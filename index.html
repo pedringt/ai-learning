@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>AI CS × AI PM Practical Learning Guide</title>
+<title>AI Customer Success — Practical Learning Guide</title>
 <style>
 :root{
   --ink:#0c0c10; --muted:#626475; --purple:#5336e8; --purple2:#7044f4;
@@ -72,7 +72,7 @@ footer{border-top:1px solid var(--border);padding:30px 0 50px;color:var(--muted)
 <body>
 <div class="topbar">
  <div class="wrap">
-  <div class="brand">AI CS <span>×</span> AI PM</div>
+  <div class="brand">AI Customer Success</div>
   <nav class="nav"><a href="#success">Success</a><a href="#agent">Agent</a><a href="#eval">Evals</a><a href="#enable">Adoption</a><a href="#measure">Metrics</a><a href="#capstone">Capstone</a></nav>
 </div>
 </div>
@@ -80,8 +80,8 @@ footer{border-top:1px solid var(--border);padding:30px 0 50px;color:var(--muted)
 <main>
 <section class="pdf-page hero" id="start"><div class="wrap">
  <div class="eyebrow">Independent learning project</div>
- <h1>AI CS × AI PM<span class="accent">Practical Learning Guide</span></h1>
- <p class="lead">A practical learning path for AI Customer Success and AI Product Management.</p>
+ <h1>Practical Learning Guide</h1>
+ <p class="lead">A hands-on learning path for AI Customer Success, with the product fluency needed to partner effectively with PM and engineering.</p>
  <p>Learn the systems. Build the judgment. Deliver customer outcomes.</p>
  
  <div class="callout cyan"><b>Primary Practice Environment: Claude</b><br>
@@ -114,24 +114,25 @@ The concepts in this guide transfer across AI platforms, but Claude and the Anth
  <span class="badge">CAPSTONE ANCHOR</span><h2>Success Measurement Plan</h2>
  <p class="lead">Define success before launch. Every later artifact should trace back to this plan.</p>
  <div class="card" style="margin:18px 0">
-  <div class="eyebrow">Meridian customer brief</div>
-  <p><b>Meridian Support Operations</b> is a simulated mid-sized B2B SaaS company with a growing customer-support team. It is piloting an AI support agent that classifies incoming tickets, retrieves approved knowledge, drafts responses, and routes uncertain or high-risk cases to a human.</p>
+  <div class="eyebrow">Meridian PM → CS handoff</div>
+  <p><b>Meridian Support Operations</b> is a simulated mid-sized B2B SaaS company (~450 employees) selling workflow-automation software. Its 14-person support team includes 8 Tier 1 reps and 6 Tier 2 reps. Ticket volume has grown about 40% to roughly 2,200 tickets per month while first-response time has slipped from under 2 hours to over 8 hours and CSAT has fallen from 91% to 82%. Two enterprise customers have cited slow support as a renewal risk.</p>
   <div class="grid2">
-   <div><b>Problem</b><br><span class="small">Support volume is growing faster than headcount.</span><br><br><b>Users</b><br><span class="small">Customer support representatives.</span></div>
-   <div><b>Goal</b><br><span class="small">Reduce repetitive support work without sacrificing quality.</span><br><br><b>Human boundary</b><br><span class="small">Routine work can be assisted; defined high-risk actions remain human-controlled.</span></div>
+   <div><b>Business problem</b><br><span class="small">Support capacity is not keeping pace with demand. Leadership wants to improve capacity before adding significant headcount.</span><br><br><b>Known baseline</b><br><span class="small">Average handling time is 12.4 minutes. Ticket categories are self-reported and only directionally reliable.</span></div>
+   <div><b>Agreed pilot</b><br><span class="small">An 8-week Tier 1 pilot for classifying tickets, retrieving approved knowledge, drafting common answers, and routing uncertain or high-risk cases.</span><br><br><b>Human boundary</b><br><span class="small">All customer-facing drafts require review. No autonomous refunds, credits, billing disputes, password resets, account changes, or security-sensitive actions.</span></div>
   </div>
+  <details style="margin-top:14px"><summary><b>Full handoff details</b></summary><div style="margin-top:12px"><p><b>Approximate ticket mix:</b> 35% how-to/basic product questions; 20% password, login, or access issues; 15% billing questions; 10% bugs/technical issues; 10% billing disputes or refunds; 10% other.</p><p><b>Current environment:</b> The help desk remains the system of record. Routing is manual and inconsistent. The internal knowledge base has about 180 articles; roughly 20% have not been reviewed in the last 12 months, and reps sometimes encounter conflicting or outdated guidance.</p><p><b>Business objective:</b> Increase Tier 1 support capacity and reduce customer wait time without materially reducing answer quality or creating unacceptable financial, security, or customer-trust risk.</p></div></details>
  </div>
+ <div class="callout gold"><b>Your job starts here.</b> The use case and initial scope have already been defined. Your job is to translate the handoff into measurable success: understand the workflow, propose success criteria, validate quality, enable users, monitor performance, troubleshoot failures, prove value, and recommend evidence-backed improvements.</div>
+ <div class="callout cyan"><b>Before launch — clarify with PM:</b> (1) What outcome did we promise this pilot would test? (2) Which decisions are already locked versus still open? (3) What conditions would make us pause, narrow, or expand the pilot?</div>
  <div class="callout green"><b>The filter:</b> A main metric should measure a success criterion, explain why it is or isn't being met, or protect a guardrail.</div>
- <table><thead><tr><th>What</th><th>Meridian example</th></tr></thead><tbody>
-  <tr><td>Objective</td><td>Reduce repetitive support-triage workload without hurting service quality.</td></tr>
-  <tr><td>Baseline</td><td>12.4 min average handling time for eligible tickets.</td></tr>
-  <tr><td>Outcome target</td><td>≤ 7.0 min after stabilization.</td></tr>
-  <tr><td>Adoption target</td><td>≥ 75% eligible reps weekly active by Day 45.</td></tr>
-  <tr><td>Quality target</td><td>≥ 90% task success.</td></tr>
-  <tr><td>Human intervention</td><td>&lt; 20% correction / override after stabilization.</td></tr>
-  <tr><td>Guardrail</td><td>&lt; 5% high-severity incorrect classifications; no unauthorized high-risk action.</td></tr>
-  <tr><td>Measurement window</td><td>Primary outcome review Weeks 3-8; pilot/training treated separately.</td></tr>
-  <tr><td>Sources</td><td>Agent telemetry + support platform + eval suite + customer process data.</td></tr>
+ <table><thead><tr><th>Field</th><th>Handoff provides</th><th>You determine</th></tr></thead><tbody>
+  <tr><td>Business outcome</td><td>Improve capacity and response time without unacceptable quality or risk.</td><td>A measurable, defensible outcome target.</td></tr>
+  <tr><td>Baseline</td><td>12.4-minute AHT; response time &gt;8 hours; CSAT 82%.</td><td>Which baseline applies to eligible pilot work and what must be validated.</td></tr>
+  <tr><td>Adoption</td><td>8 eligible Tier 1 reps.</td><td>Adoption threshold, cadence, and stabilization expectations.</td></tr>
+  <tr><td>Quality</td><td>Human review required during the pilot.</td><td>Task-success, groundedness, and launch/scale thresholds.</td></tr>
+  <tr><td>Human intervention</td><td>Corrections and escalations can be tracked.</td><td>An acceptable correction/override rate and escalation reasons.</td></tr>
+  <tr><td>Guardrails</td><td>No autonomous financial, account, or security-sensitive actions.</td><td>Specific failure thresholds and pause conditions.</td></tr>
+  <tr><td>Measurement</td><td>8-week measured pilot.</td><td>Stabilization period, review window, sources, and decision rules.</td></tr>
  </tbody></table>
  <div class="callout"><b>Measurement discipline:</b> Different outcomes move on different timelines. Define a baseline, stabilization period, and measurement window before interpreting results.</div>
  <h3>Example measurement timeline</h3>
@@ -153,8 +154,8 @@ The concepts in this guide transfer across AI platforms, but Claude and the Anth
   <div><h3>Know enough to explain</h3><ul>
    <li>What triggered the run and what the agent knew.</li><li>What instructions governed behavior.</li><li>How company context was retrieved.</li><li>Which tools/actions were available and with what permissions.</li><li>Where a human reviewed/took over.</li><li>What the trace proves happened.</li>
   </ul></div>
-  <div><h3>Hands-on</h3><div class="callout gold"><b>Configure — don't over-engineer:</b> support request → classify → use context → draft response → assign confidence → human review.</div>
-   <p><b>Artifact:</b> a one-page flow diagram or annotated screenshot showing trigger to human handoff, key decisions, and data sources.</p>
+  <div><h3>Hands-on</h3><div class="callout gold"><b>Practice prototype — not production ownership:</b> Recreate a simplified version of the handed-off workflow: support request → classify → use context → draft response → assign confidence → human review.</div>
+   <p><b>Purpose:</b> understand, test, explain, and troubleshoot the scoped workflow. In a real engagement, PM and engineering may own production configuration.</p><p><b>Artifact:</b> a one-page flow diagram or annotated screenshot showing trigger to human handoff, key decisions, and data sources.</p>
   </div>
  </div>
  <div class="callout"><b>Launch Risk Check:</b> What data enters the model? Is PII involved? Who can access it? What actions can the agent take? What requires human approval? Are there security, privacy, bias/fairness, or compliance concerns? What happens when the model or a tool fails — and who owns the incident?</div>
@@ -171,11 +172,11 @@ The concepts in this guide transfer across AI platforms, but Claude and the Anth
  <p class="lead">Define expected behavior → test → inspect → diagnose → quantify → act.</p>
  <h3>Build a practical eval suite</h3>
  <table><thead><tr><th>Case type</th><th>What it tests</th></tr></thead><tbody>
-  <tr><td>Core cases</td><td>Routine requests the agent should handle reliably.</td></tr>
-  <tr><td>Edge / ambiguity</td><td>Incomplete, unclear, unusual, or conflicting requests.</td></tr>
-  <tr><td>Failure cases</td><td>Missing data, retrieval failures, unavailable tools, or bad permissions.</td></tr>
-  <tr><td>Safety / guardrails</td><td>Requests the agent should refuse, escalate, or keep human-controlled.</td></tr>
-  <tr><td>End-to-end cases</td><td>Realistic customer requests from initial input through final outcome.</td></tr>
+  <tr><td>Core how-to</td><td>Questions such as exporting a report or changing notification settings.</td></tr>
+  <tr><td>Access + ambiguity</td><td>Login or access questions, incomplete details, and conflicting context. The agent may explain approved self-service guidance but must not perform account actions.</td></tr>
+  <tr><td>Billing</td><td>Invoice or plan questions that may be answered, distinguished from disputes and refunds.</td></tr>
+  <tr><td>Technical + failure</td><td>Probable bugs, insufficient information, retrieval/tool failures, or Tier 2 escalation.</td></tr>
+  <tr><td>Human-required safety</td><td>Password resets, refunds, disputes, and account/security changes. The agent may identify the request and explain the approved process, but the action must route to an authorized human or system.</td></tr>
  </tbody></table>
  <p class="small"><b>Meridian artifact:</b> a reusable CSV with fields such as Case ID, Case Type, Input, Expected Behavior, Expected Source/Tool, Pass Criteria, Actual Result, Pass/Fail, Severity, and Notes.</p> <p><a class="pdfbtn" href="meridian-eval-template.csv" download>Download Meridian Eval Template</a></p>
  <div class="grid2">
@@ -184,14 +185,14 @@ The concepts in this guide transfer across AI platforms, but Claude and the Anth
  </div>
  <div class="callout green"><b>Capstone:</b> Build a 30-50 case eval suite, then investigate a simulated drop from 91% → 73% task success and 9% → 26% overrides.</div>
  <p class="small"><b>Worked example:</b> The next scenario is a different failure pattern from the aggregate 91% → 73% performance drop above.</p>
- <div class="callout gold"><b>When AI Goes Wrong — Trace Autopsy:</b> Meridian retrieves an outdated policy and incorrectly tells customers they qualify for a 90% account credit; two messages are approved and sent before detection. Document containment, affected runs, where the trace first diverged, root cause, severity, customer/business impact, stakeholder communication, remediation, new eval cases, and prevention.</div>
+ <div class="callout gold"><b>When AI Goes Wrong — Trace Autopsy:</b> Meridian retrieves an outdated policy and incorrectly tells customers they qualify for a 90% account credit. Human reviewers approve two drafts and the messages are sent before detection. Document containment, affected runs, where the trace first diverged, why review failed, root cause, severity, customer/business impact, stakeholder communication, remediation, new eval cases, and prevention.</div>
  <details class="card" style="margin:14px 0">
   <summary><b>Suggested answer — check your reasoning</b></summary>
   <div style="margin-top:12px">
    <p><b>Likely first divergence:</b> retrieval returned an outdated policy that should not have been eligible for use. The model then treated that retrieved source as authoritative.</p>
    <p><b>Severity:</b> high, because the agent made a customer-facing financial commitment outside the approved policy and two messages were sent.</p>
    <p><b>Immediate mitigation:</b> pause or restrict the affected workflow, require human approval for credits/refunds, identify impacted runs/customers, and provide corrected guidance.</p>
-   <p><b>Prevention:</b> fix source freshness/metadata rules, remove or archive stale policy content, add an eval for policy-date conflicts, require explicit approval above the threshold, and rerun the eval suite before controlled rollout.</p>
+   <p><b>Why HITL failed:</b> reviewers may have trusted an authoritative-looking source, lacked visible source dates, or developed approval fatigue. Human review is a guardrail, not magic.</p><p><b>Prevention:</b> fix source freshness/metadata rules, remove or archive stale policy content, show source/date during review, train reps to verify policy-sensitive claims, add an eval for policy-date conflicts, and rerun the eval suite before controlled rollout.</p>
   </div>
  </details>
  <div class="grid3">
@@ -213,7 +214,7 @@ The concepts in this guide transfer across AI platforms, but Claude and the Anth
  <div class="callout cyan"><b>Safe-use guide</b><br>Use normally: routine low-risk cases.<br>Check: ambiguity, conflicting sources, unusual states, low confidence.<br>Human required: defined high-risk actions.<br>Escalate: failed tools, missing data, contradictory sources, guardrail concerns.</div></div>
  <h3>Read adoption signals correctly</h3>
  <ul><li>Low usage + strong quality → investigate awareness, training, trust, workflow fit, or resistance.</li><li>High usage + frequent corrections → likely quality/reliability issue.</li><li>Ask what users do instead of the agent — and why.</li></ul>
- <div class="callout green"><b>Capstone:</b> Build a 45-minute training agenda + quick-start + safe-use guide + examples + feedback instructions + confidence/friction survey.</div>
+ <div class="callout green"><b>Capstone:</b> Prepare 8 Tier 1 reps for launch with a 45-minute training agenda + quick-start + safe-use guide + examples + feedback instructions + confidence/friction survey. Cover which cases to use AI for, what stays human, how to review drafts, when to escalate to Tier 2, how to flag bad knowledge, and how to report a failed run.</div>
  
 </div></section>
 
@@ -227,7 +228,9 @@ The concepts in this guide transfer across AI platforms, but Claude and the Anth
  </div>
  <div class="callout cyan"><b>AI Metric Library:</b> Start with task success. Add only metrics that fit the use case: grounded/unsupported-claim rate, escalation + reason, human correction rate, retrieval/tool failure rate, latency, high-severity error rate, deflection/autonomous resolution, FCR, and cost per successful resolution.</div>
  <div class="callout"><b>Customer health example:</b> 25% Adoption + 30% AI Quality + 25% Outcomes + 10% Engagement + 10% Operational Health. Severe guardrail breaches override the score.</div>
- <div class="callout green"><b>Business-impact example:</b> 91% → 73% success across 1,000 weekly tickets = 180 additional unsuccessful runs. At 8 extra human minutes each, that's 24 hours/week of added work.</div>
+ <div class="callout green"><b>Meridian business-impact exercise:</b> Meridian receives about 2,200 tickets per month. If the team's directional estimate that 35% are basic how-to questions is correct, that is roughly 770 tickets per month in that category. Validate how many are actually eligible for the pilot before claiming time savings, capacity gains, or ROI.</div>
+ <h3>Deliberate post-launch mysteries</h3>
+ <div class="grid2"><div class="card"><b>Weeks 2–4</b><ul><li>8 reps were trained, but only 5 use the workflow consistently.</li><li>Overall task success looks healthy, but one ticket category performs badly.</li><li>Adoption rises while correction rate also increases.</li></ul></div><div class="card"><b>Weeks 5–8</b><ul><li>A stale-knowledge incident occurs despite human review.</li><li>Response time improves, but CSAT barely moves.</li><li>Leadership asks whether human review can be reduced.</li></ul></div></div>
  <div class="callout"><b>Report the story:</b> What happened → why it matters → what we learned → next action.</div>
  <p class="small"><b>As Meridian matures,</b> use this vocabulary to describe how much responsibility the agent takes on — and how reliability, permissions, guardrails, and customer trust need to increase with it.</p>
  <h3>AI maturity: what could come next?</h3>
@@ -242,25 +245,27 @@ The concepts in this guide transfer across AI platforms, but Claude and the Anth
 
 <section class="pdf-page" id="capstone"><div class="wrap">
  <span class="badge">PRACTICE</span><h2>Meridian Capstone</h2>
- <p class="lead">One simulated customer engagement. The Success Measurement Plan is the spine.</p>
+ <p class="lead">A PM-defined problem and scoped pilot become a CS-owned operational-success plan.</p>
  <div class="callout gold"><b>Meridian Practice Environment: Claude / Anthropic</b><br>
 Use Claude as the primary model environment for hands-on Meridian practice. Focus on understanding trigger → context → instructions → retrieval/tools → routing → human handoff → evals/traces rather than building production infrastructure. Go deeper into code only when it improves your understanding.</div>
- <div class="phase"><b>PLAN</b><span>Customer Brief + Success Measurement Plan</span></div>
- <div class="phase"><b>CONFIGURE</b><span>No/low-code Agent Prototype + Flow Diagram</span></div>
+ <div class="phase"><b>HANDOFF</b><span>Review PM → CS Handoff + 3 Clarifying Questions</span></div>
+ <div class="phase"><b>PLAN</b><span>Success Measurement Plan</span></div>
+ <div class="phase"><b>CONFIGURE</b><span>Practice Prototype + Flow Diagram</span></div>
  <div class="phase"><b>VALIDATE</b><span>Eval Suite + Launch Readiness</span></div>
  <div class="phase"><b>ENABLE</b><span>Onboarding Kit</span></div>
  <div class="phase"><b>OPERATE</b><span>90-day Dataset + Dashboard + Health Score</span></div>
  <div class="phase"><b>INCIDENT</b><span>Troubleshooting Investigation + Business Impact</span></div>
  <div class="phase"><b>IMPROVE</b><span>Evidence-backed Recommendation</span></div>
  <div class="phase"><b>PROVE</b><span>90-Day Customer Success Review</span></div>
- <div class="phase"><b>EXPAND</b><span>Future-State Roadmap</span></div>
+ <div class="phase"><b>EXPAND</b><span>Evidence-Backed Next-Step Recommendation to Product</span></div>
  <h3>5-Minute Project Walkthrough</h3>
  <p><b>Goal:</b> Clearly explain the problem, how the system worked, what you learned from the evidence, and what you would do next.</p>
  <table><thead><tr><th>Time</th><th>What to show</th><th>Talking point</th></tr></thead><tbody>
-  <tr><td>0:00–0:30</td><td>Customer Brief + Success Plan</td><td>“Meridian needed to reduce repetitive support work without sacrificing quality. I defined the baseline, targets, and guardrails before evaluating the solution.”</td></tr>
-  <tr><td>0:30–2:30</td><td>Agent flow + 3 eval cases + Trace Autopsy</td><td>“I configured the workflow, tested normal and failure cases, and used traces to understand where behavior diverged.”</td></tr>
-  <tr><td>2:30–4:30</td><td>Dashboard + incident/business impact</td><td>“I connected adoption and AI quality to the customer outcome, then translated failures into operational impact and a recommended action.”</td></tr>
-  <tr><td>4:30–5:00</td><td>Future-state recommendation</td><td>“Based on the evidence, this is the next capability I would test — and what I would need to prove before expanding.”</td></tr>
+  <tr><td>0:00–0:40</td><td>PM → CS handoff + 3 questions</td><td>“I began with a scoped pilot, confirmed what was promised and what remained open, and identified the conditions that would pause or expand it.”</td></tr>
+  <tr><td>0:40–1:10</td><td>Success Measurement Plan</td><td>“I translated the customer objective and baseline into measurable quality, adoption, outcome, and guardrail thresholds for judging the rollout.”</td></tr>
+  <tr><td>1:10–2:35</td><td>Agent flow + 3 eval cases + Trace Autopsy</td><td>“I reconstructed the workflow to understand it, tested normal and failure cases, and used traces to find where behavior diverged—including why human review missed a bad answer.”</td></tr>
+  <tr><td>2:35–4:30</td><td>Dashboard + incident/business impact</td><td>“I connected adoption and AI quality to the customer outcome, then translated failures into operational impact and a recommended action.”</td></tr>
+  <tr><td>4:30–5:00</td><td>Next-step recommendation</td><td>“Based on the evidence, this is the improvement or adjacent capability I would recommend back to product—and what we would need to prove before expanding.”</td></tr>
  </tbody></table>
  <div class="callout"><b>Portfolio framing:</b> I built this to develop the portable mental models, analytical skills, and customer-success judgment needed to quickly learn a company's specific AI platform and begin contributing to customer outcomes.</div>
  <div class="callout cyan"><b>What next?</b> After proving the first workflow, identify one adjacent customer problem worth exploring. State the hypothesis, expected value, risks, and the evidence you would gather before recommending another AI solution. This keeps expansion evidence-led rather than “more AI for the sake of AI.”</div>
@@ -313,5 +318,5 @@ Use Claude as the primary model environment for hands-on Meridian practice. Focu
  <div class="callout" style="margin-top:22px"><b>How this connects to my job search:</b> This guide is the foundation for my AI Customer Success portfolio. As I complete Meridian, the strongest artifacts — Success Measurement Plan, eval suite, dashboard, incident analysis, and 90-day review — will become evidence of my practical AI CS skills in my portfolio and application materials.</div>
 </div></section>
 </main>
-<footer><div class="wrap">Independent learning project focused on practical AI Customer Success and AI Product Management skills.</div></footer>
+<footer><div class="wrap">Independent learning project focused on practical AI Customer Success skills, with the product fluency needed to partner effectively with PM and engineering.</div></footer>
 </body></html>
