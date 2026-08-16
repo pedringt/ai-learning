@@ -46,13 +46,10 @@ table{width:100%;border-collapse:collapse;margin:18px 0;font-size:14px}
 th{background:var(--ink);color:#fff;text-align:left;padding:9px}
 td{border:1px solid var(--border);padding:9px;vertical-align:top}
 .phase{display:grid;grid-template-columns:110px 1fr;border-bottom:1px solid var(--border);padding:9px 0}
-.skill{border-bottom:1px solid var(--border);padding:11px 0}
-.skill:last-child{border-bottom:0}
-.skill .stitle{font-weight:600;font-size:14.5px}
-.skill .srow{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:5px;flex-wrap:wrap}
-.skill .sevidence{font-size:13px}
+.sevidence{font-size:12.5px}
 .phase b{color:var(--purple)}
 .phase .row{display:flex;justify-content:space-between;align-items:center;gap:14px}
+.phase .rowstack{display:flex;flex-direction:column;gap:10px}
 .pstatus{display:inline-block;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;padding:3px 9px;border-radius:999px;white-space:nowrap}
 .pstatus.done{background:#e8f6ec;color:var(--green)}
 .pstatus.progress{background:#fff6e0;color:var(--gold)}
@@ -328,18 +325,22 @@ Use Claude as the primary model environment for hands-on Meridian practice. Focu
  <div class="callout green"><b>Stop collecting links:</b> once the basics make sense, let Meridian become the curriculum.</div>
  <h3>Practical Skills Self-Assessment</h3>
  <p class="small">Ordered to follow the Meridian capstone workflow. Each "Practiced" skill links to the artifact that's the evidence.</p>
- <div class="skill"><div class="stitle">Partner effectively with PM-led discovery/design.</div><div class="srow"><a class="sevidence" href="capstone/tracker.html">HANDOFF — open questions log →</a><span class="pstatus done">Practiced</span></div></div>
- <div class="skill"><div class="stitle">Connect usage + quality to business outcomes.</div><div class="srow"><a class="sevidence" href="capstone/plan.html">PLAN — Success Measurement Plan →</a><span class="pstatus done">Practiced</span></div></div>
- <div class="skill"><div class="stitle">Explain an agent and its major components.</div><div class="srow"><a class="sevidence" href="capstone/configure.html">CONFIGURE — flow diagram →</a><span class="pstatus done">Practiced</span></div></div>
- <div class="skill"><div class="stitle">Create and interpret basic eval cases.</div><div class="srow"><span class="small">VALIDATE — not started yet</span><span class="pstatus todo">Not yet</span></div></div>
- <div class="skill"><div class="stitle">Read a trace and identify where behavior diverged.</div><div class="srow"><span class="small">VALIDATE — not started yet</span><span class="pstatus todo">Not yet</span></div></div>
- <div class="skill"><div class="stitle">Train users on safe, effective use.</div><div class="srow"><span class="small">ENABLE — not started yet</span><span class="pstatus todo">Not yet</span></div></div>
- <div class="skill"><div class="stitle">Distinguish adoption problems from AI-quality problems.</div><div class="srow"><span class="small">OPERATE — not started yet</span><span class="pstatus todo">Not yet</span></div></div>
- <div class="skill"><div class="stitle">Categorize failures and escalate with evidence.</div><div class="srow"><span class="small">INCIDENT — not started yet</span><span class="pstatus todo">Not yet</span></div></div>
- <div class="skill"><div class="stitle">Turn AI customer metrics into a recommended action.</div><div class="srow"><a class="sevidence" href="capstone/tracker.html">Standalone billing-field recommendation →</a><span class="pstatus done">Practiced</span></div></div>
- <div class="skill"><div class="stitle">Turn recurring CS work into a playbook, product signal, or safe automation.</div><div class="srow"><span class="small">EXPAND — idea seeded, not yet proven</span><span class="pstatus todo">Not yet</span></div></div>
- <div class="skill"><div class="stitle">Use a 30/60/90 plan to learn the real platform quickly.</div><div class="srow"><span class="small">Applies once I'm in an actual role</span><span class="pstatus todo">Not yet</span></div></div>
- <div class="skill"><div class="stitle">Shape an emerging role with clear ownership and handoffs.</div><div class="srow"><span class="small">Applies once I'm in an actual role</span><span class="pstatus todo">Not yet</span></div></div>
+ <div class="phase"><b>HANDOFF</b><span class="row"><span>Partner effectively with PM-led discovery/design. <a class="sevidence" href="capstone/tracker.html">→ open questions log</a></span><span class="pstatus done">Practiced</span></span></div>
+ <div class="phase"><b>PLAN</b><span class="row"><span>Connect usage + quality to business outcomes. <a class="sevidence" href="capstone/plan.html">→ Success Measurement Plan</a></span><span class="pstatus done">Practiced</span></span></div>
+ <div class="phase"><b>CONFIGURE</b><span class="row"><span>Explain an agent and its major components. <a class="sevidence" href="capstone/configure.html">→ flow diagram</a></span><span class="pstatus done">Practiced</span></span></div>
+ <div class="phase"><b>VALIDATE</b><span class="rowstack">
+   <span class="row"><span>Create and interpret basic eval cases.</span><span class="pstatus todo">Not yet</span></span>
+   <span class="row"><span>Read a trace and identify where behavior diverged.</span><span class="pstatus todo">Not yet</span></span>
+ </span></div>
+ <div class="phase"><b>ENABLE</b><span class="row"><span>Train users on safe, effective use.</span><span class="pstatus todo">Not yet</span></span></div>
+ <div class="phase"><b>OPERATE</b><span class="row"><span>Distinguish adoption problems from AI-quality problems.</span><span class="pstatus todo">Not yet</span></span></div>
+ <div class="phase"><b>INCIDENT</b><span class="row"><span>Categorize failures and escalate with evidence.</span><span class="pstatus todo">Not yet</span></span></div>
+ <div class="phase"><b>IMPROVE</b><span class="row"><span>Turn AI customer metrics into a recommended action. <a class="sevidence" href="capstone/tracker.html">→ billing-field recommendation</a></span><span class="pstatus done">Practiced</span></span></div>
+ <div class="phase"><b>EXPAND</b><span class="row"><span>Turn recurring CS work into a playbook, product signal, or safe automation.</span><span class="pstatus todo">Not yet</span></span></div>
+ <div class="phase"><b>ROLE</b><span class="rowstack">
+   <span class="row"><span>Use a 30/60/90 plan to learn the real platform quickly.</span><span class="pstatus todo">Not yet</span></span>
+   <span class="row"><span>Shape an emerging role with clear ownership and handoffs.</span><span class="pstatus todo">Not yet</span></span>
+ </span></div>
  <div class="callout" style="margin-top:22px"><b>How this connects to my job search:</b> This guide is the foundation for my AI Customer Success portfolio. As I complete Meridian, the strongest artifacts — Success Measurement Plan, eval suite, dashboard, incident analysis, and 90-day review — will become evidence of my practical AI CS skills in my portfolio and application materials.</div>
 </div></section>
 </main>
