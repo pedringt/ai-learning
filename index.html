@@ -18,7 +18,8 @@ a{color:var(--purple);text-decoration:underline;text-decoration-thickness:1.5px;
 .topbar .wrap{display:flex;justify-content:space-between;align-items:center;gap:18px;padding-top:12px;padding-bottom:12px}
 .brand{font-weight:800}.brand span{color:var(--purple)}
 .nav{display:flex;gap:14px;flex-wrap:wrap;font-size:13px}.nav a{text-decoration:none;color:var(--ink)}.nav a:hover{color:var(--purple)}
-.pdfbtn{background:var(--purple);color:#fff!important;text-decoration:none!important;padding:9px 13px;border-radius:9px;font-weight:700}
+.pdfbtn{background:var(--purple);color:#fff!important;text-decoration:none!important;padding:9px 13px;border-radius:9px;font-weight:700;display:inline-block}
+.ctarow{display:flex;align-items:center;flex-wrap:wrap;gap:10px}
 .pdf-page{padding:64px 0 60px;border-top:1px solid var(--border);scroll-margin-top:65px}
 .hero{border-top:0;padding-top:70px}
 .eyebrow{font-size:12px;letter-spacing:.13em;text-transform:uppercase;color:var(--purple);font-weight:800}
@@ -63,6 +64,7 @@ footer{border-top:1px solid var(--border);padding:30px 0 50px;color:var(--muted)
  .phase{grid-template-columns:1fr;gap:2px}
  .phase .row{flex-direction:column;align-items:flex-start;gap:6px}
  .pstatus{margin-top:2px}
+ .ctarow{flex-direction:column;align-items:flex-start;gap:8px}
 }
 @media print{
  @page{size:Letter;margin:.55in .6in .55in .6in}
@@ -93,7 +95,8 @@ footer{border-top:1px solid var(--border);padding:30px 0 50px;color:var(--muted)
  <h1>Practical Learning Guide</h1>
  <p class="lead">A hands-on learning path for AI Customer Success, with the product fluency needed to partner effectively with PM and engineering.</p>
  <p>Learn the systems. Build the judgment. Deliver customer outcomes.</p>
- 
+ <p class="ctarow" style="margin:18px 0 6px"><a class="pdfbtn" href="capstone/deliverable.html">View Capstone Deliverable →</a> <span class="small">The condensed, one-page summary of what I've actually done — or <a href="#capstone">explore the full Meridian capstone</a>.</span></p>
+
  <div class="callout cyan"><b>Primary Practice Environment: Claude</b><br>
 The concepts in this guide transfer across AI platforms, but Claude and the Anthropic ecosystem will be the primary hands-on environment for Meridian. The goal is practical fluency in one real ecosystem while building portable skills in prompting, context/RAG, tool use, MCP, agent workflows, evaluations, traces, and troubleshooting.</div>
  <h3>Your learning path</h3>
@@ -195,7 +198,7 @@ The concepts in this guide transfer across AI platforms, but Claude and the Anth
  </div>
  <div class="callout green"><b>Capstone:</b> Build a 30-50 case eval suite, then investigate a simulated drop from 91% → 73% task success and 9% → 26% overrides.</div>
  <p class="small"><b>Worked example:</b> The next scenario is a different failure pattern from the aggregate 91% → 73% performance drop above.</p>
- <div class="callout gold"><b>When AI Goes Wrong — Trace Autopsy:</b> Meridian retrieves an outdated policy and incorrectly tells customers they qualify for a 90% account credit. Human reviewers approve two drafts and the messages are sent before detection. Document containment, affected runs, where the trace first diverged, why review failed, root cause, severity, customer/business impact, stakeholder communication, remediation, new eval cases, and prevention.</div>
+ <div class="callout gold"><b>When AI Goes Wrong — Trace Autopsy:</b> Meridian retrieves an outdated policy and incorrectly tells customers they qualify for a 90% account credit. Human reviewers approve two drafts and the messages are sent before detection. Document containment, affected runs, where the trace first diverged, why review failed, root cause, severity, customer/business impact, stakeholder communication, remediation, new eval cases, and prevention. <span class="small">(This incident already shaped the Guardrails target in the <a href="capstone/plan.html">PLAN deliverable</a>.)</span></div>
  <details class="card" style="margin:14px 0">
   <summary><b>Suggested answer — check your reasoning</b></summary>
   <div style="margin-top:12px">
@@ -258,6 +261,7 @@ The concepts in this guide transfer across AI platforms, but Claude and the Anth
  <p class="lead">A PM-defined problem and scoped pilot become a CS-owned operational-success plan.</p>
  <div class="callout gold"><b>Meridian Practice Environment: Claude / Anthropic</b><br>
 Use Claude as the primary model environment for hands-on Meridian practice. Focus on understanding trigger → context → instructions → retrieval/tools → routing → human handoff → evals/traces rather than building production infrastructure. Go deeper into code only when it improves your understanding.</div>
+ <p class="ctarow" style="margin:14px 0"><a class="pdfbtn" href="capstone/deliverable.html">View Capstone Deliverable →</a> <span class="small">Condensed summary of every stage below — done, in progress, or not started.</span></p>
  <div class="phase"><b>HANDOFF</b><span class="row"><span>Review PM → CS Handoff + 3 Clarifying Questions — <a href="capstone/tracker.html">working tracker</a></span><span class="pstatus done">Done</span></span></div>
  <div class="phase"><b>PLAN</b><span class="row"><span>Success Measurement Plan — <a href="capstone/plan.html">view deliverable</a> · <a href="capstone/tracker.html">working tracker</a></span><span class="pstatus done">Done</span></span></div>
  <div class="phase"><b>CONFIGURE</b><span class="row"><span>Agent Flow Diagram — <a href="capstone/configure.html">view flow diagram</a> · <a href="capstone/tracker.html">working tracker</a> <span class="small">(optional no/low-code build practice later, for PM-workflow awareness — not required to complete this stage)</span></span><span class="pstatus progress">In progress</span></span></div>

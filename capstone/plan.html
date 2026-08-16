@@ -113,7 +113,7 @@
   <div class="metric">
     <div class="target"><b>Quality:</b> ≥ 80% of AI drafts approved with no <i>substantive</i> edit &nbsp;·&nbsp; <b>Human intervention:</b> ≤ 20% require a substantive correction</div>
     <details class="wnotes"><summary>Working notes</summary><div class="wbody">
-      Quality is a launch/scale gate — what justifies loosening mandatory review later — so it gets a stricter "prove it" bar rather than growing into it over time, unlike some other pilot targets. No solid public benchmark exists for assist-mode (human-reviewed) pilots specifically — most published numbers are for fully autonomous resolution — so this is reasoned from first principles.<br><br>
+      Quality is a launch/scale gate — what justifies loosening mandatory review later — so it gets a stricter "prove it" bar rather than growing into it over time, unlike some other pilot targets. No solid public benchmark exists for assist-mode (human-reviewed) pilots specifically — most published numbers are for fully autonomous resolution — so this is reasoned from first principles. (Task success and human correction rate are both part of the guide's <a href="../index.html#measure">AI Metric Library</a>.)<br><br>
       Human intervention is defined as roughly the complement of Quality (80% clean ≈ 20% substantive correction) so the two stay internally consistent. Non-substantive (tone-only) edits are tracked but not targeted — surfaced as a signal for possible prompt/style tuning.
       <div class="shift">Scope note: money/security categories currently skip AI drafting entirely (see Guardrails), so this target applies only to categories that get a drafted response. Revisit scope if legal clears drafting for those categories.</div>
     </div></details>
@@ -123,8 +123,8 @@
   <div class="metric">
     <div class="target"><b>Zero-tolerance, single-incident trigger</b> for money/security-related categories (not a rate)</div>
     <details class="wnotes"><summary>Working notes</summary><div class="wbody">
-      Any one confirmed guardrail breach (wrong info or an attempted unauthorized action on refunds, credits, disputes, password resets, account changes, security actions) immediately pauses autonomous drafting for that category. Response window: within 24 hours of confirmation — pause, notify, investigate. Suspected incidents are logged immediately but only count once confirmed (with 8 reps, confirmed personally).<br><br>
-      Lower-stakes accuracy issues fall under Quality/Human intervention instead — Guardrails are reserved for the human-boundary categories, where even one real failure (see the Trace Autopsy incident) is too costly to wait on a rate threshold for.
+      Any one confirmed guardrail breach (wrong info or an attempted unauthorized action on refunds, credits, disputes, password resets, account changes, security actions) immediately pauses autonomous drafting for that category. Response window: within 24 hours of confirmation — pause, notify, investigate. Suspected incidents are logged immediately but only count once confirmed (with 8 reps, confirmed personally). This is the same "skip drafting for high-risk categories" rule shown as the first branch in the <a href="configure.html">CONFIGURE flow diagram</a>.<br><br>
+      Lower-stakes accuracy issues fall under Quality/Human intervention instead — Guardrails are reserved for the human-boundary categories, where even one real failure (see the <a href="../index.html#eval">Trace Autopsy incident</a> in the guide) is too costly to wait on a rate threshold for.
     </div></details>
   </div>
 
