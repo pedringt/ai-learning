@@ -47,12 +47,20 @@ th{background:var(--ink);color:#fff;text-align:left;padding:9px}
 td{border:1px solid var(--border);padding:9px;vertical-align:top}
 .phase{display:grid;grid-template-columns:110px 1fr;border-bottom:1px solid var(--border);padding:9px 0}
 .phase b{color:var(--purple)}
+.phase .row{display:flex;justify-content:space-between;align-items:center;gap:14px}
+.pstatus{display:inline-block;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;padding:3px 9px;border-radius:999px;white-space:nowrap}
+.pstatus.done{background:#e8f6ec;color:var(--green)}
+.pstatus.progress{background:#fff6e0;color:var(--gold)}
+.pstatus.todo{background:#f2f1f6;color:var(--muted)}
 .resources a{display:block;padding:9px 0;border-bottom:1px solid var(--border);font-weight:700}
 footer{border-top:1px solid var(--border);padding:30px 0 50px;color:var(--muted);font-size:12px}
 .badge{display:inline-block;border:1px solid #d9d3ff;background:var(--softp);color:var(--purple);padding:5px 8px;border-radius:999px;font-size:12px;font-weight:800}
 @media(max-width:760px){
  .nav{display:none}.wrap{padding:0 20px}.path{grid-template-columns:repeat(3,1fr)}
  .quick,.grid2,.grid3{grid-template-columns:1fr}h1{font-size:44px}h1 .accent{font-size:38px}
+ .phase{grid-template-columns:1fr;gap:2px}
+ .phase .row{flex-direction:column;align-items:flex-start;gap:6px}
+ .pstatus{margin-top:2px}
 }
 @media print{
  @page{size:Letter;margin:.55in .6in .55in .6in}
@@ -248,16 +256,17 @@ The concepts in this guide transfer across AI platforms, but Claude and the Anth
  <p class="lead">A PM-defined problem and scoped pilot become a CS-owned operational-success plan.</p>
  <div class="callout gold"><b>Meridian Practice Environment: Claude / Anthropic</b><br>
 Use Claude as the primary model environment for hands-on Meridian practice. Focus on understanding trigger → context → instructions → retrieval/tools → routing → human handoff → evals/traces rather than building production infrastructure. Go deeper into code only when it improves your understanding.</div>
- <div class="phase"><b>HANDOFF</b><span>Review PM → CS Handoff + 3 Clarifying Questions — <a href="capstone/tracker.html">working tracker</a></span></div>
- <div class="phase"><b>PLAN</b><span>Success Measurement Plan — <a href="capstone/plan.html">view deliverable</a> · <a href="capstone/tracker.html">working tracker</a></span></div>
- <div class="phase"><b>CONFIGURE</b><span>Practice Prototype + Flow Diagram — <a href="capstone/configure.html">view flow diagram</a> · <a href="capstone/tracker.html">working tracker</a></span></div>
- <div class="phase"><b>VALIDATE</b><span>Eval Suite + Launch Readiness</span></div>
- <div class="phase"><b>ENABLE</b><span>Onboarding Kit</span></div>
- <div class="phase"><b>OPERATE</b><span>90-day Dataset + Dashboard + Health Score</span></div>
- <div class="phase"><b>INCIDENT</b><span>Troubleshooting Investigation + Business Impact</span></div>
- <div class="phase"><b>IMPROVE</b><span>Evidence-backed Recommendation</span></div>
- <div class="phase"><b>PROVE</b><span>90-Day Customer Success Review</span></div>
- <div class="phase"><b>EXPAND</b><span>Evidence-Backed Next-Step Recommendation to Product</span></div>
+ <div class="phase"><b>HANDOFF</b><span class="row"><span>Review PM → CS Handoff + 3 Clarifying Questions — <a href="capstone/tracker.html">working tracker</a></span><span class="pstatus done">Done</span></span></div>
+ <div class="phase"><b>PLAN</b><span class="row"><span>Success Measurement Plan — <a href="capstone/plan.html">view deliverable</a> · <a href="capstone/tracker.html">working tracker</a></span><span class="pstatus done">Done</span></span></div>
+ <div class="phase"><b>CONFIGURE</b><span class="row"><span>Agent Flow Diagram — <a href="capstone/configure.html">view flow diagram</a> · <a href="capstone/tracker.html">working tracker</a> <span class="small">(optional no/low-code build practice later, for PM-workflow awareness — not required to complete this stage)</span></span><span class="pstatus progress">In progress</span></span></div>
+ <div class="phase"><b>VALIDATE</b><span class="row"><span>Eval Suite + Launch Readiness</span><span class="pstatus todo">Not started</span></span></div>
+ <div class="phase"><b>ENABLE</b><span class="row"><span>Onboarding Kit</span><span class="pstatus todo">Not started</span></span></div>
+ <div class="phase"><b>OPERATE</b><span class="row"><span>90-day Dataset + Dashboard + Health Score</span><span class="pstatus todo">Not started</span></span></div>
+ <div class="phase"><b>INCIDENT</b><span class="row"><span>Troubleshooting Investigation + Business Impact</span><span class="pstatus todo">Not started</span></span></div>
+ <div class="phase"><b>IMPROVE</b><span class="row"><span>Evidence-backed Recommendation</span><span class="pstatus todo">Not started</span></span></div>
+ <div class="phase"><b>PROVE</b><span class="row"><span>90-Day Customer Success Review</span><span class="pstatus todo">Not started</span></span></div>
+ <div class="phase"><b>EXPAND</b><span class="row"><span>Evidence-Backed Next-Step Recommendation to Product</span><span class="pstatus todo">Not started</span></span></div>
+ <div class="callout gold" style="margin-top:18px"><b>A find worth flagging:</b> during CONFIGURE, digging into why reps were manually copy-pasting billing status into tickets — instead of just accepting "the AI needs billing access" as a given requirement — surfaced that the field already exists and syncs nightly, just isn't enabled for Tier 1. A config fix, not a new integration or approval process. <a href="capstone/tracker.html">Full reasoning in the working tracker →</a></div>
  <h3>5-Minute Project Walkthrough</h3>
  <p><b>Goal:</b> Clearly explain the problem, how the system worked, what you learned from the evidence, and what you would do next.</p>
  <table><thead><tr><th>Time</th><th>What to show</th><th>Talking point</th></tr></thead><tbody>

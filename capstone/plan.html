@@ -50,11 +50,15 @@
   .qmini .a b{display:inline;text-transform:none;letter-spacing:0;color:var(--ink);font-size:12.5px}
 
   .reflect{border:1px solid var(--border);border-left:4px solid var(--green);background:#f2faf5;border-radius:12px;padding:16px 18px;margin:24px 0}
+  @media(max-width:760px){
+    .wrap{padding:0 20px 60px}
+    h2{font-size:24px}
+  }
 </style>
 </head>
 <body>
 <div class="wrap">
-<p class="small" style="margin:0 0 18px"><a href="../index.html#capstone">← Back to Meridian Capstone</a> &nbsp;·&nbsp; <a href="tracker.html">Working tracker (full reasoning log)</a> &nbsp;·&nbsp; <a href="configure.html">CONFIGURE flow diagram</a></p>
+<p class="small" style="margin:0 0 18px"><a href="../index.html#capstone">← Back to Meridian Capstone</a></p>
 
   <span class="badge">CAPSTONE · PLAN</span>
   <h2>Success Measurement Plan — Meridian Support Operations</h2>
@@ -84,7 +88,7 @@
     <div class="target"><b>First-response time — ~7 hrs</b> (down from &gt; 8 hrs)</div>
     <details class="wnotes"><summary>Working notes</summary><div class="wbody">
       AI drafting a response the moment a ticket arrives removes the "compose from scratch" step before a human opens it, raising throughput even if the review-time portion of AHT doesn't shrink.<br><br>
-      <b>Measurement approach:</b> uses two hard system timestamps every ticket already has — first-reply-sent and resolved/closed — rather than a new manual field. Gap &lt; 20 min = one-shot resolution; gap &gt; 20 min = a true two-step case (quick ack, resolved later). Chosen after a simulated "dev pushback" exercise showed relying on reps to manually tag workflow type would produce unreliable data — the timestamp-gap proxy avoids depending on human compliance entirely.
+      <b>Measurement approach:</b> uses two hard system timestamps every ticket already has — first-reply-sent and resolved/closed — rather than a new manual field. Gap &lt; 20 min = one-shot resolution; gap &gt; 20 min = a true two-step case (quick ack, resolved later). Chosen after a simulated "dev pushback" exercise showed relying on reps to manually tag workflow type would produce unreliable data — the timestamp-gap proxy avoids depending on human compliance entirely. (Full dev-pushback exercise in the <a href="tracker.html">working tracker</a>.)
       <div class="shift">Changed my mind (again): revised down from ~6 hrs to ~7 hrs after rep discovery findings showed only 2 of 8 reps actually do a quick first-touch ack — most resolve start-to-finish in one pass. AHT and first-response are more entangled than I originally assumed, so the "distinct first-touch speedup" mechanism barely applies for most tickets. AI still saves composition time even in one-shot cases, just less dramatically.</div>
     </div></details>
   </div>
@@ -134,7 +138,7 @@
   </div>
 
   <h3>PM handoff — open questions log</h3>
-  <p class="small">15 clarifying questions raised across HANDOFF, PLAN, and CONFIGURE, each with a simulated placeholder answer (clearly marked) and how it was resolved — used so I wasn't blocked while working through the exercise, not real facts from Meridian.</p>
+  <p class="small">15 clarifying questions raised across HANDOFF, PLAN, and CONFIGURE, each with a simulated placeholder answer (clearly marked) and how it was resolved — used so I wasn't blocked while working through the exercise, not real facts from Meridian. Full context and rep-discovery findings behind these are in the <a href="tracker.html">working tracker</a>.</p>
 
   <div class="qmini"><b>1 · Targets</b>No formal targets set by leadership — propose data-driven pilot targets; pre-growth numbers are the long-term aim, not a pilot deadline.</div>
   <div class="qmini"><b>2 · Knowledge base</b>No formal review process, no bandwidth before launch. <span class="a"><b>Resolution:</b> track KB-caused failures explicitly during the pilot; seeded a future KB-cleanup-agent idea for EXPAND, held back until there's evidence to justify it.</span></div>
@@ -157,6 +161,8 @@
     This exercise ended up teaching me more about the job than I expected going in. My first instinct on almost every metric was to either restate the given baseline as the target, or pick a number that felt directionally right without a clear reason behind it — the KB-timeline pushback and the drafting-scope call were the moments that forced me to actually reason it through instead of defaulting to an easy answer. I also caught myself a few times proposing something clean and then realizing a constraint (mandatory human review, an unreliable data field, an unproven causal link) meant the honest answer was messier — and I think that's closer to what the job actually looks like than getting it right on the first try. The biggest shift for me was realizing that "I don't know yet, here's my plan to find out" is often a stronger answer than guessing with false confidence — which is exactly the muscle I'm hoping to walk into an AI CS role already having built.
     <p class="small" style="margin-top:8px">[Edit freely — this is a first draft in your voice, not final.]</p>
   </div>
+
+  <p class="small" style="margin-top:36px;padding-top:16px;border-top:1px solid var(--border)"><a href="tracker.html">Working tracker (full reasoning log)</a> &nbsp;·&nbsp; <a href="configure.html">CONFIGURE flow diagram</a> &nbsp;·&nbsp; <a href="../index.html#capstone">← Back to Meridian Capstone</a></p>
 
 </div>
 </body>

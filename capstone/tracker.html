@@ -6,12 +6,14 @@
 <title>Meridian Capstone — Working Tracker</title>
 <style>
   :root{
-    --ink:#0c0c10; --muted:#626475; --purple:#5336e8;
-    --border:#e7e5ef; --softp:#f3f0ff; --green:#269650; --gold:#bd8917; --cyan:#159eb9;
+    --ink:#0c0c10; --muted:#626475; --purple:#5336e8; --purple2:#7044f4;
+    --blue:#2b64d8; --cyan:#159eb9; --green:#269650; --gold:#bd8917;
+    --border:#e7e5ef; --soft:#f8f7fc; --softp:#f3f0ff; --white:#fff;
   }
   *{box-sizing:border-box}
   body{margin:0;font-family:Arial,Helvetica,sans-serif;color:var(--ink);background:#fff;line-height:1.55}
-  .wrap{max-width:880px;margin:auto;padding:40px 28px 80px}
+  a{color:var(--purple);text-decoration:underline;text-decoration-thickness:1.5px;text-underline-offset:3px}
+  .wrap{max-width:1060px;margin:auto;padding:40px 34px 80px}
   h1{font-size:30px;margin:0 0 4px;letter-spacing:-.02em}
   .sub{color:var(--muted);margin:0 0 28px;font-size:15px}
   h2{font-size:19px;margin:36px 0 10px;padding-top:16px;border-top:1px solid var(--border)}
@@ -22,6 +24,10 @@
   .status.done{background:#e8f6ec;color:var(--green)}
   .status.progress{background:#fff6e0;color:var(--gold)}
   .status.todo{background:#f2f1f6;color:var(--muted)}
+  ul.checklist{list-style:none;margin:0;padding:0}
+  ul.checklist li{display:flex;justify-content:space-between;align-items:center;gap:14px;padding:8px 0;border-bottom:1px solid var(--border);font-size:14.5px}
+  ul.checklist li:last-child{border-bottom:0}
+  ul.checklist .right{display:flex;align-items:center;gap:8px;white-space:nowrap}
   .q{border:1px solid var(--border);border-left:4px solid var(--purple);background:var(--softp);
     border-radius:10px;padding:12px 15px;margin:10px 0;font-size:14.5px}
   .q b{display:block;font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:var(--purple);margin-bottom:4px}
@@ -40,28 +46,35 @@
   .assume{display:inline-block;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.03em;
     background:#fff6e0;color:var(--gold);padding:2px 8px;border-radius:999px;margin:6px 0 4px}
   .shift{font-size:13px;color:var(--purple);margin-top:6px;font-style:italic}
+  @media(max-width:760px){
+    .wrap{padding:0 20px 60px}
+    h1{font-size:26px}
+    ul.checklist li{flex-direction:column;align-items:flex-start;gap:4px}
+    ul.checklist .right{white-space:normal}
+  }
 </style>
 </head>
 <body>
 <div class="wrap">
-<p class="small" style="margin:0 0 18px"><a href="../index.html#capstone">← Back to Meridian Capstone</a> &nbsp;·&nbsp; <a href="plan.html">PLAN deliverable</a> &nbsp;·&nbsp; <a href="configure.html">CONFIGURE flow diagram</a></p>
+<p class="small" style="margin:0 0 18px"><a href="../index.html#capstone">← Back to Meridian Capstone</a></p>
 
   <h1>Meridian Capstone — Working Tracker</h1>
   <p class="sub">Running notes for the AI Customer Success capstone: open questions for the PM, my in-progress Success Measurement Plan reasoning, and stage-by-stage status.</p>
+  <div class="callout gold" style="border:1px solid var(--border);border-left:4px solid var(--gold);background:#fff9eb;border-radius:10px;padding:12px 15px;margin:0 0 14px;font-size:13.5px"><b>What is Meridian?</b> A practice scenario: Meridian Support Operations, a mid-sized B2B SaaS company, is piloting an AI agent to help an overwhelmed Tier 1 support team — classifying tickets, drafting responses, and routing risky/uncertain cases to a human. This doc is my working process as the AI Customer Success owner of that pilot: open questions, assumptions, and reasoning as I go, not a finished report. <a href="../index.html#capstone">Full capstone context in the guide →</a></div>
   <div class="frame">This doc tracks my working process, not just final numbers — including assumptions I'm making versus facts I've been given, and cases where my thinking changed as I worked through the logic. I think the reasoning matters more than landing on a "correct" target on the first try.</div>
 
   <h2>Capstone stage checklist</h2>
   <ul class="checklist">
-    <li>HANDOFF — review + clarifying questions <span class="status done">Done</span></li>
-    <li>PLAN — Success Measurement Plan <span class="status done">Done</span> <span class="small">→ polished as its own artifact</span></li>
-    <li>CONFIGURE — agent prototype + flow diagram <span class="status todo">Not started</span></li>
-    <li>VALIDATE — eval suite + launch readiness <span class="status todo">Not started</span></li>
-    <li>ENABLE — onboarding kit <span class="status todo">Not started</span></li>
-    <li>OPERATE — 90-day dataset + dashboard <span class="status todo">Not started</span></li>
-    <li>INCIDENT — troubleshooting investigation <span class="status todo">Not started</span></li>
-    <li>IMPROVE — evidence-backed recommendation <span class="status todo">Not started</span></li>
-    <li>PROVE — 90-day customer success review <span class="status todo">Not started</span></li>
-    <li>EXPAND — next-step recommendation <span class="status todo">Not started</span></li>
+    <li><span>HANDOFF — review + clarifying questions</span><span class="right"><span class="status done">Done</span></span></li>
+    <li><span>PLAN — Success Measurement Plan</span><span class="right"><a href="plan.html">view deliverable</a><span class="status done">Done</span></span></li>
+    <li><span>CONFIGURE — agent prototype + flow diagram <span class="small">(flow diagram done, prototype not started)</span></span><span class="right"><a href="configure.html">view flow diagram</a><span class="status progress">In progress</span></span></li>
+    <li><span>VALIDATE — eval suite + launch readiness</span><span class="right"><span class="status todo">Not started</span></span></li>
+    <li><span>ENABLE — onboarding kit</span><span class="right"><span class="status todo">Not started</span></span></li>
+    <li><span>OPERATE — 90-day dataset + dashboard</span><span class="right"><span class="status todo">Not started</span></span></li>
+    <li><span>INCIDENT — troubleshooting investigation</span><span class="right"><span class="status todo">Not started</span></span></li>
+    <li><span>IMPROVE — evidence-backed recommendation</span><span class="right"><span class="status todo">Not started</span></span></li>
+    <li><span>PROVE — 90-day customer success review</span><span class="right"><span class="status todo">Not started</span></span></li>
+    <li><span>EXPAND — next-step recommendation</span><span class="right"><span class="status todo">Not started</span></span></li>
   </ul>
 
   <h2>Open questions for the PM</h2>
@@ -114,14 +127,14 @@
   <div class="shift" style="color:var(--gold)"><b>Simulated answer (harder):</b> An old internal wiki page has some general escalation guidance, but it's unmaintained and reps have said privately they don't really follow it — mostly go by instinct now. Not authoritative, but may have some historical context.</div>
   <div class="shift">Resolution: led to a good follow-up question of my own — whether the PM's discovery already covered rep-level operational habits. <b>Simulated PM answer:</b> discovery covered pilot scope/business goals/human-boundary rules, not rep-level instincts — that's better gathered directly from the 8 reps than relayed secondhand. Resulted in a rep discovery question list (below), since the team is small enough to do this personally.</div></div>
 
-  <div class="q"><b>13 · Tool inventory</b>Does the PM/agent build plan already include a list of tools reps use day-to-day, and is access to those tools already scoped into the agent's architecture — or is that still open?</div>
-  <div class="q"><b>14 · KB automation scoping</b>Could KB updates be automated in a way that doesn't require extra work from reps — and is that in scope for this pilot to discuss with engineering, or a separate scoping conversation for later? (Connects to the KB-cleanup-agent idea seeded for EXPAND.)</div>
+  <div class="q"><b>13 · Tool inventory</b>Does the PM/agent build plan already include a list of tools reps use day-to-day, and is access to those tools already scoped into the agent's architecture — or is that still open? <span class="small">(Simulated answer + resolution below, under "Rep discovery findings.")</span></div>
+  <div class="q"><b>14 · KB automation scoping</b>Could KB updates be automated in a way that doesn't require extra work from reps — and is that in scope for this pilot to discuss with engineering, or a separate scoping conversation for later? (Connects to the KB-cleanup-agent idea seeded for EXPAND.) <span class="small">(Simulated answer + resolution below, under "Rep discovery findings.")</span></div>
 
   <h2>Rep discovery questions</h2>
   <p class="small">CONFIGURE-stage prep, also feeds ENABLE later. Goal: validate/correct assumptions (like the simulated workflow-model answer to question 4) with real input from the 8 Tier 1 reps, and surface adoption concerns before the pilot starts.</p>
   <div class="reasoning">
     <b>Framing to open with:</b> "This is to help design the pilot well, not to evaluate you — I want your honest read on what's working and what isn't, including anything uncomfortable."
-    <ol style="margin:8px 0 0 18px">
+    <ol type="a" style="margin:8px 0 0 18px">
       <li>Tell me about escalations generally — what are the most common types of tickets you end up escalating, and why? <i>(follow up with "is it usually because it went long, or the customer's upset, or something else?" only if they get stuck)</i></li>
       <li>Do you generally answer tickets in one go, or do you sometimes touch base first to get a quick response out, then answer more fully later?</li>
       <li>What issues do you run into with the knowledge base — conflicting info, stale articles, anything else?</li>
@@ -133,6 +146,7 @@
   </div>
 
   <h2>Rep discovery findings (simulated) & decisions made</h2>
+  <p class="note">These findings directly shaped the agent logic in the <a href="configure.html">CONFIGURE flow diagram</a> (escalation triggers, retrieval approach) and the pilot targets in the <a href="plan.html">PLAN deliverable</a> (first-response time).</p>
   <div class="reasoning">
     <b>New escalation trigger added:</b> customer explicitly asks for a supervisor or to escalate — a cleaner signal than inferring "upset" or counting exchanges, since it doesn't require interpretation.<br><br>
     <b>Workflow model corrected:</b> real (simulated) rep input shows only 2 of 8 reps occasionally do a quick first-touch ack; most resolve start-to-finish. This is more reliable than the earlier simulated PM answer, since reps report their own actual behavior.
@@ -146,7 +160,7 @@
 
   <div class="q"><b>13 · Tool inventory</b>Does the PM/agent build plan already include a list of tools reps use day-to-day, and is access to those tools already scoped into the agent's architecture — or is that still open?
   <div class="shift" style="color:var(--gold)"><b>Simulated answer:</b> KB and help desk tool are scoped; no full inventory of everything else reps touch was done — assumed KB covers most of what the AI needs.</div>
-  <div class="shift">Resolution: go back to reps for the full tool inventory (rep discovery question 7) before finalizing agent tool-access scope, rather than proceeding on the PM's partial assumption.</div></div>
+  <div class="shift">Resolution: go back to reps for the full tool inventory (rep discovery question g) before finalizing agent tool-access scope, rather than proceeding on the PM's partial assumption.</div></div>
 
   <div class="q"><b>14 · KB automation scoping</b>Could KB updates be automated without extra rep work, and is that in scope for this pilot to discuss with engineering?
   <div class="shift" style="color:var(--gold)"><b>Simulated answer:</b> Good idea, but out of scope for this 8-week pilot — would need a separate proposal with its own timeline/budget. Bring pilot evidence afterward to pitch it as a follow-on project.</div>
@@ -160,14 +174,15 @@
   <h2>Standalone recommendation (independent of the pilot)</h2>
   <div class="callout gold"><b>Enable the existing billing/account-status field for Tier 1 reps.</b> This field already exists and syncs nightly from the billing system, but is only configured to display on the Tier 2 view. Turning it on for Tier 1 would directly solve the manual copy-paste pain point reps flagged in discovery, and — as a side effect — gives the AI agent access to the same already-approved data source without a new integration. Worth flagging to the PM/engineering regardless of pilot timing, since it's a low-risk, low-effort fix.</div>
 
-  <div class="q"><b>Rep discovery Q7 (simulated) · Tool inventory</b>Beyond the help desk and KB, reps use: the billing system (Stripe-based, for account/subscription lookups — see resolution to question 15 above), an internal admin panel for basic account changes (already excluded per Guardrails), and Slack to ping engineering when something's broken (an escalation channel, not a data source for the agent).</div>
+  <div class="q"><b>Rep discovery Q-g (simulated) · Tool inventory</b>Beyond the help desk and KB, reps use: the billing system (Stripe-based, for account/subscription lookups — see resolution to question 15 above), an internal admin panel for basic account changes (already excluded per Guardrails), and Slack to ping engineering when something's broken (an escalation channel, not a data source for the agent).</div>
 
   <h2>Success Measurement Plan — in progress</h2>
+  <p class="note">Raw reasoning below. The clean, presentation-ready version (locked targets + collapsible working notes) lives in the <a href="plan.html">PLAN deliverable</a>.</p>
 
   <h3>Business outcome</h3>
   <div class="reasoning">
     <b>Long-term goal:</b> CSAT back to 90%, first-response time back to &lt;2 hrs (stretch: beat these).<br>
-    <b>Pilot target (8 weeks):</b> First-response time ~6 hrs, AHT held roughly steady (~12.4 min), CSAT monitored but not fixed as a hard target.<br>
+    <b>Pilot target (8 weeks):</b> First-response time ~7 hrs, AHT held roughly steady (~12.4 min), CSAT monitored but not fixed as a hard target.<br>
     <b>Reasoning:</b> The pilot only covers Tier 1, and every AI draft requires human review — so this is an intermediate proof point, not the full outcome. Targets should reflect what's achievable under partial coverage + mandatory review, not the fully-scaled future state.
   </div>
 
@@ -233,6 +248,8 @@
   <div class="frame"><i>[Placeholder — draft this once the plan is finished. A sentence or two on why this exercise mattered for the CS transition, e.g. what practicing "propose the target, don't just repeat the baseline" taught you about the job.]</i></div>
 
   <p class="note">Last updated as part of an in-progress working session — targets and reasoning above are drafts, not final.</p>
+
+  <p class="small" style="margin-top:36px;padding-top:16px;border-top:1px solid var(--border)"><a href="plan.html">PLAN deliverable</a> &nbsp;·&nbsp; <a href="configure.html">CONFIGURE flow diagram</a> &nbsp;·&nbsp; <a href="../index.html#capstone">← Back to Meridian Capstone</a></p>
 
 </div>
 </body>
