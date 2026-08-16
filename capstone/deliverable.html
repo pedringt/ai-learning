@@ -13,6 +13,12 @@
   *{box-sizing:border-box}
   body{margin:0;font-family:Arial,Helvetica,sans-serif;color:var(--ink);background:#fff;line-height:1.5}
   a{color:var(--purple);text-decoration:underline;text-decoration-thickness:1.5px;text-underline-offset:3px}
+  .topbar{position:sticky;top:0;background:rgba(255,255,255,.96);backdrop-filter:blur(10px);border-bottom:1px solid var(--border);z-index:50}
+  .topbar .wrap{display:flex;justify-content:space-between;align-items:center;gap:18px;padding:12px 34px}
+  .brand{font-weight:800}
+  .brand a{color:inherit;text-decoration:none}
+  .nav{display:flex;gap:14px;flex-wrap:wrap;font-size:13px}.nav a{text-decoration:none;color:var(--ink)}.nav a:hover{color:var(--purple)}
+  .pdfbtn{background:var(--purple);color:#fff!important;text-decoration:none!important;padding:7px 12px;border-radius:9px;font-weight:700;font-size:13px;white-space:nowrap;display:inline-block}
   .wrap{max-width:1060px;margin:auto;padding:40px 34px 90px}
   .badge{display:inline-block;border:1px solid #d9d3ff;background:var(--softp);color:var(--purple);padding:5px 8px;border-radius:999px;font-size:12px;font-weight:800}
   h1{font-size:30px;line-height:1.1;letter-spacing:-.025em;margin:12px 0 8px}
@@ -36,12 +42,17 @@
   th{background:var(--ink);color:#fff;text-align:left;padding:6px 9px}
   td{border:1px solid var(--border);padding:6px 9px}
   .footer-note{font-size:12px;color:var(--muted);margin-top:36px;padding-top:16px;border-top:1px solid var(--border)}
-  @media(max-width:760px){.wrap{padding:0 20px 60px}h1{font-size:24px}}
+  @media(max-width:760px){.nav{display:none}.topbar .wrap{padding:12px 20px}.wrap{padding:0 20px 60px}h1{font-size:24px}}
 </style>
 </head>
 <body>
+<div class="topbar"><div class="wrap">
+ <div class="brand"><a href="../index.html">AI Customer Success</a></div>
+ <div style="display:flex;align-items:center;gap:18px">
+  <nav class="nav"><a href="../index.html#success">Success</a><a href="../index.html#agent">Agent</a><a href="../index.html#eval">Evals</a><a href="../index.html#enable">Adoption</a><a href="../index.html#measure">Metrics</a><a href="../index.html#capstone">Capstone</a></nav>
+ </div>
+</div></div>
 <div class="wrap">
-<p class="small" style="margin:0 0 18px"><a href="../index.html#capstone">← Back to Meridian Capstone</a></p>
 
 <span class="badge">CAPSTONE · ONE-PAGE DELIVERABLE</span>
 <h1>Meridian Capstone Deliverable</h1>
