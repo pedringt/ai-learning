@@ -158,6 +158,7 @@ The concepts in this guide transfer across AI platforms, but Claude and the Anth
  </div>
  <h3>Everything traces back here</h3>
  <ul><li><b>Evals:</b> quality targets + guardrails.</li><li><b>Onboarding:</b> adoption target.</li><li><b>Dashboard + health:</b> target progress and explanation.</li><li><b>Incident:</b> target/guardrail impact.</li><li><b>90-day review:</b> promised outcome.</li><li><b>Expansion:</b> next step based on evidence.</li></ul>
+ <p class="small">My Meridian version of this: <a href="capstone/plan.html">Success Measurement Plan deliverable</a> · <a href="capstone/tracker.html">working tracker</a></p>
 </div></section>
 
 <section class="pdf-page" id="agent"><div class="wrap">
@@ -179,6 +180,7 @@ The concepts in this guide transfer across AI platforms, but Claude and the Anth
   <a href="https://openai.com/business/guides-and-resources/a-practical-guide-to-building-ai-agents/" target="_blank">OpenAI — Practical Guide to Building AI Agents</a>
   <a href="https://www.deeplearning.ai/courses/agentic-ai/" target="_blank">DeepLearning.AI — Agentic AI</a>
  </div>
+ <p class="small">My Meridian version of this: <a href="capstone/configure.html">Agent Flow Diagram deliverable</a> · <a href="capstone/tracker.html">working tracker</a></p>
 </div></section>
 
 <section class="pdf-page" id="eval"><div class="wrap">
@@ -197,7 +199,7 @@ The concepts in this guide transfer across AI platforms, but Claude and the Anth
   <div><h3>Evaluation</h3><ul><li>Normal, edge, ambiguous, missing-data, tool-failure, and high-risk cases.</li><li>Expected behavior + pass/fail criteria.</li><li>Trace inspection.</li><li>Task success, failure category, severity, guardrails.</li><li>Before/after comparisons.</li></ul></div>
   <div><h3>Troubleshooting</h3><ul><li>Reproduce.</li><li>Validate scope + recent changes.</li><li>Find where the trace diverged.</li><li>Categorize: instructions, context, retrieval, tool, data, routing, permissions, model, user input.</li><li>Quantify impact against the Success Measurement Plan.</li><li>Work around safely + escalate with evidence.</li></ul></div>
  </div>
- <div class="callout green"><b>Capstone:</b> Build a 30-50 case eval suite, then investigate a simulated drop from 91% → 73% task success and 9% → 26% overrides.</div>
+ <div class="callout green"><b>Capstone:</b> Build a 30-50 case eval suite, then investigate a simulated drop from 91% → 73% task success and 9% → 26% overrides. <span class="small">(See <a href="capstone/evals.html">sample eval cases</a> for what these actually look like.)</span></div>
  <p class="small"><b>Worked example:</b> The next scenario is a different failure pattern from the aggregate 91% → 73% performance drop above.</p>
  <div class="callout gold"><b>When AI Goes Wrong — Trace Autopsy:</b> Meridian retrieves an outdated policy and incorrectly tells customers they qualify for a 90% account credit. Human reviewers approve two drafts and the messages are sent before detection. Document containment, affected runs, where the trace first diverged, why review failed, root cause, severity, customer/business impact, stakeholder communication, remediation, new eval cases, and prevention. <span class="small">(This incident already shaped the Guardrails target in the <a href="capstone/plan.html">PLAN deliverable</a>.)</span></div>
  <details class="card" style="margin:14px 0">
@@ -219,6 +221,7 @@ The concepts in this guide transfer across AI platforms, but Claude and the Anth
   <a href="https://www.deeplearning.ai/short-courses/evaluating-ai-agents/" target="_blank">DeepLearning.AI / Arize — Evaluating AI Agents</a>
   <a href="https://www.anthropic.com/engineering/demystifying-evals-for-ai-agents" target="_blank">Anthropic — Demystifying evals</a>
  </div>
+ <p class="small">My Meridian version of this: <a href="capstone/evals.html">eval suite sample cases</a> · <a href="capstone/plan.html">Guardrails targets</a> · <a href="capstone/tracker.html">working tracker</a></p>
 </div></section>
 
 <section class="pdf-page" id="enable"><div class="wrap">
@@ -255,6 +258,7 @@ The concepts in this guide transfer across AI platforms, but Claude and the Anth
   <tr><td><b>Orchestrate</b></td><td>Agent coordinates across multiple systems and steps to complete a broader workflow.</td></tr>
  </tbody></table>
  <p class="small"><b>CS lens:</b> Each step increases potential value — and the need for stronger reliability, permissions, guardrails, monitoring, and customer trust. Expansion should be earned by evidence.</p>
+ <p class="small">My Meridian version of this: <a href="capstone/plan.html">Success Measurement Plan targets</a> · <a href="capstone/deliverable.html">one-page deliverable</a></p>
 </div></section>
 
 <section class="pdf-page" id="capstone"><div class="wrap">
@@ -266,7 +270,7 @@ Use Claude as the primary model environment for hands-on Meridian practice. Focu
  <div class="phase"><b>HANDOFF</b><span class="row"><span>Review PM → CS Handoff + 3 Clarifying Questions — <a href="capstone/tracker.html">working tracker</a></span><span class="pstatus done">Done</span></span></div>
  <div class="phase"><b>PLAN</b><span class="row"><span>Success Measurement Plan — <a href="capstone/plan.html">view deliverable</a> · <a href="capstone/tracker.html">working tracker</a></span><span class="pstatus done">Done</span></span></div>
  <div class="phase"><b>CONFIGURE</b><span class="row"><span>Agent Flow Diagram — <a href="capstone/configure.html">view flow diagram</a> · <a href="capstone/tracker.html">working tracker</a> <span class="small">(optional no/low-code build practice later, for PM-workflow awareness — not required to complete this stage)</span></span><span class="pstatus progress">In progress</span></span></div>
- <div class="phase"><b>VALIDATE</b><span class="row"><span>Eval Suite + Launch Readiness</span><span class="pstatus todo">Not started</span></span></div>
+ <div class="phase"><b>VALIDATE</b><span class="row"><span>Eval Suite + Launch Readiness — <a href="capstone/evals.html">sample eval cases</a></span><span class="pstatus progress">In progress</span></span></div>
  <div class="phase"><b>ENABLE</b><span class="row"><span>Onboarding Kit</span><span class="pstatus todo">Not started</span></span></div>
  <div class="phase"><b>OPERATE</b><span class="row"><span>90-day Dataset + Dashboard + Health Score</span><span class="pstatus todo">Not started</span></span></div>
  <div class="phase"><b>INCIDENT</b><span class="row"><span>Troubleshooting Investigation + Business Impact</span><span class="pstatus todo">Not started</span></span></div>
