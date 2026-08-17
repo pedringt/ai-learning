@@ -89,6 +89,7 @@
     <tr><td class="field">AHT</td><td>12.4 min</td><td>Hold roughly steady — don't make it worse</td></tr>
     <tr><td class="field">First-response time</td><td>&gt; 8 hrs</td><td>~ 7 hrs</td></tr>
     <tr><td class="field">CSAT</td><td>82%</td><td>Monitored — no hard target this pilot</td></tr>
+    <tr><td class="field">Cost per AI-handled ticket</td><td>N/A (new)</td><td>Below fully-human cost per ticket — tracked from Week 1, hard ceiling set before launch</td></tr>
   </table>
 
   <div class="metric">
@@ -112,6 +113,15 @@
     <div class="target"><span class="assume">Assumption flagged</span><br><b>CSAT — monitor, no hard pilot target</b></div>
     <details class="wnotes"><summary>Working notes</summary><div class="wbody">
       The link between faster response and CSAT is an assumption, not a proven causal chain. At this stage, the more honest goal is proving AI accuracy/reliability — CSAT is a leading indicator to watch, not a metric to be pinned to yet.
+    </div></details>
+  </div>
+
+  <div class="metric">
+    <div class="target"><span class="assume">Assumption flagged</span><br><b>Cost per AI-handled ticket — must beat fully-human baseline, hard ceiling TBD with finance</b></div>
+    <details class="wnotes"><summary>Working notes</summary><div class="wbody">
+      Model calls per ticket (classify, retrieve/embed, draft) times token volume, weighted by how many tickets actually reach drafting — high-risk categories skip drafting entirely under Guardrails, so they cost less per ticket than a full-draft case. That split matters for the estimate, not just total ticket volume.<br><br>
+      <b>Measurement approach:</b> cost per AI-handled ticket vs. cost per fully-human ticket (rep time), tracked from Week 1 alongside the other metrics rather than added later — this became clear talking through the plan out loud: cost is a launch input (shapes model/architecture choices in CONFIGURE), not just a pilot output.
+      <div class="shift">Added late: this metric wasn't in my first pass — I originally treated cost as something to check once the pilot was running, alongside the other quality/speed targets. Talking it through surfaced why that's backwards: cost isn't just another OPERATE number to watch, it actively shapes CONFIGURE decisions (which model handles classification vs. drafting, how aggressively to route high-risk tickets away from generation) and it's half of the ROI story PROVE will eventually need — pilot value only holds up if the savings in AHT/response time actually beat what the AI itself costs to run. Moving it up to PLAN, as a ceiling set before CONFIGURE locks in architecture, means a cost problem gets caught as a design constraint instead of surfacing as a surprise later.</div>
     </div></details>
   </div>
 
@@ -142,6 +152,8 @@
       Lower-stakes accuracy issues fall under Quality/Human intervention instead — Guardrails are reserved for the human-boundary categories, where even one real failure (see the <a href="../index.html#eval">Trace Autopsy incident</a> in the guide) is too costly to wait on a rate threshold for.
     </div></details>
   </div>
+
+  <div class="callout gold"><b>Recognize, don't own:</b> a few things sit outside a CS/PM role but still need tracking so they don't slip — customer disclosure that a response was AI-drafted (legal/policy call), a data-privacy review of what customer data reaches the AI vendor (security/legal), and vendor dependency risk if that provider has an outage or changes terms mid-pilot. Job here is to flag these as open dependencies and hold the gate on money/security drafting scope until legal signs off — not to resolve them personally.</div>
 
   <h3>Measurement window & decision rules</h3>
   <div class="metric">
