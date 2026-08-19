@@ -82,8 +82,8 @@
   </div>
 </div>
 
-<div class="stage progress">
-  <div class="stagehead"><h2>Configure</h2><span class="pstatus progress">In progress</span></div>
+<div class="stage done">
+  <div class="stagehead"><h2>Configure</h2><span class="pstatus done">Done</span></div>
   <div class="stagebody">
     Built the agent's flow logic: classify → (high-risk skips drafting, straight to human) or (retrieve → draft → confidence check) → human review → send → escalation check on replies. Escalation threshold (5+ exchanges) justified with real usage data rather than a guess. Retrieval built on semantic/embedding search instead of keyword matching, to sidestep the knowledge base's existing search problem. The high-risk skip-drafting branch also doubles as a cost control, and model choice per step is being weighed against the PLAN cost ceiling, not quality alone. One standout catch: digging into why reps manually copy-pasted billing status into tickets found it was a simple display-config gap, not a new integration or approval need. Flow diagram is done; the actual no/low-code prototype build is optional, later practice.
     <div style="margin-top:6px"><a class="sevidence" href="configure.html">→ full flow diagram</a></div>
