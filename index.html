@@ -192,7 +192,19 @@ The concepts in this guide transfer across AI platforms, but Claude and the Anth
   <tr><td>Technical + failure</td><td>Probable bugs, insufficient information, retrieval/tool failures, or Tier 2 escalation.</td></tr>
   <tr><td>Human-required safety</td><td>Password resets, refunds, disputes, and account/security changes. The agent may identify the request and explain the approved process, but the action must route to an authorized human or system.</td></tr>
  </tbody></table>
- <p class="small"><b>Meridian artifact:</b> a reusable CSV with fields such as Case ID, Case Type, Input, Expected Behavior, Expected Source/Tool, Pass Criteria, Actual Result, Pass/Fail, Severity, and Notes.</p> <p><a class="pdfbtn" href="meridian-eval-template.csv" download>Download Meridian Eval Template</a></p>
+ <p class="small"><b>Reusable format:</b> the same fields work for any eval suite, not just Meridian's.</p>
+ <table><thead><tr><th>Field</th><th>What it captures</th></tr></thead><tbody>
+  <tr><td>Case ID</td><td>e.g. EV-014</td></tr>
+  <tr><td>Case type</td><td>e.g. edge case — ambiguous input</td></tr>
+  <tr><td>Input</td><td>The message/scenario the agent receives</td></tr>
+  <tr><td>Expected behavior</td><td>What the agent should do — specific enough two people would agree it happened</td></tr>
+  <tr><td>Expected source/tool</td><td>What the agent should reference or call to answer correctly</td></tr>
+  <tr><td>Pass criteria</td><td>The measurable pass/fail line — not "handles it well"</td></tr>
+  <tr><td>Actual result</td><td>What happened when run</td></tr>
+  <tr><td>Pass/Fail</td><td>—</td></tr>
+  <tr><td>Severity</td><td>Low / Med / High</td></tr>
+  <tr><td>Notes</td><td>Root cause if failed, follow-up needed</td></tr>
+ </tbody></table>
  <div class="grid2">
   <div><h3>Evaluation</h3><ul><li>Normal, edge, ambiguous, missing-data, tool-failure, and high-risk cases.</li><li>Expected behavior + pass/fail criteria.</li><li>Trace inspection.</li><li>Task success, failure category, severity, guardrails.</li><li>Before/after comparisons.</li></ul></div>
   <div><h3>Troubleshooting</h3><ul><li>Reproduce.</li><li>Validate scope + recent changes.</li><li>Find where the trace diverged.</li><li>Categorize: instructions, context, retrieval, tool, data, routing, permissions, model, user input.</li><li>Quantify impact against the Success Measurement Plan.</li><li>Work around safely + escalate with evidence.</li></ul></div>
@@ -268,14 +280,14 @@ Use Claude as the primary model environment for hands-on Meridian practice. Focu
  <div class="phase"><b>HANDOFF</b><span class="row"><span>Review PM → CS Handoff + 3 Clarifying Questions — <a href="capstone/tracker.html">working tracker</a></span><span class="pstatus done">Done</span></span></div>
  <div class="phase"><b>PLAN</b><span class="row"><span>Success Measurement Plan — <a href="capstone/plan.html">view deliverable</a> · <a href="capstone/tracker.html">working tracker</a></span><span class="pstatus done">Done</span></span></div>
  <div class="phase"><b>CONFIGURE</b><span class="row"><span>Agent Flow Diagram — <a href="capstone/configure.html">view flow diagram</a> · <a href="capstone/tracker.html">working tracker</a> <span class="small">(optional no/low-code build practice later, for PM-workflow awareness — not required to complete this stage)</span></span><span class="pstatus done">Done</span></span></div>
- <div class="phase"><b>VALIDATE</b><span class="row"><span>Eval Suite + Launch Readiness — <a href="capstone/evals.html">sample eval cases</a></span><span class="pstatus progress">In progress</span></span></div>
+ <div class="phase"><b>VALIDATE</b><span class="row"><span>Eval Suite + Launch Readiness — <a href="capstone/evals.html">eval cases + run results</a></span><span class="pstatus done">Done</span></span></div>
  <div class="phase"><b>ENABLE</b><span class="row"><span>Onboarding Kit</span><span class="pstatus todo">Not started</span></span></div>
  <div class="phase"><b>OPERATE</b><span class="row"><span>90-day Dataset + Dashboard + Health Score</span><span class="pstatus todo">Not started</span></span></div>
  <div class="phase"><b>INCIDENT</b><span class="row"><span>Troubleshooting Investigation + Business Impact</span><span class="pstatus todo">Not started</span></span></div>
  <div class="phase"><b>IMPROVE</b><span class="row"><span>Evidence-backed Recommendation</span><span class="pstatus todo">Not started</span></span></div>
  <div class="phase"><b>PROVE</b><span class="row"><span>90-Day Customer Success Review</span><span class="pstatus todo">Not started</span></span></div>
  <div class="phase"><b>EXPAND</b><span class="row"><span>Evidence-Backed Next-Step Recommendation to Product</span><span class="pstatus todo">Not started</span></span></div>
- <div class="callout gold" style="margin-top:18px"><b>A find worth flagging:</b> during CONFIGURE, digging into why reps were manually copy-pasting billing status into tickets — instead of just accepting "the AI needs billing access" as a given requirement — surfaced that the field already exists and syncs nightly, just isn't enabled for Tier 1. A config fix, not a new integration or approval process. <a href="capstone/tracker.html">Full reasoning in the working tracker →</a></div>
+ <div class="callout gold" style="margin-top:18px"><b>A notable finding:</b> during CONFIGURE, digging into why reps were manually copy-pasting billing status into tickets — instead of just accepting "the AI needs billing access" as a given requirement — surfaced that the field already exists and syncs nightly, just isn't enabled for Tier 1. A config fix, not a new integration or approval process. <a href="capstone/tracker.html">Full reasoning in the working tracker →</a></div>
  <h3>5-Minute Project Walkthrough</h3>
  <p><b>Goal:</b> Clearly explain the problem, how the system worked, what you learned from the evidence, and what you would do next.</p>
  <table><thead><tr><th>Time</th><th>What to show</th><th>Talking point</th></tr></thead><tbody>
@@ -341,8 +353,8 @@ Use Claude as the primary model environment for hands-on Meridian practice. Focu
  <div class="phase"><b>PLAN</b><span class="row"><span>Connect usage + quality to business outcomes. <a class="sevidence" href="capstone/plan.html">→ Success Measurement Plan</a></span><span class="pstatus done">Practiced</span></span></div>
  <div class="phase"><b>CONFIGURE</b><span class="row"><span>Explain an agent and its major components. <a class="sevidence" href="capstone/configure.html">→ flow diagram</a></span><span class="pstatus done">Practiced</span></span></div>
  <div class="phase"><b>VALIDATE</b><span class="rowstack">
-   <span class="row"><span>Create and interpret basic eval cases. <a class="sevidence" href="capstone/evals.html">→ sample eval cases</a></span><span class="pstatus done">Practiced</span></span>
-   <span class="row"><span>Read a trace and identify where behavior diverged.</span><span class="pstatus todo">Not yet</span></span>
+   <span class="row"><span>Create and interpret basic eval cases. <a class="sevidence" href="capstone/evals.html">→ eval cases + run results</a></span><span class="pstatus done">Practiced</span></span>
+   <span class="row"><span>Read a trace and identify where behavior diverged. <a class="sevidence" href="capstone/evals.html">→ E04 root-cause investigation</a></span><span class="pstatus done">Practiced</span></span>
  </span></div>
  <div class="phase"><b>ENABLE</b><span class="row"><span>Train users on safe, effective use.</span><span class="pstatus todo">Not yet</span></span></div>
  <div class="phase"><b>OPERATE</b><span class="row"><span>Distinguish adoption problems from AI-quality problems.</span><span class="pstatus todo">Not yet</span></span></div>
