@@ -55,7 +55,21 @@
 <h2>Eval Suite</h2>
 <p class="lead">Before the pilot launches, this is what "we tested it" actually has to mean — concrete cases run against the CONFIGURE flow, not a general claim that the agent "works."</p>
 
-<div class="callout cyan"><b>Status: not started.</b> This stage is meant to be worked through case by case, not generated in bulk — the eval cases, the run results, and the launch-readiness call are the actual exercise. Coming back to build this out properly.</div>
+<div class="callout cyan"><b>Status: in progress.</b> Cases are being worked through one at a time — the reasoning behind each one matters as much as the case itself, so this builds slowly rather than all at once.</div>
+
+<h3>Case EV-01</h3>
+<table>
+<thead><tr><th>Field</th><th>Detail</th></tr></thead>
+<tbody>
+<tr><td>Case type</td><td>Core how-to</td></tr>
+<tr><td>Input</td><td>"How do I generate my monthly analytics report?"</td></tr>
+<tr><td>Context</td><td>Report generation is universal across all plan tiers (confirmed — open question 17 in the <a href="tracker.html">tracker</a>), so this case needs standard KB retrieval only, no CRM/config lookup.</td></tr>
+<tr><td>Expected behavior</td><td>Agent retrieves the relevant KB article and drafts the steps, citing the source article and when it was last verified/updated — so staleness is checkable rather than invisible.</td></tr>
+<tr><td>Pass criteria</td><td>Steps match the current product; source/last-verified info is included. Fails if the steps are outdated — caught either by human review (an unreliable safety net on its own, per the Trace Autopsy precedent) or by the customer directly contradicting the steps ("I don't see that button"), which should trigger escalation rather than the agent repeating or guessing.</td></tr>
+<tr><td>Severity</td><td>Low — no financial or security exposure. Still worth catching: a stale answer on a simple, common question is exactly the kind of friction the pilot is supposed to remove, and it feeds the same reactive KB-fix process built in CONFIGURE.</td></tr>
+</tbody>
+</table>
+<p class="small"><b>Open note:</b> whether a changelog or similar signal exists to help detect staleness beyond customer pushback is a flagged assumption, not confirmed.</p>
 
 <h3>Reusable case format</h3>
 <table>
