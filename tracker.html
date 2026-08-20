@@ -153,7 +153,6 @@ body.v88-dark .metric,body.v88-dark .case,body.v88-dark .eval-area,body.v88-dark
  .v915-orientation .statusbox{padding-left:0;padding-top:10px;border-left:0;border-top:1px solid var(--border)}
 }
 </style>
-
 <style id="v917-shell-consistency">
 .v88-shellnav{display:flex;align-items:center;gap:4px;flex-wrap:nowrap}
 .v88-shellnav>a,.v88-theme,.v912-more>summary{
@@ -212,27 +211,114 @@ body.v88-dark .metric,body.v88-dark .case,body.v88-dark .eval-area,body.v88-dark
   .v912-more-panel{right:-4px;width:min(250px,calc(100vw - 28px))}
 }
 </style>
+
+<style id="v918-home-style-artifact-header">
+/* Match the main site's header architecture and control order. */
+.topbar{
+  position:sticky!important;top:0!important;z-index:50!important;
+  background:rgba(255,255,255,.96)!important;backdrop-filter:blur(12px)!important;
+  border-bottom:1px solid var(--border)!important;
+}
+body.v88-dark .topbar{background:rgba(16,16,20,.96)!important}
+.topbar .wrap{
+  max-width:1180px!important;margin:auto!important;
+  display:grid!important;grid-template-columns:auto 1fr auto!important;
+  align-items:center!important;gap:18px!important;
+  padding-top:12px!important;padding-bottom:12px!important
+}
+.v918-brand{font-weight:800;font-size:17px;white-space:nowrap}
+.v918-brand a{color:var(--ink)!important;text-decoration:none!important}
+.v918-brand span{color:var(--purple)}
+.v918-primary-nav{
+  display:flex;justify-content:center;gap:5px;flex-wrap:wrap
+}
+.v918-primary-nav a{
+  position:relative;border:0;background:transparent;color:var(--ink)!important;
+  padding:9px 11px;border-radius:9px;text-decoration:none!important;
+  font-size:13px;font-weight:700
+}
+.v918-primary-nav a:hover{background:var(--softp)!important;color:var(--purple)!important}
+.v918-top-actions{display:flex;align-items:center;gap:8px}
+.v918-theme{
+  border:1px solid var(--border);background:var(--card);color:var(--ink);
+  border-radius:999px;padding:8px 11px;cursor:pointer;font-size:12px;font-weight:800;
+  white-space:nowrap
+}
+.v918-theme:hover{background:var(--softp);color:var(--purple)}
+.v918-more{position:relative}
+.v918-more>summary{
+  list-style:none;display:flex;align-items:center;gap:7px;
+  border:1px solid var(--border);background:var(--card);color:var(--ink);
+  border-radius:999px;padding:8px 11px 8px 13px;cursor:pointer;
+  font-size:12px;font-weight:800;white-space:nowrap
+}
+.v918-more>summary::-webkit-details-marker{display:none}
+.v918-more>summary:hover,.v918-more[open]>summary{background:var(--softp);color:var(--purple)}
+.v918-chevron{display:inline-flex;align-items:center;justify-content:center;width:14px;height:14px;font-size:13px;line-height:1;transition:transform .15s ease}
+.v918-more[open] .v918-chevron{transform:rotate(180deg)}
+.v918-more-panel{
+  position:absolute;right:0;top:calc(100% + 8px);z-index:90;width:250px;padding:9px;
+  border:1px solid var(--border);border-radius:14px;background:var(--card);
+  box-shadow:0 18px 42px rgba(0,0,0,.16)
+}
+.v918-more-panel a{
+  display:block;padding:9px 10px;border-radius:9px;color:var(--ink)!important;
+  text-decoration:none!important;font-size:12.5px;font-weight:700
+}
+.v918-more-panel a:hover{background:var(--softp);color:var(--purple)!important}
+.v918-menu-label{display:block;padding:7px 10px 4px;color:var(--muted);font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase}
+.v918-mobile-nav{
+  display:none;border:1px solid var(--border);background:var(--card);color:var(--ink);
+  border-radius:9px;padding:9px 30px 9px 11px;font-size:13px;font-weight:700
+}
+@media(max-width:860px){
+  .topbar .wrap{grid-template-columns:auto 1fr!important;gap:10px!important}
+  .v918-primary-nav{display:none}
+  .v918-top-actions{justify-self:end}
+  .v918-mobile-nav{display:block}
+}
+@media(max-width:560px){
+  .topbar .wrap{padding-left:18px!important;padding-right:18px!important}
+  .v918-brand{font-size:15px}
+  .v918-more{display:none}
+  .v918-theme{padding:8px 10px}
+  .v918-mobile-nav{max-width:150px;min-width:0}
+}
+</style>
 </head>
 <body>
-<div class="topbar"><div class="wrap"><div class="brand"><a href="index.html">AI <span style="color:var(--purple)">Customer Success</span></a></div><div class="v88-shellnav">
+<div class="topbar">
+<div class="wrap">
+<div class="v918-brand"><a href="index.html">AI <span>Customer Success</span></a></div>
+<nav aria-label="Portfolio pages" class="v918-primary-nav">
 <a href="index.html">Home</a>
 <a href="index.html#meridian">Meridian</a>
 <a href="index.html#portfolio">Portfolio</a>
 <a href="index.html#learn">Learning Library</a>
-<details class="v912-more">
-<summary>More <span aria-hidden="true" class="v912-chevron">⌄</span></summary>
-<div class="v912-more-panel">
-<span class="v912-menu-label">Meridian evidence</span>
+</nav>
+<div class="v918-top-actions">
+<button aria-label="Toggle dark mode" class="v918-theme" title="Toggle dark mode" type="button">◐</button>
+<details class="v918-more">
+<summary>More <span aria-hidden="true" class="v918-chevron">⌄</span></summary>
+<div class="v918-more-panel">
+<span class="v918-menu-label">Meridian evidence</span>
 <a href="tracker.html">Discovery &amp; Decisions</a>
 <a href="deliverable.html">One-page Meridian readout</a>
-<span class="v912-menu-label">Direct artifact links</span>
+<span class="v918-menu-label">Direct artifact links</span>
 <a href="plan.html">Success Measurement Plan</a>
 <a href="agent-flow.html">Agent Flow &amp; Guardrails</a>
 <a href="evals.html">Eval Suite</a>
 </div>
 </details>
-<button aria-label="Toggle dark mode" class="v88-theme" title="Toggle dark mode" type="button">◐</button>
-</div></div></div>
+<select aria-label="Choose page" class="v918-mobile-nav">
+<option value="index.html">Home</option>
+<option value="index.html#meridian">Meridian</option>
+<option value="index.html#portfolio">Portfolio</option>
+<option value="index.html#learn">Learning Library</option>
+</select>
+</div>
+</div>
+</div>
 <div class="wrap"><div class="v88-artifact-nav"><span class="v912-artifact-label">Meridian evidence</span><a aria-current="page" class="active" href="tracker.html">Discovery</a><a href="plan.html">Success Plan</a><a href="agent-flow.html">Agent Flow</a><a href="evals.html">Eval Suite</a><a href="deliverable.html">Case Readout</a></div>
 <h1>Meridian Capstone — Working Tracker</h1>
 <p class="sub">Running notes for the AI Customer Success capstone: open questions for the PM, my in-progress Success Measurement Plan reasoning, and stage-by-stage status.</p>
@@ -411,7 +497,7 @@ body.v88-dark .metric,body.v88-dark .case,body.v88-dark .eval-area,body.v88-dark
 <p class="note">Last updated as part of an in-progress working session — targets and reasoning above are drafts, not final.</p>
 <p class="small" style="margin-top:36px;padding-top:16px;border-top:1px solid var(--border)"><a href="plan.html">PLAN deliverable</a>  ·  <a href="configure.html">CONFIGURE flow diagram</a>  ·  <a href="deliverable.html">One-page deliverable</a></p>
 </div>
-<script id="v88-shared-script">(()=>{if(document.body.dataset.v88)return;document.body.dataset.v88='1';const btn=document.querySelector('.v88-theme');if(btn){btn.onclick=()=>{document.body.classList.toggle('v88-dark');localStorage.setItem('ai-cs-theme',document.body.classList.contains('v88-dark')?'dark':'light');};}if(localStorage.getItem('ai-cs-theme')==='dark')document.body.classList.add('v88-dark');document.addEventListener('click',e=>{document.querySelectorAll('.v912-more[open]').forEach(d=>{if(!d.contains(e.target))d.removeAttribute('open')})});})();</script>
+
 <script id="v88-tracker-nav">(()=>{const wrap=document.querySelector('.wrap');if(!wrap||document.querySelector('.v88-question-nav'))return;const hs=[...wrap.querySelectorAll('h3')].filter(h=>/^\s*\d+\s*[·.:-]/.test(h.textContent)||/question/i.test(h.textContent));if(!hs.length)return;const nav=document.createElement('div');nav.className='v88-question-nav';hs.forEach((h,i)=>{h.id=h.id||'q'+(i+1);const a=document.createElement('a');a.href='#'+h.id;a.textContent=h.textContent.trim().replace(/\s+/g,' ').slice(0,42);nav.appendChild(a);});const frame=wrap.querySelector('.frame');(frame||wrap.querySelector('h2'))?.after(nav);})();</script>
 <section class="v902-adoption-revision">
 <div class="tag">Changed my mind</div>
@@ -419,5 +505,9 @@ body.v88-dark .metric,body.v88-dark .case,body.v88-dark .eval-area,body.v88-dark
 <p><strong>Earlier assumption:</strong> by the end of week two, all eight Tier 1 reps should use the AI-assisted workflow at least once each day.</p>
 <p><strong>What challenged it:</strong> daily use ignores whether a rep actually received eligible work and can penalize appropriate non-use on tickets that should stay human-led.</p>
 <p><strong>Revised approach:</strong>Reasoning: blanket daily-use targets can reward the wrong behavior because ticket eligibility varies and some non-use is appropriate. The useful signal is whether reps consistently use the AI-assisted path when eligible, return to it over time, and can explain friction or intentional non-use.</p>
-</section></body>
+</section>
+<script id="v918-header-script">
+(()=>{const theme=document.querySelector('.v918-theme');if(theme){theme.onclick=()=>{document.body.classList.toggle('v88-dark');localStorage.setItem('ai-cs-theme',document.body.classList.contains('v88-dark')?'dark':'light')}}if(localStorage.getItem('ai-cs-theme')==='dark')document.body.classList.add('v88-dark');const sel=document.querySelector('.v918-mobile-nav');if(sel){sel.onchange=()=>{location.href=sel.value}}document.addEventListener('click',e=>{document.querySelectorAll('.v918-more[open]').forEach(d=>{if(!d.contains(e.target))d.removeAttribute('open')})})})();
+</script>
+</body>
 </html>

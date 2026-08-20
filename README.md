@@ -147,3 +147,15 @@ Navigation polish only. The desktop header now keeps the four primary destinatio
 - `More` now consistently appears before the dark-mode control.
 - Standardized the Meridian evidence bar so older artifact pages no longer fall back to the legacy navigation treatment.
 - Ran cross-page navigation and local-link regression checks.
+
+## v91.8 header + spacing correction
+- Removed inherited section-kicker spacing from the compact Home Learning Library preview.
+- Rebuilt standalone Meridian headers to match the actual main-site header architecture instead of the legacy shell.
+- Standalone header control order now matches Home: dark mode first, then More.
+- Preserved the Meridian evidence bar and v91.5 artifact orientation blocks.
+
+## v91.8 final consistency correction
+- Tightened the Home Learning Library preview at the actual inherited section-kicker level.
+- Rebuilt standalone artifact headers to visually match the Home header, including dark mode then More ordering.
+- Restored the intended manager-readability orientation boxes on Plan, Agent Flow, Eval Suite, and Case Readout.
+- Preserved Tracker’s receipts-layer orientation and the Meridian evidence bar.
