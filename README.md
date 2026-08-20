@@ -164,3 +164,10 @@ Navigation polish only. The desktop header now keeps the four primary destinatio
 - Normalized standalone Meridian typography, heading hierarchy, body copy, labels, status pills, surfaces, callouts, tables, and vertical rhythm.
 - Kept the Working Tracker intentionally slightly denser as the receipts layer while matching the shared visual system.
 - No content, navigation, evidence, claims, or information architecture changed.
+
+## v92.0 visual parity
+- Replaced approximate standalone header styling with a Home-scale header treatment.
+- Unified brand/nav typography, spacing, dark/light icon behavior, More menu, and mobile controls.
+- Increased standalone artifact body/heading typography to match the newer site.
+- Tracker retains density through spacing only, not smaller type.
+- No content or information architecture changed.

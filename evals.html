@@ -280,7 +280,6 @@ body.v88-dark .topbar{background:rgba(16,16,20,.96)!important}
  .v918-orientation .statusbox{padding-left:0;padding-top:10px;border-left:0;border-top:1px solid var(--border)}
 }
 </style>
-
 <style id="v919-design-system">
 /* v91.9 — shared visual language for standalone Meridian artifacts */
 
@@ -463,31 +462,232 @@ tr:last-child td{border-bottom:0!important}
   .v918-orientation,.v915-orientation{padding:14px!important}
 }
 </style>
+
+<style id="v920-visual-parity">
+/* v92.0 — standalone Meridian pages should feel like the same site, not legacy documents */
+
+/* Exact Home-style header proportions */
+.topbar{
+  position:sticky!important;top:0!important;z-index:50!important;
+  background:rgba(255,255,255,.96)!important;
+  backdrop-filter:blur(12px)!important;
+  border-bottom:1px solid var(--border)!important;
+}
+body.v88-dark .topbar{background:rgba(16,16,20,.96)!important}
+.topbar .wrap{
+  max-width:1180px!important;
+  margin:auto!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:space-between!important;
+  gap:18px!important;
+  padding:12px 28px!important;
+}
+.v920-brand{
+  font-weight:800!important;
+  font-size:17px!important;
+  line-height:1!important;
+  white-space:nowrap!important;
+}
+.v920-brand a{color:var(--ink)!important;text-decoration:none!important}
+.v920-brand span{color:var(--purple)!important}
+.v920-nav{
+  display:flex!important;
+  gap:5px!important;
+  flex-wrap:wrap!important;
+  align-items:center!important;
+  justify-content:center!important;
+  margin-left:auto!important;
+}
+.v920-nav a{
+  border:0!important;
+  background:transparent!important;
+  color:var(--ink)!important;
+  padding:9px 11px!important;
+  border-radius:9px!important;
+  text-decoration:none!important;
+  font-size:13px!important;
+  font-weight:700!important;
+  line-height:1.2!important;
+}
+.v920-nav a:hover{
+  background:var(--softp)!important;
+  color:var(--purple)!important;
+}
+.v920-actions{
+  display:flex!important;
+  align-items:center!important;
+  gap:8px!important;
+  margin-left:10px!important;
+}
+.v920-theme{
+  border:1px solid var(--border)!important;
+  background:var(--card)!important;
+  color:var(--ink)!important;
+  border-radius:999px!important;
+  padding:8px 11px!important;
+  cursor:pointer!important;
+  font-size:12px!important;
+  font-weight:800!important;
+  line-height:1.2!important;
+  min-width:39px!important;
+}
+.v920-theme:hover{background:var(--softp)!important;color:var(--purple)!important}
+.v920-more{position:relative!important}
+.v920-more>summary{
+  list-style:none!important;
+  display:flex!important;
+  align-items:center!important;
+  gap:7px!important;
+  border:1px solid var(--border)!important;
+  background:var(--card)!important;
+  color:var(--ink)!important;
+  border-radius:999px!important;
+  padding:8px 11px 8px 13px!important;
+  cursor:pointer!important;
+  font-size:12px!important;
+  font-weight:800!important;
+  line-height:1.2!important;
+  white-space:nowrap!important;
+}
+.v920-more>summary::-webkit-details-marker{display:none!important}
+.v920-more>summary:hover,.v920-more[open]>summary{
+  background:var(--softp)!important;
+  color:var(--purple)!important;
+}
+.v920-chevron{
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  width:14px!important;height:14px!important;
+  font-size:13px!important;line-height:1!important;
+  transition:transform .15s ease!important;
+}
+.v920-more[open] .v920-chevron{transform:translateY(1px) rotate(180deg)!important}
+.v920-more-panel{
+  position:absolute!important;right:0!important;top:calc(100% + 8px)!important;
+  z-index:90!important;width:250px!important;padding:9px!important;
+  border:1px solid var(--border)!important;border-radius:14px!important;
+  background:var(--card)!important;box-shadow:0 18px 42px rgba(0,0,0,.16)!important;
+}
+.v920-more-panel a{
+  display:block!important;padding:9px 10px!important;border-radius:9px!important;
+  color:var(--ink)!important;text-decoration:none!important;
+  font-size:12.5px!important;font-weight:700!important;
+}
+.v920-more-panel a:hover{background:var(--softp)!important;color:var(--purple)!important}
+.v920-menu-label{
+  display:block!important;padding:7px 10px 4px!important;color:var(--muted)!important;
+  font-size:10px!important;font-weight:800!important;letter-spacing:.06em!important;text-transform:uppercase!important;
+}
+.v920-mobile{
+  display:none!important;
+  border:1px solid var(--border)!important;background:var(--card)!important;color:var(--ink)!important;
+  border-radius:9px!important;padding:9px 34px 9px 11px!important;
+  font-size:13px!important;font-weight:700!important;
+}
+
+/* Typography parity with Home */
+.wrap>h2:first-of-type{
+  font-size:30px!important;
+  line-height:1.08!important;
+  letter-spacing:-.03em!important;
+  margin:10px 0 8px!important;
+}
+.wrap>h2:not(:first-of-type){
+  font-size:24px!important;
+  line-height:1.18!important;
+  letter-spacing:-.025em!important;
+  margin:38px 0 12px!important;
+}
+.wrap h3{
+  font-size:18px!important;
+  line-height:1.3!important;
+  letter-spacing:-.015em!important;
+}
+.lead{
+  font-size:17.5px!important;
+  line-height:1.58!important;
+  color:var(--muted)!important;
+  max-width:900px!important;
+}
+.wrap p,.wrap li,.stagebody{
+  font-size:14px!important;
+  line-height:1.6!important;
+}
+.small,.note,.sevidence{
+  font-size:12.5px!important;
+  line-height:1.55!important;
+}
+.frame,.reasoning,.callout,.case,.eval-area,.next-grid>div,.metric{
+  padding:18px!important;
+}
+.v918-orientation,.v915-orientation{
+  padding:18px!important;
+}
+.v918-orientation p,.v915-orientation p{
+  font-size:13px!important;
+  line-height:1.55!important;
+}
+
+/* Tracker stays dense through spacing, not smaller type */
+body.v919-tracker .wrap p,
+body.v919-tracker .wrap li{
+  font-size:14px!important;
+  line-height:1.56!important;
+}
+body.v919-tracker .frame,
+body.v919-tracker .reasoning,
+body.v919-tracker .callout{
+  padding:15px 17px!important;
+}
+body.v919-tracker .wrap>h2:not(:first-of-type){
+  margin-top:31px!important;
+}
+
+/* Mobile parity */
+@media(max-width:860px){
+  .topbar .wrap{gap:10px!important}
+  .v920-nav{display:none!important}
+  .v920-actions{margin-left:auto!important}
+  .v920-mobile{display:block!important}
+  .v920-more{display:none!important}
+}
+@media(max-width:560px){
+  .topbar .wrap{padding:11px 18px!important}
+  .v920-brand{font-size:15px!important}
+  .v920-theme{padding:8px 10px!important}
+  .v920-mobile{max-width:156px!important;min-width:0!important}
+  .wrap>h2:first-of-type{font-size:28px!important}
+  .wrap>h2:not(:first-of-type){font-size:22px!important}
+  .lead{font-size:17px!important}
+}
+</style>
 </head><body>
 <div class="topbar">
 <div class="wrap">
-<div class="v918-brand"><a href="index.html">AI <span>Customer Success</span></a></div>
-<nav aria-label="Portfolio pages" class="v918-primary-nav">
+<div class="v920-brand"><a href="index.html">AI <span>Customer Success</span></a></div>
+<nav aria-label="Portfolio pages" class="v920-nav">
 <a href="index.html">Home</a>
 <a href="index.html#meridian">Meridian</a>
 <a href="index.html#portfolio">Portfolio</a>
 <a href="index.html#learn">Learning Library</a>
 </nav>
-<div class="v918-top-actions">
-<button aria-label="Toggle dark mode" class="v918-theme" title="Toggle dark mode" type="button">◐</button>
-<details class="v918-more">
-<summary>More <span aria-hidden="true" class="v918-chevron">⌄</span></summary>
-<div class="v918-more-panel">
-<span class="v918-menu-label">Meridian evidence</span>
+<div class="v920-actions">
+<button aria-label="Switch to dark mode" aria-pressed="false" class="v920-theme" title="Switch to dark mode" type="button">☾</button>
+<details class="v920-more">
+<summary>More <span aria-hidden="true" class="v920-chevron">⌄</span></summary>
+<div class="v920-more-panel">
+<span class="v920-menu-label">Meridian evidence</span>
 <a href="tracker.html">Discovery &amp; Decisions</a>
 <a href="deliverable.html">One-page Meridian readout</a>
-<span class="v918-menu-label">Direct artifact links</span>
+<span class="v920-menu-label">Direct artifact links</span>
 <a href="plan.html">Success Measurement Plan</a>
 <a href="agent-flow.html">Agent Flow &amp; Guardrails</a>
 <a href="evals.html">Eval Suite</a>
 </div>
 </details>
-<select aria-label="Choose page" class="v918-mobile-nav">
+<select aria-label="Choose page" class="v920-mobile">
 <option value="index.html">Home</option>
 <option value="index.html#meridian">Meridian</option>
 <option value="index.html#portfolio">Portfolio</option>
@@ -552,8 +752,33 @@ tr:last-child td{border-bottom:0!important}
 <div class="callout purple"><b>Portfolio boundary:</b> this page is a curated view of the eval design, not the test database. The deeper discovery questions, assumptions, and changes of mind stay in the <a href="tracker.html">Working Tracker</a>.</div>
 <p class="small" style="margin-top:36px;padding-top:16px;border-top:1px solid var(--border)"><a href="agent-flow.html">← Agent Flow &amp; Guardrails</a>  ·  <a href="tracker.html">Working Tracker</a>  ·  <a href="deliverable.html">One-page Meridian readout →</a></p>
 </div>
-<script id="v918-header-script">
-(()=>{const theme=document.querySelector('.v918-theme');if(theme){theme.onclick=()=>{document.body.classList.toggle('v88-dark');localStorage.setItem('ai-cs-theme',document.body.classList.contains('v88-dark')?'dark':'light')}}if(localStorage.getItem('ai-cs-theme')==='dark')document.body.classList.add('v88-dark');const sel=document.querySelector('.v918-mobile-nav');if(sel){sel.onchange=()=>{location.href=sel.value}}document.addEventListener('click',e=>{document.querySelectorAll('.v918-more[open]').forEach(d=>{if(!d.contains(e.target))d.removeAttribute('open')})})})();
+
+
+<script id="v920-header-behavior">
+(()=>{
+  const btn=document.querySelector('.v920-theme');
+  const apply=()=>{
+    const dark=document.body.classList.contains('v88-dark');
+    if(btn){
+      btn.textContent=dark?'☀':'☾';
+      btn.setAttribute('aria-pressed',dark?'true':'false');
+      btn.setAttribute('aria-label',dark?'Switch to light mode':'Switch to dark mode');
+      btn.setAttribute('title',dark?'Switch to light mode':'Switch to dark mode');
+    }
+  };
+  if(localStorage.getItem('ai-cs-theme')==='dark') document.body.classList.add('v88-dark');
+  apply();
+  if(btn) btn.onclick=()=>{
+    document.body.classList.toggle('v88-dark');
+    localStorage.setItem('ai-cs-theme',document.body.classList.contains('v88-dark')?'dark':'light');
+    apply();
+  };
+  const sel=document.querySelector('.v920-mobile');
+  if(sel) sel.onchange=()=>{location.href=sel.value};
+  document.addEventListener('click',e=>{
+    document.querySelectorAll('.v920-more[open]').forEach(d=>{if(!d.contains(e.target)) d.removeAttribute('open')});
+  });
+})();
 </script>
 </body>
 </html>
