@@ -135,9 +135,8 @@ Navigation polish only. The desktop header now keeps the four primary destinatio
 - Visually de-emphasized the supporting Portfolio and Learning Library as optional exploration.
 - No substantive Meridian evidence, curriculum, or claims removed.
 
-## v91.6 manager-home
-- Final manager-facing Home simplification.
-- Home now previews the Learning Library rather than trying to explain curriculum depth inline.
-- The existing Learning Library remains intact as its own view; no learning content was deleted.
-- Home links into the Learning Library use the existing SPA navigation so the experience stays consistent.
-- No Meridian evidence, artifact content, claims, or roadmap items were removed.
+## v91.6 manager-home — fixed regression-safe build
+- Rebuilt from the known-good v91.5 source after rejecting the first v91.6 attempt.
+- Replaced only the large Home learning-scaffolding block with a compact Learning Library preview.
+- Preserved top navigation, More menu, mobile navigation, theme controls, Meridian/Portfolio/Learning Library views, and all standalone artifact files.
+- Ran regression checks against v91.5 and local-link validation.
