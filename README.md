@@ -1,7 +1,7 @@
 # AI Customer Success Learning Portfolio
 
-Static deployment package.
+Deploy-ready static package.
 
-- `index.html` — main portfolio
-- `agent-flow.html` — original full Meridian Agent Flow artifact
-- `vercel.json` — Vercel static-site settings
+- `index.html` — latest portfolio source (v81)
+- `agent-flow.html` — standalone Meridian Agent Flow artifact
+- `vercel.json` — Vercel settings
