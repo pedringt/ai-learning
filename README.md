@@ -37,3 +37,9 @@ Emphasis/status polish only: Meridian primary artifacts are visually prioritized
 
 ## v88.2
 Navigation polish only. The desktop header now keeps the four primary destinations in the main nav and uses a small **More** menu for secondary/direct evidence links. The mobile selector is no longer shown on desktop, is reduced to the same four primary destinations, and has additional right-side padding so the native dropdown arrow has room to breathe. No substantive portfolio content or site architecture was changed.
+
+
+## v89.2 regression fix
+- Restored the settled lower-page progressive-disclosure styling for Meridian and Portfolio after v89 consolidation removed/mismatched those wrappers.
+- Normalized the HTML DOM so page sections close cleanly and later-view styling cannot be affected by stray closing tags.
+- No substantive content changes.
