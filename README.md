@@ -1,4 +1,4 @@
-# AI Customer Success Learning Portfolio — v90.5 Final Maintenance
+# AI Customer Success Learning Portfolio — v91.0 Final Maintenance
 
 v90 is the final content + polish pass built from the v89.5 release candidate.
 
@@ -92,3 +92,25 @@ Navigation polish only. The desktop header now keeps the four primary destinatio
 - Below-target response now matches the Success Measurement Plan: diagnose eligibility, workflow fit, review burden, trust, training gaps, reinforcement, and product friction before prescribing training.
 - No broader content, layout, navigation, hierarchy, or curriculum changes.
 - Maintenance stopping point: future portfolio updates should primarily come from completed learning/operating exercises or concrete bugs.
+
+
+## v91.0 — VALIDATE checkpoint
+- Integrated the first substantive VALIDATE expansion without turning the site into a test-case repository.
+- Eval Suite now presents the five-area v1 architecture; Ticket Classification and Knowledge Retrieval are designed, with representative reasoning-heavy cases only.
+- Working Tracker preserves the changed assumptions and diagnostic reasoning behind classification and retrieval design.
+- Added a compact visible roadmap for ENABLE, OPERATE, INCIDENT, and PROVE/EXPAND, including future commercial-judgment work; these remain explicitly planned, not completed.
+- Replaced content accordions in the Success Measurement Plan and Learning Library with visible content; removed the large collapsed Meridian case-notes block in favor of the artifact/Tracker hierarchy. Navigation menus remain menus, not content accordions.
+- Improved mobile page-selector arrow contrast in light and dark themes.
+- Preserved AI Customer Success as the primary positioning; technical depth remains supporting fluency.
+
+
+## v91.1 preview fix
+- Rebuilt `evals.html` so the VALIDATE checkpoint replaces the stale prior suite instead of appearing above it.
+- Softened dark-mode purple accents and purple-tinted surfaces for lower visual strain.
+- No new Meridian content beyond the v91.0 checkpoint; this is a preview correction pass.
+
+## v91.2 preview cohesion pass
+- Restyled the middle Meridian sections to match the visual hierarchy of the rest of the portfolio without adding content.
+- Added the same `More` navigation dropdown to standalone Meridian artifact pages.
+- Replaced confusing Previous/Next chapter navigation with a persistent Meridian evidence bar.
+- Retains v91.1 dark-mode palette and VALIDATE content.

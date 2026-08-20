@@ -66,12 +66,99 @@
   }
 </style>
 <style id="v88-shared-shell">
-:root{--ink:#0c0c10;--muted:#626475;--purple:#5336e8;--purple2:#7044f4;--blue:#2b64d8;--cyan:#159eb9;--green:#269650;--gold:#bd8917;--border:#e7e5ef;--soft:#f8f7fc;--softp:#f3f0ff;--card:#fff;--bg:#fff}body{background:var(--bg)!important;color:var(--ink)!important}body.v88-dark{--ink:#f5f5f7;--muted:#a9a9b5;--border:#31313b;--soft:#18181f;--softp:#1e1933;--card:#15151b;--bg:#101014}.v88-dark .topbar{background:rgba(16,16,20,.96)!important}.v88-dark table td,.v88-dark .frame,.v88-dark .reasoning,.v88-dark .callout,.v88-dark .stage,.v88-dark .diagram{background:var(--card)!important;color:var(--ink)!important;border-color:var(--border)!important}.v88-dark th{background:#24242c!important}.v88-shellnav{display:flex;align-items:center;gap:6px;flex-wrap:wrap}.v88-shellnav a,.v88-theme{border:0;background:transparent;color:var(--ink)!important;text-decoration:none!important;padding:8px 9px;border-radius:9px;font-size:12px;font-weight:800;cursor:pointer}.v88-shellnav a:hover,.v88-theme:hover{background:var(--softp)!important;color:var(--purple)!important}.v88-theme{border:1px solid var(--border);background:var(--card)}details.v88-notes{margin:10px 0 18px;border:1px solid var(--border);border-radius:12px;background:var(--card)}details.v88-notes>summary{cursor:pointer;padding:10px 13px;color:var(--purple);font-size:12px;font-weight:800}.v88-question-nav{display:flex;gap:7px;flex-wrap:wrap;margin:16px 0 24px}.v88-question-nav a{border:1px solid var(--border);border-radius:999px;padding:6px 9px;text-decoration:none;font-size:11px;font-weight:800;background:var(--card)}@media(max-width:760px){.v88-shellnav a:nth-child(n+4){display:none}.v88-shellnav{gap:2px}}
+:root{--ink:#0c0c10;--muted:#626475;--purple:#5336e8;--purple2:#7044f4;--blue:#2b64d8;--cyan:#159eb9;--green:#269650;--gold:#bd8917;--border:#e7e5ef;--soft:#f8f7fc;--softp:#f3f0ff;--card:#fff;--bg:#fff}body{background:var(--bg)!important;color:var(--ink)!important}body.v88-dark{--ink:#f5f5f7;--muted:#b6b6c2;--border:#34343d;--soft:#19191f;--softp:#1b1a22;--card:#15151b;--bg:#101014;--purple:#b9adff;--purple2:#a79aff}.v88-dark .topbar{background:rgba(16,16,20,.96)!important}.v88-dark table td,.v88-dark .frame,.v88-dark .reasoning,.v88-dark .callout,.v88-dark .stage,.v88-dark .diagram{background:var(--card)!important;color:var(--ink)!important;border-color:var(--border)!important}.v88-dark th{background:#24242c!important}.v88-shellnav{display:flex;align-items:center;gap:6px;flex-wrap:wrap}.v88-shellnav a,.v88-theme{border:0;background:transparent;color:var(--ink)!important;text-decoration:none!important;padding:8px 9px;border-radius:9px;font-size:12px;font-weight:800;cursor:pointer}.v88-shellnav a:hover,.v88-theme:hover{background:var(--softp)!important;color:var(--purple)!important}.v88-theme{border:1px solid var(--border);background:var(--card)}details.v88-notes{margin:10px 0 18px;border:1px solid var(--border);border-radius:12px;background:var(--card)}details.v88-notes>summary{cursor:pointer;padding:10px 13px;color:var(--purple);font-size:12px;font-weight:800}.v88-question-nav{display:flex;gap:7px;flex-wrap:wrap;margin:16px 0 24px}.v88-question-nav a{border:1px solid var(--border);border-radius:999px;padding:6px 9px;text-decoration:none;font-size:11px;font-weight:800;background:var(--card)}@media(max-width:760px){.v88-shellnav a:nth-child(n+4){display:none}.v88-shellnav{gap:2px}}
 </style>
-<style id="v88-artifact-nav-css">.v88-artifact-nav{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:14px 0 22px;font-size:12px}.v88-artifact-nav a{border:1px solid var(--border);background:var(--card);color:var(--purple)!important;text-decoration:none!important;border-radius:999px;padding:7px 10px;font-weight:800}.v88-artifact-nav strong{font-size:12px}@media(max-width:620px){.v88-artifact-nav span[style]{display:none}.v88-artifact-nav a{padding:6px 8px}}</style></head>
+<style id="v88-artifact-nav-css">.v88-artifact-nav{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:14px 0 22px;font-size:12px}.v88-artifact-nav a{border:1px solid var(--border);background:var(--card);color:var(--purple)!important;text-decoration:none!important;border-radius:999px;padding:7px 10px;font-weight:800}.v88-artifact-nav strong{font-size:12px}@media(max-width:620px){.v88-artifact-nav span[style]{display:none}.v88-artifact-nav a{padding:6px 8px}}</style><style>.visible-notes{margin:8px 0 18px;border-left:3px solid var(--border);padding:9px 12px;background:var(--soft);border-radius:0 8px 8px 0}.visible-notes .wbody:before{content:"Reasoning · ";font-size:10px;text-transform:uppercase;letter-spacing:.05em;font-weight:800;color:var(--purple)}</style>
+<style id="v912-shared-artifact-shell">
+/* v91.2 — unify standalone Meridian artifacts with the main portfolio shell */
+.v88-shellnav{display:flex;align-items:center;gap:4px;flex-wrap:nowrap}
+.v88-shellnav>a,.v88-theme,.v912-more>summary{
+  border:0;background:transparent;color:var(--ink)!important;text-decoration:none!important;
+  padding:8px 9px;border-radius:9px;font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap
+}
+.v88-shellnav>a:hover,.v88-theme:hover,.v912-more>summary:hover,.v912-more[open]>summary{
+  background:var(--softp)!important;color:var(--purple)!important
+}
+.v88-theme{border:1px solid var(--border);background:var(--card)}
+.v912-more{position:relative}
+.v912-more>summary{list-style:none;display:flex;align-items:center;gap:6px;border:1px solid var(--border);background:var(--card)}
+.v912-more>summary::-webkit-details-marker{display:none}
+.v912-chevron{font-size:12px;line-height:1;transition:transform .15s ease}
+.v912-more[open] .v912-chevron{transform:rotate(180deg)}
+.v912-more-panel{
+  position:absolute;right:0;top:calc(100% + 8px);z-index:80;width:250px;padding:9px;
+  border:1px solid var(--border);border-radius:14px;background:var(--card);
+  box-shadow:0 18px 42px rgba(0,0,0,.18)
+}
+.v912-more-panel a{
+  display:block;padding:9px 10px;border-radius:9px;color:var(--ink)!important;
+  text-decoration:none!important;font-size:12.5px;font-weight:700
+}
+.v912-more-panel a:hover{background:var(--softp);color:var(--purple)!important}
+.v912-menu-label{
+  display:block;padding:7px 10px 4px;color:var(--muted);font-size:10px;font-weight:800;
+  letter-spacing:.06em;text-transform:uppercase
+}
+
+/* Replace chapter-like Previous/Next controls with a persistent evidence map */
+.v88-artifact-nav{
+  display:flex;align-items:center;gap:8px;overflow-x:auto;margin:14px 0 26px;padding:4px 0 8px;
+  scrollbar-width:thin;font-size:12px
+}
+.v88-artifact-nav .v912-artifact-label{
+  flex:0 0 auto;color:var(--muted);font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;
+  margin-right:2px
+}
+.v88-artifact-nav a{
+  flex:0 0 auto;border:1px solid var(--border);background:var(--card);color:var(--ink)!important;
+  text-decoration:none!important;border-radius:999px;padding:8px 11px;font-weight:800
+}
+.v88-artifact-nav a:hover{background:var(--softp);color:var(--purple)!important}
+.v88-artifact-nav a.active{
+  background:var(--softp);border-color:color-mix(in srgb,var(--purple) 38%,var(--border));
+  color:var(--purple)!important
+}
+
+/* More consistent section rhythm on standalone artifacts */
+.wrap>h2:not(:first-of-type){margin-top:34px}
+.frame,.reasoning,.callout,.metric,.case,.eval-area,.next-grid>div{
+  box-shadow:0 4px 18px rgba(20,18,40,.035)
+}
+body.v88-dark .frame,body.v88-dark .reasoning,body.v88-dark .callout,
+body.v88-dark .metric,body.v88-dark .case,body.v88-dark .eval-area,body.v88-dark .next-grid>div{
+  box-shadow:none
+}
+@media(max-width:760px){
+  .topbar .wrap{gap:8px}
+  .v88-shellnav{gap:2px}
+  .v88-shellnav>a:nth-of-type(n+3){display:none}
+  .v88-shellnav>a,.v88-theme,.v912-more>summary{padding:7px 7px;font-size:11px}
+  .v912-more-panel{right:-4px;width:min(250px,calc(100vw - 28px))}
+  .v88-artifact-nav{margin-top:10px}
+}
+</style>
+</head>
 <body>
-<div class="topbar"><div class="wrap"><div class="brand"><a href="index.html">AI <span style="color:var(--purple)">Customer Success</span></a></div><div class="v88-shellnav"><a href="index.html">Home</a><a href="index.html#meridian">Meridian</a><a href="index.html#portfolio">Portfolio</a><a href="index.html#learn">Learning Library</a><button aria-label="Toggle dark mode" class="v88-theme" title="Toggle dark mode" type="button">◐</button></div></div></div>
-<div class="wrap"><div class="v88-artifact-nav"><a href="index.html#meridian">Meridian</a><span>›</span><strong>Success Plan</strong><span style="flex:1"></span><a href="tracker.html">← Previous</a><a href="agent-flow.html">Next: Agent Design →</a></div>
+<div class="topbar"><div class="wrap"><div class="brand"><a href="index.html">AI <span style="color:var(--purple)">Customer Success</span></a></div><div class="v88-shellnav">
+<a href="index.html">Home</a>
+<a href="index.html#meridian">Meridian</a>
+<a href="index.html#portfolio">Portfolio</a>
+<a href="index.html#learn">Learning Library</a>
+<details class="v912-more">
+  <summary>More <span aria-hidden="true" class="v912-chevron">⌄</span></summary>
+  <div class="v912-more-panel">
+    <span class="v912-menu-label">Meridian evidence</span>
+    <a href="tracker.html">Discovery &amp; Decisions</a>
+    <a href="deliverable.html">One-page Meridian readout</a>
+    <span class="v912-menu-label">Direct artifact links</span>
+    <a href="plan.html">Success Measurement Plan</a>
+    <a href="agent-flow.html">Agent Flow &amp; Guardrails</a>
+    <a href="evals.html">Eval Suite</a>
+  </div>
+</details>
+<button aria-label="Toggle dark mode" class="v88-theme" title="Toggle dark mode" type="button">◐</button>
+</div></div></div></div>
+<div class="wrap"><div class="v88-artifact-nav"><span class="v912-artifact-label">Meridian evidence</span><a href="tracker.html">Discovery</a><a href="plan.html" class="active" aria-current="page">Success Plan</a><a href="agent-flow.html">Agent Flow</a><a href="evals.html">Eval Suite</a><a href="deliverable.html">Case Readout</a></div>
 <span class="badge">CAPSTONE · PLAN</span>
 <h2>Success Measurement Plan — Meridian Support Operations</h2>
 <p class="lead">Final locked targets for the 8-week Tier 1 pilot. Click "Working notes" under any metric to see the reasoning, assumptions, and any place my thinking changed along the way.</p>
@@ -87,65 +174,65 @@
 </table>
 <div class="metric">
 <div class="target"><b>AHT — hold roughly steady (~12.4 min)</b></div>
-<details class="wnotes"><summary>Working notes</summary><div class="wbody">
+<div class="wnotes visible-notes"><div class="wbody">
       Mandatory human review of every AI draft caps how much time can actually be saved this phase — fact-checking an answer isn't dramatically faster than answering it in some cases. Meaningful AHT reduction is more realistic once review requirements loosen post-pilot.
       <div class="shift">Changed my mind: initially leaned toward a meaningful AHT reduction alongside the other targets. Working through what "human review" actually requires made me separate this from first-response time instead of treating both the same way.</div>
-</div></details>
+</div></div>
 </div>
 <div class="metric">
 <div class="target"><b>First-response time — ~7 hrs</b> (down from &gt; 8 hrs)</div>
-<details class="wnotes"><summary>Working notes</summary><div class="wbody">
+<div class="wnotes visible-notes"><div class="wbody">
       AI drafting a response the moment a ticket arrives removes the "compose from scratch" step before a human opens it, raising throughput even if the review-time portion of AHT doesn't shrink.<br/><br/>
 <b>Measurement approach:</b> uses two hard system timestamps every ticket already has — first-reply-sent and resolved/closed — rather than a new manual field. Gap &lt; 20 min = one-shot resolution; gap &gt; 20 min = a true two-step case (quick ack, resolved later). Chosen after a simulated "dev pushback" exercise showed relying on reps to manually tag workflow type would produce unreliable data — the timestamp-gap proxy avoids depending on human compliance entirely. (Full dev-pushback exercise in the <a href="tracker.html">working tracker</a>.)
       <div class="shift">Changed my mind (again): revised down from ~6 hrs to ~7 hrs after rep discovery findings showed only 2 of 8 reps actually do a quick first-touch ack — most resolve start-to-finish in one pass. AHT and first-response are more entangled than I originally assumed, so the "distinct first-touch speedup" mechanism barely applies for most tickets. AI still saves composition time even in one-shot cases, just less dramatically.</div>
-</div></details>
+</div></div>
 </div>
 <div class="metric">
 <div class="target"><span class="assume">Assumption flagged</span><br/><b>CSAT — monitor, no hard pilot target</b></div>
-<details class="wnotes"><summary>Working notes</summary><div class="wbody">
+<div class="wnotes visible-notes"><div class="wbody">
       The link between faster response and CSAT is an assumption, not a proven causal chain. At this stage, the more honest goal is proving AI accuracy/reliability — CSAT is a leading indicator to watch, not a metric to be pinned to yet.
-    </div></details>
+    </div></div>
 </div>
 <div class="metric">
 <div class="target"><span class="assume">Assumption flagged</span><br/><b>Cost per AI-handled ticket — must beat fully-human baseline, hard ceiling TBD with finance</b></div>
-<details class="wnotes"><summary>Working notes</summary><div class="wbody">
+<div class="wnotes visible-notes"><div class="wbody">
       Model calls per ticket (classify, retrieve/embed, draft) times token volume, weighted by how many tickets actually reach drafting — high-risk categories skip drafting entirely under Guardrails, so they cost less per ticket than a full-draft case. That split matters for the estimate, not just total ticket volume.<br/><br/>
 <b>Measurement approach:</b> cost per AI-handled ticket vs. cost per fully-human ticket (rep time), tracked from Week 1 alongside the other metrics rather than added later — this became clear talking through the plan out loud: cost is a launch input (shapes model/architecture choices in CONFIGURE), not just a pilot output.
       <div class="shift">Added late: this metric wasn't in my first pass — I originally treated cost as something to check once the pilot was running, alongside the other quality/speed targets. Talking it through surfaced why that's backwards: cost isn't just another OPERATE number to watch, it actively shapes CONFIGURE decisions (which model handles classification vs. drafting, how aggressively to route high-risk tickets away from generation) and it's half of the ROI story PROVE will eventually need — pilot value only holds up if the savings in AHT/response time actually beat what the AI itself costs to run. Moving it up to PLAN, as a ceiling set before CONFIGURE locks in architecture, means a cost problem gets caught as a design constraint instead of surfacing as a surprise later.</div>
 <div class="shift">Where the actual spend tends to hide, worth watching for beyond just picking a cheaper model: a long back-and-forth ticket can end up resending its whole history to the model on every turn, so cost creeps up with conversation length, not just ticket volume — the multi-turn escalation cases are probably the priciest ones per ticket. There's also a real difference between letting every step of the flow call a full model and reserving that for the step that actually needs it (drafting) while handling simpler steps like classification more cheaply. And the CONFIGURE category check is effectively a cost gate too, not just a safety one — every ticket that's routed to a human without an AI draft attempt is a call that never got made.</div>
-</div></details>
+</div></div>
 </div>
 <h3>Adoption</h3>
 <div class="metric">
 <div class="target"><b>Adoption: measure eligible-workflow penetration, repeat use over time, appropriate non-use, and qualitative friction/reasons for non-use.</b></div>
-<details class="wnotes"><summary>Working notes</summary><div class="wbody">Workflow penetration and repeat use are more diagnostic than blanket daily usage because they account for whether eligible work was actually available and whether non-use was appropriate.<br/><br/>
-<b>Below-target response:</b>If adoption is below target, investigate the cause before prescribing training: ticket eligibility, workflow fit, review burden, trust, training gaps, reinforcement, and product friction.</div></details>
+<div class="wnotes visible-notes"><div class="wbody">Workflow penetration and repeat use are more diagnostic than blanket daily usage because they account for whether eligible work was actually available and whether non-use was appropriate.<br/><br/>
+<b>Below-target response:</b>If adoption is below target, investigate the cause before prescribing training: ticket eligibility, workflow fit, review burden, trust, training gaps, reinforcement, and product friction.</div></div>
 </div>
 <h3>Quality &amp; human intervention</h3>
 <div class="metric">
 <div class="target"><b>Quality:</b> ≥ 80% of AI drafts approved with no <i>substantive</i> edit  ·  <b>Human intervention:</b> ≤ 20% require a substantive correction</div>
-<details class="wnotes"><summary>Working notes</summary><div class="wbody">
+<div class="wnotes visible-notes"><div class="wbody">
       Quality is a launch/scale gate — what justifies loosening mandatory review later — so it gets a stricter "prove it" bar rather than growing into it over time, unlike some other pilot targets. No solid public benchmark exists for assist-mode (human-reviewed) pilots specifically — most published numbers are for fully autonomous resolution — so this is reasoned from first principles. (Task success and human correction rate are both part of the guide's <a href="index.html#cs">AI Metric Library</a>.)<br/><br/>
       Human intervention is defined as roughly the complement of Quality (80% clean ≈ 20% substantive correction) so the two stay internally consistent. Non-substantive (tone-only) edits are tracked but not targeted — surfaced as a signal for possible prompt/style tuning.
       <div class="shift">Scope note: money/security categories currently skip AI drafting entirely (see Guardrails), so this target applies only to categories that get a drafted response. Revisit scope if legal clears drafting for those categories.</div>
-</div></details>
+</div></div>
 </div>
 <h3>Guardrails</h3>
 <div class="metric">
 <div class="target"><b>Zero-tolerance, single-incident trigger</b> for money/security-related categories (not a rate)</div>
-<details class="wnotes"><summary>Working notes</summary><div class="wbody">
+<div class="wnotes visible-notes"><div class="wbody">
       Any one confirmed guardrail breach (wrong info or an attempted unauthorized action on refunds, credits, disputes, password resets, account changes, security actions) immediately pauses autonomous drafting for that category. Response window: within 24 hours of confirmation — pause, notify, investigate. Suspected incidents are logged immediately but only count once confirmed (with 8 reps, confirmed personally). This is the same "skip drafting for high-risk categories" rule shown as the first branch in the <a href="configure.html">CONFIGURE flow diagram</a>.<br/><br/>
       Lower-stakes accuracy issues fall under Quality/Human intervention instead — Guardrails are reserved for the human-boundary categories, where even one real failure (see the <a href="index.html#cs">Trace Autopsy incident</a> in the guide) is too costly to wait on a rate threshold for.
-    </div></details>
+    </div></div>
 </div>
 <div class="callout gold"><b>Recognize, don't own:</b> a few things sit outside a CS/PM role but still need tracking so they don't slip — customer disclosure that a response was AI-drafted (legal/policy call), a data-privacy review of what customer data reaches the AI vendor (security/legal), and vendor dependency risk if that provider has an outage or changes terms mid-pilot. Job here is to flag these as open dependencies and hold the gate on money/security drafting scope until legal signs off — not to resolve them personally.</div>
 <h3>Measurement window &amp; decision rules</h3>
 <div class="metric">
 <div class="target">Stabilization: <b>Weeks 1-2</b>  ·  Measurement window: <b>Weeks 3-8</b>  ·  Decision: <b>Week 9+</b></div>
-<details class="wnotes"><summary>Working notes</summary><div class="wbody">
+<div class="wnotes visible-notes"><div class="wbody">
       Built-in flexibility clause: if early Week 3 data looks off, reassess before treating it as final rather than reacting to noise. Sources: help desk data, eval suite results, direct rep check-ins — raw data requested directly rather than a pre-built dashboard, to preserve my own interpretation of the results.<br/><br/>
 <b>Three real outcomes at Week 9+:</b> Continue/iterate (short of target, no guardrail breach) · Expand to Tier 2 (targets hit) · Pause (guardrail breach — handled immediately, not a wait-for-the-window decision).
-    </div></details>
+    </div></div>
 </div>
 <h3>PM handoff — open questions log</h3>
 <p class="small">Meridian is a fictional practice scenario. Below are 15 questions I thought of while working through HANDOFF, PLAN, and CONFIGURE, each with a made-up <b>simulated</b> answer (clearly marked) and how I resolved it — a way to keep practicing the reasoning without stalling out waiting on a real answer. Full context and rep-discovery findings behind these are in the <a href="tracker.html">working tracker</a>.</p>
@@ -170,6 +257,6 @@
   </div>
 <p class="small" style="margin-top:36px;padding-top:16px;border-top:1px solid var(--border)"><a href="tracker.html">Working tracker (full reasoning log)</a>  ·  <a href="configure.html">CONFIGURE flow diagram</a>  ·  <a href="deliverable.html">One-page deliverable</a></p>
 </div>
-<script id="v88-shared-script">(()=>{if(document.body.dataset.v88)return;document.body.dataset.v88='1';const bar=document.querySelector('.topbar .wrap');if(bar){bar.innerHTML='<div class="brand"><a href="index.html">AI <span style="color:var(--purple)">Customer Success</span></a></div><div class="v88-shellnav"><a href="index.html">Home</a><a href="index.html#meridian">Meridian</a><a href="index.html#portfolio">Portfolio</a><a href="index.html#learn">Learning Library</a><button class="v88-theme" type="button" aria-label="Toggle dark mode">☾</button></div>';bar.querySelector('.v88-theme').onclick=()=>{document.body.classList.toggle('v88-dark');localStorage.setItem('ai-cs-theme',document.body.classList.contains('v88-dark')?'dark':'light');};}if(localStorage.getItem('ai-cs-theme')==='dark')document.body.classList.add('v88-dark');})();</script>
+<script id="v88-shared-script">(()=>{if(document.body.dataset.v88)return;document.body.dataset.v88='1';const btn=document.querySelector('.v88-theme');if(btn){btn.onclick=()=>{document.body.classList.toggle('v88-dark');localStorage.setItem('ai-cs-theme',document.body.classList.contains('v88-dark')?'dark':'light');};}if(localStorage.getItem('ai-cs-theme')==='dark')document.body.classList.add('v88-dark');document.addEventListener('click',e=>{document.querySelectorAll('.v912-more[open]').forEach(d=>{if(!d.contains(e.target))d.removeAttribute('open')})});})();</script>
 </body>
 </html>

@@ -40,12 +40,99 @@
   }
 </style>
 <style id="v88-shared-shell">
-:root{--ink:#0c0c10;--muted:#626475;--purple:#5336e8;--purple2:#7044f4;--blue:#2b64d8;--cyan:#159eb9;--green:#269650;--gold:#bd8917;--border:#e7e5ef;--soft:#f8f7fc;--softp:#f3f0ff;--card:#fff;--bg:#fff}body{background:var(--bg)!important;color:var(--ink)!important}body.v88-dark{--ink:#f5f5f7;--muted:#a9a9b5;--border:#31313b;--soft:#18181f;--softp:#1e1933;--card:#15151b;--bg:#101014}.v88-dark .topbar{background:rgba(16,16,20,.96)!important}.v88-dark table td,.v88-dark .frame,.v88-dark .reasoning,.v88-dark .callout,.v88-dark .stage,.v88-dark .diagram{background:var(--card)!important;color:var(--ink)!important;border-color:var(--border)!important}.v88-dark th{background:#24242c!important}.v88-shellnav{display:flex;align-items:center;gap:6px;flex-wrap:wrap}.v88-shellnav a,.v88-theme{border:0;background:transparent;color:var(--ink)!important;text-decoration:none!important;padding:8px 9px;border-radius:9px;font-size:12px;font-weight:800;cursor:pointer}.v88-shellnav a:hover,.v88-theme:hover{background:var(--softp)!important;color:var(--purple)!important}.v88-theme{border:1px solid var(--border);background:var(--card)}details.v88-notes{margin:10px 0 18px;border:1px solid var(--border);border-radius:12px;background:var(--card)}details.v88-notes>summary{cursor:pointer;padding:10px 13px;color:var(--purple);font-size:12px;font-weight:800}.v88-question-nav{display:flex;gap:7px;flex-wrap:wrap;margin:16px 0 24px}.v88-question-nav a{border:1px solid var(--border);border-radius:999px;padding:6px 9px;text-decoration:none;font-size:11px;font-weight:800;background:var(--card)}@media(max-width:760px){.v88-shellnav a:nth-child(n+4){display:none}.v88-shellnav{gap:2px}}
+:root{--ink:#0c0c10;--muted:#626475;--purple:#5336e8;--purple2:#7044f4;--blue:#2b64d8;--cyan:#159eb9;--green:#269650;--gold:#bd8917;--border:#e7e5ef;--soft:#f8f7fc;--softp:#f3f0ff;--card:#fff;--bg:#fff}body{background:var(--bg)!important;color:var(--ink)!important}body.v88-dark{--ink:#f5f5f7;--muted:#b6b6c2;--border:#34343d;--soft:#19191f;--softp:#1b1a22;--card:#15151b;--bg:#101014;--purple:#b9adff;--purple2:#a79aff}.v88-dark .topbar{background:rgba(16,16,20,.96)!important}.v88-dark table td,.v88-dark .frame,.v88-dark .reasoning,.v88-dark .callout,.v88-dark .stage,.v88-dark .diagram{background:var(--card)!important;color:var(--ink)!important;border-color:var(--border)!important}.v88-dark th{background:#24242c!important}.v88-shellnav{display:flex;align-items:center;gap:6px;flex-wrap:wrap}.v88-shellnav a,.v88-theme{border:0;background:transparent;color:var(--ink)!important;text-decoration:none!important;padding:8px 9px;border-radius:9px;font-size:12px;font-weight:800;cursor:pointer}.v88-shellnav a:hover,.v88-theme:hover{background:var(--softp)!important;color:var(--purple)!important}.v88-theme{border:1px solid var(--border);background:var(--card)}details.v88-notes{margin:10px 0 18px;border:1px solid var(--border);border-radius:12px;background:var(--card)}details.v88-notes>summary{cursor:pointer;padding:10px 13px;color:var(--purple);font-size:12px;font-weight:800}.v88-question-nav{display:flex;gap:7px;flex-wrap:wrap;margin:16px 0 24px}.v88-question-nav a{border:1px solid var(--border);border-radius:999px;padding:6px 9px;text-decoration:none;font-size:11px;font-weight:800;background:var(--card)}@media(max-width:760px){.v88-shellnav a:nth-child(n+4){display:none}.v88-shellnav{gap:2px}}
 </style>
-<style id="v88-artifact-nav-css">.v88-artifact-nav{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:14px 0 22px;font-size:12px}.v88-artifact-nav a{border:1px solid var(--border);background:var(--card);color:var(--purple)!important;text-decoration:none!important;border-radius:999px;padding:7px 10px;font-weight:800}.v88-artifact-nav strong{font-size:12px}@media(max-width:620px){.v88-artifact-nav span[style]{display:none}.v88-artifact-nav a{padding:6px 8px}}</style></head>
+<style id="v88-artifact-nav-css">.v88-artifact-nav{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:14px 0 22px;font-size:12px}.v88-artifact-nav a{border:1px solid var(--border);background:var(--card);color:var(--purple)!important;text-decoration:none!important;border-radius:999px;padding:7px 10px;font-weight:800}.v88-artifact-nav strong{font-size:12px}@media(max-width:620px){.v88-artifact-nav span[style]{display:none}.v88-artifact-nav a{padding:6px 8px}}</style>
+<style id="v912-shared-artifact-shell">
+/* v91.2 — unify standalone Meridian artifacts with the main portfolio shell */
+.v88-shellnav{display:flex;align-items:center;gap:4px;flex-wrap:nowrap}
+.v88-shellnav>a,.v88-theme,.v912-more>summary{
+  border:0;background:transparent;color:var(--ink)!important;text-decoration:none!important;
+  padding:8px 9px;border-radius:9px;font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap
+}
+.v88-shellnav>a:hover,.v88-theme:hover,.v912-more>summary:hover,.v912-more[open]>summary{
+  background:var(--softp)!important;color:var(--purple)!important
+}
+.v88-theme{border:1px solid var(--border);background:var(--card)}
+.v912-more{position:relative}
+.v912-more>summary{list-style:none;display:flex;align-items:center;gap:6px;border:1px solid var(--border);background:var(--card)}
+.v912-more>summary::-webkit-details-marker{display:none}
+.v912-chevron{font-size:12px;line-height:1;transition:transform .15s ease}
+.v912-more[open] .v912-chevron{transform:rotate(180deg)}
+.v912-more-panel{
+  position:absolute;right:0;top:calc(100% + 8px);z-index:80;width:250px;padding:9px;
+  border:1px solid var(--border);border-radius:14px;background:var(--card);
+  box-shadow:0 18px 42px rgba(0,0,0,.18)
+}
+.v912-more-panel a{
+  display:block;padding:9px 10px;border-radius:9px;color:var(--ink)!important;
+  text-decoration:none!important;font-size:12.5px;font-weight:700
+}
+.v912-more-panel a:hover{background:var(--softp);color:var(--purple)!important}
+.v912-menu-label{
+  display:block;padding:7px 10px 4px;color:var(--muted);font-size:10px;font-weight:800;
+  letter-spacing:.06em;text-transform:uppercase
+}
+
+/* Replace chapter-like Previous/Next controls with a persistent evidence map */
+.v88-artifact-nav{
+  display:flex;align-items:center;gap:8px;overflow-x:auto;margin:14px 0 26px;padding:4px 0 8px;
+  scrollbar-width:thin;font-size:12px
+}
+.v88-artifact-nav .v912-artifact-label{
+  flex:0 0 auto;color:var(--muted);font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;
+  margin-right:2px
+}
+.v88-artifact-nav a{
+  flex:0 0 auto;border:1px solid var(--border);background:var(--card);color:var(--ink)!important;
+  text-decoration:none!important;border-radius:999px;padding:8px 11px;font-weight:800
+}
+.v88-artifact-nav a:hover{background:var(--softp);color:var(--purple)!important}
+.v88-artifact-nav a.active{
+  background:var(--softp);border-color:color-mix(in srgb,var(--purple) 38%,var(--border));
+  color:var(--purple)!important
+}
+
+/* More consistent section rhythm on standalone artifacts */
+.wrap>h2:not(:first-of-type){margin-top:34px}
+.frame,.reasoning,.callout,.metric,.case,.eval-area,.next-grid>div{
+  box-shadow:0 4px 18px rgba(20,18,40,.035)
+}
+body.v88-dark .frame,body.v88-dark .reasoning,body.v88-dark .callout,
+body.v88-dark .metric,body.v88-dark .case,body.v88-dark .eval-area,body.v88-dark .next-grid>div{
+  box-shadow:none
+}
+@media(max-width:760px){
+  .topbar .wrap{gap:8px}
+  .v88-shellnav{gap:2px}
+  .v88-shellnav>a:nth-of-type(n+3){display:none}
+  .v88-shellnav>a,.v88-theme,.v912-more>summary{padding:7px 7px;font-size:11px}
+  .v912-more-panel{right:-4px;width:min(250px,calc(100vw - 28px))}
+  .v88-artifact-nav{margin-top:10px}
+}
+</style>
+</head>
 <body>
-<div class="topbar"><div class="wrap"><div class="brand"><a href="index.html">AI <span style="color:var(--purple)">Customer Success</span></a></div><div class="v88-shellnav"><a href="index.html">Home</a><a href="index.html#meridian">Meridian</a><a href="index.html#portfolio">Portfolio</a><a href="index.html#learn">Learning Library</a><button aria-label="Toggle dark mode" class="v88-theme" title="Toggle dark mode" type="button">◐</button></div></div></div>
-<div class="wrap"><div class="v88-artifact-nav"><a href="index.html#meridian">Meridian</a><span>›</span><strong>Agent Design</strong><span style="flex:1"></span><a href="plan.html">← Previous</a><a href="evals.html">Next: Evaluation →</a></div>
+<div class="topbar"><div class="wrap"><div class="brand"><a href="index.html">AI <span style="color:var(--purple)">Customer Success</span></a></div><div class="v88-shellnav">
+<a href="index.html">Home</a>
+<a href="index.html#meridian">Meridian</a>
+<a href="index.html#portfolio">Portfolio</a>
+<a href="index.html#learn">Learning Library</a>
+<details class="v912-more">
+  <summary>More <span aria-hidden="true" class="v912-chevron">⌄</span></summary>
+  <div class="v912-more-panel">
+    <span class="v912-menu-label">Meridian evidence</span>
+    <a href="tracker.html">Discovery &amp; Decisions</a>
+    <a href="deliverable.html">One-page Meridian readout</a>
+    <span class="v912-menu-label">Direct artifact links</span>
+    <a href="plan.html">Success Measurement Plan</a>
+    <a href="agent-flow.html">Agent Flow &amp; Guardrails</a>
+    <a href="evals.html">Eval Suite</a>
+  </div>
+</details>
+<button aria-label="Toggle dark mode" class="v88-theme" title="Toggle dark mode" type="button">◐</button>
+</div></div></div></div>
+<div class="wrap"><div class="v88-artifact-nav"><span class="v912-artifact-label">Meridian evidence</span><a href="tracker.html">Discovery</a><a href="plan.html">Success Plan</a><a href="agent-flow.html" class="active" aria-current="page">Agent Flow</a><a href="evals.html">Eval Suite</a><a href="deliverable.html">Case Readout</a></div>
 <span class="badge">CAPSTONE · CONFIGURE</span>
 <h2>Agent Flow — Meridian Tier 1 Support Pilot</h2>
 <p class="lead">One-page flow from ticket arrival to human handoff, built from the classify → retrieve → draft → confidence-check → escalate logic worked out in PLAN, plus the back-and-forth escalation rule.</p>
@@ -198,6 +285,6 @@
 <p class="small">Pending validation: real rep input (see Rep Discovery Questions in the <a href="index.html">working tracker</a>) may confirm or adjust the workflow-model assumption this flow is built on (open question 4), and could refine the escalation logic further. The billing field (above) folds into the "retrieve relevant knowledge" step once enabled — no separate node needed. Pilot targets that depend on this flow (first-response time, quality) are locked in the <a href="index.html">PLAN deliverable</a>.</p>
 <p class="small" style="margin-top:36px;padding-top:16px;border-top:1px solid var(--border)"><a href="index.html">Working tracker (full reasoning log)</a>  ·  <a href="index.html">PLAN deliverable</a>  ·  <a href="index.html">One-page deliverable</a></p>
 </div>
-<script id="v88-shared-script">(()=>{if(document.body.dataset.v88)return;document.body.dataset.v88='1';const bar=document.querySelector('.topbar .wrap');if(bar){bar.innerHTML='<div class="brand"><a href="index.html">AI <span style="color:var(--purple)">Customer Success</span></a></div><div class="v88-shellnav"><a href="index.html">Home</a><a href="index.html#meridian">Meridian</a><a href="index.html#portfolio">Portfolio</a><a href="index.html#learn">Learning Library</a><button class="v88-theme" type="button" aria-label="Toggle dark mode">☾</button></div>';bar.querySelector('.v88-theme').onclick=()=>{document.body.classList.toggle('v88-dark');localStorage.setItem('ai-cs-theme',document.body.classList.contains('v88-dark')?'dark':'light');};}if(localStorage.getItem('ai-cs-theme')==='dark')document.body.classList.add('v88-dark');})();</script>
+<script id="v88-shared-script">(()=>{if(document.body.dataset.v88)return;document.body.dataset.v88='1';const btn=document.querySelector('.v88-theme');if(btn){btn.onclick=()=>{document.body.classList.toggle('v88-dark');localStorage.setItem('ai-cs-theme',document.body.classList.contains('v88-dark')?'dark':'light');};}if(localStorage.getItem('ai-cs-theme')==='dark')document.body.classList.add('v88-dark');document.addEventListener('click',e=>{document.querySelectorAll('.v912-more[open]').forEach(d=>{if(!d.contains(e.target))d.removeAttribute('open')})});})();</script>
 </body>
 </html>
