@@ -1,12 +1,19 @@
 # AI Customer Success Learning Portfolio
 
-Deploy-ready static package — v87.
+Deploy-ready static package — v88.
+
+## v88 focus
+Information architecture and progressive disclosure. Substantive v87 work is preserved; content is regrouped so the applied Meridian case is easiest to scan, the Learning Library holds deeper reference material, and Portfolio contains evidence plus Workbench breadth practice.
 
 - `index.html` — main portfolio
-- `agent-flow.html` — full responsive Meridian flowchart
-- `tracker.html` — full 17-question working tracker
-- `plan.html` — full Success Measurement Plan
+- `agent-flow.html` — Meridian flowchart
+- `tracker.html` — canonical 17-question working tracker
+- `plan.html` — Success Measurement Plan
 - `evals.html` — current Eval Suite
-- `deliverable.html` — one-page Meridian readout
-- `configure.html` — compatibility path for legacy artifact links
+- `deliverable.html` — concise Meridian readout
+- `configure.html` — legacy compatibility path
 - `vercel.json` — Vercel settings
+
+
+## v88 IA note
+Primary navigation is ordered **Home → Meridian → Portfolio → Learning Library**. The Learning Library is intentionally the deeper working-reference layer; applied work and evidence come first.

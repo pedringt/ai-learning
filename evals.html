@@ -1,9 +1,8 @@
-<!DOCTYPE html>
-
+<!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8"/>
-<meta content="width=device-width,initial-scale=1" name="viewport"/>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <title>VALIDATE — Eval Suite</title>
 <style>
   :root{
@@ -41,20 +40,26 @@
     th,td{padding:6px}
   }
 </style>
-</head>
+<style id="v88-shared-shell">
+:root{--ink:#0c0c10;--muted:#626475;--purple:#5336e8;--purple2:#7044f4;--blue:#2b64d8;--cyan:#159eb9;--green:#269650;--gold:#bd8917;--border:#e7e5ef;--soft:#f8f7fc;--softp:#f3f0ff;--card:#fff;--bg:#fff}body{background:var(--bg)!important;color:var(--ink)!important}body.v88-dark{--ink:#f5f5f7;--muted:#a9a9b5;--border:#31313b;--soft:#18181f;--softp:#1e1933;--card:#15151b;--bg:#101014}.v88-dark .topbar{background:rgba(16,16,20,.96)!important}.v88-dark table td,.v88-dark .frame,.v88-dark .reasoning,.v88-dark .callout,.v88-dark .stage,.v88-dark .diagram{background:var(--card)!important;color:var(--ink)!important;border-color:var(--border)!important}.v88-dark th{background:#24242c!important}.v88-shellnav{display:flex;align-items:center;gap:6px;flex-wrap:wrap}.v88-shellnav a,.v88-theme{border:0;background:transparent;color:var(--ink)!important;text-decoration:none!important;padding:8px 9px;border-radius:9px;font-size:12px;font-weight:800;cursor:pointer}.v88-shellnav a:hover,.v88-theme:hover{background:var(--softp)!important;color:var(--purple)!important}.v88-theme{border:1px solid var(--border);background:var(--card)}details.v88-notes{margin:10px 0 18px;border:1px solid var(--border);border-radius:12px;background:var(--card)}details.v88-notes>summary{cursor:pointer;padding:10px 13px;color:var(--purple);font-size:12px;font-weight:800}.v88-question-nav{display:flex;gap:7px;flex-wrap:wrap;margin:16px 0 24px}.v88-question-nav a{border:1px solid var(--border);border-radius:999px;padding:6px 9px;text-decoration:none;font-size:11px;font-weight:800;background:var(--card)}@media(max-width:760px){.v88-shellnav a:nth-child(n+4){display:none}.v88-shellnav{gap:2px}}
+</style>
+<style id="v88-artifact-nav-css">.v88-artifact-nav{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:14px 0 22px;font-size:12px}.v88-artifact-nav a{border:1px solid var(--border);background:var(--card);color:var(--purple)!important;text-decoration:none!important;border-radius:999px;padding:7px 10px;font-weight:800}.v88-artifact-nav strong{font-size:12px}@media(max-width:620px){.v88-artifact-nav span[style]{display:none}.v88-artifact-nav a{padding:6px 8px}}</style></head>
 <body>
 <div class="topbar"><div class="wrap">
-<div class="brand"><a href="index.html">AI Customer Success</a></div>
-<div style="display:flex;align-items:center;gap:18px">
-<nav class="nav"><a href="index.html">Guide</a><a href="tracker.html">Tracker</a><a href="plan.html">Plan</a><a href="configure.html">Configure</a></nav>
-<a class="pdfbtn" href="deliverable.html">Deliverable</a>
-</div>
+ <div class="brand"><a href="index.html">AI Customer Success</a></div>
+ <div style="display:flex;align-items:center;gap:18px">
+  <nav class="nav"><a href="index.html">Guide</a><a href="tracker.html">Tracker</a><a href="plan.html">Plan</a><a href="configure.html">Configure</a></nav>
+  <a class="pdfbtn" href="deliverable.html">Deliverable</a>
+ </div>
 </div></div>
-<div class="wrap">
+<div class="wrap"><div class="v88-artifact-nav"><a href="index.html#meridian">Meridian</a><span>›</span><strong>Evaluation</strong><span style="flex:1"></span><a href="agent-flow.html">← Previous</a><a href="deliverable.html">Next: Case Readout →</a></div>
+
 <span class="badge">CAPSTONE · VALIDATE</span>
 <h2>Eval Suite</h2>
 <p class="lead">Before the pilot launches, this is what "we tested it" actually has to mean — concrete cases run against the CONFIGURE flow, not a general claim that the agent "works."</p>
+
 <div class="callout cyan"><b>Status: in progress.</b> Cases are being worked through one at a time — the reasoning behind each one matters as much as the case itself, so this builds slowly rather than all at once.</div>
+
 <h3>Case EV-01</h3>
 <table>
 <thead><tr><th>Field</th><th>Detail</th></tr></thead>
@@ -68,6 +73,7 @@
 </tbody>
 </table>
 <p class="small"><b>Open note:</b> whether a changelog or similar signal exists to help detect staleness beyond customer pushback is a flagged assumption, not confirmed.</p>
+
 <h3>Reusable case format</h3>
 <table>
 <thead><tr><th>Field</th><th>What it captures</th></tr></thead>
@@ -84,7 +90,10 @@
 <tr><td>Notes</td><td>Root cause if failed, follow-up needed</td></tr>
 </tbody>
 </table>
-<p class="small" style="margin-top:36px;padding-top:16px;border-top:1px solid var(--border)"><a href="tracker.html">Working tracker (full reasoning log)</a>  ·  <a href="plan.html">PLAN deliverable</a>  ·  <a href="configure.html">CONFIGURE flow diagram</a>  ·  <a href="deliverable.html">One-page deliverable</a></p>
+
+<p class="small" style="margin-top:36px;padding-top:16px;border-top:1px solid var(--border)"><a href="tracker.html">Working tracker (full reasoning log)</a> &nbsp;·&nbsp; <a href="plan.html">PLAN deliverable</a> &nbsp;·&nbsp; <a href="configure.html">CONFIGURE flow diagram</a> &nbsp;·&nbsp; <a href="deliverable.html">One-page deliverable</a></p>
+
 </div>
+<script id="v88-shared-script">(()=>{if(document.body.dataset.v88)return;document.body.dataset.v88='1';const bar=document.querySelector('.topbar .wrap');if(bar){bar.innerHTML='<div class="brand"><a href="index.html">AI <span style="color:var(--purple)">Customer Success</span></a></div><div class="v88-shellnav"><a href="index.html">Home</a><a href="index.html#meridian">Meridian</a><a href="index.html#portfolio">Portfolio</a><a href="index.html#learn">Learning Library</a><button class="v88-theme" type="button" aria-label="Toggle dark mode">☾</button></div>';bar.querySelector('.v88-theme').onclick=()=>{document.body.classList.toggle('v88-dark');localStorage.setItem('ai-cs-theme',document.body.classList.contains('v88-dark')?'dark':'light');};}if(localStorage.getItem('ai-cs-theme')==='dark')document.body.classList.add('v88-dark');})();</script>
 </body>
 </html>

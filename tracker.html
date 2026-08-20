@@ -1,9 +1,8 @@
-<!DOCTYPE html>
-
+<!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8"/>
-<meta content="width=device-width,initial-scale=1" name="viewport"/>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Meridian Capstone — Working Tracker</title>
 <style>
   :root{
@@ -62,171 +61,222 @@
     ul.checklist .right{white-space:normal}
   }
 </style>
-</head>
+<style id="v88-shared-shell">
+:root{--ink:#0c0c10;--muted:#626475;--purple:#5336e8;--purple2:#7044f4;--blue:#2b64d8;--cyan:#159eb9;--green:#269650;--gold:#bd8917;--border:#e7e5ef;--soft:#f8f7fc;--softp:#f3f0ff;--card:#fff;--bg:#fff}body{background:var(--bg)!important;color:var(--ink)!important}body.v88-dark{--ink:#f5f5f7;--muted:#a9a9b5;--border:#31313b;--soft:#18181f;--softp:#1e1933;--card:#15151b;--bg:#101014}.v88-dark .topbar{background:rgba(16,16,20,.96)!important}.v88-dark table td,.v88-dark .frame,.v88-dark .reasoning,.v88-dark .callout,.v88-dark .stage,.v88-dark .diagram{background:var(--card)!important;color:var(--ink)!important;border-color:var(--border)!important}.v88-dark th{background:#24242c!important}.v88-shellnav{display:flex;align-items:center;gap:6px;flex-wrap:wrap}.v88-shellnav a,.v88-theme{border:0;background:transparent;color:var(--ink)!important;text-decoration:none!important;padding:8px 9px;border-radius:9px;font-size:12px;font-weight:800;cursor:pointer}.v88-shellnav a:hover,.v88-theme:hover{background:var(--softp)!important;color:var(--purple)!important}.v88-theme{border:1px solid var(--border);background:var(--card)}details.v88-notes{margin:10px 0 18px;border:1px solid var(--border);border-radius:12px;background:var(--card)}details.v88-notes>summary{cursor:pointer;padding:10px 13px;color:var(--purple);font-size:12px;font-weight:800}.v88-question-nav{display:flex;gap:7px;flex-wrap:wrap;margin:16px 0 24px}.v88-question-nav a{border:1px solid var(--border);border-radius:999px;padding:6px 9px;text-decoration:none;font-size:11px;font-weight:800;background:var(--card)}@media(max-width:760px){.v88-shellnav a:nth-child(n+4){display:none}.v88-shellnav{gap:2px}}
+</style>
+<style id="v88-artifact-nav-css">.v88-artifact-nav{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:14px 0 22px;font-size:12px}.v88-artifact-nav a{border:1px solid var(--border);background:var(--card);color:var(--purple)!important;text-decoration:none!important;border-radius:999px;padding:7px 10px;font-weight:800}.v88-artifact-nav strong{font-size:12px}@media(max-width:620px){.v88-artifact-nav span[style]{display:none}.v88-artifact-nav a{padding:6px 8px}}</style></head>
 <body>
 <div class="topbar"><div class="wrap">
-<div class="brand"><a href="index.html">AI Customer Success</a></div>
-<div style="display:flex;align-items:center;gap:18px">
-<nav class="nav"><a href="index.html">Guide</a><a href="tracker.html">Tracker</a><a href="plan.html">Plan</a><a href="configure.html">Configure</a></nav>
-<a class="pdfbtn" href="deliverable.html">Deliverable</a>
-</div>
+ <div class="brand"><a href="index.html">AI Customer Success</a></div>
+ <div style="display:flex;align-items:center;gap:18px">
+  <nav class="nav"><a href="index.html">Guide</a><a href="tracker.html">Tracker</a><a href="plan.html">Plan</a><a href="configure.html">Configure</a></nav>
+  <a class="pdfbtn" href="deliverable.html">Deliverable</a>
+ </div>
 </div></div>
-<div class="wrap">
-<h1>Meridian Capstone — Working Tracker</h1>
-<p class="sub">Running notes for the AI Customer Success capstone: open questions for the PM, my in-progress Success Measurement Plan reasoning, and stage-by-stage status.</p>
-<div class="callout gold" style="border:1px solid var(--border);border-left:4px solid var(--gold);background:#fff9eb;border-radius:10px;padding:12px 15px;margin:0 0 14px;font-size:13.5px"><b>What is Meridian?</b> A practice scenario: Meridian Support Operations, a mid-sized B2B SaaS company, is piloting an AI agent to help an overwhelmed Tier 1 support team — classifying tickets, drafting responses, and routing risky/uncertain cases to a human. This doc is my working process as the AI Customer Success owner of that pilot: open questions, assumptions, and reasoning as I go, not a finished report. <a href="index.html#meridian">Full capstone context in the guide →</a></div>
-<div class="frame">This doc tracks my working process, not just final numbers — including assumptions I'm making versus facts I've been given, and cases where my thinking changed as I worked through the logic. I think the reasoning matters more than landing on a "correct" target on the first try.</div>
-<h2>Capstone stage checklist</h2>
-<ul class="checklist">
-<li><span>HANDOFF — review + clarifying questions</span><span class="right"><span class="status done">Done</span></span></li>
-<li><span>PLAN — Success Measurement Plan</span><span class="right"><a href="plan.html">view deliverable</a><span class="status done">Done</span></span></li>
-<li><span>CONFIGURE — agent prototype + flow diagram <span class="small">(flow diagram done, prototype not started)</span></span><span class="right"><a href="configure.html">view flow diagram</a><span class="status progress">In progress</span></span></li>
-<li><span>VALIDATE — eval suite + launch readiness</span><span class="right"><span class="status todo">Not started</span></span></li>
-<li><span>ENABLE — onboarding kit</span><span class="right"><span class="status todo">Not started</span></span></li>
-<li><span>OPERATE — 90-day dataset + dashboard</span><span class="right"><span class="status todo">Not started</span></span></li>
-<li><span>INCIDENT — troubleshooting investigation</span><span class="right"><span class="status todo">Not started</span></span></li>
-<li><span>IMPROVE — evidence-backed recommendation</span><span class="right"><span class="status todo">Not started</span></span></li>
-<li><span>PROVE — 90-day customer success review</span><span class="right"><span class="status todo">Not started</span></span></li>
-<li><span>EXPAND — next-step recommendation</span><span class="right"><span class="status todo">Not started</span></span></li>
-</ul>
-<h2>Open questions for the PM</h2>
-<p class="note">Meridian is a fictional practice scenario — nothing here is a real company or real data. These are questions I thought of while working through the exercise, logged as I raised them. Where I didn't want to stall out waiting on an answer, I made up a plausible <b>simulated</b> one (clearly marked) so I could keep practicing the reasoning.</p>
-<div class="q"><b>1 · Targets</b>Are there existing target numbers from Meridian leadership, or should I propose targets based on restoring pre-growth performance (response time &lt;2 hrs, CSAT 91%)? We don't appear to have a pre-growth AHT number to anchor to.
+<div class="wrap"><div class="v88-artifact-nav"><a href="index.html#meridian">Meridian</a><span>›</span><strong>Discovery & Decisions</strong><span style="flex:1"></span><a href="index.html#meridian">← Previous</a><a href="plan.html">Next: Success Plan →</a></div>
+
+  <h1>Meridian Capstone — Working Tracker</h1>
+  <p class="sub">Running notes for the AI Customer Success capstone: open questions for the PM, my in-progress Success Measurement Plan reasoning, and stage-by-stage status.</p>
+  <div class="callout gold" style="border:1px solid var(--border);border-left:4px solid var(--gold);background:#fff9eb;border-radius:10px;padding:12px 15px;margin:0 0 14px;font-size:13.5px"><b>What is Meridian?</b> A practice scenario: Meridian Support Operations, a mid-sized B2B SaaS company, is piloting an AI agent to help an overwhelmed Tier 1 support team — classifying tickets, drafting responses, and routing risky/uncertain cases to a human. This doc is my working process as the AI Customer Success owner of that pilot: open questions, assumptions, and reasoning as I go, not a finished report. <a href="index.html#meridian">Full capstone context in the guide →</a></div>
+  <div class="frame">This doc tracks my working process, not just final numbers — including assumptions I'm making versus facts I've been given, and cases where my thinking changed as I worked through the logic. I think the reasoning matters more than landing on a "correct" target on the first try.</div>
+
+  <h2>Capstone stage checklist</h2>
+  <ul class="checklist">
+    <li><span>HANDOFF — review + clarifying questions</span><span class="right"><span class="status done">Done</span></span></li>
+    <li><span>PLAN — Success Measurement Plan</span><span class="right"><a href="plan.html">view deliverable</a><span class="status done">Done</span></span></li>
+    <li><span>CONFIGURE — agent flow diagram <span class="small">(required deliverable done; optional no/low-code prototype not started)</span></span><span class="right"><a href="configure.html">view flow diagram</a><span class="status done">Done</span></span></li>
+    <li><span>VALIDATE — eval suite + launch readiness <span class="small">(1 case built so far)</span></span><span class="right"><a href="evals.html">view eval suite</a><span class="status progress">In progress</span></span></li>
+    <li><span>ENABLE — onboarding kit</span><span class="right"><span class="status todo">Not started</span></span></li>
+    <li><span>OPERATE — 90-day dataset + dashboard</span><span class="right"><span class="status todo">Not started</span></span></li>
+    <li><span>INCIDENT — troubleshooting investigation</span><span class="right"><span class="status todo">Not started</span></span></li>
+    <li><span>IMPROVE — evidence-backed recommendation</span><span class="right"><span class="status todo">Not started</span></span></li>
+    <li><span>PROVE — 90-day customer success review</span><span class="right"><span class="status todo">Not started</span></span></li>
+    <li><span>EXPAND — next-step recommendation</span><span class="right"><span class="status todo">Not started</span></span></li>
+  </ul>
+
+  <h2>Open questions for the PM</h2>
+  <p class="note">Meridian is a fictional practice scenario — nothing here is a real company or real data. These are questions I thought of while working through the exercise, logged as I raised them. Where I didn't want to stall out waiting on an answer, I made up a plausible <b>simulated</b> one (clearly marked) so I could keep practicing the reasoning.</p>
+
+  <div class="q"><b>1 · Targets</b>Are there existing target numbers from Meridian leadership, or should I propose targets based on restoring pre-growth performance (response time &lt;2 hrs, CSAT 91%)? We don't appear to have a pre-growth AHT number to anchor to.
   <div class="shift" style="color:var(--gold)"><b>Simulated answer:</b> No formal targets set yet — this pilot is intentionally scoped to let CS propose data-driven targets rather than lock in commitments early. Pre-growth numbers are a reasonable long-term north star, not a hard pilot deadline.</div>
-<div class="shift">Resolution: validated the approach already taken — propose defensible pilot targets, treat pre-growth numbers as the long-term aim.</div></div>
-<div class="q"><b>2 · Knowledge base</b>What is the process for updating the knowledge base? ~20% of the ~180 articles are unreviewed in 12+ months with conflicting/outdated guidance — this could realistically block the pilot if not addressed first.
+  <div class="shift">Resolution: validated the approach already taken — propose defensible pilot targets, treat pre-growth numbers as the long-term aim.</div></div>
+
+  <div class="q"><b>2 · Knowledge base</b>What is the process for updating the knowledge base? ~20% of the ~180 articles are unreviewed in 12+ months with conflicting/outdated guidance — this could realistically block the pilot if not addressed first.
   <div class="shift" style="color:var(--gold)"><b>Simulated answer (harder):</b> No formal review process, and no bandwidth to prioritize one before launch — leadership wants to hold the 8-week timeline given the enterprise renewal pressure. Deal with KB issues as they come up.</div>
-<div class="shift">Resolution: accepted the timeline, but built in a mitigation — explicitly track failures caused by stale/conflicting KB content as a distinct root-cause category during VALIDATE/troubleshooting (ties to the guide's own RAG-troubleshooting framework), rather than letting the risk go unmonitored. Separately seeded a future EXPAND-stage idea: a KB-cleanup/maintenance agent — intentionally held back until pilot data shows it's actually worth recommending, not proposed prematurely.</div></div>
-<div class="q"><b>3 · Escalation scenarios</b>Do we have a complete list of human-boundary/escalation scenarios, or just the examples in the handoff (refunds, credits, disputes, password resets, account changes, security actions)?
+  <div class="shift">Resolution: accepted the timeline, but built in a mitigation — explicitly track failures caused by stale/conflicting KB content as a distinct root-cause category during VALIDATE/troubleshooting (ties to the guide's own RAG-troubleshooting framework), rather than letting the risk go unmonitored. Separately seeded a future EXPAND-stage idea: a KB-cleanup/maintenance agent — intentionally held back until pilot data shows it's actually worth recommending, not proposed prematurely.</div></div>
+
+  <div class="q"><b>3 · Escalation scenarios</b>Do we have a complete list of human-boundary/escalation scenarios, or just the examples in the handoff (refunds, credits, disputes, password resets, account changes, security actions)?
   <div class="shift" style="color:var(--gold)"><b>Simulated answer:</b> That's the full formally-agreed list so far, but no deep audit has been done. If something ambiguous comes up during the pilot, use judgment in the moment and flag it afterward.</div>
-<div class="shift">Resolution: pushed back to confirm the list is actually complete, and built in a default-to-escalate rule for anything ambiguous, with the rule open to revision if it starts over-escalating harmless cases.</div></div>
-<div class="q"><b>4 · Workflow model</b>Do Tier 1 reps handle tickets start-to-finish before moving to the next one, or do they send a quick first-touch acknowledgment and return later for full resolution? This changes how much first-response time can realistically improve if AHT doesn't.
+  <div class="shift">Resolution: pushed back to confirm the list is actually complete, and built in a default-to-escalate rule for anything ambiguous, with the rule open to revision if it starts over-escalating harmless cases.</div></div>
+
+  <div class="q"><b>4 · Workflow model</b>Do Tier 1 reps handle tickets start-to-finish before moving to the next one, or do they send a quick first-touch acknowledgment and return later for full resolution? This changes how much first-response time can realistically improve if AHT doesn't.
   <div class="shift" style="color:var(--gold)"><b>Simulated answer:</b> Mixed model — most reps handle tickets start-to-finish, but on high-volume days they'll send a quick first-touch acknowledgment on lower-priority tickets to keep queue wait down, then circle back for full resolution.</div>
-<div class="shift">Resolution: informed the first-response-time target (see Success Measurement Plan below) and the timestamp-based proxy metric.</div></div>
-<div class="q"><b>5 · Draft scope</b>For higher-risk categories (account access, money-related), does the AI still draft a response for human review — just flagged for extra scrutiny — or does it skip drafting entirely and escalate straight to a human?
+  <div class="shift">Resolution: informed the first-response-time target (see Success Measurement Plan below) and the timestamp-based proxy metric.</div></div>
+
+  <div class="q"><b>5 · Draft scope</b>For higher-risk categories (account access, money-related), does the AI still draft a response for human review — just flagged for extra scrutiny — or does it skip drafting entirely and escalate straight to a human?
   <div class="shift" style="color:var(--gold)"><b>Simulated answer (harder):</b> Undecided — engineering flagged that AI-drafting anything for refund/credit categories creates a paper-trail/bug risk (e.g. accidental auto-send); legal hasn't weighed in. Make a recommendation with reasoning.</div>
-<div class="shift">Resolution: recommended skipping drafting entirely for these categories for now — route straight to a human, no AI involvement — pending a firm answer from legal. Noted: if legal later clears drafting, these categories need to be added back into the Quality/Human intervention scope, which currently excludes them (see below).</div></div>
-<div class="q"><b>6 · Pause authority</b>Who has the authority to pause the pilot (or a specific ticket category) if a guardrail is breached — is that me, my manager, or someone else? Needs to be defined before a real breach happens, not after.
+  <div class="shift">Resolution: recommended skipping drafting entirely for these categories for now — route straight to a human, no AI involvement — pending a firm answer from legal. Noted: if legal later clears drafting, these categories need to be added back into the Quality/Human intervention scope, which currently excludes them (see below).</div></div>
+
+  <div class="q"><b>6 · Pause authority</b>Who has the authority to pause the pilot (or a specific ticket category) if a guardrail is breached — is that me, my manager, or someone else? Needs to be defined before a real breach happens, not after.
   <div class="shift" style="color:var(--gold)"><b>Simulated answer:</b> Category-level pauses don't need approval — go ahead. Full-pilot pauses need PM sign-off, though the PM may not always be reachable within a 24-hour window.</div>
-<div class="shift">Resolution: covers category-level pauses. Full-pilot-pause gap led directly to open question 8.</div></div>
-<div class="q"><b>7 · System data capability</b>Does Meridian's current help desk tool tag/distinguish a quick first-touch acknowledgment from a full ticket resolution — or is there a status field we could repurpose for this?
+  <div class="shift">Resolution: covers category-level pauses. Full-pilot-pause gap led directly to open question 8.</div></div>
+
+  <div class="q"><b>7 · System data capability</b>Does Meridian's current help desk tool tag/distinguish a quick first-touch acknowledgment from a full ticket resolution — or is there a status field we could repurpose for this?
   <div class="shift" style="color:var(--gold)"><b>Simulated answer (curveball):</b> There's an optional "Acknowledged" vs. "Resolved" status field, but it's inconsistently used — the data exists in theory but isn't reliable as-is.</div>
-<div class="shift">Resolution: ran a "dev pushback" exercise — rather than requiring reps to remember an optional field, use two hard system timestamps that already exist for every ticket (first-reply-sent, resolved/closed) with no new instrumentation or rep behavior change needed. See First-response time target below for the resulting proxy metric.</div></div>
-<div class="q"><b>8 · Backup pause contact</b>If the PM is unreachable and I believe the full pilot needs to be paused, who's my backup escalation contact?
+  <div class="shift">Resolution: ran a "dev pushback" exercise — rather than requiring reps to remember an optional field, use two hard system timestamps that already exist for every ticket (first-reply-sent, resolved/closed) with no new instrumentation or rep behavior change needed. See First-response time target below for the resulting proxy metric.</div></div>
+
+  <div class="q"><b>8 · Backup pause contact</b>If the PM is unreachable and I believe the full pilot needs to be paused, who's my backup escalation contact?
   <div class="shift" style="color:var(--gold)"><b>Simulated answer:</b> Go to the Engineering Lead first (can technically disable the pilot integration), and loop in the Director of Support Ops in parallel. Don't wait for both to respond if it's urgent — pause first, explain after.</div>
-<div class="shift">Resolution: gives a real chain of authority and explicit permission to act before getting a response if urgent.</div></div>
-<div class="q"><b>9 · Data/measurement ownership</b>Who sets up the actual tracking/instrumentation for these metrics — do I build it, or does someone else?
+  <div class="shift">Resolution: gives a real chain of authority and explicit permission to act before getting a response if urgent.</div></div>
+
+  <div class="q"><b>9 · Data/measurement ownership</b>Who sets up the actual tracking/instrumentation for these metrics — do I build it, or does someone else?
   <div class="shift"><b>My own proposed answer (not simulated — this is my judgment call, not a PM fact):</b> A developer/data team would own building the logging/instrumentation, based on a spec I write defining exactly what needs to be tracked (ticket category, draft vs. final, edit type, timestamps, escalation reason, etc.). I'd want <i>raw data</i> delivered to me rather than a pre-built dashboard, so I own turning it into the reviewable pilot report and interpreting it against the Success Measurement Plan. I'd also ask for direct access to Meridian's existing analytics/metrics tooling if I don't already have it.</div></div>
-<div class="q"><b>10 · AHT baseline reliability</b>Does the 12.4 min AHT baseline already reflect a mix of one-shot and two-step (first-touch-then-resolve) tickets, and is it still a valid comparison point going forward?
+
+  <div class="q"><b>10 · AHT baseline reliability</b>Does the 12.4 min AHT baseline already reflect a mix of one-shot and two-step (first-touch-then-resolve) tickets, and is it still a valid comparison point going forward?
   <div class="shift" style="color:var(--gold)"><b>Simulated answer:</b> Unknown — the 12.4 min figure came from the help desk tool's built-in average, which doesn't currently distinguish workflow type. Probably some blend of both, and there's no clean way to separate it retroactively.</div>
-<div class="shift">Resolution: keep 12.4 min as the working reference baseline for now (not worth forcing a retroactive fix), but track the new split data going forward for better-informed comparisons later.</div></div>
-<div class="q"><b>11 · Baseline exchange count</b>Does Meridian already track average replies/exchanges per ticket, to inform a back-and-forth escalation threshold?
+  <div class="shift">Resolution: keep 12.4 min as the working reference baseline for now (not worth forcing a retroactive fix), but track the new split data going forward for better-informed comparisons later.</div></div>
+
+  <div class="q"><b>11 · Baseline exchange count</b>Does Meridian already track average replies/exchanges per ticket, to inform a back-and-forth escalation threshold?
   <div class="shift" style="color:var(--gold)"><b>Simulated answer:</b> No clean existing report, but a 90-day pull is possible: average 2.3 replies/ticket; ~78% resolve in 1-2 exchanges; ~12% go beyond 4 exchanges, clustering in bugs/technical and billing-dispute categories.</div>
-<div class="shift">Resolution: kept the 5-exchange escalation threshold, now justified by real data (catches the ~12% long-tail) rather than an arbitrary round number. See the <a href="configure.html">CONFIGURE flow diagram</a>.</div></div>
-<div class="q"><b>12 · Internal guidebook</b>Does Meridian have any internal support guidebook/playbook — including an existing definition of what counts as a "problem" ticket — that should inform pilot design rather than us defining thresholds from scratch?
+  <div class="shift">Resolution: kept the 5-exchange escalation threshold, now justified by real data (catches the ~12% long-tail) rather than an arbitrary round number. See the <a href="configure.html">CONFIGURE flow diagram</a>.</div></div>
+
+  <div class="q"><b>12 · Internal guidebook</b>Does Meridian have any internal support guidebook/playbook — including an existing definition of what counts as a "problem" ticket — that should inform pilot design rather than us defining thresholds from scratch?
   <div class="shift" style="color:var(--gold)"><b>Simulated answer (harder):</b> An old internal wiki page has some general escalation guidance, but it's unmaintained and reps have said privately they don't really follow it — mostly go by instinct now. Not authoritative, but may have some historical context.</div>
-<div class="shift">Resolution: led to a good follow-up question of my own — whether the PM's discovery already covered rep-level operational habits. <b>Simulated PM answer:</b> discovery covered pilot scope/business goals/human-boundary rules, not rep-level instincts — that's better gathered directly from the 8 reps than relayed secondhand. Resulted in a rep discovery question list (below), since the team is small enough to do this personally.</div></div>
-<p class="note">Questions 13 and 14 came up mid-discovery and are logged below under "Rep discovery findings," with their answers, rather than repeated here unanswered.</p>
-<h2>Rep discovery questions</h2>
-<p class="small">CONFIGURE-stage prep (see the <a href="configure.html">flow diagram</a> these findings shaped), also feeds ENABLE later. Goal: validate/correct assumptions (like the simulated workflow-model answer to question 4) with real input from the 8 Tier 1 reps, and surface adoption concerns before the pilot starts.</p>
-<div class="reasoning">
-<b>Framing to open with:</b> "This is to help design the pilot well, not to evaluate you — I want your honest read on what's working and what isn't, including anything uncomfortable."
-    <ol style="margin:8px 0 0 18px" type="a">
-<li>Tell me about escalations generally — what are the most common types of tickets you end up escalating, and why? <i>(follow up with "is it usually because it went long, or the customer's upset, or something else?" only if they get stuck)</i></li>
-<li>Do you generally answer tickets in one go, or do you sometimes touch base first to get a quick response out, then answer more fully later?</li>
-<li>What issues do you run into with the knowledge base — conflicting info, stale articles, anything else?</li>
-<li>What does a good response sound like to you, tone-wise? Friendly, empathetic, something else?</li>
-<li>How do you feel about the AI pilot going in — any concerns, or things that would make you more or less likely to actually use it day to day?</li>
-<li>Any other pain points in your workflow, AI-related or not?</li>
-<li>What tools do you use in a normal day, beyond the help desk and knowledge base?</li>
-</ol>
-</div>
-<h2>Rep discovery findings (simulated) &amp; decisions made</h2>
-<p class="note">These findings directly shaped the agent logic in the <a href="configure.html">CONFIGURE flow diagram</a> (escalation triggers, retrieval approach) and the pilot targets in the <a href="plan.html">PLAN deliverable</a> (first-response time).</p>
-<div class="reasoning">
-<b>New escalation trigger added:</b> customer explicitly asks for a supervisor or to escalate — a cleaner signal than inferring "upset" or counting exchanges, since it doesn't require interpretation.<br/><br/>
-<b>Workflow model corrected:</b> real (simulated) rep input shows only 2 of 8 reps occasionally do a quick first-touch ack; most resolve start-to-finish. This is more reliable than the earlier simulated PM answer, since reps report their own actual behavior.
-    <div class="shift">Changed my mind: revised the First-response time pilot target from ~6 hrs down to ~7 hrs (see below) after realizing the original target partly relied on a "distinct first-touch speedup" mechanism that barely applies if most tickets are one-shot. AHT and first-response are more entangled than originally assumed, though not identical — AI still saves composition time even in one-shot tickets, just less dramatically than first assumed.</div><br/>
-<b>KB remediation cadence:</b> rather than a full pre-launch audit (not prioritized by leadership) or passive monitoring only, decided on an active/reactive process — when a pilot failure is traced to stale/conflicting KB content, that specific article gets fixed during the pilot, triggered by the failure itself.<br/><br/>
-<b>Tool access:</b> want a full inventory of tools reps use beyond the KB, to make sure the agent has access to what it actually needs — raised as open question 13 for the PM/build team.<br/><br/>
-<b>Deeper dig — copy-paste:</b> mostly reps pulling account/subscription/billing status from a separate billing system into the ticket, not the AI's draft going elsewhere. Means even "standard" category tickets may need billing/account context the AI doesn't currently have.<br/><br/>
-<b>Deeper dig — KB search:</b> both a content problem (duplicate/conflicting articles, already known) and a search problem (basic keyword matching, no fuzzy/synonym support). Good news: the AI's own retrieval doesn't have to inherit the same limitation — can be built on semantic/embedding-based retrieval instead of keyword matching, sidestepping the search half of the problem (the content half still needs the reactive KB-fix process above).
-    <div class="shift">Decision: adopt semantic/embedding-based retrieval for the agent's knowledge lookup, rather than keyword matching, per simulated engineering input.</div>
-</div>
-<div class="q"><b>13 · Tool inventory</b>Does the PM/agent build plan already include a list of tools reps use day-to-day, and is access to those tools already scoped into the agent's architecture — or is that still open?
-  <div class="shift" style="color:var(--gold)"><b>Simulated answer:</b> KB and help desk tool are scoped; no full inventory of everything else reps touch was done — assumed KB covers most of what the AI needs.</div>
-<div class="shift">Resolution: go back to reps for the full tool inventory (rep discovery question g) before finalizing agent tool-access scope, rather than proceeding on the PM's partial assumption.</div></div>
-<div class="q"><b>14 · KB automation scoping</b>Could KB updates be automated without extra rep work, and is that in scope for this pilot to discuss with engineering?
-  <div class="shift" style="color:var(--gold)"><b>Simulated answer:</b> Good idea, but out of scope for this 8-week pilot — would need a separate proposal with its own timeline/budget. Bring pilot evidence afterward to pitch it as a follow-on project.</div>
-<div class="shift">Resolution: confirms this is an EXPAND-stage idea, not a pilot deliverable. Every pilot failure traced to stale/conflicting KB content needs a consistent, filterable "root cause: KB" tag distinct from other failure types, so the evidence can be pulled cleanly when making the case for automation later.</div></div>
-<div class="q"><b>15 · Billing access approval scope</b>Does giving the AI read-only access to billing/account-status data require the same approval process as the money/security action categories in Guardrails, even though the AI couldn't act on that data — just see it?
-  <div class="shift" style="color:var(--gold)"><b>Simulated answer (original framing):</b> Read-only access to the billing system's account-status API is technically feasible — a smaller ask than write access — but still customer financial data, so needs explicit confirmation on whether it needs the same sign-off as the Guardrails action categories.</div>
-<div class="shift"><b>Reframed after asking why reps look this up manually:</b> the billing/account-status field already exists in the ticketing tool via an existing nightly sync — it's just configured to show on the Tier 2 view, not Tier 1, likely an oversight rather than an intentional decision.</div>
-<div class="shift">Resolution: turns out this may not need to be an AI/approval question at all. If Tier 1 gets the field enabled via a simple display-config change, the agent reads data it already has legitimate access to (same as a human rep would see) — no new billing-system integration, no fresh approval process, question 15 mostly resolved by avoiding the need it was asking about. Caveat: nightly sync means data could be up to 24 hrs stale. See how this fits the flow in <a href="configure.html">CONFIGURE</a>.</div></div>
-<h2>Standalone recommendation (independent of the pilot)</h2>
-<div class="callout gold"><b>Enable the existing billing/account-status field for Tier 1 reps.</b> This field already exists and syncs nightly from the billing system, but is only configured to display on the Tier 2 view. Turning it on for Tier 1 would directly solve the manual copy-paste pain point reps flagged in discovery, and — as a side effect — gives the AI agent access to the same already-approved data source without a new integration. Worth flagging to the PM/engineering regardless of pilot timing, since it's a low-risk, low-effort fix. <a href="configure.html">See how it folds into the agent flow →</a></div>
-<div class="q"><b>Rep discovery Q-g (simulated) · Tool inventory</b>Beyond the help desk and KB, reps use: the billing system (Stripe-based, for account/subscription lookups — see resolution to question 15 above), an internal admin panel for basic account changes (already excluded per Guardrails), and Slack to ping engineering when something's broken (an escalation channel, not a data source for the agent).</div>
-<h2>Success Measurement Plan — in progress</h2>
-<p class="note">Raw reasoning below. The clean, presentation-ready version (locked targets + collapsible working notes) lives in the <a href="plan.html">PLAN deliverable</a>.</p>
-<h3>Business outcome</h3>
-<div class="reasoning">
-<b>Long-term goal:</b> CSAT back to 90%, first-response time back to &lt;2 hrs (stretch: beat these).<br/>
-<b>Pilot target (8 weeks):</b> First-response time ~7 hrs, AHT held roughly steady (~12.4 min), CSAT monitored but not fixed as a hard target.<br/>
-<b>Reasoning:</b> The pilot only covers Tier 1, and every AI draft requires human review — so this is an intermediate proof point, not the full outcome. Targets should reflect what's achievable under partial coverage + mandatory review, not the fully-scaled future state.
+  <div class="shift">Resolution: led to a good follow-up question of my own — whether the PM's discovery already covered rep-level operational habits. <b>Simulated PM answer:</b> discovery covered pilot scope/business goals/human-boundary rules, not rep-level instincts — that's better gathered directly from the 8 reps than relayed secondhand. Resulted in a rep discovery question list (below), since the team is small enough to do this personally.</div></div>
+
+  <p class="note">Questions 13 and 14 came up mid-discovery and are logged below under "Rep discovery findings," with their answers, rather than repeated here unanswered.</p>
+
+  <h2>Rep discovery questions</h2>
+  <p class="small">CONFIGURE-stage prep (see the <a href="configure.html">flow diagram</a> these findings shaped), also feeds ENABLE later. Goal: validate/correct assumptions (like the simulated workflow-model answer to question 4) with real input from the 8 Tier 1 reps, and surface adoption concerns before the pilot starts.</p>
+  <div class="reasoning">
+    <b>Framing to open with:</b> "This is to help design the pilot well, not to evaluate you — I want your honest read on what's working and what isn't, including anything uncomfortable."
+    <ol type="a" style="margin:8px 0 0 18px">
+      <li>Tell me about escalations generally — what are the most common types of tickets you end up escalating, and why? <i>(follow up with "is it usually because it went long, or the customer's upset, or something else?" only if they get stuck)</i></li>
+      <li>Do you generally answer tickets in one go, or do you sometimes touch base first to get a quick response out, then answer more fully later?</li>
+      <li>What issues do you run into with the knowledge base — conflicting info, stale articles, anything else?</li>
+      <li>What does a good response sound like to you, tone-wise? Friendly, empathetic, something else?</li>
+      <li>How do you feel about the AI pilot going in — any concerns, or things that would make you more or less likely to actually use it day to day?</li>
+      <li>Any other pain points in your workflow, AI-related or not?</li>
+      <li>What tools do you use in a normal day, beyond the help desk and knowledge base?</li>
+    </ol>
   </div>
-<h3>Baseline</h3>
-<table>
-<tr><th>Field</th><th>Handoff provides</th><th>My notes</th></tr>
-<tr><td class="field">AHT</td><td>12.4 min (current)</td><td>No pre-growth historical AHT given (open question 1). Also unclear if this figure blends one-shot and two-step tickets (open question 10) — keeping as working reference regardless, tracking cleaner split data going forward.</td></tr>
-<tr><td class="field">First response</td><td>&gt;8 hrs (current), &lt;2 hrs (pre-growth)</td><td>Pre-growth number usable as long-term anchor.</td></tr>
-<tr><td class="field">CSAT</td><td>82% (current), 91% (pre-growth)</td><td>Same — usable as long-term anchor only.</td></tr>
-</table>
-<h3>AHT — pilot target</h3>
-<div class="reasoning"><b>Target:</b> Hold roughly steady during pilot — don't make it worse.<br/>
-<b>Reasoning:</b> Mandatory human review of every AI draft caps how much time can actually be saved this phase — fact-checking an answer isn't dramatically faster than answering it in some cases. Meaningful AHT reduction is more realistic once review requirements loosen post-pilot.
+
+  <h2>Rep discovery findings (simulated) & decisions made</h2>
+  <p class="note">These findings directly shaped the agent logic in the <a href="configure.html">CONFIGURE flow diagram</a> (escalation triggers, retrieval approach) and the pilot targets in the <a href="plan.html">PLAN deliverable</a> (first-response time).</p>
+  <div class="reasoning">
+    <b>New escalation trigger added:</b> customer explicitly asks for a supervisor or to escalate — a cleaner signal than inferring "upset" or counting exchanges, since it doesn't require interpretation.<br><br>
+    <b>Workflow model corrected:</b> real (simulated) rep input shows only 2 of 8 reps occasionally do a quick first-touch ack; most resolve start-to-finish. This is more reliable than the earlier simulated PM answer, since reps report their own actual behavior.
+    <div class="shift">Changed my mind: revised the First-response time pilot target from ~6 hrs down to ~7 hrs (see below) after realizing the original target partly relied on a "distinct first-touch speedup" mechanism that barely applies if most tickets are one-shot. AHT and first-response are more entangled than originally assumed, though not identical — AI still saves composition time even in one-shot tickets, just less dramatically than first assumed.</div><br>
+    <b>KB remediation cadence:</b> rather than a full pre-launch audit (not prioritized by leadership) or passive monitoring only, decided on an active/reactive process — when a pilot failure is traced to stale/conflicting KB content, that specific article gets fixed during the pilot, triggered by the failure itself.<br><br>
+    <b>Tool access:</b> want a full inventory of tools reps use beyond the KB, to make sure the agent has access to what it actually needs — raised as open question 13 for the PM/build team.<br><br>
+    <b>Deeper dig — copy-paste:</b> mostly reps pulling account/subscription/billing status from a separate billing system into the ticket, not the AI's draft going elsewhere. Means even "standard" category tickets may need billing/account context the AI doesn't currently have.<br><br>
+    <b>Deeper dig — KB search:</b> both a content problem (duplicate/conflicting articles, already known) and a search problem (basic keyword matching, no fuzzy/synonym support). Good news: the AI's own retrieval doesn't have to inherit the same limitation — can be built on semantic/embedding-based retrieval instead of keyword matching, sidestepping the search half of the problem (the content half still needs the reactive KB-fix process above).
+    <div class="shift">Decision: adopt semantic/embedding-based retrieval for the agent's knowledge lookup, rather than keyword matching, per simulated engineering input.</div>
+  </div>
+
+  <div class="q"><b>13 · Tool inventory</b>Does the PM/agent build plan already include a list of tools reps use day-to-day, and is access to those tools already scoped into the agent's architecture — or is that still open?
+  <div class="shift" style="color:var(--gold)"><b>Simulated answer:</b> KB and help desk tool are scoped; no full inventory of everything else reps touch was done — assumed KB covers most of what the AI needs.</div>
+  <div class="shift">Resolution: went back to reps for the full tool inventory (rep discovery question g, answered below) rather than proceeding on the PM's partial assumption. <b>Closed:</b> the full inventory — billing system, admin panel, Slack — confirms KB + help desk + billing (via the question 15 display-config fix) is the complete agent tool-access scope. The admin panel is out of scope per Guardrails (account changes), and Slack is a human escalation channel, not a data source. No change needed to the CONFIGURE flow.</div></div>
+
+  <div class="q"><b>14 · KB automation scoping</b>Could KB updates be automated without extra rep work, and is that in scope for this pilot to discuss with engineering?
+  <div class="shift" style="color:var(--gold)"><b>Simulated answer:</b> Good idea, but out of scope for this 8-week pilot — would need a separate proposal with its own timeline/budget. Bring pilot evidence afterward to pitch it as a follow-on project.</div>
+  <div class="shift">Resolution: confirms this is an EXPAND-stage idea, not a pilot deliverable. Every pilot failure traced to stale/conflicting KB content needs a consistent, filterable "root cause: KB" tag distinct from other failure types, so the evidence can be pulled cleanly when making the case for automation later.</div></div>
+
+  <div class="q"><b>15 · Billing access approval scope</b>Does giving the AI read-only access to billing/account-status data require the same approval process as the money/security action categories in Guardrails, even though the AI couldn't act on that data — just see it?
+  <div class="shift" style="color:var(--gold)"><b>Simulated answer (original framing):</b> Read-only access to the billing system's account-status API is technically feasible — a smaller ask than write access — but still customer financial data, so needs explicit confirmation on whether it needs the same sign-off as the Guardrails action categories.</div>
+  <div class="shift"><b>Reframed after asking why reps look this up manually:</b> the billing/account-status field already exists in the ticketing tool via an existing nightly sync — it's just configured to show on the Tier 2 view, not Tier 1, likely an oversight rather than an intentional decision.</div>
+  <div class="shift">Resolution: turns out this may not need to be an AI/approval question at all. If Tier 1 gets the field enabled via a simple display-config change, the agent reads data it already has legitimate access to (same as a human rep would see) — no new billing-system integration, no fresh approval process, question 15 mostly resolved by avoiding the need it was asking about. Caveat: nightly sync means data could be up to 24 hrs stale. See how this fits the flow in <a href="configure.html">CONFIGURE</a>.</div></div>
+
+  <h2>Standalone recommendation (independent of the pilot)</h2>
+  <div class="callout gold"><b>Enable the existing billing/account-status field for Tier 1 reps.</b> This field already exists and syncs nightly from the billing system, but is only configured to display on the Tier 2 view. Turning it on for Tier 1 would directly solve the manual copy-paste pain point reps flagged in discovery, and — as a side effect — gives the AI agent access to the same already-approved data source without a new integration. Worth flagging to the PM/engineering regardless of pilot timing, since it's a low-risk, low-effort fix. <a href="configure.html">See how it folds into the agent flow →</a></div>
+
+  <div class="q"><b>Rep discovery Q-g (simulated) · Tool inventory</b>Beyond the help desk and KB, reps use: the billing system (Stripe-based, for account/subscription lookups — see resolution to question 15 above), an internal admin panel for basic account changes (already excluded per Guardrails), and Slack to ping engineering when something's broken (an escalation channel, not a data source for the agent).</div>
+
+  <div class="q"><b>16 · Configuration-dependent answers</b>Does answering a how-to question that depends on a customer's specific configuration require access to per-customer config/CRM data, separate from the shared support KB?
+  <div class="shift" style="color:var(--gold)"><b>Rep discovery Q-h (simulated):</b> Yes — for configuration-dependent questions (report setup, custom fields, workflow steps that vary by plan tier), reps check the CRM's account record for that customer's enabled features/plan tier before answering. It's a quick lookup, not a deep investigation, but they don't answer from memory for these — too much variation between customers to guess reliably.</div>
+  <div class="shift">Resolution: confirms the working assumption — this is a real tool-access gap, not just a hypothetical. The agent needs read access to per-customer config/plan-tier data (likely the CRM) alongside the KB, help desk, and billing access already scoped, or it risks giving a generically-correct-sounding answer that's wrong for that specific customer. Added to CONFIGURE's data sources as a gap to close before this case type can pass. <b>Also worth naming directly:</b> a thorough discovery process (data/systems audit, shadowing reps) likely would have caught this before CONFIGURE — the PM handoff didn't cover it, the same way the billing-field need surfaced late rather than upfront. Not a sign the process failed, just a reminder that a single handoff document rarely captures everything a workflow actually depends on.</div></div>
+
+  <div class="q"><b>17 · Plan tier differences</b>What specifically varies between Meridian's plan tiers — and does the monthly analytics report feature vary by tier, or is it universal? Before assuming a given how-to question is config-dependent, need to know which features actually differ.
+  <div class="shift" style="color:var(--gold)"><b>Simulated answer (Product):</b> Three tiers — Starter, Growth, Enterprise. What varies: seat count, number of integrations, SSO (Enterprise only), custom fields (Growth+), API access (Enterprise only), and reporting depth — Starter gets a fixed set of standard reports, Growth adds custom date ranges and export formats, Enterprise adds scheduled/automated report delivery and custom report builder. The <i>existence</i> of a monthly analytics report is universal across all three tiers — every customer can generate one. What differs by tier is <i>how</i>: which export formats are available and whether it can be scheduled to auto-generate vs. run manually.</div>
+  <div class="shift">Resolution: this changes the eval case. "How do I generate my monthly report" is actually a universal, tier-independent action — every customer can do it, so this specific question doesn't need the CRM/config lookup after all. The config-dependent version would be a different, more specific question — like "how do I schedule this report to auto-send" (Enterprise-only) or "how do I export to a specific format" (Starter doesn't get all formats). Keeps the original case as a true core/simple case, and creates a clear next case to test the actual config-dependent path.</div></div>
+
+  <h2>Success Measurement Plan — in progress</h2>
+  <p class="note">Raw reasoning below. The clean, presentation-ready version (locked targets + collapsible working notes) lives in the <a href="plan.html">PLAN deliverable</a>.</p>
+
+  <h3>Business outcome</h3>
+  <div class="reasoning">
+    <b>Long-term goal:</b> CSAT back to 90%, first-response time back to &lt;2 hrs (stretch: beat these).<br>
+    <b>Pilot target (8 weeks):</b> First-response time ~7 hrs, AHT held roughly steady (~12.4 min), CSAT monitored but not fixed as a hard target.<br>
+    <b>Reasoning:</b> The pilot only covers Tier 1, and every AI draft requires human review — so this is an intermediate proof point, not the full outcome. Targets should reflect what's achievable under partial coverage + mandatory review, not the fully-scaled future state.
+  </div>
+
+  <h3>Baseline</h3>
+  <table>
+    <tr><th>Field</th><th>Handoff provides</th><th>My notes</th></tr>
+    <tr><td class="field">AHT</td><td>12.4 min (current)</td><td>No pre-growth historical AHT given (open question 1). Also unclear if this figure blends one-shot and two-step tickets (open question 10) — keeping as working reference regardless, tracking cleaner split data going forward.</td></tr>
+    <tr><td class="field">First response</td><td>&gt;8 hrs (current), &lt;2 hrs (pre-growth)</td><td>Pre-growth number usable as long-term anchor.</td></tr>
+    <tr><td class="field">CSAT</td><td>82% (current), 91% (pre-growth)</td><td>Same — usable as long-term anchor only.</td></tr>
+  </table>
+
+  <h3>AHT — pilot target</h3>
+  <div class="reasoning"><b>Target:</b> Hold roughly steady during pilot — don't make it worse.<br>
+  <b>Reasoning:</b> Mandatory human review of every AI draft caps how much time can actually be saved this phase — fact-checking an answer isn't dramatically faster than answering it in some cases. Meaningful AHT reduction is more realistic once review requirements loosen post-pilot.
   <div class="shift">Changed my mind: I initially leaned toward proposing a meaningful AHT reduction alongside the other targets. Working through what "human review" actually requires (reading + fact-checking every draft) made me realize that time savings there are limited this phase — so I separated it from first-response time instead of treating both the same way.</div></div>
-<h3>First-response time — pilot target</h3>
-<div class="reasoning"><b>Target:</b> ~7 hrs blended (down from &gt;8 hrs) — revised down from an earlier ~6 hr estimate. Tracked via two existing system timestamps rather than any new manual tagging.<br/>
-<b>Reasoning:</b> AI drafting a response the moment a ticket arrives removes the "compose from scratch" step before a human ever opens the ticket, which should modestly raise throughput and pull down queue/backlog wait — even for one-shot tickets, since composition happens before a human is involved at all.<br/>
-<b>Measurement approach (resolved via open question 7):</b> Use two hard timestamps every ticket already has — first-reply-sent and resolved/closed — instead of relying on reps remembering to update an optional status field. Gap between the two timestamps: <b>&lt; 20 minutes = one-shot resolution</b> (buffer above the 12.4 min AHT baseline to avoid misclassifying normal variance); <b>&gt; 20 minutes = true two-step case</b> (quick ack, resolved later). This gives the first-touch-vs-full-resolution split without needing any new rep behavior or instrumentation.
+
+  <h3>First-response time — pilot target</h3>
+  <div class="reasoning"><b>Target:</b> ~7 hrs blended (down from &gt;8 hrs) — revised down from an earlier ~6 hr estimate. Tracked via two existing system timestamps rather than any new manual tagging.<br>
+  <b>Reasoning:</b> AI drafting a response the moment a ticket arrives removes the "compose from scratch" step before a human ever opens the ticket, which should modestly raise throughput and pull down queue/backlog wait — even for one-shot tickets, since composition happens before a human is involved at all.<br>
+  <b>Measurement approach (resolved via open question 7):</b> Use two hard timestamps every ticket already has — first-reply-sent and resolved/closed — instead of relying on reps remembering to update an optional status field. Gap between the two timestamps: <b>&lt; 20 minutes = one-shot resolution</b> (buffer above the 12.4 min AHT baseline to avoid misclassifying normal variance); <b>&gt; 20 minutes = true two-step case</b> (quick ack, resolved later). This gives the first-touch-vs-full-resolution split without needing any new rep behavior or instrumentation.
   <div class="shift">Proposed refinement, tested against a simulated "dev pushback": originally planned to require reps to tag each ticket's workflow type, but a dev flagged that optional-turned-required fields are often forgotten. The timestamp-gap proxy solves the same problem without depending on human compliance.</div>
-<div class="shift">Changed my mind (again): the original ~6 hr target assumed a meaningful "mixed workflow" — some tickets getting a distinct, extra-fast first-touch ack separate from full resolution — per the simulated PM answer to question 4. Rep discovery (simulated) showed this is rare — only 2 of 8 reps do it occasionally. Since I'd trust reps' account of their own actual behavior over the PM's secondhand description, revised the target down to ~7 hrs: still a real improvement (throughput still rises since composition time is saved even in one-shot tickets), but more modest than originally assumed, and closer in spirit to the AHT reasoning (capped by the same human-review bottleneck) than treated as fully independent.</div></div>
-<h3>CSAT — pilot approach</h3>
-<span class="assume">Assumption flagged</span>
-<div class="reasoning"><b>Target:</b> Monitor, don't commit to a hard number this pilot.<br/>
-<b>Reasoning:</b> The link between faster response and CSAT is an assumption, not a proven causal chain (noted in the original scenario complications). At this stage, the more honest goal is proving AI accuracy/reliability — CSAT is a leading indicator to watch, not a metric to be pinned to yet.</div>
-<h3>Adoption — pilot target</h3>
-<div class="reasoning"><b>Target:</b> 8 of 8 Tier 1 reps using the tool at least once daily on eligible tickets, by end of Week 2.<br/>
-<b>Below-target response:</b> Not treated as pilot failure — triggers a 1:1 check-in with that rep to understand why (training gap, trust, workflow fit), since the group is small enough to manage individually.<br/>
-<b>Reasoning:</b> With only 8 reps, this is largely a routine workflow update rather than a new tool with a steep learning curve, so a short Week 1-2 training/stabilization window is enough before expecting regular use. Daily use (not just occasional) is needed to generate enough signal/data to evaluate the pilot meaningfully. A plain count (8 of 8) communicates more clearly than a percentage at this scale, and pairing the target with a built-in "go find out why" step makes it diagnostic, not just pass/fail.</div>
-<h3>Quality — pilot target</h3>
-<div class="reasoning"><b>Target:</b> ≥ 80% of AI drafts approved with no <i>substantive</i> edit needed (trivial tone/formatting edits don't count against this).<br/>
-<b>Reasoning:</b> Quality is a launch/scale gate — it's what justifies loosening the mandatory-review requirement later — so it should be a stricter, "prove it" bar rather than something that's allowed to grow into over time, unlike some of the other pilot targets. Measured primarily via live pilot data (what reps actually do with real drafts), not just the pre-launch eval suite. Checked against 2026 industry data: no solid public benchmark exists specifically for assist-mode (human-reviewed) pilots — most published numbers are for fully autonomous resolution, which isn't an apples-to-apples comparison, so this number is reasoned from first principles rather than matched to a published target.
+  <div class="shift">Changed my mind (again): the original ~6 hr target assumed a meaningful "mixed workflow" — some tickets getting a distinct, extra-fast first-touch ack separate from full resolution — per the simulated PM answer to question 4. Rep discovery (simulated) showed this is rare — only 2 of 8 reps do it occasionally. Since I'd trust reps' account of their own actual behavior over the PM's secondhand description, revised the target down to ~7 hrs: still a real improvement (throughput still rises since composition time is saved even in one-shot tickets), but more modest than originally assumed, and closer in spirit to the AHT reasoning (capped by the same human-review bottleneck) than treated as fully independent.</div></div>
+
+  <h3>CSAT — pilot approach</h3>
+  <span class="assume">Assumption flagged</span>
+  <div class="reasoning"><b>Target:</b> Monitor, don't commit to a hard number this pilot.<br>
+  <b>Reasoning:</b> The link between faster response and CSAT is an assumption, not a proven causal chain (noted in the original scenario complications). At this stage, the more honest goal is proving AI accuracy/reliability — CSAT is a leading indicator to watch, not a metric to be pinned to yet.</div>
+
+  <h3>Adoption — pilot target</h3>
+  <div class="reasoning"><b>Target:</b> 8 of 8 Tier 1 reps using the tool at least once daily on eligible tickets, by end of Week 2.<br>
+  <b>Below-target response:</b> Not treated as pilot failure — triggers a 1:1 check-in with that rep to understand why (training gap, trust, workflow fit), since the group is small enough to manage individually.<br>
+  <b>Reasoning:</b> With only 8 reps, this is largely a routine workflow update rather than a new tool with a steep learning curve, so a short Week 1-2 training/stabilization window is enough before expecting regular use. Daily use (not just occasional) is needed to generate enough signal/data to evaluate the pilot meaningfully. A plain count (8 of 8) communicates more clearly than a percentage at this scale, and pairing the target with a built-in "go find out why" step makes it diagnostic, not just pass/fail.</div>
+
+  <h3>Quality — pilot target</h3>
+  <div class="reasoning"><b>Target:</b> ≥ 80% of AI drafts approved with no <i>substantive</i> edit needed (trivial tone/formatting edits don't count against this).<br>
+  <b>Reasoning:</b> Quality is a launch/scale gate — it's what justifies loosening the mandatory-review requirement later — so it should be a stricter, "prove it" bar rather than something that's allowed to grow into over time, unlike some of the other pilot targets. Measured primarily via live pilot data (what reps actually do with real drafts), not just the pre-launch eval suite. Checked against 2026 industry data: no solid public benchmark exists specifically for assist-mode (human-reviewed) pilots — most published numbers are for fully autonomous resolution, which isn't an apples-to-apples comparison, so this number is reasoned from first principles rather than matched to a published target.
   <div class="shift">Changed my mind: also realized partway through that higher-risk categories (account access, money) might still get an AI-drafted response — just flagged for extra scrutiny — rather than skipping drafting entirely. Logged as open question 5.</div>
-<div class="shift">Scope update (resolved via open question 5): decided to skip AI drafting entirely for money/security categories pending legal, so this Quality target currently applies only to categories that get a drafted response. For those skipped categories, the only thing measured is classification accuracy (correctly routing to a human), not draft quality. If legal later clears drafting for these categories, they need to be added back into this target's scope.</div></div>
-<h3>Human intervention — pilot target</h3>
-<div class="reasoning"><b>Target:</b> ≤ 20% of tickets require a <i>substantive</i> correction or override.<br/>
-<b>Tracked but not targeted:</b> non-substantive (tone-only) edits — still surfaced, since a pattern there could point to a useful prompt/style tuning opportunity even though it's not a quality failure.<br/>
-<b>Reasoning:</b> Defined as roughly the complement of the Quality target (80% clean approval ≈ 20% substantive correction) so the two numbers stay internally consistent rather than measuring the same thing from two different, conflicting angles.</div>
-<h3>Guardrails — pilot target</h3>
-<div class="reasoning"><b>Target:</b> Zero-tolerance, single-incident trigger for money/security-related categories — not a rate. Any one confirmed guardrail breach (wrong info or an attempted unauthorized action on refunds, credits, disputes, password resets, account changes, or security actions) immediately pauses autonomous drafting for that ticket category.<br/>
-<b>Response window:</b> Within 24 hours of a confirmed breach — pause the affected category, notify the pilot owner (pending open question 6 on pause authority), and begin investigation.<br/>
-<b>Confirmation step:</b> Suspected incidents get logged immediately, but only count toward the pause trigger once confirmed. With only 8 reps, I can personally follow up with the rep involved to verify what happened rather than relying on an automated flag alone.<br/>
-<b>Reasoning:</b> Lower-stakes accuracy issues (e.g., a wrong answer on a basic how-to question) aren't guardrail breaches — those are covered by the Quality/Human intervention targets. Guardrails are reserved specifically for the human-boundary categories, where even one real failure (like the <a href="index.html#cs">Trace Autopsy incident</a> — outdated policy → incorrectly promised a 90% credit, two messages sent before detection) is too costly to wait on a rate threshold for.</div>
-<h3>Measurement — window and decision rules</h3>
-<div class="reasoning"><b>Stabilization:</b> Weeks 1-2 (training + initial use — not judged yet, since this is largely a routine workflow update rather than a new tool with a steep learning curve).<br/>
-<b>Measurement window:</b> Weeks 3-8, with a built-in flexibility clause — if early Week 3 data looks off, reassess before treating it as final rather than reacting to noise.<br/>
-<b>Sources:</b> Help desk tool data (timestamps, status), eval suite results, direct rep feedback/check-ins. Raw data requested directly rather than a pre-built dashboard (see open question 9).<br/>
-<b>Decision rules (Week 9+):</b> Three real outcomes, not just pass/fail —
+  <div class="shift">Scope update (resolved via open question 5): decided to skip AI drafting entirely for money/security categories pending legal, so this Quality target currently applies only to categories that get a drafted response. For those skipped categories, the only thing measured is classification accuracy (correctly routing to a human), not draft quality. If legal later clears drafting for these categories, they need to be added back into this target's scope.</div></div>
+
+  <h3>Human intervention — pilot target</h3>
+  <div class="reasoning"><b>Target:</b> ≤ 20% of tickets require a <i>substantive</i> correction or override.<br>
+  <b>Tracked but not targeted:</b> non-substantive (tone-only) edits — still surfaced, since a pattern there could point to a useful prompt/style tuning opportunity even though it's not a quality failure.<br>
+  <b>Reasoning:</b> Defined as roughly the complement of the Quality target (80% clean approval ≈ 20% substantive correction) so the two numbers stay internally consistent rather than measuring the same thing from two different, conflicting angles.</div>
+
+  <h3>Guardrails — pilot target</h3>
+  <div class="reasoning"><b>Target:</b> Zero-tolerance, single-incident trigger for money/security-related categories — not a rate. Any one confirmed guardrail breach (wrong info or an attempted unauthorized action on refunds, credits, disputes, password resets, account changes, or security actions) immediately pauses autonomous drafting for that ticket category.<br>
+  <b>Response window:</b> Within 24 hours of a confirmed breach — pause the affected category, notify the pilot owner (pending open question 6 on pause authority), and begin investigation.<br>
+  <b>Confirmation step:</b> Suspected incidents get logged immediately, but only count toward the pause trigger once confirmed. With only 8 reps, I can personally follow up with the rep involved to verify what happened rather than relying on an automated flag alone.<br>
+  <b>Reasoning:</b> Lower-stakes accuracy issues (e.g., a wrong answer on a basic how-to question) aren't guardrail breaches — those are covered by the Quality/Human intervention targets. Guardrails are reserved specifically for the human-boundary categories, where even one real failure (like the <a href="index.html#learn">Trace Autopsy incident</a> — outdated policy → incorrectly promised a 90% credit, two messages sent before detection) is too costly to wait on a rate threshold for.</div>
+
+  <h3>Measurement — window and decision rules</h3>
+  <div class="reasoning"><b>Stabilization:</b> Weeks 1-2 (training + initial use — not judged yet, since this is largely a routine workflow update rather than a new tool with a steep learning curve).<br>
+  <b>Measurement window:</b> Weeks 3-8, with a built-in flexibility clause — if early Week 3 data looks off, reassess before treating it as final rather than reacting to noise.<br>
+  <b>Sources:</b> Help desk tool data (timestamps, status), eval suite results, direct rep feedback/check-ins. Raw data requested directly rather than a pre-built dashboard (see open question 9).<br>
+  <b>Decision rules (Week 9+):</b> Three real outcomes, not just pass/fail —
   <ul style="margin:6px 0 0 18px">
-<li><b>Continue/iterate</b> — short of target but no guardrail breach; keep refining.</li>
-<li><b>Expand to Tier 2</b> — targets hit; ready to grow scope.</li>
-<li><b>Pause</b> — guardrail breach; handled by the Guardrails rule above, not a wait-for-the-window decision.</li>
-</ul></div>
-<h2>Reflection</h2>
-<div class="frame">The polished version of this reflection (PLAN-specific) is in the <a href="plan.html">PLAN deliverable</a>. This one's about the working process itself, across HANDOFF through CONFIGURE. The pattern I noticed most: my first answer to almost anything was usually close, but not quite precise — "reading the ticket" instead of "everything the agent can see," "drafting and sending" instead of "the decision about which path something takes." Getting from "close" to "actually right" took someone pushing back and asking me to distinguish it from something adjacent, not just re-explaining the same thing louder. I also noticed I do better reasoning when I have a concrete example to hang a concept on (Meridian) than when I'm working with the abstract idea alone — the "trigger/context/instructions/retrieval/routing/handoff/evals" framework only really clicked once I mapped each piece onto this specific pilot. That's probably useful to know about how I learn, going into a real role: ask for the concrete case, don't just take the definition at face value.</div>
-<p class="note">Last updated as part of an in-progress working session — targets and reasoning above are drafts, not final.</p>
-<p class="small" style="margin-top:36px;padding-top:16px;border-top:1px solid var(--border)"><a href="plan.html">PLAN deliverable</a>  ·  <a href="configure.html">CONFIGURE flow diagram</a>  ·  <a href="deliverable.html">One-page deliverable</a></p>
+    <li><b>Continue/iterate</b> — short of target but no guardrail breach; keep refining.</li>
+    <li><b>Expand to Tier 2</b> — targets hit; ready to grow scope.</li>
+    <li><b>Pause</b> — guardrail breach; handled by the Guardrails rule above, not a wait-for-the-window decision.</li>
+  </ul></div>
+
+  <h2>Reflection</h2>
+  <div class="frame">The polished version of this reflection (PLAN-specific) is in the <a href="plan.html">PLAN deliverable</a>. This one's about the working process itself, across HANDOFF through CONFIGURE. The pattern I noticed most: my first answer to almost anything was usually close, but not quite precise — "reading the ticket" instead of "everything the agent can see," "drafting and sending" instead of "the decision about which path something takes." Getting from "close" to "actually right" took someone pushing back and asking me to distinguish it from something adjacent, not just re-explaining the same thing louder. I also noticed I do better reasoning when I have a concrete example to hang a concept on (Meridian) than when I'm working with the abstract idea alone — the "trigger/context/instructions/retrieval/routing/handoff/evals" framework only really clicked once I mapped each piece onto this specific pilot. That's probably useful to know about how I learn, going into a real role: ask for the concrete case, don't just take the definition at face value.</div>
+
+  <p class="note">Last updated as part of an in-progress working session — targets and reasoning above are drafts, not final.</p>
+
+  <p class="small" style="margin-top:36px;padding-top:16px;border-top:1px solid var(--border)"><a href="plan.html">PLAN deliverable</a> &nbsp;·&nbsp; <a href="configure.html">CONFIGURE flow diagram</a> &nbsp;·&nbsp; <a href="deliverable.html">One-page deliverable</a></p>
+
 </div>
+<script id="v88-shared-script">(()=>{if(document.body.dataset.v88)return;document.body.dataset.v88='1';const bar=document.querySelector('.topbar .wrap');if(bar){bar.innerHTML='<div class="brand"><a href="index.html">AI <span style="color:var(--purple)">Customer Success</span></a></div><div class="v88-shellnav"><a href="index.html">Home</a><a href="index.html#meridian">Meridian</a><a href="index.html#portfolio">Portfolio</a><a href="index.html#learn">Learning Library</a><button class="v88-theme" type="button" aria-label="Toggle dark mode">☾</button></div>';bar.querySelector('.v88-theme').onclick=()=>{document.body.classList.toggle('v88-dark');localStorage.setItem('ai-cs-theme',document.body.classList.contains('v88-dark')?'dark':'light');};}if(localStorage.getItem('ai-cs-theme')==='dark')document.body.classList.add('v88-dark');})();</script>
+<script id="v88-tracker-nav">(()=>{const wrap=document.querySelector('.wrap');if(!wrap||document.querySelector('.v88-question-nav'))return;const hs=[...wrap.querySelectorAll('h3')].filter(h=>/^\s*\d+\s*[·.:-]/.test(h.textContent)||/question/i.test(h.textContent));if(!hs.length)return;const nav=document.createElement('div');nav.className='v88-question-nav';hs.forEach((h,i)=>{h.id=h.id||'q'+(i+1);const a=document.createElement('a');a.href='#'+h.id;a.textContent=h.textContent.trim().replace(/\s+/g,' ').slice(0,42);nav.appendChild(a);});const frame=wrap.querySelector('.frame');(frame||wrap.querySelector('h2'))?.after(nav);})();</script>
 </body>
 </html>
