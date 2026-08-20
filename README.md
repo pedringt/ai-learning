@@ -1,9 +1,9 @@
 # AI Customer Success Learning Portfolio
 
-Deploy-ready static package — v86.
+Deploy-ready static package — v87.
 
 - `index.html` — main portfolio
-- `agent-flow.html` — full responsive Meridian SVG flowchart
+- `agent-flow.html` — full responsive Meridian flowchart
 - `tracker.html` — full 17-question working tracker
 - `plan.html` — full Success Measurement Plan
 - `evals.html` — current Eval Suite
