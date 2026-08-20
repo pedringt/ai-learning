@@ -641,33 +641,7 @@ body.v919-tracker .wrap>h2:not(:first-of-type){
 }
 </style>
 
-<style id="v922-home-header-parity">
-.topbar{position:sticky;top:0;z-index:50;background:rgba(255,255,255,.96);backdrop-filter:blur(12px);border-bottom:1px solid var(--border)}
-body.v88-dark .topbar{background:rgba(16,16,20,.96)}
-.topbar .topinner{max-width:1180px;margin:auto;display:flex;align-items:center;justify-content:space-between;gap:18px;padding:12px 28px}
-.brand-button{border:0;background:transparent;color:inherit;padding:0;cursor:pointer;text-align:left;text-decoration:none!important}
-.brand{font-weight:800;font-size:17px}.brand span{color:var(--purple)}
-.nav{display:flex;gap:5px;flex-wrap:wrap}
-.nav a{border:0;background:transparent;color:inherit!important;padding:9px 11px;border-radius:9px;cursor:pointer;font-size:13px;font-weight:700;text-decoration:none!important}
-.nav a:hover{background:var(--softp);color:var(--purple)!important}
-.top-actions{display:flex;align-items:center;gap:8px}
-.theme-toggle{border:1px solid var(--border);background:var(--card);color:inherit;border-radius:999px;padding:8px 11px;cursor:pointer;font-size:12px;font-weight:800;white-space:nowrap}
-.theme-toggle:hover{background:var(--softp);color:var(--purple)}
-.secondary-menu{position:relative}
-.secondary-menu summary{list-style:none;display:flex;align-items:center;gap:7px;border:1px solid var(--border);background:var(--card);color:inherit;border-radius:999px;padding:8px 11px 8px 13px;cursor:pointer;font-size:12px;font-weight:800;white-space:nowrap}
-.secondary-menu summary::-webkit-details-marker{display:none}
-.secondary-menu summary:hover,.secondary-menu[open] summary{background:var(--softp);color:var(--purple)}
-.menu-chevron{display:inline-flex;align-items:center;justify-content:center;width:14px;min-width:14px;height:14px;font-size:13px;line-height:1;transform:translateY(-1px);transition:transform .15s ease}
-.secondary-menu[open] .menu-chevron{transform:translateY(1px) rotate(180deg)}
-.secondary-menu-panel{position:absolute;right:0;top:calc(100% + 8px);z-index:60;width:250px;padding:9px;border:1px solid var(--border);border-radius:14px;background:var(--card);box-shadow:0 18px 42px rgba(0,0,0,.16)}
-.secondary-menu-panel a{display:block;padding:9px 10px;border-radius:9px;color:inherit!important;text-decoration:none;font-size:12.5px;font-weight:700}
-.secondary-menu-panel a:hover{background:var(--softp);color:var(--purple)!important}
-.secondary-menu-label{display:block;padding:7px 10px 4px;color:var(--muted);font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase}
-#v922MobileNav{display:none;border:1px solid var(--border);background:var(--card);color:inherit;border-radius:9px;padding:9px 34px 9px 11px;font-size:13px;font-weight:700;min-width:154px}
-@media(max-width:860px){.nav{display:none}.secondary-menu{display:none}#v922MobileNav{display:block}}
-@media(max-width:560px){.topbar .topinner{padding:11px 18px;gap:10px}.brand{font-size:15px}.theme-toggle{padding:8px 10px}#v922MobileNav{min-width:0;max-width:156px;padding-right:34px}}
-</style>
-</head>
+<link href="site-shell.css" rel="stylesheet"/></head>
 <body>
 <div class="topbar"><div class="topinner"><a class="brand-button" href="index.html"><span class="brand">AI <span>Customer Success</span></span></a><nav aria-label="Prototype pages" class="nav"><a href="index.html">Home</a><a href="index.html#meridian">Meridian</a><a href="index.html#portfolio">Portfolio</a><a href="index.html#learn">Learning Library</a></nav><div class="top-actions"><button aria-label="Switch to dark mode" aria-pressed="false" class="theme-toggle" id="v922ThemeToggle" title="Switch to dark mode" type="button">☾</button><details class="secondary-menu"><summary>More <span aria-hidden="true" class="menu-chevron">⌄</span></summary><div class="secondary-menu-panel"><span class="secondary-menu-label">Meridian evidence</span><a href="tracker.html">Full Working Tracker</a><a href="deliverable.html">One-page Meridian readout</a><span class="secondary-menu-label">Direct artifact links</span><a href="plan.html">Success Measurement Plan</a><a href="agent-flow.html">Agent Flow &amp; Guardrails</a><a href="evals.html">Eval Suite</a></div></details><select aria-label="Choose page" id="v922MobileNav"><option value="index.html">Home</option><option value="index.html#meridian">Meridian</option><option value="index.html#portfolio">Portfolio</option><option value="index.html#learn">Learning Library</option></select></div></div></div>
 <div class="wrap"><div class="v88-artifact-nav"><span class="v912-artifact-label">Meridian evidence</span><a href="tracker.html">Discovery</a><a href="plan.html">Success Plan</a><a aria-current="page" class="active" href="agent-flow.html">Agent Flow</a><a href="evals.html">Eval Suite</a><a href="deliverable.html">Case Readout</a></div>
@@ -835,32 +809,5 @@ body.v88-dark .topbar{background:rgba(16,16,20,.96)}
 <p class="small" style="margin-top:36px;padding-top:16px;border-top:1px solid var(--border)"><a href="tracker.html">Working tracker (full reasoning log)</a>  ·  <a href="plan.html">PLAN deliverable</a>  ·  <a href="deliverable.html">One-page deliverable</a></p>
 </div>
 
-
-<script id="v922-home-header-script">
-(()=>{
-  const btn=document.getElementById('v922ThemeToggle');
-  const apply=()=>{
-    const dark=document.body.classList.contains('v88-dark');
-    if(btn){
-      btn.textContent=dark?'☀':'☾';
-      btn.setAttribute('aria-pressed',dark?'true':'false');
-      btn.setAttribute('aria-label',dark?'Switch to light mode':'Switch to dark mode');
-      btn.setAttribute('title',dark?'Switch to light mode':'Switch to dark mode');
-    }
-  };
-  if(localStorage.getItem('ai-cs-theme')==='dark') document.body.classList.add('v88-dark');
-  apply();
-  if(btn) btn.onclick=()=>{
-    document.body.classList.toggle('v88-dark');
-    localStorage.setItem('ai-cs-theme',document.body.classList.contains('v88-dark')?'dark':'light');
-    apply();
-  };
-  const sel=document.getElementById('v922MobileNav');
-  if(sel) sel.onchange=()=>{location.href=sel.value};
-  document.addEventListener('click',e=>{
-    document.querySelectorAll('.secondary-menu[open]').forEach(d=>{if(!d.contains(e.target)) d.removeAttribute('open')});
-  });
-})();
-</script>
-</body>
+<script defer="" src="site-shell.js"></script></body>
 </html>

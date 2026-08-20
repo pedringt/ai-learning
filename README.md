@@ -176,3 +176,11 @@ Navigation polish only. The desktop header now keeps the four primary destinatio
 - Standalone artifact pages now use the actual Home header markup pattern rather than a visually similar recreation.
 - Moved the one-page readout’s planned-learning note below the orientation block so the top follows the same artifact rhythm as other Meridian pages.
 - No substantive content changed.
+
+## v93.0 shared shell refactor
+- Added `site-shell.css` as the single source of truth for header/nav/control styling across Home and standalone artifacts.
+- Added `site-shell.js` for standalone theme/mobile/dropdown behavior.
+- Home keeps its SPA router but now consumes the same header CSS as artifact pages.
+- Increased the shared header type scale slightly; because the rules are shared, Home and artifacts cannot drift in nav sizing.
+- Removed v92 standalone header CSS/JS duplication.
+- No Meridian substantive content changed.
