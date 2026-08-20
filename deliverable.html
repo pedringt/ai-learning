@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width,initial-scale=1" name="viewport"/>
+<title>Meridian Capstone Deliverable</title>
+<style>
+  :root{
+    --ink:#0c0c10; --muted:#626475; --purple:#5336e8; --purple2:#7044f4;
+    --blue:#2b64d8; --cyan:#159eb9; --green:#269650; --gold:#bd8917;
+    --border:#e7e5ef; --soft:#f8f7fc; --softp:#f3f0ff; --white:#fff;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:Arial,Helvetica,sans-serif;color:var(--ink);background:#fff;line-height:1.5}
+  a{color:var(--purple);text-decoration:underline;text-decoration-thickness:1.5px;text-underline-offset:3px}
+  .topbar{position:sticky;top:0;background:rgba(255,255,255,.96);backdrop-filter:blur(10px);border-bottom:1px solid var(--border);z-index:50}
+  .topbar .wrap{display:flex;justify-content:space-between;align-items:center;gap:18px;padding:12px 34px}
+  .brand{font-weight:800}
+  .brand a{color:inherit;text-decoration:none}
+  .nav{display:flex;gap:14px;flex-wrap:wrap;font-size:13px}.nav a{text-decoration:none;color:var(--ink)}.nav a:hover{color:var(--purple)}
+  .pdfbtn{background:var(--purple);color:#fff!important;text-decoration:none!important;padding:7px 12px;border-radius:9px;font-weight:700;font-size:13px;white-space:nowrap;display:inline-block}
+  .wrap{max-width:1060px;margin:auto;padding:40px 34px 90px}
+  .badge{display:inline-block;border:1px solid #d9d3ff;background:var(--softp);color:var(--purple);padding:5px 8px;border-radius:999px;font-size:12px;font-weight:800}
+  h1{font-size:30px;line-height:1.1;letter-spacing:-.025em;margin:12px 0 8px}
+  .lead{font-size:16px;color:var(--muted);max-width:780px;margin:0 0 24px}
+  h2{font-size:15px;text-transform:uppercase;letter-spacing:.05em;margin:0 0 4px;color:var(--purple)}
+  .stage{border:1px solid var(--border);border-radius:14px;padding:18px 20px;margin:14px 0;background:#fff}
+  .stage.done{border-left:4px solid var(--green)}
+  .stage.progress{border-left:4px solid var(--gold)}
+  .stage.todo{border-left:4px solid var(--border);background:#fafafc}
+  .stagehead{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px}
+  .pstatus{display:inline-block;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;padding:3px 9px;border-radius:999px;white-space:nowrap}
+  .pstatus.done{background:#e8f6ec;color:var(--green)}
+  .pstatus.progress{background:#fff6e0;color:var(--gold)}
+  .pstatus.todo{background:#f2f1f6;color:var(--muted)}
+  .stagebody{font-size:14px}
+  .stagebody ul{margin:6px 0 0 18px;padding:0}
+  .stagebody li{margin:4px 0}
+  .stage.todo .stagebody{color:var(--muted);font-size:13.5px}
+  .sevidence{font-size:12.5px}
+  table{width:100%;border-collapse:collapse;margin:8px 0 0;font-size:13px}
+  th{background:var(--ink);color:#fff;text-align:left;padding:6px 9px}
+  td{border:1px solid var(--border);padding:6px 9px}
+  .footer-note{font-size:12px;color:var(--muted);margin-top:36px;padding-top:16px;border-top:1px solid var(--border)}
+  @media(max-width:760px){.nav{display:none}.topbar .wrap{padding:12px 20px}.wrap{padding:0 20px 60px}h1{font-size:24px}}
+</style>
+</head>
+<body>
+<div class="topbar"><div class="wrap">
+<div class="brand"><a href="index.html">AI Customer Success</a></div>
+<div style="display:flex;align-items:center;gap:18px">
+<nav class="nav"><a href="index.html">Guide</a><a href="tracker.html">Tracker</a><a href="plan.html">Plan</a><a href="configure.html">Configure</a></nav>
+</div>
+</div></div>
+<div class="wrap">
+<span class="badge">CAPSTONE · ONE-PAGE DELIVERABLE</span>
+<h1>Meridian Capstone Deliverable</h1>
+<p class="lead">A condensed, single-page view of the actual work and decisions across every stage of the capstone. Each stage links out to the full reasoning if you want more depth — this page is the "here's what I actually did" summary.</p>
+<div class="stage done">
+<div class="stagehead"><h2>Handoff</h2><span class="pstatus done">Done</span></div>
+<div class="stagebody">
+    Reviewed the PM handoff for Meridian Support Operations — a Tier 1 support pilot where an AI agent classifies tickets, drafts responses, and routes risky or uncertain cases to a human. Raised 3 initial clarifying questions before moving to PLAN: whether formal pilot targets already existed, what the knowledge base's reliability actually was, and whether the human-boundary/escalation list in the handoff was complete. Set the core human boundary early: money and security categories never get an AI draft, and every AI draft — regardless of category — goes through mandatory human review before it reaches a customer.
+    <div style="margin-top:6px"><a class="sevidence" href="tracker.html">→ full open-questions log</a></div>
+</div>
+</div>
+<div class="stage done">
+<div class="stagehead"><h2>Plan</h2><span class="pstatus done">Done</span></div>
+<div class="stagebody">
+    Turned the PM's handoff into measurable pilot targets for the 8-week Tier 1 rollout.
+    <table><tr><th>Metric</th><th>Baseline</th><th>Pilot target</th></tr>
+<tr><td>First-response time</td><td>&gt; 8 hrs</td><td>~ 7 hrs</td></tr>
+<tr><td>AHT</td><td>12.4 min</td><td>Hold roughly steady</td></tr>
+<tr><td>CSAT</td><td>82%</td><td>Monitored, no hard target this pilot</td></tr>
+<tr><td>Quality / human intervention</td><td>—</td><td>≥80% clean approval / ≤20% substantive correction</td></tr>
+<tr><td>Guardrails</td><td>—</td><td>Zero-tolerance, single-incident trigger</td></tr>
+</table>
+<div style="margin-top:6px"><a class="sevidence" href="plan.html">→ full deliverable with working notes</a></div>
+</div>
+</div>
+<div class="stage progress">
+<div class="stagehead"><h2>Configure</h2><span class="pstatus progress">In progress</span></div>
+<div class="stagebody">
+    Built the agent's flow logic: classify → (high-risk skips drafting, straight to human) or (retrieve → draft → confidence check) → human review → send → escalation check on replies. Escalation threshold (5+ exchanges) justified with real usage data rather than a guess. Retrieval built on semantic/embedding search instead of keyword matching, to sidestep the knowledge base's existing search problem. One standout catch: digging into why reps manually copy-pasted billing status into tickets found it was a simple display-config gap, not a new integration or approval need. Flow diagram is done; the actual no/low-code prototype build is optional, later practice.
+    <div style="margin-top:6px"><a class="sevidence" href="configure.html">→ full flow diagram</a></div>
+</div>
+</div>
+<div class="stage todo">
+<div class="stagehead"><h2>Validate</h2><span class="pstatus todo">Not started</span></div>
+<div class="stagebody">Eval suite + launch readiness. Will include a 30–50 case eval suite and a Trace Autopsy investigation into a simulated quality drop.</div>
+</div>
+<div class="stage todo">
+<div class="stagehead"><h2>Enable</h2><span class="pstatus todo">Not started</span></div>
+<div class="stagebody">Onboarding kit for the 8 Tier 1 reps — training agenda, quick-start guide, safe-use guide, and a confidence/friction survey.</div>
+</div>
+<div class="stage todo">
+<div class="stagehead"><h2>Operate</h2><span class="pstatus todo">Not started</span></div>
+<div class="stagebody">90-day dataset, dashboard, and customer health score — tracking adoption, AI quality, and outcomes against the PLAN targets.</div>
+</div>
+<div class="stage todo">
+<div class="stagehead"><h2>Incident</h2><span class="pstatus todo">Not started</span></div>
+<div class="stagebody">Troubleshooting investigation and business-impact write-up for a real or simulated failure during the pilot.</div>
+</div>
+<div class="stage todo">
+<div class="stagehead"><h2>Improve</h2><span class="pstatus todo">Not started</span></div>
+<div class="stagebody">Evidence-backed recommendation based on pilot data — what to change before scaling past Tier 1.</div>
+</div>
+<div class="stage todo">
+<div class="stagehead"><h2>Prove</h2><span class="pstatus todo">Not started</span></div>
+<div class="stagebody">90-day customer success review — the outcomes/ROI story tied back to the original PLAN targets.</div>
+</div>
+<div class="stage todo">
+<div class="stagehead"><h2>Expand</h2><span class="pstatus todo">Not started</span></div>
+<div class="stagebody">Evidence-backed next-step recommendation to product — likely candidate: the KB-cleanup/maintenance agent idea seeded during CONFIGURE, once there's pilot data to justify it.</div>
+</div>
+<p class="footer-note">Last updated: 8/16/2026, end of the CONFIGURE stage. Full reasoning behind every decision above lives in the <a href="tracker.html">working tracker</a>.</p>
+</div>
+</body>
+</html>
