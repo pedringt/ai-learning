@@ -667,9 +667,29 @@ body.v919-tracker .wrap>h2:not(:first-of-type){
   line-height:1.55;
 }
 </style>
+<style id="v933-agentic-note-style">
+.v933-agentic-note{
+  margin:0 0 26px;
+  padding:16px 18px;
+  border:1px solid var(--border);
+  border-left:3px solid var(--purple);
+  border-radius:12px;
+  background:var(--softp);
+}
+.v933-agentic-label{
+  margin-bottom:5px;
+  color:var(--purple);
+  font-size:10.5px;
+  font-weight:800;
+  letter-spacing:.07em;
+  text-transform:uppercase;
+}
+.v933-agentic-note h3{margin:0 0 7px}
+.v933-agentic-note p{margin:6px 0 0;line-height:1.58}
+</style>
 </head>
 <body>
-<div class="topbar"><div class="topinner"><a class="brand-button" href="index.html"><span class="brand">AI <span>Customer Success</span></span></a><nav aria-label="Prototype pages" class="nav"><a href="index.html">Home</a><a href="index.html#meridian">Meridian</a><a href="index.html#portfolio">Portfolio</a><a href="index.html#learn">Learning Library</a></nav><div class="top-actions"><button aria-label="Switch to dark mode" aria-pressed="false" class="theme-toggle" id="v922ThemeToggle" title="Switch to dark mode" type="button">☾</button><details class="secondary-menu"><summary>More <span aria-hidden="true" class="menu-chevron">⌄</span></summary><div class="secondary-menu-panel"><span class="secondary-menu-label">Meridian evidence</span><a href="tracker.html">Full Working Tracker</a><a href="deliverable.html">One-page Meridian readout</a><span class="secondary-menu-label">Direct artifact links</span><a href="plan.html">Success Measurement Plan</a><a href="agent-flow.html">Agent Flow &amp; Guardrails</a><a href="evals.html">Eval Suite</a></div></details><select aria-label="Choose page" id="v922MobileNav"><option value="index.html">Home</option><option value="index.html#meridian">Meridian</option><option value="index.html#portfolio">Portfolio</option><option value="index.html#learn">Learning Library</option></select></div></div></div>
+<div class="topbar"><div class="topinner"><a class="brand-button" href="index.html"><span class="brand">AI <span>Customer Success</span></span></a><nav aria-label="Prototype pages" class="nav"><a href="index.html">Home</a><a href="index.html#meridian">Meridian</a><a href="index.html#portfolio">Portfolio</a><a href="index.html#learn">Learning Library</a></nav><div class="top-actions"><button aria-label="Switch to dark mode" aria-pressed="false" class="theme-toggle" id="v922ThemeToggle" title="Switch to dark mode" type="button">☾</button><details class="secondary-menu"><summary>More <span aria-hidden="true" class="menu-chevron">⌄</span></summary><div class="secondary-menu-panel"><span class="secondary-menu-label">Meridian evidence</span><a href="deliverable.html">One-page Meridian readout</a><a href="tracker.html">Full Working Tracker</a><span class="secondary-menu-label">Direct artifact links</span><a href="plan.html">Success Measurement Plan</a><a href="agent-flow.html">Agent Flow &amp; Guardrails</a><a href="evals.html">Eval Suite</a></div></details><select aria-label="Choose page" id="v922MobileNav"><option value="index.html">Home</option><option value="index.html#meridian">Meridian</option><option value="index.html#portfolio">Portfolio</option><option value="index.html#learn">Learning Library</option></select></div></div></div>
 <div class="wrap"><div class="v88-artifact-nav"><span class="v912-artifact-label">Meridian evidence</span><a href="tracker.html">Discovery</a><a href="plan.html">Success Plan</a><a aria-current="page" class="active" href="agent-flow.html">Agent Flow</a><a href="evals.html">Eval Suite</a><a href="deliverable.html">Case Readout</a></div>
 <span class="badge">CAPSTONE · CONFIGURE</span>
 <h2>Agent Flow — Meridian Tier 1 Support Pilot</h2>
@@ -684,6 +704,11 @@ body.v919-tracker .wrap>h2:not(:first-of-type){
 <b>Designed</b>
 <p>Skim this box first; continue below for the full artifact.</p>
 </div>
+</div><div class="v933-agentic-note">
+<div class="v933-agentic-label">Architecture choice · Planned learning</div>
+<h3>Why this isn’t an autonomous agent</h3>
+<p>Meridian is intentionally a constrained, human-reviewed workflow rather than an open-ended agent. For this pilot, I don’t yet see a need for autonomous planning or dynamic tool use that would justify the additional complexity and risk.</p>
+<p><strong>Planned learning:</strong> Build a genuinely agentic workflow to practice dynamic tool selection and sequencing, state, tool failures and ambiguous outcomes, permissions, adversarial inputs, trajectory-level evals, and safe stopping or escalation.</p>
 </div>
 <div class="callout cyan"><b>Not shown as a separate branch:</b> money/security categories (refunds, credits, disputes, password resets, account changes, security actions) skip drafting entirely per the PLAN Guardrails decision — they're folded into the "high-risk category" branch below, which routes straight to a human with no AI draft attempt.</div>
 <div class="diagram">

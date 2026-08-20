@@ -200,3 +200,9 @@ Deliberately constrained content-only release on top of v93.1:
 - Success Measurement Plan: 20-minute workflow cutoff explicitly labeled a provisional proxy requiring validation against reviewed tickets.
 - Agent Flow: confidence wording clarified as an observable-evidence review/routing signal, not model self-reported confidence.
 - No navigation, architecture, density, lifecycle-stage, or new-page changes.
+
+## v93.3 Agentic-awareness micro-update
+- Agent Flow now explicitly states that Meridian is intentionally a constrained, human-reviewed workflow rather than an autonomous agent.
+- Added a clearly labeled future-learning placeholder for a genuinely agentic project covering dynamic tool use, state, tool failure/ambiguous outcomes, permissions, adversarial inputs, trajectory-level evals, and stopping/escalation.
+- Reordered the More menu so the one-page Meridian readout appears before the full Working Tracker.
+- No new page, no architecture change, no lifecycle-stage completion, and no substantive Meridian claims added.
