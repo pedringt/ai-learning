@@ -114,3 +114,15 @@ Navigation polish only. The desktop header now keeps the four primary destinatio
 - Added the same `More` navigation dropdown to standalone Meridian artifact pages.
 - Replaced confusing Previous/Next chapter navigation with a persistent Meridian evidence bar.
 - Retains v91.1 dark-mode palette and VALIDATE content.
+
+## v91.3 manager-entry polish
+- Made the existing “Short on time?” route visually unmistakable as a 3-minute path.
+- No new curriculum, Meridian evidence, ROI claims, or homepage section was added.
+- Retains the v91.2 cohesion/navigation pass and v91.1 VALIDATE/dark-mode fixes.
+
+## v91.4 manager-ready
+- Final scenario-integrity polish before manager review.
+- Clarified the Case Readout’s Meridian figures as scenario baselines and proposed pilot targets, not measured outcomes.
+- Clarified Tracker references to current/pre-growth CSAT as scenario current-state and scenario pre-growth baseline.
+- No new curriculum, claims, artifacts, or substantive Meridian work added.
+- This is the manager-review-ready freeze point; resume site changes when new Meridian evidence warrants them.
