@@ -1,8 +1,8 @@
-# AI Customer Success Learning Portfolio — v89.3
+# AI Customer Success Learning Portfolio — v89.4
 
-v89.3 is a regression-recovery rebuild from the known-good v88.2 visual baseline.
+v89.4 is a regression-recovery rebuild from the known-good v88.2 visual baseline.
 
-## v89.3 scope
+## v89.4 scope
 - Restored the v88.2 Home, Portfolio, lower-page, and shared “Go deeper” visual structure instead of patching the broken v89.2 DOM.
 - Preserved the four-item primary navigation: Home / Meridian / Portfolio / Learning Library.
 - Preserved the Meridian 5-second summary and four flagship applied-work artifacts.
@@ -33,3 +33,10 @@ Emphasis/status polish only: Meridian primary artifacts are visually prioritized
 
 ## v88.2
 Navigation polish only. The desktop header now keeps the four primary destinations in the main nav and uses a small **More** menu for secondary/direct evidence links. The mobile selector is no longer shown on desktop, is reduced to the same four primary destinations, and has additional right-side padding so the native dropdown arrow has room to breathe. No substantive portfolio content or site architecture was changed.
+
+
+## v89.4 live-render regression fix
+- Removed the surviving v88 Portfolio runtime wrapper that was collapsing the entire Portfolio page after load.
+- Portfolio supporting evidence is visible on the page again; it is no longer hidden behind “More portfolio notes…”.
+- Restored Go deeper as an explicitly styled shared footer inside the site wrapper.
+- Added a regression check that fails if legacy scripts dynamically create/wrap Home, Meridian, or Portfolio structure.
