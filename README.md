@@ -1,6 +1,16 @@
-# AI Customer Success Learning Portfolio
+# AI Customer Success Learning Portfolio — v89
 
-Deploy-ready static package — v88.2.
+v89 is a consolidation + scannability release built from v88.2.
+
+## v89 changes
+- Flattened the accumulated Meridian/Portfolio hierarchy patches out of `index.html`; legacy runtime injectors and hidden mini-nav code were removed rather than layered again.
+- Preserved the settled four-artifact Meridian hierarchy: Discovery & Decisions, Success Measurement Plan, Agent Flow & Guardrails, and Eval Suite.
+- Added a compact Meridian **Situation / Approach / What I built** fast-read without implying fictional pilot outcomes.
+- Added a new, explicitly labeled **Meridian AI-output proof exercise** showing mock retrieved knowledge, an AI-generated draft, human review, and an approved response.
+- Added an explicit transparency note: Meridian and the exercise are fictional/mock; AI was used to generate and iterate on practice material; the portfolio claim is the human reasoning, critique, and workflow decisions.
+- Simplified the Learning Library into collapsible Foundations and AI Systems groups while preserving the underlying learning content.
+- Added small-screen status/card wrapping polish.
+- No framework/SPA/SSR/SSG migration.
 
 ## v88 focus
 Information architecture and progressive disclosure. Substantive v87 work is preserved; content is regrouped so the applied Meridian case is easiest to scan, the Learning Library holds deeper reference material, and Portfolio contains evidence plus Workbench breadth practice.
