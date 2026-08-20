@@ -1,4 +1,4 @@
-# AI Customer Success Learning Portfolio — v90 Final
+# AI Customer Success Learning Portfolio — v90.1 Final
 
 v90 is the final content + polish pass built from the v89.5 release candidate.
 
@@ -59,3 +59,9 @@ Navigation polish only. The desktop header now keeps the four primary destinatio
 - Tightened the AI-output exercise disclosure so collaboratively AI-assisted draft/critique/revision text is not presented as solely human-authored work.
 - Updated standalone artifact fallback navigation to Home / Meridian / Portfolio / Learning Library so no-JS fetchers see the current site hierarchy.
 - Removed a dead study-tools observer whose target controls are no longer present.
+
+
+## v90.1 final small polish
+- Added breathing room below the Portfolio Learning Library concepts note.
+- Added a lightweight Home capstone progress line.
+- Kept the planned-learning framing prominent in Meridian and added it to the standalone one-page deliverable for direct-entry visitors.
