@@ -1,6 +1,6 @@
 # AI Customer Success Learning Portfolio
 
-Deploy-ready static package — v88.1.
+Deploy-ready static package — v88.2.
 
 ## v88 focus
 Information architecture and progressive disclosure. Substantive v87 work is preserved; content is regrouped so the applied Meridian case is easiest to scan, the Learning Library holds deeper reference material, and Portfolio contains evidence plus Workbench breadth practice.
@@ -14,10 +14,11 @@ Information architecture and progressive disclosure. Substantive v87 work is pre
 - `configure.html` — legacy compatibility path
 - `vercel.json` — Vercel settings
 
-
 ## v88 IA note
 Primary navigation is ordered **Home → Meridian → Portfolio → Learning Library**. The Learning Library is intentionally the deeper working-reference layer; applied work and evidence come first.
 
-
 ## v88.1
 Emphasis/status polish only: Meridian primary artifacts are visually prioritized; Working Tracker and one-page summary remain supporting evidence; Portfolio features Meridian without duplicating the full case. No substantive content was removed.
+
+## v88.2
+Navigation polish only. The desktop header now keeps the four primary destinations in the main nav and uses a small **More** menu for secondary/direct evidence links. The mobile selector is no longer shown on desktop, is reduced to the same four primary destinations, and has additional right-side padding so the native dropdown arrow has room to breathe. No substantive portfolio content or site architecture was changed.
