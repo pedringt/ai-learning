@@ -137,7 +137,6 @@ body.v88-dark .metric,body.v88-dark .case,body.v88-dark .eval-area,body.v88-dark
   .v88-artifact-nav{margin-top:10px}
 }
 </style>
-
 <style id="v915-artifact-orientation">
 .v915-orientation{
   display:grid;grid-template-columns:minmax(0,1.7fr) minmax(150px,.55fr);
@@ -154,6 +153,65 @@ body.v88-dark .metric,body.v88-dark .case,body.v88-dark .eval-area,body.v88-dark
  .v915-orientation .statusbox{padding-left:0;padding-top:10px;border-left:0;border-top:1px solid var(--border)}
 }
 </style>
+
+<style id="v917-shell-consistency">
+.v88-shellnav{display:flex;align-items:center;gap:4px;flex-wrap:nowrap}
+.v88-shellnav>a,.v88-theme,.v912-more>summary{
+  border:0;background:transparent;color:var(--ink)!important;text-decoration:none!important;
+  padding:8px 9px;border-radius:9px;font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap
+}
+.v88-shellnav>a:hover,.v88-theme:hover,.v912-more>summary:hover,.v912-more[open]>summary{
+  background:var(--softp)!important;color:var(--purple)!important
+}
+.v912-more{position:relative}
+.v912-more>summary{
+  list-style:none;display:flex;align-items:center;gap:6px;border:1px solid var(--border);
+  background:var(--card)
+}
+.v912-more>summary::-webkit-details-marker{display:none}
+.v912-more-panel{
+  position:absolute;right:0;top:calc(100% + 8px);z-index:90;width:250px;padding:9px;
+  border:1px solid var(--border);border-radius:14px;background:var(--card);
+  box-shadow:0 18px 42px rgba(0,0,0,.18)
+}
+.v912-more-panel a{
+  display:block;padding:9px 10px;border-radius:9px;color:var(--ink)!important;
+  text-decoration:none!important;font-size:12.5px;font-weight:700
+}
+.v912-more-panel a:hover{background:var(--softp);color:var(--purple)!important}
+.v912-menu-label{
+  display:block;padding:7px 10px 4px;color:var(--muted);font-size:10px;font-weight:800;
+  letter-spacing:.06em;text-transform:uppercase
+}
+.v88-theme{border:1px solid var(--border)!important;background:var(--card)!important}
+
+/* Canonical Meridian evidence bar */
+.v88-artifact-nav{
+  display:flex!important;align-items:center!important;gap:8px!important;overflow-x:auto!important;
+  margin:14px 0 26px!important;padding:4px 0 8px!important;scrollbar-width:thin;font-size:12px!important
+}
+.v88-artifact-nav .v912-artifact-label{
+  flex:0 0 auto;color:var(--muted);font-size:10px;font-weight:800;
+  letter-spacing:.06em;text-transform:uppercase;margin-right:2px
+}
+.v88-artifact-nav a{
+  flex:0 0 auto!important;border:1px solid var(--border)!important;background:var(--card)!important;
+  color:var(--ink)!important;text-decoration:none!important;border-radius:999px!important;
+  padding:8px 11px!important;font-weight:800!important
+}
+.v88-artifact-nav a:hover{background:var(--softp)!important;color:var(--purple)!important}
+.v88-artifact-nav a.active{
+  background:var(--softp)!important;
+  border-color:color-mix(in srgb,var(--purple) 38%,var(--border))!important;
+  color:var(--purple)!important
+}
+@media(max-width:760px){
+  .v88-shellnav>a:nth-of-type(n+3){display:none}
+  .v88-shellnav{gap:2px}
+  .v88-shellnav>a,.v88-theme,.v912-more>summary{padding:7px;font-size:11px}
+  .v912-more-panel{right:-4px;width:min(250px,calc(100vw - 28px))}
+}
+</style>
 </head>
 <body>
 <div class="topbar"><div class="wrap"><div class="brand"><a href="index.html">AI <span style="color:var(--purple)">Customer Success</span></a></div><div class="v88-shellnav">
@@ -162,20 +220,20 @@ body.v88-dark .metric,body.v88-dark .case,body.v88-dark .eval-area,body.v88-dark
 <a href="index.html#portfolio">Portfolio</a>
 <a href="index.html#learn">Learning Library</a>
 <details class="v912-more">
-  <summary>More <span aria-hidden="true" class="v912-chevron">⌄</span></summary>
-  <div class="v912-more-panel">
-    <span class="v912-menu-label">Meridian evidence</span>
-    <a href="tracker.html">Discovery &amp; Decisions</a>
-    <a href="deliverable.html">One-page Meridian readout</a>
-    <span class="v912-menu-label">Direct artifact links</span>
-    <a href="plan.html">Success Measurement Plan</a>
-    <a href="agent-flow.html">Agent Flow &amp; Guardrails</a>
-    <a href="evals.html">Eval Suite</a>
-  </div>
+<summary>More <span aria-hidden="true" class="v912-chevron">⌄</span></summary>
+<div class="v912-more-panel">
+<span class="v912-menu-label">Meridian evidence</span>
+<a href="tracker.html">Discovery &amp; Decisions</a>
+<a href="deliverable.html">One-page Meridian readout</a>
+<span class="v912-menu-label">Direct artifact links</span>
+<a href="plan.html">Success Measurement Plan</a>
+<a href="agent-flow.html">Agent Flow &amp; Guardrails</a>
+<a href="evals.html">Eval Suite</a>
+</div>
 </details>
 <button aria-label="Toggle dark mode" class="v88-theme" title="Toggle dark mode" type="button">◐</button>
-</div></div></div></div>
-<div class="wrap"><div class="v88-artifact-nav"><span class="v912-artifact-label">Meridian evidence</span><a href="tracker.html">Discovery</a><a href="plan.html" class="active" aria-current="page">Success Plan</a><a href="agent-flow.html">Agent Flow</a><a href="evals.html">Eval Suite</a><a href="deliverable.html">Case Readout</a></div>
+</div></div></div>
+<div class="wrap"><div class="v88-artifact-nav"><span class="v912-artifact-label">Meridian evidence</span><a href="tracker.html">Discovery</a><a aria-current="page" class="active" href="plan.html">Success Plan</a><a href="agent-flow.html">Agent Flow</a><a href="evals.html">Eval Suite</a><a href="deliverable.html">Case Readout</a></div>
 <span class="badge">CAPSTONE · PLAN</span>
 <h2>Success Measurement Plan — Meridian Support Operations</h2>
 <p class="lead">Final locked targets for the 8-week Tier 1 pilot. Click "Working notes" under any metric to see the reasoning, assumptions, and any place my thinking changed along the way.</p>

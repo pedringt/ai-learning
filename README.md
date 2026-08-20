@@ -140,3 +140,10 @@ Navigation polish only. The desktop header now keeps the four primary destinatio
 - Replaced only the large Home learning-scaffolding block with a compact Learning Library preview.
 - Preserved top navigation, More menu, mobile navigation, theme controls, Meridian/Portfolio/Learning Library views, and all standalone artifact files.
 - Ran regression checks against v91.5 and local-link validation.
+
+## v91.7 shell consistency
+- Tightened the Learning Library CTA card so content starts at the top rather than floating vertically.
+- Standardized the standalone Meridian shell across every artifact page.
+- `More` now consistently appears before the dark-mode control.
+- Standardized the Meridian evidence bar so older artifact pages no longer fall back to the legacy navigation treatment.
+- Ran cross-page navigation and local-link regression checks.

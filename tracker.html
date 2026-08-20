@@ -137,7 +137,6 @@ body.v88-dark .metric,body.v88-dark .case,body.v88-dark .eval-area,body.v88-dark
   .v88-artifact-nav{margin-top:10px}
 }
 </style>
-
 <style id="v915-artifact-orientation">
 .v915-orientation{
   display:grid;grid-template-columns:minmax(0,1.7fr) minmax(150px,.55fr);
@@ -154,6 +153,65 @@ body.v88-dark .metric,body.v88-dark .case,body.v88-dark .eval-area,body.v88-dark
  .v915-orientation .statusbox{padding-left:0;padding-top:10px;border-left:0;border-top:1px solid var(--border)}
 }
 </style>
+
+<style id="v917-shell-consistency">
+.v88-shellnav{display:flex;align-items:center;gap:4px;flex-wrap:nowrap}
+.v88-shellnav>a,.v88-theme,.v912-more>summary{
+  border:0;background:transparent;color:var(--ink)!important;text-decoration:none!important;
+  padding:8px 9px;border-radius:9px;font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap
+}
+.v88-shellnav>a:hover,.v88-theme:hover,.v912-more>summary:hover,.v912-more[open]>summary{
+  background:var(--softp)!important;color:var(--purple)!important
+}
+.v912-more{position:relative}
+.v912-more>summary{
+  list-style:none;display:flex;align-items:center;gap:6px;border:1px solid var(--border);
+  background:var(--card)
+}
+.v912-more>summary::-webkit-details-marker{display:none}
+.v912-more-panel{
+  position:absolute;right:0;top:calc(100% + 8px);z-index:90;width:250px;padding:9px;
+  border:1px solid var(--border);border-radius:14px;background:var(--card);
+  box-shadow:0 18px 42px rgba(0,0,0,.18)
+}
+.v912-more-panel a{
+  display:block;padding:9px 10px;border-radius:9px;color:var(--ink)!important;
+  text-decoration:none!important;font-size:12.5px;font-weight:700
+}
+.v912-more-panel a:hover{background:var(--softp);color:var(--purple)!important}
+.v912-menu-label{
+  display:block;padding:7px 10px 4px;color:var(--muted);font-size:10px;font-weight:800;
+  letter-spacing:.06em;text-transform:uppercase
+}
+.v88-theme{border:1px solid var(--border)!important;background:var(--card)!important}
+
+/* Canonical Meridian evidence bar */
+.v88-artifact-nav{
+  display:flex!important;align-items:center!important;gap:8px!important;overflow-x:auto!important;
+  margin:14px 0 26px!important;padding:4px 0 8px!important;scrollbar-width:thin;font-size:12px!important
+}
+.v88-artifact-nav .v912-artifact-label{
+  flex:0 0 auto;color:var(--muted);font-size:10px;font-weight:800;
+  letter-spacing:.06em;text-transform:uppercase;margin-right:2px
+}
+.v88-artifact-nav a{
+  flex:0 0 auto!important;border:1px solid var(--border)!important;background:var(--card)!important;
+  color:var(--ink)!important;text-decoration:none!important;border-radius:999px!important;
+  padding:8px 11px!important;font-weight:800!important
+}
+.v88-artifact-nav a:hover{background:var(--softp)!important;color:var(--purple)!important}
+.v88-artifact-nav a.active{
+  background:var(--softp)!important;
+  border-color:color-mix(in srgb,var(--purple) 38%,var(--border))!important;
+  color:var(--purple)!important
+}
+@media(max-width:760px){
+  .v88-shellnav>a:nth-of-type(n+3){display:none}
+  .v88-shellnav{gap:2px}
+  .v88-shellnav>a,.v88-theme,.v912-more>summary{padding:7px;font-size:11px}
+  .v912-more-panel{right:-4px;width:min(250px,calc(100vw - 28px))}
+}
+</style>
 </head>
 <body>
 <div class="topbar"><div class="wrap"><div class="brand"><a href="index.html">AI <span style="color:var(--purple)">Customer Success</span></a></div><div class="v88-shellnav">
@@ -162,20 +220,20 @@ body.v88-dark .metric,body.v88-dark .case,body.v88-dark .eval-area,body.v88-dark
 <a href="index.html#portfolio">Portfolio</a>
 <a href="index.html#learn">Learning Library</a>
 <details class="v912-more">
-  <summary>More <span aria-hidden="true" class="v912-chevron">⌄</span></summary>
-  <div class="v912-more-panel">
-    <span class="v912-menu-label">Meridian evidence</span>
-    <a href="tracker.html">Discovery &amp; Decisions</a>
-    <a href="deliverable.html">One-page Meridian readout</a>
-    <span class="v912-menu-label">Direct artifact links</span>
-    <a href="plan.html">Success Measurement Plan</a>
-    <a href="agent-flow.html">Agent Flow &amp; Guardrails</a>
-    <a href="evals.html">Eval Suite</a>
-  </div>
+<summary>More <span aria-hidden="true" class="v912-chevron">⌄</span></summary>
+<div class="v912-more-panel">
+<span class="v912-menu-label">Meridian evidence</span>
+<a href="tracker.html">Discovery &amp; Decisions</a>
+<a href="deliverable.html">One-page Meridian readout</a>
+<span class="v912-menu-label">Direct artifact links</span>
+<a href="plan.html">Success Measurement Plan</a>
+<a href="agent-flow.html">Agent Flow &amp; Guardrails</a>
+<a href="evals.html">Eval Suite</a>
+</div>
 </details>
 <button aria-label="Toggle dark mode" class="v88-theme" title="Toggle dark mode" type="button">◐</button>
-</div></div></div></div>
-<div class="wrap"><div class="v88-artifact-nav"><span class="v912-artifact-label">Meridian evidence</span><a href="tracker.html" class="active" aria-current="page">Discovery</a><a href="plan.html">Success Plan</a><a href="agent-flow.html">Agent Flow</a><a href="evals.html">Eval Suite</a><a href="deliverable.html">Case Readout</a></div>
+</div></div></div>
+<div class="wrap"><div class="v88-artifact-nav"><span class="v912-artifact-label">Meridian evidence</span><a aria-current="page" class="active" href="tracker.html">Discovery</a><a href="plan.html">Success Plan</a><a href="agent-flow.html">Agent Flow</a><a href="evals.html">Eval Suite</a><a href="deliverable.html">Case Readout</a></div>
 <h1>Meridian Capstone — Working Tracker</h1>
 <p class="sub">Running notes for the AI Customer Success capstone: open questions for the PM, my in-progress Success Measurement Plan reasoning, and stage-by-stage status.</p>
 <div class="callout gold" style="border:1px solid var(--border);border-left:4px solid var(--gold);background:#fff9eb;border-radius:10px;padding:12px 15px;margin:0 0 14px;font-size:13.5px"><b>What is Meridian?</b> A practice scenario: Meridian Support Operations, a mid-sized B2B SaaS company, is piloting an AI agent to help an overwhelmed Tier 1 support team — classifying tickets, drafting responses, and routing risky/uncertain cases to a human. This doc is my working process as the AI Customer Success owner of that pilot: open questions, assumptions, and reasoning as I go, not a finished report. <a href="index.html#meridian">Full capstone context in the guide →</a></div>
@@ -336,7 +394,6 @@ body.v88-dark .metric,body.v88-dark .case,body.v88-dark .eval-area,body.v88-dark
 <li><b>Expand to Tier 2</b> — targets hit; ready to grow scope.</li>
 <li><b>Pause</b> — guardrail breach; handled by the Guardrails rule above, not a wait-for-the-window decision.</li>
 </ul></div>
-
 <h2>VALIDATE checkpoint — eval design</h2>
 <div class="frame"><b>Status:</b> The v1 eval architecture is now defined around five areas: Ticket Classification, Knowledge Retrieval, Draft Response Quality, Appropriate Human Escalation, and Confidence &amp; Review Routing. Classification and Retrieval are designed enough to show; the other three remain intentionally in progress. These cases are designed/planned, not yet presented as executed results.</div>
 <h3>Classification — discovery changed the expected behavior</h3>
@@ -349,7 +406,6 @@ body.v88-dark .metric,body.v88-dark .case,body.v88-dark .eval-area,body.v88-dark
 <div class="reasoning"><b>Decision:</b> use separate subscores for Source Selection, Safe Fallback, and Grounded Use, with N/A where a dimension does not apply. A case can therefore show <i>Source Selection = Fail</i> while <i>Grounded Use = Pass</i> — evidence that the model faithfully used the wrong retrieved source rather than hallucinating independently. That gives future trace analysis a more useful starting point than one opaque pass/fail result.</div>
 <h3>Offline evals are not production outcomes</h3>
 <div class="reasoning">The pre-launch suite can test controlled behavior such as classification, retrieval, escalation, grounding, draft quality, confidence, and review routing. Customer follow-up/reopen rates, successful closure, real rep edits, repeated customer pushback, and recurring corrections tied to the same KB article belong in production measurement. Those signals can later create new regression cases and identify KB-maintenance work.</div>
-
 <h2>Reflection</h2>
 <div class="frame">The polished version of this reflection (PLAN-specific) is in the <a href="plan.html">PLAN deliverable</a>. This one's about the working process itself, across HANDOFF through CONFIGURE. The pattern I noticed most: my first answer to almost anything was usually close, but not quite precise — "reading the ticket" instead of "everything the agent can see," "drafting and sending" instead of "the decision about which path something takes." Getting from "close" to "actually right" took someone pushing back and asking me to distinguish it from something adjacent, not just re-explaining the same thing louder. I also noticed I do better reasoning when I have a concrete example to hang a concept on (Meridian) than when I'm working with the abstract idea alone — the "trigger/context/instructions/retrieval/routing/handoff/evals" framework only really clicked once I mapped each piece onto this specific pilot. That's probably useful to know about how I learn, going into a real role: ask for the concrete case, don't just take the definition at face value.</div>
 <p class="note">Last updated as part of an in-progress working session — targets and reasoning above are drafts, not final.</p>

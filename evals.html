@@ -117,7 +117,6 @@ body.v88-dark .metric,body.v88-dark .case,body.v88-dark .eval-area,body.v88-dark
   .v88-artifact-nav{margin-top:10px}
 }
 </style>
-
 <style id="v915-artifact-orientation">
 .v915-orientation{
   display:grid;grid-template-columns:minmax(0,1.7fr) minmax(150px,.55fr);
@@ -134,6 +133,65 @@ body.v88-dark .metric,body.v88-dark .case,body.v88-dark .eval-area,body.v88-dark
  .v915-orientation .statusbox{padding-left:0;padding-top:10px;border-left:0;border-top:1px solid var(--border)}
 }
 </style>
+
+<style id="v917-shell-consistency">
+.v88-shellnav{display:flex;align-items:center;gap:4px;flex-wrap:nowrap}
+.v88-shellnav>a,.v88-theme,.v912-more>summary{
+  border:0;background:transparent;color:var(--ink)!important;text-decoration:none!important;
+  padding:8px 9px;border-radius:9px;font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap
+}
+.v88-shellnav>a:hover,.v88-theme:hover,.v912-more>summary:hover,.v912-more[open]>summary{
+  background:var(--softp)!important;color:var(--purple)!important
+}
+.v912-more{position:relative}
+.v912-more>summary{
+  list-style:none;display:flex;align-items:center;gap:6px;border:1px solid var(--border);
+  background:var(--card)
+}
+.v912-more>summary::-webkit-details-marker{display:none}
+.v912-more-panel{
+  position:absolute;right:0;top:calc(100% + 8px);z-index:90;width:250px;padding:9px;
+  border:1px solid var(--border);border-radius:14px;background:var(--card);
+  box-shadow:0 18px 42px rgba(0,0,0,.18)
+}
+.v912-more-panel a{
+  display:block;padding:9px 10px;border-radius:9px;color:var(--ink)!important;
+  text-decoration:none!important;font-size:12.5px;font-weight:700
+}
+.v912-more-panel a:hover{background:var(--softp);color:var(--purple)!important}
+.v912-menu-label{
+  display:block;padding:7px 10px 4px;color:var(--muted);font-size:10px;font-weight:800;
+  letter-spacing:.06em;text-transform:uppercase
+}
+.v88-theme{border:1px solid var(--border)!important;background:var(--card)!important}
+
+/* Canonical Meridian evidence bar */
+.v88-artifact-nav{
+  display:flex!important;align-items:center!important;gap:8px!important;overflow-x:auto!important;
+  margin:14px 0 26px!important;padding:4px 0 8px!important;scrollbar-width:thin;font-size:12px!important
+}
+.v88-artifact-nav .v912-artifact-label{
+  flex:0 0 auto;color:var(--muted);font-size:10px;font-weight:800;
+  letter-spacing:.06em;text-transform:uppercase;margin-right:2px
+}
+.v88-artifact-nav a{
+  flex:0 0 auto!important;border:1px solid var(--border)!important;background:var(--card)!important;
+  color:var(--ink)!important;text-decoration:none!important;border-radius:999px!important;
+  padding:8px 11px!important;font-weight:800!important
+}
+.v88-artifact-nav a:hover{background:var(--softp)!important;color:var(--purple)!important}
+.v88-artifact-nav a.active{
+  background:var(--softp)!important;
+  border-color:color-mix(in srgb,var(--purple) 38%,var(--border))!important;
+  color:var(--purple)!important
+}
+@media(max-width:760px){
+  .v88-shellnav>a:nth-of-type(n+3){display:none}
+  .v88-shellnav{gap:2px}
+  .v88-shellnav>a,.v88-theme,.v912-more>summary{padding:7px;font-size:11px}
+  .v912-more-panel{right:-4px;width:min(250px,calc(100vw - 28px))}
+}
+</style>
 </head><body>
 <div class="topbar"><div class="wrap"><div class="brand"><a href="index.html">AI <span style="color:var(--purple)">Customer Success</span></a></div><div class="v88-shellnav">
 <a href="index.html">Home</a>
@@ -141,73 +199,63 @@ body.v88-dark .metric,body.v88-dark .case,body.v88-dark .eval-area,body.v88-dark
 <a href="index.html#portfolio">Portfolio</a>
 <a href="index.html#learn">Learning Library</a>
 <details class="v912-more">
-  <summary>More <span aria-hidden="true" class="v912-chevron">⌄</span></summary>
-  <div class="v912-more-panel">
-    <span class="v912-menu-label">Meridian evidence</span>
-    <a href="tracker.html">Discovery &amp; Decisions</a>
-    <a href="deliverable.html">One-page Meridian readout</a>
-    <span class="v912-menu-label">Direct artifact links</span>
-    <a href="plan.html">Success Measurement Plan</a>
-    <a href="agent-flow.html">Agent Flow &amp; Guardrails</a>
-    <a href="evals.html">Eval Suite</a>
-  </div>
+<summary>More <span aria-hidden="true" class="v912-chevron">⌄</span></summary>
+<div class="v912-more-panel">
+<span class="v912-menu-label">Meridian evidence</span>
+<a href="tracker.html">Discovery &amp; Decisions</a>
+<a href="deliverable.html">One-page Meridian readout</a>
+<span class="v912-menu-label">Direct artifact links</span>
+<a href="plan.html">Success Measurement Plan</a>
+<a href="agent-flow.html">Agent Flow &amp; Guardrails</a>
+<a href="evals.html">Eval Suite</a>
+</div>
 </details>
 <button aria-label="Toggle dark mode" class="v88-theme" title="Toggle dark mode" type="button">◐</button>
 </div></div></div>
-
 <div class="wrap">
-  <div class="v88-artifact-nav"><span class="v912-artifact-label">Meridian evidence</span><a href="tracker.html">Discovery</a><a href="plan.html">Success Plan</a><a href="agent-flow.html">Agent Flow</a><a href="evals.html" class="active" aria-current="page">Eval Suite</a><a href="deliverable.html">Case Readout</a></div>
-
-  <span class="badge">CAPSTONE · VALIDATE</span>
-  <h2>Meridian — Eval Suite</h2>
-  <p class="lead">A small, risk-based v1 suite designed to test the behaviors that matter most before launch. The goal is diagnostic coverage, not an exhaustive repository of tiny tests.</p>
-
-  <div class="callout cyan"><b>Current status:</b> v1 eval architecture defined. <b>Ticket Classification</b> and <b>Knowledge Retrieval</b> case sets are designed; <b>Draft Response Quality</b>, <b>Appropriate Human Escalation</b>, and <b>Confidence &amp; Review Routing</b> are next. The cases below are <b>designed, not yet executed</b>.</div>
-
-  <h2>v1 eval architecture</h2>
-  <div class="eval-framework">
-    <div class="eval-area ready"><b>1 · Ticket Classification</b><span>Designed</span><p>Clear and ambiguous routing, conflicting customer-selected categories, and multi-issue tickets.</p></div>
-    <div class="eval-area ready"><b>2 · Knowledge Retrieval</b><span>Designed</span><p>Correct source selection, wrong-source temptation, safe fallback, and conflicting knowledge.</p></div>
-    <div class="eval-area next"><b>3 · Draft Response Quality</b><span>Next</span><p>Factual correctness, policy adherence, grounded answers, tone, and task completion.</p></div>
-    <div class="eval-area next"><b>4 · Appropriate Human Escalation</b><span>Next</span><p>Financial actions, security, explicit human requests, repeated exchanges, and other high-risk triggers.</p></div>
-    <div class="eval-area next"><b>5 · Confidence &amp; Review Routing</b><span>Next</span><p>Whether confidence matches support quality and routes cases to the right level of human review.</p></div>
-  </div>
-
-  <div class="frame"><b>Design principle:</b> one realistic scenario can test multiple dimensions. I am prioritizing cases that reveal failure modes, tradeoffs, or missing system rules rather than creating one trivial test for every possible behavior.</div>
-
-  <h2>1 · Ticket Classification <span class="status done">Designed</span></h2>
-  <p>Meridian uses one primary category per ticket: Account &amp; Access, Billing, Product How-To, Technical Issue, Integrations, or Other / Needs Review. The planned set includes five straightforward baseline cases plus three harder cases.</p>
-  <div class="case-grid">
-    <div class="case"><div class="tag">Representative edge case</div><h3>Customer-selected category conflicts with the message</h3><p><b>Input:</b> Customer selects <i>Account &amp; Access</i>, then asks: “Why was I billed for a higher tier?”</p><p><b>Expected:</b> Billing.</p><p><b>Why it matters:</b> the customer's form selection is a hint, not ground truth. The agent should classify from the actual ticket evidence.</p></div>
-    <div class="case"><div class="tag">Representative edge case</div><h3>Multi-issue ticket</h3><p><b>Input:</b> “I’m unable to log in and access my billing information so I can upgrade to the higher tier and generate the advanced monthly reports.”</p><p><b>Expected:</b> Account &amp; Access.</p><p><b>Why it matters:</b> discovery established a routing rule: classify by the first blocking issue that must be resolved before the customer can proceed.</p></div>
-  </div>
-  <div class="scoreline"><b>Scoring:</b> category selection = Pass/Fail. Confidence is scored separately. Add a severity/risk note when a classification error could create meaningful downstream effects.</div>
-  <div class="callout gold"><b>Guardrail insight:</b> critical safety rules should not depend entirely on classification being correct. A prohibited financial action should still trigger the financial-action guardrail even if the upstream category is wrong.</div>
-
-  <h2>2 · Knowledge Retrieval <span class="status done">Designed</span></h2>
-  <p>The retrieval set tests whether the system finds the right Meridian knowledge, falls back safely when adequate support is unavailable, and keeps the answer grounded in what was actually retrieved. Four v1 cases are designed.</p>
-  <div class="case-grid">
-    <div class="case"><div class="tag">Failure localization</div><h3>Wrong-source temptation</h3><p><b>Input:</b> “My monthly report is missing the latest dashboard data.”</p><p><b>Expected source:</b> KB-108 — Troubleshooting Dashboard Data.</p><p><b>Tempting but wrong:</b> KB-101 — Generating and Scheduling Monthly Reports.</p><p><b>Why it matters:</b> a plausible final answer is not enough. The trace should show which source was actually retrieved.</p></div>
-    <div class="case"><div class="tag">Changed my mind</div><h3>Stale / conflicting sources</h3><p><b>Input:</b> “What steps do I take to set up my monthly report?”</p><p><b>Conflict:</b> current KB-101 and stale KB-107 can both look authoritative.</p><p><b>Expected v1 behavior:</b> if the agent has no reliable freshness/authority signal, do not choose arbitrarily; escalate for human review.</p><p><b>What changed:</b> I first expected the agent to choose KB-101, then realized that expectation was unfair without system metadata or a rule that tells it KB-107 is stale. This is a knowledge-system dependency, not simply a “smarter model” problem.</p></div>
-  </div>
-  <div class="scoreline"><b>Diagnostic scoring:</b> <span>Source Selection</span> · <span>Safe Fallback</span> · <span>Grounded Use</span> · use N/A where a dimension does not apply.</div>
-  <div class="frame"><b>Why separate subscores:</b> “Source Selection = Fail / Grounded Use = Pass” tells a different story from a generic failure: the model may have faithfully used the wrong retrieved article. That gives future trace analysis a concrete place to start.</div>
-
-  <h2>Next eval areas</h2>
-  <div class="next-grid">
-    <div><b>Draft Response Quality</b><p>Factual correctness, policy adherence, unsupported claims, customer tone, and whether the draft actually answers the question.</p></div>
-    <div><b>Appropriate Human Escalation</b><p>Test defined escalation triggers while preserving an important distinction: informational billing questions may still be normal support; unauthorized financial actions are the hard-stop boundary.</p></div>
-    <div><b>Confidence &amp; Review Routing</b><p>Test calibration and whether cases reach standard vs. low-confidence review. A poorly supported answer with high confidence is especially serious because it may receive less scrutiny.</p></div>
-  </div>
-
-  <h2>Offline evals vs. production measurement</h2>
-  <div class="two-col">
-    <div class="frame"><b>Pre-launch / offline</b><p>Classification, retrieval, escalation, grounding, draft quality, confidence, and review routing can be tested in controlled scenarios.</p></div>
-    <div class="frame"><b>After launch</b><p>Customer follow-up and reopen rates, successful closure, human edit patterns, repeated pushback, and recurring rep corrections tied to the same KB article are better production signals. Those signals can later become regression cases or KB-maintenance work.</p></div>
-  </div>
-
-  <div class="callout purple"><b>Portfolio boundary:</b> this page is a curated view of the eval design, not the test database. The deeper discovery questions, assumptions, and changes of mind stay in the <a href="tracker.html">Working Tracker</a>.</div>
-  <p class="small" style="margin-top:36px;padding-top:16px;border-top:1px solid var(--border)"><a href="agent-flow.html">← Agent Flow &amp; Guardrails</a>  ·  <a href="tracker.html">Working Tracker</a>  ·  <a href="deliverable.html">One-page Meridian readout →</a></p>
+<div class="v88-artifact-nav"><span class="v912-artifact-label">Meridian evidence</span><a href="tracker.html">Discovery</a><a href="plan.html">Success Plan</a><a href="agent-flow.html">Agent Flow</a><a aria-current="page" class="active" href="evals.html">Eval Suite</a><a href="deliverable.html">Case Readout</a></div>
+<span class="badge">CAPSTONE · VALIDATE</span>
+<h2>Meridian — Eval Suite</h2>
+<p class="lead">A small, risk-based v1 suite designed to test the behaviors that matter most before launch. The goal is diagnostic coverage, not an exhaustive repository of tiny tests.</p>
+<div class="callout cyan"><b>Current status:</b> v1 eval architecture defined. <b>Ticket Classification</b> and <b>Knowledge Retrieval</b> case sets are designed; <b>Draft Response Quality</b>, <b>Appropriate Human Escalation</b>, and <b>Confidence &amp; Review Routing</b> are next. The cases below are <b>designed, not yet executed</b>.</div>
+<h2>v1 eval architecture</h2>
+<div class="eval-framework">
+<div class="eval-area ready"><b>1 · Ticket Classification</b><span>Designed</span><p>Clear and ambiguous routing, conflicting customer-selected categories, and multi-issue tickets.</p></div>
+<div class="eval-area ready"><b>2 · Knowledge Retrieval</b><span>Designed</span><p>Correct source selection, wrong-source temptation, safe fallback, and conflicting knowledge.</p></div>
+<div class="eval-area next"><b>3 · Draft Response Quality</b><span>Next</span><p>Factual correctness, policy adherence, grounded answers, tone, and task completion.</p></div>
+<div class="eval-area next"><b>4 · Appropriate Human Escalation</b><span>Next</span><p>Financial actions, security, explicit human requests, repeated exchanges, and other high-risk triggers.</p></div>
+<div class="eval-area next"><b>5 · Confidence &amp; Review Routing</b><span>Next</span><p>Whether confidence matches support quality and routes cases to the right level of human review.</p></div>
+</div>
+<div class="frame"><b>Design principle:</b> one realistic scenario can test multiple dimensions. I am prioritizing cases that reveal failure modes, tradeoffs, or missing system rules rather than creating one trivial test for every possible behavior.</div>
+<h2>1 · Ticket Classification <span class="status done">Designed</span></h2>
+<p>Meridian uses one primary category per ticket: Account &amp; Access, Billing, Product How-To, Technical Issue, Integrations, or Other / Needs Review. The planned set includes five straightforward baseline cases plus three harder cases.</p>
+<div class="case-grid">
+<div class="case"><div class="tag">Representative edge case</div><h3>Customer-selected category conflicts with the message</h3><p><b>Input:</b> Customer selects <i>Account &amp; Access</i>, then asks: “Why was I billed for a higher tier?”</p><p><b>Expected:</b> Billing.</p><p><b>Why it matters:</b> the customer's form selection is a hint, not ground truth. The agent should classify from the actual ticket evidence.</p></div>
+<div class="case"><div class="tag">Representative edge case</div><h3>Multi-issue ticket</h3><p><b>Input:</b> “I’m unable to log in and access my billing information so I can upgrade to the higher tier and generate the advanced monthly reports.”</p><p><b>Expected:</b> Account &amp; Access.</p><p><b>Why it matters:</b> discovery established a routing rule: classify by the first blocking issue that must be resolved before the customer can proceed.</p></div>
+</div>
+<div class="scoreline"><b>Scoring:</b> category selection = Pass/Fail. Confidence is scored separately. Add a severity/risk note when a classification error could create meaningful downstream effects.</div>
+<div class="callout gold"><b>Guardrail insight:</b> critical safety rules should not depend entirely on classification being correct. A prohibited financial action should still trigger the financial-action guardrail even if the upstream category is wrong.</div>
+<h2>2 · Knowledge Retrieval <span class="status done">Designed</span></h2>
+<p>The retrieval set tests whether the system finds the right Meridian knowledge, falls back safely when adequate support is unavailable, and keeps the answer grounded in what was actually retrieved. Four v1 cases are designed.</p>
+<div class="case-grid">
+<div class="case"><div class="tag">Failure localization</div><h3>Wrong-source temptation</h3><p><b>Input:</b> “My monthly report is missing the latest dashboard data.”</p><p><b>Expected source:</b> KB-108 — Troubleshooting Dashboard Data.</p><p><b>Tempting but wrong:</b> KB-101 — Generating and Scheduling Monthly Reports.</p><p><b>Why it matters:</b> a plausible final answer is not enough. The trace should show which source was actually retrieved.</p></div>
+<div class="case"><div class="tag">Changed my mind</div><h3>Stale / conflicting sources</h3><p><b>Input:</b> “What steps do I take to set up my monthly report?”</p><p><b>Conflict:</b> current KB-101 and stale KB-107 can both look authoritative.</p><p><b>Expected v1 behavior:</b> if the agent has no reliable freshness/authority signal, do not choose arbitrarily; escalate for human review.</p><p><b>What changed:</b> I first expected the agent to choose KB-101, then realized that expectation was unfair without system metadata or a rule that tells it KB-107 is stale. This is a knowledge-system dependency, not simply a “smarter model” problem.</p></div>
+</div>
+<div class="scoreline"><b>Diagnostic scoring:</b> <span>Source Selection</span> · <span>Safe Fallback</span> · <span>Grounded Use</span> · use N/A where a dimension does not apply.</div>
+<div class="frame"><b>Why separate subscores:</b> “Source Selection = Fail / Grounded Use = Pass” tells a different story from a generic failure: the model may have faithfully used the wrong retrieved article. That gives future trace analysis a concrete place to start.</div>
+<h2>Next eval areas</h2>
+<div class="next-grid">
+<div><b>Draft Response Quality</b><p>Factual correctness, policy adherence, unsupported claims, customer tone, and whether the draft actually answers the question.</p></div>
+<div><b>Appropriate Human Escalation</b><p>Test defined escalation triggers while preserving an important distinction: informational billing questions may still be normal support; unauthorized financial actions are the hard-stop boundary.</p></div>
+<div><b>Confidence &amp; Review Routing</b><p>Test calibration and whether cases reach standard vs. low-confidence review. A poorly supported answer with high confidence is especially serious because it may receive less scrutiny.</p></div>
+</div>
+<h2>Offline evals vs. production measurement</h2>
+<div class="two-col">
+<div class="frame"><b>Pre-launch / offline</b><p>Classification, retrieval, escalation, grounding, draft quality, confidence, and review routing can be tested in controlled scenarios.</p></div>
+<div class="frame"><b>After launch</b><p>Customer follow-up and reopen rates, successful closure, human edit patterns, repeated pushback, and recurring rep corrections tied to the same KB article are better production signals. Those signals can later become regression cases or KB-maintenance work.</p></div>
+</div>
+<div class="callout purple"><b>Portfolio boundary:</b> this page is a curated view of the eval design, not the test database. The deeper discovery questions, assumptions, and changes of mind stay in the <a href="tracker.html">Working Tracker</a>.</div>
+<p class="small" style="margin-top:36px;padding-top:16px;border-top:1px solid var(--border)"><a href="agent-flow.html">← Agent Flow &amp; Guardrails</a>  ·  <a href="tracker.html">Working Tracker</a>  ·  <a href="deliverable.html">One-page Meridian readout →</a></p>
 </div>
 <script id="v88-shared-script">(()=>{if(document.body.dataset.v88)return;document.body.dataset.v88='1';const btn=document.querySelector('.v88-theme');if(btn){btn.onclick=()=>{document.body.classList.toggle('v88-dark');localStorage.setItem('ai-cs-theme',document.body.classList.contains('v88-dark')?'dark':'light');};}if(localStorage.getItem('ai-cs-theme')==='dark')document.body.classList.add('v88-dark');document.addEventListener('click',e=>{document.querySelectorAll('.v912-more[open]').forEach(d=>{if(!d.contains(e.target))d.removeAttribute('open')})});})();</script>
 </body>
