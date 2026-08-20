@@ -126,3 +126,11 @@ Navigation polish only. The desktop header now keeps the four primary destinatio
 - Clarified Tracker references to current/pre-growth CSAT as scenario current-state and scenario pre-growth baseline.
 - No new curriculum, claims, artifacts, or substantive Meridian work added.
 - This is the manager-review-ready freeze point; resume site changes when new Meridian evidence warrants them.
+
+## v91.5 manager-readability
+- Reduced perceived homepage density through stronger hierarchy and optional/supporting-content cues rather than deleting evidence.
+- Made the one-page Meridian readout easier to discover as an alternate shortcut.
+- Added compact “What this shows / Current status / Worth noticing” orientation to flagship artifacts.
+- Added explicit permission to sample—not read end-to-end—the Working Tracker.
+- Visually de-emphasized the supporting Portfolio and Learning Library as optional exploration.
+- No substantive Meridian evidence, curriculum, or claims removed.

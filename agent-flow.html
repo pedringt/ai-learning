@@ -111,6 +111,23 @@ body.v88-dark .metric,body.v88-dark .case,body.v88-dark .eval-area,body.v88-dark
   .v88-artifact-nav{margin-top:10px}
 }
 </style>
+
+<style id="v915-artifact-orientation">
+.v915-orientation{
+  display:grid;grid-template-columns:minmax(0,1.7fr) minmax(150px,.55fr);
+  gap:12px;margin:10px 0 28px;padding:16px 18px;border:1px solid var(--border);
+  border-radius:15px;background:var(--soft)
+}
+.v915-orientation .label{display:block;margin-bottom:5px;color:var(--purple);font-size:10px;font-weight:850;letter-spacing:.07em;text-transform:uppercase}
+.v915-orientation p{margin:0;color:var(--muted);font-size:13px;line-height:1.5}
+.v915-orientation .statusbox{padding-left:14px;border-left:1px solid var(--border)}
+.v915-orientation .statusbox b{display:block;color:var(--ink);margin-bottom:4px}
+.v915-skim-note{margin-top:8px!important;font-size:12px!important}
+@media(max-width:620px){
+ .v915-orientation{grid-template-columns:1fr}
+ .v915-orientation .statusbox{padding-left:0;padding-top:10px;border-left:0;border-top:1px solid var(--border)}
+}
+</style>
 </head>
 <body>
 <div class="topbar"><div class="wrap"><div class="brand"><a href="index.html">AI <span style="color:var(--purple)">Customer Success</span></a></div><div class="v88-shellnav">

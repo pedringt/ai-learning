@@ -245,6 +245,55 @@
   #ai-cs-mock .manager-fast-path{padding:14px 15px;margin:15px 0 22px}
 }
 </style>
+
+<style id="v915-manager-readability">
+/* v91.5 Manager Readability — hierarchy and permission-to-skim, not content deletion */
+
+/* Homepage: make secondary/supporting material quieter and increase breathing room */
+#ai-cs-mock [data-page="home"] .section,
+#ai-cs-mock [data-page="meridian"] .section{scroll-margin-top:84px}
+#ai-cs-mock [data-page="home"] h2,
+#ai-cs-mock [data-page="meridian"] h2{letter-spacing:-.025em}
+#ai-cs-mock [data-page="home"] .card p,
+#ai-cs-mock [data-page="meridian"] .card p{line-height:1.55}
+
+/* Flag the portfolio/library as optional exploration rather than required reading */
+#ai-cs-mock [data-page="portfolio"]::before,
+#ai-cs-mock [data-page="learn"]::before{
+  display:inline-block;margin:0 0 10px;padding:5px 9px;border:1px solid var(--border);
+  border-radius:999px;color:var(--muted);font-size:10px;font-weight:850;
+  letter-spacing:.07em;text-transform:uppercase;background:var(--card)
+}
+#ai-cs-mock [data-page="portfolio"]::before{content:"Supporting evidence · optional"}
+#ai-cs-mock [data-page="learn"]::before{content:"Reference library · browse as useful"}
+#ai-cs-mock [data-page="portfolio"],
+#ai-cs-mock [data-page="learn"]{padding-top:34px}
+
+/* Give the one-page readout a visible shortcut treatment wherever linked on Meridian */
+#ai-cs-mock [data-page="meridian"] a[href="deliverable.html"]{
+  text-decoration-thickness:1.5px;text-underline-offset:3px
+}
+.v915-readout-shortcut{
+  margin:16px 0 24px;padding:13px 15px;border:1px solid var(--border);
+  border-radius:14px;background:var(--soft);font-size:13px;color:var(--muted)
+}
+.v915-readout-shortcut strong{color:var(--ink)}
+.v915-readout-shortcut a{font-weight:850}
+
+/* Future roadmap stays visible but visually subordinate */
+#ai-cs-mock [data-page="meridian"] .future-roadmap{padding-top:20px;padding-bottom:20px}
+#ai-cs-mock [data-page="meridian"] .future-roadmap p{font-size:13px;line-height:1.5}
+
+/* More whitespace between major Meridian evidence bands */
+#ai-cs-mock [data-page="meridian"]>.exercise-proof,
+#ai-cs-mock [data-page="meridian"]>.customer-facing-exercise,
+#ai-cs-mock [data-page="meridian"]>.future-roadmap{margin-top:36px;margin-bottom:36px}
+
+@media(max-width:560px){
+  #ai-cs-mock [data-page="portfolio"],
+  #ai-cs-mock [data-page="learn"]{padding-top:26px}
+}
+</style>
 </head>
 <body>
 <div class="manager-fast-path" class="app-root" id="ai-cs-mock">
