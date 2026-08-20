@@ -1,4 +1,4 @@
-# AI Customer Success Learning Portfolio — v90.2 Maintenance
+# AI Customer Success Learning Portfolio — v90.3 Polish
 
 v90 is the final content + polish pass built from the v89.5 release candidate.
 
@@ -73,3 +73,9 @@ Navigation polish only. The desktop header now keeps the four primary destinatio
 - Updated the Success Measurement Plan for consistency.
 - Combined the loose Home practice-environment and capstone-progress lines into a subtle context/status strip.
 - Added a small, explicitly labeled placeholder for later Meridian operating practice (Operate / Incident / Improve / Prove / Expand), without presenting future work as completed evidence.
+
+
+## v90.3 visual polish
+- Aligned the Home Practice environment / Capstone progress strip to the same full content width as the primary Home card below it.
+- Added deliberate bottom breathing room after the shared Go deeper footer.
+- No content, navigation, hierarchy, or behavior changes.

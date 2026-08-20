@@ -144,6 +144,25 @@
 #ai-cs-mock .future-practice-preview span{display:block;font-size:12px;font-weight:800;color:var(--purple);margin-bottom:6px}
 #ai-cs-mock .future-practice-preview p{margin:0;font-size:12.5px;line-height:1.5}
 @media(max-width:700px){#ai-cs-mock .home-context-strip{grid-template-columns:1fr}}
+</style><style id="v903-visual-polish">
+/* v90.3: align Home context strip with the main content cards */
+#ai-cs-mock [data-page="home"] .home-context-strip{
+  max-width:none;
+  width:100%;
+  box-sizing:border-box;
+}
+
+/* Give the shared footer a deliberate page ending instead of ending flush to the viewport. */
+#ai-cs-mock .site-go-deeper{
+  padding-bottom:48px;
+  margin-bottom:32px;
+}
+@media(max-width:560px){
+  #ai-cs-mock .site-go-deeper{
+    padding-bottom:36px;
+    margin-bottom:24px;
+  }
+}
 </style></head>
 <body>
 <div class="app-root" id="ai-cs-mock">
