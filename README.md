@@ -184,3 +184,19 @@ Navigation polish only. The desktop header now keeps the four primary destinatio
 - Increased the shared header type scale slightly; because the rules are shared, Home and artifacts cannot drift in nav sizing.
 - Removed v92 standalone header CSS/JS duplication.
 - No Meridian substantive content changed.
+
+## v93.1 Agent Flow link regression fix
+- Corrected the Agent Flow & Guardrails footer/cross-reference links so their destinations match their labels:
+  - working tracker → `tracker.html`
+  - PLAN deliverable → `plan.html`
+  - One-page deliverable → `deliverable.html`
+- No content, design, navigation shell, or architecture changes.
+
+## v93.2 Manager-readiness content pass
+Deliberately constrained content-only release on top of v93.1:
+- Home: compact bridge from prior product/QA/customer/delivery judgment to AI-specific learning.
+- Meridian Working Tracker: explicit statement of what the fictional simulation is intended to practice/prove.
+- Success Measurement Plan: “Final locked targets” updated to “Current pilot targets.”
+- Success Measurement Plan: 20-minute workflow cutoff explicitly labeled a provisional proxy requiring validation against reviewed tickets.
+- Agent Flow: confidence wording clarified as an observable-evidence review/routing signal, not model self-reported confidence.
+- No navigation, architecture, density, lifecycle-stage, or new-page changes.

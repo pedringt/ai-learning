@@ -656,8 +656,18 @@ body.v919-tracker .wrap>h2:not(:first-of-type){
   .lead{font-size:17px!important}
 }
 </style>
-
-<link href="site-shell.css" rel="stylesheet"/></head>
+<link href="site-shell.css" rel="stylesheet"/>
+<style id="v932-routing-style">
+.v932-routing-note{
+  margin:10px 0 16px;
+  padding:11px 13px;
+  border-left:3px solid var(--purple);
+  background:var(--softp);
+  font-size:13px;
+  line-height:1.55;
+}
+</style>
+</head>
 <body>
 <div class="topbar"><div class="topinner"><a class="brand-button" href="index.html"><span class="brand">AI <span>Customer Success</span></span></a><nav aria-label="Prototype pages" class="nav"><a href="index.html">Home</a><a href="index.html#meridian">Meridian</a><a href="index.html#portfolio">Portfolio</a><a href="index.html#learn">Learning Library</a></nav><div class="top-actions"><button aria-label="Switch to dark mode" aria-pressed="false" class="theme-toggle" id="v922ThemeToggle" title="Switch to dark mode" type="button">☾</button><details class="secondary-menu"><summary>More <span aria-hidden="true" class="menu-chevron">⌄</span></summary><div class="secondary-menu-panel"><span class="secondary-menu-label">Meridian evidence</span><a href="tracker.html">Full Working Tracker</a><a href="deliverable.html">One-page Meridian readout</a><span class="secondary-menu-label">Direct artifact links</span><a href="plan.html">Success Measurement Plan</a><a href="agent-flow.html">Agent Flow &amp; Guardrails</a><a href="evals.html">Eval Suite</a></div></details><select aria-label="Choose page" id="v922MobileNav"><option value="index.html">Home</option><option value="index.html#meridian">Meridian</option><option value="index.html#portfolio">Portfolio</option><option value="index.html#learn">Learning Library</option></select></div></div></div>
 <div class="wrap"><div class="v88-artifact-nav"><span class="v912-artifact-label">Meridian evidence</span><a href="tracker.html">Discovery</a><a href="plan.html">Success Plan</a><a aria-current="page" class="active" href="agent-flow.html">Agent Flow</a><a href="evals.html">Eval Suite</a><a href="deliverable.html">Case Readout</a></div>
@@ -810,7 +820,7 @@ body.v919-tracker .wrap>h2:not(:first-of-type){
 <ul>
 <li><b>Category check</b> — money/security categories never get an AI draft, regardless of confidence. This is a hard rule, not a judgment call.</li>
 <li><b>Confidence check</b> — independent from category risk. A "safe" category can still get flagged with a reviewer note if the AI isn't confident (ambiguous request, conflicting KB sources, missing info).</li>
-<li><b>Escalation check (multi-turn)</b> — triggers on whichever comes first: 5+ exchanges (justified by the ~12% of tickets that naturally run long, per the simulated 90-day data pull — see open question 11 in the <a href="index.html">working tracker</a>), signs of an upset/repeating customer, a high-risk category surfacing mid-conversation even if the ticket didn't start that way, or the customer explicitly asking for a supervisor/to escalate (added after rep discovery — the cleanest signal of the four, since it doesn't require inference).</li>
+<li><b>Escalation check (multi-turn)</b> — triggers on whichever comes first: 5+ exchanges (justified by the ~12% of tickets that naturally run long, per the simulated 90-day data pull — see open question 11 in the <a href="tracker.html">working tracker</a>), signs of an upset/repeating customer, a high-risk category surfacing mid-conversation even if the ticket didn't start that way, or the customer explicitly asking for a supervisor/to escalate (added after rep discovery — the cleanest signal of the four, since it doesn't require inference).</li>
 <li><b>Human review outcome</b> — always one of approve / edit / start over, whether the ticket was drafted or fully human-written. Nothing sends to the customer without a human touching it first, per the pilot's human-boundary rule.</li>
 </ul>
 <h3>Data sources feeding this flow</h3>
@@ -818,12 +828,11 @@ body.v919-tracker .wrap>h2:not(:first-of-type){
 <li>Ticket content + category (help desk tool)</li>
 <li>Knowledge base articles, via <b>semantic/embedding-based retrieval</b> rather than basic keyword matching — sidesteps the search limitation reps deal with today, though the underlying content problem (~20% unreviewed/stale articles — open question 2) still applies regardless of retrieval method</li>
 <li>Conversation history (for the exchange count and mid-thread category check)</li>
-<li>Confidence signal from the drafting step itself</li>
+<li>review/routing signal based on observable evidence from the drafting workflow</li>
 <li><b>Billing/account-status data</b> — resolved simpler than expected: this already exists as a synced field on the ticket (nightly sync from the billing system), just not currently enabled for the Tier 1 view. No new integration or approval needed — enabling the existing field for Tier 1 (a standalone recommendation, not pilot-scoped) gives both reps and the agent access to the same already-approved data source. Caveat: up to 24 hrs stale due to the nightly sync.</li>
 </ul>
-<p class="small">Pending validation: real rep input (see Rep Discovery Questions in the <a href="index.html">working tracker</a>) may confirm or adjust the workflow-model assumption this flow is built on (open question 4), and could refine the escalation logic further. The billing field (above) folds into the "retrieve relevant knowledge" step once enabled — no separate node needed. Pilot targets that depend on this flow (first-response time, quality) are locked in the <a href="index.html">PLAN deliverable</a>.</p>
-<p class="small" style="margin-top:36px;padding-top:16px;border-top:1px solid var(--border)"><a href="index.html">Working tracker (full reasoning log)</a>  ·  <a href="index.html">PLAN deliverable</a>  ·  <a href="index.html">One-page deliverable</a></p>
-</div>
-
+<p class="small">Pending validation: real rep input (see Rep Discovery Questions in the <a href="tracker.html">working tracker</a>) may confirm or adjust the workflow-model assumption this flow is built on (open question 4), and could refine the escalation logic further. The billing field (above) folds into the "retrieve relevant knowledge" step once enabled — no separate node needed. Pilot targets that depend on this flow (first-response time, quality) are locked in the <a href="plan.html">PLAN deliverable</a>.</p>
+<p class="small" style="margin-top:36px;padding-top:16px;border-top:1px solid var(--border)"><a href="index.html">Working tracker (full reasoning log)</a>  ·  <a href="plan.html">PLAN deliverable</a>  ·  <a href="deliverable.html">One-page deliverable</a></p>
+</div><p class="v932-routing-note"><strong>Signal design: </strong>This is not the model rating its own confidence. It is a review/routing signal built from observable evidence such as retrieval support, missing required information, source conflicts, and rule or guardrail matches.</p>
 <script defer="" src="site-shell.js"></script></body>
 </html>
