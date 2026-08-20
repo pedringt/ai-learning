@@ -2,6 +2,11 @@
 
 v89 is a consolidation + scannability release built from v88.2.
 
+## v89 regression fix
+- Restored top-nav routing with a dedicated, single-purpose router.
+- Made the desktop and mobile primary navigation static and limited to Home / Meridian / Portfolio / Learning Library, preventing legacy AI Customer Success and Workbench items from resurfacing when cleanup scripts are removed.
+- Kept content assembly separate from navigation behavior.
+
 ## v89 changes
 - Flattened the accumulated Meridian/Portfolio hierarchy patches out of `index.html`; legacy runtime injectors and hidden mini-nav code were removed rather than layered again.
 - Preserved the settled four-artifact Meridian hierarchy: Discovery & Decisions, Success Measurement Plan, Agent Flow & Guardrails, and Eval Suite.
