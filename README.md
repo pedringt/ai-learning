@@ -1,4 +1,4 @@
-# AI Customer Success Learning Portfolio — v90.3 Polish
+# AI Customer Success Learning Portfolio — v90.4 Maintenance
 
 v90 is the final content + polish pass built from the v89.5 release candidate.
 
@@ -79,3 +79,9 @@ Navigation polish only. The desktop header now keeps the four primary destinatio
 - Aligned the Home Practice environment / Capstone progress strip to the same full content width as the primary Home card below it.
 - Added deliberate bottom breathing room after the shared Go deeper footer.
 - No content, navigation, hierarchy, or behavior changes.
+
+## v90.4 adoption-note cleanup
+- Removed stale Success Measurement Plan working-note language that still implied blanket daily use was required.
+- Working notes now explain why eligible-workflow penetration, repeat use, appropriate non-use, and qualitative friction are more diagnostic.
+- Below-target adoption now triggers investigation of eligibility, workflow fit, review burden, trust, training, reinforcement, and product friction before assuming the answer is more training.
+- No layout, navigation, hierarchy, or other content changes.
