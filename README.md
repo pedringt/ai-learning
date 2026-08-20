@@ -171,3 +171,8 @@ Navigation polish only. The desktop header now keeps the four primary destinatio
 - Increased standalone artifact body/heading typography to match the newer site.
 - Tracker retains density through spacing only, not smaller type.
 - No content or information architecture changed.
+
+## v92.2 readout + header parity
+- Standalone artifact pages now use the actual Home header markup pattern rather than a visually similar recreation.
+- Moved the one-page readout’s planned-learning note below the orientation block so the top follows the same artifact rhythm as other Meridian pages.
+- No substantive content changed.
