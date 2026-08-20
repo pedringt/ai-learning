@@ -1,5 +1,8 @@
 # AI Customer Success Learning Portfolio
 
-Final portfolio source checkpoint before additional hands-on work.
+Static deployment package.
 
-Deploy the folder to Vercel with `index.html` and `vercel.json` at the project root.
+Files:
+- `index.html` — main portfolio
+- `agent-flow.html` — full Meridian Agent Flow artifact
+- `vercel.json` — Vercel settings
