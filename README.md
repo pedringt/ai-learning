@@ -159,3 +159,8 @@ Navigation polish only. The desktop header now keeps the four primary destinatio
 - Rebuilt standalone artifact headers to visually match the Home header, including dark mode then More ordering.
 - Restored the intended manager-readability orientation boxes on Plan, Agent Flow, Eval Suite, and Case Readout.
 - Preserved Tracker’s receipts-layer orientation and the Meridian evidence bar.
+
+## v91.9 design consistency
+- Normalized standalone Meridian typography, heading hierarchy, body copy, labels, status pills, surfaces, callouts, tables, and vertical rhythm.
+- Kept the Working Tracker intentionally slightly denser as the receipts layer while matching the shared visual system.
+- No content, navigation, evidence, claims, or information architecture changed.

@@ -264,7 +264,6 @@ body.v88-dark .topbar{background:rgba(16,16,20,.96)!important}
   .v918-mobile-nav{max-width:150px;min-width:0}
 }
 </style>
-
 <style id="v918-artifact-orientation">
 .v918-orientation{
   display:grid;grid-template-columns:minmax(0,1.7fr) minmax(150px,.55fr);
@@ -279,6 +278,189 @@ body.v88-dark .topbar{background:rgba(16,16,20,.96)!important}
 @media(max-width:620px){
  .v918-orientation{grid-template-columns:1fr}
  .v918-orientation .statusbox{padding-left:0;padding-top:10px;border-left:0;border-top:1px solid var(--border)}
+}
+</style>
+
+<style id="v919-design-system">
+/* v91.9 — shared visual language for standalone Meridian artifacts */
+
+/* Shared page frame + typography */
+body{
+  font-family:Arial,Helvetica,sans-serif!important;
+  color:var(--ink)!important;
+  background:var(--bg)!important;
+}
+.wrap{
+  max-width:1180px!important;
+  padding-left:28px!important;
+  padding-right:28px!important;
+}
+.wrap>h2:first-of-type{
+  font-size:30px!important;
+  line-height:1.08!important;
+  letter-spacing:-.03em!important;
+  margin:10px 0 8px!important;
+}
+.wrap>h2:not(:first-of-type){
+  font-size:22px!important;
+  line-height:1.2!important;
+  letter-spacing:-.02em!important;
+  margin:36px 0 12px!important;
+}
+.wrap h3{
+  font-size:17px!important;
+  line-height:1.25!important;
+  letter-spacing:-.015em!important;
+}
+.lead{
+  font-size:17px!important;
+  line-height:1.55!important;
+  color:var(--muted)!important;
+  max-width:860px!important;
+  margin-bottom:22px!important;
+}
+.wrap p,.wrap li{
+  font-size:13.5px!important;
+  line-height:1.56!important;
+}
+.small{
+  font-size:12px!important;
+  line-height:1.5!important;
+  color:var(--muted)!important;
+}
+.badge,.tag,.status,.label{
+  font-family:Arial,Helvetica,sans-serif!important;
+}
+
+/* Section-label language */
+.badge,.tag{
+  display:inline-flex!important;
+  align-items:center!important;
+  width:auto!important;
+  border:1px solid color-mix(in srgb,var(--purple) 24%,var(--border))!important;
+  border-radius:999px!important;
+  background:color-mix(in srgb,var(--softp) 72%,var(--card))!important;
+  color:var(--purple)!important;
+  padding:5px 8px!important;
+  font-size:10.5px!important;
+  font-weight:800!important;
+  letter-spacing:.055em!important;
+  text-transform:uppercase!important;
+}
+.status{
+  border-radius:999px!important;
+  padding:4px 8px!important;
+  font-size:10.5px!important;
+  font-weight:800!important;
+  text-transform:uppercase!important;
+  letter-spacing:.035em!important;
+}
+
+/* Shared surface treatment */
+.frame,.reasoning,.callout,.case,.eval-area,.next-grid>div,
+.metric,.v918-orientation,.v915-orientation{
+  border-radius:16px!important;
+  border:1px solid var(--border)!important;
+  background:linear-gradient(180deg,var(--card),color-mix(in srgb,var(--soft) 56%,var(--card)))!important;
+  box-shadow:0 6px 20px rgba(20,18,40,.035)!important;
+}
+body.v88-dark .frame,body.v88-dark .reasoning,body.v88-dark .callout,
+body.v88-dark .case,body.v88-dark .eval-area,body.v88-dark .next-grid>div,
+body.v88-dark .metric,body.v88-dark .v918-orientation,body.v88-dark .v915-orientation{
+  box-shadow:none!important;
+}
+.frame,.reasoning,.callout{
+  padding:16px 18px!important;
+  margin-top:14px!important;
+  margin-bottom:14px!important;
+}
+.case,.eval-area,.next-grid>div,.metric{
+  padding:16px!important;
+}
+.frame b:first-child,.reasoning b:first-child,.callout b:first-child{
+  color:var(--ink)!important;
+}
+
+/* Callout accents should feel like Home, not legacy docs */
+.callout{
+  border-left:3px solid var(--purple2)!important;
+}
+.callout.cyan{border-left-color:var(--cyan)!important}
+.callout.gold{border-left-color:var(--gold)!important}
+.callout.purple{border-left-color:var(--purple)!important}
+
+/* Tables */
+table{
+  width:100%!important;
+  border-collapse:separate!important;
+  border-spacing:0!important;
+  overflow:hidden!important;
+  border:1px solid var(--border)!important;
+  border-radius:14px!important;
+  background:var(--card)!important;
+}
+th{
+  background:var(--soft)!important;
+  color:var(--muted)!important;
+  text-transform:uppercase!important;
+  letter-spacing:.045em!important;
+  font-size:10.5px!important;
+  font-weight:800!important;
+}
+th,td{
+  padding:11px 12px!important;
+  border-bottom:1px solid var(--border)!important;
+  vertical-align:top!important;
+}
+tr:last-child td{border-bottom:0!important}
+
+/* Lists and inline links */
+.wrap a{font-weight:700}
+.wrap ul,.wrap ol{padding-left:20px!important}
+.wrap li{margin:5px 0!important}
+
+/* Evidence bar consistent with rest of site */
+.v88-artifact-nav{
+  border-bottom:1px solid var(--border)!important;
+  padding-bottom:14px!important;
+  margin-bottom:28px!important;
+}
+.v88-artifact-nav a{
+  box-shadow:none!important;
+}
+
+/* Orientation block aligns with page header instead of feeling bolted on */
+.v918-orientation,.v915-orientation{
+  margin:14px 0 30px!important;
+  padding:16px 18px!important;
+}
+.v918-orientation .label,.v915-orientation .label{
+  color:var(--purple)!important;
+  font-size:10px!important;
+  font-weight:850!important;
+  letter-spacing:.07em!important;
+  text-transform:uppercase!important;
+}
+.v918-orientation p,.v915-orientation p{
+  font-size:12.5px!important;
+  line-height:1.5!important;
+  color:var(--muted)!important;
+}
+
+/* Bottom utility links */
+.wrap>p.small:last-child{
+  margin-top:36px!important;
+  padding-top:18px!important;
+  border-top:1px solid var(--border)!important;
+}
+
+/* Responsive parity with main site */
+@media(max-width:760px){
+  .wrap{padding-left:18px!important;padding-right:18px!important}
+  .wrap>h2:first-of-type{font-size:27px!important}
+  .wrap>h2:not(:first-of-type){font-size:20px!important}
+  .lead{font-size:16px!important}
+  .v918-orientation,.v915-orientation{padding:14px!important}
 }
 </style>
 </head><body>
