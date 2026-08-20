@@ -26,6 +26,86 @@
 /* Keep the celestial theme intentional rather than scattered. */
 .view.active::before,.view.active::after,.hero::after,.eyebrow::before,.section-kicker::before,.card::after,.band::after,.practice::after,.decision::after,.checkpoint::before,.artifact::after,.stage.todo::after{display:none!important}.learn-core .tag::before,[data-panel-content="foundations"]>.grid2::before,[data-panel-content="foundations"]>.grid2>.card:nth-child(5) h3::before{content:none!important}.float-tool{font-size:16px}.resource-float{font-size:12px}
 @media(max-width:560px){.shell{padding:0 18px 48px}.topbar{margin:0 -18px;padding:11px 18px}.topinner{gap:10px}.brand{font-size:15px}.theme-toggle{padding:8px 10px}.view{padding-top:36px}.grid2,.grid3,.metric-grid,.stages,.artifact-grid{grid-template-columns:1fr}.journey{grid-template-columns:1fr 1fr}.hero h1{font-size:40px}.lead{font-size:17px}.card{padding:17px}.checkpoint{grid-template-columns:1fr}[data-page="workbench"]>.band .pillrow{grid-template-columns:1fr 1fr}.cs-flow .node{flex-basis:156px;padding:12px}.float-tool{right:14px;top:98px;width:40px;height:40px}.resource-float{right:60px;top:98px;padding:9px 11px}.float-panel,.resource-panel{right:14px;top:148px;width:calc(100vw - 28px);max-height:calc(100vh - 166px)}#mobileNav{max-width:142px;min-width:0}}
+
+/* v88.1 — Meridian emphasis + status polish */
+.meridian-primary-work{
+  margin:28px 0 24px;
+  padding:22px;
+  border:1px solid var(--border);
+  border-radius:18px;
+  background:linear-gradient(180deg,var(--softp),var(--white));
+}
+.meridian-primary-work .section-kicker{margin-top:0}
+.primary-artifact-grid{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:14px;
+  margin-top:14px;
+}
+.primary-artifact{
+  display:block;
+  padding:17px 18px;
+  border:1px solid var(--border);
+  border-radius:14px;
+  background:var(--white);
+  color:var(--ink);
+  text-decoration:none!important;
+  box-shadow:0 5px 18px rgba(20,18,40,.045);
+}
+.primary-artifact:hover{border-color:var(--purple);transform:translateY(-1px)}
+.primary-artifact .artifact-label{
+  display:block;
+  color:var(--purple);
+  font-size:11px;
+  font-weight:800;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  margin-bottom:5px;
+}
+.primary-artifact strong{display:block;font-size:16px;margin-bottom:5px}
+.primary-artifact span:last-child{display:block;color:var(--muted);font-size:13px;line-height:1.45}
+.supporting-evidence{
+  display:flex;
+  gap:12px 18px;
+  flex-wrap:wrap;
+  align-items:center;
+  margin-top:14px;
+  padding-top:14px;
+  border-top:1px solid var(--border);
+  font-size:13px;
+}
+.supporting-evidence .support-label{color:var(--muted);font-weight:700}
+.supporting-evidence a{font-weight:700}
+.portfolio-featured-meridian{
+  border:1px solid var(--border);
+  border-left:4px solid var(--purple);
+  border-radius:16px;
+  padding:20px;
+  margin:18px 0 24px;
+  background:var(--white);
+}
+.portfolio-featured-meridian h3{margin:4px 0 6px}
+.portfolio-primary-links,.portfolio-secondary-links{display:flex;gap:8px;flex-wrap:wrap;margin-top:13px}
+.portfolio-primary-links a{
+  border:1px solid var(--border);
+  border-radius:999px;
+  padding:7px 10px;
+  text-decoration:none;
+  font-size:12.5px;
+  font-weight:800;
+  background:var(--softp);
+}
+.portfolio-secondary-links{font-size:12.5px;color:var(--muted);margin-top:10px}
+.portfolio-secondary-links a{font-weight:700}
+.status{font-weight:700!important}
+.status.done{opacity:.72}
+.status.progress{opacity:1}
+.status.todo,.status.later{opacity:.58}
+@media(max-width:720px){
+  .primary-artifact-grid{grid-template-columns:1fr}
+  .meridian-primary-work{padding:17px}
+}
+
 </style>
 <div class="shell">
   <div class="topbar"><div class="topinner"><button class="brand-button" type="button" data-brand-home aria-label="Go to home"><span class="brand">AI <span>Customer Success</span></span></button><nav class="nav" aria-label="Prototype pages"><button class="active" data-view="home">Home</button><button data-view="learn">Learn</button><button data-view="cs">AI Customer Success</button><button data-view="meridian">Meridian</button><button data-view="workbench">Workbench</button><button data-view="portfolio">Portfolio</button></nav><div style="display:flex;align-items:center;gap:8px"><button id="themeToggle" class="theme-toggle" type="button" aria-pressed="false" aria-label="Switch to dark mode" title="Switch to dark mode">☾</button><select id="mobileNav" aria-label="Choose page" style="border:1px solid var(--border);background:var(--card);color:inherit;border-radius:9px;padding:9px;font-size:13px"><option value="home">Home</option><option value="learn">Learn</option><option value="cs">AI Customer Success</option><option value="meridian">Meridian</option><option value="workbench">Workbench</option><option value="portfolio">Portfolio</option></select></div></div></div>
@@ -270,6 +350,84 @@ const wb=root.querySelector('[data-page="workbench"]');if(wb&&!wb.querySelector(
 </style>
 <script id="v88-qa-portfolio-script">
 (()=>{const port=document.querySelector('#ai-cs-mock [data-page="portfolio"]');if(!port||port.querySelector('.v88-portfolio-depth'))return;const children=[...port.children];const start=children.findIndex((e,i)=>i>0&&e.classList?.contains('grid2'));let end=-1;for(let i=children.length-1;i>=0;i--){if(children[i].classList?.contains('band')){end=i;break;}}if(start>=0&&end>=start){const details=document.createElement('details');details.className='v88-portfolio-depth';const summary=document.createElement('summary');summary.textContent='More portfolio notes, operating skills, and competency map';const inner=document.createElement('div');inner.className='v88-portfolio-depth-inner';children[start].before(details);details.append(summary,inner);for(let i=start;i<=end;i++)inner.appendChild(children[i]);}})();
+</script>
+
+
+<script>
+(function(){
+  function addV881Hierarchy(){
+    const meridian = document.querySelector('[data-page="meridian"]');
+    if (meridian && !meridian.querySelector('.meridian-primary-work')) {
+      const target = meridian.querySelector('.meridian-proof, .case-depth, .case-notes, .band');
+      const block = document.createElement('section');
+      block.className = 'meridian-primary-work';
+      block.innerHTML = `
+        <div class="section-kicker"><span>Applied work</span></div>
+        <h3 style="margin:7px 0 5px">From discovery to evaluation</h3>
+        <p style="margin:0;color:var(--muted);max-width:760px">The core Meridian work follows the decisions that changed during discovery through measurement, workflow design, and evaluation.</p>
+        <div class="primary-artifact-grid">
+          <a class="primary-artifact" href="tracker.html">
+            <span class="artifact-label">Discovery</span><strong>Discovery &amp; Decisions</strong>
+            <span>Questions, evidence, rejected assumptions, and the decisions that changed as the workflow became clearer.</span>
+          </a>
+          <a class="primary-artifact" href="plan.html">
+            <span class="artifact-label">Plan</span><strong>Success Measurement Plan</strong>
+            <span>Operational and customer outcomes, guardrails, measurement limits, and the reasoning behind the targets.</span>
+          </a>
+          <a class="primary-artifact" href="agent-flow.html">
+            <span class="artifact-label">Configure</span><strong>Agent Flow &amp; Guardrails</strong>
+            <span>Classification, retrieval, evidence checks, human review, and direct human routing for high-risk work.</span>
+          </a>
+          <a class="primary-artifact" href="evals.html">
+            <span class="artifact-label">Validate</span><strong>Eval Suite</strong>
+            <span>Concrete cases with expected behavior, pass criteria, severity, sources/tools, and failure analysis.</span>
+          </a>
+        </div>
+        <div class="supporting-evidence">
+          <span class="support-label">Supporting evidence</span>
+          <a href="tracker.html">Full Working Tracker</a>
+          <a href="deliverable.html">One-page Meridian summary</a>
+        </div>`;
+      if (target) target.parentNode.insertBefore(block,target);
+      else meridian.appendChild(block);
+    }
+
+    const portfolio = document.querySelector('[data-page="portfolio"]');
+    if (portfolio && !portfolio.querySelector('.portfolio-featured-meridian')) {
+      const anchor = portfolio.querySelector('.artifact-grid, .grid, .band, h3');
+      const feature = document.createElement('section');
+      feature.className = 'portfolio-featured-meridian';
+      feature.innerHTML = `
+        <div class="section-kicker"><span>Featured applied work</span></div>
+        <h3>Meridian AI Support Pilot</h3>
+        <p style="margin:0;color:var(--muted)">Discovery → measurement → agent design → evaluation.</p>
+        <div class="portfolio-primary-links">
+          <a href="#meridian">Discovery &amp; Decisions</a>
+          <a href="plan.html">Success Plan</a>
+          <a href="agent-flow.html">Agent Flow</a>
+          <a href="evals.html">Eval Suite</a>
+        </div>
+        <div class="portfolio-secondary-links">
+          <span>More evidence:</span>
+          <a href="tracker.html">Working Tracker</a>
+          <span>·</span>
+          <a href="deliverable.html">One-page summary</a>
+        </div>`;
+      if (anchor) anchor.parentNode.insertBefore(feature,anchor);
+      else portfolio.appendChild(feature);
+    }
+
+    // Terminology cleanup: preserve meaning while reducing dashboard-like status language.
+    document.querySelectorAll('.status').forEach(el=>{
+      const t = el.textContent.trim().toLowerCase();
+      if (t === 'done') el.textContent = 'Completed';
+      else if (t === 'later' || t === 'todo' || t === 'to do') el.textContent = 'Planned';
+      else if (t === 'building') el.textContent = 'In progress';
+    });
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', addV881Hierarchy);
+  else addV881Hierarchy();
+})();
 </script>
 
 </body>
