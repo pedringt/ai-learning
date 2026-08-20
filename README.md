@@ -1,4 +1,4 @@
-# AI Customer Success Learning Portfolio — v90.4 Maintenance
+# AI Customer Success Learning Portfolio — v90.5 Final Maintenance
 
 v90 is the final content + polish pass built from the v89.5 release candidate.
 
@@ -85,3 +85,10 @@ Navigation polish only. The desktop header now keeps the four primary destinatio
 - Working notes now explain why eligible-workflow penetration, repeat use, appropriate non-use, and qualitative friction are more diagnostic.
 - Below-target adoption now triggers investigation of eligibility, workflow fit, review burden, trust, training, reinforcement, and product friction before assuming the answer is more training.
 - No layout, navigation, hierarchy, or other content changes.
+
+## v90.5 final maintenance
+- Cleaned up the Tracker adoption section so Target and Reasoning serve distinct purposes.
+- Reasoning now explains why blanket daily-use targets are misleading when ticket eligibility and appropriate non-use vary.
+- Below-target response now matches the Success Measurement Plan: diagnose eligibility, workflow fit, review burden, trust, training gaps, reinforcement, and product friction before prescribing training.
+- No broader content, layout, navigation, hierarchy, or curriculum changes.
+- Maintenance stopping point: future portfolio updates should primarily come from completed learning/operating exercises or concrete bugs.
