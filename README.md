@@ -85,3 +85,4 @@ Navigation polish only. The desktop header now keeps the four primary destinatio
 - Working notes now explain why eligible-workflow penetration, repeat use, appropriate non-use, and qualitative friction are more diagnostic.
 - Below-target adoption now triggers investigation of eligibility, workflow fit, review burden, trust, training, reinforcement, and product friction before assuming the answer is more training.
 - No layout, navigation, hierarchy, or other content changes.
+Deployment refresh: v90.4
