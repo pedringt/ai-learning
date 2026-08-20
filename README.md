@@ -206,3 +206,9 @@ Deliberately constrained content-only release on top of v93.1:
 - Added a clearly labeled future-learning placeholder for a genuinely agentic project covering dynamic tool use, state, tool failure/ambiguous outcomes, permissions, adversarial inputs, trajectory-level evals, and stopping/escalation.
 - Reordered the More menu so the one-page Meridian readout appears before the full Working Tracker.
 - No new page, no architecture change, no lifecycle-stage completion, and no substantive Meridian claims added.
+
+## v93.4 wording-consistency cleanup
+- Tracker wording now matches “Current pilot targets” rather than referring to locked targets.
+- Replaced “real (simulated) rep input” with unambiguous simulated-input wording.
+- Agent Flow and legacy Configure wording now consistently describe review/routing signals based on observable evidence rather than vague AI/model self-confidence.
+- No design, architecture, navigation, measurement logic, or substantive learning changes.

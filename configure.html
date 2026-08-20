@@ -792,7 +792,7 @@ body.v919-tracker .wrap>h2:not(:first-of-type){
 <h3>Key decision points</h3>
 <ul>
 <li><b>Category check</b> — money/security categories never get an AI draft, regardless of confidence. This is a hard rule, not a judgment call.</li>
-<li><b>Confidence check</b> — independent from category risk. A "safe" category can still get flagged with a reviewer note if the AI isn't confident (ambiguous request, conflicting KB sources, missing info).</li>
+<li><b>Confidence check</b> — independent from category risk. A "safe" category can still get flagged with a reviewer note when observable evidence indicates review is needed (for example, an ambiguous request, conflicting KB sources, or missing information).</li>
 <li><b>Escalation check (multi-turn)</b> — triggers on whichever comes first: 5+ exchanges (justified by the ~12% of tickets that naturally run long, per the simulated 90-day data pull — see open question 11 in the <a href="tracker.html">working tracker</a>), signs of an upset/repeating customer, a high-risk category surfacing mid-conversation even if the ticket didn't start that way, or the customer explicitly asking for a supervisor/to escalate (added after rep discovery — the cleanest signal of the four, since it doesn't require inference).</li>
 <li><b>Human review outcome</b> — always one of approve / edit / start over, whether the ticket was drafted or fully human-written. Nothing sends to the customer without a human touching it first, per the pilot's human-boundary rule.</li>
 </ul>
@@ -801,7 +801,7 @@ body.v919-tracker .wrap>h2:not(:first-of-type){
 <li>Ticket content + category (help desk tool)</li>
 <li>Knowledge base articles, via <b>semantic/embedding-based retrieval</b> rather than basic keyword matching — sidesteps the search limitation reps deal with today, though the underlying content problem (~20% unreviewed/stale articles — open question 2) still applies regardless of retrieval method</li>
 <li>Conversation history (for the exchange count and mid-thread category check)</li>
-<li>Confidence signal from the drafting step itself</li>
+<li>Review/routing signal based on observable evidence from the drafting workflow</li>
 <li><b>Billing/account-status data</b> — resolved simpler than expected: this already exists as a synced field on the ticket (nightly sync from the billing system), just not currently enabled for the Tier 1 view. No new integration or approval needed — enabling the existing field for Tier 1 (a standalone recommendation, not pilot-scoped) gives both reps and the agent access to the same already-approved data source. Caveat: up to 24 hrs stale due to the nightly sync.</li>
 </ul>
 <p class="small">Pending validation: real rep input (see Rep Discovery Questions in the <a href="tracker.html">working tracker</a>) may confirm or adjust the workflow-model assumption this flow is built on (open question 4), and could refine the escalation logic further. The billing field (above) folds into the "retrieve relevant knowledge" step once enabled — no separate node needed. Pilot targets that depend on this flow (first-response time, quality) are locked in the <a href="plan.html">PLAN deliverable</a>.</p>
