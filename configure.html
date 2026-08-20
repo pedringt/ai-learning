@@ -1,8 +1,9 @@
-<!doctype html>
+<!DOCTYPE html>
+
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta charset="utf-8"/>
+<meta content="width=device-width,initial-scale=1" name="viewport"/>
 <title>CONFIGURE — Meridian Agent Flow Diagram</title>
 <style>
   :root{
@@ -43,174 +44,159 @@
 </style>
 <style id="v88-artifact-nav-css">.v88-artifact-nav{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:14px 0 22px;font-size:12px}.v88-artifact-nav a{border:1px solid var(--border);background:var(--card);color:var(--purple)!important;text-decoration:none!important;border-radius:999px;padding:7px 10px;font-weight:800}.v88-artifact-nav strong{font-size:12px}@media(max-width:620px){.v88-artifact-nav span[style]{display:none}.v88-artifact-nav a{padding:6px 8px}}</style></head>
 <body>
-<div class="topbar"><div class="wrap">
- <div class="brand"><a href="index.html">AI Customer Success</a></div>
- <div style="display:flex;align-items:center;gap:18px">
-  <nav class="nav"><a href="index.html">Guide</a><a href="tracker.html">Tracker</a><a href="plan.html">Plan</a><a href="configure.html">Configure</a></nav>
-  <a class="pdfbtn" href="deliverable.html">Deliverable</a>
- </div>
-</div></div>
+<div class="topbar"><div class="wrap"><div class="brand"><a href="index.html">AI <span style="color:var(--purple)">Customer Success</span></a></div><div class="v88-shellnav"><a href="index.html">Home</a><a href="index.html#meridian">Meridian</a><a href="index.html#portfolio">Portfolio</a><a href="index.html#learn">Learning Library</a><button aria-label="Toggle dark mode" class="v88-theme" title="Toggle dark mode" type="button">◐</button></div></div></div>
 <div class="wrap"><div class="v88-artifact-nav"><a href="index.html#meridian">Meridian</a><span>›</span><strong>Agent Design</strong><span style="flex:1"></span><a href="plan.html">← Previous</a><a href="evals.html">Next: Evaluation →</a></div>
-
-  <span class="badge">CAPSTONE · CONFIGURE</span>
-  <h2>Agent Flow — Meridian Tier 1 Support Pilot</h2>
-  <p class="lead">One-page flow from ticket arrival to human handoff, built from the classify → retrieve → draft → confidence-check → escalate logic worked out in PLAN, plus the back-and-forth escalation rule.</p>
-
-  <div class="callout cyan"><b>Not shown as a separate branch:</b> money/security categories (refunds, credits, disputes, password resets, account changes, security actions) skip drafting entirely per the PLAN Guardrails decision — they're folded into the "high-risk category" branch below, which routes straight to a human with no AI draft attempt.</div>
-
-  <div class="diagram">
-<svg width="543pt" height="1221pt"
- viewBox="0.00 0.00 543.00 1221.00" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
-<g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(4 1217)">
+<span class="badge">CAPSTONE · CONFIGURE</span>
+<h2>Agent Flow — Meridian Tier 1 Support Pilot</h2>
+<p class="lead">One-page flow from ticket arrival to human handoff, built from the classify → retrieve → draft → confidence-check → escalate logic worked out in PLAN, plus the back-and-forth escalation rule.</p>
+<div class="callout cyan"><b>Not shown as a separate branch:</b> money/security categories (refunds, credits, disputes, password resets, account changes, security actions) skip drafting entirely per the PLAN Guardrails decision — they're folded into the "high-risk category" branch below, which routes straight to a human with no AI draft attempt.</div>
+<div class="diagram">
+<svg height="1221pt" viewbox="0.00 0.00 543.00 1221.00" width="543pt" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<g class="graph" id="graph0" transform="scale(1 1) rotate(0) translate(4 1217)">
 <title>MeridianFlow</title>
-<g id="node1" class="node"><title>A</title>
-<path fill="#f3f0ff" stroke="#5336e8" stroke-width="1.4" d="M323.5,-1213C323.5,-1213 250.5,-1213 250.5,-1213 244.5,-1213 238.5,-1207 238.5,-1201 238.5,-1201 238.5,-1189 238.5,-1189 238.5,-1183 244.5,-1177 250.5,-1177 250.5,-1177 323.5,-1177 323.5,-1177 329.5,-1177 335.5,-1183 335.5,-1189 335.5,-1189 335.5,-1201 335.5,-1201 335.5,-1207 329.5,-1213 323.5,-1213"/>
-<text text-anchor="middle" x="287" y="-1191.9" font-family="Arial" font-size="12.00">Ticket arrives</text></g>
-<g id="node2" class="node"><title>B</title>
-<path fill="#fff9eb" stroke="#bd8917" stroke-width="1.4" d="M276.22,-1134.73C276.22,-1134.73 207.78,-1101.27 207.78,-1101.27 202.39,-1098.64 202.39,-1093.36 207.78,-1090.73 207.78,-1090.73 276.22,-1057.27 276.22,-1057.27 281.61,-1054.64 292.39,-1054.64 297.78,-1057.27 297.78,-1057.27 366.22,-1090.73 366.22,-1090.73 371.61,-1093.36 371.61,-1098.64 366.22,-1101.27 366.22,-1101.27 297.78,-1134.73 297.78,-1134.73 292.39,-1137.36 281.61,-1137.36 276.22,-1134.73"/>
-<text text-anchor="middle" x="287" y="-1099.4" font-family="Arial" font-size="12.00">AI classifies</text>
-<text text-anchor="middle" x="287" y="-1086.4" font-family="Arial" font-size="12.00">category</text></g>
-<g id="edge1" class="edge"><title>A-&gt;B</title>
-<path fill="none" stroke="#9490a8" stroke-width="1.2" d="M287,-1176.66C287,-1169.05 287,-1159.68 287,-1150.06"/>
-<polygon fill="#9490a8" stroke="#9490a8" stroke-width="1.2" points="290.5,-1150.02 287,-1140.02 283.5,-1150.02 290.5,-1150.02"/></g>
-<g id="node3" class="node"><title>C</title>
-<path fill="#fff9eb" stroke="#bd8917" stroke-width="1.4" d="M167.5,-930C167.5,-930 38.5,-930 38.5,-930 32.5,-930 26.5,-924 26.5,-918 26.5,-918 26.5,-885 26.5,-885 26.5,-879 32.5,-873 38.5,-873 38.5,-873 167.5,-873 167.5,-873 173.5,-873 179.5,-879 179.5,-885 179.5,-885 179.5,-918 179.5,-918 179.5,-924 173.5,-930 167.5,-930"/>
-<text text-anchor="middle" x="103" y="-911.4" font-family="Arial" font-size="12.00">Skip drafting.</text>
-<text text-anchor="middle" x="103" y="-898.4" font-family="Arial" font-size="12.00">Route straight to human</text>
-<text text-anchor="middle" x="103" y="-885.4" font-family="Arial" font-size="12.00">(classification only)</text></g>
-<g id="edge2" class="edge"><title>B-&gt;C</title>
-<path fill="none" stroke="#9490a8" stroke-width="1.2" d="M248.86,-1070.37C234.1,-1060 217.54,-1047.26 204,-1034 174.21,-1004.83 145.8,-966.58 126.75,-938.86"/>
-<polygon fill="#9490a8" stroke="#9490a8" stroke-width="1.2" points="129.41,-936.56 120.9,-930.25 123.62,-940.49 129.41,-936.56"/>
-<text text-anchor="middle" x="243.5" y="-1025.6" font-family="Arial" font-size="10.50" fill="#3a3a45">high-risk:</text>
-<text text-anchor="middle" x="243.5" y="-1013.6" font-family="Arial" font-size="10.50" fill="#3a3a45">money / security</text></g>
-<g id="node4" class="node"><title>D</title>
-<path fill="#ffffff" stroke="#e7e5ef" stroke-width="1.4" d="M348.5,-992C348.5,-992 225.5,-992 225.5,-992 219.5,-992 213.5,-986 213.5,-980 213.5,-980 213.5,-960 213.5,-960 213.5,-954 219.5,-948 225.5,-948 225.5,-948 348.5,-948 348.5,-948 354.5,-948 360.5,-954 360.5,-960 360.5,-960 360.5,-980 360.5,-980 360.5,-986 354.5,-992 348.5,-992"/>
-<text text-anchor="middle" x="287" y="-973.4" font-family="Arial" font-size="12.00">Retrieve relevant</text>
-<text text-anchor="middle" x="287" y="-960.4" font-family="Arial" font-size="12.00">knowledge (KB / tools)</text></g>
-<g id="edge3" class="edge"><title>B-&gt;D</title>
-<path fill="none" stroke="#9490a8" stroke-width="1.2" d="M287,-1051.98C287,-1035.66 287,-1017.39 287,-1002.34"/>
-<polygon fill="#9490a8" stroke="#9490a8" stroke-width="1.2" points="290.5,-1002.03 287,-992.03 283.5,-1002.03 290.5,-1002.03"/>
-<text text-anchor="middle" x="330.5" y="-1019.6" font-family="Arial" font-size="10.50" fill="#3a3a45">standard category</text></g>
-<g id="node9" class="node"><title>I</title>
-<path fill="#f2faf5" stroke="#269650" stroke-width="1.4" d="M222,-560C222,-560 130,-560 130,-560 124,-560 118,-554 118,-548 118,-548 118,-528 118,-528 118,-522 124,-516 130,-516 130,-516 222,-516 222,-516 228,-516 234,-522 234,-528 234,-528 234,-548 234,-548 234,-554 228,-560 222,-560"/>
-<text text-anchor="middle" x="176" y="-541.4" font-family="Arial" font-size="12.00">Human reviews /</text>
-<text text-anchor="middle" x="176" y="-528.4" font-family="Arial" font-size="12.00">drafts response</text></g>
-<g id="edge8" class="edge"><title>C-&gt;I</title>
-<path fill="none" stroke="#9490a8" stroke-width="1.2" d="M97.39,-872.79C93.49,-851.15 89,-820.29 89,-793 89,-793 89,-793 89,-641 89,-610.53 111.75,-584.55 133.99,-566.43"/>
-<polygon fill="#9490a8" stroke="#9490a8" stroke-width="1.2" points="136.36,-569.02 142.11,-560.12 132.07,-563.49 136.36,-569.02"/></g>
-<g id="node5" class="node"><title>E</title>
-<path fill="#ffffff" stroke="#e7e5ef" stroke-width="1.4" d="M326,-855C326,-855 248,-855 248,-855 242,-855 236,-849 236,-843 236,-843 236,-823 236,-823 236,-817 242,-811 248,-811 248,-811 326,-811 326,-811 332,-811 338,-817 338,-823 338,-823 338,-843 338,-843 338,-849 332,-855 326,-855"/>
-<text text-anchor="middle" x="287" y="-836.4" font-family="Arial" font-size="12.00">Generate draft</text>
-<text text-anchor="middle" x="287" y="-823.4" font-family="Arial" font-size="12.00">response</text></g>
-<g id="edge4" class="edge"><title>D-&gt;E</title>
-<path fill="none" stroke="#9490a8" stroke-width="1.2" d="M287,-947.91C287,-925.84 287,-890.96 287,-865.61"/>
-<polygon fill="#9490a8" stroke="#9490a8" stroke-width="1.2" points="290.5,-865.39 287,-855.39 283.5,-865.39 290.5,-865.39"/></g>
-<g id="node6" class="node"><title>F</title>
-<path fill="#fff9eb" stroke="#bd8917" stroke-width="1.4" d="M275.34,-771.15C275.34,-771.15 171.66,-745.85 171.66,-745.85 165.83,-744.42 165.83,-741.58 171.66,-740.15 171.66,-740.15 275.34,-714.85 275.34,-714.85 281.17,-713.42 292.83,-713.42 298.66,-714.85 298.66,-714.85 402.34,-740.15 402.34,-740.15 408.17,-741.58 408.17,-744.42 402.34,-745.85 402.34,-745.85 298.66,-771.15 298.66,-771.15 292.83,-772.58 281.17,-772.58 275.34,-771.15"/>
-<text text-anchor="middle" x="287" y="-739.9" font-family="Arial" font-size="12.00">Assess confidence</text></g>
-<g id="edge5" class="edge"><title>E-&gt;F</title>
-<path fill="none" stroke="#9490a8" stroke-width="1.2" d="M287,-810.7C287,-802.71 287,-793.36 287,-784.22"/>
-<polygon fill="#9490a8" stroke="#9490a8" stroke-width="1.2" points="290.5,-784.08 287,-774.08 283.5,-784.08 290.5,-784.08"/></g>
-<g id="node7" class="node"><title>G</title>
-<path fill="#effbfd" stroke="#159eb9" stroke-width="1.4" d="M222.5,-664C222.5,-664 129.5,-664 129.5,-664 123.5,-664 117.5,-658 117.5,-652 117.5,-652 117.5,-632 117.5,-632 117.5,-626 123.5,-620 129.5,-620 129.5,-620 222.5,-620 222.5,-620 228.5,-620 234.5,-626 234.5,-632 234.5,-632 234.5,-652 234.5,-652 234.5,-658 228.5,-664 222.5,-664"/>
-<text text-anchor="middle" x="176" y="-645.4" font-family="Arial" font-size="12.00">Flag for standard</text>
-<text text-anchor="middle" x="176" y="-632.4" font-family="Arial" font-size="12.00">human review</text></g>
-<g id="edge6" class="edge"><title>F-&gt;G</title>
-<path fill="none" stroke="#9490a8" stroke-width="1.2" d="M260.41,-718.29C244.54,-704.13 224.29,-686.07 207.6,-671.18"/>
-<polygon fill="#9490a8" stroke="#9490a8" stroke-width="1.2" points="209.52,-668.21 199.73,-664.16 204.86,-673.43 209.52,-668.21"/>
-<text text-anchor="middle" x="254" y="-685.6" font-family="Arial" font-size="10.50" fill="#3a3a45">confident</text></g>
-<g id="node8" class="node"><title>H</title>
-<path fill="#effbfd" stroke="#159eb9" stroke-width="1.4" d="M415.5,-664C415.5,-664 264.5,-664 264.5,-664 258.5,-664 252.5,-658 252.5,-652 252.5,-652 252.5,-632 252.5,-632 252.5,-626 258.5,-620 264.5,-620 264.5,-620 415.5,-620 415.5,-620 421.5,-620 427.5,-626 427.5,-632 427.5,-632 427.5,-652 427.5,-652 427.5,-658 421.5,-664 415.5,-664"/>
-<text text-anchor="middle" x="340" y="-645.4" font-family="Arial" font-size="12.00">Flag for human review</text>
-<text text-anchor="middle" x="340" y="-632.4" font-family="Arial" font-size="12.00">+ note why (low confidence)</text></g>
-<g id="edge7" class="edge"><title>F-&gt;H</title>
-<path fill="none" stroke="#9490a8" stroke-width="1.2" d="M301.34,-715.21C308.32,-702.18 316.73,-686.47 323.92,-673.04"/>
-<polygon fill="#9490a8" stroke="#9490a8" stroke-width="1.2" points="327.03,-674.63 328.67,-664.17 320.86,-671.33 327.03,-674.63"/>
-<text text-anchor="middle" x="353.5" y="-685.6" font-family="Arial" font-size="10.50" fill="#3a3a45">low confidence</text></g>
-<g id="edge9" class="edge"><title>G-&gt;I</title>
-<path fill="none" stroke="#9490a8" stroke-width="1.2" d="M176,-619.87C176,-605.51 176,-586.27 176,-570.16"/>
-<polygon fill="#9490a8" stroke="#9490a8" stroke-width="1.2" points="179.5,-570.11 176,-560.11 172.5,-570.11 179.5,-570.11"/></g>
-<g id="edge10" class="edge"><title>H-&gt;I</title>
-<path fill="none" stroke="#9490a8" stroke-width="1.2" d="M306.02,-619.87C280.62,-604.07 245.73,-582.37 218.49,-565.43"/>
-<polygon fill="#9490a8" stroke="#9490a8" stroke-width="1.2" points="220.28,-562.42 209.94,-560.11 216.58,-568.36 220.28,-562.42"/></g>
-<g id="node10" class="node"><title>J</title>
-<path fill="#fff9eb" stroke="#bd8917" stroke-width="1.4" d="M216.42,-475.85C216.42,-475.85 125.58,-451.15 125.58,-451.15 119.79,-449.57 119.79,-446.43 125.58,-444.85 125.58,-444.85 216.42,-420.15 216.42,-420.15 222.21,-418.57 233.79,-418.57 239.58,-420.15 239.58,-420.15 330.42,-444.85 330.42,-444.85 336.21,-446.43 336.21,-449.57 330.42,-451.15 330.42,-451.15 239.58,-475.85 239.58,-475.85 233.79,-477.43 222.21,-477.43 216.42,-475.85"/>
-<text text-anchor="middle" x="228" y="-444.9" font-family="Arial" font-size="12.00">Human decision</text></g>
-<g id="edge11" class="edge"><title>I-&gt;J</title>
-<path fill="none" stroke="#9490a8" stroke-width="1.2" d="M188.59,-515.7C194.22,-506.16 201.02,-494.66 207.36,-483.92"/>
-<polygon fill="#9490a8" stroke="#9490a8" stroke-width="1.2" points="210.48,-485.52 212.56,-475.13 204.46,-481.96 210.48,-485.52"/></g>
-<g id="node11" class="node"><title>K</title>
-<path fill="#f2faf5" stroke="#269650" stroke-width="1.4" d="M276,-357C276,-357 180,-357 180,-357 174,-357 168,-351 168,-345 168,-345 168,-333 168,-333 168,-327 174,-321 180,-321 180,-321 276,-321 276,-321 282,-321 288,-327 288,-333 288,-333 288,-345 288,-345 288,-351 282,-357 276,-357"/>
-<text text-anchor="middle" x="228" y="-335.9" font-family="Arial" font-size="12.00">Send to customer</text></g>
-<g id="edge12" class="edge"><title>J-&gt;K</title>
-<path fill="none" stroke="#9490a8" stroke-width="1.2" d="M228,-416.91C228,-401.39 228,-382.6 228,-367.47"/>
-<polygon fill="#9490a8" stroke="#9490a8" stroke-width="1.2" points="231.5,-367.21 228,-357.21 224.5,-367.21 231.5,-367.21"/>
-<text text-anchor="middle" x="264" y="-390.6" font-family="Arial" font-size="10.50" fill="#3a3a45">approve / edit /</text>
-<text text-anchor="middle" x="264" y="-378.6" font-family="Arial" font-size="10.50" fill="#3a3a45">start over</text></g>
-<g id="node12" class="node"><title>L</title>
-<path fill="#ffffff" stroke="#e7e5ef" stroke-width="1.4" d="M246.5,-284C246.5,-284 153.5,-284 153.5,-284 147.5,-284 141.5,-278 141.5,-272 141.5,-272 141.5,-252 141.5,-252 141.5,-246 147.5,-240 153.5,-240 153.5,-240 246.5,-240 246.5,-240 252.5,-240 258.5,-246 258.5,-252 258.5,-252 258.5,-272 258.5,-272 258.5,-278 252.5,-284 246.5,-284"/>
-<text text-anchor="middle" x="200" y="-265.4" font-family="Arial" font-size="12.00">Customer replies</text>
-<text text-anchor="middle" x="200" y="-252.4" font-family="Arial" font-size="12.00">(if follow-up)</text></g>
-<g id="edge13" class="edge"><title>K-&gt;L</title>
-<path fill="none" stroke="#9490a8" stroke-width="1.2" d="M221.65,-320.98C218.63,-312.9 214.93,-302.98 211.44,-293.65"/>
-<polygon fill="#9490a8" stroke="#9490a8" stroke-width="1.2" points="214.71,-292.39 207.93,-284.24 208.15,-294.84 214.71,-292.39"/></g>
-<g id="node15" class="node"><title>O</title>
-<path fill="#f3f0ff" stroke="#5336e8" stroke-width="1.4" d="M415.5,-280C415.5,-280 288.5,-280 288.5,-280 282.5,-280 276.5,-274 276.5,-268 276.5,-268 276.5,-256 276.5,-256 276.5,-250 282.5,-244 288.5,-244 288.5,-244 415.5,-244 415.5,-244 421.5,-244 427.5,-250 427.5,-256 427.5,-256 427.5,-268 427.5,-268 427.5,-274 421.5,-280 415.5,-280"/>
-<text text-anchor="middle" x="352" y="-258.9" font-family="Arial" font-size="12.00">Ticket resolved / closed</text></g>
-<g id="edge18" class="edge"><title>K-&gt;O</title>
-<path fill="none" stroke="#9490a8" stroke-width="1.2" d="M256.14,-320.98C273.53,-310.46 296.06,-296.84 314.9,-285.44"/>
-<polygon fill="#9490a8" stroke="#9490a8" stroke-width="1.2" points="316.8,-288.38 323.54,-280.21 313.18,-282.39 316.8,-288.38"/></g>
-<g id="node13" class="node"><title>M</title>
-<path fill="#fff9eb" stroke="#bd8917" stroke-width="1.4" d="M219.4,-199.93C219.4,-199.93 125.6,-175.07 125.6,-175.07 119.8,-173.54 119.8,-170.46 125.6,-168.93 125.6,-168.93 219.4,-144.07 219.4,-144.07 225.2,-142.54 236.8,-142.54 242.6,-144.07 242.6,-144.07 336.4,-168.93 336.4,-168.93 342.2,-170.46 342.2,-173.54 336.4,-175.07 336.4,-175.07 242.6,-199.93 242.6,-199.93 236.8,-201.46 225.2,-201.46 219.4,-199.93"/>
-<text text-anchor="middle" x="231" y="-168.9" font-family="Arial" font-size="12.00">Escalation check</text></g>
-<g id="edge14" class="edge"><title>L-&gt;M</title>
-<path fill="none" stroke="#9490a8" stroke-width="1.2" d="M207.5,-239.7C210.63,-230.83 214.35,-220.27 217.9,-210.2"/>
-<polygon fill="#9490a8" stroke="#9490a8" stroke-width="1.2" points="221.2,-211.36 221.22,-200.76 214.6,-209.03 221.2,-211.36"/></g>
-<g id="edge16" class="edge"><title>M-&gt;B</title>
-<path fill="none" stroke="#9490a8" stroke-width="1.2" d="M296.99,-185.53C363.38,-200.08 456,-226.55 456,-261 456,-971 456,-971 456,-971 456,-1024.45 400.37,-1057.39 352.94,-1075.75"/>
-<polygon fill="#9490a8" stroke="#9490a8" stroke-width="1.2" points="351.43,-1072.58 343.27,-1079.34 353.87,-1079.14 351.43,-1072.58"/>
-<text text-anchor="middle" x="495.5" y="-593.6" font-family="Arial" font-size="10.50" fill="#3a3a45">below threshold,</text>
-<text text-anchor="middle" x="495.5" y="-581.6" font-family="Arial" font-size="10.50" fill="#3a3a45">no flags</text></g>
-<g id="node14" class="node"><title>N</title>
-<path fill="#fff9eb" stroke="#bd8917" stroke-width="1.4" d="M192,-57C192,-57 12,-57 12,-57 6,-57 0,-51 0,-45 0,-45 0,-12 0,-12 0,-6 6,0 12,0 12,0 192,0 192,0 198,0 204,-6 204,-12 204,-12 204,-45 204,-45 204,-51 198,-57 192,-57"/>
-<text text-anchor="middle" x="102" y="-38.4" font-family="Arial" font-size="12.00">Escalate to human-only handling.</text>
-<text text-anchor="middle" x="102" y="-25.4" font-family="Arial" font-size="12.00">Show most recent AI draft</text>
-<text text-anchor="middle" x="102" y="-12.4" font-family="Arial" font-size="12.00">+ full thread for context</text></g>
-<g id="edge15" class="edge"><title>M-&gt;N</title>
-<path fill="none" stroke="#9490a8" stroke-width="1.2" d="M208.82,-146.68C188.33,-124.19 157.61,-90.5 134.38,-65.01"/>
-<polygon fill="#9490a8" stroke="#9490a8" stroke-width="1.2" points="136.75,-62.42 127.42,-57.39 131.57,-67.13 136.75,-62.42"/>
-<text text-anchor="middle" x="264.5" y="-114.6" font-family="Arial" font-size="10.50" fill="#3a3a45">5+ exchanges, OR upset/</text>
-<text text-anchor="middle" x="264.5" y="-102.6" font-family="Arial" font-size="10.50" fill="#3a3a45">repeating customer, OR high-risk</text>
-<text text-anchor="middle" x="264.5" y="-90.6" font-family="Arial" font-size="10.50" fill="#3a3a45">category mentioned mid-thread,</text>
-<text text-anchor="middle" x="264.5" y="-78.6" font-family="Arial" font-size="10.50" fill="#3a3a45">OR customer asks to escalate</text></g>
-<g id="edge17" class="edge"><title>N-&gt;I</title>
-<path fill="none" stroke="#9490a8" stroke-width="1.2" d="M97.03,-57.05C92.33,-85.49 86,-131.2 86,-171 86,-449 86,-449 86,-449 86,-474.64 104.91,-495.26 125.39,-510.08"/>
-<polygon fill="#9490a8" stroke="#9490a8" stroke-width="1.2" points="123.66,-513.14 133.9,-515.87 127.6,-507.35 123.66,-513.14"/></g>
+<g class="node" id="node1"><title>A</title>
+<path d="M323.5,-1213C323.5,-1213 250.5,-1213 250.5,-1213 244.5,-1213 238.5,-1207 238.5,-1201 238.5,-1201 238.5,-1189 238.5,-1189 238.5,-1183 244.5,-1177 250.5,-1177 250.5,-1177 323.5,-1177 323.5,-1177 329.5,-1177 335.5,-1183 335.5,-1189 335.5,-1189 335.5,-1201 335.5,-1201 335.5,-1207 329.5,-1213 323.5,-1213" fill="#f3f0ff" stroke="#5336e8" stroke-width="1.4"></path>
+<text font-family="Arial" font-size="12.00" text-anchor="middle" x="287" y="-1191.9">Ticket arrives</text></g>
+<g class="node" id="node2"><title>B</title>
+<path d="M276.22,-1134.73C276.22,-1134.73 207.78,-1101.27 207.78,-1101.27 202.39,-1098.64 202.39,-1093.36 207.78,-1090.73 207.78,-1090.73 276.22,-1057.27 276.22,-1057.27 281.61,-1054.64 292.39,-1054.64 297.78,-1057.27 297.78,-1057.27 366.22,-1090.73 366.22,-1090.73 371.61,-1093.36 371.61,-1098.64 366.22,-1101.27 366.22,-1101.27 297.78,-1134.73 297.78,-1134.73 292.39,-1137.36 281.61,-1137.36 276.22,-1134.73" fill="#fff9eb" stroke="#bd8917" stroke-width="1.4"></path>
+<text font-family="Arial" font-size="12.00" text-anchor="middle" x="287" y="-1099.4">AI classifies</text>
+<text font-family="Arial" font-size="12.00" text-anchor="middle" x="287" y="-1086.4">category</text></g>
+<g class="edge" id="edge1"><title>A-&gt;B</title>
+<path d="M287,-1176.66C287,-1169.05 287,-1159.68 287,-1150.06" fill="none" stroke="#9490a8" stroke-width="1.2"></path>
+<polygon fill="#9490a8" points="290.5,-1150.02 287,-1140.02 283.5,-1150.02 290.5,-1150.02" stroke="#9490a8" stroke-width="1.2"></polygon></g>
+<g class="node" id="node3"><title>C</title>
+<path d="M167.5,-930C167.5,-930 38.5,-930 38.5,-930 32.5,-930 26.5,-924 26.5,-918 26.5,-918 26.5,-885 26.5,-885 26.5,-879 32.5,-873 38.5,-873 38.5,-873 167.5,-873 167.5,-873 173.5,-873 179.5,-879 179.5,-885 179.5,-885 179.5,-918 179.5,-918 179.5,-924 173.5,-930 167.5,-930" fill="#fff9eb" stroke="#bd8917" stroke-width="1.4"></path>
+<text font-family="Arial" font-size="12.00" text-anchor="middle" x="103" y="-911.4">Skip drafting.</text>
+<text font-family="Arial" font-size="12.00" text-anchor="middle" x="103" y="-898.4">Route straight to human</text>
+<text font-family="Arial" font-size="12.00" text-anchor="middle" x="103" y="-885.4">(classification only)</text></g>
+<g class="edge" id="edge2"><title>B-&gt;C</title>
+<path d="M248.86,-1070.37C234.1,-1060 217.54,-1047.26 204,-1034 174.21,-1004.83 145.8,-966.58 126.75,-938.86" fill="none" stroke="#9490a8" stroke-width="1.2"></path>
+<polygon fill="#9490a8" points="129.41,-936.56 120.9,-930.25 123.62,-940.49 129.41,-936.56" stroke="#9490a8" stroke-width="1.2"></polygon>
+<text fill="#3a3a45" font-family="Arial" font-size="10.50" text-anchor="middle" x="243.5" y="-1025.6">high-risk:</text>
+<text fill="#3a3a45" font-family="Arial" font-size="10.50" text-anchor="middle" x="243.5" y="-1013.6">money / security</text></g>
+<g class="node" id="node4"><title>D</title>
+<path d="M348.5,-992C348.5,-992 225.5,-992 225.5,-992 219.5,-992 213.5,-986 213.5,-980 213.5,-980 213.5,-960 213.5,-960 213.5,-954 219.5,-948 225.5,-948 225.5,-948 348.5,-948 348.5,-948 354.5,-948 360.5,-954 360.5,-960 360.5,-960 360.5,-980 360.5,-980 360.5,-986 354.5,-992 348.5,-992" fill="#ffffff" stroke="#e7e5ef" stroke-width="1.4"></path>
+<text font-family="Arial" font-size="12.00" text-anchor="middle" x="287" y="-973.4">Retrieve relevant</text>
+<text font-family="Arial" font-size="12.00" text-anchor="middle" x="287" y="-960.4">knowledge (KB / tools)</text></g>
+<g class="edge" id="edge3"><title>B-&gt;D</title>
+<path d="M287,-1051.98C287,-1035.66 287,-1017.39 287,-1002.34" fill="none" stroke="#9490a8" stroke-width="1.2"></path>
+<polygon fill="#9490a8" points="290.5,-1002.03 287,-992.03 283.5,-1002.03 290.5,-1002.03" stroke="#9490a8" stroke-width="1.2"></polygon>
+<text fill="#3a3a45" font-family="Arial" font-size="10.50" text-anchor="middle" x="330.5" y="-1019.6">standard category</text></g>
+<g class="node" id="node9"><title>I</title>
+<path d="M222,-560C222,-560 130,-560 130,-560 124,-560 118,-554 118,-548 118,-548 118,-528 118,-528 118,-522 124,-516 130,-516 130,-516 222,-516 222,-516 228,-516 234,-522 234,-528 234,-528 234,-548 234,-548 234,-554 228,-560 222,-560" fill="#f2faf5" stroke="#269650" stroke-width="1.4"></path>
+<text font-family="Arial" font-size="12.00" text-anchor="middle" x="176" y="-541.4">Human reviews /</text>
+<text font-family="Arial" font-size="12.00" text-anchor="middle" x="176" y="-528.4">drafts response</text></g>
+<g class="edge" id="edge8"><title>C-&gt;I</title>
+<path d="M97.39,-872.79C93.49,-851.15 89,-820.29 89,-793 89,-793 89,-793 89,-641 89,-610.53 111.75,-584.55 133.99,-566.43" fill="none" stroke="#9490a8" stroke-width="1.2"></path>
+<polygon fill="#9490a8" points="136.36,-569.02 142.11,-560.12 132.07,-563.49 136.36,-569.02" stroke="#9490a8" stroke-width="1.2"></polygon></g>
+<g class="node" id="node5"><title>E</title>
+<path d="M326,-855C326,-855 248,-855 248,-855 242,-855 236,-849 236,-843 236,-843 236,-823 236,-823 236,-817 242,-811 248,-811 248,-811 326,-811 326,-811 332,-811 338,-817 338,-823 338,-823 338,-843 338,-843 338,-849 332,-855 326,-855" fill="#ffffff" stroke="#e7e5ef" stroke-width="1.4"></path>
+<text font-family="Arial" font-size="12.00" text-anchor="middle" x="287" y="-836.4">Generate draft</text>
+<text font-family="Arial" font-size="12.00" text-anchor="middle" x="287" y="-823.4">response</text></g>
+<g class="edge" id="edge4"><title>D-&gt;E</title>
+<path d="M287,-947.91C287,-925.84 287,-890.96 287,-865.61" fill="none" stroke="#9490a8" stroke-width="1.2"></path>
+<polygon fill="#9490a8" points="290.5,-865.39 287,-855.39 283.5,-865.39 290.5,-865.39" stroke="#9490a8" stroke-width="1.2"></polygon></g>
+<g class="node" id="node6"><title>F</title>
+<path d="M275.34,-771.15C275.34,-771.15 171.66,-745.85 171.66,-745.85 165.83,-744.42 165.83,-741.58 171.66,-740.15 171.66,-740.15 275.34,-714.85 275.34,-714.85 281.17,-713.42 292.83,-713.42 298.66,-714.85 298.66,-714.85 402.34,-740.15 402.34,-740.15 408.17,-741.58 408.17,-744.42 402.34,-745.85 402.34,-745.85 298.66,-771.15 298.66,-771.15 292.83,-772.58 281.17,-772.58 275.34,-771.15" fill="#fff9eb" stroke="#bd8917" stroke-width="1.4"></path>
+<text font-family="Arial" font-size="12.00" text-anchor="middle" x="287" y="-739.9">Assess confidence</text></g>
+<g class="edge" id="edge5"><title>E-&gt;F</title>
+<path d="M287,-810.7C287,-802.71 287,-793.36 287,-784.22" fill="none" stroke="#9490a8" stroke-width="1.2"></path>
+<polygon fill="#9490a8" points="290.5,-784.08 287,-774.08 283.5,-784.08 290.5,-784.08" stroke="#9490a8" stroke-width="1.2"></polygon></g>
+<g class="node" id="node7"><title>G</title>
+<path d="M222.5,-664C222.5,-664 129.5,-664 129.5,-664 123.5,-664 117.5,-658 117.5,-652 117.5,-652 117.5,-632 117.5,-632 117.5,-626 123.5,-620 129.5,-620 129.5,-620 222.5,-620 222.5,-620 228.5,-620 234.5,-626 234.5,-632 234.5,-632 234.5,-652 234.5,-652 234.5,-658 228.5,-664 222.5,-664" fill="#effbfd" stroke="#159eb9" stroke-width="1.4"></path>
+<text font-family="Arial" font-size="12.00" text-anchor="middle" x="176" y="-645.4">Flag for standard</text>
+<text font-family="Arial" font-size="12.00" text-anchor="middle" x="176" y="-632.4">human review</text></g>
+<g class="edge" id="edge6"><title>F-&gt;G</title>
+<path d="M260.41,-718.29C244.54,-704.13 224.29,-686.07 207.6,-671.18" fill="none" stroke="#9490a8" stroke-width="1.2"></path>
+<polygon fill="#9490a8" points="209.52,-668.21 199.73,-664.16 204.86,-673.43 209.52,-668.21" stroke="#9490a8" stroke-width="1.2"></polygon>
+<text fill="#3a3a45" font-family="Arial" font-size="10.50" text-anchor="middle" x="254" y="-685.6">confident</text></g>
+<g class="node" id="node8"><title>H</title>
+<path d="M415.5,-664C415.5,-664 264.5,-664 264.5,-664 258.5,-664 252.5,-658 252.5,-652 252.5,-652 252.5,-632 252.5,-632 252.5,-626 258.5,-620 264.5,-620 264.5,-620 415.5,-620 415.5,-620 421.5,-620 427.5,-626 427.5,-632 427.5,-632 427.5,-652 427.5,-652 427.5,-658 421.5,-664 415.5,-664" fill="#effbfd" stroke="#159eb9" stroke-width="1.4"></path>
+<text font-family="Arial" font-size="12.00" text-anchor="middle" x="340" y="-645.4">Flag for human review</text>
+<text font-family="Arial" font-size="12.00" text-anchor="middle" x="340" y="-632.4">+ note why (low confidence)</text></g>
+<g class="edge" id="edge7"><title>F-&gt;H</title>
+<path d="M301.34,-715.21C308.32,-702.18 316.73,-686.47 323.92,-673.04" fill="none" stroke="#9490a8" stroke-width="1.2"></path>
+<polygon fill="#9490a8" points="327.03,-674.63 328.67,-664.17 320.86,-671.33 327.03,-674.63" stroke="#9490a8" stroke-width="1.2"></polygon>
+<text fill="#3a3a45" font-family="Arial" font-size="10.50" text-anchor="middle" x="353.5" y="-685.6">low confidence</text></g>
+<g class="edge" id="edge9"><title>G-&gt;I</title>
+<path d="M176,-619.87C176,-605.51 176,-586.27 176,-570.16" fill="none" stroke="#9490a8" stroke-width="1.2"></path>
+<polygon fill="#9490a8" points="179.5,-570.11 176,-560.11 172.5,-570.11 179.5,-570.11" stroke="#9490a8" stroke-width="1.2"></polygon></g>
+<g class="edge" id="edge10"><title>H-&gt;I</title>
+<path d="M306.02,-619.87C280.62,-604.07 245.73,-582.37 218.49,-565.43" fill="none" stroke="#9490a8" stroke-width="1.2"></path>
+<polygon fill="#9490a8" points="220.28,-562.42 209.94,-560.11 216.58,-568.36 220.28,-562.42" stroke="#9490a8" stroke-width="1.2"></polygon></g>
+<g class="node" id="node10"><title>J</title>
+<path d="M216.42,-475.85C216.42,-475.85 125.58,-451.15 125.58,-451.15 119.79,-449.57 119.79,-446.43 125.58,-444.85 125.58,-444.85 216.42,-420.15 216.42,-420.15 222.21,-418.57 233.79,-418.57 239.58,-420.15 239.58,-420.15 330.42,-444.85 330.42,-444.85 336.21,-446.43 336.21,-449.57 330.42,-451.15 330.42,-451.15 239.58,-475.85 239.58,-475.85 233.79,-477.43 222.21,-477.43 216.42,-475.85" fill="#fff9eb" stroke="#bd8917" stroke-width="1.4"></path>
+<text font-family="Arial" font-size="12.00" text-anchor="middle" x="228" y="-444.9">Human decision</text></g>
+<g class="edge" id="edge11"><title>I-&gt;J</title>
+<path d="M188.59,-515.7C194.22,-506.16 201.02,-494.66 207.36,-483.92" fill="none" stroke="#9490a8" stroke-width="1.2"></path>
+<polygon fill="#9490a8" points="210.48,-485.52 212.56,-475.13 204.46,-481.96 210.48,-485.52" stroke="#9490a8" stroke-width="1.2"></polygon></g>
+<g class="node" id="node11"><title>K</title>
+<path d="M276,-357C276,-357 180,-357 180,-357 174,-357 168,-351 168,-345 168,-345 168,-333 168,-333 168,-327 174,-321 180,-321 180,-321 276,-321 276,-321 282,-321 288,-327 288,-333 288,-333 288,-345 288,-345 288,-351 282,-357 276,-357" fill="#f2faf5" stroke="#269650" stroke-width="1.4"></path>
+<text font-family="Arial" font-size="12.00" text-anchor="middle" x="228" y="-335.9">Send to customer</text></g>
+<g class="edge" id="edge12"><title>J-&gt;K</title>
+<path d="M228,-416.91C228,-401.39 228,-382.6 228,-367.47" fill="none" stroke="#9490a8" stroke-width="1.2"></path>
+<polygon fill="#9490a8" points="231.5,-367.21 228,-357.21 224.5,-367.21 231.5,-367.21" stroke="#9490a8" stroke-width="1.2"></polygon>
+<text fill="#3a3a45" font-family="Arial" font-size="10.50" text-anchor="middle" x="264" y="-390.6">approve / edit /</text>
+<text fill="#3a3a45" font-family="Arial" font-size="10.50" text-anchor="middle" x="264" y="-378.6">start over</text></g>
+<g class="node" id="node12"><title>L</title>
+<path d="M246.5,-284C246.5,-284 153.5,-284 153.5,-284 147.5,-284 141.5,-278 141.5,-272 141.5,-272 141.5,-252 141.5,-252 141.5,-246 147.5,-240 153.5,-240 153.5,-240 246.5,-240 246.5,-240 252.5,-240 258.5,-246 258.5,-252 258.5,-252 258.5,-272 258.5,-272 258.5,-278 252.5,-284 246.5,-284" fill="#ffffff" stroke="#e7e5ef" stroke-width="1.4"></path>
+<text font-family="Arial" font-size="12.00" text-anchor="middle" x="200" y="-265.4">Customer replies</text>
+<text font-family="Arial" font-size="12.00" text-anchor="middle" x="200" y="-252.4">(if follow-up)</text></g>
+<g class="edge" id="edge13"><title>K-&gt;L</title>
+<path d="M221.65,-320.98C218.63,-312.9 214.93,-302.98 211.44,-293.65" fill="none" stroke="#9490a8" stroke-width="1.2"></path>
+<polygon fill="#9490a8" points="214.71,-292.39 207.93,-284.24 208.15,-294.84 214.71,-292.39" stroke="#9490a8" stroke-width="1.2"></polygon></g>
+<g class="node" id="node15"><title>O</title>
+<path d="M415.5,-280C415.5,-280 288.5,-280 288.5,-280 282.5,-280 276.5,-274 276.5,-268 276.5,-268 276.5,-256 276.5,-256 276.5,-250 282.5,-244 288.5,-244 288.5,-244 415.5,-244 415.5,-244 421.5,-244 427.5,-250 427.5,-256 427.5,-256 427.5,-268 427.5,-268 427.5,-274 421.5,-280 415.5,-280" fill="#f3f0ff" stroke="#5336e8" stroke-width="1.4"></path>
+<text font-family="Arial" font-size="12.00" text-anchor="middle" x="352" y="-258.9">Ticket resolved / closed</text></g>
+<g class="edge" id="edge18"><title>K-&gt;O</title>
+<path d="M256.14,-320.98C273.53,-310.46 296.06,-296.84 314.9,-285.44" fill="none" stroke="#9490a8" stroke-width="1.2"></path>
+<polygon fill="#9490a8" points="316.8,-288.38 323.54,-280.21 313.18,-282.39 316.8,-288.38" stroke="#9490a8" stroke-width="1.2"></polygon></g>
+<g class="node" id="node13"><title>M</title>
+<path d="M219.4,-199.93C219.4,-199.93 125.6,-175.07 125.6,-175.07 119.8,-173.54 119.8,-170.46 125.6,-168.93 125.6,-168.93 219.4,-144.07 219.4,-144.07 225.2,-142.54 236.8,-142.54 242.6,-144.07 242.6,-144.07 336.4,-168.93 336.4,-168.93 342.2,-170.46 342.2,-173.54 336.4,-175.07 336.4,-175.07 242.6,-199.93 242.6,-199.93 236.8,-201.46 225.2,-201.46 219.4,-199.93" fill="#fff9eb" stroke="#bd8917" stroke-width="1.4"></path>
+<text font-family="Arial" font-size="12.00" text-anchor="middle" x="231" y="-168.9">Escalation check</text></g>
+<g class="edge" id="edge14"><title>L-&gt;M</title>
+<path d="M207.5,-239.7C210.63,-230.83 214.35,-220.27 217.9,-210.2" fill="none" stroke="#9490a8" stroke-width="1.2"></path>
+<polygon fill="#9490a8" points="221.2,-211.36 221.22,-200.76 214.6,-209.03 221.2,-211.36" stroke="#9490a8" stroke-width="1.2"></polygon></g>
+<g class="edge" id="edge16"><title>M-&gt;B</title>
+<path d="M296.99,-185.53C363.38,-200.08 456,-226.55 456,-261 456,-971 456,-971 456,-971 456,-1024.45 400.37,-1057.39 352.94,-1075.75" fill="none" stroke="#9490a8" stroke-width="1.2"></path>
+<polygon fill="#9490a8" points="351.43,-1072.58 343.27,-1079.34 353.87,-1079.14 351.43,-1072.58" stroke="#9490a8" stroke-width="1.2"></polygon>
+<text fill="#3a3a45" font-family="Arial" font-size="10.50" text-anchor="middle" x="495.5" y="-593.6">below threshold,</text>
+<text fill="#3a3a45" font-family="Arial" font-size="10.50" text-anchor="middle" x="495.5" y="-581.6">no flags</text></g>
+<g class="node" id="node14"><title>N</title>
+<path d="M192,-57C192,-57 12,-57 12,-57 6,-57 0,-51 0,-45 0,-45 0,-12 0,-12 0,-6 6,0 12,0 12,0 192,0 192,0 198,0 204,-6 204,-12 204,-12 204,-45 204,-45 204,-51 198,-57 192,-57" fill="#fff9eb" stroke="#bd8917" stroke-width="1.4"></path>
+<text font-family="Arial" font-size="12.00" text-anchor="middle" x="102" y="-38.4">Escalate to human-only handling.</text>
+<text font-family="Arial" font-size="12.00" text-anchor="middle" x="102" y="-25.4">Show most recent AI draft</text>
+<text font-family="Arial" font-size="12.00" text-anchor="middle" x="102" y="-12.4">+ full thread for context</text></g>
+<g class="edge" id="edge15"><title>M-&gt;N</title>
+<path d="M208.82,-146.68C188.33,-124.19 157.61,-90.5 134.38,-65.01" fill="none" stroke="#9490a8" stroke-width="1.2"></path>
+<polygon fill="#9490a8" points="136.75,-62.42 127.42,-57.39 131.57,-67.13 136.75,-62.42" stroke="#9490a8" stroke-width="1.2"></polygon>
+<text fill="#3a3a45" font-family="Arial" font-size="10.50" text-anchor="middle" x="264.5" y="-114.6">5+ exchanges, OR upset/</text>
+<text fill="#3a3a45" font-family="Arial" font-size="10.50" text-anchor="middle" x="264.5" y="-102.6">repeating customer, OR high-risk</text>
+<text fill="#3a3a45" font-family="Arial" font-size="10.50" text-anchor="middle" x="264.5" y="-90.6">category mentioned mid-thread,</text>
+<text fill="#3a3a45" font-family="Arial" font-size="10.50" text-anchor="middle" x="264.5" y="-78.6">OR customer asks to escalate</text></g>
+<g class="edge" id="edge17"><title>N-&gt;I</title>
+<path d="M97.03,-57.05C92.33,-85.49 86,-131.2 86,-171 86,-449 86,-449 86,-449 86,-474.64 104.91,-495.26 125.39,-510.08" fill="none" stroke="#9490a8" stroke-width="1.2"></path>
+<polygon fill="#9490a8" points="123.66,-513.14 133.9,-515.87 127.6,-507.35 123.66,-513.14" stroke="#9490a8" stroke-width="1.2"></polygon></g>
 </g>
 </svg>
-  </div>
-
-  <h3>Key decision points</h3>
-  <ul>
-    <li><b>Category check</b> — money/security categories never get an AI draft, regardless of confidence. This is a hard rule, not a judgment call.</li>
-    <li><b>Confidence check</b> — independent from category risk. A "safe" category can still get flagged with a reviewer note if the AI isn't confident (ambiguous request, conflicting KB sources, missing info).</li>
-    <li><b>Escalation check (multi-turn)</b> — triggers on whichever comes first: 5+ exchanges (justified by the ~12% of tickets that naturally run long, per the simulated 90-day data pull — see open question 11 in the <a href="tracker.html">working tracker</a>), signs of an upset/repeating customer, a high-risk category surfacing mid-conversation even if the ticket didn't start that way, or the customer explicitly asking for a supervisor/to escalate (added after rep discovery — the cleanest signal of the four, since it doesn't require inference).</li>
-    <li><b>Human review outcome</b> — always one of approve / edit / start over, whether the ticket was drafted or fully human-written. Nothing sends to the customer without a human touching it first, per the pilot's human-boundary rule.</li>
-  </ul>
-
-  <h3>Data sources feeding this flow</h3>
-  <ul>
-    <li>Ticket content + category (help desk tool)</li>
-    <li>Knowledge base articles, via <b>semantic/embedding-based retrieval</b> rather than basic keyword matching — sidesteps the search limitation reps deal with today, though the underlying content problem (~20% unreviewed/stale articles — open question 2) still applies regardless of retrieval method</li>
-    <li>Conversation history (for the exchange count and mid-thread category check)</li>
-    <li>Confidence signal from the drafting step itself</li>
-    <li><b>Billing/account-status data</b> — resolved simpler than expected: this already exists as a synced field on the ticket (nightly sync from the billing system), just not currently enabled for the Tier 1 view. No new integration or approval needed — enabling the existing field for Tier 1 (a standalone recommendation, not pilot-scoped) gives both reps and the agent access to the same already-approved data source. Caveat: up to 24 hrs stale due to the nightly sync.</li>
-  </ul>
-
-  <p class="small">Pending validation: real rep input (see Rep Discovery Questions in the <a href="tracker.html">working tracker</a>) may confirm or adjust the workflow-model assumption this flow is built on (open question 4), and could refine the escalation logic further. The billing field (above) folds into the "retrieve relevant knowledge" step once enabled — no separate node needed. Pilot targets that depend on this flow (first-response time, quality) are locked in the <a href="plan.html">PLAN deliverable</a>.</p>
-
-  <p class="small" style="margin-top:36px;padding-top:16px;border-top:1px solid var(--border)"><a href="tracker.html">Working tracker (full reasoning log)</a> &nbsp;·&nbsp; <a href="plan.html">PLAN deliverable</a> &nbsp;·&nbsp; <a href="deliverable.html">One-page deliverable</a></p>
-
+</div>
+<h3>Key decision points</h3>
+<ul>
+<li><b>Category check</b> — money/security categories never get an AI draft, regardless of confidence. This is a hard rule, not a judgment call.</li>
+<li><b>Confidence check</b> — independent from category risk. A "safe" category can still get flagged with a reviewer note if the AI isn't confident (ambiguous request, conflicting KB sources, missing info).</li>
+<li><b>Escalation check (multi-turn)</b> — triggers on whichever comes first: 5+ exchanges (justified by the ~12% of tickets that naturally run long, per the simulated 90-day data pull — see open question 11 in the <a href="tracker.html">working tracker</a>), signs of an upset/repeating customer, a high-risk category surfacing mid-conversation even if the ticket didn't start that way, or the customer explicitly asking for a supervisor/to escalate (added after rep discovery — the cleanest signal of the four, since it doesn't require inference).</li>
+<li><b>Human review outcome</b> — always one of approve / edit / start over, whether the ticket was drafted or fully human-written. Nothing sends to the customer without a human touching it first, per the pilot's human-boundary rule.</li>
+</ul>
+<h3>Data sources feeding this flow</h3>
+<ul>
+<li>Ticket content + category (help desk tool)</li>
+<li>Knowledge base articles, via <b>semantic/embedding-based retrieval</b> rather than basic keyword matching — sidesteps the search limitation reps deal with today, though the underlying content problem (~20% unreviewed/stale articles — open question 2) still applies regardless of retrieval method</li>
+<li>Conversation history (for the exchange count and mid-thread category check)</li>
+<li>Confidence signal from the drafting step itself</li>
+<li><b>Billing/account-status data</b> — resolved simpler than expected: this already exists as a synced field on the ticket (nightly sync from the billing system), just not currently enabled for the Tier 1 view. No new integration or approval needed — enabling the existing field for Tier 1 (a standalone recommendation, not pilot-scoped) gives both reps and the agent access to the same already-approved data source. Caveat: up to 24 hrs stale due to the nightly sync.</li>
+</ul>
+<p class="small">Pending validation: real rep input (see Rep Discovery Questions in the <a href="tracker.html">working tracker</a>) may confirm or adjust the workflow-model assumption this flow is built on (open question 4), and could refine the escalation logic further. The billing field (above) folds into the "retrieve relevant knowledge" step once enabled — no separate node needed. Pilot targets that depend on this flow (first-response time, quality) are locked in the <a href="plan.html">PLAN deliverable</a>.</p>
+<p class="small" style="margin-top:36px;padding-top:16px;border-top:1px solid var(--border)"><a href="tracker.html">Working tracker (full reasoning log)</a>  ·  <a href="plan.html">PLAN deliverable</a>  ·  <a href="deliverable.html">One-page deliverable</a></p>
 </div>
 <script id="v88-shared-script">(()=>{if(document.body.dataset.v88)return;document.body.dataset.v88='1';const bar=document.querySelector('.topbar .wrap');if(bar){bar.innerHTML='<div class="brand"><a href="index.html">AI <span style="color:var(--purple)">Customer Success</span></a></div><div class="v88-shellnav"><a href="index.html">Home</a><a href="index.html#meridian">Meridian</a><a href="index.html#portfolio">Portfolio</a><a href="index.html#learn">Learning Library</a><button class="v88-theme" type="button" aria-label="Toggle dark mode">☾</button></div>';bar.querySelector('.v88-theme').onclick=()=>{document.body.classList.toggle('v88-dark');localStorage.setItem('ai-cs-theme',document.body.classList.contains('v88-dark')?'dark':'light');};}if(localStorage.getItem('ai-cs-theme')==='dark')document.body.classList.add('v88-dark');})();</script>
 </body>

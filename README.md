@@ -1,8 +1,18 @@
-# AI Customer Success Learning Portfolio — v89.4
+# AI Customer Success Learning Portfolio — v90 Final
 
-v89.4 is a regression-recovery rebuild from the known-good v88.2 visual baseline.
+v90 is the final content + polish pass built from the v89.5 release candidate.
 
-## v89.4 scope
+## v90 final changes
+- Kept left-aligned editorial typography, but tightened page-intro widths and alignment for a more intentional content grid.
+- Strengthened the Home “short on time” path with direct links to Meridian, Discovery & Decisions, and Agent Flow & Guardrails.
+- Added status context to Meridian’s existing 5-second read rather than adding a duplicate orientation component.
+- Added light “Concepts applied” connections between Meridian / Portfolio and the Learning Library.
+- Added explicit planned-learning framing for unfinished Meridian lifecycle stages.
+- Added a transparent customer-facing Meridian exercise focused on explaining the pilot, setting expectations, avoiding overclaims, and defining evidence for expansion.
+- Preserved the AI-output proof exercise, four flagship Meridian artifacts, visible Portfolio evidence, styled Go deeper footer, dedicated router, theme persistence, and More-menu outside-click dismissal.
+- No architecture/framework redesign.
+
+## v89.5 scope
 - Restored the v88.2 Home, Portfolio, lower-page, and shared “Go deeper” visual structure instead of patching the broken v89.2 DOM.
 - Preserved the four-item primary navigation: Home / Meridian / Portfolio / Learning Library.
 - Preserved the Meridian 5-second summary and four flagship applied-work artifacts.
@@ -35,8 +45,17 @@ Emphasis/status polish only: Meridian primary artifacts are visually prioritized
 Navigation polish only. The desktop header now keeps the four primary destinations in the main nav and uses a small **More** menu for secondary/direct evidence links. The mobile selector is no longer shown on desktop, is reduced to the same four primary destinations, and has additional right-side padding so the native dropdown arrow has room to breathe. No substantive portfolio content or site architecture was changed.
 
 
-## v89.4 live-render regression fix
+## v89.5 live-render regression fix
 - Removed the surviving v88 Portfolio runtime wrapper that was collapsing the entire Portfolio page after load.
 - Portfolio supporting evidence is visible on the page again; it is no longer hidden behind “More portfolio notes…”.
 - Restored Go deeper as an explicitly styled shared footer inside the site wrapper.
 - Added a regression check that fails if legacy scripts dynamically create/wrap Home, Meridian, or Portfolio structure.
+
+
+## v89.5 deep-QA fixes
+- Restored a dedicated, persistent dark/light theme handler on the main portfolio; the toggle had become visually present but inert after legacy-script cleanup.
+- Restored Meridian's supporting case notes as static progressive disclosure beneath the primary four artifacts and AI-output exercise.
+- Updated Home copy so Portfolio—not Workbench—is the supporting evidence branch, and changed “measurable outcomes” to “measurable success criteria” for the fictional case.
+- Tightened the AI-output exercise disclosure so collaboratively AI-assisted draft/critique/revision text is not presented as solely human-authored work.
+- Updated standalone artifact fallback navigation to Home / Meridian / Portfolio / Learning Library so no-JS fetchers see the current site hierarchy.
+- Removed a dead study-tools observer whose target controls are no longer present.
