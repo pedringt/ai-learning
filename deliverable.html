@@ -469,7 +469,6 @@ tr:last-child td{border-bottom:0!important}
   .v918-orientation,.v915-orientation{padding:14px!important}
 }
 </style>
-
 <style id="v920-visual-parity">
 /* v92.0 — standalone Meridian pages should feel like the same site, not legacy documents */
 
@@ -670,6 +669,50 @@ body.v919-tracker .wrap>h2:not(:first-of-type){
   .lead{font-size:17px!important}
 }
 </style>
+
+<style id="v921-readout-top-fix">
+/* Repair the one-page readout header stack */
+body .wrap{
+  padding-top:0!important;
+}
+body .wrap>.callout:first-of-type{
+  margin:24px 0 18px!important;
+}
+body .wrap>.v88-artifact-nav{
+  margin:0 0 24px!important;
+  padding:0 0 14px!important;
+}
+body .wrap>.badge{
+  margin-top:0!important;
+}
+body .wrap>h2:first-of-type{
+  margin-top:12px!important;
+  margin-bottom:8px!important;
+}
+body .wrap>.lead{
+  margin-bottom:20px!important;
+}
+body .wrap>.v918-orientation{
+  margin:18px 0 28px!important;
+}
+body .wrap>.stage:first-of-type{
+  margin-top:0!important;
+}
+
+/* Remove legacy vertical offsets that created the giant empty band */
+body .stage,
+body .stage.done,
+body .stage.progress,
+body .stage.todo{
+  margin-top:14px!important;
+  margin-bottom:14px!important;
+}
+body .stagehead h2{
+  margin:0!important;
+  font-size:18px!important;
+  line-height:1.25!important;
+}
+</style>
 </head>
 <body>
 <div class="topbar">
@@ -782,8 +825,6 @@ body.v919-tracker .wrap>h2:not(:first-of-type){
 </div>
 <p class="footer-note">Last updated: 8/17/2026, end of the CONFIGURE stage. Full reasoning behind every decision above lives in the <a href="tracker.html">working tracker</a>.</p>
 </div>
-
-
 <script id="v920-header-behavior">
 (()=>{
   const btn=document.querySelector('.v920-theme');
