@@ -1,13 +1,9 @@
 # AI Customer Success Learning Portfolio
 
-Static deployment package.
+Static site ready for GitHub and Vercel deployment.
 
 ## Deploy
-Upload `index.html`, `vercel.json`, and `README.md` to the root of a GitHub repository, then import the repository into Vercel. No build step or Node/npm setup is required.
+Upload the files in this folder to the repository root. `index.html` is the site entry point. No build step or Node/npm setup is required.
 
 ## Local preview
-From this folder, run:
-
-    python3 -m http.server 8000
-
-Then open http://localhost:8000 in your browser.
+Run `python3 -m http.server 8000` from this folder, then open localhost:8000 in your browser.
