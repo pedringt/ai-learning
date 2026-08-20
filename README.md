@@ -1,4 +1,4 @@
-# AI Customer Success Learning Portfolio — v90.1 Final
+# AI Customer Success Learning Portfolio — v90.2 Maintenance
 
 v90 is the final content + polish pass built from the v89.5 release candidate.
 
@@ -65,3 +65,11 @@ Navigation polish only. The desktop header now keeps the four primary destinatio
 - Added breathing room below the Portfolio Learning Library concepts note.
 - Added a lightweight Home capstone progress line.
 - Kept the planned-learning framing prominent in Meridian and added it to the standalone one-page deliverable for direct-entry visitors.
+
+
+## v90.2 maintenance
+- Reframed Meridian adoption measurement away from an 8-of-8 daily-use target toward eligible-workflow penetration, repeat use, appropriate non-use, and qualitative friction.
+- Added the adoption revision as an explicit “Changed my mind” entry in the Working Tracker.
+- Updated the Success Measurement Plan for consistency.
+- Combined the loose Home practice-environment and capstone-progress lines into a subtle context/status strip.
+- Added a small, explicitly labeled placeholder for later Meridian operating practice (Operate / Incident / Improve / Prove / Expand), without presenting future work as completed evidence.
