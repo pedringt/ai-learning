@@ -321,3 +321,7 @@ Deliberately constrained content-only release on top of v93.1:
 - Made paired Harborstone detail-page cards equal height on desktop for a cleaner visual rhythm.
 - Preserved natural card height on mobile.
 - No content, navigation, or structure changes.
+
+## v94.16 — Harborstone heading scale
+- Reduced the Harborstone detail-page H1 to match the visual scale of the rest of the portfolio.
+- Preserved responsive sizing and all v94.15 card-height polish.
