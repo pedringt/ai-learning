@@ -277,3 +277,47 @@ Deliberately constrained content-only release on top of v93.1:
 - Added Workbench to the desktop navigation and mobile page selector on Home and all six standalone Meridian artifact pages.
 - Updated the Home orientation copy so Meridian = depth, Workbench = cross-functional transfer practice, Portfolio = evidence/outputs, and Learning Library = concepts/scaffolding.
 - No Workbench exercise content, Meridian evidence, design system, or learning status changed.
+
+
+## v94.9 — first completed Workbench exercise
+- Added **Harborstone Property Management — Invoice Operations** as the first completed Workbench exercise.
+- Preserved the reasoning trail: broad automation request → workflow decomposition → narrow pilot choice → human review/eval design → fictional results → iterate + controlled expansion.
+- Captured the key changed-mind insight that the goal is not maximum automation; use AI assistance, deterministic automation, human judgment, and source governance where each fits.
+- Added the automation-bias concern and service-date failure decomposition rather than presenting the fictional pilot metrics as unqualified success.
+- Parked invoice/work-order matching and approval routing/source governance as future Harborstone deep dives.
+- Replaced the redundant planned Operations card with the completed Harborstone case; other planned breadth scenarios remain.
+
+## v94.10 — Workbench reading-width polish
+- Constrained the completed Harborstone exercise to a comfortable reading width so its cards no longer stretch awkwardly across wide desktop screens.
+- Preserved the existing responsive/mobile behavior and all v94.9 content.
+
+## v94.11 — Workbench detail-page structure
+- Condensed the completed Harborstone case on the Workbench landing page into a compact summary card.
+- Added `harborstone.html` as a dedicated full exercise page preserving discovery, changed thinking, pilot workflow, measurement, fictional results, automation-bias concern, recommendation, and future deep dives.
+- This establishes the scalable pattern for future completed Workbench exercises: compact landing-page card + dedicated detail page.
+
+## v94.12 — Working Tracker progressive disclosure
+- Kept the full Meridian Working Tracker intact, but reorganized the major sections into collapsible notebook sections so the page no longer reads as one endless scroll.
+- Added a top-level jump map, Expand all / Collapse all controls, and three key reasoning highlights.
+- The stage checklist opens by default; deeper PM questions, rep discovery, success-measurement reasoning, VALIDATE work, and reflection can be opened as needed.
+- Preserved every existing question, simulated answer, resolution, decision change, measurement note, and reflection rather than shortening the working record.
+- Added direct navigation to the adoption-measurement revision.
+
+## v94.13 — Harborstone + Tracker polish
+- Fixed Harborstone's standalone page styling so it uses the same visual language as the rest of the site.
+- Removed the unnecessary collapsible wrapper from the short Capstone stage checklist.
+- Flattened the PM-question section so the nested boxes are less visually heavy while preserving all question/resolution content.
+- Removed the excessive top gap inside Harborstone's compact Workbench card.
+
+## v94.14 — QA / design / regression fixes
+- Corrected the Working Tracker hierarchy: PM questions, rep discovery, findings, recommendation, Success Measurement, VALIDATE, and Reflection are now sibling sections instead of accidentally nesting inside one another.
+- Kept the short Capstone stage checklist permanently visible and removed it from the jump controls.
+- Preserved the flatter PM-question styling from v94.13.
+- Upgraded Harborstone to the exact shared standalone navigation shell, including Workbench access, theme toggle, More menu, mobile selector, and shared `site-shell.js` behavior.
+- Preserved the v94.13 Workbench-card spacing fix.
+- No Meridian reasoning, Harborstone exercise content, roadmap content, or completed-work status changed.
+
+## v94.15 — Harborstone card-height polish
+- Made paired Harborstone detail-page cards equal height on desktop for a cleaner visual rhythm.
+- Preserved natural card height on mobile.
+- No content, navigation, or structure changes.
