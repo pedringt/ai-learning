@@ -270,3 +270,10 @@ Deliberately constrained content-only release on top of v93.1:
 - Updated the final leftover AI-CS-specific sentence in the Success Measurement Plan reflection.
 - The reflection now frames uncertainty-handling and evidence-seeking as a capability to bring into real applied AI work, wherever the eventual role lands.
 - This completes the role-generalization wording pass. No other content, design, roadmap, evidence, or scenario changes.
+
+
+## v94.8 — Workbench navigation
+- Promoted **Workbench** to the primary navigation because the site is first and foremost an active learning workspace.
+- Added Workbench to the desktop navigation and mobile page selector on Home and all six standalone Meridian artifact pages.
+- Updated the Home orientation copy so Meridian = depth, Workbench = cross-functional transfer practice, Portfolio = evidence/outputs, and Learning Library = concepts/scaffolding.
+- No Workbench exercise content, Meridian evidence, design system, or learning status changed.
