@@ -1,11 +1,13 @@
 # Current State
 
-- **Source of truth:** v95.51
+- **Source of truth:** v95.54
 - **Public architecture:** Home / Capabilities / Applied Work / Learning Guide
 - **Positioning:** Practical AI Learning Portfolio; AI Customer Success is an important application/career context, not the sole framing.
 - **Primary applied case:** Meridian — deep-dive simulated B2B SaaS support practice.
 - **Transfer case:** Harborstone — finance/operations workflow decomposition and automation-bias/value judgment.
 - **Core evidence principle:** demonstrate learning, iteration, judgment, and changes of mind; do not overclaim simulated work or production outcomes.
+
+- **Voice model:** authored case work, judgments, reflections, and recommendations should sound clearly like Paige; Learning Guide/reference material should use a neutral, clear editorial voice unless first-person perspective adds substantive learning evidence.
 - **Capabilities:** useful skill-based evidence view; architecture is frozen until materially different applied evidence warrants expansion.
 - **Learning Guide:** public curriculum/learning map, not a completed-expertise checklist.
 - **Future work:** `ROADMAP.md` is authoritative for approved/unincorporated ideas and next-release scope.

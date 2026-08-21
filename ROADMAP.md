@@ -5,7 +5,7 @@ It is **not** the public Learning Guide and **not** release history. When an ite
 incorporated elsewhere, remove it here and record shipped work in the README.
 
 ## NEXT RELEASE
-No items approved yet after v95.51. Keep this section intentionally small.
+No items approved yet after v95.54. Keep this section intentionally small.
 
 ## NEXT UP
 - **Difficult AI customer/stakeholder interaction practice — high priority.** Practice a realistic

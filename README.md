@@ -858,3 +858,25 @@ A QA pass may inspect/validate every page, but must not reserialize legacy HTML.
 - Added editorial list/body rhythm to the standalone Meridian one-page readout without changing its content or architecture.
 - No architecture expansion, new capability pages, or broad component consolidation.
 
+## v95.52 — clarity-first voice pass
+- Reworked a bounded set of public-facing passages that read more like consultant documentation than an authored learning portfolio.
+- Voice rule: clarity first, then precision, natural language, professionalism, and personality. Conversational wording is used only when it makes the reasoning easier to understand.
+- Replaced abstract/passive phrasing with concrete first-person reasoning where the judgment is genuinely mine, especially around adoption, automation bias, weak value, uncertainty, and AI-assisted software delivery.
+- Preserved technical terms where they add precision; explained or replaced them where plain language makes the same point more clearly.
+- Preserved evidence status, simulated-work disclosures, metrics, substantive decisions, and technical boundaries.
+- No visual, navigation, architecture, capability, or case-structure changes.
+
+## v95.53 — voice boundary refinement
+- Refined the v95.52 voice pass so the site now has two intentional writing modes.
+- Authored work—case reasoning, judgments, reflections, recommendations, and “changed my mind” evidence—can use Paige’s natural first-person voice.
+- Reference/instructional material—especially the Learning Guide—uses a clear, neutral editorial voice unless first person adds meaningful learning evidence.
+- Removed unnecessary first-person phrasing from selected Learning Guide passages while preserving the clarity improvements from v95.52.
+- No changes to evidence, metrics, case decisions, visuals, navigation, architecture, or capability structure.
+
+## v95.54 — Discovery closing-reflection cleanup
+- Replaced Discovery’s bottom full-card callout with a quieter closing-reflection treatment so the page ends as a conclusion rather than another evidence card.
+- Added a reusable `capability-closing-reflection` component: page-background treatment, subtle divider/left rule, compact editorial label, and restrained typography.
+- Kept the underlying Discovery conclusion and evidence unchanged.
+- Audited the other capability pages; none currently use the same bottom-card pattern, so no artificial matching sections were added.
+- No navigation, architecture, capability, case, or substantive content changes.
+
