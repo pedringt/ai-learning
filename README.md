@@ -254,3 +254,19 @@ Deliberately constrained content-only release on top of v93.1:
 - Removed only the balanced legacy `v932-ai-extension` **What I’m bringing forward** div.
 - Preserved the consolidated Foundations wording from v94.3.
 - No other structural, visual, curriculum, Meridian, or navigation changes.
+
+
+## v94.6 — roadmap alignment
+- Updated the visible roadmap and Portfolio operating-skill language to match the broader Practical AI Learning direction.
+- Generalized the planned Meridian **Customer Success Review & Expansion Recommendation** to a **Value Review & Expansion Recommendation**.
+- Reframed PROVE / EXPAND as **Value realization & scale judgment**, including explicit scale / iterate / pivot / stop decisions.
+- Generalized AI readiness evidence to **AI readiness & value assessment**.
+- Generalized personal-work automation and 90-day role-ramp practice so they apply across AI CS, product/product ops, implementation, enablement, operations, and related AI-adjacent roles.
+- Replaced the remaining Portfolio target capability that assumed an AI Customer Success role with a broader AI-adjacent target capability.
+- Kept Meridian itself support-flavored and customer-aware; no substantive pilot evidence, scenario facts, or completed-work status changed.
+
+
+## v94.7 — role-generalization complete
+- Updated the final leftover AI-CS-specific sentence in the Success Measurement Plan reflection.
+- The reflection now frames uncertainty-handling and evidence-seeking as a capability to bring into real applied AI work, wherever the eventual role lands.
+- This completes the role-generalization wording pass. No other content, design, roadmap, evidence, or scenario changes.
