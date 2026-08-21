@@ -690,16 +690,16 @@ body.v919-tracker .wrap>h2:not(:first-of-type){
 </head>
 <body>
 <div class="topbar"><div class="topinner"><a class="brand-button" href="index.html"><span class="brand">Practical <span>AI Learning</span></span></a><nav aria-label="Primary pages" class="nav"><a href="index.html">Home</a><a href="index.html#portfolio">Applied Work</a><a href="index.html#learn">Learning Guide</a></nav><div class="top-actions"><button aria-label="Switch to dark mode" aria-pressed="false" class="theme-toggle" id="v922ThemeToggle" title="Switch to dark mode" type="button">☾</button><details class="secondary-menu"><summary>Evidence <span aria-hidden="true" class="menu-chevron">⌄</span></summary><div class="secondary-menu-panel">
-<span class="menu-label">Browse by capability</span>
-<a href="index.html#portfolio">Applied Work overview</a>
-<span class="menu-label">Evidence pages</span>
-<a href="plan.html">Measurement &amp; Value</a>
-<a href="agent-flow.html">Systems &amp; Guardrails</a>
-<a href="evals.html">Evals &amp; Quality</a>
-<span class="menu-label">Case depth</span>
-<a href="deliverable.html">Meridian case readout</a>
-<a href="tracker.html">Meridian · Behind the work</a>
-<a href="harborstone.html">Harborstone case</a>
+<div class="evidence-menu-intro"><strong>Same work, different lens</strong><span>Browse across cases by capability.</span></div>
+<span class="menu-label">Capability views</span>
+<a href="plan.html"><span>Measurement &amp; Value</span><small>Meridian + Harborstone</small></a>
+<a href="agent-flow.html"><span>Systems &amp; Guardrails</span><small>Meridian + Harborstone</small></a>
+<a href="evals.html"><span>Evals &amp; Quality</span><small>Meridian + Harborstone</small></a>
+<span class="menu-label">Case context</span>
+<a href="index.html#portfolio"><span>Applied Work</span><small>Browse by case</small></a>
+<a href="deliverable.html"><span>Meridian case readout</span><small>Deep case summary</small></a>
+<a href="tracker.html"><span>Meridian · Behind the work</span><small>Reasoning + decisions</small></a>
+<a href="harborstone.html"><span>Harborstone case</span><small>Cross-functional exercise</small></a>
 </div></details><select aria-label="Choose page" id="v922MobileNav"><option value="index.html">Home</option><option value="index.html#portfolio">Applied Work</option><option value="index.html#learn">Learning Guide</option></select></div></div></div>
 <div class="wrap"><div class="v88-artifact-nav"><span class="v912-artifact-label">Meridian evidence</span><a href="tracker.html">Discovery</a><a href="plan.html">Success Plan</a><a aria-current="page" class="active" href="agent-flow.html">Agent Flow</a><a href="evals.html">Eval Suite</a><a href="deliverable.html">Case Readout</a></div>
 <span class="badge">CAPSTONE · CONFIGURE</span>
@@ -868,7 +868,7 @@ body.v919-tracker .wrap>h2:not(:first-of-type){
 <li><b>Billing/account-status data</b> — resolved simpler than expected: this already exists as a synced field on the ticket (nightly sync from the billing system), just not currently enabled for the Tier 1 view. No new integration or approval needed — enabling the existing field for Tier 1 (a standalone recommendation, not pilot-scoped) gives both reps and the agent access to the same already-approved data source. Caveat: up to 24 hrs stale due to the nightly sync.</li>
 </ul>
 <p class="small">Pending validation: real rep input (see Rep Discovery Questions in the <a href="tracker.html">working tracker</a>) may confirm or adjust the workflow-model assumption this flow is built on (open question 4), and could refine the escalation logic further. The billing field (above) folds into the "retrieve relevant knowledge" step once enabled — no separate node needed. Pilot targets that depend on this flow (first-response time, quality) are locked in the <a href="plan.html">PLAN deliverable</a>.</p>
-<p class="small" style="margin-top:36px;padding-top:16px;border-top:1px solid var(--border)"><a href="index.html">Working tracker (full reasoning log)</a>  ·  <a href="plan.html">PLAN deliverable</a>  ·  <a href="deliverable.html">One-page deliverable</a></p>
+<p class="small" style="margin-top:36px;padding-top:16px;border-top:1px solid var(--border)"><a href="tracker.html">Working tracker (full reasoning log)</a>  ·  <a href="plan.html">PLAN deliverable</a>  ·  <a href="deliverable.html">One-page deliverable</a></p>
 </div><p class="v932-routing-note"><strong>Signal design: </strong>This is not the model rating its own confidence. It is a review/routing signal built from observable evidence such as retrieval support, missing required information, source conflicts, and rule or guardrail matches.</p>
 <script defer="" src="site-shell.js"></script></body>
 </html>

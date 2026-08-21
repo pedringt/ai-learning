@@ -400,3 +400,34 @@ Deliberately constrained content-only release on top of v93.1:
 - Brought **Harborstone** into the shared standalone visual language: page width, heading scale, typography, cards, tags, spacing, surface treatment, dark mode, and responsive behavior now match the Meridian/evidence pages more closely.
 - Preserved Harborstone's substantive content and its simulated-results distinction.
 - No learning, case reasoning, evidence status, or metrics changed.
+
+
+## v95.4 — final QA + design polish
+- Completed a site-wide structural, navigation, link, responsive-design, and framing QA pass.
+- Strengthened the Evidence dropdown with a one-line mental model: **same work, different lens**.
+- Evidence menu links now show short context labels so capability views are clearly distinct from case views.
+- Strengthened Applied Work transition copy: Applied Work and Evidence explicitly show the same work organized differently; Evidence is not a separate project.
+- Clarified **Workbench** as the collection of smaller Applied Work cases rather than a competing top-level concept.
+- Added deep links from Home's **Judgment in practice** cards directly to the relevant Tracker or Harborstone reasoning, improving mobile review.
+- Added stable Harborstone anchors for key decisions/diagnostics.
+- Reduced redundant simulation wording in Harborstone while retaining clear scenario/result disclosure.
+- Fixed a stale Working Tracker footer link in the Agent Flow page.
+- Removed two lingering CS/PM-specific framing phrases that no longer matched the broader applied-AI direction.
+- QA found no missing local files, broken anchors, duplicate HTML IDs, missing page titles/viewports, or images without alt text.
+- No substantive learning conclusions, case metrics, or evidence statuses changed.
+
+
+## v95.5 — roadmap stewardship checkpoint
+- Added a **Site stewardship · later maintenance** item adjacent to (but explicitly separate from) the AI capability roadmap.
+- Future maintenance scope: consolidate the established visual language into shared design tokens/components for spacing, typography, content widths, headers, cards, bands/callouts, evidence/case summaries, tags/status, navigation/dropdowns, tables, links/buttons, dark mode, and responsive behavior; then remove legacy/duplicate CSS overrides.
+- Explicitly treats design-system consolidation as **site maintenance, not AI learning**.
+- Preserves the rule that obvious isolated UI bugs should still be fixed as they appear.
+- Fixed the excessive vertical whitespace/min-height behavior in the Applied Work explanatory band identified after v95.4.
+- v95.4's information architecture, learning roadmap, applied work, and evidence model remain unchanged.
+
+
+## v95.6 — Applied Work spacing polish
+- Increased vertical breathing room inside the Meridian and Workbench overview cards.
+- Added clearer separation between the introductory copy, blue practice callout, and bottom context note.
+- Kept both cards visually balanced and preserved tighter mobile spacing.
+- No content or architecture changes.

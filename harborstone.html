@@ -868,16 +868,16 @@ body.v88-dark .case-shell .frame{
 </style>
 </head><body>
 <div class="topbar"><div class="topinner"><a class="brand-button" href="index.html"><span class="brand">Practical <span>AI Learning</span></span></a><nav aria-label="Primary pages" class="nav"><a href="index.html">Home</a><a href="index.html#portfolio">Applied Work</a><a href="index.html#learn">Learning Guide</a></nav><div class="top-actions"><button aria-label="Switch to dark mode" aria-pressed="false" class="theme-toggle" id="v922ThemeToggle" title="Switch to dark mode" type="button">☾</button><details class="secondary-menu"><summary>Evidence <span aria-hidden="true" class="menu-chevron">⌄</span></summary><div class="secondary-menu-panel">
-<span class="menu-label">Browse by capability</span>
-<a href="index.html#portfolio">Applied Work overview</a>
-<span class="menu-label">Evidence pages</span>
-<a href="plan.html">Measurement &amp; Value</a>
-<a href="agent-flow.html">Systems &amp; Guardrails</a>
-<a href="evals.html">Evals &amp; Quality</a>
-<span class="menu-label">Case depth</span>
-<a href="deliverable.html">Meridian case readout</a>
-<a href="tracker.html">Meridian · Behind the work</a>
-<a href="harborstone.html">Harborstone case</a>
+<div class="evidence-menu-intro"><strong>Same work, different lens</strong><span>Browse across cases by capability.</span></div>
+<span class="menu-label">Capability views</span>
+<a href="plan.html"><span>Measurement &amp; Value</span><small>Meridian + Harborstone</small></a>
+<a href="agent-flow.html"><span>Systems &amp; Guardrails</span><small>Meridian + Harborstone</small></a>
+<a href="evals.html"><span>Evals &amp; Quality</span><small>Meridian + Harborstone</small></a>
+<span class="menu-label">Case context</span>
+<a href="index.html#portfolio"><span>Applied Work</span><small>Browse by case</small></a>
+<a href="deliverable.html"><span>Meridian case readout</span><small>Deep case summary</small></a>
+<a href="tracker.html"><span>Meridian · Behind the work</span><small>Reasoning + decisions</small></a>
+<a href="harborstone.html"><span>Harborstone case</span><small>Cross-functional exercise</small></a>
 </div></details><select aria-label="Choose page" id="v922MobileNav"><option value="index.html">Home</option><option value="index.html#portfolio">Applied Work</option><option value="index.html#learn">Learning Guide</option></select></div></div></div>
 <div class="case-shell">
 <a class="backlink" href="index.html#workbench">← Back to Workbench</a>
@@ -894,11 +894,11 @@ body.v88-dark .case-shell .frame{
 <p><strong>Invoice ↔ property/work-order matching:</strong> employees often piece together clues across properties, vendors, work orders, dates, descriptions, and sometimes email.</p>
 <p><strong>Expense categorization:</strong> depends on Accounting policy, context, historical corrections, and expert judgment.</p>
 <p><strong>Approval routing:</strong> depends on accumulated business rules, ownership-specific exceptions, project approvals, changing roles, and temporary delegations.</p></div>
-<div class="card"><span class="tag">Changed my mind</span><h3>Maximum automation was not the goal</h3>
+<div class="card"><span class="tag">Changed my mind</span><h3 id="automation-boundary">Maximum automation was not the goal</h3>
 <p>The stronger opportunity was to remove low-value typing, research, and digging while preserving human judgment where it adds value.</p>
 <p>The likely solution is hybrid: conventional automation for predictable steps, AI where messy information must be interpreted or synthesized, deterministic rules where rules are knowable, humans for consequential ambiguity, and better source governance where the underlying information is not reliable enough to automate.</p></div>
 </div>
-<div class="card" style="margin-top:14px"><span class="tag">First pilot choice</span><h3>Start with invoice-field extraction and pre-population</h3>
+<div class="card" style="margin-top:14px"><span class="tag">First pilot choice</span><h3 id="pilot-choice">Start with invoice-field extraction and pre-population</h3>
 <p>Data entry looked like the best <em>first</em> problem—not necessarily the most important problem. It was high-volume, measurable, lower-risk, compatible with Harborstone’s desire for a small 6–8 week experiment, and directly tied to the stated goal of returning employee capacity.</p>
 <p>The pilot would begin with a few experienced Operations employees and a representative but manageable invoice set. Those employees would also help validate the real workflow and identify business rules hidden from the executive-level view.</p></div>
 <div class="card" style="margin-top:14px"><span class="tag">Pilot workflow</span><h3>AI proposes. Employee verifies. Existing workflow continues.</h3>
@@ -914,14 +914,14 @@ body.v88-dark .case-shell .frame{
 <p>The initial pilot would use controlled invoice data rather than broad access to property systems, accounting platforms, or email. IT/Security and Legal should review the vendor, data flow, retention/training practices, access controls, and relevant client contractual obligations before launch.</p>
 <p>Broader system access for future matching work would require separate review.</p></div>
 </div>
-<div class="card simulated-results" style="margin-top:14px"><div class="simulated-banner">SIMULATED RESULTS · PRACTICE DATA, NOT A REAL CLIENT OUTCOME</div><span class="tag">Fictional pilot results</span><h3>The headline looked good—but needed scrutiny</h3>
+<div class="card simulated-results" style="margin-top:14px"><div class="simulated-banner">SIMULATED RESULTS · PRACTICE DATA, NOT A REAL CLIENT OUTCOME</div><span class="tag">Fictional pilot results</span><h3 id="automation-bias">The headline looked good—but needed scrutiny</h3>
 <p>In a fictional six-week pilot with 3 experienced employees and 620 invoices, AHT fell from <strong>7.8 to 5.9 minutes</strong> (about 24%), beating the initial 20% target. Overall field-level accuracy reached <strong>94.1%</strong>. Vendor, invoice number, invoice date, subtotal, tax, and total performed strongly, while <strong>service date lagged at 86.4%</strong>. Total reached 99.7%; both Total errors were caught during human review.</p>
 <p><strong>Economics:</strong> The simulated pilot suggests that meaningful employee capacity could be returned, but I would not claim ROI from this exercise alone. A real business case would require Harborstone’s actual invoice volume, loaded labor cost, implementation cost, model/vendor usage cost, ongoing maintenance/support cost, and expected exception rate.</p></div>
 <div class="grid2" style="margin-top:14px">
 <div class="card"><span class="tag">What I noticed</span><h3>Automation bias could distort the efficiency story</h3>
 <p>Employees reviewed highly reliable fields faster later in the pilot. That raised a question: was some of the AHT improvement caused by genuinely reduced work, or by employees scrutinizing AI output less carefully as trust increased?</p>
 <p>A next phase should independently audit a sample of submitted invoices and check whether faster review remains compatible with stable downstream accuracy.</p></div>
-<div class="card"><span class="tag">Failure analysis</span><h3>“Service-date error” is not one problem</h3>
+<div class="card"><span class="tag">Failure analysis</span><h3 id="service-date-diagnosis">“Service-date error” is not one problem</h3>
 <p>I would separate service-date corrections into <strong>true extraction failures, ambiguous source documents, undefined business rules, and poor document quality</strong>. Each has a different remedy.</p>
 <p>For genuinely ambiguous information, abstaining or flagging review can be a successful output. The goal is not to force every field to contain a value.</p></div>
 </div>
