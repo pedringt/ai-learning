@@ -363,3 +363,40 @@ Deliberately constrained content-only release on top of v93.1:
 - Generalized the remaining broad competency phrase “success planning” to “outcome planning”; Meridian's specific Success Measurement Plan and customer/support scenario remain unchanged.
 - Updated the site metadata and Learning Library introduction to reflect reliable business outcomes and role-agnostic applied AI judgment.
 - No Meridian evidence, Harborstone reasoning, completion status, navigation, design system, or standalone artifact content changed.
+
+
+## v95.1 — information architecture simplification
+- Simplified the primary site model to **Home / Applied Work / Learning Guide**.
+- Removed Portfolio as a separate conceptual destination; the site itself is the portfolio.
+- Recast the former Portfolio view as **Applied Work**, a simple map to the two kinds of practice:
+  - **Meridian = depth** — one end-to-end simulated AI implementation.
+  - **Workbench = breadth** — smaller cross-functional transfer exercises.
+- Clarified the **Working Tracker** as Meridian's behind-the-work process record, not a peer project or top-level destination.
+- Preserved Meridian and Workbench as existing SPA subviews so no substantive applied work was deleted or flattened.
+- Renamed visible Learning Library destination language to **Learning Guide** while preserving the detailed library/reference material inside it.
+- Added a compact "How the site fits together" explanation on Applied Work.
+- No substantive Meridian, Harborstone, eval, measurement, or learning-roadmap content was removed.
+
+
+## v95.2 — Evidence navigation + cross-project capability pages
+- Renamed the shared secondary dropdown from Meridian/More framing to **Evidence**.
+- Established the navigation rule: **Applied Work = browse by case; Evidence = browse by capability**.
+- Reframed three direct artifact pages as cross-project capability evidence while preserving their detailed Meridian material:
+  - Success Measurement Plan → **Measurement & Value**
+  - Agent Flow → **Systems & Guardrails**
+  - Eval Suite → **Evals & Quality**
+- Added concise Harborstone evidence summaries to those capability pages using only work already completed in the Harborstone exercise.
+- Kept the detailed Meridian artifacts as the primary deep case underneath each capability page.
+- Reframed the detailed Configure flow as a Meridian deep dive supporting Systems & Guardrails.
+- Kept the Working Tracker explicitly Meridian-specific as the behind-the-work process record.
+- The Evidence menu also links directly to the Meridian readout, Tracker, and Harborstone case for context.
+- No future legal-AI or other planned work is presented as completed evidence.
+
+
+## v95.3 — visual consistency pass
+- Polished the **Evidence** dropdown so section labels, spacing, separators, item height, and hover targets read as a designed navigation menu rather than a raw link list.
+- Standardized standalone primary navigation to **Home / Applied Work / Learning Guide**.
+- Normalized mobile standalone navigation to the same simplified architecture.
+- Brought **Harborstone** into the shared standalone visual language: page width, heading scale, typography, cards, tags, spacing, surface treatment, dark mode, and responsive behavior now match the Meridian/evidence pages more closely.
+- Preserved Harborstone's substantive content and its simulated-results distinction.
+- No learning, case reasoning, evidence status, or metrics changed.
