@@ -353,3 +353,13 @@ Deliberately constrained content-only release on top of v93.1:
 - Corrected the Portfolio inventory status for Cross-functional Workbench cases from Planned to 1 completed, reflecting Harborstone.
 - No architecture, design, navigation, or substantive content changes.
 - Site architecture is frozen after this maintenance fix unless a genuine bug or evidence-status inconsistency is found.
+
+## v95.0 — long-term capability roadmap
+- Added a high-level, multi-year learning roadmap inside the Learning Library without changing the site's frozen primary architecture.
+- Organized future learning around ten capability areas: AI systems; quality/evals/responsible AI; workflow/process/knowledge systems; implementation/adoption/human-AI interaction; data/measurement/experimentation; business/operations/AI economics; enterprise AI/organizational change; product/strategy/decision-making under uncertainty; communication/leadership/influence; and domain applications.
+- Added Legal AI as the first planned domain specialization, using the JD as a domain advantage rather than repositioning the whole portfolio around legal work. Planned legal learning includes legal workflows/technology, professional responsibility and AI, law-firm economics, knowledge systems, and AI adoption.
+- Preserved AI Customer Success readiness as a near-term applied path while broadening the long-term destination to applied AI implementation and business judgment.
+- Added the principle that the goal is not to find places to use AI, but to diagnose the problem well enough to decide whether AI belongs in the solution.
+- Generalized the remaining broad competency phrase “success planning” to “outcome planning”; Meridian's specific Success Measurement Plan and customer/support scenario remain unchanged.
+- Updated the site metadata and Learning Library introduction to reflect reliable business outcomes and role-agnostic applied AI judgment.
+- No Meridian evidence, Harborstone reasoning, completion status, navigation, design system, or standalone artifact content changed.
