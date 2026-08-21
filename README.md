@@ -481,3 +481,347 @@ Deliberately constrained content-only release on top of v93.1:
 - Added a compact contextual return path on the long-form Tracker and Harborstone pages: **Capabilities / Applied Work**.
 - Confirmed Harborstone still retains the explicit **SIMULATED RESULTS · PRACTICE DATA, NOT A REAL CLIENT OUTCOME** disclosure.
 - No substantive case, learning, evidence, or architecture changes.
+
+
+## v95.12 — Learning Guide progression
+- Reorganized only the **Learning Guide**; Home, Capabilities, Applied Work, Meridian, Harborstone, and the capability architecture remain unchanged.
+- Reframed the roadmap as a natural progression:
+  1. AI Systems & Foundations
+  2. Software, Data & UX Foundations
+  3. Quality, Evals & Responsible AI
+  4. Discovery, Workflows & Knowledge
+  5. Implementation, UX & Adoption
+  6. Measurement, Business & Operations
+  7. Product, Strategy & Leadership
+  8. Domain Applications
+- Added an **Applied throughout** lens set: UX/accessibility, quality/testing, security/privacy, human factors, data quality, knowledge quality, business value, and responsible AI.
+- Added a targeted **Software foundations** callout covering architecture, APIs, data/SQL, modern QA/QE, observability, security/privacy, UI/UX, accessibility, and AI interaction design.
+- Deliberately left formal Scrum/process methodology off the learning roadmap; company-specific operating models can be learned in context.
+- Clarified that the Learning Guide is a map/reference layer rather than a claim of completed expertise; demonstrated skills belong in Capabilities and completed scenarios in Applied Work.
+- Preserved the detailed learning library below the roadmap rather than expanding the roadmap into a textbook.
+- Added responsive/scannable progression and lens styling.
+
+
+## v95.13 — comprehensive Learning Guide checkpoint
+- Final enrichment pass on the Learning Guide only; no site architecture or applied-work changes.
+- Added/clarified: AI orchestration/state/routing and production tradeoffs; analytics instrumentation and data lineage; enterprise identity/permissions; service design; production monitoring/drift/versioning; AI-specific security; incident recovery; organizational readiness and human factors; experimentation/causal thinking; basic finance/economics; vendor evaluation/POCs/procurement; communication/data storytelling; and Legal AI confidentiality/vendor constraints.
+- Added **AI-assisted work as a discipline**: research, synthesis, analysis, prototyping, documentation, critique, automation, verification, source judgment, privacy awareness, and appropriate non-delegation.
+- Added proportionate hands-on practice examples without implying every exercise belongs in the public portfolio.
+- Added a **depth rule**: go deep on applied judgment and interdisciplinary interfaces; gain enough fluency elsewhere to collaborate and recognize when specialists are needed.
+- Kept the eight-stage progression intact rather than adding more major categories.
+- Expanded recurring lenses to include communication and responsible AI/governance while consolidating data + knowledge quality for scanability.
+- This is intended as the comprehensive roadmap checkpoint; future changes should generally come from new learning/resources/evidence rather than further taxonomy expansion.
+
+
+## v95.14 — Learning Guide consolidation
+- Kept the Learning Guide as one page but rebuilt it around progressive disclosure.
+- The eight-stage roadmap is now the actual interface to the learning library rather than a second taxonomy sitting above the older card library.
+- Each stage is a deep-linkable accordion with: short outsider-facing summary, topic preview, status, Core learning items, Reference/deeper-dive items where useful, and proportionate Practice prompts.
+- Added deep-link behavior so `#ai-foundations`, `#software-data-ux`, `#quality-evals`, `#discovery-workflows`, `#implementation-adoption`, `#measurement-business`, `#product-strategy`, and `#domain-applications` open the correct stage.
+- Consolidated the old curriculum topics into the new eight-stage progression rather than leaving the original cards pushed below the roadmap.
+- Removed public-facing maintenance/design-system notes from the Learning Guide; those belong in README/maintenance planning rather than the curriculum.
+- Reduced standalone explanatory callouts by folding their useful principles into the hero, learning loop, stage structure, and compact footer.
+- Preserved the recurring lenses and the Learn → Practice → Reflect → Capture evidence model in a much quieter form.
+- Tightened the oversized top/bottom padding on the Capabilities principle callout shown in QA.
+- No changes to Home, Capabilities taxonomy, Applied Work cases, Meridian reasoning, Harborstone reasoning, or substantive evidence.
+
+
+## v95.15 — Learning Guide typography
+- Increased Learning Guide typography to better match the reading scale used across the rest of the site.
+- Raised accordion summaries, descriptions, topic previews, learning-item body copy, lens chips, learning-loop copy, and footer guidance without changing the consolidated information architecture.
+- Preserved the compact/scannable layout; this is a readability and visual-consistency adjustment only.
+
+
+## v95.16 — Learning Guide visual normalization
+- Reworked the Learning Guide type scale against the rest of the site's editorial/body scale rather than making another small incremental font bump.
+- Stage titles now read as real card headings; stage summaries and expanded learning content use normal reading-size body text.
+- Enlarged the progression navigation, lens chips, learning-method strip, statuses, and curriculum copy while preserving hierarchy.
+- Increased card padding/vertical rhythm so the larger type has room to breathe.
+- Reduced the compressed “tiny documentation UI” feeling while preserving progressive disclosure and scanability.
+- Mobile now uses one-column learning-method blocks and an appropriately scaled accordion.
+
+
+## v95.17 — quiet editorial Learning Guide
+- Removed the dashboard-like visual treatment from the Learning Guide while preserving the v95.14–v95.16 information architecture.
+- The eight-stage progression is now a simple linked text sequence rather than eight mini-cards.
+- Recurring lenses are now one quiet inline line rather than a field of pills.
+- Learn → Practice → Reflect → Capture evidence is now one editorial process line rather than four boxes.
+- The eight curriculum stages are flat accordion rows separated by rules; no card background or outer container is used.
+- Expanded learning items are flat content rows with subtle separators rather than nested cards.
+- **Practice** remains the one deliberately distinct content treatment: a roomy pale-blue strip with a teal left accent.
+- Further tightened the oversized Capabilities principle callout padding.
+- Preserved stage statuses, deep links, progressive disclosure, curriculum content, and all other site architecture.
+
+
+## v95.18 — Capabilities spacing + Learning Guide component polish
+- Fixed the remaining excessive vertical whitespace in the Capabilities “Demonstrated, not claimed” principle callout by removing inherited min-height/display behavior and tightening internal spacing.
+- Restyled only the eight top-level Learning Guide stage disclosures using the established Capabilities visual language: clear bordered surface, stronger title/summary hierarchy, status pill, and consistently aligned expand/collapse control.
+- Kept expanded curriculum content flat/editorial with subtle separators to avoid cards-inside-cards.
+- Preserved Practice as the one distinct nested treatment, with corrected left padding and a pale-blue/teal callout style.
+- Improved mobile disclosure alignment and expand-icon placement.
+- No curriculum content, navigation architecture, Capabilities taxonomy, or Applied Work content changed.
+
+
+## v95.19 — Learning Guide header/progression polish
+- Removed Active / Refresh + Deepen / Developing / Later / Planned pills from Learning Guide stages. The ordered roadmap now communicates learning sequence without a second, potentially confusing status system.
+- Restyled “Progression at a glance” as a deliberate linked roadmap with compact stage labels and clear arrows rather than raw-looking inline text.
+- Normalized spacing around stage names and ampersands and prevented inherited typography rules from visually collapsing words.
+- Kept Applied throughout and Learn → Practice → Reflect → Capture evidence visually quieter beneath the roadmap.
+- Gave the “two views of the same evidence” explainer a more intentional compact card treatment and removed inherited excess height/whitespace.
+- Preserved the v95.18 Learning Library stage cards and flat expanded curriculum.
+
+
+## v95.20 — bottom-of-page visual polish
+- Restyled the Capabilities “Evidence grows with the work” note as a compact left-accent callout so it reads as intentional guidance rather than loose body text.
+- Reduced the visual weight of the shared “Go deeper” resource section: it is now a simple footer resource strip with a top rule, compact heading/copy, and small resource pills rather than a large tinted card.
+- Preserved resource links and all substantive copy.
+- No architecture, learning, case, or capability changes.
+
+
+## v95.21 — roadmap spacing, status cleanup, agent-flow scale
+- Fixed Learning Guide progression labels by removing forced `<br>` breaks before ampersands; labels now preserve normal spaces around `&` and wrap naturally.
+- Removed Done / In progress / Designed-style completion pills from the site where they duplicated the actual linked artifacts or page content.
+- Kept future/not-started roadmap state where it still communicates genuinely different information.
+- Replaced the Workbench “1 complete” count badge with a direct Harborstone link in the status copy.
+- Meridian tracker retains direct links to the Success Plan, Agent Flow, and Eval Suite while redundant Done/In progress badges are removed.
+- Reduced the Agent Flow diagram to a centered ~560px maximum width on desktop so the full system is easier to take in at once; it remains responsive on smaller screens.
+
+
+## v95.22 — contextual Capabilities subnavigation
+- Added a quiet local Capabilities navigation row to the Capabilities overview and the standalone Systems & Guardrails / Evals & Quality pages.
+- Local navigation includes Overview, Discovery & Workflow, Measurement & Value, Systems & Guardrails, and Evals & Quality.
+- The current destination receives a subtle highlighted state; this is intentionally subordinate to the global Home / Capabilities / Applied Work / Learning Guide navigation.
+- Mobile uses a horizontally scrollable row rather than introducing another dropdown.
+- No global dropdown was restored.
+
+
+## v95.23 — Capabilities navigation QA
+- Fixed the contextual Capabilities nav being inserted above the global header on standalone pages; it now lives inside page content below the primary site navigation.
+- Corrected broken local-nav routes: Discovery & Workflow no longer points at the Learning Guide stage, and Measurement & Value no longer points at the Measurement/Business learning stage.
+- Added a dedicated **Discovery & Workflow** capability page so all four demonstrated capabilities have a consistent capability-level destination.
+- Discovery & Workflow now summarizes completed Meridian + Harborstone evidence and deep-links to the underlying reasoning in each case.
+- Measurement & Value routes to `plan.html`; Systems & Guardrails routes to `agent-flow.html`; Evals & Quality routes to `evals.html`.
+- Added the contextual Capabilities nav to Measurement, Systems, and Evals capability pages only; removed accidental placement on unrelated pages.
+- Fixed the main-page mobile selector so Capabilities appears alongside Home, Applied Work, and Learning Guide.
+- QA verified local file/anchor targets and global-before-local navigation order.
+
+
+## v95.24 — capability hierarchy cleanup
+- Removed the Meridian Evidence artifact nav from Measurement & Value, Systems & Guardrails, and Evals & Quality. Cross-project capability pages now have one contextual navigation layer only.
+- Meridian-specific artifact navigation remains on Meridian case/depth pages, where it represents the correct project hierarchy.
+- Normalized Discovery & Workflow to the shared capability-page visual language and shared site shell, including typography, spacing, cards, links, responsive behavior, and theme support.
+- Preserved inline/deep links from capability evidence back to the underlying Meridian and Harborstone reasoning.
+- QA checked capability-nav count, global-before-local nav order, shared-shell inclusion, and local capability destinations.
+
+
+## v95.25 — Discovery styling + Learning Guide overview simplification
+- Fixed Discovery & Workflow by adding the same base design tokens, typography, page sizing, card treatment, dark-mode variables, and responsive behavior used by the other standalone capability pages.
+- Simplified the top of the Learning Guide substantially: removed the long chain of stage chips/arrows and the separate lens/process UI.
+- Replaced them with three compact editorial lines: the eight-stage learning path, the recurring lenses, and the Learn → practice → reflect → capture-evidence method.
+- The detailed eight-stage accordion immediately below remains the primary navigation/interface for the actual curriculum.
+- No learning content or capability evidence was removed.
+
+
+## v95.26 — standalone Capabilities overview
+- Added a standalone `capabilities.html` overview page so the Capabilities local navigation no longer jumps between an in-page SPA view and standalone sibling pages.
+- The overview now uses the same shared header, content width, local capability navigation, typography, spacing, dark-mode behavior, and standalone-page interaction model as Discovery, Measurement, Systems, and Evals.
+- Capability-page global and mobile Capabilities links now point to `capabilities.html`; the main index can still expose its embedded Capabilities view as part of the Home SPA.
+- This eliminates the visible layout/navigation “jump” when moving from a capability detail page back to Overview.
+
+
+## v95.27 — Learning Guide copy trim
+- Removed the “How I use the guide: Learn → practice → reflect → capture evidence…” line from the Learning Guide overview.
+
+
+## v95.28 — capability header normalization
+- Normalized the top section across Overview, Discovery & Workflow, Measurement & Value, Systems & Guardrails, and Evals & Quality so switching within the local Capabilities nav no longer causes a large typography/layout jump.
+- All five pages now use the same compact capability label, 26px title scale, 16px lead scale, content width, and bottom spacing.
+- Replaced Meridian stage labels such as “CAPSTONE · PLAN / CONFIGURE / VALIDATE” at the top of cross-project capability pages with the more accurate shared label **Cross-project capability**. Meridian-specific stage context remains in the detailed case content below.
+- No capability evidence or case content changed.
+
+
+## v95.29 — full QA / regression hardening
+Full regression pass after the Capabilities and Learning Guide restructuring.
+
+### Fixed in this pass
+- Canonicalized **Capabilities** to `capabilities.html` across global and mobile navigation so the site no longer exposes two different primary Capabilities destinations.
+- The Home/index desktop Capabilities item now links to the same standalone overview used by the capability-page family; mobile navigation handles that external destination correctly.
+- Fixed dark-mode regression on the new Capabilities Overview and Discovery & Workflow pages by supporting the shared shell's `v88-dark` state.
+- Added a consistent active state for **Capabilities** in the global nav while browsing any capability page.
+- Revalidated internal files/anchors, primary/mobile nav parity, capability-nav hierarchy, sticky-header anchor support, Harborstone simulation disclosure, status-pill cleanup, and compact Agent Flow sizing.
+
+### Deliberate future hardening / design-system work
+- Add semantic `<main>` landmarks and a skip-to-content link consistently across legacy pages.
+- Add deliberate `:focus-visible` keyboard states and reduced-motion handling.
+- Prefer native links/buttons over legacy `div role="button"` controls where practical.
+- Run formal WCAG contrast/touch-target/automated accessibility checks in light and dark mode.
+- Consolidate accumulated historical CSS overrides into shared design tokens/components. `index.html` in particular still contains many layered style blocks; visually it is coherent, but this is the largest maintainability/regression risk.
+- The embedded legacy `#evidence` view remains only for backward compatibility; `capabilities.html` is now the canonical visitor-facing Capabilities destination.
+
+
+## v95.32 — top-navigation-only correction
+- Rebased on **v95.29** to discard the v95.30/v95.31 content-frame changes that caused page content to run too close to the browser edge.
+- Found the primary cause of the Capabilities header jump: the main index used **AI Learning Portfolio** while standalone capability pages used **Practical AI Learning**, giving the left side of the header a different physical width.
+- Standardized the visible brand to **AI Learning Portfolio** across the site.
+- Reserved equal desktop-width left and right header anchors so the centered four-item primary navigation remains stationary when moving between index and standalone pages.
+- Added stable scrollbar gutter handling as a secondary safeguard.
+- This pass changes **header geometry only**. It does not alter page gutters, body layout, capability content frames, Learning Guide layout, or local capability navigation spacing.
+
+
+## v95.33 — lightweight shared design system
+This pass is intentionally an under-the-hood consolidation rather than a redesign.
+
+### Shared component layer
+- Added `site-components.css` as the reusable component layer, loaded after page-specific styles.
+- Added spacing, radius, reading-width, title-size, and lead-size tokens.
+- Added a shared **page-intro** component for sibling top-level destinations. Applied Work and Learning Guide now use it on `index.html`; the five Capabilities pages use the same component while Home intentionally retains its stronger landing-page hero.
+- Centralized the **Capabilities local nav** into one shared component and removed recent duplicated local-nav / capability-intro style blocks from capability pages.
+- Added reusable `surface-card`, `callout-subtle`, and `callout-practice` variants and applied them selectively without changing the underlying content hierarchy.
+
+### Design-system rule going forward
+If the same visible pattern appears on more than one page, prefer a class in `site-components.css` rather than another page-level override. Page-level CSS should be reserved for genuinely page-specific diagrams, tables, or layouts.
+
+### Visual regression checklist for future edits
+Check at minimum:
+1. desktop + mobile;
+2. light + dark mode;
+3. global top-nav position and active state;
+4. top-level page-intro alignment and gutters;
+5. Capabilities local-nav alignment;
+6. long-title / long-link wrapping;
+7. deep-link landing below sticky header;
+8. Learning Guide accordion closed + open states;
+9. Harborstone / Meridian standalone-page gutters;
+10. no horizontal overflow.
+
+### Remaining larger debt
+Legacy pages still contain older historical style layers. This pass removes recent duplicated component CSS but deliberately does not bulk-delete old rules without visual regression tooling. Future cleanup should migrate one stable component family at a time rather than doing a risky wholesale CSS rewrite.
+
+
+## v95.34 — roadmap / maintenance sync
+No visitor-facing redesign in this pass. The current roadmap is synchronized around two priorities:
+
+### Learning / applied-work priority
+- Continue the eight-stage Learning Guide in sequence.
+- Add new Applied Work scenarios only when they create useful practice/evidence, including adjacent UI/UX, accessibility, QA/QE, software/data/API, security/privacy, human-factors, measurement/value, product/strategy, governance, and domain-workflow skills.
+- Keep Legal AI as the first planned domain specialization because domain knowledge can materially change workflow, risk, economics, knowledge quality, governance, and adoption.
+- Treat formal process frameworks (for example Scrum) as awareness/reference rather than a major learning investment.
+
+### Site maintenance priority
+- v95.33's `site-components.css` is now the preferred shared component layer.
+- Do not resume broad visual redesign while the current architecture is working; learning and practice are the priority.
+- When maintenance is warranted, migrate repeated patterns incrementally from historical page-level CSS into shared tokens/components.
+- Future hardening remains: semantic `<main>` landmarks + skip links, `:focus-visible`, reduced-motion support, native-control cleanup, WCAG contrast/touch-target/automated accessibility checks, and eventual design-library/component documentation.
+- Continue the visual regression checklist documented in v95.33 for every meaningful site change.
+
+
+## v95.35 — Capabilities subnav position fix
+- Found the remaining subnav jump: Overview and Discovery used newer `<main class="wrap">` containers with top padding, while Measurement / Systems / Evals still used legacy `.wrap` rules whose historical CSS removed that top padding.
+- Normalized the outer capability-page wrapper on the three legacy pages to semantic `<main class="wrap">`.
+- Added one narrowly scoped shared rule in `site-components.css` that gives the wrapper containing the Capabilities local nav the same top and side gutters on all five sibling pages.
+- This rule does not target nested content wrappers, avoiding the broad gutter regressions from the earlier v95.30 attempt.
+
+
+## v95.36 — capability hierarchy + Learning Guide orientation
+- Moved the Capabilities local navigation **below** the standardized capability page intro on Overview / Discovery / Measurement / Systems / Evals.
+- This makes the hierarchy explicit: global navigation → page identity/intro → local Capabilities navigation → evidence.
+- Replaced the Learning Guide's loose Depth / Learning path / Applied throughout text with one compact three-row orientation block:
+  - Depth
+  - Path
+  - Lenses
+- Removed the redundant standalone “Learning path” heading and kept the same substantive curriculum wording.
+- Styling stays editorial and quiet: no nested cards, pills, or dashboard treatment.
+
+
+## v95.37 — Capabilities intro standardization
+- Removed the pill-style “Capabilities overview” / “Cross-project capability” labels from the Capabilities page family.
+- All five capability pages now use the same simple **CAPABILITIES** eyebrow treatment as the sibling Applied Work / Learning Guide page-intro system.
+- Preserved each page's specific title and lead copy, followed by the shared Capabilities subnav.
+- Removed obsolete pill styling from the shared component layer.
+
+
+## v95.38 — Capabilities intro-height stabilization
+- Fixed the remaining perceived jump within the Capabilities subnav family.
+- Root cause: after moving the local nav below the page intro, different lead-copy lengths gave Overview / Discovery / Measurement / Systems / Evals different intro heights, so the subnav moved vertically even though its own styling was identical.
+- All five capability intros now reserve the same desktop height, keeping the local nav at a consistent vertical position.
+- Mobile remains content-driven rather than using a fixed/minimum intro height.
+
+
+## v95.39 — explicit Capabilities page shell
+- Replaced the remaining inferred/legacy Capabilities-page geometry with one explicit shared `capability-shell` class used by Overview, Discovery & Workflow, Measurement & Value, Systems & Guardrails, and Evals & Quality.
+- The shared shell now owns the five pages' outer max width, left/right gutters, top spacing, bottom spacing, intro width/height, and local-nav spacing.
+- This intentionally overrides legacy `.wrap` layout rules on the three older Meridian-derived capability pages, including old flex/grid/alignment behavior that could subtly shift content even after newer overrides.
+- No other site sections or standalone Meridian pages use `capability-shell`.
+
+
+## v95.40 — top-level page rhythm alignment
+- Compared the Capabilities and Applied Work page openings directly.
+- The remaining mismatch was primarily vertical: the standalone Capabilities pages started at artifact-page spacing, while Applied Work / Learning Guide use the main site's larger destination-page top spacing.
+- Capabilities now starts 66px below the shared header on desktop, matching the main-site destination-page rhythm, with consistent spacing from intro → local nav → content.
+- Removed the earlier artificial fixed/minimum capability-intro height so spacing is governed by the shared page-intro component rather than reserved blank space.
+- Horizontal content gutters remain owned by the shared `capability-shell`; no broad page-gutter rules were changed.
+
+
+## v95.41 — Capabilities global-header frame alignment
+- Used the side-by-side screenshots to isolate the remaining visual shift.
+- The Capabilities **body content** and Applied Work body content were already approximately aligned; the visible mismatch was the global header, whose brand began materially farther left on the standalone Capabilities pages.
+- Added a Capabilities-family body hook and narrowed only the desktop global-header inner frame to match the main index header's visual inset.
+- Did not move the Capabilities page shell, intro, local nav, cards, or body gutters.
+
+
+## v95.42 — canonical global shell architecture
+This replaces the recent header-width/margin patching with a structural fix.
+
+- The main index header is no longer nested inside the page-content `.shell`. It now uses the same architecture as standalone pages: **full-width `topbar` → centered `topinner` → separate content container**.
+- Removed the v95.41 Capabilities-only header-width exception and its temporary `capability-family` hook.
+- Standardized global-header markup across the site to the same brand, four navigation links, action area, and element types.
+- `site-shell.css` is now the single authority for global header width, centering, padding, and flex geometry.
+- Index Home / Applied Work / Learning Guide remain SPA views; their header links use normal hash URLs and are intercepted by the existing router.
+- This is the preferred pattern going forward: fix competing shells/components at the shared-structure level rather than adding page-specific width/margin patches.
+
+
+## v95.43 — canonical shared content frame
+- Kept the v95.42 structural global-header fix.
+- Fixed the resulting Home / Applied Work / Learning Guide gutter regression at its root: `index.html` had a historical `.shell { max-width:none; padding:0 }` override that became exposed once the header was moved outside that wrapper.
+- Added an explicit `site-content-shell` for the main index views. It owns the main site's max width and horizontal gutters and overrides legacy `.shell` behavior.
+- Aligned the Capabilities `capability-shell` to the same 1180px / 28px desktop horizontal frame and 18px mobile gutters.
+- Header shell and content shell are now separate components with separate responsibilities; future header changes should not alter page-content gutters.
+
+
+## v95.45 — regression rollback / safe QA hotfix
+- v95.44 is superseded because its full-document HTML parser rewrite caused visual regressions on legacy non-Capabilities pages.
+- Rebased on **v95.43**, the last intact shared-shell/content-shell build.
+- No legacy standalone page is reserialized or structurally rewritten in this pass.
+- Reapplied only safe, surgical fixes:
+  - Capabilities Overview Discovery & Workflow card routes to `discovery.html`.
+  - Top-level current nav/mobile state is added through direct string edits.
+  - Shared focus-visible and reduced-motion CSS.
+  - Standalone theme behavior honors system dark mode when no explicit saved preference exists.
+- Future QA on legacy pages should inspect/read/validate without rewriting entire documents through an HTML parser unless the page is first migrated to clean shared markup.
+
+
+## v95.46 — regression guardrails / maintenance infrastructure
+No visitor-facing redesign in this pass.
+
+### Added
+- `SITE_ARCHITECTURE.md` — canonical ownership/contract for the global shell, content shell, page-intro system, Capabilities local nav, and legacy-page editing rules.
+- `qa_regression.py` — **read-only** structural regression checks for links, anchors, duplicate IDs, nav parity, shared stylesheet presence, capability-shell/local-nav invariants, Harborstone disclosure, Agent Flow compact sizing, and canonical Discovery routing.
+- `visual-regression-baseline.json` — defined desktop/mobile baseline pages and the visual invariants to compare after shell/design changes.
+- `RELEASE_CHECKLIST.md` — the required pre-release workflow for automated + manual regression review.
+
+### Process rule
+A QA pass may inspect/validate every page, but must not reserialize legacy HTML. Shared/root-cause fixes remain preferred; legacy migration happens deliberately one stable component family at a time.
+
+### Future maintenance roadmap
+1. Keep learning/applied practice as the priority.
+2. Use the new regression guardrails for every meaningful site change.
+3. Gradually migrate legacy Meridian wrappers/components only when there is a real maintenance benefit.
+4. Later: Tracker semantic-main cleanup, nested interactive-card cleanup, formal WCAG contrast/touch-target automation, and optional screenshot automation once a stable local/browser test harness is available.
+
+
+## v95.47 — restore the intact visual baseline
+- Restored all visitor-facing HTML/CSS/JS from **v95.41**, the last build before the v95.42 global-shell restructure changed spacing on Home / Applied Work / Learning Guide and legacy standalone pages.
+- Kept the v95.46 regression-guardrail documentation and read-only QA tooling.
+- Removed v95.41's temporary Capabilities-only 1080px header-width patch so the standalone header returns to the normal shared 1180px frame.
+- Reapplied only safe surgical fixes: canonical Discovery routing, current top-level nav/mobile state, focus-visible, reduced-motion, and system-theme preference.
+- New architecture rule: preserve the intact main-site visual frame and make new/standalone pages conform to it; do not restructure the main index to solve a standalone-page alignment issue unless that migration is intentionally screenshot-tested.

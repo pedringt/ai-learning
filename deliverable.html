@@ -728,9 +728,14 @@ body .wrap>.v88-artifact-nav{margin-top:18px!important}
 body .wrap>.badge{margin-top:0!important}
 body .wrap>.v918-orientation{margin-bottom:18px!important}
 </style>
-<link href="site-shell.css" rel="stylesheet"/></head>
+<link href="site-shell.css" rel="stylesheet"/>
+<style id="v9521-status-cleanup">
+.status.done,.status.progress,.pstatus.done,.pstatus.progress{display:none!important}
+</style>
+<link href="site-components.css" rel="stylesheet"/>
+</head>
 <body>
-<div class="topbar"><div class="topinner"><a class="brand-button" href="index.html"><span class="brand">Practical <span>AI Learning</span></span></a><nav aria-label="Primary pages" class="nav"><a href="index.html">Home</a><a href="index.html#evidence">Capabilities</a><a href="index.html#portfolio">Applied Work</a><a href="index.html#learn">Learning Guide</a></nav><div class="top-actions"><button aria-label="Switch to dark mode" aria-pressed="false" class="theme-toggle" id="v922ThemeToggle" title="Switch to dark mode" type="button">☾</button><select aria-label="Choose page" id="v922MobileNav"><option value="index.html">Home</option><option value="index.html#evidence">Capabilities</option><option value="index.html#portfolio">Applied Work</option><option value="index.html#learn">Learning Guide</option></select></div></div></div>
+<div class="topbar"><div class="topinner"><a class="brand-button" href="index.html"><span class="brand">AI <span>Learning Portfolio</span></span></a><nav aria-label="Primary pages" class="nav"><a href="index.html">Home</a><a href="capabilities.html">Capabilities</a><a href="index.html#portfolio" aria-current="page">Applied Work</a><a href="index.html#learn">Learning Guide</a></nav><div class="top-actions"><button aria-label="Switch to dark mode" aria-pressed="false" class="theme-toggle" id="v922ThemeToggle" title="Switch to dark mode" type="button">☾</button><select aria-label="Choose page" id="v922MobileNav"><option value="index.html">Home</option><option value="capabilities.html">Capabilities</option><option value="index.html#portfolio" selected>Applied Work</option><option value="index.html#learn">Learning Guide</option></select></div></div></div>
 <div class="wrap"><div class="v88-artifact-nav"><span class="v912-artifact-label">Meridian evidence</span><a href="tracker.html">Discovery</a><a href="plan.html">Success Plan</a><a href="agent-flow.html">Agent Flow</a><a href="evals.html">Eval Suite</a><a aria-current="page" class="active" href="deliverable.html">Case Readout</a></div>
 <span class="badge">CAPSTONE · ONE-PAGE DELIVERABLE</span>
 <h1>Meridian Capstone Deliverable</h1>
@@ -747,14 +752,14 @@ body .wrap>.v918-orientation{margin-bottom:18px!important}
 </div>
 </div><div class="v922-planned-note planned-learning-note">Planned learning: later Meridian lifecycle stages are intentionally unfinished. I’m completing the case in sequence so later decisions build on what I learn earlier rather than filling the portfolio with prewritten answers.</div>
 <div class="stage done">
-<div class="stagehead"><h2>Handoff</h2><span class="pstatus done">Done</span></div>
+<div class="stagehead"><h2>Handoff</h2></div>
 <div class="stagebody">
     Reviewed the PM handoff for Meridian Support Operations — a Tier 1 support pilot where an AI agent classifies tickets, drafts responses, and routes risky or uncertain cases to a human. Raised 3 initial clarifying questions before moving to PLAN: whether formal pilot targets already existed, what the knowledge base's reliability actually was, and whether the human-boundary/escalation list in the handoff was complete. Set the core human boundary early: money and security categories never get an AI draft, and every AI draft — regardless of category — goes through mandatory human review before it reaches a customer.
     <div style="margin-top:6px"><a class="sevidence" href="tracker.html">→ full open-questions log</a></div>
 </div>
 </div>
 <div class="stage done">
-<div class="stagehead"><h2>Plan</h2><span class="pstatus done">Done</span></div>
+<div class="stagehead"><h2>Plan</h2></div>
 <div class="stagebody">
     Turned the PM's handoff into measurable pilot targets for the 8-week Tier 1 rollout.
     <p class="small"><b>Scenario baseline → Proposed pilot target.</b> These are simulated case inputs and planning targets, not measured pilot results.</p>
@@ -770,14 +775,14 @@ body .wrap>.v918-orientation{margin-bottom:18px!important}
 </div>
 </div>
 <div class="stage done">
-<div class="stagehead"><h2>Configure</h2><span class="pstatus done">Done</span></div>
+<div class="stagehead"><h2>Configure</h2></div>
 <div class="stagebody">
     Built the agent's flow logic: classify → (high-risk skips drafting, straight to human) or (retrieve → draft → confidence check) → human review → send → escalation check on replies. Escalation threshold (5+ exchanges) justified with real usage data rather than a guess. Retrieval built on semantic/embedding search instead of keyword matching, to sidestep the knowledge base's existing search problem. The high-risk skip-drafting branch also doubles as a cost control, and model choice per step is being weighed against the PLAN cost ceiling, not quality alone. One notable finding: digging into why reps manually copy-pasted billing status into tickets found it was a simple display-config gap, not a new integration or approval need. Flow diagram is done; the actual no/low-code prototype build is optional, later practice.
     <div style="margin-top:6px"><a class="sevidence" href="configure.html">→ full flow diagram</a></div>
 </div>
 </div>
 <div class="stage progress">
-<div class="stagehead"><h2>Validate</h2><span class="pstatus progress">In progress</span></div>
+<div class="stagehead"><h2>Validate</h2></div>
 <div class="stagebody">
     v1 eval architecture is now defined across five areas. Ticket Classification and Knowledge Retrieval case sets are designed, including ambiguity, conflicting customer-selected categories, multi-issue routing, wrong-source temptation, safe fallback, and stale/conflicting knowledge. Draft Quality, Appropriate Human Escalation, and Confidence/Review Routing are next. The new cases are designed, not yet presented as executed results.
     <div style="margin-top:6px"><a class="sevidence" href="evals.html">→ eval suite</a></div>

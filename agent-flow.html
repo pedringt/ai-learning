@@ -687,12 +687,48 @@ body.v919-tracker .wrap>h2:not(:first-of-type){
 .v933-agentic-note h3{margin:0 0 7px}
 .v933-agentic-note p{margin:6px 0 0;line-height:1.58}
 </style>
+
+<style id="v9521-agent-flow-scale">
+/* v95.21 — make the tall flow readable as a whole before drilling into details */
+.diagram{
+  max-width:760px!important;
+  margin:24px auto!important;
+  padding:18px!important;
+}
+.diagram svg{
+  width:min(100%,560px)!important;
+  max-width:560px!important;
+  height:auto!important;
+  margin:0 auto!important;
+}
+@media(max-width:700px){
+  .diagram{max-width:100%!important;padding:12px!important}
+  .diagram svg{width:100%!important;max-width:520px!important}
+}
+</style>
+
+<style id="v9521-status-cleanup">
+.status.done,.status.progress,.pstatus.done,.pstatus.progress{display:none!important}
+</style>
+
+
+
+<style id="v9529-global-current">
+.nav a[aria-current="page"]{
+  background:var(--softp)!important;
+  color:var(--purple)!important;
+}
+</style>
+<link href="site-components.css" rel="stylesheet"/>
 </head>
-<body>
-<div class="topbar"><div class="topinner"><a class="brand-button" href="index.html"><span class="brand">Practical <span>AI Learning</span></span></a><nav aria-label="Primary pages" class="nav"><a href="index.html">Home</a><a href="index.html#evidence">Capabilities</a><a href="index.html#portfolio">Applied Work</a><a href="index.html#learn">Learning Guide</a></nav><div class="top-actions"><button aria-label="Switch to dark mode" aria-pressed="false" class="theme-toggle" id="v922ThemeToggle" title="Switch to dark mode" type="button">☾</button><select aria-label="Choose page" id="v922MobileNav"><option value="index.html">Home</option><option value="index.html#evidence">Capabilities</option><option value="index.html#portfolio">Applied Work</option><option value="index.html#learn">Learning Guide</option></select></div></div></div>
-<div class="wrap"><div class="v88-artifact-nav"><span class="v912-artifact-label">Meridian evidence</span><a href="tracker.html">Discovery</a><a href="plan.html">Success Plan</a><a aria-current="page" class="active" href="agent-flow.html">Agent Flow</a><a href="evals.html">Eval Suite</a><a href="deliverable.html">Case Readout</a></div>
-<span class="badge">CAPSTONE · CONFIGURE</span>
-<h2>Systems & Guardrails</h2><p class="lead">Cross-project evidence for deciding what AI should do, where deterministic rules or humans belong, and how to keep the permission surface proportionate to the risk.</p><div class="section-kicker"><span>Primary deep case · Meridian</span></div><h2>Agent Flow — Meridian Tier 1 Support Pilot</h2><div class="frame"><b>Evidence across applied work</b><p><strong>Meridian:</strong> the detailed system below separates trigger, context, instructions, retrieval, routing, confidence, review, and escalation so risky support actions remain human-owned.</p><p><strong>Harborstone:</strong> the first pilot deliberately stops at AI-assisted field extraction and pre-population: AI proposes, an employee verifies, and the existing downstream workflow continues. Broader accounting, property-system, and email access is deferred until the evidence justifies a larger permission surface.</p></div>
+<body class="capability-family">
+<div class="topbar"><div class="topinner"><a class="brand-button" href="index.html"><span class="brand">AI <span>Learning Portfolio</span></span></a><nav aria-label="Primary pages" class="nav"><a href="index.html">Home</a><a href="capabilities.html" aria-current="page">Capabilities</a><a href="index.html#portfolio">Applied Work</a><a href="index.html#learn">Learning Guide</a></nav><div class="top-actions"><button aria-label="Switch to dark mode" aria-pressed="false" class="theme-toggle" id="v922ThemeToggle" title="Switch to dark mode" type="button">☾</button><select aria-label="Choose page" id="v922MobileNav"><option value="index.html">Home</option><option value="capabilities.html" selected>Capabilities</option><option value="index.html#portfolio">Applied Work</option><option value="index.html#learn">Learning Guide</option></select></div></div></div>
+<main class="wrap capability-shell">
+<header class="capability-page-intro page-intro">
+<div class="eyebrow">Capabilities</div>
+<h1>Systems & Guardrails</h1>
+<p class="lead">Cross-project evidence for deciding what AI should do, where deterministic rules or humans belong, and how to keep the permission surface proportionate to the risk.</p>
+</header><nav class="capability-local-nav" aria-label="Capability pages"><span>Capabilities</span><div><a href="capabilities.html">Overview</a><a href="discovery.html">Discovery & Workflow</a><a href="plan.html">Measurement & Value</a><a href="agent-flow.html" class="current" aria-current="page">Systems & Guardrails</a><a href="evals.html">Evals & Quality</a></div></nav><div class="section-kicker"><span>Primary deep case · Meridian</span></div><h2>Agent Flow — Meridian Tier 1 Support Pilot</h2><div class="frame"><b>Evidence across applied work</b><p><strong>Meridian:</strong> the detailed system below separates trigger, context, instructions, retrieval, routing, confidence, review, and escalation so risky support actions remain human-owned.</p><p><strong>Harborstone:</strong> the first pilot deliberately stops at AI-assisted field extraction and pre-population: AI proposes, an employee verifies, and the existing downstream workflow continues. Broader accounting, property-system, and email access is deferred until the evidence justifies a larger permission surface.</p></div>
 <p class="lead">One-page flow from ticket arrival to human handoff, built from the classify → retrieve → draft → confidence-check → escalate logic worked out in PLAN, plus the back-and-forth escalation rule.</p><div class="v918-orientation">
 <div>
 <span class="label">What this shows</span>
@@ -858,6 +894,6 @@ body.v919-tracker .wrap>h2:not(:first-of-type){
 </ul>
 <p class="small">Pending validation: real rep input (see Rep Discovery Questions in the <a href="tracker.html">working tracker</a>) may confirm or adjust the workflow-model assumption this flow is built on (open question 4), and could refine the escalation logic further. The billing field (above) folds into the "retrieve relevant knowledge" step once enabled — no separate node needed. Pilot targets that depend on this flow (first-response time, quality) are locked in the <a href="plan.html">PLAN deliverable</a>.</p>
 <p class="small" style="margin-top:36px;padding-top:16px;border-top:1px solid var(--border)"><a href="tracker.html">Working tracker (full reasoning log)</a>  ·  <a href="plan.html">PLAN deliverable</a>  ·  <a href="deliverable.html">One-page deliverable</a></p>
-</div><p class="v932-routing-note"><strong>Signal design: </strong>This is not the model rating its own confidence. It is a review/routing signal built from observable evidence such as retrieval support, missing required information, source conflicts, and rule or guardrail matches.</p>
+</main><p class="v932-routing-note"><strong>Signal design: </strong>This is not the model rating its own confidence. It is a review/routing signal built from observable evidence such as retrieval support, missing required information, source conflicts, and rule or guardrail matches.</p>
 <script defer="" src="site-shell.js"></script></body>
 </html>

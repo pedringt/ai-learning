@@ -234,3 +234,72 @@ html{
 .deep-link-return a:hover{
   text-decoration:underline;
 }
+
+
+/* v95.32 — global header geometry only.
+   Intentionally does not alter page/content layout. */
+html{
+  scrollbar-gutter:stable;
+}
+.topbar .topinner{
+  width:100%!important;
+  max-width:1180px!important;
+  margin-left:auto!important;
+  margin-right:auto!important;
+  box-sizing:border-box!important;
+}
+/* Equal left/right header anchors keep the center navigation stationary. */
+.topbar .brand-button{
+  flex:0 0 190px!important;
+  min-width:190px!important;
+}
+.topbar .top-actions{
+  flex:0 0 190px!important;
+  min-width:190px!important;
+  justify-content:flex-end!important;
+  margin-left:0!important;
+}
+.topbar .nav{
+  flex:1 1 auto!important;
+  margin-left:0!important;
+}
+@media(max-width:860px){
+  .topbar .brand-button{
+    flex:0 1 auto!important;
+    min-width:0!important;
+  }
+  .topbar .top-actions{
+    flex:0 1 auto!important;
+    min-width:0!important;
+    margin-left:auto!important;
+  }
+}
+
+
+}
+
+
+/* v95.47 — safe interaction hardening */
+.nav a[aria-current="page"],
+.nav a.active,
+.nav button.active{
+  background:var(--softp)!important;
+  color:var(--purple)!important;
+}
+a:focus-visible,
+button:focus-visible,
+summary:focus-visible,
+select:focus-visible,
+[role="button"]:focus-visible{
+  outline:3px solid color-mix(in srgb,var(--purple) 72%,white)!important;
+  outline-offset:3px!important;
+}
+@media(prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto!important}
+  *,*::before,*::after{
+    scroll-behavior:auto!important;
+    transition-duration:.01ms!important;
+    animation-duration:.01ms!important;
+    animation-iteration-count:1!important;
+  }
+}

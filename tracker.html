@@ -745,9 +745,72 @@ body.v919-tracker .wrap>h2:not(:first-of-type){
   border-radius:0 8px 8px 0;
   background:var(--soft);
 }
-</style></head>
+</style>
+<style id="v9521-status-cleanup">
+.status.done,.status.progress,.pstatus.done,.pstatus.progress{display:none!important}
+</style>
+
+<style id="v9523-capability-local-nav">
+.capability-local-nav{
+  margin:0 0 24px;
+  padding:10px 0 12px;
+  border-bottom:1px solid var(--border);
+  display:flex;
+  align-items:center;
+  gap:18px;
+}
+.capability-local-nav>span{
+  flex:0 0 auto;
+  font-size:11px;
+  font-weight:900;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  color:var(--muted);
+}
+.capability-local-nav>div{
+  display:flex;
+  align-items:center;
+  gap:4px;
+  min-width:0;
+}
+.capability-local-nav a{
+  padding:7px 9px;
+  border-radius:9px;
+  color:var(--muted);
+  font-size:12px;
+  font-weight:750;
+  text-decoration:none;
+  white-space:nowrap;
+}
+.capability-local-nav a:hover{
+  color:var(--ink);
+  background:var(--softp);
+}
+.capability-local-nav a.current{
+  color:var(--purple);
+  background:var(--softp);
+}
+@media(max-width:760px){
+  .capability-local-nav{
+    display:block;
+    margin-bottom:18px;
+    padding:8px 0 10px;
+  }
+  .capability-local-nav>span{
+    display:block;
+    margin:0 8px 6px;
+  }
+  .capability-local-nav>div{
+    overflow-x:auto;
+    padding:0 2px 4px;
+    scrollbar-width:thin;
+  }
+}
+</style>
+<link href="site-components.css" rel="stylesheet"/>
+</head>
 <body class="v919-tracker">
-<div class="topbar"><div class="topinner"><a class="brand-button" href="index.html"><span class="brand">Practical <span>AI Learning</span></span></a><nav aria-label="Primary pages" class="nav"><a href="index.html">Home</a><a href="index.html#evidence">Capabilities</a><a href="index.html#portfolio">Applied Work</a><a href="index.html#learn">Learning Guide</a></nav><div class="top-actions"><button aria-label="Switch to dark mode" aria-pressed="false" class="theme-toggle" id="v922ThemeToggle" title="Switch to dark mode" type="button">☾</button><select aria-label="Choose page" id="v922MobileNav"><option value="index.html">Home</option><option value="index.html#evidence">Capabilities</option><option value="index.html#portfolio">Applied Work</option><option value="index.html#learn">Learning Guide</option></select></div></div></div>
+<div class="topbar"><div class="topinner"><a class="brand-button" href="index.html"><span class="brand">AI <span>Learning Portfolio</span></span></a><nav aria-label="Primary pages" class="nav"><a href="index.html">Home</a><a href="capabilities.html">Capabilities</a><a href="index.html#portfolio" aria-current="page">Applied Work</a><a href="index.html#learn">Learning Guide</a></nav><div class="top-actions"><button aria-label="Switch to dark mode" aria-pressed="false" class="theme-toggle" id="v922ThemeToggle" title="Switch to dark mode" type="button">☾</button><select aria-label="Choose page" id="v922MobileNav"><option value="index.html">Home</option><option value="capabilities.html">Capabilities</option><option value="index.html#portfolio" selected>Applied Work</option><option value="index.html#learn">Learning Guide</option></select></div></div></div>
 <div class="wrap"><div class="v88-artifact-nav"><span class="v912-artifact-label">Meridian evidence</span><a aria-current="page" class="active" href="tracker.html"><span id="discovery"></span>Discovery</a><a href="plan.html">Success Plan</a><a href="agent-flow.html">Agent Flow</a><a href="evals.html">Eval Suite</a><a href="deliverable.html">Case Readout</a></div>
 <div class="deep-link-return"><a href="index.html#evidence">← Capabilities</a><span>·</span><a href="index.html#portfolio">Applied Work</a></div>
 
@@ -790,10 +853,10 @@ body.v919-tracker .wrap>h2:not(:first-of-type){
 <strong>What this simulation is testing:</strong> The point is not that Meridian’s fictional numbers or simulated stakeholder answers are “correct.” It is to practice identifying what I do not know, asking the questions that would reduce uncertainty, making a defensible decision with the evidence available, and changing that decision when better evidence appears.
 </div>
 <ul class="checklist">
-<li><span>HANDOFF — review + clarifying questions</span><span class="right"><span class="status done">Done</span></span></li>
-<li><span>PLAN — Success Measurement Plan</span><span class="right"><a href="plan.html">view deliverable</a><span class="status done">Done</span></span></li>
-<li><span>CONFIGURE — agent flow diagram <span class="small">(required deliverable done; optional no/low-code prototype not started)</span></span><span class="right"><a href="configure.html">view flow diagram</a><span class="status done">Done</span></span></li>
-<li><span>VALIDATE — eval suite + launch readiness <span class="small">(v1 architecture defined; Classification + Retrieval designed)</span></span><span class="right"><a href="evals.html">view eval suite</a><span class="status progress">In progress</span></span></li>
+<li><span>HANDOFF — review + clarifying questions</span><span class="right"></span></li>
+<li><span>PLAN — Success Measurement Plan</span><span class="right"><a href="plan.html">view deliverable</a></span></li>
+<li><span>CONFIGURE — agent flow diagram <span class="small">(required deliverable done; optional no/low-code prototype not started)</span></span><span class="right"><a href="configure.html">view flow diagram</a></span></li>
+<li><span>VALIDATE — eval suite + launch readiness <span class="small">(v1 architecture defined; Classification + Retrieval designed)</span></span><span class="right"><a href="evals.html">view eval suite</a></span></li>
 <li><span>ENABLE — onboarding kit</span><span class="right"><span class="status todo">Not started</span></span></li>
 <li><span>OPERATE — 90-day dataset + dashboard</span><span class="right"><span class="status todo">Not started</span></span></li>
 <li><span>INCIDENT — troubleshooting investigation</span><span class="right"><span class="status todo">Not started</span></span></li>

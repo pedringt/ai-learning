@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Discovery &amp; Workflow · Practical AI Learning</title>
+<meta name="description" content="Cross-project evidence for discovery, workflow diagnosis, and deciding where AI belongs."/>
+<link rel="stylesheet" href="site-shell.css"/>
+
+<style>
+.wrap{max-width:1180px;margin:0 auto;padding:34px 28px 64px}
+.capability-hero{max-width:900px;margin-bottom:28px}
+.capability-hero h1{font-size:32px;line-height:1.1;letter-spacing:-.03em;margin:12px 0 10px}
+.capability-hero .lead{font-size:17px;line-height:1.6;color:var(--muted);margin:0}
+.evidence-pair{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:24px 0}
+.evidence-case{border:1px solid var(--border);border-radius:16px;background:var(--card);padding:18px}
+.evidence-case .tag{display:inline-flex;border:1px solid var(--border);border-radius:999px;padding:5px 8px;color:var(--purple);font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.05em}
+.evidence-case h2{font-size:20px;margin:10px 0 8px}
+.evidence-case p,.evidence-case li{font-size:13.5px;line-height:1.6;color:var(--muted)}
+.evidence-case ul{padding-left:18px}
+.evidence-case a{font-weight:800}
+.transfer-note{margin-top:22px;padding:16px 18px;border-left:4px solid var(--purple);background:var(--softp);border-radius:0 12px 12px 0}
+.transfer-note h2{font-size:18px;margin:0 0 6px}
+.transfer-note p{margin:0;color:var(--muted);font-size:13.5px;line-height:1.6}
+@media(max-width:760px){.wrap{padding:28px 18px 48px}.evidence-pair{grid-template-columns:1fr}.capability-hero h1{font-size:28px}}
+</style>
+
+<style id="v9524-discovery-normalization">
+/* Discovery & Workflow uses the same visual language as the other capability pages. */
+body{background:var(--bg);color:var(--ink)}
+.wrap{max-width:1180px;margin:0 auto;padding:34px 28px 64px}
+.capability-local-nav{margin-bottom:30px!important}
+.capability-hero{
+  max-width:980px;
+  margin:0 0 34px;
+  padding:0;
+}
+.capability-hero h1{
+  margin:14px 0 10px;
+  font-size:clamp(34px,4vw,48px);
+  line-height:1.08;
+  letter-spacing:-.035em;
+}
+.capability-hero .lead{
+  max-width:980px;
+  margin:0;
+  color:var(--muted);
+  font-size:17px;
+  line-height:1.65;
+}
+.evidence-pair{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:18px;
+  margin:28px 0;
+}
+.evidence-case{
+  padding:24px;
+  border:1px solid var(--border);
+  border-radius:18px;
+  background:var(--card);
+}
+.evidence-case .tag{
+  display:inline-flex;
+  padding:5px 9px;
+  border:1px solid color-mix(in srgb,var(--purple) 25%,var(--border));
+  border-radius:999px;
+  color:var(--purple);
+  font-size:10.5px;
+  font-weight:850;
+  letter-spacing:.05em;
+  text-transform:uppercase;
+}
+.evidence-case h2{
+  margin:13px 0 9px;
+  font-size:22px;
+  line-height:1.25;
+}
+.evidence-case p,.evidence-case li{
+  color:var(--muted);
+  font-size:14px;
+  line-height:1.65;
+}
+.evidence-case ul{margin:12px 0 16px;padding-left:20px}
+.evidence-case li+li{margin-top:7px}
+.evidence-case a{color:var(--purple);font-weight:800;text-decoration:none}
+.evidence-case a:hover{text-decoration:underline}
+.transfer-note{
+  margin:26px 0 0;
+  padding:18px 20px;
+  border:0;
+  border-left:4px solid var(--purple);
+  border-radius:0 12px 12px 0;
+  background:color-mix(in srgb,var(--softp) 55%,var(--card));
+}
+.transfer-note h2{margin:0 0 7px;font-size:18px}
+.transfer-note p{max-width:980px;margin:0;color:var(--muted);font-size:14px;line-height:1.65}
+@media(max-width:760px){
+  .wrap{padding:26px 18px 48px}
+  .evidence-pair{grid-template-columns:1fr}
+  .evidence-case{padding:20px}
+}
+</style>
+
+<style id="v9525-discovery-base">
+:root{
+  --ink:#0c0c10; --muted:#626475; --purple:#5336e8; --purple2:#7044f4;
+  --blue:#2b64d8; --cyan:#159eb9; --green:#269650; --gold:#bd8917;
+  --border:#e7e5ef; --soft:#f8f7fc; --softp:#f3f0ff; --white:#fff; --card:#fff;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0;
+  font-family:Arial,Helvetica,sans-serif;
+  color:var(--ink);
+  background:#fff;
+  line-height:1.55;
+}
+a{color:var(--purple)}
+.dark,.v88-dark{
+  --ink:#f4f3fa; --muted:#b8b7c7; --border:#2b2934;
+  --soft:#18171d; --softp:#211d36; --card:#141319;
+}
+body.dark,body.v88-dark{background:#101014;color:var(--ink)}
+</style>
+
+<style id="v9525-discovery-final">
+.discovery-page .capability-local-nav{margin-top:0}
+.discovery-page .capability-hero{max-width:980px;margin:0 0 30px}
+.discovery-page .capability-hero h1{
+  margin:13px 0 10px;
+  font-size:42px;
+  line-height:1.08;
+  letter-spacing:-.03em;
+}
+.discovery-page .capability-hero .lead{
+  max-width:980px;
+  margin:0;
+  font-size:17px;
+  line-height:1.62;
+  color:var(--muted);
+}
+.discovery-page .evidence-pair{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:16px;
+}
+.discovery-page .evidence-case{
+  border:1px solid var(--border);
+  border-radius:18px;
+  background:var(--card);
+  padding:22px;
+}
+.discovery-page .evidence-case h2{font-size:21px;line-height:1.28}
+.discovery-page .evidence-case p,
+.discovery-page .evidence-case li{font-size:14px;line-height:1.62;color:var(--muted)}
+.discovery-page .transfer-note{margin-top:22px}
+@media(max-width:760px){
+  .discovery-page .capability-hero h1{font-size:34px}
+  .discovery-page .evidence-pair{grid-template-columns:1fr}
+}
+</style>
+
+<style id="v9529-global-current">
+.nav a[aria-current="page"]{
+  background:var(--softp)!important;
+  color:var(--purple)!important;
+}
+</style>
+<link href="site-components.css" rel="stylesheet"/>
+</head>
+<body class="capability-family">
+<div class="topbar"><div class="topinner">
+<a class="brand-button" href="index.html"><span class="brand">AI <span>Learning Portfolio</span></span></a>
+<nav aria-label="Primary pages" class="nav"><a href="index.html">Home</a><a href="capabilities.html" aria-current="page">Capabilities</a><a href="index.html#portfolio">Applied Work</a><a href="index.html#learn">Learning Guide</a></nav>
+<div class="top-actions"><button aria-label="Switch to dark mode" aria-pressed="false" class="theme-toggle" id="v922ThemeToggle" title="Switch to dark mode" type="button">☾</button>
+<select aria-label="Choose page" id="v922MobileNav"><option value="index.html">Home</option><option value="capabilities.html" selected>Capabilities</option><option value="index.html#portfolio">Applied Work</option><option value="index.html#learn">Learning Guide</option></select></div>
+</div></div>
+<main class="wrap discovery-page capability-shell">
+
+<header class="capability-page-intro page-intro">
+<div class="eyebrow">Capabilities</div>
+<h1>Discovery &amp; Workflow</h1>
+<p class="lead">Evidence for diagnosing the actual problem before choosing a solution: mapping workflows, testing assumptions, separating symptoms from causes, and deciding where AI, deterministic rules, conventional automation, or human judgment belong.</p>
+</header><nav class="capability-local-nav" aria-label="Capability pages"><span>Capabilities</span><div><a href="capabilities.html">Overview</a><a href="discovery.html" class="current" aria-current="page">Discovery & Workflow</a><a href="plan.html">Measurement & Value</a><a href="agent-flow.html">Systems & Guardrails</a><a href="evals.html">Evals & Quality</a></div></nav>
+
+<section class="evidence-pair" aria-label="Discovery and workflow evidence by case">
+<article class="evidence-case surface-card">
+<span class="tag">Meridian · deep case</span>
+<h2>Discovery changed the implementation plan</h2>
+<p>Rep discovery challenged assumptions in the original handoff and changed what the pilot should optimize for.</p>
+<ul>
+<li>A quick first-touch workflow was not actually standard, so it stopped being treated as a dependable mechanism for improving first-response time.</li>
+<li>A copy/paste pain point proved to be a display/configuration issue rather than a reason to add another AI integration.</li>
+<li>Knowledge-base conflicts and stale content became source-quality problems to address rather than prompt problems to tune around.</li>
+</ul>
+<p><a href="tracker.html#rep-findings">See Meridian discovery reasoning →</a></p>
+</article>
+
+<article class="evidence-case surface-card">
+<span class="tag">Harborstone · transfer case</span>
+<h2>A broad automation request became several different problems</h2>
+<p>The initial ask—automate vendor invoice processing with AI—was decomposed before choosing a solution.</p>
+<ul>
+<li>The workflow contained extraction, interpretation, verification, downstream entry, exceptions, and business-rule questions with different risk profiles.</li>
+<li>Maximum automation was not the objective; the first pilot deliberately stopped at AI-assisted extraction and pre-population with employee verification.</li>
+<li>Ambiguous source documents and undefined business rules were treated separately from model extraction errors.</li>
+</ul>
+<p><a href="harborstone.html#workflow-decomposition">See Harborstone workflow reasoning →</a></p>
+</article>
+</section>
+
+<section class="transfer-note callout-subtle">
+<h2>What transfers across the cases</h2>
+<p>The repeated skill is not “finding a use for AI.” It is learning enough about the real workflow to choose the right intervention, narrow scope when risk or evidence requires it, and revise the plan when discovery contradicts the initial story.</p>
+</section>
+</main>
+<script src="site-shell.js"></script>
+<script>
+(function(){
+ const sel=document.getElementById('v922MobileNav');
+ if(sel) sel.addEventListener('change',()=>{location.href=sel.value;});
+})();
+</script>
+</body>
+</html>

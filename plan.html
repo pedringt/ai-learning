@@ -686,12 +686,27 @@ body.v919-tracker .wrap>h2:not(:first-of-type){
 <style id="v932-heuristic-style">
 .v932-heuristic-note{margin:10px 0 16px;padding:11px 13px;border-left:3px solid var(--gold);background:var(--soft);color:var(--muted);font-size:13px;line-height:1.55}
 </style>
+
+<style id="v9521-status-cleanup">
+.status.done,.status.progress,.pstatus.done,.pstatus.progress{display:none!important}
+</style>
+
+<style id="v9529-global-current">
+.nav a[aria-current="page"]{
+  background:var(--softp)!important;
+  color:var(--purple)!important;
+}
+</style>
+<link href="site-components.css" rel="stylesheet"/>
 </head>
-<body>
-<div class="topbar"><div class="topinner"><a class="brand-button" href="index.html"><span class="brand">Practical <span>AI Learning</span></span></a><nav aria-label="Primary pages" class="nav"><a href="index.html">Home</a><a href="index.html#evidence">Capabilities</a><a href="index.html#portfolio">Applied Work</a><a href="index.html#learn">Learning Guide</a></nav><div class="top-actions"><button aria-label="Switch to dark mode" aria-pressed="false" class="theme-toggle" id="v922ThemeToggle" title="Switch to dark mode" type="button">☾</button><select aria-label="Choose page" id="v922MobileNav"><option value="index.html">Home</option><option value="index.html#evidence">Capabilities</option><option value="index.html#portfolio">Applied Work</option><option value="index.html#learn">Learning Guide</option></select></div></div></div>
-<div class="wrap"><div class="v88-artifact-nav"><span class="v912-artifact-label">Meridian evidence</span><a href="tracker.html">Discovery</a><a aria-current="page" class="active" href="plan.html">Success Plan</a><a href="agent-flow.html">Agent Flow</a><a href="evals.html">Eval Suite</a><a href="deliverable.html">Case Readout</a></div>
-<span class="badge">CAPSTONE · PLAN</span>
-<h2>Measurement & Value</h2><p class="lead">Cross-project evidence for defining success, measuring operational outcomes, and connecting AI performance to business value.</p><div class="section-kicker"><span>Primary deep case · Meridian</span></div><h2>Success Measurement Plan — Meridian Support Operations</h2><div class="frame"><b>Evidence across applied work</b><p><strong>Meridian:</strong> the detailed plan below defines pilot baselines, operational and customer measures, adoption as eligible-workflow penetration rather than blanket daily use, and decision rules for what to investigate when results miss target.</p><p><strong>Harborstone:</strong> the invoice-operations exercise measures active handling time, field-level accuracy and correction types, appropriate use/non-use, and operating cost versus employee capacity returned. It also treats ambiguous source data and automation bias as measurement problems rather than hiding them inside a headline accuracy number.</p></div>
+<body class="capability-family">
+<div class="topbar"><div class="topinner"><a class="brand-button" href="index.html"><span class="brand">AI <span>Learning Portfolio</span></span></a><nav aria-label="Primary pages" class="nav"><a href="index.html">Home</a><a href="capabilities.html" aria-current="page">Capabilities</a><a href="index.html#portfolio">Applied Work</a><a href="index.html#learn">Learning Guide</a></nav><div class="top-actions"><button aria-label="Switch to dark mode" aria-pressed="false" class="theme-toggle" id="v922ThemeToggle" title="Switch to dark mode" type="button">☾</button><select aria-label="Choose page" id="v922MobileNav"><option value="index.html">Home</option><option value="capabilities.html" selected>Capabilities</option><option value="index.html#portfolio">Applied Work</option><option value="index.html#learn">Learning Guide</option></select></div></div></div>
+<main class="wrap capability-shell">
+<header class="capability-page-intro page-intro">
+<div class="eyebrow">Capabilities</div>
+<h1>Measurement & Value</h1>
+<p class="lead">Cross-project evidence for defining success, measuring operational outcomes, and connecting AI performance to business value.</p>
+</header><nav class="capability-local-nav" aria-label="Capability pages"><span>Capabilities</span><div><a href="capabilities.html">Overview</a><a href="discovery.html">Discovery & Workflow</a><a href="plan.html" class="current" aria-current="page">Measurement & Value</a><a href="agent-flow.html">Systems & Guardrails</a><a href="evals.html">Evals & Quality</a></div></nav><div class="section-kicker"><span>Primary deep case · Meridian</span></div><h2>Success Measurement Plan — Meridian Support Operations</h2><div class="frame"><b>Evidence across applied work</b><p><strong>Meridian:</strong> the detailed plan below defines pilot baselines, operational and customer measures, adoption as eligible-workflow penetration rather than blanket daily use, and decision rules for what to investigate when results miss target.</p><p><strong>Harborstone:</strong> the invoice-operations exercise measures active handling time, field-level accuracy and correction types, appropriate use/non-use, and operating cost versus employee capacity returned. It also treats ambiguous source data and automation bias as measurement problems rather than hiding them inside a headline accuracy number.</p></div>
 <p class="lead">Current pilot targets for the 8-week Tier 1 pilot. Click "Working notes" under any metric to see the reasoning, assumptions, and any place my thinking changed along the way.</p><div class="v918-orientation">
 <div>
 <span class="label">What this shows</span>
@@ -798,6 +813,6 @@ body.v919-tracker .wrap>h2:not(:first-of-type){
     This exercise ended up teaching me more about the job than I expected going in. My first instinct on almost every metric was to either restate the given baseline as the target, or pick a number that felt directionally right without a clear reason behind it — the KB-timeline pushback and the drafting-scope call were the moments that forced me to actually reason it through instead of defaulting to an easy answer. I also caught myself a few times proposing something clean and then realizing a constraint (mandatory human review, an unreliable data field, an unproven causal link) meant the honest answer was messier — and I think that's closer to what the job actually looks like than getting it right on the first try. The biggest shift for me was realizing that "I don't know yet, here's my plan to find out" is often a stronger answer than guessing with false confidence — which is exactly the muscle I want to bring into real applied AI work, wherever it ends up.
   </div>
 <p class="small" style="margin-top:36px;padding-top:16px;border-top:1px solid var(--border)"><a href="tracker.html">Working tracker (full reasoning log)</a>  ·  <a href="configure.html">CONFIGURE flow diagram</a>  ·  <a href="deliverable.html">One-page deliverable</a></p>
-</div><p class="v932-heuristic-note"><strong>Validation note: </strong>The 20-minute cutoff is a provisional workflow proxy, not a known natural boundary. Before relying on it for pilot reporting, I would validate it against a sample of manually reviewed tickets and adjust the threshold if the observed workflow does not support it.</p>
+</main><p class="v932-heuristic-note"><strong>Validation note: </strong>The 20-minute cutoff is a provisional workflow proxy, not a known natural boundary. Before relying on it for pilot reporting, I would validate it against a sample of manually reviewed tickets and adjust the threshold if the observed workflow does not support it.</p>
 <script defer="" src="site-shell.js"></script></body>
 </html>

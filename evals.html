@@ -662,12 +662,29 @@ body.v919-tracker .wrap>h2:not(:first-of-type){
   .lead{font-size:17px!important}
 }
 </style>
-<link href="site-shell.css" rel="stylesheet"/></head><body>
-<div class="topbar"><div class="topinner"><a class="brand-button" href="index.html"><span class="brand">Practical <span>AI Learning</span></span></a><nav aria-label="Primary pages" class="nav"><a href="index.html">Home</a><a href="index.html#evidence">Capabilities</a><a href="index.html#portfolio">Applied Work</a><a href="index.html#learn">Learning Guide</a></nav><div class="top-actions"><button aria-label="Switch to dark mode" aria-pressed="false" class="theme-toggle" id="v922ThemeToggle" title="Switch to dark mode" type="button">☾</button><select aria-label="Choose page" id="v922MobileNav"><option value="index.html">Home</option><option value="index.html#evidence">Capabilities</option><option value="index.html#portfolio">Applied Work</option><option value="index.html#learn">Learning Guide</option></select></div></div></div>
-<div class="wrap">
-<div class="v88-artifact-nav"><span class="v912-artifact-label">Meridian evidence</span><a href="tracker.html">Discovery</a><a href="plan.html">Success Plan</a><a href="agent-flow.html">Agent Flow</a><a aria-current="page" class="active" href="evals.html">Eval Suite</a><a href="deliverable.html">Case Readout</a></div>
-<span class="badge">CAPSTONE · VALIDATE</span>
-<h2>Evals & Quality</h2><p class="lead">Cross-project evidence for defining good AI behavior, diagnosing failures, and choosing evaluation methods that match the workflow and risk.</p><div class="section-kicker"><span>Primary deep case · Meridian</span></div><h2>Meridian — Eval Suite</h2><div class="frame"><b>Evidence across applied work</b><p><strong>Meridian:</strong> the detailed suite below uses risk-based cases for classification, retrieval, safe fallback, grounding, escalation, draft quality, confidence, and review routing. Separate subscores help distinguish model behavior from retrieval or knowledge-system failures.</p><p><strong>Harborstone:</strong> quality is evaluated at the field level rather than with one blended accuracy score. Consequential fields get a higher standard; service-date corrections are separated into extraction failures, ambiguous documents, undefined business rules, and document-quality problems. Abstaining or flagging ambiguity can be a successful output.</p></div>
+<link href="site-shell.css" rel="stylesheet"/>
+<style id="v9521-status-cleanup">
+.status.done,.status.progress,.pstatus.done,.pstatus.progress{display:none!important}
+</style>
+
+
+
+<style id="v9529-global-current">
+.nav a[aria-current="page"]{
+  background:var(--softp)!important;
+  color:var(--purple)!important;
+}
+</style>
+<link href="site-components.css" rel="stylesheet"/>
+</head><body class="capability-family">
+<div class="topbar"><div class="topinner"><a class="brand-button" href="index.html"><span class="brand">AI <span>Learning Portfolio</span></span></a><nav aria-label="Primary pages" class="nav"><a href="index.html">Home</a><a href="capabilities.html" aria-current="page">Capabilities</a><a href="index.html#portfolio">Applied Work</a><a href="index.html#learn">Learning Guide</a></nav><div class="top-actions"><button aria-label="Switch to dark mode" aria-pressed="false" class="theme-toggle" id="v922ThemeToggle" title="Switch to dark mode" type="button">☾</button><select aria-label="Choose page" id="v922MobileNav"><option value="index.html">Home</option><option value="capabilities.html" selected>Capabilities</option><option value="index.html#portfolio">Applied Work</option><option value="index.html#learn">Learning Guide</option></select></div></div></div>
+<main class="wrap capability-shell">
+
+<header class="capability-page-intro page-intro">
+<div class="eyebrow">Capabilities</div>
+<h1>Evals & Quality</h1>
+<p class="lead">Cross-project evidence for defining good AI behavior, diagnosing failures, and choosing evaluation methods that match the workflow and risk.</p>
+</header><nav class="capability-local-nav" aria-label="Capability pages"><span>Capabilities</span><div><a href="capabilities.html">Overview</a><a href="discovery.html">Discovery & Workflow</a><a href="plan.html">Measurement & Value</a><a href="agent-flow.html">Systems & Guardrails</a><a href="evals.html" class="current" aria-current="page">Evals & Quality</a></div></nav><div class="section-kicker"><span>Primary deep case · Meridian</span></div><h2>Meridian — Eval Suite</h2><div class="frame"><b>Evidence across applied work</b><p><strong>Meridian:</strong> the detailed suite below uses risk-based cases for classification, retrieval, safe fallback, grounding, escalation, draft quality, confidence, and review routing. Separate subscores help distinguish model behavior from retrieval or knowledge-system failures.</p><p><strong>Harborstone:</strong> quality is evaluated at the field level rather than with one blended accuracy score. Consequential fields get a higher standard; service-date corrections are separated into extraction failures, ambiguous documents, undefined business rules, and document-quality problems. Abstaining or flagging ambiguity can be a successful output.</p></div>
 <p class="lead">A small, risk-based v1 suite designed to test the behaviors that matter most before launch. The goal is diagnostic coverage, not an exhaustive repository of tiny tests.</p><div class="v918-orientation">
 <div>
 <span class="label">What this shows</span>
@@ -690,7 +707,7 @@ body.v919-tracker .wrap>h2:not(:first-of-type){
 <div class="eval-area next"><b>5 · Confidence &amp; Review Routing</b><span>Next</span><p>Whether confidence matches support quality and routes cases to the right level of human review.</p></div>
 </div>
 <div class="frame"><b>Design principle:</b> one realistic scenario can test multiple dimensions. I am prioritizing cases that reveal failure modes, tradeoffs, or missing system rules rather than creating one trivial test for every possible behavior.</div>
-<h2>1 · Ticket Classification <span class="status done">Designed</span></h2>
+<h2>1 · Ticket Classification</h2>
 <p>Meridian uses one primary category per ticket: Account &amp; Access, Billing, Product How-To, Technical Issue, Integrations, or Other / Needs Review. The planned set includes five straightforward baseline cases plus three harder cases.</p>
 <div class="case-grid">
 <div class="case"><div class="tag">Representative edge case</div><h3>Customer-selected category conflicts with the message</h3><p><b>Input:</b> Customer selects <i>Account &amp; Access</i>, then asks: “Why was I billed for a higher tier?”</p><p><b>Expected:</b> Billing.</p><p><b>Why it matters:</b> the customer's form selection is a hint, not ground truth. The agent should classify from the actual ticket evidence.</p></div>
@@ -698,7 +715,7 @@ body.v919-tracker .wrap>h2:not(:first-of-type){
 </div>
 <div class="scoreline"><b>Scoring:</b> category selection = Pass/Fail. Confidence is scored separately. Add a severity/risk note when a classification error could create meaningful downstream effects.</div>
 <div class="callout gold"><b>Guardrail insight:</b> critical safety rules should not depend entirely on classification being correct. A prohibited financial action should still trigger the financial-action guardrail even if the upstream category is wrong.</div>
-<h2>2 · Knowledge Retrieval <span class="status done">Designed</span></h2>
+<h2>2 · Knowledge Retrieval</h2>
 <p>The retrieval set tests whether the system finds the right Meridian knowledge, falls back safely when adequate support is unavailable, and keeps the answer grounded in what was actually retrieved. Four v1 cases are designed.</p>
 <div class="case-grid">
 <div class="case"><div class="tag">Failure localization</div><h3>Wrong-source temptation</h3><p><b>Input:</b> “My monthly report is missing the latest dashboard data.”</p><p><b>Expected source:</b> KB-108 — Troubleshooting Dashboard Data.</p><p><b>Tempting but wrong:</b> KB-101 — Generating and Scheduling Monthly Reports.</p><p><b>Why it matters:</b> a plausible final answer is not enough. The trace should show which source was actually retrieved.</p></div>
@@ -719,6 +736,6 @@ body.v919-tracker .wrap>h2:not(:first-of-type){
 </div>
 <div class="callout purple"><b>Portfolio boundary:</b> this page is a curated view of the eval design, not the test database. The deeper discovery questions, assumptions, and changes of mind stay in the <a href="tracker.html">Working Tracker</a>.</div>
 <p class="small" style="margin-top:36px;padding-top:16px;border-top:1px solid var(--border)"><a href="agent-flow.html">← Agent Flow &amp; Guardrails</a>  ·  <a href="tracker.html">Working Tracker</a>  ·  <a href="deliverable.html">One-page Meridian readout →</a></p>
-</div>
+</main>
 <script defer="" src="site-shell.js"></script></body>
 </html>

@@ -1,0 +1,72 @@
+{
+  "purpose": "Manual visual regression baseline. Capture these at the same viewport before/after major shell/design changes.",
+  "desktop_viewport": "1440x900",
+  "mobile_viewport": "390x844",
+  "pages": [
+    {
+      "name": "Home",
+      "url": "index.html#home",
+      "check": [
+        "global header position",
+        "left/right gutters",
+        "hero"
+      ]
+    },
+    {
+      "name": "Applied Work",
+      "url": "index.html#portfolio",
+      "check": [
+        "top-level intro",
+        "two case cards",
+        "global header"
+      ]
+    },
+    {
+      "name": "Learning Guide",
+      "url": "index.html#learn",
+      "check": [
+        "page intro",
+        "Depth/Path/Lenses block",
+        "closed/open stage"
+      ]
+    },
+    {
+      "name": "Capabilities Overview",
+      "url": "capabilities.html",
+      "check": [
+        "page intro",
+        "local nav",
+        "overview cards"
+      ]
+    },
+    {
+      "name": "Capabilities Detail",
+      "url": "agent-flow.html",
+      "check": [
+        "page intro",
+        "local nav",
+        "compact flow"
+      ]
+    },
+    {
+      "name": "Meridian Tracker",
+      "url": "tracker.html",
+      "check": [
+        "global header",
+        "Meridian nav",
+        "deep-link section",
+        "mobile accordion"
+      ]
+    },
+    {
+      "name": "Harborstone",
+      "url": "harborstone.html",
+      "check": [
+        "global header",
+        "case header",
+        "simulation disclosure",
+        "judgment sections"
+      ]
+    }
+  ]
+}

@@ -438,7 +438,1140 @@
   color:var(--purple);font-weight:750;text-decoration:none;
 }
 [data-page="portfolio"] .small a:hover{text-decoration:underline}
-</style></head>
+</style><style id="v9512-learning-guide">
+[data-page="learn"] .learning-roadmap{padding:24px!important}
+.progression-strip{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:18px 0 4px;padding:12px 14px;border:1px solid var(--border);border-radius:14px;background:var(--soft)}
+.progression-strip span:nth-child(odd){font-size:11px;font-weight:850;color:var(--ink)}
+.progression-strip span:nth-child(even){color:var(--muted);font-weight:800}
+.roadmap-stages .decision{min-height:0}
+.roadmap-stages .decision strong{display:block;margin-bottom:7px}
+.roadmap-stages .decision p{margin:0 0 10px}
+.recurring-lenses{padding:18px!important}
+.lens-list{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0 12px}
+.lens-list span{border:1px solid var(--border);border-radius:999px;padding:7px 10px;background:var(--card);font-size:11px;font-weight:800;color:var(--ink)}
+.guide-callouts .card{min-height:0}
+[data-page="learn"] .library-groups{margin-top:28px}
+@media(max-width:760px){
+ [data-page="learn"] .learning-roadmap{padding:18px!important}
+ .progression-strip{display:grid;grid-template-columns:1fr;gap:5px}
+ .progression-strip span:nth-child(even){display:none}
+}
+</style>
+<style id="v9514-learning-consolidation">
+/* v95.14 — tighten oversized capability principle card */
+[data-page="evidence"] .band{
+  min-height:0!important;
+}
+[data-page="evidence"] .band:has(.section-kicker){
+  padding-top:24px!important;
+  padding-bottom:24px!important;
+}
+
+/* Learning Guide: one page, progressively disclosed */
+[data-page="learn"]{max-width:1180px;margin:0 auto}
+.learning-hero{padding-bottom:22px!important}
+.learning-hero h1{max-width:980px}
+.depth-note{margin:14px 0 0;padding-top:12px;border-top:1px solid var(--border)}
+
+.learning-overview{margin-top:18px}
+.learning-path{
+  display:grid;
+  grid-template-columns:repeat(15,max-content);
+  align-items:center;
+  gap:7px;
+  overflow-x:auto;
+  padding:12px 2px 16px;
+  scrollbar-width:thin;
+}
+.learning-path a{
+  display:flex;align-items:center;gap:8px;
+  min-width:128px;padding:10px 11px;
+  border:1px solid var(--border);border-radius:13px;
+  background:var(--card);text-decoration:none;color:var(--ink)
+}
+.learning-path a:hover{border-color:var(--purple)}
+.learning-path b{font-size:11px;color:var(--purple)}
+.learning-path span{font-size:11px;font-weight:800;line-height:1.25}
+.learning-path i{font-style:normal;color:var(--muted);font-weight:800}
+
+.learning-lenses{margin-top:10px;padding:14px 16px;border:1px solid var(--border);border-radius:14px;background:var(--soft)}
+.learning-lenses>strong{display:block;font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:8px}
+.lens-list{display:flex;flex-wrap:wrap;gap:6px}
+.lens-list span{padding:5px 8px;border-radius:999px;border:1px solid var(--border);background:var(--card);font-size:10px;font-weight:800}
+
+.learning-loop{display:flex;align-items:stretch;gap:8px;margin:12px 0 28px}
+.learning-loop>span{flex:1;padding:10px 12px;border-top:2px solid var(--border);background:transparent}
+.learning-loop b{display:block;font-size:12px}
+.learning-loop small{display:block;color:var(--muted);margin-top:3px;font-size:10px;line-height:1.35}
+.learning-loop i{align-self:center;font-style:normal;color:var(--muted)}
+
+.learning-stages>.section-lead{max-width:900px;margin-bottom:14px}
+.learning-stage{
+  border:1px solid var(--border);border-radius:16px;background:var(--card);
+  margin:10px 0;overflow:hidden;scroll-margin-top:88px
+}
+.learning-stage summary{
+  list-style:none;cursor:pointer;display:grid;
+  grid-template-columns:38px minmax(0,1fr) auto;gap:12px;align-items:start;
+  padding:15px 16px
+}
+.learning-stage summary::-webkit-details-marker{display:none}
+.learning-stage summary:after{
+  content:"+";grid-column:3;grid-row:1;
+  font-size:20px;line-height:1;color:var(--muted);
+  margin-top:24px
+}
+.learning-stage[open] summary:after{content:"–"}
+.stage-num{font-size:11px;font-weight:900;color:var(--purple);padding-top:3px}
+.stage-main>b{display:block;font-size:16px;line-height:1.2;padding-right:26px}
+.stage-main>small{display:block;color:var(--muted);font-size:11px;line-height:1.4;margin-top:4px;max-width:760px}
+.topic-preview{display:block;margin-top:7px;color:var(--muted);font-size:10px;font-weight:750;line-height:1.4}
+.stage-status{
+  grid-column:3;grid-row:1;
+  white-space:nowrap;border:1px solid var(--border);border-radius:999px;
+  padding:5px 7px;font-size:9px;font-weight:900;letter-spacing:.04em;
+  color:var(--muted);margin-right:22px
+}
+.stage-body{border-top:1px solid var(--border);padding:5px 16px 16px 66px}
+.stage-group{padding:12px 0;border-bottom:1px solid var(--border)}
+.stage-group:last-child{border-bottom:0}
+.stage-group h3{font-size:10px;text-transform:uppercase;letter-spacing:.09em;color:var(--muted);margin:0 0 6px}
+.learning-item{padding:8px 0}
+.learning-item+.learning-item{border-top:1px dashed var(--border)}
+.learning-item b{font-size:12px}
+.learning-item p{margin:3px 0 0;color:var(--muted);font-size:11px;line-height:1.5}
+.stage-group.practice p{font-size:11px;line-height:1.5;color:var(--muted);margin:0}
+.learning-footer-note{
+  display:grid;gap:5px;margin:18px 0 6px;padding:14px 16px;
+  border-top:1px solid var(--border);color:var(--muted);font-size:10px;line-height:1.45
+}
+.learning-footer-note>strong{color:var(--ink);font-size:11px}
+
+@media(max-width:760px){
+  [data-page="evidence"] .band:has(.section-kicker){padding-top:18px!important;padding-bottom:18px!important}
+  .learning-path{grid-template-columns:1fr;overflow:visible;gap:6px}
+  .learning-path i{display:none}
+  .learning-path a{min-width:0}
+  .learning-loop{display:grid;grid-template-columns:1fr 1fr}
+  .learning-loop i{display:none}
+  .learning-stage summary{grid-template-columns:30px minmax(0,1fr);padding:14px 13px;gap:9px}
+  .stage-status{grid-column:2;grid-row:auto;margin:6px 24px 0 0;justify-self:start}
+  .learning-stage summary:after{grid-column:2;grid-row:1;justify-self:end;margin-top:2px}
+  .stage-body{padding:4px 14px 14px 52px}
+}
+</style>
+<script id="v9514-learning-deeplinks">
+(function(){
+  function openLearningTarget(){
+    var id=(location.hash||"").slice(1);
+    if(!id) return;
+    var el=document.getElementById(id);
+    if(el && el.matches && el.matches("details.learning-stage")){
+      el.open=true;
+      setTimeout(function(){el.scrollIntoView({block:"start"});},0);
+    }
+  }
+  window.addEventListener("hashchange",openLearningTarget);
+  document.addEventListener("DOMContentLoaded",openLearningTarget);
+})();
+</script>
+
+<style id="v9515-learning-type">
+/* v95.15 — bring Learning Guide typography back into the site's normal reading scale */
+.learning-path span{font-size:12.5px!important;line-height:1.3}
+.learning-path b{font-size:12px!important}
+
+.learning-lenses>strong{font-size:12px!important}
+.lens-list span{font-size:11.5px!important;padding:6px 9px!important}
+
+.learning-loop b{font-size:13.5px!important}
+.learning-loop small{font-size:11.5px!important;line-height:1.45!important}
+
+.stage-num{font-size:12px!important}
+.stage-main>b{font-size:17px!important;line-height:1.25!important}
+.stage-main>small{font-size:12.5px!important;line-height:1.5!important}
+.topic-preview{font-size:11.5px!important;line-height:1.5!important}
+.stage-status{font-size:10px!important}
+
+.stage-group h3{font-size:11px!important}
+.learning-item b{font-size:13.5px!important}
+.learning-item p,
+.stage-group.practice p{font-size:12.5px!important;line-height:1.58!important}
+
+.learning-footer-note{font-size:11.5px!important;line-height:1.55!important}
+.learning-footer-note>strong{font-size:12.5px!important}
+
+@media(max-width:760px){
+  .stage-main>b{font-size:16px!important}
+  .stage-main>small{font-size:12px!important}
+  .learning-item p,.stage-group.practice p{font-size:12px!important}
+}
+</style>
+
+<style id="v9516-learning-visual-normalization">
+/* v95.16 — normalize Learning Guide to the site's normal editorial scale */
+[data-page="learn"]{
+  font-size:15px;
+}
+.learning-hero .lead{
+  font-size:17px!important;
+  line-height:1.65!important;
+}
+.learning-hero .depth-note{
+  font-size:13.5px!important;
+  line-height:1.6!important;
+}
+
+/* Overview should read like navigation, not metadata. */
+.learning-path a{
+  min-width:148px!important;
+  padding:13px 14px!important;
+}
+.learning-path b{
+  font-size:13px!important;
+}
+.learning-path span{
+  font-size:14px!important;
+  line-height:1.32!important;
+}
+.learning-lenses{
+  padding:16px 18px!important;
+}
+.learning-lenses>strong{
+  font-size:13px!important;
+  letter-spacing:.055em!important;
+}
+.lens-list{
+  gap:8px!important;
+}
+.lens-list span{
+  font-size:13px!important;
+  padding:7px 10px!important;
+  font-weight:700!important;
+}
+
+/* Method strip: normal supporting copy. */
+.learning-loop{
+  margin-top:16px!important;
+  gap:12px!important;
+}
+.learning-loop>span{
+  padding:13px 14px!important;
+}
+.learning-loop b{
+  font-size:15px!important;
+}
+.learning-loop small{
+  font-size:13px!important;
+  line-height:1.5!important;
+}
+
+/* Stage rows should feel like substantial content cards. */
+.learning-stage{
+  margin:13px 0!important;
+}
+.learning-stage summary{
+  padding:19px 20px!important;
+  grid-template-columns:42px minmax(0,1fr) auto!important;
+  gap:14px!important;
+}
+.stage-num{
+  font-size:14px!important;
+  padding-top:2px!important;
+}
+.stage-main>b{
+  font-size:19px!important;
+  line-height:1.3!important;
+}
+.stage-main>small{
+  font-size:14px!important;
+  line-height:1.55!important;
+  margin-top:6px!important;
+}
+.topic-preview{
+  font-size:13px!important;
+  line-height:1.55!important;
+  margin-top:9px!important;
+  font-weight:650!important;
+}
+.stage-status{
+  font-size:11px!important;
+  padding:6px 9px!important;
+  letter-spacing:.035em!important;
+}
+.learning-stage summary:after{
+  font-size:22px!important;
+  margin-top:30px!important;
+}
+
+/* Expanded curriculum: body text now matches the rest of the site. */
+.stage-body{
+  padding:8px 20px 20px 76px!important;
+}
+.stage-group{
+  padding:16px 0!important;
+}
+.stage-group h3{
+  font-size:12.5px!important;
+  letter-spacing:.07em!important;
+  margin-bottom:8px!important;
+}
+.learning-item{
+  padding:11px 0!important;
+}
+.learning-item b{
+  font-size:15px!important;
+}
+.learning-item p,
+.stage-group.practice p{
+  font-size:14px!important;
+  line-height:1.65!important;
+  margin-top:5px!important;
+}
+.learning-footer-note{
+  font-size:13px!important;
+  line-height:1.6!important;
+  padding:16px 18px!important;
+}
+.learning-footer-note>strong{
+  font-size:14px!important;
+}
+
+/* Remove the compressed-document feeling created by too many tiny uppercase labels. */
+[data-page="learn"] .section-kicker span{
+  font-size:12px!important;
+}
+[data-page="learn"] .section-lead{
+  font-size:15px!important;
+  line-height:1.65!important;
+}
+
+@media(max-width:760px){
+  .learning-path a{padding:12px 13px!important}
+  .learning-path span{font-size:13.5px!important}
+  .learning-loop{grid-template-columns:1fr!important}
+  .learning-stage summary{
+    grid-template-columns:34px minmax(0,1fr)!important;
+    padding:17px 15px!important;
+  }
+  .stage-main>b{font-size:17.5px!important}
+  .stage-main>small{font-size:13.5px!important}
+  .topic-preview{font-size:12.5px!important}
+  .stage-body{padding:6px 16px 18px 58px!important}
+  .learning-item p,.stage-group.practice p{font-size:13.5px!important}
+}
+</style>
+
+<style id="v9517-learning-guide-quiet">
+/* v95.17 — quiet editorial Learning Guide */
+
+/* Remove dashboard/card chrome from the overview. */
+.learning-overview{
+  margin-top:22px!important;
+}
+.learning-path{
+  display:flex!important;
+  flex-wrap:wrap!important;
+  align-items:center!important;
+  gap:6px!important;
+  overflow:visible!important;
+  padding:8px 0 12px!important;
+}
+.learning-path a{
+  display:inline!important;
+  min-width:0!important;
+  padding:0!important;
+  border:0!important;
+  border-radius:0!important;
+  background:transparent!important;
+  color:var(--ink)!important;
+  text-decoration:none!important;
+  font-size:14px!important;
+  font-weight:800!important;
+}
+.learning-path a b{
+  display:none!important;
+}
+.learning-path a span{
+  display:inline!important;
+  font-size:14px!important;
+  line-height:1.5!important;
+  font-weight:800!important;
+}
+.learning-path a span br{display:none!important}
+.learning-path i{
+  display:inline!important;
+  font-style:normal!important;
+  color:var(--muted)!important;
+  font-size:13px!important;
+  font-weight:700!important;
+}
+.learning-path a:hover{text-decoration:underline!important}
+
+.learning-lenses{
+  margin:2px 0 8px!important;
+  padding:0!important;
+  border:0!important;
+  border-radius:0!important;
+  background:transparent!important;
+}
+.learning-lenses>strong{
+  display:inline!important;
+  margin:0 6px 0 0!important;
+  font-size:13px!important;
+  text-transform:none!important;
+  letter-spacing:0!important;
+  color:var(--ink)!important;
+}
+.learning-lenses .lens-list{
+  display:inline!important;
+}
+.learning-lenses .lens-list span{
+  display:inline!important;
+  padding:0!important;
+  border:0!important;
+  border-radius:0!important;
+  background:transparent!important;
+  font-size:13px!important;
+  line-height:1.7!important;
+  font-weight:500!important;
+  color:var(--muted)!important;
+}
+.learning-lenses .lens-list span:not(:last-child)::after{
+  content:" · ";
+  color:var(--muted);
+}
+
+/* Replace the four-box loop with one editorial sentence. */
+.learning-loop{
+  display:block!important;
+  margin:12px 0 30px!important;
+  padding:12px 0 0!important;
+  border-top:1px solid var(--border)!important;
+}
+.learning-loop>span{
+  display:inline!important;
+  padding:0!important;
+  border:0!important;
+  background:transparent!important;
+}
+.learning-loop>span b{
+  display:inline!important;
+  font-size:13.5px!important;
+}
+.learning-loop>span small{
+  display:none!important;
+}
+.learning-loop>i{
+  display:inline!important;
+  margin:0 5px!important;
+  color:var(--muted)!important;
+}
+
+/* Curriculum = flat editorial rows, not cards. */
+.learning-stages>.section-kicker{margin-bottom:6px!important}
+.learning-stage{
+  margin:0!important;
+  border:0!important;
+  border-top:1px solid var(--border)!important;
+  border-radius:0!important;
+  background:transparent!important;
+  overflow:visible!important;
+  box-shadow:none!important;
+}
+.learning-stage:last-of-type{
+  border-bottom:1px solid var(--border)!important;
+}
+.learning-stage summary{
+  padding:19px 4px!important;
+  grid-template-columns:44px minmax(0,1fr) auto!important;
+  gap:14px!important;
+  background:transparent!important;
+}
+.stage-num{
+  font-size:13px!important;
+  color:var(--purple)!important;
+}
+.stage-main>b{
+  font-size:18px!important;
+}
+.stage-main>small{
+  font-size:14px!important;
+  max-width:800px!important;
+}
+.topic-preview{
+  font-size:12.5px!important;
+  color:var(--muted)!important;
+}
+.stage-status{
+  border:0!important;
+  border-radius:0!important;
+  padding:2px 25px 0 0!important;
+  background:transparent!important;
+  font-size:10.5px!important;
+}
+.learning-stage summary:after{
+  margin-top:4px!important;
+}
+
+/* Expanded content gets breathing room but no nested card. */
+.stage-body{
+  padding:0 4px 22px 62px!important;
+  border-top:0!important;
+}
+.stage-group{
+  padding:14px 0!important;
+  border-bottom:1px solid var(--border)!important;
+}
+.stage-group:last-child{border-bottom:0!important}
+.stage-group h3{
+  margin:0 0 8px!important;
+  font-size:12px!important;
+}
+.learning-item{
+  padding:10px 0!important;
+}
+.learning-item+.learning-item{
+  border-top:1px dashed var(--border)!important;
+}
+.learning-item b{
+  font-size:15px!important;
+}
+.learning-item p{
+  max-width:900px;
+  font-size:14px!important;
+  line-height:1.65!important;
+}
+
+/* Practice is the one distinct content treatment. */
+.stage-group.practice{
+  margin:14px 0 0!important;
+  padding:18px 20px!important;
+  border:0!important;
+  border-left:5px solid #18a6bf!important;
+  border-radius:12px!important;
+  background:rgba(24,166,191,.07)!important;
+}
+.stage-group.practice h3{
+  margin-bottom:8px!important;
+  font-size:12.5px!important;
+}
+.stage-group.practice p{
+  margin:0!important;
+  max-width:900px!important;
+  font-size:14px!important;
+  line-height:1.65!important;
+}
+
+/* Footer guidance should read like a note, not another component. */
+.learning-footer-note{
+  margin:22px 0 0!important;
+  padding:14px 0 0!important;
+  border:0!important;
+  border-top:1px solid var(--border)!important;
+  background:transparent!important;
+  font-size:12.5px!important;
+}
+
+/* Keep the already-requested capability spacing fix tight. */
+[data-page="evidence"] .band:has(.section-kicker){
+  padding-top:18px!important;
+  padding-bottom:18px!important;
+}
+
+@media(max-width:760px){
+  .learning-path{display:block!important}
+  .learning-path a,.learning-path i{display:inline!important}
+  .learning-stage summary{
+    grid-template-columns:34px minmax(0,1fr)!important;
+    padding:17px 2px!important;
+  }
+  .stage-status{
+    grid-column:2!important;
+    padding-right:24px!important;
+  }
+  .stage-body{
+    padding:0 2px 20px 48px!important;
+  }
+  .stage-group.practice{
+    margin-left:-48px!important;
+  }
+}
+</style>
+
+<style id="v9518-capability-space-fix">
+[data-page="evidence"] .evidence-principle{
+  min-height:0!important;
+  height:auto!important;
+  padding:22px 24px!important;
+  display:block!important;
+}
+[data-page="evidence"] .evidence-principle .section-kicker{
+  margin:0 0 10px!important;
+}
+[data-page="evidence"] .evidence-principle h3{
+  margin:0 0 12px!important;
+}
+[data-page="evidence"] .evidence-principle p{
+  margin:0!important;
+}
+@media(max-width:760px){
+  [data-page="evidence"] .evidence-principle{padding:18px!important}
+}
+</style>
+
+<style id="v9518-learning-library-polish">
+/* Top-level learning stages borrow the Capabilities visual language. */
+.learning-stage{
+  margin:14px 0!important;
+  border:1px solid var(--border)!important;
+  border-radius:16px!important;
+  background:linear-gradient(180deg,var(--card),color-mix(in srgb,var(--soft) 45%,var(--card)))!important;
+  overflow:hidden!important;
+}
+.learning-stage:last-of-type{
+  border-bottom:1px solid var(--border)!important;
+}
+.learning-stage summary{
+  position:relative!important;
+  display:grid!important;
+  grid-template-columns:42px minmax(0,1fr) auto!important;
+  gap:14px!important;
+  align-items:start!important;
+  padding:18px 50px 18px 18px!important;
+  background:transparent!important;
+}
+.learning-stage summary:hover{
+  background:color-mix(in srgb,var(--softp) 32%,transparent)!important;
+}
+.learning-stage[open] summary{
+  border-bottom:1px solid var(--border)!important;
+  background:color-mix(in srgb,var(--softp) 24%,transparent)!important;
+}
+.learning-stage summary:after{
+  content:"+"!important;
+  position:absolute!important;
+  right:18px!important;
+  top:50%!important;
+  transform:translateY(-50%)!important;
+  margin:0!important;
+  width:28px!important;
+  height:28px!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  border:1px solid var(--border)!important;
+  border-radius:999px!important;
+  background:var(--card)!important;
+  color:var(--purple)!important;
+  font-size:19px!important;
+  line-height:1!important;
+  font-weight:700!important;
+}
+.learning-stage[open] summary:after{
+  content:"−"!important;
+}
+.stage-num{
+  font-size:12px!important;
+  font-weight:900!important;
+  color:var(--purple)!important;
+  padding-top:3px!important;
+}
+.stage-main>b{
+  font-size:18px!important;
+  line-height:1.3!important;
+}
+.stage-main>small{
+  display:block!important;
+  margin-top:5px!important;
+  font-size:13.5px!important;
+  line-height:1.5!important;
+  color:var(--muted)!important;
+}
+.topic-preview{
+  display:block!important;
+  margin-top:8px!important;
+  font-size:12.5px!important;
+  line-height:1.5!important;
+  color:var(--muted)!important;
+  font-weight:650!important;
+}
+.stage-status{
+  align-self:start!important;
+  margin:0!important;
+  padding:5px 8px!important;
+  border:1px solid var(--border)!important;
+  border-radius:999px!important;
+  background:var(--card)!important;
+  font-size:10px!important;
+  font-weight:900!important;
+  color:var(--muted)!important;
+  letter-spacing:.035em!important;
+}
+
+/* Keep expanded content mostly flat: no cards within cards. */
+.stage-body{
+  padding:8px 22px 22px 72px!important;
+  background:var(--card)!important;
+}
+.stage-group{
+  padding:14px 0!important;
+  border-bottom:1px solid var(--border)!important;
+}
+.stage-group:last-child{border-bottom:0!important}
+.stage-group h3{
+  margin:0 0 8px!important;
+  font-size:12px!important;
+  letter-spacing:.07em!important;
+  text-transform:uppercase!important;
+  color:var(--muted)!important;
+}
+.learning-item{
+  padding:10px 0!important;
+}
+.learning-item+.learning-item{
+  border-top:1px dashed var(--border)!important;
+}
+.learning-item b{
+  font-size:15px!important;
+}
+.learning-item p,
+.stage-group.practice p{
+  margin:4px 0 0!important;
+  font-size:14px!important;
+  line-height:1.6!important;
+  color:var(--muted)!important;
+  max-width:920px!important;
+}
+
+/* Practice remains a distinct callout with enough left padding. */
+.stage-group.practice{
+  margin:14px 0 0!important;
+  padding:18px 20px 18px 24px!important;
+  border:0!important;
+  border-left:5px solid #18a6bf!important;
+  border-radius:12px!important;
+  background:rgba(24,166,191,.07)!important;
+}
+.stage-group.practice h3{
+  margin:0 0 8px!important;
+  color:var(--ink)!important;
+}
+.stage-group.practice p{
+  margin:0!important;
+}
+
+/* Clean up top-of-library section rhythm. */
+.learning-stages>.section-kicker{
+  margin-bottom:8px!important;
+}
+.learning-stages>h2{
+  margin-top:0!important;
+  margin-bottom:10px!important;
+}
+.learning-stages>.section-lead{
+  margin-bottom:18px!important;
+  max-width:900px!important;
+}
+
+@media(max-width:760px){
+  .learning-stage summary{
+    grid-template-columns:32px minmax(0,1fr)!important;
+    padding:16px 48px 16px 14px!important;
+    gap:10px!important;
+  }
+  .stage-status{
+    grid-column:2!important;
+    margin-top:7px!important;
+    justify-self:start!important;
+  }
+  .learning-stage summary:after{
+    right:12px!important;
+  }
+  .stage-body{
+    padding:6px 14px 18px 48px!important;
+  }
+  .stage-group.practice{
+    margin-left:-48px!important;
+    padding-left:20px!important;
+  }
+}
+</style>
+
+<style id="v9519-library-header-polish">
+/* v95.19 — finish the top-of-library presentation */
+
+/* Give the Applied Work / Capabilities explainer a deliberate compact card treatment. */
+[data-page="portfolio"] .band:has(.section-kicker),
+[data-page="workbench"] .band:has(.section-kicker){
+  min-height:0!important;
+  height:auto!important;
+  padding:26px 30px!important;
+  border:1px solid var(--border)!important;
+  border-radius:18px!important;
+  background:linear-gradient(135deg,color-mix(in srgb,var(--softp) 62%,var(--card)),var(--card))!important;
+}
+[data-page="portfolio"] .band:has(.section-kicker) .section-kicker,
+[data-page="workbench"] .band:has(.section-kicker) .section-kicker{
+  margin:0 0 12px!important;
+}
+[data-page="portfolio"] .band:has(.section-kicker) h2,
+[data-page="portfolio"] .band:has(.section-kicker) h3,
+[data-page="workbench"] .band:has(.section-kicker) h2,
+[data-page="workbench"] .band:has(.section-kicker) h3{
+  margin-top:0!important;
+  margin-bottom:12px!important;
+}
+[data-page="portfolio"] .band:has(.section-kicker) p,
+[data-page="workbench"] .band:has(.section-kicker) p{
+  margin-bottom:0!important;
+  max-width:1000px!important;
+}
+
+/* Progression: make it look like an intentional roadmap, not raw inline text. */
+.learning-overview>.section-kicker{
+  margin-bottom:14px!important;
+}
+.learning-path{
+  display:flex!important;
+  flex-wrap:wrap!important;
+  align-items:center!important;
+  gap:8px 10px!important;
+  padding:0 0 18px!important;
+  border-bottom:1px solid var(--border)!important;
+}
+.learning-path a{
+  display:inline-flex!important;
+  align-items:center!important;
+  min-width:0!important;
+  padding:7px 10px!important;
+  border:1px solid var(--border)!important;
+  border-radius:10px!important;
+  background:var(--card)!important;
+  font-size:13.5px!important;
+  font-weight:800!important;
+  line-height:1.35!important;
+  text-decoration:none!important;
+}
+.learning-path a span{
+  display:inline!important;
+  font-size:13.5px!important;
+  line-height:1.35!important;
+  white-space:normal!important;
+}
+.learning-path a span br{display:none!important}
+.learning-path i{
+  display:inline-flex!important;
+  align-items:center!important;
+  font-size:13px!important;
+  color:var(--muted)!important;
+}
+.learning-path a:hover{
+  border-color:color-mix(in srgb,var(--purple) 55%,var(--border))!important;
+  text-decoration:none!important;
+}
+
+/* Supporting concepts: quieter, but visibly designed. */
+.learning-lenses{
+  margin:16px 0 0!important;
+  padding:0!important;
+}
+.learning-lenses>strong{
+  font-size:13px!important;
+  margin-right:8px!important;
+}
+.learning-lenses .lens-list span{
+  font-size:13px!important;
+  line-height:1.8!important;
+}
+.learning-loop{
+  margin:14px 0 30px!important;
+  padding:14px 0 0!important;
+  border-top:1px solid var(--border)!important;
+}
+.learning-loop>span b{
+  font-size:14px!important;
+}
+.learning-loop>i{
+  margin:0 7px!important;
+}
+
+/* Status pills removed: stage order itself communicates progression. */
+.learning-stage summary{
+  grid-template-columns:42px minmax(0,1fr)!important;
+  padding-right:56px!important;
+}
+.stage-status{display:none!important}
+
+/* Fix awkward text compaction in roadmap labels if inherited nowrap/letter spacing appears. */
+.learning-path,
+.learning-path *{
+  word-spacing:normal!important;
+  letter-spacing:normal!important;
+}
+
+/* Applied Work explainer shown in screenshot: remove excess vertical empty area. */
+[data-page="portfolio"] .frame:has(.section-kicker):has(h2),
+[data-page="portfolio"] .frame:has(.section-kicker):has(h3){
+  min-height:0!important;
+}
+
+@media(max-width:760px){
+  [data-page="portfolio"] .band:has(.section-kicker),
+  [data-page="workbench"] .band:has(.section-kicker){
+    padding:20px!important;
+  }
+  .learning-path{
+    gap:7px!important;
+  }
+  .learning-path a{
+    font-size:13px!important;
+    padding:7px 9px!important;
+  }
+  .learning-path a span{font-size:13px!important}
+}
+</style>
+
+<style id="v9520-bottom-polish">
+/* v95.20 — finish Capabilities footer note + shared resource footer */
+
+/* Capabilities growth note: intentional but quiet. */
+[data-page="evidence"] .frame{
+  margin:22px 0 0!important;
+}
+[data-page="evidence"] .frame:has(> b:first-child){
+  padding:16px 18px!important;
+  border:0!important;
+  border-left:4px solid var(--purple)!important;
+  border-radius:0 12px 12px 0!important;
+  background:color-mix(in srgb,var(--softp) 52%,var(--card))!important;
+  box-shadow:none!important;
+}
+[data-page="evidence"] .frame:has(> b:first-child)>b{
+  display:block!important;
+  margin:0 0 5px!important;
+  font-size:14px!important;
+  line-height:1.35!important;
+}
+[data-page="evidence"] .frame:has(> b:first-child)>p{
+  margin:0!important;
+  max-width:960px!important;
+  color:var(--muted)!important;
+  font-size:13.5px!important;
+  line-height:1.55!important;
+}
+
+/* Shared "Go deeper" becomes a lightweight footer resource band, not a hero card. */
+.site-go-deeper{
+  margin:36px auto 0!important;
+  padding:22px 0 12px!important;
+  border:0!important;
+  border-top:1px solid var(--border)!important;
+  border-radius:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+}
+.site-go-deeper h3{
+  margin:0 0 6px!important;
+  font-size:18px!important;
+  line-height:1.3!important;
+}
+.site-go-deeper .section-lead{
+  margin:0 0 12px!important;
+  max-width:760px!important;
+  font-size:13.5px!important;
+  line-height:1.55!important;
+}
+.site-go-deeper .resource-row{
+  display:flex!important;
+  flex-wrap:wrap!important;
+  gap:8px!important;
+}
+.site-go-deeper .resource-link{
+  display:inline-flex!important;
+  align-items:center!important;
+  padding:7px 10px!important;
+  border:1px solid var(--border)!important;
+  border-radius:999px!important;
+  background:var(--card)!important;
+  color:var(--purple)!important;
+  font-size:12px!important;
+  font-weight:800!important;
+  text-decoration:none!important;
+}
+.site-go-deeper .resource-link:hover{
+  background:var(--softp)!important;
+  border-color:color-mix(in srgb,var(--purple) 38%,var(--border))!important;
+}
+
+@media(max-width:560px){
+  [data-page="evidence"] .frame:has(> b:first-child){
+    padding:14px 15px!important;
+  }
+  .site-go-deeper{
+    padding:18px 0 8px!important;
+    margin-top:28px!important;
+  }
+}
+</style>
+
+<style id="v9521-status-cleanup">
+.status.done,.status.progress,.pstatus.done,.pstatus.progress{display:none!important}
+</style>
+
+<style id="v9522-capability-local-nav">
+.capability-local-nav{
+  max-width:1180px;
+  margin:10px auto 18px;
+  padding:10px 0 12px;
+  border-bottom:1px solid var(--border);
+  display:flex;
+  align-items:center;
+  gap:18px;
+}
+.capability-local-nav>span{
+  flex:0 0 auto;
+  font-size:11px;
+  font-weight:900;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  color:var(--muted);
+}
+.capability-local-nav>div{
+  display:flex;
+  align-items:center;
+  gap:4px;
+  min-width:0;
+}
+.capability-local-nav a{
+  padding:6px 8px;
+  border-radius:8px;
+  color:var(--muted);
+  font-size:12px;
+  font-weight:750;
+  text-decoration:none;
+  white-space:nowrap;
+}
+.capability-local-nav a:hover{
+  color:var(--ink);
+  background:var(--softp);
+}
+.capability-local-nav a.current{
+  color:var(--purple);
+  background:var(--softp);
+}
+@media(max-width:760px){
+  .capability-local-nav{
+    display:block;
+    margin:6px 0 14px;
+    padding:8px 0 10px;
+  }
+  .capability-local-nav>span{
+    display:block;
+    margin:0 14px 6px;
+  }
+  .capability-local-nav>div{
+    overflow-x:auto;
+    padding:0 8px 4px;
+    scrollbar-width:thin;
+  }
+}
+</style>
+
+<style id="v9523-capability-local-nav">
+.capability-local-nav{
+  margin:0 0 24px;
+  padding:10px 0 12px;
+  border-bottom:1px solid var(--border);
+  display:flex;
+  align-items:center;
+  gap:18px;
+}
+.capability-local-nav>span{
+  flex:0 0 auto;
+  font-size:11px;
+  font-weight:900;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  color:var(--muted);
+}
+.capability-local-nav>div{
+  display:flex;
+  align-items:center;
+  gap:4px;
+  min-width:0;
+}
+.capability-local-nav a{
+  padding:7px 9px;
+  border-radius:9px;
+  color:var(--muted);
+  font-size:12px;
+  font-weight:750;
+  text-decoration:none;
+  white-space:nowrap;
+}
+.capability-local-nav a:hover{
+  color:var(--ink);
+  background:var(--softp);
+}
+.capability-local-nav a.current{
+  color:var(--purple);
+  background:var(--softp);
+}
+@media(max-width:760px){
+  .capability-local-nav{
+    display:block;
+    margin-bottom:18px;
+    padding:8px 0 10px;
+  }
+  .capability-local-nav>span{
+    display:block;
+    margin:0 8px 6px;
+  }
+  .capability-local-nav>div{
+    overflow-x:auto;
+    padding:0 2px 4px;
+    scrollbar-width:thin;
+  }
+}
+</style>
+
+<style id="v9525-learning-overview-simple">
+.learning-overview{
+  margin:22px 0 34px!important;
+  padding:0 0 22px!important;
+  border-bottom:1px solid var(--border)!important;
+}
+.learning-overview .section-kicker{
+  margin-bottom:12px!important;
+}
+.learning-path-summary,
+.learning-lens-summary,
+.learning-method-summary{
+  max-width:1080px;
+  margin:0!important;
+  color:var(--muted)!important;
+  font-size:14px!important;
+  line-height:1.65!important;
+}
+.learning-path-summary{
+  color:var(--ink)!important;
+  font-size:15px!important;
+}
+.learning-lens-summary{margin-top:10px!important}
+.learning-method-summary{
+  margin-top:10px!important;
+  padding-top:10px!important;
+  border-top:1px solid var(--border)!important;
+}
+.learning-path-summary strong,
+.learning-lens-summary strong,
+.learning-method-summary strong{
+  color:var(--ink)!important;
+}
+</style>
+<link href="site-components.css" rel="stylesheet"/>
+</head>
 <body>
 <div class="app-root" id="ai-cs-mock">
 <style>
@@ -558,7 +1691,7 @@
 
 </style>
 <div class="shell">
-<div class="topbar"><div class="topinner"><button aria-label="Go to home" class="brand-button" data-brand-home="" type="button"><span class="brand">AI <span>Learning Portfolio</span></span></button><nav aria-label="Primary pages" class="nav"><button class="active" data-view="home">Home</button><button data-view="evidence">Capabilities</button><button data-view="portfolio">Applied Work</button><button data-view="learn">Learning Guide</button></nav><div class="top-actions"><button aria-label="Switch to dark mode" aria-pressed="false" class="theme-toggle" id="themeToggle" title="Switch to dark mode" type="button">☾</button><select aria-label="Choose page" id="mobileNav"><option value="home">Home</option><option value="portfolio">Applied Work</option><option value="learn">Learning Guide</option></select></div></div></div>
+<div class="topbar"><div class="topinner"><button aria-label="Go to home" class="brand-button" data-brand-home="" type="button"><span class="brand">AI <span>Learning Portfolio</span></span></button><nav aria-label="Primary pages" class="nav"><button class="active" data-view="home">Home</button><a href="capabilities.html">Capabilities</a><button data-view="portfolio">Applied Work</button><button data-view="learn">Learning Guide</button></nav><div class="top-actions"><button aria-label="Switch to dark mode" aria-pressed="false" class="theme-toggle" id="themeToggle" title="Switch to dark mode" type="button">☾</button><select aria-label="Choose page" id="mobileNav"><option value="home">Home</option><option value="capabilities.html">Capabilities</option><option value="portfolio">Applied Work</option><option value="learn">Learning Guide</option></select></div></div></div>
 <section class="view active" data-page="home">
 <div class="hero"><div class="eyebrow">Independent learning project</div><h1>Building <span>practical AI foundations</span> for real-world work.</h1><p class="lead">I’m building broad, practical AI fluency across the pieces that matter in real work: how AI behaves, how systems fit together, how to diagnose the right problem, how to evaluate quality and risk, and how to connect AI use to adoption and business value. <strong>Meridian is my main practice environment</strong> for applying those foundations to an AI-assisted support workflow.</p><div class="home-context-strip"><div class="home-context-item"><strong>Practice environment</strong> Claude is my main practice environment, while I’m learning the underlying concepts to transfer across AI products.</div><div class="home-context-item"><strong>Capstone progress</strong> Design and planning complete; evaluation in progress; later stages intentionally unfinished.</div></div></div><div class="band manager-fast-path" style="margin-top:24px"><h3>Applied work first</h3>
 <p class="section-lead" style="margin-bottom:10px"><strong>Meridian</strong> is the deep-dive case: discovery, workflow diagnosis, system design, guardrails, evaluation, adoption, and measurement. <strong>Harborstone</strong> is a shorter Operations exercise that tests whether the same reasoning transfers outside support.</p>
@@ -589,38 +1722,159 @@
 </div>
 </div>
 </section>
-<section class="view" data-page="learn"><div class="eyebrow">Learn</div><h2 class="section-title">Practical AI Learning Guide &amp; Library</h2><p class="section-lead">A long-term capability map for learning how to turn AI capability into useful, reliable business outcomes. The goal is not mastery of every topic or a single job title; it is durable applied judgment across systems, quality, workflows, adoption, measurement, business value, and strategy.</p>
-<p class="section-lead">The sections below are the deeper reference layer behind the roadmap. They are resources and practice prompts—not a requirement to study every item equally.</p><div class="section-kicker"><span>Detailed learning library</span></div><section aria-label="Long-term learning roadmap" class="band learning-roadmap" id="learning-roadmap">
-<div class="section-kicker"><span>Long-term learning roadmap</span></div>
-<h3 style="margin-top:0">Technical literacy → applied judgment → business judgment</h3>
-<p class="section-lead" style="margin-bottom:12px">This is a multi-year capability map, not a checklist to finish quickly. Current work goes deepest where it supports near-term AI Customer Success, implementation, quality, and operations roles; later layers broaden into enterprise, product, strategy, and domain specialization.</p>
-<div class="frame"><b>Operating principle:</b> The goal is not to find places to use AI. It is to understand the problem well enough to decide whether AI belongs in the solution—and, if it does, how to make it reliable, adoptable, measurable, and worth the investment.</div>
-<div class="grid2" style="margin-top:16px">
-<div class="decision"><strong>1 · AI Systems &amp; Foundations</strong><p>Models, context, prompting/delegation, grounding, retrieval, tools, agents, permissions, structured outputs, traces, and production-system mental models.</p><small>Active · core foundation</small></div>
-<div class="decision"><strong>2 · Quality, Evals &amp; Responsible AI</strong><p>Expected behavior, test design, failure analysis, guardrails, human review, escalation, monitoring, governance, privacy, risk, and accountability.</p><small>Active · growing depth</small></div>
-<div class="decision"><strong>3 · Workflow, Process &amp; Knowledge Systems</strong><p>Discovery, process mapping, bottlenecks, handoffs, exceptions, source-of-truth design, knowledge management, and deciding between AI, deterministic automation, process change, and human judgment.</p><small>Active · Harborstone + Meridian</small></div>
-<div class="decision"><strong>4 · Implementation, Adoption &amp; Human-AI Interaction</strong><p>Rollout, enablement, calibrated trust, appropriate reliance, change management, stakeholder incentives, workflow fit, human handoffs, and why good technology can still fail organizationally.</p><small>Developing · AI CS readying</small></div>
-<div class="decision"><strong>5 · Data, Measurement &amp; Experimentation</strong><p>Metrics, segmentation, baselines, pilot design, sampling, leading/lagging indicators, experiment interpretation, and distinguishing offline quality from real-world outcomes.</p><small>Developing · next layer</small></div>
-<div class="decision"><strong>6 · Business, Operations &amp; AI Economics</strong><p>SaaS fundamentals, process economics, cost-to-serve, capacity, ROI, payback, build/boost/buy decisions, inference and review cost, and whether an AI intervention creates enough value to continue.</p><small>Next · business fluency</small></div>
-<div class="decision"><strong>7 · Enterprise AI &amp; Organizational Change</strong><p>Enterprise buying, champions and economic buyers, procurement, security/legal review, vendor risk, implementation governance, organizational behavior, and scaling beyond an enthusiastic pilot team.</p><small>Later · enterprise fluency</small></div>
-<div class="decision"><strong>8 · Product, Strategy &amp; Decisions Under Uncertainty</strong><p>Problem discovery, opportunity sizing, prioritization, build/buy/partner, competitive thinking, expected value, scenario analysis, reversible decisions, assumptions, and knowing what evidence would change the recommendation.</p><small>Later · strategic judgment</small></div>
-<div class="decision"><strong>9 · Communication, Leadership &amp; Influence</strong><p>Executive synthesis, recommendation writing, expectation setting, negotiation, influencing without authority, incident narration, and translating among technical, business, risk, and user perspectives.</p><small>Ongoing · practiced across projects</small></div>
-<div class="decision"><strong>10 · Domain Applications</strong><p>Use the general applied-AI toolkit in specialized environments. First planned domain: legal AI—legal workflows and technology, professional-responsibility issues, law-firm economics, knowledge systems, and responsible adoption.</p><small>Future specialization · leverage JD</small></div>
+<section class="view" data-page="learn" id="learn">
+<div class="hero learning-hero page-intro">
+  <div class="eyebrow">Practical AI Learning Guide</div>
+  <h1>Building applied-AI judgment across systems, people, workflows, and business.</h1>
+  <p class="lead">This is my learning map—not a claim of completed expertise. I use it to decide what to learn next, where hands-on practice is useful, and when completed work has earned a place in <a href="capabilities.html">Capabilities</a> or <a href="#portfolio">Applied Work</a>.</p>
 </div>
-<div class="band" style="margin-top:16px">
-<h3>Where this is heading</h3>
-<p class="section-lead" style="margin-bottom:8px"><strong>Applied AI judgment:</strong> take an ambiguous business problem involving AI, determine what should be built or changed, evaluate whether it works, understand the human, risk, and economic tradeoffs, and help the organization adopt the right solution successfully.</p>
-<p class="small" style="margin:0">Possible applications include AI Customer Success, AI implementation / solutions, AI operations, enablement and adoption, product or product ops, AI quality/evals, and domain-specific adoption such as legal AI.</p>
-</div>
+
+<section class="learning-overview learning-orientation" aria-label="Learning roadmap overview">
+  <div class="learning-orientation-row">
+    <span class="learning-orientation-label">Depth</span>
+    <p>Deep applied judgment; enough adjacent fluency to collaborate well, ask better questions, and know when specialist expertise is needed.</p>
+  </div>
+  <div class="learning-orientation-row">
+    <span class="learning-orientation-label">Path</span>
+    <p>AI foundations → software, data &amp; UX → quality &amp; evals → discovery &amp; workflows → implementation &amp; adoption → measurement &amp; business → product &amp; strategy → domain applications.</p>
+  </div>
+  <div class="learning-orientation-row">
+    <span class="learning-orientation-label">Lenses</span>
+    <p>UX &amp; accessibility · quality &amp; testing · security &amp; privacy · human factors · data &amp; knowledge quality · business value · communication · responsible AI &amp; governance.</p>
+  </div>
 </section>
-<div class="frame roadmap-maintenance" style="margin-top:18px">
-  <b>Site stewardship · later maintenance</b>
-  <p>This site is also a working artifact. Once the current architecture and content have had time to settle, consolidate the established visual language into a lightweight shared design system: spacing and type tokens, content widths, page/section headers, cards, bands/callouts, evidence and case summaries, tags/status pills, navigation/dropdowns, tables, links/buttons, dark mode, and responsive behavior. Then remove legacy and duplicate CSS overrides. This is maintenance of the learning environment—not an AI-learning milestone.</p>
-  <small>Meanwhile: fix obvious isolated UI bugs when they appear rather than waiting for the larger consolidation pass.</small>
+
+<section class="learning-stages" aria-label="Learning stages">
+<div class="section-kicker"><span>Curriculum &amp; resources</span></div>
+<h2>Eight stages, one working library.</h2>
+<p class="section-lead">Each stage stays compact until opened. <strong>Core</strong> items deserve focused learning; <strong>Reference</strong> items are useful context or just-in-time depth; <strong>Practice</strong> turns concepts into judgment. Resource links can evolve without changing the roadmap.</p>
+
+<details class="learning-stage" id="ai-foundations" open>
+<summary><span class="stage-num">01</span><span class="stage-main"><b>AI Systems &amp; Foundations</b><small>Understand how modern AI systems behave, what sits around the model, and where failures come from.</small><span class="topic-preview">LLM behavior · context · grounding/RAG · tools · agents · MCP · structured outputs · reliability</span></span></summary>
+<div class="stage-body">
+  <div class="stage-group"><h3>Core</h3>
+    <div class="learning-item"><b>How LLMs behave</b><p>Probabilistic generation, context dependence, hallucination, instruction following, uncertainty, and practical model limitations.</p></div>
+    <div class="learning-item"><b>Model vs. AI application</b><p>Separate model behavior from retrieval, instructions, tools, orchestration, data, permissions, and product logic.</p></div>
+    <div class="learning-item"><b>Retrieval &amp; grounding</b><p>RAG, source selection, freshness, metadata, conflicting sources, citations, and when simpler context injection is enough.</p></div>
+    <div class="learning-item"><b>Tool use &amp; structured outputs</b><p>Actions, schemas, validation, permissions, failures, recovery, and reliable handoffs between model output and software.</p></div>
+    <div class="learning-item"><b>Agentic systems</b><p>Autonomy levels, task decomposition, state/memory, stopping conditions, verification, delegation, error recovery, and when an agent is the wrong architecture.</p></div>
+  </div>
+  <div class="stage-group"><h3>Reference / deeper dive</h3>
+    <div class="learning-item compact"><b>MCP &amp; tool protocols</b><p>How models connect to tools and context through standardized interfaces; understand the architecture without treating one protocol as permanent.</p></div>
+    <div class="learning-item compact"><b>Orchestration &amp; production tradeoffs</b><p>Routing, fallbacks, caching, latency, reliability, model choice, cost/performance, and state across longer workflows.</p></div>
+  </div>
+  <div class="stage-group practice callout-practice"><h3>Practice</h3><p>Explain an AI application as a system rather than “the model”; diagnose whether a failure came from instructions, retrieval, tools, permissions, context, or generation; sketch an agent vs. deterministic-workflow decision.</p></div>
 </div>
-<div class="library-groups"><section class="library-group"><h3 class="library-group-title">Foundations</h3><div class="library-group-body"><div class="grid2"><div class="card"><span class="tag">Foundation</span><h3>How LLMs behave</h3><p>Build a practical mental model of tokens, next-token prediction, context, probabilities, variability, and hallucination. Understand why an LLM can produce a fluent answer without actually verifying that the answer is true.</p><ul><li>Model knowledge vs. information supplied at runtime</li><li>Why the same prompt can produce different outputs</li><li>Why confidence of tone is not confidence of fact</li><li>How these limits shape product design and customer expectations</li><li>Recognize hallucination, bias, and sycophancy as distinct failure patterns</li></ul><div class="practice"><b>Practice checkpoint</b><p>Explain to a customer why a fluent answer can still be wrong without describing the model as “random” or “just guessing.”</p></div></div><div class="card"><span class="tag">Foundation</span><h3>4D AI Fluency</h3><p>Use Anthropic's 4D framework as a practical model for strong human-AI collaboration: decide what to delegate, describe the task well, discern the quality of the result, and use diligence around responsibility and impact.</p><ul><li><strong>Delegation:</strong> choose what work AI should and should not do</li><li><strong>Description:</strong> provide context, instructions, examples, and success criteria</li><li><strong>Discernment:</strong> judge quality, limits, uncertainty, and evidence</li><li><strong>Diligence:</strong> protect privacy, disclose use appropriately, and retain human accountability</li></ul><div class="practice"><b>Practice checkpoint</b><p>Take one real work task and describe how each of the four Ds changes your approach from start to finish.</p></div></div><div class="card"><span class="tag">Foundation</span><h3>Prompting &amp; Delegation</h3><p>Treat prompting as task design rather than clever wording. Define the job, give useful context, set constraints, specify the output, and decide how the result will be checked.</p><ul><li>Task → Context → Constraints → Output → Verify</li><li>Break complex work into smaller steps when useful</li><li>Use examples when desired behavior is hard to describe</li><li>Iterate based on failure instead of endlessly rewriting prompts</li><li>Use the Description → Discernment loop: improve the instructions, inspect the output, revise based on evidence</li></ul><div class="practice"><b>Practice checkpoint</b><p>Take one vague request and improve the delegation, then explain which change should improve reliability and why.</p></div></div><div class="card"><span class="tag">Foundation</span><h3>Context &amp; Knowledge</h3><p>Understand where an AI answer is actually getting its information. Separate conversation context, uploaded files, persistent project knowledge, connectors, retrieval/RAG, and tool/API results.</p><ul><li>Ask what source should be authoritative</li><li>Know that stale or conflicting knowledge cannot be fixed by prompting</li><li>Understand context-window limits and what may be omitted</li><li>Connect source quality to output quality</li><li>Use Projects, uploaded knowledge, and connectors as hands-on examples of reusable context</li></ul><div class="practice"><b>Practice checkpoint</b><p>Given a wrong policy answer, identify at least four different information paths that could have produced it and what evidence would distinguish them.</p></div></div><div class="card"><span class="tag">Foundation</span><h3>Claude Product Fluency</h3><p>Practice choosing the Claude interface or capability that best matches the work while keeping the underlying lesson platform-neutral.</p><ul><li><strong>Projects:</strong> persistent instructions and reusable knowledge</li><li><strong>Artifacts:</strong> longer or reusable outputs that benefit from an editable workspace</li><li><strong>Research:</strong> multi-source investigation where evidence and synthesis matter</li><li><strong>Skills:</strong> reusable instructions or repeatable ways of working</li><li><strong>Connectors:</strong> bring organizational knowledge into the workflow with explicit permissions and source boundaries</li><li><strong>Cowork:</strong> delegate larger multi-step work that spans files, tools, and substantial deliverables</li></ul><div class="practice"><b>Practice checkpoint</b><p>For three different work tasks, choose chat, Project, Artifact, Research, a connector-supported workflow, or Cowork and explain the decision.</p></div></div><div class="card"><span class="tag">Foundation</span><h3>Model &amp; Product Selection</h3><p>Choose the simplest approach that can reliably do the job. Think in universal tradeoffs rather than memorizing product names.</p><ul><li>Capability / reasoning quality</li><li>Latency and user experience</li><li>Cost at expected volume</li><li>Context and knowledge requirements</li><li>Chat vs. reusable workspace vs. research vs. delegated multi-step work</li></ul><div class="practice"><b>Practice checkpoint</b><p>Compare a high-volume classification task with a complex strategy synthesis task and recommend a different model/workflow profile for each.</p></div></div><div class="card"><span class="tag">Foundation</span><h3>Output Evaluation &amp; Validation</h3><p>Learn to judge whether an answer is useful, grounded, complete, and safe—not merely well written. Separate factual claims, inference, opinion, and generated recommendations.</p><ul><li>Verify important claims against authoritative sources</li><li>Define what “good” means before evaluating</li><li>Look for unsupported assumptions and missing information</li><li>Use human review where the cost of error is high</li><li>Watch for sycophancy: agreement with the user is not evidence that the conclusion is sound</li></ul><div class="practice"><b>Practice checkpoint</b><p>Review one output for factuality, completeness, source grounding, usefulness, risk, and whether the model is simply mirroring the user's framing.</p></div></div><div class="card"><span class="tag">Foundation</span><h3>Responsible Use &amp; Governance</h3><p>Recognize where AI use creates privacy, security, bias, compliance, or decision-risk concerns. Know when to stop experimenting and involve the right specialist.</p><ul><li>Sensitive data and permissions</li><li>High-impact or irreversible decisions</li><li>Blast radius: what can the AI actually change, delete, send, or expose if it is wrong?</li><li>Bias and inappropriate automation</li><li>Organizational policy and auditability</li><li>Escalation to Security, Legal, Engineering, or domain experts</li><li>Human accountability even when AI contributes heavily to the work</li></ul><div class="practice"><b>Practice checkpoint</b><p>For a proposed HR or financial workflow, separate what AI may assist with from what requires policy, specialist review, or human ownership.</p></div></div><div class="card"><span class="tag">Foundation</span><h3>AI Diligence &amp; Disclosure</h3><p>Practice documenting how AI contributed to a deliverable, which sources were authoritative, what was independently checked, what limitations remain, and who owns the final judgment.</p><ul><li>What AI did</li><li>What data or sources it used</li><li>What a human verified or changed</li><li>What uncertainty remains</li><li>Who is accountable for the final output or decision</li></ul><div class="practice"><b>Practice checkpoint</b><p>Write a short diligence statement for one AI-assisted analysis or portfolio artifact without overstating either AI or human contribution.</p></div></div><div class="card"><span class="tag">Foundation</span><h3>Behavior-Based Fluency</h3><p>Track what you can reliably do, not just what you have read. Fluency should show up as repeatable judgment in unfamiliar situations.</p><ul><li>Notice when missing context is likely to matter</li><li>Choose an authoritative source instead of asking the model to guess</li><li>Revise the workflow when the same failure repeats</li><li>Know when to verify, escalate, or stop</li><li>Explain why an output should or should not be trusted</li></ul><div class="practice"><b>Practice checkpoint</b><p>For each major lesson, record one observable behavior that would prove you can apply it in a new scenario.</p></div></div></div><div class="section-kicker"><span>Delegated work · already in practice</span></div><div class="grid2"><div class="card"><span class="tag">Cowork · Done</span><h3>Delegated &amp; Agentic Work</h3><p>I’m already using Cowork for the kind of larger projects where I want AI to work across files and tools, create substantial deliverables, and handle multiple steps instead of just answering in chat.</p><ul><li><strong>Done:</strong> multi-step task delegation</li><li><strong>Done:</strong> file and folder work</li><li><strong>Done:</strong> connectors, browser/tool use, and Skills</li><li><strong>Done:</strong> parallel pieces of larger projects</li><li><strong>Done:</strong> reviewing and redirecting work when it drifts</li></ul><div class="practice"><b>Working rule</b><p>Chat for research, brainstorming, discussion, and contained work. Cowork for bigger projects that need execution across files, tools, and multiple deliverables.</p></div></div><div class="card"><span class="tag">Real failure experience</span><h3>Context Drift &amp; Stale Decisions</h3><p>I’ve already seen a long-running Cowork project drift outside the useful context: it started repeating older decisions and moving in a direction that no longer matched the current plan.</p><ul><li>Recognize when the working context is no longer trustworthy</li><li>Re-anchor the task to current decisions instead of letting stale assumptions compound</li><li>Review outputs during execution instead of only at the end</li><li>Treat context management as an operating concern, not just a model limitation</li></ul><div class="practice"><b>Evidence</b><p>This learning guide itself is the case: messy goal → delegated execution → review → correction → revised instructions → better output.</p></div></div><div class="card"><span class="tag">Permissions · Done</span><h3>Blast Radius &amp; Consequential Actions</h3><p>I’ve also had to think about permissions when Cowork could take consequential actions on my computer, including deleting files. That makes “what can the agent actually change?” a practical question, not an abstract safety concept.</p><ul><li>Use the minimum permissions the task actually needs</li><li>Pause before destructive or hard-to-reverse actions</li><li>Separate drafting/recommendation from execution when the risk is higher</li><li>Think about recovery if the action is wrong</li></ul><div class="practice"><b>4D connection</b><p>Delegation decides the scope; Description sets the task; Discernment catches drift; Diligence controls permissions and responsibility.</p></div></div><div class="card"><span class="tag">Portfolio evidence</span><h3>The Learning Guide as an Agentic Case Study</h3><p>This project is already evidence of how I work with a more agentic system: I started with an evolving goal, let Cowork handle substantial execution, inspected the results, caught stale context and wrong turns, and kept refining the direction.</p><ul><li>Goal definition changed as the project got clearer</li><li>AI handled files, tools, and multiple deliverables</li><li>I retained judgment over what stayed, changed, or got removed</li><li>The result improved through repeated human-AI iteration</li></ul><div class="practice"><b>Status</b><p>Done as real-world practice; the remaining work is naming the patterns clearly and explaining them well in an interview.</p></div></div></div><div class="section-kicker"><span>Foundation capstone</span></div><div class="grid2"><div class="decision"><strong>Claude Work Practice</strong><p>Use the work I’m already doing across research, synthesis, drafting, planning, analysis, and Cowork execution. For each meaningful example, note the source of truth, constraints, verification approach, and which of the 4Ds mattered most.</p><small>Done in practice · keep documenting</small></div><div class="decision"><strong>Product Fluency Lab</strong><p>Use Projects, Artifacts, Research, Skills, connectors, and Cowork in real workflows. Focus on what problem each capability solves and what changes about context, permissions, validation, autonomy, and reuse.</p><small>Done in practice · continue broadening</small></div><div class="decision"><strong>Explain It Back</strong><p>Practice describing context, grounding, hallucination, bias, sycophancy, model selection, delegated work, and responsible-use boundaries in plain language suitable for a customer meeting.</p><small>Goal · customer-ready fluency</small></div><div class="decision"><strong>AI Diligence Note</strong><p>Attach a short record to one completed exercise showing what AI contributed, which sources mattered, what you checked, what changed, and who retained responsibility.</p><small>Goal · responsible professional practice</small></div></div><div class="checkpoint"><div><strong>Foundation readiness</strong><p>I can delegate work thoughtfully, choose between chat and more agentic execution, describe the task and context clearly, catch drift and stale assumptions, act with diligence around permissions, and explain important limitations without overclaiming.</p></div><span class="status progress">In progress</span></div></div></section><section class="library-group"><h3 class="library-group-title">AI Systems · Architect Lite</h3><div class="library-group-body"><div class="grid3"><div class="card"><span class="tag">Technical fluency</span><h3>Model vs. AI Application</h3><p>The model is only one layer. A production AI experience may also include system instructions, retrieved context, deterministic business logic, tools, permissions, routing, UI, and human review.</p><ul><li>Do not blame “the model” before identifying the failed layer</li><li>Trace where information and decisions entered the workflow</li></ul><div class="practice"><b>Practice checkpoint</b><p>Draw a simple system around one AI feature and label which behavior comes from the model versus application logic.</p></div></div><div class="card"><span class="tag">Technical fluency</span><h3>Retrieval &amp; Grounding</h3><p>Understand retrieval/RAG as one important way systems ground answers in current, private, or domain-specific knowledge—not as the whole architecture.</p><ul><li>Retrieval quality vs. generation quality</li><li>Freshness, metadata, chunking, filters, conflicts</li><li>Correct context retrieved but ignored</li><li>Know when a simpler connector or direct context path is enough</li></ul><div class="practice"><b>Practice checkpoint</b><p>Diagnose three failures: wrong document retrieved, correct document retrieved but answer wrong, and authoritative knowledge itself stale.</p></div></div><div class="card"><span class="tag">Technical fluency</span><h3>Agentic Architecture</h3><p>Distinguish a single model call, a fixed multi-step workflow, a tool-using agent, and coordinated agent systems. Understand why more autonomy also creates more failure modes.</p><ul><li>When does this actually need an agent?</li><li>What should remain deterministic?</li><li>Where should humans approve or intervene?</li><li>What is the blast radius if the agent is wrong?</li></ul><div class="practice"><b>Practice checkpoint</b><p>Take one use case and argue for the least-agentic architecture that can still meet the business requirement.</p></div></div><div class="card"><span class="tag">Technical fluency</span><h3>Tool Use</h3><p>Tools let the AI retrieve live data or take actions in external systems. Understand the full loop: model decision → tool request → external system → result → next model step.</p><ul><li>Wrong tool or wrong parameters</li><li>Permission and authentication failures</li><li>Timeouts, partial failures, ambiguous success</li><li>Higher guardrails for irreversible actions</li><li>Minimum permissions and recovery paths for consequential actions</li></ul><div class="practice"><b>Practice checkpoint</b><p>Trace what should happen when a refund tool times out after an uncertain execution state and explain why blind retry may be unsafe.</p></div></div><div class="card"><span class="tag">Technical fluency</span><h3>MCP Concepts</h3><p>Learn MCP as a standardized way for AI systems to discover and use external tools and data sources. Focus on where it sits in the architecture and how failures surface—not how to build a server.</p><ul><li>Client, server, tool/data source relationship</li><li>Permissions and trust boundaries</li><li>How MCP fits into troubleshooting</li></ul><div class="practice"><b>Practice checkpoint</b><p>Explain MCP to a nontechnical customer in one minute, then to an engineer in one minute, emphasizing different details.</p></div></div><div class="card"><span class="tag">Technical fluency</span><h3>Context Management</h3><p>Production systems have to decide what information belongs in the model's limited working context and what can be summarized, retrieved later, or omitted.</p><ul><li>Long conversations and state</li><li>Passing context between workflow steps</li><li>Summarization loss and stale context</li><li>Cost/latency tradeoffs of large context</li><li>Recognize context drift from real delegated-work experience</li></ul><div class="practice"><b>Practice checkpoint</b><p>Design what context should survive a long customer conversation and what should be retrieved fresh rather than carried forever.</p></div></div><div class="card"><span class="tag">Technical fluency</span><h3>Structured Outputs</h3><p>Use free-form text when humans are the consumer; use structured fields when software must reliably consume the result.</p><ul><li>Classification fields and schemas</li><li>JSON / structured records</li><li>Validation before downstream action</li></ul><div class="practice"><b>Practice checkpoint</b><p>Convert one prose AI result into a schema that another system could safely validate before acting on it.</p></div></div><div class="card"><span class="tag">Technical fluency</span><h3>Reliability Patterns</h3><p>Production AI should not rely on “hopefully the model behaves.” Learn the controls wrapped around probabilistic behavior.</p><ul><li>Validators, retries, and fallbacks</li><li>Risk- or evidence-based routing thresholds</li><li>Do not treat a model's self-reported confidence as a calibrated probability</li><li>Source/provenance checks</li><li>Human-in-the-loop approval</li><li>Regression testing after changes</li></ul><div class="practice"><b>Practice checkpoint</b><p>Wrap a risky model decision in at least three reliability controls and explain which failure each control addresses.</p></div></div><div class="card"><span class="tag">Technical fluency</span><h3>Traces &amp; Observability</h3><p>Use traces to reconstruct what actually happened across model calls, retrieval, tools, routing, and handoffs instead of diagnosing from the final answer alone.</p><ul><li>Input → context → model → tool → output</li><li>Latency and error signals</li><li>Root-cause evidence for Engineering</li></ul><div class="practice"><b>Practice checkpoint</b><p>Read a simulated trace and produce a concise engineering escalation: symptom, likely layer, evidence, business impact, and reproduction case.</p></div></div></div><div class="band"><h3>Architecture decision ladder</h3><div class="pillrow"><span class="pill">1 · Deterministic rule</span><span class="pill">2 · Single model call</span><span class="pill">3 · Retrieval + model</span><span class="pill">4 · Fixed workflow</span><span class="pill">5 · Tool-using agent</span><span class="pill">6 · Multi-agent only if justified</span></div><p class="section-lead" style="margin:16px 0 0">Move up the ladder only when the simpler option cannot meet the requirement. At every step ask what new failure modes, permissions, blast radius, latency, cost, and observability needs are being introduced.</p></div><div class="section-kicker"><span>Architect Lite capstone</span></div><div class="grid2"><div class="decision"><strong>System Map</strong><p>Map one production AI workflow from input through context/retrieval, model calls, tools, business logic, human review, permissions, and observability.</p><small>Deliverable · applied architecture</small></div><div class="decision"><strong>Trace Autopsy</strong><p>Investigate a simulated production failure and identify whether the primary issue is input, retrieval, model behavior, tool execution, routing, permissions, context drift, or handoff.</p><small>Deliverable · evidence-based troubleshooting</small></div></div><div class="checkpoint"><div><strong>Technical-fluency readiness</strong><p>I can follow an AI architecture discussion, ask useful questions about autonomy and blast radius, reason about tradeoffs, and bring Engineering evidence without pretending I should implement the stack myself.</p></div><span class="status progress">Learning</span></div><div class="band"><h3>Depth boundary</h3><p class="section-lead" style="margin-bottom:0"><strong>Learn well enough to explain and troubleshoot:</strong> retrieval/grounding, agents, tools, MCP, context, structured outputs, reliability, traces, permissions. <strong>Optional later:</strong> SDK implementation, MCP server coding, Claude Code configuration, CI/CD, infrastructure, model-training internals, and multi-agent framework implementation.</p></div></div></section></div>
+</details>
+
+<details class="learning-stage" id="software-data-ux">
+<summary><span class="stage-num">02</span><span class="stage-main"><b>Software, Data &amp; UX Foundations</b><small>Refresh the durable software concepts AI depends on and deepen the human-interface layer.</small><span class="topic-preview">architecture · APIs · SQL/data · QA/QE · observability · UI/UX · accessibility · service design · security</span></span></summary>
+<div class="stage-body">
+  <div class="stage-group"><h3>Core</h3>
+    <div class="learning-item"><b>Software architecture mental models</b><p>Frontend/backend, services, databases, queues/jobs, environments, configuration, integrations, failure boundaries, and how requests move through a system.</p></div>
+    <div class="learning-item"><b>APIs &amp; integrations</b><p>REST concepts, JSON, auth, headers/status codes, pagination, rate limits, webhooks, API documentation, and practical inspection with tools such as Postman.</p></div>
+    <div class="learning-item"><b>Data &amp; SQL refresh</b><p>Tables, keys, joins, schemas, validation, event data, analytics instrumentation, lineage, structured/unstructured data, and data-quality failure modes.</p></div>
+    <div class="learning-item"><b>Modern software quality / QE</b><p>Risk-based testing, unit/integration/end-to-end strategy, regression automation, exploratory testing, acceptance criteria, testability, CI concepts, and the bridge from QA thinking to AI evals.</p></div>
+    <div class="learning-item"><b>UI/UX &amp; AI interaction design</b><p>Information architecture, user flows, usability, cognitive load, error/recovery states, progressive disclosure, onboarding, review interfaces, uncertainty, editable output, confirmations, undo, and calibrated trust.</p></div>
+  </div>
+  <div class="stage-group"><h3>Reference / deeper dive</h3>
+    <div class="learning-item compact"><b>Observability &amp; production systems</b><p>Logs, metrics, traces, monitoring, feature flags, releases, rollbacks, incidents, and understanding what the system actually did.</p></div>
+    <div class="learning-item compact"><b>Accessibility &amp; service design</b><p>WCAG/HCI fundamentals plus journeys, service blueprints, frontstage/backstage operations, handoffs, failure points, and recovery.</p></div>
+    <div class="learning-item compact"><b>Security, privacy &amp; enterprise identity</b><p>Authentication vs. authorization, RBAC/least privilege, secrets, PII, retention, auditability, SSO/tenancy, and identity-aware access.</p></div>
+  </div>
+  <div class="stage-group practice callout-practice"><h3>Practice</h3><p>Inspect an API response; write a small SQL query; critique an AI approval screen; diagnose a fictional production failure from logs/traces; map a service blueprint.</p></div>
+</div>
+</details>
+
+<details class="learning-stage" id="quality-evals">
+<summary><span class="stage-num">03</span><span class="stage-main"><b>Quality, Evals &amp; Responsible AI</b><small>Define good behavior, find meaningful failures, and decide what is safe enough to ship and operate.</small><span class="topic-preview">eval design · failure taxonomy · regression · traces · HITL · monitoring · AI security · governance</span></span></summary>
+<div class="stage-body">
+  <div class="stage-group"><h3>Core</h3>
+    <div class="learning-item"><b>Eval design</b><p>Success criteria, test-set construction, representative and adversarial cases, graders, human evaluation, thresholds, and separating model quality from workflow outcomes.</p></div>
+    <div class="learning-item"><b>Failure analysis &amp; regression</b><p>Taxonomies, severity, reproducibility, edge cases, trace review, regression suites, and checking whether an improvement creates new failures elsewhere.</p></div>
+    <div class="learning-item"><b>Human review &amp; guardrails</b><p>HITL placement, confidence/abstention, escalation, prohibited actions, permissions, verification, and designing review around consequence rather than blanket oversight.</p></div>
+    <div class="learning-item"><b>Production quality</b><p>Monitoring, drift/input shifts, versioning prompts/models/knowledge, feedback signals, incidents, fallback/rollback, and continuous evaluation after launch.</p></div>
+  </div>
+  <div class="stage-group"><h3>Reference / deeper dive</h3>
+    <div class="learning-item compact"><b>AI security</b><p>Prompt injection, indirect injection, data exfiltration, insecure tool use, excessive agency, poisoned retrieval sources, adversarial inputs, and defense in depth.</p></div>
+    <div class="learning-item compact"><b>Responsible AI &amp; governance</b><p>Privacy, bias/fairness, risk classification, impact assessments, documentation, auditability, accountability, vendor governance, and when specialist/legal review is required.</p></div>
+  </div>
+  <div class="stage-group practice callout-practice"><h3>Practice</h3><p>Build eval cases, review traces, classify failures, set a human-review threshold, run a regression comparison, and write a short ship / do-not-ship recommendation.</p></div>
+</div>
+</details>
+
+<details class="learning-stage" id="discovery-workflows">
+<summary><span class="stage-num">04</span><span class="stage-main"><b>Discovery, Workflows &amp; Knowledge</b><small>Diagnose the real problem before choosing the technology.</small><span class="topic-preview">discovery · workflow mapping · bottlenecks · service design · knowledge lifecycle · AI vs rules vs humans</span></span></summary>
+<div class="stage-body">
+  <div class="stage-group"><h3>Core</h3>
+    <div class="learning-item"><b>Problem &amp; user discovery</b><p>Stakeholder interviews, observation, assumptions, jobs/needs, constraints, current-state evidence, and separating requested solutions from underlying problems.</p></div>
+    <div class="learning-item"><b>Workflow decomposition</b><p>Map actors, systems, handoffs, bottlenecks, exceptions, failure recovery, frontstage/backstage work, and operational consequences.</p></div>
+    <div class="learning-item"><b>Intervention choice</b><p>Compare AI, deterministic rules, conventional automation, process change, better information, and human judgment instead of defaulting to “use more AI.”</p></div>
+    <div class="learning-item"><b>Knowledge systems</b><p>Ownership, lifecycle, taxonomy, freshness, source authority, conflicts, permissions, feedback signals, and maintaining trustworthy organizational knowledge.</p></div>
+  </div>
+  <div class="stage-group practice callout-practice"><h3>Practice</h3><p>Turn an ambiguous request into discovery questions; map the workflow; identify the actual constraint; recommend where AI should and should not participate; document unresolved assumptions.</p></div>
+</div>
+</details>
+
+<details class="learning-stage" id="implementation-adoption">
+<summary><span class="stage-num">05</span><span class="stage-main"><b>Implementation, UX &amp; Adoption</b><small>Make a technically viable system useful, trustworthy, and sustainable for the people doing the work.</small><span class="topic-preview">rollout · onboarding · trust · review UX · feedback · change · incentives · appropriate non-use</span></span></summary>
+<div class="stage-body">
+  <div class="stage-group"><h3>Core</h3>
+    <div class="learning-item"><b>Implementation planning</b><p>Pilots, rollout sequencing, dependencies, readiness, enablement, support, ownership, stakeholder alignment, and operational handoffs.</p></div>
+    <div class="learning-item"><b>Adoption &amp; change</b><p>Workflow fit, incentives, champions, resistance, training, appropriate non-use, repeat use, qualitative friction, and distinguishing usage from realized value.</p></div>
+    <div class="learning-item"><b>Trust &amp; human factors</b><p>Automation bias, anchoring, confirmation bias, cognitive load, alert fatigue, user mental models, deskilling, accountability, and calibrated trust.</p></div>
+    <div class="learning-item"><b>Review &amp; feedback UX</b><p>What reviewers need to verify efficiently, how uncertainty and sources are presented, corrections/feedback loops, escalation, and recovery from bad output.</p></div>
+  </div>
+  <div class="stage-group practice callout-practice"><h3>Practice</h3><p>Design a pilot and adoption plan; critique a review workflow; identify likely resistance/incentives; define meaningful adoption signals; redesign an interface that encourages automation bias.</p></div>
+</div>
+</details>
+
+<details class="learning-stage" id="measurement-business">
+<summary><span class="stage-num">06</span><span class="stage-main"><b>Measurement, Business &amp; Operations</b><small>Connect system performance to operational outcomes and determine whether the intervention is worth it.</small><span class="topic-preview">baselines · instrumentation · experiments · metrics · SaaS/process economics · ROI · capacity · cost</span></span></summary>
+<div class="stage-body">
+  <div class="stage-group"><h3>Core</h3>
+    <div class="learning-item"><b>Measurement design</b><p>Baselines, metric definitions, leading/lagging indicators, instrumentation, segmentation, funnels/cohorts where useful, and avoiding vanity metrics.</p></div>
+    <div class="learning-item"><b>Experimentation &amp; causal thinking</b><p>Controls, confounders, selection bias, correlation vs. causation, practical vs. statistical significance, and why post-launch improvement does not prove causation.</p></div>
+    <div class="learning-item"><b>Business &amp; process economics</b><p>Revenue, gross/contribution margin intuition, fixed vs. variable cost, cost-to-serve, capacity, AI/inference and review labor, error cost, opportunity cost, ROI and payback.</p></div>
+    <div class="learning-item"><b>Value realization</b><p>Translate technical and workflow improvements into outcomes leaders care about; decide whether to expand, revise, pause, or stop.</p></div>
+  </div>
+  <div class="stage-group practice callout-practice"><h3>Practice</h3><p>Build a baseline and measurement plan; critique a causal claim; calculate a simple business case; identify missing instrumentation; write an expand / revise / stop recommendation.</p></div>
+</div>
+</details>
+
+<details class="learning-stage" id="product-strategy">
+<summary><span class="stage-num">07</span><span class="stage-main"><b>Product, Strategy &amp; Leadership</b><small>Make increasingly consequential choices across products, vendors, teams, and organizational constraints.</small><span class="topic-preview">prioritization · product judgment · build/buy/partner · vendors · procurement · strategy · executive communication</span></span></summary>
+<div class="stage-body">
+  <div class="stage-group"><h3>Core</h3>
+    <div class="learning-item"><b>Product judgment &amp; prioritization</b><p>Opportunity sizing, tradeoffs, sequencing, roadmaps as hypotheses, evidence quality, constraints, and choosing what not to build.</p></div>
+    <div class="learning-item"><b>Vendor evaluation &amp; enterprise procurement</b><p>Requirements, proof-of-concept design, bakeoffs, security/privacy review, SLAs, pricing, lock-in/portability, implementation burden, support, and build/buy/partner.</p></div>
+    <div class="learning-item"><b>Strategy &amp; organizational judgment</b><p>Competitive context, durable advantage, organizational readiness, operating-model implications, incentives, uncertainty, and where AI changes—or does not change—the business.</p></div>
+    <div class="learning-item"><b>Communication &amp; influence</b><p>Decision memos, structured writing, executive synthesis, data storytelling, recommendations under uncertainty, facilitation, stakeholder conversations, and influence without authority.</p></div>
+  </div>
+  <div class="stage-group practice callout-practice"><h3>Practice</h3><p>Compare vendors against requirements; write a build/buy recommendation; prioritize competing AI opportunities; turn technical evidence into an executive decision memo.</p></div>
+</div>
+</details>
+
+<details class="learning-stage" id="domain-applications">
+<summary><span class="stage-num">08</span><span class="stage-main"><b>Domain Applications</b><small>Apply the general toolkit where domain knowledge materially changes risk, workflow, economics, or adoption.</small><span class="topic-preview">Legal AI first · domain workflows · professional responsibility · economics · knowledge · governance · adoption</span></span></summary>
+<div class="stage-body">
+  <div class="stage-group"><h3>First planned specialization · Legal AI</h3>
+    <div class="learning-item"><b>Refresh the domain selectively</b><p>Legal workflows, law-firm/client-service economics, professional responsibility, confidentiality, privilege, supervision, and the areas where legal judgment changes implementation decisions.</p></div>
+    <div class="learning-item"><b>Legal knowledge &amp; AI systems</b><p>Authority, citations, retrieval quality, document workflows, permissions, knowledge management, auditability, vendor constraints, and high-consequence review.</p></div>
+    <div class="learning-item"><b>Adoption in professional services</b><p>Trust, partner/associate/client incentives, training, workflow integration, governance, procurement, value measurement, and appropriate boundaries for AI assistance.</p></div>
+  </div>
+  <div class="stage-group practice callout-practice"><h3>Practice</h3><p>Use a focused legal-AI adoption scenario to combine general AI implementation judgment with refreshed domain knowledge—without presenting the exercise as current legal practice expertise.</p></div>
+</div>
+</details>
 </section>
-<section class="view" data-page="cs"><div class="eyebrow">Applied AI delivery</div><h2 class="section-title">From “we want AI” to measurable business value</h2><p class="section-lead">Applied AI work sits between business goals, user workflows, product capability, technical reality, and measurable outcomes. The work is not just using a model or teaching features: it is choosing the right use case, fitting AI into a real workflow, building trust and appropriate adoption, troubleshooting what breaks, and showing whether it is actually creating value.</p><div class="cs-flow"><div class="node"><div class="n">01</div><strong>Discover</strong><p>Problem, workflow, outcome, risk, knowledge, human role, economics.</p></div><div class="node"><div class="n">02</div><strong>Evaluate</strong><p>Evals, expected behavior, edge cases, failure layers, launch readiness.</p></div><div class="node"><div class="n">03</div><strong>Enable</strong><p>Training, trust, safe use, adoption, workflow behavior, resistance.</p></div><div class="node"><div class="n">04</div><strong>Operate</strong><p>Health, incidents, escalation, internal coordination, improvement.</p></div><div class="node"><div class="n">05</div><strong>Measure</strong><p>Quality, adoption, intervention, business outcomes, cost, ROI.</p></div></div><div class="grid2"><div class="card"><span class="tag">01 · Discover</span><h3>Discovery &amp; Use-Case Qualification</h3><p>Start with the problem, not the AI feature the customer thinks they need. If someone asks for “an agent,” I still want to understand whether the real issue is slow work, inconsistent decisions, poor knowledge access, manual data entry, or something else.</p><ul><li><strong>Problem:</strong> What is painful today?</li><li><strong>Outcome:</strong> What measurable change would matter?</li><li><strong>Workflow:</strong> Who owns the process and what happens before/after?</li><li><strong>Risk:</strong> What is the cost of a wrong answer or action?</li><li><strong>Knowledge:</strong> What data is required, where is it, and who owns it?</li><li><strong>Human role:</strong> Assist, recommend, automate, or require approval?</li><li><strong>Economics:</strong> Volume, latency, quality, and cost constraints?</li></ul><div class="practice"><b>Practice output</b><p>Run a 30-minute discovery simulation and produce a one-page use-case brief with problem, stakeholders, workflow, data, risks, success metrics, and recommendation.</p></div></div><div class="card"><span class="tag">02 · Evaluate</span><h3>Define “Good” Before Launch</h3><p>I want to define what “good” looks like before rollout instead of waiting for users to tell us something feels off. Vague goals like “helpful” or “accurate” need to become behavior we can test consistently.</p><ul><li>Core cases, edge cases, ambiguous inputs, tool failures, safety cases</li><li>Expected behavior specific enough two reviewers would agree</li><li>Pass/fail thresholds and severity</li><li>Correct source/tool use—not only a plausible final answer</li><li>Regression checks when prompts, models, knowledge, or tools change</li></ul><div class="practice"><b>Practice output</b><p>Build a compact eval plan with test categories, pass criteria, severity, expected source/tool behavior, and launch-blocking thresholds.</p></div></div><div class="card"><span class="tag">02 · Troubleshoot</span><h3>Find Which Layer Failed</h3><p>A bad AI answer does not automatically mean the model is the problem. I want to figure out which part of the system actually failed before jumping to a fix.</p><ul><li>Input quality or ambiguity</li><li>Retrieval/context failure</li><li>Instructions/model behavior</li><li>Tool/API failure</li><li>Business logic or routing</li><li>Permissions or identity</li><li>Human handoff / UI integration</li></ul><div class="practice"><b>Practice output</b><p>Write an escalation with customer symptom, business impact, reproduction steps, trace evidence, likely failure layer, and the specific question for Engineering.</p></div></div><div class="card"><span class="tag">03 · Enable</span><h3>Trust, Training &amp; Adoption</h3><p>Even a technically good workflow can fail if people do not trust it, understand it, or see how it fits into their real work. Good enablement has to cover both what the AI can do and where its limits are.</p><ul><li>What AI is for—and what it is not for</li><li>How users verify, correct, and escalate</li><li>Safe-use guidance for risky categories</li><li>Workflow-specific training rather than generic prompt tips</li><li>Adoption, friction, and confidence feedback after rollout</li></ul><div class="practice"><b>Practice output</b><p>Create a launch kit: training agenda, quick-start guide, safe-use guide, and a short confidence/friction survey.</p></div></div><div class="card"><span class="tag">03 · Change</span><h3>Change Management &amp; Resistance</h3><p>If adoption is low, I do not want to assume people just need more training. The problem could be trust, extra review work, weak workflow fit, lack of manager reinforcement, or real product friction.</p><ul><li>Identify champions, skeptics, and workflow owners</li><li>Separate trust problems from usability and value problems</li><li>Use pilot feedback to change the workflow—not only the training</li><li>Set explicit norms for when to rely, verify, correct, or escalate</li><li>Watch for shadow workflows that bypass the intended process</li></ul><div class="practice"><b>Practice output</b><p>Create a resistance diagnosis for a pilot with low adoption: evidence to collect, likely root causes, intervention by segment, and the signal that would show the intervention worked.</p></div></div><div class="card"><span class="tag">04 · Operate</span><h3>Run the Customer Relationship</h3><p>Once a workflow is live, I want to look at the whole picture: system signals, human feedback, and business context. Healthy usage should mean the workflow is actually helping, not just that people logged in.</p><ul><li>Usage and adoption patterns</li><li>Quality and human-intervention trends</li><li>Incidents and recurring failure themes</li><li>Knowledge freshness and configuration drift</li><li>Stakeholder confidence and workflow friction</li></ul><div class="practice"><b>Practice output</b><p>Review a simulated 90-day account dataset and produce health, risks, priorities, stakeholder actions, and an operating cadence.</p></div></div><div class="card"><span class="tag">05 · Measure</span><h3>Prove Business Value</h3><p>For me, usage alone is not enough. I want to know whether the AI is working well, how much human correction it still needs, and whether that ultimately changes a business outcome.</p><ul><li><strong>Adoption:</strong> who is using it and where?</li><li><strong>Quality:</strong> does it behave correctly?</li><li><strong>Human intervention:</strong> how much correction or escalation is required?</li><li><strong>Outcome:</strong> did speed, quality, revenue, cost, or experience improve?</li><li><strong>Economics:</strong> is the value worth the model/tool/operating cost?</li></ul><div class="practice"><b>Practice output</b><p>Build a success review that distinguishes leading indicators from business outcomes and makes a clear scale, change, or stop recommendation.</p></div></div><div class="card"><span class="tag">05 · Economics</span><h3>Cost &amp; ROI Modeling</h3><p>I want to be able to connect technical choices to costs a customer actually cares about, including the human work that remains around the AI—not just the model bill.</p><ul><li>Baseline labor cost and current throughput</li><li>Model, tool, retrieval, and platform cost at expected volume</li><li>Human review, correction, and exception-handling cost</li><li>Time/capacity benefit and avoided cost</li><li>Break-even volume and sensitivity to quality or review rate</li><li>ROI = value created or cost avoided relative to total operating cost</li></ul><div class="practice"><b>Practice output</b><p>Model a simple pilot with baseline labor cost, AI cost per transaction, review time, adoption, and error/rework. Show the break-even point and which assumption matters most.</p></div></div><div class="card"><span class="tag">Decision support</span><h3>Competitive &amp; Product Fit Conversations</h3><p>I want to be able to help customers compare AI products without turning into a brand cheerleader. The recommendation should come back to their use case, constraints, evidence, and operating environment.</p><ul><li>Capability and task fit</li><li>Reliability, controllability, and evaluation evidence</li><li>Security, governance, privacy, and deployment requirements</li><li>Integrations, ecosystem, workflow fit, and switching burden</li><li>Latency, usability, support model, and total cost</li><li>Run a proof against customer-defined success criteria when claims are close</li></ul><div class="practice"><b>Practice output</b><p>Respond to “Why should we use Claude instead of another AI product?” with a discovery-led comparison that avoids unsupported competitor claims and recommends a fair evaluation process.</p></div></div></div><div class="section-kicker"><span>Consultative toolkit</span></div><div class="grid3"><div class="decision"><strong>Discovery question bank</strong><p>Problem, outcome, workflow, risk, knowledge/data, human role, stakeholders, scale, economics, and governance.</p><small>Use before solution design</small></div><div class="decision"><strong>Escalation template</strong><p>Symptom → impact → reproduction → evidence → likely layer → owner → exact decision/question needed.</p><small>Make handoffs useful</small></div><div class="decision"><strong>Success hierarchy</strong><p>Adoption → quality → intervention → business outcome → economics. Never let one healthy layer hide a failing one.</p><small>Measure the whole system</small></div><div class="decision"><strong>AI readiness &amp; value assessment</strong><p>Map the current workflow and baseline, define the value hypothesis, then score problem clarity, process stability, knowledge/data readiness, risk, human ownership, technical integration, measurement, and organizational readiness. Finish with Not Ready, Pilot Candidate, or Strong Candidate plus the blockers and evidence needed before scaling.</p><small>Artifact · qualify before implementation</small></div><div class="decision"><strong>Change diagnosis</strong><p>Low usage → inspect trust, workflow fit, review burden, training, manager reinforcement, and product friction before prescribing more enablement.</p><small>Adoption is a system signal</small></div><div class="decision"><strong>Product comparison lens</strong><p>Use case → evidence → capability → governance → integration → UX/latency → total cost → proof plan.</p><small>Compare against customer criteria</small></div></div><div class="section-kicker"><span>Quick reference</span></div><div class="grid3"><div class="decision"><strong>4D AI Fluency</strong><p>Delegate → Describe → Discern → Diligence.</p><small>Human-AI collaboration</small></div><div class="decision"><strong>Architecture ladder</strong><p>Rule → model call → retrieval → workflow → tool-using agent → multi-agent only when justified.</p><small>Complexity must earn its way in</small></div><div class="decision"><strong>Failure layers</strong><p>Input → retrieval/context → instructions/model → tool/API → business logic → permissions → handoff/UI.</p><small>Find the layer before the fix</small></div><div class="decision"><strong>Success hierarchy</strong><p>Adoption → quality → intervention → business outcome → economics.</p><small>Measure the whole system</small></div><div class="decision"><strong>Escalation</strong><p>Symptom → impact → reproduce → evidence → likely layer → owner → decision needed.</p><small>Triage, then hand off well</small></div><div class="decision"><strong>Output choice</strong><p>Inline answer → reusable artifact → structured data → source + approval for high risk.</p><small>Match the output to the work</small></div></div><div class="band"><h3>Match the output to the work</h3><div class="pillrow"><span class="pill">Quick answer → inline</span><span class="pill">Reusable deliverable → document/artifact</span><span class="pill">Workflow input → structured data</span><span class="pill">High risk → source + human approval</span></div></div><div class="checkpoint"><div><strong>Applied AI readiness</strong><p>I can qualify an AI use case, assess readiness, translate it into measurable success criteria, understand the system well enough to troubleshoot with technical teams, manage adoption and resistance, discuss product fit credibly, and connect performance to ROI.</p></div><span class="status progress">In progress</span></div></section>
+
+<section class="learning-footer-note">
+  <strong>Resources stay curated.</strong>
+  <span><b>Core</b> = worth completing · <b>Reference</b> = know where to find it · <b>Deeper dive</b> = optional when the work or interest demands it.</span>
+  <span>Not every exercise becomes public work. Projects follow learning; capabilities appear only after completed work demonstrates them.</span>
+</section>
+</section>
+<section class="view" data-page="cs"><div class="eyebrow">Applied AI delivery</div><h2 class="section-title">From “we want AI” to measurable business value</h2><p class="section-lead">Applied AI work sits between business goals, user workflows, product capability, technical reality, and measurable outcomes. The work is not just using a model or teaching features: it is choosing the right use case, fitting AI into a real workflow, building trust and appropriate adoption, troubleshooting what breaks, and showing whether it is actually creating value.</p><div class="cs-flow"><div class="node"><div class="n">01</div><strong>Discover</strong><p>Problem, workflow, outcome, risk, knowledge, human role, economics.</p></div><div class="node"><div class="n">02</div><strong>Evaluate</strong><p>Evals, expected behavior, edge cases, failure layers, launch readiness.</p></div><div class="node"><div class="n">03</div><strong>Enable</strong><p>Training, trust, safe use, adoption, workflow behavior, resistance.</p></div><div class="node"><div class="n">04</div><strong>Operate</strong><p>Health, incidents, escalation, internal coordination, improvement.</p></div><div class="node"><div class="n">05</div><strong>Measure</strong><p>Quality, adoption, intervention, business outcomes, cost, ROI.</p></div></div><div class="grid2"><div class="card"><span class="tag">01 · Discover</span><h3>Discovery &amp; Use-Case Qualification</h3><p>Start with the problem, not the AI feature the customer thinks they need. If someone asks for “an agent,” I still want to understand whether the real issue is slow work, inconsistent decisions, poor knowledge access, manual data entry, or something else.</p><ul><li><strong>Problem:</strong> What is painful today?</li><li><strong>Outcome:</strong> What measurable change would matter?</li><li><strong>Workflow:</strong> Who owns the process and what happens before/after?</li><li><strong>Risk:</strong> What is the cost of a wrong answer or action?</li><li><strong>Knowledge:</strong> What data is required, where is it, and who owns it?</li><li><strong>Human role:</strong> Assist, recommend, automate, or require approval?</li><li><strong>Economics:</strong> Volume, latency, quality, and cost constraints?</li></ul><div class="practice"><b>Practice output</b><p>Run a 30-minute discovery simulation and produce a one-page use-case brief with problem, stakeholders, workflow, data, risks, success metrics, and recommendation.</p></div></div><div class="card"><span class="tag">02 · Evaluate</span><h3>Define “Good” Before Launch</h3><p>I want to define what “good” looks like before rollout instead of waiting for users to tell us something feels off. Vague goals like “helpful” or “accurate” need to become behavior we can test consistently.</p><ul><li>Core cases, edge cases, ambiguous inputs, tool failures, safety cases</li><li>Expected behavior specific enough two reviewers would agree</li><li>Pass/fail thresholds and severity</li><li>Correct source/tool use—not only a plausible final answer</li><li>Regression checks when prompts, models, knowledge, or tools change</li></ul><div class="practice"><b>Practice output</b><p>Build a compact eval plan with test categories, pass criteria, severity, expected source/tool behavior, and launch-blocking thresholds.</p></div></div><div class="card"><span class="tag">02 · Troubleshoot</span><h3>Find Which Layer Failed</h3><p>A bad AI answer does not automatically mean the model is the problem. I want to figure out which part of the system actually failed before jumping to a fix.</p><ul><li>Input quality or ambiguity</li><li>Retrieval/context failure</li><li>Instructions/model behavior</li><li>Tool/API failure</li><li>Business logic or routing</li><li>Permissions or identity</li><li>Human handoff / UI integration</li></ul><div class="practice"><b>Practice output</b><p>Write an escalation with customer symptom, business impact, reproduction steps, trace evidence, likely failure layer, and the specific question for Engineering.</p></div></div><div class="card"><span class="tag">03 · Enable</span><h3>Trust, Training &amp; Adoption</h3><p>Even a technically good workflow can fail if people do not trust it, understand it, or see how it fits into their real work. Good enablement has to cover both what the AI can do and where its limits are.</p><ul><li>What AI is for—and what it is not for</li><li>How users verify, correct, and escalate</li><li>Safe-use guidance for risky categories</li><li>Workflow-specific training rather than generic prompt tips</li><li>Adoption, friction, and confidence feedback after rollout</li></ul><div class="practice"><b>Practice output</b><p>Create a launch kit: training agenda, quick-start guide, safe-use guide, and a short confidence/friction survey.</p></div></div><div class="card"><span class="tag">03 · Change</span><h3>Change Management &amp; Resistance</h3><p>If adoption is low, I do not want to assume people just need more training. The problem could be trust, extra review work, weak workflow fit, lack of manager reinforcement, or real product friction.</p><ul><li>Identify champions, skeptics, and workflow owners</li><li>Separate trust problems from usability and value problems</li><li>Use pilot feedback to change the workflow—not only the training</li><li>Set explicit norms for when to rely, verify, correct, or escalate</li><li>Watch for shadow workflows that bypass the intended process</li></ul><div class="practice"><b>Practice output</b><p>Create a resistance diagnosis for a pilot with low adoption: evidence to collect, likely root causes, intervention by segment, and the signal that would show the intervention worked.</p></div></div><div class="card"><span class="tag">04 · Operate</span><h3>Run the Customer Relationship</h3><p>Once a workflow is live, I want to look at the whole picture: system signals, human feedback, and business context. Healthy usage should mean the workflow is actually helping, not just that people logged in.</p><ul><li>Usage and adoption patterns</li><li>Quality and human-intervention trends</li><li>Incidents and recurring failure themes</li><li>Knowledge freshness and configuration drift</li><li>Stakeholder confidence and workflow friction</li></ul><div class="practice"><b>Practice output</b><p>Review a simulated 90-day account dataset and produce health, risks, priorities, stakeholder actions, and an operating cadence.</p></div></div><div class="card"><span class="tag">05 · Measure</span><h3>Prove Business Value</h3><p>For me, usage alone is not enough. I want to know whether the AI is working well, how much human correction it still needs, and whether that ultimately changes a business outcome.</p><ul><li><strong>Adoption:</strong> who is using it and where?</li><li><strong>Quality:</strong> does it behave correctly?</li><li><strong>Human intervention:</strong> how much correction or escalation is required?</li><li><strong>Outcome:</strong> did speed, quality, revenue, cost, or experience improve?</li><li><strong>Economics:</strong> is the value worth the model/tool/operating cost?</li></ul><div class="practice"><b>Practice output</b><p>Build a success review that distinguishes leading indicators from business outcomes and makes a clear scale, change, or stop recommendation.</p></div></div><div class="card"><span class="tag">05 · Economics</span><h3>Cost &amp; ROI Modeling</h3><p>I want to be able to connect technical choices to costs a customer actually cares about, including the human work that remains around the AI—not just the model bill.</p><ul><li>Baseline labor cost and current throughput</li><li>Model, tool, retrieval, and platform cost at expected volume</li><li>Human review, correction, and exception-handling cost</li><li>Time/capacity benefit and avoided cost</li><li>Break-even volume and sensitivity to quality or review rate</li><li>ROI = value created or cost avoided relative to total operating cost</li></ul><div class="practice"><b>Practice output</b><p>Model a simple pilot with baseline labor cost, AI cost per transaction, review time, adoption, and error/rework. Show the break-even point and which assumption matters most.</p></div></div><div class="card"><span class="tag">Decision support</span><h3>Competitive &amp; Product Fit Conversations</h3><p>I want to be able to help customers compare AI products without turning into a brand cheerleader. The recommendation should come back to their use case, constraints, evidence, and operating environment.</p><ul><li>Capability and task fit</li><li>Reliability, controllability, and evaluation evidence</li><li>Security, governance, privacy, and deployment requirements</li><li>Integrations, ecosystem, workflow fit, and switching burden</li><li>Latency, usability, support model, and total cost</li><li>Run a proof against customer-defined success criteria when claims are close</li></ul><div class="practice"><b>Practice output</b><p>Respond to “Why should we use Claude instead of another AI product?” with a discovery-led comparison that avoids unsupported competitor claims and recommends a fair evaluation process.</p></div></div></div><div class="section-kicker"><span>Consultative toolkit</span></div><div class="grid3"><div class="decision"><strong>Discovery question bank</strong><p>Problem, outcome, workflow, risk, knowledge/data, human role, stakeholders, scale, economics, and governance.</p><small>Use before solution design</small></div><div class="decision"><strong>Escalation template</strong><p>Symptom → impact → reproduction → evidence → likely layer → owner → exact decision/question needed.</p><small>Make handoffs useful</small></div><div class="decision"><strong>Success hierarchy</strong><p>Adoption → quality → intervention → business outcome → economics. Never let one healthy layer hide a failing one.</p><small>Measure the whole system</small></div><div class="decision"><strong>AI readiness &amp; value assessment</strong><p>Map the current workflow and baseline, define the value hypothesis, then score problem clarity, process stability, knowledge/data readiness, risk, human ownership, technical integration, measurement, and organizational readiness. Finish with Not Ready, Pilot Candidate, or Strong Candidate plus the blockers and evidence needed before scaling.</p><small>Artifact · qualify before implementation</small></div><div class="decision"><strong>Change diagnosis</strong><p>Low usage → inspect trust, workflow fit, review burden, training, manager reinforcement, and product friction before prescribing more enablement.</p><small>Adoption is a system signal</small></div><div class="decision"><strong>Product comparison lens</strong><p>Use case → evidence → capability → governance → integration → UX/latency → total cost → proof plan.</p><small>Compare against customer criteria</small></div></div><div class="section-kicker"><span>Quick reference</span></div><div class="grid3"><div class="decision"><strong>4D AI Fluency</strong><p>Delegate → Describe → Discern → Diligence.</p><small>Human-AI collaboration</small></div><div class="decision"><strong>Architecture ladder</strong><p>Rule → model call → retrieval → workflow → tool-using agent → multi-agent only when justified.</p><small>Complexity must earn its way in</small></div><div class="decision"><strong>Failure layers</strong><p>Input → retrieval/context → instructions/model → tool/API → business logic → permissions → handoff/UI.</p><small>Find the layer before the fix</small></div><div class="decision"><strong>Success hierarchy</strong><p>Adoption → quality → intervention → business outcome → economics.</p><small>Measure the whole system</small></div><div class="decision"><strong>Escalation</strong><p>Symptom → impact → reproduce → evidence → likely layer → owner → decision needed.</p><small>Triage, then hand off well</small></div><div class="decision"><strong>Output choice</strong><p>Inline answer → reusable artifact → structured data → source + approval for high risk.</p><small>Match the output to the work</small></div></div><div class="band"><h3>Match the output to the work</h3><div class="pillrow"><span class="pill">Quick answer → inline</span><span class="pill">Reusable deliverable → document/artifact</span><span class="pill">Workflow input → structured data</span><span class="pill">High risk → source + human approval</span></div></div><div class="checkpoint"><div><strong>Applied AI readiness</strong><p>I can qualify an AI use case, assess readiness, translate it into measurable success criteria, understand the system well enough to troubleshoot with technical teams, manage adoption and resistance, discuss product fit credibly, and connect performance to ROI.</p></div></div></section>
 <section class="view" data-page="meridian"><div class="eyebrow">Meridian · Deep Capstone</div><div class="meridian-hero"><h2 class="section-title">Tier 1 Support AI Pilot</h2><p class="section-lead">A fictional mid-sized B2B SaaS company has an overwhelmed support operation: ticket volume rose roughly 40%, first-response time slipped from under two hours to over eight, and CSAT fell from 91% to 82%. The pilot tests an AI-assisted Tier 1 workflow while keeping meaningful human control.</p><div class="metric-grid"><div class="metric"><span>Support team</span><strong>14 reps</strong></div><div class="metric"><span>Response time</span><strong>&lt;2h → &gt;8h</strong></div><div class="metric"><span>CSAT</span><strong>91% → 82%</strong></div><div class="metric"><span>Pilot</span><strong>8 weeks</strong></div></div></div><section aria-labelledby="meridian-fast-read" class="meridian-tldr">
 <div class="section-kicker"><span>5-second read</span></div>
 <h3 id="meridian-fast-read" style="margin:7px 0 12px">What this case is testing</h3>
@@ -702,8 +1956,8 @@
 <div class="card work-card"><span class="arrow">›</span><span class="tag">Customer Success</span><h3>Health &amp; Risk</h3><p>Turn account signals into evidence-backed risk hypotheses and next steps.</p><div class="more"><b>Customer need:</b><p>Help CSMs identify meaningful risk earlier without creating opaque automated health judgments.</p><b>Discovery:</b><p>Which signals are reliable? What does “at risk” mean? Which data is missing? Who owns commercial decisions?</p><b>AI role:</b><p>Synthesize usage, support, feedback, and account context; distinguish evidence from hypotheses; recommend questions and next steps.</p><b>Measure:</b><p>Prep time, useful-risk detection, false alarms, CSM adoption, and whether interventions improve outcomes.</p></div></div>
 </div>
 <div class="band"><h3>Workbench method</h3><div class="pillrow"><span class="pill">1 · Customer need</span><span class="pill">2 · Discovery questions</span><span class="pill">3 · Current bottleneck</span><span class="pill">4 · AI role</span><span class="pill">5 · Knowledge</span><span class="pill">6 · Output</span><span class="pill">7 · Guardrails</span><span class="pill">8 · Human role</span><span class="pill">9 · Success</span><span class="pill">10 · Escalation</span></div><p class="section-lead" style="margin:16px 0 0">Each exercise should end with a short recommendation: what I would build or configure, what I would deliberately not automate, what I would test before launch, and what evidence would make me change the design.</p></div>
-<div class="checkpoint"><div><strong>Current status</strong><p>One completed external-client Operations exercise, with additional cross-functional scenarios planned. Completed exercises count as evidence only after I work through the discovery, design, guardrail, measurement, and recommendation decisions.</p></div><span class="status done">1 complete</span></div>
-</section><section class="view" data-page="evidence">
+<div class="checkpoint"><div><strong>Current status</strong><p>One completed external-client Operations exercise, with additional cross-functional scenarios planned. Completed exercises count as evidence only after I work through the discovery, design, guardrail, measurement, and recommendation decisions. <a href="harborstone.html"><strong>View Harborstone →</strong></a></p></div></div>
+</section><section class="view" data-page="evidence"><nav class="capability-local-nav" aria-label="Capability pages"><span>Capabilities</span><div><a href="capabilities.html" class="current" aria-current="page">Overview</a><a href="discovery.html">Discovery & Workflow</a><a href="plan.html">Measurement & Value</a><a href="agent-flow.html">Systems & Guardrails</a><a href="evals.html">Evals & Quality</a></div></nav>
 <div class="eyebrow">Capabilities</div>
 <h2 class="section-title">Demonstrated through applied work.</h2>
 <p class="section-lead">The Learning Guide shows what I’m building toward. Applied Work shows the projects where I practice. <strong>Capabilities shows what I can already demonstrate</strong>—with evidence pulled across completed cases and links back to the deeper reasoning.</p>
@@ -746,10 +2000,7 @@
   <p>Implementation &amp; Adoption, Business &amp; Strategy, Knowledge Systems, and other roadmap capabilities can graduate into this section later—after completed exercises provide enough evidence. Planned work is not presented here as demonstrated capability.</p>
 </div>
 </section>
-<section class="view" data-page="portfolio">
-<div class="eyebrow">Applied Work</div>
-<h2 class="section-title">Practice the capabilities in real problems.</h2>
-<p class="section-lead">This is the evidence layer of the learning project. <strong>Meridian goes deep</strong> on one end-to-end AI implementation; the <strong>Workbench goes wide</strong> through smaller cross-functional scenarios. The site itself is the portfolio. Applied Work lets you browse by case; Capabilities lets you browse the same work by capability.</p>
+<section class="view" data-page="portfolio"><header class="page-intro"><div class="eyebrow">Applied Work</div><h2 class="section-title">Practice the capabilities in real problems.</h2><p class="section-lead">This is the evidence layer of the learning project. <strong>Meridian goes deep</strong> on one end-to-end AI implementation; the <strong>Workbench goes wide</strong> through smaller cross-functional scenarios. The site itself is the portfolio. Applied Work lets you browse by case; Capabilities lets you browse the same work by capability.</p></header>
 
 <div class="grid2" style="margin-top:24px">
   <div class="card nav-card" data-view-link="meridian" role="button" tabindex="0">
@@ -914,7 +2165,11 @@ body:has(#ai-cs-mock.dark),html:has(#ai-cs-mock.dark){background:#101014!importa
   const render=(name,scroll=false)=>{if(!valid.has(name))name='home'; views.forEach(v=>v.classList.toggle('active',v.dataset.page===name)); nav.forEach(b=>b.classList.toggle('active',b.dataset.view===name)); if(mobile)mobile.value=name; if(scroll)root.scrollIntoView({behavior:'smooth',block:'start'});};
   const go=(name,hash)=>{if(!valid.has(name))name='home'; const dest=hash||('#'+name); if(location.hash!==dest)history.pushState({page:name},'',dest); render(name,true); if(hash&&hash.includes('-'))requestAnimationFrame(()=>document.getElementById(hash.slice(1))?.scrollIntoView({behavior:'smooth',block:'start'}));};
   nav.forEach(b=>b.addEventListener('click',()=>go(b.dataset.view)));
-  if(mobile)mobile.addEventListener('change',()=>go(mobile.value));
+  if(mobile)mobile.addEventListener('change',()=>{
+  const v=mobile.value;
+  if(v.endsWith('.html')||v.includes('.html#')){ location.href=v; return; }
+  go(v);
+});
   root.querySelectorAll('[data-view-link]').forEach(el=>{const activate=()=>go(el.dataset.viewLink); el.addEventListener('click',activate); el.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();activate();}});});
   root.querySelectorAll('a[href^="#"]').forEach(a=>a.addEventListener('click',e=>{
   const hash=a.getAttribute('href'); const target=hash?.replace(/^#/,'');

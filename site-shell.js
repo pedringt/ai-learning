@@ -14,7 +14,9 @@
     btn.setAttribute('aria-label',dark?'Switch to light mode':'Switch to dark mode');
     btn.title=dark?'Switch to light mode':'Switch to dark mode';
   };
-  if(localStorage.getItem('ai-cs-theme')==='dark') body.classList.add('v88-dark');
+  const savedTheme=localStorage.getItem('ai-cs-theme');
+  const systemDark=!!(window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches);
+  if(savedTheme==='dark'||(!savedTheme&&systemDark)) body.classList.add('v88-dark');
   applyIcon();
   if(btn) btn.addEventListener('click',()=>{
     body.classList.toggle('v88-dark');
