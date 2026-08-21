@@ -341,3 +341,15 @@ Deliberately constrained content-only release on top of v93.1:
 - Expanded “Judgment in practice” to six decision-change examples, adding the adoption-measurement correction and Harborstone automation-bias insight.
 - Quieted the Home Learning Library preview while keeping the full Library readily accessible.
 - Reframed prominent Meridian scenario wording from “fictional” to “simulated” while preserving honest simulation disclosure.
+
+## v94.20 — Harborstone economics + learning boundary
+- Removed unsupported simulated dollar ROI figures from Harborstone rather than retroactively inventing a cost model.
+- Reframed economics honestly: the simulated pilot suggests capacity value, while a real ROI case would require actual invoice volume, loaded labor cost, implementation cost, model/vendor usage cost, maintenance/support cost, and exception rate.
+- Added a “What I still don’t know” section acknowledging AP-specific discovery not covered in the exercise: PO/receipt and three-way matching, duplicate-payment detection, vendor verification/fraud controls, and payment-timing/early-payment-discount workflows.
+- Preserved those topics as learning boundaries rather than post-hoc claims of AP expertise.
+- Future Workbench principle: keep a consistent reasoning method, but do not force completed exercises into the same narrative template. Let the problem determine the artifact and allow outcomes such as do-not-build, conventional automation, data-not-ready, failed pilot, or unfavorable economics when the evidence supports them.
+
+## v94.21 — final status consistency maintenance
+- Corrected the Portfolio inventory status for Cross-functional Workbench cases from Planned to 1 completed, reflecting Harborstone.
+- No architecture, design, navigation, or substantive content changes.
+- Site architecture is frozen after this maintenance fix unless a genuine bug or evidence-status inconsistency is found.

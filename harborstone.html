@@ -713,7 +713,6 @@ body.v88-dark{--ink:#f5f5f7;--muted:#b6b6c2;--border:#34343d;--soft:#19191f;--so
 .case-shell .grid2>.card>*:last-child{margin-bottom:0}
 @media(max-width:760px){.case-shell .grid2>.card{height:auto!important}}
 </style>
-
 <style id="v9416-harborstone-heading-scale">
 .case-hero h1{
   font-size:clamp(34px,4vw,48px)!important;
@@ -724,7 +723,6 @@ body.v88-dark{--ink:#f5f5f7;--muted:#b6b6c2;--border:#34343d;--soft:#19191f;--so
   .case-hero h1{font-size:clamp(32px,9vw,42px)!important}
 }
 </style>
-
 <style id="v9417-harborstone-heading-scale">
 .case-hero h1{
   font-size:clamp(30px,3vw,40px)!important;
@@ -736,7 +734,6 @@ body.v88-dark{--ink:#f5f5f7;--muted:#b6b6c2;--border:#34343d;--soft:#19191f;--so
   .case-hero h1{font-size:clamp(28px,7vw,36px)!important}
 }
 </style>
-
 <style id="v9418-simulated-results">
 .simulated-results{
   background:var(--softp)!important;
@@ -795,7 +792,7 @@ body.v88-dark{--ink:#f5f5f7;--muted:#b6b6c2;--border:#34343d;--soft:#19191f;--so
 </div>
 <div class="card simulated-results" style="margin-top:14px"><div class="simulated-banner">SIMULATED RESULTS · PRACTICE DATA, NOT A REAL CLIENT OUTCOME</div><span class="tag">Fictional pilot results</span><h3>The headline looked good—but needed scrutiny</h3>
 <p>In a fictional six-week pilot with 3 experienced employees and 620 invoices, AHT fell from <strong>7.8 to 5.9 minutes</strong> (about 24%), beating the initial 20% target. Overall field-level accuracy reached <strong>94.1%</strong>. Vendor, invoice number, invoice date, subtotal, tax, and total performed strongly, while <strong>service date lagged at 86.4%</strong>. Total reached 99.7%; both Total errors were caught during human review.</p>
-<p>Projected full-volume operating cost was about $1,600/month against roughly $5,500–$7,000/month in employee capacity returned. That is capacity value—not assumed headcount reduction.</p></div>
+<p><strong>Economics:</strong> The simulated pilot suggests that meaningful employee capacity could be returned, but I would not claim ROI from this exercise alone. A real business case would require Harborstone’s actual invoice volume, loaded labor cost, implementation cost, model/vendor usage cost, ongoing maintenance/support cost, and expected exception rate.</p></div>
 <div class="grid2" style="margin-top:14px">
 <div class="card"><span class="tag">What I noticed</span><h3>Automation bias could distort the efficiency story</h3>
 <p>Employees reviewed highly reliable fields faster later in the pilot. That raised a question: was some of the AHT improvement caused by genuinely reduced work, or by employees scrutinizing AI output less carefully as trust increased?</p>
@@ -807,7 +804,12 @@ body.v88-dark{--ink:#f5f5f7;--muted:#b6b6c2;--border:#34343d;--soft:#19191f;--so
 <div class="card" style="margin-top:14px"><span class="tag">Recommendation</span><h3>Iterate + controlled expansion</h3>
 <p>The pilot produced enough evidence to continue, but not enough to justify an immediate full rollout. The next phase should clarify service-date rules, improve ambiguity handling, broaden the user and invoice sample, and independently audit final accuracy to test the automation-bias concern.</p>
 <p>Greater autonomy should be earned only when evidence supports it.</p></div>
-<div class="band" style="margin-top:18px"><h3>Parking lot for deeper exercises</h3>
+<div class="card learning-boundary" style="margin-top:14px">
+<span class="tag">What I still don’t know</span>
+<h3>The narrow pilot does not make me an AP expert</h3>
+<p>This first pass focused on the workflow Harborstone described. Before designing a broader accounts-payable solution, I would need deeper domain discovery around areas I had not explored in the exercise—including PO/receipt matching and three-way matching, duplicate-payment detection, vendor verification and fraud controls, and payment-timing or early-payment-discount workflows.</p>
+<p>Those may change which problems are most valuable or safest to solve. I would treat them as discovery areas, not assume the extraction pilot generalizes to the rest of AP.</p>
+</div><div class="band" style="margin-top:18px"><h3>Parking lot for deeper exercises</h3>
 <p><strong>Invoice ↔ property/work-order matching:</strong> retrieval across systems, entity resolution, evidence presentation, permissions, confidence/abstention, and human verification.</p>
 <p><strong>Approval routing:</strong> distributed rules, exceptions, source-of-truth governance, data freshness, current roles/delegations, and deciding what belongs in deterministic automation versus AI.</p></div>
 <a class="back-top" href="index.html#workbench">Back to Workbench ↑</a>
