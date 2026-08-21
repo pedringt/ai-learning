@@ -427,6 +427,17 @@
   }
   [data-page="portfolio"] .grid2 > .card > p.small{margin-bottom:0!important}
 }
+</style><style id="v958-evidence-four-grid">
+[data-page="evidence"] .evidence-index{
+  grid-template-columns:repeat(2,minmax(0,1fr))!important;
+}
+@media(max-width:760px){
+  [data-page="evidence"] .evidence-index{grid-template-columns:1fr!important}
+}
+[data-page="portfolio"] .small a{
+  color:var(--purple);font-weight:750;text-decoration:none;
+}
+[data-page="portfolio"] .small a:hover{text-decoration:underline}
 </style></head>
 <body>
 <div class="app-root" id="ai-cs-mock">
@@ -547,18 +558,7 @@
 
 </style>
 <div class="shell">
-<div class="topbar"><div class="topinner"><button aria-label="Go to home" class="brand-button" data-brand-home="" type="button"><span class="brand">AI <span>Learning Portfolio</span></span></button><nav aria-label="Primary pages" class="nav"><button class="active" data-view="home">Home</button><button data-view="portfolio">Applied Work</button><button data-view="learn">Learning Guide</button></nav><div class="top-actions"><button aria-label="Switch to dark mode" aria-pressed="false" class="theme-toggle" id="themeToggle" title="Switch to dark mode" type="button">☾</button><details class="secondary-menu"><summary>Evidence <span aria-hidden="true" class="menu-chevron">⌄</span></summary><div class="secondary-menu-panel">
-<div class="evidence-menu-intro"><strong>Same work, different lens</strong><span>Browse across cases by capability.</span></div>
-<span class="menu-label">Capability views</span>
-<a href="plan.html"><span>Measurement &amp; Value</span><small>Meridian + Harborstone</small></a>
-<a href="agent-flow.html"><span>Systems &amp; Guardrails</span><small>Meridian + Harborstone</small></a>
-<a href="evals.html"><span>Evals &amp; Quality</span><small>Meridian + Harborstone</small></a>
-<span class="menu-label">Case context</span>
-<a href="index.html#portfolio"><span>Applied Work</span><small>Browse by case</small></a>
-<a href="deliverable.html"><span>Meridian case readout</span><small>Deep case summary</small></a>
-<a href="tracker.html"><span>Meridian · Behind the work</span><small>Reasoning + decisions</small></a>
-<a href="harborstone.html"><span>Harborstone case</span><small>Cross-functional exercise</small></a>
-</div></details><select aria-label="Choose page" id="mobileNav"><option value="home">Home</option><option value="portfolio">Applied Work</option><option value="learn">Learning Guide</option></select></div></div></div>
+<div class="topbar"><div class="topinner"><button aria-label="Go to home" class="brand-button" data-brand-home="" type="button"><span class="brand">AI <span>Learning Portfolio</span></span></button><nav aria-label="Primary pages" class="nav"><button class="active" data-view="home">Home</button><button data-view="evidence">Capabilities</button><button data-view="portfolio">Applied Work</button><button data-view="learn">Learning Guide</button></nav><div class="top-actions"><button aria-label="Switch to dark mode" aria-pressed="false" class="theme-toggle" id="themeToggle" title="Switch to dark mode" type="button">☾</button><select aria-label="Choose page" id="mobileNav"><option value="home">Home</option><option value="portfolio">Applied Work</option><option value="learn">Learning Guide</option></select></div></div></div>
 <section class="view active" data-page="home">
 <div class="hero"><div class="eyebrow">Independent learning project</div><h1>Building <span>practical AI foundations</span> for real-world work.</h1><p class="lead">I’m building broad, practical AI fluency across the pieces that matter in real work: how AI behaves, how systems fit together, how to diagnose the right problem, how to evaluate quality and risk, and how to connect AI use to adoption and business value. <strong>Meridian is my main practice environment</strong> for applying those foundations to an AI-assisted support workflow.</p><div class="home-context-strip"><div class="home-context-item"><strong>Practice environment</strong> Claude is my main practice environment, while I’m learning the underlying concepts to transfer across AI products.</div><div class="home-context-item"><strong>Capstone progress</strong> Design and planning complete; evaluation in progress; later stages intentionally unfinished.</div></div></div><div class="band manager-fast-path" style="margin-top:24px"><h3>Applied work first</h3>
 <p class="section-lead" style="margin-bottom:10px"><strong>Meridian</strong> is the deep-dive case: discovery, workflow diagnosis, system design, guardrails, evaluation, adoption, and measurement. <strong>Harborstone</strong> is a shorter Operations exercise that tests whether the same reasoning transfers outside support.</p>
@@ -703,10 +703,53 @@
 </div>
 <div class="band"><h3>Workbench method</h3><div class="pillrow"><span class="pill">1 · Customer need</span><span class="pill">2 · Discovery questions</span><span class="pill">3 · Current bottleneck</span><span class="pill">4 · AI role</span><span class="pill">5 · Knowledge</span><span class="pill">6 · Output</span><span class="pill">7 · Guardrails</span><span class="pill">8 · Human role</span><span class="pill">9 · Success</span><span class="pill">10 · Escalation</span></div><p class="section-lead" style="margin:16px 0 0">Each exercise should end with a short recommendation: what I would build or configure, what I would deliberately not automate, what I would test before launch, and what evidence would make me change the design.</p></div>
 <div class="checkpoint"><div><strong>Current status</strong><p>One completed external-client Operations exercise, with additional cross-functional scenarios planned. Completed exercises count as evidence only after I work through the discovery, design, guardrail, measurement, and recommendation decisions.</p></div><span class="status done">1 complete</span></div>
-</section><section class="view" data-page="portfolio">
+</section><section class="view" data-page="evidence">
+<div class="eyebrow">Capabilities</div>
+<h2 class="section-title">Demonstrated through applied work.</h2>
+<p class="section-lead">The Learning Guide shows what I’m building toward. Applied Work shows the projects where I practice. <strong>Capabilities shows what I can already demonstrate</strong>—with evidence pulled across completed cases and links back to the deeper reasoning.</p>
+
+<div class="band evidence-principle" style="margin-top:22px">
+  <div class="section-kicker"><span>Demonstrated, not claimed</span></div>
+  <h3 style="margin-top:0">The capability has to survive contact with the problem.</h3>
+  <p>These pages do not create separate projects. They reorganize completed work by capability so a reviewer can see what carries from one context to another. New capability pages should appear only when there is enough completed work to support them.</p>
+</div>
+
+<div class="grid3 evidence-index" style="margin-top:22px"><a class="card judgment-link" href="tracker.html#discovery">
+    <span class="tag">Meridian + Harborstone</span>
+    <h3>Discovery &amp; Workflow</h3>
+    <p>Diagnosing the actual problem before choosing a solution: mapping workflows, testing assumptions, separating symptoms from causes, and deciding where AI, rules, conventional automation, or human judgment belong.</p>
+    <span class="judgment-go">View evidence →</span>
+  </a>
+  
+  <a class="card judgment-link" href="plan.html">
+    <span class="tag">Meridian + Harborstone</span>
+    <h3>Measurement &amp; Value</h3>
+    <p>Defining success, choosing useful measures, questioning fragile instrumentation, and connecting AI behavior to operational and business outcomes.</p>
+    <span class="judgment-go">View evidence →</span>
+  </a>
+  <a class="card judgment-link" href="agent-flow.html">
+    <span class="tag">Meridian + Harborstone</span>
+    <h3>Systems &amp; Guardrails</h3>
+    <p>Deciding what AI should do, where deterministic rules or human judgment belong, and keeping permissions and escalation proportionate to risk.</p>
+    <span class="judgment-go">View evidence →</span>
+  </a>
+  <a class="card judgment-link" href="evals.html">
+    <span class="tag">Meridian + Harborstone</span>
+    <h3>Evals &amp; Quality</h3>
+    <p>Defining good behavior, designing risk-based tests, separating failure modes, and evaluating quality at the level that matters for the workflow.</p>
+    <span class="judgment-go">View evidence →</span>
+  </a>
+</div>
+
+<div class="frame" style="margin-top:22px">
+  <b>Evidence grows with the work</b>
+  <p>Implementation &amp; Adoption, Business &amp; Strategy, Knowledge Systems, and other roadmap capabilities can graduate into this section later—after completed exercises provide enough evidence. Planned work is not presented here as demonstrated capability.</p>
+</div>
+</section>
+<section class="view" data-page="portfolio">
 <div class="eyebrow">Applied Work</div>
 <h2 class="section-title">Practice the capabilities in real problems.</h2>
-<p class="section-lead">This is the evidence layer of the learning project. <strong>Meridian goes deep</strong> on one end-to-end AI implementation; the <strong>Workbench goes wide</strong> through smaller cross-functional scenarios. The site itself is the portfolio. Applied Work lets you browse by case; the Evidence menu lets you browse the same work by capability.</p>
+<p class="section-lead">This is the evidence layer of the learning project. <strong>Meridian goes deep</strong> on one end-to-end AI implementation; the <strong>Workbench goes wide</strong> through smaller cross-functional scenarios. The site itself is the portfolio. Applied Work lets you browse by case; Capabilities lets you browse the same work by capability.</p>
 
 <div class="grid2" style="margin-top:24px">
   <div class="card nav-card" data-view-link="meridian" role="button" tabindex="0">
@@ -714,18 +757,18 @@
     <h3>Meridian AI Support Pilot</h3>
     <p>One simulated B2B SaaS support implementation followed deeply through discovery, measurement, workflow design, guardrails, evaluation, adoption, operations, and value realization.</p>
     <div class="practice"><b>Use Meridian when you want to see:</b><p>How the pieces of an AI implementation connect over time, including the decisions and tradeoffs behind the polished artifacts.</p></div>
-    <p class="small"><strong>Behind the work:</strong> the Working Tracker is Meridian’s process record—questions, assumptions, reasoning, revisions, and changes of mind. It is not a separate project.</p>
+    <p class="small"><strong>Capabilities demonstrated:</strong> <a href="tracker.html#discovery">Discovery &amp; Workflow</a> · <a href="plan.html">Measurement &amp; Value</a> · <a href="agent-flow.html">Systems &amp; Guardrails</a> · <a href="evals.html">Evals &amp; Quality</a></p><p class="small"><strong>Behind the work:</strong> the Working Tracker is Meridian’s process record—questions, assumptions, reasoning, revisions, and changes of mind. It is not a separate project.</p>
   </div>
   <div class="card nav-card" data-view-link="workbench" role="button" tabindex="0">
     <span class="tag">Breadth · transfer practice</span>
     <h3>Workbench · Smaller Cases</h3>
     <p>The Workbench is the collection of smaller Applied Work cases. These exercises test whether the same judgment transfers beyond Meridian into different workflows, business functions, industries, and levels of AI autonomy.</p>
     <div class="practice"><b>Use the Workbench when you want to see:</b><p>How I approach a new problem without assuming the answer is “use more AI.” Harborstone invoice operations is the first completed case.</p></div>
-    <p class="small"><strong>Future domains:</strong> business/operations exercises, agentic work, and a legal-AI adoption scenario that can combine general AI implementation skills with domain knowledge.</p>
+    <p class="small"><strong>Capabilities demonstrated in Harborstone:</strong> <a href="harborstone.html#workflow-decomposition">Discovery &amp; Workflow</a> · <a href="plan.html">Measurement &amp; Value</a> · <a href="agent-flow.html">Systems &amp; Guardrails</a> · <a href="evals.html">Evals &amp; Quality</a></p><p class="small"><strong>Future domains:</strong> business/operations exercises, agentic work, and a legal-AI adoption scenario that can combine general AI implementation skills with domain knowledge.</p>
   </div>
 </div>
 
-<div class="band" style="margin-top:24px"><div class="section-kicker"><span>Two views of the same evidence</span></div><h3 style="margin-top:0">Cases for context · Evidence for capabilities</h3><p class="section-lead"><strong>Applied Work and Evidence show the same body of work in two different ways.</strong> Applied Work is the case-based view: open Meridian or a Workbench case to see the problem in context from beginning to end. Evidence is the capability-based view: open Measurement &amp; Value, Systems &amp; Guardrails, or Evals &amp; Quality to see examples of that skill pulled across Meridian and Harborstone. Nothing in Evidence is a separate project.</p></div><div class="band" style="margin-top:24px">
+<div class="band" style="margin-top:24px"><div class="section-kicker"><span>Two views of the same evidence</span></div><h3 style="margin-top:0">Cases for context · Evidence for capabilities</h3><p class="section-lead"><strong>Applied Work and Capabilities show the same body of work in two different ways.</strong> Applied Work is the case-based view: open Meridian or a Workbench case to see the problem in context from beginning to end. Capabilities is the capability-based view: open Capabilities, then Measurement &amp; Value, Systems &amp; Guardrails, or Evals &amp; Quality to see examples of that skill pulled across Meridian and Harborstone. Nothing in Capabilities is a separate project.</p></div><div class="band" style="margin-top:24px">
   <div class="section-kicker"><span>How the site fits together</span></div>
   <h3 style="margin-top:0">Three clear ways to navigate the work</h3>
   <div class="grid3">

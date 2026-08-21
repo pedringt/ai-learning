@@ -431,3 +431,44 @@ Deliberately constrained content-only release on top of v93.1:
 - Added clearer separation between the introductory copy, blue practice callout, and bottom context note.
 - Kept both cards visually balanced and preserved tighter mobile spacing.
 - No content or architecture changes.
+
+
+## v95.7 — Evidence first-class navigation
+- Promoted **Evidence** to the primary navigation: **Home / Evidence / Applied Work / Learning Guide**.
+- Added a dedicated Evidence landing view that acts as the site's proof index.
+- Evidence currently surfaces only demonstrated cross-case capabilities:
+  - Measurement & Value
+  - Systems & Guardrails
+  - Evals & Quality
+- Each capability card links to the existing cross-project evidence page summarizing Meridian + Harborstone.
+- Added the governing rule that roadmap capabilities graduate into Evidence only after completed work provides enough proof; planned work is not represented as demonstrated capability.
+- Applied Work remains the case-based view; Evidence is the capability-based proof view.
+- Standalone desktop/mobile navigation now exposes Evidence directly.
+- The Evidence dropdown remains as a quick capability navigator rather than the only way to discover the section.
+
+
+## v95.8 — Discovery & Workflow evidence
+- Promoted **Discovery & Workflow** into Evidence based on completed cross-case work in Meridian and Harborstone.
+- The capability is framed as diagnosing the real problem before choosing a solution: workflow mapping, assumption testing, separating symptoms from causes, and deciding where AI, deterministic rules, conventional automation, or human judgment belong.
+- Evidence now has four demonstrated capability areas: Discovery & Workflow, Measurement & Value, Systems & Guardrails, and Evals & Quality.
+- Added reciprocal **Capabilities demonstrated** links on the Applied Work overview so projects point back toward the skills they demonstrate.
+- Added stable deep-link anchors into Meridian's discovery reasoning and Harborstone's workflow-decomposition reasoning.
+- Changed the Evidence landing grid to a balanced two-by-two layout on desktop and one column on mobile.
+- No planned capability was promoted without completed evidence.
+
+
+## v95.9 — Capabilities naming
+- Renamed the top-level **Evidence** destination to **Capabilities**.
+- Primary navigation is now **Home / Capabilities / Applied Work / Learning Guide**.
+- Kept **evidence** as the governing proof standard rather than the navigation label: a capability appears only when completed applied work demonstrates it.
+- Capabilities answers **“What can I demonstrate?”**; Applied Work answers **“Where did I apply it?”**; Learning Guide answers **“What am I developing?”**
+- Preserved the existing `#evidence` internal route for link/backward compatibility; this is implementation detail only and is no longer user-facing terminology.
+- No capability content, case evidence, learning conclusions, or architecture changed beyond naming/framing.
+
+
+## v95.10 — navigation simplification
+- Removed the redundant secondary Capabilities/Evidence dropdown from the shared header.
+- Primary navigation is now the single global navigation model: **Home / Capabilities / Applied Work / Learning Guide**, plus the theme toggle.
+- Capability detail pages remain reachable from the Capabilities landing page; case context remains reachable from Applied Work.
+- This removes the last major navigation element inherited from the earlier Meridian/artifact architecture.
+- No content, evidence, learning, or case changes.
