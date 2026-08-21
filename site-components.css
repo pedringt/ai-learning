@@ -280,3 +280,66 @@ body > main.wrap:has(> .capability-local-nav){
     margin-bottom:24px!important;
   }
 }
+
+/* v95.51 — navigation semantics + small visual consistency cleanup */
+.site-breadcrumb{
+  margin:0 0 var(--space-5);
+  font:750 12px/1.4 Arial,Helvetica,sans-serif;
+  color:var(--muted);
+}
+.site-breadcrumb ol{
+  display:flex;
+  flex-wrap:wrap;
+  align-items:center;
+  gap:7px;
+  margin:0;
+  padding:0;
+  list-style:none;
+}
+.site-breadcrumb li{display:inline-flex;align-items:center;min-width:0}
+.site-breadcrumb li + li::before{
+  content:"›";margin-right:7px;color:var(--muted);font-weight:600;
+}
+.site-breadcrumb a{color:var(--purple);text-decoration:none}
+.site-breadcrumb a:hover{text-decoration:underline}
+.site-breadcrumb [aria-current="page"]{color:var(--muted);font-weight:700}
+
+/* Compact labels stay compact even when their parent card is a flex column. */
+.card>.tag,.surface-card>.tag,.case-shell .card>.tag{
+  align-self:flex-start;
+  width:max-content;
+  max-width:100%;
+}
+
+/* Standalone Meridian readout editorial rhythm. */
+.wrap .stagebody{color:var(--ink);font-size:13.5px;line-height:1.62}
+.wrap .stagebody p{margin:10px 0 0;line-height:1.62}
+.wrap .stagebody ul,.wrap .stagebody ol{margin:10px 0 4px;padding-left:22px}
+.wrap .stagebody li{margin:5px 0;padding-left:2px;line-height:1.55}
+.wrap .stagebody table{margin-top:12px}
+.related-evidence-links{
+  margin-top:36px!important;padding-top:16px!important;
+  border-top:1px solid var(--border)!important;color:var(--muted);
+}
+.related-evidence-links strong{color:var(--ink)}
+.related-evidence-links a{font-weight:750}
+
+/* Quiet visual landing on Home; full resource footer belongs to Learning Guide. */
+.home-closing-band{
+  margin:42px 0 4px;padding:18px 0 2px;border-top:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;gap:18px;
+}
+.home-closing-band>span{
+  color:var(--muted);font-size:11px;font-weight:900;
+  letter-spacing:.08em;text-transform:uppercase;
+}
+.home-closing-band a{color:var(--purple);font-size:13px;font-weight:850;text-decoration:none}
+.home-closing-band a:hover{text-decoration:underline}
+.deeper-practice p{max-width:900px}
+
+@media(max-width:600px){
+  .site-breadcrumb ol{gap:5px}
+  .site-breadcrumb li + li::before{margin-right:5px}
+  .home-closing-band{align-items:flex-start;flex-direction:column;gap:8px}
+}
+

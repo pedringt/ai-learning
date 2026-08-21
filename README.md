@@ -847,3 +847,14 @@ A QA pass may inspect/validate every page, but must not reserialize legacy HTML.
 - Updated release discipline to synchronize the packaged source, persistent Library `CURRENT-SOURCE`, and durable source-of-truth state while preventing opportunistic scope creep.
 - Clarified the CSS ownership contract: shared light-theme defaults are centralized; legitimate page/state/dark-mode overrides may remain local.
 - No new Capabilities, case-study expansion, component consolidation, or visual redesign.
+
+## v95.51 — navigation + visual consistency cleanup
+- Simplified detail-page navigation using hierarchy rather than competing “Back to…” links. Harborstone now uses one accessible Applied Work breadcrumb; redundant Harborstone and tracker back-link rows were removed.
+- Reframed the Eval Suite footer as related Meridian evidence rather than pseudo previous/next navigation.
+- Removed two redundant/unpolished Home positioning lines.
+- Moved the resource-heavy “Go deeper” band into the Learning Guide and replaced the Home ending with a quiet Learning Guide landing link.
+- Fixed compact pill/tag behavior inside flex cards so labels do not stretch across the full card width.
+- Restyled Harborstone’s “Parking lot for deeper exercises” as a deliberate deeper-practice boundary.
+- Added editorial list/body rhythm to the standalone Meridian one-page readout without changing its content or architecture.
+- No architecture expansion, new capability pages, or broad component consolidation.
+
