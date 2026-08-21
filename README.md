@@ -247,3 +247,10 @@ Deliberately constrained content-only release on top of v93.1:
 - Folded its strongest idea into **The foundation underneath the portfolio** introduction.
 - Generalized the wording from AI-powered customer workflows to practical AI skills across systems, evaluation, workflows, adoption, measurement, and human oversight.
 - No structural changes beyond consolidating the two adjacent Home messages; no Meridian or curriculum content changed.
+
+
+## v94.5 — safe Home-card fix
+- Restored the intact v94.3 page structure after the v94.4 removal accidentally consumed an extra closing container and broke layout/navigation.
+- Removed only the balanced legacy `v932-ai-extension` **What I’m bringing forward** div.
+- Preserved the consolidated Foundations wording from v94.3.
+- No other structural, visual, curriculum, Meridian, or navigation changes.
