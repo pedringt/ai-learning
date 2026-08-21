@@ -325,3 +325,6 @@ Deliberately constrained content-only release on top of v93.1:
 ## v94.16 — Harborstone heading scale
 - Reduced the Harborstone detail-page H1 to match the visual scale of the rest of the portfolio.
 - Preserved responsive sizing and all v94.15 card-height polish.
+
+## v94.17 — Harborstone H1 normalization
+- Reduced the Harborstone H1 again to a normal standalone-artifact scale (40px desktop maximum) rather than a marketing-hero scale.
