@@ -233,3 +233,10 @@ Deliberately constrained content-only release on top of v93.1:
 - Generalized the Working Tracker from a fictional “AI Customer Success owner” role to a record of the working process through the pilot.
 - Renamed the planned 90-day customer-success review to a **90-day value review**.
 - No redesign, scenario rewrite, new completed work, or substantive changes to Meridian decisions, metrics, guardrails, evals, or evidence.
+
+
+## v94.2 — consistency cleanup
+- Replaced the remaining **AI CS readiness** label with **Applied AI readiness**.
+- Generalized the remaining CS-specific target capability to applying AI foundations to real business problems across user needs, workflow design, system behavior, quality, adoption, and measurable value.
+- Replaced **Lead the customer work** with **Apply AI to the workflow** where that label was used as a transferable capability.
+- No structural, visual, scenario, evidence, or curriculum changes.
