@@ -75,7 +75,7 @@ Standalone pages should conform to the established index visual frame; do not re
 
 
 ## CSS maintenance boundary (v95.49)
-- Canonical shared light-theme color/design tokens are owned by `site-shell.css`; do not duplicate them into standalone pages.
+- Canonical shared light-theme color/design defaults are owned by `site-shell.css`; do not duplicate those defaults into standalone pages. Legitimate page/state-specific overrides, including dark-mode overrides, may remain local.
 - Regression QA now treats CSS structure as part of the release surface.
 - Discovery's historical normalization layers were mechanically consolidated, but broad page-by-page style/component consolidation remains deferred.
 - Capabilities architecture remains frozen until materially different applied evidence warrants expansion.

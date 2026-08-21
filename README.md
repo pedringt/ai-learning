@@ -839,3 +839,11 @@ A QA pass may inspect/validate every page, but must not reserialize legacy HTML.
 - Centralized the canonical shared light-theme design tokens in `site-shell.css`; removed duplicate page-local copies from the standalone/capability pages while leaving page-specific styles and dark-mode overrides intact.
 - Consolidated Discovery's accumulated base/normalization/final style layers into one current block without changing rule order, preserving the v95.48 visual cascade.
 - No component consolidation, Capabilities expansion, layout redesign, or index-shell migration was performed.
+
+## v95.50 — roadmap + deliberate-next-practice markers
+- Added `ROADMAP.md` as the internal home for approved future work, strict next-release scope, later ideas, and parked technical debt.
+- Added concise `CURRENT_STATE.md` so a fresh session can orient to the current source, architecture, evidence boundaries, frozen decisions, and roadmap quickly.
+- Added a restrained Learning Guide section, **Where I’m deliberately building next**, covering executed eval/failure diagnosis, customer communication under pressure, and proving/challenging value. These are explicitly planned practice areas, not demonstrated-capability claims.
+- Updated release discipline to synchronize the packaged source, persistent Library `CURRENT-SOURCE`, and durable source-of-truth state while preventing opportunistic scope creep.
+- Clarified the CSS ownership contract: shared light-theme defaults are centralized; legitimate page/state/dark-mode overrides may remain local.
+- No new Capabilities, case-study expansion, component consolidation, or visual redesign.
