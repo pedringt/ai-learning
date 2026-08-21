@@ -328,3 +328,16 @@ Deliberately constrained content-only release on top of v93.1:
 
 ## v94.17 — Harborstone H1 normalization
 - Reduced the Harborstone H1 again to a normal standalone-artifact scale (40px desktop maximum) rather than a marketing-hero scale.
+
+## v94.18 — Harborstone simulation + transfer framing
+- Made the fictional Harborstone pilot-results block visually unmistakable with a dedicated simulated-results treatment and explicit “practice data, not a real client outcome” banner.
+- Added one concise Workbench callout connecting Harborstone to the same discovery → scope → guardrail → measure → iterate framework practiced in Meridian, making the transferability evidence explicit.
+- No substantive exercise content or pilot reasoning changed.
+
+## v94.19 — applied-judgment home hierarchy
+- Shifted Home toward applied evidence without turning the learning portfolio into a hiring-only landing page.
+- Replaced the meta-heavy exploration block with an applied-work fast path to Meridian and Harborstone.
+- Made Meridian + Harborstone the two primary applied-work cards on Home.
+- Expanded “Judgment in practice” to six decision-change examples, adding the adoption-measurement correction and Harborstone automation-bias insight.
+- Quieted the Home Learning Library preview while keeping the full Library readily accessible.
+- Reframed prominent Meridian scenario wording from “fictional” to “simulated” while preserving honest simulation disclosure.
