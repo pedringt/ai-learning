@@ -72,3 +72,10 @@ Overview / Discovery & Workflow / Measurement & Value / Systems & Guardrails / E
 The main index's pre-v95.42 nested `.shell` / `.topbar` layout is the current visual baseline.
 Do not move the index global header outside that shell without an intentional, screenshot-validated migration.
 Standalone pages should conform to the established index visual frame; do not restructure the index merely to match a standalone page.
+
+
+## CSS maintenance boundary (v95.49)
+- Canonical shared light-theme color/design tokens are owned by `site-shell.css`; do not duplicate them into standalone pages.
+- Regression QA now treats CSS structure as part of the release surface.
+- Discovery's historical normalization layers were mechanically consolidated, but broad page-by-page style/component consolidation remains deferred.
+- Capabilities architecture remains frozen until materially different applied evidence warrants expansion.

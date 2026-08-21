@@ -57,6 +57,50 @@ class Collector(HTMLParser):
         if self._capture:
             self._buf.append(data)
 
+
+def css_brace_issues(text, label):
+    """Return structural CSS brace issues while ignoring comments and quoted strings."""
+    issues=[]
+    depth=0
+    line=1
+    i=0
+    quote=None
+    while i < len(text):
+        ch=text[i]
+        if ch == "\n":
+            line += 1
+        if quote:
+            if ch == "\\":
+                i += 2
+                continue
+            if ch == quote:
+                quote=None
+            i += 1
+            continue
+        if text.startswith("/*", i):
+            end=text.find("*/", i+2)
+            if end == -1:
+                issues.append(f"{label}: unterminated CSS comment near line {line}")
+                break
+            line += text[i:end+2].count("\n")
+            i=end+2
+            continue
+        if ch in ("'", '\"'):
+            quote=ch
+        elif ch == "{":
+            depth += 1
+        elif ch == "}":
+            if depth == 0:
+                issues.append(f"{label}: orphan closing CSS brace at line {line}")
+            else:
+                depth -= 1
+        i += 1
+    if quote:
+        issues.append(f"{label}: unterminated CSS string")
+    if depth:
+        issues.append(f"{label}: {depth} unclosed CSS brace(s)")
+    return issues
+
 def has_anchor(text, frag):
     return f'id="{frag}"' in text or f"id='{frag}'" in text or f'data-page="{frag}"' in text
 
@@ -89,6 +133,9 @@ for path in HTML:
         if u.fragment and not has_anchor(target.read_text(),u.fragment):
             issues.append(f"{path.name}: missing target anchor {href}")
 
+    for n, style_body in enumerate(re.findall(r"<style(?:\s[^>]*)?>(.*?)</style>", text, re.S|re.I), start=1):
+        issues.extend(css_brace_issues(style_body, f"{path.name}: inline style #{n}"))
+
     if path.name in CAPABILITY_PAGES:
         if text.count('class="capability-local-nav"') != 1:
             issues.append(f"{path.name}: capability local-nav count")
@@ -99,6 +146,10 @@ for path in HTML:
     for sheet in ("site-shell.css","site-components.css"):
         if text.count(sheet)!=1:
             issues.append(f"{path.name}: {sheet} count {text.count(sheet)}")
+
+# CSS files are part of the regression surface too.
+for css_path in sorted(ROOT.glob("*.css")):
+    issues.extend(css_brace_issues(css_path.read_text(), css_path.name))
 
 # Known invariants
 if "PRACTICE DATA, NOT A REAL CLIENT OUTCOME" not in (ROOT/"harborstone.html").read_text():

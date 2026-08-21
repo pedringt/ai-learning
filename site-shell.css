@@ -1,6 +1,22 @@
 
 /* v93 shared site shell — single source of truth for global header/navigation */
 :root{
+  /* Canonical shared design tokens. Keep cross-page color changes here. */
+  --ink:#0c0c10;
+  --muted:#626475;
+  --purple:#5336e8;
+  --purple2:#7044f4;
+  --blue:#2b64d8;
+  --cyan:#159eb9;
+  --green:#269650;
+  --gold:#bd8917;
+  --border:#e7e5ef;
+  --soft:#f8f7fc;
+  --softp:#f3f0ff;
+  --white:#fff;
+  --card:#fff;
+  --bg:#fff;
+
   --shell-max:1180px;
   --shell-x:28px;
   --shell-nav-size:15px;
@@ -273,9 +289,6 @@ html{
     min-width:0!important;
     margin-left:auto!important;
   }
-}
-
-
 }
 
 

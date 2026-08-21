@@ -825,3 +825,17 @@ A QA pass may inspect/validate every page, but must not reserialize legacy HTML.
 - Removed v95.41's temporary Capabilities-only 1080px header-width patch so the standalone header returns to the normal shared 1180px frame.
 - Reapplied only safe surgical fixes: canonical Discovery routing, current top-level nav/mobile state, focus-visible, reduced-motion, and system-theme preference.
 - New architecture rule: preserve the intact main-site visual frame and make new/standalone pages conform to it; do not restructure the main index to solve a standalone-page alignment issue unless that migration is intentionally screenshot-tested.
+
+## v95.48 — quick-win learning connections
+- Added a concise Learning Guide topic on how AI changes software delivery: implementation can compress faster than discovery, integration, validation, rollout, and production risk; estimation therefore needs to account for uncertainty, consequence, integration, and verification rather than coding effort alone.
+- Added a few direct Learn → Apply links from retrieval/grounding, software quality/evals, and workflow decomposition to completed Meridian or Harborstone evidence.
+- Tightened Home’s “Short on time?” path around finished evidence: the Meridian one-page readout, Capabilities by skill, and Harborstone as the transfer case.
+- Preserved the v95.47 visual baseline and architecture. No component consolidation or layout correction was attempted.
+
+
+## v95.49 — bounded CSS maintenance
+- Removed the orphaned closing brace in `site-shell.css`.
+- Added CSS brace/comment/string structural validation to `qa_regression.py` for both shared `.css` files and inline `<style>` blocks.
+- Centralized the canonical shared light-theme design tokens in `site-shell.css`; removed duplicate page-local copies from the standalone/capability pages while leaving page-specific styles and dark-mode overrides intact.
+- Consolidated Discovery's accumulated base/normalization/final style layers into one current block without changing rule order, preserving the v95.48 visual cascade.
+- No component consolidation, Capabilities expansion, layout redesign, or index-shell migration was performed.

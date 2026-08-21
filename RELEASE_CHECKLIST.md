@@ -7,7 +7,7 @@ Run before treating a package as the new source of truth.
 python3 qa_regression.py
 ```
 
-The QA script is read-only. It must never parse-and-reserialize site HTML.
+The QA script is read-only. It must never parse-and-reserialize site HTML. It also validates CSS brace/comment/string structure in shared stylesheets and inline `<style>` blocks.
 
 ## Manual visual baseline
 Use `visual-regression-baseline.json`.
