@@ -240,3 +240,10 @@ Deliberately constrained content-only release on top of v93.1:
 - Generalized the remaining CS-specific target capability to applying AI foundations to real business problems across user needs, workflow design, system behavior, quality, adoption, and measurable value.
 - Replaced **Lead the customer work** with **Apply AI to the workflow** where that label was used as a transferable capability.
 - No structural, visual, scenario, evidence, or curriculum changes.
+
+
+## v94.3 — Home flow cleanup
+- Removed the standalone **What I’m bringing forward** card from Home.
+- Folded its strongest idea into **The foundation underneath the portfolio** introduction.
+- Generalized the wording from AI-powered customer workflows to practical AI skills across systems, evaluation, workflows, adoption, measurement, and human oversight.
+- No structural changes beyond consolidating the two adjacent Home messages; no Meridian or curriculum content changed.
