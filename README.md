@@ -472,3 +472,12 @@ Deliberately constrained content-only release on top of v93.1:
 - Capability detail pages remain reachable from the Capabilities landing page; case context remains reachable from Applied Work.
 - This removes the last major navigation element inherited from the earlier Meridian/artifact architecture.
 - No content, evidence, learning, or case changes.
+
+
+## v95.11 — deep-link and sticky-header polish
+- Added global `scroll-padding-top` / `scroll-margin-top` handling so deep-linked headings and sections clear the sticky header on desktop and mobile.
+- This normalizes behavior for Home judgment links into the Working Tracker and Harborstone, including `#rep-findings`, `#success-measurement`, `#validate`, `#adoption-revision`, `#automation-bias`, and `#workflow-decomposition`.
+- Preserved the Tracker behavior that opens a targeted `<details>` section automatically when it is the URL hash.
+- Added a compact contextual return path on the long-form Tracker and Harborstone pages: **Capabilities / Applied Work**.
+- Confirmed Harborstone still retains the explicit **SIMULATED RESULTS · PRACTICE DATA, NOT A REAL CLIENT OUTCOME** disclosure.
+- No substantive case, learning, evidence, or architecture changes.
