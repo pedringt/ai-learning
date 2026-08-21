@@ -1,4 +1,4 @@
-# AI Customer Success Learning Portfolio — v91.0 Final Maintenance
+# Practical AI Learning Portfolio
 
 v90 is the final content + polish pass built from the v89.5 release candidate.
 
@@ -212,3 +212,24 @@ Deliberately constrained content-only release on top of v93.1:
 - Replaced “real (simulated) rep input” with unambiguous simulated-input wording.
 - Agent Flow and legacy Configure wording now consistently describe review/routing signals based on observable evidence rather than vague AI/model self-confidence.
 - No design, architecture, navigation, measurement logic, or substantive learning changes.
+
+
+## v94.0 — practical AI foundations reframe
+- Broadened the portfolio umbrella from a narrowly AI Customer Success learning project to a practical AI foundations learning portfolio.
+- Kept AI Customer Success as the first applied path and Meridian as the primary deep capstone; no completed Meridian evidence was reclassified or overstated.
+- Added a compact six-part foundation map: AI systems literacy, evaluation & quality, workflow diagnosis, adoption & change, measurement & value, and product/business judgment.
+- Added restrained longer-term direction toward AI value realization while preserving optionality into AI product, enablement, and technical post-sale work.
+- Reframed the Learning Library as intentionally transferable across job titles rather than solely AI CS preparation.
+- Expanded the existing AI readiness assessment into an upstream readiness + value exercise: current-workflow mapping, baseline, value hypothesis, readiness, blockers, and evidence needed before scaling.
+- This is a framing/curriculum-language update, not a redesign or a claim of new completed work.
+
+
+## v94.1 — role-agnostic applied AI framing
+- Removed legacy AI Customer Success branding from the shared site shell and artifact browser titles.
+- Kept customer-success language where it describes the actual Meridian support problem, customer outcomes, or genuine CS practice.
+- Reframed Meridian from an “AI Customer Success capstone” to the **Meridian AI Support Pilot**, preserving the scenario and substantive work.
+- Reframed the main lifecycle as **Applied AI delivery: from “we want AI” to measurable business value**.
+- Made the career language exploratory rather than assuming AI Customer Success is the predetermined first role.
+- Generalized the Working Tracker from a fictional “AI Customer Success owner” role to a record of the working process through the pilot.
+- Renamed the planned 90-day customer-success review to a **90-day value review**.
+- No redesign, scenario rewrite, new completed work, or substantive changes to Meridian decisions, metrics, guardrails, evals, or evidence.
