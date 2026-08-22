@@ -880,3 +880,15 @@ A QA pass may inspect/validate every page, but must not reserialize legacy HTML.
 - Audited the other capability pages; none currently use the same bottom-card pattern, so no artificial matching sections were added.
 - No navigation, architecture, capability, case, or substantive content changes.
 
+## v95.55 — mobile SPA header spacing fix
+- Fixed the Home / Applied Work / Learning Guide mobile header at phone widths so the brand, theme control, and page selector no longer compete for one cramped row.
+- On the single-page app shell only, the page selector now gets its own full-width row below the brand/theme row at <=560px.
+- The standalone Capabilities-family header is intentionally unchanged because its mobile treatment is already working well.
+- No content, navigation semantics, capability structure, or desktop layout changes.
+
+## v95.56 — canonical mobile header consistency
+- Standardized the SPA mobile header (Home / Applied Work / Learning Guide) to the same one-row geometry used by the Capabilities-family pages.
+- Removed the v95.55 two-row mobile exception.
+- Kept the brand, theme toggle, and page selector on one row with the same compact sizing/spacing behavior as Capabilities.
+- This is a mobile-header consistency fix only; desktop layout, content, navigation semantics, and page architecture are unchanged.
+

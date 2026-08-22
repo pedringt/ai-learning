@@ -1569,6 +1569,44 @@
 .learning-method-summary strong{
   color:var(--ink)!important;
 }
+
+/* v95.56 — canonical mobile header geometry.
+   Match the one-row Capabilities-family header instead of maintaining a SPA exception. */
+@media(max-width:560px){
+  #ai-cs-mock .topbar .topinner{
+    flex-wrap:nowrap!important;
+    align-items:center!important;
+    gap:10px!important;
+  }
+  #ai-cs-mock .topbar .brand-button{
+    flex:0 1 auto!important;
+    min-width:0!important;
+  }
+  #ai-cs-mock .topbar .brand{
+    font-size:16px!important;
+    white-space:nowrap!important;
+  }
+  #ai-cs-mock .topbar .top-actions{
+    display:flex!important;
+    flex:0 1 auto!important;
+    min-width:0!important;
+    margin-left:auto!important;
+    gap:8px!important;
+  }
+  #ai-cs-mock .topbar .theme-toggle{
+    flex:0 0 auto!important;
+    min-width:40px!important;
+    width:40px!important;
+    height:38px!important;
+    padding:0!important;
+  }
+  #ai-cs-mock .topbar #mobileNav{
+    flex:0 1 156px!important;
+    width:auto!important;
+    min-width:0!important;
+    max-width:156px!important;
+  }
+}
 </style>
 <link href="site-components.css" rel="stylesheet"/>
 </head>
