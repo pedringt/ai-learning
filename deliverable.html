@@ -735,7 +735,7 @@ body .wrap>.v918-orientation{margin-bottom:18px!important}
 <div class="wrap"><div class="v88-artifact-nav"><span class="v912-artifact-label">Meridian evidence</span><a href="tracker.html">Discovery</a><a href="plan.html">Success Plan</a><a href="agent-flow.html">Agent Flow</a><a href="evals.html">Eval Suite</a><a aria-current="page" class="active" href="deliverable.html">Case Readout</a></div>
 <span class="badge">CAPSTONE · ONE-PAGE DELIVERABLE</span>
 <h1>Meridian Capstone Deliverable</h1>
-<p class="lead">A condensed, single-page view of the actual work and decisions across every stage of the capstone. Each stage links out to the full reasoning if you want more depth — this page is the "here's what I actually did" summary.</p><div class="v918-orientation">
+<p class="lead">A condensed, single-page view of the Meridian lifecycle, including completed work, the current VALIDATE checkpoint, and later stages that are intentionally unfinished. Each stage links out to the full reasoning if you want more depth—this page is the “here’s what I actually did” summary.</p><div class="v918-orientation">
 <div>
 <span class="label">What this shows</span>
 <p>A one-page readout of the Meridian case, decisions, evidence, and current recommendation state.</p>
@@ -773,7 +773,7 @@ body .wrap>.v918-orientation{margin-bottom:18px!important}
 <div class="stage done">
 <div class="stagehead"><h2>Configure</h2></div>
 <div class="stagebody">
-    Built the agent's flow logic: classify → (high-risk skips drafting, straight to human) or (retrieve → draft → confidence check) → human review → send → escalation check on replies. Escalation threshold (5+ exchanges) justified with real usage data rather than a guess. Retrieval built on semantic/embedding search instead of keyword matching, to sidestep the knowledge base's existing search problem. The high-risk skip-drafting branch also doubles as a cost control, and model choice per step is being weighed against the PLAN cost ceiling, not quality alone. One notable finding: digging into why reps manually copy-pasted billing status into tickets found it was a simple display-config gap, not a new integration or approval need. Flow diagram is done; the actual no/low-code prototype build is optional, later practice.
+    Built the agent's flow logic: classify → (high-risk skips drafting, straight to human) or (retrieve → draft → evidence-based review routing) → human review → send → escalation check on replies. Escalation threshold (5+ exchanges) was justified with simulated usage data rather than a guess. Retrieval will be selected through representative-query evals; a hybrid semantic + keyword approach with metadata and reranking is a candidate, not a foregone conclusion. The high-risk skip-drafting branch also doubles as a cost control, and model choice per step is being weighed against the PLAN cost ceiling, not quality alone. One notable finding: digging into why reps manually copy-pasted billing status into tickets found it was a simple display-config gap, not a new integration or approval need. Flow diagram is done; the actual no/low-code prototype build is optional, later practice.
     <div style="margin-top:6px"><a class="sevidence" href="configure.html">→ full flow diagram</a></div>
 </div>
 </div>
@@ -808,7 +808,7 @@ body .wrap>.v918-orientation{margin-bottom:18px!important}
 <div class="stagehead"><h2>Expand</h2><span class="pstatus todo">Not started</span></div>
 <div class="stagebody">Use the pilot evidence to make a next-step recommendation to Product. One possible candidate is the KB-cleanup/maintenance agent idea from CONFIGURE, but only if the pilot data gives us a reason to build it.</div>
 </div>
-<p class="footer-note">Last updated: 8/17/2026, end of the CONFIGURE stage. Full reasoning behind every decision above lives in the <a href="tracker.html">working tracker</a>.</p>
+<p class="footer-note">Current checkpoint: VALIDATE in progress; Ticket Classification and Knowledge Retrieval cases are designed, not yet executed. Full reasoning behind every decision above lives in the <a href="tracker.html">working tracker</a>.</p>
 </div>
 <script defer="" src="site-shell.js"></script></body>
 </html>

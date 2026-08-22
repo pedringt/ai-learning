@@ -32,6 +32,9 @@
   border-bottom:1px solid var(--border)!important;
   margin:0!important;
   padding:0!important;
+  width:100vw!important;
+  margin-inline:calc(50% - 50vw)!important;
+  box-sizing:border-box!important;
 }
 .dark .topbar,
 .v88-dark .topbar,
@@ -154,10 +157,57 @@ body.v88-dark .topbar{
   .top-actions{margin-left:auto!important}
 }
 @media(max-width:560px){
-  :root{--shell-x:18px;--shell-brand-size:16px}
-  .topbar .topinner{padding-top:11px!important;padding-bottom:11px!important;gap:10px!important}
-  .theme-toggle{min-width:40px!important;height:38px!important;padding:0 10px!important}
-  #mobileNav,#v922MobileNav{min-width:0!important;max-width:156px!important}
+  :root{--shell-x:14px;--shell-brand-size:15px}
+  .topbar .topinner{
+    padding-top:11px!important;
+    padding-bottom:11px!important;
+    gap:8px!important;
+    flex-wrap:nowrap!important;
+  }
+  .topbar .brand-button{
+    flex:1 1 auto!important;
+    min-width:0!important;
+    overflow:hidden!important;
+  }
+  .topbar .brand{
+    display:block!important;
+    min-width:0!important;
+    overflow:hidden!important;
+    text-overflow:ellipsis!important;
+  }
+  .topbar .top-actions{
+    flex:0 0 auto!important;
+    min-width:0!important;
+    gap:8px!important;
+  }
+  .theme-toggle{
+    flex:0 0 38px!important;
+    min-width:38px!important;
+    width:38px!important;
+    height:38px!important;
+    padding:0!important;
+  }
+  #mobileNav,#v922MobileNav{
+    flex:0 0 clamp(108px,34vw,146px)!important;
+    width:clamp(108px,34vw,146px)!important;
+    min-width:0!important;
+    max-width:146px!important;
+    padding-left:9px!important;
+    padding-right:30px!important;
+    background-position:right 8px center!important;
+  }
+}
+@media(max-width:360px){
+  :root{--shell-x:10px;--shell-brand-size:13.5px}
+  .topbar .topinner{gap:6px!important}
+  .topbar .top-actions{gap:6px!important}
+  .theme-toggle{flex-basis:36px!important;min-width:36px!important;width:36px!important;height:36px!important}
+  #mobileNav,#v922MobileNav{
+    flex-basis:104px!important;
+    width:104px!important;
+    max-width:104px!important;
+    font-size:13px!important;
+  }
 }
 
 /* v95.3 — Evidence menu polish */

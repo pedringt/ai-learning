@@ -740,7 +740,7 @@ body.v919-tracker .wrap>h2:not(:first-of-type){
 <div class="v933-agentic-label">Architecture choice · Planned learning</div>
 <h3>Why this isn’t an autonomous agent</h3>
 <p>Meridian is intentionally a constrained, human-reviewed workflow rather than an open-ended agent. For this pilot, I don’t yet see a need for autonomous planning or dynamic tool use that would justify the additional complexity and risk.</p>
-<p><strong>Planned learning:</strong> Build a genuinely agentic workflow to practice dynamic tool selection and sequencing, state, tool failures and ambiguous outcomes, permissions, adversarial inputs, trajectory-level evals, and safe stopping or escalation.</p>
+<p><strong>Planned learning:</strong> Build a genuinely agentic workflow to practice dynamic tool selection and sequencing, state, tool failures and ambiguous outcomes, permissions, adversarial inputs, and safe stopping or escalation. Evaluate the model and its harness together through repeated trials, multiple graders, trajectory/tool-use review, and verification of the actual environment outcome—not only the final response.</p>
 </div>
 <div class="callout cyan"><b>Not shown as a separate branch:</b> money/security categories (refunds, credits, disputes, password resets, account changes, security actions) skip drafting entirely per the PLAN Guardrails decision — they're folded into the "high-risk category" branch below, which routes straight to a human with no AI draft attempt.</div>
 <div class="diagram">
@@ -883,12 +883,12 @@ body.v919-tracker .wrap>h2:not(:first-of-type){
 <h3>Data sources feeding this flow</h3>
 <ul>
 <li>Ticket content + category (help desk tool)</li>
-<li>Knowledge base articles, via <b>semantic/embedding-based retrieval</b> rather than basic keyword matching — sidesteps the search limitation reps deal with today, though the underlying content problem (~20% unreviewed/stale articles — open question 2) still applies regardless of retrieval method</li>
+<li>Knowledge base articles, using a retrieval design tested against Meridian’s actual query set. A likely candidate is hybrid semantic + keyword retrieval with useful metadata and reranking, but the eval results—not the label on the search method—should determine the design. The underlying content problem (~20% unreviewed/stale articles — open question 2) still applies regardless of retrieval method.</li>
 <li>Conversation history (for the exchange count and mid-thread category check)</li>
 <li>review/routing signal based on observable evidence from the drafting workflow</li>
 <li><b>Billing/account-status data</b> — resolved simpler than expected: this already exists as a synced field on the ticket (nightly sync from the billing system), just not currently enabled for the Tier 1 view. No new integration or approval needed — enabling the existing field for Tier 1 (a standalone recommendation, not pilot-scoped) gives both reps and the agent access to the same already-approved data source. Caveat: up to 24 hrs stale due to the nightly sync.</li>
 </ul>
-<p class="small">Pending validation: real rep input (see Rep Discovery Questions in the <a href="tracker.html">working tracker</a>) may confirm or adjust the workflow-model assumption this flow is built on (open question 4), and could refine the escalation logic further. The billing field (above) folds into the "retrieve relevant knowledge" step once enabled — no separate node needed. Pilot targets that depend on this flow (first-response time, quality) are locked in the <a href="plan.html">PLAN deliverable</a>.</p>
+<p class="small">Current validation state: the flow incorporates simulated rep-discovery findings, including the explicit-human-request escalation rule and the simpler billing-field configuration fix. A real pilot would still validate the workflow model and escalation logic with frontline reps before launch. The billing field (above) folds into the “retrieve relevant knowledge” step once enabled—no separate node is needed. Pilot targets that depend on this flow are documented in the <a href="plan.html">PLAN deliverable</a>.</p>
 <p class="small" style="margin-top:36px;padding-top:16px;border-top:1px solid var(--border)"><a href="tracker.html">Working tracker (full reasoning log)</a>  ·  <a href="plan.html">PLAN deliverable</a>  ·  <a href="deliverable.html">One-page deliverable</a></p>
 </main><p class="v932-routing-note"><strong>Signal design: </strong>This is not the model giving itself a confidence score. It’s a review/routing signal based on evidence the system can actually observe: retrieval support, missing required information, source conflicts, and rule or guardrail matches.</p>
 <script defer="" src="site-shell.js"></script></body>

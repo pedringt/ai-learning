@@ -1,6 +1,6 @@
 # Current State
 
-- **Source of truth:** v95.56
+- **Source of truth:** v95.58
 - **Public architecture:** Home / Capabilities / Applied Work / Learning Guide
 - **Positioning:** Practical AI Learning Portfolio; AI Customer Success is an important application/career context, not the sole framing.
 - **Primary applied case:** Meridian — deep-dive simulated B2B SaaS support practice.

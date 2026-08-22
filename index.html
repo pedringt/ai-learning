@@ -1570,43 +1570,6 @@
   color:var(--ink)!important;
 }
 
-/* v95.56 — canonical mobile header geometry.
-   Match the one-row Capabilities-family header instead of maintaining a SPA exception. */
-@media(max-width:560px){
-  #ai-cs-mock .topbar .topinner{
-    flex-wrap:nowrap!important;
-    align-items:center!important;
-    gap:10px!important;
-  }
-  #ai-cs-mock .topbar .brand-button{
-    flex:0 1 auto!important;
-    min-width:0!important;
-  }
-  #ai-cs-mock .topbar .brand{
-    font-size:16px!important;
-    white-space:nowrap!important;
-  }
-  #ai-cs-mock .topbar .top-actions{
-    display:flex!important;
-    flex:0 1 auto!important;
-    min-width:0!important;
-    margin-left:auto!important;
-    gap:8px!important;
-  }
-  #ai-cs-mock .topbar .theme-toggle{
-    flex:0 0 auto!important;
-    min-width:40px!important;
-    width:40px!important;
-    height:38px!important;
-    padding:0!important;
-  }
-  #ai-cs-mock .topbar #mobileNav{
-    flex:0 1 156px!important;
-    width:auto!important;
-    min-width:0!important;
-    max-width:156px!important;
-  }
-}
 </style>
 <link href="site-components.css" rel="stylesheet"/>
 </head>
@@ -1793,20 +1756,21 @@
 <p class="section-lead">Each stage stays compact until opened. <strong>Core</strong> items deserve focused learning; <strong>Reference</strong> items are useful context or just-in-time depth; <strong>Practice</strong> turns concepts into judgment. Resource links can evolve without changing the roadmap.</p>
 
 <details class="learning-stage" id="ai-foundations" open>
-<summary><span class="stage-num">01</span><span class="stage-main"><b>AI Systems &amp; Foundations</b><small>Understand how modern AI systems behave, what sits around the model, and where failures come from.</small><span class="topic-preview">LLM behavior · context · grounding/RAG · tools · agents · MCP · structured outputs · reliability</span></span></summary>
+<summary><span class="stage-num">01</span><span class="stage-main"><b>AI Systems &amp; Foundations</b><small>Understand how modern AI systems behave, what sits around the model, and where failures come from.</small><span class="topic-preview">LLM behavior · context engineering · grounding/RAG · tools · agents · MCP · structured outputs · reliability</span></span></summary>
 <div class="stage-body">
   <div class="stage-group"><h3>Core</h3>
     <div class="learning-item"><b>How LLMs behave</b><p>Probabilistic generation, context dependence, hallucination, instruction following, uncertainty, and practical model limitations.</p></div>
     <div class="learning-item"><b>Model vs. AI application</b><p>Separate model behavior from retrieval, instructions, tools, orchestration, data, permissions, and product logic.</p></div>
-    <div class="learning-item"><b>Retrieval &amp; grounding</b><p>RAG, source selection, freshness, metadata, conflicting sources, citations, and when simpler context injection is enough. <a href="tracker.html#validate"><strong>Applied in Meridian →</strong></a></p></div>
+    <div class="learning-item"><b>Context engineering</b><p>Decide what instructions, retrieved evidence, tools, state, prior results, and other context the model receives at each step—and keep that context relevant, trustworthy, and proportionate to the task.</p></div>
+    <div class="learning-item"><b>Retrieval &amp; grounding</b><p>RAG, source selection, freshness, metadata, conflicting sources, citations, and when simpler context injection is enough. Retrieval should be tested against the real query set; the right design may combine semantic and keyword search, metadata filters, reranking, or safe fallback rather than assuming one search method is universally best. <a href="tracker.html#validate"><strong>Applied in Meridian →</strong></a></p></div>
     <div class="learning-item"><b>Tool use &amp; structured outputs</b><p>Actions, schemas, validation, permissions, failures, recovery, and reliable handoffs between model output and software.</p></div>
-    <div class="learning-item"><b>Agentic systems</b><p>Autonomy levels, task decomposition, state/memory, stopping conditions, verification, delegation, error recovery, and when an agent is the wrong architecture.</p></div>
+    <div class="learning-item"><b>Agentic systems &amp; harnesses</b><p>Autonomy levels, task decomposition, state/memory, stopping conditions, verification, delegation, error recovery, and when an agent is the wrong architecture. Treat the harness—context management, tools, permissions, orchestration, and recovery—as part of the system being designed and evaluated.</p></div>
   </div>
   <div class="stage-group"><h3>Reference / deeper dive</h3>
     <div class="learning-item compact"><b>MCP &amp; tool protocols</b><p>How models connect to tools and context through standardized interfaces; understand the architecture without treating one protocol as permanent.</p></div>
     <div class="learning-item compact"><b>Orchestration &amp; production tradeoffs</b><p>Routing, fallbacks, caching, latency, reliability, model choice, cost/performance, and state across longer workflows.</p></div>
   </div>
-  <div class="stage-group practice callout-practice"><h3>Practice</h3><p>Explain an AI application as a system rather than “the model”; diagnose whether a failure came from instructions, retrieval, tools, permissions, context, or generation; sketch an agent vs. deterministic-workflow decision.</p></div>
+  <div class="stage-group practice callout-practice"><h3>Practice</h3><p>Explain an AI application as a system rather than “the model”; diagnose whether a failure came from instructions, retrieval, tools, permissions, context, or generation; decide whether the best response is AI, a hybrid design, conventional software, process/data repair, or no build.</p></div>
 </div>
 </details>
 
@@ -1927,7 +1891,7 @@
   </div>
   <div class="learning-orientation-row">
     <span class="learning-orientation-label">Prove or challenge value</span>
-    <p>If results are weak, diagnose the cause before blaming the model. Check model performance, workflow fit, adoption, process friction, measurement, and use-case choice; then decide whether to iterate, narrow the scope, or stop.</p>
+    <p>If results are weak, diagnose the cause before blaming the model. Check model performance, workflow fit, adoption, process friction, measurement, and use-case choice; then decide whether to iterate, narrow the scope, repair the process or data, replace AI with conventional software, or stop.</p>
   </div>
 </section>
 

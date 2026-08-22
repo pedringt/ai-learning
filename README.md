@@ -892,3 +892,18 @@ A QA pass may inspect/validate every page, but must not reserialize legacy HTML.
 - Kept the brand, theme toggle, and page selector on one row with the same compact sizing/spacing behavior as Capabilities.
 - This is a mobile-header consistency fix only; desktop layout, content, navigation semantics, and page architecture are unchanged.
 
+## v95.57 — shared-shell repair + current-practice maintenance
+- Restored the complete deployable source package with the shared shell/component assets and Vercel clean-URL configuration.
+- Made the shared shell the authoritative responsive header treatment across the SPA and standalone pages; removed the Home-only v95.56 exception, corrected full-width desktop geometry, and allowed the mobile brand/select controls to shrink safely without horizontal overflow.
+- Corrected stale Meridian stage/status language in the Case Readout, Agent Flow, Configure compatibility page, and Working Tracker.
+- Clarified that any post-pilot reduction in review would be selective and evidence-earned for low-risk, well-supported ticket types—not broad removal of human review.
+- Reframed retrieval as an eval-driven design choice that may use hybrid semantic + keyword search, metadata, reranking, simpler context injection, or safe fallback.
+- Added explicit context-engineering and agent-harness learning language, including repeated trials, multiple graders, trajectory/tool-use review, and outcome verification for future agentic evals.
+- Formalized AI, hybrid, conventional software, process/data repair, and no-build as valid discovery outcomes; value decisions may also replace AI with conventional software.
+- Preserved the frozen architecture, existing evidence hierarchy, simulated-work disclosures, and current Meridian eval status.
+
+## v95.58 — top-level destination rhythm correction
+- Removed the visible vertical jump between Capabilities and the SPA’s Applied Work / Learning Guide destinations.
+- Corrected a CSS-precedence conflict where the older high-specificity v95.35 wrapper rule overrode the intended v95.40 Capabilities top spacing.
+- Capabilities now uses the same `66px` desktop destination offset and corresponding `42px` compact/mobile offset as the canonical destination rhythm.
+- No header geometry, content, navigation semantics, capability structure, or architecture changes.

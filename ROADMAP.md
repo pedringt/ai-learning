@@ -1,55 +1,55 @@
-# Practical AI Learning Portfolio — Roadmap
+# AI PM Learning & Portfolio — Roadmap
 
-This is the internal parking lot for worthwhile additions that do not yet have a permanent home.
-It is **not** the public Learning Guide and **not** release history. When an item is completed or
-incorporated elsewhere, remove it here and record shipped work in the README.
+## Core Decision Principle (Added Aug 22, 2026)
 
-## NEXT RELEASE
-No items approved yet after v95.56. Keep this section intentionally small.
+**Use the simplest reliable system.** AI is one option among many—not the default.
 
-## NEXT UP
-- **Difficult AI customer/stakeholder interaction practice — high priority.** Practice a realistic
-  AI-CS escalation under pressure: explain failures without hiding behind jargon, de-escalate,
-  set boundaries, preserve trust, decide what to promise/not promise, escalate internally, and
-  define the recovery/follow-up plan. Prefer interactive practice first; preserve only strong
-  resulting evidence.
-- **Execute a small eval run — high priority.** Run roughly 10–20 representative Meridian cases,
-  inspect outputs, record pass/fail and failure type, diagnose causes, revise, and rerun where useful.
-- **Stakeholder-facing evidence.** Let one or two concise artifacts emerge from real practice,
-  such as an executive pilot-escalation/update readout or a response/support plan for a skeptical
-  frontline user. Do not manufacture a large collateral set.
-- **AI CS when value is not materializing.** Diagnose weak value/ROI across model performance,
-  workflow fit, adoption, process design, instrumentation, use-case choice, and expectations;
-  practice deciding whether to iterate, narrow, pause, or stop.
-- **AI change management / the messy human side.** Deepen practical work on resistance, job fears,
-  trust/overtrust, incentives, champions/resisters, training, workflow disruption, expectation-setting,
-  system boundaries, and adoption beyond raw usage.
-- **Interview-story extraction.** Preserve 5–7 strong evidence-driven “changed my mind” stories for
-  interview preparation.
-- **AI Customer Success role narrative.** Be able to explain why AI CS specifically is appealing,
-  how prior software/QA/PM experience creates credibility, and why the customer/value-realization
-  side is genuinely desirable—not merely a path to Product or Engineering.
+- Always ask: "Should AI be used here at all?" during workflow discovery
+- Compare AI against deterministic software using: accuracy, risk, cost, maintenance, latency, operational burden
+- Value Realization outcomes expand to: scale, revise, narrow, **replace with conventional software**, or stop
+- Future Workbench exercise: make a deliberate recommendation for non-AI software or process improvement
+- Strengthen Modern Software & SaaS refresher: recognize what APIs, rules engines, database logic, workflow automation, and ordinary application development already solve well
 
-## LATER
-- **Small agentic workflow exercise.** Hands-on practice with dynamic/tool-using behavior,
-  observability, stopping/failure handling, and evaluation. Keep it small and learning-led.
-- **Materially differentiated applied case.** Likely HR-oriented, but only when it contributes
-  genuinely new evidence rather than increasing case count.
-- **How AI changes software delivery.** Continue applying the Learning Guide concept naturally:
-  implementation may compress faster than discovery, integration, validation, rollout, and risk;
-  estimation should account for uncertainty, consequence, integration, and verification.
+*This reinforces your CS background (solutions that work > shiny tech) and your longer-term AI Value Realization direction.*
 
-## PARKED / TECHNICAL DEBT
-- Broad design-system/component consolidation remains deferred. If eventually undertaken, define
-  canonical shared primitives and migrate Capabilities first without visible redesign.
-- The slight Capabilities-family positioning shift remains known cosmetic debt; do not patch it
-  independently.
-- Keep Capabilities architecture frozen until materially different applied evidence warrants expansion.
-- Continue natural Learning Guide → applied-evidence connections as work earns them; do not
-  manufacture examples to populate topics.
+---
 
-## Working rules
-- New nonessential ideas normally land here instead of expanding an active release.
-- `NEXT RELEASE` is the approved release scope; regressions and required dependencies are exceptions.
-- External review is input, not instruction: verify the claim, decide whether it is a meaningful
-  problem, and compare its value against substantive learning/evidence work before acting.
+## Meridian Stakeholder Artifacts — Current Work
+
+### ✅ COMPLETE
+- **Executive Summary** (v3 locked) — Problem, Approach, Why It Matters, Risks, Targets (Week 8), Decision Gate
+  - Integrated in v95.57: PLAN now clarifies that any post-pilot review change would be selective, evidence-earned automation for low-risk, well-supported ticket types—not broad removal of human review.
+
+### IN PROGRESS
+- **Week 8 Pilot Readout** — What worked, what failed, what changed, what's next
+  - Status: Not started
+  - Paige reasoning required: What are the plausible failure modes? What would success look like operationally?
+  
+### QUEUED
+- **Adoption Playbook** (4-week go-live) — How to drive adoption, not just measure it
+- **Lessons Learned** — Honest reflection, what you'd do differently
+
+---
+
+## After Stakeholder Artifacts
+
+- [ ] Execute 12 designed eval cases (8 Classification + 4 Retrieval); score, diagnose, revise, rerun
+- [ ] Design remaining 3 eval areas (Draft Quality, Escalation, Confidence)
+- [ ] Interview story extraction (5–7 "changed my mind" moments)
+- [ ] Supporting skills: difficult customer interactions, change management, role narrative
+
+---
+
+## How This Principle Shows Up in Your Work
+
+**Already in Meridian:**
+- Guardrails skip money/security entirely (not trying to automate high-risk decisions)
+- Mandatory human review (hybrid, not autonomous)
+- "Should AI be used" is baked into classification logic (routes ambiguous cases to human)
+
+**Coming in portfolio:**
+- Workbench exercise: recommend process improvement or conventional software over AI
+- Modern Software refresher: when do you use rules engines, database logic, or workflow automation instead of LLMs?
+- Future case studies: show the reasoning for *not* using AI
+
+**Priority:** This doesn't change your near-term plan. Finish Meridian VALIDATE (eval execution + remaining eval design) first. Then integrate this principle into your interview stories and longer-term portfolio thinking.

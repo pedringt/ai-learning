@@ -256,6 +256,12 @@ body > main.wrap:has(> .capability-local-nav){
 .capability-shell{
   padding-top:66px!important;
 }
+/* The older v95.35 :has() wrapper rule is intentionally more specific for
+   legacy capability artifacts. Reassert the top-level Capabilities destination
+   with equal-or-greater specificity so it shares the SPA destination rhythm. */
+body > main.wrap.capability-shell{
+  padding-top:66px!important;
+}
 .capability-shell > .page-intro{
   max-width:900px!important;
   min-height:0!important;
@@ -271,6 +277,9 @@ body > main.wrap:has(> .capability-local-nav){
 }
 @media(max-width:760px){
   .capability-shell{
+    padding-top:42px!important;
+  }
+  body > main.wrap.capability-shell{
     padding-top:42px!important;
   }
   .capability-shell > .page-intro{
@@ -377,4 +386,3 @@ body > main.wrap:has(> .capability-local-nav){
 @media(max-width:600px){
   .capability-closing-reflection{padding-left:14px}
 }
-
