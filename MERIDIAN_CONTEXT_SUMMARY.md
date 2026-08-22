@@ -1,86 +1,100 @@
-# Meridian Capstone — Complete Context Summary
+# Meridian — Durable Context Handoff
 
-## The Scenario
-- **Company:** Meridian Support Operations (simulated B2B SaaS)
-- **Team:** ~450 employees, 14 support reps (8 Tier 1, 6 Tier 2)
-- **Problem:** First-response time increased (2 hrs → 8+ hrs), CSAT dropped (91% → 82%)
-- **Pilot:** AI-assisted support workflow for Tier 1, mandatory human review of all AI output
+Use this file to continue Meridian work without relying on older chats. `CURRENT_STATE.md` governs the full site; this file contains Meridian-specific product and learning context.
 
-## The Agent (CONFIGURE)
-**Type:** Drafting tool + human reviewer (NOT autonomous)
+## Scenario and evidence boundary
 
-**Flow:**
-1. Ticket arrives
-2. AI classifies into category (Account & Access, Billing, Product How-To, Technical, Integrations, Other/Needs Review)
-3. **High-risk category?** (money/security) → Skip drafting, route straight to human
-4. **Standard category** → Retrieve KB + billing/account data, generate draft
-5. Assess confidence (based on retrieval quality, missing info, source conflicts, guardrail matches)
-6. Route for human review based on confidence + risk
-7. Human chooses: approve / edit / start over
-8. **Multi-turn escalation?** (5+ exchanges, upset customer, explicit escalation request, risk category mid-thread) → Escalate to human
+- Simulated B2B SaaS organization, roughly 450 employees.
+- Support team: 14 reps, including eight Tier 1 and six Tier 2.
+- Simulated problem: monthly ticket volume grew to roughly 2,200; first-response time worsened from under two hours to over eight; CSAT declined from 91% to 82%.
+- Proposed pilot: AI-assisted Tier 1 support with mandatory human review.
+- Meridian is not a real client implementation. Lab runs are real local prototype activity, but they are not customer, operational, or business outcomes.
 
-## Success Measurement (PLAN)
-| Metric | Baseline | Pilot Target | Notes |
-|--------|----------|--------------|-------|
-| AHT | 12.4 min | Hold steady | Human review caps savings |
-| First-response | >8 hrs | ~7 hrs | Via timestamp proxy, not rep tagging |
-| CSAT | 82% (current), 91% (pre-growth) | Monitor only | Not a hard pilot target |
-| **Quality** | N/A | ≥80% approved without substantive edit | Launch/scale gate |
-| **Human Intervention** | N/A | ≤20% need substantive correction | Complement of Quality |
-| **Adoption** | N/A | Eligible-workflow penetration + repeat use | NOT blanket daily use |
-| **Guardrails** | N/A | Zero-tolerance for money/security breaches | Single incident = pause category |
+## Proposed operating design
 
-## Key Decisions Locked In
-- **KB retrieval:** Semantic/embedding-based (not keyword matching)
-- **Billing access:** Use existing nightly-synced field (no new integration)
-- **High-risk categories:** Skip AI drafting entirely (refunds, credits, disputes, password resets, account changes, security actions)
-- **Default to escalate** for anything ambiguous; refinement allowed if over-escalating
-- **Escalation threshold:** 5+ exchanges (justified by 90-day data showing ~12% of tickets go beyond 4 exchanges)
-- **Classification rule:** Classify by first operational blocker in multi-issue tickets, not customer's category selection
-- **Adoption metric:** Shift from "daily use" to measuring eligible-workflow use, appropriate non-use, return rate
+1. A Tier 1 ticket enters the workflow.
+2. The system checks eligibility and high-risk boundaries independently of classification.
+3. Eligible tickets are classified into Account & Access, Billing, Product How-To, Technical Issue, Integrations, or Other / Needs Review.
+4. High-risk financial actions, security concerns, and protected account changes skip drafting and route to a human.
+5. Standard eligible tickets retrieve approved knowledge and, where appropriate, permitted account/configuration context.
+6. The system creates a bounded draft with source evidence.
+7. Confidence/review routing considers source quality, conflicts, missing information, ambiguity, and guardrail state.
+8. A human reviews every draft during the pilot and may approve, edit, start over, or escalate.
 
-## What Changed During Discovery
-1. **Adoption metric:** Initially leaned toward "8/8 reps use daily" → Revised to "eligible-workflow penetration + appropriate non-use"
-2. **First-response target:** Originally ~6 hrs → Revised to ~7 hrs when rep discovery showed only 2/8 reps do quick-ack workflow (not the mixed model PM assumed)
-3. **Classification model:** "Ambiguous = escalate" → Added "Other/Needs Review" category per actual Meridian taxonomy
-4. **Retrieval expectations:** Fair to expect model to know source freshness only if metadata exists → Escalate conflicting sources without it
+The proposed production retrieval approach remains open and eval-driven. It may use keyword, semantic, hybrid, metadata filtering, reranking, direct context injection, or safe fallback. Do not describe semantic retrieval as locked.
 
-## Open Questions Still Flagged
-- **Q5 (Draft Scope):** Legal may clear AI drafting for money categories later — if so, add those back into Quality scope
-- **Q9 (Measurement Ownership):** Dev team builds instrumentation spec; Paige owns raw data interpretation
-- **Q16 (Config-dependent answers):** Some how-to answers need per-customer CRM/config data (e.g., plan-tier features)
+## Durable decisions and changes of mind
 
-## Eval Architecture (VALIDATE)
-**Five areas planned; two designed:**
+- Adoption changed from blanket daily use to eligible-workflow penetration, repeat use, appropriate non-use, and qualitative reasons for non-use.
+- Manual workflow tagging was rejected when existing timestamps could provide more reliable measurement.
+- A copy/paste complaint was recognized as a display/configuration problem rather than automatically becoming an AI integration.
+- Ambiguous tickets have an explicit Other / Needs Review route.
+- Classification is not the sole safety control; high-risk detection must work independently.
+- Stale or conflicting knowledge is often a source-governance/system problem rather than a prompt problem.
+- Strong-looking efficiency results must be checked for automation bias, rework, and quality degradation.
+- Any future reduction in human review must be selective and earned by evidence for low-risk, well-supported categories.
 
-### 1. Ticket Classification (DESIGNED — 8 cases)
-**Straightforward (5):** Locked-out account → Account & Access; Double billing → Billing; etc.
-**Edge cases (3):** 
-- Customer selects wrong category but describes billing issue → Classify as Billing (evidence beats hint)
-- Vague "I can't generate reports" → Other/Needs Review
-- Multi-issue (login + billing + reporting) → Account & Access (first blocker)
+## Measurement design
 
-### 2. Knowledge Retrieval (DESIGNED — 4 cases)
-**Scoring:** Source Selection | Safe Fallback | Grounded Use (use N/A for inapplicable)
+The pilot should evaluate several signals together rather than optimizing one metric:
 
-**Cases:**
-- Plan-tier access question → Retrieve KB-106
-- Missing dashboard data → Use KB-108, resist tempting KB-101
-- Custom email-integration updates → No authoritative source → Escalate
-- Monthly-report setup conflict (KB-101 vs. stale KB-107) → Don't choose arbitrarily without authority metadata → Escalate
+- First-response and resolution time.
+- Draft approval without substantive correction and correction/rework rate.
+- Grounding/source quality.
+- Guardrail recognition and no-draft behavior.
+- Escalation appropriateness.
+- CSAT and reopen/customer-follow-up patterns.
+- Eligible-workflow use, repeat use, appropriate non-use, friction, and trust.
+- Cost and operational burden where defensible.
 
-**Key insight:** Stale-knowledge handling is often a system-design problem, not just a model-intelligence problem.
+Current numbers on the site are simulated baselines or proposed targets. The Lab’s activity counts are learning metrics only.
 
-### 3–5. Remaining areas (NOT YET DESIGNED)
-- Draft Response Quality (factuality, policy adherence, tone, completeness)
-- Appropriate Human Escalation (financial actions, security, explicit escalation requests, repeated exchanges)
-- Confidence & Review Routing (calibration, whether low-confidence gets scrutinized)
+## Meridian Lab architecture
 
-## Critical Reasoning Principles
-- Classification accuracy is separate from safety — a guardrail failure cannot depend on correct classification alone
-- Offline evals test controlled scenarios (classification, retrieval, drafting); production signals (reopen rates, real edits, customer pushback) belong in post-launch monitoring
-- Adopted "root cause: KB" tag for failures traced to stale/conflicting content, to build evidence for a KB-automation proposal later (EXPAND-stage idea)
+Routes:
 
----
+1. Support Tool — try the proposed rep workflow with fictional tickets.
+2. Eval Runner — exploratory inputs plus a fixed regression suite.
+3. Knowledge Base — inspect the bundled sample sources and freshness status.
+4. Learning Log — preserve objectives, scoring, diagnosis, reflection, next questions, and rerun lineage.
+5. Learning Dashboard — summarize experiments, diagnosed runs, linked reruns, and next questions.
 
-**Next step:** Run and score the 4 designed cases (Classification + Retrieval), diagnose failures, revise system, rerun. Then design the remaining 3 eval areas.
+Technical contract:
+
+- `meridian-core.js` owns the bundled knowledge, fixed cases, deterministic classification/retrieval/guardrails/drafting behavior, and browser-local workspace/run schemas.
+- `lab.js` renders views and interactions.
+- `lab.css` owns the Lab UI.
+- Support Tool and Eval Runner must call the same shared pipeline.
+- Browser-local data should be backed up with JSON export. No model API, database, authentication, or production telemetry exists today.
+- Imported workspace and run records are shape-validated before storage; core thresholds, high-risk guardrails, persistence, and import behavior have executable regression coverage.
+
+## Current eval state
+
+Runnable fixed suite:
+
+- Eight classification cases.
+- Four retrieval cases.
+
+The deterministic Lab is a learning scaffold, not a claim that these rules represent the final AI system. A deliberately failing or surprising case is useful when it produces diagnosis and revision.
+
+Coverage still to deepen:
+
+- Draft quality.
+- Appropriate human escalation, including explicit requests and multi-turn frustration.
+- Confidence and review routing.
+- Source conflict and unknown/missing source behavior.
+- Multi-issue classification and operational consequences.
+
+## Immediate next step
+
+Complete one bounded experiment cycle in the Lab:
+
+1. Write one experiment objective.
+2. Run a representative subset of fixed cases and a few targeted exploratory cases.
+3. Score and diagnose results.
+4. Make one justified change.
+5. Use linked reruns.
+6. Record the conclusion and next question.
+7. Export the workspace backup.
+
+Only after this exists should the portfolio decide how to present MVP runs and results separately from eval design.

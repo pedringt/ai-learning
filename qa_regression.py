@@ -6,13 +6,16 @@ This script MUST NOT rewrite HTML.
 from pathlib import Path
 from urllib.parse import urlparse
 from html.parser import HTMLParser
-import re, collections, sys
+import re, collections, subprocess, sys
 
 ROOT = Path(__file__).resolve().parent
-HTML = sorted(ROOT.glob("*.html"))
+HTML = sorted(ROOT.rglob("*.html"))
 
 EXPECTED_NAV = ["Home","Capabilities","Applied Work","Learning Guide"]
-CAPABILITY_PAGES = {"capabilities.html","discovery.html","plan.html","agent-flow.html","evals.html"}
+CAPABILITY_PAGES = {"capabilities.html","discovery-workflow.html","measurement-value.html","systems-guardrails.html","evals-quality.html"}
+REDIRECT_PAGES = {"agent-flow.html","configure.html","deliverable.html","discovery.html","evals.html","plan.html","eval-runner.html"}
+SUBSTANTIVE_PAGES = {p.name for p in HTML} - REDIRECT_PAGES
+MERIDIAN_PAGES = {"case-readout.html","tracker.html","measurement-plan.html","system-flow.html","eval-work.html"}
 
 class Collector(HTMLParser):
     def __init__(self):
@@ -25,11 +28,18 @@ class Collector(HTMLParser):
         self.current_label=None
         self.in_select=False
         self.option_labels=[]
+        self.main_count=0
+        self.main_close_count=0
+        self.h1_count=0
+        self.description_count=0
         self._capture=None
         self._buf=[]
     def handle_starttag(self, tag, attrs):
         d=dict(attrs)
         if "id" in d: self.ids.append(d["id"])
+        if tag=="main": self.main_count+=1
+        if tag=="h1": self.h1_count+=1
+        if tag=="meta" and d.get("name","").lower()=="description": self.description_count+=1
         if tag=="a" and "href" in d: self.hrefs.append(d["href"])
         if tag=="nav" and d.get("aria-label")=="Primary pages":
             self.in_nav=True; self.nav_depth=1
@@ -42,6 +52,7 @@ class Collector(HTMLParser):
         if self.in_select and tag=="option":
             self._capture="option"; self._buf=[]
     def handle_endtag(self, tag):
+        if tag=="main": self.main_close_count+=1
         if self._capture=="nav" and tag in ("a","button"):
             self.nav_labels.append(" ".join("".join(self._buf).split()))
             self._capture=None
@@ -107,15 +118,23 @@ def has_anchor(text, frag):
 issues=[]
 for path in HTML:
     text=path.read_text()
+    label=path.relative_to(ROOT).as_posix()
     c=Collector(); c.feed(text)
 
     dup=[x for x,n in collections.Counter(c.ids).items() if n>1]
-    if dup: issues.append(f"{path.name}: duplicate IDs {dup}")
+    if dup: issues.append(f"{label}: duplicate IDs {dup}")
 
     if c.nav_labels and c.nav_labels!=EXPECTED_NAV:
-        issues.append(f"{path.name}: desktop nav {c.nav_labels}")
+        issues.append(f"{label}: desktop nav {c.nav_labels}")
     if c.option_labels and c.option_labels!=EXPECTED_NAV:
-        issues.append(f"{path.name}: mobile nav {c.option_labels}")
+        issues.append(f"{label}: mobile nav {c.option_labels}")
+
+    if path.name in SUBSTANTIVE_PAGES and path.name != "index.html" and (c.main_count != 1 or c.main_close_count != 1):
+        issues.append(f"{label}: expected one balanced main landmark, found {c.main_count} open/{c.main_close_count} close")
+    if path.name in SUBSTANTIVE_PAGES and c.h1_count != 1:
+        issues.append(f"{label}: expected one document h1, found {c.h1_count}")
+    if path.name in SUBSTANTIVE_PAGES and c.description_count != 1:
+        issues.append(f"{label}: expected one meta description, found {c.description_count}")
 
     for href in c.hrefs:
         if not href or href.startswith(("http://","https://","mailto:","tel:","javascript:")):
@@ -123,18 +142,21 @@ for path in HTML:
         if href.startswith("#"):
             frag=href[1:]
             if frag and not has_anchor(text, frag):
-                issues.append(f"{path.name}: missing same-page anchor {href}")
+                issues.append(f"{label}: missing same-page anchor {href}")
             continue
         u=urlparse(href)
-        target=ROOT/u.path
+        target=(path.parent/u.path).resolve()
+        if ROOT not in target.parents and target != ROOT:
+            issues.append(f"{label}: link escapes site root {href}")
+            continue
         if not target.exists():
-            issues.append(f"{path.name}: missing file {href}")
+            issues.append(f"{label}: missing file {href}")
             continue
         if u.fragment and not has_anchor(target.read_text(),u.fragment):
-            issues.append(f"{path.name}: missing target anchor {href}")
+            issues.append(f"{label}: missing target anchor {href}")
 
     for n, style_body in enumerate(re.findall(r"<style(?:\s[^>]*)?>(.*?)</style>", text, re.S|re.I), start=1):
-        issues.extend(css_brace_issues(style_body, f"{path.name}: inline style #{n}"))
+        issues.extend(css_brace_issues(style_body, f"{label}: inline style #{n}"))
 
     if path.name in CAPABILITY_PAGES:
         if text.count('class="capability-local-nav"') != 1:
@@ -142,24 +164,109 @@ for path in HTML:
         if "capability-shell" not in text:
             issues.append(f"{path.name}: capability-shell missing")
 
+    if path.name in MERIDIAN_PAGES:
+        if text.count('class="meridian-section-nav"') != 1:
+            issues.append(f"{path.name}: Meridian reading nav count")
+        if path.name != "eval-runner.html" and text.count('class="artifact-footer-nav"') != 1:
+            issues.append(f"{path.name}: Meridian footer nav count")
+        if "All Applied Work" in text:
+            issues.append(f"{path.name}: obsolete All Applied Work link")
+        if text.count('class="meridian-page-shell') != 1:
+            issues.append(f"{path.name}: canonical Meridian shell count")
+        if text.count('class="meridian-heading"') != 1:
+            issues.append(f"{path.name}: canonical Meridian heading count")
+        if text.count('class="meridian-case-hero"') != 1:
+            issues.append(f"{path.name}: canonical Meridian hero count")
+        hero_match=re.search(r'<header class="meridian-case-hero">(.*?)</header>',text,re.S)
+        if not hero_match or hero_match.group(1).count('class="meridian-context-item"') != 4:
+            issues.append(f"{path.name}: Meridian hero context row must contain four items")
+
     # shared stylesheets should be present exactly once
-    for sheet in ("site-shell.css","site-components.css"):
-        if text.count(sheet)!=1:
-            issues.append(f"{path.name}: {sheet} count {text.count(sheet)}")
+    if path.parent == ROOT and 'http-equiv="refresh"' not in text:
+        for sheet in ("site-shell.css","site-components.css"):
+            if text.count(sheet)!=1:
+                issues.append(f"{path.name}: {sheet} count {text.count(sheet)}")
 
 # CSS files are part of the regression surface too.
-for css_path in sorted(ROOT.glob("*.css")):
-    issues.extend(css_brace_issues(css_path.read_text(), css_path.name))
+for css_path in sorted(ROOT.rglob("*.css")):
+    issues.extend(css_brace_issues(css_path.read_text(), css_path.relative_to(ROOT).as_posix()))
 
 # Known invariants
 if "PRACTICE DATA, NOT A REAL CLIENT OUTCOME" not in (ROOT/"harborstone.html").read_text():
     issues.append("harborstone.html: simulation disclosure missing")
 
-if "max-width:560px" not in (ROOT/"agent-flow.html").read_text():
-    issues.append("agent-flow.html: compact flow sizing missing")
+if "max-width:560px" not in (ROOT/"system-flow.html").read_text():
+    issues.append("system-flow.html: compact flow sizing missing")
 
-if 'href="discovery.html"' not in (ROOT/"capabilities.html").read_text():
-    issues.append("capabilities.html: Discovery & Workflow card not routed to discovery.html")
+if 'href="discovery-workflow.html"' not in (ROOT/"capabilities.html").read_text():
+    issues.append("capabilities.html: Discovery & Workflow card not routed to discovery-workflow.html")
+
+eval_work=(ROOT/"eval-work.html").read_text()
+index_text=(ROOT/"index.html").read_text()
+hero_end=eval_work.find("</header>")
+if "meridian-primary-action" in eval_work[:hero_end]:
+    issues.append("eval-work.html: primary action must not change shared hero height")
+lab_html=(ROOT/"meridian-lab"/"index.html").read_text()
+lab_core=(ROOT/"meridian-lab"/"meridian-core.js").read_text()
+lab_js=(ROOT/"meridian-lab"/"lab.js").read_text()
+for required in ('data-view="support"','data-view="evals"','data-view="knowledge"','data-view="history"','data-view="dashboard"'):
+    if required not in lab_html:
+        issues.append(f"meridian-lab/index.html: missing Lab view {required}")
+for required in ('Support Tool','Eval Runner','Knowledge Base','Learning Log','Learning Dashboard'):
+    if required not in lab_html:
+        issues.append(f"meridian-lab/index.html: missing Lab navigation label {required}")
+if 'MeridianCore' not in lab_core or 'core.evaluate' not in lab_js:
+    issues.append("meridian-lab: shared evaluation pipeline contract missing")
+for required in ('session-objective','export-workspace','import-workspace','data-review-run','parentRunId'):
+    if required not in lab_html+lab_js+lab_core:
+        issues.append(f"meridian-lab: learning-workbench contract missing {required}")
+if re.search(r'<label class="field-label">',lab_js):
+    issues.append("meridian-lab: generated field label missing explicit control association")
+for required in ('class="lab-orientation"','Try the workflow','Test behavior','Capture learning','Prototype activity · not pilot outcomes'):
+    if required not in lab_html:
+        issues.append(f"meridian-lab: shared-audience orientation missing {required}")
+for required in ('class="portfolio-menu"','../index.html#meridian','../index.html#portfolio','../index.html#learn'):
+    if required not in lab_html:
+        issues.append(f"meridian-lab: portfolio exit path missing {required}")
+if '[hidden]{display:none!important}' not in (ROOT/"meridian-lab"/"lab.css").read_text():
+    issues.append("meridian-lab: hidden-state CSS invariant missing")
+for required in ('id="support-reset"','id="support-status"','function resetSupport','event.metaKey||event.ctrlKey'):
+    if required not in lab_html+lab_js:
+        issues.append(f"meridian-lab: repeat-ticket UX contract missing {required}")
+
+# Execute the deterministic domain contract; static string checks cannot catch
+# threshold, guardrail, persistence, or workspace-import regressions.
+try:
+    subprocess.run(["node", str(ROOT/"meridian-lab"/"meridian-core.test.js")], check=True, capture_output=True, text=True)
+except FileNotFoundError:
+    issues.append("meridian-lab: Node.js is required for domain regression tests")
+except subprocess.CalledProcessError as error:
+    detail=(error.stderr or error.stdout).strip()
+    issues.append(f"meridian-lab: domain regression tests failed: {detail}")
+if 'meridian-lab/index.html#evals' not in (ROOT/"eval-runner.html").read_text():
+    issues.append("eval-runner.html: compatibility redirect missing")
+if 'href="meridian-lab/index.html"' not in index_text:
+    issues.append("index.html: Meridian Lab entry point missing")
+if index_text.count('class="view meridian-page-shell meridian-overview-shell"') != 1:
+    issues.append("index.html: canonical Meridian overview shell missing")
+for component in ("meridian-case-hero","meridian-context-grid","meridian-section-nav"):
+    if component not in index_text[index_text.find('data-page="meridian"'):]:
+        issues.append(f"index.html: Meridian overview missing {component}")
+
+# Redirect routes are retained only for inbound compatibility and must stay tiny and explicit.
+for name in REDIRECT_PAGES:
+    text=(ROOT/name).read_text()
+    if 'http-equiv="refresh"' not in text or len(text)>1200:
+        issues.append(f"{name}: compatibility redirect contract broken")
+
+# Guard the exact layout invariants that have recently drifted.
+components=(ROOT/"site-components.css").read_text()
+for selector in (".meridian-page-shell",".meridian-case-hero",".meridian-section-nav",".meridian-breadcrumb",".artifact-footer-nav"):
+    if selector not in components:
+        issues.append(f"site-components.css: missing shared invariant {selector}")
+for invariant in ("padding:66px 28px 90px!important","padding:48px 18px 70px!important","max-width:1180px!important"):
+    if invariant not in components:
+        issues.append(f"site-components.css: missing Meridian geometry invariant {invariant}")
 
 if issues:
     print("REGRESSION CHECK FAILED")

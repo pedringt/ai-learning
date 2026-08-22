@@ -4,7 +4,8 @@
 <head>
 <meta charset="utf-8"/>
 <meta content="width=device-width,initial-scale=1" name="viewport"/>
-<title>Meridian Capstone — Working Tracker</title>
+<title>Meridian Discovery &amp; Decisions · Practical AI Learning</title>
+<meta name="description" content="Working reasoning record for Meridian discovery, workflow decisions, measurement planning, system design, guardrails, and evaluation.">
 <style>
   
   *{box-sizing:border-box}
@@ -57,15 +58,20 @@
     ul.checklist li{flex-direction:column;align-items:flex-start;gap:4px}
     ul.checklist .right{white-space:normal}
   }
-</style>
-<style id="v88-shared-shell">
+
+/* Consolidated from an adjacent historical style layer. */
+
 body{background:var(--bg)!important;color:var(--ink)!important}body.v88-dark{--ink:#f5f5f7;--muted:#b6b6c2;--border:#34343d;--soft:#19191f;--softp:#1b1a22;--card:#15151b;--bg:#101014;--purple:#b9adff;--purple2:#a79aff}.v88-dark .topbar{background:rgba(16,16,20,.96)!important}.v88-dark table td,.v88-dark .frame,.v88-dark .reasoning,.v88-dark .callout,.v88-dark .stage,.v88-dark .diagram{background:var(--card)!important;color:var(--ink)!important;border-color:var(--border)!important}.v88-dark th{background:#24242c!important}.v88-shellnav{display:flex;align-items:center;gap:6px;flex-wrap:wrap}.v88-shellnav a,.v88-theme{border:0;background:transparent;color:var(--ink)!important;text-decoration:none!important;padding:8px 9px;border-radius:9px;font-size:12px;font-weight:800;cursor:pointer}.v88-shellnav a:hover,.v88-theme:hover{background:var(--softp)!important;color:var(--purple)!important}.v88-theme{border:1px solid var(--border);background:var(--card)}details.v88-notes{margin:10px 0 18px;border:1px solid var(--border);border-radius:12px;background:var(--card)}details.v88-notes>summary{cursor:pointer;padding:10px 13px;color:var(--purple);font-size:12px;font-weight:800}.v88-question-nav{display:flex;gap:7px;flex-wrap:wrap;margin:16px 0 24px}.v88-question-nav a{border:1px solid var(--border);border-radius:999px;padding:6px 9px;text-decoration:none;font-size:11px;font-weight:800;background:var(--card)}@media(max-width:760px){.v88-shellnav a:nth-child(n+4){display:none}.v88-shellnav{gap:2px}}
-</style>
-<style id="v88-artifact-nav-css">.v88-artifact-nav{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:14px 0 22px;font-size:12px}.v88-artifact-nav a{border:1px solid var(--border);background:var(--card);color:var(--purple)!important;text-decoration:none!important;border-radius:999px;padding:7px 10px;font-weight:800}.v88-artifact-nav strong{font-size:12px}@media(max-width:620px){.v88-artifact-nav span[style]{display:none}.v88-artifact-nav a{padding:6px 8px}}</style><style id="v902-adoption-style">
+
+/* Consolidated from an adjacent historical style layer. */
+.v88-artifact-nav{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:14px 0 22px;font-size:12px}.v88-artifact-nav a{border:1px solid var(--border);background:var(--card);color:var(--purple)!important;text-decoration:none!important;border-radius:999px;padding:7px 10px;font-weight:800}.v88-artifact-nav strong{font-size:12px}@media(max-width:620px){.v88-artifact-nav span[style]{display:none}.v88-artifact-nav a{padding:6px 8px}}
+/* Consolidated from an adjacent historical style layer. */
+
 .v902-adoption-revision{margin:26px auto;max-width:1100px;padding:18px;border:1px solid var(--border,#ddd);border-radius:16px;background:var(--card,#fff)}
 .v902-adoption-revision h2{margin:7px 0 10px}.v902-adoption-revision p{line-height:1.55}
-</style>
-<style id="v912-shared-artifact-shell">
+
+/* Consolidated from an adjacent historical style layer. */
+
 /* v91.2 — unify standalone Meridian artifacts with the main portfolio shell */
 .v88-shellnav{display:flex;align-items:center;gap:4px;flex-wrap:nowrap}
 .v88-shellnav>a,.v88-theme,.v912-more>summary{
@@ -132,8 +138,9 @@ body.v88-dark .metric,body.v88-dark .case,body.v88-dark .eval-area,body.v88-dark
   .v912-more-panel{right:-4px;width:min(250px,calc(100vw - 28px))}
   .v88-artifact-nav{margin-top:10px}
 }
-</style>
-<style id="v915-artifact-orientation">
+
+/* Consolidated from an adjacent historical style layer. */
+
 .v915-orientation{
   display:grid;grid-template-columns:minmax(0,1.7fr) minmax(150px,.55fr);
   gap:12px;margin:10px 0 28px;padding:16px 18px;border:1px solid var(--border);
@@ -148,8 +155,9 @@ body.v88-dark .metric,body.v88-dark .case,body.v88-dark .eval-area,body.v88-dark
  .v915-orientation{grid-template-columns:1fr}
  .v915-orientation .statusbox{padding-left:0;padding-top:10px;border-left:0;border-top:1px solid var(--border)}
 }
-</style>
-<style id="v917-shell-consistency">
+
+/* Consolidated from an adjacent historical style layer. */
+
 .v88-shellnav{display:flex;align-items:center;gap:4px;flex-wrap:nowrap}
 .v88-shellnav>a,.v88-theme,.v912-more>summary{
   border:0;background:transparent;color:var(--ink)!important;text-decoration:none!important;
@@ -206,8 +214,9 @@ body.v88-dark .metric,body.v88-dark .case,body.v88-dark .eval-area,body.v88-dark
   .v88-shellnav>a,.v88-theme,.v912-more>summary{padding:7px;font-size:11px}
   .v912-more-panel{right:-4px;width:min(250px,calc(100vw - 28px))}
 }
-</style>
-<style id="v918-home-style-artifact-header">
+
+/* Consolidated from an adjacent historical style layer. */
+
 /* Match the main site's header architecture and control order. */
 .topbar{
   position:sticky!important;top:0!important;z-index:50!important;
@@ -279,8 +288,9 @@ body.v88-dark .topbar{background:rgba(16,16,20,.96)!important}
   .v918-theme{padding:8px 10px}
   .v918-mobile-nav{max-width:150px;min-width:0}
 }
-</style>
-<style id="v919-design-system">
+
+/* Consolidated from an adjacent historical style layer. */
+
 /* v91.9 — shared visual language for standalone Meridian artifacts */
 
 /* Shared page frame + typography */
@@ -461,8 +471,9 @@ tr:last-child td{border-bottom:0!important}
   .lead{font-size:16px!important}
   .v918-orientation,.v915-orientation{padding:14px!important}
 }
-</style>
-<style id="v919-tracker-density">
+
+/* Consolidated from an adjacent historical style layer. */
+
 /* Tracker remains intentionally more utilitarian—the receipts layer, not a polished readout. */
 body.v919-tracker .wrap p,
 body.v919-tracker .wrap li{font-size:13px!important}
@@ -470,8 +481,9 @@ body.v919-tracker .frame,
 body.v919-tracker .reasoning,
 body.v919-tracker .callout{padding:14px 16px!important}
 body.v919-tracker .wrap>h2:not(:first-of-type){margin-top:30px!important}
-</style>
-<style id="v920-visual-parity">
+
+/* Consolidated from an adjacent historical style layer. */
+
 /* v92.0 — standalone Meridian pages should feel like the same site, not legacy documents */
 
 /* Exact Home-style header proportions */
@@ -683,8 +695,9 @@ body.v919-tracker .wrap>h2:not(:first-of-type){
   line-height:1.58;
   font-size:14px;
 }
-</style>
-<style id="v9412-tracker-progressive-disclosure">
+
+/* Consolidated from an adjacent historical style layer. */
+
 .tracker-overview{margin:22px 0 24px;padding:20px;border:1px solid var(--border);border-radius:16px;background:var(--soft)}
 .tracker-overview-top{display:flex;justify-content:space-between;gap:20px;align-items:flex-start}
 .tracker-overview .label{display:block;color:var(--purple);font-size:10.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;margin-bottom:5px}
@@ -720,7 +733,9 @@ body.v919-tracker .wrap>h2:not(:first-of-type){
  .tracker-summary-meta{text-align:left;padding-left:20px}
 }
 @media(max-width:480px){.tracker-controls{flex-wrap:wrap}}
-</style><style id="v9413-tracker-polish">
+
+/* Consolidated from an adjacent historical style layer. */
+
 .tracker-static-section{margin:18px 0 22px}
 .tracker-static-section>h2{margin-bottom:12px}
 .tracker-flat-questions>summary~*{margin-left:0;margin-right:0}
@@ -741,12 +756,13 @@ body.v919-tracker .wrap>h2:not(:first-of-type){
   border-radius:0 8px 8px 0;
   background:var(--soft);
 }
-</style>
-<style id="v9521-status-cleanup">
-.status.done,.status.progress,.pstatus.done,.pstatus.progress{display:none!important}
-</style>
 
-<style id="v9523-capability-local-nav">
+/* Consolidated from an adjacent historical style layer. */
+
+.status.done,.status.progress,.pstatus.done,.pstatus.progress{display:none!important}
+
+/* Consolidated from an adjacent historical style layer. */
+
 .capability-local-nav{
   margin:0 0 24px;
   padding:10px 0 12px;
@@ -807,11 +823,10 @@ body.v919-tracker .wrap>h2:not(:first-of-type){
 </head>
 <body class="v919-tracker">
 <div class="topbar"><div class="topinner"><a class="brand-button" href="index.html"><span class="brand">AI <span>Learning Portfolio</span></span></a><nav aria-label="Primary pages" class="nav"><a href="index.html">Home</a><a href="capabilities.html">Capabilities</a><a href="index.html#portfolio" aria-current="page">Applied Work</a><a href="index.html#learn">Learning Guide</a></nav><div class="top-actions"><button aria-label="Switch to dark mode" aria-pressed="false" class="theme-toggle" id="v922ThemeToggle" title="Switch to dark mode" type="button">☾</button><select aria-label="Choose page" id="v922MobileNav"><option value="index.html">Home</option><option value="capabilities.html">Capabilities</option><option value="index.html#portfolio" selected>Applied Work</option><option value="index.html#learn">Learning Guide</option></select></div></div></div>
-<div class="wrap"><div class="v88-artifact-nav"><span class="v912-artifact-label">Meridian evidence</span><a aria-current="page" class="active" href="tracker.html"><span id="discovery"></span>Discovery</a><a href="plan.html">Success Plan</a><a href="agent-flow.html">Agent Flow</a><a href="evals.html">Eval Suite</a><a href="deliverable.html">Case Readout</a></div>
+<main class="meridian-page-shell"><div class="meridian-heading"><div class="meridian-breadcrumb"><a href="index.html#portfolio">Applied Work</a><span aria-hidden="true">/</span><a href="index.html#meridian">Meridian</a></div><div class="eyebrow">Meridian · Working Notebook</div></div><header class="meridian-case-hero"><h1>Meridian Capstone — Working Tracker</h1><p class="lead">Running notes for the Meridian AI Support Pilot: open questions, assumptions, decisions, changes in reasoning, and stage-by-stage status.</p><div class="meridian-context-grid"><div class="meridian-context-item"><span>Format</span><strong>Reasoning record</strong></div><div class="meridian-context-item"><span>Focus</span><strong>Decisions</strong></div><div class="meridian-context-item"><span>Checkpoint</span><strong>VALIDATE</strong></div><div class="meridian-context-item"><span>Reading</span><strong>Open by section</strong></div></div></header><nav class="meridian-section-nav" aria-label="Meridian reading order"><div class="meridian-section-links"><a href="index.html#meridian">Overview</a><a href="case-readout.html">Case Readout</a><a href="tracker.html" class="current" aria-current="page">Discovery &amp; Decisions</a><a href="measurement-plan.html">Measurement Plan</a><a href="system-flow.html">System Flow</a><a href="eval-work.html">Eval Work</a></div></nav>
 
 
-<h1>Meridian Capstone — Working Tracker</h1>
-<p class="sub">Running notes for the Meridian AI Support Pilot: open questions for the PM, my in-progress Success Measurement Plan reasoning, decision changes, and stage-by-stage status.</p>
+<span id="discovery"></span>
 <div class="callout gold" style="border:1px solid var(--border);border-left:4px solid var(--gold);background:#fff9eb;border-radius:10px;padding:12px 15px;margin:0 0 14px;font-size:13.5px"><b>What is Meridian?</b> A practice scenario: Meridian Support Operations, a mid-sized B2B SaaS company, is piloting an AI agent to help an overwhelmed Tier 1 support team — classifying tickets, drafting responses, and routing risky/uncertain cases to a human. This document preserves my working process through the pilot: open questions, assumptions, decisions, uncertainties, and changes in reasoning as I go—not a finished report. <a href="index.html#meridian">Full capstone context in the guide →</a></div>
 <div class="frame">This doc tracks my working process, not just final numbers — including assumptions I'm making versus facts I've been given, and cases where my thinking changed as I worked through the logic. I think the reasoning matters more than landing on a "correct" target on the first try.</div>
 <div class="tracker-overview">
@@ -850,9 +865,9 @@ body.v919-tracker .wrap>h2:not(:first-of-type){
 </div>
 <ul class="checklist">
 <li><span>HANDOFF — review + clarifying questions</span><span class="right"></span></li>
-<li><span>PLAN — Success Measurement Plan</span><span class="right"><a href="plan.html">view deliverable</a></span></li>
-<li><span>CONFIGURE — agent flow diagram <span class="small">(required deliverable done; optional no/low-code prototype not started)</span></span><span class="right"><a href="configure.html">view flow diagram</a></span></li>
-<li><span>VALIDATE — eval suite + launch readiness <span class="small">(v1 architecture defined; Classification + Retrieval designed)</span></span><span class="right"><a href="evals.html">view eval suite</a></span></li>
+<li><span>PLAN — Success Measurement Plan</span><span class="right"><a href="measurement-plan.html">view deliverable</a></span></li>
+<li><span>CONFIGURE — agent flow diagram <span class="small">(required deliverable done; optional no/low-code prototype not started)</span></span><span class="right"><a href="system-flow.html">view flow diagram</a></span></li>
+<li><span>VALIDATE — eval suite + launch readiness <span class="small">(v1 architecture defined; Classification + Retrieval designed)</span></span><span class="right"><a href="eval-work.html">view eval suite</a></span></li>
 <li><span>ENABLE — onboarding kit</span><span class="right"><span class="status todo">Not started</span></span></li>
 <li><span>OPERATE — 90-day dataset + dashboard</span><span class="right"><span class="status todo">Not started</span></span></li>
 <li><span>INCIDENT — troubleshooting investigation</span><span class="right"><span class="status todo">Not started</span></span></li>
@@ -893,13 +908,13 @@ body.v919-tracker .wrap>h2:not(:first-of-type){
 <div class="shift">Resolution: keep 12.4 min as the working reference baseline for now (not worth forcing a retroactive fix), but track the new split data going forward for better-informed comparisons later.</div></div>
 <div class="q"><b>11 · Baseline exchange count</b>Does Meridian already track average replies/exchanges per ticket, to inform a back-and-forth escalation threshold?
   <div class="shift" style="color:var(--gold)"><b>Simulated answer:</b> No clean existing report, but a 90-day pull is possible: average 2.3 replies/ticket; ~78% resolve in 1-2 exchanges; ~12% go beyond 4 exchanges, clustering in bugs/technical and billing-dispute categories.</div>
-<div class="shift">Resolution: kept the 5-exchange escalation threshold, now justified by real data (catches the ~12% long-tail) rather than an arbitrary round number. See the <a href="configure.html">CONFIGURE flow diagram</a>.</div></div>
+<div class="shift">Resolution: kept the 5-exchange escalation threshold, now justified by real data (catches the ~12% long-tail) rather than an arbitrary round number. See the <a href="system-flow.html">System Flow</a>.</div></div>
 <div class="q"><b>12 · Internal guidebook</b>Does Meridian have any internal support guidebook/playbook — including an existing definition of what counts as a "problem" ticket — that should inform pilot design rather than us defining thresholds from scratch?
   <div class="shift" style="color:var(--gold)"><b>Simulated answer (harder):</b> An old internal wiki page has some general escalation guidance, but it's unmaintained and reps have said privately they don't really follow it — mostly go by instinct now. Not authoritative, but may have some historical context.</div>
 <div class="shift">Resolution: led to a good follow-up question of my own — whether the PM's discovery already covered rep-level operational habits. <b>Simulated PM answer:</b> discovery covered pilot scope/business goals/human-boundary rules, not rep-level instincts — that's better gathered directly from the 8 reps than relayed secondhand. Resulted in a rep discovery question list (below), since the team is small enough to do this personally.</div></div>
 <p class="note">Questions 13 and 14 came up mid-discovery and are logged below under "Rep discovery findings," with their answers, rather than repeated here unanswered.</p>
 </details><details class="tracker-section" id="rep-questions"><summary><span class="tracker-summary-title">Rep discovery questions</span><span class="tracker-summary-meta">Direct workflow questions for frontline reps</span></summary>
-<p class="small">CONFIGURE-stage prep (see the <a href="configure.html">flow diagram</a> these findings shaped), also feeds ENABLE later. Goal: validate/correct assumptions (like the simulated workflow-model answer to question 4) with real input from the 8 Tier 1 reps, and surface adoption concerns before the pilot starts.</p>
+<p class="small">CONFIGURE-stage prep (see the <a href="system-flow.html">flow diagram</a> these findings shaped), also feeds ENABLE later. Goal: validate/correct assumptions (like the simulated workflow-model answer to question 4) with real input from the 8 Tier 1 reps, and surface adoption concerns before the pilot starts.</p>
 <div class="reasoning">
 <b>Framing to open with:</b> "This is to help design the pilot well, not to evaluate you — I want your honest read on what's working and what isn't, including anything uncomfortable."
     <ol style="margin:8px 0 0 18px" type="a">
@@ -913,7 +928,7 @@ body.v919-tracker .wrap>h2:not(:first-of-type){
 </ol>
 </div>
 </details><details class="tracker-section" id="rep-findings"><summary><span class="tracker-summary-title">Rep discovery findings (simulated) &amp; decisions made</span><span class="tracker-summary-meta">Questions 13–17 + what changed</span></summary>
-<p class="note">These findings directly shaped the agent logic in the <a href="configure.html">CONFIGURE flow diagram</a> (escalation triggers, retrieval approach) and the pilot targets in the <a href="plan.html">PLAN deliverable</a> (first-response time).</p>
+<p class="note">These findings directly shaped the agent logic in the <a href="system-flow.html">System Flow</a> (escalation triggers, retrieval approach) and the pilot targets in the <a href="measurement-plan.html">Measurement Plan</a> (first-response time).</p>
 <div class="reasoning">
 <b>New escalation trigger added:</b> customer explicitly asks for a supervisor or to escalate — a cleaner signal than inferring "upset" or counting exchanges, since it doesn't require interpretation.<br/><br/>
 <b>Workflow model corrected:</b> additional simulated rep input shows only 2 of 8 reps occasionally do a quick first-touch ack; most resolve start-to-finish. This is more reliable than the earlier simulated PM answer, since reps report their own actual behavior.
@@ -933,9 +948,9 @@ body.v919-tracker .wrap>h2:not(:first-of-type){
 <div class="q"><b>15 · Billing access approval scope</b>Does giving the AI read-only access to billing/account-status data require the same approval process as the money/security action categories in Guardrails, even though the AI couldn't act on that data — just see it?
   <div class="shift" style="color:var(--gold)"><b>Simulated answer (original framing):</b> Read-only access to the billing system's account-status API is technically feasible — a smaller ask than write access — but still customer financial data, so needs explicit confirmation on whether it needs the same sign-off as the Guardrails action categories.</div>
 <div class="shift"><b>Reframed after asking why reps look this up manually:</b> the billing/account-status field already exists in the ticketing tool via an existing nightly sync — it's just configured to show on the Tier 2 view, not Tier 1, likely an oversight rather than an intentional decision.</div>
-<div class="shift">Resolution: turns out this may not need to be an AI/approval question at all. If Tier 1 gets the field enabled via a simple display-config change, the agent reads data it already has legitimate access to (same as a human rep would see) — no new billing-system integration, no fresh approval process, question 15 mostly resolved by avoiding the need it was asking about. Caveat: nightly sync means data could be up to 24 hrs stale. See how this fits the flow in <a href="configure.html">CONFIGURE</a>.</div></div>
+<div class="shift">Resolution: turns out this may not need to be an AI/approval question at all. If Tier 1 gets the field enabled via a simple display-config change, the agent reads data it already has legitimate access to (same as a human rep would see) — no new billing-system integration, no fresh approval process, question 15 mostly resolved by avoiding the need it was asking about. Caveat: nightly sync means data could be up to 24 hrs stale. See how this fits the flow in <a href="system-flow.html">CONFIGURE</a>.</div></div>
 </details><details class="tracker-section" id="standalone-recommendation"><summary><span class="tracker-summary-title">Standalone recommendation (independent of the pilot)</span><span class="tracker-summary-meta">Low-risk workflow/configuration fix</span></summary>
-<div class="callout gold"><b>Enable the existing billing/account-status field for Tier 1 reps.</b> This field already exists and syncs nightly from the billing system, but is only configured to display on the Tier 2 view. Turning it on for Tier 1 would directly solve the manual copy-paste pain point reps flagged in discovery, and — as a side effect — gives the AI agent access to the same already-approved data source without a new integration. Worth flagging to the PM/engineering regardless of pilot timing, since it's a low-risk, low-effort fix. <a href="configure.html">See how it folds into the agent flow →</a></div>
+<div class="callout gold"><b>Enable the existing billing/account-status field for Tier 1 reps.</b> This field already exists and syncs nightly from the billing system, but is only configured to display on the Tier 2 view. Turning it on for Tier 1 would directly solve the manual copy-paste pain point reps flagged in discovery, and — as a side effect — gives the AI agent access to the same already-approved data source without a new integration. Worth flagging to the PM/engineering regardless of pilot timing, since it's a low-risk, low-effort fix. <a href="system-flow.html">See how it folds into the agent flow →</a></div>
 <div class="q"><b>Rep discovery Q-g (simulated) · Tool inventory</b>Beyond the help desk and KB, reps use: the billing system (Stripe-based, for account/subscription lookups — see resolution to question 15 above), an internal admin panel for basic account changes (already excluded per Guardrails), and Slack to ping engineering when something's broken (an escalation channel, not a data source for the agent).</div>
 <div class="q"><b>16 · Configuration-dependent answers</b>Does answering a how-to question that depends on a customer's specific configuration require access to per-customer config/CRM data, separate from the shared support KB?
   <div class="shift" style="color:var(--gold)"><b>Rep discovery Q-h (simulated):</b> Yes — for configuration-dependent questions (report setup, custom fields, workflow steps that vary by plan tier), reps check the CRM's account record for that customer's enabled features/plan tier before answering. It's a quick lookup, not a deep investigation, but they don't answer from memory for these — too much variation between customers to guess reliably.</div>
@@ -944,7 +959,7 @@ body.v919-tracker .wrap>h2:not(:first-of-type){
   <div class="shift" style="color:var(--gold)"><b>Simulated answer (Product):</b> Three tiers — Starter, Growth, Enterprise. What varies: seat count, number of integrations, SSO (Enterprise only), custom fields (Growth+), API access (Enterprise only), and reporting depth — Starter gets a fixed set of standard reports, Growth adds custom date ranges and export formats, Enterprise adds scheduled/automated report delivery and custom report builder. The <i>existence</i> of a monthly analytics report is universal across all three tiers — every customer can generate one. What differs by tier is <i>how</i>: which export formats are available and whether it can be scheduled to auto-generate vs. run manually.</div>
 <div class="shift">Resolution: this changes the eval case. "How do I generate my monthly report" is actually a universal, tier-independent action — every customer can do it, so this specific question doesn't need the CRM/config lookup after all. The config-dependent version would be a different, more specific question — like "how do I schedule this report to auto-send" (Enterprise-only) or "how do I export to a specific format" (Starter doesn't get all formats). Keeps the original case as a true core/simple case, and creates a clear next case to test the actual config-dependent path.</div></div>
 </details><details class="tracker-section" id="success-measurement"><summary><span class="tracker-summary-title">Success Measurement Plan — designed; assumptions flagged</span><span class="tracker-summary-meta">Targets, baselines, reasoning, decision rules</span></summary>
-<p class="note">Raw reasoning below. The clean, presentation-ready version (current pilot targets + collapsible working notes) lives in the <a href="plan.html">PLAN deliverable</a>.</p>
+<p class="note">Raw reasoning below. The clean, presentation-ready version (current pilot targets + collapsible working notes) lives in the <a href="measurement-plan.html">Measurement Plan</a>.</p>
 <h3>Business outcome</h3>
 <div class="reasoning">
 <b>Long-term goal:</b> CSAT back to 90%, first-response time back to &lt;2 hrs (stretch: beat these).<br/>
@@ -1013,10 +1028,9 @@ body.v919-tracker .wrap>h2:not(:first-of-type){
 <h3>Offline evals are not production outcomes</h3>
 <div class="reasoning">The pre-launch suite can test controlled behavior such as classification, retrieval, escalation, grounding, draft quality, confidence, and review routing. Customer follow-up/reopen rates, successful closure, real rep edits, repeated customer pushback, and recurring corrections tied to the same KB article belong in production measurement. Those signals can later create new regression cases and identify KB-maintenance work.</div>
 </details><details class="tracker-section" id="reflection"><summary><span class="tracker-summary-title">Reflection</span><span class="tracker-summary-meta">What I noticed about my own reasoning process</span></summary>
-<div class="frame">The polished version of this reflection (PLAN-specific) is in the <a href="plan.html">PLAN deliverable</a>. This one's about the working process itself, across HANDOFF through CONFIGURE. The pattern I noticed most: my first answer to almost anything was usually close, but not quite precise — "reading the ticket" instead of "everything the agent can see," "drafting and sending" instead of "the decision about which path something takes." Getting from "close" to "actually right" took someone pushing back and asking me to distinguish it from something adjacent, not just re-explaining the same thing louder. I also noticed I do better reasoning when I have a concrete example to hang a concept on (Meridian) than when I'm working with the abstract idea alone — the "trigger/context/instructions/retrieval/routing/handoff/evals" framework only really clicked once I mapped each piece onto this specific pilot. That's probably useful to know about how I learn, going into a real role: ask for the concrete case, don't just take the definition at face value.</div>
+<div class="frame">The polished version of this reflection (PLAN-specific) is in the <a href="measurement-plan.html">Measurement Plan</a>. This one's about the working process itself, across HANDOFF through CONFIGURE. The pattern I noticed most: my first answer to almost anything was usually close, but not quite precise — "reading the ticket" instead of "everything the agent can see," "drafting and sending" instead of "the decision about which path something takes." Getting from "close" to "actually right" took someone pushing back and asking me to distinguish it from something adjacent, not just re-explaining the same thing louder. I also noticed I do better reasoning when I have a concrete example to hang a concept on (Meridian) than when I'm working with the abstract idea alone — the "trigger/context/instructions/retrieval/routing/handoff/evals" framework only really clicked once I mapped each piece onto this specific pilot. That's probably useful to know about how I learn, going into a real role: ask for the concrete case, don't just take the definition at face value.</div>
 <p class="note">Current design state: the pilot targets and decision rules are defined, with provisional assumptions explicitly flagged for validation against real workflow data before launch.</p>
-<p class="small" style="margin-top:36px;padding-top:16px;border-top:1px solid var(--border)"><a href="plan.html">PLAN deliverable</a>  ·  <a href="configure.html">CONFIGURE flow diagram</a>  ·  <a href="deliverable.html">One-page deliverable</a></p>
-</details></div>
+</details>
 <script id="v88-tracker-nav">(()=>{const wrap=document.querySelector('.wrap');if(!wrap||document.querySelector('.v88-question-nav'))return;const hs=[...wrap.querySelectorAll('h3')].filter(h=>/^\s*\d+\s*[·.:-]/.test(h.textContent)||/question/i.test(h.textContent));if(!hs.length)return;const nav=document.createElement('div');nav.className='v88-question-nav';hs.forEach((h,i)=>{h.id=h.id||'q'+(i+1);const a=document.createElement('a');a.href='#'+h.id;a.textContent=h.textContent.trim().replace(/\s+/g,' ').slice(0,42);nav.appendChild(a);});const frame=wrap.querySelector('.frame');(frame||wrap.querySelector('h2'))?.after(nav);})();</script>
 <section class="v902-adoption-revision" id="adoption-revision">
 <div class="tag">Changed my mind</div>
@@ -1025,6 +1039,8 @@ body.v919-tracker .wrap>h2:not(:first-of-type){
 <p><strong>What challenged it:</strong> daily use ignores whether a rep actually received work where the AI-assisted path made sense, and it can penalize the right decision to keep some tickets human-led.</p>
 <p><strong>Revised approach:</strong>Reasoning: a blanket daily-use target can reward the wrong behavior. Reps won’t all get the same mix of tickets, and sometimes not using AI is the right choice. I care more about whether they use the AI-assisted path when it fits, return to it over time, and can explain what is getting in the way or why they intentionally skipped it.</p>
 </section>
+<nav class="artifact-footer-nav" aria-label="Continue through Meridian"><a href="case-readout.html"><span>Previous</span>Case Readout</a><a class="artifact-footer-home" href="index.html#meridian"><span>Meridian</span>Overview</a><a href="measurement-plan.html"><span>Next</span>Measurement Plan</a></nav>
+</main>
 <script defer="" src="site-shell.js"></script><script>
 (()=>{
   const sections=[...document.querySelectorAll('.tracker-section')];

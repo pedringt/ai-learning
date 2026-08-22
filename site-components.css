@@ -386,3 +386,221 @@ body > main.wrap.capability-shell{
 @media(max-width:600px){
   .capability-closing-reflection{padding-left:14px}
 }
+
+/* v95.59 standalone Meridian detail pages */
+body:has(> main.artifact-detail){margin:0;color:var(--ink);background:var(--bg);font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.62}
+body.v88-dark:has(> main.artifact-detail){--ink:#f5f5f7;--muted:#b6b6c2;--border:#34343d;--soft:#19191f;--softp:#1b1a22;--card:#15151b;--bg:#101014}
+body>main.artifact-detail{width:100%;max-width:1180px;margin:0 auto;padding:34px 28px 90px;box-sizing:border-box}
+main.artifact-detail .page-intro{margin-bottom:28px}
+main.artifact-detail section{margin:28px 0}
+main.artifact-detail .surface-card{padding:20px 22px;box-shadow:0 8px 24px rgba(37,27,82,.05)}
+body.v88-dark main.artifact-detail .surface-card{box-shadow:none}
+main.artifact-detail .grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+main.artifact-detail .grid2>.surface-card{height:100%;box-sizing:border-box}
+main.artifact-detail section>h2,main.artifact-detail .surface-card>h2{margin:0 0 10px;font-size:22px;line-height:1.2;letter-spacing:-.02em}
+main.artifact-detail .surface-card h3{margin:0 0 7px;font-size:16px}
+main.artifact-detail .surface-card p:last-child,main.artifact-detail .surface-card ul:last-child{margin-bottom:0}
+main.artifact-detail a{color:var(--purple);text-underline-offset:3px}
+@media(max-width:700px){body>main.artifact-detail{padding:26px 18px 70px}main.artifact-detail .grid2{grid-template-columns:1fr}main.artifact-detail .surface-card{padding:17px}}
+
+.artifact-detail table{width:100%;border-collapse:collapse}.artifact-detail th,.artifact-detail td{padding:11px;border-bottom:1px solid var(--border);text-align:left;vertical-align:top}.artifact-detail th{font-size:12px;color:var(--muted)}.table-wrap{overflow-x:auto}
+.meridian-primary-action{display:inline-flex!important;align-items:center;gap:9px;padding:12px 17px!important;border-radius:10px!important;background:var(--purple)!important;color:#fff!important;font-size:14px!important;font-weight:850!important;text-decoration:none!important;box-shadow:0 8px 22px color-mix(in srgb,var(--purple) 25%,transparent)}
+.meridian-primary-action:hover{transform:translateY(-1px);filter:brightness(1.04);text-decoration:none!important}
+.meridian-product-callout{display:flex;align-items:center;justify-content:space-between;gap:24px;margin:0 0 28px;padding:18px 20px;border:1px solid color-mix(in srgb,var(--purple) 28%,var(--border));border-radius:var(--radius-lg);background:linear-gradient(135deg,var(--softp),var(--card))}
+.meridian-product-callout>div{min-width:0}.meridian-product-callout>div>span{display:block;margin-bottom:4px;color:var(--purple);font-size:10px;font-weight:850;letter-spacing:.08em;text-transform:uppercase}.meridian-product-callout strong{display:block;font-size:16px}.meridian-product-callout p{max-width:720px;margin:4px 0 0;color:var(--muted);font-size:13px;line-height:1.5}.meridian-product-callout .meridian-primary-action{flex:0 0 auto}
+@media(max-width:760px){.meridian-primary-action{width:100%;box-sizing:border-box;justify-content:center}}
+@media(max-width:700px){.meridian-product-callout{display:block}.meridian-product-callout .meridian-primary-action{margin-top:14px}}
+
+/* Canonical content frame and route-heading behavior. */
+.site-page,
+main.artifact-detail{
+  width:min(var(--content-max),100%)!important;
+  margin-inline:auto!important;
+  box-sizing:border-box!important;
+}
+.route-title{
+  margin:0 0 var(--space-2)!important;
+  font-size:var(--page-title-size)!important;
+  line-height:1.1!important;
+  letter-spacing:-.03em!important;
+}
+.band-title,.evidence-principle-title,.case-opening-title{margin:0 0 8px!important;font-size:18px!important;line-height:1.25!important;letter-spacing:-.015em!important}
+.field-error{margin:7px 0 0;color:#b42318;font-size:12px;font-weight:700}.v88-dark .field-error{color:#ffb4ab}
+
+/* One footer navigation pattern for every Meridian artifact. */
+.artifact-footer-nav{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:12px;
+  margin:44px 0 8px;
+  padding-top:20px;
+  border-top:1px solid var(--border);
+}
+.artifact-footer-nav>a{
+  display:flex;
+  min-height:62px;
+  box-sizing:border-box;
+  flex-direction:column;
+  justify-content:center;
+  padding:11px 13px;
+  border:1px solid var(--border);
+  border-radius:var(--radius-md);
+  background:var(--card);
+  color:var(--ink)!important;
+  font-size:13px;
+  font-weight:800;
+  line-height:1.3;
+  text-decoration:none!important;
+}
+.artifact-footer-nav>a:hover{border-color:color-mix(in srgb,var(--purple) 36%,var(--border));background:var(--softp)}
+.artifact-footer-nav>a span{margin-bottom:4px;color:var(--muted);font-size:10px;font-weight:850;letter-spacing:.07em;text-transform:uppercase}
+.artifact-footer-home{text-align:center}
+.artifact-footer-nav>a:last-child{text-align:right}
+@media(max-width:620px){
+  .artifact-footer-nav{grid-template-columns:1fr;margin-top:34px}
+  .artifact-footer-nav>a,.artifact-footer-nav>a:last-child{text-align:left}
+  .artifact-footer-home{text-align:left}
+  .artifact-footer-spacer{display:none}
+}
+
+/* v95.64 — canonical Meridian page family. These namespaced classes are the
+   only geometry contract for the overview, artifacts, and runner. */
+body>main.meridian-page-shell{
+  width:100%!important;
+  max-width:1180px!important;
+  margin:0 auto!important;
+  padding:66px 28px 90px!important;
+  box-sizing:border-box!important;
+}
+#ai-cs-mock .meridian-page-shell{
+  width:100%!important;
+  max-width:none!important;
+  box-sizing:border-box!important;
+}
+.meridian-heading{margin:0 0 16px!important}
+.meridian-heading .meridian-breadcrumb{margin:0 0 8px!important}
+.meridian-heading .eyebrow{margin:0!important}
+.meridian-breadcrumb{
+  display:flex!important;
+  align-items:center!important;
+  gap:8px!important;
+  max-width:100%!important;
+  margin:0 0 8px!important;
+  overflow-x:auto!important;
+  color:var(--muted)!important;
+  font-size:12px!important;
+  font-weight:750!important;
+  line-height:1.4!important;
+  white-space:nowrap!important;
+  scrollbar-width:none;
+}
+.meridian-breadcrumb::-webkit-scrollbar{display:none}
+.meridian-breadcrumb a{color:var(--purple)!important;text-decoration:none!important}
+.meridian-breadcrumb a:hover{text-decoration:underline!important}
+.meridian-breadcrumb>span[aria-hidden]{color:var(--border)!important}
+.meridian-case-hero{
+  display:block!important;
+  min-height:0!important;
+  margin:0 0 22px!important;
+  padding:0!important;
+  border:0!important;
+  border-radius:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+}
+.meridian-case-hero h1,
+.meridian-case-hero h2{
+  min-height:42px!important;
+  margin:0 0 10px!important;
+  font-size:38px!important;
+  line-height:1.08!important;
+  letter-spacing:-.035em!important;
+}
+.meridian-case-hero>.lead,
+.meridian-case-hero>.section-lead{
+  min-height:50px!important;
+  max-width:880px!important;
+  margin:0!important;
+  color:var(--muted)!important;
+  font-size:16px!important;
+  line-height:1.55!important;
+}
+.meridian-context-grid{
+  display:grid!important;
+  grid-template-columns:repeat(4,minmax(0,1fr))!important;
+  gap:12px!important;
+  margin:20px 0 0!important;
+}
+.meridian-context-item{
+  min-width:0!important;
+  min-height:70px!important;
+  box-sizing:border-box!important;
+  padding:14px!important;
+  border:1px solid var(--border)!important;
+  border-radius:13px!important;
+  background:var(--card)!important;
+  box-shadow:none!important;
+}
+.meridian-context-item span{
+  display:block!important;
+  margin:0!important;
+  color:var(--muted)!important;
+  font-size:11px!important;
+  font-weight:800!important;
+  letter-spacing:.02em!important;
+  text-transform:uppercase!important;
+}
+.meridian-context-item strong{
+  display:block!important;
+  margin:4px 0 0!important;
+  font-size:19px!important;
+  line-height:1.25!important;
+}
+.meridian-section-nav{
+  display:block!important;
+  width:100%!important;
+  box-sizing:border-box!important;
+  margin:0 0 28px!important;
+  padding:12px 14px!important;
+  border:1px solid var(--border)!important;
+  border-radius:14px!important;
+  background:var(--card)!important;
+}
+.meridian-section-links{
+  display:flex!important;
+  align-items:center!important;
+  gap:4px!important;
+  min-width:0!important;
+  overflow-x:auto!important;
+  padding:0 0 2px!important;
+  scrollbar-width:thin;
+}
+.meridian-section-links a{
+  flex:0 0 auto!important;
+  padding:7px 10px!important;
+  border-radius:999px!important;
+  color:var(--ink)!important;
+  font-size:12px!important;
+  font-weight:750!important;
+  line-height:1.35!important;
+  text-decoration:none!important;
+  white-space:nowrap!important;
+}
+.meridian-section-links a:hover,
+.meridian-section-links a.current{
+  background:var(--softp)!important;
+  color:var(--purple)!important;
+}
+.meridian-section-links a.current{
+  box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--purple) 28%,var(--border))!important;
+}
+@media(max-width:760px){
+  body>main.meridian-page-shell{padding:48px 18px 70px!important}
+  .meridian-heading{margin-bottom:12px!important}
+  .meridian-case-hero h1,.meridian-case-hero h2{min-height:0!important;font-size:32px!important}
+  .meridian-case-hero>.lead,.meridian-case-hero>.section-lead{min-height:0!important;font-size:15px!important}
+  .meridian-context-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:9px!important;margin-top:16px!important}
+  .meridian-context-item{min-height:64px!important;padding:11px!important}
+  .meridian-context-item strong{font-size:16px!important}
+  .meridian-section-nav{margin-bottom:22px!important;padding:10px!important}
+}

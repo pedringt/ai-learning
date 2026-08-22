@@ -29,7 +29,14 @@ Use it before making site-wide design changes.
 
 - standalone HTML pages
   - page-specific content and unique layouts only
-  - legacy inline CSS may remain until intentionally migrated
+  - substantive pages use one `<main>` landmark and one document `<h1>`
+  - legacy inline CSS remains a migration target, not a place for new shared rules
+
+- `meridian-lab/`
+  - separate working-product surface inside the same static site
+  - `lab.css` owns Lab layout and components
+  - `meridian-core.js` is the only owner of support/eval domain behavior and run records
+  - `lab.js` owns view rendering and local interactions, not domain rules
 
 ## Editing rules
 
@@ -53,18 +60,46 @@ Use it before making site-wide design changes.
 
 Home / Capabilities / Applied Work / Learning Guide
 
+Meridian reading order:
+Overview / Case Readout / Discovery & Decisions / Measurement Plan / System Flow / Eval Work
+
+Meridian Lab product navigation:
+Support Tool / Eval Runner / Knowledge Base / Learning Log / Learning Dashboard
+
+- `case-readout.html` is both the executive-summary entry point and the Meridian hub.
+- Meridian artifact pages explain one case in depth.
+- Capability pages reorganize evidence across Meridian and Harborstone; they are not Meridian artifacts.
+- Do not add a separate Meridian hub unless the Case Readout can no longer orient the case clearly.
+- Applied Work remains the Workbench landing surface until multiple shorter cases require a dedicated hub.
+- Meridian Lab is a working surface linked prominently from the overview; its modules do not belong in the portfolio's global navigation.
+- Lab runs preserve learning context—objective, diagnosis, notes, next question, and rerun lineage—rather than acting only as portfolio-demo output.
+
 Capabilities local navigation:
 Overview / Discovery & Workflow / Measurement & Value / Systems & Guardrails / Evals & Quality
 
-## Current migration order
+## Compatibility routes
+
+`agent-flow.html`, `configure.html`, `deliverable.html`, `discovery.html`, `evals.html`, `plan.html`, and `eval-runner.html` are redirect-only compatibility documents. They are not current content sources and should remain small, explicit, and free of duplicated page content.
+
+## Current maintenance state
 
 1. Shared global shell — stabilized
 2. Shared page-content shell — stabilized
 3. Shared page intro — stabilized
 4. Capabilities local nav — stabilized
-5. Legacy Meridian page wrappers — future, page-by-page
-6. Legacy inline typography/card rules — future, component-by-component
-7. Tracker semantic structure — future, deliberate migration
+5. Meridian wrappers and landmarks — normalized
+6. Meridian breadcrumb, header, tabs, and footer navigation — shared
+7. Layout invariants — enforced in `qa_regression.py`
+8. Remaining embedded legacy CSS — consolidate only alongside screenshot-capable visual QA
+
+## Shared layout invariants
+
+- Substantive standalone pages have exactly one `<main>` and one `<h1>`.
+- Meridian detail pages use `.meridian-page-shell`, `.meridian-case-hero`, `.meridian-breadcrumb`, and `.meridian-section-nav`.
+- Meridian artifacts end with `.artifact-footer-nav`.
+- Shared page width is `--content-max`; shared reading width is `--reading-max`.
+- Do not add a page-local topbar, gutter, Meridian header, breadcrumb, tab, button, or footer-nav rule.
+- Primary and mobile navigation labels must remain identical; regression QA enforces them.
 
 
 ## Visual baseline correction (v95.47)

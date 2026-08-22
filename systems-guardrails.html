@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Systems & Guardrails · Practical AI Learning</title>
+<meta name="description" content="Cross-project evidence for deciding what AI should do, where deterministic rules or humans belong, and how to keep the permission surface proportionate to risk."/>
+<link rel="stylesheet" href="site-shell.css"/>
+
+<style id="v9549-agent-current">
+.wrap{max-width:1180px;margin:0 auto;padding:34px 28px 64px}
+.capability-hero{max-width:900px;margin-bottom:28px}
+.capability-hero h1{font-size:32px;line-height:1.1;letter-spacing:-.03em;margin:12px 0 10px}
+.capability-hero .lead{font-size:17px;line-height:1.6;color:var(--muted);margin:0}
+.evidence-pair{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:24px 0}
+.evidence-case{border:1px solid var(--border);border-radius:16px;background:var(--card);padding:18px}
+.evidence-case .tag{display:inline-flex;border:1px solid var(--border);border-radius:999px;padding:5px 8px;color:var(--purple);font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.05em}
+.evidence-case h2{font-size:20px;margin:10px 0 8px}
+.evidence-case p,.evidence-case li{font-size:13.5px;line-height:1.6;color:var(--muted)}
+.evidence-case ul{padding-left:18px}
+.evidence-case a{font-weight:800}
+.transfer-note{margin-top:22px;padding:16px 18px;border-left:4px solid var(--purple);background:var(--softp);border-radius:0 12px 12px 0}
+.transfer-note h2{font-size:18px;margin:0 0 6px}
+.transfer-note p{margin:0;color:var(--muted);font-size:13.5px;line-height:1.6}
+@media(max-width:760px){.wrap{padding:28px 18px 48px}.evidence-pair{grid-template-columns:1fr}.capability-hero h1{font-size:28px}}
+
+body{background:var(--bg);color:var(--ink)}
+.wrap{max-width:1180px;margin:0 auto;padding:34px 28px 64px}
+.capability-local-nav{margin-bottom:30px!important}
+.capability-hero{
+  max-width:980px;
+  margin:0 0 34px;
+  padding:0;
+}
+.capability-hero h1{
+  margin:14px 0 10px;
+  font-size:clamp(34px,4vw,48px);
+  line-height:1.08;
+  letter-spacing:-.035em;
+}
+.capability-hero .lead{
+  max-width:980px;
+  margin:0;
+  color:var(--muted);
+  font-size:17px;
+  line-height:1.65;
+}
+.evidence-pair{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:18px;
+  margin:28px 0;
+}
+.evidence-case{
+  padding:24px;
+  border:1px solid var(--border);
+  border-radius:18px;
+  background:var(--card);
+}
+.evidence-case .tag{
+  display:inline-flex;
+  padding:5px 9px;
+  border:1px solid color-mix(in srgb,var(--purple) 25%,var(--border));
+  border-radius:999px;
+  color:var(--purple);
+  font-size:10.5px;
+  font-weight:850;
+  letter-spacing:.05em;
+  text-transform:uppercase;
+}
+.evidence-case h2{
+  margin:13px 0 9px;
+  font-size:22px;
+  line-height:1.25;
+}
+.evidence-case p,.evidence-case li{
+  color:var(--muted);
+  font-size:14px;
+  line-height:1.65;
+}
+.evidence-case ul{margin:12px 0 16px;padding-left:20px}
+.evidence-case li+li{margin-top:7px}
+.evidence-case a{color:var(--purple);font-weight:800;text-decoration:none}
+.evidence-case a:hover{text-decoration:underline}
+.transfer-note{
+  margin:26px 0 0;
+  padding:18px 20px;
+  border:0;
+  border-left:4px solid var(--purple);
+  border-radius:0 12px 12px 0;
+  background:color-mix(in srgb,var(--softp) 55%,var(--card));
+}
+.transfer-note h2{margin:0 0 7px;font-size:18px}
+.transfer-note p{max-width:980px;margin:0;color:var(--muted);font-size:14px;line-height:1.65}
+@media(max-width:760px){
+  .wrap{padding:26px 18px 48px}
+  .evidence-pair{grid-template-columns:1fr}
+  .evidence-case{padding:20px}
+}
+
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0;
+  font-family:Arial,Helvetica,sans-serif;
+  color:var(--ink);
+  background:#fff;
+  line-height:1.55;
+}
+a{color:var(--purple)}
+.dark,.v88-dark{
+  --ink:#f4f3fa; --muted:#b8b7c7; --border:#2b2934;
+  --soft:#18171d; --softp:#211d36; --card:#141319;
+}
+body.dark,body.v88-dark{background:#101014;color:var(--ink)}
+
+.agent-page .capability-local-nav{margin-top:0}
+.agent-page .capability-hero{max-width:980px;margin:0 0 30px}
+.agent-page .capability-hero h1{
+  margin:13px 0 10px;
+  font-size:42px;
+  line-height:1.08;
+  letter-spacing:-.03em;
+}
+.agent-page .capability-hero .lead{
+  max-width:980px;
+  margin:0;
+  font-size:17px;
+  line-height:1.62;
+  color:var(--muted);
+}
+.agent-page .evidence-pair{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:16px;
+}
+.agent-page .evidence-case{
+  border:1px solid var(--border);
+  border-radius:18px;
+  background:var(--card);
+  padding:22px;
+}
+.agent-page .evidence-case h2{font-size:21px;line-height:1.28}
+.agent-page .evidence-case p,
+.agent-page .evidence-case li{font-size:14px;line-height:1.62;color:var(--muted)}
+.agent-page .transfer-note{margin-top:22px}
+@media(max-width:760px){
+  .agent-page .capability-hero h1{font-size:34px}
+  .agent-page .evidence-pair{grid-template-columns:1fr}
+}
+
+/* Consolidated from an adjacent historical style layer. */
+
+body{background:var(--bg)!important;color:var(--ink)!important}body.v88-dark{--ink:#f5f5f7;--muted:#b6b6c2;--border:#34343d;--soft:#19191f;--softp:#1b1a22;--card:#15151b;--bg:#101014;--purple:#b9adff;--purple2:#a79aff}.v88-dark .topbar{background:rgba(16,16,20,.96)!important}.v88-dark table td,.v88-dark .frame,.v88-dark .reasoning,.v88-dark .callout,.v88-dark .stage,.v88-dark .diagram{background:var(--card)!important;color:var(--ink)!important;border-color:var(--border)!important}.v88-dark th{background:#24242c!important}
+
+/* Consolidated from an adjacent historical style layer. */
+
+.v88-artifact-nav{display:flex;align-items:center;gap:8px;overflow-x:auto;margin:14px 0 26px;padding:4px 0 8px;scrollbar-width:thin;font-size:12px}
+.v88-artifact-nav .v912-artifact-label{flex:0 0 auto;color:var(--muted);font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;margin-right:2px}
+.v88-artifact-nav a{flex:0 0 auto;border:1px solid var(--border);background:var(--card);color:var(--ink)!important;text-decoration:none!important;border-radius:999px;padding:8px 11px;font-weight:800}
+.v88-artifact-nav a:hover{background:var(--softp);color:var(--purple)!important}
+.v88-artifact-nav a.active{background:var(--softp);border-color:color-mix(in srgb,var(--purple) 38%,var(--border));color:var(--purple)!important}
+@media(max-width:620px){.v88-artifact-nav span[style]{display:none}.v88-artifact-nav a{padding:6px 8px}}
+
+/* Consolidated from an adjacent historical style layer. */
+
+.nav a[aria-current="page"]{
+  background:var(--softp)!important;
+  color:var(--purple)!important;
+}
+
+/* Consolidated from an adjacent historical style layer. */
+
+/* On pages with both capability-local-nav and artifact nav, make capability nav secondary */
+.plan-page .capability-local-nav,
+.agent-page .capability-local-nav,
+.evals-page .capability-local-nav {
+  margin-bottom:12px!important;
+  opacity:0.75;
+  font-size:13px;
+}
+.plan-page .capability-local-nav span,
+.agent-page .capability-local-nav span,
+.evals-page .capability-local-nav span {
+  font-size:10px;
+  opacity:0.6;
+}
+.plan-page .v88-artifact-nav,
+.agent-page .v88-artifact-nav,
+.evals-page .v88-artifact-nav {
+  margin:14px 0 26px!important;
+  font-weight:800;
+}
+</style>
+<link href="site-components.css" rel="stylesheet"/>
+</head>
+<body class="capability-family">
+<div class="topbar"><div class="topinner">
+<a class="brand-button" href="index.html"><span class="brand">AI <span>Learning Portfolio</span></span></a>
+<nav aria-label="Primary pages" class="nav"><a href="index.html">Home</a><a href="capabilities.html">Capabilities</a><a href="index.html#portfolio">Applied Work</a><a href="index.html#learn">Learning Guide</a></nav>
+<div class="top-actions"><button aria-label="Switch to dark mode" aria-pressed="false" class="theme-toggle" id="v922ThemeToggle" title="Switch to dark mode" type="button">☾</button>
+<select aria-label="Choose page" id="v922MobileNav"><option value="index.html">Home</option><option value="capabilities.html">Capabilities</option><option value="index.html#portfolio">Applied Work</option><option value="index.html#learn">Learning Guide</option></select></div>
+</div></div>
+<main class="wrap agent-page capability-shell">
+
+<header class="capability-page-intro page-intro">
+<div class="eyebrow">Capabilities</div>
+<h1>Systems & Guardrails</h1>
+<p class="lead">Cross-project evidence for deciding what AI should do, where deterministic rules or humans belong, and how to keep the permission surface proportionate to risk.</p>
+</header>
+
+<nav class="capability-local-nav" aria-label="Capability pages"><span>Capabilities</span><div><a href="capabilities.html">Overview</a><a href="discovery-workflow.html">Discovery & Workflow</a><a href="measurement-value.html">Measurement & Value</a><a href="systems-guardrails.html" class="current" aria-current="page">Systems & Guardrails</a><a href="evals-quality.html">Evals & Quality</a></div></nav>
+
+<section class="evidence-pair" aria-label="Systems and guardrails evidence by case">
+<article class="evidence-case surface-card">
+<span class="tag">Meridian · safety first</span>
+<h2>Guardrails skip drafting before retrieval for high-risk categories</h2>
+<p>The system design itself enforces the "simplest reliable" principle: financial, security, and account-change tickets never reach the AI drafting stage. The guard check happens immediately after classification, so there's no paper trail of AI attempting work it shouldn't.</p>
+<ul>
+<li>High-risk categories route directly to humans without AI attempting a draft—this is faster and safer than generating a draft and then filtering it.</li>
+<li>Mandatory human review is retained for all AI drafts; selectivity comes post-pilot only after data proves accuracy is sufficient.</li>
+<li>Ambiguous classification routes to "Needs Review" (human decides) rather than forcing certainty into the wrong bucket.</li>
+</ul>
+<p><a href="system-flow.html">Open the full Meridian System Flow →</a></p>
+</article>
+
+<article class="evidence-case surface-card">
+<span class="tag">Harborstone · operator judgment</span>
+<h2>Human verification is the control layer for ambiguous extraction</h2>
+<p>The invoice extraction pilot kept human review as the control layer, not as an afterthought. When source documents are ambiguous or business rules are undefined, the AI handles what it can, and humans verify before submission.</p>
+<ul>
+<li>The system doesn't try to achieve perfection in extraction; it aims for high recall (catch all rows) and human-checkable output (clear what's missing).</li>
+<li>Business-rule exceptions and ambiguous line items are flagged for human judgment rather than forcing the model to make assumptions.</li>
+<li>The permission surface is intentionally narrow: the model extracts, but submission authority stays with the employee.</li>
+</ul>
+<p><a href="harborstone.html#automation-boundary">See Harborstone system reasoning →</a></p>
+</article>
+</section>
+
+<section class="capability-closing-reflection" aria-labelledby="agent-closing-reflection">
+<span class="reflection-label">Closing reflection</span>
+<h2 id="agent-closing-reflection">What transfers across the cases</h2>
+<p>The repeated skill is not choosing between AI and humans. It is reasoning about the specific decision at each step (classify, draft, verify, submit) and matching the right permission level to the risk at that step. The simplest system is often one that gives AI a narrow lane and keeps human judgment proportionate to uncertainty.</p>
+</section>
+</main>
+<script src="site-shell.js"></script>
+<script>
+(function(){
+ const sel=document.getElementById('v922MobileNav');
+ if(sel) sel.addEventListener('change',()=>{location.href=sel.value;});
+})();
+</script>
+</body>
+</html>

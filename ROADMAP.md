@@ -1,55 +1,87 @@
-# AI PM Learning & Portfolio — Roadmap
+# Practical AI Learning Portfolio — Roadmap
 
-## Core Decision Principle (Added Aug 22, 2026)
+This roadmap contains active or deliberately parked work only. Completed release history belongs in `CHANGELOG.md`; current facts belong in `CURRENT_STATE.md`.
 
-**Use the simplest reliable system.** AI is one option among many—not the default.
+## NEXT: Run, diagnose, revise, rerun
 
-- Always ask: "Should AI be used here at all?" during workflow discovery
-- Compare AI against deterministic software using: accuracy, risk, cost, maintenance, latency, operational burden
-- Value Realization outcomes expand to: scale, revise, narrow, **replace with conventional software**, or stop
-- Future Workbench exercise: make a deliberate recommendation for non-AI software or process improvement
-- Strengthen Modern Software & SaaS refresher: recognize what APIs, rules engines, database logic, workflow automation, and ordinary application development already solve well
+**Goal:** Use Meridian Lab to create the first meaningful learning cycle rather than adding more interface or narrative pages.
 
-*This reinforces your CS background (solutions that work > shiny tech) and your longer-term AI Value Realization direction.*
+- [ ] Choose one narrow experiment objective.
+- [ ] Run a representative subset of the 12 fixed cases.
+- [ ] Add a small number of purposeful exploratory cases, especially ambiguity, multi-issue routing, source conflict, and high-risk boundaries.
+- [ ] Score results and record a diagnosis before changing the system.
+- [ ] Separate taxonomy, retrieval, source-quality, guardrail, draft, confidence/routing, and test-case failures.
+- [ ] Make one justified change.
+- [ ] Use linked reruns to compare before and after.
+- [ ] Export the workspace backup and summarize what changed, what did not, and what question comes next.
 
----
+**Definition of done:** at least one traceable objective → run → diagnosis → change → linked rerun sequence with Paige’s own reflection.
 
-## Meridian Stakeholder Artifacts — Current Work
+## NEXT AFTER EVIDENCE: Complete eval coverage
 
-### ✅ COMPLETE
-- **Executive Summary** (v3 locked) — Problem, Approach, Why It Matters, Risks, Targets (Week 8), Decision Gate
-  - Integrated in v95.57: PLAN now clarifies that any post-pilot review change would be selective, evidence-earned automation for low-risk, well-supported ticket types—not broad removal of human review.
+Expand only after the first cycle shows what the current suite cannot answer.
 
-### IN PROGRESS
-- **Week 8 Pilot Readout** — What worked, what failed, what changed, what's next
-  - Status: Not started
-  - Paige reasoning required: What are the plausible failure modes? What would success look like operationally?
-  
-### QUEUED
-- **Adoption Playbook** (4-week go-live) — How to drive adoption, not just measure it
-- **Lessons Learned** — Honest reflection, what you'd do differently
+- [ ] Draft response quality: grounding, factual/policy accuracy, completeness, tone, and whether the actual question is answered.
+- [ ] Appropriate escalation: financial actions, security, protected account changes, explicit requests for a human, repeated exchanges, and rising customer frustration.
+- [ ] Confidence and review routing: ambiguity, missing information, weak/no source, conflicting sources, and safe fallback.
+- [ ] Decide whether graders should remain human/rules-based or whether a model-based grader would answer a specific new learning question.
+- [ ] Add failure cases discovered during real Lab use to the regression suite.
 
----
+## PINNED: Evidence-driven Meridian presentation
 
-## After Stakeholder Artifacts
+When genuine run and rerun evidence exists, decide whether the public Meridian case needs distinct **Eval Design**, **MVP & Runs**, and **Results & Changes** sections or pages.
 
-- [ ] Execute 12 designed eval cases (8 Classification + 4 Retrieval); score, diagnose, revise, rerun
-- [ ] Design remaining 3 eval areas (Draft Quality, Escalation, Confidence)
-- [ ] Interview story extraction (5–7 "changed my mind" moments)
-- [ ] Supporting skills: difficult customer interactions, change management, role narrative
+Do not restructure prematurely. Preserve a clear progression from discovery and design through implementation, diagnosis, revision, and measurement. Prototype output must remain distinct from customer, operational, or business outcomes.
 
----
+## PINNED: Lab complexity boundary
 
-## How This Principle Shows Up in Your Work
+The current static, browser-local Lab is sufficient for the present learning objective. Before adding a model API, database, authentication, shared accounts, or production-style telemetry, state:
 
-**Already in Meridian:**
-- Guardrails skip money/security entirely (not trying to automate high-risk decisions)
-- Mandatory human review (hybrid, not autonomous)
-- "Should AI be used" is baked into classification logic (routes ambiguous cases to human)
+1. What new question the capability will answer.
+2. Why the current deterministic/local design cannot answer it.
+3. What evidence will justify the added cost and maintenance burden.
 
-**Coming in portfolio:**
-- Workbench exercise: recommend process improvement or conventional software over AI
-- Modern Software refresher: when do you use rules engines, database logic, or workflow automation instead of LLMs?
-- Future case studies: show the reasoning for *not* using AI
+Possible future triggers:
 
-**Priority:** This doesn't change your near-term plan. Finish Meridian VALIDATE (eval execution + remaining eval design) first. Then integrate this principle into your interview stories and longer-term portfolio thinking.
+- Model API: needed to study nondeterminism, prompt/model comparison, grounding behavior, or model-based grading.
+- Editable/custom knowledge sources: needed for source-governance and retrieval experiments beyond the bundled sample KB.
+- Durable backend: needed for cross-device continuity, multiple users, or realistic shared-run analysis.
+- Authentication: needed only if real user-specific or sensitive data is introduced.
+- Operational dashboard: needed only when a realistic instrumented pilot or synthetic event dataset exists.
+
+## Supporting practice
+
+### Difficult customer and stakeholder communication
+
+- [ ] Frustrated customer response or escalation note.
+- [ ] Skeptical support-rep one-pager.
+- [ ] Executive update when the pilot is underperforming.
+- [ ] Recommendation to narrow, pause, replace, or stop when value is weak.
+
+### Adoption and enablement
+
+- [ ] Draft an onboarding/enablement plan after evaluated behavior is stable enough to teach honestly.
+- [ ] Define how to capture appropriate non-use, friction, overrides, and trust concerns.
+- [ ] Avoid building a fake onboarding product solely to make the portfolio look complete.
+
+### Value realization
+
+- [ ] Create a later readout using actual Lab evidence, clearly labeled as prototype learning.
+- [ ] Practice a scale / revise / narrow / replace with conventional software / stop recommendation.
+- [ ] Add operational or business metrics only when a defensible data source exists.
+
+### Transfer beyond support
+
+- [ ] Add a future Workbench exercise where process repair or conventional software is deliberately preferred over AI.
+- [ ] Continue Modern Software & SaaS refreshers: APIs, rules engines, database logic, workflow automation, QA/test strategy, product operations, analytics, and AI-assisted delivery.
+
+## Parked maintenance
+
+- Consolidate historical inline CSS only with screenshot-capable visual QA.
+- Revisit the large index SPA shell only for a genuine regression or an intentional, tested migration.
+- Consider editable Lab knowledge and case definitions when a concrete experiment requires them; do not add generic configuration screens preemptively.
+- Consider an outside-click fix for legacy overflow menus only if it remains reproducible in the current build.
+
+## Governing principle
+
+**Use the simplest reliable system.** AI is one option, not the default. Compare AI with deterministic software, workflow/process changes, source/data repair, and no-build using accuracy, risk, cost, latency, maintenance, and operational burden.

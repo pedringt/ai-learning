@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Meridian Eval Work · Practical AI Learning</title>
+<meta name="description" content="Meridian evaluation work covering classification, retrieval, draft quality, escalation, confidence, review routing, and failure diagnosis.">
+<link rel="stylesheet" href="site-shell.css">
+<link rel="stylesheet" href="site-components.css">
+</head>
+<body>
+<div class="topbar">
+<div class="topinner">
+<a class="brand-button" href="index.html">
+<span class="brand">AI <span>Learning Portfolio</span>
+</span>
+</a>
+<nav aria-label="Primary pages" class="nav">
+<a href="index.html">Home</a>
+<a href="capabilities.html">Capabilities</a>
+<a href="index.html#portfolio" aria-current="page">Applied Work</a>
+<a href="index.html#learn">Learning Guide</a>
+</nav>
+<div class="top-actions">
+<button aria-label="Switch to dark mode" aria-pressed="false" class="theme-toggle" id="v922ThemeToggle" title="Switch to dark mode" type="button">☾</button>
+<select aria-label="Choose page" id="v922MobileNav">
+<option value="index.html">Home</option>
+<option value="capabilities.html">Capabilities</option>
+<option value="index.html#portfolio" selected>Applied Work</option>
+<option value="index.html#learn">Learning Guide</option>
+</select>
+</div>
+</div>
+</div>
+<main class="meridian-page-shell artifact-detail">
+<div class="meridian-heading"><div class="meridian-breadcrumb"><a href="index.html#portfolio">Applied Work</a><span aria-hidden="true">/</span><a href="index.html#meridian">Meridian</a></div><div class="eyebrow">Meridian · Eval Work</div></div><header class="meridian-case-hero"><h1>Eval Work</h1><p class="lead">The validation record for classification, retrieval, drafting, escalation, and review routing. Designed work is separated from executed evidence.</p><div class="meridian-context-grid"><div class="meridian-context-item"><span>Areas</span><strong>5</strong></div><div class="meridian-context-item"><span>Cases</span><strong>12 designed</strong></div><div class="meridian-context-item"><span>Evidence</span><strong>Pre-launch</strong></div><div class="meridian-context-item"><span>Next</span><strong>Run + diagnose</strong></div></div></header>
+<nav class="meridian-section-nav" aria-label="Meridian reading order">
+<div class="meridian-section-links">
+<a href="index.html#meridian">Overview</a>
+<a href="case-readout.html">Case Readout</a>
+<a href="tracker.html">Discovery &amp; Decisions</a>
+<a href="measurement-plan.html">Measurement Plan</a>
+<a href="system-flow.html">System Flow</a>
+<a href="eval-work.html" class="current" aria-current="page">Eval Work</a>
+</div>
+</nav>
+<aside class="meridian-product-callout" aria-labelledby="eval-runner-callout-title">
+<div><span>Interactive prototype</span><strong id="eval-runner-callout-title">Try a ticket or run the designed cases</strong><p>Use the freeform ticket field first, then use the repeatable case suite to compare expected and actual behavior.</p></div>
+<a class="meridian-primary-action" href="meridian-lab/index.html#evals">Open Eval Runner <span aria-hidden="true">→</span></a>
+</aside>
+<section class="surface-card">
+<h2>Current state</h2>
+<p>
+<strong>Designed, not yet presented as production evidence.</strong> Classification and retrieval cases are developed enough to inspect. Draft quality, appropriate human escalation, and confidence/review routing remain in progress. Offline evals test controlled behavior; they do not prove customer or business outcomes.</p>
+</section>
+<section>
+<h2>Five evaluation areas</h2>
+<div class="grid2">
+<article class="surface-card">
+<h3>1 · Ticket classification</h3>
+<p>Straightforward, ambiguous, customer-mislabeled, and multi-issue tickets. Wrong routing is scored by its operational consequence.</p>
+</article>
+<article class="surface-card">
+<h3>2 · Knowledge retrieval</h3>
+<p>Correct-source, no-source, wrong-source temptation, and stale/conflicting-source behavior. The system must not be graded on authority information it was never given.</p>
+</article>
+<article class="surface-card">
+<h3>3 · Draft quality</h3>
+<p>Grounding, factual and policy accuracy, completeness, tone, and whether the response answers the actual question.</p>
+</article>
+<article class="surface-card">
+<h3>4 · Appropriate escalation</h3>
+<p>Financial, security, and account-change cases are included to verify recognition, no-draft behavior, and human routing—not draft quality.</p>
+</article>
+<article class="surface-card">
+<h3>5 · Confidence and review routing</h3>
+<p>Ambiguity, missing information, conflicting evidence, and safe fallback. Confidence must be tied to observable evidence rather than model self-assurance.</p>
+</article>
+</div>
+</section>
+<section class="grid2">
+<article class="surface-card">
+<h2>Failure diagnosis</h2>
+<p>Failures should be classified before fixing them: taxonomy/routing, retrieval, source authority or freshness, instructions/model behavior, guardrail logic, or human handoff. That avoids treating every poor answer as a prompt problem.</p>
+<p>
+<a href="tracker.html#validate">See the VALIDATE reasoning →</a>
+</p>
+</article>
+<article class="surface-card">
+<h2>Interactive prototype</h2>
+<p>The runner is a small rules-based practice simulator, not a production model evaluation platform. It is useful for making expected behavior and scoring visible.</p>
+<p>
+<a href="meridian-lab/index.html#evals">Open the prototype Eval Runner →</a>
+</p>
+</article>
+</section>
+<nav class="artifact-footer-nav" aria-label="Continue through Meridian">
+<a href="system-flow.html">
+<span>Previous</span>System Flow</a>
+<a class="artifact-footer-home" href="index.html#meridian">
+<span>Meridian</span>Overview</a>
+<a href="meridian-lab/index.html#evals">
+<span>Prototype</span>Eval Runner</a>
+</nav>
+</main>
+<script src="site-shell.js">
+</script>
+</body>
+</html>

@@ -41,11 +41,11 @@
     },
     {
       "name": "Capabilities Detail",
-      "url": "agent-flow.html",
+      "url": "systems-guardrails.html",
       "check": [
         "page intro",
         "local nav",
-        "compact flow"
+        "cross-project evidence cards"
       ]
     },
     {
@@ -56,6 +56,38 @@
         "Meridian nav",
         "deep-link section",
         "mobile accordion"
+      ]
+    },
+    {
+      "name": "Meridian Page Family",
+      "urls": [
+        "index.html#meridian",
+        "case-readout.html",
+        "tracker.html",
+        "measurement-plan.html",
+        "system-flow.html",
+        "eval-work.html"
+      ],
+      "check": [
+        "breadcrumb alignment",
+        "detail header height and left edge",
+        "contextual-nav vertical position",
+        "first content-block left edge",
+        "no horizontal overflow",
+        "artifact footer navigation"
+      ]
+    },
+    {
+      "name": "Eval Work and Runner",
+      "urls": [
+        "eval-work.html",
+        "eval-runner.html"
+      ],
+      "check": [
+        "Eval Runner primary action prominence",
+        "shared Meridian page rhythm",
+        "mode controls and results on mobile",
+        "dark-mode form contrast"
       ]
     },
     {
