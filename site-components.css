@@ -677,3 +677,28 @@ body>main.meridian-page-shell{
 .eval-experiment-details summary::-webkit-details-marker{display:none}.eval-experiment-details summary::after{content:"+";float:right;color:var(--purple)}.eval-experiment-details[open] summary::after{content:"−"}
 .eval-experiment-details>div{padding:0 15px 15px;overflow-x:auto}.eval-experiment-details table{width:100%;border-collapse:collapse;font-size:12px}.eval-experiment-details th,.eval-experiment-details td{padding:9px;border-top:1px solid var(--border);text-align:left;vertical-align:top}.eval-experiment-details th{color:var(--muted);font-size:10px;letter-spacing:.06em;text-transform:uppercase}.eval-experiment-details p{margin:12px 0 0;color:var(--muted);font-size:12px;line-height:1.5}
 @media(max-width:760px){.eval-experiments-heading,.eval-experiment-heading{display:block}.eval-experiments-heading>b,.eval-experiment-heading>b{display:inline-block;margin-top:10px}.eval-experiment-grid{grid-template-columns:1fr}}
+
+/* v95.89 — restrained Learning Guide color and state system. */
+#ai-cs-mock [data-page="learn"] .learning-stage{--stage-accent:#5b3df5;border-left:3px solid color-mix(in srgb,var(--stage-accent) 68%,var(--border))!important;transition:border-color .15s ease,box-shadow .15s ease}
+#ai-cs-mock [data-page="learn"] .learning-stage:nth-of-type(2){--stage-accent:#3975c9}
+#ai-cs-mock [data-page="learn"] .learning-stage:nth-of-type(3){--stage-accent:#16899a}
+#ai-cs-mock [data-page="learn"] .learning-stage:nth-of-type(4){--stage-accent:#27856d}
+#ai-cs-mock [data-page="learn"] .learning-stage:nth-of-type(5){--stage-accent:#a97718}
+#ai-cs-mock [data-page="learn"] .learning-stage:nth-of-type(6){--stage-accent:#b76035}
+#ai-cs-mock [data-page="learn"] .learning-stage:nth-of-type(7){--stage-accent:#a84f76}
+#ai-cs-mock [data-page="learn"] .learning-stage:nth-of-type(8){--stage-accent:#7651b5}
+#ai-cs-mock [data-page="learn"] .learning-stage:hover{border-color:color-mix(in srgb,var(--stage-accent) 48%,var(--border))!important}
+#ai-cs-mock [data-page="learn"] .learning-stage[open]{box-shadow:0 10px 28px color-mix(in srgb,var(--stage-accent) 8%,transparent)}
+#ai-cs-mock [data-page="learn"] .learning-stage summary:hover{background:color-mix(in srgb,var(--stage-accent) 7%,transparent)!important}
+#ai-cs-mock [data-page="learn"] .learning-stage[open] summary{background:color-mix(in srgb,var(--stage-accent) 9%,var(--card))!important}
+#ai-cs-mock [data-page="learn"] .stage-num{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;padding:0!important;border:1px solid color-mix(in srgb,var(--stage-accent) 32%,var(--border));border-radius:9px;background:color-mix(in srgb,var(--stage-accent) 10%,var(--card));color:var(--stage-accent)!important}
+#ai-cs-mock [data-page="learn"] .learning-stage summary:after{border-color:color-mix(in srgb,var(--stage-accent) 26%,var(--border))!important;color:var(--stage-accent)!important}
+#ai-cs-mock [data-page="learn"] .stage-body{background:color-mix(in srgb,var(--stage-accent) 2.5%,var(--card))!important}
+#ai-cs-mock [data-page="learn"] .stage-group h3{color:var(--stage-accent)!important}
+#ai-cs-mock [data-page="learn"] .stage-group:nth-of-type(2):not(.practice){margin:8px 0 2px!important;padding:14px 16px!important;border:1px solid color-mix(in srgb,#a97718 22%,var(--border))!important;border-radius:11px!important;background:color-mix(in srgb,#a97718 6%,var(--card))!important}
+#ai-cs-mock [data-page="learn"] .stage-group:nth-of-type(2):not(.practice) h3{color:#9a6c13!important}
+#ai-cs-mock [data-page="learn"] .stage-group.practice{border-left:4px solid #168f7b!important;background:color-mix(in srgb,#168f7b 7%,var(--card))!important}
+#ai-cs-mock [data-page="learn"] .stage-group.practice h3{color:#147b6b!important}
+#ai-cs-mock.dark [data-page="learn"] .stage-group:nth-of-type(2):not(.practice) h3{color:#d3a84f!important}
+#ai-cs-mock.dark [data-page="learn"] .stage-group.practice h3{color:#55c7b3!important}
+@media(max-width:760px){#ai-cs-mock [data-page="learn"] .stage-num{width:28px;height:28px}#ai-cs-mock [data-page="learn"] .stage-group:nth-of-type(2):not(.practice){margin-left:-48px!important;padding-left:18px!important}}

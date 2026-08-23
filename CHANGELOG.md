@@ -2,6 +2,13 @@
 
 This file preserves release history from the former long README. For the current architecture, file map, and QA instructions, use `README.md`.
 
+## v95.89 final Learning Guide color pass
+
+- Added restrained stage-specific accent colors through numbered markers, left rails, and open/hover states without adding new containers.
+- Gave expanded content a faint stage tint and clearer state feedback in light and dark mode.
+- Differentiated reference/deeper-dive material and practice callouts while preserving the existing Core / Reference / Practice structure.
+- Kept all eight stages collapsed by default and retained the simplified Curriculum & Resources introduction.
+
 ## v95.88 positioning and final hierarchy refinement
 
 - Connected the Home introduction to Paige’s prior custom-software PM and QA experience without making the portfolio role-specific.

@@ -1,6 +1,6 @@
 # Practical AI Learning Portfolio — Current State
 
-**Current source of truth:** v95.88 positioning and final hierarchy refinement.
+**Current source of truth:** v95.89 final Learning Guide color pass.
 
 ## Purpose and positioning
 

@@ -330,6 +330,9 @@ if 'case-readout.html' in artifact_slice or 'meridian-lab/index.html' in artifac
     issues.append("index.html: Readout or Lab duplicated inside supporting-artifact grid")
 if '.home-applied-heading' not in components or '.home-option-d-links' not in components or '.meridian-entry-choice' not in components:
     issues.append("site-components.css: v95.82 entry styles missing")
+for required in ('--stage-accent','#ai-cs-mock [data-page="learn"] .stage-num','.stage-group:nth-of-type(2):not(.practice)','#ai-cs-mock.dark [data-page="learn"] .stage-group.practice h3'):
+    if required not in components:
+        issues.append(f"site-components.css: final Learning Guide color system missing {required}")
 for retired in ('class="home-context-strip"','Prefer evidence by skill?','class="home-foundation-line"'):
     if retired in index_text:
         issues.append(f"index.html: removed Home repetition returned: {retired}")
