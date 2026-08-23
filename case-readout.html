@@ -791,8 +791,8 @@ body .wrap>.v918-orientation{margin-bottom:18px!important}
 <div class="stage progress">
 <div class="stagehead"><h2>Validate</h2></div>
 <div class="stagebody">
-    v1 eval architecture is now defined across five areas. Ticket Classification and Knowledge Retrieval case sets are designed, including ambiguity, conflicting customer-selected categories, multi-issue routing, wrong-source temptation, safe fallback, and stale/conflicting knowledge. Draft Quality, Appropriate Human Escalation, and Confidence/Review Routing are next. The new cases are designed, not yet presented as executed results.
-    <div style="margin-top:6px"><a class="sevidence" href="eval-work.html">→ eval suite</a></div>
+    v1 eval architecture is defined across five areas. I also completed the first run → diagnose → revise → rerun cycle: a four-case password-boundary test exposed a false-positive escalation, I narrowed the account-change rule to require request language, and all four cases then matched their expected routes. The broader 12-case suite and remaining draft-quality, escalation, and confidence work are still in progress.
+    <div style="margin-top:6px"><a class="sevidence" href="eval-work.html#guardrail-cycle">→ guardrail experiment and broader eval work</a></div>
 </div>
 </div>
 <div class="stage todo">
@@ -819,7 +819,7 @@ body .wrap>.v918-orientation{margin-bottom:18px!important}
 <div class="stagehead"><h2>Expand</h2><span class="pstatus todo">Not started</span></div>
 <div class="stagebody">Use the pilot evidence to make a next-step recommendation to Product. One possible candidate is the KB-cleanup/maintenance agent idea from CONFIGURE, but only if the pilot data gives us a reason to build it.</div>
 </div>
-<p class="footer-note">Current checkpoint: VALIDATE in progress; Ticket Classification and Knowledge Retrieval cases are designed, not yet executed. Full reasoning behind every decision above lives in the <a href="tracker.html">working tracker</a>.</p>
+<p class="footer-note">Current checkpoint: VALIDATE in progress; the first four-case guardrail cycle is complete, while the broader suite remains ongoing. Full reasoning behind every decision above lives in the <a href="tracker.html">working tracker</a>.</p>
 <nav class="artifact-footer-nav" aria-label="Continue through Meridian"><a href="index.html#meridian"><span>Meridian</span>Overview</a><span class="artifact-footer-spacer" aria-hidden="true"></span><a href="tracker.html"><span>Next</span>Discovery &amp; Decisions</a></nav></main>
 <script defer="" src="site-shell.js"></script></body>
 </html>

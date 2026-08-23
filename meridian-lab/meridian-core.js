@@ -4,7 +4,7 @@
 (function(global){
   'use strict';
 
-  const VERSION='meridian-rules-v1.0';
+  const VERSION='meridian-rules-v1.1';
   const STORAGE_KEY='meridian-lab-runs-v1';
   const WORKSPACE_KEY='meridian-lab-workspace-v1';
 
@@ -52,7 +52,7 @@
     const text=input.toLowerCase();
     if(/refund|issue a credit|credit my|reverse (the )?charge|dispute (the )?charge|cancel (the )?payment/.test(text))return {code:'financial-action',label:'Financial action',message:'Escalate without drafting. The tool cannot authorize or complete a financial action.'};
     if(/security|hack|breach|compromised/.test(text))return {code:'security',label:'Security concern',message:'Escalate without drafting. Follow the security incident workflow.'};
-    if(/(change|reset|remove|add|transfer).*(password|admin|permission|account owner)/.test(text))return {code:'account-change',label:'Protected account change',message:'Escalate without drafting. An authorized person must verify and complete this change.'};
+    if(/(please|can you|need you to).*(change|reset|remove|add|transfer).*(password|admin|permission|account owner)/.test(text))return {code:'account-change',label:'Protected account change',message:'Escalate without drafting. An authorized person must verify and complete this change.'};
     return null;
   }
 

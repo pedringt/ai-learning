@@ -2,6 +2,46 @@
 
 This file preserves release history from the former long README. For the current architecture, file map, and QA instructions, use `README.md`.
 
+## v95.87 reusable executed-experiment collection
+
+- Grouped completed eval cycles under one concise Executed Evidence collection on Eval Work.
+- Added a reusable experiment-article pattern and visible completed count for future curated cycles.
+- Kept exploratory runs in the browser-local Learning Log rather than treating every run as portfolio evidence.
+
+## v95.86 executed guardrail-cycle evidence
+
+- Added a concise canonical Experiment 01 to Eval Work: objective, false positive, diagnosis, rule revision, rerun result, and evidence boundary.
+- Kept the four-case before/after table collapsed so execution evidence is available without making the page harder to scan.
+- Updated the Case Readout’s VALIDATE stage and status language to reflect one completed cycle without overstating the unfinished broader suite.
+- Linked Evals & Quality directly to the executed guardrail diagnosis and rerun.
+
+## v95.85 account-change guardrail revision
+
+- Narrowed the protected-account regex to require a direct request pattern before escalating a password, admin, permission, or account-owner change.
+- Confirmed that troubleshooting language such as “I tried resetting my password” can continue to a human-reviewable draft while direct change requests still stop.
+- Bumped the deterministic engine to `meridian-rules-v1.1` and encoded the four-case diagnosis cycle in executable regression tests.
+
+## v95.84 minimal evidence-first Home
+
+- Shortened the Home introduction to one sentence focused on fit, quality, risk, workflow, adoption, and value.
+- Removed the Practice Environment / Capstone Progress strip; that context belongs on deeper pages.
+- Removed the redundant Capabilities CTA and foundation sentence so the hero flows directly into the two applied-work destinations and then judgment evidence.
+- Replaced the oversized Harborstone feature card with a quieter editorial problem/pilot summary and plain destination link.
+- Consolidated the Lab’s overlapping Support Tool and Eval Runner into one Test & Learn flow while retaining `#support` as a compatibility route.
+
+## v95.83 faithful Option D Home layout
+
+- Replaced the two large Home project-summary cards with the selected mockup’s compact Meridian Readout and Harborstone destination cards.
+- Preserved the inline Capabilities shortcut and converted the foundation treatment to one plain supporting sentence.
+- Kept the deeper project framing on the linked destination pages instead of repeating it on Home.
+
+## v95.82 evidence-first Home and Meridian entry hierarchy
+
+- Removed the two oversized Home explanation bands so applied work follows the hero directly.
+- Added a compact Capabilities shortcut and reduced the portfolio foundation to one supporting line beneath the case cards.
+- Elevated the Meridian Lab beside the Case Readout as a first-class entry path, with an explicit deterministic, browser-local boundary.
+- Removed the duplicate Readout and Lab cards from the supporting-artifact grid, leaving four aligned evidence artifacts.
+
 ## v95.81 Meridian consistency and System Flow completion
 
 - Matched Meridian Overview’s route spacing to the canonical standalone artifact shell on desktop and mobile.

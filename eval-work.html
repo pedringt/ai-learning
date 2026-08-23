@@ -33,7 +33,7 @@
 </div>
 </div>
 <main class="meridian-page-shell artifact-detail">
-<div class="meridian-heading"><div class="meridian-breadcrumb"><a href="index.html#portfolio">Applied Work</a><span aria-hidden="true">/</span><a href="index.html#meridian">Meridian</a></div><div class="eyebrow">Meridian · Eval Work</div></div><header class="meridian-case-hero"><h1>Eval Work</h1><p class="lead">The validation record for classification, retrieval, drafting, escalation, and review routing. Designed work is separated from executed evidence.</p><div class="meridian-context-grid"><div class="meridian-context-item"><span>Areas</span><strong>5</strong></div><div class="meridian-context-item"><span>Cases</span><strong>12 designed</strong></div><div class="meridian-context-item"><span>Evidence</span><strong>Pre-launch</strong></div><div class="meridian-context-item"><span>Next</span><strong>Run + diagnose</strong></div></div></header>
+<div class="meridian-heading"><div class="meridian-breadcrumb"><a href="index.html#portfolio">Applied Work</a><span aria-hidden="true">/</span><a href="index.html#meridian">Meridian</a></div><div class="eyebrow">Meridian · Eval Work</div></div><header class="meridian-case-hero"><h1>Eval Work</h1><p class="lead">The validation record for classification, retrieval, drafting, escalation, and review routing. Designed work is separated from executed evidence.</p><div class="meridian-context-grid"><div class="meridian-context-item"><span>Areas</span><strong>5</strong></div><div class="meridian-context-item"><span>Suite</span><strong>12 designed</strong></div><div class="meridian-context-item"><span>Executed</span><strong>1 full cycle</strong></div><div class="meridian-context-item"><span>Next</span><strong>Broaden coverage</strong></div></div></header>
 <nav class="meridian-section-nav" aria-label="Meridian reading order">
 <div class="meridian-section-links">
 <a href="index.html#meridian">Overview</a>
@@ -45,13 +45,23 @@
 </div>
 </nav>
 <aside class="meridian-product-callout" aria-labelledby="eval-runner-callout-title">
-<div><span>Interactive prototype</span><strong id="eval-runner-callout-title">Try a ticket or run the designed cases</strong><p>Use the freeform ticket field first, then use the repeatable case suite to compare expected and actual behavior.</p></div>
-<a class="meridian-primary-action" href="meridian-lab/index.html#evals">Open Eval Runner <span aria-hidden="true">→</span></a>
+<div><span>Interactive prototype</span><strong id="eval-runner-callout-title">Try a ticket or run the designed cases</strong><p>Use Test &amp; Learn to explore unfamiliar behavior, compare fixed cases, diagnose failures, and rerun what matters.</p></div>
+<a class="meridian-primary-action" href="meridian-lab/index.html#evals">Open Test &amp; Learn <span aria-hidden="true">→</span></a>
 </aside>
 <section class="surface-card">
 <h2>Current state</h2>
 <p>
-<strong>Designed, not yet presented as production evidence.</strong> Classification and retrieval cases are developed enough to inspect. Draft quality, appropriate human escalation, and confidence/review routing remain in progress. Offline evals test controlled behavior; they do not prove customer or business outcomes.</p>
+<strong>Designed work and executed evidence are labeled separately.</strong> One four-case guardrail cycle is complete. The 12-case classification/retrieval suite and the remaining draft-quality, escalation, and confidence work are still in progress. Offline evals test controlled behavior; they do not prove customer or business outcomes.</p>
+</section>
+<section class="eval-experiments" aria-labelledby="executed-experiments-heading">
+<div class="eval-experiments-heading"><div><span>Executed evidence</span><h2 id="executed-experiments-heading">Completed experiment cycles</h2><p>Only completed run → diagnose → revise → rerun cycles are curated here. Exploratory runs remain in the browser-local Learning Log.</p></div><b>1 completed</b></div>
+<article class="eval-experiment surface-card" id="guardrail-cycle" aria-labelledby="guardrail-cycle-heading">
+<div class="eval-experiment-heading"><div><span>Experiment 01 · Completed cycle</span><h2 id="guardrail-cycle-heading">Repairing a protected-account false positive</h2></div><b>4 / 4 expected routes after revision</b></div>
+<div class="eval-experiment-grid"><div><span>Objective</span><p>Test whether protected requests escalate without blocking routine account-access troubleshooting.</p></div><div><span>Failure found</span><p>“I tried resetting my password” escalated because the rule matched protected verbs and fields without considering intent.</p></div><div><span>Change</span><p>Require explicit request language before triggering the protected-account escalation.</p></div><div><span>Result</span><p>The false positive drafted after revision; the explicit password-change request still escalated.</p></div></div>
+<p class="eval-experiment-learning"><strong>Learning:</strong> A guardrail must distinguish a request for protected action from a description of a past self-service attempt.</p>
+<details class="eval-experiment-details"><summary>View before-and-after cases</summary><div><table><thead><tr><th>Case</th><th>Before</th><th>After</th></tr></thead><tbody><tr><td>I can’t log in.</td><td>Review required</td><td>Review required</td></tr><tr><td>I tried resetting my password, but it didn’t work.</td><td>Escalate</td><td>Draft</td></tr><tr><td>My password reset attempt timed out. I need help getting back in.</td><td>Draft</td><td>Draft</td></tr><tr><td>Please change my account password to something secure.</td><td>Escalate</td><td>Escalate</td></tr></tbody></table><p><strong>Rule revision:</strong> require request patterns such as “please” or “can you” before protected change verbs and fields trigger escalation.</p></div></details>
+<p class="eval-experiment-limit"><strong>Evidence boundary:</strong> This demonstrates the correction across a four-case deterministic regression set. Broader phrasing coverage is still needed before treating the rule as robust.</p>
+</article>
 </section>
 <section>
 <h2>Five evaluation areas</h2>
@@ -90,7 +100,7 @@
 <h2>Interactive prototype</h2>
 <p>The runner is a small rules-based practice simulator, not a production model evaluation platform. It is useful for making expected behavior and scoring visible.</p>
 <p>
-<a href="meridian-lab/index.html#evals">Open the prototype Eval Runner →</a>
+<a href="meridian-lab/index.html#evals">Open Test &amp; Learn →</a>
 </p>
 </article>
 </section>
@@ -100,7 +110,7 @@
 <a class="artifact-footer-home" href="index.html#meridian">
 <span>Meridian</span>Overview</a>
 <a href="meridian-lab/index.html#evals">
-<span>Prototype</span>Eval Runner</a>
+<span>Prototype</span>Test &amp; Learn</a>
 </nav>
 </main>
 <script src="site-shell.js">

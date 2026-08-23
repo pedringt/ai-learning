@@ -1,6 +1,6 @@
 # Practical AI Learning Portfolio — Current State
 
-**Current source of truth:** v95.81 Meridian consistency and System Flow completion.
+**Current source of truth:** v95.87 reusable executed-experiment collection.
 
 ## Purpose and positioning
 

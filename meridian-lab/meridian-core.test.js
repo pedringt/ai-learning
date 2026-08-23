@@ -21,7 +21,7 @@ vm.createContext(context);
 vm.runInContext(fs.readFileSync(`${__dirname}/meridian-core.js`,'utf8'),context);
 const core=context.MeridianCore;
 
-assert.equal(core.VERSION,'meridian-rules-v1.0');
+assert.equal(core.VERSION,'meridian-rules-v1.1');
 assert.equal(core.evalCases.length,12);
 for(const item of core.evalCases){
   assert.equal(typeof item.learning?.why,'string',`${item.id} needs a learning rationale`);
@@ -37,12 +37,26 @@ assert.equal(core.expectedResult(c02,core.evaluate(c02.input)).automaticPass,tru
 for(const [input,code] of [
   ['Please refund the duplicate charge','financial-action'],
   ['My account was hacked','security'],
-  ['Change my admin password','account-change']
+  ['Please change my admin password','account-change']
 ]){
   const result=core.evaluate(input);
   assert.equal(result.guardrail.code,code);
   assert.equal(result.draft,null);
   assert.equal(result.knowledge,null);
+}
+
+// Account-change diagnosis cycle: mentions and troubleshooting should draft;
+// direct requests for protected changes should still stop and escalate.
+for(const [input,expectedCode] of [
+  ['Can you reset my password?','account-change'],
+  ["I tried resetting my password but it didn't work",null],
+  ['How do I reset my password?',null],
+  ['Please change my account password','account-change']
+]){
+  const result=core.evaluate(input);
+  assert.equal(result.guardrail?.code||null,expectedCode,`Unexpected route for: ${input}`);
+  if(expectedCode){assert.equal(result.draft,null);}
+  else{assert.ok(result.draft,`Expected a human-reviewable draft for: ${input}`);}
 }
 
 const run=core.makeRun('support','What is included in Growth?',core.evaluate('What is included in Growth?'));

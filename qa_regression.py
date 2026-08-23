@@ -214,10 +214,10 @@ lab_html=(ROOT/"meridian-lab"/"index.html").read_text()
 lab_core=(ROOT/"meridian-lab"/"meridian-core.js").read_text()
 lab_js=(ROOT/"meridian-lab"/"lab.js").read_text()
 lab_css=(ROOT/"meridian-lab"/"lab.css").read_text()
-for required in ('data-view="support"','data-view="evals"','data-view="knowledge"','data-view="history"','data-view="dashboard"'):
+for required in ('data-view="evals"','data-view="knowledge"','data-view="history"','data-view="dashboard"'):
     if required not in lab_html:
         issues.append(f"meridian-lab/index.html: missing Lab view {required}")
-for required in ('Support Tool','Eval Runner','Knowledge Base','Learning Log','Learning Dashboard'):
+for required in ('Test &amp; Learn','Knowledge Base','Learning Log','Learning Dashboard'):
     if required not in lab_html:
         issues.append(f"meridian-lab/index.html: missing Lab navigation label {required}")
 if 'MeridianCore' not in lab_core or 'core.evaluate' not in lab_js:
@@ -227,10 +227,10 @@ for required in ('session-objective','export-workspace','import-workspace','data
         issues.append(f"meridian-lab: learning-workbench contract missing {required}")
 if re.search(r'<label class="field-label">',lab_js):
     issues.append("meridian-lab: generated field label missing explicit control association")
-for required in ('class="lab-orientation"','Try the workflow','Test behavior','Capture learning','Prototype activity · not pilot outcomes'):
+for required in ('class="lab-orientation"','Try a ticket','Run fixed cases','Diagnose and rerun','Prototype activity · not pilot outcomes'):
     if required not in lab_html:
         issues.append(f"meridian-lab: shared-audience orientation missing {required}")
-for required in ('deterministic practice environment','not a proposed production application'):
+for required in ('deterministic practice environment','not a production application'):
     if required not in lab_html:
         issues.append(f"meridian-lab: prototype positioning missing {required}")
 for required in ('class="portfolio-menu"','../index.html#meridian','../index.html#portfolio','../index.html#learn'):
@@ -241,9 +241,12 @@ if '[hidden]{display:none!important}' not in lab_css:
 for required in ('.review-grid select','.save-review,.save-history-review','.case-learning-context'):
     if required not in lab_css:
         issues.append(f"meridian-lab: learning-review presentation missing {required}")
-for required in ('id="support-reset"','id="support-status"','function resetSupport','event.metaKey||event.ctrlKey'):
+for required in ('id="eval-example"','id="explore-case"','id="regression-suite"','event.metaKey||event.ctrlKey',"requested==='support'?'evals'"):
     if required not in lab_html+lab_js:
-        issues.append(f"meridian-lab: repeat-ticket UX contract missing {required}")
+        issues.append(f"meridian-lab: consolidated Test & Learn contract missing {required}")
+for retired in ('data-view="support"','>Support Tool <','>Eval Runner <','id="support-input"','function resetSupport'):
+    if retired in lab_html+lab_js:
+        issues.append(f"meridian-lab: retired duplicate workflow returned {retired}")
 for required in ('id="meridian-lab-styles"',"'/meridian-lab/lab.css'","?'/meridian-lab/':''","core.onload"):
     if required not in lab_html:
         issues.append(f"meridian-lab: deployment asset-path contract missing {required}")
@@ -286,6 +289,13 @@ if 'measurement-plan.html#measurement-reasoning' not in tracker:
     issues.append("tracker.html: measurement reflection cross-reference missing")
 if 'class="evidence-source-link" href="measurement-plan.html#measurement-reasoning"' not in (ROOT/"measurement-value.html").read_text():
     issues.append("measurement-value.html: Meridian success-criteria source link missing")
+for required in ('class="eval-experiments"','id="executed-experiments-heading"','1 completed','id="guardrail-cycle"','4 / 4 expected routes after revision','This demonstrates the correction across a four-case deterministic regression set','class="eval-experiment-details"'):
+    if required not in eval_work:
+        issues.append(f"eval-work.html: executed guardrail-cycle evidence missing {required}")
+if 'eval-work.html#guardrail-cycle' not in (ROOT/"case-readout.html").read_text():
+    issues.append("case-readout.html: executed guardrail-cycle link missing")
+if 'eval-work.html#guardrail-cycle' not in (ROOT/"evals-quality.html").read_text():
+    issues.append("evals-quality.html: executed guardrail-cycle link missing")
 
 # Redirect routes are retained only for inbound compatibility and must stay tiny and explicit.
 for name in REDIRECT_PAGES:
@@ -304,6 +314,26 @@ for invariant in ("padding:66px 28px 90px!important","padding:48px 18px 70px!imp
 for invariant in (".meridian-overview-shell{padding-top:66px!important",".meridian-overview-shell{padding-top:48px!important"):
     if invariant not in components:
         issues.append(f"site-components.css: missing Overview parity invariant {invariant}")
+
+# v95.82 keeps Home evidence-first and gives Meridian two non-duplicated entry paths.
+for retired in ('class="band manager-fast-path"','class="band foundation-north-star"','class="primary-artifact meridian-lab-entry"'):
+    if retired in index_text:
+        issues.append(f"index.html: retired hierarchy returned: {retired}")
+for required in ('class="home-applied-heading"','class="home-option-d-links"','The complete case in 3 minutes','The same judgment in Operations','class="meridian-entry-choice"','Deterministic validation rig · browser-local'):
+    if required not in index_text:
+        issues.append(f"index.html: v95.82 hierarchy missing {required}")
+meridian_slice=index_text[index_text.find('data-page="meridian"'):index_text.find('data-page="workbench"')]
+artifact_slice=meridian_slice[meridian_slice.find('class="primary-artifact-grid"'):meridian_slice.find('class="concepts-applied"')]
+if 'case-readout.html' in artifact_slice or 'meridian-lab/index.html' in artifact_slice:
+    issues.append("index.html: Readout or Lab duplicated inside supporting-artifact grid")
+if '.home-applied-heading' not in components or '.home-option-d-links' not in components or '.meridian-entry-choice' not in components:
+    issues.append("site-components.css: v95.82 entry styles missing")
+for retired in ('class="home-context-strip"','Prefer evidence by skill?','class="home-foundation-line"'):
+    if retired in index_text:
+        issues.append(f"index.html: removed Home repetition returned: {retired}")
+for required in ('class="workbench-case harborstone-summary"','class="harborstone-summary-grid"','class="harborstone-explore"'):
+    if required not in index_text:
+        issues.append(f"index.html: quiet Harborstone summary missing {required}")
 
 if issues:
     print("REGRESSION CHECK FAILED")
