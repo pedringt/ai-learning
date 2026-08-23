@@ -273,9 +273,11 @@ if re.search(r'<details class="learning-stage"[^>]*\sopen(?:\s|>)',index_text):
     issues.append("index.html: Learning Guide stages must be collapsed by default")
 if 'querySelectorAll("details.learning-stage").forEach(function(stage){stage.open=false;})' not in index_text:
     issues.append("index.html: Learning Guide initial-collapse behavior missing")
-for required in ('class="learning-roadmap-card"','class="learning-roadmap-depth"','class="learning-roadmap-lenses"'):
-    if required not in index_text:
-        issues.append(f"index.html: compact Learning Guide orientation missing {required}")
+if 'learning-curriculum-intro' not in index_text:
+    issues.append("index.html: compact Learning Guide introduction missing")
+for retired in ('class="learning-roadmap-card"','class="learning-roadmap-depth"','class="learning-roadmap-lenses"'):
+    if retired in index_text:
+        issues.append(f"index.html: retired Learning Guide orientation returned {retired}")
 for required in ('class="learning-next-grid"','class="learning-footer-note"','class="evidence-views"','class="evidence-views-grid"'):
     if required not in index_text:
         issues.append(f"index.html: supporting-section presentation missing {required}")
@@ -319,7 +321,7 @@ for invariant in (".meridian-overview-shell{padding-top:66px!important",".meridi
 for retired in ('class="band manager-fast-path"','class="band foundation-north-star"','class="primary-artifact meridian-lab-entry"'):
     if retired in index_text:
         issues.append(f"index.html: retired hierarchy returned: {retired}")
-for required in ('class="home-applied-heading"','class="home-option-d-links"','The complete case in 3 minutes','The same judgment in Operations','class="meridian-entry-choice"','Deterministic validation rig · browser-local'):
+for required in ('class="home-applied-heading"','class="home-option-d-links"','The current case readout in 3 minutes','The same judgment in Operations','class="meridian-entry-choice"','Interactive validation rig','Deterministic rules · browser-local'):
     if required not in index_text:
         issues.append(f"index.html: v95.82 hierarchy missing {required}")
 meridian_slice=index_text[index_text.find('data-page="meridian"'):index_text.find('data-page="workbench"')]
@@ -331,6 +333,12 @@ if '.home-applied-heading' not in components or '.home-option-d-links' not in co
 for retired in ('class="home-context-strip"','Prefer evidence by skill?','class="home-foundation-line"'):
     if retired in index_text:
         issues.append(f"index.html: removed Home repetition returned: {retired}")
+for required in ('background in custom software project management and QA','Interactive validation rig'):
+    if required not in index_text:
+        issues.append(f"index.html: final positioning copy missing {required}")
+for required in ('Interactive validation rig','deterministic rules rather than a production model'):
+    if required not in lab_html+eval_work+(ROOT/"case-readout.html").read_text():
+        issues.append(f"Meridian Lab framing missing {required}")
 for required in ('class="workbench-case harborstone-summary"','class="harborstone-summary-grid"','class="harborstone-explore"'):
     if required not in index_text:
         issues.append(f"index.html: quiet Harborstone summary missing {required}")

@@ -1,6 +1,6 @@
 # Practical AI Learning Portfolio — Current State
 
-**Current source of truth:** v95.87 reusable executed-experiment collection.
+**Current source of truth:** v95.88 positioning and final hierarchy refinement.
 
 ## Purpose and positioning
 

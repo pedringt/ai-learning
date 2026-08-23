@@ -2,6 +2,13 @@
 
 This file preserves release history from the former long README. For the current architecture, file map, and QA instructions, use `README.md`.
 
+## v95.88 positioning and final hierarchy refinement
+
+- Connected the Home introduction to Paige’s prior custom-software PM and QA experience without making the portfolio role-specific.
+- Corrected the Home destination to “current case readout” while Meridian’s later lifecycle remains unfinished.
+- Elevated Meridian Lab’s purpose as an interactive validation rig for inspectable routing assumptions, repeatable cases, diagnosis, and before/after evidence.
+- Removed the separate Learning Guide orientation card and folded its useful meaning into one quiet Curriculum & Resources introduction.
+
 ## v95.87 reusable executed-experiment collection
 
 - Grouped completed eval cycles under one concise Executed Evidence collection on Eval Work.
