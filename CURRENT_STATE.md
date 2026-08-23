@@ -1,6 +1,6 @@
 # Practical AI Learning Portfolio — Current State
 
-**Current source of truth:** v95.72 merged Lab hardening and repeat-ticket repair.
+**Current source of truth:** v95.73 Meridian Lab deployment-path repair.
 
 ## Purpose and positioning
 
@@ -47,6 +47,7 @@ The Lab is linked from the Meridian Overview, Case Readout, and Eval Work. It is
 - The Support Tool supports repeated analysis, an explicit start-another-ticket reset, and Command/Control + Enter submission. Hidden empty/error states are enforced by the Lab CSS contract.
 - The Lab validates imported workspace/run shapes before writing browser storage, and generated reflection fields retain explicit accessible labels.
 - The topbar provides direct exits to Home, Meridian Overview, Applied Work, and Learning Guide on desktop and mobile.
+- Lab CSS and JavaScript resolve explicitly from `/meridian-lab/` on deployed HTTP(S) URLs while retaining relative paths for direct local-file previews.
 - The Learning Dashboard summarizes practice activity only. Operational, adoption, customer, and business metrics require a future realistic pilot data source.
 - `eval-runner.html` remains a compatibility redirect into the Lab.
 

@@ -233,6 +233,9 @@ if '[hidden]{display:none!important}' not in (ROOT/"meridian-lab"/"lab.css").rea
 for required in ('id="support-reset"','id="support-status"','function resetSupport','event.metaKey||event.ctrlKey'):
     if required not in lab_html+lab_js:
         issues.append(f"meridian-lab: repeat-ticket UX contract missing {required}")
+for required in ('id="meridian-lab-styles"',"'/meridian-lab/lab.css'","?'/meridian-lab/':''","core.onload"):
+    if required not in lab_html:
+        issues.append(f"meridian-lab: deployment asset-path contract missing {required}")
 
 # Execute the deterministic domain contract; static string checks cannot catch
 # threshold, guardrail, persistence, or workspace-import regressions.

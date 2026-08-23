@@ -2,6 +2,12 @@
 
 This file preserves release history from the former long README. For the current architecture, file map, and QA instructions, use `README.md`.
 
+## v95.73 Meridian Lab deployment-path repair
+
+- Fixed Lab asset resolution when Vercel serves the clean URL `/meridian-lab` without a trailing slash.
+- Deployed HTTP(S) pages now load CSS and JavaScript explicitly from `/meridian-lab/`; direct local-file previews continue using relative paths.
+- Added a regression contract for the deployed Lab asset base and ordered core/application script loading.
+
 ## v95.72 merged Lab hardening and repeat-ticket repair
 
 - Merged the repeat-ticket workflow, explicit reset, Command/Control + Enter submission, run-status feedback, and wider desktop Lab sidebar from the parallel v95.71 branch.
