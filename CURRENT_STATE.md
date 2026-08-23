@@ -1,6 +1,6 @@
 # Practical AI Learning Portfolio — Current State
 
-**Current source of truth:** v95.73 Meridian Lab deployment-path repair.
+**Current source of truth:** v95.81 Meridian consistency and System Flow completion.
 
 ## Purpose and positioning
 
@@ -42,11 +42,13 @@ The Lab is linked from the Meridian Overview, Case Readout, and Eval Work. It is
 
 - One shared deterministic rules pipeline powers the Support Tool and Eval Runner.
 - The fixed suite contains eight classification and four retrieval cases.
+- Each fixed case owns its learning rationale, diagnostic dimensions, expected failure layer, and source or guardrail assumption in the shared domain layer; the Eval Runner presents that context beside the result.
 - The Lab supports exploratory cases, human scoring, experiment objectives, diagnoses, reflection notes, next questions, saved practice cases, and linked reruns.
 - Runs and workspace settings are stored locally in the browser; JSON export/import provides backup and continuity.
 - The Support Tool supports repeated analysis, an explicit start-another-ticket reset, and Command/Control + Enter submission. Hidden empty/error states are enforced by the Lab CSS contract.
 - The Lab validates imported workspace/run shapes before writing browser storage, and generated reflection fields retain explicit accessible labels.
 - The topbar provides direct exits to Home, Meridian Overview, Applied Work, and Learning Guide on desktop and mobile.
+- The Lab explicitly presents itself as a deterministic practice environment, not a proposed production application.
 - Lab CSS and JavaScript resolve explicitly from `/meridian-lab/` on deployed HTTP(S) URLs while retaining relative paths for direct local-file previews.
 - The Learning Dashboard summarizes practice activity only. Operational, adoption, customer, and business metrics require a future realistic pilot data source.
 - `eval-runner.html` remains a compatibility redirect into the Lab.

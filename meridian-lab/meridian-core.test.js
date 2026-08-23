@@ -23,6 +23,13 @@ const core=context.MeridianCore;
 
 assert.equal(core.VERSION,'meridian-rules-v1.0');
 assert.equal(core.evalCases.length,12);
+for(const item of core.evalCases){
+  assert.equal(typeof item.learning?.why,'string',`${item.id} needs a learning rationale`);
+  assert.ok(item.learning.why.length>10,`${item.id} rationale is too thin`);
+  assert.ok(Array.isArray(item.learning.dimensions)&&item.learning.dimensions.length>0,`${item.id} needs diagnostic dimensions`);
+  assert.equal(typeof item.learning.failureLayer,'string',`${item.id} needs an expected failure layer`);
+  assert.equal(typeof item.learning.assumption,'string',`${item.id} needs a source or guardrail assumption`);
+}
 
 const c02=core.evalCases.find(item=>item.id==='C-02');
 assert.equal(core.expectedResult(c02,core.evaluate(c02.input)).automaticPass,true,'C-02 should meet its displayed 78% threshold');

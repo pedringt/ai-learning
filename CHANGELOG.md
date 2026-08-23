@@ -2,6 +2,62 @@
 
 This file preserves release history from the former long README. For the current architecture, file map, and QA instructions, use `README.md`.
 
+## v95.81 Meridian consistency and System Flow completion
+
+- Matched Meridian Overview’s route spacing to the canonical standalone artifact shell on desktop and mobile.
+- Added a bottom-anchored canonical-source link to the Meridian success-criteria capability card.
+- Removed the System Flow page’s duplicated opening title, description, status box, and guardrail explanation.
+- Added a concise diagram-reading header, contained decision/source cards, and a finished validation-boundary close before footer navigation.
+
+## v95.80 structured Learning Guide summary
+
+- Implemented the selected compact two-column orientation: learning depth on the left and recurring lenses on the right.
+- Kept the block shallow, balanced, and responsive without restoring the redundant progression row.
+- Explicitly collapses all eight curriculum disclosures on initial load; a direct link to a specific stage can still open that requested stage.
+- Replaced the old next-practice rows with three compact cards and contained the resource-curation note.
+- Reworked the oversized Applied Work/Capabilities explanation into two concise, linked evidence views.
+
+## v95.79 condensed Learning Guide context strip
+
+- Removed the redundant eight-stage progression immediately above the eight-stage curriculum.
+- Replaced the large roadmap card and lens pills with a quiet two-line focus-and-lenses strip.
+- Reduced the block’s height, border weight, typography, and visual competition with the curriculum itself.
+
+## v95.78 Learning Guide orientation refinement
+
+- Replaced the wide three-row orientation table with a compact roadmap card.
+- Kept the learning-depth statement prominent without making it look selected.
+- Rendered the eight-stage progression as a scannable sequence and the recurring lenses as wrapping pills.
+- Reduced excess vertical space and removed the competing divider immediately above Curriculum & Resources.
+
+## v95.77 shared-UI and reasoning-connection maintenance
+
+- Bottom-aligned Meridian artifact actions through the shared card rule and loaded every Learning Guide stage collapsed by default.
+- Restyled Learning Review controls and save actions consistently in immediate Lab results and the Learning Log.
+- Clarified the Lab as a deterministic practice environment rather than a proposed production application.
+- Restored a compact, collapsed Measurement Plan rationale and corrected the Working Tracker cross-reference.
+- Added canonical learning metadata to all 12 runnable eval cases and surfaced it beside each case result without creating a parallel specification source.
+
+## v95.76 reasoning-connection roadmap refinement
+
+- Queued a compact, collapsed Measurement Plan reflection and correction of the Tracker’s stale cross-reference.
+- Planned canonical eval-case learning metadata in `meridian-core.js` and display of that context beside runnable Lab cases.
+- Explicitly rejected a parallel case-spec Markdown source and duplication of the full discovery-question log, preserving the Working Tracker and shared Lab core as the appropriate owners.
+
+## v95.75 commercial-translation roadmap refinement
+
+- Specified a pressure-tested executive update that communicates an unfavorable pilot signal without spin and commits to a time-bound decision plan.
+- Added a later assumption-transparent commercial model using eligible volume, adoption, net time saved after review/rework, labor assumptions, operating cost, and maintenance burden.
+- Required low/base/high scenarios, preserved Finance-owned unknowns, and distinguished capacity returned from unsupported FTE-savings claims.
+- Queued one compact Lab-orientation clarification while retaining the Meridian Lab name and current learning-first architecture.
+
+## v95.74 roadmap synchronization
+
+- Added an explicit human-review/handoff decision to the first run → diagnose → revise → rerun learning cycle.
+- Queued an evidence-grounded signal → diagnosis → product action + CS/enablement action translation exercise.
+- Captured the next maintenance-pass UI notes: bottom-aligned Meridian card actions, shared Learning Review form styling, and fully collapsed Learning Guide sections by default.
+- Preserved executed eval work—not additional interface or generic adoption collateral—as the immediate priority.
+
 ## v95.73 Meridian Lab deployment-path repair
 
 - Fixed Lab asset resolution when Vercel serves the clean URL `/meridian-lab` without a trailing slash.

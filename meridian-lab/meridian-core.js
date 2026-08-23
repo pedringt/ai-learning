@@ -22,18 +22,18 @@
   ];
 
   const evalCases=[
-    {id:'C-01',type:'classification',input:'I have been locked out of my account for three days. How do I regain access?',expected:{category:'Account & Access',minConfidence:.78}},
-    {id:'C-02',type:'classification',input:'Why was I billed twice this month?',expected:{category:'Billing',minConfidence:.78}},
-    {id:'C-03',type:'classification',input:'How do I set up my monthly report?',expected:{category:'Product How-To',minConfidence:.78}},
-    {id:'C-04',type:'classification',input:'I see Connection timeout every time I load the dashboard.',expected:{category:'Technical Issue',minConfidence:.78}},
-    {id:'C-05',type:'classification',input:'Can you help me integrate Slack?',expected:{category:'Integrations',minConfidence:.78}},
-    {id:'C-06',type:'classification',input:'I cannot remember if my plan includes SSO.',expected:{category:'Product How-To',minConfidence:.70}},
-    {id:'C-07',type:'classification',input:'There is some stuff that is not working.',expected:{category:'Other / Needs Review',minConfidence:0}},
-    {id:'C-08',type:'classification',input:'I need to change my admin password immediately.',expected:{category:'Account & Access',minConfidence:.78}},
-    {id:'R-01',type:'retrieval',input:'What is included in my Growth plan?',expected:{knowledgeId:'KB-106'}},
-    {id:'R-02',type:'retrieval',input:'My dashboard is showing data from yesterday, not today.',expected:{knowledgeId:'KB-108'}},
-    {id:'R-03',type:'retrieval',input:'How do I set up a custom SMTP email connection?',expected:{knowledgeId:'KB-109'}},
-    {id:'R-04',type:'retrieval',input:'Should I use KB-101 or the old dashboard article for report scheduling?',expected:{knowledgeId:null}}
+    {id:'C-01',type:'classification',input:'I have been locked out of my account for three days. How do I regain access?',expected:{category:'Account & Access',minConfidence:.78},learning:{why:'Distinguishes access recovery from a protected account change.',dimensions:['Category','Confidence'],failureLayer:'Classification / taxonomy',assumption:'KB-102 is current; no change action is requested.'}},
+    {id:'C-02',type:'classification',input:'Why was I billed twice this month?',expected:{category:'Billing',minConfidence:.78},learning:{why:'Tests billing intent without inventing or executing a refund.',dimensions:['Category','Confidence'],failureLayer:'Classification / taxonomy',assumption:'A billing question may continue; a financial action must escalate.'}},
+    {id:'C-03',type:'classification',input:'How do I set up my monthly report?',expected:{category:'Product How-To',minConfidence:.78},learning:{why:'Checks a routine how-to request against nearby reporting terms.',dimensions:['Category','Confidence'],failureLayer:'Classification / taxonomy',assumption:'KB-101 is the current reporting source.'}},
+    {id:'C-04',type:'classification',input:'I see Connection timeout every time I load the dashboard.',expected:{category:'Technical Issue',minConfidence:.78},learning:{why:'Tests whether an error symptom outranks the dashboard feature noun.',dimensions:['Category','Confidence'],failureLayer:'Classification / taxonomy',assumption:'Timeout language should route to troubleshooting.'}},
+    {id:'C-05',type:'classification',input:'Can you help me integrate Slack?',expected:{category:'Integrations',minConfidence:.78},learning:{why:'Checks clear third-party setup intent.',dimensions:['Category','Confidence'],failureLayer:'Classification / taxonomy',assumption:'KB-105 is current and Slack is supported.'}},
+    {id:'C-06',type:'classification',input:'I cannot remember if my plan includes SSO.',expected:{category:'Product How-To',minConfidence:.70},learning:{why:'Tests plan-entitlement language at a deliberately lower threshold.',dimensions:['Category','Confidence'],failureLayer:'Confidence / routing',assumption:'KB-106 owns plan features; SSO itself is not an access incident.'}},
+    {id:'C-07',type:'classification',input:'There is some stuff that is not working.',expected:{category:'Other / Needs Review',minConfidence:0},learning:{why:'Tests safe abstention when the request lacks diagnostic detail.',dimensions:['Fallback','Confidence'],failureLayer:'Confidence / routing',assumption:'No source or category is supportable from this input.'}},
+    {id:'C-08',type:'classification',input:'I need to change my admin password immediately.',expected:{category:'Account & Access',minConfidence:.78},learning:{why:'Separates correct classification from the protected-change guardrail.',dimensions:['Category','Guardrail'],failureLayer:'Guardrail',assumption:'Password changes require authorized human handling and no draft.'}},
+    {id:'R-01',type:'retrieval',input:'What is included in my Growth plan?',expected:{knowledgeId:'KB-106'},learning:{why:'Checks exact plan-feature source selection.',dimensions:['Source selection','Grounded use'],failureLayer:'Retrieval',assumption:'KB-106 is current and authoritative for plan limits.'}},
+    {id:'R-02',type:'retrieval',input:'My dashboard is showing data from yesterday, not today.',expected:{knowledgeId:'KB-108'},learning:{why:'Tests freshness-aware selection over a stale dashboard article.',dimensions:['Source selection','Freshness'],failureLayer:'Knowledge quality',assumption:'KB-107 must be excluded because it is marked stale.'}},
+    {id:'R-03',type:'retrieval',input:'How do I set up a custom SMTP email connection?',expected:{knowledgeId:'KB-109'},learning:{why:'Checks specificity within overlapping integration content.',dimensions:['Source selection','Grounded use'],failureLayer:'Retrieval',assumption:'KB-109 is more specific than the generic integrations article.'}},
+    {id:'R-04',type:'retrieval',input:'Should I use KB-101 or the old dashboard article for report scheduling?',expected:{knowledgeId:null},learning:{why:'Tests safe fallback when the prompt creates ambiguous source conflict.',dimensions:['Safe fallback','Source authority'],failureLayer:'Retrieval',assumption:'Mentioning IDs is not enough evidence to choose; stale content cannot win.'}}
   ];
 
   function matches(input,keywords){

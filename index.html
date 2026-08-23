@@ -604,7 +604,10 @@
     }
   }
   window.addEventListener("hashchange",openLearningTarget);
-  document.addEventListener("DOMContentLoaded",openLearningTarget);
+  document.addEventListener("DOMContentLoaded",function(){
+    document.querySelectorAll("details.learning-stage").forEach(function(stage){stage.open=false;});
+    openLearningTarget();
+  });
 })();
 </script>
 
@@ -1767,19 +1770,9 @@
   <p class="lead">This is my learning map—not a claim of completed expertise. I use it to decide what to learn next, where hands-on practice is useful, and when completed work has earned a place in <a href="capabilities.html">Capabilities</a> or <a href="#portfolio">Applied Work</a>.</p>
 </div>
 
-<section class="learning-overview learning-orientation" aria-label="Learning roadmap overview">
-  <div class="learning-orientation-row">
-    <span class="learning-orientation-label">Depth</span>
-    <p>Deep applied judgment; enough adjacent fluency to collaborate well, ask better questions, and know when specialist expertise is needed.</p>
-  </div>
-  <div class="learning-orientation-row">
-    <span class="learning-orientation-label">Path</span>
-    <p>AI foundations → software, data &amp; UX → quality &amp; evals → discovery &amp; workflows → implementation &amp; adoption → measurement &amp; business → product &amp; strategy → domain applications.</p>
-  </div>
-  <div class="learning-orientation-row">
-    <span class="learning-orientation-label">Lenses</span>
-    <p>UX &amp; accessibility · quality &amp; testing · security &amp; privacy · human factors · data &amp; knowledge quality · business value · communication · responsible AI &amp; governance.</p>
-  </div>
+<section class="learning-roadmap-card" aria-label="Learning roadmap overview">
+  <div class="learning-roadmap-depth"><span>Depth</span><strong>Deep applied judgment</strong></div>
+  <div class="learning-roadmap-lenses"><span>Recurring lenses</span><p>UX &amp; accessibility · quality &amp; testing · security &amp; privacy · human factors · data &amp; knowledge quality · business value · communication · responsible AI &amp; governance</p></div>
 </section>
 
 <section class="learning-stages" aria-label="Learning stages">
@@ -1787,7 +1780,7 @@
 <h2>Eight stages, one working library.</h2>
 <p class="section-lead">Each stage stays compact until opened. <strong>Core</strong> items deserve focused learning; <strong>Reference</strong> items are useful context or just-in-time depth; <strong>Practice</strong> turns concepts into judgment. Resource links can evolve without changing the roadmap.</p>
 
-<details class="learning-stage" id="ai-foundations" open>
+<details class="learning-stage" id="ai-foundations">
 <summary><span class="stage-num">01</span><span class="stage-main"><b>AI Systems &amp; Foundations</b><small>Understand how modern AI systems behave, what sits around the model, and where failures come from.</small><span class="topic-preview">LLM behavior · context engineering · grounding/RAG · tools · agents · MCP · structured outputs · reliability</span></span></summary>
 <div class="stage-body">
   <div class="stage-group"><h3>Core</h3>
@@ -1909,28 +1902,29 @@
 </section>
 
 
-<section class="learning-overview learning-orientation" aria-labelledby="building-next-heading">
+<section class="learning-next" aria-labelledby="building-next-heading">
   <div class="section-kicker"><span>Deliberate next practice</span></div>
   <h2 id="building-next-heading">Where I’m deliberately building next.</h2>
   <p class="section-lead">These areas matter, but they are not yet demonstrated capabilities. The next step is practice and evidence, not a “coming soon” claim.</p>
-  <div class="learning-orientation-row">
-    <span class="learning-orientation-label">Run &amp; diagnose</span>
+  <div class="learning-next-grid">
+  <article>
+    <span>Run &amp; diagnose</span>
     <p>Move from eval design to a representative test run: inspect outputs and failures, identify likely causes, revise the approach, and rerun the cases that matter.</p>
-  </div>
-  <div class="learning-orientation-row">
-    <span class="learning-orientation-label">Communicate under pressure</span>
+  </article>
+  <article>
+    <span>Communicate under pressure</span>
     <p>Practice customer escalation, trust repair, expectation-setting, clear boundaries, and translating technical AI limitations into useful business language.</p>
-  </div>
-  <div class="learning-orientation-row">
-    <span class="learning-orientation-label">Prove or challenge value</span>
+  </article>
+  <article>
+    <span>Prove or challenge value</span>
     <p>If results are weak, diagnose the cause before blaming the model. Check model performance, workflow fit, adoption, process friction, measurement, and use-case choice; then decide whether to iterate, narrow the scope, repair the process or data, replace AI with conventional software, or stop.</p>
+  </article>
   </div>
 </section>
 
 <section class="learning-footer-note">
-  <strong>Resources stay curated.</strong>
-  <span><b>Core</b> = worth completing · <b>Reference</b> = know where to find it · <b>Deeper dive</b> = optional when the work or interest demands it.</span>
-  <span>Not every exercise becomes public work. Projects follow learning; capabilities appear only after completed work demonstrates them.</span>
+  <strong>How I curate the guide</strong>
+  <p><b>Core</b> is worth completing · <b>Reference</b> is worth knowing where to find · <b>Deeper dive</b> is optional when the work demands it. Not every exercise becomes public work; capabilities appear only after completed work demonstrates them.</p>
 </section>
 <section aria-label="Deeper learning resources" class="site-go-deeper band"><h3>Go deeper</h3><p class="section-lead" style="margin-bottom:0">Use these as optional references when a topic deserves more depth; they are not all required reading.</p><div class="resource-row"><a class="resource-link" href="https://academy.claude.com/" rel="noopener noreferrer" target="_blank">Anthropic Academy</a><a class="resource-link" href="https://academy.claude.com/all?category=fluency&amp;kind=tutorial" rel="noopener noreferrer" target="_blank">AI Fluency tutorials</a><a class="resource-link" href="https://www.anthropic.com/learn/claude-for-work" rel="noopener noreferrer" target="_blank">Claude for Work</a><a class="resource-link" href="https://docs.anthropic.com/" rel="noopener noreferrer" target="_blank">Anthropic docs</a></div></section>
 </section>
@@ -2050,7 +2044,7 @@
   </div>
 </div>
 
-<div class="band" style="margin-top:24px"><div class="section-kicker"><span>Two views of the same evidence</span></div><h3 style="margin-top:0">Cases for context · Evidence for capabilities</h3><p class="section-lead"><strong>Applied Work and Capabilities show the same body of work in two different ways.</strong> Applied Work is the case-based view: open Meridian or a Workbench case to see the problem in context from beginning to end. Capabilities is the capability-based view: open Capabilities, then Measurement &amp; Value, Systems &amp; Guardrails, or Evals &amp; Quality to see examples of that skill pulled across Meridian and Harborstone. Nothing in Capabilities is a separate project.</p></div><div class="band" style="margin-top:24px">
+<section class="evidence-views" aria-labelledby="evidence-views-heading"><div class="section-kicker"><span>Two views of the same evidence</span></div><h3 id="evidence-views-heading">Choose the view that answers your question</h3><div class="evidence-views-grid"><a href="#meridian"><span>Applied Work</span><strong>What happened in context?</strong><p>Follow Meridian or a Workbench case from problem through decisions, artifacts, and evidence.</p><b>Explore cases →</b></a><a href="capabilities.html"><span>Capabilities</span><strong>What can Paige demonstrate?</strong><p>See evidence of each skill pulled across Meridian and Harborstone. These are views of the same work, not separate projects.</p><b>Review capabilities →</b></a></div></section><div class="band" style="margin-top:24px">
   <div class="section-kicker"><span>How the site fits together</span></div>
   <h3 style="margin-top:0">Three clear ways to navigate the work</h3>
   <div class="grid3">
@@ -2087,7 +2081,7 @@
 [data-page="meridian"] .primary-artifact .artifact-label{margin:0 0 6px}
 [data-page="meridian"] .primary-artifact strong{margin:0 0 5px;line-height:1.25}
 [data-page="meridian"] .primary-artifact p{margin:0;color:var(--muted);line-height:1.5}
-[data-page="meridian"] .primary-artifact .artifact-action{display:inline-flex;align-items:center;gap:5px;align-self:flex-start;margin-top:14px;padding-top:11px;border-top:1px solid var(--border);color:var(--purple);font-size:12px;font-weight:850}
+[data-page="meridian"] .primary-artifact .artifact-action{display:inline-flex;align-items:center;gap:5px;align-self:flex-start;margin-top:auto;padding-top:11px;border-top:1px solid var(--border);color:var(--purple);font-size:12px;font-weight:850}
 [data-page="meridian"] .primary-artifact:hover .artifact-action{text-decoration:underline}
 [data-page="meridian"] .customer-facing-exercise,[data-page="meridian"] .future-roadmap{width:100%;max-width:none;margin-left:0!important;margin-right:0!important;box-sizing:border-box}
 

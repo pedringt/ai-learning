@@ -11,11 +11,12 @@ This roadmap contains active or deliberately parked work only. Completed release
 - [ ] Add a small number of purposeful exploratory cases, especially ambiguity, multi-issue routing, source conflict, and high-risk boundaries.
 - [ ] Score results and record a diagnosis before changing the system.
 - [ ] Separate taxonomy, retrieval, source-quality, guardrail, draft, confidence/routing, and test-case failures.
+- [ ] For at least one case, document what the human reviewer should approve, correct, override, or escalate—and what evidence supports that handoff.
 - [ ] Make one justified change.
 - [ ] Use linked reruns to compare before and after.
 - [ ] Export the workspace backup and summarize what changed, what did not, and what question comes next.
 
-**Definition of done:** at least one traceable objective → run → diagnosis → change → linked rerun sequence with Paige’s own reflection.
+**Definition of done:** at least one traceable objective → run → diagnosis → human-review decision → change → linked rerun sequence with Paige’s own reflection.
 
 ## NEXT AFTER EVIDENCE: Complete eval coverage
 
@@ -55,18 +56,22 @@ Possible future triggers:
 
 - [ ] Frustrated customer response or escalation note.
 - [ ] Skeptical support-rep one-pager.
-- [ ] Executive update when the pilot is underperforming.
+- [ ] Write a concise practice executive update for an underperforming pilot: state the unfavorable signal plainly, separate what is known from what still needs diagnosis, avoid spinning low adoption, and give a time-bound investigate / continue / narrow / pause decision plan.
 - [ ] Recommendation to narrow, pause, replace, or stop when value is weak.
 
 ### Adoption and enablement
 
 - [ ] Draft an onboarding/enablement plan after evaluated behavior is stable enough to teach honestly.
 - [ ] Define how to capture appropriate non-use, friction, overrides, and trust concerns.
+- [ ] After real Lab evidence exists, translate observed signals into both product/backlog actions and CS/enablement actions; distinguish system defects from training, trust, workflow, and source-governance problems.
 - [ ] Avoid building a fake onboarding product solely to make the portfolio look complete.
 
 ### Value realization
 
 - [ ] Create a later readout using actual Lab evidence, clearly labeled as prototype learning.
+- [ ] Build an assumption-transparent commercial model only after the needed inputs are defined: eligible ticket volume, actual adoption, minutes saved after review/rework, labor-cost assumptions, operating/inference cost, and implementation/maintenance burden.
+- [ ] Use low/base/high scenarios and show the calculation logic. Describe recovered time as **capacity returned** unless there is separate evidence that it avoids hiring or reduces headcount; do not invent an FTE-savings claim.
+- [ ] Preserve honest unknowns such as Finance-owned inputs rather than replacing them with simulated precision. A hypothetical break-even exercise must label every assumption and remain distinct from Meridian evidence.
 - [ ] Practice a scale / revise / narrow / replace with conventional software / stop recommendation.
 - [ ] Add operational or business metrics only when a defensible data source exists.
 

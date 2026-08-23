@@ -653,20 +653,7 @@ body.v919-tracker .wrap>h2:not(:first-of-type){
 </head>
 <body>
 <div class="topbar"><div class="topinner"><a class="brand-button" href="index.html"><span class="brand">AI <span>Learning Portfolio</span></span></a><nav aria-label="Primary pages" class="nav"><a href="index.html">Home</a><a href="capabilities.html">Capabilities</a><a href="index.html#portfolio" aria-current="page">Applied Work</a><a href="index.html#learn">Learning Guide</a></nav><div class="top-actions"><button aria-label="Switch to dark mode" aria-pressed="false" class="theme-toggle" id="v922ThemeToggle" title="Switch to dark mode" type="button">☾</button><select aria-label="Choose page" id="v922MobileNav"><option value="index.html">Home</option><option value="capabilities.html">Capabilities</option><option value="index.html#portfolio" selected>Applied Work</option><option value="index.html#learn">Learning Guide</option></select></div></div></div>
-<main class="meridian-page-shell"><div class="meridian-heading"><div class="meridian-breadcrumb"><a href="index.html#portfolio">Applied Work</a><span aria-hidden="true">/</span><a href="index.html#meridian">Meridian</a></div><div class="eyebrow">Meridian · System Flow</div></div><header class="meridian-case-hero"><h1>Systems &amp; Guardrails — Detailed Flow</h1><p class="lead">How the support workflow classifies, retrieves, drafts, checks risk and confidence, and hands work to a human.</p><div class="meridian-context-grid"><div class="meridian-context-item"><span>Entry</span><strong>Tier 1 ticket</strong></div><div class="meridian-context-item"><span>Pattern</span><strong>Classify → retrieve</strong></div><div class="meridian-context-item"><span>Boundary</span><strong>Human review</strong></div><div class="meridian-context-item"><span>High risk</span><strong>Human only</strong></div></div></header><nav class="meridian-section-nav" aria-label="Meridian reading order"><div class="meridian-section-links"><a href="index.html#meridian">Overview</a><a href="case-readout.html">Case Readout</a><a href="tracker.html">Discovery &amp; Decisions</a><a href="measurement-plan.html">Measurement Plan</a><a href="system-flow.html" class="current" aria-current="page">System Flow</a><a href="eval-work.html">Eval Work</a></div></nav><div class="section-kicker"><span>Meridian deep dive</span></div><h2>Agent Flow — Meridian Tier 1 Support Pilot</h2>
-<p class="lead">One-page flow from ticket arrival to human handoff, built from the classify → retrieve → draft → confidence-check → escalate logic worked out in PLAN, plus the back-and-forth escalation rule.</p><div class="v918-orientation">
-<div>
-<span class="label">What this shows</span>
-<p>How I translate the support problem into a bounded AI-assisted workflow with explicit human and risk boundaries.</p>
-<p class="skim"><b>Worth noticing:</b> Money, security, and other high-risk actions remain outside autonomous AI handling.</p>
-</div>
-<div class="statusbox">
-<span class="label">Current status</span>
-<b>Designed</b>
-<p>Skim this box first; continue below for the full artifact.</p>
-</div>
-</div>
-<div class="callout cyan"><b>Not shown as a separate branch:</b> money/security categories (refunds, credits, disputes, password resets, account changes, security actions) skip drafting entirely per the PLAN Guardrails decision — they're folded into the "high-risk category" branch below, which routes straight to a human with no AI draft attempt.</div>
+<main class="meridian-page-shell"><div class="meridian-heading"><div class="meridian-breadcrumb"><a href="index.html#portfolio">Applied Work</a><span aria-hidden="true">/</span><a href="index.html#meridian">Meridian</a></div><div class="eyebrow">Meridian · System Flow</div></div><header class="meridian-case-hero"><h1>Systems &amp; Guardrails — Detailed Flow</h1><p class="lead">How the support workflow classifies, retrieves, drafts, checks risk and confidence, and hands work to a human.</p><div class="meridian-context-grid"><div class="meridian-context-item"><span>Entry</span><strong>Tier 1 ticket</strong></div><div class="meridian-context-item"><span>Pattern</span><strong>Classify → retrieve</strong></div><div class="meridian-context-item"><span>Boundary</span><strong>Human review</strong></div><div class="meridian-context-item"><span>High risk</span><strong>Human only</strong></div></div></header><nav class="meridian-section-nav" aria-label="Meridian reading order"><div class="meridian-section-links"><a href="index.html#meridian">Overview</a><a href="case-readout.html">Case Readout</a><a href="tracker.html">Discovery &amp; Decisions</a><a href="measurement-plan.html">Measurement Plan</a><a href="system-flow.html" class="current" aria-current="page">System Flow</a><a href="eval-work.html">Eval Work</a></div></nav><section class="flow-artifact-heading" aria-labelledby="flow-map-heading"><div><div class="section-kicker"><span>Workflow map</span></div><h2 id="flow-map-heading">From ticket arrival to human decision</h2><p>Follow the main path downward. Side branches show where risk, weak evidence, or a multi-turn escalation changes the route.</p></div><aside><span>Hard boundary</span><p>Money, security, and protected account actions skip drafting and route directly to a human.</p></aside></section>
 <div class="diagram">
 <svg height="1221pt" viewbox="0.00 0.00 543.00 1221.00" width="543pt" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
 <g class="graph" id="graph0" transform="scale(1 1) rotate(0) translate(4 1217)">
@@ -797,22 +784,22 @@ body.v919-tracker .wrap>h2:not(:first-of-type){
 </g>
 </svg>
 </div>
-<h3>Key decision points</h3>
+<section class="flow-support-grid"><article><h3>Key decision points</h3>
 <ul>
 <li><b>Category check</b> — money/security categories never get an AI draft, regardless of confidence. This is a hard rule, not a judgment call.</li>
 <li><b>Confidence check</b> — independent from category risk. A "safe" category can still get flagged with a reviewer note when observable evidence indicates review is needed (for example, an ambiguous request, conflicting KB sources, or missing information).</li>
 <li><b>Escalation check (multi-turn)</b> — triggers on whichever comes first: 5+ exchanges (justified by the ~12% of tickets that naturally run long, per the simulated 90-day data pull — see open question 11 in the <a href="tracker.html">working tracker</a>), signs of an upset/repeating customer, a high-risk category surfacing mid-conversation even if the ticket didn't start that way, or the customer explicitly asking for a supervisor/to escalate (added after rep discovery — the cleanest signal of the four, since it doesn't require inference).</li>
 <li><b>Human review outcome</b> — always one of approve / edit / start over, whether the ticket was drafted or fully human-written. Nothing sends to the customer without a human touching it first, per the pilot's human-boundary rule.</li>
-</ul>
-<h3>Data sources feeding this flow</h3>
+</ul></article>
+<article><h3>Data sources feeding this flow</h3>
 <ul>
 <li>Ticket content + category (help desk tool)</li>
 <li>Knowledge base articles, using a retrieval design tested against Meridian’s actual query set. A likely candidate is hybrid semantic + keyword retrieval with useful metadata and reranking, but the eval results—not the label on the search method—should determine the design. The underlying content problem (~20% unreviewed/stale articles — open question 2) still applies regardless of retrieval method.</li>
 <li>Conversation history (for the exchange count and mid-thread category check)</li>
 <li>Review/routing signal based on observable evidence from the drafting workflow</li>
 <li><b>Billing/account-status data</b> — resolved simpler than expected: this already exists as a synced field on the ticket (nightly sync from the billing system), just not currently enabled for the Tier 1 view. No new integration or approval needed — enabling the existing field for Tier 1 (a standalone recommendation, not pilot-scoped) gives both reps and the agent access to the same already-approved data source. Caveat: up to 24 hrs stale due to the nightly sync.</li>
-</ul>
-<p class="small">Current validation state: the flow incorporates simulated rep-discovery findings, including the explicit-human-request escalation rule and the simpler billing-field configuration fix. A real pilot would still validate the workflow model and escalation logic with frontline reps before launch. The billing field (above) folds into the “retrieve relevant knowledge” step once enabled—no separate node is needed. Pilot targets that depend on this flow are documented in the <a href="measurement-plan.html">Measurement Plan</a>.</p>
+</ul></article></section>
+<aside class="flow-validation-note"><span>Validation boundary</span><p>The flow incorporates simulated rep-discovery findings, including explicit-human-request escalation and the simpler billing-field configuration fix. A real pilot would still validate the workflow and escalation logic with frontline reps before launch. Related targets are documented in the <a href="measurement-plan.html">Measurement Plan</a>.</p></aside>
 <nav class="artifact-footer-nav" aria-label="Continue through Meridian"><a href="measurement-plan.html"><span>Previous</span>Measurement Plan</a><a class="artifact-footer-home" href="index.html#meridian"><span>Meridian</span>Overview</a><a href="eval-work.html"><span>Next</span>Eval Work</a></nav>
 </main>
 <script defer="" src="site-shell.js"></script></body>

@@ -197,6 +197,10 @@ if "PRACTICE DATA, NOT A REAL CLIENT OUTCOME" not in (ROOT/"harborstone.html").r
 
 if "max-width:560px" not in (ROOT/"system-flow.html").read_text():
     issues.append("system-flow.html: compact flow sizing missing")
+system_flow=(ROOT/"system-flow.html").read_text()
+for required in ('class="flow-artifact-heading"','class="flow-support-grid"','class="flow-validation-note"'):
+    if required not in system_flow:
+        issues.append(f"system-flow.html: completed flow presentation missing {required}")
 
 if 'href="discovery-workflow.html"' not in (ROOT/"capabilities.html").read_text():
     issues.append("capabilities.html: Discovery & Workflow card not routed to discovery-workflow.html")
@@ -209,6 +213,7 @@ if "meridian-primary-action" in eval_work[:hero_end]:
 lab_html=(ROOT/"meridian-lab"/"index.html").read_text()
 lab_core=(ROOT/"meridian-lab"/"meridian-core.js").read_text()
 lab_js=(ROOT/"meridian-lab"/"lab.js").read_text()
+lab_css=(ROOT/"meridian-lab"/"lab.css").read_text()
 for required in ('data-view="support"','data-view="evals"','data-view="knowledge"','data-view="history"','data-view="dashboard"'):
     if required not in lab_html:
         issues.append(f"meridian-lab/index.html: missing Lab view {required}")
@@ -225,11 +230,17 @@ if re.search(r'<label class="field-label">',lab_js):
 for required in ('class="lab-orientation"','Try the workflow','Test behavior','Capture learning','Prototype activity · not pilot outcomes'):
     if required not in lab_html:
         issues.append(f"meridian-lab: shared-audience orientation missing {required}")
+for required in ('deterministic practice environment','not a proposed production application'):
+    if required not in lab_html:
+        issues.append(f"meridian-lab: prototype positioning missing {required}")
 for required in ('class="portfolio-menu"','../index.html#meridian','../index.html#portfolio','../index.html#learn'):
     if required not in lab_html:
         issues.append(f"meridian-lab: portfolio exit path missing {required}")
-if '[hidden]{display:none!important}' not in (ROOT/"meridian-lab"/"lab.css").read_text():
+if '[hidden]{display:none!important}' not in lab_css:
     issues.append("meridian-lab: hidden-state CSS invariant missing")
+for required in ('.review-grid select','.save-review,.save-history-review','.case-learning-context'):
+    if required not in lab_css:
+        issues.append(f"meridian-lab: learning-review presentation missing {required}")
 for required in ('id="support-reset"','id="support-status"','function resetSupport','event.metaKey||event.ctrlKey'):
     if required not in lab_html+lab_js:
         issues.append(f"meridian-lab: repeat-ticket UX contract missing {required}")
@@ -255,6 +266,26 @@ if index_text.count('class="view meridian-page-shell meridian-overview-shell"') 
 for component in ("meridian-case-hero","meridian-context-grid","meridian-section-nav"):
     if component not in index_text[index_text.find('data-page="meridian"'):]:
         issues.append(f"index.html: Meridian overview missing {component}")
+if re.search(r'<details class="learning-stage"[^>]*\sopen(?:\s|>)',index_text):
+    issues.append("index.html: Learning Guide stages must be collapsed by default")
+if 'querySelectorAll("details.learning-stage").forEach(function(stage){stage.open=false;})' not in index_text:
+    issues.append("index.html: Learning Guide initial-collapse behavior missing")
+for required in ('class="learning-roadmap-card"','class="learning-roadmap-depth"','class="learning-roadmap-lenses"'):
+    if required not in index_text:
+        issues.append(f"index.html: compact Learning Guide orientation missing {required}")
+for required in ('class="learning-next-grid"','class="learning-footer-note"','class="evidence-views"','class="evidence-views-grid"'):
+    if required not in index_text:
+        issues.append(f"index.html: supporting-section presentation missing {required}")
+if 'primary-artifact .artifact-action{display:inline-flex;align-items:center;gap:5px;align-self:flex-start;margin-top:auto' not in index_text:
+    issues.append("index.html: Meridian artifact actions are not bottom-aligned by the shared rule")
+measurement=(ROOT/"measurement-plan.html").read_text()
+tracker=(ROOT/"tracker.html").read_text()
+if 'id="measurement-reasoning"' not in measurement or '<details class="reasoning-disclosure surface-card">' not in measurement:
+    issues.append("measurement-plan.html: collapsed target-reasoning section missing")
+if 'measurement-plan.html#measurement-reasoning' not in tracker:
+    issues.append("tracker.html: measurement reflection cross-reference missing")
+if 'class="evidence-source-link" href="measurement-plan.html#measurement-reasoning"' not in (ROOT/"measurement-value.html").read_text():
+    issues.append("measurement-value.html: Meridian success-criteria source link missing")
 
 # Redirect routes are retained only for inbound compatibility and must stay tiny and explicit.
 for name in REDIRECT_PAGES:
@@ -270,6 +301,9 @@ for selector in (".meridian-page-shell",".meridian-case-hero",".meridian-section
 for invariant in ("padding:66px 28px 90px!important","padding:48px 18px 70px!important","max-width:1180px!important"):
     if invariant not in components:
         issues.append(f"site-components.css: missing Meridian geometry invariant {invariant}")
+for invariant in (".meridian-overview-shell{padding-top:66px!important",".meridian-overview-shell{padding-top:48px!important"):
+    if invariant not in components:
+        issues.append(f"site-components.css: missing Overview parity invariant {invariant}")
 
 if issues:
     print("REGRESSION CHECK FAILED")
