@@ -2,6 +2,15 @@
 
 This file preserves release history from the former long README. For the current architecture, file map, and QA instructions, use `README.md`.
 
+## v95.90 focused Meridian Lab mobile QA
+
+- Removed the Lab sidebar/navigation width constraint that could force the mobile page wider than the viewport.
+- Replaced the clipped horizontal Lab navigation with a contained two-by-two touch layout and an opaque mobile header.
+- Compacted the three-step learning loop into shorter mobile rows so the working controls appear sooner.
+- Increased key touch targets and added safer wrapping/stacking for result headers, source text, scoring, history actions, and import/export controls.
+- Added mobile section-change scrolling that respects reduced-motion preferences.
+- Added regression invariants for the repaired mobile layout and route behavior.
+
 ## v95.89 final Learning Guide color pass
 
 - Added restrained stage-specific accent colors through numbered markers, left rails, and open/hover states without adding new containers.

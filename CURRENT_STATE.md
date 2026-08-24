@@ -1,6 +1,6 @@
 # Practical AI Learning Portfolio — Current State
 
-**Current source of truth:** v95.89 final Learning Guide color pass.
+**Current source of truth:** v95.90 focused Meridian Lab mobile QA pass.
 
 ## Purpose and positioning
 
@@ -30,24 +30,24 @@ Meridian reading path:
 
 Meridian Lab working path:
 
-1. Support Tool
-2. Eval Runner
-3. Knowledge Base
-4. Learning Log
-5. Learning Dashboard
+1. Test & Learn
+2. Knowledge Base
+3. Learning Log
+4. Learning Dashboard
 
 The Lab is linked from the Meridian Overview, Case Readout, and Eval Work. It is intentionally not part of global navigation and has no separate reviewer mode.
 
 ## Meridian Lab today
 
-- One shared deterministic rules pipeline powers the Support Tool and Eval Runner.
+- One shared deterministic rules pipeline powers the consolidated Test & Learn workflow.
 - The fixed suite contains eight classification and four retrieval cases.
 - Each fixed case owns its learning rationale, diagnostic dimensions, expected failure layer, and source or guardrail assumption in the shared domain layer; the Eval Runner presents that context beside the result.
 - The Lab supports exploratory cases, human scoring, experiment objectives, diagnoses, reflection notes, next questions, saved practice cases, and linked reruns.
 - Runs and workspace settings are stored locally in the browser; JSON export/import provides backup and continuity.
-- The Support Tool supports repeated analysis, an explicit start-another-ticket reset, and Command/Control + Enter submission. Hidden empty/error states are enforced by the Lab CSS contract.
+- Test & Learn supports exploratory and fixed cases plus Command/Control + Enter submission. Hidden empty/error states are enforced by the Lab CSS contract.
 - The Lab validates imported workspace/run shapes before writing browser storage, and generated reflection fields retain explicit accessible labels.
 - The topbar provides direct exits to Home, Meridian Overview, Applied Work, and Learning Guide on desktop and mobile.
+- On phones, the Lab uses a contained two-by-two section navigator, opaque sticky header, compact learning-loop orientation, larger touch targets, and explicit wrapping for results and history controls.
 - The Lab explicitly presents itself as a deterministic practice environment, not a proposed production application.
 - Lab CSS and JavaScript resolve explicitly from `/meridian-lab/` on deployed HTTP(S) URLs while retaining relative paths for direct local-file previews.
 - The Learning Dashboard summarizes practice activity only. Operational, adoption, customer, and business metrics require a future realistic pilot data source.
@@ -57,7 +57,7 @@ The Lab is linked from the Meridian Overview, Case Readout, and Eval Work. It is
 
 - Discovery, measurement design, system flow/guardrails, executive readout, and initial classification/retrieval eval design are documented.
 - The Lab is functional and can produce genuine local prototype runs.
-- A meaningful execute → diagnose → revise → rerun learning cycle has not yet been completed and should not be implied.
+- One bounded guardrail execute → diagnose → revise → rerun cycle is documented. It demonstrates a four-case deterministic correction, not production performance or complete eval coverage.
 - Draft quality, escalation behavior, and confidence/review-routing eval coverage remain incomplete.
 - Later ENABLE, OPERATE, INCIDENT, and PROVE/EXPAND lifecycle work remains intentionally unfinished.
 

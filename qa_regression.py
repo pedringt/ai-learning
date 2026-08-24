@@ -241,6 +241,12 @@ if '[hidden]{display:none!important}' not in lab_css:
 for required in ('.review-grid select','.save-review,.save-history-review','.case-learning-context'):
     if required not in lab_css:
         issues.append(f"meridian-lab: learning-review presentation missing {required}")
+for required in ('grid-template-columns:repeat(2,minmax(0,1fr))','min-height:48px','background:var(--bg);backdrop-filter:none','.lab-sidebar{position:static;min-width:0;width:100%','grid-template-areas:"step title" "step detail"','@media(max-width:360px){.lab-nav .status{display:none}'):
+    if required not in lab_css:
+        issues.append(f"meridian-lab: mobile layout invariant missing {required}")
+for required in ("$('.lab-main').scrollIntoView", "'(max-width:900px)'"):
+    if required not in lab_js:
+        issues.append(f"meridian-lab: mobile route behavior missing {required}")
 for required in ('id="eval-example"','id="explore-case"','id="regression-suite"','event.metaKey||event.ctrlKey',"requested==='support'?'evals'"):
     if required not in lab_html+lab_js:
         issues.append(f"meridian-lab: consolidated Test & Learn contract missing {required}")

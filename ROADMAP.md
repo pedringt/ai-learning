@@ -50,6 +50,32 @@ Possible future triggers:
 - Authentication: needed only if real user-specific or sensitive data is introduced.
 - Operational dashboard: needed only when a realistic instrumented pilot or synthetic event dataset exists.
 
+## NEXT MAINTENANCE: Mobile interaction and responsive QA
+
+Run this as one bounded QA/fix pass across the current site, with Meridian Lab first. Do not use it as a reason for another visual-system redesign.
+
+### Meridian Lab priority
+
+- [ ] Test at 320, 375/390, and 430 px widths in both portrait and landscape.
+- [x] Replace the horizontally scrolling Lab section navigation with a contained two-by-two mobile navigator.
+- [x] Remove the sidebar min-content width that could force the Lab wider than the phone viewport.
+- [x] Make the sticky mobile header opaque so passing content does not appear sliced through it.
+- [x] Increase undersized touch targets to approximately 44 px where practical, especially Lab navigation, compact buttons, and saved-case chips.
+- [x] Compact the three-step learning-loop orientation on phones so it does not dominate the first several screens.
+- [ ] Check the complete freeform flow on mobile: enter a ticket, run it, inspect the result, complete the Learning Review fields, save the note, and return to another Lab section.
+- [x] Add explicit wrapping/stacking safeguards for result-route rows, badges, source information, drafts, long ticket text, and Learning Review controls.
+- [x] Add mobile stacking safeguards for fixed-case scoring, history actions, import/export controls, Knowledge Base headings, and dashboard cards.
+- [ ] Confirm mobile browser behavior for textarea resizing, select styling, on-screen keyboard focus, scroll position after route changes, and browser-local save feedback.
+
+### Whole-site sweep
+
+- [ ] Check Home, Meridian overview, Case Readout, Discovery, Measurement Plan, System Flow, Eval Work, Capabilities, Harborstone, and Learning Guide at the same phone widths.
+- [ ] Look specifically for horizontal overflow, clipped tables/code/diagrams, inconsistent header height, navigation jumps, awkward stacked cards, overly long line lengths, and controls below comfortable touch size.
+- [ ] Verify keyboard focus, visible focus states, reduced-motion behavior, disclosure controls, and internal anchor destinations.
+- [ ] Re-run regression tests after fixes and perform a final device-width screenshot comparison before release.
+
+**Definition of done:** the full Meridian Lab learning cycle is comfortably usable at 320 px without page-level horizontal scrolling, and every primary public route passes the same responsive smoke test.
+
 ## Supporting practice
 
 ### Difficult customer and stakeholder communication

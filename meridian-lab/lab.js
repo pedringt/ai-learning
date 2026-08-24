@@ -27,6 +27,7 @@
     document.title=`${({evals:'Test & Learn',knowledge:'Knowledge Base',history:'Learning Log',dashboard:'Learning Dashboard'})[name]} · Meridian Lab`;
   }
   addEventListener('hashchange',route);route();
+  $$('.lab-nav a').forEach(link=>link.addEventListener('click',()=>{if(!matchMedia('(max-width:900px)').matches)return;setTimeout(()=>$('.lab-main').scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'start'}),0);}));
 
   function resultMarkup(result,options={}){
     const routeLabel=result.guardrail?result.guardrail.label:(result.knowledge?'Continue with human review':'Human review needed');
