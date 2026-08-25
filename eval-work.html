@@ -63,6 +63,17 @@
 <p class="eval-experiment-limit"><strong>Evidence boundary:</strong> This demonstrates the correction across a four-case deterministic regression set. Broader phrasing coverage is still needed before treating the rule as robust.</p>
 </article>
 </section>
+<section id="draft-quality-design">
+<details class="reasoning-disclosure surface-card">
+<summary>Draft quality — how I'd measure it without adding another AI system</summary>
+<div class="reasoning-disclosure-body">
+<div><h3>Ruled out an AI judging the edit</h3><p>The first instinct was a second AI comparing the draft to what the rep actually sent, deciding whether the edit was substantive. I ruled it out: it's a second probabilistic system sitting on top of the first, with its own miss rate, and "the AI decided" is a weak answer if a manager asks why an edit didn't count. Quality needs to trace back to a rule someone can explain in one sentence.</p></div>
+<div><h3>A fixed rule needs something to compare</h3><p>Comparing "did the dollar amount change" requires two saved snapshots — the draft as generated, and the text actually sent — plus a way to find the dollar amount in ordinary prose. Plain pattern-matching (currency signs, date formats) does that without a second AI call; it will miss softer phrasing like "next Tuesday," but that gap is measurable, not assumed.</p></div>
+<div><h3>"Start over" needed its own state</h3><p>A rep who discards a bad draft immediately and one who nudges a mostly-good draft through five rounds of edits can both end up near 100% text changed — but they mean different things about the draft. Diffing alone can't tell a fast "this was useless" moment apart from a slow "this needed real tuning" one, so start-over is tracked as a distinct third action alongside approve and approve-with-edits, not inferred from the diff.</p></div>
+<div><h3>Start dumb, prove the need for smart</h3><p>Regex ships first, not a smarter extraction step, because the actual failure rate of the dumb version isn't known yet. The plan is to log cases where a rep flags an edit as substantive but the pattern-match didn't catch anything different — that gap becomes the evidence for whether a smarter method is worth the added AI surface area, instead of guessing upfront.</p></div>
+</div>
+</details>
+</section>
 <section>
 <h2>Five evaluation areas</h2>
 <div class="grid2">
