@@ -784,11 +784,11 @@ body.v919-tracker .wrap>h2:not(:first-of-type){
 </g>
 </svg>
 </div>
-<section class="flow-support-grid"><article><h3>Key decision points</h3>
+<section class="flow-support-grid"><article><h3 id="key-decision-points">Key decision points</h3>
 <ul>
 <li><b>Category check</b> — money/security categories never get an AI draft, regardless of confidence. This is a hard rule, not a judgment call.</li>
 <li><b>Confidence check</b> — independent from category risk. A "safe" category can still get flagged with a reviewer note when observable evidence indicates review is needed (for example, an ambiguous request, conflicting KB sources, or missing information).</li>
-<li><b>Escalation check (multi-turn)</b> — triggers on whichever comes first: 5+ exchanges (justified by the ~12% of tickets that naturally run long, per the simulated 90-day data pull — see open question 11 in the <a href="tracker.html">working tracker</a>), signs of an upset/repeating customer, a high-risk category surfacing mid-conversation even if the ticket didn't start that way, or the customer explicitly asking for a supervisor/to escalate (added after rep discovery — the cleanest signal of the four, since it doesn't require inference).</li>
+<li><b>Escalation check (multi-turn)</b> — triggers on whichever comes first: 5+ exchanges (justified by the ~12% of tickets that naturally run long, per the simulated 90-day data pull — see open question 11 in the <a href="tracker.html">working tracker</a>), signs of an upset/repeating customer, a high-risk category surfacing mid-conversation even if the ticket didn't start that way, or the customer explicitly asking for a supervisor/to escalate (added after rep discovery — the cleanest signal of the four, since it doesn't require inference). None of these four triggers are implemented yet — see the <a href="tracker.html#gap-check">gap check</a> for what's still open, particularly how "repeating customer" would actually be detected.</li>
 <li><b>Human review outcome</b> — always one of approve / edit / start over, whether the ticket was drafted or fully human-written. Nothing sends to the customer without a human touching it first, per the pilot's human-boundary rule.</li>
 </ul></article>
 <article><h3>Data sources feeding this flow</h3>

@@ -22,7 +22,7 @@ vm.runInContext(fs.readFileSync(`${__dirname}/meridian-core.js`,'utf8'),context)
 const core=context.MeridianCore;
 
 assert.equal(core.VERSION,'meridian-rules-v1.1');
-assert.equal(core.evalCases.length,12);
+assert.equal(core.evalCases.length,13);
 for(const item of core.evalCases){
   assert.equal(typeof item.learning?.why,'string',`${item.id} needs a learning rationale`);
   assert.ok(item.learning.why.length>10,`${item.id} rationale is too thin`);

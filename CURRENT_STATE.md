@@ -40,7 +40,7 @@ The Lab is linked from the Meridian Overview, Case Readout, and Eval Work. It is
 ## Meridian Lab today
 
 - One shared deterministic rules pipeline powers the consolidated Test & Learn workflow.
-- The fixed suite contains eight classification and four retrieval cases.
+- The fixed suite contains nine classification and four retrieval cases.
 - Each fixed case owns its learning rationale, diagnostic dimensions, expected failure layer, and source or guardrail assumption in the shared domain layer; the Eval Runner presents that context beside the result.
 - The Lab supports exploratory cases, human scoring, experiment objectives, diagnoses, reflection notes, next questions, saved practice cases, and linked reruns.
 - Runs and workspace settings are stored locally in the browser; JSON export/import provides backup and continuity.

@@ -305,6 +305,32 @@ if 'eval-work.html#guardrail-cycle' not in (ROOT/"case-readout.html").read_text(
 if 'eval-work.html#guardrail-cycle' not in (ROOT/"evals-quality.html").read_text():
     issues.append("evals-quality.html: executed guardrail-cycle link missing")
 
+# ---- Dynamic content-fact check: eval suite case counts must match the source of truth. ----
+# meridian-core.js is the single source of truth for how many eval cases exist.
+# Every place across the site that states a case count is checked against it directly,
+# rather than each site page hardcoding a number that can drift when cases are added.
+NUM_WORDS={0:'zero',1:'one',2:'two',3:'three',4:'four',5:'five',6:'six',7:'seven',8:'eight',9:'nine',10:'ten',11:'eleven',12:'twelve',13:'thirteen',14:'fourteen',15:'fifteen',16:'sixteen',17:'seventeen',18:'eighteen',19:'nineteen',20:'twenty'}
+def _word(n): return NUM_WORDS.get(n, str(n))
+classification_count=len(re.findall(r"type:'classification'", lab_core))
+retrieval_count=len(re.findall(r"type:'retrieval'", lab_core))
+total_cases=classification_count+retrieval_count
+CASE_COUNT_MENTIONS=[
+    ("case-readout.html", f"broader {total_cases}-case suite"),
+    ("CURRENT_STATE.md", f"contains {_word(classification_count)} classification and {_word(retrieval_count)} retrieval cases"),
+    ("tracker.html", f"not the full {total_cases}-case suite"),
+    ("ROADMAP.md", f"subset of the {total_cases} fixed cases"),
+    ("eval-work.html", f"<strong>{total_cases} designed</strong>"),
+    ("eval-work.html", f"The {total_cases}-case classification/retrieval suite"),
+    ("meridian-lab/index.html", f"{_word(classification_count).capitalize()} classification cases and {_word(retrieval_count)} retrieval cases"),
+    ("meridian-lab/index.html", f"{total_cases} fixed cases"),
+]
+for relpath, expected in CASE_COUNT_MENTIONS:
+    full_text=(ROOT/relpath).read_text()
+    if expected not in full_text:
+        issues.append(f"{relpath}: eval-case-count mention out of sync with meridian-core.js "
+                       f"({total_cases} total = {classification_count} classification + {retrieval_count} retrieval); "
+                       f"expected to find {expected!r}")
+
 # Redirect routes are retained only for inbound compatibility and must stay tiny and explicit.
 for name in REDIRECT_PAGES:
     text=(ROOT/name).read_text()

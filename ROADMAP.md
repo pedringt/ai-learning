@@ -7,7 +7,7 @@ This roadmap contains active or deliberately parked work only. Completed release
 **Goal:** Use Meridian Lab to create the first meaningful learning cycle rather than adding more interface or narrative pages.
 
 - [ ] Choose one narrow experiment objective.
-- [ ] Run a representative subset of the 12 fixed cases.
+- [ ] Run a representative subset of the 13 fixed cases.
 - [ ] Add a small number of purposeful exploratory cases, especially ambiguity, multi-issue routing, source conflict, and high-risk boundaries.
 - [ ] Score results and record a diagnosis before changing the system.
 - [ ] Separate taxonomy, retrieval, source-quality, guardrail, draft, confidence/routing, and test-case failures.
