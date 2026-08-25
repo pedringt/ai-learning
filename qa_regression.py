@@ -284,7 +284,7 @@ if 'learning-curriculum-intro' not in index_text:
 for retired in ('class="learning-roadmap-card"','class="learning-roadmap-depth"','class="learning-roadmap-lenses"'):
     if retired in index_text:
         issues.append(f"index.html: retired Learning Guide orientation returned {retired}")
-for required in ('class="learning-next-grid"','class="learning-footer-note"','class="evidence-views"','class="evidence-views-grid"'):
+for required in ('class="learning-next"','class="learning-footer-note"','class="evidence-views"','class="evidence-views-grid"'):
     if required not in index_text:
         issues.append(f"index.html: supporting-section presentation missing {required}")
 if 'primary-artifact .artifact-action{display:inline-flex;align-items:center;gap:5px;align-self:flex-start;margin-top:auto' not in index_text:

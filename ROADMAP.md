@@ -6,17 +6,19 @@ This roadmap contains active or deliberately parked work only. Completed release
 
 **Goal:** Use Meridian Lab to create the first meaningful learning cycle rather than adding more interface or narrative pages.
 
-- [ ] Choose one narrow experiment objective.
-- [ ] Run a representative subset of the 13 fixed cases.
+**Status (Aug 25, 2026): first cycle complete.** The guardrail false-positive cycle (see eval-work.html) satisfies the definition of done below — objective, diagnosis, change, and before/after evidence are all documented. A second, smaller cycle (the "log in" classification fix) followed the same pattern. Items below reflect what's confirmed done versus still open; a few depend on Lab session data (local browser storage) not visible from these files.
+
+- [x] Choose one narrow experiment objective.
+- [x] Run a representative subset of the 13 fixed cases.
 - [ ] Add a small number of purposeful exploratory cases, especially ambiguity, multi-issue routing, source conflict, and high-risk boundaries.
-- [ ] Score results and record a diagnosis before changing the system.
-- [ ] Separate taxonomy, retrieval, source-quality, guardrail, draft, confidence/routing, and test-case failures.
+- [x] Score results and record a diagnosis before changing the system.
+- [x] Separate taxonomy, retrieval, source-quality, guardrail, draft, confidence/routing, and test-case failures. *(Practiced across two fixes: guardrail-layer and classification/taxonomy-layer.)*
 - [ ] For at least one case, document what the human reviewer should approve, correct, override, or escalate—and what evidence supports that handoff.
-- [ ] Make one justified change.
-- [ ] Use linked reruns to compare before and after.
+- [x] Make one justified change.
+- [ ] Use linked reruns to compare before and after. *(Confirm: was this done via the Lab's linked-rerun feature specifically, or manual/external testing?)*
 - [ ] Export the workspace backup and summarize what changed, what did not, and what question comes next.
 
-**Definition of done:** at least one traceable objective → run → diagnosis → human-review decision → change → linked rerun sequence with Paige’s own reflection.
+**Definition of done:** at least one traceable objective → run → diagnosis → human-review decision → change → linked rerun sequence with Paige’s own reflection. **Met once, via the guardrail cycle.** Remaining unchecked items are either not yet done, or done in the Lab but unconfirmed here.
 
 ## NEXT AFTER EVIDENCE: Complete eval coverage
 
