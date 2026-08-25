@@ -672,6 +672,17 @@ body>main.meridian-page-shell{
 .eval-experiment-grid>div{padding:14px;border:1px solid var(--border);border-radius:12px;background:var(--card)}
 .eval-experiment-grid p{margin:5px 0 0;color:var(--muted);font-size:12.5px;line-height:1.5}
 .eval-experiment-learning,.eval-experiment-limit{margin:12px 0 0;color:var(--muted);font-size:12.5px;line-height:1.55}
+
+/* Small, reusable "correctly placed in a known framework" note — for naming a
+   term/standard/framework already used correctly in the surrounding content,
+   without a paragraph of explanation. Keep to one or two sentences. */
+.field-note{margin:14px 0 0;padding:10px 14px;border-left:3px solid var(--cyan);background:color-mix(in srgb,var(--cyan) 6%,var(--card));border-radius:0 8px 8px 0;color:var(--muted);font-size:12.5px;line-height:1.55}
+.field-note b{color:var(--ink);font-weight:700}
+
+/* Small reusable status pill — for marking work as a deliberate, bounded
+   pass (exploratory, in progress, resumed later) rather than abandoned.
+   Matches the .eval-experiment-heading>b pill visually; usable anywhere. */
+.status-pill{display:inline-block;padding:5px 10px;margin-right:8px;border:1px solid color-mix(in srgb,var(--purple) 24%,var(--border));border-radius:999px;background:var(--card);color:var(--purple);font-size:10.5px;font-weight:700;letter-spacing:.02em;white-space:nowrap}
 .eval-experiment-details{margin-top:14px;border:1px solid var(--border);border-radius:12px;background:var(--card);overflow:hidden}
 .eval-experiment-details summary{cursor:pointer;padding:13px 15px;color:var(--ink);font-size:12.5px;font-weight:850;list-style:none}
 .eval-experiment-details summary::-webkit-details-marker{display:none}.eval-experiment-details summary::after{content:"+";float:right;color:var(--purple)}.eval-experiment-details[open] summary::after{content:"−"}

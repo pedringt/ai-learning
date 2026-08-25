@@ -51,7 +51,7 @@
 <section class="surface-card">
 <h2>Current state</h2>
 <p>
-<strong>Designed work and executed evidence are labeled separately.</strong> One four-case guardrail cycle is complete. The 13-case classification/retrieval suite and the remaining draft-quality, escalation, and confidence work are still in progress. Offline evals test controlled behavior; they do not prove customer or business outcomes.</p>
+<strong>Designed work and executed evidence are labeled separately.</strong> One four-case guardrail cycle is complete. The 13-case classification/retrieval suite is designed; Draft Quality has an initial exploratory pass on Tone (see below), with Escalation and Confidence next when that resumes. Offline evals test controlled behavior; they do not prove customer or business outcomes.</p>
 </section>
 <section class="eval-experiments" aria-labelledby="executed-experiments-heading">
 <div class="eval-experiments-heading"><div><span>Executed evidence</span><h2 id="executed-experiments-heading">Completed experiment cycles</h2><p>Only completed run → diagnose → revise → rerun cycles are curated here. Exploratory runs remain in the browser-local Learning Log.</p></div><b>1 completed</b></div>
@@ -67,6 +67,7 @@
 <details class="reasoning-disclosure surface-card">
 <summary>Draft quality — how I'd measure it without adding another AI system</summary>
 <div class="reasoning-disclosure-body">
+<div><h3>Scope: one criterion first, on purpose</h3><p><span class="status-pill">Exploratory pass</span>This tests the failure-mode approach on a single criterion — Tone — rather than building out Draft Quality, Escalation, and Confidence all at once. Same "start dumb, prove the need for smart" principle applied to my own process: confirm the approach holds on one real case before generalizing the effort. Escalation and Confidence are next when I pick this back up, not abandoned.</p></div>
 <div><h3>Ruled out an AI judging the edit</h3><p>The first instinct was a second AI comparing the draft to what the rep actually sent, deciding whether the edit was substantive. I ruled it out: it's a second probabilistic system sitting on top of the first, with its own miss rate, and "the AI decided" is a weak answer if a manager asks why an edit didn't count. Quality needs to trace back to a rule someone can explain in one sentence.</p></div>
 <div><h3>A fixed rule needs something to compare</h3><p>Comparing "did the dollar amount change" requires two saved snapshots — the draft as generated, and the text actually sent — plus a way to find the dollar amount in ordinary prose. Plain pattern-matching (currency signs, date formats) does that without a second AI call; it will miss softer phrasing like "next Tuesday," but that gap is measurable, not assumed.</p></div>
 <div><h3>"Start over" needed its own state</h3><p>A rep who discards a bad draft immediately and one who nudges a mostly-good draft through five rounds of edits can both end up near 100% text changed — but they mean different things about the draft. Diffing alone can't tell a fast "this was useless" moment apart from a slow "this needed real tuning" one, so start-over is tracked as a distinct third action alongside approve and approve-with-edits, not inferred from the diff.</p></div>
@@ -77,6 +78,7 @@
 </section>
 <section>
 <h2>Five evaluation areas</h2>
+<p class="field-note">This work spans three of the four standard eval types: <b>code-based</b> (the deterministic classification/retrieval logic), <b>human eval</b> (the rep's approve/edit/start-over review), and a deliberate choice not to use <b>LLM-as-judge</b> — <a href="#draft-quality-design">reasoning above</a>. <b>User eval</b> isn't possible yet; it needs real production traffic the pilot hasn't run.</p>
 <div class="grid2">
 <article class="surface-card">
 <h3>1 · Ticket classification</h3>
