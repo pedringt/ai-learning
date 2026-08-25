@@ -42,9 +42,22 @@
     return keywords.filter(word=>text.includes(word)).length;
   }
 
+  // Generic complaint language ("not working", "issue", "broken"...) can technically match a
+  // single KB category's keyword list, but it carries almost no diagnostic signal on its own -
+  // it doesn't name what's affected. A match on one of these terms alone must not be enough to
+  // earn classification confidence; it should only count when it corroborates a more specific
+  // keyword. This is a general threshold, not a patch for one input: any future case that hits
+  // a category only through generic language falls to safe abstention the same way.
+  const GENERIC_TERMS=['not working','issue','problem','broken','trouble'];
+
+  function specificMatches(input,keywords){
+    const text=input.toLowerCase();
+    return keywords.filter(word=>!GENERIC_TERMS.includes(word)&&text.includes(word)).length;
+  }
+
   function classify(input){
     const categories=['Account & Access','Billing','Product How-To','Technical Issue','Integrations'];
-    const ranked=categories.map(category=>({category,score:Math.max(...knowledge.filter(item=>item.category===category).map(item=>matches(input,item.keywords)),0)})).sort((a,b)=>b.score-a.score);
+    const ranked=categories.map(category=>({category,score:Math.max(...knowledge.filter(item=>item.category===category).map(item=>specificMatches(input,item.keywords)),0)})).sort((a,b)=>b.score-a.score);
     if(!ranked[0]||ranked[0].score===0)return {category:'Other / Needs Review',confidence:.35};
     return {category:ranked[0].category,confidence:Math.min(.96,.70+ranked[0].score*.08)};
   }

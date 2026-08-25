@@ -9,7 +9,7 @@
 <style>
   
   *{box-sizing:border-box}
-  body{margin:0;font-family:Arial,Helvetica,sans-serif;color:var(--ink);background:#fff;line-height:1.55}
+  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;color:var(--ink);background:#fff;line-height:1.55}
   a{color:var(--purple);text-decoration:underline;text-decoration-thickness:1.5px;text-underline-offset:3px}
   .topbar{position:sticky;top:0;background:rgba(255,255,255,.96);backdrop-filter:blur(10px);border-bottom:1px solid var(--border);z-index:50}
   .topbar .wrap{display:flex;justify-content:space-between;align-items:center;gap:18px;padding:12px 34px}
@@ -295,7 +295,7 @@ body.v88-dark .topbar{background:rgba(16,16,20,.96)!important}
 
 /* Shared page frame + typography */
 body{
-  font-family:Arial,Helvetica,sans-serif!important;
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif!important;
   color:var(--ink)!important;
   background:var(--bg)!important;
 }
@@ -338,7 +338,7 @@ body{
   color:var(--muted)!important;
 }
 .badge,.tag,.status,.label{
-  font-family:Arial,Helvetica,sans-serif!important;
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif!important;
 }
 
 /* Section-label language */
@@ -1027,7 +1027,7 @@ body.v919-tracker .wrap>h2:not(:first-of-type){
 <div class="reasoning"><b>Decision:</b> use separate subscores for Source Selection, Safe Fallback, and Grounded Use, with N/A where a dimension does not apply. A case can therefore show <i>Source Selection = Fail</i> while <i>Grounded Use = Pass</i> — evidence that the model faithfully used the wrong retrieved source rather than hallucinating independently. That gives future trace analysis a more useful starting point than one opaque pass/fail result.</div>
 <h3>Offline evals are not production outcomes</h3>
 <div class="reasoning">The pre-launch suite can test controlled behavior such as classification, retrieval, escalation, grounding, draft quality, confidence, and review routing. Customer follow-up/reopen rates, successful closure, real rep edits, repeated customer pushback, and recurring corrections tied to the same KB article belong in production measurement. Those signals can later create new regression cases and identify KB-maintenance work.</div>
-</details><details class="tracker-section" id="gap-check"><summary><span class="tracker-summary-title">Gap check — before calling VALIDATE safe</span><span class="tracker-summary-meta">Six items an experienced reviewer would flag next</span></summary>
+</details><details class="tracker-section" id="gap-check"><summary><span class="tracker-summary-title">Gap check — before calling VALIDATE safe</span><span class="tracker-summary-meta">Eight items an experienced reviewer would flag next</span></summary>
 <div class="frame"><b>Status:</b> These are open, not yet resolved — flagged after stress-testing the guardrail fix and the (not-yet-built) draft-quality instrumentation against how experienced AI practitioners actually work. Logged here so they don't get lost before the next VALIDATE session.</div>
 <h3>Guardrail fix was only reverified against the cases that exposed it</h3>
 <div class="reasoning">The past-tense/imperative guardrail fix passed all four motivating cases after the regex change, but four cases is not the full 13-case suite. For a zero-tolerance guardrail, a false negative is worse than a false positive — narrowing the trigger to fix one false positive is exactly the kind of change that can quietly introduce a false negative elsewhere. Needs a full suite rerun before the fix counts as verified, not just "no longer reproduces the original bug."</div>
@@ -1043,6 +1043,8 @@ body.v919-tracker .wrap>h2:not(:first-of-type){
 <div class="reasoning">Nothing yet checks whether an 80%-confidence draft is actually correct about 80% of the time. Since confidence is the gate for eventually unlocking selective auto-send, an uncalibrated confidence score undermines the entire premise of proving readiness with data — and it's a likely first question from an experienced reviewer.</div>
 <h3>The 5-exchange escalation threshold may be measuring the wrong thing</h3>
 <div class="reasoning">Exchange count is a proxy for "this conversation is going poorly," but it also fires on a customer with several separate, unrelated questions — a five-exchange thread covering five different topics isn't the same signal as five exchanges circling one unresolved issue. Same shape of problem as the guardrail's tense/intent conflation: a surface-level pattern standing in for the thing actually meant to be detected.<br/><br/>This isn't a new problem — the <a href="system-flow.html#key-decision-points">System Flow escalation design</a> already lists an "upset/repeating customer" trigger alongside exchange count, so the design already assumes recurrence matters. What's still open is that this signal isn't specified precisely enough to implement, and none of the four described triggers exist in meridian-core.js yet. Topic recurrence across recent messages, checked against categories the classifier already assigns, looks like the closest path to a fixed-rule version of "repeating" — worth testing before treating it as settled.</div>
+<h3>Eval case C-07 misclassifies instead of abstaining <span class="status-pill">Fixed</span></h3>
+<div class="reasoning">The fixed case "There is some stuff that is not working." should safely abstain to Other/Needs Review — the message is too vague to route confidently. It was matching KB-104's keyword "not working" and classifying as Technical Issue at 78% confidence, a false-confidence result on an ambiguous ticket. Confirmed pre-existing in the original suite, not introduced by either session's edits. Same underlying failure mode as the guardrail and escalation issues above: a keyword match standing in for actual understanding of intent. <strong>Fixed</strong> at the confidence-threshold layer — generic complaint language ("not working," "issue," "problem," "broken," "trouble") no longer counts as sufficient signal on its own; it must corroborate a more specific keyword. This is a general threshold, not a one-off patch: any future message that hits a category only through generic language falls to safe abstention the same way. Verified against the full 13-case suite.</div>
 </details><details class="tracker-section" id="reflection"><summary><span class="tracker-summary-title">Reflection</span><span class="tracker-summary-meta">What I noticed about my own reasoning process</span></summary>
 <div class="frame">A shorter, measurement-specific reflection is in the <a href="measurement-plan.html#measurement-reasoning">Measurement Plan</a>. This one's about the working process itself, across HANDOFF through CONFIGURE. The pattern I noticed most: my first answer to almost anything was usually close, but not quite precise — "reading the ticket" instead of "everything the agent can see," "drafting and sending" instead of "the decision about which path something takes." Getting from "close" to "actually right" took someone pushing back and asking me to distinguish it from something adjacent, not just re-explaining the same thing louder. I also noticed I do better reasoning when I have a concrete example to hang a concept on (Meridian) than when I'm working with the abstract idea alone — the "trigger/context/instructions/retrieval/routing/handoff/evals" framework only really clicked once I mapped each piece onto this specific pilot. That's probably useful to know about how I learn, going into a real role: ask for the concrete case, don't just take the definition at face value.</div>
 <p class="note">Current design state: the pilot targets and decision rules are defined, with provisional assumptions explicitly flagged for validation against real workflow data before launch.</p>

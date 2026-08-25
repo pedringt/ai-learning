@@ -79,7 +79,7 @@
   }
   function renderEvalStats(){
     const latest=Object.values(latestSuiteByCase());const scored=latest.filter(run=>run.score);const passed=scored.filter(run=>run.score==='pass').length;const diagnosed=core.getRuns().filter(run=>run.diagnosis).length;
-    $('#eval-stats').innerHTML=`<div class="stat"><span>Cases run</span><strong>${latest.length}/12</strong></div><div class="stat"><span>Human scored</span><strong>${scored.length}</strong></div><div class="stat"><span>Review pass</span><strong>${scored.length?Math.round(passed/scored.length*100)+'%':'—'}</strong></div><div class="stat"><span>Runs diagnosed</span><strong>${diagnosed}</strong></div>`;
+    $('#eval-stats').innerHTML=`<div class="stat"><span>Cases run</span><strong>${latest.length}/${core.evalCases.length}</strong></div><div class="stat"><span>Human scored</span><strong>${scored.length}</strong></div><div class="stat"><span>Review pass</span><strong>${scored.length?Math.round(passed/scored.length*100)+'%':'—'}</strong></div><div class="stat"><span>Runs diagnosed</span><strong>${diagnosed}</strong></div>`;
   }
   renderCases();renderEvalStats();
 

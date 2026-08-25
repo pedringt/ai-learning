@@ -11,7 +11,7 @@
 
 *{box-sizing:border-box}
 html{scroll-behavior:smooth}
-body{margin:0;font-family:Arial,Helvetica,sans-serif;color:var(--ink);background:#fff;line-height:1.55}
+body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;color:var(--ink);background:#fff;line-height:1.55}
 a{color:var(--purple)}
 .dark,.v88-dark{
   --ink:#f4f3fa; --muted:#b8b7c7; --border:#2b2934;
@@ -32,7 +32,7 @@ body.dark,body.v88-dark{background:#101014;color:var(--ink)}
 .evidence-principle .section-kicker span{color:var(--purple);font-size:11px;font-weight:850;letter-spacing:.07em;text-transform:uppercase}
 .evidence-principle h3{margin:0 0 9px;font-size:20px}
 .evidence-principle p{margin:0;color:var(--muted);font-size:14px;line-height:1.6}
-.evidence-index{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:16px!important;margin-top:22px!important}
+.evidence-index{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;grid-auto-rows:1fr!important;gap:16px!important;margin-top:22px!important}
 .evidence-index .card{
   display:flex;flex-direction:column;padding:22px;border:1px solid var(--border);
   border-radius:18px;background:var(--card);color:inherit;text-decoration:none;
@@ -94,17 +94,16 @@ body.dark,body.v88-dark{background:#101014;color:var(--ink)}
     <p>Diagnosing the actual problem before choosing a solution: mapping workflows, testing assumptions, separating symptoms from causes, and deciding where AI, rules, conventional automation, or human judgment belong.</p>
     <span class="judgment-go">View evidence →</span>
   </a>
-  
-  <a class="card judgment-link" href="measurement-value.html">
-    <span class="tag">Meridian + Harborstone</span>
-    <h3>Measurement &amp; Value</h3>
-    <p>Defining success, choosing useful measures, questioning fragile instrumentation, and connecting AI behavior to operational and business outcomes.</p>
-    <span class="judgment-go">View evidence →</span>
-  </a>
   <a class="card judgment-link" href="systems-guardrails.html">
     <span class="tag">Meridian + Harborstone</span>
     <h3>Systems &amp; Guardrails</h3>
     <p>Deciding what AI should do, where deterministic rules or human judgment belong, and keeping permissions and escalation proportionate to risk.</p>
+    <span class="judgment-go">View evidence →</span>
+  </a>
+  <a class="card judgment-link" href="measurement-value.html">
+    <span class="tag">Meridian + Harborstone</span>
+    <h3>Measurement &amp; Value</h3>
+    <p>Defining success, choosing useful measures, questioning fragile instrumentation, and connecting AI behavior to operational and business outcomes.</p>
     <span class="judgment-go">View evidence →</span>
   </a>
   <a class="card judgment-link" href="evals-quality.html">
@@ -117,16 +116,10 @@ body.dark,body.v88-dark{background:#101014;color:var(--ink)}
 
 <div class="frame callout-subtle" style="margin-top:22px">
   <b>Evidence grows with the work</b>
-  <p>Implementation &amp; Adoption, Business &amp; Strategy, Knowledge Systems, and other roadmap capabilities can graduate into this section later—after completed exercises provide enough evidence. Planned work is not presented here as demonstrated capability.</p>
+  <p>Implementation &amp; Adoption and Customer Operations are the closest to graduating into this section — the AI-Assisted Tool Building case now has real privacy-review and design-iteration evidence, and the Learning Guide's Customer Operations stage is built — but neither has enough completed, evaluated work yet to stand as a demonstrated capability here. Business &amp; Strategy and Knowledge Systems remain further out. Planned work is not presented here as demonstrated capability.</p>
 </div>
 
 </main>
 <script src="site-shell.js"></script>
-<script>
-(function(){
- const sel=document.getElementById('v922MobileNav');
- if(sel)sel.addEventListener('change',()=>location.href=sel.value);
-})();
-</script>
 </body>
 </html>
