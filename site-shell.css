@@ -366,3 +366,13 @@ select:focus-visible,
     animation-iteration-count:1!important;
   }
 }
+
+/* v95.90 — preserve readable mobile navigation labels at the narrowest width. */
+@media(max-width:360px){
+  .topbar .brand span{display:none!important}
+  #mobileNav,#v922MobileNav{
+    flex-basis:126px!important;
+    width:126px!important;
+    max-width:126px!important;
+  }
+}

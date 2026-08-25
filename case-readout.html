@@ -746,7 +746,7 @@ body .wrap>.v918-orientation{margin-bottom:18px!important}
 </head>
 <body>
 <div class="topbar"><div class="topinner"><a class="brand-button" href="index.html"><span class="brand">AI <span>Learning Portfolio</span></span></a><nav aria-label="Primary pages" class="nav"><a href="index.html">Home</a><a href="capabilities.html">Capabilities</a><a href="index.html#portfolio" aria-current="page">Applied Work</a><a href="index.html#learn">Learning Guide</a></nav><div class="top-actions"><button aria-label="Switch to dark mode" aria-pressed="false" class="theme-toggle" id="v922ThemeToggle" title="Switch to dark mode" type="button">☾</button><select aria-label="Choose page" id="v922MobileNav"><option value="index.html">Home</option><option value="capabilities.html">Capabilities</option><option value="index.html#portfolio" selected>Applied Work</option><option value="index.html#learn">Learning Guide</option></select></div></div></div>
-<main class="meridian-page-shell"><div class="meridian-heading"><div class="meridian-breadcrumb"><a href="index.html#portfolio">Applied Work</a><span aria-hidden="true">/</span><a href="index.html#meridian">Meridian</a></div><div class="eyebrow">Meridian · Case Readout</div></div><header class="meridian-case-hero"><h1>Meridian Case Readout</h1><p class="lead">A condensed, single-page view of the Meridian lifecycle, including completed work, the current VALIDATE checkpoint, and later stages that are intentionally unfinished.</p><div class="meridian-context-grid"><div class="meridian-context-item"><span>Format</span><strong>Executive summary</strong></div><div class="meridian-context-item"><span>Scope</span><strong>Full lifecycle</strong></div><div class="meridian-context-item"><span>Checkpoint</span><strong>VALIDATE</strong></div><div class="meridian-context-item"><span>Depth</span><strong>5-minute read</strong></div></div></header><nav class="meridian-section-nav" aria-label="Meridian reading order"><div class="meridian-section-links"><a href="index.html#meridian">Overview</a><a href="case-readout.html" class="current" aria-current="page">Case Readout</a><a href="tracker.html">Discovery &amp; Decisions</a><a href="measurement-plan.html">Measurement Plan</a><a href="system-flow.html">System Flow</a><a href="eval-work.html">Eval Work</a></div></nav><aside class="meridian-product-callout" aria-labelledby="case-lab-title"><div><span>Interactive validation rig</span><strong id="case-lab-title">Test Meridian behavior</strong><p>Test routing assumptions, run repeatable cases, and preserve before-and-after evidence using deterministic rules.</p></div><a class="meridian-primary-action" href="meridian-lab/index.html">Open Meridian Lab <span aria-hidden="true">→</span></a></aside><div class="v918-orientation">
+<main class="meridian-page-shell"><div class="meridian-heading"><div class="meridian-breadcrumb"><a href="index.html#portfolio">Applied Work</a><span aria-hidden="true">/</span><a href="index.html#meridian">Meridian</a></div><div class="eyebrow">Meridian · Case Readout</div></div><header class="meridian-case-hero"><h1>Meridian Case Readout</h1><p class="lead">A condensed, single-page view of the Meridian lifecycle, including completed foundational validation work, the current ENABLE checkpoint, and later stages that are intentionally unfinished.</p><div class="meridian-context-grid"><div class="meridian-context-item"><span>Format</span><strong>Executive summary</strong></div><div class="meridian-context-item"><span>Scope</span><strong>Full lifecycle</strong></div><div class="meridian-context-item"><span>Checkpoint</span><strong>ENABLE</strong></div><div class="meridian-context-item"><span>Depth</span><strong>5-minute read</strong></div></div></header><nav class="meridian-section-nav" aria-label="Meridian reading order"><div class="meridian-section-links"><a href="index.html#meridian">Overview</a><a href="case-readout.html" class="current" aria-current="page">Case Readout</a><a href="tracker.html">Discovery &amp; Decisions</a><a href="measurement-plan.html">Measurement Plan</a><a href="system-flow.html">System Flow</a><a href="eval-work.html">Eval Work</a></div></nav><aside class="meridian-product-callout" aria-labelledby="case-lab-title"><div><span>Interactive validation rig</span><strong id="case-lab-title">Test Meridian behavior</strong><p>Test routing assumptions, run repeatable cases, and preserve before-and-after evidence using deterministic rules.</p></div><a class="meridian-primary-action" href="meridian-lab/index.html">Open Meridian Lab <span aria-hidden="true">→</span></a></aside><div class="v918-orientation">
 <div>
 <span class="label">What this shows</span>
 <p>A one-page readout of the Meridian case, decisions, evidence, and current recommendation state.</p>
@@ -754,8 +754,8 @@ body .wrap>.v918-orientation{margin-bottom:18px!important}
 </div>
 <div class="statusbox">
 <span class="label">Current status</span>
-<b>Current checkpoint</b>
-<p>Skim this box first; continue below for the full artifact.</p>
+<b>ENABLE</b>
+<p>Foundational validation is complete; enablement is the next active stage.</p>
 </div>
 </div><div class="v922-planned-note planned-learning-note">Planned learning: later Meridian lifecycle stages are intentionally unfinished. I’m completing the case in sequence so later decisions build on what I learn earlier rather than filling the portfolio with prewritten answers.</div>
 <div class="stage done">
@@ -788,15 +788,15 @@ body .wrap>.v918-orientation{margin-bottom:18px!important}
     <div style="margin-top:6px"><a class="sevidence" href="system-flow.html">→ full flow diagram</a></div>
 </div>
 </div>
-<div class="stage progress">
-<div class="stagehead"><h2>Validate</h2></div>
+<div class="stage done">
+<div class="stagehead"><h2>Validate</h2><span class="pstatus">Foundational cycle complete</span></div>
 <div class="stagebody">
-    v1 eval architecture is defined across five areas. I also completed the first run → diagnose → revise → rerun cycle: a four-case password-boundary test exposed a false-positive escalation, I narrowed the account-change rule to require request language, and all four cases then matched their expected routes. The broader 13-case suite and remaining draft-quality, escalation, and confidence work are still in progress.
+    v1 eval architecture is defined across five areas. I also completed the foundational run → diagnose → revise → rerun work across guardrail, classification, and confidence failures. The broader 13-case suite and remaining draft-quality, escalation, and confidence work are documented but deliberately deferred while I move to enablement and operational practice.
     <div style="margin-top:6px"><a class="sevidence" href="eval-work.html#guardrail-cycle">→ guardrail experiment and broader eval work</a></div>
 </div>
 </div>
-<div class="stage todo">
-<div class="stagehead"><h2>Enable</h2><span class="pstatus todo">Not started</span></div>
+<div class="stage progress">
+<div class="stagehead"><h2>Enable</h2><span class="pstatus">Current</span></div>
 <div class="stagebody">Onboarding kit for the 8 Tier 1 reps — training agenda, quick-start guide, safe-use guide, and a confidence/friction survey.</div>
 </div>
 <div class="stage todo">
@@ -819,7 +819,7 @@ body .wrap>.v918-orientation{margin-bottom:18px!important}
 <div class="stagehead"><h2>Expand</h2><span class="pstatus todo">Not started</span></div>
 <div class="stagebody">Use the pilot evidence to make a next-step recommendation to Product. One possible candidate is the KB-cleanup/maintenance agent idea from CONFIGURE, but only if the pilot data gives us a reason to build it.</div>
 </div>
-<p class="footer-note">Current checkpoint: VALIDATE in progress; the first four-case guardrail cycle is complete, while the broader suite remains ongoing. Full reasoning behind every decision above lives in the <a href="tracker.html">working tracker</a>.</p>
+<p class="footer-note">Current checkpoint: ENABLE. VALIDATE’s foundational run → diagnose → revise → rerun work is complete; known gaps remain documented, while deeper eval-program work is deliberately deferred. Full reasoning behind every decision above lives in the <a href="tracker.html">working tracker</a>.</p>
 <nav class="artifact-footer-nav" aria-label="Continue through Meridian"><a href="index.html#meridian"><span>Meridian</span>Overview</a><span class="artifact-footer-spacer" aria-hidden="true"></span><a href="tracker.html"><span>Next</span>Discovery &amp; Decisions</a></nav></main>
 <script defer="" src="site-shell.js"></script></body>
 </html>
