@@ -14,6 +14,10 @@ HTML = sorted(ROOT.rglob("*.html"))
 EXPECTED_NAV = ["Home","Capabilities","Applied Work","Learning Guide"]
 CAPABILITY_PAGES = {"capabilities.html","discovery-workflow.html","measurement-value.html","systems-guardrails.html","evals-quality.html"}
 REDIRECT_PAGES = {"agent-flow.html","configure.html","deliverable.html","discovery.html","evals.html","plan.html","eval-runner.html"}
+# Hosted third-party tools (not portfolio pages): built to their own product conventions,
+# not the site's page-metadata conventions. Structural page checks below don't apply to them;
+# they still get the site's general checks (dup IDs, broken links, etc).
+EXTERNAL_TOOL_PATHS = {"family-food-file/index.html","family-activity-picker/index.html","family-activity-picker/earlier-prototype.html"}
 SUBSTANTIVE_PAGES = {p.name for p in HTML} - REDIRECT_PAGES
 MERIDIAN_PAGES = {"case-readout.html","tracker.html","measurement-plan.html","system-flow.html","eval-work.html"}
 
@@ -131,9 +135,9 @@ for path in HTML:
 
     if path.name in SUBSTANTIVE_PAGES and path.name != "index.html" and (c.main_count != 1 or c.main_close_count != 1):
         issues.append(f"{label}: expected one balanced main landmark, found {c.main_count} open/{c.main_close_count} close")
-    if path.name in SUBSTANTIVE_PAGES and c.h1_count != 1:
+    if path.name in SUBSTANTIVE_PAGES and c.h1_count != 1 and label not in EXTERNAL_TOOL_PATHS:
         issues.append(f"{label}: expected one document h1, found {c.h1_count}")
-    if path.name in SUBSTANTIVE_PAGES and c.description_count != 1:
+    if path.name in SUBSTANTIVE_PAGES and c.description_count != 1 and label not in EXTERNAL_TOOL_PATHS:
         issues.append(f"{label}: expected one meta description, found {c.description_count}")
 
     for href in c.hrefs:
@@ -253,7 +257,7 @@ for required in ('id="eval-example"','id="explore-case"','id="regression-suite"'
 for retired in ('data-view="support"','>Support Tool <','>Eval Runner <','id="support-input"','function resetSupport'):
     if retired in lab_html+lab_js:
         issues.append(f"meridian-lab: retired duplicate workflow returned {retired}")
-for required in ('id="meridian-lab-styles"',"'/meridian-lab/lab.css'","?'/meridian-lab/':''","core.onload"):
+for required in ("document.write","/meridian-lab/","lab.css","?'/meridian-lab/':''","core.onload"):
     if required not in lab_html:
         issues.append(f"meridian-lab: deployment asset-path contract missing {required}")
 
@@ -297,9 +301,14 @@ if 'measurement-plan.html#measurement-reasoning' not in tracker:
     issues.append("tracker.html: measurement reflection cross-reference missing")
 if 'class="evidence-source-link" href="measurement-plan.html#measurement-reasoning"' not in (ROOT/"measurement-value.html").read_text():
     issues.append("measurement-value.html: Meridian success-criteria source link missing")
-for required in ('class="eval-experiments"','id="executed-experiments-heading"','1 completed','id="guardrail-cycle"','4 / 4 expected routes after revision','This demonstrates the correction across a four-case deterministic regression set','class="eval-experiment-details"'):
+for required in ('class="eval-experiments"','id="executed-experiments-heading"','id="guardrail-cycle"','4 / 4 expected routes after revision','This demonstrates the correction across a four-case deterministic regression set','class="eval-experiment-details"'):
     if required not in eval_work:
         issues.append(f"eval-work.html: executed guardrail-cycle evidence missing {required}")
+# The "N completed" badge must match the actual number of completed-cycle articles, not a
+# hardcoded literal that goes stale whenever a new cycle is documented.
+_completed_cycle_count = eval_work.count('class="eval-experiment surface-card"')
+if f'{_completed_cycle_count} completed' not in eval_work:
+    issues.append(f"eval-work.html: completed-cycle badge out of sync with actual article count ({_completed_cycle_count} articles present)")
 if 'eval-work.html#guardrail-cycle' not in (ROOT/"case-readout.html").read_text():
     issues.append("case-readout.html: executed guardrail-cycle link missing")
 if 'eval-work.html#guardrail-cycle' not in (ROOT/"evals-quality.html").read_text():
@@ -330,6 +339,13 @@ for relpath, expected in CASE_COUNT_MENTIONS:
         issues.append(f"{relpath}: eval-case-count mention out of sync with meridian-core.js "
                        f"({total_cases} total = {classification_count} classification + {retrieval_count} retrieval); "
                        f"expected to find {expected!r}")
+
+# lab.js must derive its stats-panel denominator from core.evalCases.length rather than
+# hardcoding a number, since a hardcoded literal drifts silently whenever cases are added.
+if "core.evalCases.length" not in lab_js:
+    issues.append("meridian-lab/lab.js: eval-stats case count must derive from core.evalCases.length, not a hardcoded literal")
+if re.search(r"latest\.length\}/\d+", lab_js):
+    issues.append("meridian-lab/lab.js: eval-stats denominator appears hardcoded instead of dynamic")
 
 # Redirect routes are retained only for inbound compatibility and must stay tiny and explicit.
 for name in REDIRECT_PAGES:

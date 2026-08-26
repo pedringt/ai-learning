@@ -345,6 +345,18 @@
 .v916-library-preview>.section-kicker{margin:0 0 12px!important}
 .v916-library-preview-inner{align-items:start!important}
 .v916-library-cta{align-self:start!important;height:auto!important}
+.gloss-term{background:none;border:none;padding:0;margin:0;font:inherit;color:inherit;cursor:help;border-bottom:1px dotted color-mix(in srgb,var(--purple) 55%,transparent);text-decoration:none}
+.concept-diagram{border:1px solid var(--border);border-radius:14px;padding:16px 18px;background:var(--soft);margin:12px 0 16px}
+.concept-diagram-title{font-size:11px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--purple);margin-bottom:11px}
+.concept-diagram-flow{display:flex;align-items:center;flex-wrap:wrap;gap:7px;row-gap:10px}
+.concept-diagram-step{display:inline-flex;align-items:center;gap:7px}
+.concept-diagram-box{border:1px solid var(--border);background:var(--card);border-radius:9px;padding:7px 11px;font-size:12.5px;font-weight:700;color:var(--ink);white-space:nowrap}
+.concept-diagram-arrow{color:var(--muted);font-size:14px;flex:0 0 auto}
+.concept-diagram-caption{margin:12px 0 0;font-size:13px;color:var(--muted);line-height:1.55}
+@media(max-width:640px){.concept-diagram-box{white-space:normal}}
+.gloss-term:hover,.gloss-term:focus-visible{border-bottom-style:solid;color:var(--purple);outline:none}
+.gloss-tooltip{position:absolute;z-index:200;max-width:280px;background:var(--ink);color:var(--bg,#fff);font-size:12.5px;line-height:1.45;padding:9px 12px;border-radius:10px;box-shadow:0 12px 30px rgba(0,0,0,.22);pointer-events:auto}
+.dark .gloss-tooltip{background:#f5f5f7;color:#101014}
 </style>
 <link href="site-shell.css" rel="stylesheet"/>
 <style id="v932-manager-readiness">
@@ -1777,7 +1789,9 @@
     <div class="learning-item"><b>How LLMs behave</b><p>Probabilistic generation, context dependence, hallucination, instruction following, uncertainty, and practical model limitations.</p></div>
     <div class="learning-item"><b>Model vs. AI application</b><p>Separate model behavior from retrieval, instructions, tools, orchestration, data, permissions, and product logic.</p></div>
     <div class="learning-item"><b>Context engineering</b><p>Decide what instructions, retrieved evidence, tools, state, prior results, and other context the model receives at each step—and keep that context relevant, trustworthy, and proportionate to the task.</p></div>
-    <div class="learning-item"><b>Retrieval &amp; grounding</b><p>RAG, source selection, freshness, metadata, conflicting sources, citations, and when simpler context injection is enough. Retrieval should be tested against the real query set; the right design may combine semantic and keyword search, metadata filters, reranking, or safe fallback rather than assuming one search method is universally best. <a href="tracker.html#validate"><strong>Applied in Meridian →</strong></a></p></div>
+    <div class="learning-item"><b>Retrieval &amp; grounding</b><p>RAG, source selection, freshness, metadata, conflicting sources, citations, and when simpler context injection is enough. Retrieval should be tested against the real query set; the right design may combine semantic and keyword search, metadata filters, reranking, or safe fallback rather than assuming one search method is universally best. <a href="tracker.html#validate"><strong>Applied in Meridian →</strong></a></p>
+    <div class="concept-diagram"><div class="concept-diagram-title">How retrieval works</div><div class="concept-diagram-flow"><span class="concept-diagram-step"><span class="concept-diagram-box">Question</span><span class="concept-diagram-arrow">→</span></span><span class="concept-diagram-step"><span class="concept-diagram-box">Embed &amp; search</span><span class="concept-diagram-arrow">→</span></span><span class="concept-diagram-step"><span class="concept-diagram-box">Relevant sources</span><span class="concept-diagram-arrow">→</span></span><span class="concept-diagram-step"><span class="concept-diagram-box">Add to context</span><span class="concept-diagram-arrow">→</span></span><span class="concept-diagram-step"><span class="concept-diagram-box">LLM</span><span class="concept-diagram-arrow">→</span></span><span class="concept-diagram-step"><span class="concept-diagram-box">Answer</span></span></div><p class="concept-diagram-caption">The question and stored documents both get converted into numerical vectors; retrieval finds the closest matches by similarity and hands them to the model as context — instead of relying only on what the model learned during training.</p></div>
+    </div>
     <div class="learning-item"><b>Tool use &amp; structured outputs</b><p>Actions, schemas, validation, permissions, failures, recovery, and reliable handoffs between model output and software.</p></div>
     <div class="learning-item"><b>Agentic systems &amp; harnesses</b><p>Autonomy levels, task decomposition, state/memory, stopping conditions, verification, delegation, error recovery, and when an agent is the wrong architecture. Treat the harness—context management, tools, permissions, orchestration, and recovery—as part of the system being designed and evaluated.</p></div>
   </div>
@@ -1877,7 +1891,9 @@
     <div class="learning-item"><b>Measurement design</b><p>Baselines, metric definitions, leading/lagging indicators, instrumentation, segmentation, funnels/cohorts where useful, and avoiding vanity metrics.</p></div>
     <div class="learning-item"><b>Experimentation &amp; causal thinking</b><p>Controls, confounders, selection bias, correlation vs. causation, practical vs. statistical significance, and why post-launch improvement does not prove causation.</p></div>
     <div class="learning-item"><b>Prove business value</b><p>Usage alone isn't enough. Track adoption (who's using it and where), quality (does it behave correctly), human intervention (how much correction/escalation is required), outcome (did speed, quality, revenue, cost, or experience improve), and economics (is the value worth the operating cost) — together.</p></div>
-    <div class="learning-item"><b>Value realization</b><p>Translate technical and workflow improvements into outcomes leaders care about; decide whether to expand, revise, pause, or stop.</p></div>
+    <div class="learning-item"><b>Value realization</b><p>Translate technical and workflow improvements into outcomes leaders care about; decide whether to expand, revise, pause, or stop.</p>
+    <div class="concept-diagram"><div class="concept-diagram-title">Capability → value</div><div class="concept-diagram-flow"><span class="concept-diagram-step"><span class="concept-diagram-box">Capability</span><span class="concept-diagram-arrow">→</span></span><span class="concept-diagram-step"><span class="concept-diagram-box">Workflow fit</span><span class="concept-diagram-arrow">→</span></span><span class="concept-diagram-step"><span class="concept-diagram-box">Adoption</span><span class="concept-diagram-arrow">→</span></span><span class="concept-diagram-step"><span class="concept-diagram-box">Behavior change</span><span class="concept-diagram-arrow">→</span></span><span class="concept-diagram-step"><span class="concept-diagram-box">Measurable outcome</span></span></div><p class="concept-diagram-caption">A working AI capability doesn't automatically create value — it has to fit a real workflow, get adopted appropriately, actually change behavior, and then show up in a measurable outcome. Any link in that chain can break.</p></div>
+    </div>
   </div>
   <div class="stage-group"><h3>Reference / deeper dive</h3>
     <div class="learning-item compact"><b>Business &amp; process economics</b><p>Revenue, gross/contribution margin intuition, fixed vs. variable cost, cost-to-serve, capacity, AI/inference and review labor, error cost, opportunity cost, ROI and payback.</p></div>
@@ -1893,7 +1909,9 @@
 <div class="stage-body">
   <div class="stage-group"><h3>Small-company core, now</h3>
     <div class="learning-item"><b>Define good behavior before launch</b><p>Define what "good" looks like before rollout instead of waiting for users to say something feels off. Vague goals like "helpful" or "accurate" need to become behavior two reviewers would agree on: core cases, edge cases, ambiguous inputs, tool failures, safety cases, pass/fail thresholds and severity, correct source/tool use — not only a plausible final answer.</p></div>
-<div class="learning-item"><b>Eval design</b><p>Success criteria, representative workflow and user slices, core/edge/adversarial cases, false-positive versus false-negative consequences, graders, thresholds, and separating component quality from end-to-end workflow outcomes. Protect against overfitting to one fixed suite and add meaningful production failures as regression cases. <a href="eval-work.html"><strong>Applied in Meridian →</strong></a></p></div>
+<div class="learning-item"><b>Eval design</b><p>Success criteria, representative workflow and user slices, core/edge/adversarial cases, false-positive versus false-negative consequences, graders, thresholds, and separating component quality from end-to-end workflow outcomes. Protect against overfitting to one fixed suite and add meaningful production failures as regression cases. <a href="eval-work.html"><strong>Applied in Meridian →</strong></a></p>
+<div class="concept-diagram"><div class="concept-diagram-title">The eval loop</div><div class="concept-diagram-flow"><span class="concept-diagram-step"><span class="concept-diagram-box">Cases</span><span class="concept-diagram-arrow">→</span></span><span class="concept-diagram-step"><span class="concept-diagram-box">Run</span><span class="concept-diagram-arrow">→</span></span><span class="concept-diagram-step"><span class="concept-diagram-box">Score</span><span class="concept-diagram-arrow">→</span></span><span class="concept-diagram-step"><span class="concept-diagram-box">Diagnose failures</span><span class="concept-diagram-arrow">→</span></span><span class="concept-diagram-step"><span class="concept-diagram-box">Change</span><span class="concept-diagram-arrow">→</span></span><span class="concept-diagram-step"><span class="concept-diagram-box">Rerun</span></span></div><p class="concept-diagram-caption">The same cycle Meridian's Lab actually runs: pick representative cases, run them, score the results, diagnose what really failed, make one justified change, then rerun to confirm it worked.</p></div>
+</div>
 <div class="learning-item"><b>Human evaluation quality</b><p>Write reviewer instructions and calibration examples, check agreement on ambiguous criteria, adjudicate disagreements, and verify that rules-based or model-based graders remain aligned with human judgment.</p></div>
     <div class="learning-item"><b>Failure analysis &amp; regression</b><p>Taxonomies, severity, reproducibility, edge cases, trace review, regression suites, and checking whether an improvement creates new failures elsewhere.</p></div>
     <div class="learning-item"><b>Human review &amp; guardrails</b><p>HITL placement, confidence/abstention, escalation, prohibited actions, permissions, verification, and designing review around consequence rather than blanket oversight. Includes confidence calibration — checking whether a stated confidence score actually matches the real correctness rate, not just whether a threshold exists.</p></div>
@@ -2314,6 +2332,176 @@ window.addEventListener('popstate',()=>render(pageFromHash(),false));
     document.addEventListener('click',e=>{if(more.hasAttribute('open')&&!more.contains(e.target))more.removeAttribute('open');});
     document.addEventListener('keydown',e=>{if(e.key==='Escape')more.removeAttribute('open');});
   }
+})();
+
+// --- Learning Guide hover/tap glossary -------------------------------------
+(()=>{
+  const GLOSSARY={
+    'large language model':'An AI model trained on large amounts of text that can understand and generate language.',
+    'llm':'An AI model trained on large amounts of text that can understand and generate language. Short for large language model.',
+    'token':'A small unit of text that an AI model processes. A word may contain one or several tokens.',
+    'context window':'The amount of information a model can consider at one time.',
+    'system prompt':'Higher-priority instructions that guide how an AI model should behave.',
+    'temperature':'A setting that affects how predictable or varied a model\'s responses are.',
+    'structured output':'Information generated in a required format, such as specific fields or JSON.',
+    'structured outputs':'Information generated in a required format, such as specific fields or JSON.',
+    'deterministic':'Producing predictable results from the same inputs and rules.',
+    'probabilistic':'Producing results based on probabilities rather than fixed rules, so outputs can vary.',
+    'hallucination':'When an AI generates information that sounds plausible but is false or unsupported.',
+    'groundedness':'Whether an AI answer is supported by the information it was supposed to rely on.',
+    'grounding':'Whether an AI answer is supported by the information it was supposed to rely on.',
+    'abstention':'When an AI system declines to answer because it lacks enough reliable information.',
+    'rag':'A technique that retrieves relevant information and gives it to a model as context before it generates an answer. Short for retrieval-augmented generation.',
+    'retrieval':'Finding information relevant to a request so it can be used by an AI system.',
+    'embedding':'A numerical representation of information that helps computers compare meaning or similarity.',
+    'vector search':'A way of finding similar information by comparing numerical representations called vectors.',
+    'semantic search':'Searching based on meaning rather than only matching exact words.',
+    'chunking':'Dividing larger documents into smaller pieces that can be stored, retrieved, or processed separately.',
+    'agent':'An AI system that can take multiple steps and use tools to work toward a goal.',
+    'agentic':'Describes an AI system that can take multiple steps and use tools to work toward a goal.',
+    'tool calling':'Allowing an AI model to request that another tool or system perform a specific action.',
+    'mcp':'A standard for connecting AI applications with external tools and sources of information. Short for Model Context Protocol.',
+    'eval':'A structured way of testing whether an AI system behaves as intended.',
+    'evals':'A structured way of testing whether an AI system behaves as intended.',
+    'evaluation dataset':'A collection of examples used to systematically test an AI system.',
+    'test set':'A collection of examples used to systematically test an AI system.',
+    'regression test':'A test repeated after a change to make sure previously working behavior has not broken.',
+    'regression':'A test repeated after a change to make sure previously working behavior has not broken.',
+    'guardrail':'A rule or control designed to prevent or redirect unwanted AI behavior.',
+    'guardrails':'Rules or controls designed to prevent or redirect unwanted AI behavior.',
+    'human-in-the-loop':'A system in which people review, approve, correct, or take over AI work when needed.',
+    'escalation':'Passing a task or case to a person or higher level of review when the AI should not handle it alone.',
+    'false positive':'When a system identifies something as matching a condition when it actually does not.',
+    'false negative':'When a system fails to identify something that actually does match a condition.',
+    'precision':'Of the things a system identified, the proportion that were actually correct.',
+    'recall':'Of all the things a system should have identified, the proportion it successfully found.',
+    'calibration':'How closely a system\'s stated confidence matches how often it is actually correct.',
+    'prompt injection':'An attempt to manipulate an AI system through instructions that conflict with its intended rules.',
+    'inference':'Using a trained AI model to generate an output from new input.',
+    'inference cost':'The cost of running an AI model to process inputs and generate outputs.',
+    'latency':'The amount of time a system takes to respond or complete an operation.',
+    'observability':'The ability to understand what a system is doing using information such as outputs, errors, logs, and timing.',
+    'source governance':'Rules and practices for maintaining the quality, ownership, permissions, and reliability of information used by a system.',
+    'adoption':'The extent to which intended users actually incorporate a system into relevant work.',
+    'value realization':'The process of turning a capability or investment into measurable benefits.',
+    'decision rights':'Clear rules about who has authority to make particular decisions.'
+  };
+
+  const container=document.querySelector('.learning-stages');
+  if(!container)return;
+
+  const used=new Set();
+  const terms=Object.keys(GLOSSARY).sort((a,b)=>b.length-a.length);
+
+  function wrapTextNode(node){
+    const text=node.nodeValue;
+    for(const term of terms){
+      if(used.has(term))continue;
+      const re=new RegExp('\\b('+term.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')\\b','i');
+      const m=re.exec(text);
+      if(!m)continue;
+      used.add(term);
+      const before=text.slice(0,m.index);
+      const match=m[0];
+      const after=text.slice(m.index+match.length);
+      const frag=document.createDocumentFragment();
+      if(before)frag.appendChild(document.createTextNode(before));
+      const btn=document.createElement('button');
+      btn.type='button';
+      btn.className='gloss-term';
+      btn.textContent=match;
+      btn.setAttribute('data-term',term);
+      btn.setAttribute('aria-describedby','gloss-tooltip');
+      frag.appendChild(btn);
+      if(after)frag.appendChild(document.createTextNode(after));
+      node.parentNode.replaceChild(frag,node);
+      return true;
+    }
+    return false;
+  }
+
+  function walk(node){
+    if(used.size>=terms.length)return;
+    if(node.nodeType===1&&node.classList&&node.classList.contains('concept-diagram'))return;
+    if(node.nodeType===3){
+      if(node.parentElement&&['A','BUTTON','SCRIPT','STYLE','SUMMARY'].includes(node.parentElement.tagName))return;
+      if(node.parentElement&&node.parentElement.closest('.concept-diagram'))return;
+      wrapTextNode(node);
+      return;
+    }
+    if(node.nodeType===1&&(node.tagName==='A'||node.tagName==='BUTTON'||node.tagName==='SCRIPT'||node.tagName==='STYLE'))return;
+    Array.from(node.childNodes).forEach(walk);
+  }
+  walk(container);
+
+  // Tooltip
+  const tip=document.createElement('div');
+  tip.id='gloss-tooltip';
+  tip.className='gloss-tooltip';
+  tip.setAttribute('role','tooltip');
+  tip.hidden=true;
+  document.body.appendChild(tip);
+
+  let hideTimer=null;
+  function showTip(btn){
+    clearTimeout(hideTimer);
+    const term=btn.getAttribute('data-term');
+    tip.textContent=GLOSSARY[term]||'';
+    tip.hidden=false;
+    const r=btn.getBoundingClientRect();
+    const top=r.bottom+window.scrollY+8;
+    let left=r.left+window.scrollX;
+    tip.style.top=top+'px';
+    tip.style.left='0px';
+    const tw=tip.offsetWidth;
+    const maxLeft=window.scrollX+document.documentElement.clientWidth-tw-12;
+    left=Math.max(window.scrollX+12,Math.min(left,maxLeft));
+    tip.style.left=left+'px';
+  }
+  function hideTip(delay){
+    clearTimeout(hideTimer);
+    hideTimer=setTimeout(()=>{tip.hidden=true;},delay||120);
+  }
+
+  let touchActive=false;
+  container.addEventListener('touchstart',()=>{
+    touchActive=true;
+    clearTimeout(touchActive._t);
+    setTimeout(()=>{touchActive=false;},600);
+  },{passive:true});
+
+  container.addEventListener('mouseover',e=>{
+    if(touchActive)return;
+    const btn=e.target.closest('.gloss-term');
+    if(btn)showTip(btn);
+  });
+  container.addEventListener('mouseout',e=>{
+    if(touchActive)return;
+    const btn=e.target.closest('.gloss-term');
+    if(btn)hideTip(120);
+  });
+  container.addEventListener('focusin',e=>{
+    const btn=e.target.closest('.gloss-term');
+    if(btn)showTip(btn);
+  });
+  container.addEventListener('focusout',e=>{
+    const btn=e.target.closest('.gloss-term');
+    if(btn)hideTip(120);
+  });
+  container.addEventListener('click',e=>{
+    const btn=e.target.closest('.gloss-term');
+    if(!btn)return;
+    e.preventDefault();
+    showTip(btn);
+  });
+  tip.addEventListener('mouseover',()=>clearTimeout(hideTimer));
+  tip.addEventListener('mouseout',()=>hideTip(120));
+  document.addEventListener('click',e=>{
+    if(!tip.hidden&&!e.target.closest('.gloss-term')&&!e.target.closest('.gloss-tooltip'))tip.hidden=true;
+  });
+  document.addEventListener('keydown',e=>{
+    if(e.key==='Escape')tip.hidden=true;
+  });
 })();
 </script></body>
 </html>
