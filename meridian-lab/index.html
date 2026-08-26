@@ -6,6 +6,37 @@
   <title>Meridian Lab · Practical AI Learning</title>
   <meta name="description" content="A lightweight working environment for testing Meridian support behavior, evaluation cases, knowledge sources, and pilot evidence.">
   <script>document.write('<link rel="stylesheet" href="'+((location.protocol==='http:'||location.protocol==='https:')?'/meridian-lab/':'')+'lab.css">');</script>
+
+<!-- Vercel Web Analytics -->
+<script>
+  // Owner mode: use ?owner=true once to disable Vercel Analytics in this browser.
+  // Use ?owner=false to re-enable analytics for this browser.
+  (function () {
+    const params = new URLSearchParams(window.location.search);
+    const ownerParam = params.get('owner');
+
+    if (ownerParam === 'true') {
+      localStorage.setItem('paigeOwnerMode', 'true');
+    } else if (ownerParam === 'false') {
+      localStorage.removeItem('paigeOwnerMode');
+    }
+
+    if (ownerParam !== null) {
+      params.delete('owner');
+      const query = params.toString();
+      const cleanUrl = window.location.pathname + (query ? '?' + query : '') + window.location.hash;
+      window.history.replaceState({}, '', cleanUrl);
+    }
+
+    if (localStorage.getItem('paigeOwnerMode') !== 'true') {
+      window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
+      const analyticsScript = document.createElement('script');
+      analyticsScript.defer = true;
+      analyticsScript.src = '/_vercel/insights/script.js';
+      document.head.appendChild(analyticsScript);
+    }
+  })();
+</script>
 </head>
 <body>
 <header class="topbar"><div class="topinner"><a class="brand-button" href="../index.html"><span>AI <span>Learning Portfolio</span></span></a><details class="portfolio-menu"><summary><span class="portfolio-menu-wide">← Back to portfolio</span><span class="portfolio-menu-compact">Portfolio</span></summary><nav aria-label="Leave Meridian Lab"><a href="../index.html">Home</a><a href="../index.html#meridian">Meridian overview</a><a href="../index.html#portfolio">Applied Work</a><a href="../index.html#learn">Learning Guide</a></nav></details><button class="theme-toggle" id="theme-toggle" type="button" aria-label="Switch to dark mode" aria-pressed="false">☾</button></div></header>

@@ -40,6 +40,37 @@ body.v88-dark{--ink:#f5f5f7;--muted:#b6b6c2;--border:#34343d;--soft:#19191f;--so
 .status.done,.status.progress,.pstatus.done,.pstatus.progress{display:none!important}
 </style>
 <link href="site-components.css" rel="stylesheet"/>
+
+<!-- Vercel Web Analytics -->
+<script>
+  // Owner mode: use ?owner=true once to disable Vercel Analytics in this browser.
+  // Use ?owner=false to re-enable analytics for this browser.
+  (function () {
+    const params = new URLSearchParams(window.location.search);
+    const ownerParam = params.get('owner');
+
+    if (ownerParam === 'true') {
+      localStorage.setItem('paigeOwnerMode', 'true');
+    } else if (ownerParam === 'false') {
+      localStorage.removeItem('paigeOwnerMode');
+    }
+
+    if (ownerParam !== null) {
+      params.delete('owner');
+      const query = params.toString();
+      const cleanUrl = window.location.pathname + (query ? '?' + query : '') + window.location.hash;
+      window.history.replaceState({}, '', cleanUrl);
+    }
+
+    if (localStorage.getItem('paigeOwnerMode') !== 'true') {
+      window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
+      const analyticsScript = document.createElement('script');
+      analyticsScript.defer = true;
+      analyticsScript.src = '/_vercel/insights/script.js';
+      document.head.appendChild(analyticsScript);
+    }
+  })();
+</script>
 </head><body>
 <div class="topbar"><div class="topinner"><a class="brand-button" href="index.html"><span class="brand">AI <span>Learning Portfolio</span></span></a><nav aria-label="Primary pages" class="nav"><a href="index.html">Home</a><a href="capabilities.html">Capabilities</a><a href="index.html#portfolio" aria-current="page">Applied Work</a><a href="index.html#learn">Learning Guide</a></nav><div class="top-actions"><button aria-label="Switch to dark mode" aria-pressed="false" class="theme-toggle" id="v922ThemeToggle" title="Switch to dark mode" type="button">☾</button><select aria-label="Choose page" id="v922MobileNav"><option value="index.html">Home</option><option value="capabilities.html">Capabilities</option><option value="index.html#portfolio" selected>Applied Work</option><option value="index.html#learn">Learning Guide</option></select></div></div></div>
 <main class="case-shell site-page tool-building-page">

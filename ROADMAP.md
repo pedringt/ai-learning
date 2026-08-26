@@ -39,6 +39,19 @@ The eval harness's own known gaps are resolved (above). Net-new eval coverage is
 - [ ] Add failure cases discovered during real Lab use to the regression suite.
 - [ ] Full eval suite rerun on the guardrail regex fix — only reverified against the 4 motivating cases so far. Also deprioritized for the same reason as the rest of this section.
 
+## NEXT: Candidate Meridian exercises — AI Systems foundations diagnostics
+
+Surfaced 8/26/2026 from a scenario-practice session on the Foundations card (context injection vs. RAG vs. agent, layer diagnosis, deterministic vs. probabilistic control). Not built or tested yet — candidates only. Only becomes portfolio evidence once actually implemented and run in Meridian, per the working agreement; the session itself doesn't become a site entry.
+
+- [ ] Stale-policy retrieval/freshness failure — old source outranks a newer one despite both being retrieved; diagnose as a freshness/metadata problem, not a prompt problem.
+- [ ] Wrong-tool selection — an agent picks a poorly-differentiated tool; diagnose whether the failure is tool-description ambiguity rather than model reasoning.
+- [ ] Insufficient tool permissions — an agent has read access but not write access to something it needs; diagnose before assuming the model itself is at fault.
+- [ ] Model claims an action succeeded without tool confirmation — surfaces a missing definition of what "success" actually requires.
+- [ ] Deterministic enforcement of a high-risk prerequisite — a hard requirement (e.g. identity verification before refund) enforced in software, not just prompted.
+- [ ] Excessive/irrelevant context — verbose or unrelated tool results degrading response quality; practice trimming vs. accumulating.
+- [ ] Missing structured-data fields — a schema should allow `null` rather than forcing the model to fabricate a value.
+- [ ] Escalation when policy is genuinely ambiguous — distinct from escalation-on-risk; this is escalation because the correct answer isn't knowable, not because the stakes are high.
+
 ## PINNED: Evidence-driven Meridian presentation
 
 When genuine run and rerun evidence exists, decide whether the public Meridian case needs distinct **Eval Design**, **MVP & Runs**, and **Results & Changes** sections or pages.
