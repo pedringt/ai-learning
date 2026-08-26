@@ -354,6 +354,10 @@
 .concept-diagram-arrow{color:var(--muted);font-size:14px;flex:0 0 auto}
 .concept-diagram-caption{margin:12px 0 0;font-size:13px;color:var(--muted);line-height:1.55}
 @media(max-width:640px){.concept-diagram-box{white-space:normal}}
+@media(max-width:640px){
+  .learning-stage .stage-body{padding:4px 14px 16px 18px!important}
+  .learning-stage summary{grid-template-columns:22px minmax(0,1fr)!important;padding:12px 10px!important;gap:7px!important}
+}
 .gloss-term:hover,.gloss-term:focus-visible{border-bottom-style:solid;color:var(--purple);outline:none}
 .gloss-tooltip{position:absolute;z-index:200;max-width:280px;background:var(--ink);color:var(--bg,#fff);font-size:12.5px;line-height:1.45;padding:9px 12px;border-radius:10px;box-shadow:0 12px 30px rgba(0,0,0,.22);pointer-events:auto}
 .dark .gloss-tooltip{background:#f5f5f7;color:#101014}
@@ -2279,6 +2283,10 @@ body:has(#ai-cs-mock.dark),html:has(#ai-cs-mock.dark){background:#101014!importa
 .v88-portfolio-depth>summary{cursor:pointer;list-style:none;padding:18px 2px;color:var(--purple);font-weight:800;font-size:13px}
 .v88-portfolio-depth>summary::-webkit-details-marker{display:none}.v88-portfolio-depth>summary::after{content:' +';}.v88-portfolio-depth[open]>summary::after{content:' −';}
 .v88-portfolio-depth-inner{padding:0 0 12px}
+@media(max-width:640px){
+  .learning-stage .stage-body{padding:4px 12px 16px 16px!important}
+  .learning-stage summary{grid-template-columns:28px minmax(0,1fr)!important;padding:14px 44px 14px 10px!important;gap:6px!important}
+}
 </style>
 <script id="v895-router">
 (()=>{

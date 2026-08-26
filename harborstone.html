@@ -869,6 +869,7 @@ body.v88-dark .case-shell .frame{
 /* Consolidated from an adjacent historical style layer. */
 
 .status.done,.status.progress,.pstatus.done,.pstatus.progress{display:none!important}
+.card .case-opening-title{margin-top:7px!important}
 </style>
 <link href="site-components.css" rel="stylesheet"/>
 </head><body>
@@ -886,9 +887,9 @@ body.v88-dark .case-shell .frame{
 <h1>Harborstone Property Management — Invoice Operations</h1>
 <p class="lead">A fictional client asked for AI to “process vendor invoices automatically.” I used discovery to decompose the workflow, choose a deliberately narrow first pilot, define how humans and AI would work together, and evaluate whether the result created enough value to expand.</p>
 </header>
-<div class="card"><span class="tag">Client ask</span><h2 class="case-opening-title">“Automate our vendor invoice process with AI.”</h2>
+<div class="card"><span class="tag">Client ask</span><h3 class="case-opening-title">“Automate our vendor invoice process with AI.”</h3>
 <p>The initial request sounded like one automation problem. Discovery showed that invoice processing actually contained several different kinds of work—and that forcing one AI approach across all of them would be the wrong design.</p></div>
-<div class="grid2" style="margin-top:14px">
+<div class="grid2" style="margin-top:26px">
 <div class="card"><span class="tag">Discovery</span><h3>I separated the workflow into distinct problems</h3>
 <p><strong>Basic data entry:</strong> repetitive, high-volume, relatively straightforward.</p>
 <p><strong>Invoice ↔ property/work-order matching:</strong> employees often piece together clues across properties, vendors, work orders, dates, descriptions, and sometimes email.</p>
@@ -898,13 +899,13 @@ body.v88-dark .case-shell .frame{
 <p>The stronger opportunity was to remove low-value typing, research, and digging while preserving human judgment where it adds value.</p>
 <p>The likely solution is hybrid: conventional automation for predictable steps, AI where messy information must be interpreted or synthesized, deterministic rules where rules are knowable, humans for consequential ambiguity, and better source governance where the underlying information is not reliable enough to automate.</p></div>
 </div>
-<div class="card" style="margin-top:14px"><span class="tag">First pilot choice</span><h3 id="pilot-choice">Start with invoice-field extraction and pre-population</h3>
+<div class="card" style="margin-top:26px"><span class="tag">First pilot choice</span><h3 id="pilot-choice">Start with invoice-field extraction and pre-population</h3>
 <p>Data entry looked like the best <em>first</em> problem—not necessarily the most important problem. It was high-volume, measurable, lower-risk, compatible with Harborstone’s desire for a small 6–8 week experiment, and directly tied to the stated goal of returning employee capacity.</p>
 <p>The pilot would begin with a few experienced Operations employees and a representative but manageable invoice set. Those employees would also help validate the real workflow and identify business rules hidden from the executive-level view.</p></div>
-<div class="card" style="margin-top:14px"><span class="tag">Pilot workflow</span><h3>AI proposes. Employee verifies. Existing workflow continues.</h3>
+<div class="card" style="margin-top:26px"><span class="tag">Pilot workflow</span><h3>AI proposes. Employee verifies. Existing workflow continues.</h3>
 <p><strong>1.</strong> An eligible invoice enters the pilot. <strong>2.</strong> AI extracts vendor name, invoice number, invoice date, service date when supported, subtotal, tax, and total. <strong>3.</strong> The employee sees the original invoice and populated fields side-by-side. <strong>4.</strong> The employee corrects errors or resolves flagged ambiguity. <strong>5.</strong> Corrections are logged automatically. <strong>6.</strong> The employee submits and Harborstone’s normal downstream process continues.</p>
 <p>Missing optional information stays blank. If the source does not support one defensible value, the system should surface the ambiguity rather than invent an answer.</p></div>
-<div class="grid2" style="margin-top:14px">
+<div class="grid2" style="margin-top:26px">
 <div class="card"><span class="tag">Success</span><h3>Measure the outcome the client cares about</h3>
 <p><strong>Efficiency:</strong> active handling time (AHT), with an initial target of at least 20% improvement.</p>
 <p><strong>Quality:</strong> field-level accuracy, correction rate, and error type—not one blended accuracy number. Consequential fields require a higher standard.</p>
@@ -914,10 +915,10 @@ body.v88-dark .case-shell .frame{
 <p>The initial pilot would use controlled invoice data rather than broad access to property systems, accounting platforms, or email. IT/Security and Legal should review the vendor, data flow, retention/training practices, access controls, and relevant client contractual obligations before launch.</p>
 <p>Broader system access for future matching work would require separate review.</p></div>
 </div>
-<div class="card simulated-results" style="margin-top:14px"><div class="simulated-banner">SIMULATED RESULTS · PRACTICE DATA, NOT A REAL CLIENT OUTCOME</div><span class="tag">Fictional pilot results</span><h3 id="automation-bias">The headline looked good—but needed scrutiny</h3>
+<div class="card simulated-results" style="margin-top:26px"><div class="simulated-banner">SIMULATED RESULTS · PRACTICE DATA, NOT A REAL CLIENT OUTCOME</div><span class="tag">Fictional pilot results</span><h3 id="automation-bias">The headline looked good—but needed scrutiny</h3>
 <p>In a fictional six-week pilot with 3 experienced employees and 620 invoices, AHT fell from <strong>7.8 to 5.9 minutes</strong> (about 24%), beating the initial 20% target. Overall field-level accuracy reached <strong>94.1%</strong>. Vendor, invoice number, invoice date, subtotal, tax, and total performed strongly, while <strong>service date lagged at 86.4%</strong>. Total reached 99.7%; both Total errors were caught during human review.</p>
 <p><strong>Economics:</strong> The simulated pilot suggests that meaningful employee capacity could be returned, but I would not claim ROI from this exercise alone. A real business case would require Harborstone’s actual invoice volume, loaded labor cost, implementation cost, model/vendor usage cost, ongoing maintenance/support cost, and expected exception rate.</p></div>
-<div class="grid2" style="margin-top:14px">
+<div class="grid2" style="margin-top:26px">
 <div class="card"><span class="tag">What I noticed</span><h3>Automation bias could distort the efficiency story</h3>
 <p>Employees reviewed highly reliable fields faster later in the pilot. That raised a question: was some of the AHT improvement caused by genuinely reduced work, or by employees scrutinizing AI output less carefully as trust increased?</p>
 <p>Before I trusted the faster review time, I’d audit a sample of submitted invoices. I’d want to know whether people are actually working faster or simply checking the AI less carefully.</p></div>
@@ -925,15 +926,15 @@ body.v88-dark .case-shell .frame{
 <p>I would separate service-date corrections into <strong>true extraction failures, ambiguous source documents, undefined business rules, and poor document quality</strong>. Each has a different remedy.</p>
 <p>For genuinely ambiguous information, abstaining or flagging review can be a successful output. I wouldn’t force the system to fill every field. If the source is ambiguous, flagging it for review is better than making an unsupported guess.</p></div>
 </div>
-<div class="card" style="margin-top:14px"><span class="tag">Recommendation</span><h3>Iterate + controlled expansion</h3>
+<div class="card" style="margin-top:26px"><span class="tag">Recommendation</span><h3>Iterate + controlled expansion</h3>
 <p>The pilot produced enough evidence to continue, but not enough to justify an immediate full rollout. The next phase should clarify service-date rules, improve ambiguity handling, broaden the user and invoice sample, and independently audit final accuracy to test the automation-bias concern.</p>
 <p>Greater autonomy should be earned only when evidence supports it.</p></div>
-<div class="card learning-boundary" style="margin-top:14px">
+<div class="card learning-boundary" style="margin-top:26px">
 <span class="tag">What I still don’t know</span>
 <h3>The narrow pilot does not make me an AP expert</h3>
 <p>This first pass focused on the workflow Harborstone described. Before designing a broader accounts-payable solution, I would need deeper domain discovery around areas I had not explored in the exercise—including PO/receipt matching and three-way matching, duplicate-payment detection, vendor verification and fraud controls, and payment-timing or early-payment-discount workflows.</p>
 <p>Those may change which problems are most valuable or safest to solve. I would treat them as discovery areas, not assume the extraction pilot generalizes to the rest of AP.</p>
-</div><div class="card learning-boundary deeper-practice" style="margin-top:14px"><span class="tag">Deeper practice</span><h3>I’d explore these next</h3>
+</div><div class="card learning-boundary deeper-practice" style="margin-top:26px"><span class="tag">Deeper practice</span><h3>I’d explore these next</h3>
 <p><strong>Invoice ↔ property/work-order matching:</strong> retrieval across systems, entity resolution, evidence presentation, permissions, confidence/abstention, and human verification.</p>
 <p><strong>Approval routing:</strong> distributed rules, exceptions, source-of-truth governance, data freshness, current roles/delegations, and deciding what belongs in deterministic automation versus AI.</p></div>
 
