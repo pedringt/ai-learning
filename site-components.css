@@ -1599,7 +1599,8 @@ body:has(.meridian-breadcrumb span:last-child) .meridian-heading .eyebrow{displa
 .case-origin h2{max-width:780px;margin:6px 0 10px;font-size:25px;line-height:1.2}
 .case-origin p{max-width:840px;margin:0;color:var(--muted);font-size:15px;line-height:1.68}
 
-.future-direction-callout{max-width:900px;margin:28px 0 34px;padding:20px 22px;border-left:3px solid var(--purple);background:var(--softp);border-radius:0 10px 10px 0}
+.future-direction-callout{max-width:900px;margin:40px 0 34px;padding:20px 22px;border:1px solid var(--border);border-left:3px solid var(--purple);background:var(--surface);border-radius:0 10px 10px 0;position:relative}
+.future-direction-callout::before{content:"";position:absolute;top:-20px;left:0;width:60px;border-top:1px solid var(--border)}
 .future-direction-callout h3{margin:6px 0 8px;font-size:18px}
 .future-direction-callout p{max-width:800px;margin:7px 0;color:var(--muted);font-size:14px;line-height:1.6}
 
@@ -1624,19 +1625,3 @@ body:has(.meridian-breadcrumb span:last-child) .meridian-heading .eyebrow{displa
 .legal-paper .paper-example figcaption,
 .legal-paper .paper-before-after{max-width:860px!important}
 .legal-paper .paper-learning{max-width:860px}
-
-.case-origin{max-width:900px;margin:0 0 34px;padding:0 0 30px;border-bottom:1px solid var(--border)}
-.case-origin h2{max-width:780px;margin:6px 0 10px;font-size:25px;line-height:1.2}
-.case-origin p{max-width:840px;margin:0;color:var(--muted);font-size:15px;line-height:1.68}
-
-.future-direction-callout{max-width:900px;margin:28px 0 34px;padding:20px 22px;border-left:3px solid var(--purple);background:var(--softp);border-radius:0 10px 10px 0}
-.future-direction-callout h3{margin:6px 0 8px;font-size:18px}
-.future-direction-callout p{max-width:800px;margin:7px 0;color:var(--muted);font-size:14px;line-height:1.6}
-
-.deep-dive-page .case-quote{max-width:760px;margin:22px 0;padding:18px 20px;background:var(--softp);border-left:3px solid var(--purple)}
-.deep-dive-page .case-quote p{font-family:Georgia,"Times New Roman",serif!important;font-size:18px!important;line-height:1.55!important;font-style:italic;color:var(--ink)!important}
-
-@media(max-width:760px){
-  .legal-paper{padding-left:8px!important;padding-right:8px!important}
-  .case-origin,.future-direction-callout{max-width:none}
-}

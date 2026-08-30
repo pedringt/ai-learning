@@ -5,8 +5,16 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>State, Behavioral Prototype</title>
   <meta name="description" content="A behavioral prototype for capturing project information, maintaining current understanding, tracking unresolved questions, and reviewing new evidence before it changes what the project treats as current." />
-  <link rel="stylesheet" href="/site-shell.css" />
-  <link rel="stylesheet" href="/implementation-context-prototype/context-tool.css" />
+  <script>
+    // Local file:// viewing can't resolve root-absolute paths (no server root to anchor to),
+    // but the live Vercel deploy needs them for clean-URL routing to work. Pick the right
+    // form based on how the page is actually being loaded.
+    (function(){
+      var local = location.protocol === 'file:';
+      document.write('<link rel="stylesheet" href="' + (local ? '../site-shell.css' : '/site-shell.css') + '">');
+      document.write('<link rel="stylesheet" href="' + (local ? 'context-tool.css' : '/implementation-context-prototype/context-tool.css') + '">');
+    })();
+  </script>
 </head>
 <body>
   <div class="topbar"><div class="topinner"><a class="brand-button" href="../index.html"><span class="brand">AI <span>Learning Portfolio</span></span></a><nav aria-label="Primary pages" class="nav"><a href="../index.html">Home</a><a aria-current="page" href="../index.html#portfolio">Applied Work</a><a href="../index.html#learn">Learning Guide</a></nav><div class="top-actions"><button aria-label="Switch to dark mode" aria-pressed="false" class="theme-toggle" id="v922ThemeToggle" title="Switch to dark mode" type="button">☾</button><select aria-label="Choose page" id="v922MobileNav"><option value="../index.html">Home</option><option selected value="../index.html#portfolio">Applied Work</option><option value="../index.html#learn">Learning Guide</option></select></div></div></div>
@@ -39,8 +47,13 @@
     </section>
   </div>
 
-  <script src="/site-shell.js"></script>
-  <script src="/implementation-context-prototype/context-data.js"></script>
-  <script src="/implementation-context-prototype/context-app.js"></script>
+  <script>
+    (function(){
+      var local = location.protocol === 'file:';
+      document.write('<script src="' + (local ? '../site-shell.js' : '/site-shell.js') + '"><\/script>');
+      document.write('<script src="' + (local ? 'context-data.js' : '/implementation-context-prototype/context-data.js') + '"><\/script>');
+      document.write('<script src="' + (local ? 'context-app.js' : '/implementation-context-prototype/context-app.js') + '"><\/script>');
+    })();
+  </script>
 </body>
 </html>

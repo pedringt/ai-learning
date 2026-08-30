@@ -140,9 +140,23 @@
     return `<article class="simple-note note-index-row ${expanded?'is-expanded':''}" data-action="toggle-note" data-note-id="${n.id}" tabindex="0"><span class="note-date">${esc(n.date)}</span><div><h3>${esc(n.title)}</h3><span class="note-source">${esc(n.source)}</span> ${statusBadge}${body}</div></article>`;
   }
 
+  function noteMatchesFilter(n,f){
+    if(f==='all') return true;
+    if(f==='pending') return n.status==='pending';
+    if(f==='reviewed') return n.status==='accepted'||n.status==='reviewed';
+    return n.status!=='pending'&&n.status!=='accepted'&&n.status!=='reviewed'; // draft
+  }
+
   function renderNotes(){
     const composer=state.noteComposerOpen?`<section class="note-composer"><input id="newNoteTitle" class="dialog-input" placeholder="Note title" aria-label="Note title"><textarea id="newNoteText" rows="8" placeholder="Write anything you want to keep with the project. Saving a note does not change project state."></textarea><div class="inline-actions"><button class="btn primary" data-action="save-new-note">Save note</button><button class="btn secondary" data-action="cancel-new-note">Cancel</button></div></section>`:'';
-    root.innerHTML=`<section class="page collection-page notes-page"><div class="page-head"><div><span class="eyebrow">Working notes</span><h2>Notes</h2><p>Your working space for project notes. Saving something here does not make it part of the project's reviewed understanding.</p><p class="notes-disclosure">This demo uses a mix of notes adapted from my real discovery/product work and simulated project notes created to demonstrate retrieval, review, and maintained-context workflows.</p></div><button class="btn primary notes-add" data-action="new-note">+ New note</button></div>${composer}<div class="notes-toolbar"><input class="notes-search" id="notesSearch" type="search" placeholder="Search notes" aria-label="Search notes"></div><div class="note-results simple-notes" id="notesList">${state.data.notes.map(simpleNote).join('')}</div></section>`;
+    const activeFilter=state.notesFilter||'all';
+    const draftCount=state.data.notes.filter(n=>noteMatchesFilter(n,'draft')).length;
+    const pendingCount=state.data.notes.filter(n=>noteMatchesFilter(n,'pending')).length;
+    const reviewedCount=state.data.notes.filter(n=>noteMatchesFilter(n,'reviewed')).length;
+    const chip=(f,label,count)=>`<button class="filter${activeFilter===f?' active':''}" data-filter="${f}">${label}${count?` <span class="count-badge">${count}</span>`:''}</button>`;
+    const filters=`<div class="filters notes-filters">${chip('all','All')}${chip('draft','Draft',draftCount)}${chip('pending','In review',pendingCount)}${chip('reviewed','Reviewed',reviewedCount)}</div>`;
+    const visibleNotes=state.data.notes.filter(n=>noteMatchesFilter(n,activeFilter));
+    root.innerHTML=`<section class="page collection-page notes-page"><div class="page-head"><div><span class="eyebrow">Working notes</span><h2>Notes</h2><p>Your working space for project notes. Saving something here does not make it part of the project's reviewed understanding.</p><p class="notes-disclosure">This demo uses a mix of notes adapted from my real discovery/product work and simulated project notes created to demonstrate retrieval, review, and maintained-context workflows.</p></div><button class="btn primary notes-add" data-action="new-note">+ New note</button></div>${composer}<div class="notes-toolbar">${filters}<input class="notes-search" id="notesSearch" type="search" placeholder="Search notes" aria-label="Search notes"></div><div class="note-results simple-notes" id="notesList">${visibleNotes.length?visibleNotes.map(simpleNote).join(''):'<div class="empty-state"><h3>Nothing here.</h3><p>No notes currently match this filter.</p></div>'}</div></section>`;
   }
 
   function renderQuestions(){ root.innerHTML=`<section class="page collection-page"><div class="page-head"><div><span class="eyebrow">Known unknowns</span><h2>Questions</h2><p>Things the project is deliberately keeping unresolved until evidence establishes an answer.</p><p class="questions-staleness-note">This is the place to see everything the project is still waiting on. Questions can also surface where they matter in Workspace answers.</p></div><button class="btn secondary" data-action="add-question">+ Add question</button></div><div class="question-cards">${openQuestions().map(q=>`<article class="question-card" data-action="open-question" data-question-id="${q.id}" tabindex="0" role="button"><div><span>${esc(q.origin)} · Open</span><h3>${esc(q.text)}</h3><button class="text-button question-answer" data-action="answer-question" data-question-id="${q.id}">Answer question →</button></div></article>`).join('') || '<div class="empty">No open questions.</div>'}</div></section>`; }
@@ -241,6 +255,7 @@
   document.addEventListener('click',e=>{
     if(e.target.closest('[data-action="dismiss-review-banner"]')){ state.reviewBannerDismissed=true; renderOverview(); return; }
     const v=e.target.closest('[data-view]'); if(v){ state.view=v.dataset.view; state.result=null; render(); return; }
+    const noteFilter=e.target.closest('.notes-filters [data-filter]'); if(noteFilter){ state.notesFilter=noteFilter.dataset.filter; renderNotes(); return; }
     const filter=e.target.closest('[data-filter]'); if(filter){ document.querySelectorAll('.filter').forEach(x=>x.classList.toggle('active',x===filter)); const f=filter.dataset.filter; const notes=f==='all'?state.data.notes:state.data.notes.filter(n=>f==='reviewed'?(n.status==='accepted'||n.status==='reviewed'):n.status==='pending'); const list=document.getElementById('notesList'); if(list)list.innerHTML=notes.map(simpleNote).join(''); return; }
     const p=e.target.closest('[data-prompt]'); if(p){ submitAsk(p.dataset.prompt); return; }
     const a=e.target.closest('[data-action]'); if(!a)return;
