@@ -112,7 +112,15 @@ body{background:#f4f3f6}.topbar{position:relative!important}.software-shell{max-
 @media(max-width:700px){.overview-heading-row{gap:10px}.overview-add{padding:7px 9px;font-size:11px}}
 
 /* v97 QA refinement — interaction polish only */
-.software-shell{padding-top:52px!important}
+.software-shell{padding-top:0!important}
+.prototype-productbar{display:flex;align-items:baseline;gap:9px;padding:15px 28px;background:var(--surface);border-bottom:1px solid var(--line)}
+.prototype-productbar .product-mark{color:var(--accent);font-size:11px}
+.prototype-productbar .product-name{font-weight:850;font-size:16px;letter-spacing:-.01em;color:var(--ink)}
+.prototype-productbar .product-divider{color:var(--line)}
+.prototype-productbar .product-cue{font-size:10.5px;text-transform:uppercase;letter-spacing:.08em;font-weight:800;color:var(--muted)}
+.prototype-productbar .product-tagline{font-size:12.5px;color:var(--muted);margin-left:2px}
+@media(max-width:700px){.prototype-productbar{padding:13px 16px;flex-wrap:wrap;row-gap:2px}.prototype-productbar .product-tagline{display:none}}
+body.v88-dark .prototype-productbar{background:var(--surface)!important;border-color:var(--line)!important}
 .overview-heading{padding-top:8px!important}
 .overview-heading-row{align-items:center!important}
 .overview-heading-row .overview-add{padding:7px 11px!important;font-size:11.5px!important;border-radius:8px!important;color:var(--accent)!important;background:transparent!important}
