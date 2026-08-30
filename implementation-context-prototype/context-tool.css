@@ -178,6 +178,10 @@ body{background:#f4f3f6}.topbar{position:relative!important}.software-shell{max-
 .note-full-text{white-space:pre-wrap!important;max-width:820px!important;color:var(--ink)!important;line-height:1.68!important}
 .note-expand-label{display:inline-block;margin-top:7px;color:var(--accent);font-size:11px;font-weight:750}
 .note-actions{margin-top:14px}
+.note-status{display:inline-block;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;border-radius:999px;padding:3px 8px;margin-left:2px;border:1px solid var(--line)}
+.note-status--draft{color:var(--muted);background:var(--surface2)}
+.note-status--pending{color:var(--warm);background:var(--warm-soft);border-color:#d9c7a7}
+.note-status--reviewed{color:var(--good);background:#e8f5ec;border-color:#bfe3cb}
 .note-inline-editor{margin-top:12px;max-width:820px}
 .note-inline-editor input{margin-bottom:8px}
 .note-composer{max-width:860px;margin:0 0 20px;padding:18px;border:1px solid var(--line);border-radius:10px;background:var(--surface)}

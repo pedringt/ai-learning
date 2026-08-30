@@ -116,17 +116,28 @@
 
   function refine(){ const v=norm(document.getElementById('refineInput')?.value||''); if(!v)return; let kind='exec'; if(v.includes('short'))kind='shorter'; else if(v.includes('auth'))kind='auth'; else if(v.includes('evidence')||v.includes('support'))kind='evidence'; state.refinements.push(kind); renderOverview(); }
 
+  function noteStatusLabel(n){
+    if(n.status==='pending') return 'In review';
+    if(n.status==='accepted'||n.status==='reviewed') return 'Reviewed';
+    return 'Draft';
+  }
+
   function simpleNote(n){
     const expanded=state.expandedNotes.has(n.id);
     const target=120+((n.id.charCodeAt(2)||7)*17)%111;
     const preview=n.text.length>target?n.text.slice(0,Math.max(80,target-3)).replace(/\s+\S*$/,'')+'…':n.text;
     const editing=state.editingNoteId===n.id;
+    const statusClass=n.status==='pending'?'pending':(n.status==='accepted'||n.status==='reviewed')?'reviewed':'draft';
+    const statusBadge=`<span class="note-status note-status--${statusClass}">${noteStatusLabel(n)}</span>`;
+    const reviewAction=n.status==='pending'||n.status==='accepted'||n.status==='reviewed'
+      ? ''
+      : `<button class="text-button" data-action="send-note-review" data-note-id="${n.id}">Send to review</button>`;
     const body=editing
       ? `<div class="note-inline-editor"><input class="dialog-input" id="editNoteTitle-${n.id}" value="${esc(n.title)}" aria-label="Note title"><textarea id="editNoteText-${n.id}" rows="8" aria-label="Note text">${esc(n.text)}</textarea><div class="inline-actions"><button class="btn primary" data-action="save-note-edit" data-note-id="${n.id}">Save changes</button><button class="btn secondary" data-action="cancel-note-edit" data-note-id="${n.id}">Cancel</button></div></div>`
       : expanded
-        ? `<p class="note-full-text">${esc(n.text)}</p><div class="inline-actions note-actions"><button class="text-button" data-action="edit-note" data-note-id="${n.id}">Edit</button><button class="text-button" data-action="send-note-review" data-note-id="${n.id}">${n.status==='pending'?'In review':'Send to review'}</button><button class="text-button" data-action="copy-note" data-note-id="${n.id}">Copy</button></div>`
+        ? `<p class="note-full-text">${esc(n.text)}</p><div class="inline-actions note-actions"><button class="text-button" data-action="edit-note" data-note-id="${n.id}">Edit</button>${reviewAction}<button class="text-button" data-action="copy-note" data-note-id="${n.id}">Copy</button></div>`
         : `<p>${esc(preview)}</p><span class="note-expand-label">Open note →</span>`;
-    return `<article class="simple-note note-index-row ${expanded?'is-expanded':''}" data-action="toggle-note" data-note-id="${n.id}" tabindex="0"><span class="note-date">${esc(n.date)}</span><div><h3>${esc(n.title)}</h3><span class="note-source">${esc(n.source)}</span>${body}</div></article>`;
+    return `<article class="simple-note note-index-row ${expanded?'is-expanded':''}" data-action="toggle-note" data-note-id="${n.id}" tabindex="0"><span class="note-date">${esc(n.date)}</span><div><h3>${esc(n.title)}</h3><span class="note-source">${esc(n.source)}</span> ${statusBadge}${body}</div></article>`;
   }
 
   function renderNotes(){
