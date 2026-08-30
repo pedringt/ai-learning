@@ -1469,6 +1469,8 @@ body:has(.meridian-breadcrumb span:last-child) .meridian-heading .eyebrow{displa
 .home-feature-pair .home-project-card strong,.home-feature-pair .home-feature-primary strong{font-size:20px!important;line-height:1.22!important;letter-spacing:-.02em!important}
 .home-feature-pair .home-project-card p{font-size:14px!important;line-height:1.55!important;margin:10px 0 18px!important}
 .home-quiet-ending{margin:34px 0 0;padding:18px 0;border-top:1px solid var(--border);color:var(--muted);font-size:13px}.home-quiet-ending a{color:var(--purple);font-weight:800;text-decoration:none}
+.home-how-i-work{margin:40px 0 0;padding:24px 0 0;border-top:1px solid var(--border);max-width:680px}.home-how-i-work .section-kicker{margin:0 0 8px}.home-how-i-work h2{margin:0 0 10px;font-size:21px}.home-how-i-work p{margin:0 0 10px;color:var(--muted);font-size:13.5px;line-height:1.6}.home-how-i-work p:last-child{margin-bottom:0}
+@media(max-width:560px){.home-how-i-work{margin-top:30px;padding-top:20px}.home-how-i-work h2{font-size:19px}}
 
 .home-feature-wide{display:flex;align-items:center;justify-content:space-between;gap:28px;width:100%;margin-top:14px;padding:22px 26px;border:1px solid var(--border);border-top:4px solid var(--purple);border-radius:12px;background:var(--card);text-decoration:none;color:inherit;transition:transform .16s ease,box-shadow .16s ease}
 .home-feature-wide:hover{transform:translateY(-2px);box-shadow:0 10px 26px rgba(41,31,72,.08)}
