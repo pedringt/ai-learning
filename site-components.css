@@ -1469,6 +1469,15 @@ body:has(.meridian-breadcrumb span:last-child) .meridian-heading .eyebrow{displa
 .home-feature-pair .home-project-card strong,.home-feature-pair .home-feature-primary strong{font-size:20px!important;line-height:1.22!important;letter-spacing:-.02em!important}
 .home-feature-pair .home-project-card p{font-size:14px!important;line-height:1.55!important;margin:10px 0 18px!important}
 .home-quiet-ending{margin:34px 0 0;padding:18px 0;border-top:1px solid var(--border);color:var(--muted);font-size:13px}.home-quiet-ending a{color:var(--purple);font-weight:800;text-decoration:none}
+
+.home-feature-wide{display:flex;align-items:center;justify-content:space-between;gap:28px;width:100%;margin-top:14px;padding:22px 26px;border:1px solid var(--border);border-top:4px solid var(--purple);border-radius:12px;background:var(--card);text-decoration:none;color:inherit;transition:transform .16s ease,box-shadow .16s ease}
+.home-feature-wide:hover{transform:translateY(-2px);box-shadow:0 10px 26px rgba(41,31,72,.08)}
+.home-feature-wide .home-feature-wide-text{max-width:820px}
+.home-feature-wide strong{display:block;margin:4px 0 6px;font-size:18px;letter-spacing:-.01em}
+.home-feature-wide p{margin:0;color:var(--muted);font-size:14px;line-height:1.55}
+.home-feature-wide .home-project-path{white-space:nowrap;flex:0 0 auto;color:var(--purple);font-size:12px;font-weight:800}
+.home-feature-wide .home-project-kicker{display:block;margin:0 0 10px;color:var(--purple);font-size:10.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;text-decoration:none}
+@media(max-width:700px){.home-feature-wide{flex-direction:column;align-items:flex-start}.home-feature-wide .home-project-path{margin-top:14px}}
 .learning-principles{margin:28px 0 42px!important;padding:28px!important;background:var(--softp)!important;border:1px solid var(--border)!important;border-radius:12px!important}
 .plain-finding-band{display:flex;align-items:flex-end;justify-content:space-between;gap:28px;width:100%;margin:26px 0;padding:22px 24px;border-left:4px solid var(--purple);background:var(--softp)}
 .plain-finding-band h2{margin:5px 0 7px;font-size:23px;line-height:1.2}.plain-finding-band p{margin:0;max-width:760px;color:var(--muted)}.finding-motif{white-space:nowrap;color:var(--purple);font-size:14px;letter-spacing:.04em}
@@ -1611,17 +1620,3 @@ body:has(.meridian-breadcrumb span:last-child) .meridian-heading .eyebrow{displa
   .legal-paper{padding-left:8px!important;padding-right:8px!important}
   .case-origin,.future-direction-callout{max-width:none}
 }
-
-/* Final feedback pass */
-.applied-major .applied-case-use{margin-top:22px!important}
-
-.legal-paper{max-width:1040px!important;padding-left:24px!important;padding-right:24px!important}
-.legal-paper .paper-abstract h2,
-.legal-paper .paper-deck,
-.legal-paper .legal-method,
-.legal-paper .paper-section>h2,
-.legal-paper .paper-section>p,
-.legal-paper .paper-findings,
-.legal-paper .paper-example figcaption,
-.legal-paper .paper-before-after{max-width:860px!important}
-.legal-paper .paper-learning{max-width:860px}
