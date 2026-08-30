@@ -170,3 +170,79 @@ body{background:#f4f3f6}.topbar{position:relative!important}.software-shell{max-
 .demo-help-steps p{margin:5px 0 0;color:var(--muted);font-size:13px;line-height:1.55}
 .demo-help-actions{align-items:center;justify-content:space-between}
 @media(max-width:760px){.demo-help-button{width:auto;margin:10px 0 0;align-self:flex-start;padding:7px 10px}.demo-help-actions{align-items:flex-start}}
+
+/* Final feedback pass */
+.note-index-row{cursor:pointer}
+.note-index-row:focus-visible{outline:3px solid var(--accent-soft);outline-offset:2px}
+.note-index-row.is-expanded{display:grid;padding-top:20px!important;padding-bottom:22px!important;background:var(--surface)!important}
+.note-full-text{white-space:pre-wrap!important;max-width:820px!important;color:var(--ink)!important;line-height:1.68!important}
+.note-expand-label{display:inline-block;margin-top:7px;color:var(--accent);font-size:11px;font-weight:750}
+.note-actions{margin-top:14px}
+.note-inline-editor{margin-top:12px;max-width:820px}
+.note-inline-editor input{margin-bottom:8px}
+.note-composer{max-width:860px;margin:0 0 20px;padding:18px;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+.note-composer input{margin-bottom:8px}
+.note-composer textarea{min-height:180px}
+.notes-page .notes-add{white-space:nowrap}
+
+/* Full prototype dark mode. The shared shell toggles body.v88-dark. */
+body.v88-dark{
+  color-scheme:dark;
+  --bg:#101014;
+  --surface:#17171d;
+  --surface2:#1e1d25;
+  --ink:#f3f1f6;
+  --muted:#aaa6b5;
+  --line:#34313d;
+  --border:#34313d;
+  --soft:#1b1921;
+  --softp:#252037;
+  --card:#17171d;
+  --purple:#b3a4f2;
+  --accent:#b3a4f2;
+  --accent-soft:#2a2540;
+  --warm:#e1a34f;
+  --warm-soft:#3a2b1b;
+  --good:#58b77a;
+  background:#101014!important;
+  color:var(--ink)!important;
+}
+body.v88-dark .software-shell,
+body.v88-dark .app-workspace,
+body.v88-dark .view-root{background:#101014!important}
+body.v88-dark .app-sidebar{background:#14131a!important;border-color:var(--line)!important}
+body.v88-dark .sidebar-nav .nav-item:hover,
+body.v88-dark .collection-page .question-card:hover,
+body.v88-dark .collection-page .simple-note:hover,
+body.v88-dark .collection-page .review-card:hover{background:#1d1b24!important}
+body.v88-dark .sidebar-nav .nav-item.active{background:#2a2540!important;color:#c5b9ff!important}
+body.v88-dark .project-switcher,
+body.v88-dark .project-menu,
+body.v88-dark .btn,
+body.v88-dark .filter,
+body.v88-dark .dialog,
+body.v88-dark .note-composer,
+body.v88-dark .answer-empty-icon,
+body.v88-dark .result-utilities .text-button{background:var(--surface)!important;color:var(--ink)!important;border-color:var(--line)!important}
+body.v88-dark .project-menu button.active{background:var(--surface2)!important}
+body.v88-dark input,
+body.v88-dark textarea,
+body.v88-dark .notes-search{background:#131218!important;color:var(--ink)!important;border-color:#403c4b!important}
+body.v88-dark .answer-stage,
+body.v88-dark .answer-stage.is-empty{background:#121117!important;border-color:var(--line)!important}
+body.v88-dark .review-banner{background:#332719!important;border-color:#7a5b25!important}
+body.v88-dark .review-banner strong{color:#f0bd67!important}
+body.v88-dark .review-banner span,
+body.v88-dark .review-banner .banner-close{color:#c3aa80!important}
+body.v88-dark .pending-notice{background:#302619!important;border-color:#6e542a!important}
+body.v88-dark .pending-notice p{color:#c5b28f!important}
+body.v88-dark .topic-row span{background:#24222b!important}
+body.v88-dark .overlay{background:rgba(0,0,0,.68)!important}
+body.v88-dark .question-card,
+body.v88-dark .review-card,
+body.v88-dark .simple-note,
+body.v88-dark .history-list article{color:var(--ink)!important}
+body.v88-dark .answer-prose p,
+body.v88-dark .deliverable-section p,
+body.v88-dark .note-card p,
+body.v88-dark .history-list p{color:#d4d0da!important}

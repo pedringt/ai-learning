@@ -1580,3 +1580,63 @@ body:has(.meridian-breadcrumb span:last-child) .meridian-heading .eyebrow{displa
 .legal-paper .paper-learning{max-width:760px;padding:28px 0 0;border-top:1px solid var(--border)}
 .legal-paper .paper-learning p{margin:0 0 12px;color:var(--muted);font-size:13.5px;line-height:1.58}
 @media(max-width:760px){.legal-single-case .legal-paper{padding:0 18px!important;margin-top:18px!important}.legal-paper .paper-meta,.legal-paper .paper-flow,.legal-paper .paper-before-after,.legal-paper .paper-next-grid{grid-template-columns:1fr}.legal-paper .paper-meta>div+div,.legal-paper .paper-flow>div+div,.legal-paper .paper-before-after>div+div{padding-left:0;border-left:0;border-top:1px solid var(--border)}.legal-paper .paper-meta>div,.legal-paper .paper-flow>div,.legal-paper .paper-before-after>div{padding:12px 0}.legal-paper .paper-abstract h2{font-size:25px!important}.legal-paper .paper-section>h2{font-size:23px!important}.legal-paper .paper-findings li{padding-left:40px}}
+
+/* Final copy/feedback pass */
+.applied-major .applied-case-use{margin-top:22px!important}
+
+.legal-paper{max-width:1040px!important;padding-left:24px!important;padding-right:24px!important}
+.legal-paper .paper-abstract h2,
+.legal-paper .paper-deck,
+.legal-paper .legal-method,
+.legal-paper .paper-section>h2,
+.legal-paper .paper-section>p,
+.legal-paper .paper-findings,
+.legal-paper .paper-example figcaption,
+.legal-paper .paper-before-after{max-width:860px!important}
+.legal-paper .paper-learning{max-width:860px}
+
+.case-origin{max-width:900px;margin:0 0 34px;padding:0 0 30px;border-bottom:1px solid var(--border)}
+.case-origin h2{max-width:780px;margin:6px 0 10px;font-size:25px;line-height:1.2}
+.case-origin p{max-width:840px;margin:0;color:var(--muted);font-size:15px;line-height:1.68}
+
+.future-direction-callout{max-width:900px;margin:28px 0 34px;padding:20px 22px;border-left:3px solid var(--purple);background:var(--softp);border-radius:0 10px 10px 0}
+.future-direction-callout h3{margin:6px 0 8px;font-size:18px}
+.future-direction-callout p{max-width:800px;margin:7px 0;color:var(--muted);font-size:14px;line-height:1.6}
+
+.deep-dive-page .case-quote{max-width:760px;margin:22px 0;padding:18px 20px;background:var(--softp);border-left:3px solid var(--purple)}
+.deep-dive-page .case-quote p{font-family:Georgia,"Times New Roman",serif!important;font-size:18px!important;line-height:1.55!important;font-style:italic;color:var(--ink)!important}
+
+@media(max-width:760px){
+  .legal-paper{padding-left:8px!important;padding-right:8px!important}
+  .case-origin,.future-direction-callout{max-width:none}
+}
+
+/* Final feedback pass */
+.applied-major .applied-case-use{margin-top:22px!important}
+
+.legal-paper{max-width:1040px!important;padding-left:24px!important;padding-right:24px!important}
+.legal-paper .paper-abstract h2,
+.legal-paper .paper-deck,
+.legal-paper .legal-method,
+.legal-paper .paper-section>h2,
+.legal-paper .paper-section>p,
+.legal-paper .paper-findings,
+.legal-paper .paper-example figcaption,
+.legal-paper .paper-before-after{max-width:860px!important}
+.legal-paper .paper-learning{max-width:860px}
+
+.case-origin{max-width:900px;margin:0 0 34px;padding:0 0 30px;border-bottom:1px solid var(--border)}
+.case-origin h2{max-width:780px;margin:6px 0 10px;font-size:25px;line-height:1.2}
+.case-origin p{max-width:840px;margin:0;color:var(--muted);font-size:15px;line-height:1.68}
+
+.future-direction-callout{max-width:900px;margin:28px 0 34px;padding:20px 22px;border-left:3px solid var(--purple);background:var(--softp);border-radius:0 10px 10px 0}
+.future-direction-callout h3{margin:6px 0 8px;font-size:18px}
+.future-direction-callout p{max-width:800px;margin:7px 0;color:var(--muted);font-size:14px;line-height:1.6}
+
+.deep-dive-page .case-quote{max-width:760px;margin:22px 0;padding:18px 20px;background:var(--softp);border-left:3px solid var(--purple)}
+.deep-dive-page .case-quote p{font-family:Georgia,"Times New Roman",serif!important;font-size:18px!important;line-height:1.55!important;font-style:italic;color:var(--ink)!important}
+
+@media(max-width:760px){
+  .legal-paper{padding-left:8px!important;padding-right:8px!important}
+  .case-origin,.future-direction-callout{max-width:none}
+}
