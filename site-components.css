@@ -1531,12 +1531,11 @@ body:has(.meridian-breadcrumb span:last-child) .meridian-heading .eyebrow{displa
 .legal-single-case .legal-decision{padding:26px 0!important;border-radius:0!important;background:transparent!important;border-top:2px solid var(--purple)!important;border-bottom:1px solid var(--border)!important}
 .legal-single-case .stop-pair p{background:transparent!important;padding:10px 14px!important}
 .legal-single-case .legal-evidence-strip span{background:transparent!important;border:1px solid var(--border)!important;color:var(--muted)!important}
-@media(max-width:760px){.legal-single-case .finding-decision{grid-template-columns:1fr}.legal-single-case .legal-opening,.legal-single-case .legal-findings,.legal-single-case .legal-decision{padding-left:0!important;padding-right:0!important}}
+@media(max-width:760px){.legal-single-case .finding-decision{grid-template-columns:1fr}}
 
-/* QA4: one legal-story gutter; highlighted sections do not add a second inset. */
+/* QA4: one legal-story gutter; highlighted sections do not add a second inset. Applies at all widths, so no separate mobile override is needed. */
 .legal-single-case .legal-story{padding-inline:0!important;box-sizing:border-box}
 .legal-single-case .legal-opening,.legal-single-case .legal-findings,.legal-single-case .legal-decision{padding-left:0!important;padding-right:0!important}
-@media(max-width:760px){.legal-single-case .legal-story{padding-inline:0!important}.legal-single-case .legal-opening,.legal-single-case .legal-findings,.legal-single-case .legal-decision{padding-left:0!important;padding-right:0!important}}
 
 
 /* QA4.2: findings keep the page alignment, but add breathing room after the accent rule. */

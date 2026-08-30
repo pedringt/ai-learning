@@ -4,7 +4,7 @@
   const initial = clone(D);
   const state = {
     data: clone(D), view:'overview', result:null, resultQuery:'', projectMenuOpen:false, refinements:[], lastScenario:null,
-    addedSample:false, pendingCreated:false, reviewBannerDismissed:false, dialogReturnFocus:null, expandedNotes:new Set(), noteComposerOpen:false, editingNoteId:null
+    addedSample:false, pendingCreated:false, reviewBannerDismissed:false, dialogReturnFocus:null, expandedNotes:new Set(), noteComposerOpen:false, editingNoteId:null, dismissedNudges:new Set()
   };
 
   const root = document.getElementById('viewRoot');
@@ -23,7 +23,7 @@
     const pm=document.getElementById('projectMenu'), ps=document.getElementById('projectSwitcher'); if(pm)pm.hidden=!state.projectMenuOpen; if(ps)ps.setAttribute('aria-expanded',state.projectMenuOpen?'true':'false');
   }
 
-  function render(){ updateNav(); ({overview:renderOverview,notes:renderNotes,questions:renderQuestions,review:renderReview}[state.view]||renderOverview)(); }
+  function render(){ updateNav(); ({overview:renderOverview,notes:renderNotes,questions:renderQuestions,review:renderReview,history:renderHistory}[state.view]||renderOverview)(); }
 
   function renderOverview(){
     const resultBody = state.result ? (state.result.fallback ? fallbackResult() : scenarioResult(state.result.scenario)) : '';
@@ -56,6 +56,10 @@
 
   function pendingFor(topics){
     return pendingReviews().filter(r => r.topics.some(t=>topics.includes(t)));
+  }
+
+  function relatedPending(r){
+    return pendingReviews().filter(o => o.id!==r.id && o.topics.some(t=>r.topics.includes(t)));
   }
 
   function submitAsk(query){
@@ -159,18 +163,29 @@
     root.innerHTML=`<section class="page collection-page notes-page"><div class="page-head"><div><span class="eyebrow">Working notes</span><h2>Notes</h2><p>Your working space for project notes. Saving something here does not make it part of the project's reviewed understanding.</p><p class="notes-disclosure">This demo uses a mix of notes adapted from my real discovery/product work and simulated project notes created to demonstrate retrieval, review, and maintained-context workflows.</p></div><button class="btn primary notes-add" data-action="new-note">+ New note</button></div>${composer}<div class="notes-toolbar">${filters}<input class="notes-search" id="notesSearch" type="search" placeholder="Search notes" aria-label="Search notes"></div><div class="note-results simple-notes" id="notesList">${visibleNotes.length?visibleNotes.map(simpleNote).join(''):'<div class="empty-state"><h3>Nothing here.</h3><p>No notes currently match this filter.</p></div>'}</div></section>`;
   }
 
+  function historyEntry(h){ return `<article><span>${esc(h.date)} · ${esc(h.reason)}</span><h3>${esc(h.type)}</h3><p><strong>Before:</strong> ${esc(h.before)}</p><p><strong>After:</strong> ${esc(h.after)}</p><p class="decision-line">${esc(h.decision)}</p></article>`; }
+
+  function renderHistory(){ const entries=state.data.history; root.innerHTML=`<section class="page collection-page"><div class="page-head"><div><span class="eyebrow">Decision record</span><h2>History</h2><p>Every decision that changed, or deliberately kept, current project understanding.</p></div></div><button class="text-button history-back" data-view="overview">← Back to Workspace</button>${entries.length?`<div class="history-list">${entries.map(historyEntry).join('')}</div>`:'<div class="empty-state"><h3>No decisions recorded yet.</h3><p>Once a Review item is decided, it will appear here.</p></div>'}</section>`; }
+
   function renderQuestions(){ root.innerHTML=`<section class="page collection-page"><div class="page-head"><div><span class="eyebrow">Known unknowns</span><h2>Questions</h2><p>Things the project is deliberately keeping unresolved until evidence establishes an answer.</p><p class="questions-staleness-note">This is the place to see everything the project is still waiting on. Questions can also surface where they matter in Workspace answers.</p></div><button class="btn secondary" data-action="add-question">+ Add question</button></div><div class="question-cards">${openQuestions().map(q=>`<article class="question-card" data-action="open-question" data-question-id="${q.id}" tabindex="0" role="button"><div><span>${esc(q.origin)} · Open</span><h3>${esc(q.text)}</h3><button class="text-button question-answer" data-action="answer-question" data-question-id="${q.id}">Answer question →</button></div></article>`).join('') || '<div class="empty">No open questions.</div>'}</div></section>`; }
 
   function showDemoHelp(){
     showDialog(`<span class="eyebrow">How this demo works</span><h2 id="dialogTitle">Try the core State interaction</h2><p>State is a fixed behavioral prototype exploring one idea: new information can enter a project without automatically changing what the project treats as current.</p><div class="demo-help-steps"><div><strong>Try the core flow</strong><p>Choose Add project update → load the sample update → send it to Review → review the new access information → ask Workspace what determines feature access.</p></div><div><strong>What is simulated</strong><p>The project data and recognized answer paths are fixed so the behavior is repeatable. There is no live AI model or production backend.</p></div></div><div class="dialog-actions demo-help-actions"><a class="text-button" href="../implementation-context.html">Read the case study →</a><button class="btn primary" data-action="close-dialog">Start exploring</button></div>`);
   }
 
+  function topicLabel(t){ return t.split('-').map(w=>w[0].toUpperCase()+w.slice(1)).join(' '); }
+
   function renderReview(){
     const pending=pendingReviews();
-    root.innerHTML=`<section class="page collection-page"><div class="page-head"><div><span class="eyebrow">Decision inbox</span><h2>Review</h2><p>New evidence does not become project truth until a person decides what it changes.</p></div></div>${pending.length?pending.map(reviewCard).join(''):`<div class="empty-state"><h3>Nothing waiting for review.</h3><p>Reviewed information remains preserved in Notes and available to the Workspace when relevant.</p></div>`}</section>`;
+    const activeFilter=state.reviewFilter||'all';
+    const topics=[...new Set(pending.flatMap(r=>r.topics))].sort();
+    const chip=(f,label)=>`<button class="filter${activeFilter===f?' active':''}" data-review-filter="${f}">${label}</button>`;
+    const filters=topics.length?`<div class="filters review-filters">${chip('all','All')}${topics.map(t=>chip(t,topicLabel(t))).join('')}</div>`:'';
+    const visible=activeFilter==='all'?pending:pending.filter(r=>r.topics.includes(activeFilter));
+    root.innerHTML=`<section class="page collection-page"><div class="page-head"><div><span class="eyebrow">Decision inbox</span><h2>Review</h2><p>New evidence does not become project truth until a person decides what it changes.</p></div></div>${filters}${visible.length?visible.map(reviewCard).join(''):(pending.length?'<div class="empty-state"><h3>Nothing here.</h3><p>No pending items match this topic.</p></div>':`<div class="empty-state"><h3>Nothing waiting for review.</h3><p>Reviewed information remains preserved in Notes and available to the Workspace when relevant.</p></div>`)}</section>`;
   }
 
-  function reviewCard(r){ const generic=r.id.startsWith('r-info-'); return `<article class="review-card compact-review" data-review-card="${r.id}"><div class="review-row-head"><div><span class="review-kicker">${esc(r.title)}</span><h3>${esc(r.summary)}</h3></div></div><details class="review-focus"><summary>${generic?'Review this evidence →':'Review this change →'}</summary><div class="review-summary single-column"><div><span>Current understanding</span><p>${esc(r.current)}</p></div><div><span>${generic?'Review question':'Proposed change'}</span><p><strong>${esc(r.proposed)}</strong></p></div><div><span>Still unresolved</span><p>${esc(r.unresolved)}</p></div></div><div class="review-actions"><button class="btn primary" data-action="review-update" data-review="${r.id}">${generic?'Accept as reviewed evidence':'Update understanding'}</button><button class="btn secondary" data-action="review-keep" data-review="${r.id}">Leave unchanged</button></div><details class="reasoning"><summary>Why is this being proposed?</summary><p><strong>New evidence:</strong> ${esc(r.evidence)}</p><p><strong>What it establishes:</strong> ${esc(r.establishes)}</p><p><strong>What it does not establish:</strong> ${esc(r.doesNot)}</p></details></details></article>`; }
+  function reviewCard(r){ const generic=r.id.startsWith('r-info-'); const related=relatedPending(r); const showNudge=related.length && !state.dismissedNudges.has(r.id); const nudge=showNudge?`<div class="related-nudge" data-nudge-for="${r.id}"><span><strong>Related, still open:</strong> ${related.map(o=>esc(o.title)).join(', ')} — worth a look while you're in this topic.</span><button class="nudge-dismiss" data-action="dismiss-nudge" data-nudge="${r.id}" aria-label="Dismiss suggestion">×</button></div>`:''; return `<article class="review-card compact-review" data-review-card="${r.id}"><div class="review-row-head"><div><span class="review-kicker">${esc(r.title)}</span><h3>${esc(r.summary)}</h3></div></div>${nudge}<details class="review-focus"><summary>${generic?'Review this evidence →':'Review this change →'}</summary><div class="review-summary single-column"><div><span>Current understanding</span><p>${esc(r.current)}</p></div><div><span>${generic?'Review question':'Proposed change'}</span><p><strong>${esc(r.proposed)}</strong></p></div><div><span>Still unresolved</span><p>${esc(r.unresolved)}</p></div></div><div class="review-actions"><button class="btn primary" data-action="review-update" data-review="${r.id}">${generic?'Accept as reviewed evidence':'Update understanding'}</button><button class="btn secondary" data-action="review-keep" data-review="${r.id}">Leave unchanged</button></div><details class="reasoning"><summary>Why is this being proposed?</summary><p><strong>New evidence:</strong> ${esc(r.evidence)}</p><p><strong>What it establishes:</strong> ${esc(r.establishes)}</p><p><strong>What it does not establish:</strong> ${esc(r.doesNot)}</p></details></details></article>`; }
 
   function decideReview(id,decision){ const r=state.data.reviews.find(x=>x.id===id); state.lastReviewGeneric=!!r?.id?.startsWith('r-info-'); if(!r||r.status!=='pending')return; r.status=decision; const note=state.data.notes.find(n=>n.id===r.evidenceId); if(note)note.status=decision==='update'?'accepted':'reviewed'; if(decision==='update'){
       if(r.id==='r-access'){ const k=state.data.knowledge.find(k=>k.id==='k-access'); if(k)k.statement=k.afterReview; }
@@ -254,8 +269,10 @@
 
   document.addEventListener('click',e=>{
     if(e.target.closest('[data-action="dismiss-review-banner"]')){ state.reviewBannerDismissed=true; renderOverview(); return; }
+    if(e.target.closest('[data-action="dismiss-nudge"]')){ const btn=e.target.closest('[data-action="dismiss-nudge"]'); state.dismissedNudges.add(btn.dataset.nudge); renderReview(); return; }
     const v=e.target.closest('[data-view]'); if(v){ state.view=v.dataset.view; state.result=null; render(); return; }
     const noteFilter=e.target.closest('.notes-filters [data-filter]'); if(noteFilter){ state.notesFilter=noteFilter.dataset.filter; renderNotes(); return; }
+    const reviewFilter=e.target.closest('.review-filters [data-review-filter]'); if(reviewFilter){ state.reviewFilter=reviewFilter.dataset.reviewFilter; renderReview(); return; }
     const filter=e.target.closest('[data-filter]'); if(filter){ document.querySelectorAll('.filter').forEach(x=>x.classList.toggle('active',x===filter)); const f=filter.dataset.filter; const notes=f==='all'?state.data.notes:state.data.notes.filter(n=>f==='reviewed'?(n.status==='accepted'||n.status==='reviewed'):n.status==='pending'); const list=document.getElementById('notesList'); if(list)list.innerHTML=notes.map(simpleNote).join(''); return; }
     const p=e.target.closest('[data-prompt]'); if(p){ submitAsk(p.dataset.prompt); return; }
     const a=e.target.closest('[data-action]'); if(!a)return;
