@@ -924,8 +924,9 @@
   })();
 </script>
 <style>
-.applied-major-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-top:14px}
-@media(max-width:900px){}@media(max-width:620px){.applied-major-grid,.applied-support-grid,.home-option-d-links{grid-template-columns:1fr!important}}
+.applied-major-grid,.applied-secondary-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-top:14px}
+.applied-secondary-grid>.card{display:flex;flex-direction:column}
+@media(max-width:900px){}@media(max-width:620px){.applied-major-grid,.applied-secondary-grid,.applied-support-grid,.home-option-d-links{grid-template-columns:1fr!important}}
 </style></head>
 <body>
 <div class="app-root" id="ai-cs-mock">
@@ -1185,6 +1186,11 @@ body.v88-dark #ai-cs-mock{background:#101014!important;color:#f5f5f7!important;-
 <div class="applied-major-grid">
 <a class="card nav-card applied-major" href="implementation-context.html"><span class="tag">Investigation · experiment + prototype</span><h3>Maintaining Project Context with AI</h3><p class="card-intro">AI framed a broad hypothesis about reconstructing current project understanding; I ran the test, let a tougher condition into it instead of protecting the original idea, and followed a narrower uncertainty failure into a deterministic prototype.</p><p class="small applied-case-use"><strong>Use this case when you want to see:</strong> Evaluation design, context/retrieval reasoning, uncertainty preservation, product restraint, and QA applied to plausible AI failures.</p></a>
 <a class="card nav-card applied-major" href="legal-ai-governance.html"><span class="tag">Opportunity evaluation · Legal AI</span><h3>Legal AI Governance Opportunity Evaluation</h3><p class="card-intro">I investigated whether a documented legal-AI governance problem could support a consulting opportunity, checked my own claims against the sources, corrected what didn’t hold up, and stopped before the evidence justified proposing an offering.</p><p class="small applied-case-use"><strong>Use this case when you want to see:</strong> How I investigate an unfamiliar AI market, separate a real problem from a proven business opportunity, and turn research into questions that could be tested with real customers.</p></a>
+</div>
+<div class="section-kicker applied-group-kicker"><span>Supporting work</span></div>
+<div class="applied-secondary-grid">
+<a class="card nav-card applied-secondary" href="meridian.html"><span class="tag">Simulated pilot · Customer support</span><h3>Meridian AI Support Pilot</h3><p class="card-intro">How an AI-assisted support pilot handles a ticket step by step, the discovery questions that most changed the design, and the pilot metrics I revised once evidence didn't support my first answer.</p></a>
+<a class="card nav-card applied-secondary" href="harborstone.html"><span class="tag">Simulated pilot · Invoice operations</span><h3>Harborstone Invoice Operations</h3><p class="card-intro">A fictional client asked to automate vendor invoices with AI. Discovery split the workflow into distinct problems, and a strong-looking efficiency number got challenged for automation bias before recommending controlled expansion, not full rollout.</p></a>
 </div>
 </section>
 <script>

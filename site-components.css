@@ -1275,7 +1275,7 @@ body:has(.meridian-breadcrumb span:last-child) .meridian-heading .eyebrow{displa
 .case-system-page .deep-dive-page .unknown-story.compact-finding-card p:last-child{margin-bottom:0!important}
 
 /* Supporting-work row: equalize the content above the nested practice panels. */
-.applied-secondary-grid>.card>.tag{min-height:31px;box-sizing:border-box}
+.applied-secondary-grid>.card>.tag{min-height:31px;box-sizing:border-box;display:inline-flex;align-items:center}
 .applied-secondary-grid>.card>h3{min-height:48px}
 .applied-secondary-grid>.card>.card-intro{min-height:112px}
 @media(max-width:900px){
