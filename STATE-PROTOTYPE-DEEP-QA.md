@@ -36,11 +36,13 @@ Verified routing logic for current-state, evidence, open-item, history, supporte
 - “Who is Maya?” → supported contact scenario
 - “Prepare me for the security meeting” → supported meeting-prep scenario
 - “What percentage can we safely automate?” → supported known-unknown scenario
-- “What are we building?” → honest fallback
-- “What should we do next?” → honest fallback
-- “Summarize the project.” → honest fallback
+- “What are we building?” → project status/current direction
+- “What should we do next?” → readiness / next-step synthesis
+- “Summarize the project.” → project status summary
+- “Are we on track?” → explicit unknown-with-context because no schedule baseline is recorded
+- “Why did we decide on 50% automation?” → premise correction; the request is not promoted to a decision
 
-The remaining fallbacks are intentional for this deterministic prototype rather than guessed answers.
+Unmatched questions still fall back rather than being guessed, but common PM phrasing now routes through reusable behaviors before fallback.
 
 ## Static QA checks passed
 

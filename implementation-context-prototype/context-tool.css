@@ -288,3 +288,9 @@ body.v88-dark .notes-filters .filter.active .count-badge{background:#352f50!impo
 .sidebar-nav .nav-parent-toggle>svg.project-chevron{position:absolute;right:9px;top:50%;margin-top:-7.5px}
 .sidebar-nav .nav-parent-toggle[aria-expanded="true"]>svg.project-chevron{transform:rotate(180deg)}
 .sidebar-nav .nav-parent-toggle[aria-expanded="true"] .nav-parent-meta .project-chevron{transform:rotate(180deg)}
+
+/* Draft artifact spacing: external rhythm, not box padding. */
+.answer-content>.result-label+.polished-draft{margin-top:14px}
+.answer-content>.polished-draft+.btn[data-action="copy-draft"]{margin-top:16px}
+
+.visually-hidden{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}
