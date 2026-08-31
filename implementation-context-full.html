@@ -26,7 +26,7 @@
 
 <section class="investigation-intro">
 <p>That distinction changed what I researched, what got built, and what I now think the interesting design question actually is.</p>
-</section><div class="investigation-orientation"><div><span>Deep dive · 12 chapters</span><strong>The manuscript is preserved here without forcing a 12-chapter scroll.</strong><p>Open any chapter for the detailed reasoning, experiment receipts, objections, limitations, and next tests.</p></div><a href="#03-the-first-experiment">Jump to the experiment →</a></div><div class="investigation-chapters"><details class="investigation-chapter" id="01-the-question"><summary><span class="chapter-number">01</span><span class="chapter-title">What happens when AI has to decide what is still true?</span><span aria-hidden="true" class="chapter-toggle">+</span></summary><div class="chapter-body">
+</section><div class="investigation-orientation"><div><span>Deep dive · 12 chapters</span><strong>The manuscript is preserved here without forcing a 12-chapter scroll.</strong><p>Open any chapter for the detailed reasoning, experiment receipts, objections, limitations, and next tests.</p></div></div><div class="investigation-chapters"><details class="investigation-chapter" id="01-the-question"><summary><span class="chapter-number">01</span><span class="chapter-title">What happens when AI has to decide what is still true?</span><span aria-hidden="true" class="chapter-toggle">+</span></summary><div class="chapter-body">
 <p>The original idea came from thinking about how project context actually
 works in software teams.</p>
 <p>A project record is not a clean database of current truth. It contains
@@ -417,7 +417,7 @@ pretending it had been validated.</p>
 challenges something the implementation is already relying on?</strong></p>
 </blockquote>
 <p>That led to a few specific product decisions.</p>
-<h3 id="decision-1-not-established-is-a-first-class-answer">Decision 1 --- "Not established" is a first-class answer</h3>
+<h3 id="decision-1-not-established-is-a-first-class-answer">Decision 1 --- "Not established" is a valid answer</h3>
 <p>If the implementation has not established a safe automation percentage,
 the system should not have to manufacture a useful-sounding number.</p>
 <p>In the prototype, <strong>Not established</strong> is a legitimate answer.</p>
@@ -478,7 +478,7 @@ state.</p>
 <p>That led to one of the product principles I care most about from the
 project:</p>
 <blockquote class="case-quote">
-<p><strong>The system shouldn't depend on perfect knowledge-management habits to keep consequential project state current.</strong></p>
+<p><strong>The system shouldn't depend on perfect knowledge-management habits to keep important project understanding current.</strong></p>
 </blockquote>
 <h3 id="decision-5-keep-the-prototype-deterministic-where-that-is-enough">Decision 5 --- Keep the prototype deterministic where that is enough</h3>
 <p>I did not add embeddings, a generic semantic-retrieval layer, or an LLM
