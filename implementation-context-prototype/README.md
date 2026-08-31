@@ -24,3 +24,6 @@ A second seeded Security review demonstrates that reviewed evidence can resolve 
 ## Prototype honesty
 
 There is no live model, production retrieval, embeddings, vector store, database, authentication, or backend. Retrieval, classification, generation, relevance, and state transitions are simulated using deterministic fixtures and curated interactions.
+
+## Project browse view (Aug 31 prototype update)
+Project is a deterministic, readable view of maintained Current State. It uses three intentionally broad categories: Product & Workflow, Safety & Constraints, and Evaluation & Rollout. Categories are populated from `knowledge[].projectArea`; pending review does not change the displayed statement until Review is accepted. The only category-management control exposed in the prototype is hide/show. This deliberately leaves edge-case taxonomy and user reorganization out of scope until real testing shows they matter.

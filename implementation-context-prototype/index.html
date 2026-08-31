@@ -31,15 +31,29 @@
     <aside class="app-sidebar" aria-label="Project workspace">
       <div class="sidebar-project">
         <span class="meta-label">Project</span>
-        <button class="project-switcher" id="projectSwitcher" data-action="toggle-projects" aria-expanded="false">Northstar <span>⌄</span></button>
+        <button class="project-switcher" id="projectSwitcher" data-action="toggle-projects" aria-expanded="false" aria-controls="projectMenu">Northstar <span>⌄</span></button>
         <div class="project-menu" id="projectMenu" hidden><button class="active">Northstar <span>Current</span></button><button disabled>Website Redesign <span>Sample</span></button><button disabled>Legal AI Research <span>Sample</span></button><button disabled>＋ New project <span>Prototype</span></button></div>
       </div>
       <nav class="sidebar-nav">
         <button class="nav-item active" data-view="overview">Workspace</button>
-        <button class="nav-item review-nav" data-view="review">Review <span class="count-badge" id="reviewCountNav"></span></button>
-        <button class="nav-item" data-view="questions">Questions</button>
         <button class="nav-item" data-view="notes">Notes</button>
-        <button class="nav-item" data-view="history">History</button>
+        <div class="sidebar-nav-group open-items-nav-group">
+          <button class="nav-item nav-parent-toggle open-items-nav-toggle" data-action="toggle-open-items-nav" aria-expanded="false" aria-controls="openItemsSubnav">Open Items <span class="nav-parent-meta"><svg class="project-chevron" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 6l4 4 4-4"/></svg></span></button>
+          <div class="project-subnav" id="openItemsSubnav" hidden>
+            <button data-view="review">Review</button>
+            <button data-view="questions">Questions</button>
+          </div>
+        </div>
+        <div class="sidebar-nav-group project-nav-group">
+          <button class="nav-item nav-parent-toggle project-nav-toggle" data-action="toggle-project-nav" aria-expanded="false" aria-controls="projectSubnav">Project <svg class="project-chevron" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 6l4 4 4-4"/></svg></button>
+          <div class="project-subnav" id="projectSubnav" hidden>
+            <button data-view="project-overview">Overview</button>
+            <button data-view="project-product" data-project-area="product">Product &amp; Workflow</button>
+            <button data-view="project-safety" data-project-area="safety">Safety &amp; Constraints</button>
+            <button data-view="project-evaluation" data-project-area="evaluation">Evaluation &amp; Rollout</button>
+            <button data-view="history">History</button>
+          </div>
+        </div>
       </nav>
       <button class="demo-help-button" data-action="show-demo-help">How this demo works</button>
     </aside>
