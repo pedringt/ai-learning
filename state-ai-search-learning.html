@@ -934,17 +934,18 @@ body.v88-dark .case-shell .frame{
 
 <div class="card" style="margin-top:26px"><span class="tag">Where I landed</span><h3>Use the simplest path that answers the question well</h3>
 <div class="search-flow" aria-label="Search decision flow"><div class="flow-step"><b>User asks a question</b></div><span class="flow-arrow">↓</span><div class="flow-step"><b>Can State answer it directly?</b><small>Show the existing State.</small></div><span class="flow-arrow">↓ if not</span><div class="flow-step"><b>Can better search find what they need?</b><small>Return the relevant information without generating a new answer.</small></div><span class="flow-arrow">↓ if they need things pulled together</span><div class="flow-step"><b>Give AI the relevant pieces</b><small>Generate a grounded answer and keep sources inspectable.</small></div></div>
+<p class="small"><strong>One thing I deliberately left unresolved:</strong> how the system decides which path a question should take. We considered simple rules, what search finds, and a lightweight AI classifier, but I wouldn't add another model call without testing whether it actually improves the experience.</p>
 <p class="small" style="margin-bottom:0"><strong>Separate from all of this:</strong> State's existing review process remains responsible for changing maintained State. Search has no AI write path back into it.</p></div>
 
 <div class="card" style="margin-top:26px"><span class="tag">Decisions I made</span><h3>The choices mattered more than the terminology</h3>
 <table><thead><tr><th>I decided...</th><th>Because...</th></tr></thead><tbody>
 <tr><td>Don't add AI to State's review/update process.</td><td>That path was intentionally human-controlled, and AI wasn't solving a clear problem there.</td></tr>
 <tr><td>Don't use AI to answer every search.</td><td>For simple questions, it was mostly rewriting information State could already show.</td></tr>
-<tr><td>Give AI only the information it needs.</td><td>Sending everything costs more and can make it harder to keep the answer focused.</td></tr>
-<tr><td>Show relevant information that's still waiting for review, but label it.</td><td>It may matter to the user's work, but it shouldn't be mistaken for current State.</td></tr>
+<tr><td>Give AI only the information it needs.</td><td>For a generated answer, I’d start with the relevant current State, open questions, and selected supporting evidence—not every matching note or document.</td></tr>
+<tr><td>Show relevant information that's still waiting for review, but keep it separate from current State.</td><td>Hiding new evidence could also mislead someone. The risk is making sure a generated answer doesn’t blur reviewed and unreviewed information together.</td></tr>
 <tr><td>Allow clearly labeled AI suggestions when they're useful.</td><td>A meeting-prep question may benefit from suggested follow-ups, as long as suggestions aren't presented as facts.</td></tr>
 <tr><td>Try the database we already have before adding another service.</td><td>I didn't see a reason to add more infrastructure until testing showed we needed it.</td></tr>
-<tr><td>Pick the cheapest model that performs well enough.</td><td>In the practice evaluation, the cheapest option missed the quality bar and the most expensive barely improved on the middle option.</td></tr>
+<tr><td>Pick the cheapest model that performs well enough.</td><td>In a hypothetical 100-question evaluation, the cheapest option missed our 95% quality threshold and the most expensive barely improved on the middle option. I also learned that some failures—like treating pending evidence as current State—should matter more than the average score.</td></tr>
 </tbody></table></div>
 
 <div class="card" style="margin-top:26px"><span class="tag">Cost exercise</span><h3>What surprised me wasn't the model price</h3>
@@ -954,11 +955,11 @@ body.v88-dark .case-shell .frame{
 <tr><td>Base</td><td>5,500</td><td>25%</td><td>~$22</td></tr>
 <tr><td>Heavy</td><td>33,000</td><td>60%</td><td>~$356</td></tr>
 </tbody></table>
-<p class="small">These were hypothetical usage scenarios using then-current API pricing, not forecasts or production costs. They were meant to show which assumptions change the economics.</p>
+<p class="small"><strong>Base case assumptions:</strong> 50 active users × 5 searches/day × 22 workdays; 25% require an AI-generated answer; about 5,000 input + 500 output tokens per generated answer. These were illustrative scenarios using then-current API pricing, not observed State usage or production forecasts.</p>
 <p style="margin-bottom:0"><strong>My takeaway:</strong> raw search volume wasn't the biggest cost lever. The economics changed much faster when more searches required generated answers and when more context was sent with each request.</p></div>
 
 <div class="grid2" style="margin-top:26px">
-<div class="card"><span class="tag">If this were real</span><h3>Test the assumptions before adding complexity</h3><p>I'd test whether the existing database can handle the smarter search well enough, evaluate models on representative State questions and important failure cases, and see how often users actually need generated answers. After launch, I'd watch quality, retries, how much context is being sent, and cost per customer before deciding whether anything needs to be optimized or limited.</p></div>
+<div class="card"><span class="tag">If this were real</span><h3>What I’d want to find out next</h3><p>The cost exercise made two assumptions especially important to test: how often users actually need an AI-generated answer and how much information the model needs to answer well. I’d also test the routing decision above, retrieval quality, and whether the existing database is good enough before adding more infrastructure.</p></div>
 <div class="card"><span class="tag">What I took away</span><h3>Cost analysis starts before API pricing</h3><p>I went into this expecting to learn how to price an AI feature. The more useful lesson was that the product decisions come first: what AI is allowed to do, when it's actually useful, and what information it needs. Those choices shape the architecture, and the architecture shapes the cost.</p></div>
 </div>
 </main><script defer="True" src="site-shell.js"></script></body></html>
