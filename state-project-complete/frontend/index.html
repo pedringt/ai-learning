@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta name="state-api-url" content="http://localhost:8000">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>State, Behavioral Prototype</title>
+  <meta name="description" content="A behavioral prototype for capturing project information, maintaining current understanding, tracking unresolved questions, and reviewing new evidence before it changes what the project treats as current." />
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="State, Behavioral Prototype">
+  <meta property="og:description" content="A behavioral prototype for capturing project information, maintaining current understanding, tracking unresolved questions, and reviewing new evidence before it changes what the project treats as current.">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="State, Behavioral Prototype">
+  <meta name="twitter:description" content="A behavioral prototype for capturing project information, maintaining current understanding, tracking unresolved questions, and reviewing new evidence before it changes what the project treats as current.">
+  <link rel="stylesheet" href="context-tool.css">
+</head>
+<body>
+  <div class="topbar"><div class="topinner"><a class="brand-button" href="../index.html"><span class="brand">AI <span>Learning Portfolio</span></span></a><nav aria-label="Primary pages" class="nav"><a href="../index.html">Home</a><a aria-current="page" href="../index.html#portfolio">Applied Work</a><a href="../index.html#learn">Learning Guide</a></nav><div class="top-actions"><button aria-label="Switch to dark mode" aria-pressed="false" class="theme-toggle" id="v922ThemeToggle" title="Switch to dark mode" type="button">☾</button><select aria-label="Choose page" id="v922MobileNav"><option value="../index.html">Home</option><option selected value="../index.html#portfolio">Applied Work</option><option value="../index.html#learn">Learning Guide</option></select></div></div></div>
+  <div class="prototype-productbar"><span class="product-mark" aria-hidden="true">◆</span><span class="product-name">State</span><span class="product-divider" aria-hidden="true">·</span><span class="product-cue">Behavioral prototype</span><span class="product-tagline">Maintained project understanding, not reconstructed history.</span></div>
+
+  <main class="app-shell software-shell">
+    <h1 class="visually-hidden">State project workspace</h1>
+    <aside class="app-sidebar" aria-label="Project workspace">
+      <div class="sidebar-project">
+        <span class="meta-label">Project</span>
+        <button class="project-switcher" id="projectSwitcher" data-action="toggle-projects" aria-expanded="false" aria-controls="projectMenu">Northstar <span>⌄</span></button>
+        <div class="project-menu" id="projectMenu" hidden><button class="active">Northstar <span>Current</span></button><button disabled>Website Redesign <span>Sample</span></button><button disabled>Legal AI Research <span>Sample</span></button><button disabled>＋ New project <span>Prototype</span></button></div>
+      </div>
+      <nav class="sidebar-nav">
+        <button class="nav-item active" data-view="overview">Workspace</button>
+        <button class="nav-item" data-view="notes">Notes</button>
+        <div class="sidebar-nav-group open-items-nav-group">
+          <button class="nav-item nav-parent-toggle open-items-nav-toggle" data-action="toggle-open-items-nav" aria-expanded="false" aria-controls="openItemsSubnav">Open Items <span class="nav-parent-meta"><svg class="project-chevron" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 6l4 4 4-4"/></svg></span></button>
+          <div class="project-subnav" id="openItemsSubnav" hidden>
+            <button data-view="review">Review</button>
+            <button data-view="questions">Questions</button>
+          </div>
+        </div>
+        <div class="sidebar-nav-group project-nav-group">
+          <button class="nav-item nav-parent-toggle project-nav-toggle" data-action="toggle-project-nav" aria-expanded="false" aria-controls="projectSubnav">Project <svg class="project-chevron" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 6l4 4 4-4"/></svg></button>
+          <div class="project-subnav" id="projectSubnav" hidden>
+            <button data-view="project-overview">Overview</button>
+            <button data-view="project-product" data-project-area="product">Product &amp; Workflow</button>
+            <button data-view="project-safety" data-project-area="safety">Safety &amp; Constraints</button>
+            <button data-view="project-evaluation" data-project-area="evaluation">Evaluation &amp; Rollout</button>
+            <button data-view="history">History</button>
+          </div>
+        </div>
+      </nav>
+      <button class="demo-help-button" data-action="show-demo-help">How this demo works</button>
+    </aside>
+    <section class="app-workspace">
+      <section id="viewRoot" class="view-root" aria-live="polite"></section>
+    </section>
+  </main>
+
+  <div class="overlay" id="overlay" hidden>
+    <section class="dialog" role="dialog" aria-modal="true" aria-labelledby="dialogTitle" tabindex="-1">
+      <button class="dialog-close" aria-label="Close" data-action="close-dialog">×</button>
+      <div id="dialogBody"></div>
+    </section>
+  </div>
+
+  <script src="context-data.js"></script>
+  <script src="context-app.js"></script>
+</body>
+</html>

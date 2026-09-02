@@ -1,0 +1,152 @@
+"""Human-authorized review resolution and read models for the State API."""
+
+from __future__ import annotations
+
+import sqlite3
+from typing import Literal
+
+from interpretation_pipeline_integrated import new_id
+
+
+class ReviewNotFoundError(KeyError):
+    pass
+
+
+class ReviewConflictError(RuntimeError):
+    pass
+
+
+Decision = Literal["accept", "keep", "reject"]
+
+
+def resolve_review(connection: sqlite3.Connection, review_id: str, decision: Decision, note: str | None = None) -> None:
+    """Resolve one review atomically; only ``accept`` may mutate Current State."""
+    connection.row_factory = sqlite3.Row
+    connection.execute("BEGIN IMMEDIATE")
+    try:
+        review = connection.execute(
+            "SELECT id, status FROM review_issues WHERE id=?", (review_id,)
+        ).fetchone()
+        if review is None:
+            raise ReviewNotFoundError(review_id)
+        if review["status"] != "open":
+            raise ReviewConflictError("Review is already resolved")
+
+        proposals = connection.execute(
+            "SELECT * FROM proposed_state_changes WHERE review_id=? AND status='pending' ORDER BY created_at, id",
+            (review_id,),
+        ).fetchall()
+
+        if decision == "accept":
+            for proposal in proposals:
+                _apply_proposal(connection, proposal)
+            proposal_status = "accepted"
+            resolution = "updated" if proposals else "confirmed_current"
+        else:
+            proposal_status = "not_applied"
+            resolution = "confirmed_current" if decision == "keep" else "not_applied"
+
+        connection.execute(
+            "UPDATE proposed_state_changes SET status=?, decided_at=CURRENT_TIMESTAMP "
+            "WHERE review_id=? AND status='pending'",
+            (proposal_status, review_id),
+        )
+        connection.execute(
+            "UPDATE review_issues SET status='resolved', resolution=?, resolution_note=?, "
+            "resolved_at=CURRENT_TIMESTAMP WHERE id=?",
+            (resolution, note, review_id),
+        )
+        connection.execute("COMMIT")
+    except Exception:
+        connection.execute("ROLLBACK")
+        raise
+
+
+def _apply_proposal(connection: sqlite3.Connection, proposal: sqlite3.Row) -> None:
+    operation = proposal["operation"] or "update"
+    if operation == "create":
+        state_id = new_id("state")
+        connection.execute(
+            "INSERT INTO current_state_items(id, topic, statement, version, effective_date) VALUES (?, ?, ?, 1, ?)",
+            (state_id, "uncategorized", proposal["proposed_statement"], proposal["effective_date"]),
+        )
+        old_statement, old_effective_date, from_version, to_version = None, None, None, 1
+        transition_type = "created"
+    else:
+        state_id = proposal["state_item_id"]
+        current = connection.execute(
+            "SELECT statement, version, effective_date, status FROM current_state_items WHERE id=?",
+            (state_id,),
+        ).fetchone()
+        if current is None or current["status"] != "active":
+            raise ReviewConflictError(f"State item {state_id} is not active")
+        if current["version"] != proposal["expected_state_version"]:
+            raise ReviewConflictError(
+                f"State item {state_id} changed after interpretation; refresh and review again"
+            )
+        old_statement = current["statement"]
+        old_effective_date = current["effective_date"]
+        from_version = current["version"]
+        to_version = from_version + 1
+        transition_type = "retired" if operation == "retire" else "updated"
+        new_statement = proposal["proposed_statement"]
+        new_effective_date = proposal["effective_date"] or old_effective_date
+        if operation == "retire":
+            connection.execute(
+                "UPDATE current_state_items SET status='retired', version=?, updated_at=CURRENT_TIMESTAMP WHERE id=?",
+                (to_version, state_id),
+            )
+        else:
+            connection.execute(
+                "UPDATE current_state_items SET statement=?, version=?, effective_date=?, updated_at=CURRENT_TIMESTAMP WHERE id=?",
+                (new_statement, to_version, new_effective_date, state_id),
+            )
+
+    connection.execute(
+        "INSERT INTO history_transitions(id, state_item_id, proposed_change_id, transition_type, "
+        "old_statement, new_statement, old_effective_date, new_effective_date, from_version, to_version) "
+        "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        (
+            new_id("history"), state_id, proposal["id"], transition_type,
+            old_statement, proposal["proposed_statement"], old_effective_date,
+            proposal["effective_date"], from_version, to_version,
+        ),
+    )
+
+
+def list_state(connection: sqlite3.Connection) -> list[dict]:
+    connection.row_factory = sqlite3.Row
+    return [dict(row) for row in connection.execute(
+        "SELECT id, topic, statement, status, version, effective_date, created_at, updated_at "
+        "FROM current_state_items WHERE status='active' ORDER BY topic, created_at, id"
+    )]
+
+
+def list_reviews(connection: sqlite3.Connection, status: str = "open") -> list[dict]:
+    connection.row_factory = sqlite3.Row
+    rows = connection.execute(
+        "SELECT r.*, e.id AS evidence_id, e.content AS evidence_content "
+        "FROM review_issues r LEFT JOIN review_evidence re ON re.review_id=r.id "
+        "LEFT JOIN evidence e ON e.id=re.evidence_id WHERE r.status=? ORDER BY r.created_at, r.id",
+        (status,),
+    ).fetchall()
+    result = []
+    for row in rows:
+        item = dict(row)
+        item["proposals"] = [dict(p) for p in connection.execute(
+            "SELECT * FROM proposed_state_changes WHERE review_id=? ORDER BY created_at, id", (row["id"],)
+        )]
+        item["affected_state_items"] = [dict(s) for s in connection.execute(
+            "SELECT s.id, s.topic, s.statement, s.version, s.status FROM current_state_items s "
+            "JOIN review_state_items rs ON rs.state_item_id=s.id WHERE rs.review_id=? ORDER BY s.id",
+            (row["id"],),
+        )]
+        result.append(item)
+    return result
+
+
+def list_history(connection: sqlite3.Connection) -> list[dict]:
+    connection.row_factory = sqlite3.Row
+    return [dict(row) for row in connection.execute(
+        "SELECT * FROM history_transitions ORDER BY changed_at DESC, id DESC"
+    )]
