@@ -5,7 +5,7 @@
   const initial = clone(D);
   const state = {
     data: clone(D), view:'overview', result:null, resultQuery:'', projectMenuOpen:false, refinements:[], lastScenario:null,
-    addedSample:false, pendingCreated:false, reviewBannerDismissed:false, dialogReturnFocus:null, expandedNotes:new Set(), noteComposerOpen:false, editingNoteId:null, dismissedNudges:new Set(), historyTopic:null, historyEvidenceId:null, historySearch:'', notesFilter:'all', notesDateFilter:'all', notesSearch:'', isAnalyzing:false, reviewsBackendAvailable:false, questionsBackendAvailable:false, reviewsHydrated:false, openQuestionsExpanded:false, expandedReviewId:null, openItemSections:{reviews:false,blockers:false,questions:null}, projectRules:[], backendStatus:{state:'loading',evidence:'loading',reviews:'loading',history:'loading',questions:'loading',rules:'loading',drafts:'loading'}
+    addedSample:false, pendingCreated:false, reviewBannerDismissed:false, dialogReturnFocus:null, expandedNotes:new Set(), noteComposerOpen:false, editingNoteId:null, dismissedNudges:new Set(), historyTopic:null, historyEvidenceId:null, historySearch:'', notesFilter:'all', notesDateFilter:'all', notesSearch:'', isAnalyzing:false, openQuestionsExpanded:false, expandedReviewId:null, openItemSections:{reviews:false,blockers:false,questions:null}, projectRules:[], backendStatus:{state:'loading',evidence:'loading',reviews:'loading',history:'loading',questions:'loading',rules:'loading',drafts:'loading'}
   };
 
   const root = document.getElementById('viewRoot');
@@ -13,9 +13,13 @@
   const dialogBody = document.getElementById('dialogBody');
   const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const norm = s => String(s).toLowerCase().replace(/[’']/g,'').replace(/[^a-z0-9\s]/g,' ').replace(/\s+/g,' ').trim();
-  const openQuestions = () => state.data.questions.filter(q => q.status === 'open' && (!state.questionsBackendAvailable || q.backendManaged));
-  const pendingReviews = () => state.data.reviews.filter(r => r.status === 'pending' && (!state.reviewsBackendAvailable || r.backendReviewId));
-  const uiPendingReviews = () => (API && !state.reviewsHydrated) ? [] : pendingReviews();
+  const openQuestions = () => API
+    ? (state.backendStatus.questions==='loaded' ? state.data.questions.filter(q => q.status === 'open' && q.backendManaged) : [])
+    : state.data.questions.filter(q => q.status === 'open');
+  const pendingReviews = () => API
+    ? (state.backendStatus.reviews==='loaded' ? state.data.reviews.filter(r => r.status === 'pending' && r.backendReviewId) : [])
+    : state.data.reviews.filter(r => r.status === 'pending');
+  const uiPendingReviews = () => pendingReviews();
   const accessUpdated = () => state.data.reviews.find(r => r.id==='r-access')?.status === 'update';
   const securityUpdated = () => state.data.reviews.find(r => r.id==='r-security')?.status === 'update';
   const todayISO = () => { const d=new Date(); const pad=n=>String(n).padStart(2,'0'); return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`; };
@@ -992,22 +996,6 @@
     state.data.questions=backend;
   }
 
-  async function bootstrapFixtureQuestions(existingItems){
-    const items=[...(existingItems||[])];
-    const byText=new Map(items.map(q=>[questionTextKey(q.text),q]));
-    const fixtures=state.data.questions.filter(q=>!q.backendManaged && q.status==='open');
-    for(const fixture of fixtures){
-      const key=questionTextKey(fixture.text);
-      if(byText.has(key))continue;
-      try{
-        const created=await API.createQuestion(fixture.text,{origin:fixture.origin||'Initial discovery',blocking:!!fixture.blocking,blocks:fixture.blocks||null});
-        if(created?.id){items.push(created);byText.set(key,created);}
-      }catch(err){
-        console.warn('Could not persist fixture question:',err);
-      }
-    }
-    return items;
-  }
 
   async function createBackendQuestion(text){ return API.createQuestion(text,{origin:'Added from Workspace',blocking:false}); }
 
@@ -1042,16 +1030,12 @@
       byKey.resolved.status==='fulfilled'?payloadOf(byKey.resolved).items||[]:null
     );
     if(byKey.history.status==='fulfilled') syncApiHistory(payloadOf(byKey.history).items||[]);
-    state.questionsBackendAvailable=true;
     if(byKey.questions.status==='fulfilled'){
-      const authoritativeQuestions=await bootstrapFixtureQuestions(payloadOf(byKey.questions).items||[]);
-      syncApiQuestions(authoritativeQuestions);
+      syncApiQuestions(payloadOf(byKey.questions).items||[]);
     }else{
       state.data.questions=[];
     }
     if(byKey.open.status==='fulfilled'){
-      state.reviewsBackendAvailable=true;
-      state.reviewsHydrated=true;
       const openItems=payloadOf(byKey.open).items||[];
       replaceBackendOpenReviews(openItems);
       for(const raw of openItems){
@@ -1059,8 +1043,6 @@
         const mapped=mapApiReview(raw,raw.evidence_content||''); mapped.evidenceId=note?.id||`api-note-${raw.evidence_id}`; upsertBackendReview(mapped);
       }
     }else{
-      state.reviewsBackendAvailable=true;
-      state.reviewsHydrated=true;
       state.data.reviews=state.data.reviews.filter(r=>!r.backendReviewId);
     }
     if(byKey.resolved.status==='fulfilled'){

@@ -143,9 +143,11 @@ def test_r83_notes_date_filters_use_calendar_day_distance_not_timestamp_midnight
 
 def test_r82_authoritative_review_counts_do_not_flash_fixture_values_before_hydration():
     app = (FRONTEND / "context-app.js").read_text(encoding="utf-8")
-    assert "reviewsHydrated:false" in app
-    assert "const uiPendingReviews = () => (API && !state.reviewsHydrated) ? [] : pendingReviews();" in app
-    assert "state.reviewsHydrated=true" in app
+    assert "reviewsBackendAvailable" not in app
+    assert "questionsBackendAvailable" not in app
+    assert "reviewsHydrated" not in app
+    assert "state.backendStatus.reviews==='loaded'" in app
+    assert "state.backendStatus.questions==='loaded'" in app
 
 def test_r82_open_item_sections_are_collapsible_and_keep_attention_hierarchy():
     app = (FRONTEND / "context-app.js").read_text(encoding="utf-8")
@@ -210,3 +212,25 @@ def test_r86_demo_history_is_real_provenance_not_frontend_fixture_rows():
     assert "INSERT INTO proposed_state_changes" in seed
     assert "INSERT INTO history_transitions" in seed
     assert "demo_history" in seed
+
+
+def test_r861_client_hydration_never_recreates_missing_fixture_questions():
+    app = (FRONTEND / "context-app.js").read_text(encoding="utf-8")
+    seed = (Path(__file__).parent / "seed_demo.py").read_text(encoding="utf-8")
+    assert "bootstrapFixtureQuestions" not in app
+    assert "syncApiQuestions(payloadOf(byKey.questions).items||[])" in app
+    assert "INSERT INTO questions" in seed
+
+
+def test_r861_ask_harness_disables_backend_hydration_instead_of_emitting_fetch_errors():
+    harness = (FRONTEND / "state-ask-behavior-tests.js").read_text(encoding="utf-8")
+    assert "context.window.STATE_API=null" in harness
+    assert "context-api.js'),'utf8'),context" not in harness
+
+
+def test_r861_repository_has_one_obvious_deploy_backend():
+    repo = Path(__file__).parent.parent
+    render = (repo / "render.yaml").read_text(encoding="utf-8")
+    assert "rootDir: state-project-complete" in render
+    assert not (repo / "api.py").exists()
+    assert (repo / "state-project-complete" / "api.py").exists()
