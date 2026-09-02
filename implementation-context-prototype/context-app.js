@@ -547,15 +547,6 @@
     }
   }
 
-      state.addedSample=true;
-    } else {
-      const stamp=Date.now(), noteId='n-added-'+stamp, reviewId='r-info-'+stamp;
-      state.data.notes.unshift({id:noteId,title:'New project update',text,source:'Project update',date:demoDate,dateISO:demoDateISO,topics:[],status:'pending',reviewId});
-      state.data.reviews.unshift({id:reviewId,evidenceId:noteId,topics:[],status:'pending',title:'New project update needs review',summary:text.length>180?text.slice(0,177).replace(/\s+\S*$/,'')+'…':text,proposed:'Decide whether this update should change current understanding.',unresolved:'What, if anything, should be added to maintained project understanding.',current:'This information is not part of the current reviewed understanding.',evidence:text,establishes:'New project information has been supplied for human review.',doesNot:'It does not become established project knowledge simply because it was added.'});
-    }
-    state.reviewBannerDismissed=false; closeDialog(); updateNav(); showDialog(`<span class="eyebrow">Added</span><h2 id="dialogTitle">Update sent to Review.</h2><p>Current project understanding has not changed yet.</p><div class="dialog-actions"><button class="btn primary" data-action="go-review">Go to Review →</button><button class="btn secondary" data-action="close-dialog">Done</button></div>`);
-  }
-
   function saveWorkingNote(title,text,source='Working note'){
     const clean=(text||'').trim(); if(!clean)return null;
     const stamp=Date.now(), id='n-user-'+stamp;
