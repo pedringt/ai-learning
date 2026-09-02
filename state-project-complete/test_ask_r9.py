@@ -153,3 +153,68 @@ def test_api_ask_fails_closed_when_provider_fails(tmp_path):
         response = client.post("/api/ask", json={"query": "Prep me for the security meeting."})
         assert response.status_code == 503
         assert "temporarily unavailable" in response.json()["detail"]
+
+class FakeOneCallAskProvider:
+    def __init__(self):
+        self.calls = []
+
+    def run(self, prompt):
+        self.calls.append(prompt)
+        return {
+            "selection": {
+                "job": "meeting_prep",
+                "state_ids": ["k-data", "k-security", "k-pilot"],
+                "review_ids": [],
+                "blocking_question_ids": ["q-retention"],
+                "question_ids": ["q-ask-named-access"],
+                "history_ids": ["demo-history-data-boundary"],
+                "evidence_ids": ["ask-evidence-security-meeting"],
+            },
+            "answer": {
+                "job": "meeting_prep",
+                "headline": "Security meeting prep",
+                "summary": "The pilot remains bounded and human-reviewed; retention authority still needs resolution.",
+                "sections": [
+                    {"kind": "established", "title": "Decisions already made", "items": [
+                        {"text": "The pilot remains read-only.", "record_type": "state", "record_id": "k-data", "detail": None}
+                    ]},
+                    {"kind": "questions", "title": "Get these answered", "items": [
+                        {"text": "Does security require named-agent access?", "record_type": "question", "record_id": "q-ask-named-access", "detail": None}
+                    ]},
+                ],
+                "source_ids": ["k-data", "ask-evidence-security-meeting"],
+                "uncertainty_ids": ["q-retention"],
+                "suggested_refinements": ["Turn into agenda"],
+            },
+        }
+
+
+def test_ask_r91_one_call_pipeline_preserves_authority_guards(tmp_path):
+    conn = seeded_connection(tmp_path)
+    provider = FakeOneCallAskProvider()
+    try:
+        result = run_ask(conn, provider, "Prep me for the security meeting.")
+        assert len(provider.calls) == 1
+        assert result["timing"]["pipeline"] == "one_call"
+        assert result["timing"]["provider_ms"] >= 0
+        assert result["timing"]["total_ms"] >= result["timing"]["provider_ms"]
+        assert "demo-review-retention" in result["selection"]["review_ids"]
+        review_ids = [i["record_id"] for s in result["answer"]["sections"] for i in s["items"] if i["record_type"] == "review"]
+        assert "demo-review-retention" in review_ids
+        blocker = next(i for s in result["answer"]["sections"] for i in s["items"] if i["record_type"] == "blocking_question")
+        assert blocker["record_id"] == "q-retention"
+        assert blocker["detail"] == "Security approval for pilot data flow"
+    finally:
+        conn.close()
+
+
+def test_api_r91_one_call_provider_is_invoked_once(tmp_path):
+    provider = FakeOneCallAskProvider()
+    settings = Settings(database_path=str(tmp_path / "api-r91.db"), cors_origins=[], demo_bootstrap=True)
+    app = create_app(settings, provider=None, ask_provider=provider)
+    with TestClient(app) as client:
+        response = client.post("/api/ask", json={"query": "Prep me for the security meeting."})
+        assert response.status_code == 200
+        payload = response.json()
+        assert payload["timing"]["pipeline"] == "one_call"
+        assert len(provider.calls) == 1

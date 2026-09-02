@@ -465,3 +465,9 @@ body.v88-dark .related-review-choice{background:#17151d!important;border-color:v
 .ask-open-items-safety{margin-top:24px;padding:14px 16px;border:1px solid var(--line);border-radius:10px;background:var(--soft)}
 .ask-open-items-safety p{margin:4px 0 8px;color:var(--muted);font-size:13px}
 @media (max-width:680px){.ask-answer-item{display:block}.ask-item-action{margin-top:8px}.result-utilities{gap:6px}}
+
+/* R9.1: session-level New ask is deliberately separated from answer-level Copy. */
+.ask-title-row{display:flex;align-items:flex-start;justify-content:space-between;gap:20px}
+.ask-new-session{flex:0 0 auto;margin-top:0;border:1px solid var(--line);border-radius:7px;padding:6px 10px;color:var(--muted)!important}
+.ask-new-session:hover{background:var(--surface2);color:var(--ink)!important}
+@media(max-width:650px){.ask-title-row{gap:12px}.ask-new-session{margin-top:-2px}}

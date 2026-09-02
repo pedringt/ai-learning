@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import time
 from typing import Any, Mapping, Protocol
 
 from ask_contract import AskSelection, AskSynthesis
@@ -9,8 +10,7 @@ from review_service import list_evidence, list_history, list_project_rules, list
 
 
 class AskProvider(Protocol):
-    def select(self, prompt: str) -> Mapping[str, Any]: ...
-    def synthesize(self, prompt: str) -> Mapping[str, Any]: ...
+    def run(self, prompt: str) -> Mapping[str, Any]: ...
 
 
 def _compact_candidates(connection: Any) -> dict[str, list[dict]]:
@@ -42,6 +42,32 @@ def _compact_candidates(connection: Any) -> dict[str, list[dict]]:
         "rules": [{"id": x["id"], "text": x["text"], "category": x["category"], "authority": "interpretation_guardrail"} for x in rules],
     }
 
+
+
+def _one_call_prompt(query: str, candidates: Mapping[str, Any], previous_answer: Mapping[str, Any] | None) -> str:
+    previous = json.dumps(previous_answer, ensure_ascii=False)[:12000] if previous_answer else "null"
+    return f"""You are State Ask. In one response, first select the project records relevant to the request, then synthesize the grounded answer from only those selected records.
+
+Authority rules are non-negotiable:
+- Current State governs what is true, allowed, or in scope now.
+- Open Reviews qualify Current State; they never replace it. Include a Review when it materially challenges State used by the answer.
+- A Question is blocking only when its supplied record says blocking=true. Ordinary Questions are known unknowns, not blockers.
+- History is accepted past change. Evidence is what was said or observed and cannot silently override Current State.
+- Project Rules constrain interpretation.
+- Unknown must remain unknown. Newer does not mean more authoritative. Approval does not mean implementation.
+- Optimize for relevance, not completeness. Omit tempting recent noise.
+- Refinement may change format, audience, length, focus, or ordering, but never project truth.
+- For meeting prep, frame relevant Questions as opportunities to get answered.
+
+Job choices: current_fact, meeting_prep, catch_up, project_update, why_or_provenance, attention_check, historical, drafting, general_project_synthesis, refinement.
+
+User request: {query}
+Previous answer (for refinement only): {previous}
+
+Authority-tagged candidate records:
+{json.dumps(candidates, ensure_ascii=False)}
+
+Return the required JSON object with both `selection` and `answer`. Every answer record_id must be present in the selection and candidate records. Relevant Reviews must appear visibly in the main answer, not only in source_ids. Use concise adaptive sections and short suggested refinements."""
 
 def _selector_prompt(query: str, candidates: Mapping[str, Any], previous_answer: Mapping[str, Any] | None) -> str:
     previous = json.dumps(previous_answer, ensure_ascii=False)[:8000] if previous_answer else "null"
@@ -183,19 +209,47 @@ def _validate_synthesis(answer: AskSynthesis, selection: AskSelection, context: 
 
 
 def run_ask(connection: Any, provider: AskProvider, query: str, previous_answer: Mapping[str, Any] | None = None) -> dict[str, Any]:
+    total_started = time.perf_counter()
+    context_started = time.perf_counter()
     candidates = _compact_candidates(connection)
-    selection_raw = provider.select(_selector_prompt(query, candidates, previous_answer))
+    context_ms = round((time.perf_counter() - context_started) * 1000)
+
+    provider_started = time.perf_counter()
+    if hasattr(provider, "run"):
+        combined = provider.run(_one_call_prompt(query, candidates, previous_answer))
+        provider_ms = round((time.perf_counter() - provider_started) * 1000)
+        selection_raw = combined.get("selection")
+        answer_raw = combined.get("answer")
+        pipeline = "one_call"
+    else:
+        # Compatibility path for deterministic test providers while R9.1 lands.
+        selection_raw = provider.select(_selector_prompt(query, candidates, previous_answer))
+        selection = _validate_selection(AskSelection.model_validate(selection_raw), candidates)
+        selected = _selected_context(selection, candidates)
+        answer_raw = provider.synthesize(_synthesis_prompt(query, selection, selected, previous_answer))
+        provider_ms = round((time.perf_counter() - provider_started) * 1000)
+        pipeline = "two_call_compat"
+
+    validation_started = time.perf_counter()
     selection = _validate_selection(AskSelection.model_validate(selection_raw), candidates)
     context = _selected_context(selection, candidates)
-    answer_raw = provider.synthesize(_synthesis_prompt(query, selection, context, previous_answer))
     answer = _validate_synthesis(AskSynthesis.model_validate(answer_raw), selection, context)
+    validation_ms = round((time.perf_counter() - validation_started) * 1000)
 
     selected_open = set(selection.review_ids + selection.blocking_question_ids + selection.question_ids)
     total_open = len(candidates["reviews"]) + len(candidates["questions"])
     remaining = max(0, total_open - len(selected_open))
     remaining_reviews = max(0, len(candidates["reviews"]) - len(selection.review_ids))
+    total_ms = round((time.perf_counter() - total_started) * 1000)
     return {
         "answer": answer.model_dump(),
         "selection": selection.model_dump(),
         "open_items_remaining": {"count": remaining, "reviews": remaining_reviews},
+        "timing": {
+            "pipeline": pipeline,
+            "context_ms": context_ms,
+            "provider_ms": provider_ms,
+            "validation_ms": validation_ms,
+            "total_ms": total_ms,
+        },
     }

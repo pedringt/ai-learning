@@ -23,7 +23,7 @@ from seed_demo import bootstrap_demo_data
 from ask_contract import AskRequest
 from ask_provider import LiveAskProvider
 from ask_service import run_ask
-STATE_BUILD_REV = "r9.0-ask-meeting-prep-slice-2026-09-02"
+STATE_BUILD_REV = "r9.1-ask-latency-one-call-2026-09-02"
 logger = logging.getLogger("state.api")
 
 from review_service import (
@@ -470,7 +470,14 @@ def create_app(settings: Settings | None = None, provider: InterpretationProvide
             request.app.state.ask_provider = selected_ask_provider
         try:
             with get_connection() as connection:
-                return run_ask(connection, selected_ask_provider, payload.query.strip(), payload.previous_answer)
+                result = run_ask(connection, selected_ask_provider, payload.query.strip(), payload.previous_answer)
+                timing = result.get("timing", {})
+                logger.info(
+                    "Ask timing pipeline=%s context_ms=%s provider_ms=%s validation_ms=%s total_ms=%s",
+                    timing.get("pipeline"), timing.get("context_ms"), timing.get("provider_ms"),
+                    timing.get("validation_ms"), timing.get("total_ms"),
+                )
+                return result
         except (ValueError, TypeError) as exc:
             logger.warning("Ask contract failure: %s", exc)
             raise HTTPException(status_code=422, detail="Ask could not produce a valid grounded answer") from exc

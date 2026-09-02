@@ -106,3 +106,14 @@ ANSWER_JSON_SCHEMA = {
         "suggested_refinements": {"type": "array", "items": {"type": "string"}},
     },
 }
+
+
+ONE_CALL_ASK_JSON_SCHEMA = {
+    "type": "object",
+    "additionalProperties": False,
+    "required": ["selection", "answer"],
+    "properties": {
+        "selection": SELECTOR_JSON_SCHEMA,
+        "answer": ANSWER_JSON_SCHEMA,
+    },
+}

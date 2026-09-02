@@ -1,11 +1,11 @@
-"""Provider-neutral two-step model adapter for State Ask."""
+"""Provider-neutral model adapter for State Ask."""
 from __future__ import annotations
 
 import json
 import re
 from typing import Any, Mapping
 
-from ask_contract import ANSWER_JSON_SCHEMA, SELECTOR_JSON_SCHEMA
+from ask_contract import ANSWER_JSON_SCHEMA, ONE_CALL_ASK_JSON_SCHEMA, SELECTOR_JSON_SCHEMA
 
 
 def _parse_json(text: str) -> Mapping[str, Any]:
@@ -25,6 +25,10 @@ class LiveAskProvider:
         self.provider = provider
         self.name = getattr(provider, "name", "unknown")
         self.model_identifier = getattr(provider, "model_identifier", "unknown")
+
+    def run(self, prompt: str) -> Mapping[str, Any]:
+        """Select relevant context and synthesize in one provider round-trip."""
+        return self._call(prompt, ONE_CALL_ASK_JSON_SCHEMA, max_tokens=2600)
 
     def select(self, prompt: str) -> Mapping[str, Any]:
         return self._call(prompt, SELECTOR_JSON_SCHEMA, max_tokens=1200)
