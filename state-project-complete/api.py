@@ -6,6 +6,9 @@ import json
 import os
 from contextlib import asynccontextmanager, contextmanager
 from typing import Literal
+import logging
+import uuid
+import time
 
 from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -16,7 +19,8 @@ from database_migration_backed import initialize_db
 from db import connect
 from interpretation_pipeline_integrated import InterpretationProvider, new_id, process_evidence
 from openai_provider import OpenAIProvider
-STATE_BUILD_REV = "open-items-outline-2026-09-02-r6"
+STATE_BUILD_REV = "r7-hardening-2026-09-02"
+logger = logging.getLogger("state.api")
 
 from review_service import (
     ReviewConflictError,
@@ -25,6 +29,9 @@ from review_service import (
     list_history,
     list_reviews,
     list_state,
+    list_questions,
+    create_question,
+    stop_question,
     resolve_review,
 )
 
@@ -75,6 +82,30 @@ class ResolutionInput(BaseModel):
     note: str | None = Field(default=None, max_length=2_000)
 
 
+class QuestionInput(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    text: str = Field(min_length=1, max_length=2_000)
+    origin: str = Field(default="Added from Workspace", min_length=1, max_length=200)
+    blocking: bool = False
+    blocks: str | None = Field(default=None, max_length=500)
+
+    @field_validator("text")
+    @classmethod
+    def text_not_blank(cls, value: str) -> str:
+        value = value.strip()
+        if not value:
+            raise ValueError("text must not be blank")
+        return value
+
+    @field_validator("blocks")
+    @classmethod
+    def blocker_requires_description(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        value = value.strip()
+        return value or None
+
+
 def _provider_from_env(settings: Settings) -> InterpretationProvider:
     if settings.provider == "anthropic":
         if not os.getenv("ANTHROPIC_API_KEY"):
@@ -104,9 +135,15 @@ def create_app(settings: Settings | None = None, provider: InterpretationProvide
     @asynccontextmanager
     async def lifespan(_: FastAPI):
         """Initialize database on startup."""
-        print(f"[STATE] Starting build {STATE_BUILD_REV}", flush=True)
+        logging.basicConfig(level=os.getenv("LOG_LEVEL", "INFO"))
+        logger.info("Starting build %s", STATE_BUILD_REV)
         with get_connection() as connection:
             initialize_db(connection)
+        if app.state.provider is None:
+            try:
+                app.state.provider = _provider_from_env(settings)
+            except RuntimeError as exc:
+                logger.warning("Provider not initialized at startup: %s", exc)
         yield
 
     app = FastAPI(title="State API", version="0.1.0", lifespan=lifespan)
@@ -119,6 +156,19 @@ def create_app(settings: Settings | None = None, provider: InterpretationProvide
         allow_methods=["GET", "POST"],
         allow_headers=["Content-Type"],
     )
+
+    @app.middleware("http")
+    async def request_id_middleware(request: Request, call_next):
+        request_id = request.headers.get("X-Request-ID") or uuid.uuid4().hex[:12]
+        started = time.perf_counter()
+        response = await call_next(request)
+        elapsed_ms = (time.perf_counter() - started) * 1000
+        response.headers["X-Request-ID"] = request_id
+        logger.info(
+            "request id=%s method=%s path=%s status=%s elapsed_ms=%.0f",
+            request_id, request.method, request.url.path, response.status_code, elapsed_ms,
+        )
+        return response
 
     @app.get("/health")
     def health() -> dict:
@@ -174,6 +224,42 @@ def create_app(settings: Settings | None = None, provider: InterpretationProvide
                 "reviews": created_reviews,
             }
 
+    @app.post("/api/evidence/{evidence_id}/reanalyze")
+    def reanalyze_evidence(evidence_id: str, request: Request) -> dict:
+        selected_provider = request.app.state.provider
+        if selected_provider is None:
+            try:
+                selected_provider = _provider_from_env(settings)
+                request.app.state.provider = selected_provider
+            except RuntimeError as exc:
+                raise HTTPException(status_code=503, detail=str(exc)) from exc
+        with get_connection() as connection:
+            exists = connection.execute("SELECT id FROM evidence WHERE id=?", (evidence_id,)).fetchone()
+            if exists is None:
+                raise HTTPException(status_code=404, detail="Evidence not found")
+            result = process_evidence(connection, evidence_id=evidence_id, provider=selected_provider)
+            reviews = list_reviews(connection, "open")
+            created_reviews = [item for item in reviews if item["id"] in result.review_ids]
+            if result.processing_status == "failed":
+                record = connection.execute(
+                    "SELECT error_code, structured_result FROM interpretation_records WHERE id=?",
+                    (result.interpretation_record_id,),
+                ).fetchone()
+                error_code = record["error_code"]
+                status_code = 503 if error_code == "provider_error" else 422
+                raise HTTPException(status_code=status_code, detail={
+                    "code": error_code,
+                    "evidence_id": evidence_id,
+                    "interpretation_record_id": result.interpretation_record_id,
+                    "error_details": {"error_message": "The analysis service could not complete this request. Please retry analysis."},
+                })
+            return {
+                "evidence_id": evidence_id,
+                "interpretation_record_id": result.interpretation_record_id,
+                "processing_status": result.processing_status,
+                "reviews": created_reviews,
+            }
+
     @app.get("/api/evidence")
     def get_evidence() -> dict:
         with get_connection() as connection:
@@ -205,6 +291,28 @@ def create_app(settings: Settings | None = None, provider: InterpretationProvide
                 "open_reviews": list_reviews(connection, "open"),
                 "history": list_history(connection),
             }
+
+    @app.get("/api/questions")
+    def get_questions(status: Literal["open", "resolved", "stopped"] = Query(default="open")) -> dict:
+        with get_connection() as connection:
+            return {"items": list_questions(connection, status)}
+
+    @app.post("/api/questions", status_code=201)
+    def post_question(payload: QuestionInput) -> dict:
+        if payload.blocking and not payload.blocks:
+            raise HTTPException(status_code=422, detail="Blocking questions must name the concrete dependency they block")
+        with get_connection() as connection:
+            item = create_question(connection, new_id("question"), payload.text, origin=payload.origin, blocking=payload.blocking, blocks=payload.blocks)
+            return item
+
+    @app.post("/api/questions/{question_id}/stop")
+    def post_stop_question(question_id: str) -> dict:
+        with get_connection() as connection:
+            try:
+                stop_question(connection, question_id)
+            except ReviewNotFoundError as exc:
+                raise HTTPException(status_code=404, detail="Open question not found") from exc
+            return {"question_id": question_id, "status": "stopped"}
 
     @app.get("/api/history")
     def get_history() -> dict:

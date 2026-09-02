@@ -20,6 +20,49 @@ class ReviewConflictError(RuntimeError):
 Decision = Literal["accept", "keep", "reject"]
 
 
+def list_questions(connection: Connection, status: str = "open") -> list[dict]:
+    connection.row_factory = sqlite3.Row
+    rows = connection.execute(
+        "SELECT id, text, status, blocking, blocks, origin, created_at, resolved_at, resolution, source_evidence_id "
+        "FROM questions WHERE status=? ORDER BY blocking DESC, created_at, id", (status,)
+    ).fetchall()
+    return [dict(row) for row in rows]
+
+
+def _normalized_question_text(value: str) -> str:
+    return " ".join((value or "").casefold().split())
+
+
+def create_question(connection: Connection, question_id: str, text: str, *, origin: str = "Added from Workspace", blocking: bool = False, blocks: str | None = None) -> dict:
+    cleaned = text.strip()
+    # Creating the same open question twice should be idempotent from the UI's
+    # point of view. This also lets the frontend safely bootstrap demo questions
+    # into the authoritative backend without duplicating them on every reload.
+    for existing in list_questions(connection, "open"):
+        if _normalized_question_text(existing["text"]) == _normalized_question_text(cleaned):
+            return existing
+    connection.execute(
+        "INSERT INTO questions(id, text, status, blocking, blocks, origin) VALUES (?, ?, 'open', ?, ?, ?)",
+        (question_id, cleaned, 1 if blocking else 0, blocks, origin),
+    )
+    connection.commit()
+    row = connection.execute("SELECT * FROM questions WHERE id=?", (question_id,)).fetchone()
+    return dict(row)
+
+
+def stop_question(connection: Connection, question_id: str) -> None:
+    existing = connection.execute(
+        "SELECT id FROM questions WHERE id=? AND status='open'", (question_id,)
+    ).fetchone()
+    if existing is None:
+        raise ReviewNotFoundError(question_id)
+    connection.execute(
+        "UPDATE questions SET status='stopped', resolved_at=CURRENT_TIMESTAMP, resolution='Stopped tracking' "
+        "WHERE id=? AND status='open'", (question_id,)
+    )
+    connection.commit()
+
+
 def resolve_review(connection: Connection, review_id: str, decision: Decision, note: str | None = None) -> None:
     """Resolve one review atomically; only ``accept`` may mutate Current State."""
     connection.row_factory = sqlite3.Row
@@ -58,6 +101,33 @@ def resolve_review(connection: Connection, review_id: str, decision: Decision, n
             "resolved_at=CURRENT_TIMESTAMP WHERE id=?",
             (resolution, note, review_id),
         )
+        if decision == "accept":
+            evidence_rows = connection.execute(
+                "SELECT e.id, e.source_type FROM evidence e JOIN review_evidence re ON re.evidence_id=e.id "
+                "WHERE re.review_id=? ORDER BY e.submitted_at DESC, e.id DESC",
+                (review_id,),
+            ).fetchall()
+            latest_evidence_id = evidence_rows[0]["id"] if evidence_rows else None
+            linked_questions = connection.execute(
+                "SELECT question_id FROM review_questions WHERE review_id=?", (review_id,)
+            ).fetchall()
+            for linked in linked_questions:
+                connection.execute(
+                    "UPDATE questions SET status='resolved', resolved_at=CURRENT_TIMESTAMP, "
+                    "resolution='Resolved by reviewed evidence', source_evidence_id=? WHERE id=? AND status='open'",
+                    (latest_evidence_id, linked["question_id"]),
+                )
+            # Backward compatibility for explicit question responses created by
+            # older clients before Review↔Question links existed.
+            for evidence in evidence_rows:
+                source_type = evidence["source_type"] or ""
+                if source_type.startswith("question_response:"):
+                    question_id = source_type.split(":", 1)[1]
+                    connection.execute(
+                        "UPDATE questions SET status='resolved', resolved_at=CURRENT_TIMESTAMP, "
+                        "resolution='Resolved by reviewed evidence', source_evidence_id=? WHERE id=? AND status='open'",
+                        (evidence["id"], question_id),
+                    )
         connection.execute("COMMIT")
     except Exception:
         connection.execute("ROLLBACK")
@@ -167,6 +237,9 @@ def list_reviews(connection: Connection, status: str = "open") -> list[dict]:
             "JOIN review_state_items rs ON rs.state_item_id=s.id WHERE rs.review_id=? ORDER BY s.id",
             (row["id"],),
         )]
+        item["resolves_question_ids"] = [q["question_id"] for q in connection.execute(
+            "SELECT question_id FROM review_questions WHERE review_id=? ORDER BY question_id", (row["id"],)
+        ).fetchall()]
         result.append(item)
     return result
 

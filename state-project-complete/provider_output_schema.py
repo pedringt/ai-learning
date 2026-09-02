@@ -35,6 +35,7 @@ PROVIDER_OUTPUT_SCHEMA = {
                     "decision_question": {"type": "string"},
                     "why_consequential": {"type": "string"},
                     "affected_state_item_ids": {"type": "array", "items": {"type": "string"}},
+                    "resolves_question_ids": {"type": "array", "items": {"type": "string"}},
                     "grouping_reason": {"type": "string"},
                     "proposed_changes": {
                         "type": "array",

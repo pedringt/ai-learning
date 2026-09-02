@@ -5,6 +5,7 @@ const document={getElementById(id){return stub},querySelectorAll(){return []},qu
 const context={window:{},document,navigator:{clipboard:{writeText(){}}},location:{protocol:'file:'},requestAnimationFrame(fn){fn()},HTMLElement:function(){},console,setTimeout};
 vm.createContext(context);
 vm.runInContext(fs.readFileSync(path.join(dir,'context-data.js'),'utf8'),context);
+vm.runInContext(fs.readFileSync(path.join(dir,'context-api.js'),'utf8'),context);
 vm.runInContext(fs.readFileSync(path.join(dir,'context-app.js'),'utf8'),context);
 const api=context.window.STATE_ASK_TEST_API;
 let pass=0,fail=0;

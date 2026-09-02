@@ -7,7 +7,7 @@ from pathlib import Path
 from db import Connection, connect_sqlite
 
 MIGRATIONS_DIR = Path(__file__).resolve().parent / "migrations"
-_EXPECTED_MIGRATIONS = ("001_initial.sql", "002_add_operation_and_effective_date.sql")
+_EXPECTED_MIGRATIONS = ("001_initial.sql", "002_add_operation_and_effective_date.sql", "003_questions.sql", "004_link_reviews_questions.sql")
 
 
 def _get_migration_files() -> list[Path]:

@@ -124,6 +124,42 @@ class Connection:
         return getattr(self._conn, name)
     
     @staticmethod
+    def _replace_qmark_placeholders(query: str) -> str:
+        """Convert SQLite qmark placeholders without touching quoted SQL text.
+
+        SQL escapes quote characters by doubling them (for example ``'it''s'``),
+        not only with backslashes.  A tiny state machine is safer than a plain
+        string replacement and is sufficient for the SQL emitted by this app.
+        """
+        out: list[str] = []
+        quote: str | None = None
+        i = 0
+        while i < len(query):
+            ch = query[i]
+            if quote is not None:
+                out.append(ch)
+                if ch == quote:
+                    if i + 1 < len(query) and query[i + 1] == quote:
+                        out.append(query[i + 1])
+                        i += 2
+                        continue
+                    if i > 0 and query[i - 1] == "\\":
+                        i += 1
+                        continue
+                    quote = None
+                i += 1
+                continue
+            if ch in ("'", '"'):
+                quote = ch
+                out.append(ch)
+            elif ch == "?":
+                out.append("%s")
+            else:
+                out.append(ch)
+            i += 1
+        return "".join(out)
+
+    @staticmethod
     def _convert_sql(query: str, is_postgres: bool) -> str:
         """Convert SQL syntax between SQLite and Postgres."""
         # Transaction control statements: pass through unchanged
@@ -135,33 +171,7 @@ class Connection:
             return query
         
         if is_postgres:
-            # Convert SQLite ? to Postgres %s
-            # Be careful not to replace ? inside strings
-            converted = ""
-            in_string = False
-            quote_char = None
-            i = 0
-            while i < len(query):
-                char = query[i]
-                
-                # Track string boundaries
-                if char in ('"', "'") and (i == 0 or query[i-1] != '\\'):
-                    if not in_string:
-                        in_string = True
-                        quote_char = char
-                    elif char == quote_char:
-                        in_string = False
-                        quote_char = None
-                
-                # Replace ? only outside strings
-                if char == '?' and not in_string:
-                    converted += '%s'
-                else:
-                    converted += char
-                
-                i += 1
-            
-            query = converted
+            query = Connection._replace_qmark_placeholders(query)
             
             # Convert INSERT OR IGNORE to INSERT ... ON CONFLICT DO NOTHING
             # Postgres uses ON CONFLICT instead of OR IGNORE

@@ -10,6 +10,7 @@ returns structured JSON. Application-owned validation enforces the contract.
 from __future__ import annotations
 
 import json
+import logging
 import os
 import time
 from typing import Any, Mapping
@@ -22,6 +23,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parent / "phase2_current"))
 from state_spike.semantic_validation import InterpretationContextSnapshot
 from provider_output_schema import PROVIDER_OUTPUT_SCHEMA
 
+
+logger = logging.getLogger("state.provider.anthropic")
 
 class AnthropicProvider:
     """Provider adapter for Anthropic's Claude API."""
@@ -93,11 +96,9 @@ class AnthropicProvider:
         # dominates the end-to-end request in production. flush=True matters on
         # hosted logs so the start line appears before the network request returns.
         started = time.perf_counter()
-        print(
-            f"[PROVIDER] anthropic start model={self.model_identifier} "
-            f"prompt_chars={len(prompt)} prompt_ms={prompt_ms:.0f} "
-            f"max_tokens={self.max_tokens} timeout_s={self.timeout_seconds:g}",
-            flush=True,
+        logger.info(
+            "provider_start provider=anthropic model=%s prompt_chars=%s prompt_ms=%.0f max_tokens=%s timeout_s=%s",
+            self.model_identifier, len(prompt), prompt_ms, self.max_tokens, self.timeout_seconds,
         )
         message = self.client.messages.create(
             model=self.model_identifier,
@@ -120,11 +121,9 @@ class AnthropicProvider:
         input_tokens = getattr(usage, "input_tokens", None)
         output_tokens = getattr(usage, "output_tokens", None)
         stop_reason = getattr(message, "stop_reason", None)
-        print(
-            f"[PROVIDER] anthropic done model={self.model_identifier} "
-            f"elapsed_ms={elapsed_ms:.0f} input_tokens={input_tokens} "
-            f"output_tokens={output_tokens} stop_reason={stop_reason}",
-            flush=True,
+        logger.info(
+            "provider_done provider=anthropic model=%s elapsed_ms=%.0f input_tokens=%s output_tokens=%s stop_reason=%s",
+            self.model_identifier, elapsed_ms, input_tokens, output_tokens, stop_reason,
         )
 
         # Structured outputs can still be non-schema text on refusal or be
@@ -202,6 +201,16 @@ class AnthropicProvider:
                     "why_consequential": row[2],
                 }
 
+        questions = {}
+        for row in connection.execute(
+            "SELECT id, text, blocking, blocks FROM questions WHERE status='open' ORDER BY created_at, id"
+        ).fetchall():
+            questions[row[0]] = {
+                "text": row[1],
+                "blocking": bool(row[2]),
+                "blocks": row[3],
+            }
+
         # The API constrains structural JSON. Keep this prompt focused on semantic
         # interpretation and cross-field meaning rather than repeating the full schema.
         prompt = f"""You maintain a project's reviewed Current State from immutable Evidence.
@@ -215,6 +224,10 @@ Evidence never changes State directly; a human decides Reviews.
 {self._format_open_reviews(reviews)}
 </open_reviews>
 
+<open_questions>
+{self._format_open_questions(questions)}
+</open_questions>
+
 <evidence id="{evidence.get('id')}">
 {evidence.get('content')}
 </evidence>
@@ -227,12 +240,18 @@ Compare the Evidence with Current State and open Reviews. Return the semantic in
 - missing_understanding: use for information not represented in Current State. Its proposals must be create operations only. Create proposals have no state_item_id.
 - state_at_risk: use when Evidence makes existing State uncertain without establishing a replacement; normally emit no proposal.
 - Set existing_review_id only when an open Review above is clearly the same pending human decision; use its exact Review ID. Otherwise omit it so software creates a new Review.
+- resolves_question_ids is optional. Include an exact open Question ID only when this Evidence directly establishes an answer and accepting this Review would establish that answer in Current State. A Note may answer a Question indirectly; do not require it to be submitted from the Question UI. Do not link merely related Evidence.
+- Blocking status is application-owned dependency metadata. Do not infer urgency or create a blocker because details are unspecified.
 - For update/retire, output the exact existing state_item_id. Software supplies expected_version and ensures that target is affected.
 - effective_date is optional. Include only a complete date explicitly established by Evidence, as YYYY-MM-DD. Omit relative, partial, immediate, approval-dependent, or unknown timing.
 - grouping_reason is optional only when one Review genuinely groups multiple affected State items or multiple changes.
 - Never invent State IDs, Review IDs, dates, facts, or certainty.
 - Keep summary, questions, reasons, and rationales concise: one sentence each, usually under 25 words. Use at most 3 topics unless clearly necessary.
-- If uncertain whether maintained understanding may need human judgment, recommend a Review rather than silently changing State.
+- Preserve epistemic status exactly. “approved” does not mean implemented, enabled, deployed, complete, universally applicable, or safe across every subtype. “planned” does not mean committed; “capable” does not mean enabled.
+- Do not create speculative residue. Missing implementation details are not themselves a reason for another Review. A Review is for a consequential change/risk to maintained State, not merely something that would be useful to know.
+- If Evidence establishes a narrow consequential fact, propose only that narrow fact. Do not widen scope beyond the Evidence.
+- Example: “Password reset tickets were approved for automation.” If that approval is not already Current State, propose the narrow fact “Password reset tickets are approved for automation.” Do not infer implementation, deployment, universal ticket coverage, or removal of human review.
+- If uncertain whether maintained understanding may need human judgment, recommend a Review rather than silently changing State; uncertainty about non-consequential details should remain unmodeled rather than becoming urgent work.
 </instructions>
 """
         return prompt
@@ -245,6 +264,15 @@ Compare the Evidence with Current State and open Reviews. Return the semantic in
         for state_id, details in sorted(states.items()):
             suffix = f" [effective {details['effective_date']}]" if details.get("effective_date") else ""
             lines.append(f"- {state_id}: {details['statement']}{suffix}")
+        return "\n".join(lines)
+
+    def _format_open_questions(self, questions: dict[str, dict]) -> str:
+        if not questions:
+            return "(No open Questions)"
+        lines = []
+        for question_id, details in sorted(questions.items()):
+            dependency = f"; blocks: {details['blocks']}" if details.get("blocking") and details.get("blocks") else ""
+            lines.append(f"- {question_id}: {details['text']}{dependency}")
         return "\n".join(lines)
 
     def _format_open_reviews(self, reviews: dict[str, dict]) -> str:

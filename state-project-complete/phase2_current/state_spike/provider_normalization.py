@@ -131,6 +131,10 @@ def normalize_provider_payload(
         else:
             affected = recommendation.get("affected_state_item_ids")
 
+        resolves_questions = _dedupe_strings(recommendation.get("resolves_question_ids"))
+        if isinstance(resolves_questions, list):
+            recommendation["resolves_question_ids"] = resolves_questions
+
         proposals = recommendation.get("proposed_changes")
         if not isinstance(proposals, list):
             continue

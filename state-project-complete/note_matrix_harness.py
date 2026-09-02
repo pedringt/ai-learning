@@ -3,7 +3,7 @@ from __future__ import annotations
 import json, sqlite3, tempfile, time, sys
 from pathlib import Path
 
-ROOT = Path('/mnt/data/state_backend_fix_verification')
+ROOT = Path(__file__).resolve().parent
 sys.path.insert(0, str(ROOT))
 from fastapi.testclient import TestClient
 from api import Settings, create_app
@@ -67,8 +67,8 @@ CASES = {
  '09_unrelated_two_reviews': {
    'note':'Password resets are automated. Also, Acme renewed its contract.',
    'payload': review_payload('Two unrelated facts changed',['password_reset','acme'],[
-      rec([{'operation':'update','state_item_id':'state_password','expected_version':1,'proposed_statement':'Password reset tickets are automated.','rationale':'Evidence changes automation status.'}], affected=['state_password']),
-      rec([{'operation':'create','proposed_statement':'Acme renewed its contract.','rationale':'Evidence establishes a separate commercial fact.'}], affected=[]),
+      rec([{'operation':'update','state_item_id':'state_password','expected_version':1,'proposed_statement':'Password reset tickets are automated.','rationale':'Evidence changes automation status.'}], affected=['state_password'], question='Update password-reset automation status?'),
+      rec([{'operation':'create','proposed_statement':'Acme renewed its contract.','rationale':'Evidence establishes a separate commercial fact.'}], affected=[], question='Add Acme contract renewal to Current State?'),
    ]), 'status':201,'reviews':2},
  '10_mixed_certain_speculative': {
    'note':'Password resets are automated, and I think MFA might be removed later.',
@@ -105,6 +105,11 @@ CASES = {
    'payload': review_payload('Rollout is in October 2026',['rollout'],[rec([
       {'operation':'update','state_item_id':'state_rollout','expected_version':1,'proposed_statement':'The rollout is in October 2026.','rationale':'Timing changed.','effective_date':'2026-10'}
    ], affected=['state_rollout'])]), 'status':201,'reviews':1},
+ '18_approval_is_not_implementation': {
+   'note':'Password reset tickets were approved for automation.',
+   'payload': review_payload('Password reset automation was approved',['password_reset'],[rec([
+      {'operation':'create','proposed_statement':'Password reset tickets are approved for automation.','rationale':'The Evidence establishes approval, not implementation or deployment.'}
+   ], review_type='missing_understanding', affected=[], question='Add the password-reset automation approval to Current State?')]), 'status':201,'reviews':1},
 }
 
 class Provider:
@@ -129,12 +134,12 @@ def seed(db):
 
 def main():
     results=[]
-    with tempfile.TemporaryDirectory() as td:
-        db=str(Path(td)/'state.db')
-        app=create_app(Settings(database_path=db,cors_origins=[]), Provider())
-        with TestClient(app, raise_server_exceptions=False) as c:
-            seed(db)
-            for name, case in CASES.items():
+    for name, case in CASES.items():
+        with tempfile.TemporaryDirectory() as td:
+            db=str(Path(td)/'state.db')
+            app=create_app(Settings(database_path=db,cors_origins=[]), Provider())
+            with TestClient(app, raise_server_exceptions=False) as c:
+                seed(db)
                 before = len(c.get('/api/reviews').json()['items'])
                 t=time.perf_counter(); r=c.post('/api/evidence',json={'content':case['note'],'source_type':'qa_matrix'}); ms=round((time.perf_counter()-t)*1000,2)
                 after = len(c.get('/api/reviews').json()['items'])

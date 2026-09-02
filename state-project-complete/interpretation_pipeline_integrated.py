@@ -14,6 +14,7 @@ Key differences from Phase 2's inline schema:
 from __future__ import annotations
 
 import json
+import logging
 import sqlite3
 import inspect
 import uuid
@@ -24,6 +25,8 @@ from pathlib import Path
 from typing import Any, Mapping, Protocol
 
 from db import Connection
+
+logger = logging.getLogger("state.interpretation")
 
 # Import Phase 2's validation logic unchanged
 sys.path.insert(0, str(Path(__file__).resolve().parent / "phase2_current"))
@@ -219,6 +222,27 @@ def _persist_success(
                     (review_id, state_id),
                 )
 
+            # Link Questions that this Review would resolve if accepted. Questions
+            # are application-owned objects: the model may reference only exact
+            # open IDs that software can verify at persistence time.
+            for question_id in rec.get("resolves_question_ids", []):
+                question_sql = "SELECT id, status FROM questions WHERE id=?"
+                if getattr(connection, "is_postgres", False):
+                    question_sql += " FOR UPDATE"
+                question = connection.execute(question_sql, (question_id,)).fetchone()
+                if question is None:
+                    raise StructuredInterpretationSemanticError(
+                        "invalid_question_reference", f"Question {question_id!r} does not exist"
+                    )
+                if question["status"] != "open":
+                    raise StructuredInterpretationSemanticError(
+                        "question_not_open", f"Question {question_id!r} is not open"
+                    )
+                connection.execute(
+                    "INSERT OR IGNORE INTO review_questions(review_id, question_id) VALUES (?, ?)",
+                    (review_id, question_id),
+                )
+
             # Create Proposals. When new Evidence updates an existing Review, a
             # newer proposal for the same State target supersedes the older
             # pending proposal instead of leaving two mutually-stale changes.
@@ -319,11 +343,11 @@ def _persist_failure(
             "error_message": error_message,
             "payload_preview": str(payload)[:500] if payload else None,
         }, sort_keys=True)
-        print(f"[PERSIST] Storing error details: {error_details[:200]}", flush=True)
+        logger.info("Storing interpretation failure details: %s", error_details[:200])
 
     connection.execute("BEGIN IMMEDIATE")
     try:
-        print(f"[PERSIST] Inserting interpretation record {record_id} with error_code {error_code}", flush=True)
+        logger.info("Inserting failed interpretation record %s code=%s", record_id, error_code)
         connection.execute(
             "INSERT INTO interpretation_records(id, evidence_id, review_id, provider, model_identifier, contract_version, processing_status, structured_result, error_code) "
             "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
@@ -341,13 +365,13 @@ def _persist_failure(
                 error_code,
             ),
         )
-        print(f"[PERSIST] Inserted interpretation record", flush=True)
+        logger.debug("Inserted failed interpretation record")
         connection.execute("UPDATE evidence SET processing_status=? WHERE id=?", ("failed", evidence_id))
-        print(f"[PERSIST] Updated evidence status", flush=True)
+        logger.debug("Updated evidence processing status")
         connection.execute("COMMIT")
-        print(f"[PERSIST] Committed transaction", flush=True)
+        logger.debug("Committed interpretation failure transaction")
     except Exception as e:
-        print(f"[ERROR] Database error in _persist_failure: {type(e).__name__}: {str(e)}", flush=True)
+        logger.exception("Database error while persisting interpretation failure")
         connection.execute("ROLLBACK")
         raise
 
@@ -384,28 +408,28 @@ def process_evidence(
 
     try:
         # Invoke provider with captured context
-        print(f"[STATE] Invoking provider for evidence {evidence_id}", flush=True)
+        logger.info("Invoking provider for evidence %s", evidence_id)
         interpret_parameters = inspect.signature(provider.interpret).parameters
         provider_kwargs = {"context": context, "evidence": dict(evidence)}
         if "connection" in interpret_parameters:
             provider_kwargs["connection"] = connection
         payload = provider.interpret(**provider_kwargs)
-        print(f"[STATE] Provider returned payload", flush=True)
+        logger.debug("Provider returned payload")
         payload = normalize_provider_payload(payload, context=context)
-        print(f"[STATE] Provider payload normalized", flush=True)
+        logger.debug("Provider payload normalized")
 
         # Structural validation (JSON Schema)
         validate_schema(payload)
-        print(f"[STATE] Schema validation passed", flush=True)
+        logger.debug("Schema validation passed")
 
         # Semantic validation (references, versions, constraints)
         validate_semantics(payload, context=context, application_state=application_snapshot(connection))
         if getattr(connection, "is_postgres", False):
             connection.commit()
-        print(f"[STATE] Semantic validation passed", flush=True)
+        logger.debug("Semantic validation passed")
 
     except StructuredInterpretationSchemaError as exc:
-        print(f"[ERROR] Schema validation failed: {exc}", flush=True)
+        logger.warning("Schema validation failed: %s", exc)
         return _persist_failure(
             connection,
             evidence_id=evidence_id,
@@ -415,7 +439,7 @@ def process_evidence(
             error_message=f"Response structure did not match required schema: {str(exc)}",
         )
     except StructuredInterpretationSemanticError as exc:
-        print(f"[ERROR] Semantic validation failed: {exc.code}: {exc}", flush=True)
+        logger.warning("Semantic validation failed code=%s: %s", exc.code, exc)
         return _persist_failure(
             connection,
             evidence_id=evidence_id,
@@ -429,7 +453,7 @@ def process_evidence(
         error_msg = f"{type(exc).__name__}: {str(exc)}"
         tb = traceback.format_exc()
         full_error = f"{error_msg}\n\n{tb}"
-        print(f"[ERROR] Provider error: {full_error}", flush=True)
+        logger.exception("Provider error while interpreting evidence %s", evidence_id)
         return _persist_failure(
             connection,
             evidence_id=evidence_id,

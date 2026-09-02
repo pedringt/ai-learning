@@ -209,3 +209,17 @@ if __name__ == "__main__":
         import traceback
         traceback.print_exc()
         sys.exit(1)
+
+
+def test_postgres_placeholder_conversion_ignores_sql_standard_escaped_quotes():
+    from db import Connection
+    query = "SELECT 'it''s ? literal', ? AS bound_value"
+    converted = Connection._convert_sql(query, is_postgres=True)
+    assert converted == "SELECT 'it''s ? literal', %s AS bound_value"
+
+
+def test_postgres_placeholder_conversion_ignores_double_quoted_identifier_text():
+    from db import Connection
+    query = 'SELECT "odd?identifier", ? FROM example'
+    converted = Connection._convert_sql(query, is_postgres=True)
+    assert converted == 'SELECT "odd?identifier", %s FROM example'

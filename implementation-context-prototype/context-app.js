@@ -1,11 +1,11 @@
 (() => {
   const D = window.PROJECT_CONTEXT_DATA;
-  const API_BASE = 'https://state-api-6waw.onrender.com';
+  const API = window.STATE_API;
   const clone = x => JSON.parse(JSON.stringify(x));
   const initial = clone(D);
   const state = {
     data: clone(D), view:'overview', result:null, resultQuery:'', projectMenuOpen:false, refinements:[], lastScenario:null,
-    addedSample:false, pendingCreated:false, reviewBannerDismissed:false, dialogReturnFocus:null, expandedNotes:new Set(), noteComposerOpen:false, editingNoteId:null, dismissedNudges:new Set(), projectNavOpen:false, hiddenProjectAreas:new Set(), historyTopic:null, notesFilter:'all', notesDateFilter:'all', notesSearch:'', isAnalyzing:false
+    addedSample:false, pendingCreated:false, reviewBannerDismissed:false, dialogReturnFocus:null, expandedNotes:new Set(), noteComposerOpen:false, editingNoteId:null, dismissedNudges:new Set(), projectNavOpen:false, hiddenProjectAreas:new Set(), historyTopic:null, notesFilter:'all', notesDateFilter:'all', notesSearch:'', isAnalyzing:false, reviewsBackendAvailable:false, questionsBackendAvailable:false
   };
 
   const root = document.getElementById('viewRoot');
@@ -13,12 +13,14 @@
   const dialogBody = document.getElementById('dialogBody');
   const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const norm = s => String(s).toLowerCase().replace(/[’']/g,'').replace(/[^a-z0-9\s]/g,' ').replace(/\s+/g,' ').trim();
-  const openQuestions = () => state.data.questions.filter(q => q.status === 'open');
-  const pendingReviews = () => state.data.reviews.filter(r => r.status === 'pending');
+  const openQuestions = () => state.data.questions.filter(q => q.status === 'open' && (!state.questionsBackendAvailable || q.backendManaged));
+  const pendingReviews = () => state.data.reviews.filter(r => r.status === 'pending' && (!state.reviewsBackendAvailable || r.backendReviewId));
   const accessUpdated = () => state.data.reviews.find(r => r.id==='r-access')?.status === 'update';
   const securityUpdated = () => state.data.reviews.find(r => r.id==='r-security')?.status === 'update';
   const demoDate = 'Aug 29';
   const demoDateISO = '2026-08-29';
+  const todayISO = () => new Date().toISOString().slice(0,10);
+  const todayLabel = () => new Intl.DateTimeFormat('en-US',{month:'short',day:'numeric'}).format(new Date());
   const isoValue = item => item?.dateISO || item?.createdISO || '';
   const sortDateAsc = (a,b) => isoValue(a).localeCompare(isoValue(b));
   const sortDateDesc = (a,b) => isoValue(b).localeCompare(isoValue(a));
@@ -31,6 +33,25 @@
     const actionCount=document.getElementById('openItemsActionCount'); if(actionCount){const n=pendingReviews().length;actionCount.textContent=n;actionCount.hidden=!n;}
     document.querySelectorAll('[data-project-area]').forEach(b=>b.hidden=state.hiddenProjectAreas.has(b.dataset.projectArea));
     const pm=document.getElementById('projectMenu'), ps=document.getElementById('projectSwitcher'); if(pm)pm.hidden=!state.projectMenuOpen; if(ps)ps.setAttribute('aria-expanded',state.projectMenuOpen?'true':'false');
+  }
+
+  function updateProjectSubnavActive(targetId){
+    if(state.view!=='project-overview') return;
+    const ids=['project-top','project-product','project-safety','project-evaluation'];
+    let activeId=targetId;
+    if(!activeId){
+      const threshold=120;
+      activeId='project-top';
+      for(const id of ids){
+        const el=document.getElementById(id);
+        if(el && el.getBoundingClientRect().top<=threshold) activeId=id;
+      }
+    }
+    document.querySelectorAll('[data-project-jump]').forEach(btn=>{
+      const active=btn.dataset.projectJump===activeId;
+      btn.classList.toggle('active',active);
+      if(active) btn.setAttribute('aria-current','location'); else btn.removeAttribute('aria-current');
+    });
   }
 
   function render(){ updateNav(); const views={overview:renderOverview,notes:renderNotes,'open-items':renderOpenItems,questions:renderOpenItems,review:renderOpenItems,history:renderHistory,'project-overview':renderProjectOverview}; (views[state.view]||renderOverview)(); }
@@ -55,7 +76,7 @@
   }
   function renderProjectOverview(){
     const visible=Object.entries(projectAreas).filter(([id])=>!state.hiddenProjectAreas.has(id));
-    root.innerHTML=`<article class="page project-page project-document"><header class="project-document-head" id="project-top"><span class="eyebrow">Current project</span><h2>${esc(state.data.project.name)}</h2><p>${esc(state.data.project.description)}</p><dl class="project-document-meta"><div><dt>Stage</dt><dd>${esc(state.data.project.stage)}</dd></div><div><dt>Outcome</dt><dd>${esc(state.data.project.outcome)}</dd></div></dl></header><div class="project-document-intro"><strong>Current direction</strong><p>Tier 1 troubleshooting assistance with human review.</p></div><div class="project-outline">${visible.map(([id,a])=>projectOutlineSection(id,a)).join('')||'<div class="empty-state"><h3>No Current State yet.</h3><p>Reviewed project understanding will appear here as a clean outline.</p></div>'}</div></article>`;
+    root.innerHTML=`<article class="page project-page project-document"><header class="project-document-head" id="project-top"><span class="eyebrow">Current project</span><h2>${esc(state.data.project.name)}</h2><p>${esc(state.data.project.description)}</p><dl class="project-document-meta"><div><dt>Stage</dt><dd>${esc(state.data.project.stage)}</dd></div><div><dt>Outcome</dt><dd>${esc(state.data.project.outcome)}</dd></div></dl></header><div class="project-document-intro"><strong>Current direction</strong><p>Tier 1 troubleshooting assistance with human review.</p></div><div class="project-outline">${visible.map(([id,a])=>projectOutlineSection(id,a)).join('')||'<div class="empty-state"><h3>No Current State yet.</h3><p>Reviewed project understanding will appear here as a clean outline.</p></div>'}</div></article>`;    requestAnimationFrame(()=>updateProjectSubnavActive());
   }
   function renderProjectArea(area){
     const a=projectAreas[area]; if(!a)return renderProjectOverview(); const items=currentKnowledge(area);
@@ -488,7 +509,7 @@
 
   function questionCard(q){
     const blocking=!!q.blocking;
-    return `<article class="open-question-row${blocking?' is-blocking':''}" data-action="open-question" data-question-id="${q.id}" tabindex="0" role="button" aria-label="Open question: ${esc(q.text)}"><div class="open-question-copy"><span class="open-item-label ${blocking?'blocking':'question'}">${blocking?'Blocking question':'Open question'}</span><h3>${esc(q.text)}</h3><p>${esc(q.origin)}${blocking&&q.blocks?` · Blocks: ${esc(q.blocks)}`:''}</p></div><span class="question-card-chevron" aria-hidden="true">›</span></article>`;
+    return `<button type="button" class="open-question-row${blocking?' is-blocking':''}" data-action="open-question" data-question-id="${q.id}" aria-label="Open question: ${esc(q.text)}"><span class="open-question-copy"><span class="open-item-label ${blocking?'blocking':'question'}">${blocking?'Blocking question':'Open question'}</span><span class="open-question-title">${esc(q.text)}</span><span class="open-question-meta">${esc(q.origin)}${q.created?` · ${esc(q.created)}`:''}${blocking&&q.blocks?` · Blocks: ${esc(q.blocks)}`:''}</span></span><span class="question-card-chevron" aria-hidden="true">›</span></button>`;
   }
 
   function renderOpenItems(){
@@ -502,7 +523,13 @@
   function renderQuestions(){ return renderOpenItems(); }
   function renderReview(){ return renderOpenItems(); }
 
-  function reviewCard(r){ const generic=r.id.startsWith('r-info-') || (Array.isArray(r.proposals) && r.proposals.length===0); return `<article class="review-card compact-review" data-review-card="${r.id}"><div class="review-row-head"><div><span class="review-kicker">${esc(r.title)}</span><h3>${esc(r.summary)}</h3></div></div><details class="review-focus"><summary>${generic?'Review this evidence →':'Review this change →'}</summary><div class="review-summary single-column"><div><span>Current understanding</span><p>${esc(r.current)}</p></div><div><span>${generic?'Review question':'Proposed change'}</span><p><strong>${esc(r.proposed)}</strong></p></div><div><span>Still unresolved</span><p>${esc(r.unresolved)}</p></div></div><div class="review-actions"><button class="btn primary" data-action="review-update" data-review="${r.id}">${generic?'Accept as reviewed evidence':'Update understanding'}</button><button class="btn secondary" data-action="review-keep" data-review="${r.id}">Leave unchanged</button></div><details class="reasoning"><summary>Why is this being proposed?</summary><p><strong>New evidence:</strong> ${esc(r.evidence)}</p><p><strong>What it establishes:</strong> ${esc(r.establishes)}</p><p><strong>What it does not establish:</strong> ${esc(r.doesNot)}</p></details></details></article>`; }
+  function reviewCard(r){
+    const generic=r.id.startsWith('r-info-') || (Array.isArray(r.proposals) && r.proposals.length===0);
+    const meaningfulUnresolved=r.unresolved && !/^nothing beyond this proposed change/i.test(r.unresolved);
+    const sourceNote=state.data.notes.find(n=>n.id===r.evidenceId);
+    const sourceMeta=sourceNote?`${sourceNote.date} · ${sourceNote.source}`:'';
+    return `<article class="review-card compact-review" data-review-card="${r.id}"><div class="review-row-head"><div><span class="review-kicker">${esc(r.title)}</span><h3>${esc(r.summary)}</h3>${sourceMeta?`<span class="review-source-meta">Evidence · ${esc(sourceMeta)}</span>`:''}</div></div><div class="review-summary single-column review-summary--decision"><div><span>Current</span><p>${esc(r.current)}</p></div><div><span>${generic?'Review question':'Proposed'}</span><p><strong>${esc(r.proposed)}</strong></p></div>${meaningfulUnresolved?`<div><span>Still unresolved</span><p>${esc(r.unresolved)}</p></div>`:''}</div><div class="review-actions"><button class="btn primary" data-action="review-update" data-review="${r.id}">${generic?'Accept as reviewed evidence':'Update understanding'}</button><button class="btn secondary" data-action="review-keep" data-review="${r.id}">Leave unchanged</button></div><details class="reasoning"><summary>Why / source</summary><p><strong>Evidence:</strong> ${esc(r.evidence)}</p><p><strong>Establishes:</strong> ${esc(r.establishes)}</p>${r.doesNot?`<p><strong>Does not establish:</strong> ${esc(r.doesNot)}</p>`:''}</details></article>`;
+  }
 
   async function decideReview(id,decision){
     const r=state.data.reviews.find(x=>x.id===id);
@@ -512,23 +539,19 @@
     if(r.backendReviewId){
       try{
         const apiDecision=decision==='update'?'accept':'keep';
-        const response=await fetch(`${API_BASE}/api/reviews/${encodeURIComponent(r.backendReviewId)}/resolve`,{
-          method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({decision:apiDecision})
-        });
-        const result=await response.json().catch(()=>({}));
-        if(!response.ok) throw new Error(result.detail||`API error ${response.status}`);
+        const result=await API.resolveReview(r.backendReviewId,apiDecision);
         r.status=decision;
         const note=state.data.notes.find(n=>n.id===r.evidenceId);
         if(note)note.status=decision==='update'?'accepted':'reviewed';
         if(decision==='update'){
           for(const p of (r.proposals||[])) if(p.operation==='retire'&&p.state_item_id){ const k=state.data.knowledge.find(x=>x.id===p.state_item_id); if(k)k.state='retired'; }
           syncApiState(result.state||[]);
-          if(r.resolvesQuestionId && (r.proposals||[]).length){ const q=state.data.questions.find(q=>q.id===r.resolvesQuestionId); if(q){q.status='resolved';q.resolution='Resolved by reviewed evidence';} }
+          const resolvedQuestionIds=r.resolvesQuestionIds?.length?r.resolvesQuestionIds:(r.resolvesQuestionId?[r.resolvesQuestionId]:[]);
+          if((r.proposals||[]).length) resolvedQuestionIds.forEach(questionId=>{const q=state.data.questions.find(q=>q.id===questionId);if(q){q.status='resolved';q.resolution='Resolved by reviewed evidence';}});
         }
         updateNav(); render(); showDecisionComplete(decision);
-        // Refetch open reviews from backend to clear stale UI elements and ensure
-        // duplicates or stale copies don't linger. Use a small delay to avoid race conditions.
-        setTimeout(() => hydrateBackend(), 300);
+        // Resolution response is authoritative; revalidate deterministically after it has rendered.
+        await hydrateBackend();
       }catch(e){
         showDialog(`<span class="eyebrow">Couldn’t complete review</span><h2 id="dialogTitle">Nothing was changed.</h2><p>${esc(e.message)}</p><div class="dialog-actions"><button class="btn primary" data-action="close-dialog">Close</button></div>`);
       }
@@ -541,8 +564,8 @@
       if(r.id==='r-access'){ const k=state.data.knowledge.find(k=>k.id==='k-access'); if(k)k.statement=k.afterReview; }
       if(r.questionToCreate && !state.data.questions.some(q=>q.id===r.questionToCreate.id)) state.data.questions.push(clone(r.questionToCreate));
       if(r.resolvesQuestionId){ const q=state.data.questions.find(q=>q.id===r.resolvesQuestionId); if(q){ q.status='resolved'; q.resolution='Resolved by reviewed Security follow-up'; } }
-      state.data.history.unshift({id:'h-'+Date.now(),date:demoDate,dateISO:demoDateISO,knowledgeId:r.id==='r-access'?'k-access':(r.id==='r-security'?'k-security':null),type:r.resolvesQuestionId?'Current understanding updated · open question resolved':(r.id.startsWith('r-info-')?'Evidence accepted without state change':'Current understanding updated'),before:r.current,after:r.id.startsWith('r-info-')?r.current:r.proposed,reason:r.id==='r-security'?'Security follow-up':r.id.startsWith('r-info-')?'Added project information':'Senior Support Rep interview',decision:'Human chose Update understanding'});
-    } else state.data.history.unshift({id:'h-'+Date.now(),date:demoDate,dateISO:demoDateISO,type:'Current understanding kept',before:r.current,after:r.current,reason:'Senior Support Rep interview preserved as evidence',decision:'Human chose Leave understanding unchanged'});
+      state.data.history.unshift({id:'h-'+Date.now(),date:todayLabel(),dateISO:todayISO(),knowledgeId:r.id==='r-access'?'k-access':(r.id==='r-security'?'k-security':null),type:r.resolvesQuestionId?'Current understanding updated · open question resolved':(r.id.startsWith('r-info-')?'Evidence accepted without state change':'Current understanding updated'),before:r.current,after:r.id.startsWith('r-info-')?r.current:r.proposed,reason:r.id==='r-security'?'Security follow-up':r.id.startsWith('r-info-')?'Added project information':'Senior Support Rep interview',decision:'Human chose Update understanding'});
+    } else state.data.history.unshift({id:'h-'+Date.now(),date:todayLabel(),dateISO:todayISO(),type:'Current understanding kept',before:r.current,after:r.current,reason:'Senior Support Rep interview preserved as evidence',decision:'Human chose Leave understanding unchanged'});
     render(); showDecisionComplete(decision);
   }
 
@@ -623,7 +646,8 @@
       current,
       evidence:r.evidence_content||fallbackEvidence,
       evidenceSourceType:r.evidence_source_type||'',
-      resolvesQuestionId:(r.evidence_source_type||'').startsWith('question_response:') ? (r.evidence_source_type||'').slice('question_response:'.length) : extras.resolvesQuestionId,
+      resolvesQuestionIds:(r.resolves_question_ids||[]).length ? [...r.resolves_question_ids] : ((r.evidence_source_type||'').startsWith('question_response:') ? [(r.evidence_source_type||'').slice('question_response:'.length)] : (extras.resolvesQuestionIds||extras.resolvesQuestionId?[extras.resolvesQuestionId].filter(Boolean):[])),
+      resolvesQuestionId:(r.resolves_question_ids||[])[0] || ((r.evidence_source_type||'').startsWith('question_response:') ? (r.evidence_source_type||'').slice('question_response:'.length) : extras.resolvesQuestionId),
       establishes:rationale||r.why_consequential,
       doesNot:r.review_type==='proposed_update'
         ? 'The proposed change does not become Current State until you accept it.'
@@ -693,11 +717,13 @@
   function syncApiState(items){
     const incoming=items||[];
     const activeIds=new Set(incoming.map(item=>item.id));
-    // /api/state is authoritative for backend-managed Current State. If a
-    // previously hydrated item disappears, it was retired and should no
-    // longer remain visible as current Project knowledge.
-    for(const k of state.data.knowledge){
-      if(k.backendManaged && !activeIds.has(k.id)) k.state='retired';
+    // A non-empty backend State response is authoritative. Fixture knowledge is
+    // an offline/demo fallback only; never merge absent fixture facts into a
+    // live backend Current State, because that creates two competing truths.
+    if(incoming.length){
+      for(const k of state.data.knowledge){
+        if(!activeIds.has(k.id)) k.state='retired';
+      }
     }
     for(const item of incoming){
       let k=state.data.knowledge.find(x=>x.id===item.id);
@@ -705,8 +731,8 @@
         k.statement=item.statement;
         k.state='current';
         k.backendManaged=true;
-        k.lastConfirmed=demoDate;
-        k.lastConfirmedISO=demoDateISO;
+        k.lastConfirmed=formatBackendDate(item.updated_at||item.created_at);
+        k.lastConfirmedISO=item.updated_at||item.created_at||todayISO();
       }else{
         state.data.knowledge.push({
           id:item.id,
@@ -716,45 +742,84 @@
           statement:item.statement,
           support:[],
           state:'current',
-          lastConfirmed:demoDate,
-          lastConfirmedISO:demoDateISO,
+          lastConfirmed:formatBackendDate(item.updated_at||item.created_at),
+          lastConfirmedISO:item.updated_at||item.created_at||todayISO(),
           backendManaged:true
         });
       }
     }
   }
 
-  async function submitEvidence(text, sourceType='manual_note'){
-    const response=await fetch(`${API_BASE}/api/evidence`,{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({content:text,source_type:sourceType})
-    });
-    const result=await response.json().catch(()=>({}));
-    if(!response.ok || !result.evidence_id){
-      console.error('API Error Response:',result);
-      if(result.detail?.error_details?.error_message) console.error('Detailed Error:',result.detail.error_details.error_message);
-      throw new Error(result.detail?.error_details?.error_message || result.detail?.code || `API error ${response.status}`);
+  function questionTextKey(value){ return norm(value); }
+
+  function remapQuestionReferences(oldId,newId){
+    if(!oldId || !newId || oldId===newId)return;
+    for(const review of state.data.reviews){
+      if(review.resolvesQuestionId===oldId) review.resolvesQuestionId=newId;
+      if(Array.isArray(review.resolvesQuestionIds)) review.resolvesQuestionIds=review.resolvesQuestionIds.map(id=>id===oldId?newId:id);
     }
-    return result;
   }
 
+  function syncApiQuestions(items){
+    const previous=[...state.data.questions];
+    const backendTexts=new Set((items||[]).map(q=>questionTextKey(q.text)));
+    const backend=(items||[]).map(q=>{
+      const fixture=previous.find(x=>!x.backendManaged && questionTextKey(x.text)===questionTextKey(q.text));
+      if(fixture) remapQuestionReferences(fixture.id,q.id);
+      return {
+        id:q.id,text:q.text,status:q.status,blocking:!!q.blocking,blocks:q.blocks||null,
+        origin:q.origin||fixture?.origin||'Added from Workspace',
+        created:fixture?.created||formatBackendDate(q.created_at),createdISO:fixture?.createdISO||q.created_at,
+        topics:fixture?.topics||[],backendManaged:true
+      };
+    });
+    const local=previous.filter(q=>!q.backendManaged && !backendTexts.has(questionTextKey(q.text)));
+    state.data.questions=[...backend,...local];
+  }
+
+  async function bootstrapFixtureQuestions(existingItems){
+    const items=[...(existingItems||[])];
+    const byText=new Map(items.map(q=>[questionTextKey(q.text),q]));
+    const fixtures=state.data.questions.filter(q=>!q.backendManaged && q.status==='open');
+    for(const fixture of fixtures){
+      const key=questionTextKey(fixture.text);
+      if(byText.has(key))continue;
+      try{
+        const created=await API.createQuestion(fixture.text,{origin:fixture.origin||'Initial discovery',blocking:!!fixture.blocking,blocks:fixture.blocks||null});
+        if(created?.id){items.push(created);byText.set(key,created);}
+      }catch(err){
+        console.warn('Could not persist fixture question:',err);
+      }
+    }
+    return items;
+  }
+
+  async function createBackendQuestion(text){ return API.createQuestion(text,{origin:'Added from Workspace',blocking:false}); }
+
+  async function submitEvidence(text, sourceType='manual_note'){
+    return API.submitEvidence(text,sourceType);
+  }
+
+  async function retryEvidenceAnalysis(evidenceId){ return API.retryEvidenceAnalysis(evidenceId); }
+
   async function hydrateBackend(){
-    if(typeof fetch!=='function')return;
+    if(!API)return;
     try{
-      const [stateResponse,evidenceResponse,openResponse,resolvedResponse,historyResponse]=await Promise.all([
-        fetch(`${API_BASE}/api/state`),
-        fetch(`${API_BASE}/api/evidence`),
-        fetch(`${API_BASE}/api/reviews?status=open`),
-        fetch(`${API_BASE}/api/reviews?status=resolved`),
-        fetch(`${API_BASE}/api/history`)
+      const [stateResult,evidenceResult,openResult,resolvedResult,historyResult,questionsResult]=await Promise.allSettled([
+        API.getState(), API.getEvidence(), API.getReviews('open'), API.getReviews('resolved'), API.getHistory(), API.getQuestions('open')
       ]);
-      const openPayload=openResponse.ok?await openResponse.json():{items:[]};
-      const resolvedPayload=resolvedResponse.ok?await resolvedResponse.json():{items:[]};
-      if(stateResponse.ok){ const payload=await stateResponse.json(); syncApiState(payload.items||[]); }
-      if(evidenceResponse.ok){ const payload=await evidenceResponse.json(); syncApiEvidence(payload.items||[],openPayload.items||[],resolvedPayload.items||[]); }
-      if(historyResponse.ok){ const payload=await historyResponse.json(); syncApiHistory(payload.items||[]); }
-      if(openResponse.ok){
+      const payloadOf=result=>result.status==='fulfilled'?result.value:{items:[]};
+      const statePayload=payloadOf(stateResult), evidencePayload=payloadOf(evidenceResult), openPayload=payloadOf(openResult), resolvedPayload=payloadOf(resolvedResult), historyPayload=payloadOf(historyResult), questionsPayload=payloadOf(questionsResult);
+      if(stateResult.status==='fulfilled') syncApiState(statePayload.items||[]);
+      if(evidenceResult.status==='fulfilled') syncApiEvidence(evidencePayload.items||[],openPayload.items||[],resolvedPayload.items||[]);
+      if(historyResult.status==='fulfilled') syncApiHistory(historyPayload.items||[]);
+      if(questionsResult.status==='fulfilled'){
+        const authoritativeQuestions=await bootstrapFixtureQuestions(questionsPayload.items||[]);
+        syncApiQuestions(authoritativeQuestions);
+        state.questionsBackendAvailable=true;
+      }
+      if(openResult.status==='fulfilled'){
+        state.reviewsBackendAvailable=true;
         replaceBackendOpenReviews(openPayload.items||[]);
         for(const raw of (openPayload.items||[])){
           const note=state.data.notes.find(n=>n.evidenceId===raw.evidence_id);
@@ -788,6 +853,15 @@
     update(); analysisClock=setInterval(update,1000);
   }
   function stopAnalysisClock(){ clearInterval(analysisClock); analysisClock=null; }
+  async function showAnalysisFailure(error,{draftMessage='This update needs another try.',safeContext='Your note'}={}){
+    state.isAnalyzing=false; stopAnalysisClock();
+    if(error?.evidenceId){
+      await hydrateBackend();
+      showDialog(`<span class="eyebrow">Saved, but not analyzed</span><h2 id="dialogTitle">${esc(safeContext)} is safe.</h2><p>The Evidence was saved, but analysis did not finish. Retry analysis without submitting it again.</p><div class="dialog-actions"><button class="btn primary" data-action="retry-analysis" data-evidence-id="${esc(error.evidenceId)}">Retry analysis</button><button class="btn secondary" data-action="close-dialog">Close</button></div>`);
+      return;
+    }
+    showDialog(`<span class="eyebrow">Couldn’t analyze</span><h2 id="dialogTitle">${esc(draftMessage)}</h2><p>${esc(error?.message||'Analysis failed.')}</p><div class="dialog-actions"><button class="btn primary" data-action="close-dialog">Close</button></div>`);
+  }
 
   async function saveInformation(){
     const text=document.getElementById('addInfoText')?.value.trim();
@@ -799,7 +873,7 @@
       const result=await submitEvidence(text,'manual_note');
       const stamp=Date.now(), noteId='n-'+stamp;
       const apiReviews=(result.reviews||[]).map(r=>mapApiReview(r,text));
-      state.data.notes.unshift({id:noteId,title:'Project update',text,source:'Update',date:demoDate,dateISO:demoDateISO,topics:[],status:apiReviews.length?'pending':'reviewed',reviewId:apiReviews[0]?.id||null,evidenceId:result.evidence_id});
+      state.data.notes.unshift({id:noteId,title:'Project update',text,source:'Update',date:todayLabel(),dateISO:todayISO(),topics:[],status:apiReviews.length?'pending':'reviewed',reviewId:apiReviews[0]?.id||null,evidenceId:result.evidence_id});
       apiReviews.forEach(r=>{r.evidenceId=noteId; upsertBackendReview(r);});
       state.reviewBannerDismissed=false;
       state.isAnalyzing=false; stopAnalysisClock();
@@ -809,16 +883,13 @@
       }else{
         showDialog(`<span class="eyebrow">Done</span><h2 id="dialogTitle">Note reviewed</h2><p>This evidence did not require a change to Current State.</p><div class="dialog-actions"><button class="btn primary" data-action="close-dialog">Done</button></div>`);
       }
-    }catch(e){
-      state.isAnalyzing=false; stopAnalysisClock();
-      showDialog(`<span class="eyebrow">Couldn’t analyze</span><h2 id="dialogTitle">This update needs another try.</h2><p>${esc(e.message)}</p><div class="dialog-actions"><button class="btn primary" data-action="close-dialog">Close</button></div>`);
-    }
+    }catch(e){ await showAnalysisFailure(e); }
   }
 
   function saveWorkingNote(title,text,source='Working note'){
     const clean=(text||'').trim(); if(!clean)return null;
     const stamp=Date.now(), id='n-user-'+stamp;
-    state.data.notes.unshift({id,title:(title||'Untitled note').trim()||'Untitled note',text:clean,source,date:demoDate,dateISO:demoDateISO,topics:[],status:'working'});
+    state.data.notes.unshift({id,title:(title||'Untitled note').trim()||'Untitled note',text:clean,source,date:todayLabel(),dateISO:todayISO(),topics:[],status:'working'});
     return id;
   }
 
@@ -833,16 +904,30 @@
       state.reviewBannerDismissed=false; state.isAnalyzing=false; stopAnalysisClock(); updateNav();
       if(apiReviews.length) showDialog(`<span class="eyebrow">Done</span><h2 id="dialogTitle">Note sent to Review</h2><p>${apiReviews.length===1?'One review needs your decision.':`${apiReviews.length} reviews need your decisions.`}</p><div class="dialog-actions"><button class="btn primary" data-action="go-review">Go to Review</button><button class="btn secondary" data-action="go-notes">Back to Notes</button></div>`);
       else showDialog(`<span class="eyebrow">Done</span><h2 id="dialogTitle">Note reviewed</h2><p>This note did not require a change to Current State.</p><div class="dialog-actions"><button class="btn primary" data-action="go-notes">Back to Notes</button></div>`);
-    }catch(e){ state.isAnalyzing=false; stopAnalysisClock(); showDialog(`<span class="eyebrow">Couldn’t analyze</span><h2 id="dialogTitle">The note is still a draft.</h2><p>${esc(e.message)}</p><div class="dialog-actions"><button class="btn primary" data-action="go-notes">Back to Notes</button></div>`); }
+    }catch(e){
+      if(e?.evidenceId) n.evidenceId=e.evidenceId;
+      await showAnalysisFailure(e,{draftMessage:'The note is still a draft.',safeContext:'Your note'});
+    }
   }
 
-  function addQuestion(text){ const clean=(text||'').trim(); if(!clean)return; if(!state.data.questions.some(q=>q.status==='open'&&norm(q.text)===norm(clean))) state.data.questions.push({id:'q-'+Date.now(),text:clean,topics:[],status:'open',origin:'Added from Workspace',created:demoDate,createdISO:demoDateISO}); updateNav(); showDialog(`<span class="eyebrow">Open question</span><h2 id="dialogTitle">Tracked without becoming a fact.</h2><p>${esc(clean)}</p><div class="dialog-actions"><button class="btn primary" data-action="go-questions">View Questions</button><button class="btn secondary" data-action="close-dialog">Continue</button></div>`); }
+  async function addQuestion(text){
+    const clean=(text||'').trim(); if(!clean)return;
+    if(state.data.questions.some(q=>q.status==='open'&&norm(q.text)===norm(clean)))return;
+    try{
+      const q=await createBackendQuestion(clean);
+      state.data.questions.push({id:q.id,text:q.text,topics:[],status:q.status,blocking:!!q.blocking,blocks:q.blocks||null,origin:q.origin,created:formatBackendDate(q.created_at),createdISO:q.created_at,backendManaged:true});
+      updateNav();
+      showDialog(`<span class="eyebrow">Open question</span><h2 id="dialogTitle">Tracked without becoming a fact.</h2><p>${esc(clean)}</p><div class="dialog-actions"><button class="btn primary" data-action="go-questions">View Questions</button><button class="btn secondary" data-action="close-dialog">Continue</button></div>`);
+    }catch(e){
+      showDialog(`<span class="eyebrow">Couldn’t save question</span><h2 id="dialogTitle">Nothing was added.</h2><p>${esc(e.message)}</p><div class="dialog-actions"><button class="btn primary" data-action="close-dialog">Close</button></div>`);
+    }
+  }
 
   document.addEventListener('click',async e=>{
     if(e.target.closest('[data-action="dismiss-review-banner"]')){ state.reviewBannerDismissed=true; renderOverview(); return; }
     if(e.target.closest('[data-action="dismiss-nudge"]')){ const btn=e.target.closest('[data-action="dismiss-nudge"]'); state.dismissedNudges.add(btn.dataset.nudge); renderReview(); return; }
-    const toggleProject=e.target.closest('[data-action="toggle-project-nav"]'); if(toggleProject){state.view='project-overview';state.projectNavOpen=true;render();setTimeout(()=>document.querySelector('.project-document-head')?.scrollIntoView({behavior:'smooth',block:'start'}),0);return;}
-    const projectJump=e.target.closest('[data-project-jump]'); if(projectJump){const target=projectJump.dataset.projectJump;state.view='project-overview';state.projectNavOpen=true;render();setTimeout(()=>document.getElementById(target)?.scrollIntoView({behavior:'smooth',block:'start'}),0);return;}
+    const toggleProject=e.target.closest('[data-action="toggle-project-nav"]'); if(toggleProject){state.projectNavOpen=true;if(state.view!=='project-overview'){state.view='project-overview';render();requestAnimationFrame(()=>document.getElementById('project-top')?.scrollIntoView({behavior:'smooth',block:'start'}));}else{updateNav();document.getElementById('project-top')?.scrollIntoView({behavior:'smooth',block:'start'});}return;}
+    const projectJump=e.target.closest('[data-project-jump]'); if(projectJump){const target=projectJump.dataset.projectJump;state.projectNavOpen=true;if(state.view!=='project-overview'){state.view='project-overview';render();requestAnimationFrame(()=>document.getElementById(target)?.scrollIntoView({behavior:'smooth',block:'start'}));}else{updateNav();updateProjectSubnavActive(target);document.getElementById(target)?.scrollIntoView({behavior:'smooth',block:'start'});}return;}
     const relatedReview=e.target.closest('[data-action="open-related-review"]'); if(relatedReview){ const r=state.data.reviews.find(x=>x.id===relatedReview.dataset.reviewId); if(r) showDialog(`<span class="eyebrow">Pending Review</span><h2 id="dialogTitle">Related evidence may affect this Current State</h2>${reviewCard(r)}`); return;}
         const topicHistory=e.target.closest('[data-action="view-topic-history"]'); if(topicHistory){state.historyTopic=topicHistory.dataset.knowledgeId;state.view='history';render();return;}
     const clearHistory=e.target.closest('[data-action="clear-history-topic"]'); if(clearHistory){state.historyTopic=null;renderHistory();return;}
@@ -901,18 +986,19 @@
           const result=await submitEvidence(text,`question_response:${q.id}`);
           const stamp=Date.now(), noteId='n-q-'+stamp;
           const apiReviews=(result.reviews||[]).map(r=>mapApiReview(r,text,{resolvesQuestionId:q.id}));
-          state.data.notes.unshift({id:noteId,title:'Answer to: '+q.text,text,source:'Question response',date:demoDate,dateISO:demoDateISO,topics:q.topics,status:apiReviews.length?'pending':'reviewed',reviewId:apiReviews[0]?.id||null,evidenceId:result.evidence_id});
+          state.data.notes.unshift({id:noteId,title:'Answer to: '+q.text,text,source:'Question response',date:todayLabel(),dateISO:todayISO(),topics:q.topics,status:apiReviews.length?'pending':'reviewed',reviewId:apiReviews[0]?.id||null,evidenceId:result.evidence_id});
           apiReviews.forEach(r=>{r.evidenceId=noteId; upsertBackendReview(r);});
           state.reviewBannerDismissed=false; state.isAnalyzing=false; stopAnalysisClock(); updateNav();
           if(apiReviews.length) showDialog(`<span class="eyebrow">Added</span><h2 id="dialogTitle">Answer sent to Review.</h2><p>The question stays unresolved until you accept reviewed evidence that establishes an answer.</p><div class="dialog-actions"><button class="btn primary" data-action="go-review">Go to Review</button></div>`);
           else showDialog(`<span class="eyebrow">Reviewed</span><h2 id="dialogTitle">The question stays open.</h2><p>The evidence did not produce a State change, so it was not enough to resolve this question.</p><div class="dialog-actions"><button class="btn primary" data-action="close-dialog">Done</button></div>`);
-        }catch(e){ state.isAnalyzing=false; stopAnalysisClock(); showDialog(`<span class="eyebrow">Couldn’t analyze</span><h2 id="dialogTitle">The question stays open.</h2><p>${esc(e.message)}</p><div class="dialog-actions"><button class="btn primary" data-action="close-dialog">Close</button></div>`); }
+        }catch(e){ await showAnalysisFailure(e,{draftMessage:'The question stays open.',safeContext:'Your question response'}); }
       }
     }
     else if(act==='close-result'){state.result=null;state.resultQuery='';renderOverview();}
     else if(act==='refine-submit')refine();
     else if(act==='add-info'||act==='suggest-update')showAddDialog();
     else if(act==='close-dialog'){if(!state.isAnalyzing)closeDialog();}
+    else if(act==='retry-analysis'){ const evidenceId=a.dataset.evidenceId; state.isAnalyzing=true; showDialog(analyzingDialog()); startAnalysisClock(); try{await retryEvidenceAnalysis(evidenceId); state.isAnalyzing=false; stopAnalysisClock(); await hydrateBackend(); showDialog(`<span class="eyebrow">Done</span><h2 id="dialogTitle">Analysis complete.</h2><p>Open Items now reflects anything that needs your decision.</p><div class="dialog-actions"><button class="btn primary" data-action="go-review">View Open Items</button></div>`);}catch(err){state.isAnalyzing=false;stopAnalysisClock();showDialog(`<span class="eyebrow">Still unavailable</span><h2 id="dialogTitle">Your note is still safe.</h2><p>${esc(err.message)}</p><div class="dialog-actions"><button class="btn primary" data-action="close-dialog">Close</button></div>`);} }
     else if(act==='sample-info'){ const t=document.getElementById('addInfoText'); if(t)t.value=state.data.sampleInformation; }
     else if(act==='save-info')saveInformation();
     else if(act==='go-review'){closeDialog();state.view='open-items';state.result=null;render();}
@@ -925,7 +1011,7 @@
     else if(act==='add-question')showDialog(`<span class="eyebrow">Known unknown</span><h2 id="dialogTitle">Add a question</h2><input id="manualQuestion" class="dialog-input" aria-label="New project question" placeholder="What does the project still need to establish?"/><div class="dialog-actions"><button class="btn primary" data-action="save-question">Track question</button><button class="btn secondary" data-action="close-dialog">Cancel</button></div>`);
     else if(act==='save-question'){const t=document.getElementById('manualQuestion')?.value;closeDialog();addQuestion(t);}
     else if(act==='confirm-stop-question'){const q=state.data.questions.find(q=>q.id===a.dataset.questionId);if(q)showDialog(`<span class="eyebrow">Open question</span><h2 id="dialogTitle">Stop tracking this question?</h2><p>It will be removed from the open questions list. This does not change any reviewed project understanding.</p><div class="dialog-actions"><button class="btn primary" data-action="stop-question" data-question-id="${q.id}">Stop tracking</button><button class="btn secondary" data-action="close-dialog">Cancel</button></div>`);}
-    else if(act==='stop-question'){const q=state.data.questions.find(q=>q.id===a.dataset.questionId);if(q)q.status='stopped';closeDialog();state.view='open-items';render();}
+    else if(act==='stop-question'){const q=state.data.questions.find(q=>q.id===a.dataset.questionId);if(q?.backendManaged){try{await API.stopQuestion(q.id);q.status='stopped';}catch(err){showDialog(`<span class="eyebrow">Couldn’t stop tracking</span><h2 id="dialogTitle">Question is still open.</h2><p>${esc(err.message)}</p><div class="dialog-actions"><button class="btn primary" data-action="close-dialog">Close</button></div>`);return;}}else if(q)q.status='stopped';closeDialog();state.view='open-items';render();}
     else if(act==='copy-note'){const n=state.data.notes.find(x=>x.id===a.dataset.noteId);if(n){navigator.clipboard?.writeText(n.text);a.textContent='Copied';}}
     else if(act==='copy-draft'){navigator.clipboard?.writeText(a.closest('.answer-stage')?.querySelector('.draft')?.innerText || '');a.textContent='Copied';}
   });
@@ -933,10 +1019,16 @@
   document.addEventListener('change',e=>{ if(e.target.id==='notesStatusFilter'){state.notesFilter=e.target.value;renderNotes();} });
 
   document.addEventListener('input',e=>{ if(e.target.id==='notesSearch'){ state.notesSearch=e.target.value; const q=norm(state.notesSearch); const list=document.getElementById('notesList'); const notes=state.data.notes.filter(n=>noteMatchesFilter(n,state.notesFilter||'all')&&(!q||norm(`${n.title} ${n.text} ${n.source}`).includes(q))); if(list) list.innerHTML=notes.map(simpleNote).join('') || '<div class="empty">No matching notes.</div>'; } });
+  let projectScrollScheduled=false;
+  window.addEventListener?.('scroll',()=>{
+    if(state.view!=='project-overview'||projectScrollScheduled)return;
+    projectScrollScheduled=true;
+    requestAnimationFrame(()=>{projectScrollScheduled=false;updateProjectSubnavActive();});
+  },{passive:true});
+
   document.addEventListener('keydown',e=>{
     if(e.key==='Enter'&&e.target.id==='askInput')submitAsk();
     if((e.key==='Enter'||e.key===' ')&&e.target.matches('.note-index-row[data-action="toggle-note"]')){e.preventDefault();const id=e.target.dataset.noteId;if(state.expandedNotes.has(id))state.expandedNotes.delete(id);else state.expandedNotes.add(id);renderNotes();}
-    if((e.key==='Enter'||e.key===' ')&&e.target.matches('.question-card-open[data-action="open-question"]')){e.preventDefault();e.target.click();}
     if((e.key==='Enter'||e.key===' ')&&e.target.matches('.history-entry.is-linked[data-action="view-topic-history"]')){e.preventDefault();e.target.click();}
     if(e.key==='Escape'&&state.projectMenuOpen){state.projectMenuOpen=false;updateNav();document.getElementById('projectSwitcher')?.focus();return;}
     if(e.key==='Escape'&&!overlay.hidden && !state.isAnalyzing){closeDialog();return;}

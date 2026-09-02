@@ -151,3 +151,163 @@ class ProviderFailureApiTests(unittest.TestCase):
                         (detail["interpretation_record_id"],),
                     ).fetchone()[0]
                     self.assertIn("TimeoutError", stored)
+
+class QuestionLifecycleApiTests(unittest.TestCase):
+    def setUp(self):
+        self.tempdir = tempfile.TemporaryDirectory()
+        self.db_path = str(Path(self.tempdir.name) / "state.db")
+        app = create_app(
+            Settings(database_path=self.db_path, provider="anthropic", cors_origins=[]),
+            provider=LaunchDateProvider(),
+        )
+        self.ctx = TestClient(app)
+        self.client = self.ctx.__enter__()
+        with sqlite3.connect(self.db_path) as connection:
+            connection.execute(
+                "INSERT INTO current_state_items(id, topic, statement, version) VALUES (?, ?, ?, ?)",
+                ("state_launch", "launch", "Launch is October 1.", 1),
+            )
+            connection.commit()
+
+    def tearDown(self):
+        self.ctx.__exit__(None, None, None)
+        self.tempdir.cleanup()
+
+    def test_manual_question_persists_and_can_be_stopped(self):
+        created = self.client.post("/api/questions", json={"text": "Which account source is authoritative?"})
+        self.assertEqual(created.status_code, 201)
+        item = created.json()
+        self.assertFalse(bool(item["blocking"]))
+        listed = self.client.get("/api/questions?status=open").json()["items"]
+        self.assertEqual([q["id"] for q in listed], [item["id"]])
+        stopped = self.client.post(f"/api/questions/{item['id']}/stop")
+        self.assertEqual(stopped.status_code, 200)
+        self.assertEqual(self.client.get("/api/questions?status=open").json()["items"], [])
+
+    def test_duplicate_open_question_text_is_idempotent(self):
+        first = self.client.post("/api/questions", json={"text": "Which account source is authoritative?"}).json()
+        second = self.client.post("/api/questions", json={"text": "  which   account source is AUTHORITATIVE?  "}).json()
+        self.assertEqual(first["id"], second["id"])
+        self.assertEqual(len(self.client.get("/api/questions?status=open").json()["items"]), 1)
+
+    def test_blocker_requires_named_dependency(self):
+        response = self.client.post("/api/questions", json={"text": "What is the threshold?", "blocking": True})
+        self.assertEqual(response.status_code, 422)
+        ok = self.client.post(
+            "/api/questions",
+            json={"text": "What is the threshold?", "blocking": True, "blocks": "Pilot launch decision"},
+        )
+        self.assertEqual(ok.status_code, 201)
+        self.assertTrue(bool(ok.json()["blocking"]))
+
+    def test_accepted_question_response_resolves_question(self):
+        q = self.client.post("/api/questions", json={"text": "When does launch start?"}).json()
+        evidence = self.client.post(
+            "/api/evidence",
+            json={"content": "Launch moved to October 15.", "source_type": f"question_response:{q['id']}"},
+        ).json()
+        self.client.post(f"/api/reviews/{evidence['reviews'][0]['id']}/resolve", json={"decision": "accept"})
+        self.assertEqual(self.client.get("/api/questions?status=open").json()["items"], [])
+        resolved = self.client.get("/api/questions?status=resolved").json()["items"]
+        self.assertEqual(resolved[0]["id"], q["id"])
+        self.assertEqual(resolved[0]["resolution"], "Resolved by reviewed evidence")
+
+
+class RetryAnalysisApiTests(unittest.TestCase):
+    def test_retry_reuses_saved_evidence_instead_of_creating_duplicate(self):
+        class FailOnceProvider:
+            name = "fail-once"
+            model_identifier = "test"
+            def __init__(self): self.calls = 0
+            def interpret(self, *, context, evidence, connection=None):
+                self.calls += 1
+                if self.calls == 1:
+                    raise TimeoutError("temporary provider failure")
+                return {
+                    "summary": "No maintained change.",
+                    "topics": ["note"],
+                    "outcome": "no_review",
+                    "no_review_explanation": "The note does not change maintained understanding.",
+                    "review_recommendations": [],
+                }
+
+        provider = FailOnceProvider()
+        with tempfile.TemporaryDirectory() as tempdir:
+            db_path = str(Path(tempdir) / "state.db")
+            app = create_app(Settings(database_path=db_path, provider="anthropic", cors_origins=[]), provider=provider)
+            with TestClient(app) as client:
+                first = client.post("/api/evidence", json={"content": "FYI only."})
+                self.assertEqual(first.status_code, 503)
+                evidence_id = first.json()["detail"]["evidence_id"]
+                retry = client.post(f"/api/evidence/{evidence_id}/reanalyze")
+                self.assertEqual(retry.status_code, 200)
+                self.assertEqual(retry.json()["evidence_id"], evidence_id)
+                evidence_items = client.get("/api/evidence").json()["items"]
+                self.assertEqual(len(evidence_items), 1)
+
+class IndirectQuestionResolutionApiTests(unittest.TestCase):
+    def test_new_note_can_link_an_open_question_but_only_acceptance_resolves_it(self):
+        class QuestionAnswerProvider:
+            name = "question-answer"
+            model_identifier = "test"
+            def __init__(self): self.question_id = None
+            def interpret(self, *, context, evidence, connection=None):
+                return {
+                    "summary": "Approval is now established.",
+                    "topics": ["automation"],
+                    "outcome": "review_recommended",
+                    "review_recommendations": [{
+                        "review_action": "create",
+                        "review_type": "missing_understanding",
+                        "decision_question": "Add the password-reset automation approval to Current State?",
+                        "why_consequential": "The note explicitly establishes an approval that was previously unknown.",
+                        "affected_state_item_ids": [],
+                        "resolves_question_ids": [self.question_id],
+                        "proposed_changes": [{
+                            "operation": "create",
+                            "state_item_id": None,
+                            "proposed_statement": "Password reset tickets are approved for automation.",
+                            "rationale": "The submitted evidence explicitly establishes approval, not implementation.",
+                        }],
+                    }],
+                }
+
+        provider = QuestionAnswerProvider()
+        with tempfile.TemporaryDirectory() as tempdir:
+            db_path = str(Path(tempdir) / "state.db")
+            app = create_app(Settings(database_path=db_path, provider="anthropic", cors_origins=[]), provider=provider)
+            with TestClient(app) as client:
+                q = client.post("/api/questions", json={"text": "Are password reset tickets approved for automation?"}).json()
+                provider.question_id = q["id"]
+                evidence = client.post("/api/evidence", json={"content": "Password reset tickets were approved for automation."})
+                self.assertEqual(evidence.status_code, 201)
+                review = evidence.json()["reviews"][0]
+                self.assertEqual(review["resolves_question_ids"], [q["id"]])
+                self.assertEqual([x["id"] for x in client.get("/api/questions?status=open").json()["items"]], [q["id"]])
+                client.post(f"/api/reviews/{review['id']}/resolve", json={"decision": "accept"})
+                self.assertEqual(client.get("/api/questions?status=open").json()["items"], [])
+                resolved = client.get("/api/questions?status=resolved").json()["items"]
+                self.assertEqual(resolved[0]["id"], q["id"])
+                self.assertEqual(resolved[0]["resolution"], "Resolved by reviewed evidence")
+
+    def test_provider_cannot_resolve_unknown_question_id(self):
+        class BadQuestionProvider:
+            name = "bad-question"
+            model_identifier = "test"
+            def interpret(self, *, context, evidence, connection=None):
+                return {
+                    "summary": "Bad reference.", "topics": [], "outcome": "review_recommended",
+                    "review_recommendations": [{
+                        "review_action": "create", "review_type": "missing_understanding",
+                        "decision_question": "Accept?", "why_consequential": "Test.",
+                        "affected_state_item_ids": [], "resolves_question_ids": ["question_missing"],
+                        "proposed_changes": [{"operation": "create", "state_item_id": None,
+                            "proposed_statement": "A new fact.", "rationale": "Test."}],
+                    }],
+                }
+        with tempfile.TemporaryDirectory() as tempdir:
+            app = create_app(Settings(database_path=str(Path(tempdir) / "state.db"), provider="anthropic", cors_origins=[]), provider=BadQuestionProvider())
+            with TestClient(app) as client:
+                response = client.post("/api/evidence", json={"content": "Some evidence."})
+                self.assertEqual(response.status_code, 422)
+                self.assertEqual(response.json()["detail"]["code"], "invalid_question_reference")

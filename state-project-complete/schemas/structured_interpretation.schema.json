@@ -130,6 +130,14 @@
           "items": {
             "$ref": "#/$defs/proposedChange"
           }
+        },
+        "resolves_question_ids": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
         }
       },
       "allOf": [

@@ -20,4 +20,4 @@ node implementation-context-prototype/state-ask-behavior-tests.js
 
 A local SQLite smoke test can exercise FastAPI startup and `/health`; the first real Neon/Postgres startup must still be validated in an environment that can reach Neon.
 
-See `DEEP_REVIEW_REPORT.md` for the September 2, 2026 deployment audit and validation status.
+See `R7_REPO_MAP.md` for the current source-of-truth map and `R7_HARDENING_REPORT.md` for the September 2 R7 audit, fixes, validation, and deferred production-readiness items.
