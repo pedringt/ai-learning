@@ -8,11 +8,11 @@
 -- applicable; SQLite limitations on ALTER TABLE mean explicit checks are needed).
 
 -- Add operation column if not present
--- Explicit check since SQLite doesn't support ADD COLUMN IF NOT EXISTS
-PRAGMA foreign_keys = ON;
+-- Note: Postgres supports ADD COLUMN IF NOT EXISTS; SQLite does not
+-- This migration assumes operation and effective_date columns don't exist yet
 
 -- Save current proposal data to temporary table (for safety/inspection)
-CREATE TEMPORARY TABLE proposed_state_changes_backup AS
+CREATE TEMP TABLE proposed_state_changes_backup AS
   SELECT * FROM proposed_state_changes;
 
 -- Add operation column with sensible default: update (Phase 1 design assumed updates)
@@ -34,4 +34,4 @@ UPDATE proposed_state_changes
 -- Add foreign key constraint if not already present
 -- (SQLite allows ALTER but it's a no-op; real enforcement is in application layer)
 
-INSERT OR IGNORE INTO schema_migrations(version) VALUES ('002_add_operation_and_effective_date');
+INSERT INTO schema_migrations(version) VALUES ('002_add_operation_and_effective_date') ON CONFLICT (version) DO NOTHING;

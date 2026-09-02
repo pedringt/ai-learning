@@ -13,11 +13,17 @@ CREATE TABLE IF NOT EXISTS evidence (
     submitted_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TRIGGER IF NOT EXISTS evidence_content_immutable
-BEFORE UPDATE OF content ON evidence
+-- Postgres trigger for evidence immutability
+CREATE OR REPLACE FUNCTION evidence_content_immutable_fn() RETURNS TRIGGER AS $$
 BEGIN
-    SELECT RAISE(ABORT, 'Evidence content is immutable');
+    RAISE EXCEPTION 'Evidence content is immutable';
 END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS evidence_content_immutable ON evidence;
+CREATE TRIGGER evidence_content_immutable
+BEFORE UPDATE OF content ON evidence
+FOR EACH ROW EXECUTE FUNCTION evidence_content_immutable_fn();
 
 CREATE TABLE IF NOT EXISTS current_state_items (
     id TEXT PRIMARY KEY,
@@ -126,5 +132,5 @@ CREATE TABLE IF NOT EXISTS history_transitions (
     CHECK (from_version IS NULL OR to_version = from_version + 1)
 );
 
-INSERT OR IGNORE INTO schema_migrations(version) VALUES ('001_initial');
+INSERT INTO schema_migrations(version) VALUES ('001_initial') ON CONFLICT (version) DO NOTHING;
 
