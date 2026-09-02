@@ -108,3 +108,30 @@ def test_r8_long_project_and_open_items_scaling_contract():
     assert "projectGroup(item,id)" in app
     assert "project-section-sticky" in app
     assert ".app-sidebar{position:sticky" in css
+
+
+def test_r81_notes_filters_share_one_date_status_search_pipeline():
+    app = (FRONTEND / "context-app.js").read_text(encoding="utf-8")
+    assert "function filteredNotes()" in app
+    assert "noteMatchesFilter(n,activeFilter) &&" in app
+    assert "noteMatchesDate(n,dateFilter) &&" in app
+    assert "const notes=filteredNotes();" in app
+
+def test_r81_multiple_reviews_default_collapsed_with_single_open_accordion():
+    app = (FRONTEND / "context-app.js").read_text(encoding="utf-8")
+    assert "reviews.length===1||state.expandedReviewId===r.id" in app
+    assert "toggle-review-card" in app
+    assert "state.expandedReviewId=state.expandedReviewId===id?null:id" in app
+
+def test_r81_project_nav_hides_empty_sections_and_orientation_uses_state():
+    app = (FRONTEND / "context-app.js").read_text(encoding="utf-8")
+    assert "currentKnowledge(area).length===0" in app
+    assert "k-stage" in app and "k-outcome" in app
+    assert "orientation.stage" in app and "orientation.outcome" in app
+
+def test_r81_date_only_note_values_are_parsed_as_local_calendar_dates():
+    app = (FRONTEND / "context-app.js").read_text(encoding="utf-8")
+    assert "if(/^\\d{4}-\\d{2}-\\d{2}$/.test(iso))" in app
+    assert "stamp=new Date(year,month-1,day)" in app
+    assert "new Date().toISOString().slice(0,10)" not in app
+    assert "notes-result-count" in app

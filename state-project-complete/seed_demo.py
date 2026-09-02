@@ -1,9 +1,10 @@
 """Idempotent Northstar demo/stress seed for the behavioral prototype.
 
-This is deliberately opt-in in production via STATE_DEMO_BOOTSTRAP=1. It only
-inserts stable demo IDs that are missing; it never overwrites user-created or
-review-updated records. That makes it safe to use against an existing demo DB
-that became sparse during R7 fixture cleanup.
+This demo bootstrap inserts stable Northstar IDs that are missing; it never
+overwrites user-created or review-updated records. Environment-loaded demo
+deployments enable it by default; set STATE_DEMO_BOOTSTRAP=0 to disable it.
+That makes it safe to use against an existing demo DB that became sparse during
+R7 fixture cleanup.
 """
 from __future__ import annotations
 
@@ -12,7 +13,9 @@ from database_migration_backed import initialize_db
 from db import connect
 
 ITEMS = [
-    ("k-pilot", "Pilot direction", "The first pilot is focused on Tier 1 troubleshooting assistance. AI drafts and assembles context; a support rep reviews before anything customer-facing is sent."),
+    ("k-stage", "Project stage", "Late discovery is nearly complete; implementation planning is next once the remaining launch-critical security, access-authority, and evaluation questions are resolved."),
+    ("k-outcome", "Project outcome", "Reduce repetitive support effort without sacrificing response quality or human control."),
+    ("k-pilot", "Pilot direction", "The core pilot use case is Tier 1 troubleshooting assistance. AI drafts and assembles context; a support rep reviews before anything customer-facing is sent."),
     ("k-entry", "Workflow fit", "The assistant supports the rep inside the existing troubleshooting workflow rather than replacing the support queue or customer conversation."),
     ("k-grounding", "Approved knowledge", "Troubleshooting guidance is grounded in approved support material and relevant account context when that context is available."),
     ("k-escalation", "Escalation path", "Cases that cannot be supported confidently from available information stay with the rep and follow the existing escalation path."),

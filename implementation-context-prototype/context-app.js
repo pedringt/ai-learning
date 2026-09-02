@@ -5,7 +5,7 @@
   const initial = clone(D);
   const state = {
     data: clone(D), view:'overview', result:null, resultQuery:'', projectMenuOpen:false, refinements:[], lastScenario:null,
-    addedSample:false, pendingCreated:false, reviewBannerDismissed:false, dialogReturnFocus:null, expandedNotes:new Set(), noteComposerOpen:false, editingNoteId:null, dismissedNudges:new Set(), projectNavOpen:false, hiddenProjectAreas:new Set(), historyTopic:null, notesFilter:'all', notesDateFilter:'all', notesSearch:'', isAnalyzing:false, reviewsBackendAvailable:false, questionsBackendAvailable:false, openQuestionsExpanded:false
+    addedSample:false, pendingCreated:false, reviewBannerDismissed:false, dialogReturnFocus:null, expandedNotes:new Set(), noteComposerOpen:false, editingNoteId:null, dismissedNudges:new Set(), projectNavOpen:false, hiddenProjectAreas:new Set(), historyTopic:null, notesFilter:'all', notesDateFilter:'all', notesSearch:'', isAnalyzing:false, reviewsBackendAvailable:false, questionsBackendAvailable:false, openQuestionsExpanded:false, expandedReviewId:null
   };
 
   const root = document.getElementById('viewRoot');
@@ -17,9 +17,7 @@
   const pendingReviews = () => state.data.reviews.filter(r => r.status === 'pending' && (!state.reviewsBackendAvailable || r.backendReviewId));
   const accessUpdated = () => state.data.reviews.find(r => r.id==='r-access')?.status === 'update';
   const securityUpdated = () => state.data.reviews.find(r => r.id==='r-security')?.status === 'update';
-  const demoDate = 'Aug 29';
-  const demoDateISO = '2026-08-29';
-  const todayISO = () => new Date().toISOString().slice(0,10);
+  const todayISO = () => { const d=new Date(); const pad=n=>String(n).padStart(2,'0'); return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`; };
   const todayLabel = () => new Intl.DateTimeFormat('en-US',{month:'short',day:'numeric'}).format(new Date());
   const isoValue = item => item?.dateISO || item?.createdISO || '';
   const sortDateAsc = (a,b) => isoValue(a).localeCompare(isoValue(b));
@@ -31,23 +29,27 @@
     const projectToggle=document.querySelector('.project-nav-toggle'); if(projectToggle) projectToggle.classList.toggle('active',projectActive);
     const sub=document.getElementById('projectSubnav'); if(sub) sub.hidden=!state.projectNavOpen; if(projectToggle) projectToggle.setAttribute('aria-expanded',state.projectNavOpen?'true':'false');
     const actionCount=document.getElementById('openItemsActionCount'); if(actionCount){const n=pendingReviews().length;actionCount.textContent=n;actionCount.hidden=!n;}
-    document.querySelectorAll('[data-project-area]').forEach(b=>b.hidden=state.hiddenProjectAreas.has(b.dataset.projectArea));
+    document.querySelectorAll('[data-project-area]').forEach(b=>{
+      const area=b.dataset.projectArea;
+      b.hidden=state.hiddenProjectAreas.has(area)||currentKnowledge(area).length===0;
+    });
     const pm=document.getElementById('projectMenu'), ps=document.getElementById('projectSwitcher'); if(pm)pm.hidden=!state.projectMenuOpen; if(ps)ps.setAttribute('aria-expanded',state.projectMenuOpen?'true':'false');
   }
 
   function updateProjectSubnavActive(targetId){
     if(state.view!=='project-overview') return;
-    const ids=['project-top','project-product','project-safety','project-evaluation'];
-    let activeId=targetId;
-    if(!activeId){
+    const buttons=[...document.querySelectorAll('[data-project-jump]:not([hidden])')];
+    const ids=buttons.map(btn=>btn.dataset.projectJump).filter(id=>document.getElementById(id));
+    let activeId=targetId&&ids.includes(targetId)?targetId:null;
+    if(!activeId&&ids.length){
       const threshold=120;
-      activeId='project-top';
-      for(const id of ids){
-        const el=document.getElementById(id);
-        if(el && el.getBoundingClientRect().top<=threshold) activeId=id;
-      }
+      activeId=ids.reduce((best,id)=>{
+        const top=document.getElementById(id).getBoundingClientRect().top;
+        const distance=Math.abs(top-threshold);
+        return !best||distance<best.distance?{id,distance}:best;
+      },null)?.id||ids[0];
     }
-    document.querySelectorAll('[data-project-jump]').forEach(btn=>{
+    buttons.forEach(btn=>{
       const active=btn.dataset.projectJump===activeId;
       btn.classList.toggle('active',active);
       if(active) btn.setAttribute('aria-current','location'); else btn.removeAttribute('aria-current');
@@ -63,7 +65,8 @@
     evaluation:{name:'Evaluation & Rollout', description:'How the pilot will be judged and what needs to be true before broader use.'}
   };
 
-  function currentKnowledge(area){ return state.data.knowledge.filter(k=>k.state==='current' && (!area || k.projectArea===area)); }
+  const projectMetaIds=new Set(['k-stage','k-outcome']);
+  function currentKnowledge(area){ return state.data.knowledge.filter(k=>k.state==='current' && (!area || (!projectMetaIds.has(k.id)&&k.projectArea===area))); }
   function projectGroup(k,area){
     const text=norm(`${k.title||''} ${k.statement||''} ${(k.topics||[]).join(' ')}`);
     if(area==='product'){
@@ -94,19 +97,22 @@
     return `<section class="project-outline-section" id="project-${id}"><div class="project-section-sticky"><h3>${esc(a.name)}</h3></div><p class="project-outline-description">${esc(a.description)}</p>${grouped}</section>`;
   }
   function projectOrientation(){
-    const pilot=state.data.knowledge.find(k=>k.id==='k-pilot'&&k.state==='current');
-    const launch=state.data.knowledge.find(k=>k.id==='k-launch'&&k.state==='current');
-    const current=currentKnowledge();
+    const byId=id=>state.data.knowledge.find(k=>k.id===id&&k.state==='current');
+    const pilot=byId('k-pilot'), stage=byId('k-stage'), outcome=byId('k-outcome');
+    const current=state.data.knowledge.filter(k=>k.state==='current');
+    const direction=pilot?.statement || 'Reviewed project direction has not been established yet.';
     return {
-      description: pilot ? `Current State is centered on ${pilot.statement.charAt(0).toLowerCase()+pilot.statement.slice(1)}${launch?` ${launch.statement}`:''}` : state.data.project.description,
-      direction: pilot?.statement || (current[0]?.statement || 'Reviewed project understanding will appear here as it is established.'),
+      description: stage ? `${direction} ${stage.statement}` : direction,
+      direction,
+      stage: stage?.statement || 'Stage not yet established in Current State.',
+      outcome: outcome?.statement || 'Outcome not yet established in Current State.',
       count: current.length
     };
   }
   function renderProjectOverview(){
-    const visible=Object.entries(projectAreas).filter(([id])=>!state.hiddenProjectAreas.has(id));
+    const visible=Object.entries(projectAreas).filter(([id])=>!state.hiddenProjectAreas.has(id)&&currentKnowledge(id).length);
     const orientation=projectOrientation();
-    root.innerHTML=`<article class="page project-page project-document"><header class="project-document-head" id="project-top"><span class="eyebrow">Current project</span><h2>${esc(state.data.project.name)}</h2><p>${esc(orientation.description)}</p><dl class="project-document-meta"><div><dt>Stage</dt><dd>${esc(state.data.project.stage)}</dd></div><div><dt>Outcome</dt><dd>${esc(state.data.project.outcome)}</dd></div><div><dt>Current State</dt><dd>${orientation.count} reviewed items</dd></div></dl></header><div class="project-document-intro"><strong>Current direction</strong><p>${esc(orientation.direction)}</p></div><div class="project-outline">${visible.map(([id,a])=>projectOutlineSection(id,a)).join('')||'<div class="empty-state"><h3>No Current State yet.</h3><p>Reviewed project understanding will appear here as a clean outline.</p></div>'}</div></article>`;    requestAnimationFrame(()=>updateProjectSubnavActive());
+    root.innerHTML=`<article class="page project-page project-document"><header class="project-document-head" id="project-top"><span class="eyebrow">Current project</span><h2>${esc(state.data.project.name)}</h2><p>${esc(orientation.description)}</p><dl class="project-document-meta"><div><dt>Stage</dt><dd>${esc(orientation.stage)}</dd></div><div><dt>Outcome</dt><dd>${esc(orientation.outcome)}</dd></div><div><dt>Current State</dt><dd>${orientation.count} reviewed items</dd></div></dl></header><div class="project-document-intro"><strong>Current direction</strong><p>${esc(orientation.direction)}</p></div><div class="project-outline">${visible.map(([id,a])=>projectOutlineSection(id,a)).join('')||'<div class="empty-state"><h3>No Current State yet.</h3><p>Reviewed project understanding will appear here as a clean outline.</p></div>'}</div></article>`;    requestAnimationFrame(()=>updateProjectSubnavActive());
   }
   function renderProjectArea(area){
     const a=projectAreas[area]; if(!a)return renderProjectOverview(); const items=currentKnowledge(area);
@@ -494,7 +500,12 @@
   function noteMatchesDate(n,filter){
     if(filter==='all')return true;
     const iso=n.dateISO||n.submittedISO; if(!iso)return false;
-    const stamp=new Date(iso); if(Number.isNaN(stamp.getTime()))return false;
+    let stamp;
+    if(/^\d{4}-\d{2}-\d{2}$/.test(iso)){
+      const [year,month,day]=iso.split('-').map(Number);
+      stamp=new Date(year,month-1,day);
+    }else stamp=new Date(iso);
+    if(Number.isNaN(stamp.getTime()))return false;
     const now=new Date();
     const start=new Date(now.getFullYear(),now.getMonth(),now.getDate());
     if(filter==='today')return stamp>=start;
@@ -503,16 +514,27 @@
     return stamp>=cutoff;
   }
 
+
+  function filteredNotes(){
+    const activeFilter=state.notesFilter||'all';
+    const dateFilter=state.notesDateFilter||'all';
+    const search=norm(state.notesSearch);
+    return state.data.notes.filter(n=>
+      noteMatchesFilter(n,activeFilter) &&
+      noteMatchesDate(n,dateFilter) &&
+      (!search||norm(`${n.title} ${n.text} ${n.source}`).includes(search))
+    ).sort(sortDateDesc);
+  }
+
   function renderNotes(){
     const composer=state.noteComposerOpen?`<section class="note-composer"><input id="newNoteTitle" class="dialog-input" placeholder="Note title" aria-label="Note title"><textarea id="newNoteText" rows="8" aria-label="New note text" placeholder="Write anything you want to keep with the project. Saving a note does not change project state."></textarea><div class="inline-actions"><button class="btn primary" data-action="save-new-note">Save note</button><button class="btn secondary" data-action="cancel-new-note">Cancel</button></div></section>`:'';
     const activeFilter=state.notesFilter||'all';
     const filters=`<label class="notes-status-filter"><span>Status</span><select id="notesStatusFilter" aria-label="Filter notes by status"><option value="all"${activeFilter==='all'?' selected':''}>All</option><option value="draft"${activeFilter==='draft'?' selected':''}>Draft</option><option value="pending"${activeFilter==='pending'?' selected':''}>In review</option><option value="reviewed"${activeFilter==='reviewed'?' selected':''}>Reviewed</option></select></label>`;
     const dateFilter=state.notesDateFilter||'all';
-    const dateChip=(f,label)=>`<button class="filter${dateFilter===f?' active':''}" data-date-filter="${f}">${label}</button>`;
+    const dateChip=(f,label)=>`<button class="filter${dateFilter===f?' active':''}" data-date-filter="${f}" aria-pressed="${dateFilter===f?'true':'false'}">${label}</button>`;
     const dateFilters=`<div class="filters notes-date-filters" aria-label="Filter notes by date">${dateChip('all','All notes')}${dateChip('today','Today')}${dateChip('7','7 days')}${dateChip('30','30 days')}</div>`;
-    const search=norm(state.notesSearch);
-    const visibleNotes=state.data.notes.filter(n=>noteMatchesFilter(n,activeFilter)&&noteMatchesDate(n,dateFilter)&&(!search||norm(`${n.title} ${n.text} ${n.source}`).includes(search))).sort(sortDateDesc);
-    root.innerHTML=`<section class="page collection-page notes-page"><div class="page-head"><div><span class="eyebrow">Project memory</span><h2>Notes</h2><p>Put everything here: updates, meeting notes, observations, decisions, corrections, and loose context. Notes preserve what came in; they do not become Current State automatically.</p><p class="notes-disclosure">This demo uses a mix of notes adapted from my real discovery/product work and simulated project notes created to demonstrate retrieval, review, and maintained-context workflows.</p></div><button class="btn primary notes-add" data-action="new-note">+ New note</button></div>${composer}<div class="notes-toolbar notes-toolbar--stacked"><div class="notes-filter-row">${dateFilters}${filters}</div><input class="notes-search" id="notesSearch" type="search" placeholder="Search all notes" aria-label="Search notes" value="${esc(state.notesSearch)}"></div><div class="note-results simple-notes" id="notesList">${visibleNotes.length?visibleNotes.map(simpleNote).join(''):'<div class="empty-state"><h3>Nothing here.</h3><p>No notes match these filters.</p></div>'}</div></section>`;
+    const visibleNotes=filteredNotes();
+    root.innerHTML=`<section class="page collection-page notes-page"><div class="page-head"><div><span class="eyebrow">Project memory</span><h2>Notes</h2><p>Put everything here: updates, meeting notes, observations, decisions, corrections, and loose context. Notes preserve what came in; they do not become Current State automatically.</p><p class="notes-disclosure">This demo uses a mix of notes adapted from my real discovery/product work and simulated project notes created to demonstrate retrieval, review, and maintained-context workflows.</p></div><button class="btn primary notes-add" data-action="new-note">+ New note</button></div>${composer}<div class="notes-toolbar notes-toolbar--stacked"><div class="notes-filter-row">${dateFilters}${filters}<span class="notes-result-count" aria-live="polite">${visibleNotes.length} ${visibleNotes.length===1?'note':'notes'}</span></div><input class="notes-search" id="notesSearch" type="search" placeholder="Search all notes" aria-label="Search notes" value="${esc(state.notesSearch)}"></div><div class="note-results simple-notes" id="notesList">${visibleNotes.length?visibleNotes.map(simpleNote).join(''):'<div class="empty-state"><h3>Nothing here.</h3><p>No notes match these filters.</p></div>'}</div></section>`;
   }
 
   function historySources(h){
@@ -553,24 +575,28 @@
     });
     const visibleWaiting=state.openQuestionsExpanded?waiting:waiting.slice(0,5);
     const remaining=Math.max(0,waiting.length-visibleWaiting.length);
-    root.innerHTML=`<section class="page collection-page open-items-page"><div class="page-head"><div><span class="eyebrow">What still needs attention</span><div class="review-title-row"><h2>Open Items</h2>${reviews.length?`<span class="count-badge review-page-count">${reviews.length}</span>`:''}</div><p>Decide what is ready now, see what is blocking progress, and keep important unknowns visible without turning this into another archive.</p></div><button class="btn secondary" data-action="add-question">+ Add question</button></div><section class="open-items-section open-items-reviews"><div class="open-items-section-head"><div><span class="open-items-kicker">Act now</span><h3>Needs your review${reviews.length?` · ${reviews.length}`:''}</h3><p>There is enough evidence to make a decision. Nothing changes Current State until you approve it.</p></div></div>${reviews.length?reviews.map(reviewCard).join(''):'<div class="open-items-empty">Nothing needs your decision right now.</div>'}</section>${blockers.length?`<section class="open-items-section"><div class="open-items-section-head"><div><span class="open-items-kicker">Needs an answer</span><h3>Blocking questions · ${blockers.length}</h3><p>Each blocker names the concrete project dependency it prevents. Uncertainty without a dependency stays an ordinary question.</p></div></div><div class="open-question-list">${blockers.map(questionCard).join('')}</div></section>`:''}<section class="open-items-section"><div class="open-items-section-head"><div><span class="open-items-kicker">Waiting to learn</span><h3>Open questions${waiting.length?` · ${waiting.length}`:''}</h3><p>Important unknowns that can sit quietly until relevant evidence arrives. Questions related to active Reviews are surfaced first.</p></div></div>${waiting.length?`<div class="open-question-list">${visibleWaiting.map(questionCard).join('')}</div>${waiting.length>5?`<button class="open-questions-more" data-action="toggle-open-questions" aria-expanded="${state.openQuestionsExpanded?'true':'false'}">${state.openQuestionsExpanded?'Show fewer questions':`Show ${remaining} more questions`} <span aria-hidden="true">${state.openQuestionsExpanded?'↑':'↓'}</span></button>`:''}`:'<div class="open-items-empty">No other open questions.</div>'}</section></section>`;
+    root.innerHTML=`<section class="page collection-page open-items-page"><div class="page-head"><div><span class="eyebrow">What still needs attention</span><div class="review-title-row"><h2>Open Items</h2>${reviews.length?`<span class="count-badge review-page-count">${reviews.length}</span>`:''}</div><p>Decide what is ready now, see what is blocking progress, and keep important unknowns visible without turning this into another archive.</p></div><button class="btn secondary" data-action="add-question">+ Add question</button></div><section class="open-items-section open-items-reviews"><div class="open-items-section-head"><div><span class="open-items-kicker">Act now</span><h3>Needs your review${reviews.length?` · ${reviews.length}`:''}</h3><p>There is enough evidence to make a decision. Nothing changes Current State until you approve it.</p></div></div>${reviews.length?reviews.map(r=>reviewCard(r,reviews.length===1||state.expandedReviewId===r.id,true)).join(''):'<div class="open-items-empty">Nothing needs your decision right now.</div>'}</section>${blockers.length?`<section class="open-items-section"><div class="open-items-section-head"><div><span class="open-items-kicker">Needs an answer</span><h3>Blocking questions · ${blockers.length}</h3><p>Each blocker names the concrete project dependency it prevents. Uncertainty without a dependency stays an ordinary question.</p></div></div><div class="open-question-list">${blockers.map(questionCard).join('')}</div></section>`:''}<section class="open-items-section"><div class="open-items-section-head"><div><span class="open-items-kicker">Waiting to learn</span><h3>Open questions${waiting.length?` · ${waiting.length}`:''}</h3><p>Important unknowns that can sit quietly until relevant evidence arrives. Questions related to active Reviews are surfaced first.</p></div></div>${waiting.length?`<div class="open-question-list">${visibleWaiting.map(questionCard).join('')}</div>${waiting.length>5?`<button class="open-questions-more" data-action="toggle-open-questions" aria-expanded="${state.openQuestionsExpanded?'true':'false'}">${state.openQuestionsExpanded?'Show fewer questions':`Show ${remaining} more questions`} <span aria-hidden="true">${state.openQuestionsExpanded?'↑':'↓'}</span></button>`:''}`:'<div class="open-items-empty">No other open questions.</div>'}</section></section>`;
   }
 
   function renderQuestions(){ return renderOpenItems(); }
   function renderReview(){ return renderOpenItems(); }
 
-  function reviewCard(r){
+  function reviewCard(r,expanded=true,accordion=false){
     const generic=r.id.startsWith('r-info-') || (Array.isArray(r.proposals) && r.proposals.length===0);
     const meaningfulUnresolved=r.unresolved && !/^nothing beyond this proposed change/i.test(r.unresolved);
     const sourceNote=state.data.notes.find(n=>n.id===r.evidenceId);
     const sourceMeta=sourceNote?`${sourceNote.date} · ${sourceNote.source}`:'';
-    return `<article class="review-card compact-review" data-review-card="${r.id}"><div class="review-row-head"><div><span class="review-kicker">${esc(r.title)}</span><h3>${esc(r.summary)}</h3>${sourceMeta?`<span class="review-source-meta">Evidence · ${esc(sourceMeta)}</span>`:''}</div></div><div class="review-summary single-column review-summary--decision"><div><span>Current</span><p>${esc(r.current)}</p></div><div><span>${generic?'Review question':'Proposed'}</span><p><strong>${esc(r.proposed)}</strong></p></div>${meaningfulUnresolved?`<div><span>Still unresolved</span><p>${esc(r.unresolved)}</p></div>`:''}</div><div class="review-actions"><button class="btn primary" data-action="review-update" data-review="${r.id}">${generic?'Accept as reviewed evidence':'Update understanding'}</button><button class="btn secondary" data-action="review-keep" data-review="${r.id}">Leave unchanged</button></div><details class="reasoning"><summary>Why / source</summary><p><strong>Evidence:</strong> ${esc(r.evidence)}</p><p><strong>Establishes:</strong> ${esc(r.establishes)}</p>${r.doesNot?`<p><strong>Does not establish:</strong> ${esc(r.doesNot)}</p>`:''}</details></article>`;
+    const head=`<span class="review-row-head"><span class="review-row-copy"><span class="review-kicker">${esc(r.title)}</span><span class="review-card-title">${esc(r.summary)}</span>${sourceMeta?`<span class="review-source-meta">Evidence · ${esc(sourceMeta)}</span>`:''}</span>${accordion?`<span class="review-card-chevron" aria-hidden="true">${expanded?'⌃':'⌄'}</span>`:''}</span>`;
+    if(accordion&&!expanded) return `<article class="review-card compact-review is-collapsed" data-review-card="${r.id}"><button type="button" class="review-card-toggle" data-action="toggle-review-card" data-review-id="${r.id}" aria-expanded="false">${head}</button></article>`;
+    const body=`<div class="review-summary single-column review-summary--decision"><div><span>Current</span><p>${esc(r.current)}</p></div><div><span>${generic?'Review question':'Proposed'}</span><p><strong>${esc(r.proposed)}</strong></p></div>${meaningfulUnresolved?`<div><span>Still unresolved</span><p>${esc(r.unresolved)}</p></div>`:''}</div><div class="review-actions"><button class="btn primary" data-action="review-update" data-review="${r.id}">${generic?'Accept as reviewed evidence':'Update understanding'}</button><button class="btn secondary" data-action="review-keep" data-review="${r.id}">Leave unchanged</button></div><details class="reasoning"><summary>Why / source</summary><p><strong>Evidence:</strong> ${esc(r.evidence)}</p><p><strong>Establishes:</strong> ${esc(r.establishes)}</p>${r.doesNot?`<p><strong>Does not establish:</strong> ${esc(r.doesNot)}</p>`:''}</details>`;
+    return `<article class="review-card compact-review${accordion?' is-expanded':''}" data-review-card="${r.id}">${accordion?`<button type="button" class="review-card-toggle" data-action="toggle-review-card" data-review-id="${r.id}" aria-expanded="true">${head}</button>`:head}<div class="review-card-body">${body}</div></article>`;
   }
 
   async function decideReview(id,decision){
     const r=state.data.reviews.find(x=>x.id===id);
     state.lastReviewGeneric=!!r && (r.id?.startsWith('r-info-') || (Array.isArray(r.proposals) && r.proposals.length===0));
     if(!r||r.status!=='pending')return;
+    state.expandedReviewId=null;
 
     if(r.backendReviewId){
       try{
@@ -806,7 +832,7 @@
         id:q.id,text:q.text,status:q.status,blocking:!!q.blocking,blocks:q.blocks||null,
         origin:q.origin||fixture?.origin||'Added from Workspace',
         created:fixture?.created||formatBackendDate(q.created_at),createdISO:fixture?.createdISO||q.created_at,
-        topics:fixture?.topics||[],backendManaged:true
+        topics:fixture?.topics?.length?fixture.topics:askTopics(norm(q.text)),backendManaged:true
       };
     });
     const local=previous.filter(q=>!q.backendManaged && !backendTexts.has(questionTextKey(q.text)));
@@ -964,7 +990,7 @@
     if(e.target.closest('[data-action="dismiss-nudge"]')){ const btn=e.target.closest('[data-action="dismiss-nudge"]'); state.dismissedNudges.add(btn.dataset.nudge); renderReview(); return; }
     const toggleProject=e.target.closest('[data-action="toggle-project-nav"]'); if(toggleProject){state.projectNavOpen=true;if(state.view!=='project-overview'){state.view='project-overview';render();requestAnimationFrame(()=>document.getElementById('project-top')?.scrollIntoView({behavior:'smooth',block:'start'}));}else{updateNav();document.getElementById('project-top')?.scrollIntoView({behavior:'smooth',block:'start'});}return;}
     const projectJump=e.target.closest('[data-project-jump]'); if(projectJump){const target=projectJump.dataset.projectJump;state.projectNavOpen=true;if(state.view!=='project-overview'){state.view='project-overview';render();requestAnimationFrame(()=>document.getElementById(target)?.scrollIntoView({behavior:'smooth',block:'start'}));}else{updateNav();updateProjectSubnavActive(target);document.getElementById(target)?.scrollIntoView({behavior:'smooth',block:'start'});}return;}
-    const relatedReview=e.target.closest('[data-action="open-related-review"]'); if(relatedReview){ const r=state.data.reviews.find(x=>x.id===relatedReview.dataset.reviewId); if(r) showDialog(`<span class="eyebrow">Pending Review</span><h2 id="dialogTitle">Related evidence may affect this Current State</h2>${reviewCard(r)}`); return;}
+    const relatedReview=e.target.closest('[data-action="open-related-review"]'); if(relatedReview){ const r=state.data.reviews.find(x=>x.id===relatedReview.dataset.reviewId); if(r) showDialog(`<span class="eyebrow">Pending Review</span><h2 id="dialogTitle">Related evidence may affect this Current State</h2>${reviewCard(r,true,false)}`); return;}
         const topicHistory=e.target.closest('[data-action="view-topic-history"]'); if(topicHistory){state.historyTopic=topicHistory.dataset.knowledgeId;state.view='history';render();return;}
     const clearHistory=e.target.closest('[data-action="clear-history-topic"]'); if(clearHistory){state.historyTopic=null;renderHistory();return;}
     const hideArea=e.target.closest('[data-action="hide-project-area"]'); if(hideArea){state.hiddenProjectAreas.add(hideArea.dataset.area);state.view='project-overview';render();return;}
@@ -973,6 +999,7 @@
     const dateFilter=e.target.closest('.notes-date-filters [data-date-filter]'); if(dateFilter){ state.notesDateFilter=dateFilter.dataset.dateFilter; renderNotes(); return; }
     const noteFilter=e.target.closest('.notes-filters [data-filter]'); if(noteFilter){ state.notesFilter=noteFilter.dataset.filter; renderNotes(); return; }
     const reviewFilter=e.target.closest('.review-filters [data-review-filter]'); if(reviewFilter){ state.reviewFilter=reviewFilter.dataset.reviewFilter; renderReview(); return; }
+    const reviewToggle=e.target.closest('[data-action="toggle-review-card"]'); if(reviewToggle){ const id=reviewToggle.dataset.reviewId; state.expandedReviewId=state.expandedReviewId===id?null:id; renderOpenItems(); return; }
     const p=e.target.closest('[data-prompt]'); if(p){ submitAsk(p.dataset.prompt); return; }
     const a=e.target.closest('[data-action]'); if(!a)return;
     const act=a.dataset.action;
@@ -1039,7 +1066,7 @@
     else if(act==='sample-info'){ const t=document.getElementById('addInfoText'); if(t)t.value=state.data.sampleInformation; }
     else if(act==='save-info')saveInformation();
     else if(act==='go-review'){closeDialog();state.view='open-items';state.result=null;render();}
-    else if(act==='review-now'){ const r=state.data.reviews.find(x=>x.id===a.dataset.review); if(r) showDialog(`<span class="eyebrow">Review, without leaving your answer</span><h2 id="dialogTitle">Review this change</h2>${reviewCard(r)}`); }
+    else if(act==='review-now'){ const r=state.data.reviews.find(x=>x.id===a.dataset.review); if(r) showDialog(`<span class="eyebrow">Review, without leaving your answer</span><h2 id="dialogTitle">Review this change</h2>${reviewCard(r,true,false)}`); }
     else if(act==='continue-current'){ a.closest('.pending-notice')?.classList.add('acknowledged'); a.closest('.pending-notice')?.querySelector('p')?.replaceChildren(document.createTextNode('Continuing from current reviewed understanding. Pending evidence remains unreviewed.')); }
     else if(act==='track-question')addQuestion(a.dataset.question||state.resultQuery);
     else if(act==='go-questions'){closeDialog();state.view='open-items';render();}
@@ -1055,7 +1082,7 @@
 
   document.addEventListener('change',e=>{ if(e.target.id==='notesStatusFilter'){state.notesFilter=e.target.value;renderNotes();} });
 
-  document.addEventListener('input',e=>{ if(e.target.id==='notesSearch'){ state.notesSearch=e.target.value; const q=norm(state.notesSearch); const list=document.getElementById('notesList'); const notes=state.data.notes.filter(n=>noteMatchesFilter(n,state.notesFilter||'all')&&(!q||norm(`${n.title} ${n.text} ${n.source}`).includes(q))); if(list) list.innerHTML=notes.map(simpleNote).join('') || '<div class="empty">No matching notes.</div>'; } });
+  document.addEventListener('input',e=>{ if(e.target.id==='notesSearch'){ state.notesSearch=e.target.value; const list=document.getElementById('notesList'); const notes=filteredNotes(); if(list) list.innerHTML=notes.map(simpleNote).join('') || '<div class="empty">No matching notes.</div>'; } });
   let projectScrollScheduled=false;
   window.addEventListener?.('scroll',()=>{
     if(state.view!=='project-overview'||projectScrollScheduled)return;

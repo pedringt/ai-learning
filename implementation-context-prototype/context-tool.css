@@ -363,3 +363,14 @@ body.v88-dark .project-document-intro p,body.v88-dark .project-outline-copy span
 .open-questions-more:hover{text-decoration:underline}
 body.v88-dark .project-section-sticky{background:color-mix(in srgb,#131218 94%,transparent)}
 @media(max-width:760px){.project-section-sticky{position:relative;top:auto;margin:0;padding:0 0 7px;background:transparent;backdrop-filter:none}}
+
+/* R8.1 QA fixes: scalable review accordion */
+.review-card-toggle{width:100%;border:0;background:transparent;color:inherit;font:inherit;text-align:left;padding:0;cursor:pointer;display:block}
+.review-card-toggle .review-row-head{display:grid;grid-template-columns:1fr auto;gap:18px;align-items:center}
+.review-card-chevron{font-size:16px;color:var(--muted);font-weight:800}
+.compact-review.is-collapsed{padding-top:14px!important;padding-bottom:14px!important}
+.compact-review.is-collapsed h3{margin-bottom:0}
+.review-card-body{padding-top:2px}
+.review-row-copy{display:grid}.review-card-title{display:block;font-size:14px;line-height:1.45;font-weight:800;color:var(--ink);margin-top:4px}.compact-review.is-expanded .review-card-title{font-size:14px}
+.notes-result-count{font-size:11px;color:var(--muted);font-weight:700;white-space:nowrap;margin-left:auto}
+@media(max-width:760px){.notes-result-count{margin-left:0}}

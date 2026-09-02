@@ -20,7 +20,7 @@ from db import connect
 from interpretation_pipeline_integrated import InterpretationProvider, new_id, process_evidence
 from openai_provider import OpenAIProvider
 from seed_demo import bootstrap_demo_data
-STATE_BUILD_REV = "r8-scale-qa-2026-09-02"
+STATE_BUILD_REV = "r8.1-qa-fixes-2026-09-02"
 logger = logging.getLogger("state.api")
 
 from review_service import (
@@ -44,6 +44,7 @@ class Settings(BaseModel):
     database_path: str | None = None
     provider: Literal["anthropic", "openai"] = "anthropic"
     cors_origins: list[str] = Field(default_factory=list)
+    demo_bootstrap: bool = False
 
     def connection_url(self) -> str:
         if self.database_url:
@@ -60,6 +61,11 @@ class Settings(BaseModel):
             database_url=database_url,
             provider=os.getenv("STATE_PROVIDER", "anthropic").lower(),
             cors_origins=origins,
+            # This repository is the Northstar demo. Default the realistic demo
+            # bootstrap on for environment-loaded deployments so an existing
+            # Render service does not depend on Blueprint env-var resync. Set
+            # STATE_DEMO_BOOTSTRAP=0 to disable it explicitly.
+            demo_bootstrap=os.getenv("STATE_DEMO_BOOTSTRAP", "1").strip().lower() in {"1", "true", "yes"},
         )
 
 
@@ -140,7 +146,7 @@ def create_app(settings: Settings | None = None, provider: InterpretationProvide
         logger.info("Starting build %s", STATE_BUILD_REV)
         with get_connection() as connection:
             initialize_db(connection)
-            if os.getenv("STATE_DEMO_BOOTSTRAP", "").strip().lower() in {"1", "true", "yes"}:
+            if settings.demo_bootstrap:
                 seeded = bootstrap_demo_data(connection)
                 logger.info("Demo bootstrap: %s", seeded)
         if app.state.provider is None:
@@ -176,7 +182,7 @@ def create_app(settings: Settings | None = None, provider: InterpretationProvide
 
     @app.get("/health")
     def health() -> dict:
-        return {"status": "ok", "build": STATE_BUILD_REV}
+        return {"status": "ok", "build": STATE_BUILD_REV, "demo_bootstrap": settings.demo_bootstrap}
 
     @app.post("/api/evidence", status_code=201)
     def interpret_evidence(payload: EvidenceInput, request: Request) -> dict:
