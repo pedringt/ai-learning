@@ -195,6 +195,7 @@ Respond ONLY with JSON in this structure:
       "decision_question": "What decision must a human make?",
       "why_consequential": "Why does this matter?",
       "affected_state_item_ids": ["state_01", "state_02"],
+      "grouping_reason": "Why these items are grouped together (REQUIRED if 2+ items or 2+ changes)",
       "proposed_changes": [
         {{
           "operation": "create" | "update" | "retire",
@@ -209,10 +210,11 @@ Respond ONLY with JSON in this structure:
   ]
 }}
 
-Remember:
+Important:
 - Evidence alone does not change State (only humans can authorize)
 - You can recommend Reviews without proposals (state_at_risk)
 - Proposals must reference State items in affected_state_item_ids
+- ALWAYS include grouping_reason if there are 2+ affected_state_item_ids OR 2+ proposed_changes
 - Be conservative: if unsure, recommend a Review
 """
         return prompt
