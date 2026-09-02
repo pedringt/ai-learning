@@ -245,6 +245,11 @@ Respond ONLY with JSON in this structure:
 
 Important:
 - Evidence alone does not change State (only humans can authorize)
+- review_type determines what kind of proposal is legal:
+  - proposed_update: use when Evidence changes or retires an EXISTING State item; proposed_changes may use update or retire (and may also include create when a grouped decision genuinely adds new State).
+  - missing_understanding: use only when the missing understanding is NOT already represented in Current State; every proposed_change in a missing_understanding review MUST use operation "create". Never use update or retire inside missing_understanding.
+  - state_at_risk: use when Evidence creates uncertainty/risk around existing State but does not yet establish a replacement; normally use no proposed_changes.
+- Before responding, verify review_type is compatible with every proposed_change operation. If you are targeting an existing State item with update or retire, use review_type "proposed_update", not "missing_understanding".
 - You can recommend Reviews without proposals (state_at_risk)
 - For EVERY update or retire proposal, the proposal state_item_id MUST also appear in affected_state_item_ids on that SAME review recommendation. Copy the exact State ID; never target a State item that is absent from affected_state_item_ids.
 - Before responding, verify each update/retire proposal target is included in its recommendation's affected_state_item_ids.

@@ -47,3 +47,19 @@ def test_anthropic_low_latency_defaults(monkeypatch):
     provider = AnthropicProvider(api_key='test')
     assert provider.model_identifier == 'claude-haiku-4-5-20251001'
     assert provider.max_tokens == 1600
+
+
+def test_anthropic_prompt_maps_missing_understanding_to_create_only():
+    from anthropic_provider import AnthropicProvider
+    import inspect
+    source = inspect.getsource(AnthropicProvider._build_prompt)
+    assert 'every proposed_change in a missing_understanding review MUST use operation "create"' in source
+    assert 'use review_type "proposed_update", not "missing_understanding"' in source
+
+
+def test_openai_prompt_maps_missing_understanding_to_create_only():
+    from openai_provider import OpenAIProvider
+    import inspect
+    source = inspect.getsource(OpenAIProvider._build_prompt)
+    assert 'every proposed_change in a missing_understanding review MUST use operation "create"' in source
+    assert 'use review_type "proposed_update", not "missing_understanding"' in source
