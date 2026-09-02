@@ -253,3 +253,15 @@ def test_r9_ask_vertical_slice_has_dedicated_module_and_backend_endpoint():
     assert "Review now" in ask_js
     assert "Blocks: " in ask_js
     assert "data-action=\"new-ask\"" in app
+
+
+def test_dialog_visibility_has_one_source_of_truth():
+    app = (FRONTEND / "context-app.js").read_text(encoding="utf-8")
+    css = (FRONTEND / "context-tool.css").read_text(encoding="utf-8")
+    html = (FRONTEND / "index.html").read_text(encoding="utf-8")
+    assert 'id="overlay" hidden' in html
+    assert "overlay.hidden=false" in app
+    assert "overlay.hidden=true" in app
+    assert "is-open" not in app
+    assert ".overlay.is-open" not in css
+    assert ".overlay[hidden]{display:none!important}" in css
