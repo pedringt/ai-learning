@@ -507,6 +507,9 @@
           if(r.resolvesQuestionId && (r.proposals||[]).length){ const q=state.data.questions.find(q=>q.id===r.resolvesQuestionId); if(q){q.status='resolved';q.resolution='Resolved by reviewed evidence';} }
         }
         updateNav(); render(); showDecisionComplete(decision);
+        // Refetch open reviews from backend to clear stale UI elements and ensure
+        // duplicates or stale copies don't linger. Use a small delay to avoid race conditions.
+        setTimeout(() => hydrateBounceFromApi(), 300);
       }catch(e){
         showDialog(`<span class="eyebrow">Couldn’t complete review</span><h2 id="dialogTitle">Nothing was changed.</h2><p>${esc(e.message)}</p><div class="dialog-actions"><button class="btn primary" data-action="close-dialog">Close</button></div>`);
       }
