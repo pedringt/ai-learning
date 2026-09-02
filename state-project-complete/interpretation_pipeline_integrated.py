@@ -17,6 +17,8 @@ import json
 import inspect
 import sqlite3
 import uuid
+import sys
+import traceback
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Mapping, Protocol
@@ -285,7 +287,11 @@ def process_evidence(
             payload=payload,
             error_code=exc.code,
         )
-    except Exception:
+    except Exception as exc:
+        # Log the actual error so we can debug
+        error_msg = f"{type(exc).__name__}: {str(exc)}"
+        print(f"[ERROR] Provider error during evidence interpretation: {error_msg}", file=sys.stderr)
+        print(f"[TRACEBACK]\n{traceback.format_exc()}", file=sys.stderr)
         return _persist_failure(
             connection,
             evidence_id=evidence_id,
