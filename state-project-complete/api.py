@@ -4,9 +4,9 @@ from __future__ import annotations
 
 import json
 import os
-import sqlite3
+import psycopg2
+import psycopg2.extras
 from contextlib import asynccontextmanager, contextmanager
-from pathlib import Path
 from typing import Iterator, Literal
 
 from fastapi import FastAPI, HTTPException, Query, Request
@@ -29,15 +29,18 @@ from review_service import (
 
 class Settings(BaseModel):
     model_config = ConfigDict(extra="forbid")
-    database_path: str = "data/state.db"
+    database_url: str = "postgresql://localhost/state"
     provider: Literal["anthropic", "openai"] = "anthropic"
     cors_origins: list[str] = []
 
     @classmethod
     def from_env(cls) -> "Settings":
         origins = [x.strip() for x in os.getenv("CORS_ORIGINS", "http://localhost:8000").split(",") if x.strip()]
+        database_url = os.getenv("DATABASE_URL")
+        if not database_url:
+            raise RuntimeError("DATABASE_URL environment variable is required")
         return cls(
-            database_path=os.getenv("DATABASE_PATH", "data/state.db"),
+            database_url=database_url,
             provider=os.getenv("STATE_PROVIDER", "anthropic").lower(),
             cors_origins=origins,
         )
@@ -79,13 +82,11 @@ def _provider_from_env(settings: Settings) -> InterpretationProvider:
 
 def create_app(settings: Settings | None = None, provider: InterpretationProvider | None = None) -> FastAPI:
     settings = settings or Settings.from_env()
-    db_path = Path(settings.database_path).expanduser().resolve()
 
     @contextmanager
-    def connect() -> Iterator[sqlite3.Connection]:
-        connection = sqlite3.connect(db_path)
-        connection.row_factory = sqlite3.Row
-        connection.execute("PRAGMA foreign_keys=ON")
+    def connect() -> Iterator[psycopg2.extensions.connection]:
+        connection = psycopg2.connect(settings.database_url)
+        connection.cursor_factory = psycopg2.extras.RealDictCursor
         try:
             yield connection
         finally:
@@ -93,7 +94,6 @@ def create_app(settings: Settings | None = None, provider: InterpretationProvide
 
     @asynccontextmanager
     async def lifespan(_: FastAPI):
-        db_path.parent.mkdir(parents=True, exist_ok=True)
         with connect() as connection:
             initialize_db(connection)
         yield
