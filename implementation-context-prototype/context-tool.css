@@ -481,7 +481,10 @@ body.v88-dark .related-review-choice{background:#17151d!important;border-color:v
 .unboxed-ask .ask-session-row+.answer-stage{border-top:0;padding-top:22px}
 .ask-answer-head{display:flex;align-items:center;justify-content:space-between;gap:16px}
 .ask-copy-answer{font-size:11px!important;color:var(--muted)!important}
-.ask-followup{border-top:1px solid var(--line);margin-top:8px;padding:18px 0 0}
+/* Active Ask becomes answer-first. The follow-up composer stays reachable while the answer scrolls. */
+.unboxed-ask:has(.ask-session-row) .answer-stage{padding-bottom:88px}
+.ask-followup{position:fixed;z-index:18;left:246px;right:30px;bottom:16px;max-width:920px;margin:0;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:color-mix(in srgb,var(--surface) 94%,transparent);box-shadow:0 10px 30px rgba(28,24,45,.12);backdrop-filter:blur(10px)}
 .ask-followup .ask-input-row{height:40px}.ask-followup .ask-input-row input{min-height:38px!important}.ask-followup .ask-input-row .btn{height:38px;min-width:72px;padding:7px 12px;font-size:11px}
 .ask-live-answer .ask-answer-section{margin-top:22px}.ask-live-answer .ask-answer-section h3{margin-bottom:9px}
+@media(max-width:760px){.ask-followup{left:16px;right:16px;bottom:12px;max-width:none}}
 @media(max-width:650px){.ask-session-row{gap:12px}.ask-session-row strong{white-space:normal}.ask-followup .ask-input-row{height:auto}}
