@@ -55,12 +55,12 @@ def initialize_db(connection) -> None:
         if migration_file.stem in applied:
             continue
         sql = migration_file.read_text(encoding="utf-8")
-        # Split on semicolons and execute statements individually
-        # (works for both SQLite and Postgres)
+        # Split by semicolon and execute each statement
         for statement in sql.split(";"):
             statement = statement.strip()
             if statement:
                 cursor.execute(statement)
+        connection.commit()
         # Record migration as applied
         cursor.execute(f"INSERT INTO schema_migrations (version) VALUES ({param_placeholder})", (migration_file.stem,))
         connection.commit()

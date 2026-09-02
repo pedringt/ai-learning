@@ -14,16 +14,9 @@ CREATE TABLE IF NOT EXISTS evidence (
 );
 
 -- Postgres trigger for evidence immutability
-CREATE OR REPLACE FUNCTION evidence_content_immutable_fn() RETURNS TRIGGER AS $$
-BEGIN
-    RAISE EXCEPTION 'Evidence content is immutable';
-END;
-$$ LANGUAGE plpgsql;
-
+CREATE OR REPLACE FUNCTION evidence_content_immutable_fn() RETURNS TRIGGER AS $$ BEGIN RAISE EXCEPTION 'Evidence content is immutable'; END; $$ LANGUAGE plpgsql;
 DROP TRIGGER IF EXISTS evidence_content_immutable ON evidence;
-CREATE TRIGGER evidence_content_immutable
-BEFORE UPDATE OF content ON evidence
-FOR EACH ROW EXECUTE FUNCTION evidence_content_immutable_fn();
+CREATE TRIGGER evidence_content_immutable BEFORE UPDATE OF content ON evidence FOR EACH ROW EXECUTE FUNCTION evidence_content_immutable_fn();
 
 CREATE TABLE IF NOT EXISTS current_state_items (
     id TEXT PRIMARY KEY,
