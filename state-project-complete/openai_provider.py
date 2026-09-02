@@ -202,7 +202,6 @@ Respond ONLY with JSON in this structure:
         {{
           "operation": "create" | "update" | "retire",
           "state_item_id": "state_01",  // required for update/retire; omit for create
-          "expected_version": 1,  // required for update/retire; omit for create
           "proposed_statement": "New or updated statement",  // required for create/update; omit for retire
           "rationale": "Why this change makes sense given Evidence",
           "effective_date": "YYYY-MM-DD"  // optional
@@ -220,11 +219,11 @@ Remember:
   - state_at_risk: use when Evidence creates uncertainty/risk around existing State but does not yet establish a replacement; normally use no proposed_changes.
 - Before responding, verify review_type is compatible with every proposed_change operation. If you are targeting an existing State item with update or retire, use review_type "proposed_update", not "missing_understanding".
 - You can recommend Reviews without proposals (state_at_risk)
-- For EVERY update or retire proposal, the proposal state_item_id MUST also appear in affected_state_item_ids on that SAME review recommendation. Copy the exact State ID; never target a State item that is absent from affected_state_item_ids.
-- Before responding, verify each update/retire proposal target is included in its recommendation's affected_state_item_ids.
+- For update/retire, output the exact existing state_item_id. Software supplies expected_version and ensures the target is included in affected_state_item_ids. Do not output expected_version.
 
 - effective_date is optional. Include it ONLY when the Evidence establishes a specific complete calendar date. It must be ISO YYYY-MM-DD. If timing is immediate, upon approval/decision, vague, relative, partial, or unknown, OMIT effective_date. Never emit sentinel or placeholder values such as "upon_decision", "immediately", "now", "TBD", or partial dates such as "2026-10".
-- Include grouping_reason only for recommendations that group 2+ affected State items or 2+ proposed changes; otherwise omit it
+- grouping_reason is optional for recommendations that group 2+ affected State items or 2+ proposed changes; omit it for single-item/single-change recommendations.
+- Keep all text fields concise: one sentence each, usually under 25 words. Use at most 3 topics unless the Evidence clearly spans more.
 - Be conservative: if unsure, recommend a Review
 """
         return prompt

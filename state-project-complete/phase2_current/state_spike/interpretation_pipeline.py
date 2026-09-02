@@ -7,6 +7,7 @@ from dataclasses import dataclass
 from typing import Any, Mapping, Protocol
 
 from .interpretation_validation import StructuredInterpretationSchemaError, validate_schema
+from .provider_normalization import normalize_provider_payload
 from .semantic_validation import (
     ApplicationStateSnapshot,
     InterpretationContextSnapshot,
@@ -179,6 +180,7 @@ def process_evidence(connection: sqlite3.Connection, *, evidence_id: str, provid
     payload: Mapping[str, Any] | None = None
     try:
         payload = provider.interpret(context=context, evidence=dict(evidence))
+        payload = normalize_provider_payload(payload, context=context)
         validate_schema(payload)
         validate_semantics(payload, context=context, application_state=application_snapshot(connection))
     except StructuredInterpretationSchemaError:

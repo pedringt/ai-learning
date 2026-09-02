@@ -67,7 +67,7 @@ def _provider_from_env(settings: Settings) -> InterpretationProvider:
     if settings.provider == "anthropic":
         if not os.getenv("ANTHROPIC_API_KEY"):
             raise RuntimeError("ANTHROPIC_API_KEY is required when STATE_PROVIDER=anthropic")
-        model = os.getenv("CLAUDE_MODEL", "claude-sonnet-4-6")
+        model = os.getenv("CLAUDE_MODEL", "claude-haiku-4-5-20251001")
         return AnthropicProvider(
             model_identifier=model,
             api_key=os.environ["ANTHROPIC_API_KEY"]
@@ -141,11 +141,20 @@ def create_app(settings: Settings | None = None, provider: InterpretationProvide
                     error_details = json.loads(record["structured_result"]) if record["structured_result"] else None
                 except (json.JSONDecodeError, TypeError):
                     pass
-                raise HTTPException(status_code=422, detail={
-                    "code": error_code, 
+                # Contract/semantic failures are client-visible 422s; provider
+                # transport/timeouts/refusals are service failures and should
+                # not masquerade as invalid Evidence.
+                status_code = 503 if error_code == "provider_error" else 422
+                public_error_details = error_details
+                if error_code == "provider_error":
+                    public_error_details = {
+                        "error_message": "The analysis service could not complete this request. Please try again."
+                    }
+                raise HTTPException(status_code=status_code, detail={
+                    "code": error_code,
                     "evidence_id": evidence_id,
                     "interpretation_record_id": result.interpretation_record_id,
-                    "error_details": error_details,
+                    "error_details": public_error_details,
                 })
             return {
                 "evidence_id": evidence_id,

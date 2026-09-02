@@ -71,6 +71,7 @@ def _apply_proposal(connection: sqlite3.Connection, proposal: sqlite3.Row) -> No
             (state_id, "uncategorized", proposal["proposed_statement"], proposal["effective_date"]),
         )
         old_statement, old_effective_date, from_version, to_version = None, None, None, 1
+        new_effective_date = proposal["effective_date"]
         transition_type = "created"
     else:
         state_id = proposal["state_item_id"]
@@ -109,7 +110,7 @@ def _apply_proposal(connection: sqlite3.Connection, proposal: sqlite3.Row) -> No
         (
             new_id("history"), state_id, proposal["id"], transition_type,
             old_statement, proposal["proposed_statement"], old_effective_date,
-            proposal["effective_date"], from_version, to_version,
+            new_effective_date, from_version, to_version,
         ),
     )
 
@@ -123,16 +124,27 @@ def list_state(connection: sqlite3.Connection) -> list[dict]:
 
 
 def list_reviews(connection: sqlite3.Connection, status: str = "open") -> list[dict]:
+    """Return each Review exactly once, even when multiple Evidence items are linked."""
     connection.row_factory = sqlite3.Row
     rows = connection.execute(
-        "SELECT r.*, e.id AS evidence_id, e.content AS evidence_content, e.source_type AS evidence_source_type "
-        "FROM review_issues r LEFT JOIN review_evidence re ON re.review_id=r.id "
-        "LEFT JOIN evidence e ON e.id=re.evidence_id WHERE r.status=? ORDER BY r.created_at, r.id",
+        "SELECT r.* FROM review_issues r WHERE r.status=? ORDER BY r.created_at, r.id",
         (status,),
     ).fetchall()
     result = []
     for row in rows:
         item = dict(row)
+        evidence_rows = connection.execute(
+            "SELECT e.id, e.content, e.source_type, e.submitted_at "
+            "FROM evidence e JOIN review_evidence re ON re.evidence_id=e.id "
+            "WHERE re.review_id=? ORDER BY e.submitted_at DESC, e.id DESC",
+            (row["id"],),
+        ).fetchall()
+        item["evidence_items"] = [dict(e) for e in evidence_rows]
+        latest = evidence_rows[0] if evidence_rows else None
+        # Backward-compatible singular fields used by the current frontend.
+        item["evidence_id"] = latest["id"] if latest else None
+        item["evidence_content"] = latest["content"] if latest else None
+        item["evidence_source_type"] = latest["source_type"] if latest else None
         item["proposals"] = [dict(p) for p in connection.execute(
             "SELECT * FROM proposed_state_changes WHERE review_id=? ORDER BY created_at, id", (row["id"],)
         )]

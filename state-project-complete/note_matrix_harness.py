@@ -99,12 +99,12 @@ CASES = {
    'note':'We can now fully automate password reset tickets. [simulate model sentinel]',
    'payload': review_payload('Password resets can now be automated',['password_reset'],[rec([
       {'operation':'update','state_item_id':'state_password','expected_version':1,'proposed_statement':'Password reset tickets can be fully automated.','rationale':'Capability changed.','effective_date':'upon_decision'}
-   ], affected=['state_password'])]), 'status':422,'reviews':0},
+   ], affected=['state_password'])]), 'status':201,'reviews':1},
  '17_invalid_partial_date': {
    'note':'Rollout is in October 2026. [simulate partial date]',
    'payload': review_payload('Rollout is in October 2026',['rollout'],[rec([
       {'operation':'update','state_item_id':'state_rollout','expected_version':1,'proposed_statement':'The rollout is in October 2026.','rationale':'Timing changed.','effective_date':'2026-10'}
-   ], affected=['state_rollout'])]), 'status':422,'reviews':0},
+   ], affected=['state_rollout'])]), 'status':201,'reviews':1},
 }
 
 class Provider:

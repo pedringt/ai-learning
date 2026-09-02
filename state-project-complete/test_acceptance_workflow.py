@@ -343,3 +343,63 @@ class AcceptanceWorkflowTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
+
+
+def test_history_records_effective_date_carried_forward_on_update(tmp_path):
+    from database_migration_backed import initialize_db
+    from review_service import resolve_review
+    import sqlite3
+
+    conn = sqlite3.connect(":memory:")
+    conn.row_factory = sqlite3.Row
+    initialize_db(conn)
+    conn.execute("INSERT INTO current_state_items(id, topic, statement, version, effective_date) VALUES ('s1','timing','Old',1,'2026-09-01')")
+    conn.execute("INSERT INTO review_issues(id, review_type, decision_question, why_consequential, status) VALUES ('r1','proposed_update','Change?','Because','open')")
+    conn.execute("INSERT INTO proposed_state_changes(id, review_id, operation, state_item_id, expected_state_version, proposed_statement, rationale, effective_date, status) VALUES ('p1','r1','update','s1',1,'New','Evidence',NULL,'pending')")
+    conn.commit()
+    resolve_review(conn, 'r1', 'accept')
+    row = conn.execute("SELECT old_effective_date, new_effective_date FROM history_transitions WHERE proposed_change_id='p1'").fetchone()
+    assert row['old_effective_date'] == '2026-09-01'
+    assert row['new_effective_date'] == '2026-09-01'
+    conn.close()
+
+
+def test_accept_create_records_history_and_effective_date():
+    import sqlite3
+    from database_migration_backed import initialize_db
+    from review_service import resolve_review
+    connection = sqlite3.connect(":memory:")
+    connection.row_factory = sqlite3.Row
+    initialize_db(connection)
+    connection.execute(
+        "INSERT INTO review_issues(id,review_type,decision_question,why_consequential,status) "
+        "VALUES('r-create','missing_understanding','Add new fact?','It fills missing State','open')"
+    )
+    connection.execute(
+        "INSERT INTO proposed_state_changes(id,review_id,operation,state_item_id,expected_state_version,proposed_statement,rationale,effective_date,status) "
+        "VALUES('p-create','r-create','create',NULL,NULL,'Tier 2 joins the pilot September 15.','Evidence establishes it.','2026-09-15','pending')"
+    )
+    connection.commit()
+
+    resolve_review(connection, 'r-create', 'accept')
+    state = connection.execute(
+        "SELECT statement,version,effective_date FROM current_state_items WHERE statement=?",
+        ('Tier 2 joins the pilot September 15.',),
+    ).fetchone()
+    assert state is not None
+    assert state['version'] == 1
+    assert state['effective_date'] == '2026-09-15'
+    history = connection.execute(
+        "SELECT transition_type,old_statement,new_statement,old_effective_date,new_effective_date,from_version,to_version "
+        "FROM history_transitions WHERE proposed_change_id='p-create'"
+    ).fetchone()
+    assert dict(history) == {
+        'transition_type': 'created',
+        'old_statement': None,
+        'new_statement': 'Tier 2 joins the pilot September 15.',
+        'old_effective_date': None,
+        'new_effective_date': '2026-09-15',
+        'from_version': None,
+        'to_version': 1,
+    }
+    connection.close()

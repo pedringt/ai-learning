@@ -102,3 +102,31 @@ class ApiWorkflowTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class ProviderFailureApiTests(unittest.TestCase):
+    def test_provider_failure_is_503_not_422(self):
+        class FailingProvider:
+            name = "failing"
+            model_identifier = "failure-test"
+            def interpret(self, *, context, evidence, connection=None):
+                raise TimeoutError("provider timed out")
+
+        with tempfile.TemporaryDirectory() as tempdir:
+            app = create_app(
+                Settings(database_path=str(Path(tempdir) / "state.db"), provider="anthropic", cors_origins=[]),
+                provider=FailingProvider(),
+            )
+            with TestClient(app) as client:
+                response = client.post("/api/evidence", json={"content": "A valid note."})
+                self.assertEqual(response.status_code, 503)
+                detail = response.json()["detail"]
+                self.assertEqual(detail["code"], "provider_error")
+                self.assertIn("Please try again", detail["error_details"]["error_message"])
+                self.assertNotIn("TimeoutError", detail["error_details"]["error_message"])
+                with sqlite3.connect(str(Path(tempdir) / "state.db")) as connection:
+                    stored = connection.execute(
+                        "SELECT structured_result FROM interpretation_records WHERE id=?",
+                        (detail["interpretation_record_id"],),
+                    ).fetchone()[0]
+                    self.assertIn("TimeoutError", stored)

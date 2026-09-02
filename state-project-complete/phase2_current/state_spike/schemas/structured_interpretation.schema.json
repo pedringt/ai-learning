@@ -11,36 +11,64 @@
     "review_recommendations"
   ],
   "properties": {
-    "summary": {"type": "string", "minLength": 1},
+    "summary": {
+      "type": "string",
+      "minLength": 1
+    },
     "topics": {
       "type": "array",
       "uniqueItems": true,
-      "items": {"type": "string", "minLength": 1}
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
     },
     "outcome": {
       "type": "string",
-      "enum": ["no_review", "review_recommended"]
+      "enum": [
+        "no_review",
+        "review_recommended"
+      ]
     },
-    "no_review_explanation": {"type": "string", "minLength": 1},
+    "no_review_explanation": {
+      "type": "string",
+      "minLength": 1
+    },
     "review_recommendations": {
       "type": "array",
-      "items": {"$ref": "#/$defs/reviewRecommendation"}
+      "items": {
+        "$ref": "#/$defs/reviewRecommendation"
+      }
     }
   },
   "allOf": [
     {
       "if": {
-        "properties": {"outcome": {"const": "no_review"}},
-        "required": ["outcome"]
+        "properties": {
+          "outcome": {
+            "const": "no_review"
+          }
+        },
+        "required": [
+          "outcome"
+        ]
       },
       "then": {
-        "required": ["no_review_explanation"],
-        "properties": {"review_recommendations": {"maxItems": 0}}
+        "required": [
+          "no_review_explanation"
+        ],
+        "properties": {
+          "review_recommendations": {
+            "maxItems": 0
+          }
+        }
       },
       "else": {
         "properties": {
           "no_review_explanation": false,
-          "review_recommendations": {"minItems": 1}
+          "review_recommendations": {
+            "minItems": 1
+          }
         }
       }
     }
@@ -58,53 +86,120 @@
         "proposed_changes"
       ],
       "properties": {
-        "review_action": {"type": "string", "enum": ["create", "update_existing"]},
-        "existing_review_id": {"type": "string", "minLength": 1},
+        "review_action": {
+          "type": "string",
+          "enum": [
+            "create",
+            "update_existing"
+          ]
+        },
+        "existing_review_id": {
+          "type": "string",
+          "minLength": 1
+        },
         "review_type": {
           "type": "string",
-          "enum": ["proposed_update", "state_at_risk", "missing_understanding"]
+          "enum": [
+            "proposed_update",
+            "state_at_risk",
+            "missing_understanding"
+          ]
         },
-        "decision_question": {"type": "string", "minLength": 1},
-        "why_consequential": {"type": "string", "minLength": 1},
+        "decision_question": {
+          "type": "string",
+          "minLength": 1
+        },
+        "why_consequential": {
+          "type": "string",
+          "minLength": 1
+        },
         "affected_state_item_ids": {
           "type": "array",
           "uniqueItems": true,
-          "items": {"type": "string", "minLength": 1}
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
         },
-        "grouping_reason": {"type": "string", "minLength": 1},
+        "grouping_reason": {
+          "type": "string",
+          "minLength": 1
+        },
         "proposed_changes": {
           "type": "array",
-          "items": {"$ref": "#/$defs/proposedChange"}
+          "items": {
+            "$ref": "#/$defs/proposedChange"
+          }
         }
       },
       "allOf": [
         {
           "if": {
-            "properties": {"review_action": {"const": "create"}},
-            "required": ["review_action"]
+            "properties": {
+              "review_action": {
+                "const": "create"
+              }
+            },
+            "required": [
+              "review_action"
+            ]
           },
-          "then": {"properties": {"existing_review_id": false}},
-          "else": {"required": ["existing_review_id"]}
+          "then": {
+            "properties": {
+              "existing_review_id": false
+            }
+          },
+          "else": {
+            "required": [
+              "existing_review_id"
+            ]
+          }
         },
         {
           "if": {
-            "properties": {"review_type": {"const": "proposed_update"}},
-            "required": ["review_type"]
+            "properties": {
+              "review_type": {
+                "const": "proposed_update"
+              }
+            },
+            "required": [
+              "review_type"
+            ]
           },
-          "then": {"properties": {"proposed_changes": {"minItems": 1}}}
+          "then": {
+            "properties": {
+              "proposed_changes": {
+                "minItems": 1
+              }
+            }
+          }
         },
         {
           "if": {
-            "properties": {"review_type": {"const": "missing_understanding"}},
-            "required": ["review_type"]
+            "properties": {
+              "review_type": {
+                "const": "missing_understanding"
+              }
+            },
+            "required": [
+              "review_type"
+            ]
           },
           "then": {
             "properties": {
               "proposed_changes": {
                 "items": {
                   "allOf": [
-                    {"$ref": "#/$defs/proposedChange"},
-                    {"properties": {"operation": {"const": "create"}}}
+                    {
+                      "$ref": "#/$defs/proposedChange"
+                    },
+                    {
+                      "properties": {
+                        "operation": {
+                          "const": "create"
+                        }
+                      }
+                    }
                   ]
                 }
               }
@@ -114,35 +209,84 @@
         {
           "if": {
             "anyOf": [
-              {"properties": {"affected_state_item_ids": {"minItems": 2}}},
-              {"properties": {"proposed_changes": {"minItems": 2}}}
+              {
+                "properties": {
+                  "affected_state_item_ids": {
+                    "minItems": 2
+                  }
+                }
+              },
+              {
+                "properties": {
+                  "proposed_changes": {
+                    "minItems": 2
+                  }
+                }
+              }
             ]
           },
-          "then": {"required": ["grouping_reason"]},
-          "else": {"properties": {"grouping_reason": false}}
+          "then": {},
+          "else": {
+            "properties": {
+              "grouping_reason": false
+            }
+          }
         }
       ]
     },
     "proposedChange": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["operation", "rationale"],
+      "required": [
+        "operation",
+        "rationale"
+      ],
       "properties": {
-        "operation": {"type": "string", "enum": ["create", "update", "retire"]},
-        "state_item_id": {"type": "string", "minLength": 1},
-        "expected_version": {"type": "integer", "minimum": 1},
-        "proposed_statement": {"type": "string", "minLength": 1},
-        "rationale": {"type": "string", "minLength": 1},
-        "effective_date": {"type": "string", "format": "date"}
+        "operation": {
+          "type": "string",
+          "enum": [
+            "create",
+            "update",
+            "retire"
+          ]
+        },
+        "state_item_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "expected_version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "proposed_statement": {
+          "type": "string",
+          "minLength": 1
+        },
+        "rationale": {
+          "type": "string",
+          "minLength": 1
+        },
+        "effective_date": {
+          "type": "string",
+          "format": "date"
+        }
       },
       "allOf": [
         {
           "if": {
-            "properties": {"operation": {"const": "create"}},
-            "required": ["operation"]
+            "properties": {
+              "operation": {
+                "const": "create"
+              }
+            },
+            "required": [
+              "operation"
+            ]
           },
           "then": {
-            "required": ["proposed_statement"],
+            "required": [
+              "proposed_statement"
+            ],
             "properties": {
               "state_item_id": false,
               "expected_version": false
@@ -151,21 +295,42 @@
         },
         {
           "if": {
-            "properties": {"operation": {"const": "update"}},
-            "required": ["operation"]
+            "properties": {
+              "operation": {
+                "const": "update"
+              }
+            },
+            "required": [
+              "operation"
+            ]
           },
           "then": {
-            "required": ["state_item_id", "expected_version", "proposed_statement"]
+            "required": [
+              "state_item_id",
+              "expected_version",
+              "proposed_statement"
+            ]
           }
         },
         {
           "if": {
-            "properties": {"operation": {"const": "retire"}},
-            "required": ["operation"]
+            "properties": {
+              "operation": {
+                "const": "retire"
+              }
+            },
+            "required": [
+              "operation"
+            ]
           },
           "then": {
-            "required": ["state_item_id", "expected_version"],
-            "properties": {"proposed_statement": false}
+            "required": [
+              "state_item_id",
+              "expected_version"
+            ],
+            "properties": {
+              "proposed_statement": false
+            }
           }
         }
       ]

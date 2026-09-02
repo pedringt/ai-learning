@@ -28,6 +28,7 @@ import sys
 sys.path.insert(0, str(Path(__file__).resolve().parent / "phase2_current"))
 
 from state_spike.interpretation_validation import StructuredInterpretationSchemaError, validate_schema
+from state_spike.provider_normalization import normalize_provider_payload
 from state_spike.semantic_validation import (
     ApplicationStateSnapshot,
     InterpretationContextSnapshot,
@@ -161,18 +162,37 @@ def _persist_success(
                     (review_id, state_id),
                 )
 
-            # Create Proposals
+            # Create Proposals. When new Evidence updates an existing Review, a
+            # newer proposal for the same State target supersedes the older
+            # pending proposal instead of leaving two mutually-stale changes.
             for proposal in rec["proposed_changes"]:
+                supersedes_proposal_id = None
+                target_state_id = proposal.get("state_item_id")
+                if rec["review_action"] == "update_existing" and target_state_id is not None:
+                    prior_pending = connection.execute(
+                        "SELECT id FROM proposed_state_changes "
+                        "WHERE review_id=? AND state_item_id=? AND status='pending' "
+                        "ORDER BY created_at DESC, id DESC",
+                        (review_id, target_state_id),
+                    ).fetchall()
+                    if prior_pending:
+                        supersedes_proposal_id = prior_pending[0]["id"]
+                        connection.execute(
+                            "UPDATE proposed_state_changes SET status='superseded', decided_at=CURRENT_TIMESTAMP "
+                            "WHERE review_id=? AND state_item_id=? AND status='pending'",
+                            (review_id, target_state_id),
+                        )
+
                 connection.execute(
                     "INSERT INTO proposed_state_changes("
                     "id, review_id, operation, state_item_id, expected_state_version, "
-                    "proposed_statement, rationale, effective_date, status"
-                    ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                    "proposed_statement, rationale, effective_date, status, supersedes_proposal_id"
+                    ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                     (
                         new_id("proposal"),
                         review_id,
                         proposal["operation"],
-                        proposal.get("state_item_id"),
+                        target_state_id,
                         proposal.get("expected_version"),
                         (
                             proposal.get("proposed_statement")
@@ -185,6 +205,7 @@ def _persist_success(
                         proposal["rationale"],
                         proposal.get("effective_date"),
                         "pending",
+                        supersedes_proposal_id,
                     ),
                 )
 
@@ -238,7 +259,9 @@ def _persist_failure(
                 provider.model_identifier,
                 "structured-interpretation-v1",
                 "failed",
-                error_details or json.dumps(payload, sort_keys=True) if payload is not None else None,
+                error_details if error_details is not None else (
+                    json.dumps(payload, sort_keys=True) if payload is not None else None
+                ),
                 error_code,
             ),
         )
@@ -289,6 +312,8 @@ def process_evidence(
             provider_kwargs["connection"] = connection
         payload = provider.interpret(**provider_kwargs)
         print(f"[STATE] Provider returned payload", flush=True)
+        payload = normalize_provider_payload(payload, context=context)
+        print(f"[STATE] Provider payload normalized", flush=True)
 
         # Structural validation (JSON Schema)
         validate_schema(payload)

@@ -135,20 +135,20 @@ class StructuredInterpretationSchemaTests(unittest.TestCase):
         recommendation["review_type"] = "missing_understanding"
         self.assert_invalid(payload)
 
-    def test_multiple_affected_items_require_grouping_reason(self):
+    def test_multiple_affected_items_allow_omitted_grouping_reason(self):
         payload = proposed_update_payload()
         recommendation = payload["review_recommendations"][0]
         recommendation["affected_state_item_ids"] = ["state_03", "state_04"]
-        self.assert_invalid(payload)
+        validate_schema(payload)
 
-    def test_multiple_proposals_require_grouping_reason(self):
+    def test_multiple_proposals_allow_omitted_grouping_reason(self):
         payload = proposed_update_payload()
         recommendation = payload["review_recommendations"][0]
         second = copy.deepcopy(recommendation["proposed_changes"][0])
         second["state_item_id"] = "state_03"
         second["proposed_statement"] = "Another supported replacement."
         recommendation["proposed_changes"].append(second)
-        self.assert_invalid(payload)
+        validate_schema(payload)
 
     def test_grouping_reason_allowed_when_grouping_is_required(self):
         payload = proposed_update_payload()

@@ -26,7 +26,7 @@ services:
         value: claude-haiku-4-5-20251001  # Low-latency interpreter; override to Sonnet if evaluation shows a quality regression
       
       - key: CLAUDE_MAX_TOKENS
-        value: 1600
+        value: 1200
 
       - key: DATABASE_PATH
         value: /tmp/state.db

@@ -156,9 +156,9 @@ class MockLiveProviderTests(unittest.TestCase):
         # Verify prompt contains expected elements
         self.assertIn("state_02", prompt)
         self.assertIn("October 15", prompt)
-        self.assertIn("review_recommended", prompt)
-        self.assertIn("JSON", prompt)
-        self.assertIn("Your Task", prompt)
+        self.assertIn("proposed_update", prompt)
+        self.assertIn("JSON schema", prompt)
+        self.assertIn("<instructions>", prompt)
 
     @patch('openai_provider.OpenAIProvider.client')
     def test_openai_mock_interpret(self, mock_client):
