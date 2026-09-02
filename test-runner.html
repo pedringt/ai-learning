@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>State Tool - Automated Test Runner</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        
+        header {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            margin: 0 0 10px 0;
+            font-size: 24px;
+            color: #333;
+        }
+        
+        .subtitle {
+            color: #666;
+            font-size: 14px;
+            margin: 0;
+        }
+        
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        button {
+            padding: 10px 16px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .btn-primary {
+            background: #5c4fb8;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #4a3d94;
+        }
+        
+        .btn-primary:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        
+        .btn-secondary {
+            background: white;
+            color: #333;
+            border: 1px solid #ddd;
+        }
+        
+        .btn-secondary:hover {
+            background: #f9f9f9;
+        }
+        
+        .summary {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin: 15px 0 0 0;
+        }
+        
+        .stat {
+            background: white;
+            padding: 15px;
+            border-radius: 6px;
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            margin: 0;
+        }
+        
+        .stat-label {
+            font-size: 12px;
+            color: #666;
+            margin-top: 5px;
+        }
+        
+        .stat.pass .stat-value {
+            color: #28a745;
+        }
+        
+        .stat.fail .stat-value {
+            color: #dc3545;
+        }
+        
+        .stat.warn .stat-value {
+            color: #ffc107;
+        }
+        
+        .test-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .test-card {
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .test-card.running {
+            opacity: 0.7;
+        }
+        
+        .test-header {
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+        }
+        
+        .test-id {
+            font-weight: 600;
+            font-size: 12px;
+            color: #666;
+            text-transform: uppercase;
+        }
+        
+        .test-name {
+            font-size: 14px;
+            font-weight: 500;
+            margin-top: 5px;
+            color: #333;
+        }
+        
+        .test-status {
+            display: inline-block;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        
+        .test-status.pending {
+            background: #eee;
+            color: #999;
+        }
+        
+        .test-status.running {
+            background: #cfe8fc;
+            color: #0066cc;
+            animation: spin 1s linear infinite;
+        }
+        
+        .test-status.pass {
+            background: #d4edda;
+            color: #28a745;
+        }
+        
+        .test-status.fail {
+            background: #f8d7da;
+            color: #dc3545;
+        }
+        
+        .test-status.warn {
+            background: #fff3cd;
+            color: #ffc107;
+        }
+        
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        
+        .test-body {
+            padding: 15px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .test-evidence {
+            font-size: 12px;
+            color: #666;
+            background: #f9f9f9;
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 10px;
+            max-height: 80px;
+            overflow: hidden;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        
+        .test-result {
+            font-size: 12px;
+            color: #666;
+            margin: 10px 0 0 0;
+        }
+        
+        .test-result-label {
+            font-weight: 500;
+            margin-bottom: 5px;
+        }
+        
+        .test-result-value {
+            color: #333;
+        }
+        
+        .test-error {
+            color: #dc3545;
+            font-size: 12px;
+            margin-top: 10px;
+            padding: 8px;
+            background: #fff5f5;
+            border-left: 2px solid #dc3545;
+            border-radius: 3px;
+        }
+        
+        .log {
+            background: white;
+            border-radius: 8px;
+            padding: 15px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            max-height: 300px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            line-height: 1.5;
+        }
+        
+        .log-entry {
+            margin-bottom: 5px;
+            padding: 5px;
+            border-left: 2px solid #eee;
+            padding-left: 10px;
+        }
+        
+        .log-entry.info {
+            color: #0066cc;
+            border-left-color: #0066cc;
+        }
+        
+        .log-entry.pass {
+            color: #28a745;
+            border-left-color: #28a745;
+        }
+        
+        .log-entry.fail {
+            color: #dc3545;
+            border-left-color: #dc3545;
+        }
+        
+        .no-tests {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>State Tool - Automated Test Runner</h1>
+            <p class="subtitle">One-click testing of multiple evidence samples</p>
+            
+            <div class="controls">
+                <button class="btn-primary" id="runAllBtn">▶ Run All Tests</button>
+                <button class="btn-secondary" id="clearBtn">Clear Results</button>
+            </div>
+            
+            <div class="summary" id="summary" style="display:none;">
+                <div class="stat pass">
+                    <div class="stat-value" id="passCount">0</div>
+                    <div class="stat-label">Passed</div>
+                </div>
+                <div class="stat fail">
+                    <div class="stat-value" id="failCount">0</div>
+                    <div class="stat-label">Failed</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value" id="totalTime">0s</div>
+                    <div class="stat-label">Total Time</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value" id="avgTime">0s</div>
+                    <div class="stat-label">Avg Response</div>
+                </div>
+            </div>
+        </header>
+        
+        <div id="testGrid" class="test-grid"></div>
+        
+        <div>
+            <h2 style="margin-top: 40px;">Test Log</h2>
+            <div id="log" class="log"></div>
+        </div>
+    </div>
+    
+    <script>
+        const API_BASE = "https://state-api-6waw.onrender.com";
+        
+        const testCases = [
+            {
+                id: "T1",
+                name: "Simple Clear Update",
+                evidence: "The pilot is now scheduled to start on October 1st, 2026. All customer data must be deleted within 30 days after pilot ends."
+            },
+            {
+                id: "T2",
+                name: "Single Short Sentence",
+                evidence: "Security team confirmed TLS 1.3 requirement is non-negotiable."
+            },
+            {
+                id: "T3",
+                name: "Positive Confirmation",
+                evidence: "Customer testing completed successfully. No blockers found. All feedback was minor UX improvements."
+            },
+            {
+                id: "T4",
+                name: "Multiple Topics (3 items)",
+                evidence: "We discovered three things during customer testing:\n1. Access control matrix doesn't match actual permissions\n2. Temporary entitlements expire silently\n3. Grandfathered packages bypass security checks\nAll three need fixes before pilot."
+            },
+            {
+                id: "T5",
+                name: "Ambiguous/Needs Clarification",
+                evidence: "Bob mentioned something about the access thing at standup. Not sure if it's a problem or just a question."
+            },
+            {
+                id: "T6",
+                name: "Contradicts Current Understanding",
+                evidence: "Actually, we were wrong about pilot scope. It's only for enterprise customers, not mid-market. This changes access controls we need."
+            },
+            {
+                id: "T7",
+                name: "Very Short Evidence",
+                evidence: "Pilot starts October 1st."
+            },
+            {
+                id: "T8",
+                name: "Long Evidence (Transcript)",
+                evidence: "CUSTOMER SUPPORT TRANSCRIPT:\n\n[Customer] The interface is confusing. I tried to add a feature flag but couldn't find the menu. Spent 20 minutes looking...\n\n[Support] Let me show you where that is...\n\n[Customer] Oh! Found it. But I noticed when I disable a feature, it doesn't disable for existing sessions.\n\n[Support] That's a known limitation.\n\n[Customer] That's a production blocker. We need immediate feature flag invalidation.\n\n[Support] We're tracking this for version 2.1."
+            },
+            {
+                id: "T9",
+                name: "Special Characters/Code",
+                evidence: "Bug found: POST /api/evidence with source_type='manual_note' returns 422 if grouping_reason missing. By design but customers see as error."
+            },
+            {
+                id: "T10",
+                name: "Question Format",
+                evidence: "Q: Should we add email notifications for feature flag changes?"
+            }
+        ];
+        
+        let results = {};
+        let logEntries = [];
+        
+        function log(message, type = "info") {
+            const entry = `[${new Date().toLocaleTimeString()}] ${message}`;
+            logEntries.push({text: entry, type});
+            
+            const logDiv = document.getElementById("log");
+            const logEntry = document.createElement("div");
+            logEntry.className = `log-entry ${type}`;
+            logEntry.textContent = entry;
+            logDiv.appendChild(logEntry);
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+        
+        function createTestCard(testCase) {
+            const card = document.createElement("div");
+            card.className = "test-card";
+            card.id = `test-${testCase.id}`;
+            
+            card.innerHTML = `
+                <div class="test-header">
+                    <div>
+                        <div class="test-id">${testCase.id}</div>
+                        <div class="test-name">${testCase.name}</div>
+                    </div>
+                    <div class="test-status pending" id="status-${testCase.id}">?</div>
+                </div>
+                <div class="test-body">
+                    <div class="test-evidence">${escapeHtml(testCase.evidence.substring(0, 100))}${testCase.evidence.length > 100 ? '...' : ''}</div>
+                    <div class="test-result" id="result-${testCase.id}"></div>
+                </div>
+            `;
+            
+            return card;
+        }
+        
+        function escapeHtml(text) {
+            const div = document.createElement("div");
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        async function runTest(testCase) {
+            const statusEl = document.getElementById(`status-${testCase.id}`);
+            const resultEl = document.getElementById(`result-${testCase.id}`);
+            const card = document.getElementById(`test-${testCase.id}`);
+            
+            card.classList.add("running");
+            statusEl.className = "test-status running";
+            statusEl.textContent = "⧗";
+            
+            log(`Running ${testCase.id}: ${testCase.name}...`);
+            
+            const startTime = Date.now();
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/evidence`, {
+                    method: "POST",
+                    headers: {"Content-Type": "application/json"},
+                    body: JSON.stringify({
+                        content: testCase.evidence,
+                        source_type: "manual_note"
+                    }),
+                    timeout: 60000
+                });
+                
+                const responseTime = (Date.now() - startTime) / 1000;
+                const data = await response.json();
+                
+                let status = "pending";
+                let statusText = "?";
+                let resultHtml = "";
+                
+                if (response.ok && response.status === 201) {
+                    if (data.evidence_id && data.processing_status === "succeeded") {
+                        status = "pass";
+                        statusText = "✓";
+                        resultHtml = `
+                            <div class="test-result-label">✓ Success</div>
+                            <div class="test-result-value">Time: ${responseTime.toFixed(2)}s</div>
+                            <div class="test-result-value">Reviews: ${data.reviews?.length || 0}</div>
+                        `;
+                        log(`${testCase.id} PASSED (${responseTime.toFixed(2)}s)`, "pass");
+                    } else if (data.detail?.code === "schema_violation") {
+                        status = "fail";
+                        statusText = "✗";
+                        resultHtml = `
+                            <div class="test-error">Schema Error: ${data.detail?.error_details?.error_message?.substring(0, 80) || 'Unknown'}</div>
+                        `;
+                        log(`${testCase.id} FAILED - Schema Violation`, "fail");
+                    } else {
+                        status = "warn";
+                        statusText = "!";
+                        resultHtml = `<div class="test-result-label">⚠ Unexpected response</div>`;
+                        log(`${testCase.id} WARNING - ${data.detail?.code || 'Unknown response'}`, "fail");
+                    }
+                } else {
+                    status = "fail";
+                    statusText = "✗";
+                    resultHtml = `
+                        <div class="test-error">HTTP ${response.status}</div>
+                    `;
+                    log(`${testCase.id} FAILED - HTTP ${response.status}`, "fail");
+                }
+                
+                results[testCase.id] = {
+                    status,
+                    responseTime,
+                    testName: testCase.name
+                };
+                
+                statusEl.className = `test-status ${status}`;
+                statusEl.textContent = statusText;
+                resultEl.innerHTML = resultHtml;
+                card.classList.remove("running");
+                
+            } catch (error) {
+                results[testCase.id] = {
+                    status: "fail",
+                    error: error.message,
+                    testName: testCase.name
+                };
+                
+                statusEl.className = "test-status fail";
+                statusEl.textContent = "✗";
+                resultEl.innerHTML = `<div class="test-error">Error: ${error.message}</div>`;
+                card.classList.remove("running");
+                
+                log(`${testCase.id} FAILED - ${error.message}`, "fail");
+            }
+        }
+        
+        function updateSummary() {
+            const passed = Object.values(results).filter(r => r.status === "pass").length;
+            const failed = Object.values(results).filter(r => r.status === "fail").length;
+            const times = Object.values(results).filter(r => r.responseTime).map(r => r.responseTime);
+            const totalTime = times.reduce((a, b) => a + b, 0);
+            const avgTime = times.length > 0 ? totalTime / times.length : 0;
+            
+            document.getElementById("passCount").textContent = passed;
+            document.getElementById("failCount").textContent = failed;
+            document.getElementById("totalTime").textContent = totalTime.toFixed(1) + "s";
+            document.getElementById("avgTime").textContent = avgTime.toFixed(2) + "s";
+            document.getElementById("summary").style.display = "grid";
+        }
+        
+        async function runAllTests() {
+            results = {};
+            logEntries = [];
+            document.getElementById("log").innerHTML = "";
+            document.getElementById("summary").style.display = "none";
+            
+            log("Starting test run...", "info");
+            log(`Total tests: ${testCases.length}`, "info");
+            
+            const startTime = Date.now();
+            
+            for (const testCase of testCases) {
+                await runTest(testCase);
+                await new Promise(resolve => setTimeout(resolve, 500)); // Delay between tests
+            }
+            
+            const totalTime = (Date.now() - startTime) / 1000;
+            log(`Test run complete in ${totalTime.toFixed(2)}s`, "pass");
+            
+            updateSummary();
+        }
+        
+        function clearResults() {
+            results = {};
+            logEntries = [];
+            document.getElementById("log").innerHTML = "";
+            document.getElementById("summary").style.display = "none";
+            document.querySelectorAll(".test-card").forEach(card => {
+                card.querySelectorAll(".test-status").forEach(el => {
+                    el.className = "test-status pending";
+                    el.textContent = "?";
+                });
+                card.querySelectorAll(".test-result").forEach(el => el.innerHTML = "");
+            });
+        }
+        
+        document.getElementById("runAllBtn").addEventListener("click", runAllTests);
+        document.getElementById("clearBtn").addEventListener("click", clearResults);
+        
+        // Initialize grid
+        const grid = document.getElementById("testGrid");
+        testCases.forEach(tc => {
+            grid.appendChild(createTestCard(tc));
+        });
+    </script>
+</body>
+</html>
