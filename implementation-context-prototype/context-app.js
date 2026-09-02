@@ -5,7 +5,7 @@
   const initial = clone(D);
   const state = {
     data: clone(D), view:'overview', result:null, resultQuery:'', projectMenuOpen:false, refinements:[], lastScenario:null,
-    addedSample:false, pendingCreated:false, reviewBannerDismissed:false, dialogReturnFocus:null, expandedNotes:new Set(), noteComposerOpen:false, editingNoteId:null, dismissedNudges:new Set(), projectNavOpen:false, hiddenProjectAreas:new Set(), historyTopic:null, notesFilter:'all', notesDateFilter:'all', notesSearch:'', isAnalyzing:false, reviewsBackendAvailable:false, questionsBackendAvailable:false, reviewsHydrated:false, openQuestionsExpanded:false, expandedReviewId:null, openItemSections:{reviews:false,blockers:false,questions:null}, projectRules:[]
+    addedSample:false, pendingCreated:false, reviewBannerDismissed:false, dialogReturnFocus:null, expandedNotes:new Set(), noteComposerOpen:false, editingNoteId:null, dismissedNudges:new Set(), historyTopic:null, historySearch:'', notesFilter:'all', notesDateFilter:'all', notesSearch:'', isAnalyzing:false, reviewsBackendAvailable:false, questionsBackendAvailable:false, reviewsHydrated:false, openQuestionsExpanded:false, expandedReviewId:null, openItemSections:{reviews:false,blockers:false,questions:null}, projectRules:[], backendStatus:{state:'loading',evidence:'loading',reviews:'loading',history:'loading',questions:'loading',rules:'loading',drafts:'loading'}
   };
 
   const root = document.getElementById('viewRoot');
@@ -28,11 +28,11 @@
     document.querySelectorAll('[data-view]').forEach(b => b.classList.toggle('active', b.dataset.view===state.view));
     const projectActive=state.view==='project-overview';
     const projectToggle=document.querySelector('.project-nav-toggle'); if(projectToggle) projectToggle.classList.toggle('active',projectActive);
-    const sub=document.getElementById('projectSubnav'); if(sub) sub.hidden=!state.projectNavOpen; if(projectToggle) projectToggle.setAttribute('aria-expanded',state.projectNavOpen?'true':'false');
+    const sub=document.getElementById('projectSubnav'); if(sub) sub.hidden=!projectActive;
     const actionCount=document.getElementById('openItemsActionCount'); if(actionCount){const n=uiPendingReviews().length;actionCount.textContent=n;actionCount.hidden=!n;}
     document.querySelectorAll('[data-project-area]').forEach(b=>{
       const area=b.dataset.projectArea;
-      b.hidden=state.hiddenProjectAreas.has(area)||currentKnowledge(area).length===0;
+      b.hidden=state.backendStatus.state!=='loaded'||currentKnowledge(area).length===0;
     });
     const pm=document.getElementById('projectMenu'), ps=document.getElementById('projectSwitcher'); if(pm)pm.hidden=!state.projectMenuOpen; if(ps)ps.setAttribute('aria-expanded',state.projectMenuOpen?'true':'false');
   }
@@ -58,6 +58,14 @@
   }
 
   function render(){ updateNav(); const views={overview:renderOverview,notes:renderNotes,'open-items':renderOpenItems,questions:renderOpenItems,review:renderOpenItems,history:renderHistory,'project-overview':renderProjectOverview}; (views[state.view]||renderOverview)(); }
+
+  function navigateTo(view,{preserveHistoryTopic=false}={}){
+    state.view=view;
+    if(view==='history'){if(!preserveHistoryTopic)state.historyTopic=null;}else state.historyTopic=null;
+    state.result=null;
+    render();
+    requestAnimationFrame(()=>window.scrollTo({top:0,behavior:'auto'}));
+  }
 
   function projectScrollTop(target){
     const el=document.getElementById(target);
@@ -128,15 +136,18 @@
     };
   }
   function renderProjectOverview(){
-    const visible=Object.entries(projectAreas).filter(([id])=>!state.hiddenProjectAreas.has(id)&&currentKnowledge(id).length);
+    if(state.backendStatus.state==='loading'){
+      root.innerHTML=`<article class="page project-page project-document"><div class="empty-state unavailable-state"><h2>Loading Current State…</h2><p>Opening the authoritative project understanding.</p></div></article>`;
+      return;
+    }
+    if(state.backendStatus.state==='error'){
+      root.innerHTML=`<article class="page project-page project-document"><div class="empty-state unavailable-state"><h2>Current State is temporarily unavailable.</h2><p>State is not substituting demo or fixture facts while the authoritative project data cannot be loaded.</p><button class="btn secondary" data-action="retry-hydration">Try again</button></div></article>`;
+      return;
+    }
+    const visible=Object.entries(projectAreas).filter(([id])=>currentKnowledge(id).length);
     const orientation=projectOrientation();
-    root.innerHTML=`<article class="page project-page project-document"><header class="project-document-head" id="project-top"><div class="project-head-row"><div><span class="eyebrow">Current project</span><h2>${esc(state.data.project.name)}</h2></div><button class="btn secondary project-settings-button" data-action="project-settings">Project settings</button></div><p>${esc(orientation.description)}</p><dl class="project-document-meta"><div><dt>Stage</dt><dd>${esc(orientation.stage)}</dd></div><div><dt>Outcome</dt><dd>${esc(orientation.outcome)}</dd></div><div><dt>Current State</dt><dd>${orientation.count} reviewed items</dd></div></dl></header><div class="project-document-intro"><strong>Current direction</strong><p>${esc(orientation.direction)}</p></div><div class="project-outline">${visible.map(([id,a])=>projectOutlineSection(id,a)).join('')||'<div class="empty-state"><h3>No Current State yet.</h3><p>Reviewed project understanding will appear here as a clean outline.</p></div>'}</div></article>`;    requestAnimationFrame(()=>updateProjectSubnavActive());
+    root.innerHTML=`<article class="page project-page project-document"><header class="project-document-head" id="project-top"><div class="project-head-row"><div><span class="eyebrow">Current project</span><h2>${esc(state.data.project.name)}</h2></div><button class="btn secondary project-settings-button" data-action="project-settings">Project settings</button></div><p>${esc(orientation.description)}</p><dl class="project-document-meta"><div><dt>Stage</dt><dd>${esc(orientation.stage)}</dd></div><div><dt>Outcome</dt><dd>${esc(orientation.outcome)}</dd></div><div><dt>Current State</dt><dd>${orientation.count} Current State items</dd></div></dl></header><div class="project-document-intro"><strong>Current direction</strong><p>${esc(orientation.direction)}</p></div><div class="project-outline">${visible.map(([id,a])=>projectOutlineSection(id,a)).join('')||'<div class="empty-state"><h3>No Current State yet.</h3><p>Reviewed project understanding will appear here as a clean outline.</p></div>'}</div></article>`;    requestAnimationFrame(()=>updateProjectSubnavActive());
   }
-  function renderProjectArea(area){
-    const a=projectAreas[area]; if(!a)return renderProjectOverview(); const items=currentKnowledge(area);
-    root.innerHTML=`<article class="page project-page project-document"><div class="project-area-top"><button class="text-button" data-view="project-overview">← Full project</button></div><header class="project-document-head"><span class="eyebrow">Project · Current State</span><h2>${esc(a.name)}</h2><p>${esc(a.description)}</p></header><ul class="project-outline-list project-outline-list--standalone">${items.map(projectFact).join('')||'<li class="empty-state"><h3>No Current State here yet.</h3><p>This part of the outline will fill in as reviewed understanding develops.</p></li>'}</ul></article>`;
-  }
-
   function renderOverview(){
     const resultBody = state.result ? (state.result.fallback ? fallbackResult() : state.result.intent ? intentAskHtml(state.result.intent) : state.result.structured ? structuredAskHtml(state.result.structured) : scenarioResult(state.result.scenario)) : '';
     const reviewBanner = uiPendingReviews().length && !state.reviewBannerDismissed ? `<aside class="review-banner"><div><strong>${uiPendingReviews().length} items need review</strong><span>New information may change the project’s current understanding.</span></div><div><button class="text-button" data-view="open-items">Open Items →</button><button class="banner-close" data-action="dismiss-review-banner" aria-label="Dismiss review reminder">×</button></div></aside>` : '';
@@ -417,10 +428,6 @@
     return pendingReviews().filter(r => r.topics.some(t=>topics.includes(t)));
   }
 
-  function relatedPending(r){
-    return pendingReviews().filter(o => o.id!==r.id && o.topics.some(t=>r.topics.includes(t)));
-  }
-
   function submitAsk(query){
     const raw=(query ?? document.getElementById('askInput')?.value ?? '').trim(); if(!raw)return;
     if(/\b(approved|confirmed|decided|agreed|learned|yesterday|today)\b/i.test(raw) && /\b(security|okta|support|customer|plan|feature|team)\b/i.test(raw)){
@@ -487,6 +494,8 @@
   function noteStatusLabel(n){
     if(n.status==='pending') return 'In review';
     if(n.status==='accepted'||n.status==='reviewed') return 'Reviewed';
+    if(n.status==='unknown') return 'Status unavailable';
+    if(n.status==='failed') return 'Analysis failed';
     return 'Draft';
   }
 
@@ -495,15 +504,17 @@
     const target=120+((n.id.charCodeAt(2)||7)*17)%111;
     const preview=n.text.length>target?n.text.slice(0,Math.max(80,target-3)).replace(/\s+\S*$/,'')+'…':n.text;
     const editing=state.editingNoteId===n.id;
-    const statusClass=n.status==='pending'?'pending':(n.status==='accepted'||n.status==='reviewed')?'reviewed':'draft';
+    const statusClass=n.status==='pending'?'pending':(n.status==='accepted'||n.status==='reviewed')?'reviewed':n.status==='failed'?'failed':n.status==='unknown'?'unknown':'draft';
     const statusBadge=`<span class="note-status note-status--${statusClass}">${noteStatusLabel(n)}</span>`;
-    const reviewAction=n.status==='pending'||n.status==='accepted'||n.status==='reviewed'
-      ? ''
-      : `<button class="text-button" data-action="send-note-review" data-note-id="${n.id}">Send to review</button>`;
+    const reviewAction=n.status==='failed'&&n.evidenceId
+      ? `<button class="text-button" data-action="retry-analysis" data-evidence-id="${n.evidenceId}">Retry analysis</button>`
+      : n.backendManaged||n.status==='pending'||n.status==='accepted'||n.status==='reviewed'||n.status==='unknown'
+        ? ''
+        : `<button class="text-button" data-action="send-note-review" data-note-id="${n.id}">Send to review</button>`;
     const body=editing
       ? `<div class="note-inline-editor"><input class="dialog-input" id="editNoteTitle-${n.id}" value="${esc(n.title)}" aria-label="Note title"><textarea id="editNoteText-${n.id}" rows="8" aria-label="Note text">${esc(n.text)}</textarea><div class="inline-actions"><button class="btn primary" data-action="save-note-edit" data-note-id="${n.id}">Save changes</button><button class="btn secondary" data-action="cancel-note-edit" data-note-id="${n.id}">Cancel</button></div></div>`
       : expanded
-        ? `<p class="note-full-text">${esc(n.text)}</p><div class="inline-actions note-actions"><button class="text-button" data-action="edit-note" data-note-id="${n.id}">Edit</button>${reviewAction}<button class="text-button" data-action="copy-note" data-note-id="${n.id}">Copy</button></div>`
+        ? `<p class="note-full-text">${esc(n.text)}</p><div class="inline-actions note-actions">${n.backendManaged?'':`<button class="text-button" data-action="edit-note" data-note-id="${n.id}">Edit</button>`}${reviewAction}<button class="text-button" data-action="copy-note" data-note-id="${n.id}">Copy</button></div>`
         : `<p>${esc(preview)}</p><span class="note-expand-label">Open note →</span>`;
     return `<article class="simple-note note-index-row ${expanded?'is-expanded':''}" data-action="toggle-note" data-note-id="${n.id}" tabindex="0"><span class="note-date">${esc(n.date)}</span><div><h3>${esc(n.title)}</h3><span class="note-source">${esc(n.source)}</span> ${statusBadge}${body}</div></article>`;
   }
@@ -512,7 +523,7 @@
     if(f==='all') return true;
     if(f==='pending') return n.status==='pending';
     if(f==='reviewed') return n.status==='accepted'||n.status==='reviewed';
-    return n.status!=='pending'&&n.status!=='accepted'&&n.status!=='reviewed'; // draft
+    return n.status==='working'||n.status==='draft'||!!n.backendDraft; // editable draft only
   }
 
   function localCalendarKey(value){
@@ -556,21 +567,60 @@
     ).sort(sortDateDesc);
   }
 
+  function notesFilterSummary(notes){
+    const total=state.data.notes.length;
+    const dateLabels={all:'All time',today:'Today','7':'Last 7 days','30':'Last 30 days'};
+    const statusLabels={all:'All statuses',draft:'Draft',pending:'In review',reviewed:'Reviewed'};
+    const parts=[dateLabels[state.notesDateFilter||'all'],statusLabels[state.notesFilter||'all']];
+    if(state.notesSearch.trim()) parts.push(`“${state.notesSearch.trim()}”`);
+    const active=(state.notesDateFilter||'all')!=='all'||(state.notesFilter||'all')!=='all'||!!state.notesSearch.trim();
+    return `<div class="notes-filter-summary" id="notesFilterSummary" aria-live="polite"><span>Showing <strong>${notes.length}</strong> of ${total} notes · ${parts.map(esc).join(' · ')}</span>${active?'<button class="text-button" data-action="clear-note-filters">Clear filters</button>':''}</div>`;
+  }
+
   function renderNotes(){
     const composer=state.noteComposerOpen?`<section class="note-composer"><input id="newNoteTitle" class="dialog-input" placeholder="Note title" aria-label="Note title"><textarea id="newNoteText" rows="8" aria-label="New note text" placeholder="Write anything you want to keep with the project. Saving a note does not change project state."></textarea><div class="inline-actions"><button class="btn primary" data-action="save-new-note">Save note</button><button class="btn secondary" data-action="cancel-new-note">Cancel</button></div></section>`:'';
     const activeFilter=state.notesFilter||'all';
     const filters=`<label class="notes-status-filter"><span>Status</span><select id="notesStatusFilter" aria-label="Filter notes by status"><option value="all"${activeFilter==='all'?' selected':''}>All</option><option value="draft"${activeFilter==='draft'?' selected':''}>Draft</option><option value="pending"${activeFilter==='pending'?' selected':''}>In review</option><option value="reviewed"${activeFilter==='reviewed'?' selected':''}>Reviewed</option></select></label>`;
     const dateFilter=state.notesDateFilter||'all';
     const dateChip=(f,label)=>`<button class="filter${dateFilter===f?' active':''}" data-date-filter="${f}" aria-pressed="${dateFilter===f?'true':'false'}">${label}</button>`;
-    const dateFilters=`<div class="filters notes-date-filters" aria-label="Filter notes by date">${dateChip('all','All notes')}${dateChip('today','Today')}${dateChip('7','7 days')}${dateChip('30','30 days')}</div>`;
+    const dateFilters=`<div class="filters notes-date-filters" aria-label="Filter notes by date">${dateChip('all','All time')}${dateChip('today','Today')}${dateChip('7','7 days')}${dateChip('30','30 days')}</div>`;
     const visibleNotes=filteredNotes();
-    root.innerHTML=`<section class="page collection-page notes-page"><div class="page-head"><div><span class="eyebrow">Project memory</span><h2>Notes</h2><p>Put everything here: updates, meeting notes, observations, decisions, corrections, and loose context. Notes preserve what came in; they do not become Current State automatically.</p><p class="notes-disclosure">This demo uses a mix of notes adapted from my real discovery/product work and simulated project notes created to demonstrate retrieval, review, and maintained-context workflows.</p></div><button class="btn primary notes-add" data-action="new-note">+ New note</button></div>${composer}<div class="notes-toolbar notes-toolbar--stacked"><div class="notes-filter-row">${dateFilters}${filters}<span class="notes-result-count" aria-live="polite">${visibleNotes.length} ${visibleNotes.length===1?'note':'notes'}</span></div><input class="notes-search" id="notesSearch" type="search" placeholder="Search all notes" aria-label="Search notes" value="${esc(state.notesSearch)}"></div><div class="note-results simple-notes" id="notesList">${visibleNotes.length?visibleNotes.map(simpleNote).join(''):'<div class="empty-state"><h3>Nothing here.</h3><p>No notes match these filters.</p></div>'}</div></section>`;
+    const liveWarning=state.backendStatus.evidence==='error'||state.backendStatus.drafts==='error'?`<div class="collection-warning"><strong>Some live Notes data is unavailable.</strong><span>${state.backendStatus.evidence==='error'?'Saved Evidence could not be loaded. ':''}${state.backendStatus.drafts==='error'?'Saved drafts could not be loaded.':''}</span><button class="text-button" data-action="retry-hydration">Try again</button></div>`:'';
+    root.innerHTML=`<section class="page collection-page notes-page"><div class="page-head"><div><span class="eyebrow">Project memory</span><h2>Notes</h2><p>Put everything here: updates, meeting notes, observations, decisions, corrections, and loose context. Notes preserve what came in; they do not become Current State automatically.</p><p class="notes-disclosure">This demo uses a mix of notes adapted from my real discovery/product work and simulated project notes created to demonstrate retrieval, review, and maintained-context workflows.</p></div><button class="btn primary notes-add" data-action="new-note">+ New note</button></div>${liveWarning}${composer}<div class="notes-toolbar notes-toolbar--stacked"><div class="notes-filter-row">${dateFilters}${filters}<span class="notes-result-count" aria-hidden="true">${visibleNotes.length} ${visibleNotes.length===1?'note':'notes'}</span></div><input class="notes-search" id="notesSearch" type="search" placeholder="Search all notes" aria-label="Search notes" value="${esc(state.notesSearch)}">${notesFilterSummary(visibleNotes)}</div><div class="note-results simple-notes" id="notesList">${visibleNotes.length?visibleNotes.map(simpleNote).join(''):'<div class="empty-state"><h3>Nothing here.</h3><p>No notes match these filters.</p></div>'}</div></section>`;
   }
+
+  function historySearchText(h){
+    const evidence=(h.evidenceItems||h.evidence_items||[]).map(e=>e.content||'').join(' ');
+    return `${h.type||''} ${h.before??h.old_statement??''} ${h.after??h.new_statement??''} ${h.reason||''} ${h.decision_question||''} ${h.proposal_rationale||''} ${h.why_consequential||''} ${evidence}`;
+  }
+  function historyEntries(){
+    const all=state.data.history.slice().sort(sortDateDesc);
+    const topic=state.historyTopic;
+    const scoped=topic?all.filter(h=>h.knowledgeId===topic):all;
+    const q=norm(state.historySearch);
+    return q?scoped.filter(h=>norm(historySearchText(h)).includes(q)):scoped;
+  }
+  function historyHighlight(value){
+    const raw=String(value??'');
+    const query=state.historySearch.trim();
+    if(!query)return esc(raw);
+    const escaped=esc(raw);
+    const safeQuery=query.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+    if(!safeQuery)return escaped;
+    return escaped.replace(new RegExp(`(${safeQuery})`,'ig'),'<mark>$1</mark>');
+  }
+  const demoEvidenceDates={
+    'demo-review-access-evidence':'2026-08-27T16:10:00',
+    'demo-review-launch-evidence':'2026-08-28T09:30:00',
+    'demo-review-escalation-evidence':'2026-08-28T13:45:00',
+    'demo-review-retention-evidence':'2026-08-29T10:20:00'
+  };
+  function evidenceDisplayTimestamp(e){return e?.source_type==='demo_seed'&&demoEvidenceDates[e.id]?demoEvidenceDates[e.id]:e?.submitted_at;}
 
   function historySources(h){
     const items=h.evidenceItems||h.evidence_items||[];
     if(!items.length)return '';
-    return `<details class="history-sources"><summary>Source notes · ${items.length}</summary><div class="history-source-list">${items.map(e=>`<article><span>${esc(formatBackendDate(e.submitted_at))} · ${esc(sourceLabel(e.source_type))}</span><p>${esc(e.content)}</p></article>`).join('')}</div></details>`;
+    return `<details class="history-sources"><summary>Source notes · ${items.length}</summary><div class="history-source-list">${items.map(e=>`<article><span>${esc(formatBackendDate(evidenceDisplayTimestamp(e)))} · ${esc(sourceLabel(e.source_type))}</span><p>${historyHighlight(e.content)}</p></article>`).join('')}</div></details>`;
   }
   function historyEntry(h, topicMode=false){
     const linked=!!h.knowledgeId&&!topicMode;
@@ -578,15 +628,29 @@
     const after=h.after??h.new_statement??'';
     const reason=h.reason||h.decision_question||h.proposal_rationale||'Reviewed project evidence';
     const decision=h.decision||'Human accepted this change';
-    return `<article class="history-entry${linked?' is-linked':''}"${linked?` data-action="view-topic-history" data-knowledge-id="${h.knowledgeId}" tabindex="0" role="button" aria-label="View topic history for ${esc(state.data.knowledge.find(k=>k.id===h.knowledgeId)?.title||h.type)}"`:''}><div class="history-entry-date">${esc(h.date||formatBackendDate(h.changed_at))}</div><div class="history-entry-body"><span class="history-reason">${esc(reason)}</span><h3>${esc(h.type||historyType(h))}</h3><div class="history-change"><p><span>Before</span>${esc(before)}</p><p><span>Now</span>${esc(after)}</p></div><p class="decision-line">${esc(decision)}</p>${historySources(h)}${linked?'<span class="history-entry-link">View this topic →</span>':''}</div></article>`;
+    return `<article class="history-entry${linked?' is-linked':''}"${linked?` data-action="view-topic-history" data-knowledge-id="${h.knowledgeId}" tabindex="0" role="button" aria-label="View topic history for ${esc(state.data.knowledge.find(k=>k.id===h.knowledgeId)?.title||h.type)}"`:''}><div class="history-entry-date">${esc(h.date||formatBackendDate(h.changed_at))}</div><div class="history-entry-body"><span class="history-reason">${historyHighlight(reason)}</span><h3>${historyHighlight(h.type||historyType(h))}</h3><div class="history-change"><p><span>Before</span>${historyHighlight(before)}</p><p><span>Now</span>${historyHighlight(after)}</p></div><p class="decision-line">${historyHighlight(decision)}</p>${historySources(h)}${linked?'<span class="history-entry-link">View this topic →</span>':''}</div></article>`;
+  }
+  function updateHistoryResults(){
+    const list=document.getElementById('historyList');
+    const entries=historyEntries();
+    const topicKnowledge=state.historyTopic?state.data.knowledge.find(k=>k.id===state.historyTopic):null;
+    if(list) list.innerHTML=entries.length?entries.map(h=>historyEntry(h,!!topicKnowledge)).join(''):(state.historySearch?'<div class="empty-state"><h3>No matching changes.</h3><p>Try a broader History search.</p></div>':'<div class="empty-state"><h3>No Current State changes yet.</h3><p>When reviewed Notes change the Project, that transition will appear here.</p></div>');
+    const count=document.getElementById('historyResultCount');
+    const total=(state.historyTopic?state.data.history.filter(h=>h.knowledgeId===state.historyTopic):state.data.history).length;
+    if(count) count.textContent=`${entries.length} of ${total} changes`;
+    const clear=document.getElementById('clearHistorySearch'); if(clear) clear.hidden=!state.historySearch.trim();
   }
 
   function renderHistory(){
-    const allEntries=state.data.history.slice().sort(sortDateDesc);
+    if(state.backendStatus.history==='error'){
+      root.innerHTML=`<section class="page collection-page history-page"><div class="empty-state unavailable-state"><h2>History is temporarily unavailable.</h2><p>Accepted project changes cannot be loaded right now.</p><button class="btn secondary" data-action="retry-hydration">Try again</button></div></section>`;
+      return;
+    }
+    const entries=historyEntries();
     const topic=state.historyTopic;
-    const entries=topic?allEntries.filter(h=>h.knowledgeId===topic):allEntries;
     const topicKnowledge=topic?state.data.knowledge.find(k=>k.id===topic):null;
-    root.innerHTML=`<section class="page collection-page history-page"><div class="page-head"><div><span class="eyebrow">From notes to Current State</span><h2>History</h2><p>${topicKnowledge?`How project evidence changed the maintained understanding of ${esc(topicKnowledge.title)}.`:'The meaningful changes extracted from Notes and accepted into Current State. This is the bridge between what came in and what the Project says now.'}</p></div></div>${topicKnowledge?`<div class="history-context"><strong>${esc(topicKnowledge.title)}</strong><span>${entries.length} recorded change${entries.length===1?'':'s'}</span><button class="text-button" data-action="clear-history-topic">View all history →</button></div>`:''}${entries.length?`<div class="history-list">${entries.map(h=>historyEntry(h,!!topicKnowledge)).join('')}</div>`:'<div class="empty-state"><h3>No Current State changes yet.</h3><p>When reviewed Notes change the Project, that transition will appear here.</p></div>'}</section>`;
+    const total=(topic?state.data.history.filter(h=>h.knowledgeId===topic):state.data.history).length;
+    root.innerHTML=`<section class="page collection-page history-page"><div class="page-head"><div><span class="eyebrow">From notes to Current State</span><h2>History</h2><p>${topicKnowledge?`How project evidence changed the maintained understanding of ${esc(topicKnowledge.title)}.`:'The meaningful changes extracted from Notes and accepted into Current State. This is the bridge between what came in and what the Project says now.'}</p></div></div>${topicKnowledge?`<div class="history-context"><strong>${esc(topicKnowledge.title)}</strong><span>${total} recorded change${total===1?'':'s'}</span><button class="text-button" data-action="clear-history-topic">View all history →</button></div>`:''}<div class="history-toolbar"><input class="history-search" id="historySearch" type="search" placeholder="Search history" aria-label="Search accepted project changes" value="${esc(state.historySearch)}"><span class="history-result-count" id="historyResultCount" aria-live="polite">${entries.length} of ${total} changes</span><button class="text-button" id="clearHistorySearch" data-action="clear-history-search"${state.historySearch?'':' hidden'}>Clear search</button></div><div class="history-list" id="historyList">${entries.length?entries.map(h=>historyEntry(h,!!topicKnowledge)).join(''):(state.historySearch?'<div class="empty-state"><h3>No matching changes.</h3><p>Try a broader History search.</p></div>':'<div class="empty-state"><h3>No Current State changes yet.</h3><p>When reviewed Notes change the Project, that transition will appear here.</p></div>')}</div></section>`;
   }
 
   function questionCard(q){
@@ -602,6 +666,14 @@
   }
 
   function renderOpenItems(){
+    if(state.backendStatus.reviews==='loading' || state.backendStatus.questions==='loading'){
+      root.innerHTML=`<section class="page collection-page open-items-page"><div class="empty-state unavailable-state"><h2>Loading Open Items…</h2><p>Checking Reviews and Questions that need attention.</p></div></section>`;
+      return;
+    }
+    if(state.backendStatus.reviews==='error' && state.backendStatus.questions==='error'){
+      root.innerHTML=`<section class="page collection-page open-items-page"><div class="empty-state unavailable-state"><h2>Open Items are temporarily unavailable.</h2><p>State will not substitute fixture Reviews or Questions while authoritative attention data cannot be loaded.</p><button class="btn secondary" data-action="retry-hydration">Try again</button></div></section>`;
+      return;
+    }
     const reviews=uiPendingReviews();
     const questions=openQuestions();
     const blockers=questions.filter(q=>q.blocking);
@@ -612,13 +684,14 @@
     });
     const visibleWaiting=state.openQuestionsExpanded?waiting:waiting.slice(0,5);
     const remaining=Math.max(0,waiting.length-visibleWaiting.length);
-    const reviewBody=reviews.length?reviews.map(r=>reviewCard(r,reviews.length===1||state.expandedReviewId===r.id,true)).join(''):'<div class="open-items-empty">Nothing needs your decision right now.</div>';
-    const blockerBody=blockers.length?`<div class="open-question-list">${blockers.map(questionCard).join('')}</div>`:'<div class="open-items-empty">Nothing is currently blocked on an answer.</div>';
-    const questionBody=waiting.length?`<div class="open-question-list">${visibleWaiting.map(questionCard).join('')}</div>${waiting.length>5?`<button class="open-questions-more" data-action="toggle-open-questions" aria-expanded="${state.openQuestionsExpanded?'true':'false'}">${state.openQuestionsExpanded?'Show fewer questions':`Show ${remaining} more questions`} <span aria-hidden="true">${state.openQuestionsExpanded?'↑':'↓'}</span></button>`:''}`:'<div class="open-items-empty">No other open questions.</div>';
-    root.innerHTML=`<section class="page collection-page open-items-page"><div class="page-head"><div><span class="eyebrow">What still needs attention</span><div class="review-title-row"><h2>Open Items</h2>${reviews.length?`<span class="count-badge review-page-count">${reviews.length}</span>`:''}</div><p>Decide what is ready now, see what is blocking progress, and keep important unknowns visible without turning this into another archive.</p></div><button class="btn secondary" data-action="add-question">+ Add question</button></div><div class="open-items-sections">${openItemSection('Needs your review','Act now','Decisions waiting on you. Current State changes only after you approve them.',reviews.length,'reviews',reviewBody,!reviews.length)}${openItemSection('Blocking questions','Resolve soon','A concrete project dependency is waiting on an answer.',blockers.length,'blockers',blockerBody,!blockers.length)}${openItemSection('Open questions','Keep in mind','Important unknowns that can wait for relevant evidence.',waiting.length,'questions',questionBody,!waiting.length)}</div></section>`;
+    const reviewUnavailable=state.backendStatus.reviews==='error';
+    const questionUnavailable=state.backendStatus.questions==='error';
+    const reviewBody=reviewUnavailable?'<div class="open-items-empty unavailable-inline">Reviews could not be loaded. <button class="text-button" data-action="retry-hydration">Try again</button></div>':reviews.length?reviews.map(r=>reviewCard(r,reviews.length===1||state.expandedReviewId===r.id,true)).join(''):'<div class="open-items-empty">Nothing needs your decision right now.</div>';
+    const blockerBody=questionUnavailable?'<div class="open-items-empty unavailable-inline">Blocking questions could not be loaded.</div>':blockers.length?`<div class="open-question-list">${blockers.map(questionCard).join('')}</div>`:'<div class="open-items-empty">Nothing is currently blocked on an answer.</div>';
+    const questionBody=questionUnavailable?'<div class="open-items-empty unavailable-inline">Open questions could not be loaded. <button class="text-button" data-action="retry-hydration">Try again</button></div>':waiting.length?`<div class="open-question-list">${visibleWaiting.map(questionCard).join('')}</div>${waiting.length>5?`<button class="open-questions-more" data-action="toggle-open-questions" aria-expanded="${state.openQuestionsExpanded?'true':'false'}">${state.openQuestionsExpanded?'Show fewer questions':`Show ${remaining} more questions`} <span aria-hidden="true">${state.openQuestionsExpanded?'↑':'↓'}</span></button>`:''}`:'<div class="open-items-empty">No other open questions.</div>';
+    root.innerHTML=`<section class="page collection-page open-items-page"><div class="page-head"><div><span class="eyebrow">What still needs attention</span><div class="review-title-row"><h2>Open Items</h2>${reviews.length?`<span class="count-badge review-page-count">${reviews.length}</span>`:''}</div><p>Decide what is ready now, see what is blocking progress, and keep important unknowns visible without turning this into another archive.</p></div><button class="btn secondary" data-action="add-question">+ Add question</button></div><div class="open-items-sections">${openItemSection('Needs your review','Act now','Decisions waiting on you. Current State changes only after you approve them.',reviewUnavailable?'—':reviews.length,'reviews',reviewBody,!reviews.length&&!reviewUnavailable)}${openItemSection('Blocking questions','Resolve soon','A concrete project dependency is waiting on an answer.',questionUnavailable?'—':blockers.length,'blockers',blockerBody,!blockers.length&&!questionUnavailable)}${openItemSection('Open questions','Keep in mind','Important unknowns that can wait for relevant evidence.',questionUnavailable?'—':waiting.length,'questions',questionBody,!waiting.length&&!questionUnavailable)}</div></section>`;
   }
 
-  function renderQuestions(){ return renderOpenItems(); }
   function renderReview(){ return renderOpenItems(); }
 
   function reviewCard(r,expanded=true,accordion=false){
@@ -697,8 +770,10 @@
     if(target && document.contains(target)) requestAnimationFrame(()=>target.focus());
   }
   function showProjectSettings(){
-    const rows=state.projectRules.length?state.projectRules.map(rule=>`<div class="project-rule-row"><div><span class="open-item-label question">${esc(rule.category)}</span><p>${esc(rule.text)}</p></div><button class="text-button" data-action="delete-project-rule" data-rule-id="${rule.id}">Remove</button></div>`).join(''):'<div class="open-items-empty">No project-specific rules yet.</div>';
-    showDialog(`<span class="eyebrow">Project settings</span><h2 id="dialogTitle">Rules</h2><p>Rules tell State how to interpret evidence and when to interrupt you. They are not Current State and State cannot change them on its own.</p><div class="project-rule-list">${rows}</div><div class="project-rule-form"><label for="projectRuleCategory">Category</label><select id="projectRuleCategory"><option>Authority</option><option>Review</option><option>Sources</option><option selected>Interpretation</option></select><label for="projectRuleText">New rule</label><textarea id="projectRuleText" rows="3" placeholder="Example: Slack is supporting evidence, not authoritative approval."></textarea><button class="btn primary" data-action="save-project-rule">Add rule</button></div>`);
+    const rulesStatus=state.backendStatus.rules;
+    const rows=rulesStatus==='error'?'<div class="open-items-empty unavailable-inline">Project Rules could not be loaded. Try again before making changes.</div>':state.projectRules.length?state.projectRules.map(rule=>`<div class="project-rule-row"><div><span class="open-item-label question">${esc(rule.category)}</span><p>${esc(rule.text)}</p></div><button class="text-button" data-action="delete-project-rule" data-rule-id="${rule.id}">Remove</button></div>`).join(''):'<div class="open-items-empty">No project-specific rules yet.</div>';
+    const form=rulesStatus==='error'?'':`<div class="project-rule-form"><label for="projectRuleCategory">Category</label><select id="projectRuleCategory"><option>Authority</option><option>Review</option><option>Sources</option><option selected>Interpretation</option></select><label for="projectRuleText">New rule</label><textarea id="projectRuleText" rows="3" placeholder="Example: Slack is supporting evidence, not authoritative approval."></textarea><button class="btn primary" data-action="save-project-rule">Add rule</button></div>`;
+    showDialog(`<span class="eyebrow">Project settings</span><h2 id="dialogTitle">Rules</h2><p>Rules tell State how to interpret evidence and when to interrupt you. They are not Current State and State cannot change them on its own.</p><p class="settings-note">Rules apply to future analysis. Existing Reviews are not reinterpreted automatically.</p><div class="project-rule-list">${rows}</div>${form}`);
   }
 
   function showAddDialog(prefill=''){ showDialog(`<span class="eyebrow">Project update</span><h2 id="dialogTitle">Add a project update</h2><p>Use this for new information that may change what the project currently understands. It goes to Review first.</p><textarea id="addInfoText" rows="7" aria-label="Project update" placeholder="Paste a finding, decision, meeting update, or other new project information...">${esc(prefill)}</textarea><button class="sample-link" data-action="sample-info">Try sample update</button><div class="dialog-actions"><button class="btn primary" data-action="save-info">Send to Review</button><button class="btn secondary" data-action="close-dialog">Cancel</button></div>`); }
@@ -798,7 +873,6 @@
     return 'Current understanding updated';
   }
   function syncApiHistory(items){
-    const fixtures=state.data.history.filter(h=>!h.backendManaged);
     const backend=(items||[]).map(h=>({
       ...h, id:h.id, backendManaged:true, knowledgeId:h.state_item_id,
       date:formatBackendDate(h.changed_at), dateISO:h.changed_at, type:historyType(h),
@@ -806,7 +880,7 @@
       reason:h.decision_question||h.proposal_rationale||'Reviewed project evidence',
       decision:'Human accepted this change', evidenceItems:h.evidence_items||[]
     }));
-    state.data.history=[...backend,...fixtures.filter(f=>!backend.some(b=>b.id===f.id))];
+    state.data.history=backend;
   }
   function syncApiEvidence(items,openReviews,resolvedReviews){
     const openByEvidence=new Map();
@@ -815,8 +889,10 @@
     for(const r of (resolvedReviews||[]))for(const e of (r.evidence_items||[]))resolvedByEvidence.set(e.id,r);
     const backendNotes=(items||[]).map(e=>{
       const open=openByEvidence.get(e.id), resolved=resolvedByEvidence.get(e.id);
-      const status=open?'pending':resolved?.resolution==='updated'?'accepted':e.processing_status==='processed'?'reviewed':'working';
-      return {id:`api-note-${e.id}`,title:sourceLabel(e.source_type),text:e.content,source:sourceLabel(e.source_type),date:formatBackendDate(e.submitted_at),dateISO:e.submitted_at,submittedISO:e.submitted_at,topics:[],status,reviewId:open?.id||null,evidenceId:e.id,backendManaged:true};
+      const reviewStatusKnown=Array.isArray(openReviews)&&Array.isArray(resolvedReviews);
+      const status=e.processing_status==='failed'?'failed':!reviewStatusKnown?'unknown':open?'pending':resolved?.resolution==='updated'?'accepted':e.processing_status==='processed'?'reviewed':'working';
+      const displayTime=evidenceDisplayTimestamp(e);
+      return {id:`api-note-${e.id}`,title:sourceLabel(e.source_type),text:e.content,source:sourceLabel(e.source_type),date:formatBackendDate(displayTime),dateISO:displayTime,submittedISO:displayTime,topics:[],status,reviewId:open?.id||null,evidenceId:e.id,backendManaged:true};
     });
     const local=state.data.notes.filter(n=>!n.backendManaged && !n.evidenceId);
     state.data.notes=[...backendNotes,...local];
@@ -828,10 +904,8 @@
     // A non-empty backend State response is authoritative. Fixture knowledge is
     // an offline/demo fallback only; never merge absent fixture facts into a
     // live backend Current State, because that creates two competing truths.
-    if(incoming.length){
-      for(const k of state.data.knowledge){
-        if(!activeIds.has(k.id)) k.state='retired';
-      }
+    for(const k of state.data.knowledge){
+      if(!activeIds.has(k.id)) k.state='retired';
     }
     for(const item of incoming){
       let k=state.data.knowledge.find(x=>x.id===item.id);
@@ -881,8 +955,7 @@
         topics:fixture?.topics?.length?fixture.topics:askTopics(norm(q.text)),backendManaged:true
       };
     });
-    const local=previous.filter(q=>!q.backendManaged && !backendTexts.has(questionTextKey(q.text)));
-    state.data.questions=[...backend,...local];
+    state.data.questions=backend;
   }
 
   async function bootstrapFixtureQuestions(existingItems){
@@ -912,39 +985,61 @@
 
   async function hydrateBackend(){
     if(!API)return;
-    try{
-      const [stateResult,evidenceResult,openResult,resolvedResult,historyResult,questionsResult,rulesResult]=await Promise.allSettled([
-        API.getState(), API.getEvidence(), API.getReviews('open'), API.getReviews('resolved'), API.getHistory(), API.getQuestions('open'), API.getRules()
-      ]);
-      const payloadOf=result=>result.status==='fulfilled'?result.value:{items:[]};
-      const statePayload=payloadOf(stateResult), evidencePayload=payloadOf(evidenceResult), openPayload=payloadOf(openResult), resolvedPayload=payloadOf(resolvedResult), historyPayload=payloadOf(historyResult), questionsPayload=payloadOf(questionsResult), rulesPayload=payloadOf(rulesResult);
-      if(stateResult.status==='fulfilled') syncApiState(statePayload.items||[]);
-      if(rulesResult.status==='fulfilled') state.projectRules=rulesPayload.items||[];
-      if(evidenceResult.status==='fulfilled') syncApiEvidence(evidencePayload.items||[],openPayload.items||[],resolvedPayload.items||[]);
-      if(historyResult.status==='fulfilled') syncApiHistory(historyPayload.items||[]);
-      if(questionsResult.status==='fulfilled'){
-        const authoritativeQuestions=await bootstrapFixtureQuestions(questionsPayload.items||[]);
-        syncApiQuestions(authoritativeQuestions);
-        state.questionsBackendAvailable=true;
+    const keys=['state','evidence','open','resolved','history','questions','rules','drafts'];
+    const results=await Promise.allSettled([
+      API.getState(), API.getEvidence(), API.getReviews('open'), API.getReviews('resolved'), API.getHistory(), API.getQuestions('open'), API.getRules(), API.getDrafts()
+    ]);
+    const byKey=Object.fromEntries(keys.map((key,i)=>[key,results[i]]));
+    const payloadOf=result=>result.status==='fulfilled'?result.value:{items:[]};
+    state.backendStatus.state=byKey.state.status==='fulfilled'?'loaded':'error';
+    state.backendStatus.evidence=byKey.evidence.status==='fulfilled'?'loaded':'error';
+    state.backendStatus.reviews=(byKey.open.status==='fulfilled'&&byKey.resolved.status==='fulfilled')?'loaded':'error';
+    state.backendStatus.history=byKey.history.status==='fulfilled'?'loaded':'error';
+    state.backendStatus.questions=byKey.questions.status==='fulfilled'?'loaded':'error';
+    state.backendStatus.rules=byKey.rules.status==='fulfilled'?'loaded':'error';
+    state.backendStatus.drafts=byKey.drafts.status==='fulfilled'?'loaded':'error';
+
+    if(byKey.state.status==='fulfilled') syncApiState(payloadOf(byKey.state).items||[]);
+    if(byKey.rules.status==='fulfilled') state.projectRules=payloadOf(byKey.rules).items||[];
+    if(byKey.drafts.status==='fulfilled') syncApiDrafts(payloadOf(byKey.drafts).items||[]);
+    if(byKey.evidence.status==='fulfilled') syncApiEvidence(
+      payloadOf(byKey.evidence).items||[],
+      byKey.open.status==='fulfilled'?payloadOf(byKey.open).items||[]:null,
+      byKey.resolved.status==='fulfilled'?payloadOf(byKey.resolved).items||[]:null
+    );
+    if(byKey.history.status==='fulfilled') syncApiHistory(payloadOf(byKey.history).items||[]);
+    state.questionsBackendAvailable=true;
+    if(byKey.questions.status==='fulfilled'){
+      const authoritativeQuestions=await bootstrapFixtureQuestions(payloadOf(byKey.questions).items||[]);
+      syncApiQuestions(authoritativeQuestions);
+    }else{
+      state.data.questions=[];
+    }
+    if(byKey.open.status==='fulfilled'){
+      state.reviewsBackendAvailable=true;
+      state.reviewsHydrated=true;
+      const openItems=payloadOf(byKey.open).items||[];
+      replaceBackendOpenReviews(openItems);
+      for(const raw of openItems){
+        const note=state.data.notes.find(n=>n.evidenceId===raw.evidence_id);
+        const mapped=mapApiReview(raw,raw.evidence_content||''); mapped.evidenceId=note?.id||`api-note-${raw.evidence_id}`; upsertBackendReview(mapped);
       }
-      if(openResult.status==='fulfilled'){
-        state.reviewsBackendAvailable=true;
-        state.reviewsHydrated=true;
-        replaceBackendOpenReviews(openPayload.items||[]);
-        for(const raw of (openPayload.items||[])){
-          const note=state.data.notes.find(n=>n.evidenceId===raw.evidence_id);
-          const mapped=mapApiReview(raw,raw.evidence_content||''); mapped.evidenceId=note?.id||`api-note-${raw.evidence_id}`; upsertBackendReview(mapped);
-        }
-      }
-      for(const raw of (resolvedPayload.items||[])){
+    }else{
+      state.reviewsBackendAvailable=true;
+      state.reviewsHydrated=true;
+      state.data.reviews=state.data.reviews.filter(r=>!r.backendReviewId);
+    }
+    if(byKey.resolved.status==='fulfilled'){
+      for(const raw of (payloadOf(byKey.resolved).items||[])){
         const source=raw.evidence_source_type||'';
         if(raw.resolution==='updated' && source.startsWith('question_response:')){
           const q=state.data.questions.find(x=>x.id===source.slice('question_response:'.length));
           if(q){q.status='resolved';q.resolution='Resolved by reviewed evidence';}
         }
       }
-      updateNav(); render();
-    }catch(err){ console.warn('Backend hydration skipped:',err); }
+    }
+    for(const [key,result] of Object.entries(byKey)) if(result.status==='rejected') console.warn(`Backend ${key} unavailable:`,result.reason);
+    updateNav(); render();
   }
 
   let analysisClock=null;
@@ -996,11 +1091,20 @@
     }catch(e){ await showAnalysisFailure(e); }
   }
 
-  function saveWorkingNote(title,text,source='Working note'){
+  async function saveWorkingNote(title,text){
     const clean=(text||'').trim(); if(!clean)return null;
-    const stamp=Date.now(), id='n-user-'+stamp;
-    state.data.notes.unshift({id,title:(title||'Untitled note').trim()||'Untitled note',text:clean,source,date:todayLabel(),dateISO:todayISO(),topics:[],status:'working'});
-    return id;
+    const cleanTitle=(title||'Untitled note').trim()||'Untitled note';
+    const draft=await API.createDraft(cleanTitle,clean);
+    const note={id:`draft-${draft.id}`,draftId:draft.id,title:draft.title,text:draft.content,source:'Working note',date:formatBackendDate(draft.updated_at||draft.created_at),dateISO:draft.updated_at||draft.created_at,topics:[],status:'working',backendDraft:true};
+    state.data.notes=state.data.notes.filter(n=>n.draftId!==draft.id);
+    state.data.notes.unshift(note);
+    return note.id;
+  }
+
+  function syncApiDrafts(items){
+    const drafts=(items||[]).map(d=>({id:`draft-${d.id}`,draftId:d.id,title:d.title,text:d.content,source:'Working note',date:formatBackendDate(d.updated_at||d.created_at),dateISO:d.updated_at||d.created_at,topics:[],status:'working',backendDraft:true}));
+    const others=state.data.notes.filter(n=>!n.backendDraft);
+    state.data.notes=[...drafts,...others];
   }
 
   async function sendNoteToReview(id){
@@ -1009,14 +1113,20 @@
     try{
       const result=await submitEvidence(n.text,'working_note');
       const apiReviews=(result.reviews||[]).map(r=>mapApiReview(r,n.text));
-      n.status=apiReviews.length?'pending':'reviewed'; n.reviewId=apiReviews[0]?.id||null; n.evidenceId=result.evidence_id;
+      if(n.draftId){try{await API.deleteDraft(n.draftId);}catch(err){console.warn('Evidence saved but draft cleanup failed:',err);}}
+      n.backendDraft=false; n.draftId=null; n.backendManaged=true; n.status=apiReviews.length?'pending':'reviewed'; n.reviewId=apiReviews[0]?.id||null; n.evidenceId=result.evidence_id;
       apiReviews.forEach(r=>{r.evidenceId=n.id; upsertBackendReview(r);});
       state.reviewBannerDismissed=false; state.isAnalyzing=false; stopAnalysisClock(); updateNav();
       if(apiReviews.length) showDialog(`<span class="eyebrow">Done</span><h2 id="dialogTitle">Note sent to Review</h2><p>${apiReviews.length===1?'One review needs your decision.':`${apiReviews.length} reviews need your decisions.`}</p><div class="dialog-actions"><button class="btn primary" data-action="go-review">Go to Review</button><button class="btn secondary" data-action="go-notes">Back to Notes</button></div>`);
       else showDialog(`<span class="eyebrow">Done</span><h2 id="dialogTitle">Note reviewed</h2><p>This note did not require a change to Current State.</p><div class="dialog-actions"><button class="btn primary" data-action="go-notes">Back to Notes</button></div>`);
     }catch(e){
-      if(e?.evidenceId) n.evidenceId=e.evidenceId;
-      await showAnalysisFailure(e,{draftMessage:'The note is still a draft.',safeContext:'Your note'});
+      if(e?.evidenceId){
+        n.evidenceId=e.evidenceId; n.status='failed';
+        if(n.draftId){try{await API.deleteDraft(n.draftId);}catch(err){console.warn('Evidence saved but draft cleanup failed:',err);}
+          n.draftId=null;n.backendDraft=false;n.backendManaged=true;
+        }
+      }
+      await showAnalysisFailure(e,{draftMessage:e?.evidenceId?'The evidence is saved and can be retried.':'The note is still a draft.',safeContext:'Your note'});
     }
   }
 
@@ -1036,14 +1146,11 @@
   document.addEventListener('click',async e=>{
     if(e.target.closest('[data-action="dismiss-review-banner"]')){ state.reviewBannerDismissed=true; renderOverview(); return; }
     if(e.target.closest('[data-action="dismiss-nudge"]')){ const btn=e.target.closest('[data-action="dismiss-nudge"]'); state.dismissedNudges.add(btn.dataset.nudge); renderReview(); return; }
-    const toggleProject=e.target.closest('[data-action="toggle-project-nav"]'); if(toggleProject){state.projectNavOpen=true;state.view='project-overview';state.result=null;render();return;}
-    const projectJump=e.target.closest('[data-project-jump]'); if(projectJump){const target=projectJump.dataset.projectJump;state.projectNavOpen=true;if(state.view!=='project-overview'){state.view='project-overview';render();requestAnimationFrame(()=>scrollProjectTarget(target));}else{updateNav();updateProjectSubnavActive(target);scrollProjectTarget(target);}return;}
+    const projectJump=e.target.closest('[data-project-jump]'); if(projectJump){const target=projectJump.dataset.projectJump;if(state.view!=='project-overview'){state.view='project-overview';state.result=null;render();requestAnimationFrame(()=>scrollProjectTarget(target));}else{updateNav();updateProjectSubnavActive(target);scrollProjectTarget(target);}return;}
     const relatedReview=e.target.closest('[data-action="open-related-review"]'); if(relatedReview){ const r=state.data.reviews.find(x=>x.id===relatedReview.dataset.reviewId); if(r) showDialog(`<span class="eyebrow">Pending Review</span><h2 id="dialogTitle">Related evidence may affect this Current State</h2>${reviewCard(r,true,false)}`); return;}
-        const topicHistory=e.target.closest('[data-action="view-topic-history"]'); if(topicHistory){state.historyTopic=topicHistory.dataset.knowledgeId;state.view='history';render();return;}
+        const topicHistory=e.target.closest('[data-action="view-topic-history"]'); if(topicHistory){state.historyTopic=topicHistory.dataset.knowledgeId;navigateTo('history',{preserveHistoryTopic:true});return;}
     const clearHistory=e.target.closest('[data-action="clear-history-topic"]'); if(clearHistory){state.historyTopic=null;renderHistory();return;}
-    const hideArea=e.target.closest('[data-action="hide-project-area"]'); if(hideArea){state.hiddenProjectAreas.add(hideArea.dataset.area);state.view='project-overview';render();return;}
-    const showHidden=e.target.closest('[data-action="show-hidden-areas"]'); if(showHidden){state.hiddenProjectAreas.clear();render();return;}
-    const v=e.target.closest('[data-view]'); if(v){ state.view=v.dataset.view; if(state.view!=='history') state.historyTopic=null; state.result=null; render(); return; }
+    const v=e.target.closest('[data-view]'); if(v){ navigateTo(v.dataset.view); return; }
     const dateFilter=e.target.closest('.notes-date-filters [data-date-filter]'); if(dateFilter){ state.notesDateFilter=dateFilter.dataset.dateFilter; renderNotes(); return; }
     const noteFilter=e.target.closest('.notes-filters [data-filter]'); if(noteFilter){ state.notesFilter=noteFilter.dataset.filter; renderNotes(); return; }
     const reviewFilter=e.target.closest('.review-filters [data-review-filter]'); if(reviewFilter){ state.reviewFilter=reviewFilter.dataset.reviewFilter; renderReview(); return; }
@@ -1059,18 +1166,21 @@
     else if(act==='project-settings')showProjectSettings();
     else if(act==='save-project-rule'){const text=document.getElementById('projectRuleText')?.value.trim();const category=document.getElementById('projectRuleCategory')?.value||'Interpretation';if(text){try{const rule=await API.createRule(text,category);if(!state.projectRules.some(x=>x.id===rule.id))state.projectRules.push(rule);showProjectSettings();}catch(err){showDialog(`<span class="eyebrow">Couldn’t save rule</span><h2 id="dialogTitle">Rule was not added.</h2><p>${esc(err.message)}</p>`);}}}
     else if(act==='delete-project-rule'){try{await API.deleteRule(a.dataset.ruleId);state.projectRules=state.projectRules.filter(x=>x.id!==a.dataset.ruleId);showProjectSettings();}catch(err){showDialog(`<span class="eyebrow">Couldn’t remove rule</span><h2 id="dialogTitle">Rule is still active.</h2><p>${esc(err.message)}</p>`);}}
-    else if(act==='example-prompt'){const q=a.dataset.prompt;closeDialog();state.view='overview';submitAsk(q);}
+    else if(act==='example-prompt'){const q=a.dataset.prompt;closeDialog();navigateTo('overview');submitAsk(q);}
     else if(act==='copy-result'){navigator.clipboard?.writeText(document.querySelector('.answer-content')?.innerText||'');a.textContent='Copied';setTimeout(()=>a.textContent='Copy',1200);}
 
 
     else if(act==='toggle-projects'){state.projectMenuOpen=!state.projectMenuOpen;render();}
     else if(act==='ask-result')submitAsk(document.getElementById('resultAskInput')?.value);
+    else if(act==='retry-hydration'){await hydrateBackend();}
+    else if(act==='clear-note-filters'){state.notesDateFilter='all';state.notesFilter='all';state.notesSearch='';renderNotes();}
+    else if(act==='clear-history-search'){state.historySearch='';renderHistory();}
     else if(act==='new-note'){state.noteComposerOpen=true;state.editingNoteId=null;renderNotes();}
     else if(act==='cancel-new-note'){state.noteComposerOpen=false;renderNotes();}
     else if(act==='save-new-note'){
       const title=document.getElementById('newNoteTitle')?.value||'Untitled note';
       const text=document.getElementById('newNoteText')?.value||'';
-      if(saveWorkingNote(title,text)){state.noteComposerOpen=false;renderNotes();}
+      try{if(await saveWorkingNote(title,text)){state.noteComposerOpen=false;renderNotes();}}catch(err){showDialog(`<span class="eyebrow">Couldn’t save draft</span><h2 id="dialogTitle">Your draft was not saved.</h2><p>${esc(err.message)}</p>`);}
     }
     else if(act==='toggle-note'){
       if(e.target.closest('button,input,textarea'))return;
@@ -1079,19 +1189,26 @@
       else state.expandedNotes.add(id);
       renderNotes();
     }
-    else if(act==='edit-note'){state.expandedNotes.add(a.dataset.noteId);state.editingNoteId=a.dataset.noteId;renderNotes();}
+    else if(act==='edit-note'){const n=state.data.notes.find(x=>x.id===a.dataset.noteId);if(n&&!n.backendManaged){state.expandedNotes.add(n.id);state.editingNoteId=n.id;renderNotes();}}
     else if(act==='cancel-note-edit'){state.editingNoteId=null;renderNotes();}
     else if(act==='save-note-edit'){
       const n=state.data.notes.find(x=>x.id===a.dataset.noteId);
-      if(n){
-        n.title=(document.getElementById(`editNoteTitle-${n.id}`)?.value||n.title).trim()||'Untitled note';
-        n.text=(document.getElementById(`editNoteText-${n.id}`)?.value||n.text).trim();
-        state.editingNoteId=null;renderNotes();
+      if(n&&!n.backendManaged){
+        const title=(document.getElementById(`editNoteTitle-${n.id}`)?.value||n.title).trim()||'Untitled note';
+        const content=(document.getElementById(`editNoteText-${n.id}`)?.value||n.text).trim();
+        try{
+          if(n.draftId){const updated=await API.updateDraft(n.draftId,title,content);n.title=updated.title;n.text=updated.content;n.date=formatBackendDate(updated.updated_at);n.dateISO=updated.updated_at;}
+          else{n.title=title;n.text=content;}
+          state.editingNoteId=null;renderNotes();
+        }catch(err){showDialog(`<span class="eyebrow">Couldn’t save draft</span><h2 id="dialogTitle">Your changes were not saved.</h2><p>${esc(err.message)}</p>`);}
       }
     }
     else if(act==='send-note-review'){sendNoteToReview(a.dataset.noteId);}
-    else if(act==='go-notes'){closeDialog();state.view='notes';render();}
-    else if(act==='open-question'){ const q=state.data.questions.find(x=>x.id===a.dataset.questionId); if(q) showDialog(`<span class="eyebrow">Open question</span><h2 id="dialogTitle">${esc(q.text)}</h2><p>This stays unresolved until reviewed evidence establishes an answer.</p><div class="dialog-actions"><button class="btn primary" data-action="answer-question" data-question-id="${q.id}">Add what you learned</button><button class="btn secondary" data-action="confirm-stop-question" data-question-id="${q.id}">Stop tracking</button></div>`); }
+    else if(act==='go-notes'){closeDialog();navigateTo('notes');}
+    else if(act==='open-question'){ const q=state.data.questions.find(x=>x.id===a.dataset.questionId); if(q) showDialog(`<span class="eyebrow">${q.blocking?'Blocking question':'Open question'}</span><h2 id="dialogTitle">${esc(q.text)}</h2><p>This stays unresolved until reviewed evidence establishes an answer.</p>${q.blocking&&q.blocks?`<p class="blocking-detail"><strong>Blocks:</strong> ${esc(q.blocks)}</p>`:''}<div class="dialog-actions"><button class="btn primary" data-action="answer-question" data-question-id="${q.id}">Add what you learned</button>${q.blocking?`<button class="btn secondary" data-action="unmark-blocking" data-question-id="${q.id}">No longer blocking</button>`:`<button class="btn secondary" data-action="mark-blocking" data-question-id="${q.id}">Mark as blocking</button>`}<button class="btn secondary" data-action="confirm-stop-question" data-question-id="${q.id}">Stop tracking</button></div>`); }
+    else if(act==='mark-blocking'){const q=state.data.questions.find(x=>x.id===a.dataset.questionId);if(q)showDialog(`<span class="eyebrow">Blocking question</span><h2 id="dialogTitle">What does this block?</h2><p>A question is blocking only when a concrete project dependency cannot move without the answer.</p><p><strong>${esc(q.text)}</strong></p><input id="questionBlocks" class="dialog-input" aria-label="Blocked dependency" placeholder="Example: Security approval for pilot data flow"><div class="dialog-actions"><button class="btn primary" data-action="save-blocking" data-question-id="${q.id}">Mark blocking</button><button class="btn secondary" data-action="close-dialog">Cancel</button></div>`);}
+    else if(act==='save-blocking'){const q=state.data.questions.find(x=>x.id===a.dataset.questionId);const blocks=document.getElementById('questionBlocks')?.value.trim();if(q&&blocks){try{const updated=await API.setQuestionBlocking(q.id,true,blocks);q.blocking=!!updated.blocking;q.blocks=updated.blocks||blocks;closeDialog();renderOpenItems();}catch(err){showDialog(`<span class="eyebrow">Couldn’t update question</span><h2 id="dialogTitle">Question is still open.</h2><p>${esc(err.message)}</p>`);}}}
+    else if(act==='unmark-blocking'){const q=state.data.questions.find(x=>x.id===a.dataset.questionId);if(q){try{const updated=await API.setQuestionBlocking(q.id,false,null);q.blocking=!!updated.blocking;q.blocks=updated.blocks||null;closeDialog();renderOpenItems();}catch(err){showDialog(`<span class="eyebrow">Couldn’t update question</span><h2 id="dialogTitle">Blocking status was not changed.</h2><p>${esc(err.message)}</p>`);}}}
     else if(act==='answer-question'){ const q=state.data.questions.find(x=>x.id===a.dataset.questionId); if(q) showDialog(`<span class="eyebrow">Answer question</span><h2 id="dialogTitle">${esc(q.text)}</h2><p>Add what you learned. It will go to Review before it can change current understanding.</p><textarea id="questionAnswer" rows="5" aria-label="Question answer" placeholder="What did you learn?"></textarea><div class="dialog-actions"><button class="btn primary" data-action="submit-question-answer" data-question-id="${q.id}">Submit for review</button><button class="btn secondary" data-action="close-dialog">Cancel</button></div>`); }
     else if(act==='submit-question-answer'){
       const text=document.getElementById('questionAnswer')?.value.trim();
@@ -1117,24 +1234,33 @@
     else if(act==='retry-analysis'){ const evidenceId=a.dataset.evidenceId; state.isAnalyzing=true; showDialog(analyzingDialog()); startAnalysisClock(); try{await retryEvidenceAnalysis(evidenceId); state.isAnalyzing=false; stopAnalysisClock(); await hydrateBackend(); showDialog(`<span class="eyebrow">Done</span><h2 id="dialogTitle">Analysis complete.</h2><p>Open Items now reflects anything that needs your decision.</p><div class="dialog-actions"><button class="btn primary" data-action="go-review">View Open Items</button></div>`);}catch(err){state.isAnalyzing=false;stopAnalysisClock();showDialog(`<span class="eyebrow">Still unavailable</span><h2 id="dialogTitle">Your note is still safe.</h2><p>${esc(err.message)}</p><div class="dialog-actions"><button class="btn primary" data-action="close-dialog">Close</button></div>`);} }
     else if(act==='sample-info'){ const t=document.getElementById('addInfoText'); if(t)t.value=state.data.sampleInformation; }
     else if(act==='save-info')saveInformation();
-    else if(act==='go-review'){closeDialog();state.view='open-items';state.result=null;render();}
+    else if(act==='go-review'){closeDialog();navigateTo('open-items');}
     else if(act==='review-now'){ const r=state.data.reviews.find(x=>x.id===a.dataset.review); if(r) showDialog(`<span class="eyebrow">Review, without leaving your answer</span><h2 id="dialogTitle">Review this change</h2>${reviewCard(r,true,false)}`); }
     else if(act==='continue-current'){ a.closest('.pending-notice')?.classList.add('acknowledged'); a.closest('.pending-notice')?.querySelector('p')?.replaceChildren(document.createTextNode('Continuing from current reviewed understanding. Pending evidence remains unreviewed.')); }
     else if(act==='track-question')addQuestion(a.dataset.question||state.resultQuery);
-    else if(act==='go-questions'){closeDialog();state.view='open-items';render();}
+    else if(act==='go-questions'){closeDialog();navigateTo('open-items');}
     else if(act==='review-update'||act==='review-keep')decideReview(a.dataset.review,act==='review-update'?'update':'keep-current');
-    else if(act==='ask-access-again'){closeDialog();state.view='overview';state.resultQuery='What determines customer feature access?';state.result={scenario:state.data.askScenarios.find(s=>s.id==='access')};render();}
+    else if(act==='ask-access-again'){closeDialog();navigateTo('overview');state.resultQuery='What determines customer feature access?';state.result={scenario:state.data.askScenarios.find(s=>s.id==='access')};renderOverview();}
     else if(act==='add-question')showDialog(`<span class="eyebrow">Known unknown</span><h2 id="dialogTitle">Add a question</h2><input id="manualQuestion" class="dialog-input" aria-label="New project question" placeholder="What does the project still need to establish?"/><div class="dialog-actions"><button class="btn primary" data-action="save-question">Track question</button><button class="btn secondary" data-action="close-dialog">Cancel</button></div>`);
     else if(act==='save-question'){const t=document.getElementById('manualQuestion')?.value;closeDialog();addQuestion(t);}
     else if(act==='confirm-stop-question'){const q=state.data.questions.find(q=>q.id===a.dataset.questionId);if(q)showDialog(`<span class="eyebrow">Open question</span><h2 id="dialogTitle">Stop tracking this question?</h2><p>It will be removed from the open questions list. This does not change any reviewed project understanding.</p><div class="dialog-actions"><button class="btn primary" data-action="stop-question" data-question-id="${q.id}">Stop tracking</button><button class="btn secondary" data-action="close-dialog">Cancel</button></div>`);}
-    else if(act==='stop-question'){const q=state.data.questions.find(q=>q.id===a.dataset.questionId);if(q?.backendManaged){try{await API.stopQuestion(q.id);q.status='stopped';}catch(err){showDialog(`<span class="eyebrow">Couldn’t stop tracking</span><h2 id="dialogTitle">Question is still open.</h2><p>${esc(err.message)}</p><div class="dialog-actions"><button class="btn primary" data-action="close-dialog">Close</button></div>`);return;}}else if(q)q.status='stopped';closeDialog();state.view='open-items';render();}
+    else if(act==='stop-question'){const q=state.data.questions.find(q=>q.id===a.dataset.questionId);if(q?.backendManaged){try{await API.stopQuestion(q.id);q.status='stopped';}catch(err){showDialog(`<span class="eyebrow">Couldn’t stop tracking</span><h2 id="dialogTitle">Question is still open.</h2><p>${esc(err.message)}</p><div class="dialog-actions"><button class="btn primary" data-action="close-dialog">Close</button></div>`);return;}}else if(q)q.status='stopped';closeDialog();navigateTo('open-items');}
     else if(act==='copy-note'){const n=state.data.notes.find(x=>x.id===a.dataset.noteId);if(n){navigator.clipboard?.writeText(n.text);a.textContent='Copied';}}
     else if(act==='copy-draft'){navigator.clipboard?.writeText(a.closest('.answer-stage')?.querySelector('.draft')?.innerText || '');a.textContent='Copied';}
   });
 
   document.addEventListener('change',e=>{ if(e.target.id==='notesStatusFilter'){state.notesFilter=e.target.value;renderNotes();} });
 
-  document.addEventListener('input',e=>{ if(e.target.id==='notesSearch'){ state.notesSearch=e.target.value; const list=document.getElementById('notesList'); const notes=filteredNotes(); if(list) list.innerHTML=notes.map(simpleNote).join('') || '<div class="empty">No matching notes.</div>'; const count=document.querySelector('.notes-result-count'); if(count) count.textContent=`${notes.length} ${notes.length===1?'note':'notes'}`; } });
+  document.addEventListener('input',e=>{
+    if(e.target.id==='notesSearch'){
+      state.notesSearch=e.target.value;
+      const list=document.getElementById('notesList'); const notes=filteredNotes();
+      if(list) list.innerHTML=notes.map(simpleNote).join('') || '<div class="empty-state"><h3>Nothing here.</h3><p>No notes match these filters.</p></div>';
+      const count=document.querySelector('.notes-result-count'); if(count) count.textContent=`${notes.length} ${notes.length===1?'note':'notes'}`;
+      const summary=document.getElementById('notesFilterSummary'); if(summary) summary.outerHTML=notesFilterSummary(notes);
+    }
+    if(e.target.id==='historySearch'){state.historySearch=e.target.value;updateHistoryResults();}
+  });
   let projectScrollScheduled=false;
   window.addEventListener?.('scroll',()=>{
     if(state.view!=='project-overview'||projectScrollScheduled)return;

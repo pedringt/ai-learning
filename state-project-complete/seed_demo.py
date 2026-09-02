@@ -68,6 +68,13 @@ REVIEWS = [
     ("demo-review-retention", "state_at_risk", "Are the vendor's stated retention terms authoritative enough for pilot planning?", "The vendor described proposed terms, but Security and Legal have not confirmed the agreement.", None, None, "Vendor follow-up described retention and logging behavior that still requires contractual confirmation."),
 ]
 
+DEMO_EVIDENCE_DATES = {
+    "demo-review-access": "2026-08-27 16:10:00",
+    "demo-review-launch": "2026-08-28 09:30:00",
+    "demo-review-escalation": "2026-08-28 13:45:00",
+    "demo-review-retention": "2026-08-29 10:20:00",
+}
+
 
 def bootstrap_demo_data(connection) -> dict[str, int]:
     """Insert missing demo records without overwriting anything already present."""
@@ -88,7 +95,7 @@ def bootstrap_demo_data(connection) -> dict[str, int]:
             if connection.execute("SELECT id FROM review_issues WHERE id=?", (rid,)).fetchone():
                 continue
             eid = f"{rid}-evidence"
-            connection.execute("INSERT OR IGNORE INTO evidence(id,content,source_type,processing_status) VALUES (?,?,'demo_seed','processed')", (eid,evidence_text))
+            connection.execute("INSERT OR IGNORE INTO evidence(id,content,source_type,processing_status,submitted_at) VALUES (?,?,'demo_seed','processed',?)", (eid,evidence_text,DEMO_EVIDENCE_DATES[rid]))
             connection.execute("INSERT INTO review_issues(id,review_type,decision_question,why_consequential,status) VALUES (?,?,?,?,'open')", (rid,rtype,question,why))
             connection.execute("INSERT OR IGNORE INTO review_evidence(review_id,evidence_id) VALUES (?,?)", (rid,eid))
             if state_id and proposed:

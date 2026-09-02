@@ -54,7 +54,7 @@ def test_backend_review_results_are_upserted_not_blindly_appended():
 
 def test_hydration_reconciles_stale_backend_reviews():
     assert "function replaceBackendOpenReviews" in JS
-    assert "replaceBackendOpenReviews(openPayload.items||[])" in JS
+    assert "replaceBackendOpenReviews(openItems);" in JS
 
 
 def test_frontend_hides_superseded_proposals_from_open_review_card():
@@ -81,7 +81,7 @@ def test_project_is_rendered_as_document_outline_not_area_card_dashboard():
 
 
 def test_project_subnav_scrolls_existing_document_without_rerender():
-    assert "if(state.view!=='project-overview'){state.view='project-overview';render();" in JS
+    assert "if(state.view!=='project-overview'){state.view='project-overview';state.result=null;render();" in JS
     assert "else{updateNav();updateProjectSubnavActive(target);scrollProjectTarget(target);}" in JS
     assert "setTimeout" not in JS or "data-project-jump" not in JS.split("setTimeout",1)[-1]
     assert "updateProjectSubnavActive" in JS
@@ -162,7 +162,7 @@ def test_r83_project_navigation_uses_stable_absolute_targets_without_sticky_sect
     assert "function projectScrollTop(target)" in app
     assert "window.scrollY+el.getBoundingClientRect().top-offset" in app
     assert "window.scrollTo({top,behavior:'smooth'})" in app
-    assert "state.view='project-overview';state.result=null;render();return;" in app
+    assert "function navigateTo(view" in app
     assert "scrollProjectTarget('project-top')" not in app
     assert "scrollIntoView({behavior:'smooth',block:'start'})" not in app
     assert ".project-section-sticky{position:relative" in css
@@ -171,8 +171,24 @@ def test_r84_navigation_rules_and_review_polish_contract():
     app = (FRONTEND / "context-app.js").read_text(encoding="utf-8")
     html = (FRONTEND / "index.html").read_text(encoding="utf-8")
     assert 'class="product-name product-home" data-view="overview"' in html
-    assert "state.view='project-overview';state.result=null;render();return;" in app
+    assert "function navigateTo(view" in app
     assert "data-action=\"project-settings\"" in app
     assert "API.createRule" in app and "API.deleteRule" in app
     assert "Blocks: ${esc(q.blocks)}" in app
     assert "replace(/\\*\\*/g,'')" in app
+
+
+def test_r85_integrity_and_polish_contracts():
+    app = (FRONTEND / "context-app.js").read_text(encoding="utf-8")
+    api_js = (FRONTEND / "context-api.js").read_text(encoding="utf-8")
+    html = (FRONTEND / "index.html").read_text(encoding="utf-8")
+    assert 'data-view="project-overview">Project</button>' in html
+    assert "window.scrollTo({top:0,behavior:'auto'})" in app
+    assert "n.backendManaged?'':`<button" in app
+    assert "getDrafts" in api_js and "createDraft" in api_js and "updateDraft" in api_js and "deleteDraft" in api_js
+    assert "setQuestionBlocking" in api_js and "What does this block?" in app
+    assert "Showing <strong>${notes.length}</strong> of ${total} notes" in app
+    assert "Search history" in app and "historyResultCount" in app
+    assert "Rules apply to future analysis. Existing Reviews are not reinterpreted automatically." in app
+    assert "Current State items" in app
+    assert "backendStatus" in app and "temporarily unavailable" in app

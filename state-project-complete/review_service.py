@@ -20,6 +20,51 @@ class ReviewConflictError(RuntimeError):
 Decision = Literal["accept", "keep", "reject"]
 
 
+def list_draft_notes(connection: Connection) -> list[dict]:
+    connection.row_factory = sqlite3.Row
+    rows = connection.execute(
+        "SELECT id, title, content, created_at, updated_at FROM draft_notes ORDER BY updated_at DESC, id DESC"
+    ).fetchall()
+    return [dict(row) for row in rows]
+
+
+def create_draft_note(connection: Connection, draft_id: str, title: str, content: str) -> dict:
+    clean_title = (title or "Untitled note").strip() or "Untitled note"
+    clean_content = content.strip()
+    connection.execute(
+        "INSERT INTO draft_notes(id, title, content) VALUES (?, ?, ?)",
+        (draft_id, clean_title, clean_content),
+    )
+    connection.commit()
+    return dict(connection.execute(
+        "SELECT id, title, content, created_at, updated_at FROM draft_notes WHERE id=?", (draft_id,)
+    ).fetchone())
+
+
+def update_draft_note(connection: Connection, draft_id: str, title: str, content: str) -> dict:
+    existing = connection.execute("SELECT id FROM draft_notes WHERE id=?", (draft_id,)).fetchone()
+    if existing is None:
+        raise ReviewNotFoundError(draft_id)
+    clean_title = (title or "Untitled note").strip() or "Untitled note"
+    clean_content = content.strip()
+    connection.execute(
+        "UPDATE draft_notes SET title=?, content=?, updated_at=CURRENT_TIMESTAMP WHERE id=?",
+        (clean_title, clean_content, draft_id),
+    )
+    connection.commit()
+    return dict(connection.execute(
+        "SELECT id, title, content, created_at, updated_at FROM draft_notes WHERE id=?", (draft_id,)
+    ).fetchone())
+
+
+def delete_draft_note(connection: Connection, draft_id: str) -> None:
+    existing = connection.execute("SELECT id FROM draft_notes WHERE id=?", (draft_id,)).fetchone()
+    if existing is None:
+        raise ReviewNotFoundError(draft_id)
+    connection.execute("DELETE FROM draft_notes WHERE id=?", (draft_id,))
+    connection.commit()
+
+
 def list_questions(connection: Connection, status: str = "open") -> list[dict]:
     connection.row_factory = sqlite3.Row
     rows = connection.execute(
@@ -48,6 +93,22 @@ def create_question(connection: Connection, question_id: str, text: str, *, orig
     connection.commit()
     row = connection.execute("SELECT * FROM questions WHERE id=?", (question_id,)).fetchone()
     return dict(row)
+
+
+def update_question_blocking(connection: Connection, question_id: str, blocking: bool, blocks: str | None = None) -> dict:
+    existing = connection.execute(
+        "SELECT id FROM questions WHERE id=? AND status='open'", (question_id,)
+    ).fetchone()
+    if existing is None:
+        raise ReviewNotFoundError(question_id)
+    if blocking and not (blocks or "").strip():
+        raise ValueError("Blocking questions require a concrete dependency")
+    connection.execute(
+        "UPDATE questions SET blocking=?, blocks=? WHERE id=? AND status='open'",
+        (1 if blocking else 0, (blocks or "").strip() or None, question_id),
+    )
+    connection.commit()
+    return dict(connection.execute("SELECT * FROM questions WHERE id=?", (question_id,)).fetchone())
 
 
 def stop_question(connection: Connection, question_id: str) -> None:

@@ -20,7 +20,7 @@ from db import connect
 from interpretation_pipeline_integrated import InterpretationProvider, new_id, process_evidence
 from openai_provider import OpenAIProvider
 from seed_demo import bootstrap_demo_data
-STATE_BUILD_REV = "r8.4-navigation-rules-polish-2026-09-02"
+STATE_BUILD_REV = "r8.5-integrity-polish-2026-09-02"
 logger = logging.getLogger("state.api")
 
 from review_service import (
@@ -36,6 +36,11 @@ from review_service import (
     list_project_rules,
     create_project_rule,
     delete_project_rule,
+    list_draft_notes,
+    create_draft_note,
+    update_draft_note,
+    delete_draft_note,
+    update_question_blocking,
     resolve_review,
 )
 
@@ -104,6 +109,48 @@ class ProjectRuleInput(BaseModel):
         if not value:
             raise ValueError("text must not be blank")
         return value
+
+
+class DraftNoteInput(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    title: str = Field(default="Untitled note", max_length=300)
+    content: str = Field(min_length=1, max_length=100_000)
+
+    @field_validator("content")
+    @classmethod
+    def draft_content_not_blank(cls, value: str) -> str:
+        value = value.strip()
+        if not value:
+            raise ValueError("content must not be blank")
+        return value
+
+
+class DraftNoteUpdate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    title: str = Field(default="Untitled note", max_length=300)
+    content: str = Field(min_length=1, max_length=100_000)
+
+    @field_validator("content")
+    @classmethod
+    def draft_update_not_blank(cls, value: str) -> str:
+        value = value.strip()
+        if not value:
+            raise ValueError("content must not be blank")
+        return value
+
+
+class QuestionBlockingInput(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    blocking: bool
+    blocks: str | None = Field(default=None, max_length=500)
+
+    @field_validator("blocks")
+    @classmethod
+    def normalize_blocks(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        value = value.strip()
+        return value or None
 
 
 class QuestionInput(BaseModel):
@@ -180,7 +227,7 @@ def create_app(settings: Settings | None = None, provider: InterpretationProvide
         CORSMiddleware,
         allow_origins=settings.cors_origins,
         allow_credentials=False,
-        allow_methods=["GET", "POST"],
+        allow_methods=["GET", "POST", "PATCH", "DELETE"],
         allow_headers=["Content-Type"],
     )
 
@@ -200,6 +247,33 @@ def create_app(settings: Settings | None = None, provider: InterpretationProvide
     @app.get("/health")
     def health() -> dict:
         return {"status": "ok", "build": STATE_BUILD_REV, "demo_bootstrap": settings.demo_bootstrap}
+
+    @app.get("/api/drafts")
+    def get_drafts() -> dict:
+        with get_connection() as connection:
+            return {"items": list_draft_notes(connection)}
+
+    @app.post("/api/drafts", status_code=201)
+    def post_draft(payload: DraftNoteInput) -> dict:
+        with get_connection() as connection:
+            return create_draft_note(connection, new_id("draft"), payload.title, payload.content)
+
+    @app.patch("/api/drafts/{draft_id}")
+    def patch_draft(draft_id: str, payload: DraftNoteUpdate) -> dict:
+        with get_connection() as connection:
+            try:
+                return update_draft_note(connection, draft_id, payload.title, payload.content)
+            except ReviewNotFoundError as exc:
+                raise HTTPException(status_code=404, detail="Draft note not found") from exc
+
+    @app.delete("/api/drafts/{draft_id}")
+    def delete_draft(draft_id: str) -> dict:
+        with get_connection() as connection:
+            try:
+                delete_draft_note(connection, draft_id)
+            except ReviewNotFoundError as exc:
+                raise HTTPException(status_code=404, detail="Draft note not found") from exc
+            return {"draft_id": draft_id, "status": "deleted"}
 
     @app.post("/api/evidence", status_code=201)
     def interpret_evidence(payload: EvidenceInput, request: Request) -> dict:
@@ -331,6 +405,16 @@ def create_app(settings: Settings | None = None, provider: InterpretationProvide
         with get_connection() as connection:
             item = create_question(connection, new_id("question"), payload.text, origin=payload.origin, blocking=payload.blocking, blocks=payload.blocks)
             return item
+
+    @app.patch("/api/questions/{question_id}/blocking")
+    def patch_question_blocking(question_id: str, payload: QuestionBlockingInput) -> dict:
+        if payload.blocking and not payload.blocks:
+            raise HTTPException(status_code=422, detail="Blocking questions must name the concrete dependency they block")
+        with get_connection() as connection:
+            try:
+                return update_question_blocking(connection, question_id, payload.blocking, payload.blocks)
+            except ReviewNotFoundError as exc:
+                raise HTTPException(status_code=404, detail="Open question not found") from exc
 
     @app.post("/api/questions/{question_id}/stop")
     def post_stop_question(question_id: str) -> dict:
