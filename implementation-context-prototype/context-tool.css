@@ -471,3 +471,17 @@ body.v88-dark .related-review-choice{background:#17151d!important;border-color:v
 .ask-new-session{flex:0 0 auto;margin-top:0;border:1px solid var(--line);border-radius:7px;padding:6px 10px;color:var(--muted)!important}
 .ask-new-session:hover{background:var(--surface2);color:var(--ink)!important}
 @media(max-width:650px){.ask-title-row{gap:12px}.ask-new-session{margin-top:-2px}}
+
+
+/* R9.2: once Ask has a result, collapse the entry UI into a quiet working session. */
+.ask-session-row{display:flex;align-items:flex-start;justify-content:space-between;gap:20px;padding:8px 0 14px;border-bottom:1px solid var(--line)}
+.ask-session-row>div{min-width:0}.ask-session-row .meta-label{display:block;margin-bottom:4px}.ask-session-row strong{display:block;font-size:14px;line-height:1.4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ask-session-row .ask-new-session{border:0;padding:2px 0;color:var(--muted)!important;font-size:12px}
+.ask-session-row .ask-new-session:hover{background:transparent;color:var(--accent)!important;text-decoration:underline}
+.unboxed-ask .ask-session-row+.answer-stage{border-top:0;padding-top:22px}
+.ask-answer-head{display:flex;align-items:center;justify-content:space-between;gap:16px}
+.ask-copy-answer{font-size:11px!important;color:var(--muted)!important}
+.ask-followup{border-top:1px solid var(--line);margin-top:8px;padding:18px 0 0}
+.ask-followup .ask-input-row{height:40px}.ask-followup .ask-input-row input{min-height:38px!important}.ask-followup .ask-input-row .btn{height:38px;min-width:72px;padding:7px 12px;font-size:11px}
+.ask-live-answer .ask-answer-section{margin-top:22px}.ask-live-answer .ask-answer-section h3{margin-bottom:9px}
+@media(max-width:650px){.ask-session-row{gap:12px}.ask-session-row strong{white-space:normal}.ask-followup .ask-input-row{height:auto}}

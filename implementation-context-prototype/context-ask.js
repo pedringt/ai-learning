@@ -24,7 +24,8 @@
 
   function itemHtml(item){
     const badge=item.record_type!=='none'?`<span class="ask-record-badge ask-record-${esc(item.record_type)}">${esc(labelFor(item.record_type))}</span>`:'';
-    const detail=item.detail?`<span class="ask-item-detail">${item.record_type==='blocking_question'?'Blocks: ':''}${esc(item.detail)}</span>`:'';
+    const cleanDetail=String(item.detail||'').replace(/^blocks:\s*/i,'');
+    const detail=cleanDetail?`<span class="ask-item-detail">${item.record_type==='blocking_question'?'Blocks: ':''}${esc(cleanDetail)}</span>`:'';
     let action='';
     if(item.record_type==='review' && item.record_id) action=`<button class="text-button ask-item-action" data-action="open-related-review" data-review-id="${esc(item.record_id)}">Review now →</button>`;
     if((item.record_type==='question'||item.record_type==='blocking_question') && item.record_id) action=`<button class="text-button ask-item-action" data-action="go-open-question" data-question-id="${esc(item.record_id)}">See question →</button>`;
@@ -38,7 +39,7 @@
     const refinements=(a.suggested_refinements||[]).slice(0,3).map(x=>`<button data-prompt="${esc(x)}">${esc(x)}</button>`).join('');
     const remaining=payload.open_items_remaining||{count:0,reviews:0};
     const footer=remaining.count>0?`<aside class="ask-open-items-safety"><strong>Before you move on</strong><p>${remaining.reviews?`${remaining.reviews} ${remaining.reviews===1?'Review':'Reviews'} and `:''}${Math.max(0,remaining.count-remaining.reviews)} other open ${Math.max(0,remaining.count-remaining.reviews)===1?'item':'items'} still need attention.</p><button class="text-button" data-view="open-items">Review open items →</button></aside>`:'';
-    return `<div class="ask-live-answer"><div class="result-label">${esc(a.job==='meeting_prep'?'Meeting prep':'State Ask')}</div><h2>${esc(a.headline)}</h2><p class="result-lede">${esc(a.summary)}</p>${sections}${refinements?`<div class="ask-refinement-chips">${refinements}</div>`:''}${footer}</div>`;
+    return `<div class="ask-live-answer"><div class="ask-answer-head"><div class="result-label">${esc(a.job==='meeting_prep'?'Meeting prep':'State Ask')}</div><button class="text-button ask-copy-answer" data-action="copy-result">Copy</button></div><h2>${esc(a.headline)}</h2><p class="result-lede">${esc(a.summary)}</p>${sections}${refinements?`<div class="ask-refinement-chips">${refinements}</div>`:''}${footer}</div>`;
   }
 
   window.STATE_ASK = Object.freeze({canHandle, submit, render});

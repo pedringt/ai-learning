@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import re
 import time
 from typing import Any, Mapping, Protocol
 
@@ -17,8 +18,8 @@ def _compact_candidates(connection: Any) -> dict[str, list[dict]]:
     state = list_state(connection)
     reviews = list_reviews(connection, "open")
     questions = list_questions(connection, "open")
-    history = list_history(connection)[:30]
-    evidence = list_evidence(connection)[:40]
+    history = list_history(connection)[:18]
+    evidence = list_evidence(connection)[:24]
     rules = list_project_rules(connection)
     return {
         "state": [{"id": x["id"], "topic": x["topic"], "statement": x["statement"], "authority": "governing_current_fact"} for x in state],
@@ -44,6 +45,47 @@ def _compact_candidates(connection: Any) -> dict[str, list[dict]]:
 
 
 
+
+def _trim_candidates_for_query(query: str, candidates: Mapping[str, list[dict]]) -> dict[str, list[dict]]:
+    """Bound the model context with transparent lexical relevance; authority is still enforced later."""
+    stop = {"the","a","an","and","or","to","for","of","in","on","me","my","we","our","this","that","what","is","are","be","with","about","prep","prepare","meeting"}
+    terms = {x for x in re.findall(r"[a-z0-9]+", query.lower()) if len(x) > 2 and x not in stop}
+    # Meeting prep needs a little semantic neighborhood even when the prompt is terse.
+    if "security" in terms:
+        terms |= {"retention","access","pilot","risk","launch","data","vendor","approval"}
+
+    def text(record: Mapping[str, Any]) -> str:
+        return " ".join(str(v) for k, v in record.items() if k not in {"authority"} and not isinstance(v, (list, dict))).lower()
+
+    def ranked(bucket: str, limit: int) -> list[dict]:
+        records = list(candidates[bucket])
+        scored = []
+        for idx, record in enumerate(records):
+            body = text(record)
+            score = sum(3 for term in terms if term in body)
+            if bucket == "questions" and record.get("blocking"):
+                score += 1
+            scored.append((score, -idx, record))
+        scored.sort(key=lambda x: (x[0], x[1]), reverse=True)
+        return [x[2] for x in scored[:limit]]
+
+    reviews = ranked("reviews", 6)
+    state = ranked("state", 12)
+    required_state = {sid for r in reviews for sid in r.get("affected_state_ids", [])}
+    state_by_id = {x["id"]: x for x in candidates["state"]}
+    for sid in required_state:
+        if sid in state_by_id and sid not in {x["id"] for x in state}:
+            state.append(state_by_id[sid])
+
+    return {
+        "state": state[:14],
+        "reviews": reviews,
+        "questions": ranked("questions", 12),
+        "history": ranked("history", 10),
+        "evidence": ranked("evidence", 12),
+        "rules": list(candidates["rules"]),
+    }
+
 def _one_call_prompt(query: str, candidates: Mapping[str, Any], previous_answer: Mapping[str, Any] | None) -> str:
     previous = json.dumps(previous_answer, ensure_ascii=False)[:12000] if previous_answer else "null"
     return f"""You are State Ask. In one response, first select the project records relevant to the request, then synthesize the grounded answer from only those selected records.
@@ -58,6 +100,9 @@ Authority rules are non-negotiable:
 - Optimize for relevance, not completeness. Omit tempting recent noise.
 - Refinement may change format, audience, length, focus, or ordering, but never project truth.
 - For meeting prep, frame relevant Questions as opportunities to get answered.
+- Meeting prep is a briefing, not a record dump: choose only the few facts the user needs in the room.
+- Do not repeat the same issue across multiple sections. A Review and linked Question may both appear, but explain each once.
+- Never call something a blocker unless the supplied Question says blocking=true. Never claim a count of blockers unless it matches selected blocking Questions.
 
 Job choices: current_fact, meeting_prep, catch_up, project_update, why_or_provenance, attention_check, historical, drafting, general_project_synthesis, refinement.
 
@@ -67,7 +112,8 @@ Previous answer (for refinement only): {previous}
 Authority-tagged candidate records:
 {json.dumps(candidates, ensure_ascii=False)}
 
-Return the required JSON object with both `selection` and `answer`. Every answer record_id must be present in the selection and candidate records. Relevant Reviews must appear visibly in the main answer, not only in source_ids. Use concise adaptive sections and short suggested refinements."""
+Return the required JSON object with both `selection` and `answer`. Every answer record_id must be present in the selection and candidate records. Relevant Reviews must appear visibly in the main answer, not only in source_ids. For meeting prep: use at most 4 sections, at most 4 items per section, and at most 3 established Current State items. Prefer one synthesized opening over many State cards. Do not create a section titled Current State or Open Reviews Qualifying Current State. Keep the full answer comfortably under 500 words.
+Use concise adaptive sections and short suggested refinements."""
 
 def _selector_prompt(query: str, candidates: Mapping[str, Any], previous_answer: Mapping[str, Any] | None) -> str:
     previous = json.dumps(previous_answer, ensure_ascii=False)[:8000] if previous_answer else "null"
@@ -151,6 +197,9 @@ Non-negotiable rules:
 - Unknown must remain unknown. Do not infer absence from missing information.
 - Refinement may change format, audience, length, focus, or ordering; it may not change project truth.
 - For meeting prep, frame relevant Questions as opportunities to get answered.
+- Meeting prep is a briefing, not a record dump: choose only the few facts the user needs in the room.
+- Do not repeat the same issue across multiple sections. A Review and linked Question may both appear, but explain each once.
+- Never call something a blocker unless the supplied Question says blocking=true. Never claim a count of blockers unless it matches selected blocking Questions.
 - Keep the main output selective; Open Items handles completeness elsewhere.
 
 User request: {query}
@@ -208,10 +257,59 @@ def _validate_synthesis(answer: AskSynthesis, selection: AskSelection, context: 
     return answer
 
 
+
+def _normalize_meeting_prep(answer: AskSynthesis) -> AskSynthesis:
+    """Make meeting prep read like a briefing rather than exposed retrieval machinery."""
+    if answer.job != "meeting_prep":
+        return answer
+    from ask_contract import AskAnswerSection
+
+    priority = {"needs_review": 0, "questions": 1, "established": 2, "recent_context": 3, "changes": 4, "open_attention": 5, "draft": 6, "other": 7}
+    merged: dict[str, AskAnswerSection] = {}
+    seen_records: set[tuple[str, str]] = set()
+    for section in answer.sections:
+        kind = section.kind
+        # Current facts belong in one quiet established section.
+        if kind == "other" and any(i.record_type == "state" for i in section.items):
+            kind = "established"
+        target = merged.get(kind)
+        if not target:
+            titles = {
+                "needs_review": "Needs your review",
+                "questions": "Get these answered",
+                "established": "Where things stand",
+                "recent_context": "Recent context",
+                "changes": "What changed",
+                "open_attention": "Be ready to discuss",
+            }
+            target = AskAnswerSection(kind=kind, title=titles.get(kind, section.title), items=[])
+            merged[kind] = target
+        for item in section.items:
+            key = (item.record_type, item.record_id or item.text.strip().lower())
+            if key in seen_records:
+                continue
+            seen_records.add(key)
+            # Renderer adds the label; store only the dependency itself.
+            if item.record_type == "blocking_question" and item.detail:
+                detail = item.detail.strip()
+                if detail.lower().startswith("blocks:"):
+                    item.detail = detail.split(":", 1)[1].strip()
+            target.items.append(item)
+
+    caps = {"needs_review": 2, "questions": 4, "established": 3, "recent_context": 2, "changes": 2, "open_attention": 3, "draft": 4, "other": 2}
+    sections = []
+    for kind, section in sorted(merged.items(), key=lambda kv: priority.get(kv[0], 99)):
+        section.items = section.items[:caps.get(kind, 3)]
+        if section.items:
+            sections.append(section)
+    answer.sections = sections[:4]
+    answer.suggested_refinements = answer.suggested_refinements[:3]
+    return answer
+
 def run_ask(connection: Any, provider: AskProvider, query: str, previous_answer: Mapping[str, Any] | None = None) -> dict[str, Any]:
     total_started = time.perf_counter()
     context_started = time.perf_counter()
-    candidates = _compact_candidates(connection)
+    candidates = _trim_candidates_for_query(query, _compact_candidates(connection))
     context_ms = round((time.perf_counter() - context_started) * 1000)
 
     provider_started = time.perf_counter()
@@ -233,7 +331,7 @@ def run_ask(connection: Any, provider: AskProvider, query: str, previous_answer:
     validation_started = time.perf_counter()
     selection = _validate_selection(AskSelection.model_validate(selection_raw), candidates)
     context = _selected_context(selection, candidates)
-    answer = _validate_synthesis(AskSynthesis.model_validate(answer_raw), selection, context)
+    answer = _normalize_meeting_prep(_validate_synthesis(AskSynthesis.model_validate(answer_raw), selection, context))
     validation_ms = round((time.perf_counter() - validation_started) * 1000)
 
     selected_open = set(selection.review_ids + selection.blocking_question_ids + selection.question_ids)

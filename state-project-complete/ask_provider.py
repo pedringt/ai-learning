@@ -28,7 +28,7 @@ class LiveAskProvider:
 
     def run(self, prompt: str) -> Mapping[str, Any]:
         """Select relevant context and synthesize in one provider round-trip."""
-        return self._call(prompt, ONE_CALL_ASK_JSON_SCHEMA, max_tokens=2600)
+        return self._call(prompt, ONE_CALL_ASK_JSON_SCHEMA, max_tokens=1500)
 
     def select(self, prompt: str) -> Mapping[str, Any]:
         return self._call(prompt, SELECTOR_JSON_SCHEMA, max_tokens=1200)

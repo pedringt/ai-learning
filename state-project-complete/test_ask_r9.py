@@ -218,3 +218,64 @@ def test_api_r91_one_call_provider_is_invoked_once(tmp_path):
         payload = response.json()
         assert payload["timing"]["pipeline"] == "one_call"
         assert len(provider.calls) == 1
+
+
+def test_r92_security_meeting_context_is_bounded_and_omits_demo_noise(tmp_path):
+    from ask_service import _compact_candidates, _trim_candidates_for_query
+    conn = seeded_connection(tmp_path)
+    try:
+        full = _compact_candidates(conn)
+        trimmed = _trim_candidates_for_query("Prep me for the security meeting.", full)
+        assert len(trimmed["state"]) <= 14
+        assert len(trimmed["questions"]) <= 12
+        assert len(trimmed["evidence"]) <= 12
+        assert not any(x["id"] == "ask-evidence-demo-noise" for x in trimmed["evidence"])
+        assert any(x["id"] == "ask-evidence-security-meeting" for x in trimmed["evidence"])
+        assert any(x["id"] == "demo-review-retention" for x in trimmed["reviews"])
+    finally:
+        conn.close()
+
+
+def test_r92_meeting_prep_merges_repeated_sections_caps_state_and_cleans_blocks_prefix(tmp_path):
+    provider = FakeOneCallAskProvider()
+    provider.run = lambda prompt: {
+        "selection": {
+            "job": "meeting_prep", "state_ids": ["k-data", "k-security", "k-pilot", "k-sensitive"],
+            "review_ids": ["demo-review-retention"], "blocking_question_ids": ["q-retention"],
+            "question_ids": ["q-ask-named-access"], "history_ids": [], "evidence_ids": ["ask-evidence-security-meeting"]
+        },
+        "answer": {
+            "job": "meeting_prep", "headline": "Security meeting prep", "summary": "A concise security briefing.",
+            "sections": [
+                {"kind":"established","title":"Security Boundaries Holding Firm","items":[
+                    {"text":"Data is read-only.","record_type":"state","record_id":"k-data","detail":None},
+                    {"text":"Human review remains required.","record_type":"state","record_id":"k-security","detail":None}]},
+                {"kind":"established","title":"Evaluation and Access Authority in Focus","items":[
+                    {"text":"Pilot remains bounded.","record_type":"state","record_id":"k-pilot","detail":None},
+                    {"text":"Sensitive actions are excluded.","record_type":"state","record_id":"k-sensitive","detail":None}]},
+                {"kind":"questions","title":"Critical Blockers","items":[
+                    {"text":"What are the retention terms?","record_type":"blocking_question","record_id":"q-retention","detail":"Blocks: Security approval for pilot data flow"}]},
+                {"kind":"questions","title":"Questions to Clarify","items":[
+                    {"text":"What are the retention terms?","record_type":"blocking_question","record_id":"q-retention","detail":"Security approval for pilot data flow"},
+                    {"text":"Does security require named access?","record_type":"question","record_id":"q-ask-named-access","detail":None}]},
+                {"kind":"needs_review","title":"Open Reviews Qualifying Current State","items":[
+                    {"text":"Confirm vendor retention authority.","record_type":"review","record_id":"demo-review-retention","detail":"Pending authority decision"}]}
+            ],
+            "source_ids":["k-data","k-security","k-pilot","k-sensitive","q-retention","q-ask-named-access","demo-review-retention"],
+            "uncertainty_ids":["q-retention","demo-review-retention"], "suggested_refinements":["Make shorter"]
+        }
+    }
+    conn = seeded_connection(tmp_path)
+    try:
+        result = run_ask(conn, provider, "Prep me for the security meeting.")
+        answer = result["answer"]
+        assert len(answer["sections"]) <= 4
+        established = [s for s in answer["sections"] if s["kind"] == "established"]
+        assert len(established) == 1
+        assert established[0]["title"] == "Where things stand"
+        assert len(established[0]["items"]) == 3
+        blockers = [i for s in answer["sections"] for i in s["items"] if i["record_type"] == "blocking_question"]
+        assert len([i for i in blockers if i["record_id"] == "q-retention"]) == 1
+        assert blockers[0]["detail"] == "Security approval for pilot data flow"
+    finally:
+        conn.close()
