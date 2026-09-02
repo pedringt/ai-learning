@@ -1,36 +1,30 @@
 services:
   - type: web
     name: state-api
-    env: python
+    runtime: python
     plan: free
-    pythonVersion: 3.12
-    
-    # Build and start commands
+    rootDir: state-project-complete
+    branch: main
+    autoDeployTrigger: commit
     buildCommand: pip install -r requirements.txt
     startCommand: uvicorn api:app --host 0.0.0.0 --port $PORT
-    
-    # Environment variables (you'll fill these in during deploy)
+    healthCheckPath: /health
     envVars:
-      - key: ANTHROPIC_API_KEY
-        scope: run
-        sync: false  # Sensitive - never sync to git
-      
-      - key: OPENAI_API_KEY
-        scope: run
+      - key: PYTHON_VERSION
+        value: "3.14.3"
+      - key: DATABASE_URL
         sync: false
-      
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
       - key: STATE_PROVIDER
         value: anthropic
-      
       - key: CLAUDE_MODEL
-        value: claude-haiku-4-5-20251001  # Low-latency interpreter; override to Sonnet if evaluation shows a quality regression
-      
+        value: claude-haiku-4-5-20251001
       - key: CLAUDE_MAX_TOKENS
-        value: 1200
-
-      - key: DATABASE_URL
-        scope: run
-        sync: false  # Neon Postgres connection string
-      
+        value: "1200"
+      - key: CLAUDE_TIMEOUT_SECONDS
+        value: "30"
       - key: CORS_ORIGINS
         value: http://localhost:3000,https://ai-learning-rouge.vercel.app

@@ -33,5 +33,3 @@ UPDATE proposed_state_changes
 
 -- Add foreign key constraint if not already present
 -- (SQLite allows ALTER but it's a no-op; real enforcement is in application layer)
-
-INSERT INTO schema_migrations(version) VALUES ('002_add_operation_and_effective_date') ON CONFLICT (version) DO NOTHING;

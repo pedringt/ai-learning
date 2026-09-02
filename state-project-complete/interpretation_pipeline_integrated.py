@@ -14,14 +14,16 @@ Key differences from Phase 2's inline schema:
 from __future__ import annotations
 
 import json
-import inspect
 import sqlite3
+import inspect
 import uuid
 import sys
 import traceback
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Mapping, Protocol
+
+from db import Connection
 
 # Import Phase 2's validation logic unchanged
 import sys
@@ -57,7 +59,7 @@ def new_id(prefix: str) -> str:
     return f"{prefix}_{uuid.uuid4().hex[:12]}"
 
 
-def capture_context(connection: sqlite3.Connection) -> InterpretationContextSnapshot:
+def capture_context(connection: Connection) -> InterpretationContextSnapshot:
     """Capture State and open Reviews from Phase 1 schema.
 
     This is the exact authority snapshot supplied to the provider. Semantic
@@ -77,7 +79,7 @@ def capture_context(connection: sqlite3.Connection) -> InterpretationContextSnap
     return InterpretationContextSnapshot(state_items=states, open_reviews=reviews)
 
 
-def application_snapshot(connection: sqlite3.Connection) -> ApplicationStateSnapshot:
+def application_snapshot(connection: Connection) -> ApplicationStateSnapshot:
     """Snapshot of all current application State and Reviews (for reference checks).
 
     Used during semantic validation to verify that proposed changes reference
@@ -98,7 +100,7 @@ def application_snapshot(connection: sqlite3.Connection) -> ApplicationStateSnap
 
 
 def _persist_success(
-    connection: sqlite3.Connection,
+    connection: Connection,
     *,
     evidence_id: str,
     provider: InterpretationProvider,
@@ -146,6 +148,25 @@ def _persist_success(
                 )
             else:  # update_existing
                 review_id = rec["existing_review_id"]
+                # Re-check under the persistence transaction so a Review that
+                # was resolved while the provider was running cannot receive
+                # new Evidence or Proposals after resolution.
+                review_sql = "SELECT review_type, status FROM review_issues WHERE id=?"
+                if getattr(connection, "is_postgres", False):
+                    review_sql += " FOR UPDATE"
+                persisted_review = connection.execute(review_sql, (review_id,)).fetchone()
+                if persisted_review is None:
+                    raise StructuredInterpretationSemanticError(
+                        "invalid_review_reference", f"Review {review_id!r} no longer exists"
+                    )
+                if persisted_review["status"] != "open":
+                    raise StructuredInterpretationSemanticError(
+                        "review_not_open", f"Review {review_id!r} was resolved while interpretation was in progress"
+                    )
+                if persisted_review["review_type"] != rec["review_type"]:
+                    raise StructuredInterpretationSemanticError(
+                        "review_type_mismatch", f"Review {review_id!r} changed type"
+                    )
 
             review_ids.append(review_id)
 
@@ -221,7 +242,7 @@ def _persist_success(
 
 
 def _persist_failure(
-    connection: sqlite3.Connection,
+    connection: Connection,
     *,
     evidence_id: str,
     provider: InterpretationProvider,
@@ -279,7 +300,7 @@ def _persist_failure(
 
 
 def process_evidence(
-    connection: sqlite3.Connection,
+    connection: Connection,
     *,
     evidence_id: str,
     provider: InterpretationProvider,
@@ -294,8 +315,6 @@ def process_evidence(
 
     All-or-nothing semantics: one invalid Review/Proposal rejects entire interpretation.
     """
-    connection.row_factory = sqlite3.Row
-
     evidence = connection.execute("SELECT id, content FROM evidence WHERE id=?", (evidence_id,)).fetchone()
     if evidence is None:
         raise KeyError(evidence_id)
@@ -358,4 +377,16 @@ def process_evidence(
             error_message=full_error,
         )
 
-    return _persist_success(connection, evidence_id=evidence_id, provider=provider, payload=payload)
+    try:
+        return _persist_success(connection, evidence_id=evidence_id, provider=provider, payload=payload)
+    except StructuredInterpretationSemanticError as exc:
+        # A lifecycle fact can change between validation and persistence. Treat
+        # that as a safe interpretation failure, not as a server crash.
+        return _persist_failure(
+            connection,
+            evidence_id=evidence_id,
+            provider=provider,
+            payload=payload,
+            error_code=exc.code,
+            error_message=str(exc),
+        )

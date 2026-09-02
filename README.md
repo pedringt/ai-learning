@@ -4,15 +4,20 @@ Current repository for the live portfolio site, State interactive prototype, and
 
 ## Deploy
 - Frontend: Vercel from repository root.
-- Backend: Render from `state-project-complete/` using `render.yaml` / `Procfile`.
-- Production provider defaults to Anthropic Claude Haiku and is configurable with `CLAUDE_MODEL`.
+- Backend: Render from `state-project-complete/`.
+- Render Blueprint configuration: repository-root `render.yaml`.
+- Python runtime is pinned in `.python-version` and `PYTHON_VERSION`.
+- Production database is provided with `DATABASE_URL` (Neon/Postgres).
+- Production provider defaults to Anthropic and is configurable with `STATE_PROVIDER` / `CLAUDE_MODEL`.
 
 ## Backend checks
-From `state-project-complete/`:
+From the repository root:
 
 ```bash
-pytest -q
-python note_matrix_harness.py
+DATABASE_URL='sqlite:///:memory:' pytest -q state-project-complete
+node implementation-context-prototype/state-ask-behavior-tests.js
 ```
 
-Provider observability logs include prompt-build time, provider round-trip time, token usage, stop reason, and configured timeout.
+A local SQLite smoke test can exercise FastAPI startup and `/health`; the first real Neon/Postgres startup must still be validated in an environment that can reach Neon.
+
+See `DEEP_REVIEW_REPORT.md` for the September 2, 2026 deployment audit and validation status.

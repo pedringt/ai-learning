@@ -5,6 +5,7 @@ from __future__ import annotations
 import sqlite3
 from typing import Literal
 
+from db import Connection
 from interpretation_pipeline_integrated import new_id
 
 
@@ -19,14 +20,15 @@ class ReviewConflictError(RuntimeError):
 Decision = Literal["accept", "keep", "reject"]
 
 
-def resolve_review(connection: sqlite3.Connection, review_id: str, decision: Decision, note: str | None = None) -> None:
+def resolve_review(connection: Connection, review_id: str, decision: Decision, note: str | None = None) -> None:
     """Resolve one review atomically; only ``accept`` may mutate Current State."""
     connection.row_factory = sqlite3.Row
     connection.execute("BEGIN IMMEDIATE")
     try:
-        review = connection.execute(
-            "SELECT id, status FROM review_issues WHERE id=?", (review_id,)
-        ).fetchone()
+        review_sql = "SELECT id, status FROM review_issues WHERE id=?"
+        if getattr(connection, "is_postgres", False):
+            review_sql += " FOR UPDATE"
+        review = connection.execute(review_sql, (review_id,)).fetchone()
         if review is None:
             raise ReviewNotFoundError(review_id)
         if review["status"] != "open":
@@ -62,7 +64,7 @@ def resolve_review(connection: sqlite3.Connection, review_id: str, decision: Dec
         raise
 
 
-def _apply_proposal(connection: sqlite3.Connection, proposal: sqlite3.Row) -> None:
+def _apply_proposal(connection: Connection, proposal: dict) -> None:
     operation = proposal["operation"] or "update"
     if operation == "create":
         state_id = new_id("state")
@@ -75,10 +77,12 @@ def _apply_proposal(connection: sqlite3.Connection, proposal: sqlite3.Row) -> No
         transition_type = "created"
     else:
         state_id = proposal["state_item_id"]
-        current = connection.execute(
-            "SELECT statement, version, effective_date, status FROM current_state_items WHERE id=?",
-            (state_id,),
-        ).fetchone()
+        current_sql = (
+            "SELECT statement, version, effective_date, status FROM current_state_items WHERE id=?"
+        )
+        if getattr(connection, "is_postgres", False):
+            current_sql += " FOR UPDATE"
+        current = connection.execute(current_sql, (state_id,)).fetchone()
         if current is None or current["status"] != "active":
             raise ReviewConflictError(f"State item {state_id} is not active")
         if current["version"] != proposal["expected_state_version"]:
@@ -115,7 +119,7 @@ def _apply_proposal(connection: sqlite3.Connection, proposal: sqlite3.Row) -> No
     )
 
 
-def list_state(connection: sqlite3.Connection) -> list[dict]:
+def list_state(connection: Connection) -> list[dict]:
     connection.row_factory = sqlite3.Row
     return [dict(row) for row in connection.execute(
         "SELECT id, topic, statement, status, version, effective_date, created_at, updated_at "
@@ -123,7 +127,7 @@ def list_state(connection: sqlite3.Connection) -> list[dict]:
     )]
 
 
-def list_reviews(connection: sqlite3.Connection, status: str = "open") -> list[dict]:
+def list_reviews(connection: Connection, status: str = "open") -> list[dict]:
     """Return each Review exactly once, even when multiple Evidence items are linked."""
     connection.row_factory = sqlite3.Row
     rows = connection.execute(
@@ -157,7 +161,7 @@ def list_reviews(connection: sqlite3.Connection, status: str = "open") -> list[d
     return result
 
 
-def list_history(connection: sqlite3.Connection) -> list[dict]:
+def list_history(connection: Connection) -> list[dict]:
     connection.row_factory = sqlite3.Row
     return [dict(row) for row in connection.execute(
         "SELECT * FROM history_transitions ORDER BY changed_at DESC, id DESC"

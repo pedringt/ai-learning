@@ -1,13 +1,11 @@
-"""Seed the prototype's reviewed Current State into an empty API database."""
+"""Seed the prototype's reviewed Current State into an empty database."""
 
 from __future__ import annotations
 
 import os
-import sqlite3
-from pathlib import Path
 
 from database_migration_backed import initialize_db
-
+from db import connect
 
 ITEMS = [
     ("k-pilot", "Pilot direction", "The first pilot is focused on Tier 1 troubleshooting assistance. AI drafts and assembles context; a support rep reviews before anything customer-facing is sent."),
@@ -28,17 +26,27 @@ ITEMS = [
 
 
 def main() -> None:
-    path = Path(os.getenv("DATABASE_PATH", "data/state.db")).expanduser().resolve()
-    path.parent.mkdir(parents=True, exist_ok=True)
-    with sqlite3.connect(path) as connection:
+    database_url = os.getenv("DATABASE_URL")
+    if not database_url:
+        database_path = os.getenv("DATABASE_PATH", "data/state.db")
+        database_url = f"sqlite://{database_path}"
+
+    with connect(database_url) as connection:
         initialize_db(connection)
-        if connection.execute("SELECT count(*) FROM current_state_items").fetchone()[0]:
+        if connection.execute("SELECT count(*) AS count FROM current_state_items").fetchone()["count"]:
             raise SystemExit("Refusing to seed: Current State is not empty.")
-        connection.executemany(
-            "INSERT INTO current_state_items(id, topic, statement, version) VALUES (?, ?, ?, 1)", ITEMS
-        )
-        connection.commit()
-    print(f"Seeded {len(ITEMS)} Current State items into {path}")
+        connection.execute("BEGIN IMMEDIATE")
+        try:
+            for item in ITEMS:
+                connection.execute(
+                    "INSERT INTO current_state_items(id, topic, statement, version) VALUES (?, ?, ?, 1)",
+                    item,
+                )
+            connection.execute("COMMIT")
+        except Exception:
+            connection.execute("ROLLBACK")
+            raise
+    print(f"Seeded {len(ITEMS)} Current State items.")
 
 
 if __name__ == "__main__":

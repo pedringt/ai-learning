@@ -16,7 +16,7 @@ from database_migration_backed import initialize_db
 from db import connect
 from interpretation_pipeline_integrated import InterpretationProvider, new_id, process_evidence
 from openai_provider import OpenAIProvider
-STATE_BUILD_REV = "neon-repair-2026-09-02-r2"
+STATE_BUILD_REV = "deep-review-2026-09-02-r3"
 
 from review_service import (
     ReviewConflictError,
@@ -34,7 +34,7 @@ class Settings(BaseModel):
     # Backward-compatible local/test path. Production should use DATABASE_URL.
     database_path: str | None = None
     provider: Literal["anthropic", "openai"] = "anthropic"
-    cors_origins: list[str] = []
+    cors_origins: list[str] = Field(default_factory=list)
 
     def connection_url(self) -> str:
         if self.database_url:
@@ -47,8 +47,6 @@ class Settings(BaseModel):
     def from_env(cls) -> "Settings":
         origins = [x.strip() for x in os.getenv("CORS_ORIGINS", "http://localhost:8000").split(",") if x.strip()]
         database_url = os.getenv("DATABASE_URL")
-        if not database_url:
-            raise RuntimeError("DATABASE_URL environment variable is required")
         return cls(
             database_url=database_url,
             provider=os.getenv("STATE_PROVIDER", "anthropic").lower(),
