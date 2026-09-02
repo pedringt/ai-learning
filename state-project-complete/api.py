@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import os
 import sqlite3
 from contextlib import asynccontextmanager, contextmanager
@@ -128,11 +129,19 @@ def create_app(settings: Settings | None = None, provider: InterpretationProvide
             created_reviews = [item for item in reviews if item["id"] in result.review_ids]
             if result.processing_status == "failed":
                 record = connection.execute(
-                    "SELECT error_code FROM interpretation_records WHERE id=?", (result.interpretation_record_id,)
+                    "SELECT error_code, structured_result FROM interpretation_records WHERE id=?", (result.interpretation_record_id,)
                 ).fetchone()
+                error_code = record["error_code"]
+                error_details = None
+                try:
+                    error_details = json.loads(record["structured_result"]) if record["structured_result"] else None
+                except (json.JSONDecodeError, TypeError):
+                    pass
                 raise HTTPException(status_code=422, detail={
-                    "code": record["error_code"], "evidence_id": evidence_id,
+                    "code": error_code, 
+                    "evidence_id": evidence_id,
                     "interpretation_record_id": result.interpretation_record_id,
+                    "error_details": error_details,
                 })
             return {
                 "evidence_id": evidence_id,

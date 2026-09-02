@@ -199,12 +199,22 @@ def _persist_failure(
     provider: InterpretationProvider,
     payload: Mapping[str, Any] | None,
     error_code: str,
+    error_message: str | None = None,
 ) -> ProcessResult:
     """Persist failed interpretation: no Reviews or Proposals created.
 
     Only the Interpretation Record and Evidence status are updated.
     """
     record_id = new_id("interpretation")
+    
+    # Store detailed error info in structured_result for debugging
+    error_details = None
+    if error_message:
+        error_details = json.dumps({
+            "error_code": error_code,
+            "error_message": error_message,
+            "payload_preview": str(payload)[:500] if payload else None,
+        }, sort_keys=True)
 
     connection.execute("BEGIN IMMEDIATE")
     try:
@@ -219,7 +229,7 @@ def _persist_failure(
                 provider.model_identifier,
                 "structured-interpretation-v1",
                 "failed",
-                json.dumps(payload, sort_keys=True) if payload is not None else None,
+                error_details or json.dumps(payload, sort_keys=True) if payload is not None else None,
                 error_code,
             ),
         )
@@ -278,6 +288,7 @@ def process_evidence(
             provider=provider,
             payload=payload,
             error_code="schema_violation",
+            error_message="Response structure did not match required schema",
         )
     except StructuredInterpretationSemanticError as exc:
         return _persist_failure(
@@ -286,18 +297,19 @@ def process_evidence(
             provider=provider,
             payload=payload,
             error_code=exc.code,
+            error_message=str(exc),
         )
     except Exception as exc:
-        # Log the actual error so we can debug
+        # Capture full error details
         error_msg = f"{type(exc).__name__}: {str(exc)}"
-        print(f"[ERROR] Provider error during evidence interpretation: {error_msg}", file=sys.stderr)
-        print(f"[TRACEBACK]\n{traceback.format_exc()}", file=sys.stderr)
+        tb = traceback.format_exc()
         return _persist_failure(
             connection,
             evidence_id=evidence_id,
             provider=provider,
             payload=payload,
             error_code="provider_error",
+            error_message=f"{error_msg}\n\n{tb}",
         )
 
     return _persist_success(connection, evidence_id=evidence_id, provider=provider, payload=payload)

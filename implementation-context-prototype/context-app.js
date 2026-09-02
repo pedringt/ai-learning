@@ -532,7 +532,12 @@
       
       if (!response.ok) throw new Error('API error: ' + response.status);
       const result = await response.json();
-      if (!result.evidence_id) throw new Error('No evidence created');
+      
+      if (!result.evidence_id) {
+        // Log detailed error to console for debugging
+        console.error('API Error Details:', result.detail || result);
+        throw new Error('API returned error: ' + (result.detail?.code || 'unknown'));
+      }
       
       const stamp = Date.now(), noteId = 'n-'+stamp, reviewId = 'r-'+stamp;
       state.data.notes.unshift({id:noteId,title:'Update',text,source:'Update',date:demoDate,dateISO:demoDateISO,topics:[],status:'pending',reviewId});
