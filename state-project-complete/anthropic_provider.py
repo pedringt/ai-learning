@@ -10,6 +10,8 @@ returns structured JSON. Application-owned validation enforces the contract.
 from __future__ import annotations
 
 import json
+import os
+import time
 from typing import Any, Mapping
 
 import sys
@@ -27,13 +29,13 @@ class AnthropicProvider:
         """Initialize provider.
 
         Args:
-            model_identifier: Claude model to use (e.g., 'claude-opus-4-6', 'claude-sonnet-4-6')
-                            If None, uses CLAUDE_MODEL env var or defaults to 'claude-sonnet-4-6'
+            model_identifier: Claude model to use. If None, uses CLAUDE_MODEL env var
+                            or defaults to 'claude-haiku-4-5-20251001' for low-latency interpretation
             api_key: Anthropic API key (if None, uses ANTHROPIC_API_KEY env var)
         """
-        import os
         self.name = "anthropic"
-        self.model_identifier = model_identifier or os.getenv("CLAUDE_MODEL", "claude-sonnet-4-6")
+        self.model_identifier = model_identifier or os.getenv("CLAUDE_MODEL", "claude-haiku-4-5-20251001")
+        self.max_tokens = int(os.getenv("CLAUDE_MAX_TOKENS", "1600"))
         self.api_key = api_key
         
         # Lazy import to avoid requiring anthropic library unless actually used
@@ -79,10 +81,16 @@ class AnthropicProvider:
         # Build complete prompt context from database
         prompt = self._build_prompt(context, evidence, connection)
 
-        # Call Claude API
+        # Call Claude API. Keep this adapter observable because provider latency
+        # dominates the end-to-end request in production.
+        started = time.perf_counter()
+        print(
+            f"[PROVIDER] anthropic start model={self.model_identifier} "
+            f"prompt_chars={len(prompt)} max_tokens={self.max_tokens}"
+        )
         message = self.client.messages.create(
             model=self.model_identifier,
-            max_tokens=2000,
+            max_tokens=self.max_tokens,
             messages=[
                 {
                     "role": "user",
@@ -90,6 +98,8 @@ class AnthropicProvider:
                 }
             ],
         )
+        elapsed_ms = (time.perf_counter() - started) * 1000
+        print(f"[PROVIDER] anthropic done model={self.model_identifier} elapsed_ms={elapsed_ms:.0f}")
 
         # Parse response
         response_text = message.content[0].text
@@ -217,7 +227,8 @@ Respond ONLY with JSON in this structure:
 Important:
 - Evidence alone does not change State (only humans can authorize)
 - You can recommend Reviews without proposals (state_at_risk)
-- Proposals must reference State items in affected_state_item_ids
+- For EVERY update or retire proposal, the proposal state_item_id MUST also appear in affected_state_item_ids on that SAME review recommendation. Copy the exact State ID; never target a State item that is absent from affected_state_item_ids.
+- Before responding, verify each update/retire proposal target is included in its recommendation's affected_state_item_ids.
 
 - effective_date is optional. Include it ONLY when the Evidence establishes a specific complete calendar date. It must be ISO YYYY-MM-DD. If timing is immediate, upon approval/decision, vague, relative, partial, or unknown, OMIT effective_date. Never emit sentinel or placeholder values such as "upon_decision", "immediately", "now", "TBD", or partial dates such as "2026-10".
 - Include grouping_reason only for recommendations that group 2+ affected State items or 2+ proposed changes; otherwise omit it

@@ -25,3 +25,25 @@ def test_anthropic_prompt_explains_effective_date_contract():
 
 def test_openai_prompt_explains_effective_date_contract():
     _assert_date_contract(_prompt(OpenAIProvider(api_key='test')))
+
+
+def _assert_target_affected_contract(prompt: str):
+    assert 'For EVERY update or retire proposal' in prompt
+    assert 'MUST also appear in affected_state_item_ids' in prompt
+    assert 'same review recommendation' in prompt.lower()
+
+
+def test_anthropic_prompt_requires_target_in_affected_state_items():
+    _assert_target_affected_contract(_prompt(AnthropicProvider(model_identifier='test', api_key='test')))
+
+
+def test_openai_prompt_requires_target_in_affected_state_items():
+    _assert_target_affected_contract(_prompt(OpenAIProvider(api_key='test')))
+
+
+def test_anthropic_low_latency_defaults(monkeypatch):
+    monkeypatch.delenv('CLAUDE_MODEL', raising=False)
+    monkeypatch.delenv('CLAUDE_MAX_TOKENS', raising=False)
+    provider = AnthropicProvider(api_key='test')
+    assert provider.model_identifier == 'claude-haiku-4-5-20251001'
+    assert provider.max_tokens == 1600

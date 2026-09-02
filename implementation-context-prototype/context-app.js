@@ -558,7 +558,7 @@
 
   function proposedText(proposals){
     if(!proposals?.length) return 'Review the evidence and decide whether Current State should change.';
-    return proposals.map(p=>p.operation==='retire' ? `Retire: ${p.proposed_statement}` : p.proposed_statement).join(' • ');
+    return proposals.map(p=>p.operation==='retire' ? `Retire current understanding${p.state_item_id?` (${p.state_item_id})`:''}` : p.proposed_statement).join(' • ');
   }
 
   function mapApiReview(r, fallbackEvidence='', extras={}){
@@ -613,11 +613,20 @@
   }
 
   function syncApiState(items){
-    for(const item of (items||[])){
+    const incoming=items||[];
+    const activeIds=new Set(incoming.map(item=>item.id));
+    // /api/state is authoritative for backend-managed Current State. If a
+    // previously hydrated item disappears, it was retired and should no
+    // longer remain visible as current Project knowledge.
+    for(const k of state.data.knowledge){
+      if(k.backendManaged && !activeIds.has(k.id)) k.state='retired';
+    }
+    for(const item of incoming){
       let k=state.data.knowledge.find(x=>x.id===item.id);
       if(k){
         k.statement=item.statement;
         k.state='current';
+        k.backendManaged=true;
         k.lastConfirmed=demoDate;
         k.lastConfirmedISO=demoDateISO;
       }else{

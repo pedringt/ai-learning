@@ -215,7 +215,8 @@ Respond ONLY with JSON in this structure:
 Remember:
 - Evidence alone does not change State (only humans can authorize)
 - You can recommend Reviews without proposals (state_at_risk)
-- Proposals must reference State items in affected_state_item_ids
+- For EVERY update or retire proposal, the proposal state_item_id MUST also appear in affected_state_item_ids on that SAME review recommendation. Copy the exact State ID; never target a State item that is absent from affected_state_item_ids.
+- Before responding, verify each update/retire proposal target is included in its recommendation's affected_state_item_ids.
 
 - effective_date is optional. Include it ONLY when the Evidence establishes a specific complete calendar date. It must be ISO YYYY-MM-DD. If timing is immediate, upon approval/decision, vague, relative, partial, or unknown, OMIT effective_date. Never emit sentinel or placeholder values such as "upon_decision", "immediately", "now", "TBD", or partial dates such as "2026-10".
 - Include grouping_reason only for recommendations that group 2+ affected State items or 2+ proposed changes; otherwise omit it

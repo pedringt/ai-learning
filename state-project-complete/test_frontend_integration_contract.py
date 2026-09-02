@@ -32,3 +32,14 @@ def test_backend_state_and_reviews_rehydrate_after_refresh():
     assert "function hydrateBackend" in JS
     assert "/api/reviews?status=open" in JS
     assert "/api/reviews?status=resolved" in JS
+
+
+def test_retire_review_does_not_render_undefined_statement():
+    assert "Retire: ${p.proposed_statement}" not in JS
+    assert 'Retire current understanding' in JS
+
+
+def test_backend_state_sync_reconciles_retired_items():
+    assert 'const activeIds=new Set' in JS
+    assert "k.backendManaged && !activeIds.has(k.id)" in JS
+    assert 'k.backendManaged=true' in JS

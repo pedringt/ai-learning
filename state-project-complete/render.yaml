@@ -23,8 +23,11 @@ services:
         value: anthropic
       
       - key: CLAUDE_MODEL
-        value: claude-sonnet-4-6  # Options: claude-opus-4-6, claude-sonnet-4-6, etc
+        value: claude-haiku-4-5-20251001  # Low-latency interpreter; override to Sonnet if evaluation shows a quality regression
       
+      - key: CLAUDE_MAX_TOKENS
+        value: 1600
+
       - key: DATABASE_PATH
         value: /tmp/state.db
       
