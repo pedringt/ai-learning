@@ -1,6 +1,7 @@
 (() => {
   const D = window.PROJECT_CONTEXT_DATA;
   const API = window.STATE_API;
+  const ASK = window.STATE_ASK;
   const clone = x => JSON.parse(JSON.stringify(x));
   const initial = clone(D);
   const state = {
@@ -156,7 +157,7 @@
     root.innerHTML=`<article class="page project-page project-document"><header class="project-document-head" id="project-top"><div class="project-head-row"><div><span class="eyebrow">Current project</span><h2>${esc(state.data.project.name)}</h2></div><button class="btn secondary project-settings-button" data-action="project-settings">Project settings</button></div><p>${esc(orientation.description)}</p><dl class="project-document-meta"><div><dt>Stage</dt><dd>${esc(orientation.stage)}</dd></div><div><dt>Outcome</dt><dd>${esc(orientation.outcome)}</dd></div><div><dt>Current State</dt><dd>${orientation.count} Current State items</dd></div></dl></header><div class="project-document-intro"><strong>Current direction</strong><p>${esc(orientation.direction)}</p></div><div class="project-outline">${visible.map(([id,a])=>projectOutlineSection(id,a)).join('')||'<div class="empty-state"><h3>No Current State yet.</h3><p>Reviewed project understanding will appear here as a clean outline.</p></div>'}</div></article>`;    requestAnimationFrame(()=>updateProjectSubnavActive());
   }
   function renderOverview(){
-    const resultBody = state.result ? (state.result.fallback ? fallbackResult() : state.result.intent ? intentAskHtml(state.result.intent) : state.result.structured ? structuredAskHtml(state.result.structured) : scenarioResult(state.result.scenario)) : '';
+    const resultBody = state.result ? (state.result.liveAsk ? ASK?.render(state.result.liveAsk) : state.result.liveAskLoading ? '<div class="ask-live-loading"><span class="status-dot"></span><strong>Building a grounded answer…</strong><p>State is selecting relevant project context and checking open uncertainty.</p></div>' : state.result.liveAskError ? `<div class="ask-live-error"><h2>Ask is temporarily unavailable.</h2><p>${esc(state.result.liveAskError)}</p></div>` : state.result.fallback ? fallbackResult() : state.result.intent ? intentAskHtml(state.result.intent) : state.result.structured ? structuredAskHtml(state.result.structured) : scenarioResult(state.result.scenario)) : '';
     const reviewBanner = uiPendingReviews().length && !state.reviewBannerDismissed ? `<aside class="review-banner"><div><strong>${uiPendingReviews().length} items need review</strong><span>New information may change the project’s current understanding.</span></div><div><button class="text-button" data-view="open-items">Open Items →</button><button class="banner-close" data-action="dismiss-review-banner" aria-label="Dismiss review reminder">×</button></div></aside>` : '';
     root.innerHTML = `<section class="overview pristine">
       <section class="overview-heading"><div class="overview-heading-row"><div><h2>Northstar</h2></div><button class="btn primary overview-add" data-action="add-info">+ Add project update</button></div></section>
@@ -164,7 +165,7 @@
       <section class="ask-panel compact-ask unboxed-ask"><div class="ask-title-row"><div><label for="askInput">Ask what State knows about the project</label><p>Search current understanding, open items, notes, and history.</p></div></div>
         <div class="ask-input-row"><input id="askInput" autocomplete="off" aria-label="Ask about the project or create an update" placeholder="${state.result?'Ask a follow-up or create something else…':'What do you want to know or make?'}"/><button class="btn primary" data-action="ask-submit">Ask</button></div>
         <div class="prompt-suggestions single-suggestion"><button class="examples-link" data-action="show-examples">See what you can ask →</button></div>
-        <div class="answer-stage ${state.result?'has-result':'is-empty'}" aria-live="polite">${state.result?`<div class="result-toolbar"><div class="result-query-line"><span class="meta-label">You asked</span><strong>${esc(state.resultQuery)}</strong></div><div class="result-utilities"><button class="text-button" data-action="copy-result">Copy</button></div></div><div class="answer-content">${resultBody}</div>`:`<div class="answer-empty"><span class="answer-empty-icon">⌕</span><strong>Work from what the project currently knows</strong><p>Find a project detail, understand what changed, prepare for a meeting, or create an update.</p><div class="empty-suggestions"><button data-prompt="What changed about feature access?">Understand a change</button><button data-prompt="What is still unresolved?">Find what is unresolved</button><button data-prompt="Prepare me for the security meeting">Prepare for a meeting</button></div></div>`}</div>
+        <div class="answer-stage ${state.result?'has-result':'is-empty'}" aria-live="polite">${state.result?`<div class="result-toolbar"><div class="result-query-line"><span class="meta-label">You asked</span><strong>${esc(state.resultQuery)}</strong></div><div class="result-utilities"><button class="text-button" data-action="new-ask">New ask</button><button class="text-button" data-action="copy-result">Copy</button></div></div><div class="answer-content">${resultBody}</div>`:`<div class="answer-empty"><span class="answer-empty-icon">⌕</span><strong>Work from what the project currently knows</strong><p>Find a project detail, understand what changed, prepare for a meeting, or create an update.</p><div class="empty-suggestions"><button data-prompt="What changed about feature access?">Understand a change</button><button data-prompt="What is still unresolved?">Find what is unresolved</button><button data-prompt="Prepare me for the security meeting">Prepare for a meeting</button></div></div>`}</div>
       </section></section>`;
   }
 
@@ -435,19 +436,34 @@
     return pendingReviews().filter(r => r.topics.some(t=>topics.includes(t)));
   }
 
-  function submitAsk(query){
+  async function submitAsk(query){
     const raw=(query ?? document.getElementById('askInput')?.value ?? '').trim(); if(!raw)return;
-    if(/\b(approved|confirmed|decided|agreed|learned|yesterday|today)\b/i.test(raw) && /\b(security|okta|support|customer|plan|feature|team)\b/i.test(raw)){
+    if(/(approved|confirmed|decided|agreed|learned|yesterday|today)/i.test(raw) && /(security|okta|support|customer|plan|feature|team)/i.test(raw)){
       showAddDialog(raw); return;
+    }
+    const previousLive=state.result?.liveAsk||null;
+    if(ASK?.canHandle(raw,previousLive)){
+      state.resultQuery=raw;
+      state.result={liveAskLoading:true};
+      renderOverview();
+      try{
+        const payload=await ASK.submit(raw,previousLive);
+        state.result={liveAsk:payload};
+        state.refinements=[];
+      }catch(err){
+        state.result={liveAskError:err?.message||'State could not produce a grounded answer. Please try again.'};
+      }
+      renderOverview();
+      return;
     }
     state.resultQuery=raw; state.refinements=[];
     const q=norm(raw);
     const intent=detectAskIntent(raw);
-    const explicitStructured=/\b(changed|change|history|historical|originally|original|previously|before|used to|superseded|earlier|note|notes|evidence|source|sources|find|show me|material|open|unresolved|unknown|pending|waiting|still need|not know)\b/.test(q);
+    const explicitStructured=/(changed|change|history|historical|originally|original|previously|before|used to|superseded|earlier|note|notes|evidence|source|sources|find|show me|material|open|unresolved|unknown|pending|waiting|still need|not know)/.test(q);
     let structured=intent?null:(explicitStructured?structuredAskResult(raw):null);
     let scenario=(intent||structured)?null:findScenario(raw);
     if(!intent && !scenario && !structured) structured=structuredAskResult(raw);
-    if(!scenario && !structured && state.lastScenario && /\b(shorter|shorten|brief|focus|evidence|sources|slack|email|executive)\b/.test(q)){
+    if(!scenario && !structured && state.lastScenario && /(shorter|shorten|brief|focus|evidence|sources|slack|email|executive)/.test(q)){
       let kind=q.includes('short')||q.includes('brief')?'shorter':q.includes('evidence')||q.includes('source')?'evidence':'exec';
       state.refinements=[kind]; scenario=state.lastScenario;
     }
@@ -1252,8 +1268,9 @@
         }catch(e){ await showAnalysisFailure(e,{draftMessage:'The question stays open.',safeContext:'Your question response'}); }
       }
     }
-    else if(act==='close-result'){state.result=null;state.resultQuery='';renderOverview();}
+    else if(act==='close-result'||act==='new-ask'){state.result=null;state.resultQuery='';state.refinements=[];renderOverview();requestAnimationFrame(()=>document.getElementById('askInput')?.focus());}
     else if(act==='refine-submit')refine();
+    else if(act==='go-open-question'){const q=state.data.questions.find(x=>x.id===a.dataset.questionId);if(q){state.openItemSections[q.blocking?'blockers':'questions']=false;state.openQuestionsExpanded=true;closeDialog();navigateTo('open-items');requestAnimationFrame(()=>{const row=[...document.querySelectorAll('[data-action="open-question"]')].find(x=>x.dataset.questionId===q.id);row?.click();});}}
     else if(act==='add-info'||act==='suggest-update')showAddDialog();
     else if(act==='close-dialog'){if(!state.isAnalyzing)closeDialog();}
     else if(act==='retry-analysis'){ const evidenceId=a.dataset.evidenceId; state.isAnalyzing=true; showDialog(analyzingDialog()); startAnalysisClock(); try{await retryEvidenceAnalysis(evidenceId); state.isAnalyzing=false; stopAnalysisClock(); await hydrateBackend(); showDialog(`<span class="eyebrow">Done</span><h2 id="dialogTitle">Analysis complete.</h2><p>Open Items now reflects anything that needs your decision.</p><div class="dialog-actions"><button class="btn primary" data-action="go-review">View Open Items</button></div>`);}catch(err){state.isAnalyzing=false;stopAnalysisClock();showDialog(`<span class="eyebrow">Still unavailable</span><h2 id="dialogTitle">Your note is still safe.</h2><p>${esc(err.message)}</p><div class="dialog-actions"><button class="btn primary" data-action="close-dialog">Close</button></div>`);} }

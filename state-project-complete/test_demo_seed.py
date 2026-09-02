@@ -9,10 +9,10 @@ def test_demo_seed_is_idempotent_and_stress_sized(tmp_path):
         initialize_db(connection)
         first = bootstrap_demo_data(connection)
         second = bootstrap_demo_data(connection)
-        assert first == {"state": 25, "questions": 18, "reviews": 4, "history": 10}
-        assert second == {"state": 0, "questions": 0, "reviews": 0, "history": 0}
+        assert first == {"state": 25, "questions": 20, "reviews": 4, "history": 10, "evidence": 5, "rules": 1}
+        assert second == {"state": 0, "questions": 0, "reviews": 0, "history": 0, "evidence": 0, "rules": 0}
         assert connection.execute("SELECT count(*) AS n FROM current_state_items").fetchone()["n"] == 25
-        assert connection.execute("SELECT count(*) AS n FROM questions WHERE status='open'").fetchone()["n"] == 18
+        assert connection.execute("SELECT count(*) AS n FROM questions WHERE status='open'").fetchone()["n"] == 20
         assert connection.execute("SELECT count(*) AS n FROM questions WHERE blocking=1").fetchone()["n"] == 3
         assert connection.execute("SELECT count(*) AS n FROM review_issues WHERE status='open'").fetchone()["n"] == 4
         assert connection.execute("SELECT count(*) AS n FROM history_transitions").fetchone()["n"] == 10
@@ -57,7 +57,7 @@ def test_environment_loaded_app_bootstraps_real_demo_dataset(tmp_path, monkeypat
         history = client.get("/api/history").json()["items"]
     assert health["demo_bootstrap"] is True
     assert len(state) == 25
-    assert len([q for q in questions if q["status"] == "open"]) == 18
+    assert len([q for q in questions if q["status"] == "open"]) == 20
     assert len(reviews) == 4
     assert len(history) == 10
 

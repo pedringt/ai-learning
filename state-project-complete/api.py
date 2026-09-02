@@ -20,7 +20,10 @@ from db import connect
 from interpretation_pipeline_integrated import InterpretationProvider, new_id, process_evidence
 from openai_provider import OpenAIProvider
 from seed_demo import bootstrap_demo_data
-STATE_BUILD_REV = "r8.6.1-pre-ask-housekeeping-2026-09-02"
+from ask_contract import AskRequest
+from ask_provider import LiveAskProvider
+from ask_service import run_ask
+STATE_BUILD_REV = "r9.0-ask-meeting-prep-slice-2026-09-02"
 logger = logging.getLogger("state.api")
 
 from review_service import (
@@ -191,7 +194,7 @@ def _provider_from_env(settings: Settings) -> InterpretationProvider:
     return OpenAIProvider(api_key=os.environ["OPENAI_API_KEY"])
 
 
-def create_app(settings: Settings | None = None, provider: InterpretationProvider | None = None) -> FastAPI:
+def create_app(settings: Settings | None = None, provider: InterpretationProvider | None = None, ask_provider=None) -> FastAPI:
     settings = settings or Settings.from_env()
 
     @contextmanager
@@ -218,10 +221,13 @@ def create_app(settings: Settings | None = None, provider: InterpretationProvide
                 app.state.provider = _provider_from_env(settings)
             except RuntimeError as exc:
                 logger.warning("Provider not initialized at startup: %s", exc)
+        if app.state.ask_provider is None and app.state.provider is not None:
+            app.state.ask_provider = LiveAskProvider(app.state.provider)
         yield
 
     app = FastAPI(title="State API", version="0.1.0", lifespan=lifespan)
     app.state.provider = provider
+    app.state.ask_provider = ask_provider
     app.state.settings = settings
     app.add_middleware(
         CORSMiddleware,
@@ -448,6 +454,29 @@ def create_app(settings: Settings | None = None, provider: InterpretationProvide
     def get_history() -> dict:
         with get_connection() as connection:
             return {"items": list_history(connection)}
+
+    @app.post("/api/ask")
+    def post_ask(payload: AskRequest, request: Request) -> dict:
+        selected_ask_provider = request.app.state.ask_provider
+        if selected_ask_provider is None:
+            selected_provider = request.app.state.provider
+            if selected_provider is None:
+                try:
+                    selected_provider = _provider_from_env(settings)
+                    request.app.state.provider = selected_provider
+                except RuntimeError as exc:
+                    raise HTTPException(status_code=503, detail=str(exc)) from exc
+            selected_ask_provider = LiveAskProvider(selected_provider)
+            request.app.state.ask_provider = selected_ask_provider
+        try:
+            with get_connection() as connection:
+                return run_ask(connection, selected_ask_provider, payload.query.strip(), payload.previous_answer)
+        except (ValueError, TypeError) as exc:
+            logger.warning("Ask contract failure: %s", exc)
+            raise HTTPException(status_code=422, detail="Ask could not produce a valid grounded answer") from exc
+        except Exception as exc:
+            logger.exception("Ask provider failure")
+            raise HTTPException(status_code=503, detail="Ask is temporarily unavailable. Please try again.") from exc
 
     return app
 

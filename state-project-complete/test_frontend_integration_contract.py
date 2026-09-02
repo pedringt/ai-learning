@@ -234,3 +234,22 @@ def test_r861_repository_has_one_obvious_deploy_backend():
     assert "rootDir: state-project-complete" in render
     assert not (repo / "api.py").exists()
     assert (repo / "state-project-complete" / "api.py").exists()
+
+
+def test_r9_ask_vertical_slice_has_dedicated_module_and_backend_endpoint():
+    frontend = Path(__file__).parent.parent / "implementation-context-prototype"
+    app = (frontend / "context-app.js").read_text(encoding="utf-8")
+    api_js = (frontend / "context-api.js").read_text(encoding="utf-8")
+    ask_js = (frontend / "context-ask.js").read_text(encoding="utf-8")
+    html = (frontend / "index.html").read_text(encoding="utf-8")
+    backend = (Path(__file__).parent / "api.py").read_text(encoding="utf-8")
+    assert "context-ask.js" in html
+    assert "ask: (query, previousAnswer = null)" in api_js
+    assert "@app.post(\"/api/ask\")" in backend
+    assert "ASK?.canHandle(raw,previousLive)" in app
+    assert "Meeting prep" in ask_js
+    assert "Before you move on" in ask_js
+    assert "Review open items" in ask_js
+    assert "Review now" in ask_js
+    assert "Blocks: " in ask_js
+    assert "data-action=\"new-ask\"" in app

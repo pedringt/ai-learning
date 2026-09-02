@@ -59,6 +59,8 @@ QUESTIONS = [
     ("q-outage", "What source should govern when an outage changes otherwise stable troubleshooting guidance?", 0, None, "Knowledge-source review"),
     ("q-feedback-loop", "How quickly should severe pilot failures feed back into guidance or scope?", 0, None, "Pilot operations"),
     ("q-success-window", "How long should the internal pilot run before the team evaluates broader rollout?", 0, None, "Rollout planning"),
+    ("q-ask-named-access", "Does security require named-agent access for the full pilot?", 0, None, "Security meeting prep"),
+    ("q-ask-expansion-owner", "Who has final authority to approve expanding the pilot beyond Tier 1?", 0, None, "Scope governance"),
 ]
 
 REVIEWS = [
@@ -84,6 +86,18 @@ HISTORY_SCENARIOS = [
     ("evaluation-shape", "k-eval", "Pilot success will primarily be measured by automation rate and response-time improvement.", "The pilot is evaluated with response-time improvement, reviewer edits, escalation behavior, unsupported-claim checks, and failure severity rather than a single automation metric.", "Evaluation expanded from a single efficiency metric to a set that can expose unsafe or low-quality behavior.", "Evaluation planning added reviewer edits, escalation quality, unsupported-claim checks, and failure severity alongside response time.", "2026-08-26 10:25:00"),
     ("training-boundary", "k-training", "Rep enablement will focus on how to access and use the assistant.", "Rep training covers when to use the assistant, what still requires manual verification, how to inspect support for an answer, and how to flag a bad suggestion.", "Training was expanded to teach the human-control boundary, not just feature operation.", "Rollout planning added verification, source inspection, and bad-suggestion reporting to rep training.", "2026-08-27 11:50:00"),
     ("rollout-sequence", "k-rollout", "The assistant may be made available to the broader support team after implementation is ready.", "Rollout begins with a bounded internal pilot before any broader support-team availability is considered.", "The rollout sequence was constrained so evidence from a bounded pilot must precede broader availability.", "Leadership and Support agreed to a bounded internal pilot before considering wider support-team rollout.", "2026-08-28 15:10:00"),
+]
+
+ASK_EVIDENCE = [
+    ("ask-evidence-security-meeting", "Security review is scheduled for September 3. Agenda: vendor retention terms, pilot access boundaries, and what remains before security approval.", "project_note", "2026-09-02 09:00:00"),
+    ("ask-evidence-vendor-retention", "For the pilot environment, retained conversation data is deleted after 30 days.", "vendor_email", "2026-09-01 14:00:00"),
+    ("ask-evidence-retrieval-test", "The retrieval prototype completed another internal test with no new safety findings. No pilot-scope decision was made.", "engineering_note", "2026-09-01 16:30:00"),
+    ("ask-evidence-demo-noise", "Updated demo copy and spacing on the internal prototype before the portfolio walkthrough.", "project_note", "2026-09-02 08:30:00"),
+    ("ask-evidence-tier2-slack", "Tier 2 should be fine to include too - I do not see a problem.", "slack", "2026-09-02 10:15:00"),
+]
+
+ASK_RULES = [
+    ("rule-ask-slack-authority", "Slack is supporting evidence, not authoritative approval.", "Sources"),
 ]
 
 DEMO_EVIDENCE_DATES = {
@@ -144,7 +158,7 @@ def _seed_accepted_history(connection) -> int:
 
 def bootstrap_demo_data(connection) -> dict[str, int]:
     """Insert missing demo records without overwriting anything already present."""
-    counts = {"state": 0, "questions": 0, "reviews": 0, "history": 0}
+    counts = {"state": 0, "questions": 0, "reviews": 0, "history": 0, "evidence": 0, "rules": 0}
     connection.execute("BEGIN IMMEDIATE")
     try:
         for item in ITEMS:
@@ -153,6 +167,20 @@ def bootstrap_demo_data(connection) -> dict[str, int]:
                 connection.execute("INSERT INTO current_state_items(id, topic, statement, version) VALUES (?, ?, ?, 1)", item)
                 counts["state"] += 1
         counts["history"] += _seed_accepted_history(connection)
+        for eid, content, source_type, submitted_at in ASK_EVIDENCE:
+            if not connection.execute("SELECT id FROM evidence WHERE id=?", (eid,)).fetchone():
+                connection.execute(
+                    "INSERT INTO evidence(id,content,source_type,processing_status,submitted_at) VALUES (?,?,?,'processed',?)",
+                    (eid, content, source_type, submitted_at),
+                )
+                counts["evidence"] += 1
+        for rule_id, statement, category in ASK_RULES:
+            if not connection.execute("SELECT id FROM project_rules WHERE id=?", (rule_id,)).fetchone():
+                connection.execute(
+                    "INSERT INTO project_rules(id,statement,rationale,status) VALUES (?,?,?,'active')",
+                    (rule_id, statement, category),
+                )
+                counts["rules"] += 1
         for qid, text, blocking, blocks, origin in QUESTIONS:
             before = connection.execute("SELECT id FROM questions WHERE id=?", (qid,)).fetchone()
             if not before:
@@ -171,6 +199,14 @@ def bootstrap_demo_data(connection) -> dict[str, int]:
                     connection.execute("INSERT OR IGNORE INTO review_state_items(review_id,state_item_id) VALUES (?,?)",(rid,state_id))
                     connection.execute("INSERT INTO proposed_state_changes(id,review_id,state_item_id,proposed_statement,rationale,expected_state_version,status,operation) VALUES (?,?,?,?,?,?,'pending','update')", (f"{rid}-proposal",rid,state_id,proposed,why,row["version"]))
             counts["reviews"] += 1
+
+        # Ask adversarial relationships: the vendor claim is relevant to the open
+        # retention Review, which also affects the current data boundary. Linking
+        # the blocker makes provenance/action navigation deterministic.
+        if connection.execute("SELECT id FROM review_issues WHERE id='demo-review-retention'").fetchone():
+            connection.execute("INSERT OR IGNORE INTO review_evidence(review_id,evidence_id) VALUES ('demo-review-retention','ask-evidence-vendor-retention')")
+            connection.execute("INSERT OR IGNORE INTO review_state_items(review_id,state_item_id) VALUES ('demo-review-retention','k-data')")
+            connection.execute("INSERT OR IGNORE INTO review_questions(review_id,question_id) VALUES ('demo-review-retention','q-retention')")
         connection.execute("COMMIT")
     except Exception:
         connection.execute("ROLLBACK")
