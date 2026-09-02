@@ -526,7 +526,8 @@ body.v88-dark .unboxed-ask:has(.ask-session-row) .answer-stage,body.v88-dark .co
 /* R9.3.1: hierarchy, portable Ask artifacts, and viewport-safe dialogs */
 /* Shared modal system: tall dialogs anchor safely inside a scrollable viewport. */
 .overlay{display:flex!important;align-items:flex-start!important;justify-content:center!important;overflow-y:auto!important;padding:24px!important}
-.dialog{margin:auto 0!important;max-height:calc(100dvh - 48px)!important;overflow:auto!important;overscroll-behavior:contain}
+.overlay[hidden]{display:none!important}
+.dialog{margin:0!important;max-height:calc(100dvh - 48px)!important;overflow:auto!important;overscroll-behavior:contain}
 .dialog-close{position:sticky!important;float:right;right:0!important;top:0!important;z-index:2;background:color-mix(in srgb,var(--surface) 94%,transparent)!important;border-radius:999px;width:32px;height:32px;display:grid;place-items:center;backdrop-filter:blur(8px)}
 
 /* Ask session utilities: discoverable without becoming a toolbar. */
@@ -588,3 +589,12 @@ body.v88-dark .unboxed-ask:has(.ask-session-row) .answer-stage,body.v88-dark .co
   .notes-page .simple-note{grid-template-columns:minmax(0,1fr) auto!important}.note-index-status{max-width:118px}
 }
 body.v88-dark .open-items-reviews .open-items-section-head,body.v88-dark .open-items-blockers .open-items-section-head,body.v88-dark .open-items-questions .open-items-section-head{background:#211e29!important}body.v88-dark .project-document-intro{background:#211e29!important}body.v88-dark .project-outline-group{background:#17151d!important}
+
+
+/* R9.3.1b: explicit modal state. Closed is the default; JS opts into .is-open. */
+.overlay{display:none!important}
+.overlay.is-open{display:flex!important;align-items:flex-start!important;justify-content:center!important;overflow-y:auto!important;padding:24px!important}
+.overlay[hidden]{display:none!important}
+.overlay.is-open .dialog{margin:0!important;max-height:calc(100dvh - 48px)!important;overflow:auto!important;overscroll-behavior:contain}
+@media(max-width:760px){.overlay.is-open{padding:14px!important}.overlay.is-open .dialog{max-height:calc(100dvh - 28px)!important}}
+@media(max-width:430px){.overlay.is-open{padding:12px!important}.overlay.is-open .dialog{max-height:calc(100dvh - 24px)!important}}

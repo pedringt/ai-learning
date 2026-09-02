@@ -12,6 +12,11 @@
   const root = document.getElementById('viewRoot');
   const overlay = document.getElementById('overlay');
   const dialogBody = document.getElementById('dialogBody');
+  // Modal must always start closed, independent of stale DOM/CSS state.
+  overlay.classList.remove('is-open');
+  overlay.hidden = true;
+  dialogBody.innerHTML = '';
+  document.body.classList.remove('modal-open');
   const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const norm = s => String(s).toLowerCase().replace(/[’']/g,'').replace(/[^a-z0-9\s]/g,' ').replace(/\s+/g,' ').trim();
   const openQuestions = () => API
@@ -792,7 +797,7 @@
 
   function showDialog(html){
     if(overlay.hidden) state.dialogReturnFocus=document.activeElement instanceof HTMLElement ? document.activeElement : null;
-    dialogBody.innerHTML=html; overlay.hidden=false; document.body.classList.add('modal-open');
+    dialogBody.innerHTML=html; overlay.hidden=false; overlay.classList.add('is-open'); document.body.classList.add('modal-open');
     const dialog=document.querySelector('.dialog');
     const closeButton=dialog?.querySelector('.dialog-close');
     if(closeButton){ closeButton.disabled=!!state.isAnalyzing; closeButton.hidden=!!state.isAnalyzing; }
@@ -802,7 +807,7 @@
     });
   }
   function closeDialog(){
-    overlay.hidden=true; dialogBody.innerHTML=''; document.body.classList.remove('modal-open');
+    overlay.classList.remove('is-open'); overlay.hidden=true; dialogBody.innerHTML=''; document.body.classList.remove('modal-open');
     const target=state.dialogReturnFocus; state.dialogReturnFocus=null;
     if(target && document.contains(target)) requestAnimationFrame(()=>target.focus());
   }
