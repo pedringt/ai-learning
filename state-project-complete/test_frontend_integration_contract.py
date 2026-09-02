@@ -53,8 +53,27 @@ def test_backend_review_results_are_upserted_not_blindly_appended():
 
 def test_hydration_reconciles_stale_backend_reviews():
     assert "function replaceBackendOpenReviews" in JS
-    assert "replaceBackendOpenReviews(payload.items||[])" in JS
+    assert "replaceBackendOpenReviews(openPayload.items||[])" in JS
 
 
 def test_frontend_hides_superseded_proposals_from_open_review_card():
     assert "const proposals=(r.proposals||[]).filter(p=>!p.status || p.status==='pending');" in JS
+
+
+def test_notes_rehydrate_complete_evidence_archive_with_date_filters():
+    assert "/api/evidence" in JS
+    assert "function syncApiEvidence" in JS
+    assert "notesDateFilter" in JS
+    assert "data-date-filter" in JS
+
+
+def test_history_rehydrates_backend_transitions_with_source_notes():
+    assert "/api/history" in JS
+    assert "function syncApiHistory" in JS
+    assert "Source notes ·" in JS
+
+
+def test_project_is_rendered_as_document_outline_not_area_card_dashboard():
+    assert "project-document" in JS
+    assert "project-outline-section" in JS
+    assert "project-area-cards" not in JS

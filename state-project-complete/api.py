@@ -16,11 +16,12 @@ from database_migration_backed import initialize_db
 from db import connect
 from interpretation_pipeline_integrated import InterpretationProvider, new_id, process_evidence
 from openai_provider import OpenAIProvider
-STATE_BUILD_REV = "deep-review-2026-09-02-r4"
+STATE_BUILD_REV = "notes-history-project-2026-09-02-r5"
 
 from review_service import (
     ReviewConflictError,
     ReviewNotFoundError,
+    list_evidence,
     list_history,
     list_reviews,
     list_state,
@@ -172,6 +173,11 @@ def create_app(settings: Settings | None = None, provider: InterpretationProvide
                 "processing_status": result.processing_status,
                 "reviews": created_reviews,
             }
+
+    @app.get("/api/evidence")
+    def get_evidence() -> dict:
+        with get_connection() as connection:
+            return {"items": list_evidence(connection)}
 
     @app.get("/api/state")
     def get_state() -> dict:

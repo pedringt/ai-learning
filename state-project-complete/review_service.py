@@ -127,6 +127,16 @@ def list_state(connection: Connection) -> list[dict]:
     )]
 
 
+
+def list_evidence(connection: Connection) -> list[dict]:
+    """Return the complete Evidence archive newest-first."""
+    connection.row_factory = sqlite3.Row
+    return [dict(row) for row in connection.execute(
+        "SELECT id, content, source_type, processing_status, supersedes_evidence_id, submitted_at "
+        "FROM evidence ORDER BY submitted_at DESC, id DESC"
+    )]
+
+
 def list_reviews(connection: Connection, status: str = "open") -> list[dict]:
     """Return each Review exactly once, even when multiple Evidence items are linked."""
     connection.row_factory = sqlite3.Row
@@ -162,7 +172,25 @@ def list_reviews(connection: Connection, status: str = "open") -> list[dict]:
 
 
 def list_history(connection: Connection) -> list[dict]:
+    """Return accepted State transitions with the Review/Evidence provenance needed by History UI."""
     connection.row_factory = sqlite3.Row
-    return [dict(row) for row in connection.execute(
-        "SELECT * FROM history_transitions ORDER BY changed_at DESC, id DESC"
-    )]
+    rows = connection.execute(
+        "SELECT h.*, p.review_id, p.rationale AS proposal_rationale, "
+        "r.decision_question, r.why_consequential, r.resolution, r.resolution_note "
+        "FROM history_transitions h "
+        "JOIN proposed_state_changes p ON p.id=h.proposed_change_id "
+        "JOIN review_issues r ON r.id=p.review_id "
+        "ORDER BY h.changed_at DESC, h.id DESC"
+    ).fetchall()
+    result = []
+    for row in rows:
+        item = dict(row)
+        evidence_rows = connection.execute(
+            "SELECT e.id, e.content, e.source_type, e.submitted_at "
+            "FROM evidence e JOIN review_evidence re ON re.evidence_id=e.id "
+            "WHERE re.review_id=? ORDER BY e.submitted_at, e.id",
+            (row["review_id"],),
+        ).fetchall()
+        item["evidence_items"] = [dict(e) for e in evidence_rows]
+        result.append(item)
+    return result

@@ -5,7 +5,7 @@
   const initial = clone(D);
   const state = {
     data: clone(D), view:'overview', result:null, resultQuery:'', projectMenuOpen:false, refinements:[], lastScenario:null,
-    addedSample:false, pendingCreated:false, reviewBannerDismissed:false, dialogReturnFocus:null, expandedNotes:new Set(), noteComposerOpen:false, editingNoteId:null, dismissedNudges:new Set(), openItemsNavOpen:false, projectNavOpen:false, hiddenProjectAreas:new Set(), historyTopic:null, notesFilter:'all', notesSearch:'', isAnalyzing:false
+    addedSample:false, pendingCreated:false, reviewBannerDismissed:false, dialogReturnFocus:null, expandedNotes:new Set(), noteComposerOpen:false, editingNoteId:null, dismissedNudges:new Set(), openItemsNavOpen:false, projectNavOpen:false, hiddenProjectAreas:new Set(), historyTopic:null, notesFilter:'all', notesDateFilter:'all', notesSearch:'', isAnalyzing:false
   };
 
   const root = document.getElementById('viewRoot');
@@ -47,21 +47,21 @@
   function currentKnowledge(area){ return state.data.knowledge.filter(k=>k.state==='current' && (!area || k.projectArea===area)); }
   function projectFact(k){
     const pending=pendingFor(k.topics||[]);
-    const historyLink=['k-access','k-pilot'].includes(k.id)?`<button class="text-button project-history-link" data-action="view-topic-history" data-knowledge-id="${k.id}">View history →</button>`:'';
-    return `<article class="project-fact"><div class="project-fact-head"><h3>${esc(k.title)}</h3></div><p>${esc(k.statement)}</p><div class="project-fact-actions">${pending.length?`<button class="project-pending" data-action="open-related-review" data-review-id="${pending[0].id}"><span class="status-dot"></span>Pending review may affect this</button>`:''}${historyLink}</div></article>`;
+    const hasHistory=state.data.history.some(h=>h.knowledgeId===k.id || h.state_item_id===k.id);
+    return `<li class="project-outline-item"><div class="project-outline-copy"><strong>${esc(k.title)}</strong><span>${esc(k.statement)}</span></div><div class="project-outline-actions">${pending.length?`<button class="project-pending" data-action="open-related-review" data-review-id="${pending[0].id}"><span class="status-dot"></span>Pending review</button>`:''}${hasHistory?`<button class="text-button project-history-link" data-action="view-topic-history" data-knowledge-id="${k.id}">History →</button>`:''}</div></li>`;
+  }
+  function projectOutlineSection(id,a){
+    const items=currentKnowledge(id);
+    if(!items.length)return '';
+    return `<section class="project-outline-section" id="project-${id}"><h3>${esc(a.name)}</h3><p class="project-outline-description">${esc(a.description)}</p><ul class="project-outline-list">${items.map(projectFact).join('')}</ul></section>`;
   }
   function renderProjectOverview(){
     const visible=Object.entries(projectAreas).filter(([id])=>!state.hiddenProjectAreas.has(id));
-    root.innerHTML=`<section class="page project-page"><div class="page-head project-page-head"><div><span class="eyebrow">Current project</span><h2>${esc(state.data.project.name)}</h2><p>${esc(state.data.project.description)}</p></div></div>
-      <div class="project-orientation"><div><span>Current direction</span><strong>Tier 1 troubleshooting assistance with human review</strong></div><div><span>Project stage</span><strong>${esc(state.data.project.stage)}</strong></div><div><span>Outcome</span><strong>${esc(state.data.project.outcome)}</strong></div></div>
-      <div class="project-section-heading"><div><h3>Browse current understanding</h3><p>Only reviewed Current State appears here. Notes, evidence, and history stay out of the way until you need them.</p></div></div>
-      <div class="project-area-cards">${visible.map(([id,a])=>`<button class="project-area-card" data-view="project-${id}"><span>${esc(a.name)}</span><strong>${currentKnowledge(id).length} current items</strong><p>${esc(a.description)}</p></button>`).join('')}</div>
-      ${state.hiddenProjectAreas.size?`<button class="text-button project-hidden-link" data-action="show-hidden-areas">Show hidden categories (${state.hiddenProjectAreas.size})</button>`:''}
-    </section>`;
+    root.innerHTML=`<article class="page project-page project-document"><header class="project-document-head"><span class="eyebrow">Current project</span><h2>${esc(state.data.project.name)}</h2><p>${esc(state.data.project.description)}</p><dl class="project-document-meta"><div><dt>Stage</dt><dd>${esc(state.data.project.stage)}</dd></div><div><dt>Outcome</dt><dd>${esc(state.data.project.outcome)}</dd></div></dl></header><div class="project-document-intro"><strong>Current direction</strong><p>Tier 1 troubleshooting assistance with human review.</p></div><div class="project-outline">${visible.map(([id,a])=>projectOutlineSection(id,a)).join('')||'<div class="empty-state"><h3>No Current State yet.</h3><p>Reviewed project understanding will appear here as a clean outline.</p></div>'}</div></article>`;
   }
   function renderProjectArea(area){
     const a=projectAreas[area]; if(!a)return renderProjectOverview(); const items=currentKnowledge(area);
-    root.innerHTML=`<section class="page project-page"><div class="project-area-top"><button class="text-button" data-view="project-overview">← Project overview</button><button class="text-button muted" data-action="hide-project-area" data-area="${area}">Hide category</button></div><div class="page-head project-page-head"><div><span class="eyebrow">Project · Current State</span><h2>${esc(a.name)}</h2><p>${esc(a.description)}</p></div></div><div class="project-facts">${items.map(projectFact).join('')||'<div class="empty-state"><h3>No Current State here yet.</h3><p>This category will fill in as reviewed project understanding develops.</p></div>'}</div></section>`;
+    root.innerHTML=`<article class="page project-page project-document"><div class="project-area-top"><button class="text-button" data-view="project-overview">← Full project</button></div><header class="project-document-head"><span class="eyebrow">Project · Current State</span><h2>${esc(a.name)}</h2><p>${esc(a.description)}</p></header><ul class="project-outline-list project-outline-list--standalone">${items.map(projectFact).join('')||'<li class="empty-state"><h3>No Current State here yet.</h3><p>This part of the outline will fill in as reviewed understanding develops.</p></li>'}</ul></article>`;
   }
 
   function renderOverview(){
@@ -442,6 +442,18 @@
     return n.status!=='pending'&&n.status!=='accepted'&&n.status!=='reviewed'; // draft
   }
 
+  function noteMatchesDate(n,filter){
+    if(filter==='all')return true;
+    const iso=n.dateISO||n.submittedISO; if(!iso)return false;
+    const stamp=new Date(iso); if(Number.isNaN(stamp.getTime()))return false;
+    const now=new Date();
+    const start=new Date(now.getFullYear(),now.getMonth(),now.getDate());
+    if(filter==='today')return stamp>=start;
+    const days=filter==='7'?7:30;
+    const cutoff=new Date(start); cutoff.setDate(cutoff.getDate()-(days-1));
+    return stamp>=cutoff;
+  }
+
   function renderNotes(){
     const composer=state.noteComposerOpen?`<section class="note-composer"><input id="newNoteTitle" class="dialog-input" placeholder="Note title" aria-label="Note title"><textarea id="newNoteText" rows="8" aria-label="New note text" placeholder="Write anything you want to keep with the project. Saving a note does not change project state."></textarea><div class="inline-actions"><button class="btn primary" data-action="save-new-note">Save note</button><button class="btn secondary" data-action="cancel-new-note">Cancel</button></div></section>`:'';
     const activeFilter=state.notesFilter||'all';
@@ -450,19 +462,34 @@
     const reviewedCount=state.data.notes.filter(n=>noteMatchesFilter(n,'reviewed')).length;
     const chip=(f,label,count)=>`<button class="filter${activeFilter===f?' active':''}" data-filter="${f}">${label}${count?` <span class="count-badge">${count}</span>`:''}</button>`;
     const filters=`<div class="filters notes-filters">${chip('all','All')}${chip('draft','Draft',draftCount)}${chip('pending','In review',pendingCount)}${chip('reviewed','Reviewed',reviewedCount)}</div>`;
+    const dateFilter=state.notesDateFilter||'all';
+    const dateChip=(f,label)=>`<button class="filter${dateFilter===f?' active':''}" data-date-filter="${f}">${label}</button>`;
+    const dateFilters=`<div class="filters notes-date-filters" aria-label="Filter notes by date">${dateChip('all','All time')}${dateChip('today','Today')}${dateChip('7','7 days')}${dateChip('30','30 days')}</div>`;
     const search=norm(state.notesSearch);
-    const visibleNotes=state.data.notes.filter(n=>noteMatchesFilter(n,activeFilter)&&(!search||norm(`${n.title} ${n.text} ${n.source}`).includes(search)));
-    root.innerHTML=`<section class="page collection-page notes-page"><div class="page-head"><div><span class="eyebrow">Working notes</span><h2>Notes</h2><p>Your working space for project notes. Saving something here does not make it part of the project's reviewed understanding.</p><p class="notes-disclosure">This demo uses a mix of notes adapted from my real discovery/product work and simulated project notes created to demonstrate retrieval, review, and maintained-context workflows.</p></div><button class="btn primary notes-add" data-action="new-note">+ New note</button></div>${composer}<div class="notes-toolbar">${filters}<input class="notes-search" id="notesSearch" type="search" placeholder="Search notes" aria-label="Search notes" value="${esc(state.notesSearch)}"></div><div class="note-results simple-notes" id="notesList">${visibleNotes.length?visibleNotes.map(simpleNote).join(''):'<div class="empty-state"><h3>Nothing here.</h3><p>No notes match the current filter and search.</p></div>'}</div></section>`;
+    const visibleNotes=state.data.notes.filter(n=>noteMatchesFilter(n,activeFilter)&&noteMatchesDate(n,dateFilter)&&(!search||norm(`${n.title} ${n.text} ${n.source}`).includes(search))).sort(sortDateDesc);
+    root.innerHTML=`<section class="page collection-page notes-page"><div class="page-head"><div><span class="eyebrow">Project memory</span><h2>Notes</h2><p>Put everything here: updates, meeting notes, observations, decisions, corrections, and loose context. Notes preserve what came in; they do not become Current State automatically.</p><p class="notes-disclosure">This demo uses a mix of notes adapted from my real discovery/product work and simulated project notes created to demonstrate retrieval, review, and maintained-context workflows.</p></div><button class="btn primary notes-add" data-action="new-note">+ New note</button></div>${composer}<div class="notes-toolbar notes-toolbar--stacked"><div class="notes-filter-row">${dateFilters}${filters}</div><input class="notes-search" id="notesSearch" type="search" placeholder="Search all notes" aria-label="Search notes" value="${esc(state.notesSearch)}"></div><div class="note-results simple-notes" id="notesList">${visibleNotes.length?visibleNotes.map(simpleNote).join(''):'<div class="empty-state"><h3>Nothing here.</h3><p>No notes match these filters.</p></div>'}</div></section>`;
   }
 
-  function historyEntry(h, topicMode=false){ const linked=!!h.knowledgeId&&!topicMode; return `<article class="history-entry${linked?' is-linked':''}"${linked?` data-action="view-topic-history" data-knowledge-id="${h.knowledgeId}" tabindex="0" role="button" aria-label="View topic history for ${esc(state.data.knowledge.find(k=>k.id===h.knowledgeId)?.title||h.type)}"`:''}><span>${esc(h.date)} · ${esc(h.reason)}</span><h3>${esc(h.type)}</h3><p><strong>Before:</strong> ${esc(h.before)}</p><p><strong>After:</strong> ${esc(h.after)}</p><p class="decision-line">${esc(h.decision)}</p>${linked?'<span class="history-entry-link">View topic history →</span>':''}</article>`; }
+  function historySources(h){
+    const items=h.evidenceItems||h.evidence_items||[];
+    if(!items.length)return '';
+    return `<details class="history-sources"><summary>Source notes · ${items.length}</summary><div class="history-source-list">${items.map(e=>`<article><span>${esc(formatBackendDate(e.submitted_at))} · ${esc(sourceLabel(e.source_type))}</span><p>${esc(e.content)}</p></article>`).join('')}</div></details>`;
+  }
+  function historyEntry(h, topicMode=false){
+    const linked=!!h.knowledgeId&&!topicMode;
+    const before=h.before??h.old_statement??'Not previously established';
+    const after=h.after??h.new_statement??'';
+    const reason=h.reason||h.decision_question||h.proposal_rationale||'Reviewed project evidence';
+    const decision=h.decision||'Human accepted this change';
+    return `<article class="history-entry${linked?' is-linked':''}"${linked?` data-action="view-topic-history" data-knowledge-id="${h.knowledgeId}" tabindex="0" role="button" aria-label="View topic history for ${esc(state.data.knowledge.find(k=>k.id===h.knowledgeId)?.title||h.type)}"`:''}><div class="history-entry-date">${esc(h.date||formatBackendDate(h.changed_at))}</div><div class="history-entry-body"><span class="history-reason">${esc(reason)}</span><h3>${esc(h.type||historyType(h))}</h3><div class="history-change"><p><span>Before</span>${esc(before)}</p><p><span>Now</span>${esc(after)}</p></div><p class="decision-line">${esc(decision)}</p>${historySources(h)}${linked?'<span class="history-entry-link">View this topic →</span>':''}</div></article>`;
+  }
 
   function renderHistory(){
     const allEntries=state.data.history.slice().sort(sortDateDesc);
     const topic=state.historyTopic;
     const entries=topic?allEntries.filter(h=>h.knowledgeId===topic):allEntries;
     const topicKnowledge=topic?state.data.knowledge.find(k=>k.id===topic):null;
-    root.innerHTML=`<section class="page collection-page history-page"><div class="page-head"><div><span class="eyebrow">Decision record</span><h2>History</h2><p>${topicKnowledge?`How maintained understanding changed for ${esc(topicKnowledge.title)}.`:'Every decision that changed, or deliberately kept, current project understanding.'}</p></div></div>${topicKnowledge?`<div class="history-context"><strong>${esc(topicKnowledge.title)}</strong><span>${entries.length} recorded change${entries.length===1?'':'s'}</span><button class="text-button" data-action="clear-history-topic">View all history →</button></div>`:''}${entries.length?`<div class="history-list">${entries.map(h=>historyEntry(h,!!topicKnowledge)).join('')}</div>`:'<div class="empty-state"><h3>No decisions recorded yet.</h3><p>Once a Review item is decided, it will appear here.</p></div>'}</section>`;
+    root.innerHTML=`<section class="page collection-page history-page"><div class="page-head"><div><span class="eyebrow">From notes to Current State</span><h2>History</h2><p>${topicKnowledge?`How project evidence changed the maintained understanding of ${esc(topicKnowledge.title)}.`:'The meaningful changes extracted from Notes and accepted into Current State. This is the bridge between what came in and what the Project says now.'}</p></div></div>${topicKnowledge?`<div class="history-context"><strong>${esc(topicKnowledge.title)}</strong><span>${entries.length} recorded change${entries.length===1?'':'s'}</span><button class="text-button" data-action="clear-history-topic">View all history →</button></div>`:''}${entries.length?`<div class="history-list">${entries.map(h=>historyEntry(h,!!topicKnowledge)).join('')}</div>`:'<div class="empty-state"><h3>No Current State changes yet.</h3><p>When reviewed Notes change the Project, that transition will appear here.</p></div>'}</section>`;
   }
 
   function renderQuestions(){ root.innerHTML=`<section class="page collection-page"><div class="page-head"><div><span class="eyebrow">Known unknowns</span><h2>Questions</h2><p>Things the project is deliberately keeping unresolved until evidence establishes an answer.</p><p class="questions-staleness-note">This is the place to see everything the project is still waiting on. Questions can also surface where they matter in Workspace answers.</p></div><button class="btn secondary" data-action="add-question">+ Add question</button></div><div class="question-cards">${openQuestions().map(q=>`<article class="question-card question-card-open" data-action="open-question" data-question-id="${q.id}" tabindex="0" role="button" aria-label="Open question: ${esc(q.text)}"><div><span>${esc(q.origin)} · Open</span><h3>${esc(q.text)}</h3></div><span class="question-card-chevron" aria-hidden="true">›</span></article>`).join('') || '<div class="empty">No open questions.</div>'}</div></section>`; }
@@ -630,6 +657,47 @@
     return first.length && first.length<=64 ? first : 'Reviewed understanding';
   }
 
+  function formatBackendDate(value){
+    if(!value)return '';
+    const d=new Date(value); if(Number.isNaN(d.getTime()))return String(value).slice(0,10);
+    return d.toLocaleDateString(undefined,{month:'short',day:'numeric'});
+  }
+  function sourceLabel(source){
+    if((source||'').startsWith('question_response:'))return 'Question response';
+    if(source==='working_note')return 'Working note';
+    if(source==='manual_note')return 'Project update';
+    return String(source||'Note').replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase());
+  }
+  function historyType(item){
+    if(item.transition_type==='created')return 'Current understanding established';
+    if(item.transition_type==='retired')return 'Current understanding retired';
+    return 'Current understanding updated';
+  }
+  function syncApiHistory(items){
+    const fixtures=state.data.history.filter(h=>!h.backendManaged);
+    const backend=(items||[]).map(h=>({
+      ...h, id:h.id, backendManaged:true, knowledgeId:h.state_item_id,
+      date:formatBackendDate(h.changed_at), dateISO:h.changed_at, type:historyType(h),
+      before:h.old_statement||'Not previously established', after:h.new_statement,
+      reason:h.decision_question||h.proposal_rationale||'Reviewed project evidence',
+      decision:'Human accepted this change', evidenceItems:h.evidence_items||[]
+    }));
+    state.data.history=[...backend,...fixtures.filter(f=>!backend.some(b=>b.id===f.id))];
+  }
+  function syncApiEvidence(items,openReviews,resolvedReviews){
+    const openByEvidence=new Map();
+    for(const r of (openReviews||[]))for(const e of (r.evidence_items||[]))openByEvidence.set(e.id,r);
+    const resolvedByEvidence=new Map();
+    for(const r of (resolvedReviews||[]))for(const e of (r.evidence_items||[]))resolvedByEvidence.set(e.id,r);
+    const backendNotes=(items||[]).map(e=>{
+      const open=openByEvidence.get(e.id), resolved=resolvedByEvidence.get(e.id);
+      const status=open?'pending':resolved?.resolution==='updated'?'accepted':e.processing_status==='processed'?'reviewed':'working';
+      return {id:`api-note-${e.id}`,title:sourceLabel(e.source_type),text:e.content,source:sourceLabel(e.source_type),date:formatBackendDate(e.submitted_at),dateISO:e.submitted_at,submittedISO:e.submitted_at,topics:[],status,reviewId:open?.id||null,evidenceId:e.id,backendManaged:true};
+    });
+    const local=state.data.notes.filter(n=>!n.backendManaged && !n.evidenceId);
+    state.data.notes=[...backendNotes,...local];
+  }
+
   function syncApiState(items){
     const incoming=items||[];
     const activeIds=new Set(incoming.map(item=>item.id));
@@ -682,33 +750,30 @@
   async function hydrateBackend(){
     if(typeof fetch!=='function')return;
     try{
-      const [stateResponse,openResponse,resolvedResponse]=await Promise.all([
+      const [stateResponse,evidenceResponse,openResponse,resolvedResponse,historyResponse]=await Promise.all([
         fetch(`${API_BASE}/api/state`),
+        fetch(`${API_BASE}/api/evidence`),
         fetch(`${API_BASE}/api/reviews?status=open`),
-        fetch(`${API_BASE}/api/reviews?status=resolved`)
+        fetch(`${API_BASE}/api/reviews?status=resolved`),
+        fetch(`${API_BASE}/api/history`)
       ]);
+      const openPayload=openResponse.ok?await openResponse.json():{items:[]};
+      const resolvedPayload=resolvedResponse.ok?await resolvedResponse.json():{items:[]};
       if(stateResponse.ok){ const payload=await stateResponse.json(); syncApiState(payload.items||[]); }
+      if(evidenceResponse.ok){ const payload=await evidenceResponse.json(); syncApiEvidence(payload.items||[],openPayload.items||[],resolvedPayload.items||[]); }
+      if(historyResponse.ok){ const payload=await historyResponse.json(); syncApiHistory(payload.items||[]); }
       if(openResponse.ok){
-        const payload=await openResponse.json();
-        replaceBackendOpenReviews(payload.items||[]);
-        for(const raw of (payload.items||[])){
-          let note=state.data.notes.find(n=>n.evidenceId===raw.evidence_id);
-          if(!note){
-            const noteId=`api-note-${raw.evidence_id}`;
-            note={id:noteId,title:'Submitted evidence',text:raw.evidence_content||'',source:(raw.evidence_source_type||'manual_note').startsWith('question_response:')?'Question response':'Update',date:demoDate,dateISO:demoDateISO,topics:[],status:'pending',reviewId:raw.id,evidenceId:raw.evidence_id};
-            state.data.notes.unshift(note);
-          }
-          const mapped=mapApiReview(raw,raw.evidence_content||''); mapped.evidenceId=note.id; upsertBackendReview(mapped);
+        replaceBackendOpenReviews(openPayload.items||[]);
+        for(const raw of (openPayload.items||[])){
+          const note=state.data.notes.find(n=>n.evidenceId===raw.evidence_id);
+          const mapped=mapApiReview(raw,raw.evidence_content||''); mapped.evidenceId=note?.id||`api-note-${raw.evidence_id}`; upsertBackendReview(mapped);
         }
       }
-      if(resolvedResponse.ok){
-        const payload=await resolvedResponse.json();
-        for(const raw of (payload.items||[])){
-          const source=raw.evidence_source_type||'';
-          if(raw.resolution==='updated' && source.startsWith('question_response:')){
-            const q=state.data.questions.find(x=>x.id===source.slice('question_response:'.length));
-            if(q){q.status='resolved';q.resolution='Resolved by reviewed evidence';}
-          }
+      for(const raw of (resolvedPayload.items||[])){
+        const source=raw.evidence_source_type||'';
+        if(raw.resolution==='updated' && source.startsWith('question_response:')){
+          const q=state.data.questions.find(x=>x.id===source.slice('question_response:'.length));
+          if(q){q.status='resolved';q.resolution='Resolved by reviewed evidence';}
         }
       }
       updateNav(); render();
@@ -792,6 +857,7 @@
     const hideArea=e.target.closest('[data-action="hide-project-area"]'); if(hideArea){state.hiddenProjectAreas.add(hideArea.dataset.area);state.view='project-overview';render();return;}
     const showHidden=e.target.closest('[data-action="show-hidden-areas"]'); if(showHidden){state.hiddenProjectAreas.clear();render();return;}
     const v=e.target.closest('[data-view]'); if(v){ state.view=v.dataset.view; if(state.view!=='history') state.historyTopic=null; state.result=null; render(); return; }
+    const dateFilter=e.target.closest('.notes-date-filters [data-date-filter]'); if(dateFilter){ state.notesDateFilter=dateFilter.dataset.dateFilter; renderNotes(); return; }
     const noteFilter=e.target.closest('.notes-filters [data-filter]'); if(noteFilter){ state.notesFilter=noteFilter.dataset.filter; renderNotes(); return; }
     const reviewFilter=e.target.closest('.review-filters [data-review-filter]'); if(reviewFilter){ state.reviewFilter=reviewFilter.dataset.reviewFilter; renderReview(); return; }
     const p=e.target.closest('[data-prompt]'); if(p){ submitAsk(p.dataset.prompt); return; }

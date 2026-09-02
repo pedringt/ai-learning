@@ -99,6 +99,27 @@ class ApiWorkflowTests(unittest.TestCase):
         self.assertEqual(self.client.post(f"/api/reviews/{review_id}/resolve", json={"decision": "keep"}).status_code, 200)
         self.assertEqual(self.client.post(f"/api/reviews/{review_id}/resolve", json={"decision": "accept"}).status_code, 409)
 
+    def test_evidence_archive_lists_processed_items_after_review_resolution(self):
+        response = self.client.post("/api/evidence", json={"content": "Launch moved to October 15."})
+        self.assertEqual(response.status_code, 201)
+        evidence_id = response.json()["evidence_id"]
+        review_id = response.json()["reviews"][0]["id"]
+        self.client.post(f"/api/reviews/{review_id}/resolve", json={"decision": "accept"})
+        items = self.client.get("/api/evidence").json()["items"]
+        row = next(item for item in items if item["id"] == evidence_id)
+        self.assertEqual(row["content"], "Launch moved to October 15.")
+        self.assertEqual(row["processing_status"], "processed")
+
+    def test_history_read_model_includes_source_evidence_provenance(self):
+        response = self.client.post("/api/evidence", json={"content": "Launch moved to October 15."})
+        review_id = response.json()["reviews"][0]["id"]
+        self.client.post(f"/api/reviews/{review_id}/resolve", json={"decision": "accept"})
+        history = self.client.get("/api/history").json()["items"]
+        self.assertEqual(len(history), 1)
+        self.assertEqual(history[0]["review_id"], review_id)
+        self.assertEqual(history[0]["decision_question"], "Accept the new launch date?")
+        self.assertEqual(history[0]["evidence_items"][0]["content"], "Launch moved to October 15.")
+
 
 if __name__ == "__main__":
     unittest.main()
