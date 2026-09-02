@@ -267,3 +267,34 @@ def list_history(connection: Connection) -> list[dict]:
         item["evidence_items"] = [dict(e) for e in evidence_rows]
         result.append(item)
     return result
+
+
+def list_project_rules(connection: Connection) -> list[dict]:
+    connection.row_factory = sqlite3.Row
+    rows = connection.execute(
+        "SELECT id, statement AS text, COALESCE(rationale, 'Interpretation') AS category, created_at FROM project_rules WHERE status='active' ORDER BY created_at, id"
+    ).fetchall()
+    return [dict(row) for row in rows]
+
+
+def create_project_rule(connection: Connection, rule_id: str, text: str, category: str = "Interpretation") -> dict:
+    cleaned = text.strip()
+    normalized = " ".join(cleaned.casefold().split())
+    for existing in list_project_rules(connection):
+        if " ".join(existing["text"].casefold().split()) == normalized:
+            return existing
+    connection.execute(
+        "INSERT INTO project_rules(id, statement, rationale, status) VALUES (?, ?, ?, 'active')",
+        (rule_id, cleaned, category),
+    )
+    connection.commit()
+    row = connection.execute("SELECT id, statement AS text, COALESCE(rationale, 'Interpretation') AS category, created_at FROM project_rules WHERE id=?", (rule_id,)).fetchone()
+    return dict(row)
+
+
+def delete_project_rule(connection: Connection, rule_id: str) -> None:
+    existing = connection.execute("SELECT id FROM project_rules WHERE id=?", (rule_id,)).fetchone()
+    if existing is None:
+        raise ReviewNotFoundError(rule_id)
+    connection.execute("UPDATE project_rules SET status='retired', retired_at=CURRENT_TIMESTAMP WHERE id=?", (rule_id,))
+    connection.commit()

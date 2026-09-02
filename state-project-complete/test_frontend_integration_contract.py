@@ -162,6 +162,17 @@ def test_r83_project_navigation_uses_stable_absolute_targets_without_sticky_sect
     assert "function projectScrollTop(target)" in app
     assert "window.scrollY+el.getBoundingClientRect().top-offset" in app
     assert "window.scrollTo({top,behavior:'smooth'})" in app
-    assert "scrollProjectTarget('project-top')" in app
+    assert "state.view='project-overview';state.result=null;render();return;" in app
+    assert "scrollProjectTarget('project-top')" not in app
     assert "scrollIntoView({behavior:'smooth',block:'start'})" not in app
     assert ".project-section-sticky{position:relative" in css
+
+def test_r84_navigation_rules_and_review_polish_contract():
+    app = (FRONTEND / "context-app.js").read_text(encoding="utf-8")
+    html = (FRONTEND / "index.html").read_text(encoding="utf-8")
+    assert 'class="product-name product-home" data-view="overview"' in html
+    assert "state.view='project-overview';state.result=null;render();return;" in app
+    assert "data-action=\"project-settings\"" in app
+    assert "API.createRule" in app and "API.deleteRule" in app
+    assert "Blocks: ${esc(q.blocks)}" in app
+    assert "replace(/\\*\\*/g,'')" in app

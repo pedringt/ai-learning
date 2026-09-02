@@ -29,6 +29,7 @@
     getReviews: status => request(`/api/reviews?status=${encodeURIComponent(status)}`),
     getHistory: () => request('/api/history'),
     getQuestions: status => request(`/api/questions?status=${encodeURIComponent(status)}`),
+    getRules: () => request('/api/rules'),
     submitEvidence: (content, sourceType = 'manual_note') => jsonPost('/api/evidence', {content, source_type: sourceType}),
     retryEvidenceAnalysis: evidenceId => request(`/api/evidence/${encodeURIComponent(evidenceId)}/reanalyze`, {method: 'POST'}),
     resolveReview: (reviewId, decision) => jsonPost(`/api/reviews/${encodeURIComponent(reviewId)}/resolve`, {decision}),
@@ -39,5 +40,7 @@
       ...(options.blocks ? {blocks: options.blocks} : {}),
     }),
     stopQuestion: questionId => request(`/api/questions/${encodeURIComponent(questionId)}/stop`, {method: 'POST'}),
+    createRule: (text, category = 'Interpretation') => jsonPost('/api/rules', {text, category}),
+    deleteRule: ruleId => request(`/api/rules/${encodeURIComponent(ruleId)}`, {method: 'DELETE'}),
   });
 })();

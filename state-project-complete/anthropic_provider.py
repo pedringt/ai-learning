@@ -211,6 +211,18 @@ class AnthropicProvider:
                 "blocks": row[3],
             }
 
+        rules = []
+        try:
+            rule_rows = connection.execute(
+                "SELECT statement, COALESCE(rationale, 'Interpretation') FROM project_rules WHERE status='active' ORDER BY created_at, id"
+            ).fetchall()
+        except Exception:
+            rule_rows = []
+        for row in rule_rows:
+            rules.append({"text": row[0], "category": row[1]})
+
+        rules_prompt = '' if not rules else '<project_rules>\n' + chr(10).join(f"- [{r['category']}] {r['text']}" for r in rules) + '\n</project_rules>\n\n'
+
         # The API constrains structural JSON. Keep this prompt focused on semantic
         # interpretation and cross-field meaning rather than repeating the full schema.
         prompt = f"""You maintain a project's reviewed Current State from immutable Evidence.
@@ -228,7 +240,7 @@ Evidence never changes State directly; a human decides Reviews.
 {self._format_open_questions(questions)}
 </open_questions>
 
-<evidence id="{evidence.get('id')}">
+{rules_prompt}<evidence id="{evidence.get('id')}">
 {evidence.get('content')}
 </evidence>
 

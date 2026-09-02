@@ -20,7 +20,7 @@ from db import connect
 from interpretation_pipeline_integrated import InterpretationProvider, new_id, process_evidence
 from openai_provider import OpenAIProvider
 from seed_demo import bootstrap_demo_data
-STATE_BUILD_REV = "r8.3-scroll-notes-fixes-2026-09-02"
+STATE_BUILD_REV = "r8.4-navigation-rules-polish-2026-09-02"
 logger = logging.getLogger("state.api")
 
 from review_service import (
@@ -33,6 +33,9 @@ from review_service import (
     list_questions,
     create_question,
     stop_question,
+    list_project_rules,
+    create_project_rule,
+    delete_project_rule,
     resolve_review,
 )
 
@@ -87,6 +90,20 @@ class ResolutionInput(BaseModel):
     model_config = ConfigDict(extra="forbid")
     decision: Literal["accept", "keep", "reject"]
     note: str | None = Field(default=None, max_length=2_000)
+
+
+class ProjectRuleInput(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    text: str = Field(min_length=1, max_length=2_000)
+    category: Literal["Authority", "Review", "Sources", "Interpretation"] = "Interpretation"
+
+    @field_validator("text")
+    @classmethod
+    def rule_text_not_blank(cls, value: str) -> str:
+        value = value.strip()
+        if not value:
+            raise ValueError("text must not be blank")
+        return value
 
 
 class QuestionInput(BaseModel):
@@ -323,6 +340,25 @@ def create_app(settings: Settings | None = None, provider: InterpretationProvide
             except ReviewNotFoundError as exc:
                 raise HTTPException(status_code=404, detail="Open question not found") from exc
             return {"question_id": question_id, "status": "stopped"}
+
+    @app.get("/api/rules")
+    def get_project_rules() -> dict:
+        with get_connection() as connection:
+            return {"items": list_project_rules(connection)}
+
+    @app.post("/api/rules", status_code=201)
+    def post_project_rule(payload: ProjectRuleInput) -> dict:
+        with get_connection() as connection:
+            return create_project_rule(connection, new_id("rule"), payload.text, payload.category)
+
+    @app.delete("/api/rules/{rule_id}")
+    def delete_rule(rule_id: str) -> dict:
+        with get_connection() as connection:
+            try:
+                delete_project_rule(connection, rule_id)
+            except ReviewNotFoundError as exc:
+                raise HTTPException(status_code=404, detail="Project rule not found") from exc
+            return {"rule_id": rule_id, "status": "deleted"}
 
     @app.get("/api/history")
     def get_history() -> dict:

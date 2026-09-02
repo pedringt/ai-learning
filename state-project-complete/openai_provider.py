@@ -159,6 +159,16 @@ class OpenAIProvider:
         ).fetchall():
             questions[row[0]] = {"text": row[1], "blocking": bool(row[2]), "blocks": row[3]}
 
+        rules = []
+        try:
+            rule_rows = connection.execute(
+                "SELECT statement, COALESCE(rationale, 'Interpretation') FROM project_rules WHERE status='active' ORDER BY created_at, id"
+            ).fetchall()
+        except Exception:
+            rule_rows = []
+        for row in rule_rows:
+            rules.append({"text": row[0], "category": row[1]})
+
         # Format prompt (identical to Anthropic, both providers use same schema)
         prompt = f"""You are an AI assistant helping maintain project context and decision-making.
 
@@ -184,6 +194,10 @@ You must recommend whether a Review is needed and what changes (if any) to propo
 ## Open Questions
 
 {self._format_open_questions(questions)}
+
+## Project Rules
+
+{chr(10).join(f"- [{r['category']}] {r['text']}" for r in rules) or "(none)"}
 
 ## New Evidence
 
