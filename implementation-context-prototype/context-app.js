@@ -59,9 +59,21 @@
 
   function render(){ updateNav(); const views={overview:renderOverview,notes:renderNotes,'open-items':renderOpenItems,questions:renderOpenItems,review:renderOpenItems,history:renderHistory,'project-overview':renderProjectOverview}; (views[state.view]||renderOverview)(); }
 
+  function projectScrollTop(target){
+    const el=document.getElementById(target);
+    if(!el)return null;
+    // Scroll to the Project document itself, not the browser/page origin.
+    // Returning to window Y=0 reintroduces the portfolio chrome and causes the
+    // visible geometry jump seen in deployed QA. Section headings no longer
+    // use sticky positioning, so one absolute target is stable for the whole
+    // animation.
+    const offset=target==='project-top'?12:18;
+    return Math.max(0,Math.round(window.scrollY+el.getBoundingClientRect().top-offset));
+  }
   function scrollProjectTarget(target){
-    if(target==='project-top'){ window.scrollTo({top:0,behavior:'smooth'}); return; }
-    document.getElementById(target)?.scrollIntoView({behavior:'smooth',block:'start'});
+    const top=projectScrollTop(target);
+    if(top===null)return;
+    window.scrollTo({top,behavior:'smooth'});
   }
 
 
@@ -503,21 +515,33 @@
     return n.status!=='pending'&&n.status!=='accepted'&&n.status!=='reviewed'; // draft
   }
 
+  function localCalendarKey(value){
+    if(!value)return null;
+    const raw=String(value);
+    if(/^\d{4}-\d{2}-\d{2}$/.test(raw))return raw;
+    const d=new Date(raw);
+    if(Number.isNaN(d.getTime()))return null;
+    const pad=n=>String(n).padStart(2,'0');
+    return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+  }
+  function calendarDayNumber(value){
+    const key=localCalendarKey(value);
+    if(!key)return null;
+    const [year,month,day]=key.split('-').map(Number);
+    return Math.floor(Date.UTC(year,month-1,day)/86400000);
+  }
   function noteMatchesDate(n,filter){
     if(filter==='all')return true;
-    const iso=n.dateISO||n.submittedISO; if(!iso)return false;
-    let stamp;
-    if(/^\d{4}-\d{2}-\d{2}$/.test(iso)){
-      const [year,month,day]=iso.split('-').map(Number);
-      stamp=new Date(year,month-1,day);
-    }else stamp=new Date(iso);
-    if(Number.isNaN(stamp.getTime()))return false;
-    const now=new Date();
-    const start=new Date(now.getFullYear(),now.getMonth(),now.getDate());
-    if(filter==='today')return stamp>=start;
-    const days=filter==='7'?7:30;
-    const cutoff=new Date(start); cutoff.setDate(cutoff.getDate()-(days-1));
-    return stamp>=cutoff;
+    const noteDay=calendarDayNumber(n.dateISO||n.submittedISO);
+    const todayDay=calendarDayNumber(todayISO());
+    if(noteDay===null||todayDay===null)return false;
+    const age=todayDay-noteDay;
+    // Calendar-day filters are inclusive and never pull future-dated notes in.
+    if(age<0)return false;
+    if(filter==='today')return age===0;
+    if(filter==='7')return age<=6;
+    if(filter==='30')return age<=29;
+    return true;
   }
 
 
@@ -1005,7 +1029,7 @@
   document.addEventListener('click',async e=>{
     if(e.target.closest('[data-action="dismiss-review-banner"]')){ state.reviewBannerDismissed=true; renderOverview(); return; }
     if(e.target.closest('[data-action="dismiss-nudge"]')){ const btn=e.target.closest('[data-action="dismiss-nudge"]'); state.dismissedNudges.add(btn.dataset.nudge); renderReview(); return; }
-    const toggleProject=e.target.closest('[data-action="toggle-project-nav"]'); if(toggleProject){state.projectNavOpen=true;if(state.view!=='project-overview'){state.view='project-overview';render();requestAnimationFrame(()=>document.getElementById('project-top')?.scrollIntoView({behavior:'smooth',block:'start'}));}else{updateNav();document.getElementById('project-top')?.scrollIntoView({behavior:'smooth',block:'start'});}return;}
+    const toggleProject=e.target.closest('[data-action="toggle-project-nav"]'); if(toggleProject){state.projectNavOpen=true;if(state.view!=='project-overview'){state.view='project-overview';render();requestAnimationFrame(()=>scrollProjectTarget('project-top'));}else{updateNav();scrollProjectTarget('project-top');}return;}
     const projectJump=e.target.closest('[data-project-jump]'); if(projectJump){const target=projectJump.dataset.projectJump;state.projectNavOpen=true;if(state.view!=='project-overview'){state.view='project-overview';render();requestAnimationFrame(()=>scrollProjectTarget(target));}else{updateNav();updateProjectSubnavActive(target);scrollProjectTarget(target);}return;}
     const relatedReview=e.target.closest('[data-action="open-related-review"]'); if(relatedReview){ const r=state.data.reviews.find(x=>x.id===relatedReview.dataset.reviewId); if(r) showDialog(`<span class="eyebrow">Pending Review</span><h2 id="dialogTitle">Related evidence may affect this Current State</h2>${reviewCard(r,true,false)}`); return;}
         const topicHistory=e.target.closest('[data-action="view-topic-history"]'); if(topicHistory){state.historyTopic=topicHistory.dataset.knowledgeId;state.view='history';render();return;}
@@ -1100,7 +1124,7 @@
 
   document.addEventListener('change',e=>{ if(e.target.id==='notesStatusFilter'){state.notesFilter=e.target.value;renderNotes();} });
 
-  document.addEventListener('input',e=>{ if(e.target.id==='notesSearch'){ state.notesSearch=e.target.value; const list=document.getElementById('notesList'); const notes=filteredNotes(); if(list) list.innerHTML=notes.map(simpleNote).join('') || '<div class="empty">No matching notes.</div>'; } });
+  document.addEventListener('input',e=>{ if(e.target.id==='notesSearch'){ state.notesSearch=e.target.value; const list=document.getElementById('notesList'); const notes=filteredNotes(); if(list) list.innerHTML=notes.map(simpleNote).join('') || '<div class="empty">No matching notes.</div>'; const count=document.querySelector('.notes-result-count'); if(count) count.textContent=`${notes.length} ${notes.length===1?'note':'notes'}`; } });
   let projectScrollScheduled=false;
   window.addEventListener?.('scroll',()=>{
     if(state.view!=='project-overview'||projectScrollScheduled)return;

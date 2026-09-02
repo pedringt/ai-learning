@@ -20,7 +20,7 @@ from db import connect
 from interpretation_pipeline_integrated import InterpretationProvider, new_id, process_evidence
 from openai_provider import OpenAIProvider
 from seed_demo import bootstrap_demo_data
-STATE_BUILD_REV = "r8.1-qa-fixes-2026-09-02"
+STATE_BUILD_REV = "r8.3-scroll-notes-fixes-2026-09-02"
 logger = logging.getLogger("state.api")
 
 from review_service import (
