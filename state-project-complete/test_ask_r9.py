@@ -272,7 +272,7 @@ def test_r92_meeting_prep_merges_repeated_sections_caps_state_and_cleans_blocks_
         assert len(answer["sections"]) <= 4
         established = [s for s in answer["sections"] if s["kind"] == "established"]
         assert len(established) == 1
-        assert established[0]["title"] == "Where things stand"
+        assert established[0]["title"] == "Useful context"
         assert len(established[0]["items"]) == 3
         blockers = [i for s in answer["sections"] for i in s["items"] if i["record_type"] == "blocking_question"]
         assert len([i for i in blockers if i["record_id"] == "q-retention"]) == 1

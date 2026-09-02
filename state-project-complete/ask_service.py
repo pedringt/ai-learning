@@ -100,7 +100,8 @@ Authority rules are non-negotiable:
 - Optimize for relevance, not completeness. Omit tempting recent noise.
 - Refinement may change format, audience, length, focus, or ordering, but never project truth.
 - For meeting prep, frame relevant Questions as opportunities to get answered.
-- Meeting prep is a briefing, not a record dump: choose only the few facts the user needs in the room.
+- Meeting prep is a portable working brief, not a dashboard or record dump. It should be useful when pasted into a meeting document and leave room for live notes.
+- For meeting prep, prefer this information architecture when supported: concise before-the-meeting summary; Decisions needed; Questions to get answered; Useful context. State navigation/actions are rendered separately by the client.
 - Do not repeat the same issue across multiple sections. A Review and linked Question may both appear, but explain each once.
 - Never call something a blocker unless the supplied Question says blocking=true. Never claim a count of blockers unless it matches selected blocking Questions.
 
@@ -197,7 +198,8 @@ Non-negotiable rules:
 - Unknown must remain unknown. Do not infer absence from missing information.
 - Refinement may change format, audience, length, focus, or ordering; it may not change project truth.
 - For meeting prep, frame relevant Questions as opportunities to get answered.
-- Meeting prep is a briefing, not a record dump: choose only the few facts the user needs in the room.
+- Meeting prep is a portable working brief, not a dashboard or record dump. It should be useful when pasted into a meeting document and leave room for live notes.
+- For meeting prep, prefer this information architecture when supported: concise before-the-meeting summary; Decisions needed; Questions to get answered; Useful context. State navigation/actions are rendered separately by the client.
 - Do not repeat the same issue across multiple sections. A Review and linked Question may both appear, but explain each once.
 - Never call something a blocker unless the supplied Question says blocking=true. Never claim a count of blockers unless it matches selected blocking Questions.
 - Keep the main output selective; Open Items handles completeness elsewhere.
@@ -275,12 +277,12 @@ def _normalize_meeting_prep(answer: AskSynthesis) -> AskSynthesis:
         target = merged.get(kind)
         if not target:
             titles = {
-                "needs_review": "Needs your review",
+                "needs_review": "Decisions needed",
                 "questions": "Get these answered",
-                "established": "Where things stand",
+                "established": "Useful context",
                 "recent_context": "Recent context",
                 "changes": "What changed",
-                "open_attention": "Be ready to discuss",
+                "open_attention": "Useful context",
             }
             target = AskAnswerSection(kind=kind, title=titles.get(kind, section.title), items=[])
             merged[kind] = target

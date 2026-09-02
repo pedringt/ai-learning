@@ -26,10 +26,45 @@
     const badge=item.record_type!=='none'?`<span class="ask-record-badge ask-record-${esc(item.record_type)}">${esc(labelFor(item.record_type))}</span>`:'';
     const cleanDetail=String(item.detail||'').replace(/^blocks:\s*/i,'');
     const detail=cleanDetail?`<span class="ask-item-detail">${item.record_type==='blocking_question'?'Blocks: ':''}${esc(cleanDetail)}</span>`:'';
-    let action='';
-    if(item.record_type==='review' && item.record_id) action=`<button class="text-button ask-item-action" data-action="open-related-review" data-review-id="${esc(item.record_id)}">Review now →</button>`;
-    if((item.record_type==='question'||item.record_type==='blocking_question') && item.record_id) action=`<button class="text-button ask-item-action" data-action="go-open-question" data-question-id="${esc(item.record_id)}">See question →</button>`;
-    return `<li class="ask-answer-item"><div>${badge}<span class="ask-item-text">${esc(item.text)}</span>${detail}</div>${action}</li>`;
+    return `<li class="ask-answer-item"><div>${badge}<span class="ask-item-text">${esc(item.text)}</span>${detail}</div></li>`;
+  }
+
+  function stateActions(a){
+    const seen=new Set(), actions=[];
+    for(const section of a.sections||[]){
+      for(const item of section.items||[]){
+        if(!item.record_id || seen.has(`${item.record_type}:${item.record_id}`)) continue;
+        seen.add(`${item.record_type}:${item.record_id}`);
+        if(item.record_type==='review') actions.push(`<button class="text-button" data-action="open-related-review" data-review-id="${esc(item.record_id)}">Review now →</button>`);
+        if(item.record_type==='blocking_question'||item.record_type==='question') actions.push(`<button class="text-button" data-action="go-open-question" data-question-id="${esc(item.record_id)}">Open question →</button>`);
+      }
+    }
+    return actions.length?`<aside class="ask-state-actions"><span class="meta-label">In State</span><div>${actions.join('')}</div></aside>`:'';
+  }
+
+  function meetingNotesScaffold(){
+    return `<section class="ask-meeting-notes"><h3>Meeting notes</h3><div class="meeting-note-block"><strong>Decisions</strong><span>—</span></div><div class="meeting-note-block"><strong>Answers / new information</strong><span>—</span></div><div class="meeting-note-block"><strong>Actions</strong><span>☐</span></div><div class="meeting-note-block"><strong>Follow-ups</strong><span>—</span></div></section>`;
+  }
+
+  function copyLabel(job){
+    return ({meeting_prep:'Copy meeting brief',project_update:'Copy update',catch_up:'Copy summary',current_fact:'Copy answer',why_or_provenance:'Copy explanation',drafting:'Copy draft'}[job]||'Copy answer');
+  }
+
+  function portableText(payload){
+    const a=payload?.answer;
+    if(!a) return '';
+    const lines=[a.headline,'',a.summary];
+    for(const section of a.sections||[]){
+      if(!(section.items||[]).length) continue;
+      lines.push('',section.title);
+      for(const item of section.items){
+        lines.push(`- ${item.text}`);
+        const detail=String(item.detail||'').replace(/^blocks:\s*/i,'').trim();
+        if(detail) lines.push(`  ${item.record_type==='blocking_question'?'Blocks: ':''}${detail}`);
+      }
+    }
+    if(a.job==='meeting_prep') lines.push('','Meeting notes','','Decisions','- ','','Answers / new information','- ','','Actions','- [ ] ','','Follow-ups','- ');
+    return lines.join('\n').trim();
   }
 
   function render(payload){
@@ -39,8 +74,9 @@
     const refinements=(a.suggested_refinements||[]).slice(0,3).map(x=>`<button data-prompt="${esc(x)}">${esc(x)}</button>`).join('');
     const remaining=payload.open_items_remaining||{count:0,reviews:0};
     const footer=remaining.count>0?`<aside class="ask-open-items-safety"><strong>Before you move on</strong><p>${remaining.reviews?`${remaining.reviews} ${remaining.reviews===1?'Review':'Reviews'} and `:''}${Math.max(0,remaining.count-remaining.reviews)} other open ${Math.max(0,remaining.count-remaining.reviews)===1?'item':'items'} still need attention.</p><button class="text-button" data-view="open-items">Review open items →</button></aside>`:'';
-    return `<div class="ask-live-answer"><div class="ask-answer-head"><div class="result-label">${esc(a.job==='meeting_prep'?'Meeting prep':'State Ask')}</div><button class="text-button ask-copy-answer" data-action="copy-result">Copy</button></div><h2>${esc(a.headline)}</h2><p class="result-lede">${esc(a.summary)}</p>${sections}${refinements?`<div class="ask-refinement-chips">${refinements}</div>`:''}${footer}</div>`;
+    const notes=a.job==='meeting_prep'?meetingNotesScaffold():'';
+    return `<div class="ask-live-answer"><div class="ask-answer-head"><div class="result-label">${esc(a.job==='meeting_prep'?'Meeting prep':'State Ask')}</div><button class="btn secondary ask-copy-answer" data-action="copy-result">${esc(copyLabel(a.job))}</button></div><h2>${esc(a.headline)}</h2><p class="result-lede">${esc(a.summary)}</p>${sections}${notes}${refinements?`<div class="ask-refinement-chips">${refinements}</div>`:''}${stateActions(a)}${footer}</div>`;
   }
 
-  window.STATE_ASK = Object.freeze({canHandle, submit, render});
+  window.STATE_ASK = Object.freeze({canHandle, submit, render, portableText, copyLabel});
 })();

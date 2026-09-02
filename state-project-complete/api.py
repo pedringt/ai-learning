@@ -23,7 +23,7 @@ from seed_demo import bootstrap_demo_data
 from ask_contract import AskRequest
 from ask_provider import LiveAskProvider
 from ask_service import run_ask
-STATE_BUILD_REV = "r9.3-visual-system-polish-2026-09-02"
+STATE_BUILD_REV = "r9.3.1-hierarchy-portable-ask-2026-09-02"
 logger = logging.getLogger("state.api")
 
 from review_service import (

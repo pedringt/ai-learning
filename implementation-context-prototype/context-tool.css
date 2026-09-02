@@ -522,3 +522,69 @@ body.v88-dark .related-review-choice{background:#17151d!important;border-color:v
 @media(max-width:430px){.project-document-meta{grid-template-columns:1fr!important}.project-document-meta div:last-child{grid-column:auto}.review-actions{display:grid!important;grid-template-columns:1fr}.review-actions .btn{width:100%}.ask-followup{bottom:8px}.note-index-row{grid-template-columns:1fr!important}.notes-page .page-head{align-items:flex-start}.notes-add{padding:8px 10px!important}.history-change{grid-template-columns:1fr!important}}
 body.v88-dark .unboxed-ask:has(.ask-session-row) .answer-stage,body.v88-dark .compact-review.is-expanded,body.v88-dark .project-document-head{background:#17151d!important}body.v88-dark .review-evidence-block{background:#2a2117!important}body.v88-dark .history-change p:last-child{background:#18261c!important}
 .note-immutable-hint{display:inline-block;margin:12px 0 0!important;padding:7px 9px;border-radius:7px;background:var(--surface2);color:var(--muted)!important;font-size:10.5px!important}.note-immutable-hint strong{color:var(--ink)}
+
+/* R9.3.1: hierarchy, portable Ask artifacts, and viewport-safe dialogs */
+/* Shared modal system: tall dialogs anchor safely inside a scrollable viewport. */
+.overlay{display:flex!important;align-items:flex-start!important;justify-content:center!important;overflow-y:auto!important;padding:24px!important}
+.dialog{margin:auto 0!important;max-height:calc(100dvh - 48px)!important;overflow:auto!important;overscroll-behavior:contain}
+.dialog-close{position:sticky!important;float:right;right:0!important;top:0!important;z-index:2;background:color-mix(in srgb,var(--surface) 94%,transparent)!important;border-radius:999px;width:32px;height:32px;display:grid;place-items:center;backdrop-filter:blur(8px)}
+
+/* Ask session utilities: discoverable without becoming a toolbar. */
+.ask-session-row .ask-new-session{font-size:13px!important;font-weight:800;padding:7px 4px!important;text-decoration:none!important;min-height:36px;white-space:nowrap}
+.ask-session-row .ask-new-session span{font-size:15px;vertical-align:-1px}
+.ask-copy-answer{font-size:12px!important;color:var(--ink)!important;padding:8px 12px!important;min-height:36px;white-space:nowrap;background:var(--surface)!important}
+.ask-copy-answer:hover{border-color:color-mix(in srgb,var(--accent) 45%,var(--line))!important;background:var(--accent-soft)!important}
+
+/* Loading is a compact process state, not an empty finished answer. */
+.unboxed-ask:has(.ask-live-loading) .answer-stage{padding:0!important;background:transparent!important;border:0!important;box-shadow:none!important}
+.ask-live-loading{min-height:0!important;margin:20px 0 0;padding:22px 24px;display:flex;align-items:flex-start;gap:14px;border:1px solid var(--line);border-radius:14px;background:var(--surface)}
+.ask-live-loading .ask-loading-mark{width:11px;height:11px;flex:0 0 auto;margin-top:5px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 5px var(--accent-soft);animation:askPulse 1.5s ease-in-out infinite}
+.ask-live-loading strong{display:block;font-size:15px}.ask-live-loading p{margin:5px 0 0!important;color:var(--muted);font-size:12.5px;line-height:1.55}
+@keyframes askPulse{0%,100%{opacity:.45;transform:scale(.9)}50%{opacity:1;transform:scale(1)}}
+
+/* Meeting prep reads like a working document. State controls sit after the portable artifact. */
+.ask-live-answer .ask-section-needs_review{border-top:1px solid color-mix(in srgb,var(--review) 30%,var(--line));}
+.ask-live-answer .ask-section-questions{border-top:1px solid color-mix(in srgb,var(--blocker) 20%,var(--line));}
+.ask-live-answer .ask-section-established,.ask-live-answer .ask-section-open_attention{border-top:1px solid color-mix(in srgb,var(--state) 20%,var(--line));}
+.ask-meeting-notes{margin-top:30px;padding-top:24px;border-top:1px solid var(--line)}
+.ask-meeting-notes h3{font-size:17px;margin:0 0 14px}.meeting-note-block{display:grid;grid-template-columns:190px 1fr;gap:16px;padding:10px 0;border-bottom:1px solid color-mix(in srgb,var(--line) 58%,transparent)}
+.meeting-note-block strong{font-size:12.5px}.meeting-note-block span{color:var(--muted);min-height:20px}
+.ask-state-actions{margin-top:28px;padding:14px 0 0;border-top:1px dashed var(--line)}.ask-state-actions>div{display:flex;flex-wrap:wrap;gap:8px 16px;margin-top:8px}.ask-state-actions .text-button{font-size:12px}
+.ask-open-items-safety{background:transparent!important;border:0!important;border-top:1px dashed var(--line)!important;border-radius:0!important;padding:14px 0 0!important;margin-top:14px!important}
+
+/* Open Items: urgency band is clearly the container; decision rows are the objects inside it. */
+.open-items-section{overflow:hidden!important}
+.open-items-section-head{padding:19px 20px!important;border-bottom:1px solid transparent!important}
+.open-items-section:not(.is-collapsed) .open-items-section-head{border-bottom-color:var(--line)!important}
+.open-items-reviews .open-items-section-head{background:linear-gradient(90deg,var(--review-soft),color-mix(in srgb,var(--review-soft) 28%,var(--surface)) 70%)}
+.open-items-blockers .open-items-section-head{background:linear-gradient(90deg,var(--blocker-soft),color-mix(in srgb,var(--blocker-soft) 28%,var(--surface)) 70%)}
+.open-items-questions .open-items-section-head{background:linear-gradient(90deg,var(--accent-soft),color-mix(in srgb,var(--accent-soft) 22%,var(--surface)) 70%)}
+.open-items-section-body{padding-top:16px!important}.open-items-section-title{font-size:17px!important}.open-items-kicker{font-size:9px!important;letter-spacing:.13em!important}
+.compact-review{border:1px solid var(--line)!important;margin-bottom:12px!important}.compact-review:last-child{margin-bottom:0!important}
+
+/* Notes: lifecycle belongs in a stable top-right status column. */
+.notes-page .simple-note{grid-template-columns:92px minmax(0,1fr) auto!important;position:relative}
+.note-index-main{min-width:0}.note-index-status{align-self:start;justify-self:end;padding-left:14px}.note-index-status .note-status,.note-index-status .note-status-link{margin-left:0!important}
+
+/* Project: editorial brief hierarchy instead of a flat State table. */
+.project-document-intro{margin:18px 0 4px;padding:17px 19px!important;max-width:none!important;border-radius:11px;background:var(--accent-soft)}
+.project-document-intro strong{font-size:11px!important;text-transform:uppercase;letter-spacing:.09em;color:var(--accent)}.project-document-intro p{margin:5px 0 0!important;font-size:14px!important;color:var(--ink)!important}
+.project-outline-section{padding:30px 0 18px!important}.project-section-sticky h3{font-size:23px!important;margin:0}.project-outline-description{font-size:13px!important;margin:6px 0 18px!important;max-width:740px!important}
+.project-outline-group{margin:12px 0 16px;padding:0!important;border:1px solid color-mix(in srgb,var(--line) 80%,transparent);border-radius:11px;background:var(--surface);overflow:hidden}
+.project-outline-group>h4{margin:0!important;padding:10px 14px!important;background:var(--surface2);border-bottom:1px solid var(--line);font-size:10px!important}
+.project-outline-group .project-outline-list{padding:0 14px}.project-outline-group .project-outline-item{padding:13px 0!important}.project-outline-group .project-outline-item:first-child{border-top:0!important}
+.project-outline-copy{grid-template-columns:minmax(120px,175px) minmax(0,1fr)!important;gap:16px!important}.project-outline-copy strong{font-size:12.5px!important}.project-outline-copy span{font-size:13px!important;line-height:1.58!important}
+.project-outline-actions{align-self:start}
+
+@media(max-width:760px){
+  .overlay{padding:14px!important}.dialog{max-height:calc(100dvh - 28px)!important}
+  .meeting-note-block{grid-template-columns:1fr;gap:3px}
+  .notes-page .simple-note{grid-template-columns:1fr auto!important}.note-date{grid-column:1}.note-index-main{grid-column:1}.note-index-status{grid-column:2;grid-row:1/3}
+  .project-outline-copy{grid-template-columns:1fr!important;gap:4px!important}.project-outline-group .project-outline-list{padding:0 12px}
+}
+@media(max-width:430px){
+  .overlay{padding:12px!important}.dialog{max-height:calc(100dvh - 24px)!important;padding:20px 18px!important}
+  .ask-session-row .ask-new-session{font-size:12.5px!important}.ask-copy-answer{padding:8px 10px!important}
+  .notes-page .simple-note{grid-template-columns:minmax(0,1fr) auto!important}.note-index-status{max-width:118px}
+}
+body.v88-dark .open-items-reviews .open-items-section-head,body.v88-dark .open-items-blockers .open-items-section-head,body.v88-dark .open-items-questions .open-items-section-head{background:#211e29!important}body.v88-dark .project-document-intro{background:#211e29!important}body.v88-dark .project-outline-group{background:#17151d!important}
