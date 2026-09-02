@@ -216,6 +216,8 @@ Remember:
 - Evidence alone does not change State (only humans can authorize)
 - You can recommend Reviews without proposals (state_at_risk)
 - Proposals must reference State items in affected_state_item_ids
+
+- effective_date is optional. Include it ONLY when the Evidence establishes a specific complete calendar date. It must be ISO YYYY-MM-DD. If timing is immediate, upon approval/decision, vague, relative, partial, or unknown, OMIT effective_date. Never emit sentinel or placeholder values such as "upon_decision", "immediately", "now", "TBD", or partial dates such as "2026-10".
 - Include grouping_reason only for recommendations that group 2+ affected State items or 2+ proposed changes; otherwise omit it
 - Be conservative: if unsure, recommend a Review
 """

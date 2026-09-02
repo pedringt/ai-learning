@@ -81,6 +81,17 @@ class ApiWorkflowTests(unittest.TestCase):
             self.assertEqual(resolved.json()["state"][0]["statement"], "Launch is October 1.")
             self.assertEqual(resolved.json()["history"], [])
 
+    def test_review_read_model_preserves_evidence_source_type(self):
+        response = self.client.post(
+            "/api/evidence",
+            json={"content": "Launch moved to October 15.", "source_type": "question_response:q-launch"},
+        )
+        self.assertEqual(response.status_code, 201)
+        review = response.json()["reviews"][0]
+        self.assertEqual(review["evidence_source_type"], "question_response:q-launch")
+        listed = self.client.get("/api/reviews?status=open").json()["items"]
+        self.assertEqual(listed[0]["evidence_source_type"], "question_response:q-launch")
+
     def test_rejects_invalid_input_and_duplicate_resolution(self):
         self.assertEqual(self.client.post("/api/evidence", json={"content": "   "}).status_code, 422)
         response = self.client.post("/api/evidence", json={"content": "Launch moved."})

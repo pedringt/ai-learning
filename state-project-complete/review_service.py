@@ -125,7 +125,7 @@ def list_state(connection: sqlite3.Connection) -> list[dict]:
 def list_reviews(connection: sqlite3.Connection, status: str = "open") -> list[dict]:
     connection.row_factory = sqlite3.Row
     rows = connection.execute(
-        "SELECT r.*, e.id AS evidence_id, e.content AS evidence_content "
+        "SELECT r.*, e.id AS evidence_id, e.content AS evidence_content, e.source_type AS evidence_source_type "
         "FROM review_issues r LEFT JOIN review_evidence re ON re.review_id=r.id "
         "LEFT JOIN evidence e ON e.id=re.evidence_id WHERE r.status=? ORDER BY r.created_at, r.id",
         (status,),
