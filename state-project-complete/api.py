@@ -16,7 +16,7 @@ from database_migration_backed import initialize_db
 from db import connect
 from interpretation_pipeline_integrated import InterpretationProvider, new_id, process_evidence
 from openai_provider import OpenAIProvider
-STATE_BUILD_REV = "notes-history-project-2026-09-02-r5"
+STATE_BUILD_REV = "open-items-outline-2026-09-02-r6"
 
 from review_service import (
     ReviewConflictError,

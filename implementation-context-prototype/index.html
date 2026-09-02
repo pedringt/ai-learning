@@ -38,23 +38,17 @@
       <nav class="sidebar-nav">
         <button class="nav-item active" data-view="overview">Workspace</button>
         <button class="nav-item" data-view="notes">Notes</button>
-        <div class="sidebar-nav-group open-items-nav-group">
-          <button class="nav-item nav-parent-toggle open-items-nav-toggle" data-action="toggle-open-items-nav" aria-expanded="false" aria-controls="openItemsSubnav">Open Items <span class="nav-parent-meta"><svg class="project-chevron" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 6l4 4 4-4"/></svg></span></button>
-          <div class="project-subnav" id="openItemsSubnav" hidden>
-            <button data-view="review">Review</button>
-            <button data-view="questions">Questions</button>
-          </div>
-        </div>
+        <button class="nav-item open-items-nav-toggle" data-view="open-items">Open Items <span class="nav-count" id="openItemsActionCount" hidden></span></button>
         <div class="sidebar-nav-group project-nav-group">
           <button class="nav-item nav-parent-toggle project-nav-toggle" data-action="toggle-project-nav" aria-expanded="false" aria-controls="projectSubnav">Project <svg class="project-chevron" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 6l4 4 4-4"/></svg></button>
           <div class="project-subnav" id="projectSubnav" hidden>
-            <button data-view="project-overview">Overview</button>
-            <button data-view="project-product" data-project-area="product">Product &amp; Workflow</button>
-            <button data-view="project-safety" data-project-area="safety">Safety &amp; Constraints</button>
-            <button data-view="project-evaluation" data-project-area="evaluation">Evaluation &amp; Rollout</button>
-            <button data-view="history">History</button>
+            <button data-project-jump="project-top">Overview</button>
+            <button data-project-jump="project-product" data-project-area="product">Product &amp; Workflow</button>
+            <button data-project-jump="project-safety" data-project-area="safety">Safety &amp; Constraints</button>
+            <button data-project-jump="project-evaluation" data-project-area="evaluation">Evaluation &amp; Rollout</button>
           </div>
         </div>
+        <button class="nav-item" data-view="history">History</button>
       </nav>
       <button class="demo-help-button" data-action="show-demo-help">How this demo works</button>
     </aside>

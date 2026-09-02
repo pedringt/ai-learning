@@ -52,9 +52,9 @@ window.PROJECT_CONTEXT_DATA = {
   questions: [
     {id:'q-suitable', text:'Which troubleshooting cases are actually suitable for the first pilot?', topics:['automation','scope'], status:'open', origin:'Initial discovery', created:'Aug 19'},
     {id:'q-review', text:'What evidence would justify reconsidering human review?', topics:['security','automation'], status:'open', origin:'Security discovery', created:'Aug 25'},
-    {id:'q-authority-seed', text:'What source authoritatively determines effective customer feature access?', topics:['feature-access','security'], status:'open', origin:'Access mapping', created:'Aug 24'},
-    {id:'q-thresholds', text:'What evaluation thresholds should block or allow pilot launch?', topics:['success-metrics','security'], status:'open', origin:'Evaluation working session', created:'Aug 22'},
-    {id:'q-retention', text:'What retention/deletion terms will apply to pilot prompts and outputs?', topics:['security','data','vendor'], status:'open', origin:'Vendor security review', created:'Aug 27'}
+    {id:'q-authority-seed', text:'What source authoritatively determines effective customer feature access?', topics:['feature-access','security'], status:'open', origin:'Access mapping', created:'Aug 24', blocking:true, blocks:'Implementation backlog' },
+    {id:'q-thresholds', text:'What evaluation thresholds should block or allow pilot launch?', topics:['success-metrics','security'], status:'open', origin:'Evaluation working session', created:'Aug 22', blocking:true, blocks:'Pilot launch criteria' },
+    {id:'q-retention', text:'What retention/deletion terms will apply to pilot prompts and outputs?', topics:['security','data','vendor'], status:'open', origin:'Vendor security review', created:'Aug 27', blocking:true, blocks:'Implementation backlog' }
   ],
   reviews: [
     {
