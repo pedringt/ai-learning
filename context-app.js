@@ -525,7 +525,7 @@
         ? 'http://localhost:5000'
         : 'https://state-api.render.com';  // Will be set to deployed URL
       
-      const response = await fetch(apiUrl + '/api/interpret', {
+      const response = await fetch(apiUrl + '/api/evidence', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({content: text, evidence_id: 'evidence_' + Date.now()}),
