@@ -4,7 +4,7 @@
   const initial = clone(D);
   const state = {
     data: clone(D), view:'overview', result:null, resultQuery:'', projectMenuOpen:false, refinements:[], lastScenario:null,
-    addedSample:false, pendingCreated:false, reviewBannerDismissed:false, dialogReturnFocus:null, expandedNotes:new Set(), noteComposerOpen:false, editingNoteId:null, dismissedNudges:new Set(), openItemsNavOpen:false, projectNavOpen:false, hiddenProjectAreas:new Set(), historyTopic:null, notesFilter:'all', notesSearch:''
+    addedSample:false, pendingCreated:false, reviewBannerDismissed:false, dialogReturnFocus:null, expandedNotes:new Set(), noteComposerOpen:false, editingNoteId:null, dismissedNudges:new Set(), openItemsNavOpen:false, projectNavOpen:false, hiddenProjectAreas:new Set(), historyTopic:null, notesFilter:'all', notesSearch:'', isAnalyzing:false
   };
 
   const root = document.getElementById('viewRoot');
@@ -522,6 +522,7 @@
     if(!text)return;
     
     showDialog(`<span class="eyebrow">Processing</span><h2>Analyzing...</h2>`);
+    state.isAnalyzing = true;
     
     try {
       const response = await fetch('https://state-api-6waw.onrender.com/api/evidence', {
@@ -547,9 +548,11 @@
       
       closeDialog();
       updateNav();
+      state.isAnalyzing = false;
       showDialog(`<span class="eyebrow">Done</span><h2>Sent to review</h2><div class="dialog-actions"><button class="btn primary" data-action="go-review">Go to Review</button></div>`);
     } catch(e) {
       closeDialog();
+      state.isAnalyzing = false;
       showDialog(`<span class="eyebrow">Error</span><h2>${e.message}</h2>`);
     }
   }
@@ -654,7 +657,7 @@
     if((e.key==='Enter'||e.key===' ')&&e.target.matches('.question-card-open[data-action="open-question"]')){e.preventDefault();e.target.click();}
     if((e.key==='Enter'||e.key===' ')&&e.target.matches('.history-entry.is-linked[data-action="view-topic-history"]')){e.preventDefault();e.target.click();}
     if(e.key==='Escape'&&state.projectMenuOpen){state.projectMenuOpen=false;updateNav();document.getElementById('projectSwitcher')?.focus();return;}
-    if(e.key==='Escape'&&!overlay.hidden){closeDialog();return;}
+    if(e.key==='Escape'&&!overlay.hidden && !state.isAnalyzing){closeDialog();return;}
     if(e.key==='Tab'&&!overlay.hidden){
       const dialog=document.querySelector('.dialog');
       const focusables=[...dialog.querySelectorAll('button:not([disabled]),input:not([disabled]),textarea:not([disabled]),select:not([disabled]),a[href],[tabindex]:not([tabindex="-1"])')];
@@ -665,7 +668,7 @@
     }
   });
   document.addEventListener('click',e=>{ if(state.projectMenuOpen && !e.target.closest('.sidebar-project') && !e.target.closest('[data-action="toggle-projects"]')){state.projectMenuOpen=false;updateNav();} });
-  overlay.addEventListener('click',e=>{if(e.target===overlay)closeDialog();});
+  overlay.addEventListener('click',e=>{if(e.target===overlay && !state.isAnalyzing) closeDialog();});
   window.STATE_ASK_TEST_API={state,detectAskIntent,findScenario,structuredAskResult,scenarioResult,intentAskHtml,submitAsk};
   render();
 })();

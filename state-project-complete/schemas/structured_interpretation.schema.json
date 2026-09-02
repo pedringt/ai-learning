@@ -55,6 +55,7 @@
         "decision_question",
         "why_consequential",
         "affected_state_item_ids",
+        "grouping_reason",
         "proposed_changes"
       ],
       "properties": {
@@ -110,16 +111,6 @@
               }
             }
           }
-        },
-        {
-          "if": {
-            "anyOf": [
-              {"properties": {"affected_state_item_ids": {"minItems": 2}}},
-              {"properties": {"proposed_changes": {"minItems": 2}}}
-            ]
-          },
-          "then": {"required": ["grouping_reason"]},
-          "else": {"properties": {"grouping_reason": false}}
         }
       ]
     },

@@ -181,6 +181,8 @@ Content: {evidence.get('content')}
 
 Analyze the Evidence against Current State and open Reviews.
 
+Every review recommendation MUST include a grouping_reason - a brief explanation of why these specific items are being grouped together in this single recommendation (even if there's just one item or change, explain why this particular item needs a review).
+
 Respond ONLY with JSON in this structure:
 {{
   "summary": "Brief assessment of whether/how Evidence affects State",
@@ -195,7 +197,7 @@ Respond ONLY with JSON in this structure:
       "decision_question": "What decision must a human make?",
       "why_consequential": "Why does this matter?",
       "affected_state_item_ids": ["state_01", "state_02"],
-      "grouping_reason": "Why these items are grouped together (REQUIRED if 2+ items or 2+ changes)",
+      "grouping_reason": "Why these items are grouped together",
       "proposed_changes": [
         {{
           "operation": "create" | "update" | "retire",
@@ -214,7 +216,7 @@ Important:
 - Evidence alone does not change State (only humans can authorize)
 - You can recommend Reviews without proposals (state_at_risk)
 - Proposals must reference State items in affected_state_item_ids
-- ALWAYS include grouping_reason if there are 2+ affected_state_item_ids OR 2+ proposed_changes
+- ALWAYS include grouping_reason explaining why these specific items are grouped in this recommendation
 - Be conservative: if unsure, recommend a Review
 """
         return prompt
