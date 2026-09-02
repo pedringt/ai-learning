@@ -181,6 +181,8 @@ Content: {evidence.get('content')}
 
 Analyze the Evidence against Current State and open Reviews.
 
+Include grouping_reason ONLY when a recommendation groups multiple affected State items or multiple proposed changes. Omit grouping_reason for a single-item/single-change recommendation.
+
 Respond ONLY with JSON in this structure:
 {{
   "summary": "Brief assessment of whether/how Evidence affects State",
@@ -195,12 +197,13 @@ Respond ONLY with JSON in this structure:
       "decision_question": "What decision must a human make?",
       "why_consequential": "Why does this matter?",
       "affected_state_item_ids": ["state_01", "state_02"],
+      "grouping_reason": "Why these items/changes belong in one decision",  // include only when grouping 2+ affected items or 2+ proposed changes
       "proposed_changes": [
         {{
           "operation": "create" | "update" | "retire",
-          "state_item_id": "state_01",  // omit for create
-          "expected_version": 1,  // version at context capture time
-          "proposed_statement": "New or updated statement",
+          "state_item_id": "state_01",  // required for update/retire; omit for create
+          "expected_version": 1,  // required for update/retire; omit for create
+          "proposed_statement": "New or updated statement",  // required for create/update; omit for retire
           "rationale": "Why this change makes sense given Evidence",
           "effective_date": "YYYY-MM-DD"  // optional
         }}
@@ -213,6 +216,7 @@ Remember:
 - Evidence alone does not change State (only humans can authorize)
 - You can recommend Reviews without proposals (state_at_risk)
 - Proposals must reference State items in affected_state_item_ids
+- Include grouping_reason only for recommendations that group 2+ affected State items or 2+ proposed changes; otherwise omit it
 - Be conservative: if unsure, recommend a Review
 """
         return prompt

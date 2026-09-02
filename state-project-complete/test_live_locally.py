@@ -15,6 +15,8 @@ This will:
 4. Save results to live_test_results.txt
 """
 
+__test__ = False  # manual live-provider runner; not a pytest module
+
 import os
 import sys
 import time

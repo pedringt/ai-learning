@@ -174,7 +174,14 @@ def _persist_success(
                         proposal["operation"],
                         proposal.get("state_item_id"),
                         proposal.get("expected_version"),
-                        proposal.get("proposed_statement"),
+                        (
+                            proposal.get("proposed_statement")
+                            if proposal["operation"] != "retire"
+                            else connection.execute(
+                                "SELECT statement FROM current_state_items WHERE id=?",
+                                (proposal["state_item_id"],),
+                            ).fetchone()["statement"]
+                        ),
                         proposal["rationale"],
                         proposal.get("effective_date"),
                         "pending",
