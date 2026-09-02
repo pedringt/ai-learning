@@ -530,13 +530,15 @@
         body: JSON.stringify({content: text, source_type: 'manual_note'})
       });
       
-      if (!response.ok) throw new Error('API error: ' + response.status);
       const result = await response.json();
       
-      if (!result.evidence_id) {
+      if (!response.ok || !result.evidence_id) {
         // Log detailed error to console for debugging
-        console.error('API Error Details:', result.detail || result);
-        throw new Error('API returned error: ' + (result.detail?.code || 'unknown'));
+        console.error('API Error Response:', result);
+        if (result.detail?.error_details?.error_message) {
+          console.error('Detailed Error:', result.detail.error_details.error_message);
+        }
+        throw new Error('API error: ' + (result.detail?.code || response.status));
       }
       
       const stamp = Date.now(), noteId = 'n-'+stamp, reviewId = 'r-'+stamp;
