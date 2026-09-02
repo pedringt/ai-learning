@@ -68,6 +68,24 @@ REVIEWS = [
     ("demo-review-retention", "state_at_risk", "Are the vendor's stated retention terms authoritative enough for pilot planning?", "The vendor described proposed terms, but Security and Legal have not confirmed the agreement.", None, None, "Vendor follow-up described retention and logging behavior that still requires contractual confirmation."),
 ]
 
+
+# Accepted demo transitions make History realistic without pretending the entire
+# baseline was individually reviewed. They are only applied to untouched demo
+# State items whose statement/version still match the original seed, so real
+# user changes are never overwritten.
+HISTORY_SCENARIOS = [
+    ("pilot-scope", "k-pilot", "The pilot may include a mix of Tier 1 and Tier 2 support workflows.", "The core pilot use case is Tier 1 troubleshooting assistance. AI drafts and assembles context; a support rep reviews before anything customer-facing is sent.", "Discovery narrowed the first pilot to the workflow with the clearest support value and safest review boundary.", "Scope review narrowed the first implementation to Tier 1 troubleshooting with rep review.", "2026-08-18 10:00:00"),
+    ("approved-knowledge", "k-grounding", "The assistant may use internal support material and whatever account context is available.", "Troubleshooting guidance is grounded in approved support material and relevant account context when that context is available.", "The team separated approved sources from merely available context so unsupported guidance cannot quietly regain authority.", "Knowledge-source review established that only approved support material should ground troubleshooting guidance.", "2026-08-19 14:30:00"),
+    ("password-approval", "k-password", "Password-reset tickets are being evaluated as a possible automation candidate.", "Password-reset tickets are approved for automation, but approval does not by itself establish that automation has been implemented or deployed.", "Security approved the automation direction while implementation status remained separate.", "Security approved password-reset tickets for automation; rollout and implementation were not yet established.", "2026-08-21 11:15:00"),
+    ("human-review", "k-security", "The pilot is expected to use human review while the team learns where automation is safe.", "Human review remains required for the pilot. Security wants agreed high-risk failure categories and evidence across them before that boundary is reconsidered.", "Security turned a working expectation into an explicit pilot boundary and defined what evidence would be needed to revisit it.", "Security review confirmed human review for the pilot and asked for evidence across high-risk failure categories before reconsideration.", "2026-08-22 15:20:00"),
+    ("data-boundary", "k-data", "The pilot may use customer and account data needed to answer support questions.", "The pilot uses the minimum customer and account data needed for troubleshooting, remains read-only, and avoids account-changing actions in the first implementation.", "The implementation boundary was narrowed to minimum necessary data and read-only behavior.", "Security discovery limited the first implementation to minimum necessary troubleshooting data and read-only access.", "2026-08-23 09:40:00"),
+    ("sensitive-actions", "k-sensitive", "Sensitive account actions will be evaluated separately during implementation planning.", "Billing adjustments, ownership changes, refunds, and other sensitive account actions remain outside the assistant's first implementation.", "The team explicitly removed account-changing actions from first-pilot scope instead of leaving them ambiguous.", "Workflow review moved billing adjustments, ownership changes, refunds, and similar actions out of the first implementation.", "2026-08-24 13:05:00"),
+    ("slack-source", "k-slack", "Support Slack may be useful as an additional troubleshooting source.", "Support Slack is not an approved retrieval source for the first pilot while ownership, freshness, and data-governance questions remain unresolved.", "A potentially useful source was held out until authority, freshness, and governance could be established.", "Knowledge-source review decided not to use Support Slack in the first pilot until governance questions are resolved.", "2026-08-25 16:45:00"),
+    ("evaluation-shape", "k-eval", "Pilot success will primarily be measured by automation rate and response-time improvement.", "The pilot is evaluated with response-time improvement, reviewer edits, escalation behavior, unsupported-claim checks, and failure severity rather than a single automation metric.", "Evaluation expanded from a single efficiency metric to a set that can expose unsafe or low-quality behavior.", "Evaluation planning added reviewer edits, escalation quality, unsupported-claim checks, and failure severity alongside response time.", "2026-08-26 10:25:00"),
+    ("training-boundary", "k-training", "Rep enablement will focus on how to access and use the assistant.", "Rep training covers when to use the assistant, what still requires manual verification, how to inspect support for an answer, and how to flag a bad suggestion.", "Training was expanded to teach the human-control boundary, not just feature operation.", "Rollout planning added verification, source inspection, and bad-suggestion reporting to rep training.", "2026-08-27 11:50:00"),
+    ("rollout-sequence", "k-rollout", "The assistant may be made available to the broader support team after implementation is ready.", "Rollout begins with a bounded internal pilot before any broader support-team availability is considered.", "The rollout sequence was constrained so evidence from a bounded pilot must precede broader availability.", "Leadership and Support agreed to a bounded internal pilot before considering wider support-team rollout.", "2026-08-28 15:10:00"),
+]
+
 DEMO_EVIDENCE_DATES = {
     "demo-review-access": "2026-08-27 16:10:00",
     "demo-review-launch": "2026-08-28 09:30:00",
@@ -76,9 +94,57 @@ DEMO_EVIDENCE_DATES = {
 }
 
 
+
+def _seed_accepted_history(connection) -> int:
+    """Create synthetic but fully linked accepted provenance for untouched demo State."""
+    seeded = 0
+    for slug, state_id, before_statement, after_statement, rationale, evidence_text, changed_at in HISTORY_SCENARIOS:
+        history_id = f"demo-history-{slug}"
+        if connection.execute("SELECT id FROM history_transitions WHERE id=?", (history_id,)).fetchone():
+            continue
+        state_row = connection.execute(
+            "SELECT statement, version, status FROM current_state_items WHERE id=?", (state_id,)
+        ).fetchone()
+        if not state_row or state_row["status"] != "active" or state_row["version"] != 1 or state_row["statement"] != after_statement:
+            continue
+        # Do not retrofit provenance onto a State item that already has any real history.
+        if connection.execute("SELECT id FROM history_transitions WHERE state_item_id=? LIMIT 1", (state_id,)).fetchone():
+            continue
+        rid = f"demo-history-review-{slug}"
+        pid = f"demo-history-proposal-{slug}"
+        eid = f"demo-history-evidence-{slug}"
+        connection.execute(
+            "INSERT OR IGNORE INTO evidence(id,content,source_type,processing_status,submitted_at) VALUES (?,?,'demo_history','processed',?)",
+            (eid, evidence_text, changed_at),
+        )
+        connection.execute(
+            "INSERT INTO review_issues(id,review_type,decision_question,why_consequential,status,resolution,resolution_note,created_at,resolved_at) "
+            "VALUES (?, 'proposed_update', ?, ?, 'resolved', 'updated', 'Accepted in the Northstar demo baseline.', ?, ?)",
+            (rid, f"Should Current State update {state_id} based on this reviewed evidence?", rationale, changed_at, changed_at),
+        )
+        connection.execute("INSERT INTO review_evidence(review_id,evidence_id) VALUES (?,?)", (rid, eid))
+        connection.execute("INSERT INTO review_state_items(review_id,state_item_id) VALUES (?,?)", (rid, state_id))
+        connection.execute(
+            "INSERT INTO proposed_state_changes(id,review_id,state_item_id,proposed_statement,rationale,expected_state_version,status,created_at,decided_at,operation) "
+            "VALUES (?,?,?,?,?,1,'accepted',?,?,'update')",
+            (pid, rid, state_id, after_statement, rationale, changed_at, changed_at),
+        )
+        connection.execute(
+            "INSERT INTO history_transitions(id,state_item_id,proposed_change_id,transition_type,old_statement,new_statement,from_version,to_version,changed_at) "
+            "VALUES (?,?,?,'updated',?,?,1,2,?)",
+            (history_id, state_id, pid, before_statement, after_statement, changed_at),
+        )
+        connection.execute(
+            "UPDATE current_state_items SET version=2, updated_at=? WHERE id=? AND version=1 AND statement=?",
+            (changed_at, state_id, after_statement),
+        )
+        seeded += 1
+    return seeded
+
+
 def bootstrap_demo_data(connection) -> dict[str, int]:
     """Insert missing demo records without overwriting anything already present."""
-    counts = {"state": 0, "questions": 0, "reviews": 0}
+    counts = {"state": 0, "questions": 0, "reviews": 0, "history": 0}
     connection.execute("BEGIN IMMEDIATE")
     try:
         for item in ITEMS:
@@ -86,6 +152,7 @@ def bootstrap_demo_data(connection) -> dict[str, int]:
             if not before:
                 connection.execute("INSERT INTO current_state_items(id, topic, statement, version) VALUES (?, ?, ?, 1)", item)
                 counts["state"] += 1
+        counts["history"] += _seed_accepted_history(connection)
         for qid, text, blocking, blocks, origin in QUESTIONS:
             before = connection.execute("SELECT id FROM questions WHERE id=?", (qid,)).fetchone()
             if not before:

@@ -192,3 +192,21 @@ def test_r85_integrity_and_polish_contracts():
     assert "Rules apply to future analysis. Existing Reviews are not reinterpreted automatically." in app
     assert "Current State items" in app
     assert "backendStatus" in app and "temporarily unavailable" in app
+
+
+def test_r86_notes_link_into_review_and_history_workflow():
+    app = (FRONTEND / "context-app.js").read_text(encoding="utf-8")
+    assert "data-action=\"open-note-reviews\"" in app
+    assert "reviewIds:open.map(r=>r.id)" in app
+    assert "state.expandedReviewId=ids[0]" in app
+    assert "data-action=\"open-note-history\"" in app
+    assert "historyEvidenceId" in app
+    assert "From note:" in app
+
+def test_r86_demo_history_is_real_provenance_not_frontend_fixture_rows():
+    seed = (Path(__file__).parent / "seed_demo.py").read_text(encoding="utf-8")
+    assert "HISTORY_SCENARIOS" in seed
+    assert "INSERT INTO review_issues" in seed
+    assert "INSERT INTO proposed_state_changes" in seed
+    assert "INSERT INTO history_transitions" in seed
+    assert "demo_history" in seed
