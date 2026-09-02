@@ -86,7 +86,21 @@ def create_app(settings: Settings | None = None, provider: InterpretationProvide
     @contextmanager
     def connect() -> Iterator[psycopg2.extensions.connection]:
         connection = psycopg2.connect(settings.database_url)
-        connection.cursor_factory = psycopg2.extras.RealDictCursor
+        
+        # Add an execute() method to psycopg2 connection so existing code works
+        # psycopg2 connections don't have .execute() natively; normally you create a cursor
+        # This wrapper makes the connection look like sqlite3.Connection to the rest of the code
+        def execute(query: str, params=None):
+            # Convert SQLite syntax to Postgres syntax
+            converted_query = query.replace("?", "%s")
+            converted_query = converted_query.replace("INSERT OR IGNORE", "INSERT")
+            
+            cursor = connection.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+            cursor.execute(converted_query, params or ())
+            return cursor
+        
+        connection.execute = execute
+        
         try:
             yield connection
         finally:
