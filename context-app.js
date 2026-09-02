@@ -528,13 +528,11 @@
       const response = await fetch('https://state-api-6waw.onrender.com/api/evidence', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({content: text, evidence_id: 'evidence_' + Date.now()}),
+        body: JSON.stringify({content: text, source_type: 'manual_note': 'evidence_' + Date.now()}),
       });
       
       if (!response.ok) throw new Error('API error: ' + response.status);
-      const result = await response.json();
-      if (result.status !== 'success') throw new Error(result.error);
-      
+      const result = await response.json();      
       const stamp = Date.now(), noteId = 'n-added-'+stamp, reviewId = 'r-info-'+stamp;
       state.data.notes.unshift({id:noteId,title:'Project update',text,source:'Project update',date:demoDate,dateISO:demoDateISO,topics:result.interpretation?.topics||[],status:'pending',reviewId});
       state.data.reviews.unshift({id:reviewId,evidenceId:noteId,topics:result.interpretation?.topics||[],status:'pending',title:'AI analysis: '+result.interpretation?.outcome,summary:text.length>180?text.slice(0,177)+'…':text,proposed:result.interpretation?.outcome==='review_recommended'?'AI recommends review':'No review needed',unresolved:'Change current understanding?',current:'Not yet reviewed',evidence:text,establishes:'AI-analyzed information',doesNot:'Does not become knowledge until review'});
