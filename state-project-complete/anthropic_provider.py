@@ -23,15 +23,17 @@ from state_spike.semantic_validation import InterpretationContextSnapshot
 class AnthropicProvider:
     """Provider adapter for Anthropic's Claude API."""
 
-    def __init__(self, model_identifier: str = "claude-opus-4-6", api_key: str | None = None):
+    def __init__(self, model_identifier: str | None = None, api_key: str | None = None):
         """Initialize provider.
 
         Args:
             model_identifier: Claude model to use (e.g., 'claude-opus-4-6', 'claude-sonnet-4-6')
+                            If None, uses CLAUDE_MODEL env var or defaults to 'claude-sonnet-4-6'
             api_key: Anthropic API key (if None, uses ANTHROPIC_API_KEY env var)
         """
+        import os
         self.name = "anthropic"
-        self.model_identifier = model_identifier
+        self.model_identifier = model_identifier or os.getenv("CLAUDE_MODEL", "claude-sonnet-4-6")
         self.api_key = api_key
         
         # Lazy import to avoid requiring anthropic library unless actually used

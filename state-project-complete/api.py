@@ -67,7 +67,11 @@ def _provider_from_env(settings: Settings) -> InterpretationProvider:
     if settings.provider == "anthropic":
         if not os.getenv("ANTHROPIC_API_KEY"):
             raise RuntimeError("ANTHROPIC_API_KEY is required when STATE_PROVIDER=anthropic")
-        return AnthropicProvider(api_key=os.environ["ANTHROPIC_API_KEY"])
+        model = os.getenv("CLAUDE_MODEL", "claude-sonnet-4-6")
+        return AnthropicProvider(
+            model_identifier=model,
+            api_key=os.environ["ANTHROPIC_API_KEY"]
+        )
     if not os.getenv("OPENAI_API_KEY"):
         raise RuntimeError("OPENAI_API_KEY is required when STATE_PROVIDER=openai")
     return OpenAIProvider(api_key=os.environ["OPENAI_API_KEY"])
