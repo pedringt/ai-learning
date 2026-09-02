@@ -697,15 +697,29 @@
     }catch(err){ console.warn('Backend hydration skipped:',err); }
   }
 
+  let analysisClock=null;
   function analyzingDialog(){
-    return `<div class="analysis-state"><div class="analysis-orbit" aria-hidden="true"><span></span><span></span><span></span></div><span class="eyebrow">Analyzing evidence</span><h2 id="dialogTitle">Working out what this changes…</h2><p>Comparing the note with Current State and deciding whether anything needs your review.</p></div>`;
+    return `<div class="analysis-state"><div class="analysis-orbit" aria-hidden="true"><span></span><span></span><span></span></div><span class="eyebrow">Analyzing evidence</span><h2 id="dialogTitle">Working out what this changes…</h2><p>Comparing the note with Current State and deciding whether anything needs your review.</p><div class="analysis-progress"><span class="analysis-pulse" aria-hidden="true"></span><span id="analysisElapsed">Starting analysis…</span></div><p class="analysis-patience">A thorough comparison can take around 10–20 seconds.</p></div>`;
   }
+  function startAnalysisClock(){
+    clearInterval(analysisClock);
+    const started=Date.now();
+    const update=()=>{
+      const el=document.getElementById('analysisElapsed');
+      if(!el)return;
+      const seconds=Math.max(0,Math.floor((Date.now()-started)/1000));
+      el.textContent=seconds<2?'Starting analysis…':`Analyzing… ${seconds}s`;
+    };
+    update(); analysisClock=setInterval(update,1000);
+  }
+  function stopAnalysisClock(){ clearInterval(analysisClock); analysisClock=null; }
 
   async function saveInformation(){
     const text=document.getElementById('addInfoText')?.value.trim();
     if(!text)return;
     state.isAnalyzing=true;
     showDialog(analyzingDialog());
+    startAnalysisClock();
     try{
       const result=await submitEvidence(text,'manual_note');
       const stamp=Date.now(), noteId='n-'+stamp;
@@ -713,7 +727,7 @@
       state.data.notes.unshift({id:noteId,title:'Project update',text,source:'Update',date:demoDate,dateISO:demoDateISO,topics:[],status:apiReviews.length?'pending':'reviewed',reviewId:apiReviews[0]?.id||null,evidenceId:result.evidence_id});
       apiReviews.forEach(r=>{r.evidenceId=noteId; state.data.reviews.unshift(r);});
       state.reviewBannerDismissed=false;
-      state.isAnalyzing=false;
+      state.isAnalyzing=false; stopAnalysisClock();
       updateNav();
       if(apiReviews.length){
         showDialog(`<span class="eyebrow">Done</span><h2 id="dialogTitle">Sent to Review</h2><p>${apiReviews.length===1?'One review needs your decision.':`${apiReviews.length} reviews need your decisions.`}</p><div class="dialog-actions"><button class="btn primary" data-action="go-review">Go to Review</button><button class="btn secondary" data-action="close-dialog">Done</button></div>`);
@@ -721,7 +735,7 @@
         showDialog(`<span class="eyebrow">Done</span><h2 id="dialogTitle">Note reviewed</h2><p>This evidence did not require a change to Current State.</p><div class="dialog-actions"><button class="btn primary" data-action="close-dialog">Done</button></div>`);
       }
     }catch(e){
-      state.isAnalyzing=false;
+      state.isAnalyzing=false; stopAnalysisClock();
       showDialog(`<span class="eyebrow">Couldn’t analyze</span><h2 id="dialogTitle">This update needs another try.</h2><p>${esc(e.message)}</p><div class="dialog-actions"><button class="btn primary" data-action="close-dialog">Close</button></div>`);
     }
   }
@@ -735,16 +749,16 @@
 
   async function sendNoteToReview(id){
     const n=state.data.notes.find(x=>x.id===id); if(!n||n.status==='pending')return;
-    state.isAnalyzing=true; showDialog(analyzingDialog());
+    state.isAnalyzing=true; showDialog(analyzingDialog()); startAnalysisClock();
     try{
       const result=await submitEvidence(n.text,'working_note');
       const apiReviews=(result.reviews||[]).map(r=>mapApiReview(r,n.text));
       n.status=apiReviews.length?'pending':'reviewed'; n.reviewId=apiReviews[0]?.id||null; n.evidenceId=result.evidence_id;
       apiReviews.forEach(r=>{r.evidenceId=n.id; state.data.reviews.unshift(r);});
-      state.reviewBannerDismissed=false; state.isAnalyzing=false; updateNav();
+      state.reviewBannerDismissed=false; state.isAnalyzing=false; stopAnalysisClock(); updateNav();
       if(apiReviews.length) showDialog(`<span class="eyebrow">Done</span><h2 id="dialogTitle">Note sent to Review</h2><p>${apiReviews.length===1?'One review needs your decision.':`${apiReviews.length} reviews need your decisions.`}</p><div class="dialog-actions"><button class="btn primary" data-action="go-review">Go to Review</button><button class="btn secondary" data-action="go-notes">Back to Notes</button></div>`);
       else showDialog(`<span class="eyebrow">Done</span><h2 id="dialogTitle">Note reviewed</h2><p>This note did not require a change to Current State.</p><div class="dialog-actions"><button class="btn primary" data-action="go-notes">Back to Notes</button></div>`);
-    }catch(e){ state.isAnalyzing=false; showDialog(`<span class="eyebrow">Couldn’t analyze</span><h2 id="dialogTitle">The note is still a draft.</h2><p>${esc(e.message)}</p><div class="dialog-actions"><button class="btn primary" data-action="go-notes">Back to Notes</button></div>`); }
+    }catch(e){ state.isAnalyzing=false; stopAnalysisClock(); showDialog(`<span class="eyebrow">Couldn’t analyze</span><h2 id="dialogTitle">The note is still a draft.</h2><p>${esc(e.message)}</p><div class="dialog-actions"><button class="btn primary" data-action="go-notes">Back to Notes</button></div>`); }
   }
 
   function addQuestion(text){ const clean=(text||'').trim(); if(!clean)return; if(!state.data.questions.some(q=>q.status==='open'&&norm(q.text)===norm(clean))) state.data.questions.push({id:'q-'+Date.now(),text:clean,topics:[],status:'open',origin:'Added from Workspace',created:demoDate,createdISO:demoDateISO}); updateNav(); showDialog(`<span class="eyebrow">Open question</span><h2 id="dialogTitle">Tracked without becoming a fact.</h2><p>${esc(clean)}</p><div class="dialog-actions"><button class="btn primary" data-action="go-questions">View Questions</button><button class="btn secondary" data-action="close-dialog">Continue</button></div>`); }
@@ -806,17 +820,17 @@
       const text=document.getElementById('questionAnswer')?.value.trim();
       const q=state.data.questions.find(x=>x.id===a.dataset.questionId);
       if(text&&q){
-        state.isAnalyzing=true; showDialog(analyzingDialog());
+        state.isAnalyzing=true; showDialog(analyzingDialog()); startAnalysisClock();
         try{
           const result=await submitEvidence(text,`question_response:${q.id}`);
           const stamp=Date.now(), noteId='n-q-'+stamp;
           const apiReviews=(result.reviews||[]).map(r=>mapApiReview(r,text,{resolvesQuestionId:q.id}));
           state.data.notes.unshift({id:noteId,title:'Answer to: '+q.text,text,source:'Question response',date:demoDate,dateISO:demoDateISO,topics:q.topics,status:apiReviews.length?'pending':'reviewed',reviewId:apiReviews[0]?.id||null,evidenceId:result.evidence_id});
           apiReviews.forEach(r=>{r.evidenceId=noteId; state.data.reviews.unshift(r);});
-          state.reviewBannerDismissed=false; state.isAnalyzing=false; updateNav();
+          state.reviewBannerDismissed=false; state.isAnalyzing=false; stopAnalysisClock(); updateNav();
           if(apiReviews.length) showDialog(`<span class="eyebrow">Added</span><h2 id="dialogTitle">Answer sent to Review.</h2><p>The question stays unresolved until you accept reviewed evidence that establishes an answer.</p><div class="dialog-actions"><button class="btn primary" data-action="go-review">Go to Review</button></div>`);
           else showDialog(`<span class="eyebrow">Reviewed</span><h2 id="dialogTitle">The question stays open.</h2><p>The evidence did not produce a State change, so it was not enough to resolve this question.</p><div class="dialog-actions"><button class="btn primary" data-action="close-dialog">Done</button></div>`);
-        }catch(e){ state.isAnalyzing=false; showDialog(`<span class="eyebrow">Couldn’t analyze</span><h2 id="dialogTitle">The question stays open.</h2><p>${esc(e.message)}</p><div class="dialog-actions"><button class="btn primary" data-action="close-dialog">Close</button></div>`); }
+        }catch(e){ state.isAnalyzing=false; stopAnalysisClock(); showDialog(`<span class="eyebrow">Couldn’t analyze</span><h2 id="dialogTitle">The question stays open.</h2><p>${esc(e.message)}</p><div class="dialog-actions"><button class="btn primary" data-action="close-dialog">Close</button></div>`); }
       }
     }
     else if(act==='close-result'){state.result=null;state.resultQuery='';renderOverview();}

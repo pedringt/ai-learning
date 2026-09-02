@@ -36,6 +36,7 @@ class AnthropicProvider:
         self.name = "anthropic"
         self.model_identifier = model_identifier or os.getenv("CLAUDE_MODEL", "claude-haiku-4-5-20251001")
         self.max_tokens = int(os.getenv("CLAUDE_MAX_TOKENS", "1600"))
+        self.timeout_seconds = float(os.getenv("CLAUDE_TIMEOUT_SECONDS", "30"))
         self.api_key = api_key
         
         # Lazy import to avoid requiring anthropic library unless actually used
@@ -52,7 +53,10 @@ class AnthropicProvider:
                     "anthropic package required for live adapters. "
                     "Install: pip install anthropic"
                 )
-            self._client = anthropic.Anthropic(api_key=self.api_key)
+            self._client = anthropic.Anthropic(
+                api_key=self.api_key,
+                timeout=self.timeout_seconds,
+            )
         return self._client
 
     def interpret(
@@ -78,15 +82,21 @@ class AnthropicProvider:
                 "Anthropic adapter requires database connection to fetch full context"
             )
 
-        # Build complete prompt context from database
+        # Build complete prompt context from database and time it separately from
+        # the provider round-trip so production traces identify the slow layer.
+        prompt_started = time.perf_counter()
         prompt = self._build_prompt(context, evidence, connection)
+        prompt_ms = (time.perf_counter() - prompt_started) * 1000
 
         # Call Claude API. Keep this adapter observable because provider latency
-        # dominates the end-to-end request in production.
+        # dominates the end-to-end request in production. flush=True matters on
+        # hosted logs so the start line appears before the network request returns.
         started = time.perf_counter()
         print(
             f"[PROVIDER] anthropic start model={self.model_identifier} "
-            f"prompt_chars={len(prompt)} max_tokens={self.max_tokens}"
+            f"prompt_chars={len(prompt)} prompt_ms={prompt_ms:.0f} "
+            f"max_tokens={self.max_tokens} timeout_s={self.timeout_seconds:g}",
+            flush=True,
         )
         message = self.client.messages.create(
             model=self.model_identifier,
@@ -99,7 +109,16 @@ class AnthropicProvider:
             ],
         )
         elapsed_ms = (time.perf_counter() - started) * 1000
-        print(f"[PROVIDER] anthropic done model={self.model_identifier} elapsed_ms={elapsed_ms:.0f}")
+        usage = getattr(message, "usage", None)
+        input_tokens = getattr(usage, "input_tokens", None)
+        output_tokens = getattr(usage, "output_tokens", None)
+        stop_reason = getattr(message, "stop_reason", None)
+        print(
+            f"[PROVIDER] anthropic done model={self.model_identifier} "
+            f"elapsed_ms={elapsed_ms:.0f} input_tokens={input_tokens} "
+            f"output_tokens={output_tokens} stop_reason={stop_reason}",
+            flush=True,
+        )
 
         # Parse response
         response_text = message.content[0].text
