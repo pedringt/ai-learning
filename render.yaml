@@ -20,6 +20,8 @@ services:
         sync: false
       - key: STATE_PROVIDER
         value: anthropic
+      - key: STATE_DEMO_BOOTSTRAP
+        value: "1"
       - key: CLAUDE_MODEL
         value: claude-haiku-4-5-20251001
       - key: CLAUDE_MAX_TOKENS

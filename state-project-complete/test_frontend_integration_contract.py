@@ -97,3 +97,14 @@ def test_provider_failure_retry_reuses_saved_evidence():
     assert "retryEvidenceAnalysis" in JS
     assert "/api/evidence/${encodeURIComponent(evidenceId)}/reanalyze" in API_JS
     assert "Retry analysis without submitting it again" in JS
+
+
+def test_r8_long_project_and_open_items_scaling_contract():
+    app = (FRONTEND / "context-app.js").read_text(encoding="utf-8")
+    css = (FRONTEND / "context-tool.css").read_text(encoding="utf-8")
+    assert "waiting.slice(0,5)" in app
+    assert "toggle-open-questions" in app
+    assert "Questions related to active Reviews are surfaced first." in app
+    assert "projectGroup(item,id)" in app
+    assert "project-section-sticky" in app
+    assert ".app-sidebar{position:sticky" in css

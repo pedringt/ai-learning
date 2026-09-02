@@ -19,7 +19,8 @@ from database_migration_backed import initialize_db
 from db import connect
 from interpretation_pipeline_integrated import InterpretationProvider, new_id, process_evidence
 from openai_provider import OpenAIProvider
-STATE_BUILD_REV = "r7-hardening-2026-09-02"
+from seed_demo import bootstrap_demo_data
+STATE_BUILD_REV = "r8-scale-qa-2026-09-02"
 logger = logging.getLogger("state.api")
 
 from review_service import (
@@ -139,6 +140,9 @@ def create_app(settings: Settings | None = None, provider: InterpretationProvide
         logger.info("Starting build %s", STATE_BUILD_REV)
         with get_connection() as connection:
             initialize_db(connection)
+            if os.getenv("STATE_DEMO_BOOTSTRAP", "").strip().lower() in {"1", "true", "yes"}:
+                seeded = bootstrap_demo_data(connection)
+                logger.info("Demo bootstrap: %s", seeded)
         if app.state.provider is None:
             try:
                 app.state.provider = _provider_from_env(settings)

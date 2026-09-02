@@ -5,7 +5,7 @@
   const initial = clone(D);
   const state = {
     data: clone(D), view:'overview', result:null, resultQuery:'', projectMenuOpen:false, refinements:[], lastScenario:null,
-    addedSample:false, pendingCreated:false, reviewBannerDismissed:false, dialogReturnFocus:null, expandedNotes:new Set(), noteComposerOpen:false, editingNoteId:null, dismissedNudges:new Set(), projectNavOpen:false, hiddenProjectAreas:new Set(), historyTopic:null, notesFilter:'all', notesDateFilter:'all', notesSearch:'', isAnalyzing:false, reviewsBackendAvailable:false, questionsBackendAvailable:false
+    addedSample:false, pendingCreated:false, reviewBannerDismissed:false, dialogReturnFocus:null, expandedNotes:new Set(), noteComposerOpen:false, editingNoteId:null, dismissedNudges:new Set(), projectNavOpen:false, hiddenProjectAreas:new Set(), historyTopic:null, notesFilter:'all', notesDateFilter:'all', notesSearch:'', isAnalyzing:false, reviewsBackendAvailable:false, questionsBackendAvailable:false, openQuestionsExpanded:false
   };
 
   const root = document.getElementById('viewRoot');
@@ -64,6 +64,22 @@
   };
 
   function currentKnowledge(area){ return state.data.knowledge.filter(k=>k.state==='current' && (!area || k.projectArea===area)); }
+  function projectGroup(k,area){
+    const text=norm(`${k.title||''} ${k.statement||''} ${(k.topics||[]).join(' ')}`);
+    if(area==='product'){
+      if(/scope|pilot|tier 1|tier 2|password|login/.test(text)) return 'Scope';
+      if(/access|ground|knowledge|source/.test(text)) return 'Knowledge & access';
+      return 'Workflow';
+    }
+    if(area==='safety'){
+      if(/data|privacy|retention|slack/.test(text)) return 'Data & sources';
+      if(/human review|autonomy|sensitive|read.only|vip/.test(text)) return 'Control boundaries';
+      return 'Risk controls';
+    }
+    if(/launch|rollout|training|enablement/.test(text)) return 'Rollout';
+    if(/feedback|monitor|sample|metric|evaluation/.test(text)) return 'Measurement';
+    return 'Readiness';
+  }
   function projectFact(k){
     const pending=pendingFor(k.topics||[]);
     const hasHistory=state.data.history.some(h=>h.knowledgeId===k.id || h.state_item_id===k.id);
@@ -72,11 +88,25 @@
   function projectOutlineSection(id,a){
     const items=currentKnowledge(id);
     if(!items.length)return '';
-    return `<section class="project-outline-section" id="project-${id}"><h3>${esc(a.name)}</h3><p class="project-outline-description">${esc(a.description)}</p><ul class="project-outline-list">${items.map(projectFact).join('')}</ul></section>`;
+    const groups=new Map();
+    for(const item of items){const label=projectGroup(item,id);if(!groups.has(label))groups.set(label,[]);groups.get(label).push(item);}
+    const grouped=[...groups.entries()].map(([label,groupItems])=>`<div class="project-outline-group"><h4>${esc(label)}</h4><ul class="project-outline-list">${groupItems.map(projectFact).join('')}</ul></div>`).join('');
+    return `<section class="project-outline-section" id="project-${id}"><div class="project-section-sticky"><h3>${esc(a.name)}</h3></div><p class="project-outline-description">${esc(a.description)}</p>${grouped}</section>`;
+  }
+  function projectOrientation(){
+    const pilot=state.data.knowledge.find(k=>k.id==='k-pilot'&&k.state==='current');
+    const launch=state.data.knowledge.find(k=>k.id==='k-launch'&&k.state==='current');
+    const current=currentKnowledge();
+    return {
+      description: pilot ? `Current State is centered on ${pilot.statement.charAt(0).toLowerCase()+pilot.statement.slice(1)}${launch?` ${launch.statement}`:''}` : state.data.project.description,
+      direction: pilot?.statement || (current[0]?.statement || 'Reviewed project understanding will appear here as it is established.'),
+      count: current.length
+    };
   }
   function renderProjectOverview(){
     const visible=Object.entries(projectAreas).filter(([id])=>!state.hiddenProjectAreas.has(id));
-    root.innerHTML=`<article class="page project-page project-document"><header class="project-document-head" id="project-top"><span class="eyebrow">Current project</span><h2>${esc(state.data.project.name)}</h2><p>${esc(state.data.project.description)}</p><dl class="project-document-meta"><div><dt>Stage</dt><dd>${esc(state.data.project.stage)}</dd></div><div><dt>Outcome</dt><dd>${esc(state.data.project.outcome)}</dd></div></dl></header><div class="project-document-intro"><strong>Current direction</strong><p>Tier 1 troubleshooting assistance with human review.</p></div><div class="project-outline">${visible.map(([id,a])=>projectOutlineSection(id,a)).join('')||'<div class="empty-state"><h3>No Current State yet.</h3><p>Reviewed project understanding will appear here as a clean outline.</p></div>'}</div></article>`;    requestAnimationFrame(()=>updateProjectSubnavActive());
+    const orientation=projectOrientation();
+    root.innerHTML=`<article class="page project-page project-document"><header class="project-document-head" id="project-top"><span class="eyebrow">Current project</span><h2>${esc(state.data.project.name)}</h2><p>${esc(orientation.description)}</p><dl class="project-document-meta"><div><dt>Stage</dt><dd>${esc(state.data.project.stage)}</dd></div><div><dt>Outcome</dt><dd>${esc(state.data.project.outcome)}</dd></div><div><dt>Current State</dt><dd>${orientation.count} reviewed items</dd></div></dl></header><div class="project-document-intro"><strong>Current direction</strong><p>${esc(orientation.direction)}</p></div><div class="project-outline">${visible.map(([id,a])=>projectOutlineSection(id,a)).join('')||'<div class="empty-state"><h3>No Current State yet.</h3><p>Reviewed project understanding will appear here as a clean outline.</p></div>'}</div></article>`;    requestAnimationFrame(()=>updateProjectSubnavActive());
   }
   function renderProjectArea(area){
     const a=projectAreas[area]; if(!a)return renderProjectOverview(); const items=currentKnowledge(area);
@@ -516,8 +546,14 @@
     const reviews=pendingReviews();
     const questions=openQuestions();
     const blockers=questions.filter(q=>q.blocking);
-    const waiting=questions.filter(q=>!q.blocking);
-    root.innerHTML=`<section class="page collection-page open-items-page"><div class="page-head"><div><span class="eyebrow">What still needs attention</span><div class="review-title-row"><h2>Open Items</h2>${reviews.length?`<span class="count-badge review-page-count">${reviews.length}</span>`:''}</div><p>Decide what is ready now, see what is blocking progress, and keep important unknowns visible until new Notes answer them.</p></div><button class="btn secondary" data-action="add-question">+ Add question</button></div><section class="open-items-section open-items-reviews"><div class="open-items-section-head"><div><span class="open-items-kicker">Act now</span><h3>Needs your review${reviews.length?` · ${reviews.length}`:''}</h3><p>There is enough evidence to make a decision. Nothing changes Current State until you approve it.</p></div></div>${reviews.length?reviews.map(reviewCard).join(''):'<div class="open-items-empty">Nothing needs your decision right now.</div>'}</section>${blockers.length?`<section class="open-items-section"><div class="open-items-section-head"><div><span class="open-items-kicker">Needs an answer</span><h3>Blocking questions · ${blockers.length}</h3><p>These unresolved questions are tied to a known project dependency. They stay open until a Note supplies an answer, then move to Review.</p></div></div><div class="open-question-list">${blockers.map(questionCard).join('')}</div></section>`:''}<section class="open-items-section"><div class="open-items-section-head"><div><span class="open-items-kicker">Waiting to learn</span><h3>Open questions${waiting.length?` · ${waiting.length}`:''}</h3><p>Important unknowns that can sit quietly until relevant evidence arrives.</p></div></div>${waiting.length?`<div class="open-question-list">${waiting.map(questionCard).join('')}</div>`:'<div class="open-items-empty">No other open questions.</div>'}</section></section>`;
+    const waiting=questions.filter(q=>!q.blocking).sort((a,b)=>{
+      const reviewTopics=new Set(reviews.flatMap(r=>r.topics||[]));
+      const score=q=>(q.topics||[]).some(t=>reviewTopics.has(t))?1:0;
+      return score(b)-score(a) || String(b.createdISO||b.created||'').localeCompare(String(a.createdISO||a.created||''));
+    });
+    const visibleWaiting=state.openQuestionsExpanded?waiting:waiting.slice(0,5);
+    const remaining=Math.max(0,waiting.length-visibleWaiting.length);
+    root.innerHTML=`<section class="page collection-page open-items-page"><div class="page-head"><div><span class="eyebrow">What still needs attention</span><div class="review-title-row"><h2>Open Items</h2>${reviews.length?`<span class="count-badge review-page-count">${reviews.length}</span>`:''}</div><p>Decide what is ready now, see what is blocking progress, and keep important unknowns visible without turning this into another archive.</p></div><button class="btn secondary" data-action="add-question">+ Add question</button></div><section class="open-items-section open-items-reviews"><div class="open-items-section-head"><div><span class="open-items-kicker">Act now</span><h3>Needs your review${reviews.length?` · ${reviews.length}`:''}</h3><p>There is enough evidence to make a decision. Nothing changes Current State until you approve it.</p></div></div>${reviews.length?reviews.map(reviewCard).join(''):'<div class="open-items-empty">Nothing needs your decision right now.</div>'}</section>${blockers.length?`<section class="open-items-section"><div class="open-items-section-head"><div><span class="open-items-kicker">Needs an answer</span><h3>Blocking questions · ${blockers.length}</h3><p>Each blocker names the concrete project dependency it prevents. Uncertainty without a dependency stays an ordinary question.</p></div></div><div class="open-question-list">${blockers.map(questionCard).join('')}</div></section>`:''}<section class="open-items-section"><div class="open-items-section-head"><div><span class="open-items-kicker">Waiting to learn</span><h3>Open questions${waiting.length?` · ${waiting.length}`:''}</h3><p>Important unknowns that can sit quietly until relevant evidence arrives. Questions related to active Reviews are surfaced first.</p></div></div>${waiting.length?`<div class="open-question-list">${visibleWaiting.map(questionCard).join('')}</div>${waiting.length>5?`<button class="open-questions-more" data-action="toggle-open-questions" aria-expanded="${state.openQuestionsExpanded?'true':'false'}">${state.openQuestionsExpanded?'Show fewer questions':`Show ${remaining} more questions`} <span aria-hidden="true">${state.openQuestionsExpanded?'↑':'↓'}</span></button>`:''}`:'<div class="open-items-empty">No other open questions.</div>'}</section></section>`;
   }
 
   function renderQuestions(){ return renderOpenItems(); }
@@ -941,6 +977,7 @@
     const a=e.target.closest('[data-action]'); if(!a)return;
     const act=a.dataset.action;
     if(act==='ask-submit')submitAsk();
+    else if(act==='toggle-open-questions'){state.openQuestionsExpanded=!state.openQuestionsExpanded;renderOpenItems();}
     else if(act==='show-examples')showExamples();
     else if(act==='show-demo-help')showDemoHelp();
     else if(act==='example-prompt'){const q=a.dataset.prompt;closeDialog();state.view='overview';submitAsk(q);}
