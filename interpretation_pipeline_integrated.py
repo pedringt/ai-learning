@@ -14,6 +14,7 @@ Key differences from Phase 2's inline schema:
 from __future__ import annotations
 
 import json
+import sqlite3
 import inspect
 import uuid
 import sys
@@ -295,10 +296,6 @@ def process_evidence(
 
     All-or-nothing semantics: one invalid Review/Proposal rejects entire interpretation.
     """
-    # Set row factory for compatibility (Connection handles this appropriately)
-    from db import Row
-    connection.row_factory = Row
-
     evidence = connection.execute("SELECT id, content FROM evidence WHERE id=?", (evidence_id,)).fetchone()
     if evidence is None:
         raise KeyError(evidence_id)

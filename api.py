@@ -16,6 +16,8 @@ from database_migration_backed import initialize_db
 from db import connect
 from interpretation_pipeline_integrated import InterpretationProvider, new_id, process_evidence
 from openai_provider import OpenAIProvider
+STATE_BUILD_REV = "neon-repair-2026-09-02-r2"
+
 from review_service import (
     ReviewConflictError,
     ReviewNotFoundError,
@@ -28,9 +30,18 @@ from review_service import (
 
 class Settings(BaseModel):
     model_config = ConfigDict(extra="forbid")
-    database_url: str = "postgresql://localhost/state"
+    database_url: str | None = None
+    # Backward-compatible local/test path. Production should use DATABASE_URL.
+    database_path: str | None = None
     provider: Literal["anthropic", "openai"] = "anthropic"
     cors_origins: list[str] = []
+
+    def connection_url(self) -> str:
+        if self.database_url:
+            return self.database_url
+        if self.database_path:
+            return f"sqlite://{self.database_path}"
+        raise RuntimeError("No database configured")
 
     @classmethod
     def from_env(cls) -> "Settings":
@@ -85,7 +96,7 @@ def create_app(settings: Settings | None = None, provider: InterpretationProvide
     @contextmanager
     def get_connection():
         """Get a database connection using the unified abstraction."""
-        connection = connect(settings.database_url)
+        connection = connect(settings.connection_url())
         try:
             yield connection
         finally:
@@ -94,6 +105,7 @@ def create_app(settings: Settings | None = None, provider: InterpretationProvide
     @asynccontextmanager
     async def lifespan(_: FastAPI):
         """Initialize database on startup."""
+        print(f"[STATE] Starting build {STATE_BUILD_REV}", flush=True)
         with get_connection() as connection:
             initialize_db(connection)
         yield

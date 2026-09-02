@@ -15,13 +15,16 @@ from typing import Any, Protocol, Sequence, Iterator
 
 
 class Row(dict):
-    """Dict-like row supporting both dict and attribute access."""
+    """Mapping row with sqlite3.Row-compatible numeric indexing."""
     
     def __getitem__(self, key):
-        try:
-            return super().__getitem__(key)
-        except KeyError:
-            raise KeyError(key)
+        if isinstance(key, int):
+            values = tuple(self.values())
+            try:
+                return values[key]
+            except IndexError:
+                raise IndexError(key) from None
+        return super().__getitem__(key)
     
     def __getattr__(self, name):
         try:
@@ -60,13 +63,22 @@ class Connection:
     
     @row_factory.setter
     def row_factory(self, factory):
-        """Set row factory (for sqlite3 compatibility)."""
+        """Accept legacy row-factory assignments without breaking unified rows.
+
+        Callers historically set sqlite3.Row, None, or the compatibility Row
+        type.  The abstraction always exposes mapping rows, so SQLite must keep
+        sqlite3.Row underneath regardless of those legacy assignments.
+        """
         self._row_factory = factory
         if not self._is_postgres:
-            self._conn.row_factory = factory
+            self._conn.row_factory = sqlite3.Row
     
     def cursor(self) -> Cursor:
         """Get a new cursor."""
+        if not self._is_postgres:
+            # sqlite3 copies connection.row_factory when the cursor is created.
+            # Set it first so every cursor yields sqlite3.Row objects.
+            self._conn.row_factory = sqlite3.Row
         if self._is_postgres:
             import psycopg2.extras
             return self._wrap_psycopg2_cursor(
@@ -197,11 +209,8 @@ class Connection:
         class SQLite3CursorWrapper:
             def __init__(self, inner_cursor):
                 self.inner = inner_cursor
-                self.row_factory = sqlite3.Row
             
             def execute(self, query: str, params: Sequence = None):
-                # Ensure row_factory is set
-                self.inner.connection.row_factory = self.row_factory
                 # Execute as-is (sqlite3 uses ? natively)
                 self.inner.execute(query, params or ())
                 return self
@@ -210,12 +219,11 @@ class Connection:
                 row = self.inner.fetchone()
                 if row is None:
                     return None
-                # Convert sqlite3.Row to dict
-                return dict(row) if row else None
+                return Row(dict(row)) if row else None
             
             def fetchall(self):
                 rows = self.inner.fetchall()
-                return [dict(row) if row else None for row in rows]
+                return [Row(dict(row)) if row else None for row in rows]
             
             def close(self):
                 self.inner.close()
@@ -241,12 +249,11 @@ class Connection:
                 row = self.inner.fetchone()
                 if row is None:
                     return None
-                # psycopg2.extras.RealDictCursor already returns dicts
-                return dict(row) if row else None
+                return Row(dict(row)) if row else None
             
             def fetchall(self):
                 rows = self.inner.fetchall()
-                return [dict(row) if row else None for row in rows]
+                return [Row(dict(row)) if row else None for row in rows]
             
             def close(self):
                 self.inner.close()

@@ -64,6 +64,11 @@ def initialize_db(connection: Connection) -> None:
     Raises:
         RuntimeError: If migration files are missing or out of order
     """
+    # Preserve compatibility with callers that still pass a raw sqlite3
+    # connection while using the unified abstraction internally.
+    if not isinstance(connection, Connection):
+        connection = Connection(connection)
+
     # Detect database type
     is_postgres = connection._is_postgres
     

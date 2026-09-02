@@ -10,7 +10,7 @@ CREATE TABLE IF NOT EXISTS evidence (
     processing_status TEXT NOT NULL DEFAULT 'pending'
         CHECK (processing_status IN ('pending', 'processed', 'failed')),
     supersedes_evidence_id TEXT REFERENCES evidence(id),
-    submitted_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+    submitted_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Evidence immutability will be enforced at the application layer, not via database trigger
@@ -24,8 +24,8 @@ CREATE TABLE IF NOT EXISTS current_state_items (
         CHECK (status IN ('active', 'retired')),
     version INTEGER NOT NULL DEFAULT 1 CHECK (version >= 1),
     effective_date TEXT,
-    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE IF NOT EXISTS project_rules (
@@ -35,8 +35,8 @@ CREATE TABLE IF NOT EXISTS project_rules (
         CHECK (status IN ('active', 'retired')),
     rationale TEXT,
     version INTEGER NOT NULL DEFAULT 1 CHECK (version >= 1),
-    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    retired_at TEXT
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    retired_at TIMESTAMP
 );
 
 CREATE TABLE IF NOT EXISTS review_issues (
@@ -55,8 +55,8 @@ CREATE TABLE IF NOT EXISTS review_issues (
     ),
     resolution_note TEXT,
     prior_review_id TEXT REFERENCES review_issues(id),
-    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    resolved_at TEXT
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    resolved_at TIMESTAMP
 );
 
 CREATE TABLE IF NOT EXISTS interpretation_records (
@@ -70,7 +70,7 @@ CREATE TABLE IF NOT EXISTS interpretation_records (
         CHECK (processing_status IN ('succeeded', 'failed')),
     structured_result TEXT,
     error_code TEXT,
-    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CHECK (
         (processing_status = 'succeeded' AND structured_result IS NOT NULL AND error_code IS NULL)
         OR (processing_status = 'failed' AND error_code IS NOT NULL)
@@ -99,8 +99,8 @@ CREATE TABLE IF NOT EXISTS proposed_state_changes (
     status TEXT NOT NULL DEFAULT 'pending'
         CHECK (status IN ('pending', 'accepted', 'not_applied', 'superseded')),
     supersedes_proposal_id TEXT REFERENCES proposed_state_changes(id),
-    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    decided_at TEXT,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    decided_at TIMESTAMP,
     CHECK (
         (state_item_id IS NULL AND expected_state_version IS NULL)
         OR (state_item_id IS NOT NULL AND expected_state_version IS NOT NULL)
@@ -119,6 +119,6 @@ CREATE TABLE IF NOT EXISTS history_transitions (
     new_effective_date TEXT,
     from_version INTEGER,
     to_version INTEGER NOT NULL,
-    changed_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    changed_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CHECK (from_version IS NULL OR to_version = from_version + 1)
 );
