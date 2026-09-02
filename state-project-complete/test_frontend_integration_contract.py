@@ -265,3 +265,13 @@ def test_dialog_visibility_has_one_source_of_truth():
     assert "is-open" not in app
     assert ".overlay.is-open" not in css
     assert ".overlay[hidden]{display:none!important}" in css
+
+
+def test_ask_fixed_followup_reserves_answer_clearance_on_desktop_and_mobile():
+    css = (FRONTEND / "context-tool.css").read_text(encoding="utf-8")
+    app = (FRONTEND / "context-app.js").read_text(encoding="utf-8")
+    assert ".ask-followup{position:fixed" in css
+    assert ".unboxed-ask:has(.ask-session-row) .answer-stage{background:#fff" in css
+    assert "padding:26px 30px 100px" in css
+    assert ".unboxed-ask:has(.ask-session-row) .answer-stage{padding:20px 18px 96px}" in css
+    assert 'class="ask-followup"' in app
