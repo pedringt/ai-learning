@@ -374,3 +374,26 @@ body.v88-dark .project-section-sticky{background:color-mix(in srgb,#131218 94%,t
 .review-row-copy{display:grid}.review-card-title{display:block;font-size:14px;line-height:1.45;font-weight:800;color:var(--ink);margin-top:4px}.compact-review.is-expanded .review-card-title{font-size:14px}
 .notes-result-count{font-size:11px;color:var(--muted);font-weight:700;white-space:nowrap;margin-left:auto}
 @media(max-width:760px){.notes-result-count{margin-left:0}}
+
+/* R8.2 Open Items hierarchy + section collapse */
+.open-items-sections{display:grid;gap:16px;margin-top:4px}
+.open-items-section{padding:0!important;border:1px solid var(--line)!important;border-radius:10px;background:var(--surface);overflow:hidden}
+.open-items-section-head{width:100%;margin:0!important;padding:17px 18px!important;border:0;background:transparent;color:inherit;font:inherit;text-align:left;display:grid;grid-template-columns:1fr auto;gap:20px;align-items:center;cursor:pointer}
+.open-items-section-head:hover{background:var(--surface2)}
+.open-items-section-copy{display:grid;min-width:0}
+.open-items-section-title{font-size:16px;font-weight:850;color:var(--ink);margin:3px 0 4px}
+.open-items-section-count{display:inline-grid;place-items:center;min-width:22px;height:20px;padding:0 6px;margin-left:5px;border:1px solid var(--line);border-radius:999px;font-size:10.5px;vertical-align:2px;background:var(--surface2);color:var(--muted)}
+.open-items-section-description{font-size:11.5px;color:var(--muted);line-height:1.4}
+.open-items-section-chevron{font-size:16px;color:var(--muted);font-weight:850}
+.open-items-section-body{padding:0 18px 18px}
+.open-items-reviews{border-left:3px solid #d98a12!important}
+.open-items-reviews .open-items-kicker{color:#8a560d}
+.open-items-blockers{border-left:3px solid #b96535!important}
+.open-items-blockers .open-items-kicker{color:#9a4b18}
+.open-items-questions{border-left:3px solid color-mix(in srgb,var(--accent) 52%,var(--line))!important}
+.open-items-section.is-collapsed .open-items-section-head{padding-block:14px!important}
+.open-items-section.is-empty{opacity:.72}
+.open-items-section.is-empty .open-items-section-description{display:none}
+.open-items-section.is-empty .open-items-section-head{padding-block:12px!important}
+.open-items-section .review-card:first-child{margin-top:0}
+@media(max-width:760px){.open-items-sections{gap:12px}.open-items-section-head{padding:14px!important}.open-items-section-body{padding:0 14px 14px}.open-items-section-description{font-size:11px}}

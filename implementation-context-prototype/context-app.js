@@ -5,7 +5,7 @@
   const initial = clone(D);
   const state = {
     data: clone(D), view:'overview', result:null, resultQuery:'', projectMenuOpen:false, refinements:[], lastScenario:null,
-    addedSample:false, pendingCreated:false, reviewBannerDismissed:false, dialogReturnFocus:null, expandedNotes:new Set(), noteComposerOpen:false, editingNoteId:null, dismissedNudges:new Set(), projectNavOpen:false, hiddenProjectAreas:new Set(), historyTopic:null, notesFilter:'all', notesDateFilter:'all', notesSearch:'', isAnalyzing:false, reviewsBackendAvailable:false, questionsBackendAvailable:false, openQuestionsExpanded:false, expandedReviewId:null
+    addedSample:false, pendingCreated:false, reviewBannerDismissed:false, dialogReturnFocus:null, expandedNotes:new Set(), noteComposerOpen:false, editingNoteId:null, dismissedNudges:new Set(), projectNavOpen:false, hiddenProjectAreas:new Set(), historyTopic:null, notesFilter:'all', notesDateFilter:'all', notesSearch:'', isAnalyzing:false, reviewsBackendAvailable:false, questionsBackendAvailable:false, reviewsHydrated:false, openQuestionsExpanded:false, expandedReviewId:null, openItemSections:{reviews:false,blockers:false,questions:null}
   };
 
   const root = document.getElementById('viewRoot');
@@ -15,6 +15,7 @@
   const norm = s => String(s).toLowerCase().replace(/[’']/g,'').replace(/[^a-z0-9\s]/g,' ').replace(/\s+/g,' ').trim();
   const openQuestions = () => state.data.questions.filter(q => q.status === 'open' && (!state.questionsBackendAvailable || q.backendManaged));
   const pendingReviews = () => state.data.reviews.filter(r => r.status === 'pending' && (!state.reviewsBackendAvailable || r.backendReviewId));
+  const uiPendingReviews = () => (API && !state.reviewsHydrated) ? [] : pendingReviews();
   const accessUpdated = () => state.data.reviews.find(r => r.id==='r-access')?.status === 'update';
   const securityUpdated = () => state.data.reviews.find(r => r.id==='r-security')?.status === 'update';
   const todayISO = () => { const d=new Date(); const pad=n=>String(n).padStart(2,'0'); return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`; };
@@ -28,7 +29,7 @@
     const projectActive=state.view==='project-overview';
     const projectToggle=document.querySelector('.project-nav-toggle'); if(projectToggle) projectToggle.classList.toggle('active',projectActive);
     const sub=document.getElementById('projectSubnav'); if(sub) sub.hidden=!state.projectNavOpen; if(projectToggle) projectToggle.setAttribute('aria-expanded',state.projectNavOpen?'true':'false');
-    const actionCount=document.getElementById('openItemsActionCount'); if(actionCount){const n=pendingReviews().length;actionCount.textContent=n;actionCount.hidden=!n;}
+    const actionCount=document.getElementById('openItemsActionCount'); if(actionCount){const n=uiPendingReviews().length;actionCount.textContent=n;actionCount.hidden=!n;}
     document.querySelectorAll('[data-project-area]').forEach(b=>{
       const area=b.dataset.projectArea;
       b.hidden=state.hiddenProjectAreas.has(area)||currentKnowledge(area).length===0;
@@ -57,6 +58,11 @@
   }
 
   function render(){ updateNav(); const views={overview:renderOverview,notes:renderNotes,'open-items':renderOpenItems,questions:renderOpenItems,review:renderOpenItems,history:renderHistory,'project-overview':renderProjectOverview}; (views[state.view]||renderOverview)(); }
+
+  function scrollProjectTarget(target){
+    if(target==='project-top'){ window.scrollTo({top:0,behavior:'smooth'}); return; }
+    document.getElementById(target)?.scrollIntoView({behavior:'smooth',block:'start'});
+  }
 
 
   const projectAreas = {
@@ -121,7 +127,7 @@
 
   function renderOverview(){
     const resultBody = state.result ? (state.result.fallback ? fallbackResult() : state.result.intent ? intentAskHtml(state.result.intent) : state.result.structured ? structuredAskHtml(state.result.structured) : scenarioResult(state.result.scenario)) : '';
-    const reviewBanner = pendingReviews().length && !state.reviewBannerDismissed ? `<aside class="review-banner"><div><strong>${pendingReviews().length} items need review</strong><span>New information may change the project’s current understanding.</span></div><div><button class="text-button" data-view="open-items">Open Items →</button><button class="banner-close" data-action="dismiss-review-banner" aria-label="Dismiss review reminder">×</button></div></aside>` : '';
+    const reviewBanner = uiPendingReviews().length && !state.reviewBannerDismissed ? `<aside class="review-banner"><div><strong>${uiPendingReviews().length} items need review</strong><span>New information may change the project’s current understanding.</span></div><div><button class="text-button" data-view="open-items">Open Items →</button><button class="banner-close" data-action="dismiss-review-banner" aria-label="Dismiss review reminder">×</button></div></aside>` : '';
     root.innerHTML = `<section class="overview pristine">
       <section class="overview-heading"><div class="overview-heading-row"><div><h2>Northstar</h2></div><button class="btn primary overview-add" data-action="add-info">+ Add project update</button></div></section>
       ${reviewBanner}
@@ -564,8 +570,15 @@
     return `<button type="button" class="open-question-row${blocking?' is-blocking':''}" data-action="open-question" data-question-id="${q.id}" aria-label="Open question: ${esc(q.text)}"><span class="open-question-copy"><span class="open-item-label ${blocking?'blocking':'question'}">${blocking?'Blocking question':'Open question'}</span><span class="open-question-title">${esc(q.text)}</span><span class="open-question-meta">${esc(q.origin)}${q.created?` · ${esc(q.created)}`:''}${blocking&&q.blocks?` · Blocks: ${esc(q.blocks)}`:''}</span></span><span class="question-card-chevron" aria-hidden="true">›</span></button>`;
   }
 
+  function openItemSection(title,kicker,description,count,key,body,empty=false){
+    const defaultCollapsed=key==='questions' && count>5;
+    const stored=state.openItemSections[key];
+    const collapsed=stored===null?defaultCollapsed:!!stored;
+    return `<section class="open-items-section open-items-${key}${collapsed?' is-collapsed':''}${empty?' is-empty':''}"><button type="button" class="open-items-section-head" data-action="toggle-open-item-section" data-section="${key}" aria-expanded="${collapsed?'false':'true'}"><span class="open-items-section-copy"><span class="open-items-kicker">${esc(kicker)}</span><span class="open-items-section-title">${esc(title)} <span class="open-items-section-count">${count}</span></span><span class="open-items-section-description">${esc(description)}</span></span><span class="open-items-section-chevron" aria-hidden="true">${collapsed?'⌄':'⌃'}</span></button>${collapsed?'':`<div class="open-items-section-body">${body}</div>`}</section>`;
+  }
+
   function renderOpenItems(){
-    const reviews=pendingReviews();
+    const reviews=uiPendingReviews();
     const questions=openQuestions();
     const blockers=questions.filter(q=>q.blocking);
     const waiting=questions.filter(q=>!q.blocking).sort((a,b)=>{
@@ -575,7 +588,10 @@
     });
     const visibleWaiting=state.openQuestionsExpanded?waiting:waiting.slice(0,5);
     const remaining=Math.max(0,waiting.length-visibleWaiting.length);
-    root.innerHTML=`<section class="page collection-page open-items-page"><div class="page-head"><div><span class="eyebrow">What still needs attention</span><div class="review-title-row"><h2>Open Items</h2>${reviews.length?`<span class="count-badge review-page-count">${reviews.length}</span>`:''}</div><p>Decide what is ready now, see what is blocking progress, and keep important unknowns visible without turning this into another archive.</p></div><button class="btn secondary" data-action="add-question">+ Add question</button></div><section class="open-items-section open-items-reviews"><div class="open-items-section-head"><div><span class="open-items-kicker">Act now</span><h3>Needs your review${reviews.length?` · ${reviews.length}`:''}</h3><p>There is enough evidence to make a decision. Nothing changes Current State until you approve it.</p></div></div>${reviews.length?reviews.map(r=>reviewCard(r,reviews.length===1||state.expandedReviewId===r.id,true)).join(''):'<div class="open-items-empty">Nothing needs your decision right now.</div>'}</section>${blockers.length?`<section class="open-items-section"><div class="open-items-section-head"><div><span class="open-items-kicker">Needs an answer</span><h3>Blocking questions · ${blockers.length}</h3><p>Each blocker names the concrete project dependency it prevents. Uncertainty without a dependency stays an ordinary question.</p></div></div><div class="open-question-list">${blockers.map(questionCard).join('')}</div></section>`:''}<section class="open-items-section"><div class="open-items-section-head"><div><span class="open-items-kicker">Waiting to learn</span><h3>Open questions${waiting.length?` · ${waiting.length}`:''}</h3><p>Important unknowns that can sit quietly until relevant evidence arrives. Questions related to active Reviews are surfaced first.</p></div></div>${waiting.length?`<div class="open-question-list">${visibleWaiting.map(questionCard).join('')}</div>${waiting.length>5?`<button class="open-questions-more" data-action="toggle-open-questions" aria-expanded="${state.openQuestionsExpanded?'true':'false'}">${state.openQuestionsExpanded?'Show fewer questions':`Show ${remaining} more questions`} <span aria-hidden="true">${state.openQuestionsExpanded?'↑':'↓'}</span></button>`:''}`:'<div class="open-items-empty">No other open questions.</div>'}</section></section>`;
+    const reviewBody=reviews.length?reviews.map(r=>reviewCard(r,reviews.length===1||state.expandedReviewId===r.id,true)).join(''):'<div class="open-items-empty">Nothing needs your decision right now.</div>';
+    const blockerBody=blockers.length?`<div class="open-question-list">${blockers.map(questionCard).join('')}</div>`:'<div class="open-items-empty">Nothing is currently blocked on an answer.</div>';
+    const questionBody=waiting.length?`<div class="open-question-list">${visibleWaiting.map(questionCard).join('')}</div>${waiting.length>5?`<button class="open-questions-more" data-action="toggle-open-questions" aria-expanded="${state.openQuestionsExpanded?'true':'false'}">${state.openQuestionsExpanded?'Show fewer questions':`Show ${remaining} more questions`} <span aria-hidden="true">${state.openQuestionsExpanded?'↑':'↓'}</span></button>`:''}`:'<div class="open-items-empty">No other open questions.</div>';
+    root.innerHTML=`<section class="page collection-page open-items-page"><div class="page-head"><div><span class="eyebrow">What still needs attention</span><div class="review-title-row"><h2>Open Items</h2>${reviews.length?`<span class="count-badge review-page-count">${reviews.length}</span>`:''}</div><p>Decide what is ready now, see what is blocking progress, and keep important unknowns visible without turning this into another archive.</p></div><button class="btn secondary" data-action="add-question">+ Add question</button></div><div class="open-items-sections">${openItemSection('Needs your review','Act now','Decisions waiting on you. Current State changes only after you approve them.',reviews.length,'reviews',reviewBody,!reviews.length)}${openItemSection('Blocking questions','Resolve soon','A concrete project dependency is waiting on an answer.',blockers.length,'blockers',blockerBody,!blockers.length)}${openItemSection('Open questions','Keep in mind','Important unknowns that can wait for relevant evidence.',waiting.length,'questions',questionBody,!waiting.length)}</div></section>`;
   }
 
   function renderQuestions(){ return renderOpenItems(); }
@@ -882,6 +898,7 @@
       }
       if(openResult.status==='fulfilled'){
         state.reviewsBackendAvailable=true;
+        state.reviewsHydrated=true;
         replaceBackendOpenReviews(openPayload.items||[]);
         for(const raw of (openPayload.items||[])){
           const note=state.data.notes.find(n=>n.evidenceId===raw.evidence_id);
@@ -989,7 +1006,7 @@
     if(e.target.closest('[data-action="dismiss-review-banner"]')){ state.reviewBannerDismissed=true; renderOverview(); return; }
     if(e.target.closest('[data-action="dismiss-nudge"]')){ const btn=e.target.closest('[data-action="dismiss-nudge"]'); state.dismissedNudges.add(btn.dataset.nudge); renderReview(); return; }
     const toggleProject=e.target.closest('[data-action="toggle-project-nav"]'); if(toggleProject){state.projectNavOpen=true;if(state.view!=='project-overview'){state.view='project-overview';render();requestAnimationFrame(()=>document.getElementById('project-top')?.scrollIntoView({behavior:'smooth',block:'start'}));}else{updateNav();document.getElementById('project-top')?.scrollIntoView({behavior:'smooth',block:'start'});}return;}
-    const projectJump=e.target.closest('[data-project-jump]'); if(projectJump){const target=projectJump.dataset.projectJump;state.projectNavOpen=true;if(state.view!=='project-overview'){state.view='project-overview';render();requestAnimationFrame(()=>document.getElementById(target)?.scrollIntoView({behavior:'smooth',block:'start'}));}else{updateNav();updateProjectSubnavActive(target);document.getElementById(target)?.scrollIntoView({behavior:'smooth',block:'start'});}return;}
+    const projectJump=e.target.closest('[data-project-jump]'); if(projectJump){const target=projectJump.dataset.projectJump;state.projectNavOpen=true;if(state.view!=='project-overview'){state.view='project-overview';render();requestAnimationFrame(()=>scrollProjectTarget(target));}else{updateNav();updateProjectSubnavActive(target);scrollProjectTarget(target);}return;}
     const relatedReview=e.target.closest('[data-action="open-related-review"]'); if(relatedReview){ const r=state.data.reviews.find(x=>x.id===relatedReview.dataset.reviewId); if(r) showDialog(`<span class="eyebrow">Pending Review</span><h2 id="dialogTitle">Related evidence may affect this Current State</h2>${reviewCard(r,true,false)}`); return;}
         const topicHistory=e.target.closest('[data-action="view-topic-history"]'); if(topicHistory){state.historyTopic=topicHistory.dataset.knowledgeId;state.view='history';render();return;}
     const clearHistory=e.target.closest('[data-action="clear-history-topic"]'); if(clearHistory){state.historyTopic=null;renderHistory();return;}
@@ -999,6 +1016,7 @@
     const dateFilter=e.target.closest('.notes-date-filters [data-date-filter]'); if(dateFilter){ state.notesDateFilter=dateFilter.dataset.dateFilter; renderNotes(); return; }
     const noteFilter=e.target.closest('.notes-filters [data-filter]'); if(noteFilter){ state.notesFilter=noteFilter.dataset.filter; renderNotes(); return; }
     const reviewFilter=e.target.closest('.review-filters [data-review-filter]'); if(reviewFilter){ state.reviewFilter=reviewFilter.dataset.reviewFilter; renderReview(); return; }
+    const sectionToggle=e.target.closest('[data-action="toggle-open-item-section"]'); if(sectionToggle){ const key=sectionToggle.dataset.section; const reviews=uiPendingReviews(), questions=openQuestions(); const count=key==='reviews'?reviews.length:key==='blockers'?questions.filter(q=>q.blocking).length:questions.filter(q=>!q.blocking).length; const current=state.openItemSections[key]===null?(key==='questions'&&count>5):!!state.openItemSections[key]; state.openItemSections[key]=!current; renderOpenItems(); return; }
     const reviewToggle=e.target.closest('[data-action="toggle-review-card"]'); if(reviewToggle){ const id=reviewToggle.dataset.reviewId; state.expandedReviewId=state.expandedReviewId===id?null:id; renderOpenItems(); return; }
     const p=e.target.closest('[data-prompt]'); if(p){ submitAsk(p.dataset.prompt); return; }
     const a=e.target.closest('[data-action]'); if(!a)return;

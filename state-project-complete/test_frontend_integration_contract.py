@@ -82,7 +82,7 @@ def test_project_is_rendered_as_document_outline_not_area_card_dashboard():
 
 def test_project_subnav_scrolls_existing_document_without_rerender():
     assert "if(state.view!=='project-overview'){state.view='project-overview';render();" in JS
-    assert "else{updateNav();updateProjectSubnavActive(target);document.getElementById(target)?.scrollIntoView" in JS
+    assert "else{updateNav();updateProjectSubnavActive(target);scrollProjectTarget(target);}" in JS
     assert "setTimeout" not in JS or "data-project-jump" not in JS.split("setTimeout",1)[-1]
     assert "updateProjectSubnavActive" in JS
     assert "aria-current','location'" in JS
@@ -104,7 +104,7 @@ def test_r8_long_project_and_open_items_scaling_contract():
     css = (FRONTEND / "context-tool.css").read_text(encoding="utf-8")
     assert "waiting.slice(0,5)" in app
     assert "toggle-open-questions" in app
-    assert "Questions related to active Reviews are surfaced first." in app
+    assert "const reviewTopics=new Set(reviews.flatMap(r=>r.topics||[]));" in app
     assert "projectGroup(item,id)" in app
     assert "project-section-sticky" in app
     assert ".app-sidebar{position:sticky" in css
@@ -135,3 +135,25 @@ def test_r81_date_only_note_values_are_parsed_as_local_calendar_dates():
     assert "stamp=new Date(year,month-1,day)" in app
     assert "new Date().toISOString().slice(0,10)" not in app
     assert "notes-result-count" in app
+
+
+def test_r82_authoritative_review_counts_do_not_flash_fixture_values_before_hydration():
+    app = (FRONTEND / "context-app.js").read_text(encoding="utf-8")
+    assert "reviewsHydrated:false" in app
+    assert "const uiPendingReviews = () => (API && !state.reviewsHydrated) ? [] : pendingReviews();" in app
+    assert "state.reviewsHydrated=true" in app
+
+def test_r82_open_item_sections_are_collapsible_and_keep_attention_hierarchy():
+    app = (FRONTEND / "context-app.js").read_text(encoding="utf-8")
+    css = (FRONTEND / "context-tool.css").read_text(encoding="utf-8")
+    assert "openItemSections:{reviews:false,blockers:false,questions:null}" in app
+    assert "toggle-open-item-section" in app
+    assert "key==='questions' && count>5" in app
+    assert "Needs your review" in app and "Blocking questions" in app and "Open questions" in app
+    assert ".open-items-reviews" in css and ".open-items-blockers" in css and ".open-items-questions" in css
+
+def test_r82_project_overview_jump_uses_single_exact_top_scroll():
+    app = (FRONTEND / "context-app.js").read_text(encoding="utf-8")
+    assert "function scrollProjectTarget(target)" in app
+    assert "if(target==='project-top'){ window.scrollTo({top:0,behavior:'smooth'}); return; }" in app
+    assert "requestAnimationFrame(()=>scrollProjectTarget(target))" in app
