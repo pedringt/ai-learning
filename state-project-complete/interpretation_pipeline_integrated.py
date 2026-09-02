@@ -26,7 +26,6 @@ from typing import Any, Mapping, Protocol
 from db import Connection
 
 # Import Phase 2's validation logic unchanged
-import sys
 sys.path.insert(0, str(Path(__file__).resolve().parent / "phase2_current"))
 
 from state_spike.interpretation_validation import StructuredInterpretationSchemaError, validate_schema
@@ -57,6 +56,29 @@ class ProcessResult:
 
 def new_id(prefix: str) -> str:
     return f"{prefix}_{uuid.uuid4().hex[:12]}"
+
+
+def _normalize_review_text(value: str) -> str:
+    """Stable identity normalization for exact duplicate open Reviews."""
+    return " ".join((value or "").split()).casefold()
+
+
+def _matching_open_review_id(connection: Connection, recommendation: Mapping[str, Any]) -> str | None:
+    """Return an existing open Review for the exact same pending decision.
+
+    Providers are instructed to use update_existing, but software owns the
+    invariant that one exact pending human decision is represented once.
+    """
+    wanted = _normalize_review_text(recommendation["decision_question"])
+    rows = connection.execute(
+        "SELECT id, decision_question FROM review_issues "
+        "WHERE status='open' AND review_type=? ORDER BY created_at, id",
+        (recommendation["review_type"],),
+    ).fetchall()
+    for row in rows:
+        if _normalize_review_text(row["decision_question"]) == wanted:
+            return row["id"]
+    return None
 
 
 def capture_context(connection: Connection) -> InterpretationContextSnapshot:
@@ -120,6 +142,11 @@ def _persist_success(
     connection.row_factory = sqlite3.Row
     connection.execute("BEGIN IMMEDIATE")
     try:
+        # Serialize Review creation in PostgreSQL so two concurrent Evidence
+        # submissions cannot both create the same open human decision.
+        if getattr(connection, "is_postgres", False):
+            connection.execute("LOCK TABLE review_issues IN SHARE ROW EXCLUSIVE MODE")
+
         # Persist Interpretation Record with complete structured result
         connection.execute(
             "INSERT INTO interpretation_records(id, evidence_id, review_id, provider, model_identifier, contract_version, processing_status, structured_result, error_code) "
@@ -137,17 +164,25 @@ def _persist_success(
             ),
         )
 
-        # For each recommendation, create or link a Review and create Proposals
+        # For each recommendation, create or link a Review and create Proposals.
+        # A provider may mistakenly ask to create an exact duplicate of an
+        # already-open decision. Reuse it instead of exposing duplicate cards.
         for rec in payload["review_recommendations"]:
+            reused_existing = False
             if rec["review_action"] == "create":
-                review_id = new_id("review")
-                connection.execute(
-                    "INSERT INTO review_issues(id, review_type, decision_question, why_consequential, status) "
-                    "VALUES (?, ?, ?, ?, ?)",
-                    (review_id, rec["review_type"], rec["decision_question"], rec["why_consequential"], "open"),
-                )
+                review_id = _matching_open_review_id(connection, rec)
+                if review_id is None:
+                    review_id = new_id("review")
+                    connection.execute(
+                        "INSERT INTO review_issues(id, review_type, decision_question, why_consequential, status) "
+                        "VALUES (?, ?, ?, ?, ?)",
+                        (review_id, rec["review_type"], rec["decision_question"], rec["why_consequential"], "open"),
+                    )
+                else:
+                    reused_existing = True
             else:  # update_existing
                 review_id = rec["existing_review_id"]
+                reused_existing = True
                 # Re-check under the persistence transaction so a Review that
                 # was resolved while the provider was running cannot receive
                 # new Evidence or Proposals after resolution.
@@ -168,7 +203,8 @@ def _persist_success(
                         "review_type_mismatch", f"Review {review_id!r} changed type"
                     )
 
-            review_ids.append(review_id)
+            if review_id not in review_ids:
+                review_ids.append(review_id)
 
             # Link Evidence to Review
             connection.execute(
@@ -189,7 +225,7 @@ def _persist_success(
             for proposal in rec["proposed_changes"]:
                 supersedes_proposal_id = None
                 target_state_id = proposal.get("state_item_id")
-                if rec["review_action"] == "update_existing" and target_state_id is not None:
+                if reused_existing and target_state_id is not None:
                     prior_pending = connection.execute(
                         "SELECT id FROM proposed_state_changes "
                         "WHERE review_id=? AND state_item_id=? AND status='pending' "
@@ -202,6 +238,25 @@ def _persist_success(
                             "UPDATE proposed_state_changes SET status='superseded', decided_at=CURRENT_TIMESTAMP "
                             "WHERE review_id=? AND state_item_id=? AND status='pending'",
                             (review_id, target_state_id),
+                        )
+                elif reused_existing and target_state_id is None and proposal["operation"] == "create":
+                    # Repeated Evidence can refine the same missing-understanding
+                    # Review. Supersede an exact duplicate create proposal so an
+                    # acceptance cannot create the same State item twice.
+                    wanted_statement = " ".join((proposal.get("proposed_statement") or "").split()).casefold()
+                    create_rows = connection.execute(
+                        "SELECT id, proposed_statement FROM proposed_state_changes "
+                        "WHERE review_id=? AND state_item_id IS NULL AND operation='create' AND status='pending' "
+                        "ORDER BY created_at DESC, id DESC",
+                        (review_id,),
+                    ).fetchall()
+                    matching = [row for row in create_rows if " ".join(row["proposed_statement"].split()).casefold() == wanted_statement]
+                    if matching:
+                        supersedes_proposal_id = matching[0]["id"]
+                        connection.execute(
+                            "UPDATE proposed_state_changes SET status='superseded', decided_at=CURRENT_TIMESTAMP "
+                            "WHERE id=?",
+                            (supersedes_proposal_id,),
                         )
 
                 connection.execute(
@@ -320,6 +375,11 @@ def process_evidence(
         raise KeyError(evidence_id)
 
     context = capture_context(connection)
+    # Do not hold a PostgreSQL transaction open while waiting on the model.
+    # The exact authority snapshot is already captured in memory, and all
+    # mutable lifecycle/version facts are rechecked before persistence.
+    if getattr(connection, "is_postgres", False):
+        connection.commit()
     payload: Mapping[str, Any] | None = None
 
     try:
@@ -340,6 +400,8 @@ def process_evidence(
 
         # Semantic validation (references, versions, constraints)
         validate_semantics(payload, context=context, application_state=application_snapshot(connection))
+        if getattr(connection, "is_postgres", False):
+            connection.commit()
         print(f"[STATE] Semantic validation passed", flush=True)
 
     except StructuredInterpretationSchemaError as exc:

@@ -16,7 +16,7 @@ from database_migration_backed import initialize_db
 from db import connect
 from interpretation_pipeline_integrated import InterpretationProvider, new_id, process_evidence
 from openai_provider import OpenAIProvider
-STATE_BUILD_REV = "deep-review-2026-09-02-r3"
+STATE_BUILD_REV = "deep-review-2026-09-02-r4"
 
 from review_service import (
     ReviewConflictError,
@@ -121,7 +121,7 @@ def create_app(settings: Settings | None = None, provider: InterpretationProvide
 
     @app.get("/health")
     def health() -> dict:
-        return {"status": "ok"}
+        return {"status": "ok", "build": STATE_BUILD_REV}
 
     @app.post("/api/evidence", status_code=201)
     def interpret_evidence(payload: EvidenceInput, request: Request) -> dict:

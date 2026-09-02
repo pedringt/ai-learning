@@ -1,11 +1,11 @@
-V7 CHANGED FILES ONLY
+STATE R4 FULL QA REPOSITORY
 
-These are the source/config/test files changed from the v6 GitHub baseline to the v7 deep-hardened build.
+1. Unzip this package.
+2. Drag the CONTENTS into the root of the GitHub repository.
+3. Preserve the folder structure and allow matching files to replace existing files.
+4. Commit to main.
 
-IMPORTANT:
-- Upload the CONTENTS of this package into the root of the GitHub repository, preserving the folder structure.
-- Do not upload this README if you do not want it committed; it is only instructions.
-- GitHub's web uploader replaces files at matching paths but does not apply a .patch file.
-- The package does not include unchanged files.
+Expected backend startup marker:
+[STATE] Starting build deep-review-2026-09-02-r4
 
-After committing, Render/Vercel may auto-deploy from main.
+R4 includes startup consolidation of legacy duplicate open Reviews plus frontend/backend duplicate protections.

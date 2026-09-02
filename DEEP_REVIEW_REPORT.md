@@ -1,45 +1,59 @@
-# State Deep Review — 2026-09-02
+# State Full QA Review — 2026-09-02 (R4)
 
 ## Scope
 
-A full repository review was performed after repeated Render deployment failures. The review covered backend startup, database abstraction, migrations, transaction behavior, integrity constraints, concurrency paths, provider integration contracts, API/frontend integration, deployment configuration, dependencies, secret hygiene, stale files, and packaging structure.
+A full repository QA pass was completed after the live app exposed duplicate Review cards. The pass covered backend startup, database abstraction, migrations, integrity constraints, duplicate handling, transaction/concurrency behavior, review resolution, provider contracts, API behavior, frontend/backend hydration, deployment configuration, dependency pinning, source-secret hygiene, syntax/compile checks, stale artifacts, and packaging structure.
 
-## Critical issues found and fixed
+## Critical issues found and fixed across the deep-review work
 
-1. **Invalid psycopg2 monkey patch** — old code attempted to assign `connection.execute` to a C-extension connection object. The backend now uses the dedicated `db.Connection` wrapper.
-2. **Missing-file / nested-upload deployment risk** — prior patch packaging could leave the old `api.py` authoritative or omit `db.py`. The repaired repository keeps the complete backend dependency set together; the final distribution is packaged from repository root without an enclosing wrapper directory.
-3. **Import-time configuration crash** — importing `api.py` previously failed immediately when `DATABASE_URL` was absent. Import now succeeds; a missing database configuration still fails explicitly when a connection/startup is actually attempted.
-4. **Non-atomic migrations** — schema application and migration bookkeeping could diverge after a partial failure. Migrations now execute transactionally and roll back on failure.
-5. **SQLite/Postgres integrity mismatch** — SQLite foreign keys were not consistently enabled, allowing local behavior that PostgreSQL would reject. SQLite connections now enable foreign-key enforcement.
-6. **Evidence immutability only at application level** — immutable Evidence core fields are now protected by database triggers for both SQLite and PostgreSQL while processing-status updates remain permitted.
-7. **Review resolution race** — concurrency-critical review/state reads now use PostgreSQL row locking where appropriate.
-8. **Interpretation persistence TOCTOU race** — an existing Review is revalidated at persistence time so it cannot be resolved or materially changed while the model is running and then receive stale model output.
-9. **Seed script database mismatch** — the demo seed path now uses `DATABASE_URL`/the unified DB layer instead of silently targeting a local SQLite database when production uses Postgres.
-10. **Outdated Render Blueprint fields** — configuration was replaced with current `runtime`, `rootDir`, `autoDeployTrigger`, `healthCheckPath`, and env-var structure at repository root. Python is explicitly pinned to 3.14.3.
-11. **Unbounded dependency drift** — runtime dependencies are pinned to exact versions observed installing successfully in the current Render build environment.
-12. **Stale duplicate artifacts** — obsolete `.bak` files and the duplicate DB wrapper were removed; `.gitignore` now excludes local databases, virtual environments, caches, and env files.
-13. **Regression coverage gaps** — hardening tests were added for missing-env import behavior, foreign-key parity, Evidence immutability, PostgreSQL SQL conversion, and lifecycle revalidation during persistence.
+1. Invalid psycopg2 monkey patch was removed in favor of the dedicated `db.Connection` wrapper.
+2. Import-time database configuration crashes were removed; missing production configuration fails at startup/use instead of module import.
+3. Database migrations were made transactional and rollback-safe.
+4. SQLite foreign-key enforcement was enabled so local tests better match PostgreSQL integrity behavior.
+5. Evidence core immutability is enforced at the database layer on both SQLite and PostgreSQL.
+6. Review resolution and interpretation persistence use PostgreSQL locking/revalidation to block stale or concurrent mutations.
+7. Seed/demo database access was moved onto the same unified connection layer used by production.
+8. Render configuration was updated and Python/runtime dependencies were pinned.
+9. Stale backup/duplicate database-wrapper artifacts were removed and generated/local files are ignored.
+10. Frontend backend-review hydration now upserts by backend Review ID and removes stale backend Review copies instead of repeatedly appending cards.
+11. Backend `list_reviews` returns each Review once even when multiple Evidence items are linked.
+12. Repeated Evidence that recommends the same open human decision now reuses the existing Review instead of creating another card.
+13. Existing duplicate open Reviews are consolidated at database startup. Linked Evidence, affected State items, proposals, interpretation links, and prior-review links are preserved/moved to the keeper Review.
+14. Duplicate pending proposals merged into one Review are superseded so accepting the Review cannot apply the same change twice.
+15. A partial unique database index provides an additional backstop against exact duplicate open Review identities.
+16. Regression tests were added for duplicate creation, legacy duplicate consolidation, frontend backend-review upsert/hydration, missing-env import behavior, foreign-key parity, Evidence immutability, PostgreSQL SQL conversion, and lifecycle revalidation.
 
-## Validation completed
+## Final validation completed
 
-- Python suite: **132 passed, 3 skipped, 7 subtests passed**.
-- Frontend behavior suite: **78 passed, 0 failed**.
-- JavaScript syntax checks: passed for the prototype application/data files.
-- FastAPI lifecycle smoke test against SQLite: passed.
-- `GET /health`: **200** with `{"status":"ok"}`.
-- `GET /api/state`: **200** with an empty initialized state.
-- Source secret scan: no real API keys or database credentials found; only placeholder examples such as `sk-ant-...` remain in local-test instructions.
+- Python suite: **137 passed, 3 skipped, 7 subtests passed**.
+- Frontend behavior suite: **81 passed, 0 failed**.
+- Python `compileall`: passed.
+- JavaScript syntax checks: passed for all repository `.js` files.
+- FastAPI lifecycle smoke test against a persistent SQLite database containing legacy duplicate open Reviews: passed.
+- Legacy duplicate startup smoke test reduced two normalized duplicate open Reviews to exactly one.
+- `GET /health`: **200** and reports build `deep-review-2026-09-02-r4`.
+- `GET /api/state`: covered by the automated API suite and lifecycle smoke testing.
+- Source secret scan: no real API keys or database credentials were found; placeholder examples remain only in test/instruction text.
+- Package structure check: final ZIP is created from repository root with no enclosing wrapper directory.
 
-## What is not yet proven
+## Important remaining limitations / risks
 
-The audit environment has no outbound database access, so it cannot perform a live connection/migration/request test against the actual Neon Postgres instance. PostgreSQL-specific code paths and SQL conversion are covered by review and tests, but the next Render startup is still the first live Neon smoke test.
+### Live Neon cannot be exercised from this QA environment
+The audit environment cannot reach the user's actual Neon database. PostgreSQL behavior is covered by code review and automated tests, but the next Render startup is the live verification that the legacy duplicate cleanup and uniqueness backstop execute successfully against that specific database and data set.
 
-Likewise, Render's existing service-level GitHub auto-deploy webhook/authorization cannot be repaired from repository code alone. The root `render.yaml` now records the intended `main` branch, `state-project-complete` root directory, and commit-triggered auto deploy for Blueprint-managed use, but an already-created Render service may require its GitHub integration to be reauthorized separately if webhook delivery remains broken.
+### Public API has no real authentication layer
+The current API is suitable for a prototype/demo but should not be treated as a secured multi-user production system. CORS is not authentication. If the Render API is publicly reachable, an arbitrary client can call Evidence and Review endpoints directly, including endpoints that can incur model cost or resolve Reviews. Before production use with real users/data, add real identity/authorization (not a shared secret embedded in frontend JavaScript) plus abuse/rate controls.
+
+### Provider variants are not live-tested here
+The production-configured Anthropic path has contract/unit coverage but cannot make a live provider call from this QA environment. The alternate OpenAI provider is retained but is not the production path and likewise is not live-tested in this pass.
+
+### Existing Render/GitHub webhook authorization is service-level state
+Repository configuration records the intended `main` branch, `state-project-complete` root, and commit-triggered auto-deploy. A pre-existing Render service's GitHub webhook/app authorization is external service state and cannot be fully validated from repository files alone. The user's later successful auto-deploy indicates the connection was functioning at that point.
 
 ## Deployment identity
 
-The backend emits this startup marker:
+The backend emits:
 
-`[STATE] Starting build deep-review-2026-09-02-r3`
+`[STATE] Starting build deep-review-2026-09-02-r4`
 
-Seeing that marker in Render proves the audited `api.py` is the code being executed.
+A successful R4 startup should also consolidate any legacy exact-normalized duplicate open Reviews before the API begins serving requests.

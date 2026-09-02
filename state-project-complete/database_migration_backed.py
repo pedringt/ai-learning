@@ -52,6 +52,99 @@ def _migration_statements(path: Path) -> list[str]:
     return [statement.strip() for statement in sql.split(";") if statement.strip()]
 
 
+def _normalize_review_text(value: str) -> str:
+    return " ".join((value or "").split()).casefold()
+
+
+def _consolidate_duplicate_open_reviews(connection: Connection) -> None:
+    """Merge exact duplicate open Reviews and all of their linked records.
+
+    Older production builds could create a new Review for the same pending
+    decision when repeated Evidence arrived. This startup repair is deliberately
+    conservative: only exact normalized decision-question + review-type matches
+    are merged.
+    """
+    rows = connection.execute(
+        "SELECT id, review_type, decision_question, created_at FROM review_issues "
+        "WHERE status='open' ORDER BY created_at, id"
+    ).fetchall()
+    keepers: dict[tuple[str, str], str] = {}
+    duplicate_to_keeper: dict[str, str] = {}
+    for row in rows:
+        key = (row["review_type"], _normalize_review_text(row["decision_question"]))
+        keeper = keepers.get(key)
+        if keeper is None:
+            keepers[key] = row["id"]
+        else:
+            duplicate_to_keeper[row["id"]] = keeper
+
+    for duplicate_id, keeper_id in duplicate_to_keeper.items():
+        for evidence in connection.execute(
+            "SELECT evidence_id FROM review_evidence WHERE review_id=?", (duplicate_id,)
+        ).fetchall():
+            connection.execute(
+                "INSERT OR IGNORE INTO review_evidence(review_id, evidence_id) VALUES (?, ?)",
+                (keeper_id, evidence["evidence_id"]),
+            )
+        for state in connection.execute(
+            "SELECT state_item_id FROM review_state_items WHERE review_id=?", (duplicate_id,)
+        ).fetchall():
+            connection.execute(
+                "INSERT OR IGNORE INTO review_state_items(review_id, state_item_id) VALUES (?, ?)",
+                (keeper_id, state["state_item_id"]),
+            )
+
+        connection.execute(
+            "UPDATE proposed_state_changes SET review_id=? WHERE review_id=?",
+            (keeper_id, duplicate_id),
+        )
+        connection.execute(
+            "UPDATE interpretation_records SET review_id=? WHERE review_id=?",
+            (keeper_id, duplicate_id),
+        )
+        connection.execute(
+            "UPDATE review_issues SET prior_review_id=? WHERE prior_review_id=?",
+            (keeper_id, duplicate_id),
+        )
+        connection.execute("DELETE FROM review_issues WHERE id=?", (duplicate_id,))
+
+    # Once duplicate Reviews are merged, collapse duplicate pending proposals
+    # that would otherwise apply the same change twice on acceptance.
+    for keeper_id in set(duplicate_to_keeper.values()):
+        pending = connection.execute(
+            "SELECT id, operation, state_item_id, proposed_statement, created_at "
+            "FROM proposed_state_changes WHERE review_id=? AND status='pending' "
+            "ORDER BY created_at DESC, id DESC",
+            (keeper_id,),
+        ).fetchall()
+        seen: set[tuple[str, str, str]] = set()
+        for proposal in pending:
+            if proposal["state_item_id"] is not None:
+                key = (proposal["operation"], proposal["state_item_id"], "")
+            else:
+                key = (
+                    proposal["operation"],
+                    "",
+                    _normalize_review_text(proposal["proposed_statement"]),
+                )
+            if key in seen:
+                connection.execute(
+                    "UPDATE proposed_state_changes SET status='superseded', decided_at=CURRENT_TIMESTAMP "
+                    "WHERE id=?",
+                    (proposal["id"],),
+                )
+            else:
+                seen.add(key)
+
+
+def _install_open_review_uniqueness(connection: Connection) -> None:
+    """Database backstop: one exact normalized open decision per review type."""
+    connection.execute(
+        "CREATE UNIQUE INDEX IF NOT EXISTS uq_open_review_identity "
+        "ON review_issues(review_type, lower(trim(decision_question))) WHERE status='open'"
+    )
+
+
 def _install_evidence_immutability(connection: Connection) -> None:
     """Protect immutable Evidence fields while allowing processing_status updates."""
     if connection.is_postgres:
@@ -132,6 +225,8 @@ def initialize_db(connection: Connection) -> None:
     # databases receive the protection on their next startup too.
     connection.execute("BEGIN IMMEDIATE")
     try:
+        _consolidate_duplicate_open_reviews(connection)
+        _install_open_review_uniqueness(connection)
         _install_evidence_immutability(connection)
         connection.execute("COMMIT")
     except Exception:

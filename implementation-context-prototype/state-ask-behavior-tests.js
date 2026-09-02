@@ -76,4 +76,13 @@ check('history preserves transition',api.intentAskHtml(api.detectAskIntent('How 
 // Regression: unrelated evidence should not alter automation answer.
 data.notes.unshift({id:'n-unrelated',title:'Training note',text:'Training deck needs screenshots.',source:'Support',date:'Aug 29',dateISO:'2026-08-29',topics:['operations'],status:'draft'});
 check('unrelated note does not alter automation answer',/25% autonomous resolution is the accepted pilot target/.test(api.intentAskHtml(api.detectAskIntent('What is the automation target?'))));
+// Backend review UI regression: receiving the same backend Review again must
+// update the existing card, not append a duplicate card.
+const backendReview={id:'review-backend-1',backendReviewId:'review-backend-1',status:'pending',title:'More understanding is needed',summary:'Should Current State represent temporary entitlements separately?',topics:['feature-access'],proposals:[]};
+api.upsertBackendReview({...backendReview,evidence:'first'});
+api.upsertBackendReview({...backendReview,evidence:'second'});
+check('same backend review id is upserted instead of duplicated',api.state.data.reviews.filter(r=>r.id==='review-backend-1').length===1);
+check('backend review upsert refreshes latest evidence',api.state.data.reviews.find(r=>r.id==='review-backend-1')?.evidence==='second');
+api.replaceBackendOpenReviews([]);
+check('backend hydration removes stale backend review copies',!api.state.data.reviews.some(r=>r.backendReviewId==='review-backend-1'));
 console.log(`\n${pass} passed, ${fail} failed`); if(fail)process.exit(1);

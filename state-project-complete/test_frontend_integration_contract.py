@@ -43,3 +43,18 @@ def test_backend_state_sync_reconciles_retired_items():
     assert 'const activeIds=new Set' in JS
     assert "k.backendManaged && !activeIds.has(k.id)" in JS
     assert 'k.backendManaged=true' in JS
+
+
+def test_backend_review_results_are_upserted_not_blindly_appended():
+    assert "function upsertBackendReview" in JS
+    assert "apiReviews.forEach(r=>{r.evidenceId=noteId; upsertBackendReview(r);});" in JS
+    assert "hydrateBounceFromApi" not in JS
+
+
+def test_hydration_reconciles_stale_backend_reviews():
+    assert "function replaceBackendOpenReviews" in JS
+    assert "replaceBackendOpenReviews(payload.items||[])" in JS
+
+
+def test_frontend_hides_superseded_proposals_from_open_review_card():
+    assert "const proposals=(r.proposals||[]).filter(p=>!p.status || p.status==='pending');" in JS

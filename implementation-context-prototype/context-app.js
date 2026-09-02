@@ -509,7 +509,7 @@
         updateNav(); render(); showDecisionComplete(decision);
         // Refetch open reviews from backend to clear stale UI elements and ensure
         // duplicates or stale copies don't linger. Use a small delay to avoid race conditions.
-        setTimeout(() => hydrateBounceFromApi(), 300);
+        setTimeout(() => hydrateBackend(), 300);
       }catch(e){
         showDialog(`<span class="eyebrow">Couldn’t complete review</span><h2 id="dialogTitle">Nothing was changed.</h2><p>${esc(e.message)}</p><div class="dialog-actions"><button class="btn primary" data-action="close-dialog">Close</button></div>`);
       }
@@ -564,8 +564,23 @@
     return proposals.map(p=>p.operation==='retire' ? `Retire current understanding${p.state_item_id?` (${p.state_item_id})`:''}` : p.proposed_statement).join(' • ');
   }
 
+  function upsertBackendReview(review){
+    const existingIndex=state.data.reviews.findIndex(x=>x.id===review.id);
+    if(existingIndex>=0){
+      state.data.reviews[existingIndex]={...state.data.reviews[existingIndex],...review};
+      return state.data.reviews[existingIndex];
+    }
+    state.data.reviews.unshift(review);
+    return review;
+  }
+
+  function replaceBackendOpenReviews(rawReviews){
+    const openIds=new Set((rawReviews||[]).map(r=>r.id));
+    state.data.reviews=state.data.reviews.filter(r=>!r.backendReviewId || openIds.has(r.backendReviewId));
+  }
+
   function mapApiReview(r, fallbackEvidence='', extras={}){
-    const proposals=r.proposals||[];
+    const proposals=(r.proposals||[]).filter(p=>!p.status || p.status==='pending');
     const affected=r.affected_state_items||[];
     const current=affected.length
       ? affected.map(x=>x.statement).join(' • ')
@@ -675,15 +690,15 @@
       if(stateResponse.ok){ const payload=await stateResponse.json(); syncApiState(payload.items||[]); }
       if(openResponse.ok){
         const payload=await openResponse.json();
+        replaceBackendOpenReviews(payload.items||[]);
         for(const raw of (payload.items||[])){
-          if(state.data.reviews.some(r=>r.id===raw.id))continue;
           let note=state.data.notes.find(n=>n.evidenceId===raw.evidence_id);
           if(!note){
             const noteId=`api-note-${raw.evidence_id}`;
             note={id:noteId,title:'Submitted evidence',text:raw.evidence_content||'',source:(raw.evidence_source_type||'manual_note').startsWith('question_response:')?'Question response':'Update',date:demoDate,dateISO:demoDateISO,topics:[],status:'pending',reviewId:raw.id,evidenceId:raw.evidence_id};
             state.data.notes.unshift(note);
           }
-          const mapped=mapApiReview(raw,raw.evidence_content||''); mapped.evidenceId=note.id; state.data.reviews.unshift(mapped);
+          const mapped=mapApiReview(raw,raw.evidence_content||''); mapped.evidenceId=note.id; upsertBackendReview(mapped);
         }
       }
       if(resolvedResponse.ok){
@@ -728,7 +743,7 @@
       const stamp=Date.now(), noteId='n-'+stamp;
       const apiReviews=(result.reviews||[]).map(r=>mapApiReview(r,text));
       state.data.notes.unshift({id:noteId,title:'Project update',text,source:'Update',date:demoDate,dateISO:demoDateISO,topics:[],status:apiReviews.length?'pending':'reviewed',reviewId:apiReviews[0]?.id||null,evidenceId:result.evidence_id});
-      apiReviews.forEach(r=>{r.evidenceId=noteId; state.data.reviews.unshift(r);});
+      apiReviews.forEach(r=>{r.evidenceId=noteId; upsertBackendReview(r);});
       state.reviewBannerDismissed=false;
       state.isAnalyzing=false; stopAnalysisClock();
       updateNav();
@@ -757,7 +772,7 @@
       const result=await submitEvidence(n.text,'working_note');
       const apiReviews=(result.reviews||[]).map(r=>mapApiReview(r,n.text));
       n.status=apiReviews.length?'pending':'reviewed'; n.reviewId=apiReviews[0]?.id||null; n.evidenceId=result.evidence_id;
-      apiReviews.forEach(r=>{r.evidenceId=n.id; state.data.reviews.unshift(r);});
+      apiReviews.forEach(r=>{r.evidenceId=n.id; upsertBackendReview(r);});
       state.reviewBannerDismissed=false; state.isAnalyzing=false; stopAnalysisClock(); updateNav();
       if(apiReviews.length) showDialog(`<span class="eyebrow">Done</span><h2 id="dialogTitle">Note sent to Review</h2><p>${apiReviews.length===1?'One review needs your decision.':`${apiReviews.length} reviews need your decisions.`}</p><div class="dialog-actions"><button class="btn primary" data-action="go-review">Go to Review</button><button class="btn secondary" data-action="go-notes">Back to Notes</button></div>`);
       else showDialog(`<span class="eyebrow">Done</span><h2 id="dialogTitle">Note reviewed</h2><p>This note did not require a change to Current State.</p><div class="dialog-actions"><button class="btn primary" data-action="go-notes">Back to Notes</button></div>`);
@@ -829,7 +844,7 @@
           const stamp=Date.now(), noteId='n-q-'+stamp;
           const apiReviews=(result.reviews||[]).map(r=>mapApiReview(r,text,{resolvesQuestionId:q.id}));
           state.data.notes.unshift({id:noteId,title:'Answer to: '+q.text,text,source:'Question response',date:demoDate,dateISO:demoDateISO,topics:q.topics,status:apiReviews.length?'pending':'reviewed',reviewId:apiReviews[0]?.id||null,evidenceId:result.evidence_id});
-          apiReviews.forEach(r=>{r.evidenceId=noteId; state.data.reviews.unshift(r);});
+          apiReviews.forEach(r=>{r.evidenceId=noteId; upsertBackendReview(r);});
           state.reviewBannerDismissed=false; state.isAnalyzing=false; stopAnalysisClock(); updateNav();
           if(apiReviews.length) showDialog(`<span class="eyebrow">Added</span><h2 id="dialogTitle">Answer sent to Review.</h2><p>The question stays unresolved until you accept reviewed evidence that establishes an answer.</p><div class="dialog-actions"><button class="btn primary" data-action="go-review">Go to Review</button></div>`);
           else showDialog(`<span class="eyebrow">Reviewed</span><h2 id="dialogTitle">The question stays open.</h2><p>The evidence did not produce a State change, so it was not enough to resolve this question.</p><div class="dialog-actions"><button class="btn primary" data-action="close-dialog">Done</button></div>`);
@@ -876,7 +891,7 @@
   });
   document.addEventListener('click',e=>{ if(state.projectMenuOpen && !e.target.closest('.sidebar-project') && !e.target.closest('[data-action="toggle-projects"]')){state.projectMenuOpen=false;updateNav();} });
   overlay.addEventListener('click',e=>{if(e.target===overlay && !state.isAnalyzing) closeDialog();});
-  window.STATE_ASK_TEST_API={state,detectAskIntent,findScenario,structuredAskResult,scenarioResult,intentAskHtml,submitAsk};
+  window.STATE_ASK_TEST_API={state,detectAskIntent,findScenario,structuredAskResult,scenarioResult,intentAskHtml,submitAsk,upsertBackendReview,replaceBackendOpenReviews,mapApiReview};
   render();
   hydrateBackend();
 })();
