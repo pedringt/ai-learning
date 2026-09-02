@@ -215,9 +215,11 @@ def _persist_failure(
             "error_message": error_message,
             "payload_preview": str(payload)[:500] if payload else None,
         }, sort_keys=True)
+        print(f"[PERSIST] Storing error details: {error_details[:200]}", flush=True)
 
     connection.execute("BEGIN IMMEDIATE")
     try:
+        print(f"[PERSIST] Inserting interpretation record {record_id} with error_code {error_code}", flush=True)
         connection.execute(
             "INSERT INTO interpretation_records(id, evidence_id, review_id, provider, model_identifier, contract_version, processing_status, structured_result, error_code) "
             "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
@@ -233,9 +235,13 @@ def _persist_failure(
                 error_code,
             ),
         )
+        print(f"[PERSIST] Inserted interpretation record", flush=True)
         connection.execute("UPDATE evidence SET processing_status=? WHERE id=?", ("failed", evidence_id))
+        print(f"[PERSIST] Updated evidence status", flush=True)
         connection.execute("COMMIT")
-    except Exception:
+        print(f"[PERSIST] Committed transaction", flush=True)
+    except Exception as e:
+        print(f"[ERROR] Database error in _persist_failure: {type(e).__name__}: {str(e)}", flush=True)
         connection.execute("ROLLBACK")
         raise
 
@@ -269,28 +275,34 @@ def process_evidence(
 
     try:
         # Invoke provider with captured context
+        print(f"[STATE] Invoking provider for evidence {evidence_id}", flush=True)
         interpret_parameters = inspect.signature(provider.interpret).parameters
         provider_kwargs = {"context": context, "evidence": dict(evidence)}
         if "connection" in interpret_parameters:
             provider_kwargs["connection"] = connection
         payload = provider.interpret(**provider_kwargs)
+        print(f"[STATE] Provider returned payload", flush=True)
 
         # Structural validation (JSON Schema)
         validate_schema(payload)
+        print(f"[STATE] Schema validation passed", flush=True)
 
         # Semantic validation (references, versions, constraints)
         validate_semantics(payload, context=context, application_state=application_snapshot(connection))
+        print(f"[STATE] Semantic validation passed", flush=True)
 
-    except StructuredInterpretationSchemaError:
+    except StructuredInterpretationSchemaError as exc:
+        print(f"[ERROR] Schema validation failed: {exc}", flush=True)
         return _persist_failure(
             connection,
             evidence_id=evidence_id,
             provider=provider,
             payload=payload,
             error_code="schema_violation",
-            error_message="Response structure did not match required schema",
+            error_message=f"Response structure did not match required schema: {str(exc)}",
         )
     except StructuredInterpretationSemanticError as exc:
+        print(f"[ERROR] Semantic validation failed: {exc.code}: {exc}", flush=True)
         return _persist_failure(
             connection,
             evidence_id=evidence_id,
@@ -303,13 +315,15 @@ def process_evidence(
         # Capture full error details
         error_msg = f"{type(exc).__name__}: {str(exc)}"
         tb = traceback.format_exc()
+        full_error = f"{error_msg}\n\n{tb}"
+        print(f"[ERROR] Provider error: {full_error}", flush=True)
         return _persist_failure(
             connection,
             evidence_id=evidence_id,
             provider=provider,
             payload=payload,
             error_code="provider_error",
-            error_message=f"{error_msg}\n\n{tb}",
+            error_message=full_error,
         )
 
     return _persist_success(connection, evidence_id=evidence_id, provider=provider, payload=payload)
