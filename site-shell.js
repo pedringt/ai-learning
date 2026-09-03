@@ -30,3 +30,5 @@
     });
   });
 })();
+/* State subnav clicks intentionally start the destination page at the top. */
+(()=>{const k='state-case-nav-top';document.querySelectorAll('.case-system-page > .meridian-section-nav a').forEach(a=>a.addEventListener('click',()=>sessionStorage.setItem(k,'1')));const reset=()=>{if(sessionStorage.getItem(k)==='1'){sessionStorage.removeItem(k);requestAnimationFrame(()=>window.scrollTo(0,0));}};window.addEventListener('pageshow',reset);reset();})();
