@@ -8,7 +8,7 @@ from api import Settings, create_app
 from database_migration_backed import initialize_db
 from db import connect
 from seed_demo import bootstrap_demo_data
-from ask_service import run_ask
+from ask_service import run_ask, _selection_from_raw
 
 
 class FakeAskProvider:
@@ -373,3 +373,41 @@ def test_openai_model_env_selects_benchmark_model(monkeypatch):
     provider = api._provider_from_env(settings)
     assert provider.name == "openai"
     assert provider.model_identifier == "gpt-4.1-mini"
+
+
+def test_ask_provider_over_selection_is_bounded_before_contract_validation(tmp_path):
+    conn = seeded_connection(tmp_path)
+    try:
+        rows = conn.execute("SELECT id FROM current_state_items ORDER BY id").fetchall()
+        all_state_ids = [row["id"] for row in rows]
+        preferred = ["k-data", "k-security", "k-pilot"]
+        overlong = preferred + [sid for sid in all_state_ids if sid not in preferred][:10]
+        assert len(overlong) == 13
+        provider = FakeAskProvider(selection={
+            "job": "meeting_prep",
+            "state_ids": overlong,
+            "review_ids": [],
+            "blocking_question_ids": ["q-retention"],
+            "question_ids": [],
+            "history_ids": [],
+            "evidence_ids": ["ask-evidence-security-meeting"],
+        })
+        normalized = _selection_from_raw(provider.selection)
+        assert len(normalized.state_ids) == 12
+        assert normalized.state_ids == overlong[:12]
+        result = run_ask(conn, provider, "Summarize the project for the security meeting.")
+        assert len(result["selection"]["state_ids"]) <= 12
+    finally:
+        conn.close()
+
+
+def test_selector_json_schema_declares_contract_cardinality_limits():
+    from ask_contract import SELECTOR_JSON_SCHEMA
+
+    props = SELECTOR_JSON_SCHEMA["properties"]
+    assert props["state_ids"]["maxItems"] == 12
+    assert props["review_ids"]["maxItems"] == 8
+    assert props["blocking_question_ids"]["maxItems"] == 8
+    assert props["question_ids"]["maxItems"] == 10
+    assert props["history_ids"]["maxItems"] == 12
+    assert props["evidence_ids"]["maxItems"] == 12

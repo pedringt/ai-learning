@@ -185,6 +185,32 @@ Candidate records:
 Return only IDs from the supplied candidates in the required JSON schema."""
 
 
+_SELECTION_LIMITS = {
+    "state_ids": 12,
+    "review_ids": 8,
+    "blocking_question_ids": 8,
+    "question_ids": 10,
+    "history_ids": 12,
+    "evidence_ids": 12,
+}
+
+
+def _selection_from_raw(raw: Mapping[str, Any]) -> AskSelection:
+    """Normalize provider cardinality before strict contract validation.
+
+    Structured-output schemas should keep providers inside these bounds, but
+    software remains the final enforcement layer. Preserve provider ordering
+    while deduplicating and trimming excess IDs.
+    """
+    data = dict(raw)
+    for field, limit in _SELECTION_LIMITS.items():
+        values = data.get(field, [])
+        if not isinstance(values, list):
+            continue
+        data[field] = list(dict.fromkeys(values))[:limit]
+    return AskSelection.model_validate(data)
+
+
 def _validate_selection(selection: AskSelection, candidates: Mapping[str, list[dict]]) -> AskSelection:
     by_type = {k: {x["id"]: x for x in v} for k, v in candidates.items() if k != "rules"}
     fields = {
@@ -201,7 +227,9 @@ def _validate_selection(selection: AskSelection, candidates: Mapping[str, list[d
     # is mandatory context, regardless of model relevance judgment.
     selected_state = set(data["state_ids"])
     mandatory_reviews = [r["id"] for r in candidates["reviews"] if selected_state.intersection(r.get("affected_state_ids", []))]
-    data["review_ids"] = list(dict.fromkeys(data["review_ids"] + mandatory_reviews))
+    # Mandatory authority context wins over model-selected optional context
+    # when the bounded contract is full.
+    data["review_ids"] = list(dict.fromkeys(mandatory_reviews + data["review_ids"]))[:_SELECTION_LIMITS["review_ids"]]
 
     # A selected Review may explicitly resolve/track a known Question. Preserve
     # that relationship so meeting prep cannot surface the Review while hiding
@@ -213,7 +241,7 @@ def _validate_selection(selection: AskSelection, candidates: Mapping[str, list[d
         if not question:
             continue
         field = "blocking_question_ids" if question["blocking"] else "question_ids"
-        data[field] = list(dict.fromkeys(data[field] + [qid]))
+        data[field] = list(dict.fromkeys([qid] + data[field]))[:_SELECTION_LIMITS[field]]
     return AskSelection.model_validate(data)
 
 
@@ -391,14 +419,14 @@ def run_ask(connection: Any, provider: AskProvider, query: str, previous_answer:
     else:
         # Compatibility path for deterministic test providers while R9.1 lands.
         selection_raw = provider.select(_selector_prompt(query, candidates, previous_answer))
-        selection = _validate_selection(AskSelection.model_validate(selection_raw), candidates)
+        selection = _validate_selection(_selection_from_raw(selection_raw), candidates)
         selected = _selected_context(selection, candidates)
         answer_raw = provider.synthesize(_synthesis_prompt(query, selection, selected, previous_answer))
         provider_ms = round((time.perf_counter() - provider_started) * 1000)
         pipeline = "two_call_compat"
 
     validation_started = time.perf_counter()
-    selection = _validate_selection(AskSelection.model_validate(selection_raw), candidates)
+    selection = _validate_selection(_selection_from_raw(selection_raw), candidates)
     context = _selected_context(selection, candidates)
     answer = _normalize_meeting_prep(_validate_synthesis(AskSynthesis.model_validate(answer_raw), selection, context))
     validation_ms = round((time.perf_counter() - validation_started) * 1000)

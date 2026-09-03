@@ -1,29 +1,25 @@
-State R9.4.2 — OpenAI benchmark + Ask contract fix
+State R9.4.3 — Ask selection-boundary hardening
 
-Why
-- The deployed OpenAI Ask path was only appending "Return JSON only".
-- OpenAI returned plausible but wrong selection keys like:
-  state / reviews / questions / history / evidence / rules
-- State requires the exact AskSelection schema:
-  state_ids / review_ids / blocking_question_ids / question_ids / history_ids / evidence_ids
-- The fast-path fallback then made a second OpenAI call and failed the same contract.
+What the OpenAI benchmark exposed
+- OpenAI returned the correct AskSelection field names, but selected 13 state_ids.
+- The State contract allows at most 12, causing a 422.
+- The JSON schema did not previously advertise these max-item limits even
+  though the Pydantic contract enforced them.
 
 Fix
-- OpenAI Ask now uses strict JSON-schema structured output for both fast synthesis and one-call fallback.
-- OPENAI_MODEL is now read from Render env, defaulting to gpt-4.1-mini.
-- OpenAIProvider default model is gpt-4.1-mini.
-- Ask timing logs now include provider and model so benchmark results are unambiguous.
-- Regression test verifies structured-output use.
+- Adds maxItems to the provider JSON schema for every bounded selection list.
+- Normalizes/deduplicates/trims provider selections before strict Pydantic validation.
+- Mandatory Review and linked Question context wins over optional model-selected
+  context if a bounded list is already full.
+- Applies to all providers, not only OpenAI.
+- Build revision: r9.4.3-selection-bounds-2026-09-02.
 
 Verification
-- Full backend/integration suite: 201 passed, 3 skipped, 7 subtests passed.
-- Targeted Ask/frontend tests: 49 passed.
+- Full backend/integration suite: 203 passed, 3 skipped, 7 subtests passed.
+- Targeted Ask/frontend tests: 51 passed.
+- Regression coverage includes the exact 13-state-id over-selection failure.
 
-Render settings after deploy
-- STATE_PROVIDER=openai
-- OPENAI_MODEL=gpt-4.1-mini
-- Keep ANTHROPIC_API_KEY and CLAUDE_MODEL in place for easy rollback/comparison.
-
-After deploy
-- Run: Prep me for the security meeting
-- Copy the new Ask timing line; it will include provider=openai model=gpt-4.1-mini.
+Benchmark conclusion
+- GPT-4.1 mini request took 48.9s and failed after two provider calls.
+- Claude's latest successful meeting-prep request was ~24.8s total.
+- Recommendation: set STATE_PROVIDER back to anthropic for now.

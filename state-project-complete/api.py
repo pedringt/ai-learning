@@ -23,7 +23,7 @@ from seed_demo import bootstrap_demo_data
 from ask_contract import AskRequest
 from ask_provider import LiveAskProvider
 from ask_service import run_ask
-STATE_BUILD_REV = "r9.4.2-provider-benchmark-2026-09-02"
+STATE_BUILD_REV = "r9.4.3-selection-bounds-2026-09-02"
 logger = logging.getLogger("state.api")
 
 from review_service import (
