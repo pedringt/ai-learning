@@ -12,7 +12,6 @@ import time
 
 from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from anthropic_provider import AnthropicProvider
@@ -20,11 +19,11 @@ from database_migration_backed import initialize_db
 from db import connect
 from interpretation_pipeline_integrated import InterpretationProvider, new_id, process_evidence
 from openai_provider import OpenAIProvider
-from seed_demo import bootstrap_demo_data, reset_demo_data
+from seed_demo import bootstrap_demo_data
 from ask_contract import AskRequest
 from ask_provider import LiveAskProvider
-from ask_service import build_ask_preview, finalize_streaming_meeting_ask, prepare_streaming_meeting_ask, run_ask
-STATE_BUILD_REV = "r12-definitive-project-wiki-2026-09-02"
+from ask_service import run_ask
+STATE_BUILD_REV = "r9.3.1-hierarchy-portable-ask-2026-09-02"
 logger = logging.getLogger("state.api")
 
 from review_service import (
@@ -192,8 +191,7 @@ def _provider_from_env(settings: Settings) -> InterpretationProvider:
         )
     if not os.getenv("OPENAI_API_KEY"):
         raise RuntimeError("OPENAI_API_KEY is required when STATE_PROVIDER=openai")
-    model = os.getenv("OPENAI_MODEL", "gpt-4.1-mini")
-    return OpenAIProvider(model_identifier=model, api_key=os.environ["OPENAI_API_KEY"])
+    return OpenAIProvider(api_key=os.environ["OPENAI_API_KEY"])
 
 
 def create_app(settings: Settings | None = None, provider: InterpretationProvider | None = None, ask_provider=None) -> FastAPI:
@@ -299,16 +297,6 @@ def create_app(settings: Settings | None = None, provider: InterpretationProvide
             )
             connection.commit()
             result = process_evidence(connection, evidence_id=evidence_id, provider=selected_provider)
-            # A transient provider failure should not immediately bounce a demo user into
-            # a manual Retry flow. Evidence is already immutable and persisted, so one
-            # automatic retry safely reuses the same Evidence record without duplicating it.
-            if result.processing_status == "failed":
-                first_record = connection.execute(
-                    "SELECT error_code FROM interpretation_records WHERE id=?", (result.interpretation_record_id,)
-                ).fetchone()
-                if first_record is not None and first_record["error_code"] == "provider_error":
-                    logger.warning("Evidence analysis provider failure; retrying once evidence_id=%s", evidence_id)
-                    result = process_evidence(connection, evidence_id=evidence_id, provider=selected_provider)
             reviews = list_reviews(connection, "open")
             created_reviews = [item for item in reviews if item["id"] in result.review_ids]
             if result.processing_status == "failed":
@@ -467,88 +455,6 @@ def create_app(settings: Settings | None = None, provider: InterpretationProvide
         with get_connection() as connection:
             return {"items": list_history(connection)}
 
-    @app.post("/api/demo/reset")
-    def post_demo_reset() -> dict:
-        if not settings.demo_bootstrap:
-            raise HTTPException(status_code=403, detail="Demo reset is disabled for this deployment")
-        with get_connection() as connection:
-            counts = reset_demo_data(connection)
-        return {"status": "reset", "seeded": counts, "build": STATE_BUILD_REV}
-
-    @app.post("/api/ask/preview")
-    def post_ask_preview(payload: AskRequest) -> dict:
-        """Return software-grounded progress immediately; never calls a model."""
-        with get_connection() as connection:
-            return build_ask_preview(connection, payload.query.strip())
-
-    @app.post("/api/ask/stream")
-    def post_ask_stream(payload: AskRequest, request: Request):
-        """Stream grounded meeting-prep synthesis, then emit the validated final payload."""
-        selected_ask_provider = request.app.state.ask_provider
-        if selected_ask_provider is None:
-            selected_provider = request.app.state.provider
-            if selected_provider is None:
-                try:
-                    selected_provider = _provider_from_env(settings)
-                    request.app.state.provider = selected_provider
-                except RuntimeError as exc:
-                    raise HTTPException(status_code=503, detail=str(exc)) from exc
-            selected_ask_provider = LiveAskProvider(selected_provider)
-            request.app.state.ask_provider = selected_ask_provider
-        if getattr(selected_ask_provider, "name", None) != "anthropic" or not hasattr(selected_ask_provider, "stream_synthesize_selected"):
-            raise HTTPException(status_code=409, detail="Streaming Ask is currently available with Anthropic meeting prep only")
-
-        try:
-            with get_connection() as connection:
-                prepared = prepare_streaming_meeting_ask(connection, payload.query.strip(), payload.previous_answer)
-        except (ValueError, TypeError) as exc:
-            raise HTTPException(status_code=422, detail=str(exc)) from exc
-
-        selection = prepared["selection"]
-        preview = {
-            "job": "meeting_prep",
-            "grounded": True,
-            "counts": {
-                "reviews": len(selection.review_ids),
-                "blockers": len(selection.blocking_question_ids),
-                "questions": len(selection.question_ids),
-                "state": len(selection.state_ids),
-            },
-        }
-
-        def sse(event: str, data: dict) -> str:
-            return f"event: {event}\ndata: {json.dumps(data, ensure_ascii=False)}\n\n"
-
-        def generate():
-            yield sse("preview", preview)
-            provider_started = time.perf_counter()
-            chunks: list[str] = []
-            try:
-                for text in selected_ask_provider.stream_synthesize_selected(prepared["prompt"]):
-                    chunks.append(text)
-                    yield sse("delta", {"text": text})
-                provider_ms = round((time.perf_counter() - provider_started) * 1000)
-                answer_raw = json.loads("".join(chunks))
-                result = finalize_streaming_meeting_ask(prepared, answer_raw, provider_ms=provider_ms)
-                timing = result.get("timing", {})
-                logger.info(
-                    "Ask timing provider=%s model=%s pipeline=%s context_ms=%s provider_ms=%s validation_ms=%s total_ms=%s",
-                    getattr(selected_ask_provider, "name", "unknown"),
-                    getattr(selected_ask_provider, "model_identifier", "unknown"),
-                    timing.get("pipeline"), timing.get("context_ms"), timing.get("provider_ms"),
-                    timing.get("validation_ms"), timing.get("total_ms"),
-                )
-                yield sse("final", result)
-            except Exception as exc:
-                logger.exception("Streaming Ask provider failure")
-                yield sse("error", {"message": "Ask could not produce a valid grounded answer"})
-
-        return StreamingResponse(
-            generate(),
-            media_type="text/event-stream",
-            headers={"Cache-Control": "no-cache, no-transform", "X-Accel-Buffering": "no"},
-        )
-
     @app.post("/api/ask")
     def post_ask(payload: AskRequest, request: Request) -> dict:
         selected_ask_provider = request.app.state.ask_provider
@@ -567,9 +473,7 @@ def create_app(settings: Settings | None = None, provider: InterpretationProvide
                 result = run_ask(connection, selected_ask_provider, payload.query.strip(), payload.previous_answer)
                 timing = result.get("timing", {})
                 logger.info(
-                    "Ask timing provider=%s model=%s pipeline=%s context_ms=%s provider_ms=%s validation_ms=%s total_ms=%s",
-                    getattr(selected_ask_provider, "name", "unknown"),
-                    getattr(selected_ask_provider, "model_identifier", "unknown"),
+                    "Ask timing pipeline=%s context_ms=%s provider_ms=%s validation_ms=%s total_ms=%s",
                     timing.get("pipeline"), timing.get("context_ms"), timing.get("provider_ms"),
                     timing.get("validation_ms"), timing.get("total_ms"),
                 )

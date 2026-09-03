@@ -1626,8 +1626,3 @@ body:has(.meridian-breadcrumb span:last-child) .meridian-heading .eyebrow{displa
 @media(max-width:560px){.home-pattern-proof{grid-template-columns:1fr}.home-pattern-flow{gap:7px}.home-pattern-flow b{display:none}}
 
 .legal-part-divider{margin:48px 0 18px;padding:20px 22px;border:1px solid var(--border);border-radius:14px;background:var(--soft)}.legal-part-divider span{display:block;color:var(--purple);font-size:11px;font-weight:850;letter-spacing:.06em;text-transform:uppercase;margin-bottom:6px}.legal-part-divider h2{margin:0 0 8px!important;font-size:26px!important}.legal-part-divider p,.legal-part-transition p{margin:0!important;font-size:13.5px!important;line-height:1.6!important}.legal-part-transition{margin:42px 0 12px;padding:17px 19px;border-left:3px solid var(--purple);background:var(--softp);border-radius:0 12px 12px 0}.legal-part-transition strong{display:block;margin-bottom:5px;font-size:16px}
-
-/* Homepage featured pair: keep sibling cards visually aligned. */
-.home-feature-pair{align-items:stretch!important}
-.home-feature-pair .home-project-card,.home-feature-pair .home-feature-primary,.home-feature-pair .home-feature-secondary{height:100%!important;min-height:230px!important;box-sizing:border-box!important}
-@media(max-width:700px){.home-feature-pair .home-project-card,.home-feature-pair .home-feature-primary,.home-feature-pair .home-feature-secondary{height:auto!important;min-height:0!important}}

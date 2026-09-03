@@ -84,61 +84,6 @@ def _matching_open_review_id(connection: Connection, recommendation: Mapping[str
     return None
 
 
-
-
-def _state_statement_key(value: str) -> str:
-    """Normalize State prose for exact semantic-identity checks.
-
-    This deliberately stays conservative: punctuation/case/whitespace differences
-    are ignored, but paraphrases are not guessed equivalent in software.
-    """
-    return " ".join("".join(ch if ch.isalnum() else " " for ch in (value or "").casefold()).split())
-
-
-def _suppress_redundant_create_reviews(connection: Connection, payload: Mapping[str, Any]) -> Mapping[str, Any]:
-    """Drop create-only Reviews whose proposed fact is already active Current State.
-
-    Providers may correctly notice Evidence but redundantly recommend creating the
-    same maintained fact again. Evidence is still preserved; software simply avoids
-    asking a human to approve a no-op. This is intentionally conservative and does
-    not attempt fuzzy semantic deduplication.
-    """
-    if payload.get("outcome") != "review_recommended":
-        return payload
-    active_keys = {
-        _state_statement_key(row["statement"])
-        for row in connection.execute("SELECT statement FROM current_state_items WHERE status='active'").fetchall()
-    }
-    kept = []
-    suppressed = 0
-    for rec in payload.get("review_recommendations", []):
-        proposals = rec.get("proposed_changes", [])
-        redundant = (
-            rec.get("review_action") == "create"
-            and rec.get("review_type") == "missing_understanding"
-            and bool(proposals)
-            and not rec.get("resolves_question_ids")
-            and all(
-                p.get("operation") == "create"
-                and _state_statement_key(p.get("proposed_statement", "")) in active_keys
-                for p in proposals
-            )
-        )
-        if redundant:
-            suppressed += 1
-        else:
-            kept.append(rec)
-    if not suppressed:
-        return payload
-    normalized = dict(payload)
-    normalized["review_recommendations"] = kept
-    if not kept:
-        normalized["outcome"] = "no_review"
-        normalized["no_review_explanation"] = "The evidence corroborates Current State and does not require a maintained-understanding change."
-    logger.info("Suppressed %s redundant create Review(s) already represented in Current State", suppressed)
-    return normalized
-
-
 def capture_context(connection: Connection) -> InterpretationContextSnapshot:
     """Capture State and open Reviews from Phase 1 schema.
 
@@ -479,7 +424,6 @@ def process_evidence(
 
         # Semantic validation (references, versions, constraints)
         validate_semantics(payload, context=context, application_state=application_snapshot(connection))
-        payload = _suppress_redundant_create_reviews(connection, payload)
         if getattr(connection, "is_postgres", False):
             connection.commit()
         logger.debug("Semantic validation passed")

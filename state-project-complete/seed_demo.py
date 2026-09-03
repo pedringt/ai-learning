@@ -214,29 +214,6 @@ def bootstrap_demo_data(connection) -> dict[str, int]:
     return counts
 
 
-
-def reset_demo_data(connection) -> dict[str, int]:
-    """Destructively restore the curated Northstar demo baseline.
-
-    This is intentionally demo-only: it removes user/test activity while keeping
-    schema migrations intact, then recreates the canonical interactive seed.
-    """
-    tables = [
-        "history_transitions", "interpretation_records", "review_questions",
-        "review_evidence", "review_state_items", "proposed_state_changes",
-        "review_issues", "questions", "draft_notes", "project_rules",
-        "current_state_items", "evidence",
-    ]
-    connection.execute("BEGIN IMMEDIATE")
-    try:
-        for table in tables:
-            connection.execute(f"DELETE FROM {table}")
-        connection.execute("COMMIT")
-    except Exception:
-        connection.execute("ROLLBACK")
-        raise
-    return bootstrap_demo_data(connection)
-
 def main() -> None:
     database_url = os.getenv("DATABASE_URL")
     if not database_url:

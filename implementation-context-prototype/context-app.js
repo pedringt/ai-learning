@@ -6,7 +6,7 @@
   const initial = clone(D);
   const state = {
     data: clone(D), view:'overview', result:null, resultQuery:'', askInputDraft:'', projectMenuOpen:false, refinements:[], lastScenario:null,
-    addedSample:false, pendingCreated:false, reviewBannerDismissed:false, dialogReturnFocus:null, expandedNotes:new Set(), noteComposerOpen:false, editingNoteId:null, dismissedNudges:new Set(), historyTopic:null, historyEvidenceId:null, historySearch:'', notesFilter:'all', notesDateFilter:'all', notesSearch:'', isAnalyzing:false, openQuestionsExpanded:false, expandedReviewId:null, openItemSections:{reviews:false,blockers:false,questions:null}, projectRules:[], backendStatus:{state:'loading',evidence:'loading',reviews:'loading',history:'loading',questions:'loading',rules:'loading',drafts:'loading'}
+    addedSample:false, pendingCreated:false, reviewBannerDismissed:false, dialogReturnFocus:null, expandedNotes:new Set(), noteComposerOpen:false, editingNoteId:null, dismissedNudges:new Set(), historyTopic:null, historyEvidenceId:null, historySearch:'', notesFilter:'all', notesDateFilter:'all', notesSearch:'', isAnalyzing:false, openQuestionsExpanded:false, expandedReviewId:null, openItemSections:{reviews:false,blockers:false,questions:null}, projectRules:[], workspaceAttentionStatus:'loading', backendStatus:{state:'loading',evidence:'loading',reviews:'loading',history:'loading',questions:'loading',rules:'loading',drafts:'loading'}
   };
 
   const root = document.getElementById('viewRoot');
@@ -109,30 +109,83 @@
     const text=norm(`${k.title||''} ${k.statement||''} ${(k.topics||[]).join(' ')}`);
     if(area==='product'){
       if(/scope|pilot|tier 1|tier 2|password|login/.test(text)) return 'Scope';
-      if(/access|ground|knowledge|source/.test(text)) return 'Knowledge & access';
+      if(/access|ground|knowledge|source|entitlement/.test(text)) return 'Knowledge & access';
       return 'Workflow';
     }
     if(area==='safety'){
-      if(/data|privacy|retention|slack/.test(text)) return 'Data & sources';
-      if(/human review|autonomy|sensitive|read.only|vip/.test(text)) return 'Control boundaries';
+      if(/data|privacy|retention|slack|source/.test(text)) return 'Data & sources';
+      if(/human review|autonomy|sensitive|read.only|vip|account change/.test(text)) return 'Control boundaries';
       return 'Risk controls';
     }
     if(/launch|rollout|training|enablement/.test(text)) return 'Rollout';
-    if(/feedback|monitor|sample|metric|evaluation/.test(text)) return 'Measurement';
+    if(/feedback|monitor|sample|metric|evaluation|claim|failure/.test(text)) return 'Measurement';
     return 'Readiness';
   }
+
+  const projectWikiTopics={
+    product:[
+      {id:'pilot-workflow',title:'Pilot scope & workflow',description:'What the first pilot is for and how it fits into support.',matches:k=>['k-pilot','k-entry','k-login','k-password'].includes(k.id)||projectGroup(k,'product')==='Scope'},
+      {id:'knowledge-access',title:'Knowledge & access',description:'What the assistant can rely on when it answers and how access is determined.',matches:k=>['k-grounding','k-access'].includes(k.id)||projectGroup(k,'product')==='Knowledge & access'},
+      {id:'escalation-handoff',title:'Escalation & handoff',description:'What happens when the assistant cannot safely carry the case forward.',matches:k=>['k-escalation','k-handoff'].includes(k.id)||projectGroup(k,'product')==='Workflow'},
+    ],
+    safety:[
+      {id:'human-control',title:'Human control',description:'Where human judgment remains required and what would be needed to revisit that boundary.',matches:k=>['k-security','k-autonomy'].includes(k.id)},
+      {id:'action-boundaries',title:'Action boundaries',description:'What the assistant is and is not allowed to do in the first implementation.',matches:k=>['k-readonly','k-sensitive','k-vip'].includes(k.id)||projectGroup(k,'safety')==='Control boundaries'},
+      {id:'data-sources',title:'Data & sources',description:'The current rules for customer data and approved retrieval sources.',matches:k=>['k-data','k-slack'].includes(k.id)||projectGroup(k,'safety')==='Data & sources'},
+    ],
+    evaluation:[
+      {id:'success',title:'How success is judged',description:'The evidence the team will use to decide whether the pilot is working safely and usefully.',matches:k=>['k-eval','k-feedback','k-sample','k-monitoring','k-claims'].includes(k.id)||projectGroup(k,'evaluation')==='Measurement'},
+      {id:'readiness',title:'Launch readiness',description:'What still has to be true before the pilot is ready to launch.',matches:k=>['k-launch'].includes(k.id)||projectGroup(k,'evaluation')==='Readiness'},
+      {id:'rollout',title:'Rollout & enablement',description:'How the pilot expands and how reps are prepared to use it.',matches:k=>['k-training','k-rollout'].includes(k.id)||projectGroup(k,'evaluation')==='Rollout'},
+    ]
+  };
+
   function projectFact(k){
     const pending=pendingFor(k.topics||[]);
     const hasHistory=state.data.history.some(h=>h.knowledgeId===k.id || h.state_item_id===k.id);
-    return `<li class="project-outline-item"><div class="project-outline-copy"><strong>${esc(k.title)}</strong><span>${esc(k.statement)}</span></div><div class="project-outline-actions">${pending.length?`<button class="project-pending" data-action="open-related-review" data-review-id="${pending[0].id}"><span class="status-dot"></span>Pending review</button>`:''}${hasHistory?`<button class="text-button project-history-link" data-action="view-topic-history" data-knowledge-id="${k.id}">History →</button>`:''}</div></li>`;
+    return `<li class="project-maintained-fact" data-state-id="${esc(k.id)}"><div><strong>${esc(k.title)}</strong><span>${esc(k.statement)}</span></div><div class="project-outline-actions">${pending.length?`<button class="project-pending" data-action="open-related-review" data-review-id="${pending[0].id}"><span class="status-dot"></span>Pending review</button>`:''}${hasHistory?`<button class="text-button project-history-link" data-action="view-topic-history" data-knowledge-id="${k.id}">History →</button>`:''}</div></li>`;
   }
+
+  function projectWikiParagraphs(items){
+    const statements=[];
+    for(const item of items){
+      const candidate=String(item.statement||'').trim();
+      if(!candidate) continue;
+      const candidateWords=new Set(norm(candidate).split(' ').filter(w=>w.length>3));
+      const tooClose=statements.some(existing=>{
+        const existingWords=new Set(norm(existing).split(' ').filter(w=>w.length>3));
+        const intersection=[...candidateWords].filter(w=>existingWords.has(w)).length;
+        const union=new Set([...candidateWords,...existingWords]).size||1;
+        return intersection/union>.78;
+      });
+      if(!tooClose) statements.push(candidate);
+    }
+    const paragraphs=[];
+    for(let i=0;i<statements.length;i+=3) paragraphs.push(statements.slice(i,i+3).join(' '));
+    return paragraphs;
+  }
+
+  function projectWikiTopic(topic,items){
+    if(!items.length) return '';
+    const paragraphs=projectWikiParagraphs(items);
+    const maintained=`<details class="project-maintained-facts"><summary>Maintained from ${items.length} Current State ${items.length===1?'fact':'facts'}</summary><ul>${items.map(projectFact).join('')}</ul></details>`;
+    return `<section class="project-wiki-topic" id="project-topic-${topic.id}" data-state-ids="${items.map(x=>esc(x.id)).join(' ')}"><div class="project-wiki-topic-head"><h4>${esc(topic.title)}</h4><p>${esc(topic.description)}</p></div><div class="project-wiki-prose">${paragraphs.map(text=>`<p>${esc(text)}</p>`).join('')}</div>${maintained}</section>`;
+  }
+
   function projectOutlineSection(id,a){
     const items=currentKnowledge(id);
     if(!items.length)return '';
-    const groups=new Map();
-    for(const item of items){const label=projectGroup(item,id);if(!groups.has(label))groups.set(label,[]);groups.get(label).push(item);}
-    const grouped=[...groups.entries()].map(([label,groupItems])=>`<div class="project-outline-group"><h4>${esc(label)}</h4><ul class="project-outline-list">${groupItems.map(projectFact).join('')}</ul></div>`).join('');
-    return `<section class="project-outline-section" id="project-${id}"><div class="project-section-sticky"><h3>${esc(a.name)}</h3></div><p class="project-outline-description">${esc(a.description)}</p>${grouped}</section>`;
+    const topics=projectWikiTopics[id]||[];
+    const assigned=new Set();
+    const blocks=[];
+    for(const topic of topics){
+      const matched=items.filter(k=>!assigned.has(k.id)&&topic.matches(k));
+      matched.forEach(k=>assigned.add(k.id));
+      if(matched.length) blocks.push(projectWikiTopic(topic,matched));
+    }
+    const leftover=items.filter(k=>!assigned.has(k.id));
+    if(leftover.length) blocks.push(projectWikiTopic({id:`${id}-other`,title:'Additional maintained understanding',description:'Other reviewed facts that belong to this part of the project.'},leftover));
+    return `<section class="project-outline-section project-wiki-section" id="project-${id}"><div class="project-section-sticky"><h3>${esc(a.name)}</h3></div><p class="project-outline-description">${esc(a.description)}</p>${blocks.join('')}</section>`;
   }
   function projectOrientation(){
     const byId=id=>state.data.knowledge.find(k=>k.id===id&&k.state==='current');
@@ -158,7 +211,7 @@
     }
     const visible=Object.entries(projectAreas).filter(([id])=>currentKnowledge(id).length);
     const orientation=projectOrientation();
-    root.innerHTML=`<article class="page project-page project-document"><header class="project-document-head" id="project-top"><div class="project-head-row"><div><span class="eyebrow">Current project</span><h2>${esc(state.data.project.name)}</h2></div><button class="btn secondary project-settings-button" data-action="project-settings">Project settings</button></div><p class="project-document-summary">Reviewed project understanding, organized around the facts currently treated as true.</p><dl class="project-document-meta"><div><dt>Stage</dt><dd>${esc(orientation.stage)}</dd></div><div><dt>Outcome</dt><dd>${esc(orientation.outcome)}</dd></div><div><dt>Current State</dt><dd>${orientation.count} Current State items</dd></div></dl></header><div class="project-document-intro"><strong>Current direction</strong><p>${esc(orientation.direction)}</p></div><div class="project-outline">${visible.map(([id,a])=>projectOutlineSection(id,a)).join('')||'<div class="empty-state"><h3>No Current State yet.</h3><p>Reviewed project understanding will appear here as a clean outline.</p></div>'}</div></article>`;    requestAnimationFrame(()=>updateProjectSubnavActive());
+    root.innerHTML=`<article class="page project-page project-document"><header class="project-document-head" id="project-top"><div class="project-head-row"><div><span class="eyebrow">Current project</span><h2>${esc(state.data.project.name)}</h2></div><button class="btn secondary project-settings-button" data-action="project-settings">Project settings</button></div><p class="project-document-summary">The maintained project wiki: a readable view of what the team currently treats as true.</p><dl class="project-document-meta"><div><dt>Stage</dt><dd>${esc(orientation.stage)}</dd></div><div><dt>Outcome</dt><dd>${esc(orientation.outcome)}</dd></div><div><dt>Maintained from</dt><dd>${orientation.count} Current State facts</dd></div></dl></header><div class="project-document-intro"><strong>Current direction</strong><p>${esc(orientation.direction)}</p></div><div class="project-outline">${visible.map(([id,a])=>projectOutlineSection(id,a)).join('')||'<div class="empty-state"><h3>No Current State yet.</h3><p>Reviewed project understanding will appear here as a clean outline.</p></div>'}</div></article>`;    requestAnimationFrame(()=>updateProjectSubnavActive());
   }
   let askStreamPaintQueued=false;
   let askStreamLastPaint=0;
@@ -184,13 +237,14 @@
     return `<div class="ask-live-loading${preview?.grounded?' has-grounded-preview':''}"><span class="ask-loading-mark" aria-hidden="true"></span><div><strong>${esc(label)}</strong><p>${esc(message)}</p></div></div>`;
   }
   function workspaceAttentionHtml(){
-    const reviewsReady=state.backendStatus.reviews==='loaded';
-    const questionsReady=state.backendStatus.questions==='loaded';
-    if(!reviewsReady||!questionsReady){
+    if(API && state.workspaceAttentionStatus==='loading'){
       return `<section class="workspace-attention is-loading" aria-busy="true"><div class="workspace-attention-head"><div><span class="eyebrow">Needs your attention</span><h3>Checking what needs you</h3></div></div><div class="attention-placeholder"><span></span><span></span></div></section>`;
     }
-    const reviews=uiPendingReviews();
-    const blockers=openQuestions().filter(q=>q.blocking);
+    if(API && state.workspaceAttentionStatus==='error'){
+      return `<section class="workspace-attention is-clear"><div class="workspace-attention-head"><div><span class="eyebrow">Needs your attention</span><h3>Attention items could not be loaded</h3><p>Ask still works; try Open Items again in a moment.</p></div><button class="text-button" data-action="retry-hydration">Try again →</button></div></section>`;
+    }
+    const reviews=API?state.data.reviews.filter(r=>r.status==='pending'&&r.backendReviewId):uiPendingReviews();
+    const blockers=(API?state.data.questions.filter(q=>q.status==='open'&&q.backendManaged):openQuestions()).filter(q=>q.blocking);
     const items=[];
     reviews.slice(0,2).forEach(r=>items.push({kind:'review',id:r.id,label:'Review',title:r.summary||r.title,detail:r.whyConsequential||r.proposed||'New evidence may change Current State.'}));
     if(items.length<2) blockers.slice(0,2-items.length).forEach(q=>items.push({kind:'blocker',id:q.id,label:'Blocking question',title:q.text,detail:q.blocks?`Blocks ${q.blocks}`:'A concrete dependency is waiting on this answer.'}));
@@ -219,7 +273,7 @@
     const resultBody = state.result ? (state.result.liveAsk ? (state.result.previousLive?`<div class="ask-previous-answer">${ASK?.render(state.result.previousLive)}</div><div class="ask-followup-answer">${ASK?.render(state.result.liveAsk)}</div>`:ASK?.render(state.result.liveAsk)) : state.result.liveAskStreaming ? `${state.result.previousLive?`<div class="ask-previous-answer">${ASK?.render(state.result.previousLive)}</div><div class="ask-followup-stream">${ASK?.renderStream(state.result.liveAskStreamRaw||'',state.result.liveAskPreview||null)}</div>`:ASK?.renderStream(state.result.liveAskStreamRaw||'',state.result.liveAskPreview||null)}` : state.result.liveAskLoading ? `${state.result.previousLive?`<div class="ask-previous-answer">${ASK?.render(state.result.previousLive)}</div><div class="ask-followup-working">Working on your follow-up…</div>`:liveAskLoadingHtml()}` : state.result.liveAskError ? `${state.result.previousLive?`<div class="ask-previous-answer">${ASK?.render(state.result.previousLive)}</div>`:''}<div class="ask-live-error"><h2>Ask is temporarily unavailable.</h2><p>${esc(state.result.liveAskError)}</p></div>` : state.result.fallback ? fallbackResult() : state.result.intent ? intentAskHtml(state.result.intent) : state.result.structured ? structuredAskHtml(state.result.structured) : scenarioResult(state.result.scenario)) : '';
     root.innerHTML = `<section class="overview pristine">
       <section class="overview-heading"><div class="overview-heading-row"><div><h2>Northstar</h2></div><button class="btn primary overview-add" data-action="add-info">+ Add note</button></div></section>
-      <section class="ask-panel compact-ask unboxed-ask">${state.result?`<div class="ask-session-row"><div><span class="meta-label">Current ask</span><strong>${esc(state.resultQuery)}</strong></div><button class="text-button ask-new-session" data-action="new-ask"><span aria-hidden="true">＋</span> New ask</button></div><div class="answer-stage has-result" aria-live="polite"><div class="answer-content">${resultBody}</div></div>${(state.result.liveAsk||state.result.previousLive)?`<div class="ask-followup"><div class="ask-input-row"><input id="askInput" autocomplete="off" aria-label="Refine or ask a follow-up" placeholder="Refine, ask a follow-up, or turn this into something…" value="${esc(state.askInputDraft||'')}"/><button class="btn primary" data-action="ask-submit" ${state.result.liveAskLoading||state.result.liveAskStreaming?'disabled':''}>${state.result.liveAskLoading||state.result.liveAskStreaming?'Working…':'Ask'}</button></div></div>`:''}`:`<div class="ask-title-row"><div><label for="askInput">Ask what State knows about the project</label><p>Search current understanding, open items, notes, and history.</p></div></div><div class="ask-input-row"><input id="askInput" autocomplete="off" aria-label="Ask about the project or create an update" placeholder="What do you want to know or make?" value="${esc(state.askInputDraft||'')}"/><button class="btn primary" data-action="ask-submit">Ask</button></div><div class="prompt-suggestions single-suggestion"><button class="examples-link" data-action="show-examples">See what you can ask →</button></div><div class="answer-stage is-empty" aria-live="polite"><div class="answer-empty"><span class="answer-empty-icon">⌕</span><strong>Work from what the project currently knows</strong><p>Find a project detail, understand what changed, prepare for a meeting, or create an update.</p><div class="empty-suggestions"><button data-prompt="What changed about feature access?">Understand a change</button><button data-prompt="What is still unresolved?">Find what is unresolved</button><button data-prompt="Prepare me for the security meeting">Prepare for a meeting</button></div></div></div>`}</section>${state.result?'':workspaceAttentionHtml()}</section>`;
+      <section class="ask-panel compact-ask unboxed-ask">${state.result?`<div class="ask-session-row"><div><span class="meta-label">Current ask</span><strong>${esc(state.resultQuery)}</strong></div><button class="text-button ask-new-session" data-action="new-ask"><span aria-hidden="true">＋</span> New ask</button></div><div class="answer-stage has-result" aria-live="polite"><div class="answer-content">${resultBody}</div></div>${(state.result.liveAsk||state.result.previousLive)?`<div class="ask-followup"><div class="ask-input-row"><input id="askInput" autocomplete="off" aria-label="Refine or ask a follow-up" placeholder="Refine, ask a follow-up, or turn this into something…" value="${esc(state.askInputDraft||'')}"/><button class="btn primary" data-action="ask-submit" ${state.result.liveAskLoading||state.result.liveAskStreaming?'disabled':''}>${state.result.liveAskLoading||state.result.liveAskStreaming?'Working…':'Ask'}</button></div></div>`:''}`:`<div class="ask-title-row"><div><label for="askInput">Ask what State knows about the project</label><p>Search current understanding, open items, notes, and history.</p></div></div><div class="ask-input-row"><input id="askInput" autocomplete="off" aria-label="Ask about the project or create an update" placeholder="What do you want to know or make?" value="${esc(state.askInputDraft||'')}"/><button class="btn primary" data-action="ask-submit">Ask</button></div><div class="prompt-suggestions single-suggestion"><button class="examples-link" data-action="show-examples">See what you can ask →</button></div>`}</section>${state.result?'':workspaceAttentionHtml()}</section>`;
   }
 
   function findScenario(query){
@@ -825,7 +879,7 @@
 
   function reviewCard(r,expanded=true,accordion=false){
     const generic=r.id.startsWith('r-info-') || (Array.isArray(r.proposals) && r.proposals.length===0);
-    const cleanReviewCopy=value=>String(value||'').replace(/\*\*/g,'').trim();
+    const cleanReviewCopy=value=>String(value||'').replace(/\*\*/g,'').replace(/\b(?:state|question|evidence|review|proposal)_[a-z0-9]+\b/gi,'').replace(/\b(?:ask-evidence|state|question|evidence|review|proposal|k|q)-[a-z0-9-]+\b/gi,'').replace(/\s+([,.;:])/g,'$1').replace(/\s{2,}/g,' ').trim();
     const meaningfulUnresolved=r.unresolved && !/^nothing beyond this proposed change/i.test(cleanReviewCopy(r.unresolved));
     const sourceNote=state.data.notes.find(n=>n.id===r.evidenceId);
     const sourceMeta=sourceNote?`${sourceNote.date} · ${sourceNote.source}`:'';
@@ -857,7 +911,17 @@
           const resolvedQuestionIds=r.resolvesQuestionIds?.length?r.resolvesQuestionIds:(r.resolvesQuestionId?[r.resolvesQuestionId]:[]);
           if((r.proposals||[]).length) resolvedQuestionIds.forEach(questionId=>{const q=state.data.questions.find(q=>q.id===questionId);if(q){q.status='resolved';q.resolution='Resolved by reviewed evidence';}});
         }
-        updateNav(); render(); showDecisionComplete(decision);
+        const receiptItems=[];
+        if(decision==='update'){
+          for(const proposal of (r.proposals||[])){
+            if(proposal.operation==='retire') continue;
+            const text=proposal.proposed_statement||'';
+            const matched=(result.state||[]).find(item=>norm(item.statement)===norm(text)) || (proposal.state_item_id?(result.state||[]).find(item=>item.id===proposal.state_item_id):null);
+            if(matched) receiptItems.push({id:matched.id,statement:matched.statement,area:inferProjectArea(matched)||matched.projectArea||'product'});
+            else if(text) receiptItems.push({id:proposal.state_item_id||'',statement:text,area:'product'});
+          }
+        }
+        updateNav(); render(); showDecisionComplete(decision,{review:r,items:receiptItems});
         // Resolution response is authoritative; revalidate deterministically after it has rendered.
         await hydrateBackend();
       }catch(e){
@@ -876,19 +940,35 @@
       if(r.resolvesQuestionId){ const q=state.data.questions.find(q=>q.id===r.resolvesQuestionId); if(q){ q.status='resolved'; q.resolution='Resolved by reviewed Security follow-up'; } }
       state.data.history.unshift({id:'h-'+Date.now(),date:todayLabel(),dateISO:todayISO(),knowledgeId:r.id==='r-access'?'k-access':(r.id==='r-security'?'k-security':null),type:r.resolvesQuestionId?'Current understanding updated · open question resolved':(r.id.startsWith('r-info-')?'Evidence accepted without state change':'Current understanding updated'),before:r.current,after:r.id.startsWith('r-info-')?r.current:r.proposed,reason:r.id==='r-security'?'Security follow-up':r.id.startsWith('r-info-')?'Added project information':'Senior Support Rep interview',decision:'Human chose Update understanding'});
     } else state.data.history.unshift({id:'h-'+Date.now(),date:todayLabel(),dateISO:todayISO(),type:'Current understanding kept',before:r.current,after:r.current,reason:'Senior Support Rep interview preserved as evidence',decision:'Human chose Leave understanding unchanged'});
-    render(); showDecisionComplete(decision);
+    render(); showDecisionComplete(decision,{review:r,items:[]});
   }
 
-  function showDecisionComplete(decision){ showDialog(`<span class="eyebrow">Review complete</span><h2 id="dialogTitle">${decision==='update'?(state.lastReviewGeneric?'Evidence reviewed.':'Current understanding updated.'):'Understanding left unchanged.'}</h2><p>${decision==='update'?'The reviewed evidence has been applied to current understanding. Any question it directly establishes has been resolved; unresolved residue stays open.':'The evidence is preserved, but downstream work continues using the prior reviewed understanding.'}</p><div class="dialog-actions"><button class="btn primary" data-action="close-dialog">Done</button></div>`); }
+  function showDecisionComplete(decision,{review=null,items=[]}={}){
+    if(decision!=='update'){
+      showDialog(`<span class="eyebrow">Review complete</span><h2 id="dialogTitle">Understanding left unchanged.</h2><p>The evidence is preserved, but downstream work continues using the prior reviewed understanding.</p><div class="dialog-actions"><button class="btn primary" data-action="close-dialog">Done</button></div>`);
+      return;
+    }
+    if(state.lastReviewGeneric || !items.length){
+      showDialog(`<span class="eyebrow">Review complete</span><h2 id="dialogTitle">${state.lastReviewGeneric?'Evidence reviewed.':'Current understanding updated.'}</h2><p>${state.lastReviewGeneric?'The evidence is preserved as reviewed material.':'The reviewed evidence has been applied to current understanding. Any question it directly establishes has been resolved; unresolved residue stays open.'}</p><div class="dialog-actions"><button class="btn primary" data-action="close-dialog">Done</button></div>`);
+      return;
+    }
+    const primary=items[0];
+    const changes=items.slice(0,3).map(item=>`<li>${esc(item.statement)}</li>`).join('');
+    showDialog(`<span class="eyebrow">Understanding updated</span><h2 id="dialogTitle">Here’s what changed.</h2><ul class="review-change-receipt">${changes}</ul>${items.length>3?`<p>${items.length-3} more maintained facts were updated.</p>`:''}<p class="review-receipt-note">State has updated the definitive Project view and recorded the accepted change in History.</p><div class="dialog-actions"><button class="btn primary" data-action="review-receipt-project" data-project-area="${esc(primary.area||'product')}" data-state-id="${esc(primary.id||'')}">View in Project</button>${primary.id?`<button class="btn secondary" data-action="view-topic-history" data-knowledge-id="${esc(primary.id)}">View in History</button>`:''}<button class="btn secondary" data-action="close-dialog">Done</button></div>`);
+  }
 
 
   function showDemoHelp(){
-    showDialog(`<span class="eyebrow">How this demo works</span><h2 id="dialogTitle">State turns project memory into maintained understanding.</h2><p>Use the demo as a workflow, not as a static dashboard. Original material stays preserved while consequential changes require human review.</p><div class="demo-help-steps"><div><strong>1 · Notes preserve what came in</strong><p>Updates, meeting notes, observations, and corrections are stored as project evidence. Submitted notes are immutable; corrections create new evidence rather than rewriting the past.</p></div><div><strong>2 · Review protects Current State</strong><p>When new evidence could change the project’s maintained understanding, State creates a Review. Nothing consequential becomes Current State until a person accepts it.</p></div><div><strong>3 · Project shows what is true now</strong><p>Project is the clean, current outline. Questions remain unknowns; blocking questions identify the concrete dependency waiting on an answer.</p></div><div><strong>4 · History explains how it changed</strong><p>History shows accepted Current State transitions, not every project activity. All original material remains in Notes.</p></div><div><strong>5 · Ask works from maintained truth</strong><p>Ask synthesizes Current State and uses History and Notes for explanation, while surfacing relevant Reviews and unresolved questions instead of silently treating them as facts.</p></div></div><p class="settings-note"><strong>Project Rules</strong> in Project settings tell State how to interpret evidence, source authority, and review behavior.</p><div class="dialog-actions demo-help-actions"><button class="btn primary" data-action="close-dialog">Got it</button></div>`);
+    showDialog(`<span class="eyebrow">How this demo works</span><h2 id="dialogTitle">State keeps the project’s working understanding current.</h2><p>Add project information as Notes. State preserves the original evidence, identifies anything that could change maintained understanding, and sends consequential changes to Review. Accept a change and you can see the updated understanding in Project and its transition in History.</p><div class="demo-start"><span class="meta-label">Good places to start</span><button class="demo-start-action" data-action="demo-start-ask"><strong>Ask about Northstar</strong><span>Put a useful project question in Ask →</span></button><button class="demo-start-action" data-action="demo-start-note"><strong>Add a sample note</strong><span>Try new project information and see how Review handles it →</span></button><button class="demo-start-action" data-action="demo-start-project"><strong>Explore the maintained Project</strong><span>Read the definitive view of what the team currently treats as true →</span></button></div><p class="settings-note"><strong>Want to start over?</strong> Reset Northstar from Project Settings to restore the curated starting scenario.</p><div class="dialog-actions demo-help-actions"><button class="btn primary" data-action="close-dialog">Got it</button></div>`);
   }
 
   function showExamples(){
-    const groups=[['Find something',['Who is my support rep contact?','What did we decide about pilot access?','Find notes about plan access']],['Understand the project',['What changed this week?','What are we still waiting on?','What percentage can we safely automate?']],['Prepare & summarize',['Prepare for security meeting','Summarize what changed this week','Are we ready for implementation?']],['Create something',['Draft a leadership update','Write a short status update for the support team','Turn the current project state into a Slack update']]];
-    showDialog(`<span class="eyebrow">Workspace examples</span><h2 id="dialogTitle">What can I ask?</h2><p>Try asking about current project knowledge, changes, open questions, meetings, or updates.</p><div class="example-groups static-examples">${groups.map(([g,items])=>`<section><h3>${g}</h3>${items.map(x=>`<div class="example-row static-example">${esc(x)}</div>`).join('')}</section>`).join('')}</div>`);
+    const groups=[
+      ['Understand',['What’s the current plan for the pilot?','What should I know about access and entitlements?']],
+      ['Decide',['What still needs to be decided before launch?','What is blocking the pilot right now?']],
+      ['Prepare',['Prepare me for the security meeting.','What has changed recently?']]
+    ];
+    showDialog(`<span class="eyebrow">Ask examples</span><h2 id="dialogTitle">What can I ask?</h2><p>Choose an example to put it in Ask. You can edit it before sending.</p><div class="example-groups">${groups.map(([g,items])=>`<section><h3>${g}</h3>${items.map(x=>`<button class="example-row" data-action="example-fill" data-prompt="${esc(x)}">${esc(x)}<span aria-hidden="true">→</span></button>`).join('')}</section>`).join('')}</div>`);
   }
 
   function showDialog(html){
@@ -917,7 +997,7 @@
     showDialog(`<span class="eyebrow">Project settings</span><h2 id="dialogTitle">Rules</h2><p>Rules tell State how to interpret evidence and when to interrupt you. They are not Current State and State cannot change them on its own.</p><p class="settings-note">Rules apply to future analysis. Existing Reviews are not reinterpreted automatically.</p><div class="project-rule-list">${rows}</div>${form}<div class="demo-reset-zone"><span class="eyebrow">Demo data</span><p>Restore Northstar to the curated starting scenario with open Reviews, blockers, Questions, Notes, and History.</p><button class="btn secondary danger-light" data-action="confirm-demo-reset">Reset demo data</button></div>`);
   }
 
-  function showAddDialog(prefill=''){ showDialog(`<span class="eyebrow">Project update</span><h2 id="dialogTitle">Add a project update</h2><p>Use this for new information that may change what the project currently understands. It goes to Review first.</p><textarea id="addInfoText" rows="7" aria-label="Project update" placeholder="Paste a finding, decision, meeting update, or other new project information...">${esc(prefill)}</textarea><button class="sample-link" data-action="sample-info">Try sample update</button><div class="dialog-actions"><button class="btn primary" data-action="save-info">Send to Review</button><button class="btn secondary" data-action="close-dialog">Cancel</button></div>`); }
+  function showAddDialog(prefill=''){ showDialog(`<span class="eyebrow">Project update</span><h2 id="dialogTitle">Add a project update</h2><p>Use this for new information that may change what the project currently understands. It goes to Review first.</p><textarea id="addInfoText" rows="7" aria-label="Project update" placeholder="Paste a finding, decision, meeting update, or other new project information...">${esc(prefill)}</textarea><div class="note-example-picker"><span class="meta-label">Try an example</span><div class="note-example-chips"><button type="button" data-action="sample-info" data-sample="plan">New plan</button><button type="button" data-action="sample-info" data-sample="research">Research finding</button><button type="button" data-action="sample-info" data-sample="constraint">Decision / constraint</button></div></div><div class="dialog-actions"><button class="btn primary" data-action="save-info">Send to Review</button><button class="btn secondary" data-action="close-dialog">Cancel</button></div>`); }
 
   function reviewTypeTitle(type){
     if(type==='state_at_risk') return 'Current State may be at risk';
@@ -986,7 +1066,7 @@
 
   function inferProjectArea(item){
     const text=norm(`${item.topic||''} ${item.statement||''}`);
-    if(/security|risk|data|privacy|human review|sensitive|claim/.test(text)) return 'safety';
+    if(/security|risk|data|privacy|human review|sensitive|claim|read only|readonly|account change|refund|ownership change|autonomy|vip/.test(text)) return 'safety';
     if(/evaluation|metric|launch|rollout|timeline|phase|pilot date|threshold/.test(text)) return 'evaluation';
     return 'product';
   }
@@ -1127,10 +1207,28 @@
 
   async function hydrateBackend(){
     if(!API)return;
+    state.workspaceAttentionStatus='loading';
+    renderWorkspaceAttentionOnly();
     const keys=['state','evidence','open','resolved','history','questions','rules','drafts'];
-    const results=await Promise.allSettled([
+    const calls=[
       API.getState(), API.getEvidence(), API.getReviews('open'), API.getReviews('resolved'), API.getHistory(), API.getQuestions('open'), API.getRules(), API.getDrafts()
-    ]);
+    ];
+    const attentionReady=Promise.allSettled([calls[2],calls[5]]).then(([openResult,questionResult])=>{
+      if(openResult.status==='fulfilled'){
+        const openItems=openResult.value?.items||[];
+        replaceBackendOpenReviews(openItems);
+        for(const raw of openItems){
+          const mapped=mapApiReview(raw,raw.evidence_content||'');
+          mapped.evidenceId=`api-note-${raw.evidence_id}`;
+          upsertBackendReview(mapped);
+        }
+      }
+      if(questionResult.status==='fulfilled') syncApiQuestions(questionResult.value?.items||[]);
+      state.workspaceAttentionStatus=(openResult.status==='fulfilled'&&questionResult.status==='fulfilled')?'loaded':'error';
+      updateNav();
+      renderWorkspaceAttentionOnly();
+    });
+    const results=await Promise.allSettled(calls);
     const byKey=Object.fromEntries(keys.map((key,i)=>[key,results[i]]));
     const payloadOf=result=>result.status==='fulfilled'?result.value:{items:[]};
     state.backendStatus.state=byKey.state.status==='fulfilled'?'loaded':'error';
@@ -1175,6 +1273,7 @@
       }
     }
     for(const [key,result] of Object.entries(byKey)) if(result.status==='rejected') console.warn(`Backend ${key} unavailable:`,result.reason);
+    await attentionReady;
     updateNav();
     // Backend hydration must never replace the Ask DOM while a person is typing.
     // Workspace attention can update independently; other views may rerender normally.
@@ -1301,7 +1400,7 @@
     if(e.target.closest('[data-action="dismiss-nudge"]')){ const btn=e.target.closest('[data-action="dismiss-nudge"]'); state.dismissedNudges.add(btn.dataset.nudge); renderReview(); return; }
     const projectJump=e.target.closest('[data-project-jump]'); if(projectJump){const target=projectJump.dataset.projectJump;if(state.view!=='project-overview'){state.view='project-overview';state.result=null;render();requestAnimationFrame(()=>scrollProjectTarget(target));}else{updateNav();updateProjectSubnavActive(target);scrollProjectTarget(target);}return;}
     const relatedReview=e.target.closest('[data-action="open-related-review"]'); if(relatedReview){ const r=state.data.reviews.find(x=>x.id===relatedReview.dataset.reviewId); if(r) showDialog(`<span class="eyebrow">Pending Review</span><h2 id="dialogTitle">Related evidence may affect this Current State</h2>${reviewCard(r,true,false)}`); return;}
-        const topicHistory=e.target.closest('[data-action="view-topic-history"]'); if(topicHistory){state.historyTopic=topicHistory.dataset.knowledgeId;navigateTo('history',{preserveHistoryTopic:true});return;}
+        const topicHistory=e.target.closest('[data-action="view-topic-history"]'); if(topicHistory){if(!overlay.hidden)closeDialog();state.historyTopic=topicHistory.dataset.knowledgeId;navigateTo('history',{preserveHistoryTopic:true});return;}
     const clearHistory=e.target.closest('[data-action="clear-history-topic"]'); if(clearHistory){state.historyTopic=null;renderHistory();return;}
     const clearHistoryEvidence=e.target.closest('[data-action="clear-history-evidence"]'); if(clearHistoryEvidence){state.historyEvidenceId=null;renderHistory();return;}
     const noteReviews=e.target.closest('[data-action="open-note-reviews"]'); if(noteReviews){
@@ -1317,14 +1416,24 @@
     const reviewFilter=e.target.closest('.review-filters [data-review-filter]'); if(reviewFilter){ state.reviewFilter=reviewFilter.dataset.reviewFilter; renderReview(); return; }
     const sectionToggle=e.target.closest('[data-action="toggle-open-item-section"]'); if(sectionToggle){ const key=sectionToggle.dataset.section; const reviews=uiPendingReviews(), questions=openQuestions(); const count=key==='reviews'?reviews.length:key==='blockers'?questions.filter(q=>q.blocking).length:questions.filter(q=>!q.blocking).length; const current=state.openItemSections[key]===null?(key==='questions'&&count>5):!!state.openItemSections[key]; state.openItemSections[key]=!current; renderOpenItems(); return; }
     const reviewToggle=e.target.closest('[data-action="toggle-review-card"]'); if(reviewToggle){ const id=reviewToggle.dataset.reviewId; state.expandedReviewId=state.expandedReviewId===id?null:id; renderOpenItems(); return; }
-    const p=e.target.closest('[data-prompt]'); if(p){ submitAsk(p.dataset.prompt); return; }
+    const p=e.target.closest('[data-prompt]:not([data-action="example-fill"])'); if(p){ submitAsk(p.dataset.prompt); return; }
     const a=e.target.closest('[data-action]'); if(!a)return;
     const act=a.dataset.action;
     if(act==='ask-submit')submitAsk();
     else if(act==='open-specific-review'){closeDialog();state.expandedReviewId=a.dataset.reviewId;state.openItemSections.reviews=false;navigateTo('open-items');}
     else if(act==='toggle-open-questions'){state.openQuestionsExpanded=!state.openQuestionsExpanded;renderOpenItems();}
     else if(act==='show-examples')showExamples();
+    else if(act==='example-fill'){
+      const q=a.dataset.prompt||'';
+      state.askInputDraft=q;
+      closeDialog();
+      const input=document.getElementById('askInput');
+      if(input){input.value=q;input.focus();input.setSelectionRange(input.value.length,input.value.length);requestAnimationFrame(()=>{input.focus();input.setSelectionRange(input.value.length,input.value.length);});}
+    }
     else if(act==='show-demo-help')showDemoHelp();
+    else if(act==='demo-start-ask'){closeDialog();navigateTo('overview');state.askInputDraft='What should I know about the Northstar pilot?';const input=document.getElementById('askInput');if(input){input.value=state.askInputDraft;input.focus();input.setSelectionRange(input.value.length,input.value.length);requestAnimationFrame(()=>input.focus());}}
+    else if(act==='demo-start-note'){closeDialog();showAddDialog(state.data.sampleInformationOptions?.plan||state.data.sampleInformation||'');}
+    else if(act==='demo-start-project'){closeDialog();navigateTo('project-overview');}
     else if(act==='project-settings')showProjectSettings();
     else if(act==='save-project-rule'){const text=document.getElementById('projectRuleText')?.value.trim();const category=document.getElementById('projectRuleCategory')?.value||'Interpretation';if(text){try{const rule=await API.createRule(text,category);if(!state.projectRules.some(x=>x.id===rule.id))state.projectRules.push(rule);showProjectSettings();}catch(err){showDialog(`<span class="eyebrow">Couldn’t save rule</span><h2 id="dialogTitle">Rule was not added.</h2><p>${esc(err.message)}</p>`);}}}
     else if(act==='delete-project-rule'){try{await API.deleteRule(a.dataset.ruleId);state.projectRules=state.projectRules.filter(x=>x.id!==a.dataset.ruleId);showProjectSettings();}catch(err){showDialog(`<span class="eyebrow">Couldn’t remove rule</span><h2 id="dialogTitle">Rule is still active.</h2><p>${esc(err.message)}</p>`);}}
@@ -1395,9 +1504,10 @@
     else if(act==='add-info'||act==='suggest-update')showAddDialog();
     else if(act==='confirm-demo-reset'){showDialog(`<span class="eyebrow">Reset demo</span><h2 id="dialogTitle">Restore the Northstar starting scenario?</h2><p>This removes everything created during testing and restores the same curated demo State, open Reviews, blockers, Questions, Notes, Rules, and History.</p><div class="dialog-actions"><button class="btn primary" data-action="reset-demo">Reset Northstar</button><button class="btn secondary" data-action="project-settings">Cancel</button></div>`);}
     else if(act==='reset-demo'){state.isAnalyzing=true;showDialog(`<span class="eyebrow">Resetting demo</span><h2 id="dialogTitle">Restoring Northstar…</h2><p>Rebuilding the curated starting scenario.</p>`);try{await API.resetDemo();await hydrateBackend();state.result=null;state.resultQuery='';state.askInputDraft='';state.isAnalyzing=false;closeDialog();navigateTo('overview');}catch(err){state.isAnalyzing=false;showDialog(`<span class="eyebrow">Reset failed</span><h2 id="dialogTitle">Northstar was not reset.</h2><p>${esc(err.message)}</p><div class="dialog-actions"><button class="btn primary" data-action="close-dialog">Close</button></div>`);}}
+    else if(act==='review-receipt-project'){const area=a.dataset.projectArea||'product';closeDialog();navigateTo('project-overview');requestAnimationFrame(()=>{scrollProjectTarget(`project-${area}`);const target=a.dataset.stateId?[...document.querySelectorAll('[data-state-id]')].find(el=>el.dataset.stateId===a.dataset.stateId)?.closest('.project-wiki-topic'):null;if(target){target.classList.add('is-recently-updated');setTimeout(()=>target.classList.remove('is-recently-updated'),2200);}});}
     else if(act==='close-dialog'){if(!state.isAnalyzing)closeDialog();}
     else if(act==='retry-analysis'){ const evidenceId=a.dataset.evidenceId; state.isAnalyzing=true; showDialog(analyzingDialog()); startAnalysisClock(); try{await retryEvidenceAnalysis(evidenceId); state.isAnalyzing=false; stopAnalysisClock(); await hydrateBackend(); showDialog(`<span class="eyebrow">Done</span><h2 id="dialogTitle">Analysis complete.</h2><p>Open Items now reflects anything that needs your decision.</p><div class="dialog-actions"><button class="btn primary" data-action="go-review">View Open Items</button></div>`);}catch(err){state.isAnalyzing=false;stopAnalysisClock();showDialog(`<span class="eyebrow">Still unavailable</span><h2 id="dialogTitle">Your note is still safe.</h2><p>${esc(err.message)}</p><div class="dialog-actions"><button class="btn primary" data-action="close-dialog">Close</button></div>`);} }
-    else if(act==='sample-info'){ const t=document.getElementById('addInfoText'); if(t)t.value=state.data.sampleInformation; }
+    else if(act==='sample-info'){ const t=document.getElementById('addInfoText'); const samples=state.data.sampleInformationOptions||{}; const value=samples[a.dataset.sample]||state.data.sampleInformation; if(t){t.value=value;t.focus();t.setSelectionRange(t.value.length,t.value.length);} }
     else if(act==='save-info')saveInformation();
     else if(act==='go-review'){closeDialog();navigateTo('open-items');}
     else if(act==='review-now'){ const r=state.data.reviews.find(x=>x.id===a.dataset.review); if(r) showDialog(`<span class="eyebrow">Review, without leaving your answer</span><h2 id="dialogTitle">Review this change</h2>${reviewCard(r,true,false)}`); }

@@ -26,11 +26,11 @@ logger = logging.getLogger("state.provider.openai")
 class OpenAIProvider:
     """Provider adapter for OpenAI API."""
 
-    def __init__(self, model_identifier: str = "gpt-4.1-mini", api_key: str | None = None):
+    def __init__(self, model_identifier: str = "gpt-4o", api_key: str | None = None):
         """Initialize provider.
 
         Args:
-            model_identifier: OpenAI model to use (defaults to 'gpt-4.1-mini')
+            model_identifier: OpenAI model to use (e.g., 'gpt-4o', 'gpt-4-turbo')
             api_key: OpenAI API key (if None, uses OPENAI_API_KEY env var)
         """
         self.name = "openai"

@@ -105,7 +105,7 @@ def test_r8_long_project_and_open_items_scaling_contract():
     assert "waiting.slice(0,5)" in app
     assert "toggle-open-questions" in app
     assert "const reviewTopics=new Set(reviews.flatMap(r=>r.topics||[]));" in app
-    assert "projectWikiTopics" in app and "projectWikiTopic(topic,matched)" in app
+    assert "projectGroup(item,id)" in app
     assert "project-section-sticky" in app
     assert ".app-sidebar{position:sticky" in css
 
@@ -192,7 +192,7 @@ def test_r85_integrity_and_polish_contracts():
     assert "Showing <strong>${notes.length}</strong> of ${total} notes" in app
     assert "Search history" in app and "historyResultCount" in app
     assert "Rules apply to future analysis. Existing Reviews are not reinterpreted automatically." in app
-    assert "Current State facts" in app
+    assert "Current State items" in app
     assert "backendStatus" in app and "temporarily unavailable" in app
 
 
@@ -265,174 +265,3 @@ def test_dialog_visibility_has_one_source_of_truth():
     assert "is-open" not in app
     assert ".overlay.is-open" not in css
     assert ".overlay[hidden]{display:none!important}" in css
-
-
-
-def test_informational_dialog_focus_does_not_scroll_to_bottom_action():
-    app = (FRONTEND / "context-app.js").read_text()
-    assert "button:not(.dialog-close)" not in app
-    assert "[autofocus], input:not([type=\"hidden\"]), textarea, select" in app
-    assert "focus({preventScroll:true})" in app
-    assert "function showDemoHelp()" in app
-
-
-def test_ask_fixed_followup_reserves_answer_clearance_on_desktop_and_mobile():
-    css = (FRONTEND / "context-tool.css").read_text(encoding="utf-8")
-    app = (FRONTEND / "context-app.js").read_text(encoding="utf-8")
-    assert ".ask-followup{position:fixed" in css
-    assert ".unboxed-ask:has(.ask-session-row) .answer-stage{background:#fff" in css
-    assert "padding:26px 30px 100px" in css
-    assert ".unboxed-ask:has(.ask-session-row) .answer-stage{padding:20px 18px 96px}" in css
-    assert 'class="ask-followup"' in app
-
-
-def test_project_finishing_pass_avoids_repeating_current_direction_in_header():
-    app = (FRONTEND / "context-app.js").read_text(encoding="utf-8")
-    css = (FRONTEND / "context-tool.css").read_text(encoding="utf-8")
-    assert 'class="project-document-summary">The maintained project wiki' in app
-    assert '<strong>Current direction</strong>' in app
-    assert '${esc(orientation.description)}</p><dl class="project-document-meta">' not in app
-    assert 'grid-template-columns:minmax(0,1.35fr) minmax(0,1.05fr) minmax(145px,.55fr)!important' in css
-    assert 'project-maintained-facts' in app and 'project-wiki-prose' in app
-
-
-def test_r95_ask_progress_preview_runs_in_parallel_without_blocking_final_request():
-    app = (FRONTEND / "context-app.js").read_text(encoding="utf-8")
-    api_js = (FRONTEND / "context-api.js").read_text(encoding="utf-8")
-    ask_js = (FRONTEND / "context-ask.js").read_text(encoding="utf-8")
-    backend = (Path(__file__).parent / "api.py").read_text(encoding="utf-8")
-    assert "askPreview: query => jsonPost('/api/ask/preview'" in api_js
-    assert "async function preview(query)" in ask_js
-    assert "previewPromise=ASK.preview?.(raw)" in app
-    assert "const payload=await ASK.submit(raw,previousLive)" in app
-    assert "await ASK.preview" not in app
-    assert "Grounded context ready" in app
-    assert '@app.post("/api/ask/preview")' in backend
-
-
-def test_r96_true_streaming_contract_is_wired_end_to_end():
-    api_js = (FRONTEND / "context-api.js").read_text()
-    ask_js = (FRONTEND / "context-ask.js").read_text()
-    app_js = (FRONTEND / "context-app.js").read_text()
-    backend = (Path(__file__).parent / "api.py").read_text()
-    provider = (Path(__file__).parent / "ask_provider.py").read_text()
-
-    assert "askStream" in api_js
-    assert "getReader()" in api_js
-    assert "text/event-stream" in api_js
-    assert "renderStream" in ask_js
-    assert "ask-stream-cursor" in ask_js
-    assert "liveAskStreaming" in app_js
-    assert "paintStreamingAsk" in app_js
-    assert '@app.post("/api/ask/stream")' in backend
-    assert "StreamingResponse" in backend
-    assert "stream_synthesize_selected" in provider
-    assert "messages.stream(" in provider
-
-
-def test_r97_workspace_attention_replaces_late_review_banner_with_stable_action_layer():
-    app = (FRONTEND / "context-app.js").read_text(encoding="utf-8")
-    css = (FRONTEND / "context-tool.css").read_text(encoding="utf-8")
-    assert "function workspaceAttentionHtml()" in app
-    assert "Needs your attention" in app
-    assert "Checking what needs you" in app
-    assert "uiPendingReviews()" in app
-    assert "state.data.questions.filter(q=>q.status==='open'&&q.backendManaged)" in app
-    assert "workspaceAttentionHtml()" in app
-    assert "const reviewBanner =" not in app
-    assert "${reviewBanner}" not in app
-    assert ".workspace-attention{" in css
-    assert "min-height:126px" in css
-    assert ".attention-item.blocker .attention-kind" in css
-
-
-def test_r10_all_fresh_questions_use_grounded_backend_when_available():
-    ask_js = (FRONTEND / "context-ask.js").read_text(encoding="utf-8")
-    assert "return !!API?.ask && !!String(query || '').trim();" in ask_js
-
-
-def test_r10_modal_overlay_sits_above_portfolio_header_and_resets_scroll():
-    app = (FRONTEND / "context-app.js").read_text(encoding="utf-8")
-    css = (FRONTEND / "context-tool.css").read_text(encoding="utf-8")
-    assert ".overlay{z-index:200!important" in css
-    assert "overlay.scrollTop=0; if(dialog) dialog.scrollTop=0;" in app
-    assert "focus({preventScroll:true})" in app
-
-
-def test_r10_ask_draft_is_captured_before_overview_rerender():
-    app = (FRONTEND / "context-app.js").read_text(encoding="utf-8")
-    assert "if(liveAskInput) state.askInputDraft=liveAskInput.value;" in app
-    assert 'value="${esc(state.askInputDraft||\'\')}"' in app
-
-
-def test_r10_followups_keep_previous_artifact_and_use_compact_working_state():
-    app = (FRONTEND / "context-app.js").read_text(encoding="utf-8")
-    css = (FRONTEND / "context-tool.css").read_text(encoding="utf-8")
-    assert "ask-followup-working" in app
-    assert "ask-followup-answer" in app
-    assert "state.result={liveAsk:payload,previousLive};" in app
-    assert ".ask-followup-working" in css
-
-
-def test_r10_demo_reset_is_available_from_project_settings():
-    app = (FRONTEND / "context-app.js").read_text(encoding="utf-8")
-    api_js = (FRONTEND / "context-api.js").read_text(encoding="utf-8")
-    backend = (Path(__file__).parent / "api.py").read_text(encoding="utf-8")
-    assert "Reset demo data" in app
-    assert "data-action=\"reset-demo\"" in app
-    assert "resetDemo: () => request('/api/demo/reset'" in api_js
-    assert '@app.post("/api/demo/reset")' in backend
-
-
-def test_r14_frontend_assets_use_current_cache_bust_revision():
-    html = (FRONTEND / "index.html").read_text(encoding="utf-8")
-    assert "?v=r14-demo-discovery" in html
-    assert "?v=r12-project-wiki" not in html
-    assert "?v=r9.3.1b" not in html
-
-
-def test_workspace_hydration_does_not_replace_active_ask_input():
-    app = (FRONTEND / "context-app.js").read_text(encoding="utf-8")
-    assert "function renderWorkspaceAttentionOnly()" in app
-    assert "current.replaceWith(next);" in app
-    assert "if(state.view==='overview')" in app
-    assert "if(!state.result)" in app
-    assert "renderWorkspaceAttentionOnly();" in app
-    assert "return;" in app
-    assert "if(liveAskInput) state.askInputDraft=liveAskInput.value;" in app
-
-
-def test_r12_project_is_readable_wiki_projection_with_expandable_atomic_facts():
-    app = (FRONTEND / "context-app.js").read_text(encoding="utf-8")
-    css = (FRONTEND / "context-tool.css").read_text(encoding="utf-8")
-    assert "Pilot scope & workflow" in app
-    assert "Human control" in app
-    assert "How success is judged" in app
-    assert "Maintained from ${items.length} Current State" in app
-    assert 'class="project-wiki-prose"' in app
-    assert '.project-wiki-prose p' in css
-    assert "Here’s what changed." in app
-    assert 'data-action="review-receipt-project"' in app
-
-def test_r12_light_mode_portfolio_purple_is_restrained():
-    html = (FRONTEND.parent / "index.html").read_text(encoding="utf-8")
-    assert "--purple:#51438f;--purple2:#6858a6" in html
-
-
-def test_r14_examples_are_fill_only_and_sample_update_is_demo_safe():
-    app = (FRONTEND / 'context-app.js').read_text()
-    data = (FRONTEND / 'context-data.js').read_text()
-    index = (FRONTEND / 'index.html').read_text()
-    assert 'data-action="example-fill"' in app
-    assert "Choose an example to put it in Ask. You can edit it before sending." in app
-    assert "state.askInputDraft=q;" in app
-    assert "The first pilot will run for two weeks with 8 support reps" in data
-    assert "Temporary entitlements and grandfathered packages are the two cases" not in data
-    assert 'context-data.js?v=r14-demo-discovery' in index
-
-
-def test_r13_workspace_attention_hydrates_from_open_reviews_and_questions_only():
-    app = (FRONTEND / 'context-app.js').read_text()
-    assert "Promise.allSettled([calls[2],calls[5]])" in app
-    assert "state.workspaceAttentionStatus=(openResult.status==='fulfilled'&&questionResult.status==='fulfilled')?'loaded':'error'" in app
-    assert "const results=await Promise.allSettled(calls);" in app

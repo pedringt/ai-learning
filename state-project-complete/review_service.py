@@ -198,15 +198,6 @@ def resolve_review(connection: Connection, review_id: str, decision: Decision, n
 def _apply_proposal(connection: Connection, proposal: dict) -> None:
     operation = proposal["operation"] or "update"
     if operation == "create":
-        proposed_statement = " ".join((proposal["proposed_statement"] or "").casefold().split())
-        duplicate = next((row for row in connection.execute(
-            "SELECT id, statement FROM current_state_items WHERE status='active' ORDER BY id"
-        ).fetchall() if " ".join((row["statement"] or "").casefold().split()) == proposed_statement), None)
-        if duplicate:
-            # Accepting evidence that exactly matches an existing active fact should
-            # never create a second active Current State item. The Review can resolve
-            # as accepted evidence without inventing a duplicate transition.
-            return
         state_id = new_id("state")
         connection.execute(
             "INSERT INTO current_state_items(id, topic, statement, version, effective_date) VALUES (?, ?, ?, 1, ?)",
