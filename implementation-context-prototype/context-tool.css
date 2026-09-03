@@ -690,3 +690,10 @@ body.v88-dark .project-wiki-prose p{color:#d8d4df!important}.project-maintained-
 .demo-reset-help strong,.demo-reset-help span{display:block}.demo-reset-help strong{font-size:12px}.demo-reset-help span{margin-top:2px;font-size:11px;color:var(--muted)}
 .demo-reset-link{flex:0 0 auto;font-size:11px!important}
 @media(max-width:600px){.demo-reset-help{align-items:flex-start;flex-direction:column;gap:9px}}
+
+/* R16 release hardening: make horizontally scrollable mobile workspace navigation obvious. */
+@media(max-width:760px){
+  .sidebar-nav{position:relative;-webkit-overflow-scrolling:touch;scrollbar-width:thin;padding-right:22px}
+  .sidebar-nav::after{content:"→";position:sticky;right:-1px;flex:0 0 24px;align-self:stretch;display:grid;place-items:center;background:linear-gradient(90deg,transparent 0%,#f8f7fa 52%,#f8f7fa 100%);color:var(--accent);font-size:13px;font-weight:850;pointer-events:none}
+  body.v88-dark .sidebar-nav::after{background:linear-gradient(90deg,transparent 0%,#14131a 52%,#14131a 100%)}
+}

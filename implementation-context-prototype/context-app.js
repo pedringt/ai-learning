@@ -546,7 +546,7 @@
   async function submitAsk(query){
     const raw=(query ?? document.getElementById('askInput')?.value ?? state.askInputDraft ?? '').trim(); if(!raw)return;
     state.askInputDraft='';
-    if(/(approved|confirmed|decided|agreed|learned|yesterday|today)/i.test(raw) && /(security|okta|support|customer|plan|feature|team)/i.test(raw)){
+    if(/\b(approved|confirmed|decided|agreed|learned|yesterday|today)\b/i.test(raw) && /\b(security|okta|support|customer|plan|feature|team)\b/i.test(raw)){
       showAddDialog(raw); return;
     }
     const previousLive=state.result?.liveAsk||null;
@@ -639,11 +639,11 @@
     state.resultQuery=raw; state.refinements=[];
     const q=norm(raw);
     const intent=detectAskIntent(raw);
-    const explicitStructured=/(changed|change|history|historical|originally|original|previously|before|used to|superseded|earlier|note|notes|evidence|source|sources|find|show me|material|open|unresolved|unknown|pending|waiting|still need|not know)/.test(q);
+    const explicitStructured=/\b(changed|change|history|historical|originally|original|previously|before|used to|superseded|earlier|note|notes|evidence|source|sources|find|show me|material|open|unresolved|unknown|pending|waiting|still need|not know)\b/.test(q);
     let structured=intent?null:(explicitStructured?structuredAskResult(raw):null);
     let scenario=(intent||structured)?null:findScenario(raw);
     if(!intent && !scenario && !structured) structured=structuredAskResult(raw);
-    if(!scenario && !structured && state.lastScenario && /(shorter|shorten|brief|focus|evidence|sources|slack|email|executive)/.test(q)){
+    if(!scenario && !structured && state.lastScenario && /\b(shorter|shorten|brief|focus|evidence|sources|slack|email|executive)\b/.test(q)){
       let kind=q.includes('short')||q.includes('brief')?'shorter':q.includes('evidence')||q.includes('source')?'evidence':'exec';
       state.refinements=[kind]; scenario=state.lastScenario;
     }
