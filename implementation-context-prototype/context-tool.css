@@ -682,3 +682,11 @@ body.v88-dark .project-wiki-prose p{color:#d8d4df!important}.project-maintained-
 
 /* Keep a streamed draft visible while State retries final grounding once. */
 .ask-stream-finalizing{margin-top:14px;padding-top:10px;border-top:1px solid rgba(84,67,143,.16);font-size:.86rem;color:var(--muted);font-weight:650}
+
+/* Final demo polish: quiet rule actions + discoverable reset. */
+.project-rule-row>.text-button{font-size:11px!important;font-weight:750!important;line-height:1.2!important;padding:4px 2px!important;color:var(--muted)!important;align-self:start}
+.project-rule-row>.text-button:hover{color:var(--accent)!important;text-decoration:underline}
+.demo-reset-help{display:flex;align-items:center;justify-content:space-between;gap:18px;margin-top:18px;padding:13px 14px;border:1px solid var(--line);border-radius:9px;background:var(--surface2)}
+.demo-reset-help strong,.demo-reset-help span{display:block}.demo-reset-help strong{font-size:12px}.demo-reset-help span{margin-top:2px;font-size:11px;color:var(--muted)}
+.demo-reset-link{flex:0 0 auto;font-size:11px!important}
+@media(max-width:600px){.demo-reset-help{align-items:flex-start;flex-direction:column;gap:9px}}
