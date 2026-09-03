@@ -15,4 +15,4 @@ Current local validation:
 
 This is not described as "production proven" because this environment cannot connect to the live Neon database. The next Render deployment is the required live Postgres smoke test.
 
-See the repository-root `DEEP_REVIEW_REPORT.md` for detailed findings and remaining limitations.
+See `DEEP_REVIEW_REPORT.md` in this directory for detailed findings and remaining limitations.

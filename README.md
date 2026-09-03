@@ -1,29 +1,188 @@
-# Project Context Workspace — behavioral prototype
+# State
 
-Project Context Workspace is the redesigned Implementation Context prototype. It follows `PROJECT-CONTEXT-UI-UX-FROZEN-IMPLEMENTATION-SPEC.md`: high fidelity in product behavior and interaction, intentionally low fidelity in backend AI implementation.
+**State is a maintained-project-understanding tool.** It keeps a small, trustworthy view of what a project currently treats as true, instead of reconstructing that view from the project's history every time someone asks.
 
-## Editable source
+Its central rule:
 
-- `index.html` — application shell and five-part information architecture
-- `context-tool.css` — product styling
-- `context-data.js` — deterministic fixture/state model
-- `context-app.js` — routing, rendering, state transitions, Review decisions, Questions, Notes, and History behavior
+> **The LLM interprets. Software enforces. The human authorizes consequential State transitions.**
 
-## Product model
+State is the flagship project in an applied-AI learning portfolio. It is a working product with a live model, a real backend and a real database — but it is a learning prototype with deliberately bounded scope, not enterprise software. The tradeoffs below are intentional.
 
-Primary navigation is **Overview · Notes · Questions · Review · History**. `+ Add information` is a persistent write action. Overview is a fixed-size launching surface; substantive AI results replace it temporarily in-page and disappear when the user returns.
+---
 
-The prototype supports deterministic natural-language variants for retrieval, Q&A, change summaries, Security meeting preparation, summaries, leadership drafting, and unresolved questions. Unsupported queries fail intentionally. Pending evidence is surfaced through explicit topic relationships and is never silently incorporated into current understanding.
+## The authority model
 
-## Core trust loop
+These boundaries are the point of the product. They are enforced in software, not left to the model's judgment.
 
-**Ask → encounter an unknown → track it → add evidence → leave Review pending → encounter relevant pending evidence during normal work → review → update current understanding → ask again → see changed output → inspect History.**
+| Concept | Rule |
+|---|---|
+| **Current State** | Governs what is true, allowed, or in scope *now*. |
+| **Evidence / Notes** | Preserve what was said or observed. They never silently become truth. |
+| **Open Reviews** | Qualify Current State. They do not replace it. |
+| **Questions** | Known unknowns. Only explicitly blocking questions are blockers. |
+| **History** | Records accepted past changes. |
 
-A second seeded Security review demonstrates that reviewed evidence can resolve an open question and leave a History trace.
+And the transition rules:
 
-## Prototype honesty
+- Consequential State changes require a human Review.
+- Evidence is immutable; corrections supersede rather than rewrite.
+- Review acceptance changes State atomically with History.
+- Stale proposals are blocked (optimistic concurrency on the state item's version).
+- A Question resolves only through an explicitly linked accepted Review. Source type alone is never sufficient.
 
-There is no live model, production retrieval, embeddings, vector store, database, authentication, or backend. Retrieval, classification, generation, relevance, and state transitions are simulated using deterministic fixtures and curated interactions.
+If you are changing this codebase, do not weaken these boundaries for convenience.
 
-## Project browse view (Aug 31 prototype update)
-Project is a deterministic, readable view of maintained Current State. It uses three intentionally broad categories: Product & Workflow, Safety & Constraints, and Evaluation & Rollout. Categories are populated from `knowledge[].projectArea`; pending review does not change the displayed statement until Review is accepted. The only category-management control exposed in the prototype is hide/show. This deliberately leaves edge-case taxonomy and user reorganization out of scope until real testing shows they matter.
+---
+
+## Where the real code lives
+
+The repository root holds the portfolio site. The two directories below are the deployed application.
+
+| Path | What it is |
+|---|---|
+| `implementation-context-prototype/` | **The State frontend.** Authoritative. This is what the live site loads. |
+| `state-project-complete/` | **The State backend.** Authoritative. This is what Render builds. |
+| `render.yaml` (root) | The one Render config. `rootDir: state-project-complete`, `branch: main`. |
+| `vercel.json` | Static hosting config for the portfolio site. |
+| `index.html`, `site-shell.css`, `site-components.css` | Portfolio homepage and shared shell. |
+| `implementation-context*.html` | The State case study (overview, product decisions, deep dive). |
+| `docs/` | Historical implementation and review notes. |
+
+### Frontend files
+
+| File | Responsibility |
+|---|---|
+| `index.html` | Application shell and navigation |
+| `context-app.js` | Routing, rendering, state transitions, Review decisions, Questions, Notes, History |
+| `context-api.js` | Backend HTTP client |
+| `context-ask.js` | Ask UI and result rendering |
+| `context-data.js` | Deterministic fixture used when the backend is unavailable |
+| `context-tool.css` | Product styling |
+| `final-polish.js` | Post-render patch layer. Known technical debt — see *Known debt* below. |
+
+### Backend files
+
+| File | Responsibility |
+|---|---|
+| `api.py` | FastAPI app and all HTTP endpoints |
+| `ask_service.py` | Authority-aware candidate selection and synthesis for Ask |
+| `ask_contract.py` | Structured contracts for Ask selection and synthesis |
+| `ask_provider.py` | Provider-neutral model adapter for Ask |
+| `ask_refinement_transforms.py` | Post-processing for Ask refinements (shorten, reformat, etc.) |
+| `review_service.py` | Human-authorized review resolution and read models |
+| `interpretation_pipeline_integrated.py` | Evidence interpretation pipeline |
+| `db.py` | Unified SQLite/Postgres connection abstraction |
+| `database_migration_backed.py` | Migration runner and schema initialization |
+| `anthropic_provider.py`, `openai_provider.py` | Provider adapters |
+| `migrations/` | Numbered SQL migrations (`001`–`005`). The only migrations directory. |
+| `seed_demo.py` | Idempotent seed for the "Northstar" demo project |
+
+---
+
+## Running it locally
+
+### Backend
+
+```bash
+cd state-project-complete
+pip install -r requirements.txt
+
+export DATABASE_URL="sqlite:///tmp/state.db"
+export STATE_PROVIDER=anthropic
+export ANTHROPIC_API_KEY="sk-ant-..."
+export STATE_DEMO_BOOTSTRAP=1          # seed the Northstar demo project
+
+python -m uvicorn api:app --reload --port 8000
+```
+
+Check it came up:
+
+```bash
+curl http://127.0.0.1:8000/health
+# {"status":"ok","build":"...","demo_bootstrap":true}
+```
+
+Migrations run automatically at startup and are recorded in `schema_migrations`.
+`DATABASE_URL` is required — set it to a Postgres URL for a Postgres-backed run.
+
+### Frontend
+
+`implementation-context-prototype/index.html` opens directly from the filesystem; it detects `file://` and switches to relative asset paths. By default it talks to the deployed backend. To point it at a local one, set the API base before `context-api.js` loads:
+
+```html
+<script>window.STATE_API_BASE = 'http://127.0.0.1:8000';</script>
+```
+
+or set `data-api-base` on the `<html>` element.
+
+If the backend is unreachable, the frontend falls back to the deterministic fixture in `context-data.js` rather than failing. That is intentional.
+
+---
+
+## Tests
+
+```bash
+# Python — deterministic suite, no flags needed
+cd state-project-complete && python -m pytest -q
+# 241 passed, 3 skipped, 7 subtests passed
+
+# JavaScript — deterministic Ask behavior
+cd implementation-context-prototype && node state-ask-behavior-tests.js
+# 81 passed, 0 failed
+```
+
+Tests that require real provider API keys skip themselves when the keys are
+absent. Nothing needs to be deselected by hand.
+
+The browser suite (`test_browser_user_flows.py`) drives Chromium through
+Playwright. It uses Playwright's managed browser by default:
+
+```bash
+python -m playwright install chromium
+```
+
+Set `STATE_CHROMIUM_PATH` to use a specific binary instead.
+
+A CI workflow is parked at `.github/workflows/tests.yml.disabled`. GitHub
+ignores it until it is renamed to `tests.yml`.
+
+---
+
+## Deployment
+
+| Surface | Host | Source |
+|---|---|---|
+| Portfolio site + State frontend | Vercel | GitHub `main` |
+| State API | Render | root `render.yaml`, `rootDir: state-project-complete`, `branch: main` |
+
+Both deploy from `main` on commit. Secrets (`DATABASE_URL`, `ANTHROPIC_API_KEY`,
+`OPENAI_API_KEY`) are set in the Render dashboard and never committed.
+
+---
+
+## Deliberate constraints
+
+Things that look like omissions but are decisions:
+
+- **Ask streaming is disabled in the browser.** A live token-streaming path produced corrupted split words. `/api/ask/stream` still exists; the UI uses the validated non-streaming `/api/ask` path. Do not re-enable streaming without evidence and testing.
+- **Ask refinement behavior is backend-driven.** `followup_mode` is authoritative. Transformative refinements ("shorten it", "make this exactly three points") replace the previous answer; conversational follow-ups ("what source supports that?") append.
+- **No auth, organizations, or multi-tenancy.** Out of scope for a prototype.
+- **No vector database, RAG, or agents.** Selection is authority-aware and deterministic. Adding retrieval machinery would obscure the thing this project is actually about.
+- **No ORM.** `db.py` is a small deliberate abstraction over SQLite and Postgres. It is doing real work — parameter conversion, row factories, transaction control, dialect differences — and is smaller than the ORM it would be replaced by.
+- **The frontend falls back to a fixture** rather than showing an error when the backend is down.
+
+## Known debt
+
+Being cleaned up deliberately rather than all at once:
+
+- `final-polish.js` is a post-render patch layer — it injects CSS, rewrites button labels, applies inline `!important` overrides and repositions DOM nodes through a MutationObserver. Its *behavior* is correct and intended; the mechanism should move into the renderer and stylesheet.
+- The stylesheets carry layered version-specific overrides and heavy `!important` use.
+- Some homepage copy is rendered from CSS `::before` content while the DOM still holds older wording.
+- State's navigation clips on narrow screens.
+- `STATE_BUILD_REV` in `api.py` is hand-edited rather than derived from the deployed commit.
+
+---
+
+## What this project is not
+
+It is not a validated commercial product, and it does not claim to be. It demonstrates a design pattern — separating evidence from accepted state, calibrating AI authority to consequence, and keeping uncertainty visible — and the investigation that produced it. The case study at `implementation-context.html` covers the experiment, what weakened the original hypothesis, and what changed as a result.

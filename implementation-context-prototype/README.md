@@ -1,29 +1,48 @@
-# Project Context Workspace — behavioral prototype
+# State — frontend
 
-Project Context Workspace is the redesigned Implementation Context prototype. It follows `PROJECT-CONTEXT-UI-UX-FROZEN-IMPLEMENTATION-SPEC.md`: high fidelity in product behavior and interaction, intentionally low fidelity in backend AI implementation.
+This directory is the **authoritative State frontend**. It is what the live site
+loads and what every frontend test reads.
 
-## Editable source
+Full documentation — the authority model, architecture, how to run the backend,
+deployment, and known debt — lives in the [repository README](../README.md).
+This file exists so nobody has to guess whether this directory or some other
+copy is the real one. It is.
 
-- `index.html` — application shell and five-part information architecture
-- `context-tool.css` — product styling
-- `context-data.js` — deterministic fixture/state model
-- `context-app.js` — routing, rendering, state transitions, Review decisions, Questions, Notes, and History behavior
+## Files
 
-## Product model
+| File | Responsibility |
+|---|---|
+| `index.html` | Application shell and navigation |
+| `context-app.js` | Routing, rendering, state transitions, Review decisions, Questions, Notes, History |
+| `context-api.js` | Backend HTTP client |
+| `context-ask.js` | Ask UI and result rendering |
+| `context-data.js` | Deterministic fixture used when the backend is unreachable |
+| `context-tool.css` | Product styling |
+| `final-polish.js` | Post-render patch layer — known debt, see the repository README |
 
-Primary navigation is **Overview · Notes · Questions · Review · History**. `+ Add information` is a persistent write action. Overview is a fixed-size launching surface; substantive AI results replace it temporarily in-page and disappear when the user returns.
+## Running it
 
-The prototype supports deterministic natural-language variants for retrieval, Q&A, change summaries, Security meeting preparation, summaries, leadership drafting, and unresolved questions. Unsupported queries fail intentionally. Pending evidence is surfaced through explicit topic relationships and is never silently incorporated into current understanding.
+`index.html` opens directly from the filesystem; it detects `file://` and
+switches to relative asset paths.
 
-## Core trust loop
+By default it talks to the deployed backend. To point it at a local one, set the
+API base before `context-api.js` loads:
 
-**Ask → encounter an unknown → track it → add evidence → leave Review pending → encounter relevant pending evidence during normal work → review → update current understanding → ask again → see changed output → inspect History.**
+```html
+<script>window.STATE_API_BASE = 'http://127.0.0.1:8000';</script>
+```
 
-A second seeded Security review demonstrates that reviewed evidence can resolve an open question and leave a History trace.
+or set `data-api-base` on the `<html>` element.
 
-## Prototype honesty
+## Tests
 
-There is no live model, production retrieval, embeddings, vector store, database, authentication, or backend. Retrieval, classification, generation, relevance, and state transitions are simulated using deterministic fixtures and curated interactions.
+```bash
+node state-ask-behavior-tests.js
+# 81 passed, 0 failed
+```
 
-## Project browse view (Aug 31 prototype update)
-Project is a deterministic, readable view of maintained Current State. It uses three intentionally broad categories: Product & Workflow, Safety & Constraints, and Evaluation & Rollout. Categories are populated from `knowledge[].projectArea`; pending review does not change the displayed statement until Review is accepted. The only category-management control exposed in the prototype is hide/show. This deliberately leaves edge-case taxonomy and user reorganization out of scope until real testing shows they matter.
+This suite covers deterministic Ask routing and behavior. Browser flow tests and
+the frontend integration contract live with the backend suite in
+`../state-project-complete/` and read the files in this directory directly.
+
+See `STATE-ASK-EVALUATION-MAP.md` for what the Ask suite covers.
