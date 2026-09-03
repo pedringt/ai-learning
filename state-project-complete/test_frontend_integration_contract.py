@@ -275,3 +275,13 @@ def test_ask_fixed_followup_reserves_answer_clearance_on_desktop_and_mobile():
     assert "padding:26px 30px 100px" in css
     assert ".unboxed-ask:has(.ask-session-row) .answer-stage{padding:20px 18px 96px}" in css
     assert 'class="ask-followup"' in app
+
+
+def test_project_finishing_pass_avoids_repeating_current_direction_in_header():
+    app = (FRONTEND / "context-app.js").read_text(encoding="utf-8")
+    css = (FRONTEND / "context-tool.css").read_text(encoding="utf-8")
+    assert 'class="project-document-summary">Reviewed project understanding' in app
+    assert '<strong>Current direction</strong>' in app
+    assert '${esc(orientation.description)}</p><dl class="project-document-meta">' not in app
+    assert 'grid-template-columns:minmax(0,.9fr) minmax(0,1.35fr) minmax(150px,.75fr)!important' in css
+    assert '.project-outline-actions .project-pending,.project-outline-actions .project-history-link{opacity:.72' in css
