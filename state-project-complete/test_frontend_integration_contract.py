@@ -81,12 +81,20 @@ def test_project_is_rendered_as_document_outline_not_area_card_dashboard():
 
 
 def test_project_subnav_scrolls_existing_document_without_rerender():
-    assert "if(state.view!=='project-overview'){state.view='project-overview';state.result=null;render();" in JS
+    assert "if(state.view!=='project-overview'){state.view='project-overview';render();" in JS
     assert "else{updateNav();updateProjectSubnavActive(target);scrollProjectTarget(target);}" in JS
     assert "setTimeout" not in JS or "data-project-jump" not in JS.split("setTimeout",1)[-1]
     assert "updateProjectSubnavActive" in JS
     assert "aria-current','location'" in JS
 
+
+
+
+def test_navigation_preserves_current_ask_session_until_explicit_new_ask():
+    nav = JS.split("function navigateTo(view", 1)[1].split("function projectScrollTop", 1)[0]
+    assert "state.result=null" not in nav
+    assert "state.resultQuery=''" not in nav
+    assert "act==='close-result'||act==='new-ask'" in JS
 
 def test_frontend_api_base_is_runtime_configurable():
     assert "window.STATE_API_BASE" in API_JS

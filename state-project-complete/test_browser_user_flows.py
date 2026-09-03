@@ -184,6 +184,29 @@ def test_project_reads_as_wiki_and_keeps_atomic_facts_collapsed_by_default():
         browser.close(); pw.stop()
 
 
+
+
+def test_current_ask_survives_navigation_until_new_ask():
+    pw, browser, page = _launch_page(hydration_ms=10, ask_ms=20)
+    try:
+        box = page.locator('#askInput')
+        box.fill('Who is my billing contact?')
+        page.locator('[data-action="ask-submit"]').click()
+        page.get_by_text('Jane Smith', exact=True).wait_for()
+
+        page.locator('.sidebar-nav [data-view="project-overview"]').click()
+        page.locator('.sidebar-nav [data-view="overview"]').click()
+
+        assert page.get_by_text('Jane Smith', exact=True).is_visible()
+        assert page.get_by_text('Who is my billing contact?', exact=True).is_visible()
+
+        page.locator('[data-action="new-ask"]').click()
+        assert page.locator('.answer-stage.has-result').count() == 0
+        assert page.locator('#askInput').input_value() == ''
+    finally:
+        browser.close(); pw.stop()
+
+
 def test_ask_examples_fill_input_without_auto_submitting():
     pw, browser, page = _launch_page(hydration_ms=10)
     try:

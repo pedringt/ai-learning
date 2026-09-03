@@ -74,7 +74,9 @@
       if(!preserveHistoryTopic)state.historyTopic=null;
       if(!preserveHistoryEvidence)state.historyEvidenceId=null;
     }else{state.historyTopic=null;state.historyEvidenceId=null;}
-    state.result=null;
+    // Navigation is not a new Ask session. Keep the current answer/query so a
+    // user can inspect Project, Open Items, Notes, or History and return to the
+    // same working Ask. Explicit New ask / reset actions own session cleanup.
     render();
     requestAnimationFrame(()=>window.scrollTo({top:0,behavior:'auto'}));
   }
@@ -1456,7 +1458,7 @@
   document.addEventListener('click',async e=>{
     if(e.target.closest('[data-action="dismiss-review-banner"]')){ state.reviewBannerDismissed=true; renderOverview(); return; }
     if(e.target.closest('[data-action="dismiss-nudge"]')){ const btn=e.target.closest('[data-action="dismiss-nudge"]'); state.dismissedNudges.add(btn.dataset.nudge); renderReview(); return; }
-    const projectJump=e.target.closest('[data-project-jump]'); if(projectJump){const target=projectJump.dataset.projectJump;if(state.view!=='project-overview'){state.view='project-overview';state.result=null;render();requestAnimationFrame(()=>scrollProjectTarget(target));}else{updateNav();updateProjectSubnavActive(target);scrollProjectTarget(target);}return;}
+    const projectJump=e.target.closest('[data-project-jump]'); if(projectJump){const target=projectJump.dataset.projectJump;if(state.view!=='project-overview'){state.view='project-overview';render();requestAnimationFrame(()=>scrollProjectTarget(target));}else{updateNav();updateProjectSubnavActive(target);scrollProjectTarget(target);}return;}
     const relatedReview=e.target.closest('[data-action="open-related-review"]'); if(relatedReview){ const r=state.data.reviews.find(x=>x.id===relatedReview.dataset.reviewId); if(r) showDialog(`<span class="eyebrow">Pending Review</span><h2 id="dialogTitle">Related evidence may affect this Current State</h2>${reviewCard(r,true,false)}`); return;}
         const topicHistory=e.target.closest('[data-action="view-topic-history"]'); if(topicHistory){if(!overlay.hidden)closeDialog();state.historyTopic=topicHistory.dataset.knowledgeId;navigateTo('history',{preserveHistoryTopic:true});return;}
     const clearHistory=e.target.closest('[data-action="clear-history-topic"]'); if(clearHistory){state.historyTopic=null;renderHistory();return;}
