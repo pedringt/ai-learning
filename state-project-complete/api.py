@@ -22,8 +22,8 @@ from openai_provider import OpenAIProvider
 from seed_demo import bootstrap_demo_data
 from ask_contract import AskRequest
 from ask_provider import LiveAskProvider
-from ask_service import run_ask
-STATE_BUILD_REV = "r9.4.3-selection-bounds-2026-09-02"
+from ask_service import build_ask_preview, run_ask
+STATE_BUILD_REV = "r9.5-grounded-ask-progress-2026-09-02"
 logger = logging.getLogger("state.api")
 
 from review_service import (
@@ -455,6 +455,12 @@ def create_app(settings: Settings | None = None, provider: InterpretationProvide
     def get_history() -> dict:
         with get_connection() as connection:
             return {"items": list_history(connection)}
+
+    @app.post("/api/ask/preview")
+    def post_ask_preview(payload: AskRequest) -> dict:
+        """Return software-grounded progress immediately; never calls a model."""
+        with get_connection() as connection:
+            return build_ask_preview(connection, payload.query.strip())
 
     @app.post("/api/ask")
     def post_ask(payload: AskRequest, request: Request) -> dict:

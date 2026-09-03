@@ -285,3 +285,17 @@ def test_project_finishing_pass_avoids_repeating_current_direction_in_header():
     assert '${esc(orientation.description)}</p><dl class="project-document-meta">' not in app
     assert 'grid-template-columns:minmax(0,.9fr) minmax(0,1.35fr) minmax(150px,.75fr)!important' in css
     assert '.project-outline-actions .project-pending,.project-outline-actions .project-history-link{opacity:.72' in css
+
+
+def test_r95_ask_progress_preview_runs_in_parallel_without_blocking_final_request():
+    app = (FRONTEND / "context-app.js").read_text(encoding="utf-8")
+    api_js = (FRONTEND / "context-api.js").read_text(encoding="utf-8")
+    ask_js = (FRONTEND / "context-ask.js").read_text(encoding="utf-8")
+    backend = (Path(__file__).parent / "api.py").read_text(encoding="utf-8")
+    assert "askPreview: query => jsonPost('/api/ask/preview'" in api_js
+    assert "async function preview(query)" in ask_js
+    assert "previewPromise=ASK.preview?.(raw)" in app
+    assert "const payload=await ASK.submit(raw,previousLive)" in app
+    assert "await ASK.preview" not in app
+    assert "Grounded context ready" in app
+    assert '@app.post("/api/ask/preview")' in backend

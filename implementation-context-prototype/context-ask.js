@@ -14,6 +14,10 @@
   function canHandle(query, previousPayload){
     return !!API?.ask && (isMeetingPrep(query) || !!previousPayload);
   }
+  async function preview(query){
+    if(!API?.askPreview || !isMeetingPrep(query)) return null;
+    return API.askPreview(query);
+  }
   async function submit(query, previousPayload=null){
     return API.ask(query, previousPayload?.answer || null);
   }
@@ -78,5 +82,5 @@
     return `<div class="ask-live-answer"><div class="ask-answer-head"><div class="result-label">${esc(a.job==='meeting_prep'?'Meeting prep':'State Ask')}</div><button class="btn secondary ask-copy-answer" data-action="copy-result">${esc(copyLabel(a.job))}</button></div><h2>${esc(a.headline)}</h2><p class="result-lede">${esc(a.summary)}</p>${sections}${notes}${refinements?`<div class="ask-refinement-chips">${refinements}</div>`:''}${stateActions(a)}${footer}</div>`;
   }
 
-  window.STATE_ASK = Object.freeze({canHandle, submit, render, portableText, copyLabel});
+  window.STATE_ASK = Object.freeze({canHandle, preview, submit, render, portableText, copyLabel});
 })();

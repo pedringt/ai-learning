@@ -411,3 +411,31 @@ def test_selector_json_schema_declares_contract_cardinality_limits():
     assert props["question_ids"]["maxItems"] == 10
     assert props["history_ids"]["maxItems"] == 12
     assert props["evidence_ids"]["maxItems"] == 12
+
+
+def test_r95_meeting_preview_is_grounded_and_model_free(tmp_path):
+    from ask_service import build_ask_preview
+    conn = seeded_connection(tmp_path)
+    try:
+        preview = build_ask_preview(conn, "Prep me for the security meeting.")
+        assert preview["job"] == "meeting_prep"
+        assert preview["grounded"] is True
+        assert preview["counts"]["reviews"] >= 1
+        assert preview["counts"]["blockers"] >= 1
+        assert preview["counts"]["state"] >= 1
+        assert "Drafting the brief" in preview["message"]
+        assert preview["elapsed_ms"] >= 0
+    finally:
+        conn.close()
+
+
+def test_r95_non_meeting_preview_does_not_invent_selection(tmp_path):
+    from ask_service import build_ask_preview
+    conn = seeded_connection(tmp_path)
+    try:
+        preview = build_ask_preview(conn, "What changed about pilot scope?")
+        assert preview["grounded"] is False
+        assert preview["counts"] == {}
+        assert "Checking Current State" in preview["message"]
+    finally:
+        conn.close()

@@ -381,6 +381,52 @@ def _normalize_meeting_prep(answer: AskSynthesis) -> AskSynthesis:
     answer.suggested_refinements = answer.suggested_refinements[:3]
     return answer
 
+
+def build_ask_preview(connection: Any, query: str) -> dict[str, Any]:
+    """Return an immediate, software-grounded preview while synthesis runs.
+
+    This intentionally does not ask the model to infer anything. For explicit
+    meeting-prep jobs it uses the same deterministic selection and authority
+    validation as the fast Ask path, so every count reflects records that may
+    legitimately appear in the final answer. Other jobs get a neutral progress
+    state until their provider-driven selection is available.
+    """
+    started = time.perf_counter()
+    candidates = _trim_candidates_for_query(query, _compact_candidates(connection))
+    if not _is_explicit_meeting_prep(query):
+        return {
+            "job": "general",
+            "grounded": False,
+            "message": "Checking Current State and open items…",
+            "counts": {},
+            "elapsed_ms": round((time.perf_counter() - started) * 1000),
+        }
+
+    selection = _validate_selection(_deterministic_meeting_selection(candidates), candidates)
+    counts = {
+        "reviews": len(selection.review_ids),
+        "blockers": len(selection.blocking_question_ids),
+        "questions": len(selection.question_ids),
+        "state": len(selection.state_ids),
+    }
+    parts = []
+    if counts["reviews"]:
+        parts.append(f"{counts['reviews']} relevant {'Review' if counts['reviews'] == 1 else 'Reviews'}")
+    if counts["blockers"]:
+        parts.append(f"{counts['blockers']} {'blocker' if counts['blockers'] == 1 else 'blockers'}")
+    if counts["questions"]:
+        parts.append(f"{counts['questions']} open {'question' if counts['questions'] == 1 else 'questions'}")
+    if counts["state"]:
+        parts.append(f"{counts['state']} Current State {'fact' if counts['state'] == 1 else 'facts'}")
+    message = "Found " + ", ".join(parts[:-1]) + ((" and " + parts[-1]) if len(parts) > 1 else (parts[-1] if parts else "relevant project context")) + ". Drafting the brief…"
+    return {
+        "job": "meeting_prep",
+        "grounded": True,
+        "message": message,
+        "counts": counts,
+        "elapsed_ms": round((time.perf_counter() - started) * 1000),
+    }
+
 def run_ask(connection: Any, provider: AskProvider, query: str, previous_answer: Mapping[str, Any] | None = None) -> dict[str, Any]:
     total_started = time.perf_counter()
     context_started = time.perf_counter()

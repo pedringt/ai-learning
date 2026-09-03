@@ -592,3 +592,7 @@ body.v88-dark .open-items-reviews .open-items-section-head,body.v88-dark .open-i
 .project-outline-actions .project-pending:hover,.project-outline-actions .project-pending:focus-visible,.project-outline-actions .project-history-link:hover,.project-outline-actions .project-history-link:focus-visible{opacity:1}
 @media(max-width:760px){.project-document-meta{grid-template-columns:1fr 1fr!important}.project-document-meta div:last-child{grid-column:1/-1}}
 @media(max-width:430px){.project-document-meta{grid-template-columns:1fr!important}.project-document-meta div:last-child{grid-column:auto}}
+
+/* R9.5 — grounded Ask progress: useful feedback while synthesis is still running. */
+.ask-live-loading.has-grounded-preview strong{color:var(--ink)}
+.ask-live-loading.has-grounded-preview p{color:var(--muted)}
