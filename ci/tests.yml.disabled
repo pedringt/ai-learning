@@ -1,0 +1,60 @@
+# Deterministic test suite for State.
+#
+# NOT ACTIVE. GitHub only reads files ending in .yml or .yaml, so while this file
+# is named tests.yml.disabled it will never run. To turn it on, rename it:
+#
+#     git mv .github/workflows/tests.yml.disabled .github/workflows/tests.yml
+#
+# It is deliberately parked because the production site is frozen for review and
+# nothing should run against the repository until that freeze lifts.
+#
+# This workflow only runs tests. It does not build, publish or deploy anything.
+# Vercel and Render deploy from `main` on their own; this does not touch either.
+
+name: tests
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  python:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+
+      - name: Install dependencies
+        working-directory: state-project-complete
+        run: |
+          pip install -r requirements.txt
+          pip install pytest pytest-subtests playwright
+
+      # The browser suite resolves Chromium through Playwright by default, so the
+      # runner needs Playwright's managed download. STATE_CHROMIUM_PATH can point
+      # at a specific binary instead.
+      - name: Install Chromium for the browser suite
+        run: python -m playwright install --with-deps chromium
+
+      # No --deselect needed: tests that require real provider API keys skip
+      # themselves when the keys are absent.
+      - name: Run deterministic Python suite
+        working-directory: state-project-complete
+        run: python -m pytest -q
+
+  javascript:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Run Ask behavior suite
+        working-directory: implementation-context-prototype
+        run: node state-ask-behavior-tests.js

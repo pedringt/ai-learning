@@ -1,16 +1,48 @@
 from __future__ import annotations
 
 import json
+import os
 import re
 from pathlib import Path
 
 import pytest
 
 pytest.importorskip("playwright.sync_api")
-from playwright.sync_api import sync_playwright
+from playwright.sync_api import Error as PlaywrightError, sync_playwright
 
 ROOT = Path(__file__).resolve().parents[1]
 FRONT = ROOT / "implementation-context-prototype"
+
+# Chromium does not live in the same place on every machine. This suite used to
+# hardcode /usr/bin/chromium, which meant it only ran on one laptop; anywhere
+# else all twelve tests failed at launch, and Playwright reported a misleading
+# "Sync API inside the asyncio loop" error rather than "executable not found".
+_CHROMIUM_FALLBACKS = (
+    "/usr/bin/chromium",
+    "/usr/bin/chromium-browser",
+    "/usr/bin/google-chrome",
+    "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+    "/Applications/Chromium.app/Contents/MacOS/Chromium",
+)
+
+
+def _launch_chromium(pw):
+    """Launch headless Chromium wherever it happens to live on this machine.
+
+    Order: an explicit STATE_CHROMIUM_PATH override, then Playwright's own
+    managed browser (correct after `playwright install`), then a system install.
+    """
+    args = ["--no-sandbox"]
+    override = os.environ.get("STATE_CHROMIUM_PATH")
+    if override:
+        return pw.chromium.launch(headless=True, executable_path=override, args=args)
+    try:
+        return pw.chromium.launch(headless=True, args=args)
+    except PlaywrightError:
+        for candidate in _CHROMIUM_FALLBACKS:
+            if Path(candidate).exists():
+                return pw.chromium.launch(headless=True, executable_path=candidate, args=args)
+        raise
 
 
 def _body_markup() -> str:
@@ -36,6 +68,14 @@ def _mock_api_script(hydration_ms: int = 120, ask_ms: int = 180, resolved_review
         const sleep=(v,ms)=>new Promise(r=>setTimeout(()=>r(v),ms));
         let askCount=0;
         window.STATE_API={{
+          // Fast first-paint path: the Workspace calls getAttention() before the
+          // rest of the project loads, so the attention row can render without
+          // waiting on the slower resolved-review call below.
+          getAttention:()=>sleep({{open_reviews:[],questions:[]}}, {hydration_ms}),
+          // Deliberately rejected. These tests exercise the individual-resource
+          // fallback path, which is what keeps resolved_review_ms observable as
+          // a separate, slower call. The app catches this and retries per resource.
+          getBootstrap:()=>Promise.reject(new Error('bootstrap unavailable in this mock')),
           getState:()=>sleep({{items:[]}}, {hydration_ms}),
           getEvidence:()=>sleep({{items:[]}}, {hydration_ms}),
           getReviews:(status)=>sleep({{items:[]}}, status==='resolved'?{resolved_review_ms}:{hydration_ms}),
@@ -54,7 +94,7 @@ def _mock_api_script(hydration_ms: int = 120, ask_ms: int = 180, resolved_review
 
 def _launch_page(hydration_ms: int = 120, ask_ms: int = 180, resolved_review_ms: int | None = None):
     pw = sync_playwright().start()
-    browser = pw.chromium.launch(headless=True, executable_path="/usr/bin/chromium", args=["--no-sandbox"])
+    browser = _launch_chromium(pw)
     page = browser.new_page(viewport={"width": 1398, "height": 986})
     css = (ROOT / "site-shell.css").read_text() + "\n" + (FRONT / "context-tool.css").read_text()
     page.set_content(f"<!doctype html><html><head><style>{css}</style></head><body>{_body_markup()}</body></html>")
@@ -138,7 +178,9 @@ def test_backend_review_choice_acknowledges_and_disappears_before_server_round_t
         page.wait_for_timeout(50)
         assert page.locator('[data-review-card="r-browser"]').count() == 0
         assert page.get_by_text('Updating understanding…', exact=True).count() == 1
-        page.get_by_text('Here’s what changed.', exact=True).wait_for(timeout=2000)
+        # Product copy is "Here’s what changed" with no trailing period; the old
+        # assertion kept a period the UI has never rendered.
+        page.get_by_text('Here’s what changed', exact=True).wait_for(timeout=2000)
     finally:
         browser.close(); pw.stop()
 
