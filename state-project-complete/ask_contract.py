@@ -48,6 +48,9 @@ class AskSynthesis(BaseModel):
     uncertainty_ids: list[str] = Field(default_factory=list, max_length=50)
     suggested_refinements: list[str] = Field(default_factory=list, max_length=5)
 
+# Anthropic structured outputs support only a subset of JSON Schema and reject
+# array maxItems. Application limits therefore remain authoritative in
+# AskSelection / ask_service rather than being expressed in this provider schema.
 SELECTOR_JSON_SCHEMA = {
     "type": "object",
     "additionalProperties": False,
@@ -58,12 +61,12 @@ SELECTOR_JSON_SCHEMA = {
             "why_or_provenance", "attention_check", "historical", "drafting",
             "general_project_synthesis", "refinement"
         ]},
-        "state_ids": {"type": "array", "items": {"type": "string"}, "maxItems": 12},
-        "review_ids": {"type": "array", "items": {"type": "string"}, "maxItems": 8},
-        "blocking_question_ids": {"type": "array", "items": {"type": "string"}, "maxItems": 8},
-        "question_ids": {"type": "array", "items": {"type": "string"}, "maxItems": 10},
-        "history_ids": {"type": "array", "items": {"type": "string"}, "maxItems": 12},
-        "evidence_ids": {"type": "array", "items": {"type": "string"}, "maxItems": 12},
+        "state_ids": {"type": "array", "items": {"type": "string"}},
+        "review_ids": {"type": "array", "items": {"type": "string"}},
+        "blocking_question_ids": {"type": "array", "items": {"type": "string"}},
+        "question_ids": {"type": "array", "items": {"type": "string"}},
+        "history_ids": {"type": "array", "items": {"type": "string"}},
+        "evidence_ids": {"type": "array", "items": {"type": "string"}},
     },
 }
 
