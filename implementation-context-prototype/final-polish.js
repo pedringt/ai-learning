@@ -1,5 +1,22 @@
 (() => {
   const STYLE_ID = 'state-final-ask-polish';
+  const loadingTimers = new WeakMap();
+
+  const INITIAL_WAIT_MESSAGES = [
+    'Finding the project context that matters for this question…',
+    'Checking Current State against open Reviews and Questions…',
+    'Keeping unresolved information unresolved…',
+    'Shaping the grounded answer around the useful parts…',
+  ];
+  const LONG_WAIT_MESSAGES = [
+    'Still working — validating the answer against the project record…',
+    'Still working — making sure Reviews qualify rather than silently replace Current State…',
+  ];
+  const REFINEMENT_WAIT_MESSAGES = [
+    'Refining the existing answer without changing the underlying project truth…',
+    'Keeping the same grounding while changing the format and emphasis…',
+    'Still working — checking the refinement against the project record…',
+  ];
 
   function installStyles(){
     let style = document.getElementById(STYLE_ID);
@@ -57,7 +74,39 @@
         margin-top:3px!important;
         line-height:1.4!important;
       }
+      .ask-live-loading p,
+      .ask-followup-working{
+        min-height:1.55em;
+      }
     `;
+  }
+
+  function startRotatingStatus(node, target, messages, longMessages=null){
+    if(!node || !target || loadingTimers.has(node)) return;
+    const started = Date.now();
+    let index = 0;
+    const timer = window.setInterval(() => {
+      if(!node.isConnected){
+        window.clearInterval(timer);
+        loadingTimers.delete(node);
+        return;
+      }
+      const elapsed = Date.now() - started;
+      const pool = longMessages && elapsed >= 10000 ? longMessages : messages;
+      target.textContent = pool[index % pool.length];
+      index += 1;
+    }, 3000);
+    loadingTimers.set(node, timer);
+  }
+
+  function enhanceLoadingStates(){
+    document.querySelectorAll('.ask-live-loading').forEach(node => {
+      const target = node.querySelector('p');
+      startRotatingStatus(node, target, INITIAL_WAIT_MESSAGES, LONG_WAIT_MESSAGES);
+    });
+    document.querySelectorAll('.ask-followup-working').forEach(node => {
+      startRotatingStatus(node, node, REFINEMENT_WAIT_MESSAGES);
+    });
   }
 
   function normalizeAskUi(){
@@ -74,6 +123,7 @@
       item.style.setProperty('border-top', '0', 'important');
       item.style.setProperty('border-bottom', '0', 'important');
     });
+    enhanceLoadingStates();
   }
 
   installStyles();
