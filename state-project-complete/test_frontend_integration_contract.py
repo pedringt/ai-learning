@@ -267,6 +267,15 @@ def test_dialog_visibility_has_one_source_of_truth():
     assert ".overlay[hidden]{display:none!important}" in css
 
 
+
+def test_informational_dialog_focus_does_not_scroll_to_bottom_action():
+    app = (FRONTEND / "context-app.js").read_text()
+    assert "button:not(.dialog-close)" not in app
+    assert "[autofocus], input:not([type=\"hidden\"]), textarea, select" in app
+    assert "focus({preventScroll:true})" in app
+    assert "function showDemoHelp()" in app
+
+
 def test_ask_fixed_followup_reserves_answer_clearance_on_desktop_and_mobile():
     css = (FRONTEND / "context-tool.css").read_text(encoding="utf-8")
     app = (FRONTEND / "context-app.js").read_text(encoding="utf-8")

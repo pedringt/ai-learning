@@ -5,7 +5,7 @@
   const clone = x => JSON.parse(JSON.stringify(x));
   const initial = clone(D);
   const state = {
-    data: clone(D), view:'overview', result:null, resultQuery:'', projectMenuOpen:false, refinements:[], lastScenario:null,
+    data: clone(D), view:'overview', result:null, resultQuery:'', askInputDraft:'', projectMenuOpen:false, refinements:[], lastScenario:null,
     addedSample:false, pendingCreated:false, reviewBannerDismissed:false, dialogReturnFocus:null, expandedNotes:new Set(), noteComposerOpen:false, editingNoteId:null, dismissedNudges:new Set(), historyTopic:null, historyEvidenceId:null, historySearch:'', notesFilter:'all', notesDateFilter:'all', notesSearch:'', isAnalyzing:false, openQuestionsExpanded:false, expandedReviewId:null, openItemSections:{reviews:false,blockers:false,questions:null}, projectRules:[], backendStatus:{state:'loading',evidence:'loading',reviews:'loading',history:'loading',questions:'loading',rules:'loading',drafts:'loading'}
   };
 
@@ -206,7 +206,7 @@
     const resultBody = state.result ? (state.result.liveAsk ? ASK?.render(state.result.liveAsk) : state.result.liveAskStreaming ? `${state.result.previousLive?`<div class="ask-previous-answer">${ASK?.render(state.result.previousLive)}</div>`:''}${ASK?.renderStream(state.result.liveAskStreamRaw||'',state.result.liveAskPreview||null)}` : state.result.liveAskLoading ? `${state.result.previousLive?`<div class="ask-previous-answer">${ASK?.render(state.result.previousLive)}</div>`:''}${liveAskLoadingHtml()}` : state.result.liveAskError ? `${state.result.previousLive?`<div class="ask-previous-answer">${ASK?.render(state.result.previousLive)}</div>`:''}<div class="ask-live-error"><h2>Ask is temporarily unavailable.</h2><p>${esc(state.result.liveAskError)}</p></div>` : state.result.fallback ? fallbackResult() : state.result.intent ? intentAskHtml(state.result.intent) : state.result.structured ? structuredAskHtml(state.result.structured) : scenarioResult(state.result.scenario)) : '';
     root.innerHTML = `<section class="overview pristine">
       <section class="overview-heading"><div class="overview-heading-row"><div><h2>Northstar</h2></div><button class="btn primary overview-add" data-action="add-info">+ Add note</button></div></section>
-      <section class="ask-panel compact-ask unboxed-ask">${state.result?`<div class="ask-session-row"><div><span class="meta-label">Current ask</span><strong>${esc(state.resultQuery)}</strong></div><button class="text-button ask-new-session" data-action="new-ask"><span aria-hidden="true">＋</span> New ask</button></div><div class="answer-stage has-result" aria-live="polite"><div class="answer-content">${resultBody}</div></div>${(state.result.liveAsk||state.result.previousLive)?`<div class="ask-followup"><div class="ask-input-row"><input id="askInput" autocomplete="off" aria-label="Refine or ask a follow-up" placeholder="Refine, ask a follow-up, or turn this into something…" value="${esc(state.result.pendingInput||'')}"/><button class="btn primary" data-action="ask-submit" ${state.result.liveAskLoading||state.result.liveAskStreaming?'disabled':''}>${state.result.liveAskLoading||state.result.liveAskStreaming?'Working…':'Ask'}</button></div></div>`:''}`:`<div class="ask-title-row"><div><label for="askInput">Ask what State knows about the project</label><p>Search current understanding, open items, notes, and history.</p></div></div><div class="ask-input-row"><input id="askInput" autocomplete="off" aria-label="Ask about the project or create an update" placeholder="What do you want to know or make?"/><button class="btn primary" data-action="ask-submit">Ask</button></div><div class="prompt-suggestions single-suggestion"><button class="examples-link" data-action="show-examples">See what you can ask →</button></div><div class="answer-stage is-empty" aria-live="polite"><div class="answer-empty"><span class="answer-empty-icon">⌕</span><strong>Work from what the project currently knows</strong><p>Find a project detail, understand what changed, prepare for a meeting, or create an update.</p><div class="empty-suggestions"><button data-prompt="What changed about feature access?">Understand a change</button><button data-prompt="What is still unresolved?">Find what is unresolved</button><button data-prompt="Prepare me for the security meeting">Prepare for a meeting</button></div></div></div>`}</section>${state.result?'':workspaceAttentionHtml()}</section>`;
+      <section class="ask-panel compact-ask unboxed-ask">${state.result?`<div class="ask-session-row"><div><span class="meta-label">Current ask</span><strong>${esc(state.resultQuery)}</strong></div><button class="text-button ask-new-session" data-action="new-ask"><span aria-hidden="true">＋</span> New ask</button></div><div class="answer-stage has-result" aria-live="polite"><div class="answer-content">${resultBody}</div></div>${(state.result.liveAsk||state.result.previousLive)?`<div class="ask-followup"><div class="ask-input-row"><input id="askInput" autocomplete="off" aria-label="Refine or ask a follow-up" placeholder="Refine, ask a follow-up, or turn this into something…" value="${esc(state.askInputDraft||'')}"/><button class="btn primary" data-action="ask-submit" ${state.result.liveAskLoading||state.result.liveAskStreaming?'disabled':''}>${state.result.liveAskLoading||state.result.liveAskStreaming?'Working…':'Ask'}</button></div></div>`:''}`:`<div class="ask-title-row"><div><label for="askInput">Ask what State knows about the project</label><p>Search current understanding, open items, notes, and history.</p></div></div><div class="ask-input-row"><input id="askInput" autocomplete="off" aria-label="Ask about the project or create an update" placeholder="What do you want to know or make?" value="${esc(state.askInputDraft||'')}"/><button class="btn primary" data-action="ask-submit">Ask</button></div><div class="prompt-suggestions single-suggestion"><button class="examples-link" data-action="show-examples">See what you can ask →</button></div><div class="answer-stage is-empty" aria-live="polite"><div class="answer-empty"><span class="answer-empty-icon">⌕</span><strong>Work from what the project currently knows</strong><p>Find a project detail, understand what changed, prepare for a meeting, or create an update.</p><div class="empty-suggestions"><button data-prompt="What changed about feature access?">Understand a change</button><button data-prompt="What is still unresolved?">Find what is unresolved</button><button data-prompt="Prepare me for the security meeting">Prepare for a meeting</button></div></div></div>`}</section>${state.result?'':workspaceAttentionHtml()}</section>`;
   }
 
   function findScenario(query){
@@ -477,7 +477,8 @@
   }
 
   async function submitAsk(query){
-    const raw=(query ?? document.getElementById('askInput')?.value ?? '').trim(); if(!raw)return;
+    const raw=(query ?? document.getElementById('askInput')?.value ?? state.askInputDraft ?? '').trim(); if(!raw)return;
+    state.askInputDraft='';
     if(/(approved|confirmed|decided|agreed|learned|yesterday|today)/i.test(raw) && /(security|okta|support|customer|plan|feature|team)/i.test(raw)){
       showAddDialog(raw); return;
     }
@@ -1355,7 +1356,7 @@
         }catch(e){ await showAnalysisFailure(e,{draftMessage:'The question stays open.',safeContext:'Your question response'}); }
       }
     }
-    else if(act==='close-result'||act==='new-ask'){state.result=null;state.resultQuery='';state.refinements=[];renderOverview();requestAnimationFrame(()=>document.getElementById('askInput')?.focus());}
+    else if(act==='close-result'||act==='new-ask'){state.result=null;state.resultQuery='';state.askInputDraft='';state.refinements=[];renderOverview();requestAnimationFrame(()=>document.getElementById('askInput')?.focus());}
     else if(act==='refine-submit')refine();
     else if(act==='go-open-question'){const q=state.data.questions.find(x=>x.id===a.dataset.questionId);if(q){state.openItemSections[q.blocking?'blockers':'questions']=false;state.openQuestionsExpanded=true;closeDialog();navigateTo('open-items');requestAnimationFrame(()=>{const row=[...document.querySelectorAll('[data-action="open-question"]')].find(x=>x.dataset.questionId===q.id);row?.click();});}}
     else if(act==='add-info'||act==='suggest-update')showAddDialog();
@@ -1389,6 +1390,7 @@
       const summary=document.getElementById('notesFilterSummary'); if(summary) summary.outerHTML=notesFilterSummary(notes);
     }
     if(e.target.id==='historySearch'){state.historySearch=e.target.value;updateHistoryResults();}
+    if(e.target.id==='askInput'){state.askInputDraft=e.target.value;}
   });
   let projectScrollScheduled=false;
   window.addEventListener?.('scroll',()=>{
