@@ -86,6 +86,51 @@ def _trim_candidates_for_query(query: str, candidates: Mapping[str, list[dict]])
         "rules": list(candidates["rules"]),
     }
 
+
+def _is_explicit_meeting_prep(query: str) -> bool:
+    """Use the fast path only when the requested job is unambiguous."""
+    words = set(re.findall(r"[a-z0-9]+", query.lower()))
+    return "meeting" in words and bool(words.intersection({"prep", "prepare", "brief", "briefing"}))
+
+
+def _deterministic_meeting_selection(candidates: Mapping[str, list[dict]]) -> AskSelection:
+    """Select a compact, authority-safe meeting context without a model round-trip.
+
+    Candidates are already relevance-ranked for the query. Reviews and concrete
+    blockers get priority; linked State/Questions are then restored by the normal
+    validation safety net.
+    """
+    reviews = list(candidates["reviews"][:3])
+    blocking = [x for x in candidates["questions"] if x.get("blocking")][:3]
+    ordinary = [x for x in candidates["questions"] if not x.get("blocking")][:3]
+
+    required_state = {sid for r in reviews for sid in r.get("affected_state_ids", [])}
+    state_ids = list(required_state)
+    for item in candidates["state"]:
+        if item["id"] not in state_ids:
+            state_ids.append(item["id"])
+        if len(state_ids) >= 6:
+            break
+
+    required_evidence = {eid for r in reviews for eid in r.get("evidence_ids", [])}
+    evidence_ids = list(required_evidence)
+    for item in candidates["evidence"]:
+        if item["id"] not in evidence_ids:
+            evidence_ids.append(item["id"])
+        if len(evidence_ids) >= 6:
+            break
+
+    return AskSelection(
+        job="meeting_prep",
+        state_ids=state_ids[:6],
+        review_ids=[x["id"] for x in reviews],
+        blocking_question_ids=[x["id"] for x in blocking],
+        question_ids=[x["id"] for x in ordinary],
+        history_ids=[x["id"] for x in candidates["history"][:3]],
+        evidence_ids=evidence_ids[:6],
+    )
+
+
 def _one_call_prompt(query: str, candidates: Mapping[str, Any], previous_answer: Mapping[str, Any] | None) -> str:
     previous = json.dumps(previous_answer, ensure_ascii=False)[:12000] if previous_answer else "null"
     return f"""You are State Ask. In one response, first select the project records relevant to the request, then synthesize the grounded answer from only those selected records.
@@ -315,7 +360,14 @@ def run_ask(connection: Any, provider: AskProvider, query: str, previous_answer:
     context_ms = round((time.perf_counter() - context_started) * 1000)
 
     provider_started = time.perf_counter()
-    if hasattr(provider, "run"):
+    if _is_explicit_meeting_prep(query) and hasattr(provider, "synthesize_selected"):
+        selection = _validate_selection(_deterministic_meeting_selection(candidates), candidates)
+        selected = _selected_context(selection, candidates)
+        answer_raw = provider.synthesize_selected(_synthesis_prompt(query, selection, selected, previous_answer))
+        provider_ms = round((time.perf_counter() - provider_started) * 1000)
+        selection_raw = selection.model_dump()
+        pipeline = "deterministic_select_one_call"
+    elif hasattr(provider, "run"):
         combined = provider.run(_one_call_prompt(query, candidates, previous_answer))
         provider_ms = round((time.perf_counter() - provider_started) * 1000)
         selection_raw = combined.get("selection")

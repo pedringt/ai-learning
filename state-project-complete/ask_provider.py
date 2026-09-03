@@ -36,6 +36,10 @@ class LiveAskProvider:
     def synthesize(self, prompt: str) -> Mapping[str, Any]:
         return self._call(prompt, ANSWER_JSON_SCHEMA, max_tokens=2200)
 
+    def synthesize_selected(self, prompt: str) -> Mapping[str, Any]:
+        """Fast path when software has already selected authoritative context."""
+        return self._call(prompt, ANSWER_JSON_SCHEMA, max_tokens=1000)
+
     def _call(self, prompt: str, schema: Mapping[str, Any], *, max_tokens: int) -> Mapping[str, Any]:
         if self.name == "anthropic":
             message = self.provider.client.messages.create(

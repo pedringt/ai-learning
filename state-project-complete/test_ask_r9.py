@@ -279,3 +279,44 @@ def test_r92_meeting_prep_merges_repeated_sections_caps_state_and_cleans_blocks_
         assert blockers[0]["detail"] == "Security approval for pilot data flow"
     finally:
         conn.close()
+
+class FakeFastMeetingProvider(FakeOneCallAskProvider):
+    def __init__(self):
+        super().__init__()
+        self.fast_prompts = []
+
+    def synthesize_selected(self, prompt):
+        self.fast_prompts.append(prompt)
+        return deepcopy(self.run("seed")["answer"])
+
+
+def test_r94_explicit_meeting_prep_uses_deterministic_selection_fast_path(tmp_path):
+    from ask_service import _compact_candidates, _trim_candidates_for_query, _one_call_prompt
+    conn = seeded_connection(tmp_path)
+    provider = FakeFastMeetingProvider()
+    try:
+        query = "Prep me for the security meeting."
+        candidates = _trim_candidates_for_query(query, _compact_candidates(conn))
+        legacy_prompt_chars = len(_one_call_prompt(query, candidates, None))
+        result = run_ask(conn, provider, query)
+
+        assert result["timing"]["pipeline"] == "deterministic_select_one_call"
+        assert len(provider.fast_prompts) == 1
+        assert len(provider.fast_prompts[0]) < legacy_prompt_chars * 0.65
+        assert "demo-review-retention" in result["selection"]["review_ids"]
+        assert "q-retention" in result["selection"]["blocking_question_ids"]
+        assert "ask-evidence-demo-noise" not in result["selection"]["evidence_ids"]
+    finally:
+        conn.close()
+
+
+def test_r94_general_ask_keeps_model_selection_path(tmp_path):
+    conn = seeded_connection(tmp_path)
+    provider = FakeFastMeetingProvider()
+    try:
+        result = run_ask(conn, provider, "What changed about pilot scope?")
+        assert result["timing"]["pipeline"] == "one_call"
+        assert len(provider.fast_prompts) == 0
+        assert len(provider.calls) == 1
+    finally:
+        conn.close()
