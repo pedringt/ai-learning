@@ -4,7 +4,7 @@ from __future__ import annotations
 import json
 import re
 import time
-from typing import Any, Mapping, Protocol
+from typing import Any, Iterator, Mapping, Protocol
 
 from ask_contract import AskSelection, AskSynthesis
 from review_service import list_evidence, list_history, list_project_rules, list_questions, list_reviews, list_state
@@ -353,28 +353,27 @@ def _normalize_meeting_prep(answer: AskSynthesis) -> AskSynthesis:
     answer.suggested_refinements = answer.suggested_refinements[:3]
     return answer
 
-def run_ask(connection: Any, provider: AskProvider, query: str, previous_answer: Mapping[str, Any] | None = None) -> dict[str, Any]:
-    total_started = time.perf_counter()
-    context_started = time.perf_counter()
-    candidates = _trim_candidates_for_query(query, _compact_candidates(connection))
-    context_ms = round((time.perf_counter() - context_started) * 1000)
 
-    provider_started = time.perf_counter()
-    if hasattr(provider, "run"):
-        combined = provider.run(_one_call_prompt(query, candidates, previous_answer))
-        provider_ms = round((time.perf_counter() - provider_started) * 1000)
-        selection_raw = combined.get("selection")
-        answer_raw = combined.get("answer")
-        pipeline = "one_call"
-    else:
-        # Compatibility path for deterministic test providers while R9.1 lands.
-        selection_raw = provider.select(_selector_prompt(query, candidates, previous_answer))
-        selection = _validate_selection(AskSelection.model_validate(selection_raw), candidates)
-        selected = _selected_context(selection, candidates)
-        answer_raw = provider.synthesize(_synthesis_prompt(query, selection, selected, previous_answer))
-        provider_ms = round((time.perf_counter() - provider_started) * 1000)
-        pipeline = "two_call_compat"
+def _parse_streamed_json(text: str) -> Mapping[str, Any]:
+    try:
+        return json.loads(text)
+    except json.JSONDecodeError:
+        match = re.search(r"```(?:json)?\s*(.*?)\s*```", text, re.DOTALL)
+        if not match:
+            raise
+        return json.loads(match.group(1))
 
+
+def _finalize_ask_result(
+    candidates: Mapping[str, list[dict]],
+    selection_raw: Mapping[str, Any],
+    answer_raw: Mapping[str, Any],
+    *,
+    pipeline: str,
+    context_ms: int,
+    provider_ms: int,
+    total_started: float,
+) -> dict[str, Any]:
     validation_started = time.perf_counter()
     selection = _validate_selection(AskSelection.model_validate(selection_raw), candidates)
     context = _selected_context(selection, candidates)
@@ -398,3 +397,73 @@ def run_ask(connection: Any, provider: AskProvider, query: str, previous_answer:
             "total_ms": total_ms,
         },
     }
+
+
+def stream_ask_events(
+    connection: Any,
+    provider: AskProvider,
+    query: str,
+    previous_answer: Mapping[str, Any] | None = None,
+) -> Iterator[tuple[str, dict[str, Any]]]:
+    """Yield grounded-context status, real provider deltas, then a validated final Ask payload."""
+    total_started = time.perf_counter()
+    context_started = time.perf_counter()
+    candidates = _trim_candidates_for_query(query, _compact_candidates(connection))
+    context_ms = round((time.perf_counter() - context_started) * 1000)
+    yield "preview", {
+        "counts": {
+            "reviews": len(candidates["reviews"]),
+            "blockers": sum(1 for x in candidates["questions"] if x.get("blocking")),
+            "questions": sum(1 for x in candidates["questions"] if not x.get("blocking")),
+        }
+    }
+
+    if not hasattr(provider, "stream"):
+        result = run_ask(connection, provider, query, previous_answer)
+        yield "final", result
+        return
+
+    provider_started = time.perf_counter()
+    chunks: list[str] = []
+    for text in provider.stream(_one_call_prompt(query, candidates, previous_answer)):
+        if not text:
+            continue
+        chunks.append(text)
+        yield "delta", {"text": text}
+    provider_ms = round((time.perf_counter() - provider_started) * 1000)
+    combined = _parse_streamed_json("".join(chunks))
+    selection_raw = combined.get("selection")
+    answer_raw = combined.get("answer")
+    result = _finalize_ask_result(
+        candidates, selection_raw, answer_raw, pipeline="one_call_stream",
+        context_ms=context_ms, provider_ms=provider_ms, total_started=total_started,
+    )
+    yield "final", result
+
+
+def run_ask(connection: Any, provider: AskProvider, query: str, previous_answer: Mapping[str, Any] | None = None) -> dict[str, Any]:
+    total_started = time.perf_counter()
+    context_started = time.perf_counter()
+    candidates = _trim_candidates_for_query(query, _compact_candidates(connection))
+    context_ms = round((time.perf_counter() - context_started) * 1000)
+
+    provider_started = time.perf_counter()
+    if hasattr(provider, "run"):
+        combined = provider.run(_one_call_prompt(query, candidates, previous_answer))
+        provider_ms = round((time.perf_counter() - provider_started) * 1000)
+        selection_raw = combined.get("selection")
+        answer_raw = combined.get("answer")
+        pipeline = "one_call"
+    else:
+        # Compatibility path for deterministic test providers while R9.1 lands.
+        selection_raw = provider.select(_selector_prompt(query, candidates, previous_answer))
+        selection = _validate_selection(AskSelection.model_validate(selection_raw), candidates)
+        selected = _selected_context(selection, candidates)
+        answer_raw = provider.synthesize(_synthesis_prompt(query, selection, selected, previous_answer))
+        provider_ms = round((time.perf_counter() - provider_started) * 1000)
+        pipeline = "two_call_compat"
+
+    return _finalize_ask_result(
+        candidates, selection_raw, answer_raw, pipeline=pipeline,
+        context_ms=context_ms, provider_ms=provider_ms, total_started=total_started,
+    )

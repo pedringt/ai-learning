@@ -12,6 +12,7 @@ import time
 
 from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from anthropic_provider import AnthropicProvider
@@ -22,7 +23,7 @@ from openai_provider import OpenAIProvider
 from seed_demo import bootstrap_demo_data, reset_demo_data
 from ask_contract import AskRequest
 from ask_provider import LiveAskProvider
-from ask_service import run_ask
+from ask_service import run_ask, stream_ask_events
 STATE_BUILD_REV = "r9.5-fast-attention-2026-09-03"
 logger = logging.getLogger("state.api")
 
@@ -486,6 +487,41 @@ def create_app(settings: Settings | None = None, provider: InterpretationProvide
     def get_history() -> dict:
         with get_connection() as connection:
             return {"items": list_history(connection)}
+
+
+    @app.post("/api/ask/stream")
+    def post_ask_stream(payload: AskRequest, request: Request):
+        selected_ask_provider = request.app.state.ask_provider
+        if selected_ask_provider is None:
+            selected_provider = request.app.state.provider
+            if selected_provider is None:
+                try:
+                    selected_provider = _provider_from_env(settings)
+                    request.app.state.provider = selected_provider
+                except RuntimeError as exc:
+                    raise HTTPException(status_code=503, detail=str(exc)) from exc
+            selected_ask_provider = LiveAskProvider(selected_provider)
+            request.app.state.ask_provider = selected_ask_provider
+
+        def event_stream():
+            try:
+                with get_connection() as connection:
+                    for event_name, event_payload in stream_ask_events(
+                        connection, selected_ask_provider, payload.query.strip(), payload.previous_answer
+                    ):
+                        yield f"event: {event_name}\ndata: {json.dumps(event_payload, ensure_ascii=False)}\n\n"
+            except (ValueError, TypeError, json.JSONDecodeError) as exc:
+                logger.warning("Streaming Ask contract failure: %s", exc)
+                yield "event: error\ndata: {\"message\": \"Ask could not produce a valid grounded answer\"}\n\n"
+            except Exception:
+                logger.exception("Streaming Ask provider failure")
+                yield "event: error\ndata: {\"message\": \"Ask is temporarily unavailable. Please try again.\"}\n\n"
+
+        return StreamingResponse(
+            event_stream(),
+            media_type="text/event-stream",
+            headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+        )
 
     @app.post("/api/ask")
     def post_ask(payload: AskRequest, request: Request) -> dict:

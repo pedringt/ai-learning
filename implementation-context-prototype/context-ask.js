@@ -21,7 +21,7 @@
     return API.askPreview(query);
   }
   function canStream(query){
-    return !!API?.askStream && isMeetingPrep(query);
+    return !!API?.askStream && !!String(query || '').trim();
   }
   async function submitStream(query, previousPayload=null, handlers={}){
     return API.askStream(query, previousPayload?.answer || null, handlers);
@@ -97,7 +97,12 @@
         if(ch==='\\'){ escaped=true; continue; }
         if(ch==='"'){ complete=true; break; }
       }
-      const value=decodeJsonStringFragment(raw.slice(i,j));
+      const value=decodeJsonStringFragment(raw.slice(i,j))
+        .replace(/\b(?:state|question|evidence|review|proposal)_[a-z0-9]+\b/gi,'')
+        .replace(/\b(?:ask-evidence|state|question|evidence|review|proposal|k|q)-[a-z0-9-]+\b/gi,'')
+        .replace(/\s+([,.;:])/g,'$1')
+        .replace(/\s{2,}/g,' ')
+        .trim();
       out.push({key:match[1],value,complete});
       if(!complete) break;
       re.lastIndex=j+1;
@@ -113,7 +118,7 @@
       if(counts.reviews) bits.push(`${counts.reviews} ${counts.reviews===1?'Review':'Reviews'}`);
       if(counts.blockers) bits.push(`${counts.blockers} ${counts.blockers===1?'blocker':'blockers'}`);
       if(counts.questions) bits.push(`${counts.questions} open ${counts.questions===1?'question':'questions'}`);
-      const msg=bits.length?`Grounded in ${bits.join(', ')}. Claude is drafting the brief…`:'Claude is drafting the grounded brief…';
+      const msg=bits.length?`Grounded in ${bits.join(', ')}. Claude is drafting the answer…`:'Claude is drafting the grounded answer…';
       return `<div class="ask-live-loading has-grounded-preview"><span class="ask-loading-mark" aria-hidden="true"></span><div><strong>Grounded context ready</strong><p>${esc(msg)}</p></div></div>`;
     }
     let body='';
@@ -126,7 +131,7 @@
       else if(field.key==='detail' && field.value) body+=`<div class="ask-stream-detail">${esc(field.value)}${cursor}</div>`;
     }
     const status=preview?.retrying?'<div class="ask-stream-finalizing">Checking final grounding…</div>':'';
-    return `<div class="ask-live-answer ask-streaming-draft" aria-busy="true"><div class="result-label">Meeting prep · ${preview?.retrying?'Finalizing':'Drafting'}</div>${body}${status}</div>`;
+    return `<div class="ask-live-answer ask-streaming-draft" aria-busy="true"><div class="result-label">State Ask · ${preview?.retrying?'Finalizing':'Drafting'}</div>${body}${status}</div>`;
   }
 
   function render(payload){

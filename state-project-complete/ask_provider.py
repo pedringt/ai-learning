@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import json
 import re
-from typing import Any, Mapping
+from typing import Any, Iterator, Mapping
 
 from ask_contract import ANSWER_JSON_SCHEMA, ONE_CALL_ASK_JSON_SCHEMA, SELECTOR_JSON_SCHEMA
 
@@ -29,6 +29,34 @@ class LiveAskProvider:
     def run(self, prompt: str) -> Mapping[str, Any]:
         """Select relevant context and synthesize in one provider round-trip."""
         return self._call(prompt, ONE_CALL_ASK_JSON_SCHEMA, max_tokens=1500)
+
+
+    def stream(self, prompt: str) -> Iterator[str]:
+        """Stream the one-call Ask JSON text as the model generates it."""
+        if self.name == "anthropic":
+            with self.provider.client.messages.stream(
+                model=self.model_identifier,
+                max_tokens=1500,
+                output_config={"format": {"type": "json_schema", "schema": ONE_CALL_ASK_JSON_SCHEMA}},
+                messages=[{"role": "user", "content": prompt}],
+            ) as stream:
+                for text in stream.text_stream:
+                    if text:
+                        yield text
+            return
+        if self.name == "openai":
+            response = self.provider.client.chat.completions.create(
+                model=self.model_identifier,
+                max_tokens=1500,
+                messages=[{"role": "user", "content": prompt + "\nReturn JSON only."}],
+                stream=True,
+            )
+            for chunk in response:
+                text = getattr(chunk.choices[0].delta, "content", None) if getattr(chunk, "choices", None) else None
+                if text:
+                    yield text
+            return
+        raise RuntimeError(f"Configured provider {self.name!r} does not support streaming Ask")
 
     def select(self, prompt: str) -> Mapping[str, Any]:
         return self._call(prompt, SELECTOR_JSON_SCHEMA, max_tokens=1200)
