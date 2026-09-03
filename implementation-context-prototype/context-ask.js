@@ -125,7 +125,8 @@
       else if(field.key==='text') body+=`<div class="ask-stream-item">${esc(field.value)}${cursor}</div>`;
       else if(field.key==='detail' && field.value) body+=`<div class="ask-stream-detail">${esc(field.value)}${cursor}</div>`;
     }
-    return `<div class="ask-live-answer ask-streaming-draft" aria-busy="true"><div class="result-label">Meeting prep · Drafting</div>${body}</div>`;
+    const status=preview?.retrying?'<div class="ask-stream-finalizing">Checking final grounding…</div>':'';
+    return `<div class="ask-live-answer ask-streaming-draft" aria-busy="true"><div class="result-label">Meeting prep · ${preview?.retrying?'Finalizing':'Drafting'}</div>${body}${status}</div>`;
   }
 
   function render(payload){

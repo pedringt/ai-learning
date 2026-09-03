@@ -1,26 +1,27 @@
-State R14 — demo discovery polish
+Final Ask + pill patch
 
-Changes
-- Add Note now has three quiet, clickable examples:
-  New plan / Research finding / Decision / constraint.
-  Each fills and focuses the note field without submitting.
-- How this demo works is shorter and centered on the actual State loop.
-- Added three clickable Good places to start actions:
-  Ask about Northstar / Add a sample note / Explore the maintained Project.
-- The guide points users to Project Settings → Reset Northstar if they want to restore the curated demo.
-- No Review tutorial/“Try this” treatment was added.
-- Asset cache key bumped to r14-demo-discovery.
+1. Ask streaming validation recovery
+- If meeting-prep text has already streamed but final grounding/validation fails, the UI no longer immediately replaces it with “Ask is temporarily unavailable.”
+- State automatically retries once through the normal grounded Ask endpoint.
+- The existing streamed draft stays visible while the retry runs and shows “Checking final grounding…” / “Finalizing.”
+- The retry still must return a validated grounded answer before State treats it as final.
+- If the retry also fails, the normal error state remains.
+- Final answer replacement preserves the user’s scroll position.
+
+2. AI Search pill
+- Shortened to: “Pre-build exploration”.
+- Applied Work tag uses the same concise wording.
 
 Verification
-- 245 passed, 3 skipped, 7 subtests passed.
-- Ask behavior harness: 81 passed, 0 failed.
-- Browser workflow suite: 10 passed, including the new sample-note and demo-guide interactions.
+- context-app.js syntax: pass
+- context-ask.js syntax: pass
+- frontend integration + Chromium workflow tests: 60 passed
 
 Deployment
-Frontend visible files:
-- implementation-context-prototype/index.html
+Frontend only. No Render/backend redeploy is required for this patch.
+Upload preserving paths:
+- index.html
+- state-ai-search-learning.html
 - implementation-context-prototype/context-app.js
-- implementation-context-prototype/context-data.js
+- implementation-context-prototype/context-ask.js
 - implementation-context-prototype/context-tool.css
-
-No backend behavior changed; no Render redeploy is required.

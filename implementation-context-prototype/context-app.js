@@ -582,6 +582,31 @@
           }
           return;
         }catch(err){
+          // A streamed draft is not authoritative until final validation succeeds.
+          // If finalization fails after useful text has already streamed, retry once
+          // through the normal grounded Ask path instead of dropping the user into
+          // an error immediately.
+          const streamedDraft=state.result?.liveAskStreamRaw||'';
+          if(streamedDraft.trim()){
+            state.result={...state.result,liveAskRetrying:true,liveAskPreview:{...(state.result?.liveAskPreview||{}),retrying:true}};
+            paintStreamingAsk();
+            try{
+              const payload=await ASK.submit(raw,previousLive);
+              const answerTop=root.querySelector('.answer-content')?.getBoundingClientRect().top ?? null;
+              state.result={liveAsk:payload,previousLive};
+              state.refinements=[];
+              renderOverview();
+              if(answerTop!==null){
+                requestAnimationFrame(()=>{
+                  const nextTop=root.querySelector('.answer-content')?.getBoundingClientRect().top;
+                  if(typeof nextTop==='number') window.scrollBy(0,nextTop-answerTop);
+                });
+              }
+              return;
+            }catch(fallbackErr){
+              err=fallbackErr;
+            }
+          }
           state.result={liveAskError:err?.message||'State could not produce a grounded answer. Please try again.',previousLive};
         }
         renderOverview();
