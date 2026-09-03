@@ -12,7 +12,9 @@
     return /\b(shorter|shorten|brief|agenda|15 minutes|minutes|leadership|slack|talking points|focus|format|turn this|make it)\b/.test(q);
   }
   function canHandle(query, previousPayload){
-    return !!API?.ask && (isMeetingPrep(query) || !!previousPayload);
+    // All user questions should use the grounded backend when it is available.
+    // The older local intent layer is only a no-backend fallback.
+    return !!API?.ask && !!String(query || '').trim();
   }
   async function preview(query){
     if(!API?.askPreview || !isMeetingPrep(query)) return null;

@@ -344,3 +344,47 @@ def test_r97_workspace_attention_replaces_late_review_banner_with_stable_action_
     assert ".workspace-attention{" in css
     assert "min-height:126px" in css
     assert ".attention-item.blocker .attention-kind" in css
+
+
+def test_r10_all_fresh_questions_use_grounded_backend_when_available():
+    ask_js = (FRONTEND / "context-ask.js").read_text(encoding="utf-8")
+    assert "return !!API?.ask && !!String(query || '').trim();" in ask_js
+
+
+def test_r10_modal_overlay_sits_above_portfolio_header_and_resets_scroll():
+    app = (FRONTEND / "context-app.js").read_text(encoding="utf-8")
+    css = (FRONTEND / "context-tool.css").read_text(encoding="utf-8")
+    assert ".overlay{z-index:200!important" in css
+    assert "overlay.scrollTop=0; if(dialog) dialog.scrollTop=0;" in app
+    assert "focus({preventScroll:true})" in app
+
+
+def test_r10_ask_draft_is_captured_before_overview_rerender():
+    app = (FRONTEND / "context-app.js").read_text(encoding="utf-8")
+    assert "if(liveAskInput && document.activeElement===liveAskInput) state.askInputDraft=liveAskInput.value;" in app
+    assert 'value="${esc(state.askInputDraft||\'\')}"' in app
+
+
+def test_r10_followups_keep_previous_artifact_and_use_compact_working_state():
+    app = (FRONTEND / "context-app.js").read_text(encoding="utf-8")
+    css = (FRONTEND / "context-tool.css").read_text(encoding="utf-8")
+    assert "ask-followup-working" in app
+    assert "ask-followup-answer" in app
+    assert "state.result={liveAsk:payload,previousLive};" in app
+    assert ".ask-followup-working" in css
+
+
+def test_r10_demo_reset_is_available_from_project_settings():
+    app = (FRONTEND / "context-app.js").read_text(encoding="utf-8")
+    api_js = (FRONTEND / "context-api.js").read_text(encoding="utf-8")
+    backend = (Path(__file__).parent / "api.py").read_text(encoding="utf-8")
+    assert "Reset demo data" in app
+    assert "data-action=\"reset-demo\"" in app
+    assert "resetDemo: () => request('/api/demo/reset'" in api_js
+    assert '@app.post("/api/demo/reset")' in backend
+
+
+def test_r10_frontend_assets_use_current_cache_bust_revision():
+    html = (FRONTEND / "index.html").read_text(encoding="utf-8")
+    assert "?v=r10-golden-qa" in html
+    assert "?v=r9.3.1b" not in html

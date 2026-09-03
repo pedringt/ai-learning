@@ -20,11 +20,11 @@ from database_migration_backed import initialize_db
 from db import connect
 from interpretation_pipeline_integrated import InterpretationProvider, new_id, process_evidence
 from openai_provider import OpenAIProvider
-from seed_demo import bootstrap_demo_data
+from seed_demo import bootstrap_demo_data, reset_demo_data
 from ask_contract import AskRequest
 from ask_provider import LiveAskProvider
 from ask_service import build_ask_preview, finalize_streaming_meeting_ask, prepare_streaming_meeting_ask, run_ask
-STATE_BUILD_REV = "r9.8-qa-consolidation-2026-09-02"
+STATE_BUILD_REV = "r10-golden-qa-hardening-2026-09-02"
 logger = logging.getLogger("state.api")
 
 from review_service import (
@@ -456,6 +456,14 @@ def create_app(settings: Settings | None = None, provider: InterpretationProvide
     def get_history() -> dict:
         with get_connection() as connection:
             return {"items": list_history(connection)}
+
+    @app.post("/api/demo/reset")
+    def post_demo_reset() -> dict:
+        if not settings.demo_bootstrap:
+            raise HTTPException(status_code=403, detail="Demo reset is disabled for this deployment")
+        with get_connection() as connection:
+            counts = reset_demo_data(connection)
+        return {"status": "reset", "seeded": counts, "build": STATE_BUILD_REV}
 
     @app.post("/api/ask/preview")
     def post_ask_preview(payload: AskRequest) -> dict:

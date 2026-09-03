@@ -94,6 +94,7 @@
     stopQuestion: questionId => request(`/api/questions/${encodeURIComponent(questionId)}/stop`, {method: 'POST'}),
     createRule: (text, category = 'Interpretation') => jsonPost('/api/rules', {text, category}),
     deleteRule: ruleId => request(`/api/rules/${encodeURIComponent(ruleId)}`, {method: 'DELETE'}),
+    resetDemo: () => request('/api/demo/reset', {method:'POST'}),
     askPreview: query => jsonPost('/api/ask/preview', {query}),
     askStream,
     ask: (query, previousAnswer = null) => jsonPost('/api/ask', {query, ...(previousAnswer ? {previous_answer: previousAnswer} : {})}),

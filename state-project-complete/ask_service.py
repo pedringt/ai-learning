@@ -93,6 +93,33 @@ def _is_explicit_meeting_prep(query: str) -> bool:
     return "meeting" in words and bool(words.intersection({"prep", "prepare", "brief", "briefing"}))
 
 
+def _is_direct_fact_lookup(query: str) -> bool:
+    """Recognize small lookup questions that should not become broad briefings."""
+    q = " ".join(re.findall(r"[a-z0-9]+", query.lower()))
+    if len(q.split()) > 14:
+        return False
+    broad = {"summarize", "summary", "status", "project", "everything", "catch up", "meeting", "prepare", "prep", "why", "changed", "change", "history", "unresolved", "blocking"}
+    if any(term in q for term in broad):
+        return False
+    return bool(re.match(r"^(who|what|when|where|which)\b", q)) or any(term in q for term in {"contact", "owner", "date", "deadline"})
+
+
+def _deterministic_fact_selection(candidates: Mapping[str, list[dict]]) -> AskSelection:
+    state_ids = [x["id"] for x in candidates["state"][:4]]
+    evidence_ids = [x["id"] for x in candidates["evidence"][:4]]
+    linked_reviews = [
+        r for r in candidates["reviews"]
+        if set(r.get("affected_state_ids", [])).intersection(state_ids)
+        or set(r.get("evidence_ids", [])).intersection(evidence_ids)
+    ][:3]
+    return AskSelection(
+        job="current_fact",
+        state_ids=state_ids,
+        review_ids=[r["id"] for r in linked_reviews],
+        blocking_question_ids=[], question_ids=[], history_ids=[], evidence_ids=evidence_ids,
+    )
+
+
 def _deterministic_meeting_selection(candidates: Mapping[str, list[dict]]) -> AskSelection:
     """Select a compact, authority-safe meeting context without a model round-trip.
 
@@ -143,6 +170,8 @@ Authority rules are non-negotiable:
 - Project Rules constrain interpretation.
 - Unknown must remain unknown. Newer does not mean more authoritative. Approval does not mean implementation.
 - Optimize for relevance, not completeness. Omit tempting recent noise.
+- For a direct factual lookup (for example, who/what is a named contact, owner, date, or value), the most specific matching fact/evidence outranks broad topical context. Answer directly and briefly rather than turning the lookup into a project briefing.
+- Never expose internal record IDs in user-facing prose. IDs belong only in record_id/source_ids/uncertainty_ids.
 - Refinement may change format, audience, length, focus, or ordering, but never project truth.
 - For meeting prep, frame relevant Questions as opportunities to get answered.
 - Meeting prep is a portable working brief, not a dashboard or record dump. It should be useful when pasted into a meeting document and leave room for live notes.
@@ -173,6 +202,8 @@ Authority rules:
 - History is accepted past change. Evidence is what was said/observed and cannot silently override Current State.
 - Project Rules constrain interpretation.
 - Optimize for relevance, not completeness. Omit tempting recent noise.
+- For a direct factual lookup (for example, who/what is a named contact, owner, date, or value), the most specific matching fact/evidence outranks broad topical context. Answer directly and briefly rather than turning the lookup into a project briefing.
+- Never expose internal record IDs in user-facing prose. IDs belong only in record_id/source_ids/uncertainty_ids.
 
 Job choices: current_fact, meeting_prep, catch_up, project_update, why_or_provenance, attention_check, historical, drafting, general_project_synthesis, refinement.
 
@@ -226,7 +257,8 @@ def _validate_selection(selection: AskSelection, candidates: Mapping[str, list[d
     # Deterministic safety net: any open Review linked to selected Current State
     # is mandatory context, regardless of model relevance judgment.
     selected_state = set(data["state_ids"])
-    mandatory_reviews = [r["id"] for r in candidates["reviews"] if selected_state.intersection(r.get("affected_state_ids", []))]
+    selected_evidence = set(data["evidence_ids"])
+    mandatory_reviews = [r["id"] for r in candidates["reviews"] if selected_state.intersection(r.get("affected_state_ids", [])) or selected_evidence.intersection(r.get("evidence_ids", []))]
     # Mandatory authority context wins over model-selected optional context
     # when the bounded contract is full.
     data["review_ids"] = list(dict.fromkeys(mandatory_reviews + data["review_ids"]))[:_SELECTION_LIMITS["review_ids"]]
@@ -276,6 +308,8 @@ Non-negotiable rules:
 - Do not repeat the same issue across multiple sections. A Review and linked Question may both appear, but explain each once.
 - Never call something a blocker unless the supplied Question says blocking=true. Never claim a count of blockers unless it matches selected blocking Questions.
 - Keep the main output selective; Open Items handles completeness elsewhere.
+- For direct factual lookups, prefer one short answer plus at most one concise qualification about authority/provenance.
+- Never place internal record IDs in headline, summary, section titles, item text, or detail.
 
 User request: {query}
 Job: {selection.job}
@@ -286,6 +320,19 @@ Selected validated context:
 Use record IDs on items whenever they correspond to a source record. Suggested refinements should be short actions."""
 
 
+_INTERNAL_ID_RE = re.compile(r"(?<![A-Za-z0-9])(?:question_[a-z0-9]+|evidence_[a-z0-9]+|review_[a-z0-9]+|ask-evidence-[a-z0-9-]+|demo-review-[a-z0-9-]+|q-[a-z0-9-]+|k-[a-z0-9-]+)(?![A-Za-z0-9])", re.IGNORECASE)
+
+def _clean_user_text(value: str | None) -> str | None:
+    if value is None:
+        return None
+    text = str(value).replace("\\_", "_")
+    # Remove parenthetical provenance that is only internal IDs, then any stray IDs.
+    text = re.sub(r"\\s*\\((?:\\s*(?:question_[a-z0-9]+|evidence_[a-z0-9]+|review_[a-z0-9]+|ask-evidence-[a-z0-9-]+|demo-review-[a-z0-9-]+|q-[a-z0-9-]+|k-[a-z0-9-]+)\\s*(?:/|,)?\\s*)+\\)", "", text, flags=re.IGNORECASE)
+    text = _INTERNAL_ID_RE.sub("", text)
+    text = re.sub(r"\\s+([,.;:])", r"\\1", text)
+    text = re.sub(r"[ \\t]{2,}", " ", text)
+    return text.strip(" -/\\t")
+
 def _validate_synthesis(answer: AskSynthesis, selection: AskSelection, context: Mapping[str, Any]) -> AskSynthesis:
     allowed: dict[str, set[str]] = {
         "state": {x["id"] for x in context.get("state", [])},
@@ -295,13 +342,33 @@ def _validate_synthesis(answer: AskSynthesis, selection: AskSelection, context: 
         "blocking_question": {x["id"] for x in context.get("questions", []) if x["blocking"]},
         "question": {x["id"] for x in context.get("questions", []) if not x["blocking"]},
     }
+    answer.headline = _clean_user_text(answer.headline) or "Project answer"
+    answer.summary = _clean_user_text(answer.summary) or "State found grounded project context."
+    question_by_id = {x["id"]: x for x in context.get("questions", [])}
+    review_by_id = {x["id"]: x for x in context.get("reviews", [])}
     clean_sections = []
     for section in answer.sections:
+        section.title = _clean_user_text(section.title) or "Details"
         clean_items = []
         for item in section.items:
+            item.text = _clean_user_text(item.text) or ""
+            item.detail = _clean_user_text(item.detail)
             if item.record_type == "none":
-                clean_items.append(item); continue
+                if item.text: clean_items.append(item)
+                continue
             if item.record_id and item.record_id in allowed.get(item.record_type, set()):
+                # Questions and Reviews are decision objects. Render their canonical text
+                # rather than letting model prose leak IDs or mash metadata into the copy.
+                if item.record_type in {"question", "blocking_question"}:
+                    source = question_by_id.get(item.record_id)
+                    if source:
+                        item.text = source["text"]
+                        item.detail = source.get("blocks") if item.record_type == "blocking_question" else None
+                elif item.record_type == "review":
+                    source = review_by_id.get(item.record_id)
+                    if source:
+                        item.text = source["decision_question"]
+                        item.detail = source.get("why_consequential")
                 clean_items.append(item)
         section.items = clean_items
         clean_sections.append(section)
@@ -331,6 +398,18 @@ def _validate_synthesis(answer: AskSynthesis, selection: AskSelection, context: 
             answer.sections.append(AskAnswerSection(kind="questions", title="Get these answered", items=items))
     return answer
 
+
+
+def _normalize_current_fact(answer: AskSynthesis) -> AskSynthesis:
+    if answer.job != "current_fact":
+        return answer
+    # A lookup answer should stay lookup-sized. Preserve decision/uncertainty first.
+    priority = {"needs_review": 0, "questions": 1, "established": 2, "recent_context": 3, "other": 4}
+    answer.sections = sorted(answer.sections, key=lambda s: priority.get(s.kind, 9))[:2]
+    for section in answer.sections:
+        section.items = section.items[:2]
+    answer.suggested_refinements = answer.suggested_refinements[:2]
+    return answer
 
 
 def _normalize_meeting_prep(answer: AskSynthesis) -> AskSynthesis:
@@ -485,7 +564,14 @@ def run_ask(connection: Any, provider: AskProvider, query: str, previous_answer:
     context_ms = round((time.perf_counter() - context_started) * 1000)
 
     provider_started = time.perf_counter()
-    if _is_explicit_meeting_prep(query) and hasattr(provider, "synthesize_selected"):
+    if _is_direct_fact_lookup(query) and previous_answer is None and hasattr(provider, "synthesize_selected"):
+        selection = _validate_selection(_deterministic_fact_selection(candidates), candidates)
+        selected = _selected_context(selection, candidates)
+        answer_raw = provider.synthesize_selected(_synthesis_prompt(query, selection, selected, previous_answer))
+        selection_raw = selection.model_dump()
+        pipeline = "deterministic_fact_one_call"
+        provider_ms = round((time.perf_counter() - provider_started) * 1000)
+    elif _is_explicit_meeting_prep(query) and hasattr(provider, "synthesize_selected"):
         selection = _validate_selection(_deterministic_meeting_selection(candidates), candidates)
         selected = _selected_context(selection, candidates)
         try:
@@ -525,7 +611,7 @@ def run_ask(connection: Any, provider: AskProvider, query: str, previous_answer:
     validation_started = time.perf_counter()
     selection = _validate_selection(_selection_from_raw(selection_raw), candidates)
     context = _selected_context(selection, candidates)
-    answer = _normalize_meeting_prep(_validate_synthesis(AskSynthesis.model_validate(answer_raw), selection, context))
+    answer = _normalize_current_fact(_normalize_meeting_prep(_validate_synthesis(AskSynthesis.model_validate(answer_raw), selection, context)))
     validation_ms = round((time.perf_counter() - validation_started) * 1000)
 
     selected_open = set(selection.review_ids + selection.blocking_question_ids + selection.question_ids)

@@ -203,7 +203,9 @@
     return `<section class="workspace-attention"><div class="workspace-attention-head"><div><span class="eyebrow">Needs your attention</span><h3>${total===1?'1 item is waiting on you':`${total} items are waiting on you`}</h3></div><button class="text-button" data-view="open-items">Open Items →</button></div><div class="attention-list">${rows}</div>${more?`<button class="attention-more" data-view="open-items">${more} more in Open Items →</button>`:''}</section>`;
   }
   function renderOverview(){
-    const resultBody = state.result ? (state.result.liveAsk ? ASK?.render(state.result.liveAsk) : state.result.liveAskStreaming ? `${state.result.previousLive?`<div class="ask-previous-answer">${ASK?.render(state.result.previousLive)}</div>`:''}${ASK?.renderStream(state.result.liveAskStreamRaw||'',state.result.liveAskPreview||null)}` : state.result.liveAskLoading ? `${state.result.previousLive?`<div class="ask-previous-answer">${ASK?.render(state.result.previousLive)}</div>`:''}${liveAskLoadingHtml()}` : state.result.liveAskError ? `${state.result.previousLive?`<div class="ask-previous-answer">${ASK?.render(state.result.previousLive)}</div>`:''}<div class="ask-live-error"><h2>Ask is temporarily unavailable.</h2><p>${esc(state.result.liveAskError)}</p></div>` : state.result.fallback ? fallbackResult() : state.result.intent ? intentAskHtml(state.result.intent) : state.result.structured ? structuredAskHtml(state.result.structured) : scenarioResult(state.result.scenario)) : '';
+    const liveAskInput=document.getElementById('askInput');
+    if(liveAskInput && document.activeElement===liveAskInput) state.askInputDraft=liveAskInput.value;
+    const resultBody = state.result ? (state.result.liveAsk ? (state.result.previousLive?`<div class="ask-previous-answer">${ASK?.render(state.result.previousLive)}</div><div class="ask-followup-answer">${ASK?.render(state.result.liveAsk)}</div>`:ASK?.render(state.result.liveAsk)) : state.result.liveAskStreaming ? `${state.result.previousLive?`<div class="ask-previous-answer">${ASK?.render(state.result.previousLive)}</div><div class="ask-followup-stream">${ASK?.renderStream(state.result.liveAskStreamRaw||'',state.result.liveAskPreview||null)}</div>`:ASK?.renderStream(state.result.liveAskStreamRaw||'',state.result.liveAskPreview||null)}` : state.result.liveAskLoading ? `${state.result.previousLive?`<div class="ask-previous-answer">${ASK?.render(state.result.previousLive)}</div><div class="ask-followup-working">Working on your follow-up…</div>`:liveAskLoadingHtml()}` : state.result.liveAskError ? `${state.result.previousLive?`<div class="ask-previous-answer">${ASK?.render(state.result.previousLive)}</div>`:''}<div class="ask-live-error"><h2>Ask is temporarily unavailable.</h2><p>${esc(state.result.liveAskError)}</p></div>` : state.result.fallback ? fallbackResult() : state.result.intent ? intentAskHtml(state.result.intent) : state.result.structured ? structuredAskHtml(state.result.structured) : scenarioResult(state.result.scenario)) : '';
     root.innerHTML = `<section class="overview pristine">
       <section class="overview-heading"><div class="overview-heading-row"><div><h2>Northstar</h2></div><button class="btn primary overview-add" data-action="add-info">+ Add note</button></div></section>
       <section class="ask-panel compact-ask unboxed-ask">${state.result?`<div class="ask-session-row"><div><span class="meta-label">Current ask</span><strong>${esc(state.resultQuery)}</strong></div><button class="text-button ask-new-session" data-action="new-ask"><span aria-hidden="true">＋</span> New ask</button></div><div class="answer-stage has-result" aria-live="polite"><div class="answer-content">${resultBody}</div></div>${(state.result.liveAsk||state.result.previousLive)?`<div class="ask-followup"><div class="ask-input-row"><input id="askInput" autocomplete="off" aria-label="Refine or ask a follow-up" placeholder="Refine, ask a follow-up, or turn this into something…" value="${esc(state.askInputDraft||'')}"/><button class="btn primary" data-action="ask-submit" ${state.result.liveAskLoading||state.result.liveAskStreaming?'disabled':''}>${state.result.liveAskLoading||state.result.liveAskStreaming?'Working…':'Ask'}</button></div></div>`:''}`:`<div class="ask-title-row"><div><label for="askInput">Ask what State knows about the project</label><p>Search current understanding, open items, notes, and history.</p></div></div><div class="ask-input-row"><input id="askInput" autocomplete="off" aria-label="Ask about the project or create an update" placeholder="What do you want to know or make?" value="${esc(state.askInputDraft||'')}"/><button class="btn primary" data-action="ask-submit">Ask</button></div><div class="prompt-suggestions single-suggestion"><button class="examples-link" data-action="show-examples">See what you can ask →</button></div><div class="answer-stage is-empty" aria-live="polite"><div class="answer-empty"><span class="answer-empty-icon">⌕</span><strong>Work from what the project currently knows</strong><p>Find a project detail, understand what changed, prepare for a meeting, or create an update.</p><div class="empty-suggestions"><button data-prompt="What changed about feature access?">Understand a change</button><button data-prompt="What is still unresolved?">Find what is unresolved</button><button data-prompt="Prepare me for the security meeting">Prepare for a meeting</button></div></div></div>`}</section>${state.result?'':workspaceAttentionHtml()}</section>`;
@@ -503,7 +505,7 @@
               }
             },
           });
-          state.result={liveAsk:payload};
+          state.result={liveAsk:payload,previousLive};
           state.refinements=[];
         }catch(err){
           state.result={liveAskError:err?.message||'State could not produce a grounded answer. Please try again.',previousLive};
@@ -526,7 +528,7 @@
       try{
         const payload=await ASK.submit(raw,previousLive);
         completed=true;
-        state.result={liveAsk:payload};
+        state.result={liveAsk:payload,previousLive};
         state.refinements=[];
       }catch(err){
         completed=true;
@@ -832,6 +834,7 @@
       const previousStatus=r.status;
       r.status=decision;
       render();
+      showDialog(`<span class="eyebrow">Saving decision</span><h2 id="dialogTitle">${decision==='update'?'Updating understanding…':'Leaving understanding unchanged…'}</h2><p>Your choice was recorded locally. State is confirming it with the project record.</p>`);
       try{
         const apiDecision=decision==='update'?'accept':'keep';
         const result=await API.resolveReview(r.backendReviewId,apiDecision);
@@ -885,8 +888,10 @@
     const closeButton=dialog?.querySelector('.dialog-close');
     if(closeButton){ closeButton.disabled=!!state.isAnalyzing; closeButton.hidden=!!state.isAnalyzing; }
     requestAnimationFrame(()=>{
+      overlay.scrollTop=0; if(dialog) dialog.scrollTop=0;
       const first=dialog?.querySelector('[autofocus], input:not([type="hidden"]), textarea, select');
       (first||dialog)?.focus({preventScroll:true});
+      overlay.scrollTop=0; if(dialog) dialog.scrollTop=0;
     });
   }
   function closeDialog(){
@@ -898,7 +903,7 @@
     const rulesStatus=state.backendStatus.rules;
     const rows=rulesStatus==='error'?'<div class="open-items-empty unavailable-inline">Project Rules could not be loaded. Try again before making changes.</div>':state.projectRules.length?state.projectRules.map(rule=>`<div class="project-rule-row"><div><span class="open-item-label question">${esc(rule.category)}</span><p>${esc(rule.text)}</p></div><button class="text-button" data-action="delete-project-rule" data-rule-id="${rule.id}">Remove</button></div>`).join(''):'<div class="open-items-empty">No project-specific rules yet.</div>';
     const form=rulesStatus==='error'?'':`<div class="project-rule-form"><label for="projectRuleCategory">Category</label><select id="projectRuleCategory"><option>Authority</option><option>Review</option><option>Sources</option><option selected>Interpretation</option></select><label for="projectRuleText">New rule</label><textarea id="projectRuleText" rows="3" placeholder="Example: Slack is supporting evidence, not authoritative approval."></textarea><button class="btn primary" data-action="save-project-rule">Add rule</button></div>`;
-    showDialog(`<span class="eyebrow">Project settings</span><h2 id="dialogTitle">Rules</h2><p>Rules tell State how to interpret evidence and when to interrupt you. They are not Current State and State cannot change them on its own.</p><p class="settings-note">Rules apply to future analysis. Existing Reviews are not reinterpreted automatically.</p><div class="project-rule-list">${rows}</div>${form}`);
+    showDialog(`<span class="eyebrow">Project settings</span><h2 id="dialogTitle">Rules</h2><p>Rules tell State how to interpret evidence and when to interrupt you. They are not Current State and State cannot change them on its own.</p><p class="settings-note">Rules apply to future analysis. Existing Reviews are not reinterpreted automatically.</p><div class="project-rule-list">${rows}</div>${form}<div class="demo-reset-zone"><span class="eyebrow">Demo data</span><p>Restore Northstar to the curated starting scenario with open Reviews, blockers, Questions, Notes, and History.</p><button class="btn secondary danger-light" data-action="confirm-demo-reset">Reset demo data</button></div>`);
   }
 
   function showAddDialog(prefill=''){ showDialog(`<span class="eyebrow">Project update</span><h2 id="dialogTitle">Add a project update</h2><p>Use this for new information that may change what the project currently understands. It goes to Review first.</p><textarea id="addInfoText" rows="7" aria-label="Project update" placeholder="Paste a finding, decision, meeting update, or other new project information...">${esc(prefill)}</textarea><button class="sample-link" data-action="sample-info">Try sample update</button><div class="dialog-actions"><button class="btn primary" data-action="save-info">Send to Review</button><button class="btn secondary" data-action="close-dialog">Cancel</button></div>`); }
@@ -1360,6 +1365,8 @@
     else if(act==='refine-submit')refine();
     else if(act==='go-open-question'){const q=state.data.questions.find(x=>x.id===a.dataset.questionId);if(q){state.openItemSections[q.blocking?'blockers':'questions']=false;state.openQuestionsExpanded=true;closeDialog();navigateTo('open-items');requestAnimationFrame(()=>{const row=[...document.querySelectorAll('[data-action="open-question"]')].find(x=>x.dataset.questionId===q.id);row?.click();});}}
     else if(act==='add-info'||act==='suggest-update')showAddDialog();
+    else if(act==='confirm-demo-reset'){showDialog(`<span class="eyebrow">Reset demo</span><h2 id="dialogTitle">Restore the Northstar starting scenario?</h2><p>This removes everything created during testing and restores the same curated demo State, open Reviews, blockers, Questions, Notes, Rules, and History.</p><div class="dialog-actions"><button class="btn primary" data-action="reset-demo">Reset Northstar</button><button class="btn secondary" data-action="project-settings">Cancel</button></div>`);}
+    else if(act==='reset-demo'){state.isAnalyzing=true;showDialog(`<span class="eyebrow">Resetting demo</span><h2 id="dialogTitle">Restoring Northstar…</h2><p>Rebuilding the curated starting scenario.</p>`);try{await API.resetDemo();await hydrateBackend();state.result=null;state.resultQuery='';state.askInputDraft='';state.isAnalyzing=false;closeDialog();navigateTo('overview');}catch(err){state.isAnalyzing=false;showDialog(`<span class="eyebrow">Reset failed</span><h2 id="dialogTitle">Northstar was not reset.</h2><p>${esc(err.message)}</p><div class="dialog-actions"><button class="btn primary" data-action="close-dialog">Close</button></div>`);}}
     else if(act==='close-dialog'){if(!state.isAnalyzing)closeDialog();}
     else if(act==='retry-analysis'){ const evidenceId=a.dataset.evidenceId; state.isAnalyzing=true; showDialog(analyzingDialog()); startAnalysisClock(); try{await retryEvidenceAnalysis(evidenceId); state.isAnalyzing=false; stopAnalysisClock(); await hydrateBackend(); showDialog(`<span class="eyebrow">Done</span><h2 id="dialogTitle">Analysis complete.</h2><p>Open Items now reflects anything that needs your decision.</p><div class="dialog-actions"><button class="btn primary" data-action="go-review">View Open Items</button></div>`);}catch(err){state.isAnalyzing=false;stopAnalysisClock();showDialog(`<span class="eyebrow">Still unavailable</span><h2 id="dialogTitle">Your note is still safe.</h2><p>${esc(err.message)}</p><div class="dialog-actions"><button class="btn primary" data-action="close-dialog">Close</button></div>`);} }
     else if(act==='sample-info'){ const t=document.getElementById('addInfoText'); if(t)t.value=state.data.sampleInformation; }
