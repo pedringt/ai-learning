@@ -1,41 +1,42 @@
-State R9.5 — grounded Ask progress
+State R9.6 — true Ask streaming
 
-Goal
-Make Ask feel responsive without weakening the final grounded-answer contract.
+This is real answer streaming, not just a progressive loading message.
 
-Behavior
-- Final Claude Ask request starts immediately, exactly as before.
-- A separate model-free /api/ask/preview request runs in parallel.
-- For explicit meeting prep, preview uses the same deterministic, authority-aware
-  selection as the fast Ask path.
-- As soon as that preview returns, the loading state changes from generic progress
-  to a grounded message such as:
-  "Found 2 relevant Reviews, 1 blocker, 3 open questions and 6 Current State facts.
-   Drafting the brief..."
-- Preview is never awaited before the final Ask request starts, so it does not add
-  serial latency.
-- Partial/unvalidated model text is never rendered.
-- Final answer still uses the existing Claude structured-output + validation path.
+How it works
+- Explicit meeting-prep requests use POST /api/ask/stream.
+- State deterministically selects and validates the grounded context first.
+- Anthropic Messages streaming begins using the existing structured-output schema.
+- The backend forwards Claude text deltas to the browser over Server-Sent Events.
+- The browser incrementally extracts only human-readable fields from the structured
+  JSON and renders them as they arrive, including the currently-generating field.
+- A blinking draft cursor makes the active field visibly progressive.
+- The completed JSON is validated by the existing State authority contract.
+- Only after validation does the final normal Ask payload replace the streaming draft.
+- If streaming/validation fails, the draft is not treated as a completed State answer.
 
-Why progressive rather than raw token streaming
-The current provider response is structured JSON. Rendering partial JSON would
-either expose unvalidated model claims or require a second output contract.
-This pass improves perceived latency while preserving State's authority boundary.
+Important
+- This currently applies only to explicit meeting-prep requests on Anthropic.
+- General Ask behavior remains unchanged.
+- This does not make Claude itself finish faster; it improves time-to-first-useful-text.
+- The frontend updates only the answer body during deltas instead of rerendering the
+  whole Workspace, to avoid page-jump/jank while streaming.
 
 Build
-r9.5-grounded-ask-progress-2026-09-02
+r9.6-true-ask-streaming-2026-09-02
 
 Verification
-- Full backend/integration: 206 passed, 3 skipped, 7 subtests passed
+- Full backend/integration: 209 passed, 3 skipped, 7 subtests passed
 - Ask behavior harness: 81 passed, 0 failed
-- Targeted Ask/frontend regression suite: 54 passed
+- New regression coverage proves delta events occur before final validation payload
+- JS syntax checks pass
 
 Deployment
-- Upload all files preserving their paths.
-- Render must redeploy because api.py and ask_service.py changed.
-- Vercel/front-end must receive the implementation-context-prototype files.
-- After deploy, run "Prep me for the security meeting".
-- Expected experience:
-  1. generic building state appears immediately;
-  2. around context-hydration time, it becomes a real grounded-count message;
-  3. final validated brief replaces it when Claude finishes.
+1. Upload state-project-complete files and let Render redeploy.
+2. Upload implementation-context-prototype files to GitHub/Vercel.
+3. Confirm /health reports r9.6-true-ask-streaming-2026-09-02.
+4. Ask: "Prep me for the security meeting."
+5. Expected behavior: after context setup, the headline/summary/sections should visibly
+   build while Claude is still generating; final State links/actions appear after validation.
+
+The Anthropic streaming implementation follows the current Messages SDK streaming
+pattern (client.messages.stream / text_stream) while retaining output_config JSON schema.

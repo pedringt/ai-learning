@@ -160,6 +160,19 @@
     const orientation=projectOrientation();
     root.innerHTML=`<article class="page project-page project-document"><header class="project-document-head" id="project-top"><div class="project-head-row"><div><span class="eyebrow">Current project</span><h2>${esc(state.data.project.name)}</h2></div><button class="btn secondary project-settings-button" data-action="project-settings">Project settings</button></div><p class="project-document-summary">Reviewed project understanding, organized around the facts currently treated as true.</p><dl class="project-document-meta"><div><dt>Stage</dt><dd>${esc(orientation.stage)}</dd></div><div><dt>Outcome</dt><dd>${esc(orientation.outcome)}</dd></div><div><dt>Current State</dt><dd>${orientation.count} Current State items</dd></div></dl></header><div class="project-document-intro"><strong>Current direction</strong><p>${esc(orientation.direction)}</p></div><div class="project-outline">${visible.map(([id,a])=>projectOutlineSection(id,a)).join('')||'<div class="empty-state"><h3>No Current State yet.</h3><p>Reviewed project understanding will appear here as a clean outline.</p></div>'}</div></article>`;    requestAnimationFrame(()=>updateProjectSubnavActive());
   }
+  let askStreamPaintQueued=false;
+  function paintStreamingAsk(){
+    if(askStreamPaintQueued) return;
+    askStreamPaintQueued=true;
+    requestAnimationFrame(()=>{
+      askStreamPaintQueued=false;
+      if(!state.result?.liveAskStreaming) return;
+      const target=root.querySelector('.answer-content');
+      if(target && ASK?.renderStream) target.innerHTML=ASK.renderStream(state.result.liveAskStreamRaw||'',state.result.liveAskPreview||null);
+      else renderOverview();
+    });
+  }
+
   function liveAskLoadingHtml(){
     const preview=state.result?.liveAskPreview;
     const message=preview?.message || 'Finding relevant project context · checking Reviews and unresolved questions · shaping the useful parts.';
@@ -167,7 +180,7 @@
     return `<div class="ask-live-loading${preview?.grounded?' has-grounded-preview':''}"><span class="ask-loading-mark" aria-hidden="true"></span><div><strong>${esc(label)}</strong><p>${esc(message)}</p></div></div>`;
   }
   function renderOverview(){
-    const resultBody = state.result ? (state.result.liveAsk ? ASK?.render(state.result.liveAsk) : state.result.liveAskLoading ? liveAskLoadingHtml() : state.result.liveAskError ? `<div class="ask-live-error"><h2>Ask is temporarily unavailable.</h2><p>${esc(state.result.liveAskError)}</p></div>` : state.result.fallback ? fallbackResult() : state.result.intent ? intentAskHtml(state.result.intent) : state.result.structured ? structuredAskHtml(state.result.structured) : scenarioResult(state.result.scenario)) : '';
+    const resultBody = state.result ? (state.result.liveAsk ? ASK?.render(state.result.liveAsk) : state.result.liveAskStreaming ? ASK?.renderStream(state.result.liveAskStreamRaw||'',state.result.liveAskPreview||null) : state.result.liveAskLoading ? liveAskLoadingHtml() : state.result.liveAskError ? `<div class="ask-live-error"><h2>Ask is temporarily unavailable.</h2><p>${esc(state.result.liveAskError)}</p></div>` : state.result.fallback ? fallbackResult() : state.result.intent ? intentAskHtml(state.result.intent) : state.result.structured ? structuredAskHtml(state.result.structured) : scenarioResult(state.result.scenario)) : '';
     const reviewBanner = uiPendingReviews().length && !state.reviewBannerDismissed ? `<aside class="review-banner"><div><strong>${uiPendingReviews().length} items need review</strong><span>New information may change the project’s current understanding.</span></div><div><button class="text-button" data-view="open-items">Open Items →</button><button class="banner-close" data-action="dismiss-review-banner" aria-label="Dismiss review reminder">×</button></div></aside>` : '';
     root.innerHTML = `<section class="overview pristine">
       <section class="overview-heading"><div class="overview-heading-row"><div><h2>Northstar</h2></div><button class="btn primary overview-add" data-action="add-info">+ Add note</button></div></section>
@@ -450,6 +463,32 @@
     const previousLive=state.result?.liveAsk||null;
     if(ASK?.canHandle(raw,previousLive)){
       state.resultQuery=raw;
+      if(ASK.canStream?.(raw)){
+        state.result={liveAskStreaming:true,liveAskStreamRaw:'',liveAskPreview:null};
+        renderOverview();
+        try{
+          const payload=await ASK.submitStream(raw,previousLive,{
+            preview: preview=>{
+              if(state.result?.liveAskStreaming){
+                state.result={...state.result,liveAskPreview:preview};
+                paintStreamingAsk();
+              }
+            },
+            delta: event=>{
+              if(state.result?.liveAskStreaming){
+                state.result={...state.result,liveAskStreamRaw:(state.result.liveAskStreamRaw||'')+(event?.text||'')};
+                paintStreamingAsk();
+              }
+            },
+          });
+          state.result={liveAsk:payload};
+          state.refinements=[];
+        }catch(err){
+          state.result={liveAskError:err?.message||'State could not produce a grounded answer. Please try again.'};
+        }
+        renderOverview();
+        return;
+      }
       state.result={liveAskLoading:true,liveAskPreview:null};
       renderOverview();
       let completed=false;

@@ -18,6 +18,12 @@
     if(!API?.askPreview || !isMeetingPrep(query)) return null;
     return API.askPreview(query);
   }
+  function canStream(query){
+    return !!API?.askStream && isMeetingPrep(query);
+  }
+  async function submitStream(query, previousPayload=null, handlers={}){
+    return API.askStream(query, previousPayload?.answer || null, handlers);
+  }
   async function submit(query, previousPayload=null){
     return API.ask(query, previousPayload?.answer || null);
   }
@@ -71,6 +77,55 @@
     return lines.join('\n').trim();
   }
 
+  function decodeJsonStringFragment(fragment){
+    try { return JSON.parse(`"${fragment}"`); } catch (_) {
+      return fragment.replace(/\\n/g,'\n').replace(/\\"/g,'"').replace(/\\\\/g,'\\');
+    }
+  }
+
+  function streamedFields(raw){
+    const out=[];
+    const re=/"(headline|summary|title|text|detail)"\s*:\s*"/g;
+    let match;
+    while((match=re.exec(raw))){
+      let i=re.lastIndex, j=i, escaped=false, complete=false;
+      for(;j<raw.length;j++){
+        const ch=raw[j];
+        if(escaped){ escaped=false; continue; }
+        if(ch==='\\'){ escaped=true; continue; }
+        if(ch==='"'){ complete=true; break; }
+      }
+      const value=decodeJsonStringFragment(raw.slice(i,j));
+      out.push({key:match[1],value,complete});
+      if(!complete) break;
+      re.lastIndex=j+1;
+    }
+    return out;
+  }
+
+  function renderStream(raw, preview=null){
+    const fields=streamedFields(raw||'');
+    if(!fields.length){
+      const counts=preview?.counts||{};
+      const bits=[];
+      if(counts.reviews) bits.push(`${counts.reviews} ${counts.reviews===1?'Review':'Reviews'}`);
+      if(counts.blockers) bits.push(`${counts.blockers} ${counts.blockers===1?'blocker':'blockers'}`);
+      if(counts.questions) bits.push(`${counts.questions} open ${counts.questions===1?'question':'questions'}`);
+      const msg=bits.length?`Grounded in ${bits.join(', ')}. Claude is drafting the brief…`:'Claude is drafting the grounded brief…';
+      return `<div class="ask-live-loading has-grounded-preview"><span class="ask-loading-mark" aria-hidden="true"></span><div><strong>Grounded context ready</strong><p>${esc(msg)}</p></div></div>`;
+    }
+    let body='';
+    for(const field of fields){
+      const cursor=field.complete?'':'<span class="ask-stream-cursor" aria-hidden="true"></span>';
+      if(field.key==='headline') body+=`<h2>${esc(field.value)}${cursor}</h2>`;
+      else if(field.key==='summary') body+=`<p class="result-lede">${esc(field.value)}${cursor}</p>`;
+      else if(field.key==='title') body+=`<h3 class="ask-stream-section-title">${esc(field.value)}${cursor}</h3>`;
+      else if(field.key==='text') body+=`<div class="ask-stream-item">${esc(field.value)}${cursor}</div>`;
+      else if(field.key==='detail' && field.value) body+=`<div class="ask-stream-detail">${esc(field.value)}${cursor}</div>`;
+    }
+    return `<div class="ask-live-answer ask-streaming-draft" aria-busy="true"><div class="result-label">Meeting prep · Drafting</div>${body}</div>`;
+  }
+
   function render(payload){
     const a=payload?.answer;
     if(!a) return '<div class="ask-live-error"><h2>Ask is temporarily unavailable.</h2><p>State did not receive a grounded answer.</p></div>';
@@ -82,5 +137,5 @@
     return `<div class="ask-live-answer"><div class="ask-answer-head"><div class="result-label">${esc(a.job==='meeting_prep'?'Meeting prep':'State Ask')}</div><button class="btn secondary ask-copy-answer" data-action="copy-result">${esc(copyLabel(a.job))}</button></div><h2>${esc(a.headline)}</h2><p class="result-lede">${esc(a.summary)}</p>${sections}${notes}${refinements?`<div class="ask-refinement-chips">${refinements}</div>`:''}${stateActions(a)}${footer}</div>`;
   }
 
-  window.STATE_ASK = Object.freeze({canHandle, preview, submit, render, portableText, copyLabel});
+  window.STATE_ASK = Object.freeze({canHandle, canStream, preview, submitStream, submit, renderStream, render, portableText, copyLabel});
 })();

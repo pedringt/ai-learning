@@ -40,6 +40,24 @@ class LiveAskProvider:
         """Fast path when software has already selected authoritative context."""
         return self._call(prompt, ANSWER_JSON_SCHEMA, max_tokens=1300)
 
+    def stream_synthesize_selected(self, prompt: str):
+        """Yield structured-output text deltas for the grounded meeting-prep fast path.
+
+        The caller must accumulate the complete JSON text and validate it before
+        treating the streamed draft as a finished State answer.
+        """
+        if self.name != "anthropic":
+            raise RuntimeError("Streaming Ask currently requires the Anthropic provider")
+        with self.provider.client.messages.stream(
+            model=self.model_identifier,
+            max_tokens=1300,
+            output_config={"format": {"type": "json_schema", "schema": ANSWER_JSON_SCHEMA}},
+            messages=[{"role": "user", "content": prompt}],
+        ) as stream:
+            for text in stream.text_stream:
+                if text:
+                    yield text
+
     def _call(self, prompt: str, schema: Mapping[str, Any], *, max_tokens: int) -> Mapping[str, Any]:
         if self.name == "anthropic":
             message = self.provider.client.messages.create(

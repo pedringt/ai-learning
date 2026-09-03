@@ -12,6 +12,7 @@ import time
 
 from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from anthropic_provider import AnthropicProvider
@@ -22,8 +23,8 @@ from openai_provider import OpenAIProvider
 from seed_demo import bootstrap_demo_data
 from ask_contract import AskRequest
 from ask_provider import LiveAskProvider
-from ask_service import build_ask_preview, run_ask
-STATE_BUILD_REV = "r9.5-grounded-ask-progress-2026-09-02"
+from ask_service import build_ask_preview, finalize_streaming_meeting_ask, prepare_streaming_meeting_ask, run_ask
+STATE_BUILD_REV = "r9.6-true-ask-streaming-2026-09-02"
 logger = logging.getLogger("state.api")
 
 from review_service import (
@@ -461,6 +462,74 @@ def create_app(settings: Settings | None = None, provider: InterpretationProvide
         """Return software-grounded progress immediately; never calls a model."""
         with get_connection() as connection:
             return build_ask_preview(connection, payload.query.strip())
+
+    @app.post("/api/ask/stream")
+    def post_ask_stream(payload: AskRequest, request: Request):
+        """Stream grounded meeting-prep synthesis, then emit the validated final payload."""
+        selected_ask_provider = request.app.state.ask_provider
+        if selected_ask_provider is None:
+            selected_provider = request.app.state.provider
+            if selected_provider is None:
+                try:
+                    selected_provider = _provider_from_env(settings)
+                    request.app.state.provider = selected_provider
+                except RuntimeError as exc:
+                    raise HTTPException(status_code=503, detail=str(exc)) from exc
+            selected_ask_provider = LiveAskProvider(selected_provider)
+            request.app.state.ask_provider = selected_ask_provider
+        if getattr(selected_ask_provider, "name", None) != "anthropic" or not hasattr(selected_ask_provider, "stream_synthesize_selected"):
+            raise HTTPException(status_code=409, detail="Streaming Ask is currently available with Anthropic meeting prep only")
+
+        try:
+            with get_connection() as connection:
+                prepared = prepare_streaming_meeting_ask(connection, payload.query.strip(), payload.previous_answer)
+        except (ValueError, TypeError) as exc:
+            raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+        selection = prepared["selection"]
+        preview = {
+            "job": "meeting_prep",
+            "grounded": True,
+            "counts": {
+                "reviews": len(selection.review_ids),
+                "blockers": len(selection.blocking_question_ids),
+                "questions": len(selection.question_ids),
+                "state": len(selection.state_ids),
+            },
+        }
+
+        def sse(event: str, data: dict) -> str:
+            return f"event: {event}\ndata: {json.dumps(data, ensure_ascii=False)}\n\n"
+
+        def generate():
+            yield sse("preview", preview)
+            provider_started = time.perf_counter()
+            chunks: list[str] = []
+            try:
+                for text in selected_ask_provider.stream_synthesize_selected(prepared["prompt"]):
+                    chunks.append(text)
+                    yield sse("delta", {"text": text})
+                provider_ms = round((time.perf_counter() - provider_started) * 1000)
+                answer_raw = json.loads("".join(chunks))
+                result = finalize_streaming_meeting_ask(prepared, answer_raw, provider_ms=provider_ms)
+                timing = result.get("timing", {})
+                logger.info(
+                    "Ask timing provider=%s model=%s pipeline=%s context_ms=%s provider_ms=%s validation_ms=%s total_ms=%s",
+                    getattr(selected_ask_provider, "name", "unknown"),
+                    getattr(selected_ask_provider, "model_identifier", "unknown"),
+                    timing.get("pipeline"), timing.get("context_ms"), timing.get("provider_ms"),
+                    timing.get("validation_ms"), timing.get("total_ms"),
+                )
+                yield sse("final", result)
+            except Exception as exc:
+                logger.exception("Streaming Ask provider failure")
+                yield sse("error", {"message": "Ask could not produce a valid grounded answer"})
+
+        return StreamingResponse(
+            generate(),
+            media_type="text/event-stream",
+            headers={"Cache-Control": "no-cache, no-transform", "X-Accel-Buffering": "no"},
+        )
 
     @app.post("/api/ask")
     def post_ask(payload: AskRequest, request: Request) -> dict:

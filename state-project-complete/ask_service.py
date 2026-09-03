@@ -427,6 +427,57 @@ def build_ask_preview(connection: Any, query: str) -> dict[str, Any]:
         "elapsed_ms": round((time.perf_counter() - started) * 1000),
     }
 
+def prepare_streaming_meeting_ask(connection: Any, query: str, previous_answer: Mapping[str, Any] | None = None) -> dict[str, Any]:
+    """Prepare the deterministic meeting-prep fast path without calling a model."""
+    total_started = time.perf_counter()
+    context_started = time.perf_counter()
+    candidates = _trim_candidates_for_query(query, _compact_candidates(connection))
+    context_ms = round((time.perf_counter() - context_started) * 1000)
+    if not _is_explicit_meeting_prep(query):
+        raise ValueError("Streaming Ask currently supports explicit meeting-prep requests only")
+    selection = _validate_selection(_deterministic_meeting_selection(candidates), candidates)
+    context = _selected_context(selection, candidates)
+    return {
+        "query": query,
+        "selection": selection,
+        "context": context,
+        "candidates": candidates,
+        "prompt": _synthesis_prompt(query, selection, context, previous_answer),
+        "context_ms": context_ms,
+        "total_started": total_started,
+    }
+
+
+def finalize_streaming_meeting_ask(prepared: Mapping[str, Any], answer_raw: Mapping[str, Any], *, provider_ms: int) -> dict[str, Any]:
+    """Validate a completed streamed synthesis and return the normal Ask payload."""
+    validation_started = time.perf_counter()
+    selection = prepared["selection"]
+    context = prepared["context"]
+    candidates = prepared["candidates"]
+    answer = AskSynthesis.model_validate(answer_raw)
+    if answer.job != "meeting_prep":
+        answer.job = "meeting_prep"
+    answer = _normalize_meeting_prep(_validate_synthesis(answer, selection, context))
+    validation_ms = round((time.perf_counter() - validation_started) * 1000)
+    selected_open = set(selection.review_ids + selection.blocking_question_ids + selection.question_ids)
+    total_open = len(candidates["reviews"]) + len(candidates["questions"])
+    remaining = max(0, total_open - len(selected_open))
+    remaining_reviews = max(0, len(candidates["reviews"]) - len(selection.review_ids))
+    total_ms = round((time.perf_counter() - prepared["total_started"]) * 1000)
+    return {
+        "answer": answer.model_dump(),
+        "selection": selection.model_dump(),
+        "open_items_remaining": {"count": remaining, "reviews": remaining_reviews},
+        "timing": {
+            "pipeline": "deterministic_select_stream",
+            "context_ms": prepared["context_ms"],
+            "provider_ms": provider_ms,
+            "validation_ms": validation_ms,
+            "total_ms": total_ms,
+        },
+    }
+
+
 def run_ask(connection: Any, provider: AskProvider, query: str, previous_answer: Mapping[str, Any] | None = None) -> dict[str, Any]:
     total_started = time.perf_counter()
     context_started = time.perf_counter()

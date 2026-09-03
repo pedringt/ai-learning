@@ -439,3 +439,50 @@ def test_r95_non_meeting_preview_does_not_invent_selection(tmp_path):
         assert "Checking Current State" in preview["message"]
     finally:
         conn.close()
+
+class FakeStreamingMeetingProvider:
+    name = "anthropic"
+    model_identifier = "claude-haiku-test"
+
+    def __init__(self):
+        self.prompts = []
+
+    def stream_synthesize_selected(self, prompt):
+        self.prompts.append(prompt)
+        raw = (
+            '{"job":"meeting_prep","headline":"Security meeting prep",'
+            '"summary":"The pilot remains bounded and human-reviewed.",'
+            '"sections":[{"kind":"established","title":"Useful context","items":['
+            '{"text":"The pilot remains read-only.","record_type":"state","record_id":"k-data","detail":null}'
+            ']}],"source_ids":["k-data"],"uncertainty_ids":[],"suggested_refinements":[]}'
+        )
+        midpoint = raw.index('"summary"')
+        yield raw[:midpoint]
+        yield raw[midpoint:]
+
+
+def test_r96_streaming_endpoint_emits_deltas_before_validated_final(tmp_path):
+    provider = FakeStreamingMeetingProvider()
+    settings = Settings(database_path=str(tmp_path / "api-r96.db"), cors_origins=[], demo_bootstrap=True)
+    app = create_app(settings, provider=None, ask_provider=provider)
+    with TestClient(app) as client:
+        response = client.post('/api/ask/stream', json={'query':'Prep me for the security meeting.'})
+        assert response.status_code == 200
+        body = response.text
+        assert 'event: preview' in body
+        assert 'event: delta' in body
+        assert 'Security meeting prep' in body
+        assert 'event: final' in body
+        assert body.index('event: delta') < body.index('event: final')
+        assert '"pipeline": "deterministic_select_stream"' in body
+        assert len(provider.prompts) == 1
+
+
+def test_r96_streaming_endpoint_rejects_non_meeting_job_before_provider(tmp_path):
+    provider = FakeStreamingMeetingProvider()
+    settings = Settings(database_path=str(tmp_path / "api-r96-nonmeeting.db"), cors_origins=[], demo_bootstrap=True)
+    app = create_app(settings, provider=None, ask_provider=provider)
+    with TestClient(app) as client:
+        response = client.post('/api/ask/stream', json={'query':'What changed about pilot scope?'})
+        assert response.status_code == 422
+        assert provider.prompts == []

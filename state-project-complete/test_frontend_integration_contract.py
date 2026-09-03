@@ -299,3 +299,23 @@ def test_r95_ask_progress_preview_runs_in_parallel_without_blocking_final_reques
     assert "await ASK.preview" not in app
     assert "Grounded context ready" in app
     assert '@app.post("/api/ask/preview")' in backend
+
+
+def test_r96_true_streaming_contract_is_wired_end_to_end():
+    api_js = (FRONTEND / "context-api.js").read_text()
+    ask_js = (FRONTEND / "context-ask.js").read_text()
+    app_js = (FRONTEND / "context-app.js").read_text()
+    backend = (Path(__file__).parent / "api.py").read_text()
+    provider = (Path(__file__).parent / "ask_provider.py").read_text()
+
+    assert "askStream" in api_js
+    assert "getReader()" in api_js
+    assert "text/event-stream" in api_js
+    assert "renderStream" in ask_js
+    assert "ask-stream-cursor" in ask_js
+    assert "liveAskStreaming" in app_js
+    assert "paintStreamingAsk" in app_js
+    assert '@app.post("/api/ask/stream")' in backend
+    assert "StreamingResponse" in backend
+    assert "stream_synthesize_selected" in provider
+    assert "messages.stream(" in provider

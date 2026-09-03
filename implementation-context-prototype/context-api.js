@@ -22,6 +22,53 @@
     body: JSON.stringify(body),
   });
 
+  async function askStream(query, previousAnswer = null, handlers = {}) {
+    const response = await fetch(`${base}/api/ask/stream`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json', 'Accept': 'text/event-stream'},
+      body: JSON.stringify({query, ...(previousAnswer ? {previous_answer: previousAnswer} : {})}),
+    });
+    if (!response.ok) {
+      const payload = await response.json().catch(() => ({}));
+      const detail = payload?.detail;
+      throw new Error(typeof detail === 'string' ? detail : `API error ${response.status}`);
+    }
+    if (!response.body) throw new Error('Streaming response is unavailable in this browser');
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+    let finalPayload = null;
+
+    const dispatch = block => {
+      let event = 'message';
+      const data = [];
+      for (const line of block.split(/\r?\n/)) {
+        if (line.startsWith('event:')) event = line.slice(6).trim();
+        else if (line.startsWith('data:')) data.push(line.slice(5).trimStart());
+      }
+      if (!data.length) return;
+      const payload = JSON.parse(data.join('\n'));
+      if (event === 'error') throw new Error(payload?.message || 'Ask could not produce a valid grounded answer');
+      if (event === 'final') finalPayload = payload;
+      handlers[event]?.(payload);
+    };
+
+    while (true) {
+      const {value, done} = await reader.read();
+      buffer += decoder.decode(value || new Uint8Array(), {stream: !done});
+      let boundary;
+      while ((boundary = buffer.indexOf('\n\n')) >= 0) {
+        const block = buffer.slice(0, boundary);
+        buffer = buffer.slice(boundary + 2);
+        if (block.trim()) dispatch(block);
+      }
+      if (done) break;
+    }
+    if (buffer.trim()) dispatch(buffer);
+    if (!finalPayload) throw new Error('Ask stream ended before a validated answer was ready');
+    return finalPayload;
+  }
+
   window.STATE_API = Object.freeze({
     base,
     getState: () => request('/api/state'),
@@ -48,6 +95,7 @@
     createRule: (text, category = 'Interpretation') => jsonPost('/api/rules', {text, category}),
     deleteRule: ruleId => request(`/api/rules/${encodeURIComponent(ruleId)}`, {method: 'DELETE'}),
     askPreview: query => jsonPost('/api/ask/preview', {query}),
+    askStream,
     ask: (query, previousAnswer = null) => jsonPost('/api/ask', {query, ...(previousAnswer ? {previous_answer: previousAnswer} : {})}),
   });
 })();
