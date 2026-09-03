@@ -15,7 +15,7 @@ def _looks_like_question(query: str) -> bool:
     return False
 
 
-def _detect_refinement_type(query: str) -> str | None:
+def detect_refinement_type(query: str) -> str | None:
     """Detect refinement type from natural language variations.
     
     Handles synonyms and natural phrasing while avoiding false positives.
@@ -276,7 +276,7 @@ def transform_more_detailed(answer: AskSynthesis) -> AskSynthesis:
 
 def apply_refinement_transform(query: str, answer: AskSynthesis) -> AskSynthesis:
     """Apply refinement transformations to enforce strict compliance."""
-    refinement_type = _detect_refinement_type(query)
+    refinement_type = detect_refinement_type(query)
     
     if refinement_type == "three_bullets":
         return transform_to_three_bullets(answer)

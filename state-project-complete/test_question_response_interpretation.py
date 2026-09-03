@@ -16,7 +16,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from db import Connection, get_connection
 from interpretation_pipeline_integrated import process_evidence
-from review_service import accept_review
+from review_service import accept_review, resolve_review
 from fake_provider_integrated import FakeProviderIntegrated
 
 
@@ -67,7 +67,7 @@ class TestQuestionResponseContext:
         result = process_evidence(db, evidence_id, fake_provider)
         
         # Verify: FakeProvider received Question context
-        assert result.processing_status in ("interpretation_complete", "review_recommended")
+        assert result.processing_status == "succeeded"
         
         # Verify: Review was created
         reviews = db.execute("SELECT id, review_type FROM review_issues WHERE status='open'").fetchall()
@@ -198,9 +198,9 @@ class TestQuestionResponseContext:
         ).fetchone()[0]
         
         state_id = db.execute(
-            "INSERT INTO current_state_items(id, statement, status, version) "
-            "VALUES(?, ?, ?, ?) RETURNING id",
-            ("state_1", "Deployment is manual", "active", 1),
+            "INSERT INTO current_state_items(id, topic, statement, status, version) "
+            "VALUES(?, ?, ?, ?, ?) RETURNING id",
+            ("state_1", "deployment", "Deployment is manual", "active", 1),
         ).fetchone()[0]
         
         # Submit evidence and create Review
@@ -264,10 +264,9 @@ class TestQuestionResponseContext:
             "SELECT id FROM review_issues WHERE status='open' LIMIT 1"
         ).fetchone()[0]
         
-        # Reject Review by changing its status to 'rejected'
-        db.execute(
-            "UPDATE review_issues SET status='rejected' WHERE id=?", (review_id,)
-        )
+        # Reject through the real lifecycle API; review_issues uses open/resolved
+        # status while resolution records the semantic outcome.
+        resolve_review(db, review_id, "reject", "Rejected by test")
         
         # Question should still be open (rejection doesn't close it)
         question = db.execute("SELECT status FROM questions WHERE id=?", (question_id,)).fetchone()
@@ -333,9 +332,10 @@ class TestQuestionBackwardCompatibilityRemoved:
         # Manually insert a Review and Evidence with source_type link
         # (simulating what would happen if code auto-submitted)
         review_id = db.execute(
-            "INSERT INTO review_issues(id, review_type, status, decision_question) "
-            "VALUES(?, ?, ?, ?) RETURNING id",
-            ("rev_manual", "proposed_update", "open", "Is this enough?"),
+            "INSERT INTO review_issues(id, review_type, status, decision_question, why_consequential) "
+            "VALUES(?, ?, ?, ?, ?) RETURNING id",
+            ("rev_manual", "proposed_update", "open", "Is this enough?",
+             "Test that source metadata alone cannot resolve a Question."),
         ).fetchone()[0]
         
         evidence_result = db.execute(
@@ -344,6 +344,11 @@ class TestQuestionBackwardCompatibilityRemoved:
             ("ev_backward", "Some answer", f"question_response:{question_id}"),
         ).fetchone()
         evidence_id = evidence_result[0]
+        db.execute(
+            "INSERT INTO review_evidence(review_id, evidence_id) VALUES (?, ?)",
+            (review_id, evidence_id),
+        )
+        db.commit()
         
         # Accept the Review WITHOUT creating a review_questions link
         accept_review(db, review_id, "Accepted by test")

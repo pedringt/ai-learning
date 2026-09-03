@@ -15,24 +15,28 @@ class LaunchDateProvider:
     model_identifier = "deterministic-test-v1"
 
     def interpret(self, *, context, evidence):
+        question_id = (evidence.get("response_to_question") or {}).get("question_id")
+        recommendation = {
+            "review_action": "create",
+            "review_type": "proposed_update",
+            "decision_question": "Accept the new launch date?",
+            "why_consequential": "The current launch date would be stale.",
+            "affected_state_item_ids": ["state_launch"],
+            "proposed_changes": [{
+                "operation": "update",
+                "state_item_id": "state_launch",
+                "expected_version": 1,
+                "proposed_statement": "Launch is October 15.",
+                "rationale": "The submitted evidence explicitly changes the date.",
+            }],
+        }
+        if question_id:
+            recommendation["resolves_question_ids"] = [question_id]
         return {
             "summary": "The launch date moved.",
             "topics": ["pilot", "launch"],
             "outcome": "review_recommended",
-            "review_recommendations": [{
-                "review_action": "create",
-                "review_type": "proposed_update",
-                "decision_question": "Accept the new launch date?",
-                "why_consequential": "The current launch date would be stale.",
-                "affected_state_item_ids": ["state_launch"],
-                "proposed_changes": [{
-                    "operation": "update",
-                    "state_item_id": "state_launch",
-                    "expected_version": 1,
-                    "proposed_statement": "Launch is October 15.",
-                    "rationale": "The submitted evidence explicitly changes the date.",
-                }],
-            }],
+            "review_recommendations": [recommendation],
         }
 
 

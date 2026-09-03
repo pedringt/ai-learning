@@ -250,8 +250,8 @@ def test_r861_grounded_ask_module_and_release_assets_are_self_contained():
     ask = (FRONTEND / "context-ask.js").read_text(encoding="utf-8")
     html = (FRONTEND / "index.html").read_text(encoding="utf-8")
     assert "window.STATE_ASK" in ask
-    assert "context-ask.js?v=r19-final-polish" in html
-    assert "context-app.js?v=r19-final-polish" in html
+    assert "context-ask.js?v=r20-refinement-project" in html
+    assert "context-app.js?v=r20-refinement-project" in html
 
 
 def test_r95_workspace_attention_has_a_fast_independent_load_path():
@@ -294,7 +294,7 @@ def test_r9_ask_vertical_slice_has_dedicated_module_and_backend_endpoint():
     assert "Review open items" in ask_js
     assert "Review now" in ask_js
     assert "Blocks: " in ask_js
-    assert "data-action=\"new-ask\"" in app
+    assert "data-action=\"new-ask\"" in ask_js
 
 
 def test_dialog_visibility_has_one_source_of_truth():
@@ -321,3 +321,12 @@ def test_r16_mobile_workspace_nav_has_horizontal_overflow_affordance():
     assert "R16 release hardening" in css
     assert '.sidebar-nav::after{content:"→"' in css
     assert "scrollbar-width:thin" in css
+
+
+def test_followup_rendering_obeys_backend_mode_and_not_duplicate_js_classifier():
+    ask = (FRONTEND / "context-ask.js").read_text()
+    app = (FRONTEND / "context-app.js").read_text()
+    assert "backend's followup_mode is authoritative" in ask
+    assert "payload?.followup_mode" in app
+    assert "const visiblePrevious=previousLive;" in app
+    assert "raw.resolution==='updated' && source.startsWith('question_response:')" not in app

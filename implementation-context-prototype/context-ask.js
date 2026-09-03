@@ -12,10 +12,9 @@
     return /\b(shorter|shorten|brief|agenda|15 minutes|minutes|leadership|slack|talking points|focus|format|turn this|make it)\b/.test(q);
   }
   function followupMode(query, previousPayload){
-    if(!previousPayload) return 'new';
-    const q=norm(query);
-    if(/\b(shorter|shorten|concise|briefer|make this|make it|turn this|turn it|format|agenda|bullet|bullets|leadership|more detail|detailed|focus|rewrite|summarize)\b/.test(q)) return 'replace';
-    return 'append';
+    // Pending/error fallback only. The backend's followup_mode is authoritative
+    // once a grounded response arrives, which prevents JS/Python classifier drift.
+    return previousPayload ? 'append' : 'new';
   }
   function canHandle(query, previousPayload){
     // All user questions should use the grounded backend when it is available.

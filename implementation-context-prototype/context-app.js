@@ -557,7 +557,7 @@
     }
     const previousLive=state.result?.liveAsk||null;
     const followupMode=ASK?.followupMode?.(raw,previousLive)||'new';
-    const visiblePrevious=followupMode==='append'?previousLive:null;
+    const visiblePrevious=previousLive;
     if(ASK?.canHandle(raw,previousLive)){
       state.resultQuery=raw;
       if(ASK.canStream?.(raw)){
@@ -579,7 +579,7 @@
             },
           });
           const answerTop=root.querySelector('.answer-content')?.getBoundingClientRect().top ?? null;
-          state.result={liveAsk:payload,previousLive:(payload?.followup_mode||followupMode)==='append'?previousLive:null};
+          state.result={liveAsk:payload,previousLive:(payload?.followup_mode||(previousLive?'append':'new'))==='append'?previousLive:null};
           state.refinements=[];
           renderOverview();
           if(answerTop!==null){
@@ -601,7 +601,7 @@
             try{
               const payload=await ASK.submit(raw,previousLive);
               const answerTop=root.querySelector('.answer-content')?.getBoundingClientRect().top ?? null;
-              state.result={liveAsk:payload,previousLive:(payload?.followup_mode||followupMode)==='append'?previousLive:null};
+              state.result={liveAsk:payload,previousLive:(payload?.followup_mode||(previousLive?'append':'new'))==='append'?previousLive:null};
               state.refinements=[];
               renderOverview();
               if(answerTop!==null){
@@ -635,7 +635,7 @@
       try{
         const payload=await ASK.submit(raw,previousLive);
         completed=true;
-        state.result={liveAsk:payload,previousLive:(payload?.followup_mode||followupMode)==='append'?previousLive:null};
+        state.result={liveAsk:payload,previousLive:(payload?.followup_mode||(previousLive?'append':'new'))==='append'?previousLive:null};
         state.refinements=[];
       }catch(err){
         completed=true;
@@ -1323,15 +1323,6 @@
       }
     }else{
       state.data.reviews=state.data.reviews.filter(r=>!r.backendReviewId);
-    }
-    if(byKey.resolved.status==='fulfilled'){
-      for(const raw of (payloadOf(byKey.resolved).items||[])){
-        const source=raw.evidence_source_type||'';
-        if(raw.resolution==='updated' && source.startsWith('question_response:')){
-          const q=state.data.questions.find(x=>x.id===source.slice('question_response:'.length));
-          if(q){q.status='resolved';q.resolution='Resolved by reviewed evidence';}
-        }
-      }
     }
     state.workspaceAttentionStatus=(byKey.open.status==='fulfilled'&&byKey.questions.status==='fulfilled')?'loaded':'error';
     for(const [key,result] of Object.entries(byKey)) if(result.status==='rejected') console.warn(`Backend ${key} unavailable:`,result.reason);

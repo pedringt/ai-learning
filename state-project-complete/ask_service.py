@@ -7,7 +7,7 @@ import time
 from typing import Any, Iterator, Mapping, Protocol
 
 from ask_contract import AskSelection, AskSynthesis
-from ask_refinement_transforms import apply_refinement_transform
+from ask_refinement_transforms import apply_refinement_transform, detect_refinement_type
 from review_service import list_evidence, list_history, list_project_rules, list_questions, list_reviews, list_state
 
 
@@ -88,17 +88,15 @@ def _trim_candidates_for_query(query: str, candidates: Mapping[str, list[dict]])
     }
 
 
-_TRANSFORM_RE = re.compile(r"\b(shorter|shorten|concise|brief(er)?|make (?:this|it)|turn (?:this|it)|format|agenda|bullets?|leadership(?:-ready)?|more detail(?:ed)?|focus(?: only)?|rewrite|summari[sz]e)\b", re.I)
-_FOLLOWUP_RE = re.compile(r"\b(source|support(?:s|ed)?|why|how do we know|where did|what about|which|clarif|explain|that|this|it|those|these)\b", re.I)
-
 def _followup_mode(query: str, previous_answer: Mapping[str, Any] | None) -> str:
-    """Deterministically decide whether a continuation replaces or appends."""
+    """Use the same refinement classifier as deterministic post-processing.
+
+    The backend is the authority for replace-vs-append so the browser cannot
+    disagree with the transform that was actually applied.
+    """
     if not previous_answer:
         return "new"
-    q = query.strip().lower()
-    if _TRANSFORM_RE.search(q):
-        return "replace"
-    return "append"
+    return "replace" if detect_refinement_type(query) else "append"
 
 def _previous_answer_search_text(previous_answer: Mapping[str, Any] | None) -> str:
     if not previous_answer:

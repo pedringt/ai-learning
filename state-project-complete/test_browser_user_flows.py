@@ -257,3 +257,25 @@ def test_demo_help_start_actions_are_clickable_and_reset_is_discoverable():
         assert page.locator('.answer-stage.has-result').count() == 0
     finally:
         browser.close(); pw.stop()
+
+
+def test_backend_replace_mode_removes_previous_artifact_for_natural_transform():
+    pw, browser, page = _launch_page(hydration_ms=10, ask_ms=10)
+    try:
+        page.locator("#askInput").fill("Who is my billing contact?")
+        page.locator('[data-action="ask-submit"]').click()
+        page.get_by_text("Jane Smith", exact=True).wait_for(timeout=2000)
+        page.evaluate("""() => {
+          window.STATE_API.ask = async () => ({
+            followup_mode:'replace',
+            selection:{job:'current_fact',state_ids:[],review_ids:[],blocking_question_ids:[],question_ids:[],history_ids:[],evidence_ids:[]},
+            answer:{job:'current_fact',headline:'Short version',summary:'Jane Smith.',sections:[],source_ids:[],uncertainty_ids:[],suggested_refinements:[]},
+            timing:{pipeline:'browser_fake',context_ms:1,provider_ms:1,validation_ms:0,total_ms:2}
+          });
+        }""")
+        page.locator("#askInput").fill("condense this")
+        page.locator('[data-action="ask-submit"]').click()
+        page.get_by_text("Short version", exact=True).wait_for(timeout=2000)
+        assert page.locator(".ask-previous-answer").count() == 0
+    finally:
+        browser.close(); pw.stop()

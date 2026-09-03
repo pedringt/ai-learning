@@ -279,3 +279,22 @@ def test_r92_meeting_prep_merges_repeated_sections_caps_state_and_cleans_blocks_
         assert blockers[0]["detail"] == "Security approval for pilot data flow"
     finally:
         conn.close()
+
+
+def test_natural_refinement_phrases_share_one_replace_classifier():
+    from ask_service import _followup_mode
+    previous = {"headline": "Current answer", "summary": "Details", "sections": []}
+    replace_phrases = [
+        "trim this down", "condense this", "exactly three points",
+        "just the blockers", "show me blockers only", "executive summary",
+        "for leaders", "add more context", "expand this", "go deeper", "longer version",
+    ]
+    for phrase in replace_phrases:
+        assert _followup_mode(phrase, previous) == "replace", phrase
+
+    append_phrases = [
+        "what source supports that?", "why?", "what about Security?",
+        "where did that come from?", "tell me about the Salesforce part",
+    ]
+    for phrase in append_phrases:
+        assert _followup_mode(phrase, previous) == "append", phrase
