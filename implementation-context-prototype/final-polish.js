@@ -2,9 +2,12 @@
   const STYLE_ID = 'state-final-ask-polish';
 
   function installStyles(){
-    if(document.getElementById(STYLE_ID)) return;
-    const style = document.createElement('style');
-    style.id = STYLE_ID;
+    let style = document.getElementById(STYLE_ID);
+    if(!style){
+      style = document.createElement('style');
+      style.id = STYLE_ID;
+      document.head.appendChild(style);
+    }
     style.textContent = `
       .ask-answer-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
       .ask-answer-actions .ask-copy-answer,
@@ -28,8 +31,14 @@
         background:var(--surface2)!important;
         color:var(--ink)!important;
       }
-      .ask-live-answer .ask-answer-item{
+      .ask-live-answer .ask-answer-item,
+      .ask-live-answer .ask-answer-item:last-child,
+      .ask-live-answer .ask-answer-item + .ask-answer-item{
         border:0!important;
+        border-top:0!important;
+        border-bottom:0!important;
+      }
+      .ask-live-answer .ask-answer-item{
         padding:8px 0!important;
         margin:0!important;
       }
@@ -38,7 +47,6 @@
         width:100%!important;
       }
       .ask-live-answer .ask-answer-item + .ask-answer-item{
-        border:0!important;
         margin-top:10px!important;
         padding-top:10px!important;
       }
@@ -50,21 +58,27 @@
         line-height:1.4!important;
       }
     `;
-    document.head.appendChild(style);
   }
 
-  function normalizeAskActions(){
+  function normalizeAskUi(){
     document.querySelectorAll('[data-action="copy-result"]').forEach(button => {
       if(button.textContent !== 'Copy') button.textContent = 'Copy';
     });
     document.querySelectorAll('[data-action="new-ask"]').forEach(button => {
       if(button.textContent !== 'New ask') button.textContent = 'New ask';
     });
+    // Inline enforcement makes the divider removal immune to older stylesheet
+    // specificity/caching. These rows should be separated by whitespace only.
+    document.querySelectorAll('.ask-live-answer .ask-answer-item').forEach(item => {
+      item.style.setProperty('border', '0', 'important');
+      item.style.setProperty('border-top', '0', 'important');
+      item.style.setProperty('border-bottom', '0', 'important');
+    });
   }
 
   installStyles();
-  normalizeAskActions();
+  normalizeAskUi();
 
   const root = document.getElementById('viewRoot') || document.body;
-  new MutationObserver(normalizeAskActions).observe(root, {childList:true, subtree:true});
+  new MutationObserver(normalizeAskUi).observe(root, {childList:true, subtree:true});
 })();
