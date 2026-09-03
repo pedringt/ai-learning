@@ -88,6 +88,27 @@ def _trim_candidates_for_query(query: str, candidates: Mapping[str, list[dict]])
 
 def _one_call_prompt(query: str, candidates: Mapping[str, Any], previous_answer: Mapping[str, Any] | None) -> str:
     previous = json.dumps(previous_answer, ensure_ascii=False)[:12000] if previous_answer else "null"
+    
+    # Build refinement guidance based on whether previous_answer exists
+    refinement_guidance = ""
+    if previous_answer:
+        refinement_guidance = """
+IMPORTANT: Refinement transformations must be visibly honored:
+- "shorten it" / "make it concise" → Output obviously shorter; target 40-60% of prior content unless dropping would lose critical authority/uncertainty. Keep only the most essential facts.
+- "make this 3 bullets" → Output exactly 3 bullets with distinct facts (fewer only if genuinely fewer than 3 key points exist).
+- "focus only on blockers" → Output only confirmed blockers (Questions where blocking=true). Remove non-blocking background entirely. Preserve the distinction between confirmed blocker vs ordinary uncertainty.
+- "turn it into an agenda" → Output an agenda format (with times/topics/decisions), not prose + an agenda embedded.
+- "make it leadership-ready" → Compress into decision/status/risk framing. No invented facts; only include what actual Evidence establishes.
+- "make it more detailed" → Expand grounded context only. Do not invent detail beyond what records support. Preserve epistemic status exactly.
+- "what source supports that?" (conversational) → Keep prior answer visible as context; append source-focused follow-up without losing prior content.
+
+If the user request is a transformation (shorter, bullets, focus, turn into, leadership, detailed), REPLACE the main visible artifact completely.
+If the request is a conversational follow-up (asking about sources, asking clarifying questions), PRESERVE prior answer and append the new content.
+
+A user saying "make this 3 bullets" wants to see exactly 3 bullets where the prior prose was. They do NOT want to see the prose plus 3 bullets.
+A user saying "what source supports X?" wants to see the prior answer plus new source analysis appended.
+"""
+    
     return f"""You are State Ask. In one response, first select the project records relevant to the request, then synthesize the grounded answer from only those selected records.
 
 Authority rules are non-negotiable:
@@ -98,7 +119,7 @@ Authority rules are non-negotiable:
 - Project Rules constrain interpretation.
 - Unknown must remain unknown. Newer does not mean more authoritative. Approval does not mean implementation.
 - Optimize for relevance, not completeness. Omit tempting recent noise.
-- Refinement may change format, audience, length, focus, or ordering, but never project truth.
+- Refinement may change format, audience, length, focus, or ordering, but never project truth.{refinement_guidance}
 - For meeting prep, frame relevant Questions as opportunities to get answered.
 - Meeting prep is a portable working brief, not a dashboard or record dump. It should be useful when pasted into a meeting document and leave room for live notes.
 - For meeting prep, prefer this information architecture when supported: concise before-the-meeting summary; Decisions needed; Questions to get answered; Useful context. State navigation/actions are rendered separately by the client.
@@ -128,6 +149,7 @@ Authority rules:
 - History is accepted past change. Evidence is what was said/observed and cannot silently override Current State.
 - Project Rules constrain interpretation.
 - Optimize for relevance, not completeness. Omit tempting recent noise.
+- For refinement requests (shorten, make bullets, focus, transform format), select records that support the transformed answer, not the prior one. A "focus only on blockers" request requires selecting only Questions where blocking=true.
 
 Job choices: current_fact, meeting_prep, catch_up, project_update, why_or_provenance, attention_check, historical, drafting, general_project_synthesis, refinement.
 
@@ -187,6 +209,24 @@ def _selected_context(selection: AskSelection, candidates: Mapping[str, list[dic
 
 def _synthesis_prompt(query: str, selection: AskSelection, context: Mapping[str, Any], previous_answer: Mapping[str, Any] | None) -> str:
     previous = json.dumps(previous_answer, ensure_ascii=False)[:12000] if previous_answer else "null"
+    
+    refinement_guidance = ""
+    if previous_answer:
+        refinement_guidance = """
+
+REFINEMENT TRANSFORMATION RULES:
+- "shorten it" / "make it concise" / "brief" → Output obviously shorter; target 40-60% of prior content unless dropping would lose critical authority/uncertainty.
+- "make this 3 bullets" → Output exactly 3 bullets with distinct facts (fewer only if genuinely fewer than 3 essential points exist).
+- "focus only on blockers" → Output ONLY confirmed blockers (Questions where blocking=true). Remove non-blocking background. Preserve blocker vs ordinary-uncertainty distinction.
+- "turn it into an agenda" → Output agenda format (with times/topics/decisions), not prose-plus-agenda.
+- "make it leadership-ready" → Compress into decision/status/risk framing without inventing facts.
+- "make it more detailed" → Expand grounded context only; do not invent beyond what records support.
+- "what source supports X?" (conversational) → Keep prior answer visible; append source-focused follow-up.
+
+Transformation = replace main artifact. Follow-up = append to prior answer.
+User requesting "make this 3 bullets" does NOT want prose plus bullets; they want ONLY 3 bullets.
+"""
+    
     return f"""You synthesize State Ask answers from authority-labeled project records.
 Return a useful answer first, not a record dump. Use concise adaptive sections.
 
@@ -196,7 +236,7 @@ Non-negotiable rules:
 - confirmed blockers must remain distinct from ordinary open Questions. For a blocker, include its exact 'blocks' dependency in detail.
 - Evidence may describe activity/claims but may not silently override Current State.
 - Unknown must remain unknown. Do not infer absence from missing information.
-- Refinement may change format, audience, length, focus, or ordering; it may not change project truth.
+- Refinement may change format, audience, length, focus, or ordering; it may not change project truth.{refinement_guidance}
 - For meeting prep, frame relevant Questions as opportunities to get answered.
 - Meeting prep is a portable working brief, not a dashboard or record dump. It should be useful when pasted into a meeting document and leave room for live notes.
 - For meeting prep, prefer this information architecture when supported: concise before-the-meeting summary; Decisions needed; Questions to get answered; Useful context. State navigation/actions are rendered separately by the client.

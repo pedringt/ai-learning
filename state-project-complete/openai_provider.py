@@ -203,6 +203,7 @@ You must recommend whether a Review is needed and what changes (if any) to propo
 
 ID: {evidence.get('id')}
 Content: {evidence.get('content')}
+{self._format_openai_question_context(evidence)}
 
 ## Your Task
 
@@ -248,7 +249,7 @@ Remember:
   - Preserve epistemic status exactly: approved != implemented/enabled/deployed; planned != committed; capable != enabled. Never widen a narrow statement beyond the Evidence.
   - Do not manufacture follow-up work from unspecified details. Missing implementation specifics are not themselves consequential maintained understanding.
   - Example: “Password reset tickets were approved for automation.” If new, propose only that approval as maintained understanding; do not infer implementation, deployment, universal coverage, or removal of review.
-- resolves_question_ids is optional. Include an exact open Question ID only when this Evidence directly answers it and accepting the Review would establish that answer in Current State. Notes can answer Questions indirectly; mere topical relation is not enough.
+- resolves_question_ids is optional. Include an exact open Question ID only when this Evidence directly answers it and accepting the Review would establish that answer in Current State. Notes can answer Questions indirectly; mere topical relation is not enough. When Evidence is explicitly submitted as an answer to a scoped Question (shown in context above), interpret it in the context of that specific Question; merely being submitted from the Question UI does not itself prove the answer is sufficient — only include the Question ID when the Evidence actually establishes a concrete answer.
 - Blocking status belongs to the application. Do not invent blocker urgency from missing details.
 - Before responding, verify review_type is compatible with every proposed_change operation. If you are targeting an existing State item with update or retire, use review_type "proposed_update", not "missing_understanding".
 - You can recommend Reviews without proposals (state_at_risk)
@@ -288,4 +289,23 @@ Remember:
             lines.append(f"- **{review_id}** ({details['review_type']})")
             lines.append(f"  - Decision: {details['decision_question']}")
             lines.append(f"  - Why: {details['why_consequential']}")
+        return "\n".join(lines)
+
+    def _format_openai_question_context(self, evidence: Mapping[str, Any]) -> str:
+        """Format optional Question-response context for OpenAI prompt."""
+        question_context = evidence.get("response_to_question")
+        if not question_context:
+            return ""
+        
+        lines = []
+        lines.append("")
+        lines.append("### Question Response Context")
+        lines.append(f"This Evidence was explicitly submitted as the user's answer to this Question:")
+        lines.append(f"- **Question ID**: {question_context['question_id']}")
+        lines.append(f"- **Question**: {question_context['question_text']}")
+        if question_context.get("is_blocking"):
+            lines.append(f"- **Status**: Blocking (depends: {question_context['blocks']})")
+        lines.append("")
+        lines.append("Interpret terse wording in the context of this specific Question. However, merely being submitted from the Question UI does not itself prove it is sufficient to resolve the Question — include the Question ID in resolves_question_ids only when the Evidence actually establishes a concrete answer.")
+        
         return "\n".join(lines)

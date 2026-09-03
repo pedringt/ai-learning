@@ -432,9 +432,34 @@ def process_evidence(
 
     All-or-nothing semantics: one invalid Review/Proposal rejects entire interpretation.
     """
-    evidence = connection.execute("SELECT id, content FROM evidence WHERE id=?", (evidence_id,)).fetchone()
+    evidence = connection.execute(
+        "SELECT id, content, source_type FROM evidence WHERE id=?",
+        (evidence_id,),
+    ).fetchone()
     if evidence is None:
         raise KeyError(evidence_id)
+
+    # Convert to mutable dict and load Question context if this is a question_response
+    evidence_dict = dict(evidence)
+    source_type = evidence_dict.get("source_type") or ""
+    if source_type.startswith("question_response:"):
+        question_id = source_type.split(":", 1)[1]
+        question = connection.execute(
+            "SELECT id, text, blocking, blocks FROM questions WHERE id=?",
+            (question_id,),
+        ).fetchone()
+        if question:
+            evidence_dict["response_to_question"] = {
+                "question_id": question["id"],
+                "question_text": question["text"],
+                "is_blocking": bool(question["blocking"]),
+                "blocks": question["blocks"],
+            }
+            logger.info(
+                "Loaded Question context for response evidence %s: Q=%s",
+                evidence_id,
+                question_id,
+            )
 
     context = capture_context(connection)
     # Do not hold a PostgreSQL transaction open while waiting on the model.
@@ -448,7 +473,7 @@ def process_evidence(
         # Invoke provider with captured context
         logger.info("Invoking provider for evidence %s", evidence_id)
         interpret_parameters = inspect.signature(provider.interpret).parameters
-        provider_kwargs = {"context": context, "evidence": dict(evidence)}
+        provider_kwargs = {"context": context, "evidence": evidence_dict}
         if "connection" in interpret_parameters:
             provider_kwargs["connection"] = connection
         payload = provider.interpret(**provider_kwargs)

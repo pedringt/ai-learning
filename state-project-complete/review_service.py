@@ -178,17 +178,10 @@ def resolve_review(connection: Connection, review_id: str, decision: Decision, n
                     "resolution='Resolved by reviewed evidence', source_evidence_id=? WHERE id=? AND status='open'",
                     (latest_evidence_id, linked["question_id"]),
                 )
-            # Backward compatibility for explicit question responses created by
-            # older clients before Review↔Question links existed.
-            for evidence in evidence_rows:
-                source_type = evidence["source_type"] or ""
-                if source_type.startswith("question_response:"):
-                    question_id = source_type.split(":", 1)[1]
-                    connection.execute(
-                        "UPDATE questions SET status='resolved', resolved_at=CURRENT_TIMESTAMP, "
-                        "resolution='Resolved by reviewed evidence', source_evidence_id=? WHERE id=? AND status='open'",
-                        (evidence["id"], question_id),
-                    )
+            # REMOVED: Unsafe backward-compatibility fallback that resolved Questions based solely
+            # on source_type.startswith("question_response:"). Question resolution now comes only
+            # from the explicit review_questions relationship created by validated resolves_question_ids.
+            # This prevents unrelated Evidence submitted from the Question UI from incorrectly closing Questions.
         connection.execute("COMMIT")
     except Exception:
         connection.execute("ROLLBACK")

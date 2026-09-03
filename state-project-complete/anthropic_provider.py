@@ -240,9 +240,7 @@ Evidence never changes State directly; a human decides Reviews.
 {self._format_open_questions(questions)}
 </open_questions>
 
-{rules_prompt}<evidence id="{evidence.get('id')}">
-{evidence.get('content')}
-</evidence>
+{rules_prompt}{self._format_evidence_with_question_context(evidence)}
 
 <instructions>
 Compare the Evidence with Current State and open Reviews. Return the semantic interpretation in the supplied JSON schema.
@@ -252,7 +250,7 @@ Compare the Evidence with Current State and open Reviews. Return the semantic in
 - missing_understanding: use for information not represented in Current State. Its proposals must be create operations only. Create proposals have no state_item_id.
 - state_at_risk: use when Evidence makes existing State uncertain without establishing a replacement; normally emit no proposal.
 - Set existing_review_id only when an open Review above is clearly the same pending human decision; use its exact Review ID. Otherwise omit it so software creates a new Review.
-- resolves_question_ids is optional. Include an exact open Question ID only when this Evidence directly establishes an answer and accepting this Review would establish that answer in Current State. A Note may answer a Question indirectly; do not require it to be submitted from the Question UI. Do not link merely related Evidence.
+- resolves_question_ids is optional. Include an exact open Question ID only when this Evidence directly establishes an answer and accepting this Review would establish that answer in Current State. A Note may answer a Question indirectly; do not require it to be submitted from the Question UI. Do not link merely related Evidence. When Evidence is explicitly submitted as an answer to a scoped Question (shown in context above), interpret it in the context of that Question's specific ask; merely being submitted from the Question UI does not itself prove the answer is sufficient — only include the Question ID when the Evidence actually establishes a concrete answer.
 - Blocking status is application-owned dependency metadata. Do not infer urgency or create a blocker because details are unspecified.
 - For update/retire, output the exact existing state_item_id. Software supplies expected_version and ensures that target is affected.
 - effective_date is optional. Include only a complete date explicitly established by Evidence, as YYYY-MM-DD. Omit relative, partial, immediate, approval-dependent, or unknown timing.
@@ -296,4 +294,26 @@ Compare the Evidence with Current State and open Reviews. Return the semantic in
             lines.append(f"- **{review_id}** ({details['review_type']})")
             lines.append(f"  - Decision: {details['decision_question']}")
             lines.append(f"  - Why: {details['why_consequential']}")
+        return "\n".join(lines)
+
+    def _format_evidence_with_question_context(self, evidence: Mapping[str, Any]) -> str:
+        """Format evidence with optional Question-response context."""
+        lines = []
+        lines.append(f'<evidence id="{evidence.get("id")}">')
+        lines.append(evidence.get("content", ""))
+        lines.append("</evidence>")
+        
+        # If this evidence was explicitly submitted as a Question response, provide context
+        question_context = evidence.get("response_to_question")
+        if question_context:
+            lines.append("")
+            lines.append("<question_response_context>")
+            lines.append(f"This Evidence was explicitly submitted as the user's answer to this Question:")
+            lines.append(f"- Question ID: {question_context['question_id']}")
+            lines.append(f"- Question: {question_context['question_text']}")
+            if question_context.get("is_blocking"):
+                lines.append(f"- Status: Blocking (depends: {question_context['blocks']})")
+            lines.append("Interpret terse wording in the context of this specific Question. However, merely being submitted from the Question UI does not itself prove it is sufficient to resolve the Question — include the Question ID in resolves_question_ids only when the Evidence actually establishes a concrete answer.")
+            lines.append("</question_response_context>")
+        
         return "\n".join(lines)
