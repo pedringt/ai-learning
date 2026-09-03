@@ -29,23 +29,25 @@
         color:var(--ink)!important;
       }
       .ask-live-answer .ask-answer-item{
-        border-bottom:0!important;
-        padding:10px 0!important;
+        border:0!important;
+        padding:8px 0!important;
+        margin:0!important;
       }
       .ask-live-answer .ask-answer-item>div{
         flex:1 1 100%!important;
         width:100%!important;
       }
       .ask-live-answer .ask-answer-item + .ask-answer-item{
-        border-top:1px solid color-mix(in srgb,var(--line) 62%,transparent)!important;
-        margin-top:8px!important;
-        padding-top:18px!important;
+        border:0!important;
+        margin-top:10px!important;
+        padding-top:10px!important;
       }
       .ask-live-answer .ask-item-detail{
         display:block!important;
         width:100%!important;
         flex-basis:100%!important;
-        margin-top:2px!important;
+        margin-top:3px!important;
+        line-height:1.4!important;
       }
     `;
     document.head.appendChild(style);

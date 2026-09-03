@@ -108,12 +108,15 @@ ANSWER_JSON_SCHEMA = {
 }
 
 
+# Keep the visible answer first in the structured stream. The final payload still
+# validates answer record IDs against `selection`, but emitting answer first lets
+# the browser render useful text while the model finishes the hidden ID lists.
 ONE_CALL_ASK_JSON_SCHEMA = {
     "type": "object",
     "additionalProperties": False,
-    "required": ["selection", "answer"],
+    "required": ["answer", "selection"],
     "properties": {
-        "selection": SELECTOR_JSON_SCHEMA,
         "answer": ANSWER_JSON_SCHEMA,
+        "selection": SELECTOR_JSON_SCHEMA,
     },
 }
