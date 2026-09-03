@@ -206,3 +206,31 @@ def test_workspace_attention_does_not_wait_for_slow_resolved_reviews():
         assert page.get_by_text('Checking what needs you', exact=True).count() == 0
     finally:
         browser.close(); pw.stop()
+
+def test_add_note_examples_fill_field_without_submitting():
+    pw, browser, page = _launch_page(hydration_ms=10)
+    try:
+        page.locator('[data-action="add-info"]').click()
+        assert page.locator('[data-action="sample-info"]').count() == 3
+        page.locator('[data-action="sample-info"][data-sample="research"]').click()
+        box = page.locator('#addInfoText')
+        assert 'three reps said they check recent ticket history' in box.input_value()
+        assert page.evaluate("document.activeElement && document.activeElement.id") == 'addInfoText'
+        assert page.locator('#overlay').evaluate('e=>e.hidden') is False
+    finally:
+        browser.close(); pw.stop()
+
+
+def test_demo_help_start_actions_are_clickable_and_reset_is_discoverable():
+    pw, browser, page = _launch_page(hydration_ms=10)
+    try:
+        page.locator('[data-action="show-demo-help"]').click()
+        assert page.get_by_text('Good places to start', exact=True).is_visible()
+        assert page.get_by_text('Reset Northstar from Project Settings', exact=False).is_visible()
+        page.locator('[data-action="demo-start-ask"]').click()
+        box = page.locator('#askInput')
+        assert box.input_value() == 'What should I know about the Northstar pilot?'
+        assert page.evaluate("document.activeElement && document.activeElement.id") == 'askInput'
+        assert page.locator('.answer-stage.has-result').count() == 0
+    finally:
+        browser.close(); pw.stop()

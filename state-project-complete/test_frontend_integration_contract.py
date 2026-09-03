@@ -384,9 +384,9 @@ def test_r10_demo_reset_is_available_from_project_settings():
     assert '@app.post("/api/demo/reset")' in backend
 
 
-def test_r13_frontend_assets_use_current_cache_bust_revision():
+def test_r14_frontend_assets_use_current_cache_bust_revision():
     html = (FRONTEND / "index.html").read_text(encoding="utf-8")
-    assert "?v=r13-demo-readiness" in html
+    assert "?v=r14-demo-discovery" in html
     assert "?v=r12-project-wiki" not in html
     assert "?v=r9.3.1b" not in html
 
@@ -419,7 +419,7 @@ def test_r12_light_mode_portfolio_purple_is_restrained():
     assert "--purple:#51438f;--purple2:#6858a6" in html
 
 
-def test_r13_examples_are_fill_only_and_sample_update_is_demo_safe():
+def test_r14_examples_are_fill_only_and_sample_update_is_demo_safe():
     app = (FRONTEND / 'context-app.js').read_text()
     data = (FRONTEND / 'context-data.js').read_text()
     index = (FRONTEND / 'index.html').read_text()
@@ -428,7 +428,7 @@ def test_r13_examples_are_fill_only_and_sample_update_is_demo_safe():
     assert "state.askInputDraft=q;" in app
     assert "The first pilot will run for two weeks with 8 support reps" in data
     assert "Temporary entitlements and grandfathered packages are the two cases" not in data
-    assert 'context-data.js?v=r13-demo-readiness' in index
+    assert 'context-data.js?v=r14-demo-discovery' in index
 
 
 def test_r13_workspace_attention_hydrates_from_open_reviews_and_questions_only():
