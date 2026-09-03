@@ -319,3 +319,19 @@ def test_r96_true_streaming_contract_is_wired_end_to_end():
     assert "StreamingResponse" in backend
     assert "stream_synthesize_selected" in provider
     assert "messages.stream(" in provider
+
+
+def test_r97_workspace_attention_replaces_late_review_banner_with_stable_action_layer():
+    app = (FRONTEND / "context-app.js").read_text(encoding="utf-8")
+    css = (FRONTEND / "context-tool.css").read_text(encoding="utf-8")
+    assert "function workspaceAttentionHtml()" in app
+    assert "Needs your attention" in app
+    assert "Checking what needs you" in app
+    assert "uiPendingReviews()" in app
+    assert "openQuestions().filter(q=>q.blocking)" in app
+    assert "workspaceAttentionHtml()" in app
+    assert "const reviewBanner =" not in app
+    assert "${reviewBanner}" not in app
+    assert ".workspace-attention{" in css
+    assert "min-height:126px" in css
+    assert ".attention-item.blocker .attention-kind" in css

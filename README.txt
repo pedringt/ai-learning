@@ -1,42 +1,32 @@
-State R9.6 — true Ask streaming
+State R9.7 — Workspace Needs Your Attention
 
-This is real answer streaming, not just a progressive loading message.
+What changed
+- Removes the late-inserting yellow Review banner from Workspace.
+- Adds a stable Needs your attention section directly beneath Ask.
+- The section exists during hydration, so Reviews loading later do not insert a new
+  block and shove the page downward.
+- Surfaces at most two substantive items:
+  1. pending Reviews first;
+  2. concrete blocking questions second.
+- Ordinary open questions are intentionally not promoted here.
+- Each surfaced item includes what it is, the actual decision/question, and why it
+  matters rather than only a count.
+- Review rows open the specific Review; blocker rows open the specific Question.
+- Remaining unresolved items route to Open Items.
+- When there is nothing actionable, the same stable section calmly says so.
 
-How it works
-- Explicit meeting-prep requests use POST /api/ask/stream.
-- State deterministically selects and validates the grounded context first.
-- Anthropic Messages streaming begins using the existing structured-output schema.
-- The backend forwards Claude text deltas to the browser over Server-Sent Events.
-- The browser incrementally extracts only human-readable fields from the structured
-  JSON and renders them as they arrive, including the currently-generating field.
-- A blinking draft cursor makes the active field visibly progressive.
-- The completed JSON is validated by the existing State authority contract.
-- Only after validation does the final normal Ask payload replace the streaming draft.
-- If streaming/validation fails, the draft is not treated as a completed State answer.
-
-Important
-- This currently applies only to explicit meeting-prep requests on Anthropic.
-- General Ask behavior remains unchanged.
-- This does not make Claude itself finish faster; it improves time-to-first-useful-text.
-- The frontend updates only the answer body during deltas instead of rerendering the
-  whole Workspace, to avoid page-jump/jank while streaming.
-
-Build
-r9.6-true-ask-streaming-2026-09-02
+Product rule
+Workspace surfaces what you should not miss.
+Project holds what is true.
+Open Items holds everything unresolved.
+Ask handles what you want to know.
 
 Verification
-- Full backend/integration: 209 passed, 3 skipped, 7 subtests passed
-- Ask behavior harness: 81 passed, 0 failed
-- New regression coverage proves delta events occur before final validation payload
-- JS syntax checks pass
+- Frontend integration contracts: 38 passed.
+- Full repository backend/integration suite passed.
+- Existing Ask behavior harness passed.
 
 Deployment
-1. Upload state-project-complete files and let Render redeploy.
-2. Upload implementation-context-prototype files to GitHub/Vercel.
-3. Confirm /health reports r9.6-true-ask-streaming-2026-09-02.
-4. Ask: "Prep me for the security meeting."
-5. Expected behavior: after context setup, the headline/summary/sections should visibly
-   build while Claude is still generating; final State links/actions appear after validation.
-
-The Anthropic streaming implementation follows the current Messages SDK streaming
-pattern (client.messages.stream / text_stream) while retaining output_config JSON schema.
+- This is primarily a Vercel/frontend change.
+- Upload context-app.js and context-tool.css preserving their paths.
+- test_frontend_integration_contract.py is included for repository regression coverage.
