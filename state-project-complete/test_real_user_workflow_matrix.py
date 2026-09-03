@@ -40,6 +40,23 @@ class UserScenarioProvider:
                     "proposed_changes": [{"operation": "create", "proposed_statement": statement, "rationale": "Repeated evidence."}],
                 }],
             }
+        if text == "Pilot lead: The first pilot will run for two weeks with 8 support reps from the Billing and Account Access teams. The team will review results at the end of the two-week period before deciding whether to expand.":
+            return {
+                "summary": "A concrete first-pilot cohort and duration were established.",
+                "topics": ["rollout", "pilot"],
+                "outcome": "review_recommended",
+                "review_recommendations": [{
+                    "review_action": "create", "review_type": "missing_understanding",
+                    "decision_question": "Should State add the first-pilot cohort and duration?",
+                    "why_consequential": "This establishes how the pilot will be run.",
+                    "affected_state_item_ids": [],
+                    "proposed_changes": [{
+                        "operation": "create",
+                        "proposed_statement": "The first pilot will run for two weeks with 8 support reps from Billing and Account Access, followed by a review before expansion.",
+                        "rationale": "The Evidence explicitly establishes the cohort, duration, and expansion checkpoint."
+                    }],
+                }],
+            }
         if text == "The pilot direction should now be internal-only.":
             version = context.state_items["k-pilot"].version
             return {
@@ -110,3 +127,17 @@ def test_real_user_can_reset_back_to_interactive_northstar(tmp_path):
         assert len(client.get("/api/reviews?status=open").json()["items"]) >= 4
         questions = client.get("/api/questions?status=open").json()["items"]
         assert any(x["blocking"] for x in questions)
+
+
+def test_builtin_sample_update_creates_clear_rollout_review_and_state_change(tmp_path):
+    sample = "Pilot lead: The first pilot will run for two weeks with 8 support reps from the Billing and Account Access teams. The team will review results at the end of the two-week period before deciding whether to expand."
+    with client_for(tmp_path) as client:
+        added = client.post('/api/evidence', json={'content': sample, 'source_type': 'manual_note'})
+        assert added.status_code == 201
+        reviews = added.json()['reviews']
+        assert len(reviews) == 1
+        assert 'cohort and duration' in reviews[0]['decision_question']
+        resolved = client.post(f"/api/reviews/{reviews[0]['id']}/resolve", json={'decision':'accept'})
+        assert resolved.status_code == 200
+        statements = [x['statement'] for x in client.get('/api/state').json()['items']]
+        assert sum('8 support reps from Billing and Account Access' in x for x in statements) == 1

@@ -1,76 +1,53 @@
-State R12 — definitive Project wiki + stabilization
+State R13 — final demo-readiness refinements
 
-PROJECT: DEFINITIVE WIKI
-- Project is now a human-readable projection of authoritative Current State.
-- The underlying atomic State records are NOT merged or deleted.
-- Major sections remain Product & Workflow, Safety & Constraints, Evaluation & Rollout.
-- Within them, maintained understanding is organized into readable wiki topics:
-  * Pilot scope & workflow
-  * Knowledge & access
-  * Escalation & handoff
-  * Human control
-  * Action boundaries
-  * Data & sources
-  * How success is judged
-  * Launch readiness
-  * Rollout & enablement
-- Current State statements are composed into readable prose paragraphs.
-- Near-identical prose is suppressed only in presentation; provenance records remain intact.
-- Every wiki topic has a collapsed "Maintained from N Current State facts" disclosure.
-- Individual atomic facts, pending Review links, and History links remain available there.
-- Project metadata proportions are rebalanced so Stage/Outcome are readable and the fact count is not squeezed.
+WHAT CHANGED
 
-AFTER REVIEW: CHANGE RECEIPT
-- Accepting a substantive Review now ends with a concrete "Here's what changed" receipt.
-- The receipt shows the resulting maintained statement(s).
-- It provides View in Project and View in History actions.
-- View in Project jumps to and briefly highlights the relevant wiki section.
-- Leaving understanding unchanged keeps the existing clear confirmation.
+1. Ask examples are now useful and clickable
+- The large initial empty Ask answer card is removed.
+- Initial Workspace stays focused on Ask + a quiet "See what you can ask" link + Needs your attention.
+- The examples modal is simplified into three groups:
+  Understand / Decide / Prepare.
+- Clicking an example fills the Ask field and focuses it.
+- Examples do NOT auto-submit, so the user can edit before sending.
 
-ADD NOTE RELIABILITY
-- Evidence is still saved exactly once before analysis.
-- If the provider has a transient provider_error, State automatically retries analysis once against the SAME Evidence.
-- Contract/semantic failures are not blindly retried.
-- If the second provider attempt still fails, the existing Saved-but-not-analyzed / Retry analysis flow remains.
-- This is intended to reduce the flaky built-in sample-note experience without creating duplicate Evidence.
+2. Built-in sample update is now a clean demo scenario
+OLD sample:
+- repeated the plan-matrix / temporary-entitlement / grandfathered-package topic
+  already present in Northstar, which could create a no-op or duplicate-looking Review.
 
-OPEN ITEMS / REVIEW
-- Open Question and Review title typography is more deliberate and less oversized.
-- Review uses a strong purple decision/authorization treatment rather than visually reading as lower priority than red blockers.
-- User-facing Review copy strips leaked internal IDs such as state_..., question_..., k-..., q-..., etc.
+NEW sample:
+- establishes a clearly new first-pilot cohort and duration:
+  two weeks, 8 support reps from Billing + Account Access, review before expansion.
+- This is intended to create an easy-to-understand rollout Review and a visible
+  Project change after approval.
+- The workflow is covered by a deterministic end-to-end API regression test.
 
-LIGHT-MODE PORTFOLIO
-- The main portfolio purple is less saturated in light mode:
-  --purple #51438f
-  --purple2 #6858a6
-- Dark-mode palette is unchanged.
+3. Workspace attention hydrates sooner
+- Needs your attention no longer waits for all startup requests.
+- It updates as soon as OPEN Reviews + OPEN Questions finish.
+- Slow resolved-Review / History / Evidence requests continue hydrating independently.
+- A browser regression test deliberately makes resolved Reviews slow and proves
+  the Workspace attention section finishes first.
 
-CLASSIFICATION
-- Read-only, account-changing, autonomy, refund/ownership, VIP, and similar control-boundary facts are deterministically classified into Safety rather than accidentally falling into Workflow.
+4. Cache identity
+- Prototype assets now use r13-demo-readiness.
+- context-data.js is cache-busted too, so the new sample update cannot be hidden
+  behind a stale browser/CDN copy.
 
-CACHE / BUILD
-- Frontend cache revision: r12-project-wiki
-- Backend build: r12-definitive-project-wiki-2026-09-02
-
-AUTOMATED VERIFICATION
-- Full pytest: 238 passed, 3 skipped, 7 subtests passed.
-- Existing Ask behavior suite: 81 passed, 0 failed.
-- Real Chromium coverage includes the new Project wiki projection with atomic facts collapsed by default.
-- API regression coverage proves the automatic transient analysis retry reuses one Evidence record.
+VERIFICATION
+- Full pytest: 243 passed, 3 skipped, 7 subtests passed.
+- Existing Ask behavior harness: 81 passed, 0 failed.
+- Browser coverage: 8 real Chromium tests, including:
+  * Ask examples fill + focus without submission
+  * Workspace attention does not wait for slow resolved Reviews
 
 DEPLOYMENT
-Vercel / frontend:
-- index.html (root portfolio light-mode purple)
+This is a frontend-only user-visible change.
+Upload to Vercel/GitHub preserving paths:
 - implementation-context-prototype/index.html
 - implementation-context-prototype/context-app.js
-- implementation-context-prototype/context-tool.css
+- implementation-context-prototype/context-data.js
 
-Render / backend:
-- state-project-complete/api.py
+Commit the included test files for regression coverage.
 
-Commit test files too:
-- state-project-complete/test_api.py
-- state-project-complete/test_browser_user_flows.py
-- state-project-complete/test_frontend_integration_contract.py
-
-Both Vercel and Render need updating.
+No Render redeploy is required for the user-visible behavior in this patch.

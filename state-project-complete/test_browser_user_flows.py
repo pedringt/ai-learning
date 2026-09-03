@@ -27,9 +27,10 @@ def _payload(headline: str, summary: str, job: str = "current_fact") -> dict:
     }
 
 
-def _mock_api_script(hydration_ms: int = 120, ask_ms: int = 180) -> str:
+def _mock_api_script(hydration_ms: int = 120, ask_ms: int = 180, resolved_review_ms: int | None = None) -> str:
     first = json.dumps(_payload("Jane Smith", "Jane Smith is the billing contact."))
     second = json.dumps(_payload("From a recent project update", "The billing-contact answer comes from the recent project update.", "why_or_provenance"))
+    resolved_review_ms = hydration_ms if resolved_review_ms is None else resolved_review_ms
     return f"""
       (() => {{
         const sleep=(v,ms)=>new Promise(r=>setTimeout(()=>r(v),ms));
@@ -37,7 +38,7 @@ def _mock_api_script(hydration_ms: int = 120, ask_ms: int = 180) -> str:
         window.STATE_API={{
           getState:()=>sleep({{items:[]}}, {hydration_ms}),
           getEvidence:()=>sleep({{items:[]}}, {hydration_ms}),
-          getReviews:(status)=>sleep({{items:[]}}, {hydration_ms}),
+          getReviews:(status)=>sleep({{items:[]}}, status==='resolved'?{resolved_review_ms}:{hydration_ms}),
           getHistory:()=>sleep({{items:[]}}, {hydration_ms}),
           getQuestions:()=>sleep({{items:[]}}, {hydration_ms}),
           getRules:()=>sleep({{items:[]}}, {hydration_ms}),
@@ -51,14 +52,14 @@ def _mock_api_script(hydration_ms: int = 120, ask_ms: int = 180) -> str:
     """
 
 
-def _launch_page(hydration_ms: int = 120, ask_ms: int = 180):
+def _launch_page(hydration_ms: int = 120, ask_ms: int = 180, resolved_review_ms: int | None = None):
     pw = sync_playwright().start()
     browser = pw.chromium.launch(headless=True, executable_path="/usr/bin/chromium", args=["--no-sandbox"])
     page = browser.new_page(viewport={"width": 1398, "height": 986})
     css = (ROOT / "site-shell.css").read_text() + "\n" + (FRONT / "context-tool.css").read_text()
     page.set_content(f"<!doctype html><html><head><style>{css}</style></head><body>{_body_markup()}</body></html>")
     page.add_script_tag(content=(FRONT / "context-data.js").read_text())
-    page.add_script_tag(content=_mock_api_script(hydration_ms, ask_ms))
+    page.add_script_tag(content=_mock_api_script(hydration_ms, ask_ms, resolved_review_ms))
     page.add_script_tag(content=(FRONT / "context-ask.js").read_text())
     page.add_script_tag(content=(FRONT / "context-app.js").read_text())
     return pw, browser, page
@@ -179,5 +180,29 @@ def test_project_reads_as_wiki_and_keeps_atomic_facts_collapsed_by_default():
         assert page.locator('.project-wiki-prose').count() >= 3
         assert page.locator('.project-maintained-facts[open]').count() == 0
         assert page.locator('.project-wiki-prose p').filter(has_text='The core pilot use case is Tier 1 troubleshooting assistance.').first.is_visible()
+    finally:
+        browser.close(); pw.stop()
+
+
+def test_ask_examples_fill_input_without_auto_submitting():
+    pw, browser, page = _launch_page(hydration_ms=10)
+    try:
+        page.locator('[data-action="show-examples"]').click()
+        page.locator('[data-action="example-fill"]').first.click()
+        box = page.locator('#askInput')
+        assert box.input_value() == "What’s the current plan for the pilot?"
+        assert page.evaluate("document.activeElement && document.activeElement.id") == 'askInput'
+        assert page.locator('.answer-stage.has-result').count() == 0
+        assert page.locator('#overlay').evaluate('e=>e.hidden') is True
+    finally:
+        browser.close(); pw.stop()
+
+
+def test_workspace_attention_does_not_wait_for_slow_resolved_reviews():
+    pw, browser, page = _launch_page(hydration_ms=35, resolved_review_ms=650)
+    try:
+        page.wait_for_timeout(140)
+        assert page.get_by_text('Nothing needs action right now', exact=True).is_visible()
+        assert page.get_by_text('Checking what needs you', exact=True).count() == 0
     finally:
         browser.close(); pw.stop()

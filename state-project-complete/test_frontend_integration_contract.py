@@ -337,7 +337,7 @@ def test_r97_workspace_attention_replaces_late_review_banner_with_stable_action_
     assert "Needs your attention" in app
     assert "Checking what needs you" in app
     assert "uiPendingReviews()" in app
-    assert "openQuestions().filter(q=>q.blocking)" in app
+    assert "state.data.questions.filter(q=>q.status==='open'&&q.backendManaged)" in app
     assert "workspaceAttentionHtml()" in app
     assert "const reviewBanner =" not in app
     assert "${reviewBanner}" not in app
@@ -384,9 +384,10 @@ def test_r10_demo_reset_is_available_from_project_settings():
     assert '@app.post("/api/demo/reset")' in backend
 
 
-def test_r11_frontend_assets_use_current_cache_bust_revision():
+def test_r13_frontend_assets_use_current_cache_bust_revision():
     html = (FRONTEND / "index.html").read_text(encoding="utf-8")
-    assert "?v=r12-project-wiki" in html
+    assert "?v=r13-demo-readiness" in html
+    assert "?v=r12-project-wiki" not in html
     assert "?v=r9.3.1b" not in html
 
 
@@ -416,3 +417,22 @@ def test_r12_project_is_readable_wiki_projection_with_expandable_atomic_facts():
 def test_r12_light_mode_portfolio_purple_is_restrained():
     html = (FRONTEND.parent / "index.html").read_text(encoding="utf-8")
     assert "--purple:#51438f;--purple2:#6858a6" in html
+
+
+def test_r13_examples_are_fill_only_and_sample_update_is_demo_safe():
+    app = (FRONTEND / 'context-app.js').read_text()
+    data = (FRONTEND / 'context-data.js').read_text()
+    index = (FRONTEND / 'index.html').read_text()
+    assert 'data-action="example-fill"' in app
+    assert "Choose an example to put it in Ask. You can edit it before sending." in app
+    assert "state.askInputDraft=q;" in app
+    assert "The first pilot will run for two weeks with 8 support reps" in data
+    assert "Temporary entitlements and grandfathered packages are the two cases" not in data
+    assert 'context-data.js?v=r13-demo-readiness' in index
+
+
+def test_r13_workspace_attention_hydrates_from_open_reviews_and_questions_only():
+    app = (FRONTEND / 'context-app.js').read_text()
+    assert "Promise.allSettled([calls[2],calls[5]])" in app
+    assert "state.workspaceAttentionStatus=(openResult.status==='fulfilled'&&questionResult.status==='fulfilled')?'loaded':'error'" in app
+    assert "const results=await Promise.allSettled(calls);" in app

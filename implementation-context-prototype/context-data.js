@@ -104,5 +104,5 @@ window.PROJECT_CONTEXT_DATA = {
     {id:'pilot-start', family:'answer', topics:['operations','scope'], aliases:['when does the pilot start','pilot start date','when are we starting the pilot','are we ready to implement','are we ready for implementation'], output:'pilot-start'},
     {id:'retrieve-access', family:'retrieve', topics:['feature-access'], aliases:['find notes about plan access','show me what we have on plan access','find feature access notes','notes about feature access','show notes on customer access'], output:'retrieve'}
   ],
-  sampleInformation: 'Senior Support Rep: The plan matrix is where I start, but it does not always reflect what the customer actually has. Temporary entitlements and grandfathered packages are the two cases I see most often.'
+  sampleInformation: 'Pilot lead: The first pilot will run for two weeks with 8 support reps from the Billing and Account Access teams. The team will review results at the end of the two-week period before deciding whether to expand.'
 };

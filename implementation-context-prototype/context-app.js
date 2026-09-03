@@ -6,7 +6,7 @@
   const initial = clone(D);
   const state = {
     data: clone(D), view:'overview', result:null, resultQuery:'', askInputDraft:'', projectMenuOpen:false, refinements:[], lastScenario:null,
-    addedSample:false, pendingCreated:false, reviewBannerDismissed:false, dialogReturnFocus:null, expandedNotes:new Set(), noteComposerOpen:false, editingNoteId:null, dismissedNudges:new Set(), historyTopic:null, historyEvidenceId:null, historySearch:'', notesFilter:'all', notesDateFilter:'all', notesSearch:'', isAnalyzing:false, openQuestionsExpanded:false, expandedReviewId:null, openItemSections:{reviews:false,blockers:false,questions:null}, projectRules:[], backendStatus:{state:'loading',evidence:'loading',reviews:'loading',history:'loading',questions:'loading',rules:'loading',drafts:'loading'}
+    addedSample:false, pendingCreated:false, reviewBannerDismissed:false, dialogReturnFocus:null, expandedNotes:new Set(), noteComposerOpen:false, editingNoteId:null, dismissedNudges:new Set(), historyTopic:null, historyEvidenceId:null, historySearch:'', notesFilter:'all', notesDateFilter:'all', notesSearch:'', isAnalyzing:false, openQuestionsExpanded:false, expandedReviewId:null, openItemSections:{reviews:false,blockers:false,questions:null}, projectRules:[], workspaceAttentionStatus:'loading', backendStatus:{state:'loading',evidence:'loading',reviews:'loading',history:'loading',questions:'loading',rules:'loading',drafts:'loading'}
   };
 
   const root = document.getElementById('viewRoot');
@@ -237,13 +237,14 @@
     return `<div class="ask-live-loading${preview?.grounded?' has-grounded-preview':''}"><span class="ask-loading-mark" aria-hidden="true"></span><div><strong>${esc(label)}</strong><p>${esc(message)}</p></div></div>`;
   }
   function workspaceAttentionHtml(){
-    const reviewsReady=state.backendStatus.reviews==='loaded';
-    const questionsReady=state.backendStatus.questions==='loaded';
-    if(!reviewsReady||!questionsReady){
+    if(API && state.workspaceAttentionStatus==='loading'){
       return `<section class="workspace-attention is-loading" aria-busy="true"><div class="workspace-attention-head"><div><span class="eyebrow">Needs your attention</span><h3>Checking what needs you</h3></div></div><div class="attention-placeholder"><span></span><span></span></div></section>`;
     }
-    const reviews=uiPendingReviews();
-    const blockers=openQuestions().filter(q=>q.blocking);
+    if(API && state.workspaceAttentionStatus==='error'){
+      return `<section class="workspace-attention is-clear"><div class="workspace-attention-head"><div><span class="eyebrow">Needs your attention</span><h3>Attention items could not be loaded</h3><p>Ask still works; try Open Items again in a moment.</p></div><button class="text-button" data-action="retry-hydration">Try again →</button></div></section>`;
+    }
+    const reviews=API?state.data.reviews.filter(r=>r.status==='pending'&&r.backendReviewId):uiPendingReviews();
+    const blockers=(API?state.data.questions.filter(q=>q.status==='open'&&q.backendManaged):openQuestions()).filter(q=>q.blocking);
     const items=[];
     reviews.slice(0,2).forEach(r=>items.push({kind:'review',id:r.id,label:'Review',title:r.summary||r.title,detail:r.whyConsequential||r.proposed||'New evidence may change Current State.'}));
     if(items.length<2) blockers.slice(0,2-items.length).forEach(q=>items.push({kind:'blocker',id:q.id,label:'Blocking question',title:q.text,detail:q.blocks?`Blocks ${q.blocks}`:'A concrete dependency is waiting on this answer.'}));
@@ -272,7 +273,7 @@
     const resultBody = state.result ? (state.result.liveAsk ? (state.result.previousLive?`<div class="ask-previous-answer">${ASK?.render(state.result.previousLive)}</div><div class="ask-followup-answer">${ASK?.render(state.result.liveAsk)}</div>`:ASK?.render(state.result.liveAsk)) : state.result.liveAskStreaming ? `${state.result.previousLive?`<div class="ask-previous-answer">${ASK?.render(state.result.previousLive)}</div><div class="ask-followup-stream">${ASK?.renderStream(state.result.liveAskStreamRaw||'',state.result.liveAskPreview||null)}</div>`:ASK?.renderStream(state.result.liveAskStreamRaw||'',state.result.liveAskPreview||null)}` : state.result.liveAskLoading ? `${state.result.previousLive?`<div class="ask-previous-answer">${ASK?.render(state.result.previousLive)}</div><div class="ask-followup-working">Working on your follow-up…</div>`:liveAskLoadingHtml()}` : state.result.liveAskError ? `${state.result.previousLive?`<div class="ask-previous-answer">${ASK?.render(state.result.previousLive)}</div>`:''}<div class="ask-live-error"><h2>Ask is temporarily unavailable.</h2><p>${esc(state.result.liveAskError)}</p></div>` : state.result.fallback ? fallbackResult() : state.result.intent ? intentAskHtml(state.result.intent) : state.result.structured ? structuredAskHtml(state.result.structured) : scenarioResult(state.result.scenario)) : '';
     root.innerHTML = `<section class="overview pristine">
       <section class="overview-heading"><div class="overview-heading-row"><div><h2>Northstar</h2></div><button class="btn primary overview-add" data-action="add-info">+ Add note</button></div></section>
-      <section class="ask-panel compact-ask unboxed-ask">${state.result?`<div class="ask-session-row"><div><span class="meta-label">Current ask</span><strong>${esc(state.resultQuery)}</strong></div><button class="text-button ask-new-session" data-action="new-ask"><span aria-hidden="true">＋</span> New ask</button></div><div class="answer-stage has-result" aria-live="polite"><div class="answer-content">${resultBody}</div></div>${(state.result.liveAsk||state.result.previousLive)?`<div class="ask-followup"><div class="ask-input-row"><input id="askInput" autocomplete="off" aria-label="Refine or ask a follow-up" placeholder="Refine, ask a follow-up, or turn this into something…" value="${esc(state.askInputDraft||'')}"/><button class="btn primary" data-action="ask-submit" ${state.result.liveAskLoading||state.result.liveAskStreaming?'disabled':''}>${state.result.liveAskLoading||state.result.liveAskStreaming?'Working…':'Ask'}</button></div></div>`:''}`:`<div class="ask-title-row"><div><label for="askInput">Ask what State knows about the project</label><p>Search current understanding, open items, notes, and history.</p></div></div><div class="ask-input-row"><input id="askInput" autocomplete="off" aria-label="Ask about the project or create an update" placeholder="What do you want to know or make?" value="${esc(state.askInputDraft||'')}"/><button class="btn primary" data-action="ask-submit">Ask</button></div><div class="prompt-suggestions single-suggestion"><button class="examples-link" data-action="show-examples">See what you can ask →</button></div><div class="answer-stage is-empty" aria-live="polite"><div class="answer-empty"><span class="answer-empty-icon">⌕</span><strong>Work from what the project currently knows</strong><p>Find a project detail, understand what changed, prepare for a meeting, or create an update.</p><div class="empty-suggestions"><button data-prompt="What changed about feature access?">Understand a change</button><button data-prompt="What is still unresolved?">Find what is unresolved</button><button data-prompt="Prepare me for the security meeting">Prepare for a meeting</button></div></div></div>`}</section>${state.result?'':workspaceAttentionHtml()}</section>`;
+      <section class="ask-panel compact-ask unboxed-ask">${state.result?`<div class="ask-session-row"><div><span class="meta-label">Current ask</span><strong>${esc(state.resultQuery)}</strong></div><button class="text-button ask-new-session" data-action="new-ask"><span aria-hidden="true">＋</span> New ask</button></div><div class="answer-stage has-result" aria-live="polite"><div class="answer-content">${resultBody}</div></div>${(state.result.liveAsk||state.result.previousLive)?`<div class="ask-followup"><div class="ask-input-row"><input id="askInput" autocomplete="off" aria-label="Refine or ask a follow-up" placeholder="Refine, ask a follow-up, or turn this into something…" value="${esc(state.askInputDraft||'')}"/><button class="btn primary" data-action="ask-submit" ${state.result.liveAskLoading||state.result.liveAskStreaming?'disabled':''}>${state.result.liveAskLoading||state.result.liveAskStreaming?'Working…':'Ask'}</button></div></div>`:''}`:`<div class="ask-title-row"><div><label for="askInput">Ask what State knows about the project</label><p>Search current understanding, open items, notes, and history.</p></div></div><div class="ask-input-row"><input id="askInput" autocomplete="off" aria-label="Ask about the project or create an update" placeholder="What do you want to know or make?" value="${esc(state.askInputDraft||'')}"/><button class="btn primary" data-action="ask-submit">Ask</button></div><div class="prompt-suggestions single-suggestion"><button class="examples-link" data-action="show-examples">See what you can ask →</button></div>`}</section>${state.result?'':workspaceAttentionHtml()}</section>`;
   }
 
   function findScenario(query){
@@ -962,8 +963,12 @@
   }
 
   function showExamples(){
-    const groups=[['Find something',['Who is my support rep contact?','What did we decide about pilot access?','Find notes about plan access']],['Understand the project',['What changed this week?','What are we still waiting on?','What percentage can we safely automate?']],['Prepare & summarize',['Prepare for security meeting','Summarize what changed this week','Are we ready for implementation?']],['Create something',['Draft a leadership update','Write a short status update for the support team','Turn the current project state into a Slack update']]];
-    showDialog(`<span class="eyebrow">Workspace examples</span><h2 id="dialogTitle">What can I ask?</h2><p>Try asking about current project knowledge, changes, open questions, meetings, or updates.</p><div class="example-groups static-examples">${groups.map(([g,items])=>`<section><h3>${g}</h3>${items.map(x=>`<div class="example-row static-example">${esc(x)}</div>`).join('')}</section>`).join('')}</div>`);
+    const groups=[
+      ['Understand',['What’s the current plan for the pilot?','What should I know about access and entitlements?']],
+      ['Decide',['What still needs to be decided before launch?','What is blocking the pilot right now?']],
+      ['Prepare',['Prepare me for the security meeting.','What has changed recently?']]
+    ];
+    showDialog(`<span class="eyebrow">Ask examples</span><h2 id="dialogTitle">What can I ask?</h2><p>Choose an example to put it in Ask. You can edit it before sending.</p><div class="example-groups">${groups.map(([g,items])=>`<section><h3>${g}</h3>${items.map(x=>`<button class="example-row" data-action="example-fill" data-prompt="${esc(x)}">${esc(x)}<span aria-hidden="true">→</span></button>`).join('')}</section>`).join('')}</div>`);
   }
 
   function showDialog(html){
@@ -1202,10 +1207,28 @@
 
   async function hydrateBackend(){
     if(!API)return;
+    state.workspaceAttentionStatus='loading';
+    renderWorkspaceAttentionOnly();
     const keys=['state','evidence','open','resolved','history','questions','rules','drafts'];
-    const results=await Promise.allSettled([
+    const calls=[
       API.getState(), API.getEvidence(), API.getReviews('open'), API.getReviews('resolved'), API.getHistory(), API.getQuestions('open'), API.getRules(), API.getDrafts()
-    ]);
+    ];
+    const attentionReady=Promise.allSettled([calls[2],calls[5]]).then(([openResult,questionResult])=>{
+      if(openResult.status==='fulfilled'){
+        const openItems=openResult.value?.items||[];
+        replaceBackendOpenReviews(openItems);
+        for(const raw of openItems){
+          const mapped=mapApiReview(raw,raw.evidence_content||'');
+          mapped.evidenceId=`api-note-${raw.evidence_id}`;
+          upsertBackendReview(mapped);
+        }
+      }
+      if(questionResult.status==='fulfilled') syncApiQuestions(questionResult.value?.items||[]);
+      state.workspaceAttentionStatus=(openResult.status==='fulfilled'&&questionResult.status==='fulfilled')?'loaded':'error';
+      updateNav();
+      renderWorkspaceAttentionOnly();
+    });
+    const results=await Promise.allSettled(calls);
     const byKey=Object.fromEntries(keys.map((key,i)=>[key,results[i]]));
     const payloadOf=result=>result.status==='fulfilled'?result.value:{items:[]};
     state.backendStatus.state=byKey.state.status==='fulfilled'?'loaded':'error';
@@ -1250,6 +1273,7 @@
       }
     }
     for(const [key,result] of Object.entries(byKey)) if(result.status==='rejected') console.warn(`Backend ${key} unavailable:`,result.reason);
+    await attentionReady;
     updateNav();
     // Backend hydration must never replace the Ask DOM while a person is typing.
     // Workspace attention can update independently; other views may rerender normally.
@@ -1392,13 +1416,20 @@
     const reviewFilter=e.target.closest('.review-filters [data-review-filter]'); if(reviewFilter){ state.reviewFilter=reviewFilter.dataset.reviewFilter; renderReview(); return; }
     const sectionToggle=e.target.closest('[data-action="toggle-open-item-section"]'); if(sectionToggle){ const key=sectionToggle.dataset.section; const reviews=uiPendingReviews(), questions=openQuestions(); const count=key==='reviews'?reviews.length:key==='blockers'?questions.filter(q=>q.blocking).length:questions.filter(q=>!q.blocking).length; const current=state.openItemSections[key]===null?(key==='questions'&&count>5):!!state.openItemSections[key]; state.openItemSections[key]=!current; renderOpenItems(); return; }
     const reviewToggle=e.target.closest('[data-action="toggle-review-card"]'); if(reviewToggle){ const id=reviewToggle.dataset.reviewId; state.expandedReviewId=state.expandedReviewId===id?null:id; renderOpenItems(); return; }
-    const p=e.target.closest('[data-prompt]'); if(p){ submitAsk(p.dataset.prompt); return; }
+    const p=e.target.closest('[data-prompt]:not([data-action="example-fill"])'); if(p){ submitAsk(p.dataset.prompt); return; }
     const a=e.target.closest('[data-action]'); if(!a)return;
     const act=a.dataset.action;
     if(act==='ask-submit')submitAsk();
     else if(act==='open-specific-review'){closeDialog();state.expandedReviewId=a.dataset.reviewId;state.openItemSections.reviews=false;navigateTo('open-items');}
     else if(act==='toggle-open-questions'){state.openQuestionsExpanded=!state.openQuestionsExpanded;renderOpenItems();}
     else if(act==='show-examples')showExamples();
+    else if(act==='example-fill'){
+      const q=a.dataset.prompt||'';
+      state.askInputDraft=q;
+      closeDialog();
+      const input=document.getElementById('askInput');
+      if(input){input.value=q;input.focus();input.setSelectionRange(input.value.length,input.value.length);requestAnimationFrame(()=>{input.focus();input.setSelectionRange(input.value.length,input.value.length);});}
+    }
     else if(act==='show-demo-help')showDemoHelp();
     else if(act==='project-settings')showProjectSettings();
     else if(act==='save-project-rule'){const text=document.getElementById('projectRuleText')?.value.trim();const category=document.getElementById('projectRuleCategory')?.value||'Interpretation';if(text){try{const rule=await API.createRule(text,category);if(!state.projectRules.some(x=>x.id===rule.id))state.projectRules.push(rule);showProjectSettings();}catch(err){showDialog(`<span class="eyebrow">Couldn’t save rule</span><h2 id="dialogTitle">Rule was not added.</h2><p>${esc(err.message)}</p>`);}}}
