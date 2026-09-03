@@ -161,16 +161,20 @@
     root.innerHTML=`<article class="page project-page project-document"><header class="project-document-head" id="project-top"><div class="project-head-row"><div><span class="eyebrow">Current project</span><h2>${esc(state.data.project.name)}</h2></div><button class="btn secondary project-settings-button" data-action="project-settings">Project settings</button></div><p class="project-document-summary">Reviewed project understanding, organized around the facts currently treated as true.</p><dl class="project-document-meta"><div><dt>Stage</dt><dd>${esc(orientation.stage)}</dd></div><div><dt>Outcome</dt><dd>${esc(orientation.outcome)}</dd></div><div><dt>Current State</dt><dd>${orientation.count} Current State items</dd></div></dl></header><div class="project-document-intro"><strong>Current direction</strong><p>${esc(orientation.direction)}</p></div><div class="project-outline">${visible.map(([id,a])=>projectOutlineSection(id,a)).join('')||'<div class="empty-state"><h3>No Current State yet.</h3><p>Reviewed project understanding will appear here as a clean outline.</p></div>'}</div></article>`;    requestAnimationFrame(()=>updateProjectSubnavActive());
   }
   let askStreamPaintQueued=false;
+  let askStreamLastPaint=0;
   function paintStreamingAsk(){
     if(askStreamPaintQueued) return;
     askStreamPaintQueued=true;
-    requestAnimationFrame(()=>{
+    const paint=timestamp=>{
+      if(timestamp-askStreamLastPaint<64){ requestAnimationFrame(paint); return; }
       askStreamPaintQueued=false;
+      askStreamLastPaint=timestamp;
       if(!state.result?.liveAskStreaming) return;
       const target=root.querySelector('.answer-content');
       if(target && ASK?.renderStream) target.innerHTML=ASK.renderStream(state.result.liveAskStreamRaw||'',state.result.liveAskPreview||null);
       else renderOverview();
-    });
+    };
+    requestAnimationFrame(paint);
   }
 
   function liveAskLoadingHtml(){
@@ -199,10 +203,10 @@
     return `<section class="workspace-attention"><div class="workspace-attention-head"><div><span class="eyebrow">Needs your attention</span><h3>${total===1?'1 item is waiting on you':`${total} items are waiting on you`}</h3></div><button class="text-button" data-view="open-items">Open Items →</button></div><div class="attention-list">${rows}</div>${more?`<button class="attention-more" data-view="open-items">${more} more in Open Items →</button>`:''}</section>`;
   }
   function renderOverview(){
-    const resultBody = state.result ? (state.result.liveAsk ? ASK?.render(state.result.liveAsk) : state.result.liveAskStreaming ? ASK?.renderStream(state.result.liveAskStreamRaw||'',state.result.liveAskPreview||null) : state.result.liveAskLoading ? liveAskLoadingHtml() : state.result.liveAskError ? `<div class="ask-live-error"><h2>Ask is temporarily unavailable.</h2><p>${esc(state.result.liveAskError)}</p></div>` : state.result.fallback ? fallbackResult() : state.result.intent ? intentAskHtml(state.result.intent) : state.result.structured ? structuredAskHtml(state.result.structured) : scenarioResult(state.result.scenario)) : '';
+    const resultBody = state.result ? (state.result.liveAsk ? ASK?.render(state.result.liveAsk) : state.result.liveAskStreaming ? `${state.result.previousLive?`<div class="ask-previous-answer">${ASK?.render(state.result.previousLive)}</div>`:''}${ASK?.renderStream(state.result.liveAskStreamRaw||'',state.result.liveAskPreview||null)}` : state.result.liveAskLoading ? `${state.result.previousLive?`<div class="ask-previous-answer">${ASK?.render(state.result.previousLive)}</div>`:''}${liveAskLoadingHtml()}` : state.result.liveAskError ? `${state.result.previousLive?`<div class="ask-previous-answer">${ASK?.render(state.result.previousLive)}</div>`:''}<div class="ask-live-error"><h2>Ask is temporarily unavailable.</h2><p>${esc(state.result.liveAskError)}</p></div>` : state.result.fallback ? fallbackResult() : state.result.intent ? intentAskHtml(state.result.intent) : state.result.structured ? structuredAskHtml(state.result.structured) : scenarioResult(state.result.scenario)) : '';
     root.innerHTML = `<section class="overview pristine">
       <section class="overview-heading"><div class="overview-heading-row"><div><h2>Northstar</h2></div><button class="btn primary overview-add" data-action="add-info">+ Add note</button></div></section>
-      <section class="ask-panel compact-ask unboxed-ask">${state.result?`<div class="ask-session-row"><div><span class="meta-label">Current ask</span><strong>${esc(state.resultQuery)}</strong></div><button class="text-button ask-new-session" data-action="new-ask"><span aria-hidden="true">＋</span> New ask</button></div><div class="answer-stage has-result" aria-live="polite"><div class="answer-content">${resultBody}</div></div>${state.result.liveAsk?`<div class="ask-followup"><div class="ask-input-row"><input id="askInput" autocomplete="off" aria-label="Refine or ask a follow-up" placeholder="Refine, ask a follow-up, or turn this into something…"/><button class="btn primary" data-action="ask-submit">Ask</button></div></div>`:''}`:`<div class="ask-title-row"><div><label for="askInput">Ask what State knows about the project</label><p>Search current understanding, open items, notes, and history.</p></div></div><div class="ask-input-row"><input id="askInput" autocomplete="off" aria-label="Ask about the project or create an update" placeholder="What do you want to know or make?"/><button class="btn primary" data-action="ask-submit">Ask</button></div><div class="prompt-suggestions single-suggestion"><button class="examples-link" data-action="show-examples">See what you can ask →</button></div><div class="answer-stage is-empty" aria-live="polite"><div class="answer-empty"><span class="answer-empty-icon">⌕</span><strong>Work from what the project currently knows</strong><p>Find a project detail, understand what changed, prepare for a meeting, or create an update.</p><div class="empty-suggestions"><button data-prompt="What changed about feature access?">Understand a change</button><button data-prompt="What is still unresolved?">Find what is unresolved</button><button data-prompt="Prepare me for the security meeting">Prepare for a meeting</button></div></div></div>`}</section>${workspaceAttentionHtml()}</section>`;
+      <section class="ask-panel compact-ask unboxed-ask">${state.result?`<div class="ask-session-row"><div><span class="meta-label">Current ask</span><strong>${esc(state.resultQuery)}</strong></div><button class="text-button ask-new-session" data-action="new-ask"><span aria-hidden="true">＋</span> New ask</button></div><div class="answer-stage has-result" aria-live="polite"><div class="answer-content">${resultBody}</div></div>${(state.result.liveAsk||state.result.previousLive)?`<div class="ask-followup"><div class="ask-input-row"><input id="askInput" autocomplete="off" aria-label="Refine or ask a follow-up" placeholder="Refine, ask a follow-up, or turn this into something…" value="${esc(state.result.pendingInput||'')}"/><button class="btn primary" data-action="ask-submit" ${state.result.liveAskLoading||state.result.liveAskStreaming?'disabled':''}>${state.result.liveAskLoading||state.result.liveAskStreaming?'Working…':'Ask'}</button></div></div>`:''}`:`<div class="ask-title-row"><div><label for="askInput">Ask what State knows about the project</label><p>Search current understanding, open items, notes, and history.</p></div></div><div class="ask-input-row"><input id="askInput" autocomplete="off" aria-label="Ask about the project or create an update" placeholder="What do you want to know or make?"/><button class="btn primary" data-action="ask-submit">Ask</button></div><div class="prompt-suggestions single-suggestion"><button class="examples-link" data-action="show-examples">See what you can ask →</button></div><div class="answer-stage is-empty" aria-live="polite"><div class="answer-empty"><span class="answer-empty-icon">⌕</span><strong>Work from what the project currently knows</strong><p>Find a project detail, understand what changed, prepare for a meeting, or create an update.</p><div class="empty-suggestions"><button data-prompt="What changed about feature access?">Understand a change</button><button data-prompt="What is still unresolved?">Find what is unresolved</button><button data-prompt="Prepare me for the security meeting">Prepare for a meeting</button></div></div></div>`}</section>${state.result?'':workspaceAttentionHtml()}</section>`;
   }
 
   function findScenario(query){
@@ -481,7 +485,7 @@
     if(ASK?.canHandle(raw,previousLive)){
       state.resultQuery=raw;
       if(ASK.canStream?.(raw)){
-        state.result={liveAskStreaming:true,liveAskStreamRaw:'',liveAskPreview:null};
+        state.result={liveAskStreaming:true,liveAskStreamRaw:'',liveAskPreview:null,previousLive,pendingInput:''};
         renderOverview();
         try{
           const payload=await ASK.submitStream(raw,previousLive,{
@@ -501,12 +505,12 @@
           state.result={liveAsk:payload};
           state.refinements=[];
         }catch(err){
-          state.result={liveAskError:err?.message||'State could not produce a grounded answer. Please try again.'};
+          state.result={liveAskError:err?.message||'State could not produce a grounded answer. Please try again.',previousLive};
         }
         renderOverview();
         return;
       }
-      state.result={liveAskLoading:true,liveAskPreview:null};
+      state.result={liveAskLoading:true,liveAskPreview:null,previousLive,pendingInput:''};
       renderOverview();
       let completed=false;
       const previewPromise=ASK.preview?.(raw);
@@ -525,7 +529,7 @@
         state.refinements=[];
       }catch(err){
         completed=true;
-        state.result={liveAskError:err?.message||'State could not produce a grounded answer. Please try again.'};
+        state.result={liveAskError:err?.message||'State could not produce a grounded answer. Please try again.',previousLive};
       }
       renderOverview();
       return;
@@ -824,10 +828,12 @@
     state.expandedReviewId=null;
 
     if(r.backendReviewId){
+      const previousStatus=r.status;
+      r.status=decision;
+      render();
       try{
         const apiDecision=decision==='update'?'accept':'keep';
         const result=await API.resolveReview(r.backendReviewId,apiDecision);
-        r.status=decision;
         const note=state.data.notes.find(n=>n.id===r.evidenceId);
         if(note)note.status=decision==='update'?'accepted':'reviewed';
         if(decision==='update'){
@@ -840,6 +846,8 @@
         // Resolution response is authoritative; revalidate deterministically after it has rendered.
         await hydrateBackend();
       }catch(e){
+        r.status=previousStatus;
+        render();
         showDialog(`<span class="eyebrow">Couldn’t complete review</span><h2 id="dialogTitle">Nothing was changed.</h2><p>${esc(e.message)}</p><div class="dialog-actions"><button class="btn primary" data-action="close-dialog">Close</button></div>`);
       }
       return;
@@ -870,13 +878,14 @@
 
   function showDialog(html){
     if(overlay.hidden) state.dialogReturnFocus=document.activeElement instanceof HTMLElement ? document.activeElement : null;
-    dialogBody.innerHTML=html; overlay.hidden=false; document.body.classList.add('modal-open');
+    dialogBody.innerHTML=html; overlay.hidden=false; overlay.scrollTop=0; document.body.classList.add('modal-open');
     const dialog=document.querySelector('.dialog');
+    if(dialog) dialog.scrollTop=0;
     const closeButton=dialog?.querySelector('.dialog-close');
     if(closeButton){ closeButton.disabled=!!state.isAnalyzing; closeButton.hidden=!!state.isAnalyzing; }
     requestAnimationFrame(()=>{
-      const first=dialog?.querySelector('input, textarea, select, button:not(.dialog-close), [href], [tabindex]:not([tabindex="-1"])');
-      (first||dialog)?.focus();
+      const first=dialog?.querySelector('[autofocus], input:not([type="hidden"]), textarea, select');
+      (first||dialog)?.focus({preventScroll:true});
     });
   }
   function closeDialog(){

@@ -4,6 +4,7 @@ from __future__ import annotations
 import json
 import re
 from typing import Any, Mapping
+from copy import deepcopy
 
 from ask_contract import ANSWER_JSON_SCHEMA, ONE_CALL_ASK_JSON_SCHEMA, SELECTOR_JSON_SCHEMA
 
@@ -16,6 +17,25 @@ def _parse_json(text: str) -> Mapping[str, Any]:
         if not match:
             raise
         return json.loads(match.group(1))
+
+
+def _anthropic_schema(schema: Mapping[str, Any]) -> Mapping[str, Any]:
+    """Return a provider-compatible copy without weakening software validation.
+
+    Anthropic structured outputs currently reject JSON Schema array maxItems.
+    State still enforces those bounds when normalizing/validating provider output.
+    """
+    cleaned = deepcopy(schema)
+    def walk(value):
+        if isinstance(value, dict):
+            value.pop("maxItems", None)
+            for child in value.values():
+                walk(child)
+        elif isinstance(value, list):
+            for child in value:
+                walk(child)
+    walk(cleaned)
+    return cleaned
 
 
 class LiveAskProvider:
@@ -51,7 +71,7 @@ class LiveAskProvider:
         with self.provider.client.messages.stream(
             model=self.model_identifier,
             max_tokens=1300,
-            output_config={"format": {"type": "json_schema", "schema": ANSWER_JSON_SCHEMA}},
+            output_config={"format": {"type": "json_schema", "schema": _anthropic_schema(ANSWER_JSON_SCHEMA)}},
             messages=[{"role": "user", "content": prompt}],
         ) as stream:
             for text in stream.text_stream:
@@ -63,7 +83,7 @@ class LiveAskProvider:
             message = self.provider.client.messages.create(
                 model=self.model_identifier,
                 max_tokens=max_tokens,
-                output_config={"format": {"type": "json_schema", "schema": schema}},
+                output_config={"format": {"type": "json_schema", "schema": _anthropic_schema(schema)}},
                 messages=[{"role": "user", "content": prompt}],
             )
             text = next((getattr(block, "text", None) for block in message.content if getattr(block, "text", None)), None)

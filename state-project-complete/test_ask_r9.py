@@ -486,3 +486,20 @@ def test_r96_streaming_endpoint_rejects_non_meeting_job_before_provider(tmp_path
         response = client.post('/api/ask/stream', json={'query':'What changed about pilot scope?'})
         assert response.status_code == 422
         assert provider.prompts == []
+
+
+def test_anthropic_ask_schema_strips_unsupported_max_items_but_contract_keeps_limits():
+    from types import SimpleNamespace
+    from ask_provider import LiveAskProvider
+    from ask_contract import SELECTOR_JSON_SCHEMA
+
+    calls = []
+    class Messages:
+        def create(self, **kwargs):
+            calls.append(kwargs)
+            return SimpleNamespace(content=[SimpleNamespace(text='{"job":"meeting_prep","state_ids":[],"review_ids":[],"blocking_question_ids":[],"question_ids":[],"history_ids":[],"evidence_ids":[]}')])
+    provider = SimpleNamespace(name="anthropic", model_identifier="claude-haiku-4-5", client=SimpleNamespace(messages=Messages()))
+    LiveAskProvider(provider).select("prompt")
+    sent_schema = calls[0]["output_config"]["format"]["schema"]
+    assert "maxItems" not in str(sent_schema)
+    assert SELECTOR_JSON_SCHEMA["properties"]["state_ids"]["maxItems"] == 12
