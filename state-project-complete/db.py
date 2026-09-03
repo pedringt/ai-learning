@@ -300,9 +300,18 @@ def connect_postgres(database_url: str) -> Connection:
 def connect(database_url: str | None = None) -> Connection:
     """Connect to database (auto-detect SQLite vs Postgres from URL)."""
     if database_url is None or database_url.startswith("sqlite://") or database_url == ":memory:":
-        # SQLite
-        path = database_url.replace("sqlite://", "") if database_url else ":memory:"
+        # SQLite. Normalize the standard in-memory URL explicitly; a naive
+        # prefix strip turns sqlite:///:memory: into /:memory: (a real file).
+        if database_url in (None, ":memory:", "sqlite:///:memory:", "sqlite://:memory:"):
+            path = ":memory:"
+        else:
+            path = database_url.replace("sqlite://", "", 1)
         return connect_sqlite(path)
     else:
         # Assume Postgres
         return connect_postgres(database_url)
+
+
+def get_connection(database_url: str | None = None) -> Connection:
+    """Backward-compatible alias for tests and older integration code."""
+    return connect(database_url)

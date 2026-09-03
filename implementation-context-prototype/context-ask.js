@@ -11,6 +11,12 @@
     const q=norm(query);
     return /\b(shorter|shorten|brief|agenda|15 minutes|minutes|leadership|slack|talking points|focus|format|turn this|make it)\b/.test(q);
   }
+  function followupMode(query, previousPayload){
+    if(!previousPayload) return 'new';
+    const q=norm(query);
+    if(/\b(shorter|shorten|concise|briefer|make this|make it|turn this|turn it|format|agenda|bullet|bullets|leadership|more detail|detailed|focus|rewrite|summarize)\b/.test(q)) return 'replace';
+    return 'append';
+  }
   function canHandle(query, previousPayload){
     // All user questions should use the grounded backend when it is available.
     // The older local intent layer is only a no-backend fallback.
@@ -142,8 +148,8 @@
     const remaining=payload.open_items_remaining||{count:0,reviews:0};
     const footer=remaining.count>0?`<aside class="ask-open-items-safety"><strong>Before you move on</strong><p>${remaining.reviews?`${remaining.reviews} ${remaining.reviews===1?'Review':'Reviews'} and `:''}${Math.max(0,remaining.count-remaining.reviews)} other open ${Math.max(0,remaining.count-remaining.reviews)===1?'item':'items'} still need attention.</p><button class="text-button" data-view="open-items">Review open items →</button></aside>`:'';
     const notes=a.job==='meeting_prep'?meetingNotesScaffold():'';
-    return `<div class="ask-live-answer"><div class="ask-answer-head"><div class="result-label">${esc(a.job==='meeting_prep'?'Meeting prep':'State Ask')}</div><button class="btn secondary ask-copy-answer" data-action="copy-result">${esc(copyLabel(a.job))}</button></div><h2>${esc(a.headline)}</h2><p class="result-lede">${esc(a.summary)}</p>${sections}${notes}${refinements?`<div class="ask-refinement-chips">${refinements}</div>`:''}${stateActions(a)}${footer}</div>`;
+    return `<div class="ask-live-answer"><div class="ask-answer-head"><div class="result-label">${esc(a.job==='meeting_prep'?'Meeting prep':'State Ask')}</div><div class="ask-answer-actions"><button class="btn secondary ask-copy-answer" data-action="copy-result">${esc(copyLabel(a.job))}</button><button class="btn secondary ask-new-session" data-action="new-ask">Start new ask</button></div></div><h2>${esc(a.headline)}</h2><p class="result-lede">${esc(a.summary)}</p>${sections}${notes}${refinements?`<div class="ask-refinement-chips">${refinements}</div>`:''}${stateActions(a)}${footer}</div>`;
   }
 
-  window.STATE_ASK = Object.freeze({canHandle, canStream, preview, submitStream, submit, renderStream, render, portableText, copyLabel});
+  window.STATE_ASK = Object.freeze({canHandle, canStream, followupMode, preview, submitStream, submit, renderStream, render, portableText, copyLabel});
 })();

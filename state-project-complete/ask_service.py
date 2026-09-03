@@ -86,6 +86,50 @@ def _trim_candidates_for_query(query: str, candidates: Mapping[str, list[dict]])
         "rules": list(candidates["rules"]),
     }
 
+
+_TRANSFORM_RE = re.compile(r"\b(shorter|shorten|concise|brief(er)?|make (?:this|it)|turn (?:this|it)|format|agenda|bullets?|leadership(?:-ready)?|more detail(?:ed)?|focus(?: only)?|rewrite|summari[sz]e)\b", re.I)
+_FOLLOWUP_RE = re.compile(r"\b(source|support(?:s|ed)?|why|how do we know|where did|what about|which|clarif|explain|that|this|it|those|these)\b", re.I)
+
+def _followup_mode(query: str, previous_answer: Mapping[str, Any] | None) -> str:
+    """Deterministically decide whether a continuation replaces or appends."""
+    if not previous_answer:
+        return "new"
+    q = query.strip().lower()
+    if _TRANSFORM_RE.search(q):
+        return "replace"
+    return "append"
+
+def _previous_answer_search_text(previous_answer: Mapping[str, Any] | None) -> str:
+    if not previous_answer:
+        return ""
+    bits: list[str] = []
+    for key in ("headline", "summary"):
+        value = previous_answer.get(key)
+        if value:
+            bits.append(str(value))
+    for section in previous_answer.get("sections", []) or []:
+        if isinstance(section, Mapping):
+            if section.get("title"):
+                bits.append(str(section["title"]))
+            for item in section.get("items", []) or []:
+                if isinstance(item, Mapping):
+                    if item.get("text"):
+                        bits.append(str(item["text"]))
+                    if item.get("detail"):
+                        bits.append(str(item["detail"]))
+    return " ".join(bits)[:12000]
+
+def _retrieval_query(query: str, previous_answer: Mapping[str, Any] | None) -> str:
+    """Carry prior subject matter into dependent follow-ups/refinements."""
+    if not previous_answer:
+        return query
+    prior = _previous_answer_search_text(previous_answer)
+    if not prior:
+        return query
+    # The continuation field is intentionally session-scoped. Retrieval must use
+    # both the user's new instruction and the subject matter already established.
+    return f"{query} {prior}"
+
 def _one_call_prompt(query: str, candidates: Mapping[str, Any], previous_answer: Mapping[str, Any] | None) -> str:
     previous = json.dumps(previous_answer, ensure_ascii=False)[:12000] if previous_answer else "null"
     
@@ -413,6 +457,8 @@ def _finalize_ask_result(
     context_ms: int,
     provider_ms: int,
     total_started: float,
+    query: str,
+    previous_answer: Mapping[str, Any] | None,
 ) -> dict[str, Any]:
     validation_started = time.perf_counter()
     selection = _validate_selection(AskSelection.model_validate(selection_raw), candidates)
@@ -429,6 +475,7 @@ def _finalize_ask_result(
         "answer": answer.model_dump(),
         "selection": selection.model_dump(),
         "open_items_remaining": {"count": remaining, "reviews": remaining_reviews},
+        "followup_mode": _followup_mode(query, previous_answer),
         "timing": {
             "pipeline": pipeline,
             "context_ms": context_ms,
@@ -448,7 +495,7 @@ def stream_ask_events(
     """Yield grounded-context status, real provider deltas, then a validated final Ask payload."""
     total_started = time.perf_counter()
     context_started = time.perf_counter()
-    candidates = _trim_candidates_for_query(query, _compact_candidates(connection))
+    candidates = _trim_candidates_for_query(_retrieval_query(query, previous_answer), _compact_candidates(connection))
     context_ms = round((time.perf_counter() - context_started) * 1000)
     yield "preview", {
         "counts": {
@@ -477,6 +524,7 @@ def stream_ask_events(
     result = _finalize_ask_result(
         candidates, selection_raw, answer_raw, pipeline="one_call_stream",
         context_ms=context_ms, provider_ms=provider_ms, total_started=total_started,
+        query=query, previous_answer=previous_answer,
     )
     yield "final", result
 
@@ -484,11 +532,25 @@ def stream_ask_events(
 def run_ask(connection: Any, provider: AskProvider, query: str, previous_answer: Mapping[str, Any] | None = None) -> dict[str, Any]:
     total_started = time.perf_counter()
     context_started = time.perf_counter()
-    candidates = _trim_candidates_for_query(query, _compact_candidates(connection))
+    candidates = _trim_candidates_for_query(_retrieval_query(query, previous_answer), _compact_candidates(connection))
     context_ms = round((time.perf_counter() - context_started) * 1000)
 
     provider_started = time.perf_counter()
-    if hasattr(provider, "run"):
+    if hasattr(provider, "synthesize_selected") and not hasattr(provider, "run"):
+        # Deterministic compatibility path for direct-fact providers. Relevance is
+        # selected by application code; the model/provider only phrases the answer.
+        evidence_ids = [candidates["evidence"][0]["id"]] if candidates["evidence"] else []
+        linked_reviews = [r["id"] for r in candidates["reviews"] if set(r.get("evidence_ids", [])) & set(evidence_ids)]
+        selection = AskSelection(
+            job="current_fact", state_ids=[], review_ids=linked_reviews,
+            blocking_question_ids=[], question_ids=[], history_ids=[], evidence_ids=evidence_ids,
+        )
+        selection_raw = selection.model_dump()
+        selected = _selected_context(selection, candidates)
+        answer_raw = provider.synthesize_selected(_synthesis_prompt(query, selection, selected, previous_answer))
+        provider_ms = round((time.perf_counter() - provider_started) * 1000)
+        pipeline = "deterministic_fact_one_call"
+    elif hasattr(provider, "run"):
         combined = provider.run(_one_call_prompt(query, candidates, previous_answer))
         provider_ms = round((time.perf_counter() - provider_started) * 1000)
         selection_raw = combined.get("selection")
@@ -506,4 +568,5 @@ def run_ask(connection: Any, provider: AskProvider, query: str, previous_answer:
     return _finalize_ask_result(
         candidates, selection_raw, answer_raw, pipeline=pipeline,
         context_ms=context_ms, provider_ms=provider_ms, total_started=total_started,
+        query=query, previous_answer=previous_answer,
     )

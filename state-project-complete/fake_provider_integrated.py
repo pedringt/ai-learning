@@ -67,3 +67,35 @@ GOLDEN_OUTPUTS = {
         }],
     },
 }
+
+
+class FakeProviderIntegrated:
+    """Compatibility provider for lifecycle tests using the current schema."""
+    name = "fake-integrated"
+    model_identifier = "state-question-lifecycle-v2"
+
+    def interpret(self, *, context, evidence, connection=None):
+        question = evidence.get("response_to_question") or {}
+        question_id = question.get("question_id")
+        content = str(evidence.get("content") or "").strip()
+        rec = {
+            "review_action": "create",
+            "review_type": "missing_understanding",
+            "decision_question": "Should this reviewed evidence be added to maintained project understanding?",
+            "why_consequential": "The submitted evidence may establish project understanding that should be human-reviewed.",
+            "affected_state_item_ids": [],
+            "proposed_changes": [{
+                "operation": "create",
+                "state_item_id": None,
+                "proposed_statement": content or "Reviewed project information.",
+                "rationale": "The submitted evidence states this directly.",
+            }],
+        }
+        if question_id:
+            rec["resolves_question_ids"] = [question_id]
+        return {
+            "summary": "The evidence may establish maintained project understanding.",
+            "topics": ["question-response"],
+            "outcome": "review_recommended",
+            "review_recommendations": [rec],
+        }

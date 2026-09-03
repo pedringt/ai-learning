@@ -285,7 +285,7 @@ def create_app(settings: Settings | None = None, provider: InterpretationProvide
             raise HTTPException(status_code=404, detail="Demo reset is unavailable")
         with get_connection() as connection:
             counts = reset_demo_data(connection)
-            return {"status": "reset", "counts": counts}
+            return {"status": "reset", "counts": counts, "seeded": counts}
 
     @app.get("/api/drafts")
     def get_drafts() -> dict:

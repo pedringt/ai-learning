@@ -188,6 +188,11 @@ def resolve_review(connection: Connection, review_id: str, decision: Decision, n
         raise
 
 
+
+def accept_review(connection: Connection, review_id: str, note: str | None = None) -> None:
+    """Backward-compatible helper for older tests/integrations."""
+    resolve_review(connection, review_id, "accept", note)
+
 def _apply_proposal(connection: Connection, proposal: dict) -> None:
     operation = proposal["operation"] or "update"
     if operation == "create":

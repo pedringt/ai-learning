@@ -418,7 +418,6 @@ def _persist_failure(
 
 def process_evidence(
     connection: Connection,
-    *,
     evidence_id: str,
     provider: InterpretationProvider,
 ) -> ProcessResult:
@@ -432,6 +431,11 @@ def process_evidence(
 
     All-or-nothing semantics: one invalid Review/Proposal rejects entire interpretation.
     """
+    # Evidence is immutable input and must exist as a committed record before
+    # interpretation starts its own atomic persistence transaction. This also
+    # keeps direct/test callers consistent with the API submission path.
+    if not getattr(connection, "is_postgres", False) and getattr(connection, "in_transaction", False):
+        connection.commit()
     evidence = connection.execute(
         "SELECT id, content, source_type FROM evidence WHERE id=?",
         (evidence_id,),

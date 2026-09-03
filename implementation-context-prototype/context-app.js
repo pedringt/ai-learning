@@ -279,7 +279,7 @@
     const resultBody = state.result ? (state.result.liveAsk ? (state.result.previousLive?`<div class="ask-previous-answer">${ASK?.render(state.result.previousLive)}</div><div class="ask-followup-answer">${ASK?.render(state.result.liveAsk)}</div>`:ASK?.render(state.result.liveAsk)) : state.result.liveAskStreaming ? `${state.result.previousLive?`<div class="ask-previous-answer">${ASK?.render(state.result.previousLive)}</div><div class="ask-followup-stream">${ASK?.renderStream(state.result.liveAskStreamRaw||'',state.result.liveAskPreview||null)}</div>`:ASK?.renderStream(state.result.liveAskStreamRaw||'',state.result.liveAskPreview||null)}` : state.result.liveAskLoading ? `${state.result.previousLive?`<div class="ask-previous-answer">${ASK?.render(state.result.previousLive)}</div><div class="ask-followup-working">Working on your follow-up…</div>`:liveAskLoadingHtml()}` : state.result.liveAskError ? `${state.result.previousLive?`<div class="ask-previous-answer">${ASK?.render(state.result.previousLive)}</div>`:''}<div class="ask-live-error"><h2>Ask is temporarily unavailable.</h2><p>${esc(state.result.liveAskError)}</p></div>` : state.result.fallback ? fallbackResult() : state.result.intent ? intentAskHtml(state.result.intent) : state.result.structured ? structuredAskHtml(state.result.structured) : scenarioResult(state.result.scenario)) : '';
     root.innerHTML = `<section class="overview pristine">
       <section class="overview-heading"><div class="overview-heading-row"><div><h2>Northstar</h2></div><button class="btn primary overview-add" data-action="add-info">+ Add note</button></div></section>
-      <section class="ask-panel compact-ask unboxed-ask">${state.result?`<div class="ask-session-row"><div><span class="meta-label">Current ask</span><strong>${esc(state.resultQuery)}</strong></div><button class="text-button ask-new-session" data-action="new-ask"><span aria-hidden="true">＋</span> New ask</button></div><div class="answer-stage has-result" aria-live="polite"><div class="answer-content">${resultBody}</div></div>${(state.result.liveAsk||state.result.previousLive)?`<div class="ask-followup"><div class="ask-input-row"><input id="askInput" autocomplete="off" aria-label="Refine or ask a follow-up" placeholder="Refine, ask a follow-up, or turn this into something…" value="${esc(state.askInputDraft||'')}"/><button class="btn primary" data-action="ask-submit" ${state.result.liveAskLoading||state.result.liveAskStreaming?'disabled':''}>${state.result.liveAskLoading||state.result.liveAskStreaming?'Working…':'Ask'}</button></div></div>`:''}`:`<div class="ask-title-row"><div><label for="askInput">Ask what State knows about the project</label><p>Search current understanding, open items, notes, and history.</p></div></div><div class="ask-input-row"><input id="askInput" autocomplete="off" aria-label="Ask about the project or create an update" placeholder="What do you want to know or make?" value="${esc(state.askInputDraft||'')}"/><button class="btn primary" data-action="ask-submit">Ask</button></div><div class="prompt-suggestions single-suggestion"><button class="examples-link" data-action="show-examples">See what you can ask →</button></div>`}</section>${state.result?'':workspaceAttentionHtml()}</section>`;
+      <section class="ask-panel compact-ask unboxed-ask">${state.result?`<div class="ask-session-row"><div><span class="meta-label">Current ask</span><strong>${esc(state.resultQuery)}</strong></div></div><div class="answer-stage has-result" aria-live="polite"><div class="answer-content">${resultBody}</div></div>${(state.result.liveAsk||state.result.previousLive)?`<div class="ask-followup"><div class="ask-input-row"><input id="askInput" autocomplete="off" aria-label="Refine or ask a follow-up" placeholder="Refine, ask a follow-up, or turn this into something…" value="${esc(state.askInputDraft||'')}"/><button class="btn primary" data-action="ask-submit" ${state.result.liveAskLoading||state.result.liveAskStreaming?'disabled':''}>${state.result.liveAskLoading||state.result.liveAskStreaming?'Working…':'Ask'}</button></div></div>`:''}`:`<div class="ask-title-row"><div><label for="askInput">Ask what State knows about the project</label><p>Search current understanding, open items, notes, and history.</p></div></div><div class="ask-input-row"><input id="askInput" autocomplete="off" aria-label="Ask about the project or create an update" placeholder="What do you want to know or make?" value="${esc(state.askInputDraft||'')}"/><button class="btn primary" data-action="ask-submit">Ask</button></div><div class="prompt-suggestions single-suggestion"><button class="examples-link" data-action="show-examples">See what you can ask →</button></div>`}</section>${state.result?'':workspaceAttentionHtml()}</section>`;
   }
 
   function findScenario(query){
@@ -556,10 +556,12 @@
       showAddDialog(raw); return;
     }
     const previousLive=state.result?.liveAsk||null;
+    const followupMode=ASK?.followupMode?.(raw,previousLive)||'new';
+    const visiblePrevious=followupMode==='append'?previousLive:null;
     if(ASK?.canHandle(raw,previousLive)){
       state.resultQuery=raw;
       if(ASK.canStream?.(raw)){
-        state.result={liveAskStreaming:true,liveAskStreamRaw:'',liveAskPreview:null,previousLive,pendingInput:''};
+        state.result={liveAskStreaming:true,liveAskStreamRaw:'',liveAskPreview:null,previousLive:visiblePrevious,pendingInput:''};
         renderOverview();
         try{
           const payload=await ASK.submitStream(raw,previousLive,{
@@ -577,7 +579,7 @@
             },
           });
           const answerTop=root.querySelector('.answer-content')?.getBoundingClientRect().top ?? null;
-          state.result={liveAsk:payload,previousLive};
+          state.result={liveAsk:payload,previousLive:(payload?.followup_mode||followupMode)==='append'?previousLive:null};
           state.refinements=[];
           renderOverview();
           if(answerTop!==null){
@@ -599,7 +601,7 @@
             try{
               const payload=await ASK.submit(raw,previousLive);
               const answerTop=root.querySelector('.answer-content')?.getBoundingClientRect().top ?? null;
-              state.result={liveAsk:payload,previousLive};
+              state.result={liveAsk:payload,previousLive:(payload?.followup_mode||followupMode)==='append'?previousLive:null};
               state.refinements=[];
               renderOverview();
               if(answerTop!==null){
@@ -613,12 +615,12 @@
               err=fallbackErr;
             }
           }
-          state.result={liveAskError:err?.message||'State could not produce a grounded answer. Please try again.',previousLive};
+          state.result={liveAskError:err?.message||'State could not produce a grounded answer. Please try again.',previousLive:visiblePrevious};
         }
         renderOverview();
         return;
       }
-      state.result={liveAskLoading:true,liveAskPreview:null,previousLive,pendingInput:''};
+      state.result={liveAskLoading:true,liveAskPreview:null,previousLive:visiblePrevious,pendingInput:''};
       renderOverview();
       let completed=false;
       const previewPromise=ASK.preview?.(raw);
@@ -633,11 +635,11 @@
       try{
         const payload=await ASK.submit(raw,previousLive);
         completed=true;
-        state.result={liveAsk:payload,previousLive};
+        state.result={liveAsk:payload,previousLive:(payload?.followup_mode||followupMode)==='append'?previousLive:null};
         state.refinements=[];
       }catch(err){
         completed=true;
-        state.result={liveAskError:err?.message||'State could not produce a grounded answer. Please try again.',previousLive};
+        state.result={liveAskError:err?.message||'State could not produce a grounded answer. Please try again.',previousLive:visiblePrevious};
       }
       renderOverview();
       return;
@@ -1000,7 +1002,7 @@
 
 
   function showDemoHelp(){
-    showDialog(`<span class="eyebrow">How this demo works</span><h2 id="dialogTitle">State keeps the project’s working understanding current.</h2><p>Add project information as Notes. State preserves the original evidence, identifies anything that could change maintained understanding, and sends consequential changes to Review. Accept a change and you can see the updated understanding in Project and its transition in History.</p><div class="demo-start"><span class="meta-label">Good places to start</span><button class="demo-start-action" data-action="demo-start-ask"><strong>Ask about Northstar</strong><span>Put a useful project question in Ask →</span></button><button class="demo-start-action" data-action="demo-start-note"><strong>Add a sample note</strong><span>Try new project information and see how Review handles it →</span></button><button class="demo-start-action" data-action="demo-start-project"><strong>Explore the maintained Project</strong><span>Read the definitive view of what the team currently treats as true →</span></button></div><div class="demo-reset-help"><div><strong>Want to start over?</strong><span>Restore the curated Northstar starting scenario.</span></div><button class="text-button demo-reset-link" data-action="confirm-demo-reset">Reset demo data →</button></div><div class="dialog-actions demo-help-actions"><button class="btn primary" data-action="close-dialog">Got it</button></div>`);
+    showDialog(`<span class="eyebrow">How this demo works</span><h2 id="dialogTitle">State keeps the project’s working understanding current.</h2><p>Add project information as Notes. State preserves the original evidence, identifies anything that could change maintained understanding, and sends consequential changes to Review. Accept a change and you can see the updated understanding in Project and its transition in History.</p><div class="demo-start"><span class="meta-label">Good places to start</span><button class="demo-start-action" data-action="demo-start-ask"><strong>Ask about Northstar</strong><span>Put a useful project question in Ask →</span></button><button class="demo-start-action" data-action="demo-start-note"><strong>Add a sample note</strong><span>Try new project information and see how Review handles it →</span></button><button class="demo-start-action" data-action="demo-start-project"><strong>Explore the maintained Project</strong><span>Read the definitive view of what the team currently treats as true →</span></button></div><div class="demo-reset-help"><div><strong>Want to start over?</strong><span>Restore the curated Northstar starting scenario. You can also reset Northstar from Project Settings.</span></div><button class="text-button demo-reset-link" data-action="confirm-demo-reset">Reset demo data →</button></div><div class="dialog-actions demo-help-actions"><button class="btn primary" data-action="close-dialog">Got it</button></div>`);
   }
 
   function showExamples(){

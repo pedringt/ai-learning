@@ -721,3 +721,11 @@ body.v88-dark .current-direction-list span{color:#e3dfe8}
   .sidebar-nav::after{content:"→";position:sticky;right:-1px;flex:0 0 24px;align-self:stretch;display:grid;place-items:center;background:linear-gradient(90deg,transparent 0%,#f8f7fa 52%,#f8f7fa 100%);color:var(--accent);font-size:13px;font-weight:850;pointer-events:none}
   body.v88-dark .sidebar-nav::after{background:linear-gradient(90deg,transparent 0%,#14131a 52%,#14131a 100%)}
 }
+
+
+/* R20 Ask refinement + Project reading canvas stabilization */
+.ask-answer-head{align-items:center!important;gap:16px}.ask-answer-actions{display:flex;align-items:center;justify-content:flex-end;gap:8px;flex-wrap:wrap}.ask-answer-actions .ask-new-session{font-size:12px!important;padding:8px 11px!important;border-color:color-mix(in srgb,var(--accent) 28%,var(--line))!important;background:var(--surface)!important;color:var(--accent)!important;white-space:nowrap}.ask-answer-actions .ask-new-session:hover,.ask-answer-actions .ask-new-session:focus-visible{background:var(--accent-soft)!important;border-color:color-mix(in srgb,var(--accent) 46%,var(--line))!important}.ask-session-row{padding:12px 20px!important;min-height:auto!important}.ask-session-row>div{max-width:min(760px,100%)}
+.project-page.project-document{max-width:940px!important}.project-outline{max-width:none!important;width:100%!important;margin-top:18px!important;background:var(--surface)!important;border:1px solid var(--line)!important;border-radius:14px!important;padding:2px 28px 10px!important;box-shadow:0 5px 18px rgba(31,25,56,.025)}.project-wiki-section{max-width:none!important;width:100%!important}.project-wiki-topic-head{max-width:800px!important}.project-wiki-prose{max-width:820px!important}.project-wiki-prose p{max-width:820px!important}.project-outline-description{max-width:820px!important}
+body.v88-dark .project-outline{background:#17151d!important;border-color:var(--line)!important}
+@media(max-width:760px){.ask-answer-head{align-items:flex-start!important}.ask-answer-actions{justify-content:flex-start}.ask-answer-actions .btn{width:auto!important}.project-outline{padding:0 18px 8px!important;border-radius:12px!important}}
+@media(max-width:430px){.ask-answer-actions{width:100%}.ask-answer-actions .btn{flex:1 1 auto!important}.project-outline{padding:0 14px 6px!important}}

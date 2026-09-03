@@ -250,15 +250,15 @@ Compare the Evidence with Current State and open Reviews. Return the semantic in
 - missing_understanding: use for information not represented in Current State. Its proposals must be create operations only. Create proposals have no state_item_id.
 - state_at_risk: use when Evidence makes existing State uncertain without establishing a replacement; normally emit no proposal.
 - Set existing_review_id only when an open Review above is clearly the same pending human decision; use its exact Review ID. Otherwise omit it so software creates a new Review.
-- resolves_question_ids is optional. Include an exact open Question ID only when this Evidence directly establishes an answer and accepting this Review would establish that answer in Current State. A Note may answer a Question indirectly; do not require it to be submitted from the Question UI. Do not link merely related Evidence. When Evidence is explicitly submitted as an answer to a scoped Question (shown in context above), interpret it in the context of that Question's specific ask; merely being submitted from the Question UI does not itself prove the answer is sufficient — only include the Question ID when the Evidence actually establishes a concrete answer.
-- Blocking status is application-owned dependency metadata. Do not infer urgency or create a blocker because details are unspecified.
+- resolves_question_ids: include an exact open Question ID only when this Evidence concretely answers it and accepting the Review would establish that answer. Scoped Question responses should be interpreted against the shown Question, but source UI alone is never sufficient. Notes may answer Questions indirectly.
+- Blocking is application-owned dependency metadata; never infer it from urgency or missing detail.
 - For update/retire, output the exact existing state_item_id. Software supplies expected_version and ensures that target is affected.
 - effective_date is optional. Include only a complete date explicitly established by Evidence, as YYYY-MM-DD. Omit relative, partial, immediate, approval-dependent, or unknown timing.
 - grouping_reason is optional only when one Review genuinely groups multiple affected State items or multiple changes.
 - Never invent State IDs, Review IDs, dates, facts, or certainty.
 - Keep summary, questions, reasons, and rationales concise: one sentence each, usually under 25 words. Use at most 3 topics unless clearly necessary.
-- Preserve epistemic status exactly. “approved” does not mean implemented, enabled, deployed, complete, universally applicable, or safe across every subtype. “planned” does not mean committed; “capable” does not mean enabled.
-- Do not create speculative residue. Missing implementation details are not themselves a reason for another Review. A Review is for a consequential change/risk to maintained State, not merely something that would be useful to know.
+- Preserve epistemic status: approved != implemented/enabled/complete; planned != committed; capable != enabled.
+- Do not create speculative residue. Missing implementation details alone are not a Review; Reviews are for consequential change/risk to maintained State.
 - If Evidence establishes a narrow consequential fact, propose only that narrow fact. Do not widen scope beyond the Evidence.
 - Example: “Password reset tickets were approved for automation.” If that approval is not already Current State, propose the narrow fact “Password reset tickets are approved for automation.” Do not infer implementation, deployment, universal ticket coverage, or removal of human review.
 - If uncertain whether maintained understanding may need human judgment, recommend a Review rather than silently changing State; uncertainty about non-consequential details should remain unmodeled rather than becoming urgent work.
@@ -313,7 +313,7 @@ Compare the Evidence with Current State and open Reviews. Return the semantic in
             lines.append(f"- Question: {question_context['question_text']}")
             if question_context.get("is_blocking"):
                 lines.append(f"- Status: Blocking (depends: {question_context['blocks']})")
-            lines.append("Interpret terse wording in the context of this specific Question. However, merely being submitted from the Question UI does not itself prove it is sufficient to resolve the Question — include the Question ID in resolves_question_ids only when the Evidence actually establishes a concrete answer.")
+            lines.append("Interpret terse wording against this Question. Include its ID in resolves_question_ids only when the Evidence concretely answers it.")
             lines.append("</question_response_context>")
         
         return "\n".join(lines)
