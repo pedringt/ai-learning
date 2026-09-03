@@ -137,7 +137,7 @@ def test_backend_review_choice_acknowledges_and_disappears_before_server_round_t
         page.wait_for_timeout(50)
         assert page.locator('[data-review-card="r-browser"]').count() == 0
         assert page.get_by_text('Updating understanding…', exact=True).count() == 1
-        page.get_by_text('Current understanding updated.', exact=True).wait_for(timeout=2000)
+        page.get_by_text('Here’s what changed.', exact=True).wait_for(timeout=2000)
     finally:
         browser.close(); pw.stop()
 
@@ -152,5 +152,32 @@ def test_modal_geometry_remains_top_safe_at_phone_width():
         assert box and box['y'] >= 10
         assert box['y'] + box['height'] <= 710
         assert page.locator('.dialog-close').is_visible()
+    finally:
+        browser.close(); pw.stop()
+
+def test_project_reads_as_wiki_and_keeps_atomic_facts_collapsed_by_default():
+    pw, browser, page = _launch_page(hydration_ms=10)
+    try:
+        page.wait_for_timeout(40)
+        page.evaluate("""() => {
+          const t=window.STATE_ASK_TEST_API;
+          t.state.data.knowledge=[
+            {id:'k-stage',title:'Project stage',statement:'Late discovery is nearly complete.',state:'current',projectArea:'evaluation',topics:['stage']},
+            {id:'k-outcome',title:'Project outcome',statement:'Reduce repetitive support effort without sacrificing human control.',state:'current',projectArea:'product',topics:['outcome']},
+            {id:'k-pilot',title:'Pilot direction',statement:'The core pilot use case is Tier 1 troubleshooting assistance.',state:'current',projectArea:'product',topics:['pilot']},
+            {id:'k-entry',title:'Workflow fit',statement:'The assistant supports the rep inside the existing troubleshooting workflow.',state:'current',projectArea:'product',topics:['workflow']},
+            {id:'k-security',title:'Human review boundary',statement:'Human review remains required for the pilot.',state:'current',projectArea:'safety',topics:['security']},
+            {id:'k-readonly',title:'Read-only boundary',statement:'The assistant may retrieve information but may not execute account changes.',state:'current',projectArea:'safety',topics:['safety']},
+            {id:'k-eval',title:'Evaluation direction',statement:'The pilot is judged on quality, escalation behavior, and severe failures.',state:'current',projectArea:'evaluation',topics:['evaluation']},
+          ];
+          t.state.backendStatus.state='loaded';
+        }""")
+        page.locator('.sidebar-nav [data-view="project-overview"]').click()
+        assert page.get_by_text('Pilot scope & workflow', exact=True).is_visible()
+        assert page.get_by_text('Human control', exact=True).is_visible()
+        assert page.get_by_text('How success is judged', exact=True).is_visible()
+        assert page.locator('.project-wiki-prose').count() >= 3
+        assert page.locator('.project-maintained-facts[open]').count() == 0
+        assert page.locator('.project-wiki-prose p').filter(has_text='The core pilot use case is Tier 1 troubleshooting assistance.').first.is_visible()
     finally:
         browser.close(); pw.stop()

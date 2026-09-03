@@ -24,7 +24,7 @@ from seed_demo import bootstrap_demo_data, reset_demo_data
 from ask_contract import AskRequest
 from ask_provider import LiveAskProvider
 from ask_service import build_ask_preview, finalize_streaming_meeting_ask, prepare_streaming_meeting_ask, run_ask
-STATE_BUILD_REV = "r11-user-workflow-e2e-2026-09-02"
+STATE_BUILD_REV = "r12-definitive-project-wiki-2026-09-02"
 logger = logging.getLogger("state.api")
 
 from review_service import (
@@ -299,6 +299,16 @@ def create_app(settings: Settings | None = None, provider: InterpretationProvide
             )
             connection.commit()
             result = process_evidence(connection, evidence_id=evidence_id, provider=selected_provider)
+            # A transient provider failure should not immediately bounce a demo user into
+            # a manual Retry flow. Evidence is already immutable and persisted, so one
+            # automatic retry safely reuses the same Evidence record without duplicating it.
+            if result.processing_status == "failed":
+                first_record = connection.execute(
+                    "SELECT error_code FROM interpretation_records WHERE id=?", (result.interpretation_record_id,)
+                ).fetchone()
+                if first_record is not None and first_record["error_code"] == "provider_error":
+                    logger.warning("Evidence analysis provider failure; retrying once evidence_id=%s", evidence_id)
+                    result = process_evidence(connection, evidence_id=evidence_id, provider=selected_provider)
             reviews = list_reviews(connection, "open")
             created_reviews = [item for item in reviews if item["id"] in result.review_ids]
             if result.processing_status == "failed":

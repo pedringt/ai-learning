@@ -237,13 +237,13 @@ class RetryAnalysisApiTests(unittest.TestCase):
             app = create_app(Settings(database_path=db_path, provider="anthropic", cors_origins=[]), provider=provider)
             with TestClient(app) as client:
                 first = client.post("/api/evidence", json={"content": "FYI only."})
-                self.assertEqual(first.status_code, 503)
-                evidence_id = first.json()["detail"]["evidence_id"]
-                retry = client.post(f"/api/evidence/{evidence_id}/reanalyze")
-                self.assertEqual(retry.status_code, 200)
-                self.assertEqual(retry.json()["evidence_id"], evidence_id)
+                self.assertEqual(first.status_code, 201)
+                evidence_id = first.json()["evidence_id"]
+                self.assertEqual(provider.calls, 2)
+                self.assertEqual(first.json()["reviews"], [])
                 evidence_items = client.get("/api/evidence").json()["items"]
                 self.assertEqual(len(evidence_items), 1)
+                self.assertEqual(evidence_items[0]["id"], evidence_id)
 
 class IndirectQuestionResolutionApiTests(unittest.TestCase):
     def test_new_note_can_link_an_open_question_but_only_acceptance_resolves_it(self):

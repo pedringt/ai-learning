@@ -105,7 +105,7 @@ def test_r8_long_project_and_open_items_scaling_contract():
     assert "waiting.slice(0,5)" in app
     assert "toggle-open-questions" in app
     assert "const reviewTopics=new Set(reviews.flatMap(r=>r.topics||[]));" in app
-    assert "projectGroup(item,id)" in app
+    assert "projectWikiTopics" in app and "projectWikiTopic(topic,matched)" in app
     assert "project-section-sticky" in app
     assert ".app-sidebar{position:sticky" in css
 
@@ -192,7 +192,7 @@ def test_r85_integrity_and_polish_contracts():
     assert "Showing <strong>${notes.length}</strong> of ${total} notes" in app
     assert "Search history" in app and "historyResultCount" in app
     assert "Rules apply to future analysis. Existing Reviews are not reinterpreted automatically." in app
-    assert "Current State items" in app
+    assert "Current State facts" in app
     assert "backendStatus" in app and "temporarily unavailable" in app
 
 
@@ -289,11 +289,11 @@ def test_ask_fixed_followup_reserves_answer_clearance_on_desktop_and_mobile():
 def test_project_finishing_pass_avoids_repeating_current_direction_in_header():
     app = (FRONTEND / "context-app.js").read_text(encoding="utf-8")
     css = (FRONTEND / "context-tool.css").read_text(encoding="utf-8")
-    assert 'class="project-document-summary">Reviewed project understanding' in app
+    assert 'class="project-document-summary">The maintained project wiki' in app
     assert '<strong>Current direction</strong>' in app
     assert '${esc(orientation.description)}</p><dl class="project-document-meta">' not in app
-    assert 'grid-template-columns:minmax(0,.9fr) minmax(0,1.35fr) minmax(150px,.75fr)!important' in css
-    assert '.project-outline-actions .project-pending,.project-outline-actions .project-history-link{opacity:.72' in css
+    assert 'grid-template-columns:minmax(0,1.35fr) minmax(0,1.05fr) minmax(145px,.55fr)!important' in css
+    assert 'project-maintained-facts' in app and 'project-wiki-prose' in app
 
 
 def test_r95_ask_progress_preview_runs_in_parallel_without_blocking_final_request():
@@ -386,7 +386,7 @@ def test_r10_demo_reset_is_available_from_project_settings():
 
 def test_r11_frontend_assets_use_current_cache_bust_revision():
     html = (FRONTEND / "index.html").read_text(encoding="utf-8")
-    assert "?v=r11-user-e2e" in html
+    assert "?v=r12-project-wiki" in html
     assert "?v=r9.3.1b" not in html
 
 
@@ -399,3 +399,20 @@ def test_workspace_hydration_does_not_replace_active_ask_input():
     assert "renderWorkspaceAttentionOnly();" in app
     assert "return;" in app
     assert "if(liveAskInput) state.askInputDraft=liveAskInput.value;" in app
+
+
+def test_r12_project_is_readable_wiki_projection_with_expandable_atomic_facts():
+    app = (FRONTEND / "context-app.js").read_text(encoding="utf-8")
+    css = (FRONTEND / "context-tool.css").read_text(encoding="utf-8")
+    assert "Pilot scope & workflow" in app
+    assert "Human control" in app
+    assert "How success is judged" in app
+    assert "Maintained from ${items.length} Current State" in app
+    assert 'class="project-wiki-prose"' in app
+    assert '.project-wiki-prose p' in css
+    assert "Here’s what changed." in app
+    assert 'data-action="review-receipt-project"' in app
+
+def test_r12_light_mode_portfolio_purple_is_restrained():
+    html = (FRONTEND.parent / "index.html").read_text(encoding="utf-8")
+    assert "--purple:#51438f;--purple2:#6858a6" in html
