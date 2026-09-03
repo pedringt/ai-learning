@@ -156,10 +156,11 @@ def _seed_accepted_history(connection) -> int:
     return seeded
 
 
-def bootstrap_demo_data(connection) -> dict[str, int]:
+def bootstrap_demo_data(connection, *, manage_transaction: bool = True) -> dict[str, int]:
     """Insert missing demo records without overwriting anything already present."""
     counts = {"state": 0, "questions": 0, "reviews": 0, "history": 0, "evidence": 0, "rules": 0}
-    connection.execute("BEGIN IMMEDIATE")
+    if manage_transaction:
+        connection.execute("BEGIN IMMEDIATE")
     try:
         for item in ITEMS:
             before = connection.execute("SELECT id FROM current_state_items WHERE id=?", (item[0],)).fetchone()
@@ -207,11 +208,42 @@ def bootstrap_demo_data(connection) -> dict[str, int]:
             connection.execute("INSERT OR IGNORE INTO review_evidence(review_id,evidence_id) VALUES ('demo-review-retention','ask-evidence-vendor-retention')")
             connection.execute("INSERT OR IGNORE INTO review_state_items(review_id,state_item_id) VALUES ('demo-review-retention','k-data')")
             connection.execute("INSERT OR IGNORE INTO review_questions(review_id,question_id) VALUES ('demo-review-retention','q-retention')")
+        if manage_transaction:
+            connection.execute("COMMIT")
+    except Exception:
+        if manage_transaction:
+            connection.execute("ROLLBACK")
+        raise
+    return counts
+
+
+def reset_demo_data(connection) -> dict[str, int]:
+    """Atomically remove session changes and restore the curated Northstar baseline."""
+    connection.execute("BEGIN IMMEDIATE")
+    try:
+        # Delete dependents first so this works with both SQLite and PostgreSQL
+        # regardless of whether a particular foreign key cascades.
+        for table in (
+            "history_transitions",
+            "review_questions",
+            "review_state_items",
+            "review_evidence",
+            "interpretation_records",
+            "proposed_state_changes",
+            "review_issues",
+            "questions",
+            "draft_notes",
+            "evidence",
+            "current_state_items",
+            "project_rules",
+        ):
+            connection.execute(f"DELETE FROM {table}")
+        counts = bootstrap_demo_data(connection, manage_transaction=False)
         connection.execute("COMMIT")
+        return counts
     except Exception:
         connection.execute("ROLLBACK")
         raise
-    return counts
 
 
 def main() -> None:

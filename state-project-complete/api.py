@@ -19,11 +19,11 @@ from database_migration_backed import initialize_db
 from db import connect
 from interpretation_pipeline_integrated import InterpretationProvider, new_id, process_evidence
 from openai_provider import OpenAIProvider
-from seed_demo import bootstrap_demo_data
+from seed_demo import bootstrap_demo_data, reset_demo_data
 from ask_contract import AskRequest
 from ask_provider import LiveAskProvider
 from ask_service import run_ask
-STATE_BUILD_REV = "r9.3.1-hierarchy-portable-ask-2026-09-02"
+STATE_BUILD_REV = "r9.4-release-experience-2026-09-03"
 logger = logging.getLogger("state.api")
 
 from review_service import (
@@ -253,6 +253,29 @@ def create_app(settings: Settings | None = None, provider: InterpretationProvide
     @app.get("/health")
     def health() -> dict:
         return {"status": "ok", "build": STATE_BUILD_REV, "demo_bootstrap": settings.demo_bootstrap}
+
+    @app.get("/api/bootstrap")
+    def get_bootstrap() -> dict:
+        """Load the project workspace in one round trip."""
+        with get_connection() as connection:
+            return {
+                "state": list_state(connection),
+                "evidence": list_evidence(connection),
+                "open_reviews": list_reviews(connection, "open"),
+                "resolved_reviews": list_reviews(connection, "resolved"),
+                "history": list_history(connection),
+                "questions": list_questions(connection, "open"),
+                "rules": list_project_rules(connection),
+                "drafts": list_draft_notes(connection),
+            }
+
+    @app.post("/api/demo/reset")
+    def post_demo_reset() -> dict:
+        if not settings.demo_bootstrap:
+            raise HTTPException(status_code=404, detail="Demo reset is unavailable")
+        with get_connection() as connection:
+            counts = reset_demo_data(connection)
+            return {"status": "reset", "counts": counts}
 
     @app.get("/api/drafts")
     def get_drafts() -> dict:

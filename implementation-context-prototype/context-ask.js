@@ -55,7 +55,7 @@
   }
 
   function meetingNotesScaffold(){
-    return `<section class="ask-meeting-notes"><h3>Meeting notes</h3><div class="meeting-note-block"><strong>Decisions</strong><span>—</span></div><div class="meeting-note-block"><strong>Answers / new information</strong><span>—</span></div><div class="meeting-note-block"><strong>Actions</strong><span>☐</span></div><div class="meeting-note-block"><strong>Follow-ups</strong><span>—</span></div></section>`;
+    return `<section class="ask-meeting-notes"><h3>Meeting notes</h3><div class="meeting-note-block"><strong>Decisions</strong><span>Add notes here</span></div><div class="meeting-note-block"><strong>Answers / new information</strong><span>Add notes here</span></div><div class="meeting-note-block"><strong>Actions</strong><span>☐ Add actions here</span></div><div class="meeting-note-block"><strong>Follow-ups</strong><span>Add notes here</span></div></section>`;
   }
 
   function copyLabel(job){

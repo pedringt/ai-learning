@@ -93,6 +93,20 @@ def test_frontend_api_base_is_runtime_configurable():
     assert "dataset?.apiBase" in API_JS
 
 
+def test_workspace_uses_one_bootstrap_request_with_safe_fallback():
+    assert "getBootstrap: () => request('/api/bootstrap')" in API_JS
+    assert "const payload=await API.getBootstrap()" in JS
+    assert "Workspace bootstrap unavailable; retrying individual resources." in JS
+
+
+def test_open_items_action_count_includes_reviews_and_blockers_only():
+    assert "uiPendingReviews().length+openQuestions().filter(q=>q.blocking).length" in JS
+    assert "const actionTotal=" in JS
+    assert "View all ${total} →" in JS
+    assert "Showing ${items.length} of ${total}" in JS
+    assert "more in Open Items" not in JS
+
+
 def test_provider_failure_retry_reuses_saved_evidence():
     assert "retryEvidenceAnalysis" in JS
     assert "/api/evidence/${encodeURIComponent(evidenceId)}/reanalyze" in API_JS
@@ -105,7 +119,8 @@ def test_r8_long_project_and_open_items_scaling_contract():
     assert "waiting.slice(0,5)" in app
     assert "toggle-open-questions" in app
     assert "const reviewTopics=new Set(reviews.flatMap(r=>r.topics||[]));" in app
-    assert "projectGroup(item,id)" in app
+    assert "projectWikiTopic(topic,items)" in app
+    assert "projectOutlineSection(id,a)" in app
     assert "project-section-sticky" in app
     assert ".app-sidebar{position:sticky" in css
 
@@ -192,7 +207,8 @@ def test_r85_integrity_and_polish_contracts():
     assert "Showing <strong>${notes.length}</strong> of ${total} notes" in app
     assert "Search history" in app and "historyResultCount" in app
     assert "Rules apply to future analysis. Existing Reviews are not reinterpreted automatically." in app
-    assert "Current State items" in app
+    assert "Current State facts" in app
+    assert "project-maintained-facts" in app
     assert "backendStatus" in app and "temporarily unavailable" in app
 
 
@@ -222,10 +238,12 @@ def test_r861_client_hydration_never_recreates_missing_fixture_questions():
     assert "INSERT INTO questions" in seed
 
 
-def test_r861_ask_harness_disables_backend_hydration_instead_of_emitting_fetch_errors():
-    harness = (FRONTEND / "state-ask-behavior-tests.js").read_text(encoding="utf-8")
-    assert "context.window.STATE_API=null" in harness
-    assert "context-api.js'),'utf8'),context" not in harness
+def test_r861_grounded_ask_module_and_release_assets_are_self_contained():
+    ask = (FRONTEND / "context-ask.js").read_text(encoding="utf-8")
+    html = (FRONTEND / "index.html").read_text(encoding="utf-8")
+    assert "window.STATE_ASK" in ask
+    assert "context-ask.js?v=r16-release-hardening" in html
+    assert "context-app.js?v=r16-release-hardening" in html
 
 
 def test_r861_repository_has_one_obvious_deploy_backend():
@@ -265,3 +283,17 @@ def test_dialog_visibility_has_one_source_of_truth():
     assert "is-open" not in app
     assert ".overlay.is-open" not in css
     assert ".overlay[hidden]{display:none!important}" in css
+
+
+def test_r16_release_hardening_removes_control_chars_and_keeps_word_boundary_routing():
+    app = (FRONTEND / "context-app.js").read_text(encoding="utf-8")
+    assert "\x08" not in app
+    assert "\\b(approved|confirmed|decided|agreed|learned|yesterday|today)\\b" in app
+    assert "\\b(changed|change|history|historical|originally" in app
+
+
+def test_r16_mobile_workspace_nav_has_horizontal_overflow_affordance():
+    css = (FRONTEND / "context-tool.css").read_text(encoding="utf-8")
+    assert "R16 release hardening" in css
+    assert '.sidebar-nav::after{content:"→"' in css
+    assert "scrollbar-width:thin" in css

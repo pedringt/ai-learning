@@ -135,12 +135,11 @@ body.v88-dark .card,body.v88-dark .band{box-shadow:none}
 <header class="case-hero">
 <div class="eyebrow">Supporting exercise · simulated support pilot</div>
 <h1>Meridian AI Support Pilot</h1>
-<p class="lead">A simulated 8-week support pilot focused on a practical scoping question: where should AI draft, where should software enforce a hard boundary, and when should the work move to a person? The useful part of the exercise was not the simulation itself; it was seeing which discovery answers changed the design and which early metrics did not survive scrutiny.</p>
+<p class="lead">A simulated 8-week support pilot focused on a practical scoping question: where should AI draft, where should software enforce a hard boundary, and when should the work move to a person? The exercise showed which discovery answers actually changed the design and which early metrics did not survive scrutiny.</p>
 </header>
 
 <div class="card"><span class="tag">How I worked with AI</span>
-<p>I made the scope and boundary calls and decided which simulated findings were strong enough to change the design. Claude generated substantial first-draft material early in the exercise, including simulated stakeholder answers and target numbers, so I treat Meridian as supporting practice rather than evidence equivalent to State. I specified the branching logic and rules in the flow below; Claude rendered the visual.</p>
-<p>The longer exercise also included AI-heavy eval work. I left that material out of this case because it did not give me enough independent ownership to treat it as portfolio evidence. The case stays focused on the discovery, boundaries and metric revisions I can defend.</p>
+<p>I made the scope and boundary calls and decided which simulated findings were strong enough to change the design. Claude generated substantial first-draft material early in the exercise, including simulated stakeholder answers and target numbers. Meridian is a supporting exercise focused on the discovery, boundary, and measurement decisions I can defend. I specified the branching logic and rules in the flow below; Claude rendered the visual.</p>
 </div>
 
 <h2>Agent flow</h2>
@@ -183,7 +182,7 @@ body.v88-dark .card,body.v88-dark .band{box-shadow:none}
 <p class="small">The 5+ exchange threshold isn't arbitrary: a simulated 90-day data pull put average replies per ticket at 2.3, with about 12% of tickets running past 4 exchanges. The escalate-on-request signal was added after simulated rep discovery, since it doesn't require inferring anything.</p>
 
 <h2>Discovery questions that changed the design</h2>
-<p>Out of a longer running log, these are the ones that most directly reshaped the pilot. Each includes the resolution, not just the open question.</p>
+<p>These questions most directly reshaped the pilot. I included the resolution for each one, not only the original question.</p>
 
 <div class="qcard"><b class="qnum">System data capability</b>Does the help desk tool actually distinguish a quick first-touch acknowledgment from a full ticket resolution, or is there a status field we could repurpose for this?
 <div class="resolution"><b>Resolution:</b> the field exists but is inconsistently used, so instead of requiring reps to remember it, I used two hard system timestamps every ticket already has (first-reply-sent, resolved/closed) with no new tracking system or change in how reps work needed.</div></div>
@@ -217,7 +216,7 @@ body.v88-dark .card,body.v88-dark .band{box-shadow:none}
 <div class="metric"><div class="metric-target"><b>Guardrails:</b> zero-tolerance, single-incident trigger for money/security categories, not a rate.</div>
 <p>Lower-stakes accuracy issues aren't guardrail breaches, those are covered separately. Guardrails are reserved for the human-boundary categories, where even one real failure is too costly to wait on a rate threshold for.</p></div>
 
-<div class="callout"><p><strong>Where I landed on this exercise:</strong> my first answer to almost everything early on tended to be a plausible-sounding solution proposed too soon, rather than digging further. Discovery for this kind of AI/agent work has to be more precise than for typical software projects, because you're often trying to specify human judgment, not a process you can already fully define. Embedding with a company to notice what to ask is something I believe matters and couldn't fully simulate solo. That's a real limitation of a solo practice exercise, not something I'd claim to have solved here.</p></div>
+<div class="callout"><p><strong>Where I landed on this exercise:</strong> early on, I often reached for a plausible solution before I had dug far enough into the problem. Discovery for AI and agent workflows needs particular precision because the work often involves defining human judgment, not documenting a process that is already clear. A solo simulation also cannot replace being embedded with a company long enough to notice the questions worth asking. That remains a real limit of this exercise.</p></div>
 
 <a class="back-top" href="index.html#portfolio">← Back to Applied Work</a>
 </main>

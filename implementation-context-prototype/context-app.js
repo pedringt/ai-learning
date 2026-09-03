@@ -38,7 +38,7 @@
     const projectActive=state.view==='project-overview';
     const projectToggle=document.querySelector('.project-nav-toggle'); if(projectToggle) projectToggle.classList.toggle('active',projectActive);
     const sub=document.getElementById('projectSubnav'); if(sub) sub.hidden=!projectActive;
-    const actionCount=document.getElementById('openItemsActionCount'); if(actionCount){const n=uiPendingReviews().length;actionCount.textContent=n;actionCount.hidden=!n;}
+    const actionCount=document.getElementById('openItemsActionCount'); if(actionCount){const n=uiPendingReviews().length+openQuestions().filter(q=>q.blocking).length;actionCount.textContent=n;actionCount.hidden=!n;actionCount.setAttribute('aria-label',`${n} items need attention`);}
     document.querySelectorAll('[data-project-area]').forEach(b=>{
       const area=b.dataset.projectArea;
       b.hidden=state.backendStatus.state!=='loaded'||currentKnowledge(area).length===0;
@@ -254,7 +254,7 @@
     }
     const rows=items.map(item=>`<button class="attention-item ${item.kind}" data-action="${item.kind==='review'?'open-specific-review':'go-open-question'}" ${item.kind==='review'?`data-review-id="${esc(item.id)}"`:`data-question-id="${esc(item.id)}"`}><span class="attention-item-copy"><span class="attention-kind">${esc(item.label)}</span><strong>${esc(item.title)}</strong><span>${esc(item.detail)}</span></span><span class="attention-arrow" aria-hidden="true">→</span></button>`).join('');
     const more=Math.max(0,total-items.length);
-    return `<section class="workspace-attention"><div class="workspace-attention-head"><div><span class="eyebrow">Needs your attention</span><h3>${total===1?'1 item is waiting on you':`${total} items are waiting on you`}</h3></div><button class="text-button" data-view="open-items">Open Items →</button></div><div class="attention-list">${rows}</div>${more?`<button class="attention-more" data-view="open-items">${more} more in Open Items →</button>`:''}</section>`;
+    return `<section class="workspace-attention"><div class="workspace-attention-head"><div><span class="eyebrow">Needs your attention</span><h3>${total===1?'1 item is waiting on you':`${total} items are waiting on you`}</h3></div><button class="text-button" data-view="open-items">View all ${total} →</button></div><div class="attention-list">${rows}</div>${more?`<p class="attention-more-summary">Showing ${items.length} of ${total}</p>`:''}</section>`;
   }
   function renderWorkspaceAttentionOnly(){
     if(state.view!=='overview' || state.result) return false;
@@ -906,7 +906,8 @@
     const reviewBody=reviewUnavailable?'<div class="open-items-empty unavailable-inline">Reviews could not be loaded. <button class="text-button" data-action="retry-hydration">Try again</button></div>':reviews.length?reviews.map(r=>reviewCard(r,reviews.length===1||state.expandedReviewId===r.id,true)).join(''):'<div class="open-items-empty">Nothing needs your decision right now.</div>';
     const blockerBody=questionUnavailable?'<div class="open-items-empty unavailable-inline">Blocking questions could not be loaded.</div>':blockers.length?`<div class="open-question-list">${blockers.map(questionCard).join('')}</div>`:'<div class="open-items-empty">Nothing is currently blocked on an answer.</div>';
     const questionBody=questionUnavailable?'<div class="open-items-empty unavailable-inline">Open questions could not be loaded. <button class="text-button" data-action="retry-hydration">Try again</button></div>':waiting.length?`<div class="open-question-list">${visibleWaiting.map(questionCard).join('')}</div>${waiting.length>5?`<button class="open-questions-more" data-action="toggle-open-questions" aria-expanded="${state.openQuestionsExpanded?'true':'false'}">${state.openQuestionsExpanded?'Show fewer questions':`Show ${remaining} more questions`} <span aria-hidden="true">${state.openQuestionsExpanded?'↑':'↓'}</span></button>`:''}`:'<div class="open-items-empty">No other open questions.</div>';
-    root.innerHTML=`<section class="page collection-page open-items-page"><div class="page-head"><div><span class="eyebrow">What still needs attention</span><div class="review-title-row"><h2>Open Items</h2>${reviews.length?`<span class="count-badge review-page-count">${reviews.length}</span>`:''}</div><p>Decide what is ready now, see what is blocking progress, and keep important unknowns visible without turning this into another archive.</p></div><button class="btn secondary" data-action="add-question">+ Add question</button></div><div class="open-items-sections">${openItemSection('Needs your review','Act now','Decisions waiting on you. Current State changes only after you approve them.',reviewUnavailable?'—':reviews.length,'reviews',reviewBody,!reviews.length&&!reviewUnavailable)}${openItemSection('Blocking questions','Resolve soon','A concrete project dependency is waiting on an answer.',questionUnavailable?'—':blockers.length,'blockers',blockerBody,!blockers.length&&!questionUnavailable)}${openItemSection('Open questions','Keep in mind','Important unknowns that can wait for relevant evidence.',questionUnavailable?'—':waiting.length,'questions',questionBody,!waiting.length&&!questionUnavailable)}</div></section>`;
+    const actionTotal=(reviewUnavailable?0:reviews.length)+(questionUnavailable?0:blockers.length);
+    root.innerHTML=`<section class="page collection-page open-items-page"><div class="page-head"><div><span class="eyebrow">What still needs attention</span><div class="review-title-row"><h2>Open Items</h2>${actionTotal?`<span class="count-badge review-page-count" aria-label="${actionTotal} items need attention">${actionTotal}</span>`:''}</div><p>Decide what is ready now, see what is blocking progress, and keep important unknowns visible without turning this into another archive.</p></div><button class="btn secondary" data-action="add-question">+ Add question</button></div><div class="open-items-sections">${openItemSection('Needs your review','Act now','Decisions waiting on you. Current State changes only after you approve them.',reviewUnavailable?'Unavailable':reviews.length,'reviews',reviewBody,!reviews.length&&!reviewUnavailable)}${openItemSection('Blocking questions','Resolve soon','A concrete project dependency is waiting on an answer.',questionUnavailable?'Unavailable':blockers.length,'blockers',blockerBody,!blockers.length&&!questionUnavailable)}${openItemSection('Open questions','Keep in mind','Important unknowns that can wait for relevant evidence.',questionUnavailable?'Unavailable':waiting.length,'questions',questionBody,!waiting.length&&!questionUnavailable)}</div></section>`;
   }
 
   function renderReview(){ return renderOpenItems(); }
@@ -988,7 +989,7 @@
     }
     const primary=items[0];
     const changes=items.slice(0,3).map(item=>`<li>${esc(item.statement)}</li>`).join('');
-    showDialog(`<span class="eyebrow">Understanding updated</span><h2 id="dialogTitle">Here’s what changed.</h2><ul class="review-change-receipt">${changes}</ul>${items.length>3?`<p>${items.length-3} more maintained facts were updated.</p>`:''}<p class="review-receipt-note">State has updated the definitive Project view and recorded the accepted change in History.</p><div class="dialog-actions"><button class="btn primary" data-action="review-receipt-project" data-project-area="${esc(primary.area||'product')}" data-state-id="${esc(primary.id||'')}">View in Project</button>${primary.id?`<button class="btn secondary" data-action="view-topic-history" data-knowledge-id="${esc(primary.id)}">View in History</button>`:''}<button class="btn secondary" data-action="close-dialog">Done</button></div>`);
+    showDialog(`<span class="eyebrow">Understanding updated</span><h2 id="dialogTitle">Here’s what changed</h2><ul class="review-change-receipt">${changes}</ul>${items.length>3?`<p>${items.length-3} more maintained facts were updated.</p>`:''}<p class="review-receipt-note">State updated the definitive Project view and recorded the accepted change in History.</p><div class="dialog-actions"><button class="btn primary" data-action="review-receipt-project" data-project-area="${esc(primary.area||'product')}" data-state-id="${esc(primary.id||'')}">View in Project</button>${primary.id?`<button class="btn secondary" data-action="view-topic-history" data-knowledge-id="${esc(primary.id)}">View in History</button>`:''}<button class="btn secondary" data-action="close-dialog">Done</button></div>`);
   }
 
 
@@ -1241,29 +1242,29 @@
 
   async function hydrateBackend(){
     if(!API)return;
+    const loadStatus=document.getElementById('appLoadStatus');
+    if(loadStatus){loadStatus.textContent='Opening Northstar…';loadStatus.hidden=false;}
     state.workspaceAttentionStatus='loading';
     renderWorkspaceAttentionOnly();
     const keys=['state','evidence','open','resolved','history','questions','rules','drafts'];
-    const calls=[
-      API.getState(), API.getEvidence(), API.getReviews('open'), API.getReviews('resolved'), API.getHistory(), API.getQuestions('open'), API.getRules(), API.getDrafts()
-    ];
-    const attentionReady=Promise.allSettled([calls[2],calls[5]]).then(([openResult,questionResult])=>{
-      if(openResult.status==='fulfilled'){
-        const openItems=openResult.value?.items||[];
-        replaceBackendOpenReviews(openItems);
-        for(const raw of openItems){
-          const mapped=mapApiReview(raw,raw.evidence_content||'');
-          mapped.evidenceId=`api-note-${raw.evidence_id}`;
-          upsertBackendReview(mapped);
-        }
-      }
-      if(questionResult.status==='fulfilled') syncApiQuestions(questionResult.value?.items||[]);
-      state.workspaceAttentionStatus=(openResult.status==='fulfilled'&&questionResult.status==='fulfilled')?'loaded':'error';
-      updateNav();
-      renderWorkspaceAttentionOnly();
-    });
-    const results=await Promise.allSettled(calls);
-    const byKey=Object.fromEntries(keys.map((key,i)=>[key,results[i]]));
+    let byKey;
+    try{
+      const payload=await API.getBootstrap();
+      const fulfilled=items=>({status:'fulfilled',value:{items:items||[]}});
+      byKey={
+        state:fulfilled(payload.state), evidence:fulfilled(payload.evidence),
+        open:fulfilled(payload.open_reviews), resolved:fulfilled(payload.resolved_reviews),
+        history:fulfilled(payload.history), questions:fulfilled(payload.questions),
+        rules:fulfilled(payload.rules), drafts:fulfilled(payload.drafts)
+      };
+    }catch(bootstrapError){
+      console.warn('Workspace bootstrap unavailable; retrying individual resources.',bootstrapError);
+      const calls=[
+        API.getState(), API.getEvidence(), API.getReviews('open'), API.getReviews('resolved'), API.getHistory(), API.getQuestions('open'), API.getRules(), API.getDrafts()
+      ];
+      const results=await Promise.allSettled(calls);
+      byKey=Object.fromEntries(keys.map((key,i)=>[key,results[i]]));
+    }
     const payloadOf=result=>result.status==='fulfilled'?result.value:{items:[]};
     state.backendStatus.state=byKey.state.status==='fulfilled'?'loaded':'error';
     state.backendStatus.evidence=byKey.evidence.status==='fulfilled'?'loaded':'error';
@@ -1306,8 +1307,9 @@
         }
       }
     }
+    state.workspaceAttentionStatus=(byKey.open.status==='fulfilled'&&byKey.questions.status==='fulfilled')?'loaded':'error';
     for(const [key,result] of Object.entries(byKey)) if(result.status==='rejected') console.warn(`Backend ${key} unavailable:`,result.reason);
-    await attentionReady;
+    if(loadStatus)loadStatus.hidden=true;
     updateNav();
     // Backend hydration must never replace the Ask DOM while a person is typing.
     // Workspace attention can update independently; other views may rerender normally.

@@ -1,6 +1,6 @@
 from database_migration_backed import initialize_db
 from db import connect_sqlite
-from seed_demo import bootstrap_demo_data
+from seed_demo import bootstrap_demo_data, reset_demo_data
 
 
 def test_demo_seed_is_idempotent_and_stress_sized(tmp_path):
@@ -30,6 +30,24 @@ def test_demo_seed_never_overwrites_existing_state(tmp_path):
         row = connection.execute("SELECT statement,version FROM current_state_items WHERE id='k-pilot'").fetchone()
         assert row["statement"] == "User-reviewed pilot truth."
         assert row["version"] == 7
+
+
+def test_demo_reset_removes_session_changes_and_restores_baseline(tmp_path):
+    db = tmp_path / "state.db"
+    with connect_sqlite(str(db)) as connection:
+        initialize_db(connection)
+        bootstrap_demo_data(connection)
+        connection.execute("UPDATE current_state_items SET statement='Changed during demo', version=9 WHERE id='k-pilot'")
+        connection.execute("INSERT INTO draft_notes(id,title,content) VALUES ('draft-user','Scratch','Temporary note')")
+        connection.execute("INSERT INTO questions(id,text,status,blocking,origin) VALUES ('q-user','Temporary question?','open',0,'User')")
+        connection.commit()
+        counts = reset_demo_data(connection)
+        pilot = connection.execute("SELECT statement,version FROM current_state_items WHERE id='k-pilot'").fetchone()
+        assert counts == {"state": 25, "questions": 20, "reviews": 4, "history": 10, "evidence": 5, "rules": 1}
+        assert pilot["statement"].startswith("The core pilot use case is Tier 1")
+        assert pilot["version"] == 2
+        assert connection.execute("SELECT count(*) AS n FROM draft_notes").fetchone()["n"] == 0
+        assert connection.execute("SELECT count(*) AS n FROM questions WHERE id='q-user'").fetchone()["n"] == 0
 
 
 def test_environment_loaded_demo_bootstrap_defaults_on(monkeypatch):

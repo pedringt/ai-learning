@@ -121,6 +121,37 @@ class ApiWorkflowTests(unittest.TestCase):
         self.assertEqual(history[0]["evidence_items"][0]["content"], "Launch moved to October 15.")
 
 
+class DemoExperienceApiTests(unittest.TestCase):
+    def test_bootstrap_and_reset_routes_restore_curated_demo(self):
+        with tempfile.TemporaryDirectory() as tempdir:
+            db_path = str(Path(tempdir) / "state.db")
+            app = create_app(
+                Settings(database_path=db_path, provider="anthropic", cors_origins=[], demo_bootstrap=True),
+                provider=LaunchDateProvider(),
+            )
+            with TestClient(app) as client:
+                bootstrap = client.get("/api/bootstrap")
+                self.assertEqual(bootstrap.status_code, 200)
+                self.assertEqual(len(bootstrap.json()["state"]), 25)
+                self.assertEqual(len(bootstrap.json()["open_reviews"]), 4)
+                client.post("/api/questions", json={"text": "Temporary demo question"})
+                reset = client.post("/api/demo/reset")
+                self.assertEqual(reset.status_code, 200)
+                self.assertEqual(reset.json()["status"], "reset")
+                questions = client.get("/api/questions?status=open").json()["items"]
+                self.assertEqual(len(questions), 20)
+                self.assertNotIn("Temporary demo question", {item["text"] for item in questions})
+
+    def test_reset_route_is_hidden_outside_demo_mode(self):
+        with tempfile.TemporaryDirectory() as tempdir:
+            app = create_app(
+                Settings(database_path=str(Path(tempdir) / "state.db"), provider="anthropic", cors_origins=[], demo_bootstrap=False),
+                provider=LaunchDateProvider(),
+            )
+            with TestClient(app) as client:
+                self.assertEqual(client.post("/api/demo/reset").status_code, 404)
+
+
 if __name__ == "__main__":
     unittest.main()
 
