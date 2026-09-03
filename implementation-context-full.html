@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 
-<html lang="en"><head><link rel="icon" href="favicon.svg"><meta charset="utf-8"/><meta content="width=device-width,initial-scale=1" name="viewport"/><title>Research &amp; Methods Deep Dive · Maintaining Project Context with AI</title><meta content="Research and methods deep dive for Maintaining Project Context with AI." name="description"/><meta property="og:type" content="website"><meta property="og:title" content="Research &amp; Methods Deep Dive · Maintaining Project Context with AI"><meta property="og:description" content="Research and methods deep dive for Maintaining Project Context with AI."><meta name="twitter:card" content="summary"><meta name="twitter:title" content="Research &amp; Methods Deep Dive · Maintaining Project Context with AI"><meta name="twitter:description" content="Research and methods deep dive for Maintaining Project Context with AI."><link href="site-shell.css" rel="stylesheet"/><link href="site-components.css" rel="stylesheet"/><link href="implementation-context-case.css" rel="stylesheet"/></head><body>
+<html lang="en"><head><link href="favicon.svg" rel="icon"/><meta charset="utf-8"/><meta content="width=device-width,initial-scale=1" name="viewport"/><title>Research &amp; Methods Deep Dive · Maintaining Project Context with AI</title><meta content="Research and methods deep dive for Maintaining Project Context with AI." name="description"/><meta content="website" property="og:type"/><meta content="Research &amp; Methods Deep Dive · Maintaining Project Context with AI" property="og:title"/><meta content="Research and methods deep dive for Maintaining Project Context with AI." property="og:description"/><meta content="summary" name="twitter:card"/><meta content="Research &amp; Methods Deep Dive · Maintaining Project Context with AI" name="twitter:title"/><meta content="Research and methods deep dive for Maintaining Project Context with AI." name="twitter:description"/><link href="site-shell.css" rel="stylesheet"><link href="site-components.css" rel="stylesheet"/><link href="implementation-context-case.css" rel="stylesheet"/></link></head><body>
 <div class="topbar"><div class="topinner"><a class="brand-button" href="index.html"><span class="brand">AI <span>Learning Portfolio</span></span></a><nav aria-label="Primary pages" class="nav"><a href="index.html">Home</a><a aria-current="page" href="index.html#portfolio">Applied Work</a><a href="index.html#learn">Learning Guide</a></nav><div class="top-actions"><button aria-label="Switch to dark mode" aria-pressed="false" class="theme-toggle" id="v922ThemeToggle" title="Switch to dark mode" type="button">☾</button><select aria-label="Choose page" id="v922MobileNav"><option value="index.html">Home</option><option selected="" value="index.html#portfolio">Applied Work</option><option value="index.html#learn">Learning Guide</option></select></div></div></div>
-<main class="meridian-page-shell case-system-page"><div class="meridian-heading"><div class="meridian-breadcrumb"><a href="index.html#portfolio">Applied Work</a><span aria-hidden="true">/</span><a href="implementation-context.html">Maintaining Project Context with AI</a><span aria-hidden="true">/</span><span>Deep Dive</span></div><div class="eyebrow">Independent AI learning project</div></div><header class="meridian-case-hero"><h1>Maintaining Project Context with AI</h1><p class="lead">What should AI have to infer from project history? The broad hypothesis weakened under testing; a narrower uncertainty failure changed what I investigated and built.</p></header><nav aria-label="Maintaining Project Context with AI pages" class="meridian-section-nav"><div class="meridian-section-links"><a href="implementation-context.html">Overview</a><a href="implementation-context-product.html">Product Decisions</a><a aria-current="page" class="current" href="implementation-context-full.html">Deep Dive</a></div></nav><aside class="meridian-product-callout"><div><span>Working prototype</span><strong>See the idea behave, not just described</strong><p>Explore how reviewed evidence, open questions, and the project’s current understanding affect later work.</p></div><a class="meridian-primary-action" href="implementation-context-prototype/index.html">Open prototype <span aria-hidden="true">→</span></a></aside><article class="case-page-content deep-dive-page"><div class="deep-dive-note"><p><strong>Optional deep dive.</strong> The primary case study ends with Product Decisions. This page preserves the full experimental record, methods, limitations, and reasoning for readers who want to inspect the work in detail.</p><p><strong>Method:</strong> AI designed the experiment itself, the A/B/C structure, Condition C, the fixture, and the scoring rubric, and did most of the interpretation of results, including first noticing the unknown-vs-0% pattern. I manually ran every test condition, accepted the result when it weakened my original hypothesis, and directed the product decisions that followed. First-person language below describes decisions and judgment calls that were mine; it should not be read as a claim that I independently designed the experimental methodology.</p></div><section class="case-section-intro"><div class="kicker">Maintaining Project Context with AI · Deep Dive</div><h2>Research &amp; Methods Deep Dive</h2><p>The full reasoning record: hypothesis, fixture, AI-assisted experimental design, repeated runs, failure analysis, research, product decisions, objections, limitations, and next tests.</p></section><article class="deep-article"><section class="investigation-intro">
+<main class="meridian-page-shell case-system-page"><div class="meridian-heading"><div class="meridian-breadcrumb"><a href="index.html#portfolio">Applied Work</a><span aria-hidden="true">/</span><a href="implementation-context.html">Maintaining Project Context with AI</a><span aria-hidden="true">/</span><span>Deep Dive</span></div><div class="eyebrow">Independent AI learning project</div></div><header class="meridian-case-hero"><h1>Maintaining Project Context with AI</h1><p class="lead">What should AI have to infer from project history? The broad hypothesis weakened under testing; a narrower uncertainty failure changed what I investigated and built.</p></header><nav aria-label="Maintaining Project Context with AI pages" class="meridian-section-nav"><div class="meridian-section-links"><a href="implementation-context.html">Overview</a><a href="implementation-context-product.html">Product Decisions</a><a aria-current="page" class="current" href="implementation-context-full.html">Deep Dive</a></div></nav><aside class="meridian-product-callout"><div><span>Working product</span><strong>See the idea behave, not just described</strong><p>Explore how reviewed evidence, open questions, and the project’s current understanding affect later work.</p></div><a class="meridian-primary-action" href="implementation-context-prototype/index.html">Open State <span aria-hidden="true">→</span></a></aside><article class="case-page-content deep-dive-page"><div class="deep-dive-note"><p><strong>Optional deep dive.</strong> The primary case study ends with Product Decisions. This page preserves the full experimental record, methods, limitations, and reasoning for readers who want to inspect the work in detail.</p><p><strong>Method:</strong> AI designed the experiment itself, the A/B/C structure, Condition C, the fixture, and the scoring rubric, and did most of the interpretation of results, including first noticing the unknown-vs-0% pattern. I manually ran every test condition, accepted the result when it weakened my original hypothesis, and directed the product decisions that followed. First-person language below describes decisions and judgment calls that were mine; it should not be read as a claim that I independently designed the experimental methodology.</p></div><section class="case-section-intro"><div class="kicker">Maintaining Project Context with AI · Deep Dive</div><h2>Research &amp; Methods Deep Dive</h2><p>The full reasoning record: hypothesis, fixture, AI-assisted experimental design, repeated runs, failure analysis, research, product decisions, objections, limitations, and next tests.</p></section><article class="deep-article"><section class="investigation-intro">
 <p>This project started with a question about something I'd mostly been calling <strong>context</strong>: software teams work from messy histories, tickets, notes, decisions, evidence, things proposed but never approved, and I wondered what happens when AI starts doing more of the work of turning that history into answers.</p>
 <p>I'd been running into a specific version of this myself: my own Claude and ChatGPT conversations would occasionally make things up, or ask me things I'd already told them. That's what sent me looking.</p>
 </section>
@@ -23,7 +23,6 @@
 <p>The results didn't cleanly validate the idea, which made it more interesting. Strong models reconstructed current state better than expected, and a stronger prompt improved that further, but a smaller failure kept appearing: the model could understand the project well and still make an unresolved answer more definite than the evidence supported.</p>
 </section>
 </div>
-
 <section class="investigation-intro">
 <p>That distinction changed what I researched, what got built, and what I now think the interesting design question actually is.</p>
 </section><div class="investigation-orientation"><div><span>Deep dive · 12 chapters</span><strong>The manuscript is preserved here without forcing a 12-chapter scroll.</strong><p>Open any chapter for the detailed reasoning, experiment receipts, objections, limitations, and next tests.</p></div></div><div class="investigation-chapters"><details class="investigation-chapter" id="01-the-question"><summary><span class="chapter-number">01</span><span class="chapter-title">What happens when AI has to decide what is still true?</span><span aria-hidden="true" class="chapter-toggle">+</span></summary><div class="chapter-body">
@@ -406,8 +405,8 @@ continuously interpreting messy implementation evidence and producing
 downstream work from it?</strong></p>
 </blockquote>
 <p>That is a much smaller claim, and a more productive design question.</p>
-</div></details><details class="investigation-chapter" id="08-turning-the-findings-into-product-decisions"><summary><span class="chapter-number">08</span><span class="chapter-title">The prototype became a product experiment, not proof of the architecture</span><span aria-hidden="true" class="chapter-toggle">+</span></summary><div class="chapter-body"><div class="evidence-visual review-flow"><div><span>Currently operating on</span><strong>Plan rules are sufficient</strong></div><b>→</b><div><span>New evidence</span><strong>Exceptions exist</strong></div><b>→</b><div><span>What it establishes</span><strong>Plan rules alone are not always sufficient</strong></div><b>→</b><div><span>Still unresolved</span><strong>Which source is authoritative</strong></div></div><div class="evidence-visual meeting-receipt"><span class="receipt-label">Meeting Prep</span><strong>1 pending review may affect this briefing.</strong><p>Review it now, or continue using the current reviewed understanding. Pending evidence does not silently become truth.</p></div>
-<p>Once the broad hypothesis weakened, I did not want the prototype to keep
+</div></details><details class="investigation-chapter" id="08-turning-the-findings-into-product-decisions"><summary><span class="chapter-number">08</span><span class="chapter-title">The build became a product experiment, not proof of the architecture</span><span aria-hidden="true" class="chapter-toggle">+</span></summary><div class="chapter-body"><div class="evidence-visual review-flow"><div><span>Currently operating on</span><strong>Plan rules are sufficient</strong></div><b>→</b><div><span>New evidence</span><strong>Exceptions exist</strong></div><b>→</b><div><span>What it establishes</span><strong>Plan rules alone are not always sufficient</strong></div><b>→</b><div><span>Still unresolved</span><strong>Which source is authoritative</strong></div></div><div class="evidence-visual meeting-receipt"><span class="receipt-label">Meeting Prep</span><strong>1 pending review may affect this briefing.</strong><p>Review it now, or continue using the current reviewed understanding. Pending evidence does not silently become truth.</p></div>
+<p>Once the broad hypothesis weakened, I did not want the build to keep
 pretending it had been validated.</p>
 <p>I narrowed it.</p>
 <p><em>The review and state-update architecture described in this section, how new evidence stays separate from what the project currently treats as true, when a change needs review, how pending evidence shows up again where it matters, was primarily designed by AI, interpreting what the experiment implied. I questioned and refined that design and focused most of my direct contribution on the UI around it.</em></p>
@@ -420,12 +419,12 @@ challenges something the implementation is already relying on?</strong></p>
 <h3 id="decision-1-not-established-is-a-first-class-answer">Decision 1 --- "Not established" is a valid answer</h3>
 <p>If the implementation has not established a safe automation percentage,
 the system should not have to manufacture a useful-sounding number.</p>
-<p>In the prototype, <strong>Not established</strong> is a legitimate answer.</p>
+<p>In the build, <strong>Not established</strong> is a legitimate answer.</p>
 <p>The goal is not to make the AI less useful.</p>
 <p>It is to make the boundary visible so the user can decide what evidence
 is needed next.</p>
 <h3 id="decision-2-evidence-does-not-automatically-become-accepted-state">Decision 2 --- Evidence does not automatically become accepted state</h3>
-<p>The prototype separates incoming evidence from what the implementation
+<p>The build separates incoming evidence from what the implementation
 currently operates on.</p>
 <p>For the feature-access scenario, Review shows:</p>
 <p><strong>Currently operating on</strong><br/>
@@ -450,7 +449,7 @@ understanding.</p>
 </blockquote>
 <h3 id="decision-3-human-review-belongs-at-consequential-state-transitions">Decision 3 --- Human review belongs at consequential state transitions</h3>
 <p>I became less interested in generic "human in the loop" language.</p>
-<p>The reason for review in this prototype is specific:</p>
+<p>The reason for review in this build is specific:</p>
 <blockquote class="case-quote">
 <p>The system is proposing a consequential change to something downstream
 AI will rely on.</p>
@@ -465,7 +464,7 @@ a plan.</p>
 <p>Then I thought about how people actually work.</p>
 <p>A queue only protects downstream work if somebody remembers to clean it
 up.</p>
-<p>So the prototype keeps the Review queue, but relevant pending evidence
+<p>So the build keeps the Review queue, but relevant pending evidence
 can also resurface during normal work.</p>
 <p>For example, Meeting Prep can say:</p>
 <blockquote class="case-quote">
@@ -480,10 +479,10 @@ project:</p>
 <blockquote class="case-quote">
 <p><strong>The system shouldn't depend on perfect knowledge-management habits to keep important project understanding current.</strong></p>
 </blockquote>
-<h3 id="decision-5-keep-the-prototype-deterministic-where-that-is-enough">Decision 5 --- Keep the prototype deterministic where that is enough</h3>
+<h3 id="decision-5-keep-the-prototype-deterministic-where-that-is-enough">Decision 5 --- Keep the build deterministic where that is enough</h3>
 <p>I did not add embeddings, a generic semantic-retrieval layer, or an LLM
-pipeline just to make the prototype look more sophisticated.</p>
-<p>The current prototype uses controlled fixtures and deterministic
+pipeline just to make the build look more sophisticated.</p>
+<p>The current build uses controlled fixtures and deterministic
 behavior.</p>
 <p>That means it does <strong>not</strong> demonstrate that arbitrary real-world
 evidence can be interpreted correctly.</p>
@@ -502,7 +501,7 @@ model:</p>
 impressive-looking without necessarily making that question easier to
 answer.</p>
 </div></details><details class="investigation-chapter" id="09-testing-the-prototype-in-realistic-use"><summary><span class="chapter-number">09</span><span class="chapter-title">The useful path mattered more than the Review page</span><span aria-hidden="true" class="chapter-toggle">+</span></summary><div class="chapter-body">
-<p>Once the core state transitions worked, I tested the prototype less like
+<p>Once the core state transitions worked, I tested the build less like
 its designer and more like someone trying to get work done.</p>
 <p>That changed the emphasis.</p>
 <p>The most likely useful actions were not:</p>
@@ -640,9 +639,9 @@ it.</strong></p>
 </ul>
 <p>If a system gives maintained state privileged downstream influence,
 errors in that layer could become more consequential, not less.</p>
-<p>That is why the prototype keeps history, source information, unresolved
+<p>That is why the build keeps history, source information, unresolved
 questions, and human review around consequential changes.</p>
-<p>But the prototype does not prove that those safeguards are sufficient.</p>
+<p>But the build does not prove that those safeguards are sufficient.</p>
 <h2 id="the-experiment-was-small-and-synthetic">The experiment was small and synthetic</h2>
 <p>AI designed the fixture, at my direction and with my review.</p>
 <p>That gave me control, but it also means the scenario may favor the
@@ -667,7 +666,7 @@ the cleaner comparison.</p>
 <p>That was frustrating, but hiding the contamination would have made the
 experiment look cleaner than it actually was.</p>
 <h2 id="i-have-not-validated-the-product-with-real-implementation-teams">I have not validated the product with real implementation teams</h2>
-<p>The prototype demonstrates the interaction model in a controlled
+<p>The build demonstrates the interaction model in a controlled
 scenario.</p>
 <p>It does not establish:</p>
 <ul>
@@ -681,7 +680,7 @@ inside an existing implementation, PM, CRM, or knowledge tool.</li>
 </ul>
 <p>I am deliberately leaving those questions open.</p>
 <h2 id="where-would-the-initial-state-come-from">Where would the initial state come from?</h2>
-<p>The prototype starts mid-project, already populated. A real version has
+<p>The build starts mid-project, already populated. A real version has
 to start somewhere, and none of the honest options are free.</p>
 <p>If AI reconstructs the initial state from existing history, the
 reconstruction problem this whole project is about comes right back,
@@ -700,7 +699,7 @@ at the same time and are each right from where they sit: engineering
 believes one thing, sales has promised another, legal requires a
 third, product decided a fourth. Those aren't obviously just conflicting
 scraps waiting to collapse into one canonical answer.</p>
-<p>The prototype stays single-user on purpose. One reviewer working with
+<p>The build stays single-user on purpose. One reviewer working with
 evidence generated by many people and sources is enough to demonstrate
 the review-and-state-change interaction. It is not enough to show that
 one maintained project state can represent what a whole organization
@@ -737,7 +736,7 @@ have flagged it." An imperfect State could leave people more confident
 in incomplete understanding than messy documentation ever would have.
 That's a genuinely product-killing failure mode, not a small UX gap.</li>
 <li><strong>Consequential changes can't be surfaced reliably enough.</strong> This
-prototype preconfigures which incoming evidence deserves review. A
+build preconfigures which incoming evidence deserves review. A
 real version needs that judged automatically, and the two ways to get
 it wrong---too many irrelevant reviews, too many missed
 changes---pull against each other.</li>
