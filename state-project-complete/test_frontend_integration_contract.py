@@ -207,7 +207,7 @@ def test_r85_integrity_and_polish_contracts():
     assert "Showing <strong>${notes.length}</strong> of ${total} notes" in app
     assert "Search history" in app and "historyResultCount" in app
     assert "Rules apply to future analysis. Existing Reviews are not reinterpreted automatically." in app
-    assert "Current State facts" in app
+    assert "current facts" in app
     assert "project-maintained-facts" in app
     assert "backendStatus" in app and "temporarily unavailable" in app
 
@@ -242,8 +242,8 @@ def test_r861_grounded_ask_module_and_release_assets_are_self_contained():
     ask = (FRONTEND / "context-ask.js").read_text(encoding="utf-8")
     html = (FRONTEND / "index.html").read_text(encoding="utf-8")
     assert "window.STATE_ASK" in ask
-    assert "context-ask.js?v=r18-story-attention" in html
-    assert "context-app.js?v=r18-story-attention" in html
+    assert "context-ask.js?v=r19-final-polish" in html
+    assert "context-app.js?v=r19-final-polish" in html
 
 
 def test_r95_workspace_attention_has_a_fast_independent_load_path():
@@ -253,6 +253,13 @@ def test_r95_workspace_attention_has_a_fast_independent_load_path():
     assert "getAttention: () => request('/api/attention')" in api_client
     assert "API.getAttention().then" in app
     assert '@app.get("/api/attention")' in api_server
+
+
+def test_r19_project_summary_and_modal_actions_stay_compact():
+    app = (FRONTEND / "context-app.js").read_text(encoding="utf-8")
+    assert 'class="project-fact-count"' in app
+    assert 'class="current-direction-list"' in app
+    assert 'data-action="close-dialog">Done' not in app
 
 
 def test_r861_repository_has_one_obvious_deploy_backend():

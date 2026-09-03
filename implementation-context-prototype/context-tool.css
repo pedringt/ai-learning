@@ -672,6 +672,28 @@ body.v88-dark .project-wiki-prose p{color:#d8d4df!important}.project-maintained-
 @media(max-width:760px){.project-document-meta{grid-template-columns:1fr 1fr!important}.project-document-meta div:last-child{grid-column:1/-1}.project-maintained-fact{grid-template-columns:1fr}.project-maintained-fact>div:first-child{grid-template-columns:1fr;gap:3px}}
 @media(max-width:430px){.project-document-meta{grid-template-columns:1fr!important}.project-document-meta div:last-child{grid-column:auto}}
 .review-change-receipt{margin:14px 0 8px;padding-left:20px}.review-change-receipt li{margin:7px 0;font-size:13.5px;line-height:1.55}.review-receipt-note{font-size:12px!important}.project-wiki-topic.is-recently-updated{background:color-mix(in srgb,var(--good) 8%,transparent);border-radius:10px;box-shadow:0 0 0 8px color-mix(in srgb,var(--good) 8%,transparent);transition:background .35s ease,box-shadow .35s ease}
+
+/* R19 Project reading pass: balanced overview, compact direction, calmer document width. */
+.project-page.project-document{max-width:940px!important}
+.project-title-line{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+.project-title-line h2{margin-right:0!important}
+.project-fact-count{font-size:11px;line-height:1.2;font-weight:750;color:var(--muted);white-space:nowrap}
+.project-document-meta{grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;gap:28px!important;margin-top:20px!important}
+.project-document-intro{margin:18px 0 4px!important;padding:17px 0 19px!important;background:transparent!important;border-radius:0!important;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.current-direction-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:0;list-style:none;margin:12px 0 0;padding:0}
+.current-direction-list li{padding:0 18px 0 0;min-width:0}
+.current-direction-list li+li{padding-left:18px;border-left:1px solid var(--line)}
+.current-direction-list strong{display:block!important;margin-bottom:5px;font-size:10px!important;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)!important}
+.current-direction-list span{display:block;font-size:13px;line-height:1.55;color:var(--ink)}
+.project-outline{max-width:760px!important}
+.project-wiki-section{padding-top:34px!important;padding-bottom:20px!important}
+.project-wiki-topic{padding:22px 0 27px!important}
+.project-wiki-topic-head{max-width:680px!important;margin-bottom:11px!important}
+.project-wiki-prose{max-width:700px!important}
+.project-wiki-prose p{font-size:14px!important;line-height:1.75!important;margin:9px 0 14px!important}
+body.v88-dark .project-document-intro{background:transparent!important}
+body.v88-dark .current-direction-list span{color:#e3dfe8}
+@media(max-width:760px){.project-document-meta{grid-template-columns:1fr!important;gap:14px!important}.current-direction-list{grid-template-columns:1fr}.current-direction-list li,.current-direction-list li+li{padding:10px 0;border-left:0}.current-direction-list li+li{border-top:1px solid var(--line)}.project-fact-count{font-size:10.5px}}
 /* Review is a human decision/authorization state, not a lower-severity warning. */
 :root{--review:#5b4a91;--review-soft:#f1eef8}
 .open-items-reviews .open-items-section-head{background:linear-gradient(90deg,color-mix(in srgb,var(--review-soft) 96%,var(--surface)),color-mix(in srgb,var(--review-soft) 30%,var(--surface)) 72%)!important}
