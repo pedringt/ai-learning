@@ -1,3 +1,11 @@
+# Authoritative Render configuration for the State backend.
+#
+# This file is the ONLY Render config for this project. Render reads it from the
+# repository root and builds `state-project-complete` (rootDir below) from `main`.
+# A second, stale config previously lived at state-project-complete/render.yaml and
+# disagreed with this one about the Python version and the database configuration.
+# It has been removed. Do not reintroduce a service-local render.yaml.
+
 services:
   - type: web
     name: state-api
