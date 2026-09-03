@@ -148,3 +148,44 @@ def test_golden_direct_fact_lookup_uses_specific_deterministic_fast_path_and_pre
         assert len(provider.prompts) == 1
     finally:
         conn.close()
+
+class DuplicateCreateProvider:
+    name = "fake"
+    model_identifier = "duplicate-create"
+    def __init__(self, statement):
+        self.statement = statement
+    def interpret(self, *, context, evidence):
+        return {
+            "summary": "The note repeats an already-maintained fact.",
+            "topics": ["workflow"],
+            "outcome": "review_recommended",
+            "review_recommendations": [{
+                "review_action": "create",
+                "review_type": "missing_understanding",
+                "decision_question": "Should State add this fact?",
+                "why_consequential": "The provider believes this is missing.",
+                "affected_state_item_ids": [],
+                "proposed_changes": [{
+                    "operation": "create",
+                    "proposed_statement": self.statement,
+                    "rationale": "The note states this directly."
+                }],
+            }],
+        }
+
+
+def test_golden_repeated_current_state_evidence_does_not_create_noop_review(tmp_path):
+    from interpretation_pipeline_integrated import process_evidence
+    conn = seeded_connection(tmp_path)
+    try:
+        statement = conn.execute("SELECT statement FROM current_state_items WHERE id='k-pilot'").fetchone()["statement"]
+        conn.execute("INSERT INTO evidence(id,content,source_type,processing_status) VALUES ('e-repeat',?,'manual_note','pending')", (statement,))
+        conn.commit()
+        result = process_evidence(conn, evidence_id="e-repeat", provider=DuplicateCreateProvider(statement))
+        assert result.processing_status == "succeeded"
+        assert result.review_ids == ()
+        assert conn.execute("SELECT COUNT(*) AS c FROM review_evidence WHERE evidence_id='e-repeat'").fetchone()["c"] == 0
+        record = conn.execute("SELECT structured_result FROM interpretation_records WHERE id=?", (result.interpretation_record_id,)).fetchone()
+        assert '"outcome": "no_review"' in record["structured_result"]
+    finally:
+        conn.close()

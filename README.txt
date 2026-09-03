@@ -1,80 +1,69 @@
-State R10 — golden Ask QA + queued fixes
+State R11 — real-user workflow E2E + stabilization
 
-NEW AUTOMATED GOLDEN SCENARIOS
-- Specific recent fact beats broad topical context:
-  "My billing contact is Jane Smith" -> "Who is my billing contact?"
-- Pending Evidence remains discoverable and linked Review is preserved.
-- Internal IDs never appear in user-facing Question/Review prose.
-- Blocking metadata renders structurally from canonical records.
-- Exact duplicate Current State create proposals do not create a second active fact.
-- Demo reset restores the same rich, interactive Northstar starting scenario.
+WHAT IS NEW
 
-ASK / RETRIEVAL
-- All fresh questions use live grounded Ask when the backend is available.
-  The older canned intent layer is now only a no-backend fallback.
-- Small who/what/when/where lookups use a deterministic fact-selection fast path.
-- Specific matching Evidence gets selected alongside relevant Current State.
-- Reviews linked to selected Evidence are automatically preserved so pending facts
-  are qualified rather than silently promoted.
-- Direct-fact answers are capped to a small number of sections/items.
-- User-facing text is sanitized for internal record IDs.
-- Question and Review display text is canonicalized from State records.
+1. Real-browser E2E coverage (Chromium)
+- Workspace hydration does not replace or blur the Ask field while a person is typing.
+- Shared modal geometry stays inside the viewport and above the portfolio header.
+- Modal geometry is also checked at 390px phone width.
+- Follow-ups preserve the existing Ask artifact and use a compact working state.
+- Backend Review decisions disappear and acknowledge immediately before the delayed server round-trip finishes.
 
-FOLLOW-UPS
-- Previous artifact stays visible while a follow-up works and after it returns.
-- Follow-up loading is compact rather than spawning another giant briefing loader.
-- Ask input draft is captured before overview rerenders so hydration cannot erase typing.
-- Existing Anthropic maxItems compatibility adapter is included.
+2. Real-user API workflow matrix
+- Add new fact -> Review -> accept -> Project/Current State + History update.
+- Reject proposed change -> Current State stays unchanged.
+- Repeat an already-maintained fact -> Evidence is preserved but no no-op Review is created.
+- Reset demo -> curated interactive Northstar baseline returns.
 
-MODALS
-- Shared overlay z-index is raised above the portfolio shell header.
-- Overlay/dialog scroll is reset on every open before and after focus.
-- Tall dialogs remain internally scrollable and viewport-bounded.
-- Applies to Add Note, Project Settings, How this demo works, and all shared dialogs.
+3. Ask input / hydration fix
+- Backend hydration no longer rerenders the full Workspace.
+- Needs your attention updates independently.
+- A focused Ask DOM node is therefore not replaced when the bottom section finishes loading.
+- This fixes both lost focus and disappearing typed text caused by hydration.
 
-REVIEWS
-- Existing optimistic Review removal remains.
-- Immediate "Saving decision" feedback appears before the ~2s backend resolve finishes.
-- Final confirmation replaces it when the authoritative response returns.
+4. Shared modal fix
+- Critical modal geometry is now inlined in index.html as well as the stylesheet.
+- Overlay uses an extremely high stacking layer and explicitly lowers portfolio shell layers while open.
+- Dialogs are top-safe, viewport-bounded, internally scrollable, desktop + mobile tested.
+- This applies to Add Note, Project Settings, How this demo works, and every shared modal.
 
-CURRENT STATE INTEGRITY
-- Accepting an exact duplicate create-proposal resolves the Review without inserting
-  a duplicate active Current State fact.
+5. No-op / duplicate Review prevention
+- After provider validation, create-only missing-understanding Reviews are suppressed when every proposed fact already exactly exists in active Current State.
+- Evidence remains preserved.
+- The user is not asked to approve a change that would do nothing.
+- This is intentionally conservative: case/punctuation/whitespace are ignored; software does not guess that arbitrary paraphrases are equivalent.
+- Existing exact duplicate State acceptance protection remains in place.
 
-DEMO RESET
-- Project Settings now contains "Reset demo data".
-- POST /api/demo/reset is available only when demo bootstrap is enabled.
-- Reset removes QA/user-created demo activity, then restores canonical Northstar:
-  Current State, open Reviews, blockers, open Questions, Evidence, Rules, and History.
-- Reset is not used as a substitute for duplicate prevention; both are implemented.
+6. Ask visual cleanup
+- Removes the extra session divider directly above the Ask answer card so the card no longer looks like it is touching a stray line.
 
-CACHE / DEPLOY
-- Frontend cache-bust revision moved from stale r9.3.1b to r10-golden-qa.
-- This is important: index.html must be uploaded with the JS/CSS so browsers fetch
-  the new assets.
+7. Cache/deploy identity
+- Frontend cache-bust is r11-user-e2e.
+- Backend /health build is r11-user-workflow-e2e-2026-09-02.
 
-BUILD
-r10-golden-qa-hardening-2026-09-02
+AUTOMATED VERIFICATION
+- Full pytest: 235 passed, 3 skipped, 7 subtests passed.
+- Existing Ask behavior harness: 81 passed, 0 failed.
+- Browser tests use real headless Chromium via Playwright.
 
-VERIFICATION
-- Full backend/integration: 224 passed, 3 skipped, 7 subtests passed
-- Ask behavior harness: 81 passed, 0 failed
-- Frontend integration contracts + golden scenarios: 51 passed
+IMPORTANT ABOUT EXISTING DUPLICATES
+The prevention logic stops new exact duplicate facts / no-op Reviews, but it does not silently delete already-created Current State records because that could damage provenance.
+After deploying R11, use Project Settings -> Reset demo data once if you want a pristine curated Northstar baseline. That reset removes QA-created duplicate/demo activity and restores the canonical interactive scenario with open Reviews, blockers, Questions, Notes/Evidence, Rules, and History.
 
 DEPLOYMENT
-Render/backend:
-- api.py
-- ask_provider.py
-- ask_service.py
-- review_service.py
-- seed_demo.py
-- tests should be committed with source
-
 Vercel/frontend:
-- index.html
-- context-api.js
-- context-ask.js
-- context-app.js
-- context-tool.css
+- implementation-context-prototype/index.html
+- implementation-context-prototype/context-app.js
+- implementation-context-prototype/context-tool.css
 
-Both Render and Vercel need updating.
+Render/backend:
+- state-project-complete/api.py
+- state-project-complete/interpretation_pipeline_integrated.py
+
+Commit the test files too:
+- test_ask_golden_scenarios.py
+- test_browser_user_flows.py
+- test_real_user_workflow_matrix.py
+- test_frontend_integration_contract.py
+
+Both Vercel and Render need updating.

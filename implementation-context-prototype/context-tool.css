@@ -649,3 +649,11 @@ body.v88-dark .workspace-attention{background:#1d1d1f;border-color:#343438}body.
 .ask-followup-answer .ask-answer-head{margin-top:0}
 .demo-reset-zone{margin-top:24px;padding-top:18px;border-top:1px solid var(--line)}.demo-reset-zone p{font-size:12px;color:var(--muted);max-width:620px}.danger-light{color:#8c302a!important;border-color:#d8b4b1!important}
 @media(max-width:760px){.overlay{padding-top:max(16px,env(safe-area-inset-top))!important}.dialog{max-height:calc(100dvh - 32px)!important}}
+
+
+/* R11 browser-stability polish */
+.ask-session-row{border-bottom:0!important;padding-bottom:18px!important}
+.unboxed-ask .ask-session-row+.answer-stage{margin-top:0!important}
+/* Critical geometry is also in index.html; these are the stylesheet equivalents. */
+#overlay{z-index:2147483000!important;inset:0!important}
+body.modal-open .topbar,body.modal-open .prototype-productbar{z-index:0!important}

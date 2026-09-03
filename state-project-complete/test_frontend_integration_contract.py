@@ -361,7 +361,7 @@ def test_r10_modal_overlay_sits_above_portfolio_header_and_resets_scroll():
 
 def test_r10_ask_draft_is_captured_before_overview_rerender():
     app = (FRONTEND / "context-app.js").read_text(encoding="utf-8")
-    assert "if(liveAskInput && document.activeElement===liveAskInput) state.askInputDraft=liveAskInput.value;" in app
+    assert "if(liveAskInput) state.askInputDraft=liveAskInput.value;" in app
     assert 'value="${esc(state.askInputDraft||\'\')}"' in app
 
 
@@ -384,7 +384,18 @@ def test_r10_demo_reset_is_available_from_project_settings():
     assert '@app.post("/api/demo/reset")' in backend
 
 
-def test_r10_frontend_assets_use_current_cache_bust_revision():
+def test_r11_frontend_assets_use_current_cache_bust_revision():
     html = (FRONTEND / "index.html").read_text(encoding="utf-8")
-    assert "?v=r10-golden-qa" in html
+    assert "?v=r11-user-e2e" in html
     assert "?v=r9.3.1b" not in html
+
+
+def test_workspace_hydration_does_not_replace_active_ask_input():
+    app = (FRONTEND / "context-app.js").read_text(encoding="utf-8")
+    assert "function renderWorkspaceAttentionOnly()" in app
+    assert "current.replaceWith(next);" in app
+    assert "if(state.view==='overview')" in app
+    assert "if(!state.result)" in app
+    assert "renderWorkspaceAttentionOnly();" in app
+    assert "return;" in app
+    assert "if(liveAskInput) state.askInputDraft=liveAskInput.value;" in app

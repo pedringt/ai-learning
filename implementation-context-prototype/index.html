@@ -19,9 +19,17 @@
       var local = location.protocol === 'file:';
       document.write('<link rel="icon" href="' + (local ? '../favicon.svg' : '/favicon.svg') + '">');
       document.write('<link rel="stylesheet" href="' + (local ? '../site-shell.css' : '/site-shell.css') + '">');
-      document.write('<link rel="stylesheet" href="' + (local ? 'context-tool.css?v=r10-golden-qa' : '/implementation-context-prototype/context-tool.css?v=r10-golden-qa') + '">');
+      document.write('<link rel="stylesheet" href="' + (local ? 'context-tool.css?v=r11-user-e2e' : '/implementation-context-prototype/context-tool.css?v=r11-user-e2e') + '">');
     })();
   </script>
+  <style id="state-critical-modal">
+    /* Critical modal geometry lives inline so portfolio-shell stacking/caching can never clip dialogs. */
+    #overlay{position:fixed!important;inset:0!important;z-index:2147483000!important;display:flex;align-items:flex-start!important;justify-content:center!important;overflow-y:auto!important;box-sizing:border-box!important;padding:max(20px,env(safe-area-inset-top)) 18px max(20px,env(safe-area-inset-bottom))!important;}
+    #overlay[hidden]{display:none!important;}
+    #overlay>.dialog{position:relative!important;margin:0 auto!important;width:min(620px,100%)!important;max-height:calc(100dvh - 40px)!important;overflow:auto!important;overscroll-behavior:contain!important;}
+    body.modal-open .topbar,body.modal-open .prototype-productbar{z-index:0!important;}
+    @media(max-width:760px){#overlay{padding:max(14px,env(safe-area-inset-top)) 12px max(14px,env(safe-area-inset-bottom))!important;}#overlay>.dialog{max-height:calc(100dvh - 28px)!important;}}
+  </style>
 </head>
 <body>
   <div class="topbar"><div class="topinner"><a class="brand-button" href="../index.html"><span class="brand">AI <span>Learning Portfolio</span></span></a><nav aria-label="Primary pages" class="nav"><a href="../index.html">Home</a><a aria-current="page" href="../index.html#portfolio">Applied Work</a><a href="../index.html#learn">Learning Guide</a></nav><div class="top-actions"><button aria-label="Switch to dark mode" aria-pressed="false" class="theme-toggle" id="v922ThemeToggle" title="Switch to dark mode" type="button">☾</button><select aria-label="Choose page" id="v922MobileNav"><option value="../index.html">Home</option><option selected value="../index.html#portfolio">Applied Work</option><option value="../index.html#learn">Learning Guide</option></select></div></div></div>
@@ -69,9 +77,9 @@
       var local = location.protocol === 'file:';
       document.write('<script src="' + (local ? '../site-shell.js' : '/site-shell.js') + '"><\/script>');
       document.write('<script src="' + (local ? 'context-data.js' : '/implementation-context-prototype/context-data.js') + '"><\/script>');
-      document.write('<script src="' + (local ? 'context-api.js?v=r10-golden-qa' : '/implementation-context-prototype/context-api.js?v=r10-golden-qa') + '"><\/script>');
-      document.write('<script src="' + (local ? 'context-ask.js?v=r10-golden-qa' : '/implementation-context-prototype/context-ask.js?v=r10-golden-qa') + '"><\/script>');
-      document.write('<script src="' + (local ? 'context-app.js?v=r10-golden-qa' : '/implementation-context-prototype/context-app.js?v=r10-golden-qa') + '"><\/script>');
+      document.write('<script src="' + (local ? 'context-api.js?v=r11-user-e2e' : '/implementation-context-prototype/context-api.js?v=r11-user-e2e') + '"><\/script>');
+      document.write('<script src="' + (local ? 'context-ask.js?v=r11-user-e2e' : '/implementation-context-prototype/context-ask.js?v=r11-user-e2e') + '"><\/script>');
+      document.write('<script src="' + (local ? 'context-app.js?v=r11-user-e2e' : '/implementation-context-prototype/context-app.js?v=r11-user-e2e') + '"><\/script>');
     })();
   </script>
 </body>

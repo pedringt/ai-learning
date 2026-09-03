@@ -24,7 +24,7 @@ from seed_demo import bootstrap_demo_data, reset_demo_data
 from ask_contract import AskRequest
 from ask_provider import LiveAskProvider
 from ask_service import build_ask_preview, finalize_streaming_meeting_ask, prepare_streaming_meeting_ask, run_ask
-STATE_BUILD_REV = "r10-golden-qa-hardening-2026-09-02"
+STATE_BUILD_REV = "r11-user-workflow-e2e-2026-09-02"
 logger = logging.getLogger("state.api")
 
 from review_service import (

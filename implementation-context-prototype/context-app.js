@@ -202,9 +202,20 @@
     const more=Math.max(0,total-items.length);
     return `<section class="workspace-attention"><div class="workspace-attention-head"><div><span class="eyebrow">Needs your attention</span><h3>${total===1?'1 item is waiting on you':`${total} items are waiting on you`}</h3></div><button class="text-button" data-view="open-items">Open Items →</button></div><div class="attention-list">${rows}</div>${more?`<button class="attention-more" data-view="open-items">${more} more in Open Items →</button>`:''}</section>`;
   }
+  function renderWorkspaceAttentionOnly(){
+    if(state.view!=='overview' || state.result) return false;
+    const current=root.querySelector('.workspace-attention');
+    if(!current) return false;
+    const holder=document.createElement('div');
+    holder.innerHTML=workspaceAttentionHtml();
+    const next=holder.firstElementChild;
+    if(!next) return false;
+    current.replaceWith(next);
+    return true;
+  }
   function renderOverview(){
     const liveAskInput=document.getElementById('askInput');
-    if(liveAskInput && document.activeElement===liveAskInput) state.askInputDraft=liveAskInput.value;
+    if(liveAskInput) state.askInputDraft=liveAskInput.value;
     const resultBody = state.result ? (state.result.liveAsk ? (state.result.previousLive?`<div class="ask-previous-answer">${ASK?.render(state.result.previousLive)}</div><div class="ask-followup-answer">${ASK?.render(state.result.liveAsk)}</div>`:ASK?.render(state.result.liveAsk)) : state.result.liveAskStreaming ? `${state.result.previousLive?`<div class="ask-previous-answer">${ASK?.render(state.result.previousLive)}</div><div class="ask-followup-stream">${ASK?.renderStream(state.result.liveAskStreamRaw||'',state.result.liveAskPreview||null)}</div>`:ASK?.renderStream(state.result.liveAskStreamRaw||'',state.result.liveAskPreview||null)}` : state.result.liveAskLoading ? `${state.result.previousLive?`<div class="ask-previous-answer">${ASK?.render(state.result.previousLive)}</div><div class="ask-followup-working">Working on your follow-up…</div>`:liveAskLoadingHtml()}` : state.result.liveAskError ? `${state.result.previousLive?`<div class="ask-previous-answer">${ASK?.render(state.result.previousLive)}</div>`:''}<div class="ask-live-error"><h2>Ask is temporarily unavailable.</h2><p>${esc(state.result.liveAskError)}</p></div>` : state.result.fallback ? fallbackResult() : state.result.intent ? intentAskHtml(state.result.intent) : state.result.structured ? structuredAskHtml(state.result.structured) : scenarioResult(state.result.scenario)) : '';
     root.innerHTML = `<section class="overview pristine">
       <section class="overview-heading"><div class="overview-heading-row"><div><h2>Northstar</h2></div><button class="btn primary overview-add" data-action="add-info">+ Add note</button></div></section>
@@ -1164,7 +1175,24 @@
       }
     }
     for(const [key,result] of Object.entries(byKey)) if(result.status==='rejected') console.warn(`Backend ${key} unavailable:`,result.reason);
-    updateNav(); render();
+    updateNav();
+    // Backend hydration must never replace the Ask DOM while a person is typing.
+    // Workspace attention can update independently; other views may rerender normally.
+    if(state.view==='overview'){
+      if(!state.result){
+        const updated=renderWorkspaceAttentionOnly();
+        if(!updated){
+          const askPanel=root.querySelector('.ask-panel');
+          if(askPanel){
+            const holder=document.createElement('div');
+            holder.innerHTML=workspaceAttentionHtml();
+            if(holder.firstElementChild) askPanel.insertAdjacentElement('afterend',holder.firstElementChild);
+          }
+        }
+      }
+      return;
+    }
+    render();
   }
 
   let analysisClock=null;
