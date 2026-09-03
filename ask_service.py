@@ -7,7 +7,7 @@ import time
 from typing import Any, Iterator, Mapping, Protocol
 
 from ask_contract import AskSelection, AskSynthesis
-from ask_refinement_transforms_v2 import apply_refinement_transform
+from ask_refinement_transforms import apply_refinement_transform
 from review_service import list_evidence, list_history, list_project_rules, list_questions, list_reviews, list_state
 
 
