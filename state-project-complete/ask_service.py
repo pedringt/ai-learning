@@ -15,6 +15,43 @@ class AskProvider(Protocol):
     def run(self, prompt: str) -> Mapping[str, Any]: ...
 
 
+_SELECTION_LIMITS = {
+    "state_ids": 12,
+    "review_ids": 8,
+    "blocking_question_ids": 8,
+    "question_ids": 10,
+    "history_ids": 12,
+    "evidence_ids": 12,
+}
+
+
+def _bounded_selection_raw(selection_raw: Mapping[str, Any] | None) -> dict[str, Any]:
+    """Make provider over-selection recoverable before strict contract validation.
+
+    Structured-output schemas should keep providers within these limits, but this
+    application-side bound prevents a single extra valid ID from turning an
+    otherwise grounded Ask into a retry and 422. Provider order is preserved.
+    """
+    if not isinstance(selection_raw, Mapping):
+        return {}
+    data = dict(selection_raw)
+    for field, limit in _SELECTION_LIMITS.items():
+        values = data.get(field)
+        if not isinstance(values, list):
+            continue
+        bounded: list[str] = []
+        seen: set[str] = set()
+        for value in values:
+            if not isinstance(value, str) or value in seen:
+                continue
+            seen.add(value)
+            bounded.append(value)
+            if len(bounded) >= limit:
+                break
+        data[field] = bounded
+    return data
+
+
 def _compact_candidates(connection: Any) -> dict[str, list[dict]]:
     state = list_state(connection)
     reviews = list_reviews(connection, "open")
@@ -476,7 +513,7 @@ def _finalize_ask_result(
     previous_answer: Mapping[str, Any] | None,
 ) -> dict[str, Any]:
     validation_started = time.perf_counter()
-    selection = _validate_selection(AskSelection.model_validate(selection_raw), candidates)
+    selection = _validate_selection(AskSelection.model_validate(_bounded_selection_raw(selection_raw)), candidates)
     context = _selected_context(selection, candidates)
     answer = apply_refinement_transform(query, _normalize_meeting_prep(_validate_synthesis(AskSynthesis.model_validate(answer_raw), selection, context)))
     validation_ms = round((time.perf_counter() - validation_started) * 1000)
@@ -574,7 +611,7 @@ def run_ask(connection: Any, provider: AskProvider, query: str, previous_answer:
     else:
         # Compatibility path for deterministic test providers while R9.1 lands.
         selection_raw = provider.select(_selector_prompt(query, candidates, previous_answer))
-        selection = _validate_selection(AskSelection.model_validate(selection_raw), candidates)
+        selection = _validate_selection(AskSelection.model_validate(_bounded_selection_raw(selection_raw)), candidates)
         selected = _selected_context(selection, candidates)
         answer_raw = provider.synthesize(_synthesis_prompt(query, selection, selected, previous_answer))
         provider_ms = round((time.perf_counter() - provider_started) * 1000)

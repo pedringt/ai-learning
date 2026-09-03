@@ -58,12 +58,12 @@ SELECTOR_JSON_SCHEMA = {
             "why_or_provenance", "attention_check", "historical", "drafting",
             "general_project_synthesis", "refinement"
         ]},
-        "state_ids": {"type": "array", "items": {"type": "string"}},
-        "review_ids": {"type": "array", "items": {"type": "string"}},
-        "blocking_question_ids": {"type": "array", "items": {"type": "string"}},
-        "question_ids": {"type": "array", "items": {"type": "string"}},
-        "history_ids": {"type": "array", "items": {"type": "string"}},
-        "evidence_ids": {"type": "array", "items": {"type": "string"}},
+        "state_ids": {"type": "array", "items": {"type": "string"}, "maxItems": 12},
+        "review_ids": {"type": "array", "items": {"type": "string"}, "maxItems": 8},
+        "blocking_question_ids": {"type": "array", "items": {"type": "string"}, "maxItems": 8},
+        "question_ids": {"type": "array", "items": {"type": "string"}, "maxItems": 10},
+        "history_ids": {"type": "array", "items": {"type": "string"}, "maxItems": 12},
+        "evidence_ids": {"type": "array", "items": {"type": "string"}, "maxItems": 12},
     },
 }
 
