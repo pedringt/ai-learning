@@ -98,7 +98,10 @@
     deleteRule: ruleId => request(`/api/rules/${encodeURIComponent(ruleId)}`, {method: 'DELETE'}),
     resetDemo: () => request('/api/demo/reset', {method:'POST'}),
     askPreview: query => jsonPost('/api/ask/preview', {query}),
-    askStream,
+    // Native structured-output streaming currently exposes token-split whitespace
+    // artifacts in visible Ask text. Keep the validated one-call non-stream path
+    // for the manager-facing prototype until the stream renderer is safe again.
+    askStream: null,
     ask: (query, previousAnswer = null) => jsonPost('/api/ask', {query, ...(previousAnswer ? {previous_answer: previousAnswer} : {})}),
   });
 })();
