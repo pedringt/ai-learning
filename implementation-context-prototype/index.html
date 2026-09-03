@@ -19,7 +19,7 @@
       var local = location.protocol === 'file:';
       document.write('<link rel="icon" href="' + (local ? '../favicon.svg' : '/favicon.svg') + '">');
       document.write('<link rel="stylesheet" href="' + (local ? '../site-shell.css' : '/site-shell.css') + '">');
-      document.write('<link rel="stylesheet" href="' + (local ? 'context-tool.css?v=r21-final-polish' : '/implementation-context-prototype/context-tool.css?v=r21-final-polish') + '">');
+      document.write('<link rel="stylesheet" href="' + (local ? 'context-tool.css?v=r22-ui-source-fix' : '/implementation-context-prototype/context-tool.css?v=r22-ui-source-fix') + '">');
     })();
   </script>
   <style id="state-critical-modal">
@@ -28,6 +28,17 @@
     #overlay[hidden]{display:none!important;}
     #overlay>.dialog{position:relative!important;margin:0 auto!important;width:min(620px,100%)!important;max-height:calc(100dvh - 40px)!important;overflow:auto!important;overscroll-behavior:contain!important;}
     body.modal-open .topbar,body.modal-open .prototype-productbar{z-index:0!important;}
+    /* Ask result rows use whitespace rather than horizontal rules. Keep this inline
+       so a stale or more-specific stylesheet cannot put dividers through metadata. */
+    .ask-live-answer .ask-answer-item,
+    .ask-live-answer .ask-answer-item>div,
+    .ask-live-answer .ask-answer-item .ask-item-detail{
+      border-top:0!important;border-bottom:0!important;box-shadow:none!important;
+    }
+    .ask-live-answer .ask-answer-item::before,
+    .ask-live-answer .ask-answer-item::after{
+      border:0!important;box-shadow:none!important;
+    }
     @media(max-width:760px){#overlay{padding:max(14px,env(safe-area-inset-top)) 12px max(14px,env(safe-area-inset-bottom))!important;}#overlay>.dialog{max-height:calc(100dvh - 28px)!important;}}
   </style>
 </head>
@@ -77,11 +88,11 @@
     (function(){
       var local = location.protocol === 'file:';
       document.write('<script src="' + (local ? '../site-shell.js' : '/site-shell.js') + '"><\/script>');
-      document.write('<script src="' + (local ? 'context-data.js?v=r21-final-polish' : '/implementation-context-prototype/context-data.js?v=r21-final-polish') + '"><\/script>');
-      document.write('<script src="' + (local ? 'context-api.js?v=r21-final-polish' : '/implementation-context-prototype/context-api.js?v=r21-final-polish') + '"><\/script>');
-      document.write('<script src="' + (local ? 'context-ask.js?v=r21-final-polish' : '/implementation-context-prototype/context-ask.js?v=r21-final-polish') + '"><\/script>');
-      document.write('<script src="' + (local ? 'context-app.js?v=r21-final-polish' : '/implementation-context-prototype/context-app.js?v=r21-final-polish') + '"><\/script>');
-      document.write('<script src="' + (local ? 'final-polish.js?v=r21-final-polish' : '/implementation-context-prototype/final-polish.js?v=r21-final-polish') + '"><\/script>');
+      document.write('<script src="' + (local ? 'context-data.js?v=r22-ui-source-fix' : '/implementation-context-prototype/context-data.js?v=r22-ui-source-fix') + '"><\/script>');
+      document.write('<script src="' + (local ? 'context-api.js?v=r22-ui-source-fix' : '/implementation-context-prototype/context-api.js?v=r22-ui-source-fix') + '"><\/script>');
+      document.write('<script src="' + (local ? 'context-ask.js?v=r22-ui-source-fix' : '/implementation-context-prototype/context-ask.js?v=r22-ui-source-fix') + '"><\/script>');
+      document.write('<script src="' + (local ? 'context-app.js?v=r22-ui-source-fix' : '/implementation-context-prototype/context-app.js?v=r22-ui-source-fix') + '"><\/script>');
+      document.write('<script src="' + (local ? 'final-polish.js?v=r22-ui-source-fix' : '/implementation-context-prototype/final-polish.js?v=r22-ui-source-fix') + '"><\/script>');
     })();
   </script>
 </body>
