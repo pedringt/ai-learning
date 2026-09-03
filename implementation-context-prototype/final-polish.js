@@ -78,6 +78,16 @@
       .ask-followup-working{
         min-height:1.55em;
       }
+      .ask-followup-working{
+        margin:2px 0 14px!important;
+        padding:10px 12px!important;
+        border:1px solid var(--line)!important;
+        border-radius:8px!important;
+        background:var(--surface2)!important;
+        color:var(--muted)!important;
+        font-size:.92rem!important;
+        line-height:1.45!important;
+      }
     `;
   }
 
@@ -99,7 +109,18 @@
     loadingTimers.set(node, timer);
   }
 
+  function positionRefinementLoading(){
+    document.querySelectorAll('.answer-content').forEach(container => {
+      const working = container.querySelector('.ask-followup-working');
+      const previous = container.querySelector('.ask-previous-answer');
+      if(working && previous && working.nextElementSibling !== previous){
+        container.insertBefore(working, previous);
+      }
+    });
+  }
+
   function enhanceLoadingStates(){
+    positionRefinementLoading();
     document.querySelectorAll('.ask-live-loading').forEach(node => {
       const target = node.querySelector('p');
       startRotatingStatus(node, target, INITIAL_WAIT_MESSAGES, LONG_WAIT_MESSAGES);
