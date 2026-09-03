@@ -1,26 +1,23 @@
-State R9.4 — Ask speed: deterministic meeting-prep selection
+State R9.4.1 — Ask fast-path reliability hotfix
 
-What changed
-- Explicit meeting-prep requests now use deterministic, authority-aware record selection in software.
-- The model receives only the selected validated context and only has to synthesize the answer.
-- This remains one provider call; it does NOT reintroduce the old two-model-call pipeline.
-- General Ask requests continue using the existing one-call model selection+synthesis path.
-- Fast meeting-prep synthesis is capped at 1000 output tokens.
-- /health build revision is r9.4-ask-fast-meeting-path-2026-09-02.
+Why
+- The R9.4 deterministic meeting-prep fast path could surface
+  "Ask could not produce a valid grounded answer" if the provider's structured
+  synthesis response was truncated/invalid.
 
-Measured locally on the seeded security-meeting case
-- Previous one-call prompt: about 18.6k characters.
-- Fast synthesis prompt: under 65% of the previous prompt in regression coverage.
-- Selection still preserves relevant Reviews, true blocking Questions, linked State, and evidence.
-- Demo-copy noise remains excluded.
+Fix
+- Raises fast meeting-prep synthesis budget from 1000 to 1300 tokens.
+- Pre-validates the fast structured response.
+- If the fast response is invalid/truncated, automatically falls back to the
+  proven one-call Ask path instead of returning a user-visible grounding error.
+- The fallback only runs on a failed fast response; normal successful meeting
+  prep remains one provider call.
 
 Verification
-- Backend/integration: 198 passed, 3 skipped, 7 subtests passed.
+- Backend/integration: 199 passed, 3 skipped, 7 subtests passed.
 - Frontend Ask behavior: 81 passed, 0 failed.
-- Targeted API/Ask tests: 25 passed.
+- Added regression coverage for malformed fast-path output.
 
 Deployment
-- Upload files preserving paths.
-- Render MUST redeploy because this changes backend Python.
-- After deploy, confirm /health reports r9.4-ask-fast-meeting-path-2026-09-02.
-- Then run "Prep me for the security meeting" and capture the "Ask timing" log line.
+- Upload these files preserving paths.
+- Render must redeploy.

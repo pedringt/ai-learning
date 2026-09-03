@@ -363,10 +363,25 @@ def run_ask(connection: Any, provider: AskProvider, query: str, previous_answer:
     if _is_explicit_meeting_prep(query) and hasattr(provider, "synthesize_selected"):
         selection = _validate_selection(_deterministic_meeting_selection(candidates), candidates)
         selected = _selected_context(selection, candidates)
-        answer_raw = provider.synthesize_selected(_synthesis_prompt(query, selection, selected, previous_answer))
+        try:
+            answer_raw = provider.synthesize_selected(_synthesis_prompt(query, selection, selected, previous_answer))
+            # Preflight the fast response before committing to the fast path.
+            # Truncated/invalid structured output should degrade to the proven
+            # one-call route rather than become a user-visible 422.
+            fast_answer = AskSynthesis.model_validate(answer_raw)
+            if fast_answer.job != "meeting_prep":
+                fast_answer.job = "meeting_prep"
+            answer_raw = fast_answer.model_dump()
+            selection_raw = selection.model_dump()
+            pipeline = "deterministic_select_one_call"
+        except (ValueError, TypeError):
+            if not hasattr(provider, "run"):
+                raise
+            combined = provider.run(_one_call_prompt(query, candidates, previous_answer))
+            selection_raw = combined.get("selection")
+            answer_raw = combined.get("answer")
+            pipeline = "fast_path_fallback_one_call"
         provider_ms = round((time.perf_counter() - provider_started) * 1000)
-        selection_raw = selection.model_dump()
-        pipeline = "deterministic_select_one_call"
     elif hasattr(provider, "run"):
         combined = provider.run(_one_call_prompt(query, candidates, previous_answer))
         provider_ms = round((time.perf_counter() - provider_started) * 1000)

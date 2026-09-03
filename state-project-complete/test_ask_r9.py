@@ -320,3 +320,24 @@ def test_r94_general_ask_keeps_model_selection_path(tmp_path):
         assert len(provider.calls) == 1
     finally:
         conn.close()
+
+class FakeInvalidFastMeetingProvider(FakeFastMeetingProvider):
+    def synthesize_selected(self, prompt):
+        self.fast_prompts.append(prompt)
+        # Simulates truncated/malformed structured output that cannot satisfy
+        # the Ask answer contract.
+        return {"job": "meeting_prep", "headline": "Incomplete"}
+
+
+def test_r94_invalid_fast_answer_falls_back_to_proven_one_call_path(tmp_path):
+    conn = seeded_connection(tmp_path)
+    provider = FakeInvalidFastMeetingProvider()
+    try:
+        result = run_ask(conn, provider, "Prep me for the security meeting.")
+        assert result["timing"]["pipeline"] == "fast_path_fallback_one_call"
+        assert len(provider.fast_prompts) == 1
+        assert len(provider.calls) == 1
+        assert result["answer"]["job"] == "meeting_prep"
+        assert result["answer"]["headline"]
+    finally:
+        conn.close()
