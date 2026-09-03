@@ -570,8 +570,17 @@
               }
             },
           });
+          const answerTop=root.querySelector('.answer-content')?.getBoundingClientRect().top ?? null;
           state.result={liveAsk:payload,previousLive};
           state.refinements=[];
+          renderOverview();
+          if(answerTop!==null){
+            requestAnimationFrame(()=>{
+              const nextTop=root.querySelector('.answer-content')?.getBoundingClientRect().top;
+              if(typeof nextTop==='number') window.scrollBy(0,nextTop-answerTop);
+            });
+          }
+          return;
         }catch(err){
           state.result={liveAskError:err?.message||'State could not produce a grounded answer. Please try again.',previousLive};
         }
