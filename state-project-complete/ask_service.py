@@ -7,6 +7,7 @@ import time
 from typing import Any, Iterator, Mapping, Protocol
 
 from ask_contract import AskSelection, AskSynthesis
+from ask_refinement_transforms import apply_refinement_transform
 from review_service import list_evidence, list_history, list_project_rules, list_questions, list_reviews, list_state
 
 
@@ -139,18 +140,26 @@ def _one_call_prompt(query: str, candidates: Mapping[str, Any], previous_answer:
         refinement_guidance = """
 IMPORTANT: Refinement transformations must be visibly honored:
 - "shorten it" / "make it concise" → Output obviously shorter; target 40-60% of prior content unless dropping would lose critical authority/uncertainty. Keep only the most essential facts.
-- "make this 3 bullets" → Output exactly 3 bullets with distinct facts (fewer only if genuinely fewer than 3 key points exist).
-- "focus only on blockers" → Output only confirmed blockers (Questions where blocking=true). Remove non-blocking background entirely. Preserve the distinction between confirmed blocker vs ordinary uncertainty.
-- "turn it into an agenda" → Output an agenda format (with times/topics/decisions), not prose + an agenda embedded.
-- "make it leadership-ready" → Compress into decision/status/risk framing. No invented facts; only include what actual Evidence establishes.
-- "make it more detailed" → Expand grounded context only. Do not invent detail beyond what records support. Preserve epistemic status exactly.
-- "what source supports that?" (conversational) → Keep prior answer visible as context; append source-focused follow-up without losing prior content.
+- "make this 3 bullets" → Create exactly one section with exactly 3 items in that section (fewer only if genuinely fewer than 3 distinct points exist). Each item must be a key fact. Remove all other sections entirely. This is a structural transformation: the answer goes from prose+sections to a single 3-item list.
+- "focus only on blockers" → Keep only sections and items about confirmed blockers (Questions where blocking=true). Remove all non-blocking background, context, and supporting detail. If no blockers exist in prior answer, output one section explaining why.
+- "turn it into an agenda" → Output a single section titled "Agenda" with 3-5 agenda items (time, topic, decision required). Remove all other sections entirely.
+- "make it leadership-ready" → Compress to exactly 2-3 sections: "Decision needed", "Status", "Risk". No background or context unless critical to a decision. 50% of prior length maximum.
+- "make it more detailed" → Expand grounded content only. Add more context from Evidence but do not invent facts beyond what records support. Keep all prior sections; add detail within them.
+- "what source supports that?" (conversational) → Keep prior answer visible as context; append a new section with source-focused follow-up without losing prior content.
 
-If the user request is a transformation (shorter, bullets, focus, turn into, leadership, detailed), REPLACE the main visible artifact completely.
-If the request is a conversational follow-up (asking about sources, asking clarifying questions), PRESERVE prior answer and append the new content.
+If the user request is a transformation (shorter, bullets, focus, turn into, leadership, detailed), REPLACE the main visible artifact completely with the new structure.
+If the request is a conversational follow-up (asking about sources, asking clarifying questions), PRESERVE prior answer and append the new content in a new section.
 
-A user saying "make this 3 bullets" wants to see exactly 3 bullets where the prior prose was. They do NOT want to see the prose plus 3 bullets.
-A user saying "what source supports X?" wants to see the prior answer plus new source analysis appended.
+CRITICAL: "make this 3 bullets" transformation rules:
+- Output ONLY one section. No intro paragraph. No other sections.
+- Output ONLY 3 items in that section. Exactly 3.
+- Each item is a key fact from the prior answer, as a single bullet.
+- Remove all other structure, all explanatory text, all groupings.
+- Example of WRONG output: "Summary [intro text]. Blocking decisions required [section title]. - Item 1 - Item 2 Proposed refinements [section title]. - Item 3" (this has multiple sections and intro)
+- Example of RIGHT output: "- Key fact 1 from prior answer - Key fact 2 from prior answer - Key fact 3 from prior answer" (this is ONLY the 3 bullets, nothing else)
+- When a prior answer has many sections (blockers, refinements, checkpoints, etc.), select 3 of the most important points across ALL sections and output only those 3 as bullets.
+
+CRITICAL: Append mode (conversational) means: include the full prior answer as-is PLUS a new section with the follow-up analysis. Do not merge or summarize the prior answer.
 """
     
     return f"""You are State Ask. In one response, first select the project records relevant to the request, then synthesize the grounded answer from only those selected records.
@@ -193,7 +202,14 @@ Authority rules:
 - History is accepted past change. Evidence is what was said/observed and cannot silently override Current State.
 - Project Rules constrain interpretation.
 - Optimize for relevance, not completeness. Omit tempting recent noise.
-- For refinement requests (shorten, make bullets, focus, transform format), select records that support the transformed answer, not the prior one. A "focus only on blockers" request requires selecting only Questions where blocking=true.
+- For refinement requests, select records for the TRANSFORMED answer, not the prior one:
+  - "shorten it": select only the most essential records (top 30% by importance)
+  - "make this 3 bullets": select exactly 3 key facts worth a bullet point each
+  - "focus only on blockers": select ONLY Questions where blocking=true and their linked Reviews
+  - "turn into agenda": select records that form agenda topics (decisions, timeline, risks)
+  - "make it leadership-ready": select only decision/status/risk-relevant records
+  - "more detailed": select all supporting records to expand context
+  - "what source supports X?" (conversational): select additional source evidence to append
 
 Job choices: current_fact, meeting_prep, catch_up, project_update, why_or_provenance, attention_check, historical, drafting, general_project_synthesis, refinement.
 
@@ -259,16 +275,17 @@ def _synthesis_prompt(query: str, selection: AskSelection, context: Mapping[str,
         refinement_guidance = """
 
 REFINEMENT TRANSFORMATION RULES:
-- "shorten it" / "make it concise" / "brief" → Output obviously shorter; target 40-60% of prior content unless dropping would lose critical authority/uncertainty.
-- "make this 3 bullets" → Output exactly 3 bullets with distinct facts (fewer only if genuinely fewer than 3 essential points exist).
-- "focus only on blockers" → Output ONLY confirmed blockers (Questions where blocking=true). Remove non-blocking background. Preserve blocker vs ordinary-uncertainty distinction.
-- "turn it into an agenda" → Output agenda format (with times/topics/decisions), not prose-plus-agenda.
-- "make it leadership-ready" → Compress into decision/status/risk framing without inventing facts.
-- "make it more detailed" → Expand grounded context only; do not invent beyond what records support.
-- "what source supports X?" (conversational) → Keep prior answer visible; append source-focused follow-up.
+- "shorten it" / "make it concise" → Output obviously shorter; target 40-60% of prior content unless dropping would lose critical authority/uncertainty.
+- "make this 3 bullets" → Output ONLY one section with ONLY 3 items. No intro text. No other sections. Each item is a single key fact. Remove ALL other structure. When prior answer has many sections (blockers, refinements, checkpoints, etc.), extract 3 key points across all of them and output only those 3 as bullets. Example WRONG: "Summary [intro]. Blocking decisions [section]. - Item 1 - Item 2 Refinements [section]. - Item 3". Example RIGHT: "- Key fact 1 - Key fact 2 - Key fact 3".
+- "focus only on blockers" → Keep only sections and items about confirmed blockers (Questions where blocking=true). Remove all non-blocking background and context. Output only blocked items.
+- "turn it into an agenda" → Output one section titled "Agenda" with 3-5 agenda items. Remove all other sections. Include times, topics, and decisions required.
+- "make it leadership-ready" → Output exactly 2-3 sections: "Decision needed", "Status", "Risk". No background. Compress to 50% or less of prior length.
+- "make it more detailed" → Expand within existing sections. Add supporting context from Evidence but do not invent facts. Keep all prior sections; make them deeper.
+- "what source supports X?" (conversational) → Keep prior answer visible in full. Append a new section with source-focused follow-up analysis.
 
-Transformation = replace main artifact. Follow-up = append to prior answer.
-User requesting "make this 3 bullets" does NOT want prose plus bullets; they want ONLY 3 bullets.
+Transformation (shorter, bullets, focus, turn into, leadership, detailed) = replace main artifact completely.
+Follow-up (questions, asking about sources) = append new section to prior answer, keeping it intact.
+CRITICAL: Append mode means output the full prior answer followed by new content in a separate section. Do not merge or summarize the prior answer.
 """
     
     return f"""You synthesize State Ask answers from authority-labeled project records.
@@ -463,7 +480,7 @@ def _finalize_ask_result(
     validation_started = time.perf_counter()
     selection = _validate_selection(AskSelection.model_validate(selection_raw), candidates)
     context = _selected_context(selection, candidates)
-    answer = _normalize_meeting_prep(_validate_synthesis(AskSynthesis.model_validate(answer_raw), selection, context))
+    answer = apply_refinement_transform(query, _normalize_meeting_prep(_validate_synthesis(AskSynthesis.model_validate(answer_raw), selection, context)))
     validation_ms = round((time.perf_counter() - validation_started) * 1000)
 
     selected_open = set(selection.review_ids + selection.blocking_question_ids + selection.question_ids)
