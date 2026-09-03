@@ -729,3 +729,14 @@ body.v88-dark .current-direction-list span{color:#e3dfe8}
 body.v88-dark .project-outline{background:#17151d!important;border-color:var(--line)!important}
 @media(max-width:760px){.ask-answer-head{align-items:flex-start!important}.ask-answer-actions{justify-content:flex-start}.ask-answer-actions .btn{width:auto!important}.project-outline{padding:0 18px 8px!important;border-radius:12px!important}}
 @media(max-width:430px){.ask-answer-actions{width:100%}.ask-answer-actions .btn{flex:1 1 auto!important}.project-outline{padding:0 14px 6px!important}}
+/* Fix 1: Dark mode result-lede contrast */
+body.v88-dark .result-lede{color:#d9d5e0!important}
+
+/* Fix 2: Reduce streaming visual lines opacity */
+.ask-stream-item,.ask-stream-detail{border-bottom-color:color-mix(in srgb,var(--line) 35%,transparent)!important}
+
+/* Fix 3: Make both refinement buttons identical */
+.unboxed-ask .inline-actions .btn,.ask-live-answer .inline-actions .btn{border:1px solid var(--line)!important;background:var(--surface)!important;color:var(--ink)!important;font-weight:800!important;padding:10px 14px!important;border-radius:9px!important}
+
+/* Fix 4: Mobile link wrapping for IN STATE actions */
+@media(max-width:760px){.inline-actions{flex-wrap:wrap;gap:6px}}

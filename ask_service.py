@@ -7,6 +7,7 @@ import time
 from typing import Any, Iterator, Mapping, Protocol
 
 from ask_contract import AskSelection, AskSynthesis
+from ask_refinement_transforms_v2 import apply_refinement_transform
 from review_service import list_evidence, list_history, list_project_rules, list_questions, list_reviews, list_state
 
 
@@ -149,7 +150,15 @@ IMPORTANT: Refinement transformations must be visibly honored:
 If the user request is a transformation (shorter, bullets, focus, turn into, leadership, detailed), REPLACE the main visible artifact completely with the new structure.
 If the request is a conversational follow-up (asking about sources, asking clarifying questions), PRESERVE prior answer and append the new content in a new section.
 
-CRITICAL: "make this 3 bullets" means: take the key points from the prior answer, extract exactly 3 of them as distinct items, and output a single section containing exactly those 3 items. The prior prose, prior sections, and prior structure are removed. The user does NOT want the original prose plus 3 bullets.
+CRITICAL: "make this 3 bullets" transformation rules:
+- Output ONLY one section. No intro paragraph. No other sections.
+- Output ONLY 3 items in that section. Exactly 3.
+- Each item is a key fact from the prior answer, as a single bullet.
+- Remove all other structure, all explanatory text, all groupings.
+- Example of WRONG output: "Summary [intro text]. Blocking decisions required [section title]. - Item 1 - Item 2 Proposed refinements [section title]. - Item 3" (this has multiple sections and intro)
+- Example of RIGHT output: "- Key fact 1 from prior answer - Key fact 2 from prior answer - Key fact 3 from prior answer" (this is ONLY the 3 bullets, nothing else)
+- When a prior answer has many sections (blockers, refinements, checkpoints, etc.), select 3 of the most important points across ALL sections and output only those 3 as bullets.
+
 CRITICAL: Append mode (conversational) means: include the full prior answer as-is PLUS a new section with the follow-up analysis. Do not merge or summarize the prior answer.
 """
     
@@ -267,7 +276,7 @@ def _synthesis_prompt(query: str, selection: AskSelection, context: Mapping[str,
 
 REFINEMENT TRANSFORMATION RULES:
 - "shorten it" / "make it concise" → Output obviously shorter; target 40-60% of prior content unless dropping would lose critical authority/uncertainty.
-- "make this 3 bullets" → Create exactly one section with exactly 3 items (fewer only if genuinely fewer than 3 distinct points). Each item is a key fact. Remove all other sections entirely. User does NOT want prose plus bullets; they want ONLY 3 bullets restructured as items.
+- "make this 3 bullets" → Output ONLY one section with ONLY 3 items. No intro text. No other sections. Each item is a single key fact. Remove ALL other structure. When prior answer has many sections (blockers, refinements, checkpoints, etc.), extract 3 key points across all of them and output only those 3 as bullets. Example WRONG: "Summary [intro]. Blocking decisions [section]. - Item 1 - Item 2 Refinements [section]. - Item 3". Example RIGHT: "- Key fact 1 - Key fact 2 - Key fact 3".
 - "focus only on blockers" → Keep only sections and items about confirmed blockers (Questions where blocking=true). Remove all non-blocking background and context. Output only blocked items.
 - "turn it into an agenda" → Output one section titled "Agenda" with 3-5 agenda items. Remove all other sections. Include times, topics, and decisions required.
 - "make it leadership-ready" → Output exactly 2-3 sections: "Decision needed", "Status", "Risk". No background. Compress to 50% or less of prior length.
@@ -471,7 +480,7 @@ def _finalize_ask_result(
     validation_started = time.perf_counter()
     selection = _validate_selection(AskSelection.model_validate(selection_raw), candidates)
     context = _selected_context(selection, candidates)
-    answer = _normalize_meeting_prep(_validate_synthesis(AskSynthesis.model_validate(answer_raw), selection, context))
+    answer = apply_refinement_transform(query, _normalize_meeting_prep(_validate_synthesis(AskSynthesis.model_validate(answer_raw), selection, context)))
     validation_ms = round((time.perf_counter() - validation_started) * 1000)
 
     selected_open = set(selection.review_ids + selection.blocking_question_ids + selection.question_ids)
