@@ -8,6 +8,14 @@ from typing import Any, Iterator, Mapping
 from ask_contract import ANSWER_JSON_SCHEMA, ONE_CALL_ASK_JSON_SCHEMA, SELECTOR_JSON_SCHEMA
 
 
+# Ask returns both a grounded selection and a user-facing answer in one structured
+# response. 1500 tokens proved too tight in production: otherwise-valid responses
+# were being cut off around 5.5-5.8k JSON characters, causing the streaming path to
+# fail and the browser to pay for a second non-streaming request. Keep enough
+# headroom to finish the JSON; the application still caps visible sections/items.
+ASK_ONE_CALL_MAX_TOKENS = 2600
+
+
 def _parse_json(text: str) -> Mapping[str, Any]:
     try:
         return json.loads(text)
@@ -28,15 +36,14 @@ class LiveAskProvider:
 
     def run(self, prompt: str) -> Mapping[str, Any]:
         """Select relevant context and synthesize in one provider round-trip."""
-        return self._call(prompt, ONE_CALL_ASK_JSON_SCHEMA, max_tokens=1500)
-
+        return self._call(prompt, ONE_CALL_ASK_JSON_SCHEMA, max_tokens=ASK_ONE_CALL_MAX_TOKENS)
 
     def stream(self, prompt: str) -> Iterator[str]:
         """Stream the one-call Ask JSON text as the model generates it."""
         if self.name == "anthropic":
             with self.provider.client.messages.stream(
                 model=self.model_identifier,
-                max_tokens=1500,
+                max_tokens=ASK_ONE_CALL_MAX_TOKENS,
                 output_config={"format": {"type": "json_schema", "schema": ONE_CALL_ASK_JSON_SCHEMA}},
                 messages=[{"role": "user", "content": prompt}],
             ) as stream:
@@ -47,7 +54,7 @@ class LiveAskProvider:
         if self.name == "openai":
             response = self.provider.client.chat.completions.create(
                 model=self.model_identifier,
-                max_tokens=1500,
+                max_tokens=ASK_ONE_CALL_MAX_TOKENS,
                 messages=[{"role": "user", "content": prompt + "\nReturn JSON only."}],
                 stream=True,
             )
