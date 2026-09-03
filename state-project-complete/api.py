@@ -23,7 +23,7 @@ from seed_demo import bootstrap_demo_data, reset_demo_data
 from ask_contract import AskRequest
 from ask_provider import LiveAskProvider
 from ask_service import run_ask
-STATE_BUILD_REV = "r9.4-release-experience-2026-09-03"
+STATE_BUILD_REV = "r9.5-fast-attention-2026-09-03"
 logger = logging.getLogger("state.api")
 
 from review_service import (
@@ -267,6 +267,15 @@ def create_app(settings: Settings | None = None, provider: InterpretationProvide
                 "questions": list_questions(connection, "open"),
                 "rules": list_project_rules(connection),
                 "drafts": list_draft_notes(connection),
+            }
+
+    @app.get("/api/attention")
+    def get_attention() -> dict:
+        """Load only the action items needed for the first Workspace view."""
+        with get_connection() as connection:
+            return {
+                "open_reviews": list_reviews(connection, "open"),
+                "questions": list_questions(connection, "open"),
             }
 
     @app.post("/api/demo/reset")

@@ -238,7 +238,7 @@
   }
   function workspaceAttentionHtml(){
     if(API && state.workspaceAttentionStatus==='loading'){
-      return `<section class="workspace-attention is-loading" aria-busy="true"><div class="workspace-attention-head"><div><span class="eyebrow">Needs your attention</span><h3>Checking what needs you</h3></div></div><div class="attention-placeholder"><span></span><span></span></div></section>`;
+      return `<section class="workspace-attention is-loading" aria-busy="true"><div class="workspace-attention-head"><div><span class="eyebrow">Needs your attention</span><h3>Opening action items…</h3></div></div></section>`;
     }
     if(API && state.workspaceAttentionStatus==='error'){
       return `<section class="workspace-attention is-clear"><div class="workspace-attention-head"><div><span class="eyebrow">Needs your attention</span><h3>Attention items could not be loaded</h3><p>Ask still works; try Open Items again in a moment.</p></div><button class="text-button" data-action="retry-hydration">Try again →</button></div></section>`;
@@ -1246,6 +1246,24 @@
     if(loadStatus){loadStatus.textContent='Opening Northstar…';loadStatus.hidden=false;}
     state.workspaceAttentionStatus='loading';
     renderWorkspaceAttentionOnly();
+    // Load the first action layer separately while the rest of the project opens.
+    API.getAttention().then(payload=>{
+      syncApiQuestions(payload.questions||[]);
+      replaceBackendOpenReviews(payload.open_reviews||[]);
+      for(const raw of (payload.open_reviews||[])){
+        const note=state.data.notes.find(n=>n.evidenceId===raw.evidence_id);
+        const mapped=mapApiReview(raw,raw.evidence_content||'');
+        mapped.evidenceId=note?.id||`api-note-${raw.evidence_id}`;
+        upsertBackendReview(mapped);
+      }
+      state.backendStatus.reviews='loaded';
+      state.backendStatus.questions='loaded';
+      state.workspaceAttentionStatus='loaded';
+      updateNav();
+      renderWorkspaceAttentionOnly();
+    }).catch(attentionError=>{
+      console.warn('Fast attention load unavailable; full Workspace load will continue.',attentionError);
+    });
     const keys=['state','evidence','open','resolved','history','questions','rules','drafts'];
     let byKey;
     try{

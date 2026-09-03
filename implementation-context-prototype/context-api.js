@@ -71,6 +71,7 @@
 
   window.STATE_API = Object.freeze({
     base,
+    getAttention: () => request('/api/attention'),
     getBootstrap: () => request('/api/bootstrap'),
     getState: () => request('/api/state'),
     getEvidence: () => request('/api/evidence'),

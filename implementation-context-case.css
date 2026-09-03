@@ -221,6 +221,21 @@
 .tradeoff-line{max-width:900px;font-size:17px!important;line-height:1.55!important}
 @media(max-width:760px){.decision-receipts .qa-receipt{grid-column:auto}.hero-tldr{font-size:13.5px!important}}
 
+/* Final State story pass: show the product model and iteration without turning the page into a feature inventory. */
+.state-model-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0;max-width:1000px;margin:24px 0;border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
+.state-model-grid article{padding:18px 20px 18px 0}
+.state-model-grid article:nth-child(3n+2),.state-model-grid article:nth-child(3n+3){padding-left:20px;border-left:1px solid var(--border)}
+.state-model-grid article:nth-child(n+4){border-top:1px solid var(--border)}
+.state-model-grid span,.learning-stories span{display:block;margin-bottom:7px;color:var(--purple);font-size:10px;font-weight:900;letter-spacing:.08em;text-transform:uppercase}
+.state-model-grid strong{display:block;font-size:15px;line-height:1.4}
+.state-model-grid p{margin:6px 0 0!important;color:var(--muted);font-size:12.8px!important;line-height:1.55!important}
+.learning-stories{max-width:940px;margin:22px 0}
+.learning-stories article{padding:20px 0;border-top:1px solid var(--border)}
+.learning-stories article:last-child{border-bottom:1px solid var(--border)}
+.learning-stories strong{display:block;max-width:760px;font-size:17px;line-height:1.4}
+.learning-stories p{max-width:860px!important;margin:7px 0 0!important;color:var(--muted);font-size:14px!important;line-height:1.65!important}
+@media(max-width:760px){.state-model-grid{grid-template-columns:1fr}.state-model-grid article,.state-model-grid article:nth-child(3n+2),.state-model-grid article:nth-child(3n+3){padding:16px 0;border-left:0}.state-model-grid article+article{border-top:1px solid var(--border)}}
+
 /* v10 feedback pass: balanced decision grid and light unresolved-tradeoff treatment. */
 .decision-receipts .qa-receipt{grid-column:auto;border-color:var(--border);background:var(--card)}
 .decision-receipts .qa-receipt strong{font-size:15px}

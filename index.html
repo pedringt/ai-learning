@@ -1024,8 +1024,9 @@ body.v88-dark #ai-cs-mock{background:#101014!important;color:#f5f5f7!important;-
   align-items:end!important;
   box-shadow:0 10px 28px rgba(41,31,72,.06)!important;
 }
-.home-state-feature h2{font-size:clamp(2.35rem,5vw,4rem)!important;margin:4px 0 12px!important;letter-spacing:-.045em!important;line-height:.98!important}
-.home-state-copy{min-width:0!important}.home-state-copy p{max-width:780px!important}.home-state-lead{font-size:1.08rem!important;line-height:1.58!important}
+.home-state-feature .home-project-kicker{display:block!important;margin:0 0 9px!important;color:var(--purple)!important;font-size:12px!important;line-height:1.2!important;font-weight:850!important;letter-spacing:.1em!important;text-transform:uppercase!important}
+.home-state-feature h2{font-size:clamp(2.35rem,5vw,3.55rem)!important;margin:0 0 18px!important;letter-spacing:-.045em!important;line-height:1!important}
+.home-state-copy{min-width:0!important}.home-state-copy p{max-width:760px!important}.home-state-lead{margin:0 0 13px!important;font-size:1.1rem!important;line-height:1.58!important;font-weight:550!important}.home-state-copy p:not(.home-state-lead){margin:0!important;color:var(--muted)!important;font-size:.96rem!important;line-height:1.62!important}
 .home-state-actions{display:flex!important;gap:10px!important;flex-wrap:wrap!important;align-items:center!important;justify-content:flex-end!important;min-width:270px!important}
 .home-state-actions a{display:inline-flex!important;align-items:center!important;justify-content:center!important;min-height:46px!important;padding:11px 16px!important;border-radius:11px!important;border:1px solid var(--border)!important;text-decoration:none!important;font-size:14px!important;line-height:1.2!important;font-weight:800!important;white-space:nowrap!important}
 .home-state-actions .home-state-primary{background:var(--purple)!important;color:#fff!important;border-color:var(--purple)!important;min-width:158px!important}
@@ -1049,9 +1050,9 @@ body.v88-dark .learning-how-note strong{color:#f5f2fb!important}
 <section class="view active" data-page="home" id="home">
 <div class="hero"><div class="eyebrow">Independent learning project</div><h1>Building <span>practical AI foundations</span> for real-world work.</h1><p class="lead">Building on my background in custom software project management and QA, I’m learning how to diagnose where AI fits, define what it should and shouldn’t do, evaluate quality and risk, and connect it to workflows, adoption, and business value.</p></div>
 <div class="home-start"><div class="home-applied-heading"><div class="section-kicker"><span>Applied work · start here</span></div></div>
-<article class="home-state-feature"><div class="home-state-copy"><span class="home-project-kicker">Flagship project</span><h2>State</h2><p class="home-state-lead">I built State around a project-context problem I kept running into: how do you preserve what happened while keeping a small, trustworthy view of what the project currently treats as true?</p><p>Building and using it forced decisions about AI authority, deterministic controls, retrieval, review burden, latency, information design, and what “working” means when a model is part of the product.</p></div><div class="home-state-actions"><a class="home-state-primary" href="implementation-context.html">Read case study →</a><a class="home-state-secondary" href="implementation-context-prototype/index.html">Try State →</a></div></article>
+<article class="home-state-feature"><div class="home-state-copy"><span class="home-project-kicker">Flagship project</span><h2>State</h2><p class="home-state-lead">I built State after repeatedly losing the thread across long AI projects. What began as a context problem became a deeper question: how should a team decide what information to rely on now?</p><p>State preserves incoming notes, separates unresolved information from accepted project understanding, and keeps consequential changes under human review.</p></div><div class="home-state-actions"><a class="home-state-primary" href="implementation-context.html">Read case study →</a><a class="home-state-secondary" href="implementation-context-prototype/index.html">Try State →</a></div></article>
 <a class="home-project-card home-feature-wide home-legal-feature" href="legal-ai-governance.html"><div class="home-feature-wide-text"><span class="home-project-kicker">Opportunity evaluation</span><strong>Legal AI Governance</strong><p>I found evidence of a real governance gap, along with a harder commercial reality: the law firms that need the most help may be the least practical consulting clients to pursue. The work became an exercise in separating a real problem from a viable opportunity.</p></div><span class="home-project-path">Read the evaluation →</span></a>
-<div class="home-all-work"><a data-view-link="portfolio" href="#portfolio">Explore all applied work →</a></div></div>
+</div></div>
 <section aria-label="Continue exploring" class="home-quiet-ending"><span>My working notes, references, and practice library live separately in the <a data-view-link="learn" href="#learn">Learning Guide →</a></span></section>
 </section>
 <section class="view" data-page="learn" id="learn">
@@ -1638,5 +1639,5 @@ window.addEventListener('popstate',()=>render(pageFromHash(),false));
     if(e.key==='Escape')tip.hidden=true;
   });
 })();
-</script></div></body>
+</script><script>(function(){var wake=function(){fetch('https://state-api-6waw.onrender.com/health',{mode:'no-cors',cache:'no-store'}).catch(function(){});};if('requestIdleCallback' in window){requestIdleCallback(wake,{timeout:1800});}else{setTimeout(wake,900);}})();</script></div></body>
 </html>

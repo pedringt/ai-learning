@@ -242,8 +242,17 @@ def test_r861_grounded_ask_module_and_release_assets_are_self_contained():
     ask = (FRONTEND / "context-ask.js").read_text(encoding="utf-8")
     html = (FRONTEND / "index.html").read_text(encoding="utf-8")
     assert "window.STATE_ASK" in ask
-    assert "context-ask.js?v=r16-release-hardening" in html
-    assert "context-app.js?v=r16-release-hardening" in html
+    assert "context-ask.js?v=r18-story-attention" in html
+    assert "context-app.js?v=r18-story-attention" in html
+
+
+def test_r95_workspace_attention_has_a_fast_independent_load_path():
+    api_client = (FRONTEND / "context-api.js").read_text(encoding="utf-8")
+    app = (FRONTEND / "context-app.js").read_text(encoding="utf-8")
+    api_server = (Path(__file__).parent / "api.py").read_text(encoding="utf-8")
+    assert "getAttention: () => request('/api/attention')" in api_client
+    assert "API.getAttention().then" in app
+    assert '@app.get("/api/attention")' in api_server
 
 
 def test_r861_repository_has_one_obvious_deploy_backend():
