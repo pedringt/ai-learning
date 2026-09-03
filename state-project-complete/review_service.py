@@ -198,6 +198,14 @@ def resolve_review(connection: Connection, review_id: str, decision: Decision, n
 def _apply_proposal(connection: Connection, proposal: dict) -> None:
     operation = proposal["operation"] or "update"
     if operation == "create":
+        wanted = " ".join((proposal["proposed_statement"] or "").split()).casefold()
+        existing_rows = connection.execute(
+            "SELECT id, statement FROM current_state_items WHERE status='active'"
+        ).fetchall()
+        if any(" ".join((row["statement"] or "").split()).casefold() == wanted for row in existing_rows):
+            # Defense in depth: even a stale/manual Review cannot create an
+            # exact duplicate of understanding State already maintains.
+            return
         state_id = new_id("state")
         connection.execute(
             "INSERT INTO current_state_items(id, topic, statement, version, effective_date) VALUES (?, ?, ?, 1, ?)",

@@ -271,8 +271,9 @@
     return true;
   }
   function renderOverview(){
-    const liveAskInput=document.getElementById('askInput');
-    if(liveAskInput) state.askInputDraft=liveAskInput.value;
+    // askInputDraft is kept current by the input event handler. Reading the old
+    // DOM value here can resurrect a submitted question while the result view is
+    // replacing the input, which makes a cleared Ask reappear after navigation.
     const resultBody = state.result ? (state.result.liveAsk ? (state.result.previousLive?`<div class="ask-previous-answer">${ASK?.render(state.result.previousLive)}</div><div class="ask-followup-answer">${ASK?.render(state.result.liveAsk)}</div>`:ASK?.render(state.result.liveAsk)) : state.result.liveAskStreaming ? `${state.result.previousLive?`<div class="ask-previous-answer">${ASK?.render(state.result.previousLive)}</div><div class="ask-followup-stream">${ASK?.renderStream(state.result.liveAskStreamRaw||'',state.result.liveAskPreview||null)}</div>`:ASK?.renderStream(state.result.liveAskStreamRaw||'',state.result.liveAskPreview||null)}` : state.result.liveAskLoading ? `${state.result.previousLive?`<div class="ask-previous-answer">${ASK?.render(state.result.previousLive)}</div><div class="ask-followup-working">Working on your follow-up…</div>`:liveAskLoadingHtml()}` : state.result.liveAskError ? `${state.result.previousLive?`<div class="ask-previous-answer">${ASK?.render(state.result.previousLive)}</div>`:''}<div class="ask-live-error"><h2>Ask is temporarily unavailable.</h2><p>${esc(state.result.liveAskError)}</p></div>` : state.result.fallback ? fallbackResult() : state.result.intent ? intentAskHtml(state.result.intent) : state.result.structured ? structuredAskHtml(state.result.structured) : scenarioResult(state.result.scenario)) : '';
     root.innerHTML = `<section class="overview pristine">
       <section class="overview-heading"><div class="overview-heading-row"><div><h2>Northstar</h2></div><button class="btn primary overview-add" data-action="add-info">+ Add note</button></div></section>

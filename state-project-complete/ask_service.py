@@ -213,6 +213,23 @@ Selected validated context:
 Use record IDs on items whenever they correspond to a source record. Suggested refinements should be short actions."""
 
 
+def _clean_visible_ask_text(value: str | None, internal_ids: set[str]) -> str | None:
+    """Remove implementation identifiers from prose shown to users."""
+    if value is None:
+        return None
+    text = str(value)
+    # Remove exact IDs available to this Ask run first, then defensively strip
+    # generated identifier shapes if a model echoes one outside record_id.
+    for internal_id in sorted(internal_ids, key=len, reverse=True):
+        if internal_id:
+            text = re.sub(rf"(?<![A-Za-z0-9_]){re.escape(internal_id)}(?![A-Za-z0-9_])", "", text, flags=re.IGNORECASE)
+    text = re.sub(r"\b(?:state|question|evidence|review|proposal)_[a-z0-9]+\b", "", text, flags=re.IGNORECASE)
+    text = re.sub(r"\b(?:ask-evidence|state|question|evidence|review|proposal|k|q)-[a-z0-9-]+\b", "", text, flags=re.IGNORECASE)
+    text = re.sub(r"\s+([,.;:])", r"\1", text)
+    text = re.sub(r"\s{2,}", " ", text).strip(" -–—:;,.")
+    return text or None
+
+
 def _validate_synthesis(answer: AskSynthesis, selection: AskSelection, context: Mapping[str, Any]) -> AskSynthesis:
     allowed: dict[str, set[str]] = {
         "state": {x["id"] for x in context.get("state", [])},
@@ -222,18 +239,46 @@ def _validate_synthesis(answer: AskSynthesis, selection: AskSelection, context: 
         "blocking_question": {x["id"] for x in context.get("questions", []) if x["blocking"]},
         "question": {x["id"] for x in context.get("questions", []) if not x["blocking"]},
     }
+    all_internal_ids = set().union(*allowed.values(), {x["id"] for x in context.get("rules", [])})
+    canonical_reviews = {x["id"]: x for x in context.get("reviews", [])}
+    canonical_questions = {x["id"]: x for x in context.get("questions", [])}
+
+    answer.headline = _clean_visible_ask_text(answer.headline, all_internal_ids) or "Project answer"
+    answer.summary = _clean_visible_ask_text(answer.summary, all_internal_ids) or "See the grounded project details below."
+    answer.suggested_refinements = [
+        cleaned for value in answer.suggested_refinements
+        if (cleaned := _clean_visible_ask_text(value, all_internal_ids))
+    ]
+
     clean_sections = []
     for section in answer.sections:
+        section.title = _clean_visible_ask_text(section.title, all_internal_ids) or "Project context"
         clean_items = []
         for item in section.items:
             if item.record_type == "none":
-                clean_items.append(item); continue
+                item.text = _clean_visible_ask_text(item.text, all_internal_ids) or "Project context"
+                item.detail = _clean_visible_ask_text(item.detail, all_internal_ids)
+                clean_items.append(item)
+                continue
             if item.record_id and item.record_id in allowed.get(item.record_type, set()):
+                # For unresolved decisions/questions, visible wording comes from
+                # application-owned records rather than model paraphrase.
+                if item.record_type == "review" and item.record_id in canonical_reviews:
+                    source = canonical_reviews[item.record_id]
+                    item.text = source["decision_question"]
+                    item.detail = source.get("why_consequential")
+                elif item.record_type in {"question", "blocking_question"} and item.record_id in canonical_questions:
+                    source = canonical_questions[item.record_id]
+                    item.text = source["text"]
+                    item.detail = source.get("blocks") if item.record_type == "blocking_question" else None
+                else:
+                    item.text = _clean_visible_ask_text(item.text, all_internal_ids) or "Project context"
+                    item.detail = _clean_visible_ask_text(item.detail, all_internal_ids)
                 clean_items.append(item)
         section.items = clean_items
         clean_sections.append(section)
     answer.sections = clean_sections
-    all_allowed_ids = set().union(*allowed.values(), {x["id"] for x in context.get("rules", [])})
+    all_allowed_ids = all_internal_ids
     uncertainty_allowed = allowed["review"] | allowed["blocking_question"] | allowed["question"]
     answer.source_ids = list(dict.fromkeys(x for x in answer.source_ids if x in all_allowed_ids))
     answer.uncertainty_ids = list(dict.fromkeys(x for x in answer.uncertainty_ids if x in uncertainty_allowed))

@@ -502,7 +502,14 @@ def create_app(settings: Settings | None = None, provider: InterpretationProvide
             request.app.state.ask_provider = selected_ask_provider
         try:
             with get_connection() as connection:
-                result = run_ask(connection, selected_ask_provider, payload.query.strip(), payload.previous_answer)
+                try:
+                    result = run_ask(connection, selected_ask_provider, payload.query.strip(), payload.previous_answer)
+                except (ValueError, TypeError) as first_exc:
+                    # Model output can occasionally miss the grounded Ask contract even
+                    # for a good query. Retry once with the same authoritative context
+                    # before surfacing an error; invalid final output still fails closed.
+                    logger.warning("Ask contract failure; retrying once: %s", first_exc)
+                    result = run_ask(connection, selected_ask_provider, payload.query.strip(), payload.previous_answer)
                 timing = result.get("timing", {})
                 logger.info(
                     "Ask timing pipeline=%s context_ms=%s provider_ms=%s validation_ms=%s total_ms=%s",
@@ -511,7 +518,7 @@ def create_app(settings: Settings | None = None, provider: InterpretationProvide
                 )
                 return result
         except (ValueError, TypeError) as exc:
-            logger.warning("Ask contract failure: %s", exc)
+            logger.warning("Ask contract failure after retry: %s", exc)
             raise HTTPException(status_code=422, detail="Ask could not produce a valid grounded answer") from exc
         except Exception as exc:
             logger.exception("Ask provider failure")

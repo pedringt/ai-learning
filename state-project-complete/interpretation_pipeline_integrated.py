@@ -66,6 +66,44 @@ def _normalize_review_text(value: str) -> str:
     return " ".join((value or "").split()).casefold()
 
 
+def _filter_duplicate_current_state_creates(connection: Connection, payload: Mapping[str, Any]) -> Mapping[str, Any]:
+    """Treat exact restatements of active Current State as no change.
+
+    The model may recommend a missing-understanding/create Review for wording
+    that State already maintains. Software owns the invariant that exact
+    maintained understanding is not duplicated or sent back for needless Review.
+    """
+    active_statements = {
+        _normalize_review_text(row["statement"])
+        for row in connection.execute(
+            "SELECT statement FROM current_state_items WHERE status='active'"
+        ).fetchall()
+    }
+    recommendations = []
+    for rec in payload.get("review_recommendations", []):
+        kept = []
+        for proposal in rec.get("proposed_changes", []):
+            is_duplicate_create = (
+                proposal.get("operation") == "create"
+                and _normalize_review_text(proposal.get("proposed_statement", "")) in active_statements
+            )
+            if not is_duplicate_create:
+                kept.append(proposal)
+        rec["proposed_changes"] = kept
+        # A missing-understanding Review with nothing left to establish is a
+        # no-op, so do not create a human decision merely because the model
+        # failed to notice an exact existing fact.
+        if kept or rec.get("review_type") != "missing_understanding":
+            recommendations.append(rec)
+    payload["review_recommendations"] = recommendations
+    payload["outcome"] = "review_recommended" if recommendations else "no_review"
+    if recommendations:
+        payload.pop("no_review_explanation", None)
+    else:
+        payload["no_review_explanation"] = payload.get("summary") or "The evidence does not change maintained understanding."
+    return payload
+
+
 def _matching_open_review_id(connection: Connection, recommendation: Mapping[str, Any]) -> str | None:
     """Return an existing open Review for the exact same pending decision.
 
@@ -416,6 +454,7 @@ def process_evidence(
         payload = provider.interpret(**provider_kwargs)
         logger.debug("Provider returned payload")
         payload = normalize_provider_payload(payload, context=context)
+        payload = _filter_duplicate_current_state_creates(connection, payload)
         logger.debug("Provider payload normalized")
 
         # Structural validation (JSON Schema)
