@@ -56,7 +56,15 @@ class LiveAskProvider:
             response = self.provider.client.chat.completions.create(
                 model=self.model_identifier,
                 max_tokens=max_tokens,
-                messages=[{"role": "user", "content": prompt + "\nReturn JSON only."}],
+                response_format={
+                    "type": "json_schema",
+                    "json_schema": {
+                        "name": "state_ask_response",
+                        "strict": True,
+                        "schema": schema,
+                    },
+                },
+                messages=[{"role": "user", "content": prompt}],
             )
             text = response.choices[0].message.content
             if not text:

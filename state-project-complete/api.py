@@ -23,7 +23,7 @@ from seed_demo import bootstrap_demo_data
 from ask_contract import AskRequest
 from ask_provider import LiveAskProvider
 from ask_service import run_ask
-STATE_BUILD_REV = "r9.4-ask-fast-meeting-path-2026-09-02"
+STATE_BUILD_REV = "r9.4.2-provider-benchmark-2026-09-02"
 logger = logging.getLogger("state.api")
 
 from review_service import (
@@ -191,7 +191,8 @@ def _provider_from_env(settings: Settings) -> InterpretationProvider:
         )
     if not os.getenv("OPENAI_API_KEY"):
         raise RuntimeError("OPENAI_API_KEY is required when STATE_PROVIDER=openai")
-    return OpenAIProvider(api_key=os.environ["OPENAI_API_KEY"])
+    model = os.getenv("OPENAI_MODEL", "gpt-4.1-mini")
+    return OpenAIProvider(model_identifier=model, api_key=os.environ["OPENAI_API_KEY"])
 
 
 def create_app(settings: Settings | None = None, provider: InterpretationProvider | None = None, ask_provider=None) -> FastAPI:
@@ -473,7 +474,9 @@ def create_app(settings: Settings | None = None, provider: InterpretationProvide
                 result = run_ask(connection, selected_ask_provider, payload.query.strip(), payload.previous_answer)
                 timing = result.get("timing", {})
                 logger.info(
-                    "Ask timing pipeline=%s context_ms=%s provider_ms=%s validation_ms=%s total_ms=%s",
+                    "Ask timing provider=%s model=%s pipeline=%s context_ms=%s provider_ms=%s validation_ms=%s total_ms=%s",
+                    getattr(selected_ask_provider, "name", "unknown"),
+                    getattr(selected_ask_provider, "model_identifier", "unknown"),
                     timing.get("pipeline"), timing.get("context_ms"), timing.get("provider_ms"),
                     timing.get("validation_ms"), timing.get("total_ms"),
                 )

@@ -341,3 +341,35 @@ def test_r94_invalid_fast_answer_falls_back_to_proven_one_call_path(tmp_path):
         assert result["answer"]["headline"]
     finally:
         conn.close()
+
+
+def test_openai_ask_uses_json_schema_structured_output():
+    from types import SimpleNamespace
+    from ask_provider import LiveAskProvider
+
+    calls = []
+    class Completions:
+        def create(self, **kwargs):
+            calls.append(kwargs)
+            return SimpleNamespace(choices=[SimpleNamespace(message=SimpleNamespace(content='{"job":"meeting_prep","headline":"Ready","summary":"Summary","sections":[],"source_ids":[],"uncertainty_ids":[],"suggested_refinements":[]}'))])
+    provider = SimpleNamespace(
+        name="openai",
+        model_identifier="gpt-4.1-mini",
+        client=SimpleNamespace(chat=SimpleNamespace(completions=Completions())),
+    )
+    result = LiveAskProvider(provider).synthesize_selected("prompt")
+    assert result["job"] == "meeting_prep"
+    assert calls[0]["model"] == "gpt-4.1-mini"
+    assert calls[0]["response_format"]["type"] == "json_schema"
+    assert calls[0]["response_format"]["json_schema"]["strict"] is True
+    assert "Return JSON only" not in calls[0]["messages"][0]["content"]
+
+
+def test_openai_model_env_selects_benchmark_model(monkeypatch):
+    import api
+    monkeypatch.setenv("OPENAI_API_KEY", "test-key")
+    monkeypatch.setenv("OPENAI_MODEL", "gpt-4.1-mini")
+    settings = api.Settings(database_path=":memory:", provider="openai")
+    provider = api._provider_from_env(settings)
+    assert provider.name == "openai"
+    assert provider.model_identifier == "gpt-4.1-mini"
