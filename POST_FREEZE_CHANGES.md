@@ -12,7 +12,7 @@ These are product decisions, separate from the technical cleanup batches in
 ## 1. Remove "Explore all applied work →" from the homepage
 
 **Requested:** September 4, 2026
-**Status:** Not applied — waiting on the freeze
+**Status:** Applied on the `post-manager-cleanup` branch, September 4, 2026. Still not on `main` and not deployed.
 **Risk:** Low
 
 ### What it is
@@ -80,7 +80,14 @@ Run the screenshot harness before and after and diff. The change should show up
 only on the homepage, and only below the Applied Work grid; every other view
 should stay pixel-identical.
 
-**Worth a look before committing:** this link is the visual close of the Applied
-Work section. Without it the grid may end abruptly. If that reads badly, the
-options are to let the section end on the cards, or to keep the ending but
-rewrite it — the decision is yours once you can see it.
+### Outcome
+
+Applied and checked. The spacing concern did not materialize: the hairline
+divider and the "My working notes, references, and practice library live
+separately in the Learning Guide →" line already close the section, and there is
+115px of breathing room between the last card and that ending. **No spacing
+adjustment was needed.**
+
+A 42-shot pixel diff confirms the change is confined to the six homepage
+captures, each 34px shorter — the link plus its 16px top margin. Every other
+view at every width, in both themes, is pixel-identical. Tests unchanged.
