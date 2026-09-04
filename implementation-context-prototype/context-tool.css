@@ -729,3 +729,57 @@ body.v88-dark .current-direction-list span{color:#e3dfe8}
 body.v88-dark .project-outline{background:#17151d!important;border-color:var(--line)!important}
 @media(max-width:760px){.ask-answer-head{align-items:flex-start!important}.ask-answer-actions{justify-content:flex-start}.ask-answer-actions .btn{width:auto!important}.project-outline{padding:0 18px 8px!important;border-radius:12px!important}}
 @media(max-width:430px){.ask-answer-actions{width:100%}.ask-answer-actions .btn{flex:1 1 auto!important}.project-outline{padding:0 14px 6px!important}}
+
+/* Mobile primary navigation — information architecture fix.
+
+   Below 760px the desktop sidebar becomes a horizontal nav strip, but two rules
+   written for the vertical list came along with it:
+
+   1. Every .nav-item reserves a 28px gutter (an ::after spacer) so that desktop
+      labels line up in a column above the count badge. In a horizontal row that
+      gutter aligns nothing, and it cost about 140px of the 351px available at a
+      390px viewport.
+   2. .project-subnav is a block nested inside .sidebar-nav-group, which is
+      itself a flex child. Expanding Project therefore changed the height of the
+      primary row and pushed its siblings sideways.
+
+   Together those produced 579px of navigation inside a 351px strip: Notes and
+   History sat entirely off-screen, behind a horizontal scroll with no visible
+   affordance.
+
+   The row now wraps instead of scrolling, so nothing is ever hidden, and
+   display:contents lifts the Project sub-nav out of the row onto its own line,
+   so an expanded Project can no longer disturb the primary row. */
+@media(max-width:760px){
+  .sidebar-nav{display:flex;flex-wrap:wrap;overflow:visible;gap:4px 6px;min-width:0}
+  .sidebar-nav-group{display:contents}
+  .sidebar-nav .nav-item{
+    width:auto;
+    flex:0 0 auto;
+    white-space:nowrap;
+    display:inline-flex;
+    align-items:center;
+    justify-content:flex-start;
+    grid-template-columns:none;
+    gap:6px;
+    padding:8px 11px;
+  }
+  .sidebar-nav .nav-item::after{display:none!important}
+  /* Supersedes the earlier sticky "→" edge-fade affordance, which was an
+     isolated patch at this same problem: it hinted that the row scrolled but
+     still let Notes clip mid-word behind the gradient. With the row wrapping,
+     there is nothing left to scroll to and the hint would be misleading. */
+  .sidebar-nav::after{display:none!important}
+  .project-subnav{
+    flex:1 0 100%;
+    order:1;
+    display:flex;
+    flex-wrap:wrap;
+    gap:3px;
+    margin:2px 0 0;
+    padding:7px 0 0;
+    border-left:0;
+    border-top:1px solid var(--line);
+  }
+  .project-subnav[hidden]{display:none!important}
+}
