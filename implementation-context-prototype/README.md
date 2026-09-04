@@ -18,7 +18,6 @@ copy is the real one. It is.
 | `context-ask.js` | Ask UI and result rendering |
 | `context-data.js` | Deterministic fixture used when the backend is unreachable |
 | `context-tool.css` | Product styling |
-| `final-polish.js` | Post-render patch layer — known debt, see the repository README |
 
 ## Running it
 
