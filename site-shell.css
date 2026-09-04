@@ -407,39 +407,30 @@ body.v88-dark .home-state-copy .home-state-lead + p,
   .home-state-copy .home-state-lead + p{font-size:15.5px!important;margin-top:17px!important}
 }
 
-/* v96.2 — make the homepage read as product judgment, not a learning log. */
-#home > .hero > .lead,
-#home .home-state-copy .home-state-lead + p,
-#home .home-legal-feature .home-feature-wide-text p{
-  font-size:0!important;
-  line-height:0!important;
-}
-#home > .hero > .lead::before{
-  content:"Building on my background in custom software project management and QA, I’m using small products and opportunity evaluations to work through where AI adds value, where software should enforce rules, where humans should remain the authority, and what makes an AI workflow actually usable.";
+/* v96.2 — homepage reads as product judgment, not a learning log.
+   The copy itself lives in index.html. These rules only style it.
+
+   This block previously carried the copy in `content:` on ::before while
+   zeroing the real paragraphs with font-size:0, so the visible text and the
+   DOM text disagreed: screen readers, search engines, link previews and View
+   Source all got the older wording. The text now lives in the markup and only
+   its presentation lives here.
+
+   `.home-state-copy .home-state-lead + p` needs no rule — the v96.1 block
+   above already gives it exactly this treatment. */
+#home > .hero > .lead{
   display:block;
   max-width:980px;
   font-size:19px;
   line-height:1.55;
   color:var(--muted);
 }
-#home .home-state-copy .home-state-lead + p::before{
-  content:"Building State changed my default for AI product design: let the model interpret and synthesize, but keep source authority, consequential state changes, permissions, and acceptance in deterministic software or human hands. Building the product also exposed less obvious problems around retrieval, review burden, latency, and what ‘working’ means when a model is part of the system.";
-  display:block;
-  max-width:700px;
-  font-size:16px;
-  line-height:1.6;
-  font-weight:450;
-  letter-spacing:-.004em;
-  color:var(--muted);
-}
-#home .home-legal-feature .home-feature-wide-text p::before{
-  content:"I found evidence of a real governance gap, along with a harder commercial reality: the law firms that need the most help may be the least practical consulting clients to pursue. My recommendation: do not propose an offering until direct customer discovery changes that commercial picture.";
+#home .home-legal-feature .home-feature-wide-text p{
   display:block;
   font-size:14px;
   line-height:1.55;
   color:var(--muted);
 }
 @media(max-width:560px){
-  #home > .hero > .lead::before{font-size:17px}
-  #home .home-state-copy .home-state-lead + p::before{font-size:15.5px}
+  #home > .hero > .lead{font-size:17px}
 }
