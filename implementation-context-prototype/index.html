@@ -42,11 +42,13 @@
     @media(max-width:760px){
       #overlay{padding:max(14px,env(safe-area-inset-top)) 12px max(14px,env(safe-area-inset-bottom))!important;}
       #overlay>.dialog{max-height:calc(100dvh - 28px)!important;}
-      /* Mobile-only cue: keep the existing horizontal workspace navigation, but make
-         the off-screen destinations visibly discoverable without changing desktop. */
-      .app-sidebar{position:relative!important;}
-      .sidebar-nav{padding-right:34px!important;scrollbar-width:thin;}
-      .app-sidebar::after{content:"Swipe for more →";position:absolute;right:8px;bottom:47px;z-index:4;padding:3px 6px;border-radius:999px;background:color-mix(in srgb,var(--surface) 92%,transparent);color:var(--muted);font-size:9px;font-weight:800;letter-spacing:.01em;pointer-events:none;box-shadow:0 0 12px color-mix(in srgb,var(--surface) 95%,transparent);}
+      /* Mobile-only: make all workspace destinations visible instead of relying on
+         a clipped horizontal scroller. Desktop sidebar/navigation is untouched. */
+      .sidebar-nav{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:6px!important;overflow:visible!important;padding:0!important;}
+      .sidebar-nav-group{display:contents!important;}
+      .sidebar-nav .nav-item{width:100%!important;min-width:0!important;justify-content:center!important;text-align:center!important;white-space:normal!important;padding:8px 6px!important;font-size:11px!important;line-height:1.2!important;}
+      .sidebar-nav .nav-item::after{display:none!important;}
+      .sidebar-nav .nav-count{position:static!important;margin-left:4px!important;}
     }
   </style>
 </head>
