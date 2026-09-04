@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import hashlib
 import re
 import time
 from typing import Any, Iterator, Mapping, Protocol
@@ -23,6 +24,27 @@ _SELECTION_LIMITS = {
     "history_ids": 12,
     "evidence_ids": 12,
 }
+
+
+def ask_cache_key(
+    connection: Any,
+    query: str,
+    previous_answer: Mapping[str, Any] | None = None,
+) -> str:
+    """Fingerprint an Ask request against every authority-bearing input.
+
+    Reusing a prior answer is safe only while Current State, open Reviews,
+    Questions, History, Evidence, and project Rules are unchanged. Including
+    the full compact candidate set makes any accepted decision or new evidence
+    produce a different key instead of serving a stale answer.
+    """
+    payload = {
+        "query": " ".join(query.lower().split()),
+        "previous_answer": previous_answer,
+        "candidates": _compact_candidates(connection),
+    }
+    encoded = json.dumps(payload, ensure_ascii=False, sort_keys=True, separators=(",", ":"), default=str)
+    return hashlib.sha256(encoded.encode("utf-8")).hexdigest()
 
 
 def _bounded_selection_raw(selection_raw: Mapping[str, Any] | None) -> dict[str, Any]:

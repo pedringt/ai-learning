@@ -4,7 +4,10 @@ from __future__ import annotations
 
 import json
 import os
+from collections import OrderedDict
 from contextlib import asynccontextmanager, contextmanager
+from copy import deepcopy
+from threading import Lock
 from typing import Literal
 import logging
 import uuid
@@ -23,9 +26,35 @@ from openai_provider import OpenAIProvider
 from seed_demo import bootstrap_demo_data, reset_demo_data
 from ask_contract import AskRequest
 from ask_provider import LiveAskProvider
-from ask_service import run_ask, stream_ask_events
+from ask_service import ask_cache_key, run_ask, stream_ask_events
 STATE_BUILD_REV = "r9.5-fast-attention-2026-09-03"
 logger = logging.getLogger("state.api")
+
+
+class AskResponseCache:
+    """Small process-local cache for repeated, unchanged grounded questions."""
+
+    def __init__(self, max_entries: int = 32):
+        self.max_entries = max_entries
+        self._items: OrderedDict[str, dict] = OrderedDict()
+        self._lock = Lock()
+
+    def get(self, key: str) -> dict | None:
+        with self._lock:
+            value = self._items.get(key)
+            if value is None:
+                return None
+            self._items.move_to_end(key)
+            result = deepcopy(value)
+            result.setdefault("timing", {})["cache_hit"] = True
+            return result
+
+    def put(self, key: str, value: dict) -> None:
+        with self._lock:
+            self._items[key] = deepcopy(value)
+            self._items.move_to_end(key)
+            while len(self._items) > self.max_entries:
+                self._items.popitem(last=False)
 
 from review_service import (
     ReviewConflictError,
@@ -229,6 +258,7 @@ def create_app(settings: Settings | None = None, provider: InterpretationProvide
     app = FastAPI(title="State API", version="0.1.0", lifespan=lifespan)
     app.state.provider = provider
     app.state.ask_provider = ask_provider
+    app.state.ask_cache = AskResponseCache()
     app.state.settings = settings
     app.add_middleware(
         CORSMiddleware,
@@ -506,9 +536,17 @@ def create_app(settings: Settings | None = None, provider: InterpretationProvide
         def event_stream():
             try:
                 with get_connection() as connection:
+                    cache_key = ask_cache_key(connection, payload.query.strip(), payload.previous_answer)
+                    cached = request.app.state.ask_cache.get(cache_key)
+                    if cached is not None:
+                        logger.info("Ask cache hit endpoint=stream")
+                        yield f"event: final\ndata: {json.dumps(cached, ensure_ascii=False)}\n\n"
+                        return
                     for event_name, event_payload in stream_ask_events(
                         connection, selected_ask_provider, payload.query.strip(), payload.previous_answer
                     ):
+                        if event_name == "final":
+                            request.app.state.ask_cache.put(cache_key, event_payload)
                         yield f"event: {event_name}\ndata: {json.dumps(event_payload, ensure_ascii=False)}\n\n"
             except (ValueError, TypeError, json.JSONDecodeError) as exc:
                 logger.warning("Streaming Ask contract failure: %s", exc)
@@ -538,6 +576,11 @@ def create_app(settings: Settings | None = None, provider: InterpretationProvide
             request.app.state.ask_provider = selected_ask_provider
         try:
             with get_connection() as connection:
+                cache_key = ask_cache_key(connection, payload.query.strip(), payload.previous_answer)
+                cached = request.app.state.ask_cache.get(cache_key)
+                if cached is not None:
+                    logger.info("Ask cache hit endpoint=standard")
+                    return cached
                 try:
                     result = run_ask(connection, selected_ask_provider, payload.query.strip(), payload.previous_answer)
                 except (ValueError, TypeError) as first_exc:
@@ -546,6 +589,7 @@ def create_app(settings: Settings | None = None, provider: InterpretationProvide
                     # before surfacing an error; invalid final output still fails closed.
                     logger.warning("Ask contract failure; retrying once: %s", first_exc)
                     result = run_ask(connection, selected_ask_provider, payload.query.strip(), payload.previous_answer)
+                request.app.state.ask_cache.put(cache_key, result)
                 timing = result.get("timing", {})
                 logger.info(
                     "Ask timing pipeline=%s context_ms=%s provider_ms=%s validation_ms=%s total_ms=%s",

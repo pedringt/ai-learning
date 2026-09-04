@@ -145,6 +145,46 @@ def test_api_ask_vertical_slice_uses_injected_provider(tmp_path):
         assert len(provider.prompts) == 2
 
 
+def test_api_ask_reuses_answer_only_while_authoritative_context_is_unchanged(tmp_path):
+    provider = FakeAskProvider()
+    settings = Settings(database_path=str(tmp_path / "api-cache.db"), cors_origins=[], demo_bootstrap=True)
+    app = create_app(settings, provider=None, ask_provider=provider)
+    with TestClient(app) as client:
+        first = client.post("/api/ask", json={"query": "Prep me for the security meeting."})
+        second = client.post("/api/ask", json={"query": "Prep me for the security meeting."})
+
+        assert first.status_code == 200
+        assert second.status_code == 200
+        assert len(provider.prompts) == 2
+        assert second.json()["timing"]["cache_hit"] is True
+
+        with connect(settings.connection_url()) as connection:
+            connection.execute(
+                "UPDATE current_state_items SET statement=?, version=version+1, updated_at=CURRENT_TIMESTAMP WHERE id=?",
+                ("The pilot remains read-only, human-reviewed, and newly revised.", "k-data"),
+            )
+            connection.commit()
+
+        third = client.post("/api/ask", json={"query": "Prep me for the security meeting."})
+        assert third.status_code == 200
+        assert len(provider.prompts) == 4
+        assert third.json()["timing"].get("cache_hit") is not True
+
+
+def test_streaming_ask_reuses_the_same_state_aware_cache(tmp_path):
+    provider = FakeAskProvider()
+    settings = Settings(database_path=str(tmp_path / "stream-cache.db"), cors_origins=[], demo_bootstrap=True)
+    app = create_app(settings, provider=None, ask_provider=provider)
+    with TestClient(app) as client:
+        first = client.post("/api/ask/stream", json={"query": "Prep me for the security meeting."})
+        second = client.post("/api/ask/stream", json={"query": "Prep me for the security meeting."})
+
+        assert first.status_code == 200
+        assert second.status_code == 200
+        assert len(provider.prompts) == 2
+        assert '"cache_hit": true' in second.text
+
+
 def test_api_ask_fails_closed_when_provider_fails(tmp_path):
     provider = FakeAskProvider(fail=True)
     settings = Settings(database_path=str(tmp_path / "api.db"), cors_origins=[], demo_bootstrap=True)
