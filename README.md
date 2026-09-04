@@ -47,6 +47,7 @@ The repository root holds the portfolio site. The two directories below are the 
 | `index.html`, `site-shell.css`, `site-components.css` | Portfolio homepage and shared shell. |
 | `implementation-context*.html` | The State case study (overview, product decisions, deep dive). |
 | `docs/` | Historical implementation and review notes. |
+| `tools/` | Visual regression harness. Not part of the test suite; see `tools/README.md`. |
 
 ### Frontend files
 
@@ -125,7 +126,7 @@ If the backend is unreachable, the frontend falls back to the deterministic fixt
 ```bash
 # Python — deterministic suite, no flags needed
 cd state-project-complete && python -m pytest -q
-# 241 passed, 3 skipped, 7 subtests passed
+# 248 passed, 3 skipped, 7 subtests passed
 
 # JavaScript — deterministic Ask behavior
 cd implementation-context-prototype && node state-ask-behavior-tests.js
@@ -134,6 +135,16 @@ cd implementation-context-prototype && node state-ask-behavior-tests.js
 
 Tests that require real provider API keys skip themselves when the keys are
 absent. Nothing needs to be deselected by hand.
+
+`test_ask_cache_authority.py` is the one to watch. It asserts that the Ask
+response cache never outlives a human decision — accepting a Review, dismissing
+one, or new Evidence arriving all force the next identical question back to the
+provider. If those fail, the cache is serving pre-decision answers and the
+product's central claim is broken.
+
+Visual changes are checked separately with the harness in `tools/` — it captures
+42 screenshots across every view, three widths and both themes, and compares
+them byte for byte.
 
 The browser suite (`test_browser_user_flows.py`) drives Chromium through
 Playwright. It uses Playwright's managed browser by default:
