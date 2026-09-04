@@ -27,7 +27,22 @@ from seed_demo import bootstrap_demo_data, reset_demo_data
 from ask_contract import AskRequest
 from ask_provider import LiveAskProvider
 from ask_service import ask_cache_key, run_ask, stream_ask_events
-STATE_BUILD_REV = "r9.5-fast-attention-2026-09-03"
+def _build_rev() -> str:
+    """Identify the running build.
+
+    Render injects RENDER_GIT_COMMIT with the deployed commit SHA, so /health
+    reports what is actually running rather than a string someone remembered to
+    edit. The previous hand-maintained literal could -- and did -- outlive the
+    commit it named. The fallback keeps local runs and non-Render hosts honest
+    about being exactly that.
+    """
+    sha = (os.getenv("RENDER_GIT_COMMIT") or "").strip()
+    if sha:
+        return sha[:12]
+    return os.getenv("STATE_BUILD_REV", "local-dev").strip() or "local-dev"
+
+
+STATE_BUILD_REV = _build_rev()
 logger = logging.getLogger("state.api")
 
 
