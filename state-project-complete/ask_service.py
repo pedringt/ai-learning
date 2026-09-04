@@ -37,6 +37,14 @@ def ask_cache_key(
     Questions, History, Evidence, and project Rules are unchanged. Including
     the full compact candidate set makes any accepted decision or new evidence
     produce a different key instead of serving a stale answer.
+
+    Depends on ordering defined elsewhere. _compact_candidates truncates
+    history to 18 entries and evidence to 24, which is only safe because
+    list_history and list_evidence in review_service.py both ORDER BY ... DESC:
+    the windows hold the newest records, so anything added lands inside them and
+    changes the key. Reorder those queries to ASC and this cache silently starts
+    serving stale answers -- the tests would still pass, because they add
+    records rather than adding 25 of them.
     """
     payload = {
         "query": " ".join(query.lower().split()),

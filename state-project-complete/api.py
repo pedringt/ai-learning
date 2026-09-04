@@ -31,31 +31,6 @@ STATE_BUILD_REV = "r9.5-fast-attention-2026-09-03"
 logger = logging.getLogger("state.api")
 
 
-class AskResponseCache:
-    """Small process-local cache for repeated, unchanged grounded questions."""
-
-    def __init__(self, max_entries: int = 32):
-        self.max_entries = max_entries
-        self._items: OrderedDict[str, dict] = OrderedDict()
-        self._lock = Lock()
-
-    def get(self, key: str) -> dict | None:
-        with self._lock:
-            value = self._items.get(key)
-            if value is None:
-                return None
-            self._items.move_to_end(key)
-            result = deepcopy(value)
-            result.setdefault("timing", {})["cache_hit"] = True
-            return result
-
-    def put(self, key: str, value: dict) -> None:
-        with self._lock:
-            self._items[key] = deepcopy(value)
-            self._items.move_to_end(key)
-            while len(self._items) > self.max_entries:
-                self._items.popitem(last=False)
-
 from review_service import (
     ReviewConflictError,
     ReviewNotFoundError,
@@ -76,6 +51,40 @@ from review_service import (
     update_question_blocking,
     resolve_review,
 )
+
+
+class AskResponseCache:
+    """Small process-local cache for repeated, unchanged grounded questions."""
+
+    def __init__(self, max_entries: int = 32):
+        self.max_entries = max_entries
+        self._items: OrderedDict[str, dict] = OrderedDict()
+        self._lock = Lock()
+
+    def get(self, key: str) -> dict | None:
+        with self._lock:
+            value = self._items.get(key)
+            if value is None:
+                return None
+            self._items.move_to_end(key)
+            result = deepcopy(value)
+            timing = result.setdefault("timing", {})
+            timing["cache_hit"] = True
+            # Report this response's own cost, not the original call's. Carrying
+            # the first request's provider_ms forward made a sub-millisecond
+            # cache hit read as a 68-second model call in the logs.
+            timing["provider_ms"] = 0
+            timing["context_ms"] = 0
+            timing["validation_ms"] = 0
+            timing["total_ms"] = 0
+            return result
+
+    def put(self, key: str, value: dict) -> None:
+        with self._lock:
+            self._items[key] = deepcopy(value)
+            self._items.move_to_end(key)
+            while len(self._items) > self.max_entries:
+                self._items.popitem(last=False)
 
 
 class Settings(BaseModel):
