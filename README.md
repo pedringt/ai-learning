@@ -77,7 +77,7 @@ The repository root holds the portfolio site. The two directories below are the 
 | `migrations/` | Numbered SQL migrations (`001`–`005`). The only migrations directory. |
 | `seed_demo.py` | Idempotent seed for the "Northstar" demo project |
 | `phase2_current/state_spike/` | **Runtime code, despite the name.** `anthropic_provider`, `openai_provider` and `interpretation_pipeline_integrated` all add this to `sys.path` and import schema validation, provider normalization and semantic validation from it. Removing or relocating it breaks the backend at import. It also holds the interpretation schema the runtime validates against. |
-| `api_test_harness.py`, `note_matrix_harness.py` | Manual harnesses, run by hand (`python api_test_harness.py`), not part of the pytest suite. See *Known debt*. |
+| `api_test_harness.py`, `note_matrix_harness.py` | Manual harnesses, run by hand (`python api_test_harness.py`). Not in the pytest suite. `api_test_harness` documents the enforcement model end to end: what software normalizes rather than rejects, and where optimistic concurrency actually bites. |
 
 ---
 
@@ -189,7 +189,6 @@ Being cleaned up deliberately rather than all at once:
 
 - The stylesheets carry layered version-specific overrides and heavy `!important` use. `context-tool.css` still holds roughly thirty separate `@media(max-width:760px)` blocks, several redefining the same selectors, and `index.html` carries version-stamped inline `<style>` blocks. Consolidating them is the next cleanup pass.
 - `context-app.js` is a single 1,600-line module. **Splitting it was investigated and rejected**, for a reason worth recording: the prototype is meant to open from the filesystem (`index.html` has explicit `file://` guards), and ES modules are CORS-blocked over `file://` — verified, not assumed. The only other split is several IIFEs sharing state through `window`, which would take `state` — touched by 64% of the functions — from closure-private to globally mutable. For a product whose thesis is controlled state transitions, that is a downgrade. The file now carries section banners instead, which is what the size problem actually needed.
-- `api_test_harness.py` fails 3 of its 8 cases (`create_expected_version_invalid`, `grouping_singleton`, `stale_version`). They are negative-path cases whose expectations no longer match the API; the schema rejects the bad payloads correctly, but the harness's HTTP expectations are stale. Nothing catches this because the harness is manual and outside the pytest suite.
 - `phase2_current/` is named as though it were a superseded spike but is load-bearing runtime code. Renaming it would be the honest fix, and would touch every provider's import path.
 
 ---
