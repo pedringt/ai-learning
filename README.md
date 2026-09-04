@@ -155,8 +155,10 @@ python -m playwright install chromium
 
 Set `STATE_CHROMIUM_PATH` to use a specific binary instead.
 
-A CI workflow is parked at `.github/workflows/tests.yml.disabled`. GitHub
-ignores it until it is renamed to `tests.yml`.
+A CI workflow is parked at `ci/tests.yml.disabled`. It sits outside `.github/`
+on purpose: GitHub rejects pushes that touch `.github/workflows/` unless the
+credential has the `workflow` scope. Move it to
+`.github/workflows/tests.yml` to enable it.
 
 ---
 

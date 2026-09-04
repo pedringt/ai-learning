@@ -1,9 +1,17 @@
 # Deterministic test suite for State.
 #
-# NOT ACTIVE. GitHub only reads files ending in .yml or .yaml, so while this file
-# is named tests.yml.disabled it will never run. To turn it on, rename it:
+# NOT ACTIVE, and deliberately parked outside .github/ for two reasons.
 #
-#     git mv .github/workflows/tests.yml.disabled .github/workflows/tests.yml
+# GitHub only reads workflows from .github/workflows/, so nothing here can run.
+# It also refuses any push that creates or updates a file under that directory
+# unless the credential carries the `workflow` scope -- which is what blocked
+# these branches on the first push attempt. Keeping the file here means the
+# branches push with an ordinary token.
+#
+# To turn it on, move it and commit with a token that has `workflow` scope:
+#
+#     mkdir -p .github/workflows
+#     git mv ci/tests.yml.disabled .github/workflows/tests.yml
 #
 # It is deliberately parked because the production site is frozen for review and
 # nothing should run against the repository until that freeze lifts.
