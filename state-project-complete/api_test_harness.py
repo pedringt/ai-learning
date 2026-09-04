@@ -8,9 +8,11 @@ from jsonschema import Draft202012Validator, FormatChecker
 from fastapi.testclient import TestClient
 from api import Settings, create_app
 
-ROOT_SCHEMA = json.loads((Path(__file__).parent / 'schemas/structured_interpretation.schema.json').read_text())
+# The runtime validates against phase2_current/state_spike/schemas/. A byte-identical
+# duplicate used to sit at state-project-complete/schemas/, read by nothing but the
+# drift check below -- a copy kept alive by the test that watched it for drift. The
+# copy is gone; this validates against the schema the runtime actually uses.
 RUNTIME_SCHEMA = json.loads((Path(__file__).parent / 'phase2_current/state_spike/schemas/structured_interpretation.schema.json').read_text())
-ROOT_VALIDATOR = Draft202012Validator(ROOT_SCHEMA, format_checker=FormatChecker())
 RUNTIME_VALIDATOR = Draft202012Validator(RUNTIME_SCHEMA, format_checker=FormatChecker())
 
 class Provider:
@@ -52,7 +54,7 @@ def payload(case):
 def errs(v,p): return [e.message for e in v.iter_errors(p)]
 
 def run(case):
-    p=payload(case); out={'case':case,'root_schema_errors':errs(ROOT_VALIDATOR,p),'runtime_schema_errors':errs(RUNTIME_VALIDATOR,p)}
+    p=payload(case); out={'case':case,'runtime_schema_errors':errs(RUNTIME_VALIDATOR,p)}
     with tempfile.TemporaryDirectory() as td:
         db=str(Path(td)/'state.db'); app=create_app(Settings(database_path=db,cors_origins=[]), Provider())
         with TestClient(app, raise_server_exceptions=False) as c:
@@ -82,7 +84,7 @@ LOCAL_LATENCY_BUDGET_MS = 1000
 
 def assess(result):
     expected=EXPECTED[result['case']]
-    schema_valid=not result['root_schema_errors'] and not result['runtime_schema_errors']
+    schema_valid=not result['runtime_schema_errors']
     checks={
         'http_status': result['http_status']==expected['status'],
         'review_delta': result['open_review_delta']==expected['review_delta'],
@@ -99,9 +101,8 @@ def main():
     cases=list(EXPECTED)
     results=[assess(run(c)) for c in cases]
     output={
-        'schemas_identical': ROOT_SCHEMA==RUNTIME_SCHEMA,
         'latency_budget_ms': LOCAL_LATENCY_BUDGET_MS,
-        'passed': ROOT_SCHEMA==RUNTIME_SCHEMA and all(r['passed'] for r in results),
+        'passed': all(r['passed'] for r in results),
         'results': results,
     }
     print(json.dumps(output,indent=2))
