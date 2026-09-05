@@ -54,6 +54,8 @@ jobs:
         with:
           node-version: "22"
 
-      - name: Run Ask behavior suite
+      - name: Run State behavior suites
         working-directory: implementation-context-prototype
-        run: node state-ask-behavior-tests.js
+        run: |
+          node state-ask-behavior-tests.js
+          node state-provenance-behavior-tests.js
