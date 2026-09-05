@@ -35,7 +35,7 @@ from slack_intake_service import (
     handle_slack_event,
     run_checkpoint_poll_loop,
 )
-from slack_oauth_service import SlackOAuthError, build_authorize_url, exchange_code_for_token, save_connection
+from slack_oauth_service import SlackOAuthError, build_authorize_url, disconnect_most_recent, exchange_code_for_token, save_connection
 from slack_relevance_service import ProviderRelevanceClassifier, run_relevance_poll_loop
 from slack_signing import SlackSignatureError, verify_slack_request
 def _build_rev() -> str:
@@ -918,6 +918,12 @@ def create_app(settings: Settings | None = None, provider: InterpretationProvide
             return RedirectResponse(landing.format("error"))
 
         return RedirectResponse(landing.format("success"))
+
+    @app.post("/api/integrations/slack/disconnect")
+    def slack_disconnect() -> dict:
+        with get_connection() as connection:
+            disconnected = disconnect_most_recent(connection)
+        return {"disconnected": disconnected}
 
     return app
 

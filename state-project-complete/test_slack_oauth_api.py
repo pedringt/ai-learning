@@ -129,6 +129,28 @@ class SlackOAuthApiTests(unittest.TestCase):
         self.assertIn("slack_connect=success", first.headers["location"])
         self.assertIn("slack_connect=error", second.headers["location"])
 
+    def test_disconnect_endpoint_marks_connection_disconnected(self) -> None:
+        client = self._client(_oauth_settings(self.db_path))
+        with sqlite3.connect(self.db_path) as connection:
+            connection.execute(
+                "INSERT INTO slack_connections (id, team_id, workspace_name, status, environment, bot_token, connected_at) "
+                "VALUES ('c1','T1','Acme','connected','staging','xoxb-1','2026-01-01T00:00:00+00:00')"
+            )
+            connection.commit()
+
+        response = client.post("/api/integrations/slack/disconnect")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json(), {"disconnected": True})
+        with sqlite3.connect(self.db_path) as connection:
+            row = connection.execute("SELECT status, bot_token FROM slack_connections WHERE team_id='T1'").fetchone()
+        self.assertEqual(row, ("disconnected", None))
+
+    def test_disconnect_endpoint_with_nothing_connected(self) -> None:
+        client = self._client(_oauth_settings(self.db_path))
+        response = client.post("/api/integrations/slack/disconnect")
+        self.assertEqual(response.json(), {"disconnected": False})
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -115,6 +115,7 @@
     getSlackChannels: () => request('/api/integrations/slack/channels'),
     updateSlackChannel: (channelRowId, updates) => request(`/api/integrations/slack/channels/${encodeURIComponent(channelRowId)}`, {method:'PATCH', headers:{'Content-Type':'application/json'}, body:JSON.stringify(updates)}),
     getSlackHealth: () => request('/api/integrations/slack/health'),
+    disconnectSlack: () => request('/api/integrations/slack/disconnect', {method:'POST'}),
     resetDemo: () => request('/api/demo/reset', {method:'POST'}),
     askPreview: query => jsonPost('/api/ask/preview', {query}),
     // Free-form Ask streams visible answer text while the final grounded payload

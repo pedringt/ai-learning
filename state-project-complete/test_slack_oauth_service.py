@@ -9,6 +9,7 @@ from database_migration_backed import get_test_db
 from slack_oauth_service import (
     SlackOAuthError,
     build_authorize_url,
+    disconnect_most_recent,
     exchange_code_for_token,
     save_connection,
 )
@@ -90,6 +91,22 @@ class SaveConnectionTest(unittest.TestCase):
     def test_missing_team_id_raises(self):
         with self.assertRaises(SlackOAuthError):
             save_connection(self.conn, team_id="", workspace_name="Acme", bot_token="xoxb-1", environment="staging")
+
+    def test_disconnect_marks_connected_row_disconnected_and_clears_token(self):
+        save_connection(self.conn, team_id="T1", workspace_name="Acme", bot_token="xoxb-1", environment="staging")
+        self.assertTrue(disconnect_most_recent(self.conn))
+        row = self.conn.execute("SELECT status, bot_token FROM slack_connections WHERE team_id='T1'").fetchone()
+        self.assertEqual(dict(row), {"status": "disconnected", "bot_token": None})
+
+    def test_disconnect_with_nothing_connected_returns_false(self):
+        self.assertFalse(disconnect_most_recent(self.conn))
+
+    def test_reconnecting_after_disconnect_marks_connected_again(self):
+        save_connection(self.conn, team_id="T1", workspace_name="Acme", bot_token="xoxb-1", environment="staging")
+        disconnect_most_recent(self.conn)
+        save_connection(self.conn, team_id="T1", workspace_name="Acme", bot_token="xoxb-2", environment="staging")
+        row = self.conn.execute("SELECT status, bot_token FROM slack_connections WHERE team_id='T1'").fetchone()
+        self.assertEqual(dict(row), {"status": "connected", "bot_token": "xoxb-2"})
 
 
 if __name__ == "__main__":
