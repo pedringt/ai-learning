@@ -28,13 +28,14 @@
       .settings-behavior-list{margin:14px 0 0;padding:0;list-style:none;display:grid;gap:9px}
       .settings-behavior-list li{padding-left:22px;position:relative;line-height:1.45}
       .settings-behavior-list li::before{content:'✓';position:absolute;left:0;font-weight:700}
-      .slack-preview{margin-top:16px;display:grid;gap:10px}
-      .slack-preview-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px 0;border-top:1px solid var(--line,#e5e5ea)}
-      .slack-preview-row span{color:var(--muted,#666);font-size:13px}
+      .slack-preview,.source-list{margin-top:16px;display:grid;gap:10px}
+      .slack-preview-row,.source-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px 0;border-top:1px solid var(--line,#e5e5ea)}
+      .slack-preview-row span,.source-row span{color:var(--muted,#666);font-size:13px}
+      .source-row strong{display:block;margin-bottom:2px}
       .settings-callout{margin-top:14px;padding:12px 14px;border-radius:12px;background:var(--soft,#f6f5f8);font-size:13px;line-height:1.45}
       .settings-actions{margin-top:16px;display:flex;gap:8px;flex-wrap:wrap}
       .settings-danger{border-color:#c8a7a7}
-      @media(max-width:680px){.settings-section{padding:16px}.settings-section-head,.slack-preview-row{align-items:flex-start;flex-direction:column}.settings-rule-form{display:grid}.settings-rule-list li{align-items:flex-start}.settings-status{align-self:flex-start}}
+      @media(max-width:680px){.settings-section{padding:16px}.settings-section-head,.slack-preview-row,.source-row{align-items:flex-start;flex-direction:column}.settings-rule-form{display:grid}.settings-rule-list li{align-items:flex-start}.settings-status{align-self:flex-start}}
     `;
     document.head.appendChild(style);
   }
@@ -79,8 +80,16 @@
       </section>
 
       <section class="settings-section">
-        <div class="settings-section-head"><div><h3>Slack</h3><p>Choose which project channels can automatically feed conversations into Evidence.</p></div><span class="settings-status">Not connected</span></div>
-        <div class="settings-callout"><strong>Slack will be a collection source, not an authority source.</strong> Messages can become Evidence, but they still require State's existing Review and human authorization flow before Current State changes.</div>
+        <div class="settings-section-head"><div><h3>Connected sources</h3><p>Choose where State can gather project information from planning, discovery, and collaboration.</p></div></div>
+        <div class="settings-callout"><strong>Sources provide Evidence. They never change Current State directly.</strong></div>
+        <div class="source-list" aria-label="Connected and planned sources">
+          <div class="source-row"><div><strong>Slack</strong><span>Conversations, decisions, questions, and corrections.</span></div><span class="settings-status">Not connected</span></div>
+          <div class="source-row"><div><strong>Google Drive</strong><span>Docs, Sheets, Slides, research, and planning artifacts.</span></div><span class="settings-status">Coming soon</span></div>
+          <div class="source-row"><div><strong>Notion</strong><span>Project documentation, discovery notes, research, and specs.</span></div><span class="settings-status">Coming soon</span></div>
+          <div class="source-row"><div><strong>Confluence</strong><span>Project documentation and shared team knowledge.</span></div><span class="settings-status">Coming soon</span></div>
+        </div>
+        <div class="settings-subhead">Slack</div>
+        <p>Choose which project channels can automatically feed conversations into Evidence.</p>
         <div class="slack-preview" aria-label="Planned Slack behavior">
           <div class="slack-preview-row"><div><strong>Approved channels</strong><br><span>Only channels explicitly enabled for this project will be eligible.</span></div><span>Planned</span></div>
           <div class="slack-preview-row"><div><strong>Threads</strong><br><span>Long-running conversations will be grouped and checkpointed when meaningfully updated.</span></div><span>Planned</span></div>
