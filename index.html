@@ -4,8 +4,8 @@
 <head><link href="favicon.svg" rel="icon"/>
 <meta charset="utf-8"/>
 <meta content="width=device-width,initial-scale=1" name="viewport"/>
-<title>Practical AI Learning Portfolio</title>
-<meta content="A practical AI learning portfolio showing applied judgment across workflow discovery, system design, evaluation, adoption, measurement, and business value." name="description"/><meta content="website" property="og:type"/><meta content="Practical AI Learning Portfolio" property="og:title"/><meta content="A practical AI learning portfolio showing applied judgment across workflow discovery, system design, evaluation, adoption, measurement, and business value." property="og:description"/><meta content="summary" name="twitter:card"/><meta content="Practical AI Learning Portfolio" name="twitter:title"/><meta content="A practical AI learning portfolio showing applied judgment across workflow discovery, system design, evaluation, adoption, measurement, and business value." name="twitter:description"/>
+<title>Paige Edrington · Applied AI Product Portfolio</title>
+<meta content="A practical AI learning portfolio showing applied judgment across workflow discovery, system design, evaluation, adoption, measurement, and business value." name="description"/><meta content="website" property="og:type"/><meta content="Paige Edrington · Applied AI Product Portfolio" property="og:title"/><meta content="A practical AI learning portfolio showing applied judgment across workflow discovery, system design, evaluation, adoption, measurement, and business value." property="og:description"/><meta content="summary" name="twitter:card"/><meta content="Paige Edrington · Applied AI Product Portfolio" name="twitter:title"/><meta content="A practical AI learning portfolio showing applied judgment across workflow discovery, system design, evaluation, adoption, measurement, and business value." name="twitter:description"/>
 <style id="v893-style">
 
 
@@ -1224,7 +1224,7 @@ body.v88-dark .learning-how-note strong{color:#f5f2fb!important}
 <section class="view" data-page="portfolio" id="portfolio"><header class="page-intro"><div class="eyebrow">Applied Work</div><h2 class="section-title">Applied AI work, with State at the center.</h2><p class="section-lead">State is the deepest project here. Legal AI is the strongest opportunity evaluation; the smaller exercises are supporting work.</p></header>
 <div class="section-kicker applied-group-kicker"><span>Primary work</span></div>
 <div class="applied-major-grid">
-<div class="card applied-major applied-major-with-actions"><span class="tag">Flagship project</span><h3><a class="applied-card-primary-link" href="implementation-context.html">State</a></h3><p class="card-intro">A project-context product I built, used, broke and refined to test a harder question: where should AI interpret, where should software enforce, and when should a person remain the authority?</p><div class="applied-card-actions"><a href="implementation-context.html">Read case study →</a><a href="implementation-context-prototype/index.html">Open State prototype →</a></div></div>
+<div class="card applied-major applied-major-with-actions"><span class="tag">Flagship project</span><h3><a class="applied-card-primary-link" href="implementation-context.html">State</a></h3><p class="card-intro">A project-context product I built, used, broke and refined to test a harder question: where should AI interpret, where should software enforce, and when should a person remain the authority?</p><div class="applied-card-actions"><a href="implementation-context.html">Read case study →</a><a href="implementation-context-prototype/index.html">Open State →</a></div></div>
 <a class="card nav-card applied-major" href="legal-ai-governance.html"><span class="tag">Opportunity evaluation</span><h3>Legal AI Governance</h3><p class="card-intro">I investigated a documented governance gap and found that the firms with the clearest structural need may be the hardest to justify pursuing as consulting clients. My recommendation: do not propose an offering until direct customer discovery changes that commercial picture.</p></a>
 </div>
 <div class="section-kicker applied-group-kicker"><span>Supporting work</span></div>
@@ -1440,7 +1440,7 @@ body.v88-dark .learning-how-note strong{color:#f5f2fb!important}
   if(themeToggle)themeToggle.addEventListener('click',()=>setTheme(!root.classList.contains('dark'),true));
   const valid=new Set(views.map(v=>v.dataset.page));
   const learningIds=new Set([...root.querySelectorAll('details.learning-stage[id]')].map(el=>el.id));
-  const pageTitles={home:'Practical AI Learning Portfolio',portfolio:'Applied Work · Practical AI Learning',learn:'Learning Guide · Practical AI Learning'};
+  const pageTitles={home:'Paige Edrington · Applied AI Product Portfolio',portfolio:'Applied Work · Practical AI Learning',learn:'Learning Guide · Practical AI Learning'};
   const pageFromHash=()=>{const h=location.hash.replace(/^#/,''); if(learningIds.has(h))return'learn'; return valid.has(h)?h:'home';};
   const render=(name,scroll=false)=>{if(!valid.has(name))name='home'; const navName=name; views.forEach(v=>v.classList.toggle('active',v.dataset.page===name)); nav.forEach(b=>b.classList.toggle('active',b.dataset.view===navName)); if(mobile)mobile.value=navName; document.title=pageTitles[name]||pageTitles.home; if(scroll)root.scrollIntoView({behavior:'smooth',block:'start'});};
   const go=(name,hash)=>{if(!valid.has(name))name='home'; const dest=hash||('#'+name); if(location.hash!==dest)history.pushState({page:name},'',dest); render(name,true); if(hash&&hash.includes('-'))requestAnimationFrame(()=>document.getElementById(hash.slice(1))?.scrollIntoView({behavior:'smooth',block:'start'}));};
