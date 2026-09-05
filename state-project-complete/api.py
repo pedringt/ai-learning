@@ -11,12 +11,13 @@ from copy import deepcopy
 from threading import Lock
 from typing import Literal
 import logging
+import secrets
 import uuid
 import time
 
 from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import StreamingResponse
+from fastapi.responses import RedirectResponse, StreamingResponse
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from anthropic_provider import AnthropicProvider
@@ -34,6 +35,7 @@ from slack_intake_service import (
     handle_slack_event,
     run_checkpoint_poll_loop,
 )
+from slack_oauth_service import SlackOAuthError, build_authorize_url, exchange_code_for_token, save_connection
 from slack_relevance_service import ProviderRelevanceClassifier, run_relevance_poll_loop
 from slack_signing import SlackSignatureError, verify_slack_request
 def _build_rev() -> str:
@@ -140,6 +142,17 @@ class Settings(BaseModel):
     # deployment that hasn't explicitly turned it on). Set
     # SLACK_RELEVANCE_POLL_SECONDS to enable it.
     slack_relevance_poll_seconds: int | None = None
+    # The self-serve "Connect Slack" OAuth flow. All four must be set for
+    # the Connect button to work; public_base_url/frontend_base_url are
+    # required (not derived from the incoming request) because this service
+    # runs behind Render's proxy without --proxy-headers, so request.base_url
+    # would report plain http and silently mismatch the https redirect_uri
+    # registered in the Slack app.
+    slack_client_id: str | None = None
+    slack_client_secret: str | None = None
+    public_base_url: str | None = None
+    frontend_base_url: str | None = None
+    environment: str = "staging"
 
     def connection_url(self) -> str:
         if self.database_url:
@@ -171,6 +184,11 @@ class Settings(BaseModel):
             slack_relevance_poll_seconds=(
                 int(raw) if (raw := os.getenv("SLACK_RELEVANCE_POLL_SECONDS", "").strip()).isdigit() else None
             ),
+            slack_client_id=os.getenv("SLACK_CLIENT_ID"),
+            slack_client_secret=os.getenv("SLACK_CLIENT_SECRET"),
+            public_base_url=(os.getenv("STATE_PUBLIC_BASE_URL", "").strip().rstrip("/") or None),
+            frontend_base_url=(os.getenv("STATE_FRONTEND_BASE_URL", "").strip().rstrip("/") or None),
+            environment=os.getenv("STATE_ENVIRONMENT", "staging").strip().lower(),
         )
 
 
@@ -368,6 +386,11 @@ def create_app(settings: Settings | None = None, provider: InterpretationProvide
     app.state.ask_provider = ask_provider
     app.state.ask_cache = AskResponseCache()
     app.state.settings = settings
+    # CSRF guard for the OAuth redirect round trip: a short-lived, single-use
+    # token minted at /oauth/start and consumed at /oauth/callback. In-memory
+    # is fine for a single-instance service (WEB_CONCURRENCY=1); a lost token
+    # on restart just means an in-flight OAuth attempt has to be retried.
+    app.state.slack_oauth_states = {}
     app.add_middleware(
         CORSMiddleware,
         allow_origins=settings.cors_origins,
@@ -852,6 +875,49 @@ def create_app(settings: Settings | None = None, provider: InterpretationProvide
             "last_event_at": connection_row["last_event_at"],
             "pending_checkpoints": pending["pending"] if pending else 0,
         }
+
+    @app.get("/api/integrations/slack/oauth/start")
+    def slack_oauth_start() -> RedirectResponse:
+        if not (settings.slack_client_id and settings.public_base_url):
+            raise HTTPException(status_code=503, detail="Slack OAuth is not configured")
+        state = secrets.token_urlsafe(24)
+        app.state.slack_oauth_states[state] = time.time() + 600  # 10 minutes to complete the round trip
+        redirect_uri = f"{settings.public_base_url}/api/integrations/slack/oauth/callback"
+        return RedirectResponse(build_authorize_url(client_id=settings.slack_client_id, redirect_uri=redirect_uri, state=state))
+
+    @app.get("/api/integrations/slack/oauth/callback")
+    def slack_oauth_callback(code: str | None = None, state: str | None = None, error: str | None = None) -> RedirectResponse:
+        if not settings.frontend_base_url:
+            raise HTTPException(status_code=503, detail="Slack OAuth is not configured")
+        landing = f"{settings.frontend_base_url}?slack_connect={{}}#settings-slack"
+
+        expiry = app.state.slack_oauth_states.pop(state, None) if state else None
+        state_is_valid = expiry is not None and expiry > time.time()
+
+        if error or not code or not state_is_valid:
+            logger.warning("Slack OAuth callback rejected: error=%s code_present=%s state_valid=%s", error, bool(code), state_is_valid)
+            return RedirectResponse(landing.format("error"))
+
+        if not (settings.slack_client_id and settings.slack_client_secret and settings.public_base_url):
+            raise HTTPException(status_code=503, detail="Slack OAuth is not configured")
+
+        redirect_uri = f"{settings.public_base_url}/api/integrations/slack/oauth/callback"
+        try:
+            payload = exchange_code_for_token(
+                client_id=settings.slack_client_id, client_secret=settings.slack_client_secret,
+                code=code, redirect_uri=redirect_uri,
+            )
+            team = payload.get("team") or {}
+            with get_connection() as connection:
+                save_connection(
+                    connection, team_id=team.get("id", ""), workspace_name=team.get("name") or "",
+                    bot_token=payload.get("access_token") or "", environment=settings.environment,
+                )
+        except SlackOAuthError as exc:
+            logger.warning("Slack OAuth token exchange failed: %s", exc)
+            return RedirectResponse(landing.format("error"))
+
+        return RedirectResponse(landing.format("success"))
 
     return app
 
