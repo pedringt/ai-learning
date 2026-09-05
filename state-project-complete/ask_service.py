@@ -541,6 +541,9 @@ def _finalize_ask_result(
     total_started: float,
     query: str,
     previous_answer: Mapping[str, Any] | None,
+    db_ms: int | None = None,
+    trim_ms: int | None = None,
+    first_token_ms: int | None = None,
 ) -> dict[str, Any]:
     validation_started = time.perf_counter()
     selection = _validate_selection(AskSelection.model_validate(_bounded_selection_raw(selection_raw)), candidates)
@@ -553,19 +556,82 @@ def _finalize_ask_result(
     remaining = max(0, total_open - len(selected_open))
     remaining_reviews = max(0, len(candidates["reviews"]) - len(selection.review_ids))
     total_ms = round((time.perf_counter() - total_started) * 1000)
+    timing: dict[str, Any] = {
+        "pipeline": pipeline,
+        "context_ms": context_ms,
+        "provider_ms": provider_ms,
+        "validation_ms": validation_ms,
+        "total_ms": total_ms,
+    }
+    # Stage breakdown for latency debugging. Optional so a caller that hasn't
+    # measured a given sub-stage (e.g. the deterministic-refinement shortcut,
+    # which has no model call) doesn't have to fake a number for it.
+    if db_ms is not None:
+        timing["db_ms"] = db_ms
+    if trim_ms is not None:
+        timing["trim_ms"] = trim_ms
+    if first_token_ms is not None:
+        timing["first_token_ms"] = first_token_ms
     return {
         "answer": answer.model_dump(),
         "selection": selection.model_dump(),
         "open_items_remaining": {"count": remaining, "reviews": remaining_reviews},
         "followup_mode": _followup_mode(query, previous_answer),
-        "timing": {
-            "pipeline": pipeline,
-            "context_ms": context_ms,
-            "provider_ms": provider_ms,
-            "validation_ms": validation_ms,
-            "total_ms": total_ms,
-        },
+        "timing": timing,
     }
+
+
+def _selection_raw_from_answer(answer: Mapping[str, Any]) -> dict[str, Any]:
+    """Reconstruct an approximate selection payload from a previous answer's own
+    record references, for the deterministic-refinement shortcut below, where no
+    fresh model call selects new candidates. `_validate_selection` still checks
+    every id against real candidates, so a stale or malformed id here is inert.
+    """
+    ids: dict[str, list[str]] = {"state": [], "review": [], "blocking_question": [], "question": [], "history": [], "evidence": []}
+    for section in answer.get("sections", []) or []:
+        for item in section.get("items", []) or []:
+            record_type = item.get("record_type")
+            record_id = item.get("record_id")
+            if record_id and record_type in ids:
+                ids[record_type].append(record_id)
+    return {
+        "job": answer.get("job", "refinement"),
+        "state_ids": ids["state"],
+        "review_ids": ids["review"],
+        "blocking_question_ids": ids["blocking_question"],
+        "question_ids": ids["question"],
+        "history_ids": ids["history"],
+        "evidence_ids": ids["evidence"],
+    }
+
+
+def _refinement_shortcut_result(
+    connection: Any,
+    query: str,
+    previous_answer: Mapping[str, Any],
+    total_started: float,
+) -> dict[str, Any]:
+    """Serve a recognized refinement ("make this 3 bullets", "shorten it", "focus
+    on blockers", etc.) without a model round-trip.
+
+    ask_refinement_transforms.py already reshapes the prior answer with zero AI
+    involvement -- the normal pipeline was paying for a full model call and then
+    discarding most of its output to run this same transform anyway. Database
+    reads still happen here (cheap, and needed for an honest open-items-remaining
+    count against current State), but nothing goes to the model.
+    """
+    db_started = time.perf_counter()
+    raw_candidates = _compact_candidates(connection)
+    db_ms = round((time.perf_counter() - db_started) * 1000)
+    trim_started = time.perf_counter()
+    candidates = _trim_candidates_for_query(_retrieval_query(query, previous_answer), raw_candidates)
+    trim_ms = round((time.perf_counter() - trim_started) * 1000)
+    selection_raw = _selection_raw_from_answer(previous_answer)
+    return _finalize_ask_result(
+        candidates, selection_raw, previous_answer, pipeline="deterministic_refinement",
+        context_ms=db_ms + trim_ms, provider_ms=0, total_started=total_started,
+        query=query, previous_answer=previous_answer, db_ms=db_ms, trim_ms=trim_ms,
+    )
 
 
 def stream_ask_events(
@@ -576,9 +642,18 @@ def stream_ask_events(
 ) -> Iterator[tuple[str, dict[str, Any]]]:
     """Yield grounded-context status, real provider deltas, then a validated final Ask payload."""
     total_started = time.perf_counter()
-    context_started = time.perf_counter()
-    candidates = _trim_candidates_for_query(_retrieval_query(query, previous_answer), _compact_candidates(connection))
-    context_ms = round((time.perf_counter() - context_started) * 1000)
+
+    if previous_answer and detect_refinement_type(query):
+        yield "final", _refinement_shortcut_result(connection, query, previous_answer, total_started)
+        return
+
+    db_started = time.perf_counter()
+    raw_candidates = _compact_candidates(connection)
+    db_ms = round((time.perf_counter() - db_started) * 1000)
+    trim_started = time.perf_counter()
+    candidates = _trim_candidates_for_query(_retrieval_query(query, previous_answer), raw_candidates)
+    trim_ms = round((time.perf_counter() - trim_started) * 1000)
+    context_ms = db_ms + trim_ms
     yield "preview", {
         "counts": {
             "reviews": len(candidates["reviews"]),
@@ -593,10 +668,13 @@ def stream_ask_events(
         return
 
     provider_started = time.perf_counter()
+    first_token_ms: int | None = None
     chunks: list[str] = []
     for text in provider.stream(_one_call_prompt(query, candidates, previous_answer)):
         if not text:
             continue
+        if first_token_ms is None:
+            first_token_ms = round((time.perf_counter() - provider_started) * 1000)
         chunks.append(text)
         yield "delta", {"text": text}
     provider_ms = round((time.perf_counter() - provider_started) * 1000)
@@ -606,16 +684,24 @@ def stream_ask_events(
     result = _finalize_ask_result(
         candidates, selection_raw, answer_raw, pipeline="one_call_stream",
         context_ms=context_ms, provider_ms=provider_ms, total_started=total_started,
-        query=query, previous_answer=previous_answer,
+        query=query, previous_answer=previous_answer, db_ms=db_ms, trim_ms=trim_ms, first_token_ms=first_token_ms,
     )
     yield "final", result
 
 
 def run_ask(connection: Any, provider: AskProvider, query: str, previous_answer: Mapping[str, Any] | None = None) -> dict[str, Any]:
     total_started = time.perf_counter()
-    context_started = time.perf_counter()
-    candidates = _trim_candidates_for_query(_retrieval_query(query, previous_answer), _compact_candidates(connection))
-    context_ms = round((time.perf_counter() - context_started) * 1000)
+
+    if previous_answer and detect_refinement_type(query):
+        return _refinement_shortcut_result(connection, query, previous_answer, total_started)
+
+    db_started = time.perf_counter()
+    raw_candidates = _compact_candidates(connection)
+    db_ms = round((time.perf_counter() - db_started) * 1000)
+    trim_started = time.perf_counter()
+    candidates = _trim_candidates_for_query(_retrieval_query(query, previous_answer), raw_candidates)
+    trim_ms = round((time.perf_counter() - trim_started) * 1000)
+    context_ms = db_ms + trim_ms
 
     provider_started = time.perf_counter()
     if hasattr(provider, "synthesize_selected") and not hasattr(provider, "run"):
@@ -650,5 +736,5 @@ def run_ask(connection: Any, provider: AskProvider, query: str, previous_answer:
     return _finalize_ask_result(
         candidates, selection_raw, answer_raw, pipeline=pipeline,
         context_ms=context_ms, provider_ms=provider_ms, total_started=total_started,
-        query=query, previous_answer=previous_answer,
+        query=query, previous_answer=previous_answer, db_ms=db_ms, trim_ms=trim_ms,
     )
