@@ -1,4 +1,5 @@
 (() => {
+  // Workspace source status stays intentionally lightweight; this file is also a safe staging deploy trigger.
   const root = document.getElementById('viewRoot');
   if (!root) return;
 
