@@ -9,11 +9,15 @@ from ask_contract import ANSWER_JSON_SCHEMA, ONE_CALL_ASK_JSON_SCHEMA, SELECTOR_
 
 
 # Ask returns both a grounded selection and a user-facing answer in one structured
-# response. 1500 tokens proved too tight in production: otherwise-valid responses
-# were being cut off around 5.5-5.8k JSON characters, causing the streaming path to
-# fail and the browser to pay for a second non-streaming request. Keep enough
-# headroom to finish the JSON; the application still caps visible sections/items.
-ASK_ONE_CALL_MAX_TOKENS = 2600
+# response. 1500 tokens proved too tight in production, but 2600 leaves more room
+# than the manager-facing Ask output needs. 2000 preserves headroom for valid JSON
+# while bounding generation work more tightly.
+ASK_ONE_CALL_MAX_TOKENS = 2000
+# Ask is interactive. The Anthropic SDK defaults to two retries, which can turn a
+# transient 30-second timeout into a ~70-second user wait. Evidence interpretation
+# keeps the provider's normal retry behavior; Ask uses a single bounded attempt.
+ASK_TIMEOUT_SECONDS = 30.0
+ASK_MAX_RETRIES = 0
 
 
 def _parse_json(text: str) -> Mapping[str, Any]:
@@ -34,6 +38,13 @@ class LiveAskProvider:
         self.name = getattr(provider, "name", "unknown")
         self.model_identifier = getattr(provider, "model_identifier", "unknown")
 
+    def _anthropic_client(self):
+        """Use interactive Ask-specific retry/timeout settings without changing Evidence."""
+        return self.provider.client.with_options(
+            timeout=ASK_TIMEOUT_SECONDS,
+            max_retries=ASK_MAX_RETRIES,
+        )
+
     def run(self, prompt: str) -> Mapping[str, Any]:
         """Select relevant context and synthesize in one provider round-trip."""
         return self._call(prompt, ONE_CALL_ASK_JSON_SCHEMA, max_tokens=ASK_ONE_CALL_MAX_TOKENS)
@@ -41,7 +52,7 @@ class LiveAskProvider:
     def stream(self, prompt: str) -> Iterator[str]:
         """Stream the one-call Ask JSON text as the model generates it."""
         if self.name == "anthropic":
-            with self.provider.client.messages.stream(
+            with self._anthropic_client().messages.stream(
                 model=self.model_identifier,
                 max_tokens=ASK_ONE_CALL_MAX_TOKENS,
                 output_config={"format": {"type": "json_schema", "schema": ONE_CALL_ASK_JSON_SCHEMA}},
@@ -66,14 +77,14 @@ class LiveAskProvider:
         raise RuntimeError(f"Configured provider {self.name!r} does not support streaming Ask")
 
     def select(self, prompt: str) -> Mapping[str, Any]:
-        return self._call(prompt, SELECTOR_JSON_SCHEMA, max_tokens=1200)
+        return self._call(prompt, SELECTOR_JSON_SCHEMA, max_tokens=900)
 
     def synthesize(self, prompt: str) -> Mapping[str, Any]:
-        return self._call(prompt, ANSWER_JSON_SCHEMA, max_tokens=2200)
+        return self._call(prompt, ANSWER_JSON_SCHEMA, max_tokens=1800)
 
     def _call(self, prompt: str, schema: Mapping[str, Any], *, max_tokens: int) -> Mapping[str, Any]:
         if self.name == "anthropic":
-            message = self.provider.client.messages.create(
+            message = self._anthropic_client().messages.create(
                 model=self.model_identifier,
                 max_tokens=max_tokens,
                 output_config={"format": {"type": "json_schema", "schema": schema}},
