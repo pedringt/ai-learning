@@ -8,8 +8,7 @@ const root = {
 
 global.window = {
   STATE_API: {
-    getHistory: async () => [],
-    getReviews: async () => [],
+    getBootstrap: async () => ({history:[], resolved_reviews:[], open_reviews:[]}),
   },
 };
 global.document = {
@@ -22,6 +21,17 @@ global.MutationObserver = class { observe() {} };
 require(path.join(__dirname, 'context-provenance.js'));
 const P = window.STATE_PROVENANCE;
 assert(P, 'provenance helpers should be exposed');
+
+(function bootstrapUsesAuthoritativeResponseShape() {
+  const normalized = P.normalizeBootstrap({
+    history:[{id:'h1'}],
+    resolved_reviews:[{id:'r1'}],
+    open_reviews:[{id:'r2'}],
+  });
+  assert.equal(normalized.history.length, 1);
+  assert.equal(normalized.resolvedReviews[0].id, 'r1');
+  assert.equal(normalized.openReviews[0].id, 'r2');
+})();
 
 (function acceptedHistoryCarriesReviewAndEvidence() {
   const data = {
