@@ -28,6 +28,7 @@ from slack_intake_service import (
     DEFAULT_QUIET_WINDOW_SECONDS,
     classify_event,
     create_due_checkpoints,
+    ensure_channel_approved,
     handle_slack_event,
     run_checkpoint_poll_loop,
 )
@@ -112,6 +113,21 @@ def test_classify_short_reply_is_not_filtered_by_length():
 # ---------------------------------------------------------------------------
 # Channel approval + noise filtering via the full intake pipeline
 # ---------------------------------------------------------------------------
+
+def test_ensure_channel_approved_is_idempotent_and_re_enables():
+    with get_test_db() as conn:
+        ensure_channel_approved(conn, team_id=TEAM_ID, channel_id=CHANNEL_ID, channel_name="state-test")
+        assert conn.execute("SELECT COUNT(*) AS n FROM slack_channels").fetchone()["n"] == 1
+
+        # Calling again (e.g. every process startup) must not create a duplicate row.
+        ensure_channel_approved(conn, team_id=TEAM_ID, channel_id=CHANNEL_ID, channel_name="state-test")
+        assert conn.execute("SELECT COUNT(*) AS n FROM slack_channels").fetchone()["n"] == 1
+
+        conn.execute("UPDATE slack_channels SET enabled=0 WHERE team_id=? AND channel_id=?", (TEAM_ID, CHANNEL_ID))
+        ensure_channel_approved(conn, team_id=TEAM_ID, channel_id=CHANNEL_ID, channel_name="state-test")
+        row = conn.execute("SELECT enabled FROM slack_channels WHERE team_id=? AND channel_id=?", (TEAM_ID, CHANNEL_ID)).fetchone()
+        assert row["enabled"] == 1
+
 
 def test_unapproved_channel_creates_no_conversation():
     with get_test_db() as conn:
@@ -474,6 +490,71 @@ class SlackEventsEndpointTests(unittest.TestCase):
         response = self._post(payload)
         self.assertEqual(response.status_code, 200)
         # _BoomProvider.interpret raises if ever called; reaching here proves it wasn't.
+
+
+class SlackTestChannelAutoApprovalTests(unittest.TestCase):
+    """No admin UI exists yet, so a configured test channel must approve
+    itself at startup -- and survive a fresh (ephemeral) database on the
+    next startup too, since that's how staging actually runs."""
+
+    def setUp(self):
+        self.tempdir = tempfile.TemporaryDirectory()
+        self.db_path = str(Path(self.tempdir.name) / "state.db")
+
+    def tearDown(self):
+        self.tempdir.cleanup()
+
+    def _settings(self):
+        return Settings(
+            database_path=self.db_path,
+            provider="anthropic",
+            cors_origins=["http://localhost:8000"],
+            slack_signing_secret=SIGNING_SECRET,
+            slack_team_id=TEAM_ID,
+            slack_test_channel_id=CHANNEL_ID,
+            slack_test_channel_name="state-test",
+        )
+
+    def test_configured_test_channel_is_approved_with_no_manual_setup(self):
+        app = create_app(self._settings(), provider=_BoomProvider())
+        with TestClient(app) as client:
+            # ensure_channel_approved defaults ingestion_started_at to the real
+            # "now" it runs at (no historical backfill), so the test message
+            # must be after that, not a fixed epoch-based ts() fixture value.
+            real_now_ts = str(datetime.now(timezone.utc).timestamp())
+            raw = json.dumps(_payload(_message_event(real_now_ts), event_id="ev-auto-1")).encode("utf-8")
+            request_ts = str(int(time.time()))
+            response = client.post(
+                "/api/integrations/slack/events", content=raw,
+                headers={
+                    "Content-Type": "application/json",
+                    "X-Slack-Request-Timestamp": request_ts,
+                    "X-Slack-Signature": _sign(raw, request_ts),
+                },
+            )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["disposition"], "conversation_updated")
+
+    def test_approval_survives_a_fresh_process_against_the_same_db(self):
+        # Simulates a Render redeploy: same on-disk sqlite file, new process.
+        app1 = create_app(self._settings(), provider=_BoomProvider())
+        with TestClient(app1):
+            pass  # startup runs ensure_channel_approved and exits cleanly
+
+        app2 = create_app(self._settings(), provider=_BoomProvider())
+        with TestClient(app2) as client:
+            real_now_ts = str(datetime.now(timezone.utc).timestamp())
+            raw = json.dumps(_payload(_message_event(real_now_ts), event_id="ev-auto-2")).encode("utf-8")
+            request_ts = str(int(time.time()))
+            response = client.post(
+                "/api/integrations/slack/events", content=raw,
+                headers={
+                    "Content-Type": "application/json",
+                    "X-Slack-Request-Timestamp": request_ts,
+                    "X-Slack-Signature": _sign(raw, request_ts),
+                },
+            )
+        self.assertEqual(response.json()["disposition"], "conversation_updated")
 
 
 class _BoomProvider:

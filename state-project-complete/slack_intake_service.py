@@ -131,6 +131,27 @@ def _get_channel(connection: Connection, team_id: str, channel_id: str) -> dict 
     ).fetchone()
 
 
+def ensure_channel_approved(
+    connection: Connection, *, team_id: str, channel_id: str, channel_name: str | None = None
+) -> None:
+    """Idempotently approve a channel. Safe to call on every startup.
+
+    There is no admin UI for channel approval in Phase 1. This lets a
+    configured test channel stay approved across restarts of an ephemeral
+    database, the same way seeded demo data already re-bootstraps on startup.
+    """
+    existing = _get_channel(connection, team_id, channel_id)
+    if existing is None:
+        connection.execute(
+            "INSERT INTO slack_channels "
+            "(id, team_id, channel_id, channel_name, enabled, include_threads, include_bots) "
+            "VALUES (?,?,?,?,1,1,0)",
+            (new_id("slkch"), team_id, channel_id, channel_name),
+        )
+    elif not existing["enabled"]:
+        connection.execute("UPDATE slack_channels SET enabled=1 WHERE id=?", (existing["id"],))
+
+
 def _before_ingestion_start(channel: dict, message_ts: str) -> bool:
     if not message_ts:
         return False

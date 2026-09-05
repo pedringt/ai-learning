@@ -28,7 +28,12 @@ from seed_demo import bootstrap_demo_data, reset_demo_data
 from ask_contract import AskRequest
 from ask_provider import LiveAskProvider
 from ask_service import ask_cache_key, run_ask, stream_ask_events
-from slack_intake_service import DEFAULT_QUIET_WINDOW_SECONDS, handle_slack_event, run_checkpoint_poll_loop
+from slack_intake_service import (
+    DEFAULT_QUIET_WINDOW_SECONDS,
+    ensure_channel_approved,
+    handle_slack_event,
+    run_checkpoint_poll_loop,
+)
 from slack_signing import SlackSignatureError, verify_slack_request
 def _build_rev() -> str:
     """Identify the running build.
@@ -122,6 +127,13 @@ class Settings(BaseModel):
     # at all (used for local dev and tests). Set SLACK_CHECKPOINT_POLL_SECONDS
     # to enable it in a deployed environment.
     slack_checkpoint_poll_seconds: int | None = None
+    # There is no admin UI for channel approval in Phase 1, and staging's
+    # database is ephemeral (SQLite on the container, reset on every
+    # redeploy). Approving the test channel at startup -- the same way demo
+    # data already re-seeds on startup -- means it survives every redeploy
+    # without a manual DB step.
+    slack_test_channel_id: str | None = None
+    slack_test_channel_name: str | None = None
 
     def connection_url(self) -> str:
         if self.database_url:
@@ -148,6 +160,8 @@ class Settings(BaseModel):
             slack_checkpoint_poll_seconds=(
                 int(raw) if (raw := os.getenv("SLACK_CHECKPOINT_POLL_SECONDS", "").strip()).isdigit() else None
             ),
+            slack_test_channel_id=os.getenv("SLACK_TEST_CHANNEL_ID"),
+            slack_test_channel_name=os.getenv("SLACK_TEST_CHANNEL_NAME", "state-test"),
         )
 
 
@@ -287,6 +301,14 @@ def create_app(settings: Settings | None = None, provider: InterpretationProvide
             if settings.demo_bootstrap:
                 seeded = bootstrap_demo_data(connection)
                 logger.info("Demo bootstrap: %s", seeded)
+            if settings.slack_team_id and settings.slack_test_channel_id:
+                ensure_channel_approved(
+                    connection,
+                    team_id=settings.slack_team_id,
+                    channel_id=settings.slack_test_channel_id,
+                    channel_name=settings.slack_test_channel_name,
+                )
+                connection.commit()
         if app.state.provider is None:
             try:
                 app.state.provider = _provider_from_env(settings)

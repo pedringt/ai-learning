@@ -48,3 +48,10 @@ services:
         sync: false
       - key: SLACK_CHECKPOINT_POLL_SECONDS
         sync: false
+      # Auto-approved at startup since there is no admin UI yet (see
+      # ensure_channel_approved in slack_intake_service.py). Needed because
+      # this service's database is not guaranteed to persist across deploys.
+      - key: SLACK_TEST_CHANNEL_ID
+        sync: false
+      - key: SLACK_TEST_CHANNEL_NAME
+        value: state-test
