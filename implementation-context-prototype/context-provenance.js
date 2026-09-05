@@ -4,6 +4,8 @@
   if (!API || !root) return;
 
   let provenancePromise = null;
+  let focusedStateId = null;
+  let decorating = false;
   const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
   function normalizeBootstrap(payload) {
@@ -19,9 +21,6 @@
       provenancePromise = API.getBootstrap()
         .then(normalizeBootstrap)
         .finally(() => {
-          // De-dupe only concurrent reads. A later Project render should read a
-          // fresh authoritative snapshot so newly accepted Reviews appear
-          // without requiring a browser refresh.
           provenancePromise = null;
         });
     }
@@ -48,8 +47,8 @@
     );
 
     const openReviews = data.openReviews.filter(review => affectedStateIds(review).has(stateId));
-
     const reviewById = new Map(resolvedReviews.map(review => [review.id, review]));
+
     for (const transition of history) {
       if (transition?.review_id && !reviewById.has(transition.review_id)) {
         reviewById.set(transition.review_id, {
@@ -87,144 +86,67 @@
   function traceMarkup(trace) {
     if (!hasAcceptedProvenance(trace)) return '';
 
-    const accepted = trace.acceptedReviews.length;
-    const evidence = trace.evidence.length;
-    const summary = `State treats this as current because ${accepted} accepted ${accepted === 1 ? 'review' : 'reviews'} used ${evidence} linked Evidence ${evidence === 1 ? 'item' : 'items'}.`;
-
-    const reviewItems = trace.acceptedReviews.map(review => {
-      const decision = review?.decision_question || 'Accepted review';
-      const resolution = review?.resolution === 'confirmed_current' ? 'Confirmed current' : 'Updated Current State';
-      return `<li><strong>${esc(resolution)}</strong><span>${esc(decision)}</span></li>`;
-    }).join('');
-
-    const evidenceItems = trace.evidence.map(item =>
-      `<li><strong>${esc(sourceLabel(item?.source_type))}</strong><span>${esc(item?.content || '')}</span></li>`
+    const latestTransition = trace.history[0] || {};
+    const latestReview = trace.acceptedReviews.find(review => review?.id === latestTransition?.review_id) || trace.acceptedReviews[0] || {};
+    const why = latestTransition?.proposal_rationale || latestReview?.why_consequential || latestReview?.decision_question || 'Reviewed evidence supported this Current State change.';
+    const evidenceItems = trace.evidence.slice(0, 3).map(item =>
+      `<li><span>${esc(sourceLabel(item?.source_type))}</span><p>${esc(item?.content || '')}</p></li>`
     ).join('');
 
-    const historyItems = trace.history.slice(0, 3).map(item => {
-      const changed = item?.changed_at ? ` · ${esc(String(item.changed_at).slice(0, 10))}` : '';
-      const before = item?.old_statement ? `<span class="provenance-before">Previously: ${esc(item.old_statement)}</span>` : '';
-      return `<li><strong>${esc(item?.transition_type || 'Accepted change')}${changed}</strong><span>${esc(item?.new_statement || '')}</span>${before}</li>`;
-    }).join('');
-
-    const pendingItems = trace.openReviews.map(review =>
-      `<li><strong>Pending review</strong><span>${esc(review?.decision_question || review?.why_consequential || 'Open review')}</span></li>`
-    ).join('');
-
-    return `<div class="project-provenance-detail" role="region">
-      <p class="project-provenance-summary">${esc(summary)}</p>
-      ${reviewItems ? `<div class="project-provenance-group"><h5>Human decisions</h5><ul>${reviewItems}</ul></div>` : ''}
-      ${evidenceItems ? `<div class="project-provenance-group"><h5>Evidence used</h5><ul>${evidenceItems}</ul></div>` : ''}
-      ${historyItems ? `<div class="project-provenance-group"><h5>Accepted history</h5><ul>${historyItems}</ul></div>` : ''}
-      ${pendingItems ? `<div class="project-provenance-group provenance-pending"><h5>Still pending</h5><ul>${pendingItems}</ul><p>Pending reviews can qualify this fact, but they do not replace Current State until a human accepts them.</p></div>` : ''}
+    return `<div class="history-provenance-detail" role="note">
+      <strong>Why State treats this as current</strong>
+      <p>${esc(why)}</p>
+      ${evidenceItems ? `<div class="history-provenance-evidence"><span>Evidence</span><ul>${evidenceItems}</ul></div>` : ''}
     </div>`;
   }
 
-  function moveActionsInline(row) {
-    const actions = row.querySelector('.project-outline-actions');
-    if (!actions || actions.dataset.provenanceInline === 'true') return actions;
-    const factContent = actions.previousElementSibling;
-    if (!factContent) return actions;
-    actions.dataset.provenanceInline = 'true';
-    actions.classList.add('project-outline-actions-inline');
-    factContent.appendChild(actions);
-    return actions;
+  function rememberHistoryTarget(event) {
+    const projectLink = event.target.closest('.project-history-link[data-knowledge-id]');
+    const historyEntry = event.target.closest('.history-entry[data-knowledge-id]');
+    if (projectLink?.dataset?.knowledgeId) focusedStateId = projectLink.dataset.knowledgeId;
+    if (historyEntry?.dataset?.knowledgeId) focusedStateId = historyEntry.dataset.knowledgeId;
+    if (event.target.closest('[data-action="clear-history-topic"]')) focusedStateId = null;
   }
 
-  async function ensureButtons() {
-    const rows = [...root.querySelectorAll('.project-maintained-fact[data-state-id]')]
-      .filter(row => row.dataset.provenanceChecked !== 'true');
-    if (!rows.length) return;
+  async function decorateFocusedHistory() {
+    if (decorating || !focusedStateId) return;
+    const topicContext = root.querySelector('.history-context [data-action="clear-history-topic"]');
+    const entryBody = root.querySelector('.history-list .history-entry .history-entry-body');
+    if (!topicContext || !entryBody || entryBody.querySelector('.history-provenance-detail')) return;
 
-    rows.forEach(row => { row.dataset.provenanceChecked = 'true'; });
-
-    let data;
-    try {
-      data = await loadProvenance();
-    } catch (error) {
-      rows.forEach(row => { delete row.dataset.provenanceChecked; });
-      return;
-    }
-
-    for (const row of rows) {
-      const actions = moveActionsInline(row);
-      if (!actions || row.querySelector('[data-provenance-toggle]')) continue;
-
-      const trace = buildTrace(row.dataset.stateId, data);
-      if (!hasAcceptedProvenance(trace)) continue;
-
-      const button = document.createElement('button');
-      button.type = 'button';
-      button.className = 'text-button project-provenance-link';
-      button.dataset.provenanceToggle = 'true';
-      button.setAttribute('aria-expanded', 'false');
-      button.textContent = 'Why?';
-      actions.prepend(button);
-    }
-  }
-
-  async function toggleTrace(button) {
-    const row = button.closest('.project-maintained-fact[data-state-id]');
-    if (!row) return;
-    const existing = row.querySelector('.project-provenance-detail');
-    if (existing) {
-      existing.remove();
-      button.setAttribute('aria-expanded', 'false');
-      return;
-    }
-
-    button.disabled = true;
+    decorating = true;
     try {
       const data = await loadProvenance();
-      const trace = buildTrace(row.dataset.stateId, data);
+      const trace = buildTrace(focusedStateId, data);
       const markup = traceMarkup(trace);
-      if (!markup) {
-        button.remove();
-        return;
+      if (markup && entryBody.isConnected && !entryBody.querySelector('.history-provenance-detail')) {
+        entryBody.insertAdjacentHTML('beforeend', markup);
       }
-      row.insertAdjacentHTML('beforeend', markup);
-      button.setAttribute('aria-expanded', 'true');
     } catch (error) {
-      button.remove();
+      // History remains fully usable if provenance cannot be loaded.
     } finally {
-      if (button.isConnected) button.disabled = false;
+      decorating = false;
     }
   }
 
-  root.addEventListener('click', event => {
-    const button = event.target.closest('[data-provenance-toggle]');
-    if (!button) return;
-    event.preventDefault();
-    toggleTrace(button);
-  });
+  root.addEventListener('click', rememberHistoryTarget, true);
 
   const style = document.createElement('style');
   style.textContent = `
-    .project-outline-actions-inline{display:flex;align-items:center;gap:10px;margin-top:7px}
-    .project-outline-actions-inline .text-button,
-    .project-outline-actions-inline a{font-size:12px!important;font-weight:600!important;line-height:1.25!important;white-space:nowrap!important}
-    .project-provenance-link{padding:0!important;min-height:0!important;background:none!important;border:0!important;box-shadow:none!important}
-    .project-provenance-detail{grid-column:2/-1;margin:10px 0 2px;padding:11px 13px;border:1px solid var(--border, #d9dde3);border-radius:9px;background:var(--surface-soft, rgba(127,127,127,.045));font-size:13px;line-height:1.45}
-    .project-provenance-summary{margin:0 0 9px;font-weight:600}
-    .project-provenance-group+ .project-provenance-group{margin-top:11px}
-    .project-provenance-group h5{margin:0 0 5px;font-size:11px;text-transform:uppercase;letter-spacing:.04em}
-    .project-provenance-group ul{margin:0;padding-left:17px}
-    .project-provenance-group li{margin:5px 0}
-    .project-provenance-group li strong{display:block;font-size:12px}
-    .project-provenance-group li span{display:block}
-    .project-provenance-group .provenance-before{margin-top:2px;opacity:.72;font-size:12px}
-    .provenance-pending{padding-top:9px;border-top:1px solid var(--border, #d9dde3)}
-    .provenance-pending>p{margin:6px 0 0;opacity:.8}
-    @media(max-width:760px){
-      .project-outline-actions-inline{flex-wrap:wrap;gap:8px}
-      .project-provenance-detail{grid-column:1/-1;padding:10px 11px}
-    }
+    .history-provenance-detail{margin-top:16px;padding-top:14px;border-top:1px solid var(--border, #d9dde3);font-size:13px;line-height:1.45}
+    .history-provenance-detail>strong{display:block;margin-bottom:5px;font-size:13px}
+    .history-provenance-detail>p{margin:0;color:var(--muted, #626779)}
+    .history-provenance-evidence{margin-top:10px}
+    .history-provenance-evidence>span{display:block;margin-bottom:4px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em}
+    .history-provenance-evidence ul{margin:0;padding:0;list-style:none}
+    .history-provenance-evidence li+li{margin-top:8px}
+    .history-provenance-evidence li>span{display:block;font-size:11px;font-weight:700;color:var(--muted, #626779)}
+    .history-provenance-evidence li>p{margin:1px 0 0}
   `;
   document.head.appendChild(style);
 
-  const observer = new MutationObserver(ensureButtons);
+  const observer = new MutationObserver(() => requestAnimationFrame(decorateFocusedHistory));
   observer.observe(root, {childList:true, subtree:true});
-  ensureButtons();
 
   window.STATE_PROVENANCE = Object.freeze({buildTrace, traceMarkup, hasAcceptedProvenance, affectedStateIds, supportingResolvedReview, normalizeBootstrap});
 })();
