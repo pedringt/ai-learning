@@ -6,20 +6,24 @@
   let provenancePromise = null;
   const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
+  function normalizeBootstrap(payload) {
+    return {
+      history: Array.isArray(payload?.history) ? payload.history : [],
+      resolvedReviews: Array.isArray(payload?.resolved_reviews) ? payload.resolved_reviews : [],
+      openReviews: Array.isArray(payload?.open_reviews) ? payload.open_reviews : [],
+    };
+  }
+
   function loadProvenance() {
     if (!provenancePromise) {
-      provenancePromise = Promise.all([
-        API.getHistory(),
-        API.getReviews('resolved'),
-        API.getReviews('open'),
-      ]).then(([history, resolvedReviews, openReviews]) => ({
-        history: Array.isArray(history) ? history : [],
-        resolvedReviews: Array.isArray(resolvedReviews) ? resolvedReviews : [],
-        openReviews: Array.isArray(openReviews) ? openReviews : [],
-      })).catch(error => {
-        provenancePromise = null;
-        throw error;
-      });
+      provenancePromise = API.getBootstrap()
+        .then(normalizeBootstrap)
+        .finally(() => {
+          // De-dupe only concurrent reads. A later Project render should read a
+          // fresh authoritative snapshot so newly accepted Reviews appear
+          // without requiring a browser refresh.
+          provenancePromise = null;
+        });
     }
     return provenancePromise;
   }
@@ -222,5 +226,5 @@
   observer.observe(root, {childList:true, subtree:true});
   ensureButtons();
 
-  window.STATE_PROVENANCE = Object.freeze({buildTrace, traceMarkup, hasAcceptedProvenance, affectedStateIds, supportingResolvedReview});
+  window.STATE_PROVENANCE = Object.freeze({buildTrace, traceMarkup, hasAcceptedProvenance, affectedStateIds, supportingResolvedReview, normalizeBootstrap});
 })();
