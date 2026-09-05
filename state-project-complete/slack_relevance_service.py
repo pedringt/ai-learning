@@ -37,6 +37,21 @@ class RelevanceClassifier(Protocol):
         ...
 
 
+class ProviderRelevanceClassifier:
+    """Adapts an InterpretationProvider's classify_slack_relevance() to RelevanceClassifier.
+
+    Lets the relevance worker reuse whichever provider is already configured
+    for Evidence interpretation (same STATE_PROVIDER/model, same API key)
+    instead of introducing a second, separately-configured model.
+    """
+
+    def __init__(self, provider: InterpretationProvider) -> None:
+        self._provider = provider
+
+    def classify(self, conversation_text: str) -> Mapping[str, Any]:
+        return self._provider.classify_slack_relevance(conversation_text)
+
+
 class FakeSlackRelevanceClassifier:
     """Deterministic classifier for tests and local dev -- never calls a model.
 

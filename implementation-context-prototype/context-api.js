@@ -112,6 +112,9 @@
     stopQuestion: questionId => request(`/api/questions/${encodeURIComponent(questionId)}/stop`, {method:'POST'}),
     createRule: (text, category = 'Interpretation') => jsonPost('/api/rules', {text, category}),
     deleteRule: ruleId => request(`/api/rules/${encodeURIComponent(ruleId)}`, {method:'DELETE'}),
+    getSlackChannels: () => request('/api/integrations/slack/channels'),
+    updateSlackChannel: (channelRowId, updates) => request(`/api/integrations/slack/channels/${encodeURIComponent(channelRowId)}`, {method:'PATCH', headers:{'Content-Type':'application/json'}, body:JSON.stringify(updates)}),
+    getSlackHealth: () => request('/api/integrations/slack/health'),
     resetDemo: () => request('/api/demo/reset', {method:'POST'}),
     askPreview: query => jsonPost('/api/ask/preview', {query}),
     // Free-form Ask streams visible answer text while the final grounded payload

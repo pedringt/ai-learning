@@ -47,7 +47,7 @@
       .slack-preview,.source-list{margin-top:16px;display:grid;gap:10px}.slack-preview-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px 0;border-top:1px solid var(--line,#e5e5ea)}.slack-preview-row:first-child{border-top:0}.slack-preview-row span{color:var(--muted,#666);font-size:13px}
       .source-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:16px;align-items:start;padding:14px 0;border-top:1px solid var(--line,#e5e5ea)}.source-row:nth-child(-n+2){border-top:0}.source-row>div{min-width:0}.source-description{display:block;margin:5px 0 0 26px;color:var(--muted,#666);font-size:13px;line-height:1.4}
       .source-title{display:flex;align-items:center;gap:8px;font-weight:700;color:inherit}.source-icon{width:18px;height:18px;flex:0 0 18px;display:block}
-      .settings-slack-heading{display:flex;align-items:center;gap:9px}.settings-slack-heading .source-icon{width:20px;height:20px;flex-basis:20px}.settings-callout{margin-top:14px;padding:12px 14px;border-radius:12px;background:var(--soft,#f6f5f8);font-size:13px;line-height:1.45}.settings-actions{margin-top:16px;display:flex;gap:8px;flex-wrap:wrap}.settings-slack .settings-section-head{align-items:center}.settings-slack-intro{max-width:620px}.settings-source-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 28px}
+      .settings-slack-heading{display:flex;align-items:center;gap:9px}.settings-slack-heading .source-icon{width:20px;height:20px;flex-basis:20px}.settings-callout{margin-top:14px;padding:12px 14px;border-radius:12px;background:var(--soft,#f6f5f8);font-size:13px;line-height:1.45}.settings-actions{margin-top:16px;display:flex;gap:8px;flex-wrap:wrap}.settings-slack-status{margin-top:14px;font-size:13px}.settings-slack .settings-section-head{align-items:center}.settings-slack-intro{max-width:620px}.settings-source-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 28px}
       .settings-danger{border-color:#c8a7a7;padding:16px 20px}.settings-danger .settings-section-head{align-items:center;margin:0}.settings-danger .settings-actions{margin:0}
       @media(max-width:680px){.settings-section{padding:16px}.settings-section-head,.slack-preview-row{align-items:flex-start;flex-direction:column}.settings-rule-form{display:grid}.settings-rule-list li{align-items:center}.settings-status{align-self:flex-start}.settings-behavior-list,.settings-source-grid{grid-template-columns:1fr}.source-row,.source-row:nth-child(-n+2){border-top:1px solid var(--line,#e5e5ea)}.source-row:first-child{border-top:0}.settings-danger .settings-actions{margin-top:12px}}
     `;
@@ -71,6 +71,38 @@
     return rulesState.items.map(rule=>`<li data-rule-id="${esc(rule.id)}"><div class="settings-rule-copy"><strong>${esc(rule.category||'Interpretation')}</strong><span>${esc(rule.text||rule.rule||'')}</span></div><button class="text-button" type="button" data-settings-action="delete-rule" data-rule-id="${esc(rule.id)}">Remove</button></li>`).join('');
   }
 
+  // Distinguishes "the fetch failed" from "nothing is connected yet" the
+  // same way rules() does above.
+  async function slackStatus(){
+    try{
+      const [channelsPayload,health]=await Promise.all([api()?.getSlackChannels?.(),api()?.getSlackHealth?.()]);
+      return {loading:false,failed:false,channels:channelsPayload?.items||[],health:health||null};
+    }catch(error){
+      console.warn('Settings could not load Slack status.',error);
+      return {loading:false,failed:true,channels:[],health:null};
+    }
+  }
+
+  function slackStatusLine(slackState){
+    if(slackState.loading) return 'Checking connection…';
+    if(slackState.failed) return 'Connection status unavailable.';
+    const health=slackState.health;
+    if(!health?.connected) return 'Not connected yet.';
+    const parts=[`Connected${health.workspace_name?` · ${esc(health.workspace_name)}`:''}`];
+    if(health.pending_checkpoints) parts.push(`${health.pending_checkpoints} conversation${health.pending_checkpoints===1?'':'s'} awaiting review`);
+    return parts.join(' · ');
+  }
+
+  // No channel-discovery/OAuth flow exists yet, so a channel only ever
+  // appears here once Slack has actually sent State an event from it. Until
+  // then, describe the planned behavior instead of showing an empty list.
+  function slackChannelsMarkup(slackState){
+    if(slackState.loading) return '<div class="slack-preview-row"><span>Loading channels…</span></div>';
+    if(slackState.failed) return '<div class="slack-preview-row"><span>Channels could not be loaded.</span><button class="text-button" type="button" data-settings-action="retry-slack">Try again</button></div>';
+    if(!slackState.channels.length) return '<div class="slack-preview-row"><div><strong>Approved channels</strong><br><span>Only channels explicitly enabled for Northstar can feed State.</span></div><span>Planned</span></div><div class="slack-preview-row"><div><strong>Threads</strong><br><span>State follows conversations over time and creates new Evidence when something meaningful changes.</span></div><span>Planned</span></div><div class="slack-preview-row"><div><strong>Noise control</strong><br><span>Bot, system, and low-value conversation is filtered before it reaches Notes.</span></div><span>Planned</span></div>';
+    return slackState.channels.map(channel=>`<div class="slack-preview-row"><div><strong>#${esc(channel.channel_name||channel.channel_id)}</strong><br><span>${channel.last_event_at?`Last activity ${esc(channel.last_event_at)}`:'No activity yet'}</span></div><button class="btn secondary" type="button" data-settings-action="toggle-channel" data-channel-row-id="${esc(channel.id)}" data-enabled="${channel.enabled?'1':'0'}">${channel.enabled?'Enabled':'Disabled'}</button></div>`).join('');
+  }
+
   // Settings owns its own data fetch instead of going through the shared,
   // already-loaded state.data that every other view reads synchronously.
   // The page shell (and the sections below that don't depend on rules) must
@@ -79,16 +111,17 @@
   // resolves, rather than leaving #viewRoot showing the previous view for as
   // long as the request takes (seconds, or tens of seconds against a cold
   // staging backend).
-  function render(rulesState){
+  function render(rulesState,slackState){
     const settingsNav=document.querySelector('.sidebar-nav [data-view="settings"]');if(!settingsNav?.classList.contains('active')) return;
     const target=root();if(!target) return;
     const state=rulesState||{loading:true,failed:false,items:[]};
+    const slack=slackState||{loading:true,failed:false,channels:[],health:null};
     target.innerHTML=`<article class="page settings-page">
       <div class="page-head"><h2>Settings</h2><p>Configure Northstar and the sources allowed to feed it.</p></div>
       <section class="settings-section"><div class="settings-section-head"><div><h3>Project</h3><p>Basic information State uses for this project.</p></div></div><div class="settings-project-name"><label for="settings-project-name">Project name</label><input id="settings-project-name" value="Northstar" readonly aria-readonly="true"><p>Project renaming isn't available for this example project.</p></div>
         <details class="settings-rules"><summary><span>Project rules <span class="settings-rules-count">${rulesCountMarkup(state)}</span></span></summary><div class="settings-rules-body"><p>Rules tell State how to interpret information for this project.</p><form class="settings-rule-form" data-settings-action="add-rule"><label>Add a project rule<input name="rule" autocomplete="off" placeholder="Example: Security approvals must be explicit."></label><label>Category<select name="category"><option>Authority</option><option>Review</option><option>Sources</option><option selected>Interpretation</option></select></label><button class="btn secondary" type="submit">Add rule</button></form><ul class="settings-rule-list">${rulesListMarkup(state)}</ul></div></details>
       </section>
-      <section class="settings-section settings-slack" id="settings-slack"><div class="settings-section-head"><div class="settings-slack-intro"><h3 class="settings-slack-heading">${sourceIcon('slack')}<span>Slack</span></h3><p>Bring useful project conversations into State as Evidence. Slack never changes Current State directly.</p></div><span class="settings-status dev">In development</span></div><div class="settings-actions"><button class="btn secondary" type="button" disabled aria-disabled="true">Connect Slack</button></div><div class="slack-preview" aria-label="Planned Slack behavior"><div class="slack-preview-row"><div><strong>Approved channels</strong><br><span>Only channels explicitly enabled for Northstar can feed State.</span></div><span>Planned</span></div><div class="slack-preview-row"><div><strong>Threads</strong><br><span>State follows conversations over time and creates new Evidence when something meaningful changes.</span></div><span>Planned</span></div><div class="slack-preview-row"><div><strong>Noise control</strong><br><span>Bot, system, and low-value conversation is filtered before it reaches Notes.</span></div><span>Planned</span></div></div></section>
+      <section class="settings-section settings-slack" id="settings-slack"><div class="settings-section-head"><div class="settings-slack-intro"><h3 class="settings-slack-heading">${sourceIcon('slack')}<span>Slack</span></h3><p>Bring useful project conversations into State as Evidence. Slack never changes Current State directly.</p></div><span class="settings-status dev">In development</span></div><div class="settings-actions"><button class="btn secondary" type="button" disabled aria-disabled="true">Connect Slack</button></div><p class="settings-slack-status">${slackStatusLine(slack)}</p><div class="slack-preview" aria-label="Slack channel activity">${slackChannelsMarkup(slack)}</div></section>
       <section class="settings-section settings-quiet"><div class="settings-section-head"><div><h3>How State works</h3><p>Safeguards that protect the human authorization model.</p></div></div><ul class="settings-behavior-list"><li>Evidence cannot change Current State automatically.</li><li>Questions require Review before resolution.</li><li>Ignored Evidence is excluded from active reasoning.</li><li>Evidence history stays available so accepted changes remain explainable.</li></ul></section>
       <section class="settings-section"><div class="settings-section-head"><div><h3>Sources</h3><p>Places State can gather project information from planning, discovery, documentation, and collaboration.</p></div></div><div class="settings-callout"><strong>Sources provide Evidence. They never change Current State directly.</strong></div><div class="source-list settings-source-grid" aria-label="Connected and planned sources">
         <div class="source-row"><div>${sourceTitle('slack','Slack')}<span class="source-description">Project conversations and decisions.</span></div><span class="settings-status dev">In development</span></div>
@@ -110,17 +143,23 @@
     }
   }
 
-  // Paints the shell immediately (loading placeholder for rules), then
-  // patches in the real rules once the fetch resolves. See the comment on
-  // render() above for why this can't just be one await-then-paint step.
+  // Paints the shell immediately (loading placeholders for rules and Slack
+  // status), then patches each in independently as its own fetch resolves --
+  // rules and Slack status are unrelated requests, and one running slow
+  // (e.g. against a cold staging backend) shouldn't hold up the other. See
+  // the comment on render() above for why this can't just be one
+  // await-then-paint step.
   async function load(){
-    render();
-    const rulesResult=await rules();
-    render(rulesResult);
+    const current={rules:{loading:true,failed:false,items:[]},slack:{loading:true,failed:false,channels:[],health:null}};
+    render(current.rules,current.slack);
+    await Promise.all([
+      rules().then(result=>{current.rules=result;render(current.rules,current.slack);}),
+      slackStatus().then(result=>{current.slack=result;render(current.rules,current.slack);}),
+    ]);
   }
 
   document.addEventListener('submit',async event=>{const form=event.target.closest('form[data-settings-action="add-rule"]');if(!form)return;event.preventDefault();const input=form.elements.rule;const text=String(input?.value||'').trim();if(!text)return;const category=form.elements.category?.value||'Interpretation';const button=form.querySelector('button[type="submit"]');if(button)button.disabled=true;try{await api()?.createRule?.(text,category);if(input)input.value='';await load();}catch(error){console.error('Could not add project rule.',error);if(button)button.disabled=false;window.alert(`Could not save the rule: ${error.message}`);}});
-  document.addEventListener('click',async event=>{const control=event.target.closest('[data-settings-action]');if(!control)return;const action=control.dataset.settingsAction;if(action==='retry-rules'){await load();}if(action==='delete-rule'){control.disabled=true;try{await api()?.deleteRule?.(control.dataset.ruleId);await load();}catch(error){console.error('Could not remove project rule.',error);control.disabled=false;window.alert(`Could not remove the rule: ${error.message}`);}}if(action==='reset-demo'){if(!window.confirm('Reset Northstar to its original seeded scenario?'))return;control.disabled=true;try{await api()?.resetDemo?.();window.location.reload();}catch(error){console.error('Could not reset demo.',error);control.disabled=false;window.alert(error?.isTimeout?error.message:`Northstar was not reset: ${error.message}`);}}});
+  document.addEventListener('click',async event=>{const control=event.target.closest('[data-settings-action]');if(!control)return;const action=control.dataset.settingsAction;if(action==='retry-rules'||action==='retry-slack'){await load();}if(action==='delete-rule'){control.disabled=true;try{await api()?.deleteRule?.(control.dataset.ruleId);await load();}catch(error){console.error('Could not remove project rule.',error);control.disabled=false;window.alert(`Could not remove the rule: ${error.message}`);}}if(action==='toggle-channel'){control.disabled=true;const nowEnabled=control.dataset.enabled!=='1';try{await api()?.updateSlackChannel?.(control.dataset.channelRowId,{enabled:nowEnabled});await load();}catch(error){console.error('Could not update Slack channel.',error);control.disabled=false;window.alert(`Could not update the channel: ${error.message}`);}}if(action==='reset-demo'){if(!window.confirm('Reset Northstar to its original seeded scenario?'))return;control.disabled=true;try{await api()?.resetDemo?.();window.location.reload();}catch(error){console.error('Could not reset demo.',error);control.disabled=false;window.alert(error?.isTimeout?error.message:`Northstar was not reset: ${error.message}`);}}});
 
   styles();const settingsNav=document.querySelector('.sidebar-nav [data-view="settings"]');let settingsWasActive=!!settingsNav?.classList.contains('active');if(settingsWasActive)load();if(settingsNav){new MutationObserver(()=>{const active=settingsNav.classList.contains('active');if(active&&!settingsWasActive)load();settingsWasActive=active;}).observe(settingsNav,{attributes:true,attributeFilter:['class']});}
 })();
