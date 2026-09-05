@@ -66,7 +66,20 @@
     });
   }
 
-  function render(){ updateNav(); const views={overview:renderOverview,notes:renderNotes,'open-items':renderOpenItems,questions:renderOpenItems,review:renderOpenItems,history:renderHistory,'project-overview':renderProjectOverview}; (views[state.view]||renderOverview)(); ASK?.activateWaitStates?.(root); }
+  // 'settings' intentionally maps to a no-op: context-settings.js owns
+  // #viewRoot's content for that view entirely through its own
+  // load()/MutationObserver pair, decoupled from this render(). Without an
+  // explicit no-op here, the `|| renderOverview` fallback below silently
+  // overwrites Settings' content with Workspace's on *any* call to this
+  // render() while state.view==='settings' -- including the one
+  // hydrateBackend() fires when its async fetch resolves, which does not
+  // itself check what view is active. That produces a real, reachable bug
+  // independent of any Settings-specific flow: land on/navigate to
+  // Settings while hydrateBackend's fetch is still in flight (guaranteed
+  // right after a fresh page load, e.g. the Slack OAuth redirect lands
+  // there) and its resolution can clobber Settings back to Workspace
+  // content while the sidebar still shows Settings highlighted.
+  function render(){ updateNav(); const views={overview:renderOverview,notes:renderNotes,'open-items':renderOpenItems,questions:renderOpenItems,review:renderOpenItems,history:renderHistory,'project-overview':renderProjectOverview,settings:()=>{}}; (views[state.view]||renderOverview)(); ASK?.activateWaitStates?.(root); }
 
   function navigateTo(view,{preserveHistoryTopic=false,preserveHistoryEvidence=false}={}){
     state.view=view;
@@ -1705,19 +1718,13 @@
   // The Slack "Connect Slack" OAuth round trip ends with the backend
   // redirecting the browser back here with ?slack_connect=success|error.
   // Land directly on Settings' Slack section with that result instead of
-  // leaving the user on Workspace with an unexplained query string.
-  //
-  // This must NOT call navigateTo() directly: this script runs before
-  // context-history.js's, so toggling the sidebar's active class here
-  // happens before that module's own MutationObserver exists to see it.
-  // context-history.js then reads the URL hash itself on its own boot and,
-  // finding one it doesn't recognize, rewrites the URL back over whatever
-  // was just set -- leaving the sidebar showing Settings as active while
-  // state.view silently disagrees, and a later click on Settings becomes a
-  // no-op (already "active", no class transition to observe). Setting the
-  // hash to the plain route context-history.js already recognizes lets its
-  // existing (already correct) restore-on-load path do this via a real
-  // click on the nav button instead.
+  // leaving the user on Workspace with an unexplained query string. Safe
+  // to call navigateTo() directly now that render()'s views map has an
+  // explicit no-op for 'settings' -- previously this raced with
+  // hydrateBackend()'s async completion (in flight on every fresh page
+  // load) falling back to Workspace content the moment it resolved, which
+  // is the real bug that was fixed above, not anything specific to this
+  // boot step.
   const bootParams=new URLSearchParams(location.search);
   const slackConnectResult=bootParams.get('slack_connect');
   if(slackConnectResult){
@@ -1726,6 +1733,7 @@
     bootParams.delete('slack_connect');
     const cleanedSearch=bootParams.toString();
     history.replaceState(history.state,'',location.pathname+(cleanedSearch?`?${cleanedSearch}`:'')+'#settings');
+    navigateTo('settings');
   }
   window.STATE_ASK_TEST_API={state,detectAskIntent,findScenario,structuredAskResult,scenarioResult,intentAskHtml,submitAsk,upsertBackendReview,replaceBackendOpenReviews,mapApiReview};
   render();

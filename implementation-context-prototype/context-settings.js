@@ -61,7 +61,7 @@
       .slack-preview,.source-list{margin-top:16px;display:grid;gap:10px}.slack-preview-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px 0;border-top:1px solid var(--line,#e5e5ea)}.slack-preview-row:first-child{border-top:0}.slack-preview-row span{color:var(--muted,#666);font-size:13px}
       .source-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:16px;align-items:start;padding:14px 0;border-top:1px solid var(--line,#e5e5ea)}.source-row:nth-child(-n+2){border-top:0}.source-row>div{min-width:0}.source-description{display:block;margin:5px 0 0 26px;color:var(--muted,#666);font-size:13px;line-height:1.4}
       .source-title{display:flex;align-items:center;gap:8px;font-weight:700;color:inherit}.source-icon{width:18px;height:18px;flex:0 0 18px;display:block}
-      .settings-slack-heading{display:flex;align-items:center;gap:9px}.settings-slack-heading .source-icon{width:20px;height:20px;flex-basis:20px}.settings-callout{margin-top:14px;padding:12px 14px;border-radius:12px;background:var(--soft,#f6f5f8);font-size:13px;line-height:1.45}.settings-actions{margin-top:16px;display:flex;gap:12px;align-items:center;flex-wrap:wrap}.settings-actions a.btn{text-decoration:none;display:inline-flex;align-items:center}.settings-slack-status{margin-top:14px;font-size:13px;font-weight:600;color:var(--muted,#666)}.settings-slack-status.connected{color:#1c8a5c}.settings-slack-status.error{color:#c81d55}.settings-slack-notice{margin-top:12px;padding:9px 12px;border-radius:10px;font-size:13px;font-weight:600}.settings-slack-notice.success{background:rgba(46,182,125,.12);color:#1c8a5c}.settings-slack-notice.error{background:rgba(224,30,90,.1);color:#c81d55}.settings-slack .settings-section-head{align-items:center}.settings-slack-intro{max-width:620px}.settings-source-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 28px}
+      .settings-slack-heading{display:flex;align-items:center;gap:9px}.settings-slack-heading .source-icon{width:20px;height:20px;flex-basis:20px}.settings-callout{margin-top:14px;padding:12px 14px;border-radius:12px;background:var(--soft,#f6f5f8);font-size:13px;line-height:1.45}.settings-actions{margin-top:16px;display:flex;gap:12px;align-items:center;flex-wrap:wrap}.settings-actions a.btn{text-decoration:none;display:inline-flex;align-items:center}.settings-slack-status{margin-top:14px;font-size:13px;font-weight:600;color:var(--muted,#666)}.settings-slack-status.connected{color:#1c8a5c}.settings-slack-status.error{color:#c81d55}.settings-slack-notice{margin-top:12px;padding:9px 12px;border-radius:10px;font-size:13px;font-weight:600}.settings-slack-notice.error{background:rgba(224,30,90,.1);color:#c81d55}.settings-slack .settings-section-head{align-items:center}.settings-slack-intro{max-width:620px}.settings-source-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 28px}
       .settings-danger{border-color:#c8a7a7;padding:16px 20px}.settings-danger .settings-section-head{align-items:center;margin:0}.settings-danger .settings-actions{margin:0}
       @media(max-width:680px){.settings-section{padding:16px}.settings-section-head,.slack-preview-row{align-items:flex-start;flex-direction:column}.settings-rule-form{display:grid}.settings-rule-list li{align-items:center}.settings-status{align-self:flex-start}.settings-behavior-list,.settings-source-grid{grid-template-columns:1fr}.source-row,.source-row:nth-child(-n+2){border-top:1px solid var(--line,#e5e5ea)}.source-row:first-child{border-top:0}.settings-danger .settings-actions{margin-top:12px}}
     `;
@@ -130,8 +130,13 @@
   // resolves, rather than leaving #viewRoot showing the previous view for as
   // long as the request takes (seconds, or tens of seconds against a cold
   // staging backend).
+  // Only the error case gets a banner: the persistent status line right
+  // below already says "Connected · workspace" in green on success, so a
+  // second "Slack connected." box on top of it just duplicates the same
+  // information. On failure, though, that status line reads "Not connected
+  // yet." in neutral gray -- indistinguishable from having simply never
+  // tried -- so it can't carry "your last attempt just failed" on its own.
   function slackConnectNoticeMarkup(connectNotice){
-    if(connectNotice==='success') return '<p class="settings-slack-notice success">Slack connected.</p>';
     if(connectNotice==='error') return '<p class="settings-slack-notice error">Could not connect Slack. Please try again.</p>';
     return '';
   }
