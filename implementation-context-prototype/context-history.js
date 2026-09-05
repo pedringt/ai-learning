@@ -35,12 +35,20 @@
     history.pushState({stateView: view}, '', urlForView(view));
   }
 
+  function closeOpenDialog() {
+    const overlay = document.getElementById('overlay');
+    if (!overlay || overlay.hidden) return;
+    const close = overlay.querySelector('[data-action="close-dialog"]');
+    if (close) close.click();
+  }
+
   function navigateFromHistory(view) {
     if (!routeForView[view]) view = 'overview';
     currentView = view;
     const target = document.querySelector(`[data-view="${CSS.escape(view)}"]`);
     if (!target) return;
     applyingHistory = true;
+    closeOpenDialog();
     target.click();
     // The app's delegated click handler and our own zero-delay history observer
     // both run from this click. Keep suppression alive through that task so a
