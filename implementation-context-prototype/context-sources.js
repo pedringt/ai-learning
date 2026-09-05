@@ -20,7 +20,7 @@
     if (!overview || overview.querySelector('.workspace-source-strip')) return;
     const heading = overview.querySelector('.overview-heading');
     if (!heading) return;
-    heading.insertAdjacentHTML('afterend', `<section class="workspace-source-strip" aria-label="Source status"><span class="meta-label">Sources</span><span class="workspace-source-name">Slack</span><span class="workspace-source-status">In development</span><span class="workspace-source-copy">Approved project conversations will enter State as Evidence, never as automatic Current State.</span><button class="text-button" type="button" data-view="settings">Settings →</button></section>`);
+    heading.insertAdjacentHTML('afterend', `<section class="workspace-source-strip" aria-label="Source status"><span class="meta-label">Sources</span><span class="workspace-source-name">Slack</span><span class="workspace-source-status">In development</span><span class="workspace-source-copy">This demo includes Slack-sourced Evidence you can trace through Review and History. Live connection is still in development.</span><button class="text-button" type="button" data-view="settings">Settings →</button></section>`);
   }
 
   decorate();
