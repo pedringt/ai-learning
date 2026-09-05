@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import json
 import os
 from collections import OrderedDict
@@ -27,7 +28,7 @@ from seed_demo import bootstrap_demo_data, reset_demo_data
 from ask_contract import AskRequest
 from ask_provider import LiveAskProvider
 from ask_service import ask_cache_key, run_ask, stream_ask_events
-from slack_intake_service import DEFAULT_QUIET_WINDOW_SECONDS, handle_slack_event
+from slack_intake_service import DEFAULT_QUIET_WINDOW_SECONDS, handle_slack_event, run_checkpoint_poll_loop
 from slack_signing import SlackSignatureError, verify_slack_request
 def _build_rev() -> str:
     """Identify the running build.
@@ -117,6 +118,10 @@ class Settings(BaseModel):
     # other team_id are rejected before any processing, so a staging Slack
     # app cannot feed a production deployment (or vice versa).
     slack_team_id: str | None = None
+    # Opt-in: unset means the checkpoint quiet-window poll loop does not run
+    # at all (used for local dev and tests). Set SLACK_CHECKPOINT_POLL_SECONDS
+    # to enable it in a deployed environment.
+    slack_checkpoint_poll_seconds: int | None = None
 
     def connection_url(self) -> str:
         if self.database_url:
@@ -140,6 +145,9 @@ class Settings(BaseModel):
             demo_bootstrap=os.getenv("STATE_DEMO_BOOTSTRAP", "1").strip().lower() in {"1", "true", "yes"},
             slack_signing_secret=os.getenv("SLACK_SIGNING_SECRET"),
             slack_team_id=os.getenv("SLACK_TEAM_ID"),
+            slack_checkpoint_poll_seconds=(
+                int(raw) if (raw := os.getenv("SLACK_CHECKPOINT_POLL_SECONDS", "").strip()).isdigit() else None
+            ),
         )
 
 
@@ -286,7 +294,18 @@ def create_app(settings: Settings | None = None, provider: InterpretationProvide
                 logger.warning("Provider not initialized at startup: %s", exc)
         if app.state.ask_provider is None and app.state.provider is not None:
             app.state.ask_provider = LiveAskProvider(app.state.provider)
+        checkpoint_task = None
+        if settings.slack_checkpoint_poll_seconds:
+            checkpoint_task = asyncio.create_task(
+                run_checkpoint_poll_loop(get_connection, settings.slack_checkpoint_poll_seconds, logger)
+            )
         yield
+        if checkpoint_task is not None:
+            checkpoint_task.cancel()
+            try:
+                await checkpoint_task
+            except asyncio.CancelledError:
+                pass
 
     app = FastAPI(title="State API", version="0.1.0", lifespan=lifespan)
     app.state.provider = provider

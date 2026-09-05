@@ -29,6 +29,7 @@ from slack_intake_service import (
     classify_event,
     create_due_checkpoints,
     handle_slack_event,
+    run_checkpoint_poll_loop,
 )
 from slack_signing import SlackSignatureError, verify_slack_request
 
@@ -251,6 +252,72 @@ def test_second_checkpoint_supersedes_the_first_via_previous_checkpoint_id():
         second = conn.execute("SELECT * FROM slack_checkpoints WHERE id=?", (second_batch[0],)).fetchone()
         assert second["version"] == 2
         assert second["previous_checkpoint_id"] == first_batch[0]
+
+
+def test_edit_and_deletion_counts_are_deltas_since_previous_checkpoint_not_totals():
+    with get_test_db() as conn:
+        _insert_channel(conn)
+        start = datetime(2026, 1, 1, tzinfo=timezone.utc)
+        handle_slack_event(conn, _payload(_message_event(ts(1)), event_id="ev1"), now=start)
+        handle_slack_event(
+            conn, _payload(_message_event(ts(2), thread_ts=ts(1), text="reply"), event_id="ev2"), now=start,
+        )
+        first_batch = create_due_checkpoints(conn, now=start + timedelta(seconds=DEFAULT_QUIET_WINDOW_SECONDS + 1))
+        first = conn.execute("SELECT * FROM slack_checkpoints WHERE id=?", (first_batch[0],)).fetchone()
+        assert first["new_edit_count"] == 0
+
+        later = start + timedelta(hours=1)
+        edit_event = {
+            "type": "message", "subtype": "message_changed", "channel": CHANNEL_ID,
+            "message": {"ts": ts(1), "text": "corrected", "user": "U1"},
+        }
+        handle_slack_event(conn, _payload(edit_event, event_id="ev-edit"), now=later)
+        handle_slack_event(
+            conn, _payload(_message_event(ts(3), thread_ts=ts(1), text="another reply"), event_id="ev3"), now=later,
+        )
+        second_batch = create_due_checkpoints(conn, now=later + timedelta(seconds=DEFAULT_QUIET_WINDOW_SECONDS + 1))
+        second = conn.execute("SELECT * FROM slack_checkpoints WHERE id=?", (second_batch[0],)).fetchone()
+        assert second["new_edit_count"] == 1  # only the edit since checkpoint 1, not a running total
+
+        even_later = later + timedelta(hours=1)
+        handle_slack_event(
+            conn, _payload(_message_event(ts(4), thread_ts=ts(1), text="yet another reply"), event_id="ev4"),
+            now=even_later,
+        )
+        third_batch = create_due_checkpoints(conn, now=even_later + timedelta(seconds=DEFAULT_QUIET_WINDOW_SECONDS + 1))
+        third = conn.execute("SELECT * FROM slack_checkpoints WHERE id=?", (third_batch[0],)).fetchone()
+        # No new edit since checkpoint 2. A cumulative (buggy) count would still show 1.
+        assert third["new_edit_count"] == 0
+
+
+def test_checkpoint_poll_loop_actually_creates_due_checkpoints():
+    # This is the only thing that calls create_due_checkpoints in a deployed
+    # environment; without it, quiet-window checkpoints never materialize.
+    with get_test_db() as conn:
+        _insert_channel(conn)
+        real_past = datetime.now(timezone.utc) - timedelta(seconds=DEFAULT_QUIET_WINDOW_SECONDS + 5)
+        handle_slack_event(conn, _payload(_message_event(ts(1)), event_id="ev1"), now=real_past)
+
+        class _StaticConnection:
+            def __enter__(self):
+                return conn
+
+            def __exit__(self, *exc_info):
+                return False  # the outer get_test_db() owns closing this connection
+
+        import asyncio as _asyncio
+
+        async def run_one_iteration():
+            task = _asyncio.create_task(run_checkpoint_poll_loop(lambda: _StaticConnection(), 0.01))
+            await _asyncio.sleep(0.05)
+            task.cancel()
+            try:
+                await task
+            except _asyncio.CancelledError:
+                pass
+
+        _asyncio.run(run_one_iteration())
+        assert conn.execute("SELECT COUNT(*) AS n FROM slack_checkpoints").fetchone()["n"] == 1
 
 
 # ---------------------------------------------------------------------------

@@ -368,9 +368,10 @@ def create_due_checkpoints(connection: Connection, now: datetime | None = None) 
     Returns the ids of newly created checkpoints.
     """
     now = now or datetime.now(timezone.utc)
+    now_iso = utc_now_iso(now)
     rows = connection.execute(
-        "SELECT id, team_id, channel_id, thread_root_ts, next_checkpoint_at, "
-        "latest_checkpoint_id, last_checkpointed_message_count FROM slack_conversations"
+        "SELECT id, team_id, channel_id, thread_root_ts, next_checkpoint_at, latest_checkpoint_id, "
+        "last_checkpointed_message_count, last_checkpointed_at FROM slack_conversations"
     ).fetchall()
 
     created: list[str] = []
@@ -397,7 +398,19 @@ def create_due_checkpoints(connection: Connection, now: datetime | None = None) 
             ).fetchone()
             version = (prev["version"] if prev else 0) + 1
 
+        # Deltas are relative to the previous checkpoint, not the whole
+        # conversation. last_checkpointed_at is NULL before the first
+        # checkpoint, so everything counts as new for version 1.
+        cutoff = _parse_db_timestamp(row["last_checkpointed_at"]) if row["last_checkpointed_at"] else None
         new_message_count = max(len(messages) - row["last_checkpointed_message_count"], 0)
+        new_edit_count = sum(
+            1 for m in messages if m["edited_at"] and (cutoff is None or _parse_db_timestamp(m["edited_at"]) > cutoff)
+        )
+        new_deletion_count = sum(
+            1 for m in messages
+            if m["removed_at_source_at"] and (cutoff is None or _parse_db_timestamp(m["removed_at_source_at"]) > cutoff)
+        )
+
         checkpoint_id = new_id("slkchk")
         connection.execute(
             "INSERT INTO slack_checkpoints "
@@ -406,16 +419,38 @@ def create_due_checkpoints(connection: Connection, now: datetime | None = None) 
             (
                 checkpoint_id, row["id"], version, row["latest_checkpoint_id"],
                 json.dumps([m["message_ts"] for m in messages]),
-                new_message_count,
-                sum(1 for m in messages if m["edited_at"]),
-                sum(1 for m in messages if m["removed_at_source_at"]),
+                new_message_count, new_edit_count, new_deletion_count,
                 "ready_for_relevance",
             ),
         )
         connection.execute(
             "UPDATE slack_conversations SET latest_checkpoint_id=?, last_checkpointed_message_count=?, "
-            "next_checkpoint_at=? WHERE id=?",
-            (checkpoint_id, len(messages), _NO_PENDING_CHECKPOINT, row["id"]),
+            "last_checkpointed_at=?, next_checkpoint_at=? WHERE id=?",
+            (checkpoint_id, len(messages), now_iso, _NO_PENDING_CHECKPOINT, row["id"]),
         )
         created.append(checkpoint_id)
     return created
+
+
+async def run_checkpoint_poll_loop(get_connection, interval_seconds: int, logger=None) -> None:
+    """Background loop: periodically materialize due checkpoints.
+
+    Intended to run as a single asyncio task for the life of the process.
+    Never calls a model; only wraps create_due_checkpoints with scheduling
+    and error isolation so one bad iteration doesn't kill the loop.
+    """
+    import asyncio
+
+    while True:
+        await asyncio.sleep(interval_seconds)
+        try:
+            with get_connection() as connection:
+                created = create_due_checkpoints(connection)
+                connection.commit()
+            if created and logger:
+                logger.info("slack_checkpoints_created count=%d", len(created))
+        except asyncio.CancelledError:
+            raise
+        except Exception:
+            if logger:
+                logger.exception("slack_checkpoint_poll_iteration_failed")

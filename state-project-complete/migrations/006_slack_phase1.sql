@@ -75,6 +75,9 @@ CREATE TABLE IF NOT EXISTS slack_conversations (
     last_activity_at TIMESTAMP NOT NULL,
     next_checkpoint_at TIMESTAMP NOT NULL,
     last_checkpointed_message_count INTEGER NOT NULL DEFAULT 0,
+    -- NULL means "never checkpointed": every edit/deletion in the
+    -- conversation counts toward the first checkpoint's deltas.
+    last_checkpointed_at TIMESTAMP,
     latest_checkpoint_id TEXT,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     UNIQUE (team_id, channel_id, thread_root_ts)
