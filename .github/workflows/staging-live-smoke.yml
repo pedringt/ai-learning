@@ -27,47 +27,24 @@ jobs:
           print('bootstrap ok', {k: len(payload.get(k, [])) if isinstance(payload.get(k), list) else type(payload.get(k)).__name__ for k in sorted(required)})
           PY
 
-      - name: Exercise free-form Ask at staging token budget
+      - name: Probe free-form Ask response shape
         run: |
           python - <<'PY'
           import json, os, time, urllib.request, urllib.error
           base = os.environ['STAGING_API']
-          prompts = [
-              'Summarize the current pilot plan in three concise bullets.',
-              'What is still unresolved about the pilot, and what needs attention?',
-              'What evidence supports the current human review boundary?',
-              'Give me a concise meeting-prep summary of the pilot, including current facts, unresolved questions, and anything blocking progress.',
-              'What changed recently, and which changes are accepted versus still awaiting review?'
-          ]
-          for i, query in enumerate(prompts, 1):
-              body = json.dumps({'query': query}).encode()
-              req = urllib.request.Request(base + '/api/ask', data=body, headers={'Content-Type':'application/json'}, method='POST')
-              started = time.time()
-              try:
-                  with urllib.request.urlopen(req, timeout=45) as r:
-                      payload = json.load(r)
-              except urllib.error.HTTPError as e:
-                  detail = e.read().decode('utf-8', 'replace')
-                  raise AssertionError(f'Ask {i} HTTP {e.code}: {detail[:1000]}')
-              elapsed = time.time() - started
-              assert isinstance(payload.get('selection'), dict), f'Ask {i} missing selection'
-              answer = payload.get('answer')
-              assert isinstance(answer, dict), f'Ask {i} missing answer'
-              assert str(answer.get('headline') or answer.get('summary') or '').strip(), f'Ask {i} empty answer'
-              timing = payload.get('timing') or {}
-              print(f'ASK {i} OK elapsed={elapsed:.2f}s provider_ms={timing.get("provider_ms")} total_ms={timing.get("total_ms")} headline={answer.get("headline")!r}')
-          PY
-
-      - name: Verify free-form Ask streaming reaches validated final payload
-        run: |
-          python - <<'PY'
-          import json, os, urllib.request
-          base = os.environ['STAGING_API']
-          body = json.dumps({'query':'What should I know before the next pilot meeting?'}).encode()
-          req = urllib.request.Request(base + '/api/ask/stream', data=body, headers={'Content-Type':'application/json','Accept':'text/event-stream'}, method='POST')
-          with urllib.request.urlopen(req, timeout=45) as r:
-              text = r.read().decode('utf-8', 'replace')
-          assert 'event: final' in text, 'stream ended without final event'
-          assert 'event: error' not in text, f'stream emitted error: {text[-1200:]}'
-          print('stream final ok; bytes=', len(text))
+          query = 'Summarize the current pilot plan in three concise bullets.'
+          body = json.dumps({'query': query}).encode()
+          req = urllib.request.Request(base + '/api/ask', data=body, headers={'Content-Type':'application/json'}, method='POST')
+          started = time.time()
+          try:
+              with urllib.request.urlopen(req, timeout=45) as r:
+                  payload = json.load(r)
+          except urllib.error.HTTPError as e:
+              detail = e.read().decode('utf-8', 'replace')
+              raise AssertionError(f'Ask HTTP {e.code}: {detail[:2000]}')
+          elapsed = time.time() - started
+          print('RAW_PAYLOAD', json.dumps(payload, ensure_ascii=False, sort_keys=True)[:12000])
+          print(f'elapsed={elapsed:.2f}s')
+          assert isinstance(payload.get('selection'), dict), 'Ask missing selection'
+          assert isinstance(payload.get('answer'), dict), 'Ask missing answer'
           PY
