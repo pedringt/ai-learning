@@ -280,17 +280,22 @@
     return true;
   }
   function liveRecordStatus(){
+    // Reuses the same backend-confirmed filters as everywhere else
+    // (pendingReviews/openQuestions), not a raw status lookup on
+    // state.data.reviews/questions directly: once a review or question is
+    // resolved, replaceBackendOpenReviews/syncApiQuestions-style hydration
+    // prunes it from local state rather than flipping its status, so a
+    // find-by-id lookup for a just-resolved record returns nothing. An "is
+    // it still in the live open set" check handles that correctly either
+    // way, where a status lookup with a "not found -> still pending"
+    // fallback would get it backwards.
+    const openReviewIds = new Set(pendingReviews().map(r=>r.id));
+    const openQuestionIds = new Set(openQuestions().map(q=>q.id));
     return {
-      reviewStatus: id => state.data.reviews.find(x=>x.id===id)?.status || null,
-      questionStatus: id => state.data.questions.find(x=>x.id===id)?.status || null,
-      // Lets the "Related open items" footer recompute from the live project
-      // record instead of the ask-time snapshot it was handed. Reuses the
-      // same backend-confirmed filters as everywhere else (pendingReviews/
-      // openQuestions), not a raw status check, so local-only placeholder
-      // records that haven't round-tripped through the backend yet don't
-      // get counted as open.
-      openReviewIds: () => pendingReviews().map(r=>r.id),
-      openQuestionIds: () => openQuestions().map(q=>q.id),
+      isReviewOpen: id => openReviewIds.has(id),
+      isQuestionOpen: id => openQuestionIds.has(id),
+      openReviewIds: () => Array.from(openReviewIds),
+      openQuestionIds: () => Array.from(openQuestionIds),
     };
   }
   function renderOverview(){

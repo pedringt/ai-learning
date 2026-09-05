@@ -88,8 +88,12 @@
   // whose Review/Question has since been resolved must not keep appearing as
   // open work -- on screen or in anything copied out of the answer.
   function isItemResolved(i,liveStatus){
-    if(i.record_type==='review'&&i.record_id) return (liveStatus?.reviewStatus?.(i.record_id)??'pending')!=='pending';
-    if((i.record_type==='blocking_question'||i.record_type==='question')&&i.record_id) return (liveStatus?.questionStatus?.(i.record_id)??'open')!=='open';
+    // A "not currently in the live open set" check, not a status lookup:
+    // once resolved, hydration prunes the record from local state rather
+    // than flipping its status, so a find-by-id-then-check-status here
+    // would see nothing and could default to treating it as still open.
+    if(i.record_type==='review'&&i.record_id) return typeof liveStatus?.isReviewOpen==='function' ? !liveStatus.isReviewOpen(i.record_id) : false;
+    if((i.record_type==='blocking_question'||i.record_type==='question')&&i.record_id) return typeof liveStatus?.isQuestionOpen==='function' ? !liveStatus.isQuestionOpen(i.record_id) : false;
     return false;
   }
   function itemHtml(i,liveStatus){
