@@ -3,7 +3,7 @@
 
   const starters = [
     ['What should I know?', 'What should I know right now? Give me a concise briefing with Project snapshot, Changed recently, Needs attention, and Still unclear.'],
-    ['Prep me for a meeting', 'Prep me for a project meeting. Focus on settled decisions, recent changes, what needs attention, and questions we still need answered.'],
+    ['Give me a meeting brief', 'Give me a concise meeting brief from what State currently knows. Focus on settled decisions, recent changes, what needs attention, and questions we still need answered.'],
     ['What changed recently?', 'What changed recently? Separate accepted Current State changes from pending evidence or unresolved information.'],
     ['What needs my attention?', 'What needs my attention right now? Prioritize Reviews and blocking questions, then mention other important unresolved items.'],
     ['What are we still unsure about?', 'What are we still unsure about? Show unresolved questions and pending evidence without turning them into facts.']
