@@ -148,8 +148,15 @@
     }
   });
 
-  function enhance(){styles(); if(document.querySelector('.sidebar-nav [data-view="settings"]')?.classList.contains('active')) render();}
-  let queued=false; const schedule=()=>{if(queued)return;queued=true;requestAnimationFrame(()=>{queued=false;enhance();});};
-  new MutationObserver(schedule).observe(document.documentElement,{childList:true,subtree:true,attributes:true,attributeFilter:['class']});
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',schedule,{once:true});else schedule();
+  styles();
+  const settingsNav=document.querySelector('.sidebar-nav [data-view="settings"]');
+  let settingsWasActive=!!settingsNav?.classList.contains('active');
+  if(settingsWasActive) render();
+  if(settingsNav){
+    new MutationObserver(()=>{
+      const active=settingsNav.classList.contains('active');
+      if(active&&!settingsWasActive) render();
+      settingsWasActive=active;
+    }).observe(settingsNav,{attributes:true,attributeFilter:['class']});
+  }
 })();
