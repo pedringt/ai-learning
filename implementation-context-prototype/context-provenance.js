@@ -60,9 +60,8 @@
   function sourceLabel(sourceType){
     const value=String(sourceType||'Manual').toLowerCase();
     if(value==='slack') return 'Slack';
-    if(value==='google_drive'||value==='drive') return 'Google Drive';
+    if(value==='google_docs'||value==='docs') return 'Google Docs';
     if(value==='notion') return 'Notion';
-    if(value==='confluence') return 'Confluence';
     if(['manual','note','notes','evidence'].includes(value)) return 'Manual note';
     return String(sourceType||'Evidence').replace(/[_-]+/g,' ').replace(/\b\w/g,c=>c.toUpperCase());
   }
