@@ -23,7 +23,7 @@
     if (!overview || overview.querySelector('.workspace-source-strip')) return;
     const heading = overview.querySelector('.overview-heading');
     if (!heading) return;
-    heading.insertAdjacentHTML('afterend', `<section class="workspace-source-strip" aria-label="Source status"><div class="workspace-source-head"><span class="meta-label">Sources</span><span class="workspace-source-name">Slack</span><span class="workspace-source-status">In development</span></div><button class="btn secondary workspace-source-action" type="button" data-view="settings">Connect your apps →</button></section>`);
+    heading.insertAdjacentHTML('afterend', `<section class="workspace-source-strip" aria-label="Source status"><div class="workspace-source-head"><span class="meta-label">Sources</span><span class="workspace-source-name">Slack</span><span class="workspace-source-status">In development</span></div><button class="btn secondary workspace-source-action" type="button" data-view="settings" data-anchor="settings-slack">Connect your apps →</button></section>`);
   }
 
   decorate();

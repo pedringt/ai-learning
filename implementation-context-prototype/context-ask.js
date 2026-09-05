@@ -185,7 +185,32 @@
       reviews:Math.max(0,openReviewIds.length-shownOpenReviews),
     };
   }
-  function render(payload,liveStatus){const a=payload?.answer;if(!a)return '<div class="ask-live-error"><h2>Ask is temporarily unavailable.</h2><p>State did not receive a grounded answer.</p></div>';const sections=(a.sections||[]).map(s=>({...s,items:(s.items||[]).filter(i=>!isItemResolved(i,liveStatus))})).filter(s=>(s.items||[]).length).map(s=>`<section class="ask-answer-section ask-section-${esc(s.kind)}"><h3>${esc(s.title)}</h3><ul>${s.items.map(i=>itemHtml(i,liveStatus)).join('')}</ul></section>`).join('');const refinements=(a.suggested_refinements||[]).slice(0,3).map(x=>`<button data-prompt="${esc(x)}">${esc(x)}</button>`).join('');const remaining=liveOpenItemsRemaining(a,liveStatus)||payload.open_items_remaining||{count:0,reviews:0};const footer=remaining.count>0?`<aside class="ask-open-items-safety"><strong>Related open items</strong><p>${remaining.reviews?`${remaining.reviews} ${remaining.reviews===1?'Review':'Reviews'} · `:''}${Math.max(0,remaining.count-remaining.reviews)} other open ${Math.max(0,remaining.count-remaining.reviews)===1?'item':'items'}</p><button class="text-button" data-view="open-items">View open items →</button></aside>`:'';const notes=a.job==='meeting_prep'?meetingNotesScaffold():'';return `<div class="ask-live-answer"><div class="ask-answer-head"><div class="result-label">${esc(a.job==='meeting_prep'?'Meeting prep':'State Ask')}</div><div class="ask-answer-actions"><button class="btn secondary ask-copy-answer" data-action="copy-result">Copy</button><button class="btn secondary ask-new-session" data-action="new-ask">New ask</button></div></div><h2>${esc(a.headline)}</h2><p class="result-lede">${esc(a.summary)}</p>${sections}${notes}${refinements?`<div class="ask-refinement-chips">${refinements}</div>`:''}${stateActions(a,liveStatus)}${footer}</div>`;}
+  function render(payload,liveStatus){
+    const a=payload?.answer;
+    if(!a)return '<div class="ask-live-error"><h2>Ask is temporarily unavailable.</h2><p>State did not receive a grounded answer.</p></div>';
+    // Counting resolved-and-dropped items here (rather than tracking "did
+    // the user resolve something" as separate state) means this can never
+    // drift out of sync with what actually got filtered out below.
+    let resolvedCount=0;
+    const sections=(a.sections||[]).map(s=>{
+      const items=(s.items||[]).filter(i=>{
+        const resolved=isItemResolved(i,liveStatus);
+        if(resolved) resolvedCount++;
+        return !resolved;
+      });
+      return {...s,items};
+    }).filter(s=>(s.items||[]).length).map(s=>`<section class="ask-answer-section ask-section-${esc(s.kind)}"><h3>${esc(s.title)}</h3><ul>${s.items.map(i=>itemHtml(i,liveStatus)).join('')}</ul></section>`).join('');
+    const refinements=(a.suggested_refinements||[]).slice(0,3).map(x=>`<button data-prompt="${esc(x)}">${esc(x)}</button>`).join('');
+    const remaining=liveOpenItemsRemaining(a,liveStatus)||payload.open_items_remaining||{count:0,reviews:0};
+    const footer=remaining.count>0?`<aside class="ask-open-items-safety"><strong>Related open items</strong><p>${remaining.reviews?`${remaining.reviews} ${remaining.reviews===1?'Review':'Reviews'} · `:''}${Math.max(0,remaining.count-remaining.reviews)} other open ${Math.max(0,remaining.count-remaining.reviews)===1?'item':'items'}</p><button class="text-button" data-view="open-items">View open items →</button></aside>`:'';
+    const notes=a.job==='meeting_prep'?meetingNotesScaffold():'';
+    // The item list, footer, and Copy all reflect resolutions live, but the
+    // headline/summary text above them is still whatever was written when
+    // this answer was generated -- it can't safely rewrite itself (see
+    // isItemResolved). Surface that instead of leaving it silently stale.
+    const staleNotice=resolvedCount>0?`<div class="ask-stale-notice"><span>${resolvedCount===1?'An item shown here has':`${resolvedCount} items shown here have`} since been resolved. This summary wasn't regenerated.</span><button class="text-button" data-action="refresh-answer">Refresh this answer →</button></div>`:'';
+    return `<div class="ask-live-answer"><div class="ask-answer-head"><div class="result-label">${esc(a.job==='meeting_prep'?'Meeting prep':'State Ask')}</div><div class="ask-answer-actions"><button class="btn secondary ask-copy-answer" data-action="copy-result">Copy</button><button class="btn secondary ask-new-session" data-action="new-ask">New ask</button></div></div><h2>${esc(a.headline)}</h2><p class="result-lede">${esc(a.summary)}</p>${staleNotice}${sections}${notes}${refinements?`<div class="ask-refinement-chips">${refinements}</div>`:''}${stateActions(a,liveStatus)}${footer}</div>`;
+  }
   const INITIAL_WAIT_MESSAGES=['Finding the project context that matters for this question…','Checking Current State against open Reviews and Questions…','Keeping unresolved information unresolved…','Shaping the grounded answer around the useful parts…'];const LONG_WAIT_MESSAGES=['Still working — validating the answer against the project record…','Still working — making sure Reviews qualify rather than silently replace Current State…'];const REFINEMENT_WAIT_MESSAGES=['Refining the existing answer without changing the underlying project truth…','Keeping the same grounding while changing the format and emphasis…','Still working — checking the refinement against the project record…'];const waitTimers=new WeakMap();
   function rotateStatus(node,target,messages,longMessages=null){if(!node||!target||waitTimers.has(node))return;const started=Date.now();let index=0;const timer=window.setInterval(()=>{if(!node.isConnected){window.clearInterval(timer);waitTimers.delete(node);return;}const pool=longMessages&&Date.now()-started>=10000?longMessages:messages;target.textContent=pool[index%pool.length];index+=1;},3000);waitTimers.set(node,timer);}
   function activateWaitStates(scope){const root=scope||document;root.querySelectorAll('.ask-live-loading').forEach(node=>rotateStatus(node,node.querySelector('p'),INITIAL_WAIT_MESSAGES,LONG_WAIT_MESSAGES));root.querySelectorAll('.ask-followup-working').forEach(node=>rotateStatus(node,node,REFINEMENT_WAIT_MESSAGES));}

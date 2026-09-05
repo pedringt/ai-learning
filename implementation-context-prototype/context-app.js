@@ -1546,7 +1546,10 @@
       return;
     }
     const noteHistory=e.target.closest('[data-action="open-note-history"]'); if(noteHistory){const n=state.data.notes.find(x=>x.id===noteHistory.dataset.noteId);if(n?.evidenceId){state.historyEvidenceId=n.evidenceId;state.historyTopic=null;state.historySearch='';navigateTo('history',{preserveHistoryEvidence:true});}return;}
-    const v=e.target.closest('[data-view]'); if(v){ navigateTo(v.dataset.view); return; }
+    // A plain URL hash won't survive this: context-history.js's own click
+    // listener rewrites location.hash back to the bare view route (e.g.
+    // #settings) on every navigation, shortly after this handler returns.
+    const v=e.target.closest('[data-view]'); if(v){ navigateTo(v.dataset.view); if(v.dataset.anchor) window.__stateScrollAnchor=v.dataset.anchor; return; }
     const dateFilter=e.target.closest('.notes-date-filters [data-date-filter]'); if(dateFilter){ state.notesDateFilter=dateFilter.dataset.dateFilter; renderNotes(); return; }
     const noteFilter=e.target.closest('.notes-filters [data-filter]'); if(noteFilter){ state.notesFilter=noteFilter.dataset.filter; renderNotes(); return; }
     const reviewFilter=e.target.closest('.review-filters [data-review-filter]'); if(reviewFilter){ state.reviewFilter=reviewFilter.dataset.reviewFilter; renderReview(); return; }
@@ -1575,6 +1578,7 @@
     else if(act==='delete-project-rule'){try{await API.deleteRule(a.dataset.ruleId);state.projectRules=state.projectRules.filter(x=>x.id!==a.dataset.ruleId);showProjectSettings();}catch(err){showDialog(`<span class="eyebrow">Couldn’t remove rule</span><h2 id="dialogTitle">Rule is still active.</h2><p>${esc(err.message)}</p>`);}}
     else if(act==='example-prompt'){const q=a.dataset.prompt;closeDialog();navigateTo('overview');submitAsk(q);}
     else if(act==='copy-result'){const text=state.result?.liveAsk&&ASK?.portableText?ASK.portableText(state.result.liveAsk,liveRecordStatus()):(document.querySelector('.answer-content')?.innerText||'');const label='Copy';navigator.clipboard?.writeText(text);a.textContent='Copied';setTimeout(()=>a.textContent=label,1200);}
+    else if(act==='refresh-answer'){const q=state.resultQuery;if(!q)return;state.result=null;await submitAsk(q);}
 
 
     else if(act==='toggle-projects'){state.projectMenuOpen=!state.projectMenuOpen;render();}
