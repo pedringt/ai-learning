@@ -114,7 +114,15 @@
     });
   }
 
-  function enhance(scope=document){addStyles();addAskStarters(scope);addGrounding(scope);compactRelatedItems(scope);improveOpenItemsSummary(scope);improveEmptyStates(scope);clarifyReviewCompletion(scope);clarifyReviewActions(scope);}
+  function loadBrowserHistory(){
+    if(document.getElementById('state-browser-history')) return;
+    const script=document.createElement('script');
+    script.id='state-browser-history';
+    script.src=(location.protocol==='file:'?'context-history.js':'/implementation-context-prototype/context-history.js')+'?v=history-1';
+    document.body.appendChild(script);
+  }
+
+  function enhance(scope=document){addStyles();addAskStarters(scope);addGrounding(scope);compactRelatedItems(scope);improveOpenItemsSummary(scope);improveEmptyStates(scope);clarifyReviewCompletion(scope);clarifyReviewActions(scope);loadBrowserHistory();}
   let queued=false;const schedule=()=>{if(queued)return;queued=true;requestAnimationFrame(()=>{queued=false;enhance(document);});};
   new MutationObserver(schedule).observe(document.documentElement,{childList:true,subtree:true});
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',schedule,{once:true});else schedule();
