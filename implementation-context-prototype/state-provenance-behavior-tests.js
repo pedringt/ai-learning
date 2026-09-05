@@ -3,6 +3,7 @@ const path = require('path');
 
 const root = {
   querySelectorAll: () => [],
+  querySelector: () => null,
   addEventListener: () => {},
 };
 
@@ -17,6 +18,7 @@ global.document = {
   head: {appendChild: () => {}},
 };
 global.MutationObserver = class { observe() {} };
+global.requestAnimationFrame = fn => fn();
 
 require(path.join(__dirname, 'context-provenance.js'));
 const P = window.STATE_PROVENANCE;
@@ -38,6 +40,7 @@ assert(P, 'provenance helpers should be exposed');
     history: [{
       id:'h1', state_item_id:'k-data', review_id:'r1', transition_type:'updated',
       old_statement:'Old boundary', new_statement:'Read only', changed_at:'2026-09-01',
+      proposal_rationale:'Security narrowed the implementation to a read-only boundary.',
       resolution:'updated', decision_question:'Accept the read-only boundary?',
       evidence_items:[{id:'e1', source_type:'security_review', content:'Security approved read-only access.'}],
     }],
@@ -54,12 +57,13 @@ assert(P, 'provenance helpers should be exposed');
   assert.equal(trace.evidence.length, 1, 'linked evidence should be de-duplicated across History and Review');
   assert.equal(P.hasAcceptedProvenance(trace), true);
   const html = P.traceMarkup(trace);
-  assert(html.includes('Human decisions'));
-  assert(html.includes('Evidence used'));
-  assert(html.includes('Previously: Old boundary'));
+  assert(html.includes('Why State treats this as current'));
+  assert(html.includes('Security narrowed the implementation to a read-only boundary.'));
+  assert(html.includes('Security approved read-only access.'));
+  assert(!html.includes('1 accepted review'), 'History provenance should use product language, not record counts');
 })();
 
-(function openReviewQualifiesButDoesNotCreateWhyAction() {
+(function openReviewDoesNotCountAsAcceptedProvenance() {
   const data = {
     history: [], resolvedReviews: [],
     openReviews: [{
@@ -73,7 +77,7 @@ assert(P, 'provenance helpers should be exposed');
   assert.equal(trace.evidence.length, 0, 'open-review evidence must not be presented as accepted support');
   assert.equal(trace.openReviews.length, 1);
   assert.equal(P.hasAcceptedProvenance(trace), false);
-  assert.equal(P.traceMarkup(trace), '', 'facts without accepted provenance should not render an empty-state panel');
+  assert.equal(P.traceMarkup(trace), '');
 })();
 
 (function rejectedReviewIsNotAcceptedProvenance() {
@@ -92,7 +96,7 @@ assert(P, 'provenance helpers should be exposed');
   assert.equal(P.traceMarkup(trace), '');
 })();
 
-(function reviewWithoutEvidenceDoesNotCreateWhyAction() {
+(function reviewWithoutEvidenceDoesNotRenderProvenance() {
   const data = {
     history: [], openReviews: [],
     resolvedReviews: [{
@@ -113,6 +117,7 @@ assert(P, 'provenance helpers should be exposed');
     history: [], openReviews: [],
     resolvedReviews: [{
       id:'r-confirm', status:'resolved', resolution:'confirmed_current', decision_question:'Keep the current boundary?',
+      why_consequential:'Security rechecked the existing boundary and found it remains appropriate.',
       affected_state_items:[{id:'k-security'}], proposals:[],
       evidence_items:[{id:'e2', source_type:'security_review', content:'Current boundary remains correct.'}],
     }],
@@ -121,7 +126,9 @@ assert(P, 'provenance helpers should be exposed');
   assert.equal(trace.acceptedReviews.length, 1);
   assert.equal(trace.evidence.length, 1);
   assert.equal(P.hasAcceptedProvenance(trace), true);
-  assert(P.traceMarkup(trace).includes('Confirmed current'));
+  const html = P.traceMarkup(trace);
+  assert(html.includes('Why State treats this as current'));
+  assert(html.includes('Current boundary remains correct.'));
 })();
 
 console.log('State provenance behavior tests passed');
