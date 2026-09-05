@@ -4,8 +4,28 @@
     : 'https://state-api-6waw.onrender.com';
   const base = window.STATE_API_BASE || document.documentElement?.dataset?.apiBase || inferredBase;
 
+  // Plain fetch() has no timeout: a request against a backend that's mid
+  // restart (e.g. a Render redeploy) can hang indefinitely with no error
+  // and no visible feedback, even though the write may have already gone
+  // through server-side. Abort after a generous window instead, and mark
+  // the error so callers can show a "try refreshing" hint rather than a
+  // generic failure.
   async function request(path, options = {}) {
-    const response = await fetch(`${base}${path}`, options);
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 30000);
+    let response;
+    try {
+      response = await fetch(`${base}${path}`, {...options, signal: controller.signal});
+    } catch (err) {
+      if (err.name === 'AbortError') {
+        const timeoutError = new Error('This is taking longer than expected. The request may still complete on the server -- try refreshing before trying again.');
+        timeoutError.isTimeout = true;
+        throw timeoutError;
+      }
+      throw err;
+    } finally {
+      clearTimeout(timeoutId);
+    }
     const payload = await response.json().catch(() => ({}));
     if (!response.ok) {
       const detail = payload?.detail;
