@@ -85,30 +85,39 @@
     return rulesState.items.map(rule=>`<li data-rule-id="${esc(rule.id)}"><div class="settings-rule-copy"><strong>${esc(rule.category||'Interpretation')}</strong><span>${esc(rule.text||rule.rule||'')}</span></div><button class="text-button" type="button" data-settings-action="delete-rule" data-rule-id="${esc(rule.id)}">Remove</button></li>`).join('');
   }
 
-  // Distinguishes "the fetch failed" from "nothing is connected yet" the
-  // same way rules() does above.
+  // Health and channels are two independent endpoints; a hiccup in one
+  // must not erase a perfectly good result from the other. Promise.all
+  // used to fail both together on either rejecting, which could turn "the
+  // channel list endpoint had a blip" into "State claims Slack is
+  // disconnected" -- exactly the false-negative State's own thesis (don't
+  // collapse unknown/unrelated-failure into a confident wrong answer) is
+  // supposed to guard against.
   async function slackStatus(){
-    try{
-      const [channelsPayload,health]=await Promise.all([api()?.getSlackChannels?.(),api()?.getSlackHealth?.()]);
-      return {loading:false,failed:false,channels:channelsPayload?.items||[],health:health||null};
-    }catch(error){
-      console.warn('Settings could not load Slack status.',error);
-      return {loading:false,failed:true,channels:[],health:null};
-    }
+    const [channelsResult,healthResult]=await Promise.allSettled([api()?.getSlackChannels?.(),api()?.getSlackHealth?.()]);
+    if(channelsResult.status==='rejected') console.warn('Settings could not load Slack channels.',channelsResult.reason);
+    if(healthResult.status==='rejected') console.warn('Settings could not load Slack health.',healthResult.reason);
+    return {
+      loading:false,
+      channelsFailed:channelsResult.status==='rejected',
+      healthFailed:healthResult.status==='rejected',
+      channels:channelsResult.status==='fulfilled'?(channelsResult.value?.items||[]):[],
+      health:healthResult.status==='fulfilled'?(healthResult.value||null):null,
+    };
   }
 
   function slackStatusClass(slackState){
     if(slackState.loading) return '';
-    if(slackState.failed) return 'error';
+    if(slackState.healthFailed) return 'error';
     return slackState.health?.connected ? 'connected' : '';
   }
   function slackStatusLine(slackState){
     if(slackState.loading) return 'Checking connection…';
-    if(slackState.failed) return 'Connection status unavailable.';
+    if(slackState.healthFailed) return 'Connection status unavailable.';
     const health=slackState.health;
     if(!health?.connected) return 'Not connected yet.';
     const parts=[`Connected${health.workspace_name?` · ${esc(health.workspace_name)}`:''}`];
     if(health.pending_checkpoints) parts.push(`${health.pending_checkpoints} conversation${health.pending_checkpoints===1?'':'s'} awaiting review`);
+    if(slackState.channelsFailed) parts.push('channels unavailable');
     return parts.join(' · ');
   }
 
@@ -117,7 +126,7 @@
   // then, describe the planned behavior instead of showing an empty list.
   function slackChannelsMarkup(slackState){
     if(slackState.loading) return '<div class="slack-preview-row"><span>Loading channels…</span></div>';
-    if(slackState.failed) return '<div class="slack-preview-row"><span>Channels could not be loaded.</span><button class="text-button" type="button" data-settings-action="retry-slack">Try again</button></div>';
+    if(slackState.channelsFailed) return '<div class="slack-preview-row"><span>Channels could not be loaded.</span><button class="text-button" type="button" data-settings-action="retry-slack">Try again</button></div>';
     if(!slackState.channels.length) return '<div class="slack-preview-row"><div><strong>Approved channels</strong><br><span>Only channels explicitly enabled for Northstar can feed State.</span></div><span>Planned</span></div><div class="slack-preview-row"><div><strong>Threads</strong><br><span>State follows conversations over time and creates new Evidence when something meaningful changes.</span></div><span>Planned</span></div><div class="slack-preview-row"><div><strong>Noise control</strong><br><span>Bot, system, and low-value conversation is filtered before it reaches Notes.</span></div><span>Planned</span></div>';
     return slackState.channels.map(channel=>`<div class="slack-preview-row"><div><strong>#${esc(channel.channel_name||channel.channel_id)}</strong><br><span>${channel.last_event_at?`Last activity ${esc(channel.last_event_at)}`:'No activity yet'}</span></div><button class="btn secondary" type="button" data-settings-action="toggle-channel" data-channel-row-id="${esc(channel.id)}" data-enabled="${channel.enabled?'1':'0'}">${channel.enabled?'Enabled':'Disabled'}</button></div>`).join('');
   }
@@ -145,7 +154,7 @@
     const settingsNav=document.querySelector('.sidebar-nav [data-view="settings"]');if(!settingsNav?.classList.contains('active')) return;
     const target=root();if(!target) return;
     const state=rulesState||{loading:true,failed:false,items:[]};
-    const slack=slackState||{loading:true,failed:false,channels:[],health:null};
+    const slack=slackState||{loading:true,channelsFailed:false,healthFailed:false,channels:[],health:null};
     target.innerHTML=`<article class="page settings-page">
       <div class="page-head"><h2>Settings</h2><p>Configure Northstar and the sources allowed to feed it.</p></div>
       <section class="settings-section"><div class="settings-section-head"><div><h3>Project</h3><p>Basic information State uses for this project.</p></div></div><div class="settings-project-name"><label for="settings-project-name">Project name</label><input id="settings-project-name" value="Northstar" readonly aria-readonly="true"><p>Project renaming isn't available for this example project.</p></div>
@@ -186,7 +195,7 @@
     // patched re-render but still clears itself for the next visit.
     let connectNotice=null;
     if(window.__stateSlackConnectResult!==undefined){connectNotice=window.__stateSlackConnectResult;delete window.__stateSlackConnectResult;}
-    const current={rules:{loading:true,failed:false,items:[]},slack:{loading:true,failed:false,channels:[],health:null}};
+    const current={rules:{loading:true,failed:false,items:[]},slack:{loading:true,channelsFailed:false,healthFailed:false,channels:[],health:null}};
     render(current.rules,current.slack,connectNotice);
     await Promise.all([
       rules().then(result=>{current.rules=result;render(current.rules,current.slack,connectNotice);}),
