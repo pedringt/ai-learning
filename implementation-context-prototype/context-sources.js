@@ -12,10 +12,10 @@
     .workspace-source-name{font-weight:700}
     .workspace-source-status{padding:3px 7px;border:1px solid var(--border,#d9dde3);border-radius:999px;background:var(--soft,#f6f5f8);font-weight:700;color:var(--muted,#626779)}
     .workspace-source-copy{grid-area:copy;color:var(--muted,#626779);line-height:1.45}
-    .workspace-source-strip .text-button{grid-area:action;align-self:start;white-space:nowrap;margin:0}
+    .workspace-source-strip .workspace-source-action{grid-area:action;align-self:start;white-space:nowrap;margin:0}
     @media(max-width:560px){
       .workspace-source-strip{grid-template-columns:1fr;grid-template-areas:'head' 'copy' 'action';gap:8px}
-      .workspace-source-strip .text-button{justify-self:start}
+      .workspace-source-strip .workspace-source-action{justify-self:start}
     }
   `;
   document.head.appendChild(style);
@@ -25,7 +25,7 @@
     if (!overview || overview.querySelector('.workspace-source-strip')) return;
     const heading = overview.querySelector('.overview-heading');
     if (!heading) return;
-    heading.insertAdjacentHTML('afterend', `<section class="workspace-source-strip" aria-label="Source status"><div class="workspace-source-head"><span class="meta-label">Sources</span><span class="workspace-source-name">Slack</span><span class="workspace-source-status">In development</span></div><button class="text-button" type="button" data-view="settings">Settings →</button><span class="workspace-source-copy">This demo includes Slack-sourced Evidence you can trace through Review and History. Live connection is still in development.</span></section>`);
+    heading.insertAdjacentHTML('afterend', `<section class="workspace-source-strip" aria-label="Source status"><div class="workspace-source-head"><span class="meta-label">Sources</span><span class="workspace-source-name">Slack</span><span class="workspace-source-status">In development</span></div><button class="btn secondary workspace-source-action" type="button" data-view="settings">Connect your apps →</button><span class="workspace-source-copy">This demo includes Slack-sourced Evidence you can trace through Review and History. Live connection is still in development.</span></section>`);
   }
 
   decorate();
