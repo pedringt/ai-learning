@@ -27,6 +27,8 @@ from seed_demo import bootstrap_demo_data, reset_demo_data
 from ask_contract import AskRequest
 from ask_provider import LiveAskProvider
 from ask_service import ask_cache_key, run_ask, stream_ask_events
+from slack_intake_service import DEFAULT_QUIET_WINDOW_SECONDS, handle_slack_event
+from slack_signing import SlackSignatureError, verify_slack_request
 def _build_rev() -> str:
     """Identify the running build.
 
@@ -110,6 +112,11 @@ class Settings(BaseModel):
     provider: Literal["anthropic", "openai"] = "anthropic"
     cors_origins: list[str] = Field(default_factory=list)
     demo_bootstrap: bool = False
+    slack_signing_secret: str | None = None
+    # Single-workspace validation guard for Phase 1: when set, events from any
+    # other team_id are rejected before any processing, so a staging Slack
+    # app cannot feed a production deployment (or vice versa).
+    slack_team_id: str | None = None
 
     def connection_url(self) -> str:
         if self.database_url:
@@ -131,6 +138,8 @@ class Settings(BaseModel):
             # Render service does not depend on Blueprint env-var resync. Set
             # STATE_DEMO_BOOTSTRAP=0 to disable it explicitly.
             demo_bootstrap=os.getenv("STATE_DEMO_BOOTSTRAP", "1").strip().lower() in {"1", "true", "yes"},
+            slack_signing_secret=os.getenv("SLACK_SIGNING_SECRET"),
+            slack_team_id=os.getenv("SLACK_TEAM_ID"),
         )
 
 
@@ -627,6 +636,61 @@ def create_app(settings: Settings | None = None, provider: InterpretationProvide
         except Exception as exc:
             logger.exception("Ask provider failure")
             raise HTTPException(status_code=503, detail="Ask is temporarily unavailable. Please try again.") from exc
+
+    @app.post("/api/integrations/slack/events")
+    async def post_slack_events(request: Request) -> dict:
+        """Slack Phase 1 deterministic intake boundary.
+
+        Verifies the request, dedupes by Slack's event_id, and updates
+        deterministic conversation/checkpoint state. Never calls a model,
+        never creates Evidence/Review/Question, never mutates Current State.
+        """
+        if not settings.slack_signing_secret:
+            raise HTTPException(status_code=503, detail="Slack integration is not configured")
+
+        raw_body = await request.body()
+        try:
+            verify_slack_request(
+                signing_secret=settings.slack_signing_secret,
+                timestamp_header=request.headers.get("X-Slack-Request-Timestamp"),
+                signature_header=request.headers.get("X-Slack-Signature"),
+                raw_body=raw_body,
+            )
+        except SlackSignatureError as exc:
+            raise HTTPException(status_code=401, detail=str(exc)) from exc
+
+        try:
+            payload = json.loads(raw_body)
+        except json.JSONDecodeError as exc:
+            raise HTTPException(status_code=400, detail="Malformed Slack event payload") from exc
+
+        if payload.get("type") == "url_verification":
+            return {"challenge": payload.get("challenge", "")}
+
+        if settings.slack_team_id and payload.get("team_id") != settings.slack_team_id:
+            raise HTTPException(status_code=403, detail="Unrecognized Slack workspace")
+
+        if payload.get("type") != "event_callback":
+            # Acknowledge quickly; Phase 1 only processes channel activity events.
+            return {"ok": True}
+
+        with get_connection() as connection:
+            try:
+                result = handle_slack_event(
+                    connection, payload, quiet_window_seconds=DEFAULT_QUIET_WINDOW_SECONDS
+                )
+            except ValueError as exc:
+                raise HTTPException(status_code=400, detail=str(exc)) from exc
+            connection.commit()
+        # Structured, no message bodies: team/channel/event identifiers and
+        # disposition only, per the Phase 1 observability contract.
+        inner_event = payload.get("event") or {}
+        logger.info(
+            "slack_event team_id=%s channel_id=%s event_type=%s duplicate=%s disposition=%s",
+            payload.get("team_id"), inner_event.get("channel"), inner_event.get("type"),
+            result.get("duplicate"), result.get("disposition"),
+        )
+        return {"ok": True, **result}
 
     return app
 

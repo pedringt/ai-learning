@@ -7,7 +7,7 @@ from pathlib import Path
 from db import Connection, connect_sqlite
 
 MIGRATIONS_DIR = Path(__file__).resolve().parent / "migrations"
-_EXPECTED_MIGRATIONS = ("001_initial.sql", "002_add_operation_and_effective_date.sql", "003_questions.sql", "004_link_reviews_questions.sql", "005_draft_notes.sql")
+_EXPECTED_MIGRATIONS = ("001_initial.sql", "002_add_operation_and_effective_date.sql", "003_questions.sql", "004_link_reviews_questions.sql", "005_draft_notes.sql", "006_slack_phase1.sql")
 
 
 def _get_migration_files() -> list[Path]:
@@ -188,6 +188,36 @@ def _install_evidence_immutability(connection: Connection) -> None:
         )
 
 
+def _install_slack_checkpoint_immutability(connection: Connection) -> None:
+    """Slack checkpoints are immutable once created: block every UPDATE."""
+    if connection.is_postgres:
+        connection.execute(
+            """
+            CREATE OR REPLACE FUNCTION state_protect_slack_checkpoint() RETURNS trigger AS $$
+            BEGIN
+                RAISE EXCEPTION 'Slack checkpoints are immutable';
+            END;
+            $$ LANGUAGE plpgsql
+            """
+        )
+        connection.execute("DROP TRIGGER IF EXISTS slack_checkpoint_immutable ON slack_checkpoints")
+        connection.execute(
+            "CREATE TRIGGER slack_checkpoint_immutable BEFORE UPDATE ON slack_checkpoints "
+            "FOR EACH ROW EXECUTE FUNCTION state_protect_slack_checkpoint()"
+        )
+    else:
+        connection.execute("DROP TRIGGER IF EXISTS slack_checkpoint_immutable")
+        connection.execute(
+            """
+            CREATE TRIGGER slack_checkpoint_immutable
+            BEFORE UPDATE ON slack_checkpoints
+            BEGIN
+              SELECT RAISE(ABORT, 'Slack checkpoints are immutable');
+            END
+            """
+        )
+
+
 def initialize_db(connection: Connection) -> None:
     """Apply every migration atomically and install database invariants."""
     if not isinstance(connection, Connection):
@@ -228,6 +258,7 @@ def initialize_db(connection: Connection) -> None:
         _consolidate_duplicate_open_reviews(connection)
         _install_open_review_uniqueness(connection)
         _install_evidence_immutability(connection)
+        _install_slack_checkpoint_immutability(connection)
         connection.execute("COMMIT")
     except Exception:
         connection.execute("ROLLBACK")
