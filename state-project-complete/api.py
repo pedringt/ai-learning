@@ -137,6 +137,10 @@ class Settings(BaseModel):
     # without a manual DB step.
     slack_test_channel_id: str | None = None
     slack_test_channel_name: str | None = None
+    # Defaults to the product-intended 15 minutes (DEFAULT_QUIET_WINDOW_SECONDS).
+    # Override with SLACK_QUIET_WINDOW_SECONDS for faster manual testing --
+    # e.g. staging while iterating on the relevance/Evidence pipeline live.
+    slack_quiet_window_seconds: int | None = None
     # Opt-in like slack_checkpoint_poll_seconds: unset means the Phase 2
     # relevance-evaluation loop does not run (local dev and tests, and any
     # deployment that hasn't explicitly turned it on). Set
@@ -181,6 +185,9 @@ class Settings(BaseModel):
             ),
             slack_test_channel_id=os.getenv("SLACK_TEST_CHANNEL_ID"),
             slack_test_channel_name=os.getenv("SLACK_TEST_CHANNEL_NAME", "state-test"),
+            slack_quiet_window_seconds=(
+                int(raw) if (raw := os.getenv("SLACK_QUIET_WINDOW_SECONDS", "").strip()).isdigit() else None
+            ),
             slack_relevance_poll_seconds=(
                 int(raw) if (raw := os.getenv("SLACK_RELEVANCE_POLL_SECONDS", "").strip()).isdigit() else None
             ),
@@ -775,7 +782,8 @@ def create_app(settings: Settings | None = None, provider: InterpretationProvide
         with get_connection() as connection:
             try:
                 result = handle_slack_event(
-                    connection, payload, quiet_window_seconds=DEFAULT_QUIET_WINDOW_SECONDS
+                    connection, payload,
+                    quiet_window_seconds=settings.slack_quiet_window_seconds or DEFAULT_QUIET_WINDOW_SECONDS
                 )
             except ValueError as exc:
                 raise HTTPException(status_code=400, detail=str(exc)) from exc
