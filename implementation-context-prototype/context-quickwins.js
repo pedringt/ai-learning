@@ -54,23 +54,22 @@
       if(!unique.length)return;
       const details=document.createElement('details');
       details.className='evidence ask-grounding';
-      details.innerHTML=`<summary>Based on ${unique.length} State ${unique.length===1?'item':'items'}</summary>${unique.map(row=>`<article><strong>${esc(row.badge)}</strong><p>${esc(row.text)}</p></article>`).join('')}`;
+      details.innerHTML=`<summary>Grounded in State's project record</summary><p>${unique.length} project ${unique.length===1?'item is':'items are'} shown in this answer.</p>${unique.map(row=>`<article><strong>${esc(row.badge)}</strong><p>${esc(row.text)}</p></article>`).join('')}`;
       const actions=answer.querySelector('.ask-state-actions');
       const safety=answer.querySelector('.ask-open-items-safety');
       if(actions)answer.insertBefore(details,actions);else if(safety)answer.insertBefore(details,safety);else answer.appendChild(details);
     });
   }
 
-  function compactRelatedItems(scope=document){
+  function clarifyRemainingOpenItems(scope=document){
     scope.querySelectorAll('.ask-open-items-safety').forEach(box=>{
-      if(box.dataset.quickwinCompact==='true')return;
-      const links=[...box.querySelectorAll('a,button')];
-      if(links.length<2)return;
-      const reviewCount=links.filter(x=>/review/i.test(x.textContent)).length;
-      const questionCount=links.filter(x=>/question/i.test(x.textContent)).length;
+      if(box.dataset.quickwinRemaining==='true')return;
+      const heading=box.querySelector('strong');
+      if(heading) heading.textContent='Other open items remain';
+      const button=box.querySelector('button[data-view="open-items"]');
+      if(button) button.textContent='View all open items →';
       box.classList.add('ask-related-summary');
-      box.innerHTML=`<strong>Related open items</strong><p>${reviewCount?`${reviewCount} ${reviewCount===1?'item needs':'items need'} review`:''}${reviewCount&&questionCount?' · ':''}${questionCount?`${questionCount} open ${questionCount===1?'question':'questions'}`:''}</p><button type="button" class="text-link" data-view="open-items">View open items →</button>`;
-      box.dataset.quickwinCompact='true';
+      box.dataset.quickwinRemaining='true';
     });
   }
 
@@ -114,15 +113,7 @@
     });
   }
 
-  function loadBrowserHistory(){
-    if(document.getElementById('state-browser-history')) return;
-    const script=document.createElement('script');
-    script.id='state-browser-history';
-    script.src=(location.protocol==='file:'?'context-history.js':'/implementation-context-prototype/context-history.js')+'?v=history-1';
-    document.body.appendChild(script);
-  }
-
-  function enhance(scope=document){addStyles();addAskStarters(scope);addGrounding(scope);compactRelatedItems(scope);improveOpenItemsSummary(scope);improveEmptyStates(scope);clarifyReviewCompletion(scope);clarifyReviewActions(scope);loadBrowserHistory();}
+  function enhance(scope=document){addStyles();addAskStarters(scope);addGrounding(scope);clarifyRemainingOpenItems(scope);improveOpenItemsSummary(scope);improveEmptyStates(scope);clarifyReviewCompletion(scope);clarifyReviewActions(scope);}
   let queued=false;const schedule=()=>{if(queued)return;queued=true;requestAnimationFrame(()=>{queued=false;enhance(document);});};
   new MutationObserver(schedule).observe(document.documentElement,{childList:true,subtree:true});
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',schedule,{once:true});else schedule();
