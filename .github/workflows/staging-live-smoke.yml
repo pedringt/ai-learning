@@ -10,26 +10,26 @@ jobs:
     env:
       STAGING_API: https://state-api-staging.onrender.com
     steps:
-      - name: Verify corrected staging build is live
+      - name: Verify 2400-token staging build is live
         run: |
           python - <<'PY'
           import json, os, urllib.request
           with urllib.request.urlopen(os.environ['STAGING_API'] + '/health', timeout=60) as r:
               payload=json.load(r)
           print('HEALTH', json.dumps(payload, sort_keys=True))
-          assert str(payload.get('build','')).startswith('45e1fc60f599'), payload
+          assert str(payload.get('build','')).startswith('90eda64a461e'), payload
           PY
 
-      - name: Re-test prior truncation scenario at 1800 tokens
+      - name: Re-test prior truncation scenario at 2400 tokens
         run: |
           python - <<'PY'
           import json, os, time, urllib.request, urllib.error
-          query='What changed recently, and which changes are accepted versus still awaiting review? QA verification after restoring structured-output headroom.'
+          query='What changed recently, and which changes are accepted versus still awaiting review? Final QA verification with 2400-token structured-output headroom.'
           body=json.dumps({'query':query}).encode()
           req=urllib.request.Request(os.environ['STAGING_API']+'/api/ask',data=body,headers={'Content-Type':'application/json'},method='POST')
           started=time.time()
           try:
-              with urllib.request.urlopen(req,timeout=45) as r:
+              with urllib.request.urlopen(req,timeout=60) as r:
                   payload=json.load(r)
           except urllib.error.HTTPError as e:
               detail=e.read().decode('utf-8','replace')
@@ -43,15 +43,15 @@ jobs:
           print('TARGET_OK', json.dumps({'elapsed_s':round(elapsed,2),'timing':payload.get('timing'),'headline':answer.get('headline')}, ensure_ascii=False))
           PY
 
-      - name: Verify uncached streaming final and deltas
+      - name: Verify uncached streaming final and deltas at 2400 tokens
         run: |
           python - <<'PY'
           import json, os, time, urllib.request
-          query='Give me a fresh concise pilot risk brief for this QA streaming verification.'
+          query='Give me a fresh concise pilot risk brief for the final 2400-token streaming QA verification.'
           body=json.dumps({'query':query}).encode()
           req=urllib.request.Request(os.environ['STAGING_API']+'/api/ask/stream',data=body,headers={'Content-Type':'application/json','Accept':'text/event-stream'},method='POST')
           started=time.time()
-          with urllib.request.urlopen(req,timeout=45) as r:
+          with urllib.request.urlopen(req,timeout=60) as r:
               text=r.read().decode('utf-8','replace')
           result={'elapsed_s':round(time.time()-started,2),'final':'event: final' in text,'error':'event: error' in text,'delta':'event: delta' in text,'preview':'event: preview' in text,'bytes':len(text)}
           print('STREAM',json.dumps(result))
