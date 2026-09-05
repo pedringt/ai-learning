@@ -284,9 +284,13 @@
       reviewStatus: id => state.data.reviews.find(x=>x.id===id)?.status || null,
       questionStatus: id => state.data.questions.find(x=>x.id===id)?.status || null,
       // Lets the "Related open items" footer recompute from the live project
-      // record instead of the ask-time snapshot it was handed.
-      openReviewIds: () => state.data.reviews.filter(r=>r.status==='pending').map(r=>r.id),
-      openQuestionIds: () => state.data.questions.filter(q=>q.status==='open').map(q=>q.id),
+      // record instead of the ask-time snapshot it was handed. Reuses the
+      // same backend-confirmed filters as everywhere else (pendingReviews/
+      // openQuestions), not a raw status check, so local-only placeholder
+      // records that haven't round-tripped through the backend yet don't
+      // get counted as open.
+      openReviewIds: () => pendingReviews().map(r=>r.id),
+      openQuestionIds: () => openQuestions().map(q=>q.id),
     };
   }
   function renderOverview(){
