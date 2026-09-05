@@ -12,9 +12,6 @@
   <meta name="twitter:title" content="State, Working Prototype">
   <meta name="twitter:description" content="A working prototype for capturing project information, maintaining current understanding, tracking unresolved questions, and reviewing new evidence before it changes what the project treats as current.">
   <script>
-    // Local file:// viewing can't resolve root-absolute paths (no server root to anchor to),
-    // but the live Vercel deploy needs them for clean-URL routing to work. Pick the right
-    // form based on how the page is actually being loaded.
     (function(){
       var local = location.protocol === 'file:';
       document.write('<link rel="icon" href="' + (local ? '../favicon.svg' : '/favicon.svg') + '">');
@@ -23,33 +20,30 @@
     })();
   </script>
   <style id="state-critical-modal">
-    /* Critical modal geometry lives inline so portfolio-shell stacking/caching can never clip dialogs. */
     #overlay{position:fixed!important;inset:0!important;z-index:2147483000!important;display:flex;align-items:flex-start!important;justify-content:center!important;overflow-y:auto!important;box-sizing:border-box!important;padding:max(20px,env(safe-area-inset-top)) 18px max(20px,env(safe-area-inset-bottom))!important;}
     #overlay[hidden]{display:none!important;}
     #overlay>.dialog{position:relative!important;margin:0 auto!important;width:min(620px,100%)!important;max-height:calc(100dvh - 40px)!important;overflow:auto!important;overscroll-behavior:contain!important;}
     body.modal-open .topbar,body.modal-open .prototype-productbar{z-index:0!important;}
-    /* Ask result rows use whitespace rather than horizontal rules. Keep this inline
-       so a stale or more-specific stylesheet cannot put dividers through metadata. */
     .ask-live-answer .ask-answer-item,
     .ask-live-answer .ask-answer-item>div,
-    .ask-live-answer .ask-answer-item .ask-item-detail{
-      border-top:0!important;border-bottom:0!important;box-shadow:none!important;
-    }
+    .ask-live-answer .ask-answer-item .ask-item-detail{border-top:0!important;border-bottom:0!important;box-shadow:none!important;}
     .ask-live-answer .ask-answer-item::before,
-    .ask-live-answer .ask-answer-item::after{
-      border:0!important;box-shadow:none!important;
-    }
+    .ask-live-answer .ask-answer-item::after{border:0!important;box-shadow:none!important;}
+    .ask-quick-starts{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;}
+    .ask-quick-starts button{white-space:normal;text-align:left;}
+    .ask-grounding{margin-top:18px;}
+    .open-items-count-summary{display:inline-block;margin-bottom:4px;font-weight:600;}
     @media(max-width:760px){
       #overlay{padding:max(14px,env(safe-area-inset-top)) 12px max(14px,env(safe-area-inset-bottom))!important;}
       #overlay>.dialog{max-height:calc(100dvh - 28px)!important;}
-      /* Mobile-only: make all workspace destinations visible instead of relying on
-         a clipped horizontal scroller. Desktop sidebar/navigation is untouched. */
       .sidebar-nav{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:6px!important;overflow:visible!important;padding:0!important;}
       .sidebar-nav-group{display:contents!important;}
       .sidebar-nav .nav-item{width:100%!important;min-width:0!important;justify-content:center!important;text-align:center!important;white-space:normal!important;padding:8px 6px!important;font-size:11px!important;line-height:1.2!important;}
       .sidebar-nav .nav-item::after{display:none!important;}
       .sidebar-nav .nav-count{position:static!important;margin-left:4px!important;}
+      .ask-quick-starts{display:grid;grid-template-columns:1fr 1fr;}
     }
+    @media(max-width:480px){.ask-quick-starts{grid-template-columns:1fr;}}
   </style>
 </head>
 <body>
@@ -102,6 +96,8 @@
       document.write('<script src="' + (local ? 'context-api.js?v=r22-ui-source-fix' : '/implementation-context-prototype/context-api.js?v=r22-ui-source-fix') + '"><\/script>');
       document.write('<script src="' + (local ? 'context-ask.js?v=r22-ui-source-fix' : '/implementation-context-prototype/context-ask.js?v=r22-ui-source-fix') + '"><\/script>');
       document.write('<script src="' + (local ? 'context-app.js?v=r22-ui-source-fix' : '/implementation-context-prototype/context-app.js?v=r22-ui-source-fix') + '"><\/script>');
+      document.write('<script src="' + (local ? 'context-history.js?v=history-2' : '/implementation-context-prototype/context-history.js?v=history-2') + '"><\/script>');
+      document.write('<script src="' + (local ? 'context-quickwins.js?v=quickwins-2' : '/implementation-context-prototype/context-quickwins.js?v=quickwins-2') + '"><\/script>');
     })();
   </script>
 </body>
