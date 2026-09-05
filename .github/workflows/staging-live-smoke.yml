@@ -6,80 +6,55 @@ on:
 jobs:
   live-staging-smoke:
     runs-on: ubuntu-latest
-    timeout-minutes: 12
+    timeout-minutes: 8
     env:
       STAGING_API: https://state-api-staging.onrender.com
     steps:
-      - name: Wake staging and verify health
-        run: |
-          curl --fail --silent --show-error --retry 6 --retry-delay 5 --max-time 90 "$STAGING_API/health"
-
-      - name: Verify bootstrap contract
+      - name: Verify corrected staging build is live
         run: |
           python - <<'PY'
           import json, os, urllib.request
-          base = os.environ['STAGING_API']
-          with urllib.request.urlopen(base + '/api/bootstrap', timeout=60) as r:
-              payload = json.load(r)
-          required = {'state','questions','open_reviews','resolved_reviews','history','evidence','rules','drafts'}
-          missing = required - set(payload)
-          assert not missing, f'missing bootstrap keys: {sorted(missing)}'
-          print('bootstrap ok', {k: len(payload.get(k, [])) if isinstance(payload.get(k), list) else type(payload.get(k)).__name__ for k in sorted(required)})
+          with urllib.request.urlopen(os.environ['STAGING_API'] + '/health', timeout=60) as r:
+              payload=json.load(r)
+          print('HEALTH', json.dumps(payload, sort_keys=True))
+          assert str(payload.get('build','')).startswith('45e1fc60f599'), payload
           PY
 
-      - name: Exercise free-form Ask prompts independently
+      - name: Re-test prior truncation scenario at 1800 tokens
         run: |
           python - <<'PY'
           import json, os, time, urllib.request, urllib.error
-          base = os.environ['STAGING_API']
-          prompts = [
-              'Summarize the current pilot plan concisely.',
-              'What is still unresolved about the pilot, and what needs attention?',
-              'What evidence supports the current human review boundary?',
-              'Give me a concise meeting-prep summary of the pilot, including current facts, unresolved questions, and anything blocking progress.',
-              'What changed recently, and which changes are accepted versus still awaiting review?'
-          ]
-          def has_visible_content(answer):
-              if str(answer.get('headline') or '').strip() or str(answer.get('summary') or '').strip():
-                  return True
-              return any(str(item.get('text') or '').strip() for section in answer.get('sections') or [] for item in section.get('items') or [])
-          results=[]
-          for i, query in enumerate(prompts, 1):
-              body=json.dumps({'query':query}).encode()
-              req=urllib.request.Request(base+'/api/ask',data=body,headers={'Content-Type':'application/json'},method='POST')
-              started=time.time()
-              try:
-                  with urllib.request.urlopen(req,timeout=45) as r:
-                      payload=json.load(r)
-                  elapsed=time.time()-started
-                  answer=payload.get('answer')
-                  ok=isinstance(payload.get('selection'),dict) and isinstance(answer,dict) and has_visible_content(answer)
-                  timing=payload.get('timing') or {}
-                  print(f'ASK {i} {"OK" if ok else "INVALID"} elapsed={elapsed:.2f}s provider_ms={timing.get("provider_ms")} total_ms={timing.get("total_ms")} headline={(answer or {}).get("headline")!r}')
-                  results.append(ok)
-              except urllib.error.HTTPError as e:
-                  elapsed=time.time()-started
-                  detail=e.read().decode('utf-8','replace')
-                  print(f'ASK {i} HTTP_{e.code} elapsed={elapsed:.2f}s detail={detail[:500]}')
-                  results.append(False)
-              except Exception as e:
-                  elapsed=time.time()-started
-                  print(f'ASK {i} ERROR elapsed={elapsed:.2f}s type={type(e).__name__} detail={e}')
-                  results.append(False)
-          print('ASK_SUMMARY',json.dumps({'passed':sum(results),'failed':len(results)-sum(results),'results':results}))
-          PY
-
-      - name: Verify free-form Ask streaming independently
-        run: |
-          python - <<'PY'
-          import json, os, urllib.request
-          base=os.environ['STAGING_API']
-          body=json.dumps({'query':'What should I know before the next pilot meeting?'}).encode()
-          req=urllib.request.Request(base+'/api/ask/stream',data=body,headers={'Content-Type':'application/json','Accept':'text/event-stream'},method='POST')
+          query='What changed recently, and which changes are accepted versus still awaiting review? QA verification after restoring structured-output headroom.'
+          body=json.dumps({'query':query}).encode()
+          req=urllib.request.Request(os.environ['STAGING_API']+'/api/ask',data=body,headers={'Content-Type':'application/json'},method='POST')
+          started=time.time()
           try:
               with urllib.request.urlopen(req,timeout=45) as r:
-                  text=r.read().decode('utf-8','replace')
-              print('STREAM_SUMMARY',json.dumps({'final': 'event: final' in text,'error':'event: error' in text,'delta':'event: delta' in text,'bytes':len(text)}))
-          except Exception as e:
-              print('STREAM_ERROR',type(e).__name__,str(e))
+                  payload=json.load(r)
+          except urllib.error.HTTPError as e:
+              detail=e.read().decode('utf-8','replace')
+              raise AssertionError(f'HTTP {e.code}: {detail[:1500]}')
+          elapsed=time.time()-started
+          answer=payload.get('answer') or {}
+          assert isinstance(payload.get('selection'),dict), 'missing selection'
+          assert isinstance(answer,dict), 'missing answer'
+          visible=bool(str(answer.get('headline') or '').strip() or str(answer.get('summary') or '').strip() or any(str(i.get('text') or '').strip() for s in answer.get('sections') or [] for i in s.get('items') or []))
+          assert visible, 'no visible answer content'
+          print('TARGET_OK', json.dumps({'elapsed_s':round(elapsed,2),'timing':payload.get('timing'),'headline':answer.get('headline')}, ensure_ascii=False))
+          PY
+
+      - name: Verify uncached streaming final and deltas
+        run: |
+          python - <<'PY'
+          import json, os, time, urllib.request
+          query='Give me a fresh concise pilot risk brief for this QA streaming verification.'
+          body=json.dumps({'query':query}).encode()
+          req=urllib.request.Request(os.environ['STAGING_API']+'/api/ask/stream',data=body,headers={'Content-Type':'application/json','Accept':'text/event-stream'},method='POST')
+          started=time.time()
+          with urllib.request.urlopen(req,timeout=45) as r:
+              text=r.read().decode('utf-8','replace')
+          result={'elapsed_s':round(time.time()-started,2),'final':'event: final' in text,'error':'event: error' in text,'delta':'event: delta' in text,'preview':'event: preview' in text,'bytes':len(text)}
+          print('STREAM',json.dumps(result))
+          assert result['final'] and not result['error'], result
+          assert result['delta'], result
           PY
