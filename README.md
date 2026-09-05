@@ -75,6 +75,8 @@ The repository root holds the portfolio site. The two directories below are the 
 | `anthropic_provider.py`, `openai_provider.py` | Provider adapters |
 | `migrations/` | Numbered SQL migrations (`001`–`005`). The only migrations directory. |
 | `seed_demo.py` | Idempotent seed for the "Northstar" demo project |
+| `phase2_current/state_spike/` | **Runtime code, despite the name.** `anthropic_provider`, `openai_provider` and `interpretation_pipeline_integrated` all add this to `sys.path` and import schema validation, provider normalization and semantic validation from it. Removing or relocating it breaks the backend at import. It also holds the interpretation schema the runtime validates against. |
+| `api_test_harness.py`, `note_matrix_harness.py` | Manual harnesses, run by hand (`python api_test_harness.py`), not part of the pytest suite. See *Known debt*. |
 
 ---
 
@@ -177,7 +179,8 @@ Being cleaned up deliberately rather than all at once:
 - The stylesheets carry layered version-specific overrides and heavy `!important` use. `context-tool.css` still holds roughly thirty separate `@media(max-width:760px)` blocks, several redefining the same selectors, and `index.html` carries version-stamped inline `<style>` blocks. Consolidating them is the next cleanup pass.
 - `STATE_BUILD_REV` in `api.py` is hand-edited rather than derived from the deployed commit, so `/health` can report a stale build.
 - `context-app.js` is a single 160 KB module. It is coherent, but it would read better split along product boundaries.
-- A few historical portfolio pages have no inbound links. They are kept until it is confirmed the URLs were never shared.
+- `api_test_harness.py` fails 3 of its 8 cases (`create_expected_version_invalid`, `grouping_singleton`, `stale_version`). They are negative-path cases whose expectations no longer match the API; the schema rejects the bad payloads correctly, but the harness's HTTP expectations are stale. Nothing catches this because the harness is manual and outside the pytest suite.
+- `phase2_current/` is named as though it were a superseded spike but is load-bearing runtime code. Renaming it would be the honest fix, and would touch every provider's import path.
 
 ---
 
