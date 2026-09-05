@@ -90,12 +90,12 @@ def test_project_subnav_scrolls_existing_document_without_rerender():
 
 
 
-
 def test_navigation_preserves_current_ask_session_until_explicit_new_ask():
     nav = JS.split("function navigateTo(view", 1)[1].split("function projectScrollTop", 1)[0]
     assert "state.result=null" not in nav
     assert "state.resultQuery=''" not in nav
     assert "act==='close-result'||act==='new-ask'" in JS
+
 
 def test_frontend_api_base_is_runtime_configurable():
     assert "window.STATE_API_BASE" in API_JS
@@ -141,17 +141,20 @@ def test_r81_notes_filters_share_one_date_status_search_pipeline():
     assert "noteMatchesDate(n,dateFilter) &&" in app
     assert "const notes=filteredNotes();" in app
 
+
 def test_r81_multiple_reviews_default_collapsed_with_single_open_accordion():
     app = (FRONTEND / "context-app.js").read_text(encoding="utf-8")
     assert "reviews.length===1||state.expandedReviewId===r.id" in app
     assert "toggle-review-card" in app
     assert "state.expandedReviewId=state.expandedReviewId===id?null:id" in app
 
+
 def test_r81_project_nav_hides_empty_sections_and_orientation_uses_state():
     app = (FRONTEND / "context-app.js").read_text(encoding="utf-8")
     assert "currentKnowledge(area).length===0" in app
     assert "k-stage" in app and "k-outcome" in app
     assert "orientation.stage" in app and "orientation.outcome" in app
+
 
 def test_r83_notes_date_filters_use_calendar_day_distance_not_timestamp_midnights():
     app = (FRONTEND / "context-app.js").read_text(encoding="utf-8")
@@ -173,6 +176,7 @@ def test_r82_authoritative_review_counts_do_not_flash_fixture_values_before_hydr
     assert "state.backendStatus.reviews==='loaded'" in app
     assert "state.backendStatus.questions==='loaded'" in app
 
+
 def test_r82_open_item_sections_are_collapsible_and_keep_attention_hierarchy():
     app = (FRONTEND / "context-app.js").read_text(encoding="utf-8")
     css = (FRONTEND / "context-tool.css").read_text(encoding="utf-8")
@@ -181,6 +185,7 @@ def test_r82_open_item_sections_are_collapsible_and_keep_attention_hierarchy():
     assert "key==='questions' && count>5" in app
     assert "Needs your review" in app and "Blocking questions" in app and "Open questions" in app
     assert ".open-items-reviews" in css and ".open-items-blockers" in css and ".open-items-questions" in css
+
 
 def test_r83_project_navigation_uses_stable_absolute_targets_without_sticky_section_motion():
     app = (FRONTEND / "context-app.js").read_text(encoding="utf-8")
@@ -192,6 +197,7 @@ def test_r83_project_navigation_uses_stable_absolute_targets_without_sticky_sect
     assert "scrollProjectTarget('project-top')" not in app
     assert "scrollIntoView({behavior:'smooth',block:'start'})" not in app
     assert ".project-section-sticky{position:relative" in css
+
 
 def test_r84_navigation_rules_and_review_polish_contract():
     app = (FRONTEND / "context-app.js").read_text(encoding="utf-8")
@@ -230,6 +236,7 @@ def test_r86_notes_link_into_review_and_history_workflow():
     assert "historyEvidenceId" in app
     assert "From note:" in app
 
+
 def test_r86_demo_history_is_real_provenance_not_frontend_fixture_rows():
     seed = (Path(__file__).parent / "seed_demo.py").read_text(encoding="utf-8")
     assert "HISTORY_SCENARIOS" in seed
@@ -252,16 +259,13 @@ def test_r861_grounded_ask_module_and_release_assets_are_self_contained():
     html = (FRONTEND / "index.html").read_text(encoding="utf-8")
     assert "window.STATE_ASK" in ask
 
-    # index.html cache-busts every script and stylesheet with a ?v= token. Assert
-    # the internal consistency of that scheme rather than one frozen literal: the
-    # pinned version string went stale on every asset bump (r20 -> r22) without
-    # ever catching a real defect, while a half-bumped set of assets — the actual
-    # failure this guards against — would have slipped through.
+    # All State-owned JS/CSS assets use one release token so a deployment cannot
+    # accidentally serve a mix of old and new frontend files from cache.
     versioned = re.findall(r"([\w./-]+\.(?:js|css))\?v=([\w.-]+)", html)
     assert versioned, "index.html no longer cache-busts its assets"
 
     referenced = {Path(src).name for src, _ in versioned}
-    assert {"context-ask.js", "context-app.js"} <= referenced
+    assert {"context-ask.js", "context-app.js", "context-history.js", "context-quickwins.js"} <= referenced
 
     versions = {token for _, token in versioned}
     assert len(versions) == 1, f"assets carry mismatched cache-bust versions: {sorted(versions)}"
@@ -305,10 +309,10 @@ def test_r9_ask_vertical_slice_has_dedicated_module_and_backend_endpoint():
     assert "ask: (query, previousAnswer = null)" in api_js
     assert "@app.post(\"/api/ask\")" in backend
     assert "ASK?.canHandle(raw,previousLive)" in app
-    assert "Meeting prep" in ask_js
-    assert "Before you move on" in ask_js
-    assert "Review open items" in ask_js
-    assert "Review now" in ask_js
+    assert "Meeting brief" in ask_js
+    assert "Related open items" in ask_js
+    assert "View open items →" in ask_js
+    assert "Review →" in ask_js
     assert "Blocks: " in ask_js
     assert "data-action=\"new-ask\"" in ask_js
 
@@ -339,10 +343,10 @@ def test_r16_mobile_workspace_nav_has_horizontal_overflow_affordance():
     assert "scrollbar-width:thin" in css
 
 
-def test_followup_rendering_obeys_backend_mode_and_not_duplicate_js_classifier():
+def test_followup_rendering_obeys_payload_mode_and_preserves_previous_answer_state():
     ask = (FRONTEND / "context-ask.js").read_text()
     app = (FRONTEND / "context-app.js").read_text()
-    assert "backend's followup_mode is authoritative" in ask
+    assert "followup_mode:'new'" in ask
     assert "payload?.followup_mode" in app
     assert "const visiblePrevious=previousLive;" in app
     assert "raw.resolution==='updated' && source.startsWith('question_response:')" not in app
