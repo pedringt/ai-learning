@@ -3,6 +3,16 @@
   const root = () => document.getElementById('viewRoot');
   const api = () => window.STATE_API;
 
+  function sourceIcon(type){
+    const common='class="source-icon" aria-hidden="true" viewBox="0 0 24 24"';
+    if(type==='slack') return `<svg ${common}><rect x="9.2" y="2" width="3.2" height="8" rx="1.6" fill="#36C5F0"/><rect x="13.8" y="9.2" width="8" height="3.2" rx="1.6" fill="#2EB67D"/><rect x="11.6" y="13.8" width="3.2" height="8" rx="1.6" fill="#ECB22E"/><rect x="2" y="11.6" width="8" height="3.2" rx="1.6" fill="#E01E5A"/><circle cx="7" cy="7" r="1.6" fill="#E01E5A"/><circle cx="17" cy="7" r="1.6" fill="#36C5F0"/><circle cx="17" cy="17" r="1.6" fill="#2EB67D"/><circle cx="7" cy="17" r="1.6" fill="#ECB22E"/></svg>`;
+    if(type==='drive') return `<svg ${common}><path d="M8.2 3.2h5.1l6.8 11.8H15z" fill="#0F9D58"/><path d="M8.2 3.2 2 14l2.6 4.5L10.8 7.7z" fill="#F4B400"/><path d="M4.6 18.5h12.7l2.8-4.8H7.4z" fill="#4285F4"/></svg>`;
+    if(type==='notion') return `<svg ${common}><rect x="3" y="3" width="18" height="18" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M7.2 17V8.1l7.4 8.9V8.4h-1.8V7h4.1v1.4h-1.1V17h-1.7L8.9 10.8V17z" fill="currentColor"/></svg>`;
+    if(type==='confluence') return `<svg ${common}><path d="M5.4 14.7c2.3-1.5 4.4-2.2 6.8-2.2 2.4 0 4.5.7 6.4 1.8l-2.5 3.4c-1.3-.7-2.5-1.1-3.9-1.1-1.7 0-3.1.5-4.6 1.5z" fill="#1868DB"/><path d="M18.6 9.3C16.3 10.8 14.2 11.5 11.8 11.5c-2.4 0-4.5-.7-6.4-1.8l2.5-3.4c1.3.7 2.5 1.1 3.9 1.1 1.7 0 3.1-.5 4.6-1.5z" fill="#1868DB"/></svg>`;
+    return '';
+  }
+  function sourceTitle(type,label){return `<span class="source-title">${sourceIcon(type)}<span>${esc(label)}</span></span>`;}
+
   function styles(){
     if(document.getElementById('state-settings-view-styles')) return;
     const style=document.createElement('style');
@@ -40,7 +50,11 @@
       .slack-preview-row,.source-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px 0;border-top:1px solid var(--line,#e5e5ea)}
       .slack-preview-row:first-child,.source-row:first-child{border-top:0}
       .slack-preview-row span,.source-row span{color:var(--muted,#666);font-size:13px}
-      .source-row strong{display:block;margin-bottom:2px}
+      .source-row>div{min-width:0}
+      .source-title{display:inline-flex;align-items:center;gap:8px;margin-bottom:2px;font-weight:700;color:inherit}
+      .source-icon{width:18px;height:18px;flex:0 0 18px;display:block}
+      .settings-slack-heading{display:flex;align-items:center;gap:9px}
+      .settings-slack-heading .source-icon{width:20px;height:20px;flex-basis:20px}
       .settings-callout{margin-top:14px;padding:12px 14px;border-radius:12px;background:var(--soft,#f6f5f8);font-size:13px;line-height:1.45}
       .settings-actions{margin-top:16px;display:flex;gap:8px;flex-wrap:wrap}
       .settings-slack .settings-section-head{align-items:center}
@@ -87,7 +101,7 @@
       </section>
 
       <section class="settings-section settings-slack">
-        <div class="settings-section-head"><div class="settings-slack-intro"><h3>Slack</h3><p>Bring useful project conversations into State as Evidence. Slack never changes Current State directly.</p></div><span class="settings-status">Not connected</span></div>
+        <div class="settings-section-head"><div class="settings-slack-intro"><h3 class="settings-slack-heading">${sourceIcon('slack')}<span>Slack</span></h3><p>Bring useful project conversations into State as Evidence. Slack never changes Current State directly.</p></div><span class="settings-status">Not connected</span></div>
         <div class="settings-actions"><button class="btn secondary" type="button" disabled aria-disabled="true">Connect Slack</button></div>
         <div class="slack-preview" aria-label="Planned Slack behavior">
           <div class="slack-preview-row"><div><strong>Approved channels</strong><br><span>Only channels explicitly enabled for Northstar can feed State.</span></div><span>Planned</span></div>
@@ -110,10 +124,10 @@
         <div class="settings-section-head"><div><h3>Connected sources</h3><p>Places State can gather project information from planning, discovery, documentation, and collaboration.</p></div></div>
         <div class="settings-callout"><strong>Sources provide Evidence. They never change Current State directly.</strong></div>
         <div class="source-list settings-source-grid" aria-label="Connected and planned sources">
-          <div class="source-row"><div><strong>Slack</strong><span>Project conversations and decisions.</span></div><span class="settings-status">Not connected</span></div>
-          <div class="source-row"><div><strong>Google Drive</strong><span>Docs, research, and planning artifacts.</span></div><span class="settings-status">Coming soon</span></div>
-          <div class="source-row"><div><strong>Notion</strong><span>Discovery notes, research, and specs.</span></div><span class="settings-status">Coming soon</span></div>
-          <div class="source-row"><div><strong>Confluence</strong><span>Project documentation and team knowledge.</span></div><span class="settings-status">Coming soon</span></div>
+          <div class="source-row"><div>${sourceTitle('slack','Slack')}<span>Project conversations and decisions.</span></div><span class="settings-status">Not connected</span></div>
+          <div class="source-row"><div>${sourceTitle('drive','Google Drive')}<span>Docs, research, and planning artifacts.</span></div><span class="settings-status">Coming soon</span></div>
+          <div class="source-row"><div>${sourceTitle('notion','Notion')}<span>Discovery notes, research, and specs.</span></div><span class="settings-status">Coming soon</span></div>
+          <div class="source-row"><div>${sourceTitle('confluence','Confluence')}<span>Project documentation and team knowledge.</span></div><span class="settings-status">Coming soon</span></div>
         </div>
       </section>
 
@@ -148,8 +162,15 @@
     }
   });
 
-  function enhance(){styles(); if(document.querySelector('.sidebar-nav [data-view="settings"]')?.classList.contains('active')) render();}
-  let queued=false; const schedule=()=>{if(queued)return;queued=true;requestAnimationFrame(()=>{queued=false;enhance();});};
-  new MutationObserver(schedule).observe(document.documentElement,{childList:true,subtree:true,attributes:true,attributeFilter:['class']});
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',schedule,{once:true});else schedule();
+  styles();
+  const settingsNav=document.querySelector('.sidebar-nav [data-view="settings"]');
+  let settingsWasActive=!!settingsNav?.classList.contains('active');
+  if(settingsWasActive) render();
+  if(settingsNav){
+    new MutationObserver(()=>{
+      const active=settingsNav.classList.contains('active');
+      if(active&&!settingsWasActive) render();
+      settingsWasActive=active;
+    }).observe(settingsNav,{attributes:true,attributeFilter:['class']});
+  }
 })();
