@@ -42,13 +42,14 @@ assert(P, 'provenance helpers should be exposed');
   assert.equal(trace.history.length, 1);
   assert.equal(trace.acceptedReviews.length, 1);
   assert.equal(trace.evidence.length, 1, 'linked evidence should be de-duplicated across History and Review');
+  assert.equal(P.hasAcceptedProvenance(trace), true);
   const html = P.traceMarkup(trace);
   assert(html.includes('Human decisions'));
   assert(html.includes('Evidence used'));
   assert(html.includes('Previously: Old boundary'));
 })();
 
-(function openReviewQualifiesButDoesNotSupportTruth() {
+(function openReviewQualifiesButDoesNotCreateWhyAction() {
   const data = {
     history: [], resolvedReviews: [],
     openReviews: [{
@@ -61,9 +62,8 @@ assert(P, 'provenance helpers should be exposed');
   assert.equal(trace.acceptedReviews.length, 0);
   assert.equal(trace.evidence.length, 0, 'open-review evidence must not be presented as accepted support');
   assert.equal(trace.openReviews.length, 1);
-  const html = P.traceMarkup(trace);
-  assert(html.includes('Still pending'));
-  assert(html.includes('do not replace Current State'));
+  assert.equal(P.hasAcceptedProvenance(trace), false);
+  assert.equal(P.traceMarkup(trace), '', 'facts without accepted provenance should not render an empty-state panel');
 })();
 
 (function rejectedReviewIsNotAcceptedProvenance() {
@@ -78,6 +78,24 @@ assert(P, 'provenance helpers should be exposed');
   const trace = P.buildTrace('k-pilot', data);
   assert.equal(trace.acceptedReviews.length, 0);
   assert.equal(trace.evidence.length, 0);
+  assert.equal(P.hasAcceptedProvenance(trace), false);
+  assert.equal(P.traceMarkup(trace), '');
+})();
+
+(function reviewWithoutEvidenceDoesNotCreateWhyAction() {
+  const data = {
+    history: [], openReviews: [],
+    resolvedReviews: [{
+      id:'r-no-evidence', status:'resolved', resolution:'updated', decision_question:'Accept this?',
+      affected_state_items:[{id:'k-no-evidence'}], proposals:[{state_item_id:'k-no-evidence'}],
+      evidence_items:[],
+    }],
+  };
+  const trace = P.buildTrace('k-no-evidence', data);
+  assert.equal(trace.acceptedReviews.length, 1);
+  assert.equal(trace.evidence.length, 0);
+  assert.equal(P.hasAcceptedProvenance(trace), false);
+  assert.equal(P.traceMarkup(trace), '');
 })();
 
 (function confirmedCurrentReviewCountsAsSupport() {
@@ -92,6 +110,7 @@ assert(P, 'provenance helpers should be exposed');
   const trace = P.buildTrace('k-security', data);
   assert.equal(trace.acceptedReviews.length, 1);
   assert.equal(trace.evidence.length, 1);
+  assert.equal(P.hasAcceptedProvenance(trace), true);
   assert(P.traceMarkup(trace).includes('Confirmed current'));
 })();
 

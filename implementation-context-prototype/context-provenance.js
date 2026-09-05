@@ -72,19 +72,20 @@
     return {history, acceptedReviews, evidence, openReviews};
   }
 
+  function hasAcceptedProvenance(trace) {
+    return trace.acceptedReviews.length > 0 && trace.evidence.length > 0;
+  }
+
   function sourceLabel(sourceType) {
     return String(sourceType || 'Evidence').replace(/[_-]+/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
   }
 
   function traceMarkup(trace) {
-    const accepted = trace.acceptedReviews.length;
-    const transitions = trace.history.length;
-    const evidence = trace.evidence.length;
-    const pending = trace.openReviews.length;
+    if (!hasAcceptedProvenance(trace)) return '';
 
-    const summary = accepted || transitions || evidence
-      ? `This Current State fact is backed by ${accepted || transitions} accepted ${accepted === 1 ? 'review' : 'reviews'}${evidence ? ` and ${evidence} linked Evidence ${evidence === 1 ? 'item' : 'items'}` : ''}.`
-      : 'This is maintained as Current State, but no accepted Review/Evidence provenance is available for this fact in the current demo record.';
+    const accepted = trace.acceptedReviews.length;
+    const evidence = trace.evidence.length;
+    const summary = `State treats this as current because ${accepted} accepted ${accepted === 1 ? 'review' : 'reviews'} used ${evidence} linked Evidence ${evidence === 1 ? 'item' : 'items'}.`;
 
     const reviewItems = trace.acceptedReviews.map(review => {
       const decision = review?.decision_question || 'Accepted review';
@@ -115,19 +116,47 @@
     </div>`;
   }
 
-  function ensureButtons() {
-    root.querySelectorAll('.project-maintained-fact[data-state-id]').forEach(row => {
-      if (row.querySelector('[data-provenance-toggle]')) return;
-      const actions = row.querySelector('.project-outline-actions');
-      if (!actions) return;
+  function moveActionsInline(row) {
+    const actions = row.querySelector('.project-outline-actions');
+    if (!actions || actions.dataset.provenanceInline === 'true') return actions;
+    const factContent = actions.previousElementSibling;
+    if (!factContent) return actions;
+    actions.dataset.provenanceInline = 'true';
+    actions.classList.add('project-outline-actions-inline');
+    factContent.appendChild(actions);
+    return actions;
+  }
+
+  async function ensureButtons() {
+    const rows = [...root.querySelectorAll('.project-maintained-fact[data-state-id]')]
+      .filter(row => row.dataset.provenanceChecked !== 'true');
+    if (!rows.length) return;
+
+    rows.forEach(row => { row.dataset.provenanceChecked = 'true'; });
+
+    let data;
+    try {
+      data = await loadProvenance();
+    } catch (error) {
+      rows.forEach(row => { delete row.dataset.provenanceChecked; });
+      return;
+    }
+
+    for (const row of rows) {
+      const actions = moveActionsInline(row);
+      if (!actions || row.querySelector('[data-provenance-toggle]')) continue;
+
+      const trace = buildTrace(row.dataset.stateId, data);
+      if (!hasAcceptedProvenance(trace)) continue;
+
       const button = document.createElement('button');
       button.type = 'button';
       button.className = 'text-button project-provenance-link';
       button.dataset.provenanceToggle = 'true';
       button.setAttribute('aria-expanded', 'false');
-      button.textContent = 'Why is this true?';
+      button.textContent = 'Why?';
       actions.prepend(button);
-    });
+    }
   }
 
   async function toggleTrace(button) {
@@ -141,19 +170,20 @@
     }
 
     button.disabled = true;
-    const original = button.textContent;
-    button.textContent = 'Checking…';
     try {
       const data = await loadProvenance();
       const trace = buildTrace(row.dataset.stateId, data);
-      row.insertAdjacentHTML('beforeend', traceMarkup(trace));
+      const markup = traceMarkup(trace);
+      if (!markup) {
+        button.remove();
+        return;
+      }
+      row.insertAdjacentHTML('beforeend', markup);
       button.setAttribute('aria-expanded', 'true');
     } catch (error) {
-      row.insertAdjacentHTML('beforeend', `<div class="project-provenance-detail provenance-error" role="status">Provenance is temporarily unavailable. Current State itself is unchanged.</div>`);
-      button.setAttribute('aria-expanded', 'true');
+      button.remove();
     } finally {
-      button.disabled = false;
-      button.textContent = original;
+      if (button.isConnected) button.disabled = false;
     }
   }
 
@@ -166,20 +196,25 @@
 
   const style = document.createElement('style');
   style.textContent = `
-    .project-provenance-link{white-space:nowrap}
-    .project-provenance-detail{grid-column:1/-1;margin:10px 0 2px;padding:12px 14px;border:1px solid var(--border, #d9dde3);border-radius:10px;background:var(--surface-soft, rgba(127,127,127,.055));font-size:13px;line-height:1.45}
-    .project-provenance-summary{margin:0 0 10px;font-weight:600}
-    .project-provenance-group+ .project-provenance-group{margin-top:12px}
-    .project-provenance-group h5{margin:0 0 5px;font-size:12px;text-transform:uppercase;letter-spacing:.04em}
-    .project-provenance-group ul{margin:0;padding-left:18px}
+    .project-outline-actions-inline{display:flex;align-items:center;gap:10px;margin-top:7px}
+    .project-outline-actions-inline .text-button,
+    .project-outline-actions-inline a{font-size:12px!important;font-weight:600!important;line-height:1.25!important;white-space:nowrap!important}
+    .project-provenance-link{padding:0!important;min-height:0!important;background:none!important;border:0!important;box-shadow:none!important}
+    .project-provenance-detail{grid-column:2/-1;margin:10px 0 2px;padding:11px 13px;border:1px solid var(--border, #d9dde3);border-radius:9px;background:var(--surface-soft, rgba(127,127,127,.045));font-size:13px;line-height:1.45}
+    .project-provenance-summary{margin:0 0 9px;font-weight:600}
+    .project-provenance-group+ .project-provenance-group{margin-top:11px}
+    .project-provenance-group h5{margin:0 0 5px;font-size:11px;text-transform:uppercase;letter-spacing:.04em}
+    .project-provenance-group ul{margin:0;padding-left:17px}
     .project-provenance-group li{margin:5px 0}
     .project-provenance-group li strong{display:block;font-size:12px}
     .project-provenance-group li span{display:block}
     .project-provenance-group .provenance-before{margin-top:2px;opacity:.72;font-size:12px}
-    .provenance-pending{padding-top:10px;border-top:1px solid var(--border, #d9dde3)}
+    .provenance-pending{padding-top:9px;border-top:1px solid var(--border, #d9dde3)}
     .provenance-pending>p{margin:6px 0 0;opacity:.8}
-    .provenance-error{font-weight:600}
-    @media(max-width:760px){.project-provenance-link{white-space:normal}.project-provenance-detail{padding:11px 12px}}
+    @media(max-width:760px){
+      .project-outline-actions-inline{flex-wrap:wrap;gap:8px}
+      .project-provenance-detail{grid-column:1/-1;padding:10px 11px}
+    }
   `;
   document.head.appendChild(style);
 
@@ -187,5 +222,5 @@
   observer.observe(root, {childList:true, subtree:true});
   ensureButtons();
 
-  window.STATE_PROVENANCE = Object.freeze({buildTrace, traceMarkup, affectedStateIds, supportingResolvedReview});
+  window.STATE_PROVENANCE = Object.freeze({buildTrace, traceMarkup, hasAcceptedProvenance, affectedStateIds, supportingResolvedReview});
 })();
