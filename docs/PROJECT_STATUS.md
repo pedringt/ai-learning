@@ -21,7 +21,8 @@ State is currently release-hardened with the following behavior in production:
 - adversarial live Ask QA passed cases covering unknown vs. zero, conflicting authority, superseded history, negation, ambiguous dates, and unresolved authority;
 - Project stays focused on maintained Current State. Facts with relevant history can link into a filtered History view;
 - History can show a compact, read-only "Why State treats this as current" explanation for a focused fact, grounded in accepted Review/Evidence provenance rather than open or rejected reviews;
-- project rules and demo reset are accessed from a dedicated **Settings** entry in the sidebar below History rather than from the Project document.
+- project rules and demo reset are accessed from a dedicated **Settings** entry in the sidebar below History rather than from the Project document;
+- an open Question explicitly linked to an open Review is presented as **Answer found · Awaiting review**. This is a derived UI state only: the Question remains open until a human accepts the Review.
 
 Free-form Ask remains primarily provider-bound. Context assembly is typically only a few milliseconds, while model-backed calls can take tens of seconds. Streaming is the main perceived-latency mitigation. Ask uses a single interactive attempt with no automatic retry spiral. The configured 30-second provider timeout should not be interpreted as a strict whole-request wall-clock ceiling.
 
@@ -37,7 +38,6 @@ High-value areas that remain in scope:
 
 - continue measuring Ask latency and failure rate before changing timeout or provider behavior;
 - keep expanding adversarial AI-quality coverage when new failure modes are discovered;
-- consider a clear question state for "answered by evidence, awaiting review";
 - continue accessibility, mobile, dark-mode, security, observability, and small maintainability improvements when supported by evidence;
 - keep temporary QA branches and PRs cleaned up once they are no longer useful.
 
