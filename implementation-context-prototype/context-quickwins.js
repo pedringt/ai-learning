@@ -1,13 +1,12 @@
 (() => {
-  const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#39;'}[c]));
 
   const starters = [
     ['What should I know?', 'What should I know right now? Give me a concise briefing with Project snapshot, Changed recently, Needs attention, and Still unclear.'],
     ['Prep me for a meeting', 'Prep me for a project meeting. Focus on settled decisions, recent changes, what needs attention, and questions we still need answered.'],
     ['What changed recently?', 'What changed recently? Separate accepted Current State changes from pending evidence or unresolved information.'],
     ['What needs my attention?', 'What needs my attention right now? Prioritize Reviews and blocking questions, then mention other important unresolved items.'],
-    ['What are we still unsure about?', 'What are we still unsure about? Show unresolved questions and pending evidence without turning them into facts.'],
-    ['Give me a project update', 'Give me a concise project update I can copy into Slack or email, with sections Changed, Needs attention, and Still unresolved.']
+    ['What are we still unsure about?', 'What are we still unsure about? Show unresolved questions and pending evidence without turning them into facts.']
   ];
 
   function addStyles() {
@@ -15,7 +14,7 @@
     const style = document.createElement('style');
     style.id = 'state-quickwin-styles';
     style.textContent = `
-      @media (min-width: 1180px){.ask-quick-starts{display:flex!important;flex-wrap:nowrap!important;gap:8px!important}.ask-quick-starts button{font-size:13px!important;padding:9px 12px!important;white-space:nowrap!important;flex:1 1 auto!important}}
+      @media (min-width: 1180px){.ask-quick-starts{display:flex!important;flex-wrap:nowrap!important;gap:8px!important}.ask-quick-starts button{font-size:13px!important;padding:9px 12px!important;white-space:nowrap!important;flex:0 1 auto!important}}
       @media (max-width:1179px){.ask-quick-starts{display:flex!important;flex-wrap:wrap!important;gap:8px!important}}
       .open-items-count-summary{display:inline-block;margin-bottom:4px}
       .ask-grounding{margin-top:18px}
@@ -69,8 +68,6 @@
       if(links.length<2)return;
       const reviewCount=links.filter(x=>/review/i.test(x.textContent)).length;
       const questionCount=links.filter(x=>/question/i.test(x.textContent)).length;
-      const firstTarget=links[0];
-      const action=firstTarget?.getAttribute('data-view')||firstTarget?.getAttribute('data-action');
       box.classList.add('ask-related-summary');
       box.innerHTML=`<strong>Related open items</strong><p>${reviewCount?`${reviewCount} ${reviewCount===1?'item needs':'items need'} review`:''}${reviewCount&&questionCount?' · ':''}${questionCount?`${questionCount} open ${questionCount===1?'question':'questions'}`:''}</p><button type="button" class="text-link" data-view="open-items">View open items →</button>`;
       box.dataset.quickwinCompact='true';
