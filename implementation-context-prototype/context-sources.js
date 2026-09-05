@@ -25,7 +25,7 @@
     if (!overview || overview.querySelector('.workspace-source-strip')) return;
     const heading = overview.querySelector('.overview-heading');
     if (!heading) return;
-    heading.insertAdjacentHTML('afterend', `<section class="workspace-source-strip" aria-label="Source status"><div class="workspace-source-head"><span class="meta-label">Sources</span><span class="workspace-source-name">Slack</span><span class="workspace-source-status">In development</span></div><button class="btn secondary workspace-source-action" type="button" data-view="settings">Connect your apps →</button><span class="workspace-source-copy">This demo includes Slack-sourced Evidence you can trace through Review and History. Live connection is still in development.</span></section>`);
+    heading.insertAdjacentHTML('afterend', `<section class="workspace-source-strip" aria-label="Source status"><div class="workspace-source-head"><span class="meta-label">Sources</span><span class="workspace-source-name">Slack</span><span class="workspace-source-status">In development</span></div><button class="btn secondary workspace-source-action" type="button" data-view="settings">Connect your apps →</button><span class="workspace-source-copy">Northstar's seed data includes Slack-sourced Evidence you can trace through Review and History. Live connection is still in development.</span></section>`);
   }
 
   decorate();
