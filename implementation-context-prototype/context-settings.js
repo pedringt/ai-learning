@@ -59,13 +59,34 @@
   // this list can't do that to its own settings.
   async function rules(){try{const payload=await api()?.getRules?.();return {items:payload?.items||payload||[],failed:false};}catch(error){console.warn('Settings could not load project rules.',error);return {items:[],failed:true};}}
 
-  async function render(){
+  function rulesCountMarkup(rulesState){
+    if(rulesState.loading) return '…';
+    if(rulesState.failed) return 'unavailable';
+    return `${rulesState.items.length} ${rulesState.items.length===1?'rule':'rules'}`;
+  }
+  function rulesListMarkup(rulesState){
+    if(rulesState.loading) return '<li><span>Loading project rules…</span></li>';
+    if(rulesState.failed) return '<li><span>Project rules could not be loaded. This may not be the full list.</span><button class="text-button" type="button" data-settings-action="retry-rules">Try again</button></li>';
+    if(!rulesState.items.length) return '<li><span>No project-specific rules yet.</span></li>';
+    return rulesState.items.map(rule=>`<li data-rule-id="${esc(rule.id)}"><div class="settings-rule-copy"><strong>${esc(rule.category||'Interpretation')}</strong><span>${esc(rule.text||rule.rule||'')}</span></div><button class="text-button" type="button" data-settings-action="delete-rule" data-rule-id="${esc(rule.id)}">Remove</button></li>`).join('');
+  }
+
+  // Settings owns its own data fetch instead of going through the shared,
+  // already-loaded state.data that every other view reads synchronously.
+  // The page shell (and the sections below that don't depend on rules) must
+  // still paint the instant the nav is clicked -- so this renders immediately
+  // with a loading placeholder and patches in the real rules once the fetch
+  // resolves, rather than leaving #viewRoot showing the previous view for as
+  // long as the request takes (seconds, or tens of seconds against a cold
+  // staging backend).
+  function render(rulesState){
     const settingsNav=document.querySelector('.sidebar-nav [data-view="settings"]');if(!settingsNav?.classList.contains('active')) return;
-    const target=root();if(!target) return;const rulesResult=await rules();const projectRules=rulesResult.items;const rulesFailed=rulesResult.failed;if(!settingsNav.classList.contains('active')) return;
+    const target=root();if(!target) return;
+    const state=rulesState||{loading:true,failed:false,items:[]};
     target.innerHTML=`<article class="page settings-page">
       <div class="page-head"><h2>Settings</h2><p>Configure Northstar and the sources allowed to feed it.</p></div>
       <section class="settings-section"><div class="settings-section-head"><div><h3>Project</h3><p>Basic information State uses for this project.</p></div></div><div class="settings-project-name"><label for="settings-project-name">Project name</label><input id="settings-project-name" value="Northstar" readonly aria-readonly="true"><p>Project renaming isn't available for this example project.</p></div>
-        <details class="settings-rules"><summary><span>Project rules <span class="settings-rules-count">${rulesFailed?'unavailable':`${projectRules.length} ${projectRules.length===1?'rule':'rules'}`}</span></span></summary><div class="settings-rules-body"><p>Rules tell State how to interpret information for this project.</p><form class="settings-rule-form" data-settings-action="add-rule"><label>Add a project rule<input name="rule" autocomplete="off" placeholder="Example: Security approvals must be explicit."></label><label>Category<select name="category"><option>Authority</option><option>Review</option><option>Sources</option><option selected>Interpretation</option></select></label><button class="btn secondary" type="submit">Add rule</button></form><ul class="settings-rule-list">${rulesFailed?'<li><span>Project rules could not be loaded. This may not be the full list.</span><button class="text-button" type="button" data-settings-action="retry-rules">Try again</button></li>':(projectRules.length?projectRules.map(rule=>`<li data-rule-id="${esc(rule.id)}"><div class="settings-rule-copy"><strong>${esc(rule.category||'Interpretation')}</strong><span>${esc(rule.text||rule.rule||'')}</span></div><button class="text-button" type="button" data-settings-action="delete-rule" data-rule-id="${esc(rule.id)}">Remove</button></li>`).join(''):'<li><span>No project-specific rules yet.</span></li>')}</ul></div></details>
+        <details class="settings-rules"><summary><span>Project rules <span class="settings-rules-count">${rulesCountMarkup(state)}</span></span></summary><div class="settings-rules-body"><p>Rules tell State how to interpret information for this project.</p><form class="settings-rule-form" data-settings-action="add-rule"><label>Add a project rule<input name="rule" autocomplete="off" placeholder="Example: Security approvals must be explicit."></label><label>Category<select name="category"><option>Authority</option><option>Review</option><option>Sources</option><option selected>Interpretation</option></select></label><button class="btn secondary" type="submit">Add rule</button></form><ul class="settings-rule-list">${rulesListMarkup(state)}</ul></div></details>
       </section>
       <section class="settings-section settings-slack" id="settings-slack"><div class="settings-section-head"><div class="settings-slack-intro"><h3 class="settings-slack-heading">${sourceIcon('slack')}<span>Slack</span></h3><p>Bring useful project conversations into State as Evidence. Slack never changes Current State directly.</p></div><span class="settings-status dev">In development</span></div><div class="settings-actions"><button class="btn secondary" type="button" disabled aria-disabled="true">Connect Slack</button></div><div class="slack-preview" aria-label="Planned Slack behavior"><div class="slack-preview-row"><div><strong>Approved channels</strong><br><span>Only channels explicitly enabled for Northstar can feed State.</span></div><span>Planned</span></div><div class="slack-preview-row"><div><strong>Threads</strong><br><span>State follows conversations over time and creates new Evidence when something meaningful changes.</span></div><span>Planned</span></div><div class="slack-preview-row"><div><strong>Noise control</strong><br><span>Bot, system, and low-value conversation is filtered before it reaches Notes.</span></div><span>Planned</span></div></div></section>
       <section class="settings-section settings-quiet"><div class="settings-section-head"><div><h3>How State works</h3><p>Safeguards that protect the human authorization model.</p></div></div><ul class="settings-behavior-list"><li>Evidence cannot change Current State automatically.</li><li>Questions require Review before resolution.</li><li>Ignored Evidence is excluded from active reasoning.</li><li>Evidence history stays available so accepted changes remain explainable.</li></ul></section>
@@ -89,8 +110,17 @@
     }
   }
 
-  document.addEventListener('submit',async event=>{const form=event.target.closest('form[data-settings-action="add-rule"]');if(!form)return;event.preventDefault();const input=form.elements.rule;const text=String(input?.value||'').trim();if(!text)return;const category=form.elements.category?.value||'Interpretation';const button=form.querySelector('button[type="submit"]');if(button)button.disabled=true;try{await api()?.createRule?.(text,category);if(input)input.value='';await render();}catch(error){console.error('Could not add project rule.',error);if(button)button.disabled=false;window.alert(`Could not save the rule: ${error.message}`);}});
-  document.addEventListener('click',async event=>{const control=event.target.closest('[data-settings-action]');if(!control)return;const action=control.dataset.settingsAction;if(action==='retry-rules'){await render();}if(action==='delete-rule'){control.disabled=true;try{await api()?.deleteRule?.(control.dataset.ruleId);await render();}catch(error){console.error('Could not remove project rule.',error);control.disabled=false;window.alert(`Could not remove the rule: ${error.message}`);}}if(action==='reset-demo'){if(!window.confirm('Reset Northstar to its original seeded scenario?'))return;control.disabled=true;try{await api()?.resetDemo?.();window.location.reload();}catch(error){console.error('Could not reset demo.',error);control.disabled=false;window.alert(error?.isTimeout?error.message:`Northstar was not reset: ${error.message}`);}}});
+  // Paints the shell immediately (loading placeholder for rules), then
+  // patches in the real rules once the fetch resolves. See the comment on
+  // render() above for why this can't just be one await-then-paint step.
+  async function load(){
+    render();
+    const rulesResult=await rules();
+    render(rulesResult);
+  }
 
-  styles();const settingsNav=document.querySelector('.sidebar-nav [data-view="settings"]');let settingsWasActive=!!settingsNav?.classList.contains('active');if(settingsWasActive)render();if(settingsNav){new MutationObserver(()=>{const active=settingsNav.classList.contains('active');if(active&&!settingsWasActive)render();settingsWasActive=active;}).observe(settingsNav,{attributes:true,attributeFilter:['class']});}
+  document.addEventListener('submit',async event=>{const form=event.target.closest('form[data-settings-action="add-rule"]');if(!form)return;event.preventDefault();const input=form.elements.rule;const text=String(input?.value||'').trim();if(!text)return;const category=form.elements.category?.value||'Interpretation';const button=form.querySelector('button[type="submit"]');if(button)button.disabled=true;try{await api()?.createRule?.(text,category);if(input)input.value='';await load();}catch(error){console.error('Could not add project rule.',error);if(button)button.disabled=false;window.alert(`Could not save the rule: ${error.message}`);}});
+  document.addEventListener('click',async event=>{const control=event.target.closest('[data-settings-action]');if(!control)return;const action=control.dataset.settingsAction;if(action==='retry-rules'){await load();}if(action==='delete-rule'){control.disabled=true;try{await api()?.deleteRule?.(control.dataset.ruleId);await load();}catch(error){console.error('Could not remove project rule.',error);control.disabled=false;window.alert(`Could not remove the rule: ${error.message}`);}}if(action==='reset-demo'){if(!window.confirm('Reset Northstar to its original seeded scenario?'))return;control.disabled=true;try{await api()?.resetDemo?.();window.location.reload();}catch(error){console.error('Could not reset demo.',error);control.disabled=false;window.alert(error?.isTimeout?error.message:`Northstar was not reset: ${error.message}`);}}});
+
+  styles();const settingsNav=document.querySelector('.sidebar-nav [data-view="settings"]');let settingsWasActive=!!settingsNav?.classList.contains('active');if(settingsWasActive)load();if(settingsNav){new MutationObserver(()=>{const active=settingsNav.classList.contains('active');if(active&&!settingsWasActive)load();settingsWasActive=active;}).observe(settingsNav,{attributes:true,attributeFilter:['class']});}
 })();
