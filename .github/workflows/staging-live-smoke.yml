@@ -21,7 +21,7 @@ jobs:
           base = os.environ['STAGING_API']
           with urllib.request.urlopen(base + '/api/bootstrap', timeout=60) as r:
               payload = json.load(r)
-          required = {'state','questions','reviews','history','evidence','rules'}
+          required = {'state','questions','open_reviews','resolved_reviews','history','evidence','rules','drafts'}
           missing = required - set(payload)
           assert not missing, f'missing bootstrap keys: {sorted(missing)}'
           print('bootstrap ok', {k: len(payload.get(k, [])) if isinstance(payload.get(k), list) else type(payload.get(k)).__name__ for k in sorted(required)})
