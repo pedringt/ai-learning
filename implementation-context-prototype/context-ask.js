@@ -11,14 +11,26 @@
     const q=norm(query);
     return /\b(shorter|shorten|brief|agenda|15 minutes|minutes|leadership|slack|talking points|focus|format|turn this|make it)\b/.test(q);
   }
+  function isFastStarter(query, previousPayload){
+    if(previousPayload) return false;
+    const q=norm(query);
+    return q.startsWith('what should i know right now') ||
+      q.startsWith('give me a meeting brief based on what state currently knows') ||
+      q.startsWith('what changed recently') ||
+      q.startsWith('what needs my attention right now') ||
+      q.startsWith('what are we still unsure about');
+  }
   function followupMode(query, previousPayload){
     // Pending/error fallback only. The backend's followup_mode is authoritative
     // once a grounded response arrives, which prevents JS/Python classifier drift.
     return previousPayload ? 'append' : 'new';
   }
   function canHandle(query, previousPayload){
-    // All user questions should use the grounded backend when it is available.
-    // The older local intent layer is only a no-backend fallback.
+    // The five product-owned starter jobs are assembled from already-hydrated
+    // authoritative State data by the deterministic UI layer. Sending those to
+    // the model added 10-70 seconds without adding authority or new information.
+    // Free-form questions remain grounded, model-backed Ask requests.
+    if(isFastStarter(query, previousPayload)) return false;
     return !!API?.ask && !!String(query || '').trim();
   }
   async function preview(query){
@@ -62,7 +74,6 @@
   function meetingNotesScaffold(){
     return `<section class="ask-meeting-notes"><h3>Meeting notes</h3><div class="meeting-note-block"><strong>Decisions</strong><span>Add notes here</span></div><div class="meeting-note-block"><strong>Answers / new information</strong><span>Add notes here</span></div><div class="meeting-note-block"><strong>Actions</strong><span>☐ Add actions here</span></div><div class="meeting-note-block"><strong>Follow-ups</strong><span>Add notes here</span></div></section>`;
   }
-
 
   function portableText(payload){
     const a=payload?.answer;
@@ -146,16 +157,6 @@
     const notes=a.job==='meeting_prep'?meetingNotesScaffold():'';
     return `<div class="ask-live-answer"><div class="ask-answer-head"><div class="result-label">${esc(a.job==='meeting_prep'?'Meeting prep':'State Ask')}</div><div class="ask-answer-actions"><button class="btn secondary ask-copy-answer" data-action="copy-result">Copy</button><button class="btn secondary ask-new-session" data-action="new-ask">New ask</button></div></div><h2>${esc(a.headline)}</h2><p class="result-lede">${esc(a.summary)}</p>${sections}${notes}${refinements?`<div class="ask-refinement-chips">${refinements}</div>`:''}${stateActions(a)}${footer}</div>`;
   }
-
-  // --- Ask wait states -----------------------------------------------------
-  // Ask can take several seconds. Rather than a static spinner, the wait state
-  // narrates what State is actually doing, and after ten seconds switches to
-  // copy that acknowledges the wait. This is product behavior, not decoration:
-  // it is what keeps a slow grounded answer from reading as a hang.
-  //
-  // Call activateWaitStates(root) after any render that can produce a loading
-  // node. It is idempotent — a node already rotating is left alone — and each
-  // timer stops itself once its node leaves the document.
 
   const INITIAL_WAIT_MESSAGES = [
     'Finding the project context that matters for this question…',
