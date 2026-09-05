@@ -1,5 +1,5 @@
 (() => {
-  const base = window.STATE_API_BASE || document.documentElement?.dataset?.apiBase || 'https://state-api-6waw.onrender.com';
+  const base = window.STATE_API_BASE || document.documentElement?.dataset?.apiBase || 'https://state-api-staging.onrender.com';
 
   async function request(path, options = {}) {
     const response = await fetch(`${base}${path}`, options);
