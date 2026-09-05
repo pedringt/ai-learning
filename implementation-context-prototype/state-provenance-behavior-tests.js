@@ -1,0 +1,134 @@
+const assert = require('assert');
+const path = require('path');
+
+const root = {
+  querySelectorAll: () => [],
+  querySelector: () => null,
+  addEventListener: () => {},
+};
+
+global.window = {
+  STATE_API: {
+    getBootstrap: async () => ({history:[], resolved_reviews:[], open_reviews:[]}),
+  },
+};
+global.document = {
+  getElementById: id => id === 'viewRoot' ? root : null,
+  createElement: () => ({textContent:'', appendChild:()=>{}}),
+  head: {appendChild: () => {}},
+};
+global.MutationObserver = class { observe() {} };
+global.requestAnimationFrame = fn => fn();
+
+require(path.join(__dirname, 'context-provenance.js'));
+const P = window.STATE_PROVENANCE;
+assert(P, 'provenance helpers should be exposed');
+
+(function bootstrapUsesAuthoritativeResponseShape() {
+  const normalized = P.normalizeBootstrap({
+    history:[{id:'h1'}],
+    resolved_reviews:[{id:'r1'}],
+    open_reviews:[{id:'r2'}],
+  });
+  assert.equal(normalized.history.length, 1);
+  assert.equal(normalized.resolvedReviews[0].id, 'r1');
+  assert.equal(normalized.openReviews[0].id, 'r2');
+})();
+
+(function acceptedHistoryCarriesReviewAndEvidence() {
+  const data = {
+    history: [{
+      id:'h1', state_item_id:'k-data', review_id:'r1', transition_type:'updated',
+      old_statement:'Old boundary', new_statement:'Read only', changed_at:'2026-09-01',
+      proposal_rationale:'Security narrowed the implementation to a read-only boundary.',
+      resolution:'updated', decision_question:'Accept the read-only boundary?',
+      evidence_items:[{id:'e1', source_type:'security_review', content:'Security approved read-only access.'}],
+    }],
+    resolvedReviews: [{
+      id:'r1', status:'resolved', resolution:'updated', decision_question:'Accept the read-only boundary?',
+      affected_state_items:[{id:'k-data'}], proposals:[{state_item_id:'k-data'}],
+      evidence_items:[{id:'e1', source_type:'security_review', content:'Security approved read-only access.'}],
+    }],
+    openReviews: [],
+  };
+  const trace = P.buildTrace('k-data', data);
+  assert.equal(trace.history.length, 1);
+  assert.equal(trace.acceptedReviews.length, 1);
+  assert.equal(trace.evidence.length, 1, 'linked evidence should be de-duplicated across History and Review');
+  assert.equal(P.hasAcceptedProvenance(trace), true);
+  const html = P.traceMarkup(trace);
+  assert(html.includes('Why State treats this as current'));
+  assert(html.includes('Security narrowed the implementation to a read-only boundary.'));
+  assert(html.includes('Security approved read-only access.'));
+  assert(!html.includes('1 accepted review'), 'History provenance should use product language, not record counts');
+})();
+
+(function openReviewDoesNotCountAsAcceptedProvenance() {
+  const data = {
+    history: [], resolvedReviews: [],
+    openReviews: [{
+      id:'r-open', status:'open', decision_question:'Should this change?',
+      affected_state_items:[{id:'k-access'}], proposals:[{state_item_id:'k-access'}],
+      evidence_items:[{id:'e-pending', content:'Pending claim'}],
+    }],
+  };
+  const trace = P.buildTrace('k-access', data);
+  assert.equal(trace.acceptedReviews.length, 0);
+  assert.equal(trace.evidence.length, 0, 'open-review evidence must not be presented as accepted support');
+  assert.equal(trace.openReviews.length, 1);
+  assert.equal(P.hasAcceptedProvenance(trace), false);
+  assert.equal(P.traceMarkup(trace), '');
+})();
+
+(function rejectedReviewIsNotAcceptedProvenance() {
+  const data = {
+    history: [], openReviews: [],
+    resolvedReviews: [{
+      id:'r-rejected', status:'resolved', resolution:'not_applied',
+      affected_state_items:[{id:'k-pilot'}], proposals:[{state_item_id:'k-pilot'}],
+      evidence_items:[{id:'e-rejected', content:'Rejected claim'}],
+    }],
+  };
+  const trace = P.buildTrace('k-pilot', data);
+  assert.equal(trace.acceptedReviews.length, 0);
+  assert.equal(trace.evidence.length, 0);
+  assert.equal(P.hasAcceptedProvenance(trace), false);
+  assert.equal(P.traceMarkup(trace), '');
+})();
+
+(function reviewWithoutEvidenceDoesNotRenderProvenance() {
+  const data = {
+    history: [], openReviews: [],
+    resolvedReviews: [{
+      id:'r-no-evidence', status:'resolved', resolution:'updated', decision_question:'Accept this?',
+      affected_state_items:[{id:'k-no-evidence'}], proposals:[{state_item_id:'k-no-evidence'}],
+      evidence_items:[],
+    }],
+  };
+  const trace = P.buildTrace('k-no-evidence', data);
+  assert.equal(trace.acceptedReviews.length, 1);
+  assert.equal(trace.evidence.length, 0);
+  assert.equal(P.hasAcceptedProvenance(trace), false);
+  assert.equal(P.traceMarkup(trace), '');
+})();
+
+(function confirmedCurrentReviewCountsAsSupport() {
+  const data = {
+    history: [], openReviews: [],
+    resolvedReviews: [{
+      id:'r-confirm', status:'resolved', resolution:'confirmed_current', decision_question:'Keep the current boundary?',
+      why_consequential:'Security rechecked the existing boundary and found it remains appropriate.',
+      affected_state_items:[{id:'k-security'}], proposals:[],
+      evidence_items:[{id:'e2', source_type:'security_review', content:'Current boundary remains correct.'}],
+    }],
+  };
+  const trace = P.buildTrace('k-security', data);
+  assert.equal(trace.acceptedReviews.length, 1);
+  assert.equal(trace.evidence.length, 1);
+  assert.equal(P.hasAcceptedProvenance(trace), true);
+  const html = P.traceMarkup(trace);
+  assert(html.includes('Why State treats this as current'));
+  assert(html.includes('Current boundary remains correct.'));
+})();
+
+console.log('State provenance behavior tests passed');

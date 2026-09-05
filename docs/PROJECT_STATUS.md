@@ -6,7 +6,7 @@ This file is the canonical current-state handoff for State. Any AI assistant or 
 
 _Last updated: September 5, 2026_
 
-`main` is production. `staging` is the active test branch and intentionally uses the separate staging backend.
+`main` is production. `staging` remains the test branch and intentionally uses the separate staging backend.
 
 State is currently release-hardened with the following behavior in production:
 
@@ -17,13 +17,16 @@ State is currently release-hardened with the following behavior in production:
 - Ask related-item treatment and grounding language are tightened;
 - browser Back/Forward works across Workspace, Project, Open Items, Notes, and History;
 - review-completion wording and Open Items/empty-state behavior have been polished;
-- production Ask structured-output headroom is 2400 tokens after live staging QA showed that 1650 and 1800 could truncate otherwise valid structured responses.
+- production Ask structured-output headroom is 2400 tokens after live staging QA showed that 1650 and 1800 could truncate otherwise valid structured responses;
+- adversarial live Ask QA passed cases covering unknown vs. zero, conflicting authority, superseded history, negation, ambiguous dates, and unresolved authority;
+- Project stays focused on maintained Current State. Facts with relevant history can link into a filtered History view;
+- History can show a compact, read-only "Why State treats this as current" explanation for a focused fact, grounded in accepted Review/Evidence provenance rather than open or rejected reviews.
 
 Free-form Ask remains primarily provider-bound. Context assembly is typically only a few milliseconds, while model-backed calls can take tens of seconds. Streaming is the main perceived-latency mitigation. Ask uses a single interactive attempt with no automatic retry spiral. The configured 30-second provider timeout should not be interpreted as a strict whole-request wall-clock ceiling.
 
 Production Render is on a paid always-on plan, so production cold starts should be treated as solved unless live telemetry shows otherwise. Staging Render remains on the free tier and may sleep after inactivity; ignore the first staging request after idle when measuring performance, or wake staging first.
 
-The current production frontend must continue pointing to the production API. Staging intentionally points to the staging API, so staging should not be merged wholesale into `main`.
+The production frontend must point to the production API. Staging intentionally points to the staging API. A full staging promotion is acceptable only when the promotion branch normalizes that environment-specific URL before merge.
 
 ## Open work
 
@@ -32,11 +35,12 @@ Current work should focus on incremental quality and reliability improvements ra
 High-value areas that remain in scope:
 
 - continue measuring Ask latency and failure rate before changing timeout or provider behavior;
-- expand adversarial AI-quality coverage for cases such as unknown vs. zero, conflicting authority, negation, superseding evidence, and partial dates;
-- improve source/authority visibility and a future "Why is this true?" trace from Current State back through Review, Evidence, and History;
+- keep expanding adversarial AI-quality coverage when new failure modes are discovered;
 - consider a clear question state for "answered by evidence, awaiting review";
 - continue accessibility, mobile, dark-mode, security, observability, and small maintainability improvements when supported by evidence;
 - keep temporary QA branches and PRs cleaned up once they are no longer useful.
+
+The Current State provenance/"Why is this true?" work is no longer an open item. The settled product model is: Project answers what is true now; History explains how and why it became true.
 
 Do not carry forward completed staging-era checklists as open work. Re-verify the repo and live environments before reviving an old issue.
 
@@ -44,9 +48,9 @@ Do not carry forward completed staging-era checklists as open work. Re-verify th
 
 - **Update this file whenever `main` changes.** Any push or merge to `main` must include a same-pass review of `docs/PROJECT_STATUS.md`: add relevant new facts, remove stale or completed information, and make sure the document still describes what is actually in production.
 - **Read this file first in a new chat.** Then inspect the current repository and connected environments before assuming older handoffs are still accurate.
-- **Treat `main` as production and `staging` as test-only.** Never merge staging wholesale into `main`; promote only the validated changes that belong in production.
-- **Use a PR plus CI for production code changes.** Run the JavaScript Ask behavior suite and the Python/browser suite before promotion unless the change is purely non-runtime documentation.
-- **Do not promote an experiment just because it looks promising on staging.** Validate the exact behavior, understand the failure mode, and then move only the proven change.
+- **Treat `main` as production and `staging` as test-only.** Staging may be promoted wholesale when Paige explicitly requests it, but the promotion must preserve production-only environment configuration such as the production API URL.
+- **Use a PR plus CI for production code changes.** Run the JavaScript behavior suites and the Python/browser suite before promotion unless the change is purely non-runtime documentation.
+- **Do not promote an experiment just because it looks promising on staging.** Validate the exact behavior, understand the failure mode, and then promote only when Paige authorizes it.
 - **Prefer small, reversible changes.** Fix the narrow problem without opportunistic unrelated refactors.
 - **Instrument before optimizing.** For Ask performance, separate provider time from State/context time before deciding what to change.
 - **Do not use lower model output limits as a speed optimization without live structured-output testing.** Staging QA demonstrated truncation at both 1650 and 1800 tokens; 2400 passed the known failure cases.
