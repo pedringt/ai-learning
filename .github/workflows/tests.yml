@@ -1,23 +1,14 @@
 # Deterministic test suite for State.
 #
-# NOT ACTIVE, and deliberately parked outside .github/ for two reasons.
+# Runs the Python and JS suites on every push to main and every PR. It only
+# runs tests -- it does not build, publish or deploy anything. Vercel and
+# Render deploy from `main` on their own; this workflow never touches either.
 #
-# GitHub only reads workflows from .github/workflows/, so nothing here can run.
-# It also refuses any push that creates or updates a file under that directory
-# unless the credential carries the `workflow` scope -- which is what blocked
-# these branches on the first push attempt. Keeping the file here means the
-# branches push with an ordinary token.
-#
-# To turn it on, move it and commit with a token that has `workflow` scope:
-#
-#     mkdir -p .github/workflows
-#     git mv ci/tests.yml.disabled .github/workflows/tests.yml
-#
-# It is deliberately parked because the production site is frozen for review and
-# nothing should run against the repository until that freeze lifts.
-#
-# This workflow only runs tests. It does not build, publish or deploy anything.
-# Vercel and Render deploy from `main` on their own; this does not touch either.
+# Previously parked at ci/tests.yml.disabled: the review freeze on the live
+# site meant nothing should run against the repo yet, and the push token used
+# for the cleanup branches lacked `workflow` scope to write into
+# .github/workflows/ anyway. Both are resolved -- the freeze lifted and the
+# cleanup PRs (#14-#17) are merged -- so it's activated here.
 
 name: tests
 
