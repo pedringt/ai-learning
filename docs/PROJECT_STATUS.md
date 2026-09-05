@@ -4,9 +4,18 @@ This file is the canonical current-state handoff for State. Any AI assistant or 
 
 ## Current production state
 
-_Last updated: September 5, 2026_
+_Last updated: September 5, 2026 (evening session)_
 
-`main` is production. `staging` remains the test branch and intentionally uses the separate staging backend.
+`main` is production, currently at commit `20dfe0b`, and matches `staging` exactly (both branches in sync). `staging` remains the test branch and intentionally uses the separate staging backend.
+
+This evening's session shipped (all now on `main`):
+
+- fixed a real bug in a `main`-shipped Ask-answer staleness fix: resolved items could reappear (in the on-screen list, the "Related open items" footer, and Copy output) after `hydrateBackend()` pruned them from local state, because the live-status check used a find-by-id-then-check-status lookup with a "not found -> still open" fallback. Replaced with an "is this id still in the live open set" check;
+- Ask answers now show an inline notice with a "Refresh this answer" action when the headline/summary text has gone stale relative to a resolved item still shown in that answer's copy;
+- all frontend API calls now abort after 30s instead of hanging indefinitely, with the error marked `isTimeout` so callers can show "try refreshing" instead of a silent hang. Root cause of the bug report that prompted this: **Render's `state-api-staging` auto-deploy was not scoped to `state-project-complete/`, so every staging push (including pure frontend commits) bounced the backend** -- Paige has since fixed the Render build-filter config herself; confirmed working (a subsequent frontend-only push produced zero backend redeploys);
+- Settings: a failed project-rules fetch and a genuinely empty rules list used to render identically ("No project-specific rules yet.") -- now shows "unavailable" with a Try again action. Add/delete-rule failures now show a visible error instead of console-only;
+- removed a stale `state-api-staging.onrender.com/health` wake-ping that was shipping in the production case-study page;
+- portfolio copy/professionalism pass: "Open State prototype" corrected to "Open State" (Applied Work card), page title/meta now attributed ("Paige Edrington - Applied AI Product Portfolio"), case-study streaming paragraph updated to match what's actually shipped (streaming is real now, not deferred), stale `SESSION_HANDOFF_2026-09-05.md` archived to `docs/history/`.
 
 State is currently release-hardened with the following behavior in production:
 
@@ -32,7 +41,15 @@ The production frontend must point to the production API. Staging intentionally 
 
 ## Open work
 
-Current work should focus on incremental quality and reliability improvements rather than redesigning or rebuilding State.
+**Next planned work: Slack Phase 2.** Slack Phase 1 (deterministic intake -- signature verification, dedup, channel approval, noise filtering, conversation/thread aggregation, checkpoints) is done and stable, with no LLM calls and no Evidence/Review/Question creation yet. Phase 2 is the LLM-driven step: turning approved Slack conversations into Evidence, plus an approved-channel config UI and connection health display. Not started, not scoped in detail yet -- start there when picking this back up. Read this file's git history / ask Paige for the 2026-09-05 evening session's design discussion if more product-philosophy context is needed before scoping; the short version:
+
+- **Integration philosophy:** State takes in places where project knowledge is *created* and helps the team determine what's true; it sends approved outcomes to where people communicate or work. It does not become a workflow/task-management system -- no Jira/GitHub-issue-status ingestion, no board views.
+- **Planned inputs stay small:** Slack (Phase 1 shipped), Google Docs, Notion. Not Confluence/Obsidian/OneNote/Coda. No per-service transcription connectors (Fathom/Granola/Otter/etc.) -- generic file upload instead.
+- **Slack is deliberately the one bidirectional input** (input+output), not a placeholder pending extension to other tools. Slack -> State (evidence in); State -> Slack (an explicit "Share to Slack" action after a change is accepted, posting a summary to the project channel).
+- **New "Documents" area is the other big planned addition** -- a simple file cabinet for project resources (SOWs, briefs, transcripts, client PDFs, etc.). Document != Evidence: uploading a file must not trigger automatic extraction. V1 is deliberately boring (upload/list/open/delete, no folders, no AI processing). Storage recommendation: Vercel Blob for file bytes + a `documents` metadata row in State's existing database (decouple storage key from filename/id so the provider could change later) -- verify Blob's included tier fits the Hobby plan, and note `state-api` is a separate Python/Render service, not Next.js, so Blob integration is a REST call from the backend rather than framework-native. Falls back to a links-only model (no hosting at all) if a storage decision should be deferred further. Later (not V1): a per-document "Review with State" user-initiated action that surfaces candidate Evidence from a document's contents, routed through the existing Evidence -> Review -> Current State pipeline -- never automatic, never bypassing human authorization.
+- **Outputs, generally:** State can propose sending an approved outcome elsewhere; it doesn't manage what happens there afterward (propose -> human authorizes -> external action happens, mirroring the existing internal authority model). GitHub Issues is the planned first output/action integration -- an accepted State change can suggest creating an issue; once created, GitHub owns it fully, State does not track/sync status.
+
+Beyond Slack Phase 2, current work should otherwise focus on incremental quality and reliability improvements rather than redesigning or rebuilding State.
 
 High-value areas that remain in scope:
 
