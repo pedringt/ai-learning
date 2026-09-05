@@ -47,6 +47,7 @@ The repository root holds the portfolio site. The two directories below are the 
 | `index.html`, `site-shell.css`, `site-components.css` | Portfolio homepage and shared shell. |
 | `implementation-context*.html` | The State case study (overview, product decisions, deep dive). |
 | `docs/` | Historical implementation and review notes. |
+| `tools/` | Visual regression harness. Not part of the test suite; see `tools/README.md`. |
 
 ### Frontend files
 
@@ -76,7 +77,7 @@ The repository root holds the portfolio site. The two directories below are the 
 | `migrations/` | Numbered SQL migrations (`001`–`005`). The only migrations directory. |
 | `seed_demo.py` | Idempotent seed for the "Northstar" demo project |
 | `phase2_current/state_spike/` | **Runtime code, despite the name.** `anthropic_provider`, `openai_provider` and `interpretation_pipeline_integrated` all add this to `sys.path` and import schema validation, provider normalization and semantic validation from it. Removing or relocating it breaks the backend at import. It also holds the interpretation schema the runtime validates against. |
-| `api_test_harness.py`, `note_matrix_harness.py` | Manual harnesses, run by hand (`python api_test_harness.py`), not part of the pytest suite. See *Known debt*. |
+| `api_test_harness.py`, `note_matrix_harness.py` | Manual harnesses, run by hand (`python api_test_harness.py`). Not in the pytest suite. `api_test_harness` documents the enforcement model end to end: what software normalizes rather than rejects, and where optimistic concurrency actually bites. |
 
 ---
 
@@ -125,7 +126,7 @@ If the backend is unreachable, the frontend falls back to the deterministic fixt
 ```bash
 # Python — deterministic suite, no flags needed
 cd state-project-complete && python -m pytest -q
-# 241 passed, 3 skipped, 7 subtests passed
+# 248 passed, 3 skipped, 7 subtests passed
 
 # JavaScript — deterministic Ask behavior
 cd implementation-context-prototype && node state-ask-behavior-tests.js
@@ -134,6 +135,16 @@ cd implementation-context-prototype && node state-ask-behavior-tests.js
 
 Tests that require real provider API keys skip themselves when the keys are
 absent. Nothing needs to be deselected by hand.
+
+`test_ask_cache_authority.py` is the one to watch. It asserts that the Ask
+response cache never outlives a human decision — accepting a Review, dismissing
+one, or new Evidence arriving all force the next identical question back to the
+provider. If those fail, the cache is serving pre-decision answers and the
+product's central claim is broken.
+
+Visual changes are checked separately with the harness in `tools/` — it captures
+42 screenshots across every view, three widths and both themes, and compares
+them byte for byte.
 
 The browser suite (`test_browser_user_flows.py`) drives Chromium through
 Playwright. It uses Playwright's managed browser by default:
@@ -144,8 +155,10 @@ python -m playwright install chromium
 
 Set `STATE_CHROMIUM_PATH` to use a specific binary instead.
 
-A CI workflow is parked at `.github/workflows/tests.yml.disabled`. GitHub
-ignores it until it is renamed to `tests.yml`.
+A CI workflow is parked at `ci/tests.yml.disabled`. It sits outside `.github/`
+on purpose: GitHub rejects pushes that touch `.github/workflows/` unless the
+credential has the `workflow` scope. Move it to
+`.github/workflows/tests.yml` to enable it.
 
 ---
 
@@ -177,9 +190,7 @@ Things that look like omissions but are decisions:
 Being cleaned up deliberately rather than all at once:
 
 - The stylesheets carry layered version-specific overrides and heavy `!important` use. `context-tool.css` still holds roughly thirty separate `@media(max-width:760px)` blocks, several redefining the same selectors, and `index.html` carries version-stamped inline `<style>` blocks. Consolidating them is the next cleanup pass.
-- `STATE_BUILD_REV` in `api.py` is hand-edited rather than derived from the deployed commit, so `/health` can report a stale build.
-- `context-app.js` is a single 160 KB module. It is coherent, but it would read better split along product boundaries.
-- `api_test_harness.py` fails 3 of its 8 cases (`create_expected_version_invalid`, `grouping_singleton`, `stale_version`). They are negative-path cases whose expectations no longer match the API; the schema rejects the bad payloads correctly, but the harness's HTTP expectations are stale. Nothing catches this because the harness is manual and outside the pytest suite.
+- `context-app.js` is a single 1,600-line module. **Splitting it was investigated and rejected**, for a reason worth recording: the prototype is meant to open from the filesystem (`index.html` has explicit `file://` guards), and ES modules are CORS-blocked over `file://` — verified, not assumed. The only other split is several IIFEs sharing state through `window`, which would take `state` — touched by 64% of the functions — from closure-private to globally mutable. For a product whose thesis is controlled state transitions, that is a downgrade. The file now carries section banners instead, which is what the size problem actually needed.
 - `phase2_current/` is named as though it were a superseded spike but is load-bearing runtime code. Renaming it would be the honest fix, and would touch every provider's import path.
 
 ---

@@ -142,6 +142,13 @@
     ]
   };
 
+
+  /* ----------------------------------------------------------------------
+     Project view
+
+     Renders Current State as a readable document: grouping, wiki paragraphs,
+     outline sections and the sub-nav that scrolls between them.
+     ------------------------------------------------------------------- */
   function projectFact(k){
     const pending=pendingFor(k.topics||[]);
     const hasHistory=state.data.history.some(h=>h.knowledgeId===k.id || h.state_item_id===k.id);
@@ -321,6 +328,13 @@
     'workflow':['workflow','human review','draft','rep review'],
     'knowledge':['knowledge','grounding','source','sources','documentation','slack']
   };
+
+  /* ----------------------------------------------------------------------
+     Ask — intent and deterministic scenarios
+
+     Routes a question to a known intent or fixture scenario. This is the
+     no-backend path; it also backs the deterministic Ask behavior suite.
+     ------------------------------------------------------------------- */
   function askTopics(q){
     return Object.entries(askTopicTerms).filter(([,terms])=>terms.some(t=>q.includes(t))).map(([topic])=>topic);
   }
@@ -664,6 +678,13 @@
   }
 
 
+
+  /* ----------------------------------------------------------------------
+     Ask — submission and results
+
+     Sends the question, manages the loading and refinement states, and renders
+     what comes back. followup_mode from the backend decides replace vs append.
+     ------------------------------------------------------------------- */
   function sourceDisclosure(ids){
     const notes=ids.map(id=>state.data.notes.find(n=>n.id===id)).filter(Boolean);
     return `<details class="evidence"><summary>Supporting evidence · ${notes.length}</summary>${notes.map(n=>`<article><strong>${esc(n.title)}</strong><span>${esc(n.source)} · ${esc(n.date)}</span><p>${esc(n.text)}</p></article>`).join('')}</details>`;
@@ -745,6 +766,13 @@
     return `<article class="simple-note note-index-row ${expanded?'is-expanded':''}" data-action="toggle-note" data-note-id="${n.id}" tabindex="0"><span class="note-date">${esc(n.date)}</span><div class="note-index-main"><h3>${esc(n.title)}</h3><span class="note-source">${esc(n.source)}</span>${body}</div><div class="note-index-status">${statusBadge}</div></article>`;
   }
 
+
+  /* ----------------------------------------------------------------------
+     Notes
+
+     Evidence as the user sees it: listing, filtering by date and status, search,
+     and the composer.
+     ------------------------------------------------------------------- */
   function noteMatchesFilter(n,f){
     if(f==='all') return true;
     if(f==='pending') return n.status==='pending';
@@ -922,6 +950,13 @@
     root.innerHTML=`<section class="page collection-page open-items-page"><div class="page-head"><div><span class="eyebrow">What still needs attention</span><div class="review-title-row"><h2>Open Items</h2>${actionTotal?`<span class="count-badge review-page-count" aria-label="${actionTotal} items need attention">${actionTotal}</span>`:''}</div><p>Decide what is ready now, see what is blocking progress, and keep important unknowns visible without turning this into another archive.</p></div><button class="btn secondary" data-action="add-question">+ Add question</button></div><div class="open-items-sections">${openItemSection('Needs your review','Act now','Decisions waiting on you. Current State changes only after you approve them.',reviewUnavailable?'Unavailable':reviews.length,'reviews',reviewBody,!reviews.length&&!reviewUnavailable)}${openItemSection('Blocking questions','Resolve soon','A concrete project dependency is waiting on an answer.',questionUnavailable?'Unavailable':blockers.length,'blockers',blockerBody,!blockers.length&&!questionUnavailable)}${openItemSection('Open questions','Keep in mind','Important unknowns that can wait for relevant evidence.',questionUnavailable?'Unavailable':waiting.length,'questions',questionBody,!waiting.length&&!questionUnavailable)}</div></section>`;
   }
 
+
+  /* ----------------------------------------------------------------------
+     Open Items and Reviews
+
+     Reviews awaiting a human decision, blocking questions and open questions.
+     decideReview is where a human decision becomes a State change.
+     ------------------------------------------------------------------- */
   function renderReview(){ return renderOpenItems(); }
 
   function reviewCard(r,expanded=true,accordion=false){
@@ -1111,6 +1146,13 @@
     };
   }
 
+
+  /* ----------------------------------------------------------------------
+     Backend mapping and sync
+
+     Translates API payloads into the client's shape and reconciles them with
+     local state. Nothing here decides anything; it only mirrors the server.
+     ------------------------------------------------------------------- */
   function inferProjectArea(item){
     const text=norm(`${item.topic||''} ${item.statement||''}`);
     if(/security|risk|data|privacy|human review|sensitive|claim|read only|readonly|account change|refund|ownership change|autonomy|vip/.test(text)) return 'safety';
@@ -1352,6 +1394,13 @@
   }
 
   let analysisClock=null;
+
+  /* ----------------------------------------------------------------------
+     Hydration
+
+     Loads the project on open. getAttention() is a deliberate fast path so the
+     attention row can render before the rest of the project arrives.
+     ------------------------------------------------------------------- */
   function analyzingDialog(){
     return `<div class="analysis-state"><div class="analysis-orbit" aria-hidden="true"><span></span><span></span><span></span></div><span class="eyebrow">Analyzing evidence</span><h2 id="dialogTitle">Working out what this changes…</h2><p>Comparing the note with Current State and deciding whether anything needs your review.</p><div class="analysis-progress"><span class="analysis-pulse" aria-hidden="true"></span><span id="analysisElapsed">Starting analysis…</span></div><p class="analysis-patience">A thorough comparison can take around 10–20 seconds.</p></div>`;
   }
@@ -1400,6 +1449,12 @@
     }catch(e){ await showAnalysisFailure(e); }
   }
 
+
+  /* ----------------------------------------------------------------------
+     Actions and events
+
+     The click/keyboard surface. Every user action funnels through here.
+     ------------------------------------------------------------------- */
   async function saveWorkingNote(title,text){
     const clean=(text||'').trim(); if(!clean)return null;
     const cleanTitle=(title||'Untitled note').trim()||'Untitled note';
