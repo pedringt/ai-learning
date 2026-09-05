@@ -34,8 +34,11 @@
       .settings-rules[open] summary{border-bottom:1px solid var(--line,#e1e1e7);background:var(--surface,#fff)}
       .settings-rules-count{font-size:12px;font-weight:600;color:var(--muted,#666);margin-left:6px}
       .settings-rules-body{padding:16px;background:var(--surface,#fff)}
-      .settings-rule-form{display:flex;gap:8px;margin-top:14px;align-items:flex-end}
-      .settings-rule-form label{flex:1;display:grid;gap:6px;font-size:12px;font-weight:700}.settings-rule-form input{width:100%;box-sizing:border-box;padding:10px 11px;border:1px solid var(--line,#ccc);border-radius:10px;background:var(--surface,#fff);color:inherit}
+      .settings-rule-form{display:flex;gap:8px;margin-top:14px;align-items:flex-end;flex-wrap:wrap}
+      .settings-rule-form label{flex:1;display:grid;gap:6px;font-size:12px;font-weight:700;min-width:180px}.settings-rule-form label:has(select){flex:0 0 auto;min-width:0}
+      .settings-rule-form input{width:100%;box-sizing:border-box;padding:10px 11px;border:1px solid var(--line,#ccc);border-radius:10px;background:var(--surface,#fff);color:inherit}
+      .settings-rule-form select{box-sizing:border-box;padding:10px 30px 10px 11px;border:1px solid var(--line,#ccc);border-radius:10px;background:var(--surface,#fff);color:inherit;font:inherit;font-size:13px;font-weight:600;appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'><path fill='%23666' d='M5.5 7.5l4.5 4.5 4.5-4.5z'/></svg>");background-repeat:no-repeat;background-position:right 9px center;background-size:13px}
+      @media(max-width:520px){.settings-rule-form label:has(select){flex:1 1 100%}}
       .settings-rule-list{list-style:none;margin:16px 0 0;padding:16px 0 0;border-top:1px solid var(--line,#e5e5ea);display:grid;gap:8px}
       .settings-rule-list li{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:12px 14px;border:1px solid var(--line,#e5e5ea);border-radius:10px;background:var(--soft,#fafafd)}
       .settings-rule-copy{min-width:0}.settings-rule-copy strong{display:block;margin-bottom:4px;font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted,#666)}
