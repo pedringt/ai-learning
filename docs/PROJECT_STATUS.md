@@ -38,9 +38,31 @@ normal PR from the feature branch into `main` instead.
 
 ## Open items
 
-None blocking as of the last update. If you're an assistant reading this and
-something here is stale or you're picking up unfinished work, correct this
-section rather than leaving it as-is.
+**In progress on `staging` (not on `main`):** Phase 1 of a planned "Ask
+speed" pass. Commit `c47cc73` adds:
+
+- A deterministic-refinement shortcut — recognized structural refinements
+  ("make this 3 bullets," "shorten it," "focus on blockers," "turn into
+  agenda," "leadership-ready," "more detailed") now skip the model call
+  entirely when a previous answer exists. `ask_refinement_transforms.py`
+  already reshaped these deterministically with zero AI involvement, but the
+  old path paid for a full context fetch and a real model round-trip first
+  and threw most of that output away.
+- A split latency `timing` breakdown: `context_ms` is now backed by separate
+  `db_ms` (raw `list_state`/`list_reviews`/etc. queries) and `trim_ms`
+  (lexical relevance scoring) fields, and streaming responses also get
+  `first_token_ms`.
+
+Backend suite passes (242 passed, 4 skipped) but this hasn't been exercised
+against a live model on the staging deploy yet, and isn't merged toward
+`main`. Next planned step: use the new db_ms/trim_ms/first_token_ms fields to
+see where remaining latency actually goes on non-refinement queries before
+doing more Ask-speed work (routing common Ask jobs deterministically,
+per-job output-length limits).
+
+If you're an assistant picking this up: check `staging`'s latest commit
+against this note before assuming it's still current, and correct this
+section if something here is stale.
 
 ## Hard constraints
 
