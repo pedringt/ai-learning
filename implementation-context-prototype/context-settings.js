@@ -14,28 +14,42 @@
       .settings-section-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:14px}
       .settings-section h3{margin:0 0 5px;font-size:18px}
       .settings-section p{margin:0;color:var(--muted,#666);line-height:1.5}
-      .settings-subhead{margin:18px 0 4px;font-size:14px;font-weight:700}
-      .settings-project-name{margin-top:14px;display:grid;gap:6px;max-width:420px}
+      .settings-project-name{display:grid;gap:6px;max-width:420px}
       .settings-project-name label{font-size:12px;font-weight:700}
       .settings-project-name input{width:100%;box-sizing:border-box;padding:10px 11px;border:1px solid var(--line,#ccc);border-radius:10px;background:var(--soft,#f6f5f8);color:inherit}
       .settings-status{font-size:12px;font-weight:700;padding:5px 9px;border:1px solid var(--line,#d8d8df);border-radius:999px;white-space:nowrap}
+      .settings-rules{margin-top:18px;border-top:1px solid var(--line,#e5e5ea);padding-top:4px}
+      .settings-rules summary{cursor:pointer;list-style:none;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 0;font-weight:700}
+      .settings-rules summary::-webkit-details-marker{display:none}
+      .settings-rules summary::after{content:'+';font-size:20px;font-weight:400;color:var(--muted,#666)}
+      .settings-rules[open] summary::after{content:'−'}
+      .settings-rules-count{font-size:12px;font-weight:600;color:var(--muted,#666);margin-left:6px}
+      .settings-rules-body{padding:0 0 4px}
       .settings-rule-list{list-style:none;margin:12px 0 0;padding:0;display:grid;gap:9px}
       .settings-rule-list li{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:12px 0;border-top:1px solid var(--line,#e5e5ea)}
       .settings-rule-copy strong{display:block;margin-bottom:3px;font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted,#666)}
       .settings-rule-form{display:flex;gap:8px;margin-top:16px;align-items:flex-end}
       .settings-rule-form label{flex:1;display:grid;gap:6px;font-size:12px;font-weight:700}
       .settings-rule-form input{width:100%;box-sizing:border-box;padding:10px 11px;border:1px solid var(--line,#ccc);border-radius:10px;background:var(--surface,#fff);color:inherit}
-      .settings-behavior-list{margin:14px 0 0;padding:0;list-style:none;display:grid;gap:9px}
-      .settings-behavior-list li{padding-left:22px;position:relative;line-height:1.45}
+      .settings-behavior-list{margin:12px 0 0;padding:0;list-style:none;display:grid;grid-template-columns:1fr 1fr;gap:9px 18px}
+      .settings-behavior-list li{padding-left:22px;position:relative;line-height:1.45;font-size:13px}
       .settings-behavior-list li::before{content:'✓';position:absolute;left:0;font-weight:700}
+      .settings-quiet{background:var(--soft,#f6f5f8);border-color:transparent}
+      .settings-quiet .settings-section-head{margin-bottom:8px}
       .slack-preview,.source-list{margin-top:16px;display:grid;gap:10px}
       .slack-preview-row,.source-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px 0;border-top:1px solid var(--line,#e5e5ea)}
+      .slack-preview-row:first-child,.source-row:first-child{border-top:0}
       .slack-preview-row span,.source-row span{color:var(--muted,#666);font-size:13px}
       .source-row strong{display:block;margin-bottom:2px}
       .settings-callout{margin-top:14px;padding:12px 14px;border-radius:12px;background:var(--soft,#f6f5f8);font-size:13px;line-height:1.45}
       .settings-actions{margin-top:16px;display:flex;gap:8px;flex-wrap:wrap}
-      .settings-danger{border-color:#c8a7a7}
-      @media(max-width:680px){.settings-section{padding:16px}.settings-section-head,.slack-preview-row,.source-row{align-items:flex-start;flex-direction:column}.settings-rule-form{display:grid}.settings-rule-list li{align-items:flex-start}.settings-status{align-self:flex-start}}
+      .settings-slack .settings-section-head{align-items:center}
+      .settings-slack-intro{max-width:620px}
+      .settings-source-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 22px}
+      .settings-danger{border-color:#c8a7a7;padding:16px 20px}
+      .settings-danger .settings-section-head{align-items:center;margin:0}
+      .settings-danger .settings-actions{margin:0}
+      @media(max-width:680px){.settings-section{padding:16px}.settings-section-head,.slack-preview-row,.source-row{align-items:flex-start;flex-direction:column}.settings-rule-form{display:grid}.settings-rule-list li{align-items:flex-start}.settings-status{align-self:flex-start}.settings-behavior-list,.settings-source-grid{grid-template-columns:1fr}.settings-danger .settings-actions{margin-top:12px}}
     `;
     document.head.appendChild(style);
   }
@@ -57,50 +71,54 @@
     const projectRules=await rules();
     if(!settingsNav.classList.contains('active')) return;
     target.innerHTML=`<article class="page settings-page">
-      <div class="page-head"><h2>Settings</h2><p>Configure this State project and the sources allowed to feed it.</p></div>
+      <div class="page-head"><h2>Settings</h2><p>Configure Northstar and the sources allowed to feed it.</p></div>
 
       <section class="settings-section">
-        <div class="settings-section-head"><div><h3>Project</h3><p>Basic information and interpretation rules for this State project.</p></div></div>
+        <div class="settings-section-head"><div><h3>Project</h3><p>Basic information State uses for this project.</p></div></div>
         <div class="settings-project-name"><label for="settings-project-name">Project name</label><input id="settings-project-name" value="Northstar" readonly aria-readonly="true"><p>Project renaming is not available in the demo.</p></div>
-        <div class="settings-subhead">Project rules</div>
-        <p>Rules tell State how to interpret information for this project.</p>
-        <ul class="settings-rule-list">${projectRules.length?projectRules.map(rule=>`<li data-rule-id="${esc(rule.id)}"><div class="settings-rule-copy"><strong>${esc(rule.category||'Interpretation')}</strong><span>${esc(rule.text||rule.rule||'')}</span></div><button class="text-button" type="button" data-settings-action="delete-rule" data-rule-id="${esc(rule.id)}">Remove</button></li>`).join(''):'<li><span>No project-specific rules yet.</span></li>'}</ul>
-        <form class="settings-rule-form" data-settings-action="add-rule"><label>Add a project rule<input name="rule" autocomplete="off" placeholder="Example: Security approvals must be explicit."></label><button class="btn secondary" type="submit">Add rule</button></form>
+        <details class="settings-rules">
+          <summary><span>Project rules <span class="settings-rules-count">${projectRules.length} ${projectRules.length===1?'rule':'rules'}</span></span></summary>
+          <div class="settings-rules-body">
+            <p>Rules tell State how to interpret information for this project.</p>
+            <ul class="settings-rule-list">${projectRules.length?projectRules.map(rule=>`<li data-rule-id="${esc(rule.id)}"><div class="settings-rule-copy"><strong>${esc(rule.category||'Interpretation')}</strong><span>${esc(rule.text||rule.rule||'')}</span></div><button class="text-button" type="button" data-settings-action="delete-rule" data-rule-id="${esc(rule.id)}">Remove</button></li>`).join(''):'<li><span>No project-specific rules yet.</span></li>'}</ul>
+            <form class="settings-rule-form" data-settings-action="add-rule"><label>Add a project rule<input name="rule" autocomplete="off" placeholder="Example: Security approvals must be explicit."></label><button class="btn secondary" type="submit">Add rule</button></form>
+          </div>
+        </details>
       </section>
 
-      <section class="settings-section">
-        <div class="settings-section-head"><div><h3>Evidence &amp; review</h3><p>Project-wide safeguards State uses when information may affect what the team treats as true.</p></div></div>
-        <ul class="settings-behavior-list">
-          <li>Evidence never changes Current State automatically.</li>
-          <li>Questions stay unresolved until supporting information goes through Review.</li>
-          <li>Ignored evidence is excluded from active reasoning.</li>
-          <li>Evidence history is preserved so accepted changes remain explainable.</li>
-        </ul>
-        <div class="settings-callout">These safeguards describe how State works. They are not configurable because they protect the human authorization model.</div>
-      </section>
-
-      <section class="settings-section">
-        <div class="settings-section-head"><div><h3>Connected sources</h3><p>Choose where State can gather project information from planning, discovery, and collaboration.</p></div></div>
-        <div class="settings-callout"><strong>Sources provide Evidence. They never change Current State directly.</strong></div>
-        <div class="source-list" aria-label="Connected and planned sources">
-          <div class="source-row"><div><strong>Slack</strong><span>Conversations, decisions, questions, and corrections.</span></div><span class="settings-status">Not connected</span></div>
-          <div class="source-row"><div><strong>Google Drive</strong><span>Docs, Sheets, Slides, research, and planning artifacts.</span></div><span class="settings-status">Coming soon</span></div>
-          <div class="source-row"><div><strong>Notion</strong><span>Project documentation, discovery notes, research, and specs.</span></div><span class="settings-status">Coming soon</span></div>
-          <div class="source-row"><div><strong>Confluence</strong><span>Project documentation and shared team knowledge.</span></div><span class="settings-status">Coming soon</span></div>
-        </div>
-        <div class="settings-subhead">Slack</div>
-        <p>Choose which project channels can automatically feed conversations into Evidence.</p>
-        <div class="slack-preview" aria-label="Planned Slack behavior">
-          <div class="slack-preview-row"><div><strong>Approved channels</strong><br><span>Only channels explicitly enabled for this project will be eligible.</span></div><span>Planned</span></div>
-          <div class="slack-preview-row"><div><strong>Threads</strong><br><span>Long-running conversations will be grouped and checkpointed when meaningfully updated.</span></div><span>Planned</span></div>
-          <div class="slack-preview-row"><div><strong>Noise control</strong><br><span>Bot/system chatter is filtered first; low-value Evidence can be ignored later.</span></div><span>Planned</span></div>
-        </div>
+      <section class="settings-section settings-slack">
+        <div class="settings-section-head"><div class="settings-slack-intro"><h3>Slack</h3><p>Bring useful project conversations into State as Evidence. Slack never changes Current State directly.</p></div><span class="settings-status">Not connected</span></div>
         <div class="settings-actions"><button class="btn secondary" type="button" disabled aria-disabled="true">Connect Slack</button></div>
+        <div class="slack-preview" aria-label="Planned Slack behavior">
+          <div class="slack-preview-row"><div><strong>Approved channels</strong><br><span>Only channels explicitly enabled for Northstar can feed State.</span></div><span>Planned</span></div>
+          <div class="slack-preview-row"><div><strong>Threads</strong><br><span>State follows conversations over time and creates new Evidence when something meaningful changes.</span></div><span>Planned</span></div>
+          <div class="slack-preview-row"><div><strong>Noise control</strong><br><span>Bot, system, and low-value conversation is filtered before it reaches Notes.</span></div><span>Planned</span></div>
+        </div>
+      </section>
+
+      <section class="settings-section settings-quiet">
+        <div class="settings-section-head"><div><h3>How State works</h3><p>Safeguards that protect the human authorization model.</p></div></div>
+        <ul class="settings-behavior-list">
+          <li>Evidence cannot change Current State automatically.</li>
+          <li>Questions require Review before resolution.</li>
+          <li>Ignored Evidence is excluded from active reasoning.</li>
+          <li>Evidence history stays available so accepted changes remain explainable.</li>
+        </ul>
+      </section>
+
+      <section class="settings-section">
+        <div class="settings-section-head"><div><h3>Connected sources</h3><p>Places State can gather project information from planning, discovery, documentation, and collaboration.</p></div></div>
+        <div class="settings-callout"><strong>Sources provide Evidence. They never change Current State directly.</strong></div>
+        <div class="source-list settings-source-grid" aria-label="Connected and planned sources">
+          <div class="source-row"><div><strong>Slack</strong><span>Project conversations and decisions.</span></div><span class="settings-status">Not connected</span></div>
+          <div class="source-row"><div><strong>Google Drive</strong><span>Docs, research, and planning artifacts.</span></div><span class="settings-status">Coming soon</span></div>
+          <div class="source-row"><div><strong>Notion</strong><span>Discovery notes, research, and specs.</span></div><span class="settings-status">Coming soon</span></div>
+          <div class="source-row"><div><strong>Confluence</strong><span>Project documentation and team knowledge.</span></div><span class="settings-status">Coming soon</span></div>
+        </div>
       </section>
 
       <section class="settings-section settings-danger">
-        <div class="settings-section-head"><div><h3>Demo</h3><p>Restore Northstar to the seeded demo baseline.</p></div></div>
-        <div class="settings-actions"><button class="btn secondary" type="button" data-settings-action="reset-demo">Reset demo</button></div>
+        <div class="settings-section-head"><div><h3>Demo</h3><p>Restore Northstar to the seeded demo baseline.</p></div><div class="settings-actions"><button class="btn secondary" type="button" data-settings-action="reset-demo">Reset demo</button></div></div>
       </section>
     </article>`;
   }
