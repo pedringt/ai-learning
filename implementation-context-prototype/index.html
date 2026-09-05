@@ -3,20 +3,20 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>State, Working Prototype</title>
-  <meta name="description" content="A working prototype for capturing project information, maintaining current understanding, tracking unresolved questions, and reviewing new evidence before it changes what the project treats as current." />
+  <title>State</title>
+  <meta name="description" content="State captures project information, maintains current understanding, tracks unresolved questions, and reviews new evidence before it changes what the project treats as current." />
   <meta property="og:type" content="website">
-  <meta property="og:title" content="State, Working Prototype">
-  <meta property="og:description" content="A working prototype for capturing project information, maintaining current understanding, tracking unresolved questions, and reviewing new evidence before it changes what the project treats as current.">
+  <meta property="og:title" content="State">
+  <meta property="og:description" content="State captures project information, maintains current understanding, tracks unresolved questions, and reviews new evidence before it changes what the project treats as current.">
   <meta name="twitter:card" content="summary">
-  <meta name="twitter:title" content="State, Working Prototype">
-  <meta name="twitter:description" content="A working prototype for capturing project information, maintaining current understanding, tracking unresolved questions, and reviewing new evidence before it changes what the project treats as current.">
+  <meta name="twitter:title" content="State">
+  <meta name="twitter:description" content="State captures project information, maintains current understanding, tracks unresolved questions, and reviews new evidence before it changes what the project treats as current.">
   <script>
     (function(){
       var local = location.protocol === 'file:';
       document.write('<link rel="icon" href="' + (local ? '../favicon.svg' : '/favicon.svg') + '">');
       document.write('<link rel="stylesheet" href="' + (local ? '../site-shell.css' : '/site-shell.css') + '">');
-      document.write('<link rel="stylesheet" href="' + (local ? 'context-tool.css?v=r27-settings-page' : '/implementation-context-prototype/context-tool.css?v=r27-settings-page') + '">');
+      document.write('<link rel="stylesheet" href="' + (local ? 'context-tool.css?v=r28-sources' : '/implementation-context-prototype/context-tool.css?v=r28-sources') + '">');
     })();
   </script>
   <style id="state-critical-modal">
@@ -49,7 +49,7 @@
 </head>
 <body>
   <div class="topbar"><div class="topinner"><a class="brand-button" href="../index.html"><span class="brand">AI <span>Learning Portfolio</span></span></a><nav aria-label="Primary pages" class="nav"><a href="../index.html">Home</a><a aria-current="page" href="../index.html#portfolio">Applied Work</a><a href="../index.html#learn">Learning Guide</a></nav><div class="top-actions"><button aria-label="Switch to dark mode" aria-pressed="false" class="theme-toggle" id="v922ThemeToggle" title="Switch to dark mode" type="button">☾</button><select aria-label="Choose page" id="v922MobileNav"><option value="../index.html">Home</option><option selected value="../index.html#portfolio">Applied Work</option><option value="../index.html#learn">Learning Guide</option></select></div></div></div>
-  <div class="prototype-productbar"><span class="product-mark" aria-hidden="true">◆</span><button type="button" class="product-name product-home" data-view="overview" aria-label="Return to Workspace">State</button><span class="product-divider" aria-hidden="true">·</span><span class="product-cue">Working prototype</span><span class="product-tagline">Maintained project understanding, not reconstructed history.</span></div>
+  <div class="prototype-productbar"><span class="product-mark" aria-hidden="true">◆</span><button type="button" class="product-name product-home" data-view="overview" aria-label="Return to Workspace">State</button><span class="product-divider" aria-hidden="true">·</span><span class="product-tagline">Maintained project understanding, not reconstructed history.</span></div>
 
   <main class="app-shell software-shell">
     <h1 class="visually-hidden">State project workspace</h1>
@@ -57,7 +57,7 @@
       <div class="sidebar-project">
         <span class="meta-label">Project</span>
         <button class="project-switcher" id="projectSwitcher" data-action="toggle-projects" aria-expanded="false" aria-controls="projectMenu">Northstar <span>⌄</span></button>
-        <div class="project-menu" id="projectMenu" hidden><button class="active">Northstar <span>Current</span></button><button disabled>Website Redesign <span>Sample</span></button><button disabled>Legal AI Research <span>Sample</span></button><button disabled>＋ New project <span>Prototype</span></button></div>
+        <div class="project-menu" id="projectMenu" hidden><button class="active">Northstar <span>Current</span></button><button disabled>Website Redesign <span>Sample</span></button><button disabled>Legal AI Research <span>Sample</span></button><button disabled>＋ New project <span>Planned</span></button></div>
       </div>
       <nav class="sidebar-nav">
         <button class="nav-item active" data-view="overview">Workspace</button>
@@ -94,14 +94,16 @@
     (function(){
       var local = location.protocol === 'file:';
       document.write('<script src="' + (local ? '../site-shell.js' : '/site-shell.js') + '"><\/script>');
-      document.write('<script src="' + (local ? 'context-data.js?v=r27-settings-page' : '/implementation-context-prototype/context-data.js?v=r27-settings-page') + '"><\/script>');
-      document.write('<script src="' + (local ? 'context-api.js?v=r27-settings-page' : '/implementation-context-prototype/context-api.js?v=r27-settings-page') + '"><\/script>');
-      document.write('<script src="' + (local ? 'context-ask.js?v=r27-settings-page' : '/implementation-context-prototype/context-ask.js?v=r27-settings-page') + '"><\/script>');
-      document.write('<script src="' + (local ? 'context-app.js?v=r27-settings-page' : '/implementation-context-prototype/context-app.js?v=r27-settings-page') + '"><\/script>');
-      document.write('<script src="' + (local ? 'context-history.js?v=r27-settings-page' : '/implementation-context-prototype/context-history.js?v=r27-settings-page') + '"><\/script>');
-      document.write('<script src="' + (local ? 'context-provenance.js?v=r27-settings-page' : '/implementation-context-prototype/context-provenance.js?v=r27-settings-page') + '"><\/script>');
-      document.write('<script src="' + (local ? 'context-quickwins.js?v=r27-settings-page' : '/implementation-context-prototype/context-quickwins.js?v=r27-settings-page') + '"><\/script>');
-      document.write('<script src="' + (local ? 'context-settings.js?v=r27-settings-page' : '/implementation-context-prototype/context-settings.js?v=r27-settings-page') + '"><\/script>');
+      if(!local) document.write('<script src="/api/state-config.js"><\/script>');
+      document.write('<script src="' + (local ? 'context-data.js?v=r28-sources' : '/implementation-context-prototype/context-data.js?v=r28-sources') + '"><\/script>');
+      document.write('<script src="' + (local ? 'context-api.js?v=r28-sources' : '/implementation-context-prototype/context-api.js?v=r28-sources') + '"><\/script>');
+      document.write('<script src="' + (local ? 'context-ask.js?v=r28-sources' : '/implementation-context-prototype/context-ask.js?v=r28-sources') + '"><\/script>');
+      document.write('<script src="' + (local ? 'context-app.js?v=r28-sources' : '/implementation-context-prototype/context-app.js?v=r28-sources') + '"><\/script>');
+      document.write('<script src="' + (local ? 'context-history.js?v=r28-sources' : '/implementation-context-prototype/context-history.js?v=r28-sources') + '"><\/script>');
+      document.write('<script src="' + (local ? 'context-provenance.js?v=r28-sources' : '/implementation-context-prototype/context-provenance.js?v=r28-sources') + '"><\/script>');
+      document.write('<script src="' + (local ? 'context-quickwins.js?v=r28-sources' : '/implementation-context-prototype/context-quickwins.js?v=r28-sources') + '"><\/script>');
+      document.write('<script src="' + (local ? 'context-settings.js?v=r28-sources' : '/implementation-context-prototype/context-settings.js?v=r28-sources') + '"><\/script>');
+      document.write('<script src="' + (local ? 'context-sources.js?v=r28-sources' : '/implementation-context-prototype/context-sources.js?v=r28-sources') + '"><\/script>');
     })();
   </script>
 </body>
