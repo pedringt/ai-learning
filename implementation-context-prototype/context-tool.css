@@ -152,6 +152,7 @@ body.v88-dark .prototype-productbar{background:linear-gradient(135deg,#352a5e,#2
 .note-status--draft{color:var(--muted);background:var(--surface2)}
 .note-status--pending{color:var(--warm);background:var(--warm-soft);border-color:#d9c7a7}
 .note-status--reviewed{color:var(--good);background:#e8f5ec;border-color:#bfe3cb}
+.note-status--no-review-needed{color:var(--muted);background:var(--surface2)}
 .note-inline-editor{margin-top:12px;max-width:820px}
 .note-inline-editor input{margin-bottom:8px}
 .note-composer{max-width:860px;margin:0 0 20px;padding:18px;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
@@ -492,7 +493,7 @@ body.v88-dark .related-review-choice{background:#17151d!important;border-color:v
 /* Notes: lifecycle pills use one geometry whether clickable or static. */
 .note-status,.note-status-link{display:inline-flex!important;align-items:center!important;min-height:25px!important;padding:4px 10px!important;border-radius:999px!important;font-family:inherit!important;font-size:10px!important;font-weight:800!important;line-height:1!important;letter-spacing:.06em!important;text-transform:uppercase!important;margin-left:4px!important}
 .note-status-link{background:inherit;border-style:solid;border-width:1px;text-decoration:none;appearance:none}
-.note-status--pending{color:var(--review)!important;background:var(--review-soft)!important;border-color:#e3c994!important}.note-status--reviewed{color:var(--good)!important;background:#eaf7ee!important;border-color:#bfe3cb!important}
+.note-status--pending{color:var(--review)!important;background:var(--review-soft)!important;border-color:#e3c994!important}.note-status--reviewed{color:var(--good)!important;background:#eaf7ee!important;border-color:#bfe3cb!important}.note-status--no-review-needed{color:var(--muted)!important;background:var(--surface2)!important}
 /* Project: calm established document with a little identity. */
 .project-page.project-document{max-width:900px!important}.project-document-head{background:#fff;border:1px solid var(--line)!important;border-radius:15px;padding:24px 26px!important;box-shadow:0 8px 24px rgba(31,25,56,.04)}
 .project-document-meta{display:grid!important;grid-template-columns:repeat(3,minmax(150px,1fr));gap:12px!important}.project-document-meta div{padding:10px 12px;border-radius:9px;background:var(--surface2)}.project-document-meta dt{white-space:nowrap}.project-document-meta dd{font-size:14px!important}

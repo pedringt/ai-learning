@@ -763,6 +763,7 @@
   function noteStatusLabel(n){
     if(n.status==='pending') return 'In review';
     if(n.status==='accepted'||n.status==='reviewed') return 'Reviewed';
+    if(n.status==='no_review_needed') return 'No review needed';
     if(n.status==='unknown') return 'Status unavailable';
     if(n.status==='failed') return 'Analysis failed';
     return 'Draft';
@@ -784,11 +785,11 @@
     const target=120+((n.id.charCodeAt(2)||7)*17)%111;
     const preview=n.text.length>target?n.text.slice(0,Math.max(80,target-3)).replace(/\s+\S*$/,'')+'…':n.text;
     const editing=state.editingNoteId===n.id;
-    const statusClass=n.status==='pending'?'pending':(n.status==='accepted'||n.status==='reviewed')?'reviewed':n.status==='failed'?'failed':n.status==='unknown'?'unknown':'draft';
+    const statusClass=n.status==='pending'?'pending':(n.status==='accepted'||n.status==='reviewed')?'reviewed':n.status==='no_review_needed'?'no-review-needed':n.status==='failed'?'failed':n.status==='unknown'?'unknown':'draft';
     const statusBadge=noteStatusControl(n,statusClass);
     const reviewAction=n.status==='failed'&&n.evidenceId
       ? `<button class="text-button" data-action="retry-analysis" data-evidence-id="${n.evidenceId}">Retry analysis</button>`
-      : n.backendManaged||n.status==='pending'||n.status==='accepted'||n.status==='reviewed'||n.status==='unknown'
+      : n.backendManaged||n.status==='pending'||n.status==='accepted'||n.status==='reviewed'||n.status==='no_review_needed'||n.status==='unknown'
         ? ''
         : `<button class="text-button" data-action="send-note-review" data-note-id="${n.id}">Send to review</button>`;
     const body=editing
@@ -809,7 +810,7 @@
   function noteMatchesFilter(n,f){
     if(f==='all') return true;
     if(f==='pending') return n.status==='pending';
-    if(f==='reviewed') return n.status==='accepted'||n.status==='reviewed';
+    if(f==='reviewed') return n.status==='accepted'||n.status==='reviewed'||n.status==='no_review_needed';
     return n.status==='working'||n.status==='draft'||!!n.backendDraft; // editable draft only
   }
 
@@ -1254,7 +1255,21 @@
     const backendNotes=(items||[]).map(e=>{
       const open=openByEvidence.get(e.id)||[], resolved=resolvedByEvidence.get(e.id)||[];
       const reviewStatusKnown=Array.isArray(openReviews)&&Array.isArray(resolvedReviews);
-      const status=e.processing_status==='failed'?'failed':!reviewStatusKnown?'unknown':open.length?'pending':resolved.some(r=>r.resolution==='updated')?'accepted':e.processing_status==='processed'?'reviewed':'working';
+      // 'reviewed' means a human actually looked at a Review for this
+      // evidence (resolved.length>0), whether or not it changed Current
+      // State. That's distinct from 'no_review_needed': the model judged
+      // the evidence non-consequential and no Review was ever created, so
+      // no human was ever involved. Collapsing these into one status/label
+      // (as this used to) reads as "a human reviewed and approved this"
+      // for evidence nobody ever reviewed -- exactly the interpret/
+      // authorize distinction State's authority model exists to preserve.
+      const status=e.processing_status==='failed'?'failed'
+        :!reviewStatusKnown?'unknown'
+        :open.length?'pending'
+        :resolved.some(r=>r.resolution==='updated')?'accepted'
+        :resolved.length?'reviewed'
+        :e.processing_status==='processed'?'no_review_needed'
+        :'working';
       const displayTime=evidenceDisplayTimestamp(e);
       return {id:`api-note-${e.id}`,title:sourceLabel(e.source_type),text:e.content,source:sourceLabel(e.source_type),date:formatBackendDate(displayTime),dateISO:displayTime,submittedISO:displayTime,topics:[],status,reviewId:open[0]?.id||null,reviewIds:open.map(r=>r.id),resolvedReviewIds:resolved.map(r=>r.id),historyIds:[],historyKnowledgeIds:[],evidenceId:e.id,backendManaged:true};
     });
@@ -1473,7 +1488,7 @@
       const result=await submitEvidence(text,'manual_note');
       const stamp=Date.now(), noteId='n-'+stamp;
       const apiReviews=(result.reviews||[]).map(r=>mapApiReview(r,text));
-      state.data.notes.unshift({id:noteId,title:'Project update',text,source:'Update',date:todayLabel(),dateISO:todayISO(),topics:[],status:apiReviews.length?'pending':'reviewed',reviewId:apiReviews[0]?.id||null,reviewIds:apiReviews.map(r=>r.id),evidenceId:result.evidence_id});
+      state.data.notes.unshift({id:noteId,title:'Project update',text,source:'Update',date:todayLabel(),dateISO:todayISO(),topics:[],status:apiReviews.length?'pending':'no_review_needed',reviewId:apiReviews[0]?.id||null,reviewIds:apiReviews.map(r=>r.id),evidenceId:result.evidence_id});
       apiReviews.forEach(r=>{r.evidenceId=noteId; upsertBackendReview(r);});
       state.reviewBannerDismissed=false;
       state.isAnalyzing=false; stopAnalysisClock();
@@ -1515,7 +1530,7 @@
       const result=await submitEvidence(n.text,'working_note');
       const apiReviews=(result.reviews||[]).map(r=>mapApiReview(r,n.text));
       if(n.draftId){try{await API.deleteDraft(n.draftId);}catch(err){console.warn('Evidence saved but draft cleanup failed:',err);}}
-      n.backendDraft=false; n.draftId=null; n.backendManaged=true; n.status=apiReviews.length?'pending':'reviewed'; n.reviewId=apiReviews[0]?.id||null; n.reviewIds=apiReviews.map(r=>r.id); n.evidenceId=result.evidence_id;
+      n.backendDraft=false; n.draftId=null; n.backendManaged=true; n.status=apiReviews.length?'pending':'no_review_needed'; n.reviewId=apiReviews[0]?.id||null; n.reviewIds=apiReviews.map(r=>r.id); n.evidenceId=result.evidence_id;
       apiReviews.forEach(r=>{r.evidenceId=n.id; upsertBackendReview(r);});
       state.reviewBannerDismissed=false; state.isAnalyzing=false; stopAnalysisClock(); updateNav();
       if(apiReviews.length) showDialog(`<span class="eyebrow">Done</span><h2 id="dialogTitle">Note sent to Review</h2><p>${apiReviews.length===1?'One review needs your decision.':`${apiReviews.length} reviews need your decisions.`}</p><div class="dialog-actions"><button class="btn primary" data-action="go-review">Go to Review</button><button class="btn secondary" data-action="go-notes">Back to Notes</button></div>`);
@@ -1643,7 +1658,7 @@
           const result=await submitEvidence(text,`question_response:${q.id}`);
           const stamp=Date.now(), noteId='n-q-'+stamp;
           const apiReviews=(result.reviews||[]).map(r=>mapApiReview(r,text,{resolvesQuestionId:q.id}));
-          state.data.notes.unshift({id:noteId,title:'Answer to: '+q.text,text,source:'Question response',date:todayLabel(),dateISO:todayISO(),topics:q.topics,status:apiReviews.length?'pending':'reviewed',reviewId:apiReviews[0]?.id||null,reviewIds:apiReviews.map(r=>r.id),evidenceId:result.evidence_id});
+          state.data.notes.unshift({id:noteId,title:'Answer to: '+q.text,text,source:'Question response',date:todayLabel(),dateISO:todayISO(),topics:q.topics,status:apiReviews.length?'pending':'no_review_needed',reviewId:apiReviews[0]?.id||null,reviewIds:apiReviews.map(r=>r.id),evidenceId:result.evidence_id});
           apiReviews.forEach(r=>{r.evidenceId=noteId; upsertBackendReview(r);});
           state.reviewBannerDismissed=false; state.isAnalyzing=false; stopAnalysisClock(); updateNav();
           if(apiReviews.length) showDialog(`<span class="eyebrow">Added</span><h2 id="dialogTitle">Answer sent to Review.</h2><p>The question stays unresolved until you accept reviewed evidence that establishes an answer.</p><div class="dialog-actions"><button class="btn primary" data-action="go-review">Go to Review</button></div>`);
