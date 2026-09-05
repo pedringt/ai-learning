@@ -12,7 +12,7 @@
     .workspace-source-name{font-weight:700}
     .workspace-source-status{padding:3px 7px;border:1px solid var(--border,#d9dde3);border-radius:999px;background:var(--soft,#f6f5f8);font-weight:700;color:var(--muted,#626779)}
     .workspace-source-copy{grid-area:copy;color:var(--muted,#626779);line-height:1.45}
-    .workspace-source-strip .workspace-source-action{grid-area:action;align-self:start;white-space:nowrap;margin:0}
+    .workspace-source-strip .workspace-source-action{grid-area:action;align-self:start;white-space:nowrap;margin:0;padding:5px 10px;font-size:12px;border-radius:8px}
     @media(max-width:560px){
       .workspace-source-strip{grid-template-columns:1fr;grid-template-areas:'head' 'copy' 'action';gap:8px}
       .workspace-source-strip .workspace-source-action{justify-self:start}
