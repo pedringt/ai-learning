@@ -1,3 +1,4 @@
+// Staging redeploy trigger: 2026-09-05
 export default function handler(request, response) {
   const productionApi = 'https://state-api-6waw.onrender.com';
   const stagingApi = 'https://state-api-staging.onrender.com';
