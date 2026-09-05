@@ -89,6 +89,25 @@ def exchange_code_for_token(
     return payload
 
 
+def disconnect_most_recent(connection: Connection) -> bool:
+    """Mark the most recently connected workspace as disconnected.
+
+    A testing/reset convenience (mirrors the existing "Reset example data"
+    action's pragmatism, not a security-grade token revocation) -- clears
+    the stored bot token and flips status, but does not call Slack's own
+    auth.revoke API or affect whether the app is still installed in Slack.
+    Returns False if there was nothing connected to disconnect.
+    """
+    row = connection.execute(
+        "SELECT id FROM slack_connections WHERE status='connected' ORDER BY connected_at DESC LIMIT 1"
+    ).fetchone()
+    if row is None:
+        return False
+    connection.execute("UPDATE slack_connections SET status='disconnected', bot_token=NULL WHERE id=?", (row["id"],))
+    connection.commit()
+    return True
+
+
 def save_connection(connection: Connection, *, team_id: str, workspace_name: str, bot_token: str, environment: str) -> None:
     """Upsert the workspace connection. One row per team_id."""
     if not team_id:
