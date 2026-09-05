@@ -1,5 +1,5 @@
 (() => {
-  const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#39;'}[c]));
+  const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
   const starters = [
     ['What should I know?', 'What should I know right now? Give me a concise briefing with Project snapshot, Changed recently, Needs attention, and Still unclear.'],
@@ -25,8 +25,6 @@
       .ask-related-summary{margin-top:18px;padding-top:16px;border-top:1px dashed var(--line,#d7d3e3)}
       .ask-related-summary strong{display:block;margin-bottom:5px}
       .ask-related-summary p{margin:0 0 8px;color:var(--muted,#666)}
-      .open-items-section:nth-of-type(3){opacity:.82}
-      .open-items-section:nth-of-type(3) .open-items-section-head{background:color-mix(in srgb,var(--surface,#fff) 94%,#777 6%)}
     `;
     document.head.appendChild(style);
   }
