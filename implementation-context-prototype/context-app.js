@@ -279,14 +279,21 @@
     current.replaceWith(next);
     return true;
   }
+  function liveRecordStatus(){
+    return {
+      reviewStatus: id => state.data.reviews.find(x=>x.id===id)?.status || null,
+      questionStatus: id => state.data.questions.find(x=>x.id===id)?.status || null,
+      // Lets the "Related open items" footer recompute from the live project
+      // record instead of the ask-time snapshot it was handed.
+      openReviewIds: () => state.data.reviews.filter(r=>r.status==='pending').map(r=>r.id),
+      openQuestionIds: () => state.data.questions.filter(q=>q.status==='open').map(q=>q.id),
+    };
+  }
   function renderOverview(){
     // askInputDraft is kept current by the input event handler. Reading the old
     // DOM value here can resurrect a submitted question while the result view is
     // replacing the input, which makes a cleared Ask reappear after navigation.
-    const liveStatus = {
-      reviewStatus: id => state.data.reviews.find(x=>x.id===id)?.status || null,
-      questionStatus: id => state.data.questions.find(x=>x.id===id)?.status || null,
-    };
+    const liveStatus = liveRecordStatus();
     const resultBody = state.result ? (state.result.liveAsk ? (state.result.previousLive?`<div class="ask-previous-answer">${ASK?.render(state.result.previousLive,liveStatus)}</div><div class="ask-followup-answer">${ASK?.render(state.result.liveAsk,liveStatus)}</div>`:ASK?.render(state.result.liveAsk,liveStatus)) : state.result.liveAskStreaming ? `${state.result.previousLive?`<div class="ask-previous-answer">${ASK?.render(state.result.previousLive,liveStatus)}</div><div class="ask-followup-stream">${ASK?.renderStream(state.result.liveAskStreamRaw||'',state.result.liveAskPreview||null)}</div>`:ASK?.renderStream(state.result.liveAskStreamRaw||'',state.result.liveAskPreview||null)}` : state.result.liveAskLoading ? `${state.result.previousLive?`<div class="ask-followup-working">Working on your follow-up…</div><div class="ask-previous-answer">${ASK?.render(state.result.previousLive,liveStatus)}</div>`:liveAskLoadingHtml()}` : state.result.liveAskError ? `${state.result.previousLive?`<div class="ask-previous-answer">${ASK?.render(state.result.previousLive,liveStatus)}</div>`:''}<div class="ask-live-error"><h2>Ask is temporarily unavailable.</h2><p>${esc(state.result.liveAskError)}</p></div>` : state.result.fallback ? fallbackResult() : state.result.intent ? intentAskHtml(state.result.intent) : state.result.structured ? structuredAskHtml(state.result.structured) : scenarioResult(state.result.scenario)) : '';
     root.innerHTML = `<section class="overview pristine">
       <section class="overview-heading"><div class="overview-heading-row"><div><h2>Northstar</h2></div><button class="btn primary overview-add" data-action="add-info">+ Add note</button></div></section>
@@ -1558,7 +1565,7 @@
     else if(act==='save-project-rule'){const text=document.getElementById('projectRuleText')?.value.trim();const category=document.getElementById('projectRuleCategory')?.value||'Interpretation';if(text){try{const rule=await API.createRule(text,category);if(!state.projectRules.some(x=>x.id===rule.id))state.projectRules.push(rule);showProjectSettings();}catch(err){showDialog(`<span class="eyebrow">Couldn’t save rule</span><h2 id="dialogTitle">Rule was not added.</h2><p>${esc(err.message)}</p>`);}}}
     else if(act==='delete-project-rule'){try{await API.deleteRule(a.dataset.ruleId);state.projectRules=state.projectRules.filter(x=>x.id!==a.dataset.ruleId);showProjectSettings();}catch(err){showDialog(`<span class="eyebrow">Couldn’t remove rule</span><h2 id="dialogTitle">Rule is still active.</h2><p>${esc(err.message)}</p>`);}}
     else if(act==='example-prompt'){const q=a.dataset.prompt;closeDialog();navigateTo('overview');submitAsk(q);}
-    else if(act==='copy-result'){const text=state.result?.liveAsk&&ASK?.portableText?ASK.portableText(state.result.liveAsk):(document.querySelector('.answer-content')?.innerText||'');const label='Copy';navigator.clipboard?.writeText(text);a.textContent='Copied';setTimeout(()=>a.textContent=label,1200);}
+    else if(act==='copy-result'){const text=state.result?.liveAsk&&ASK?.portableText?ASK.portableText(state.result.liveAsk,liveRecordStatus()):(document.querySelector('.answer-content')?.innerText||'');const label='Copy';navigator.clipboard?.writeText(text);a.textContent='Copied';setTimeout(()=>a.textContent=label,1200);}
 
 
     else if(act==='toggle-projects'){state.projectMenuOpen=!state.projectMenuOpen;render();}

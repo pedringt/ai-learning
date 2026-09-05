@@ -84,29 +84,35 @@
   async function submit(query,previousPayload=null){const kind=starterKind(query,previousPayload);if(kind)return fastStarterPayload(kind);return API.ask(query,previousPayload?.answer||null);}
 
   const labelFor=type=>({review:'Needs review',blocking_question:'Blocking',question:'Open question',state:'Current State',history:'History',evidence:'Project evidence'}[type]||'');
+  // The answer's item list is a snapshot from when it was generated. An item
+  // whose Review/Question has since been resolved must not keep appearing as
+  // open work -- on screen or in anything copied out of the answer.
+  function isItemResolved(i,liveStatus){
+    if(i.record_type==='review'&&i.record_id) return (liveStatus?.reviewStatus?.(i.record_id)??'pending')!=='pending';
+    if((i.record_type==='blocking_question'||i.record_type==='question')&&i.record_id) return (liveStatus?.questionStatus?.(i.record_id)??'open')!=='open';
+    return false;
+  }
   function itemHtml(i,liveStatus){
     const badge=i.record_type!=='none'?`<span class="ask-record-badge ask-record-${esc(i.record_type)}">${esc(labelFor(i.record_type))}</span>`:'';
     const d=String(i.detail||'').replace(/^blocks:\s*/i,'');
     const detail=d?`<span class="ask-item-detail">${i.record_type==='blocking_question'?'Blocks: ':''}${esc(d)}</span>`:'';
     let link='';
-    // The answer's item list is a snapshot from when it was generated. A
-    // Review/Question resolved since then must stop offering a link that
-    // silently no-ops when clicked -- check current status, not the snapshot.
-    if(i.record_type==='review'&&i.record_id){
-      const status=liveStatus?.reviewStatus?.(i.record_id);
-      if((status??'pending')==='pending') link=`<button class="text-button ask-item-link ask-item-action" data-action="open-related-review" data-review-id="${esc(i.record_id)}">Review →</button>`;
+    // Callers filter resolved items out before reaching this point, so this
+    // is a defensive re-check rather than the primary gate.
+    if(isItemResolved(i,liveStatus)){/* resolved: no link */}
+    else if(i.record_type==='review'&&i.record_id){
+      link=`<button class="text-button ask-item-link ask-item-action" data-action="open-related-review" data-review-id="${esc(i.record_id)}">Review →</button>`;
     }else if((i.record_type==='blocking_question'||i.record_type==='question')&&i.record_id){
-      const status=liveStatus?.questionStatus?.(i.record_id);
-      if((status??'open')==='open') link=`<button class="text-button ask-item-link ask-item-action" data-action="go-open-question" data-question-id="${esc(i.record_id)}">Open →</button>`;
+      link=`<button class="text-button ask-item-link ask-item-action" data-action="go-open-question" data-question-id="${esc(i.record_id)}">Open →</button>`;
     }
     // The link is a sibling of the copy block, not nested inside it, so
     // .ask-answer-item's flex layout can place it beside the item instead of
     // stacking it on its own line underneath.
     return `<li class="ask-answer-item"><div>${badge}<span class="ask-item-text">${esc(i.text)}</span>${detail}</div>${link}</li>`;
   }
-  function stateActions(a){const seen=new Set(),r=[],q=[];for(const s of a.sections||[])for(const i of s.items||[]){if(!i.record_id||seen.has(`${i.record_type}:${i.record_id}`))continue;seen.add(`${i.record_type}:${i.record_id}`);if(i.record_type==='review')r.push(i);if(i.record_type==='blocking_question'||i.record_type==='question')q.push(i);}if(!r.length&&!q.length)return'';const bits=[];if(r.length)bits.push(`${r.length} ${r.length===1?'Review':'Reviews'}`);if(q.length)bits.push(`${q.length} ${q.length===1?'Question':'Questions'}`);return `<aside class="ask-state-actions"><span class="meta-label">Related open items</span><div><span>${esc(bits.join(' · '))}</span> <button class="text-button" data-view="open-items">View open items →</button></div></aside>`;}
+  function stateActions(a,liveStatus){const seen=new Set(),r=[],q=[];for(const s of a.sections||[])for(const i of s.items||[]){if(!i.record_id||seen.has(`${i.record_type}:${i.record_id}`)||isItemResolved(i,liveStatus))continue;seen.add(`${i.record_type}:${i.record_id}`);if(i.record_type==='review')r.push(i);if(i.record_type==='blocking_question'||i.record_type==='question')q.push(i);}if(!r.length&&!q.length)return'';const bits=[];if(r.length)bits.push(`${r.length} ${r.length===1?'Review':'Reviews'}`);if(q.length)bits.push(`${q.length} ${q.length===1?'Question':'Questions'}`);return `<aside class="ask-state-actions"><span class="meta-label">Related open items</span><div><span>${esc(bits.join(' · '))}</span> <button class="text-button" data-view="open-items">View open items →</button></div></aside>`;}
   function meetingNotesScaffold(){return `<section class="ask-meeting-notes"><h3>Meeting notes</h3><div class="meeting-note-block"><strong>Decisions</strong><span>Add notes here</span></div><div class="meeting-note-block"><strong>Answers / new information</strong><span>Add notes here</span></div><div class="meeting-note-block"><strong>Actions</strong><span>☐ Add actions here</span></div><div class="meeting-note-block"><strong>Follow-ups</strong><span>Add notes here</span></div></section>`;}
-  function portableText(p){const a=p?.answer;if(!a)return'';const lines=[a.headline,'',a.summary];for(const s of a.sections||[]){if(!(s.items||[]).length)continue;lines.push('',s.title);for(const i of s.items){lines.push(`- ${i.text}`);const d=String(i.detail||'').replace(/^blocks:\s*/i,'').trim();if(d)lines.push(`  ${i.record_type==='blocking_question'?'Blocks: ':''}${d}`);}}if(a.job==='meeting_prep')lines.push('','Meeting notes','','Decisions','- ','','Answers / new information','- ','','Actions','- [ ] ','','Follow-ups','- ');return lines.join('\n').trim();}
+  function portableText(p,liveStatus){const a=p?.answer;if(!a)return'';const lines=[a.headline,'',a.summary];for(const s of a.sections||[]){const items=(s.items||[]).filter(i=>!isItemResolved(i,liveStatus));if(!items.length)continue;lines.push('',s.title);for(const i of items){lines.push(`- ${i.text}`);const d=String(i.detail||'').replace(/^blocks:\s*/i,'').trim();if(d)lines.push(`  ${i.record_type==='blocking_question'?'Blocks: ':''}${d}`);}}if(a.job==='meeting_prep')lines.push('','Meeting notes','','Decisions','- ','','Answers / new information','- ','','Actions','- [ ] ','','Follow-ups','- ');return lines.join('\n').trim();}
 
   function decodeJsonStringFragment(fragment){
     try{return JSON.parse(`"${fragment}"`);}catch(_){return fragment.replace(/\\n/g,'\n').replace(/\\"/g,'"').replace(/\\\\/g,'\\');}
@@ -155,7 +161,27 @@
     return `<div class="ask-live-answer ask-streaming-draft" aria-busy="true"><div class="result-label">State Ask · Drafting</div>${body}</div>`;
   }
 
-  function render(payload,liveStatus){const a=payload?.answer;if(!a)return '<div class="ask-live-error"><h2>Ask is temporarily unavailable.</h2><p>State did not receive a grounded answer.</p></div>';const sections=(a.sections||[]).filter(s=>(s.items||[]).length).map(s=>`<section class="ask-answer-section ask-section-${esc(s.kind)}"><h3>${esc(s.title)}</h3><ul>${s.items.map(i=>itemHtml(i,liveStatus)).join('')}</ul></section>`).join('');const refinements=(a.suggested_refinements||[]).slice(0,3).map(x=>`<button data-prompt="${esc(x)}">${esc(x)}</button>`).join('');const remaining=payload.open_items_remaining||{count:0,reviews:0};const footer=remaining.count>0?`<aside class="ask-open-items-safety"><strong>Related open items</strong><p>${remaining.reviews?`${remaining.reviews} ${remaining.reviews===1?'Review':'Reviews'} · `:''}${Math.max(0,remaining.count-remaining.reviews)} other open ${Math.max(0,remaining.count-remaining.reviews)===1?'item':'items'}</p><button class="text-button" data-view="open-items">View open items →</button></aside>`:'';const notes=a.job==='meeting_prep'?meetingNotesScaffold():'';return `<div class="ask-live-answer"><div class="ask-answer-head"><div class="result-label">${esc(a.job==='meeting_prep'?'Meeting prep':'State Ask')}</div><div class="ask-answer-actions"><button class="btn secondary ask-copy-answer" data-action="copy-result">Copy</button><button class="btn secondary ask-new-session" data-action="new-ask">New ask</button></div></div><h2>${esc(a.headline)}</h2><p class="result-lede">${esc(a.summary)}</p>${sections}${notes}${refinements?`<div class="ask-refinement-chips">${refinements}</div>`:''}${stateActions(a)}${footer}</div>`;}
+  // The server (or the deterministic fast-starter path) computes remaining
+  // open-item counts once, at answer-build time. If liveStatus exposes the
+  // live open id sets, recompute from those instead so a same-session
+  // resolve is reflected here too, rather than only in the item list above.
+  function liveOpenItemsRemaining(a,liveStatus){
+    if(typeof liveStatus?.openReviewIds!=='function'||typeof liveStatus?.openQuestionIds!=='function') return null;
+    const openReviewIds=liveStatus.openReviewIds();
+    const openQuestionIds=liveStatus.openQuestionIds();
+    const shownReviewIds=new Set(),shownQuestionIds=new Set();
+    for(const s of a.sections||[])for(const i of s.items||[]){
+      if(i.record_type==='review') shownReviewIds.add(i.record_id);
+      else if(i.record_type==='blocking_question'||i.record_type==='question') shownQuestionIds.add(i.record_id);
+    }
+    const shownOpenReviews=openReviewIds.filter(id=>shownReviewIds.has(id)).length;
+    const shownOpenQuestions=openQuestionIds.filter(id=>shownQuestionIds.has(id)).length;
+    return {
+      count:Math.max(0,(openReviewIds.length+openQuestionIds.length)-shownOpenReviews-shownOpenQuestions),
+      reviews:Math.max(0,openReviewIds.length-shownOpenReviews),
+    };
+  }
+  function render(payload,liveStatus){const a=payload?.answer;if(!a)return '<div class="ask-live-error"><h2>Ask is temporarily unavailable.</h2><p>State did not receive a grounded answer.</p></div>';const sections=(a.sections||[]).map(s=>({...s,items:(s.items||[]).filter(i=>!isItemResolved(i,liveStatus))})).filter(s=>(s.items||[]).length).map(s=>`<section class="ask-answer-section ask-section-${esc(s.kind)}"><h3>${esc(s.title)}</h3><ul>${s.items.map(i=>itemHtml(i,liveStatus)).join('')}</ul></section>`).join('');const refinements=(a.suggested_refinements||[]).slice(0,3).map(x=>`<button data-prompt="${esc(x)}">${esc(x)}</button>`).join('');const remaining=liveOpenItemsRemaining(a,liveStatus)||payload.open_items_remaining||{count:0,reviews:0};const footer=remaining.count>0?`<aside class="ask-open-items-safety"><strong>Related open items</strong><p>${remaining.reviews?`${remaining.reviews} ${remaining.reviews===1?'Review':'Reviews'} · `:''}${Math.max(0,remaining.count-remaining.reviews)} other open ${Math.max(0,remaining.count-remaining.reviews)===1?'item':'items'}</p><button class="text-button" data-view="open-items">View open items →</button></aside>`:'';const notes=a.job==='meeting_prep'?meetingNotesScaffold():'';return `<div class="ask-live-answer"><div class="ask-answer-head"><div class="result-label">${esc(a.job==='meeting_prep'?'Meeting prep':'State Ask')}</div><div class="ask-answer-actions"><button class="btn secondary ask-copy-answer" data-action="copy-result">Copy</button><button class="btn secondary ask-new-session" data-action="new-ask">New ask</button></div></div><h2>${esc(a.headline)}</h2><p class="result-lede">${esc(a.summary)}</p>${sections}${notes}${refinements?`<div class="ask-refinement-chips">${refinements}</div>`:''}${stateActions(a,liveStatus)}${footer}</div>`;}
   const INITIAL_WAIT_MESSAGES=['Finding the project context that matters for this question…','Checking Current State against open Reviews and Questions…','Keeping unresolved information unresolved…','Shaping the grounded answer around the useful parts…'];const LONG_WAIT_MESSAGES=['Still working — validating the answer against the project record…','Still working — making sure Reviews qualify rather than silently replace Current State…'];const REFINEMENT_WAIT_MESSAGES=['Refining the existing answer without changing the underlying project truth…','Keeping the same grounding while changing the format and emphasis…','Still working — checking the refinement against the project record…'];const waitTimers=new WeakMap();
   function rotateStatus(node,target,messages,longMessages=null){if(!node||!target||waitTimers.has(node))return;const started=Date.now();let index=0;const timer=window.setInterval(()=>{if(!node.isConnected){window.clearInterval(timer);waitTimers.delete(node);return;}const pool=longMessages&&Date.now()-started>=10000?longMessages:messages;target.textContent=pool[index%pool.length];index+=1;},3000);waitTimers.set(node,timer);}
   function activateWaitStates(scope){const root=scope||document;root.querySelectorAll('.ask-live-loading').forEach(node=>rotateStatus(node,node.querySelector('p'),INITIAL_WAIT_MESSAGES,LONG_WAIT_MESSAGES));root.querySelectorAll('.ask-followup-working').forEach(node=>rotateStatus(node,node,REFINEMENT_WAIT_MESSAGES));}
