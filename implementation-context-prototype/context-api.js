@@ -1,5 +1,5 @@
 (() => {
-  const base = window.STATE_API_BASE || document.documentElement?.dataset?.apiBase || 'https://state-api-staging.onrender.com';
+  const base = window.STATE_API_BASE || document.documentElement?.dataset?.apiBase || 'https://state-api-6waw.onrender.com';
 
   async function request(path, options = {}) {
     const response = await fetch(`${base}${path}`, options);
@@ -25,7 +25,7 @@
   async function askStream(query, previousAnswer = null, handlers = {}) {
     const response = await fetch(`${base}/api/ask/stream`, {
       method: 'POST',
-      headers: {'Content-Type': 'application/json', 'Accept': 'text/event-stream'},
+      headers: {'Content-Type':'application/json', 'Accept':'text/event-stream'},
       body: JSON.stringify({query, ...(previousAnswer ? {previous_answer: previousAnswer} : {})}),
     });
     if (!response.ok) {
@@ -38,7 +38,6 @@
     const decoder = new TextDecoder();
     let buffer = '';
     let finalPayload = null;
-
     const dispatch = block => {
       let event = 'message';
       const data = [];
@@ -52,7 +51,6 @@
       if (event === 'final') finalPayload = payload;
       handlers[event]?.(payload);
     };
-
     while (true) {
       const {value, done} = await reader.read();
       buffer += decoder.decode(value || new Uint8Array(), {stream: !done});
@@ -84,18 +82,13 @@
     updateDraft: (draftId, title, content) => request(`/api/drafts/${encodeURIComponent(draftId)}`, {method:'PATCH', headers:{'Content-Type':'application/json'}, body:JSON.stringify({title, content})}),
     deleteDraft: draftId => request(`/api/drafts/${encodeURIComponent(draftId)}`, {method:'DELETE'}),
     submitEvidence: (content, sourceType = 'manual_note') => jsonPost('/api/evidence', {content, source_type: sourceType}),
-    retryEvidenceAnalysis: evidenceId => request(`/api/evidence/${encodeURIComponent(evidenceId)}/reanalyze`, {method: 'POST'}),
+    retryEvidenceAnalysis: evidenceId => request(`/api/evidence/${encodeURIComponent(evidenceId)}/reanalyze`, {method:'POST'}),
     resolveReview: (reviewId, decision) => jsonPost(`/api/reviews/${encodeURIComponent(reviewId)}/resolve`, {decision}),
-    createQuestion: (text, options = {}) => jsonPost('/api/questions', {
-      text,
-      origin: options.origin || 'Added from Workspace',
-      blocking: !!options.blocking,
-      ...(options.blocks ? {blocks: options.blocks} : {}),
-    }),
+    createQuestion: (text, options = {}) => jsonPost('/api/questions', {text, origin: options.origin || 'Added from Workspace', blocking: !!options.blocking, ...(options.blocks ? {blocks: options.blocks} : {})}),
     setQuestionBlocking: (questionId, blocking, blocks = null) => request(`/api/questions/${encodeURIComponent(questionId)}/blocking`, {method:'PATCH', headers:{'Content-Type':'application/json'}, body:JSON.stringify({blocking, blocks})}),
-    stopQuestion: questionId => request(`/api/questions/${encodeURIComponent(questionId)}/stop`, {method: 'POST'}),
+    stopQuestion: questionId => request(`/api/questions/${encodeURIComponent(questionId)}/stop`, {method:'POST'}),
     createRule: (text, category = 'Interpretation') => jsonPost('/api/rules', {text, category}),
-    deleteRule: ruleId => request(`/api/rules/${encodeURIComponent(ruleId)}`, {method: 'DELETE'}),
+    deleteRule: ruleId => request(`/api/rules/${encodeURIComponent(ruleId)}`, {method:'DELETE'}),
     resetDemo: () => request('/api/demo/reset', {method:'POST'}),
     askPreview: query => jsonPost('/api/ask/preview', {query}),
     // Free-form Ask streams visible answer text while the final grounded payload
