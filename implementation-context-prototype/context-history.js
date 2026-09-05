@@ -42,10 +42,13 @@
     if (!target) return;
     applyingHistory = true;
     target.click();
-    requestAnimationFrame(() => {
-      applyingHistory = false;
+    // The app's delegated click handler and our own zero-delay history observer
+    // both run from this click. Keep suppression alive through that task so a
+    // Back/Forward restoration cannot immediately push a duplicate entry.
+    window.setTimeout(() => {
       currentView = activeView();
-    });
+      applyingHistory = false;
+    }, 50);
   }
 
   function initialView() {
@@ -55,7 +58,7 @@
 
   // State's app owns rendering. This layer only mirrors meaningful view changes
   // into browser history so Back/Forward behaves like users expect in an SPA.
-  document.addEventListener('click', () => setTimeout(pushIfChanged, 0));
+  document.addEventListener('click', () => window.setTimeout(pushIfChanged, 0));
 
   const navObserver = new MutationObserver(() => requestAnimationFrame(pushIfChanged));
   const nav = document.querySelector('.sidebar-nav');
