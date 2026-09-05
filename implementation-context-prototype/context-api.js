@@ -98,10 +98,9 @@
     deleteRule: ruleId => request(`/api/rules/${encodeURIComponent(ruleId)}`, {method: 'DELETE'}),
     resetDemo: () => request('/api/demo/reset', {method:'POST'}),
     askPreview: query => jsonPost('/api/ask/preview', {query}),
-    // Native structured-output streaming currently exposes token-split whitespace
-    // artifacts in visible Ask text. Keep the validated one-call non-stream path
-    // for the manager-facing prototype until the stream renderer is safe again.
-    askStream: null,
+    // Free-form Ask streams visible answer text while the final grounded payload
+    // is still validated server-side. Product-owned starters remain deterministic.
+    askStream,
     ask: (query, previousAnswer = null) => jsonPost('/api/ask', {query, ...(previousAnswer ? {previous_answer: previousAnswer} : {})}),
   });
 })();
