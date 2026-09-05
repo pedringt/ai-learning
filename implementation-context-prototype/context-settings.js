@@ -47,7 +47,7 @@
       .slack-preview,.source-list{margin-top:16px;display:grid;gap:10px}.slack-preview-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px 0;border-top:1px solid var(--line,#e5e5ea)}.slack-preview-row:first-child{border-top:0}.slack-preview-row span{color:var(--muted,#666);font-size:13px}
       .source-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:16px;align-items:start;padding:14px 0;border-top:1px solid var(--line,#e5e5ea)}.source-row:nth-child(-n+2){border-top:0}.source-row>div{min-width:0}.source-description{display:block;margin:5px 0 0 26px;color:var(--muted,#666);font-size:13px;line-height:1.4}
       .source-title{display:flex;align-items:center;gap:8px;font-weight:700;color:inherit}.source-icon{width:18px;height:18px;flex:0 0 18px;display:block}
-      .settings-slack-heading{display:flex;align-items:center;gap:9px}.settings-slack-heading .source-icon{width:20px;height:20px;flex-basis:20px}.settings-callout{margin-top:14px;padding:12px 14px;border-radius:12px;background:var(--soft,#f6f5f8);font-size:13px;line-height:1.45}.settings-actions{margin-top:16px;display:flex;gap:8px;flex-wrap:wrap}.settings-slack-status{margin-top:14px;font-size:13px}.settings-slack .settings-section-head{align-items:center}.settings-slack-intro{max-width:620px}.settings-source-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 28px}
+      .settings-slack-heading{display:flex;align-items:center;gap:9px}.settings-slack-heading .source-icon{width:20px;height:20px;flex-basis:20px}.settings-callout{margin-top:14px;padding:12px 14px;border-radius:12px;background:var(--soft,#f6f5f8);font-size:13px;line-height:1.45}.settings-actions{margin-top:16px;display:flex;gap:8px;flex-wrap:wrap}.settings-actions a.btn{text-decoration:none;display:inline-flex;align-items:center}.settings-slack-status{margin-top:14px;font-size:13px}.settings-slack-notice{margin-top:12px;padding:9px 12px;border-radius:10px;font-size:13px;font-weight:600}.settings-slack-notice.success{background:rgba(46,182,125,.12);color:#1c8a5c}.settings-slack-notice.error{background:rgba(224,30,90,.1);color:#c81d55}.settings-slack .settings-section-head{align-items:center}.settings-slack-intro{max-width:620px}.settings-source-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 28px}
       .settings-danger{border-color:#c8a7a7;padding:16px 20px}.settings-danger .settings-section-head{align-items:center;margin:0}.settings-danger .settings-actions{margin:0}
       @media(max-width:680px){.settings-section{padding:16px}.settings-section-head,.slack-preview-row{align-items:flex-start;flex-direction:column}.settings-rule-form{display:grid}.settings-rule-list li{align-items:center}.settings-status{align-self:flex-start}.settings-behavior-list,.settings-source-grid{grid-template-columns:1fr}.source-row,.source-row:nth-child(-n+2){border-top:1px solid var(--line,#e5e5ea)}.source-row:first-child{border-top:0}.settings-danger .settings-actions{margin-top:12px}}
     `;
@@ -111,7 +111,13 @@
   // resolves, rather than leaving #viewRoot showing the previous view for as
   // long as the request takes (seconds, or tens of seconds against a cold
   // staging backend).
-  function render(rulesState,slackState){
+  function slackConnectNoticeMarkup(connectNotice){
+    if(connectNotice==='success') return '<p class="settings-slack-notice success">Slack connected.</p>';
+    if(connectNotice==='error') return '<p class="settings-slack-notice error">Could not connect Slack. Please try again.</p>';
+    return '';
+  }
+
+  function render(rulesState,slackState,connectNotice){
     const settingsNav=document.querySelector('.sidebar-nav [data-view="settings"]');if(!settingsNav?.classList.contains('active')) return;
     const target=root();if(!target) return;
     const state=rulesState||{loading:true,failed:false,items:[]};
@@ -121,7 +127,7 @@
       <section class="settings-section"><div class="settings-section-head"><div><h3>Project</h3><p>Basic information State uses for this project.</p></div></div><div class="settings-project-name"><label for="settings-project-name">Project name</label><input id="settings-project-name" value="Northstar" readonly aria-readonly="true"><p>Project renaming isn't available for this example project.</p></div>
         <details class="settings-rules"><summary><span>Project rules <span class="settings-rules-count">${rulesCountMarkup(state)}</span></span></summary><div class="settings-rules-body"><p>Rules tell State how to interpret information for this project.</p><form class="settings-rule-form" data-settings-action="add-rule"><label>Add a project rule<input name="rule" autocomplete="off" placeholder="Example: Security approvals must be explicit."></label><label>Category<select name="category"><option>Authority</option><option>Review</option><option>Sources</option><option selected>Interpretation</option></select></label><button class="btn secondary" type="submit">Add rule</button></form><ul class="settings-rule-list">${rulesListMarkup(state)}</ul></div></details>
       </section>
-      <section class="settings-section settings-slack" id="settings-slack"><div class="settings-section-head"><div class="settings-slack-intro"><h3 class="settings-slack-heading">${sourceIcon('slack')}<span>Slack</span></h3><p>Bring useful project conversations into State as Evidence. Slack never changes Current State directly.</p></div><span class="settings-status dev">In development</span></div><div class="settings-actions"><button class="btn secondary" type="button" disabled aria-disabled="true">Connect Slack</button></div><p class="settings-slack-status">${slackStatusLine(slack)}</p><div class="slack-preview" aria-label="Slack channel activity">${slackChannelsMarkup(slack)}</div></section>
+      <section class="settings-section settings-slack" id="settings-slack"><div class="settings-section-head"><div class="settings-slack-intro"><h3 class="settings-slack-heading">${sourceIcon('slack')}<span>Slack</span></h3><p>Bring useful project conversations into State as Evidence. Slack never changes Current State directly.</p></div><span class="settings-status dev">In development</span></div><div class="settings-actions"><a class="btn secondary" href="${esc((api()?.base||'')+'/api/integrations/slack/oauth/start')}">Connect Slack</a></div>${slackConnectNoticeMarkup(connectNotice)}<p class="settings-slack-status">${slackStatusLine(slack)}</p><div class="slack-preview" aria-label="Slack channel activity">${slackChannelsMarkup(slack)}</div></section>
       <section class="settings-section settings-quiet"><div class="settings-section-head"><div><h3>How State works</h3><p>Safeguards that protect the human authorization model.</p></div></div><ul class="settings-behavior-list"><li>Evidence cannot change Current State automatically.</li><li>Questions require Review before resolution.</li><li>Ignored Evidence is excluded from active reasoning.</li><li>Evidence history stays available so accepted changes remain explainable.</li></ul></section>
       <section class="settings-section"><div class="settings-section-head"><div><h3>Sources</h3><p>Places State can gather project information from planning, discovery, documentation, and collaboration.</p></div></div><div class="settings-callout"><strong>Sources provide Evidence. They never change Current State directly.</strong></div><div class="source-list settings-source-grid" aria-label="Connected and planned sources">
         <div class="source-row"><div>${sourceTitle('slack','Slack')}<span class="source-description">Project conversations and decisions.</span></div><span class="settings-status dev">In development</span></div>
@@ -150,11 +156,17 @@
   // the comment on render() above for why this can't just be one
   // await-then-paint step.
   async function load(){
+    // A one-shot notice set by context-app.js right after the OAuth
+    // redirect lands back on the app. Read once per Settings visit (not
+    // once per render() call within it) so it survives the loading ->
+    // patched re-render but still clears itself for the next visit.
+    let connectNotice=null;
+    if(window.__stateSlackConnectResult!==undefined){connectNotice=window.__stateSlackConnectResult;delete window.__stateSlackConnectResult;}
     const current={rules:{loading:true,failed:false,items:[]},slack:{loading:true,failed:false,channels:[],health:null}};
-    render(current.rules,current.slack);
+    render(current.rules,current.slack,connectNotice);
     await Promise.all([
-      rules().then(result=>{current.rules=result;render(current.rules,current.slack);}),
-      slackStatus().then(result=>{current.slack=result;render(current.rules,current.slack);}),
+      rules().then(result=>{current.rules=result;render(current.rules,current.slack,connectNotice);}),
+      slackStatus().then(result=>{current.slack=result;render(current.rules,current.slack,connectNotice);}),
     ]);
   }
 

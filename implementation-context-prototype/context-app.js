@@ -1702,6 +1702,20 @@
   });
   document.addEventListener('click',e=>{ if(state.projectMenuOpen && !e.target.closest('.sidebar-project') && !e.target.closest('[data-action="toggle-projects"]')){state.projectMenuOpen=false;updateNav();} });
   overlay.addEventListener('click',e=>{if(e.target===overlay && !state.isAnalyzing) closeDialog();});
+  // The Slack "Connect Slack" OAuth round trip ends with the backend
+  // redirecting the browser back here with ?slack_connect=success|error.
+  // Land directly on Settings' Slack section with that result instead of
+  // leaving the user on Workspace with an unexplained query string.
+  const bootParams=new URLSearchParams(location.search);
+  const slackConnectResult=bootParams.get('slack_connect');
+  if(slackConnectResult){
+    window.__stateSlackConnectResult=slackConnectResult;
+    window.__stateScrollAnchor='settings-slack';
+    bootParams.delete('slack_connect');
+    const cleanedSearch=bootParams.toString();
+    history.replaceState(null,'',location.pathname+(cleanedSearch?`?${cleanedSearch}`:'')+location.hash);
+    navigateTo('settings');
+  }
   window.STATE_ASK_TEST_API={state,detectAskIntent,findScenario,structuredAskResult,scenarioResult,intentAskHtml,submitAsk,upsertBackendReview,replaceBackendOpenReviews,mapApiReview};
   render();
   hydrateBackend();
