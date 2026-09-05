@@ -58,7 +58,6 @@ The repository root holds the portfolio site. The two directories below are the 
 | `context-ask.js` | Ask UI and result rendering |
 | `context-data.js` | Deterministic fixture used when the backend is unavailable |
 | `context-tool.css` | Product styling |
-| `final-polish.js` | Post-render patch layer. Known technical debt — see *Known debt* below. |
 
 ### Backend files
 
@@ -175,11 +174,10 @@ Things that look like omissions but are decisions:
 
 Being cleaned up deliberately rather than all at once:
 
-- `final-polish.js` is a post-render patch layer — it injects CSS, rewrites button labels, applies inline `!important` overrides and repositions DOM nodes through a MutationObserver. Its *behavior* is correct and intended; the mechanism should move into the renderer and stylesheet.
-- The stylesheets carry layered version-specific overrides and heavy `!important` use.
-- Some homepage copy is rendered from CSS `::before` content while the DOM still holds older wording.
-- State's navigation clips on narrow screens.
-- `STATE_BUILD_REV` in `api.py` is hand-edited rather than derived from the deployed commit.
+- The stylesheets carry layered version-specific overrides and heavy `!important` use. `context-tool.css` still holds roughly thirty separate `@media(max-width:760px)` blocks, several redefining the same selectors, and `index.html` carries version-stamped inline `<style>` blocks. Consolidating them is the next cleanup pass.
+- `STATE_BUILD_REV` in `api.py` is hand-edited rather than derived from the deployed commit, so `/health` can report a stale build.
+- `context-app.js` is a single 160 KB module. It is coherent, but it would read better split along product boundaries.
+- A few historical portfolio pages have no inbound links. They are kept until it is confirmed the URLs were never shared.
 
 ---
 

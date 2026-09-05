@@ -63,9 +63,6 @@
     return `<section class="ask-meeting-notes"><h3>Meeting notes</h3><div class="meeting-note-block"><strong>Decisions</strong><span>Add notes here</span></div><div class="meeting-note-block"><strong>Answers / new information</strong><span>Add notes here</span></div><div class="meeting-note-block"><strong>Actions</strong><span>☐ Add actions here</span></div><div class="meeting-note-block"><strong>Follow-ups</strong><span>Add notes here</span></div></section>`;
   }
 
-  function copyLabel(job){
-    return ({meeting_prep:'Copy meeting brief',project_update:'Copy update',catch_up:'Copy summary',current_fact:'Copy answer',why_or_provenance:'Copy explanation',drafting:'Copy draft'}[job]||'Copy answer');
-  }
 
   function portableText(payload){
     const a=payload?.answer;
@@ -147,8 +144,65 @@
     const remaining=payload.open_items_remaining||{count:0,reviews:0};
     const footer=remaining.count>0?`<aside class="ask-open-items-safety"><strong>Before you move on</strong><p>${remaining.reviews?`${remaining.reviews} ${remaining.reviews===1?'Review':'Reviews'} and `:''}${Math.max(0,remaining.count-remaining.reviews)} other open ${Math.max(0,remaining.count-remaining.reviews)===1?'item':'items'} still need attention.</p><button class="text-button" data-view="open-items">Review open items →</button></aside>`:'';
     const notes=a.job==='meeting_prep'?meetingNotesScaffold():'';
-    return `<div class="ask-live-answer"><div class="ask-answer-head"><div class="result-label">${esc(a.job==='meeting_prep'?'Meeting prep':'State Ask')}</div><div class="ask-answer-actions"><button class="btn secondary ask-copy-answer" data-action="copy-result">${esc(copyLabel(a.job))}</button><button class="btn secondary ask-new-session" data-action="new-ask">Start new ask</button></div></div><h2>${esc(a.headline)}</h2><p class="result-lede">${esc(a.summary)}</p>${sections}${notes}${refinements?`<div class="ask-refinement-chips">${refinements}</div>`:''}${stateActions(a)}${footer}</div>`;
+    return `<div class="ask-live-answer"><div class="ask-answer-head"><div class="result-label">${esc(a.job==='meeting_prep'?'Meeting prep':'State Ask')}</div><div class="ask-answer-actions"><button class="btn secondary ask-copy-answer" data-action="copy-result">Copy</button><button class="btn secondary ask-new-session" data-action="new-ask">New ask</button></div></div><h2>${esc(a.headline)}</h2><p class="result-lede">${esc(a.summary)}</p>${sections}${notes}${refinements?`<div class="ask-refinement-chips">${refinements}</div>`:''}${stateActions(a)}${footer}</div>`;
   }
 
-  window.STATE_ASK = Object.freeze({canHandle, canStream, followupMode, preview, submitStream, submit, renderStream, render, portableText, copyLabel});
+  // --- Ask wait states -----------------------------------------------------
+  // Ask can take several seconds. Rather than a static spinner, the wait state
+  // narrates what State is actually doing, and after ten seconds switches to
+  // copy that acknowledges the wait. This is product behavior, not decoration:
+  // it is what keeps a slow grounded answer from reading as a hang.
+  //
+  // Call activateWaitStates(root) after any render that can produce a loading
+  // node. It is idempotent — a node already rotating is left alone — and each
+  // timer stops itself once its node leaves the document.
+
+  const INITIAL_WAIT_MESSAGES = [
+    'Finding the project context that matters for this question…',
+    'Checking Current State against open Reviews and Questions…',
+    'Keeping unresolved information unresolved…',
+    'Shaping the grounded answer around the useful parts…',
+  ];
+  const LONG_WAIT_MESSAGES = [
+    'Still working — validating the answer against the project record…',
+    'Still working — making sure Reviews qualify rather than silently replace Current State…',
+  ];
+  const REFINEMENT_WAIT_MESSAGES = [
+    'Refining the existing answer without changing the underlying project truth…',
+    'Keeping the same grounding while changing the format and emphasis…',
+    'Still working — checking the refinement against the project record…',
+  ];
+  const LONG_WAIT_AFTER_MS = 10000;
+  const ROTATE_EVERY_MS = 3000;
+
+  const waitTimers = new WeakMap();
+
+  function rotateStatus(node, target, messages, longMessages = null){
+    if(!node || !target || waitTimers.has(node)) return;
+    const started = Date.now();
+    let index = 0;
+    const timer = window.setInterval(() => {
+      if(!node.isConnected){
+        window.clearInterval(timer);
+        waitTimers.delete(node);
+        return;
+      }
+      const pool = longMessages && Date.now() - started >= LONG_WAIT_AFTER_MS ? longMessages : messages;
+      target.textContent = pool[index % pool.length];
+      index += 1;
+    }, ROTATE_EVERY_MS);
+    waitTimers.set(node, timer);
+  }
+
+  function activateWaitStates(scope){
+    const root = scope || document;
+    root.querySelectorAll('.ask-live-loading').forEach(node => {
+      rotateStatus(node, node.querySelector('p'), INITIAL_WAIT_MESSAGES, LONG_WAIT_MESSAGES);
+    });
+    root.querySelectorAll('.ask-followup-working').forEach(node => {
+      rotateStatus(node, node, REFINEMENT_WAIT_MESSAGES);
+    });
+  }
+
+  window.STATE_ASK = Object.freeze({canHandle, canStream, followupMode, preview, submitStream, submit, renderStream, render, portableText, activateWaitStates});
 })();
