@@ -1,3 +1,4 @@
+import re
 from pathlib import Path
 
 
@@ -250,8 +251,23 @@ def test_r861_grounded_ask_module_and_release_assets_are_self_contained():
     ask = (FRONTEND / "context-ask.js").read_text(encoding="utf-8")
     html = (FRONTEND / "index.html").read_text(encoding="utf-8")
     assert "window.STATE_ASK" in ask
-    assert "context-ask.js?v=r20-refinement-project" in html
-    assert "context-app.js?v=r20-refinement-project" in html
+
+    # index.html cache-busts every script and stylesheet with a ?v= token. Assert
+    # the internal consistency of that scheme rather than one frozen literal: the
+    # pinned version string went stale on every asset bump (r20 -> r22) without
+    # ever catching a real defect, while a half-bumped set of assets — the actual
+    # failure this guards against — would have slipped through.
+    versioned = re.findall(r"([\w./-]+\.(?:js|css))\?v=([\w.-]+)", html)
+    assert versioned, "index.html no longer cache-busts its assets"
+
+    referenced = {Path(src).name for src, _ in versioned}
+    assert {"context-ask.js", "context-app.js"} <= referenced
+
+    versions = {token for _, token in versioned}
+    assert len(versions) == 1, f"assets carry mismatched cache-bust versions: {sorted(versions)}"
+
+    for src, _ in versioned:
+        assert (FRONTEND / Path(src).name).exists(), f"{src} is referenced but does not exist"
 
 
 def test_r95_workspace_attention_has_a_fast_independent_load_path():
