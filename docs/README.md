@@ -3,6 +3,10 @@
 Start with the [repository README](../README.md) — it covers the authority
 model, architecture, running locally, tests and deployment.
 
+**[`PROJECT_STATUS.md`](PROJECT_STATUS.md)** — the current, shared status of
+the project. Read this first if you're an AI assistant (or a new chat session
+with one) picking up work here.
+
 | Directory | Contents |
 |---|---|
 | `architecture/` | Current behavioral specifications |
