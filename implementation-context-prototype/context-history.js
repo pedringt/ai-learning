@@ -5,6 +5,7 @@
     'open-items': 'open-items',
     notes: 'notes',
     history: 'history',
+    settings: 'settings',
   };
   const viewForRoute = Object.fromEntries(Object.entries(routeForView).map(([view, route]) => [route, view]));
 
@@ -50,9 +51,6 @@
     applyingHistory = true;
     closeOpenDialog();
     target.click();
-    // The app's delegated click handler and our own zero-delay history observer
-    // both run from this click. Keep suppression alive through that task so a
-    // Back/Forward restoration cannot immediately push a duplicate entry.
     window.setTimeout(() => {
       currentView = activeView();
       applyingHistory = false;
@@ -64,8 +62,6 @@
     return viewForRoute[route] || history.state?.stateView || 'overview';
   }
 
-  // State's app owns rendering. This layer only mirrors meaningful view changes
-  // into browser history so Back/Forward behaves like users expect in an SPA.
   document.addEventListener('click', () => window.setTimeout(pushIfChanged, 0));
 
   const navObserver = new MutationObserver(() => requestAnimationFrame(pushIfChanged));
