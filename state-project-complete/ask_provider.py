@@ -9,10 +9,10 @@ from ask_contract import ANSWER_JSON_SCHEMA, ONE_CALL_ASK_JSON_SCHEMA, SELECTOR_
 
 
 # Ask returns both a grounded selection and a user-facing answer in one structured
-# response. 1500 tokens proved too tight in production, but 2600 leaves more room
-# than the manager-facing Ask output needs. 2000 preserves headroom for valid JSON
-# while bounding generation work more tightly.
-ASK_ONE_CALL_MAX_TOKENS = 2000
+# response. 1500 tokens proved too tight in production. 1800 keeps enough JSON
+# headroom while reducing work for the manager-facing answer, which is explicitly
+# constrained to stay comfortably under 500 words.
+ASK_ONE_CALL_MAX_TOKENS = 1800
 # Ask is interactive. The Anthropic SDK defaults to two retries, which can turn a
 # transient 30-second timeout into a ~70-second user wait. Evidence interpretation
 # keeps the provider's normal retry behavior; Ask uses a single bounded attempt.
