@@ -4,7 +4,7 @@ This file is the canonical current-state handoff for State. Any AI assistant or 
 
 ## Current production state
 
-_Last updated: September 5, 2026 (end of session)_
+_Last updated: September 6, 2026_
 
 `main` is production, currently at commit `0d5a9b5`. **`staging` has since diverged significantly from `main`** — Slack Phase 2, self-serve Slack OAuth, and a round of reliability/UX fixes have all shipped to `staging` but are **not yet on `main`**, pending explicit authorization to promote (see "Staging ahead of main" below). Avoid exact "commits ahead" counts here because this handoff commit itself changes that number. Until promotion happens, do not assume `staging` and `main` describe the same product — verify which branch a claim is about.
 
@@ -59,9 +59,10 @@ Slack Phase 2 is **built, live-tested against a real Slack workspace, and shippe
 - **Lookup subject + attribute relevance**: explicit lookups now require both the relevant subject/topic and attribute instead of matching on a generic shared word. This prevents failures such as a `security contact` record being treated as an answer to a `billing contact` question merely because both contain `contact`.
 - **Semantic paraphrase recall preserved**: the relevance guard was loosened where needed so legitimate facts are not lost just because user wording differs from stored terminology. Regression coverage includes concept pairs such as `leads`/`owner`, `going live`/`launch date`, and `cost`/`budget`.
 - **Ask regression coverage expanded**: tests now cover unknown specific lookups, adjacent-record traps, topic shifts, dependent follow-ups, punctuation normalization, and semantic paraphrase recall. The exact staging commit carrying the final Ask hardening passed both the JavaScript behavior suite and the Python/browser deterministic suite before this handoff update.
+- **Fixed a real bug found via live QA on the deployed staging app (not just unit tests)**: a fresh/topic-shift Ask question computed the correct `followupMode` but never consulted it before entering the loading/streaming state, so the previous, unrelated answer stayed fully visible on screen for the entire wait before the correct new answer finally swapped in -- exactly the "falls back to the original answer" symptom the follow-up hardening above was meant to fix, except this time in the transient loading window rather than the final render. Existing tests only covered the network payload and the final rendered state, not the loading window, so this slipped through; a Python contract test had even pinned the buggy line as "expected." Fixed and added `state-ask-loading-visibility-tests.js` (wired into CI) plus an updated contract assertion so this can't silently regress again.
 
 **Before promoting to `main`:**
-1. Paige sets up a **second, production-scoped Slack app** (Slack apps support only one Event Subscriptions Request URL each, so staging and production need separate apps even within the same workspace) -- in progress, Paige's own task.
+1. ~~Paige sets up a **second, production-scoped Slack app**~~ -- done (2026-09-06).
 2. Explicit authorization to merge `staging` -> `main`.
 3. After promotion, update this file's production section and confirm the production Slack app credentials are set as Render env vars only (never written here -- see "Authority / credentials" below).
 
