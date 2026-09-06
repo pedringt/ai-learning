@@ -61,7 +61,7 @@
       .slack-preview,.source-list{margin-top:16px;display:grid;gap:10px}.slack-preview-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px 0;border-top:1px solid var(--line,#e5e5ea)}.slack-preview-row:first-child{border-top:0}.slack-preview-row span{color:var(--muted,#666);font-size:13px}
       .source-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:16px;align-items:start;padding:14px 0;border-top:1px solid var(--line,#e5e5ea)}.source-row:nth-child(-n+2){border-top:0}.source-row>div{min-width:0}.source-description{display:block;margin:5px 0 0 26px;color:var(--muted,#666);font-size:13px;line-height:1.4}
       .source-title{display:flex;align-items:center;gap:8px;font-weight:700;color:inherit}.source-icon{width:18px;height:18px;flex:0 0 18px;display:block}
-      .settings-slack-heading{display:flex;align-items:center;gap:9px}.settings-slack-heading .source-icon{width:20px;height:20px;flex-basis:20px}.settings-callout{margin-top:14px;padding:12px 14px;border-radius:12px;background:var(--soft,#f6f5f8);font-size:13px;line-height:1.45}.settings-actions{margin-top:16px;display:flex;gap:12px;align-items:center;flex-wrap:wrap}.settings-actions a.btn{text-decoration:none;display:inline-flex;align-items:center}.settings-slack-status{margin-top:14px;font-size:13px;font-weight:600;color:var(--muted,#666)}.settings-slack-status.connected{color:#1c8a5c}.settings-slack-status.error{color:#c81d55}.settings-slack-notice{margin-top:12px;padding:9px 12px;border-radius:10px;font-size:13px;font-weight:600}.settings-slack-notice.success{background:rgba(46,182,125,.12);color:#1c8a5c}.settings-slack-notice.error{background:rgba(224,30,90,.1);color:#c81d55}.settings-slack .settings-section-head{align-items:center}.settings-slack-intro{max-width:620px}.settings-source-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 28px}
+      .settings-slack-heading{display:flex;align-items:center;gap:9px}.settings-slack-heading .source-icon{width:20px;height:20px;flex-basis:20px}.settings-callout{margin-top:14px;padding:12px 14px;border-radius:12px;background:var(--soft,#f6f5f8);font-size:13px;line-height:1.45}.settings-actions{margin-top:16px;display:flex;gap:12px;align-items:center;flex-wrap:wrap}.settings-actions a.btn{text-decoration:none;display:inline-flex;align-items:center}.settings-slack-status{margin-top:14px;font-size:13px;font-weight:600;color:var(--muted,#666)}.settings-slack-status.connected{color:#1c8a5c}.settings-slack-status.error{color:#c81d55}.settings-slack-notice{margin-top:12px;padding:9px 12px;border-radius:10px;font-size:13px;font-weight:600}.settings-slack-notice.error{background:rgba(224,30,90,.1);color:#c81d55}.settings-slack .settings-section-head{align-items:center}.settings-slack-intro{max-width:620px}.settings-source-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 28px}
       .settings-danger{border-color:#c8a7a7;padding:16px 20px}.settings-danger .settings-section-head{align-items:center;margin:0}.settings-danger .settings-actions{margin:0}
       @media(max-width:680px){.settings-section{padding:16px}.settings-section-head,.slack-preview-row{align-items:flex-start;flex-direction:column}.settings-rule-form{display:grid}.settings-rule-list li{align-items:center}.settings-status{align-self:flex-start}.settings-behavior-list,.settings-source-grid{grid-template-columns:1fr}.source-row,.source-row:nth-child(-n+2){border-top:1px solid var(--line,#e5e5ea)}.source-row:first-child{border-top:0}.settings-danger .settings-actions{margin-top:12px}}
     `;
@@ -85,30 +85,39 @@
     return rulesState.items.map(rule=>`<li data-rule-id="${esc(rule.id)}"><div class="settings-rule-copy"><strong>${esc(rule.category||'Interpretation')}</strong><span>${esc(rule.text||rule.rule||'')}</span></div><button class="text-button" type="button" data-settings-action="delete-rule" data-rule-id="${esc(rule.id)}">Remove</button></li>`).join('');
   }
 
-  // Distinguishes "the fetch failed" from "nothing is connected yet" the
-  // same way rules() does above.
+  // Health and channels are two independent endpoints; a hiccup in one
+  // must not erase a perfectly good result from the other. Promise.all
+  // used to fail both together on either rejecting, which could turn "the
+  // channel list endpoint had a blip" into "State claims Slack is
+  // disconnected" -- exactly the false-negative State's own thesis (don't
+  // collapse unknown/unrelated-failure into a confident wrong answer) is
+  // supposed to guard against.
   async function slackStatus(){
-    try{
-      const [channelsPayload,health]=await Promise.all([api()?.getSlackChannels?.(),api()?.getSlackHealth?.()]);
-      return {loading:false,failed:false,channels:channelsPayload?.items||[],health:health||null};
-    }catch(error){
-      console.warn('Settings could not load Slack status.',error);
-      return {loading:false,failed:true,channels:[],health:null};
-    }
+    const [channelsResult,healthResult]=await Promise.allSettled([api()?.getSlackChannels?.(),api()?.getSlackHealth?.()]);
+    if(channelsResult.status==='rejected') console.warn('Settings could not load Slack channels.',channelsResult.reason);
+    if(healthResult.status==='rejected') console.warn('Settings could not load Slack health.',healthResult.reason);
+    return {
+      loading:false,
+      channelsFailed:channelsResult.status==='rejected',
+      healthFailed:healthResult.status==='rejected',
+      channels:channelsResult.status==='fulfilled'?(channelsResult.value?.items||[]):[],
+      health:healthResult.status==='fulfilled'?(healthResult.value||null):null,
+    };
   }
 
   function slackStatusClass(slackState){
     if(slackState.loading) return '';
-    if(slackState.failed) return 'error';
+    if(slackState.healthFailed) return 'error';
     return slackState.health?.connected ? 'connected' : '';
   }
   function slackStatusLine(slackState){
     if(slackState.loading) return 'Checking connection…';
-    if(slackState.failed) return 'Connection status unavailable.';
+    if(slackState.healthFailed) return 'Connection status unavailable.';
     const health=slackState.health;
     if(!health?.connected) return 'Not connected yet.';
     const parts=[`Connected${health.workspace_name?` · ${esc(health.workspace_name)}`:''}`];
     if(health.pending_checkpoints) parts.push(`${health.pending_checkpoints} conversation${health.pending_checkpoints===1?'':'s'} awaiting review`);
+    if(slackState.channelsFailed) parts.push('channels unavailable');
     return parts.join(' · ');
   }
 
@@ -117,7 +126,7 @@
   // then, describe the planned behavior instead of showing an empty list.
   function slackChannelsMarkup(slackState){
     if(slackState.loading) return '<div class="slack-preview-row"><span>Loading channels…</span></div>';
-    if(slackState.failed) return '<div class="slack-preview-row"><span>Channels could not be loaded.</span><button class="text-button" type="button" data-settings-action="retry-slack">Try again</button></div>';
+    if(slackState.channelsFailed) return '<div class="slack-preview-row"><span>Channels could not be loaded.</span><button class="text-button" type="button" data-settings-action="retry-slack">Try again</button></div>';
     if(!slackState.channels.length) return '<div class="slack-preview-row"><div><strong>Approved channels</strong><br><span>Only channels explicitly enabled for Northstar can feed State.</span></div><span>Planned</span></div><div class="slack-preview-row"><div><strong>Threads</strong><br><span>State follows conversations over time and creates new Evidence when something meaningful changes.</span></div><span>Planned</span></div><div class="slack-preview-row"><div><strong>Noise control</strong><br><span>Bot, system, and low-value conversation is filtered before it reaches Notes.</span></div><span>Planned</span></div>';
     return slackState.channels.map(channel=>`<div class="slack-preview-row"><div><strong>#${esc(channel.channel_name||channel.channel_id)}</strong><br><span>${channel.last_event_at?`Last activity ${esc(channel.last_event_at)}`:'No activity yet'}</span></div><button class="btn secondary" type="button" data-settings-action="toggle-channel" data-channel-row-id="${esc(channel.id)}" data-enabled="${channel.enabled?'1':'0'}">${channel.enabled?'Enabled':'Disabled'}</button></div>`).join('');
   }
@@ -130,8 +139,13 @@
   // resolves, rather than leaving #viewRoot showing the previous view for as
   // long as the request takes (seconds, or tens of seconds against a cold
   // staging backend).
+  // Only the error case gets a banner: the persistent status line right
+  // below already says "Connected · workspace" in green on success, so a
+  // second "Slack connected." box on top of it just duplicates the same
+  // information. On failure, though, that status line reads "Not connected
+  // yet." in neutral gray -- indistinguishable from having simply never
+  // tried -- so it can't carry "your last attempt just failed" on its own.
   function slackConnectNoticeMarkup(connectNotice){
-    if(connectNotice==='success') return '<p class="settings-slack-notice success">Slack connected.</p>';
     if(connectNotice==='error') return '<p class="settings-slack-notice error">Could not connect Slack. Please try again.</p>';
     return '';
   }
@@ -140,7 +154,7 @@
     const settingsNav=document.querySelector('.sidebar-nav [data-view="settings"]');if(!settingsNav?.classList.contains('active')) return;
     const target=root();if(!target) return;
     const state=rulesState||{loading:true,failed:false,items:[]};
-    const slack=slackState||{loading:true,failed:false,channels:[],health:null};
+    const slack=slackState||{loading:true,channelsFailed:false,healthFailed:false,channels:[],health:null};
     target.innerHTML=`<article class="page settings-page">
       <div class="page-head"><h2>Settings</h2><p>Configure Northstar and the sources allowed to feed it.</p></div>
       <section class="settings-section"><div class="settings-section-head"><div><h3>Project</h3><p>Basic information State uses for this project.</p></div></div><div class="settings-project-name"><label for="settings-project-name">Project name</label><input id="settings-project-name" value="Northstar" readonly aria-readonly="true"><p>Project renaming isn't available for this example project.</p></div>
@@ -181,7 +195,7 @@
     // patched re-render but still clears itself for the next visit.
     let connectNotice=null;
     if(window.__stateSlackConnectResult!==undefined){connectNotice=window.__stateSlackConnectResult;delete window.__stateSlackConnectResult;}
-    const current={rules:{loading:true,failed:false,items:[]},slack:{loading:true,failed:false,channels:[],health:null}};
+    const current={rules:{loading:true,failed:false,items:[]},slack:{loading:true,channelsFailed:false,healthFailed:false,channels:[],health:null}};
     render(current.rules,current.slack,connectNotice);
     await Promise.all([
       rules().then(result=>{current.rules=result;render(current.rules,current.slack,connectNotice);}),
@@ -190,7 +204,7 @@
   }
 
   document.addEventListener('submit',async event=>{const form=event.target.closest('form[data-settings-action="add-rule"]');if(!form)return;event.preventDefault();const input=form.elements.rule;const text=String(input?.value||'').trim();if(!text)return;const category=form.elements.category?.value||'Interpretation';const button=form.querySelector('button[type="submit"]');if(button)button.disabled=true;try{await api()?.createRule?.(text,category);if(input)input.value='';await load();}catch(error){console.error('Could not add project rule.',error);if(button)button.disabled=false;window.alert(`Could not save the rule: ${error.message}`);}});
-  document.addEventListener('click',async event=>{const control=event.target.closest('[data-settings-action]');if(!control)return;const action=control.dataset.settingsAction;if(action==='retry-rules'||action==='retry-slack'){await load();}if(action==='delete-rule'){control.disabled=true;try{await api()?.deleteRule?.(control.dataset.ruleId);await load();}catch(error){console.error('Could not remove project rule.',error);control.disabled=false;window.alert(`Could not remove the rule: ${error.message}`);}}if(action==='toggle-channel'){control.disabled=true;const nowEnabled=control.dataset.enabled!=='1';try{await api()?.updateSlackChannel?.(control.dataset.channelRowId,{enabled:nowEnabled});await load();}catch(error){console.error('Could not update Slack channel.',error);control.disabled=false;window.alert(`Could not update the channel: ${error.message}`);}}if(action==='confirm-disconnect-slack'){showSettingsDialog(`<span class="eyebrow">Disconnect Slack</span><h2 id="dialogTitle">Disconnect this Slack workspace?</h2><p>Channel approvals stay as they are. Reconnecting will not re-approve anything on its own.</p><div class="dialog-actions"><button class="btn primary" type="button" data-settings-action="disconnect-slack">Disconnect</button><button class="btn secondary" type="button" data-action="close-dialog">Cancel</button></div>`);}if(action==='disconnect-slack'){control.disabled=true;try{await api()?.disconnectSlack?.();document.getElementById('overlay')?.setAttribute('hidden','');document.body.classList.remove('modal-open');await load();}catch(error){console.error('Could not disconnect Slack.',error);control.disabled=false;window.alert(`Could not disconnect: ${error.message}`);}}if(action==='confirm-reset-demo'){showSettingsDialog(`<span class="eyebrow">Reset to starting scenario</span><h2 id="dialogTitle">Restore the Northstar starting scenario?</h2><p>This removes everything created during testing and restores the same curated starting State, open Reviews, blockers, Questions, Notes, Rules, and History.</p><div class="dialog-actions"><button class="btn primary" type="button" data-settings-action="reset-demo">Reset Northstar</button><button class="btn secondary" type="button" data-action="close-dialog">Cancel</button></div>`);}if(action==='reset-demo'){control.disabled=true;try{await api()?.resetDemo?.();window.location.reload();}catch(error){console.error('Could not reset demo.',error);control.disabled=false;window.alert(error?.isTimeout?error.message:`Northstar was not reset: ${error.message}`);}}});
+  document.addEventListener('click',async event=>{const control=event.target.closest('[data-settings-action]');if(!control)return;const action=control.dataset.settingsAction;if(action==='retry-rules'||action==='retry-slack'){await load();}if(action==='delete-rule'){control.disabled=true;try{await api()?.deleteRule?.(control.dataset.ruleId);await load();}catch(error){console.error('Could not remove project rule.',error);control.disabled=false;window.alert(`Could not remove the rule: ${error.message}`);}}if(action==='toggle-channel'){control.disabled=true;const nowEnabled=control.dataset.enabled!=='1';try{await api()?.updateSlackChannel?.(control.dataset.channelRowId,{enabled:nowEnabled});await load();}catch(error){console.error('Could not update Slack channel.',error);control.disabled=false;window.alert(`Could not update the channel: ${error.message}`);}}if(action==='confirm-disconnect-slack'){showSettingsDialog(`<span class="eyebrow">Disconnect from State</span><h2 id="dialogTitle">Disconnect this Slack workspace from State?</h2><p>State forgets this connection and its saved access token. This does not remove or reinstall the State app in Slack itself -- do that from Slack's own App Directory if that's what you're after. Channel approvals stay as they are; reconnecting will not re-approve anything on its own.</p><div class="dialog-actions"><button class="btn primary" type="button" data-settings-action="disconnect-slack">Disconnect</button><button class="btn secondary" type="button" data-action="close-dialog">Cancel</button></div>`);}if(action==='disconnect-slack'){control.disabled=true;try{await api()?.disconnectSlack?.();document.getElementById('overlay')?.setAttribute('hidden','');document.body.classList.remove('modal-open');await load();}catch(error){console.error('Could not disconnect Slack.',error);control.disabled=false;window.alert(`Could not disconnect: ${error.message}`);}}if(action==='confirm-reset-demo'){showSettingsDialog(`<span class="eyebrow">Reset to starting scenario</span><h2 id="dialogTitle">Restore the Northstar starting scenario?</h2><p>This removes everything created during testing and restores the same curated starting State, open Reviews, blockers, Questions, Notes, Rules, and History.</p><div class="dialog-actions"><button class="btn primary" type="button" data-settings-action="reset-demo">Reset Northstar</button><button class="btn secondary" type="button" data-action="close-dialog">Cancel</button></div>`);}if(action==='reset-demo'){control.disabled=true;try{await api()?.resetDemo?.();window.location.reload();}catch(error){console.error('Could not reset demo.',error);control.disabled=false;window.alert(error?.isTimeout?error.message:`Northstar was not reset: ${error.message}`);}}});
 
   styles();const settingsNav=document.querySelector('.sidebar-nav [data-view="settings"]');let settingsWasActive=!!settingsNav?.classList.contains('active');if(settingsWasActive)load();if(settingsNav){new MutationObserver(()=>{const active=settingsNav.classList.contains('active');if(active&&!settingsWasActive)load();settingsWasActive=active;}).observe(settingsNav,{attributes:true,attributeFilter:['class']});}
 })();

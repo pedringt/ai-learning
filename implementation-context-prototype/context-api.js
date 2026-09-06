@@ -45,18 +45,44 @@
     body: JSON.stringify(body),
   });
 
+  // Unlike request() above, this has no single request/response round trip
+  // to wrap in one timeout -- a streaming answer can legitimately keep
+  // producing text for a while. Instead this is an *inactivity* timeout:
+  // it resets on every chunk received (including the initial connection),
+  // so a slow-but-progressing stream is never killed, but a connection
+  // that stalls completely -- no data, ever, from that point on -- gets
+  // aborted instead of leaving the UI stuck in the streaming state
+  // indefinitely with no recovery path, the same failure mode already
+  // fixed for plain API calls in request() above.
+  const STREAM_INACTIVITY_TIMEOUT_MS = 45000;
   async function askStream(query, previousAnswer = null, handlers = {}) {
-    const response = await fetch(`${base}/api/ask/stream`, {
-      method: 'POST',
-      headers: {'Content-Type':'application/json', 'Accept':'text/event-stream'},
-      body: JSON.stringify({query, ...(previousAnswer ? {previous_answer: previousAnswer} : {})}),
-    });
+    const controller = new AbortController();
+    let watchdog = setTimeout(() => controller.abort(), STREAM_INACTIVITY_TIMEOUT_MS);
+    const resetWatchdog = () => { clearTimeout(watchdog); watchdog = setTimeout(() => controller.abort(), STREAM_INACTIVITY_TIMEOUT_MS); };
+    const timeoutError = () => {
+      const err = new Error('This is taking longer than expected. Please try again.');
+      err.isTimeout = true;
+      return err;
+    };
+    let response;
+    try {
+      response = await fetch(`${base}/api/ask/stream`, {
+        method: 'POST',
+        headers: {'Content-Type':'application/json', 'Accept':'text/event-stream'},
+        body: JSON.stringify({query, ...(previousAnswer ? {previous_answer: previousAnswer} : {})}),
+        signal: controller.signal,
+      });
+    } catch (err) {
+      clearTimeout(watchdog);
+      throw err.name === 'AbortError' ? timeoutError() : err;
+    }
     if (!response.ok) {
+      clearTimeout(watchdog);
       const payload = await response.json().catch(() => ({}));
       const detail = payload?.detail;
       throw new Error(typeof detail === 'string' ? detail : `API error ${response.status}`);
     }
-    if (!response.body) throw new Error('Streaming response is unavailable in this browser');
+    if (!response.body) { clearTimeout(watchdog); throw new Error('Streaming response is unavailable in this browser'); }
     const reader = response.body.getReader();
     const decoder = new TextDecoder();
     let buffer = '';
@@ -74,16 +100,26 @@
       if (event === 'final') finalPayload = payload;
       handlers[event]?.(payload);
     };
-    while (true) {
-      const {value, done} = await reader.read();
-      buffer += decoder.decode(value || new Uint8Array(), {stream: !done});
-      let boundary;
-      while ((boundary = buffer.indexOf('\n\n')) >= 0) {
-        const block = buffer.slice(0, boundary);
-        buffer = buffer.slice(boundary + 2);
-        if (block.trim()) dispatch(block);
+    try {
+      while (true) {
+        let value, done;
+        try {
+          ({value, done} = await reader.read());
+        } catch (err) {
+          throw err.name === 'AbortError' ? timeoutError() : err;
+        }
+        resetWatchdog();
+        buffer += decoder.decode(value || new Uint8Array(), {stream: !done});
+        let boundary;
+        while ((boundary = buffer.indexOf('\n\n')) >= 0) {
+          const block = buffer.slice(0, boundary);
+          buffer = buffer.slice(boundary + 2);
+          if (block.trim()) dispatch(block);
+        }
+        if (done) break;
       }
-      if (done) break;
+    } finally {
+      clearTimeout(watchdog);
     }
     if (buffer.trim()) dispatch(buffer);
     if (!finalPayload) throw new Error('Ask stream ended before a validated answer was ready');

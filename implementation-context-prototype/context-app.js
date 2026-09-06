@@ -66,7 +66,20 @@
     });
   }
 
-  function render(){ updateNav(); const views={overview:renderOverview,notes:renderNotes,'open-items':renderOpenItems,questions:renderOpenItems,review:renderOpenItems,history:renderHistory,'project-overview':renderProjectOverview}; (views[state.view]||renderOverview)(); ASK?.activateWaitStates?.(root); }
+  // 'settings' intentionally maps to a no-op: context-settings.js owns
+  // #viewRoot's content for that view entirely through its own
+  // load()/MutationObserver pair, decoupled from this render(). Without an
+  // explicit no-op here, the `|| renderOverview` fallback below silently
+  // overwrites Settings' content with Workspace's on *any* call to this
+  // render() while state.view==='settings' -- including the one
+  // hydrateBackend() fires when its async fetch resolves, which does not
+  // itself check what view is active. That produces a real, reachable bug
+  // independent of any Settings-specific flow: land on/navigate to
+  // Settings while hydrateBackend's fetch is still in flight (guaranteed
+  // right after a fresh page load, e.g. the Slack OAuth redirect lands
+  // there) and its resolution can clobber Settings back to Workspace
+  // content while the sidebar still shows Settings highlighted.
+  function render(){ updateNav(); const views={overview:renderOverview,notes:renderNotes,'open-items':renderOpenItems,questions:renderOpenItems,review:renderOpenItems,history:renderHistory,'project-overview':renderProjectOverview,settings:()=>{}}; (views[state.view]||renderOverview)(); ASK?.activateWaitStates?.(root); }
 
   function navigateTo(view,{preserveHistoryTopic=false,preserveHistoryEvidence=false}={}){
     state.view=view;
@@ -181,6 +194,44 @@
     return `<section class="project-wiki-topic" id="project-topic-${topic.id}" data-state-ids="${items.map(x=>esc(x.id)).join(' ')}"><div class="project-wiki-topic-head"><h4>${esc(topic.title)}</h4><p>${esc(topic.description)}</p></div><div class="project-wiki-prose">${paragraphs.map(text=>`<p>${esc(text)}</p>`).join('')}</div>${maintained}</section>`;
   }
 
+  // Reuses context-provenance.js's exposed trace-building and markup
+  // functions rather than a second provenance system -- History already
+  // shows "Why State treats this as current" for a focused fact, but an
+  // unfamiliar user has no reason to know that's where it lives. Adds the
+  // same disclosure directly on each maintained fact in Project instead.
+  //
+  // hasAcceptedProvenance() needs the same async bootstrap data
+  // buildTrace() does, so this can't be decided synchronously inside
+  // projectFact() at render time without delaying the whole Project view
+  // on a fetch just for this. Painting the outline immediately and
+  // patching in a toggle per fact once that data resolves matches the
+  // same paint-then-patch pattern already used elsewhere (e.g. Settings'
+  // rules list) -- and a fact with no accepted provenance (e.g. seeded
+  // baseline facts like stage/outcome) just never gets a toggle, per the
+  // "skip silently, no empty state" requirement.
+  let projectProvenanceDecorating=false;
+  async function decorateProjectProvenance(){
+    const PROV=window.STATE_PROVENANCE;
+    if(!PROV?.loadProvenance||projectProvenanceDecorating||state.view!=='project-overview') return;
+    projectProvenanceDecorating=true;
+    try{
+      const data=await PROV.loadProvenance();
+      if(state.view!=='project-overview') return;
+      root.querySelectorAll('.project-maintained-fact[data-state-id]').forEach(li=>{
+        if(!li.isConnected||li.querySelector('.project-fact-provenance')) return;
+        const trace=PROV.buildTrace(li.dataset.stateId,data);
+        if(!PROV.hasAcceptedProvenance(trace)) return;
+        const markup=PROV.traceMarkup(trace);
+        if(!markup) return;
+        const holder=document.createElement('div');
+        holder.className='project-fact-provenance';
+        holder.innerHTML=`<button type="button" class="text-button project-provenance-toggle" data-action="toggle-provenance" aria-expanded="false">Why this is current →</button><div class="project-provenance-body" hidden>${markup}</div>`;
+        li.appendChild(holder);
+      });
+    }catch(error){console.warn('Could not load project provenance.',error);}
+    finally{projectProvenanceDecorating=false;}
+  }
+
   function projectOutlineSection(id,a){
     const items=currentKnowledge(id);
     if(!items.length)return '';
@@ -223,7 +274,9 @@
     const directionParts=orientation.direction.split(/(?<=[.!?])\s+/).filter(Boolean);
     const directionLabel=text=>/two weeks|support reps|pilot runs/i.test(text)?'Pilot':/reviews?|customer-facing|human/i.test(text)?'Guardrail':'Focus';
     const directionSummary=directionParts.map(text=>`<li><strong>${directionLabel(text)}</strong><span>${esc(text)}</span></li>`).join('');
-    root.innerHTML=`<article class="page project-page project-document"><header class="project-document-head" id="project-top"><div class="project-head-row"><div><span class="eyebrow">Current project</span><div class="project-title-line"><h2>${esc(state.data.project.name)}</h2><span class="project-fact-count">${orientation.count} current facts</span></div></div><button class="btn secondary project-settings-button" data-action="project-settings">Project settings</button></div><p class="project-document-summary">The maintained project wiki: a readable view of what the team currently treats as true.</p><dl class="project-document-meta"><div><dt>Stage</dt><dd>${esc(orientation.stage)}</dd></div><div><dt>Outcome</dt><dd>${esc(orientation.outcome)}</dd></div></dl></header><section class="project-document-intro" aria-labelledby="currentDirectionTitle"><strong id="currentDirectionTitle">Current direction</strong><ul class="current-direction-list">${directionSummary}</ul></section><div class="project-outline">${visible.map(([id,a])=>projectOutlineSection(id,a)).join('')||'<div class="empty-state"><h3>No Current State yet.</h3><p>Reviewed project understanding will appear here as a clean outline.</p></div>'}</div></article>`;    requestAnimationFrame(()=>updateProjectSubnavActive());
+    root.innerHTML=`<article class="page project-page project-document"><header class="project-document-head" id="project-top"><div class="project-head-row"><div><span class="eyebrow">Current project</span><div class="project-title-line"><h2>${esc(state.data.project.name)}</h2><span class="project-fact-count">${orientation.count} current facts</span></div></div><button class="btn secondary project-settings-button" data-action="project-settings">Project settings</button></div><p class="project-document-summary">The maintained project wiki: a readable view of what the team currently treats as true.</p><dl class="project-document-meta"><div><dt>Stage</dt><dd>${esc(orientation.stage)}</dd></div><div><dt>Outcome</dt><dd>${esc(orientation.outcome)}</dd></div></dl></header><section class="project-document-intro" aria-labelledby="currentDirectionTitle"><strong id="currentDirectionTitle">Current direction</strong><ul class="current-direction-list">${directionSummary}</ul></section><div class="project-outline">${visible.map(([id,a])=>projectOutlineSection(id,a)).join('')||'<div class="empty-state"><h3>No Current State yet.</h3><p>Reviewed project understanding will appear here as a clean outline.</p></div>'}</div></article>`;
+    decorateProjectProvenance();
+    requestAnimationFrame(()=>updateProjectSubnavActive());
   }
   let askStreamPaintQueued=false;
   let askStreamLastPaint=0;
@@ -750,6 +803,7 @@
   function noteStatusLabel(n){
     if(n.status==='pending') return 'In review';
     if(n.status==='accepted'||n.status==='reviewed') return 'Reviewed';
+    if(n.status==='no_review_needed') return 'No review needed';
     if(n.status==='unknown') return 'Status unavailable';
     if(n.status==='failed') return 'Analysis failed';
     return 'Draft';
@@ -771,11 +825,11 @@
     const target=120+((n.id.charCodeAt(2)||7)*17)%111;
     const preview=n.text.length>target?n.text.slice(0,Math.max(80,target-3)).replace(/\s+\S*$/,'')+'…':n.text;
     const editing=state.editingNoteId===n.id;
-    const statusClass=n.status==='pending'?'pending':(n.status==='accepted'||n.status==='reviewed')?'reviewed':n.status==='failed'?'failed':n.status==='unknown'?'unknown':'draft';
+    const statusClass=n.status==='pending'?'pending':(n.status==='accepted'||n.status==='reviewed')?'reviewed':n.status==='no_review_needed'?'no-review-needed':n.status==='failed'?'failed':n.status==='unknown'?'unknown':'draft';
     const statusBadge=noteStatusControl(n,statusClass);
     const reviewAction=n.status==='failed'&&n.evidenceId
       ? `<button class="text-button" data-action="retry-analysis" data-evidence-id="${n.evidenceId}">Retry analysis</button>`
-      : n.backendManaged||n.status==='pending'||n.status==='accepted'||n.status==='reviewed'||n.status==='unknown'
+      : n.backendManaged||n.status==='pending'||n.status==='accepted'||n.status==='reviewed'||n.status==='no_review_needed'||n.status==='unknown'
         ? ''
         : `<button class="text-button" data-action="send-note-review" data-note-id="${n.id}">Send to review</button>`;
     const body=editing
@@ -796,7 +850,7 @@
   function noteMatchesFilter(n,f){
     if(f==='all') return true;
     if(f==='pending') return n.status==='pending';
-    if(f==='reviewed') return n.status==='accepted'||n.status==='reviewed';
+    if(f==='reviewed') return n.status==='accepted'||n.status==='reviewed'||n.status==='no_review_needed';
     return n.status==='working'||n.status==='draft'||!!n.backendDraft; // editable draft only
   }
 
@@ -1065,14 +1119,15 @@
 
 
   function showDemoHelp(){
-    showDialog(`<span class="eyebrow">How this works</span><h2 id="dialogTitle">State keeps the project’s working understanding current.</h2><p>Add project information as Notes. State preserves the original evidence, identifies anything that could change maintained understanding, and sends consequential changes to Review. Accept a change and you can see the updated understanding in Project and its transition in History.</p><div class="demo-start"><span class="meta-label">Good places to start</span><button class="demo-start-action" data-action="demo-start-ask"><strong>Ask about Northstar</strong><span>Put a useful project question in Ask →</span></button><button class="demo-start-action" data-action="demo-start-note"><strong>Add a sample note</strong><span>Try new project information and see how Review handles it →</span></button><button class="demo-start-action" data-action="demo-start-project"><strong>Explore the maintained Project</strong><span>Read the definitive view of what the team currently treats as true →</span></button></div><div class="demo-reset-help"><div><strong>Want to start over?</strong><span>Restore the curated Northstar starting scenario. You can also reset Northstar from Project Settings.</span></div><button class="text-button demo-reset-link" data-action="confirm-demo-reset">Reset example data →</button></div><div class="dialog-actions demo-help-actions"><button class="btn primary" data-action="close-dialog">Got it</button></div>`);
+    const steps=['Information comes in','State interprets it','Important changes need review','Current State stays up to date','Project + Ask use that understanding'];
+    showDialog(`<span class="eyebrow">How this works</span><h2 id="dialogTitle">State keeps the project’s working understanding current.</h2><ul class="demo-flow">${steps.map(s=>`<li>${esc(s)}</li>`).join('')}</ul><p class="demo-flow-principle">AI interprets → software enforces → people decide</p><div class="demo-start"><span class="meta-label">Good places to start</span><button class="demo-start-action" data-action="demo-start-ask"><strong>Ask about Northstar</strong><span>Put a useful project question in Ask →</span></button><button class="demo-start-action" data-action="demo-start-note"><strong>Add a sample note</strong><span>Try new project information and see how Review handles it →</span></button><button class="demo-start-action" data-action="demo-start-project"><strong>Explore the maintained Project</strong><span>Read the definitive view of what the team currently treats as true →</span></button></div><div class="demo-reset-help"><div><strong>Want to start over?</strong><span>Restore the curated Northstar starting scenario. You can also reset Northstar from Project Settings.</span></div><button class="text-button demo-reset-link" data-action="confirm-demo-reset">Reset example data →</button></div><div class="dialog-actions demo-help-actions"><button class="btn primary" data-action="close-dialog">Got it</button></div>`);
   }
 
   function showExamples(){
     const groups=[
-      ['Understand',['What’s the current plan for the pilot?','What should I know about access and entitlements?']],
-      ['Decide',['What still needs to be decided before launch?','What is blocking the pilot right now?']],
-      ['Prepare',['Prepare me for the security meeting.','What has changed recently?']]
+      ['Catch me up',['What’s the current plan for the pilot?','What should I know about access and entitlements?']],
+      ['What’s still unresolved?',['What still needs to be decided before launch?','What is blocking the pilot right now?']],
+      ['Prepare for a meeting',['Prepare me for the security meeting.','What has changed recently?']]
     ];
     showDialog(`<span class="eyebrow">Ask examples</span><h2 id="dialogTitle">What can I ask?</h2><p>Choose an example to put it in Ask. You can edit it before sending.</p><div class="example-groups">${groups.map(([g,items])=>`<section><h3>${g}</h3>${items.map(x=>`<button class="example-row" data-action="example-fill" data-prompt="${esc(x)}">${esc(x)}<span aria-hidden="true">→</span></button>`).join('')}</section>`).join('')}</div>`);
   }
@@ -1241,7 +1296,21 @@
     const backendNotes=(items||[]).map(e=>{
       const open=openByEvidence.get(e.id)||[], resolved=resolvedByEvidence.get(e.id)||[];
       const reviewStatusKnown=Array.isArray(openReviews)&&Array.isArray(resolvedReviews);
-      const status=e.processing_status==='failed'?'failed':!reviewStatusKnown?'unknown':open.length?'pending':resolved.some(r=>r.resolution==='updated')?'accepted':e.processing_status==='processed'?'reviewed':'working';
+      // 'reviewed' means a human actually looked at a Review for this
+      // evidence (resolved.length>0), whether or not it changed Current
+      // State. That's distinct from 'no_review_needed': the model judged
+      // the evidence non-consequential and no Review was ever created, so
+      // no human was ever involved. Collapsing these into one status/label
+      // (as this used to) reads as "a human reviewed and approved this"
+      // for evidence nobody ever reviewed -- exactly the interpret/
+      // authorize distinction State's authority model exists to preserve.
+      const status=e.processing_status==='failed'?'failed'
+        :!reviewStatusKnown?'unknown'
+        :open.length?'pending'
+        :resolved.some(r=>r.resolution==='updated')?'accepted'
+        :resolved.length?'reviewed'
+        :e.processing_status==='processed'?'no_review_needed'
+        :'working';
       const displayTime=evidenceDisplayTimestamp(e);
       return {id:`api-note-${e.id}`,title:sourceLabel(e.source_type),text:e.content,source:sourceLabel(e.source_type),date:formatBackendDate(displayTime),dateISO:displayTime,submittedISO:displayTime,topics:[],status,reviewId:open[0]?.id||null,reviewIds:open.map(r=>r.id),resolvedReviewIds:resolved.map(r=>r.id),historyIds:[],historyKnowledgeIds:[],evidenceId:e.id,backendManaged:true};
     });
@@ -1460,7 +1529,7 @@
       const result=await submitEvidence(text,'manual_note');
       const stamp=Date.now(), noteId='n-'+stamp;
       const apiReviews=(result.reviews||[]).map(r=>mapApiReview(r,text));
-      state.data.notes.unshift({id:noteId,title:'Project update',text,source:'Update',date:todayLabel(),dateISO:todayISO(),topics:[],status:apiReviews.length?'pending':'reviewed',reviewId:apiReviews[0]?.id||null,reviewIds:apiReviews.map(r=>r.id),evidenceId:result.evidence_id});
+      state.data.notes.unshift({id:noteId,title:'Project update',text,source:'Update',date:todayLabel(),dateISO:todayISO(),topics:[],status:apiReviews.length?'pending':'no_review_needed',reviewId:apiReviews[0]?.id||null,reviewIds:apiReviews.map(r=>r.id),evidenceId:result.evidence_id});
       apiReviews.forEach(r=>{r.evidenceId=noteId; upsertBackendReview(r);});
       state.reviewBannerDismissed=false;
       state.isAnalyzing=false; stopAnalysisClock();
@@ -1502,7 +1571,7 @@
       const result=await submitEvidence(n.text,'working_note');
       const apiReviews=(result.reviews||[]).map(r=>mapApiReview(r,n.text));
       if(n.draftId){try{await API.deleteDraft(n.draftId);}catch(err){console.warn('Evidence saved but draft cleanup failed:',err);}}
-      n.backendDraft=false; n.draftId=null; n.backendManaged=true; n.status=apiReviews.length?'pending':'reviewed'; n.reviewId=apiReviews[0]?.id||null; n.reviewIds=apiReviews.map(r=>r.id); n.evidenceId=result.evidence_id;
+      n.backendDraft=false; n.draftId=null; n.backendManaged=true; n.status=apiReviews.length?'pending':'no_review_needed'; n.reviewId=apiReviews[0]?.id||null; n.reviewIds=apiReviews.map(r=>r.id); n.evidenceId=result.evidence_id;
       apiReviews.forEach(r=>{r.evidenceId=n.id; upsertBackendReview(r);});
       state.reviewBannerDismissed=false; state.isAnalyzing=false; stopAnalysisClock(); updateNav();
       if(apiReviews.length) showDialog(`<span class="eyebrow">Done</span><h2 id="dialogTitle">Note sent to Review</h2><p>${apiReviews.length===1?'One review needs your decision.':`${apiReviews.length} reviews need your decisions.`}</p><div class="dialog-actions"><button class="btn primary" data-action="go-review">Go to Review</button><button class="btn secondary" data-action="go-notes">Back to Notes</button></div>`);
@@ -1555,6 +1624,7 @@
     const reviewFilter=e.target.closest('.review-filters [data-review-filter]'); if(reviewFilter){ state.reviewFilter=reviewFilter.dataset.reviewFilter; renderReview(); return; }
     const sectionToggle=e.target.closest('[data-action="toggle-open-item-section"]'); if(sectionToggle){ const key=sectionToggle.dataset.section; const reviews=uiPendingReviews(), questions=openQuestions(); const count=key==='reviews'?reviews.length:key==='blockers'?questions.filter(q=>q.blocking).length:questions.filter(q=>!q.blocking).length; const current=state.openItemSections[key]===null?(key==='questions'&&count>5):!!state.openItemSections[key]; state.openItemSections[key]=!current; renderOpenItems(); return; }
     const reviewToggle=e.target.closest('[data-action="toggle-review-card"]'); if(reviewToggle){ const id=reviewToggle.dataset.reviewId; state.expandedReviewId=state.expandedReviewId===id?null:id; renderOpenItems(); return; }
+    const provenanceToggle=e.target.closest('[data-action="toggle-provenance"]'); if(provenanceToggle){ const body=provenanceToggle.parentElement?.querySelector('.project-provenance-body'); if(body){ const expanded=!body.hidden; body.hidden=expanded; provenanceToggle.setAttribute('aria-expanded',String(!expanded)); provenanceToggle.textContent=expanded?'Why this is current →':'Hide why this is current'; } return; }
     const p=e.target.closest('[data-prompt]:not([data-action="example-fill"])'); if(p){ submitAsk(p.dataset.prompt); return; }
     const a=e.target.closest('[data-action]'); if(!a)return;
     const act=a.dataset.action;
@@ -1630,7 +1700,7 @@
           const result=await submitEvidence(text,`question_response:${q.id}`);
           const stamp=Date.now(), noteId='n-q-'+stamp;
           const apiReviews=(result.reviews||[]).map(r=>mapApiReview(r,text,{resolvesQuestionId:q.id}));
-          state.data.notes.unshift({id:noteId,title:'Answer to: '+q.text,text,source:'Question response',date:todayLabel(),dateISO:todayISO(),topics:q.topics,status:apiReviews.length?'pending':'reviewed',reviewId:apiReviews[0]?.id||null,reviewIds:apiReviews.map(r=>r.id),evidenceId:result.evidence_id});
+          state.data.notes.unshift({id:noteId,title:'Answer to: '+q.text,text,source:'Question response',date:todayLabel(),dateISO:todayISO(),topics:q.topics,status:apiReviews.length?'pending':'no_review_needed',reviewId:apiReviews[0]?.id||null,reviewIds:apiReviews.map(r=>r.id),evidenceId:result.evidence_id});
           apiReviews.forEach(r=>{r.evidenceId=noteId; upsertBackendReview(r);});
           state.reviewBannerDismissed=false; state.isAnalyzing=false; stopAnalysisClock(); updateNav();
           if(apiReviews.length) showDialog(`<span class="eyebrow">Added</span><h2 id="dialogTitle">Answer sent to Review.</h2><p>The question stays unresolved until you accept reviewed evidence that establishes an answer.</p><div class="dialog-actions"><button class="btn primary" data-action="go-review">Go to Review</button></div>`);
@@ -1705,19 +1775,13 @@
   // The Slack "Connect Slack" OAuth round trip ends with the backend
   // redirecting the browser back here with ?slack_connect=success|error.
   // Land directly on Settings' Slack section with that result instead of
-  // leaving the user on Workspace with an unexplained query string.
-  //
-  // This must NOT call navigateTo() directly: this script runs before
-  // context-history.js's, so toggling the sidebar's active class here
-  // happens before that module's own MutationObserver exists to see it.
-  // context-history.js then reads the URL hash itself on its own boot and,
-  // finding one it doesn't recognize, rewrites the URL back over whatever
-  // was just set -- leaving the sidebar showing Settings as active while
-  // state.view silently disagrees, and a later click on Settings becomes a
-  // no-op (already "active", no class transition to observe). Setting the
-  // hash to the plain route context-history.js already recognizes lets its
-  // existing (already correct) restore-on-load path do this via a real
-  // click on the nav button instead.
+  // leaving the user on Workspace with an unexplained query string. Safe
+  // to call navigateTo() directly now that render()'s views map has an
+  // explicit no-op for 'settings' -- previously this raced with
+  // hydrateBackend()'s async completion (in flight on every fresh page
+  // load) falling back to Workspace content the moment it resolved, which
+  // is the real bug that was fixed above, not anything specific to this
+  // boot step.
   const bootParams=new URLSearchParams(location.search);
   const slackConnectResult=bootParams.get('slack_connect');
   if(slackConnectResult){
@@ -1726,6 +1790,7 @@
     bootParams.delete('slack_connect');
     const cleanedSearch=bootParams.toString();
     history.replaceState(history.state,'',location.pathname+(cleanedSearch?`?${cleanedSearch}`:'')+'#settings');
+    navigateTo('settings');
   }
   window.STATE_ASK_TEST_API={state,detectAskIntent,findScenario,structuredAskResult,scenarioResult,intentAskHtml,submitAsk,upsertBackendReview,replaceBackendOpenReviews,mapApiReview};
   render();

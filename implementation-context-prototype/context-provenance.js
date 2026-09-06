@@ -121,5 +121,5 @@
   document.head.appendChild(style);
   const observer=new MutationObserver(()=>requestAnimationFrame(decorateFocusedHistory));
   observer.observe(root,{childList:true,subtree:true});
-  window.STATE_PROVENANCE=Object.freeze({buildTrace,traceMarkup,hasAcceptedProvenance,affectedStateIds,supportingResolvedReview,normalizeBootstrap});
+  window.STATE_PROVENANCE=Object.freeze({buildTrace,traceMarkup,hasAcceptedProvenance,affectedStateIds,supportingResolvedReview,normalizeBootstrap,loadProvenance});
 })();
