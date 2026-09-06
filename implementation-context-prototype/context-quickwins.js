@@ -22,9 +22,6 @@
       .ask-grounding article{padding:10px 0;border-bottom:1px solid var(--line,#ddd)}
       .ask-grounding article:last-child{border-bottom:0}
       .ask-grounding p{margin:4px 0 0}
-      .ask-related-summary{margin-top:18px;padding-top:16px;border-top:1px dashed var(--line,#d7d3e3)}
-      .ask-related-summary strong{display:block;margin-bottom:5px}
-      .ask-related-summary p{margin:0 0 8px;color:var(--muted,#666)}
       .open-question-row.is-awaiting-review .open-item-label{font-weight:700}
       .open-question-row.is-awaiting-review .question-awaiting-review-note{display:block;margin-top:4px;font-size:12px;line-height:1.35;color:var(--muted,#666)}
       @media (max-width:600px){
@@ -63,18 +60,6 @@
       const actions=answer.querySelector('.ask-state-actions');
       const safety=answer.querySelector('.ask-open-items-safety');
       if(actions)answer.insertBefore(details,actions);else if(safety)answer.insertBefore(details,safety);else answer.appendChild(details);
-    });
-  }
-
-  function clarifyRemainingOpenItems(scope=document){
-    scope.querySelectorAll('.ask-open-items-safety').forEach(box=>{
-      if(box.dataset.quickwinRemaining==='true')return;
-      const heading=box.querySelector('strong');
-      if(heading) heading.textContent='Other open items remain';
-      const button=box.querySelector('button[data-view="open-items"]');
-      if(button) button.textContent='View all open items →';
-      box.classList.add('ask-related-summary');
-      box.dataset.quickwinRemaining='true';
     });
   }
 
@@ -170,7 +155,7 @@
     });
   }
 
-  function enhance(scope=document){addStyles();addAskStarters(scope);addGrounding(scope);clarifyRemainingOpenItems(scope);improveOpenItemsSummary(scope);clarifyQuestionsAwaitingReview(scope);improveEmptyStates(scope);clarifyReviewCompletion(scope);clarifyReviewActions(scope);clarifyNotesProcessedFilter(scope);improveProjectProvenanceSummary(scope);}
+  function enhance(scope=document){addStyles();addAskStarters(scope);addGrounding(scope);improveOpenItemsSummary(scope);clarifyQuestionsAwaitingReview(scope);improveEmptyStates(scope);clarifyReviewCompletion(scope);clarifyReviewActions(scope);clarifyNotesProcessedFilter(scope);improveProjectProvenanceSummary(scope);}
   let queued=false;const schedule=()=>{if(queued)return;queued=true;requestAnimationFrame(()=>{queued=false;enhance(document);});};
   new MutationObserver(schedule).observe(document.documentElement,{childList:true,subtree:true});
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',schedule,{once:true});else schedule();
