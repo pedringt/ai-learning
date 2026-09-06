@@ -648,7 +648,11 @@
     }
     const previousLive=state.result?.liveAsk||null;
     const followupMode=ASK?.followupMode?.(raw,previousLive)||'new';
-    const visiblePrevious=previousLive;
+    // A fresh/topic-shift question must not show the old answer while the new
+    // one is loading -- otherwise the stale answer sits on screen for the
+    // entire wait, which reads as State "falling back" to it even though the
+    // final swap (driven by the backend's own followup_mode) was always correct.
+    const visiblePrevious=followupMode==='new'?null:previousLive;
     if(ASK?.canHandle(raw,previousLive)){
       state.resultQuery=raw;
       if(ASK.canStream?.(raw)){
