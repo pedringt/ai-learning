@@ -63,7 +63,9 @@ The production frontend must point to the production API. Staging intentionally 
 
 ## Open work
 
-**Remaining checklist item:** confirm the production Slack app credentials are set as Render env vars on the `state-api` (production) service -- Paige's task, never to be written in this file (see "Authority / credentials" below).
+~~**Remaining checklist item:** confirm the production Slack app credentials are set as Render env vars on the `state-api` (production) service.~~ Done 2026-09-06: `SLACK_TEAM_ID` and `SLACK_TEST_CHANNEL_ID` are set on production and the `state-test` channel (`C0BURAA7MCP`) is confirmed approved live (`/api/integrations/slack/channels` returns it with `enabled: true`).
+
+**Known gap, confirmed 2026-09-06: inviting the State Slack app to a channel does not approve that channel.** Paige's reasonable assumption was that inviting the bot activates the channel; it doesn't. Slack-level membership (can the bot receive events from this channel) and State's own internal approval flag (`slack_channels.enabled`, will State actually evaluate what it hears) are two separate things today, with nothing bridging them -- `slack_intake_service.py` ignores every event type except `message`, so it doesn't even see a "bot added to channel" event to act on. The only way a channel becomes approved right now is the `SLACK_TEAM_ID`/`SLACK_TEST_CHANNEL_ID` env-var-driven startup bootstrap (Phase 1, no admin UI). **Future work:** build a real "auto-approve on invite" path (likely listening for Slack's channel-join event and calling `ensure_channel_approved` from it, or building the Phase-2-planned admin UI so approval doesn't depend on env vars/redeploys at all) -- scope this properly rather than a quick patch, since it changes who/what can add an approved evidence source.
 
 Deliberately still out of scope: real Slack token revocation on Disconnect, and automatic channel discovery via the Slack Web API (channels are currently approved manually).
 
