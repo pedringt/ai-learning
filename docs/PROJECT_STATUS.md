@@ -73,6 +73,16 @@ The production frontend must point to the production API. Staging intentionally 
 
 Deliberately still out of scope: real Slack token revocation on Disconnect, and automatic channel discovery via the Slack Web API (channels are currently approved manually).
 
+### Next up (queued 2026-09-06): tech debt pass
+
+Paige asked to tackle tech debt in a fresh chat right after PR #64 promoted. Start from `README.md`'s "Known debt" section, which is current as of this promotion:
+
+- **CSS override layering in `context-tool.css`** is the highest-priority item — around thirty `@media` blocks at various breakpoints, heavy `!important` use, and a pattern where each new visual pass adds one more override layer on top of the last rather than editing the original rule (the 2026-09-06 Open Items tier-color pass is the most recent example, and its own comment literally says it "supersedes the earlier layered overrides above"). Consolidate rather than adding a fourth or fifth generation of the same pattern.
+- `context-app.js` is a single ~1,840-line module; splitting it was investigated and rejected for a documented reason (ES modules are CORS-blocked over `file://`, and the prototype must open from the filesystem) — re-read that reasoning in the README before reopening the idea, it's not a naive oversight.
+- `phase2_current/` is named as though it were dead spike code but is load-bearing runtime code (imported by `anthropic_provider.py`, `openai_provider.py`, `interpretation_pipeline_integrated.py`, and the Slack services). Renaming it would be the honest fix, but touches every provider's import path — scope it as a real change, not a quick rename.
+
+None of these are urgent bugs — they're the kind of thing worth a deliberate, scoped session rather than opportunistic edits mixed into feature work.
+
 ### Next planned work: approved-channel config UI polish and connection health display
 
 Read this file's git history / ask Paige for the 2026-09-05 design discussion if more product-philosophy context is needed before scoping further Slack work; the short version:
