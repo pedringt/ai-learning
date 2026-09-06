@@ -131,6 +131,30 @@ def _get_channel(connection: Connection, team_id: str, channel_id: str) -> dict 
     ).fetchone()
 
 
+def _ensure_channel_seen(connection: Connection, team_id: str, channel_id: str) -> dict:
+    """Record a channel's existence the first time Slack sends an event from
+    it, disabled by default.
+
+    Without this, an event from any channel State hasn't already been
+    manually pre-approved for (today, only via ensure_channel_approved's
+    startup env-var configuration) is dropped with no trace and no way for
+    a human to ever approve it short of editing environment config and
+    redeploying. This makes an unapproved channel discoverable in Settings'
+    channel list instead -- approval remains an explicit human action (the
+    Settings toggle), this just stops silently losing the option.
+    """
+    existing = _get_channel(connection, team_id, channel_id)
+    if existing is not None:
+        return existing
+    connection.execute(
+        "INSERT INTO slack_channels "
+        "(id, team_id, channel_id, channel_name, enabled, include_threads, include_bots) "
+        "VALUES (?,?,?,?,0,1,0)",
+        (new_id("slkch"), team_id, channel_id, None),
+    )
+    return _get_channel(connection, team_id, channel_id)
+
+
 def ensure_channel_approved(
     connection: Connection, *, team_id: str, channel_id: str, channel_name: str | None = None
 ) -> None:
@@ -285,8 +309,8 @@ def process_slack_event(
     """Apply deterministic filtering/aggregation for one already-deduplicated event."""
     now_iso = utc_now_iso(now)
     kind = classify_event(event)
-    channel = _get_channel(connection, team_id, channel_id)
-    approved = channel is not None and channel["enabled"] == 1
+    channel = _ensure_channel_seen(connection, team_id, channel_id)
+    approved = channel["enabled"] == 1
 
     if kind == "bot_message":
         kind = "content_message" if approved and channel["include_bots"] == 1 else "noise"

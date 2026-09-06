@@ -60,9 +60,8 @@
   function sourceLabel(sourceType){
     const value=String(sourceType||'Manual').toLowerCase();
     if(value==='slack') return 'Slack';
-    if(value==='google_drive'||value==='drive') return 'Google Drive';
+    if(value==='google_docs'||value==='docs') return 'Google Docs';
     if(value==='notion') return 'Notion';
-    if(value==='confluence') return 'Confluence';
     if(['manual','note','notes','evidence'].includes(value)) return 'Manual note';
     return String(sourceType||'Evidence').replace(/[_-]+/g,' ').replace(/\b\w/g,c=>c.toUpperCase());
   }
@@ -122,5 +121,5 @@
   document.head.appendChild(style);
   const observer=new MutationObserver(()=>requestAnimationFrame(decorateFocusedHistory));
   observer.observe(root,{childList:true,subtree:true});
-  window.STATE_PROVENANCE=Object.freeze({buildTrace,traceMarkup,hasAcceptedProvenance,affectedStateIds,supportingResolvedReview,normalizeBootstrap});
+  window.STATE_PROVENANCE=Object.freeze({buildTrace,traceMarkup,hasAcceptedProvenance,affectedStateIds,supportingResolvedReview,normalizeBootstrap,loadProvenance});
 })();

@@ -348,5 +348,9 @@ def test_followup_rendering_obeys_payload_mode_and_preserves_previous_answer_sta
     app = (FRONTEND / "context-app.js").read_text()
     assert "followup_mode:'new'" in ask
     assert "payload?.followup_mode" in app
-    assert "const visiblePrevious=previousLive;" in app
+    # A fresh/topic-shift question must not carry the stale answer into the
+    # loading/streaming state either -- not just the final rendered state.
+    # (Regression: 2026-09-06 live QA found the old answer stayed fully
+    # visible for the entire loading wait on a topic shift.)
+    assert "const visiblePrevious=followupMode==='new'?null:previousLive;" in app
     assert "raw.resolution==='updated' && source.startsWith('question_response:')" not in app

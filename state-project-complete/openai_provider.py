@@ -19,6 +19,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent / "phase2_current"))
 
 from state_spike.semantic_validation import InterpretationContextSnapshot
+from provider_json import extract_json_object
 
 
 logger = logging.getLogger("state.provider.openai")
@@ -110,6 +111,44 @@ class OpenAIProvider:
                 structured = json.loads(response_text)
 
         return structured
+
+    def classify_slack_relevance(self, conversation_text: str) -> Mapping[str, Any]:
+        """Bounded relevance check for a Slack conversation checkpoint.
+
+        Deliberately separate from interpret(): this decides whether a
+        conversation is worth turning into Evidence at all, before any
+        Evidence exists to interpret against State/Reviews. See
+        slack_relevance_service.py, the only caller.
+        """
+        prompt = (
+            "You are helping a project-knowledge tool called State decide whether a Slack "
+            "conversation contains information worth remembering as project Evidence.\n\n"
+            "Flag it as relevant only if it contains one or more of: a decision or change, "
+            "a requirement or constraint, a risk or blocker, an answer to an open question, "
+            "an important correction, a change in ownership or authority, a rollout/readiness "
+            "change, or an unresolved contradiction that matters to the project.\n\n"
+            "Casual conversation, scheduling chatter, acknowledgements, and social discussion "
+            "are NOT relevant. When genuinely unsure, prefer relevant=true -- missing "
+            "consequential project information is worse than a small amount of extra Evidence.\n\n"
+            f'Conversation:\n"""\n{conversation_text}\n"""\n\n'
+            'Respond with ONLY a JSON object, no other text: {"relevant": true or false, "summary": '
+            '"a one or two sentence standalone statement of what the conversation established, '
+            'written so it makes sense without the original messages. Empty string if not relevant."}'
+        )
+        response = self.client.chat.completions.create(
+            model=self.model_identifier,
+            max_tokens=300,
+            messages=[{"role": "user", "content": prompt}],
+        )
+        response_text = response.choices[0].message.content
+        if not response_text:
+            return {"relevant": False, "summary": ""}
+        try:
+            parsed = extract_json_object(response_text)
+        except json.JSONDecodeError:
+            logger.warning("Slack relevance classification returned non-JSON response; treating as not relevant.")
+            return {"relevant": False, "summary": ""}
+        return {"relevant": bool(parsed.get("relevant")), "summary": str(parsed.get("summary") or "")}
 
     def _build_prompt(
         self,

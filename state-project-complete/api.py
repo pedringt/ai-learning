@@ -11,12 +11,13 @@ from copy import deepcopy
 from threading import Lock
 from typing import Literal
 import logging
+import secrets
 import uuid
 import time
 
 from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import StreamingResponse
+from fastapi.responses import RedirectResponse, StreamingResponse
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from anthropic_provider import AnthropicProvider
@@ -34,6 +35,8 @@ from slack_intake_service import (
     handle_slack_event,
     run_checkpoint_poll_loop,
 )
+from slack_oauth_service import SlackOAuthError, build_authorize_url, disconnect_most_recent, exchange_code_for_token, save_connection
+from slack_relevance_service import ProviderRelevanceClassifier, run_relevance_poll_loop
 from slack_signing import SlackSignatureError, verify_slack_request
 def _build_rev() -> str:
     """Identify the running build.
@@ -134,6 +137,26 @@ class Settings(BaseModel):
     # without a manual DB step.
     slack_test_channel_id: str | None = None
     slack_test_channel_name: str | None = None
+    # Defaults to the product-intended 15 minutes (DEFAULT_QUIET_WINDOW_SECONDS).
+    # Override with SLACK_QUIET_WINDOW_SECONDS for faster manual testing --
+    # e.g. staging while iterating on the relevance/Evidence pipeline live.
+    slack_quiet_window_seconds: int | None = None
+    # Opt-in like slack_checkpoint_poll_seconds: unset means the Phase 2
+    # relevance-evaluation loop does not run (local dev and tests, and any
+    # deployment that hasn't explicitly turned it on). Set
+    # SLACK_RELEVANCE_POLL_SECONDS to enable it.
+    slack_relevance_poll_seconds: int | None = None
+    # The self-serve "Connect Slack" OAuth flow. All four must be set for
+    # the Connect button to work; public_base_url/frontend_base_url are
+    # required (not derived from the incoming request) because this service
+    # runs behind Render's proxy without --proxy-headers, so request.base_url
+    # would report plain http and silently mismatch the https redirect_uri
+    # registered in the Slack app.
+    slack_client_id: str | None = None
+    slack_client_secret: str | None = None
+    public_base_url: str | None = None
+    frontend_base_url: str | None = None
+    environment: str = "staging"
 
     def connection_url(self) -> str:
         if self.database_url:
@@ -162,6 +185,17 @@ class Settings(BaseModel):
             ),
             slack_test_channel_id=os.getenv("SLACK_TEST_CHANNEL_ID"),
             slack_test_channel_name=os.getenv("SLACK_TEST_CHANNEL_NAME", "state-test"),
+            slack_quiet_window_seconds=(
+                int(raw) if (raw := os.getenv("SLACK_QUIET_WINDOW_SECONDS", "").strip()).isdigit() else None
+            ),
+            slack_relevance_poll_seconds=(
+                int(raw) if (raw := os.getenv("SLACK_RELEVANCE_POLL_SECONDS", "").strip()).isdigit() else None
+            ),
+            slack_client_id=os.getenv("SLACK_CLIENT_ID"),
+            slack_client_secret=os.getenv("SLACK_CLIENT_SECRET"),
+            public_base_url=(os.getenv("STATE_PUBLIC_BASE_URL", "").strip().rstrip("/") or None),
+            frontend_base_url=(os.getenv("STATE_FRONTEND_BASE_URL", "").strip().rstrip("/") or None),
+            environment=os.getenv("STATE_ENVIRONMENT", "staging").strip().lower(),
         )
 
 
@@ -225,6 +259,13 @@ class DraftNoteUpdate(BaseModel):
         if not value:
             raise ValueError("content must not be blank")
         return value
+
+
+class SlackChannelUpdate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    enabled: bool | None = None
+    include_threads: bool | None = None
+    include_bots: bool | None = None
 
 
 class QuestionBlockingInput(BaseModel):
@@ -321,19 +362,42 @@ def create_app(settings: Settings | None = None, provider: InterpretationProvide
             checkpoint_task = asyncio.create_task(
                 run_checkpoint_poll_loop(get_connection, settings.slack_checkpoint_poll_seconds, logger)
             )
+        relevance_task = None
+        if settings.slack_relevance_poll_seconds:
+            if app.state.provider is None:
+                logger.warning(
+                    "SLACK_RELEVANCE_POLL_SECONDS is set but no provider is configured; "
+                    "relevance evaluation will not run."
+                )
+            else:
+                relevance_task = asyncio.create_task(
+                    run_relevance_poll_loop(
+                        get_connection,
+                        ProviderRelevanceClassifier(app.state.provider),
+                        app.state.provider,
+                        settings.slack_relevance_poll_seconds,
+                        logger,
+                    )
+                )
         yield
-        if checkpoint_task is not None:
-            checkpoint_task.cancel()
-            try:
-                await checkpoint_task
-            except asyncio.CancelledError:
-                pass
+        for task in (checkpoint_task, relevance_task):
+            if task is not None:
+                task.cancel()
+                try:
+                    await task
+                except asyncio.CancelledError:
+                    pass
 
     app = FastAPI(title="State API", version="0.1.0", lifespan=lifespan)
     app.state.provider = provider
     app.state.ask_provider = ask_provider
     app.state.ask_cache = AskResponseCache()
     app.state.settings = settings
+    # CSRF guard for the OAuth redirect round trip: a short-lived, single-use
+    # token minted at /oauth/start and consumed at /oauth/callback. In-memory
+    # is fine for a single-instance service (WEB_CONCURRENCY=1); a lost token
+    # on restart just means an in-flight OAuth attempt has to be retried.
+    app.state.slack_oauth_states = {}
     app.add_middleware(
         CORSMiddleware,
         allow_origins=settings.cors_origins,
@@ -718,7 +782,8 @@ def create_app(settings: Settings | None = None, provider: InterpretationProvide
         with get_connection() as connection:
             try:
                 result = handle_slack_event(
-                    connection, payload, quiet_window_seconds=DEFAULT_QUIET_WINDOW_SECONDS
+                    connection, payload,
+                    quiet_window_seconds=settings.slack_quiet_window_seconds or DEFAULT_QUIET_WINDOW_SECONDS
                 )
             except ValueError as exc:
                 raise HTTPException(status_code=400, detail=str(exc)) from exc
@@ -732,6 +797,141 @@ def create_app(settings: Settings | None = None, provider: InterpretationProvide
             result.get("duplicate"), result.get("disposition"),
         )
         return {"ok": True, **result}
+
+    @app.get("/api/integrations/slack/channels")
+    def get_slack_channels() -> dict:
+        """Channels State knows about, with their approval config and basic activity.
+
+        A channel only has a row once Slack has sent an event from it (or it
+        was seeded via ensure_channel_approved at startup) -- there is no
+        channel-discovery/OAuth flow yet, so this cannot list every channel
+        in a workspace, only ones already seen.
+        """
+        with get_connection() as connection:
+            rows = connection.execute(
+                "SELECT id, team_id, channel_id, channel_name, enabled, include_threads, include_bots, "
+                "ingestion_started_at FROM slack_channels ORDER BY channel_name, channel_id"
+            ).fetchall()
+            channels = []
+            for row in rows:
+                last_event = connection.execute(
+                    "SELECT MAX(received_at) AS last_event_at FROM slack_events WHERE team_id=? AND channel_id=?",
+                    (row["team_id"], row["channel_id"]),
+                ).fetchone()
+                channels.append({
+                    "id": row["id"],
+                    "team_id": row["team_id"],
+                    "channel_id": row["channel_id"],
+                    "channel_name": row["channel_name"],
+                    "enabled": bool(row["enabled"]),
+                    "include_threads": bool(row["include_threads"]),
+                    "include_bots": bool(row["include_bots"]),
+                    "ingestion_started_at": row["ingestion_started_at"],
+                    "last_event_at": last_event["last_event_at"] if last_event else None,
+                })
+        return {"items": channels}
+
+    @app.patch("/api/integrations/slack/channels/{channel_row_id}")
+    def patch_slack_channel(channel_row_id: str, payload: SlackChannelUpdate) -> dict:
+        updates = payload.model_dump(exclude_unset=True)
+        if not updates:
+            raise HTTPException(status_code=400, detail="No fields to update")
+        with get_connection() as connection:
+            existing = connection.execute(
+                "SELECT id FROM slack_channels WHERE id=?", (channel_row_id,)
+            ).fetchone()
+            if existing is None:
+                raise HTTPException(status_code=404, detail="Slack channel not found")
+            set_clause = ", ".join(f"{field}=?" for field in updates)
+            values = [int(v) if isinstance(v, bool) else v for v in updates.values()]
+            connection.execute(
+                f"UPDATE slack_channels SET {set_clause} WHERE id=?", (*values, channel_row_id)
+            )
+            connection.commit()
+            row = connection.execute(
+                "SELECT id, enabled, include_threads, include_bots FROM slack_channels WHERE id=?",
+                (channel_row_id,),
+            ).fetchone()
+        return {
+            "id": row["id"],
+            "enabled": bool(row["enabled"]),
+            "include_threads": bool(row["include_threads"]),
+            "include_bots": bool(row["include_bots"]),
+        }
+
+    @app.get("/api/integrations/slack/health")
+    def get_slack_health() -> dict:
+        """Compact connection/activity health -- not raw logs. See
+        docs/architecture/SLACK_INTEGRATION_PLAN.md, "Integration health"."""
+        with get_connection() as connection:
+            connection_row = connection.execute(
+                "SELECT team_id, workspace_name, status, connected_at, last_event_at FROM slack_connections "
+                "ORDER BY connected_at DESC LIMIT 1"
+            ).fetchone()
+            pending = connection.execute(
+                "SELECT COUNT(*) AS pending FROM slack_checkpoints sc "
+                "LEFT JOIN slack_checkpoint_evaluations sce ON sce.checkpoint_id = sc.id "
+                "WHERE sce.id IS NULL"
+            ).fetchone()
+        if connection_row is None:
+            return {"connected": False, "pending_checkpoints": pending["pending"] if pending else 0}
+        return {
+            "connected": connection_row["status"] == "connected",
+            "workspace_name": connection_row["workspace_name"],
+            "team_id": connection_row["team_id"],
+            "connected_at": connection_row["connected_at"],
+            "last_event_at": connection_row["last_event_at"],
+            "pending_checkpoints": pending["pending"] if pending else 0,
+        }
+
+    @app.get("/api/integrations/slack/oauth/start")
+    def slack_oauth_start() -> RedirectResponse:
+        if not (settings.slack_client_id and settings.public_base_url):
+            raise HTTPException(status_code=503, detail="Slack OAuth is not configured")
+        state = secrets.token_urlsafe(24)
+        app.state.slack_oauth_states[state] = time.time() + 600  # 10 minutes to complete the round trip
+        redirect_uri = f"{settings.public_base_url}/api/integrations/slack/oauth/callback"
+        return RedirectResponse(build_authorize_url(client_id=settings.slack_client_id, redirect_uri=redirect_uri, state=state))
+
+    @app.get("/api/integrations/slack/oauth/callback")
+    def slack_oauth_callback(code: str | None = None, state: str | None = None, error: str | None = None) -> RedirectResponse:
+        if not settings.frontend_base_url:
+            raise HTTPException(status_code=503, detail="Slack OAuth is not configured")
+        landing = f"{settings.frontend_base_url}?slack_connect={{}}#settings-slack"
+
+        expiry = app.state.slack_oauth_states.pop(state, None) if state else None
+        state_is_valid = expiry is not None and expiry > time.time()
+
+        if error or not code or not state_is_valid:
+            logger.warning("Slack OAuth callback rejected: error=%s code_present=%s state_valid=%s", error, bool(code), state_is_valid)
+            return RedirectResponse(landing.format("error"))
+
+        if not (settings.slack_client_id and settings.slack_client_secret and settings.public_base_url):
+            raise HTTPException(status_code=503, detail="Slack OAuth is not configured")
+
+        redirect_uri = f"{settings.public_base_url}/api/integrations/slack/oauth/callback"
+        try:
+            payload = exchange_code_for_token(
+                client_id=settings.slack_client_id, client_secret=settings.slack_client_secret,
+                code=code, redirect_uri=redirect_uri,
+            )
+            team = payload.get("team") or {}
+            with get_connection() as connection:
+                save_connection(
+                    connection, team_id=team.get("id", ""), workspace_name=team.get("name") or "",
+                    bot_token=payload.get("access_token") or "", environment=settings.environment,
+                )
+        except SlackOAuthError as exc:
+            logger.warning("Slack OAuth token exchange failed: %s", exc)
+            return RedirectResponse(landing.format("error"))
+
+        return RedirectResponse(landing.format("success"))
+
+    @app.post("/api/integrations/slack/disconnect")
+    def slack_disconnect() -> dict:
+        with get_connection() as connection:
+            disconnected = disconnect_most_recent(connection)
+        return {"disconnected": disconnected}
 
     return app
 

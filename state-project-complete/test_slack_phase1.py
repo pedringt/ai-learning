@@ -137,6 +137,23 @@ def test_unapproved_channel_creates_no_conversation():
         assert conn.execute("SELECT COUNT(*) AS n FROM slack_conversations").fetchone()["n"] == 0
 
 
+def test_unknown_channel_becomes_discoverable_but_stays_unapproved():
+    with get_test_db() as conn:
+        handle_slack_event(conn, _payload(_message_event(ts(1)), event_id="ev1"))
+        row = conn.execute(
+            "SELECT enabled FROM slack_channels WHERE team_id=? AND channel_id=?", (TEAM_ID, CHANNEL_ID)
+        ).fetchone()
+        assert row is not None
+        assert row["enabled"] == 0
+
+        # A second event from the same never-yet-approved channel must not
+        # duplicate the row or flip it on by itself.
+        handle_slack_event(conn, _payload(_message_event(ts(2)), event_id="ev2"))
+        assert conn.execute(
+            "SELECT COUNT(*) AS n FROM slack_channels WHERE team_id=? AND channel_id=?", (TEAM_ID, CHANNEL_ID)
+        ).fetchone()["n"] == 1
+
+
 def test_approved_channel_casual_bot_noise_is_a_deterministic_no_op():
     with get_test_db() as conn:
         _insert_channel(conn, include_bots=0)
