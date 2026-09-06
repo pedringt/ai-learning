@@ -4,9 +4,9 @@ This file is the canonical current-state handoff for State. Any AI assistant or 
 
 ## Current production state
 
-_Last updated: September 5, 2026 (evening session)_
+_Last updated: September 5, 2026 (late session)_
 
-`main` is production, currently at commit `20dfe0b`, and matches `staging` exactly (both branches in sync). `staging` remains the test branch and intentionally uses the separate staging backend.
+`main` is production, currently at commit `0d5a9b5`. **`staging` has since diverged significantly and is 22 commits ahead of `main`** — Slack Phase 2, self-serve Slack OAuth, and a round of reliability/UX fixes have all shipped to `staging` but are **not yet on `main`**, pending explicit authorization to promote (see "Staging ahead of main" below). Until that promotion happens, do not assume `staging` and `main` describe the same product — verify which branch a claim is about.
 
 This evening's session shipped (all now on `main`):
 
@@ -41,10 +41,31 @@ The production frontend must point to the production API. Staging intentionally 
 
 ## Open work
 
-**Next planned work: Slack Phase 2.** Slack Phase 1 (deterministic intake -- signature verification, dedup, channel approval, noise filtering, conversation/thread aggregation, checkpoints) is done and stable, with no LLM calls and no Evidence/Review/Question creation yet. Phase 2 is the LLM-driven step: turning approved Slack conversations into Evidence, plus an approved-channel config UI and connection health display. Not started, not scoped in detail yet -- start there when picking this back up. Read this file's git history / ask Paige for the 2026-09-05 evening session's design discussion if more product-philosophy context is needed before scoping; the short version:
+### Staging ahead of main (not yet promoted)
+
+Slack Phase 2 is **built, live-tested against a real Slack workspace, and shipped to `staging`** — no longer "not started." What shipped, all on `staging` only:
+
+- **Slack Phase 2**: LLM-driven relevance evaluation (`slack_relevance_service.py`) that turns approved Slack conversations into real Evidence, which flows into real Review the same way any other Evidence does. Verified live: a real workspace message became a real Review item end-to-end.
+- **Self-serve Slack OAuth**: Settings' Connect/Reconnect/Disconnect buttons are fully wired (`slack_oauth_service.py`, `/api/integrations/slack/oauth/*`), replacing manual token setup. Disconnect clears the stored bot token and marks the connection disconnected -- it deliberately does **not** call Slack's real token-revoke API (out of scope for now).
+- **Reliability fixes found via independent QA, verified before fixing**: free-form Ask streaming now has a 45s inactivity timeout (previously could hang indefinitely on a stalled connection); Settings' Slack channel list and health check now fail independently (`Promise.allSettled`) instead of one failure blanking both.
+- **Authority-model fix**: distinguished evidence the system decided needed no human review (`no_review_needed`) from evidence a human actually reviewed (`reviewed`) -- previously both showed an identical "REVIEWED" badge, which blurred State's "LLM interprets -> software enforces -> human authorizes" model. Applies to both Slack-sourced and manually-submitted evidence.
+- **Fixed a real architectural bug**, found only because the OAuth redirect surfaced it: the view-dispatch table in `context-app.js`'s `render()` had no `settings` entry, so any concurrent async call (e.g. `hydrateBackend()` completing right after a fresh page load) would silently clobber Settings content back to Workspace content. Unrelated in origin to Slack, but only reliably triggered by the OAuth redirect's timing.
+- **UX orientation pass**: Project facts now disclose their provenance ("Why this is current ->") when backed by an accepted Review; the sidebar "How this works" help modal leads with a 5-step flow diagram plus the authority-model principle; Ask's example-question groupings were relabeled in plainer language (unchanged underlying questions).
+- Also found and fixed in the same pass: the JS behavior-test harness (`state-ask-behavior-tests.js`) had been silently broken (`ReferenceError: URLSearchParams is not defined`) since the OAuth boot code was added -- the full 81-test suite hadn't actually run since then. Fixed; suite passes again.
+
+**Before promoting to `main`:**
+1. Paige sets up a **second, production-scoped Slack app** (Slack apps support only one Event Subscriptions Request URL each, so staging and production need separate apps even within the same workspace) -- in progress, Paige's own task.
+2. Explicit authorization to merge `staging` -> `main`.
+3. After promotion, update this file's production section and confirm the production Slack app credentials are set as Render env vars only (never written here -- see "Authority / credentials" below).
+
+Deliberately still out of scope, not blocking promotion: real Slack token revocation on Disconnect, and automatic channel discovery via the Slack Web API (channels are currently approved manually).
+
+### Next planned work after that: approved-channel config UI polish and connection health display
+
+Read this file's git history / ask Paige for the 2026-09-05 design discussion if more product-philosophy context is needed before scoping further Slack work; the short version:
 
 - **Integration philosophy:** State takes in places where project knowledge is *created* and helps the team determine what's true; it sends approved outcomes to where people communicate or work. It does not become a workflow/task-management system -- no Jira/GitHub-issue-status ingestion, no board views.
-- **Planned inputs stay small:** Slack (Phase 1 shipped), Google Docs, Notion. Not Confluence/Obsidian/OneNote/Coda. No per-service transcription connectors (Fathom/Granola/Otter/etc.) -- generic file upload instead.
+- **Planned inputs stay small:** Slack (Phase 1 + Phase 2 shipped to staging), Google Docs, Notion. Not Confluence/Obsidian/OneNote/Coda. No per-service transcription connectors (Fathom/Granola/Otter/etc.) -- generic file upload instead.
 - **Slack is deliberately the one bidirectional input** (input+output), not a placeholder pending extension to other tools. Slack -> State (evidence in); State -> Slack (an explicit "Share to Slack" action after a change is accepted, posting a summary to the project channel).
 - **New "Documents" area is the other big planned addition** -- a simple file cabinet for project resources (SOWs, briefs, transcripts, client PDFs, etc.). Document != Evidence: uploading a file must not trigger automatic extraction. V1 is deliberately boring (upload/list/open/delete, no folders, no AI processing). Storage recommendation: Vercel Blob for file bytes + a `documents` metadata row in State's existing database (decouple storage key from filename/id so the provider could change later) -- verify Blob's included tier fits the Hobby plan, and note `state-api` is a separate Python/Render service, not Next.js, so Blob integration is a REST call from the backend rather than framework-native. Falls back to a links-only model (no hosting at all) if a storage decision should be deferred further. Later (not V1): a per-document "Review with State" user-initiated action that surfaces candidate Evidence from a document's contents, routed through the existing Evidence -> Review -> Current State pipeline -- never automatic, never bypassing human authorization.
 - **Outputs, generally:** State can propose sending an approved outcome elsewhere; it doesn't manage what happens there afterward (propose -> human authorizes -> external action happens, mirroring the existing internal authority model). GitHub Issues is the planned first output/action integration -- an accepted State change can suggest creating an issue; once created, GitHub owns it fully, State does not track/sync status.
