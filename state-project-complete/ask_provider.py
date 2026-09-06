@@ -44,9 +44,11 @@ _BROAD_HINTS = (
 )
 
 _DEPENDENT_HINTS = (
-    "source supports that", "sources support that", "where did that come from", "how do you know that",
-    "why is that", "why does that", "tell me more about that", "expand on that", "more about that",
-    "what do you mean by that", "what about that", "and that", "those items", "those points",
+    "source supports that", "sources support that", "what source supports that", "where did that come from",
+    "where did you get that", "how do you know", "how do you know that", "why is that", "why does that",
+    "tell me more about that", "expand on that", "more about that", "what do you mean by that",
+    "what about that", "and that", "those items", "those points", "that source", "that review",
+    "that question", "that item", "that decision", "that change",
 )
 
 _TRANSFORM_HINTS = (
@@ -102,7 +104,15 @@ def _is_broad_request(query: str) -> bool:
 
 def _is_dependent_followup(query: str) -> bool:
     q = " ".join(query.lower().split())
-    return any(hint in q for hint in _DEPENDENT_HINTS)
+    if q in {"why", "how", "who else", "what else", "which ones", "which one"}:
+        return True
+    if any(hint in q for hint in _DEPENDENT_HINTS):
+        return True
+    # Short pronoun-heavy prompts usually refer to the immediately preceding
+    # answer. Longer prompts such as "what other contacts do I have?" are not
+    # treated as dependent merely because they contain generic words.
+    words = q.split()
+    return len(words) <= 5 and bool(re.search(r"\b(it|that|those|them|this|these)\b", q))
 
 
 def _is_transform_request(query: str) -> bool:
@@ -121,11 +131,14 @@ def _record_text(record: Mapping[str, Any]) -> str:
 
 
 def _filter_candidate_payload(query: str, payload: Mapping[str, Any]) -> dict[str, Any]:
-    """Drop obvious lexical bystanders before the model sees them.
+    """Drop obvious bystanders only for explicit attribute lookups.
 
-    This is a final safety gate, not the primary retriever. Broad briefing prompts
-    keep their full bounded candidate set. Specific questions keep records that
-    share meaningful terms with the newest request; rules are always preserved.
+    This is a final safety gate, not the primary retriever. Broad prompts,
+    dependent follow-ups, transformations, and semantically phrased lookups such
+    as "who leads the pilot?" keep the bounded retriever output so the model can
+    match synonyms. Explicit attribute lookups such as "billing contact" or
+    "pilot budget" get the stricter lexical guard that prevents nearby-but-not-
+    answering records from masquerading as the answer. Rules are always kept.
     """
     data = {key: list(value) if isinstance(value, list) else value for key, value in payload.items()}
     if _is_broad_request(query) or _is_dependent_followup(query) or _is_transform_request(query):
@@ -137,6 +150,8 @@ def _filter_candidate_payload(query: str, payload: Mapping[str, Any]) -> dict[st
 
     normalized_query = {_normalize_token(term) for term in terms}
     anchor_terms = normalized_query & _LOOKUP_ANCHORS
+    if not anchor_terms:
+        return data
 
     for bucket in ("state", "reviews", "questions", "history", "evidence"):
         records = data.get(bucket)
@@ -150,9 +165,9 @@ def _filter_candidate_payload(query: str, payload: Mapping[str, Any]) -> dict[st
             overlap = normalized_query & body_tokens
             if not overlap:
                 continue
-            # For specific attribute lookups, require the record to mention the
-            # requested attribute itself, not merely a neighboring topic word.
-            if anchor_terms and not (anchor_terms & body_tokens):
+            # Explicit attribute lookups must mention the requested attribute,
+            # not merely a neighboring topic word.
+            if not (anchor_terms & body_tokens):
                 continue
             kept.append(dict(record))
         data[bucket] = kept
