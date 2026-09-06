@@ -60,4 +60,5 @@ jobs:
         run: |
           node state-ask-behavior-tests.js
           node state-ask-followup-tests.js
+          node state-ask-loading-visibility-tests.js
           node state-provenance-behavior-tests.js
