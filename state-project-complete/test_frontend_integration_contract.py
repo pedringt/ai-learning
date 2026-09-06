@@ -6,6 +6,7 @@ FRONTEND = Path(__file__).parent.parent / "implementation-context-prototype"
 JS = (FRONTEND / "context-app.js").read_text()
 API_JS = (FRONTEND / "context-api.js").read_text()
 NOTES_VIEW_JS = (FRONTEND / "context-notes-view.js").read_text()
+OPEN_ITEMS_VIEW_JS = (FRONTEND / "context-open-items-view.js").read_text()
 
 
 def test_live_reviews_use_backend_payload_not_placeholder_values():
@@ -116,10 +117,15 @@ def test_workspace_uses_one_bootstrap_request_with_safe_fallback():
 
 def test_open_items_action_count_includes_reviews_and_blockers_only():
     assert "uiPendingReviews().length+openQuestions().filter(q=>q.blocking).length" in JS
-    assert "const actionTotal=" in JS
+    # The Open Items page header's own actionTotal moved to
+    # context-open-items-view.js 2026-09-06; the workspace attention-banner
+    # total below is a separate computation (workspaceAttentionHtml) and
+    # stayed in context-app.js.
+    assert "const actionTotal=" in OPEN_ITEMS_VIEW_JS
     assert "View all ${total} →" in JS
     assert "Showing ${items.length} of ${total}" in JS
     assert "more in Open Items" not in JS
+    assert "more in Open Items" not in OPEN_ITEMS_VIEW_JS
 
 
 def test_provider_failure_retry_reuses_saved_evidence():
@@ -131,9 +137,12 @@ def test_provider_failure_retry_reuses_saved_evidence():
 def test_r8_long_project_and_open_items_scaling_contract():
     app = (FRONTEND / "context-app.js").read_text(encoding="utf-8")
     css = (FRONTEND / "context-tool.css").read_text(encoding="utf-8")
-    assert "waiting.slice(0,5)" in app
+    # The "waiting" question list's 5-item cap and topic-overlap sort moved to
+    # context-open-items-view.js 2026-09-06; the click handler that flips
+    # state.openQuestionsExpanded and re-renders stayed in context-app.js.
+    assert "waiting.slice(0,5)" in OPEN_ITEMS_VIEW_JS
     assert "toggle-open-questions" in app
-    assert "const reviewTopics=new Set(reviews.flatMap(r=>r.topics||[]));" in app
+    assert "const reviewTopics=new Set(reviews.flatMap(r=>r.topics||[]));" in OPEN_ITEMS_VIEW_JS
     assert "projectWikiTopic(topic,items)" in app
     assert "projectOutlineSection(id,a)" in app
     assert "project-section-sticky" in app
@@ -156,7 +165,13 @@ def test_r81_notes_filters_share_one_date_status_search_pipeline():
 
 def test_r81_multiple_reviews_default_collapsed_with_single_open_accordion():
     app = (FRONTEND / "context-app.js").read_text(encoding="utf-8")
-    assert "reviews.length===1||state.expandedReviewId===r.id" in app
+    # The expanded/collapsed decision per review card moved to
+    # context-open-items-view.js 2026-09-06 -- expandedReviewId arrives there
+    # as a plain argument (from context-app.js's state.expandedReviewId)
+    # rather than being read off `state` directly, so the literal text lost
+    # its "state." prefix. The click handler that mutates state.expandedReviewId
+    # and the toggle-review-card action name itself stayed in context-app.js.
+    assert "reviews.length===1||expandedReviewId===r.id" in OPEN_ITEMS_VIEW_JS
     assert "toggle-review-card" in app
     assert "state.expandedReviewId=state.expandedReviewId===id?null:id" in app
 
@@ -196,8 +211,10 @@ def test_r82_open_item_sections_are_collapsible_and_keep_attention_hierarchy():
     css = (FRONTEND / "context-tool.css").read_text(encoding="utf-8")
     assert "openItemSections:{reviews:false,blockers:false,drafts:true,questions:null}" in app
     assert "toggle-open-item-section" in app
-    assert "key==='questions' && count>5" in app
-    assert "Needs your review" in app and "Blocking questions" in app and "Draft notes" in app and "Open questions" in app
+    # openItemSection()'s own default-collapse rule and the section
+    # title/copy strings moved to context-open-items-view.js 2026-09-06.
+    assert "key==='questions' && count>5" in OPEN_ITEMS_VIEW_JS
+    assert "Needs your review" in OPEN_ITEMS_VIEW_JS and "Blocking questions" in OPEN_ITEMS_VIEW_JS and "Draft notes" in OPEN_ITEMS_VIEW_JS and "Open questions" in OPEN_ITEMS_VIEW_JS
     assert ".open-items-reviews" in css and ".open-items-blockers" in css and ".open-items-drafts" in css and ".open-items-questions" in css
 
 
@@ -220,8 +237,10 @@ def test_r84_navigation_rules_and_review_polish_contract():
     assert "function navigateTo(view" in app
     assert "data-action=\"project-settings\"" in app
     assert "API.createRule" in app and "API.deleteRule" in app
-    assert "Blocks: ${esc(q.blocks)}" in app
-    assert "replace(/\\*\\*/g,'')" in app
+    # questionDialogHtml() and reviewCard()'s cleanReviewCopy() both moved to
+    # context-open-items-view.js 2026-09-06.
+    assert "Blocks: ${esc(q.blocks)}" in OPEN_ITEMS_VIEW_JS
+    assert "replace(/\\*\\*/g,'')" in OPEN_ITEMS_VIEW_JS
 
 
 def test_r85_integrity_and_polish_contracts():

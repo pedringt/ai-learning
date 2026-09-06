@@ -3,6 +3,7 @@
   const API = window.STATE_API;
   const ASK = window.STATE_ASK;
   const NOTES_VIEW = window.STATE_NOTES_VIEW;
+  const OPEN_ITEMS_VIEW = window.STATE_OPEN_ITEMS_VIEW;
   const clone = x => JSON.parse(JSON.stringify(x));
   const initial = clone(D);
   const state = {
@@ -890,73 +891,29 @@
     root.innerHTML=`<section class="page collection-page history-page"><div class="page-head"><div><span class="eyebrow">From notes to Current State</span><h2>History</h2><p>${topicKnowledge?`How project evidence changed the maintained understanding of ${esc(topicKnowledge.title)}.`:'The meaningful changes extracted from Notes and accepted into Current State. This is the bridge between what came in and what the Project says now.'}</p></div></div>${evidenceNote?`<div class="history-context"><strong>From note: ${esc(evidenceNote.title)}</strong><span>${total} accepted change${total===1?'':'s'}</span><button class="text-button" data-action="clear-history-evidence">View all history →</button></div>`:topicKnowledge?`<div class="history-context"><strong>${esc(topicKnowledge.title)}</strong><span>${total} recorded change${total===1?'':'s'}</span><button class="text-button" data-action="clear-history-topic">View all history →</button></div>`:''}<div class="history-toolbar"><input class="history-search" id="historySearch" type="search" placeholder="Search history" aria-label="Search accepted project changes" value="${esc(state.historySearch)}"><span class="history-result-count" id="historyResultCount" aria-live="polite">${entries.length} of ${total} changes</span><button class="text-button" id="clearHistorySearch" data-action="clear-history-search"${state.historySearch?'':' hidden'}>Clear search</button></div><div class="history-list" id="historyList">${entries.length?entries.map(h=>historyEntry(h,!!topicKnowledge)).join(''):(state.historySearch?'<div class="empty-state"><h3>No matching changes.</h3><p>Try a broader History search.</p></div>':'<div class="empty-state"><h3>No Current State changes yet.</h3><p>When reviewed Notes change the Project, that transition will appear here.</p></div>')}</div></section>`;
   }
 
-  function questionCard(q){
-    const blocking=!!q.blocking;
-    return `<button type="button" class="open-question-row${blocking?' is-blocking':''}" data-action="open-question" data-question-id="${q.id}" aria-label="Open question: ${esc(q.text)}"><span class="open-question-copy"><span class="open-item-label ${blocking?'blocking':'question'}">${blocking?'Blocking question':'Open question'}</span><span class="open-question-title">${esc(q.text)}</span><span class="open-question-meta">${esc(q.origin)}${q.created?` · ${esc(q.created)}`:''}${blocking&&q.blocks?` · Blocks: ${esc(q.blocks)}`:''}</span></span><span class="question-card-chevron" aria-hidden="true">›</span></button>`;
-  }
-
-  function questionDialogHtml(q){
-    return `<span class="eyebrow">${q.blocking?'Blocking question':'Open question'}</span><h2 id="dialogTitle">${esc(q.text)}</h2><p>This stays unresolved until reviewed evidence establishes an answer.</p>${q.blocking&&q.blocks?`<p class="blocking-detail"><strong>Blocks:</strong> ${esc(q.blocks)}</p>`:''}<div class="dialog-actions"><button class="btn primary" data-action="answer-question" data-question-id="${q.id}">Add what you learned</button>${q.blocking?`<button class="btn secondary" data-action="unmark-blocking" data-question-id="${q.id}">No longer blocking</button>`:`<button class="btn secondary" data-action="mark-blocking" data-question-id="${q.id}">Mark as blocking</button>`}<button class="btn secondary" data-action="confirm-stop-question" data-question-id="${q.id}">Stop tracking</button></div>`;
-  }
-
-  function openItemSection(title,kicker,description,count,key,body,empty=false){
-    const defaultCollapsed=key==='questions' && count>5;
-    const stored=state.openItemSections[key];
-    const collapsed=stored===null?defaultCollapsed:!!stored;
-    return `<section class="open-items-section open-items-${key}${collapsed?' is-collapsed':''}${empty?' is-empty':''}"><button type="button" class="open-items-section-head" data-action="toggle-open-item-section" data-section="${key}" aria-expanded="${collapsed?'false':'true'}"><span class="open-items-section-copy"><span class="open-items-kicker">${esc(kicker)}</span><span class="open-items-section-title">${esc(title)} <span class="open-items-section-count">${count}</span></span><span class="open-items-section-description">${esc(description)}</span></span><span class="open-items-section-chevron" aria-hidden="true">${collapsed?'⌄':'⌃'}</span></button>${collapsed?'':`<div class="open-items-section-body">${body}</div>`}</section>`;
-  }
-
-  function renderOpenItems(){
-    if(state.backendStatus.reviews==='loading' || state.backendStatus.questions==='loading'){
-      root.innerHTML=`<section class="page collection-page open-items-page"><div class="empty-state unavailable-state"><h2>Loading Open Items…</h2><p>Checking Reviews and Questions that need attention.</p></div></section>`;
-      return;
-    }
-    if(state.backendStatus.reviews==='error' && state.backendStatus.questions==='error'){
-      root.innerHTML=`<section class="page collection-page open-items-page"><div class="empty-state unavailable-state"><h2>Open Items are temporarily unavailable.</h2><p>State will not substitute fixture Reviews or Questions while authoritative attention data cannot be loaded.</p><button class="btn secondary" data-action="retry-hydration">Try again</button></div></section>`;
-      return;
-    }
-    const reviews=uiPendingReviews();
-    const questions=openQuestions();
-    const blockers=questions.filter(q=>q.blocking);
-    const waiting=questions.filter(q=>!q.blocking).sort((a,b)=>{
-      const reviewTopics=new Set(reviews.flatMap(r=>r.topics||[]));
-      const score=q=>(q.topics||[]).some(t=>reviewTopics.has(t))?1:0;
-      return score(b)-score(a) || String(b.createdISO||b.created||'').localeCompare(String(a.createdISO||a.created||''));
-    });
-    const visibleWaiting=state.openQuestionsExpanded?waiting:waiting.slice(0,5);
-    const remaining=Math.max(0,waiting.length-visibleWaiting.length);
-    const reviewUnavailable=state.backendStatus.reviews==='error';
-    const questionUnavailable=state.backendStatus.questions==='error';
-    const reviewBody=reviewUnavailable?'<div class="open-items-empty unavailable-inline">Reviews could not be loaded. <button class="text-button" data-action="retry-hydration">Try again</button></div>':reviews.length?reviews.map(r=>reviewCard(r,reviews.length===1||state.expandedReviewId===r.id,true)).join(''):'<div class="open-items-empty">Nothing needs your decision right now.</div>';
-    const blockerBody=questionUnavailable?'<div class="open-items-empty unavailable-inline">Blocking questions could not be loaded.</div>':blockers.length?`<div class="open-question-list">${blockers.map(questionCard).join('')}</div>`:'<div class="open-items-empty">Nothing is currently blocked on an answer.</div>';
-    const draftNotes=state.data.notes.filter(n=>n.status==='working'||n.status==='draft'||!!n.backendDraft);
-    const draftsUnavailable=state.backendStatus.drafts==='error';
-    const draftBody=draftsUnavailable?'<div class="open-items-empty unavailable-inline">Draft notes could not be loaded.</div>':draftNotes.length?`<div class="open-question-list">${draftNotes.map(draftNoteRow).join('')}</div>`:'<div class="open-items-empty">No draft notes waiting to be sent.</div>';
-    const questionBody=questionUnavailable?'<div class="open-items-empty unavailable-inline">Open questions could not be loaded. <button class="text-button" data-action="retry-hydration">Try again</button></div>':waiting.length?`<div class="open-question-list">${visibleWaiting.map(questionCard).join('')}</div>${waiting.length>5?`<button class="open-questions-more" data-action="toggle-open-questions" aria-expanded="${state.openQuestionsExpanded?'true':'false'}">${state.openQuestionsExpanded?'Show fewer questions':`Show ${remaining} more questions`} <span aria-hidden="true">${state.openQuestionsExpanded?'↑':'↓'}</span></button>`:''}`:'<div class="open-items-empty">No other open questions.</div>';
-    const actionTotal=(reviewUnavailable?0:reviews.length)+(questionUnavailable?0:blockers.length);
-    root.innerHTML=`<section class="page collection-page open-items-page"><div class="page-head"><div><span class="eyebrow">What still needs attention</span><div class="review-title-row"><h2>Open Items</h2>${actionTotal?`<span class="count-badge review-page-count" aria-label="${actionTotal} items need attention">${actionTotal}</span>`:''}</div><p>Decide what is ready now, see what is blocking progress, and keep important unknowns visible without turning this into another archive.</p></div><button class="btn secondary" data-action="add-question">+ Add question</button></div><div class="open-items-sections">${openItemSection('Needs your review','Act now','Decisions waiting on you. Current State changes only after you approve them.',reviewUnavailable?'Unavailable':reviews.length,'reviews',reviewBody,!reviews.length&&!reviewUnavailable)}${openItemSection('Blocking questions','Resolve soon','A concrete project dependency is waiting on an answer.',questionUnavailable?'Unavailable':blockers.length,'blockers',blockerBody,!blockers.length&&!questionUnavailable)}${openItemSection('Open questions','Keep in mind','Important unknowns that can wait for relevant evidence.',questionUnavailable?'Unavailable':waiting.length,'questions',questionBody,!waiting.length&&!questionUnavailable)}${openItemSection('Draft notes','Finish up',"Notes you've started but haven't sent for review yet.",draftsUnavailable?'Unavailable':draftNotes.length,'drafts',draftBody,!draftNotes.length&&!draftsUnavailable)}</div></section>`;
-  }
-
-
   /* ----------------------------------------------------------------------
      Open Items and Reviews
 
-     Reviews awaiting a human decision, blocking questions and open questions.
-     decideReview is where a human decision becomes a State change.
+     Rendering (review/question cards, section collapsing, the page itself)
+     lives in context-open-items-view.js -- see the comment above the Notes
+     wrappers for why. decideReview() below is where a human decision
+     becomes a State change; it stays here since it mutates `state` and
+     talks to the backend, which the view module deliberately never does.
      ------------------------------------------------------------------- */
-  function renderReview(){ return renderOpenItems(); }
-
-  function reviewCard(r,expanded=true,accordion=false){
-    const generic=r.id.startsWith('r-info-') || (Array.isArray(r.proposals) && r.proposals.length===0);
-    const cleanReviewCopy=value=>String(value||'').replace(/\*\*/g,'').replace(/\b(?:state|question|evidence|review|proposal)_[a-z0-9]+\b/gi,'').replace(/\b(?:ask-evidence|state|question|evidence|review|proposal|k|q)-[a-z0-9-]+\b/gi,'').replace(/\s+([,.;:])/g,'$1').replace(/\s{2,}/g,' ').trim();
-    const meaningfulUnresolved=r.unresolved && !/^nothing beyond this proposed change/i.test(cleanReviewCopy(r.unresolved));
-    const sourceNote=state.data.notes.find(n=>n.id===r.evidenceId);
-    const sourceMeta=sourceNote?`${sourceNote.date} · ${sourceNote.source}`:'';
-    const head=`<span class="review-row-head"><span class="review-row-copy"><span class="review-kicker">${esc(r.title)}</span><span class="review-card-title">${esc(r.summary)}</span>${sourceMeta?`<span class="review-source-meta">Evidence · ${esc(sourceMeta)}</span>`:''}</span></span>`;
-    if(accordion&&!expanded) return `<article class="review-card compact-review is-collapsed" data-review-card="${r.id}"><button type="button" class="review-card-toggle" data-action="toggle-review-card" data-review-id="${r.id}" aria-expanded="false">${head}</button></article>`;
-    const body=`<div class="review-decision-context"><div class="review-context-block"><span>Current understanding</span><p>${esc(cleanReviewCopy(r.current))}</p></div><div class="review-context-block review-evidence-block"><span>${generic?'What the evidence says':'Proposed change'}</span><p>${esc(generic?cleanReviewCopy(r.evidence):cleanReviewCopy(r.proposed))}</p></div>${!generic&&meaningfulUnresolved?`<div class="review-context-block"><span>Still unresolved</span><p>${esc(cleanReviewCopy(r.unresolved))}</p></div>`:''}</div><div class="review-actions"><button class="btn primary" data-action="review-update" data-review="${r.id}">${generic?'Accept as reviewed evidence':'Update understanding'}</button><button class="btn secondary" data-action="review-keep" data-review="${r.id}">Leave unchanged</button></div><details class="reasoning"><summary>Why / source</summary><p><strong>Evidence:</strong> ${esc(r.evidence)}</p><p><strong>Establishes:</strong> ${esc(r.establishes)}</p>${r.doesNot?`<p><strong>Does not establish:</strong> ${esc(r.doesNot)}</p>`:''}</details>`;
-    return `<article class="review-card compact-review${accordion?' is-expanded':''}" data-review-card="${r.id}">${accordion?`<button type="button" class="review-card-toggle" data-action="toggle-review-card" data-review-id="${r.id}" aria-expanded="true">${head}</button>`:head}<div class="review-card-body">${body}</div></article>`;
+  function openItemsProps(){
+    return {
+      reviewsStatus:state.backendStatus.reviews,questionsStatus:state.backendStatus.questions,draftsStatus:state.backendStatus.drafts,
+      reviews:uiPendingReviews(),questions:openQuestions(),
+      draftNotes:state.data.notes.filter(n=>n.status==='working'||n.status==='draft'||!!n.backendDraft),
+      notes:state.data.notes,
+      openQuestionsExpanded:state.openQuestionsExpanded,expandedReviewId:state.expandedReviewId,openItemSections:state.openItemSections,
+      renderDraftNote:n=>NOTES_VIEW.draftNoteRow(n)
+    };
   }
+  function renderOpenItems(){ root.innerHTML=OPEN_ITEMS_VIEW.render(openItemsProps()); }
+  function renderReview(){ return renderOpenItems(); }
+  function reviewCard(r,expanded=true,accordion=false){ return OPEN_ITEMS_VIEW.reviewCard(r,expanded,accordion,state.data.notes.find(n=>n.id===r.evidenceId)); }
+  function questionDialogHtml(q){ return OPEN_ITEMS_VIEW.questionDialogHtml(q); }
 
   async function decideReview(id,decision){
     const r=state.data.reviews.find(x=>x.id===id);
