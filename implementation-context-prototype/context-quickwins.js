@@ -67,7 +67,7 @@
     }
 
     const title=askPanel?.querySelector('label[for="askInput"]');
-    if(title) title.textContent='Understand decisions • Ask follow-ups • Prep for meetings';
+    if(title) title.textContent='Search decisions • Ask follow-ups • Prep for meetings';
     const description=title?.closest('.ask-title-row')?.querySelector('p');
     if(description) description.textContent="Summarize Project State, identify what's still pending, or create a meeting brief.";
     const input=askPanel?.querySelector('#askInput');
