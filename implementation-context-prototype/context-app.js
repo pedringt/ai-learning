@@ -6,7 +6,7 @@
   const initial = clone(D);
   const state = {
     data: clone(D), view:'overview', result:null, resultQuery:'', askInputDraft:'', projectMenuOpen:false, refinements:[], lastScenario:null,
-    addedSample:false, pendingCreated:false, reviewBannerDismissed:false, dialogReturnFocus:null, expandedNotes:new Set(), noteComposerOpen:false, editingNoteId:null, dismissedNudges:new Set(), historyTopic:null, historyEvidenceId:null, historySearch:'', notesFilter:'all', notesDateFilter:'all', notesSearch:'', isAnalyzing:false, openQuestionsExpanded:false, expandedReviewId:null, openItemSections:{reviews:false,blockers:false,drafts:false,questions:null}, projectRules:[], workspaceAttentionStatus:'loading', backendStatus:{state:'loading',evidence:'loading',reviews:'loading',history:'loading',questions:'loading',rules:'loading',drafts:'loading'}
+    addedSample:false, pendingCreated:false, reviewBannerDismissed:false, dialogReturnFocus:null, expandedNotes:new Set(), noteComposerOpen:false, editingNoteId:null, dismissedNudges:new Set(), historyTopic:null, historyEvidenceId:null, historySearch:'', notesFilter:'all', notesDateFilter:'all', notesSearch:'', isAnalyzing:false, openQuestionsExpanded:false, expandedReviewId:null, openItemSections:{reviews:false,blockers:false,drafts:true,questions:null}, projectRules:[], workspaceAttentionStatus:'loading', backendStatus:{state:'loading',evidence:'loading',reviews:'loading',history:'loading',questions:'loading',rules:'loading',drafts:'loading'}
   };
 
   const root = document.getElementById('viewRoot');
@@ -299,7 +299,7 @@
     const preview=state.result?.liveAskPreview;
     const message=preview?.message || 'Finding relevant project context · checking Reviews and unresolved questions · shaping the useful parts.';
     const label=preview?.grounded ? 'Grounded context ready' : 'Building your briefing…';
-    return `<div class="ask-live-loading${preview?.grounded?' has-grounded-preview':''}"><span class="ask-loading-mark" aria-hidden="true"></span><div><strong>${esc(label)}</strong><p>${esc(message)}</p></div></div>`;
+    return `<div class="ask-live-loading${preview?.grounded?' has-grounded-preview':''}"><span class="ask-loading-mark" aria-hidden="true"></span><div><strong>${esc(label)}</strong><p>${esc(message)}</p><p class="ask-loading-note">Suggested prompts below answer instantly from what's already known -- this one runs a live check against the full project record.</p></div></div>`;
   }
   function workspaceAttentionHtml(){
     if(API && state.workspaceAttentionStatus==='loading'){
@@ -1044,7 +1044,7 @@
     const draftBody=draftsUnavailable?'<div class="open-items-empty unavailable-inline">Draft notes could not be loaded.</div>':draftNotes.length?`<div class="open-question-list">${draftNotes.map(draftNoteRow).join('')}</div>`:'<div class="open-items-empty">No draft notes waiting to be sent.</div>';
     const questionBody=questionUnavailable?'<div class="open-items-empty unavailable-inline">Open questions could not be loaded. <button class="text-button" data-action="retry-hydration">Try again</button></div>':waiting.length?`<div class="open-question-list">${visibleWaiting.map(questionCard).join('')}</div>${waiting.length>5?`<button class="open-questions-more" data-action="toggle-open-questions" aria-expanded="${state.openQuestionsExpanded?'true':'false'}">${state.openQuestionsExpanded?'Show fewer questions':`Show ${remaining} more questions`} <span aria-hidden="true">${state.openQuestionsExpanded?'↑':'↓'}</span></button>`:''}`:'<div class="open-items-empty">No other open questions.</div>';
     const actionTotal=(reviewUnavailable?0:reviews.length)+(questionUnavailable?0:blockers.length);
-    root.innerHTML=`<section class="page collection-page open-items-page"><div class="page-head"><div><span class="eyebrow">What still needs attention</span><div class="review-title-row"><h2>Open Items</h2>${actionTotal?`<span class="count-badge review-page-count" aria-label="${actionTotal} items need attention">${actionTotal}</span>`:''}</div><p>Decide what is ready now, see what is blocking progress, and keep important unknowns visible without turning this into another archive.</p></div><button class="btn secondary" data-action="add-question">+ Add question</button></div><div class="open-items-sections">${openItemSection('Needs your review','Act now','Decisions waiting on you. Current State changes only after you approve them.',reviewUnavailable?'Unavailable':reviews.length,'reviews',reviewBody,!reviews.length&&!reviewUnavailable)}${openItemSection('Blocking questions','Resolve soon','A concrete project dependency is waiting on an answer.',questionUnavailable?'Unavailable':blockers.length,'blockers',blockerBody,!blockers.length&&!questionUnavailable)}${openItemSection('Draft notes','Finish up',"Notes you've started but haven't sent for review yet.",draftsUnavailable?'Unavailable':draftNotes.length,'drafts',draftBody,!draftNotes.length&&!draftsUnavailable)}${openItemSection('Open questions','Keep in mind','Important unknowns that can wait for relevant evidence.',questionUnavailable?'Unavailable':waiting.length,'questions',questionBody,!waiting.length&&!questionUnavailable)}</div></section>`;
+    root.innerHTML=`<section class="page collection-page open-items-page"><div class="page-head"><div><span class="eyebrow">What still needs attention</span><div class="review-title-row"><h2>Open Items</h2>${actionTotal?`<span class="count-badge review-page-count" aria-label="${actionTotal} items need attention">${actionTotal}</span>`:''}</div><p>Decide what is ready now, see what is blocking progress, and keep important unknowns visible without turning this into another archive.</p></div><button class="btn secondary" data-action="add-question">+ Add question</button></div><div class="open-items-sections">${openItemSection('Needs your review','Act now','Decisions waiting on you. Current State changes only after you approve them.',reviewUnavailable?'Unavailable':reviews.length,'reviews',reviewBody,!reviews.length&&!reviewUnavailable)}${openItemSection('Blocking questions','Resolve soon','A concrete project dependency is waiting on an answer.',questionUnavailable?'Unavailable':blockers.length,'blockers',blockerBody,!blockers.length&&!questionUnavailable)}${openItemSection('Open questions','Keep in mind','Important unknowns that can wait for relevant evidence.',questionUnavailable?'Unavailable':waiting.length,'questions',questionBody,!waiting.length&&!questionUnavailable)}${openItemSection('Draft notes','Finish up',"Notes you've started but haven't sent for review yet.",draftsUnavailable?'Unavailable':draftNotes.length,'drafts',draftBody,!draftNotes.length&&!draftsUnavailable)}</div></section>`;
   }
 
 
@@ -1702,6 +1702,13 @@
     }
     else if(act==='toggle-note'){
       if(e.target.closest('button,input,textarea'))return;
+      // The whole card is one clickable toggle target, so dragging to select
+      // note text ends with a mouseup on that same target -- which still
+      // fires a click. Without this guard, that click re-renders the list
+      // (renderNotes() below) immediately after, which tears down the DOM
+      // text nodes the selection was anchored to and wipes it out, making it
+      // look like note text can never be selected at all.
+      if(window.getSelection && String(window.getSelection()).length>0)return;
       const id=a.dataset.noteId;
       if(state.expandedNotes.has(id)){state.expandedNotes.delete(id);if(state.editingNoteId===id)state.editingNoteId=null;}
       else state.expandedNotes.add(id);
