@@ -185,11 +185,11 @@ def test_r82_authoritative_review_counts_do_not_flash_fixture_values_before_hydr
 def test_r82_open_item_sections_are_collapsible_and_keep_attention_hierarchy():
     app = (FRONTEND / "context-app.js").read_text(encoding="utf-8")
     css = (FRONTEND / "context-tool.css").read_text(encoding="utf-8")
-    assert "openItemSections:{reviews:false,blockers:false,questions:null}" in app
+    assert "openItemSections:{reviews:false,blockers:false,drafts:false,questions:null}" in app
     assert "toggle-open-item-section" in app
     assert "key==='questions' && count>5" in app
-    assert "Needs your review" in app and "Blocking questions" in app and "Open questions" in app
-    assert ".open-items-reviews" in css and ".open-items-blockers" in css and ".open-items-questions" in css
+    assert "Needs your review" in app and "Blocking questions" in app and "Draft notes" in app and "Open questions" in app
+    assert ".open-items-reviews" in css and ".open-items-blockers" in css and ".open-items-drafts" in css and ".open-items-questions" in css
 
 
 def test_r83_project_navigation_uses_stable_absolute_targets_without_sticky_section_motion():
