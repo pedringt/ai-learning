@@ -809,7 +809,7 @@ body>main.site-page{
 
 /* v96.01 portfolio hierarchy */
 .home-option-d-links .home-feature-primary{border-color:var(--purple);background:var(--softp);box-shadow:0 0 0 1px color-mix(in srgb,var(--purple) 12%,transparent)}
-.home-option-d-links .home-feature-primary strong{font-size:18px}.applied-major-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}.applied-secondary-grid{grid-template-columns:repeat(3,minmax(0,1fr))!important}.applied-secondary-grid>.nav-card,.applied-secondary-grid>.card{grid-column:auto!important}@media(max-width:900px){.applied-secondary-grid{grid-template-columns:1fr!important}}
+.home-option-d-links .home-feature-primary strong{font-size:18px}.applied-major-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}.applied-secondary-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}.applied-secondary-grid>.nav-card,.applied-secondary-grid>.card{grid-column:auto!important}@media(max-width:900px){.applied-secondary-grid{grid-template-columns:1fr!important}}
 
 /* v96.02 — Home project hierarchy */
 .home-option-d-links>a.home-project-card{align-items:flex-start;justify-content:flex-start;text-align:left;padding:22px;min-height:210px}
@@ -1576,6 +1576,10 @@ body:has(.meridian-breadcrumb span:last-child) .meridian-heading .eyebrow{displa
 .legal-paper .paper-next-grid p{margin:0!important;padding-top:12px;border-top:1px solid var(--border);font-size:13.5px!important;line-height:1.55!important}
 .legal-paper .paper-learning{max-width:760px;padding:28px 0 0;border-top:1px solid var(--border)}
 .legal-paper .paper-learning p{margin:0 0 12px;color:var(--muted);font-size:13.5px;line-height:1.58}
+.legal-paper .paper-sources{max-width:760px;margin-top:20px;padding-top:14px;border-top:1px solid var(--border);color:var(--muted)}
+.legal-paper .paper-sources h3{margin:0 0 8px;font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.legal-paper .paper-sources ul{margin:0;padding-left:18px;font-size:12.5px;line-height:1.6}
+.legal-paper .paper-sources li{margin:3px 0}
 @media(max-width:760px){.legal-single-case .legal-paper{padding:0 18px!important;margin-top:18px!important}.legal-paper .paper-meta,.legal-paper .paper-flow,.legal-paper .paper-before-after,.legal-paper .paper-next-grid{grid-template-columns:1fr}.legal-paper .paper-meta>div+div,.legal-paper .paper-flow>div+div,.legal-paper .paper-before-after>div+div{padding-left:0;border-left:0;border-top:1px solid var(--border)}.legal-paper .paper-meta>div,.legal-paper .paper-flow>div,.legal-paper .paper-before-after>div{padding:12px 0}.legal-paper .paper-abstract h2{font-size:25px!important}.legal-paper .paper-section>h2{font-size:23px!important}.legal-paper .paper-findings li{padding-left:40px}}
 
 /* Final copy/feedback pass */
