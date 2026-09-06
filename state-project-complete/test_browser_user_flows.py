@@ -101,6 +101,9 @@ def _launch_page(hydration_ms: int = 120, ask_ms: int = 180, resolved_review_ms:
     page.add_script_tag(content=(FRONT / "context-data.js").read_text())
     page.add_script_tag(content=_mock_api_script(hydration_ms, ask_ms, resolved_review_ms))
     page.add_script_tag(content=(FRONT / "context-ask.js").read_text())
+    page.add_script_tag(content=(FRONT / "context-notes-view.js").read_text())
+    page.add_script_tag(content=(FRONT / "context-open-items-view.js").read_text())
+    page.add_script_tag(content=(FRONT / "context-project-view.js").read_text())
     page.add_script_tag(content=(FRONT / "context-app.js").read_text())
     return pw, browser, page
 
