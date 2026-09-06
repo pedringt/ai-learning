@@ -97,16 +97,21 @@ def _extract_user_request(prompt: str) -> str:
     return match.group(1).strip() if match else ""
 
 
+def _normalized_query_text(query: str) -> str:
+    """Match frontend Ask normalization for intent classification."""
+    return " ".join(re.sub(r"[^a-z0-9\s]", " ", query.lower()).split())
+
+
 def _is_broad_request(query: str) -> bool:
-    q = " ".join(query.lower().split())
-    return any(hint in q for hint in _BROAD_HINTS)
+    q = _normalized_query_text(query)
+    return any(_normalized_query_text(hint) in q for hint in _BROAD_HINTS)
 
 
 def _is_dependent_followup(query: str) -> bool:
-    q = " ".join(query.lower().split())
+    q = _normalized_query_text(query)
     if q in {"why", "how", "who else", "what else", "which ones", "which one"}:
         return True
-    if any(hint in q for hint in _DEPENDENT_HINTS):
+    if any(_normalized_query_text(hint) in q for hint in _DEPENDENT_HINTS):
         return True
     # Short pronoun-heavy prompts usually refer to the immediately preceding
     # answer. Longer prompts such as "what other contacts do I have?" are not
@@ -116,8 +121,8 @@ def _is_dependent_followup(query: str) -> bool:
 
 
 def _is_transform_request(query: str) -> bool:
-    q = " ".join(query.lower().split())
-    return any(hint in q for hint in _TRANSFORM_HINTS)
+    q = _normalized_query_text(query)
+    return any(_normalized_query_text(hint) in q for hint in _TRANSFORM_HINTS)
 
 
 def _record_text(record: Mapping[str, Any]) -> str:
