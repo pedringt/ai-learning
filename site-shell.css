@@ -440,3 +440,8 @@ body.v88-dark .home-state-copy .home-state-lead + p,
   font-size:clamp(2rem,3.8vw,3.15rem)!important;
   line-height:1.02!important;
 }
+
+/* v98.2 — the bottom Working style section already explains the non-linear learning approach. */
+#ai-cs-mock .learning-hero > .lead + .lead{
+  display:none!important;
+}
