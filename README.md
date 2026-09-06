@@ -8,6 +8,8 @@ Its central rule:
 
 State is the flagship project in an applied-AI learning portfolio. It is a working product with a live model, a real backend and a real database — but it is a learning prototype with deliberately bounded scope, not enterprise software. The tradeoffs below are intentional.
 
+Slack is State's one shipped external integration today, and it's deliberately bidirectional: Slack messages from approved channels become Evidence automatically, and an accepted change can be shared back to the project's Slack channel. Channel approval is intentionally manual right now (see `slack_intake_service.py` in the table below) — inviting the bot to a channel is not the same as approving it for evidence intake.
+
 ---
 
 ## The authority model
@@ -42,7 +44,7 @@ The repository root holds the portfolio site. The two directories below are the 
 |---|---|
 | `implementation-context-prototype/` | **The State frontend.** Authoritative. This is what the live site loads. |
 | `state-project-complete/` | **The State backend.** Authoritative. This is what Render builds. |
-| `render.yaml` (root) | The one Render config. `rootDir: state-project-complete`, `branch: main`. |
+| `render.yaml` (root) | The only *committed* Render config, building the production `state-api` service (`rootDir: state-project-complete`, `branch: main`). A second Render service, `state-api-staging`, tracks the `staging` branch and exists only in the Render dashboard — nothing in the repo declares it. |
 | `vercel.json` | Static hosting config for the portfolio site. |
 | `index.html`, `site-shell.css`, `site-components.css` | Portfolio homepage and shared shell. |
 | `implementation-context*.html` | The State case study (overview, product decisions, deep dive). |
@@ -54,10 +56,16 @@ The repository root holds the portfolio site. The two directories below are the 
 | File | Responsibility |
 |---|---|
 | `index.html` | Application shell and navigation |
-| `context-app.js` | Routing, rendering, state transitions, Review decisions, Questions, Notes, History |
-| `context-api.js` | Backend HTTP client |
-| `context-ask.js` | Ask UI and result rendering |
+| `context-app.js` | Routing, rendering, state transitions, Review decisions, Questions, Notes, History, Open Items |
+| `context-api.js` | Backend HTTP client, including the `/api/ask/stream` SSE reader |
+| `context-ask.js` | Ask UI, streaming and non-streaming result rendering |
+| `context-ask-followup.js` | Follow-up question handling for Ask (dependent vs. transformative refinements) |
 | `context-data.js` | Deterministic fixture used when the backend is unavailable |
+| `context-history.js` | History view rendering |
+| `context-provenance.js` | "Why is this current?" provenance disclosures |
+| `context-quickwins.js` | Small incremental UI polish injected at runtime (quick-start Ask prompts, responsive tweaks) rather than folded into `context-tool.css` |
+| `context-settings.js` | Settings view: project rules, Slack connection and channel approval |
+| `context-sources.js` | Workspace "Sources" banner (Slack connection status) |
 | `context-tool.css` | Product styling |
 
 ### Backend files
@@ -71,6 +79,10 @@ The repository root holds the portfolio site. The two directories below are the 
 | `ask_refinement_transforms.py` | Post-processing for Ask refinements (shorten, reformat, etc.) |
 | `review_service.py` | Human-authorized review resolution and read models |
 | `interpretation_pipeline_integrated.py` | Evidence interpretation pipeline |
+| `slack_intake_service.py` | Slack event handling and channel approval (`ensure_channel_approved`, called from `api.py`'s `lifespan`). Only reacts to `message` events today — see "Known debt" below. |
+| `slack_oauth_service.py` | Self-serve "Connect Slack" OAuth flow |
+| `slack_relevance_service.py` | Classifies which Slack messages are worth turning into Evidence |
+| `slack_signing.py` | Verifies Slack request signatures |
 | `db.py` | Unified SQLite/Postgres connection abstraction |
 | `database_migration_backed.py` | Migration runner and schema initialization |
 | `anthropic_provider.py`, `openai_provider.py` | Provider adapters |
@@ -126,11 +138,14 @@ If the backend is unreachable, the frontend falls back to the deterministic fixt
 ```bash
 # Python — deterministic suite, no flags needed
 cd state-project-complete && python -m pytest -q
-# 248 passed, 3 skipped, 7 subtests passed
+# 328 passed, 4 skipped, 7 subtests passed
 
-# JavaScript — deterministic Ask behavior
-cd implementation-context-prototype && node state-ask-behavior-tests.js
-# 81 passed, 0 failed
+# JavaScript — deterministic Ask, Notes and provenance behavior
+cd implementation-context-prototype
+node state-ask-behavior-tests.js            # 81 passed, 0 failed
+node state-ask-followup-tests.js            # 18 passed, 0 failed
+node state-ask-loading-visibility-tests.js  # 5 passed, 0 failed
+node state-provenance-behavior-tests.js
 ```
 
 Tests that require real provider API keys skip themselves when the keys are
@@ -155,10 +170,11 @@ python -m playwright install chromium
 
 Set `STATE_CHROMIUM_PATH` to use a specific binary instead.
 
-A CI workflow is parked at `ci/tests.yml.disabled`. It sits outside `.github/`
-on purpose: GitHub rejects pushes that touch `.github/workflows/` unless the
-credential has the `workflow` scope. Move it to
-`.github/workflows/tests.yml` to enable it.
+CI runs both suites automatically via
+[`.github/workflows/tests.yml`](.github/workflows/tests.yml) on every push to
+`main`/`staging` and every pull request. It only runs tests — it never builds,
+publishes, or deploys anything; Vercel and Render deploy from their configured
+branches independently.
 
 ---
 
@@ -166,11 +182,18 @@ credential has the `workflow` scope. Move it to
 
 | Surface | Host | Source |
 |---|---|---|
-| Portfolio site + State frontend | Vercel | GitHub `main` |
-| State API | Render | root `render.yaml`, `rootDir: state-project-complete`, `branch: main` |
+| Portfolio site + State frontend (production) | Vercel | GitHub `main` |
+| State API (production, `state-api`) | Render | root `render.yaml`, `rootDir: state-project-complete`, `branch: main` |
+| State API (staging, `state-api-staging`) | Render | dashboard-only config (not in `render.yaml`), `branch: staging`, auto-deploy scoped to `state-project-complete/` changes |
 
-Both deploy from `main` on commit. Secrets (`DATABASE_URL`, `ANTHROPIC_API_KEY`,
-`OPENAI_API_KEY`) are set in the Render dashboard and never committed.
+`main` is production; `staging` is where changes are pushed and verified first.
+Feature work merges to `staging`, and only promotes to `main` with explicit
+authorization. Vercel is on a build-rate-limited Hobby plan — batch pushes
+rather than deploying `staging` repeatedly. The staging Render service is on
+Render's free tier and sleeps after idle, so its first request after a while
+is expected to be slow. Secrets (`DATABASE_URL`, `ANTHROPIC_API_KEY`,
+`OPENAI_API_KEY`, Slack credentials) are set per-service in the Render
+dashboard and never committed.
 
 ---
 
@@ -178,7 +201,7 @@ Both deploy from `main` on commit. Secrets (`DATABASE_URL`, `ANTHROPIC_API_KEY`,
 
 Things that look like omissions but are decisions:
 
-- **Ask streaming is disabled in the browser.** A live token-streaming path produced corrupted split words. `/api/ask/stream` still exists; the UI uses the validated non-streaming `/api/ask` path. Do not re-enable streaming without evidence and testing.
+- **Free-typed Ask questions stream by default; the five suggested-prompt starters don't.** An earlier streaming attempt produced corrupted split words and was reverted to a non-streaming `/api/ask` call; once that rendering bug was fixed, streaming (`/api/ask/stream`, read via SSE in `context-api.js`'s `askStream`) became the primary path again, since context assembly is fast but the model call can take tens of seconds and streaming is the main perceived-latency mitigation. The five starter prompts (`starterKind` in `context-ask.js`) still answer instantly from live API data with no model call at all, so they're intentionally excluded from `canStream`. The stream carries a 45s inactivity timeout. Do not change this balance without evidence and testing — the corrupted-word failure mode is real and already happened once.
 - **Ask refinement behavior is backend-driven.** `followup_mode` is authoritative. Transformative refinements ("shorten it", "make this exactly three points") replace the previous answer; conversational follow-ups ("what source supports that?") append.
 - **No auth, organizations, or multi-tenancy.** Out of scope for a prototype.
 - **No vector database, RAG, or agents.** Selection is authority-aware and deterministic. Adding retrieval machinery would obscure the thing this project is actually about.
@@ -189,8 +212,8 @@ Things that look like omissions but are decisions:
 
 Being cleaned up deliberately rather than all at once:
 
-- The stylesheets carry layered version-specific overrides and heavy `!important` use. `context-tool.css` still holds roughly thirty separate `@media(max-width:760px)` blocks, several redefining the same selectors, and `index.html` carries version-stamped inline `<style>` blocks. Consolidating them is the next cleanup pass.
-- `context-app.js` is a single 1,600-line module. **Splitting it was investigated and rejected**, for a reason worth recording: the prototype is meant to open from the filesystem (`index.html` has explicit `file://` guards), and ES modules are CORS-blocked over `file://` — verified, not assumed. The only other split is several IIFEs sharing state through `window`, which would take `state` — touched by 64% of the functions — from closure-private to globally mutable. For a product whose thesis is controlled state transitions, that is a downgrade. The file now carries section banners instead, which is what the size problem actually needed.
+- The stylesheets carry layered version-specific overrides and heavy `!important` use. `context-tool.css` holds around thirty separate `@media` blocks at various breakpoints, several redefining the same selectors, and `index.html` carries version-stamped inline `<style>` blocks. Each new visual pass has tended to add one more override layer on top of the last rather than editing the original rule (the Open Items tier-color pass on 2026-09-06 is a recent example) — consolidating them, not adding another layer next time, is the next cleanup pass.
+- `context-app.js` is a single ~1,840-line module. **Splitting it was investigated and rejected**, for a reason worth recording: the prototype is meant to open from the filesystem (`index.html` has explicit `file://` guards), and ES modules are CORS-blocked over `file://` — verified, not assumed. The only other split is several IIFEs sharing state through `window`, which would take `state` — touched by 64% of the functions — from closure-private to globally mutable. For a product whose thesis is controlled state transitions, that is a downgrade. The file now carries section banners instead, which is what the size problem actually needed.
 - `phase2_current/` is named as though it were a superseded spike but is load-bearing runtime code. Renaming it would be the honest fix, and would touch every provider's import path.
 
 ---
