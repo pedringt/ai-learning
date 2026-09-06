@@ -152,6 +152,7 @@ def _filter_candidate_payload(query: str, payload: Mapping[str, Any]) -> dict[st
     anchor_terms = normalized_query & _LOOKUP_ANCHORS
     if not anchor_terms:
         return data
+    topic_terms = normalized_query - anchor_terms
 
     for bucket in ("state", "reviews", "questions", "history", "evidence"):
         records = data.get(bucket)
@@ -162,12 +163,13 @@ def _filter_candidate_payload(query: str, payload: Mapping[str, Any]) -> dict[st
             if not isinstance(record, Mapping):
                 continue
             body_tokens = {_normalize_token(token) for token in re.findall(r"[a-z0-9]+", _record_text(record))}
-            overlap = normalized_query & body_tokens
-            if not overlap:
-                continue
-            # Explicit attribute lookups must mention the requested attribute,
-            # not merely a neighboring topic word.
             if not (anchor_terms & body_tokens):
+                continue
+            # If the lookup names a subject as well as an attribute, require the
+            # record to match that subject too. "Security contact" must not
+            # survive a lookup for "billing contact" merely because both say
+            # contact.
+            if topic_terms and not (topic_terms & body_tokens):
                 continue
             kept.append(dict(record))
         data[bucket] = kept
