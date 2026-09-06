@@ -27,6 +27,11 @@
       .ask-related-summary p{margin:0 0 8px;color:var(--muted,#666)}
       .open-question-row.is-awaiting-review .open-item-label{font-weight:700}
       .open-question-row.is-awaiting-review .question-awaiting-review-note{display:block;margin-top:4px;font-size:12px;line-height:1.35;color:var(--muted,#666)}
+      @media (max-width:600px){
+        .demo-flow{display:grid!important;grid-template-columns:1fr!important;gap:3px!important}
+        .demo-flow li{display:grid!important;grid-template-columns:1fr!important;gap:1px!important}
+        .demo-flow li:not(:last-child)::after{content:'↓'!important;display:block!important;margin-left:6px!important}
+      }
     `;
     document.head.appendChild(style);
   }
@@ -143,7 +148,29 @@
     });
   }
 
-  function enhance(scope=document){addStyles();addAskStarters(scope);addGrounding(scope);clarifyRemainingOpenItems(scope);improveOpenItemsSummary(scope);clarifyQuestionsAwaitingReview(scope);improveEmptyStates(scope);clarifyReviewCompletion(scope);clarifyReviewActions(scope);}
+  function clarifyNotesProcessedFilter(scope=document){
+    const select=scope.querySelector('#notesStatusFilter');
+    if(!select)return;
+    const reviewedOption=select.querySelector('option[value="reviewed"]');
+    if(reviewedOption && reviewedOption.textContent!=='Processed') reviewedOption.textContent='Processed';
+    if(select.value==='reviewed'){
+      const summary=scope.querySelector('#notesFilterSummary span');
+      if(summary) summary.textContent=summary.textContent.replace(/Reviewed/g,'Processed');
+    }
+  }
+
+  function improveProjectProvenanceSummary(scope=document){
+    scope.querySelectorAll('.project-maintained-facts').forEach(details=>{
+      const summary=details.querySelector(':scope > summary');
+      if(!summary)return;
+      const count=details.querySelectorAll('.project-maintained-fact').length;
+      if(!count)return;
+      const hasProvenance=!!details.querySelector('.project-fact-provenance');
+      summary.textContent=`See ${count} maintained Current State ${count===1?'fact':'facts'}${hasProvenance?' · sources & history':''}`;
+    });
+  }
+
+  function enhance(scope=document){addStyles();addAskStarters(scope);addGrounding(scope);clarifyRemainingOpenItems(scope);improveOpenItemsSummary(scope);clarifyQuestionsAwaitingReview(scope);improveEmptyStates(scope);clarifyReviewCompletion(scope);clarifyReviewActions(scope);clarifyNotesProcessedFilter(scope);improveProjectProvenanceSummary(scope);}
   let queued=false;const schedule=()=>{if(queued)return;queued=true;requestAnimationFrame(()=>{queued=false;enhance(document);});};
   new MutationObserver(schedule).observe(document.documentElement,{childList:true,subtree:true});
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',schedule,{once:true});else schedule();
