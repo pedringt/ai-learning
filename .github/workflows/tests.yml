@@ -59,4 +59,5 @@ jobs:
         working-directory: implementation-context-prototype
         run: |
           node state-ask-behavior-tests.js
+          node state-ask-followup-tests.js
           node state-provenance-behavior-tests.js
