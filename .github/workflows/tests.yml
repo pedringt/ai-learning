@@ -1,8 +1,9 @@
 # Deterministic test suite for State.
 #
-# Runs the Python and JS suites on every push to main and every PR. It only
+# Runs the Python and JS suites on every push to main/staging and every PR. It only
 # runs tests -- it does not build, publish or deploy anything. Vercel and
-# Render deploy from `main` on their own; this workflow never touches either.
+# Render deploy from their configured branches on their own; this workflow never
+# touches either.
 #
 # Previously parked at ci/tests.yml.disabled: the review freeze on the live
 # site meant nothing should run against the repo yet, and the push token used
@@ -15,7 +16,7 @@ name: tests
 on:
   pull_request:
   push:
-    branches: [main]
+    branches: [main, staging]
 
 jobs:
   python:
