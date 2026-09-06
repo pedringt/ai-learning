@@ -34,35 +34,24 @@
       .demo-concept{padding:10px;border:1px solid var(--line);border-radius:8px;background:var(--surface)}
       .demo-concept strong{display:block;font-size:12px;margin-bottom:4px}
       .demo-concept span{display:block;font-size:11px;line-height:1.45;color:var(--muted)}
-      @media (max-width:600px){
-        .demo-flow{display:grid!important;grid-template-columns:1fr!important;gap:3px!important}
-        .demo-flow li{display:grid!important;grid-template-columns:1fr!important;gap:1px!important}
-        .demo-flow li:not(:last-child)::after{content:'↓'!important;display:block!important;margin-left:6px!important}
-        .demo-concepts{grid-template-columns:1fr}
-      }
+      @media (max-width:600px){.demo-concepts{grid-template-columns:1fr}}
     `;
     document.head.appendChild(style);
   }
 
   function improveFirstRunOrientation(scope=document){
-    const projectNav=scope.querySelector('.project-nav-toggle');
-    if(projectNav && projectNav.textContent.trim()!=='Project State') projectNav.textContent='Project State';
-
     const overview=scope.querySelector('.overview.pristine');
     if(!overview) return;
     const askPanel=overview.querySelector('.ask-panel');
     const hasResult=!!askPanel?.querySelector('.ask-session-row,.answer-stage.has-result,.ask-live-answer,.ask-live-loading,.ask-live-error');
     const existingOrientation=overview.querySelector('.orientation-box');
 
-    if(hasResult){
-      existingOrientation?.remove();
-      return;
-    }
+    if(hasResult){existingOrientation?.remove();return;}
 
     if(!existingOrientation && askPanel){
       const box=document.createElement('div');
       box.className='orientation-box';
-      box.innerHTML='<strong>How Project State stays current:</strong> New information is captured as evidence. State proposes what it may change, and you decide what becomes part of Project State.';
+      box.innerHTML='<strong>How Project State stays current:</strong> New information is captured as Evidence. State proposes what it may change in Current State, and you decide what becomes part of the accepted understanding shown in Project State.';
       overview.insertBefore(box,askPanel);
     }
 
@@ -74,27 +63,35 @@
     if(input && !hasResult) input.placeholder='What do you need right now?';
   }
 
+  let orientationReturnFocus=null;
+  function restoreOrientationFocus(){
+    const target=orientationReturnFocus;
+    orientationReturnFocus=null;
+    if(target && document.contains(target)) requestAnimationFrame(()=>target.focus());
+  }
+
   function showOrientationHelp(){
     const overlay=document.getElementById('overlay');
     const body=document.getElementById('dialogBody');
     if(!overlay||!body)return;
+    if(overlay.hidden) orientationReturnFocus=document.activeElement instanceof HTMLElement ? document.activeElement : null;
     body.innerHTML=`<span class="eyebrow">How this works</span>
       <h2 id="dialogTitle">State keeps the project’s working understanding current.</h2>
-      <p>State separates what the team currently treats as true from the information and questions that still need judgment.</p>
+      <p>State separates accepted Current State from the evidence and questions that still need judgment. Project State is the readable view of that accepted Current State.</p>
       <ul class="demo-orientation-list">
-        <li><strong>1. Information comes in</strong><span>Notes, Slack, documents, and other project sources are captured as Evidence.</span></li>
-        <li><strong>2. State interprets what changed</strong><span>AI compares new Evidence with Project State and identifies possible changes or unresolved questions.</span></li>
-        <li><strong>3. You decide what becomes current</strong><span>Important changes go to Review. AI can propose a change, but it cannot update Project State on its own.</span></li>
-        <li><strong>4. Project State stays maintained</strong><span>Accepted changes update the definitive project view. Previous decisions remain visible in History.</span></li>
+        <li><strong>1. Information comes in</strong><span>Notes and messages from approved Slack channels are captured as Evidence. Other project information can be added manually as Notes.</span></li>
+        <li><strong>2. State interprets what changed</strong><span>AI compares new Evidence with Current State and identifies possible changes or unresolved questions.</span></li>
+        <li><strong>3. You decide what becomes current</strong><span>Important changes go to Review. AI can propose a change, but it cannot update Current State on its own.</span></li>
+        <li><strong>4. Current State stays maintained</strong><span>Accepted changes update Current State, which Project State presents as the readable project view. Previous decisions remain visible in History.</span></li>
         <li><strong>5. Ask works from that maintained context</strong><span>Use Ask to catch up, understand decisions, find unresolved questions, or prepare for meetings.</span></li>
       </ul>
       <p class="demo-flow-principle">AI interprets → software enforces → people decide</p>
       <div class="demo-concepts">
-        <div class="demo-concept"><strong>Project State</strong><span>What the team currently treats as true.</span></div>
+        <div class="demo-concept"><strong>Project State</strong><span>The readable view of Current State: what the team currently treats as true.</span></div>
         <div class="demo-concept"><strong>Evidence</strong><span>Information State keeps without automatically treating it as truth.</span></div>
         <div class="demo-concept"><strong>Open Items</strong><span>Changes and questions that still need attention.</span></div>
       </div>
-      <div class="demo-start"><span class="meta-label">Good places to start</span><button class="demo-start-action" data-action="demo-start-ask"><strong>Ask about Northstar</strong><span>Put a useful project question in Ask →</span></button><button class="demo-start-action" data-action="demo-start-note"><strong>Add a sample note</strong><span>Try new project information and see how Review handles it →</span></button><button class="demo-start-action" data-action="demo-start-project"><strong>Explore Project State</strong><span>Read the definitive view of what the team currently treats as true →</span></button></div>
+      <div class="demo-start"><span class="meta-label">Good places to start</span><button class="demo-start-action" data-action="demo-start-ask"><strong>Ask about Northstar</strong><span>Put a useful project question in Ask →</span></button><button class="demo-start-action" data-action="demo-start-note"><strong>Add a sample note</strong><span>Try new project information and see how Review handles it →</span></button><button class="demo-start-action" data-action="demo-start-project"><strong>Explore Project State</strong><span>Read the maintained view of accepted Current State →</span></button></div>
       <div class="demo-reset-help"><div><strong>Want to start over?</strong><span>Restore the curated Northstar starting scenario. You can also reset Northstar from Settings.</span></div><button class="text-button demo-reset-link" data-action="confirm-demo-reset">Reset example data →</button></div>
       <div class="dialog-actions demo-help-actions"><button class="btn primary" data-action="close-dialog">Got it</button></div>`;
     overlay.hidden=false;
@@ -108,12 +105,12 @@
     if(document.documentElement.dataset.orientationHelpInstalled==='true')return;
     document.documentElement.dataset.orientationHelpInstalled='true';
     document.addEventListener('click',event=>{
-      const button=event.target.closest?.('[data-action="show-demo-help"]');
-      if(!button)return;
-      event.preventDefault();
-      event.stopPropagation();
-      event.stopImmediatePropagation();
-      showOrientationHelp();
+      const helpButton=event.target.closest?.('[data-action="show-demo-help"]');
+      if(helpButton){event.preventDefault();event.stopPropagation();event.stopImmediatePropagation();showOrientationHelp();return;}
+      if(orientationReturnFocus && (event.target.closest?.('[data-action="close-dialog"]') || event.target.id==='overlay')) requestAnimationFrame(restoreOrientationFocus);
+    },true);
+    document.addEventListener('keydown',event=>{
+      if(orientationReturnFocus && event.key==='Escape') requestAnimationFrame(restoreOrientationFocus);
     },true);
   }
 
