@@ -5,6 +5,7 @@ from pathlib import Path
 FRONTEND = Path(__file__).parent.parent / "implementation-context-prototype"
 JS = (FRONTEND / "context-app.js").read_text()
 API_JS = (FRONTEND / "context-api.js").read_text()
+NOTES_VIEW_JS = (FRONTEND / "context-notes-view.js").read_text()
 
 
 def test_live_reviews_use_backend_payload_not_placeholder_values():
@@ -140,11 +141,17 @@ def test_r8_long_project_and_open_items_scaling_contract():
 
 
 def test_r81_notes_filters_share_one_date_status_search_pipeline():
+    # Notes filtering (date + status + search) lives in context-notes-view.js;
+    # context-app.js only forwards to it via a same-name wrapper (see
+    # notesUiState()/filteredNotes() there) so every existing call site is
+    # unchanged. Split out 2026-09-06 as part of the context-app.js size
+    # reduction -- see README's "Known debt".
     app = (FRONTEND / "context-app.js").read_text(encoding="utf-8")
-    assert "function filteredNotes()" in app
-    assert "noteMatchesFilter(n,activeFilter) &&" in app
-    assert "noteMatchesDate(n,dateFilter) &&" in app
+    assert "function filteredNotes(){ return NOTES_VIEW.filteredNotes(" in app
     assert "const notes=filteredNotes();" in app
+    assert "function filteredNotes(notes,ui)" in NOTES_VIEW_JS
+    assert "noteMatchesFilter(n,activeFilter) &&" in NOTES_VIEW_JS
+    assert "noteMatchesDate(n,dateFilter) &&" in NOTES_VIEW_JS
 
 
 def test_r81_multiple_reviews_default_collapsed_with_single_open_accordion():
@@ -162,14 +169,16 @@ def test_r81_project_nav_hides_empty_sections_and_orientation_uses_state():
 
 
 def test_r83_notes_date_filters_use_calendar_day_distance_not_timestamp_midnights():
+    # Relocated to context-notes-view.js 2026-09-06 (see comment on
+    # test_r81_notes_filters_share_one_date_status_search_pipeline above).
     app = (FRONTEND / "context-app.js").read_text(encoding="utf-8")
-    assert "function localCalendarKey(value)" in app
-    assert "function calendarDayNumber(value)" in app
-    assert "const age=todayDay-noteDay;" in app
-    assert "if(filter==='today')return age===0;" in app
-    assert "if(filter==='7')return age<=6;" in app
-    assert "if(filter==='30')return age<=29;" in app
-    assert "new Date().toISOString().slice(0,10)" not in app
+    assert "function localCalendarKey(value)" in NOTES_VIEW_JS
+    assert "function calendarDayNumber(value)" in NOTES_VIEW_JS
+    assert "const age=todayDay-noteDay;" in NOTES_VIEW_JS
+    assert "if(filter==='today')return age===0;" in NOTES_VIEW_JS
+    assert "if(filter==='7')return age<=6;" in NOTES_VIEW_JS
+    assert "if(filter==='30')return age<=29;" in NOTES_VIEW_JS
+    assert "new Date().toISOString().slice(0,10)" not in NOTES_VIEW_JS
     assert "notes-result-count" in app
 
 
@@ -221,10 +230,13 @@ def test_r85_integrity_and_polish_contracts():
     html = (FRONTEND / "index.html").read_text(encoding="utf-8")
     assert 'data-view="project-overview">Project</button>' in html
     assert "window.scrollTo({top:0,behavior:'auto'})" in app
-    assert "n.backendManaged?'':`<button" in app
+    # n.backendManaged?'':`<button ...>Edit</button>` moved to context-notes-view.js
+    # 2026-09-06 (see comment on test_r81_notes_filters_share_one_date_status_search_pipeline).
+    assert "n.backendManaged?'':`<button" in NOTES_VIEW_JS
     assert "getDrafts" in api_js and "createDraft" in api_js and "updateDraft" in api_js and "deleteDraft" in api_js
     assert "setQuestionBlocking" in api_js and "What does this block?" in app
-    assert "Showing <strong>${notes.length}</strong> of ${total} notes" in app
+    # notesFilterSummary() moved to context-notes-view.js 2026-09-06.
+    assert "Showing <strong>${notes.length}</strong> of ${totalCount} notes" in NOTES_VIEW_JS
     assert "Search history" in app and "historyResultCount" in app
     assert "Rules apply to future analysis. Existing Reviews are not reinterpreted automatically." in app
     assert "current facts" in app
