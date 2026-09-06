@@ -7,6 +7,7 @@ JS = (FRONTEND / "context-app.js").read_text()
 API_JS = (FRONTEND / "context-api.js").read_text()
 NOTES_VIEW_JS = (FRONTEND / "context-notes-view.js").read_text()
 OPEN_ITEMS_VIEW_JS = (FRONTEND / "context-open-items-view.js").read_text()
+PROJECT_VIEW_JS = (FRONTEND / "context-project-view.js").read_text()
 
 
 def test_live_reviews_use_backend_payload_not_placeholder_values():
@@ -78,9 +79,10 @@ def test_history_rehydrates_backend_transitions_with_source_notes():
 
 
 def test_project_is_rendered_as_document_outline_not_area_card_dashboard():
-    assert "project-document" in JS
-    assert "project-outline-section" in JS
-    assert "project-area-cards" not in JS
+    # Project page rendering moved to context-project-view.js 2026-09-06.
+    assert "project-document" in PROJECT_VIEW_JS
+    assert "project-outline-section" in PROJECT_VIEW_JS
+    assert "project-area-cards" not in JS and "project-area-cards" not in PROJECT_VIEW_JS
 
 
 def test_project_subnav_scrolls_existing_document_without_rerender():
@@ -143,9 +145,12 @@ def test_r8_long_project_and_open_items_scaling_contract():
     assert "waiting.slice(0,5)" in OPEN_ITEMS_VIEW_JS
     assert "toggle-open-questions" in app
     assert "const reviewTopics=new Set(reviews.flatMap(r=>r.topics||[]));" in OPEN_ITEMS_VIEW_JS
-    assert "projectWikiTopic(topic,items)" in app
-    assert "projectOutlineSection(id,a)" in app
-    assert "project-section-sticky" in app
+    # Both gained extra parameters (pendingFor, history, knowledge) when they
+    # moved to context-project-view.js 2026-09-06, since they can no longer
+    # close over context-app.js's `state`.
+    assert "function projectWikiTopic(topic,items,pendingFor,history)" in PROJECT_VIEW_JS
+    assert "function projectOutlineSection(id,a,knowledge,pendingFor,history)" in PROJECT_VIEW_JS
+    assert "project-section-sticky" in PROJECT_VIEW_JS
     assert ".app-sidebar{position:sticky" in css
 
 
@@ -177,10 +182,15 @@ def test_r81_multiple_reviews_default_collapsed_with_single_open_accordion():
 
 
 def test_r81_project_nav_hides_empty_sections_and_orientation_uses_state():
+    # updateNav()'s empty-section check (and its own currentKnowledge()/
+    # projectMetaIds copy) stayed in context-app.js. projectOrientation() and
+    # the header that reads its stage/outcome moved to context-project-view.js
+    # 2026-09-06.
     app = (FRONTEND / "context-app.js").read_text(encoding="utf-8")
     assert "currentKnowledge(area).length===0" in app
     assert "k-stage" in app and "k-outcome" in app
-    assert "orientation.stage" in app and "orientation.outcome" in app
+    assert "k-stage" in PROJECT_VIEW_JS and "k-outcome" in PROJECT_VIEW_JS
+    assert "orientation.stage" in PROJECT_VIEW_JS and "orientation.outcome" in PROJECT_VIEW_JS
 
 
 def test_r83_notes_date_filters_use_calendar_day_distance_not_timestamp_midnights():
@@ -258,8 +268,9 @@ def test_r85_integrity_and_polish_contracts():
     assert "Showing <strong>${notes.length}</strong> of ${totalCount} notes" in NOTES_VIEW_JS
     assert "Search history" in app and "historyResultCount" in app
     assert "Rules apply to future analysis. Existing Reviews are not reinterpreted automatically." in app
-    assert "current facts" in app
-    assert "project-maintained-facts" in app
+    # Both moved to context-project-view.js 2026-09-06.
+    assert "current facts" in PROJECT_VIEW_JS
+    assert "project-maintained-facts" in PROJECT_VIEW_JS
     assert "backendStatus" in app and "temporarily unavailable" in app
 
 
@@ -321,9 +332,11 @@ def test_r95_workspace_attention_has_a_fast_independent_load_path():
 
 def test_r19_project_summary_and_modal_actions_stay_compact():
     app = (FRONTEND / "context-app.js").read_text(encoding="utf-8")
-    assert 'class="project-fact-count"' in app
-    assert 'class="current-direction-list"' in app
+    # Both moved to context-project-view.js 2026-09-06.
+    assert 'class="project-fact-count"' in PROJECT_VIEW_JS
+    assert 'class="current-direction-list"' in PROJECT_VIEW_JS
     assert 'data-action="close-dialog">Done' not in app
+    assert 'data-action="close-dialog">Done' not in PROJECT_VIEW_JS
 
 
 def test_r861_repository_has_one_obvious_deploy_backend():
