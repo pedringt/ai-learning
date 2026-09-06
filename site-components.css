@@ -1553,10 +1553,10 @@ body:has(.meridian-breadcrumb span:last-child) .meridian-heading .eyebrow{displa
 .legal-paper .paper-section>h2{max-width:760px!important;font-size:26px!important;line-height:1.18!important;margin:0 0 18px!important}
 .legal-paper .paper-section>p{max-width:760px!important;font-size:14.5px!important;line-height:1.65!important}
 .legal-paper .paper-findings{max-width:760px;margin:0;padding:0;list-style:none;counter-reset:findings}
-.legal-paper .paper-findings li{counter-increment:findings;position:relative;padding:22px 0 22px 52px;border-top:1px solid var(--border)}
-.legal-paper .paper-findings li:first-child{border-top:0;padding-top:8px}
-.legal-paper .paper-findings li:before{content:"0" counter(findings);position:absolute;left:0;top:24px;color:var(--purple);font-size:11px;font-weight:850;letter-spacing:.08em}
-.legal-paper .paper-findings li:first-child:before{top:10px}
+.legal-paper .paper-findings li{counter-increment:findings;position:relative;padding:14px 0 14px 52px;border-top:1px solid var(--border)}
+.legal-paper .paper-findings li:first-child{border-top:0;padding-top:4px}
+.legal-paper .paper-findings li:before{content:"0" counter(findings);position:absolute;left:0;top:15px;color:var(--purple);font-size:11px;font-weight:850;letter-spacing:.08em}
+.legal-paper .paper-findings li:first-child:before{top:3px}
 .legal-paper .paper-findings h3{font-size:18px!important;line-height:1.3!important;margin:0 0 7px!important}
 .legal-paper .paper-findings p{margin:0!important;color:var(--muted);font-size:14px!important;line-height:1.62!important}
 .legal-paper .paper-example{margin:8px 0 0;padding:26px 0 30px;border-top:2px solid var(--purple);border-bottom:1px solid var(--border)}
