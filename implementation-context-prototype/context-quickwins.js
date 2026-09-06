@@ -40,6 +40,9 @@
   }
 
   function improveFirstRunOrientation(scope=document){
+    const projectNav=scope.querySelector('.project-nav-toggle');
+    if(projectNav && projectNav.textContent.trim()!=='Project State') projectNav.textContent='Project State';
+
     const overview=scope.querySelector('.overview.pristine');
     if(!overview) return;
     const askPanel=overview.querySelector('.ask-panel');
