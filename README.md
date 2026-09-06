@@ -56,12 +56,15 @@ The repository root holds the portfolio site. The two directories below are the 
 | File | Responsibility |
 |---|---|
 | `index.html` | Application shell and navigation |
-| `context-app.js` | Routing, rendering, state transitions, Review decisions, Questions, Notes, History, Open Items |
+| `context-app.js` | Routing, state transitions, Review decisions, Questions, History, backend hydration -- the pieces that mutate state or talk to the backend. Delegates Notes/Open Items/Project rendering to the view modules below. |
 | `context-api.js` | Backend HTTP client, including the `/api/ask/stream` SSE reader |
 | `context-ask.js` | Ask UI, streaming and non-streaming result rendering |
 | `context-ask-followup.js` | Follow-up question handling for Ask (dependent vs. transformative refinements) |
 | `context-data.js` | Deterministic fixture used when the backend is unavailable |
 | `context-history.js` | History view rendering |
+| `context-notes-view.js` | Notes view rendering: filtering, the note/draft row markup, the composer |
+| `context-open-items-view.js` | Open Items view rendering: review/question cards, section collapsing |
+| `context-project-view.js` | Project view rendering: wiki-topic grouping, maintained-fact list, outline sections |
 | `context-provenance.js` | "Why is this current?" provenance disclosures |
 | `context-quickwins.js` | Small incremental UI polish injected at runtime (quick-start Ask prompts, responsive tweaks) rather than folded into `context-tool.css` |
 | `context-settings.js` | Settings view: project rules, Slack connection and channel approval |
@@ -213,7 +216,7 @@ Things that look like omissions but are decisions:
 Being cleaned up deliberately rather than all at once:
 
 - **Partially addressed 2026-09-06.** `context-tool.css`'s ~30 scattered `@media` blocks (several breakpoints redefined five-plus times across separate blocks) are now 13: one canonical block per breakpoint, plus four single-rule exceptions pinned at their original position because moving them would have changed which declaration wins the cascade at that breakpoint (each carries a comment explaining why). The consolidation was done mechanically and verified, not by eye: a small script modeled the cascade for every selector/property in the file across every combination of viewport width, dark mode, and `prefers-reduced-motion`, confirmed the merge changes nothing, and separately confirmed 96 whole rules were already fully dead (permanently shadowed by a later declaration) and safe to delete outright — see git history around 2026-09-06 for the verification script if this is reopened. **Still open:** the same layering pattern in the ~1,100 lines of non-media rules (harder to verify mechanically, since there's no breakpoint to partition on) and the version-stamped inline `<style>` blocks in `index.html` — neither was touched this pass.
-- `context-app.js` is a single ~1,840-line module. **Splitting it was investigated and rejected**, for a reason worth recording: the prototype is meant to open from the filesystem (`index.html` has explicit `file://` guards), and ES modules are CORS-blocked over `file://` — verified, not assumed. The only other split is several IIFEs sharing state through `window`, which would take `state` — touched by 64% of the functions — from closure-private to globally mutable. For a product whose thesis is controlled state transitions, that is a downgrade. The file now carries section banners instead, which is what the size problem actually needed.
+- **`context-app.js`'s size — addressed 2026-09-06.** It was a single ~1,840-line module; a full ES-module split was investigated and rejected (the prototype opens from the filesystem via `index.html`'s `file://` guards, and ES modules are CORS-blocked over `file://`). What actually unblocked the split was noticing this codebase already had the answer: `context-ask.js` and `context-provenance.js` were already plain `<script>` files (no modules needed) that keep their own logic private and expose one small `Object.freeze()` API on `window`, rather than dumping shared state there. Applying that same pattern pulled Notes, Open Items, and Project view rendering out into `context-notes-view.js`, `context-open-items-view.js`, and `context-project-view.js` — each takes plain data/callbacks and returns HTML, never touching `state` directly. `context-app.js` is now 1,580 lines (down ~14%) and keeps every original call site working via same-name thin wrapper functions. **Still open:** the remaining ~1,580 lines are Ask routing/submission, backend hydration/mapping, and the event-dispatch handler — all controller logic that mutates `state` or talks to the backend, which doesn't fit the same-shape "given data, return HTML" contract the three extracted modules use. Splitting that further would need a different pattern, not just more of this one.
 - `phase2_current/` is named as though it were a superseded spike but is load-bearing runtime code. Renaming it would be the honest fix, and would touch every provider's import path.
 
 ---
