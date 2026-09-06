@@ -66,6 +66,26 @@ def test_source_followup_keeps_previous_answer_context():
     assert "Billing is out of scope" in hardened
 
 
+def test_short_why_followup_keeps_previous_answer_context():
+    hardened = _harden_prompt_for_relevance(_prompt("Why?"))
+    assert "Billing is out of scope" in hardened
+
+
+def test_how_do_you_know_followup_keeps_previous_answer_context():
+    hardened = _harden_prompt_for_relevance(_prompt("How do you know?"))
+    assert "Billing is out of scope" in hardened
+
+
+def test_where_did_you_get_that_followup_keeps_previous_answer_context():
+    hardened = _harden_prompt_for_relevance(_prompt("Where did you get that?"))
+    assert "Billing is out of scope" in hardened
+
+
+def test_pronoun_followup_keeps_previous_answer_context():
+    hardened = _harden_prompt_for_relevance(_prompt("Can you explain that?"))
+    assert "Billing is out of scope" in hardened
+
+
 def test_broad_brief_keeps_bounded_context():
     payload = {
         "state": [
@@ -76,6 +96,55 @@ def test_broad_brief_keeps_bounded_context():
     }
     filtered = _filter_candidate_payload("Catch me up", payload)
     assert filtered["state"] == payload["state"]
+
+
+def test_semantic_owner_paraphrase_does_not_get_pre_filtered():
+    payload = {
+        "state": [
+            {"id": "owner", "statement": "Project owner: Morgan Lee."},
+            {"id": "scope", "statement": "The pilot covers Tier 1 support."},
+        ],
+        "reviews": [], "questions": [], "history": [], "evidence": [], "rules": [],
+    }
+    filtered = _filter_candidate_payload("Who leads the pilot?", payload)
+    assert filtered["state"] == payload["state"]
+
+
+def test_semantic_launch_date_paraphrase_does_not_get_pre_filtered():
+    payload = {
+        "state": [
+            {"id": "launch", "statement": "Launch date: October 5."},
+            {"id": "scope", "statement": "The pilot covers Tier 1 support."},
+        ],
+        "reviews": [], "questions": [], "history": [], "evidence": [], "rules": [],
+    }
+    filtered = _filter_candidate_payload("When are we going live?", payload)
+    assert filtered["state"] == payload["state"]
+
+
+def test_semantic_budget_paraphrase_does_not_get_pre_filtered():
+    payload = {
+        "state": [
+            {"id": "budget", "statement": "Pilot budget: $25,000."},
+            {"id": "scope", "statement": "The pilot covers Tier 1 support."},
+        ],
+        "reviews": [], "questions": [], "history": [], "evidence": [], "rules": [],
+    }
+    filtered = _filter_candidate_payload("What does the pilot cost?", payload)
+    assert filtered["state"] == payload["state"]
+
+
+def test_explicit_attribute_lookup_still_filters_adjacent_records():
+    payload = {
+        "state": [
+            {"id": "scope", "statement": "Billing work is outside the pilot."},
+            {"id": "contact", "statement": "Billing contact: Morgan Lee."},
+            {"id": "security", "statement": "Security contact: Jamie Chen."},
+        ],
+        "reviews": [], "questions": [], "history": [], "evidence": [], "rules": [],
+    }
+    filtered = _filter_candidate_payload("Who is the billing contact?", payload)
+    assert [x["id"] for x in filtered["state"]] == ["contact"]
 
 
 def test_guard_explicitly_distinguishes_grounding_from_relevance():
