@@ -6,7 +6,16 @@ This file is the canonical current-state handoff for State. Any AI assistant or 
 
 _Last updated: September 6, 2026 (post-promotion)_
 
-`main` is production, currently at commit `e623aeb` (merged via [PR #59](https://github.com/pedringt/ai-learning/pull/59)). **Slack Phase 2, self-serve Slack OAuth, a full round of Ask reliability/UX hardening, the Slack empty-channels copy fix, and a site-wide portfolio content/wording pass are all now live in production** -- this second promotion was explicitly authorized by Paige on 2026-09-06. `staging` and `main` now describe the same product with no pending items.
+`main` is production, currently at commit `19ec1be` (merged via [PR #60](https://github.com/pedringt/ai-learning/pull/60)). **Slack Phase 2, self-serve Slack OAuth, a full round of Ask reliability/UX hardening, the Slack empty-channels copy fix, and a site-wide portfolio content/wording pass are all now live in production** -- this third promotion was explicitly authorized by Paige on 2026-09-06. `staging` and `main` now describe the same product with no pending items.
+
+This third promotion (PR #60) additionally shipped a round of feedback from an external site review (a "Kim" persona review simulating the portfolio's target reader), plus repo housekeeping:
+
+- Fixed Applied Work's homepage grids rendering 3 columns for only 2 cards (both the major and secondary grid) -- the real bug was a later `!important` CSS override that survived an earlier attempted fix.
+- Standardized the last remaining "person" -> "human" terminology mention (Applied Work's State card).
+- Reworded the Learning Guide's Meridian eval-cycle sentence ("actually runs" -> "uses") since Meridian is an explicitly simulated exercise, not something that actually runs.
+- Added a small "Sources / evidence reviewed" footer to the Legal AI case study, listing the evidence categories already named elsewhere on the page.
+- Archived `CLEANUP_PLAN.md` and `POST_FREEZE_CHANGES.md` to `docs/history/` -- verified nearly everything both flagged (orphaned pages, duplicate root frontend files, stale README, dead branches) was already resolved in earlier sessions. Note: `CLEANUP_PLAN.md`'s claim that `phase2_current/` is dead spike code is **incorrect** as of this promotion -- it's a live import of `openai_provider.py`, `anthropic_provider.py`, `interpretation_pipeline_integrated.py`, and the Slack services. Do not act on that specific recommendation if this doc is reopened later.
+- Deleted 34 stale GitHub branches (fully-merged or pre-Slack-era snapshots superseded by later work). Only `main` and `staging` remain on the remote.
 
 This promotion shipped (all now on `main`):
 

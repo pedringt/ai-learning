@@ -84,7 +84,12 @@ def test_project_is_rendered_as_document_outline_not_area_card_dashboard():
 def test_project_subnav_scrolls_existing_document_without_rerender():
     assert "if(state.view!=='project-overview'){state.view='project-overview';render();" in JS
     assert "else{updateNav();updateProjectSubnavActive(target);scrollProjectTarget(target);}" in JS
-    assert "setTimeout" not in JS or "data-project-jump" not in JS.split("setTimeout",1)[-1]
+    # Scope this to the project-jump handler itself (not the whole file) so an
+    # unrelated setTimeout added anywhere else in JS can't produce a false
+    # failure here: the handler should scroll via requestAnimationFrame /
+    # scrollProjectTarget, not an arbitrary setTimeout delay.
+    project_jump_handler = JS.split("const projectJump=e.target.closest('[data-project-jump]');", 1)[1].split("const relatedReview=", 1)[0]
+    assert "setTimeout" not in project_jump_handler
     assert "updateProjectSubnavActive" in JS
     assert "aria-current','location'" in JS
 

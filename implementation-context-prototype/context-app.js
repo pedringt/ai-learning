@@ -1110,10 +1110,12 @@
   function showDecisionComplete(decision,{review=null,items=[]}={}){
     if(decision!=='update'){
       showDialog(`<span class="eyebrow">Review complete</span><h2 id="dialogTitle">Understanding left unchanged.</h2><p>The evidence is preserved, but downstream work continues using the prior reviewed understanding.</p>`);
+      autoCloseDialog();
       return;
     }
     if(state.lastReviewGeneric || !items.length){
       showDialog(`<span class="eyebrow">Review complete</span><h2 id="dialogTitle">${state.lastReviewGeneric?'Evidence reviewed.':'Current understanding updated.'}</h2><p>${state.lastReviewGeneric?'The evidence is preserved as reviewed material.':'The reviewed evidence has been applied to current understanding. Any question it directly establishes has been resolved; unresolved residue stays open.'}</p>`);
+      autoCloseDialog();
       return;
     }
     const primary=items[0];
@@ -1138,6 +1140,10 @@
 
   function showDialog(html){
     if(overlay.hidden) state.dialogReturnFocus=document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    // Showing any new dialog invalidates a previous auto-close timer (if any)
+    // so it can never fire against a different, later dialog. Callers that
+    // want this one to auto-close call autoCloseDialog() right after.
+    state.autoCloseToken=null;
     dialogBody.innerHTML=html; overlay.hidden=false; overlay.scrollTop=0; document.body.classList.add('modal-open');
     const dialog=document.querySelector('.dialog');
     if(dialog) dialog.scrollTop=0;
@@ -1152,8 +1158,20 @@
   }
   function closeDialog(){
     overlay.hidden=true; dialogBody.innerHTML=''; document.body.classList.remove('modal-open');
+    state.autoCloseToken=null;
     const target=state.dialogReturnFocus; state.dialogReturnFocus=null;
     if(target && document.contains(target)) requestAnimationFrame(()=>target.focus());
+  }
+  // Info-only confirmations (no action buttons) otherwise sit on top of the
+  // page indefinitely: their full-screen backdrop silently absorbs the
+  // user's next click as a dismiss instead of letting it reach whatever was
+  // actually clicked underneath (e.g. a sidebar nav tab), so it looks like
+  // that first click did nothing. Auto-close after a readable delay instead
+  // of requiring an explicit dismissal for dialogs with nothing to act on.
+  function autoCloseDialog(delay=2200){
+    const token=Symbol();
+    state.autoCloseToken=token;
+    setTimeout(()=>{ if(state.autoCloseToken===token && !overlay.hidden) closeDialog(); },delay);
   }
   function showProjectSettings(){
     const rulesStatus=state.backendStatus.rules;
