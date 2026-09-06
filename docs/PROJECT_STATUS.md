@@ -6,7 +6,7 @@ This file is the canonical current-state handoff for State. Any AI assistant or 
 
 _Last updated: September 6, 2026 (post-promotion)_
 
-`main` is production, currently at commit `59cb02e` (merged via [PR #57](https://github.com/pedringt/ai-learning/pull/57)). **Slack Phase 2, self-serve Slack OAuth, and a full round of Ask reliability/UX hardening are now live in production** -- this promotion was explicitly authorized by Paige on 2026-09-06 after all outstanding live-QA checks (below) were verified. `staging` and `main` now describe the same product except for one small pending item (see "Staging ahead of main" below).
+`main` is production, currently at commit `e623aeb` (merged via [PR #59](https://github.com/pedringt/ai-learning/pull/59)). **Slack Phase 2, self-serve Slack OAuth, a full round of Ask reliability/UX hardening, the Slack empty-channels copy fix, and a site-wide portfolio content/wording pass are all now live in production** -- this second promotion was explicitly authorized by Paige on 2026-09-06. `staging` and `main` now describe the same product with no pending items.
 
 This promotion shipped (all now on `main`):
 
@@ -19,6 +19,11 @@ This promotion shipped (all now on `main`):
 - **Ask follow-up mode hardening**: follow-ups are classified as fresh/topic-shift, dependent, or transformation, with backend and frontend normalization agreeing on punctuation (`Why?` vs `Why`).
 - **Fixed a stale-answer-during-loading bug found via live QA on deployed staging** (not caught by unit tests): a fresh/topic-shift question computed the correct `followupMode` but never consulted it before entering the loading state, so the previous unrelated answer stayed visible the entire wait. Fixed, with a dedicated regression suite (`state-ask-loading-visibility-tests.js`) added to CI, plus a corrected Python contract test that had been pinning the buggy line as "expected."
 - **UX/copy polish**: Project facts disclose provenance ("Why this is current ->"); the "How this works" help modal has a 5-step flow diagram; Notes' combined reviewed/no-review-needed bucket reads "Processed"; the Workspace Slack banner and Settings' Slack card no longer say "In development" (Slack shipped) and the banner is dismissable; the Ask "Related open items" footer no longer duplicates itself into two near-identical blocks; the Learning Guide intro no longer makes the same point twice.
+
+This second promotion (PR #59) additionally shipped:
+
+- **Settings' Slack empty-channels copy fix**: the stale "Planned" feature-preview (Approved channels / Threads / Noise control) in Settings' Slack card, shown whenever a workspace has zero approved channels, has been replaced with a plain "No channels approved yet." line. All three previously-"Planned" features are actually already built and shipped.
+- **Site-wide portfolio content/wording pass** (four rounds of review with Paige, content-only, no application logic changed): standardized the site's own name/tagline to "AI Learning Portfolio" everywhere (previously three different taglines depending on which tab/page); removed a dangling "Meridian's Lab" reference in the Learning Guide by linking it to the actual case study; cut duplicated narrative (the AI-authority-boundary story on the search-cost page, the latency/streaming story between two pages, a repeated firm-size point on the Legal AI page); standardized "person" -> "human" terminology across the State case study to match the product's own authority-model language; reworded several long comma-list sentences for sentence-length variety; and switched two dense sections (State's merged learning-lessons list, Legal AI's three findings) to more visually compact layouts (a 2-column card grid, and tightened list spacing) without cutting content.
 
 Independent manager-readiness review (a separate assistant session, 2026-09-06) gave a GO on product/design/content, contingent on live-verifying: Ask -> Review, Ask -> Question modal, Settings category-save round trip, and Open Items with real data. All four were verified directly against the deployed staging app before promotion (see git history around 2026-09-06 for the detailed QA trail). Additional adversarial scenarios also verified live: rapid-navigation races during hydration, and full Question lifecycle (wrong answer -> reject -> question stays open -> correct answer -> accept -> blocking count/Project/History all reconcile).
 
@@ -47,13 +52,7 @@ The production frontend must point to the production API. Staging intentionally 
 
 ## Open work
 
-### Staging ahead of main (small, not yet promoted)
-
-One small commit is on `staging` but not yet on `main`: [`8880b83`](https://github.com/pedringt/ai-learning/commit/8880b83) / [PR #58](https://github.com/pedringt/ai-learning/pull/58) -- dropped a stale "Planned" feature-preview (Approved channels / Threads / Noise control) that rendered in Settings' Slack card whenever a workspace has zero approved channels. All three described features are actually already built (Phase 1/2), so the copy read as "not built yet" for something live -- and production is hitting this exact empty state right now since the new production Slack app has no approved channel yet. Replaced with a plain "No channels approved yet." line.
-
-This has **not been visually verified live** yet -- it landed right as the Vercel rate limit above was hit, so no preview/staging deploy has run against it. Verify it renders correctly once deploys resume, then it's a candidate for a quick follow-up promotion to `main` (small, cosmetic, already covered by the full JS+Python suite) whenever Paige wants to bundle it with something else or push it alone.
-
-**Remaining pre-promotion-era checklist item, now post-promotion:** confirm the production Slack app credentials are set as Render env vars on the `state-api` (production) service -- Paige's task, never to be written in this file (see "Authority / credentials" below).
+**Remaining checklist item:** confirm the production Slack app credentials are set as Render env vars on the `state-api` (production) service -- Paige's task, never to be written in this file (see "Authority / credentials" below).
 
 Deliberately still out of scope: real Slack token revocation on Disconnect, and automatic channel discovery via the Slack Web API (channels are currently approved manually).
 
