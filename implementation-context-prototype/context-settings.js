@@ -127,7 +127,7 @@
   function slackChannelsMarkup(slackState){
     if(slackState.loading) return '<div class="slack-preview-row"><span>Loading channels…</span></div>';
     if(slackState.channelsFailed) return '<div class="slack-preview-row"><span>Channels could not be loaded.</span><button class="text-button" type="button" data-settings-action="retry-slack">Try again</button></div>';
-    if(!slackState.channels.length) return '<div class="slack-preview-row"><div><strong>Approved channels</strong><br><span>Only channels explicitly enabled for Northstar can feed State.</span></div><span>Planned</span></div><div class="slack-preview-row"><div><strong>Threads</strong><br><span>State follows conversations over time and creates new Evidence when something meaningful changes.</span></div><span>Planned</span></div><div class="slack-preview-row"><div><strong>Noise control</strong><br><span>Bot, system, and low-value conversation is filtered before it reaches Notes.</span></div><span>Planned</span></div>';
+    if(!slackState.channels.length) return '<div class="slack-preview-row"><span>No channels approved yet.</span></div>';
     return slackState.channels.map(channel=>`<div class="slack-preview-row"><div><strong>#${esc(channel.channel_name||channel.channel_id)}</strong><br><span>${channel.last_event_at?`Last activity ${esc(channel.last_event_at)}`:'No activity yet'}</span></div><button class="btn secondary" type="button" data-settings-action="toggle-channel" data-channel-row-id="${esc(channel.id)}" data-enabled="${channel.enabled?'1':'0'}">${channel.enabled?'Enabled':'Disabled'}</button></div>`).join('');
   }
 
