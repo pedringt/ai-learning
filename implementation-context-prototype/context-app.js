@@ -2,6 +2,9 @@
   const D = window.PROJECT_CONTEXT_DATA;
   const API = window.STATE_API;
   const ASK = window.STATE_ASK;
+  const NOTES_VIEW = window.STATE_NOTES_VIEW;
+  const OPEN_ITEMS_VIEW = window.STATE_OPEN_ITEMS_VIEW;
+  const PROJECT_VIEW = window.STATE_PROJECT_VIEW;
   const clone = x => JSON.parse(JSON.stringify(x));
   const initial = clone(D);
   const state = {
@@ -112,87 +115,17 @@
   }
 
 
-  const projectAreas = {
-    product:{name:'Product & Workflow', description:'What the assistant currently does, where it fits, and how the support workflow is expected to work.'},
-    safety:{name:'Safety & Constraints', description:'The current boundaries that keep the first implementation controlled and reviewable.'},
-    evaluation:{name:'Evaluation & Rollout', description:'How the pilot will be judged and what needs to be true before broader use.'}
-  };
-
   const projectMetaIds=new Set(['k-stage','k-outcome']);
   function currentKnowledge(area){ return state.data.knowledge.filter(k=>k.state==='current' && (!area || (!projectMetaIds.has(k.id)&&k.projectArea===area))); }
-  function projectGroup(k,area){
-    const text=norm(`${k.title||''} ${k.statement||''} ${(k.topics||[]).join(' ')}`);
-    if(area==='product'){
-      if(/scope|pilot|tier 1|tier 2|password|login/.test(text)) return 'Scope';
-      if(/access|ground|knowledge|source|entitlement/.test(text)) return 'Knowledge & access';
-      return 'Workflow';
-    }
-    if(area==='safety'){
-      if(/data|privacy|retention|slack|source/.test(text)) return 'Data & sources';
-      if(/human review|autonomy|sensitive|read.only|vip|account change/.test(text)) return 'Control boundaries';
-      return 'Risk controls';
-    }
-    if(/launch|rollout|training|enablement/.test(text)) return 'Rollout';
-    if(/feedback|monitor|sample|metric|evaluation|claim|failure/.test(text)) return 'Measurement';
-    return 'Readiness';
-  }
-
-  const projectWikiTopics={
-    product:[
-      {id:'pilot-workflow',title:'Pilot scope & workflow',description:'What the first pilot is for and how it fits into support.',matches:k=>['k-pilot','k-entry','k-login','k-password'].includes(k.id)||projectGroup(k,'product')==='Scope'},
-      {id:'knowledge-access',title:'Knowledge & access',description:'What the assistant can rely on when it answers and how access is determined.',matches:k=>['k-grounding','k-access'].includes(k.id)||projectGroup(k,'product')==='Knowledge & access'},
-      {id:'escalation-handoff',title:'Escalation & handoff',description:'What happens when the assistant cannot safely carry the case forward.',matches:k=>['k-escalation','k-handoff'].includes(k.id)||projectGroup(k,'product')==='Workflow'},
-    ],
-    safety:[
-      {id:'human-control',title:'Human control',description:'Where human judgment remains required and what would be needed to revisit that boundary.',matches:k=>['k-security','k-autonomy'].includes(k.id)},
-      {id:'action-boundaries',title:'Action boundaries',description:'What the assistant is and is not allowed to do in the first implementation.',matches:k=>['k-readonly','k-sensitive','k-vip'].includes(k.id)||projectGroup(k,'safety')==='Control boundaries'},
-      {id:'data-sources',title:'Data & sources',description:'The current rules for customer data and approved retrieval sources.',matches:k=>['k-data','k-slack'].includes(k.id)||projectGroup(k,'safety')==='Data & sources'},
-    ],
-    evaluation:[
-      {id:'success',title:'How success is judged',description:'The evidence the team will use to decide whether the pilot is working safely and usefully.',matches:k=>['k-eval','k-feedback','k-sample','k-monitoring','k-claims'].includes(k.id)||projectGroup(k,'evaluation')==='Measurement'},
-      {id:'readiness',title:'Launch readiness',description:'What still has to be true before the pilot is ready to launch.',matches:k=>['k-launch'].includes(k.id)||projectGroup(k,'evaluation')==='Readiness'},
-      {id:'rollout',title:'Rollout & enablement',description:'How the pilot expands and how reps are prepared to use it.',matches:k=>['k-training','k-rollout'].includes(k.id)||projectGroup(k,'evaluation')==='Rollout'},
-    ]
-  };
-
 
   /* ----------------------------------------------------------------------
      Project view
 
-     Renders Current State as a readable document: grouping, wiki paragraphs,
-     outline sections and the sub-nav that scrolls between them.
+     Grouping, wiki paragraphs, outline sections, and the page itself live in
+     context-project-view.js (see the comment above the Notes wrappers for
+     why); decorateProjectProvenance() below stays here since it patches the
+     live DOM after render() rather than returning a string.
      ------------------------------------------------------------------- */
-  function projectFact(k){
-    const pending=pendingFor(k.topics||[]);
-    const hasHistory=state.data.history.some(h=>h.knowledgeId===k.id || h.state_item_id===k.id);
-    return `<li class="project-maintained-fact" data-state-id="${esc(k.id)}"><div><strong>${esc(k.title)}</strong><span>${esc(k.statement)}</span></div><div class="project-outline-actions">${pending.length?`<button class="project-pending" data-action="open-related-review" data-review-id="${pending[0].id}"><span class="status-dot"></span>Pending review</button>`:''}${hasHistory?`<button class="text-button project-history-link" data-action="view-topic-history" data-knowledge-id="${k.id}">History →</button>`:''}</div></li>`;
-  }
-
-  function projectWikiParagraphs(items){
-    const statements=[];
-    for(const item of items){
-      const candidate=String(item.statement||'').trim();
-      if(!candidate) continue;
-      const candidateWords=new Set(norm(candidate).split(' ').filter(w=>w.length>3));
-      const tooClose=statements.some(existing=>{
-        const existingWords=new Set(norm(existing).split(' ').filter(w=>w.length>3));
-        const intersection=[...candidateWords].filter(w=>existingWords.has(w)).length;
-        const union=new Set([...candidateWords,...existingWords]).size||1;
-        return intersection/union>.78;
-      });
-      if(!tooClose) statements.push(candidate);
-    }
-    const paragraphs=[];
-    for(let i=0;i<statements.length;i+=3) paragraphs.push(statements.slice(i,i+3).join(' '));
-    return paragraphs;
-  }
-
-  function projectWikiTopic(topic,items){
-    if(!items.length) return '';
-    const paragraphs=projectWikiParagraphs(items);
-    const maintained=`<details class="project-maintained-facts"><summary>Maintained from ${items.length} Current State ${items.length===1?'fact':'facts'}</summary><ul>${items.map(projectFact).join('')}</ul></details>`;
-    return `<section class="project-wiki-topic" id="project-topic-${topic.id}" data-state-ids="${items.map(x=>esc(x.id)).join(' ')}"><div class="project-wiki-topic-head"><h4>${esc(topic.title)}</h4><p>${esc(topic.description)}</p></div><div class="project-wiki-prose">${paragraphs.map(text=>`<p>${esc(text)}</p>`).join('')}</div>${maintained}</section>`;
-  }
 
   // Reuses context-provenance.js's exposed trace-building and markup
   // functions rather than a second provenance system -- History already
@@ -202,7 +135,8 @@
   //
   // hasAcceptedProvenance() needs the same async bootstrap data
   // buildTrace() does, so this can't be decided synchronously inside
-  // projectFact() at render time without delaying the whole Project view
+  // context-project-view.js's projectFact() at render time without delaying
+  // the whole Project view
   // on a fetch just for this. Painting the outline immediately and
   // patching in a toggle per fact once that data resolves matches the
   // same paint-then-patch pattern already used elsewhere (e.g. Settings'
@@ -232,49 +166,8 @@
     finally{projectProvenanceDecorating=false;}
   }
 
-  function projectOutlineSection(id,a){
-    const items=currentKnowledge(id);
-    if(!items.length)return '';
-    const topics=projectWikiTopics[id]||[];
-    const assigned=new Set();
-    const blocks=[];
-    for(const topic of topics){
-      const matched=items.filter(k=>!assigned.has(k.id)&&topic.matches(k));
-      matched.forEach(k=>assigned.add(k.id));
-      if(matched.length) blocks.push(projectWikiTopic(topic,matched));
-    }
-    const leftover=items.filter(k=>!assigned.has(k.id));
-    if(leftover.length) blocks.push(projectWikiTopic({id:`${id}-other`,title:'Additional maintained understanding',description:'Other reviewed facts that belong to this part of the project.'},leftover));
-    return `<section class="project-outline-section project-wiki-section" id="project-${id}"><div class="project-section-sticky"><h3>${esc(a.name)}</h3></div><p class="project-outline-description">${esc(a.description)}</p>${blocks.join('')}</section>`;
-  }
-  function projectOrientation(){
-    const byId=id=>state.data.knowledge.find(k=>k.id===id&&k.state==='current');
-    const pilot=byId('k-pilot'), stage=byId('k-stage'), outcome=byId('k-outcome');
-    const current=state.data.knowledge.filter(k=>k.state==='current');
-    const direction=pilot?.statement || 'Reviewed project direction has not been established yet.';
-    return {
-      description: stage ? `${direction} ${stage.statement}` : direction,
-      direction,
-      stage: stage?.statement || 'Stage not yet established in Current State.',
-      outcome: outcome?.statement || 'Outcome not yet established in Current State.',
-      count: current.length
-    };
-  }
   function renderProjectOverview(){
-    if(state.backendStatus.state==='loading'){
-      root.innerHTML=`<article class="page project-page project-document"><div class="empty-state unavailable-state"><h2>Loading Current State…</h2><p>Opening the authoritative project understanding.</p></div></article>`;
-      return;
-    }
-    if(state.backendStatus.state==='error'){
-      root.innerHTML=`<article class="page project-page project-document"><div class="empty-state unavailable-state"><h2>Current State is temporarily unavailable.</h2><p>State is not substituting placeholder facts while the authoritative project data cannot be loaded.</p><button class="btn secondary" data-action="retry-hydration">Try again</button></div></article>`;
-      return;
-    }
-    const visible=Object.entries(projectAreas).filter(([id])=>currentKnowledge(id).length);
-    const orientation=projectOrientation();
-    const directionParts=orientation.direction.split(/(?<=[.!?])\s+/).filter(Boolean);
-    const directionLabel=text=>/two weeks|support reps|pilot runs/i.test(text)?'Pilot':/reviews?|customer-facing|human/i.test(text)?'Guardrail':'Focus';
-    const directionSummary=directionParts.map(text=>`<li><strong>${directionLabel(text)}</strong><span>${esc(text)}</span></li>`).join('');
-    root.innerHTML=`<article class="page project-page project-document"><header class="project-document-head" id="project-top"><div class="project-head-row"><div><span class="eyebrow">Current project</span><div class="project-title-line"><h2>${esc(state.data.project.name)}</h2><span class="project-fact-count">${orientation.count} current facts</span></div></div><button class="btn secondary project-settings-button" data-action="project-settings">Project settings</button></div><p class="project-document-summary">The maintained project wiki: a readable view of what the team currently treats as true.</p><dl class="project-document-meta"><div><dt>Stage</dt><dd>${esc(orientation.stage)}</dd></div><div><dt>Outcome</dt><dd>${esc(orientation.outcome)}</dd></div></dl></header><section class="project-document-intro" aria-labelledby="currentDirectionTitle"><strong id="currentDirectionTitle">Current direction</strong><ul class="current-direction-list">${directionSummary}</ul></section><div class="project-outline">${visible.map(([id,a])=>projectOutlineSection(id,a)).join('')||'<div class="empty-state"><h3>No Current State yet.</h3><p>Reviewed project understanding will appear here as a clean outline.</p></div>'}</div></article>`;
+    root.innerHTML=PROJECT_VIEW.render({backendState:state.backendStatus.state,projectName:state.data.project.name,knowledge:state.data.knowledge,history:state.data.history,pendingFor});
     decorateProjectProvenance();
     requestAnimationFrame(()=>updateProjectSubnavActive());
   }
@@ -804,134 +697,23 @@
 
   function refine(){ const v=norm(document.getElementById('refineInput')?.value||''); if(!v)return; let kind='exec'; if(v.includes('short'))kind='shorter'; else if(v.includes('auth'))kind='auth'; else if(v.includes('evidence')||v.includes('support'))kind='evidence'; state.refinements.push(kind); renderOverview(); }
 
-  function noteStatusLabel(n){
-    if(n.status==='pending') return 'In review';
-    if(n.status==='accepted'||n.status==='reviewed') return 'Reviewed';
-    if(n.status==='no_review_needed') return 'No review needed';
-    if(n.status==='unknown') return 'Status unavailable';
-    if(n.status==='failed') return 'Analysis failed';
-    return 'Draft';
-  }
-
-  function noteStatusControl(n,statusClass){
-    if(n.status==='pending' && (n.reviewIds||[]).length){
-      const count=n.reviewIds.length;
-      return `<button type="button" class="note-status note-status-link note-status--${statusClass}" data-action="open-note-reviews" data-note-id="${n.id}" aria-label="Open ${count===1?'the Review':`${count} Reviews`} for this note">In review${count>1?` · ${count}`:''} →</button>`;
-    }
-    if((n.status==='accepted'||n.status==='reviewed') && (n.historyIds||[]).length){
-      return `<button type="button" class="note-status note-status-link note-status--${statusClass}" data-action="open-note-history" data-note-id="${n.id}" aria-label="View accepted History from this note">Reviewed →</button>`;
-    }
-    return `<span class="note-status note-status--${statusClass}">${noteStatusLabel(n)}</span>`;
-  }
-
-  function simpleNote(n){
-    const expanded=state.expandedNotes.has(n.id);
-    const target=120+((n.id.charCodeAt(2)||7)*17)%111;
-    const preview=n.text.length>target?n.text.slice(0,Math.max(80,target-3)).replace(/\s+\S*$/,'')+'…':n.text;
-    const editing=state.editingNoteId===n.id;
-    const statusClass=n.status==='pending'?'pending':(n.status==='accepted'||n.status==='reviewed')?'reviewed':n.status==='no_review_needed'?'no-review-needed':n.status==='failed'?'failed':n.status==='unknown'?'unknown':'draft';
-    const statusBadge=noteStatusControl(n,statusClass);
-    const reviewAction=n.status==='failed'&&n.evidenceId
-      ? `<button class="text-button" data-action="retry-analysis" data-evidence-id="${n.evidenceId}">Retry analysis</button>`
-      : n.backendManaged||n.status==='pending'||n.status==='accepted'||n.status==='reviewed'||n.status==='no_review_needed'||n.status==='unknown'
-        ? ''
-        : `<button class="text-button" data-action="send-note-review" data-note-id="${n.id}">Send to review</button>`;
-    const body=editing
-      ? `<div class="note-inline-editor"><input class="dialog-input" id="editNoteTitle-${n.id}" value="${esc(n.title)}" aria-label="Note title"><textarea id="editNoteText-${n.id}" rows="8" aria-label="Note text">${esc(n.text)}</textarea><div class="inline-actions"><button class="btn primary" data-action="save-note-edit" data-note-id="${n.id}">Save changes</button><button class="btn secondary" data-action="cancel-note-edit" data-note-id="${n.id}">Cancel</button></div></div>`
-      : expanded
-        ? `<p class="note-full-text">${esc(n.text)}</p>${n.backendManaged?'<p class="note-immutable-hint"><strong>Submitted note</strong> · Preserved as project evidence and not editable.</p>':''}<div class="inline-actions note-actions">${n.backendManaged?'':`<button class="text-button" data-action="edit-note" data-note-id="${n.id}">Edit</button>`}${reviewAction}<button class="text-button" data-action="copy-note" data-note-id="${n.id}">Copy</button></div>`
-        : `<p>${esc(preview)}</p><span class="note-expand-label">Open note →</span>`;
-    return `<article class="simple-note note-index-row ${expanded?'is-expanded':''}" data-action="toggle-note" data-note-id="${n.id}" tabindex="0"><span class="note-date">${esc(n.date)}</span><div class="note-index-main"><h3>${esc(n.title)}</h3><span class="note-source">${esc(n.source)}</span>${body}</div><div class="note-index-status">${statusBadge}</div></article>`;
-  }
-
-  // Used only for the Open Items "Draft notes" section: a non-collapsible
-  // variant of simpleNote() with the review action always visible. Reusing
-  // simpleNote() directly would wire up its toggle-note interaction, whose
-  // handler unconditionally re-renders the Notes view -- clicking to expand
-  // a draft note from Open Items would silently navigate away from Open
-  // Items entirely. This avoids that by never entering the toggle path.
-  function draftNoteRow(n){
-    const target=120+((n.id.charCodeAt(2)||7)*17)%111;
-    const preview=n.text.length>target?n.text.slice(0,Math.max(80,target-3)).replace(/\s+\S*$/,'')+'…':n.text;
-    return `<article class="simple-note note-index-row is-expanded" data-note-id="${n.id}"><span class="note-date">${esc(n.date)}</span><div class="note-index-main"><h3>${esc(n.title)}</h3><span class="note-source">${esc(n.source)}</span><p>${esc(preview)}</p><div class="inline-actions note-actions"><button class="text-button" data-action="send-note-review" data-note-id="${n.id}">Send to review</button></div></div><div class="note-index-status"><span class="note-status note-status--draft">Draft</span></div></article>`;
-  }
-
-
   /* ----------------------------------------------------------------------
      Notes
 
-     Evidence as the user sees it: listing, filtering by date and status, search,
-     and the composer.
+     Rendering (filtering, the note/draft row markup, and the composer) lives
+     in context-notes-view.js -- these are thin wrappers that gather the
+     relevant slice of `state` and hand it to that module's frozen API, so
+     every existing call site below (renderNotes(), simpleNote(n), etc.) is
+     unchanged.
      ------------------------------------------------------------------- */
-  function noteMatchesFilter(n,f){
-    if(f==='all') return true;
-    if(f==='pending') return n.status==='pending';
-    if(f==='reviewed') return n.status==='accepted'||n.status==='reviewed'||n.status==='no_review_needed';
-    return n.status==='working'||n.status==='draft'||!!n.backendDraft; // editable draft only
+  function notesUiState(){
+    return {noteComposerOpen:state.noteComposerOpen,notesFilter:state.notesFilter,notesDateFilter:state.notesDateFilter,notesSearch:state.notesSearch,expandedNotes:state.expandedNotes,editingNoteId:state.editingNoteId,evidenceStatus:state.backendStatus.evidence,draftsStatus:state.backendStatus.drafts};
   }
-
-  function localCalendarKey(value){
-    if(!value)return null;
-    const raw=String(value);
-    if(/^\d{4}-\d{2}-\d{2}$/.test(raw))return raw;
-    const d=new Date(raw);
-    if(Number.isNaN(d.getTime()))return null;
-    const pad=n=>String(n).padStart(2,'0');
-    return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
-  }
-  function calendarDayNumber(value){
-    const key=localCalendarKey(value);
-    if(!key)return null;
-    const [year,month,day]=key.split('-').map(Number);
-    return Math.floor(Date.UTC(year,month-1,day)/86400000);
-  }
-  function noteMatchesDate(n,filter){
-    if(filter==='all')return true;
-    const noteDay=calendarDayNumber(n.dateISO||n.submittedISO);
-    const todayDay=calendarDayNumber(todayISO());
-    if(noteDay===null||todayDay===null)return false;
-    const age=todayDay-noteDay;
-    // Calendar-day filters are inclusive and never pull future-dated notes in.
-    if(age<0)return false;
-    if(filter==='today')return age===0;
-    if(filter==='7')return age<=6;
-    if(filter==='30')return age<=29;
-    return true;
-  }
-
-
-  function filteredNotes(){
-    const activeFilter=state.notesFilter||'all';
-    const dateFilter=state.notesDateFilter||'all';
-    const search=norm(state.notesSearch);
-    return state.data.notes.filter(n=>
-      noteMatchesFilter(n,activeFilter) &&
-      noteMatchesDate(n,dateFilter) &&
-      (!search||norm(`${n.title} ${n.text} ${n.source}`).includes(search))
-    ).sort(sortDateDesc);
-  }
-
-  function notesFilterSummary(notes){
-    const total=state.data.notes.length;
-    const dateLabels={all:'All time',today:'Today','7':'Last 7 days','30':'Last 30 days'};
-    const statusLabels={all:'All statuses',draft:'Draft',pending:'In review',reviewed:'Reviewed'};
-    const parts=[dateLabels[state.notesDateFilter||'all'],statusLabels[state.notesFilter||'all']];
-    if(state.notesSearch.trim()) parts.push(`“${state.notesSearch.trim()}”`);
-    const active=(state.notesDateFilter||'all')!=='all'||(state.notesFilter||'all')!=='all'||!!state.notesSearch.trim();
-    return `<div class="notes-filter-summary" id="notesFilterSummary" aria-live="polite"><span>Showing <strong>${notes.length}</strong> of ${total} notes · ${parts.map(esc).join(' · ')}</span>${active?'<button class="text-button" data-action="clear-note-filters">Clear filters</button>':''}</div>`;
-  }
-
-  function renderNotes(){
-    const composer=state.noteComposerOpen?`<section class="note-composer"><input id="newNoteTitle" class="dialog-input" placeholder="Note title" aria-label="Note title"><textarea id="newNoteText" rows="8" aria-label="New note text" placeholder="Write anything you want to keep with the project. Saving a note does not change project state."></textarea><div class="inline-actions"><button class="btn primary" data-action="save-new-note">Save note</button><button class="btn secondary" data-action="cancel-new-note">Cancel</button></div></section>`:'';
-    const activeFilter=state.notesFilter||'all';
-    const filters=`<label class="notes-status-filter"><span>Status</span><select id="notesStatusFilter" aria-label="Filter notes by status"><option value="all"${activeFilter==='all'?' selected':''}>All</option><option value="draft"${activeFilter==='draft'?' selected':''}>Draft</option><option value="pending"${activeFilter==='pending'?' selected':''}>In review</option><option value="reviewed"${activeFilter==='reviewed'?' selected':''}>Reviewed</option></select></label>`;
-    const dateFilter=state.notesDateFilter||'all';
-    const dateChip=(f,label)=>`<button class="filter${dateFilter===f?' active':''}" data-date-filter="${f}" aria-pressed="${dateFilter===f?'true':'false'}">${label}</button>`;
-    const dateFilters=`<div class="filters notes-date-filters" aria-label="Filter notes by date">${dateChip('all','All time')}${dateChip('today','Today')}${dateChip('7','7 days')}${dateChip('30','30 days')}</div>`;
-    const visibleNotes=filteredNotes();
-    const liveWarning=state.backendStatus.evidence==='error'||state.backendStatus.drafts==='error'?`<div class="collection-warning"><strong>Some live Notes data is unavailable.</strong><span>${state.backendStatus.evidence==='error'?'Saved Evidence could not be loaded. ':''}${state.backendStatus.drafts==='error'?'Saved drafts could not be loaded.':''}</span><button class="text-button" data-action="retry-hydration">Try again</button></div>`:'';
-    root.innerHTML=`<section class="page collection-page notes-page"><div class="page-head"><div><span class="eyebrow">Project memory</span><h2>Notes</h2><p>Put everything here: updates, meeting notes, observations, decisions, corrections, and loose context. Notes preserve what came in; they do not become Current State automatically.</p><p class="notes-disclosure">Northstar's seed data mixes notes adapted from my real discovery/product work with simulated project notes created to exercise retrieval, review, and maintained-context workflows.</p></div><button class="btn primary notes-add" data-action="new-note">+ New note</button></div>${liveWarning}${composer}<div class="notes-toolbar notes-toolbar--stacked"><div class="notes-filter-row">${dateFilters}${filters}<span class="notes-result-count" aria-hidden="true">${visibleNotes.length} ${visibleNotes.length===1?'note':'notes'}</span></div><input class="notes-search" id="notesSearch" type="search" placeholder="Search all notes" aria-label="Search notes" value="${esc(state.notesSearch)}">${notesFilterSummary(visibleNotes)}</div><div class="note-results simple-notes" id="notesList">${visibleNotes.length?visibleNotes.map(simpleNote).join(''):'<div class="empty-state"><h3>Nothing here.</h3><p>No notes match these filters.</p></div>'}</div></section>`;
-  }
+  function filteredNotes(){ return NOTES_VIEW.filteredNotes(state.data.notes,notesUiState()); }
+  function notesFilterSummary(notes){ return NOTES_VIEW.notesFilterSummary(notes,state.data.notes.length,notesUiState()); }
+  function simpleNote(n){ return NOTES_VIEW.simpleNote(n,state.expandedNotes,state.editingNoteId); }
+  function draftNoteRow(n){ return NOTES_VIEW.draftNoteRow(n); }
+  function renderNotes(){ root.innerHTML=NOTES_VIEW.render(state.data.notes,notesUiState()); }
 
   function historySearchText(h){
     const evidence=(h.evidenceItems||h.evidence_items||[]).map(e=>e.content||'').join(' ');
@@ -1000,73 +782,29 @@
     root.innerHTML=`<section class="page collection-page history-page"><div class="page-head"><div><span class="eyebrow">From notes to Current State</span><h2>History</h2><p>${topicKnowledge?`How project evidence changed the maintained understanding of ${esc(topicKnowledge.title)}.`:'The meaningful changes extracted from Notes and accepted into Current State. This is the bridge between what came in and what the Project says now.'}</p></div></div>${evidenceNote?`<div class="history-context"><strong>From note: ${esc(evidenceNote.title)}</strong><span>${total} accepted change${total===1?'':'s'}</span><button class="text-button" data-action="clear-history-evidence">View all history →</button></div>`:topicKnowledge?`<div class="history-context"><strong>${esc(topicKnowledge.title)}</strong><span>${total} recorded change${total===1?'':'s'}</span><button class="text-button" data-action="clear-history-topic">View all history →</button></div>`:''}<div class="history-toolbar"><input class="history-search" id="historySearch" type="search" placeholder="Search history" aria-label="Search accepted project changes" value="${esc(state.historySearch)}"><span class="history-result-count" id="historyResultCount" aria-live="polite">${entries.length} of ${total} changes</span><button class="text-button" id="clearHistorySearch" data-action="clear-history-search"${state.historySearch?'':' hidden'}>Clear search</button></div><div class="history-list" id="historyList">${entries.length?entries.map(h=>historyEntry(h,!!topicKnowledge)).join(''):(state.historySearch?'<div class="empty-state"><h3>No matching changes.</h3><p>Try a broader History search.</p></div>':'<div class="empty-state"><h3>No Current State changes yet.</h3><p>When reviewed Notes change the Project, that transition will appear here.</p></div>')}</div></section>`;
   }
 
-  function questionCard(q){
-    const blocking=!!q.blocking;
-    return `<button type="button" class="open-question-row${blocking?' is-blocking':''}" data-action="open-question" data-question-id="${q.id}" aria-label="Open question: ${esc(q.text)}"><span class="open-question-copy"><span class="open-item-label ${blocking?'blocking':'question'}">${blocking?'Blocking question':'Open question'}</span><span class="open-question-title">${esc(q.text)}</span><span class="open-question-meta">${esc(q.origin)}${q.created?` · ${esc(q.created)}`:''}${blocking&&q.blocks?` · Blocks: ${esc(q.blocks)}`:''}</span></span><span class="question-card-chevron" aria-hidden="true">›</span></button>`;
-  }
-
-  function questionDialogHtml(q){
-    return `<span class="eyebrow">${q.blocking?'Blocking question':'Open question'}</span><h2 id="dialogTitle">${esc(q.text)}</h2><p>This stays unresolved until reviewed evidence establishes an answer.</p>${q.blocking&&q.blocks?`<p class="blocking-detail"><strong>Blocks:</strong> ${esc(q.blocks)}</p>`:''}<div class="dialog-actions"><button class="btn primary" data-action="answer-question" data-question-id="${q.id}">Add what you learned</button>${q.blocking?`<button class="btn secondary" data-action="unmark-blocking" data-question-id="${q.id}">No longer blocking</button>`:`<button class="btn secondary" data-action="mark-blocking" data-question-id="${q.id}">Mark as blocking</button>`}<button class="btn secondary" data-action="confirm-stop-question" data-question-id="${q.id}">Stop tracking</button></div>`;
-  }
-
-  function openItemSection(title,kicker,description,count,key,body,empty=false){
-    const defaultCollapsed=key==='questions' && count>5;
-    const stored=state.openItemSections[key];
-    const collapsed=stored===null?defaultCollapsed:!!stored;
-    return `<section class="open-items-section open-items-${key}${collapsed?' is-collapsed':''}${empty?' is-empty':''}"><button type="button" class="open-items-section-head" data-action="toggle-open-item-section" data-section="${key}" aria-expanded="${collapsed?'false':'true'}"><span class="open-items-section-copy"><span class="open-items-kicker">${esc(kicker)}</span><span class="open-items-section-title">${esc(title)} <span class="open-items-section-count">${count}</span></span><span class="open-items-section-description">${esc(description)}</span></span><span class="open-items-section-chevron" aria-hidden="true">${collapsed?'⌄':'⌃'}</span></button>${collapsed?'':`<div class="open-items-section-body">${body}</div>`}</section>`;
-  }
-
-  function renderOpenItems(){
-    if(state.backendStatus.reviews==='loading' || state.backendStatus.questions==='loading'){
-      root.innerHTML=`<section class="page collection-page open-items-page"><div class="empty-state unavailable-state"><h2>Loading Open Items…</h2><p>Checking Reviews and Questions that need attention.</p></div></section>`;
-      return;
-    }
-    if(state.backendStatus.reviews==='error' && state.backendStatus.questions==='error'){
-      root.innerHTML=`<section class="page collection-page open-items-page"><div class="empty-state unavailable-state"><h2>Open Items are temporarily unavailable.</h2><p>State will not substitute fixture Reviews or Questions while authoritative attention data cannot be loaded.</p><button class="btn secondary" data-action="retry-hydration">Try again</button></div></section>`;
-      return;
-    }
-    const reviews=uiPendingReviews();
-    const questions=openQuestions();
-    const blockers=questions.filter(q=>q.blocking);
-    const waiting=questions.filter(q=>!q.blocking).sort((a,b)=>{
-      const reviewTopics=new Set(reviews.flatMap(r=>r.topics||[]));
-      const score=q=>(q.topics||[]).some(t=>reviewTopics.has(t))?1:0;
-      return score(b)-score(a) || String(b.createdISO||b.created||'').localeCompare(String(a.createdISO||a.created||''));
-    });
-    const visibleWaiting=state.openQuestionsExpanded?waiting:waiting.slice(0,5);
-    const remaining=Math.max(0,waiting.length-visibleWaiting.length);
-    const reviewUnavailable=state.backendStatus.reviews==='error';
-    const questionUnavailable=state.backendStatus.questions==='error';
-    const reviewBody=reviewUnavailable?'<div class="open-items-empty unavailable-inline">Reviews could not be loaded. <button class="text-button" data-action="retry-hydration">Try again</button></div>':reviews.length?reviews.map(r=>reviewCard(r,reviews.length===1||state.expandedReviewId===r.id,true)).join(''):'<div class="open-items-empty">Nothing needs your decision right now.</div>';
-    const blockerBody=questionUnavailable?'<div class="open-items-empty unavailable-inline">Blocking questions could not be loaded.</div>':blockers.length?`<div class="open-question-list">${blockers.map(questionCard).join('')}</div>`:'<div class="open-items-empty">Nothing is currently blocked on an answer.</div>';
-    const draftNotes=state.data.notes.filter(n=>n.status==='working'||n.status==='draft'||!!n.backendDraft);
-    const draftsUnavailable=state.backendStatus.drafts==='error';
-    const draftBody=draftsUnavailable?'<div class="open-items-empty unavailable-inline">Draft notes could not be loaded.</div>':draftNotes.length?`<div class="open-question-list">${draftNotes.map(draftNoteRow).join('')}</div>`:'<div class="open-items-empty">No draft notes waiting to be sent.</div>';
-    const questionBody=questionUnavailable?'<div class="open-items-empty unavailable-inline">Open questions could not be loaded. <button class="text-button" data-action="retry-hydration">Try again</button></div>':waiting.length?`<div class="open-question-list">${visibleWaiting.map(questionCard).join('')}</div>${waiting.length>5?`<button class="open-questions-more" data-action="toggle-open-questions" aria-expanded="${state.openQuestionsExpanded?'true':'false'}">${state.openQuestionsExpanded?'Show fewer questions':`Show ${remaining} more questions`} <span aria-hidden="true">${state.openQuestionsExpanded?'↑':'↓'}</span></button>`:''}`:'<div class="open-items-empty">No other open questions.</div>';
-    const actionTotal=(reviewUnavailable?0:reviews.length)+(questionUnavailable?0:blockers.length);
-    root.innerHTML=`<section class="page collection-page open-items-page"><div class="page-head"><div><span class="eyebrow">What still needs attention</span><div class="review-title-row"><h2>Open Items</h2>${actionTotal?`<span class="count-badge review-page-count" aria-label="${actionTotal} items need attention">${actionTotal}</span>`:''}</div><p>Decide what is ready now, see what is blocking progress, and keep important unknowns visible without turning this into another archive.</p></div><button class="btn secondary" data-action="add-question">+ Add question</button></div><div class="open-items-sections">${openItemSection('Needs your review','Act now','Decisions waiting on you. Current State changes only after you approve them.',reviewUnavailable?'Unavailable':reviews.length,'reviews',reviewBody,!reviews.length&&!reviewUnavailable)}${openItemSection('Blocking questions','Resolve soon','A concrete project dependency is waiting on an answer.',questionUnavailable?'Unavailable':blockers.length,'blockers',blockerBody,!blockers.length&&!questionUnavailable)}${openItemSection('Open questions','Keep in mind','Important unknowns that can wait for relevant evidence.',questionUnavailable?'Unavailable':waiting.length,'questions',questionBody,!waiting.length&&!questionUnavailable)}${openItemSection('Draft notes','Finish up',"Notes you've started but haven't sent for review yet.",draftsUnavailable?'Unavailable':draftNotes.length,'drafts',draftBody,!draftNotes.length&&!draftsUnavailable)}</div></section>`;
-  }
-
-
   /* ----------------------------------------------------------------------
      Open Items and Reviews
 
-     Reviews awaiting a human decision, blocking questions and open questions.
-     decideReview is where a human decision becomes a State change.
+     Rendering (review/question cards, section collapsing, the page itself)
+     lives in context-open-items-view.js -- see the comment above the Notes
+     wrappers for why. decideReview() below is where a human decision
+     becomes a State change; it stays here since it mutates `state` and
+     talks to the backend, which the view module deliberately never does.
      ------------------------------------------------------------------- */
-  function renderReview(){ return renderOpenItems(); }
-
-  function reviewCard(r,expanded=true,accordion=false){
-    const generic=r.id.startsWith('r-info-') || (Array.isArray(r.proposals) && r.proposals.length===0);
-    const cleanReviewCopy=value=>String(value||'').replace(/\*\*/g,'').replace(/\b(?:state|question|evidence|review|proposal)_[a-z0-9]+\b/gi,'').replace(/\b(?:ask-evidence|state|question|evidence|review|proposal|k|q)-[a-z0-9-]+\b/gi,'').replace(/\s+([,.;:])/g,'$1').replace(/\s{2,}/g,' ').trim();
-    const meaningfulUnresolved=r.unresolved && !/^nothing beyond this proposed change/i.test(cleanReviewCopy(r.unresolved));
-    const sourceNote=state.data.notes.find(n=>n.id===r.evidenceId);
-    const sourceMeta=sourceNote?`${sourceNote.date} · ${sourceNote.source}`:'';
-    const head=`<span class="review-row-head"><span class="review-row-copy"><span class="review-kicker">${esc(r.title)}</span><span class="review-card-title">${esc(r.summary)}</span>${sourceMeta?`<span class="review-source-meta">Evidence · ${esc(sourceMeta)}</span>`:''}</span></span>`;
-    if(accordion&&!expanded) return `<article class="review-card compact-review is-collapsed" data-review-card="${r.id}"><button type="button" class="review-card-toggle" data-action="toggle-review-card" data-review-id="${r.id}" aria-expanded="false">${head}</button></article>`;
-    const body=`<div class="review-decision-context"><div class="review-context-block"><span>Current understanding</span><p>${esc(cleanReviewCopy(r.current))}</p></div><div class="review-context-block review-evidence-block"><span>${generic?'What the evidence says':'Proposed change'}</span><p>${esc(generic?cleanReviewCopy(r.evidence):cleanReviewCopy(r.proposed))}</p></div>${!generic&&meaningfulUnresolved?`<div class="review-context-block"><span>Still unresolved</span><p>${esc(cleanReviewCopy(r.unresolved))}</p></div>`:''}</div><div class="review-actions"><button class="btn primary" data-action="review-update" data-review="${r.id}">${generic?'Accept as reviewed evidence':'Update understanding'}</button><button class="btn secondary" data-action="review-keep" data-review="${r.id}">Leave unchanged</button></div><details class="reasoning"><summary>Why / source</summary><p><strong>Evidence:</strong> ${esc(r.evidence)}</p><p><strong>Establishes:</strong> ${esc(r.establishes)}</p>${r.doesNot?`<p><strong>Does not establish:</strong> ${esc(r.doesNot)}</p>`:''}</details>`;
-    return `<article class="review-card compact-review${accordion?' is-expanded':''}" data-review-card="${r.id}">${accordion?`<button type="button" class="review-card-toggle" data-action="toggle-review-card" data-review-id="${r.id}" aria-expanded="true">${head}</button>`:head}<div class="review-card-body">${body}</div></article>`;
+  function openItemsProps(){
+    return {
+      reviewsStatus:state.backendStatus.reviews,questionsStatus:state.backendStatus.questions,draftsStatus:state.backendStatus.drafts,
+      reviews:uiPendingReviews(),questions:openQuestions(),
+      draftNotes:state.data.notes.filter(n=>n.status==='working'||n.status==='draft'||!!n.backendDraft),
+      notes:state.data.notes,
+      openQuestionsExpanded:state.openQuestionsExpanded,expandedReviewId:state.expandedReviewId,openItemSections:state.openItemSections,
+      renderDraftNote:n=>NOTES_VIEW.draftNoteRow(n)
+    };
   }
+  function renderOpenItems(){ root.innerHTML=OPEN_ITEMS_VIEW.render(openItemsProps()); }
+  function renderReview(){ return renderOpenItems(); }
+  function reviewCard(r,expanded=true,accordion=false){ return OPEN_ITEMS_VIEW.reviewCard(r,expanded,accordion,state.data.notes.find(n=>n.id===r.evidenceId)); }
+  function questionDialogHtml(q){ return OPEN_ITEMS_VIEW.questionDialogHtml(q); }
 
   async function decideReview(id,decision){
     const r=state.data.reviews.find(x=>x.id===id);

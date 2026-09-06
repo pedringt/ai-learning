@@ -5,6 +5,9 @@ const document={getElementById(id){return stub},querySelectorAll(){return []},qu
 const context={window:{},document,navigator:{clipboard:{writeText(){}}},location:{protocol:'file:',search:''},requestAnimationFrame(fn){fn()},HTMLElement:function(){},console,setTimeout,URLSearchParams,history:{replaceState(){}}};
 vm.createContext(context);
 vm.runInContext(fs.readFileSync(path.join(dir,'context-data.js'),'utf8'),context);
+vm.runInContext(fs.readFileSync(path.join(dir,'context-notes-view.js'),'utf8'),context);
+vm.runInContext(fs.readFileSync(path.join(dir,'context-open-items-view.js'),'utf8'),context);
+vm.runInContext(fs.readFileSync(path.join(dir,'context-project-view.js'),'utf8'),context);
 // Ask behavior tests exercise the deterministic Ask contract only. Keep backend
 // hydration disabled here so network/runtime failures cannot pollute test output.
 context.window.STATE_API=null;
