@@ -201,7 +201,7 @@ body.v88-dark .topbar{
   :root{--shell-x:10px;--shell-brand-size:13.5px}
   .topbar .topinner{gap:6px!important}
   .topbar .top-actions{gap:6px!important}
-  .theme-toggle{flex-basis:36px!important;min-width:36px!important;width:36px!important;height:36px!important}
+  .theme-toggle{flex-basis:36px!important;min-width:36px!important;width:36px!important;height:36px!important;padding:0!important}
   #mobileNav,#v922MobileNav{
     flex-basis:104px!important;
     width:104px!important;
@@ -433,4 +433,10 @@ body.v88-dark .home-state-copy .home-state-lead + p,
 }
 @media(max-width:560px){
   #home > .hero > .lead{font-size:17px}
+}
+
+/* v98.1 — keep the flagship State title prominent without overpowering the card. */
+#ai-cs-mock .home-state-feature h2{
+  font-size:clamp(2rem,3.8vw,3.15rem)!important;
+  line-height:1.02!important;
 }
