@@ -2,7 +2,7 @@ const fs=require('fs'), vm=require('vm'), path=require('path');
 const dir=__dirname;
 const stub={innerHTML:'',hidden:true,classList:{toggle(){},add(){},remove(){}},setAttribute(){},addEventListener(){},querySelector(){return null},querySelectorAll(){return []}};
 const document={getElementById(id){return stub},querySelectorAll(){return []},querySelector(){return null},addEventListener(){},body:stub,contains(){return true},activeElement:null};
-const context={window:{},document,navigator:{clipboard:{writeText(){}}},location:{protocol:'file:'},requestAnimationFrame(fn){fn()},HTMLElement:function(){},console,setTimeout};
+const context={window:{},document,navigator:{clipboard:{writeText(){}}},location:{protocol:'file:',search:''},requestAnimationFrame(fn){fn()},HTMLElement:function(){},console,setTimeout,URLSearchParams,history:{replaceState(){}}};
 vm.createContext(context);
 vm.runInContext(fs.readFileSync(path.join(dir,'context-data.js'),'utf8'),context);
 // Ask behavior tests exercise the deterministic Ask contract only. Keep backend

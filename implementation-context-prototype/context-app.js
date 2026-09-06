@@ -194,6 +194,44 @@
     return `<section class="project-wiki-topic" id="project-topic-${topic.id}" data-state-ids="${items.map(x=>esc(x.id)).join(' ')}"><div class="project-wiki-topic-head"><h4>${esc(topic.title)}</h4><p>${esc(topic.description)}</p></div><div class="project-wiki-prose">${paragraphs.map(text=>`<p>${esc(text)}</p>`).join('')}</div>${maintained}</section>`;
   }
 
+  // Reuses context-provenance.js's exposed trace-building and markup
+  // functions rather than a second provenance system -- History already
+  // shows "Why State treats this as current" for a focused fact, but an
+  // unfamiliar user has no reason to know that's where it lives. Adds the
+  // same disclosure directly on each maintained fact in Project instead.
+  //
+  // hasAcceptedProvenance() needs the same async bootstrap data
+  // buildTrace() does, so this can't be decided synchronously inside
+  // projectFact() at render time without delaying the whole Project view
+  // on a fetch just for this. Painting the outline immediately and
+  // patching in a toggle per fact once that data resolves matches the
+  // same paint-then-patch pattern already used elsewhere (e.g. Settings'
+  // rules list) -- and a fact with no accepted provenance (e.g. seeded
+  // baseline facts like stage/outcome) just never gets a toggle, per the
+  // "skip silently, no empty state" requirement.
+  let projectProvenanceDecorating=false;
+  async function decorateProjectProvenance(){
+    const PROV=window.STATE_PROVENANCE;
+    if(!PROV?.loadProvenance||projectProvenanceDecorating||state.view!=='project-overview') return;
+    projectProvenanceDecorating=true;
+    try{
+      const data=await PROV.loadProvenance();
+      if(state.view!=='project-overview') return;
+      root.querySelectorAll('.project-maintained-fact[data-state-id]').forEach(li=>{
+        if(!li.isConnected||li.querySelector('.project-fact-provenance')) return;
+        const trace=PROV.buildTrace(li.dataset.stateId,data);
+        if(!PROV.hasAcceptedProvenance(trace)) return;
+        const markup=PROV.traceMarkup(trace);
+        if(!markup) return;
+        const holder=document.createElement('div');
+        holder.className='project-fact-provenance';
+        holder.innerHTML=`<button type="button" class="text-button project-provenance-toggle" data-action="toggle-provenance" aria-expanded="false">Why this is current →</button><div class="project-provenance-body" hidden>${markup}</div>`;
+        li.appendChild(holder);
+      });
+    }catch(error){console.warn('Could not load project provenance.',error);}
+    finally{projectProvenanceDecorating=false;}
+  }
+
   function projectOutlineSection(id,a){
     const items=currentKnowledge(id);
     if(!items.length)return '';
@@ -236,7 +274,9 @@
     const directionParts=orientation.direction.split(/(?<=[.!?])\s+/).filter(Boolean);
     const directionLabel=text=>/two weeks|support reps|pilot runs/i.test(text)?'Pilot':/reviews?|customer-facing|human/i.test(text)?'Guardrail':'Focus';
     const directionSummary=directionParts.map(text=>`<li><strong>${directionLabel(text)}</strong><span>${esc(text)}</span></li>`).join('');
-    root.innerHTML=`<article class="page project-page project-document"><header class="project-document-head" id="project-top"><div class="project-head-row"><div><span class="eyebrow">Current project</span><div class="project-title-line"><h2>${esc(state.data.project.name)}</h2><span class="project-fact-count">${orientation.count} current facts</span></div></div><button class="btn secondary project-settings-button" data-action="project-settings">Project settings</button></div><p class="project-document-summary">The maintained project wiki: a readable view of what the team currently treats as true.</p><dl class="project-document-meta"><div><dt>Stage</dt><dd>${esc(orientation.stage)}</dd></div><div><dt>Outcome</dt><dd>${esc(orientation.outcome)}</dd></div></dl></header><section class="project-document-intro" aria-labelledby="currentDirectionTitle"><strong id="currentDirectionTitle">Current direction</strong><ul class="current-direction-list">${directionSummary}</ul></section><div class="project-outline">${visible.map(([id,a])=>projectOutlineSection(id,a)).join('')||'<div class="empty-state"><h3>No Current State yet.</h3><p>Reviewed project understanding will appear here as a clean outline.</p></div>'}</div></article>`;    requestAnimationFrame(()=>updateProjectSubnavActive());
+    root.innerHTML=`<article class="page project-page project-document"><header class="project-document-head" id="project-top"><div class="project-head-row"><div><span class="eyebrow">Current project</span><div class="project-title-line"><h2>${esc(state.data.project.name)}</h2><span class="project-fact-count">${orientation.count} current facts</span></div></div><button class="btn secondary project-settings-button" data-action="project-settings">Project settings</button></div><p class="project-document-summary">The maintained project wiki: a readable view of what the team currently treats as true.</p><dl class="project-document-meta"><div><dt>Stage</dt><dd>${esc(orientation.stage)}</dd></div><div><dt>Outcome</dt><dd>${esc(orientation.outcome)}</dd></div></dl></header><section class="project-document-intro" aria-labelledby="currentDirectionTitle"><strong id="currentDirectionTitle">Current direction</strong><ul class="current-direction-list">${directionSummary}</ul></section><div class="project-outline">${visible.map(([id,a])=>projectOutlineSection(id,a)).join('')||'<div class="empty-state"><h3>No Current State yet.</h3><p>Reviewed project understanding will appear here as a clean outline.</p></div>'}</div></article>`;
+    decorateProjectProvenance();
+    requestAnimationFrame(()=>updateProjectSubnavActive());
   }
   let askStreamPaintQueued=false;
   let askStreamLastPaint=0;
@@ -1079,14 +1119,15 @@
 
 
   function showDemoHelp(){
-    showDialog(`<span class="eyebrow">How this works</span><h2 id="dialogTitle">State keeps the project’s working understanding current.</h2><p>Add project information as Notes. State preserves the original evidence, identifies anything that could change maintained understanding, and sends consequential changes to Review. Accept a change and you can see the updated understanding in Project and its transition in History.</p><div class="demo-start"><span class="meta-label">Good places to start</span><button class="demo-start-action" data-action="demo-start-ask"><strong>Ask about Northstar</strong><span>Put a useful project question in Ask →</span></button><button class="demo-start-action" data-action="demo-start-note"><strong>Add a sample note</strong><span>Try new project information and see how Review handles it →</span></button><button class="demo-start-action" data-action="demo-start-project"><strong>Explore the maintained Project</strong><span>Read the definitive view of what the team currently treats as true →</span></button></div><div class="demo-reset-help"><div><strong>Want to start over?</strong><span>Restore the curated Northstar starting scenario. You can also reset Northstar from Project Settings.</span></div><button class="text-button demo-reset-link" data-action="confirm-demo-reset">Reset example data →</button></div><div class="dialog-actions demo-help-actions"><button class="btn primary" data-action="close-dialog">Got it</button></div>`);
+    const steps=['Information comes in','State interprets it','Important changes need review','Current State stays up to date','Project + Ask use that understanding'];
+    showDialog(`<span class="eyebrow">How this works</span><h2 id="dialogTitle">State keeps the project’s working understanding current.</h2><ul class="demo-flow">${steps.map(s=>`<li>${esc(s)}</li>`).join('')}</ul><p class="demo-flow-principle">AI interprets → software enforces → people decide</p><div class="demo-start"><span class="meta-label">Good places to start</span><button class="demo-start-action" data-action="demo-start-ask"><strong>Ask about Northstar</strong><span>Put a useful project question in Ask →</span></button><button class="demo-start-action" data-action="demo-start-note"><strong>Add a sample note</strong><span>Try new project information and see how Review handles it →</span></button><button class="demo-start-action" data-action="demo-start-project"><strong>Explore the maintained Project</strong><span>Read the definitive view of what the team currently treats as true →</span></button></div><div class="demo-reset-help"><div><strong>Want to start over?</strong><span>Restore the curated Northstar starting scenario. You can also reset Northstar from Project Settings.</span></div><button class="text-button demo-reset-link" data-action="confirm-demo-reset">Reset example data →</button></div><div class="dialog-actions demo-help-actions"><button class="btn primary" data-action="close-dialog">Got it</button></div>`);
   }
 
   function showExamples(){
     const groups=[
-      ['Understand',['What’s the current plan for the pilot?','What should I know about access and entitlements?']],
-      ['Decide',['What still needs to be decided before launch?','What is blocking the pilot right now?']],
-      ['Prepare',['Prepare me for the security meeting.','What has changed recently?']]
+      ['Catch me up',['What’s the current plan for the pilot?','What should I know about access and entitlements?']],
+      ['What’s still unresolved?',['What still needs to be decided before launch?','What is blocking the pilot right now?']],
+      ['Prepare for a meeting',['Prepare me for the security meeting.','What has changed recently?']]
     ];
     showDialog(`<span class="eyebrow">Ask examples</span><h2 id="dialogTitle">What can I ask?</h2><p>Choose an example to put it in Ask. You can edit it before sending.</p><div class="example-groups">${groups.map(([g,items])=>`<section><h3>${g}</h3>${items.map(x=>`<button class="example-row" data-action="example-fill" data-prompt="${esc(x)}">${esc(x)}<span aria-hidden="true">→</span></button>`).join('')}</section>`).join('')}</div>`);
   }
@@ -1583,6 +1624,7 @@
     const reviewFilter=e.target.closest('.review-filters [data-review-filter]'); if(reviewFilter){ state.reviewFilter=reviewFilter.dataset.reviewFilter; renderReview(); return; }
     const sectionToggle=e.target.closest('[data-action="toggle-open-item-section"]'); if(sectionToggle){ const key=sectionToggle.dataset.section; const reviews=uiPendingReviews(), questions=openQuestions(); const count=key==='reviews'?reviews.length:key==='blockers'?questions.filter(q=>q.blocking).length:questions.filter(q=>!q.blocking).length; const current=state.openItemSections[key]===null?(key==='questions'&&count>5):!!state.openItemSections[key]; state.openItemSections[key]=!current; renderOpenItems(); return; }
     const reviewToggle=e.target.closest('[data-action="toggle-review-card"]'); if(reviewToggle){ const id=reviewToggle.dataset.reviewId; state.expandedReviewId=state.expandedReviewId===id?null:id; renderOpenItems(); return; }
+    const provenanceToggle=e.target.closest('[data-action="toggle-provenance"]'); if(provenanceToggle){ const body=provenanceToggle.parentElement?.querySelector('.project-provenance-body'); if(body){ const expanded=!body.hidden; body.hidden=expanded; provenanceToggle.setAttribute('aria-expanded',String(!expanded)); provenanceToggle.textContent=expanded?'Why this is current →':'Hide why this is current'; } return; }
     const p=e.target.closest('[data-prompt]:not([data-action="example-fill"])'); if(p){ submitAsk(p.dataset.prompt); return; }
     const a=e.target.closest('[data-action]'); if(!a)return;
     const act=a.dataset.action;
