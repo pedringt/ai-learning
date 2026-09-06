@@ -2,9 +2,9 @@
 <html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width,initial-scale=1" name="viewport"/>
 <link rel="icon" href="favicon.svg">
 <title>Meridian AI Support Pilot · AI Learning Portfolio</title>
-<meta name="description" content="A simulated software company's AI-assisted customer support pilot: the discovery questions and metric revisions that came out of finding my first answer usually close, but not quite precise.">
-<meta property="og:type" content="website"><meta property="og:title" content="Meridian AI Support Pilot · AI Learning Portfolio"><meta property="og:description" content="A simulated software company's AI-assisted customer support pilot: the discovery questions and metric revisions that came out of finding my first answer usually close, but not quite precise.">
-<meta name="twitter:card" content="summary"><meta name="twitter:title" content="Meridian AI Support Pilot · AI Learning Portfolio"><meta name="twitter:description" content="A simulated software company's AI-assisted customer support pilot: the discovery questions and metric revisions that came out of finding my first answer usually close, but not quite precise.">
+<meta name="description" content="A simulated software company’s AI-assisted customer support pilot: the discovery questions and metric revisions that came out of finding my first answer usually close, but not quite precise.">
+<meta property="og:type" content="website"><meta property="og:title" content="Meridian AI Support Pilot · AI Learning Portfolio"><meta property="og:description" content="A simulated software company’s AI-assisted customer support pilot: the discovery questions and metric revisions that came out of finding my first answer usually close, but not quite precise.">
+<meta name="twitter:card" content="summary"><meta name="twitter:title" content="Meridian AI Support Pilot · AI Learning Portfolio"><meta name="twitter:description" content="A simulated software company’s AI-assisted customer support pilot: the discovery questions and metric revisions that came out of finding my first answer usually close, but not quite precise.">
 <style>
 *{box-sizing:border-box}
 body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;background:var(--bg);color:var(--ink);line-height:1.5}
@@ -143,7 +143,7 @@ body.v88-dark .card,body.v88-dark .band{box-shadow:none}
 </div>
 
 <h2>Agent flow</h2>
-<p>The AI sorts each ticket into a category, looks up the right information, drafts a reply, checks how confident it is, and hands off to a human if the conversation needs it. Money and security categories (refunds, credits, disputes, password resets, account changes, security actions) never reach drafting, regardless of confidence: that's a hard rule, not a judgment call.</p>
+<p>The AI sorts each ticket into a category, looks up the right information, drafts a reply, checks how confident it is, and hands off to a human if the conversation needs it. Money and security categories (refunds, credits, disputes, password resets, account changes, security actions) never reach drafting, regardless of confidence: that’s a hard rule, not a judgment call.</p>
 <div class="flow-diagram">
 <div class="flow-title">Ticket arrives → human handoff</div>
 <div class="flow-legend"><span><i class="system"></i>AI / system</span><span><i class="human"></i>Human</span><span><i class="customer"></i>Customer</span></div>
@@ -173,13 +173,13 @@ body.v88-dark .card,body.v88-dark .band{box-shadow:none}
 <div class="flow-connector"></div>
 <div class="flow-step"><span class="flow-num">4</span><div class="flow-content owner-human"><span class="owner-tag">Human</span><b>Human decision → send to customer</b><span>approve, edit, or start over; nothing reaches the customer without a human touching it first</span></div></div>
 <div class="flow-connector"></div>
-<div class="flow-step"><span class="flow-num">5</span><div class="flow-content owner-customer"><span class="owner-tag">Customer</span><b>Customer replies, if there's a follow-up</b><span>otherwise the ticket ends here, resolved</span></div></div>
+<div class="flow-step"><span class="flow-num">5</span><div class="flow-content owner-customer"><span class="owner-tag">Customer</span><b>Customer replies, if there’s a follow-up</b><span>otherwise the ticket ends here, resolved</span></div></div>
 <div class="flow-connector"></div>
 <div class="flow-step"><span class="flow-num">6</span><div class="flow-content owner-system"><span class="owner-tag">AI / system</span><b>Escalation check</b><span>triggers on any one of: 5+ exchanges · upset/repeating customer · high-risk category surfaces mid-thread · customer asks to escalate</span></div></div>
 <div class="flow-connector"></div>
 <div class="flow-step"><span class="flow-num">7</span><div class="flow-content owner-human"><span class="owner-tag">Human</span><b>Escalate to human-only handling</b><span>shows the most recent AI draft plus the full thread for context; otherwise the ticket loops back to step 3 for the next reply</span></div></div>
 </div>
-<p class="small">The 5+ exchange threshold isn't arbitrary: a simulated 90-day data pull put average replies per ticket at 2.3, with about 12% of tickets running past 4 exchanges. The escalate-on-request signal was added after simulated rep discovery, since it doesn't require inferring anything.</p>
+<p class="small">The 5+ exchange threshold isn’t arbitrary: a simulated 90-day data pull put average replies per ticket at 2.3, with about 12% of tickets running past 4 exchanges. The escalate-on-request signal was added after simulated rep discovery, since it doesn’t require inferring anything.</p>
 
 <h2>Discovery questions that changed the design</h2>
 <p>These questions most directly reshaped the pilot. I included the resolution for each one, not only the original question.</p>
@@ -187,34 +187,34 @@ body.v88-dark .card,body.v88-dark .band{box-shadow:none}
 <div class="qcard"><b class="qnum">System data capability</b>Does the help desk tool actually distinguish a quick first-touch acknowledgment from a full ticket resolution, or is there a status field we could repurpose for this?
 <div class="resolution"><b>Resolution:</b> the field exists but is inconsistently used, so instead of requiring reps to remember it, I used two hard system timestamps every ticket already has (first-reply-sent, resolved/closed) with no new tracking system or change in how reps work needed.</div></div>
 
-<div class="qcard"><b class="qnum">Did discovery cover rep-level habits?</b>Does Meridian's internal guidebook, or the product manager's discovery work, already cover how reps actually work day to day, or just pilot scope and business goals?
-<div class="resolution"><b>Resolution:</b> discovery covered scope and boundary rules, not rep-level instinct, which is better gathered directly than relayed secondhand. That led to a direct discovery pass with the 8 reps, which corrected an earlier assumption: only 2 of 8 reps do a first-touch acknowledgment, not the "mixed model" I'd been told, which changed the first-response target below.</div></div>
+<div class="qcard"><b class="qnum">Did discovery cover rep-level habits?</b>Does Meridian’s internal guidebook, or the product manager’s discovery work, already cover how reps actually work day to day, or just pilot scope and business goals?
+<div class="resolution"><b>Resolution:</b> discovery covered scope and boundary rules, not rep-level instinct, which is better gathered directly than relayed secondhand. That led to a direct discovery pass with the 8 reps, which corrected an earlier assumption: only 2 of 8 reps do a first-touch acknowledgment, not the "mixed model" I’d been told, which changed the first-response target below.</div></div>
 
-<div class="qcard"><b class="qnum">Billing access approval scope</b>Does giving the AI read-only access to billing/account-status data need the same approval process as the money/security action categories, even though it couldn't act on that data, just see it?
+<div class="qcard"><b class="qnum">Billing access approval scope</b>Does giving the AI read-only access to billing/account-status data need the same approval process as the money/security action categories, even though it couldn’t act on that data, just see it?
 <div class="resolution"><b>Resolution:</b> asking why reps look this up manually surfaced that the field already exists via an existing nightly sync, just configured to show on the Tier 2 view, not Tier 1. Turning it on for Tier 1 is a display-config fix, not a new integration or approval process, and solves the question it was asking about.</div></div>
 
 <div class="qcard"><b class="qnum">Draft scope for high-risk categories</b>For higher-risk categories (account access, money), does the AI still draft a response for human review, just flagged for extra scrutiny, or skip drafting entirely and escalate straight to a human?
 <div class="resolution"><b>Resolution:</b> recommended skipping drafting entirely for these categories pending a legal answer, route straight to a human. If legal later clears drafting, these categories need to be added back into the quality target below, which currently skips them.</div></div>
 
-<div class="qcard"><b class="qnum">Knowledge base health</b>What's the process for updating the knowledge base? About 20% of the roughly 180 articles are unreviewed in over 12 months, with conflicting or outdated guidance, which could realistically block the pilot if not addressed first.
-<div class="resolution"><b>Resolution:</b> leadership held the 8-week timeline regardless, given renewal pressure, so instead of blocking on a cleanup, I built in a mitigation: track any pilot failure caused by stale or conflicting KB content as its own distinct root-cause category. Also seeded a future idea for a KB-maintenance agent, deliberately held back until pilot evidence actually shows it's worth recommending, not pitched upfront.</div></div>
+<div class="qcard"><b class="qnum">Knowledge base health</b>What’s the process for updating the knowledge base? About 20% of the roughly 180 articles are unreviewed in over 12 months, with conflicting or outdated guidance, which could realistically block the pilot if not addressed first.
+<div class="resolution"><b>Resolution:</b> leadership held the 8-week timeline regardless, given renewal pressure, so instead of blocking on a cleanup, I built in a mitigation: track any pilot failure caused by stale or conflicting KB content as its own distinct root-cause category. Also seeded a future idea for a KB-maintenance agent, deliberately held back until pilot evidence actually shows it’s worth recommending, not pitched upfront.</div></div>
 
 <h2>Metrics I revised</h2>
-<p>The Success Measurement Plan separates signals so one strong number can't hide a failure elsewhere. These are the two targets that changed once I reasoned through what the pilot's own constraints actually allowed, plus the two I deliberately declined to pin down.</p>
+<p>The Success Measurement Plan separates signals so one strong number can’t hide a failure elsewhere. These are the two targets that changed once I reasoned through what the pilot’s own constraints actually allowed, plus the two I deliberately declined to pin down.</p>
 
 <div class="metric"><div class="metric-target"><b>Handling time:</b> hold roughly steady (~12.4 min per ticket), not an aggressive reduction target.</div>
-<p>Mandatory human review of every AI draft caps how much time can actually be saved this phase; fact-checking an answer isn't dramatically faster than answering it in some cases.</p>
+<p>Mandatory human review of every AI draft caps how much time can actually be saved this phase; fact-checking an answer isn’t dramatically faster than answering it in some cases.</p>
 <div class="shift">Changed my mind: I initially leaned toward proposing a meaningful handling-time reduction alongside the other targets. Working through what human review actually requires made me separate it from first-response time instead of treating both the same way.</div></div>
 
 <div class="metric"><div class="metric-target"><b>First-response time:</b> ~7 hrs blended, down from &gt;8 hrs, revised down from an earlier ~6 hr estimate.</div>
 <p>AI drafting a response the moment a ticket arrives removes the compose-from-scratch step before a human opens it, which should modestly speed things up even for tickets resolved in one reply.</p>
-<div class="shift">Changed my mind again: the original ~6 hr target assumed a meaningful "mixed workflow" where some tickets got a distinct, extra-fast first-touch acknowledgment. Direct rep discovery showed that's rare, only 2 of 8 reps do it. I trust reps' account of their own behavior over the earlier secondhand answer, so I revised the target down to ~7 hrs: still a real improvement, but more modest than I'd first assumed.</div></div>
+<div class="shift">Changed my mind again: the original ~6 hr target assumed a meaningful "mixed workflow" where some tickets got a distinct, extra-fast first-touch acknowledgment. Direct rep discovery showed that’s rare, only 2 of 8 reps do it. I trust reps’ account of their own behavior over the earlier secondhand answer, so I revised the target down to ~7 hrs: still a real improvement, but more modest than I’d first assumed.</div></div>
 
 <div class="metric"><div class="metric-target"><b>Customer satisfaction score:</b> monitor, no hard pilot target.</div>
-<p>The link between faster response and customer satisfaction is an assumption, not a proven cause and effect. At this stage the more honest goal is proving AI accuracy and reliability; it's a signal worth watching, not a metric to be pinned to yet.</p></div>
+<p>The link between faster response and customer satisfaction is an assumption, not a proven cause and effect. At this stage the more honest goal is proving AI accuracy and reliability; it’s a signal worth watching, not a metric to be pinned to yet.</p></div>
 
 <div class="metric"><div class="metric-target"><b>Guardrails:</b> zero-tolerance, single-incident trigger for money/security categories, not a rate.</div>
-<p>Lower-stakes accuracy issues aren't guardrail breaches, those are covered separately. Guardrails are reserved for the human-boundary categories, where even one real failure is too costly to wait on a rate threshold for.</p></div>
+<p>Lower-stakes accuracy issues aren’t guardrail breaches, those are covered separately. Guardrails are reserved for the human-boundary categories, where even one real failure is too costly to wait on a rate threshold for.</p></div>
 
 <div class="callout"><p><strong>Where I landed on this exercise:</strong> early on, I often reached for a plausible solution before I had dug far enough into the problem. Discovery for AI and agent workflows needs particular precision because the work often involves defining human judgment, not documenting a process that is already clear. A solo simulation also cannot replace being embedded with a company long enough to notice the questions worth asking. That remains a real limit of this exercise.</p></div>
 
