@@ -6,7 +6,7 @@ This file is the canonical current-state handoff for State. Any AI assistant or 
 
 _Last updated: September 5, 2026 (late session)_
 
-`main` is production, currently at commit `0d5a9b5`. **`staging` has since diverged significantly and is 22 commits ahead of `main`** — Slack Phase 2, self-serve Slack OAuth, and a round of reliability/UX fixes have all shipped to `staging` but are **not yet on `main`**, pending explicit authorization to promote (see "Staging ahead of main" below). Until that promotion happens, do not assume `staging` and `main` describe the same product — verify which branch a claim is about.
+`main` is production, currently at commit `0d5a9b5`. **`staging` has since diverged significantly from `main`** — Slack Phase 2, self-serve Slack OAuth, and a round of reliability/UX fixes have all shipped to `staging` but are **not yet on `main`**, pending explicit authorization to promote (see "Staging ahead of main" below). Avoid exact "commits ahead" counts here because this handoff commit itself changes that number. Until promotion happens, do not assume `staging` and `main` describe the same product — verify which branch a claim is about.
 
 This evening's session shipped (all now on `main`):
 
@@ -51,6 +51,7 @@ Slack Phase 2 is **built, live-tested against a real Slack workspace, and shippe
 - **Authority-model fix**: distinguished evidence the system decided needed no human review (`no_review_needed`) from evidence a human actually reviewed (`reviewed`) -- previously both showed an identical "REVIEWED" badge, which blurred State's "LLM interprets -> software enforces -> human authorizes" model. Applies to both Slack-sourced and manually-submitted evidence.
 - **Fixed a real architectural bug**, found only because the OAuth redirect surfaced it: the view-dispatch table in `context-app.js`'s `render()` had no `settings` entry, so any concurrent async call (e.g. `hydrateBackend()` completing right after a fresh page load) would silently clobber Settings content back to Workspace content. Unrelated in origin to Slack, but only reliably triggered by the OAuth redirect's timing.
 - **UX orientation pass**: Project facts now disclose their provenance ("Why this is current ->") when backed by an accepted Review; the sidebar "How this works" help modal leads with a 5-step flow diagram plus the authority-model principle; Ask's example-question groupings were relabeled in plainer language (unchanged underlying questions).
+- **QA follow-up on the orientation pass**: the Notes status filter now presents the combined human-reviewed / no-review-needed bucket as **Processed** rather than **Reviewed**; Project's maintained-facts disclosure now hints at sources/history when provenance is available; the 5-step help flow stacks vertically on narrow screens; and the deterministic workflow now runs on direct `staging` pushes as well as `main` pushes and PRs.
 - Also found and fixed in the same pass: the JS behavior-test harness (`state-ask-behavior-tests.js`) had been silently broken (`ReferenceError: URLSearchParams is not defined`) since the OAuth boot code was added -- the full 81-test suite hadn't actually run since then. Fixed; suite passes again.
 
 **Before promoting to `main`:**
@@ -88,7 +89,7 @@ Do not carry forward completed staging-era checklists as open work. Re-verify th
 - **Update this file whenever `main` changes.** Any push or merge to `main` must include a same-pass review of `docs/PROJECT_STATUS.md`: add relevant new facts, remove stale or completed information, and make sure the document still describes what is actually in production.
 - **Read this file first in a new chat.** Then inspect the current repository and connected environments before assuming older handoffs are still accurate.
 - **Treat `main` as production and `staging` as test-only.** Staging may be promoted wholesale when Paige explicitly requests it, but the promotion must preserve production-only environment configuration such as the production API URL.
-- **Use a PR plus CI for production code changes.** Run the JavaScript behavior suites and the Python/browser suite before promotion unless the change is purely non-runtime documentation.
+- **Use a PR plus CI for production code changes.** The deterministic suite also runs automatically on direct `staging` pushes so the exact staging commit is validated before promotion. Run the JavaScript behavior suites and the Python/browser suite before promotion unless the change is purely non-runtime documentation.
 - **Do not promote an experiment just because it looks promising on staging.** Validate the exact behavior, understand the failure mode, and then promote only when Paige authorizes it.
 - **Prefer small, reversible changes.** Fix the narrow problem without opportunistic unrelated refactors.
 - **Instrument before optimizing.** For Ask performance, separate provider time from State/context time before deciding what to change.
