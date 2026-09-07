@@ -1,0 +1,188 @@
+# Manual, heavier "hammer staging" QA layer. Tests the real deployed staging
+# system (protected Vercel frontend + Render staging backend) rather than the
+# mocked Playwright suite in tests.yml. See qa/deployed/README.md.
+#
+# Never runs on push/PR and never touches main -- workflow_dispatch only, and
+# every write this workflow performs is scoped to the staging branch/refs and
+# to state-api-staging.onrender.com specifically.
+
+name: State Deep QA
+
+on:
+  workflow_dispatch: {}
+
+env:
+  VERCEL_PROJECT_ID: prj_acxPDHf89pEox4gOGMsVcHJLtoUc
+  VERCEL_TEAM_ID: team_UxrzvAczWhPiXlO3nvWPAu5b
+  STATE_DEPLOY_URL: https://ai-learning-git-staging-cairn10.vercel.app
+  STATE_BACKEND_URL: https://state-api-staging.onrender.com
+  BACKEND_RELEVANT_PATH: state-project-complete/
+
+jobs:
+  preflight:
+    runs-on: ubuntu-latest
+    outputs:
+      backend_ready: ${{ steps.backend.outputs.ready }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Resolve GitHub staging HEAD
+        id: github_head
+        run: |
+          echo "sha=${{ github.sha }}" >> "$GITHUB_OUTPUT"
+          echo "GitHub staging HEAD: ${{ github.sha }}"
+
+      - name: Wait for Render backend and read its deployed build
+        id: backend
+        run: |
+          set +e
+          deadline=$((SECONDS + 90))
+          ready=false
+          while [ $SECONDS -lt $deadline ]; do
+            body=$(curl -sS -m 15 -w '\n%{http_code}' "$STATE_BACKEND_URL/health")
+            code=$(echo "$body" | tail -n1)
+            payload=$(echo "$body" | sed '$d')
+            if [ "$code" = "200" ]; then
+              ready=true
+              break
+            fi
+            echo "Backend not ready yet (HTTP ${code:-none}), retrying..."
+            sleep 5
+          done
+          set -e
+          echo "ready=$ready" >> "$GITHUB_OUTPUT"
+          if [ "$ready" != "true" ]; then
+            echo "backend_sha=" >> "$GITHUB_OUTPUT"
+            echo "demo_bootstrap=" >> "$GITHUB_OUTPUT"
+            echo "::error::state-api-staging.onrender.com never became healthy within 90s. This looks like a real outage, not just a cold start."
+            exit 1
+          fi
+          echo "$payload"
+          backend_sha=$(echo "$payload" | python3 -c "import json,sys;print(json.load(sys.stdin).get('build',''))")
+          demo_bootstrap=$(echo "$payload" | python3 -c "import json,sys;print(json.load(sys.stdin).get('demo_bootstrap',''))")
+          echo "backend_sha=$backend_sha" >> "$GITHUB_OUTPUT"
+          echo "demo_bootstrap=$demo_bootstrap" >> "$GITHUB_OUTPUT"
+          echo "Render-deployed backend build: $backend_sha (demo_bootstrap=$demo_bootstrap)"
+
+      - name: Look up Vercel-deployed frontend SHA
+        id: vercel
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: |
+          if [ -z "$VERCEL_TOKEN" ]; then
+            echo "frontend_sha=" >> "$GITHUB_OUTPUT"
+            echo "::warning::VERCEL_TOKEN secret not set -- skipping frontend SHA verification. See qa/deployed/README.md."
+            exit 0
+          fi
+          curl -sS -m 20 -H "Authorization: Bearer $VERCEL_TOKEN" \
+            "https://api.vercel.com/v6/deployments?projectId=$VERCEL_PROJECT_ID&teamId=$VERCEL_TEAM_ID&limit=15" \
+            -o vercel_deployments.json
+          frontend_sha=$(python3 -c "import json; data=json.load(open('vercel_deployments.json')); matches=[d.get('meta',{}).get('githubCommitSha','') for d in data.get('deployments',[]) if d.get('meta',{}).get('githubCommitRef')=='staging' and d.get('state')=='READY']; print(matches[0] if matches else '')")
+          rm -f vercel_deployments.json
+          if [ -z "$frontend_sha" ]; then
+            echo "::warning::Could not find a READY Vercel deployment for staging in the last 15 deployments."
+          fi
+          echo "frontend_sha=$frontend_sha" >> "$GITHUB_OUTPUT"
+          echo "Vercel-deployed frontend commit: ${frontend_sha:-unknown}"
+
+      - name: Classify revision skew and write summary
+        env:
+          GITHUB_HEAD: ${{ steps.github_head.outputs.sha }}
+          FRONTEND_SHA: ${{ steps.vercel.outputs.frontend_sha }}
+          BACKEND_SHA: ${{ steps.backend.outputs.backend_sha }}
+        run: |
+          {
+            echo "## State Deep QA -- environment"
+            echo
+            echo "| | SHA |"
+            echo "|---|---|"
+            echo "| GitHub \`staging\` HEAD | \`$GITHUB_HEAD\` |"
+            echo "| Vercel-deployed frontend | \`${FRONTEND_SHA:-unknown}\` |"
+            echo "| Render-deployed backend | \`${BACKEND_SHA:-unknown}\` |"
+            echo
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          if [ -z "$FRONTEND_SHA" ]; then
+            echo "**Frontend revision check:** skipped (no VERCEL_TOKEN)" >> "$GITHUB_STEP_SUMMARY"
+          elif [ "$FRONTEND_SHA" = "$GITHUB_HEAD" ]; then
+            echo "**Frontend revision check:** PASS -- deployed frontend matches \`staging\` HEAD." >> "$GITHUB_STEP_SUMMARY"
+          else
+            git merge-base --is-ancestor "$FRONTEND_SHA" "$GITHUB_HEAD" 2>/dev/null && ancestor=yes || ancestor=no
+            if [ "$ancestor" = "yes" ]; then
+              echo "**Frontend revision check:** WARN -- deployed frontend (\`$FRONTEND_SHA\`) is behind \`staging\` HEAD. This is normal for a minute or two after a push; re-run if this persists." >> "$GITHUB_STEP_SUMMARY"
+            else
+              echo "**Frontend revision check:** BLOCKED -- deployed frontend commit \`$FRONTEND_SHA\` is not an ancestor of \`staging\` HEAD. Vercel may be deploying the wrong branch." >> "$GITHUB_STEP_SUMMARY"
+            fi
+          fi
+
+          if [ -z "$BACKEND_SHA" ]; then
+            echo "**Backend revision check:** unknown (health check did not report a build SHA)" >> "$GITHUB_STEP_SUMMARY"
+          elif [ "$BACKEND_SHA" = "${GITHUB_HEAD:0:12}" ]; then
+            echo "**Backend revision check:** PASS -- deployed backend matches \`staging\` HEAD." >> "$GITHUB_STEP_SUMMARY"
+          else
+            changed=$(git diff --name-only "$BACKEND_SHA" "$GITHUB_HEAD" -- "$BACKEND_RELEVANT_PATH" 2>/dev/null || echo "__diff_failed__")
+            if [ "$changed" = "__diff_failed__" ]; then
+              echo "**Backend revision check:** WARN -- could not diff \`$BACKEND_SHA\`..\`$GITHUB_HEAD\` (short SHA not found locally). Backend may be several deploys behind." >> "$GITHUB_STEP_SUMMARY"
+            elif [ -z "$changed" ]; then
+              echo "**Backend revision check:** PASS -- backend is behind \`staging\` HEAD, but no commits under \`$BACKEND_RELEVANT_PATH\` changed since its deployed commit, so this is expected (Render's build filter only redeploys on backend-relevant changes)." >> "$GITHUB_STEP_SUMMARY"
+            else
+              echo "**Backend revision check:** BLOCKED -- backend-relevant commits exist after the deployed backend SHA and have not been redeployed:" >> "$GITHUB_STEP_SUMMARY"
+              echo '```' >> "$GITHUB_STEP_SUMMARY"
+              echo "$changed" >> "$GITHUB_STEP_SUMMARY"
+              echo '```' >> "$GITHUB_STEP_SUMMARY"
+            fi
+          fi
+          echo >> "$GITHUB_STEP_SUMMARY"
+
+  playwright:
+    needs: preflight
+    if: needs.preflight.outputs.backend_ready == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Install Deep QA dependencies
+        working-directory: qa/deployed
+        run: npm install
+
+      - name: Install Chromium
+        working-directory: qa/deployed
+        run: npx playwright install --with-deps chromium
+
+      - name: Run deployed Playwright suite
+        working-directory: qa/deployed
+        env:
+          VERCEL_AUTOMATION_BYPASS_SECRET: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
+        run: npx playwright test
+
+      - name: Write result summary
+        if: always()
+        working-directory: qa/deployed
+        run: |
+          {
+            echo "## State Deep QA -- Playwright results"
+            echo
+            if [ -f qa-report.json ]; then
+              python3 summarize-results.py
+            else
+              echo "No qa-report.json produced -- the run likely failed before tests started (see logs above, and the VERCEL_AUTOMATION_BYPASS_SECRET / VERCEL_TOKEN setup in qa/deployed/README.md)."
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload diagnostics (traces, screenshots, report)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: deep-qa-artifacts
+          path: |
+            qa/deployed/playwright-report/
+            qa/deployed/test-results/
+            qa/deployed/qa-report.json
+          retention-days: 14
+          if-no-files-found: ignore

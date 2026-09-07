@@ -5,3 +5,7 @@ __pycache__/
 *.sqlite3
 .env
 .DS_Store
+node_modules/
+qa/deployed/playwright-report/
+qa/deployed/test-results/
+qa/deployed/qa-report.json
