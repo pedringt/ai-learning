@@ -45,7 +45,8 @@
       .ask-state-starters{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;min-width:0;padding-right:2px}
       .ask-state-starters button{max-width:100%;white-space:normal;text-align:left;border:1px solid var(--line);border-radius:999px;background:var(--surface);padding:7px 10px;font:inherit;font-size:12px;cursor:pointer;color:var(--ink)}
       .ask-state-starters button:hover{background:var(--surface2)}
-      .ask-state-launcher{position:fixed;right:24px;bottom:24px;z-index:1200;border:1px solid var(--line);border-radius:12px;background:var(--ink);color:var(--surface);padding:11px 15px;font:inherit;font-weight:800;box-shadow:0 10px 28px rgba(0,0,0,.16);cursor:pointer;transition:opacity .16s ease,transform .16s ease}
+      .ask-state-launcher{position:fixed;right:24px;bottom:24px;z-index:1200;border:1px solid var(--line);border-radius:12px;background:var(--ink);color:var(--surface);padding:11px 15px;font:inherit;font-weight:800;box-shadow:0 10px 28px rgba(0,0,0,.16);cursor:pointer;opacity:.62;transition:opacity .16s ease,transform .16s ease}
+      .ask-state-launcher:hover,.ask-state-launcher:focus-visible{opacity:1}
       .ask-state-launcher.is-hidden{opacity:0;pointer-events:none;transform:translateY(8px)}
       .ask-state-drawer{position:fixed;right:0;top:92px;height:calc(100dvh - 92px);width:min(470px,calc(100vw - 24px));z-index:1250;background:var(--surface);border-left:1px solid var(--line);box-shadow:-16px 0 40px rgba(0,0,0,.14);display:flex;flex-direction:column}
       .ask-state-drawer[hidden]{display:none}

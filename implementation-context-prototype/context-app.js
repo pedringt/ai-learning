@@ -208,40 +208,48 @@
     if(items.length<2) blockers.slice(0,2-items.length).forEach(q=>items.push({kind:'blocker',id:q.id,label:'Blocking question',title:q.text,detail:q.blocks?`Blocks ${q.blocks}`:'A concrete dependency is waiting on this answer.'}));
     const total=reviews.length+blockers.length;
     if(!items.length){
-      return `<section class="workspace-attention is-clear"><div class="workspace-attention-head"><div><span class="eyebrow">Needs your attention</span><h3>You're caught up</h3><p>Nothing currently needs a decision and no questions are blocking progress.</p></div><button class="text-button" data-view="open-items">View Open Items →</button></div></section>`;
+      return `<section class="workspace-attention is-clear"><div class="workspace-attention-head"><div><span class="eyebrow">Needs your attention</span><h3>You're caught up</h3><p>Nothing currently needs a decision and no questions are blocking progress.</p></div><button class="text-button" data-view="open-items">Open Items →</button></div></section>`;
     }
+    const breakdownParts=[];
+    if(reviews.length) breakdownParts.push(`${reviews.length} review${reviews.length===1?'':'s'}`);
+    if(blockers.length) breakdownParts.push(`${blockers.length} blocking question${blockers.length===1?'':'s'}`);
     const rows=items.map(item=>`<button class="attention-item ${item.kind}" data-action="${item.kind==='review'?'open-specific-review':'go-open-question'}" ${item.kind==='review'?`data-review-id="${esc(item.id)}"`:`data-question-id="${esc(item.id)}"`}><span class="attention-item-copy"><span class="attention-kind">${esc(item.label)}</span><strong>${esc(item.title)}</strong><span>${esc(item.detail)}</span></span><span class="attention-arrow" aria-hidden="true">→</span></button>`).join('');
-    return `<section class="workspace-attention"><div class="workspace-attention-head"><div><span class="eyebrow">Needs your attention</span><h3>${total===1?'1 item is waiting on you':`${total} items are waiting on you`}</h3><p class="attention-intro-text">Click an item below to open it in Open Items and make a decision.</p></div><button class="text-button" data-view="open-items">View all ${total} →</button></div><div class="attention-list">${rows}</div></section>`;
+    return `<section class="workspace-attention"><div class="workspace-attention-head"><div><span class="eyebrow">Needs your attention</span><h3>${total===1?'1 item is waiting on you':`${total} items are waiting on you`}</h3><p class="attention-intro-text">${esc(breakdownParts.join(' · '))}</p></div><button class="text-button" data-view="open-items">Open Items →</button></div><div class="attention-list">${rows}</div></section>`;
   }
-  // Answers "What just happened?" -- up to 3 meaningful recent decisions,
-  // whether they changed Current State or deliberately kept it unchanged.
-  // Not a second History feed: no filtering/search here, just a link out.
-  // Rows have no trailing arrow -- the whole row is already the click target.
-  function recentUpdatesHtml(){
+  // Answers "What actually changed?" -- up to 3 meaningful recent decisions,
+  // led by the substance of the change (history's `after` text), not a
+  // generic "X was updated" label. Not a second History feed: no
+  // filtering/search here, just a link out. Rows have no trailing arrow --
+  // the whole row is already the click target.
+  function whatChangedHtml(){
     const entries=(state.data.history||[]).slice().sort(sortDateDesc).slice(0,3);
     if(!entries.length) return '';
     const rows=entries.map(h=>{
       const date=h.date||formatBackendDate(h.changed_at);
-      const type=h.type||historyType(h);
       const topic=h.knowledgeId?state.data.knowledge.find(k=>k.id===h.knowledgeId):null;
-      const title=topic?.title||type;
-      const subtitle=topic?`${type} · ${date}`:date;
+      const kicker=topic?`${topic.title} · ${date}`:date;
+      const summary=h.after||h.type||historyType(h);
       const linkAttrs=h.knowledgeId?`data-action="view-topic-history" data-knowledge-id="${esc(h.knowledgeId)}"`:'data-view="history"';
-      return `<button class="recent-update-row" ${linkAttrs}><strong>${esc(title)}</strong><span>${esc(subtitle)}</span></button>`;
+      return `<button class="recent-update-row" ${linkAttrs}><strong>${esc(truncateText(summary,120))}</strong><span>${esc(kicker)}</span></button>`;
     }).join('');
-    return `<section class="workspace-recent"><div class="workspace-recent-head"><span class="eyebrow">Recently updated</span><button class="text-button" data-view="history">View all History →</button></div><div class="recent-update-list">${rows}</div></section>`;
+    return `<section class="workspace-recent"><div class="workspace-recent-head"><span class="eyebrow">What changed</span><button class="text-button" data-view="history">History →</button></div><div class="recent-update-list">${rows}</div></section>`;
   }
-  // Answers "Where does the project stand?" -- one quiet link-out card, not
-  // a dashboard of stat cards. Sized to its own content, not forced to match
-  // Recently Updated's height.
-  function projectStatusCardHtml(){
+  // Answers "Where does the project stand?" -- a Current State pulse across
+  // three real dimensions: what's fresh (last change), how much is
+  // established (decision count), and what's blocking (open questions).
+  // Three genuine rows, not padding added to match What Changed's height.
+  function currentStateHtml(){
     const last=(state.data.history||[]).slice().sort(sortDateDesc)[0];
-    const lastUpdated=last?esc(last.date||formatBackendDate(last.changed_at)):null;
+    const lastUpdated=last?(last.date||formatBackendDate(last.changed_at)):null;
+    const lastTopic=last?.knowledgeId?state.data.knowledge.find(k=>k.id===last.knowledgeId):null;
+    const lastLabel=lastTopic?.title||last?.type||'';
+    const decisionCount=(state.data.knowledge||[]).filter(k=>k.state==='current').length;
     const openCount=openQuestions().length;
-    const openLabel=openCount===0?'✓ No open questions':`${openCount} open question${openCount===1?'':'s'}`;
-    return `<section class="workspace-status-card"><span class="eyebrow">Project status</span><div class="workspace-status-body">
-      <div class="workspace-status-item"><strong>Current State</strong><div class="workspace-status-row"><span>${lastUpdated?`Updated ${lastUpdated}`:'What the project currently treats as true.'}</span><button class="text-button" data-view="project-overview">Browse →</button></div></div>
-      <div class="workspace-status-item"><div class="workspace-status-row"><span class="${openCount===0?'is-clear':''}">${openLabel}</span><button class="text-button" data-view="open-items">View Open Items →</button></div></div>
+    const openHeadline=openCount===0?'✓ No open questions':`${openCount} open question${openCount===1?'':'s'}`;
+    return `<section class="workspace-status-card"><span class="eyebrow">Current State</span><div class="workspace-status-body">
+      <div class="workspace-status-item"><strong class="workspace-status-value">${lastUpdated?`Updated ${esc(lastUpdated)}`:'Not yet established'}</strong><div class="workspace-status-row"><span>${lastLabel?esc(lastLabel):'Most recent change.'}</span></div></div>
+      <div class="workspace-status-item"><strong class="workspace-status-value">${decisionCount} decision${decisionCount===1?'':'s'} recorded</strong><div class="workspace-status-row"><span>What the project currently treats as true.</span><button class="text-button" data-view="project-overview">Browse Current State →</button></div></div>
+      <div class="workspace-status-item"><strong class="workspace-status-value${openCount===0?' is-clear':''}">${esc(openHeadline)}</strong><div class="workspace-status-row"><span>${openCount===0?'Nothing blocking progress.':'Waiting on a decision.'}</span><button class="text-button" data-view="open-items">Open Items →</button></div></div>
     </div></section>`;
   }
   function renderWorkspaceAttentionOnly(){
@@ -282,11 +290,11 @@
     // read-only utility reached from the floating Ask State control
     // (context-product-polish.js), not a Workspace feature.
     root.innerHTML = `<section class="overview pristine">
-      <section class="overview-heading"><div class="overview-heading-row"><div><span class="eyebrow">Workspace</span><h2>Northstar</h2></div><button class="btn primary overview-add" data-action="add-info">+ Add Evidence</button></div></section>
+      <section class="overview-heading"><div class="overview-heading-row"><div><span class="eyebrow">Workspace</span><h2>Northstar</h2>${D.project?.stage?`<p class="overview-stage">${esc(D.project.stage)}</p>`:''}</div><button class="btn secondary overview-add" data-action="add-info">+ Add Evidence</button></div></section>
       ${workspaceAttentionHtml()}
       <div class="workspace-below-grid">
-        ${recentUpdatesHtml()}
-        ${projectStatusCardHtml()}
+        ${whatChangedHtml()}
+        ${currentStateHtml()}
       </div>
     </section>`;
     // The Ask loading and refinement nodes are emitted here, and renderOverview
