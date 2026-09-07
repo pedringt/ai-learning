@@ -1055,19 +1055,31 @@
     if(source==='manual_note')return 'Project update';
     return String(source||'Note').replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase());
   }
-  function historyType(item){
-    if(item.transition_type==='created')return 'Current understanding established';
-    if(item.transition_type==='retired')return 'Current understanding retired';
-    return 'Current understanding updated';
+  // topicName is looked up from state.data.knowledge (may be a retired item
+  // by the time this renders, but syncApiState marks items retired rather
+  // than deleting them, so the topic label survives). A generic fallback
+  // headline like "Current understanding updated" told a scanning user
+  // nothing about what actually changed -- every entry looked the same.
+  // Found via live QA 2026-09-07.
+  function historyType(item,topicName){
+    const verb=item.transition_type==='created'?'established':item.transition_type==='retired'?'retired':'updated';
+    return topicName?`${topicName} ${verb}`:`Current understanding ${verb}`;
   }
   function syncApiHistory(items){
-    const backend=(items||[]).map(h=>({
-      ...h, id:h.id, backendManaged:true, knowledgeId:h.state_item_id,
-      date:formatBackendDate(h.changed_at), dateISO:h.changed_at, type:historyType(h),
-      before:h.old_statement||'Not previously established', after:h.new_statement,
-      reason:h.decision_question||h.proposal_rationale||'Reviewed project evidence',
-      decision:'Human accepted this change', evidenceItems:h.evidence_items||[]
-    }));
+    // Internal record ids (k-rollout, q-retention, ...) must never reach
+    // user-facing History copy -- reuses the same stripping OPEN_ITEMS_VIEW
+    // already applies to review text, rather than a third duplicate regex.
+    const clean=value=>OPEN_ITEMS_VIEW?.cleanReviewCopy?OPEN_ITEMS_VIEW.cleanReviewCopy(value):String(value||'');
+    const backend=(items||[]).map(h=>{
+      const topicName=state.data.knowledge.find(k=>k.id===h.state_item_id)?.title;
+      return {
+        ...h, id:h.id, backendManaged:true, knowledgeId:h.state_item_id,
+        date:formatBackendDate(h.changed_at), dateISO:h.changed_at, type:historyType(h,topicName),
+        before:clean(h.old_statement)||'Not previously established', after:clean(h.new_statement),
+        reason:clean(h.decision_question||h.proposal_rationale)||'Reviewed project evidence',
+        decision:'Human accepted this change', evidenceItems:h.evidence_items||[]
+      };
+    });
     state.data.history=backend;
     const byEvidence=new Map();
     for(const h of backend){
@@ -1403,16 +1415,16 @@
     if(e.target.closest('[data-action="dismiss-nudge"]')){ const btn=e.target.closest('[data-action="dismiss-nudge"]'); state.dismissedNudges.add(btn.dataset.nudge); renderReview(); return; }
     const projectJump=e.target.closest('[data-project-jump]'); if(projectJump){const target=projectJump.dataset.projectJump;if(state.view!=='project-overview'){state.view='project-overview';render();requestAnimationFrame(()=>scrollProjectTarget(target));}else{updateNav();updateProjectSubnavActive(target);scrollProjectTarget(target);}return;}
     const relatedReview=e.target.closest('[data-action="open-related-review"]'); if(relatedReview){ const r=state.data.reviews.find(x=>x.id===relatedReview.dataset.reviewId); if(r) showDialog(`<span class="eyebrow">Pending Review</span><h2 id="dialogTitle">Related evidence may affect this Current State</h2>${reviewCard(r,true,false)}`); return;}
-        const topicHistory=e.target.closest('[data-action="view-topic-history"]'); if(topicHistory){if(!overlay.hidden)closeDialog();state.historyTopic=topicHistory.dataset.knowledgeId;navigateTo('history',{preserveHistoryTopic:true});return;}
-    const clearHistory=e.target.closest('[data-action="clear-history-topic"]'); if(clearHistory){state.historyTopic=null;renderHistory();return;}
-    const clearHistoryEvidence=e.target.closest('[data-action="clear-history-evidence"]'); if(clearHistoryEvidence){state.historyEvidenceId=null;renderHistory();return;}
+        const topicHistory=e.target.closest('[data-action="view-topic-history"]'); if(topicHistory){if(!overlay.hidden)closeDialog();state.historyTopic=topicHistory.dataset.knowledgeId;navigateTo('history',{preserveHistoryTopic:true});window.STATE_HISTORY_NAV?.pushHistoryTopic?.(state.historyTopic);return;}
+    const clearHistory=e.target.closest('[data-action="clear-history-topic"]'); if(clearHistory){state.historyTopic=null;renderHistory();window.STATE_HISTORY_NAV?.pushHistoryTopic?.(null);return;}
+    const clearHistoryEvidence=e.target.closest('[data-action="clear-history-evidence"]'); if(clearHistoryEvidence){state.historyEvidenceId=null;renderHistory();window.STATE_HISTORY_NAV?.pushHistoryTopic?.(null);return;}
     const noteReviews=e.target.closest('[data-action="open-note-reviews"]'); if(noteReviews){
       const n=state.data.notes.find(x=>x.id===noteReviews.dataset.noteId); const ids=n?.reviewIds||[];
       if(ids.length===1){state.expandedReviewId=ids[0];state.openItemSections.reviews=false;navigateTo('open-items');}
       else if(ids.length>1){const rows=ids.map(id=>state.data.reviews.find(r=>r.id===id)).filter(Boolean).map(r=>`<button class="related-review-choice" data-action="open-specific-review" data-review-id="${r.id}"><strong>${esc(r.summary||r.title)}</strong><span>${esc(r.whyConsequential||'Needs your decision')}</span></button>`).join('');showDialog(`<span class="eyebrow">In review</span><h2 id="dialogTitle">This note is connected to ${ids.length} Reviews.</h2><div class="related-review-list">${rows}</div><div class="dialog-actions"><button class="btn secondary" data-action="close-dialog">Close</button></div>`);}
       return;
     }
-    const noteHistory=e.target.closest('[data-action="open-note-history"]'); if(noteHistory){const n=state.data.notes.find(x=>x.id===noteHistory.dataset.noteId);if(n?.evidenceId){state.historyEvidenceId=n.evidenceId;state.historyTopic=null;state.historySearch='';navigateTo('history',{preserveHistoryEvidence:true});}return;}
+    const noteHistory=e.target.closest('[data-action="open-note-history"]'); if(noteHistory){const n=state.data.notes.find(x=>x.id===noteHistory.dataset.noteId);if(n?.evidenceId){state.historyEvidenceId=n.evidenceId;state.historyTopic=null;state.historySearch='';navigateTo('history',{preserveHistoryEvidence:true});window.STATE_HISTORY_NAV?.pushHistoryTopic?.(null);}return;}
     // A plain URL hash won't survive this: context-history.js's own click
     // listener rewrites location.hash back to the bare view route (e.g.
     // #settings) on every navigation, shortly after this handler returns.
@@ -1597,7 +1609,12 @@
     history.replaceState(history.state,'',location.pathname+(cleanedSearch?`?${cleanedSearch}`:'')+'#settings');
     navigateTo('settings');
   }
-  window.STATE_ASK_TEST_API={state,detectAskIntent,findScenario,structuredAskResult,scenarioResult,intentAskHtml,submitAsk,upsertBackendReview,replaceBackendOpenReviews,mapApiReview,looksLikeQuestion,hasExplicitUpdateIntent,linkedReviewFor,questionDialogHtml,renderOverview};
+  window.STATE_ASK_TEST_API={state,detectAskIntent,findScenario,structuredAskResult,scenarioResult,intentAskHtml,submitAsk,upsertBackendReview,replaceBackendOpenReviews,mapApiReview,looksLikeQuestion,hasExplicitUpdateIntent,linkedReviewFor,questionDialogHtml,renderOverview,historyType,syncApiHistory};
+  // Called by context-history.js's popstate handler after it re-activates the
+  // History tab, so a Back press that lands on a topic-detail browser-history
+  // entry actually restores that topic filter instead of always landing on
+  // the plain list. See context-history.js for the paired pushHistoryTopic().
+  window.STATE_HISTORY_RESTORE=(topic)=>{ if(state.view!=='history')return; state.historyTopic=topic||null; renderHistory(); };
   render();
   hydrateBackend();
 })();
