@@ -4,13 +4,25 @@ This file is the canonical current-state handoff for State. Any AI assistant or 
 
 ## Current production state
 
-_Last updated: September 7, 2026 (State UX review batch reconciled -- fresh-chat handoff)_
+_Last updated: September 7, 2026 (Workspace/Ask follow-up round on top of the reconciled UX review batch)_
 
 `main` is production, currently at commit `2adb591` (merged via [PR #66](https://github.com/pedringt/ai-learning/pull/66)). Slack Phase 2, self-serve Slack OAuth, a full round of Ask reliability/UX hardening, and a site-wide portfolio content pass are live in production, promoted 2026-09-06. The *only* thing on `main` past that is `.github/workflows/deep-qa.yml` itself (PR #66) -- no application code -- added there deliberately, because GitHub only allows dispatching a `workflow_dispatch` workflow if its file exists on the default branch; the workflow's actual content still runs against whatever ref you dispatch it against (normally `staging`).
 
 **`staging` has diverged substantially further and is not yet promoted -- CI green throughout.** Nothing below has been promoted; it all requires Paige's explicit go-ahead per the usual workflow rule. See "Next up" below.
 
-### Latest session: a 16-item "harsh UX/product review" batch, reconciled against a ChatGPT-authored partial implementation
+### Latest session: Workspace/Ask follow-up round after live screenshots of the UX review batch (PR #81)
+
+A quick follow-up on top of the 16-item batch below, driven by Paige reviewing live screenshots of the deployed result rather than a new written spec:
+
+- **Ask fully removed from inline Workspace** -- reachable only through the floating "Ask State" button/drawer now. Deleted `context-product-polish.js`'s inline-card injection and the launcher-hiding logic that existed only to work around the inline card's presence. Removed the "Read only" pill (the drawer already says this in plain text, and a mutation-intent query already redirects to Add Evidence with an explanation) and the drawer's clear (x) button (sat redundantly next to its own close (x)).
+- **Workspace hierarchy restructured to match spatially, not just via headings:** Needs Your Attention stays full-width at the top; below it, a 65/35 two-column row pairs Recently Updated with a new combined **Project Status** card (Current State blurb + open-questions count -- previously two uneven side-by-side cards with mismatched link alignment). Added a "Workspace" label above the page heading.
+- **Bug fixed:** Recently Updated/"last updated" were using History's raw fixture order instead of sorting by date, so entries could show out of chronological order -- now sorts the same way the real History page does.
+- **Knock-on fixes from removing the inline ask-panel:** "Ask about Northstar" in the How This Works modal used to fill a now-nonexistent `#askInput` -- fixed to route into the Ask State drawer via the same synthetic click its own starter chips use, and it now actually submits rather than just prefilling. The old "See what you can ask" examples dialog (`showExamples()`) lived entirely inside the removed ask-panel with no other way to reach it -- deleted as genuinely dead code.
+- **Real gap found in the Python test harness while debugging why this looked broken in Playwright but not live:** `_launch_page()` in `test_browser_user_flows.py` never loaded `context-quickwins.js`, `context-settings.js`, or `context-product-polish.js` at all -- every browser test had been exercising a materially different (older, patch-less) page than what actually ships. Added all three to the harness. 3 tests that verified now-removed-by-design behavior (old inline Ask's dependent-follow-up UI, the examples dialog) were retired rather than force-fit to the new architecture; 3 more were rewritten against the drawer's real markup.
+
+Verified: 339 Python passed/3 skipped (down from 342 by the 3 legitimately retired tests), 135 JS assertions across 9 suites, live-browser verification of the layout at both desktop (65/35 grid) and narrow (<680px, single column) widths.
+
+### Prior session: a 16-item "harsh UX/product review" batch, reconciled against a ChatGPT-authored partial implementation
 
 Paige ran a UX/information-flow review of State and handed off a 16-item punch list, with an explicit warning that ChatGPT had already pushed a partial implementation directly to `staging` (`context-product-polish.js`, a ~460-line DOM-patching module, plus related `index.html`/case-study edits) and an instruction to *reconcile that work rather than layer more patches on top of it*, preferring to fix owning components/functions where possible. `main` was untouched throughout.
 
@@ -86,7 +98,7 @@ Deliberately still out of scope: real Slack token revocation on Disconnect, and 
 
 ### Next up: `staging` -> `main` promotion is the pending decision
 
-`staging` is 62 commits ahead of `main`, CI green throughout, everything above individually verified (several live, not just via the deterministic suites). **Ask Paige whether to promote now or hold for more work** -- do not promote without her explicit authorization. If she says yes: this doc's "Current production state" intro needs a fresh rewrite afterward (same rule as always -- any push to `main` gets a same-pass review of this file), and double-check the production-only environment config (production API URL) survives the promotion, per the working rule below.
+`staging` is 65 commits ahead of `main`, CI green throughout, everything above individually verified (several live, not just via the deterministic suites). **Ask Paige whether to promote now or hold for more work** -- do not promote without her explicit authorization. If she says yes: this doc's "Current production state" intro needs a fresh rewrite afterward (same rule as always -- any push to `main` gets a same-pass review of this file), and double-check the production-only environment config (production API URL) survives the promotion, per the working rule below.
 
 ### Smaller tech debt still open (not urgent, no live QA evidence forcing it)
 
