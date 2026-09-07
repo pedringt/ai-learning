@@ -75,6 +75,13 @@ The production frontend must point to the production API. Staging intentionally 
 
 Deliberately still out of scope: real Slack token revocation on Disconnect, and automatic channel discovery via the Slack Web API (channels are currently approved manually).
 
+### Deferred until after manager review (September 6, 2026)
+
+- `index.html` remains very large, with accumulated historical CSS, style blocks, and comments. Consolidation is intentionally deferred.
+- Some State orientation and Ask polish still lives in `implementation-context-prototype/context-quickwins.js` instead of the canonical view modules. Moving that behavior is intentionally deferred.
+- Both items are deferred because CI is green and further cleanup before manager review adds regression risk. The final copy batch changes real source text and leaves these structural refactors for a separate pass.
+- The final copy batch corrects the homepage hero and removes the duplicate Learning Guide introduction that earlier notes described as complete. It also standardizes the public principle to **AI interprets → software enforces → people decide**. These changes are staging-only; promotion still requires Paige’s explicit authorization.
+
 ### Next up (queued 2026-09-06): finish the tech debt pass, then consider promoting
 
 Paige asked to tackle tech debt in a fresh chat right after PR #64 promoted. Two of three items are done (below); **`phase2_current/`'s rename is the one still open** -- start there if continuing this pass. Separately, ask Paige whether `staging` (tech debt + the portfolio copy revision, all verified and CI-green) should be promoted to `main` now or held for more work first -- do not promote without her explicit authorization.
@@ -126,7 +133,7 @@ Do not carry forward completed staging-era checklists as open work. Re-verify th
 
 ## Core product constraints
 
-- Preserve State's authority model: **LLM interprets -> software enforces -> human authorizes**.
+- Preserve State's authority model: **AI interprets → software enforces → people decide**.
 - Current State must remain distinct from Evidence, Reviews, Questions, and History.
 - Consequential Current State changes require human authorization.
 - Keep deterministic schema, semantic, and authority enforcement around model output.
