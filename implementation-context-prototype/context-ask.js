@@ -169,7 +169,7 @@
       if(counts.blockers)bits.push(`${counts.blockers} ${counts.blockers===1?'blocker':'blockers'}`);
       if(counts.questions)bits.push(`${counts.questions} open ${counts.questions===1?'question':'questions'}`);
       const msg=bits.length?`Grounded in ${bits.join(', ')}. Drafting the answer…`:'Grounded context ready. Drafting the answer…';
-      return `<div class="ask-live-loading has-grounded-preview"><span class="ask-loading-mark" aria-hidden="true"></span><div><strong>Grounded context ready</strong><p>${esc(msg)}</p><p class="ask-loading-note">Suggested prompts below answer instantly from what's already known -- this one runs a live check against the full project record.</p></div></div>`;
+      return `<div class="ask-live-loading has-grounded-preview"><span class="ask-loading-mark" aria-hidden="true"></span><div><strong>Grounded context ready</strong><p>${esc(msg)}</p><p class="ask-loading-note">Suggested prompts above answer instantly from what's already known -- this one runs a live check against the full project record.</p></div></div>`;
     }
     let body='';
     for(const field of fields){

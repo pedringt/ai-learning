@@ -206,7 +206,7 @@
     const preview=state.result?.liveAskPreview;
     const message=preview?.message || 'Finding relevant project context · checking Reviews and unresolved questions · shaping the useful parts.';
     const label=preview?.grounded ? 'Grounded context ready' : 'Building your briefing…';
-    return `<div class="ask-live-loading${preview?.grounded?' has-grounded-preview':''}"><span class="ask-loading-mark" aria-hidden="true"></span><div><strong>${esc(label)}</strong><p>${esc(message)}</p><p class="ask-loading-note">Suggested prompts below answer instantly from what's already known -- this one runs a live check against the full project record.</p></div></div>`;
+    return `<div class="ask-live-loading${preview?.grounded?' has-grounded-preview':''}"><span class="ask-loading-mark" aria-hidden="true"></span><div><strong>${esc(label)}</strong><p>${esc(message)}</p><p class="ask-loading-note">Suggested prompts above answer instantly from what's already known -- this one runs a live check against the full project record.</p></div></div>`;
   }
   function workspaceAttentionHtml(){
     if(API && state.workspaceAttentionStatus==='loading'){
