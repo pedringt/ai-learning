@@ -208,11 +208,36 @@
     if(items.length<2) blockers.slice(0,2-items.length).forEach(q=>items.push({kind:'blocker',id:q.id,label:'Blocking question',title:q.text,detail:q.blocks?`Blocks ${q.blocks}`:'A concrete dependency is waiting on this answer.'}));
     const total=reviews.length+blockers.length;
     if(!items.length){
-      return `<section class="workspace-attention is-clear"><div class="workspace-attention-head"><div><span class="eyebrow">Needs your attention</span><h3>Nothing needs action right now</h3><p>No Reviews or blocking questions are waiting on you. Try asking a question above, or browsing Notes.</p></div><button class="text-button" data-view="open-items">View Open Items →</button></div></section>`;
+      return `<section class="workspace-attention is-clear"><div class="workspace-attention-head"><div><span class="eyebrow">Needs your attention</span><h3>You're caught up</h3><p>Nothing currently needs a decision and no questions are blocking progress.</p></div><button class="text-button" data-view="open-items">View Open Items →</button></div></section>`;
     }
     const rows=items.map(item=>`<button class="attention-item ${item.kind}" data-action="${item.kind==='review'?'open-specific-review':'go-open-question'}" ${item.kind==='review'?`data-review-id="${esc(item.id)}"`:`data-question-id="${esc(item.id)}"`}><span class="attention-item-copy"><span class="attention-kind">${esc(item.label)}</span><strong>${esc(item.title)}</strong><span>${esc(item.detail)}</span></span><span class="attention-arrow" aria-hidden="true">→</span></button>`).join('');
     const more=Math.max(0,total-items.length);
     return `<section class="workspace-attention"><div class="workspace-attention-head"><div><span class="eyebrow">Needs your attention</span><h3>${total===1?'1 item is waiting on you':`${total} items are waiting on you`}</h3><p class="attention-intro-text">Click an item below to open it in Open Items and make a decision.</p></div><button class="text-button" data-view="open-items">View all ${total} →</button></div><div class="attention-list">${rows}</div>${more?`<p class="attention-more-summary">Showing ${items.length} of ${total}</p>`:''}</section>`;
+  }
+  // Answers "What just happened?" -- up to 3 meaningful recent decisions,
+  // whether they changed Current State or deliberately kept it unchanged.
+  // Not a second History feed: no filtering/search here, just a link out.
+  function recentUpdatesHtml(){
+    const entries=(state.data.history||[]).slice().sort(sortDateDesc).slice(0,3);
+    if(!entries.length) return '';
+    const rows=entries.map(h=>{
+      const date=h.date||formatBackendDate(h.changed_at);
+      const type=h.type||historyType(h);
+      const topic=h.knowledgeId?state.data.knowledge.find(k=>k.id===h.knowledgeId):null;
+      const title=topic?.title||type;
+      const subtitle=topic?`${type} · ${date}`:date;
+      const linkAttrs=h.knowledgeId?`data-action="view-topic-history" data-knowledge-id="${esc(h.knowledgeId)}"`:'data-view="history"';
+      return `<button class="recent-update-row" ${linkAttrs}><span class="recent-update-copy"><strong>${esc(title)}</strong><span>${esc(subtitle)}</span></span><span class="recent-update-arrow" aria-hidden="true">→</span></button>`;
+    }).join('');
+    return `<section class="workspace-recent"><div class="workspace-recent-head"><span class="eyebrow">Recently updated</span><button class="text-button" data-view="history">View all History →</button></div><div class="recent-update-list">${rows}</div></section>`;
+  }
+  // Answers "Where does the project stand?" -- quiet link-outs, not another
+  // dashboard of stat cards.
+  function quietOrientationHtml(){
+    const last=(state.data.history||[]).slice().sort(sortDateDesc)[0];
+    const lastUpdated=last?esc(last.date||formatBackendDate(last.changed_at)):null;
+    const openCount=openQuestions().length;
+    return `<section class="workspace-orientation"><div class="workspace-orientation-item"><strong>Current State</strong><span>The maintained view of what the project currently treats as true.${lastUpdated?` Last updated ${lastUpdated}.`:''}</span><button class="text-button" data-view="project-overview">Browse Current State →</button></div><div class="workspace-orientation-item"><strong>${openCount} open question${openCount===1?'':'s'}</strong><span>Preserved as unresolved until there's enough evidence to answer them.</span><button class="text-button" data-view="open-items">View Open Items →</button></div></section>`;
   }
   function renderWorkspaceAttentionOnly(){
     if(state.view!=='overview' || state.result) return false;
@@ -255,8 +280,10 @@
     // an AI question box. Only shown on the fresh Workspace landing view --
     // once an Ask result is on screen it stays hidden, same as before.
     root.innerHTML = `<section class="overview pristine">
-      <section class="overview-heading"><div class="overview-heading-row"><div><h2>Northstar</h2></div><button class="btn primary overview-add" data-action="add-info">+ Add note</button></div></section>
-      ${state.result?'':workspaceAttentionHtml()}
+      <section class="overview-heading"><div class="overview-heading-row"><div><h2>Northstar</h2></div><button class="btn primary overview-add" data-action="add-info">+ Add Evidence</button></div></section>
+      ${workspaceAttentionHtml()}
+      ${recentUpdatesHtml()}
+      ${quietOrientationHtml()}
       <section class="ask-panel compact-ask unboxed-ask">${state.result?`<div class="ask-session-row"><div><span class="meta-label">Current ask</span><strong>${esc(state.resultQuery)}</strong></div></div><div class="answer-stage has-result" aria-live="polite"><div class="answer-content">${resultBody}</div></div>${(state.result.liveAsk||state.result.previousLive)?`<div class="ask-followup"><div class="ask-input-row"><input id="askInput" autocomplete="off" aria-label="Refine or ask a follow-up" placeholder="Refine, ask a follow-up, or turn this into something…" value="${esc(state.askInputDraft||'')}"/><button class="btn primary" data-action="ask-submit" ${state.result.liveAskLoading||state.result.liveAskStreaming?'disabled':''}>${state.result.liveAskLoading||state.result.liveAskStreaming?'Working…':'Ask'}</button></div></div>`:''}`:`<div class="ask-title-row"><div><label for="askInput">Ask what State knows about the project</label><p>Search current understanding, open items, notes, and history.</p></div></div><div class="ask-input-row"><input id="askInput" autocomplete="off" aria-label="Ask about the project or create an update" placeholder="What do you want to know or make?" value="${esc(state.askInputDraft||'')}"/><button class="btn primary" data-action="ask-submit">Ask</button></div><div class="prompt-suggestions single-suggestion"><button class="examples-link" data-action="show-examples">See what you can ask →</button></div>`}</section></section>`;
     // The Ask loading and refinement nodes are emitted here, and renderOverview
     // is called directly on the Ask paths rather than always through render(),
@@ -831,17 +858,48 @@
   }
   function questionDialogHtml(q){ return OPEN_ITEMS_VIEW.questionDialogHtml(q,linkedReviewFor(q.id)); }
 
-  async function decideReview(id,decision){
+  function truncateText(value,max=190){
+    const text=String(value||'').replace(/\s+/g,' ').trim();
+    return text.length>max?`${text.slice(0,max-1).replace(/\s+\S*$/,'')}…`:text;
+  }
+  function showToast(message){
+    document.querySelector('.state-toast')?.remove();
+    const toast=document.createElement('div');
+    toast.className='state-toast';toast.setAttribute('role','status');toast.textContent=message;
+    document.body.appendChild(toast);
+    setTimeout(()=>toast.remove(),2600);
+  }
+
+  // A consequential update (real proposals, not a generic "evidence noted"
+  // review) confirms before mutating anything -- Current State is what the
+  // project treats as true, so changing it deserves an explicit step. Keep
+  // decisions and generic evidence-only outcomes never change Current State,
+  // so they skip the confirmation and use lighter feedback (a toast, no
+  // interstitial loading modal) instead.
+  function decideReview(id,decision){
     const r=state.data.reviews.find(x=>x.id===id);
-    state.lastReviewGeneric=!!r && (r.id?.startsWith('r-info-') || (Array.isArray(r.proposals) && r.proposals.length===0));
     if(!r||r.status!=='pending')return;
+    const isGeneric=r.id?.startsWith('r-info-') || (Array.isArray(r.proposals) && r.proposals.length===0);
+    if(decision==='update' && !isGeneric){
+      const proposalText=(r.proposals||[]).map(p=>p.proposed_statement).filter(Boolean).join(' • ') || r.proposed || '';
+      showDialog(`<span class="eyebrow">Review decision</span><h2 id="dialogTitle">Update Current State?</h2><p>This changes what the project currently treats as true and records the decision in History.</p>${proposalText?`<div class="review-confirm-change"><span>Change</span><strong>${esc(truncateText(proposalText,210))}</strong></div>`:''}<div class="dialog-actions"><button class="btn secondary" data-action="close-dialog">Cancel</button><button class="btn primary" data-action="confirm-review-update" data-review="${esc(id)}">Update Current State</button></div>`);
+      return;
+    }
+    executeReviewDecision(id,decision,isGeneric);
+  }
+
+  async function executeReviewDecision(id,decision,isGeneric){
+    const r=state.data.reviews.find(x=>x.id===id);
+    if(!r||r.status!=='pending')return;
+    state.lastReviewGeneric=isGeneric;
     state.expandedReviewId=null;
+    const lightweight=decision!=='update'||isGeneric;
 
     if(r.backendReviewId){
       const previousStatus=r.status;
       r.status=decision;
       render();
-      showDialog(`<span class="eyebrow">Saving decision</span><h2 id="dialogTitle">${decision==='update'?'Updating understanding…':'Leaving understanding unchanged…'}</h2><p>Your choice was recorded locally. State is confirming it with the project record.</p>`);
+      if(!lightweight) showDialog(`<span class="eyebrow">Updating</span><h2 id="dialogTitle">Updating Current State…</h2><p>Saving the reviewed decision to the project record.</p>`);
       try{
         const apiDecision=decision==='update'?'accept':'keep';
         const result=await API.resolveReview(r.backendReviewId,apiDecision);
@@ -863,7 +921,10 @@
             else if(text) receiptItems.push({id:proposal.state_item_id||'',statement:text,area:'product'});
           }
         }
-        updateNav(); render(); showDecisionComplete(decision,{review:r,items:receiptItems});
+        updateNav(); render();
+        if(lightweight) closeDialog(); // no interstitial was shown for these outcomes
+        if(lightweight) showToast(decision==='update'?'Added as Evidence. Current State did not need a Review.':'Current State left unchanged. Evidence is preserved.');
+        else showDecisionComplete({items:receiptItems});
         // Resolution response is authoritative; revalidate deterministically after it has rendered.
         await hydrateBackend();
       }catch(e){
@@ -876,35 +937,34 @@
 
     r.status=decision;
     const note=state.data.notes.find(n=>n.id===r.evidenceId); if(note)note.status=decision==='update'?'accepted':'reviewed';
+    const receiptItems=[];
     if(decision==='update'){
-      if(r.id==='r-access'){ const k=state.data.knowledge.find(k=>k.id==='k-access'); if(k)k.statement=k.afterReview; }
+      if(r.id==='r-access'){ const k=state.data.knowledge.find(k=>k.id==='k-access'); if(k){k.statement=k.afterReview;receiptItems.push({id:k.id,statement:k.statement,area:k.projectArea||'product'});} }
       if(r.questionToCreate && !state.data.questions.some(q=>q.id===r.questionToCreate.id)) state.data.questions.push(clone(r.questionToCreate));
       if(r.resolvesQuestionId){ const q=state.data.questions.find(q=>q.id===r.resolvesQuestionId); if(q){ q.status='resolved'; q.resolution='Resolved by reviewed Security follow-up'; } }
       state.data.history.unshift({id:'h-'+Date.now(),date:todayLabel(),dateISO:todayISO(),knowledgeId:r.id==='r-access'?'k-access':(r.id==='r-security'?'k-security':null),type:r.resolvesQuestionId?'Current understanding updated · open question resolved':(r.id.startsWith('r-info-')?'Evidence accepted without state change':'Current understanding updated'),before:r.current,after:r.id.startsWith('r-info-')?r.current:r.proposed,reason:r.id==='r-security'?'Security follow-up':r.id.startsWith('r-info-')?'Added project information':'Senior Support Rep interview',decision:'Human chose Update understanding'});
     } else state.data.history.unshift({id:'h-'+Date.now(),date:todayLabel(),dateISO:todayISO(),type:'Current understanding kept',before:r.current,after:r.current,reason:'Senior Support Rep interview preserved as evidence',decision:'Human chose Leave understanding unchanged'});
-    render(); showDecisionComplete(decision,{review:r,items:[]});
+    render();
+    if(lightweight) showToast(decision==='update'?'Added as Evidence. Current State did not need a Review.':'Current State left unchanged. Evidence is preserved.');
+    else showDecisionComplete({items:receiptItems});
   }
 
-  function showDecisionComplete(decision,{review=null,items=[]}={}){
-    if(decision!=='update'){
-      showDialog(`<span class="eyebrow">Review complete</span><h2 id="dialogTitle">Understanding left unchanged.</h2><p>The evidence is preserved, but downstream work continues using the prior reviewed understanding.</p>`);
-      autoCloseDialog();
-      return;
-    }
-    if(state.lastReviewGeneric || !items.length){
-      showDialog(`<span class="eyebrow">Review complete</span><h2 id="dialogTitle">${state.lastReviewGeneric?'Evidence reviewed.':'Current understanding updated.'}</h2><p>${state.lastReviewGeneric?'The evidence is preserved as reviewed material.':'The reviewed evidence has been applied to current understanding. Any question it directly establishes has been resolved; unresolved residue stays open.'}</p>`);
-      autoCloseDialog();
-      return;
-    }
+  function showDecisionComplete({items=[]}={}){
     const primary=items[0];
-    const changes=items.slice(0,3).map(item=>`<li>${esc(item.statement)}</li>`).join('');
-    showDialog(`<span class="eyebrow">Understanding updated</span><h2 id="dialogTitle">Here’s what changed</h2><ul class="review-change-receipt">${changes}</ul>${items.length>3?`<p>${items.length-3} more maintained facts were updated.</p>`:''}<p class="review-receipt-note">State updated the definitive Project view and recorded the accepted change in History.</p><div class="dialog-actions"><button class="btn primary" data-action="review-receipt-project" data-project-area="${esc(primary.area||'product')}" data-state-id="${esc(primary.id||'')}">View in Project</button>${primary.id?`<button class="btn secondary" data-action="view-topic-history" data-knowledge-id="${esc(primary.id)}">View in History</button>`:''}</div>`);
+    const line=primary?truncateText(primary.statement,180):'The reviewed change is now part of Current State.';
+    showDialog(`<span class="eyebrow">Review complete</span><h2 id="dialogTitle">Current State updated</h2><p>${esc(line)}</p><div class="dialog-actions"><button class="btn primary" data-action="review-receipt-project" data-project-area="${esc(primary?.area||'product')}" data-state-id="${esc(primary?.id||'')}">View Current State</button>${primary?.id?`<button class="btn secondary" data-action="view-topic-history" data-knowledge-id="${esc(primary.id)}">View History</button>`:'<button class="btn secondary" data-view="history">View History</button>'}</div>`);
   }
 
 
   function showDemoHelp(){
-    const steps=['Add information','State interprets what changed','Review & decide','Current State stays maintained','Ask what you need to know'];
-    showDialog(`<span class="eyebrow">How this works</span><h2 id="dialogTitle">State keeps the project’s working understanding current.</h2><ul class="demo-flow">${steps.map(s=>`<li>${esc(s)}</li>`).join('')}</ul><p class="demo-flow-principle">AI interprets → software enforces → people decide</p><div class="demo-start"><span class="meta-label">Good places to start</span><button class="demo-start-action" data-action="demo-start-ask"><strong>Ask about Northstar</strong><span>Put a useful project question in Ask →</span></button><button class="demo-start-action" data-action="demo-start-note"><strong>Add a sample note</strong><span>Try new project information and see how Review handles it →</span></button><button class="demo-start-action" data-action="demo-start-project"><strong>Explore Current State</strong><span>Read the maintained view of what the project currently treats as true →</span></button></div><div class="demo-reset-help"><div><strong>Want to start over?</strong><span>Restore the curated Northstar starting scenario. You can also reset Northstar from Settings.</span></div><button class="text-button demo-reset-link" data-action="confirm-demo-reset">Reset example data →</button></div><div class="dialog-actions demo-help-actions"><button class="btn primary" data-action="close-dialog">Got it</button></div>`);
+    const steps=[
+      ['1. Add','Add Evidence. Capture a finding, decision, or meeting update. Approved Slack conversations can also become Evidence automatically.'],
+      ['2. State interprets','AI compares new Evidence with Current State and identifies possible changes or unresolved Questions.'],
+      ['3. Review & decide','Review proposed changes. Accept, reject/leave unchanged, or keep uncertainty open before Current State changes.'],
+      ['4. Know','Accepted changes update Current State. Previous decisions remain in History.'],
+      ['5. Ask','Use Ask State to understand the project without changing it.']
+    ];
+    showDialog(`<span class="eyebrow">How this works</span><h2 id="dialogTitle">State keeps accepted understanding separate from new information.</h2><div class="state-help-steps">${steps.map(([title,body])=>`<div class="state-help-step"><strong>${esc(title)}</strong><span>${esc(body)}</span></div>`).join('')}</div><p class="demo-flow-principle">AI interprets → software enforces → people decide</p><div class="demo-start"><span class="meta-label">Good places to start</span><button class="demo-start-action" data-action="demo-start-ask"><strong>Ask about Northstar</strong><span>Put a useful project question in Ask →</span></button><button class="demo-start-action" data-action="demo-start-note"><strong>Add a sample note</strong><span>Try new project information and see how Review handles it →</span></button><button class="demo-start-action" data-action="demo-start-project"><strong>Explore Current State</strong><span>Read the maintained view of what the project currently treats as true →</span></button></div><div class="demo-reset-help"><div><strong>Want to start over?</strong><span>Restore the curated Northstar starting scenario. You can also reset Northstar from Settings.</span></div><button class="text-button demo-reset-link" data-action="confirm-demo-reset">Reset example data →</button></div><div class="dialog-actions demo-help-actions"><button class="btn primary" data-action="close-dialog">Got it</button></div>`);
   }
 
   function showExamples(){
@@ -958,7 +1018,7 @@
     showDialog(`<span class="eyebrow">Project settings</span><h2 id="dialogTitle">Rules</h2><p>Rules tell State how to interpret evidence and when to interrupt you. They are not Current State and State cannot change them on its own.</p><p class="settings-note">Rules apply to future analysis. Existing Reviews are not reinterpreted automatically.</p><div class="project-rule-list">${rows}</div>${form}<div class="demo-reset-zone"><span class="eyebrow">Example data</span><p>Restore Northstar to the curated starting scenario with open Reviews, blockers, Questions, Notes, and History.</p><button class="btn secondary danger-light" data-action="confirm-demo-reset">Reset example data</button></div>`);
   }
 
-  function showAddDialog(prefill=''){ showDialog(`<span class="eyebrow">Project update</span><h2 id="dialogTitle">Add a project update</h2><p>Use this for new information that may change what the project currently understands. It goes to Review first.</p><textarea id="addInfoText" rows="7" aria-label="Project update" placeholder="Paste a finding, decision, meeting update, or other new project information...">${esc(prefill)}</textarea><div class="note-example-picker"><span class="meta-label">Try an example</span><div class="note-example-chips"><button type="button" data-action="sample-info" data-sample="plan">New plan</button><button type="button" data-action="sample-info" data-sample="research">Research finding</button><button type="button" data-action="sample-info" data-sample="constraint">Decision / constraint</button></div></div><div class="dialog-actions"><button class="btn primary" data-action="save-info">Send to Review</button><button class="btn secondary" data-action="close-dialog">Cancel</button></div>`); }
+  function showAddDialog(prefill=''){ showDialog(`<span class="eyebrow">Evidence</span><h2 id="dialogTitle">Add Evidence</h2><p>Add project information State should evaluate. It is preserved as Evidence first and cannot change Current State without Review.</p><textarea id="addInfoText" rows="7" aria-label="Evidence" placeholder="Paste a finding, decision, meeting update, or other project information...">${esc(prefill)}</textarea><div class="note-example-picker"><span class="meta-label">Try an example</span><div class="note-example-chips"><button type="button" data-action="sample-info" data-sample="plan">New plan</button><button type="button" data-action="sample-info" data-sample="research">Research finding</button><button type="button" data-action="sample-info" data-sample="constraint">Decision / constraint</button></div></div><div class="dialog-actions"><button class="btn primary" data-action="save-info">Add Evidence</button><button class="btn secondary" data-action="close-dialog">Cancel</button></div>`); }
 
   function reviewTypeTitle(type){
     if(type==='state_at_risk') return 'Current State may be at risk';
@@ -1020,8 +1080,13 @@
       current,
       evidence:r.evidence_content||fallbackEvidence,
       evidenceSourceType:r.evidence_source_type||'',
-      resolvesQuestionIds:(r.resolves_question_ids||[]).length ? [...r.resolves_question_ids] : ((r.evidence_source_type||'').startsWith('question_response:') ? [(r.evidence_source_type||'').slice('question_response:'.length)] : (extras.resolvesQuestionIds||extras.resolvesQuestionId?[extras.resolvesQuestionId].filter(Boolean):[])),
-      resolvesQuestionId:(r.resolves_question_ids||[])[0] || ((r.evidence_source_type||'').startsWith('question_response:') ? (r.evidence_source_type||'').slice('question_response:'.length) : extras.resolvesQuestionId),
+      // Only an explicit backend resolves_question_ids (or a hardcoded local
+      // fixture relationship via `extras`) counts as a resolving link -- a
+      // review is never inferred to resolve a question just because its
+      // evidence happened to come from answering one. "Answer found ·
+      // Awaiting review" must only appear when the backend actually says so.
+      resolvesQuestionIds:(r.resolves_question_ids||[]).length ? [...r.resolves_question_ids] : (extras.resolvesQuestionIds||extras.resolvesQuestionId?[extras.resolvesQuestionId].filter(Boolean):[]),
+      resolvesQuestionId:(r.resolves_question_ids||[])[0] || extras.resolvesQuestionId,
       establishes:rationale||r.why_consequential,
       doesNot:r.review_type==='proposed_update'
         ? 'The proposed change does not become Current State until you accept it.'
@@ -1356,9 +1421,9 @@
       state.isAnalyzing=false; stopAnalysisClock();
       updateNav();
       if(apiReviews.length){
-        showDialog(`<span class="eyebrow">Done</span><h2 id="dialogTitle">Sent to Review</h2><p>${apiReviews.length===1?'One review needs your decision.':`${apiReviews.length} reviews need your decisions.`}</p><div class="dialog-actions"><button class="btn primary" data-action="go-review">Go to Review</button></div>`);
+        showDialog(`<span class="eyebrow">Evidence added</span><h2 id="dialogTitle">Evidence added</h2><p>${apiReviews.length===1?'1 Review needs your decision.':`${apiReviews.length} Reviews need your decisions.`}</p><div class="dialog-actions"><button class="btn primary" data-action="go-review">View Review</button></div>`);
       }else{
-        showDialog(`<span class="eyebrow">Done</span><h2 id="dialogTitle">Note reviewed</h2><p>This evidence did not require a change to Current State.</p>`);
+        showDialog(`<span class="eyebrow">Evidence added</span><h2 id="dialogTitle">Evidence added</h2><p>Added as Evidence. Current State did not need a Review.</p>`);
       }
     }catch(e){ await showAnalysisFailure(e); }
   }
@@ -1395,8 +1460,8 @@
       n.backendDraft=false; n.draftId=null; n.backendManaged=true; n.status=apiReviews.length?'pending':'no_review_needed'; n.reviewId=apiReviews[0]?.id||null; n.reviewIds=apiReviews.map(r=>r.id); n.evidenceId=result.evidence_id;
       apiReviews.forEach(r=>{r.evidenceId=n.id; upsertBackendReview(r);});
       state.reviewBannerDismissed=false; state.isAnalyzing=false; stopAnalysisClock(); updateNav();
-      if(apiReviews.length) showDialog(`<span class="eyebrow">Done</span><h2 id="dialogTitle">Note sent to Review</h2><p>${apiReviews.length===1?'One review needs your decision.':`${apiReviews.length} reviews need your decisions.`}</p><div class="dialog-actions"><button class="btn primary" data-action="go-review">Go to Review</button><button class="btn secondary" data-action="go-notes">Back to Notes</button></div>`);
-      else showDialog(`<span class="eyebrow">Done</span><h2 id="dialogTitle">Note reviewed</h2><p>This note did not require a change to Current State.</p><div class="dialog-actions"><button class="btn primary" data-action="go-notes">Back to Notes</button></div>`);
+      if(apiReviews.length) showDialog(`<span class="eyebrow">Evidence added</span><h2 id="dialogTitle">Evidence added</h2><p>${apiReviews.length===1?'1 Review needs your decision.':`${apiReviews.length} Reviews need your decisions.`}</p><div class="dialog-actions"><button class="btn primary" data-action="go-review">View Review</button><button class="btn secondary" data-action="go-notes">Back to Notes</button></div>`);
+      else showDialog(`<span class="eyebrow">Evidence added</span><h2 id="dialogTitle">Evidence added</h2><p>Added as Evidence. Current State did not need a Review.</p><div class="dialog-actions"><button class="btn primary" data-action="go-notes">Back to Notes</button></div>`);
     }catch(e){
       if(e?.evidenceId){
         n.evidenceId=e.evidenceId; n.status='failed';
@@ -1554,6 +1619,7 @@
     else if(act==='track-question')addQuestion(a.dataset.question||state.resultQuery);
     else if(act==='go-questions'){closeDialog();navigateTo('open-items');}
     else if(act==='review-update'||act==='review-keep')decideReview(a.dataset.review,act==='review-update'?'update':'keep-current');
+    else if(act==='confirm-review-update')executeReviewDecision(a.dataset.review,'update',false);
     else if(act==='ask-access-again'){closeDialog();navigateTo('overview');state.resultQuery='What determines customer feature access?';state.result={scenario:state.data.askScenarios.find(s=>s.id==='access')};renderOverview();}
     else if(act==='add-question')showDialog(`<span class="eyebrow">Known unknown</span><h2 id="dialogTitle">Add a question</h2><input id="manualQuestion" class="dialog-input" aria-label="New project question" placeholder="What does the project still need to establish?"/><div class="dialog-actions"><button class="btn primary" data-action="save-question">Track question</button><button class="btn secondary" data-action="close-dialog">Cancel</button></div>`);
     else if(act==='save-question'){const t=document.getElementById('manualQuestion')?.value;closeDialog();addQuestion(t);}

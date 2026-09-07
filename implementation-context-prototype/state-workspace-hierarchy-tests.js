@@ -36,12 +36,15 @@ check('Needs your attention appears before the Ask panel in document order',
   attentionIndex!==-1 && askPanelIndex!==-1 && attentionIndex<askPanelIndex,
   `attention@${attentionIndex} askPanel@${askPanelIndex}`);
 
-// Once an Ask result is on screen, attention stays hidden -- unchanged
-// behavior, just confirming the reorder didn't disturb it.
+// 2026-09-07 UX review batch: attention is now rendered natively and stays
+// authoritative regardless of the legacy state.result field -- the old
+// "hide attention while Ask has a result" patchwork depended on an inline
+// Ask flow that Ask State's drawer model has superseded (typed Ask no
+// longer populates state.result at all in a live environment).
 api.state.result={liveAsk:{headline:'An answer'}};
 api.state.resultQuery='some question';
 api.renderOverview();
-check('attention is hidden while an Ask result is showing', !stub.innerHTML.includes('workspace-attention'));
+check('attention keeps rendering even if the legacy state.result field is set', stub.innerHTML.includes('workspace-attention'));
 
 console.log(`\n${pass} passed, ${fail} failed`);
 if(fail) process.exit(1);

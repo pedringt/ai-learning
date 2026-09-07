@@ -276,9 +276,12 @@ def test_r85_integrity_and_polish_contracts():
     assert "Showing <strong>${notes.length}</strong> of ${totalCount} notes" in NOTES_VIEW_JS
     assert "Search history" in app and "historyResultCount" in app
     assert "Rules apply to future analysis. Existing Reviews are not reinterpreted automatically." in app
-    # Both moved to context-project-view.js 2026-09-06.
-    assert "current facts" in PROJECT_VIEW_JS
+    # project-maintained-facts moved to context-project-view.js 2026-09-06.
+    # The header's "N current facts" count and "Current project" eyebrow were
+    # deliberately removed 2026-09-07 (UX review batch, item 14): Current
+    # State reads as a reference document, not an operational dashboard stat.
     assert "project-maintained-facts" in PROJECT_VIEW_JS
+    assert "current facts" not in PROJECT_VIEW_JS
     assert "backendStatus" in app and "temporarily unavailable" in app
 
 
@@ -340,8 +343,10 @@ def test_r95_workspace_attention_has_a_fast_independent_load_path():
 
 def test_r19_project_summary_and_modal_actions_stay_compact():
     app = (FRONTEND / "context-app.js").read_text(encoding="utf-8")
-    # Both moved to context-project-view.js 2026-09-06.
-    assert 'class="project-fact-count"' in PROJECT_VIEW_JS
+    # current-direction-list moved to context-project-view.js 2026-09-06.
+    # project-fact-count was deliberately removed 2026-09-07 (UX review
+    # batch, item 14) along with the header's fact count.
+    assert 'class="project-fact-count"' not in PROJECT_VIEW_JS
     assert 'class="current-direction-list"' in PROJECT_VIEW_JS
     assert 'data-action="close-dialog">Done' not in app
     assert 'data-action="close-dialog">Done' not in PROJECT_VIEW_JS

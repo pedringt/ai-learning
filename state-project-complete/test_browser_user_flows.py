@@ -160,7 +160,12 @@ def test_follow_up_keeps_existing_artifact_and_uses_compact_working_state():
         browser.close(); pw.stop()
 
 
-def test_backend_review_choice_acknowledges_and_disappears_before_server_round_trip():
+def test_backend_review_choice_confirms_then_acknowledges_before_server_round_trip():
+    # 2026-09-07 UX review batch: a consequential Current State update now
+    # confirms before mutating anything ("Update Current State?"), rather
+    # than the old optimistic-update-then-explain flow. Only after
+    # confirming does the review disappear and the compact "Current State
+    # updated" receipt appear.
     pw, browser, page = _launch_page(hydration_ms=10)
     try:
         page.wait_for_timeout(40)
@@ -178,12 +183,13 @@ def test_backend_review_choice_acknowledges_and_disappears_before_server_round_t
         }""")
         page.locator('.sidebar-nav [data-view="open-items"]').click()
         page.locator('[data-review-card="r-browser"] [data-action="review-update"]').click()
+        page.get_by_text('Update Current State?', exact=True).wait_for(timeout=2000)
+        assert page.locator('[data-review-card="r-browser"]').count() == 1
+        page.locator('[data-action="confirm-review-update"]').click()
         page.wait_for_timeout(50)
         assert page.locator('[data-review-card="r-browser"]').count() == 0
-        assert page.get_by_text('Updating understanding…', exact=True).count() == 1
-        # Product copy is "Here’s what changed" with no trailing period; the old
-        # assertion kept a period the UI has never rendered.
-        page.get_by_text('Here’s what changed', exact=True).wait_for(timeout=2000)
+        assert page.get_by_text('Updating Current State…', exact=True).count() == 1
+        page.get_by_text('Current State updated', exact=True).wait_for(timeout=2000)
     finally:
         browser.close(); pw.stop()
 
@@ -270,7 +276,7 @@ def test_workspace_attention_does_not_wait_for_slow_resolved_reviews():
     pw, browser, page = _launch_page(hydration_ms=35, resolved_review_ms=650)
     try:
         page.wait_for_timeout(140)
-        assert page.get_by_text('Nothing needs action right now', exact=True).is_visible()
+        assert page.get_by_text("You're caught up", exact=True).is_visible()
         assert page.get_by_text('Checking what needs you', exact=True).count() == 0
     finally:
         browser.close(); pw.stop()
