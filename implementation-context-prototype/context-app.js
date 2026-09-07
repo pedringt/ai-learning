@@ -211,12 +211,12 @@
       return `<section class="workspace-attention is-clear"><div class="workspace-attention-head"><div><span class="eyebrow">Needs your attention</span><h3>You're caught up</h3><p>Nothing currently needs a decision and no questions are blocking progress.</p></div><button class="text-button" data-view="open-items">View Open Items →</button></div></section>`;
     }
     const rows=items.map(item=>`<button class="attention-item ${item.kind}" data-action="${item.kind==='review'?'open-specific-review':'go-open-question'}" ${item.kind==='review'?`data-review-id="${esc(item.id)}"`:`data-question-id="${esc(item.id)}"`}><span class="attention-item-copy"><span class="attention-kind">${esc(item.label)}</span><strong>${esc(item.title)}</strong><span>${esc(item.detail)}</span></span><span class="attention-arrow" aria-hidden="true">→</span></button>`).join('');
-    const more=Math.max(0,total-items.length);
-    return `<section class="workspace-attention"><div class="workspace-attention-head"><div><span class="eyebrow">Needs your attention</span><h3>${total===1?'1 item is waiting on you':`${total} items are waiting on you`}</h3><p class="attention-intro-text">Click an item below to open it in Open Items and make a decision.</p></div><button class="text-button" data-view="open-items">View all ${total} →</button></div><div class="attention-list">${rows}</div>${more?`<p class="attention-more-summary">Showing ${items.length} of ${total}</p>`:''}</section>`;
+    return `<section class="workspace-attention"><div class="workspace-attention-head"><div><span class="eyebrow">Needs your attention</span><h3>${total===1?'1 item is waiting on you':`${total} items are waiting on you`}</h3><p class="attention-intro-text">Click an item below to open it in Open Items and make a decision.</p></div><button class="text-button" data-view="open-items">View all ${total} →</button></div><div class="attention-list">${rows}</div></section>`;
   }
   // Answers "What just happened?" -- up to 3 meaningful recent decisions,
   // whether they changed Current State or deliberately kept it unchanged.
   // Not a second History feed: no filtering/search here, just a link out.
+  // Rows have no trailing arrow -- the whole row is already the click target.
   function recentUpdatesHtml(){
     const entries=(state.data.history||[]).slice().sort(sortDateDesc).slice(0,3);
     if(!entries.length) return '';
@@ -227,17 +227,22 @@
       const title=topic?.title||type;
       const subtitle=topic?`${type} · ${date}`:date;
       const linkAttrs=h.knowledgeId?`data-action="view-topic-history" data-knowledge-id="${esc(h.knowledgeId)}"`:'data-view="history"';
-      return `<button class="recent-update-row" ${linkAttrs}><span class="recent-update-copy"><strong>${esc(title)}</strong><span>${esc(subtitle)}</span></span><span class="recent-update-arrow" aria-hidden="true">→</span></button>`;
+      return `<button class="recent-update-row" ${linkAttrs}><strong>${esc(title)}</strong><span>${esc(subtitle)}</span></button>`;
     }).join('');
     return `<section class="workspace-recent"><div class="workspace-recent-head"><span class="eyebrow">Recently updated</span><button class="text-button" data-view="history">View all History →</button></div><div class="recent-update-list">${rows}</div></section>`;
   }
   // Answers "Where does the project stand?" -- one quiet link-out card, not
-  // a dashboard of stat cards.
+  // a dashboard of stat cards. Sized to its own content, not forced to match
+  // Recently Updated's height.
   function projectStatusCardHtml(){
     const last=(state.data.history||[]).slice().sort(sortDateDesc)[0];
     const lastUpdated=last?esc(last.date||formatBackendDate(last.changed_at)):null;
     const openCount=openQuestions().length;
-    return `<section class="workspace-status-card"><span class="eyebrow">Project status</span><div class="workspace-status-body"><div class="workspace-status-item"><strong>Current State</strong><span>${lastUpdated?`Updated ${lastUpdated}`:'The maintained view of what the project currently treats as true.'}</span><button class="text-button" data-view="project-overview">Browse →</button></div><div class="workspace-status-item"><strong>${openCount} open question${openCount===1?'':'s'}</strong><button class="text-button" data-view="open-items">View Open Items →</button></div></div></section>`;
+    const openLabel=openCount===0?'✓ No open questions':`${openCount} open question${openCount===1?'':'s'}`;
+    return `<section class="workspace-status-card"><span class="eyebrow">Project status</span><div class="workspace-status-body">
+      <div class="workspace-status-item"><strong>Current State</strong><div class="workspace-status-row"><span>${lastUpdated?`Updated ${lastUpdated}`:'What the project currently treats as true.'}</span><button class="text-button" data-view="project-overview">Browse →</button></div></div>
+      <div class="workspace-status-item"><div class="workspace-status-row"><span class="${openCount===0?'is-clear':''}">${openLabel}</span><button class="text-button" data-view="open-items">View Open Items →</button></div></div>
+    </div></section>`;
   }
   function renderWorkspaceAttentionOnly(){
     if(state.view!=='overview' || state.result) return false;
