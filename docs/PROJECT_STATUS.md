@@ -86,7 +86,7 @@ Deliberately still out of scope: real Slack token revocation on Disconnect, and 
 
 ### Next up: `staging` -> `main` promotion is the pending decision
 
-`staging` is 54 commits ahead of `main`, CI green throughout, everything above individually verified (several live, not just via the deterministic suites). **Ask Paige whether to promote now or hold for more work** -- do not promote without her explicit authorization. If she says yes: this doc's "Current production state" intro needs a fresh rewrite afterward (same rule as always -- any push to `main` gets a same-pass review of this file), and double-check the production-only environment config (production API URL) survives the promotion, per the working rule below.
+`staging` is 62 commits ahead of `main`, CI green throughout, everything above individually verified (several live, not just via the deterministic suites). **Ask Paige whether to promote now or hold for more work** -- do not promote without her explicit authorization. If she says yes: this doc's "Current production state" intro needs a fresh rewrite afterward (same rule as always -- any push to `main` gets a same-pass review of this file), and double-check the production-only environment config (production API URL) survives the promotion, per the working rule below.
 
 ### Smaller tech debt still open (not urgent, no live QA evidence forcing it)
 
