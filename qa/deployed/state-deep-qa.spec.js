@@ -10,7 +10,7 @@
 //
 // See qa/deployed/README.md for how to run this manually and what it needs.
 const { test, expect } = require('@playwright/test');
-const { attachDiagnostics, resetDemoData, backendJson, gotoWithBypass } = require('./helpers');
+const { attachDiagnostics, resetDemoData, backendJson, backendPost, gotoWithBypass } = require('./helpers');
 
 const STATE_URL = '/implementation-context-prototype/index.html';
 
@@ -253,5 +253,28 @@ test.describe('Review + Question resolution (deterministic demo data)', () => {
     const afterAccess = (after.items || after).find(s => s.id === 'k-access');
     expect(afterAccess?.statement).toEqual(beforeAccess?.statement);
     diag.assertClean(expect);
+  });
+});
+
+// Real-model regression case, run against the actual deployed provider (this
+// is the whole point -- staging has live provider credentials; local dev/CI
+// does not, so the equivalent local suite,
+// state-project-complete/test_evidence_intake_consequentiality.py, can only
+// run this against a real model when someone supplies their own
+// ANTHROPIC_API_KEY). Found via a real miss: this exact Note (typo verbatim,
+// as submitted through the UI) was sent as Evidence against Northstar's seed
+// Current State -- which explicitly carves billing actions out of the
+// pilot's first implementation via k-sensitive -- and process_evidence()
+// returned zero review recommendations.
+test.describe('Evidence intake consequentiality (real model)', () => {
+  test.beforeAll(async ({ request }) => { await resetDemoData(request); });
+  test.afterAll(async ({ request }) => { await resetDemoData(request); });
+
+  test('VP billing note reaches Review, not a silent no_review', async ({ request }) => {
+    const result = await backendPost(request, '/api/evidence', {
+      content: 'VP says we can move forward on auto drafting billing quesitons',
+    });
+    expect(Array.isArray(result.reviews)).toBeTruthy();
+    expect(result.reviews.length).toBeGreaterThan(0);
   });
 });

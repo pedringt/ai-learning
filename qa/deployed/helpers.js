@@ -110,4 +110,27 @@ async function backendJson(request, path) {
   return res.json();
 }
 
-module.exports = { attachDiagnostics, resetDemoData, backendJson, gotoWithBypass, BACKEND_URL, REQUIRED_BACKEND_HOST };
+/**
+ * POSTs JSON to the backend. Same host guard as resetDemoData -- this can
+ * create real records (e.g. Evidence, Reviews) on whatever host it targets,
+ * so it refuses to run against anything but the known staging backend.
+ */
+async function backendPost(request, path, data) {
+  let host;
+  try {
+    host = new URL(BACKEND_URL).host;
+  } catch {
+    throw new Error(`STATE_BACKEND_URL is not a valid URL: ${BACKEND_URL}`);
+  }
+  if (host !== REQUIRED_BACKEND_HOST) {
+    throw new Error(
+      `Refusing to POST ${path}: target host "${host}" is not the known staging ` +
+      `backend "${REQUIRED_BACKEND_HOST}". Aborting rather than mutating an unexpected environment.`
+    );
+  }
+  const res = await request.post(`${BACKEND_URL}${path}`, { data });
+  if (!res.ok()) throw new Error(`POST ${path} failed: HTTP ${res.status()} ${await res.text()}`);
+  return res.json();
+}
+
+module.exports = { attachDiagnostics, resetDemoData, backendJson, backendPost, gotoWithBypass, BACKEND_URL, REQUIRED_BACKEND_HOST };
