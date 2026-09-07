@@ -141,14 +141,17 @@ The deterministic fixture in `context-data.js` supports local/no-backend paths a
 ```bash
 # Python — deterministic suite, no flags needed
 cd state-project-complete && python -m pytest -q
-# 340 passed, 3 skipped, 7 subtests passed
+# 339 passed, 44 skipped, 7 subtests passed
 
-# JavaScript — deterministic Ask, Notes and provenance behavior
+# JavaScript — deterministic Ask, Notes, provenance, Workspace and analytics behavior
 cd implementation-context-prototype
 node state-ask-behavior-tests.js            # 81 passed, 0 failed
 node state-ask-followup-tests.js            # 18 passed, 0 failed
 node state-ask-loading-visibility-tests.js  # 5 passed, 0 failed
 node state-provenance-behavior-tests.js
+# ...and 6 more state-*-tests.js files. The full list CI actually runs lives
+# in .github/workflows/tests.yml's `javascript` job — that file is the
+# source of truth, not this one, so it can't drift out of date here.
 ```
 
 Tests that require real provider API keys skip themselves when the keys are
