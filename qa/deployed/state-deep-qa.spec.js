@@ -50,8 +50,8 @@ test.describe('Workspace', () => {
   });
 });
 
-test.describe('Knowledge', () => {
-  test('Knowledge view renders as maintained project context', async ({ page }) => {
+test.describe('Current State', () => {
+  test('Current State view renders as maintained project context', async ({ page }) => {
     const diag = attachDiagnostics(page);
     await gotoWithBypass(page, STATE_URL);
     await expect(page.locator('#appLoadStatus')).toBeHidden({ timeout: 30_000 });

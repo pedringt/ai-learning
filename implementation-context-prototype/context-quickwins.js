@@ -51,14 +51,18 @@
     if(!existingOrientation && askPanel){
       const box=document.createElement('div');
       box.className='orientation-box';
-      box.innerHTML='<strong>How Knowledge stays current:</strong> New information is captured as Evidence. State proposes what it may change in Current State, and you decide what becomes part of the accepted understanding shown in Knowledge.';
-      overview.insertBefore(box,askPanel);
+      box.innerHTML='<strong>How Current State stays maintained:</strong> New information is captured as Evidence. State proposes what it may change, and you decide what becomes part of Current State.';
+      // Anchored to the heading rather than askPanel so it renders at the
+      // top of Workspace, above Needs your attention -- an orienting
+      // explainer belongs before the action items it explains.
+      const heading=overview.querySelector('.overview-heading');
+      overview.insertBefore(box,heading?heading.nextElementSibling:askPanel);
     }
 
     const title=askPanel?.querySelector('label[for="askInput"]');
     if(title) title.textContent='Search decisions • Ask follow-ups • Prep for meetings';
     const description=title?.closest('.ask-title-row')?.querySelector('p');
-    if(description) description.textContent="Summarize Knowledge, identify what's still pending, or create a meeting brief.";
+    if(description) description.textContent="Summarize Current State, identify what's still pending, or create a meeting brief.";
     const input=askPanel?.querySelector('#askInput');
     if(input && !hasResult) input.placeholder='What do you need right now?';
   }
@@ -77,21 +81,21 @@
     if(overlay.hidden) orientationReturnFocus=document.activeElement instanceof HTMLElement ? document.activeElement : null;
     body.innerHTML=`<span class="eyebrow">How this works</span>
       <h2 id="dialogTitle">State keeps the project’s working understanding current.</h2>
-      <p>State separates accepted Current State from the evidence and questions that still need judgment. Knowledge is the readable view of that accepted Current State.</p>
+      <p>State separates accepted Current State, what the project currently treats as true, from the evidence and questions that still need judgment.</p>
       <ul class="demo-orientation-list">
         <li><strong>1. Information comes in</strong><span>Notes and messages from approved Slack channels are captured as Evidence. Other project information can be added manually as Notes.</span></li>
         <li><strong>2. State interprets what changed</strong><span>AI compares new Evidence with Current State and identifies possible changes or unresolved questions.</span></li>
         <li><strong>3. You decide what becomes current</strong><span>Important changes go to Review. AI can propose a change, but it cannot update Current State on its own.</span></li>
-        <li><strong>4. Current State stays maintained</strong><span>Accepted changes update Current State, which Knowledge presents as the readable project view. Previous decisions remain visible in History.</span></li>
+        <li><strong>4. Current State stays maintained</strong><span>Accepted changes update Current State, the readable project view of what's currently true. Previous decisions remain visible in History.</span></li>
         <li><strong>5. Ask works from that maintained context</strong><span>Use Ask to catch up, understand decisions, find unresolved questions, or prepare for meetings.</span></li>
       </ul>
       <p class="demo-flow-principle">AI interprets → software enforces → people decide</p>
       <div class="demo-concepts">
-        <div class="demo-concept"><strong>Knowledge</strong><span>The readable view of Current State: what the team currently treats as true.</span></div>
+        <div class="demo-concept"><strong>Current State</strong><span>What the project currently treats as true, presented as a readable view.</span></div>
         <div class="demo-concept"><strong>Evidence</strong><span>Information State keeps without automatically treating it as truth.</span></div>
         <div class="demo-concept"><strong>Open Items</strong><span>Changes and questions that still need attention.</span></div>
       </div>
-      <div class="demo-start"><span class="meta-label">Good places to start</span><button class="demo-start-action" data-action="demo-start-ask"><strong>Ask about Northstar</strong><span>Put a useful project question in Ask →</span></button><button class="demo-start-action" data-action="demo-start-note"><strong>Add a sample note</strong><span>Try new project information and see how Review handles it →</span></button><button class="demo-start-action" data-action="demo-start-project"><strong>Explore Knowledge</strong><span>Read the maintained view of accepted Current State →</span></button></div>
+      <div class="demo-start"><span class="meta-label">Good places to start</span><button class="demo-start-action" data-action="demo-start-ask"><strong>Ask about Northstar</strong><span>Put a useful project question in Ask →</span></button><button class="demo-start-action" data-action="demo-start-note"><strong>Add a sample note</strong><span>Try new project information and see how Review handles it →</span></button><button class="demo-start-action" data-action="demo-start-project"><strong>Explore Current State</strong><span>Read the maintained view of what the project currently treats as true →</span></button></div>
       <div class="demo-reset-help"><div><strong>Want to start over?</strong><span>Restore the curated Northstar starting scenario. You can also reset Northstar from Settings.</span></div><button class="text-button demo-reset-link" data-action="confirm-demo-reset">Reset example data →</button></div>
       <div class="dialog-actions demo-help-actions"><button class="btn primary" data-action="close-dialog">Got it</button></div>`;
     overlay.hidden=false;
