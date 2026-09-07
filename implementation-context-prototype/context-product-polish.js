@@ -32,7 +32,6 @@
     running: false,
     requestId: 0,
     copyContextData: null,
-    inlineObserved: null,
   };
 
   function addStyles() {
@@ -40,18 +39,9 @@
     const style = document.createElement('style');
     style.id = 'state-product-polish-styles';
     style.textContent = `
-      .overview .workspace-attention + .ask-panel{margin-top:36px!important;padding-top:30px!important;border-top:1px solid var(--line)!important}
-      .overview .orientation-box + .workspace-attention{margin-top:22px!important}
-      .ask-panel.review-batch-ask{min-width:0}
-      .ask-state-inline-card{min-width:0}
-      .ask-state-inline-head{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin-bottom:12px}
-      .ask-state-inline-head h3{margin:0 0 4px;font-size:18px}
-      .ask-state-inline-head p{margin:0;color:var(--muted);font-size:13px;line-height:1.45}
-      .ask-readonly-pill{flex:0 0 auto;border:1px solid var(--line);border-radius:999px;padding:4px 8px;font-size:11px;font-weight:800;color:var(--muted);background:var(--surface2)}
-      .ask-state-inline-form,.ask-state-drawer-form{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:8px;min-width:0;align-items:center}
-      .ask-clear-btn{font-size:20px;color:var(--muted);padding:0 4px}
-      .ask-state-inline-form input,.ask-state-drawer-form input{min-width:0;width:100%;box-sizing:border-box;border:1px solid #cfc9bd;background:#fff;border-radius:9px;padding:11px 12px;color:var(--ink);outline:none}
-      .ask-state-inline-form input:focus,.ask-state-drawer-form input:focus{border-color:var(--accent);box-shadow:0 0 0 2px color-mix(in srgb,var(--accent) 16%,transparent)}
+      .ask-state-drawer-form{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;min-width:0;align-items:center}
+      .ask-state-drawer-form input{min-width:0;width:100%;box-sizing:border-box;border:1px solid #cfc9bd;background:#fff;border-radius:9px;padding:11px 12px;color:var(--ink);outline:none}
+      .ask-state-drawer-form input:focus{border-color:var(--accent);box-shadow:0 0 0 2px color-mix(in srgb,var(--accent) 16%,transparent)}
       .ask-state-starters{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;min-width:0;padding-right:2px}
       .ask-state-starters button{max-width:100%;white-space:normal;text-align:left;border:1px solid var(--line);border-radius:999px;background:var(--surface);padding:7px 10px;font:inherit;font-size:12px;cursor:pointer;color:var(--ink)}
       .ask-state-starters button:hover{background:var(--surface2)}
@@ -88,7 +78,7 @@
       .settings-page .settings-how-state-first{order:-1}
       .notes-page .notes-product-purpose{margin-top:6px}
       @media(max-width:760px){
-        .ask-state-launcher{right:14px;bottom:14px}.ask-state-drawer{top:0;height:100dvh;width:100vw;border-left:0}.ask-state-inline-form,.ask-state-drawer-form{grid-template-columns:1fr}.ask-state-inline-head{align-items:flex-start;flex-direction:column}.project-head-copy-context{margin-left:0}
+        .ask-state-launcher{right:14px;bottom:14px}.ask-state-drawer{top:0;height:100dvh;width:100vw;border-left:0}.ask-state-drawer-form{grid-template-columns:1fr}.project-head-copy-context{margin-left:0}
       }
     `;
     document.head.appendChild(style);
@@ -190,27 +180,12 @@
       const launcher=document.createElement('button');launcher.id='askStateLauncher';launcher.className='ask-state-launcher';launcher.type='button';launcher.dataset.reviewBatchAction='open-ask';launcher.textContent='Ask State';document.body.appendChild(launcher);
     }
     if(!document.getElementById('askStateDrawer')){
-      const drawer=document.createElement('aside');drawer.id='askStateDrawer';drawer.className='ask-state-drawer';drawer.hidden=true;drawer.setAttribute('aria-label','Ask State');drawer.innerHTML=`<div class="ask-state-drawer-head"><div><h2>Ask State</h2><p>Read-only. Asking never changes the project record.</p></div><button class="ask-state-drawer-close" type="button" aria-label="Close Ask State" data-review-batch-action="close-ask">×</button></div><div class="ask-state-drawer-controls"><form class="ask-state-drawer-form" data-review-batch-form="ask"><input id="askStateDrawerInput" autocomplete="off" aria-label="Ask State" placeholder="What do you want to know?"><button class="icon-btn ask-clear-btn" type="button" aria-label="Clear question" data-review-batch-action="clear-ask">×</button><button class="btn primary" type="submit">Ask</button></form><p class="ask-state-drawer-help">Edit the question and run it again to refine the answer. State does not carry a hidden conversation forward.</p><div class="ask-state-starters">${starters.map(([label,prompt])=>`<button type="button" data-review-batch-prompt="${esc(prompt)}">${esc(label)}</button>`).join('')}</div></div><div class="ask-state-drawer-result" id="askStateDrawerResult" aria-live="polite"></div>`;document.body.appendChild(drawer);
+      const drawer=document.createElement('aside');drawer.id='askStateDrawer';drawer.className='ask-state-drawer';drawer.hidden=true;drawer.setAttribute('aria-label','Ask State');drawer.innerHTML=`<div class="ask-state-drawer-head"><div><h2>Ask State</h2><p>Read-only. Asking never changes the project record.</p></div><button class="ask-state-drawer-close" type="button" aria-label="Close Ask State" data-review-batch-action="close-ask">×</button></div><div class="ask-state-drawer-controls"><form class="ask-state-drawer-form" data-review-batch-form="ask"><input id="askStateDrawerInput" autocomplete="off" aria-label="Ask State" placeholder="What do you want to know?"><button class="btn primary" type="submit">Ask</button></form><p class="ask-state-drawer-help">Edit the question and run it again to refine the answer. State does not carry a hidden conversation forward.</p><div class="ask-state-starters">${starters.map(([label,prompt])=>`<button type="button" data-review-batch-prompt="${esc(prompt)}">${esc(label)}</button>`).join('')}</div></div><div class="ask-state-drawer-result" id="askStateDrawerResult" aria-live="polite"></div>`;document.body.appendChild(drawer);
     }
     syncAskInputs();
   }
-  function inlineAskMarkup(){
-    return `<div class="ask-state-inline-card"><div class="ask-state-inline-head"><div><h3>Ask State</h3><p>Find, summarize, investigate, or prepare from the project record.</p></div><span class="ask-readonly-pill">Read only</span></div><form class="ask-state-inline-form" data-review-batch-form="ask"><input id="askStateInlineInput" autocomplete="off" aria-label="Ask State" placeholder="What do you want to know?" value="${esc(ui.query)}"><button class="icon-btn ask-clear-btn" type="button" aria-label="Clear question" data-review-batch-action="clear-ask">×</button><button class="btn primary" type="submit">Ask</button></form><div class="ask-state-starters">${starters.map(([label,prompt])=>`<button type="button" data-review-batch-prompt="${esc(prompt)}">${esc(label)}</button>`).join('')}</div></div>`;
-  }
-  function ensureWorkspaceAsk(){
-    const panel=document.querySelector('.overview.pristine .ask-panel'); if(!panel) return;
-    if(panel.dataset.reviewBatchAsk!=='true'){
-      panel.dataset.reviewBatchAsk='true';panel.classList.add('review-batch-ask');panel.innerHTML=inlineAskMarkup();
-    } else {
-      const input=panel.querySelector('#askStateInlineInput');if(input && input.value!==ui.query && document.activeElement!==input)input.value=ui.query;
-    }
-    const add=document.querySelector('.overview-add[data-action="add-info"]'); if(add && add.textContent.trim()!=='+ Add Evidence')add.textContent='+ Add Evidence';
-    if(ui.inlineObserved!==panel){ui.inlineObserved=panel;}
-    syncLauncherVisibility();
-  }
   function syncAskInputs(){
     const drawer=document.getElementById('askStateDrawerInput');if(drawer && drawer.value!==ui.query && document.activeElement!==drawer)drawer.value=ui.query;
-    const inline=document.getElementById('askStateInlineInput');if(inline && inline.value!==ui.query && document.activeElement!==inline)inline.value=ui.query;
   }
   function openAskDrawer({focus=true}={}){
     ensureAskShell();ui.drawerOpen=true;const drawer=document.getElementById('askStateDrawer');if(drawer)drawer.hidden=false;document.body.classList.add('ask-state-drawer-open');syncAskInputs();syncLauncherVisibility();if(focus)requestAnimationFrame(()=>document.getElementById('askStateDrawerInput')?.focus());checkAnswerFreshness();
@@ -218,9 +193,7 @@
   function closeAskDrawer(){ui.drawerOpen=false;document.getElementById('askStateDrawer')?.setAttribute('hidden','');document.body.classList.remove('ask-state-drawer-open');syncLauncherVisibility();}
   function syncLauncherVisibility(){
     const launcher=document.getElementById('askStateLauncher');if(!launcher)return;
-    let hide=ui.drawerOpen;
-    const card=document.querySelector('.ask-state-inline-card');
-    if(!hide && card){const r=card.getBoundingClientRect();hide=r.bottom>0&&r.top<window.innerHeight;}
+    const hide=ui.drawerOpen;
     launcher.classList.toggle('is-hidden',hide);
   }
 
@@ -317,7 +290,7 @@
   // rather than layered on top of the native fix.
 
   function enhanceAll(){
-    addStyles();ensureAskShell();ensureWorkspaceAsk();syncLauncherVisibility();
+    addStyles();ensureAskShell();syncLauncherVisibility();
   }
 
   document.addEventListener('submit',event=>{
@@ -339,7 +312,6 @@
     else if(type==='copy-ask-answer'&&ui.payload)writeClipboard(portableAskText(ui.payload,ui.resolvedContext)).then(()=>showToast('Ask answer copied with State labels.'));
     else if(type==='refresh-ask')runAsk(ui.query);
     else if(type==='open-add-evidence'){closeAskDrawer();document.querySelector('[data-action="add-info"]')?.click();}
-    else if(type==='clear-ask'){ui.query='';ui.payload=null;ui.resolvedContext=[];ui.answerStateSignature=null;ui.stale=false;syncAskInputs();renderDrawerResult('');}
   },true);
 
   document.addEventListener('click',event=>{

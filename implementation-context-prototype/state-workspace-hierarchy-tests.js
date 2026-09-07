@@ -1,9 +1,15 @@
-// Regression coverage for a P1 finding from live staging QA (2026-09-07):
-// Workspace gave Ask the most prominent placement, with the decisions
-// actually waiting on the user (Needs your attention) appearing below it --
-// making State read as an AI question box rather than a project-state
-// command center. renderOverview() must put attention above Ask on the
-// fresh landing view.
+// Regression coverage for Workspace's layout hierarchy.
+//
+// P1 finding (2026-09-07 live staging QA): Workspace gave Ask the most
+// prominent placement, with the decisions actually waiting on the user
+// (Needs your attention) appearing below it -- making State read as an AI
+// question box rather than a project-state command center.
+//
+// 2026-09-07 UX review batch: Ask's inline Workspace instance was removed
+// entirely in favor of the global read-only Ask State drawer/launcher
+// (context-product-polish.js) -- Workspace itself no longer renders Ask at
+// all. Needs your attention stays full-width at the top; Recently Updated
+// and the Project Status card sit below it in a two-column row.
 const fs=require('fs'), vm=require('vm'), path=require('path');
 const dir=__dirname;
 
@@ -23,24 +29,24 @@ const api=context.window.STATE_ASK_TEST_API;
 let pass=0,fail=0;
 function check(name,ok,detail=''){if(ok){pass++;console.log('✓',name)}else{fail++;console.error('✗',name,detail)}}
 
-// Fresh Workspace landing (no active Ask result): attention must render
-// before the Ask panel in document order.
+// Fresh Workspace landing: attention must render before the below-grid
+// (Recently Updated + Project Status) in document order, and Ask must not
+// render inline in Workspace at all.
 api.state.result=null;
 api.renderOverview();
 const html=stub.innerHTML;
 const attentionIndex=html.indexOf('workspace-attention');
-const askPanelIndex=html.indexOf('class="ask-panel');
+const gridIndex=html.indexOf('workspace-below-grid');
 check('workspace-attention renders on the landing view', attentionIndex!==-1, html.slice(0,120));
-check('ask-panel renders on the landing view', askPanelIndex!==-1);
-check('Needs your attention appears before the Ask panel in document order',
-  attentionIndex!==-1 && askPanelIndex!==-1 && attentionIndex<askPanelIndex,
-  `attention@${attentionIndex} askPanel@${askPanelIndex}`);
+check('workspace-below-grid (Recently Updated + Project Status) renders on the landing view', gridIndex!==-1);
+check('Needs your attention appears before the below-grid in document order',
+  attentionIndex!==-1 && gridIndex!==-1 && attentionIndex<gridIndex,
+  `attention@${attentionIndex} grid@${gridIndex}`);
+check('Workspace no longer renders an inline ask-panel', !html.includes('class="ask-panel'));
 
-// 2026-09-07 UX review batch: attention is now rendered natively and stays
-// authoritative regardless of the legacy state.result field -- the old
-// "hide attention while Ask has a result" patchwork depended on an inline
-// Ask flow that Ask State's drawer model has superseded (typed Ask no
-// longer populates state.result at all in a live environment).
+// Attention is rendered natively and stays authoritative regardless of the
+// legacy state.result field -- the old "hide attention while Ask has a
+// result" patchwork depended on an inline Ask flow that no longer exists.
 api.state.result={liveAsk:{headline:'An answer'}};
 api.state.resultQuery='some question';
 api.renderOverview();
