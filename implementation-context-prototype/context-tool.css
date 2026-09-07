@@ -53,7 +53,7 @@ body{background:#f4f3f6}.topbar{position:relative!important}.software-shell{max-
 .unboxed-ask .answer-empty{max-width:600px}
 .review-banner{max-width:1040px;display:flex;align-items:center;justify-content:space-between;gap:20px;margin:0 0 22px;padding:10px 12px;border:1px solid color-mix(in srgb,var(--accent) 22%,var(--line));border-left:3px solid var(--accent);background:var(--accent-soft);border-radius:7px}
 .review-banner>div{display:flex;align-items:center;gap:9px}.review-banner span{font-size:11px;color:var(--muted)}.review-banner .text-button{font-size:11px}.banner-close{border:0;background:transparent;color:var(--muted);font-size:18px;line-height:1;cursor:pointer;padding:2px 4px}
-.result-action{margin:8px 0 2px}.result-note-list{margin-top:14px;border-top:1px solid var(--line)}
+.result-action{margin:8px 0 2px}.result-note-list{margin-top:14px;border-top:1px solid var(--line)}.ask-example-list{display:flex;flex-direction:column;gap:8px;margin:16px 0}.ask-example-list .prompt{width:100%}
 /* Review, Questions, and Notes share one collection/list grammar. */
 .collection-page{max-width:1040px!important}.collection-page .page-head{min-height:68px}.collection-page .question-cards,.collection-page .note-results{border-top:1px solid var(--line)}
 .collection-page .question-card,.collection-page .simple-note,.collection-page .review-card{margin:0!important;border:0!important;border-bottom:1px solid var(--line)!important;border-radius:0!important;background:transparent!important;padding:16px 6px!important;max-width:none!important}

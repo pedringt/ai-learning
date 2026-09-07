@@ -294,7 +294,7 @@ def test_demo_help_start_actions_are_clickable_and_reset_is_discoverable():
     try:
         page.locator('[data-action="show-demo-help"]').click()
         assert page.get_by_text('Good places to start', exact=True).is_visible()
-        assert page.get_by_text('Reset Northstar from Project Settings', exact=False).is_visible()
+        assert page.get_by_text('Reset Northstar from Settings', exact=False).is_visible()
         page.locator('[data-action="demo-start-ask"]').click()
         box = page.locator('#askInput')
         assert box.input_value() == 'What should I know about the Northstar pilot?'
