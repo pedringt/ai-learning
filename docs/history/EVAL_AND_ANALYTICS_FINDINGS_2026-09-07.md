@@ -262,7 +262,45 @@ corpus the doc asked for, which this session didn't have time to build.
 **Review-burden measurement (Phase 4) now has a first real number**
 (86% recall / 100% precision on this 33-scenario set), but it's one run
 against one model, on a dataset skewed toward the categories this session
-had time to write. Treat it as a first signal, not a final grade.
+had time to write. Treat it as a first signal, not a final grade -- and
+see the nondeterminism finding immediately below, which is a reason on its
+own not to over-read a single run's precision/recall.
+
+## A fifth finding: the model's judgment is not stable run-to-run
+
+Running the full suite a second time (with `pytest`'s default parametrized
+per-scenario tests, real key present) surfaced two failures the first
+`eval.run_eval` run hadn't: `clear_decision_budget` (already known -- the
+no-anchor budget miss above) and, new, `state_at_risk_escalation_path`.
+Re-ran that one scenario **three more times in isolation, identical input
+every time**: pass, fail, fail. Then re-ran `authority_statement_refunds`
+(the VP-billing case) three more times: pass, pass, pass, after having
+failed once in the original 33-scenario batch run.
+
+**This means single-run precision/recall numbers have real, unreported
+variance.** A borderline scenario can flip between must-review and
+no-review on identical input with nothing else changed. The 86% recall
+figure above is one sample from a distribution, not a fixed measurement --
+a materially different (though probably still imperfect) number is
+plausible on a re-run. For Phase 4 to produce a trustworthy number, each
+scenario likely needs several trials (e.g. 3-5) with recall computed
+against majority vote or reported as a range, not a single pass/fail.
+This wasn't attempted this session (cost/time) but is now a known
+prerequisite for treating any single precision/recall number as
+decision-grade evidence, not just a first signal.
+
+**A genuinely separate, unrelated bug found and fixed while investigating
+this:** `test_live_providers.py`'s two live-pipeline tests
+(`test_live_anthropic_full_pipeline` / `test_live_openai_full_pipeline`)
+referenced `result.proposal_ids`, an attribute that doesn't exist on
+`ProcessResult` (only `review_ids` does) -- a pure `AttributeError` in the
+test's own print statement, not a pipeline failure (the pipeline itself
+succeeded both times; `Status: succeeded`, a real Review was returned).
+This test suite apparently had never been run against a working key
+before this session, so nothing had caught it. Fixed by removing the two
+stale print lines; re-verified green (`test_live_anthropic_full_pipeline`
+now passes; the OpenAI-only tests skip cleanly, as expected without an
+`OPENAI_API_KEY`).
 
 ## What this does and doesn't tell us yet
 
@@ -341,6 +379,11 @@ enough evidence to reason about instead of guessing:
    and new-fact-no-anchor cases, since those are exactly where misses
    happened) and, for Phase 6, the genuinely messy multi-topic corpus the
    doc originally asked for.
+5. **Multi-trial measurement** -- given the confirmed run-to-run
+   nondeterminism on borderline scenarios, any precision/recall number
+   meant to inform a real decision should come from several trials per
+   scenario (majority vote or a reported range), not a single pass. This
+   session's 86% recall is a first signal, explicitly not that.
 
 Phase 7 (which of these, if any, become actual product changes) stays
 explicitly Paige's call -- not because of a lack of evidence, but because
