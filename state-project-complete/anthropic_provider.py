@@ -52,14 +52,24 @@ class AnthropicProvider:
         self.model_identifier = model_identifier or os.getenv("CLAUDE_MODEL", "claude-haiku-4-5-20251001")
         self.max_tokens = int(os.getenv("CLAUDE_MAX_TOKENS", "1200"))
         self.timeout_seconds = float(os.getenv("CLAUDE_TIMEOUT_SECONDS", "30"))
-        # Consequentiality judgment is a decision with real product consequences
-        # (does a human get asked to review this?), not creative generation --
-        # it should be as repeatable as the API allows given identical input.
-        # Confirmed via eval/scaling_experiment.py and repeated single-scenario
-        # reruns (2026-09-07) that the previously unset (API-default) temperature
-        # produced real run-to-run flips on borderline evidence with nothing else
-        # changed. Overridable via CLAUDE_TEMPERATURE for experimentation.
-        self.temperature = float(os.getenv("CLAUDE_TEMPERATURE", "0"))
+        # A temperature=0 override was added and stress-tested here 2026-09-07
+        # (see eval/scaling_experiment.py and repeated single-scenario reruns,
+        # which confirmed the previously unset, API-default temperature produced
+        # real run-to-run flips on borderline evidence with nothing else changed)
+        # -- then reverted the same day after live staging testing found it broke
+        # every evidence submission: the anthropic package version actually
+        # pinned in requirements.txt (1.3.0) has no `temperature` parameter on
+        # Messages.create() at all when combined with output_config's structured
+        # JSON-schema output -- confirmed by installing that exact pinned
+        # version and inspecting its real call signature, not assumed. The
+        # local dev environment had a different (unpinned) anthropic version
+        # installed, which is why this passed extensive local testing before
+        # shipping and only broke once exercised against the actual deployed
+        # dependency. Determinism-via-temperature is real, evidence-backed
+        # product value (see docs/history/EVAL_AND_ANALYTICS_FINDINGS_
+        # 2026-09-07.md) that a future SDK upgrade could re-enable -- it is not
+        # abandoned because the idea was wrong, only because this specific
+        # mechanism doesn't exist in the pinned SDK version today.
         self.api_key = api_key
         
         # Lazy import to avoid requiring anthropic library unless actually used
@@ -122,7 +132,6 @@ class AnthropicProvider:
         message = self.client.messages.create(
             model=self.model_identifier,
             max_tokens=self.max_tokens,
-            temperature=self.temperature,
             output_config={
                 "format": {
                     "type": "json_schema",
@@ -205,7 +214,6 @@ class AnthropicProvider:
         message = self.client.messages.create(
             model=self.model_identifier,
             max_tokens=300,
-            temperature=self.temperature,
             output_config={"format": {"type": "json_schema", "schema": _RELEVANCE_SCHEMA}},
             messages=[{"role": "user", "content": prompt}],
         )
