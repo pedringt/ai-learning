@@ -163,11 +163,17 @@
     page.dataset.awaitingReviewChecked='true';
     try{
       const payload=await window.STATE_API.getReviews('open');
-      if(!page.isConnected)return;
       const reviews=payload?.items||payload||[];
       const questionIds=new Set(reviews.flatMap(review=>review.resolves_question_ids||[]).filter(Boolean).map(String));
       if(!questionIds.size)return;
-      page.querySelectorAll('.open-question-row[data-question-id]').forEach(row=>{
+      // Open Items re-renders progressively as other backend resources
+      // finish hydrating, which can replace `page` with a new DOM node while
+      // the request above was in flight. Query the live page again rather
+      // than bailing on the now-possibly-detached original reference --
+      // the fetched question IDs are still correct either way.
+      const currentPage=document.querySelector('.open-items-page');
+      if(!currentPage)return;
+      currentPage.querySelectorAll('.open-question-row[data-question-id]').forEach(row=>{
         if(!questionIds.has(String(row.dataset.questionId)))return;
         row.classList.add('is-awaiting-review');
         const label=row.querySelector('.open-item-label');
