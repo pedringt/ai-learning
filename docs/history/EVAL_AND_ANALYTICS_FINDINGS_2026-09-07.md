@@ -1,12 +1,14 @@
 # Analytics instrumentation + consequentiality eval dataset -- findings (2026-09-07)
 
 Scope for this session, per the "Next Marching Orders" doc: Phase 1
-(analytics instrumentation) and Phase 2 (evaluation dataset), including a
-first real run once Paige supplied an API key mid-session -- see "Real
-results" below for the two concrete misses that turned up. Phases 3, 5,
-and 6 (sequence tests, source-gap experiment, raw-vs-State-context
-comparison) were **not** attempted this session -- see "What's still open"
-below.
+(analytics instrumentation) and Phases 2-6 of the evaluation work
+(consequentiality dataset, real results, sequence tests, source-gap audit,
+raw-vs-State comparison), once Paige supplied a real API key mid-session.
+Every phase surfaced at least one genuine, reproducible finding -- none of
+this is "ran clean, nothing to report." See each section below. **Phase 7
+(product changes) was deliberately not started** -- per the doc's own
+ordering, findings come first; see "What's still open and what Paige
+should decide" at the end.
 
 ## What shipped
 
@@ -161,12 +163,101 @@ compliance concerns"), which the model was willing to propose, versus
 sequence 1's "paused" status which it treated as pure risk with nothing to
 assert in its place.
 
-## What's still open
+## Source-gap experiment (Phase 5) -- a code/schema audit, not live QA
 
-**Source-gap experiment and the raw-vs-State-context comparison were not
-started this session at the time of first writing this section** -- see
-below for whether they were picked up afterward. These are genuinely
-separate pieces of work (the doc's Phases 5 and 6).
+The doc's ask here is specifically to *observe what State currently
+communicates* about freshness/incompleteness before building any UI for
+it. That doesn't require a live deployed environment -- it requires
+reading what actually exists. This machine can't exercise the live
+deployed product against real Slack/Docs/meeting sources (no server
+access, and the local static frontend can't reach the production API from
+`localhost` due to CORS), so this is a direct audit of the schema and
+frontend code, not a live-browser QA session -- flagged explicitly so it
+isn't mistaken for one.
+
+**What exists:** `current_state_items` has an `updated_at` timestamp
+(`migrations/001_initial.sql`), set on every state change. **What does
+NOT exist, confirmed by grepping the entire frontend
+(`implementation-context-prototype/*.js`) for every freshness-adjacent
+term:** `updated_at` is never rendered anywhere. There is no per-item
+"last confirmed," no source-age indicator, no confidence score, nothing
+resembling Scenario C ("nothing relevant seen from this source in
+weeks"). The only "stale" concept in the whole product
+(`context-product-polish.js`'s `ui.stale` / `.ask-state-stale`) means
+something narrower and purely internal: *"Current State has changed since
+this Ask answer was generated"* -- an Ask-answer-vs-Current-State
+consistency check, not a Current-State-vs-the-real-world one.
+
+**The honest answer to the doc's research question ("what can State
+honestly tell the user about trustworthiness when source coverage is
+incomplete?") is: nothing right now.** State has no representation at all
+of "we haven't heard from this source in a while" or "this fact might be
+stale because the world moved and nothing told us." This is architecturally
+inherent, not a bug to patch -- Scenarios A and B in the doc (a Google Doc
+says A, Slack later says B, but State only received the Doc; or a meeting
+reverses something and State never sees the meeting) can't be detected by
+any amount of better interpretation, because the missing Evidence never
+arrives for the model to reason about. Scenario D (ambiguous evidence that
+puts existing State at risk without establishing a replacement) is not
+hypothetical -- it's exactly what happened for real, twice, in this
+session's own results above: the `state_at_risk_no_replacement` eval
+scenarios, and the Okta sequence's step 4/5 (Security's problem, then the
+client's pause) both produced a `state_at_risk` review with no proposed
+replacement, which the existing mechanism already handles reasonably
+(flags it, doesn't silently resolve it) -- Current State's own headline
+text just doesn't reflect the risk until a human looks at the Review, per
+the paused-decision finding above.
+
+**Implication, matching the doc's own instruction:** do not build a
+generic confidence badge or source-health dashboard from this alone. The
+one thing this audit does support concretely: if source-freshness UX gets
+built later, `updated_at` already exists in the schema and needs no new
+migration -- the gap is entirely on the surfacing side (API response +
+frontend), not the data model.
+
+## Raw context vs. State context comparison (Phase 6) -- a scoped-down first pass
+
+Built `eval/raw_vs_state_experiment.py` and ran it against the real model
+(`claude-haiku-4-5-20251001`, the same model State's own interpretation
+pipeline uses, for a fair comparison). Both conditions were built from
+**real output of this session**, not invented for the experiment: the raw
+condition is the exact 6 pieces of Evidence from the Okta sequence above,
+reformatted as chronological Slack-style chatter; the State condition is
+the actual Current State + open Review text that sequence run produced,
+formatted the way Copy Context's "working" mode formats it. Asked 5 of the
+doc's suggested questions against both.
+
+**Honest result: no clear correctness differentiation showed up in this
+run.** Both conditions correctly identified that Okta is paused (not
+approved), correctly avoided claiming the decision was final, correctly
+surfaced Auth0 as a candidate rather than a decision, and correctly told
+the team not to proceed with implementation this week. The raw-context
+answers were, if anything, comparably good -- the model reconstructed the
+chronological "what's actually current" reasoning from the 6-message dump
+without help, for every question asked.
+
+**The one clear, measurable difference is efficiency, not correctness:**
+the State condition answered from 2 sentences of maintained context; the
+raw condition needed all 6 messages every time. Same answer quality from
+roughly a fifth of the input. That's a real result, just a different one
+than "State prevents wrong answers" -- worth keeping, but don't oversell it
+as the differentiation finding.
+
+**Why this run likely undersells State's real differentiation value, and
+what a better version would need:** this corpus was small (6 messages),
+single-topic, and already in clean chronological order -- exactly the
+easy case for an LLM to reconstruct correctly on its own. The doc's own
+design brief asks for something harder: a corpus spanning **multiple**
+topics, with genuine cross-source contradictions, superseded information
+mixed back in, and irrelevant chatter diluting the signal -- much closer
+to what this session's `eval/scenarios.py` BASE_STATE dilution finding
+already showed causes real judgment failures. That's the version likely
+to actually separate the two conditions (a large raw dump forces the
+model to do its own triage under noise; State hands it pre-triaged
+context). **This first pass should be read as "the mechanism works and is
+measurably more efficient," not as a finished answer to the
+differentiation question** -- the real test needs the messier, larger
+corpus the doc asked for, which this session didn't have time to build.
 
 **Review-burden measurement (Phase 4) now has a first real number**
 (86% recall / 100% precision on this 33-scenario set), but it's one run
@@ -183,3 +274,76 @@ regression testing). The context-sensitivity finding in particular is worth
 treating as a real product risk: a regression test that only ever seeds a
 minimal, hand-picked Current State snapshot can pass while the same
 judgment fails in a busier, more realistic one.
+
+## Findings, condensed
+
+What State does well:
+- Zero false positives across 33 single-event scenarios and both
+  sequences -- nothing tested this session made State ask about something
+  it shouldn't have.
+- Clean decisions, direct/implicit contradictions, reversals stated as
+  positive replacement facts, duplicates, and off-topic chatter are all
+  handled correctly and consistently.
+- The `state_at_risk` mechanism (flag it, don't silently resolve it) works
+  as designed for genuinely ambiguous evidence -- this is a real strength
+  of the authority model, not just a passed test.
+- Copy Context's compact maintained-context format answered every raw-vs-
+  State question as well as the full raw chat dump, using roughly a fifth
+  of the input.
+
+Where it failed, twice each in a different way:
+- Recall drops when Current State gets busier (2-item vs. 7-item context,
+  same evidence, different judgment) -- a pure prompt-attention effect,
+  not a selection bug (there is no selection step at all -- everything
+  active always goes in).
+- A genuinely new, decision-shaped fact with no matching existing Current
+  State item can be missed entirely (nothing to compare it against).
+- An explicit status-change reversal ("paused") can produce a
+  `state_at_risk` review with no proposed replacement, leaving Current
+  State's headline text stale until a human notices the Review -- distinct
+  from a reversal stated as a clean positive fact, which does get proposed
+  correctly.
+- State has no mechanism at all -- schema or UI -- for representing "we
+  might be missing something" when a source goes quiet. This is
+  architectural, not a bug, and not something interpretation quality can
+  fix on its own.
+
+What should NOT change based on this session alone: the state_at_risk
+mechanism itself (it's working as intended), the authority model
+(nothing here suggests weakening human-in-the-loop), or building any
+source-freshness UI yet (the audit found no evidence to design against
+beyond "the timestamp already exists").
+
+## What's still open and what Paige should decide
+
+Nothing here has been changed in `anthropic_provider.py`, `review_service.py`,
+or any product surface in response to these findings -- everything above is
+reporting, not action, per the doc's explicit "findings before changes"
+ordering. Four real decisions are now ready for Paige's judgment, each with
+enough evidence to reason about instead of guessing:
+
+1. **Context-dilution recall drop** -- worth a scoped prompt-engineering
+   pass (e.g., testing whether grouping/reordering Current State items, or
+   a lightweight relevance pre-filter, recovers recall at higher item
+   counts)? This is the highest-leverage finding since it gets worse as a
+   real project's Current State grows.
+2. **New-fact-with-no-anchor misses** (the budget case) -- does the prompt
+   need an explicit instruction that a concrete authority decision can be
+   consequential even with nothing existing to compare it to (i.e.
+   treating it as `missing_understanding` more readily)?
+3. **Paused/reversed decisions defaulting to state_at_risk with no
+   proposal** -- should a clear status-change reversal get its own
+   proposed_update path, distinct from ambiguous state_at_risk?
+4. **Phase 4 at scale, and a proper Phase 6 corpus** -- this session's
+   precision/recall number is one run over 33 hand-written scenarios, and
+   the raw-vs-State comparison used a small, clean, single-topic corpus.
+   Both would benefit from more scenarios (especially more state-at-risk
+   and new-fact-no-anchor cases, since those are exactly where misses
+   happened) and, for Phase 6, the genuinely messy multi-topic corpus the
+   doc originally asked for.
+
+Phase 7 (which of these, if any, become actual product changes) stays
+explicitly Paige's call -- not because of a lack of evidence, but because
+the doc is right that "do not assume these are all needed," and a rushed
+fix to #1 or #3 without testing it against the full eval set first risks
+trading a recall problem for a precision one.
