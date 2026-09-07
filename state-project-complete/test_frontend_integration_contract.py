@@ -257,7 +257,12 @@ def test_r85_integrity_and_polish_contracts():
     app = (FRONTEND / "context-app.js").read_text(encoding="utf-8")
     api_js = (FRONTEND / "context-api.js").read_text(encoding="utf-8")
     html = (FRONTEND / "index.html").read_text(encoding="utf-8")
-    assert 'data-view="project-overview">Project</button>' in html
+    # Renamed Project -> Project State -> Knowledge (2026-09-07, live QA: "Project
+    # State" made users learn a third term alongside Current State; "Project"
+    # alone felt too ambiguous). The label now lives directly in index.html --
+    # context-quickwins.js used to force-rewrite it at runtime specifically to
+    # avoid touching this assertion; removed that indirection along with the rename.
+    assert 'data-view="project-overview">Knowledge</button>' in html
     assert "window.scrollTo({top:0,behavior:'auto'})" in app
     # n.backendManaged?'':`<button ...>Edit</button>` moved to context-notes-view.js
     # 2026-09-06 (see comment on test_r81_notes_filters_share_one_date_status_search_pipeline).
