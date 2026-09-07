@@ -85,23 +85,23 @@ Vercel share link, not the automation secret), one real product bug turned up
 that isn't part of the tasks this suite was built for, so it wasn't fixed here
 -- flagging it instead per working preference:
 
-- **"Answer found · Awaiting review" doesn't reliably appear.**
+- **"Answer found · Awaiting review" doesn't always appear -- looks racy.**
   `clarifyQuestionsAwaitingReview()` in `context-quickwins.js` is supposed to
   tag an open question with `.is-awaiting-review` when an open Review's
   `resolves_question_ids` names it (confirmed live: `demo-review-retention`
-  correctly reports `resolves_question_ids: ["q-retention"]`, but the
-  `q-retention` row in Open Items never gets the class or the "Answer found"
-  label). Root cause looks like a race in that function against Open Items'
-  own progressive re-renders: it captures a `page` element, awaits
-  `getReviews('open')`, then bails via `if(!page.isConnected)return` if Open
-  Items re-rendered in the meantime -- but the *next* re-render's own
-  MutationObserver-triggered call doesn't reliably get a clean run either, in
-  practice never landing after a normal page load. The mocked Playwright suite
-  can't see this because it doesn't load `context-quickwins.js` at all. The
-  Deep QA test for this
-  (`Review + Question resolution... accepting a linked review resolves its
-  question`) asserts the intended behavior and will likely fail on it until
-  this is fixed.
+  correctly reports `resolves_question_ids: ["q-retention"]`). Manually
+  reloading staging repeatedly, the `q-retention` row in Open Items never got
+  the class -- but the first automated Deep QA run against this exact code
+  passed that assertion cleanly. Root cause looks like a race in that
+  function against Open Items' own progressive re-renders: it captures a
+  `page` element, awaits `getReviews('open')`, then bails via
+  `if(!page.isConnected)return` if Open Items re-rendered in the meantime.
+  Whether the *next* MutationObserver-triggered call lands cleanly seems to
+  depend on exact timing, which would explain manual testing missing it
+  while an automated run (different load timing) didn't. The mocked
+  Playwright suite can't see this either way because it doesn't load
+  `context-quickwins.js` at all. Worth a closer look since it's intermittent,
+  not fixed here.
 
 ## Local run (optional)
 
