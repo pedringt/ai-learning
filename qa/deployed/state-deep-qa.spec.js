@@ -180,9 +180,10 @@ test.describe('Review + Question resolution (deterministic demo data)', () => {
 
     // The question must show as awaiting review, not silently disappear or
     // resolve just because evidence/a review exists -- only accepting the
-    // explicitly linked Review is allowed to resolve it. (Known issue at the
-    // time this suite was written: this indicator does not reliably appear --
-    // see qa/deployed/README.md "Known findings".)
+    // explicitly linked Review is allowed to resolve it. (This indicator has
+    // shown intermittent timing issues in manual testing -- see
+    // qa/deployed/README.md "Known findings". If this assertion starts
+    // failing in CI, check there first before assuming a new regression.)
     const questionRow = page.locator('[data-question-id="q-retention"]');
     await expect(questionRow).toHaveClass(/is-awaiting-review/, { timeout: 15_000 });
 
