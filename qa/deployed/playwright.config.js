@@ -35,10 +35,13 @@ module.exports = defineConfig({
     video: 'retain-on-failure',
     actionTimeout: 15_000,
     navigationTimeout: 30_000,
-    extraHTTPHeaders: {
-      'x-vercel-protection-bypass': BYPASS_SECRET,
-      'x-vercel-set-bypass-cookie': 'true',
-    },
+    // Deliberately NOT extraHTTPHeaders here: that applies to every request in
+    // the browser context, including the page's own cross-origin fetches to
+    // the Render backend -- which turns those into CORS preflights the
+    // backend doesn't allow, breaking every API call with net::ERR_FAILED.
+    // Instead each navigation goes through gotoWithBypass() (helpers.js),
+    // which uses Vercel's query-param + set-cookie method: the bypass only
+    // ever touches the Vercel origin, so backend calls are unaffected.
   },
   projects: [
     { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
