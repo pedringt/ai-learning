@@ -231,11 +231,11 @@ class AnthropicProvider:
         states = {}
         for state_id in context.state_items.keys():
             row = connection.execute(
-                "SELECT statement, effective_date FROM current_state_items WHERE id=?",
+                "SELECT topic, statement, effective_date FROM current_state_items WHERE id=?",
                 (state_id,),
             ).fetchone()
             if row:
-                states[state_id] = {"statement": row[0], "effective_date": row[1]}
+                states[state_id] = {"topic": row[0], "statement": row[1], "effective_date": row[2]}
 
         # Fetch full Review details
         reviews = {}
@@ -307,6 +307,7 @@ Compare the Evidence with Current State and open Reviews. Return the semantic in
 - effective_date is optional. Include only a complete date explicitly established by Evidence, as YYYY-MM-DD. Omit relative, partial, immediate, approval-dependent, or unknown timing.
 - grouping_reason is optional only when one Review genuinely groups multiple affected State items or multiple changes.
 - Never invent State IDs, Review IDs, dates, facts, or certainty.
+- In summary, decision_question, why_consequential, and other prose fields, refer to a State item by its topic name (shown in parentheses above), never by its raw ID. IDs are for state_item_id/existing_review_id fields only.
 - Keep summary, questions, reasons, and rationales concise: one sentence each, usually under 25 words. Use at most 3 topics unless clearly necessary.
 - Preserve epistemic status: approved != implemented/enabled/complete; planned != committed; capable != enabled.
 - Do not create speculative residue. Missing implementation details alone are not a Review; Reviews are for consequential change/risk to maintained State.
@@ -318,13 +319,22 @@ Compare the Evidence with Current State and open Reviews. Return the semantic in
         return prompt
 
     def _format_state_items(self, states: dict[str, dict[str, Any]]) -> str:
-        """Format semantic State context compactly; versions stay backend-owned."""
+        """Format semantic State context compactly; versions stay backend-owned.
+
+        Includes each item's human-readable topic alongside its ID -- without
+        it, the model's only handle for an item is the raw database ID (e.g.
+        "k-launch"), which it will then echo verbatim into generated prose
+        like a Review's decision_question. The ID is still shown too, since
+        proposed_changes must reference the exact existing state_item_id.
+        """
         if not states:
             return "(No active State items)"
         lines = []
         for state_id, details in sorted(states.items()):
             suffix = f" [effective {details['effective_date']}]" if details.get("effective_date") else ""
-            lines.append(f"- {state_id}: {details['statement']}{suffix}")
+            topic = details.get("topic")
+            label = f"{state_id} ({topic})" if topic else state_id
+            lines.append(f"- {label}: {details['statement']}{suffix}")
         return "\n".join(lines)
 
     def _format_open_questions(self, questions: dict[str, dict]) -> str:

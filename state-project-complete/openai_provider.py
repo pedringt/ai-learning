@@ -171,11 +171,11 @@ class OpenAIProvider:
         states = {}
         for state_id in context.state_items.keys():
             row = connection.execute(
-                "SELECT statement FROM current_state_items WHERE id=?",
+                "SELECT topic, statement FROM current_state_items WHERE id=?",
                 (state_id,),
             ).fetchone()
             if row:
-                states[state_id] = row[0]
+                states[state_id] = {"topic": row[0], "statement": row[1]}
 
         # Fetch full Review details
         reviews = {}
@@ -293,6 +293,7 @@ Remember:
 - Before responding, verify review_type is compatible with every proposed_change operation. If you are targeting an existing State item with update or retire, use review_type "proposed_update", not "missing_understanding".
 - You can recommend Reviews without proposals (state_at_risk)
 - For update/retire, output the exact existing state_item_id. Software supplies expected_version and ensures the target is included in affected_state_item_ids. Do not output expected_version.
+- In summary, decision_question, why_consequential, and other prose fields, refer to a State item by its topic name (shown in parentheses above), never by its raw ID. IDs are for state_item_id/existing_review_id fields only.
 
 - effective_date is optional. Include it ONLY when the Evidence establishes a specific complete calendar date. It must be ISO YYYY-MM-DD. If timing is immediate, upon approval/decision, vague, relative, partial, or unknown, OMIT effective_date. Never emit sentinel or placeholder values such as "upon_decision", "immediately", "now", "TBD", or partial dates such as "2026-10".
 - grouping_reason is optional for recommendations that group 2+ affected State items or 2+ proposed changes; omit it for single-item/single-change recommendations.
@@ -301,13 +302,22 @@ Remember:
 """
         return prompt
 
-    def _format_state_items(self, states: dict[str, str]) -> str:
-        """Format State items for prompt."""
+    def _format_state_items(self, states: dict[str, dict[str, str]]) -> str:
+        """Format State items for prompt.
+
+        Includes each item's human-readable topic alongside its ID -- without
+        it, the model's only handle for an item is the raw database ID (e.g.
+        "k-launch"), which it will then echo verbatim into generated prose
+        like a Review's decision_question. The ID is still shown too, since
+        proposed_changes must reference the exact existing state_item_id.
+        """
         if not states:
             return "(No active State items)"
         lines = []
-        for state_id, statement in sorted(states.items()):
-            lines.append(f"- **{state_id}**: {statement}")
+        for state_id, details in sorted(states.items()):
+            topic = details.get("topic")
+            label = f"{state_id} ({topic})" if topic else state_id
+            lines.append(f"- **{label}**: {details['statement']}")
         return "\n".join(lines)
 
     def _format_open_questions(self, questions: dict[str, dict]) -> str:
