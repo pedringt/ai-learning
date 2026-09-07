@@ -4,13 +4,24 @@ This file is the canonical current-state handoff for State. Any AI assistant or 
 
 ## Current production state
 
-_Last updated: September 7, 2026 (Workspace visual-polish rounds -- density, hierarchy, and a real backend prompt bug)_
+_Last updated: September 7, 2026 (Analytics instrumentation + consequentiality eval dataset expansion, Phase 1/2 of the "Next Marching Orders" doc)_
 
 `main` is production, currently at commit `2adb591` (merged via [PR #66](https://github.com/pedringt/ai-learning/pull/66)). Slack Phase 2, self-serve Slack OAuth, a full round of Ask reliability/UX hardening, and a site-wide portfolio content pass are live in production, promoted 2026-09-06. The *only* thing on `main` past that is `.github/workflows/deep-qa.yml` itself (PR #66) -- no application code -- added there deliberately, because GitHub only allows dispatching a `workflow_dispatch` workflow if its file exists on the default branch; the workflow's actual content still runs against whatever ref you dispatch it against (normally `staging`).
 
 **`staging` has diverged substantially further and is not yet promoted -- CI green throughout.** Nothing below has been promoted; it all requires Paige's explicit go-ahead per the usual workflow rule. See "Next up" below.
 
-### Latest session: Workspace visual-polish rounds (PRs #82-#85), plus a real backend prompt bug found along the way
+### Latest session: analytics instrumentation + consequentiality eval dataset (start of "Next Marching Orders" Phase 1/2)
+
+Paige handed off a broader "Next Marching Orders" doc reframing the next phase of work around testing the product thesis (does State maintain trustworthy context without unreasonable review burden?) rather than adding features -- see that doc for the full multi-phase plan (analytics, a 30-50 scenario eval set, sequence tests, review-burden precision/recall, a source-gap experiment, a raw-vs-State-context AI comparison). This session covered the first two phases only; full detail in [docs/history/EVAL_AND_ANALYTICS_FINDINGS_2026-09-07.md](history/EVAL_AND_ANALYTICS_FINDINGS_2026-09-07.md).
+
+- **Analytics (Phase 1):** State's product surface had zero event tracking before this session -- only the portfolio pages had Vercel Web Analytics. Added `context-analytics.js`, reusing that same lightweight beacon rather than new infra: `?ref=` reviewer attribution, `state_demo_opened`, view-change events, Review accept/reject/open, provenance/orientation-opened, copy-context-used, and Ask submitted/completed/failed/refinement-used. Ask query text is tracked (real product-research signal) but the Ask drawer's help text now discloses this, and the existing owner-mode opt-out (`paigeOwnerMode`) suppresses tracking so QA/dev usage doesn't pollute reviewer data. 12 new JS assertions (`state-analytics-tests.js`, added to CI); verified live in browser (ref capture, event firing, disclosure text rendering).
+- **Consequentiality eval dataset (start of Phase 2):** grew the existing 7-case regression suite (`test_evidence_intake_consequentiality.py`, kept as-is -- it's the standalone VP-billing regression) into a 33-scenario labeled dataset (`state-project-complete/eval/scenarios.py`) covering every category the doc named: clear decisions, tentative suggestions, authority statements, non-authoritative opinions, direct/implicit contradictions, reversals, superseded/resurfacing information, duplicates, irrelevant chatter, observations-without-decisions, direct/partial/conflicting Question answers, compounding weak signals, and state-at-risk-without-replacement. 14 must-review / 13 no-review / 6 deliberately-ambiguous (never hard-asserted). Two runnable mechanisms on the same data: `python3 -m eval.run_eval` (precision/recall report script) and `test_consequentiality_eval_dataset.py` (one pytest case per scenario). **No ANTHROPIC_API_KEY is configured in this environment**, so no real judgment results exist yet -- both mechanisms confirmed to skip cleanly (not fail) without one. Running the eval for real against a live key is the concrete next step before any prompt/instruction changes are considered.
+
+Verified: 339 Python passed / 44 skipped (up from 11 skipped -- 33 new real-provider-gated scenarios all confirmed to skip cleanly), all 10 JS suites passing (81+18+5+10+8+5+3+7+12 assertions across the existing 9 plus the new analytics suite), live-browser smoke test of the analytics wiring.
+
+**Not done this session, explicitly out of scope:** Phases 3-6 of the doc (sequence tests, review-burden measurement against real results, the source-gap experiment, and the raw-context-vs-State-context AI comparison) -- each is real, separately-scoped work, not squeezed into this session.
+
+### Prior session: Workspace visual-polish rounds (PRs #82-#85), plus a real backend prompt bug found along the way
 
 A series of small, fast feedback loops against live screenshots of the Workspace redesign below, converging on the current layout:
 
