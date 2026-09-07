@@ -95,9 +95,11 @@
   // content while the sidebar still shows Settings highlighted.
   function render(){ updateNav(); const views={overview:renderOverview,notes:renderNotes,'open-items':renderOpenItems,questions:renderOpenItems,review:renderOpenItems,history:renderHistory,'project-overview':renderProjectOverview,settings:()=>{}}; (views[state.view]||renderOverview)(); ASK?.activateWaitStates?.(root); }
 
+  const VIEW_ANALYTICS_EVENTS={overview:'workspace_viewed','project-overview':'current_state_viewed','open-items':'open_items_viewed',questions:'open_items_viewed',review:'open_items_viewed',notes:'notes_viewed',history:'history_viewed',settings:'settings_viewed'};
   function navigateTo(view,{preserveHistoryTopic=false,preserveHistoryEvidence=false}={}){
     state.view=view;
     state.navMoreOpen=false;
+    window.StateAnalytics?.track(VIEW_ANALYTICS_EVENTS[view]||'view_changed',{view});
     if(view==='history'){
       if(!preserveHistoryTopic)state.historyTopic=null;
       if(!preserveHistoryEvidence)state.historyEvidenceId=null;
@@ -635,6 +637,8 @@
     const visiblePrevious=followupMode==='new'?null:previousLive;
     if(ASK?.canHandle(raw,previousLive)){
       state.resultQuery=raw;
+      window.StateAnalytics?.trackAskQuery(raw,{followupMode});
+      if(followupMode!=='new'&&previousLive) window.StateAnalytics?.track('ask_refinement_used',{followupMode});
       if(ASK.canStream?.(raw)){
         state.result={liveAskStreaming:true,liveAskStreamRaw:'',liveAskPreview:null,previousLive:visiblePrevious,pendingInput:''};
         renderOverview();
@@ -656,6 +660,7 @@
           const answerTop=root.querySelector('.answer-content')?.getBoundingClientRect().top ?? null;
           state.result={liveAsk:payload,previousLive:(payload?.followup_mode||(previousLive?'append':'new'))==='append'?previousLive:null};
           state.refinements=[];
+          window.StateAnalytics?.track('ask_completed',{streamed:true});
           renderOverview();
           if(answerTop!==null){
             requestAnimationFrame(()=>{
@@ -678,6 +683,7 @@
               const answerTop=root.querySelector('.answer-content')?.getBoundingClientRect().top ?? null;
               state.result={liveAsk:payload,previousLive:(payload?.followup_mode||(previousLive?'append':'new'))==='append'?previousLive:null};
               state.refinements=[];
+              window.StateAnalytics?.track('ask_completed',{streamed:true,retried:true});
               renderOverview();
               if(answerTop!==null){
                 requestAnimationFrame(()=>{
@@ -691,6 +697,7 @@
             }
           }
           state.result={liveAskError:err?.message||'State could not produce a grounded answer. Please try again.',previousLive:visiblePrevious};
+          window.StateAnalytics?.track('ask_failed',{streamed:true,message:String(err?.message||'').slice(0,200)});
         }
         renderOverview();
         return;
@@ -701,8 +708,10 @@
         const payload=await ASK.submit(raw,previousLive);
         state.result={liveAsk:payload,previousLive:(payload?.followup_mode||(previousLive?'append':'new'))==='append'?previousLive:null};
         state.refinements=[];
+        window.StateAnalytics?.track('ask_completed',{streamed:false});
       }catch(err){
         state.result={liveAskError:err?.message||'State could not produce a grounded answer. Please try again.',previousLive:visiblePrevious};
+        window.StateAnalytics?.track('ask_failed',{streamed:false,message:String(err?.message||'').slice(0,200)});
       }
       renderOverview();
       return;
@@ -916,6 +925,7 @@
   function decideReview(id,decision){
     const r=state.data.reviews.find(x=>x.id===id);
     if(!r||r.status!=='pending')return;
+    window.StateAnalytics?.track(decision==='update'?'review_accepted':'review_rejected',{reviewId:id});
     const isGeneric=r.id?.startsWith('r-info-') || (Array.isArray(r.proposals) && r.proposals.length===0);
     if(decision==='update' && !isGeneric){
       const proposalText=(r.proposals||[]).map(p=>p.proposed_statement).filter(Boolean).join(' • ') || r.proposed || '';
@@ -994,6 +1004,7 @@
 
 
   function showDemoHelp(){
+    window.StateAnalytics?.track('orientation_opened');
     const steps=[
       ['1. Add','Add Evidence. Capture a finding, decision, or meeting update. Approved Slack conversations can also become Evidence automatically.'],
       ['2. State interprets','AI compares new Evidence with Current State and identifies possible changes or unresolved Questions.'],
@@ -1549,8 +1560,8 @@
     const noteFilter=e.target.closest('.notes-filters [data-filter]'); if(noteFilter){ state.notesFilter=noteFilter.dataset.filter; renderNotes(); return; }
     const reviewFilter=e.target.closest('.review-filters [data-review-filter]'); if(reviewFilter){ state.reviewFilter=reviewFilter.dataset.reviewFilter; renderReview(); return; }
     const sectionToggle=e.target.closest('[data-action="toggle-open-item-section"]'); if(sectionToggle){ const key=sectionToggle.dataset.section; const reviews=uiPendingReviews(), questions=openQuestions(); const count=key==='reviews'?reviews.length:key==='blockers'?questions.filter(q=>q.blocking).length:questions.filter(q=>!q.blocking).length; const current=state.openItemSections[key]===null?(key==='questions'&&count>5):!!state.openItemSections[key]; state.openItemSections[key]=!current; renderOpenItems(); return; }
-    const reviewToggle=e.target.closest('[data-action="toggle-review-card"]'); if(reviewToggle){ const id=reviewToggle.dataset.reviewId; state.expandedReviewId=state.expandedReviewId===id?null:id; renderOpenItems(); return; }
-    const provenanceToggle=e.target.closest('[data-action="toggle-provenance"]'); if(provenanceToggle){ const body=provenanceToggle.parentElement?.querySelector('.project-provenance-body'); if(body){ const expanded=!body.hidden; body.hidden=expanded; provenanceToggle.setAttribute('aria-expanded',String(!expanded)); provenanceToggle.textContent=expanded?'Why this is current →':'Hide why this is current'; } return; }
+    const reviewToggle=e.target.closest('[data-action="toggle-review-card"]'); if(reviewToggle){ const id=reviewToggle.dataset.reviewId; const wasOpen=state.expandedReviewId===id; state.expandedReviewId=state.expandedReviewId===id?null:id; if(!wasOpen) window.StateAnalytics?.track('review_opened',{reviewId:id}); renderOpenItems(); return; }
+    const provenanceToggle=e.target.closest('[data-action="toggle-provenance"]'); if(provenanceToggle){ const body=provenanceToggle.parentElement?.querySelector('.project-provenance-body'); if(body){ const expanded=!body.hidden; body.hidden=expanded; provenanceToggle.setAttribute('aria-expanded',String(!expanded)); provenanceToggle.textContent=expanded?'Why this is current →':'Hide why this is current'; if(!expanded) window.StateAnalytics?.track('provenance_opened'); } return; }
     const p=e.target.closest('[data-prompt]'); if(p){ submitAsk(p.dataset.prompt); return; }
     const a=e.target.closest('[data-action]'); if(!a)return;
     const act=a.dataset.action;
