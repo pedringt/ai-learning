@@ -15,7 +15,16 @@ import os
 import sqlite3
 import sys
 from dataclasses import dataclass
+from pathlib import Path
 from typing import List
+
+from dotenv import load_dotenv
+
+# Loads state-project-complete/.env if present, so a real key can be dropped
+# into a plain gitignored file (no terminal/shell export required) --
+# harmless no-op if the file doesn't exist, and never overrides a variable
+# already set in the real environment.
+load_dotenv(Path(__file__).resolve().parent.parent / ".env")
 
 sys.path.insert(0, "phase2_current")
 
