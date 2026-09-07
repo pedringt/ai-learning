@@ -237,7 +237,7 @@
     const last=(state.data.history||[]).slice().sort(sortDateDesc)[0];
     const lastUpdated=last?esc(last.date||formatBackendDate(last.changed_at)):null;
     const openCount=openQuestions().length;
-    return `<section class="workspace-status-card"><span class="eyebrow">Project status</span><div class="workspace-status-item"><strong>Current State</strong><span>${lastUpdated?`Updated ${lastUpdated}`:'The maintained view of what the project currently treats as true.'}</span><button class="text-button" data-view="project-overview">Browse →</button></div><div class="workspace-status-item"><strong>${openCount} open question${openCount===1?'':'s'}</strong><button class="text-button" data-view="open-items">View Open Items →</button></div></section>`;
+    return `<section class="workspace-status-card"><span class="eyebrow">Project status</span><div class="workspace-status-body"><div class="workspace-status-item"><strong>Current State</strong><span>${lastUpdated?`Updated ${lastUpdated}`:'The maintained view of what the project currently treats as true.'}</span><button class="text-button" data-view="project-overview">Browse →</button></div><div class="workspace-status-item"><strong>${openCount} open question${openCount===1?'':'s'}</strong><button class="text-button" data-view="open-items">View Open Items →</button></div></div></section>`;
   }
   function renderWorkspaceAttentionOnly(){
     if(state.view!=='overview' || state.result) return false;
