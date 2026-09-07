@@ -89,20 +89,84 @@ Both misses are real findings about the deployed interpretation prompt
 succeeded (`processing_status == "succeeded"`) in both cases; the model
 simply didn't recommend a review.
 
+**Root cause of the context-sensitivity finding:** `capture_context()` in
+`interpretation_pipeline_integrated.py` (lines 134-142) selects **every**
+`current_state_items` row with `status='active'`, unconditionally -- there
+is no relevance filter, ranking, or truncation before it goes into
+`anthropic_provider.py`'s `_build_prompt()`. So the miss is not a
+selection/retrieval bug; every item is always shown to the model. The
+VP-billing case flipping from pass (2 items shown) to miss (7 items shown)
+is a pure in-context-distraction effect -- more unrelated Current State
+competing for the model's attention lowers the odds it flags the one
+boundary-adjacent item. This is a real scalability concern, not a one-off:
+Current State is designed to only grow over a project's life, so this
+exact failure mode should get *more* likely over time on a real project,
+not less. No fix has been attempted yet -- this needs its own evaluation
+(does the miss rate scale with item count? does reordering/grouping
+related items help? does a two-pass "which items are even relevant"
+step help?) before touching the prompt.
+
 **No prompt/product change has been made in response to this yet.** Per
 the doc's own ordering (findings first, product changes last, and "do not
 solve review misses by simply sending everything to Review"), this is
 being surfaced as a finding for Paige to weigh in on before touching
 `anthropic_provider.py`'s prompt.
 
+## Sequence evaluations (Phase 3), run the same session
+
+Added `eval/sequences.py` + `eval/run_sequences.py`: two realistic
+multi-step project evolutions, run against a single persistent DB
+connection so Current State/Reviews/Questions/History can be inspected
+after every step (not just at the end). Both ran against the real
+provider, with a simulated human accepting each review per the step's
+own scripted decision.
+
+**Sequence 1 -- Okta proposal -> approval -> security problem -> pause ->
+alternative** (the exact shape the doc asked for). Steps 1-3 behaved
+correctly: two non-committal proposal/leaning-toward steps produced no
+review, and the formal approval did, correctly updating Current State to
+"Okta has been selected." Step 6 (team discussing Auth0 as a fallback)
+correctly landed as an open `state_at_risk` review rather than silently
+overwriting anything -- exactly the intended "flag it, don't silently
+resolve it" behavior.
+
+**Step 5 is a real finding.** The evidence was "The client paused the
+Okta decision pending a resolution to the session-timeout issue Security
+raised" -- an explicit, unambiguous status change. The model classified
+this as `state_at_risk` with **no proposed replacement fact**, which is
+correct per the prompt's own instructions ("state_at_risk... normally
+emit no proposal") -- so accepting the review left Current State reading
+**"Okta has been selected as the SSO provider for client integration"
+unchanged**, even after the decision had been explicitly paused. The
+Review itself does correctly exist and flag the risk, so a human working
+Open Items would see it -- but anyone reading Current State's headline
+fact alone at that point would be misled into thinking Okta is still the
+active decision. This is a real, narrow judgment-quality gap, not a
+pipeline bug: "paused" is a strong enough status change that it plausibly
+warranted its own proposed_update (e.g. "Okta selection is paused pending
+a session-timeout resolution"), not just a risk flag with nothing to
+replace it. Worth deciding deliberately: is "point to the open Review" a
+good-enough answer to "what is Current State's word actually worth right
+now," or does a paused/reversed decision need its own update path distinct
+from state_at_risk?
+
+**Sequence 2 -- open Question -> answered -> reversed** worked well in
+both directions: the direct leadership answer resolved the Question and
+updated the automation-scope Current State item; the subsequent finance-
+driven reversal correctly produced a new review and updated Current State
+again to reflect the reversal (not left stale like sequence 1's step 5).
+The difference looks like phrasing: sequence 2's reversal stated a clean,
+positive replacement fact ("refund tickets will NOT be added... due to
+compliance concerns"), which the model was willing to propose, versus
+sequence 1's "paused" status which it treated as pure risk with nothing to
+assert in its place.
+
 ## What's still open
 
-**Sequence tests, source-gap experiment, and the raw-vs-State-context
-comparison were not started.** These are genuinely separate pieces of work
-(the doc's Phases 3, 5, and 6) and would each deserve their own scoped
-session rather than being squeezed in here. The eval dataset built this
-session is single-event only, by design -- it's the foundation those build
-on, not a substitute for them.
+**Source-gap experiment and the raw-vs-State-context comparison were not
+started this session at the time of first writing this section** -- see
+below for whether they were picked up afterward. These are genuinely
+separate pieces of work (the doc's Phases 5 and 6).
 
 **Review-burden measurement (Phase 4) now has a first real number**
 (86% recall / 100% precision on this 33-scenario set), but it's one run
