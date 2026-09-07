@@ -350,6 +350,21 @@ def _validate_selection(selection: AskSelection, candidates: Mapping[str, list[d
             continue
         field = "blocking_question_ids" if question["blocking"] else "question_ids"
         data[field] = list(dict.fromkeys(data[field] + [qid]))
+
+    # The reverse relationship must hold too: a selected Question may have an
+    # open Review explicitly linked as potentially resolving it (via that
+    # Review's own resolves_question_ids). Ask must not show the Question
+    # while omitting the qualifying Review -- symmetric with the Review ->
+    # Question safety net above. Runs after that net so it also covers
+    # Questions that were only added because of a selected Review (those
+    # already have their Review selected, so this is a no-op for them; it
+    # only adds anything new for Questions the model selected directly).
+    selected_questions = set(data["blocking_question_ids"] + data["question_ids"])
+    linked_review_ids = [
+        r["id"] for r in candidates["reviews"]
+        if selected_questions.intersection(r.get("question_ids", []))
+    ]
+    data["review_ids"] = list(dict.fromkeys(data["review_ids"] + linked_review_ids))
     return AskSelection.model_validate(data)
 
 

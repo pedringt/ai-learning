@@ -64,5 +64,26 @@ check('question with no linked review still offers "Add what you learned"',
 check('question with no linked review does not claim an answer was found',
   !dialogNoLink.includes('Answer found'));
 
+// Regression coverage for a second bug found in a live-testing logic review
+// (2026-09-07): mapApiReview() used to accept a caller-supplied
+// `resolvesQuestionId` as a fallback whenever the backend's own
+// resolves_question_ids came back empty. The one real caller of that
+// fallback was the "submit an answer to this Question" flow, which passed
+// the Question's own id -- meaning any Review returned from evidence
+// submitted through the Question UI got treated as resolving that Question
+// regardless of what the backend actually determined. mapApiReview() must
+// only ever reflect the backend's own resolves_question_ids, never infer a
+// relationship from where the Evidence came from.
+const backendReviewNoResolution={id:'review_x1',review_type:'state_at_risk',decision_question:'Does this change anything?',evidence_content:'Some answer text.',resolves_question_ids:[]};
+const mappedNoResolution=api.mapApiReview(backendReviewNoResolution,'Some answer text.');
+check('a backend review with an empty resolves_question_ids is never treated as resolving a question, even from the answer-a-question flow',
+  mappedNoResolution.resolvesQuestionIds.length===0 && !mappedNoResolution.resolvesQuestionId,
+  JSON.stringify({resolvesQuestionIds:mappedNoResolution.resolvesQuestionIds,resolvesQuestionId:mappedNoResolution.resolvesQuestionId}));
+
+const backendReviewWithResolution={id:'review_x2',review_type:'proposed_update',decision_question:'Does this resolve it?',evidence_content:'A real answer.',resolves_question_ids:['q-retention']};
+const mappedWithResolution=api.mapApiReview(backendReviewWithResolution,'A real answer.');
+check('a backend review that DOES return resolves_question_ids is still correctly mapped',
+  mappedWithResolution.resolvesQuestionIds.includes('q-retention') && mappedWithResolution.resolvesQuestionId==='q-retention');
+
 console.log(`\n${pass} passed, ${fail} failed`);
 if(fail) process.exit(1);

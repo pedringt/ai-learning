@@ -15,9 +15,16 @@ import sys
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from db import Connection, get_connection
-from interpretation_pipeline_integrated import process_evidence
+from interpretation_pipeline_integrated import _persist_success, process_evidence
 from review_service import accept_review, resolve_review
 from fake_provider_integrated import FakeProviderIntegrated
+
+
+class DummyProvider:
+    """Minimal provider identity for tests that call _persist_success()
+    directly with a pre-scripted payload -- no interpret() call is made."""
+    name = "test"
+    model_identifier = "test-model"
 
 
 @pytest.fixture
@@ -359,3 +366,106 @@ class TestQuestionBackwardCompatibilityRemoved:
             "CRITICAL: source_type alone must NOT resolve Questions. " \
             "Only explicit review_questions links should resolve them. " \
             "This suggests the backward-compatibility fallback was not removed."
+
+
+class TestReinterpretationClearsStaleQuestionLinks:
+    """Regression coverage for a logic-review finding (2026-09-07): reviews
+    that get reinterpreted by newer Evidence properly supersede their old
+    proposed_state_changes (see interpretation_pipeline_integrated.py's
+    supersedes_proposal_id handling), but review_questions links were only
+    ever added via INSERT OR IGNORE -- never removed. Concretely:
+
+    1. Evidence A creates Review R and says accepting it resolves Question Q.
+    2. Evidence B later reinterprets that same Review R.
+    3. The newer interpretation no longer says Q is answered.
+    4. Without a fix, the stale R -> Q link from step 1 survives.
+    5. Accepting the latest (Evidence-B) version of R would incorrectly
+       resolve Q, even though nothing currently reviewed establishes that
+       answer.
+
+    Uses _persist_success() directly with a scripted payload (not a live or
+    fake provider) so each interpretation's resolves_question_ids is exactly
+    controlled -- what's under test is the persistence logic, not model
+    judgment.
+    """
+
+    def test_reinterpreting_a_review_removes_a_question_link_the_new_interpretation_no_longer_makes(self, db):
+        question_id = db.execute(
+            "INSERT INTO questions(id, text, status) VALUES(?, ?, ?) RETURNING id",
+            ("Q_stale", "Does the new vendor policy affect retention?", "open"),
+        ).fetchone()[0]
+
+        db.execute(
+            "INSERT INTO evidence(id, content, source_type) VALUES (?, ?, ?)",
+            ("ev_a", "Vendor confirmed the retention policy answers Q_stale.", "manual_note"),
+        )
+        db.commit()
+
+        payload_a = {
+            "summary": "Vendor policy update.",
+            "topics": ["retention"],
+            "outcome": "review_recommended",
+            "review_recommendations": [{
+                "review_action": "create",
+                "review_type": "proposed_update",
+                "decision_question": "Should retention policy change?",
+                "why_consequential": "Vendor policy may answer an open question.",
+                "affected_state_item_ids": [],
+                "resolves_question_ids": [question_id],
+                "proposed_changes": [],
+            }],
+        }
+        result_a = _persist_success(db, evidence_id="ev_a", provider=DummyProvider(), payload=payload_a)
+        review_id = result_a.review_ids[0]
+
+        # Confirm the initial link exists before reinterpreting.
+        linked_before = db.execute(
+            "SELECT COUNT(*) AS n FROM review_questions WHERE review_id=? AND question_id=?",
+            (review_id, question_id),
+        ).fetchone()["n"]
+        assert linked_before == 1, "Evidence A's interpretation should link the Review to the Question"
+
+        # Evidence B reinterprets the SAME Review, and this time does NOT
+        # say the Question is resolved.
+        db.execute(
+            "INSERT INTO evidence(id, content, source_type) VALUES (?, ?, ?)",
+            ("ev_b", "Actually the vendor policy doesn't address Q_stale after all.", "manual_note"),
+        )
+        db.commit()
+        payload_b = {
+            "summary": "Correction: vendor policy is unrelated.",
+            "topics": ["retention"],
+            "outcome": "review_recommended",
+            "review_recommendations": [{
+                "review_action": "update_existing",
+                "existing_review_id": review_id,
+                "review_type": "proposed_update",
+                "decision_question": "Should retention policy change?",
+                "why_consequential": "Vendor policy may answer an open question.",
+                "affected_state_item_ids": [],
+                "proposed_changes": [],
+                # No resolves_question_ids this time -- the newer interpretation
+                # does not establish an answer to Q_stale.
+            }],
+        }
+        _persist_success(db, evidence_id="ev_b", provider=DummyProvider(), payload=payload_b)
+
+        linked_after = db.execute(
+            "SELECT COUNT(*) AS n FROM review_questions WHERE review_id=? AND question_id=?",
+            (review_id, question_id),
+        ).fetchone()["n"]
+        assert linked_after == 0, (
+            "STALE LINK: reinterpreting the Review with Evidence that no longer "
+            "resolves the Question must remove the old review_questions link, "
+            "not leave it from the earlier interpretation."
+        )
+
+        # Accepting the latest version of the Review must not resolve the
+        # Question, since nothing currently reviewed establishes its answer.
+        accept_review(db, review_id, "Accepted latest interpretation")
+        question = db.execute("SELECT status FROM questions WHERE id=?", (question_id,)).fetchone()
+        assert question[0] == "open", (
+            "CRITICAL: accepting a Review whose latest interpretation no longer "
+            "resolves a Question must not resolve that Question via a stale link "
+            "from an earlier interpretation."
+        )

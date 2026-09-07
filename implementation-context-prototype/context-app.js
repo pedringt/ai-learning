@@ -108,7 +108,18 @@
     // user can inspect Project, Open Items, Notes, or History and return to the
     // same working Ask. Explicit New ask / reset actions own session cleanup.
     render();
-    requestAnimationFrame(()=>window.scrollTo({top:0,behavior:'auto'}));
+    // Scroll synchronously, in the same tick as render() -- not a frame
+    // later via requestAnimationFrame, as this used to do. Leaving a
+    // scrolled-down Current State page (with its subnav open) shrinks the
+    // page a lot; deferring the scroll reset let the browser paint one
+    // frame of the new, shorter content at the old scroll offset first (a
+    // visible snap), before the correction landed. The browser doesn't
+    // paint until this function returns, so doing both in one synchronous
+    // pass produces a single atomic visual update instead of two.
+    // Tried scrolling to top BEFORE the content swap instead -- doesn't
+    // work: CSS scroll anchoring compensates for the subsequent layout
+    // shift and silently drags the scroll position back away from 0.
+    window.scrollTo({top:0,behavior:'auto'});
   }
 
   function projectScrollTop(target){
@@ -265,13 +276,24 @@
     const lastUpdated=last?(last.date||formatBackendDate(last.changed_at)):null;
     const lastTopic=last?.knowledgeId?state.data.knowledge.find(k=>k.id===last.knowledgeId):null;
     const lastLabel=lastTopic?.title||last?.type||'';
-    const decisionCount=(state.data.knowledge||[]).filter(k=>k.state==='current').length;
+    // Current State holds facts, constraints, scope, and outcomes -- not
+    // just "decisions" -- and an open Question is not necessarily blocking
+    // or undecided, so this card's copy must not conflate the two. See
+    // openQuestions()'s own note above and the Open Items badge (which
+    // already separates blocking questions from every open one).
+    const establishedCount=(state.data.knowledge||[]).filter(k=>k.state==='current').length;
     const openCount=openQuestions().length;
+    const blockingCount=openQuestions().filter(q=>q.blocking).length;
     const openHeadline=openCount===0?'✓ No open questions':`${openCount} open question${openCount===1?'':'s'}`;
+    const openSupportText=openCount===0
+      ? 'Nothing to track right now.'
+      : blockingCount===0
+        ? 'None are currently blocking progress.'
+        : `${blockingCount} ${blockingCount===1?'is':'are'} currently blocking progress.`;
     return `<section class="workspace-status-card"><span class="eyebrow">Current State</span><div class="workspace-status-body">
       <div class="workspace-status-item"><strong class="workspace-status-value">${lastUpdated?`Updated ${esc(lastUpdated)}`:'Not yet established'}</strong><div class="workspace-status-row"><span>${lastLabel?esc(lastLabel):'Most recent change.'}</span></div></div>
-      <div class="workspace-status-item"><strong class="workspace-status-value">${decisionCount} decision${decisionCount===1?'':'s'} recorded</strong><div class="workspace-status-row"><span>What the project currently treats as true.</span><button class="text-button" data-view="project-overview">Browse Current State →</button></div></div>
-      <div class="workspace-status-item"><strong class="workspace-status-value${openCount===0?' is-clear':''}">${esc(openHeadline)}</strong><div class="workspace-status-row"><span>${openCount===0?'Nothing blocking progress.':'Waiting on a decision.'}</span><button class="text-button" data-view="open-items">Open Items →</button></div></div>
+      <div class="workspace-status-item"><strong class="workspace-status-value">${establishedCount} established fact${establishedCount===1?'':'s'}</strong><div class="workspace-status-row"><span>What the project currently treats as true.</span><button class="text-button" data-view="project-overview">Browse Current State →</button></div></div>
+      <div class="workspace-status-item"><strong class="workspace-status-value${openCount===0?' is-clear':''}">${esc(openHeadline)}</strong><div class="workspace-status-row"><span>${openSupportText}</span><button class="text-button" data-view="open-items">Open Items →</button></div></div>
     </div></section>`;
   }
   function renderWorkspaceAttentionOnly(){
@@ -1102,7 +1124,7 @@
     state.data.reviews=state.data.reviews.filter(r=>!r.backendReviewId || openIds.has(r.backendReviewId));
   }
 
-  function mapApiReview(r, fallbackEvidence='', extras={}){
+  function mapApiReview(r, fallbackEvidence=''){
     const proposals=(r.proposals||[]).filter(p=>!p.status || p.status==='pending');
     const affected=r.affected_state_items||[];
     const current=affected.length
@@ -1127,13 +1149,16 @@
       current,
       evidence:r.evidence_content||fallbackEvidence,
       evidenceSourceType:r.evidence_source_type||'',
-      // Only an explicit backend resolves_question_ids (or a hardcoded local
-      // fixture relationship via `extras`) counts as a resolving link -- a
-      // review is never inferred to resolve a question just because its
-      // evidence happened to come from answering one. "Answer found ·
-      // Awaiting review" must only appear when the backend actually says so.
-      resolvesQuestionIds:(r.resolves_question_ids||[]).length ? [...r.resolves_question_ids] : (extras.resolvesQuestionIds||extras.resolvesQuestionId?[extras.resolvesQuestionId].filter(Boolean):[]),
-      resolvesQuestionId:(r.resolves_question_ids||[])[0] || extras.resolvesQuestionId,
+      // Only an explicit backend resolves_question_ids counts as a resolving
+      // link -- a review is never inferred to resolve a question just
+      // because its evidence happened to come from answering one (that used
+      // to fall back to a caller-supplied questionId here; removed 2026-09-07
+      // after a live-testing review found it could show "Answer found ·
+      // Awaiting review" even when the backend returned no such relationship
+      // at all). "Answer found · Awaiting review" must only appear when the
+      // backend actually says so.
+      resolvesQuestionIds:[...(r.resolves_question_ids||[])],
+      resolvesQuestionId:(r.resolves_question_ids||[])[0],
       establishes:rationale||r.why_consequential,
       doesNot:r.review_type==='proposed_update'
         ? 'The proposed change does not become Current State until you accept it.'
@@ -1142,7 +1167,6 @@
       reviewType:r.review_type,
       proposals,
       affectedStateItems:affected,
-      ...extras
     };
   }
 
@@ -1651,7 +1675,7 @@
         try{
           const result=await submitEvidence(text,`question_response:${q.id}`);
           const stamp=Date.now(), noteId='n-q-'+stamp;
-          const apiReviews=(result.reviews||[]).map(r=>mapApiReview(r,text,{resolvesQuestionId:q.id}));
+          const apiReviews=(result.reviews||[]).map(r=>mapApiReview(r,text));
           state.data.notes.unshift({id:noteId,title:'Answer to: '+q.text,text,source:'Question response',date:todayLabel(),dateISO:todayISO(),topics:q.topics,status:apiReviews.length?'pending':'no_review_needed',reviewId:apiReviews[0]?.id||null,reviewIds:apiReviews.map(r=>r.id),evidenceId:result.evidence_id});
           apiReviews.forEach(r=>{r.evidenceId=noteId; upsertBackendReview(r);});
           state.reviewBannerDismissed=false; state.isAnalyzing=false; stopAnalysisClock(); updateNav();
