@@ -39,7 +39,10 @@ test.describe('Workspace', () => {
     // "Opening Northstar..." must clear once hydration finishes -- it must
     // never sit there forever (the thing a cold Render backend could cause).
     await expect(page.locator('#appLoadStatus')).toBeHidden({ timeout: 30_000 });
-    const askInput = page.locator('#askInput');
+    // Ask is a global drawer opened from the floating launcher, not an
+    // inline Workspace field -- open it the way a real user would.
+    await page.locator('#askStateLauncher').click();
+    const askInput = page.locator('#askStateDrawerInput');
     await expect(askInput).toBeVisible();
     await askInput.click();
     await askInput.fill('temporary focus check');
@@ -114,16 +117,13 @@ test.describe('Ask', () => {
     const diag = attachDiagnostics(page);
     await gotoWithBypass(page, STATE_URL);
     await expect(page.locator('#appLoadStatus')).toBeHidden({ timeout: 30_000 });
-    const askInput = page.locator('#askInput');
+    await page.locator('#askStateLauncher').click();
+    const askInput = page.locator('#askStateDrawerInput');
+    await expect(askInput).toBeVisible();
     await askInput.fill("What needs my attention right now?");
-    await page.locator('[data-action="ask-submit"]').click();
-    // A working state must appear promptly (this query matches a deterministic
-    // "starter" shortcut server-side, so it can resolve in under a second --
-    // the loading state may be too brief to reliably observe, hence no direct
-    // assertion on it here).
-    await expect(page.locator('.answer-stage.has-result')).toBeVisible({ timeout: 5_000 });
-    await expect(page.locator('.ask-live-answer')).toBeVisible({ timeout: 45_000 });
-    await expect(page.locator('.ask-live-error')).toHaveCount(0);
+    await page.locator('#askStateDrawer [data-review-batch-form="ask"] button[type="submit"]').click();
+    await expect(page.locator('#askStateDrawer .ask-live-answer')).toBeVisible({ timeout: 45_000 });
+    await expect(page.locator('#askStateDrawer .ask-live-error')).toHaveCount(0);
     diag.assertClean(expect);
   });
 });
@@ -134,7 +134,9 @@ test.describe('Mobile smoke', () => {
     const diag = attachDiagnostics(page);
     await gotoWithBypass(page, STATE_URL);
     await expect(page.locator('#appLoadStatus')).toBeHidden({ timeout: 30_000 });
-    await expect(page.locator('#askInput')).toBeVisible();
+    // Ask's entry point at phone width is the floating launcher, not an
+    // inline field -- confirm it's visible and reachable rather than open it.
+    await expect(page.locator('#askStateLauncher')).toBeVisible();
     await page.locator('.sidebar-nav [data-view="open-items"]').click();
     await expect(page.locator('.open-items-page')).toBeVisible();
     const box = await page.locator('.open-items-page').boundingBox();
