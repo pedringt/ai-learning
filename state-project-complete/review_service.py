@@ -275,10 +275,22 @@ def list_evidence(connection: Connection) -> list[dict]:
 
 
 def list_reviews(connection: Connection, status: str = "open") -> list[dict]:
-    """Return each Review exactly once, even when multiple Evidence items are linked."""
+    """Return each Review exactly once, even when multiple Evidence items are linked.
+
+    Ordering is the single shared consequentiality ranking every consumer
+    (Workspace's attention list, Open Items, and Ask's deterministic starter
+    answers) inherits by taking the first N reviews returned here -- none of
+    them re-rank independently. state_at_risk reviews sort first regardless
+    of age: unlike a proposed_update, a state_at_risk review means Current
+    State may already be wrong, which QA found could otherwise get pushed
+    out of a `.slice(0, N)` cut by older, lower-stakes reviews. Added
+    2026-09-07 after live QA found a "Current State may be at risk" review
+    that led Workspace's attention list disappear from some Ask briefings.
+    """
     connection.row_factory = sqlite3.Row
     rows = connection.execute(
-        "SELECT r.* FROM review_issues r WHERE r.status=? ORDER BY r.created_at, r.id",
+        "SELECT r.* FROM review_issues r WHERE r.status=? "
+        "ORDER BY (r.review_type='state_at_risk') DESC, r.created_at, r.id",
         (status,),
     ).fetchall()
     result = []

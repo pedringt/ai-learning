@@ -5,6 +5,7 @@ import json
 import hashlib
 import re
 import time
+from datetime import date
 from typing import Any, Iterator, Mapping, Protocol
 
 from ask_contract import AskSelection, AskSynthesis
@@ -196,6 +197,24 @@ def _retrieval_query(query: str, previous_answer: Mapping[str, Any] | None) -> s
     # both the user's new instruction and the subject matter already established.
     return f"{query} {prior}"
 
+def _grounding_rules() -> str:
+    """Shared non-negotiable rules injected into every prompt that produces
+    user-visible Ask prose. Added 2026-09-07 after live QA found three
+    related trust problems in the same family: a Review's consequentiality
+    ranking changed between a full answer and a "make this shorter"
+    refinement of the SAME conversation (selection was independently
+    re-derived rather than narrowed from what the fuller answer already
+    surfaced); a retention answer grouped access/security facts under a
+    "Confirmed Retention Constraints" heading; and a next-step
+    recommendation referenced an already-past date as though it were
+    upcoming. The model has no other way to know what day it is, or that a
+    section title should match its own contents -- both must be explicit.
+    """
+    return f"""- Today's date is {date.today().isoformat()}. When referencing a specific date from a record, compare it to today: if that date has already passed, describe it as overdue, still unresolved, or needing follow-up -- never as upcoming or a future next step.
+- Section, group, and category titles must accurately describe the actual conceptual domain of their contents (for example, do not label access or security constraints as retention constraints, or vice versa). If items span more than one domain, either split them into separate sections or use a domain-neutral title.
+- Consequentiality ordering must stay consistent for the same underlying records across every job and every refinement in this conversation. A refinement may narrow, reformat, or shorten what is shown, but it must select from what a fuller answer to the same request would already treat as most important -- never independently re-rank the same records into a different priority order, and never introduce a record that a fuller answer would have omitted."""
+
+
 def _one_call_prompt(query: str, candidates: Mapping[str, Any], previous_answer: Mapping[str, Any] | None) -> str:
     previous = json.dumps(previous_answer, ensure_ascii=False)[:12000] if previous_answer else "null"
     
@@ -243,6 +262,7 @@ Authority rules are non-negotiable:
 - For meeting prep, prefer this information architecture when supported: concise before-the-meeting summary; Decisions needed; Questions to get answered; Useful context. State navigation/actions are rendered separately by the client.
 - Do not repeat the same issue across multiple sections. A Review and linked Question may both appear, but explain each once.
 - Never call something a blocker unless the supplied Question says blocking=true. Never claim a count of blockers unless it matches selected blocking Questions.
+{_grounding_rules()}
 
 Job choices: current_fact, meeting_prep, catch_up, project_update, why_or_provenance, attention_check, historical, drafting, general_project_synthesis, refinement.
 
@@ -267,14 +287,15 @@ Authority rules:
 - History is accepted past change. Evidence is what was said/observed and cannot silently override Current State.
 - Project Rules constrain interpretation.
 - Optimize for relevance, not completeness. Omit tempting recent noise.
-- For refinement requests, select records for the TRANSFORMED answer, not the prior one:
-  - "shorten it": select only the most essential records (top 30% by importance)
-  - "make this 3 bullets": select exactly 3 key facts worth a bullet point each
+- For refinement requests, select records for the TRANSFORMED answer, not the prior one. A refinement narrows or reformats what a fuller answer to this same request would already treat as most important -- it must not independently re-rank the candidates and arrive at a different priority order, and it must not select a record that a fuller answer would have omitted:
+  - "shorten it": from the records a fuller answer would select, keep only the top 30% by importance -- the same top-ranked records, not a fresh independent judgment
+  - "make this 3 bullets": select exactly 3 key facts worth a bullet point each, from the highest-priority records
   - "focus only on blockers": select ONLY Questions where blocking=true and their linked Reviews
   - "turn into agenda": select records that form agenda topics (decisions, timeline, risks)
   - "make it leadership-ready": select only decision/status/risk-relevant records
   - "more detailed": select all supporting records to expand context
   - "what source supports X?" (conversational): select additional source evidence to append
+{_grounding_rules()}
 
 Job choices: current_fact, meeting_prep, catch_up, project_update, why_or_provenance, attention_check, historical, drafting, general_project_synthesis, refinement.
 
@@ -369,6 +390,7 @@ Non-negotiable rules:
 - Do not repeat the same issue across multiple sections. A Review and linked Question may both appear, but explain each once.
 - Never call something a blocker unless the supplied Question says blocking=true. Never claim a count of blockers unless it matches selected blocking Questions.
 - Keep the main output selective; Open Items handles completeness elsewhere.
+{_grounding_rules()}
 
 User request: {query}
 Job: {selection.job}
