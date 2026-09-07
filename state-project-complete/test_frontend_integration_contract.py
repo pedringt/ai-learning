@@ -124,7 +124,11 @@ def test_open_items_action_count_includes_reviews_and_blockers_only():
     # total below is a separate computation (workspaceAttentionHtml) and
     # stayed in context-app.js.
     assert "const actionTotal=" in OPEN_ITEMS_VIEW_JS
-    assert "View all ${total} →" in JS
+    # The attention banner's link text was standardized to a plain
+    # "Open Items ->" (2026-09-07 Workspace redesign); the count now lives
+    # only in the heading ("N items are waiting on you"), not the link.
+    assert "${total} items are waiting on you" in JS
+    assert 'data-view="open-items">Open Items →</button>' in JS
     # "Showing N of total" was removed 2026-09-07 (Workspace polish round):
     # redundant with "View all N ->" immediately above it in the same section.
     assert "Showing ${items.length} of ${total}" not in JS
