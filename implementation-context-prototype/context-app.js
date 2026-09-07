@@ -250,9 +250,14 @@
     // replacing the input, which makes a cleared Ask reappear after navigation.
     const liveStatus = liveRecordStatus();
     const resultBody = state.result ? (state.result.liveAsk ? (state.result.previousLive?`<div class="ask-previous-answer">${ASK?.render(state.result.previousLive,liveStatus)}</div><div class="ask-followup-answer">${ASK?.render(state.result.liveAsk,liveStatus)}</div>`:ASK?.render(state.result.liveAsk,liveStatus)) : state.result.liveAskStreaming ? `${state.result.previousLive?`<div class="ask-previous-answer">${ASK?.render(state.result.previousLive,liveStatus)}</div><div class="ask-followup-stream">${ASK?.renderStream(state.result.liveAskStreamRaw||'',state.result.liveAskPreview||null)}</div>`:ASK?.renderStream(state.result.liveAskStreamRaw||'',state.result.liveAskPreview||null)}` : state.result.liveAskLoading ? `${state.result.previousLive?`<div class="ask-followup-working">Working on your follow-up…</div><div class="ask-previous-answer">${ASK?.render(state.result.previousLive,liveStatus)}</div>`:liveAskLoadingHtml()}` : state.result.liveAskError ? `${state.result.previousLive?`<div class="ask-previous-answer">${ASK?.render(state.result.previousLive,liveStatus)}</div>`:''}<div class="ask-live-error"><h2>Ask is temporarily unavailable.</h2><p>${esc(state.result.liveAskError)}</p></div>` : state.result.fallback ? fallbackResult() : state.result.intent ? intentAskHtml(state.result.intent) : state.result.structured ? structuredAskHtml(state.result.structured) : scenarioResult(state.result.scenario)) : '';
+    // Needs your attention comes before Ask: the decisions waiting on the
+    // user are State's command-center content, not a secondary block under
+    // an AI question box. Only shown on the fresh Workspace landing view --
+    // once an Ask result is on screen it stays hidden, same as before.
     root.innerHTML = `<section class="overview pristine">
       <section class="overview-heading"><div class="overview-heading-row"><div><h2>Northstar</h2></div><button class="btn primary overview-add" data-action="add-info">+ Add note</button></div></section>
-      <section class="ask-panel compact-ask unboxed-ask">${state.result?`<div class="ask-session-row"><div><span class="meta-label">Current ask</span><strong>${esc(state.resultQuery)}</strong></div></div><div class="answer-stage has-result" aria-live="polite"><div class="answer-content">${resultBody}</div></div>${(state.result.liveAsk||state.result.previousLive)?`<div class="ask-followup"><div class="ask-input-row"><input id="askInput" autocomplete="off" aria-label="Refine or ask a follow-up" placeholder="Refine, ask a follow-up, or turn this into something…" value="${esc(state.askInputDraft||'')}"/><button class="btn primary" data-action="ask-submit" ${state.result.liveAskLoading||state.result.liveAskStreaming?'disabled':''}>${state.result.liveAskLoading||state.result.liveAskStreaming?'Working…':'Ask'}</button></div></div>`:''}`:`<div class="ask-title-row"><div><label for="askInput">Ask what State knows about the project</label><p>Search current understanding, open items, notes, and history.</p></div></div><div class="ask-input-row"><input id="askInput" autocomplete="off" aria-label="Ask about the project or create an update" placeholder="What do you want to know or make?" value="${esc(state.askInputDraft||'')}"/><button class="btn primary" data-action="ask-submit">Ask</button></div><div class="prompt-suggestions single-suggestion"><button class="examples-link" data-action="show-examples">See what you can ask →</button></div>`}</section>${state.result?'':workspaceAttentionHtml()}</section>`;
+      ${state.result?'':workspaceAttentionHtml()}
+      <section class="ask-panel compact-ask unboxed-ask">${state.result?`<div class="ask-session-row"><div><span class="meta-label">Current ask</span><strong>${esc(state.resultQuery)}</strong></div></div><div class="answer-stage has-result" aria-live="polite"><div class="answer-content">${resultBody}</div></div>${(state.result.liveAsk||state.result.previousLive)?`<div class="ask-followup"><div class="ask-input-row"><input id="askInput" autocomplete="off" aria-label="Refine or ask a follow-up" placeholder="Refine, ask a follow-up, or turn this into something…" value="${esc(state.askInputDraft||'')}"/><button class="btn primary" data-action="ask-submit" ${state.result.liveAskLoading||state.result.liveAskStreaming?'disabled':''}>${state.result.liveAskLoading||state.result.liveAskStreaming?'Working…':'Ask'}</button></div></div>`:''}`:`<div class="ask-title-row"><div><label for="askInput">Ask what State knows about the project</label><p>Search current understanding, open items, notes, and history.</p></div></div><div class="ask-input-row"><input id="askInput" autocomplete="off" aria-label="Ask about the project or create an update" placeholder="What do you want to know or make?" value="${esc(state.askInputDraft||'')}"/><button class="btn primary" data-action="ask-submit">Ask</button></div><div class="prompt-suggestions single-suggestion"><button class="examples-link" data-action="show-examples">See what you can ask →</button></div>`}</section></section>`;
     // The Ask loading and refinement nodes are emitted here, and renderOverview
     // is called directly on the Ask paths rather than always through render(),
     // so activate the rotating wait states at the point they are created.
@@ -955,13 +960,22 @@
     return proposals.map(p=>p.operation==='retire' ? `Retire current understanding${p.state_item_id?` (${p.state_item_id})`:''}` : p.proposed_statement).join(' • ');
   }
 
-  function upsertBackendReview(review){
+  // toFront defaults to true for the live "I just submitted evidence and it
+  // produced a Review" call sites, where showing the newest review first is
+  // the right UX. Bulk hydration passes toFront:false -- appending in the
+  // order the loop encounters them (the backend's own consequentiality
+  // order, see list_reviews) -- because calling this per-review with the
+  // default unshift inside a hydration loop silently reverses that order:
+  // Workspace's attention list then disagreed with Ask about what mattered
+  // most, since Ask fetches reviews fresh and never goes through this
+  // reversal. Found via live QA 2026-09-07.
+  function upsertBackendReview(review,{toFront=true}={}){
     const existingIndex=state.data.reviews.findIndex(x=>x.id===review.id);
     if(existingIndex>=0){
       state.data.reviews[existingIndex]={...state.data.reviews[existingIndex],...review};
       return state.data.reviews[existingIndex];
     }
-    state.data.reviews.unshift(review);
+    if(toFront) state.data.reviews.unshift(review); else state.data.reviews.push(review);
     return review;
   }
 
@@ -1185,7 +1199,7 @@
         const note=state.data.notes.find(n=>n.evidenceId===raw.evidence_id);
         const mapped=mapApiReview(raw,raw.evidence_content||'');
         mapped.evidenceId=note?.id||`api-note-${raw.evidence_id}`;
-        upsertBackendReview(mapped);
+        upsertBackendReview(mapped,{toFront:false});
       }
       state.backendStatus.reviews='loaded';
       state.backendStatus.questions='loaded';
@@ -1242,7 +1256,7 @@
       replaceBackendOpenReviews(openItems);
       for(const raw of openItems){
         const note=state.data.notes.find(n=>n.evidenceId===raw.evidence_id);
-        const mapped=mapApiReview(raw,raw.evidence_content||''); mapped.evidenceId=note?.id||`api-note-${raw.evidence_id}`; upsertBackendReview(mapped);
+        const mapped=mapApiReview(raw,raw.evidence_content||''); mapped.evidenceId=note?.id||`api-note-${raw.evidence_id}`; upsertBackendReview(mapped,{toFront:false});
       }
     }else{
       state.data.reviews=state.data.reviews.filter(r=>!r.backendReviewId);
@@ -1583,7 +1597,7 @@
     history.replaceState(history.state,'',location.pathname+(cleanedSearch?`?${cleanedSearch}`:'')+'#settings');
     navigateTo('settings');
   }
-  window.STATE_ASK_TEST_API={state,detectAskIntent,findScenario,structuredAskResult,scenarioResult,intentAskHtml,submitAsk,upsertBackendReview,replaceBackendOpenReviews,mapApiReview,looksLikeQuestion,hasExplicitUpdateIntent,linkedReviewFor,questionDialogHtml};
+  window.STATE_ASK_TEST_API={state,detectAskIntent,findScenario,structuredAskResult,scenarioResult,intentAskHtml,submitAsk,upsertBackendReview,replaceBackendOpenReviews,mapApiReview,looksLikeQuestion,hasExplicitUpdateIntent,linkedReviewFor,questionDialogHtml,renderOverview};
   render();
   hydrateBackend();
 })();
