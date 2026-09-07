@@ -153,7 +153,6 @@
     getSlackHealth: () => request('/api/integrations/slack/health'),
     disconnectSlack: () => request('/api/integrations/slack/disconnect', {method:'POST'}),
     resetDemo: () => request('/api/demo/reset', {method:'POST'}),
-    askPreview: query => jsonPost('/api/ask/preview', {query}),
     // Free-form Ask streams visible answer text while the final grounded payload
     // is still validated server-side. Product-owned starters remain deterministic.
     askStream,

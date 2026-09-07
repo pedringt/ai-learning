@@ -610,23 +610,11 @@
       }
       state.result={liveAskLoading:true,liveAskPreview:null,previousLive:visiblePrevious,pendingInput:''};
       renderOverview();
-      let completed=false;
-      const previewPromise=ASK.preview?.(raw);
-      if(previewPromise){
-        previewPromise.then(preview=>{
-          if(!completed && preview && state.result?.liveAskLoading){
-            state.result={...state.result,liveAskPreview:preview};
-            renderOverview();
-          }
-        }).catch(()=>{});
-      }
       try{
         const payload=await ASK.submit(raw,previousLive);
-        completed=true;
         state.result={liveAsk:payload,previousLive:(payload?.followup_mode||(previousLive?'append':'new'))==='append'?previousLive:null};
         state.refinements=[];
       }catch(err){
-        completed=true;
         state.result={liveAskError:err?.message||'State could not produce a grounded answer. Please try again.',previousLive:visiblePrevious};
       }
       renderOverview();
