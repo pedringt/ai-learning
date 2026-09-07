@@ -125,7 +125,7 @@ body.v88-dark .prototype-productbar{background:linear-gradient(135deg,#352a5e,#2
 .overview-heading-row h2{margin:0!important;line-height:1.15!important}
 .overview-heading-row .overview-add{display:inline-flex!important;visibility:visible!important;opacity:1!important;position:static!important;align-items:center!important;justify-content:center!important;align-self:center!important;flex:0 0 auto!important;margin:0!important;padding:9px 14px!important;font-size:12.5px!important;font-weight:700!important;border-radius:9px!important;color:var(--ink)!important;background:var(--surface)!important;border-color:var(--line)!important}
 .overview-heading-row .overview-add:hover{border-color:#b7adce!important}
-.overview-stage{margin:3px 0 0;color:var(--muted);font-size:12.5px;line-height:1.4}
+.overview-heading .overview-stage{margin:3px 0 0;color:var(--muted);font-size:12.5px;line-height:1.4}
 .review-banner .banner-close{position:relative;z-index:2}
 .answer-stage.is-empty{min-height:250px!important;display:grid;place-items:center;background:linear-gradient(180deg,color-mix(in srgb,var(--surface2) 52%,var(--surface)),var(--surface))!important;border:1px solid var(--line);border-radius:14px}
 .answer-empty{max-width:660px!important;padding:28px 24px;text-align:center}
