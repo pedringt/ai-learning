@@ -83,11 +83,11 @@
       <h2 id="dialogTitle">State keeps the project’s working understanding current.</h2>
       <p>State separates accepted Current State, what the project currently treats as true, from the evidence and questions that still need judgment.</p>
       <ul class="demo-orientation-list">
-        <li><strong>1. Information comes in</strong><span>Notes and messages from approved Slack channels are captured as Evidence. Other project information can be added manually as Notes.</span></li>
+        <li><strong>1. Add</strong><span>Click <strong>+ Add note</strong> for a finding, decision, or meeting update. Slack messages from approved channels are captured as Evidence automatically.</span></li>
         <li><strong>2. State interprets what changed</strong><span>AI compares new Evidence with Current State and identifies possible changes or unresolved questions.</span></li>
-        <li><strong>3. You decide what becomes current</strong><span>Important changes go to Review. AI can propose a change, but it cannot update Current State on its own.</span></li>
-        <li><strong>4. Current State stays maintained</strong><span>Accepted changes update Current State, the readable project view of what's currently true. Previous decisions remain visible in History.</span></li>
-        <li><strong>5. Ask works from that maintained context</strong><span>Use Ask to catch up, understand decisions, find unresolved questions, or prepare for meetings.</span></li>
+        <li><strong>3. Review &amp; decide</strong><span>Open <strong>Open Items</strong> to see what's pending. Each one shows the current understanding, the proposed change, and your decision -- accept it or leave Current State unchanged.</span></li>
+        <li><strong>4. Know</strong><span>Accepted changes update Current State, the readable project view of what's currently true. Previous decisions remain visible in History.</span></li>
+        <li><strong>5. Ask what you need to know</strong><span>Try "What changed this week?", "What needs review right now?", "Show me security notes", or "What's unresolved?"</span></li>
       </ul>
       <p class="demo-flow-principle">AI interprets → software enforces → people decide</p>
       <div class="demo-concepts">

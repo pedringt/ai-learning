@@ -208,11 +208,11 @@
     if(items.length<2) blockers.slice(0,2-items.length).forEach(q=>items.push({kind:'blocker',id:q.id,label:'Blocking question',title:q.text,detail:q.blocks?`Blocks ${q.blocks}`:'A concrete dependency is waiting on this answer.'}));
     const total=reviews.length+blockers.length;
     if(!items.length){
-      return `<section class="workspace-attention is-clear"><div class="workspace-attention-head"><div><span class="eyebrow">Needs your attention</span><h3>Nothing needs action right now</h3><p>No Reviews or blocking questions are waiting on you.</p></div><button class="text-button" data-view="open-items">View Open Items →</button></div></section>`;
+      return `<section class="workspace-attention is-clear"><div class="workspace-attention-head"><div><span class="eyebrow">Needs your attention</span><h3>Nothing needs action right now</h3><p>No Reviews or blocking questions are waiting on you. Try asking a question above, or browsing Notes.</p></div><button class="text-button" data-view="open-items">View Open Items →</button></div></section>`;
     }
     const rows=items.map(item=>`<button class="attention-item ${item.kind}" data-action="${item.kind==='review'?'open-specific-review':'go-open-question'}" ${item.kind==='review'?`data-review-id="${esc(item.id)}"`:`data-question-id="${esc(item.id)}"`}><span class="attention-item-copy"><span class="attention-kind">${esc(item.label)}</span><strong>${esc(item.title)}</strong><span>${esc(item.detail)}</span></span><span class="attention-arrow" aria-hidden="true">→</span></button>`).join('');
     const more=Math.max(0,total-items.length);
-    return `<section class="workspace-attention"><div class="workspace-attention-head"><div><span class="eyebrow">Needs your attention</span><h3>${total===1?'1 item is waiting on you':`${total} items are waiting on you`}</h3></div><button class="text-button" data-view="open-items">View all ${total} →</button></div><div class="attention-list">${rows}</div>${more?`<p class="attention-more-summary">Showing ${items.length} of ${total}</p>`:''}</section>`;
+    return `<section class="workspace-attention"><div class="workspace-attention-head"><div><span class="eyebrow">Needs your attention</span><h3>${total===1?'1 item is waiting on you':`${total} items are waiting on you`}</h3><p class="attention-intro-text">Click an item below to open it in Open Items and make a decision.</p></div><button class="text-button" data-view="open-items">View all ${total} →</button></div><div class="attention-list">${rows}</div>${more?`<p class="attention-more-summary">Showing ${items.length} of ${total}</p>`:''}</section>`;
   }
   function renderWorkspaceAttentionOnly(){
     if(state.view!=='overview' || state.result) return false;
@@ -704,7 +704,18 @@
     return `<div class="result-label">Refined result</div><h2>Executive version</h2><p class="result-lede">Troubleshooting remains the pilot focus, but the project is preserving unresolved safety and authority questions rather than turning them into assumptions.</p>${pendingNotice(pending)}`;
   }
 
-  function fallbackResult(){ return `<div class="result-label">Project knowledge</div><h2>I don't have a reliable answer for that from the project knowledge available in this prototype.</h2><p class="result-lede">I’d rather leave this unresolved than route you to an unrelated canned answer.</p><div class="inline-actions"><button class="btn primary" data-action="track-question" data-question="${esc(state.resultQuery)}">Track as open question →</button><button class="btn secondary" data-view="notes">Browse Notes</button></div>`; }
+  function fallbackResult(){
+    const statusRank={pending:0,accepted:1,reviewed:2,no_review_needed:3};
+    const topics=askTopics(norm(state.resultQuery));
+    const notes=topics.length?state.data.notes.filter(n=>overlapsTopics(n,topics)).slice().sort((a,b)=>{
+      const ra=statusRank[a.status]??99, rb=statusRank[b.status]??99;
+      return ra!==rb?ra-rb:sortDateDesc(a,b);
+    }).slice(0,3):[];
+    const trackActions=`<div class="inline-actions"><button class="btn primary" data-action="track-question" data-question="${esc(state.resultQuery)}">Track as open question →</button><button class="btn secondary" data-view="notes">Browse Notes</button></div>`;
+    if(notes.length) return `<div class="result-label">Related material</div><h2>Ask didn’t find an exact match, but here’s what State knows about that topic.</h2><div class="result-note-list">${notes.map(simpleNote).join('')}</div>${trackActions}`;
+    const examples=['What changed this week?','What needs review right now?','Show me security notes','What’s unresolved?'];
+    return `<div class="result-label">Project knowledge</div><h2>Ask doesn’t recognize that phrasing yet.</h2><p class="result-lede">I’d rather leave this unresolved than route you to an unrelated canned answer. Try one of these instead:</p><div class="ask-example-list">${examples.map(x=>`<button class="prompt" data-action="example-prompt" data-prompt="${esc(x)}">${esc(x)}</button>`).join('')}</div>${trackActions}`;
+  }
 
   function refine(){ const v=norm(document.getElementById('refineInput')?.value||''); if(!v)return; let kind='exec'; if(v.includes('short'))kind='shorter'; else if(v.includes('auth'))kind='auth'; else if(v.includes('evidence')||v.includes('support'))kind='evidence'; state.refinements.push(kind); renderOverview(); }
 
@@ -892,8 +903,8 @@
 
 
   function showDemoHelp(){
-    const steps=['Information comes in','State interprets it','Important changes need review','Current State stays up to date','Project + Ask use that understanding'];
-    showDialog(`<span class="eyebrow">How this works</span><h2 id="dialogTitle">State keeps the project’s working understanding current.</h2><ul class="demo-flow">${steps.map(s=>`<li>${esc(s)}</li>`).join('')}</ul><p class="demo-flow-principle">AI interprets → software enforces → people decide</p><div class="demo-start"><span class="meta-label">Good places to start</span><button class="demo-start-action" data-action="demo-start-ask"><strong>Ask about Northstar</strong><span>Put a useful project question in Ask →</span></button><button class="demo-start-action" data-action="demo-start-note"><strong>Add a sample note</strong><span>Try new project information and see how Review handles it →</span></button><button class="demo-start-action" data-action="demo-start-project"><strong>Explore the maintained Project</strong><span>Read the definitive view of what the team currently treats as true →</span></button></div><div class="demo-reset-help"><div><strong>Want to start over?</strong><span>Restore the curated Northstar starting scenario. You can also reset Northstar from Project Settings.</span></div><button class="text-button demo-reset-link" data-action="confirm-demo-reset">Reset example data →</button></div><div class="dialog-actions demo-help-actions"><button class="btn primary" data-action="close-dialog">Got it</button></div>`);
+    const steps=['Add information','State interprets what changed','Review & decide','Current State stays maintained','Ask what you need to know'];
+    showDialog(`<span class="eyebrow">How this works</span><h2 id="dialogTitle">State keeps the project’s working understanding current.</h2><ul class="demo-flow">${steps.map(s=>`<li>${esc(s)}</li>`).join('')}</ul><p class="demo-flow-principle">AI interprets → software enforces → people decide</p><div class="demo-start"><span class="meta-label">Good places to start</span><button class="demo-start-action" data-action="demo-start-ask"><strong>Ask about Northstar</strong><span>Put a useful project question in Ask →</span></button><button class="demo-start-action" data-action="demo-start-note"><strong>Add a sample note</strong><span>Try new project information and see how Review handles it →</span></button><button class="demo-start-action" data-action="demo-start-project"><strong>Explore Current State</strong><span>Read the maintained view of what the project currently treats as true →</span></button></div><div class="demo-reset-help"><div><strong>Want to start over?</strong><span>Restore the curated Northstar starting scenario. You can also reset Northstar from Settings.</span></div><button class="text-button demo-reset-link" data-action="confirm-demo-reset">Reset example data →</button></div><div class="dialog-actions demo-help-actions"><button class="btn primary" data-action="close-dialog">Got it</button></div>`);
   }
 
   function showExamples(){
