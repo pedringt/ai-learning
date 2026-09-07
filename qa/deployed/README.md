@@ -78,30 +78,33 @@ public, so no token is needed to read its deployed build SHA.
   `state-api-staging.onrender.com` specifically -- every write path checks the
   target host first and refuses to run against anything else.
 
-## Known findings (as of the session that wrote this suite)
+## Findings from building/running this suite
 
-While validating these tests directly against live staging (via a temporary
-Vercel share link, not the automation secret), one real product bug turned up
-that isn't part of the tasks this suite was built for, so it wasn't fixed here
--- flagging it instead per working preference:
+- **Fixed: "Answer found · Awaiting review" didn't reliably appear.**
+  `clarifyQuestionsAwaitingReview()` in `context-quickwins.js` tags an open
+  question with `.is-awaiting-review` when an open Review's
+  `resolves_question_ids` names it. Root cause: it captured the
+  `.open-items-page` element, awaited `getReviews('open')`, then bailed via
+  `if(!page.isConnected)return` if Open Items had progressively re-rendered
+  (replacing that DOM node) while the request was in flight -- which happens
+  routinely during hydration, so the fetch's result was silently discarded
+  more often than not. Fixed by re-querying the live `.open-items-page` at
+  apply time instead of trusting the possibly-detached original reference.
+  Confirmed against real staging: the Deep QA run that first caught this
+  (11/12 failing, unrelated CORS bug below) still passed this specific
+  assertion on its own, and a second run after the CORS fix also passed it
+  cleanly -- consistent with a race that was usually won, not a hard
+  failure, which is exactly why the mocked suite (which doesn't load
+  `context-quickwins.js` at all) never had a chance to catch it either way.
 
-- **"Answer found · Awaiting review" doesn't always appear -- looks racy.**
-  `clarifyQuestionsAwaitingReview()` in `context-quickwins.js` is supposed to
-  tag an open question with `.is-awaiting-review` when an open Review's
-  `resolves_question_ids` names it (confirmed live: `demo-review-retention`
-  correctly reports `resolves_question_ids: ["q-retention"]`). Manually
-  reloading staging repeatedly, the `q-retention` row in Open Items never got
-  the class -- but the first automated Deep QA run against this exact code
-  passed that assertion cleanly. Root cause looks like a race in that
-  function against Open Items' own progressive re-renders: it captures a
-  `page` element, awaits `getReviews('open')`, then bails via
-  `if(!page.isConnected)return` if Open Items re-rendered in the meantime.
-  Whether the *next* MutationObserver-triggered call lands cleanly seems to
-  depend on exact timing, which would explain manual testing missing it
-  while an automated run (different load timing) didn't. The mocked
-  Playwright suite can't see this either way because it doesn't load
-  `context-quickwins.js` at all. Worth a closer look since it's intermittent,
-  not fixed here.
+- **Fixed: Vercel bypass headers broke every backend API call.** The suite
+  originally applied the bypass secret as an `extraHTTPHeaders` header on
+  every request in the browser context -- including the page's own
+  cross-origin fetches to the Render backend, which forced a CORS preflight
+  the backend doesn't allow. First real Deep QA run failed 11/12 tests on
+  this. Switched to Vercel's query-param + set-cookie method
+  (`gotoWithBypass()` in `helpers.js`), which only ever touches the Vercel
+  origin. Confirmed via a clean 12/12 run after the fix.
 
 ## Local run (optional)
 
