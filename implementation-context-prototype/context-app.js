@@ -231,13 +231,13 @@
     }).join('');
     return `<section class="workspace-recent"><div class="workspace-recent-head"><span class="eyebrow">Recently updated</span><button class="text-button" data-view="history">View all History →</button></div><div class="recent-update-list">${rows}</div></section>`;
   }
-  // Answers "Where does the project stand?" -- quiet link-outs, not another
-  // dashboard of stat cards.
-  function quietOrientationHtml(){
+  // Answers "Where does the project stand?" -- one quiet link-out card, not
+  // a dashboard of stat cards.
+  function projectStatusCardHtml(){
     const last=(state.data.history||[]).slice().sort(sortDateDesc)[0];
     const lastUpdated=last?esc(last.date||formatBackendDate(last.changed_at)):null;
     const openCount=openQuestions().length;
-    return `<section class="workspace-orientation"><div class="workspace-orientation-item"><strong>Current State</strong><span>The maintained view of what the project currently treats as true.${lastUpdated?` Last updated ${lastUpdated}.`:''}</span><button class="text-button" data-view="project-overview">Browse Current State →</button></div><div class="workspace-orientation-item"><strong>${openCount} open question${openCount===1?'':'s'}</strong><span>Preserved as unresolved until there's enough evidence to answer them.</span><button class="text-button" data-view="open-items">View Open Items →</button></div></section>`;
+    return `<section class="workspace-status"><span class="eyebrow">Project status</span><div class="workspace-status-item"><strong>Current State</strong><span>${lastUpdated?`Updated ${lastUpdated}`:'The maintained view of what the project currently treats as true.'}</span><button class="text-button" data-view="project-overview">Browse →</button></div><div class="workspace-status-item"><strong>${openCount} open question${openCount===1?'':'s'}</strong><button class="text-button" data-view="open-items">View Open Items →</button></div></section>`;
   }
   function renderWorkspaceAttentionOnly(){
     if(state.view!=='overview' || state.result) return false;
@@ -270,21 +270,20 @@
     };
   }
   function renderOverview(){
-    // askInputDraft is kept current by the input event handler. Reading the old
-    // DOM value here can resurrect a submitted question while the result view is
-    // replacing the input, which makes a cleared Ask reappear after navigation.
-    const liveStatus = liveRecordStatus();
-    const resultBody = state.result ? (state.result.liveAsk ? (state.result.previousLive?`<div class="ask-previous-answer">${ASK?.render(state.result.previousLive,liveStatus)}</div><div class="ask-followup-answer">${ASK?.render(state.result.liveAsk,liveStatus)}</div>`:ASK?.render(state.result.liveAsk,liveStatus)) : state.result.liveAskStreaming ? `${state.result.previousLive?`<div class="ask-previous-answer">${ASK?.render(state.result.previousLive,liveStatus)}</div><div class="ask-followup-stream">${ASK?.renderStream(state.result.liveAskStreamRaw||'',state.result.liveAskPreview||null)}</div>`:ASK?.renderStream(state.result.liveAskStreamRaw||'',state.result.liveAskPreview||null)}` : state.result.liveAskLoading ? `${state.result.previousLive?`<div class="ask-followup-working">Working on your follow-up…</div><div class="ask-previous-answer">${ASK?.render(state.result.previousLive,liveStatus)}</div>`:liveAskLoadingHtml()}` : state.result.liveAskError ? `${state.result.previousLive?`<div class="ask-previous-answer">${ASK?.render(state.result.previousLive,liveStatus)}</div>`:''}<div class="ask-live-error"><h2>Ask is temporarily unavailable.</h2><p>${esc(state.result.liveAskError)}</p></div>` : state.result.fallback ? fallbackResult() : state.result.intent ? intentAskHtml(state.result.intent) : state.result.structured ? structuredAskHtml(state.result.structured) : scenarioResult(state.result.scenario)) : '';
-    // Needs your attention comes before Ask: the decisions waiting on the
-    // user are State's command-center content, not a secondary block under
-    // an AI question box. Only shown on the fresh Workspace landing view --
-    // once an Ask result is on screen it stays hidden, same as before.
+    // Needs your attention is the whole top of Workspace because it's the
+    // only thing here that requires action; Recently Updated and Project
+    // Status are catch-up/orientation, one step down in the hierarchy.
+    // Ask no longer has an inline instance in Workspace -- it's a global
+    // read-only utility reached from the floating Ask State control
+    // (context-product-polish.js), not a Workspace feature.
     root.innerHTML = `<section class="overview pristine">
-      <section class="overview-heading"><div class="overview-heading-row"><div><h2>Northstar</h2></div><button class="btn primary overview-add" data-action="add-info">+ Add Evidence</button></div></section>
+      <section class="overview-heading"><div class="overview-heading-row"><div><span class="eyebrow">Workspace</span><h2>Northstar</h2></div><button class="btn primary overview-add" data-action="add-info">+ Add Evidence</button></div></section>
       ${workspaceAttentionHtml()}
-      ${recentUpdatesHtml()}
-      ${quietOrientationHtml()}
-      <section class="ask-panel compact-ask unboxed-ask">${state.result?`<div class="ask-session-row"><div><span class="meta-label">Current ask</span><strong>${esc(state.resultQuery)}</strong></div></div><div class="answer-stage has-result" aria-live="polite"><div class="answer-content">${resultBody}</div></div>${(state.result.liveAsk||state.result.previousLive)?`<div class="ask-followup"><div class="ask-input-row"><input id="askInput" autocomplete="off" aria-label="Refine or ask a follow-up" placeholder="Refine, ask a follow-up, or turn this into something…" value="${esc(state.askInputDraft||'')}"/><button class="btn primary" data-action="ask-submit" ${state.result.liveAskLoading||state.result.liveAskStreaming?'disabled':''}>${state.result.liveAskLoading||state.result.liveAskStreaming?'Working…':'Ask'}</button></div></div>`:''}`:`<div class="ask-title-row"><div><label for="askInput">Ask what State knows about the project</label><p>Search current understanding, open items, notes, and history.</p></div></div><div class="ask-input-row"><input id="askInput" autocomplete="off" aria-label="Ask about the project or create an update" placeholder="What do you want to know or make?" value="${esc(state.askInputDraft||'')}"/><button class="btn primary" data-action="ask-submit">Ask</button></div><div class="prompt-suggestions single-suggestion"><button class="examples-link" data-action="show-examples">See what you can ask →</button></div>`}</section></section>`;
+      <div class="workspace-below-grid">
+        ${recentUpdatesHtml()}
+        ${projectStatusCardHtml()}
+      </div>
+    </section>`;
     // The Ask loading and refinement nodes are emitted here, and renderOverview
     // is called directly on the Ask paths rather than always through render(),
     // so activate the rotating wait states at the point they are created.
@@ -967,15 +966,6 @@
     showDialog(`<span class="eyebrow">How this works</span><h2 id="dialogTitle">State keeps accepted understanding separate from new information.</h2><div class="state-help-steps">${steps.map(([title,body])=>`<div class="state-help-step"><strong>${esc(title)}</strong><span>${esc(body)}</span></div>`).join('')}</div><p class="demo-flow-principle">AI interprets → software enforces → people decide</p><div class="demo-start"><span class="meta-label">Good places to start</span><button class="demo-start-action" data-action="demo-start-ask"><strong>Ask about Northstar</strong><span>Put a useful project question in Ask →</span></button><button class="demo-start-action" data-action="demo-start-note"><strong>Add a sample note</strong><span>Try new project information and see how Review handles it →</span></button><button class="demo-start-action" data-action="demo-start-project"><strong>Explore Current State</strong><span>Read the maintained view of what the project currently treats as true →</span></button></div><div class="demo-reset-help"><div><strong>Want to start over?</strong><span>Restore the curated Northstar starting scenario. You can also reset Northstar from Settings.</span></div><button class="text-button demo-reset-link" data-action="confirm-demo-reset">Reset example data →</button></div><div class="dialog-actions demo-help-actions"><button class="btn primary" data-action="close-dialog">Got it</button></div>`);
   }
 
-  function showExamples(){
-    const groups=[
-      ['Catch me up',['What’s the current plan for the pilot?','What should I know about access and entitlements?']],
-      ['What’s still unresolved?',['What still needs to be decided before launch?','What is blocking the pilot right now?']],
-      ['Prepare for a meeting',['Prepare me for the security meeting.','What has changed recently?']]
-    ];
-    showDialog(`<span class="eyebrow">Ask examples</span><h2 id="dialogTitle">What can I ask?</h2><p>Choose an example to put it in Ask. You can edit it before sending.</p><div class="example-groups">${groups.map(([g,items])=>`<section><h3>${g}</h3>${items.map(x=>`<button class="example-row" data-action="example-fill" data-prompt="${esc(x)}">${esc(x)}<span aria-hidden="true">→</span></button>`).join('')}</section>`).join('')}</div>`);
-  }
-
   function showDialog(html){
     if(overlay.hidden) state.dialogReturnFocus=document.activeElement instanceof HTMLElement ? document.activeElement : null;
     // Showing any new dialog invalidates a previous auto-close timer (if any)
@@ -1511,22 +1501,21 @@
     const sectionToggle=e.target.closest('[data-action="toggle-open-item-section"]'); if(sectionToggle){ const key=sectionToggle.dataset.section; const reviews=uiPendingReviews(), questions=openQuestions(); const count=key==='reviews'?reviews.length:key==='blockers'?questions.filter(q=>q.blocking).length:questions.filter(q=>!q.blocking).length; const current=state.openItemSections[key]===null?(key==='questions'&&count>5):!!state.openItemSections[key]; state.openItemSections[key]=!current; renderOpenItems(); return; }
     const reviewToggle=e.target.closest('[data-action="toggle-review-card"]'); if(reviewToggle){ const id=reviewToggle.dataset.reviewId; state.expandedReviewId=state.expandedReviewId===id?null:id; renderOpenItems(); return; }
     const provenanceToggle=e.target.closest('[data-action="toggle-provenance"]'); if(provenanceToggle){ const body=provenanceToggle.parentElement?.querySelector('.project-provenance-body'); if(body){ const expanded=!body.hidden; body.hidden=expanded; provenanceToggle.setAttribute('aria-expanded',String(!expanded)); provenanceToggle.textContent=expanded?'Why this is current →':'Hide why this is current'; } return; }
-    const p=e.target.closest('[data-prompt]:not([data-action="example-fill"])'); if(p){ submitAsk(p.dataset.prompt); return; }
+    const p=e.target.closest('[data-prompt]'); if(p){ submitAsk(p.dataset.prompt); return; }
     const a=e.target.closest('[data-action]'); if(!a)return;
     const act=a.dataset.action;
     if(act==='ask-submit')submitAsk();
     else if(act==='open-specific-review'){closeDialog();state.expandedReviewId=a.dataset.reviewId;state.openItemSections.reviews=false;navigateTo('open-items');}
     else if(act==='toggle-open-questions'){state.openQuestionsExpanded=!state.openQuestionsExpanded;renderOpenItems();}
-    else if(act==='show-examples')showExamples();
-    else if(act==='example-fill'){
-      const q=a.dataset.prompt||'';
-      state.askInputDraft=q;
-      closeDialog();
-      const input=document.getElementById('askInput');
-      if(input){input.value=q;input.focus();input.setSelectionRange(input.value.length,input.value.length);requestAnimationFrame(()=>{input.focus();input.setSelectionRange(input.value.length,input.value.length);});}
-    }
     else if(act==='show-demo-help')showDemoHelp();
-    else if(act==='demo-start-ask'){closeDialog();navigateTo('overview');state.askInputDraft='What should I know about the Northstar pilot?';const input=document.getElementById('askInput');if(input){input.value=state.askInputDraft;input.focus();input.setSelectionRange(input.value.length,input.value.length);requestAnimationFrame(()=>input.focus());}}
+    else if(act==='demo-start-ask'){
+      closeDialog();navigateTo('overview');
+      // Ask no longer has an inline Workspace instance -- routes into the
+      // Ask State drawer (context-product-polish.js) the same way its own
+      // starter chips do, via a synthetic click on its data-review-batch-prompt
+      // delegated listener.
+      const proxy=document.createElement('button');proxy.type='button';proxy.dataset.reviewBatchPrompt='What should I know about the Northstar pilot?';document.body.appendChild(proxy);proxy.click();proxy.remove();
+    }
     else if(act==='demo-start-note'){closeDialog();showAddDialog(state.data.sampleInformationOptions?.plan||state.data.sampleInformation||'');}
     else if(act==='demo-start-project'){closeDialog();navigateTo('project-overview');}
     else if(act==='project-settings')showProjectSettings();

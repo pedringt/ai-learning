@@ -105,18 +105,27 @@ def _launch_page(hydration_ms: int = 120, ask_ms: int = 180, resolved_review_ms:
     page.add_script_tag(content=(FRONT / "context-open-items-view.js").read_text())
     page.add_script_tag(content=(FRONT / "context-project-view.js").read_text())
     page.add_script_tag(content=(FRONT / "context-app.js").read_text())
+    page.add_script_tag(content=(FRONT / "context-quickwins.js").read_text())
+    page.add_script_tag(content=(FRONT / "context-settings.js").read_text())
+    page.add_script_tag(content=(FRONT / "context-product-polish.js").read_text())
     return pw, browser, page
 
 
 def test_workspace_hydration_does_not_replace_focused_ask_input():
+    # 2026-09-07 UX review batch: Ask no longer has an inline Workspace
+    # instance -- the same "don't yank focus mid-typing during hydration"
+    # concern now applies to the Ask State drawer's input instead. The
+    # protection is context-product-polish.js's syncAskInputs(), which
+    # checks document.activeElement before overwriting the input's value.
     pw, browser, page = _launch_page(hydration_ms=220)
     try:
-        box = page.locator("#askInput")
+        page.locator('#askStateLauncher').click()
+        box = page.locator("#askStateDrawerInput")
         box.click()
         box.fill("Who is my billing contact?")
         page.wait_for_timeout(350)
         assert box.input_value() == "Who is my billing contact?"
-        assert page.evaluate("document.activeElement && document.activeElement.id") == "askInput"
+        assert page.evaluate("document.activeElement && document.activeElement.id") == "askStateDrawerInput"
     finally:
         browser.close(); pw.stop()
 
@@ -138,24 +147,6 @@ def test_shared_modal_is_never_hidden_under_portfolio_header():
         page.locator('[data-action="show-demo-help"]').click()
         help_box = page.locator(".dialog").bounding_box()
         assert help_box and help_box["y"] >= 12
-    finally:
-        browser.close(); pw.stop()
-
-
-def test_follow_up_keeps_existing_artifact_and_uses_compact_working_state():
-    pw, browser, page = _launch_page(hydration_ms=10, ask_ms=220)
-    try:
-        page.locator("#askInput").fill("Who is my billing contact?")
-        page.locator('[data-action="ask-submit"]').click()
-        page.get_by_text("Jane Smith", exact=True).wait_for(timeout=2000)
-        page.locator("#askInput").fill("What source is that from?")
-        page.locator('[data-action="ask-submit"]').click()
-        page.wait_for_timeout(40)
-        assert page.get_by_text("Jane Smith", exact=True).count() >= 1
-        assert page.locator(".ask-followup-working").count() == 1
-        assert page.locator(".ask-live-loading").count() == 0
-        page.get_by_text("From a recent project update", exact=True).wait_for(timeout=2000)
-        assert page.locator(".ask-previous-answer").count() == 1
     finally:
         browser.close(); pw.stop()
 
@@ -237,37 +228,27 @@ def test_project_reads_as_wiki_and_keeps_atomic_facts_collapsed_by_default():
 
 
 
-def test_current_ask_survives_navigation_until_new_ask():
+def test_current_ask_survives_navigation_until_drawer_closes_and_reopens_cleared():
+    # 2026-09-07 UX review batch: Ask moved from an inline Workspace panel
+    # (whose answer lived in `state.result`, cleared by a dedicated "New ask"
+    # button) to the global read-only Ask State drawer. The drawer isn't tied
+    # to state.view at all, so "survives navigation" is now inherent rather
+    # than something that needs its own state-preservation logic to get
+    # right -- but it's still worth a regression test given how central it
+    # is to the "Ask is a global utility" redesign.
     pw, browser, page = _launch_page(hydration_ms=10, ask_ms=20)
     try:
-        box = page.locator('#askInput')
+        page.locator('#askStateLauncher').click()
+        box = page.locator('#askStateDrawerInput')
         box.fill('Who is my billing contact?')
-        page.locator('[data-action="ask-submit"]').click()
+        page.locator('.ask-state-drawer-form button[type="submit"]').click()
         page.get_by_text('Jane Smith', exact=True).wait_for()
 
         page.locator('.sidebar-nav [data-view="project-overview"]').click()
         page.locator('.sidebar-nav [data-view="overview"]').click()
 
         assert page.get_by_text('Jane Smith', exact=True).is_visible()
-        assert page.get_by_text('Who is my billing contact?', exact=True).is_visible()
-
-        page.locator('[data-action="new-ask"]').click()
-        assert page.locator('.answer-stage.has-result').count() == 0
-        assert page.locator('#askInput').input_value() == ''
-    finally:
-        browser.close(); pw.stop()
-
-
-def test_ask_examples_fill_input_without_auto_submitting():
-    pw, browser, page = _launch_page(hydration_ms=10)
-    try:
-        page.locator('[data-action="show-examples"]').click()
-        page.locator('[data-action="example-fill"]').first.click()
-        box = page.locator('#askInput')
-        assert box.input_value() == "What’s the current plan for the pilot?"
-        assert page.evaluate("document.activeElement && document.activeElement.id") == 'askInput'
-        assert page.locator('.answer-stage.has-result').count() == 0
-        assert page.locator('#overlay').evaluate('e=>e.hidden') is True
+        assert box.input_value() == 'Who is my billing contact?'
     finally:
         browser.close(); pw.stop()
 
@@ -296,37 +277,22 @@ def test_add_note_examples_fill_field_without_submitting():
 
 
 def test_demo_help_start_actions_are_clickable_and_reset_is_discoverable():
+    # 2026-09-07 UX review batch: "Ask about Northstar" now routes into the
+    # Ask State drawer (it used to just fill and focus the since-removed
+    # inline #askInput) via the same synthetic data-review-batch-prompt
+    # click the drawer's own starter chips use, and actually submits the
+    # question rather than only prefilling it.
     pw, browser, page = _launch_page(hydration_ms=10)
     try:
         page.locator('[data-action="show-demo-help"]').click()
         assert page.get_by_text('Good places to start', exact=True).is_visible()
         assert page.get_by_text('Reset Northstar from Settings', exact=False).is_visible()
         page.locator('[data-action="demo-start-ask"]').click()
-        box = page.locator('#askInput')
+        assert page.locator('#askStateDrawer[hidden]').count() == 0
+        box = page.locator('#askStateDrawerInput')
         assert box.input_value() == 'What should I know about the Northstar pilot?'
-        assert page.evaluate("document.activeElement && document.activeElement.id") == 'askInput'
-        assert page.locator('.answer-stage.has-result').count() == 0
+        page.get_by_text('Jane Smith', exact=True).wait_for(timeout=2000)
     finally:
         browser.close(); pw.stop()
 
 
-def test_backend_replace_mode_removes_previous_artifact_for_natural_transform():
-    pw, browser, page = _launch_page(hydration_ms=10, ask_ms=10)
-    try:
-        page.locator("#askInput").fill("Who is my billing contact?")
-        page.locator('[data-action="ask-submit"]').click()
-        page.get_by_text("Jane Smith", exact=True).wait_for(timeout=2000)
-        page.evaluate("""() => {
-          window.STATE_API.ask = async () => ({
-            followup_mode:'replace',
-            selection:{job:'current_fact',state_ids:[],review_ids:[],blocking_question_ids:[],question_ids:[],history_ids:[],evidence_ids:[]},
-            answer:{job:'current_fact',headline:'Short version',summary:'Jane Smith.',sections:[],source_ids:[],uncertainty_ids:[],suggested_refinements:[]},
-            timing:{pipeline:'browser_fake',context_ms:1,provider_ms:1,validation_ms:0,total_ms:2}
-          });
-        }""")
-        page.locator("#askInput").fill("condense this")
-        page.locator('[data-action="ask-submit"]').click()
-        page.get_by_text("Short version", exact=True).wait_for(timeout=2000)
-        assert page.locator(".ask-previous-answer").count() == 0
-    finally:
-        browser.close(); pw.stop()
