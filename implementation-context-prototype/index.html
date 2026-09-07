@@ -16,7 +16,7 @@
       var local = location.protocol === 'file:';
       document.write('<link rel="icon" href="' + (local ? '../favicon.svg' : '/favicon.svg') + '">');
       document.write('<link rel="stylesheet" href="' + (local ? '../site-shell.css' : '/site-shell.css') + '">');
-      document.write('<link rel="stylesheet" href="' + (local ? 'context-tool.css?v=r52-mobile-launcher-compact' : '/implementation-context-prototype/context-tool.css?v=r52-mobile-launcher-compact') + '">');
+      document.write('<link rel="stylesheet" href="' + (local ? 'context-tool.css?v=r53-mobile-nav-and-copy-polish' : '/implementation-context-prototype/context-tool.css?v=r53-mobile-nav-and-copy-polish') + '">');
     })();
   </script>
   <style id="state-critical-modal">
@@ -39,11 +39,29 @@
     @media(max-width:760px){
       #overlay{padding:max(14px,env(safe-area-inset-top)) 12px max(14px,env(safe-area-inset-bottom))!important;}
       #overlay>.dialog{max-height:calc(100dvh - 28px)!important;}
-      .sidebar-nav{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:6px!important;overflow:visible!important;padding:0!important;}
+      /* Mobile primary nav is Workspace, Open Items, Current State, More --
+         the three core State destinations plus one collapsed entry point,
+         not a compressed grid of every sidebar item. Notes/History/Settings/
+         How this works move into the More panel here; desktop is untouched
+         (.sidebar-nav-more stays display:none there). */
+      .sidebar-nav{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:6px!important;overflow:visible!important;padding:0!important;}
       .sidebar-nav-group{display:contents!important;}
-      .sidebar-nav .nav-item{width:100%!important;min-width:0!important;justify-content:center!important;text-align:center!important;white-space:normal!important;padding:8px 6px!important;font-size:11px!important;line-height:1.2!important;}
+      .sidebar-nav .nav-item{width:100%!important;min-width:0!important;justify-content:center!important;text-align:center!important;white-space:normal!important;padding:8px 4px!important;font-size:10.5px!important;line-height:1.2!important;}
       .sidebar-nav .nav-item::after{display:none!important;}
-      .sidebar-nav .nav-count{position:static!important;margin-left:4px!important;}
+      .sidebar-nav .nav-count{position:static!important;margin-left:3px!important;}
+      .sidebar-nav>.nav-item[data-view="notes"],
+      .sidebar-nav>.nav-item[data-view="history"],
+      .sidebar-nav>.nav-item[data-view="settings"],
+      .app-sidebar>.demo-help-button{display:none!important;}
+      .sidebar-nav>.nav-item[data-view="overview"]{order:1!important;}
+      .sidebar-nav .open-items-nav-toggle{order:2!important;}
+      .sidebar-nav .project-nav-toggle{order:3!important;}
+      .sidebar-nav-more{order:4!important;}
+      .sidebar-nav-more{display:block!important;position:relative!important;}
+      .sidebar-nav-more .nav-more-toggle{width:100%!important;min-width:0!important;justify-content:center!important;text-align:center!important;white-space:normal!important;padding:8px 4px!important;font-size:10.5px!important;line-height:1.2!important;}
+      .nav-more-menu{position:absolute!important;z-index:30;top:calc(100% + 6px);right:0;width:180px;padding:6px;border:1px solid var(--line);border-radius:9px;background:var(--surface);box-shadow:0 16px 36px rgba(28,24,45,.12);display:grid!important;gap:2px;}
+      .nav-more-menu[hidden]{display:none!important;}
+      .nav-more-menu .nav-item{width:100%!important;text-align:left!important;justify-content:flex-start!important;padding:8px 9px!important;font-size:12px!important;border-radius:6px!important;white-space:normal!important;}
       .ask-quick-starts{display:grid;grid-template-columns:1fr 1fr;}
     }
     @media(max-width:480px){.ask-quick-starts{grid-template-columns:1fr;}}
@@ -76,6 +94,15 @@
         <button class="nav-item" data-view="notes">Notes</button>
         <button class="nav-item" data-view="history">History</button>
         <button class="nav-item" data-view="settings">Settings</button>
+        <div class="sidebar-nav-more">
+          <button class="nav-item nav-more-toggle" type="button" data-action="toggle-nav-more" aria-expanded="false" aria-controls="navMoreMenu">More</button>
+          <div class="nav-more-menu" id="navMoreMenu" hidden>
+            <button class="nav-item" data-view="notes">Notes</button>
+            <button class="nav-item" data-view="history">History</button>
+            <button class="nav-item" data-view="settings">Settings</button>
+            <button class="nav-item" data-action="show-demo-help">How this works</button>
+          </div>
+        </div>
       </nav>
       <button class="demo-help-button" data-action="show-demo-help">How this works</button>
     </aside>
@@ -97,20 +124,20 @@
       var local = location.protocol === 'file:';
       document.write('<script src="' + (local ? '../site-shell.js' : '/site-shell.js') + '"><\/script>');
       if(!local) document.write('<script src="/api/state-config.js"><\/script>');
-      document.write('<script src="' + (local ? 'context-data.js?v=r52-mobile-launcher-compact' : '/implementation-context-prototype/context-data.js?v=r52-mobile-launcher-compact') + '"><\/script>');
-      document.write('<script src="' + (local ? 'context-api.js?v=r52-mobile-launcher-compact' : '/implementation-context-prototype/context-api.js?v=r52-mobile-launcher-compact') + '"><\/script>');
-      document.write('<script src="' + (local ? 'context-ask.js?v=r52-mobile-launcher-compact' : '/implementation-context-prototype/context-ask.js?v=r52-mobile-launcher-compact') + '"><\/script>');
-      document.write('<script src="' + (local ? 'context-ask-followup.js?v=r52-mobile-launcher-compact' : '/implementation-context-prototype/context-ask-followup.js?v=r52-mobile-launcher-compact') + '"><\/script>');
-      document.write('<script src="' + (local ? 'context-notes-view.js?v=r52-mobile-launcher-compact' : '/implementation-context-prototype/context-notes-view.js?v=r52-mobile-launcher-compact') + '"><\/script>');
-      document.write('<script src="' + (local ? 'context-open-items-view.js?v=r52-mobile-launcher-compact' : '/implementation-context-prototype/context-open-items-view.js?v=r52-mobile-launcher-compact') + '"><\/script>');
-      document.write('<script src="' + (local ? 'context-project-view.js?v=r52-mobile-launcher-compact' : '/implementation-context-prototype/context-project-view.js?v=r52-mobile-launcher-compact') + '"><\/script>');
-      document.write('<script src="' + (local ? 'context-app.js?v=r52-mobile-launcher-compact' : '/implementation-context-prototype/context-app.js?v=r52-mobile-launcher-compact') + '"><\/script>');
-      document.write('<script src="' + (local ? 'context-history.js?v=r52-mobile-launcher-compact' : '/implementation-context-prototype/context-history.js?v=r52-mobile-launcher-compact') + '"><\/script>');
-      document.write('<script src="' + (local ? 'context-provenance.js?v=r52-mobile-launcher-compact' : '/implementation-context-prototype/context-provenance.js?v=r52-mobile-launcher-compact') + '"><\/script>');
-      document.write('<script src="' + (local ? 'context-quickwins.js?v=r52-mobile-launcher-compact' : '/implementation-context-prototype/context-quickwins.js?v=r52-mobile-launcher-compact') + '"><\/script>');
-      document.write('<script src="' + (local ? 'context-product-polish.js?v=r52-mobile-launcher-compact' : '/implementation-context-prototype/context-product-polish.js?v=r52-mobile-launcher-compact') + '"><\/script>');
-      document.write('<script src="' + (local ? 'context-settings.js?v=r52-mobile-launcher-compact' : '/implementation-context-prototype/context-settings.js?v=r52-mobile-launcher-compact') + '"><\/script>');
-      document.write('<script src="' + (local ? 'context-sources.js?v=r52-mobile-launcher-compact' : '/implementation-context-prototype/context-sources.js?v=r52-mobile-launcher-compact') + '"><\/script>');
+      document.write('<script src="' + (local ? 'context-data.js?v=r53-mobile-nav-and-copy-polish' : '/implementation-context-prototype/context-data.js?v=r53-mobile-nav-and-copy-polish') + '"><\/script>');
+      document.write('<script src="' + (local ? 'context-api.js?v=r53-mobile-nav-and-copy-polish' : '/implementation-context-prototype/context-api.js?v=r53-mobile-nav-and-copy-polish') + '"><\/script>');
+      document.write('<script src="' + (local ? 'context-ask.js?v=r53-mobile-nav-and-copy-polish' : '/implementation-context-prototype/context-ask.js?v=r53-mobile-nav-and-copy-polish') + '"><\/script>');
+      document.write('<script src="' + (local ? 'context-ask-followup.js?v=r53-mobile-nav-and-copy-polish' : '/implementation-context-prototype/context-ask-followup.js?v=r53-mobile-nav-and-copy-polish') + '"><\/script>');
+      document.write('<script src="' + (local ? 'context-notes-view.js?v=r53-mobile-nav-and-copy-polish' : '/implementation-context-prototype/context-notes-view.js?v=r53-mobile-nav-and-copy-polish') + '"><\/script>');
+      document.write('<script src="' + (local ? 'context-open-items-view.js?v=r53-mobile-nav-and-copy-polish' : '/implementation-context-prototype/context-open-items-view.js?v=r53-mobile-nav-and-copy-polish') + '"><\/script>');
+      document.write('<script src="' + (local ? 'context-project-view.js?v=r53-mobile-nav-and-copy-polish' : '/implementation-context-prototype/context-project-view.js?v=r53-mobile-nav-and-copy-polish') + '"><\/script>');
+      document.write('<script src="' + (local ? 'context-app.js?v=r53-mobile-nav-and-copy-polish' : '/implementation-context-prototype/context-app.js?v=r53-mobile-nav-and-copy-polish') + '"><\/script>');
+      document.write('<script src="' + (local ? 'context-history.js?v=r53-mobile-nav-and-copy-polish' : '/implementation-context-prototype/context-history.js?v=r53-mobile-nav-and-copy-polish') + '"><\/script>');
+      document.write('<script src="' + (local ? 'context-provenance.js?v=r53-mobile-nav-and-copy-polish' : '/implementation-context-prototype/context-provenance.js?v=r53-mobile-nav-and-copy-polish') + '"><\/script>');
+      document.write('<script src="' + (local ? 'context-quickwins.js?v=r53-mobile-nav-and-copy-polish' : '/implementation-context-prototype/context-quickwins.js?v=r53-mobile-nav-and-copy-polish') + '"><\/script>');
+      document.write('<script src="' + (local ? 'context-product-polish.js?v=r53-mobile-nav-and-copy-polish' : '/implementation-context-prototype/context-product-polish.js?v=r53-mobile-nav-and-copy-polish') + '"><\/script>');
+      document.write('<script src="' + (local ? 'context-settings.js?v=r53-mobile-nav-and-copy-polish' : '/implementation-context-prototype/context-settings.js?v=r53-mobile-nav-and-copy-polish') + '"><\/script>');
+      document.write('<script src="' + (local ? 'context-sources.js?v=r53-mobile-nav-and-copy-polish' : '/implementation-context-prototype/context-sources.js?v=r53-mobile-nav-and-copy-polish') + '"><\/script>');
     })();
   </script>
 </body>

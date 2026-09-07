@@ -144,7 +144,7 @@ def test_shared_modal_is_never_hidden_under_portfolio_header():
         topbar_z = int(page.locator(".topbar").evaluate("e=>getComputedStyle(e).zIndex"))
         assert overlay_z > topbar_z
         page.locator('[data-action="close-dialog"]').first.click()
-        page.locator('[data-action="show-demo-help"]').click()
+        page.locator('.demo-help-button').click()
         help_box = page.locator(".dialog").bounding_box()
         assert help_box and help_box["y"] >= 12
     finally:
@@ -284,7 +284,7 @@ def test_demo_help_start_actions_are_clickable_and_reset_is_discoverable():
     # question rather than only prefilling it.
     pw, browser, page = _launch_page(hydration_ms=10)
     try:
-        page.locator('[data-action="show-demo-help"]').click()
+        page.locator('.demo-help-button').click()
         assert page.get_by_text('Good places to start', exact=True).is_visible()
         assert page.get_by_text('Reset Northstar from Settings', exact=False).is_visible()
         page.locator('[data-action="demo-start-ask"]').click()

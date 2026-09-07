@@ -8,7 +8,7 @@
   const clone = x => JSON.parse(JSON.stringify(x));
   const initial = clone(D);
   const state = {
-    data: clone(D), view:'overview', result:null, resultQuery:'', askInputDraft:'', projectMenuOpen:false, refinements:[], lastScenario:null,
+    data: clone(D), view:'overview', result:null, resultQuery:'', askInputDraft:'', projectMenuOpen:false, navMoreOpen:false, refinements:[], lastScenario:null,
     addedSample:false, pendingCreated:false, reviewBannerDismissed:false, dialogReturnFocus:null, expandedNotes:new Set(), noteComposerOpen:false, editingNoteId:null, dismissedNudges:new Set(), historyTopic:null, historyEvidenceId:null, historySearch:'', notesFilter:'all', notesDateFilter:'all', notesSearch:'', isAnalyzing:false, openQuestionsExpanded:false, expandedReviewId:null, openItemSections:{reviews:false,blockers:false,drafts:true,questions:null}, projectRules:[], workspaceAttentionStatus:'loading', backendStatus:{state:'loading',evidence:'loading',reviews:'loading',history:'loading',questions:'loading',rules:'loading',drafts:'loading'}
   };
 
@@ -57,6 +57,7 @@
       b.hidden=state.backendStatus.state!=='loaded'||currentKnowledge(area).length===0;
     });
     const pm=document.getElementById('projectMenu'), ps=document.getElementById('projectSwitcher'); if(pm)pm.hidden=!state.projectMenuOpen; if(ps)ps.setAttribute('aria-expanded',state.projectMenuOpen?'true':'false');
+    const nm=document.getElementById('navMoreMenu'), nmt=document.querySelector('.nav-more-toggle'); if(nm)nm.hidden=!state.navMoreOpen; if(nmt)nmt.setAttribute('aria-expanded',state.navMoreOpen?'true':'false');
   }
 
   function updateProjectSubnavActive(targetId){
@@ -96,6 +97,7 @@
 
   function navigateTo(view,{preserveHistoryTopic=false,preserveHistoryEvidence=false}={}){
     state.view=view;
+    state.navMoreOpen=false;
     if(view==='history'){
       if(!preserveHistoryTopic)state.historyTopic=null;
       if(!preserveHistoryEvidence)state.historyEvidenceId=null;
@@ -242,7 +244,7 @@
       const linkAttrs=h.knowledgeId?`data-action="view-topic-history" data-knowledge-id="${esc(h.knowledgeId)}"`:'data-view="history"';
       return `<button class="recent-update-row" ${linkAttrs}><strong>${esc(truncateText(summary,120))}</strong><span>${esc(kicker)}</span></button>`;
     }).join('');
-    return `<section class="workspace-recent"><div class="workspace-recent-head"><span class="eyebrow">What changed</span><button class="text-button" data-view="history">History →</button></div><div class="recent-update-list">${rows}</div></section>`;
+    return `<section class="workspace-recent"><div class="workspace-recent-head"><span class="eyebrow">What changed</span><button class="text-button" data-view="history">History →</button></div><p class="workspace-section-hint">Recent decisions and updates to the project.</p><div class="recent-update-list">${rows}</div></section>`;
   }
   // Answers "Where does the project stand?" -- a Current State pulse across
   // three real dimensions: what's fresh (last change), how much is
@@ -1555,7 +1557,7 @@
     if(act==='ask-submit')submitAsk();
     else if(act==='open-specific-review'){closeDialog();state.expandedReviewId=a.dataset.reviewId;state.openItemSections.reviews=false;navigateTo('open-items');}
     else if(act==='toggle-open-questions'){state.openQuestionsExpanded=!state.openQuestionsExpanded;renderOpenItems();}
-    else if(act==='show-demo-help')showDemoHelp();
+    else if(act==='show-demo-help'){state.navMoreOpen=false;updateNav();showDemoHelp();}
     else if(act==='demo-start-ask'){
       closeDialog();navigateTo('overview');
       // Ask no longer has an inline Workspace instance -- routes into the
@@ -1575,6 +1577,7 @@
 
 
     else if(act==='toggle-projects'){state.projectMenuOpen=!state.projectMenuOpen;render();}
+    else if(act==='toggle-nav-more'){state.navMoreOpen=!state.navMoreOpen;updateNav();}
     else if(act==='ask-result')submitAsk(document.getElementById('resultAskInput')?.value);
     else if(act==='retry-hydration'){await hydrateBackend();}
     else if(act==='clear-note-filters'){state.notesDateFilter='all';state.notesFilter='all';state.notesSearch='';renderNotes();}
@@ -1691,6 +1694,7 @@
     if((e.key==='Enter'||e.key===' ')&&e.target.matches('.note-index-row[data-action="toggle-note"]')){e.preventDefault();const id=e.target.dataset.noteId;if(state.expandedNotes.has(id))state.expandedNotes.delete(id);else state.expandedNotes.add(id);renderNotes();}
     if((e.key==='Enter'||e.key===' ')&&e.target.matches('.history-entry.is-linked[data-action="view-topic-history"]')){e.preventDefault();e.target.click();}
     if(e.key==='Escape'&&state.projectMenuOpen){state.projectMenuOpen=false;updateNav();document.getElementById('projectSwitcher')?.focus();return;}
+    if(e.key==='Escape'&&state.navMoreOpen){state.navMoreOpen=false;updateNav();document.querySelector('.nav-more-toggle')?.focus();return;}
     if(e.key==='Escape'&&!overlay.hidden && !state.isAnalyzing){closeDialog();return;}
     if(e.key==='Tab'&&!overlay.hidden){
       const dialog=document.querySelector('.dialog');
@@ -1702,6 +1706,7 @@
     }
   });
   document.addEventListener('click',e=>{ if(state.projectMenuOpen && !e.target.closest('.sidebar-project') && !e.target.closest('[data-action="toggle-projects"]')){state.projectMenuOpen=false;updateNav();} });
+  document.addEventListener('click',e=>{ if(state.navMoreOpen && !e.target.closest('.sidebar-nav-more')){state.navMoreOpen=false;updateNav();} });
   overlay.addEventListener('click',e=>{if(e.target===overlay && !state.isAnalyzing) closeDialog();});
   // The Slack "Connect Slack" OAuth round trip ends with the backend
   // redirecting the browser back here with ?slack_connect=success|error.
