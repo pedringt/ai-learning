@@ -1,331 +1,460 @@
 (() => {
   const API = window.STATE_API;
+  const ASK = window.STATE_ASK;
   const DATA = window.PROJECT_CONTEXT_DATA || {};
-  const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const APP = () => window.STATE_ASK_TEST_API;
+  const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const asList = (payload, keys = []) => {
     if (Array.isArray(payload)) return payload;
     for (const key of keys) if (Array.isArray(payload?.[key])) return payload[key];
     return [];
   };
+  const truncate = (value, max = 190) => {
+    const text = String(value || '').replace(/\s+/g, ' ').trim();
+    return text.length > max ? `${text.slice(0, max - 1).replace(/\s+\S*$/, '')}…` : text;
+  };
 
   const starters = [
-    ['What should I know?', 'What should I know right now? Give me a concise briefing with Project snapshot, Changed recently, Needs attention, and Still unclear.'],
-    ['Prep me for my next meeting', 'Give me a concise meeting brief from what State currently knows. Focus on settled decisions, recent changes, what needs attention, and questions we still need answered.'],
-    ['Why did we keep human review?', 'Why did we keep human review for the pilot? Use Current State and History, and keep any unresolved assumptions separate.'],
-    ["What's blocking implementation?", 'What is blocking implementation planning right now? Prioritize blocking questions and pending Reviews that need to be settled before implementation.'],
-    ['What are we still unsure about?', 'What are we still unsure about? Show unresolved questions and pending evidence without turning them into facts.']
+    ['What should I know?', 'Give me the most consequential project briefing for right now. Prioritize what matters most, then keep accepted Current State, pending Reviews, and unresolved Questions clearly separate.'],
+    ['Prep me for my next meeting', 'Prepare a concise meeting brief from the project record. Focus on settled decisions, decisions that need review, useful unresolved questions, and the most relevant recent change.'],
+    ['Why did we keep human review?', 'Why did we keep human review for the pilot? Use Current State and History, and keep unresolved assumptions separate.'],
+    ["What's blocking implementation?", 'What is blocking implementation planning right now? Distinguish confirmed blocking Questions from other unresolved items and pending Reviews.'],
+    ['What are we still unsure about?', 'What is still unresolved? Keep open Questions and pending Evidence separate from accepted Current State.']
   ];
 
-  let capturedAttentionHtml = '';
-  let fallbackAttentionLoading = false;
-  let copyContextData = null;
+  const ui = {
+    drawerOpen: false,
+    query: '',
+    payload: null,
+    resolvedContext: [],
+    answerStateSignature: null,
+    stale: false,
+    running: false,
+    requestId: 0,
+    copyContextData: null,
+    decisionMode: null,
+    confirmReturnHtml: null,
+    questionReconcileBusy: false,
+    inlineObserved: null,
+  };
 
-  function addStyles(){
-    if(document.getElementById('state-product-polish-styles')) return;
-    const style=document.createElement('style');
-    style.id='state-product-polish-styles';
-    style.textContent=`
+  function addStyles() {
+    if (document.getElementById('state-product-polish-styles')) return;
+    const style = document.createElement('style');
+    style.id = 'state-product-polish-styles';
+    style.textContent = `
       .overview .workspace-attention + .ask-panel{margin-top:36px!important;padding-top:30px!important;border-top:1px solid var(--line)!important}
-      .overview .orientation-box + .workspace-attention,.overview .workspace-context-banner + .workspace-attention{margin-top:22px!important}
-      .workspace-context-banner{display:flex;align-items:center;justify-content:space-between;gap:16px;background:var(--surface2);border-left:3px solid var(--accent);padding:12px 13px;border-radius:6px;font-size:12px;line-height:1.55;color:var(--ink);margin:18px 0}
-      .workspace-context-banner strong{color:var(--accent);font-weight:800}
-      .orientation-box .workspace-context-link{display:inline-block;margin-left:10px}
-      .ask-title-row label[for="askInput"]{font-size:0!important;line-height:1!important}
-      .ask-title-row label[for="askInput"]::after{content:'Ask State';font-size:18px;line-height:1.25;font-weight:800;color:var(--ink);letter-spacing:0;text-transform:none}
-      .ask-title-row>div>p{display:none!important}
-      .ask-state-description{display:block!important;margin:5px 0 0!important;color:var(--muted)!important;font-size:13px!important;line-height:1.5!important}
-      .ask-session-row{display:flex;align-items:flex-start;justify-content:space-between;gap:18px}
-      .ask-another-button{flex:0 0 auto;margin-top:2px}
-      .ask-authority-strip{display:flex;align-items:center;gap:8px;margin:0 0 16px;padding:9px 11px;border-radius:8px;background:var(--surface2);font-size:12px;color:var(--muted)}
-      .ask-authority-strip strong{color:var(--ink)}
-      .ask-context-links{display:flex;flex-wrap:wrap;gap:14px;margin-top:18px;padding-top:14px;border-top:1px solid var(--line)}
+      .overview .orientation-box + .workspace-attention{margin-top:22px!important}
+      .ask-panel.review-batch-ask{min-width:0}
+      .ask-state-inline-card{min-width:0}
+      .ask-state-inline-head{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin-bottom:12px}
+      .ask-state-inline-head h3{margin:0 0 4px;font-size:18px}
+      .ask-state-inline-head p{margin:0;color:var(--muted);font-size:13px;line-height:1.45}
+      .ask-readonly-pill{flex:0 0 auto;border:1px solid var(--line);border-radius:999px;padding:4px 8px;font-size:11px;font-weight:800;color:var(--muted);background:var(--surface2)}
+      .ask-state-inline-form,.ask-state-drawer-form{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;min-width:0}
+      .ask-state-inline-form input,.ask-state-drawer-form input{min-width:0;width:100%;box-sizing:border-box;border:1px solid #cfc9bd;background:#fff;border-radius:9px;padding:11px 12px;color:var(--ink);outline:none}
+      .ask-state-inline-form input:focus,.ask-state-drawer-form input:focus{border-color:var(--accent);box-shadow:0 0 0 2px color-mix(in srgb,var(--accent) 16%,transparent)}
+      .ask-state-starters{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;min-width:0;padding-right:2px}
+      .ask-state-starters button{max-width:100%;white-space:normal;text-align:left;border:1px solid var(--line);border-radius:999px;background:var(--surface);padding:7px 10px;font:inherit;font-size:12px;cursor:pointer;color:var(--ink)}
+      .ask-state-starters button:hover{background:var(--surface2)}
+      .ask-state-launcher{position:fixed;right:24px;bottom:24px;z-index:1200;border:1px solid var(--line);border-radius:12px;background:var(--ink);color:var(--surface);padding:11px 15px;font:inherit;font-weight:800;box-shadow:0 10px 28px rgba(0,0,0,.16);cursor:pointer;transition:opacity .16s ease,transform .16s ease}
+      .ask-state-launcher.is-hidden{opacity:0;pointer-events:none;transform:translateY(8px)}
+      .ask-state-drawer{position:fixed;right:0;top:92px;height:calc(100dvh - 92px);width:min(470px,calc(100vw - 24px));z-index:1250;background:var(--surface);border-left:1px solid var(--line);box-shadow:-16px 0 40px rgba(0,0,0,.14);display:flex;flex-direction:column}
+      .ask-state-drawer[hidden]{display:none}
+      .ask-state-drawer-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;padding:18px 18px 14px;border-bottom:1px solid var(--line)}
+      .ask-state-drawer-head h2{margin:0 0 4px;font-size:20px}.ask-state-drawer-head p{margin:0;color:var(--muted);font-size:12px;line-height:1.4}
+      .ask-state-drawer-close{border:0;background:transparent;color:var(--muted);font-size:24px;line-height:1;cursor:pointer;padding:2px 4px}
+      .ask-state-drawer-controls{padding:14px 18px;border-bottom:1px solid var(--line)}
+      .ask-state-drawer-help{margin:7px 0 0;color:var(--muted);font-size:11px;line-height:1.4}
+      .ask-state-drawer-result{padding:18px;overflow:auto;overscroll-behavior:contain;flex:1;min-height:0}
+      .ask-state-drawer-result:empty::before{content:'Ask about decisions, open questions, project changes, evidence, or meeting context.';display:block;color:var(--muted);font-size:13px;line-height:1.55}
+      .ask-state-drawer .ask-live-answer{max-width:none}.ask-state-drawer .ask-answer-head{gap:10px}.ask-state-drawer .ask-answer-actions{margin-left:auto}
+      .ask-state-drawer .ask-answer-section{margin-top:18px}.ask-state-drawer .ask-answer-section h3{font-size:14px}
+      .ask-state-stale{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin:0 0 14px;padding:10px 11px;border:1px solid var(--line);border-radius:9px;background:var(--surface2);font-size:12px;line-height:1.4}
+      .ask-state-stale button{flex:0 0 auto}
+      .ask-readonly-message{padding:14px;border:1px solid var(--line);border-radius:10px;background:var(--surface2)}
+      .ask-readonly-message h3{margin:0 0 5px}.ask-readonly-message p{margin:0 0 12px;color:var(--muted);font-size:13px;line-height:1.5}
+      .ask-resolved-decisions{margin-top:18px;padding-top:16px;border-top:1px solid var(--line)}
+      .ask-resolved-decisions>span{display:block;margin-bottom:7px;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}
+      .ask-resolved-decisions h3{margin:0 0 8px;font-size:14px}.ask-resolved-decisions ul{margin:0;padding-left:18px}.ask-resolved-decisions li{margin:7px 0;line-height:1.45;font-size:13px}.ask-resolved-decisions small{display:block;margin-top:2px;color:var(--muted)}
       .project-head-copy-context{margin-left:auto}
-      .copy-context-intro{margin-bottom:16px}
-      .copy-context-options{display:grid;gap:9px;margin:16px 0}
+      .copy-context-intro{margin-bottom:16px}.copy-context-options{display:grid;gap:9px;margin:16px 0}
       .copy-context-option{display:grid;grid-template-columns:auto 1fr;gap:10px;align-items:flex-start;border:1px solid var(--line);border-radius:10px;padding:12px;background:var(--surface);cursor:pointer}
-      .copy-context-option input{margin-top:4px}
-      .copy-context-option strong,.copy-context-option span{display:block}
-      .copy-context-option span{margin-top:3px;color:var(--muted);font-size:12px;line-height:1.45}
-      .copy-context-task{margin-top:14px}
-      .copy-context-task label{display:block;font-weight:800;font-size:12px;margin-bottom:6px}
-      .copy-context-task input{width:100%;border:1px solid #cfc9bd;background:#fff;border-radius:9px;padding:11px 12px;color:var(--ink);outline:none}
+      .copy-context-option input{margin-top:4px}.copy-context-option strong,.copy-context-option span{display:block}.copy-context-option span{margin-top:3px;color:var(--muted);font-size:12px;line-height:1.45}
+      .copy-context-task{margin-top:14px}.copy-context-task label{display:block;font-weight:800;font-size:12px;margin-bottom:6px}.copy-context-task input{width:100%;box-sizing:border-box;border:1px solid #cfc9bd;background:#fff;border-radius:9px;padding:11px 12px;color:var(--ink);outline:none}
       .copy-context-status{min-height:18px;margin:8px 0 0!important;font-size:12px}
-      @media(max-width:700px){.workspace-context-banner,.ask-session-row{align-items:flex-start;flex-direction:column}.project-head-copy-context{margin-left:0}.overview .workspace-attention + .ask-panel{margin-top:28px!important;padding-top:24px!important}}
+      .review-confirm-change{margin:14px 0 2px;padding:10px 12px;border-radius:9px;background:var(--surface2);font-size:12px;line-height:1.45}.review-confirm-change span{display:block;margin-bottom:4px;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
+      .review-saving-compact{text-align:left}.review-saving-compact h2{margin-bottom:6px}.review-saving-compact p{margin:0;color:var(--muted)}
+      .state-toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%);z-index:2147482000;max-width:min(520px,calc(100vw - 32px));padding:10px 14px;border:1px solid var(--line);border-radius:10px;background:var(--ink);color:var(--surface);font-size:13px;font-weight:700;box-shadow:0 10px 28px rgba(0,0,0,.18)}
+      .state-help-steps{display:grid;gap:9px;margin:16px 0}.state-help-step{padding:10px 12px;border:1px solid var(--line);border-radius:9px;background:var(--surface2)}.state-help-step strong{display:block;margin-bottom:3px}.state-help-step span{display:block;color:var(--muted);font-size:12px;line-height:1.45}
+      .settings-page .settings-how-state-first{order:-1}
+      .notes-page .notes-product-purpose{margin-top:6px}
+      @media(max-width:760px){
+        .ask-state-launcher{right:14px;bottom:14px}.ask-state-drawer{top:0;height:100dvh;width:100vw;border-left:0}.ask-state-inline-form,.ask-state-drawer-form{grid-template-columns:1fr}.ask-state-inline-head{align-items:flex-start;flex-direction:column}.project-head-copy-context{margin-left:0}
+      }
     `;
     document.head.appendChild(style);
   }
 
-  function captureAttention(){
-    const overview=document.querySelector('.overview.pristine');
-    if(!overview || overview.querySelector('.ask-session-row')) return;
-    const attention=overview.querySelector('.workspace-attention');
-    if(attention) capturedAttentionHtml=attention.outerHTML;
+  function overlayParts() {
+    return {overlay: document.getElementById('overlay'), body: document.getElementById('dialogBody')};
+  }
+  function openOverlay(html) {
+    const {overlay, body} = overlayParts();
+    if (!overlay || !body) return;
+    body.innerHTML = html;
+    overlay.hidden = false;
+    overlay.scrollTop = 0;
+    document.body.classList.add('modal-open');
+    requestAnimationFrame(() => overlay.querySelector('.dialog')?.focus({preventScroll:true}));
+  }
+  function closeOverlay() {
+    const {overlay, body} = overlayParts();
+    if (!overlay || !body) return;
+    overlay.hidden = true;
+    body.innerHTML = '';
+    document.body.classList.remove('modal-open');
+  }
+  function showToast(message) {
+    document.querySelector('.state-toast')?.remove();
+    const toast = document.createElement('div');
+    toast.className = 'state-toast';
+    toast.setAttribute('role','status');
+    toast.textContent = message;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 2600);
   }
 
-  async function restoreAttentionFromApi(overview, askPanel){
-    if(fallbackAttentionLoading || !API?.getAttention || !overview?.isConnected || !askPanel?.isConnected) return;
-    fallbackAttentionLoading=true;
-    const loading=document.createElement('section');
-    loading.className='workspace-attention ux-restored-attention is-loading';
-    loading.innerHTML='<div class="workspace-attention-head"><div><span class="eyebrow">Needs your attention</span><h3>Opening action items…</h3></div></div>';
-    askPanel.before(loading);
-    try{
-      const payload=await API.getAttention();
-      if(!loading.isConnected) return;
-      const reviews=asList(payload?.open_reviews || [], ['items','reviews']);
-      const questions=asList(payload?.questions || [], ['items','questions']);
-      const blockers=questions.filter(q=>q.blocking);
-      const total=reviews.length+blockers.length;
-      loading.classList.remove('is-loading');
-      loading.classList.toggle('is-clear',!total);
-      loading.innerHTML=total
-        ? `<div class="workspace-attention-head"><div><span class="eyebrow">Needs your attention</span><h3>${total===1?'1 item is waiting on you':`${total} items are waiting on you`}</h3><p>Keep these in view while you work with the answer below.</p></div><button class="text-button" data-view="open-items">View Open Items →</button></div>`
-        : '<div class="workspace-attention-head"><div><span class="eyebrow">Needs your attention</span><h3>Nothing needs action right now</h3><p>No Reviews or blocking questions are waiting on you.</p></div><button class="text-button" data-view="open-items">View Open Items →</button></div>';
-    }catch(_){
-      if(loading.isConnected){
-        loading.classList.remove('is-loading');
-        loading.classList.add('is-clear');
-        loading.innerHTML='<div class="workspace-attention-head"><div><span class="eyebrow">Needs your attention</span><h3>Open Items are still available</h3><p>Keep working with the answer below, or inspect pending decisions directly.</p></div><button class="text-button" data-view="open-items">View Open Items →</button></div>';
-      }
-    }finally{fallbackAttentionLoading=false;}
+  function stateTitle(item){return item.title || item.topic || item.name || 'Current State';}
+  function stateStatement(item){return item.statement || item.current_statement || item.text || item.value || '';}
+  function reviewText(item){return item.decision_question || item.title || item.summary || item.why_consequential || item.proposed || 'Review pending';}
+  function questionText(item){return item.text || item.question || item.title || 'Open question';}
+  function fallbackContext(){
+    return {
+      state:(DATA.knowledge||[]).filter(x=>x.state==='current'),
+      reviews:(DATA.reviews||[]).filter(x=>x.status==='pending'),
+      questions:(DATA.questions||[]).filter(x=>x.status==='open')
+    };
   }
-
-  function ensureWorkspaceContext(){
-    const overview=document.querySelector('.overview.pristine');
-    if(!overview) return;
-    const askPanel=overview.querySelector('.ask-panel');
-    if(!askPanel) return;
-    const hasResult=!!askPanel.querySelector('.ask-session-row,.answer-stage.has-result,.ask-live-answer,.ask-live-loading,.ask-live-error');
-
-    if(!hasResult){
-      const orientation=overview.querySelector('.orientation-box');
-      if(orientation && !orientation.querySelector('.workspace-context-link')){
-        const link=document.createElement('button');
-        link.type='button';
-        link.className='text-button workspace-context-link';
-        link.dataset.view='project-overview';
-        link.textContent='Browse Current State →';
-        orientation.appendChild(link);
-      }
-      overview.querySelector('.workspace-context-banner')?.remove();
-      return;
-    }
-
-    if(!overview.querySelector('.workspace-context-banner')){
-      const banner=document.createElement('div');
-      banner.className='workspace-context-banner';
-      banner.innerHTML='<span><strong>How Current State stays maintained:</strong> New information is captured as Evidence. State proposes what it may change, and you decide what becomes part of Current State.</span><button type="button" class="text-button" data-view="project-overview">Browse Current State →</button>';
-      const heading=overview.querySelector('.overview-heading');
-      (heading?.nextElementSibling || askPanel).before(banner);
-    }
-
-    if(!overview.querySelector('.workspace-attention')){
-      if(capturedAttentionHtml){
-        const holder=document.createElement('div');
-        holder.innerHTML=capturedAttentionHtml;
-        const attention=holder.firstElementChild;
-        if(attention) askPanel.before(attention);
-      }else restoreAttentionFromApi(overview,askPanel);
-    }
-  }
-
-  function enhanceAskTitle(){
-    const panel=document.querySelector('.overview.pristine .ask-panel');
-    if(!panel) return;
-    const label=panel.querySelector('.ask-title-row label[for="askInput"]');
-    if(label) label.setAttribute('aria-label','Ask State');
-    const wrap=label?.closest('.ask-title-row')?.querySelector('div');
-    if(wrap && !wrap.querySelector('.ask-state-description')){
-      const p=document.createElement('p');
-      p.className='ask-state-description';
-      p.textContent="Summarize Current State, find a decision, see what's pending, or prepare for a meeting.";
-      wrap.appendChild(p);
-    }
-  }
-
-  function enhanceAskStarters(){
-    const starts=document.querySelector('.overview.pristine .ask-quick-starts');
-    if(!starts || starts.dataset.productStarters==='true') return;
-    starts.dataset.productStarters='true';
-    starts.innerHTML=starters.map(([label,prompt])=>`<button type="button" data-prompt="${esc(prompt)}">${esc(label)}</button>`).join('');
-  }
-
-  function addAskAnother(){
-    const row=document.querySelector('.overview.pristine .ask-session-row');
-    if(!row || row.querySelector('[data-action="new-ask"]')) return;
-    const button=document.createElement('button');
-    button.type='button';
-    button.className='text-button ask-another-button';
-    button.dataset.action='new-ask';
-    button.textContent='Ask another question';
-    row.appendChild(button);
-  }
-
-  function addAskAuthority(){
-    document.querySelectorAll('.overview.pristine .answer-content').forEach(answer=>{
-      const badges=[...answer.querySelectorAll('.ask-record-badge,.knowledge-status')].map(x=>x.textContent.trim().toLowerCase());
-      if(!badges.length) return;
-      const hasCurrent=badges.some(x=>x.includes('current state'));
-      const hasHistory=badges.some(x=>x.includes('history')||x.includes('historical'));
-      const hasOpen=badges.some(x=>x.includes('review')||x.includes('blocking')||x.includes('open question')||x.includes('pending'));
-      const hasEvidence=badges.some(x=>x.includes('evidence'));
-      if(!answer.querySelector('.ask-authority-strip')){
-        const strip=document.createElement('div');
-        strip.className='ask-authority-strip';
-        let text="Grounded in State's project record";
-        if(hasCurrent&&hasOpen) text='Accepted Current State and pending items are kept separate';
-        else if(hasCurrent) text='Grounded in accepted Current State';
-        else if(hasOpen) text='Pending and unresolved items are not treated as settled facts';
-        else if(hasHistory) text='Grounded in recorded History';
-        strip.innerHTML=`<strong>State context</strong><span>${esc(text)}</span>`;
-        answer.prepend(strip);
-      }
-      if(!answer.querySelector('.ask-context-links')){
-        const actions=[];
-        if(hasCurrent) actions.push('<button type="button" class="text-button" data-view="project-overview">View Current State →</button>');
-        if(hasHistory) actions.push('<button type="button" class="text-button" data-view="history">View History →</button>');
-        if(hasOpen && !answer.querySelector('[data-view="open-items"]')) actions.push('<button type="button" class="text-button" data-view="open-items">View Open Items →</button>');
-        if(hasEvidence) actions.push('<button type="button" class="text-button" data-view="notes">View Notes →</button>');
-        if(actions.length){
-          const row=document.createElement('div');
-          row.className='ask-context-links';
-          row.innerHTML=actions.join('');
-          answer.appendChild(row);
-        }
-      }
-    });
-  }
-
-  function enhanceCurrentStateHeader(){
-    const head=document.querySelector('.project-document-head');
-    if(!head) return;
-    head.querySelector('.project-fact-count')?.remove();
-    const eyebrow=head.querySelector('.eyebrow');
-    if(eyebrow && /^current project$/i.test(eyebrow.textContent.trim())) eyebrow.remove();
-    const row=head.querySelector('.project-head-row');
-    if(row && !row.querySelector('[data-action="copy-context"]')){
-      const button=document.createElement('button');
-      button.type='button';
-      button.className='btn secondary project-head-copy-context';
-      button.dataset.action='copy-context';
-      button.textContent='Copy context';
-      const settings=row.querySelector('.project-settings-button');
-      if(settings) row.insertBefore(button,settings); else row.appendChild(button);
-    }
-  }
-
-  function clarifyReviewReceipt(){
-    const note=document.querySelector('#dialogBody .review-receipt-note');
-    if(note && /definitive Project view/i.test(note.textContent)) note.textContent='State updated Current State and recorded the accepted change in History.';
-    const button=document.querySelector('#dialogBody [data-action="review-receipt-project"]');
-    if(button && button.textContent.trim()!=='View in Current State') button.textContent='View in Current State';
-  }
-
-  function loadedFallbackContext(){
-    const state=(DATA.knowledge||[]).filter(x=>x.state==='current');
-    const reviews=(DATA.reviews||[]).filter(x=>x.status==='pending');
-    const questions=(DATA.questions||[]).filter(x=>x.status==='open');
-    return {state,reviews,questions};
-  }
-
   async function loadCopyContext(){
-    if(!API) return loadedFallbackContext();
+    if(!API) return fallbackContext();
     try{
-      const [stateRaw,reviewsRaw,questionsRaw]=await Promise.all([API.getState(),API.getReviews('open'),API.getQuestions('open')]);
+      const [stateRaw,reviewsRaw,questionsRaw] = await Promise.all([API.getState(),API.getReviews('open'),API.getQuestions('open')]);
       return {
         state:asList(stateRaw,['state','items','results']),
         reviews:asList(reviewsRaw,['reviews','items','results']),
         questions:asList(questionsRaw,['questions','items','results'])
       };
-    }catch(_){return loadedFallbackContext();}
+    }catch(_){return fallbackContext();}
   }
-
-  function openCopyContextDialog(){
-    const overlay=document.getElementById('overlay');
-    const body=document.getElementById('dialogBody');
-    if(!overlay||!body) return;
-    body.innerHTML='<span class="eyebrow">Copy context</span><h2 id="dialogTitle">Take Current State with you.</h2><p class="copy-context-intro">Copy a clean project context package to paste into Claude, ChatGPT, another AI tool, or wherever you are continuing the work.</p><div class="copy-context-options"><label class="copy-context-option"><input type="radio" name="copyContextMode" value="working" checked><span><strong>Working context</strong><span>Current State plus pending Reviews and open Questions. Recommended when another tool needs to understand both what is settled and what is not.</span></span></label><label class="copy-context-option"><input type="radio" name="copyContextMode" value="state"><span><strong>Current State only</strong><span>Only the project understanding the team currently treats as accepted.</span></span></label></div><div class="copy-context-task"><label for="copyContextTask">What are you working on? <span class="quiet-meta">Optional</span></label><input id="copyContextTask" autocomplete="off" placeholder="e.g. Prepare the pilot implementation plan"></div><p class="copy-context-status" id="copyContextStatus" role="status"></p><div class="dialog-actions"><button class="btn secondary" data-action="close-dialog">Cancel</button><button class="btn primary" data-action="copy-context-confirm" disabled>Loading context…</button></div>';
-    overlay.hidden=false;
-    overlay.scrollTop=0;
-    document.body.classList.add('modal-open');
-    overlay.querySelector('.dialog')?.focus({preventScroll:true});
-    copyContextData=null;
-    loadCopyContext().then(data=>{
-      copyContextData=data;
-      const button=body.querySelector('[data-action="copy-context-confirm"]');
-      if(button){button.disabled=false;button.textContent='Copy to clipboard';}
-    });
-  }
-
-  function stateTitle(item){return item.title||item.topic||item.name||'Current State';}
-  function stateStatement(item){return item.statement||item.current_statement||item.text||item.value||'';}
-  function reviewText(item){return item.decision_question||item.title||item.summary||item.why_consequential||item.proposed||'Review pending';}
-  function questionText(item){return item.text||item.question||item.title||'Open question';}
-
   function buildContextText(mode,task){
-    const data=copyContextData||loadedFallbackContext();
+    const data=ui.copyContextData || fallbackContext();
     const project=DATA.project?.name || document.querySelector('.project-title-line h2')?.textContent?.trim() || 'Project';
     const lines=['PROJECT CONTEXT FROM STATE',`Project: ${project}`];
     if(task) lines.push(`Task: ${task}`);
-    lines.push('', 'Use the following as maintained project context. Treat items under CURRENT STATE as accepted project understanding. Do not turn pending Reviews or open Questions into decided facts. If something conflicts with this context, call it out rather than smoothing it over.', '', 'CURRENT STATE');
+    lines.push('', 'Use this as maintained project context. CURRENT STATE is accepted project understanding. PENDING REVIEWS and OPEN QUESTIONS are not accepted facts. If another source conflicts with this context, call out the conflict instead of smoothing it over.', '', 'CURRENT STATE');
     const current=(data.state||[]).filter(item=>item.state===undefined || item.state==='current');
     if(current.length) current.forEach(item=>{const statement=stateStatement(item);if(statement) lines.push(`- ${stateTitle(item)}: ${statement}`);});
     else lines.push('- No accepted Current State items were available.');
     if(mode==='working'){
       lines.push('', 'PENDING REVIEWS');
-      if(data.reviews?.length) data.reviews.forEach(item=>lines.push(`- ${reviewText(item)}`)); else lines.push('- None currently open.');
+      if(data.reviews?.length) data.reviews.forEach(item=>lines.push(`- [Needs review] ${reviewText(item)}`)); else lines.push('- None currently open.');
       lines.push('', 'OPEN QUESTIONS');
-      if(data.questions?.length) data.questions.forEach(item=>lines.push(`- ${item.blocking?'[Blocking] ':''}${questionText(item)}`)); else lines.push('- None currently open.');
+      if(data.questions?.length) data.questions.forEach(item=>lines.push(`- [${item.blocking?'Blocking':'Open question'}] ${questionText(item)}`)); else lines.push('- None currently open.');
     }
     return lines.join('\n').trim();
   }
-
   async function writeClipboard(text){
     if(navigator.clipboard?.writeText){await navigator.clipboard.writeText(text);return;}
-    const area=document.createElement('textarea');
-    area.value=text;area.style.position='fixed';area.style.opacity='0';document.body.appendChild(area);area.select();document.execCommand('copy');area.remove();
+    const area=document.createElement('textarea');area.value=text;area.style.position='fixed';area.style.opacity='0';document.body.appendChild(area);area.select();document.execCommand('copy');area.remove();
+  }
+  function openCopyContextDialog(){
+    openOverlay('<span class="eyebrow">Copy context</span><h2 id="dialogTitle">Take Current State with you.</h2><p class="copy-context-intro">Copy a clean context package to Claude, ChatGPT, another AI tool, or wherever you continue the work.</p><div class="copy-context-options"><label class="copy-context-option"><input type="radio" name="copyContextMode" value="working" checked><span><strong>Working context</strong><span>Current State plus pending Reviews and open Questions. Recommended when another tool needs both settled and unresolved context.</span></span></label><label class="copy-context-option"><input type="radio" name="copyContextMode" value="state"><span><strong>Current State only</strong><span>Only the project understanding the team currently treats as accepted.</span></span></label></div><div class="copy-context-task"><label for="copyContextTask">What are you working on? <span class="quiet-meta">Optional</span></label><input id="copyContextTask" autocomplete="off" placeholder="e.g. Prepare the pilot implementation plan"></div><p class="copy-context-status" id="copyContextStatus" role="status"></p><div class="dialog-actions"><button class="btn secondary" data-action="close-dialog">Cancel</button><button class="btn primary" data-review-batch-action="copy-context-confirm" disabled>Loading context…</button></div>');
+    ui.copyContextData=null;
+    loadCopyContext().then(data=>{
+      ui.copyContextData=data;
+      const button=document.querySelector('[data-review-batch-action="copy-context-confirm"]');
+      if(button){button.disabled=false;button.textContent='Copy to clipboard';}
+    });
+  }
+  async function confirmCopyContext(){
+    const body=document.getElementById('dialogBody'); if(!body || !ui.copyContextData) return;
+    const mode=body.querySelector('input[name="copyContextMode"]:checked')?.value || 'working';
+    const task=body.querySelector('#copyContextTask')?.value.trim() || '';
+    const button=body.querySelector('[data-review-batch-action="copy-context-confirm"]');
+    const status=body.querySelector('#copyContextStatus');
+    try{await writeClipboard(buildContextText(mode,task));if(button)button.textContent='Copied';if(status)status.textContent='Context copied.';}
+    catch(_){if(status)status.textContent='Copy failed. Your browser may be blocking clipboard access.';}
   }
 
-  async function confirmCopyContext(){
-    const body=document.getElementById('dialogBody');
-    if(!body || !copyContextData) return;
-    const mode=body.querySelector('input[name="copyContextMode"]:checked')?.value||'working';
-    const task=body.querySelector('#copyContextTask')?.value.trim()||'';
-    const button=body.querySelector('[data-action="copy-context-confirm"]');
-    const status=body.querySelector('#copyContextStatus');
-    try{
-      await writeClipboard(buildContextText(mode,task));
-      if(button) button.textContent='Copied';
-      if(status) status.textContent='Context copied. Paste it wherever you are continuing the work.';
-    }catch(_){
-      if(status) status.textContent='Copy failed. Your browser may be blocking clipboard access.';
+  function ensureCurrentStateHeader(){
+    const head=document.querySelector('.project-document-head'); if(!head) return;
+    head.querySelector('.project-fact-count')?.remove();
+    const eyebrow=head.querySelector('.eyebrow'); if(eyebrow && /^current project$/i.test(eyebrow.textContent.trim())) eyebrow.remove();
+    const row=head.querySelector('.project-head-row');
+    if(row && !row.querySelector('[data-review-batch-action="copy-context"]')){
+      const button=document.createElement('button');button.type='button';button.className='btn secondary project-head-copy-context';button.dataset.reviewBatchAction='copy-context';button.textContent='Copy context';
+      const settings=row.querySelector('.project-settings-button');if(settings)row.insertBefore(button,settings);else row.appendChild(button);
     }
   }
 
-  function enhance(){
-    addStyles();
-    ensureWorkspaceContext();
-    enhanceAskTitle();
-    enhanceAskStarters();
-    addAskAnother();
-    addAskAuthority();
-    enhanceCurrentStateHeader();
-    clarifyReviewReceipt();
+  function ensureAskShell(){
+    if(!document.getElementById('askStateLauncher')){
+      const launcher=document.createElement('button');launcher.id='askStateLauncher';launcher.className='ask-state-launcher';launcher.type='button';launcher.dataset.reviewBatchAction='open-ask';launcher.textContent='Ask State';document.body.appendChild(launcher);
+    }
+    if(!document.getElementById('askStateDrawer')){
+      const drawer=document.createElement('aside');drawer.id='askStateDrawer';drawer.className='ask-state-drawer';drawer.hidden=true;drawer.setAttribute('aria-label','Ask State');drawer.innerHTML=`<div class="ask-state-drawer-head"><div><h2>Ask State</h2><p>Read-only. Asking never changes the project record.</p></div><button class="ask-state-drawer-close" type="button" aria-label="Close Ask State" data-review-batch-action="close-ask">×</button></div><div class="ask-state-drawer-controls"><form class="ask-state-drawer-form" data-review-batch-form="ask"><input id="askStateDrawerInput" autocomplete="off" aria-label="Ask State" placeholder="What do you want to know?"><button class="btn primary" type="submit">Ask</button></form><p class="ask-state-drawer-help">Edit the question and run it again to refine the answer. State does not carry a hidden conversation forward.</p><div class="ask-state-starters">${starters.map(([label,prompt])=>`<button type="button" data-review-batch-prompt="${esc(prompt)}">${esc(label)}</button>`).join('')}</div></div><div class="ask-state-drawer-result" id="askStateDrawerResult" aria-live="polite"></div>`;document.body.appendChild(drawer);
+    }
+    syncAskInputs();
+  }
+  function inlineAskMarkup(){
+    return `<div class="ask-state-inline-card"><div class="ask-state-inline-head"><div><h3>Ask State</h3><p>Find, summarize, investigate, or prepare from the project record.</p></div><span class="ask-readonly-pill">Read only</span></div><form class="ask-state-inline-form" data-review-batch-form="ask"><input id="askStateInlineInput" autocomplete="off" aria-label="Ask State" placeholder="What do you want to know?" value="${esc(ui.query)}"><button class="btn primary" type="submit">Ask</button></form><div class="ask-state-starters">${starters.map(([label,prompt])=>`<button type="button" data-review-batch-prompt="${esc(prompt)}">${esc(label)}</button>`).join('')}</div></div>`;
+  }
+  function ensureWorkspaceAsk(){
+    const panel=document.querySelector('.overview.pristine .ask-panel'); if(!panel) return;
+    if(panel.dataset.reviewBatchAsk!=='true'){
+      panel.dataset.reviewBatchAsk='true';panel.classList.add('review-batch-ask');panel.innerHTML=inlineAskMarkup();
+    } else {
+      const input=panel.querySelector('#askStateInlineInput');if(input && input.value!==ui.query && document.activeElement!==input)input.value=ui.query;
+    }
+    const add=document.querySelector('.overview-add[data-action="add-info"]'); if(add && add.textContent.trim()!=='+ Add Evidence')add.textContent='+ Add Evidence';
+    if(ui.inlineObserved!==panel){ui.inlineObserved=panel;}
+    syncLauncherVisibility();
+  }
+  function syncAskInputs(){
+    const drawer=document.getElementById('askStateDrawerInput');if(drawer && drawer.value!==ui.query && document.activeElement!==drawer)drawer.value=ui.query;
+    const inline=document.getElementById('askStateInlineInput');if(inline && inline.value!==ui.query && document.activeElement!==inline)inline.value=ui.query;
+  }
+  function openAskDrawer({focus=true}={}){
+    ensureAskShell();ui.drawerOpen=true;const drawer=document.getElementById('askStateDrawer');if(drawer)drawer.hidden=false;document.body.classList.add('ask-state-drawer-open');syncAskInputs();syncLauncherVisibility();if(focus)requestAnimationFrame(()=>document.getElementById('askStateDrawerInput')?.focus());checkAnswerFreshness();
+  }
+  function closeAskDrawer(){ui.drawerOpen=false;document.getElementById('askStateDrawer')?.setAttribute('hidden','');document.body.classList.remove('ask-state-drawer-open');syncLauncherVisibility();}
+  function syncLauncherVisibility(){
+    const launcher=document.getElementById('askStateLauncher');if(!launcher)return;
+    let hide=ui.drawerOpen;
+    const card=document.querySelector('.ask-state-inline-card');
+    if(!hide && card){const r=card.getBoundingClientRect();hide=r.bottom>0&&r.top<window.innerHeight;}
+    launcher.classList.toggle('is-hidden',hide);
   }
 
-  document.addEventListener('click',event=>{
-    if(event.target.closest?.('.overview.pristine .ask-panel')) captureAttention();
-    const copy=event.target.closest?.('[data-action="copy-context"]');
-    if(copy){event.preventDefault();event.stopPropagation();event.stopImmediatePropagation();openCopyContextDialog();return;}
-    const confirm=event.target.closest?.('[data-action="copy-context-confirm"]');
-    if(confirm){event.preventDefault();event.stopPropagation();event.stopImmediatePropagation();confirmCopyContext();}
-  },true);
-  document.addEventListener('keydown',event=>{
-    if(event.key==='Enter' && event.target?.id==='askInput') captureAttention();
+  async function currentStateSignature(){
+    if(!API?.getState) return null;
+    try{
+      const raw=await API.getState();const items=asList(raw,['state','items','results']).map(x=>({id:x.id||'',version:x.version||0,statement:x.statement||x.text||''})).sort((a,b)=>String(a.id).localeCompare(String(b.id)));return JSON.stringify(items);
+    }catch(_){return null;}
+  }
+  function queryTerms(query){
+    const stop=new Set(['what','when','where','which','would','could','should','about','this','that','with','from','have','been','were','they','project','state','review','reviewed','decision','decided','evidence']);
+    return [...new Set(String(query||'').toLowerCase().match(/[a-z0-9]+/g)||[])].filter(x=>x.length>3&&!stop.has(x));
+  }
+  async function relevantResolvedDecisions(query){
+    if(!API?.getReviews) return [];
+    try{
+      const raw=await API.getReviews('resolved');const reviews=asList(raw,['reviews','items','results']).filter(r=>['confirmed_current','not_applied'].includes(r.resolution));
+      const terms=queryTerms(query);const asksPast=/\b(reject|rejected|considered|reviewed|leave unchanged|left unchanged|decided against|why (?:did|do|is|was).*not|did we already|previous decision|past decision)\b/i.test(query);
+      const scored=reviews.map((r,index)=>{const body=`${r.decision_question||''} ${r.why_consequential||''} ${(r.evidence_items||[]).map(e=>e.content||'').join(' ')}`.toLowerCase();const score=terms.reduce((n,t)=>n+(body.includes(t)?1:0),0);return {r,score,index};}).filter(x=>x.score>0||asksPast).sort((a,b)=>b.score-a.score||a.index-b.index).slice(0,3);
+      return scored.map(x=>x.r);
+    }catch(_){return [];}
+  }
+  function resolvedDecisionMarkup(items){
+    if(!items.length)return'';
+    return `<section class="ask-resolved-decisions"><span>Human review history</span><h3>Relevant prior decisions</h3><ul>${items.map(r=>{const label=r.resolution==='not_applied'?'Evidence was not applied':'Current State was left unchanged';const source=truncate((r.evidence_items||[])[0]?.content||'',120);return `<li><strong>${esc(label)}:</strong> ${esc(r.decision_question||'A prior Review was resolved.')} ${source?`<small>Evidence: ${esc(source)}</small>`:''}</li>`;}).join('')}</ul></section>`;
+  }
+  function portableAskText(payload,resolved=[]){
+    const answer=payload?.answer;if(!answer)return'';
+    const labels={state:'Current State',review:'Needs review',blocking_question:'Blocking question',question:'Open question',history:'History',evidence:'Evidence',none:'Context'};
+    const lines=[answer.headline||'State Ask','',answer.summary||''];
+    for(const section of answer.sections||[]){if(!section?.items?.length)continue;lines.push('',section.title||'Project context');for(const item of section.items){const label=labels[item.record_type]||'Context';lines.push(`- [${label}] ${item.text}`);if(item.detail)lines.push(`  ${item.record_type==='blocking_question'?'Blocks: ':''}${item.detail}`);}}
+    if(resolved.length){lines.push('','RELEVANT PRIOR HUMAN REVIEW DECISIONS');resolved.forEach(r=>lines.push(`- [${r.resolution==='not_applied'?'Evidence not applied':'Current State left unchanged'}] ${r.decision_question||'Prior review decision'}`));}
+    return lines.join('\n').trim();
+  }
+  function sanitizeAskHtml(html){
+    const holder=document.createElement('div');holder.innerHTML=html;
+    holder.querySelectorAll('.ask-new-session,.ask-meeting-notes,.ask-refinement-chips,.ask-copy-answer').forEach(x=>x.remove());
+    const actions=holder.querySelector('.ask-answer-actions');
+    if(actions){actions.innerHTML='<button class="btn secondary" type="button" data-review-batch-action="copy-ask-answer">Copy</button>';}
+    return holder.innerHTML;
+  }
+  function renderDrawerResult(html){const target=document.getElementById('askStateDrawerResult');if(target)target.innerHTML=html;}
+  function renderFinalAsk(){
+    if(!ui.payload){renderDrawerResult('<div class="ask-live-error"><h2>Ask is temporarily unavailable.</h2><p>State did not receive a grounded answer.</p></div>');return;}
+    let html=sanitizeAskHtml(ASK?.render?.(ui.payload) || '<div class="ask-live-error"><h2>Ask is temporarily unavailable.</h2></div>');
+    if(ui.stale)html=`<div class="ask-state-stale"><span>Current State has changed since this answer was generated.</span><button class="text-button" type="button" data-review-batch-action="refresh-ask">Refresh answer →</button></div>${html}`;
+    html+=resolvedDecisionMarkup(ui.resolvedContext);
+    renderDrawerResult(html);
+  }
+  async function checkAnswerFreshness(){
+    if(!ui.payload||!ui.answerStateSignature)return;
+    const current=await currentStateSignature();if(current===null)return;const next=current!==ui.answerStateSignature;if(next!==ui.stale){ui.stale=next;renderFinalAsk();}
+  }
+  function explicitMutationIntent(query){
+    const api=APP();
+    if(api?.looksLikeQuestion?.(query))return false;
+    if(api?.hasExplicitUpdateIntent)return api.hasExplicitUpdateIntent(query);
+    return /\b(add (this|that|it)|please add|update (the )?(current )?state|record (this|that)|please record|note that|for the record|log (this|that))\b/i.test(query);
+  }
+  async function runAsk(query){
+    const clean=String(query||'').trim();if(!clean)return;
+    ui.query=clean;syncAskInputs();openAskDrawer({focus:false});
+    if(explicitMutationIntent(clean)){
+      ui.payload=null;ui.resolvedContext=[];ui.answerStateSignature=null;ui.stale=false;
+      renderDrawerResult('<div class="ask-readonly-message"><h3>Ask State is read-only.</h3><p>Typing here never changes the project record. Use Add Evidence when you have new project information State should evaluate.</p><button class="btn primary" type="button" data-review-batch-action="open-add-evidence">Add Evidence</button></div>');return;
+    }
+    if(!ASK?.submit){renderDrawerResult('<div class="ask-live-error"><h2>Ask is temporarily unavailable.</h2><p>The Ask module did not load.</p></div>');return;}
+    const requestId=++ui.requestId;ui.running=true;ui.stale=false;ui.payload=null;ui.resolvedContext=[];
+    const statePromise=currentStateSignature();const resolvedPromise=relevantResolvedDecisions(clean);
+    renderDrawerResult('<div class="ask-live-loading"><span class="ask-loading-mark" aria-hidden="true"></span><div><strong>Checking the project record…</strong><p>Keeping accepted, pending, and unresolved information separate.</p></div></div>');
+    try{
+      let payload;
+      if(ASK.canStream?.(clean)){
+        payload=await ASK.submitStream(clean,null,{
+          preview:preview=>{if(requestId!==ui.requestId)return;const html=ASK.renderStream?.('',preview);if(html)renderDrawerResult(html);},
+          delta:event=>{if(requestId!==ui.requestId)return;ui.streamRaw=(ui.streamRaw||'')+(event?.text||'');const html=ASK.renderStream?.(ui.streamRaw,null);if(html)renderDrawerResult(html);}
+        });
+      }else payload=await ASK.submit(clean,null);
+      if(requestId!==ui.requestId)return;
+      ui.payload=payload;ui.answerStateSignature=await statePromise;ui.resolvedContext=await resolvedPromise;ui.running=false;ui.streamRaw='';renderFinalAsk();
+    }catch(error){
+      if(requestId!==ui.requestId)return;ui.running=false;ui.streamRaw='';renderDrawerResult(`<div class="ask-live-error"><h2>Ask is temporarily unavailable.</h2><p>${esc(error?.message||'Please try again.')}</p></div>`);
+    }
+  }
+
+  function openHowStateWorks(){
+    openOverlay(`<span class="eyebrow">How this works</span><h2 id="dialogTitle">State keeps accepted understanding separate from new information.</h2><div class="state-help-steps"><div class="state-help-step"><strong>1. Add Evidence</strong><span>Capture a finding, decision, or meeting update. Approved Slack channels can also create Evidence.</span></div><div class="state-help-step"><strong>2. State interprets</strong><span>AI compares new Evidence with Current State and identifies what may have changed.</span></div><div class="state-help-step"><strong>3. Review &amp; decide</strong><span>Review proposed changes before anything becomes accepted Current State.</span></div><div class="state-help-step"><strong>4. Current State stays maintained</strong><span>Accepted changes update the project reference. History keeps the prior understanding and decision path.</span></div><div class="state-help-step"><strong>5. Ask State</strong><span>Ask is read-only. Use it to find, summarize, investigate, or prepare from the project record.</span></div></div><p class="demo-flow-principle">AI interprets → software enforces → people decide</p><div class="dialog-actions"><button class="btn primary" data-action="close-dialog">Got it</button></div>`);
+  }
+  function prepareHelpButton(){
+    const btn=document.querySelector('.demo-help-button');if(!btn)return;
+    btn.removeAttribute('data-action');btn.dataset.reviewBatchAction='show-help';
+  }
+
+  function enhanceSettings(){
+    const page=document.querySelector('.settings-page');if(!page)return;
+    const sections=[...page.querySelectorAll(':scope > .settings-section')];
+    const how=sections.find(s=>/How State works/i.test(s.querySelector('h3')?.textContent||''));
+    const first=sections[0];if(how&&first&&how!==first){how.classList.add('settings-how-state-first');page.insertBefore(how,first);}
+    const head=page.querySelector('.page-head p');if(head)head.textContent='Configure Northstar, its Evidence sources, and the safeguards around Current State.';
+  }
+
+  function enhanceNotes(){
+    const page=document.querySelector('.notes-page');if(page){
+      const head=page.querySelector('.page-head>div>p');if(head&&!head.classList.contains('notes-product-purpose')){head.classList.add('notes-product-purpose');head.textContent='Keep working notes and browse information State has received. Use Review, Current State, and History for downstream detail.';}
+    }
+    document.querySelectorAll('[data-action="send-note-review"]').forEach(btn=>{if(btn.textContent.trim()!=='Send as Evidence')btn.textContent='Send as Evidence';});
+    document.querySelectorAll('[data-action="open-note-history"]').forEach(btn=>{if(/Reviewed/i.test(btn.textContent))btn.textContent='Changed Current State →';});
+    document.querySelectorAll('.open-items-drafts .open-items-section-description').forEach(node=>{node.textContent="Notes you've started but haven't submitted as Evidence yet.";});
+  }
+
+  function enhanceEvidenceDialog(){
+    const body=document.getElementById('dialogBody');if(!body)return;
+    const title=body.querySelector('#dialogTitle');if(!title)return;
+    const text=title.textContent.trim();
+    if(text==='Add a project update'){
+      const eyebrow=body.querySelector('.eyebrow');if(eyebrow)eyebrow.textContent='Evidence';title.textContent='Add Evidence';
+      const p=title.nextElementSibling;if(p)p.textContent='Add project information State should evaluate. It is preserved as Evidence first and cannot change Current State without Review.';
+      const textarea=body.querySelector('#addInfoText');if(textarea)textarea.placeholder='Paste a finding, decision, meeting update, or other project information...';
+      const action=body.querySelector('[data-action="save-info"]');if(action)action.textContent='Add Evidence';
+    } else if(text==='Sent to Review' || text==='Note sent to Review'){
+      const eyebrow=body.querySelector('.eyebrow');if(eyebrow)eyebrow.textContent='Evidence added';title.textContent='Evidence added';
+      const p=title.nextElementSibling;if(p)p.textContent=p.textContent.replace(/One review needs your decision\./,'1 Review needs your decision.').replace(/reviews need your decisions\./,'Reviews need your decisions.');
+      body.querySelector('[data-action="go-review"]')?.replaceChildren(document.createTextNode('View Review'));
+    } else if(text==='Note reviewed'){
+      const eyebrow=body.querySelector('.eyebrow');if(eyebrow)eyebrow.textContent='Evidence added';title.textContent='Evidence added';const p=title.nextElementSibling;if(p)p.textContent='Added as Evidence. Current State did not need a Review.';
+    }
+  }
+
+  async function reconcileQuestionLinks(){
+    if(ui.questionReconcileBusy||!API?.getReviews||!APP()?.state?.data?.reviews)return;ui.questionReconcileBusy=true;
+    try{
+      const raw=await API.getReviews('open');const reviews=asList(raw,['reviews','items','results']);const byId=new Map(reviews.map(r=>[String(r.id),r]));
+      for(const local of APP().state.data.reviews){if(!local?.backendReviewId)continue;const source=byId.get(String(local.backendReviewId));if(!source)continue;const ids=[...(source.resolves_question_ids||[])];local.resolvesQuestionIds=ids;local.resolvesQuestionId=ids[0]||null;}
+    }catch(_){/* authoritative backend unavailable: leave current UI alone */}
+    finally{ui.questionReconcileBusy=false;}
+  }
+
+  function reviewFromButton(button){const id=button.dataset.review;return APP()?.state?.data?.reviews?.find(r=>String(r.id)===String(id));}
+  function showStateUpdateConfirmation(button){
+    const review=reviewFromButton(button);if(!review)return;
+    ui.confirmReturnHtml=button.closest('#dialogBody')?document.getElementById('dialogBody')?.innerHTML:null;
+    const proposal=truncate(review.proposed || (review.proposals||[]).map(p=>p.proposed_statement).filter(Boolean).join(' • ') || review.summary,210);
+    openOverlay(`<span class="eyebrow">Review decision</span><h2 id="dialogTitle">Update Current State?</h2><p>This changes what the project currently treats as true and records the decision in History.</p>${proposal?`<div class="review-confirm-change"><span>Change</span><strong>${esc(proposal)}</strong></div>`:''}<div class="dialog-actions"><button class="btn secondary" type="button" data-review-batch-action="cancel-state-update">Cancel</button><button class="btn primary" type="button" data-review-batch-action="confirm-state-update" data-review-id="${esc(review.id)}">Update Current State</button></div>`);
+  }
+  function triggerReviewAction(reviewId,action){
+    const ghost=document.createElement('button');ghost.type='button';ghost.hidden=true;ghost.dataset.action=action;ghost.dataset.review=reviewId;ghost.dataset.reviewBatchBypass='1';document.body.appendChild(ghost);ghost.click();ghost.remove();
+  }
+  function compactStateReceipt(){
+    const body=document.getElementById('dialogBody');if(!body)return;const title=body.querySelector('#dialogTitle');if(!title)return;
+    const first=truncate(body.querySelector('.review-change-receipt li')?.textContent||'',180);
+    body.innerHTML=`<span class="eyebrow">Review complete</span><h2 id="dialogTitle">Current State updated</h2>${first?`<p>${esc(first)}</p>`:'<p>The reviewed change is now part of Current State.</p>'}<div class="dialog-actions"><button class="btn primary" type="button" data-review-batch-action="go-current-state">View Current State</button><button class="btn secondary" type="button" data-review-batch-action="go-history">View History</button></div>`;
+    ui.decisionMode=null;setTimeout(checkAnswerFreshness,350);setTimeout(reconcileQuestionLinks,350);
+  }
+  function handleDecisionDialog(){
+    const body=document.getElementById('dialogBody');const overlay=document.getElementById('overlay');if(!body||!overlay)return;const title=body.querySelector('#dialogTitle')?.textContent?.trim()||'';
+    if(ui.decisionMode==='state'){
+      if(title==='Updating understanding…')body.innerHTML='<div class="review-saving-compact"><span class="eyebrow">Updating</span><h2 id="dialogTitle">Updating Current State…</h2><p>Saving the reviewed decision to the project record.</p></div>';
+      else if(title==='Here’s what changed' || title==='Current understanding updated.')compactStateReceipt();
+      else if(title==='Nothing was changed.')ui.decisionMode=null;
+    }else if(ui.decisionMode==='evidence'){
+      if(title==='Updating understanding…'){overlay.hidden=true;document.body.classList.remove('modal-open');}
+      else if(title==='Evidence reviewed.' || title==='Review complete.'){overlay.hidden=true;document.body.classList.remove('modal-open');ui.decisionMode=null;showToast('Evidence reviewed. Current State did not change.');setTimeout(reconcileQuestionLinks,250);}
+      else if(title==='Nothing was changed.')ui.decisionMode=null;
+    }else if(ui.decisionMode==='keep'){
+      if(title==='Leaving understanding unchanged…'){overlay.hidden=true;document.body.classList.remove('modal-open');}
+      else if(title==='Understanding left unchanged.') {overlay.hidden=true;document.body.classList.remove('modal-open');ui.decisionMode=null;showToast('Current State left unchanged. Evidence is preserved.');setTimeout(reconcileQuestionLinks,250);}
+      else if(title==='Nothing was changed.')ui.decisionMode=null;
+    }
+  }
+
+  function enhanceWorkspaceAttention(){
+    const attention=document.querySelector('.overview.pristine .workspace-attention');if(!attention)return;
+    const intro=attention.querySelector('.attention-intro-text');if(intro)intro.textContent='Open an item to make the decision where it belongs. Ask State stays available separately.';
+  }
+
+  function enhanceAll(){
+    addStyles();ensureAskShell();prepareHelpButton();ensureWorkspaceAsk();ensureCurrentStateHeader();enhanceSettings();enhanceNotes();enhanceEvidenceDialog();handleDecisionDialog();enhanceWorkspaceAttention();syncLauncherVisibility();
+  }
+
+  document.addEventListener('submit',event=>{
+    const form=event.target.closest('[data-review-batch-form="ask"]');if(!form)return;event.preventDefault();event.stopPropagation();const input=form.querySelector('input');runAsk(input?.value||ui.query);
   },true);
 
-  let queued=false;
-  const schedule=()=>{if(queued)return;queued=true;requestAnimationFrame(()=>{queued=false;enhance();});};
-  new MutationObserver(schedule).observe(document.documentElement,{childList:true,subtree:true});
-  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',schedule,{once:true}); else schedule();
+  document.addEventListener('input',event=>{
+    if(event.target?.id==='askStateDrawerInput'||event.target?.id==='askStateInlineInput'){ui.query=event.target.value;const other=event.target.id==='askStateDrawerInput'?document.getElementById('askStateInlineInput'):document.getElementById('askStateDrawerInput');if(other&&document.activeElement!==other)other.value=ui.query;}
+  });
+
+  document.addEventListener('click',event=>{
+    const reviewUpdate=event.target.closest?.('[data-action="review-update"]');
+    if(reviewUpdate && reviewUpdate.dataset.reviewBatchBypass!=='1'){
+      const review=reviewFromButton(reviewUpdate);const generic=!!review && Array.isArray(review.proposals) && review.proposals.length===0;
+      if(generic){ui.decisionMode='evidence';return;}
+      event.preventDefault();event.stopPropagation();event.stopImmediatePropagation();showStateUpdateConfirmation(reviewUpdate);return;
+    }
+    const reviewKeep=event.target.closest?.('[data-action="review-keep"]');if(reviewKeep){ui.decisionMode='keep';return;}
+    const prompt=event.target.closest?.('[data-review-batch-prompt]');if(prompt){event.preventDefault();event.stopPropagation();runAsk(prompt.dataset.reviewBatchPrompt);return;}
+    const action=event.target.closest?.('[data-review-batch-action]');if(!action)return;
+    event.preventDefault();event.stopPropagation();const type=action.dataset.reviewBatchAction;
+    if(type==='open-ask')openAskDrawer();
+    else if(type==='close-ask')closeAskDrawer();
+    else if(type==='copy-context')openCopyContextDialog();
+    else if(type==='copy-context-confirm')confirmCopyContext();
+    else if(type==='show-help')openHowStateWorks();
+    else if(type==='copy-ask-answer'&&ui.payload)writeClipboard(portableAskText(ui.payload,ui.resolvedContext)).then(()=>showToast('Ask answer copied with State labels.'));
+    else if(type==='refresh-ask')runAsk(ui.query);
+    else if(type==='open-add-evidence'){closeAskDrawer();document.querySelector('[data-action="add-info"]')?.click();}
+    else if(type==='cancel-state-update'){if(ui.confirmReturnHtml){document.getElementById('dialogBody').innerHTML=ui.confirmReturnHtml;ui.confirmReturnHtml=null;}else closeOverlay();}
+    else if(type==='confirm-state-update'){ui.confirmReturnHtml=null;ui.decisionMode='state';const id=action.dataset.reviewId;document.getElementById('dialogBody').innerHTML='<div class="review-saving-compact"><span class="eyebrow">Updating</span><h2 id="dialogTitle">Updating Current State…</h2><p>Saving the reviewed decision to the project record.</p></div>';triggerReviewAction(id,'review-update');}
+    else if(type==='go-current-state'){closeOverlay();document.querySelector('.sidebar-nav [data-view="project-overview"]')?.click();}
+    else if(type==='go-history'){closeOverlay();document.querySelector('.sidebar-nav [data-view="history"]')?.click();}
+  },true);
+
+  document.addEventListener('click',event=>{
+    if(event.target.closest?.('#askStateDrawer [data-view],#askStateDrawer [data-action="open-related-review"],#askStateDrawer [data-action="go-open-question"]'))setTimeout(closeAskDrawer,0);
+  });
+  document.addEventListener('keydown',event=>{if(event.key==='Escape'&&ui.drawerOpen&&document.getElementById('overlay')?.hidden)closeAskDrawer();});
+  window.addEventListener('scroll',syncLauncherVisibility,{passive:true});window.addEventListener('resize',syncLauncherVisibility,{passive:true});
+
+  let queued=false;const schedule=()=>{if(queued)return;queued=true;requestAnimationFrame(()=>{queued=false;enhanceAll();});};
+  new MutationObserver(schedule).observe(document.documentElement,{childList:true,subtree:true,characterData:true});
+  setInterval(()=>{if(ui.drawerOpen&&ui.payload)checkAnswerFreshness();},7000);
+  setTimeout(reconcileQuestionLinks,250);setTimeout(reconcileQuestionLinks,1400);
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',schedule,{once:true});else schedule();
 })();
