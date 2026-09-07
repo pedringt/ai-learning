@@ -66,3 +66,4 @@ jobs:
           node state-question-review-handoff-tests.js
           node state-workspace-hierarchy-tests.js
           node state-review-priority-tests.js
+          node state-history-copy-tests.js
