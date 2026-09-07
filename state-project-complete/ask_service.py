@@ -39,6 +39,18 @@ def ask_cache_key(
     the full compact candidate set makes any accepted decision or new evidence
     produce a different key instead of serving a stale answer.
 
+    Also keyed on today's date. None of the authority-bearing inputs above
+    change just because a day passed, but an answer's own prose can still go
+    stale purely from the passage of time -- a record dated "September 3" is
+    accurately described as upcoming on September 2 and stale if that exact
+    cached prose is still served on September 4. _grounding_rules() below
+    tells the model how to describe a passed date correctly, but that
+    instruction only takes effect on an actual model call; a cache hit skips
+    the model entirely and would otherwise replay whatever tense the answer
+    was generated in indefinitely. Keying on the date forces a fresh call
+    (and a fresh grounding-rules read) once the day rolls over, without
+    invalidating same-day repeat questions.
+
     Depends on ordering defined elsewhere. _compact_candidates truncates
     history to 18 entries and evidence to 24, which is only safe because
     list_history and list_evidence in review_service.py both ORDER BY ... DESC:
@@ -51,6 +63,7 @@ def ask_cache_key(
         "query": " ".join(query.lower().split()),
         "previous_answer": previous_answer,
         "candidates": _compact_candidates(connection),
+        "as_of_date": date.today().isoformat(),
     }
     encoded = json.dumps(payload, ensure_ascii=False, sort_keys=True, separators=(",", ":"), default=str)
     return hashlib.sha256(encoded.encode("utf-8")).hexdigest()
@@ -337,6 +350,21 @@ def _validate_selection(selection: AskSelection, candidates: Mapping[str, list[d
             continue
         field = "blocking_question_ids" if question["blocking"] else "question_ids"
         data[field] = list(dict.fromkeys(data[field] + [qid]))
+
+    # The reverse relationship must hold too: a selected Question may have an
+    # open Review explicitly linked as potentially resolving it (via that
+    # Review's own resolves_question_ids). Ask must not show the Question
+    # while omitting the qualifying Review -- symmetric with the Review ->
+    # Question safety net above. Runs after that net so it also covers
+    # Questions that were only added because of a selected Review (those
+    # already have their Review selected, so this is a no-op for them; it
+    # only adds anything new for Questions the model selected directly).
+    selected_questions = set(data["blocking_question_ids"] + data["question_ids"])
+    linked_review_ids = [
+        r["id"] for r in candidates["reviews"]
+        if selected_questions.intersection(r.get("question_ids", []))
+    ]
+    data["review_ids"] = list(dict.fromkeys(data["review_ids"] + linked_review_ids))
     return AskSelection.model_validate(data)
 
 

@@ -263,6 +263,23 @@ def _persist_success(
             # Link Questions that this Review would resolve if accepted. Questions
             # are application-owned objects: the model may reference only exact
             # open IDs that software can verify at persistence time.
+            #
+            # When newer Evidence reinterprets an existing Review, the old
+            # question-resolution links must not simply accumulate the way a
+            # bare INSERT OR IGNORE would leave them -- unlike proposals (which
+            # get an explicit supersedes_proposal_id above), there was no
+            # equivalent cleanup here. Concretely: Evidence A creates Review R
+            # and says accepting it resolves Question Q; Evidence B later
+            # reinterprets R and no longer says Q is answered; without this
+            # delete, the stale R->Q link from Evidence A survives, and
+            # accepting the latest (Evidence-B) version of R would incorrectly
+            # resolve Q even though nothing currently reviewed actually
+            # establishes that answer. Clearing existing links before
+            # re-inserting whatever this interpretation says makes
+            # review_questions represent only the latest interpretation, the
+            # same rule proposals already follow.
+            if reused_existing:
+                connection.execute("DELETE FROM review_questions WHERE review_id=?", (review_id,))
             for question_id in rec.get("resolves_question_ids", []):
                 question_sql = "SELECT id, status FROM questions WHERE id=?"
                 if getattr(connection, "is_postgres", False):

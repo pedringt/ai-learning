@@ -255,7 +255,6 @@ class LiveProviderIntegrationTests(unittest.TestCase):
         print(f"\n✓ Anthropic pipeline succeeded")
         print(f"  Status: {result.processing_status}")
         print(f"  Reviews: {result.review_ids}")
-        print(f"  Proposals: {result.proposal_ids}")
         
         assert result.processing_status == "succeeded"
         assert len(result.review_ids) > 0
@@ -291,7 +290,6 @@ class LiveProviderIntegrationTests(unittest.TestCase):
         print(f"\n✓ OpenAI pipeline succeeded")
         print(f"  Status: {result.processing_status}")
         print(f"  Reviews: {result.review_ids}")
-        print(f"  Proposals: {result.proposal_ids}")
         
         assert result.processing_status == "succeeded"
         assert len(result.review_ids) > 0

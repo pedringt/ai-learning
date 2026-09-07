@@ -102,6 +102,7 @@ The repository root holds the portfolio site. The two directories below are the 
 
 ```bash
 cd state-project-complete
+python3 -m venv .venv && source .venv/bin/activate   # gitignored; do not skip this
 pip install -r requirements.txt
 
 export DATABASE_URL="sqlite:///tmp/state.db"
@@ -111,6 +112,15 @@ export STATE_DEMO_BOOTSTRAP=1          # seed the Northstar demo project
 
 python -m uvicorn api:app --reload --port 8000
 ```
+
+Use this `.venv`, not a global `pip install`. A real incident (2026-09-07):
+a provider-call parameter that worked fine against a globally-installed
+`anthropic` package broke every evidence submission on staging, because
+the version actually pinned in `requirements.txt` (and what Render
+deploys) didn't support that parameter at all — local testing had
+silently been running against a different SDK version the whole time. A
+project-local venv installed from this exact `requirements.txt` is what
+makes "it works locally" mean the same thing as "it works deployed."
 
 Check it came up:
 
@@ -141,14 +151,17 @@ The deterministic fixture in `context-data.js` supports local/no-backend paths a
 ```bash
 # Python — deterministic suite, no flags needed
 cd state-project-complete && python -m pytest -q
-# 340 passed, 3 skipped, 7 subtests passed
+# 339 passed, 44 skipped, 7 subtests passed
 
-# JavaScript — deterministic Ask, Notes and provenance behavior
+# JavaScript — deterministic Ask, Notes, provenance, Workspace and analytics behavior
 cd implementation-context-prototype
 node state-ask-behavior-tests.js            # 81 passed, 0 failed
 node state-ask-followup-tests.js            # 18 passed, 0 failed
 node state-ask-loading-visibility-tests.js  # 5 passed, 0 failed
 node state-provenance-behavior-tests.js
+# ...and 6 more state-*-tests.js files. The full list CI actually runs lives
+# in .github/workflows/tests.yml's `javascript` job — that file is the
+# source of truth, not this one, so it can't drift out of date here.
 ```
 
 Tests that require real provider API keys skip themselves when the keys are
@@ -218,6 +231,7 @@ Being cleaned up deliberately rather than all at once:
 - **Partially addressed 2026-09-06.** `context-tool.css`'s ~30 scattered `@media` blocks (several breakpoints redefined five-plus times across separate blocks) are now 13: one canonical block per breakpoint, plus four single-rule exceptions pinned at their original position because moving them would have changed which declaration wins the cascade at that breakpoint (each carries a comment explaining why). The consolidation was done mechanically and verified, not by eye: a small script modeled the cascade for every selector/property in the file across every combination of viewport width, dark mode, and `prefers-reduced-motion`, confirmed the merge changes nothing, and separately confirmed 96 whole rules were already fully dead (permanently shadowed by a later declaration) and safe to delete outright — see git history around 2026-09-06 for the verification script if this is reopened. **Still open:** the same layering pattern in the ~1,100 lines of non-media rules (harder to verify mechanically, since there's no breakpoint to partition on) and the version-stamped inline `<style>` blocks in `index.html` — neither was touched this pass.
 - **`context-app.js`'s size — addressed 2026-09-06.** It was a single ~1,840-line module; a full ES-module split was investigated and rejected (the prototype opens from the filesystem via `index.html`'s `file://` guards, and ES modules are CORS-blocked over `file://`). What actually unblocked the split was noticing this codebase already had the answer: `context-ask.js` and `context-provenance.js` were already plain `<script>` files (no modules needed) that keep their own logic private and expose one small `Object.freeze()` API on `window`, rather than dumping shared state there. Applying that same pattern pulled Notes, Open Items, and Current State view rendering out into `context-notes-view.js`, `context-open-items-view.js`, and `context-project-view.js` — each takes plain data/callbacks and returns HTML, never touching `state` directly. `context-app.js` is now 1,580 lines (down ~14%) and keeps every original call site working via same-name thin wrapper functions. **Still open:** the remaining ~1,580 lines are Ask routing/submission, backend hydration/mapping, and the event-dispatch handler — all controller logic that mutates `state` or talks to the backend, which doesn't fit the same-shape "given data, return HTML" contract the three extracted modules use. Splitting that further would need a different pattern, not just more of this one.
 - `phase2_current/` is named as though it were a superseded spike but is load-bearing runtime code. Renaming it would be the honest fix, and would touch every provider's import path.
+- **Question resolution provenance is imprecise when one Review has multiple linked Evidence and resolves multiple Questions.** `resolve_review()` (`review_service.py`) stamps every Question a Review resolves with `latest_evidence_id` — the single most-recently-submitted Evidence linked to the whole Review — not necessarily the specific Evidence that established that Question's own answer. Flagged in a 2026-09-07 logic review; not fixed, since a real fix needs a schema migration (`review_questions` has no `evidence_id` column to record a per-link source) rather than a narrow code change. Resolution/status remain correct either way — only `source_evidence_id` attribution can be imprecise in this specific multi-evidence, multi-question case. See the comment at the fix site for the exact shape a real fix would take.
 
 ---
 

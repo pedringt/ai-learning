@@ -95,9 +95,11 @@
   // content while the sidebar still shows Settings highlighted.
   function render(){ updateNav(); const views={overview:renderOverview,notes:renderNotes,'open-items':renderOpenItems,questions:renderOpenItems,review:renderOpenItems,history:renderHistory,'project-overview':renderProjectOverview,settings:()=>{}}; (views[state.view]||renderOverview)(); ASK?.activateWaitStates?.(root); }
 
+  const VIEW_ANALYTICS_EVENTS={overview:'workspace_viewed','project-overview':'current_state_viewed','open-items':'open_items_viewed',questions:'open_items_viewed',review:'open_items_viewed',notes:'notes_viewed',history:'history_viewed',settings:'settings_viewed'};
   function navigateTo(view,{preserveHistoryTopic=false,preserveHistoryEvidence=false}={}){
     state.view=view;
     state.navMoreOpen=false;
+    window.StateAnalytics?.track(VIEW_ANALYTICS_EVENTS[view]||'view_changed',{view});
     if(view==='history'){
       if(!preserveHistoryTopic)state.historyTopic=null;
       if(!preserveHistoryEvidence)state.historyEvidenceId=null;
@@ -106,7 +108,18 @@
     // user can inspect Project, Open Items, Notes, or History and return to the
     // same working Ask. Explicit New ask / reset actions own session cleanup.
     render();
-    requestAnimationFrame(()=>window.scrollTo({top:0,behavior:'auto'}));
+    // Scroll synchronously, in the same tick as render() -- not a frame
+    // later via requestAnimationFrame, as this used to do. Leaving a
+    // scrolled-down Current State page (with its subnav open) shrinks the
+    // page a lot; deferring the scroll reset let the browser paint one
+    // frame of the new, shorter content at the old scroll offset first (a
+    // visible snap), before the correction landed. The browser doesn't
+    // paint until this function returns, so doing both in one synchronous
+    // pass produces a single atomic visual update instead of two.
+    // Tried scrolling to top BEFORE the content swap instead -- doesn't
+    // work: CSS scroll anchoring compensates for the subsequent layout
+    // shift and silently drags the scroll position back away from 0.
+    window.scrollTo({top:0,behavior:'auto'});
   }
 
   function projectScrollTop(target){
@@ -204,7 +217,7 @@
     const preview=state.result?.liveAskPreview;
     const message=preview?.message || 'Finding relevant project context · checking Reviews and unresolved questions · shaping the useful parts.';
     const label=preview?.grounded ? 'Grounded context ready' : 'Building your briefing…';
-    return `<div class="ask-live-loading${preview?.grounded?' has-grounded-preview':''}"><span class="ask-loading-mark" aria-hidden="true"></span><div><strong>${esc(label)}</strong><p>${esc(message)}</p><p class="ask-loading-note">Suggested prompts below answer instantly from what's already known -- this one runs a live check against the full project record.</p></div></div>`;
+    return `<div class="ask-live-loading${preview?.grounded?' has-grounded-preview':''}"><span class="ask-loading-mark" aria-hidden="true"></span><div><strong>${esc(label)}</strong><p>${esc(message)}</p><p class="ask-loading-note">Suggested prompts above answer instantly from what's already known -- this one runs a live check against the full project record.</p></div></div>`;
   }
   function workspaceAttentionHtml(){
     if(API && state.workspaceAttentionStatus==='loading'){
@@ -222,9 +235,17 @@
     if(!items.length){
       return `<section class="workspace-attention is-clear"><div class="workspace-attention-head"><div><span class="eyebrow">Needs your attention</span><h3>You're caught up</h3><p>Nothing currently needs a decision and no questions are blocking progress.</p></div><button class="text-button" data-view="open-items">Open Items →</button></div></section>`;
     }
+    // Describe exactly what's rendered in `items` below, never the uncapped
+    // reviews/blockers totals -- those can outnumber the 2 row slots, and a
+    // breakdown claiming "3 blocking questions" while only 1 (or 0) blocker
+    // row actually renders is the exact silent mismatch this guards against.
+    const shownReviews=items.filter(i=>i.kind==='review').length;
+    const shownBlockers=items.filter(i=>i.kind==='blocker').length;
+    const hiddenCount=total-items.length;
     const breakdownParts=[];
-    if(reviews.length) breakdownParts.push(`${reviews.length} review${reviews.length===1?'':'s'}`);
-    if(blockers.length) breakdownParts.push(`${blockers.length} blocking question${blockers.length===1?'':'s'}`);
+    if(shownReviews) breakdownParts.push(`${shownReviews} review${shownReviews===1?'':'s'}`);
+    if(shownBlockers) breakdownParts.push(`${shownBlockers} blocking question${shownBlockers===1?'':'s'}`);
+    if(hiddenCount>0) breakdownParts.push(`+${hiddenCount} more in Open Items`);
     const rows=items.map(item=>`<button class="attention-item ${item.kind}" data-action="${item.kind==='review'?'open-specific-review':'go-open-question'}" ${item.kind==='review'?`data-review-id="${esc(item.id)}"`:`data-question-id="${esc(item.id)}"`}><span class="attention-item-copy"><span class="attention-kind">${esc(item.label)}</span><strong>${esc(item.title)}</strong><span>${esc(item.detail)}</span></span><span class="attention-arrow" aria-hidden="true">→</span></button>`).join('');
     return `<section class="workspace-attention"><div class="workspace-attention-head"><div><span class="eyebrow">Needs your attention</span><h3>${total===1?'1 item is waiting on you':`${total} items are waiting on you`}</h3><p class="attention-intro-text">${esc(breakdownParts.join(' · '))}</p></div><button class="text-button" data-view="open-items">Open Items →</button></div><div class="attention-list">${rows}</div></section>`;
   }
@@ -255,13 +276,24 @@
     const lastUpdated=last?(last.date||formatBackendDate(last.changed_at)):null;
     const lastTopic=last?.knowledgeId?state.data.knowledge.find(k=>k.id===last.knowledgeId):null;
     const lastLabel=lastTopic?.title||last?.type||'';
-    const decisionCount=(state.data.knowledge||[]).filter(k=>k.state==='current').length;
+    // Current State holds facts, constraints, scope, and outcomes -- not
+    // just "decisions" -- and an open Question is not necessarily blocking
+    // or undecided, so this card's copy must not conflate the two. See
+    // openQuestions()'s own note above and the Open Items badge (which
+    // already separates blocking questions from every open one).
+    const establishedCount=(state.data.knowledge||[]).filter(k=>k.state==='current').length;
     const openCount=openQuestions().length;
+    const blockingCount=openQuestions().filter(q=>q.blocking).length;
     const openHeadline=openCount===0?'✓ No open questions':`${openCount} open question${openCount===1?'':'s'}`;
+    const openSupportText=openCount===0
+      ? 'Nothing to track right now.'
+      : blockingCount===0
+        ? 'None are currently blocking progress.'
+        : `${blockingCount} ${blockingCount===1?'is':'are'} currently blocking progress.`;
     return `<section class="workspace-status-card"><span class="eyebrow">Current State</span><div class="workspace-status-body">
       <div class="workspace-status-item"><strong class="workspace-status-value">${lastUpdated?`Updated ${esc(lastUpdated)}`:'Not yet established'}</strong><div class="workspace-status-row"><span>${lastLabel?esc(lastLabel):'Most recent change.'}</span></div></div>
-      <div class="workspace-status-item"><strong class="workspace-status-value">${decisionCount} decision${decisionCount===1?'':'s'} recorded</strong><div class="workspace-status-row"><span>What the project currently treats as true.</span><button class="text-button" data-view="project-overview">Browse Current State →</button></div></div>
-      <div class="workspace-status-item"><strong class="workspace-status-value${openCount===0?' is-clear':''}">${esc(openHeadline)}</strong><div class="workspace-status-row"><span>${openCount===0?'Nothing blocking progress.':'Waiting on a decision.'}</span><button class="text-button" data-view="open-items">Open Items →</button></div></div>
+      <div class="workspace-status-item"><strong class="workspace-status-value">${establishedCount} established fact${establishedCount===1?'':'s'}</strong><div class="workspace-status-row"><span>What the project currently treats as true.</span><button class="text-button" data-view="project-overview">Browse Current State →</button></div></div>
+      <div class="workspace-status-item"><strong class="workspace-status-value${openCount===0?' is-clear':''}">${esc(openHeadline)}</strong><div class="workspace-status-row"><span>${openSupportText}</span><button class="text-button" data-view="open-items">Open Items →</button></div></div>
     </div></section>`;
   }
   function renderWorkspaceAttentionOnly(){
@@ -635,6 +667,8 @@
     const visiblePrevious=followupMode==='new'?null:previousLive;
     if(ASK?.canHandle(raw,previousLive)){
       state.resultQuery=raw;
+      window.StateAnalytics?.trackAskQuery(raw,{followupMode});
+      if(followupMode!=='new'&&previousLive) window.StateAnalytics?.track('ask_refinement_used',{followupMode});
       if(ASK.canStream?.(raw)){
         state.result={liveAskStreaming:true,liveAskStreamRaw:'',liveAskPreview:null,previousLive:visiblePrevious,pendingInput:''};
         renderOverview();
@@ -656,6 +690,7 @@
           const answerTop=root.querySelector('.answer-content')?.getBoundingClientRect().top ?? null;
           state.result={liveAsk:payload,previousLive:(payload?.followup_mode||(previousLive?'append':'new'))==='append'?previousLive:null};
           state.refinements=[];
+          window.StateAnalytics?.track('ask_completed',{streamed:true});
           renderOverview();
           if(answerTop!==null){
             requestAnimationFrame(()=>{
@@ -678,6 +713,7 @@
               const answerTop=root.querySelector('.answer-content')?.getBoundingClientRect().top ?? null;
               state.result={liveAsk:payload,previousLive:(payload?.followup_mode||(previousLive?'append':'new'))==='append'?previousLive:null};
               state.refinements=[];
+              window.StateAnalytics?.track('ask_completed',{streamed:true,retried:true});
               renderOverview();
               if(answerTop!==null){
                 requestAnimationFrame(()=>{
@@ -691,6 +727,7 @@
             }
           }
           state.result={liveAskError:err?.message||'State could not produce a grounded answer. Please try again.',previousLive:visiblePrevious};
+          window.StateAnalytics?.track('ask_failed',{streamed:true,message:String(err?.message||'').slice(0,200)});
         }
         renderOverview();
         return;
@@ -701,8 +738,10 @@
         const payload=await ASK.submit(raw,previousLive);
         state.result={liveAsk:payload,previousLive:(payload?.followup_mode||(previousLive?'append':'new'))==='append'?previousLive:null};
         state.refinements=[];
+        window.StateAnalytics?.track('ask_completed',{streamed:false});
       }catch(err){
         state.result={liveAskError:err?.message||'State could not produce a grounded answer. Please try again.',previousLive:visiblePrevious};
+        window.StateAnalytics?.track('ask_failed',{streamed:false,message:String(err?.message||'').slice(0,200)});
       }
       renderOverview();
       return;
@@ -916,6 +955,7 @@
   function decideReview(id,decision){
     const r=state.data.reviews.find(x=>x.id===id);
     if(!r||r.status!=='pending')return;
+    window.StateAnalytics?.track(decision==='update'?'review_accepted':'review_rejected',{reviewId:id});
     const isGeneric=r.id?.startsWith('r-info-') || (Array.isArray(r.proposals) && r.proposals.length===0);
     if(decision==='update' && !isGeneric){
       const proposalText=(r.proposals||[]).map(p=>p.proposed_statement).filter(Boolean).join(' • ') || r.proposed || '';
@@ -994,6 +1034,7 @@
 
 
   function showDemoHelp(){
+    window.StateAnalytics?.track('orientation_opened');
     const steps=[
       ['1. Add','Add Evidence. Capture a finding, decision, or meeting update. Approved Slack conversations can also become Evidence automatically.'],
       ['2. State interprets','AI compares new Evidence with Current State and identifies possible changes or unresolved Questions.'],
@@ -1083,7 +1124,7 @@
     state.data.reviews=state.data.reviews.filter(r=>!r.backendReviewId || openIds.has(r.backendReviewId));
   }
 
-  function mapApiReview(r, fallbackEvidence='', extras={}){
+  function mapApiReview(r, fallbackEvidence=''){
     const proposals=(r.proposals||[]).filter(p=>!p.status || p.status==='pending');
     const affected=r.affected_state_items||[];
     const current=affected.length
@@ -1108,13 +1149,16 @@
       current,
       evidence:r.evidence_content||fallbackEvidence,
       evidenceSourceType:r.evidence_source_type||'',
-      // Only an explicit backend resolves_question_ids (or a hardcoded local
-      // fixture relationship via `extras`) counts as a resolving link -- a
-      // review is never inferred to resolve a question just because its
-      // evidence happened to come from answering one. "Answer found ·
-      // Awaiting review" must only appear when the backend actually says so.
-      resolvesQuestionIds:(r.resolves_question_ids||[]).length ? [...r.resolves_question_ids] : (extras.resolvesQuestionIds||extras.resolvesQuestionId?[extras.resolvesQuestionId].filter(Boolean):[]),
-      resolvesQuestionId:(r.resolves_question_ids||[])[0] || extras.resolvesQuestionId,
+      // Only an explicit backend resolves_question_ids counts as a resolving
+      // link -- a review is never inferred to resolve a question just
+      // because its evidence happened to come from answering one (that used
+      // to fall back to a caller-supplied questionId here; removed 2026-09-07
+      // after a live-testing review found it could show "Answer found ·
+      // Awaiting review" even when the backend returned no such relationship
+      // at all). "Answer found · Awaiting review" must only appear when the
+      // backend actually says so.
+      resolvesQuestionIds:[...(r.resolves_question_ids||[])],
+      resolvesQuestionId:(r.resolves_question_ids||[])[0],
       establishes:rationale||r.why_consequential,
       doesNot:r.review_type==='proposed_update'
         ? 'The proposed change does not become Current State until you accept it.'
@@ -1123,7 +1167,6 @@
       reviewType:r.review_type,
       proposals,
       affectedStateItems:affected,
-      ...extras
     };
   }
 
@@ -1549,8 +1592,8 @@
     const noteFilter=e.target.closest('.notes-filters [data-filter]'); if(noteFilter){ state.notesFilter=noteFilter.dataset.filter; renderNotes(); return; }
     const reviewFilter=e.target.closest('.review-filters [data-review-filter]'); if(reviewFilter){ state.reviewFilter=reviewFilter.dataset.reviewFilter; renderReview(); return; }
     const sectionToggle=e.target.closest('[data-action="toggle-open-item-section"]'); if(sectionToggle){ const key=sectionToggle.dataset.section; const reviews=uiPendingReviews(), questions=openQuestions(); const count=key==='reviews'?reviews.length:key==='blockers'?questions.filter(q=>q.blocking).length:questions.filter(q=>!q.blocking).length; const current=state.openItemSections[key]===null?(key==='questions'&&count>5):!!state.openItemSections[key]; state.openItemSections[key]=!current; renderOpenItems(); return; }
-    const reviewToggle=e.target.closest('[data-action="toggle-review-card"]'); if(reviewToggle){ const id=reviewToggle.dataset.reviewId; state.expandedReviewId=state.expandedReviewId===id?null:id; renderOpenItems(); return; }
-    const provenanceToggle=e.target.closest('[data-action="toggle-provenance"]'); if(provenanceToggle){ const body=provenanceToggle.parentElement?.querySelector('.project-provenance-body'); if(body){ const expanded=!body.hidden; body.hidden=expanded; provenanceToggle.setAttribute('aria-expanded',String(!expanded)); provenanceToggle.textContent=expanded?'Why this is current →':'Hide why this is current'; } return; }
+    const reviewToggle=e.target.closest('[data-action="toggle-review-card"]'); if(reviewToggle){ const id=reviewToggle.dataset.reviewId; const wasOpen=state.expandedReviewId===id; state.expandedReviewId=state.expandedReviewId===id?null:id; if(!wasOpen) window.StateAnalytics?.track('review_opened',{reviewId:id}); renderOpenItems(); return; }
+    const provenanceToggle=e.target.closest('[data-action="toggle-provenance"]'); if(provenanceToggle){ const body=provenanceToggle.parentElement?.querySelector('.project-provenance-body'); if(body){ const expanded=!body.hidden; body.hidden=expanded; provenanceToggle.setAttribute('aria-expanded',String(!expanded)); provenanceToggle.textContent=expanded?'Why this is current →':'Hide why this is current'; if(!expanded) window.StateAnalytics?.track('provenance_opened'); } return; }
     const p=e.target.closest('[data-prompt]'); if(p){ submitAsk(p.dataset.prompt); return; }
     const a=e.target.closest('[data-action]'); if(!a)return;
     const act=a.dataset.action;
@@ -1632,7 +1675,7 @@
         try{
           const result=await submitEvidence(text,`question_response:${q.id}`);
           const stamp=Date.now(), noteId='n-q-'+stamp;
-          const apiReviews=(result.reviews||[]).map(r=>mapApiReview(r,text,{resolvesQuestionId:q.id}));
+          const apiReviews=(result.reviews||[]).map(r=>mapApiReview(r,text));
           state.data.notes.unshift({id:noteId,title:'Answer to: '+q.text,text,source:'Question response',date:todayLabel(),dateISO:todayISO(),topics:q.topics,status:apiReviews.length?'pending':'no_review_needed',reviewId:apiReviews[0]?.id||null,reviewIds:apiReviews.map(r=>r.id),evidenceId:result.evidence_id});
           apiReviews.forEach(r=>{r.evidenceId=noteId; upsertBackendReview(r);});
           state.reviewBannerDismissed=false; state.isAnalyzing=false; stopAnalysisClock(); updateNav();

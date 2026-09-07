@@ -172,6 +172,26 @@ def resolve_review(connection: Connection, review_id: str, decision: Decision, n
             linked_questions = connection.execute(
                 "SELECT question_id FROM review_questions WHERE review_id=?", (review_id,)
             ).fetchall()
+            # KNOWN PROVENANCE GAP (logged 2026-09-07 logic review, not fixed
+            # here -- flagged as future hardening, not expanded into this
+            # pass): every Question this Review resolves gets stamped with
+            # latest_evidence_id, the single most-recently-submitted Evidence
+            # linked to the whole Review -- not necessarily the Evidence that
+            # actually established THAT Question's specific answer. If Review
+            # R has two linked Evidence items (A resolves Q1, B resolves Q2,
+            # B submitted after A), both Q1 and Q2 end up attributed to B.
+            # The schema has no way to do better today: review_questions only
+            # stores (review_id, question_id), with no evidence_id column, so
+            # there's no per-link record of which Evidence resolved which
+            # Question. A real fix needs a migration adding that column,
+            # populated in interpretation_pipeline_integrated.py's
+            # resolves_question_ids insert loop (which does know the current
+            # evidence_id at insert time), plus this query joining on it
+            # instead of applying one latest_evidence_id to every linked
+            # Question. Not attempted here since it's a schema change, not a
+            # narrow fix -- resolution and status remain correct either way,
+            # only the source_evidence_id attribution can be imprecise for
+            # this specific multi-evidence, multi-question case.
             for linked in linked_questions:
                 connection.execute(
                     "UPDATE questions SET status='resolved', resolved_at=CURRENT_TIMESTAMP, "

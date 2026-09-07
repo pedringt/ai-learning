@@ -52,5 +52,44 @@ api.state.resultQuery='some question';
 api.renderOverview();
 check('attention keeps rendering even if the legacy state.result field is set', stub.innerHTML.includes('workspace-attention'));
 
+// Regression coverage for a logic-review finding (2026-09-07): the Current
+// State card's open-questions row conflated "any open question" with
+// "blocking progress" ("Waiting on a decision." / "Nothing blocking
+// progress."), and labeled the Current State item count "N decisions
+// recorded" even though Current State holds facts/constraints/scope/
+// outcomes, not just decisions.
+api.state.result=null;
+
+// Open questions exist, none are blocking -- must not claim anything is
+// blocking progress.
+api.state.data.questions=[
+  {id:'q-1',status:'open',blocking:false,text:'Non-blocking question one'},
+  {id:'q-2',status:'open',blocking:false,text:'Non-blocking question two'},
+];
+api.renderOverview();
+let html2=stub.innerHTML;
+check('open questions with none blocking says so explicitly', html2.includes('None are currently blocking progress.'));
+check('open questions with none blocking does not say "Waiting on a decision"', !html2.includes('Waiting on a decision'));
+check('the open-question count is shown', html2.includes('2 open questions'));
+
+// Some open questions are blocking -- the count shown must be the blocking
+// count, not the total open count.
+api.state.data.questions=[
+  {id:'q-1',status:'open',blocking:true,text:'Blocking question'},
+  {id:'q-2',status:'open',blocking:false,text:'Non-blocking question'},
+  {id:'q-3',status:'open',blocking:false,text:'Another non-blocking question'},
+];
+api.renderOverview();
+html2=stub.innerHTML;
+check('the blocking count (1), not the total open count (3), is what\'s reported as blocking',
+  html2.includes('1 is currently blocking progress.'));
+check('total open questions (3) is still the headline count', html2.includes('3 open questions'));
+
+// Current State items are described as established understanding, not
+// "decisions" -- Current State holds facts, constraints, scope, and
+// outcomes, not only decisions.
+check('Current State item count is not labeled "decisions recorded"', !html2.includes('decision') || !html2.includes('recorded'));
+check('Current State item count uses "established" language instead', /\d+ established facts?/.test(html2), html2.match(/\d+ established[^<]*/)?.[0]);
+
 console.log(`\n${pass} passed, ${fail} failed`);
 if(fail) process.exit(1);

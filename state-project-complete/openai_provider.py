@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import json
 import logging
+import os
 from typing import Any, Mapping
 
 import sys
@@ -37,6 +38,12 @@ class OpenAIProvider:
         self.name = "openai"
         self.model_identifier = model_identifier
         self.api_key = api_key
+        # See anthropic_provider.py's matching comment: consequentiality
+        # judgment is a decision with real product consequences, not creative
+        # generation, and repeated calls on identical input should not flip.
+        # Kept consistent with the Anthropic adapter's default rather than
+        # leaving this provider on the API's own (non-zero) default.
+        self.temperature = float(os.getenv("OPENAI_TEMPERATURE", "0"))
         
         # Lazy import to avoid requiring openai library unless actually used
         self._client = None
@@ -85,6 +92,7 @@ class OpenAIProvider:
         response = self.client.chat.completions.create(
             model=self.model_identifier,
             max_tokens=2000,
+            temperature=self.temperature,
             messages=[
                 {
                     "role": "user",
@@ -138,6 +146,7 @@ class OpenAIProvider:
         response = self.client.chat.completions.create(
             model=self.model_identifier,
             max_tokens=300,
+            temperature=self.temperature,
             messages=[{"role": "user", "content": prompt}],
         )
         response_text = response.choices[0].message.content
