@@ -212,6 +212,13 @@ test.describe('Review + Question resolution (deterministic demo data)', () => {
 
     const reviewCard = await expandReviewCard(page, 'demo-review-escalation');
     await reviewCard.locator('[data-action="review-update"]').click();
+    // A review with a real proposed change is "consequential" -- it opens a
+    // confirm dialog instead of mutating Current State immediately (unlike
+    // the generic demo-review-retention case above, which has no proposals
+    // and skips this step). Confirm it before expecting the card to clear.
+    const confirmButton = page.locator('[data-action="confirm-review-update"]');
+    await expect(confirmButton).toBeVisible({ timeout: 5_000 });
+    await confirmButton.click();
     await expect(reviewCard).toHaveCount(0, { timeout: 10_000 });
 
     await expect(async () => {
