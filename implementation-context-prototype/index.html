@@ -16,7 +16,7 @@
       var local = location.protocol === 'file:';
       document.write('<link rel="icon" href="' + (local ? '../favicon.svg' : '/favicon.svg') + '">');
       document.write('<link rel="stylesheet" href="' + (local ? '../site-shell.css' : '/site-shell.css') + '">');
-      document.write('<link rel="stylesheet" href="' + (local ? 'context-tool.css?v=r53-mobile-nav-and-copy-polish' : '/implementation-context-prototype/context-tool.css?v=r53-mobile-nav-and-copy-polish') + '">');
+      document.write('<link rel="stylesheet" href="' + (local ? 'context-tool.css?v=r54-analytics-instrumentation' : '/implementation-context-prototype/context-tool.css?v=r54-analytics-instrumentation') + '">');
     })();
   </script>
   <style id="state-critical-modal">
@@ -124,20 +124,21 @@
       var local = location.protocol === 'file:';
       document.write('<script src="' + (local ? '../site-shell.js' : '/site-shell.js') + '"><\/script>');
       if(!local) document.write('<script src="/api/state-config.js"><\/script>');
-      document.write('<script src="' + (local ? 'context-data.js?v=r53-mobile-nav-and-copy-polish' : '/implementation-context-prototype/context-data.js?v=r53-mobile-nav-and-copy-polish') + '"><\/script>');
-      document.write('<script src="' + (local ? 'context-api.js?v=r53-mobile-nav-and-copy-polish' : '/implementation-context-prototype/context-api.js?v=r53-mobile-nav-and-copy-polish') + '"><\/script>');
-      document.write('<script src="' + (local ? 'context-ask.js?v=r53-mobile-nav-and-copy-polish' : '/implementation-context-prototype/context-ask.js?v=r53-mobile-nav-and-copy-polish') + '"><\/script>');
-      document.write('<script src="' + (local ? 'context-ask-followup.js?v=r53-mobile-nav-and-copy-polish' : '/implementation-context-prototype/context-ask-followup.js?v=r53-mobile-nav-and-copy-polish') + '"><\/script>');
-      document.write('<script src="' + (local ? 'context-notes-view.js?v=r53-mobile-nav-and-copy-polish' : '/implementation-context-prototype/context-notes-view.js?v=r53-mobile-nav-and-copy-polish') + '"><\/script>');
-      document.write('<script src="' + (local ? 'context-open-items-view.js?v=r53-mobile-nav-and-copy-polish' : '/implementation-context-prototype/context-open-items-view.js?v=r53-mobile-nav-and-copy-polish') + '"><\/script>');
-      document.write('<script src="' + (local ? 'context-project-view.js?v=r53-mobile-nav-and-copy-polish' : '/implementation-context-prototype/context-project-view.js?v=r53-mobile-nav-and-copy-polish') + '"><\/script>');
-      document.write('<script src="' + (local ? 'context-app.js?v=r53-mobile-nav-and-copy-polish' : '/implementation-context-prototype/context-app.js?v=r53-mobile-nav-and-copy-polish') + '"><\/script>');
-      document.write('<script src="' + (local ? 'context-history.js?v=r53-mobile-nav-and-copy-polish' : '/implementation-context-prototype/context-history.js?v=r53-mobile-nav-and-copy-polish') + '"><\/script>');
-      document.write('<script src="' + (local ? 'context-provenance.js?v=r53-mobile-nav-and-copy-polish' : '/implementation-context-prototype/context-provenance.js?v=r53-mobile-nav-and-copy-polish') + '"><\/script>');
-      document.write('<script src="' + (local ? 'context-quickwins.js?v=r53-mobile-nav-and-copy-polish' : '/implementation-context-prototype/context-quickwins.js?v=r53-mobile-nav-and-copy-polish') + '"><\/script>');
-      document.write('<script src="' + (local ? 'context-product-polish.js?v=r53-mobile-nav-and-copy-polish' : '/implementation-context-prototype/context-product-polish.js?v=r53-mobile-nav-and-copy-polish') + '"><\/script>');
-      document.write('<script src="' + (local ? 'context-settings.js?v=r53-mobile-nav-and-copy-polish' : '/implementation-context-prototype/context-settings.js?v=r53-mobile-nav-and-copy-polish') + '"><\/script>');
-      document.write('<script src="' + (local ? 'context-sources.js?v=r53-mobile-nav-and-copy-polish' : '/implementation-context-prototype/context-sources.js?v=r53-mobile-nav-and-copy-polish') + '"><\/script>');
+      document.write('<script src="' + (local ? 'context-analytics.js?v=r54-analytics-instrumentation' : '/implementation-context-prototype/context-analytics.js?v=r54-analytics-instrumentation') + '"><\/script>');
+      document.write('<script src="' + (local ? 'context-data.js?v=r54-analytics-instrumentation' : '/implementation-context-prototype/context-data.js?v=r54-analytics-instrumentation') + '"><\/script>');
+      document.write('<script src="' + (local ? 'context-api.js?v=r54-analytics-instrumentation' : '/implementation-context-prototype/context-api.js?v=r54-analytics-instrumentation') + '"><\/script>');
+      document.write('<script src="' + (local ? 'context-ask.js?v=r54-analytics-instrumentation' : '/implementation-context-prototype/context-ask.js?v=r54-analytics-instrumentation') + '"><\/script>');
+      document.write('<script src="' + (local ? 'context-ask-followup.js?v=r54-analytics-instrumentation' : '/implementation-context-prototype/context-ask-followup.js?v=r54-analytics-instrumentation') + '"><\/script>');
+      document.write('<script src="' + (local ? 'context-notes-view.js?v=r54-analytics-instrumentation' : '/implementation-context-prototype/context-notes-view.js?v=r54-analytics-instrumentation') + '"><\/script>');
+      document.write('<script src="' + (local ? 'context-open-items-view.js?v=r54-analytics-instrumentation' : '/implementation-context-prototype/context-open-items-view.js?v=r54-analytics-instrumentation') + '"><\/script>');
+      document.write('<script src="' + (local ? 'context-project-view.js?v=r54-analytics-instrumentation' : '/implementation-context-prototype/context-project-view.js?v=r54-analytics-instrumentation') + '"><\/script>');
+      document.write('<script src="' + (local ? 'context-app.js?v=r54-analytics-instrumentation' : '/implementation-context-prototype/context-app.js?v=r54-analytics-instrumentation') + '"><\/script>');
+      document.write('<script src="' + (local ? 'context-history.js?v=r54-analytics-instrumentation' : '/implementation-context-prototype/context-history.js?v=r54-analytics-instrumentation') + '"><\/script>');
+      document.write('<script src="' + (local ? 'context-provenance.js?v=r54-analytics-instrumentation' : '/implementation-context-prototype/context-provenance.js?v=r54-analytics-instrumentation') + '"><\/script>');
+      document.write('<script src="' + (local ? 'context-quickwins.js?v=r54-analytics-instrumentation' : '/implementation-context-prototype/context-quickwins.js?v=r54-analytics-instrumentation') + '"><\/script>');
+      document.write('<script src="' + (local ? 'context-product-polish.js?v=r54-analytics-instrumentation' : '/implementation-context-prototype/context-product-polish.js?v=r54-analytics-instrumentation') + '"><\/script>');
+      document.write('<script src="' + (local ? 'context-settings.js?v=r54-analytics-instrumentation' : '/implementation-context-prototype/context-settings.js?v=r54-analytics-instrumentation') + '"><\/script>');
+      document.write('<script src="' + (local ? 'context-sources.js?v=r54-analytics-instrumentation' : '/implementation-context-prototype/context-sources.js?v=r54-analytics-instrumentation') + '"><\/script>');
     })();
   </script>
 </body>

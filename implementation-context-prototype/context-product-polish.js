@@ -181,7 +181,7 @@
     const task=body.querySelector('#copyContextTask')?.value.trim() || '';
     const button=body.querySelector('[data-review-batch-action="copy-context-confirm"]');
     const status=body.querySelector('#copyContextStatus');
-    try{await writeClipboard(buildContextText(mode,task));if(button)button.textContent='Copied';if(status)status.textContent='Context copied.';}
+    try{await writeClipboard(buildContextText(mode,task));if(button)button.textContent='Copied';if(status)status.textContent='Context copied.';window.StateAnalytics?.track('copy_context_used',{mode,hasTask:!!task});}
     catch(_){if(status)status.textContent='Copy failed. Your browser may be blocking clipboard access.';}
   }
 
@@ -190,7 +190,7 @@
       const launcher=document.createElement('button');launcher.id='askStateLauncher';launcher.className='ask-state-launcher';launcher.type='button';launcher.dataset.reviewBatchAction='open-ask';launcher.textContent='Ask State';document.body.appendChild(launcher);
     }
     if(!document.getElementById('askStateDrawer')){
-      const drawer=document.createElement('aside');drawer.id='askStateDrawer';drawer.className='ask-state-drawer';drawer.hidden=true;drawer.setAttribute('aria-label','Ask State');drawer.innerHTML=`<div class="ask-state-drawer-head"><div><h2>Ask State</h2><p>Read-only. Asking never changes the project record.</p></div><button class="ask-state-drawer-close" type="button" aria-label="Close Ask State" data-review-batch-action="close-ask">×</button></div><div class="ask-state-drawer-controls"><form class="ask-state-drawer-form" data-review-batch-form="ask"><input id="askStateDrawerInput" autocomplete="off" aria-label="Ask State" placeholder="What do you want to know?"><button class="btn primary" type="submit">Ask</button></form><p class="ask-state-drawer-help">Edit the question and run it again to refine the answer. State does not carry a hidden conversation forward.</p><div class="ask-state-starters">${starters.map(([label,prompt])=>`<button type="button" data-review-batch-prompt="${esc(prompt)}">${esc(label)}</button>`).join('')}</div></div><div class="ask-state-drawer-result" id="askStateDrawerResult" aria-live="polite"></div>`;document.body.appendChild(drawer);
+      const drawer=document.createElement('aside');drawer.id='askStateDrawer';drawer.className='ask-state-drawer';drawer.hidden=true;drawer.setAttribute('aria-label','Ask State');drawer.innerHTML=`<div class="ask-state-drawer-head"><div><h2>Ask State</h2><p>Read-only. Asking never changes the project record.</p></div><button class="ask-state-drawer-close" type="button" aria-label="Close Ask State" data-review-batch-action="close-ask">×</button></div><div class="ask-state-drawer-controls"><form class="ask-state-drawer-form" data-review-batch-form="ask"><input id="askStateDrawerInput" autocomplete="off" aria-label="Ask State" placeholder="What do you want to know?"><button class="btn primary" type="submit">Ask</button></form><p class="ask-state-drawer-help">Edit the question and run it again to refine the answer. State does not carry a hidden conversation forward. Questions asked here may be recorded to help improve State.</p><div class="ask-state-starters">${starters.map(([label,prompt])=>`<button type="button" data-review-batch-prompt="${esc(prompt)}">${esc(label)}</button>`).join('')}</div></div><div class="ask-state-drawer-result" id="askStateDrawerResult" aria-live="polite"></div>`;document.body.appendChild(drawer);
     }
     syncAskInputs();
   }
