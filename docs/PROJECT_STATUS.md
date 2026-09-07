@@ -4,11 +4,13 @@ This file is the canonical current-state handoff for State. Any AI assistant or 
 
 ## Current production state
 
-_Last updated: September 7, 2026 (Analytics + full evaluation pass, Phases 1-7 of the "Next Marching Orders" doc -- two evidence-backed interpretation-prompt fixes now landed, eval set at 100%/100%)_
+_Last updated: September 7, 2026 (staging promoted to main via PR #88 -- analytics, the consequentiality eval framework, portfolio + case-study refinement, and a Question/Review consistency-hardening pass are all now live in production)_
 
-`main` is production, currently at commit `2adb591` (merged via [PR #66](https://github.com/pedringt/ai-learning/pull/66)). Slack Phase 2, self-serve Slack OAuth, a full round of Ask reliability/UX hardening, and a site-wide portfolio content pass are live in production, promoted 2026-09-06. The *only* thing on `main` past that is `.github/workflows/deep-qa.yml` itself (PR #66) -- no application code -- added there deliberately, because GitHub only allows dispatching a `workflow_dispatch` workflow if its file exists on the default branch; the workflow's actual content still runs against whatever ref you dispatch it against (normally `staging`).
+`main` is production, currently at commit `098b052` (merged via [PR #88](https://github.com/pedringt/ai-learning/pull/88), 18 commits). `staging` and `main` are now in sync -- everything described in this file as "latest session" work below is live in production, not pending promotion.
 
-**`staging` has diverged substantially further and is not yet promoted -- CI green throughout.** Nothing below has been promoted; it all requires Paige's explicit go-ahead per the usual workflow rule. See "Next up" below.
+**One merge conflict during promotion, resolved:** `index.html`'s homepage hero. `main` had received a differently-worded hero line independently (commit `361a25a`, "Homepage hero: reframe around epistemic uncertainty", promoted to `main` on its own path before this PR). Resolved in favor of `staging`'s version per this session's explicit instruction to preserve it: *"So I'm building real products and evaluating real opportunities to find out where that matters, what needs human judgment, and where AI actually helps."*
+
+Everything promoted was verified before and after the merge: full Python suite (379 passed / 3 skipped, including real-provider tests) run against the actual pinned dependency stack (`state-project-complete/.venv`) both on `staging` before the PR and again on the merged `main` state before pushing; all 11 JS suites green; live smoke tests against the deployed backend (evidence submission, Ask streaming and non-streaming) and confirmed Render/Vercel build hashes matching before promoting.
 
 ### Latest session: analytics + a full pass through "Next Marching Orders" Phases 1-6, with real findings from every phase
 
@@ -129,9 +131,9 @@ The production frontend must point to the production API. Staging intentionally 
 
 Deliberately still out of scope: real Slack token revocation on Disconnect, and automatic channel discovery via the Slack Web API (channels are currently approved manually).
 
-### Next up: `staging` -> `main` promotion is the pending decision
+### Next up
 
-`staging` is 75 commits ahead of `main`, CI green throughout, everything above individually verified (several live, not just via the deterministic suites). **Ask Paige whether to promote now or hold for more work** -- do not promote without her explicit authorization. If she says yes: this doc's "Current production state" intro needs a fresh rewrite afterward (same rule as always -- any push to `main` gets a same-pass review of this file), and double-check the production-only environment config (production API URL) survives the promotion, per the working rule below.
+`staging` and `main` were promoted in sync 2026-09-07 (PR #88) -- there is no pending promotion decision right now. The production-only environment config (production API URL, `VERCEL_ENV==='production'` detection) was not touched by this promotion and needs no follow-up. Future staging work resumes the normal cycle: feature branches off `staging`, merge to `staging`, push, smoke-test, and only promote to `main` again with Paige's explicit go-ahead each time.
 
 ### Smaller tech debt still open (not urgent, no live QA evidence forcing it)
 
