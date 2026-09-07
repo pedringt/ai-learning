@@ -104,10 +104,13 @@ test.describe('Settings', () => {
     // regression that protection guards against; verify it against the real
     // deployed build rather than only the mocked suite.
     await gotoWithBypass(page, STATE_URL);
-    await page.locator('.sidebar-nav [data-view="settings"]').click();
-    await expect(page.locator('.nav-item[data-view="settings"]')).toHaveClass(/active/);
+    // Settings also appears inside the mobile-only "More" menu now (2026-09-07
+    // release polish) -- scope to the direct sidebar child so this desktop-width
+    // test targets the always-visible primary button, not that hidden duplicate.
+    await page.locator('.sidebar-nav > [data-view="settings"]').click();
+    await expect(page.locator('.sidebar-nav > [data-view="settings"]')).toHaveClass(/active/);
     await page.waitForTimeout(3_000); // let any pending hydration attempt to redraw
-    await expect(page.locator('.nav-item[data-view="settings"]')).toHaveClass(/active/);
+    await expect(page.locator('.sidebar-nav > [data-view="settings"]')).toHaveClass(/active/);
     diag.assertClean(expect);
   });
 });
