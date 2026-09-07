@@ -125,7 +125,9 @@ def test_open_items_action_count_includes_reviews_and_blockers_only():
     # stayed in context-app.js.
     assert "const actionTotal=" in OPEN_ITEMS_VIEW_JS
     assert "View all ${total} →" in JS
-    assert "Showing ${items.length} of ${total}" in JS
+    # "Showing N of total" was removed 2026-09-07 (Workspace polish round):
+    # redundant with "View all N ->" immediately above it in the same section.
+    assert "Showing ${items.length} of ${total}" not in JS
     assert "more in Open Items" not in JS
     assert "more in Open Items" not in OPEN_ITEMS_VIEW_JS
 
