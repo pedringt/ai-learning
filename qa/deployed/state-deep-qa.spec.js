@@ -271,9 +271,10 @@ test.describe('Evidence intake consequentiality (real model)', () => {
   test.afterAll(async ({ request }) => { await resetDemoData(request); });
 
   test('VP billing note reaches Review, not a silent no_review', async ({ request }) => {
+    test.setTimeout(90_000); // real interpretation round-trip, not a UI interaction
     const result = await backendPost(request, '/api/evidence', {
       content: 'VP says we can move forward on auto drafting billing quesitons',
-    });
+    }, { timeout: 75_000 });
     expect(Array.isArray(result.reviews)).toBeTruthy();
     expect(result.reviews.length).toBeGreaterThan(0);
   });

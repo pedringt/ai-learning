@@ -114,8 +114,12 @@ async function backendJson(request, path) {
  * POSTs JSON to the backend. Same host guard as resetDemoData -- this can
  * create real records (e.g. Evidence, Reviews) on whatever host it targets,
  * so it refuses to run against anything but the known staging backend.
+ *
+ * Default timeout is 60s, not Playwright's 15s default: a POST /api/evidence
+ * call runs a real interpretation round-trip (an actual LLM call plus
+ * validation and persistence), which routinely takes longer than 15s.
  */
-async function backendPost(request, path, data) {
+async function backendPost(request, path, data, { timeout = 60_000 } = {}) {
   let host;
   try {
     host = new URL(BACKEND_URL).host;
@@ -128,7 +132,7 @@ async function backendPost(request, path, data) {
       `backend "${REQUIRED_BACKEND_HOST}". Aborting rather than mutating an unexpected environment.`
     );
   }
-  const res = await request.post(`${BACKEND_URL}${path}`, { data });
+  const res = await request.post(`${BACKEND_URL}${path}`, { data, timeout });
   if (!res.ok()) throw new Error(`POST ${path} failed: HTTP ${res.status()} ${await res.text()}`);
   return res.json();
 }
