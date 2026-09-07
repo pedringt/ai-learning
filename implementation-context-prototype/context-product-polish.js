@@ -79,7 +79,16 @@
       .settings-page .settings-how-state-first{order:-1}
       .notes-page .notes-product-purpose{margin-top:6px}
       @media(max-width:760px){
-        .ask-state-launcher{right:14px;bottom:14px}.ask-state-drawer{top:0;height:100dvh;width:100vw;border-left:0}.ask-state-drawer-form{grid-template-columns:1fr}.project-head-copy-context{margin-left:0}
+        /* Compact icon-only on mobile: every Workspace card's CTA link
+           ("History ->", "Open Items ->", "Browse Current State ->") is
+           right-aligned, the same corner the launcher lives in -- at phone
+           width the labeled button's footprint reliably sits on top of one
+           of them even at rest, not just mid-scroll. Desktop keeps the
+           labeled "Ask State" button; a smaller icon here shrinks the
+           collision footprint without changing what it does. */
+        .ask-state-launcher{right:14px;bottom:14px;width:48px;height:48px;padding:0;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0}
+        .ask-state-launcher::before{content:'✦';font-size:19px;line-height:1}
+        .ask-state-drawer{top:0;height:100dvh;width:100vw;border-left:0}.ask-state-drawer-form{grid-template-columns:1fr}.project-head-copy-context{margin-left:0}
       }
     `;
     document.head.appendChild(style);
