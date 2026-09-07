@@ -4,13 +4,24 @@ This file is the canonical current-state handoff for State. Any AI assistant or 
 
 ## Current production state
 
-_Last updated: September 7, 2026 (Workspace/Ask follow-up round on top of the reconciled UX review batch)_
+_Last updated: September 7, 2026 (Workspace visual-polish rounds -- density, hierarchy, and a real backend prompt bug)_
 
 `main` is production, currently at commit `2adb591` (merged via [PR #66](https://github.com/pedringt/ai-learning/pull/66)). Slack Phase 2, self-serve Slack OAuth, a full round of Ask reliability/UX hardening, and a site-wide portfolio content pass are live in production, promoted 2026-09-06. The *only* thing on `main` past that is `.github/workflows/deep-qa.yml` itself (PR #66) -- no application code -- added there deliberately, because GitHub only allows dispatching a `workflow_dispatch` workflow if its file exists on the default branch; the workflow's actual content still runs against whatever ref you dispatch it against (normally `staging`).
 
 **`staging` has diverged substantially further and is not yet promoted -- CI green throughout.** Nothing below has been promoted; it all requires Paige's explicit go-ahead per the usual workflow rule. See "Next up" below.
 
-### Latest session: Workspace/Ask follow-up round after live screenshots of the UX review batch (PR #81)
+### Latest session: Workspace visual-polish rounds (PRs #82-#85), plus a real backend prompt bug found along the way
+
+A series of small, fast feedback loops against live screenshots of the Workspace redesign below, converging on the current layout:
+
+- **Card alignment/sizing (PR #82):** Recently Updated's border only wrapped its list, not its "View all History" header -- gave both Recently Updated and Project Status one bordered container each. Found and fixed a latent class-name collision along the way: Project Status reused `.workspace-status`, which already existed (unrelated, dead CSS for a small header badge) -- renamed to `.workspace-status-card`.
+- **A real backend bug, not a display bug (PR #83):** a live Review title read "Should k-launch explicitly state..." -- `k-launch` is the internal database ID for the "Launch readiness" Current State item. Root cause: `_build_prompt()` in both `anthropic_provider.py` and `openai_provider.py` showed the model Current State items using only their raw ID, never a human-readable name, so the model had nothing else to call the item when generating prose like a `decision_question`. Fixed by including each item's existing `topic` column (e.g. "Launch readiness") alongside the ID in the prompt, plus an explicit instruction telling the model to use the topic name in prose and reserve the ID for structured fields (`state_item_id`/`existing_review_id`). This is upstream of the frontend's `k-rollout`-style ID-stripping regex -- that regex only catches IDs in specific known copy patterns, not a model generating a novel sentence that happens to name an item by ID.
+- **Proportions (PR #84):** grid 65/35 -> 55/45, and Project Status's content redistributed with `justify-content: space-between` so it didn't look bunched at the top of its (then still equal-height) card.
+- **Density/hierarchy (PR #85), the more substantial pass:** navigation links (View all History, Browse, View Open Items) were rendering larger/heavier than the actual information above them -- "Browse" was visually louder than "Current State." Unified all three to a smaller utility-link style (15px/600 weight). Removed Recently Updated's trailing row arrows (the whole row is already the click target) and compressed its padding. Grid moved to 60/40 and **stopped forcing equal card heights** (`align-items: start`, not `stretch`) -- once Recently Updated was compact, matching heights just created dead space in Project Status. Project Status restructured to one line per fact (label + link share a row); zero open questions now reads as a calm "✓ No open questions" instead of a bolded "0". Removed "Showing 2 of 7" under Needs Your Attention as redundant with "View all 7 ->" immediately above it.
+
+Verified across all four: 339 Python passed/3 skipped throughout (one contract test's assertion flipped when "Showing N of total" was intentionally removed; a direct check confirmed the new `_format_state_items()` prompt format), 135 JS assertions across 9 suites, live-browser verification at each step. Two of the four PRs' Vercel preview deploys hit the documented Hobby-plan build-rate limit from heavy same-day push volume -- merged anyway since the actual test suites (the real quality gate) were green; per the existing note below, this is expected under volume, not a sign of broken code.
+
+### Prior session: Workspace/Ask follow-up round after live screenshots of the UX review batch (PR #81)
 
 A quick follow-up on top of the 16-item batch below, driven by Paige reviewing live screenshots of the deployed result rather than a new written spec:
 
@@ -98,7 +109,7 @@ Deliberately still out of scope: real Slack token revocation on Disconnect, and 
 
 ### Next up: `staging` -> `main` promotion is the pending decision
 
-`staging` is 65 commits ahead of `main`, CI green throughout, everything above individually verified (several live, not just via the deterministic suites). **Ask Paige whether to promote now or hold for more work** -- do not promote without her explicit authorization. If she says yes: this doc's "Current production state" intro needs a fresh rewrite afterward (same rule as always -- any push to `main` gets a same-pass review of this file), and double-check the production-only environment config (production API URL) survives the promotion, per the working rule below.
+`staging` is 75 commits ahead of `main`, CI green throughout, everything above individually verified (several live, not just via the deterministic suites). **Ask Paige whether to promote now or hold for more work** -- do not promote without her explicit authorization. If she says yes: this doc's "Current production state" intro needs a fresh rewrite afterward (same rule as always -- any push to `main` gets a same-pass review of this file), and double-check the production-only environment config (production API URL) survives the promotion, per the working rule below.
 
 ### Smaller tech debt still open (not urgent, no live QA evidence forcing it)
 
