@@ -302,6 +302,78 @@ stale print lines; re-verified green (`test_live_anthropic_full_pipeline`
 now passes; the OpenAI-only tests skip cleanly, as expected without an
 `OPENAI_API_KEY`).
 
+## Phase 7, later the same session: two evidence-backed fixes shipped
+
+Paige authorized proceeding on item #1 (the context-dilution scaling
+experiment) and "whatever is easy" without further check-ins. Two changes
+went out; both were re-tested against the full 33-scenario set and
+stress-tested with repeated reruns before being called done, not shipped
+on a single green run (the nondeterminism finding above made that
+non-negotiable).
+
+**Fix 1: `temperature=0` on every interpretation call**
+(`anthropic_provider.py`, `openai_provider.py`). Neither provider ever set
+a temperature, so every call used the API's own (non-zero) default on a
+task that's a decision with real product consequences, not creative
+generation. This didn't "fix" any single scenario by itself -- it converted
+noisy, unreliable per-scenario results into a stable, reproducible signal.
+Concretely: `state_at_risk_escalation_path`, previously pass/fail/fail
+across reruns, became a consistent, deterministic fail at temp=0 -- meaning
+the earlier occasional pass had been noise in the *lucky* direction, not a
+real signal. Applied to both providers for consistency, though only the
+Anthropic path could be live-verified here (no `OPENAI_API_KEY`
+available).
+
+**Correcting the earlier context-dilution hypothesis.** Once results were
+stable, `eval/scaling_experiment.py` was re-run properly: the VP-billing
+evidence against 2/4/6/8/10 *generic* filler items, several trials each.
+**Every count passed, 100% of the time.** That directly contradicts the
+original "more Current State items dilutes attention" theory from earlier
+in this doc. What actually reproduces the miss is not item *count* -- it's
+the *exact* composition of `eval/scenarios.py`'s `BASE_STATE` (which the
+scaling experiment's generic filler pool never exactly matched). The
+honest, corrected finding: **something specific about that particular set
+of surrounding items causes the miss, not sheer volume.** This session
+didn't isolate which item(s) or why -- that's now a real open question, not
+a solved one, and the original "gets worse as Current State grows"
+framing earlier in this doc should be read as superseded by this more
+precise result.
+
+**Fix 2: an explicit `missing_understanding` instruction addition**
+(`anthropic_provider.py`'s `_build_prompt()`): "No matching existing item
+is a reason to use `missing_understanding`, not a reason to treat the
+Evidence as non-consequential" (full wording in the source -- a shorter
+version was tried first and measurably fixed fewer cases, so the fuller
+one was kept and `test_provider_prompt_contract.py`'s compactness budget
+was raised 3500->4000 chars to accommodate it, with a comment explaining
+why). This directly fixed both confirmed no-anchor misses
+(`clear_decision_budget`, `authority_statement_launch_date`) and, somewhat
+unexpectedly, also fixed the VP-billing case and the two remaining
+borderline scenarios -- possibly because the clarified instruction reduced
+the model's general tendency to under-weight decisions that don't map
+cleanly onto an existing item, not only the literal zero-anchor case.
+
+**Result after both fixes, stress-tested:** the full 33-scenario set now
+reads **100% precision, 100% recall** -- and, unlike every number earlier
+in this doc, this one held up: `authority_statement_refunds`,
+`state_at_risk_escalation_path`, and `observation_billing_volume` (the
+three scenarios that had shown any instability all session) were each
+re-run 3 more times after the fixes, 9/9 consistent passes.
+
+**What this genuinely does and doesn't prove.** It proves both fixes
+measurably improved this specific 33-scenario dataset without any
+precision cost, and that the improvement is stable, not lucky. It does
+**not** prove the underlying judgment is now perfect -- 33 hand-written
+scenarios against one model is still a small, self-authored dataset (the
+person who wrote the scenarios also wrote the fix), and the unresolved
+"why does this specific item composition matter" question means a
+differently-composed Current State could still reproduce a miss this
+dataset doesn't happen to cover. Both changes are low-risk on their own
+merits (temperature=0 is a well-understood, mechanical change; the prompt
+addition is narrow and its net effect was measured, not assumed) but
+should be treated as "meaningfully better, evidence-backed, not proven
+complete."
+
 ## What this does and doesn't tell us yet
 
 This session answers both "does the harness for measuring consequentiality
@@ -354,39 +426,50 @@ beyond "the timestamp already exists").
 
 ## What's still open and what Paige should decide
 
-Nothing here has been changed in `anthropic_provider.py`, `review_service.py`,
-or any product surface in response to these findings -- everything above is
-reporting, not action, per the doc's explicit "findings before changes"
-ordering. Four real decisions are now ready for Paige's judgment, each with
-enough evidence to reason about instead of guessing:
+Two of the five items originally listed here now have shipped,
+stress-tested fixes (`temperature=0` and the `missing_understanding`
+instruction addition -- see "Phase 7" above); this list is updated to
+reflect that, plus one new question the scaling-experiment correction
+raised. Nothing else in `anthropic_provider.py`, `openai_provider.py`, or
+`review_service.py` was changed beyond those two fixes -- everything else
+below is still reporting, not action, per the doc's "findings before
+changes" ordering:
 
-1. **Context-dilution recall drop** -- worth a scoped prompt-engineering
-   pass (e.g., testing whether grouping/reordering Current State items, or
-   a lightweight relevance pre-filter, recovers recall at higher item
-   counts)? This is the highest-leverage finding since it gets worse as a
-   real project's Current State grows.
-2. **New-fact-with-no-anchor misses** (the budget case) -- does the prompt
-   need an explicit instruction that a concrete authority decision can be
-   consequential even with nothing existing to compare it to (i.e.
-   treating it as `missing_understanding` more readily)?
+1. ~~Context-dilution recall drop~~ -- **superseded.** The original theory
+   ("more items dilutes attention") did not survive a proper controlled
+   test; see "Correcting the earlier context-dilution hypothesis" above.
+   Replaced by a new, narrower open question (#6 below).
+2. ~~New-fact-with-no-anchor misses~~ -- **fixed and stress-tested** (Fix
+   2 above). Both confirmed instances now pass consistently.
 3. **Paused/reversed decisions defaulting to state_at_risk with no
-   proposal** -- should a clear status-change reversal get its own
-   proposed_update path, distinct from ambiguous state_at_risk?
-4. **Phase 4 at scale, and a proper Phase 6 corpus** -- this session's
-   precision/recall number is one run over 33 hand-written scenarios, and
-   the raw-vs-State comparison used a small, clean, single-topic corpus.
-   Both would benefit from more scenarios (especially more state-at-risk
-   and new-fact-no-anchor cases, since those are exactly where misses
-   happened) and, for Phase 6, the genuinely messy multi-topic corpus the
-   doc originally asked for.
-5. **Multi-trial measurement** -- given the confirmed run-to-run
-   nondeterminism on borderline scenarios, any precision/recall number
-   meant to inform a real decision should come from several trials per
-   scenario (majority vote or a reported range), not a single pass. This
-   session's 86% recall is a first signal, explicitly not that.
+   proposal** -- still open, still Paige's call. Should a clear
+   status-change reversal get its own proposed_update path, distinct from
+   ambiguous state_at_risk? Unaffected by either fix shipped this session.
+4. **Phase 4 at scale, and a proper Phase 6 corpus** -- still open. This
+   session's dataset is 33 hand-written scenarios from one author, and the
+   raw-vs-State comparison used one small, clean, single-topic corpus.
+   Worth expanding before treating either number as final, and especially
+   worth adding more scenarios that vary Current State composition (not
+   just count -- see #6) given what the scaling-experiment correction
+   found.
+5. ~~Multi-trial measurement~~ -- **adopted as working practice this
+   session**, not fully solved. Every scenario touched by a fix was
+   stress-tested 3-9x before being called done, but the full 33-scenario
+   set itself has still only been run to convergence once at temp=0 (plus
+   the earlier noisy temp-default runs). A fully rigorous Phase 4 number
+   would still benefit from multiple full-set runs, not just per-scenario
+   spot checks.
+6. **New: what specifically about `BASE_STATE`'s composition caused the
+   VP-billing miss, if it wasn't item count?** This session found the
+   effect and fixed the two scenarios that were failing (via Fix 2), but
+   never isolated *why* that particular combination of surrounding items
+   mattered when generic filler at the same or higher counts didn't
+   reproduce it. Worth understanding before assuming Fix 2 generalizes to
+   every future case of this shape, since the mechanism itself is still
+   not fully understood -- the fix's effectiveness was measured, but the
+   underlying "why" wasn't.
 
-Phase 7 (which of these, if any, become actual product changes) stays
-explicitly Paige's call -- not because of a lack of evidence, but because
-the doc is right that "do not assume these are all needed," and a rushed
-fix to #1 or #3 without testing it against the full eval set first risks
-trading a recall problem for a precision one.
+Item 3 remains explicitly Paige's call, not because of a lack of evidence
+but because it's a genuine product-behavior tradeoff (how confidently
+should State restate a fact it isn't fully sure about?), not a bug with an
+obviously-correct answer the way the two shipped fixes were.

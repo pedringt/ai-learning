@@ -109,7 +109,15 @@ def test_anthropic_prompt_is_compact_and_does_not_repeat_json_skeleton():
     prompt = _prompt(AnthropicProvider(model_identifier='test', api_key='test'))
     assert '<instructions>' in prompt
     assert '"review_recommendations": [' not in prompt
-    assert len(prompt) < 3500
+    # Bumped 3500 -> 4000 2026-09-07: eval/scaling_experiment.py and repeated
+    # eval-set runs confirmed the missing_understanding instruction needed
+    # explicit new-fact-with-no-anchor guidance to stop missing concrete
+    # attributed decisions (a budget approval, a launch date) that have no
+    # existing Current State item to react to -- a shorter version of that
+    # instruction measurably fixed fewer of the two confirmed misses than
+    # this fuller one. Compactness still matters; this is headroom for a
+    # specific, evidence-backed instruction, not an invitation to bloat.
+    assert len(prompt) < 4000
 
 
 def test_provider_output_schema_stays_below_anthropic_complexity_budget():

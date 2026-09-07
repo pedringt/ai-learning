@@ -52,6 +52,14 @@ class AnthropicProvider:
         self.model_identifier = model_identifier or os.getenv("CLAUDE_MODEL", "claude-haiku-4-5-20251001")
         self.max_tokens = int(os.getenv("CLAUDE_MAX_TOKENS", "1200"))
         self.timeout_seconds = float(os.getenv("CLAUDE_TIMEOUT_SECONDS", "30"))
+        # Consequentiality judgment is a decision with real product consequences
+        # (does a human get asked to review this?), not creative generation --
+        # it should be as repeatable as the API allows given identical input.
+        # Confirmed via eval/scaling_experiment.py and repeated single-scenario
+        # reruns (2026-09-07) that the previously unset (API-default) temperature
+        # produced real run-to-run flips on borderline evidence with nothing else
+        # changed. Overridable via CLAUDE_TEMPERATURE for experimentation.
+        self.temperature = float(os.getenv("CLAUDE_TEMPERATURE", "0"))
         self.api_key = api_key
         
         # Lazy import to avoid requiring anthropic library unless actually used
@@ -114,6 +122,7 @@ class AnthropicProvider:
         message = self.client.messages.create(
             model=self.model_identifier,
             max_tokens=self.max_tokens,
+            temperature=self.temperature,
             output_config={
                 "format": {
                     "type": "json_schema",
@@ -196,6 +205,7 @@ class AnthropicProvider:
         message = self.client.messages.create(
             model=self.model_identifier,
             max_tokens=300,
+            temperature=self.temperature,
             output_config={"format": {"type": "json_schema", "schema": _RELEVANCE_SCHEMA}},
             messages=[{"role": "user", "content": prompt}],
         )
@@ -298,7 +308,7 @@ Compare the Evidence with Current State and open Reviews. Return the semantic in
 
 - If Evidence does not materially change, threaten, or fill maintained understanding, return no recommendations and explain briefly.
 - proposed_update: use when Evidence changes or retires existing State. update/retire must use an exact State ID shown above. A grouped proposed_update may also create new State.
-- missing_understanding: use for information not represented in Current State. Its proposals must be create operations only. Create proposals have no state_item_id.
+- missing_understanding: use for information not represented in Current State. Its proposals must be create operations only. Create proposals have no state_item_id. A concrete, attributed decision (a budget approval, a launch date, a new capability, a scope change) is consequential even when Current State has no existing item on that topic -- the absence of a related item is a reason to use missing_understanding, not a reason to treat the Evidence as non-consequential.
 - state_at_risk: use when Evidence makes existing State uncertain without establishing a replacement; normally emit no proposal.
 - Set existing_review_id only when an open Review above is clearly the same pending human decision; use its exact Review ID. Otherwise omit it so software creates a new Review.
 - resolves_question_ids: include an exact open Question ID only when this Evidence concretely answers it and accepting the Review would establish that answer. Scoped Question responses should be interpreted against the shown Question, but source UI alone is never sufficient. Notes may answer Questions indirectly.
