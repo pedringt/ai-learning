@@ -10,14 +10,14 @@
 //
 // See qa/deployed/README.md for how to run this manually and what it needs.
 const { test, expect } = require('@playwright/test');
-const { attachDiagnostics, resetDemoData, backendJson } = require('./helpers');
+const { attachDiagnostics, resetDemoData, backendJson, gotoWithBypass } = require('./helpers');
 
 const STATE_URL = '/implementation-context-prototype/index.html';
 
 test.describe('Portfolio -> State entry', () => {
   test('homepage loads and links into State', async ({ page }) => {
     const diag = attachDiagnostics(page);
-    await page.goto('/');
+    await gotoWithBypass(page, '/');
     await expect(page.getByRole('link', { name: /Try State/i }).first()).toBeVisible();
     await expect(page.getByRole('link', { name: /Read case study/i }).first()).toBeVisible();
     diag.assertClean(expect);
@@ -25,7 +25,7 @@ test.describe('Portfolio -> State entry', () => {
 
   test('Try State opens the State workspace with no auth loop', async ({ page }) => {
     const diag = attachDiagnostics(page);
-    await page.goto(STATE_URL);
+    await gotoWithBypass(page, STATE_URL);
     await expect(page).not.toHaveURL(/vercel\.com\/(login|sso)/i);
     await expect(page.locator('.sidebar-nav [data-view="overview"]')).toBeVisible();
     diag.assertClean(expect);
@@ -35,7 +35,7 @@ test.describe('Portfolio -> State entry', () => {
 test.describe('Workspace', () => {
   test('attention section hydrates and Ask stays usable', async ({ page }) => {
     const diag = attachDiagnostics(page);
-    await page.goto(STATE_URL);
+    await gotoWithBypass(page, STATE_URL);
     // "Opening Northstar..." must clear once hydration finishes -- it must
     // never sit there forever (the thing a cold Render backend could cause).
     await expect(page.locator('#appLoadStatus')).toBeHidden({ timeout: 30_000 });
@@ -53,7 +53,7 @@ test.describe('Workspace', () => {
 test.describe('Project State', () => {
   test('Project view renders as maintained project context', async ({ page }) => {
     const diag = attachDiagnostics(page);
-    await page.goto(STATE_URL);
+    await gotoWithBypass(page, STATE_URL);
     await expect(page.locator('#appLoadStatus')).toBeHidden({ timeout: 30_000 });
     await page.locator('.sidebar-nav [data-view="project-overview"]').click();
     await expect(page.locator('.project-nav-toggle')).toHaveClass(/active/);
@@ -66,7 +66,7 @@ test.describe('Project State', () => {
 test.describe('Open Items', () => {
   test('Reviews, Blocking, Open questions and Drafts all load', async ({ page }) => {
     const diag = attachDiagnostics(page);
-    await page.goto(STATE_URL);
+    await gotoWithBypass(page, STATE_URL);
     await expect(page.locator('#appLoadStatus')).toBeHidden({ timeout: 30_000 });
     await page.locator('.sidebar-nav [data-view="open-items"]').click();
     await expect(page.locator('.open-items-page')).toBeVisible();
@@ -80,7 +80,7 @@ test.describe('Open Items', () => {
 
   test('an open question can be opened from its list', async ({ page }) => {
     const diag = attachDiagnostics(page);
-    await page.goto(STATE_URL);
+    await gotoWithBypass(page, STATE_URL);
     await expect(page.locator('#appLoadStatus')).toBeHidden({ timeout: 30_000 });
     await page.locator('.sidebar-nav [data-view="open-items"]').click();
     const firstQuestion = page.locator('[data-action="open-question"]').first();
@@ -100,7 +100,7 @@ test.describe('Settings', () => {
     // hydrates, used to race with hydration replacing the view. This is the
     // regression that protection guards against; verify it against the real
     // deployed build rather than only the mocked suite.
-    await page.goto(STATE_URL);
+    await gotoWithBypass(page, STATE_URL);
     await page.locator('.sidebar-nav [data-view="settings"]').click();
     await expect(page.locator('.nav-item[data-view="settings"]')).toHaveClass(/active/);
     await page.waitForTimeout(3_000); // let any pending hydration attempt to redraw
@@ -112,7 +112,7 @@ test.describe('Settings', () => {
 test.describe('Ask', () => {
   test('a safe query produces a grounded, non-error answer', async ({ page }) => {
     const diag = attachDiagnostics(page);
-    await page.goto(STATE_URL);
+    await gotoWithBypass(page, STATE_URL);
     await expect(page.locator('#appLoadStatus')).toBeHidden({ timeout: 30_000 });
     const askInput = page.locator('#askInput');
     await askInput.fill("What needs my attention right now?");
@@ -132,7 +132,7 @@ test.describe('Mobile smoke', () => {
   test.use({ viewport: { width: 390, height: 720 } });
   test('workspace is usable at phone width', async ({ page }) => {
     const diag = attachDiagnostics(page);
-    await page.goto(STATE_URL);
+    await gotoWithBypass(page, STATE_URL);
     await expect(page.locator('#appLoadStatus')).toBeHidden({ timeout: 30_000 });
     await expect(page.locator('#askInput')).toBeVisible();
     await page.locator('.sidebar-nav [data-view="open-items"]').click();
@@ -174,7 +174,7 @@ test.describe('Review + Question resolution (deterministic demo data)', () => {
     const beforeIds = (beforeQuestions.items || beforeQuestions).map(q => q.id);
     expect(beforeIds).toContain('q-retention');
 
-    await page.goto(STATE_URL);
+    await gotoWithBypass(page, STATE_URL);
     await expect(page.locator('#appLoadStatus')).toBeHidden({ timeout: 30_000 });
     await page.locator('.sidebar-nav [data-view="open-items"]').click();
 
@@ -203,7 +203,7 @@ test.describe('Review + Question resolution (deterministic demo data)', () => {
     const before = await backendJson(request, '/api/state');
     const beforeEscalation = (before.items || before).find(s => s.id === 'k-escalation');
 
-    await page.goto(STATE_URL);
+    await gotoWithBypass(page, STATE_URL);
     await expect(page.locator('#appLoadStatus')).toBeHidden({ timeout: 30_000 });
     await page.locator('.sidebar-nav [data-view="open-items"]').click();
 
@@ -228,7 +228,7 @@ test.describe('Review + Question resolution (deterministic demo data)', () => {
     const before = await backendJson(request, '/api/state');
     const beforeAccess = (before.items || before).find(s => s.id === 'k-access');
 
-    await page.goto(STATE_URL);
+    await gotoWithBypass(page, STATE_URL);
     await expect(page.locator('#appLoadStatus')).toBeHidden({ timeout: 30_000 });
     await page.locator('.sidebar-nav [data-view="open-items"]').click();
 

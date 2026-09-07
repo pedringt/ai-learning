@@ -1,5 +1,26 @@
 const BACKEND_URL = process.env.STATE_BACKEND_URL || 'https://state-api-staging.onrender.com';
 const REQUIRED_BACKEND_HOST = 'state-api-staging.onrender.com';
+const BYPASS_SECRET = process.env.VERCEL_AUTOMATION_BYPASS_SECRET || '';
+
+/**
+ * Navigates past Vercel's Deployment Protection using the query-param +
+ * set-cookie method, NOT extraHTTPHeaders. extraHTTPHeaders applies to every
+ * request in the browser context -- including the page's own cross-origin
+ * fetches to the Render backend -- which turns those into CORS preflights
+ * the backend doesn't allow, breaking every API call. The query param only
+ * ever touches the Vercel origin and sets a same-origin cookie, so backend
+ * requests are never affected.
+ */
+async function gotoWithBypass(page, path) {
+  if (!BYPASS_SECRET) {
+    throw new Error(
+      'VERCEL_AUTOMATION_BYPASS_SECRET is not set. See qa/deployed/README.md.'
+    );
+  }
+  const separator = path.includes('?') ? '&' : '?';
+  const url = `${path}${separator}x-vercel-protection-bypass=${encodeURIComponent(BYPASS_SECRET)}&x-vercel-set-bypass-cookie=true`;
+  return page.goto(url);
+}
 
 // Harmless noise this suite should not fail on. Kept narrow on purpose --
 // the point of Deep QA is to make real failures visible, not to suppress
@@ -89,4 +110,4 @@ async function backendJson(request, path) {
   return res.json();
 }
 
-module.exports = { attachDiagnostics, resetDemoData, backendJson, BACKEND_URL, REQUIRED_BACKEND_HOST };
+module.exports = { attachDiagnostics, resetDemoData, backendJson, gotoWithBypass, BACKEND_URL, REQUIRED_BACKEND_HOST };
