@@ -1,0 +1,11 @@
+{
+  "name": "state-deep-qa",
+  "private": true,
+  "description": "Deployed-environment Playwright suite for State staging. Not part of the app build -- only used by .github/workflows/deep-qa.yml.",
+  "scripts": {
+    "test": "playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.48.0"
+  }
+}

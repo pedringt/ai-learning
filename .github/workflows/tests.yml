@@ -62,3 +62,8 @@ jobs:
           node state-ask-followup-tests.js
           node state-ask-loading-visibility-tests.js
           node state-provenance-behavior-tests.js
+          node state-ask-intent-tests.js
+          node state-question-review-handoff-tests.js
+          node state-workspace-hierarchy-tests.js
+          node state-review-priority-tests.js
+          node state-history-copy-tests.js

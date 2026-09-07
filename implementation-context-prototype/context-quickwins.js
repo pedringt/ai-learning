@@ -1,21 +1,11 @@
 (() => {
   const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
-  const starters = [
-    ['What should I know?', 'What should I know right now? Give me a concise briefing with Project snapshot, Changed recently, Needs attention, and Still unclear.'],
-    ['Give me a meeting brief', 'Give me a concise meeting brief from what State currently knows. Focus on settled decisions, recent changes, what needs attention, and questions we still need answered.'],
-    ['What changed recently?', 'What changed recently? Separate accepted Current State changes from pending evidence or unresolved information.'],
-    ['What needs my attention?', 'What needs my attention right now? Prioritize Reviews and blocking questions, then mention other important unresolved items.'],
-    ['What are we still unsure about?', 'What are we still unsure about? Show unresolved questions and pending evidence without turning them into facts.']
-  ];
-
   function addStyles() {
     if (document.getElementById('state-quickwin-styles')) return;
     const style = document.createElement('style');
     style.id = 'state-quickwin-styles';
     style.textContent = `
-      @media (min-width: 1180px){.ask-quick-starts{display:flex!important;flex-wrap:nowrap!important;gap:8px!important}.ask-quick-starts button{font-size:13px!important;padding:9px 12px!important;white-space:nowrap!important;flex:0 1 auto!important}}
-      @media (max-width:1179px){.ask-quick-starts{display:flex!important;flex-wrap:wrap!important;gap:8px!important}}
       .open-items-count-summary{display:inline-block;margin-bottom:4px}
       .ask-grounding{margin-top:18px}
       .ask-grounding summary{cursor:pointer;font-weight:700}
@@ -24,24 +14,16 @@
       .ask-grounding p{margin:4px 0 0}
       .open-question-row.is-awaiting-review .open-item-label{font-weight:700}
       .open-question-row.is-awaiting-review .question-awaiting-review-note{display:block;margin-top:4px;font-size:12px;line-height:1.35;color:var(--muted,#666)}
-      @media (max-width:600px){
-        .demo-flow{display:grid!important;grid-template-columns:1fr!important;gap:3px!important}
-        .demo-flow li{display:grid!important;grid-template-columns:1fr!important;gap:1px!important}
-        .demo-flow li:not(:last-child)::after{content:'↓'!important;display:block!important;margin-left:6px!important}
-      }
     `;
     document.head.appendChild(style);
   }
 
-  function addAskStarters(scope = document) {
-    const panel = scope.querySelector('.ask-panel');
-    if (!panel || panel.querySelector('.ask-live-answer, .ask-live-loading, .ask-live-error, .ask-quick-starts')) return;
-    const existing = panel.querySelector('.prompt-suggestions');
-    if (!existing) return;
-    existing.classList.remove('single-suggestion');
-    existing.classList.add('ask-quick-starts', 'ask-refinement-chips');
-    existing.innerHTML = starters.map(([label,prompt]) => `<button type="button" data-prompt="${esc(prompt)}">${esc(label)}</button>`).join('');
-  }
+  // The first-run orientation banner and this module's own "How this works"
+  // override/Ask starters were removed as part of the 2026-09-07 UX review
+  // batch -- superseded by the native Workspace orientation section, the
+  // native showDemoHelp() modal in context-app.js, and context-product-polish.js's
+  // Ask State drawer/starters, respectively. Keeping both was exactly the
+  // "layering duplicate overrides" pattern that batch was meant to remove.
 
   function addGrounding(scope = document) {
     scope.querySelectorAll('.ask-live-answer').forEach(answer => {
@@ -79,11 +61,17 @@
     page.dataset.awaitingReviewChecked='true';
     try{
       const payload=await window.STATE_API.getReviews('open');
-      if(!page.isConnected)return;
       const reviews=payload?.items||payload||[];
       const questionIds=new Set(reviews.flatMap(review=>review.resolves_question_ids||[]).filter(Boolean).map(String));
       if(!questionIds.size)return;
-      page.querySelectorAll('.open-question-row[data-question-id]').forEach(row=>{
+      // Open Items re-renders progressively as other backend resources
+      // finish hydrating, which can replace `page` with a new DOM node while
+      // the request above was in flight. Query the live page again rather
+      // than bailing on the now-possibly-detached original reference --
+      // the fetched question IDs are still correct either way.
+      const currentPage=document.querySelector('.open-items-page');
+      if(!currentPage)return;
+      currentPage.querySelectorAll('.open-question-row[data-question-id]').forEach(row=>{
         if(!questionIds.has(String(row.dataset.questionId)))return;
         row.classList.add('is-awaiting-review');
         const label=row.querySelector('.open-item-label');
@@ -155,7 +143,7 @@
     });
   }
 
-  function enhance(scope=document){addStyles();addAskStarters(scope);addGrounding(scope);improveOpenItemsSummary(scope);clarifyQuestionsAwaitingReview(scope);improveEmptyStates(scope);clarifyReviewCompletion(scope);clarifyReviewActions(scope);clarifyNotesProcessedFilter(scope);improveProjectProvenanceSummary(scope);}
+  function enhance(scope=document){addStyles();addGrounding(scope);improveOpenItemsSummary(scope);clarifyQuestionsAwaitingReview(scope);improveEmptyStates(scope);clarifyReviewCompletion(scope);clarifyReviewActions(scope);clarifyNotesProcessedFilter(scope);improveProjectProvenanceSummary(scope);}
   let queued=false;const schedule=()=>{if(queued)return;queued=true;requestAnimationFrame(()=>{queued=false;enhance(document);});};
   new MutationObserver(schedule).observe(document.documentElement,{childList:true,subtree:true});
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',schedule,{once:true});else schedule();

@@ -5,6 +5,9 @@ from pathlib import Path
 FRONTEND = Path(__file__).parent.parent / "implementation-context-prototype"
 JS = (FRONTEND / "context-app.js").read_text()
 API_JS = (FRONTEND / "context-api.js").read_text()
+NOTES_VIEW_JS = (FRONTEND / "context-notes-view.js").read_text()
+OPEN_ITEMS_VIEW_JS = (FRONTEND / "context-open-items-view.js").read_text()
+PROJECT_VIEW_JS = (FRONTEND / "context-project-view.js").read_text()
 
 
 def test_live_reviews_use_backend_payload_not_placeholder_values():
@@ -76,9 +79,10 @@ def test_history_rehydrates_backend_transitions_with_source_notes():
 
 
 def test_project_is_rendered_as_document_outline_not_area_card_dashboard():
-    assert "project-document" in JS
-    assert "project-outline-section" in JS
-    assert "project-area-cards" not in JS
+    # Project page rendering moved to context-project-view.js 2026-09-06.
+    assert "project-document" in PROJECT_VIEW_JS
+    assert "project-outline-section" in PROJECT_VIEW_JS
+    assert "project-area-cards" not in JS and "project-area-cards" not in PROJECT_VIEW_JS
 
 
 def test_project_subnav_scrolls_existing_document_without_rerender():
@@ -115,10 +119,21 @@ def test_workspace_uses_one_bootstrap_request_with_safe_fallback():
 
 def test_open_items_action_count_includes_reviews_and_blockers_only():
     assert "uiPendingReviews().length+openQuestions().filter(q=>q.blocking).length" in JS
-    assert "const actionTotal=" in JS
-    assert "View all ${total} →" in JS
-    assert "Showing ${items.length} of ${total}" in JS
+    # The Open Items page header's own actionTotal moved to
+    # context-open-items-view.js 2026-09-06; the workspace attention-banner
+    # total below is a separate computation (workspaceAttentionHtml) and
+    # stayed in context-app.js.
+    assert "const actionTotal=" in OPEN_ITEMS_VIEW_JS
+    # The attention banner's link text was standardized to a plain
+    # "Open Items ->" (2026-09-07 Workspace redesign); the count now lives
+    # only in the heading ("N items are waiting on you"), not the link.
+    assert "${total} items are waiting on you" in JS
+    assert 'data-view="open-items">Open Items →</button>' in JS
+    # "Showing N of total" was removed 2026-09-07 (Workspace polish round):
+    # redundant with "View all N ->" immediately above it in the same section.
+    assert "Showing ${items.length} of ${total}" not in JS
     assert "more in Open Items" not in JS
+    assert "more in Open Items" not in OPEN_ITEMS_VIEW_JS
 
 
 def test_provider_failure_retry_reuses_saved_evidence():
@@ -130,46 +145,71 @@ def test_provider_failure_retry_reuses_saved_evidence():
 def test_r8_long_project_and_open_items_scaling_contract():
     app = (FRONTEND / "context-app.js").read_text(encoding="utf-8")
     css = (FRONTEND / "context-tool.css").read_text(encoding="utf-8")
-    assert "waiting.slice(0,5)" in app
+    # The "waiting" question list's 5-item cap and topic-overlap sort moved to
+    # context-open-items-view.js 2026-09-06; the click handler that flips
+    # state.openQuestionsExpanded and re-renders stayed in context-app.js.
+    assert "waiting.slice(0,5)" in OPEN_ITEMS_VIEW_JS
     assert "toggle-open-questions" in app
-    assert "const reviewTopics=new Set(reviews.flatMap(r=>r.topics||[]));" in app
-    assert "projectWikiTopic(topic,items)" in app
-    assert "projectOutlineSection(id,a)" in app
-    assert "project-section-sticky" in app
+    assert "const reviewTopics=new Set(reviews.flatMap(r=>r.topics||[]));" in OPEN_ITEMS_VIEW_JS
+    # Both gained extra parameters (pendingFor, history, knowledge) when they
+    # moved to context-project-view.js 2026-09-06, since they can no longer
+    # close over context-app.js's `state`.
+    assert "function projectWikiTopic(topic,items,pendingFor,history)" in PROJECT_VIEW_JS
+    assert "function projectOutlineSection(id,a,knowledge,pendingFor,history)" in PROJECT_VIEW_JS
+    assert "project-section-sticky" in PROJECT_VIEW_JS
     assert ".app-sidebar{position:sticky" in css
 
 
 def test_r81_notes_filters_share_one_date_status_search_pipeline():
+    # Notes filtering (date + status + search) lives in context-notes-view.js;
+    # context-app.js only forwards to it via a same-name wrapper (see
+    # notesUiState()/filteredNotes() there) so every existing call site is
+    # unchanged. Split out 2026-09-06 as part of the context-app.js size
+    # reduction -- see README's "Known debt".
     app = (FRONTEND / "context-app.js").read_text(encoding="utf-8")
-    assert "function filteredNotes()" in app
-    assert "noteMatchesFilter(n,activeFilter) &&" in app
-    assert "noteMatchesDate(n,dateFilter) &&" in app
+    assert "function filteredNotes(){ return NOTES_VIEW.filteredNotes(" in app
     assert "const notes=filteredNotes();" in app
+    assert "function filteredNotes(notes,ui)" in NOTES_VIEW_JS
+    assert "noteMatchesFilter(n,activeFilter) &&" in NOTES_VIEW_JS
+    assert "noteMatchesDate(n,dateFilter) &&" in NOTES_VIEW_JS
 
 
 def test_r81_multiple_reviews_default_collapsed_with_single_open_accordion():
     app = (FRONTEND / "context-app.js").read_text(encoding="utf-8")
-    assert "reviews.length===1||state.expandedReviewId===r.id" in app
+    # The expanded/collapsed decision per review card moved to
+    # context-open-items-view.js 2026-09-06 -- expandedReviewId arrives there
+    # as a plain argument (from context-app.js's state.expandedReviewId)
+    # rather than being read off `state` directly, so the literal text lost
+    # its "state." prefix. The click handler that mutates state.expandedReviewId
+    # and the toggle-review-card action name itself stayed in context-app.js.
+    assert "reviews.length===1||expandedReviewId===r.id" in OPEN_ITEMS_VIEW_JS
     assert "toggle-review-card" in app
     assert "state.expandedReviewId=state.expandedReviewId===id?null:id" in app
 
 
 def test_r81_project_nav_hides_empty_sections_and_orientation_uses_state():
+    # updateNav()'s empty-section check (and its own currentKnowledge()/
+    # projectMetaIds copy) stayed in context-app.js. projectOrientation() and
+    # the header that reads its stage/outcome moved to context-project-view.js
+    # 2026-09-06.
     app = (FRONTEND / "context-app.js").read_text(encoding="utf-8")
     assert "currentKnowledge(area).length===0" in app
     assert "k-stage" in app and "k-outcome" in app
-    assert "orientation.stage" in app and "orientation.outcome" in app
+    assert "k-stage" in PROJECT_VIEW_JS and "k-outcome" in PROJECT_VIEW_JS
+    assert "orientation.stage" in PROJECT_VIEW_JS and "orientation.outcome" in PROJECT_VIEW_JS
 
 
 def test_r83_notes_date_filters_use_calendar_day_distance_not_timestamp_midnights():
+    # Relocated to context-notes-view.js 2026-09-06 (see comment on
+    # test_r81_notes_filters_share_one_date_status_search_pipeline above).
     app = (FRONTEND / "context-app.js").read_text(encoding="utf-8")
-    assert "function localCalendarKey(value)" in app
-    assert "function calendarDayNumber(value)" in app
-    assert "const age=todayDay-noteDay;" in app
-    assert "if(filter==='today')return age===0;" in app
-    assert "if(filter==='7')return age<=6;" in app
-    assert "if(filter==='30')return age<=29;" in app
-    assert "new Date().toISOString().slice(0,10)" not in app
+    assert "function localCalendarKey(value)" in NOTES_VIEW_JS
+    assert "function calendarDayNumber(value)" in NOTES_VIEW_JS
+    assert "const age=todayDay-noteDay;" in NOTES_VIEW_JS
+    assert "if(filter==='today')return age===0;" in NOTES_VIEW_JS
+    assert "if(filter==='7')return age<=6;" in NOTES_VIEW_JS
+    assert "if(filter==='30')return age<=29;" in NOTES_VIEW_JS
+    assert "new Date().toISOString().slice(0,10)" not in NOTES_VIEW_JS
     assert "notes-result-count" in app
 
 
@@ -179,7 +219,17 @@ def test_r82_authoritative_review_counts_do_not_flash_fixture_values_before_hydr
     assert "questionsBackendAvailable" not in app
     assert "reviewsHydrated" not in app
     assert "state.backendStatus.reviews==='loaded'" in app
-    assert "state.backendStatus.questions==='loaded'" in app
+    # Questions dropped the analogous state.backendStatus.questions==='loaded'
+    # gate (2026-09-07): it caused a real bug where Current State kept
+    # showing "no open questions" even after the fast attention-only
+    # hydration path had already populated real, backendManaged question
+    # data -- the status flag just hadn't caught up yet, and nothing told
+    # Current State to redraw when it later did (see
+    # renderWorkspaceBelowGridOnly()). q.backendManaged is the correct guard
+    # against flashing fixture values instead: it's only ever set true
+    # inside syncApiQuestions(), never on local fixture data, so this still
+    # yields [] before any real hydration, same as before.
+    assert "state.data.questions.filter(q => q.status === 'open' && q.backendManaged)" in app
 
 
 def test_r82_open_item_sections_are_collapsible_and_keep_attention_hierarchy():
@@ -187,8 +237,10 @@ def test_r82_open_item_sections_are_collapsible_and_keep_attention_hierarchy():
     css = (FRONTEND / "context-tool.css").read_text(encoding="utf-8")
     assert "openItemSections:{reviews:false,blockers:false,drafts:true,questions:null}" in app
     assert "toggle-open-item-section" in app
-    assert "key==='questions' && count>5" in app
-    assert "Needs your review" in app and "Blocking questions" in app and "Draft notes" in app and "Open questions" in app
+    # openItemSection()'s own default-collapse rule and the section
+    # title/copy strings moved to context-open-items-view.js 2026-09-06.
+    assert "key==='questions' && count>5" in OPEN_ITEMS_VIEW_JS
+    assert "Needs your review" in OPEN_ITEMS_VIEW_JS and "Blocking questions" in OPEN_ITEMS_VIEW_JS and "Draft notes" in OPEN_ITEMS_VIEW_JS and "Open questions" in OPEN_ITEMS_VIEW_JS
     assert ".open-items-reviews" in css and ".open-items-blockers" in css and ".open-items-drafts" in css and ".open-items-questions" in css
 
 
@@ -211,24 +263,41 @@ def test_r84_navigation_rules_and_review_polish_contract():
     assert "function navigateTo(view" in app
     assert "data-action=\"project-settings\"" in app
     assert "API.createRule" in app and "API.deleteRule" in app
-    assert "Blocks: ${esc(q.blocks)}" in app
-    assert "replace(/\\*\\*/g,'')" in app
+    # questionDialogHtml() and reviewCard()'s cleanReviewCopy() both moved to
+    # context-open-items-view.js 2026-09-06.
+    assert "Blocks: ${esc(q.blocks)}" in OPEN_ITEMS_VIEW_JS
+    assert "replace(/\\*\\*/g,'')" in OPEN_ITEMS_VIEW_JS
 
 
 def test_r85_integrity_and_polish_contracts():
     app = (FRONTEND / "context-app.js").read_text(encoding="utf-8")
     api_js = (FRONTEND / "context-api.js").read_text(encoding="utf-8")
     html = (FRONTEND / "index.html").read_text(encoding="utf-8")
-    assert 'data-view="project-overview">Project</button>' in html
+    # Renamed Project -> Project State -> Knowledge -> Current State (2026-09-07
+    # then again same day: "Project State" made users learn a third term
+    # alongside Current State, and "Knowledge" sounded like an AI knowledge base
+    # and reintroduced the same two-concept problem under a new name -- Current
+    # State is now the single user-facing name for the maintained project
+    # understanding). The label lives directly in index.html -- context-quickwins.js
+    # used to force-rewrite it at runtime specifically to avoid touching this
+    # assertion; removed that indirection along with the rename.
+    assert 'data-view="project-overview">Current State</button>' in html
     assert "window.scrollTo({top:0,behavior:'auto'})" in app
-    assert "n.backendManaged?'':`<button" in app
+    # n.backendManaged?'':`<button ...>Edit</button>` moved to context-notes-view.js
+    # 2026-09-06 (see comment on test_r81_notes_filters_share_one_date_status_search_pipeline).
+    assert "n.backendManaged?'':`<button" in NOTES_VIEW_JS
     assert "getDrafts" in api_js and "createDraft" in api_js and "updateDraft" in api_js and "deleteDraft" in api_js
     assert "setQuestionBlocking" in api_js and "What does this block?" in app
-    assert "Showing <strong>${notes.length}</strong> of ${total} notes" in app
+    # notesFilterSummary() moved to context-notes-view.js 2026-09-06.
+    assert "Showing <strong>${notes.length}</strong> of ${totalCount} notes" in NOTES_VIEW_JS
     assert "Search history" in app and "historyResultCount" in app
     assert "Rules apply to future analysis. Existing Reviews are not reinterpreted automatically." in app
-    assert "current facts" in app
-    assert "project-maintained-facts" in app
+    # project-maintained-facts moved to context-project-view.js 2026-09-06.
+    # The header's "N current facts" count and "Current project" eyebrow were
+    # deliberately removed 2026-09-07 (UX review batch, item 14): Current
+    # State reads as a reference document, not an operational dashboard stat.
+    assert "project-maintained-facts" in PROJECT_VIEW_JS
+    assert "current facts" not in PROJECT_VIEW_JS
     assert "backendStatus" in app and "temporarily unavailable" in app
 
 
@@ -290,9 +359,13 @@ def test_r95_workspace_attention_has_a_fast_independent_load_path():
 
 def test_r19_project_summary_and_modal_actions_stay_compact():
     app = (FRONTEND / "context-app.js").read_text(encoding="utf-8")
-    assert 'class="project-fact-count"' in app
-    assert 'class="current-direction-list"' in app
+    # current-direction-list moved to context-project-view.js 2026-09-06.
+    # project-fact-count was deliberately removed 2026-09-07 (UX review
+    # batch, item 14) along with the header's fact count.
+    assert 'class="project-fact-count"' not in PROJECT_VIEW_JS
+    assert 'class="current-direction-list"' in PROJECT_VIEW_JS
     assert 'data-action="close-dialog">Done' not in app
+    assert 'data-action="close-dialog">Done' not in PROJECT_VIEW_JS
 
 
 def test_r861_repository_has_one_obvious_deploy_backend():
@@ -337,7 +410,14 @@ def test_dialog_visibility_has_one_source_of_truth():
 def test_r16_release_hardening_removes_control_chars_and_keeps_word_boundary_routing():
     app = (FRONTEND / "context-app.js").read_text(encoding="utf-8")
     assert "\x08" not in app
-    assert "\\b(approved|confirmed|decided|agreed|learned|yesterday|today)\\b" in app
+    # The old approved/confirmed/decided/... heuristic (any past-tense word
+    # plus a topic word) was replaced 2026-09-07 after live QA found it
+    # misrouted plain questions like "Did Security confirm retention terms?"
+    # into the update-Evidence dialog. The successor only routes to that
+    # dialog on explicit update intent, and only when the input doesn't
+    # already look like a question -- this asserts the new regex's word
+    # boundaries are still intact rather than pinning the retired one.
+    assert "\\b(add (this|that|it)|please add|update (the )?(current )?state|record (this|that)|please record|note that|for the record|log (this|that))\\b" in app
     assert "\\b(changed|change|history|historical|originally" in app
 
 

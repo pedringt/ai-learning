@@ -21,6 +21,14 @@
     @media(max-width:560px){
       .workspace-source-strip{flex-direction:column;align-items:flex-start;gap:10px}
     }
+    /* This banner has no actionable-state model behind it yet -- it's
+       always the same static "connected fine" promo, never a real
+       disconnected/failed/needs-attention signal. On mobile that's just
+       vertical space spent on nothing new to say, so it's hidden there
+       until it has something actionable to report. Desktop unchanged. */
+    @media(max-width:760px){
+      .workspace-source-strip{display:none}
+    }
   `;
   document.head.appendChild(style);
 
