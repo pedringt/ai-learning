@@ -102,6 +102,7 @@ The repository root holds the portfolio site. The two directories below are the 
 
 ```bash
 cd state-project-complete
+python3 -m venv .venv && source .venv/bin/activate   # gitignored; do not skip this
 pip install -r requirements.txt
 
 export DATABASE_URL="sqlite:///tmp/state.db"
@@ -111,6 +112,15 @@ export STATE_DEMO_BOOTSTRAP=1          # seed the Northstar demo project
 
 python -m uvicorn api:app --reload --port 8000
 ```
+
+Use this `.venv`, not a global `pip install`. A real incident (2026-09-07):
+a provider-call parameter that worked fine against a globally-installed
+`anthropic` package broke every evidence submission on staging, because
+the version actually pinned in `requirements.txt` (and what Render
+deploys) didn't support that parameter at all — local testing had
+silently been running against a different SDK version the whole time. A
+project-local venv installed from this exact `requirements.txt` is what
+makes "it works locally" mean the same thing as "it works deployed."
 
 Check it came up:
 
