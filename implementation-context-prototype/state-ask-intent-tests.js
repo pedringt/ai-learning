@@ -35,7 +35,7 @@ const api=context.window.STATE_ASK_TEST_API;
 let pass=0,fail=0;
 function check(name,ok,detail=''){if(ok){pass++;console.log('✓',name)}else{fail++;console.error('✗',name,detail)}}
 
-function dialogOpened(){ return stub.innerHTML.includes('Add a project update'); }
+function dialogOpened(){ return stub.innerHTML.includes('id="dialogTitle">Add Evidence'); }
 
 (async()=>{
   // The exact bug report: a question containing "confirm"/topic words must

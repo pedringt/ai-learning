@@ -65,7 +65,8 @@
 
   function noteStatusLabel(n){
     if(n.status==='pending') return 'In review';
-    if(n.status==='accepted'||n.status==='reviewed') return 'Reviewed';
+    if(n.status==='accepted') return 'Changed Current State';
+    if(n.status==='reviewed') return 'Reviewed, no State change';
     if(n.status==='no_review_needed') return 'No review needed';
     if(n.status==='unknown') return 'Status unavailable';
     if(n.status==='failed') return 'Analysis failed';
@@ -75,10 +76,10 @@
   function noteStatusControl(n,statusClass){
     if(n.status==='pending' && (n.reviewIds||[]).length){
       const count=n.reviewIds.length;
-      return `<button type="button" class="note-status note-status-link note-status--${statusClass}" data-action="open-note-reviews" data-note-id="${n.id}" aria-label="Open ${count===1?'the Review':`${count} Reviews`} for this note">In review${count>1?` · ${count}`:''} →</button>`;
+      return `<button type="button" class="note-status note-status-link note-status--${statusClass}" data-action="open-note-reviews" data-note-id="${n.id}" aria-label="Open ${count===1?'the Review':`${count} Reviews`} for this note">Review proposed update${count>1?` · ${count}`:''} →</button>`;
     }
-    if((n.status==='accepted'||n.status==='reviewed') && (n.historyIds||[]).length){
-      return `<button type="button" class="note-status note-status-link note-status--${statusClass}" data-action="open-note-history" data-note-id="${n.id}" aria-label="View accepted History from this note">Reviewed →</button>`;
+    if(n.status==='accepted' && (n.historyIds||[]).length){
+      return `<button type="button" class="note-status note-status-link note-status--${statusClass}" data-action="open-note-history" data-note-id="${n.id}" aria-label="View accepted History from this note">Changed Current State →</button>`;
     }
     return `<span class="note-status note-status--${statusClass}">${noteStatusLabel(n)}</span>`;
   }
@@ -95,7 +96,7 @@
       ? `<button class="text-button" data-action="retry-analysis" data-evidence-id="${n.evidenceId}">Retry analysis</button>`
       : n.backendManaged||n.status==='pending'||n.status==='accepted'||n.status==='reviewed'||n.status==='no_review_needed'||n.status==='unknown'
         ? ''
-        : `<button class="text-button" data-action="send-note-review" data-note-id="${n.id}">Send to review</button>`;
+        : `<button class="text-button" data-action="send-note-review" data-note-id="${n.id}">Send as Evidence</button>`;
     const body=editing
       ? `<div class="note-inline-editor"><input class="dialog-input" id="editNoteTitle-${n.id}" value="${esc(n.title)}" aria-label="Note title"><textarea id="editNoteText-${n.id}" rows="8" aria-label="Note text">${esc(n.text)}</textarea><div class="inline-actions"><button class="btn primary" data-action="save-note-edit" data-note-id="${n.id}">Save changes</button><button class="btn secondary" data-action="cancel-note-edit" data-note-id="${n.id}">Cancel</button></div></div>`
       : expanded
@@ -113,7 +114,7 @@
   function draftNoteRow(n){
     const target=120+((n.id.charCodeAt(2)||7)*17)%111;
     const preview=n.text.length>target?n.text.slice(0,Math.max(80,target-3)).replace(/\s+\S*$/,'')+'…':n.text;
-    return `<article class="simple-note note-index-row is-expanded" data-note-id="${n.id}"><span class="note-date">${esc(n.date)}</span><div class="note-index-main"><h3>${esc(n.title)}</h3><span class="note-source">${esc(n.source)}</span><p>${esc(preview)}</p><div class="inline-actions note-actions"><button class="text-button" data-action="send-note-review" data-note-id="${n.id}">Send to review</button></div></div><div class="note-index-status"><span class="note-status note-status--draft">Draft</span></div></article>`;
+    return `<article class="simple-note note-index-row is-expanded" data-note-id="${n.id}"><span class="note-date">${esc(n.date)}</span><div class="note-index-main"><h3>${esc(n.title)}</h3><span class="note-source">${esc(n.source)}</span><p>${esc(preview)}</p><div class="inline-actions note-actions"><button class="text-button" data-action="send-note-review" data-note-id="${n.id}">Send as Evidence</button></div></div><div class="note-index-status"><span class="note-status note-status--draft">Draft</span></div></article>`;
   }
 
   // notes: state.data.notes (unfiltered). ui: {noteComposerOpen, notesFilter,
@@ -129,7 +130,7 @@
     const dateFilters=`<div class="filters notes-date-filters" aria-label="Filter notes by date">${dateChip('all','All time')}${dateChip('today','Today')}${dateChip('7','7 days')}${dateChip('30','30 days')}</div>`;
     const visibleNotes=filteredNotes(notes,ui);
     const liveWarning=ui.evidenceStatus==='error'||ui.draftsStatus==='error'?`<div class="collection-warning"><strong>Some live Notes data is unavailable.</strong><span>${ui.evidenceStatus==='error'?'Saved Evidence could not be loaded. ':''}${ui.draftsStatus==='error'?'Saved drafts could not be loaded.':''}</span><button class="text-button" data-action="retry-hydration">Try again</button></div>`:'';
-    return `<section class="page collection-page notes-page"><div class="page-head"><div><span class="eyebrow">Project memory</span><h2>Notes</h2><p>Put everything here: updates, meeting notes, observations, decisions, corrections, and loose context. Notes preserve what came in; they do not become Current State automatically.</p><p class="notes-disclosure">Northstar's seed data mixes notes adapted from my real discovery/product work with simulated project notes created to exercise retrieval, review, and maintained-context workflows.</p></div><button class="btn primary notes-add" data-action="new-note">+ New note</button></div>${liveWarning}${composer}<div class="notes-toolbar notes-toolbar--stacked"><div class="notes-filter-row">${dateFilters}${filters}<span class="notes-result-count" aria-hidden="true">${visibleNotes.length} ${visibleNotes.length===1?'note':'notes'}</span></div><input class="notes-search" id="notesSearch" type="search" placeholder="Search all notes" aria-label="Search notes" value="${esc(ui.notesSearch||'')}">${notesFilterSummary(visibleNotes,notes.length,ui)}</div><div class="note-results simple-notes" id="notesList">${visibleNotes.length?visibleNotes.map(n=>simpleNote(n,ui.expandedNotes,ui.editingNoteId)).join(''):'<div class="empty-state"><h3>Nothing here.</h3><p>No notes match these filters.</p></div>'}</div></section>`;
+    return `<section class="page collection-page notes-page"><div class="page-head"><div><span class="eyebrow">Project memory</span><h2>Notes</h2><p class="notes-product-purpose">Keep working notes and browse information State has received. Use Review, Current State, and History for downstream detail.</p><p class="notes-disclosure">Northstar's seed data mixes notes adapted from my real discovery/product work with simulated project notes created to exercise retrieval, review, and maintained-context workflows.</p></div><button class="btn primary notes-add" data-action="new-note">+ New note</button></div>${liveWarning}${composer}<div class="notes-toolbar notes-toolbar--stacked"><div class="notes-filter-row">${dateFilters}${filters}<span class="notes-result-count" aria-hidden="true">${visibleNotes.length} ${visibleNotes.length===1?'note':'notes'}</span></div><input class="notes-search" id="notesSearch" type="search" placeholder="Search all notes" aria-label="Search notes" value="${esc(ui.notesSearch||'')}">${notesFilterSummary(visibleNotes,notes.length,ui)}</div><div class="note-results simple-notes" id="notesList">${visibleNotes.length?visibleNotes.map(n=>simpleNote(n,ui.expandedNotes,ui.editingNoteId)).join(''):'<div class="empty-state"><h3>Nothing here.</h3><p>No notes match these filters.</p></div>'}</div></section>`;
   }
 
   window.STATE_NOTES_VIEW = Object.freeze({render,filteredNotes,notesFilterSummary,simpleNote,draftNoteRow});

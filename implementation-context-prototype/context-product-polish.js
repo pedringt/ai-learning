@@ -32,9 +32,6 @@
     running: false,
     requestId: 0,
     copyContextData: null,
-    decisionMode: null,
-    confirmReturnHtml: null,
-    questionReconcileBusy: false,
     inlineObserved: null,
   };
 
@@ -51,7 +48,8 @@
       .ask-state-inline-head h3{margin:0 0 4px;font-size:18px}
       .ask-state-inline-head p{margin:0;color:var(--muted);font-size:13px;line-height:1.45}
       .ask-readonly-pill{flex:0 0 auto;border:1px solid var(--line);border-radius:999px;padding:4px 8px;font-size:11px;font-weight:800;color:var(--muted);background:var(--surface2)}
-      .ask-state-inline-form,.ask-state-drawer-form{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;min-width:0}
+      .ask-state-inline-form,.ask-state-drawer-form{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:8px;min-width:0;align-items:center}
+      .ask-clear-btn{font-size:20px;color:var(--muted);padding:0 4px}
       .ask-state-inline-form input,.ask-state-drawer-form input{min-width:0;width:100%;box-sizing:border-box;border:1px solid #cfc9bd;background:#fff;border-radius:9px;padding:11px 12px;color:var(--ink);outline:none}
       .ask-state-inline-form input:focus,.ask-state-drawer-form input:focus{border-color:var(--accent);box-shadow:0 0 0 2px color-mix(in srgb,var(--accent) 16%,transparent)}
       .ask-state-starters{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;min-width:0;padding-right:2px}
@@ -187,28 +185,17 @@
     catch(_){if(status)status.textContent='Copy failed. Your browser may be blocking clipboard access.';}
   }
 
-  function ensureCurrentStateHeader(){
-    const head=document.querySelector('.project-document-head'); if(!head) return;
-    head.querySelector('.project-fact-count')?.remove();
-    const eyebrow=head.querySelector('.eyebrow'); if(eyebrow && /^current project$/i.test(eyebrow.textContent.trim())) eyebrow.remove();
-    const row=head.querySelector('.project-head-row');
-    if(row && !row.querySelector('[data-review-batch-action="copy-context"]')){
-      const button=document.createElement('button');button.type='button';button.className='btn secondary project-head-copy-context';button.dataset.reviewBatchAction='copy-context';button.textContent='Copy context';
-      const settings=row.querySelector('.project-settings-button');if(settings)row.insertBefore(button,settings);else row.appendChild(button);
-    }
-  }
-
   function ensureAskShell(){
     if(!document.getElementById('askStateLauncher')){
       const launcher=document.createElement('button');launcher.id='askStateLauncher';launcher.className='ask-state-launcher';launcher.type='button';launcher.dataset.reviewBatchAction='open-ask';launcher.textContent='Ask State';document.body.appendChild(launcher);
     }
     if(!document.getElementById('askStateDrawer')){
-      const drawer=document.createElement('aside');drawer.id='askStateDrawer';drawer.className='ask-state-drawer';drawer.hidden=true;drawer.setAttribute('aria-label','Ask State');drawer.innerHTML=`<div class="ask-state-drawer-head"><div><h2>Ask State</h2><p>Read-only. Asking never changes the project record.</p></div><button class="ask-state-drawer-close" type="button" aria-label="Close Ask State" data-review-batch-action="close-ask">×</button></div><div class="ask-state-drawer-controls"><form class="ask-state-drawer-form" data-review-batch-form="ask"><input id="askStateDrawerInput" autocomplete="off" aria-label="Ask State" placeholder="What do you want to know?"><button class="btn primary" type="submit">Ask</button></form><p class="ask-state-drawer-help">Edit the question and run it again to refine the answer. State does not carry a hidden conversation forward.</p><div class="ask-state-starters">${starters.map(([label,prompt])=>`<button type="button" data-review-batch-prompt="${esc(prompt)}">${esc(label)}</button>`).join('')}</div></div><div class="ask-state-drawer-result" id="askStateDrawerResult" aria-live="polite"></div>`;document.body.appendChild(drawer);
+      const drawer=document.createElement('aside');drawer.id='askStateDrawer';drawer.className='ask-state-drawer';drawer.hidden=true;drawer.setAttribute('aria-label','Ask State');drawer.innerHTML=`<div class="ask-state-drawer-head"><div><h2>Ask State</h2><p>Read-only. Asking never changes the project record.</p></div><button class="ask-state-drawer-close" type="button" aria-label="Close Ask State" data-review-batch-action="close-ask">×</button></div><div class="ask-state-drawer-controls"><form class="ask-state-drawer-form" data-review-batch-form="ask"><input id="askStateDrawerInput" autocomplete="off" aria-label="Ask State" placeholder="What do you want to know?"><button class="icon-btn ask-clear-btn" type="button" aria-label="Clear question" data-review-batch-action="clear-ask">×</button><button class="btn primary" type="submit">Ask</button></form><p class="ask-state-drawer-help">Edit the question and run it again to refine the answer. State does not carry a hidden conversation forward.</p><div class="ask-state-starters">${starters.map(([label,prompt])=>`<button type="button" data-review-batch-prompt="${esc(prompt)}">${esc(label)}</button>`).join('')}</div></div><div class="ask-state-drawer-result" id="askStateDrawerResult" aria-live="polite"></div>`;document.body.appendChild(drawer);
     }
     syncAskInputs();
   }
   function inlineAskMarkup(){
-    return `<div class="ask-state-inline-card"><div class="ask-state-inline-head"><div><h3>Ask State</h3><p>Find, summarize, investigate, or prepare from the project record.</p></div><span class="ask-readonly-pill">Read only</span></div><form class="ask-state-inline-form" data-review-batch-form="ask"><input id="askStateInlineInput" autocomplete="off" aria-label="Ask State" placeholder="What do you want to know?" value="${esc(ui.query)}"><button class="btn primary" type="submit">Ask</button></form><div class="ask-state-starters">${starters.map(([label,prompt])=>`<button type="button" data-review-batch-prompt="${esc(prompt)}">${esc(label)}</button>`).join('')}</div></div>`;
+    return `<div class="ask-state-inline-card"><div class="ask-state-inline-head"><div><h3>Ask State</h3><p>Find, summarize, investigate, or prepare from the project record.</p></div><span class="ask-readonly-pill">Read only</span></div><form class="ask-state-inline-form" data-review-batch-form="ask"><input id="askStateInlineInput" autocomplete="off" aria-label="Ask State" placeholder="What do you want to know?" value="${esc(ui.query)}"><button class="icon-btn ask-clear-btn" type="button" aria-label="Clear question" data-review-batch-action="clear-ask">×</button><button class="btn primary" type="submit">Ask</button></form><div class="ask-state-starters">${starters.map(([label,prompt])=>`<button type="button" data-review-batch-prompt="${esc(prompt)}">${esc(label)}</button>`).join('')}</div></div>`;
   }
   function ensureWorkspaceAsk(){
     const panel=document.querySelector('.overview.pristine .ask-panel'); if(!panel) return;
@@ -319,98 +306,18 @@
     }
   }
 
-  function openHowStateWorks(){
-    openOverlay(`<span class="eyebrow">How this works</span><h2 id="dialogTitle">State keeps accepted understanding separate from new information.</h2><div class="state-help-steps"><div class="state-help-step"><strong>1. Add Evidence</strong><span>Capture a finding, decision, or meeting update. Approved Slack channels can also create Evidence.</span></div><div class="state-help-step"><strong>2. State interprets</strong><span>AI compares new Evidence with Current State and identifies what may have changed.</span></div><div class="state-help-step"><strong>3. Review &amp; decide</strong><span>Review proposed changes before anything becomes accepted Current State.</span></div><div class="state-help-step"><strong>4. Current State stays maintained</strong><span>Accepted changes update the project reference. History keeps the prior understanding and decision path.</span></div><div class="state-help-step"><strong>5. Ask State</strong><span>Ask is read-only. Use it to find, summarize, investigate, or prepare from the project record.</span></div></div><p class="demo-flow-principle">AI interprets → software enforces → people decide</p><div class="dialog-actions"><button class="btn primary" data-action="close-dialog">Got it</button></div>`);
-  }
-  function prepareHelpButton(){
-    const btn=document.querySelector('.demo-help-button');if(!btn)return;
-    btn.removeAttribute('data-action');btn.dataset.reviewBatchAction='show-help';
-  }
-
-  function enhanceSettings(){
-    const page=document.querySelector('.settings-page');if(!page)return;
-    const sections=[...page.querySelectorAll(':scope > .settings-section')];
-    const how=sections.find(s=>/How State works/i.test(s.querySelector('h3')?.textContent||''));
-    const first=sections[0];if(how&&first&&how!==first){how.classList.add('settings-how-state-first');page.insertBefore(how,first);}
-    const head=page.querySelector('.page-head p');if(head)head.textContent='Configure Northstar, its Evidence sources, and the safeguards around Current State.';
-  }
-
-  function enhanceNotes(){
-    const page=document.querySelector('.notes-page');if(page){
-      const head=page.querySelector('.page-head>div>p');if(head&&!head.classList.contains('notes-product-purpose')){head.classList.add('notes-product-purpose');head.textContent='Keep working notes and browse information State has received. Use Review, Current State, and History for downstream detail.';}
-    }
-    document.querySelectorAll('[data-action="send-note-review"]').forEach(btn=>{if(btn.textContent.trim()!=='Send as Evidence')btn.textContent='Send as Evidence';});
-    document.querySelectorAll('[data-action="open-note-history"]').forEach(btn=>{if(/Reviewed/i.test(btn.textContent))btn.textContent='Changed Current State →';});
-    document.querySelectorAll('.open-items-drafts .open-items-section-description').forEach(node=>{node.textContent="Notes you've started but haven't submitted as Evidence yet.";});
-  }
-
-  function enhanceEvidenceDialog(){
-    const body=document.getElementById('dialogBody');if(!body)return;
-    const title=body.querySelector('#dialogTitle');if(!title)return;
-    const text=title.textContent.trim();
-    if(text==='Add a project update'){
-      const eyebrow=body.querySelector('.eyebrow');if(eyebrow)eyebrow.textContent='Evidence';title.textContent='Add Evidence';
-      const p=title.nextElementSibling;if(p)p.textContent='Add project information State should evaluate. It is preserved as Evidence first and cannot change Current State without Review.';
-      const textarea=body.querySelector('#addInfoText');if(textarea)textarea.placeholder='Paste a finding, decision, meeting update, or other project information...';
-      const action=body.querySelector('[data-action="save-info"]');if(action)action.textContent='Add Evidence';
-    } else if(text==='Sent to Review' || text==='Note sent to Review'){
-      const eyebrow=body.querySelector('.eyebrow');if(eyebrow)eyebrow.textContent='Evidence added';title.textContent='Evidence added';
-      const p=title.nextElementSibling;if(p)p.textContent=p.textContent.replace(/One review needs your decision\./,'1 Review needs your decision.').replace(/reviews need your decisions\./,'Reviews need your decisions.');
-      body.querySelector('[data-action="go-review"]')?.replaceChildren(document.createTextNode('View Review'));
-    } else if(text==='Note reviewed'){
-      const eyebrow=body.querySelector('.eyebrow');if(eyebrow)eyebrow.textContent='Evidence added';title.textContent='Evidence added';const p=title.nextElementSibling;if(p)p.textContent='Added as Evidence. Current State did not need a Review.';
-    }
-  }
-
-  async function reconcileQuestionLinks(){
-    if(ui.questionReconcileBusy||!API?.getReviews||!APP()?.state?.data?.reviews)return;ui.questionReconcileBusy=true;
-    try{
-      const raw=await API.getReviews('open');const reviews=asList(raw,['reviews','items','results']);const byId=new Map(reviews.map(r=>[String(r.id),r]));
-      for(const local of APP().state.data.reviews){if(!local?.backendReviewId)continue;const source=byId.get(String(local.backendReviewId));if(!source)continue;const ids=[...(source.resolves_question_ids||[])];local.resolvesQuestionIds=ids;local.resolvesQuestionId=ids[0]||null;}
-    }catch(_){/* authoritative backend unavailable: leave current UI alone */}
-    finally{ui.questionReconcileBusy=false;}
-  }
-
-  function reviewFromButton(button){const id=button.dataset.review;return APP()?.state?.data?.reviews?.find(r=>String(r.id)===String(id));}
-  function showStateUpdateConfirmation(button){
-    const review=reviewFromButton(button);if(!review)return;
-    ui.confirmReturnHtml=button.closest('#dialogBody')?document.getElementById('dialogBody')?.innerHTML:null;
-    const proposal=truncate(review.proposed || (review.proposals||[]).map(p=>p.proposed_statement).filter(Boolean).join(' • ') || review.summary,210);
-    openOverlay(`<span class="eyebrow">Review decision</span><h2 id="dialogTitle">Update Current State?</h2><p>This changes what the project currently treats as true and records the decision in History.</p>${proposal?`<div class="review-confirm-change"><span>Change</span><strong>${esc(proposal)}</strong></div>`:''}<div class="dialog-actions"><button class="btn secondary" type="button" data-review-batch-action="cancel-state-update">Cancel</button><button class="btn primary" type="button" data-review-batch-action="confirm-state-update" data-review-id="${esc(review.id)}">Update Current State</button></div>`);
-  }
-  function triggerReviewAction(reviewId,action){
-    const ghost=document.createElement('button');ghost.type='button';ghost.hidden=true;ghost.dataset.action=action;ghost.dataset.review=reviewId;ghost.dataset.reviewBatchBypass='1';document.body.appendChild(ghost);ghost.click();ghost.remove();
-  }
-  function compactStateReceipt(){
-    const body=document.getElementById('dialogBody');if(!body)return;const title=body.querySelector('#dialogTitle');if(!title)return;
-    const first=truncate(body.querySelector('.review-change-receipt li')?.textContent||'',180);
-    body.innerHTML=`<span class="eyebrow">Review complete</span><h2 id="dialogTitle">Current State updated</h2>${first?`<p>${esc(first)}</p>`:'<p>The reviewed change is now part of Current State.</p>'}<div class="dialog-actions"><button class="btn primary" type="button" data-review-batch-action="go-current-state">View Current State</button><button class="btn secondary" type="button" data-review-batch-action="go-history">View History</button></div>`;
-    ui.decisionMode=null;setTimeout(checkAnswerFreshness,350);setTimeout(reconcileQuestionLinks,350);
-  }
-  function handleDecisionDialog(){
-    const body=document.getElementById('dialogBody');const overlay=document.getElementById('overlay');if(!body||!overlay)return;const title=body.querySelector('#dialogTitle')?.textContent?.trim()||'';
-    if(ui.decisionMode==='state'){
-      if(title==='Updating understanding…')body.innerHTML='<div class="review-saving-compact"><span class="eyebrow">Updating</span><h2 id="dialogTitle">Updating Current State…</h2><p>Saving the reviewed decision to the project record.</p></div>';
-      else if(title==='Here’s what changed' || title==='Current understanding updated.')compactStateReceipt();
-      else if(title==='Nothing was changed.')ui.decisionMode=null;
-    }else if(ui.decisionMode==='evidence'){
-      if(title==='Updating understanding…'){overlay.hidden=true;document.body.classList.remove('modal-open');}
-      else if(title==='Evidence reviewed.' || title==='Review complete.'){overlay.hidden=true;document.body.classList.remove('modal-open');ui.decisionMode=null;showToast('Evidence reviewed. Current State did not change.');setTimeout(reconcileQuestionLinks,250);}
-      else if(title==='Nothing was changed.')ui.decisionMode=null;
-    }else if(ui.decisionMode==='keep'){
-      if(title==='Leaving understanding unchanged…'){overlay.hidden=true;document.body.classList.remove('modal-open');}
-      else if(title==='Understanding left unchanged.') {overlay.hidden=true;document.body.classList.remove('modal-open');ui.decisionMode=null;showToast('Current State left unchanged. Evidence is preserved.');setTimeout(reconcileQuestionLinks,250);}
-      else if(title==='Nothing was changed.')ui.decisionMode=null;
-    }
-  }
-
-  function enhanceWorkspaceAttention(){
-    const attention=document.querySelector('.overview.pristine .workspace-attention');if(!attention)return;
-    const intro=attention.querySelector('.attention-intro-text');if(intro)intro.textContent='Open an item to make the decision where it belongs. Ask State stays available separately.';
-  }
+  // The "How this works" modal, the Review confirm/receipt flow, the
+  // Settings section order, the Evidence dialog copy, the Notes copy, and
+  // the Workspace attention intro text were all originally patched here at
+  // runtime. They're now fixed natively in their owning functions/templates
+  // (context-app.js's showDemoHelp()/decideReview()/showAddDialog(),
+  // context-settings.js's render(), context-notes-view.js, and
+  // context-app.js's workspaceAttentionHtml()) as part of the 2026-09-07 UX
+  // review batch, so the DOM-patches that used to live here were removed
+  // rather than layered on top of the native fix.
 
   function enhanceAll(){
-    addStyles();ensureAskShell();prepareHelpButton();ensureWorkspaceAsk();ensureCurrentStateHeader();enhanceSettings();enhanceNotes();enhanceEvidenceDialog();handleDecisionDialog();enhanceWorkspaceAttention();syncLauncherVisibility();
+    addStyles();ensureAskShell();ensureWorkspaceAsk();syncLauncherVisibility();
   }
 
   document.addEventListener('submit',event=>{
@@ -422,28 +329,17 @@
   });
 
   document.addEventListener('click',event=>{
-    const reviewUpdate=event.target.closest?.('[data-action="review-update"]');
-    if(reviewUpdate && reviewUpdate.dataset.reviewBatchBypass!=='1'){
-      const review=reviewFromButton(reviewUpdate);const generic=!!review && Array.isArray(review.proposals) && review.proposals.length===0;
-      if(generic){ui.decisionMode='evidence';return;}
-      event.preventDefault();event.stopPropagation();event.stopImmediatePropagation();showStateUpdateConfirmation(reviewUpdate);return;
-    }
-    const reviewKeep=event.target.closest?.('[data-action="review-keep"]');if(reviewKeep){ui.decisionMode='keep';return;}
     const prompt=event.target.closest?.('[data-review-batch-prompt]');if(prompt){event.preventDefault();event.stopPropagation();runAsk(prompt.dataset.reviewBatchPrompt);return;}
+    const copyContext=event.target.closest?.('[data-action="open-copy-context"]');if(copyContext){event.preventDefault();event.stopPropagation();openCopyContextDialog();return;}
+    const confirmCopy=event.target.closest?.('[data-review-batch-action="copy-context-confirm"]');if(confirmCopy){event.preventDefault();event.stopPropagation();confirmCopyContext();return;}
     const action=event.target.closest?.('[data-review-batch-action]');if(!action)return;
     event.preventDefault();event.stopPropagation();const type=action.dataset.reviewBatchAction;
     if(type==='open-ask')openAskDrawer();
     else if(type==='close-ask')closeAskDrawer();
-    else if(type==='copy-context')openCopyContextDialog();
-    else if(type==='copy-context-confirm')confirmCopyContext();
-    else if(type==='show-help')openHowStateWorks();
     else if(type==='copy-ask-answer'&&ui.payload)writeClipboard(portableAskText(ui.payload,ui.resolvedContext)).then(()=>showToast('Ask answer copied with State labels.'));
     else if(type==='refresh-ask')runAsk(ui.query);
     else if(type==='open-add-evidence'){closeAskDrawer();document.querySelector('[data-action="add-info"]')?.click();}
-    else if(type==='cancel-state-update'){if(ui.confirmReturnHtml){document.getElementById('dialogBody').innerHTML=ui.confirmReturnHtml;ui.confirmReturnHtml=null;}else closeOverlay();}
-    else if(type==='confirm-state-update'){ui.confirmReturnHtml=null;ui.decisionMode='state';const id=action.dataset.reviewId;document.getElementById('dialogBody').innerHTML='<div class="review-saving-compact"><span class="eyebrow">Updating</span><h2 id="dialogTitle">Updating Current State…</h2><p>Saving the reviewed decision to the project record.</p></div>';triggerReviewAction(id,'review-update');}
-    else if(type==='go-current-state'){closeOverlay();document.querySelector('.sidebar-nav [data-view="project-overview"]')?.click();}
-    else if(type==='go-history'){closeOverlay();document.querySelector('.sidebar-nav [data-view="history"]')?.click();}
+    else if(type==='clear-ask'){ui.query='';ui.payload=null;ui.resolvedContext=[];ui.answerStateSignature=null;ui.stale=false;syncAskInputs();renderDrawerResult('');}
   },true);
 
   document.addEventListener('click',event=>{
@@ -455,6 +351,5 @@
   let queued=false;const schedule=()=>{if(queued)return;queued=true;requestAnimationFrame(()=>{queued=false;enhanceAll();});};
   new MutationObserver(schedule).observe(document.documentElement,{childList:true,subtree:true,characterData:true});
   setInterval(()=>{if(ui.drawerOpen&&ui.payload)checkAnswerFreshness();},7000);
-  setTimeout(reconcileQuestionLinks,250);setTimeout(reconcileQuestionLinks,1400);
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',schedule,{once:true});else schedule();
 })();
