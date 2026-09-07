@@ -21,8 +21,18 @@
   document.body.classList.remove('modal-open');
   const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const norm = s => String(s).toLowerCase().replace(/[’']/g,'').replace(/[^a-z0-9\s]/g,' ').replace(/\s+/g,' ').trim();
+  // No backendStatus.questions==='loaded' gate: the fast attention-only
+  // hydration path (see hydrateBackend()) can populate real, backendManaged
+  // question data well before the slower full bootstrap flips that status
+  // flag. Gating on it made this return [] during that window even though
+  // workspaceAttentionHtml() (which filters the same backendManaged data
+  // directly) already showed the real count -- a real "Current State says
+  // no open questions, Attention says 3 blocking" contradiction users could
+  // actually see. backendManaged itself is the correct guard: it's false
+  // until synced from a real API response, so pre-hydration this still
+  // yields [] exactly as before.
   const openQuestions = () => API
-    ? (state.backendStatus.questions==='loaded' ? state.data.questions.filter(q => q.status === 'open' && q.backendManaged) : [])
+    ? state.data.questions.filter(q => q.status === 'open' && q.backendManaged)
     : state.data.questions.filter(q => q.status === 'open');
   const pendingReviews = () => API
     ? (state.backendStatus.reviews==='loaded' ? state.data.reviews.filter(r => r.status === 'pending' && r.backendReviewId) : [])
@@ -261,6 +271,19 @@
     const next=holder.firstElementChild;
     if(!next) return false;
     current.replaceWith(next);
+    return true;
+  }
+  // Sibling to renderWorkspaceAttentionOnly(): the fast attention-only
+  // hydration path populates real question/review data that What Changed
+  // and Current State also read (openQuestions(), decision counts), so it
+  // needs to redraw them too -- otherwise Current State keeps showing
+  // whatever it computed at initial mount (often "no open questions")
+  // until the slower full bootstrap eventually finishes.
+  function renderWorkspaceBelowGridOnly(){
+    if(state.view!=='overview' || state.result) return false;
+    const current=root.querySelector('.workspace-below-grid');
+    if(!current) return false;
+    current.innerHTML=whatChangedHtml()+currentStateHtml();
     return true;
   }
   function liveRecordStatus(){
@@ -1297,6 +1320,11 @@
       state.workspaceAttentionStatus='loaded';
       updateNav();
       renderWorkspaceAttentionOnly();
+      // This is the only point where the fast path's real question/review
+      // data reaches the page before the slower full bootstrap -- What
+      // Changed/Current State need to redraw here too, or they keep
+      // showing whatever they computed at initial mount.
+      renderWorkspaceBelowGridOnly();
     }).catch(attentionError=>{
       console.warn('Fast attention load unavailable; full Workspace load will continue.',attentionError);
     });
@@ -1369,6 +1397,13 @@
             if(holder.firstElementChild) askPanel.insertAdjacentElement('afterend',holder.firstElementChild);
           }
         }
+        // Same reasoning as the fast attention path above: the full
+        // bootstrap is what actually populates state.data.history/knowledge
+        // with real values, but nothing was re-drawing What
+        // Changed/Current State to reflect them -- they stayed frozen at
+        // whatever the very first synchronous render computed, on every
+        // page load, not just during the fast-path race window.
+        renderWorkspaceBelowGridOnly();
       }
       return;
     }

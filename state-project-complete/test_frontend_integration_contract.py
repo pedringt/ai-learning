@@ -219,7 +219,17 @@ def test_r82_authoritative_review_counts_do_not_flash_fixture_values_before_hydr
     assert "questionsBackendAvailable" not in app
     assert "reviewsHydrated" not in app
     assert "state.backendStatus.reviews==='loaded'" in app
-    assert "state.backendStatus.questions==='loaded'" in app
+    # Questions dropped the analogous state.backendStatus.questions==='loaded'
+    # gate (2026-09-07): it caused a real bug where Current State kept
+    # showing "no open questions" even after the fast attention-only
+    # hydration path had already populated real, backendManaged question
+    # data -- the status flag just hadn't caught up yet, and nothing told
+    # Current State to redraw when it later did (see
+    # renderWorkspaceBelowGridOnly()). q.backendManaged is the correct guard
+    # against flashing fixture values instead: it's only ever set true
+    # inside syncApiQuestions(), never on local fixture data, so this still
+    # yields [] before any real hydration, same as before.
+    assert "state.data.questions.filter(q => q.status === 'open' && q.backendManaged)" in app
 
 
 def test_r82_open_item_sections_are_collapsible_and_keep_attention_hierarchy():
