@@ -381,7 +381,14 @@ def test_dialog_visibility_has_one_source_of_truth():
 def test_r16_release_hardening_removes_control_chars_and_keeps_word_boundary_routing():
     app = (FRONTEND / "context-app.js").read_text(encoding="utf-8")
     assert "\x08" not in app
-    assert "\\b(approved|confirmed|decided|agreed|learned|yesterday|today)\\b" in app
+    # The old approved/confirmed/decided/... heuristic (any past-tense word
+    # plus a topic word) was replaced 2026-09-07 after live QA found it
+    # misrouted plain questions like "Did Security confirm retention terms?"
+    # into the update-Evidence dialog. The successor only routes to that
+    # dialog on explicit update intent, and only when the input doesn't
+    # already look like a question -- this asserts the new regex's word
+    # boundaries are still intact rather than pinning the retired one.
+    assert "\\b(add (this|that|it)|please add|update (the )?(current )?state|record (this|that)|please record|note that|for the record|log (this|that))\\b" in app
     assert "\\b(changed|change|history|historical|originally" in app
 
 

@@ -1,12 +1,12 @@
 (() => {
   const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const cleanReviewCopy=value=>String(value||'').replace(/\*\*/g,'').replace(/\b(?:state|question|evidence|review|proposal)_[a-z0-9]+\b/gi,'').replace(/\b(?:ask-evidence|state|question|evidence|review|proposal|k|q)-[a-z0-9-]+\b/gi,'').replace(/\s+([,.;:])/g,'$1').replace(/\s{2,}/g,' ').trim();
 
   // sourceNote: the note this review's evidence came from (state.data.notes
   // resolved by evidenceId), or undefined. Passed in rather than looked up
   // here so this module never needs the whole notes array just for one field.
   function reviewCard(r,expanded=true,accordion=false,sourceNote){
     const generic=r.id.startsWith('r-info-') || (Array.isArray(r.proposals) && r.proposals.length===0);
-    const cleanReviewCopy=value=>String(value||'').replace(/\*\*/g,'').replace(/\b(?:state|question|evidence|review|proposal)_[a-z0-9]+\b/gi,'').replace(/\b(?:ask-evidence|state|question|evidence|review|proposal|k|q)-[a-z0-9-]+\b/gi,'').replace(/\s+([,.;:])/g,'$1').replace(/\s{2,}/g,' ').trim();
     const meaningfulUnresolved=r.unresolved && !/^nothing beyond this proposed change/i.test(cleanReviewCopy(r.unresolved));
     const sourceMeta=sourceNote?`${sourceNote.date} · ${sourceNote.source}`:'';
     const head=`<span class="review-row-head"><span class="review-row-copy"><span class="review-kicker">${esc(r.title)}</span><span class="review-card-title">${esc(r.summary)}</span>${sourceMeta?`<span class="review-source-meta">Evidence · ${esc(sourceMeta)}</span>`:''}</span></span>`;
@@ -20,7 +20,16 @@
     return `<button type="button" class="open-question-row${blocking?' is-blocking':''}" data-action="open-question" data-question-id="${q.id}" aria-label="Open question: ${esc(q.text)}"><span class="open-question-copy"><span class="open-item-label ${blocking?'blocking':'question'}">${blocking?'Blocking question':'Open question'}</span><span class="open-question-title">${esc(q.text)}</span><span class="open-question-meta">${esc(q.origin)}${q.created?` · ${esc(q.created)}`:''}${blocking&&q.blocks?` · Blocks: ${esc(q.blocks)}`:''}</span></span><span class="question-card-chevron" aria-hidden="true">›</span></button>`;
   }
 
-  function questionDialogHtml(q){
+  // linkedReview: the open Review whose resolvesQuestionIds names this
+  // question, if any (state.data.reviews, looked up by the caller). When
+  // present, the dialog must not dead-end on "Add what you learned" -- State
+  // already has a candidate answer waiting on a human decision, so the
+  // primary action is going to that Review, not re-submitting evidence.
+  function questionDialogHtml(q,linkedReview){
+    if(linkedReview){
+      const evidenceSummary=cleanReviewCopy(linkedReview.evidence)||cleanReviewCopy(linkedReview.summary)||'New evidence may answer this question.';
+      return `<span class="eyebrow">Answer found · Awaiting review</span><h2 id="dialogTitle">${esc(q.text)}</h2><p>${esc(evidenceSummary)}</p><p class="blocking-detail">Current State has not changed yet because this still needs your review.</p><div class="dialog-actions"><button class="btn primary" data-action="open-specific-review" data-review-id="${linkedReview.id}">Review proposed update →</button><button class="btn secondary" data-action="answer-question" data-question-id="${q.id}">Add something else</button></div>`;
+    }
     return `<span class="eyebrow">${q.blocking?'Blocking question':'Open question'}</span><h2 id="dialogTitle">${esc(q.text)}</h2><p>This stays unresolved until reviewed evidence establishes an answer.</p>${q.blocking&&q.blocks?`<p class="blocking-detail"><strong>Blocks:</strong> ${esc(q.blocks)}</p>`:''}<div class="dialog-actions"><button class="btn primary" data-action="answer-question" data-question-id="${q.id}">Add what you learned</button>${q.blocking?`<button class="btn secondary" data-action="unmark-blocking" data-question-id="${q.id}">No longer blocking</button>`:`<button class="btn secondary" data-action="mark-blocking" data-question-id="${q.id}">Mark as blocking</button>`}<button class="btn secondary" data-action="confirm-stop-question" data-question-id="${q.id}">Stop tracking</button></div>`;
   }
 

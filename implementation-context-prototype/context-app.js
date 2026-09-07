@@ -533,10 +533,28 @@
     return pendingReviews().filter(r => r.topics.some(t=>topics.includes(t)));
   }
 
+  // A question mark, or a leading interrogative word, is enough to treat
+  // input as a question. Anything that looks like a question must never be
+  // redirected into the update flow, no matter what other words it contains.
+  function looksLikeQuestion(text){
+    const q=text.trim();
+    if(/\?\s*$/.test(q))return true;
+    return /^(who|what|when|where|why|how|which|did|does|do|is|are|was|were|can|could|should|would|will|has|have|had)\b/i.test(q);
+  }
+  // Only explicit update intent should route input into "Add a project
+  // update" -- Ask is the default for everything else, including plain
+  // statements with no imperative marker. The old heuristic (any past-tense
+  // "approved"/"confirmed"/etc. plus a topic word) fired on ordinary
+  // questions like "Did Security confirm retention terms?" and opened the
+  // update dialog instead of answering.
+  function hasExplicitUpdateIntent(text){
+    return /\b(add (this|that|it)|please add|update (the )?(current )?state|record (this|that)|please record|note that|for the record|log (this|that))\b/i.test(text);
+  }
+
   async function submitAsk(query){
     const raw=(query ?? document.getElementById('askInput')?.value ?? state.askInputDraft ?? '').trim(); if(!raw)return;
     state.askInputDraft='';
-    if(/\b(approved|confirmed|decided|agreed|learned|yesterday|today)\b/i.test(raw) && /\b(security|okta|support|customer|plan|feature|team)\b/i.test(raw)){
+    if(!looksLikeQuestion(raw) && hasExplicitUpdateIntent(raw)){
       showAddDialog(raw); return;
     }
     const previousLive=state.result?.liveAsk||null;
@@ -792,7 +810,10 @@
   function renderOpenItems(){ root.innerHTML=OPEN_ITEMS_VIEW.render(openItemsProps()); }
   function renderReview(){ return renderOpenItems(); }
   function reviewCard(r,expanded=true,accordion=false){ return OPEN_ITEMS_VIEW.reviewCard(r,expanded,accordion,state.data.notes.find(n=>n.id===r.evidenceId)); }
-  function questionDialogHtml(q){ return OPEN_ITEMS_VIEW.questionDialogHtml(q); }
+  function linkedReviewFor(questionId){
+    return state.data.reviews.find(r=>r.status==='pending' && (r.resolvesQuestionIds?.includes(questionId) || r.resolvesQuestionId===questionId));
+  }
+  function questionDialogHtml(q){ return OPEN_ITEMS_VIEW.questionDialogHtml(q,linkedReviewFor(q.id)); }
 
   async function decideReview(id,decision){
     const r=state.data.reviews.find(x=>x.id===id);
@@ -1562,7 +1583,7 @@
     history.replaceState(history.state,'',location.pathname+(cleanedSearch?`?${cleanedSearch}`:'')+'#settings');
     navigateTo('settings');
   }
-  window.STATE_ASK_TEST_API={state,detectAskIntent,findScenario,structuredAskResult,scenarioResult,intentAskHtml,submitAsk,upsertBackendReview,replaceBackendOpenReviews,mapApiReview};
+  window.STATE_ASK_TEST_API={state,detectAskIntent,findScenario,structuredAskResult,scenarioResult,intentAskHtml,submitAsk,upsertBackendReview,replaceBackendOpenReviews,mapApiReview,looksLikeQuestion,hasExplicitUpdateIntent,linkedReviewFor,questionDialogHtml};
   render();
   hydrateBackend();
 })();
