@@ -39,6 +39,18 @@ def ask_cache_key(
     the full compact candidate set makes any accepted decision or new evidence
     produce a different key instead of serving a stale answer.
 
+    Also keyed on today's date. None of the authority-bearing inputs above
+    change just because a day passed, but an answer's own prose can still go
+    stale purely from the passage of time -- a record dated "September 3" is
+    accurately described as upcoming on September 2 and stale if that exact
+    cached prose is still served on September 4. _grounding_rules() below
+    tells the model how to describe a passed date correctly, but that
+    instruction only takes effect on an actual model call; a cache hit skips
+    the model entirely and would otherwise replay whatever tense the answer
+    was generated in indefinitely. Keying on the date forces a fresh call
+    (and a fresh grounding-rules read) once the day rolls over, without
+    invalidating same-day repeat questions.
+
     Depends on ordering defined elsewhere. _compact_candidates truncates
     history to 18 entries and evidence to 24, which is only safe because
     list_history and list_evidence in review_service.py both ORDER BY ... DESC:
@@ -51,6 +63,7 @@ def ask_cache_key(
         "query": " ".join(query.lower().split()),
         "previous_answer": previous_answer,
         "candidates": _compact_candidates(connection),
+        "as_of_date": date.today().isoformat(),
     }
     encoded = json.dumps(payload, ensure_ascii=False, sort_keys=True, separators=(",", ":"), default=str)
     return hashlib.sha256(encoded.encode("utf-8")).hexdigest()

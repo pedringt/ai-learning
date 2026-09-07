@@ -132,8 +132,21 @@ def test_open_items_action_count_includes_reviews_and_blockers_only():
     # "Showing N of total" was removed 2026-09-07 (Workspace polish round):
     # redundant with "View all N ->" immediately above it in the same section.
     assert "Showing ${items.length} of ${total}" not in JS
-    assert "more in Open Items" not in JS
+    # A different, later fix (2026-09-07 live-testing round) reintroduced a
+    # truncation note, but scoped to workspaceAttentionHtml()'s breakdown
+    # line specifically -- not the same "Showing N of total" pattern this
+    # removed above. That prior removal was about the Open Items page
+    # header, where a nearby "View all N ->" already showed the count; the
+    # attention banner has no such nearby count, and its breakdown text was
+    # claiming more blocking questions than the (slot-capped) list below it
+    # actually rendered -- a real mismatch, not mere redundancy. See
+    # workspaceAttentionHtml()'s own comment and
+    # state-attention-breakdown-tests.js for the regression this guards.
     assert "more in Open Items" not in OPEN_ITEMS_VIEW_JS
+    assert "const shownReviews=" in JS and "const shownBlockers=" in JS, (
+        "the attention breakdown must describe what's actually rendered in "
+        "items, not the uncapped reviews/blockers totals"
+    )
 
 
 def test_provider_failure_retry_reuses_saved_evidence():

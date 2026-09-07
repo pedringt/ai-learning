@@ -224,9 +224,17 @@
     if(!items.length){
       return `<section class="workspace-attention is-clear"><div class="workspace-attention-head"><div><span class="eyebrow">Needs your attention</span><h3>You're caught up</h3><p>Nothing currently needs a decision and no questions are blocking progress.</p></div><button class="text-button" data-view="open-items">Open Items →</button></div></section>`;
     }
+    // Describe exactly what's rendered in `items` below, never the uncapped
+    // reviews/blockers totals -- those can outnumber the 2 row slots, and a
+    // breakdown claiming "3 blocking questions" while only 1 (or 0) blocker
+    // row actually renders is the exact silent mismatch this guards against.
+    const shownReviews=items.filter(i=>i.kind==='review').length;
+    const shownBlockers=items.filter(i=>i.kind==='blocker').length;
+    const hiddenCount=total-items.length;
     const breakdownParts=[];
-    if(reviews.length) breakdownParts.push(`${reviews.length} review${reviews.length===1?'':'s'}`);
-    if(blockers.length) breakdownParts.push(`${blockers.length} blocking question${blockers.length===1?'':'s'}`);
+    if(shownReviews) breakdownParts.push(`${shownReviews} review${shownReviews===1?'':'s'}`);
+    if(shownBlockers) breakdownParts.push(`${shownBlockers} blocking question${shownBlockers===1?'':'s'}`);
+    if(hiddenCount>0) breakdownParts.push(`+${hiddenCount} more in Open Items`);
     const rows=items.map(item=>`<button class="attention-item ${item.kind}" data-action="${item.kind==='review'?'open-specific-review':'go-open-question'}" ${item.kind==='review'?`data-review-id="${esc(item.id)}"`:`data-question-id="${esc(item.id)}"`}><span class="attention-item-copy"><span class="attention-kind">${esc(item.label)}</span><strong>${esc(item.title)}</strong><span>${esc(item.detail)}</span></span><span class="attention-arrow" aria-hidden="true">→</span></button>`).join('');
     return `<section class="workspace-attention"><div class="workspace-attention-head"><div><span class="eyebrow">Needs your attention</span><h3>${total===1?'1 item is waiting on you':`${total} items are waiting on you`}</h3><p class="attention-intro-text">${esc(breakdownParts.join(' · '))}</p></div><button class="text-button" data-view="open-items">Open Items →</button></div><div class="attention-list">${rows}</div></section>`;
   }
