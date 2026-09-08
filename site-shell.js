@@ -6,6 +6,16 @@
   const btn=document.getElementById('v922ThemeToggle');
   const mobile=document.getElementById('v922MobileNav');
   const isDark=()=>body.classList.contains('v88-dark');
+
+  /* Small shared presentation layer for the final pre-freeze polish. */
+  if(!document.querySelector('link[data-final-freeze-polish]')){
+    const polish=document.createElement('link');
+    polish.rel='stylesheet';
+    polish.href=location.protocol==='file:'?'../final-freeze-polish.css':'/final-freeze-polish.css';
+    polish.dataset.finalFreezePolish='true';
+    document.head.appendChild(polish);
+  }
+
   const applyIcon=()=>{
     if(!btn)return;
     const dark=isDark();
@@ -29,4 +39,21 @@
       if(!d.contains(e.target))d.removeAttribute('open');
     });
   });
+
+  /* State creates this launcher after the shell loads, so watch briefly and add the AI cue without changing behavior. */
+  const polishAskLauncher=()=>{
+    const launcher=document.querySelector('.ask-state-launcher');
+    if(!launcher)return false;
+    if(!launcher.dataset.sparkleLabel){
+      const label=launcher.textContent.trim().replace(/^✦\s*/, '') || 'Ask State';
+      launcher.textContent=`✦ ${label}`;
+      launcher.dataset.sparkleLabel='true';
+    }
+    return true;
+  };
+  if(!polishAskLauncher()){
+    const observer=new MutationObserver(()=>{if(polishAskLauncher())observer.disconnect();});
+    observer.observe(body,{childList:true,subtree:true});
+    window.setTimeout(()=>observer.disconnect(),10000);
+  }
 })();
