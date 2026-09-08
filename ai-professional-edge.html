@@ -6,84 +6,28 @@
 <meta content="website" property="og:type"/><meta content="AI Professional Edge · AI Learning Portfolio" property="og:title"/><meta content="A living reference of the AI product patterns, techniques, vocabulary, and questions I want to keep using." property="og:description"/>
 <meta content="summary" name="twitter:card"/><meta content="AI Professional Edge · AI Learning Portfolio" name="twitter:title"/><meta content="A living reference of the AI product patterns, techniques, vocabulary, and questions I want to keep using." name="twitter:description"/>
 <style>
-*{box-sizing:border-box}
-html{scroll-behavior:smooth}
-body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;color:var(--ink);background:var(--bg);line-height:1.5}
-a{color:var(--purple)}
-.edge-wrap{max-width:900px;margin:auto;padding:40px 34px 90px}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;color:var(--ink);background:var(--bg);line-height:1.5}a{color:var(--purple)}
+.edge-wrap{max-width:1160px;margin:auto;padding:40px 34px 90px}.edge-head{max-width:900px}.edge-eyebrow{font-size:11px;font-weight:850;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}.edge-title{font-family:Georgia,"Times New Roman",serif;font-size:34px;line-height:1.1;letter-spacing:-.025em;margin:8px 0 10px}.edge-lede{font-size:16px;color:var(--muted);max-width:640px;margin:0 0 6px}.edge-note{font-size:12.5px;color:var(--muted);border-top:1px solid var(--border);padding-top:14px;margin-top:18px}
+.edge-layout{display:grid;grid-template-columns:190px minmax(0,760px);gap:48px;align-items:start;margin-top:28px}.edge-jump{position:sticky;top:82px;display:grid;gap:2px;border-left:1px solid var(--border);padding-left:12px}.edge-jump::before{content:'On this page';font-size:10.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:0 0 8px}.edge-jump a{font-size:12px;font-weight:650;line-height:1.3;text-decoration:none;color:var(--muted);padding:6px 8px;border-radius:6px}.edge-jump a:hover,.edge-jump a:focus-visible,.edge-jump a.is-active{color:var(--ink);background:var(--soft)}.edge-jump a.is-active{box-shadow:inset 2px 0 0 var(--purple)}
+.edge-body h2{font-size:22px;letter-spacing:-.01em;margin:44px 0 14px;padding-top:24px;border-top:1px solid var(--border);scroll-margin-top:76px}.edge-body h2:first-of-type{margin-top:0;padding-top:0;border-top:0}.edge-body h3{font-size:16px;margin:24px 0 6px;color:var(--ink);line-height:1.3}.edge-body h3:first-of-type{margin-top:14px}.edge-body p{margin:0 0 10px;font-size:14.5px;max-width:720px}.edge-body hr{display:none}.edge-body strong{font-weight:750}.edge-body strong.edge-lead{color:var(--purple);font-weight:800}.edge-body p.edge-callout{border-left:2px solid var(--purple);background:var(--soft);padding:8px 11px;margin:10px 0 16px;border-radius:0 6px 6px 0;color:var(--muted)}.edge-body p.edge-callout strong.edge-lead{color:var(--purple)}.edge-body ol{margin:8px 0 0;padding-left:0;max-width:760px;list-style:none;counter-reset:edgeq;display:grid;gap:6px}.edge-body ol li{counter-increment:edgeq;margin:0;padding:9px 11px 9px 38px;font-size:14px;line-height:1.45;border:1px solid var(--border);border-radius:8px;background:var(--card);position:relative}.edge-body ol li::before{content:counter(edgeq);position:absolute;left:11px;top:9px;width:18px;height:18px;border-radius:50%;background:var(--soft);color:var(--muted);font-size:10px;font-weight:800;display:grid;place-items:center}.edge-body ul{margin:6px 0 0;padding-left:20px;max-width:760px}.edge-body ul li{margin:0 0 6px;font-size:14.5px}
+.edge-glossary{width:100%;border-collapse:separate;border-spacing:0;margin-top:10px;font-size:13.5px;border:1px solid var(--border);border-radius:9px;overflow:hidden}.edge-glossary th{text-align:left;font-size:10.5px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);background:var(--soft);padding:9px 12px;border-bottom:1px solid var(--border)}.edge-glossary td{padding:10px 12px;vertical-align:top;border-bottom:1px solid var(--border)}.edge-glossary tr:last-child td{border-bottom:0}.edge-glossary td:first-child{width:30%;font-weight:750;color:var(--ink)}.edge-glossary td:last-child{color:var(--muted)}.edge-loading,.edge-error{font-size:13.5px;color:var(--muted);padding:20px 0}
 body.v88-dark{--ink:#f5f5f7;--muted:#b6b6c2;--border:#34343d;--soft:#19191f;--softp:#1b1a22;--card:#15151b;--bg:#101014;--purple:#b9adff;--purple2:#a79aff}
-.edge-eyebrow{font-size:11px;font-weight:850;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
-.edge-title{font-family:Georgia,"Times New Roman",serif;font-size:34px;line-height:1.1;letter-spacing:-.025em;margin:8px 0 10px}
-.edge-lede{font-size:16px;color:var(--muted);max-width:640px;margin:0 0 6px}
-.edge-note{font-size:12.5px;color:var(--muted);border-top:1px solid var(--border);padding-top:14px;margin-top:18px}
-.edge-jump{display:flex;flex-wrap:wrap;gap:7px;margin:18px 0 4px}
-.edge-jump a{font-size:12px;font-weight:700;text-decoration:none;color:var(--muted);border:1px solid var(--border);border-radius:999px;padding:5px 9px;background:var(--card)}
-.edge-jump a:hover,.edge-jump a:focus-visible{color:var(--ink);border-color:var(--purple)}
-.edge-body h2{font-size:22px;letter-spacing:-.01em;margin:40px 0 4px;padding-top:22px;border-top:1px solid var(--border);scroll-margin-top:76px}
-.edge-body h2:first-of-type{margin-top:30px;padding-top:0;border-top:0}
-.edge-body h3{font-size:15.5px;margin:22px 0 5px;color:var(--ink)}
-.edge-body h3:first-of-type{margin-top:14px}
-.edge-body p{margin:0 0 10px;font-size:14.5px;max-width:760px}
-.edge-body hr{display:none}
-.edge-body strong{font-weight:750}
-.edge-body strong.edge-lead{color:var(--purple);font-weight:800}
-.edge-body p.edge-callout{border-left:2px solid var(--purple);background:var(--soft);padding:8px 11px;margin:10px 0 14px;border-radius:0 6px 6px 0}
-.edge-body ol{margin:6px 0 0;padding-left:20px;max-width:760px}
-.edge-body ol li{margin:0 0 8px;font-size:14.5px}
-.edge-body ul{margin:6px 0 0;padding-left:20px;max-width:760px}
-.edge-body ul li{margin:0 0 6px;font-size:14.5px}
-.edge-loading,.edge-error{font-size:13.5px;color:var(--muted);padding:20px 0}
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
-@media(max-width:760px){.edge-wrap{padding:0 20px 60px}.edge-title{font-size:27px}.edge-jump{gap:6px}.edge-jump a{font-size:11.5px}}
+@media(max-width:860px){.edge-wrap{max-width:900px}.edge-layout{display:block}.edge-jump{position:static;display:flex;flex-wrap:wrap;gap:6px;border-left:0;padding:0;margin:20px 0 28px}.edge-jump::before{content:'On this page';width:100%;margin-bottom:2px}.edge-jump a{border:1px solid var(--border);background:var(--card);padding:5px 8px}.edge-jump a.is-active{box-shadow:none;border-color:var(--purple)}}
+@media(max-width:760px){.edge-wrap{padding:0 20px 60px}.edge-title{font-size:27px}.edge-glossary{font-size:12.5px}.edge-glossary th,.edge-glossary td{padding:8px 9px}.edge-glossary td:first-child{width:36%}}
 </style>
-<link href="site-shell.css" rel="stylesheet">
-<link href="site-components.css" rel="stylesheet"/>
+<link href="site-shell.css" rel="stylesheet"><link href="site-components.css" rel="stylesheet"/>
 </head><body>
 <div class="topbar"><div class="topinner"><a class="brand-button" href="index.html"><span class="brand">AI <span>Learning Portfolio</span></span></a><nav aria-label="Primary pages" class="nav"><a href="index.html">Home</a><a href="index.html#portfolio">Applied Work</a><a aria-current="page" href="index.html#learn">Learning Guide</a></nav><div class="top-actions"><button aria-label="Switch to dark mode" aria-pressed="false" class="theme-toggle" id="v922ThemeToggle" title="Switch to dark mode" type="button">☾</button><select aria-label="Choose page" id="v922MobileNav"><option value="index.html">Home</option><option value="index.html#portfolio">Applied Work</option><option selected="" value="index.html#learn">Learning Guide</option></select></div></div></div>
-<main class="edge-wrap">
-<div class="edge-eyebrow">Learning Guide · Living reference</div>
-<h1 class="edge-title">AI Professional Edge</h1>
-<p class="edge-lede">A living reference of the AI product patterns, techniques, vocabulary, and questions I want to keep using.</p>
-<p class="edge-note">I update this as I research and build, keeping the material I expect to use again. · Updated September 2026</p>
-<nav class="edge-jump" aria-label="On this page" id="edgeJump"></nav>
-<div class="edge-body" id="edgeBody"><p class="edge-loading">Loading…</p></div>
-</main>
+<main class="edge-wrap"><div class="edge-head"><div class="edge-eyebrow">Learning Guide · Living reference</div><h1 class="edge-title">AI Professional Edge</h1><p class="edge-lede">A living reference of the AI product patterns, techniques, vocabulary, and questions I want to keep using.</p><p class="edge-note">I update this as I research and build, keeping the material I expect to use again. · Updated September 2026</p></div><div class="edge-layout"><nav class="edge-jump" aria-label="On this page" id="edgeJump"></nav><div class="edge-body" id="edgeBody"><p class="edge-loading">Loading…</p></div></div></main>
 <script>
 (() => {
-  const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#39;'}[c]));
-  const LEAD_LABELS = ['Ask:','Key term:','Why:','Useful for:','Product habit:'];
-  const slug = s => s.toLowerCase().replace(/&/g,'and').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
-  function inline(text){
-    let out = esc(text);
-    out = out.replace(/\*\*([^*]+)\*\*/g, (_, t) => `<strong>${t}</strong>`);
-    out = out.replace(/\*([^*]+)\*/g, (_, t) => `<em>${t}</em>`);
-    out = out.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (_, t, href) => `<a href="${esc(href)}" rel="noopener" target="_blank">${t}</a>`);
-    for (const label of LEAD_LABELS) out = out.split(`<strong>${label}</strong>`).join(`<strong class="edge-lead">${label}</strong>`);
-    return out;
-  }
-  function renderMarkdown(src){
-    const lines = src.replace(/\r\n/g, '\n').split('\n');
-    let html='',i=0,paragraph=[];
-    const flush=()=>{if(paragraph.length){const text=paragraph.join(' ');const callout=LEAD_LABELS.some(label=>text.startsWith(`**${label}**`));html+=`<p${callout?' class="edge-callout"':''}>${inline(text)}</p>`;paragraph=[];}};
-    while(i<lines.length){
-      const line=lines[i],heading=/^(#{1,3})\s+(.*)$/.exec(line);
-      if(line.trim()===''){flush();i++;continue}
-      if(line.trim()==='---'){flush();html+='<hr>';i++;continue}
-      if(heading){flush();const level=heading[1].length;const id=level===2?` id="${slug(heading[2])}"`:'';html+=`<h${level}${id}>${inline(heading[2])}</h${level}>`;i++;continue}
-      if(/^\d+\.\s+/.test(line)){flush();html+='<ol>';while(i<lines.length&&/^\d+\.\s+/.test(lines[i])){html+=`<li>${inline(lines[i].replace(/^\d+\.\s+/,''))}</li>`;i++}html+='</ol>';continue}
-      if(/^[-*]\s+/.test(line)){flush();html+='<ul>';while(i<lines.length&&/^[-*]\s+/.test(lines[i])){html+=`<li>${inline(lines[i].replace(/^[-*]\s+/,''))}</li>`;i++}html+='</ul>';continue}
-      paragraph.push(line.trim());i++;
-    }
-    flush();return html;
-  }
-  const target=document.getElementById('edgeBody');
-  fetch('content/ai-professional-edge.md').then(r=>{if(!r.ok)throw new Error(`${r.status}`);return r.text()}).then(text=>{
-    const withoutHeader=text.replace(/^#\s+.*\n(\n\*[^\n]*\*\n)?(\n[^\n#]*\n)?\n?---\n/,'');
-    target.innerHTML=renderMarkdown(withoutHeader.trim());
-    const jump=document.getElementById('edgeJump');
-    jump.innerHTML=[...target.querySelectorAll('h2')].map(h=>`<a href="#${h.id}">${h.textContent}</a>`).join('');
-  }).catch(()=>{target.innerHTML='<p class="edge-error">This reference could not be loaded right now. Please try again in a moment.</p>'});
+ const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+ const LEAD_LABELS=['Ask:','Key term:','Why:','Useful for:','Product habit:']; const slug=s=>s.toLowerCase().replace(/&/g,'and').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
+ function inline(text){let out=esc(text);out=out.replace(/\*\*([^*]+)\*\*/g,(_,t)=>`<strong>${t}</strong>`);out=out.replace(/\*([^*]+)\*/g,(_,t)=>`<em>${t}</em>`);out=out.replace(/\[([^\]]+)\]\(([^)]+)\)/g,(_,t,href)=>`<a href="${esc(href)}" rel="noopener" target="_blank">${t}</a>`);for(const label of LEAD_LABELS)out=out.split(`<strong>${label}</strong>`).join(`<strong class="edge-lead">${label}</strong>`);return out}
+ function renderMarkdown(src){const lines=src.replace(/\r\n/g,'\n').split('\n');let html='',i=0,paragraph=[];const flush=()=>{if(paragraph.length){const text=paragraph.join(' ');const callout=LEAD_LABELS.some(label=>text.startsWith(`**${label}**`));html+=`<p${callout?' class="edge-callout"':''}>${inline(text)}</p>`;paragraph=[]}};while(i<lines.length){const line=lines[i],heading=/^(#{1,3})\s+(.*)$/.exec(line);if(line.trim()===''){flush();i++;continue}if(line.trim()==='---'){flush();html+='<hr>';i++;continue}if(heading){flush();const level=heading[1].length;const id=level===2?` id="${slug(heading[2])}"`:'';html+=`<h${level}${id}>${inline(heading[2])}</h${level}>`;i++;continue}if(/^\d+\.\s+/.test(line)){flush();html+='<ol>';while(i<lines.length&&/^\d+\.\s+/.test(lines[i])){html+=`<li>${inline(lines[i].replace(/^\d+\.\s+/,''))}</li>`;i++}html+='</ol>';continue}if(/^[-*]\s+/.test(line)){flush();html+='<ul>';while(i<lines.length&&/^[-*]\s+/.test(lines[i])){html+=`<li>${inline(lines[i].replace(/^[-*]\s+/,''))}</li>`;i++}html+='</ul>';continue}paragraph.push(line.trim());i++}flush();return html}
+ function makeGlossary(){const heading=document.getElementById('concepts-and-vocabulary');if(!heading)return;const rows=[];let node=heading.nextElementSibling;while(node&&node.tagName!=='H2'){if(node.tagName==='H3'){const term=node.textContent;const def=node.nextElementSibling;if(def&&def.tagName==='P'){rows.push([term,def.innerHTML]);const next=def.nextElementSibling;node.remove();def.remove();node=next;continue}}node=node.nextElementSibling}if(rows.length){const table=document.createElement('table');table.className='edge-glossary';table.innerHTML='<thead><tr><th>Term</th><th>Meaning</th></tr></thead><tbody>'+rows.map(([t,d])=>`<tr><td>${esc(t)}</td><td>${d}</td></tr>`).join('')+'</tbody>';heading.insertAdjacentElement('afterend',table)}}
+ function setupNav(){const jump=document.getElementById('edgeJump'),heads=[...target.querySelectorAll('h2')];jump.innerHTML=heads.map(h=>`<a href="#${h.id}">${h.textContent}</a>`).join('');const links=[...jump.querySelectorAll('a')];if('IntersectionObserver'in window){const observer=new IntersectionObserver(entries=>{const visible=entries.filter(e=>e.isIntersecting).sort((a,b)=>a.boundingClientRect.top-b.boundingClientRect.top)[0];if(!visible)return;links.forEach(a=>a.classList.toggle('is-active',a.getAttribute('href')===`#${visible.target.id}`))},{rootMargin:'-15% 0px -70% 0px',threshold:0});heads.forEach(h=>observer.observe(h))}}
+ const target=document.getElementById('edgeBody');fetch('content/ai-professional-edge.md').then(r=>{if(!r.ok)throw new Error(`${r.status}`);return r.text()}).then(text=>{const withoutHeader=text.replace(/^#\s+.*\n(\n\*[^\n]*\*\n)?(\n[^\n#]*\n)?\n?---\n/,'');target.innerHTML=renderMarkdown(withoutHeader.trim());makeGlossary();setupNav()}).catch(()=>{target.innerHTML='<p class="edge-error">This reference could not be loaded right now. Please try again in a moment.</p>'});
 })();
-</script>
-<script defer src="site-shell.js"></script>
-</body></html>
+</script><script defer src="site-shell.js"></script></body></html>
