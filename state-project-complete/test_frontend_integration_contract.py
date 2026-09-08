@@ -435,10 +435,19 @@ def test_r16_release_hardening_removes_control_chars_and_keeps_word_boundary_rou
 
 
 def test_r16_mobile_workspace_nav_has_horizontal_overflow_affordance():
-    css = (FRONTEND / "context-tool.css").read_text(encoding="utf-8")
-    assert "R16 release hardening" in css
-    assert '.sidebar-nav::after{content:"→"' in css
-    assert "scrollbar-width:thin" in css
+    # 2026-09-08: the mobile nav was consolidated from four competing
+    # implementations (context-tool.css scroller rules, an inline
+    # index.html override, state-mobile-fix.css, and a site-shell.js
+    # MutationObserver proxy nav) into one native static nav -- see
+    # .mobile-primary-nav / .mobile-subnav in index.html. context-tool.css
+    # no longer owns any mobile nav layout; asserting against it here would
+    # just recreate the stale-test problem this consolidation fixed.
+    html = (FRONTEND / "index.html").read_text(encoding="utf-8")
+    assert '.mobile-primary-nav::after,.mobile-subnav::after{' in html
+    assert 'content:"›"' in html
+    assert "overflow-x:auto" in html
+    assert 'class="mobile-primary-nav"' in html
+    assert 'class="mobile-subnav" id="mobileProjectSubnav" hidden' in html
 
 
 def test_followup_rendering_obeys_payload_mode_and_preserves_previous_answer_state():

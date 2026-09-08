@@ -8,7 +8,7 @@
   const clone = x => JSON.parse(JSON.stringify(x));
   const initial = clone(D);
   const state = {
-    data: clone(D), view:'overview', result:null, resultQuery:'', askInputDraft:'', projectMenuOpen:false, navMoreOpen:false, refinements:[], lastScenario:null,
+    data: clone(D), view:'overview', result:null, resultQuery:'', askInputDraft:'', projectMenuOpen:false, refinements:[], lastScenario:null,
     addedSample:false, pendingCreated:false, reviewBannerDismissed:false, dialogReturnFocus:null, expandedNotes:new Set(), noteComposerOpen:false, editingNoteId:null, dismissedNudges:new Set(), historyTopic:null, historyEvidenceId:null, historySearch:'', notesFilter:'all', notesDateFilter:'all', notesSearch:'', isAnalyzing:false, openQuestionsExpanded:false, expandedReviewId:null, openItemSections:{reviews:false,blockers:false,drafts:true,questions:null}, projectRules:[], workspaceAttentionStatus:'loading', backendStatus:{state:'loading',evidence:'loading',reviews:'loading',history:'loading',questions:'loading',rules:'loading',drafts:'loading'}
   };
 
@@ -50,14 +50,15 @@
     document.querySelectorAll('[data-view]').forEach(b => b.classList.toggle('active', b.dataset.view===state.view));
     const projectActive=state.view==='project-overview';
     const projectToggle=document.querySelector('.project-nav-toggle'); if(projectToggle) projectToggle.classList.toggle('active',projectActive);
-    const sub=document.getElementById('projectSubnav'); if(sub) sub.hidden=!projectActive;
-    const actionCount=document.getElementById('openItemsActionCount'); if(actionCount){const n=uiPendingReviews().length+openQuestions().filter(q=>q.blocking).length;actionCount.textContent=n;actionCount.hidden=!n;actionCount.setAttribute('aria-label',`${n} items need attention`);}
+    document.querySelectorAll('#projectSubnav, #mobileProjectSubnav').forEach(sub=>{sub.hidden=!projectActive;});
+    const openItemsCount=uiPendingReviews().length+openQuestions().filter(q=>q.blocking).length;
+    document.querySelectorAll('#openItemsActionCount, #mobileOpenItemsCount').forEach(actionCount=>{actionCount.textContent=openItemsCount;actionCount.hidden=!openItemsCount;actionCount.setAttribute('aria-label',`${openItemsCount} items need attention`);});
     document.querySelectorAll('[data-project-area]').forEach(b=>{
       const area=b.dataset.projectArea;
       b.hidden=state.backendStatus.state!=='loaded'||currentKnowledge(area).length===0;
     });
     const pm=document.getElementById('projectMenu'), ps=document.getElementById('projectSwitcher'); if(pm)pm.hidden=!state.projectMenuOpen; if(ps)ps.setAttribute('aria-expanded',state.projectMenuOpen?'true':'false');
-    const nm=document.getElementById('navMoreMenu'), nmt=document.querySelector('.nav-more-toggle'); if(nm)nm.hidden=!state.navMoreOpen; if(nmt)nmt.setAttribute('aria-expanded',state.navMoreOpen?'true':'false');
+    document.querySelector('.mobile-primary-nav .nav-item.active')?.scrollIntoView({block:'nearest',inline:'nearest'});
   }
 
   function updateProjectSubnavActive(targetId){
@@ -98,7 +99,6 @@
   const VIEW_ANALYTICS_EVENTS={overview:'workspace_viewed','project-overview':'current_state_viewed','open-items':'open_items_viewed',questions:'open_items_viewed',review:'open_items_viewed',notes:'notes_viewed',history:'history_viewed',settings:'settings_viewed'};
   function navigateTo(view,{preserveHistoryTopic=false,preserveHistoryEvidence=false}={}){
     state.view=view;
-    state.navMoreOpen=false;
     window.StateAnalytics?.track(VIEW_ANALYTICS_EVENTS[view]||'view_changed',{view});
     if(view==='history'){
       if(!preserveHistoryTopic)state.historyTopic=null;
@@ -1600,7 +1600,7 @@
     if(act==='ask-submit')submitAsk();
     else if(act==='open-specific-review'){closeDialog();state.expandedReviewId=a.dataset.reviewId;state.openItemSections.reviews=false;navigateTo('open-items');}
     else if(act==='toggle-open-questions'){state.openQuestionsExpanded=!state.openQuestionsExpanded;renderOpenItems();}
-    else if(act==='show-demo-help'){state.navMoreOpen=false;updateNav();showDemoHelp();}
+    else if(act==='show-demo-help'){showDemoHelp();}
     else if(act==='demo-start-ask'){
       closeDialog();navigateTo('overview');
       // Ask no longer has an inline Workspace instance -- routes into the
@@ -1620,7 +1620,6 @@
 
 
     else if(act==='toggle-projects'){state.projectMenuOpen=!state.projectMenuOpen;render();}
-    else if(act==='toggle-nav-more'){state.navMoreOpen=!state.navMoreOpen;updateNav();}
     else if(act==='ask-result')submitAsk(document.getElementById('resultAskInput')?.value);
     else if(act==='retry-hydration'){await hydrateBackend();}
     else if(act==='clear-note-filters'){state.notesDateFilter='all';state.notesFilter='all';state.notesSearch='';renderNotes();}
@@ -1737,7 +1736,6 @@
     if((e.key==='Enter'||e.key===' ')&&e.target.matches('.note-index-row[data-action="toggle-note"]')){e.preventDefault();const id=e.target.dataset.noteId;if(state.expandedNotes.has(id))state.expandedNotes.delete(id);else state.expandedNotes.add(id);renderNotes();}
     if((e.key==='Enter'||e.key===' ')&&e.target.matches('.history-entry.is-linked[data-action="view-topic-history"]')){e.preventDefault();e.target.click();}
     if(e.key==='Escape'&&state.projectMenuOpen){state.projectMenuOpen=false;updateNav();document.getElementById('projectSwitcher')?.focus();return;}
-    if(e.key==='Escape'&&state.navMoreOpen){state.navMoreOpen=false;updateNav();document.querySelector('.nav-more-toggle')?.focus();return;}
     if(e.key==='Escape'&&!overlay.hidden && !state.isAnalyzing){closeDialog();return;}
     if(e.key==='Tab'&&!overlay.hidden){
       const dialog=document.querySelector('.dialog');
@@ -1749,7 +1747,6 @@
     }
   });
   document.addEventListener('click',e=>{ if(state.projectMenuOpen && !e.target.closest('.sidebar-project') && !e.target.closest('[data-action="toggle-projects"]')){state.projectMenuOpen=false;updateNav();} });
-  document.addEventListener('click',e=>{ if(state.navMoreOpen && !e.target.closest('.sidebar-nav-more')){state.navMoreOpen=false;updateNav();} });
   overlay.addEventListener('click',e=>{if(e.target===overlay && !state.isAnalyzing) closeDialog();});
   // The Slack "Connect Slack" OAuth round trip ends with the backend
   // redirecting the browser back here with ?slack_connect=success|error.

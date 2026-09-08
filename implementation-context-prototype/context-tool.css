@@ -41,10 +41,6 @@ body{background:#f4f3f6}.topbar{position:relative!important}.software-shell{max-
 .sidebar-brand{padding:2px 8px 18px;border-bottom:1px solid var(--line)}.sidebar-brand strong{display:block;margin-top:5px;font-size:14px}.sidebar-brand small{display:block;margin-top:2px;color:var(--muted);font-size:10px}.sidebar-brand .prototype-cue{font-size:9px;color:var(--muted)}
 .sidebar-project{position:relative;padding:16px 7px 13px}.sidebar-project .meta-label{display:block;margin-bottom:5px}.project-switcher{width:100%;display:flex;align-items:center;justify-content:space-between;text-align:left;font-size:12px;font-weight:750;border:1px solid var(--line);border-radius:7px;background:var(--surface);padding:7px 9px;cursor:pointer}.project-switcher:hover{border-color:#a9a1ba}.project-menu{position:absolute;z-index:30;top:58px;left:7px;width:260px;padding:6px;border:1px solid var(--line);border-radius:9px;background:var(--surface);box-shadow:0 16px 36px rgba(28,24,45,.12)}.project-menu[hidden]{display:none}.project-menu button{width:100%;display:flex;justify-content:space-between;border:0;border-radius:6px;background:transparent;padding:8px 9px;text-align:left;font-size:11px}.project-menu button.active{background:var(--accent-soft)}.project-menu button span{color:var(--muted);font-size:9px}.project-menu button:disabled{opacity:.5}
 .sidebar-nav{display:grid;gap:3px;padding:4px 0}.sidebar-nav .nav-item{width:100%;display:flex;align-items:center;justify-content:space-between;border:0;border-radius:7px;padding:8px 9px;text-align:left;font-size:12px;color:var(--muted);background:transparent}.sidebar-nav .nav-item:hover{background:#eeecf2;color:var(--ink)}.sidebar-nav .nav-item.active{background:var(--accent-soft);color:var(--accent);font-weight:800}.sidebar-nav .review-nav .count-badge{margin-left:auto}.nav-count{font-size:10px;color:var(--muted)}
-/* Desktop: the mobile-only "More" toggle/panel (Notes, History, Settings,
-   How this works) stays hidden -- desktop already shows those four as
-   their own flat, always-visible items, unchanged. */
-.sidebar-nav-more{display:none}
 .app-workspace{min-width:0;background:#fdfcfd}.workspace-header{height:48px;padding:0 26px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line);background:var(--surface);font-size:11px}.workspace-product{font-weight:800}.workspace-status{margin-left:12px;color:var(--muted)}.workspace-back{color:var(--muted);text-decoration:none;font-weight:700}.workspace-back:hover{color:var(--accent)}.view-root{padding:20px 30px 96px;min-height:calc(100vh - 106px)}
 .app-load-status{min-height:34px;padding:9px 30px;border-bottom:1px solid var(--line);background:var(--accent-soft);color:var(--accent);font-size:11px;font-weight:800;letter-spacing:.01em;transition:opacity .18s ease}.app-load-status[hidden]{display:none}
 .overview{max-width:1040px;margin:0}.overview-heading{max-width:720px;padding:0 0 12px}.overview-heading h2{margin:4px 0 4px;font-size:21px}.overview-heading p{margin:0;color:var(--muted);font-size:12.5px;line-height:1.55}.compact-ask{max-width:920px;border-radius:10px!important}.ask-title-row{padding:17px 18px 0}.compact-ask>.ask-input-row{padding:12px 18px 0;height:46px}.ask-input-row input{min-height:34px;padding:7px 10px!important}.compact-ask>.ask-input-row .btn{height:34px;min-width:72px;padding:6px 12px;white-space:nowrap;font-size:11px}.prompt-suggestions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:9px 18px 13px;font-size:10.5px;color:var(--muted)}.prompt-suggestions>span{font-weight:750}.prompt-suggestions .prompt{border:0!important;background:transparent!important;border-radius:4px!important;padding:2px 3px!important;color:var(--accent);font-size:10.5px;text-decoration:none}.prompt-suggestions .prompt:hover{text-decoration:underline;background:var(--accent-soft)!important}.answer-stage{min-height:190px;padding:18px}.answer-stage.has-result{min-height:300px}.compact-attention{max-width:920px!important;margin-top:14px!important}.compact-attention button:first-child{border-color:#b9b1c9;background:var(--accent-soft)}.compact-attention button:first-child strong{color:var(--accent)}
@@ -769,20 +765,12 @@ body.v88-dark .project-outline{background:#17151d!important;border-color:var(--l
    outright rather than merged. Four rules could not be merged here without
    changing the rendered result at this breakpoint -- each is pinned in its
    original spot elsewhere in this file with a comment explaining why. */
-/* Mobile navigation — one leftover from the superseded scroller.
-
-   The mobile nav layout itself is fixed in the inline <style> block of
-   implementation-context-prototype/index.html (PR #13): the row became a
-   3-column grid, display:contents lifts the Project sub-nav out of it, and the
-   28px ::after gutter each .nav-item reserved for the desktop column layout is
-   suppressed. That fix is authoritative; this file does not duplicate it.
-
-   It leaves one thing behind. The sticky "→" edge-fade on .sidebar-nav was an
-   earlier attempt at the same problem — a hint that the row scrolled sideways,
-   which still let Notes clip mid-word behind the gradient. Nothing scrolls any
-   more, so the arrow now points at nothing. PR #13 hides
-   .sidebar-nav .nav-item::after but not .sidebar-nav::after, so without this
-   rule the arrow still renders. */
+/* Mobile navigation lives entirely in the inline <style> block of
+   implementation-context-prototype/index.html (.mobile-primary-nav /
+   .mobile-subnav): a single swipeable row of real [data-view] buttons, not a
+   reshaping of .sidebar-nav. .sidebar-nav itself is simply hidden below at
+   this breakpoint. Do not add mobile nav rules here — that recreates the
+   competing-implementations problem this replaced. */
 @media(max-width:760px){
 
   .portfolio-bar{padding:0 16px}
@@ -821,8 +809,6 @@ body.v88-dark .project-outline{background:#17151d!important;border-color:var(--l
   .app-sidebar{min-height:auto;min-width:0;border-right:0;border-bottom:1px solid var(--line);padding:12px}
   .sidebar-brand{display:none}
   .sidebar-project{padding:2px 0 10px}
-  .sidebar-nav{display:flex;overflow:auto;min-width:0}
-  .sidebar-nav .nav-item{width:auto;white-space:nowrap;flex:0 0 auto}
   .workspace-header{padding:0 16px}
   .workspace-status{display:none}
   .view-root{padding:20px 16px 82px}
@@ -874,10 +860,6 @@ body.v88-dark .project-outline{background:#17151d!important;border-color:var(--l
   .dialog{max-height:calc(100dvh - 32px)!important}
   .project-maintained-fact{grid-template-columns:1fr}
   .project-maintained-fact>div:first-child{grid-template-columns:1fr;gap:3px}
-  .sidebar-nav{position:relative;-webkit-overflow-scrolling:touch;scrollbar-width:thin;padding-right:22px}
-  /* R16 release hardening: make horizontally scrollable mobile workspace navigation obvious. */
-  .sidebar-nav::after{content:"→";position:sticky;right:-1px;flex:0 0 24px;align-self:stretch;display:grid;place-items:center;background:linear-gradient(90deg,transparent 0%,#f8f7fa 52%,#f8f7fa 100%);color:var(--accent);font-size:13px;font-weight:850;pointer-events:none}
-  body.v88-dark .sidebar-nav::after{background:linear-gradient(90deg,transparent 0%,#14131a 52%,#14131a 100%)}
   .project-document-meta{grid-template-columns:1fr!important;gap:14px!important}
   .current-direction-list{grid-template-columns:1fr}
   .current-direction-list li,.current-direction-list li+li{padding:10px 0;border-left:0}
@@ -886,8 +868,6 @@ body.v88-dark .project-outline{background:#17151d!important;border-color:var(--l
   .ask-answer-head{align-items:flex-start!important}
   .ask-answer-actions{justify-content:flex-start}
   .ask-answer-actions .btn{width:auto!important}
-  .sidebar-nav::after{display:none!important}
-
 }
 
 /* Ask answer actions and answer-row rhythm.
