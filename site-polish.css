@@ -1,0 +1,118 @@
+/* Small site-wide polish pass. Keep this layer visual and low-risk. */
+
+/* Consistent keyboard focus across standalone pages. */
+a:focus-visible,
+button:focus-visible,
+select:focus-visible,
+summary:focus-visible{
+  outline:3px solid color-mix(in srgb,var(--purple) 48%,transparent);
+  outline-offset:3px;
+}
+
+/* State: make the authority model read as one compact sequence, not three pills. */
+.flagship-case .integration-flow{
+  display:flex;
+  align-items:center;
+  flex-wrap:nowrap;
+  gap:9px;
+  margin-top:16px;
+  padding-top:14px;
+  border-top:1px solid var(--border);
+  color:var(--muted);
+}
+.flagship-case .integration-flow span{
+  padding:0;
+  border:0;
+  border-radius:0;
+  background:transparent;
+  color:var(--ink);
+  font-size:12px;
+  font-weight:800;
+  letter-spacing:0;
+  text-transform:none;
+  white-space:nowrap;
+}
+.flagship-case .integration-flow .ai-step,
+.flagship-case .integration-flow .human-step{color:var(--purple)}
+.flagship-case .integration-flow b{color:var(--muted);font-weight:600}
+
+/* State: supporting model cards stay quieter than the product-decision cards. */
+.flagship-case .state-model-grid article{
+  box-shadow:none!important;
+  background:color-mix(in srgb,var(--soft) 38%,var(--card))!important;
+  border-color:var(--border)!important;
+}
+.flagship-case .seam-learning .surface-grid article{
+  border-color:color-mix(in srgb,var(--purple) 28%,var(--border));
+}
+
+/* Breadcrumb families should feel like the same component even where legacy markup differs. */
+.meridian-breadcrumb,
+.site-breadcrumb{
+  font-size:12px!important;
+  font-weight:750!important;
+  line-height:1.4!important;
+}
+
+/* Legal AI: make the two closing blocks read as one deliberate ending. */
+.legal-paper .paper-learning{
+  margin-top:30px;
+  padding-top:24px;
+  border-top:1px solid var(--border);
+}
+.legal-paper .paper-sources{
+  margin-top:18px;
+  padding-top:18px;
+  border-top:1px solid var(--border);
+}
+.legal-paper .paper-learning + .paper-sources{margin-top:18px}
+
+/* Meridian is an older standalone page. Quiet its local chrome so it sits closer to the shared system. */
+.case-shell.site-page{
+  max-width:1000px;
+  padding-top:48px;
+}
+.case-shell.site-page .card,
+.case-shell.site-page .band{
+  box-shadow:none;
+  background:var(--card);
+}
+.case-shell.site-page .tag{
+  padding:4px 7px;
+  letter-spacing:.045em;
+}
+.case-shell.site-page .callout{
+  background:color-mix(in srgb,var(--softp) 55%,var(--card));
+}
+
+@media(max-width:760px){
+  .flagship-case .integration-flow{
+    display:grid;
+    grid-template-columns:max-content 14px max-content 14px max-content;
+    gap:5px;
+    overflow-x:auto;
+    padding-bottom:4px;
+  }
+  .case-shell.site-page{padding-top:34px}
+}
+
+@media(max-width:430px){
+  .flagship-case .integration-flow{
+    grid-template-columns:1fr;
+    gap:5px;
+  }
+  .flagship-case .integration-flow b{
+    transform:rotate(90deg);
+    width:14px;
+    margin-left:2px;
+  }
+}
+
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{
+    scroll-behavior:auto!important;
+    transition-duration:.01ms!important;
+    animation-duration:.01ms!important;
+    animation-iteration-count:1!important;
+  }
+}
