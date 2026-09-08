@@ -4,7 +4,10 @@
 
 Read [docs/PROJECT_STATUS.md](docs/PROJECT_STATUS.md) first — it's the
 canonical current-state doc for the State project (what shipped, what's
-next, working rules, core product constraints). Then verify the repo/live
+next, working rules, core product constraints). Then read
+[docs/HANDOFF_2026-09-07_FINAL_FREEZE.md](docs/HANDOFF_2026-09-07_FINAL_FREEZE.md)
+for the latest post-promotion portfolio freeze notes, known small visual issue,
+and the deliberately deferred cleanup list. Then verify the repo/live
 environments before relying on it or older conversation memory.
 
 ## Workflow rules
