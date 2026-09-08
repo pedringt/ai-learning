@@ -59,6 +59,13 @@ check('attention keeps rendering even if the legacy state.result field is set', 
 // recorded" even though Current State holds facts/constraints/scope/
 // outcomes, not just decisions.
 api.state.result=null;
+// currentStateHtml() only renders real counts once state/questions/history
+// backend sources report 'loaded' -- otherwise it shows '…'/"Loading…"
+// placeholders. The assertions below check the loaded copy, so hydration
+// must be marked complete first.
+api.state.backendStatus.state='loaded';
+api.state.backendStatus.questions='loaded';
+api.state.backendStatus.history='loaded';
 
 // Open questions exist, none are blocking -- must not claim anything is
 // blocking progress.
