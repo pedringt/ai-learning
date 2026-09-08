@@ -6,9 +6,27 @@ This is a small post-promotion handoff for Claude/other coding agents. Read `doc
 
 - `main` is production.
 - The latest portfolio/staging promotion was merged via PR #89.
-- Production merge commit: `f16168829e5333d1aa6f527198cbda95f266922e`.
+- PR #89 production merge commit: `f16168829e5333d1aa6f527198cbda95f266922e`.
+- A final copy-only production fix followed: commit `46593e477cde2798a4d4933da24f7ae3842d69fc`, aligning the State authority wording from `people authorize` to `people decide`.
 - The user wants the site effectively frozen for a while. Do not start broad redesign, refactoring, or speculative cleanup without an explicit request.
-- State product behavior should be treated as stable. The most recent State changes before the freeze were targeted Question/Review/Ask consistency hardening plus regression coverage; the final visual pass did not intentionally change State behavior.
+- State product behavior should be treated as stable. The most recent State changes before the freeze were targeted Question/Review/Ask consistency hardening plus regression coverage; the final visual/copy pass did not intentionally change State behavior.
+
+## Final production QA result
+
+Production QA is effectively complete for the freeze. The browser passes found no meaningful product failures.
+
+Verified:
+
+- production navigation across Home, Applied Work, Learning Guide, State case study, Legal AI, and AI Professional Edge
+- desktop visual sanity and readable dark mode
+- State Review `Leave unchanged` flow: pending-review count changed appropriately, Current State stayed unchanged, and no false accepted History entry was created
+- State Ask uncertainty behavior: a vendor proposal, pending Review, and blocking Question remained distinct; pending information was not presented as approved policy
+- State at a real 390 × 844 mobile viewport had no horizontal overflow
+- persistent Ask State launcher is visible in production (manual user confirmation)
+
+The one real issue found was inconsistent authority wording: Applied Work said `people decide` while the State case study said `people authorize`. That was fixed directly on `main` in commit `46593e4`.
+
+A full mobile navigation tour was not completed by automation because of viewport-tool limitations. This is low priority and not a freeze blocker unless a real user reports a mobile problem.
 
 ## Known small visual issue that is safe for Claude to fix later
 
@@ -54,6 +72,7 @@ Current preferred portfolio hierarchy:
 - Home: State first, Legal AI second, learning system as supporting context
 - Applied Work: State + Legal AI as primary work; smaller exercises are supporting evidence
 - State case study: preserve the current structure and the four product-decision stories
+- authority-model public wording: `AI interprets → software enforces → people decide`
 - Persistent Ask in State is intentional
 - No need to add more homepage projects, frameworks, footer content, or decorative sections
 
@@ -71,17 +90,6 @@ Ownership framing should remain transparent: Paige owned problem definition, pro
 
 Rule: fix visible inconsistencies or real product bugs when found; defer code cleanliness/speculative architecture work.
 
-## Manual production QA still useful
+## Browser QA guidance after the freeze
 
-A small real-browser pass is still useful because normal chat/tooling cannot fully exercise the dynamic UI. Keep it tiny:
-
-1. Verify production visibly reflects the latest Home, State case study, Legal AI, and Professional Edge content/styles.
-2. Desktop + one mobile-width navigation smoke test, including dark mode and obvious overflow/overlap.
-3. One State Review flow: open Review → accept or leave unchanged → confirm Workspace/Current State/History remain coherent; open/close/scroll `✦ Ask State`.
-4. One State uncertainty Ask: confirm accepted Current State, pending Review information, and unresolved Questions remain distinct.
-
-Do not spend browser-agent time on another broad `hammer the site` review unless a new problem justifies it.
-
-## One observation from non-browser QA
-
-A lightweight public fetch briefly returned older-looking homepage copy immediately after the PR #89 promotion. Treat this as a deployment/cache-propagation question first, not as proof of a code bug. A real browser should be the source of truth. If production is genuinely stale after normal propagation time, investigate the Vercel production deployment/branch SHA before changing copy or code.
+Do not repeat a broad `hammer the site` pass without a new reason. If a future change needs smoke testing, target only the affected surface plus one adjacent flow. The high-value State Review and Ask uncertainty behaviors above have already been verified in production.
