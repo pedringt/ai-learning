@@ -445,3 +445,34 @@ body.v88-dark .home-state-copy .home-state-lead + p,
 #ai-cs-mock .learning-hero > .lead + .lead{
   display:none!important;
 }
+
+/* v98.3 — keep expanded Learning Guide content inside its mobile card bounds. */
+@media(max-width:640px){
+  #ai-cs-mock [data-page="learn"] .learning-stage .stage-body,
+  #ai-cs-mock [data-page="learn"] .learning-stage .stage-group,
+  #ai-cs-mock [data-page="learn"] .learning-stage .learning-item{
+    min-width:0!important;
+    max-width:100%!important;
+    box-sizing:border-box!important;
+  }
+  #ai-cs-mock [data-page="learn"] .learning-stage .stage-group.practice{
+    margin-left:0!important;
+    margin-right:0!important;
+    width:auto!important;
+    max-width:100%!important;
+  }
+  #ai-cs-mock [data-page="learn"] .learning-stage .resource-row{
+    min-width:0!important;
+    max-width:100%!important;
+  }
+  #ai-cs-mock [data-page="learn"] .learning-stage .resource-link{
+    max-width:100%!important;
+    white-space:normal!important;
+    overflow-wrap:anywhere!important;
+  }
+  #ai-cs-mock [data-page="learn"] .learning-stage .learning-item,
+  #ai-cs-mock [data-page="learn"] .learning-stage .learning-item p,
+  #ai-cs-mock [data-page="learn"] .learning-stage .stage-group.practice p{
+    overflow-wrap:break-word!important;
+  }
+}
