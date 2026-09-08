@@ -255,11 +255,14 @@
   // filtering/search here, just a link out. Rows have no trailing arrow --
   // the whole row is already the click target.
   function whatChangedHtml(){
+    if(state.backendStatus.history!=='loaded'){
+      return `<section class="workspace-recent"><div class="workspace-recent-head"><span class="eyebrow">What changed</span><button class="text-button" data-view="history">History →</button></div><p class="workspace-section-hint" role="status">${state.backendStatus.history==='error'?'Recent changes are unavailable.':'Loading recent changes…'}</p></section>`;
+    }
     const entries=(state.data.history||[]).slice().sort(sortDateDesc).slice(0,3);
     if(!entries.length) return '';
     const rows=entries.map(h=>{
       const date=h.date||formatBackendDate(h.changed_at);
-      const topic=h.knowledgeId?state.data.knowledge.find(k=>k.id===h.knowledgeId):null;
+      const topic=state.backendStatus.state==='loaded'&&h.knowledgeId?state.data.knowledge.find(k=>k.id===h.knowledgeId):null;
       const kicker=topic?`${topic.title} · ${date}`:date;
       const summary=h.after||h.type||historyType(h);
       const linkAttrs=h.knowledgeId?`data-action="view-topic-history" data-knowledge-id="${esc(h.knowledgeId)}"`:'data-view="history"';
@@ -272,9 +275,15 @@
   // established (decision count), and what's blocking (open questions).
   // Three genuine rows, not padding added to match What Changed's height.
   function currentStateHtml(){
-    const last=(state.data.history||[]).slice().sort(sortDateDesc)[0];
+    const stateLoaded=state.backendStatus.state==='loaded';
+    const questionsLoaded=state.backendStatus.questions==='loaded';
+    const historyLoaded=state.backendStatus.history==='loaded';
+    if(state.backendStatus.state==='loading'||state.backendStatus.questions==='loading'||state.backendStatus.history==='loading'){
+      return `<section class="workspace-status-card" aria-busy="true"><span class="eyebrow">Current State</span><div class="workspace-status-body"><div class="workspace-status-item"><strong class="workspace-status-value" role="status">Loading Current State…</strong><div class="workspace-status-row"><span>Opening the latest project understanding.</span></div></div></div></section>`;
+    }
+    const last=historyLoaded?(state.data.history||[]).slice().sort(sortDateDesc)[0]:null;
     const lastUpdated=last?(last.date||formatBackendDate(last.changed_at)):null;
-    const lastTopic=last?.knowledgeId?state.data.knowledge.find(k=>k.id===last.knowledgeId):null;
+    const lastTopic=stateLoaded&&last?.knowledgeId?state.data.knowledge.find(k=>k.id===last.knowledgeId):null;
     const lastLabel=lastTopic?.title||last?.type||'';
     // Current State holds facts, constraints, scope, and outcomes -- not
     // just "decisions" -- and an open Question is not necessarily blocking
@@ -284,16 +293,18 @@
     const establishedCount=(state.data.knowledge||[]).filter(k=>k.state==='current').length;
     const openCount=openQuestions().length;
     const blockingCount=openQuestions().filter(q=>q.blocking).length;
-    const openHeadline=openCount===0?'✓ No open questions':`${openCount} open question${openCount===1?'':'s'}`;
-    const openSupportText=openCount===0
+    const openHeadline=!questionsLoaded?(state.backendStatus.questions==='error'?'Questions unavailable':'…'):openCount===0?'✓ No open questions':`${openCount} open question${openCount===1?'':'s'}`;
+    const openSupportText=!questionsLoaded
+      ? (state.backendStatus.questions==='error'?'Open questions could not be loaded.':'Loading open questions…')
+      : openCount===0
       ? 'Nothing to track right now.'
       : blockingCount===0
         ? 'None are currently blocking progress.'
         : `${blockingCount} ${blockingCount===1?'is':'are'} currently blocking progress.`;
     return `<section class="workspace-status-card"><span class="eyebrow">Current State</span><div class="workspace-status-body">
-      <div class="workspace-status-item"><strong class="workspace-status-value">${lastUpdated?`Updated ${esc(lastUpdated)}`:'Not yet established'}</strong><div class="workspace-status-row"><span>${lastLabel?esc(lastLabel):'Most recent change.'}</span></div></div>
-      <div class="workspace-status-item"><strong class="workspace-status-value">${establishedCount} established fact${establishedCount===1?'':'s'}</strong><div class="workspace-status-row"><span>What the project currently treats as true.</span><button class="text-button" data-view="project-overview">Browse Current State →</button></div></div>
-      <div class="workspace-status-item"><strong class="workspace-status-value${openCount===0?' is-clear':''}">${esc(openHeadline)}</strong><div class="workspace-status-row"><span>${openSupportText}</span><button class="text-button" data-view="open-items">Open Items →</button></div></div>
+      <div class="workspace-status-item"><strong class="workspace-status-value">${!historyLoaded?(state.backendStatus.history==='error'?'Recent change unavailable':'…'):lastUpdated?`Updated ${esc(lastUpdated)}`:'Not yet established'}</strong><div class="workspace-status-row"><span>${!historyLoaded&&state.backendStatus.history!=='error'?'Loading most recent change…':lastLabel?esc(lastLabel):'Most recent change.'}</span></div></div>
+      <div class="workspace-status-item"><strong class="workspace-status-value">${stateLoaded?`${establishedCount} established fact${establishedCount===1?'':'s'}`:state.backendStatus.state==='error'?'Established facts unavailable':'… established facts'}</strong><div class="workspace-status-row"><span>What the project currently treats as true.</span><button class="text-button" data-view="project-overview">Browse Current State →</button></div></div>
+      <div class="workspace-status-item"><strong class="workspace-status-value${questionsLoaded&&openCount===0?' is-clear':''}">${esc(openHeadline)}</strong><div class="workspace-status-row"><span>${openSupportText}</span><button class="text-button" data-view="open-items">Open Items →</button></div></div>
     </div></section>`;
   }
   function renderWorkspaceAttentionOnly(){
@@ -899,6 +910,10 @@
       root.innerHTML=`<section class="page collection-page history-page"><div class="empty-state unavailable-state"><h2>History is temporarily unavailable.</h2><p>Accepted project changes cannot be loaded right now.</p><button class="btn secondary" data-action="retry-hydration">Try again</button></div></section>`;
       return;
     }
+    if(state.backendStatus.history!=='loaded'){
+      root.innerHTML=`<section class="page collection-page history-page"><div class="page-head"><div><h2>History</h2><p role="status">Loading History…</p></div></div></section>`;
+      return;
+    }
     const entries=historyEntries();
     const topic=state.historyTopic;
     const topicKnowledge=topic?state.data.knowledge.find(k=>k.id===topic):null;
@@ -1084,7 +1099,7 @@
     const rulesStatus=state.backendStatus.rules;
     const rows=rulesStatus==='error'?'<div class="open-items-empty unavailable-inline">Project Rules could not be loaded. Try again before making changes.</div>':state.projectRules.length?state.projectRules.map(rule=>`<div class="project-rule-row"><div><span class="open-item-label question">${esc(rule.category)}</span><p>${esc(rule.text)}</p></div><button class="text-button" data-action="delete-project-rule" data-rule-id="${rule.id}">Remove</button></div>`).join(''):'<div class="open-items-empty">No project-specific rules yet.</div>';
     const form=rulesStatus==='error'?'':`<div class="project-rule-form"><label for="projectRuleCategory">Category</label><select id="projectRuleCategory"><option>Authority</option><option>Review</option><option>Sources</option><option selected>Interpretation</option></select><label for="projectRuleText">New rule</label><textarea id="projectRuleText" rows="3" placeholder="Example: Slack is supporting evidence, not authoritative approval."></textarea><button class="btn primary" data-action="save-project-rule">Add rule</button></div>`;
-    showDialog(`<span class="eyebrow">Project settings</span><h2 id="dialogTitle">Rules</h2><p>Rules tell State how to interpret evidence and when to interrupt you. They are not Current State and State cannot change them on its own.</p><p class="settings-note">Rules apply to future analysis. Existing Reviews are not reinterpreted automatically.</p><div class="project-rule-list">${rows}</div>${form}<div class="demo-reset-zone"><span class="eyebrow">Example data</span><p>Restore Northstar to the curated starting scenario with open Reviews, blockers, Questions, Notes, and History.</p><button class="btn secondary danger-light" data-action="confirm-demo-reset">Reset example data</button></div>`);
+    showDialog(`<span class="eyebrow">Project settings</span><h2 id="dialogTitle">Rules</h2><p>Rules tell State how to interpret evidence and when to interrupt you. They are not Current State and State cannot change them on its own.</p><p class="settings-note">Rules apply to future analysis. Existing Reviews are not reinterpreted automatically.</p><div class="project-rule-list">${rows}</div>${form}<div class="demo-reset-zone"><span class="eyebrow">Example data</span><p>Restore Northstar to the curated starting scenario with open Reviews, blockers, Questions, Notes, Rules, and History.</p><button class="btn secondary danger-light" data-action="confirm-demo-reset">Reset example data</button></div>`);
   }
 
   function showAddDialog(prefill=''){ showDialog(`<span class="eyebrow">Evidence</span><h2 id="dialogTitle">Add Evidence</h2><p>Add project information State should evaluate. It is preserved as Evidence first and cannot change Current State without Review.</p><textarea id="addInfoText" rows="7" aria-label="Evidence" placeholder="Paste a finding, decision, meeting update, or other project information...">${esc(prefill)}</textarea><div class="note-example-picker"><span class="meta-label">Try an example</span><div class="note-example-chips"><button type="button" data-action="sample-info" data-sample="plan">New plan</button><button type="button" data-action="sample-info" data-sample="research">Research finding</button><button type="button" data-action="sample-info" data-sample="constraint">Decision / constraint</button></div></div><div class="dialog-actions"><button class="btn primary" data-action="save-info">Add Evidence</button><button class="btn secondary" data-action="close-dialog">Cancel</button></div>`); }
