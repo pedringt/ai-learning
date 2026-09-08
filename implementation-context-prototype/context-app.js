@@ -255,11 +255,14 @@
   // filtering/search here, just a link out. Rows have no trailing arrow --
   // the whole row is already the click target.
   function whatChangedHtml(){
+    if(state.backendStatus.history!=='loaded'){
+      return `<section class="workspace-recent"><div class="workspace-recent-head"><span class="eyebrow">What changed</span><button class="text-button" data-view="history">History →</button></div><p class="workspace-section-hint" role="status">${state.backendStatus.history==='error'?'Recent changes are unavailable.':'Loading recent changes…'}</p></section>`;
+    }
     const entries=(state.data.history||[]).slice().sort(sortDateDesc).slice(0,3);
     if(!entries.length) return '';
     const rows=entries.map(h=>{
       const date=h.date||formatBackendDate(h.changed_at);
-      const topic=h.knowledgeId?state.data.knowledge.find(k=>k.id===h.knowledgeId):null;
+      const topic=state.backendStatus.state==='loaded'&&h.knowledgeId?state.data.knowledge.find(k=>k.id===h.knowledgeId):null;
       const kicker=topic?`${topic.title} · ${date}`:date;
       const summary=h.after||h.type||historyType(h);
       const linkAttrs=h.knowledgeId?`data-action="view-topic-history" data-knowledge-id="${esc(h.knowledgeId)}"`:'data-view="history"';
@@ -272,9 +275,12 @@
   // established (decision count), and what's blocking (open questions).
   // Three genuine rows, not padding added to match What Changed's height.
   function currentStateHtml(){
-    const last=(state.data.history||[]).slice().sort(sortDateDesc)[0];
+    const stateLoaded=state.backendStatus.state==='loaded';
+    const questionsLoaded=state.backendStatus.questions==='loaded';
+    const historyLoaded=state.backendStatus.history==='loaded';
+    const last=historyLoaded?(state.data.history||[]).slice().sort(sortDateDesc)[0]:null;
     const lastUpdated=last?(last.date||formatBackendDate(last.changed_at)):null;
-    const lastTopic=last?.knowledgeId?state.data.knowledge.find(k=>k.id===last.knowledgeId):null;
+    const lastTopic=stateLoaded&&last?.knowledgeId?state.data.knowledge.find(k=>k.id===last.knowledgeId):null;
     const lastLabel=lastTopic?.title||last?.type||'';
     // Current State holds facts, constraints, scope, and outcomes -- not
     // just "decisions" -- and an open Question is not necessarily blocking
@@ -284,16 +290,18 @@
     const establishedCount=(state.data.knowledge||[]).filter(k=>k.state==='current').length;
     const openCount=openQuestions().length;
     const blockingCount=openQuestions().filter(q=>q.blocking).length;
-    const openHeadline=openCount===0?'✓ No open questions':`${openCount} open question${openCount===1?'':'s'}`;
-    const openSupportText=openCount===0
+    const openHeadline=!questionsLoaded?(state.backendStatus.questions==='error'?'Questions unavailable':'…'):openCount===0?'✓ No open questions':`${openCount} open question${openCount===1?'':'s'}`;
+    const openSupportText=!questionsLoaded
+      ? (state.backendStatus.questions==='error'?'Open questions could not be loaded.':'Loading open questions…')
+      : openCount===0
       ? 'Nothing to track right now.'
       : blockingCount===0
         ? 'None are currently blocking progress.'
         : `${blockingCount} ${blockingCount===1?'is':'are'} currently blocking progress.`;
     return `<section class="workspace-status-card"><span class="eyebrow">Current State</span><div class="workspace-status-body">
-      <div class="workspace-status-item"><strong class="workspace-status-value">${lastUpdated?`Updated ${esc(lastUpdated)}`:'Not yet established'}</strong><div class="workspace-status-row"><span>${lastLabel?esc(lastLabel):'Most recent change.'}</span></div></div>
-      <div class="workspace-status-item"><strong class="workspace-status-value">${establishedCount} established fact${establishedCount===1?'':'s'}</strong><div class="workspace-status-row"><span>What the project currently treats as true.</span><button class="text-button" data-view="project-overview">Browse Current State →</button></div></div>
-      <div class="workspace-status-item"><strong class="workspace-status-value${openCount===0?' is-clear':''}">${esc(openHeadline)}</strong><div class="workspace-status-row"><span>${openSupportText}</span><button class="text-button" data-view="open-items">Open Items →</button></div></div>
+      <div class="workspace-status-item"><strong class="workspace-status-value">${!historyLoaded?(state.backendStatus.history==='error'?'Recent change unavailable':'…'):lastUpdated?`Updated ${esc(lastUpdated)}`:'Not yet established'}</strong><div class="workspace-status-row"><span>${!historyLoaded&&state.backendStatus.history!=='error'?'Loading most recent change…':lastLabel?esc(lastLabel):'Most recent change.'}</span></div></div>
+      <div class="workspace-status-item"><strong class="workspace-status-value">${stateLoaded?`${establishedCount} established fact${establishedCount===1?'':'s'}`:state.backendStatus.state==='error'?'Established facts unavailable':'… established facts'}</strong><div class="workspace-status-row"><span>What the project currently treats as true.</span><button class="text-button" data-view="project-overview">Browse Current State →</button></div></div>
+      <div class="workspace-status-item"><strong class="workspace-status-value${questionsLoaded&&openCount===0?' is-clear':''}">${esc(openHeadline)}</strong><div class="workspace-status-row"><span>${openSupportText}</span><button class="text-button" data-view="open-items">Open Items →</button></div></div>
     </div></section>`;
   }
   function renderWorkspaceAttentionOnly(){
@@ -897,6 +905,10 @@
   function renderHistory(){
     if(state.backendStatus.history==='error'){
       root.innerHTML=`<section class="page collection-page history-page"><div class="empty-state unavailable-state"><h2>History is temporarily unavailable.</h2><p>Accepted project changes cannot be loaded right now.</p><button class="btn secondary" data-action="retry-hydration">Try again</button></div></section>`;
+      return;
+    }
+    if(state.backendStatus.history!=='loaded'){
+      root.innerHTML=`<section class="page collection-page history-page"><div class="page-head"><div><h2>History</h2><p role="status">Loading History…</p></div></div></section>`;
       return;
     }
     const entries=historyEntries();
