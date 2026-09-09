@@ -34,6 +34,17 @@
       .ask-state-starters button::before{display:none!important}.ask-polish-icon{width:21px;height:21px;color:#31598f;display:grid;place-items:center}
       .ask-quick-actions-polish button{display:grid!important;grid-template-columns:26px minmax(0,1fr)!important;gap:14px!important;align-items:center!important;padding:11px 14px!important}
       .ask-quick-actions-polish button b{display:none!important}.ask-quick-actions-polish .ask-polish-icon{width:22px;height:22px;color:#1769e8}
+      /* Ask answers: compact readable hierarchy, with actions secondary to content */
+      #askStateDrawer .ask-live-answer>h2{font-size:20px!important;line-height:1.28!important;letter-spacing:-.015em!important;margin:8px 0 10px!important;color:#16233d!important}
+      #askStateDrawer .ask-live-answer .result-lede{font-size:13px!important;line-height:1.55!important;margin:0 0 18px!important;color:#566176!important}
+      #askStateDrawer .ask-answer-section{margin-top:18px!important}
+      #askStateDrawer .ask-answer-section h3{font-size:14px!important;line-height:1.3!important;margin:0 0 8px!important;color:#1c2942!important}
+      #askStateDrawer .ask-answer-section ul{margin:0!important;padding:0!important;list-style:none!important}
+      #askStateDrawer .ask-answer-item{align-items:flex-start!important;gap:10px!important;padding:10px 0!important}
+      #askStateDrawer .ask-item-text{font-size:13px!important;line-height:1.5!important;color:#26344d!important}
+      #askStateDrawer .ask-item-detail{font-size:11.5px!important;line-height:1.45!important;margin-top:4px!important;color:#687387!important}
+      #askStateDrawer .ask-record-badge{font-size:9.5px!important;line-height:1.2!important;padding:3px 6px!important;margin-bottom:6px!important}
+      #askStateDrawer .ask-item-action,#askStateDrawer .ask-item-link{font-size:11px!important;line-height:1.2!important;font-weight:700!important;padding:2px 0!important;white-space:nowrap!important}
       /* Notes: dense activity/feed list */
       .notes-page .note-results{border-top:1px solid #e1e8f1!important}
       .notes-page article.simple-note.note-index-row{position:relative!important;display:grid!important;grid-template-columns:38px minmax(0,1fr) auto!important;column-gap:14px!important;row-gap:0!important;padding:16px 12px!important;margin:0!important;border:0!important;border-bottom:1px solid #e1e8f1!important;border-radius:0!important;background:transparent!important;box-shadow:none!important;min-height:0!important}
@@ -60,7 +71,19 @@
       /* workspace card links use one pattern */
       .workspace-status-card{position:relative!important}.workspace-status-card .state-fact-preview>.text-button{position:absolute!important;top:22px!important;right:22px!important;margin:0!important;font-size:12px!important;font-weight:700!important}
       .workspace-status-card .state-fact-preview{padding-top:2px!important}.workspace-status-card .state-fact-preview p{padding-right:130px!important}
-      @media(max-width:760px){.app-sidebar{position:static!important;height:auto!important;padding-bottom:0!important}.attention-item{grid-template-columns:44px minmax(0,1fr) auto!important}.workspace-status-card .state-fact-preview>.text-button{position:static!important;margin-top:12px!important}.workspace-status-card .state-fact-preview p{padding-right:0!important}}
+      @media(max-width:760px){
+        .app-sidebar{position:static!important;height:auto!important;padding-bottom:0!important}
+        .attention-item{grid-template-columns:44px minmax(0,1fr) auto!important}
+        .workspace-status-card .state-fact-preview>.text-button{position:static!important;margin-top:12px!important}
+        .workspace-status-card .state-fact-preview p{padding-right:0!important}
+        #askStateDrawer .ask-live-answer>h2{font-size:18px!important;line-height:1.3!important;margin:7px 0 8px!important}
+        #askStateDrawer .ask-live-answer .result-lede{font-size:12.5px!important;line-height:1.5!important;margin-bottom:15px!important}
+        #askStateDrawer .ask-answer-section h3{font-size:13px!important;margin-bottom:6px!important}
+        #askStateDrawer .ask-answer-item{padding:9px 0!important}
+        #askStateDrawer .ask-item-text{font-size:12.5px!important;line-height:1.48!important}
+        #askStateDrawer .ask-item-detail{font-size:11px!important}
+        #askStateDrawer .ask-item-action,#askStateDrawer .ask-item-link{font-size:10.5px!important}
+      }
     `; document.head.appendChild(s);
   }
   function askIcons(){
