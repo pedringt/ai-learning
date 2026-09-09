@@ -14,16 +14,28 @@
       .ask-grounding p{margin:4px 0 0}
       .open-question-row.is-awaiting-review .open-item-label{font-weight:700}
       .open-question-row.is-awaiting-review .question-awaiting-review-note{display:block;margin-top:4px;font-size:12px;line-height:1.35;color:var(--muted,#666)}
+      .workspace-record-orientation{max-width:760px;margin:5px 0 0;color:var(--ink);font-size:13px;line-height:1.45}
+      @media(max-width:700px){.workspace-record-orientation{max-width:100%;font-size:12.5px;line-height:1.45;margin-top:6px}}
     `;
     document.head.appendChild(style);
   }
 
-  // The first-run orientation banner and this module's own "How this works"
+  // The old first-run orientation banner and this module's own "How this works"
   // override/Ask starters were removed as part of the 2026-09-07 UX review
-  // batch -- superseded by the native Workspace orientation section, the
-  // native showDemoHelp() modal in context-app.js, and context-product-polish.js's
-  // Ask State drawer/starters, respectively. Keeping both was exactly the
-  // "layering duplicate overrides" pattern that batch was meant to remove.
+  // batch. Workspace now gets one lightweight, persistent orientation line in
+  // the project header; the native showDemoHelp() modal in context-app.js and
+  // context-product-polish.js's Ask State drawer/starters handle deeper help.
+
+  function addWorkspaceOrientation(scope=document){
+    const heading=scope.querySelector('.overview-heading-row > div');
+    if(!heading || heading.querySelector('.workspace-record-orientation'))return;
+    const title=heading.querySelector('h2');
+    if(!title)return;
+    const orientation=document.createElement('p');
+    orientation.className='workspace-record-orientation';
+    orientation.textContent='A quick view of your project record: what needs attention, what changed, and what the team currently treats as true.';
+    title.insertAdjacentElement('afterend',orientation);
+  }
 
   function addGrounding(scope = document) {
     scope.querySelectorAll('.ask-live-answer').forEach(answer => {
@@ -143,7 +155,7 @@
     });
   }
 
-  function enhance(scope=document){addStyles();addGrounding(scope);improveOpenItemsSummary(scope);clarifyQuestionsAwaitingReview(scope);improveEmptyStates(scope);clarifyReviewCompletion(scope);clarifyReviewActions(scope);clarifyNotesProcessedFilter(scope);improveProjectProvenanceSummary(scope);}
+  function enhance(scope=document){addStyles();addWorkspaceOrientation(scope);addGrounding(scope);improveOpenItemsSummary(scope);clarifyQuestionsAwaitingReview(scope);improveEmptyStates(scope);clarifyReviewCompletion(scope);clarifyReviewActions(scope);clarifyNotesProcessedFilter(scope);improveProjectProvenanceSummary(scope);}
   let queued=false;const schedule=()=>{if(queued)return;queued=true;requestAnimationFrame(()=>{queued=false;enhance(document);});};
   new MutationObserver(schedule).observe(document.documentElement,{childList:true,subtree:true});
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',schedule,{once:true});else schedule();
