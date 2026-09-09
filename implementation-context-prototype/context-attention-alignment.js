@@ -18,9 +18,7 @@
       justify-content:stretch!important;
       justify-items:stretch!important;
     }
-    .workspace-attention .attention-item .attention-icon{
-      display:none!important;
-    }
+    .workspace-attention .attention-item .attention-icon{display:none!important}
     .workspace-attention .attention-item .attention-item-copy{
       grid-column:1!important;
       justify-self:stretch!important;
@@ -52,19 +50,71 @@
   `;
   document.head.appendChild(s);
 
-  /* Final small-screen cleanup collected from the last manual mobile pass.
-     Keep this layer last because several older feedback files intentionally
-     use !important while the prototype is being polished. */
-  const lastMileId='state-mobile-last-mile-r68';
+  /* Final small-screen and record-surface cleanup from manual QA. */
+  const lastMileId='state-mobile-last-mile-r69';
   const lastMile=document.createElement('style');
   lastMile.id=lastMileId;
   lastMile.textContent=`
-    /* Open Items should read as one flat queue, not white cards on a tinted page. */
+    /* Record-heavy pages use one simple rule: framing stays on the quiet page
+       background; the records themselves sit on one full-width white surface. */
+    html body .open-items-page .open-items-section{background:transparent!important;box-shadow:none!important}
+    html body .open-items-page .open-items-section-head{background:transparent!important;box-shadow:none!important}
+    html body .open-items-page .open-items-section-body{
+      width:100%!important;
+      max-width:none!important;
+      background:var(--surface,#fff)!important;
+      box-shadow:none!important;
+    }
     html body .open-items-page .review-card,
     html body .open-items-page .compact-review,
     html body .open-items-page .review-card-toggle,
-    html body .open-items-page .review-card-body{background:transparent!important;box-shadow:none!important}
-    html body .open-items-page .review-card-toggle:hover{background:#f8fafc!important}
+    html body .open-items-page .review-card-body,
+    html body .open-items-page .open-question-list,
+    html body .open-items-page details.open-question-item{
+      width:100%!important;
+      max-width:none!important;
+      background:transparent!important;
+      box-shadow:none!important;
+    }
+    html body .open-items-page .review-card-toggle:hover,
+    html body .open-items-page .open-question-row:hover{background:#f8fafc!important}
+
+    html body .notes-page .note-results,
+    html body .notes-page #notesList{
+      width:100%!important;
+      max-width:none!important;
+      background:var(--surface,#fff)!important;
+      box-shadow:none!important;
+    }
+    html body .notes-page article.simple-note.note-index-row{
+      width:100%!important;
+      max-width:none!important;
+      background:transparent!important;
+    }
+
+    html body .history-page .history-list,
+    html body .history-page #historyList{
+      width:100%!important;
+      max-width:none!important;
+      background:var(--surface,#fff)!important;
+      box-shadow:none!important;
+    }
+    html body .history-page .history-entry,
+    html body .history-page .history-entry-body{background:transparent!important}
+
+    /* Settings header reads as one header row rather than two unrelated lines. */
+    html body .settings-page>.page-head{
+      display:flex!important;
+      align-items:center!important;
+      justify-content:space-between!important;
+      gap:28px!important;
+    }
+    html body .settings-page>.page-head>h2{margin:0!important;flex:0 0 auto!important}
+    html body .settings-page>.page-head>p{
+      margin:0!important;
+      max-width:620px!important;
+      line-height:1.45!important;
+    }
 
     /* The stage line is orientation only. A chevron implies a click target. */
     html body .overview-stage .workspace-next-arrow{display:none!important}
@@ -102,30 +152,53 @@
       }
       html body .workspace-attention .workspace-attention-head h3{margin:0!important}
 
-      /* Notes status labels need their own natural line height instead of being
-         compressed by the row/grid rules used for desktop. */
+      /* Notes status labels keep their natural size instead of being squeezed
+         by the desktop grid's right-hand status column. */
       html body .notes-page .note-index-status{
+        display:flex!important;
+        flex-wrap:wrap!important;
         justify-self:start!important;
         align-self:start!important;
+        width:100%!important;
         min-width:0!important;
         max-width:100%!important;
       }
-      html body .notes-page .note-index-status .note-status{
+      html body .notes-page .note-index-status .note-status,
+      html body .notes-page .note-index-status .note-status-link{
         display:inline-flex!important;
         align-items:center!important;
+        justify-content:flex-start!important;
         width:auto!important;
         max-width:100%!important;
         height:auto!important;
-        min-height:24px!important;
-        padding:4px 8px!important;
+        min-height:26px!important;
+        padding:5px 9px!important;
         border-radius:999px!important;
         line-height:1.25!important;
         white-space:normal!important;
-        overflow-wrap:anywhere!important;
+        overflow-wrap:normal!important;
+        word-break:normal!important;
       }
 
-      /* Settings rule form should use the same compact control scale as the
-         rest of Settings, rather than a full-height CTA. */
+      /* Settings should stack source copy first, then its quiet status. */
+      html body .settings-page>.page-head{
+        display:block!important;
+      }
+      html body .settings-page>.page-head>p{margin-top:7px!important;max-width:none!important}
+      html body .settings-page .settings-source-grid .source-row{
+        display:grid!important;
+        grid-template-columns:minmax(0,1fr)!important;
+        gap:8px!important;
+        align-items:start!important;
+      }
+      html body .settings-page .settings-source-grid .source-row>.settings-status{
+        justify-self:start!important;
+        margin-left:26px!important;
+      }
+      html body .settings-page .settings-source-grid .source-title,
+      html body .settings-page .settings-source-grid .source-description{min-width:0!important;max-width:100%!important}
+
+      /* Settings rule form should use the same compact control scale as the rest of Settings. */
       html body .settings-page .settings-rule-form>.btn{
         width:auto!important;
         min-width:0!important;
@@ -151,8 +224,7 @@
   };
 
   /* A blank Ask should never enter a loading state. Native required validation
-     blocks both tapping the arrow and pressing Enter before any older submit
-     listener can run. */
+     blocks both tapping the arrow and pressing Enter before any older submit listener can run. */
   const syncAskBlankGuard=()=>{
     const input=document.getElementById('askStateDrawerInput');
     const form=input?.closest('[data-review-batch-form="ask"]');
@@ -166,27 +238,31 @@
     }
   };
 
-  /* On touch devices the Ask close control occupies the same screen position
-     as the portfolio menu underneath. Keep a very short transparent shield in
-     place after close so the release/synthetic click cannot hit that menu. */
-  const installCloseShield=()=>{
+  /* Ask closes over the same screen position as the portfolio mobile menu.
+     Disable the underlying top-right controls before the finger comes up, then
+     restore them after the synthetic click window has passed. */
+  let closeShieldTimer=0;
+  const shieldMobileNav=()=>{
     if(!window.matchMedia('(max-width:760px)').matches)return;
-    document.getElementById('stateAskCloseShield')?.remove();
-    const shield=document.createElement('div');
-    shield.id='stateAskCloseShield';
-    shield.setAttribute('aria-hidden','true');
-    Object.assign(shield.style,{position:'fixed',inset:'0',zIndex:'2147483600',background:'transparent',pointerEvents:'auto'});
-    const swallow=event=>{event.preventDefault();event.stopPropagation();event.stopImmediatePropagation();};
-    ['pointerdown','pointerup','touchstart','touchend','click'].forEach(type=>shield.addEventListener(type,swallow,{capture:true,passive:false}));
-    document.body.appendChild(shield);
-    setTimeout(()=>shield.remove(),360);
+    document.body.classList.add('state-ask-close-shield');
+    clearTimeout(closeShieldTimer);
+    closeShieldTimer=setTimeout(()=>document.body.classList.remove('state-ask-close-shield'),500);
   };
+  const shieldStyle=document.createElement('style');
+  shieldStyle.textContent='@media(max-width:760px){body.state-ask-close-shield .top-actions{pointer-events:none!important}}';
+  document.head.appendChild(shieldStyle);
 
   document.addEventListener('input',event=>{
     if(event.target?.id==='askStateDrawerInput')syncAskBlankGuard();
   },true);
+  document.addEventListener('pointerdown',event=>{
+    if(event.target.closest?.('#askStateDrawer [data-review-batch-action="close-ask"]'))shieldMobileNav();
+  },true);
+  document.addEventListener('touchstart',event=>{
+    if(event.target.closest?.('#askStateDrawer [data-review-batch-action="close-ask"]'))shieldMobileNav();
+  },{capture:true,passive:true});
   document.addEventListener('click',event=>{
-    if(event.target.closest?.('#askStateDrawer [data-review-batch-action="close-ask"]'))installCloseShield();
+    if(event.target.closest?.('#askStateDrawer [data-review-batch-action="close-ask"]'))shieldMobileNav();
   },true);
 
   const sync=()=>{keepLastMileLast();syncAskBlankGuard();};
