@@ -1,5 +1,5 @@
 (() => {
-  const STYLE_ID = 'state-final-mobile-r64';
+  const STYLE_ID = 'state-final-mobile-r65';
   let movingStyle=false;
 
   function installStyles(){
@@ -7,13 +7,15 @@
     const s=document.createElement('style');
     s.id=STYLE_ID;
     s.textContent=`
-      /* Product chrome: identifiable, but quieter than the primary action blue. */
-      html body:not(.v88-dark) .prototype-productbar{background:#356fae!important;border-bottom-color:#2f639c!important;color:#fff!important}
+      /* Product chrome: quiet separation from the portfolio, not a colored banner. */
+      html body:not(.v88-dark) .prototype-productbar{background:#fbfcfd!important;border-bottom:1px solid #d8e1eb!important;color:#1e3048!important;box-shadow:none!important}
       html body:not(.v88-dark) .prototype-productbar .product-name,
-      html body:not(.v88-dark) .prototype-productbar .product-mark,
-      html body:not(.v88-dark) .prototype-productbar .product-divider,
-      html body:not(.v88-dark) .prototype-productbar .product-tagline{color:#fff!important;opacity:1!important}
-      html body:not(.v88-dark) .prototype-productbar .product-tagline{font-weight:600!important}
+      html body:not(.v88-dark) .prototype-productbar .product-mark{color:#1e3048!important;opacity:1!important}
+      html body:not(.v88-dark) .prototype-productbar .product-divider{color:#9aa8b8!important;opacity:1!important}
+      html body:not(.v88-dark) .prototype-productbar .product-tagline{color:#617086!important;font-weight:600!important;opacity:1!important}
+
+      /* Project stage is orientation, not a warning or call to action. */
+      html body:not(.v88-dark) .overview-stage{display:inline-flex!important;width:max-content!important;margin-top:7px!important;padding:3px 8px!important;border:1px solid #d9e0e8!important;border-radius:999px!important;background:#f5f7f9!important;color:#647084!important;box-shadow:none!important;font-size:10.5px!important;font-weight:700!important}
 
       /* Workspace attention: text supplies the hierarchy. No redundant header alert icon. */
       html body .workspace-attention{border:1px solid #dfe5ed!important;border-top:1px solid #dfe5ed!important;background:#fff!important;box-shadow:none!important}
