@@ -12,7 +12,9 @@ def test_state_release_assets_share_one_dynamic_version_token():
     assert token_match, "index.html no longer defines the shared State release token"
     token = token_match.group(1)
 
-    array_match = re.search(r"var\s+files\s*=\s*\[(.*?)\]", html, re.S)
+    # State keeps the release assets in an inline array chained directly into
+    # forEach(), rather than assigning that array to a separate variable.
+    array_match = re.search(r"\[(.*?)\]\.forEach\(function\(file\)", html, re.S)
     assert array_match, "index.html no longer defines the State JS release asset list"
     assets = re.findall(r"['\"]([^'\"]+\.js)['\"]", array_match.group(1))
     referenced = {Path(src).name for src in assets}
@@ -29,4 +31,4 @@ def test_state_release_assets_share_one_dynamic_version_token():
         f"CSS release token {css_match.group(1)!r} does not match JS release token {token!r}"
     )
 
-    assert "s.src=(local?'':'/implementation-context-prototype/')+f+'?v='+v" in html
+    assert "+file+'?v='+v" in html
