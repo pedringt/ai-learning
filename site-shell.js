@@ -47,6 +47,15 @@
         font-weight:750!important;
         letter-spacing:.02em!important;
       }
+      .settings-channel-heading{
+        margin-top:18px!important;
+        padding-top:16px!important;
+        border-top:1px solid var(--line,#e5e5ea)!important;
+      }
+      .settings-channel-heading strong{display:block;font-size:13px!important;margin-bottom:3px!important;}
+      .settings-channel-heading span{display:block;color:var(--muted,#666)!important;font-size:12.5px!important;line-height:1.45!important;}
+      .settings-slack .slack-preview{margin-top:8px!important;}
+      .settings-slack .slack-preview-row [data-settings-action="toggle-channel"]{white-space:nowrap!important;}
       @media(max-width:640px){
         .notes-page .note-index-status{
           display:inline-flex!important;
@@ -133,6 +142,35 @@
     });
   });
 
+  /* Keep State's authority wording exact wherever a late-rendered helper or
+     dialog still uses the older "people decide" phrasing. */
+  const normalizeAuthorityCopy=()=>{
+    document.querySelectorAll('.demo-flow-principle').forEach(node=>{
+      if(node.textContent.trim()==='AI interprets → software enforces → people decide') node.textContent='AI interprets → software enforces → people authorize';
+    });
+  };
+
+  /* Make Slack workspace controls and channel controls read as two different
+     levels of control instead of three adjacent connection buttons. */
+  const polishSlackSettings=()=>{
+    const section=document.getElementById('settings-slack');
+    if(!section)return;
+    const preview=section.querySelector('.slack-preview');
+    if(preview&&!section.querySelector('.settings-channel-heading')){
+      const heading=document.createElement('div');
+      heading.className='settings-channel-heading';
+      heading.innerHTML='<strong>Approved channels</strong><span>Choose which channel conversations State can use as Evidence.</span>';
+      preview.parentNode.insertBefore(heading,preview);
+    }
+    section.querySelectorAll('[data-settings-action="toggle-channel"]').forEach(control=>{
+      const enabled=control.dataset.enabled==='1';
+      control.textContent=enabled?'Disable channel':'Enable channel';
+      const row=control.closest('.slack-preview-row');
+      const channel=row?.querySelector('strong')?.textContent?.trim();
+      if(channel) control.setAttribute('aria-label',`${enabled?'Disable':'Enable'} ${channel}`);
+    });
+  };
+
   /* Ask is a true drawer on small screens. Lock the document behind it so a
      swipe in the drawer cannot accidentally move the page underneath. Keep
      and restore the exact page position when the drawer closes. */
@@ -167,9 +205,11 @@
     window.scrollTo(0,askPageY);
   };
   const syncAskBackground=()=>{askDrawerIsOpen()?lockAskBackground():unlockAskBackground();};
-  const askObserver=new MutationObserver(syncAskBackground);
-  askObserver.observe(body,{childList:true,subtree:true,attributes:true,attributeFilter:['hidden','aria-hidden','class','style']});
+  const stateUiObserver=new MutationObserver(()=>{syncAskBackground();polishSlackSettings();normalizeAuthorityCopy();});
+  stateUiObserver.observe(body,{childList:true,subtree:true,attributes:true,attributeFilter:['hidden','aria-hidden','class','style']});
   syncAskBackground();
+  polishSlackSettings();
+  normalizeAuthorityCopy();
 
   /* State creates this launcher after the shell loads, so watch briefly and add the AI cue without changing behavior. */
   const polishAskLauncher=()=>{
