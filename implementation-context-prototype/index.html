@@ -14,9 +14,10 @@
   <script>
     (function(){
       var local = location.protocol === 'file:';
+      var release = 'r57-final-polish';
       document.write('<link rel="icon" href="' + (local ? '../favicon.svg' : '/favicon.svg') + '">');
       document.write('<link rel="stylesheet" href="' + (local ? '../site-shell.css' : '/site-shell.css') + '">');
-      document.write('<link rel="stylesheet" href="' + (local ? 'context-tool.css?v=r56-mobile-nav-consolidation' : '/implementation-context-prototype/context-tool.css?v=r56-mobile-nav-consolidation') + '">');
+      document.write('<link rel="stylesheet" href="' + (local ? 'context-tool.css?v=' + release : '/implementation-context-prototype/context-tool.css?v=' + release) + '">');
     })();
   </script>
   <style id="state-critical-modal">
@@ -77,27 +78,27 @@
   <script>
     (function(){
       var local = location.protocol === 'file:';
-      document.write('<script src="' + (local ? '../site-shell.js' : '/site-shell.js') + '"><\/script>');
-      if(!local) document.write('<script src="/api/state-config.js"><\/script>');
-      document.write('<script src="' + (local ? 'context-analytics.js?v=r56-mobile-nav-consolidation' : '/implementation-context-prototype/context-analytics.js?v=r56-mobile-nav-consolidation') + '"><\/script>');
-      document.write('<script src="' + (local ? 'context-data.js?v=r56-mobile-nav-consolidation' : '/implementation-context-prototype/context-data.js?v=r56-mobile-nav-consolidation') + '"><\/script>');
-      document.write('<script src="' + (local ? 'context-api.js?v=r56-mobile-nav-consolidation' : '/implementation-context-prototype/context-api.js?v=r56-mobile-nav-consolidation') + '"><\/script>');
-      document.write('<script src="' + (local ? 'context-ask.js?v=r56-mobile-nav-consolidation' : '/implementation-context-prototype/context-ask.js?v=r56-mobile-nav-consolidation') + '"><\/script>');
-      document.write('<script src="' + (local ? 'context-ask-followup.js?v=r56-mobile-nav-consolidation' : '/implementation-context-prototype/context-ask-followup.js?v=r56-mobile-nav-consolidation') + '"><\/script>');
-      document.write('<script src="' + (local ? 'context-notes-view.js?v=r56-mobile-nav-consolidation' : '/implementation-context-prototype/context-notes-view.js?v=r56-mobile-nav-consolidation') + '"><\/script>');
-      document.write('<script src="' + (local ? 'context-open-items-view.js?v=r56-mobile-nav-consolidation' : '/implementation-context-prototype/context-open-items-view.js?v=r56-mobile-nav-consolidation') + '"><\/script>');
-      document.write('<script src="' + (local ? 'context-project-view.js?v=r56-mobile-nav-consolidation' : '/implementation-context-prototype/context-project-view.js?v=r56-mobile-nav-consolidation') + '"><\/script>');
-      document.write('<script src="' + (local ? 'context-app.js?v=r56-mobile-nav-consolidation' : '/implementation-context-prototype/context-app.js?v=r56-mobile-nav-consolidation') + '"><\/script>');
-      document.write('<script src="' + (local ? 'context-history.js?v=r56-mobile-nav-consolidation' : '/implementation-context-prototype/context-history.js?v=r56-mobile-nav-consolidation') + '"><\/script>');
-      document.write('<script src="' + (local ? 'context-provenance.js?v=r56-mobile-nav-consolidation' : '/implementation-context-prototype/context-provenance.js?v=r56-mobile-nav-consolidation') + '"><\/script>');
-      document.write('<script src="' + (local ? 'context-quickwins.js?v=r56-mobile-nav-consolidation' : '/implementation-context-prototype/context-quickwins.js?v=r56-mobile-nav-consolidation') + '"><\/script>');
-      document.write('<script src="' + (local ? 'context-product-polish.js?v=r56-mobile-nav-consolidation' : '/implementation-context-prototype/context-product-polish.js?v=r56-mobile-nav-consolidation') + '"><\/script>');
-      document.write('<script src="' + (local ? 'context-settings.js?v=r56-mobile-nav-consolidation' : '/implementation-context-prototype/context-settings.js?v=r56-mobile-nav-consolidation') + '"><\/script>');
-      document.write('<script src="' + (local ? 'context-sources.js?v=r56-mobile-nav-consolidation' : '/implementation-context-prototype/context-sources.js?v=r56-mobile-nav-consolidation') + '"><\/script>');
-      document.write('<script src="' + (local ? 'context-design-pass.js?v=r1' : '/implementation-context-prototype/context-design-pass.js?v=r1') + '"><\/script>');
-      document.write('<script src="' + (local ? 'context-feedback-pass.js?v=r1' : '/implementation-context-prototype/context-feedback-pass.js?v=r1') + '"><\/script>');
-      document.write('<script src="' + (local ? 'context-feedback-pass-2.js?v=r1' : '/implementation-context-prototype/context-feedback-pass-2.js?v=r1') + '"><\/script>');
-      document.write('<script src="' + (local ? 'context-feedback-pass-3.js?v=r2-final' : '/implementation-context-prototype/context-feedback-pass-3.js?v=r2-final') + '"><\/script>');
+      var release = 'r57-final-polish';
+      function script(name){ return (local ? name : '/implementation-context-prototype/' + name) + '?v=' + release; }
+      document.write('<script src="' + script('context-analytics.js') + '"><\/script>');
+      document.write('<script src="' + script('context-data.js') + '"><\/script>');
+      document.write('<script src="' + script('context-api.js') + '"><\/script>');
+      document.write('<script src="' + script('context-ask.js') + '"><\/script>');
+      document.write('<script src="' + script('context-ask-followup.js') + '"><\/script>');
+      document.write('<script src="' + script('context-notes-view.js') + '"><\/script>');
+      document.write('<script src="' + script('context-open-items-view.js') + '"><\/script>');
+      document.write('<script src="' + script('context-project-view.js') + '"><\/script>');
+      document.write('<script src="' + script('context-app.js') + '"><\/script>');
+      document.write('<script src="' + script('context-history.js') + '"><\/script>');
+      document.write('<script src="' + script('context-provenance.js') + '"><\/script>');
+      document.write('<script src="' + script('context-quickwins.js') + '"><\/script>');
+      document.write('<script src="' + script('context-product-polish.js') + '"><\/script>');
+      document.write('<script src="' + script('context-settings.js') + '"><\/script>');
+      document.write('<script src="' + script('context-sources.js') + '"><\/script>');
+      document.write('<script src="' + script('context-design-pass.js') + '"><\/script>');
+      document.write('<script src="' + script('context-feedback-pass.js') + '"><\/script>');
+      document.write('<script src="' + script('context-feedback-pass-2.js') + '"><\/script>');
+      document.write('<script src="' + script('context-feedback-pass-3.js') + '"><\/script>');
     })();
   </script>
 </body>
