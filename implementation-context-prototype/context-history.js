@@ -21,7 +21,8 @@
     html body .open-items-page .open-items-reviews .review-card-toggle::after{content:'›'!important;display:block!important;flex:0 0 auto!important;margin-left:auto!important;font-size:22px!important;line-height:1!important;color:#7a8799!important;transform:none!important;transition:transform .14s ease,color .14s ease!important}
     html body .open-items-page .open-items-reviews .review-card-toggle[aria-expanded='true']::after{transform:rotate(90deg)!important}
     html body .open-items-page .open-items-reviews .review-card-toggle:hover::after{color:var(--accent,#40356f)!important}
-    html body .open-items-page .open-items-reviews .review-row-head{display:block!important;flex:1 1 auto!important;min-width:0!important;max-width:none!important}
+    html body .open-items-page .open-items-reviews .review-row-head{display:flex!important;flex:1 1 auto!important;flex-direction:column!important;align-items:flex-start!important;gap:4px!important;min-width:0!important;max-width:none!important}
+    html body .open-items-page .open-item-label.review{display:inline-flex!important;width:auto!important;padding:2px 6px!important;border-radius:999px!important;background:#f0f2f5!important;color:#657187!important;font-size:9px!important;font-weight:750!important;letter-spacing:.05em!important;text-transform:uppercase!important}
 
     /* Notes: status stays in the list; History navigation appears only after opening the note. */
     html body .notes-page .note-index-status{display:flex!important;flex-direction:column!important;align-items:flex-end!important;justify-content:flex-start!important;gap:3px!important}
