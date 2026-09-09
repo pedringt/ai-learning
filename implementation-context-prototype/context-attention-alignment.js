@@ -1,6 +1,6 @@
 (() => {
   const STYLE_ID='state-attention-alignment';
-  const PASS='r80-pre-main-cleanup';
+  const PASS='r81-final-insets';
 
   document.getElementById(STYLE_ID)?.remove();
   const style=document.createElement('style');
@@ -10,12 +10,12 @@
     html body .open-items-page .open-items-section,
     html body .open-items-page .open-items-section-head{background:transparent!important;box-shadow:none!important}
     html body .open-items-page .open-items-section-body,
-    html body .open-items-page .open-question-list{width:100%!important;max-width:none!important;background:var(--surface,#fff)!important;box-shadow:none!important}
-    html body .open-items-page .open-question-list{box-sizing:border-box!important;padding-left:20px!important;padding-right:20px!important}
+    html body .open-items-page .open-question-list{width:100%!important;max-width:none!important;background:var(--surface,#fff)!important;box-shadow:none!important;box-sizing:border-box!important}
+    html body .open-items-page .open-question-list{padding-left:0!important;padding-right:0!important}
     html body .open-items-page .review-card,
     html body .open-items-page .compact-review,
     html body .open-items-page details.open-question-item,
-    html body .open-items-page .open-question-row{background:transparent!important;box-shadow:none!important}
+    html body .open-items-page .open-question-row{background:transparent!important;box-shadow:none!important;box-sizing:border-box!important;padding-left:24px!important;padding-right:24px!important}
 
     html body .notes-page .note-results,
     html body .notes-page #notesList{width:100%!important;max-width:none!important;background:var(--surface,#fff)!important;box-shadow:none!important}
@@ -62,8 +62,9 @@
     html body .workspace-attention .workspace-attention-head .eyebrow,
     html body .workspace-attention .workspace-attention-head p{display:none!important}
 
-    /* Settings sections use the same calm white surfaces as the record views. */
-    html body .settings-page .settings-section{border:0!important;border-radius:0!important;box-shadow:none!important;background:var(--surface,#fff)!important;box-sizing:border-box!important;padding:20px 24px!important}
+    /* Settings sections use the same calm white surfaces as the record views and fill the page. */
+    html body .settings-page{width:100%!important;max-width:none!important;box-sizing:border-box!important}
+    html body .settings-page .settings-section{width:100%!important;max-width:none!important;margin-left:0!important;margin-right:0!important;border:0!important;border-radius:0!important;box-shadow:none!important;background:var(--surface,#fff)!important;box-sizing:border-box!important;padding:20px 24px!important}
 
     /* Other Sources: one source per row, status aligned top-right with the title. */
     html body .settings-page .settings-source-grid{display:block!important;grid-template-columns:none!important;gap:0!important}
@@ -74,7 +75,7 @@
     html body .settings-page .settings-source-grid .source-title,
     html body .settings-page .settings-source-grid .source-description{min-width:0!important;max-width:100%!important}
 
-    html body .settings-page>.page-head{display:flex!important;align-items:center!important;justify-content:space-between!important;gap:28px!important}
+    html body .settings-page>.page-head{display:flex!important;align-items:center!important;justify-content:space-between!important;gap:28px!important;width:100%!important;max-width:none!important}
     html body .settings-page>.page-head>h2{margin:0!important;flex:0 0 auto!important}
     html body .settings-page>.page-head>p{margin:0!important;max-width:620px!important;line-height:1.45!important}
 
@@ -89,7 +90,10 @@
       html body .settings-page>.page-head{display:block!important}
       html body .settings-page>.page-head>p{margin-top:7px!important;max-width:none!important}
       html body .settings-page .settings-section{padding:18px 16px!important}
-      html body .open-items-page .open-question-list{padding-left:14px!important;padding-right:14px!important}
+      html body .open-items-page .review-card,
+      html body .open-items-page .compact-review,
+      html body .open-items-page details.open-question-item,
+      html body .open-items-page .open-question-row{padding-left:16px!important;padding-right:16px!important}
       html body .notes-page .note-index-status{display:flex!important;flex-wrap:wrap!important;justify-self:start!important;align-self:start!important;width:100%!important;min-width:0!important;max-width:100%!important;margin-left:0!important}
       html body .notes-page .note-index-status .note-status,
       html body .notes-page .note-index-status .note-status-link{display:inline-flex!important;align-items:center!important;justify-content:flex-start!important;width:auto!important;max-width:100%!important;height:auto!important;min-height:26px!important;padding:5px 9px!important;border-radius:999px!important;line-height:1.25!important;white-space:nowrap!important}
@@ -203,7 +207,9 @@
 
   function normalizeSettings(scope=document){
     const mobile=matchMedia('(max-width:760px)').matches;
-    scope.querySelectorAll?.('.settings-page .settings-section').forEach(section=>{important(section,'border','0');important(section,'border-radius','0');important(section,'box-shadow','none');important(section,'background','var(--surface,#fff)');important(section,'box-sizing','border-box');important(section,'padding',mobile?'18px 16px':'20px 24px')});
+    const page=scope.querySelector?.('.settings-page');
+    if(page){important(page,'width','100%');important(page,'max-width','none');important(page,'box-sizing','border-box')}
+    scope.querySelectorAll?.('.settings-page .settings-section').forEach(section=>{important(section,'width','100%');important(section,'max-width','none');important(section,'margin-left','0');important(section,'margin-right','0');important(section,'border','0');important(section,'border-radius','0');important(section,'box-shadow','none');important(section,'background','var(--surface,#fff)');important(section,'box-sizing','border-box');important(section,'padding',mobile?'18px 16px':'20px 24px')});
     const grid=scope.querySelector?.('.settings-page .settings-source-grid');
     if(!grid) return;
     important(grid,'display','block');important(grid,'grid-template-columns','none');important(grid,'gap','0');
@@ -226,11 +232,12 @@
   }
 
   function normalizeRecordSurfaces(scope=document){
-    scope.querySelectorAll?.('.open-items-page .open-items-section-body,.open-items-page .open-question-list').forEach(el=>{important(el,'width','100%');important(el,'max-width','none');important(el,'background','var(--surface,#fff)');important(el,'box-shadow','none')});
-    scope.querySelectorAll?.('.open-items-page .open-question-list').forEach(el=>{important(el,'box-sizing','border-box');important(el,'padding-left',matchMedia('(max-width:760px)').matches?'14px':'20px');important(el,'padding-right',matchMedia('(max-width:760px)').matches?'14px':'20px')});
-    scope.querySelectorAll?.('.open-items-page .review-card,.open-items-page .compact-review,.open-items-page details.open-question-item,.open-items-page .open-question-row').forEach(el=>{important(el,'background','transparent');important(el,'box-shadow','none')});
+    const mobile=matchMedia('(max-width:760px)').matches;
+    scope.querySelectorAll?.('.open-items-page .open-items-section-body,.open-items-page .open-question-list').forEach(el=>{important(el,'width','100%');important(el,'max-width','none');important(el,'background','var(--surface,#fff)');important(el,'box-shadow','none');important(el,'box-sizing','border-box')});
+    scope.querySelectorAll?.('.open-items-page .open-question-list').forEach(el=>{important(el,'padding-left','0');important(el,'padding-right','0')});
+    scope.querySelectorAll?.('.open-items-page .review-card,.open-items-page .compact-review,.open-items-page details.open-question-item,.open-items-page .open-question-row').forEach(el=>{important(el,'background','transparent');important(el,'box-shadow','none');important(el,'box-sizing','border-box');important(el,'padding-left',mobile?'16px':'24px');important(el,'padding-right',mobile?'16px':'24px')});
     const history=scope.querySelector?.('.history-page .history-list,.history-page #historyList');
-    if(history){important(history,'width','100%');important(history,'max-width','none');important(history,'box-sizing','border-box');important(history,'background','var(--surface,#fff)');important(history,'padding',matchMedia('(max-width:760px)').matches?'18px 16px 20px':'20px 24px 24px')}
+    if(history){important(history,'width','100%');important(history,'max-width','none');important(history,'box-sizing','border-box');important(history,'background','var(--surface,#fff)');important(history,'padding',mobile?'18px 16px 20px':'20px 24px 24px')}
     scope.querySelectorAll?.('.history-page .history-entry,.history-page .history-entry-body,.history-page .history-change').forEach(el=>{important(el,'width','100%');important(el,'max-width','none');important(el,'box-sizing','border-box')});
     scope.querySelectorAll?.('.history-page .history-change>p').forEach(el=>{important(el,'width','100%');important(el,'max-width','none');important(el,'box-sizing','border-box')});
   }
