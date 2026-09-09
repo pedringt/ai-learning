@@ -30,7 +30,7 @@
       html body .workspace-attention .workspace-attention-head h3{margin-top:1px!important}
       html body .workspace-attention .attention-row-icon{align-self:start!important;margin-top:2px!important}
 
-      /* Open Items: reviews are the action queue; question status is semantic, not urgency color. */
+      /* Open Items: one shared collapsed-row geometry for Reviews and Questions. */
       html body .open-items-page .open-items-section,
       html body .open-items-page .open-items-reviews,
       html body .open-items-page .open-items-blockers,
@@ -43,14 +43,22 @@
       html body .open-items-page .open-items-drafts .open-items-section-head{background:transparent!important;background-image:none!important;border:0!important;border-bottom:1px solid #dde3ea!important;box-shadow:none!important}
       html body .open-items-page .open-items-kicker,
       html body .open-items-page .open-items-blockers .open-items-kicker{color:#7b8494!important}
+      html body .open-items-page .review-card,
+      html body .open-items-page .compact-review{padding-left:0!important;padding-right:0!important}
+      html body .open-items-page .review-card::before,
+      html body .open-items-page .compact-review::before{content:none!important;display:none!important}
+      html body .open-items-page .review-card-toggle{padding:13px 16px 13px 4px!important}
       html body .open-items-page .review-card:first-child .review-card-toggle,
-      html body .open-items-page .review-card.is-expanded .review-card-toggle{border-left:0!important;padding-left:8px!important}
+      html body .open-items-page .review-card.is-expanded .review-card-toggle{border-left:0!important;padding-left:4px!important}
       html body .open-items-page .review-card.is-expanded .review-card-toggle{background:#fafbfc!important;border-radius:8px!important}
       html body .open-items-page .open-item-label,
       html body .open-items-page .open-item-label.blocking,
-      html body .open-items-page .open-item-label.question{display:inline-flex!important;width:max-content!important;max-width:100%!important;min-width:0!important;padding:0!important;border:0!important;border-radius:0!important;background:transparent!important;white-space:nowrap!important;font-size:10.5px!important;line-height:1.25!important;letter-spacing:.055em!important;color:#6f7887!important}
-      html body .open-items-page .open-item-label.blocking::before{content:'•';margin-right:5px;font-size:13px;line-height:.9;color:#7b8494!important}
-      html body .open-items-page .open-item-label.question{color:#6f7887!important}
+      html body .open-items-page .open-item-label.question,
+      html body .open-items-page .open-item-label.review{display:inline-flex!important;width:max-content!important;max-width:100%!important;min-width:0!important;padding:0!important;border:0!important;border-radius:0!important;background:transparent!important;white-space:nowrap!important;font-size:10.5px!important;line-height:1.25!important;letter-spacing:.055em!important;color:#6f7887!important}
+      html body .open-items-page .open-item-label.blocking::before,
+      html body .open-items-page .open-item-label.review::before{content:'•';margin-right:5px;font-size:13px;line-height:.9;color:#7b8494!important}
+      html body .open-items-page .open-item-label.question,
+      html body .open-items-page .open-item-label.review{color:#6f7887!important}
       html body .open-items-page .open-question-row.is-blocking{border-left:0!important;padding-left:4px!important;background:transparent!important}
       html body .open-items-page .open-question-row,
       html body .open-items-page .open-items-section,
@@ -67,9 +75,13 @@
       html body .open-items-page .open-question-actions{display:flex!important;flex-wrap:wrap!important;gap:8px 12px!important;margin-top:10px!important}
       html body .open-items-page .open-question-actions .text-button{font-size:12px!important}
 
-      /* History is a flat audit log. Reassert this after every older style pass. */
+      /* History is a flat audit log with a modest rail and compact rhythm. */
       html body .history-page #historyList,
-      html body .history-page .history-list{border-left:0!important;border-inline-start:0!important;background-image:none!important}
+      html body .history-page .history-list{border-left:0!important;border-inline-start:0!important;background-image:none!important;padding:18px 20px 20px!important}
+      html body .history-page .history-list article.history-entry,
+      html body .history-page #historyList article.history-entry{grid-template-columns:44px minmax(0,1fr)!important;gap:12px!important;padding:0 0 22px!important;margin:0 0 22px!important}
+      html body .history-page .history-list article.history-entry:last-child,
+      html body .history-page #historyList article.history-entry:last-child{padding-bottom:0!important;margin-bottom:0!important}
       html body .history-page .history-entry,
       html body .history-page .history-entry:hover,
       html body .history-page .history-entry.is-linked,
@@ -157,10 +169,15 @@
         html body .open-items-page .review-card:first-child .review-card-toggle,
         html body .open-items-page .review-card.is-expanded .review-card-toggle{padding-left:4px!important}
         html body .open-items-page .open-question-row.is-blocking{padding-left:4px!important}
-        html body .open-items-page .open-item-label.blocking{white-space:normal!important}
+        html body .open-items-page .open-item-label.blocking,
+        html body .open-items-page .open-item-label.review{white-space:normal!important}
         html body .open-items-page .open-question-inline-body{padding-left:4px!important;padding-right:4px!important}
         html body .open-items-page .open-question-actions{display:grid!important;grid-template-columns:1fr!important;gap:3px!important}
         html body .open-items-page .open-question-actions .text-button{justify-content:flex-start!important;min-height:38px!important;padding:7px 4px!important}
+        html body .history-page #historyList,
+        html body .history-page .history-list{padding:18px 16px 20px!important}
+        html body .history-page .history-list article.history-entry,
+        html body .history-page #historyList article.history-entry{grid-template-columns:1fr!important;gap:4px!important;padding-left:28px!important;padding-bottom:22px!important;margin-bottom:22px!important}
         html body .dialog-close,
         html body #askStateDrawer .ask-state-drawer-close{width:40px!important;height:40px!important;min-width:40px!important;min-height:40px!important}
         html body .settings-page .settings-actions .btn,
