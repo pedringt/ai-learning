@@ -6,25 +6,28 @@
   releaseStyle.textContent = `
     /* Final release rhythm: keep Open Items sections visually consistent. */
     html body .open-items-page .open-items-sections{display:block!important;gap:0!important}
-    html body .open-items-page .open-items-section{margin:0!important}
+    html body .open-items-page .open-items-section{margin:0!important;padding:0!important}
     html body .open-items-page .open-items-section + .open-items-section{margin-top:28px!important}
-    html body .open-items-page .open-items-section-head{margin:0!important}
-    html body .open-items-page .open-items-section-body{margin-top:12px!important}
+    html body .open-items-page .open-items-section-head{margin:0!important;padding:0 0 11px!important;min-height:0!important}
+    html body .open-items-page .open-items-section-body{margin-top:12px!important;padding:0!important}
 
-    /* Review rows use the full white surface like Questions and show their expand action clearly. */
-    html body .open-items-page .review-card,
-    html body .open-items-page .compact-review{width:100%!important;max-width:none!important;margin:0!important;border:0!important;border-bottom:1px solid #e3e8ef!important;border-radius:0!important}
-    html body .open-items-page .review-card:last-child,
-    html body .open-items-page .compact-review:last-child{border-bottom:0!important}
-    html body .open-items-page .review-card-toggle{width:100%!important;display:flex!important;align-items:center!important;justify-content:space-between!important;gap:16px!important;text-align:left!important;background:transparent!important;border:0!important;padding:0!important;color:inherit!important}
-    html body .open-items-page .review-card-toggle::after{content:'›'!important;display:block!important;flex:0 0 auto!important;font-size:22px!important;line-height:1!important;color:#7a8799!important;transform:none!important;transition:transform .14s ease,color .14s ease!important}
-    html body .open-items-page .review-card-toggle[aria-expanded='true']::after{transform:rotate(90deg)!important}
-    html body .open-items-page .review-card-toggle:hover::after{color:var(--accent,#40356f)!important}
-    html body .open-items-page .review-row-head{display:block!important;flex:1 1 auto!important;min-width:0!important}
+    /* Reviews and Questions share one full-width record geometry. */
+    html body .open-items-page .open-items-reviews .open-items-section-body{display:block!important;width:100%!important;max-width:none!important;min-width:0!important;grid-template-columns:none!important;box-sizing:border-box!important}
+    html body .open-items-page .open-items-reviews .review-card,
+    html body .open-items-page .open-items-reviews .compact-review{display:block!important;width:100%!important;max-width:none!important;min-width:0!important;margin:0!important;border:0!important;border-bottom:1px solid #e3e8ef!important;border-radius:0!important;box-sizing:border-box!important}
+    html body .open-items-page .open-items-reviews .review-card:last-child,
+    html body .open-items-page .open-items-reviews .compact-review:last-child{border-bottom:0!important}
+    html body .open-items-page .open-items-reviews .review-card-toggle{width:100%!important;max-width:none!important;min-width:0!important;display:flex!important;align-items:center!important;justify-content:space-between!important;gap:16px!important;text-align:left!important;background:transparent!important;border:0!important;padding:13px 0!important;box-sizing:border-box!important;color:inherit!important}
+    html body .open-items-page .open-items-reviews .review-card-toggle::after{content:'›'!important;display:block!important;flex:0 0 auto!important;margin-left:auto!important;font-size:22px!important;line-height:1!important;color:#7a8799!important;transform:none!important;transition:transform .14s ease,color .14s ease!important}
+    html body .open-items-page .open-items-reviews .review-card-toggle[aria-expanded='true']::after{transform:rotate(90deg)!important}
+    html body .open-items-page .open-items-reviews .review-card-toggle:hover::after{color:var(--accent,#40356f)!important}
+    html body .open-items-page .open-items-reviews .review-row-head{display:flex!important;flex:1 1 auto!important;flex-direction:column!important;align-items:flex-start!important;gap:4px!important;min-width:0!important;max-width:none!important}
+    html body .open-items-page .open-item-label.review{display:inline-flex!important;width:auto!important;padding:2px 6px!important;border-radius:999px!important;background:#f0f2f5!important;color:#657187!important;font-size:9px!important;font-weight:750!important;letter-spacing:.05em!important;text-transform:uppercase!important}
 
-    /* Notes: status stays a status; navigation sits quietly beneath it. */
+    /* Notes: status stays in the list; History navigation appears only after opening the note. */
     html body .notes-page .note-index-status{display:flex!important;flex-direction:column!important;align-items:flex-end!important;justify-content:flex-start!important;gap:3px!important}
-    html body .notes-page .note-history-link{display:block!important;margin:1px 0 0!important;font-size:11px!important;line-height:1.25!important;white-space:nowrap!important}
+    html body .notes-page .note-history-link{display:none!important;margin:1px 0 0!important;font-size:11px!important;line-height:1.25!important;white-space:nowrap!important}
+    html body .notes-page .note-index-row.is-expanded .note-history-link{display:block!important}
 
     /* Settings keeps the current width, but removes the long loose vertical rhythm. */
     html body .settings-page .settings-section{margin-top:0!important;margin-bottom:12px!important}
@@ -38,19 +41,24 @@
     html body .settings-page .settings-slack-status{margin-top:10px!important}
     html body .settings-page .settings-danger{padding-top:14px!important;padding-bottom:14px!important}
 
-    /* History: remove the old 920px page constraint and tighten the timeline's left rail. */
-    html body .history-page{width:100%!important;max-width:none!important}
+    /* History: natural-height white surface with a compact left rail. */
+    html body .history-page{width:100%!important;max-width:none!important;min-height:0!important;height:auto!important}
     html body .history-page .history-list,
-    html body .history-page #historyList{width:100%!important;max-width:none!important;margin-left:0!important;margin-right:0!important}
+    html body .history-page #historyList{width:100%!important;max-width:none!important;min-height:0!important;height:auto!important;margin-left:0!important;margin-right:0!important;padding-bottom:16px!important}
     html body .history-page .history-list::before,
     html body .history-page #historyList::before{left:80px!important}
     html body .history-page .history-list article.history-entry,
     html body .history-page #historyList article.history-entry{grid-template-columns:52px minmax(0,1fr)!important;gap:18px!important;margin-left:0!important;margin-right:0!important}
+    html body .history-page .history-list article.history-entry:last-child,
+    html body .history-page #historyList article.history-entry:last-child{padding-bottom:0!important;margin-bottom:0!important}
     html body .history-page .history-entry-body::before{left:-14px!important}
 
     @media(max-width:760px){
       html body .open-items-page .open-items-section + .open-items-section{margin-top:24px!important}
+      html body .open-items-page .open-items-reviews .review-card-toggle{padding-top:13px!important;padding-bottom:13px!important}
       html body .notes-page .note-index-status{align-items:flex-start!important}
+      html body .history-page .history-list,
+      html body .history-page #historyList{padding-bottom:14px!important}
       html body .history-page .history-list::before,
       html body .history-page #historyList::before{left:21px!important}
       html body .history-page .history-list article.history-entry,
