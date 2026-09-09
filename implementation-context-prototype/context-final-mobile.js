@@ -181,6 +181,15 @@
     document.head.appendChild(s);
   }
 
+  function loadAttentionAlignment(){
+    if(document.getElementById('state-attention-alignment')||document.querySelector('script[data-state-attention-alignment]'))return;
+    const script=document.createElement('script');
+    script.dataset.stateAttentionAlignment='true';
+    const local=location.protocol==='file:';
+    script.src=(local?'':'/implementation-context-prototype/')+'context-attention-alignment.js?v=r69-last-mile';
+    document.head.appendChild(script);
+  }
+
   function keepFinalStyleLast(){
     const style=document.getElementById(STYLE_ID);
     if(!style||style.parentElement!==document.head||document.head.lastElementChild===style||movingStyle) return;
@@ -226,7 +235,7 @@
     if(window.__stateFinalMobileTimer){clearTimeout(window.__stateFinalMobileTimer);delete window.__stateFinalMobileTimer;}
   }
 
-  function run(){installStyles();keepFinalStyleLast();removeWorkspaceAttentionIcon();ensureMobileHelp();syncMobileAskLauncher();reveal();}
+  function run(){installStyles();loadAttentionAlignment();keepFinalStyleLast();removeWorkspaceAttentionIcon();ensureMobileHelp();syncMobileAskLauncher();reveal();}
   let queued=false;
   const schedule=()=>{
     if(movingStyle||queued)return;
@@ -234,6 +243,7 @@
     requestAnimationFrame(()=>{
       queued=false;
       installStyles();
+      loadAttentionAlignment();
       keepFinalStyleLast();
       removeWorkspaceAttentionIcon();
       ensureMobileHelp();
