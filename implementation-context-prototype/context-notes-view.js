@@ -84,23 +84,29 @@
     return `<span class="note-status note-status--${statusClass}">${noteStatusLabel(n)}</span>`;
   }
 
+  function isEditableDraft(n){
+    if(n.backendManaged) return false;
+    return !['pending','accepted','reviewed','no_review_needed','unknown'].includes(n.status);
+  }
+
   // expandedNotes: Set of expanded note ids. editingNoteId: id of the note currently being edited, or null.
   function simpleNote(n,expandedNotes,editingNoteId){
     const expanded=expandedNotes.has(n.id);
     const target=120+((n.id.charCodeAt(2)||7)*17)%111;
     const preview=n.text.length>target?n.text.slice(0,Math.max(80,target-3)).replace(/\s+\S*$/,'')+'…':n.text;
     const editing=editingNoteId===n.id;
+    const editable=isEditableDraft(n);
     const statusClass=n.status==='pending'?'pending':(n.status==='accepted'||n.status==='reviewed')?'reviewed':n.status==='no_review_needed'?'no-review-needed':n.status==='failed'?'failed':n.status==='unknown'?'unknown':'draft';
     const statusBadge=noteStatusControl(n,statusClass);
     const reviewAction=n.status==='failed'&&n.evidenceId
       ? `<button class="text-button" data-action="retry-analysis" data-evidence-id="${n.evidenceId}">Retry analysis</button>`
-      : n.backendManaged||n.status==='pending'||n.status==='accepted'||n.status==='reviewed'||n.status==='no_review_needed'||n.status==='unknown'
+      : !editable
         ? ''
-        : `<button class="text-button" data-action="send-note-review" data-note-id="${n.id}">Send as Evidence</button>`;
+        : `<button class="text-button" data-action="send-note-review" data-note-id="${n.id}">Submit for review</button>`;
     const body=editing
       ? `<div class="note-inline-editor"><input class="dialog-input" id="editNoteTitle-${n.id}" value="${esc(n.title)}" aria-label="Note title"><textarea id="editNoteText-${n.id}" rows="8" aria-label="Note text">${esc(n.text)}</textarea><div class="inline-actions"><button class="btn primary" data-action="save-note-edit" data-note-id="${n.id}">Save changes</button><button class="btn secondary" data-action="cancel-note-edit" data-note-id="${n.id}">Cancel</button></div></div>`
       : expanded
-        ? `<p class="note-full-text">${esc(n.text)}</p>${n.backendManaged?'<p class="note-immutable-hint"><strong>Submitted note</strong> · Preserved as project evidence and not editable.</p>':''}<div class="inline-actions note-actions">${n.backendManaged?'':`<button class="text-button" data-action="edit-note" data-note-id="${n.id}">Edit</button>`}${reviewAction}<button class="text-button" data-action="copy-note" data-note-id="${n.id}">Copy</button></div>`
+        ? `<p class="note-full-text">${esc(n.text)}</p>${!editable?'<p class="note-immutable-hint"><strong>Submitted note</strong> · Preserved as project evidence and not editable.</p>':''}<div class="inline-actions note-actions">${editable?`<button class="text-button" data-action="edit-note" data-note-id="${n.id}">Edit</button>`:''}${reviewAction}<button class="text-button" data-action="copy-note" data-note-id="${n.id}">Copy</button></div>`
         : `<p>${esc(preview)}</p><span class="note-expand-label">Open note →</span>`;
     return `<article class="simple-note note-index-row ${expanded?'is-expanded':''}" data-action="toggle-note" data-note-id="${n.id}" tabindex="0"><span class="note-date">${esc(n.date)}</span><div class="note-index-main"><h3>${esc(n.title)}</h3><span class="note-source">${esc(n.source)}</span>${body}</div><div class="note-index-status">${statusBadge}</div></article>`;
   }
@@ -114,7 +120,7 @@
   function draftNoteRow(n){
     const target=120+((n.id.charCodeAt(2)||7)*17)%111;
     const preview=n.text.length>target?n.text.slice(0,Math.max(80,target-3)).replace(/\s+\S*$/,'')+'…':n.text;
-    return `<article class="simple-note note-index-row is-expanded" data-note-id="${n.id}"><span class="note-date">${esc(n.date)}</span><div class="note-index-main"><h3>${esc(n.title)}</h3><span class="note-source">${esc(n.source)}</span><p>${esc(preview)}</p><div class="inline-actions note-actions"><button class="text-button" data-action="send-note-review" data-note-id="${n.id}">Send as Evidence</button></div></div><div class="note-index-status"><span class="note-status note-status--draft">Draft</span></div></article>`;
+    return `<article class="simple-note note-index-row is-expanded" data-note-id="${n.id}"><span class="note-date">${esc(n.date)}</span><div class="note-index-main"><h3>${esc(n.title)}</h3><span class="note-source">${esc(n.source)}</span><p>${esc(preview)}</p><div class="inline-actions note-actions"><button class="text-button" data-action="send-note-review" data-note-id="${n.id}">Submit for review</button></div></div><div class="note-index-status"><span class="note-status note-status--draft">Draft</span></div></article>`;
   }
 
   // notes: state.data.notes (unfiltered). ui: {noteComposerOpen, notesFilter,
