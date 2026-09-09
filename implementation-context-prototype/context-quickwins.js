@@ -14,8 +14,12 @@
       .ask-grounding p{margin:4px 0 0}
       .open-question-row.is-awaiting-review .open-item-label{font-weight:700}
       .open-question-row.is-awaiting-review .question-awaiting-review-note{display:block;margin-top:4px;font-size:12px;line-height:1.35;color:var(--muted,#666)}
-      .workspace-record-orientation{max-width:760px;margin:5px 0 0;color:var(--ink);font-size:13px;line-height:1.45}
-      @media(max-width:700px){.workspace-record-orientation{max-width:100%;font-size:12.5px;line-height:1.45;margin-top:6px}}
+      .workspace-record-orientation{max-width:650px;margin:4px 0 0;color:var(--muted);font-size:13px;line-height:1.5}
+      .overview-heading .overview-stage{display:inline-block!important;margin:10px 0 0!important;padding-top:7px;border-top:1px solid var(--line);color:color-mix(in srgb,var(--muted) 88%,transparent)!important;font-size:11.5px!important;line-height:1.35!important}
+      @media(max-width:700px){
+        .workspace-record-orientation{max-width:100%;font-size:12.5px;line-height:1.5;margin-top:5px}
+        .overview-heading .overview-stage{margin-top:9px!important;font-size:11px!important}
+      }
     `;
     document.head.appendChild(style);
   }
@@ -33,7 +37,7 @@
     if(!title)return;
     const orientation=document.createElement('p');
     orientation.className='workspace-record-orientation';
-    orientation.textContent='A quick view of your project record: what needs attention, what changed, and what the team currently treats as true.';
+    orientation.textContent='See what needs attention, what changed, and what the team currently treats as true.';
     title.insertAdjacentElement('afterend',orientation);
   }
 
