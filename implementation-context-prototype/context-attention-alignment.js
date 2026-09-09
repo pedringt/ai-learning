@@ -1,6 +1,6 @@
 (() => {
   const STYLE_ID='state-attention-alignment';
-  const PASS='r79-finished-workspace-pair';
+  const PASS='r80-pre-main-cleanup';
 
   document.getElementById(STYLE_ID)?.remove();
   const style=document.createElement('style');
@@ -11,6 +11,7 @@
     html body .open-items-page .open-items-section-head{background:transparent!important;box-shadow:none!important}
     html body .open-items-page .open-items-section-body,
     html body .open-items-page .open-question-list{width:100%!important;max-width:none!important;background:var(--surface,#fff)!important;box-shadow:none!important}
+    html body .open-items-page .open-question-list{box-sizing:border-box!important;padding-left:20px!important;padding-right:20px!important}
     html body .open-items-page .review-card,
     html body .open-items-page .compact-review,
     html body .open-items-page details.open-question-item,
@@ -61,8 +62,8 @@
     html body .workspace-attention .workspace-attention-head .eyebrow,
     html body .workspace-attention .workspace-attention-head p{display:none!important}
 
-    /* Settings sections are flat surfaces. */
-    html body .settings-page .settings-section{border:0!important;border-radius:0!important;box-shadow:none!important;background:transparent!important}
+    /* Settings sections use the same calm white surfaces as the record views. */
+    html body .settings-page .settings-section{border:0!important;border-radius:0!important;box-shadow:none!important;background:var(--surface,#fff)!important;box-sizing:border-box!important;padding:20px 24px!important}
 
     /* Other Sources: one source per row, status aligned top-right with the title. */
     html body .settings-page .settings-source-grid{display:block!important;grid-template-columns:none!important;gap:0!important}
@@ -76,11 +77,19 @@
     html body .settings-page>.page-head{display:flex!important;align-items:center!important;justify-content:space-between!important;gap:28px!important}
     html body .settings-page>.page-head>h2{margin:0!important;flex:0 0 auto!important}
     html body .settings-page>.page-head>p{margin:0!important;max-width:620px!important;line-height:1.45!important}
+
+    /* Project stage is informational, not a warning. */
+    html body .overview-stage{background:#f4f6ff!important;border-color:#d9def2!important;box-shadow:none!important}
+    html body .overview-stage .workspace-stage-pill{background:#e8edff!important;color:#4f5f8e!important}
+    html body .overview-stage .workspace-stage-pill::before{color:#6675a8!important}
+    html body .overview-stage .workspace-next-step{color:#52617e!important}
     html body .overview-stage .workspace-next-arrow{display:none!important}
 
     @media(max-width:760px){
       html body .settings-page>.page-head{display:block!important}
       html body .settings-page>.page-head>p{margin-top:7px!important;max-width:none!important}
+      html body .settings-page .settings-section{padding:18px 16px!important}
+      html body .open-items-page .open-question-list{padding-left:14px!important;padding-right:14px!important}
       html body .notes-page .note-index-status{display:flex!important;flex-wrap:wrap!important;justify-self:start!important;align-self:start!important;width:100%!important;min-width:0!important;max-width:100%!important;margin-left:0!important}
       html body .notes-page .note-index-status .note-status,
       html body .notes-page .note-index-status .note-status-link{display:inline-flex!important;align-items:center!important;justify-content:flex-start!important;width:auto!important;max-width:100%!important;height:auto!important;min-height:26px!important;padding:5px 9px!important;border-radius:999px!important;line-height:1.25!important;white-space:nowrap!important}
@@ -193,28 +202,32 @@
   }
 
   function normalizeSettings(scope=document){
-    scope.querySelectorAll?.('.settings-page .settings-section').forEach(section=>{important(section,'border','0');important(section,'border-radius','0');important(section,'box-shadow','none');important(section,'background','transparent')});
+    const mobile=matchMedia('(max-width:760px)').matches;
+    scope.querySelectorAll?.('.settings-page .settings-section').forEach(section=>{important(section,'border','0');important(section,'border-radius','0');important(section,'box-shadow','none');important(section,'background','var(--surface,#fff)');important(section,'box-sizing','border-box');important(section,'padding',mobile?'18px 16px':'20px 24px')});
     const grid=scope.querySelector?.('.settings-page .settings-source-grid');
     if(!grid) return;
     important(grid,'display','block');important(grid,'grid-template-columns','none');important(grid,'gap','0');
     grid.querySelectorAll(':scope > .source-row').forEach((row,index)=>{
       const content=row.querySelector(':scope > div');
       const status=row.querySelector(':scope > .settings-status');
-      important(row,'display','grid');important(row,'grid-template-columns','minmax(0,1fr) auto');important(row,'grid-template-rows','auto');important(row,'column-gap',matchMedia('(max-width:760px)').matches?'10px':'16px');important(row,'row-gap','0');important(row,'align-items','start');important(row,'width','100%');important(row,'min-width','0');important(row,'box-sizing','border-box');important(row,'border-top',index===0?'0':'1px solid #e5e8ed');
+      important(row,'display','grid');important(row,'grid-template-columns','minmax(0,1fr) auto');important(row,'grid-template-rows','auto');important(row,'column-gap',mobile?'10px':'16px');important(row,'row-gap','0');important(row,'align-items','start');important(row,'width','100%');important(row,'min-width','0');important(row,'box-sizing','border-box');important(row,'border-top',index===0?'0':'1px solid #e5e8ed');
       if(content){important(content,'grid-column','1');important(content,'grid-row','1');important(content,'width','100%');important(content,'min-width','0')}
       if(status){important(status,'grid-column','2');important(status,'grid-row','1');important(status,'align-self','start');important(status,'justify-self','end');important(status,'margin','1px 0 0');important(status,'width','max-content');important(status,'max-width','none')}
     });
   }
 
   function normalizeStage(scope=document){
+    const stage=scope.querySelector?.('.overview-stage');
+    if(stage){important(stage,'background','#f4f6ff');important(stage,'background-color','#f4f6ff');important(stage,'border-color','#d9def2');important(stage,'box-shadow','none')}
     scope.querySelectorAll?.('.overview-stage *').forEach(el=>{
       if(!/^late discovery$/i.test(el.textContent?.trim()||'')) return;
-      important(el,'background','#f3f5f7');important(el,'background-color','#f3f5f7');important(el,'color','#5f6b7c');important(el,'border-color','#d9e0e8');important(el,'box-shadow','none');
+      important(el,'background','#e8edff');important(el,'background-color','#e8edff');important(el,'color','#4f5f8e');important(el,'border-color','#d9def2');important(el,'box-shadow','none');
     });
   }
 
   function normalizeRecordSurfaces(scope=document){
     scope.querySelectorAll?.('.open-items-page .open-items-section-body,.open-items-page .open-question-list').forEach(el=>{important(el,'width','100%');important(el,'max-width','none');important(el,'background','var(--surface,#fff)');important(el,'box-shadow','none')});
+    scope.querySelectorAll?.('.open-items-page .open-question-list').forEach(el=>{important(el,'box-sizing','border-box');important(el,'padding-left',matchMedia('(max-width:760px)').matches?'14px':'20px');important(el,'padding-right',matchMedia('(max-width:760px)').matches?'14px':'20px')});
     scope.querySelectorAll?.('.open-items-page .review-card,.open-items-page .compact-review,.open-items-page details.open-question-item,.open-items-page .open-question-row').forEach(el=>{important(el,'background','transparent');important(el,'box-shadow','none')});
     const history=scope.querySelector?.('.history-page .history-list,.history-page #historyList');
     if(history){important(history,'width','100%');important(history,'max-width','none');important(history,'box-sizing','border-box');important(history,'background','var(--surface,#fff)');important(history,'padding',matchMedia('(max-width:760px)').matches?'18px 16px 20px':'20px 24px 24px')}
