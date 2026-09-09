@@ -1,28 +1,41 @@
 (() => {
   const STYLE_ID='state-attention-alignment';
-  const PASS='r75-layout-ownership';
+  const PASS='r76-final-qa';
 
   document.getElementById(STYLE_ID)?.remove();
   const style=document.createElement('style');
   style.id=STYLE_ID;
   style.textContent=`
-    /* Preserve record surfaces that already passed visual QA. */
+    /* Record surfaces: headers stay on the page background; records live on one white surface. */
     html body .open-items-page .open-items-section,
     html body .open-items-page .open-items-section-head{background:transparent!important;box-shadow:none!important}
-    html body .open-items-page .open-items-section-body{width:100%!important;max-width:none!important;background:var(--surface,#fff)!important;box-shadow:none!important}
+    html body .open-items-page .open-items-section-body,
+    html body .open-items-page .open-question-list{width:100%!important;max-width:none!important;background:var(--surface,#fff)!important;box-shadow:none!important}
+    html body .open-items-page .review-card,
+    html body .open-items-page .compact-review,
+    html body .open-items-page details.open-question-item,
+    html body .open-items-page .open-question-row{background:transparent!important;box-shadow:none!important}
+
     html body .notes-page .note-results,
     html body .notes-page #notesList{width:100%!important;max-width:none!important;background:var(--surface,#fff)!important;box-shadow:none!important}
-    html body .history-page .history-list,
-    html body .history-page #historyList{width:100%!important;max-width:none!important;box-sizing:border-box!important;padding-top:20px!important;background:var(--surface,#fff)!important;box-shadow:none!important}
 
-    /* Current State header owns its icon, title, support copy, and Browse action. */
+    html body .history-page .history-list,
+    html body .history-page #historyList{width:100%!important;max-width:none!important;box-sizing:border-box!important;padding:20px 24px 24px!important;background:var(--surface,#fff)!important;box-shadow:none!important}
+    html body .history-page .history-entry,
+    html body .history-page .history-entry-body{width:100%!important;max-width:none!important;background:transparent!important;box-sizing:border-box!important}
+    html body .history-page .history-change{width:100%!important;max-width:none!important}
+    html body .history-page .history-change>p{width:100%!important;max-width:none!important;box-sizing:border-box!important}
+
+    /* Current State: icon + one real copy block + Browse. No pseudo-title/grid-row stretching. */
     html body .workspace-below-grid{align-items:start!important;grid-auto-rows:min-content!important}
     html body .workspace-status-card{align-self:start!important;height:auto!important;min-height:0!important;display:block!important;position:relative!important}
-    html body .workspace-status-card>.eyebrow{display:grid!important;grid-template-columns:36px minmax(0,1fr) auto!important;grid-template-rows:auto auto!important;column-gap:12px!important;row-gap:3px!important;align-items:center!important;min-height:0!important;height:auto!important;margin:0 0 10px!important;padding-left:0!important;font-size:0!important;position:relative!important}
-    html body .workspace-status-card>.eyebrow>.section-icon{position:static!important;grid-column:1!important;grid-row:1 / span 2!important;align-self:center!important;justify-self:start!important;transform:none!important;margin:0!important}
-    html body .workspace-status-card>.eyebrow::after{grid-column:2!important;grid-row:1!important;align-self:end!important;margin:0!important;line-height:1.2!important}
-    html body .workspace-status-card .current-state-support{grid-column:2!important;grid-row:2!important;align-self:start!important;margin:0!important;padding:0!important;color:#64718a!important;font-size:12px!important;font-weight:500!important;letter-spacing:0!important;text-transform:none!important;line-height:1.4!important}
-    html body .workspace-status-card .current-state-browse{grid-column:3!important;grid-row:1!important;align-self:center!important;justify-self:end!important;position:static!important;margin:0!important;white-space:nowrap!important;font-size:11.5px!important}
+    html body .workspace-status-card>.eyebrow{display:grid!important;grid-template-columns:auto minmax(0,1fr) auto!important;gap:12px!important;align-items:center!important;min-height:0!important;height:auto!important;margin:0 0 12px!important;padding-left:0!important;font-size:0!important;position:relative!important}
+    html body .workspace-status-card>.eyebrow::after{content:none!important;display:none!important}
+    html body .workspace-status-card>.eyebrow>.section-icon{position:static!important;grid-column:1!important;align-self:center!important;justify-self:start!important;transform:none!important;margin:0!important}
+    html body .workspace-status-card .current-state-copy{grid-column:2!important;display:flex!important;flex-direction:column!important;justify-content:center!important;align-items:flex-start!important;gap:4px!important;min-width:0!important}
+    html body .workspace-status-card .current-state-title{display:block!important;margin:0!important;padding:0!important;color:var(--ink,#101a31)!important;font-size:16px!important;font-weight:820!important;letter-spacing:-.01em!important;text-transform:none!important;line-height:1.2!important}
+    html body .workspace-status-card .current-state-support{display:block!important;margin:0!important;padding:0!important;color:#64718a!important;font-size:12px!important;font-weight:500!important;letter-spacing:0!important;text-transform:none!important;line-height:1.4!important}
+    html body .workspace-status-card .current-state-browse{grid-column:3!important;align-self:start!important;justify-self:end!important;position:static!important;margin:2px 0 0!important;white-space:nowrap!important;font-size:11.5px!important}
     html body .workspace-status-card .workspace-status-body{display:block!important;flex:0 0 auto!important;height:auto!important;min-height:0!important;margin-top:0!important}
     html body .workspace-status-card .state-fact-preview{display:block!important;flex:0 0 auto!important;height:auto!important;min-height:0!important;padding-top:0!important;justify-content:flex-start!important}
     html body .workspace-status-card .state-fact-preview>ul{margin:0!important}
@@ -56,9 +69,11 @@
       html body .notes-page .note-index-status .note-status,
       html body .notes-page .note-index-status .note-status-link{display:inline-flex!important;align-items:center!important;justify-content:flex-start!important;width:auto!important;max-width:100%!important;height:auto!important;min-height:26px!important;padding:5px 9px!important;border-radius:999px!important;line-height:1.25!important;white-space:nowrap!important}
       html body .settings-page .settings-rule-form>.btn{width:auto!important;min-width:0!important;height:38px!important;min-height:38px!important;padding:0 12px!important;border-radius:8px!important;font-size:12px!important;line-height:1.2!important;align-self:end!important}
-      html body .workspace-status-card>.eyebrow{grid-template-columns:36px minmax(0,1fr)!important}
-      html body .workspace-status-card .current-state-browse{grid-column:2!important;grid-row:3!important;justify-self:start!important;margin-top:5px!important}
+      html body .workspace-status-card>.eyebrow{grid-template-columns:auto minmax(0,1fr)!important;align-items:start!important}
+      html body .workspace-status-card .current-state-browse{grid-column:2!important;grid-row:2!important;justify-self:start!important;margin-top:4px!important}
       html body .workspace-attention .workspace-attention-head{display:flex!important}
+      html body .history-page .history-list,
+      html body .history-page #historyList{padding:18px 16px 20px!important}
     }
   `;
   document.head.appendChild(style);
@@ -72,13 +87,29 @@
       const body=card.querySelector('.workspace-status-body');
       if(!eyebrow||!preview) return;
 
-      let support=eyebrow.querySelector(':scope > .current-state-support');
+      let support=eyebrow.querySelector('.current-state-support');
       const oldSupport=preview.querySelector(':scope > p');
       if(!support&&oldSupport){
         support=oldSupport;
         support.classList.add('current-state-support');
-        eyebrow.appendChild(support);
       }
+
+      let title=eyebrow.querySelector('.current-state-title');
+      if(!title){
+        title=document.createElement('span');
+        title.className='current-state-title';
+        title.textContent='Current State';
+      }
+
+      let copy=eyebrow.querySelector('.current-state-copy');
+      if(!copy){
+        copy=document.createElement('span');
+        copy.className='current-state-copy';
+        const icon=eyebrow.querySelector(':scope > .section-icon');
+        if(icon) icon.after(copy); else eyebrow.prepend(copy);
+      }
+      if(title.parentElement!==copy) copy.appendChild(title);
+      if(support&&support.parentElement!==copy) copy.appendChild(support);
 
       let browse=eyebrow.querySelector(':scope > .current-state-browse');
       const oldBrowse=preview.querySelector(':scope > .text-button');
@@ -159,6 +190,38 @@
     });
   }
 
+  function normalizeRecordSurfaces(scope=document){
+    scope.querySelectorAll?.('.open-items-page .open-items-section-body,.open-items-page .open-question-list').forEach(el=>{
+      important(el,'width','100%');
+      important(el,'max-width','none');
+      important(el,'background','var(--surface,#fff)');
+      important(el,'box-shadow','none');
+    });
+    scope.querySelectorAll?.('.open-items-page .review-card,.open-items-page .compact-review,.open-items-page details.open-question-item,.open-items-page .open-question-row').forEach(el=>{
+      important(el,'background','transparent');
+      important(el,'box-shadow','none');
+    });
+
+    const history=scope.querySelector?.('.history-page .history-list,.history-page #historyList');
+    if(history){
+      important(history,'width','100%');
+      important(history,'max-width','none');
+      important(history,'box-sizing','border-box');
+      important(history,'background','var(--surface,#fff)');
+      important(history,'padding',matchMedia('(max-width:760px)').matches?'18px 16px 20px':'20px 24px 24px');
+    }
+    scope.querySelectorAll?.('.history-page .history-entry,.history-page .history-entry-body,.history-page .history-change').forEach(el=>{
+      important(el,'width','100%');
+      important(el,'max-width','none');
+      important(el,'box-sizing','border-box');
+    });
+    scope.querySelectorAll?.('.history-page .history-change>p').forEach(el=>{
+      important(el,'width','100%');
+      important(el,'max-width','none');
+      important(el,'box-sizing','border-box');
+    });
+  }
+
   function syncAskBlankGuard(){
     const input=document.getElementById('askStateDrawerInput');
     const form=input?.closest('[data-review-batch-form="ask"]');
@@ -191,6 +254,7 @@
     normalizeCurrentState(document);
     normalizeAttention(document);
     normalizeSettings(document);
+    normalizeRecordSurfaces(document);
     syncAskBlankGuard();
   }
 
