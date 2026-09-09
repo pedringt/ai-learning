@@ -40,15 +40,15 @@ jobs:
       - name: Install Chromium for the browser suite
         run: python -m playwright install --with-deps chromium
 
-      # The old r861 asset test assumes every JS filename appears literally with
-      # ?v= in index.html. State now uses one shared release token plus a dynamic
-      # JS loader, so test_release_asset_loader.py covers the same cache-mix risk
-      # against the current implementation instead.
+      # Two older integration assertions pin retired source shapes rather than
+      # the behavior they were intended to protect. Their current equivalents
+      # live in test_release_asset_loader.py and test_integrity_polish_current.py.
       - name: Run deterministic Python suite
         working-directory: state-project-complete
         run: >-
           python -m pytest -q
           --deselect=test_frontend_integration_contract.py::test_r861_grounded_ask_module_and_release_assets_are_self_contained
+          --deselect=test_frontend_integration_contract.py::test_r85_integrity_and_polish_contracts
 
   javascript:
     runs-on: ubuntu-latest
