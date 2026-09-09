@@ -1,5 +1,5 @@
 (() => {
-  const STYLE_ID = 'state-final-mobile-r66';
+  const STYLE_ID = 'state-final-mobile-r67';
   let movingStyle=false;
 
   function installStyles(){
@@ -55,6 +55,17 @@
       html body .open-items-page .open-question-row,
       html body .open-items-page .open-items-section,
       html body .open-items-page .open-items-section-body{overflow-anchor:auto!important}
+      html body .open-items-page details.open-question-item{border:0!important;border-bottom:1px solid #e4e8ee!important;background:transparent!important}
+      html body .open-items-page details.open-question-item>summary{list-style:none!important;cursor:pointer!important}
+      html body .open-items-page details.open-question-item>summary::-webkit-details-marker{display:none!important}
+      html body .open-items-page .question-card-chevron{margin-left:auto!important;flex:0 0 auto!important;color:#8490a0!important;transition:transform .15s ease!important}
+      html body .open-items-page details.open-question-item[open] .question-card-chevron{transform:rotate(90deg)!important}
+      html body .open-items-page .open-question-inline-body{padding:0 4px 15px!important;max-width:760px!important}
+      html body .open-items-page .open-question-inline-state{padding:10px 12px!important;border:1px solid #e4e8ee!important;border-radius:9px!important;background:#f8f9fb!important}
+      html body .open-items-page .open-question-inline-state p{margin:0!important;font-size:13px!important;line-height:1.48!important;color:#4f5b70!important}
+      html body .open-items-page .open-question-inline-state p+p{margin-top:7px!important}
+      html body .open-items-page .open-question-actions{display:flex!important;flex-wrap:wrap!important;gap:8px 12px!important;margin-top:10px!important}
+      html body .open-items-page .open-question-actions .text-button{font-size:12px!important}
 
       /* History is a flat audit log. Reassert this after every older style pass. */
       html body .history-page #historyList,
@@ -82,6 +93,9 @@
       html body #askStateDrawer.is-editing-answer .state-ask-clear{display:none!important;visibility:hidden!important;pointer-events:none!important}
       html body #askStateDrawer .state-ask-reset::before,
       html body #askStateDrawer .state-ask-reset::after{content:none!important;display:none!important}
+
+      /* Mobile help is deliberately part of the page flow, not another floating control. */
+      html body .state-mobile-help{display:none}
 
       /* Readability floor against older late-loaded polish rules. */
       html body .open-items-page .review-source-meta,
@@ -144,6 +158,9 @@
         html body .open-items-page .review-card.is-expanded .review-card-toggle{padding-left:4px!important}
         html body .open-items-page .open-question-row.is-blocking{padding-left:4px!important}
         html body .open-items-page .open-item-label.blocking{white-space:normal!important}
+        html body .open-items-page .open-question-inline-body{padding-left:4px!important;padding-right:4px!important}
+        html body .open-items-page .open-question-actions{display:grid!important;grid-template-columns:1fr!important;gap:3px!important}
+        html body .open-items-page .open-question-actions .text-button{justify-content:flex-start!important;min-height:38px!important;padding:7px 4px!important}
         html body .dialog-close,
         html body #askStateDrawer .ask-state-drawer-close{width:40px!important;height:40px!important;min-width:40px!important;min-height:40px!important}
         html body .settings-page .settings-actions .btn,
@@ -152,6 +169,8 @@
         html body #askStateDrawer .ask-copy-answer,
         html body #askStateDrawer .ask-item-action,
         html body #askStateDrawer .ask-item-link{min-height:34px!important;display:inline-flex!important;align-items:center!important;padding:5px 6px!important}
+        html body .state-mobile-help{display:block!important;margin:30px 0 72px!important;padding:18px 2px 0!important;border-top:1px solid #e1e6ed!important}
+        html body .state-mobile-help button{display:inline-flex!important;min-height:40px!important;align-items:center!important;padding:4px 0!important;border:0!important;background:transparent!important;color:#68768a!important;font:inherit!important;font-size:12px!important;font-weight:700!important;cursor:pointer!important}
       }
       @media(max-width:480px){
         html body .prototype-productbar .product-tagline,
@@ -174,12 +193,40 @@
     document.querySelectorAll('.workspace-attention .workspace-attention-head>.state-attention-head-icon').forEach(icon=>icon.remove());
   }
 
+  function ensureMobileHelp(){
+    const root=document.getElementById('viewRoot');
+    const page=root?.querySelector('.page,.overview');
+    if(!page)return;
+    root.querySelectorAll('.state-mobile-help').forEach(el=>{if(el.parentElement!==page)el.remove();});
+    if(page.querySelector('.state-mobile-help'))return;
+    const help=document.createElement('footer');
+    help.className='state-mobile-help';
+    help.innerHTML='<button type="button" data-action="show-demo-help">Need help? How State works →</button>';
+    page.appendChild(help);
+  }
+
+  function syncMobileAskLauncher(){
+    if(!window.matchMedia('(max-width:760px)').matches)return;
+    const launcher=document.getElementById('askStateLauncher');
+    if(!launcher)return;
+    const drawer=document.getElementById('askStateDrawer');
+    const drawerOpen=!!drawer&&!drawer.hidden&&document.body.classList.contains('ask-state-drawer-open');
+    launcher.classList.toggle('is-hidden',drawerOpen);
+    if(!drawerOpen){
+      launcher.style.removeProperty('opacity');
+      launcher.style.removeProperty('visibility');
+      launcher.style.removeProperty('pointer-events');
+      launcher.style.removeProperty('transform');
+      launcher.removeAttribute('aria-hidden');
+    }
+  }
+
   function reveal(){
     document.documentElement.classList.remove('state-final-mobile-pending');
     if(window.__stateFinalMobileTimer){clearTimeout(window.__stateFinalMobileTimer);delete window.__stateFinalMobileTimer;}
   }
 
-  function run(){installStyles();keepFinalStyleLast();removeWorkspaceAttentionIcon();reveal();}
+  function run(){installStyles();keepFinalStyleLast();removeWorkspaceAttentionIcon();ensureMobileHelp();syncMobileAskLauncher();reveal();}
   let queued=false;
   const schedule=()=>{
     if(movingStyle||queued)return;
@@ -189,9 +236,18 @@
       installStyles();
       keepFinalStyleLast();
       removeWorkspaceAttentionIcon();
+      ensureMobileHelp();
+      syncMobileAskLauncher();
       reveal();
     });
   };
-  new MutationObserver(schedule).observe(document.documentElement,{childList:true,subtree:true});
+  new MutationObserver(schedule).observe(document.documentElement,{childList:true,subtree:true,attributes:true,attributeFilter:['hidden','class']});
+  document.addEventListener('click',event=>{
+    if(event.target.closest?.('[data-review-batch-action="close-ask"]')){
+      requestAnimationFrame(()=>requestAnimationFrame(syncMobileAskLauncher));
+    }
+  },true);
+  window.addEventListener('pageshow',syncMobileAskLauncher);
+  window.addEventListener('resize',schedule,{passive:true});
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',run,{once:true});else run();
 })();
