@@ -16,6 +16,51 @@
     document.head.appendChild(polish);
   }
 
+  /* Mobile Learning Guide hardening. Keep expanded stage content inside the
+     card bounds instead of letting old negative-offset polish clip it. */
+  if(!document.getElementById('learning-mobile-bounds-fix')){
+    const learningMobileFix=document.createElement('style');
+    learningMobileFix.id='learning-mobile-bounds-fix';
+    learningMobileFix.textContent=`
+      @media(max-width:640px){
+        [data-page="learn"] .learning-stage .stage-body{
+          width:100%!important;
+          max-width:100%!important;
+          min-width:0!important;
+          box-sizing:border-box!important;
+        }
+        [data-page="learn"] .learning-stage .stage-body > *,
+        [data-page="learn"] .learning-stage .stage-group,
+        [data-page="learn"] .learning-stage .learning-item{
+          min-width:0!important;
+          max-width:100%!important;
+          box-sizing:border-box!important;
+        }
+        [data-page="learn"] .learning-stage .stage-group.practice{
+          margin-left:0!important;
+          margin-right:0!important;
+          width:auto!important;
+          max-width:100%!important;
+        }
+        [data-page="learn"] .learning-stage .resource-row{
+          min-width:0!important;
+          max-width:100%!important;
+        }
+        [data-page="learn"] .learning-stage .resource-link{
+          max-width:100%!important;
+          white-space:normal!important;
+          overflow-wrap:anywhere!important;
+        }
+        [data-page="learn"] .learning-stage .learning-item,
+        [data-page="learn"] .learning-stage .learning-item p,
+        [data-page="learn"] .learning-stage .stage-group.practice p{
+          overflow-wrap:break-word!important;
+        }
+      }
+    `;
+    document.head.appendChild(learningMobileFix);
+  }
+
   const applyIcon=()=>{
     if(!btn)return;
     const dark=isDark();

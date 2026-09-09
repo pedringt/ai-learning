@@ -1,4 +1,65 @@
 (() => {
+  const RELEASE_STYLE_ID = 'state-release-finish';
+  document.getElementById(RELEASE_STYLE_ID)?.remove();
+  const releaseStyle = document.createElement('style');
+  releaseStyle.id = RELEASE_STYLE_ID;
+  releaseStyle.textContent = `
+    /* Final release rhythm: keep Open Items sections visually consistent. */
+    html body .open-items-page .open-items-sections{display:block!important;gap:0!important}
+    html body .open-items-page .open-items-section{margin:0!important}
+    html body .open-items-page .open-items-section + .open-items-section{margin-top:28px!important}
+    html body .open-items-page .open-items-section-head{margin:0!important}
+    html body .open-items-page .open-items-section-body{margin-top:12px!important}
+
+    /* Review rows use the full white surface like Questions and show their expand action clearly. */
+    html body .open-items-page .review-card,
+    html body .open-items-page .compact-review{width:100%!important;max-width:none!important;margin:0!important;border:0!important;border-bottom:1px solid #e3e8ef!important;border-radius:0!important}
+    html body .open-items-page .review-card:last-child,
+    html body .open-items-page .compact-review:last-child{border-bottom:0!important}
+    html body .open-items-page .review-card-toggle{width:100%!important;display:flex!important;align-items:center!important;justify-content:space-between!important;gap:16px!important;text-align:left!important;background:transparent!important;border:0!important;padding:0!important;color:inherit!important}
+    html body .open-items-page .review-card-toggle::after{content:'›'!important;display:block!important;flex:0 0 auto!important;font-size:22px!important;line-height:1!important;color:#7a8799!important;transform:none!important;transition:transform .14s ease,color .14s ease!important}
+    html body .open-items-page .review-card-toggle[aria-expanded='true']::after{transform:rotate(90deg)!important}
+    html body .open-items-page .review-card-toggle:hover::after{color:var(--accent,#40356f)!important}
+    html body .open-items-page .review-row-head{display:block!important;flex:1 1 auto!important;min-width:0!important}
+
+    /* Notes: status stays a status; navigation sits quietly beneath it. */
+    html body .notes-page .note-index-status{display:flex!important;flex-direction:column!important;align-items:flex-end!important;justify-content:flex-start!important;gap:3px!important}
+    html body .notes-page .note-history-link{display:block!important;margin:1px 0 0!important;font-size:11px!important;line-height:1.25!important;white-space:nowrap!important}
+
+    /* Settings keeps the current width, but removes the long loose vertical rhythm. */
+    html body .settings-page .settings-section{margin-top:0!important;margin-bottom:12px!important}
+    html body .settings-page .settings-section:last-child{margin-bottom:0!important}
+    html body .settings-page .settings-section-head{margin-bottom:10px!important}
+    html body .settings-page .slack-preview,
+    html body .settings-page .source-list{margin-top:10px!important;gap:6px!important}
+    html body .settings-page .settings-source-grid>.source-row{padding-top:10px!important;padding-bottom:10px!important}
+    html body .settings-page .settings-callout{margin-top:10px!important;padding-top:10px!important;padding-bottom:10px!important}
+    html body .settings-page .settings-actions{margin-top:10px!important}
+    html body .settings-page .settings-slack-status{margin-top:10px!important}
+    html body .settings-page .settings-danger{padding-top:14px!important;padding-bottom:14px!important}
+
+    /* History: remove the old 920px page constraint and tighten the timeline's left rail. */
+    html body .history-page{width:100%!important;max-width:none!important}
+    html body .history-page .history-list,
+    html body .history-page #historyList{width:100%!important;max-width:none!important;margin-left:0!important;margin-right:0!important}
+    html body .history-page .history-list::before,
+    html body .history-page #historyList::before{left:80px!important}
+    html body .history-page .history-list article.history-entry,
+    html body .history-page #historyList article.history-entry{grid-template-columns:52px minmax(0,1fr)!important;gap:18px!important;margin-left:0!important;margin-right:0!important}
+    html body .history-page .history-entry-body::before{left:-14px!important}
+
+    @media(max-width:760px){
+      html body .open-items-page .open-items-section + .open-items-section{margin-top:24px!important}
+      html body .notes-page .note-index-status{align-items:flex-start!important}
+      html body .history-page .history-list::before,
+      html body .history-page #historyList::before{left:21px!important}
+      html body .history-page .history-list article.history-entry,
+      html body .history-page #historyList article.history-entry{grid-template-columns:1fr!important;gap:4px!important;padding-left:28px!important}
+      html body .history-page .history-entry-body::before{left:-18px!important}
+    }
+  `;
+  document.head.appendChild(releaseStyle);
+
   const routeForView = {
     overview: 'workspace',
     'project-overview': 'project',

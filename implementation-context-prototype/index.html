@@ -12,11 +12,19 @@
   <meta name="twitter:title" content="State">
   <meta name="twitter:description" content="State captures project information, maintains current understanding, tracks unresolved questions, and reviews new evidence before it changes what the project treats as current.">
   <script>
+    document.documentElement.classList.add('state-prepaint','state-final-mobile-pending');
+    window.__stateRevealTimer=setTimeout(function(){document.documentElement.classList.remove('state-prepaint');},1200);
+    window.__stateFinalMobileTimer=setTimeout(function(){document.documentElement.classList.remove('state-final-mobile-pending');},1400);
+  </script>
+  <style id="state-prepaint-guard">
+    html.state-prepaint .prototype-productbar,html.state-prepaint .software-shell,html.state-final-mobile-pending .prototype-productbar,html.state-final-mobile-pending .software-shell{visibility:hidden!important;}
+  </style>
+  <script>
     (function(){
       var local = location.protocol === 'file:';
       document.write('<link rel="icon" href="' + (local ? '../favicon.svg' : '/favicon.svg') + '">');
       document.write('<link rel="stylesheet" href="' + (local ? '../site-shell.css' : '/site-shell.css') + '">');
-      document.write('<link rel="stylesheet" href="' + (local ? 'context-tool.css?v=r56-mobile-nav-consolidation' : '/implementation-context-prototype/context-tool.css?v=r56-mobile-nav-consolidation') + '">');
+      document.write('<link rel="stylesheet" href="' + (local ? 'context-tool.css?v=r73-mobile-pass' : '/implementation-context-prototype/context-tool.css?v=r73-mobile-pass') + '">');
     })();
   </script>
   <style id="state-critical-modal">
@@ -25,11 +33,8 @@
     #overlay>.dialog{position:relative!important;margin:0 auto!important;width:min(620px,100%)!important;max-height:calc(100dvh - 40px)!important;overflow:auto!important;overscroll-behavior:contain!important;}
     body.modal-open .topbar,body.modal-open .prototype-productbar{z-index:0!important;}
     .project-settings-button{display:none!important;}
-    .ask-live-answer .ask-answer-item,
-    .ask-live-answer .ask-answer-item>div,
-    .ask-live-answer .ask-answer-item .ask-item-detail{border-top:0!important;border-bottom:0!important;box-shadow:none!important;}
-    .ask-live-answer .ask-answer-item::before,
-    .ask-live-answer .ask-answer-item::after{border:0!important;box-shadow:none!important;}
+    .ask-live-answer .ask-answer-item,.ask-live-answer .ask-answer-item>div,.ask-live-answer .ask-answer-item .ask-item-detail{border-top:0!important;border-bottom:0!important;box-shadow:none!important;}
+    .ask-live-answer .ask-answer-item::before,.ask-live-answer .ask-answer-item::after{border:0!important;box-shadow:none!important;}
     .ask-quick-starts{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;}
     .ask-quick-starts button{white-space:normal;text-align:left;}
     .ask-grounding{margin-top:18px;}
@@ -39,151 +44,137 @@
     @media(max-width:760px){
       #overlay{padding:max(14px,env(safe-area-inset-top)) 12px max(14px,env(safe-area-inset-bottom))!important;}
       #overlay>.dialog{max-height:calc(100dvh - 28px)!important;}
-      /* One authoritative mobile nav (see mobile-primary-nav / mobile-subnav
-         below). The desktop sidebar nav is simply hidden here rather than
-         reshaped -- do not add another override layer on top of it. */
       .sidebar-nav,.app-sidebar>.demo-help-button{display:none!important;}
       .mobile-primary-nav,.mobile-subnav{display:flex!important;}
       .ask-quick-starts{display:grid;grid-template-columns:1fr 1fr;}
     }
-    /* Single native mobile nav: a horizontally swipeable row of real
-       [data-view] buttons, plus a second swipeable row of real
-       [data-project-jump] buttons that only appears inside Current State.
-       Hidden entirely on desktop; shown only inside the max-width:760px
-       block above. The trailing "›" is a sticky, non-scrolling flex item
-       sitting on a gradient that fades to the sidebar's own background
-       (#f8f7fa / #14131a in dark mode -- see .app-sidebar), so it reads as
-       an edge indicator rather than scrolling away with the buttons. */
-    .mobile-primary-nav,.mobile-subnav{
-      display:none;
-      overflow-x:auto;
-      -webkit-overflow-scrolling:touch;
-      scrollbar-width:none;
-      gap:4px;
-      margin:0 -12px;
-      padding:2px 0 2px 12px;
-      position:relative;
-    }
+    .mobile-primary-nav,.mobile-subnav{display:none;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;gap:4px;margin:0 -12px;padding:2px 0 2px 12px;position:relative;}
     .mobile-primary-nav::-webkit-scrollbar,.mobile-subnav::-webkit-scrollbar{display:none;}
     .mobile-primary-nav{border-bottom:1px solid var(--line);padding-bottom:10px;}
     .mobile-subnav{padding-top:8px;}
-    .mobile-primary-nav::after,.mobile-subnav::after{
-      content:"›";
-      position:sticky;
-      right:0;
-      flex:0 0 24px;
-      align-self:stretch;
-      display:grid;
-      place-items:center;
-      background:linear-gradient(90deg,transparent 0%,#f8f7fa 55%,#f8f7fa 100%);
-      color:var(--accent);
-      font-size:17px;
-      font-weight:800;
-      pointer-events:none;
-    }
+    .mobile-primary-nav::after,.mobile-subnav::after{content:"›";position:sticky;right:0;flex:0 0 24px;align-self:stretch;display:grid;place-items:center;background:linear-gradient(90deg,transparent 0%,#f8f7fa 55%,#f8f7fa 100%);color:var(--accent);font-size:17px;font-weight:800;pointer-events:none;}
     body.v88-dark .mobile-primary-nav::after,body.v88-dark .mobile-subnav::after{background:linear-gradient(90deg,transparent 0%,#14131a 55%,#14131a 100%);}
-    .mobile-primary-nav .nav-item,.mobile-subnav button{
-      flex:0 0 auto;
-      white-space:nowrap;
-      width:auto!important;
-      display:inline-flex!important;
-      align-items:center;
-      gap:4px;
-      padding:7px 12px!important;
-      border-radius:999px!important;
-      font-size:12px!important;
-      color:var(--muted);
-      background:var(--surface2);
-      border:0;
-      cursor:pointer;
-    }
-    .mobile-primary-nav .nav-item.active,.mobile-subnav button.active{
-      background:var(--accent-soft);
-      color:var(--accent);
-      font-weight:800;
-    }
+    .mobile-primary-nav .nav-item,.mobile-subnav button{flex:0 0 auto;white-space:nowrap;width:auto!important;display:inline-flex!important;align-items:center;gap:4px;padding:7px 12px!important;border-radius:999px!important;font-size:12px!important;color:var(--muted);background:var(--surface2);border:0;cursor:pointer;}
+    .mobile-primary-nav .nav-item.active,.mobile-subnav button.active{background:var(--accent-soft);color:var(--accent);font-weight:800;}
     .mobile-primary-nav .nav-count{width:auto!important;height:auto!important;min-width:16px!important;padding:0 5px!important;border-radius:999px!important;background:var(--accent-soft);color:var(--accent);font-weight:750;}
     .mobile-primary-nav .nav-count[hidden]{display:none!important;}
     .mobile-subnav[hidden]{display:none!important;}
     @media(max-width:480px){.ask-quick-starts{grid-template-columns:1fr;}}
   </style>
+  <style id="state-final-r62">
+    html body:not(.v88-dark) .prototype-productbar{color:#172b49!important}
+    html body:not(.v88-dark) .prototype-productbar .product-tagline{color:#304a6d!important;font-weight:650!important;opacity:1!important}
+    html body .page-head>div>p,html body .workspace-section-hint{font-size:13.5px!important;line-height:1.5!important}
+    html body .open-items-page .open-items-kicker,html body .open-items-page .review-kicker,html body .open-items-page .open-item-label{font-size:10.5px!important}
+    html body .open-items-page .open-items-section-description,html body .open-items-page .review-source-meta,html body .open-items-page .open-question-meta{font-size:12px!important;line-height:1.45!important}
+    html body .open-items-page details.reasoning summary,html body .open-items-page details.reasoning p{font-size:12px!important;line-height:1.45!important}
+    html body .open-items-page .review-actions .btn{font-size:12.5px!important}
+    html body .notes-page .note-index-main h3{font-size:14.5px!important}
+    html body .notes-page .note-index-main p{font-size:13.5px!important;line-height:1.52!important;overflow-wrap:anywhere!important;word-break:break-word!important}
+    html body .notes-page .note-source,html body .notes-page .note-date,html body .notes-page .note-expand-label,html body .notes-page .note-index-row .text-button{font-size:11.5px!important}
+    html body .history-page .history-entry-date,html body .history-page .decision-line{font-size:11.5px!important}
+    html body .history-page .history-change>p{font-size:13.5px!important;line-height:1.5!important}
+    html body .settings-page .settings-section p,html body .settings-page .settings-behavior-list li,html body .settings-page .source-description,html body .settings-page .slack-preview-row span,html body .settings-page .settings-rule-copy span{font-size:12.5px!important;line-height:1.48!important}
+    html body .settings-page .settings-rule-copy strong,html body .settings-page .settings-project-name label{font-size:10.5px!important}
+    html body .dialog p,html body .dialog textarea{font-size:13.5px!important}
+    html body .dialog .btn{font-size:12.5px!important}
+    html body .open-items-page .open-items-count-summary{display:none!important}
+    html body .open-items-page .review-page-count{display:none!important}
+    html body .open-items-page .review-kicker{display:none!important}
+    html body .open-items-page .review-card-title{font-size:15.5px!important;line-height:1.38!important;font-weight:720!important;max-width:720px!important}
+    html body .open-items-page .review-card-toggle{padding:17px 8px!important}
+    html body .open-items-page .review-card:first-child .review-card-toggle{border-left:3px solid #7867b5!important;padding-left:13px!important}
+    html body .open-items-page .review-card:first-child .review-card-title{font-weight:800!important}
+    html body .open-items-page .review-source-meta{margin-top:6px!important;color:#7a8494!important}
+    html body .open-items-page .open-items-section-title{font-size:18px!important}
+    html body .open-items-page .open-question-title{font-size:14px!important;font-weight:680!important}
+    html body .notes-page .note-index-row:has(.note-status--pending) [data-action='edit-note'],html body .notes-page .note-index-row:has(.note-status--reviewed) [data-action='edit-note'],html body .notes-page .note-index-row:has(.note-status--no-review-needed) [data-action='edit-note'],html body .notes-page .note-index-row:has(.note-status--unknown) [data-action='edit-note']{display:none!important}
+    html body .notes-page .note-immutable-hint{font-size:12px!important;color:#6d7788!important}
+    html body #askStateDrawer{border-radius:18px 0 0 18px!important;overflow:hidden!important}
+    html body #askStateDrawer .ask-state-drawer-inner,html body #askStateDrawer .ask-state-drawer-body{border-radius:18px 0 0 18px!important}
+    html body #askStateDrawer .ask-live-answer{font-size:13.5px!important;line-height:1.5!important}
+    html body #askStateDrawer .ask-answer-actions .text-button,html body #askStateDrawer [data-action*='copy']{font-size:11.5px!important}
+    @media(max-width:760px){
+      html body .prototype-productbar{padding:9px 14px!important;gap:6px!important;align-items:flex-start!important;flex-wrap:wrap!important}
+      html body .prototype-productbar .product-tagline{flex:1 1 210px!important;font-size:11.5px!important;line-height:1.35!important}
+      html body .software-shell{min-width:0!important}
+      html body .app-sidebar,html body .app-workspace,html body .view-root,html body .page{min-width:0!important;max-width:100%!important}
+      html body .app-workspace{padding-left:14px!important;padding-right:14px!important}
+      html body .page-head{gap:12px!important;align-items:flex-start!important}
+      html body .page-head h2{font-size:27px!important;line-height:1.12!important}
+      html body .page-head>.btn{min-height:40px!important;white-space:nowrap!important}
+      html body .open-items-page .open-items-sections{gap:25px!important}
+      html body .open-items-page .open-items-section-head{padding-bottom:10px!important}
+      html body .open-items-page .review-card,html body .open-items-page .compact-review,html body .open-items-page .open-question-list{max-width:100%!important}
+      html body .open-items-page .review-card-toggle{padding:15px 4px!important}
+      html body .open-items-page .review-card:first-child .review-card-toggle{padding-left:10px!important}
+      html body .open-items-page .review-card-title{font-size:15px!important;overflow-wrap:anywhere!important}
+      html body .open-items-page .review-decision-context{max-width:100%!important}
+      html body .open-items-page .review-context-block{padding:10px 11px!important}
+      html body .open-items-page .review-actions{display:grid!important;grid-template-columns:1fr!important}
+      html body .open-items-page .review-actions .btn{width:100%!important;min-height:42px!important}
+      html body .open-items-page .open-question-row{padding-top:13px!important;padding-bottom:13px!important}
+      html body .open-items-page .open-question-title,html body .open-items-page .open-question-meta{max-width:none!important;overflow-wrap:anywhere!important}
+      html body .notes-page article.simple-note.note-index-row{grid-template-columns:1fr!important;gap:7px!important;padding:14px 0!important}
+      html body .notes-page .note-date{grid-row:auto!important}
+      html body .notes-page .note-index-status{justify-self:start!important;grid-column:1!important}
+      html body .notes-page .note-index-main{min-width:0!important}
+      html body .notes-page .note-index-main p,html body .notes-page .note-full-text{max-width:100%!important;overflow-wrap:anywhere!important;word-break:break-word!important}
+      html body .notes-page .inline-actions.note-actions{flex-wrap:wrap!important;gap:8px!important}
+      html body .notes-page .notes-toolbar,html body .notes-page .notes-filter-row{min-width:0!important;max-width:100%!important;flex-wrap:wrap!important}
+      html body .notes-page .notes-search{width:100%!important;max-width:100%!important}
+      html body .history-page .history-entry{padding-bottom:22px!important;margin-bottom:22px!important}
+      html body .history-page .history-entry h3{font-size:17px!important}
+      html body .history-page .history-change{grid-template-columns:1fr!important;max-width:100%!important}
+      html body .settings-page{max-width:100%!important}
+      html body .settings-page .settings-section-head,html body .settings-page .slack-preview-row,html body .settings-page .source-row{align-items:flex-start!important;flex-wrap:wrap!important}
+      html body .settings-page .settings-project-name{max-width:100%!important}
+      html body .settings-page .settings-project-name input{width:100%!important;box-sizing:border-box!important}
+      html body .settings-page .settings-actions{flex-wrap:wrap!important}
+      html body .dialog{padding:17px!important;width:100%!important;border-radius:12px!important}
+      html body .dialog h2{font-size:20px!important;overflow-wrap:anywhere!important}
+      html body .dialog .dialog-actions{display:grid!important;grid-template-columns:1fr!important}
+      html body .dialog .dialog-actions .btn{width:100%!important;min-height:42px!important}
+      html body #askStateDrawer{width:min(94vw,420px)!important;max-width:94vw!important;border-radius:16px 0 0 16px!important}
+      html body #askStateDrawer .ask-state-drawer-inner,html body #askStateDrawer .ask-state-drawer-body{border-radius:16px 0 0 16px!important}
+      html body #askStateDrawer .ask-state-starters button{width:100%!important;max-width:100%!important;white-space:normal!important;text-align:left!important;min-height:42px!important}
+      html body #askStateDrawer .ask-live-answer,html body #askStateDrawer .ask-live-answer *{overflow-wrap:anywhere!important}
+    }
+    @media(max-width:480px){html body .page-head{display:block!important}html body .page-head>.btn{margin-top:12px!important;width:100%!important}html body .prototype-productbar .product-divider{display:none!important}html body .prototype-productbar .product-name{margin-right:3px!important}html body #askStateDrawer{width:96vw!important;max-width:96vw!important}}
+  </style>
 </head>
 <body>
   <div class="topbar"><div class="topinner"><a class="brand-button" href="../index.html"><span class="brand">AI <span>Learning Portfolio</span></span></a><nav aria-label="Primary pages" class="nav"><a href="../index.html">Home</a><a aria-current="page" href="../index.html#portfolio">Applied Work</a><a href="../index.html#learn">Learning Guide</a></nav><div class="top-actions"><button aria-label="Switch to dark mode" aria-pressed="false" class="theme-toggle" id="v922ThemeToggle" title="Switch to dark mode" type="button">☾</button><select aria-label="Choose page" id="v922MobileNav"><option value="../index.html">Home</option><option selected value="../index.html#portfolio">Applied Work</option><option value="../index.html#learn">Learning Guide</option></select></div></div></div>
   <div class="prototype-productbar"><span class="product-mark" aria-hidden="true">◆</span><button type="button" class="product-name product-home" data-view="overview" aria-label="Return to Workspace">State</button><span class="product-divider" aria-hidden="true">·</span><span class="product-tagline">Maintained project understanding, not reconstructed history.</span></div>
-
   <main class="app-shell software-shell">
     <h1 class="visually-hidden">State project workspace</h1>
     <aside class="app-sidebar" aria-label="Project workspace">
-      <div class="sidebar-project">
-        <span class="meta-label">Project</span>
-        <button class="project-switcher" id="projectSwitcher" data-action="toggle-projects" aria-expanded="false" aria-controls="projectMenu">Northstar <span>⌄</span></button>
-        <div class="project-menu" id="projectMenu" hidden><button class="active">Northstar <span>Current</span></button><button disabled>Website Redesign <span>Sample</span></button><button disabled>Legal AI Research <span>Sample</span></button><button disabled>＋ New project <span>Planned</span></button></div>
-      </div>
-      <nav class="sidebar-nav">
-        <button class="nav-item active" data-view="overview">Workspace</button>
-        <div class="sidebar-nav-group project-nav-group">
-          <button class="nav-item project-nav-toggle" data-view="project-overview">Current State</button>
-          <div class="project-subnav" id="projectSubnav" hidden>
-            <button data-project-jump="project-top">Overview</button>
-            <button data-project-jump="project-product" data-project-area="product">Product &amp; Workflow</button>
-            <button data-project-jump="project-safety" data-project-area="safety">Safety &amp; Constraints</button>
-            <button data-project-jump="project-evaluation" data-project-area="evaluation">Evaluation &amp; Rollout</button>
-          </div>
-        </div>
-        <button class="nav-item open-items-nav-toggle" data-view="open-items">Open Items <span class="nav-count" id="openItemsActionCount" hidden></span></button>
-        <button class="nav-item" data-view="notes">Notes</button>
-        <button class="nav-item" data-view="history">History</button>
-        <button class="nav-item" data-view="settings">Settings</button>
-      </nav>
-      <nav class="mobile-primary-nav" aria-label="Project navigation">
-        <button class="nav-item active" data-view="overview">Workspace</button>
-        <button class="nav-item open-items-nav-toggle" data-view="open-items">Open Items <span class="nav-count" id="mobileOpenItemsCount" hidden></span></button>
-        <button class="nav-item" data-view="project-overview">Current State</button>
-        <button class="nav-item" data-view="notes">Notes</button>
-        <button class="nav-item" data-view="history">History</button>
-        <button class="nav-item" data-view="settings">Settings</button>
-      </nav>
-      <nav class="mobile-subnav" id="mobileProjectSubnav" hidden aria-label="Current State sections">
-        <button data-project-jump="project-top">Overview</button>
-        <button data-project-jump="project-product" data-project-area="product">Product &amp; Workflow</button>
-        <button data-project-jump="project-safety" data-project-area="safety">Safety &amp; Constraints</button>
-        <button data-project-jump="project-evaluation" data-project-area="evaluation">Evaluation &amp; Rollout</button>
-      </nav>
+      <div class="sidebar-project"><span class="meta-label">Project</span><button class="project-switcher" id="projectSwitcher" data-action="toggle-projects" aria-expanded="false" aria-controls="projectMenu">Northstar <span>⌄</span></button><div class="project-menu" id="projectMenu" hidden><button class="active">Northstar <span>Current</span></button><button disabled>Website Redesign <span>Sample</span></button><button disabled>Legal AI Research <span>Sample</span></button><button disabled>＋ New project <span>Planned</span></button></div></div>
+      <nav class="sidebar-nav"><button class="nav-item active" data-view="overview">Workspace</button><div class="sidebar-nav-group project-nav-group"><button class="nav-item project-nav-toggle" data-view="project-overview">Current State</button><div class="project-subnav" id="projectSubnav" hidden><button data-project-jump="project-top">Overview</button><button data-project-jump="project-product" data-project-area="product">Product &amp; Workflow</button><button data-project-jump="project-safety" data-project-area="safety">Safety &amp; Constraints</button><button data-project-jump="project-evaluation" data-project-area="evaluation">Evaluation &amp; Rollout</button></div></div><button class="nav-item open-items-nav-toggle" data-view="open-items">Open Items <span class="nav-count" id="openItemsActionCount" hidden></span></button><button class="nav-item" data-view="notes">Notes</button><button class="nav-item" data-view="history">History</button><button class="nav-item" data-view="settings">Settings</button></nav>
+      <nav class="mobile-primary-nav" aria-label="Project navigation"><button class="nav-item active" data-view="overview">Workspace</button><button class="nav-item open-items-nav-toggle" data-view="open-items">Open Items <span class="nav-count" id="mobileOpenItemsCount" hidden></span></button><button class="nav-item" data-view="project-overview">Current State</button><button class="nav-item" data-view="notes">Notes</button><button class="nav-item" data-view="history">History</button><button class="nav-item" data-view="settings">Settings</button></nav>
+      <nav class="mobile-subnav" id="mobileProjectSubnav" hidden aria-label="Current State sections"><button data-project-jump="project-top">Overview</button><button data-project-jump="project-product" data-project-area="product">Product &amp; Workflow</button><button data-project-jump="project-safety" data-project-area="safety">Safety &amp; Constraints</button><button data-project-jump="project-evaluation" data-project-area="evaluation">Evaluation &amp; Rollout</button></nav>
       <button class="demo-help-button" data-action="show-demo-help">How this works</button>
     </aside>
-    <section class="app-workspace">
-      <section id="viewRoot" class="view-root" aria-live="polite"></section>
-    </section>
+    <section class="app-workspace"><section id="viewRoot" class="view-root" aria-live="polite"></section></section>
   </main>
-
-  <div class="overlay" id="overlay" hidden>
-    <section class="dialog" role="dialog" aria-modal="true" aria-labelledby="dialogTitle" tabindex="-1">
-      <button class="dialog-close" aria-label="Close" data-action="close-dialog">×</button>
-      <div id="dialogBody"></div>
-    </section>
-  </div>
-
+  <div class="overlay" id="overlay" hidden><section class="dialog" role="dialog" aria-modal="true" aria-labelledby="dialogTitle" tabindex="-1"><button class="dialog-close" aria-label="Close" data-action="close-dialog">×</button><div id="dialogBody"></div></section></div>
   <script>
     (function(){
       var local = location.protocol === 'file:';
       document.write('<script src="' + (local ? '../site-shell.js' : '/site-shell.js') + '"><\/script>');
       if(!local) document.write('<script src="/api/state-config.js"><\/script>');
-      document.write('<script src="' + (local ? 'context-analytics.js?v=r56-mobile-nav-consolidation' : '/implementation-context-prototype/context-analytics.js?v=r56-mobile-nav-consolidation') + '"><\/script>');
-      document.write('<script src="' + (local ? 'context-data.js?v=r56-mobile-nav-consolidation' : '/implementation-context-prototype/context-data.js?v=r56-mobile-nav-consolidation') + '"><\/script>');
-      document.write('<script src="' + (local ? 'context-api.js?v=r56-mobile-nav-consolidation' : '/implementation-context-prototype/context-api.js?v=r56-mobile-nav-consolidation') + '"><\/script>');
-      document.write('<script src="' + (local ? 'context-ask.js?v=r56-mobile-nav-consolidation' : '/implementation-context-prototype/context-ask.js?v=r56-mobile-nav-consolidation') + '"><\/script>');
-      document.write('<script src="' + (local ? 'context-ask-followup.js?v=r56-mobile-nav-consolidation' : '/implementation-context-prototype/context-ask-followup.js?v=r56-mobile-nav-consolidation') + '"><\/script>');
-      document.write('<script src="' + (local ? 'context-notes-view.js?v=r56-mobile-nav-consolidation' : '/implementation-context-prototype/context-notes-view.js?v=r56-mobile-nav-consolidation') + '"><\/script>');
-      document.write('<script src="' + (local ? 'context-open-items-view.js?v=r56-mobile-nav-consolidation' : '/implementation-context-prototype/context-open-items-view.js?v=r56-mobile-nav-consolidation') + '"><\/script>');
-      document.write('<script src="' + (local ? 'context-project-view.js?v=r56-mobile-nav-consolidation' : '/implementation-context-prototype/context-project-view.js?v=r56-mobile-nav-consolidation') + '"><\/script>');
-      document.write('<script src="' + (local ? 'context-app.js?v=r56-mobile-nav-consolidation' : '/implementation-context-prototype/context-app.js?v=r56-mobile-nav-consolidation') + '"><\/script>');
-      document.write('<script src="' + (local ? 'context-history.js?v=r56-mobile-nav-consolidation' : '/implementation-context-prototype/context-history.js?v=r56-mobile-nav-consolidation') + '"><\/script>');
-      document.write('<script src="' + (local ? 'context-provenance.js?v=r56-mobile-nav-consolidation' : '/implementation-context-prototype/context-provenance.js?v=r56-mobile-nav-consolidation') + '"><\/script>');
-      document.write('<script src="' + (local ? 'context-quickwins.js?v=r56-mobile-nav-consolidation' : '/implementation-context-prototype/context-quickwins.js?v=r56-mobile-nav-consolidation') + '"><\/script>');
-      document.write('<script src="' + (local ? 'context-product-polish.js?v=r56-mobile-nav-consolidation' : '/implementation-context-prototype/context-product-polish.js?v=r56-mobile-nav-consolidation') + '"><\/script>');
-      document.write('<script src="' + (local ? 'context-settings.js?v=r56-mobile-nav-consolidation' : '/implementation-context-prototype/context-settings.js?v=r56-mobile-nav-consolidation') + '"><\/script>');
-      document.write('<script src="' + (local ? 'context-sources.js?v=r56-mobile-nav-consolidation' : '/implementation-context-prototype/context-sources.js?v=r56-mobile-nav-consolidation') + '"><\/script>');
+      var v='r73-mobile-pass';
+      ['context-analytics.js','context-data.js','context-api.js','context-ask.js','context-ask-followup.js','context-notes-view.js','context-open-items-view.js','context-project-view.js','context-app.js','context-history.js','context-provenance.js','context-quickwins.js','context-product-polish.js','context-settings.js','context-sources.js','context-design-pass.js','context-feedback-pass.js','context-feedback-pass-2.js','context-feedback-pass-3.js','context-feedback-pass-4.js','context-attention-alignment.js','context-final-mobile.js'].forEach(function(file){document.write('<script src="'+(local?'':'/implementation-context-prototype/')+file+'?v='+v+'"><\/script>');});
+      document.write('<script>requestAnimationFrame(function(){requestAnimationFrame(function(){document.documentElement.classList.remove("state-prepaint");clearTimeout(window.__stateRevealTimer);});});<\/script>');
+    })();
+  </script>
+  <script>
+    (function(){
+      function syncNoteLifecycle(){
+        document.querySelectorAll("[data-action='send-note-review']").forEach(function(btn){if(btn.textContent.trim()==='Send as Evidence') btn.textContent='Submit for review';});
+        document.querySelectorAll('.notes-page .note-index-row').forEach(function(row){var submitted=row.querySelector('.note-status--pending,.note-status--reviewed,.note-status--no-review-needed,.note-status--unknown');var edit=row.querySelector("[data-action='edit-note']");if(submitted&&edit) edit.remove();});
+      }
+      var observer=new MutationObserver(syncNoteLifecycle);observer.observe(document.body,{childList:true,subtree:true});syncNoteLifecycle();
     })();
   </script>
 </body>
