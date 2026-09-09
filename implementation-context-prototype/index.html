@@ -25,11 +25,8 @@
     #overlay>.dialog{position:relative!important;margin:0 auto!important;width:min(620px,100%)!important;max-height:calc(100dvh - 40px)!important;overflow:auto!important;overscroll-behavior:contain!important;}
     body.modal-open .topbar,body.modal-open .prototype-productbar{z-index:0!important;}
     .project-settings-button{display:none!important;}
-    .ask-live-answer .ask-answer-item,
-    .ask-live-answer .ask-answer-item>div,
-    .ask-live-answer .ask-answer-item .ask-item-detail{border-top:0!important;border-bottom:0!important;box-shadow:none!important;}
-    .ask-live-answer .ask-answer-item::before,
-    .ask-live-answer .ask-answer-item::after{border:0!important;box-shadow:none!important;}
+    .ask-live-answer .ask-answer-item,.ask-live-answer .ask-answer-item>div,.ask-live-answer .ask-answer-item .ask-item-detail{border-top:0!important;border-bottom:0!important;box-shadow:none!important;}
+    .ask-live-answer .ask-answer-item::before,.ask-live-answer .ask-answer-item::after{border:0!important;box-shadow:none!important;}
     .ask-quick-starts{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;}
     .ask-quick-starts button{white-space:normal;text-align:left;}
     .ask-grounding{margin-top:18px;}
@@ -39,69 +36,18 @@
     @media(max-width:760px){
       #overlay{padding:max(14px,env(safe-area-inset-top)) 12px max(14px,env(safe-area-inset-bottom))!important;}
       #overlay>.dialog{max-height:calc(100dvh - 28px)!important;}
-      /* One authoritative mobile nav (see mobile-primary-nav / mobile-subnav
-         below). The desktop sidebar nav is simply hidden here rather than
-         reshaped -- do not add another override layer on top of it. */
       .sidebar-nav,.app-sidebar>.demo-help-button{display:none!important;}
       .mobile-primary-nav,.mobile-subnav{display:flex!important;}
       .ask-quick-starts{display:grid;grid-template-columns:1fr 1fr;}
     }
-    /* Single native mobile nav: a horizontally swipeable row of real
-       [data-view] buttons, plus a second swipeable row of real
-       [data-project-jump] buttons that only appears inside Current State.
-       Hidden entirely on desktop; shown only inside the max-width:760px
-       block above. The trailing "›" is a sticky, non-scrolling flex item
-       sitting on a gradient that fades to the sidebar's own background
-       (#f8f7fa / #14131a in dark mode -- see .app-sidebar), so it reads as
-       an edge indicator rather than scrolling away with the buttons. */
-    .mobile-primary-nav,.mobile-subnav{
-      display:none;
-      overflow-x:auto;
-      -webkit-overflow-scrolling:touch;
-      scrollbar-width:none;
-      gap:4px;
-      margin:0 -12px;
-      padding:2px 0 2px 12px;
-      position:relative;
-    }
+    .mobile-primary-nav,.mobile-subnav{display:none;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;gap:4px;margin:0 -12px;padding:2px 0 2px 12px;position:relative;}
     .mobile-primary-nav::-webkit-scrollbar,.mobile-subnav::-webkit-scrollbar{display:none;}
     .mobile-primary-nav{border-bottom:1px solid var(--line);padding-bottom:10px;}
     .mobile-subnav{padding-top:8px;}
-    .mobile-primary-nav::after,.mobile-subnav::after{
-      content:"›";
-      position:sticky;
-      right:0;
-      flex:0 0 24px;
-      align-self:stretch;
-      display:grid;
-      place-items:center;
-      background:linear-gradient(90deg,transparent 0%,#f8f7fa 55%,#f8f7fa 100%);
-      color:var(--accent);
-      font-size:17px;
-      font-weight:800;
-      pointer-events:none;
-    }
+    .mobile-primary-nav::after,.mobile-subnav::after{content:"›";position:sticky;right:0;flex:0 0 24px;align-self:stretch;display:grid;place-items:center;background:linear-gradient(90deg,transparent 0%,#f8f7fa 55%,#f8f7fa 100%);color:var(--accent);font-size:17px;font-weight:800;pointer-events:none;}
     body.v88-dark .mobile-primary-nav::after,body.v88-dark .mobile-subnav::after{background:linear-gradient(90deg,transparent 0%,#14131a 55%,#14131a 100%);}
-    .mobile-primary-nav .nav-item,.mobile-subnav button{
-      flex:0 0 auto;
-      white-space:nowrap;
-      width:auto!important;
-      display:inline-flex!important;
-      align-items:center;
-      gap:4px;
-      padding:7px 12px!important;
-      border-radius:999px!important;
-      font-size:12px!important;
-      color:var(--muted);
-      background:var(--surface2);
-      border:0;
-      cursor:pointer;
-    }
-    .mobile-primary-nav .nav-item.active,.mobile-subnav button.active{
-      background:var(--accent-soft);
-      color:var(--accent);
-      font-weight:800;
-    }
+    .mobile-primary-nav .nav-item,.mobile-subnav button{flex:0 0 auto;white-space:nowrap;width:auto!important;display:inline-flex!important;align-items:center;gap:4px;padding:7px 12px!important;border-radius:999px!important;font-size:12px!important;color:var(--muted);background:var(--surface2);border:0;cursor:pointer;}
+    .mobile-primary-nav .nav-item.active,.mobile-subnav button.active{background:var(--accent-soft);color:var(--accent);font-weight:800;}
     .mobile-primary-nav .nav-count{width:auto!important;height:auto!important;min-width:16px!important;padding:0 5px!important;border-radius:999px!important;background:var(--accent-soft);color:var(--accent);font-weight:750;}
     .mobile-primary-nav .nav-count[hidden]{display:none!important;}
     .mobile-subnav[hidden]{display:none!important;}
@@ -111,59 +57,23 @@
 <body>
   <div class="topbar"><div class="topinner"><a class="brand-button" href="../index.html"><span class="brand">AI <span>Learning Portfolio</span></span></a><nav aria-label="Primary pages" class="nav"><a href="../index.html">Home</a><a aria-current="page" href="../index.html#portfolio">Applied Work</a><a href="../index.html#learn">Learning Guide</a></nav><div class="top-actions"><button aria-label="Switch to dark mode" aria-pressed="false" class="theme-toggle" id="v922ThemeToggle" title="Switch to dark mode" type="button">☾</button><select aria-label="Choose page" id="v922MobileNav"><option value="../index.html">Home</option><option selected value="../index.html#portfolio">Applied Work</option><option value="../index.html#learn">Learning Guide</option></select></div></div></div>
   <div class="prototype-productbar"><span class="product-mark" aria-hidden="true">◆</span><button type="button" class="product-name product-home" data-view="overview" aria-label="Return to Workspace">State</button><span class="product-divider" aria-hidden="true">·</span><span class="product-tagline">Maintained project understanding, not reconstructed history.</span></div>
-
   <main class="app-shell software-shell">
     <h1 class="visually-hidden">State project workspace</h1>
     <aside class="app-sidebar" aria-label="Project workspace">
-      <div class="sidebar-project">
-        <span class="meta-label">Project</span>
-        <button class="project-switcher" id="projectSwitcher" data-action="toggle-projects" aria-expanded="false" aria-controls="projectMenu">Northstar <span>⌄</span></button>
-        <div class="project-menu" id="projectMenu" hidden><button class="active">Northstar <span>Current</span></button><button disabled>Website Redesign <span>Sample</span></button><button disabled>Legal AI Research <span>Sample</span></button><button disabled>＋ New project <span>Planned</span></button></div>
-      </div>
+      <div class="sidebar-project"><span class="meta-label">Project</span><button class="project-switcher" id="projectSwitcher" data-action="toggle-projects" aria-expanded="false" aria-controls="projectMenu">Northstar <span>⌄</span></button><div class="project-menu" id="projectMenu" hidden><button class="active">Northstar <span>Current</span></button><button disabled>Website Redesign <span>Sample</span></button><button disabled>Legal AI Research <span>Sample</span></button><button disabled>＋ New project <span>Planned</span></button></div></div>
       <nav class="sidebar-nav">
         <button class="nav-item active" data-view="overview">Workspace</button>
-        <div class="sidebar-nav-group project-nav-group">
-          <button class="nav-item project-nav-toggle" data-view="project-overview">Current State</button>
-          <div class="project-subnav" id="projectSubnav" hidden>
-            <button data-project-jump="project-top">Overview</button>
-            <button data-project-jump="project-product" data-project-area="product">Product &amp; Workflow</button>
-            <button data-project-jump="project-safety" data-project-area="safety">Safety &amp; Constraints</button>
-            <button data-project-jump="project-evaluation" data-project-area="evaluation">Evaluation &amp; Rollout</button>
-          </div>
-        </div>
+        <div class="sidebar-nav-group project-nav-group"><button class="nav-item project-nav-toggle" data-view="project-overview">Current State</button><div class="project-subnav" id="projectSubnav" hidden><button data-project-jump="project-top">Overview</button><button data-project-jump="project-product" data-project-area="product">Product &amp; Workflow</button><button data-project-jump="project-safety" data-project-area="safety">Safety &amp; Constraints</button><button data-project-jump="project-evaluation" data-project-area="evaluation">Evaluation &amp; Rollout</button></div></div>
         <button class="nav-item open-items-nav-toggle" data-view="open-items">Open Items <span class="nav-count" id="openItemsActionCount" hidden></span></button>
-        <button class="nav-item" data-view="notes">Notes</button>
-        <button class="nav-item" data-view="history">History</button>
-        <button class="nav-item" data-view="settings">Settings</button>
+        <button class="nav-item" data-view="notes">Notes</button><button class="nav-item" data-view="history">History</button><button class="nav-item" data-view="settings">Settings</button>
       </nav>
-      <nav class="mobile-primary-nav" aria-label="Project navigation">
-        <button class="nav-item active" data-view="overview">Workspace</button>
-        <button class="nav-item open-items-nav-toggle" data-view="open-items">Open Items <span class="nav-count" id="mobileOpenItemsCount" hidden></span></button>
-        <button class="nav-item" data-view="project-overview">Current State</button>
-        <button class="nav-item" data-view="notes">Notes</button>
-        <button class="nav-item" data-view="history">History</button>
-        <button class="nav-item" data-view="settings">Settings</button>
-      </nav>
-      <nav class="mobile-subnav" id="mobileProjectSubnav" hidden aria-label="Current State sections">
-        <button data-project-jump="project-top">Overview</button>
-        <button data-project-jump="project-product" data-project-area="product">Product &amp; Workflow</button>
-        <button data-project-jump="project-safety" data-project-area="safety">Safety &amp; Constraints</button>
-        <button data-project-jump="project-evaluation" data-project-area="evaluation">Evaluation &amp; Rollout</button>
-      </nav>
+      <nav class="mobile-primary-nav" aria-label="Project navigation"><button class="nav-item active" data-view="overview">Workspace</button><button class="nav-item open-items-nav-toggle" data-view="open-items">Open Items <span class="nav-count" id="mobileOpenItemsCount" hidden></span></button><button class="nav-item" data-view="project-overview">Current State</button><button class="nav-item" data-view="notes">Notes</button><button class="nav-item" data-view="history">History</button><button class="nav-item" data-view="settings">Settings</button></nav>
+      <nav class="mobile-subnav" id="mobileProjectSubnav" hidden aria-label="Current State sections"><button data-project-jump="project-top">Overview</button><button data-project-jump="project-product" data-project-area="product">Product &amp; Workflow</button><button data-project-jump="project-safety" data-project-area="safety">Safety &amp; Constraints</button><button data-project-jump="project-evaluation" data-project-area="evaluation">Evaluation &amp; Rollout</button></nav>
       <button class="demo-help-button" data-action="show-demo-help">How this works</button>
     </aside>
-    <section class="app-workspace">
-      <section id="viewRoot" class="view-root" aria-live="polite"></section>
-    </section>
+    <section class="app-workspace"><section id="viewRoot" class="view-root" aria-live="polite"></section></section>
   </main>
-
-  <div class="overlay" id="overlay" hidden>
-    <section class="dialog" role="dialog" aria-modal="true" aria-labelledby="dialogTitle" tabindex="-1">
-      <button class="dialog-close" aria-label="Close" data-action="close-dialog">×</button>
-      <div id="dialogBody"></div>
-    </section>
-  </div>
-
+  <div class="overlay" id="overlay" hidden><section class="dialog" role="dialog" aria-modal="true" aria-labelledby="dialogTitle" tabindex="-1"><button class="dialog-close" aria-label="Close" data-action="close-dialog">×</button><div id="dialogBody"></div></section></div>
   <script>
     (function(){
       var local = location.protocol === 'file:';
@@ -184,6 +94,7 @@
       document.write('<script src="' + (local ? 'context-product-polish.js?v=r56-mobile-nav-consolidation' : '/implementation-context-prototype/context-product-polish.js?v=r56-mobile-nav-consolidation') + '"><\/script>');
       document.write('<script src="' + (local ? 'context-settings.js?v=r56-mobile-nav-consolidation' : '/implementation-context-prototype/context-settings.js?v=r56-mobile-nav-consolidation') + '"><\/script>');
       document.write('<script src="' + (local ? 'context-sources.js?v=r56-mobile-nav-consolidation' : '/implementation-context-prototype/context-sources.js?v=r56-mobile-nav-consolidation') + '"><\/script>');
+      document.write('<script src="' + (local ? 'context-design-pass.js?v=r1' : '/implementation-context-prototype/context-design-pass.js?v=r1') + '"><\/script>');
     })();
   </script>
 </body>
