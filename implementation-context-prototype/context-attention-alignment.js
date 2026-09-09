@@ -1,6 +1,6 @@
 (() => {
   const STYLE_ID='state-attention-alignment';
-  const PASS='r78-matched-workspace-cards';
+  const PASS='r79-finished-workspace-pair';
 
   document.getElementById(STYLE_ID)?.remove();
   const style=document.createElement('style');
@@ -26,18 +26,29 @@
     html body .history-page .history-change{width:100%!important;max-width:none!important}
     html body .history-page .history-change>p{width:100%!important;max-width:none!important;box-sizing:border-box!important}
 
-    /* Workspace summary pair: same row height and matching top alignment. */
+    /* Workspace summary pair: equal cards and one shared header geometry. */
     html body .workspace-below-grid{align-items:stretch!important;grid-auto-rows:auto!important}
     html body .workspace-recent,
     html body .workspace-status-card{align-self:stretch!important;height:100%!important;min-height:0!important}
-    html body .workspace-status-card{display:block!important;position:relative!important}
-    html body .workspace-status-card>.eyebrow{display:grid!important;grid-template-columns:auto minmax(0,1fr) auto!important;gap:12px!important;align-items:start!important;min-height:0!important;height:auto!important;margin:6px 0 12px!important;padding-left:0!important;font-size:0!important;position:relative!important}
-    html body .workspace-status-card>.eyebrow::after{content:none!important;display:none!important}
-    html body .workspace-status-card>.eyebrow>.section-icon{position:static!important;grid-column:1!important;grid-row:1!important;align-self:start!important;justify-self:start!important;transform:none!important;margin:0!important}
+
+    html body .workspace-recent-head,
+    html body .workspace-status-card>.eyebrow{display:grid!important;grid-template-columns:auto minmax(0,1fr) auto!important;gap:12px!important;align-items:start!important;min-height:0!important;height:auto!important;margin:0 0 12px!important;padding-left:0!important;position:relative!important}
+    html body .workspace-recent-head>.section-icon,
+    html body .workspace-status-card>.eyebrow>.section-icon{position:static!important;grid-column:1!important;grid-row:1!important;align-self:start!important;justify-self:start!important;transform:none!important;margin:0!important;width:36px!important;height:36px!important}
+
+    html body .workspace-recent-head>.eyebrow{display:none!important}
+    html body .workspace-recent-copy,
     html body .workspace-status-card .current-state-copy{grid-column:2!important;grid-row:1!important;display:flex!important;flex-direction:column!important;justify-content:flex-start!important;align-items:flex-start!important;gap:4px!important;min-width:0!important}
+    html body .workspace-recent-title,
     html body .workspace-status-card .current-state-title{display:block!important;margin:0!important;padding:0!important;color:var(--ink,#101a31)!important;font-size:16px!important;font-weight:820!important;letter-spacing:-.01em!important;text-transform:none!important;line-height:1.2!important}
+    html body .workspace-recent-copy .workspace-section-hint,
     html body .workspace-status-card .current-state-support{display:block!important;margin:0!important;padding:0!important;color:#64718a!important;font-size:12px!important;font-weight:500!important;letter-spacing:0!important;text-transform:none!important;line-height:1.4!important}
+    html body .workspace-recent-head>.text-button,
     html body .workspace-status-card .current-state-browse{grid-column:3!important;grid-row:1!important;align-self:start!important;justify-self:end!important;position:static!important;margin:3px 0 0!important;white-space:nowrap!important;font-size:11.5px!important}
+
+    html body .workspace-status-card{display:block!important;position:relative!important}
+    html body .workspace-status-card>.eyebrow{font-size:0!important}
+    html body .workspace-status-card>.eyebrow::after{content:none!important;display:none!important}
     html body .workspace-status-card .workspace-status-body{display:block!important;flex:0 0 auto!important;height:auto!important;min-height:0!important;margin-top:0!important}
     html body .workspace-status-card .state-fact-preview{display:block!important;flex:0 0 auto!important;height:auto!important;min-height:0!important;padding-top:0!important;justify-content:flex-start!important}
     html body .workspace-status-card .state-fact-preview>ul{margin:0!important}
@@ -50,7 +61,7 @@
     html body .workspace-attention .workspace-attention-head .eyebrow,
     html body .workspace-attention .workspace-attention-head p{display:none!important}
 
-    /* Settings sections are flat surfaces. Remove old rounded/accent outlines. */
+    /* Settings sections are flat surfaces. */
     html body .settings-page .settings-section{border:0!important;border-radius:0!important;box-shadow:none!important;background:transparent!important}
 
     /* Other Sources: one source per row, status aligned top-right with the title. */
@@ -77,8 +88,9 @@
       html body .workspace-below-grid{align-items:start!important;grid-auto-rows:min-content!important}
       html body .workspace-recent,
       html body .workspace-status-card{align-self:start!important;height:auto!important}
-      html body .workspace-status-card>.eyebrow{grid-template-columns:auto minmax(0,1fr) auto!important;align-items:start!important;margin-top:0!important}
-      html body .workspace-status-card .current-state-browse{grid-column:3!important;grid-row:1!important;justify-self:end!important;margin-top:3px!important}
+      html body .workspace-recent-head,
+      html body .workspace-status-card>.eyebrow{grid-template-columns:auto minmax(0,1fr) auto!important;align-items:start!important}
+      html body .workspace-status-card .state-fact-preview li:nth-child(n+4){display:none!important}
       html body .workspace-attention .workspace-attention-head{display:flex!important}
       html body .history-page .history-list,
       html body .history-page #historyList{padding:18px 16px 20px!important}
@@ -90,7 +102,30 @@
 
   const important=(el,prop,value)=>el?.style?.setProperty(prop,value,'important');
 
-  function normalizeCurrentState(scope=document){
+  function normalizeWorkspacePair(scope=document){
+    const grid=scope.querySelector?.('.workspace-below-grid');
+    const recent=grid?.querySelector('.workspace-recent');
+    const recentHead=recent?.querySelector('.workspace-recent-head');
+    const mobile=matchMedia('(max-width:760px)').matches;
+
+    if(recent&&recentHead){
+      const icon=recentHead.querySelector(':scope > .section-icon');
+      const oldEyebrow=recentHead.querySelector(':scope > .eyebrow');
+      const hint=recent.querySelector(':scope > .workspace-section-hint');
+      let copy=recentHead.querySelector(':scope > .workspace-recent-copy');
+      if(!copy){
+        copy=document.createElement('span');
+        copy.className='workspace-recent-copy';
+        if(icon) icon.after(copy); else recentHead.prepend(copy);
+      }
+      let title=copy.querySelector('.workspace-recent-title');
+      if(!title){title=document.createElement('span');title.className='workspace-recent-title';title.textContent='What Changed';copy.prepend(title)}
+      if(hint&&hint.parentElement!==copy) copy.appendChild(hint);
+      if(oldEyebrow) important(oldEyebrow,'display','none');
+      important(recent,'align-self',mobile?'start':'stretch');
+      important(recent,'height',mobile?'auto':'100%');
+    }
+
     scope.querySelectorAll?.('.workspace-status-card').forEach(card=>{
       const eyebrow=card.querySelector(':scope > .eyebrow');
       const preview=card.querySelector('.state-fact-preview');
@@ -118,7 +153,12 @@
       const oldBrowse=preview.querySelector(':scope > .text-button');
       if(!browse&&oldBrowse){browse=oldBrowse;browse.classList.add('current-state-browse');eyebrow.appendChild(browse)}
 
-      const mobile=matchMedia('(max-width:760px)').matches;
+      const list=preview.querySelector(':scope > ul');
+      if(list&&list.children.length<4){
+        const fact=window.PROJECT_CONTEXT_DATA?.knowledge?.find?.(item=>item.id==='k-entry'&&item.state==='current')?.statement;
+        if(fact){const li=document.createElement('li');li.textContent=fact;list.appendChild(li)}
+      }
+
       important(card,'align-self',mobile?'start':'stretch');
       important(card,'height',mobile?'auto':'100%');
       important(card,'min-height','0');
@@ -132,22 +172,11 @@
       important(preview,'min-height','0');
       important(preview,'justify-content','flex-start');
       important(preview,'padding-top','0');
-      if(eyebrow) important(eyebrow,'margin-top',mobile?'0':'6px');
-      if(browse){
-        important(browse,'grid-column','3');
-        important(browse,'grid-row','1');
-        important(browse,'align-self','start');
-        important(browse,'justify-self','end');
-        important(browse,'position','static');
-        important(browse,'margin','3px 0 0');
-      }
+      if(browse){important(browse,'grid-column','3');important(browse,'grid-row','1');important(browse,'align-self','start');important(browse,'justify-self','end');important(browse,'position','static');important(browse,'margin','3px 0 0')}
     });
-    const grid=scope.querySelector?.('.workspace-below-grid');
-    const recent=scope.querySelector?.('.workspace-below-grid .workspace-recent');
-    const mobile=matchMedia('(max-width:760px)').matches;
+
     important(grid,'align-items',mobile?'start':'stretch');
     important(grid,'grid-auto-rows',mobile?'min-content':'auto');
-    if(recent){important(recent,'align-self',mobile?'start':'stretch');important(recent,'height',mobile?'auto':'100%')}
   }
 
   function normalizeAttention(scope=document){
@@ -157,45 +186,21 @@
       const icon=copy?.querySelector('.attention-head-icon');
       const title=copy?.querySelector('h3');
       if(!head||!copy||!title) return;
-      important(head,'display','flex');
-      important(head,'align-items','flex-start');
-      important(copy,'display','flex');
-      important(copy,'align-items','center');
-      important(copy,'gap','12px');
-      important(copy,'padding-left','0');
-      important(copy,'position','static');
-      important(copy,'min-height','38px');
+      important(head,'display','flex');important(head,'align-items','flex-start');important(copy,'display','flex');important(copy,'align-items','center');important(copy,'gap','12px');important(copy,'padding-left','0');important(copy,'position','static');important(copy,'min-height','38px');
       if(icon){important(icon,'position','static');important(icon,'flex','0 0 38px');important(icon,'width','38px');important(icon,'height','38px');important(icon,'margin','0');important(icon,'transform','none');important(icon,'top','auto');important(icon,'left','auto')}
-      important(title,'margin','0');
-      important(title,'align-self','center');
+      important(title,'margin','0');important(title,'align-self','center');
     });
   }
 
   function normalizeSettings(scope=document){
-    scope.querySelectorAll?.('.settings-page .settings-section').forEach(section=>{
-      important(section,'border','0');
-      important(section,'border-radius','0');
-      important(section,'box-shadow','none');
-      important(section,'background','transparent');
-    });
+    scope.querySelectorAll?.('.settings-page .settings-section').forEach(section=>{important(section,'border','0');important(section,'border-radius','0');important(section,'box-shadow','none');important(section,'background','transparent')});
     const grid=scope.querySelector?.('.settings-page .settings-source-grid');
     if(!grid) return;
-    important(grid,'display','block');
-    important(grid,'grid-template-columns','none');
-    important(grid,'gap','0');
+    important(grid,'display','block');important(grid,'grid-template-columns','none');important(grid,'gap','0');
     grid.querySelectorAll(':scope > .source-row').forEach((row,index)=>{
       const content=row.querySelector(':scope > div');
       const status=row.querySelector(':scope > .settings-status');
-      important(row,'display','grid');
-      important(row,'grid-template-columns','minmax(0,1fr) auto');
-      important(row,'grid-template-rows','auto');
-      important(row,'column-gap',matchMedia('(max-width:760px)').matches?'10px':'16px');
-      important(row,'row-gap','0');
-      important(row,'align-items','start');
-      important(row,'width','100%');
-      important(row,'min-width','0');
-      important(row,'box-sizing','border-box');
-      important(row,'border-top',index===0?'0':'1px solid #e5e8ed');
+      important(row,'display','grid');important(row,'grid-template-columns','minmax(0,1fr) auto');important(row,'grid-template-rows','auto');important(row,'column-gap',matchMedia('(max-width:760px)').matches?'10px':'16px');important(row,'row-gap','0');important(row,'align-items','start');important(row,'width','100%');important(row,'min-width','0');important(row,'box-sizing','border-box');important(row,'border-top',index===0?'0':'1px solid #e5e8ed');
       if(content){important(content,'grid-column','1');important(content,'grid-row','1');important(content,'width','100%');important(content,'min-width','0')}
       if(status){important(status,'grid-column','2');important(status,'grid-row','1');important(status,'align-self','start');important(status,'justify-self','end');important(status,'margin','1px 0 0');important(status,'width','max-content');important(status,'max-width','none')}
     });
@@ -204,11 +209,7 @@
   function normalizeStage(scope=document){
     scope.querySelectorAll?.('.overview-stage *').forEach(el=>{
       if(!/^late discovery$/i.test(el.textContent?.trim()||'')) return;
-      important(el,'background','#f3f5f7');
-      important(el,'background-color','#f3f5f7');
-      important(el,'color','#5f6b7c');
-      important(el,'border-color','#d9e0e8');
-      important(el,'box-shadow','none');
+      important(el,'background','#f3f5f7');important(el,'background-color','#f3f5f7');important(el,'color','#5f6b7c');important(el,'border-color','#d9e0e8');important(el,'box-shadow','none');
     });
   }
 
@@ -250,7 +251,7 @@
 
   function sync(){
     document.documentElement.dataset.stateMobilePass=PASS;
-    normalizeCurrentState(document);
+    normalizeWorkspacePair(document);
     normalizeAttention(document);
     normalizeSettings(document);
     normalizeStage(document);
