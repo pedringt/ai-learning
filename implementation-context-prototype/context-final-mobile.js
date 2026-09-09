@@ -1,5 +1,5 @@
 (() => {
-  const STYLE_ID = 'state-final-mobile-r65';
+  const STYLE_ID = 'state-final-mobile-r66';
   let movingStyle=false;
 
   function installStyles(){
@@ -56,8 +56,32 @@
       html body .open-items-page .open-items-section,
       html body .open-items-page .open-items-section-body{overflow-anchor:auto!important}
 
+      /* History is a flat audit log. Reassert this after every older style pass. */
+      html body .history-page #historyList,
+      html body .history-page .history-list{border-left:0!important;border-inline-start:0!important;background-image:none!important}
+      html body .history-page .history-entry,
+      html body .history-page .history-entry:hover,
+      html body .history-page .history-entry.is-linked,
+      html body .history-page .history-entry.is-linked:hover,
+      html body .history-page .history-entry-body,
+      html body .history-page .history-entry-body:hover{border-left:0!important;border-inline-start:0!important;background-image:none!important;box-shadow:none!important;transform:none!important;outline:0!important}
+      html body .history-page .history-entry::before,
+      html body .history-page .history-entry::after,
+      html body .history-page .history-entry:hover::before,
+      html body .history-page .history-entry:hover::after,
+      html body .history-page .history-entry-body::before,
+      html body .history-page .history-entry-body::after{content:none!important;display:none!important;border:0!important;box-shadow:none!important}
+
       /* Expanded Notes really show the whole note. */
       html body .notes-page .note-index-row.is-expanded .note-full-text{display:block!important;-webkit-line-clamp:unset!important;-webkit-box-orient:initial!important;overflow:visible!important;max-height:none!important;white-space:pre-wrap!important;overflow-wrap:anywhere!important;word-break:break-word!important}
+
+      /* Ask has one control state. The obsolete clear X must never compete with reset. */
+      html body #askStateDrawer .state-ask-clear,
+      html body #askStateDrawer.has-answer .state-ask-clear,
+      html body #askStateDrawer.is-generating .state-ask-clear,
+      html body #askStateDrawer.is-editing-answer .state-ask-clear{display:none!important;visibility:hidden!important;pointer-events:none!important}
+      html body #askStateDrawer .state-ask-reset::before,
+      html body #askStateDrawer .state-ask-reset::after{content:none!important;display:none!important}
 
       /* Readability floor against older late-loaded polish rules. */
       html body .open-items-page .review-source-meta,
@@ -83,6 +107,17 @@
       html body #askStateDrawer .ask-item-link,
       html body #askStateDrawer .ask-state-actions .text-button,
       html body #askStateDrawer .ask-copy-answer{font-size:11.5px!important}
+
+      /* Evidence intake uses the same neutral + blue action language as State. */
+      html body .dialog:has(#addInfoText){background:#fff!important;border:1px solid #dfe5ed!important;box-shadow:0 22px 70px rgba(24,43,70,.16)!important}
+      html body .dialog:has(#addInfoText)>.dialog-close{background:#f7f9fc!important;color:#647084!important}
+      html body .dialog:has(#addInfoText) .eyebrow,
+      html body .dialog:has(#addInfoText) .meta-label{color:#68768a!important}
+      html body .dialog:has(#addInfoText) #addInfoText{border-color:#cfd8e4!important;background:#fff!important;box-shadow:none!important}
+      html body .dialog:has(#addInfoText) #addInfoText:focus{border-color:#6f9bc8!important;box-shadow:0 0 0 3px #edf4fb!important}
+      html body .dialog:has(#addInfoText) .note-example-chips button{border:1px solid #d8e0e9!important;background:#f7f9fb!important;color:#476789!important;box-shadow:none!important}
+      html body .dialog:has(#addInfoText) .note-example-chips button:hover{border-color:#b9c9dc!important;background:#f0f5fa!important}
+      html body .dialog:has(#addInfoText) [data-action='save-info']{background:#1769e8!important;border-color:#1769e8!important;color:#fff!important}
 
       /* Evidence analysis uses the same neutral/blue language as the rest of State. */
       html body .dialog:has(.analysis-state){background:#fff!important;border:1px solid #dfe5ed!important;box-shadow:0 22px 70px rgba(24,43,70,.16)!important}
