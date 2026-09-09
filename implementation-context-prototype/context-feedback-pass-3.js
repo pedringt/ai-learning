@@ -7,23 +7,28 @@
     s.id='state-feedback-pass-3';
     s.textContent=`
       /* Final source of truth for the redesign pass. */
+      :root{color-scheme:light!important}
+      #v922ThemeToggle{display:none!important}
       .sidebar-nav{gap:4px!important}
       .sidebar-nav .nav-item{min-height:46px!important;padding:9px 15px!important;margin:0!important}
       .sidebar-nav .nav-label,.sidebar-nav .project-nav-toggle{white-space:nowrap!important;min-width:0!important}
-      .app-sidebar>.demo-help-button.state-help-card{position:fixed!important;left:18px!important;right:auto!important;bottom:18px!important;width:280px!important;max-width:calc(100vw - 36px)!important;margin:0!important;z-index:80!important}
+      .app-sidebar>.demo-help-button.state-help-card{position:fixed!important;right:auto!important;bottom:16px!important;margin:0!important;z-index:80!important;max-width:none!important}
       .project-switcher>span{display:inline-flex!important;align-items:center!important;justify-content:center!important;line-height:1!important;transform:translateY(-1px)!important}
 
-      /* Workspace attention: compact, left anchored, no phantom grid columns. */
+      /* Workspace attention: explicit two-zone layout. The copy block itself
+         owns the icon column so older grid rules cannot recenter the text. */
       .workspace-attention{padding:16px!important}
       .workspace-attention .attention-list{border:0!important;background:transparent!important;border-radius:0!important;overflow:visible!important}
-      .workspace-attention .attention-item{display:flex!important;align-items:center!important;justify-content:flex-start!important;gap:12px!important;width:100%!important;max-width:none!important;margin:0!important;padding:13px 16px!important;background:#fff!important;border:0!important;border-top:1px solid #e8edf4!important;border-radius:0!important;text-align:left!important}
+      .workspace-attention .attention-item{display:flex!important;align-items:center!important;justify-content:flex-start!important;gap:14px!important;width:100%!important;max-width:none!important;margin:0!important;padding:13px 16px!important;background:#fff!important;border:0!important;border-top:1px solid #e8edf4!important;border-radius:0!important;text-align:left!important}
       .workspace-attention .attention-item:first-child{border-top:0!important;border-radius:10px 10px 0 0!important}
       .workspace-attention .attention-item:last-child{border-radius:0 0 10px 10px!important}
       .workspace-attention .attention-item:only-child{border-radius:10px!important}
       .workspace-attention .attention-item>.attention-icon{display:none!important}
-      .workspace-attention .attention-item-copy{flex:1 1 auto!important;width:auto!important;max-width:none!important;min-width:0!important;margin:0!important;padding:0 0 0 46px!important;position:relative!important;text-align:left!important;justify-self:auto!important}
+      .workspace-attention .attention-item-copy{display:grid!important;grid-template-columns:42px minmax(0,1fr)!important;grid-template-rows:auto auto!important;column-gap:12px!important;row-gap:2px!important;align-items:center!important;flex:1 1 auto!important;width:auto!important;max-width:none!important;min-width:0!important;margin:0!important;padding:0!important;position:static!important;text-align:left!important;justify-self:auto!important}
       .workspace-attention .attention-item-copy>*{text-align:left!important;margin-left:0!important;margin-right:0!important}
-      .workspace-attention .attention-row-icon{position:absolute!important;left:0!important;top:50%!important;transform:translateY(-50%)!important;width:34px!important;height:34px!important;background:#eaf2ff!important;color:#1769e8!important}
+      .workspace-attention .attention-row-icon{position:static!important;grid-column:1!important;grid-row:1 / span 2!important;align-self:center!important;transform:none!important;width:34px!important;height:34px!important;background:#eaf2ff!important;color:#1769e8!important}
+      .workspace-attention .attention-item-copy>strong{grid-column:2!important;grid-row:1!important;align-self:end!important}
+      .workspace-attention .attention-item-copy>span:last-child{grid-column:2!important;grid-row:2!important;align-self:start!important}
       .workspace-attention .attention-kind{flex:0 0 auto!important;margin:0 0 0 auto!important;padding:2px 7px!important;font-size:9px!important;font-weight:750!important;white-space:nowrap!important;align-self:center!important}
       .workspace-attention .attention-arrow{display:none!important}
       .workspace-attention .attention-item:hover{background:#fbfcff!important}
@@ -31,10 +36,10 @@
       /* Workspace Current State card: remove excess vertical air. */
       .workspace-status-card{padding:14px 16px!important}
       .workspace-status-card>.eyebrow{min-height:30px!important;margin:0 0 2px!important}
-      .workspace-status-card .workspace-section-hint{margin-top:-14px!important;margin-bottom:8px!important}
+      .workspace-status-card .workspace-section-hint{margin-top:-14px!important;margin-bottom:6px!important}
       .workspace-status-card .workspace-status-body{margin-top:0!important}
       .workspace-status-card .state-fact-preview{padding-top:0!important}
-      .workspace-status-card .state-fact-preview p{margin:0 0 8px!important}
+      .workspace-status-card .state-fact-preview p{margin:0 0 7px!important}
       .workspace-status-card .state-fact-preview>.text-button{font-size:11.5px!important;font-weight:700!important}
 
       /* Current State page: readable wiki, not a database/provenance inspector. */
@@ -60,21 +65,21 @@
       .project-page .project-fact-provenance,
       .project-page [class*="provenance"]{display:none!important}
 
-      /* Open Items: decision queue density. */
+      /* Open Items: compact, but with enough breathing room to scan. */
       .open-items-page .open-items-section{margin-bottom:10px!important}
       .open-items-page .open-items-section-head{padding:12px 16px!important}
       .open-items-page .open-items-section-copy{gap:1px!important}
       .open-items-page .open-items-kicker{font-size:10px!important;margin-bottom:1px!important}
       .open-items-page .open-items-section-title{font-size:17px!important;line-height:1.22!important}
       .open-items-page .open-items-section-description{font-size:11.5px!important;line-height:1.32!important;margin-top:1px!important}
-      .open-items-page .open-items-section-body{padding:4px 16px 8px!important}
+      .open-items-page .open-items-section-body{padding:5px 16px 9px!important}
       .open-items-page .review-card.compact-review{padding:0!important;margin:0!important;border-radius:0!important}
-      .open-items-page .review-card-toggle{padding:10px 0!important;min-height:0!important}
-      .open-items-page .review-row-copy{gap:2px!important}
-      .open-items-page .review-kicker{font-size:10px!important;line-height:1.15!important;margin:0!important}
-      .open-items-page .review-card-title{font-size:14px!important;line-height:1.32!important;margin:1px 0!important}
-      .open-items-page .review-source-meta{font-size:10.5px!important;margin-top:1px!important}
-      .open-items-page .review-card-body{padding-top:8px!important}
+      .open-items-page .review-card-toggle{padding:14px 0!important;min-height:0!important}
+      .open-items-page .review-row-copy{gap:3px!important}
+      .open-items-page .review-kicker{font-size:10px!important;line-height:1.15!important;margin:0 0 1px!important}
+      .open-items-page .review-card-title{font-size:14px!important;line-height:1.32!important;margin:2px 0!important}
+      .open-items-page .review-source-meta{font-size:10.5px!important;margin-top:2px!important}
+      .open-items-page .review-card-body{padding-top:9px!important}
 
       /* Notes: quiet neutral state, actionable review remains actionable. */
       .notes-page .notes-disclosure,.notes-page .notes-result-count{display:none!important}
@@ -102,10 +107,17 @@
       .settings-page .settings-callout{margin-top:7px!important;padding:7px 9px!important}
       .settings-page .settings-actions{margin-top:7px!important}
 
-      /* Ask: consistent icon proportions and functional compact mobile form. */
-      .ask-state-drawer-head{background:#f1f6ff!important}
+      /* Ask: compact composer, consistent icons, visible generation state. */
+      .ask-state-drawer-head{background:#f1f6ff!important;padding-top:16px!important;padding-bottom:14px!important}
       .ask-state-starters .ask-polish-icon,.ask-quick-actions-polish .ask-polish-icon{display:grid!important;place-items:center!important}
       .ask-state-starters .ask-polish-icon svg,.ask-quick-actions-polish .ask-polish-icon svg{width:21px!important;height:21px!important;fill:none!important;stroke:currentColor!important;stroke-width:1.8!important;stroke-linecap:round!important;stroke-linejoin:round!important}
+      .ask-state-drawer-form{position:relative!important}
+      .ask-state-drawer-form input,.ask-state-drawer-form textarea{height:96px!important;min-height:96px!important;max-height:96px!important;padding:16px 64px 16px 16px!important;box-sizing:border-box!important;font-size:16px!important;line-height:1.35!important}
+      .ask-state-drawer-form button{position:absolute!important;right:12px!important;bottom:12px!important;top:auto!important;transform:none!important;width:44px!important;height:44px!important}
+      .ask-state-drawer-form button:disabled{opacity:.55!important;cursor:wait!important}
+      .state-ask-generating{display:flex;align-items:center;gap:7px;margin:7px 2px 0;color:#31598f;font-size:11px;font-weight:650}
+      .state-ask-generating::before{content:'';width:7px;height:7px;border-radius:50%;background:#1769e8;animation:stateAskPulse 1s ease-in-out infinite alternate}
+      @keyframes stateAskPulse{from{opacity:.35;transform:scale(.85)}to{opacity:1;transform:scale(1)}}
 
       @media(max-width:760px){
         html,body{overflow-x:hidden!important}
@@ -120,7 +132,7 @@
 
         .workspace-attention{padding:12px!important}
         .workspace-attention .attention-item{display:flex!important;gap:8px!important;padding:11px!important}
-        .workspace-attention .attention-item-copy{padding-left:39px!important}
+        .workspace-attention .attention-item-copy{grid-template-columns:36px minmax(0,1fr)!important;column-gap:9px!important}
         .workspace-attention .attention-row-icon{width:30px!important;height:30px!important}
         .workspace-attention .attention-kind{align-self:flex-start!important;margin-top:2px!important;font-size:9px!important;padding:2px 6px!important}
         .workspace-status-card .state-fact-preview>.text-button{position:static!important;margin-top:8px!important}
@@ -143,17 +155,16 @@
         .project-page .project-wiki-prose p{font-size:13px!important;line-height:1.58!important}
 
         .open-items-page .open-items-section-head{padding:11px 13px!important}
-        .open-items-page .open-items-section-body{padding:3px 13px 7px!important}
-        .open-items-page .review-card-toggle{padding:9px 0!important}
+        .open-items-page .open-items-section-body{padding:4px 13px 8px!important}
+        .open-items-page .review-card-toggle{padding:12px 0!important}
 
         .settings-page .settings-section{padding:10px!important;margin-bottom:7px!important}
 
         .ask-state-drawer{width:100vw!important;max-width:100vw!important}
-        .ask-state-drawer-head{padding:15px 18px 12px!important}
+        .ask-state-drawer-head{padding:14px 18px 12px!important}
         .ask-state-drawer-controls{padding:14px 18px 20px!important}
-        .ask-state-drawer-form{position:relative!important}
-        .ask-state-drawer-form input,.ask-state-drawer-form textarea{height:96px!important;min-height:96px!important;padding:14px 58px 14px 14px!important;box-sizing:border-box!important}
-        .ask-state-drawer-form button{position:absolute!important;right:12px!important;bottom:12px!important;top:auto!important;transform:none!important;width:42px!important;height:42px!important}
+        .ask-state-drawer-form input,.ask-state-drawer-form textarea{height:86px!important;min-height:86px!important;max-height:86px!important;padding:13px 56px 13px 13px!important}
+        .ask-state-drawer-form button{right:10px!important;bottom:10px!important;width:40px!important;height:40px!important}
       }
       @media(max-width:430px){
         .mobile-primary-nav,.mobile-subnav{margin-left:-4px!important;margin-right:-4px!important;padding-left:4px!important}
@@ -202,35 +213,122 @@
     }
   }
 
+  function quickPrompt(button){
+    if(button.dataset.q) return button.dataset.q;
+    const label=(button.textContent||'').replace(/\s+/g,' ').trim().toLowerCase();
+    if(label.includes('summarize this page')) return 'Summarize the current page using the project context that matters most.';
+    if(label.includes('show open questions')) return 'What are we still unsure about?';
+    if(label.includes('show recent changes')) return 'What changed recently?';
+    return (button.textContent||'').replace(/\s+/g,' ').trim();
+  }
+
   function runQuickAction(button){
     const drawer=button.closest('.ask-state-drawer')||document.querySelector('.ask-state-drawer');
     const form=drawer?.querySelector('.ask-state-drawer-form');
     const field=form?.querySelector('input,textarea');
-    const submit=form?.querySelector('button');
+    const submit=form?.querySelector('button[type="submit"],button');
     if(!field||!submit) return;
-    field.value=button.dataset.q||button.textContent.trim();
+    field.value=quickPrompt(button);
     field.dispatchEvent(new Event('input',{bubbles:true}));
     field.dispatchEvent(new Event('change',{bubbles:true}));
+    field.focus();
     setTimeout(()=>submit.click(),0);
   }
 
   function bindQuickActions(){
-    if(document.documentElement.dataset.stateFinalQuickActions==='1') return;
-    document.documentElement.dataset.stateFinalQuickActions='1';
+    if(document.documentElement.dataset.stateFinalQuickActions==='2') return;
+    document.documentElement.dataset.stateFinalQuickActions='2';
     document.addEventListener('click',e=>{
-      const b=e.target.closest('.ask-quick-actions-polish button[data-q]');
+      const b=e.target.closest('.ask-quick-actions-polish button');
       if(!b) return;
-      setTimeout(()=>runQuickAction(b),0);
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      runQuickAction(b);
     },true);
+  }
+
+  function beginAskLoading(form){
+    if(!form||form.dataset.stateLoading==='1') return;
+    const field=form.querySelector('input,textarea');
+    if(!field||!field.value.trim()) return;
+    form.dataset.stateLoading='1';
+    const submit=form.querySelector('button[type="submit"],button');
+    if(submit) submit.disabled=true;
+    let status=form.parentElement?.querySelector('.state-ask-generating');
+    if(!status){
+      status=document.createElement('div');
+      status.className='state-ask-generating';
+      status.setAttribute('role','status');
+      status.textContent='Finding the answer…';
+      form.insertAdjacentElement('afterend',status);
+    }
+    const drawer=form.closest('.ask-state-drawer');
+    if(!drawer) return;
+    const observer=new MutationObserver(()=>{
+      const live=drawer.querySelector('.ask-live-loading');
+      if(live){ status.textContent='Generating answer…'; return; }
+      const answer=drawer.querySelector('.ask-live-answer,.ask-answer-item,.ask-state-answer');
+      const error=drawer.querySelector('.ask-error,.error-message,[role="alert"]');
+      if(answer||error){
+        status.remove();
+        form.dataset.stateLoading='0';
+        if(submit) submit.disabled=false;
+        observer.disconnect();
+      }
+    });
+    observer.observe(drawer,{childList:true,subtree:true,characterData:true});
+    setTimeout(()=>{
+      if(form.dataset.stateLoading==='1'){
+        status?.remove();
+        form.dataset.stateLoading='0';
+        if(submit) submit.disabled=false;
+        observer.disconnect();
+      }
+    },45000);
+  }
+
+  function bindAskLoading(){
+    if(document.documentElement.dataset.stateAskLoadingBound==='1') return;
+    document.documentElement.dataset.stateAskLoadingBound='1';
+    document.addEventListener('click',e=>{
+      const submit=e.target.closest('.ask-state-drawer-form button');
+      if(submit) beginAskLoading(submit.closest('.ask-state-drawer-form'));
+    },true);
+    document.addEventListener('submit',e=>{
+      if(e.target.matches?.('.ask-state-drawer-form')) beginAskLoading(e.target);
+    },true);
+  }
+
+  function forceLightMode(){
+    document.documentElement.style.colorScheme='light';
+    if(document.body?.classList.contains('v88-dark')) document.body.classList.remove('v88-dark');
+  }
+
+  function containHelpCard(){
+    const sidebar=document.querySelector('.app-sidebar');
+    const card=sidebar?.querySelector('.demo-help-button.state-help-card,.demo-help-button');
+    if(!sidebar||!card) return;
+    if(window.innerWidth<=760){
+      card.style.removeProperty('left');
+      card.style.removeProperty('width');
+      return;
+    }
+    const r=sidebar.getBoundingClientRect();
+    const inset=14;
+    card.style.left=`${Math.round(r.left+inset)}px`;
+    card.style.width=`${Math.max(0,Math.round(r.width-inset*2))}px`;
   }
 
   function run(){
     addStyles();
+    forceLightMode();
     simplifyWorkspaceBrowse();
     cleanNotes();
     simplifyCurrentState();
     fixAskIcon();
     bindQuickActions();
+    bindAskLoading();
+    containHelpCard();
   }
 
   let queued=false;
@@ -239,7 +337,8 @@
     queued=true;
     requestAnimationFrame(()=>{queued=false;run();});
   };
-  new MutationObserver(schedule).observe(document.documentElement,{childList:true,subtree:true});
+  new MutationObserver(schedule).observe(document.documentElement,{childList:true,subtree:true,attributes:true,attributeFilter:['class']});
+  window.addEventListener('resize',schedule,{passive:true});
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',schedule,{once:true});
   else schedule();
 })();
