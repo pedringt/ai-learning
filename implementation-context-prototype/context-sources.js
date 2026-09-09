@@ -1,4 +1,23 @@
 (() => {
+  // Keep the last UI layer authoritative without flashing an earlier design
+  // while the final cleanup script loads. The fallback always reveals State
+  // even if that optional polish script fails to load.
+  if(!document.getElementById('state-final-mobile-loader-style')){
+    const guard=document.createElement('style');
+    guard.id='state-final-mobile-loader-style';
+    guard.textContent='html.state-final-mobile-pending .prototype-productbar,html.state-final-mobile-pending .software-shell{visibility:hidden!important}';
+    document.head.appendChild(guard);
+  }
+  document.documentElement.classList.add('state-final-mobile-pending');
+  window.__stateFinalMobileTimer=setTimeout(()=>document.documentElement.classList.remove('state-final-mobile-pending'),1500);
+  if(!document.querySelector('script[data-state-final-mobile]')){
+    const finalScript=document.createElement('script');
+    finalScript.dataset.stateFinalMobile='1';
+    finalScript.src=(location.protocol==='file:'?'context-final-mobile.js?v=r63-mobile-final':'/implementation-context-prototype/context-final-mobile.js?v=r63-mobile-final');
+    finalScript.addEventListener('error',()=>document.documentElement.classList.remove('state-final-mobile-pending'),{once:true});
+    document.head.appendChild(finalScript);
+  }
+
   // Workspace source status stays intentionally lightweight; this file is also a safe staging deploy trigger.
   const root = document.getElementById('viewRoot');
   if (!root) return;
