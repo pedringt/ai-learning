@@ -6,10 +6,10 @@
   releaseStyle.textContent = `
     /* Final release rhythm: keep Open Items sections visually consistent. */
     html body .open-items-page .open-items-sections{display:block!important;gap:0!important}
-    html body .open-items-page .open-items-section{margin:0!important}
+    html body .open-items-page .open-items-section{margin:0!important;padding:0!important}
     html body .open-items-page .open-items-section + .open-items-section{margin-top:28px!important}
-    html body .open-items-page .open-items-section-head{margin:0!important}
-    html body .open-items-page .open-items-section-body{margin-top:12px!important}
+    html body .open-items-page .open-items-section-head{margin:0!important;padding:0 0 11px!important;min-height:0!important}
+    html body .open-items-page .open-items-section-body{margin-top:12px!important;padding:0!important}
 
     /* Reviews and Questions share one full-width record geometry. */
     html body .open-items-page .open-items-reviews .open-items-section-body{display:block!important;width:100%!important;max-width:none!important;min-width:0!important;grid-template-columns:none!important;box-sizing:border-box!important}
@@ -17,7 +17,7 @@
     html body .open-items-page .open-items-reviews .compact-review{display:block!important;width:100%!important;max-width:none!important;min-width:0!important;margin:0!important;border:0!important;border-bottom:1px solid #e3e8ef!important;border-radius:0!important;box-sizing:border-box!important}
     html body .open-items-page .open-items-reviews .review-card:last-child,
     html body .open-items-page .open-items-reviews .compact-review:last-child{border-bottom:0!important}
-    html body .open-items-page .open-items-reviews .review-card-toggle{width:100%!important;max-width:none!important;min-width:0!important;display:flex!important;align-items:center!important;justify-content:space-between!important;gap:16px!important;text-align:left!important;background:transparent!important;border:0!important;padding-top:0!important;padding-bottom:0!important;box-sizing:border-box!important;color:inherit!important}
+    html body .open-items-page .open-items-reviews .review-card-toggle{width:100%!important;max-width:none!important;min-width:0!important;display:flex!important;align-items:center!important;justify-content:space-between!important;gap:16px!important;text-align:left!important;background:transparent!important;border:0!important;padding:13px 0!important;box-sizing:border-box!important;color:inherit!important}
     html body .open-items-page .open-items-reviews .review-card-toggle::after{content:'›'!important;display:block!important;flex:0 0 auto!important;margin-left:auto!important;font-size:22px!important;line-height:1!important;color:#7a8799!important;transform:none!important;transition:transform .14s ease,color .14s ease!important}
     html body .open-items-page .open-items-reviews .review-card-toggle[aria-expanded='true']::after{transform:rotate(90deg)!important}
     html body .open-items-page .open-items-reviews .review-card-toggle:hover::after{color:var(--accent,#40356f)!important}
@@ -54,6 +54,7 @@
 
     @media(max-width:760px){
       html body .open-items-page .open-items-section + .open-items-section{margin-top:24px!important}
+      html body .open-items-page .open-items-reviews .review-card-toggle{padding-top:13px!important;padding-bottom:13px!important}
       html body .notes-page .note-index-status{align-items:flex-start!important}
       html body .history-page .history-list,
       html body .history-page #historyList{padding-bottom:14px!important}
