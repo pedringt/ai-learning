@@ -11,7 +11,7 @@
   function styles(){
     if(document.getElementById('state-final-feedback'))return;
     const s=document.createElement('style');s.id='state-final-feedback';s.textContent=`
-      .prototype-productbar{background:#e7effc!important;border-bottom-color:#cfdbef!important}
+      .prototype-productbar{background:#dce8fa!important;border-bottom-color:#c3d4ed!important}
 
       /* Workspace attention: one calm surface with dividers instead of white cards on pink. */
       body .workspace-attention .attention-list{background:transparent!important;border:0!important;border-radius:0!important;overflow:visible!important}
@@ -34,7 +34,11 @@
       body .open-items-page details.reasoning p{margin:7px 0!important;font-size:13px!important;line-height:1.45!important;color:#4f5b70!important}
       body .open-items-page details.reasoning p strong{font-size:inherit!important;color:#26344d!important}
 
-      /* History is the readable decision log; provenance controls live elsewhere. */
+      /* History is a flat decision log. Remove timeline rails and hover geometry entirely. */
+      body .history-page #historyList,body .history-page .history-list{border-left:0!important;background-image:none!important}
+      body .history-page .history-entry,body .history-page .history-entry:hover,body .history-page .history-entry.is-linked:hover{border-left:0!important;border-radius:0!important;background:transparent!important;background-image:none!important;box-shadow:none!important;transform:none!important;outline:0!important}
+      body .history-page .history-entry::before,body .history-page .history-entry::after,body .history-page .history-entry:hover::before,body .history-page .history-entry:hover::after{content:none!important;display:none!important;border:0!important;box-shadow:none!important}
+      body .history-page .history-entry-body,body .history-page .history-entry-body:hover{border-left:0!important;background:transparent!important;box-shadow:none!important;transform:none!important}
       body .history-page .history-sources,body .history-page .history-entry-link{display:none!important}
 
       /* Ask discovery controls. */
@@ -48,11 +52,16 @@
       body #askStateDrawer .ask-state-starters button:nth-of-type(4) .ask-polish-icon::before{content:'?';display:grid;place-items:center;width:18px;height:18px;border:1.7px solid currentColor;border-radius:50%;font-size:12px;font-weight:800;line-height:1}
       body #askStateDrawer .ask-state-drawer-close{display:grid!important;place-items:center!important;width:32px!important;height:32px!important;min-width:32px!important;padding:0!important;border:0!important;background:transparent!important;font-size:25px!important;line-height:1!important;appearance:none!important;-webkit-appearance:none!important}
       body #askStateDrawer .ask-state-drawer-close::before,body #askStateDrawer .ask-state-drawer-close::after{content:none!important;display:none!important}
-      body #askStateDrawer.has-answer .ask-state-drawer-form button[type="submit"]{display:none!important}
-      body #askStateDrawer.has-answer .state-ask-clear{display:block!important;right:6px!important}
+      body #askStateDrawer.has-answer:not(.is-editing-answer) .ask-state-drawer-form button[type="submit"]{display:none!important}
+      body #askStateDrawer.has-answer:not(.is-editing-answer) .state-ask-clear{display:block!important;right:6px!important}
       body #askStateDrawer.is-editing-answer .state-ask-clear{display:none!important}
       body #askStateDrawer.is-editing-answer .ask-state-drawer-form button[type="submit"]{display:block!important}
       body #askStateDrawer.is-editing-answer .ask-state-starters{display:none!important}
+
+      /* The global Current-State signature warning is too coarse: any unrelated
+         accepted change marks every answer stale. Hide it until freshness can
+         be tied to the state records the answer actually used. */
+      body #askStateDrawer .ask-state-stale{display:none!important}
 
       /* Ask answers: compact hierarchy and small utilities. */
       body #askStateDrawer .ask-live-answer>h2,body #askStateDrawer .ask-live-answer .ask-answer-head h2{font-size:20px!important;line-height:1.22!important;letter-spacing:-.015em!important;margin:7px 0 9px!important}
@@ -119,14 +128,22 @@
       if(e.target?.id!=='askStateDrawerInput')return;
       const drawer=document.getElementById('askStateDrawer');
       if(!drawer?.classList.contains('has-answer'))return;
-      const result=drawer.querySelector('#askStateDrawerResult');
-      if(result)result.innerHTML='';
-      drawer.classList.remove('has-answer');
+      if(!e.target.value.trim()){
+        drawer.classList.remove('is-editing-answer');
+        return;
+      }
       drawer.classList.add('is-editing-answer');
     });
     document.addEventListener('submit',e=>{
       if(!e.target.closest?.('#askStateDrawer [data-review-batch-form="ask"]'))return;
       document.getElementById('askStateDrawer')?.classList.remove('is-editing-answer');
+    },true);
+    document.addEventListener('click',e=>{
+      if(!e.target.closest?.('#askStateDrawer .state-ask-clear'))return;
+      setTimeout(()=>{
+        const drawer=document.getElementById('askStateDrawer');
+        drawer?.classList.remove('is-editing-answer','has-answer','is-generating');
+      },0);
     },true);
   }
 
