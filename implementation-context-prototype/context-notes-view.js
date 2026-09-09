@@ -33,7 +33,6 @@
     const todayDay=calendarDayNumber(todayISO());
     if(noteDay===null||todayDay===null)return false;
     const age=todayDay-noteDay;
-    // Calendar-day filters are inclusive and never pull future-dated notes in.
     if(age<0)return false;
     if(filter==='today')return age===0;
     if(filter==='7')return age<=6;
@@ -41,7 +40,6 @@
     return true;
   }
 
-  // ui: {notesFilter, notesDateFilter, notesSearch}
   function filteredNotes(notes,ui){
     const activeFilter=ui.notesFilter||'all';
     const dateFilter=ui.notesDateFilter||'all';
@@ -76,7 +74,7 @@
   function noteStatusControl(n,statusClass){
     if(n.status==='pending' && (n.reviewIds||[]).length){
       const count=n.reviewIds.length;
-      return `<button type="button" class="note-status note-status-link note-status--${statusClass}" data-action="open-note-reviews" data-note-id="${n.id}" aria-label="Open ${count===1?'the Review':`${count} Reviews`} for this note">Review proposed update${count>1?` · ${count}`:''} →</button>`;
+      return `<button type="button" class="text-button note-review-link" data-action="open-note-reviews" data-note-id="${n.id}" aria-label="Open ${count===1?'the Review':`${count} Reviews`} for this note">Review proposed update${count>1?` · ${count}`:''} →</button>`;
     }
     if(n.status==='accepted' && (n.historyIds||[]).length){
       return `<button type="button" class="note-status note-status-link note-status--${statusClass}" data-action="open-note-history" data-note-id="${n.id}" aria-label="View accepted History from this note">Changed Current State →</button>`;
@@ -89,7 +87,6 @@
     return !['pending','accepted','reviewed','no_review_needed','unknown'].includes(n.status);
   }
 
-  // expandedNotes: Set of expanded note ids. editingNoteId: id of the note currently being edited, or null.
   function simpleNote(n,expandedNotes,editingNoteId){
     const expanded=expandedNotes.has(n.id);
     const target=120+((n.id.charCodeAt(2)||7)*17)%111;
@@ -111,22 +108,12 @@
     return `<article class="simple-note note-index-row ${expanded?'is-expanded':''}" data-action="toggle-note" data-note-id="${n.id}" tabindex="0"><span class="note-date">${esc(n.date)}</span><div class="note-index-main"><h3>${esc(n.title)}</h3><span class="note-source">${esc(n.source)}</span>${body}</div><div class="note-index-status">${statusBadge}</div></article>`;
   }
 
-  // Used only for the Open Items "Draft notes" section: a non-collapsible
-  // variant of simpleNote() with the review action always visible. Reusing
-  // simpleNote() directly would wire up its toggle-note interaction, whose
-  // handler unconditionally re-renders the Notes view -- clicking to expand
-  // a draft note from Open Items would silently navigate away from Open
-  // Items entirely. This avoids that by never entering the toggle path.
   function draftNoteRow(n){
     const target=120+((n.id.charCodeAt(2)||7)*17)%111;
     const preview=n.text.length>target?n.text.slice(0,Math.max(80,target-3)).replace(/\s+\S*$/,'')+'…':n.text;
     return `<article class="simple-note note-index-row is-expanded" data-note-id="${n.id}"><span class="note-date">${esc(n.date)}</span><div class="note-index-main"><h3>${esc(n.title)}</h3><span class="note-source">${esc(n.source)}</span><p>${esc(preview)}</p><div class="inline-actions note-actions"><button class="text-button" data-action="send-note-review" data-note-id="${n.id}">Submit for review</button></div></div><div class="note-index-status"><span class="note-status note-status--draft">Draft</span></div></article>`;
   }
 
-  // notes: state.data.notes (unfiltered). ui: {noteComposerOpen, notesFilter,
-  // notesDateFilter, notesSearch, expandedNotes, editingNoteId, evidenceStatus,
-  // draftsStatus}. Returns the full Notes page markup; the caller assigns it
-  // to #viewRoot.
   function render(notes,ui){
     const composer=ui.noteComposerOpen?`<section class="note-composer"><input id="newNoteTitle" class="dialog-input" placeholder="Note title" aria-label="Note title"><textarea id="newNoteText" rows="8" aria-label="New note text" placeholder="Write anything you want to keep with the project. Saving a note does not change project state."></textarea><div class="inline-actions"><button class="btn primary" data-action="save-new-note">Save note</button><button class="btn secondary" data-action="cancel-new-note">Cancel</button></div></section>`:'';
     const activeFilter=ui.notesFilter||'all';
