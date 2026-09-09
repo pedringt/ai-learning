@@ -34,7 +34,7 @@ def _page(width=1200, height=900):
     browser = _launch(pw)
     page = browser.new_page(viewport={"width": width, "height": height})
     page.goto(STATE_URL)
-    page.wait_for_function("document.getElementById('state-final-feedback-r61') !== null")
+    page.wait_for_function("document.getElementById('state-final-mobile-r66') !== null")
     return pw, browser, page
 
 
@@ -42,10 +42,11 @@ def test_final_feedback_layer_is_loaded_by_real_state_entrypoint():
     pw, browser, page = _page()
     try:
         assert page.locator("#state-final-feedback-r61").count() == 1
-        # Final State polish is deliberately owned by the last-loaded feedback
-        # layer so earlier experimental passes cannot silently win the cascade.
+        assert page.locator("#state-final-mobile-r66").count() == 1
         bg = page.locator(".prototype-productbar").evaluate("e => getComputedStyle(e).backgroundColor")
-        assert bg == "rgb(185, 206, 232)"
+        border = page.locator(".prototype-productbar").evaluate("e => getComputedStyle(e).borderBottomColor")
+        assert bg == "rgb(251, 252, 253)"
+        assert border == "rgb(216, 225, 235)"
     finally:
         browser.close(); pw.stop()
 
@@ -69,9 +70,6 @@ def test_ask_answer_has_one_control_and_reset_restores_discovery_ui():
         assert not page.locator("#askStateDrawer .ask-state-drawer-form button[type='submit']").is_visible()
         assert page.locator("#askStateDrawer .state-ask-clear").count() == 1
         assert not page.locator("#askStateDrawer .state-ask-clear").is_visible()
-        # Regression: an older generic button::after rule appended an arrow to
-        # the reset button itself, visually producing "x ->" even when submit
-        # was correctly hidden.
         reset_after = reset.evaluate("e => getComputedStyle(e,'::after').content")
         assert reset_after in ('none', '""')
 
@@ -97,6 +95,21 @@ def test_mobile_ask_starters_are_full_width_and_drawer_can_close():
         page.locator("#askStateDrawer .ask-state-drawer-close").click()
         page.wait_for_timeout(30)
         assert page.locator("#askStateDrawer").evaluate("e => e.hidden") is True
+    finally:
+        browser.close(); pw.stop()
+
+
+def test_add_evidence_modal_uses_neutral_surface_and_blue_action():
+    pw, browser, page = _page()
+    try:
+        page.locator('[data-action="add-info"]').click()
+        dialog = page.locator("#overlay .dialog")
+        assert dialog.is_visible()
+        assert page.locator("#addInfoText").is_visible()
+        bg = dialog.evaluate("e => getComputedStyle(e).backgroundColor")
+        primary = page.locator('[data-action="save-info"]').evaluate("e => getComputedStyle(e).backgroundColor")
+        assert bg == "rgb(255, 255, 255)"
+        assert primary == "rgb(23, 105, 232)"
     finally:
         browser.close(); pw.stop()
 
