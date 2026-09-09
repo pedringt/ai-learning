@@ -7,10 +7,8 @@
   const mobile=document.getElementById('v922MobileNav');
   const isDark=()=>body.classList.contains('v88-dark');
 
-  /* The portfolio started as an AI learning exercise, but the work now needs
-     to lead with Paige's product identity. Keep learning visible in the IA,
-     not as the site's primary professional label. */
-  document.querySelectorAll('.brand').forEach(brand=>{brand.innerHTML='Paige <span>Edrington</span>';});
+  /* Keep the portfolio anonymous for now while still positioning the work as
+     applied AI product work rather than only a learning exercise. */
   if(document.title.includes('AI Learning Portfolio')) document.title=document.title.replace('AI Learning Portfolio','Applied AI Product Portfolio');
   document.querySelectorAll('meta[property="og:title"],meta[name="twitter:title"]').forEach(meta=>{
     if((meta.content||'').includes('AI Learning Portfolio')) meta.content=meta.content.replace('AI Learning Portfolio','Applied AI Product Portfolio');
