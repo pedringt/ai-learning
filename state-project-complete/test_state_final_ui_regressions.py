@@ -34,19 +34,18 @@ def _page(width=1200, height=900):
     browser = _launch(pw)
     page = browser.new_page(viewport={"width": width, "height": height})
     page.goto(STATE_URL)
-    page.wait_for_function("document.getElementById('state-final-feedback-r58') !== null")
+    page.wait_for_function("document.getElementById('state-final-feedback-r61') !== null")
     return pw, browser, page
 
 
 def test_final_feedback_layer_is_loaded_by_real_state_entrypoint():
     pw, browser, page = _page()
     try:
-        assert page.locator("#state-final-feedback-r58").count() == 1
-        # Regression: context-feedback-pass-4.js existed in the repo but was not
-        # loaded by index.html, and initially shared a style id with an older pass,
-        # so several 'fixed' bugs never actually won in the real cascade.
+        assert page.locator("#state-final-feedback-r61").count() == 1
+        # Final State polish is deliberately owned by the last-loaded feedback
+        # layer so earlier experimental passes cannot silently win the cascade.
         bg = page.locator(".prototype-productbar").evaluate("e => getComputedStyle(e).backgroundColor")
-        assert bg == "rgb(219, 231, 248)"
+        assert bg == "rgb(185, 206, 232)"
     finally:
         browser.close(); pw.stop()
 
@@ -63,16 +62,21 @@ def test_ask_answer_has_one_control_and_reset_restores_discovery_ui():
           result.innerHTML='<div class="ask-live-answer"><h2>Billing contact</h2><p>Example answer</p></div>';
           drawer.classList.add('has-answer');
         }""")
-        page.wait_for_timeout(40)
+        page.wait_for_timeout(50)
 
         reset = page.locator("#askStateDrawer .state-ask-reset")
         assert reset.is_visible()
         assert not page.locator("#askStateDrawer .ask-state-drawer-form button[type='submit']").is_visible()
         assert page.locator("#askStateDrawer .state-ask-clear").count() == 1
         assert not page.locator("#askStateDrawer .state-ask-clear").is_visible()
+        # Regression: an older generic button::after rule appended an arrow to
+        # the reset button itself, visually producing "x ->" even when submit
+        # was correctly hidden.
+        reset_after = reset.evaluate("e => getComputedStyle(e,'::after').content")
+        assert reset_after in ('none', '""')
 
         reset.click()
-        page.wait_for_timeout(40)
+        page.wait_for_timeout(50)
         assert page.locator("#askStateDrawerInput").input_value() == ""
         assert page.locator("#askStateDrawerResult").inner_text() == ""
         assert page.locator("#askStateDrawer .ask-state-starters").is_visible()
@@ -111,8 +115,6 @@ def test_coarse_stale_answer_warning_is_not_surfaced():
 
 
 def test_history_entries_have_no_left_timeline_rail_or_hover_transform():
-    # File-mode seed history can be empty depending on the bootstrap path, so
-    # test the actual final History selectors against representative markup.
     pw, browser, page = _page()
     try:
         page.evaluate("""() => {
