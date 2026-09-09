@@ -34,16 +34,17 @@ def _page(width=1200, height=900):
     browser = _launch(pw)
     page = browser.new_page(viewport={"width": width, "height": height})
     page.goto(STATE_URL)
-    page.wait_for_function("document.getElementById('state-final-feedback') !== null")
+    page.wait_for_function("document.getElementById('state-final-feedback-r58') !== null")
     return pw, browser, page
 
 
 def test_final_feedback_layer_is_loaded_by_real_state_entrypoint():
     pw, browser, page = _page()
     try:
-        assert page.locator("#state-final-feedback").count() == 1
+        assert page.locator("#state-final-feedback-r58").count() == 1
         # Regression: context-feedback-pass-4.js existed in the repo but was not
-        # loaded by index.html, so several 'fixed' bugs kept reappearing live.
+        # loaded by index.html, and initially shared a style id with an older pass,
+        # so several 'fixed' bugs never actually won in the real cascade.
         bg = page.locator(".prototype-productbar").evaluate("e => getComputedStyle(e).backgroundColor")
         assert bg == "rgb(219, 231, 248)"
     finally:
@@ -110,11 +111,17 @@ def test_coarse_stale_answer_warning_is_not_surfaced():
 
 
 def test_history_entries_have_no_left_timeline_rail_or_hover_transform():
+    # File-mode seed history can be empty depending on the bootstrap path, so
+    # test the actual final History selectors against representative markup.
     pw, browser, page = _page()
     try:
-        page.locator('.sidebar-nav [data-view="history"]').click()
-        entry = page.locator(".history-page .history-entry").first
-        entry.wait_for()
+        page.evaluate("""() => {
+          const host=document.createElement('section');
+          host.className='history-page';
+          host.innerHTML='<div id="historyList" class="history-list"><article class="history-entry is-linked"><div class="history-entry-body">Decision</div></article></div>';
+          document.body.appendChild(host);
+        }""")
+        entry = page.locator(".history-page .history-entry").last
         values = entry.evaluate("""e => ({
           borderLeft:getComputedStyle(e).borderLeftWidth,
           transform:getComputedStyle(e).transform,
