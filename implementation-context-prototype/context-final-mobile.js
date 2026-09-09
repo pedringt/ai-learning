@@ -30,7 +30,7 @@
       html body .workspace-attention .workspace-attention-head h3{margin-top:1px!important}
       html body .workspace-attention .attention-row-icon{align-self:start!important;margin-top:2px!important}
 
-      /* Open Items: match the locally reviewed Review row geometry. */
+      /* Open Items: exact locally reviewed Review row geometry. */
       html body .open-items-page .open-items-section,
       html body .open-items-page .open-items-reviews,
       html body .open-items-page .open-items-blockers,
@@ -47,9 +47,9 @@
       html body .open-items-page .compact-review{padding-left:0!important;padding-right:0!important}
       html body .open-items-page .review-card::before,
       html body .open-items-page .compact-review::before{content:none!important;display:none!important}
-      html body .open-items-page .review-card-toggle{width:100%!important;display:grid!important;grid-template-columns:18px minmax(0,1fr) 24px!important;align-items:center!important;column-gap:12px!important;padding:14px 16px 15px 12px!important}
-      html body .open-items-page .review-card-toggle::before{content:''!important;display:block!important;width:7px!important;height:7px!important;border-radius:50%!important;background:#8d99aa!important;align-self:start!important;justify-self:center!important;margin-top:6px!important}
-      html body .open-items-page .review-card-toggle::after{grid-column:3!important;justify-self:end!important;margin-left:0!important}
+      html body .open-items-page .review-card-toggle{width:100%!important;display:grid!important;grid-template-columns:12px minmax(0,1fr) 20px!important;align-items:start!important;column-gap:8px!important;padding:13px 16px 13px 12px!important}
+      html body .open-items-page .review-card-toggle::before{content:''!important;display:block!important;width:7px!important;height:7px!important;border-radius:50%!important;background:#8d99aa!important;justify-self:center!important;align-self:start!important;margin-top:4px!important}
+      html body .open-items-page .review-card-toggle::after{grid-column:3!important;justify-self:end!important;align-self:center!important;margin-left:0!important}
       html body .open-items-page .review-card:first-child .review-card-toggle,
       html body .open-items-page .review-card.is-expanded .review-card-toggle{border-left:0!important;padding-left:12px!important}
       html body .open-items-page .review-card.is-expanded .review-card-toggle{background:#fafbfc!important;border-radius:8px!important}
@@ -78,14 +78,15 @@
       html body .open-items-page .open-question-actions{display:flex!important;flex-wrap:wrap!important;gap:8px 12px!important;margin-top:10px!important}
       html body .open-items-page .open-question-actions .text-button{font-size:12px!important}
 
-      /* History: locally reviewed compact horizontal date rail. */
+      /* History: no date rail. Date sits above the title in one content column. */
       html body .history-page #historyList,
-      html body .history-page .history-list{border-left:0!important;border-inline-start:0!important;background-image:none!important;padding:0 24px 16px!important}
+      html body .history-page .history-list{border-left:0!important;border-inline-start:0!important;background-image:none!important;padding:16px 24px 4px!important}
       html body .history-page .history-list article.history-entry,
-      html body .history-page #historyList article.history-entry{grid-template-columns:72px minmax(0,1fr)!important;gap:14px!important;padding:16px 0!important;margin:0!important;border-bottom:1px solid #e2e7ee!important}
+      html body .history-page #historyList article.history-entry{display:block!important;grid-template-columns:none!important;gap:0!important;padding:0 0 18px!important;margin:0 0 18px!important;border-bottom:1px solid #e2e7ee!important}
       html body .history-page .history-list article.history-entry:last-child,
-      html body .history-page #historyList article.history-entry:last-child{padding-bottom:16px!important;margin-bottom:0!important;border-bottom:0!important}
-      html body .history-page .history-entry-date{white-space:nowrap!important;text-align:right!important;padding-top:4px!important;line-height:1.2!important;align-self:start!important}
+      html body .history-page #historyList article.history-entry:last-child{padding-bottom:0!important;margin-bottom:0!important;border-bottom:0!important}
+      html body .history-page .history-entry-date{display:block!important;white-space:nowrap!important;text-align:left!important;padding:0!important;margin:0 0 5px!important;line-height:1.2!important;align-self:auto!important}
+      html body .history-page .history-entry-body{display:block!important;width:100%!important;max-width:none!important;margin:0!important;padding:0!important}
       html body .history-page .history-entry,
       html body .history-page .history-entry:hover,
       html body .history-page .history-entry.is-linked,
@@ -170,7 +171,7 @@
         html body .workspace-attention .workspace-attention-head{display:block!important}
         html body .workspace-attention .workspace-attention-head>.text-button{display:inline-flex!important;margin-top:8px!important}
         html body .workspace-attention .workspace-attention-head h3{font-size:16px!important;line-height:1.3!important}
-        html body .open-items-page .review-card-toggle{grid-template-columns:16px minmax(0,1fr) 22px!important;column-gap:10px!important;padding:13px 12px 13px 10px!important}
+        html body .open-items-page .review-card-toggle{grid-template-columns:10px minmax(0,1fr) 18px!important;column-gap:7px!important;padding:12px 12px 12px 10px!important}
         html body .open-items-page .review-card:first-child .review-card-toggle,
         html body .open-items-page .review-card.is-expanded .review-card-toggle{padding-left:10px!important}
         html body .open-items-page .open-question-row.is-blocking{padding-left:4px!important}
@@ -180,12 +181,12 @@
         html body .open-items-page .open-question-actions{display:grid!important;grid-template-columns:1fr!important;gap:3px!important}
         html body .open-items-page .open-question-actions .text-button{justify-content:flex-start!important;min-height:38px!important;padding:7px 4px!important}
         html body .history-page #historyList,
-        html body .history-page .history-list{padding:18px 16px 20px!important}
+        html body .history-page .history-list{padding:14px 16px 4px!important}
         html body .history-page .history-list article.history-entry,
-        html body .history-page #historyList article.history-entry{grid-template-columns:1fr!important;gap:4px!important;padding-left:28px!important;padding-bottom:22px!important;margin-bottom:22px!important;border-bottom:1px solid #e2e7ee!important}
+        html body .history-page #historyList article.history-entry{display:block!important;grid-template-columns:none!important;gap:0!important;padding:0 0 16px!important;margin:0 0 16px!important;border-bottom:1px solid #e2e7ee!important}
         html body .history-page .history-list article.history-entry:last-child,
-        html body .history-page #historyList article.history-entry:last-child{border-bottom:0!important;margin-bottom:0!important}
-        html body .history-page .history-entry-date{text-align:left!important;padding-top:0!important}
+        html body .history-page #historyList article.history-entry:last-child{border-bottom:0!important;margin-bottom:0!important;padding-bottom:0!important}
+        html body .history-page .history-entry-date{text-align:left!important;padding:0!important;margin-bottom:5px!important}
         html body .dialog-close,
         html body #askStateDrawer .ask-state-drawer-close{width:40px!important;height:40px!important;min-width:40px!important;min-height:40px!important}
         html body .settings-page .settings-actions .btn,
