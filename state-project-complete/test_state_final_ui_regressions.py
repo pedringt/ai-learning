@@ -34,7 +34,7 @@ def _page(width=1200, height=900):
     browser = _launch(pw)
     page = browser.new_page(viewport={"width": width, "height": height})
     page.goto(STATE_URL)
-    page.wait_for_function("document.getElementById('state-final-mobile-r66') !== null")
+    page.wait_for_function("document.getElementById('state-final-mobile-r67') !== null")
     return pw, browser, page
 
 
@@ -42,7 +42,7 @@ def test_final_feedback_layer_is_loaded_by_real_state_entrypoint():
     pw, browser, page = _page()
     try:
         assert page.locator("#state-final-feedback-r61").count() == 1
-        assert page.locator("#state-final-mobile-r66").count() == 1
+        assert page.locator("#state-final-mobile-r67").count() == 1
         bg = page.locator(".prototype-productbar").evaluate("e => getComputedStyle(e).backgroundColor")
         border = page.locator(".prototype-productbar").evaluate("e => getComputedStyle(e).borderBottomColor")
         assert bg == "rgb(251, 252, 253)"
