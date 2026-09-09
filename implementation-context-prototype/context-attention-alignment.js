@@ -51,7 +51,7 @@
   document.head.appendChild(s);
 
   /* Final small-screen and record-surface cleanup from manual QA. */
-  const lastMileId='state-mobile-last-mile-r69';
+  const lastMileId='state-mobile-last-mile-r70';
   const lastMile=document.createElement('style');
   lastMile.id=lastMileId;
   lastMile.textContent=`
@@ -96,6 +96,8 @@
     html body .history-page #historyList{
       width:100%!important;
       max-width:none!important;
+      box-sizing:border-box!important;
+      padding-top:20px!important;
       background:var(--surface,#fff)!important;
       box-shadow:none!important;
     }
@@ -119,24 +121,83 @@
     /* The stage line is orientation only. A chevron implies a click target. */
     html body .overview-stage .workspace-next-arrow{display:none!important}
 
+    /* Other Sources should stop using a two-column mini-dashboard before the
+       layout gets narrow enough to make source names and statuses compete. */
+    @media(max-width:900px){
+      html body .settings-page .settings-source-grid{
+        grid-template-columns:minmax(0,1fr)!important;
+        gap:0!important;
+      }
+      html body .settings-page .settings-source-grid .source-row{
+        display:flex!important;
+        flex-direction:column!important;
+        align-items:flex-start!important;
+        gap:8px!important;
+        min-width:0!important;
+      }
+      html body .settings-page .settings-source-grid .source-row>div{
+        order:1!important;
+        width:100%!important;
+        min-width:0!important;
+      }
+      html body .settings-page .settings-source-grid .source-row>.settings-status{
+        order:2!important;
+        align-self:flex-start!important;
+        margin:0 0 0 26px!important;
+        width:max-content!important;
+        max-width:calc(100% - 26px)!important;
+      }
+      html body .settings-page .settings-source-grid .source-title,
+      html body .settings-page .settings-source-grid .source-description{
+        min-width:0!important;
+        max-width:100%!important;
+      }
+    }
+
     @media(max-width:760px){
-      /* Current State card: make icon, title and supporting copy one compact header. */
+      /* Current State's vertical gap came from an older rule that made the
+         fact preview flex:1 with justify-content:space-evenly. On a tall card
+         that distributes the subtitle and facts through the available height.
+         Collapse it back to normal document flow so the subtitle sits directly
+         beneath the header. */
+      html body .workspace-status-card{
+        position:relative!important;
+        display:block!important;
+      }
       html body .workspace-status-card>.eyebrow{
         display:flex!important;
         align-items:center!important;
         min-height:40px!important;
-        padding-left:52px!important;
-        margin:0 0 5px!important;
+        margin:0!important;
         line-height:1.15!important;
       }
-      html body .workspace-status-card>.eyebrow .section-icon{
-        top:50%!important;
-        transform:translateY(-50%)!important;
+      html body .workspace-status-card .workspace-status-body{
+        display:block!important;
+        flex:0 0 auto!important;
+        margin-top:0!important;
       }
-      html body .workspace-status-card .workspace-status-body{margin-top:0!important}
-      html body .workspace-status-card .workspace-status-item:first-child{padding-top:7px!important}
-      html body .workspace-status-card .workspace-status-row{min-width:0!important}
-      html body .workspace-status-card .workspace-status-row span{display:block!important;min-width:0!important;overflow-wrap:anywhere!important}
+      html body .workspace-status-card .state-fact-preview{
+        display:block!important;
+        flex:0 0 auto!important;
+        justify-content:flex-start!important;
+        padding-top:2px!important;
+      }
+      html body .workspace-status-card .state-fact-preview p{
+        margin:5px 0 12px!important;
+        padding-right:0!important;
+        line-height:1.4!important;
+      }
+      html body .workspace-status-card .state-fact-preview ul{margin:0!important}
+      html body .workspace-status-card .state-fact-preview li{
+        padding-top:9px!important;
+        padding-bottom:9px!important;
+      }
+      html body .workspace-status-card .state-fact-preview>.text-button{
+        position:absolute!important;
+        top:23px!important;
+        right:18px!important;
+        margin:0!important;
+      }
 
       /* Center the attention icon against the actual heading block. */
       html body .workspace-attention .workspace-attention-head>div{
@@ -180,23 +241,8 @@
         word-break:normal!important;
       }
 
-      /* Settings should stack source copy first, then its quiet status. */
-      html body .settings-page>.page-head{
-        display:block!important;
-      }
+      html body .settings-page>.page-head{display:block!important}
       html body .settings-page>.page-head>p{margin-top:7px!important;max-width:none!important}
-      html body .settings-page .settings-source-grid .source-row{
-        display:grid!important;
-        grid-template-columns:minmax(0,1fr)!important;
-        gap:8px!important;
-        align-items:start!important;
-      }
-      html body .settings-page .settings-source-grid .source-row>.settings-status{
-        justify-self:start!important;
-        margin-left:26px!important;
-      }
-      html body .settings-page .settings-source-grid .source-title,
-      html body .settings-page .settings-source-grid .source-description{min-width:0!important;max-width:100%!important}
 
       /* Settings rule form should use the same compact control scale as the rest of Settings. */
       html body .settings-page .settings-rule-form>.btn{
@@ -239,8 +285,9 @@
   };
 
   /* Ask closes over the same screen position as the portfolio mobile menu.
-     Disable the underlying top-right controls before the finger comes up, then
-     restore them after the synthetic click window has passed. */
+     Shield that menu before pointerup, because an older capture handler hides
+     the drawer during pointerup; without the early shield the browser can then
+     retarget the synthetic click to the newly exposed menu underneath. */
   let closeShieldTimer=0;
   const shieldMobileNav=()=>{
     if(!window.matchMedia('(max-width:760px)').matches)return;
@@ -252,17 +299,14 @@
   shieldStyle.textContent='@media(max-width:760px){body.state-ask-close-shield .top-actions{pointer-events:none!important}}';
   document.head.appendChild(shieldStyle);
 
+  const closeTarget=event=>event.target?.closest?.('#askStateDrawer [data-review-batch-action="close-ask"]');
+  window.addEventListener('pointerdown',event=>{if(closeTarget(event))shieldMobileNav();},true);
+  window.addEventListener('touchstart',event=>{if(closeTarget(event))shieldMobileNav();},{capture:true,passive:true});
   document.addEventListener('input',event=>{
     if(event.target?.id==='askStateDrawerInput')syncAskBlankGuard();
   },true);
-  document.addEventListener('pointerdown',event=>{
-    if(event.target.closest?.('#askStateDrawer [data-review-batch-action="close-ask"]'))shieldMobileNav();
-  },true);
-  document.addEventListener('touchstart',event=>{
-    if(event.target.closest?.('#askStateDrawer [data-review-batch-action="close-ask"]'))shieldMobileNav();
-  },{capture:true,passive:true});
   document.addEventListener('click',event=>{
-    if(event.target.closest?.('#askStateDrawer [data-review-batch-action="close-ask"]'))shieldMobileNav();
+    if(closeTarget(event))shieldMobileNav();
   },true);
 
   const sync=()=>{keepLastMileLast();syncAskBlankGuard();};
