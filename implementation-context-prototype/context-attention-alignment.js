@@ -1,6 +1,6 @@
 (() => {
   const STYLE_ID='state-attention-alignment';
-  const PASS='r77-final-touchups';
+  const PASS='r78-matched-workspace-cards';
 
   document.getElementById(STYLE_ID)?.remove();
   const style=document.createElement('style');
@@ -26,10 +26,12 @@
     html body .history-page .history-change{width:100%!important;max-width:none!important}
     html body .history-page .history-change>p{width:100%!important;max-width:none!important;box-sizing:border-box!important}
 
-    /* Current State: icon + one real copy block + Browse. */
-    html body .workspace-below-grid{align-items:start!important;grid-auto-rows:min-content!important}
-    html body .workspace-status-card{align-self:start!important;height:auto!important;min-height:0!important;display:block!important;position:relative!important}
-    html body .workspace-status-card>.eyebrow{display:grid!important;grid-template-columns:auto minmax(0,1fr) auto!important;gap:12px!important;align-items:start!important;min-height:0!important;height:auto!important;margin:0 0 12px!important;padding-left:0!important;font-size:0!important;position:relative!important}
+    /* Workspace summary pair: same row height and matching top alignment. */
+    html body .workspace-below-grid{align-items:stretch!important;grid-auto-rows:auto!important}
+    html body .workspace-recent,
+    html body .workspace-status-card{align-self:stretch!important;height:100%!important;min-height:0!important}
+    html body .workspace-status-card{display:block!important;position:relative!important}
+    html body .workspace-status-card>.eyebrow{display:grid!important;grid-template-columns:auto minmax(0,1fr) auto!important;gap:12px!important;align-items:start!important;min-height:0!important;height:auto!important;margin:6px 0 12px!important;padding-left:0!important;font-size:0!important;position:relative!important}
     html body .workspace-status-card>.eyebrow::after{content:none!important;display:none!important}
     html body .workspace-status-card>.eyebrow>.section-icon{position:static!important;grid-column:1!important;grid-row:1!important;align-self:start!important;justify-self:start!important;transform:none!important;margin:0!important}
     html body .workspace-status-card .current-state-copy{grid-column:2!important;grid-row:1!important;display:flex!important;flex-direction:column!important;justify-content:flex-start!important;align-items:flex-start!important;gap:4px!important;min-width:0!important}
@@ -72,7 +74,10 @@
       html body .notes-page .note-index-status .note-status,
       html body .notes-page .note-index-status .note-status-link{display:inline-flex!important;align-items:center!important;justify-content:flex-start!important;width:auto!important;max-width:100%!important;height:auto!important;min-height:26px!important;padding:5px 9px!important;border-radius:999px!important;line-height:1.25!important;white-space:nowrap!important}
       html body .settings-page .settings-rule-form>.btn{width:auto!important;min-width:0!important;height:38px!important;min-height:38px!important;padding:0 12px!important;border-radius:8px!important;font-size:12px!important;line-height:1.2!important;align-self:end!important}
-      html body .workspace-status-card>.eyebrow{grid-template-columns:auto minmax(0,1fr) auto!important;align-items:start!important}
+      html body .workspace-below-grid{align-items:start!important;grid-auto-rows:min-content!important}
+      html body .workspace-recent,
+      html body .workspace-status-card{align-self:start!important;height:auto!important}
+      html body .workspace-status-card>.eyebrow{grid-template-columns:auto minmax(0,1fr) auto!important;align-items:start!important;margin-top:0!important}
       html body .workspace-status-card .current-state-browse{grid-column:3!important;grid-row:1!important;justify-self:end!important;margin-top:3px!important}
       html body .workspace-attention .workspace-attention-head{display:flex!important}
       html body .history-page .history-list,
@@ -113,8 +118,9 @@
       const oldBrowse=preview.querySelector(':scope > .text-button');
       if(!browse&&oldBrowse){browse=oldBrowse;browse.classList.add('current-state-browse');eyebrow.appendChild(browse)}
 
-      important(card,'align-self','start');
-      important(card,'height','auto');
+      const mobile=matchMedia('(max-width:760px)').matches;
+      important(card,'align-self',mobile?'start':'stretch');
+      important(card,'height',mobile?'auto':'100%');
       important(card,'min-height','0');
       important(body,'display','block');
       important(body,'flex','0 0 auto');
@@ -126,6 +132,7 @@
       important(preview,'min-height','0');
       important(preview,'justify-content','flex-start');
       important(preview,'padding-top','0');
+      if(eyebrow) important(eyebrow,'margin-top',mobile?'0':'6px');
       if(browse){
         important(browse,'grid-column','3');
         important(browse,'grid-row','1');
@@ -136,8 +143,11 @@
       }
     });
     const grid=scope.querySelector?.('.workspace-below-grid');
-    important(grid,'align-items','start');
-    important(grid,'grid-auto-rows','min-content');
+    const recent=scope.querySelector?.('.workspace-below-grid .workspace-recent');
+    const mobile=matchMedia('(max-width:760px)').matches;
+    important(grid,'align-items',mobile?'start':'stretch');
+    important(grid,'grid-auto-rows',mobile?'min-content':'auto');
+    if(recent){important(recent,'align-self',mobile?'start':'stretch');important(recent,'height',mobile?'auto':'100%')}
   }
 
   function normalizeAttention(scope=document){
