@@ -1,5 +1,5 @@
 (() => {
-  const icons = {
+  const icons={
     overview:'<svg viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5V21h-6v-6H9v6H3z"/></svg>',
     'project-overview':'<svg viewBox="0 0 24 24"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 8h6M9 12h6M9 16h4"/></svg>',
     'open-items':'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m8 12 2.5 2.5L16 9"/></svg>',
@@ -7,52 +7,74 @@
     history:'<svg viewBox="0 0 24 24"><path d="M4 7V3m0 4h4M4.5 7A9 9 0 1 1 3 15"/><path d="M12 7v5l3 2"/></svg>',
     settings:'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19 13.5v-3l-2-.7-.7-1.7.9-1.9-2.1-2.1-1.9.9-1.7-.7L10.5 2h-3l-.7 2.3-1.7.7-1.9-.9-2.1 2.1.9 1.9-.7 1.7-2 .7v3l2 .7.7 1.7-.9 1.9 2.1 2.1 1.9-.9 1.7.7.7 2.3h3l.7-2.3 1.7-.7 1.9.9 2.1-2.1-.9-1.9.7-1.7z" transform="translate(2.25 0) scale(.8)"/></svg>'
   };
-  const askIcons={
-    summary:'<svg viewBox="0 0 24 24"><path d="M6 3h9l3 3v15H6z"/><path d="M9 10h6M9 14h6M9 18h4"/></svg>',
-    question:'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.8 9a2.4 2.4 0 0 1 4.5 1.2c0 1.8-2.3 2.1-2.3 4"/><path d="M12 18h.01"/></svg>',
-    change:'<svg viewBox="0 0 24 24"><path d="M4 17 10 11l4 4 6-8"/><path d="M15 7h5v5"/></svg>'
-  };
-  function addStyles(){
-    if(document.getElementById('state-feedback-pass')) return;
-    const s=document.createElement('style'); s.id='state-feedback-pass'; s.textContent=`
-      body:not(.v88-dark) .prototype-productbar{background:#edf4ff!important;border-bottom:1px solid #d7e4f5!important}
-      .sidebar-nav .nav-item{grid-template-columns:28px minmax(0,1fr) auto!important;gap:14px!important;justify-items:start!important;text-align:left!important;padding:13px 18px!important}
-      .sidebar-nav .nav-item .nav-icon{width:24px!important;height:24px!important;display:grid!important;place-items:center!important;color:#58709a!important;font-size:0!important}
-      .sidebar-nav .nav-item .nav-icon svg{width:23px;height:23px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
-      .sidebar-nav .nav-item.active .nav-icon,.sidebar-nav .nav-item[aria-current="page"] .nav-icon{color:#1769e8!important}
-      .sidebar-nav .nav-label{justify-self:start!important;text-align:left!important}
-      .sidebar-nav .nav-count{justify-self:end!important}
-      .app-sidebar{position:relative!important;padding-bottom:108px!important}
-      .app-sidebar>.demo-help-button.state-help-card{position:absolute!important;left:18px!important;right:18px!important;bottom:18px!important;width:auto!important;margin:0!important}
-      .project-switcher>span{display:inline-flex!important;align-items:center!important;justify-content:center!important;line-height:1!important;transform:translateY(-1px)!important}
-      .attention-item{grid-template-columns:54px minmax(0,1fr) auto 22px!important;gap:16px!important;padding:18px 22px!important;min-height:0!important;align-items:center!important}
-      .attention-item-copy{grid-column:2!important;justify-self:start!important;width:100%!important;max-width:none!important;text-align:left!important}
-      .attention-item-copy>*{text-align:left!important;margin-left:0!important;margin-right:0!important}
-      .attention-item .attention-icon{grid-column:1!important;justify-self:start!important}
-      .attention-kind{grid-column:3!important}.attention-arrow{grid-column:4!important}
-      body:not(.v88-dark) .history-page article{border-left:0!important}
-      body:not(.v88-dark) .history-page article::before{border-left-color:#dce7f5!important}
-      body:not(.v88-dark) .history-page [class*="timeline"] [class*="dot"],body:not(.v88-dark) .history-page [class*="marker"]{color:#1769e8!important;border-color:#1769e8!important}
-      body:not(.v88-dark) .notes-page article{border-left:0!important;border:1px solid #e0e7f1!important;box-shadow:0 1px 2px rgba(24,47,84,.03)!important}
-      body:not(.v88-dark) .notes-page article::before{content:'';display:block;position:absolute;inset:0 auto 0 0;width:3px;border-radius:14px 0 0 14px;background:#c7b8ff}
-      body:not(.v88-dark) .notes-page article:nth-of-type(even)::before{background:#b7d5ff}
-      .notes-page article{position:relative!important}
-      .ask-state-drawer-head{padding:20px 26px 16px!important}
-      .ask-title-row{padding-left:42px!important}.ask-title-row::before{content:'✦'!important;font-size:29px!important;left:2px!important;top:-4px!important;color:#1769e8!important}
-      .ask-state-drawer-head h2{font-size:22px!important}.ask-state-description{font-size:13px!important;max-width:300px!important}
-      .ask-state-drawer-controls{padding:20px 26px 24px!important}
-      .ask-state-drawer-form input{height:104px!important;min-height:104px!important;padding:16px 58px 52px 16px!important;align-items:flex-start!important}
-      .ask-state-drawer-form button{top:auto!important;bottom:12px!important;transform:none!important;width:42px!important;height:42px!important}
-      .ask-state-starters{gap:1px!important;margin-top:26px!important}.ask-state-starters::before{content:'Try asking about:'!important;text-transform:none!important;letter-spacing:0!important;font-size:13px!important;font-weight:500!important;color:#65728b!important;margin-bottom:8px!important}
-      .ask-state-starters button{background:transparent!important;padding:9px 8px 9px 42px!important;font-size:12.5px!important;border-radius:8px!important}.ask-state-starters button::before{left:10px!important;font-size:17px!important;color:#314f82!important}
-      .ask-state-starters button:nth-of-type(1)::before{content:'✣'!important}.ask-state-starters button:nth-of-type(2)::before{content:'▣'!important}.ask-state-starters button:nth-of-type(3)::before{content:'☑'!important}.ask-state-starters button:nth-of-type(4)::before{content:'◯'!important}.ask-state-starters button:nth-of-type(5){display:none!important}
-      .ask-quick-actions-polish{border-top:1px solid #e2e9f2;margin-top:22px;padding-top:18px;display:grid;gap:8px}.ask-quick-actions-polish>span{font-size:13px;color:#65728b;margin-bottom:2px}.ask-quick-actions-polish button{display:grid;grid-template-columns:28px 1fr;align-items:center;gap:12px;width:100%;padding:10px 12px;border:1px solid #dce6f3;border-radius:9px;background:#fff;color:#1e2b43;font:inherit;font-size:12px;text-align:left;cursor:pointer}.ask-quick-actions-polish button b{display:grid;place-items:center;width:28px;height:28px;color:#1769e8;font-size:0}.ask-quick-actions-polish button b svg{width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}.ask-quick-actions-polish button:hover{background:#f5f9ff}
-      .ask-state-drawer-controls>p:last-child{font-size:10.5px!important;margin-top:16px!important;padding-top:12px!important}
-      @media(max-width:760px){.app-sidebar{padding-bottom:0!important}.attention-item{grid-template-columns:44px minmax(0,1fr) auto!important;padding:14px!important;gap:11px!important}}
-    `; document.head.appendChild(s);
+
+  function styles(){
+    if(document.getElementById('state-final-feedback'))return;
+    const s=document.createElement('style');s.id='state-final-feedback';s.textContent=`
+      .prototype-productbar{background:#e7effc!important;border-bottom-color:#cfdbef!important}
+      .project-page .project-head-copy-context{padding:7px 11px!important;border:1px solid #c8d6ea!important;border-radius:9px!important;background:#fff!important;color:#28558f!important;box-shadow:0 1px 2px rgba(16,26,49,.04)!important}
+      .project-page .project-head-copy-context:hover{background:#f3f7fd!important;border-color:#aec4e3!important}
+      .settings-page .settings-actions{display:flex!important;align-items:center!important;gap:7px!important;flex-wrap:wrap!important}
+      .settings-page .settings-actions .btn,.settings-page .source-row .btn,.settings-page [data-action="connect-slack"],.settings-page [data-action="disable-slack"]{min-height:32px!important;padding:6px 10px!important;font-size:11px!important;line-height:1.2!important}
+      #askStateDrawer .ask-quick-actions-polish{display:none!important}
+      #askStateDrawer .ask-state-drawer-form input{height:44px!important;min-height:44px!important;max-height:44px!important}
+      #askStateDrawer .ask-state-drawer-close{display:grid!important;place-items:center!important;width:32px!important;height:32px!important;min-width:32px!important;padding:0!important;border:0!important;background:transparent!important;font-size:25px!important;line-height:1!important;appearance:none!important;-webkit-appearance:none!important}
+      #askStateDrawer .ask-state-drawer-close::before,#askStateDrawer .ask-state-drawer-close::after{content:none!important;display:none!important}
+      #askStateDrawer .ask-live-answer>h2,#askStateDrawer .ask-live-answer .ask-answer-head h2{font-size:20px!important;line-height:1.22!important;letter-spacing:-.015em!important;margin:7px 0 9px!important}
+      #askStateDrawer .ask-live-answer .result-lede,#askStateDrawer .ask-live-answer .ask-answer-summary{font-size:13px!important;line-height:1.55!important}
+      #askStateDrawer .ask-answer-section h3{font-size:13px!important;line-height:1.3!important}
+      #askStateDrawer .ask-item-text{font-size:13px!important;line-height:1.48!important}
+      #askStateDrawer .ask-item-detail{font-size:11.5px!important;line-height:1.4!important}
+      #askStateDrawer .ask-item-action,#askStateDrawer .ask-item-link{font-size:10.5px!important;font-weight:700!important;white-space:nowrap!important}
+      @media(max-width:760px){
+        #askStateDrawer .ask-state-drawer-form{display:block!important;position:relative!important}
+        #askStateDrawer .ask-state-drawer-form input{height:42px!important;min-height:42px!important;max-height:42px!important;padding:0 78px 0 12px!important;font-size:14px!important}
+        #askStateDrawer .ask-state-drawer-form button[type="submit"]{position:absolute!important;right:5px!important;top:50%!important;bottom:auto!important;transform:translateY(-50%)!important;width:32px!important;height:32px!important;min-width:32px!important;padding:0!important}
+        #askStateDrawer .state-ask-clear{right:40px!important}
+        #askStateDrawer .ask-state-drawer-close{position:relative!important;z-index:3!important;touch-action:manipulation!important}
+        #askStateDrawer .ask-state-starters button{touch-action:manipulation!important}
+        .settings-page .settings-actions{align-items:stretch!important}
+        .settings-page .settings-actions .btn,.settings-page [data-action="connect-slack"],.settings-page [data-action="disable-slack"]{display:inline-flex!important;align-items:center!important;justify-content:center!important;width:auto!important;min-width:0!important}
+        #askStateDrawer .ask-live-answer>h2,#askStateDrawer .ask-live-answer .ask-answer-head h2{font-size:18px!important}
+        #askStateDrawer .ask-live-answer .result-lede,#askStateDrawer .ask-live-answer .ask-answer-summary,#askStateDrawer .ask-item-text{font-size:12.5px!important}
+      }
+    `;document.head.appendChild(s);
   }
-  function fixNav(){document.querySelectorAll('.sidebar-nav .nav-item').forEach(b=>{const i=b.querySelector(':scope > .nav-icon');if(i&&icons[b.dataset.view]) i.innerHTML=icons[b.dataset.view]})}
-  function quickActions(){const c=document.querySelector('.ask-state-drawer-controls');if(!c)return;let wrap=c.querySelector('.ask-quick-actions-polish');const starters=c.querySelector('.ask-state-starters');if(!starters)return;if(!wrap){wrap=document.createElement('div');wrap.className='ask-quick-actions-polish';starters.after(wrap);wrap.addEventListener('click',e=>{const b=e.target.closest('button[data-q]');if(!b)return;const input=c.querySelector('input,textarea');if(input){input.value=b.dataset.q;input.dispatchEvent(new Event('input',{bubbles:true}));input.focus()}})}wrap.innerHTML='<span>Quick actions</span><button type="button" data-q="Summarize the current state"><b>'+askIcons.summary+'</b>Summarize this page</button><button type="button" data-q="What are we still unsure about?"><b>'+askIcons.question+'</b>Show open questions</button><button type="button" data-q="What changed recently?"><b>'+askIcons.change+'</b>Show recent changes</button>'}
-  function run(){addStyles();fixNav();quickActions()}
-  let queued=false;const schedule=()=>{if(queued)return;queued=true;requestAnimationFrame(()=>{queued=false;run()})};new MutationObserver(schedule).observe(document.documentElement,{childList:true,subtree:true});if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',schedule,{once:true});else schedule();
+
+  function fixNav(){document.querySelectorAll('.sidebar-nav .nav-item').forEach(b=>{let i=b.querySelector(':scope > .nav-icon');if(!i&&icons[b.dataset.view]){i=document.createElement('span');i.className='nav-icon';b.prepend(i)}if(i&&icons[b.dataset.view])i.innerHTML=icons[b.dataset.view]})}
+
+  function syncAttentionFromApi(){
+    const API=window.STATE_API,app=window.STATE_ASK_TEST_API;if(!API?.getAttention||!app?.state)return;
+    API.getAttention().then(payload=>{
+      const state=app.state,incoming=Array.isArray(payload?.questions)?payload.questions:[];
+      state.data.questions=incoming.map(q=>({id:q.id,text:q.text,status:q.status,blocking:!!q.blocking,blocks:q.blocks||null,origin:q.origin||'Added from Workspace',created:q.created_at||'',createdISO:q.created_at||'',topics:[],backendManaged:true}));
+      const reviews=Array.isArray(payload?.open_reviews)?payload.open_reviews.length:0,blockers=incoming.filter(q=>q.status==='open'&&q.blocking).length,count=reviews+blockers;
+      document.querySelectorAll('#openItemsActionCount,#mobileOpenItemsCount').forEach(el=>{el.textContent=count;el.hidden=!count;el.setAttribute('aria-label',`${count} items need attention`)});
+      const attention=document.querySelector('.workspace-attention'),title=attention?.querySelector('.workspace-attention-head h3'),support=attention?.querySelector('.workspace-attention-head p');
+      if(title&&count)title.textContent=`${count} ${count===1?'item is':'items are'} waiting on you`;
+      if(support&&count)support.textContent=`${reviews} ${reviews===1?'review':'reviews'} · ${blockers} blocking ${blockers===1?'question':'questions'}`;
+    }).catch(()=>{});
+  }
+
+  function mobileAsk(){
+    if(document.documentElement.dataset.stateAskMobileHardening==='1')return;document.documentElement.dataset.stateAskMobileHardening='1';
+    document.addEventListener('pointerup',e=>{
+      if(!matchMedia('(max-width:760px)').matches)return;
+      const close=e.target.closest?.('#askStateDrawer .ask-state-drawer-close');
+      if(close){e.preventDefault();e.stopImmediatePropagation();const d=document.getElementById('askStateDrawer'),l=document.getElementById('askStateLauncher');if(d)d.hidden=true;if(l)l.classList.remove('is-hidden');return}
+      const starter=e.target.closest?.('#askStateDrawer [data-review-batch-prompt]');
+      if(starter){e.preventDefault();e.stopImmediatePropagation();const input=document.getElementById('askStateDrawerInput'),form=document.querySelector('#askStateDrawer [data-review-batch-form="ask"]');if(!input||!form)return;input.value=starter.dataset.reviewBatchPrompt||starter.textContent.trim();input.dispatchEvent(new Event('input',{bubbles:true}));form.requestSubmit()}
+    },true);
+  }
+
+  function evidenceSync(){
+    if(document.documentElement.dataset.stateEvidenceCountSync==='1')return;document.documentElement.dataset.stateEvidenceCountSync='1';
+    const start=()=>{const body=document.getElementById('dialogBody');if(!body)return;new MutationObserver(()=>{const text=(body.textContent||'').replace(/\s+/g,' ').trim();if(/Evidence added|Saved, but not analyzed/i.test(text))setTimeout(syncAttentionFromApi,250)}).observe(body,{childList:true,subtree:true,characterData:true})};
+    if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
+  }
+
+  function run(){styles();fixNav();mobileAsk();evidenceSync()}
+  let queued=false;const schedule=()=>{if(queued)return;queued=true;requestAnimationFrame(()=>{queued=false;styles();fixNav()})};
+  new MutationObserver(schedule).observe(document.documentElement,{childList:true,subtree:true});
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',run,{once:true});else run();
 })();
