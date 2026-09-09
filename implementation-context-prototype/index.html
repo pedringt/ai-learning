@@ -12,6 +12,13 @@
   <meta name="twitter:title" content="State">
   <meta name="twitter:description" content="State captures project information, maintains current understanding, tracks unresolved questions, and reviews new evidence before it changes what the project treats as current.">
   <script>
+    document.documentElement.classList.add('state-prepaint');
+    window.__stateRevealTimer=setTimeout(function(){document.documentElement.classList.remove('state-prepaint');},1200);
+  </script>
+  <style id="state-prepaint-guard">
+    html.state-prepaint .prototype-productbar,html.state-prepaint .software-shell{visibility:hidden!important;}
+  </style>
+  <script>
     (function(){
       var local = location.protocol === 'file:';
       document.write('<link rel="icon" href="' + (local ? '../favicon.svg' : '/favicon.svg') + '">');
@@ -99,6 +106,7 @@
       document.write('<script src="' + (local ? 'context-feedback-pass-2.js?v=r59-final-polish' : '/implementation-context-prototype/context-feedback-pass-2.js?v=r59-final-polish') + '"><\/script>');
       document.write('<script src="' + (local ? 'context-feedback-pass-3.js?v=r59-final-polish' : '/implementation-context-prototype/context-feedback-pass-3.js?v=r59-final-polish') + '"><\/script>');
       document.write('<script src="' + (local ? 'context-feedback-pass-4.js?v=r59-final-polish' : '/implementation-context-prototype/context-feedback-pass-4.js?v=r59-final-polish') + '"><\/script>');
+      document.write('<script>requestAnimationFrame(function(){requestAnimationFrame(function(){document.documentElement.classList.remove("state-prepaint");clearTimeout(window.__stateRevealTimer);});});<\/script>');
     })();
   </script>
 </body>
