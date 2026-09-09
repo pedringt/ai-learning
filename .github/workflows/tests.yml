@@ -40,11 +40,15 @@ jobs:
       - name: Install Chromium for the browser suite
         run: python -m playwright install --with-deps chromium
 
-      # No --deselect needed: tests that require real provider API keys skip
-      # themselves when the keys are absent.
+      # The old r861 asset test assumes every JS filename appears literally with
+      # ?v= in index.html. State now uses one shared release token plus a dynamic
+      # JS loader, so test_release_asset_loader.py covers the same cache-mix risk
+      # against the current implementation instead.
       - name: Run deterministic Python suite
         working-directory: state-project-complete
-        run: python -m pytest -q
+        run: >-
+          python -m pytest -q
+          --deselect=test_frontend_integration_contract.py::test_r861_grounded_ask_module_and_release_assets_are_self_contained
 
   javascript:
     runs-on: ubuntu-latest
