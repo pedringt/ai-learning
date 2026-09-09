@@ -7,6 +7,25 @@
   const mobile=document.getElementById('v922MobileNav');
   const isDark=()=>body.classList.contains('v88-dark');
 
+  /* The portfolio started as an AI learning exercise, but the work now needs
+     to lead with Paige's product identity. Keep learning visible in the IA,
+     not as the site's primary professional label. */
+  document.querySelectorAll('.brand').forEach(brand=>{brand.innerHTML='Paige <span>Edrington</span>';});
+  if(document.title.includes('AI Learning Portfolio')) document.title=document.title.replace('AI Learning Portfolio','Applied AI Product Portfolio');
+  document.querySelectorAll('meta[property="og:title"],meta[name="twitter:title"]').forEach(meta=>{
+    if((meta.content||'').includes('AI Learning Portfolio')) meta.content=meta.content.replace('AI Learning Portfolio','Applied AI Product Portfolio');
+  });
+  document.querySelectorAll('meta[name="description"],meta[property="og:description"],meta[name="twitter:description"]').forEach(meta=>{
+    if((meta.content||'').toLowerCase().includes('ai learning portfolio')) meta.content=meta.content.replace(/ai learning portfolio/ig,'applied AI product portfolio');
+  });
+  const homeHero=document.querySelector('[data-page="home"] .hero');
+  if(homeHero&&!homeHero.querySelector('.professional-context')){
+    const context=document.createElement('p');
+    context.className='professional-context';
+    context.textContent='Product manager with a QA foundation, now focused on applied AI product work.';
+    homeHero.insertBefore(context,homeHero.firstChild);
+  }
+
   /* Small shared presentation layer for the final pre-freeze polish. */
   if(!document.querySelector('link[data-final-freeze-polish]')){
     const polish=document.createElement('link');
@@ -14,6 +33,35 @@
     polish.href=location.protocol==='file:'?'../final-freeze-polish.css':'/final-freeze-polish.css';
     polish.dataset.finalFreezePolish='true';
     document.head.appendChild(polish);
+  }
+
+  /* Small high-signal fixes shared by the portfolio shell and State. */
+  if(!document.getElementById('portfolio-signal-and-mobile-fixes')){
+    const fixes=document.createElement('style');
+    fixes.id='portfolio-signal-and-mobile-fixes';
+    fixes.textContent=`
+      .professional-context{
+        margin:0 0 14px!important;
+        color:var(--muted)!important;
+        font-size:13px!important;
+        font-weight:750!important;
+        letter-spacing:.02em!important;
+      }
+      @media(max-width:640px){
+        .notes-page .note-index-status{
+          display:inline-flex!important;
+          align-items:center!important;
+          width:auto!important;
+          max-width:100%!important;
+          min-height:0!important;
+          padding:4px 8px!important;
+          line-height:1.2!important;
+          white-space:normal!important;
+          justify-self:start!important;
+        }
+      }
+    `;
+    document.head.appendChild(fixes);
   }
 
   /* Mobile Learning Guide hardening. Keep expanded stage content inside the
@@ -84,6 +132,44 @@
       if(!d.contains(e.target))d.removeAttribute('open');
     });
   });
+
+  /* Ask is a true drawer on small screens. Lock the document behind it so a
+     swipe in the drawer cannot accidentally move the page underneath. Keep
+     and restore the exact page position when the drawer closes. */
+  let askPageY=0;
+  let askScrollLocked=false;
+  const askDrawerIsOpen=()=>{
+    const drawer=document.getElementById('askStateDrawer');
+    if(!drawer||drawer.hidden||drawer.getAttribute('aria-hidden')==='true') return false;
+    const style=window.getComputedStyle(drawer);
+    return style.display!=='none'&&style.visibility!=='hidden';
+  };
+  const lockAskBackground=()=>{
+    if(askScrollLocked)return;
+    askPageY=window.scrollY||window.pageYOffset||0;
+    body.style.position='fixed';
+    body.style.top=`-${askPageY}px`;
+    body.style.left='0';
+    body.style.right='0';
+    body.style.width='100%';
+    body.style.overflow='hidden';
+    askScrollLocked=true;
+  };
+  const unlockAskBackground=()=>{
+    if(!askScrollLocked)return;
+    body.style.position='';
+    body.style.top='';
+    body.style.left='';
+    body.style.right='';
+    body.style.width='';
+    body.style.overflow='';
+    askScrollLocked=false;
+    window.scrollTo(0,askPageY);
+  };
+  const syncAskBackground=()=>{askDrawerIsOpen()?lockAskBackground():unlockAskBackground();};
+  const askObserver=new MutationObserver(syncAskBackground);
+  askObserver.observe(body,{childList:true,subtree:true,attributes:true,attributeFilter:['hidden','aria-hidden','class','style']});
+  syncAskBackground();
 
   /* State creates this launcher after the shell loads, so watch briefly and add the AI cue without changing behavior. */
   const polishAskLauncher=()=>{
