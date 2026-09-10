@@ -17,6 +17,8 @@
     'those points','that source','that review','that question','that item','that decision','that change'
   ];
 
+  let lastRenderedPayload = null;
+
   function followupIntent(query, previousPayload) {
     if (!previousPayload) return 'new';
     const q = norm(query);
@@ -54,16 +56,23 @@
     return payload;
   }
 
+  function render(payload, liveStatus) {
+    lastRenderedPayload = payload || null;
+    return prior.render(payload, liveStatus);
+  }
+
   window.STATE_ASK = Object.freeze({
     ...prior,
     followupIntent,
     followupMode,
     submitStream,
     submit,
+    render,
   });
 
   // The code above is also evaluated by Node-only behavior tests. The reviewer
-  // guide is browser-only UI, so stop here when there is no DOM.
+  // guide and Ask record navigation below are browser-only UI, so stop here
+  // when there is no DOM.
   if (typeof document === 'undefined') return;
 
   // Reviewer/demo orientation. Keep this separate from State's product model:
@@ -100,6 +109,8 @@
       .state-reviewer-guide-reopen{display:block;width:100%;margin-top:7px;padding:7px 12px;border:0;background:transparent;color:#68768a;font:inherit;font-size:12px;font-weight:700;text-align:left;cursor:pointer}
       .state-reviewer-guide-reopen:hover{text-decoration:underline}
       .state-mobile-help .state-reviewer-guide-reopen{width:auto;margin:8px 0 0;padding:4px 0;min-height:40px}
+      .ask-current-state-link{white-space:nowrap}
+      .project-maintained-fact.is-ask-target{outline:2px solid rgba(23,105,232,.28);outline-offset:5px;border-radius:6px}
       body.v88-dark .state-reviewer-guide{background:#171b22;border-color:#303946;color:#eef2f7}
       body.v88-dark .state-reviewer-guide-copy strong{color:#f2f5f8}
       body.v88-dark .state-reviewer-guide-copy p{color:#b5bfcc}
@@ -155,7 +166,53 @@
     if (!existing) overview.insertAdjacentHTML('afterbegin', guideMarkup());
   }
 
+  // Ask already links Review and Question records directly. Current State
+  // records also carry stable state IDs, so add a direct jump to the exact
+  // maintained fact. Map by record type/order from the rendered payload,
+  // never by matching visible text.
+  function decorateAskCurrentStateLinks() {
+    if (!root || !lastRenderedPayload?.answer) return;
+    const stateItems = (lastRenderedPayload.answer.sections || [])
+      .flatMap(section => section.items || [])
+      .filter(item => item.record_type === 'state' && item.record_id);
+    if (!stateItems.length) return;
+    const rows = [...root.querySelectorAll('.ask-answer-item')]
+      .filter(row => row.querySelector('.ask-record-state'));
+    rows.forEach((row, index) => {
+      const item = stateItems[index];
+      if (!item || row.querySelector('[data-action="ask-open-current-state"]')) return;
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'text-button ask-item-link ask-item-action ask-current-state-link';
+      button.dataset.action = 'ask-open-current-state';
+      button.dataset.stateId = item.record_id;
+      button.textContent = 'View current →';
+      row.appendChild(button);
+    });
+  }
+
+  function focusCurrentStateFact(stateId) {
+    const nav = document.querySelector('.sidebar-nav [data-view="project-overview"], .mobile-primary-nav [data-view="project-overview"]');
+    if (!nav || !stateId) return;
+    nav.click();
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      const target = [...document.querySelectorAll('.project-maintained-fact[data-state-id]')]
+        .find(el => el.dataset.stateId === stateId);
+      if (!target) return;
+      const disclosure = target.closest('details');
+      if (disclosure) disclosure.open = true;
+      target.classList.add('is-ask-target');
+      target.scrollIntoView({behavior:'smooth', block:'center'});
+      setTimeout(() => target.classList.remove('is-ask-target'), 2400);
+    }));
+  }
+
   document.addEventListener('click', event => {
+    const askCurrent = event.target.closest?.('[data-action="ask-open-current-state"]');
+    if (askCurrent) {
+      focusCurrentStateFact(askCurrent.dataset.stateId);
+      return;
+    }
     const dismiss = event.target.closest?.('[data-action="dismiss-reviewer-guide"]');
     if (dismiss) {
       setDismissed(true);
@@ -172,9 +229,18 @@
   }, true);
 
   if (root) {
-    const observer = new MutationObserver(() => requestAnimationFrame(syncReviewerGuide));
+    const observer = new MutationObserver(() => requestAnimationFrame(() => {
+      syncReviewerGuide();
+      decorateAskCurrentStateLinks();
+    }));
     observer.observe(root, {childList:true, subtree:true});
   }
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', syncReviewerGuide, {once:true});
-  else syncReviewerGuide();
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', () => {
+    syncReviewerGuide();
+    decorateAskCurrentStateLinks();
+  }, {once:true});
+  else {
+    syncReviewerGuide();
+    decorateAskCurrentStateLinks();
+  }
 })();
