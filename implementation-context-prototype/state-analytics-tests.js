@@ -1,7 +1,9 @@
 // Regression coverage for context-analytics.js -- the lightweight,
 // privacy-conscious event tracker added for the "Next Marching Orders"
-// Phase 1 analytics work. Verifies ref/session attribution, owner-mode
-// suppression, Ask query handling, and consequence-specific Review events.
+// Phase 1 analytics work (see docs/PROJECT_STATUS.md). Verifies: ref/session
+// attribution is captured and reused, owner mode suppresses tracking
+// entirely, Ask query text only ever goes out through trackAskQuery, and
+// the "State demo opened" event fires once on load.
 const fs=require('fs'), vm=require('vm'), path=require('path');
 const dir=__dirname;
 
@@ -48,6 +50,7 @@ function freshContext({search='',ownerMode=false}={}){
 let pass=0,fail=0;
 function check(name,ok,detail=''){if(ok){pass++;console.log('✓',name)}else{fail++;console.error('✗',name,detail)}}
 
+// --- basic tracking + session/ref attribution ---------------------------
 {
   const {context,events}=freshContext({search:'?ref=kim-review'});
   context.window.StateAnalytics.track('workspace_viewed',{view:'overview'});
@@ -58,6 +61,7 @@ function check(name,ok,detail=''){if(ok){pass++;console.log('✓',name)}else{fai
   check('a session id is attached', typeof payload.data.session==='string' && payload.data.session.length>0);
 }
 
+// --- ref persists across calls even after the query param is gone -------
 {
   const {context,events}=freshContext({search:'?ref=kim-review'});
   context.window.StateAnalytics.track('workspace_viewed');
@@ -67,6 +71,7 @@ function check(name,ok,detail=''){if(ok){pass++;console.log('✓',name)}else{fai
   check('ref is remembered for later events in the same session even once the URL param is gone', last.data.ref==='kim-review');
 }
 
+// --- no ref param falls back to 'direct' ---------------------------------
 {
   const {context,events}=freshContext();
   context.window.StateAnalytics.track('workspace_viewed');
@@ -74,12 +79,14 @@ function check(name,ok,detail=''){if(ok){pass++;console.log('✓',name)}else{fai
   check('ordinary traffic with no ?ref= is labeled direct', last.data.ref==='direct');
 }
 
+// --- owner mode suppresses all tracking -----------------------------------
 {
   const {context,events}=freshContext({ownerMode:true});
   context.window.StateAnalytics.track('workspace_viewed');
   check('owner mode (paigeOwnerMode) suppresses tracking so QA/dev usage does not pollute reviewer analytics', events.length===0);
 }
 
+// --- Ask query text only goes out through trackAskQuery -------------------
 {
   const {context,events}=freshContext();
   context.window.StateAnalytics.trackAskQuery('What is blocking launch?',{followupMode:'new'});
@@ -89,6 +96,7 @@ function check(name,ok,detail=''){if(ok){pass++;console.log('✓',name)}else{fai
   check('trackAskQuery still carries session/ref attribution', payload.data.ref==='direct' && !!payload.data.session);
 }
 
+// --- ask query text is truncated, not stored unbounded ---------------------
 {
   const {context,events}=freshContext();
   context.window.StateAnalytics.trackAskQuery('x'.repeat(1000));
@@ -96,30 +104,7 @@ function check(name,ok,detail=''){if(ok){pass++;console.log('✓',name)}else{fai
   check('overly long Ask queries are truncated before being sent', payload.data.query.length<=300);
 }
 
-// Legacy controller events fire when the reviewer selects an action, before a
-// proposed State update is confirmed/saved. Analytics must not overstate them
-// as completed decisions.
-{
-  const {context,events}=freshContext();
-  context.window.StateAnalytics.track('review_accepted',{reviewId:'r-update'});
-  const [,payload]=events[events.length-1];
-  check('legacy review_accepted is normalized to action-selected', payload.name==='review_action_selected');
-  check('update selection is described as an action, not a completed State mutation', payload.data.action==='update_current_state' && payload.data.reviewId==='r-update' && !('outcome' in payload.data));
-}
-{
-  const {context,events}=freshContext();
-  context.window.StateAnalytics.track('review_rejected',{reviewId:'r-keep'});
-  const [,payload]=events[events.length-1];
-  check('legacy review_rejected is normalized instead of calling kept Evidence rejected', payload.name==='review_action_selected');
-  check('keep selection is recorded as keep Current State', payload.data.action==='keep_current_state' && payload.data.reviewId==='r-keep' && !('outcome' in payload.data));
-}
-{
-  const {context,events}=freshContext();
-  context.window.StateAnalytics.track('review_decision',{reviewId:'r-answer',outcome:'question_resolved'});
-  const [,payload]=events[events.length-1];
-  check('new question-specific review_decision passes through unchanged', payload.name==='review_decision' && payload.data.outcome==='question_resolved');
-}
-
+// --- state_demo_opened fires once on load (document already complete) -----
 {
   const {events}=freshContext();
   check('state_demo_opened fires on module load', events.some(([,p])=>p.name==='state_demo_opened'));
