@@ -25,14 +25,11 @@
     if (!q) return 'new';
     if (transformHints.some(hint => q.includes(norm(hint)))) return 'transform';
     if (dependentExact.has(q) || dependentHints.some(hint => q.includes(norm(hint)))) return 'dependent';
-    // Pronoun-heavy very short prompts usually depend on the preceding answer.
     if (q.split(' ').length <= 5 && /\b(it|that|those|them|this|these)\b/.test(q)) return 'dependent';
     return 'new';
   }
 
   function responseMode(intent) {
-    // Never render the full previous answer again. Dependent follow-ups use the
-    // previous answer as context, while transformations replace it in place.
     return intent === 'new' ? 'new' : 'replace';
   }
 
@@ -70,13 +67,8 @@
     render,
   });
 
-  // The code above is also evaluated by Node-only behavior tests. The reviewer
-  // guide and Ask record navigation below are browser-only UI, so stop here
-  // when there is no DOM.
   if (typeof document === 'undefined') return;
 
-  // Reviewer/demo orientation. Keep this separate from State's product model:
-  // it only guides an unfamiliar visitor through the existing surfaces.
   const GUIDE_KEY = 'stateReviewerGuideDismissedV1';
   const root = document.getElementById('viewRoot');
   const sidebar = document.querySelector('.app-sidebar');
@@ -106,9 +98,9 @@
       .state-reviewer-guide-start{min-height:38px;padding:8px 11px;border:1px solid #b9cbe0;border-radius:9px;background:#fff;color:#1769e8;font:inherit;font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap}
       .state-reviewer-guide-dismiss{min-width:38px;min-height:38px;border:0;background:transparent;color:#6b778a;font:inherit;font-size:20px;line-height:1;cursor:pointer;border-radius:8px}
       .state-reviewer-guide-dismiss:hover,.state-reviewer-guide-dismiss:focus-visible{background:#edf3f9;color:#26344c}
-      .state-reviewer-guide-reopen{display:block;width:100%;margin-top:7px;padding:7px 12px;border:0;background:transparent;color:#68768a;font:inherit;font-size:12px;font-weight:700;text-align:left;cursor:pointer}
-      .state-reviewer-guide-reopen:hover{text-decoration:underline}
-      .state-mobile-help .state-reviewer-guide-reopen{width:auto;margin:8px 0 0;padding:4px 0;min-height:40px}
+      .state-reviewer-guide-reopen{display:flex;width:100%;min-height:40px;margin-top:8px;padding:9px 12px;align-items:center;justify-content:flex-start;border:1px solid var(--line);border-radius:10px;background:transparent;color:var(--muted);font:inherit;font-size:12px;font-weight:700;text-align:left;cursor:pointer;box-sizing:border-box}
+      .state-reviewer-guide-reopen:hover,.state-reviewer-guide-reopen:focus-visible{border-color:#b9cbe0;background:var(--surface2);color:var(--ink);text-decoration:none}
+      .state-mobile-help .state-reviewer-guide-reopen{width:100%;margin:8px 0 0;padding:9px 12px;min-height:44px}
       .ask-current-state-link{white-space:nowrap}
       .project-maintained-fact.is-ask-target{outline:2px solid rgba(23,105,232,.28);outline-offset:5px;border-radius:6px}
       body.v88-dark .state-reviewer-guide{background:#171b22;border-color:#303946;color:#eef2f7}
@@ -116,6 +108,8 @@
       body.v88-dark .state-reviewer-guide-copy p{color:#b5bfcc}
       body.v88-dark .state-reviewer-guide-start{background:#202631;border-color:#44556c;color:#9fc6ff}
       body.v88-dark .state-reviewer-guide-dismiss{color:#aeb8c5}
+      body.v88-dark .state-reviewer-guide-reopen{border-color:#303946;color:#b5bfcc}
+      body.v88-dark .state-reviewer-guide-reopen:hover,body.v88-dark .state-reviewer-guide-reopen:focus-visible{border-color:#44556c;background:#202631;color:#eef2f7}
       @media(max-width:760px){
         .state-reviewer-guide{grid-template-columns:1fr;gap:11px;margin:0 14px 14px;padding:13px 14px}
         .state-reviewer-guide-actions{justify-content:flex-start}
@@ -166,10 +160,6 @@
     if (!existing) overview.insertAdjacentHTML('afterbegin', guideMarkup());
   }
 
-  // Ask already links Review and Question records directly. Current State
-  // records also carry stable state IDs, so add a direct jump to the exact
-  // maintained fact. Map by record type/order from the rendered payload,
-  // never by matching visible text.
   function decorateAskCurrentStateLinks() {
     if (!root || !lastRenderedPayload?.answer) return;
     const stateItems = (lastRenderedPayload.answer.sections || [])
