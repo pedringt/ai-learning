@@ -2,6 +2,22 @@
   const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const cleanReviewCopy=value=>String(value||'').replace(/\*\*/g,'').replace(/\b(?:state|question|evidence|review|proposal)_[a-z0-9]+\b/gi,'').replace(/\b(?:ask-evidence|state|question|evidence|review|proposal|k|q)-[a-z0-9-]+\b/gi,'').replace(/\s+([,.;:])/g,'$1').replace(/\s{2,}/g,' ').trim();
 
+  // Keep the Workspace orientation banner visually distinct from the pale app
+  // canvas without introducing another heavy card treatment. The banner is
+  // added by late product-polish code, so locate it by its stable CTA rather
+  // than coupling this module to that helper's internal class name.
+  function polishExploringBanner(){
+    const trigger=[...document.querySelectorAll('button,a')].find(el=>String(el.textContent||'').includes('Start with Open Items'));
+    if(!trigger)return;
+    let banner=trigger.parentElement;
+    while(banner&&banner!==document.body&&!String(banner.textContent||'').includes('Exploring State?')) banner=banner.parentElement;
+    if(!banner||banner===document.body)return;
+    banner.style?.setProperty?.('background','#fff','important');
+  }
+  document.addEventListener('DOMContentLoaded',polishExploringBanner,{once:true});
+  setTimeout(polishExploringBanner,0);
+  setTimeout(polishExploringBanner,250);
+
   // sourceNote: the note this review's evidence came from (state.data.notes
   // resolved by evidenceId), or undefined. Passed in rather than looked up
   // here so this module never needs the whole notes array just for one field.
@@ -9,7 +25,8 @@
     const generic=r.id.startsWith('r-info-') || (Array.isArray(r.proposals) && r.proposals.length===0);
     const meaningfulUnresolved=r.unresolved && !/^nothing beyond this proposed change/i.test(cleanReviewCopy(r.unresolved));
     const sourceMeta=sourceNote?`${sourceNote.date} · ${sourceNote.source}`:'';
-    const head=`<span class="open-question-copy"><span class="open-item-label blocking">Review</span><span class="open-question-title">${esc(r.summary)}</span>${sourceMeta?`<span class="open-question-meta">Evidence · ${esc(sourceMeta)}</span>`:''}</span><span class="question-card-chevron" aria-hidden="true">›</span>`;
+    const chevron=accordion&&expanded?'⌃':'›';
+    const head=`<span class="open-question-copy"><span class="open-item-label blocking">Review</span><span class="open-question-title">${esc(r.summary)}</span>${sourceMeta?`<span class="open-question-meta">Evidence · ${esc(sourceMeta)}</span>`:''}</span><span class="question-card-chevron" aria-hidden="true">${chevron}</span>`;
     const rowStyle='width:100%;display:flex;align-items:center;justify-content:space-between;gap:20px;text-align:left;border:0;background:transparent;color:inherit;cursor:pointer;box-sizing:border-box';
     const recordStyle='width:100%;max-width:none;margin:12px 0 0;padding:0;border:0;border-top:1px solid var(--line);border-radius:0;background:transparent;box-shadow:none';
     if(accordion&&!expanded) return `<article class="review-record is-collapsed" style="${recordStyle}" data-review-card="${r.id}"><button type="button" class="open-question-row review-record-toggle" style="${rowStyle}" data-action="toggle-review-card" data-review-id="${r.id}" aria-expanded="false">${head}</button></article>`;
