@@ -106,7 +106,7 @@ check('Open Items uses concise page and section copy',
   renderedOpenItems.includes('Human decisions waiting on you.') &&
   renderedOpenItems.includes('Questions stopping progress.') &&
   renderedOpenItems.includes('Important unknowns to keep visible.') &&
-  renderedOpenItems.includes("Notes you haven't submitted yet."));
+  renderedOpenItems.includes('Notes you haven&#39;t submitted yet.'));
 check('Open Items removes redundant hierarchy and explainer copy',
   !renderedOpenItems.includes('What still needs attention') &&
   !renderedOpenItems.includes('How reviews work:') &&
