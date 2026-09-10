@@ -1,0 +1,41 @@
+name: Question Review live staging check
+on:
+  workflow_dispatch: {}
+  push:
+    branches: [staging]
+    paths: [qa/deployed/question-review-live.js]
+permissions:
+  contents: read
+concurrency:
+  group: question-review-live-staging
+  cancel-in-progress: false
+jobs:
+  walkthrough:
+    if: github.ref == 'refs/heads/staging'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install browser tools
+        working-directory: qa/deployed
+        run: |
+          npm install
+          npx playwright install --with-deps chromium
+      - name: Walk through deployed staging with the live model
+        working-directory: qa/deployed
+        env:
+          VERCEL_AUTOMATION_BYPASS_SECRET: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
+        run: node question-review-live.js
+      - name: Save results and screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: question-review-live
+          path: qa/deployed/question-live-results/
+          retention-days: 7
+          if-no-files-found: warn
