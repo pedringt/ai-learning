@@ -113,3 +113,11 @@
     track('state_demo_opened');
   }
 })();
+
+/* Ask already links its cited records inline. Hide the duplicate grounding appendix and open-items summary. */
+(function () {
+  var style = document.createElement('style');
+  style.id = 'state-ask-redundancy-cleanup';
+  style.textContent = '#askStateDrawer .ask-grounding,#askStateDrawer .ask-state-actions{display:none!important}';
+  document.head.appendChild(style);
+})();
