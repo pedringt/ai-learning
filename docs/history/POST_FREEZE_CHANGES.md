@@ -1,8 +1,8 @@
 # Post-freeze change requests
 
 Running list of changes Paige has asked for while the live site is frozen for
-manager review. **Nothing here has been applied.** Each entry records what was
-asked, exactly where it lives, and anything worth knowing before doing it.
+manager review. Each entry records what was asked, exactly where it lives, and
+anything worth knowing before doing it.
 
 These are product decisions, separate from the technical cleanup batches in
 `CLEANUP_PLAN.md`.
@@ -91,3 +91,45 @@ adjustment was needed.**
 A 42-shot pixel diff confirms the change is confined to the six homepage
 captures, each 34px shorter — the link plus its 16px top margin. Every other
 view at every width, in both themes, is pixel-identical. Tests unchanged.
+
+---
+
+## 2. Clarify Review action wording
+
+**Requested:** September 10, 2026
+**Status:** Wording-only change on `staging`. Broader Review behavior changes deferred.
+**Risk:** Low for current copy change; medium-large for future outcome-model work.
+
+### Current staging change
+
+Keep existing Review behavior intact and clarify only what the buttons say:
+
+- Reviews with a concrete proposed State change: **Update Current State** / **Keep Current State**.
+- Reviews with no proposed State change: **Mark reviewed** / **Keep Current State**.
+- Remove the misleading phrases **Accept as reviewed evidence**, **Update understanding**, and **Leave unchanged** from these Review actions.
+
+No backend, schema, Question-resolution, History, or Review-resolution behavior
+changes are included in this pass.
+
+### Deferred cleanup
+
+A later product pass should revisit the deeper issue that a human Review can
+have different effects: update Current State, resolve a Question without changing
+State, or establish that Current State is uncertain without yet establishing a
+replacement. The current backend resolution vocabulary does not cleanly express
+all of those outcomes.
+
+Before changing that model, use the State eval work to define and test realistic
+cases for at least:
+
+1. Evidence that should update Current State.
+2. Evidence that should be reviewed but leave Current State unchanged.
+3. Evidence that resolves an open Question without changing Current State.
+4. `state_at_risk` Evidence where the existing State is doubtful but no replacement is known.
+5. Evidence that is useful but not consequential enough to require Review.
+
+Then decide whether the product needs explicit uncertainty/qualified-State
+outcomes, different Review actions by consequence, richer audit/history entries,
+or schema/backend changes. Keep the central boundary intact: Evidence is
+immutable; AI interprets; software enforces; people authorize consequential
+changes.
