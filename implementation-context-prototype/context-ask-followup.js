@@ -62,6 +62,10 @@
     submit,
   });
 
+  // The code above is also evaluated by Node-only behavior tests. The reviewer
+  // guide is browser-only UI, so stop here when there is no DOM.
+  if (typeof document === 'undefined') return;
+
   // Reviewer/demo orientation. Keep this separate from State's product model:
   // it only guides an unfamiliar visitor through the existing surfaces.
   const GUIDE_KEY = 'stateReviewerGuideDismissedV1';
