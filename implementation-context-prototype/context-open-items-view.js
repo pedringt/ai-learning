@@ -25,6 +25,24 @@
   setTimeout(polishExploringBanner,0);
   setTimeout(polishExploringBanner,250);
 
+  // The legacy Review controller still uses the evidence-submission toast for
+  // zero-proposal Reviews. Keep the underlying Review resolution untouched and
+  // correct only the user-facing confirmation after "Mark reviewed" succeeds.
+  document.addEventListener('click',event=>{
+    const trigger=event.target.closest?.('[data-action="review-update"]');
+    if(!trigger||String(trigger.textContent||'').trim()!=='Mark reviewed')return;
+    const oldCopy='Added as Evidence. Current State did not need a Review.';
+    const observer=new MutationObserver(()=>{
+      const toast=document.querySelector('.state-toast');
+      if(toast&&String(toast.textContent||'').trim()===oldCopy){
+        toast.textContent='Reviewed. Current State was not changed.';
+        observer.disconnect();
+      }
+    });
+    observer.observe(document.body,{childList:true,subtree:true,characterData:true});
+    setTimeout(()=>observer.disconnect(),5000);
+  },true);
+
   // sourceNote: the note this review's evidence came from (state.data.notes
   // resolved by evidenceId), or undefined. Passed in rather than looked up
   // here so this module never needs the whole notes array just for one field.
