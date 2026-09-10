@@ -55,6 +55,10 @@
     } catch (_) { return 'no-storage'; }
   }
 
+  // A reviewer link looks like ?ref=kim-review. Captured once per session
+  // and reused on every event after, including ones that happen after the
+  // query param itself has been navigated away from (e.g. deep inside the
+  // State app). Falls back to 'direct' for ordinary/no-referral traffic.
   function refLabel() {
     try {
       var params = new URLSearchParams(window.location.search);
@@ -74,6 +78,10 @@
     try { window.va('event', { name: name, data: payload }); } catch (_) { /* analytics must never break the product */ }
   }
 
+  // Ask query text is genuinely useful product research (see doc: "Ask
+  // queries are especially valuable"), but it's user-entered content, so it
+  // is only ever sent under this one function -- callers should not read
+  // ui/query text into any other track() call.
   function trackAskQuery(query, props) {
     track('ask_submitted', Object.assign({ query: String(query || '').slice(0, 300) }, props || {}));
   }
@@ -86,6 +94,10 @@
     ownerMode: ownerMode
   };
 
+  // Generic outbound-link tracker -- covers "source link opened" without
+  // instrumenting every individual source-rendering call site. Only fires
+  // for links leaving the current origin (external evidence/source links,
+  // not in-app navigation, which already has its own view-change tracking).
   document.addEventListener('click', function (e) {
     var link = e.target && e.target.closest && e.target.closest('a[href]');
     if (!link) return;
