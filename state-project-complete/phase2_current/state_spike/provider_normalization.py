@@ -122,7 +122,7 @@ def normalize_provider_payload(
                 "update_existing" if recommendation.get("existing_review_id") else "create"
             )
         recommendation["review_type"] = _normalize_enum(
-            recommendation.get("review_type"), {"proposed_update", "state_at_risk", "missing_understanding"}
+            recommendation.get("review_type"), {"proposed_update", "state_at_risk", "missing_understanding", "open_question"}
         )
 
         affected = _dedupe_strings(recommendation.get("affected_state_item_ids"))
@@ -187,6 +187,15 @@ def normalize_provider_payload(
         # review type is proposed_update.
         if recommendation.get("review_type") == "missing_understanding" and has_existing_state_change:
             recommendation["review_type"] = "proposed_update"
+
+        # An open_question Review proposes a durable unknown, never a State
+        # mutation or an answer to an existing Question. Keep the provider's
+        # semantic choice, but remove harmless empty presentation metadata so
+        # canonical validation sees the minimal legal shape.
+        if recommendation.get("review_type") == "open_question":
+            if recommendation.get("resolves_question_ids") == []:
+                recommendation.pop("resolves_question_ids", None)
+            recommendation.pop("grouping_reason", None)
 
         # grouping_reason is presentation metadata, not authority. It is legal
         # only when there is actual grouping; remove accidental singleton use.
