@@ -74,7 +74,9 @@
   function render(payload, liveStatus) {
     const cleaned = dedupeAnswerPayload(payload);
     lastRenderedPayload = cleaned || null;
-    return prior.render(cleaned, liveStatus);
+    const html = prior.render(cleaned, liveStatus);
+    if (typeof html !== 'string') return html;
+    return html.replace(/<aside class="ask-state-actions">[\s\S]*?<\/aside>/g, '');
   }
 
   window.STATE_ASK = Object.freeze({
