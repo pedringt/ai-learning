@@ -162,7 +162,8 @@
     }
     section.querySelectorAll('[data-settings-action="toggle-channel"]').forEach(control=>{
       const enabled=control.dataset.enabled==='1';
-      control.textContent=enabled?'Disable channel':'Enable channel';
+      const label=enabled?'Disable channel':'Enable channel';
+      if(control.textContent!==label) control.textContent=label;
       const row=control.closest('.slack-preview-row');
       const channel=row?.querySelector('strong')?.textContent?.trim();
       if(channel) control.setAttribute('aria-label',`${enabled?'Disable':'Enable'} ${channel}`);
