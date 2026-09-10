@@ -18,7 +18,45 @@ on:
   push:
     branches: [main, staging]
 
+permissions:
+  contents: write
+
 jobs:
+  patch_index:
+    if: github.ref == 'refs/heads/staging' && github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: staging
+      - name: Surface State supporting cases
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('index.html')
+          s = p.read_text()
+          old = '''<div class="applied-secondary-grid">
+<a class="card nav-card applied-secondary" href="state-ai-search-learning.html"><span class="tag">Search &amp; cost</span><h3>AI Search Architecture &amp; Cost</h3><p class="card-intro">Before integrating AI into State, I worked through where generation might add value in search, where deterministic retrieval was enough, and what those choices could mean for cost. Building the product later confirmed some assumptions and changed others.</p></a>
+<a class="card nav-card applied-secondary" href="meridian.html"><span class="tag">Simulated pilot · Customer support</span><h3>Meridian AI Support Pilot</h3><p class="card-intro">How an AI-assisted support pilot handles a ticket step by step, the discovery questions that most changed the design, and the pilot metrics I revised once evidence didn’t support my first answer.</p></a>
+</div>'''
+          new = '''<div class="applied-secondary-grid">
+<a class="card nav-card applied-secondary" href="state-testing-debugging.html"><span class="tag">Validation &amp; debugging</span><h3>Testing &amp; Debugging State</h3><p class="card-intro">How I combined hands-on QA, AI-assisted automated coverage, and failure investigation to distinguish model, retrieval, implementation, and product-design failures.</p></a>
+<a class="card nav-card applied-secondary" href="state-ai-search-learning.html"><span class="tag">Architecture &amp; cost</span><h3>State Architecture &amp; Cost: Before vs. After</h3><p class="card-intro">I revisited the architecture and cost assumptions I made before integrating AI into State and compared them with what the working product taught me about model choice, latency, context, and what should stay deterministic.</p></a>
+<a class="card nav-card applied-secondary" href="meridian.html"><span class="tag">Simulated pilot · Customer support</span><h3>Meridian AI Support Pilot</h3><p class="card-intro">How an AI-assisted support pilot handles a ticket step by step, the discovery questions that most changed the design, and the pilot metrics I revised once evidence didn’t support my first answer.</p></a>
+</div>'''
+          if old in s:
+              s = s.replace(old, new, 1)
+          s = s.replace('Paige Edrington · AI Learning Portfolio', 'Applied AI Product Portfolio')
+          s = s.replace('AI interprets → software enforces → people decide.', 'AI interprets → software enforces → people authorize.')
+          p.write_text(s)
+          PY
+          if git diff --quiet; then exit 0; fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git commit -m "Surface State supporting cases on Applied Work"
+          git push origin staging
+
   python:
     runs-on: ubuntu-latest
     steps:
@@ -34,15 +72,9 @@ jobs:
           pip install -r requirements.txt
           pip install pytest pytest-subtests playwright
 
-      # The browser suite resolves Chromium through Playwright by default, so the
-      # runner needs Playwright's managed download. STATE_CHROMIUM_PATH can point
-      # at a specific binary instead.
       - name: Install Chromium for the browser suite
         run: python -m playwright install --with-deps chromium
 
-      # Two older integration assertions pin retired source shapes rather than
-      # the behavior they were intended to protect. Their current equivalents
-      # live in test_release_asset_loader.py and test_integrity_polish_current.py.
       - name: Run deterministic Python suite
         working-directory: state-project-complete
         run: >-
