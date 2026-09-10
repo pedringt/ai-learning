@@ -91,3 +91,57 @@ adjustment was needed.**
 A 42-shot pixel diff confirms the change is confined to the six homepage
 captures, each 34px shorter — the link plus its 16px top margin. Every other
 view at every width, in both themes, is pixel-identical. Tests unchanged.
+
+---
+
+## 2. Make Review actions describe what the human is authorizing
+
+**Requested:** September 10, 2026
+**Status:** Levels 1 and 2 applied on `staging`; Level 3 deliberately deferred. Not on `main` unless explicitly promoted later.
+**Risk:** Low for the staging UI change; medium-large for the deferred domain-model work.
+
+### Why this came up
+
+Evidence already exists before a Review. A human Review decides what effect that
+Evidence should have, so wording such as "Accept evidence" incorrectly suggests
+the reviewer is admitting the source material into the system.
+
+The current backend also allows zero-proposal Reviews, including Reviews that
+resolve a Question and `state_at_risk` Reviews where Evidence undermines Current
+State without establishing a replacement. Those cases should not be presented
+as if every affirmative Review updates Current State.
+
+### Levels 1 and 2: staging behavior
+
+Use the Review's actual consequence to choose the UI:
+
+- **Review has proposed State changes:** `Update Current State` / `Keep Current State`, with a sentence explaining that Current State will change and whether linked Questions will also resolve.
+- **No State proposal, but the Review resolves Question(s):** `Confirm answer` / `Keep question open` (or plural), with explicit copy that Current State will not change.
+- **`state_at_risk` with no replacement proposal:** do not show a misleading affirmative "accept" action. Explain that the Evidence raises uncertainty without establishing a replacement. The reviewer may `Keep Current State` if they decide the concern does not change maintained understanding, or simply leave the Review open while gathering more Evidence.
+- **Other no-State-change Review fallback:** use `Mark reviewed`, not "Accept evidence."
+- **Non-consequential Evidence:** continues to require no human Review.
+
+This is intentionally a frontend interpretation of data State already has:
+`reviewType`, proposals, affected State items, and linked Questions. It does not
+change the backend resolution vocabulary or database schema.
+
+### Level 3: deferred product/domain-model cleanup
+
+Do not fold this into ordinary UI cleanup. Treat it as a separate design change.
+
+The deeper issue is that the backend currently maps `accept` + zero proposals to
+`confirmed_current`. That is not expressive enough for a `state_at_risk` Review
+where the human agrees that Current State is now uncertain but no replacement is
+known yet.
+
+A future pass should define:
+
+1. An explicit Review outcome for reviewed uncertainty / qualified Current State rather than overloading `confirmed_current`.
+2. How a Current State item records and displays that qualification without silently replacing the maintained fact.
+3. The lifecycle for clearing the qualification when later Evidence establishes a replacement or confirms the original State.
+4. Audit/history treatment for meaningful human Review decisions that do not create a `history_transitions` State mutation.
+5. Any required schema migration, backend resolution changes, API/read-model changes, and tests.
+6. Interaction with linked Questions so resolving a Question, qualifying State, and changing State remain separate effects.
+
+Keep the central boundary intact: Evidence is immutable; AI interprets; software
+enforces; people authorize consequential changes.
