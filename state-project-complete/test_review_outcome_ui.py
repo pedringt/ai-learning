@@ -202,14 +202,10 @@ def test_legacy_question_submission_explanations_are_corrected_without_changing_
         page.evaluate("""() => {
           document.getElementById('dialogBody').innerHTML='<p>The question stays unresolved until you accept reviewed evidence that establishes an answer.</p>';
         }""")
-        page.get_by_text(
-            "The question stays unresolved until you confirm reviewed evidence that establishes an answer.", exact=True
-        ).wait_for()
+        page.wait_for_function("""() => document.querySelector('#dialogBody p')?.textContent === 'The question stays unresolved until you confirm reviewed evidence that establishes an answer.'""")
         page.evaluate("""() => {
           document.getElementById('dialogBody').innerHTML='<p>The evidence did not produce a State change, so it was not enough to resolve this question.</p>';
         }""")
-        page.get_by_text(
-            "State did not identify reviewed evidence that establishes an answer, so the question stays open.", exact=True
-        ).wait_for()
+        page.wait_for_function("""() => document.querySelector('#dialogBody p')?.textContent === 'State did not identify reviewed evidence that establishes an answer, so the question stays open.'""")
     finally:
         browser.close(); pw.stop()

@@ -71,19 +71,19 @@
     } catch (_) { return 'direct'; }
   }
 
-  // context-app.js predates consequence-specific Review labels and still
-  // emits accepted/rejected event names. Normalize those at the analytics
-  // boundary so "Keep Current State" is never reported as rejection of the
-  // Evidence itself. New question-only Review actions already emit
-  // review_decision directly with their specific outcome.
+  // context-app.js predates consequence-specific Review labels and emits
+  // accepted/rejected when the reviewer selects an action, before a proposed
+  // State update has necessarily been confirmed or saved. Normalize those
+  // legacy names without overstating the result. Question-only Review actions
+  // emit review_decision separately after the backend succeeds.
   function normalizeReviewEvent(name, props) {
     if (name === 'review_accepted') return {
-      name: 'review_decision',
-      props: Object.assign({ outcome: 'current_state_updated' }, props || {})
+      name: 'review_action_selected',
+      props: Object.assign({ action: 'update_current_state' }, props || {})
     };
     if (name === 'review_rejected') return {
-      name: 'review_decision',
-      props: Object.assign({ outcome: 'current_state_kept' }, props || {})
+      name: 'review_action_selected',
+      props: Object.assign({ action: 'keep_current_state' }, props || {})
     };
     return { name: name, props: props || {} };
   }
