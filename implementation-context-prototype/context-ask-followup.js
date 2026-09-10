@@ -85,7 +85,7 @@
     const style = document.createElement('style');
     style.id = 'state-reviewer-guide-styles';
     style.textContent = `
-      .state-reviewer-guide{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:16px;align-items:center;margin:0 0 16px;padding:14px 16px;border:1px solid #d9e3f0;border-radius:12px;background:#f7faff;color:#26344c;box-sizing:border-box}
+      .state-reviewer-guide{position:relative;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:16px;align-items:center;margin:0 0 16px;padding:14px 16px;border:1px solid #d9e3f0;border-radius:12px;background:#f7faff;color:#26344c;box-sizing:border-box}
       .state-reviewer-guide-copy{min-width:0}
       .state-reviewer-guide-copy strong{display:block;margin-bottom:3px;font-size:13px;color:#18253a}
       .state-reviewer-guide-copy p{margin:0;font-size:12.5px;line-height:1.5;color:#59677d}
@@ -104,9 +104,10 @@
       @media(max-width:760px){
         .state-reviewer-guide{grid-template-columns:1fr;gap:11px;margin:0 14px 14px;padding:13px 14px}
         .state-reviewer-guide-actions{justify-content:flex-start}
-        .state-reviewer-guide-start{min-height:42px}
-        .state-reviewer-guide-dismiss{position:absolute;right:20px;margin-top:-4px}
-        .state-reviewer-guide-copy{padding-right:34px}
+        .state-reviewer-guide-start{min-height:44px}
+        .state-reviewer-guide-dismiss{position:absolute;right:8px;top:8px;min-width:44px;min-height:44px}
+        .state-reviewer-guide-copy{padding-right:38px}
+        #askStateDrawer .ask-item-action,#askStateDrawer .ask-item-link,#askStateDrawer .ask-copy-answer{min-height:44px!important;padding-top:8px!important;padding-bottom:8px!important}
       }
     `;
     document.head.appendChild(style);
