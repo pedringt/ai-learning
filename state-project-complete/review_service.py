@@ -7,6 +7,10 @@ from typing import Literal
 
 from db import Connection
 from interpretation_pipeline_integrated import new_id
+from question_review_service import (
+    QuestionReviewConflictError, create_or_find_question, normalized_question_text,
+    question_proposal_read_model, resolve_question_proposal,
+)
 
 
 class ReviewNotFoundError(KeyError):
@@ -75,24 +79,18 @@ def list_questions(connection: Connection, status: str = "open") -> list[dict]:
 
 
 def _normalized_question_text(value: str) -> str:
-    return " ".join((value or "").casefold().split())
+    return normalized_question_text(value)
 
 
 def create_question(connection: Connection, question_id: str, text: str, *, origin: str = "Added from Workspace", blocking: bool = False, blocks: str | None = None) -> dict:
-    cleaned = text.strip()
-    # Creating the same open question twice should be idempotent from the UI's
-    # point of view. This also lets the frontend safely bootstrap demo questions
-    # into the authoritative backend without duplicating them on every reload.
-    for existing in list_questions(connection, "open"):
-        if _normalized_question_text(existing["text"]) == _normalized_question_text(cleaned):
-            return existing
-    connection.execute(
-        "INSERT INTO questions(id, text, status, blocking, blocks, origin) VALUES (?, ?, 'open', ?, ?, ?)",
-        (question_id, cleaned, 1 if blocking else 0, blocks, origin),
-    )
-    connection.commit()
-    row = connection.execute("SELECT * FROM questions WHERE id=?", (question_id,)).fetchone()
-    return dict(row)
+    connection.execute("BEGIN IMMEDIATE")
+    try:
+        item, _ = create_or_find_question(connection, question_id, text, origin=origin, blocking=blocking, blocks=blocks)
+        connection.execute("COMMIT")
+        return item
+    except Exception:
+        connection.execute("ROLLBACK")
+        raise
 
 
 def update_question_blocking(connection: Connection, question_id: str, blocking: bool, blocks: str | None = None) -> dict:
@@ -124,12 +122,12 @@ def stop_question(connection: Connection, question_id: str) -> None:
     connection.commit()
 
 
-def resolve_review(connection: Connection, review_id: str, decision: Decision, note: str | None = None) -> None:
+def resolve_review(connection: Connection, review_id: str, decision: Decision, note: str | None = None, *, expected_question_proposal_id: str | None = None, expected_existing_question_id: str | None = None) -> dict | None:
     """Resolve one review atomically; only ``accept`` may mutate Current State."""
     connection.row_factory = sqlite3.Row
     connection.execute("BEGIN IMMEDIATE")
     try:
-        review_sql = "SELECT id, status FROM review_issues WHERE id=?"
+        review_sql = "SELECT id, status, review_type FROM review_issues WHERE id=?"
         if getattr(connection, "is_postgres", False):
             review_sql += " FOR UPDATE"
         review = connection.execute(review_sql, (review_id,)).fetchone()
@@ -137,6 +135,22 @@ def resolve_review(connection: Connection, review_id: str, decision: Decision, n
             raise ReviewNotFoundError(review_id)
         if review["status"] != "open":
             raise ReviewConflictError("Review is already resolved")
+
+        if decision not in {"accept", "keep", "reject"}:
+            raise ReviewConflictError("Invalid Review decision")
+        if review["review_type"] == "open_question":
+            try:
+                outcome = resolve_question_proposal(connection, review_id, decision, expected_question_proposal_id, expected_existing_question_id)
+            except QuestionReviewConflictError as exc:
+                raise ReviewConflictError(str(exc)) from exc
+            connection.execute(
+                "UPDATE review_issues SET status='resolved', resolution=?, resolution_note=?, "
+                "resolved_at=CURRENT_TIMESTAMP WHERE id=?", (outcome["resolution"], note, review_id)
+            )
+            connection.execute("COMMIT")
+            return outcome
+        if expected_question_proposal_id is not None:
+            raise ReviewConflictError("The Review outcome changed. Refresh and review it again.")
 
         proposals = connection.execute(
             "SELECT * FROM proposed_state_changes WHERE review_id=? AND status='pending' ORDER BY created_at, id",
@@ -339,6 +353,8 @@ def list_reviews(connection: Connection, status: str = "open") -> list[dict]:
         item["resolves_question_ids"] = [q["question_id"] for q in connection.execute(
             "SELECT question_id FROM review_questions WHERE review_id=? ORDER BY question_id", (row["id"],)
         ).fetchall()]
+        if item["review_type"] == "open_question":
+            item["question_to_create"] = question_proposal_read_model(connection, row["id"])
         result.append(item)
     return result
 

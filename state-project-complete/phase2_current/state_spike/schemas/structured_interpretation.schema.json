@@ -237,7 +237,13 @@
               "resolves_question_ids": {
                 "maxItems": 0
               },
-              "grouping_reason": false
+              "grouping_reason": false,
+              "decision_question": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 500,
+                "pattern": "\\S"
+              }
             }
           }
         },

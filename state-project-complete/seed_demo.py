@@ -225,6 +225,7 @@ def reset_demo_data(connection) -> dict[str, int]:
         # regardless of whether a particular foreign key cascades.
         for table in (
             "history_transitions",
+            "proposed_questions",
             "review_questions",
             "review_state_items",
             "review_evidence",

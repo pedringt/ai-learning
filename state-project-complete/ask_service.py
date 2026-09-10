@@ -111,6 +111,8 @@ def _compact_candidates(connection: Any) -> dict[str, list[dict]]:
             "affected_state_ids": [s["id"] for s in x.get("affected_state_items", [])],
             "evidence_ids": [e["id"] for e in x.get("evidence_items", [])],
             "question_ids": list(x.get("resolves_question_ids", [])),
+            **({"question_to_create": {key: x["question_to_create"].get(key) for key in
+                 ("id", "text", "evidence_id", "existing_question_id")}} if x.get("question_to_create") else {}),
         } for x in reviews],
         "questions": [{"id": x["id"], "text": x["text"], "blocking": bool(x["blocking"]), "blocks": x["blocks"], "authority": "known_unknown"} for x in questions],
         "history": [{
@@ -268,6 +270,7 @@ Authority rules are non-negotiable:
 - History is accepted past change. Evidence is what was said or observed and cannot silently override Current State.
 - Project Rules constrain interpretation.
 - Unknown must remain unknown. Newer does not mean more authoritative. Approval does not mean implementation.
+- An open_question Review proposes tracking an unknown, not a State change. Its suggested Question is not yet an open Question or a fact. After authorization the ordinary Question record is still an unknown, never proof of its premise.
 - Optimize for relevance, not completeness. Omit tempting recent noise.
 - Refinement may change format, audience, length, focus, or ordering, but never project truth.{refinement_guidance}
 - For meeting prep, frame relevant Questions as opportunities to get answered.

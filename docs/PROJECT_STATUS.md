@@ -4,14 +4,15 @@ This is the canonical current-state handoff for State and the surrounding portfo
 
 ## Current production state
 
-_Last updated: September 10, 2026 after the reviewer-orientation / Ask cleanup was promoted to production._
+_Last updated: September 10, 2026 during the AI-suggested Questions staging implementation._
 
 - Production branch: `main`.
 - Review branch: `staging`.
-- Latest reviewed product/UI cleanup was promoted through PR #99, **Promote State cleanup to main**.
+- The earlier reviewer-orientation / Ask cleanup was promoted through PR #99, **Promote State cleanup to main**. Later Open Items and banner fixes shipped through PR #102.
 - PR #99 merge commit: `9bed95c134d0ef2766d762c23a6960c3b7b6a226`.
 - Vercel production deployment for that merge is green.
-- `main` and `staging` contain the same reviewed product/UI changes; this handoff update itself is a documentation-only commit on `main`.
+- Production includes the Mark reviewed confirmation fix at `3f87909afd6391544d0c267c0bd50d2f2544bc8d`.
+- Staging now has the AI-suggested Questions feature described below. Do not treat it as promoted to main.
 - **Hard rule: all product/site changes go to `staging` first. Never push or merge product/site changes to `main` without the user's explicit confirmation.**
 
 Production site:
@@ -19,6 +20,24 @@ Production site:
 - Portfolio: https://ai-learning-rouge.vercel.app/
 - State case study: https://ai-learning-rouge.vercel.app/implementation-context
 - State product: https://ai-learning-rouge.vercel.app/implementation-context-prototype/
+
+## Current staging feature: AI-suggested open Questions
+
+- Same Review flow, small consequence-specific text/actions: **Create Question**,
+  **Link existing Question**, or **Dismiss suggestion**.
+- Suggestions remain proposals until human approval. Approval creates/reuses an
+  ordinary Question and closes the Review atomically, without changing Current
+  State or History. New Questions are non-blocking.
+- Exact case/whitespace duplicate checks happen before display and during the
+  transaction. Semantic matching is deferred. Stale proposals fail closed.
+- Ask keeps its read-only model. Its pending/unknown grounding and existing-answer
+  freshness checks now account for Question-only decisions.
+- Migration 009 preserves existing data and adds Question proposal persistence.
+- Scope, rollout notes, tests, and the model-eval handoff are in
+  `docs/architecture/REVIEW_SUGGESTED_QUESTIONS.md`.
+- Implementation was tested locally against the available environment. The
+  pinned-dependency CI run, including isolated PostgreSQL, is the release gate.
+- No approval has been given to merge this feature into main.
 
 ## What changed on September 10
 

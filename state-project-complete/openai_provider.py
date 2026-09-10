@@ -21,6 +21,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent / "phase2_current"))
 
 from state_spike.semantic_validation import InterpretationContextSnapshot
 from provider_json import extract_json_object
+from question_review_prompt import QUESTION_REVIEW_GUIDANCE
 
 
 logger = logging.getLogger("state.provider.openai")
@@ -255,6 +256,8 @@ Content: {evidence.get('content')}
 
 ## Your Task
 
+{QUESTION_REVIEW_GUIDANCE}
+
 Analyze the Evidence against Current State and open Reviews.
 
 Include grouping_reason ONLY when a recommendation groups multiple affected State items or multiple proposed changes. Omit grouping_reason for a single-item/single-change recommendation.
@@ -269,7 +272,7 @@ Respond ONLY with JSON in this structure:
     {{
       "review_action": "create" | "update_existing",
       "existing_review_id": "review_...",  // only if update_existing
-      "review_type": "proposed_update" | "state_at_risk" | "missing_understanding",
+      "review_type": "proposed_update" | "state_at_risk" | "missing_understanding" | "open_question",
       "decision_question": "What decision must a human make?",
       "why_consequential": "Why does this matter?",
       "affected_state_item_ids": ["state_01", "state_02"],

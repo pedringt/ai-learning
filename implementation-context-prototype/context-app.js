@@ -970,6 +970,7 @@
   function decideReview(id,decision){
     const r=state.data.reviews.find(x=>x.id===id);
     if(!r||r.status!=='pending')return;
+    if(r.reviewType==='open_question'){executeQuestionReviewDecision(id,decision);return;}
     window.StateAnalytics?.track(decision==='update'?'review_accepted':'review_rejected',{reviewId:id});
     const isGeneric=r.id?.startsWith('r-info-') || (Array.isArray(r.proposals) && r.proposals.length===0);
     if(decision==='update' && !isGeneric){
@@ -978,6 +979,54 @@
       return;
     }
     executeReviewDecision(id,decision,isGeneric);
+  }
+
+  const pendingQuestionDecisions=new Set();
+  async function executeQuestionReviewDecision(id,decision){
+    const r=state.data.reviews.find(x=>x.id===id);
+    if(!r||r.status!=='pending'||pendingQuestionDecisions.has(id))return;
+    const proposal=r.questionToCreate;
+    if(!r.backendReviewId||!proposal?.id||proposal.status!=='pending'){
+      showToast('Question suggestion unavailable. Refresh and review it again.');return;
+    }
+    pendingQuestionDecisions.add(id);
+    const buttons=[...document.querySelectorAll('[data-review]')].filter(b=>b.dataset.review===id);
+    buttons.forEach(b=>{b.disabled=true;});
+    let result;
+    try{
+      result=await API.resolveReview(r.backendReviewId,decision==='update'?'accept':'keep',{
+        questionProposalId:proposal.id,existingQuestionId:proposal.existing_question_id||null
+      });
+    }catch(error){
+      // A timeout can happen after the server commits. Never claim that nothing
+      // changed or optimistically retry a write whose outcome is unknown.
+      showToast(error?.status===409?'This Review changed. Refresh and review it again.':'Could not confirm the result. Refresh before trying again.');
+      if(error?.status===409)await hydrateBackend();
+      return;
+    }finally{
+      pendingQuestionDecisions.delete(id);
+      buttons.forEach(b=>{b.disabled=false;});
+    }
+    // Publish only server-confirmed effects. The existing Question collection
+    // feeds Open Items, Workspace counts and Ask; never invent a local Question.
+    r.status=decision;
+    if(Array.isArray(result.questions))syncApiQuestions(result.questions);
+    if(Array.isArray(result.open_reviews))replaceBackendOpenReviews(result.open_reviews);
+    const note=state.data.notes.find(n=>n.id===r.evidenceId);
+    if(note){
+      note.reviewIds=(note.reviewIds||[]).filter(reviewId=>reviewId!==id);
+      note.reviewId=note.reviewIds[0]||null;
+      note.status=note.reviewIds.length?'pending':'reviewed';
+    }
+    state.expandedReviewId=null;
+    if(result.question){state.openItemSections.questions=false;state.openQuestionsExpanded=true;}
+    closeDialog();render();
+    showToast(result.resolution==='question_created'?'Question created. Current State was not changed.':result.resolution==='question_linked'?'Linked to the existing Question. Current State was not changed.':'Review complete. No Question was created.');
+    window.StateAnalytics?.track('review_decision',{reviewId:id,outcome:result.resolution,kind:'open_question'});
+    // Ask stays read-only; an already visible answer is a snapshot, so flag it
+    // for refresh immediately rather than leaving a closed Review as current.
+    document.dispatchEvent(new Event('state-project-record-changed'));
+    try{await hydrateBackend();}catch(error){console.warn('Review saved; refresh needed.',error);}
   }
 
   async function executeReviewDecision(id,decision,isGeneric){
@@ -995,6 +1044,7 @@
       try{
         const apiDecision=decision==='update'?'accept':'keep';
         const result=await API.resolveReview(r.backendReviewId,apiDecision);
+        if(Array.isArray(result.questions))syncApiQuestions(result.questions);
         const note=state.data.notes.find(n=>n.id===r.evidenceId);
         if(note)note.status=decision==='update'?'accepted':'reviewed';
         if(decision==='update'){
@@ -1107,6 +1157,7 @@
   function reviewTypeTitle(type){
     if(type==='state_at_risk') return 'Current State may be at risk';
     if(type==='missing_understanding') return 'More understanding is needed';
+    if(type==='open_question') return 'Question to track';
     return 'Review needed';
   }
 
@@ -1142,7 +1193,9 @@
   function mapApiReview(r, fallbackEvidence=''){
     const proposals=(r.proposals||[]).filter(p=>!p.status || p.status==='pending');
     const affected=r.affected_state_items||[];
-    const current=affected.length
+    const current=r.review_type==='open_question'
+      ? 'Current State will stay unchanged. This Review is about tracking an unknown.'
+      : affected.length
       ? affected.map(x=>x.statement).join(' • ')
       : proposals.some(p=>p.operation==='create')
         ? 'No matching Current State item exists yet.'
@@ -1160,6 +1213,7 @@
       title:reviewTypeTitle(r.review_type),
       summary:r.decision_question,
       proposed:proposedText(proposals),
+      questionToCreate:r.question_to_create||null,
       unresolved,
       current,
       evidence:r.evidence_content||fallbackEvidence,

@@ -135,7 +135,6 @@
       html body #askStateDrawer .state-ask-reset{position:absolute!important;right:6px!important;top:50%!important;transform:translateY(-50%)!important;width:31px!important;height:31px!important;padding:0!important;border:0!important;background:transparent!important;color:#677389!important;font-size:21px!important;line-height:31px!important;z-index:20!important;cursor:pointer!important}
       html body #askStateDrawer .state-ask-reset::before,html body #askStateDrawer .state-ask-reset::after{content:none!important;display:none!important}
       html body #askStateDrawer.has-answer .ask-state-starters,html body #askStateDrawer.is-generating .ask-state-starters{display:none!important}
-      html body #askStateDrawer .ask-state-stale{display:none!important}
       html body #askStateDrawer .ask-state-starters{grid-template-columns:minmax(0,1fr)!important;width:100%!important}
       html body #askStateDrawer .ask-state-starters button{width:100%!important;min-width:0!important;max-width:100%!important;white-space:normal!important;text-align:left!important}
       html body #askStateDrawer .ask-copy-answer{min-height:27px!important;height:27px!important;padding:0 7px!important;font-size:10px!important}

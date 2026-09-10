@@ -217,6 +217,8 @@ class ResolutionInput(BaseModel):
     model_config = ConfigDict(extra="forbid")
     decision: Literal["accept", "keep", "reject"]
     note: str | None = Field(default=None, max_length=2_000)
+    expected_question_proposal_id: str | None = Field(default=None, min_length=1, max_length=100)
+    expected_existing_question_id: str | None = Field(default=None, min_length=1, max_length=100)
 
 
 class ProjectRuleInput(BaseModel):
@@ -587,7 +589,9 @@ def create_app(settings: Settings | None = None, provider: InterpretationProvide
     def post_resolution(review_id: str, payload: ResolutionInput) -> dict:
         with get_connection() as connection:
             try:
-                resolve_review(connection, review_id, payload.decision, payload.note)
+                outcome = resolve_review(connection, review_id, payload.decision, payload.note,
+                                         expected_question_proposal_id=payload.expected_question_proposal_id,
+                                         expected_existing_question_id=payload.expected_existing_question_id)
             except ReviewNotFoundError as exc:
                 raise HTTPException(status_code=404, detail="Review not found") from exc
             except ReviewConflictError as exc:
@@ -595,6 +599,8 @@ def create_app(settings: Settings | None = None, provider: InterpretationProvide
             return {
                 "review_id": review_id,
                 "decision": payload.decision,
+                **(outcome or {}),
+                "questions": list_questions(connection, "open"),
                 "state": list_state(connection),
                 "open_reviews": list_reviews(connection, "open"),
                 "history": list_history(connection),

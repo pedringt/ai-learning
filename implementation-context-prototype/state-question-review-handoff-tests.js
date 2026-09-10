@@ -121,7 +121,7 @@ const renderedOpenItems=openItems.render({
   renderDraftNote:()=>'',
 });
 check('Open Items keeps the explanation once at the top of the page',
-  renderedOpenItems.includes('Reviews may propose a Current State change or simply need a human check.') &&
+  renderedOpenItems.includes('Reviews may propose a Current State change, suggest a Question, or simply need a human check.') &&
   renderedOpenItems.includes('Blocking and open questions stay visible here too.'));
 check('Open Items removes repeated section descriptions and old hierarchy copy',
   !renderedOpenItems.includes('Human decisions waiting on you.') &&
@@ -156,6 +156,22 @@ const backendReviewWithResolution={id:'review_x2',review_type:'proposed_update',
 const mappedWithResolution=api.mapApiReview(backendReviewWithResolution,'A real answer.');
 check('a backend review that DOES return resolves_question_ids is still correctly mapped',
   mappedWithResolution.resolvesQuestionIds.includes('q-retention') && mappedWithResolution.resolvesQuestionId==='q-retention');
+
+// A Question proposal uses the same Review card but discloses its actual
+// consequence. Missing backend proposal data must not fall back to Mark reviewed.
+const proposedQuestion={id:'question-proposal-1',text:'Are agents checking drafts?',status:'pending',existing_question_id:null};
+const questionReview=api.mapApiReview({id:'review-question',review_type:'open_question',decision_question:proposedQuestion.text,why_consequential:'Human checks may be ineffective.',evidence_content:'Some approvals are suspiciously fast.',question_to_create:proposedQuestion,proposals:[]});
+check('mapping preserves the backend Question proposal token', questionReview.questionToCreate.id==='question-proposal-1');
+const questionReviewHtml=openItems.reviewCard(questionReview,true,false);
+check('Question Review discloses the unchanged Current State',questionReviewHtml.includes('Current State will stay unchanged'));
+check('Question Review uses Create Question, not Mark reviewed or Update Current State',questionReviewHtml.includes('>Create Question<')&&!questionReviewHtml.includes('>Mark reviewed<')&&!questionReviewHtml.includes('>Update Current State<'));
+check('Question Review includes a decline action in the same flow',questionReviewHtml.includes('>Dismiss suggestion<'));
+const existingQuestionHtml=openItems.reviewCard({...questionReview,questionToCreate:{...proposedQuestion,existing_question_id:'question-existing',existing_question_text:'Are agents checking drafts?'}},true,false);
+check('duplicate Question is explained before authorization',existingQuestionHtml.includes('>Already tracked<')&&existingQuestionHtml.includes('>Link existing Question<'));
+const missingQuestionHtml=openItems.reviewCard({...questionReview,questionToCreate:null},true,false);
+check('missing suggestion data disables actions rather than marking reviewed',missingQuestionHtml.includes(' disabled')&&missingQuestionHtml.includes('Question suggestion unavailable')&&!missingQuestionHtml.includes('>Mark reviewed<'));
+const escapedQuestionHtml=openItems.reviewCard({...questionReview,questionToCreate:{...proposedQuestion,text:'<script>bad()</script>'}},true,false);
+check('suggested Question text is escaped',!escapedQuestionHtml.includes('<script>bad()')&&escapedQuestionHtml.includes('&lt;script&gt;'));
 
 console.log(`\n${pass} passed, ${fail} failed`);
 if(fail) process.exit(1);

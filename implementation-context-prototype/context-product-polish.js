@@ -211,7 +211,13 @@
   async function currentStateSignature(){
     if(!API?.getState) return null;
     try{
-      const raw=await API.getState();const items=asList(raw,['state','items','results']).map(x=>({id:x.id||'',version:x.version||0,statement:x.statement||x.text||''})).sort((a,b)=>String(a.id).localeCompare(String(b.id)));return JSON.stringify(items);
+      const [raw,reviews,questions]=await Promise.all([API.getState(),API.getReviews('open'),API.getQuestions('open')]);
+      const sorted=items=>items.sort((a,b)=>String(a.id).localeCompare(String(b.id)));
+      return JSON.stringify({
+        state:sorted(asList(raw,['state','items','results']).map(x=>({id:x.id||'',version:x.version||0,statement:x.statement||x.text||''}))),
+        reviews:sorted(asList(reviews,['reviews','items']).map(x=>({id:x.id,type:x.review_type,text:x.decision_question,questionProposal:x.question_to_create?.id||null}))),
+        questions:sorted(asList(questions,['questions','items']).map(x=>({id:x.id,text:x.text,blocking:!!x.blocking,blocks:x.blocks||null})))
+      });
     }catch(_){return null;}
   }
   function queryTerms(query){
@@ -250,13 +256,19 @@
   function renderFinalAsk(){
     if(!ui.payload){renderDrawerResult('<div class="ask-live-error"><h2>Ask is temporarily unavailable.</h2><p>State did not receive a grounded answer.</p></div>');return;}
     let html=sanitizeAskHtml(ASK?.render?.(ui.payload) || '<div class="ask-live-error"><h2>Ask is temporarily unavailable.</h2></div>');
-    if(ui.stale)html=`<div class="ask-state-stale"><span>Current State has changed since this answer was generated.</span><button class="text-button" type="button" data-review-batch-action="refresh-ask">Refresh answer →</button></div>${html}`;
+    if(ui.stale)html=`<div class="ask-state-stale"><span>The project record has changed since this answer was generated.</span><button class="text-button" type="button" data-review-batch-action="refresh-ask">Refresh answer →</button></div>${html}`;
     html+=resolvedDecisionMarkup(ui.resolvedContext);
     renderDrawerResult(html);
   }
+  document.addEventListener('state-project-record-changed',()=>{if(ui.payload){ui.stale=true;renderFinalAsk();}});
   async function checkAnswerFreshness(){
-    if(!ui.payload||!ui.answerStateSignature)return;
-    const current=await currentStateSignature();if(current===null)return;const next=current!==ui.answerStateSignature;if(next!==ui.stale){ui.stale=next;renderFinalAsk();}
+    if(!ui.payload||!ui.answerStateSignature||ui.running)return;
+    const answer=ui.payload,signature=ui.answerStateSignature,requestId=ui.requestId;
+    const current=await currentStateSignature();
+    // Opening the drawer can launch this check just before Refresh starts a
+    // new request. A late check for the old answer cannot mark the new one stale.
+    if(current===null||ui.running||ui.payload!==answer||ui.requestId!==requestId||ui.answerStateSignature!==signature)return;
+    const next=current!==signature;if(next!==ui.stale){ui.stale=next;renderFinalAsk();}
   }
   function explicitMutationIntent(query){
     const api=APP();

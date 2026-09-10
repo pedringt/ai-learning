@@ -5,9 +5,10 @@ from __future__ import annotations
 from pathlib import Path
 
 from db import Connection, connect_sqlite
+from review_question_migration import extend_review_constraints
 
 MIGRATIONS_DIR = Path(__file__).resolve().parent / "migrations"
-_EXPECTED_MIGRATIONS = ("001_initial.sql", "002_add_operation_and_effective_date.sql", "003_questions.sql", "004_link_reviews_questions.sql", "005_draft_notes.sql", "006_slack_phase1.sql", "007_slack_phase2.sql", "008_slack_oauth.sql")
+_EXPECTED_MIGRATIONS = ("001_initial.sql", "002_add_operation_and_effective_date.sql", "003_questions.sql", "004_link_reviews_questions.sql", "005_draft_notes.sql", "006_slack_phase1.sql", "007_slack_phase2.sql", "008_slack_oauth.sql", "009_question_review_proposals.sql")
 
 
 def _get_migration_files() -> list[Path]:
@@ -106,6 +107,15 @@ def _consolidate_duplicate_open_reviews(connection: Connection) -> None:
             "UPDATE review_issues SET prior_review_id=? WHERE prior_review_id=?",
             (keeper_id, duplicate_id),
         )
+        question_proposals = connection.execute(
+            "SELECT id FROM proposed_questions WHERE review_id=? AND status='pending'", (duplicate_id,)
+        ).fetchall()
+        if question_proposals:
+            connection.execute(
+                "UPDATE proposed_questions SET status='superseded', decided_at=CURRENT_TIMESTAMP "
+                "WHERE review_id=? AND status='pending'", (keeper_id,)
+            )
+        connection.execute("UPDATE proposed_questions SET review_id=? WHERE review_id=?", (keeper_id, duplicate_id))
         connection.execute("DELETE FROM review_issues WHERE id=?", (duplicate_id,))
 
     # Once duplicate Reviews are merged, collapse duplicate pending proposals
@@ -241,15 +251,26 @@ def initialize_db(connection: Connection) -> None:
         version = migration_file.stem
         if version in applied:
             continue
+        widen_reviews = version == "009_question_review_proposals"
+        rebuild_sqlite = widen_reviews and not connection.is_postgres
+        if rebuild_sqlite:
+            connection.execute("PRAGMA foreign_keys = OFF")
         connection.execute("BEGIN IMMEDIATE")
         try:
+            if widen_reviews:
+                extend_review_constraints(connection)
             for statement in _migration_statements(migration_file):
                 connection.execute(statement)
             connection.execute("INSERT INTO schema_migrations (version) VALUES (?)", (version,))
+            if rebuild_sqlite and connection.execute("PRAGMA foreign_key_check").fetchall():
+                raise RuntimeError("Foreign key check failed during migration 009")
             connection.execute("COMMIT")
         except Exception:
             connection.execute("ROLLBACK")
             raise
+        finally:
+            if rebuild_sqlite:
+                connection.execute("PRAGMA foreign_keys = ON")
 
     # Install/refresh invariants outside numbered migrations so existing
     # databases receive the protection on their next startup too.

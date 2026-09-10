@@ -1,0 +1,8 @@
+"""Shared interpretation instructions for the reviewed-Question outcome."""
+QUESTION_REVIEW_GUIDANCE = """
+- open_question: use only when this Evidence raises a specific consequential unresolved concern worth tracking, but does not establish a Current State change. The decision_question MUST be the exact concise Question text to track (at most 500 characters). Supply no proposed_changes, affected_state_item_ids, or resolves_question_ids. Human acceptance creates a normal, non-blocking open Question; never create it directly or infer blocking.
+- Check open_questions before suggesting a Question. Do not suggest another Question for the same unknown already tracked. If new evidence answers an existing Question, use resolves_question_ids through the normal Review path instead. Merely related Questions can be distinct; do not combine different scopes.
+- Do not turn routine missing detail, speculative possibilities, or every observation into a Question. Explain the concrete consequence in why_consequential. A suspicion is not an established fact, and a confirmed fact should not be downgraded into a Question.
+- Example: credible observations suggest agents approve AI drafts without checking them, but do not establish that as a fact. Suggest: Are support agents meaningfully reviewing AI-generated drafts before approval? Do not claim human review was removed or automatically mark the concern blocking.
+- Keep the existing Review types for established changes, new facts, and risks to maintained understanding. Use open_question for tracking an unknown, not as a substitute for a supported State change.
+"""

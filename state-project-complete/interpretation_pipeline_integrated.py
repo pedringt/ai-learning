@@ -25,6 +25,7 @@ from pathlib import Path
 from typing import Any, Mapping, Protocol
 
 from db import Connection
+from question_review_service import persist_question_proposal
 
 logger = logging.getLogger("state.interpretation")
 
@@ -246,6 +247,15 @@ def _persist_success(
 
             if review_id not in review_ids:
                 review_ids.append(review_id)
+
+            if rec["review_type"] == "open_question":
+                # The suggested Question lives on this Review only. It is not
+                # inserted into questions until a person authorizes it.
+                connection.execute(
+                    "UPDATE review_issues SET decision_question=?, why_consequential=? WHERE id=?",
+                    (rec["decision_question"].strip(), rec["why_consequential"], review_id),
+                )
+                persist_question_proposal(connection, review_id, evidence_id, rec["decision_question"])
 
             # Link Evidence to Review
             connection.execute(
