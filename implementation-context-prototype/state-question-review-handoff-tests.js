@@ -95,9 +95,8 @@ check('zero-proposal Review has only the Mark reviewed decision',
   !noProposalReviewHtml.includes('>Keep Current State<') && !noProposalReviewHtml.includes('data-action="review-keep"'));
 
 const separatedReviewHtml=openItems.reviewCard(proposedReview,false,true);
-check('Review records have subtle spacing and a top divider between records',
-  separatedReviewHtml.includes('margin:12px 0 0') && separatedReviewHtml.includes('border-top:1px solid #d9dde5'));
-const separatedQuestionHtml=openItems.questionDialogHtml ? openItems.questionDialogHtml : null;
+check('Review records have subtle spacing and a theme-aware top divider between records',
+  separatedReviewHtml.includes('margin:12px 0 0') && separatedReviewHtml.includes('border-top:1px solid var(--line)'));
 const questionRecordHtml=openItems.render({
   reviewsStatus:'loaded',questionsStatus:'loaded',draftsStatus:'loaded',
   reviews:[],questions:[{...question,origin:'Manual',created:'Sep 10'}],draftNotes:[],notes:[],
@@ -105,8 +104,8 @@ const questionRecordHtml=openItems.render({
   openItemSections:{reviews:null,blockers:null,questions:null,drafts:null},
   renderDraftNote:()=>'',
 });
-check('Question records have subtle spacing and a top divider between records',
-  questionRecordHtml.includes('margin:10px 0 0') && questionRecordHtml.includes('border-top:1px solid #d9dde5'));
+check('Question records have subtle spacing and a theme-aware top divider between records',
+  questionRecordHtml.includes('margin:10px 0 0') && questionRecordHtml.includes('border-top:1px solid var(--line)'));
 
 const renderedOpenItems=openItems.render({
   reviewsStatus:'loaded',questionsStatus:'loaded',draftsStatus:'loaded',
