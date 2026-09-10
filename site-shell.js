@@ -24,30 +24,66 @@
     homeHero.insertBefore(context,homeHero.firstChild);
   }
 
-  /* Applied Work should show the State family as a coherent set: flagship
-     product plus supporting validation and feasibility studies. Reuse the
-     existing supporting grid so this stays visually consistent with the page. */
+  /* Applied Work hierarchy: one flagship State story, two attached deep dives,
+     then the other applied work. */
   const portfolioPage=document.querySelector('[data-page="portfolio"]');
-  if(portfolioPage){
+  if(portfolioPage&&!portfolioPage.dataset.stateHierarchyApplied){
+    portfolioPage.dataset.stateHierarchyApplied='true';
+    const intro=portfolioPage.querySelector('.page-intro .section-lead');
+    if(intro) intro.textContent="A product I built, the decisions behind it, and other AI opportunities I've evaluated.";
+
+    const kickers=[...portfolioPage.querySelectorAll('.applied-group-kicker')];
+    const primaryKicker=kickers[0];
+    const supportingKicker=kickers[1];
+    if(primaryKicker?.querySelector('span')) primaryKicker.querySelector('span').textContent='Flagship project';
+    if(supportingKicker?.querySelector('span')) supportingKicker.querySelector('span').textContent='Other applied work';
+
+    const majorGrid=portfolioPage.querySelector('.applied-major-grid');
     const supportingGrid=portfolioPage.querySelector('.applied-secondary-grid');
-    if(supportingGrid){
-      const oldCostCard=supportingGrid.querySelector('a[href="state-ai-search-learning.html"]');
-      if(oldCostCard){
-        oldCostCard.href='state-architecture-cost.html';
-        const tag=oldCostCard.querySelector('.tag');
-        const title=oldCostCard.querySelector('h3');
-        const intro=oldCostCard.querySelector('.card-intro');
-        if(tag) tag.textContent='State · Architecture & cost';
+    if(majorGrid&&supportingGrid){
+      const stateCard=majorGrid.querySelector('.applied-major:first-child');
+      const legalCard=majorGrid.querySelector('a[href="legal-ai-governance.html"]');
+      let testingCard=supportingGrid.querySelector('a[href="state-testing-debugging.html"]');
+      let costCard=supportingGrid.querySelector('a[href="state-architecture-cost.html"],a[href="state-ai-search-learning.html"]');
+      const meridianCard=supportingGrid.querySelector('a[href="meridian.html"]');
+
+      if(costCard){
+        costCard.href='state-architecture-cost.html';
+        const tag=costCard.querySelector('.tag');
+        const title=costCard.querySelector('h3');
+        const cardIntro=costCard.querySelector('.card-intro');
+        if(tag) tag.textContent='Architecture & cost';
         if(title) title.textContent='State Architecture & Cost: Before vs. After';
-        if(intro) intro.textContent='I revisited my pre-build architecture and cost assumptions after building State, comparing what I expected with what actually mattered: model choice, context size, latency, deterministic boundaries, and where generation earned its cost.';
+        if(cardIntro) cardIntro.textContent='What changed when I compared my pre-build assumptions with the working product: model choice, latency, context, and what should stay deterministic.';
       }
-      if(!supportingGrid.querySelector('a[href="state-testing-debugging.html"]')){
-        const testing=document.createElement('a');
-        testing.className='card nav-card applied-secondary';
-        testing.href='state-testing-debugging.html';
-        testing.innerHTML='<span class="tag">State · Validation</span><h3>Testing & Debugging State</h3><p class="card-intro">How I used hands-on testing, AI-assisted automated coverage, and failure investigation to distinguish model, retrieval, implementation, and product-design problems instead of treating every bad AI result as a prompt problem.</p>';
-        supportingGrid.insertBefore(testing,oldCostCard||supportingGrid.firstChild);
+      if(!testingCard){
+        testingCard=document.createElement('a');
+        testingCard.className='card nav-card applied-secondary';
+        testingCard.href='state-testing-debugging.html';
+        testingCard.innerHTML='<span class="tag">Validation &amp; debugging</span><h3>Testing &amp; Debugging State</h3><p class="card-intro">How I used hands-on testing, AI-assisted automated coverage, and failure investigation to find what was actually going wrong.</p>';
       }
+
+      if(stateCard){
+        stateCard.classList.add('state-flagship-card');
+        if(!stateCard.querySelector('.state-deep-dives')){
+          const deep=document.createElement('div');
+          deep.className='state-deep-dives';
+          deep.innerHTML='<div class="state-deep-label">Go deeper</div><div class="state-deep-grid"></div>';
+          const deepGrid=deep.querySelector('.state-deep-grid');
+          [testingCard,costCard].forEach(card=>{
+            if(!card)return;
+            card.classList.remove('card','nav-card','applied-secondary');
+            card.classList.add('state-deep-card');
+            deepGrid.appendChild(card);
+          });
+          stateCard.appendChild(deep);
+        }
+      }
+
+      majorGrid.innerHTML='';
+      if(stateCard) majorGrid.appendChild(stateCard);
+      supportingGrid.innerHTML='';
+      [legalCard,meridianCard].forEach(card=>{if(card)supportingGrid.appendChild(card);});
     }
   }
 
