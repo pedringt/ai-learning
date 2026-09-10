@@ -53,9 +53,28 @@
     return payload;
   }
 
+  function dedupeAnswerPayload(payload) {
+    if (!payload?.answer?.sections) return payload;
+    const seen = new Set();
+    const sections = [];
+    for (const section of payload.answer.sections) {
+      const items = [];
+      for (const item of section.items || []) {
+        const key = item?.record_id ? `${item.record_type || 'none'}:${item.record_id}` : null;
+        if (key && seen.has(key)) continue;
+        if (key) seen.add(key);
+        items.push(item);
+      }
+      if (items.length) sections.push({...section, items});
+    }
+    if (sections.length === payload.answer.sections.length && sections.every((s, i) => s.items.length === (payload.answer.sections[i].items || []).length)) return payload;
+    return {...payload, answer: {...payload.answer, sections}};
+  }
+
   function render(payload, liveStatus) {
-    lastRenderedPayload = payload || null;
-    return prior.render(payload, liveStatus);
+    const cleaned = dedupeAnswerPayload(payload);
+    lastRenderedPayload = cleaned || null;
+    return prior.render(cleaned, liveStatus);
   }
 
   window.STATE_ASK = Object.freeze({
@@ -99,6 +118,7 @@
       .state-reviewer-guide-dismiss{min-width:38px;min-height:38px;border:0;background:transparent;color:#6b778a;font:inherit;font-size:20px;line-height:1;cursor:pointer;border-radius:8px}
       .state-reviewer-guide-dismiss:hover,.state-reviewer-guide-dismiss:focus-visible{background:#edf3f9;color:#26344c}
       .state-reviewer-guide-reopen{display:flex;width:100%;min-height:40px;margin-top:8px;padding:9px 12px;align-items:center;justify-content:flex-start;border:1px solid var(--line);border-radius:10px;background:transparent;color:var(--muted);font:inherit;font-size:12px;font-weight:700;text-align:left;cursor:pointer;box-sizing:border-box}
+      .state-reviewer-guide-reopen[hidden]{display:none!important}
       .state-reviewer-guide-reopen:hover,.state-reviewer-guide-reopen:focus-visible{border-color:#b9cbe0;background:var(--surface2);color:var(--ink);text-decoration:none}
       .state-mobile-help .state-reviewer-guide-reopen{width:100%;margin:8px 0 0;padding:9px 12px;min-height:44px}
       .ask-current-state-link{white-space:nowrap}
@@ -153,7 +173,9 @@
     ensureReopenControls();
     const overview = root.querySelector('.overview');
     const existing = root.querySelector('.state-reviewer-guide');
-    if (!overview || isDismissed()) {
+    const showBanner = !!overview && !isDismissed();
+    document.querySelectorAll('.state-reviewer-guide-reopen').forEach(control => { control.hidden = showBanner; });
+    if (!showBanner) {
       existing?.remove();
       return;
     }
@@ -207,6 +229,7 @@
     if (dismiss) {
       setDismissed(true);
       root?.querySelector('.state-reviewer-guide')?.remove();
+      syncReviewerGuide();
       return;
     }
     const reopen = event.target.closest?.('[data-action="show-reviewer-guide"]');
