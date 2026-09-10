@@ -18,7 +18,64 @@ on:
   push:
     branches: [main, staging]
 
+permissions:
+  contents: write
+
 jobs:
+  patch_portfolio:
+    if: github.ref == 'refs/heads/staging' && github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: staging
+      - name: Make State the Applied Work flagship
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+          p=Path('index.html')
+          s=p.read_text()
+          start=s.index('<section class="view" data-page="portfolio" id="portfolio">')
+          end=s.index('\n<script>\n(()=>{const root=document.getElementById(\'ai-cs-mock\')', start)
+          section='''<section class="view" data-page="portfolio" id="portfolio"><header class="page-intro"><div class="eyebrow">Applied Work</div><h2 class="section-title">Projects and opportunity evaluations</h2><p class="section-lead">A product I built, the decisions behind it, and other AI opportunities I've evaluated.</p></header>
+<div class="section-kicker applied-group-kicker"><span>Flagship project</span></div>
+<div class="applied-major-grid applied-flagship-grid">
+<div class="card applied-major applied-major-with-actions state-flagship-card"><span class="tag">Flagship project</span><h3><a class="applied-card-primary-link" href="implementation-context.html">State</a></h3><p class="card-intro">A project-context product I built and tested to understand what AI should be allowed to change. AI interprets → software enforces → people authorize.</p><div class="applied-card-actions"><a href="implementation-context.html">Read case study →</a><a href="implementation-context-prototype/index.html">Open State →</a></div><div class="state-deep-dives"><div class="state-deep-label">Go deeper</div><div class="state-deep-grid"><a class="state-deep-card" href="state-testing-debugging.html"><span class="tag">Validation &amp; debugging</span><h4>Testing &amp; Debugging State</h4><p>How I used hands-on testing, AI-assisted automated coverage, and failure investigation to find what was actually going wrong.</p></a><a class="state-deep-card" href="state-architecture-cost.html"><span class="tag">Architecture &amp; cost</span><h4>State Architecture &amp; Cost: Before vs. After</h4><p>What changed when I compared my pre-build assumptions with the working product: model choice, latency, context, and what should stay deterministic.</p></a></div></div></div></div>
+</div>
+<div class="section-kicker applied-group-kicker"><span>Other applied work</span></div>
+<div class="applied-secondary-grid applied-other-grid">
+<a class="card nav-card applied-secondary" href="legal-ai-governance.html"><span class="tag">Opportunity evaluation</span><h3>Legal AI Governance</h3><p class="card-intro">I investigated a documented compliance gap and found that the firms with the clearest structural need may be the least attractive clients to pursue one at a time. My recommendation: do not propose an offering until direct customer discovery changes that commercial picture.</p></a>
+<a class="card nav-card applied-secondary" href="meridian.html"><span class="tag">Simulated pilot · Customer support</span><h3>Meridian AI Support Pilot</h3><p class="card-intro">How an AI-assisted support pilot handles a ticket step by step, the discovery questions that most changed the design, and the pilot metrics I revised once evidence didn’t support my first answer.</p></a>
+</div>
+<style id="applied-work-flagship-layout">
+#ai-cs-mock [data-page="portfolio"] .applied-flagship-grid{display:grid!important;grid-template-columns:1fr!important}
+#ai-cs-mock [data-page="portfolio"] .state-flagship-card{min-height:0!important;padding:32px!important;border-color:color-mix(in srgb,var(--purple) 32%,var(--border))!important;background:linear-gradient(145deg,color-mix(in srgb,var(--softp) 88%,var(--card)) 0%,var(--card) 78%)!important;box-shadow:0 14px 34px color-mix(in srgb,var(--purple) 9%,transparent)!important}
+#ai-cs-mock [data-page="portfolio"] .state-flagship-card h3{font-size:34px!important;margin-bottom:12px!important}
+#ai-cs-mock [data-page="portfolio"] .state-flagship-card .card-intro{max-width:880px!important;font-size:17px!important;line-height:1.6!important}
+#ai-cs-mock [data-page="portfolio"] .state-deep-dives{margin-top:26px!important;padding-top:22px!important;border-top:1px solid var(--border)!important}
+#ai-cs-mock [data-page="portfolio"] .state-deep-label{margin-bottom:12px!important;color:var(--muted)!important;font-size:11px!important;font-weight:850!important;letter-spacing:.07em!important;text-transform:uppercase!important}
+#ai-cs-mock [data-page="portfolio"] .state-deep-grid{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:12px!important}
+#ai-cs-mock [data-page="portfolio"] .state-deep-card{display:block!important;padding:18px!important;border:1px solid var(--border)!important;border-radius:14px!important;background:var(--card)!important;color:inherit!important;text-decoration:none!important}
+#ai-cs-mock [data-page="portfolio"] .state-deep-card:hover{border-color:color-mix(in srgb,var(--purple) 40%,var(--border))!important;background:color-mix(in srgb,var(--softp) 45%,var(--card))!important}
+#ai-cs-mock [data-page="portfolio"] .state-deep-card .tag{color:var(--purple)!important}
+#ai-cs-mock [data-page="portfolio"] .state-deep-card h4{margin:8px 0 7px!important;color:var(--purple)!important;font-size:18px!important}
+#ai-cs-mock [data-page="portfolio"] .state-deep-card p{margin:0!important;color:var(--muted)!important;font-size:14px!important;line-height:1.55!important}
+#ai-cs-mock [data-page="portfolio"] .applied-other-grid{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:18px!important}
+@media(max-width:760px){#ai-cs-mock [data-page="portfolio"] .state-flagship-card{padding:24px!important}#ai-cs-mock [data-page="portfolio"] .state-flagship-card h3{font-size:28px!important}#ai-cs-mock [data-page="portfolio"] .state-deep-grid,#ai-cs-mock [data-page="portfolio"] .applied-other-grid{grid-template-columns:1fr!important}}
+</style>
+</section>'''
+          p.write_text(s[:start]+section+s[end:])
+          PY
+      - name: Commit rewrite
+        run: |
+          if git diff --quiet; then exit 0; fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git commit -m "Make State the Applied Work flagship"
+          git push origin staging
+
   python:
     runs-on: ubuntu-latest
     steps:
@@ -34,15 +91,9 @@ jobs:
           pip install -r requirements.txt
           pip install pytest pytest-subtests playwright
 
-      # The browser suite resolves Chromium through Playwright by default, so the
-      # runner needs Playwright's managed download. STATE_CHROMIUM_PATH can point
-      # at a specific binary instead.
       - name: Install Chromium for the browser suite
         run: python -m playwright install --with-deps chromium
 
-      # Two older integration assertions pin retired source shapes rather than
-      # the behavior they were intended to protect. Their current equivalents
-      # live in test_release_asset_loader.py and test_integrity_polish_current.py.
       - name: Run deterministic Python suite
         working-directory: state-project-complete
         run: >-
