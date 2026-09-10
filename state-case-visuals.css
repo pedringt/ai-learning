@@ -1,0 +1,13 @@
+/* State case-study screenshots: visual proof without turning the page into a gallery. */
+.state-product-shot{max-width:980px;margin:28px 0 8px}
+.state-product-shot img{display:block;width:100%;height:auto;border:1px solid var(--border);border-radius:14px;background:var(--card);box-shadow:0 18px 40px rgba(20,32,54,.08)}
+.state-product-shot figcaption{margin:9px 2px 0;max-width:820px;color:var(--muted);font-size:12.5px;line-height:1.5}
+.state-product-shot--hero{max-width:1040px;margin:28px auto 36px}
+.state-product-evidence-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:18px;max-width:1040px;margin:28px 0 8px;align-items:start}
+.state-product-evidence-grid .state-product-shot{margin:0}
+@media(max-width:760px){
+  .state-product-evidence-grid{grid-template-columns:1fr;gap:22px}
+  .state-product-shot,.state-product-shot--hero{margin-top:22px}
+  .state-product-shot--hero{margin-left:0;margin-right:0}
+  .state-product-shot img{border-radius:10px}
+}
