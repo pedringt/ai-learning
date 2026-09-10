@@ -1,6 +1,5 @@
 /* Final pre-freeze visual polish. Intentionally small and presentation-only. */
 
-/* Learning Guide: keep the Professional Edge entry useful without letting a short reference card span the full reading canvas. */
 #ai-cs-mock [data-page="learn"] > .band:first-of-type{
   max-width:820px;
   padding:20px 22px;
@@ -8,7 +7,6 @@
 }
 #ai-cs-mock [data-page="learn"] > .band:first-of-type .resource-row{margin-top:11px}
 
-/* State should read as the flagship because of its treatment, not because every line is equally dark. */
 .home-state-feature{
   border-color:color-mix(in srgb,var(--purple) 24%,var(--border))!important;
   background:linear-gradient(145deg,color-mix(in srgb,var(--softp) 92%,var(--card)) 0%,var(--card) 72%)!important;
@@ -18,18 +16,25 @@
 .home-state-feature p:not(.home-state-lead){color:var(--muted)!important}
 .home-state-feature p strong{color:var(--ink)!important}
 
+/* Applied Work: State is the flagship, not a peer-sized card. */
+#ai-cs-mock [data-page="portfolio"] .applied-major-grid{
+  grid-template-columns:repeat(2,minmax(0,1fr))!important;
+}
 #ai-cs-mock [data-page="portfolio"] .applied-major-grid > .applied-major:first-child{
+  grid-column:1/-1!important;
+  min-height:250px!important;
+  padding:30px 32px!important;
   border-color:color-mix(in srgb,var(--purple) 30%,var(--border))!important;
   background:linear-gradient(145deg,color-mix(in srgb,var(--softp) 86%,var(--card)) 0%,var(--card) 76%)!important;
   box-shadow:0 12px 30px color-mix(in srgb,var(--purple) 8%,transparent)!important;
 }
 #ai-cs-mock [data-page="portfolio"] .applied-major-grid > .applied-major:first-child .tag{color:var(--purple)!important}
 #ai-cs-mock [data-page="portfolio"] .applied-major-grid > .applied-major:first-child h3,
-#ai-cs-mock [data-page="portfolio"] .applied-major-grid > .applied-major:first-child .applied-card-primary-link{color:var(--ink)!important}
-#ai-cs-mock [data-page="portfolio"] .applied-major-grid > .applied-major:first-child .card-intro{color:var(--muted)!important}
+#ai-cs-mock [data-page="portfolio"] .applied-major-grid > .applied-major:first-child .applied-card-primary-link{color:var(--ink)!important;font-size:1.18em!important}
+#ai-cs-mock [data-page="portfolio"] .applied-major-grid > .applied-major:first-child .card-intro{color:var(--muted)!important;max-width:820px!important}
 #ai-cs-mock [data-page="portfolio"] .applied-major-grid > .applied-major:first-child .applied-card-actions a{color:var(--purple)!important}
+#ai-cs-mock [data-page="portfolio"] .applied-secondary-grid{grid-template-columns:repeat(3,minmax(0,1fr))!important;}
 
-/* State product launcher: AI utility, not a generic chatbot bubble. */
 .ask-state-launcher{
   border-color:color-mix(in srgb,var(--accent) 38%,var(--line))!important;
   border-radius:10px!important;
@@ -41,11 +46,14 @@
 }
 .ask-state-launcher:hover,.ask-state-launcher:focus-visible{opacity:1!important;transform:translateY(-1px)}
 .ask-state-launcher.is-hidden{opacity:0!important;transform:translateY(8px)!important}
+
+@media(max-width:900px){
+  #ai-cs-mock [data-page="portfolio"] .applied-secondary-grid{grid-template-columns:1fr!important;}
+}
 @media(max-width:760px){
   .ask-state-launcher{border-radius:50%!important;transform:none}
   .ask-state-launcher:hover,.ask-state-launcher:focus-visible{transform:none}
-}
-
-@media(max-width:760px){
   #ai-cs-mock [data-page="learn"] > .band:first-of-type{max-width:none;padding:18px;margin:20px 0 26px}
+  #ai-cs-mock [data-page="portfolio"] .applied-major-grid{grid-template-columns:1fr!important;}
+  #ai-cs-mock [data-page="portfolio"] .applied-major-grid > .applied-major:first-child{padding:24px!important;min-height:0!important;}
 }
