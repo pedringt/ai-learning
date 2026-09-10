@@ -1,206 +1,131 @@
 # Project status
 
-This file is the canonical current-state handoff for State. Any AI assistant or new chat should read this first, then verify the repository before relying on older handoffs, historical notes, or conversation memory.
+This is the canonical current-state handoff for State and the surrounding portfolio. Read this first, then verify the repository before relying on older handoffs or conversation memory.
 
 ## Current production state
 
-_Last updated: September 7, 2026 (staging promoted to main via PR #88 -- analytics, the consequentiality eval framework, portfolio + case-study refinement, and a Question/Review consistency-hardening pass are all now live in production)_
+_Last updated: September 9, 2026 after the latest portfolio/case-study batch was promoted to production._
 
-`main` is production, currently at commit `098b052` (merged via [PR #88](https://github.com/pedringt/ai-learning/pull/88), 18 commits). `staging` and `main` are now in sync -- everything described in this file as "latest session" work below is live in production, not pending promotion.
+- `main` and `staging` are in sync at `f975ec0` before this handoff-only update.
+- Production Vercel deployment for that release is green.
+- The main-branch GitHub Actions test workflow completed successfully.
+- Future product/site changes should still go to `staging` first. Do not promote to `main` without explicit user authorization.
 
-**One merge conflict during promotion, resolved:** `index.html`'s homepage hero. `main` had received a differently-worded hero line independently (commit `361a25a`, "Homepage hero: reframe around epistemic uncertainty", promoted to `main` on its own path before this PR). Resolved in favor of `staging`'s version per this session's explicit instruction to preserve it: *"So I'm building real products and evaluating real opportunities to find out where that matters, what needs human judgment, and where AI actually helps."*
+## Latest portfolio state
 
-Everything promoted was verified before and after the merge: full Python suite (379 passed / 3 skipped, including real-provider tests) run against the actual pinned dependency stack (`state-project-complete/.venv`) both on `staging` before the PR and again on the merged `main` state before pushing; all 11 JS suites green; live smoke tests against the deployed backend (evidence submission, Ask streaming and non-streaming) and confirmed Render/Vercel build hashes matching before promoting.
+The portfolio is in a review-ready / near-freeze state. Avoid broad redesign or cleanup work outside the planned cleanup pass.
 
-### Latest session: analytics + a full pass through "Next Marching Orders" Phases 1-6, with real findings from every phase
+### Applied Work
 
-Paige handed off a broader "Next Marching Orders" doc reframing the next phase of work around testing the product thesis (does State maintain trustworthy context without unreasonable review burden?) rather than adding features. This session covered analytics (Phase 1) and the entire evaluation arc (Phases 2-6) in one pass, once Paige supplied a real `ANTHROPIC_API_KEY` mid-session via a gitignored `.env` file (`eval/harness.py` auto-loads it via `python-dotenv` -- no shell/terminal required, `.env.example` documents the variable). **Full detail, including exact excerpts and honest caveats on every result, in [docs/history/EVAL_AND_ANALYTICS_FINDINGS_2026-09-07.md](history/EVAL_AND_ANALYTICS_FINDINGS_2026-09-07.md) -- read that before acting on any of the summary below.**
+The stable, intentionally plain layout is restored:
 
-- **Analytics (Phase 1):** State's product surface had zero event tracking before this session -- only the portfolio pages had Vercel Web Analytics. Added `context-analytics.js`, reusing that same lightweight beacon: `?ref=` reviewer attribution, `state_demo_opened`, view-change events, Review accept/reject/open, provenance/orientation-opened, copy-context-used, Ask submitted/completed/failed/refinement-used. Ask query text is tracked but disclosed in the drawer's help text; owner-mode opt-out suppresses QA/dev traffic. 12 new JS assertions in CI; verified live in browser.
-- **Consequentiality eval dataset (Phase 2):** grew the 7-case regression suite into a 33-scenario labeled dataset (`state-project-complete/eval/scenarios.py`, 14 must-review / 13 no-review / 6 ambiguous) covering every category the doc named. Two runnable mechanisms: `python3 -m eval.run_eval` and `test_consequentiality_eval_dataset.py`.
-- **First real results:** 100% precision, 86% recall (12/14, 0 false positives, 2 misses). The exact VP-billing regression content passed against the original test's minimal 2-item Current State snapshot but failed against this eval set's fuller 7-item snapshot -- same evidence, different surrounding context, different judgment. The initial hypothesis (item-*count* dilution, since `capture_context()` has no relevance filter -- every active item always goes into the prompt) **did not survive a proper controlled test later the same session** -- see Phase 7 below; the real cause turned out to be the specific composition of items, not sheer volume, and remains not fully explained even after the fix that resolved it.
-- **Sequence evaluations (Phase 3):** `eval/sequences.py` + `eval/run_sequences.py` -- two multi-step project evolutions (Okta proposal→approval→security problem→pause→alternative; a Question answered then reversed), run against a persistent DB so Current State/Reviews/Questions can be inspected after each step. Found a third real finding: an explicit "the client paused the decision" event produced a `state_at_risk` review with **no proposed replacement fact**, so Current State's headline text kept reading "Okta has been selected" even after the pause was accepted -- correct per the prompt's own state_at_risk instructions, but means a paused/reversed decision isn't distinguished from a merely-uncertain one at the Current State level. A comparable reversal stated as a clean positive fact (in sequence 2) *did* get proposed and update State correctly -- the difference looks like phrasing, not a hard bug.
-- **Source-gap audit (Phase 5):** a code/schema audit (no live server access from this environment) rather than live QA, explicitly flagged as such. `current_state_items.updated_at` exists in the schema but is never surfaced anywhere in the frontend -- the only "stale" concept in the whole product is Ask-answer-vs-Current-State consistency, not Current-State-vs-the-real-world freshness. Honest finding: State currently has no way to represent "we might be missing something." Architectural, not a bug -- no UI built in response, per the doc's own "observe first, don't build confidence badges yet" instruction.
-- **Raw-vs-State-context comparison (Phase 6):** `eval/raw_vs_state_experiment.py`, built from real output of the Okta sequence run (not invented), run against the real model. Honest result: no correctness differentiation showed up on this small, single-topic, cleanly-ordered corpus -- both conditions answered every question correctly. The one clear win was efficiency (same answer quality from ~1/5th the input). Documented why a proper differentiation test needs the messier, multi-topic corpus the doc originally asked for, which this session didn't build.
+- **Primary work:** State + Legal AI Governance
+- **Supporting work:** Testing & Debugging State + State Architecture & Cost + Meridian AI Support Pilot
 
-**Phase 7, later the same session, on Paige's explicit go-ahead ("go ahead with 1 and whatever is easy to do without me"):** two evidence-backed fixes landed in `anthropic_provider.py`/`openai_provider.py`, each re-tested against the full 33-scenario set and stress-tested with repeated reruns (not shipped on one green run, given the nondeterminism finding below):
+A more visual State flagship treatment with a Workspace screenshot was explored, but the current CSS layering made the layout fragile. That redesign was intentionally backed out. Revisit only after the planned CSS cleanup.
 
-- **`temperature=0`** on every interpretation call (both providers -- previously unset, using the API's own non-zero default on a judgment task where repeatability matters). Didn't fix any scenario by itself; converted noisy per-scenario results into a stable, reproducible signal -- a scenario that had been flipping pass/fail/fail across reruns became a consistent, deterministic fail once temperature stopped adding sampling noise.
-- **An explicit `missing_understanding` instruction addition**: a concrete attributed decision (budget approval, launch date, etc.) is consequential even with no existing Current State item to compare it to -- the absence of a related item was being read as a reason to skip it, not to use `missing_understanding`. Fixed both confirmed no-anchor misses and, unexpectedly, the VP-billing case too. `test_provider_prompt_contract.py`'s compactness budget was raised 3500->4000 chars to fit the fuller (and measurably more effective) wording, with a comment explaining why.
-- **Result, stress-tested:** the 33-scenario set now reads **100% precision, 100% recall**, holding across 9 repeated reruns of the three previously-unstable scenarios. This does not mean judgment is now perfect -- 33 scenarios from one author against one model is still a small, self-authored dataset, and *why* that specific item composition caused the original miss (not item count -- a proper scaling experiment disproved that) is still not understood, only worked around. See [the findings doc](history/EVAL_AND_ANALYTICS_FINDINGS_2026-09-07.md)'s "Phase 7" section for the full before/after evidence.
-- **A genuinely unrelated bug found and fixed along the way:** `test_live_providers.py` referenced a `ProcessResult.proposal_ids` attribute that has never existed (only `review_ids` does) -- a pure `AttributeError` in a print statement, not a pipeline failure. This suite had apparently never been run against a working key before this session. Fixed, re-verified green.
+### State case-study family
 
-One item remains explicitly Paige's call, not fixed: whether a paused/reversed decision (sequence-test finding, Phase 3) should get its own `proposed_update` path distinct from ambiguous `state_at_risk` -- a real product-behavior tradeoff, not a bug with an obvious answer.
+- `implementation-context.html` is the main State case study.
+- `state-testing-debugging.html` is the supporting validation/failure-investigation case.
+- `state-architecture-cost.html` is the supporting before-vs-after architecture/cost case.
 
-Verified: Python deterministic suite green throughout (temperature/prompt changes didn't break any fake-provider contract test once the compactness budget was adjusted), all 10 JS suites passing (unaffected -- no frontend changes this round beyond the earlier analytics work), live-browser smoke test of the analytics wiring. The real-provider eval/sequence/experiment/scaling runs above are additional, separate real-API runs (not part of the deterministic CI-gated suite, same convention as every other real-provider test in this repo).
+The main State case is intentionally shorter now. Its story is:
 
-### Prior session: Workspace visual-polish rounds (PRs #82-#85), plus a real backend prompt bug found along the way
+**Problem -> What I built -> Key product decision -> How it evolved -> What I'd test next -> Where I landed**
 
-A series of small, fast feedback loops against live screenshots of the Workspace redesign below, converging on the current layout:
+Detailed validation/debugging and architecture/cost material lives in the two supporting cases rather than repeating on the flagship page.
 
-- **Card alignment/sizing (PR #82):** Recently Updated's border only wrapped its list, not its "View all History" header -- gave both Recently Updated and Project Status one bordered container each. Found and fixed a latent class-name collision along the way: Project Status reused `.workspace-status`, which already existed (unrelated, dead CSS for a small header badge) -- renamed to `.workspace-status-card`.
-- **A real backend bug, not a display bug (PR #83):** a live Review title read "Should k-launch explicitly state..." -- `k-launch` is the internal database ID for the "Launch readiness" Current State item. Root cause: `_build_prompt()` in both `anthropic_provider.py` and `openai_provider.py` showed the model Current State items using only their raw ID, never a human-readable name, so the model had nothing else to call the item when generating prose like a `decision_question`. Fixed by including each item's existing `topic` column (e.g. "Launch readiness") alongside the ID in the prompt, plus an explicit instruction telling the model to use the topic name in prose and reserve the ID for structured fields (`state_item_id`/`existing_review_id`). This is upstream of the frontend's `k-rollout`-style ID-stripping regex -- that regex only catches IDs in specific known copy patterns, not a model generating a novel sentence that happens to name an item by ID.
-- **Proportions (PR #84):** grid 65/35 -> 55/45, and Project Status's content redistributed with `justify-content: space-between` so it didn't look bunched at the top of its (then still equal-height) card.
-- **Density/hierarchy (PR #85), the more substantial pass:** navigation links (View all History, Browse, View Open Items) were rendering larger/heavier than the actual information above them -- "Browse" was visually louder than "Current State." Unified all three to a smaller utility-link style (15px/600 weight). Removed Recently Updated's trailing row arrows (the whole row is already the click target) and compressed its padding. Grid moved to 60/40 and **stopped forcing equal card heights** (`align-items: start`, not `stretch`) -- once Recently Updated was compact, matching heights just created dead space in Project Status. Project Status restructured to one line per fact (label + link share a row); zero open questions now reads as a calm "✓ No open questions" instead of a bolded "0". Removed "Showing 2 of 7" under Needs Your Attention as redundant with "View all 7 ->" immediately above it.
+### Portfolio positioning and privacy
 
-Verified across all four: 339 Python passed/3 skipped throughout (one contract test's assertion flipped when "Showing N of total" was intentionally removed; a direct check confirmed the new `_format_state_items()` prompt format), 135 JS assertions across 9 suites, live-browser verification at each step. Two of the four PRs' Vercel preview deploys hit the documented Hobby-plan build-rate limit from heavy same-day push volume -- merged anyway since the actual test suites (the real quality gate) were green; per the existing note below, this is expected under volume, not a sign of broken code.
+- Keep the portfolio focused on applied AI product judgment, not on presenting the owner as an engineer or as an "evals person."
+- Background framing should stay grounded in **QA and project management**, with most hands-on historical QA being manual.
+- AI implementation leverage should be credited clearly where relevant, especially automated testing and implementation work beyond the owner's coding experience.
+- **Keep public portfolio branding anonymous for now. Do not add the owner's personal name unless explicitly requested.**
+- The non-Meridian case-study eyebrow text that looked like stray oversized purple copy has been removed.
+- Legal AI's accidental personal-name brand leak has been removed.
 
-### Prior session: Workspace/Ask follow-up round after live screenshots of the UX review batch (PR #81)
+## State product boundaries
 
-A quick follow-up on top of the 16-item batch below, driven by Paige reviewing live screenshots of the deployed result rather than a new written spec:
+State maintains a trustworthy answer to: **What should this project treat as true right now?**
 
-- **Ask fully removed from inline Workspace** -- reachable only through the floating "Ask State" button/drawer now. Deleted `context-product-polish.js`'s inline-card injection and the launcher-hiding logic that existed only to work around the inline card's presence. Removed the "Read only" pill (the drawer already says this in plain text, and a mutation-intent query already redirects to Add Evidence with an explanation) and the drawer's clear (x) button (sat redundantly next to its own close (x)).
-- **Workspace hierarchy restructured to match spatially, not just via headings:** Needs Your Attention stays full-width at the top; below it, a 65/35 two-column row pairs Recently Updated with a new combined **Project Status** card (Current State blurb + open-questions count -- previously two uneven side-by-side cards with mismatched link alignment). Added a "Workspace" label above the page heading.
-- **Bug fixed:** Recently Updated/"last updated" were using History's raw fixture order instead of sorting by date, so entries could show out of chronological order -- now sorts the same way the real History page does.
-- **Knock-on fixes from removing the inline ask-panel:** "Ask about Northstar" in the How This Works modal used to fill a now-nonexistent `#askInput` -- fixed to route into the Ask State drawer via the same synthetic click its own starter chips use, and it now actually submits rather than just prefilling. The old "See what you can ask" examples dialog (`showExamples()`) lived entirely inside the removed ask-panel with no other way to reach it -- deleted as genuinely dead code.
-- **Real gap found in the Python test harness while debugging why this looked broken in Playwright but not live:** `_launch_page()` in `test_browser_user_flows.py` never loaded `context-quickwins.js`, `context-settings.js`, or `context-product-polish.js` at all -- every browser test had been exercising a materially different (older, patch-less) page than what actually ships. Added all three to the harness. 3 tests that verified now-removed-by-design behavior (old inline Ask's dependent-follow-up UI, the examples dialog) were retired rather than force-fit to the new architecture; 3 more were rewritten against the drawer's real markup.
+Its authority model remains:
 
-Verified: 339 Python passed/3 skipped (down from 342 by the 3 legitimately retired tests), 135 JS assertions across 9 suites, live-browser verification of the layout at both desktop (65/35 grid) and narrow (<680px, single column) widths.
+> **AI interprets -> software enforces -> people authorize.**
 
-### Prior session: a 16-item "harsh UX/product review" batch, reconciled against a ChatGPT-authored partial implementation
+Core objects:
 
-Paige ran a UX/information-flow review of State and handed off a 16-item punch list, with an explicit warning that ChatGPT had already pushed a partial implementation directly to `staging` (`context-product-polish.js`, a ~460-line DOM-patching module, plus related `index.html`/case-study edits) and an instruction to *reconcile that work rather than layer more patches on top of it*, preferring to fix owning components/functions where possible. `main` was untouched throughout.
+- **Evidence / Notes:** immutable source material and observations
+- **Current State:** maintained, human-approved project understanding
+- **Reviews:** human authorization for consequential changes
+- **Questions:** explicit unknowns/blockers
+- **History:** accepted transitions with provenance
+- **Ask:** read-only use of maintained context
 
-**What was found on inspection:** the ChatGPT commits had already built a genuinely solid Ask State drawer subsystem (read-only global Ask, staleness detection, resolved-decision surfacing, Copy Context) as a self-contained module -- reasonable to keep, in the same spirit as `context-quickwins.js`/`context-provenance.js`. But several other parts of it were exactly the anti-pattern Paige flagged: a title-text-matching state machine intercepting the native review-decision dialogs, a `data-action` attribute-stripping trick to redirect the "How this works" button to a third competing modal implementation, and DOM-reordering Settings sections after the fact instead of changing their source order. All of that was moved into the owning functions and the patches deleted, shrinking `context-product-polish.js` from 459 to ~350 lines.
+Do not weaken the authority boundary for convenience. AI may interpret or propose changes, but only a person authorizes a consequential Current State transition.
 
-**Shipped, natively fixed or newly built:**
-- **Workspace redesigned as a landing page** (item 1): "Needs your attention" now reads "You're caught up" with Paige's exact quiet copy when clear (native `workspaceAttentionHtml()`, unchanged otherwise -- draft notes still excluded). Two new native sections: **Recently updated** (up to 3 most-recent History entries, sorted correctly by date -- an early version used fixture insertion order and showed them out of chronological order, caught and fixed before shipping) with a "View all History ->" link; and a quiet **Current State / open-questions orientation** block (no dashboard stat cards). `+ Add Evidence` replaces `+ Add note` as the primary intake action.
-- **Ask redesigned as a global read-only utility** (items 2-4, 6): kept the ChatGPT-built drawer (`Ask State` launcher, bottom-right, hides while the inline discovery card is visible), strictly read-only (explicit-mutation-intent queries get redirected to Add Evidence, never silently answered or mutated), no conversational session/New-ask accumulation (the original query stays in the input; editing and re-asking is the refinement model), a stale-answer banner when cited Current State has changed since the answer was generated, and relevant resolved human Review decisions (kept/rejected) surfaced alongside the answer. Added a clear/X action on both the inline and drawer inputs (a real gap in the original build). **Not done, and flagged as backend follow-up work:** resolved Review decisions are appended to the *displayed* answer client-side, not fed into the model's own reasoning context -- doing that properly means changing Ask's context-assembly in `ask_service.py`, out of scope for a frontend session. Same for item 6's ask to make the "What should I know?" Current State selection deterministic/ranked rather than whatever order the backend returns -- that's a backend prompt/selection change, not touched.
-- **Frontend Question<->Review linkage fallback removed** (item 5): `mapApiReview()` no longer infers a resolving relationship from `evidence_source_type` starting with `question_response:` -- "Answer found · Awaiting review" now only appears when the backend's own `resolves_question_ids` says so.
-- **Copy Context** (item 7): kept, Current State header now has a native `Copy context` button (working/state-only modes, optional task field, CURRENT STATE/PENDING REVIEWS/OPEN QUESTIONS labeled sections).
-- **Review acceptance flow rebuilt in the owning function** (item 10): `decideReview()`/`executeReviewDecision()` in `context-app.js` now confirm before mutating for consequential updates ("Update Current State?" + the specific change + Cancel/Update), replacing the old immediate-mutate-then-explain flow. Non-mutating outcomes (keep, or a generic evidence-only accept) skip the confirmation and any interstitial loading modal entirely, using a toast instead ("Current State left unchanged. Evidence is preserved." / "Added as Evidence. Current State did not need a Review."). The consequential-update receipt is now a compact "Current State updated" + one-line change + View Current State/View History, replacing the old "Here's what changed" list format.
-- **"How this works" modal consolidated to one implementation** (item 11): `showDemoHelp()` in `context-app.js` is now the sole canonical version (rich `.state-help-step` cards, Add/State interprets/Review & decide/Know/Ask), matching Paige's exact copy. **Bug found and fixed along the way:** there had been a second, independently-stale copy of this modal in `context-app.js` (pre-dating both terminology renames -- it said "Project Settings" and "the maintained Project") that a load-order race could expose instead of the intended one; the project's own Playwright test (`test_demo_help_start_actions_are_clickable_and_reset_is_discoverable`) was actually pinning that stale race, which is what surfaced it. `context-quickwins.js`'s competing `showOrientationHelp()` override (and its now-dead Ask-starter injection, superseded by the drawer's starters) were deleted rather than left as a third copy.
-- **Settings reordered at the source** (item 12): `context-settings.js`'s `render()` now emits "How State works" first, then Project, Slack, Other Sources, Example data -- no runtime DOM reorder.
-- **Notes/Evidence terminology** (items 8-9): "Add Evidence" throughout (dialog title/button/placeholder, post-submit "Evidence added" receipts); Notes' "Send to review" -> "Send as Evidence"; note status distinguishes "Changed Current State ->" (a real state change) from "Reviewed, no State change" (kept unchanged) instead of showing "Reviewed" for both; Draft notes section description updated.
-- **Current State header cleaned up** (item 14): the "N current facts" count and "Current project" eyebrow are gone from `context-project-view.js`'s own template (previously only removed by a runtime patch, so the "already partially implemented" note in an earlier handoff was describing the patch, not the source -- now actually fixed at the source).
-- **Case study** (item 15): added one sentence making explicit that State doesn't replace Claude/ChatGPT, it maintains portable project context alongside them -- the two other requested points (maintaining understanding outside the AI; not depending on AI memory/reconstruction) turned out to already be in the case study's lead and opening section from an earlier pass, so nothing further was added there to avoid over-expanding it.
-- Cache-busting version token bumped (`r43-hard-ux-review` -> `r44-review-batch-reconciled`) across `index.html`'s script/style query params.
+For architecture, runtime paths, local setup, and component ownership, use the root `README.md` as the detailed source of truth.
 
-**Verification:** full suites green after every fix, including two real regressions caught and corrected mid-session (not just stale-assertion updates) -- a Playwright test had been asserting the old immediate-mutate review behavior and needed rewriting for the new confirm-first flow, and another was asserting the old "Nothing needs action right now" copy. Final state: 342 Python passed/3 skipped (including the real-browser Playwright suite), 136 JS behavior-test assertions across 9 suites. Verified live in a real browser: Recently updated shows correctly-sorted entries, quiet orientation renders, Ask State drawer opens with working starters and clear button, the read-only mutation gate redirects to Add Evidence correctly.
+## Recent product/UI fixes worth preserving
 
-**Not done / explicitly out of scope this session**, per Paige's own "keep prior leftovers separate" instruction: Slack invite->approval behavior, Documents, broader integrations, and general tech debt were deliberately not pulled in even though they're adjacent. See "Smaller tech debt" below for two new items this batch surfaced.
+- Ask is a persistent read-only drawer, not an inline Workspace card.
+- Workspace emphasizes what needs attention, recent changes, and Current State orientation.
+- Settings navigation freeze caused by a mutation-observer loop was fixed.
+- Notes shows result-summary UI only when search/filters are active, including clear-filter/no-results behavior.
+- Current State loading remains deliberately stricter than some Workspace sections so authoritative state does not flash seeded/fake values.
+- The authority copy should stay **people authorize**, not **people decide**.
 
-### Prior session (2026-09-07), all on `staging` (PRs #76-#78)
+## Known product questions / open validation
 
-**Terminology decision, revisited a second time: "Knowledge" -> "Current State"** (PR #76). Discussed and decided with Paige before changing. "Knowledge" (chosen the same day, see below) reintroduced the exact two-concept problem it was meant to fix, just under a new name, and read like an AI-knowledge-base feature rather than State's actual authority model. **Current State is now the single user-facing name for the maintained project understanding** -- sidebar nav label, the Workspace orientation banner, the full "How this works" modal, the case study, and README were all updated; "Project State" stays fully retired (already removed in the same-day rename below). Internal code (`currentKnowledge()`, `state.data.knowledge`, `knowledgeId`, the `context-project-view.js` filename) was deliberately left alone -- Paige's own guidance was that renaming those would be unnecessary churn. Recommended information architecture, discussed and confirmed: Workspace (command center) / **Current State** (full maintained understanding, with internal subsections Overview / Product & Workflow / Safety & Constraints / Evaluation & Rollout -- unchanged) / Open Items / Notes / History. Bundled into the same PR: the "How Current State stays maintained" orientation banner now anchors to the Workspace heading instead of the Ask panel, so it renders above Needs your attention again (a position it lost when Attention was promoted above Ask on 2026-09-07, see below); Open Items' Reviews section no longer colors its "Needs your review" title text red, only the ACT NOW kicker does, matching Blocking/Open questions.
+These are product questions, not obvious bugs:
 
-**Smarter Ask fallback, concrete "How this works" modal, Workspace first-load guidance** (PR #78). Adapted from an external planning spec (`IMPLEMENTATION_SPEC.md`, produced by Claude cowork on Paige's Desktop, not checked into this repo) that was reconciled against the actual codebase rather than applied as written -- several of its assumed function names/locations were stale, and one proposed fix duplicated something that already existed:
+- **Review burden:** does the human-control model create too much work?
+- **Source completeness:** can State stay trustworthy if important project sources are missing?
+- **Generalization:** does the current structure work outside the Northstar demo/project type?
+- **Usability + speed:** can an unfamiliar user understand the model, and is Ask fast enough?
+- **Paused/reversed decisions:** decide whether a paused/reversed decision needs a distinct `proposed_update` path rather than the current `state_at_risk` behavior.
 
-- `fallbackResult()` (the client-side deterministic Ask fallback, reached when the live Ask backend genuinely can't be used -- see the note on Ask architecture below) now shows up to 3 topic-matching notes (pending first) instead of a dead-end "I don't have a reliable answer," or 4 clickable example questions when there's no topic match at all. Fixed at the function itself so all 3 call sites benefit; reuses the existing `askTopics()`/`overlapsTopics()`/`simpleNote()` helpers and the existing generic `[data-prompt]` click handler rather than adding new ones.
-- The "How this works" modal (`context-quickwins.js`'s `showOrientationHelp()`, the version users actually see) now explains the concrete Add -> Review & decide -> Know -> Ask workflow, naming the actual `+ Add note` button, the Open Items page, and real example questions, instead of abstract steps.
-- **Bug found and fixed while verifying the modal change:** `context-app.js` has a second, normally-dormant copy of the same modal (`showDemoHelp()`) that renders instead whenever a user clicks "How this works" before `context-quickwins.js`'s capture-phase override finishes installing. It still said "Explore the maintained Project" and "reset ... from Project Settings" -- stale from before *both* the Project State -> Knowledge and Knowledge -> Current State renames. This isn't theoretical: the project's own Playwright browser test (`test_demo_help_start_actions_are_clickable_and_reset_is_discoverable`, which clicks the button at `hydration_ms=10`) was actually exercising this exact stale copy and had to be updated to match the corrected text.
-- Workspace's "Needs your attention" section now says what to do next ("Click an item below to open it in Open Items and make a decision" / "Try asking a question above, or browsing Notes" when clear) -- no new CSS needed, it inherits the existing `.workspace-attention-head p` styling.
-- The spec's 4th proposed fix (discoverable example questions in the empty Ask state) was skipped as redundant -- `context-quickwins.js`'s `addAskStarters()` already renders 5 clickable starters there.
+## Planned cleanup pass
 
-**Note on Ask architecture, worth knowing before touching this area again:** `submitAsk()` routes to the live model-backed backend (`ASK.canHandle()`) for essentially every typed query in any environment where the Ask module loaded, which is always true in staging/production. The client-side deterministic `scenarioResult()`/`findScenario()`/`fallbackResult()` system (extensively covered by `state-ask-behavior-tests.js` and friends) is therefore **not** the code path a real deployed-site user hits when the model gives a low-confidence answer -- that's governed server-side, in the Ask prompts/service, not touched this session. The deterministic system is still real and tested (a genuine offline/degraded-backend fallback, and the harness the JS test suites use), but "smarter fallback" here improves that layer specifically, not the live model's own "I don't know" phrasing. If a future session wants to improve what reviewers see when the *live* model can't answer confidently, that's a backend/prompt change in `state-project-complete`, not a frontend one.
+Keep this separate from product/portfolio feature work.
 
-**Learning Guide restructured into a cleaner 8-domain framework** (PR #77, `index.html` -- portfolio-site content, not the State product itself). Consolidated a new Domain 03 "Data, Knowledge & Context" from material previously spread across the old Domains 01 and 02 (context engineering, retrieval/grounding with its concept diagram, knowledge systems, plus a new data-quality/lineage/schema item split out of an old combined SQL item); merged the old Implementation/Onboarding and Customer Operations domains into one "Implementation, Adoption & Customer Success"; renamed three domains for clarity (Discovery & Workflow Design; Quality, Risk & Governance; ...Organizational Decisions) with one new "Commercial & market fit" item added to the last. Still exactly eight domains; no content, PDFs, or practice exercises dropped, only reorganized; all internal cross-references updated.
+1. **Baseline / hygiene**
+   - verify `main` and `staging` are synced
+   - run the normal tests
+   - remove only clearly obsolete branches/files
 
-All three PRs verified before merging: 342 Python passed/3 skipped, 136 JS behavior-test assertions across 8 suites (including a real Playwright browser test that caught the `showDemoHelp()` race above), plus live browser verification of the rename, the banner position, the modal content (both copies), and the Open Items color fix.
+2. **CSS cleanup**
+   - remove only proven-dead non-media CSS first
+   - consolidate inline/version-stamped styles only where cascade equivalence is demonstrated
+   - do not use the cleanup as an excuse for another visual redesign
 
-### Prior sessions, condensed (full detail in git history -- see PRs #59-#74)
+3. **Controller architecture review**
+   - inspect current patch/module layering and simplify only where ownership is clear
 
-A Deep QA harness (`qa/deployed/`, manual `workflow_dispatch` against real deployed staging, see `qa/deployed/README.md`) was built and used to find and fix three real bugs (a Vercel-bypass CORS break, an intermittent "Answer found · Awaiting review" indicator, a stale unused `askPreview()` surface). The State case study was condensed 894->669 words for a faster executive read. An 11-item live-staging QA round fixed, in priority order: Ask misclassifying informational questions as project updates and a dead-end "Answer found" state (P0); Workspace's attention-vs-Ask ordering, inconsistent briefing prioritization from two separate ranking bugs, and Ask prompt-grounding issues (P1); generic History headlines, leaked internal record IDs, and a broken browser-Back path out of History topic detail (P2). Mid-round, "Project State" (the nav label, chosen deliberately by Paige the day before) was discussed and renamed to "Knowledge" for being one term too many alongside "Current State" -- see above for why that didn't stick either. Before that: Slack Phase 2 (LLM-driven relevance evaluation turning approved Slack messages into real Evidence/Review), self-serve Slack OAuth, Ask reliability hardening (45s streaming timeout, independent Settings failure handling, 30s API abort), an authority-model badge fix (`no_review_needed` vs. `reviewed`), a `context-app.js` view-dispatch bug that could clobber Settings, and Ask relevance/follow-up-mode hardening all shipped to `main`. `context-app.js` was also split: Notes/Open Items/Current State view rendering extracted into their own modules (`context-notes-view.js`, `context-open-items-view.js`, `context-project-view.js`), each a pure given-data-return-HTML function.
+4. **Runtime naming cleanup**
+   - consider renaming `phase2_current/` only after the frontend is stable and the full suite is green
+   - remember that it is currently runtime/load-bearing despite the misleading name
 
-State is currently release-hardened with the following behavior in production:
+Separate from the above: question-resolution Evidence provenance may need a schema/data migration and should be treated as its own design change.
 
-- five product-owned Ask starters are assembled deterministically from live State data and skip the model call;
-- recognized structural Ask refinements use deterministic shortcuts where appropriate;
-- free-form Ask streams useful text before the validated final answer is complete;
-- Ask timing instrumentation separates context work from provider time;
-- browser Back/Forward works across Workspace, Current State, Open Items, Notes, and History (including a History topic detail correctly returning to the History list, not skipping past it);
-- production Ask structured-output headroom is 2400 tokens after live staging QA showed that 1650 and 1800 could truncate otherwise valid structured responses;
-- adversarial live Ask QA passed cases covering unknown vs. zero, conflicting authority, superseded history, negation, ambiguous dates, and unresolved authority;
-- **Current State** (the nav tab; renamed from Knowledge 2026-09-07, which was itself renamed from Project State earlier the same day -- see above) stays focused on maintained understanding. Facts with relevant history can link into a filtered History view;
-- History can show a compact, read-only "Why State treats this as current" explanation for a focused fact, grounded in accepted Review/Evidence provenance rather than open or rejected reviews;
-- project rules and demo reset are accessed from a dedicated **Settings** entry in the sidebar below History rather than from the Current State document;
-- an open Question explicitly linked to an open Review is presented as **Answer found · Awaiting review**. This is a derived UI state only: the Question remains open until a human accepts the Review;
-- Open Items' attention badge counts only pending Reviews + blocking Questions (not every open Question) -- signals "needs a decision," not "everything unresolved."
+## Do not introduce during cleanup
 
-Free-form Ask remains primarily provider-bound. Context assembly is typically only a few milliseconds, while model-backed calls can take tens of seconds. Streaming is the main perceived-latency mitigation. Ask uses a single interactive attempt with no automatic retry spiral. The configured 30-second provider timeout should not be interpreted as a strict whole-request wall-clock ceiling.
+Unless explicitly requested, leave these alone:
 
-Production Render is on a paid always-on plan, so production cold starts should be treated as solved unless live telemetry shows otherwise. Staging Render remains on the free tier and may sleep after inactivity; ignore the first staging request after idle when measuring performance, or wake staging first.
+- React/Vue/framework rewrite
+- ES-module conversion that breaks direct `file://` support
+- vector DB / RAG infrastructure
+- agents
+- ORM migration
+- auth / organizations / multitenancy
+- enterprise-architecture expansion
 
-The production frontend must point to the production API. Staging intentionally points to the staging API. This is handled automatically by environment detection (`VERCEL_ENV==='production'` in `api/state-config.js` and hostname-based inference in `context-api.js`) -- no manual URL-swap step is needed when promoting.
+## Deployment notes
 
-**Vercel Hobby-plan build-rate limit was hit on 2026-09-06** (a routine small commit's deploy failed with "Deployment rate limited — retry in 24 hours"). This is expected on the Hobby plan under heavy same-day push volume, not a sign of anything broken. If a fresh session finds a recent commit isn't reflected on a live Vercel URL, check whether this is why before assuming a deploy failed for a real reason. Batch pushes; avoid a rapid sequence of small separate merges when a handful of fixes can go out together (this session's three PRs were each scoped to one coherent change, then merged back-to-back once each was individually green -- a reasonable middle ground, not a violation of this rule).
+- Vercel Hobby/build-rate limits have been hit during high-volume iteration before. A pending or rate-limited preview is not by itself evidence of broken code.
+- `main` is production and `staging` is the review branch.
+- Batch low-value pushes where possible.
 
-## Open work
+## Current release summary
 
-**Known gap, confirmed 2026-09-06, still open: inviting the State Slack app to a channel does not approve that channel.** Paige's reasonable assumption was that inviting the bot activates the channel; it doesn't. Slack-level membership (can the bot receive events from this channel) and State's own internal approval flag (`slack_channels.enabled`, will State actually evaluate what it hears) are two separate things today, with nothing bridging them -- `slack_intake_service.py` ignores every event type except `message`, so it doesn't even see a "bot added to channel" event to act on. The only way a channel becomes approved right now is the `SLACK_TEAM_ID`/`SLACK_TEST_CHANNEL_ID` env-var-driven startup bootstrap (Phase 1, no admin UI). **Future work:** build a real "auto-approve on invite" path (likely listening for Slack's channel-join event and calling `ensure_channel_approved` from it, or building the Phase-2-planned admin UI so approval doesn't depend on env vars/redeploys at all) -- scope this properly rather than a quick patch, since it changes who/what can add an approved evidence source.
-
-Deliberately still out of scope: real Slack token revocation on Disconnect, and automatic channel discovery via the Slack Web API (channels are currently approved manually).
-
-### Next up
-
-`staging` and `main` were promoted in sync 2026-09-07 (PR #88) -- there is no pending promotion decision right now. The production-only environment config (production API URL, `VERCEL_ENV==='production'` detection) was not touched by this promotion and needs no follow-up. Future staging work resumes the normal cycle: feature branches off `staging`, merge to `staging`, push, smoke-test, and only promote to `main` again with Paige's explicit go-ahead each time.
-
-### Smaller tech debt still open (not urgent, no live QA evidence forcing it)
-
-- `phase2_current/` is named as though it were dead spike code but is load-bearing runtime code (imported by `anthropic_provider.py`, `openai_provider.py`, `interpretation_pipeline_integrated.py`, and the Slack services). Renaming it would be the honest fix, but touches every provider's import path -- scope it as a real change, not a quick rename.
-- `context-tool.css`'s ~1,100 non-media-query lines still have the same override-layering pattern the `@media` blocks were consolidated out of in an earlier pass -- harder to verify a merge here since there's no breakpoint to mechanically partition on.
-- `index.html`'s version-stamped inline `<style>` blocks are still untouched.
-- `context-app.js`'s remaining ~1,580 lines (Ask routing/submission, backend hydration/mapping, the event-dispatch handler) are controller logic that mutates `state` or calls the backend directly -- they don't fit the "given data, return HTML" contract the three already-extracted view modules use, so splitting further needs a different approach, not just repeating that extraction. See README's "Known debt" table for the current file-by-file map.
-- ~~Two divergent copies of the "How this works" modal existed~~ -- resolved in the 2026-09-07 UX review batch: consolidated to one implementation (`context-app.js`'s `showDemoHelp()`); the `context-quickwins.js` and `context-product-polish.js` competing versions were deleted rather than kept in sync.
-- Ask's resolved-human-Review-decisions are surfaced to the user (appended after the rendered answer) but not fed into the model's own reasoning context -- doing that properly means changing Ask's context-assembly in `ask_service.py` (backend), not a frontend change. Scope it as its own session with live testing against the real Ask pipeline, not a quick patch, since it touches prompt construction.
-- The "What should I know?" starter's Current State selection is whatever the backend/model returns, not a deterministic relevance ranking -- same caveat as above, a backend change to `ask_service.py`'s context selection, not attempted this session.
-
-None of these are urgent bugs -- they're the kind of thing worth a deliberate, scoped session rather than opportunistic edits mixed into feature work.
-
-### Next planned work: approved-channel config UI polish and connection health display
-
-Read this file's git history / ask Paige for the 2026-09-05 design discussion if more product-philosophy context is needed before scoping further Slack work; the short version:
-
-- **Integration philosophy:** State takes in places where project knowledge is *created* and helps the team determine what's true; it sends approved outcomes to where people communicate or work. It does not become a workflow/task-management system -- no Jira/GitHub-issue-status ingestion, no board views.
-- **Planned inputs stay small:** Slack (Phase 1 + Phase 2 shipped to production), Google Docs, Notion. Not Confluence/Obsidian/OneNote/Coda. No per-service transcription connectors (Fathom/Granola/Otter/etc.) -- generic file upload instead.
-- **Slack is deliberately the one bidirectional input** (input+output), not a placeholder pending extension to other tools. Slack -> State (evidence in); State -> Slack (an explicit "Share to Slack" action after a change is accepted, posting a summary to the project channel).
-- **New "Documents" area is the other big planned addition** -- a simple file cabinet for project resources (SOWs, briefs, transcripts, client PDFs, etc.). Document != Evidence: uploading a file must not trigger automatic extraction. V1 is deliberately boring (upload/list/open/delete, no folders, no AI processing). Storage recommendation: Vercel Blob for file bytes + a `documents` metadata row in State's existing database (decouple storage key from filename/id so the provider could change later) -- verify Blob's included tier fits the Hobby plan, and note `state-api` is a separate Python/Render service, not Next.js, so Blob integration is a REST call from the backend rather than framework-native. Falls back to a links-only model (no hosting at all) if a storage decision should be deferred further. Later (not V1): a per-document "Review with State" user-initiated action that surfaces candidate Evidence from a document's contents, routed through the existing Evidence -> Review -> Current State pipeline -- never automatic, never bypassing human authorization.
-- **Outputs, generally:** State can propose sending an approved outcome elsewhere; it doesn't manage what happens there afterward (propose -> human authorizes -> external action happens, mirroring the existing internal authority model). GitHub Issues is the planned first output/action integration -- an accepted State change can suggest creating an issue; once created, GitHub owns it fully, State does not track/sync status.
-
-Beyond Slack Phase 2, current work should otherwise focus on incremental quality and reliability improvements rather than redesigning or rebuilding State.
-
-High-value areas that remain in scope:
-
-- continue measuring Ask latency and failure rate before changing timeout or provider behavior;
-- keep expanding adversarial AI-quality coverage when new failure modes are discovered;
-- continue accessibility, mobile, dark-mode, security, observability, and small maintainability improvements when supported by evidence;
-- keep temporary QA branches and PRs cleaned up once they are no longer useful.
-
-The Current State provenance/"Why is this true?" work is no longer an open item. The settled product model is: Current State answers what is true now; History explains how and why it became true.
-
-Do not carry forward completed staging-era checklists as open work. Re-verify the repo and live environments before reviving an old issue.
-
-## Working rules for AI assistants
-
-- **Update this file whenever `main` changes.** Any push or merge to `main` must include a same-pass review of `docs/PROJECT_STATUS.md`: add relevant new facts, remove stale or completed information, and make sure the document still describes what is actually in production.
-- **Read this file first in a new chat.** Then inspect the current repository and connected environments before assuming older handoffs are still accurate.
-- **Treat `main` as production and `staging` as test-only.** Staging may be promoted wholesale when Paige explicitly requests it, but the promotion must preserve production-only environment configuration such as the production API URL.
-- **Use a PR plus CI for production code changes.** The deterministic suite also runs automatically on direct `staging` pushes so the exact staging commit is validated before promotion. Run the JavaScript behavior suites and the Python/browser suite before promotion unless the change is purely non-runtime documentation.
-- **Do not promote an experiment just because it looks promising on staging.** Validate the exact behavior, understand the failure mode, and then promote only when Paige authorizes it.
-- **Prefer small, reversible changes.** Fix the narrow problem without opportunistic unrelated refactors.
-- **Instrument before optimizing.** For Ask performance, separate provider time from State/context time before deciding what to change.
-- **Do not use lower model output limits as a speed optimization without live structured-output testing.** Staging QA demonstrated truncation at both 1650 and 1800 tokens; 2400 passed the known failure cases.
-- **Do not misdiagnose free-tier staging cold starts as a production performance problem.** Production is paid and always on; staging can sleep.
-- **Historical docs are provenance, not current truth.** Files under `docs/history/` are snapshots. Current repository code, current architecture docs, `README.md`, and this file take precedence.
-- **Keep the repo clean.** Remove temporary QA branches/PRs and obsolete handoff material when they no longer serve a purpose.
-- **When Paige is giving iterative product, UI, or copy feedback, collect feedback first.** Do not start applying those edits until she says to go ahead.
-- **Before implementing an externally-produced spec (e.g. from Claude cowork or another tool), verify its assumed function names, file locations, and existing features against the actual current code.** This session's spec had all three problems (stale locations, and a proposed feature that already existed) -- treat such specs as a starting point for the *intent*, not as ground truth for the *implementation*.
-- **Keep explanations product-oriented.** State is a product-learning and portfolio project. Paige is demonstrating AI product judgment, QA instincts, UX decisions, and the ability to build with AI, not positioning herself as an engineer.
-
-## Core product constraints
-
-- Preserve State's authority model: **AI interprets → software enforces → people decide**.
-- Current State must remain distinct from Evidence, Reviews, Questions, and History.
-- Consequential Current State changes require human authorization.
-- Keep deterministic schema, semantic, and authority enforcement around model output.
-- Evidence remains immutable; corrections should supersede prior evidence rather than overwrite it.
-- Review acceptance remains atomic and stale proposals must be blocked.
-- Questions should resolve through evidence/review/state-change flow rather than silently mutating Current State.
-- Avoid scope creep: no auth, multi-tenant/organizations, vector DB, RAG, agent framework, major rebuild, or major redesign unless Paige explicitly changes scope.
-- Do not deploy or merge speculative production changes.
-
-## Authority / credentials
-
-Do not store raw credentials, tokens, cookies, API keys, session values, private keys, `.env` contents, or database connection secrets in this file.
-
-Use connected or platform-provided access for GitHub, Render, Vercel, Neon, model providers, and other external systems. Destructive or externally visible actions require explicit authorization unless the user has already clearly authorized that specific action in the current task.
+The production portfolio now presents State as the flagship product, with two smaller supporting State cases for deeper evidence, while preserving Legal AI and Meridian as separate demonstrations of opportunity evaluation and workflow thinking. The main State case is shorter, the public branding is anonymous, and the current Applied Work layout intentionally favors stability over another visual redesign until CSS cleanup is complete.
