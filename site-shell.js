@@ -24,6 +24,33 @@
     homeHero.insertBefore(context,homeHero.firstChild);
   }
 
+  /* Applied Work should show the State family as a coherent set: flagship
+     product plus supporting validation and feasibility studies. Reuse the
+     existing supporting grid so this stays visually consistent with the page. */
+  const portfolioPage=document.querySelector('[data-page="portfolio"]');
+  if(portfolioPage){
+    const supportingGrid=portfolioPage.querySelector('.applied-secondary-grid');
+    if(supportingGrid){
+      const oldCostCard=supportingGrid.querySelector('a[href="state-ai-search-learning.html"]');
+      if(oldCostCard){
+        oldCostCard.href='state-architecture-cost.html';
+        const tag=oldCostCard.querySelector('.tag');
+        const title=oldCostCard.querySelector('h3');
+        const intro=oldCostCard.querySelector('.card-intro');
+        if(tag) tag.textContent='State · Architecture & cost';
+        if(title) title.textContent='State Architecture & Cost: Before vs. After';
+        if(intro) intro.textContent='I revisited my pre-build architecture and cost assumptions after building State, comparing what I expected with what actually mattered: model choice, context size, latency, deterministic boundaries, and where generation earned its cost.';
+      }
+      if(!supportingGrid.querySelector('a[href="state-testing-debugging.html"]')){
+        const testing=document.createElement('a');
+        testing.className='card nav-card applied-secondary';
+        testing.href='state-testing-debugging.html';
+        testing.innerHTML='<span class="tag">State · Validation</span><h3>Testing & Debugging State</h3><p class="card-intro">How I used hands-on testing, AI-assisted automated coverage, and failure investigation to distinguish model, retrieval, implementation, and product-design problems instead of treating every bad AI result as a prompt problem.</p>';
+        supportingGrid.insertBefore(testing,oldCostCard||supportingGrid.firstChild);
+      }
+    }
+  }
+
   /* Keep the validation story precise about the user's actual background:
      hands-on QA was primarily manual; broader testing familiarity came from
      working closely with software teams in project management. */
