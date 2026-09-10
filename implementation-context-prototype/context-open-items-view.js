@@ -10,28 +10,46 @@
       return {
         consequence:`This will update Current State${questionCount?` and resolve ${questionCount===1?'1 open question':`${questionCount} open questions`}`:''}.`,
         primary:'Update Current State',
+        primaryAction:'review-update',
         secondary:'Keep Current State',
+        secondaryAction:'review-keep',
+      };
+    }
+    // A zero-proposal state_at_risk Review must never fall through to the
+    // question-only "Confirm answer" path. The backend currently maps an
+    // accepted zero-proposal Review to confirmed_current, which cannot express
+    // "the human agrees Current State is now uncertain." Keep the Review open
+    // unless the human explicitly decides the concern does not change what is
+    // maintained as current. The richer uncertainty lifecycle is deferred.
+    if(r.reviewType==='state_at_risk'){
+      return {
+        consequence:`This evidence raises uncertainty but does not establish a replacement for Current State.${questionCount?' Linked questions stay open while the uncertainty is unresolved.':''}`,
+        primary:null,
+        primaryAction:null,
+        secondary:'Keep Current State',
+        secondaryAction:'review-keep',
+        leaveOpen:'Leave this Review open if more evidence is needed.',
       };
     }
     if(questionCount){
       return {
         consequence:`Confirming this will resolve ${questionCount===1?'1 open question':`${questionCount} open questions`}. Current State will not change.`,
         primary:'Confirm answer',
+        primaryAction:'review-confirm-answer',
         secondary:questionCount===1?'Keep question open':'Keep questions open',
+        secondaryAction:'review-keep-question',
       };
     }
-    if(r.reviewType==='state_at_risk'){
-      return {
-        consequence:'This evidence raises uncertainty but does not establish a replacement for Current State.',
-        primary:null,
-        secondary:'Keep Current State',
-        leaveOpen:'Leave this Review open if more evidence is needed.',
-      };
-    }
+    // missing_understanding with no concrete proposal and no Question answer
+    // has nothing a human can safely authorize yet. Do not turn "reviewed but
+    // still missing" into confirmed_current merely to close the Review.
     return {
-      consequence:'This records the Review. Current State will not change.',
-      primary:'Mark reviewed',
-      secondary:'Keep Current State',
+      consequence:'This Review does not yet contain a concrete Current State change or an answer to confirm.',
+      primary:null,
+      primaryAction:null,
+      secondary:null,
+      secondaryAction:null,
+      leaveOpen:'Leave this Review open and add Evidence when more is known.',
     };
   }
 
@@ -47,23 +65,40 @@
     const recordStyle='width:100%;max-width:none;margin:0;padding:0;border:0;border-bottom:1px solid #e4e8ee;border-radius:0;background:transparent;box-shadow:none';
     if(accordion&&!expanded) return `<article class="review-record is-collapsed" style="${recordStyle}" data-review-card="${r.id}"><button type="button" class="open-question-row review-record-toggle" style="${rowStyle}" data-action="toggle-review-card" data-review-id="${r.id}" aria-expanded="false">${head}</button></article>`;
     const decisionUi=reviewDecisionUi(r);
-    const actions=decisionUi.primary
-      ? `<button class="btn primary" data-action="review-update" data-review="${r.id}">${esc(decisionUi.primary)}</button><button class="btn secondary" data-action="review-keep" data-review="${r.id}">${esc(decisionUi.secondary)}</button>`
-      : `<button class="btn secondary" data-action="review-keep" data-review="${r.id}">${esc(decisionUi.secondary)}</button>${decisionUi.leaveOpen?`<span class="blocking-detail">${esc(decisionUi.leaveOpen)}</span>`:''}`;
-    const body=`<div class="review-decision-context"><div class="review-context-block"><span>Current understanding</span><p>${esc(cleanReviewCopy(r.current))}</p></div><div class="review-context-block review-evidence-block"><span>${generic?'What the evidence says':'Proposed change'}</span><p>${esc(generic?cleanReviewCopy(r.evidence):cleanReviewCopy(r.proposed))}</p></div>${!generic&&meaningfulUnresolved?`<div class="review-context-block"><span>Still unresolved</span><p>${esc(cleanReviewCopy(r.unresolved))}</p></div>`:''}</div><p class="blocking-detail review-consequence">${esc(decisionUi.consequence)}</p><div class="review-actions">${actions}</div><details class="reasoning"><summary>Why / source</summary><p><strong>Evidence:</strong> ${esc(r.evidence)}</p><p><strong>Establishes:</strong> ${esc(r.establishes)}</p>${r.doesNot?`<p><strong>Does not establish:</strong> ${esc(r.doesNot)}</p>`:''}</details>`;
+    const primary=decisionUi.primary&&decisionUi.primaryAction?`<button class="btn primary" data-action="${esc(decisionUi.primaryAction)}" data-review="${r.id}">${esc(decisionUi.primary)}</button>`:'';
+    const secondary=decisionUi.secondary&&decisionUi.secondaryAction?`<button class="btn secondary" data-action="${esc(decisionUi.secondaryAction)}" data-review="${r.id}">${esc(decisionUi.secondary)}</button>`:'';
+    const leaveOpen=decisionUi.leaveOpen?`<span class="blocking-detail">${esc(decisionUi.leaveOpen)}</span>`:'';
+    const actions=primary||secondary||leaveOpen?`${primary}${secondary}${leaveOpen}`:'';
+    const body=`<div class="review-decision-context"><div class="review-context-block"><span>Current understanding</span><p>${esc(cleanReviewCopy(r.current))}</p></div><div class="review-context-block review-evidence-block"><span>${generic?'What the evidence says':'Proposed change'}</span><p>${esc(generic?cleanReviewCopy(r.evidence):cleanReviewCopy(r.proposed))}</p></div>${!generic&&meaningfulUnresolved?`<div class="review-context-block"><span>Still unresolved</span><p>${esc(cleanReviewCopy(r.unresolved))}</p></div>`:''}</div><p class="blocking-detail review-consequence">${esc(decisionUi.consequence)}</p>${actions?`<div class="review-actions">${actions}</div>`:''}<details class="reasoning"><summary>Why / source</summary><p><strong>Evidence:</strong> ${esc(r.evidence)}</p><p><strong>Establishes:</strong> ${esc(r.establishes)}</p>${r.doesNot?`<p><strong>Does not establish:</strong> ${esc(r.doesNot)}</p>`:''}</details>`;
     if(accordion) return `<article class="review-record is-expanded" style="${recordStyle}" data-review-card="${r.id}"><button type="button" class="open-question-row review-record-toggle" style="${rowStyle}" data-action="toggle-review-card" data-review-id="${r.id}" aria-expanded="true">${head}</button><div class="review-card-body" style="padding:0 16px 16px 16px!important;box-sizing:border-box">${body}</div></article>`;
     return `<article class="review-card compact-review" data-review-card="${r.id}"><span class="review-row-head open-question-copy"><span class="open-item-label review">Review</span><span class="review-card-title open-question-title">${esc(r.summary)}</span>${sourceMeta?`<span class="review-source-meta open-question-meta">Evidence · ${esc(sourceMeta)}</span>`:''}</span><div class="review-card-body">${body}</div></article>`;
   }
 
-  function linkedReviewActionLabel(linkedReview){
-    return Array.isArray(linkedReview?.proposals)&&linkedReview.proposals.length?'Review proposed update →':'Review answer →';
+  function linkedReviewQuestionUi(linkedReview){
+    const hasProposals=Array.isArray(linkedReview?.proposals)&&linkedReview.proposals.length>0;
+    if(hasProposals) return {
+      kicker:'Answer found · Awaiting review',
+      detail:'Current State has not changed yet because this still needs your review.',
+      action:'Review proposed update →',
+    };
+    if(linkedReview?.reviewType==='state_at_risk') return {
+      kicker:'Uncertainty found · Awaiting review',
+      detail:'This evidence raises uncertainty without establishing a replacement. The question stays open while that uncertainty is unresolved.',
+      action:'Review uncertainty →',
+    };
+    return {
+      kicker:'Answer found · Awaiting review',
+      detail:'The question stays open until you confirm the answer. Current State will not change.',
+      action:'Review answer →',
+    };
   }
 
   function questionCard(q,linkedReview){
     const blocking=!!q.blocking;
     const evidenceSummary=linkedReview?(cleanReviewCopy(linkedReview.evidence)||cleanReviewCopy(linkedReview.summary)||'New evidence may answer this question.'):'';
+    const reviewUi=linkedReview?linkedReviewQuestionUi(linkedReview):null;
     const body=linkedReview
-      ? `<div class="open-question-inline-state"><span class="eyebrow">Answer found · Awaiting review</span><p>${esc(evidenceSummary)}</p><p class="blocking-detail">Current State has not changed yet because this still needs your review.</p></div><div class="open-question-actions"><button class="text-button" data-action="open-specific-review" data-review-id="${linkedReview.id}">${linkedReviewActionLabel(linkedReview)}</button><button class="text-button muted" data-action="answer-question" data-question-id="${q.id}">Add something else</button></div>`
+      ? `<div class="open-question-inline-state"><span class="eyebrow">${esc(reviewUi.kicker)}</span><p>${esc(evidenceSummary)}</p><p class="blocking-detail">${esc(reviewUi.detail)}</p></div><div class="open-question-actions"><button class="text-button" data-action="open-specific-review" data-review-id="${linkedReview.id}">${esc(reviewUi.action)}</button><button class="text-button muted" data-action="answer-question" data-question-id="${q.id}">Add something else</button></div>`
       : `<div class="open-question-inline-state"><p>This stays unresolved until reviewed evidence establishes an answer.</p>${blocking&&q.blocks?`<p class="blocking-detail"><strong>Blocks:</strong> ${esc(q.blocks)}</p>`:''}</div><div class="open-question-actions"><button class="text-button" data-action="answer-question" data-question-id="${q.id}">Add what you learned →</button>${blocking?`<button class="text-button muted" data-action="unmark-blocking" data-question-id="${q.id}">No longer blocking</button>`:`<button class="text-button muted" data-action="mark-blocking" data-question-id="${q.id}">Mark as blocking</button>`}<button class="text-button muted" data-action="confirm-stop-question" data-question-id="${q.id}">Stop tracking</button></div>`;
     return `<details class="open-question-item${blocking?' is-blocking':''}" data-question-id="${q.id}"><summary class="open-question-row${blocking?' is-blocking':''}" aria-label="Question: ${esc(q.text)}"><span class="open-question-copy"><span class="open-item-label ${blocking?'blocking':'question'}">${blocking?'Blocking question':'Open question'}</span><span class="open-question-title">${esc(q.text)}</span><span class="open-question-meta">${esc(q.origin)}${q.created?` · ${esc(q.created)}`:''}${blocking&&q.blocks?` · Blocks: ${esc(q.blocks)}`:''}</span></span><span class="question-card-chevron" aria-hidden="true">›</span></summary><div class="open-question-inline-body">${body}</div></details>`;
   }
@@ -71,7 +106,8 @@
   function questionDialogHtml(q,linkedReview){
     if(linkedReview){
       const evidenceSummary=cleanReviewCopy(linkedReview.evidence)||cleanReviewCopy(linkedReview.summary)||'New evidence may answer this question.';
-      return `<span class="eyebrow">Answer found · Awaiting review</span><h2 id="dialogTitle">${esc(q.text)}</h2><p>${esc(evidenceSummary)}</p><p class="blocking-detail">Current State has not changed yet because this still needs your review.</p><div class="dialog-actions"><button class="btn primary" data-action="open-specific-review" data-review-id="${linkedReview.id}">${linkedReviewActionLabel(linkedReview)}</button><button class="btn secondary" data-action="answer-question" data-question-id="${q.id}">Add something else</button></div>`;
+      const reviewUi=linkedReviewQuestionUi(linkedReview);
+      return `<span class="eyebrow">${esc(reviewUi.kicker)}</span><h2 id="dialogTitle">${esc(q.text)}</h2><p>${esc(evidenceSummary)}</p><p class="blocking-detail">${esc(reviewUi.detail)}</p><div class="dialog-actions"><button class="btn primary" data-action="open-specific-review" data-review-id="${linkedReview.id}">${esc(reviewUi.action)}</button><button class="btn secondary" data-action="answer-question" data-question-id="${q.id}">Add something else</button></div>`;
     }
     return `<span class="eyebrow">${q.blocking?'Blocking question':'Open question'}</span><h2 id="dialogTitle">${esc(q.text)}</h2><p>This stays unresolved until reviewed evidence establishes an answer.</p>${q.blocking&&q.blocks?`<p class="blocking-detail"><strong>Blocks:</strong> ${esc(q.blocks)}</p>`:''}<div class="dialog-actions"><button class="btn primary" data-action="answer-question" data-question-id="${q.id}">Add what you learned</button>${q.blocking?`<button class="btn secondary" data-action="unmark-blocking" data-question-id="${q.id}">No longer blocking</button>`:`<button class="btn secondary" data-action="mark-blocking" data-question-id="${q.id}">Mark as blocking</button>`}<button class="btn secondary" data-action="confirm-stop-question" data-question-id="${q.id}">Stop tracking</button></div>`;
   }
@@ -123,5 +159,5 @@
     return `<section class="page collection-page open-items-page"><div class="page-head"><div><span class="eyebrow">What still needs attention</span><div class="review-title-row"><h2>Open Items</h2>${actionTotal?`<span class="count-badge review-page-count" aria-label="${actionTotal} items need attention">${actionTotal}</span>`:''}</div><p>Decide what is ready now, see what is blocking progress, and keep important unknowns visible without turning this into another archive.</p></div><button class="btn secondary" data-action="add-question">+ Add question</button></div><div class="open-items-sections">${openItemSection('Needs your review','Act now','Decisions waiting on you. Current State changes only after you approve them.',reviewUnavailable?'Unavailable':reviews.length,'reviews',reviewBody,!reviews.length&&!reviewUnavailable,openItemSections)}${openItemSection('Blocking questions','Resolve soon','A concrete project dependency is waiting on an answer.',questionUnavailable?'Unavailable':blockers.length,'blockers',blockerBody,!blockers.length&&!questionUnavailable,openItemSections)}${openItemSection('Open questions','Keep in mind','Important unknowns that can wait for relevant evidence.',questionUnavailable?'Unavailable':waiting.length,'questions',questionBody,!waiting.length&&!questionUnavailable,openItemSections)}${openItemSection('Draft notes','Finish up',"Notes you've started but haven't submitted for review yet.",draftsLoading?'…':draftsUnavailable?'Unavailable':draftNotes.length,'drafts',draftBody,draftsStatus==='loaded'&&!draftNotes.length,openItemSections)}</div></section>`;
   }
 
-  window.STATE_OPEN_ITEMS_VIEW = Object.freeze({render,reviewCard,questionDialogHtml,cleanReviewCopy,reviewDecisionUi});
+  window.STATE_OPEN_ITEMS_VIEW = Object.freeze({render,reviewCard,questionDialogHtml,cleanReviewCopy,reviewDecisionUi,linkedReviewQuestionUi});
 })();

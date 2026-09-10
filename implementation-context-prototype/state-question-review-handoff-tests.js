@@ -1,10 +1,7 @@
-// Regression coverage for a bug found in live staging QA (2026-09-07): a
-// question marked "Answer found · Awaiting review" opened a dialog with no
-// link to the discovered answer or the related Review -- the only visible
-// action was "Add what you learned", a dead end that breaks State's own
-// workflow (open question -> new evidence -> review -> state update ->
-// resolved question). questionDialogHtml() must surface the linked Review
-// and a direct path to it whenever one exists.
+// Regression coverage for Review/Question handoff semantics. These tests keep
+// the UI aligned with State's authority model: Evidence already exists;
+// human Review authorizes a consequence (State update, Question resolution,
+// or no change) rather than "accepting Evidence" into the system.
 const fs=require('fs'), vm=require('vm'), path=require('path');
 const dir=__dirname;
 
@@ -41,14 +38,12 @@ check('linkedReviewFor finds the review whose resolvesQuestionIds names this que
 check('linkedReviewFor returns nothing for a question with no linked review',
   api.linkedReviewFor('q-thresholds')===undefined);
 
-api.state.data.reviews=[{...linkedReview,status:'update'}]; // already resolved, no longer pending
+api.state.data.reviews=[{...linkedReview,status:'update'}];
 check('linkedReviewFor ignores a review that is no longer pending',
   api.linkedReviewFor('q-retention')===undefined);
 
-// questionDialogHtml() with a linked review must not dead-end on "Add what
-// you learned" as the only action -- it must surface the answer and a
-// direct path to the Review.
-const html=api.questionDialogHtml.length; // sanity: function exists
+// A linked question-only Review surfaces the found answer and accurately says
+// that confirming it resolves the Question without changing Current State.
 const dialogWithLink=openItems.questionDialogHtml(question,linkedReview);
 check('linked-review dialog surfaces the evidence as the found answer',
   dialogWithLink.includes('Slack indicates the client approved a 30-day retention window'));
@@ -56,19 +51,17 @@ check('linked-review dialog links directly to the Review',
   dialogWithLink.includes('data-action="open-specific-review"') && dialogWithLink.includes('data-review-id="r-retention"'));
 check('linked-review dialog names a question-only Review as an answer review',
   dialogWithLink.includes('Review answer →') && !dialogWithLink.includes('Review proposed update →'));
-check('linked-review dialog is not just "Add what you learned"',
-  !/^[^<]*<div class="dialog-actions"><button[^>]*data-action="answer-question"/.test(dialogWithLink.replace(/\s+/g,' ')));
+check('question-only dialog says the Question stays open until confirmation and State will not change',
+  dialogWithLink.includes('The question stays open until you confirm the answer. Current State will not change.'));
 
-// Without a linked review, the original "Add what you learned" flow is
-// unchanged (this must keep working for a genuinely unanswered question).
+// Without a linked Review, the original evidence-submission path remains.
 const dialogNoLink=openItems.questionDialogHtml(question,undefined);
 check('question with no linked review still offers "Add what you learned"',
   dialogNoLink.includes('data-action="answer-question"') && dialogNoLink.includes('Add what you learned'));
 check('question with no linked review does not claim an answer was found',
   !dialogNoLink.includes('Answer found'));
 
-// Review actions must describe the effect of the human decision, not imply
-// that already-saved Evidence is being accepted into the system.
+// Proposed Current State change.
 const proposedReview={
   id:'r-proposed',status:'pending',reviewType:'proposed_update',summary:'Move launch date?',
   current:'Launch is October 1.',proposed:'Launch is October 15.',evidence:'Security review moved the launch.',
@@ -78,20 +71,33 @@ const proposedReview={
 };
 const proposedUi=openItems.reviewDecisionUi(proposedReview);
 check('proposed State change uses explicit Current State actions',
-  proposedUi.primary==='Update Current State' && proposedUi.secondary==='Keep Current State',JSON.stringify(proposedUi));
+  proposedUi.primary==='Update Current State' && proposedUi.primaryAction==='review-update' && proposedUi.secondary==='Keep Current State',JSON.stringify(proposedUi));
 const proposedHtml=openItems.reviewCard(proposedReview,true,false);
 check('proposed State change explains the consequence',
   proposedHtml.includes('This will update Current State.') && proposedHtml.includes('>Update Current State<') && proposedHtml.includes('>Keep Current State<'));
 check('proposed State change no longer says Accept as reviewed evidence',
   !proposedHtml.includes('Accept as reviewed evidence') && !proposedHtml.includes('Update understanding'));
 
+// Question-only Review.
 const questionOnlyUi=openItems.reviewDecisionUi(linkedReview);
-check('question-only Review uses confirm/open-question actions',
-  questionOnlyUi.primary==='Confirm answer' && questionOnlyUi.secondary==='Keep question open',JSON.stringify(questionOnlyUi));
+check('question-only Review uses consequence-specific action handlers',
+  questionOnlyUi.primary==='Confirm answer' && questionOnlyUi.primaryAction==='review-confirm-answer' && questionOnlyUi.secondaryAction==='review-keep-question',JSON.stringify(questionOnlyUi));
 const questionOnlyHtml=openItems.reviewCard(linkedReview,true,false);
 check('question-only Review says Current State will not change',
   questionOnlyHtml.includes('Confirming this will resolve 1 open question. Current State will not change.') && questionOnlyHtml.includes('>Confirm answer<') && questionOnlyHtml.includes('>Keep question open<'));
+check('question-only Review routes through specialized question actions rather than legacy generic Review handling',
+  questionOnlyHtml.includes('data-action="review-confirm-answer"') && questionOnlyHtml.includes('data-action="review-keep-question"'));
 
+// Proposal + Question: changing State and resolving the Question is still one
+// consequential State-update path.
+const proposedQuestionReview={...proposedReview,resolvesQuestionIds:['q-retention']};
+const proposedQuestionUi=openItems.linkedReviewQuestionUi(proposedQuestionReview);
+check('proposal-linked Question keeps the Current-State-pending explanation',
+  proposedQuestionUi.action==='Review proposed update →' && proposedQuestionUi.detail.includes('Current State has not changed yet'));
+
+// state_at_risk must take precedence over Question resolution when there is no
+// replacement proposal, otherwise backend accept would record confirmed_current
+// for a Review whose whole point is that Current State may be unreliable.
 const riskReview={
   id:'r-risk',status:'pending',reviewType:'state_at_risk',summary:'Can we still trust the vendor policy?',
   current:'Vendor content is not used for model training.',evidence:'Legal says the contract language may conflict with that claim.',
@@ -105,25 +111,31 @@ const riskHtml=openItems.reviewCard(riskReview,true,false);
 check('state-at-risk Review tells the reviewer why it remains open',
   riskHtml.includes('raises uncertainty but does not establish a replacement') && riskHtml.includes('Leave this Review open if more evidence is needed.') && !riskHtml.includes('data-action="review-update"'));
 
-const reviewedOnly={
-  id:'r-info-1',status:'pending',reviewType:'state_at_risk',summary:'Record this context?',
-  current:'No Current State change is proposed.',evidence:'Useful contextual information.',establishes:'Context only.',
-  proposals:[],resolvesQuestionIds:[],
-};
-const reviewedOnlyUi=openItems.reviewDecisionUi({...reviewedOnly,reviewType:'informational'});
-check('fallback no-State-change Review uses Mark reviewed rather than Accept evidence',
-  reviewedOnlyUi.primary==='Mark reviewed' && reviewedOnlyUi.consequence.includes('Current State will not change'));
+const riskLinked={...riskReview,resolvesQuestionIds:['q-retention']};
+const riskLinkedUi=openItems.reviewDecisionUi(riskLinked);
+const riskQuestionUi=openItems.linkedReviewQuestionUi(riskLinked);
+const riskDialog=openItems.questionDialogHtml(question,riskLinked);
+check('state-at-risk takes precedence even when backend linked it to a Question',
+  riskLinkedUi.primary===null && riskLinkedUi.secondary==='Keep Current State' && !riskLinkedUi.primaryAction,JSON.stringify(riskLinkedUi));
+check('Question linked to state-at-risk is framed as uncertainty, not an answer',
+  riskQuestionUi.action==='Review uncertainty →' && riskQuestionUi.kicker==='Uncertainty found · Awaiting review' && riskDialog.includes('Review uncertainty →') && !riskDialog.includes('Answer found'));
 
-// Regression coverage for a second bug found in a live-testing logic review
-// (2026-09-07): mapApiReview() used to accept a caller-supplied
-// `resolvesQuestionId` as a fallback whenever the backend's own
-// resolves_question_ids came back empty. The one real caller of that
-// fallback was the "submit an answer to this Question" flow, which passed
-// the Question's own id -- meaning any Review returned from evidence
-// submitted through the Question UI got treated as resolving that Question
-// regardless of what the backend actually determined. mapApiReview() must
-// only ever reflect the backend's own resolves_question_ids, never infer a
-// relationship from where the Evidence came from.
+// A zero-proposal missing_understanding Review with no linked Question has no
+// concrete decision to authorize. It must stay open instead of accepting into
+// backend confirmed_current just to clear the queue.
+const missingNoOutcome={
+  id:'r-missing',status:'pending',reviewType:'missing_understanding',summary:'What is the authoritative system?',
+  current:'No authoritative source is established.',evidence:'The team confirmed the old source is insufficient.',
+  establishes:'More information is required.',doesNot:'No replacement source is established.',proposals:[],resolvesQuestionIds:[],
+};
+const missingUi=openItems.reviewDecisionUi(missingNoOutcome);
+const missingHtml=openItems.reviewCard(missingNoOutcome,true,false);
+check('zero-proposal missing-understanding has no fake completion action',
+  missingUi.primary===null && missingUi.secondary===null && /Leave this Review open/.test(missingUi.leaveOpen||''),JSON.stringify(missingUi));
+check('zero-proposal missing-understanding renders guidance but no mutation/keep buttons',
+  missingHtml.includes('Leave this Review open and add Evidence when more is known.') && !missingHtml.includes('data-action="review-update"') && !missingHtml.includes('data-action="review-keep"'));
+
+// mapApiReview must only reflect explicit backend Question links.
 const backendReviewNoResolution={id:'review_x1',review_type:'state_at_risk',decision_question:'Does this change anything?',evidence_content:'Some answer text.',resolves_question_ids:[]};
 const mappedNoResolution=api.mapApiReview(backendReviewNoResolution,'Some answer text.');
 check('a backend review with an empty resolves_question_ids is never treated as resolving a question, even from the answer-a-question flow',

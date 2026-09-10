@@ -1,9 +1,7 @@
 // Regression coverage for context-analytics.js -- the lightweight,
 // privacy-conscious event tracker added for the "Next Marching Orders"
-// Phase 1 analytics work (see docs/PROJECT_STATUS.md). Verifies: ref/session
-// attribution is captured and reused, owner mode suppresses tracking
-// entirely, Ask query text only ever goes out through trackAskQuery, and
-// the "State demo opened" event fires once on load.
+// Phase 1 analytics work. Verifies ref/session attribution, owner-mode
+// suppression, Ask query handling, and consequence-specific Review events.
 const fs=require('fs'), vm=require('vm'), path=require('path');
 const dir=__dirname;
 
@@ -102,6 +100,28 @@ function check(name,ok,detail=''){if(ok){pass++;console.log('✓',name)}else{fai
   context.window.StateAnalytics.trackAskQuery('x'.repeat(1000));
   const [,payload]=events[events.length-1];
   check('overly long Ask queries are truncated before being sent', payload.data.query.length<=300);
+}
+
+// --- legacy Review events normalize to consequence language --------------
+{
+  const {context,events}=freshContext();
+  context.window.StateAnalytics.track('review_accepted',{reviewId:'r-update'});
+  const [,payload]=events[events.length-1];
+  check('legacy review_accepted is normalized to review_decision', payload.name==='review_decision');
+  check('accepted State update records the actual outcome', payload.data.outcome==='current_state_updated' && payload.data.reviewId==='r-update');
+}
+{
+  const {context,events}=freshContext();
+  context.window.StateAnalytics.track('review_rejected',{reviewId:'r-keep'});
+  const [,payload]=events[events.length-1];
+  check('legacy review_rejected is normalized instead of calling kept Evidence rejected', payload.name==='review_decision');
+  check('keep action is recorded as Current State kept', payload.data.outcome==='current_state_kept' && payload.data.reviewId==='r-keep');
+}
+{
+  const {context,events}=freshContext();
+  context.window.StateAnalytics.track('review_decision',{reviewId:'r-answer',outcome:'question_resolved'});
+  const [,payload]=events[events.length-1];
+  check('new question-specific review_decision passes through unchanged', payload.name==='review_decision' && payload.data.outcome==='question_resolved');
 }
 
 // --- state_demo_opened fires once on load (document already complete) -----

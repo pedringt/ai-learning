@@ -71,11 +71,29 @@
     } catch (_) { return 'direct'; }
   }
 
+  // context-app.js predates consequence-specific Review labels and still
+  // emits accepted/rejected event names. Normalize those at the analytics
+  // boundary so "Keep Current State" is never reported as rejection of the
+  // Evidence itself. New question-only Review actions already emit
+  // review_decision directly with their specific outcome.
+  function normalizeReviewEvent(name, props) {
+    if (name === 'review_accepted') return {
+      name: 'review_decision',
+      props: Object.assign({ outcome: 'current_state_updated' }, props || {})
+    };
+    if (name === 'review_rejected') return {
+      name: 'review_decision',
+      props: Object.assign({ outcome: 'current_state_kept' }, props || {})
+    };
+    return { name: name, props: props || {} };
+  }
+
   function track(name, props) {
     if (!name || ownerMode()) return;
     ensureBeacon();
-    var payload = Object.assign({ ref: refLabel(), session: sessionId() }, props || {});
-    try { window.va('event', { name: name, data: payload }); } catch (_) { /* analytics must never break the product */ }
+    var normalized = normalizeReviewEvent(name, props);
+    var payload = Object.assign({ ref: refLabel(), session: sessionId() }, normalized.props || {});
+    try { window.va('event', { name: normalized.name, data: payload }); } catch (_) { /* analytics must never break the product */ }
   }
 
   // Ask query text is genuinely useful product research (see doc: "Ask
