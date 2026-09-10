@@ -52,13 +52,21 @@
   }
 
   function notesFilterSummary(notes,totalCount,ui){
-    const dateLabels={all:'All time',today:'Today','7':'Last 7 days','30':'Last 30 days'};
-    const statusLabels={all:'All statuses',draft:'Draft',pending:'In review',reviewed:'Reviewed'};
-    const notesSearch=ui.notesSearch||'';
-    const parts=[dateLabels[ui.notesDateFilter||'all'],statusLabels[ui.notesFilter||'all']];
-    if(notesSearch.trim()) parts.push(`“${notesSearch.trim()}”`);
-    const active=(ui.notesDateFilter||'all')!=='all'||(ui.notesFilter||'all')!=='all'||!!notesSearch.trim();
-    return `<div class="notes-filter-summary" id="notesFilterSummary" aria-live="polite"><span>Showing <strong>${notes.length}</strong> of ${totalCount} notes · ${parts.map(esc).join(' · ')}</span>${active?'<button class="text-button" data-action="clear-note-filters">Clear filters</button>':''}</div>`;
+    const dateFilter=ui.notesDateFilter||'all';
+    const statusFilter=ui.notesFilter||'all';
+    const notesSearch=(ui.notesSearch||'').trim();
+    const active=dateFilter!=='all'||statusFilter!=='all'||!!notesSearch;
+    if(!active)return '';
+    const dateLabels={today:'Today','7':'Last 7 days','30':'Last 30 days'};
+    const statusLabels={draft:'Draft',pending:'In review',reviewed:'Reviewed'};
+    const parts=[];
+    if(dateFilter!=='all')parts.push(dateLabels[dateFilter]);
+    if(statusFilter!=='all')parts.push(statusLabels[statusFilter]);
+    if(notesSearch)parts.push(`“${notesSearch}”`);
+    const message=notes.length
+      ? `Showing <strong>${notes.length}</strong> of ${totalCount} notes${parts.length?` · ${parts.map(esc).join(' · ')}`:''}`
+      : `No notes match these filters${parts.length?` · ${parts.map(esc).join(' · ')}`:''}`;
+    return `<div class="notes-filter-summary" id="notesFilterSummary" aria-live="polite"><span>${message}</span><button class="text-button" data-action="clear-note-filters">Clear filters</button></div>`;
   }
 
   function noteStatusLabel(n){
@@ -125,7 +133,8 @@
     const notesLoading=[ui.evidenceStatus,ui.draftsStatus].some(status=>status!=='loaded'&&status!=='error');
     const visibleNotes=notesLoading?[]:filteredNotes(notes,ui);
     const liveWarning=ui.evidenceStatus==='error'||ui.draftsStatus==='error'?`<div class="collection-warning"><strong>Some live Notes data is unavailable.</strong><span>${ui.evidenceStatus==='error'?'Saved Evidence could not be loaded. ':''}${ui.draftsStatus==='error'?'Saved drafts could not be loaded.':''}</span><button class="text-button" data-action="retry-hydration">Try again</button></div>`:'';
-    return `<section class="page collection-page notes-page"><div class="page-head"><div><span class="eyebrow">Project memory</span><h2>Notes</h2><p class="notes-product-purpose">Keep working notes and browse information State has received. Use Review, Current State, and History for downstream detail.</p><p class="notes-disclosure">Northstar's seed data mixes notes adapted from my real discovery/product work with simulated project notes created to exercise retrieval, review, and maintained-context workflows.</p></div><button class="btn primary notes-add" data-action="new-note">+ New note</button></div>${liveWarning}${composer}${notesLoading?'<p class="workspace-section-hint" role="status">Loading Notes…</p>':`<div class="notes-toolbar notes-toolbar--stacked"><div class="notes-filter-row">${dateFilters}${filters}<span class="notes-result-count" aria-hidden="true">${visibleNotes.length} ${visibleNotes.length===1?'note':'notes'}</span></div><input class="notes-search" id="notesSearch" type="search" placeholder="Search all notes" aria-label="Search notes" value="${esc(ui.notesSearch||'')}">${notesFilterSummary(visibleNotes,notes.length,ui)}</div><div class="note-results simple-notes" id="notesList">${visibleNotes.length?visibleNotes.map(n=>simpleNote(n,ui.expandedNotes,ui.editingNoteId)).join(''):'<div class="empty-state"><h3>Nothing here.</h3><p>No notes match these filters.</p></div>'}</div>`}</section>`;
+    const filterSummary=notesFilterSummary(visibleNotes,notes.length,ui);
+    return `<section class="page collection-page notes-page"><div class="page-head"><div><span class="eyebrow">Project memory</span><h2>Notes</h2><p class="notes-product-purpose">Keep working notes and browse information State has received. Use Review, Current State, and History for downstream detail.</p><p class="notes-disclosure">Northstar's seed data mixes notes adapted from my real discovery/product work with simulated project notes created to exercise retrieval, review, and maintained-context workflows.</p></div><button class="btn primary notes-add" data-action="new-note">+ New note</button></div>${liveWarning}${composer}${notesLoading?'<p class="workspace-section-hint" role="status">Loading Notes…</p>':`<div class="notes-toolbar notes-toolbar--stacked"><div class="notes-filter-row">${dateFilters}${filters}</div><input class="notes-search" id="notesSearch" type="search" placeholder="Search all notes" aria-label="Search notes" value="${esc(ui.notesSearch||'')}"></div>${filterSummary}<div class="note-results simple-notes" id="notesList">${visibleNotes.length?visibleNotes.map(n=>simpleNote(n,ui.expandedNotes,ui.editingNoteId)).join(''):'<div class="empty-state"><h3>Nothing here.</h3><p>No notes match these filters.</p></div>'}</div>`}</section>`;
   }
 
   window.STATE_NOTES_VIEW = Object.freeze({render,filteredNotes,notesFilterSummary,simpleNote,draftNoteRow});
