@@ -62,6 +62,12 @@ For longer tasks, keep important progress, dependencies, goals, and state outsid
 
 **Key term:** **Scaffolding** is external structure, tools, and saved state that help AI stay oriented.
 
+### Design workflows to survive interruption
+
+Multi-step AI work may time out, fail halfway through, receive the same request twice, or pause for human input. Save progress explicitly and make retries safe so the workflow can continue without losing work or repeating an action.
+
+**Ask:** If this stops halfway through or runs twice, what happens?
+
 ### Memory and project state are not the same thing
 
 Better model memory helps continuity, but important project truth may still need an external maintained record with clear authority.
@@ -259,9 +265,10 @@ Use these during product discovery, design reviews, client conversations, and AI
 7. What representative scenarios and real failures should become evals?
 8. What important project state should live outside the model?
 9. How will we recover when a multi-step agent gets something wrong?
-10. How will we inspect what the agent actually did after the fact?
-11. Do all steps need the strongest model, or can we route work differently?
-12. Does this interaction fit the user's real workflow, or are we adding AI-shaped friction?
-13. Which source systems does the AI truly need, and can access remain permissioned?
-14. What are we measuring after launch: quality, latency, cost, review burden, and user value?
-15. If the AI improves, does this product or workflow still earn its maintenance cost?
+10. If this fails halfway through or runs twice, can it recover safely?
+11. How will we inspect what the agent actually did after the fact?
+12. Do all steps need the strongest model, or can we route work differently?
+13. Does this interaction fit the user's real workflow, or are we adding AI-shaped friction?
+14. Which source systems does the AI truly need, and can access remain permissioned?
+15. What are we measuring after launch: quality, latency, cost, review burden, and user value?
+16. If the AI improves, does this product or workflow still earn its maintenance cost?
