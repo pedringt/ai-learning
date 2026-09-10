@@ -97,6 +97,12 @@ check('zero-proposal Review has only the Mark reviewed decision',
 const separatedReviewHtml=openItems.reviewCard(proposedReview,false,true);
 check('Review records have subtle spacing and a theme-aware top divider between records',
   separatedReviewHtml.includes('margin:12px 0 0') && separatedReviewHtml.includes('border-top:1px solid var(--line)'));
+check('collapsed Review uses a right chevron',
+  separatedReviewHtml.includes('<span class="question-card-chevron" aria-hidden="true">›</span>'));
+const expandedReviewHtml=openItems.reviewCard(proposedReview,true,true);
+check('expanded Review uses an up chevron',
+  expandedReviewHtml.includes('<span class="question-card-chevron" aria-hidden="true">⌃</span>'));
+
 const questionRecordHtml=openItems.render({
   reviewsStatus:'loaded',questionsStatus:'loaded',draftsStatus:'loaded',
   reviews:[],questions:[{...question,origin:'Manual',created:'Sep 10'}],draftNotes:[],notes:[],
