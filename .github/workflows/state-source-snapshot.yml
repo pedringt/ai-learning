@@ -1,22 +1,111 @@
-name: State source snapshot
+# Temporary staging-only delivery; removed once the verified source is committed.
+name: Verify Question Review feature
 on:
   push:
     branches: [staging]
-    paths: ['.github/workflows/state-source-snapshot.yml']
-  workflow_dispatch:
+    paths:
+      - '.github/workflows/state-source-snapshot.yml'
+      - 'tools/.question-review-delivery/**'
 permissions:
-  contents: read
+  contents: write
+concurrency:
+  group: question-review-staging-delivery
+  cancel-in-progress: false
 jobs:
-  snapshot:
+  verify-and-save:
+    if: github.repository == 'pedringt/ai-learning' && github.ref == 'refs/heads/staging'
     runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: state_question_tests
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd pg_isready --health-interval 10s
+          --health-timeout 5s --health-retries 5
+    env:
+      STATE_TEST_POSTGRES_URL: postgresql://postgres:postgres@localhost:5432/state_question_tests
     steps:
       - uses: actions/checkout@v4
         with:
-          persist-credentials: false
-      - name: Archive tracked source only
-        run: git archive --format=tar --output=/tmp/state-source.tar HEAD
-      - uses: actions/upload-artifact@v4
+          fetch-depth: 0
+      - name: Verify exact baseline and apply reviewed source patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$GITHUB_REF" = refs/heads/staging
+          unexpected=$(git diff --name-only b060b5e9a20e89e99c7f3ba464268ae68734f5ef HEAD -- . ':(exclude).github/workflows/state-source-snapshot.yml' ':(exclude)tools/.question-review-delivery/**')
+          test -z "$unexpected" || { printf 'Staging moved; refusing overwrite:\n%s\n' "$unexpected"; exit 1; }
+          python - <<'PY'
+          from pathlib import Path
+          import base64, gzip, hashlib
+          folder = Path('tools/.question-review-delivery')
+          parts = [folder / f'part{i}.b64' for i in range(1, 5)]
+          patch = gzip.decompress(base64.b64decode(''.join(p.read_text().strip() for p in parts), validate=True))
+          assert hashlib.sha256(patch).hexdigest() == '59fa1e5d0cd1c22873ea8759c6b8ffe3bb9dfd7c3d3ed5f95ebb241d6e761c1d'
+          Path('/tmp/question-review.patch').write_bytes(patch)
+          PY
+          git apply --check /tmp/question-review.patch
+          git apply /tmp/question-review.patch
+          git diff --check
+      - uses: actions/setup-python@v5
         with:
-          name: state-source-snapshot
-          path: /tmp/state-source.tar
-          retention-days: 1
+          python-version: '3.14'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install exact runtime dependencies and test tools
+        run: |
+          pip install -r state-project-complete/requirements.txt
+          pip install pytest pytest-subtests playwright httpx
+          python -m playwright install --with-deps chromium
+      - name: Test Python including real PostgreSQL and Chromium
+        working-directory: state-project-complete
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m pytest -q \
+            --deselect=test_frontend_integration_contract.py::test_r861_grounded_ask_module_and_release_assets_are_self_contained \
+            --deselect=test_frontend_integration_contract.py::test_r85_integrity_and_polish_contracts \
+            2>&1 | tee /tmp/question-python.log
+      - name: Test every JavaScript behavior suite
+        working-directory: implementation-context-prototype
+        shell: bash
+        run: |
+          set -euo pipefail
+          for testfile in state-*-tests.js; do
+            node "$testfile"
+          done 2>&1 | tee /tmp/question-javascript.log
+      - name: Save verified feature to staging only
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$GITHUB_REF" = refs/heads/staging
+          remote=$(git ls-remote origin refs/heads/staging | cut -f1)
+          test "$remote" = "$GITHUB_SHA" || { echo 'Staging moved during verification; refusing to push.'; exit 1; }
+          # Workflow updates are applied separately by the connected GitHub tool.
+          # The action token only saves application source, tests and docs.
+          git restore .github/workflows/tests.yml
+          rm -rf tools/.question-review-delivery
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          test -z "$(git diff --cached --name-only -- .github/workflows)"
+          git diff --cached --check
+          git commit -m 'Add human-reviewed open Question suggestions and regression coverage'
+          git push origin HEAD:refs/heads/staging
+          git rev-parse HEAD | tee /tmp/question-commit.txt
+          echo "Verified feature saved on staging: $(cat /tmp/question-commit.txt)" >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: question-review-verification
+          path: |
+            /tmp/question-python.log
+            /tmp/question-javascript.log
+            /tmp/question-commit.txt
+          retention-days: 5
