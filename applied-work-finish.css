@@ -1,241 +1,243 @@
-/* Applied Work hierarchy. This file intentionally overrides the older portfolio grid rules in site-shell-base.css. */
+/* Applied Work: explicit hierarchy for one flagship project plus supporting cases. */
 
-#ai-cs-mock [data-page="portfolio"]:not(.active){
+#ai-cs-mock #portfolio::before,
+#ai-cs-mock #portfolio::after{
   display:none!important;
+  content:none!important;
 }
 
-#ai-cs-mock [data-page="portfolio"].active{
+#ai-cs-mock #portfolio .portfolio-intro{
+  max-width:900px!important;
+  margin-bottom:28px!important;
+}
+
+#ai-cs-mock #portfolio .portfolio-flagship{
   display:grid!important;
-  grid-template-columns:repeat(2,minmax(0,1fr))!important;
-  column-gap:18px!important;
-  row-gap:0!important;
-  align-items:start!important;
-}
-
-#ai-cs-mock [data-page="portfolio"] > .page-intro{
-  grid-column:1/-1!important;
-  order:1!important;
-}
-
-/* The old Primary work / Supporting work labels no longer match the hierarchy. */
-#ai-cs-mock [data-page="portfolio"] > .applied-group-kicker{
-  display:none!important;
-}
-
-/* Flatten the two legacy card wrappers so every card can participate in one clean grid. */
-#ai-cs-mock [data-page="portfolio"] > .applied-major-grid,
-#ai-cs-mock [data-page="portfolio"] > .applied-secondary-grid{
-  display:contents!important;
-}
-
-/* Flagship State card */
-#ai-cs-mock [data-page="portfolio"] .applied-major-grid > .applied-major:first-child{
-  order:2!important;
-  grid-column:1/-1!important;
-  display:grid!important;
-  grid-template-columns:minmax(0,.86fr) minmax(420px,1.14fr)!important;
-  column-gap:34px!important;
+  grid-template-columns:minmax(0,.78fr) minmax(0,1.22fr)!important;
+  gap:32px!important;
   align-items:center!important;
-  min-height:0!important;
-  height:auto!important;
-  padding:34px!important;
-  border-color:color-mix(in srgb,var(--purple) 34%,var(--border))!important;
-  background:linear-gradient(145deg,color-mix(in srgb,var(--softp) 86%,var(--card)) 0%,var(--card) 76%)!important;
-  box-shadow:0 16px 36px color-mix(in srgb,var(--purple) 10%,transparent)!important;
+  margin:0!important;
+  padding:30px!important;
+  border:1px solid color-mix(in srgb,var(--purple) 30%,var(--border))!important;
+  border-radius:22px!important;
+  background:linear-gradient(145deg,color-mix(in srgb,var(--softp) 80%,var(--card)) 0%,var(--card) 76%)!important;
+  box-shadow:0 16px 36px color-mix(in srgb,var(--purple) 9%,transparent)!important;
   overflow:hidden!important;
 }
 
-#ai-cs-mock [data-page="portfolio"] .applied-major-grid > .applied-major:first-child > .tag,
-#ai-cs-mock [data-page="portfolio"] .applied-major-grid > .applied-major:first-child > h3,
-#ai-cs-mock [data-page="portfolio"] .applied-major-grid > .applied-major:first-child > .card-intro,
-#ai-cs-mock [data-page="portfolio"] .applied-major-grid > .applied-major:first-child > .applied-card-actions{
-  grid-column:1!important;
+#ai-cs-mock #portfolio .portfolio-flagship-copy{
+  min-width:0!important;
 }
 
-#ai-cs-mock [data-page="portfolio"] .applied-major-grid > .applied-major:first-child > .tag{
-  width:max-content!important;
-  align-self:end!important;
-  color:var(--purple)!important;
+#ai-cs-mock #portfolio .portfolio-flagship .tag{
+  margin-bottom:12px!important;
 }
 
-#ai-cs-mock [data-page="portfolio"] .applied-major-grid > .applied-major:first-child > h3{
-  margin:12px 0 12px!important;
-  font-size:34px!important;
-  line-height:1.12!important;
+#ai-cs-mock #portfolio .portfolio-flagship h3{
+  margin:0 0 12px!important;
+  font-size:clamp(34px,4vw,48px)!important;
+  line-height:1!important;
+  letter-spacing:-.035em!important;
 }
 
-#ai-cs-mock [data-page="portfolio"] .applied-major-grid > .applied-major:first-child > .card-intro{
-  max-width:620px!important;
-  margin:0 0 20px!important;
+#ai-cs-mock #portfolio .portfolio-flagship h3 a{
+  color:var(--ink)!important;
+  text-decoration:none!important;
+}
+
+#ai-cs-mock #portfolio .portfolio-flagship-lead{
+  max-width:520px!important;
+  margin:0!important;
+  color:var(--muted)!important;
   font-size:17px!important;
   line-height:1.58!important;
 }
 
-#ai-cs-mock [data-page="portfolio"] .applied-major-grid > .applied-major:first-child > .applied-card-actions{
-  margin-top:0!important;
+#ai-cs-mock #portfolio .portfolio-authority{
+  margin:14px 0 0!important;
+  color:var(--ink)!important;
+  font-size:14px!important;
+  line-height:1.5!important;
+  font-weight:750!important;
 }
 
-#ai-cs-mock [data-page="portfolio"] .applied-major-grid > .applied-major:first-child::after{
-  content:""!important;
+#ai-cs-mock #portfolio .portfolio-flagship-actions{
+  display:flex!important;
+  flex-wrap:wrap!important;
+  gap:10px 18px!important;
+  margin-top:24px!important;
+}
+
+#ai-cs-mock #portfolio .portfolio-flagship-actions a{
+  font-size:13px!important;
+  line-height:1.2!important;
+  font-weight:850!important;
+  text-decoration:none!important;
+}
+
+#ai-cs-mock #portfolio .portfolio-primary-action,
+#ai-cs-mock #portfolio .portfolio-secondary-action{
+  color:var(--purple)!important;
+}
+
+#ai-cs-mock #portfolio .portfolio-flagship-media{
   display:block!important;
-  grid-column:2!important;
-  grid-row:1/5!important;
-  width:100%!important;
-  min-height:310px!important;
-  align-self:stretch!important;
-  border:1px solid color-mix(in srgb,var(--purple) 20%,var(--border))!important;
+  min-width:0!important;
+  overflow:hidden!important;
+  border:1px solid color-mix(in srgb,var(--purple) 18%,var(--border))!important;
   border-radius:16px!important;
-  background-image:url("assets/state-workspace-card.webp")!important;
-  background-position:center top!important;
-  background-size:cover!important;
-  background-repeat:no-repeat!important;
+  background:var(--soft)!important;
   box-shadow:0 12px 28px rgba(20,24,40,.10)!important;
 }
 
-/* Section label between the flagship and its two supporting cases. */
-#ai-cs-mock [data-page="portfolio"]::before{
-  content:"Go deeper into State"!important;
+#ai-cs-mock #portfolio .portfolio-flagship-media img{
   display:block!important;
-  order:3!important;
-  grid-column:1/-1!important;
-  margin:30px 0 14px!important;
-  padding:0 0 9px!important;
-  border:0!important;
-  border-bottom:1px solid var(--border)!important;
-  border-radius:0!important;
-  background:transparent!important;
-  color:var(--muted)!important;
-  font-size:11px!important;
-  line-height:1.2!important;
-  font-weight:850!important;
-  letter-spacing:.08em!important;
-  text-transform:uppercase!important;
+  width:100%!important;
+  height:auto!important;
+  aspect-ratio:1.91 / 1!important;
+  object-fit:cover!important;
+  object-position:left top!important;
 }
 
-/* State deep dives */
-#ai-cs-mock [data-page="portfolio"] .applied-secondary-grid > a[href="state-testing-debugging.html"],
-#ai-cs-mock [data-page="portfolio"] .applied-secondary-grid > a[href="state-ai-search-learning.html"],
-#ai-cs-mock [data-page="portfolio"] .applied-secondary-grid > a[href="state-architecture-cost.html"]{
-  order:4!important;
-  grid-column:auto!important;
+#ai-cs-mock #portfolio .portfolio-section{
+  margin-top:36px!important;
+  padding-top:24px!important;
+  border-top:1px solid var(--border)!important;
+}
+
+#ai-cs-mock #portfolio .portfolio-section-heading{
+  display:flex!important;
+  align-items:flex-end!important;
+  justify-content:space-between!important;
+  gap:24px!important;
+  margin-bottom:16px!important;
+}
+
+#ai-cs-mock #portfolio .portfolio-section-heading h3{
+  margin:0!important;
+  color:var(--ink)!important;
+  font-size:21px!important;
+  line-height:1.25!important;
+  letter-spacing:-.015em!important;
+}
+
+#ai-cs-mock #portfolio .portfolio-section-heading p{
+  max-width:560px!important;
+  margin:0!important;
+  color:var(--muted)!important;
+  font-size:13px!important;
+  line-height:1.5!important;
+  text-align:right!important;
+}
+
+#ai-cs-mock #portfolio .portfolio-deep-grid,
+#ai-cs-mock #portfolio .portfolio-other-grid{
+  display:grid!important;
+  grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  gap:14px!important;
+  align-items:stretch!important;
+}
+
+#ai-cs-mock #portfolio .portfolio-card{
+  display:flex!important;
+  flex-direction:column!important;
+  min-width:0!important;
   min-height:0!important;
   height:auto!important;
-  margin:0!important;
-  padding:22px 24px!important;
-  align-self:stretch!important;
-  background:color-mix(in srgb,var(--softp) 48%,var(--card))!important;
-  border-color:color-mix(in srgb,var(--purple) 24%,var(--border))!important;
+  position:relative!important;
+  overflow:hidden!important;
+  padding:20px 22px!important;
+  border:1px solid var(--border)!important;
+  border-radius:16px!important;
+  background:var(--card)!important;
+  color:var(--ink)!important;
+  text-decoration:none!important;
+  box-shadow:0 8px 24px color-mix(in srgb,var(--purple) 4%,transparent)!important;
+  transition:transform .16s ease,border-color .16s ease,background .16s ease,box-shadow .16s ease!important;
 }
 
-#ai-cs-mock [data-page="portfolio"] .applied-secondary-grid > a[href^="state-"] h3{
-  margin:0 0 10px!important;
+#ai-cs-mock #portfolio .portfolio-card:hover{
+  transform:translateY(-2px)!important;
+  border-color:color-mix(in srgb,var(--purple) 32%,var(--border))!important;
+  box-shadow:0 12px 28px color-mix(in srgb,var(--purple) 8%,transparent)!important;
+}
+
+#ai-cs-mock #portfolio .portfolio-deep-card{
+  padding:18px 20px!important;
+  background:color-mix(in srgb,var(--softp) 42%,var(--card))!important;
+  border-color:color-mix(in srgb,var(--purple) 22%,var(--border))!important;
+}
+
+#ai-cs-mock #portfolio .portfolio-card .tag{
+  margin-bottom:10px!important;
+}
+
+#ai-cs-mock #portfolio .portfolio-card h4{
+  margin:0 0 8px!important;
   color:var(--purple)!important;
   font-size:20px!important;
   line-height:1.25!important;
+  letter-spacing:-.018em!important;
 }
 
-#ai-cs-mock [data-page="portfolio"] .applied-secondary-grid > a[href^="state-"] .card-intro{
+#ai-cs-mock #portfolio .portfolio-deep-card h4{
+  font-size:18px!important;
+}
+
+#ai-cs-mock #portfolio .portfolio-card p{
   margin:0!important;
-  font-size:14px!important;
+  color:var(--muted)!important;
+  font-size:13.5px!important;
   line-height:1.55!important;
 }
 
-/* Section label for the remaining portfolio work. */
-#ai-cs-mock [data-page="portfolio"]::after{
-  content:"Other applied work"!important;
-  display:block!important;
-  order:5!important;
-  grid-column:1/-1!important;
-  margin:32px 0 14px!important;
-  padding:0 0 9px!important;
-  border-bottom:1px solid var(--border)!important;
-  color:var(--muted)!important;
-  font-size:11px!important;
+#ai-cs-mock #portfolio .portfolio-card-path{
+  margin-top:auto!important;
+  padding-top:14px!important;
+  color:var(--purple)!important;
+  font-size:12px!important;
   line-height:1.2!important;
   font-weight:850!important;
-  letter-spacing:.08em!important;
-  text-transform:uppercase!important;
-}
-
-/* Legal AI + Meridian */
-#ai-cs-mock [data-page="portfolio"] .applied-major-grid > a[href="legal-ai-governance.html"],
-#ai-cs-mock [data-page="portfolio"] .applied-secondary-grid > a[href="meridian.html"]{
-  order:6!important;
-  grid-column:auto!important;
-  min-height:0!important;
-  height:auto!important;
-  margin:0!important;
-  padding:22px 24px!important;
-  align-self:stretch!important;
-  background:var(--card)!important;
-}
-
-#ai-cs-mock [data-page="portfolio"] .applied-major-grid > a[href="legal-ai-governance.html"] h3,
-#ai-cs-mock [data-page="portfolio"] .applied-secondary-grid > a[href="meridian.html"] h3{
-  margin:0 0 10px!important;
-  font-size:20px!important;
-  line-height:1.25!important;
-}
-
-#ai-cs-mock [data-page="portfolio"] .applied-major-grid > a[href="legal-ai-governance.html"] .card-intro,
-#ai-cs-mock [data-page="portfolio"] .applied-secondary-grid > a[href="meridian.html"] .card-intro{
-  margin:0!important;
-  font-size:14px!important;
-  line-height:1.55!important;
-}
-
-/* Updated intro copy without changing the large legacy index file. */
-#ai-cs-mock [data-page="portfolio"] .page-intro .section-lead{
-  font-size:0!important;
-}
-#ai-cs-mock [data-page="portfolio"] .page-intro .section-lead::after{
-  content:"A product I built, the decisions behind it, and other AI opportunities I've evaluated."!important;
-  display:block!important;
-  font-size:16px!important;
-  line-height:1.6!important;
-  color:var(--muted)!important;
 }
 
 @media(max-width:900px){
-  #ai-cs-mock [data-page="portfolio"].active{
+  #ai-cs-mock #portfolio .portfolio-flagship{
     grid-template-columns:1fr!important;
+    gap:24px!important;
   }
-  #ai-cs-mock [data-page="portfolio"] .applied-major-grid > .applied-major:first-child{
-    grid-template-columns:1fr!important;
-    padding:28px!important;
+  #ai-cs-mock #portfolio .portfolio-flagship-lead{
+    max-width:700px!important;
   }
-  #ai-cs-mock [data-page="portfolio"] .applied-major-grid > .applied-major:first-child::after{
-    grid-column:1!important;
-    grid-row:auto!important;
-    min-height:260px!important;
-    margin-top:22px!important;
+  #ai-cs-mock #portfolio .portfolio-section-heading{
+    display:block!important;
   }
-  #ai-cs-mock [data-page="portfolio"] .applied-secondary-grid > a[href="state-testing-debugging.html"],
-  #ai-cs-mock [data-page="portfolio"] .applied-secondary-grid > a[href="state-ai-search-learning.html"],
-  #ai-cs-mock [data-page="portfolio"] .applied-secondary-grid > a[href="state-architecture-cost.html"],
-  #ai-cs-mock [data-page="portfolio"] .applied-major-grid > a[href="legal-ai-governance.html"],
-  #ai-cs-mock [data-page="portfolio"] .applied-secondary-grid > a[href="meridian.html"]{
-    grid-column:1!important;
-  }
-  #ai-cs-mock [data-page="portfolio"] .applied-secondary-grid > a[href="state-ai-search-learning.html"],
-  #ai-cs-mock [data-page="portfolio"] .applied-secondary-grid > a[href="state-architecture-cost.html"],
-  #ai-cs-mock [data-page="portfolio"] .applied-secondary-grid > a[href="meridian.html"]{
-    margin-top:12px!important;
+  #ai-cs-mock #portfolio .portfolio-section-heading p{
+    max-width:700px!important;
+    margin-top:5px!important;
+    text-align:left!important;
   }
 }
 
-@media(max-width:560px){
-  #ai-cs-mock [data-page="portfolio"] .applied-major-grid > .applied-major:first-child{
+@media(max-width:680px){
+  #ai-cs-mock #portfolio .portfolio-flagship{
     padding:22px!important;
+    border-radius:18px!important;
   }
-  #ai-cs-mock [data-page="portfolio"] .applied-major-grid > .applied-major:first-child > h3{
-    font-size:28px!important;
+  #ai-cs-mock #portfolio .portfolio-flagship h3{
+    font-size:34px!important;
   }
-  #ai-cs-mock [data-page="portfolio"] .applied-major-grid > .applied-major:first-child > .card-intro{
+  #ai-cs-mock #portfolio .portfolio-flagship-lead{
     font-size:15.5px!important;
   }
-  #ai-cs-mock [data-page="portfolio"] .applied-major-grid > .applied-major:first-child::after{
-    min-height:210px!important;
+  #ai-cs-mock #portfolio .portfolio-flagship-media{
     border-radius:12px!important;
+  }
+  #ai-cs-mock #portfolio .portfolio-deep-grid,
+  #ai-cs-mock #portfolio .portfolio-other-grid{
+    grid-template-columns:1fr!important;
+  }
+  #ai-cs-mock #portfolio .portfolio-section{
+    margin-top:30px!important;
+    padding-top:20px!important;
   }
 }

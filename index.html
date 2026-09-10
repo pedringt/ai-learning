@@ -1226,19 +1226,70 @@ body.v88-dark .learning-how-note strong{color:#f5f2fb!important}
 </section>
 <section aria-label="Deeper learning resources" class="site-go-deeper band"><h3>Go deeper</h3><p class="section-lead" style="margin-bottom:0">Use these as optional references when a topic deserves more depth; they are not all required reading.</p><div class="resource-row"><a class="resource-link" href="https://academy.claude.com/" rel="noopener noreferrer" target="_blank">Anthropic Academy</a><a class="resource-link" href="https://academy.claude.com/all?category=fluency&amp;kind=tutorial" rel="noopener noreferrer" target="_blank">AI Fluency tutorials</a><a class="resource-link" href="https://www.anthropic.com/learn/claude-for-work" rel="noopener noreferrer" target="_blank">Claude for Work</a><a class="resource-link" href="https://docs.anthropic.com/" rel="noopener noreferrer" target="_blank">Anthropic docs</a></div></section>
 </section>
-<section class="view" data-page="portfolio" id="portfolio"><header class="page-intro"><div class="eyebrow">Applied Work</div><h2 class="section-title">Projects and opportunity evaluations</h2><p class="section-lead">State is the deepest project here. Legal AI is the strongest opportunity evaluation; the smaller exercises are supporting work.</p></header>
-<div class="section-kicker applied-group-kicker"><span>Primary work</span></div>
-<div class="applied-major-grid">
-<div class="card applied-major applied-major-with-actions"><span class="tag">Flagship project</span><h3><a class="applied-card-primary-link" href="implementation-context.html">State</a></h3><p class="card-intro">A project-context product I built and tested to understand what AI should be allowed to change. AI interprets → software enforces → people authorize.</p><div class="applied-card-actions"><a href="implementation-context.html">Read case study →</a><a href="implementation-context-prototype/index.html">Open State →</a></div></div>
-<a class="card nav-card applied-major" href="legal-ai-governance.html"><span class="tag">Opportunity evaluation</span><h3>Legal AI Governance</h3><p class="card-intro">I investigated a documented compliance gap and found that the firms with the clearest structural need may be the least attractive clients to pursue one at a time. My recommendation: do not propose an offering until direct customer discovery changes that commercial picture.</p></a>
-</div>
-<div class="section-kicker applied-group-kicker"><span>Supporting work</span></div>
-<div class="applied-secondary-grid">
-<a class="card nav-card applied-secondary" href="state-testing-debugging.html"><span class="tag">Validation &amp; debugging</span><h3>Testing &amp; Debugging State</h3><p class="card-intro">How I combined hands-on QA, AI-assisted automated coverage, and failure investigation to distinguish model, retrieval, implementation, and product-design failures.</p></a>
-<a class="card nav-card applied-secondary" href="state-ai-search-learning.html"><span class="tag">Architecture &amp; cost</span><h3>State Architecture &amp; Cost: Before vs. After</h3><p class="card-intro">I revisited the architecture and cost assumptions I made before integrating AI into State and compared them with what the working product taught me about model choice, latency, context, and what should stay deterministic.</p></a>
-<a class="card nav-card applied-secondary" href="meridian.html"><span class="tag">Simulated pilot · Customer support</span><h3>Meridian AI Support Pilot</h3><p class="card-intro">How an AI-assisted support pilot handles a ticket step by step, the discovery questions that most changed the design, and the pilot metrics I revised once evidence didn’t support my first answer.</p></a>
-</div>
+<section class="view" data-page="portfolio" id="portfolio">
+<header class="page-intro portfolio-intro">
+  <div class="eyebrow">Applied Work</div>
+  <h2 class="section-title">Projects and opportunity evaluations</h2>
+  <p class="section-lead">A product I built, the decisions behind it, and other AI opportunities I've evaluated.</p>
+</header>
 
+<article class="portfolio-flagship" aria-labelledby="portfolio-state-title">
+  <div class="portfolio-flagship-copy">
+    <span class="tag">Flagship project</span>
+    <h3 id="portfolio-state-title"><a href="implementation-context.html">State</a></h3>
+    <p class="portfolio-flagship-lead">A project-context product I built and tested to understand what AI should be allowed to change.</p>
+    <p class="portfolio-authority">AI interprets → software enforces → people authorize.</p>
+    <div class="portfolio-flagship-actions">
+      <a class="portfolio-primary-action" href="implementation-context.html">Read case study →</a>
+      <a class="portfolio-secondary-action" href="implementation-context-prototype/index.html">Open State →</a>
+    </div>
+  </div>
+  <a class="portfolio-flagship-media" href="implementation-context-prototype/index.html" aria-label="Open the State product">
+    <img src="assets/state-workspace-card.webp" alt="State Workspace showing items waiting for review, recent project changes, and current project state." loading="lazy" decoding="async"/>
+  </a>
+</article>
+
+<section class="portfolio-section portfolio-deep-dives" aria-labelledby="portfolio-deep-dives-title">
+  <header class="portfolio-section-heading">
+    <h3 id="portfolio-deep-dives-title">Go deeper into State</h3>
+    <p>Focused cases on how I tested the product and what building it changed.</p>
+  </header>
+  <div class="portfolio-deep-grid">
+    <a class="portfolio-card portfolio-deep-card" href="state-testing-debugging.html">
+      <span class="tag">Validation &amp; debugging</span>
+      <h4>Testing &amp; Debugging</h4>
+      <p>How I tested State and traced failures to the right layer before deciding what to change.</p>
+      <span class="portfolio-card-path">Read case →</span>
+    </a>
+    <a class="portfolio-card portfolio-deep-card" href="state-architecture-cost.html">
+      <span class="tag">Architecture &amp; cost</span>
+      <h4>Architecture &amp; Cost: Before vs. After</h4>
+      <p>What building State changed about my assumptions on model choice, latency, context, cost, and what should stay deterministic.</p>
+      <span class="portfolio-card-path">Read case →</span>
+    </a>
+  </div>
+</section>
+
+<section class="portfolio-section portfolio-other-work" aria-labelledby="portfolio-other-title">
+  <header class="portfolio-section-heading">
+    <h3 id="portfolio-other-title">Other applied work</h3>
+    <p>Different problems that show how I evaluate opportunities, workflows, evidence, and tradeoffs.</p>
+  </header>
+  <div class="portfolio-other-grid">
+    <a class="portfolio-card portfolio-other-card" href="legal-ai-governance.html">
+      <span class="tag">Opportunity evaluation</span>
+      <h4>Legal AI Governance</h4>
+      <p>I investigated a documented compliance gap and found that the firms with the clearest structural need may be the least attractive clients to pursue one at a time. My recommendation: do not propose an offering until direct customer discovery changes that commercial picture.</p>
+      <span class="portfolio-card-path">Read evaluation →</span>
+    </a>
+    <a class="portfolio-card portfolio-other-card" href="meridian.html">
+      <span class="tag">Simulated pilot · Customer support</span>
+      <h4>Meridian AI Support Pilot</h4>
+      <p>A simulated support pilot showing the workflow, discovery questions, and metrics I revised when the evidence did not support my first answer.</p>
+      <span class="portfolio-card-path">Read pilot →</span>
+    </a>
+  </div>
+</section>
 </section>
 <script>
 (()=>{const root=document.getElementById('ai-cs-mock');if(!root)return;root.querySelectorAll('[data-page="home"] .journey .step').forEach(step=>{step.style.cursor='default';step.removeAttribute('tabindex');step.removeAttribute('role');});})();
