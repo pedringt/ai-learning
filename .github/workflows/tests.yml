@@ -21,6 +21,23 @@ on:
 jobs:
   python:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: state_question_tests
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      # Ephemeral runner-only database; never a staging/production connection.
+      STATE_TEST_POSTGRES_URL: postgresql://postgres:postgres@localhost:5432/state_question_tests
     steps:
       - uses: actions/checkout@v4
 

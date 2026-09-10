@@ -89,3 +89,27 @@ check that Current State/History did not change. Repeat with dismissal and with
 an already-open Question. Ask about unresolved issues before and after approval.
 
 Keep all changes on staging until the user explicitly authorizes main promotion.
+
+## Verification record (September 10, 2026)
+
+Feature implementation commit: `5c1f2bc51e25db6f75e099123736abd5ac43c7d3` on staging.
+GitHub verification run: https://github.com/pedringt/ai-learning/actions/runs/34543108027
+
+The complete Python CI command passed with **407 passed, 44 skipped,
+2 pre-existing deselections, and 7 subtests passed** using the pinned runtime
+dependencies, Python 3.14, real PostgreSQL 16, and Playwright Chromium. All
+**11 JavaScript behavior suites** passed, including 28 Question/Review handoff
+assertions. The new browser flows cover desktop/mobile creation, dismissal,
+duplicate linking, reload persistence, and Ask freshness after approval.
+
+The six legacy file-navigation browser tests that this editing container could
+not execute also passed in GitHub's normal browser environment. Database upgrade
+tests preserve existing seeded records and links on both SQLite and PostgreSQL;
+concurrency and rollback tests run against isolated test databases, not the
+user's staging or production records.
+
+These results validate software behavior, not the live model's judgment about
+when to suggest a Question. Provider-backed product evals and a deployed staging
+walkthrough remain separate checks before any requested promotion to main.
+The temporary source-transfer files and delivery workflow are removed after
+verification; the permanent tests workflow retains the PostgreSQL test service.
