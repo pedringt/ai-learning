@@ -101,10 +101,20 @@ const renderedOpenItems=openItems.render({
   openItemSections:{reviews:null,blockers:null,questions:null,drafts:null},
   renderDraftNote:()=>'',
 });
-check('Needs your review explains the two kinds of Review before the cards',
-  renderedOpenItems.includes('How reviews work:') &&
-  renderedOpenItems.includes('Some evidence suggests a change to Current State.') &&
-  renderedOpenItems.includes('Otherwise, simply mark the review complete.'));
+check('Open Items uses concise page and section copy',
+  renderedOpenItems.includes('Review decisions, blockers, and unresolved questions.') &&
+  renderedOpenItems.includes('Human decisions waiting on you.') &&
+  renderedOpenItems.includes('Questions stopping progress.') &&
+  renderedOpenItems.includes('Important unknowns to keep visible.') &&
+  renderedOpenItems.includes("Notes you haven't submitted yet."));
+check('Open Items removes redundant hierarchy and explainer copy',
+  !renderedOpenItems.includes('What still needs attention') &&
+  !renderedOpenItems.includes('How reviews work:') &&
+  !renderedOpenItems.includes('Act now') &&
+  !renderedOpenItems.includes('Resolve soon') &&
+  !renderedOpenItems.includes('Keep in mind') &&
+  !renderedOpenItems.includes('Finish up') &&
+  !renderedOpenItems.includes('Decide what is ready now'));
 
 // Regression coverage for a second bug found in a live-testing logic review
 // (2026-09-07): mapApiReview() used to accept a caller-supplied
