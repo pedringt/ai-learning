@@ -97,16 +97,19 @@ view at every width, in both themes, is pixel-identical. Tests unchanged.
 ## 2. Clarify Review action wording
 
 **Requested:** September 10, 2026
-**Status:** Wording-only change on `staging`. Broader Review behavior changes deferred.
-**Risk:** Low for current copy change; medium-large for future outcome-model work.
+**Status:** Wording/UI-only change on `staging`. Broader Review behavior changes deferred.
+**Risk:** Low for current UI change; medium-large for future outcome-model work.
 
 ### Current staging change
 
-Keep existing Review behavior intact and clarify only what the buttons say:
+Keep existing Review behavior intact and clarify only what the interface says and how Open Items is organized:
 
 - Reviews with a concrete proposed State change: **Update Current State** / **Keep Current State**.
-- Reviews with no proposed State change: **Mark reviewed** / **Keep Current State**.
+- Reviews with no proposed State change: **Mark reviewed** only.
 - Remove the misleading phrases **Accept as reviewed evidence**, **Update understanding**, and **Leave unchanged** from these Review actions.
+- Explain the Review distinction once at the top of Open Items instead of repeating helper text across the page and inside each Review.
+- Remove the bulky per-Review **No Current State change is proposed** message.
+- Add subtle spacing and theme-aware dividers between individual Reviews and Questions so record boundaries are easier to scan.
 
 No backend, schema, Question-resolution, History, or Review-resolution behavior
 changes are included in this pass.
