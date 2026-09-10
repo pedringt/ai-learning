@@ -89,8 +89,22 @@ const noProposalReview={
 const noProposalReviewHtml=openItems.reviewCard(noProposalReview,true,false);
 check('zero-proposal Review uses Mark reviewed instead of Accept as reviewed evidence',
   noProposalReviewHtml.includes('>Mark reviewed<') && !noProposalReviewHtml.includes('Accept as reviewed evidence'));
-check('zero-proposal Review keeps the same secondary Current State wording',
-  noProposalReviewHtml.includes('>Keep Current State<'));
+check('zero-proposal Review explains that no Current State change is proposed',
+  noProposalReviewHtml.includes('No Current State change is proposed.'));
+check('zero-proposal Review has only the Mark reviewed decision',
+  !noProposalReviewHtml.includes('>Keep Current State<') && !noProposalReviewHtml.includes('data-action="review-keep"'));
+
+const renderedOpenItems=openItems.render({
+  reviewsStatus:'loaded',questionsStatus:'loaded',draftsStatus:'loaded',
+  reviews:[noProposalReview],questions:[],draftNotes:[],notes:[],
+  openQuestionsExpanded:false,expandedReviewId:null,
+  openItemSections:{reviews:null,blockers:null,questions:null,drafts:null},
+  renderDraftNote:()=>'',
+});
+check('Needs your review explains the two kinds of Review before the cards',
+  renderedOpenItems.includes('How reviews work:') &&
+  renderedOpenItems.includes('Some evidence suggests a change to Current State.') &&
+  renderedOpenItems.includes('Otherwise, simply mark the review complete.'));
 
 // Regression coverage for a second bug found in a live-testing logic review
 // (2026-09-07): mapApiReview() used to accept a caller-supplied
