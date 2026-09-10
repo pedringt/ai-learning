@@ -89,10 +89,24 @@ const noProposalReview={
 const noProposalReviewHtml=openItems.reviewCard(noProposalReview,true,false);
 check('zero-proposal Review uses Mark reviewed instead of Accept as reviewed evidence',
   noProposalReviewHtml.includes('>Mark reviewed<') && !noProposalReviewHtml.includes('Accept as reviewed evidence'));
-check('zero-proposal Review explains that no Current State change is proposed',
-  noProposalReviewHtml.includes('No Current State change is proposed.'));
+check('zero-proposal Review does not add redundant no-change explainer inside the card',
+  !noProposalReviewHtml.includes('No Current State change is proposed.'));
 check('zero-proposal Review has only the Mark reviewed decision',
   !noProposalReviewHtml.includes('>Keep Current State<') && !noProposalReviewHtml.includes('data-action="review-keep"'));
+
+const separatedReviewHtml=openItems.reviewCard(proposedReview,false,true);
+check('Review records have subtle spacing and a top divider between records',
+  separatedReviewHtml.includes('margin:12px 0 0') && separatedReviewHtml.includes('border-top:1px solid #d9dde5'));
+const separatedQuestionHtml=openItems.questionDialogHtml ? openItems.questionDialogHtml : null;
+const questionRecordHtml=openItems.render({
+  reviewsStatus:'loaded',questionsStatus:'loaded',draftsStatus:'loaded',
+  reviews:[],questions:[{...question,origin:'Manual',created:'Sep 10'}],draftNotes:[],notes:[],
+  openQuestionsExpanded:false,expandedReviewId:null,
+  openItemSections:{reviews:null,blockers:null,questions:null,drafts:null},
+  renderDraftNote:()=>'',
+});
+check('Question records have subtle spacing and a top divider between records',
+  questionRecordHtml.includes('margin:10px 0 0') && questionRecordHtml.includes('border-top:1px solid #d9dde5'));
 
 const renderedOpenItems=openItems.render({
   reviewsStatus:'loaded',questionsStatus:'loaded',draftsStatus:'loaded',
@@ -101,13 +115,14 @@ const renderedOpenItems=openItems.render({
   openItemSections:{reviews:null,blockers:null,questions:null,drafts:null},
   renderDraftNote:()=>'',
 });
-check('Open Items uses concise page and section copy',
-  renderedOpenItems.includes('Review decisions, blockers, and unresolved questions.') &&
-  renderedOpenItems.includes('Human decisions waiting on you.') &&
-  renderedOpenItems.includes('Questions stopping progress.') &&
-  renderedOpenItems.includes('Important unknowns to keep visible.') &&
-  renderedOpenItems.includes('Notes you haven&#39;t submitted yet.'));
-check('Open Items removes redundant hierarchy and explainer copy',
+check('Open Items keeps the explanation once at the top of the page',
+  renderedOpenItems.includes('Reviews may propose a Current State change or simply need a human check.') &&
+  renderedOpenItems.includes('Blocking and open questions stay visible here too.'));
+check('Open Items removes repeated section descriptions and old hierarchy copy',
+  !renderedOpenItems.includes('Human decisions waiting on you.') &&
+  !renderedOpenItems.includes('Questions stopping progress.') &&
+  !renderedOpenItems.includes('Important unknowns to keep visible.') &&
+  !renderedOpenItems.includes('Notes you haven&#39;t submitted yet.') &&
   !renderedOpenItems.includes('What still needs attention') &&
   !renderedOpenItems.includes('How reviews work:') &&
   !renderedOpenItems.includes('Act now') &&
