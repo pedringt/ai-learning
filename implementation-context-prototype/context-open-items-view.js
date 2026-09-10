@@ -13,6 +13,13 @@
     while(banner&&banner!==document.body&&!String(banner.textContent||'').includes('Exploring State?')) banner=banner.parentElement;
     if(!banner||banner===document.body)return;
     banner.style?.setProperty?.('background','#fff','important');
+    trigger.style?.setProperty?.('border','0','important');
+    trigger.style?.setProperty?.('background','transparent','important');
+    trigger.style?.setProperty?.('box-shadow','none','important');
+    trigger.style?.setProperty?.('border-radius','0','important');
+    trigger.style?.setProperty?.('padding','4px 0','important');
+    trigger.style?.setProperty?.('min-height','0','important');
+    trigger.style?.setProperty?.('color','#1769e8','important');
   }
   document.addEventListener('DOMContentLoaded',polishExploringBanner,{once:true});
   setTimeout(polishExploringBanner,0);
