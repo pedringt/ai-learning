@@ -1,0 +1,22 @@
+name: State source snapshot
+on:
+  push:
+    branches: [staging]
+    paths: ['.github/workflows/state-source-snapshot.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  snapshot:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Archive tracked source only
+        run: git archive --format=tar --output=/tmp/state-source.tar HEAD
+      - uses: actions/upload-artifact@v4
+        with:
+          name: state-source-snapshot
+          path: /tmp/state-source.tar
+          retention-days: 1
