@@ -504,3 +504,51 @@ body.v88-dark .home-state-copy .home-state-lead + p,
     max-width:100%!important;
   }
 }
+
+/* v98.5 — Applied Work hierarchy is CSS-only on index.html, which does not load site-shell.js. */
+#ai-cs-mock [data-page="portfolio"]{
+  display:grid!important;
+  grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  column-gap:18px!important;
+}
+#ai-cs-mock [data-page="portfolio"] > .page-intro{grid-column:1/-1!important;order:1!important}
+#ai-cs-mock [data-page="portfolio"] > .applied-group-kicker:first-of-type{grid-column:1/-1!important;order:2!important}
+#ai-cs-mock [data-page="portfolio"] > .applied-major-grid,
+#ai-cs-mock [data-page="portfolio"] > .applied-secondary-grid{display:contents!important}
+#ai-cs-mock [data-page="portfolio"] .applied-major-grid > .applied-major:first-child{
+  grid-column:1/-1!important;order:3!important;min-height:0!important;padding:32px!important;
+  border-color:color-mix(in srgb,var(--purple) 32%,var(--border))!important;
+  background:linear-gradient(145deg,color-mix(in srgb,var(--softp) 88%,var(--card)) 0%,var(--card) 78%)!important;
+  box-shadow:0 14px 34px color-mix(in srgb,var(--purple) 9%,transparent)!important;
+}
+#ai-cs-mock [data-page="portfolio"] .applied-major-grid > .applied-major:first-child h3{font-size:34px!important;margin-bottom:12px!important}
+#ai-cs-mock [data-page="portfolio"] .applied-major-grid > .applied-major:first-child .card-intro{max-width:880px!important;font-size:17px!important;line-height:1.6!important}
+#ai-cs-mock [data-page="portfolio"] .applied-secondary-grid > a[href="state-testing-debugging.html"]{order:4!important}
+#ai-cs-mock [data-page="portfolio"] .applied-secondary-grid > a[href="state-architecture-cost.html"],
+#ai-cs-mock [data-page="portfolio"] .applied-secondary-grid > a[href="state-ai-search-learning.html"]{order:5!important}
+#ai-cs-mock [data-page="portfolio"] .applied-secondary-grid > a[href^="state-"]{
+  margin-top:12px!important;padding:20px!important;background:color-mix(in srgb,var(--softp) 42%,var(--card))!important;
+  border-color:color-mix(in srgb,var(--purple) 24%,var(--border))!important;
+}
+#ai-cs-mock [data-page="portfolio"] .applied-secondary-grid > a[href^="state-"] h3{color:var(--purple)!important;font-size:19px!important}
+#ai-cs-mock [data-page="portfolio"] .applied-secondary-grid > a[href^="state-"] .tag{color:var(--purple)!important}
+#ai-cs-mock [data-page="portfolio"] > .applied-group-kicker:nth-of-type(2){grid-column:1/-1!important;order:6!important;margin-top:34px!important}
+#ai-cs-mock [data-page="portfolio"] .applied-major-grid > a[href="legal-ai-governance.html"]{order:7!important}
+#ai-cs-mock [data-page="portfolio"] .applied-secondary-grid > a[href="meridian.html"]{order:8!important}
+#ai-cs-mock [data-page="portfolio"] .applied-major-grid > a[href="legal-ai-governance.html"],
+#ai-cs-mock [data-page="portfolio"] .applied-secondary-grid > a[href="meridian.html"]{min-height:0!important}
+#ai-cs-mock [data-page="portfolio"] .page-intro .section-lead{font-size:0!important}
+#ai-cs-mock [data-page="portfolio"] .page-intro .section-lead::after{
+  content:"A product I built, the decisions behind it, and other AI opportunities I've evaluated.";
+  display:block;font-size:16px;line-height:1.6;color:var(--muted)
+}
+#ai-cs-mock [data-page="portfolio"] > .applied-group-kicker:first-of-type span{font-size:0!important}
+#ai-cs-mock [data-page="portfolio"] > .applied-group-kicker:first-of-type span::after{content:"Flagship project";font-size:inherit}
+#ai-cs-mock [data-page="portfolio"] > .applied-group-kicker:nth-of-type(2) span{font-size:0!important}
+#ai-cs-mock [data-page="portfolio"] > .applied-group-kicker:nth-of-type(2) span::after{content:"Other applied work";font-size:inherit}
+@media(max-width:760px){
+  #ai-cs-mock [data-page="portfolio"]{grid-template-columns:1fr!important}
+  #ai-cs-mock [data-page="portfolio"] .applied-major-grid > .applied-major:first-child{padding:24px!important}
+  #ai-cs-mock [data-page="portfolio"] .applied-major-grid > .applied-major:first-child h3{font-size:28px!important}
+  #ai-cs-mock [data-page="portfolio"] .applied-secondary-grid > a[href^="state-"]{grid-column:1!important}
+}
