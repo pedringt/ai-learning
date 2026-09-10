@@ -1,6 +1,5 @@
 /* Small site-wide polish pass. Keep this layer visual and low-risk. */
 
-/* Consistent keyboard focus across standalone pages. */
 a:focus-visible,
 button:focus-visible,
 select:focus-visible,
@@ -9,7 +8,6 @@ summary:focus-visible{
   outline-offset:3px;
 }
 
-/* State: make the authority model read as one compact sequence, not three pills. */
 .flagship-case .integration-flow{
   display:flex;
   align-items:center;
@@ -36,7 +34,6 @@ summary:focus-visible{
 .flagship-case .integration-flow .human-step{color:var(--purple)}
 .flagship-case .integration-flow b{color:var(--muted);font-weight:600}
 
-/* State: supporting model cards stay quieter than the product-decision cards. */
 .flagship-case .state-model-grid article{
   box-shadow:none!important;
   background:color-mix(in srgb,var(--soft) 38%,var(--card))!important;
@@ -46,7 +43,20 @@ summary:focus-visible{
   border-color:color-mix(in srgb,var(--purple) 28%,var(--border));
 }
 
-/* Breadcrumb families should feel like the same component even where legacy markup differs. */
+/* Architecture supporting case: four concepts read as a balanced 2x2 set. */
+.flagship-case .state-model-grid.architecture-four-grid{
+  grid-template-columns:repeat(2,minmax(0,1fr))!important;
+}
+
+/* Main State case: supporting paths should look intentionally clickable. */
+.flagship-case .go-deeper-link{margin-top:18px!important;}
+.flagship-case .go-deeper-link .text-link{
+  color:var(--purple)!important;
+  font-weight:800!important;
+  text-decoration:none!important;
+}
+.flagship-case .go-deeper-link .text-link:hover{text-decoration:underline!important;}
+
 .meridian-breadcrumb,
 .site-breadcrumb{
   font-size:12px!important;
@@ -54,7 +64,6 @@ summary:focus-visible{
   line-height:1.4!important;
 }
 
-/* Legal AI: make the two closing blocks read as one deliberate ending. */
 .legal-paper .paper-learning{
   margin-top:30px;
   padding-top:24px;
@@ -67,7 +76,6 @@ summary:focus-visible{
 }
 .legal-paper .paper-learning + .paper-sources{margin-top:18px}
 
-/* Meridian is an older standalone page. Quiet its local chrome so it sits closer to the shared system. */
 .case-shell.site-page{
   max-width:1000px;
   padding-top:48px;
@@ -93,6 +101,7 @@ summary:focus-visible{
     overflow-x:auto;
     padding-bottom:4px;
   }
+  .flagship-case .state-model-grid.architecture-four-grid{grid-template-columns:1fr!important;}
   .case-shell.site-page{padding-top:34px}
 }
 
