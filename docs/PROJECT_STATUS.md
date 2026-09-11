@@ -56,6 +56,16 @@ Keep the treatment small: immediately show an obvious busy indicator and concise
 
 When implementation is requested, add delayed-response, duplicate-click, success, and failure/timeout coverage using an isolated or mocked reset endpoint, and check desktop/mobile visibility. This note does not authorize resetting shared staging or production data, implementing the change during the pause, or merging to main.
 
+### Additional user note: wide-screen Ask State launcher alignment (pending)
+
+The user reports that on very wide desktop screens the Ask State button moves far to the right while the rest of the app stays within its constrained layout, making the button feel detached from the product.
+
+**Recorded for follow-up only; not visually reproduced or fixed in this documentation update.** The base `.ask-state-launcher` rule in `implementation-context-prototype/context-product-polish.js` uses `position:fixed; right:24px; bottom:24px`, consistent with anchoring to the viewport rather than the app. Verify computed styles, later overrides, and the actual app container before choosing the fix.
+
+Keep the launcher available while scrolling, but align its horizontal position with the app's right edge once the viewport exceeds the app width. Reuse the real layout dimensions rather than inventing another maximum width. Preserve ordinary desktop spacing and the existing mobile icon/tap target. Check the opened drawer's relationship to the launcher without turning this into an Ask redesign.
+
+When implementation is requested, verify normal desktop and wide/ultrawide viewports (for example 1440, 1920, 2560 and 3440 CSS pixels), resizing, scrolling, navigation, drawer opening/closing, and mobile. Check for overlap and horizontal overflow. This is a small responsive-layout follow-up, not a Review logic issue or permission to change the paused app or main now.
+
 ## Current production state
 
 - Production branch: `main`.
