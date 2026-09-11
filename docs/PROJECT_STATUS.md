@@ -4,7 +4,7 @@ This is the canonical current-state handoff for State and the surrounding portfo
 
 ## Current production state
 
-_Last updated: September 10, 2026 during the AI-suggested Questions staging implementation._
+_Last updated: September 10, 2026 after the AI-suggested Questions live staging walkthrough._
 
 - Production branch: `main`.
 - Review branch: `staging`.
@@ -35,8 +35,15 @@ Production site:
 - Migration 009 preserves existing data and adds Question proposal persistence.
 - Scope, rollout notes, tests, and the model-eval handoff are in
   `docs/architecture/REVIEW_SUGGESTED_QUESTIONS.md`.
-- Implementation was tested locally against the available environment. The
-  pinned-dependency CI run, including isolated PostgreSQL, is the release gate.
+- Pinned-dependency CI passed, including isolated PostgreSQL and browser tests.
+- Deployed live-model/browser walkthrough passed all eight checks at `8ce2c7a`:
+  creation, dismissal, exact duplicate linking, no-change integrity, Ask freshness,
+  reload persistence, and a small sample of model-routing decisions.
+- Full results and two minor Ask prose eval notes are in
+  `docs/history/QUESTION_REVIEW_LIVE_QA_2026-09-10.md`.
+- Only test-created Reviews/Questions were closed; immutable test Evidence remains
+  in staging. The demo was not reset. Choose a clean baseline explicitly for formal evals.
+- The reusable live walkthrough is manual-only; it is not part of automatic CI.
 - No approval has been given to merge this feature into main.
 
 ## What changed on September 10

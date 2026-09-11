@@ -1,9 +1,8 @@
+# Manual only: makes real model calls and creates temporary staging records.
+# Do not add this to automatic CI. The script never resets the demo or touches main.
 name: Question Review live staging check
 on:
   workflow_dispatch: {}
-  push:
-    branches: [staging]
-    paths: [qa/deployed/question-review-live.js]
 permissions:
   contents: read
 concurrency:
