@@ -71,6 +71,12 @@ async function clickOutcome(row, label) {
   expect(res.ok(), 'Review resolution HTTP ' + res.status()).toBeTruthy();
   return res.json();
 }
+async function completedAsk() {
+  // Streaming previews also have .ask-live-answer. The Copy action is added
+  // only by renderFinalAsk, after the validated final payload has arrived.
+  await expect(page.locator('#askStateDrawerResult [data-review-batch-action="copy-ask-answer"]')).toBeVisible({ timeout: 90000 });
+  await expect(page.locator('#askStateDrawerResult .ask-live-error')).toHaveCount(0);
+}
 async function unchanged() {
   expect((await get('/api/state')).items).toEqual(baseline.state);
   expect((await get('/api/history')).items).toEqual(baseline.history);
@@ -124,7 +130,7 @@ async function unchanged() {
       await page.locator('#askStateLauncher').click();
       const query = 'What do we know about whether Northstar agents carefully check AI drafts before approving them? Separate accepted facts from unresolved concerns.';
       await page.locator('#askStateDrawerInput').fill(query); await page.locator('#askStateDrawerInput').press('Enter');
-      await expect(page.locator('#askStateDrawerResult .ask-live-answer')).toBeVisible({ timeout: 75000 });
+      await completedAsk();
       report.asks.before = await page.locator('#askStateDrawerResult').innerText(); save();
       await page.locator('[data-review-batch-action="close-ask"]').click();
       const row = page.locator('[data-review-card="' + r.id + '"]');
@@ -137,11 +143,12 @@ async function unchanged() {
       expect(!!q.blocking).toBe(false); await unchanged();
       await expect(page.locator('[data-review-card="' + r.id + '"]')).toHaveCount(0);
       await expect(page.locator('.open-question-item[data-question-id="' + q.id + '"]')).toBeVisible();
+      item.questionCreated = true; item.questionId = q.id; save();
       await page.locator('#askStateLauncher').click();
       await expect(page.locator('#askStateDrawerResult .ask-state-stale')).toBeVisible({ timeout: 20000 });
       await page.locator('[data-review-batch-action="refresh-ask"]').click();
-      await expect(page.locator('#askStateDrawerResult .ask-state-stale')).toHaveCount(0, { timeout: 75000 });
-      await expect(page.locator('#askStateDrawerResult .ask-live-answer')).toBeVisible({ timeout: 75000 });
+      await completedAsk();
+      await expect(page.locator('#askStateDrawerResult .ask-state-stale')).toHaveCount(0);
       report.asks.after = await page.locator('#askStateDrawerResult').innerText();
       report.asks.rawAfter = await post('/api/ask', { query });
       expect(JSON.stringify(report.asks.rawAfter), 'Ask should ground the follow-up in the created Question').toContain(q.id);
@@ -150,7 +157,6 @@ async function unchanged() {
       await page.reload(); await loaded();
       await page.locator('[data-view="open-items"]:visible').first().click();
       expect((await get('/api/questions')).items.some(x => x.id === q.id)).toBeTruthy();
-      item.questionId = q.id;
     });
 
     await check('Routine noise does not create a Review or Question', async item => {
