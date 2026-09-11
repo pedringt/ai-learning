@@ -2,15 +2,57 @@
 
 This is the canonical current-state handoff for State and the surrounding portfolio. Read this first, then verify the repository before relying on older handoffs or conversation memory.
 
-## Current production state
+## Resume here: paused for user review
 
-_Last updated: September 10, 2026 after the AI-suggested Questions live staging walkthrough._
+_Last updated: September 10, 2026 Pacific time, after the user chose to pause and requested a GitHub handoff for Claude._
+
+**The AI-suggested Questions feature is implemented on staging, not waiting to be built. Automated checks and a live staging walkthrough passed. The user has not yet reported the results of their own hands-on review. Work is paused; do not make further product changes or promote to main without a new request.**
+
+For this feature, read these files from **`staging`**, not the older copies on `main`:
+
+1. This file: current status, boundaries, and next action.
+2. [Question Review implementation and test guide](architecture/REVIEW_SUGGESTED_QUESTIONS.md): settled product decisions, file map, test commands, and the exact manual walkthrough shared with the user.
+3. [Deployed live QA report](history/QUESTION_REVIEW_LIVE_QA_2026-09-10.md): actual live results, runner correction, two Ask quality findings, retained test data, and artifact references.
+4. Root `README.md` for general runtime setup and component ownership.
+
+### Verified checkpoints before this documentation-only handoff
+
+| Checkpoint | Commit / result |
+| --- | --- |
+| Production `main` | `3f87909afd6391544d0c267c0bd50d2f2544bc8d` |
+| Staging before the pause handoff | `bfe6d83d7cbef2fa8ea9ad1bfcff303e9fd5f3d3`, 10 commits ahead of main, none behind |
+| Question feature implementation | `5c1f2bc51e25db6f75e099123736abd5ac43c7d3` |
+| Live walkthrough source | `8ce2c7a0d6da633b7961f58c066ef8eaf21904d7` |
+| Latest checked pre-handoff CI | Run `34544899127`, success on `bfe6d83` |
+| Successful live-model walkthrough | Run `34544596269`, all eight checks passed |
+
+These are checkpoints, not a promise that branch heads will stay fixed. This handoff adds documentation only. Fetch current refs and compare before making changes; do not restore staging to an older SHA or overwrite work from another session.
+
+```sh
+git status --short --branch
+git fetch origin
+git log -1 --oneline origin/main
+git log -1 --oneline origin/staging
+git diff --stat origin/main..origin/staging
+```
+
+Preserve any local uncommitted work. Read `origin/staging:docs/PROJECT_STATUS.md` with `git show` if switching branches would disturb the working tree.
+
+### Next action when the user returns
+
+Help the user complete the manual staging walkthrough in the feature guide and collect any specific confusion or unexpected outcome. Do not rerun the entire implementation or reopen settled UI decisions. A different model outcome is evidence for the separate eval exercise, not a reason to keep rewriting an input until the desired result appears.
+
+The user is writing State evals in another chat. Keep software regressions separate from model judgment: the central eval choice is **supported State change vs consequential unresolved Question vs neither**. Carry forward the exact-duplicate limit, internal-ID leakage, and evidence-attribution findings described below and in the live report. Do not claim the separate eval dataset has been updated here.
+
+A future main promotion needs the user's explicit confirmation in that conversation, a fresh diff/CI check, and verification of the staging/frontend/backend revisions. Migration 009 is part of the feature; do not deploy only the UI. No database reset, extra live-model run, broad cleanup, or additional feature work is part of this pause request.
+
+## Current production state
 
 - Production branch: `main`.
 - Review branch: `staging`.
 - The earlier reviewer-orientation / Ask cleanup was promoted through PR #99, **Promote State cleanup to main**. Later Open Items and banner fixes shipped through PR #102.
 - PR #99 merge commit: `9bed95c134d0ef2766d762c23a6960c3b7b6a226`.
-- Vercel production deployment for that merge is green.
+- Vercel production deployment for that merge was verified green during that release.
 - Production includes the Mark reviewed confirmation fix at `3f87909afd6391544d0c267c0bd50d2f2544bc8d`.
 - Staging now has the AI-suggested Questions feature described below. Do not treat it as promoted to main.
 - **Hard rule: all product/site changes go to `staging` first. Never push or merge product/site changes to `main` without the user's explicit confirmation.**
@@ -20,6 +62,13 @@ Production site:
 - Portfolio: https://ai-learning-rouge.vercel.app/
 - State case study: https://ai-learning-rouge.vercel.app/implementation-context
 - State product: https://ai-learning-rouge.vercel.app/implementation-context-prototype/
+
+Staging environments:
+
+- Frontend: https://ai-learning-git-staging-cairn10.vercel.app/implementation-context-prototype/
+- Backend: https://state-api-staging.onrender.com
+
+Do not confuse the protected staging preview with the public production URL. Never use the production backend for feature QA writes.
 
 ## Current staging feature: AI-suggested open Questions
 
@@ -36,14 +85,21 @@ Production site:
 - Scope, rollout notes, tests, and the model-eval handoff are in
   `docs/architecture/REVIEW_SUGGESTED_QUESTIONS.md`.
 - Pinned-dependency CI passed, including isolated PostgreSQL and browser tests.
+- The recorded full verification run had **407 Python tests passed, 44 skipped,
+  two pre-existing deselections, seven subtests passed, and all 11 JavaScript
+  suites passed**. Do not present skipped/excluded checks as executed tests.
 - Deployed live-model/browser walkthrough passed all eight checks at `8ce2c7a`:
   creation, dismissal, exact duplicate linking, no-change integrity, Ask freshness,
   reload persistence, and a small sample of model-routing decisions.
-- Full results and two minor Ask prose eval notes are in
+- Full results and two Ask prose eval notes are in
   `docs/history/QUESTION_REVIEW_LIVE_QA_2026-09-10.md`.
-- Only test-created Reviews/Questions were closed; immutable test Evidence remains
-  in staging. The demo was not reset. Choose a clean baseline explicitly for formal evals.
+- Only test-created Reviews/Questions were closed; **12 immutable test Evidence
+  records remain in staging** across the two live runs. The demo was not reset.
+  These records can influence Ask. Choose a clean baseline explicitly for formal
+  evals, but do not reset the shared staging database without authorization.
 - The reusable live walkthrough is manual-only; it is not part of automatic CI.
+  It makes real model calls and retains new test Evidence. The temporary source
+  transfer/delivery files and workflow were removed after implementation.
 - No approval has been given to merge this feature into main.
 
 ## What changed on September 10
@@ -83,6 +139,16 @@ During review, the separate provenance/grounding appendix was judged redundant b
 - the separate **Related open items** summary
 
 Keep the inline Review / Open / View current links. The goal is provenance where it is useful, not a second copy of the answer.
+
+### Settled Review/UI decisions
+
+- Keep one Review flow; vary the disclosed consequence and action, not the whole interaction.
+- Existing State proposals use **Update Current State** / **Keep Current State**.
+- No-State-proposal human checks use **Mark reviewed**, not **Accept evidence**: the Evidence already exists. The confirmation is **Reviewed. Current State was not changed.**
+- The Open Items explanation belongs once at the top. Do not restore repeated section descriptions or a large no-change explanation in every Review.
+- Keep the subtle review/question row separation and the expanded Review's up chevron. The user declined heavier expanded panels, tint/containment redesign, and another polish round.
+- The Exploring State banner has a white background and **Start with Open Items** as a blue text-style link, not an outlined/filled button.
+- Leave the Learning Guide label, portfolio hierarchy, and case study alone unless specifically requested.
 
 ### State case-study screenshots
 
@@ -154,7 +220,7 @@ Core objects:
 
 - **Evidence / Notes:** immutable source material and observations
 - **Current State:** maintained, human-approved project understanding
-- **Reviews:** human authorization for consequential changes
+- **Reviews:** human authorization for consequential outcomes, including Question creation on staging
 - **Questions:** explicit unknowns/blockers
 - **History:** accepted transitions with provenance
 - **Ask:** read-only use of maintained context
@@ -186,6 +252,14 @@ These are product questions, not obvious bugs. Do not start them automatically j
 - **Paused/reversed decisions:** decide whether a paused/reversed decision needs a distinct `proposed_update` path rather than the current `state_at_risk` behavior.
 
 A separate unfamiliar-user validation/eval pass was discussed but intentionally left for later. Do not conflate that with ordinary polish work.
+
+### Deferred findings relevant to the current feature
+
+- **Ask internal IDs:** live generated prose exposed `(k-security)` once. Keep IDs in structured records/navigation, not human-facing prose.
+- **Ask evidence strength:** some prose upgraded what reps *reported* into what a spot-check *found*. Preserve attribution and uncertainty. Neither observation changed Question/State persistence, but both belong in the model evals.
+- **Duplicate scope:** case/whitespace matching is implemented. Differently worded equivalents are not guaranteed to match; semantic deduplication is deferred.
+- **Legacy Review analytics:** Mark reviewed is still conflated with `review_accepted` on the old path. The new Question path has its own server-confirmed `review_decision` outcome. Do not use raw legacy accept events as proof that Current State changed.
+- **Older Question-resolution provenance:** multi-Evidence Reviews can attribute multiple resolved Questions to the latest linked Evidence rather than each answer's actual Evidence. This is separate from the new Question proposal's source Evidence link and remains a later schema/design cleanup.
 
 ## Planned cleanup pass
 
@@ -242,4 +316,4 @@ Unless explicitly requested, leave these alone:
 
 The production portfolio presents State as the flagship product with two supporting State cases, while preserving Legal AI and Meridian as separate demonstrations of opportunity evaluation and workflow thinking. State's current review path is intentionally simpler than the first September 10 polish attempt: the case study no longer shows blurry screenshots, Ask keeps inline record navigation without repeating the same records in a grounding appendix, and the reviewer orientation controls no longer compete with each other.
 
-The portfolio is suitable for a pause/freeze unless the user identifies a specific issue or explicitly asks for the next validation/cleanup phase.
+The portfolio is paused unless the user identifies a specific issue or explicitly asks for the next validation/cleanup phase. The completed Question Review feature remains on staging pending the user's hands-on review and explicit promotion decision.
