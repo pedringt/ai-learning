@@ -46,6 +46,16 @@ The user is writing State evals in another chat. Keep software regressions separ
 
 A future main promotion needs the user's explicit confirmation in that conversation, a fresh diff/CI check, and verification of the staging/frontend/backend revisions. Migration 009 is part of the feature; do not deploy only the UI. No database reset, extra live-model run, broad cleanup, or additional feature work is part of this pause request.
 
+### Additional user note: reset-data loading feedback (pending)
+
+The user noted after the pause: "resetting data modal probably needs a loading state so the user knows it's working."
+
+**Recorded for follow-up only; not reproduced or fixed in this documentation update.** Inspect the actual rendered reset flow before assuming loading logic is absent. Start with the `reset-demo` handler, `showDialog`, and `hydrateBackend` in `implementation-context-prototype/context-app.js`, including any later modal/UI overrides.
+
+Keep the treatment small: immediately show an obvious busy indicator and concise copy such as **Resetting example data...** after confirmation. Prevent duplicate reset submissions and keep visible feedback through both the reset request and the following workspace refresh. Show completion only once the refreshed data is ready. A failure or timeout must leave a clear recovery path, not a stuck spinner or a misleading success message; a timed-out request may still have completed on the server, so do not automatically repeat the reset. Do not add invented progress percentages.
+
+When implementation is requested, add delayed-response, duplicate-click, success, and failure/timeout coverage using an isolated or mocked reset endpoint, and check desktop/mobile visibility. This note does not authorize resetting shared staging or production data, implementing the change during the pause, or merging to main.
+
 ## Current production state
 
 - Production branch: `main`.
