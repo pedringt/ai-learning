@@ -444,6 +444,26 @@ def _match_case(replacement: str, matched: str) -> str:
     return replacement
 
 
+# Shared between the headline/title backstop and the full-prose backstop
+# below: a piece of text containing one of these is already correctly
+# hedged and must be left completely alone by either backstop. Defined once
+# up here after a real bug caught this on a live run: the headline backstop
+# used to swap "resolved" unconditionally, and mangled an already-correct
+# "Retention is not yet resolved" into the nonsensical "not yet pending".
+_PENDING_HEDGE_PHRASES = (
+    "evidence says", "evidence reports", "pending review", "awaiting review",
+    "not yet confirmed", "not yet accepted", "not yet established", "not yet approved",
+    "not yet decided", "not yet resolved", "still open", "still pending",
+    "remains open", "remains unresolved", "remains unaccepted", "proposed",
+    "suggests", "appears to", "reportedly", "reported to", "is reported",
+)
+
+
+def _already_hedged(text: str) -> bool:
+    lowered = text.lower()
+    return any(hedge in lowered for hedge in _PENDING_HEDGE_PHRASES)
+
+
 _SETTLED_WORD_REPLACEMENTS = (
     (re.compile(r"\(\s*confirmed\s*\)", re.I), lambda m: ""),
     (re.compile(r"\(\s*resolved\s*\)", re.I), lambda m: ""),
@@ -465,14 +485,71 @@ def _soften_unearned_settled_words(value: str | None) -> str | None:
     here -- this is the deterministic backstop. Only called when the
     answer's own selected context actually includes an open Review or open
     Question (has_pending_material in _validate_synthesis), so a genuinely
-    fully-settled answer's headline is never touched.
+    fully-settled answer's headline is never touched. Checks for an
+    existing hedge first (see _already_hedged) so an already-correct
+    headline is never touched either.
     """
     if not value:
+        return value
+    if _already_hedged(value):
         return value
     text = value
     for pattern, replacement in _SETTLED_WORD_REPLACEMENTS:
         text = pattern.sub(replacement, text)
     text = re.sub(r"\s{2,}", " ", text).strip(" -–—:;,.")
+    return text or value
+
+
+# Full-sentence prose companion to _soften_unearned_settled_words. Live
+# testing after the headline/title fix (2026-09-12) still found unhedged
+# claims occasionally slipping into prose (summary, free-text items) --
+# narrower in scope than the headline fix on purpose, per explicit
+# direction: only rewrite a sentence that both (a) contains one of these
+# settled-sounding words/phrases and (b) is not already hedged per
+# _already_hedged above. A sentence that already hedges ("not yet
+# confirmed", "pending review") is left completely alone -- this must
+# never touch or garble a sentence the model already got right.
+_UNEARNED_SETTLED_PROSE_REPLACEMENTS = (
+    (re.compile(r"\bhas\s+confirmed\b", re.I), lambda m: _match_case("is reported to have said", m.group(0))),
+    (re.compile(r"\bconfirmed\b", re.I), lambda m: _match_case("reported (pending Review)", m.group(0))),
+    (re.compile(r"\bresolves\b", re.I), lambda m: _match_case("may address (Review still open)", m.group(0))),
+    (re.compile(r"\bresolved\b", re.I), lambda m: _match_case("reportedly addressed, pending Review", m.group(0))),
+    (re.compile(r"\bestablished\b", re.I), lambda m: _match_case("proposed (not yet established)", m.group(0))),
+    (re.compile(r"\bapproved\b", re.I), lambda m: _match_case("proposed for approval (not yet approved)", m.group(0))),
+    (re.compile(r"\bdecided\b", re.I), lambda m: _match_case("proposed (not yet decided)", m.group(0))),
+    (re.compile(r"\bnow\s+known\b", re.I), lambda m: _match_case("reported (not yet confirmed)", m.group(0))),
+    (re.compile(r"\bno\s+longer\s+blocking\b", re.I), lambda m: _match_case("reported as potentially no longer blocking, pending Review", m.group(0))),
+)
+
+_SENTENCE_SPLIT_RE = re.compile(r"(?<=[.!?])\s+")
+
+
+def _soften_unearned_settled_prose(value: str | None) -> str | None:
+    """Sentence-scoped companion to _soften_unearned_settled_words: rewrites
+    an unhedged settled-sounding claim within full prose (Ask's summary,
+    and free-text item text/detail), leaving any sentence that already
+    hedges completely untouched. Narrow by design -- this is a deterministic
+    backstop for a specific, recurring trust failure (Ask narrating pending
+    Review/Evidence/Question material as settled), not a general rewriter,
+    per explicit direction after live testing showed prompt wording alone
+    isn't reliable here (~1/4 pass in a small live sample). Only called
+    when the answer's own selected context includes an open Review or open
+    Question (has_pending_material in _validate_synthesis).
+    """
+    if not value:
+        return value
+    sentences = _SENTENCE_SPLIT_RE.split(value)
+    rewritten = []
+    for sentence in sentences:
+        if _already_hedged(sentence):
+            rewritten.append(sentence)
+            continue
+        fixed = sentence
+        for pattern, replacement in _UNEARNED_SETTLED_PROSE_REPLACEMENTS:
+            fixed = pattern.sub(replacement, fixed)
+        rewritten.append(fixed)
+    text = " ".join(rewritten)
+    text = re.sub(r"\s{2,}", " ", text).strip()
     return text or value
 
 
@@ -512,6 +589,8 @@ def _validate_synthesis(answer: AskSynthesis, selection: AskSelection, context: 
     if has_pending_material:
         answer.headline = _soften_unearned_settled_words(answer.headline)
     answer.summary = _clean_visible_ask_text(answer.summary, all_internal_ids) or "See the grounded project details below."
+    if has_pending_material:
+        answer.summary = _soften_unearned_settled_prose(answer.summary)
     answer.suggested_refinements = [
         cleaned for value in answer.suggested_refinements
         if (cleaned := _clean_visible_ask_text(value, all_internal_ids))
@@ -527,6 +606,9 @@ def _validate_synthesis(answer: AskSynthesis, selection: AskSelection, context: 
             if item.record_type == "none":
                 item.text = _clean_visible_ask_text(item.text, all_internal_ids) or "Project context"
                 item.detail = _clean_visible_ask_text(item.detail, all_internal_ids)
+                if has_pending_material:
+                    item.text = _soften_unearned_settled_prose(item.text)
+                    item.detail = _soften_unearned_settled_prose(item.detail)
                 clean_items.append(item)
                 continue
             if item.record_id and item.record_id in allowed.get(item.record_type, set()):

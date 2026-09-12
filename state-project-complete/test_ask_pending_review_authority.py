@@ -49,7 +49,7 @@ import pytest
 from ask_contract import AskAnswerItem, AskAnswerSection, AskSelection, AskSynthesis
 from ask_provider import LiveAskProvider
 from ask_service import (
-    _grounding_rules, _one_call_prompt, _soften_unearned_settled_words,
+    _grounding_rules, _one_call_prompt, _soften_unearned_settled_prose, _soften_unearned_settled_words,
     _synthesis_prompt, _validate_synthesis, run_ask,
 )
 from database_migration_backed import get_test_db
@@ -105,6 +105,15 @@ def test_soften_unearned_settled_words_leaves_clean_text_alone():
     assert _soften_unearned_settled_words("") == ""
 
 
+def test_soften_unearned_settled_words_does_not_mangle_an_already_hedged_headline():
+    """The exact bug this same backstop introduced on a live run: swapping
+    "resolved" unconditionally turned the already-correct headline
+    "Retention is not yet resolved" into the nonsensical "Retention is not
+    yet pending". A headline that already hedges must be left alone."""
+    assert _soften_unearned_settled_words("Retention is not yet resolved") == "Retention is not yet resolved"
+    assert _soften_unearned_settled_words("Legal has not yet confirmed retention") == "Legal has not yet confirmed retention"
+
+
 def _selection_and_context_with_open_review():
     selection = AskSelection(
         job="current_fact", state_ids=[], review_ids=["r-1"], blocking_question_ids=[],
@@ -149,6 +158,80 @@ def test_validate_synthesis_leaves_headline_alone_when_nothing_is_pending():
         "With no open Review or Question anywhere in context, there's nothing pending to "
         "protect against -- the backstop must not touch a headline about something genuinely settled."
     )
+
+
+# --- Prose-level backstop (2026-09-12, narrow scope per explicit direction) --
+
+def test_soften_unearned_settled_prose_rewrites_an_unhedged_sentence():
+    text = "Legal has confirmed retention is 30 days."
+    fixed = _soften_unearned_settled_prose(text)
+    assert "confirmed" not in fixed.lower()
+    assert "is reported to have said" in fixed
+
+
+def test_soften_unearned_settled_prose_leaves_hedged_sentences_alone():
+    hedged = [
+        "Legal has not yet confirmed retention terms.",
+        "Evidence says retention is 30 days, pending review.",
+        "The proposed retention figure is 30 days.",
+        "Retention terms remain unresolved.",
+        "This suggests retention may be 30 days.",
+    ]
+    for sentence in hedged:
+        assert _soften_unearned_settled_prose(sentence) == sentence, (
+            f"Already-hedged sentence must be left byte-for-byte alone: {sentence!r}"
+        )
+
+
+def test_soften_unearned_settled_prose_only_rewrites_the_unhedged_sentence_in_a_mixed_paragraph():
+    text = (
+        "Legal has confirmed retention is 30 days. "
+        "This is still pending Security approval, so nothing has changed in Current State."
+    )
+    fixed = _soften_unearned_settled_prose(text)
+    sentences = fixed.split(". ")
+    assert "confirmed" not in sentences[0].lower()
+    assert sentences[1].strip().rstrip(".") == (
+        "This is still pending Security approval, so nothing has changed in Current State"
+    ), "The already-correct second sentence must not be touched."
+
+
+def test_soften_unearned_settled_prose_covers_each_target_phrase():
+    cases = {
+        "This resolves the retention blocker.": "resolved",
+        "The new policy is now established.": "established",
+        "Security approved the change.": "approved",
+        "Leadership decided to proceed.": "decided",
+        "The answer is now known.": "known",
+        "The blocker is no longer blocking.": "blocking",
+    }
+    for sentence, banned_root in cases.items():
+        fixed = _soften_unearned_settled_prose(sentence)
+        assert fixed != sentence, f"Expected a rewrite for: {sentence!r}"
+        assert banned_root not in fixed.lower() or "not yet" in fixed.lower() or "pending" in fixed.lower(), (
+            f"Rewrite still reads as settled: {fixed!r}"
+        )
+
+
+def test_soften_unearned_settled_prose_handles_none_and_empty():
+    assert _soften_unearned_settled_prose(None) is None
+    assert _soften_unearned_settled_prose("") == ""
+
+
+def test_validate_synthesis_softens_summary_and_free_text_items_when_pending():
+    selection, context = _selection_and_context_with_open_review()
+    answer = AskSynthesis(
+        job="current_fact",
+        headline="Retention",
+        summary="Legal has confirmed retention is 30 days. This is still pending Security approval.",
+        sections=[AskAnswerSection(kind="other", title="Details", items=[
+            AskAnswerItem(text="This resolves the retention blocker.", record_type="none"),
+        ])],
+    )
+    cleaned = _validate_synthesis(answer, selection, context)
+    assert "Legal has confirmed" not in cleaned.summary
+    assert "still pending Security approval" in cleaned.summary, "The already-hedged sentence must survive unchanged."
+    assert "This resolves" not in cleaned.sections[0].items[0].text
 
 
 @requires_anthropic_key
@@ -200,6 +283,12 @@ def test_the_exact_reported_repro_no_longer_treats_pending_evidence_as_settled()
                 idx = lowered.find(word, start)
                 if idx == -1:
                     break
+                # "unconfirmed"/"unresolved" are themselves the correct, safe
+                # word (the "un-" prefix already IS the hedge) -- not a claim
+                # that needs a nearby hedge phrase to be safe.
+                if idx >= 2 and lowered[idx - 2:idx] == "un":
+                    start = idx + len(word)
+                    continue
                 window = lowered[max(0, idx - 40):idx + len(word) + 20]
                 if not any(h in window for h in hedges):
                     hits.append(text[max(0, idx - 40):idx + len(word) + 20])
