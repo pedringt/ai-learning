@@ -227,7 +227,8 @@ def _grounding_rules() -> str:
     """
     return f"""- Today's date is {date.today().isoformat()}. When referencing a specific date from a record, compare it to today: if that date has already passed, describe it as overdue, still unresolved, or needing follow-up -- never as upcoming or a future next step.
 - Section, group, and category titles must accurately describe the actual conceptual domain of their contents (for example, do not label access or security constraints as retention constraints, or vice versa). If items span more than one domain, either split them into separate sections or use a domain-neutral title.
-- Consequentiality ordering must stay consistent for the same underlying records across every job and every refinement in this conversation. A refinement may narrow, reformat, or shorten what is shown, but it must select from what a fuller answer to the same request would already treat as most important -- never independently re-rank the same records into a different priority order, and never introduce a record that a fuller answer would have omitted."""
+- Consequentiality ordering must stay consistent for the same underlying records across every job and every refinement in this conversation. A refinement may narrow, reformat, or shorten what is shown, but it must select from what a fuller answer to the same request would already treat as most important -- never independently re-rank the same records into a different priority order, and never introduce a record that a fuller answer would have omitted.
+- An open Review's proposed statement, number, or decision is not yet true and does not close its linked Question, no matter how certain the underlying Evidence sounds (e.g. "Legal confirmed X"). Never describe an open Review's content as "confirmed", "established", "accepted", or as resolving/answering/closing a Question -- describe it as proposed and awaiting review, and state plainly that the linked Question remains open and Current State has not changed. Only an item actually present in Current State, or a Question actually absent from the open Questions list, may be described as settled."""
 
 
 def _one_call_prompt(query: str, candidates: Mapping[str, Any], previous_answer: Mapping[str, Any] | None) -> str:
@@ -265,7 +266,7 @@ CRITICAL: Append mode (conversational) means: include the full prior answer as-i
 
 Authority rules are non-negotiable:
 - Current State governs what is true, allowed, or in scope now.
-- Open Reviews qualify Current State; they never replace it. Include a Review when it materially challenges State used by the answer.
+- Open Reviews qualify Current State; they never replace it, and their proposed content is not yet true. Never describe an open Review's proposed statement as "confirmed", "established", or as resolving its linked Question -- it is proposed and awaiting review, the linked Question is still open, and Current State has not changed. Include a Review when it materially challenges State used by the answer, but phrase it as pending, not settled.
 - A Question is blocking only when its supplied record says blocking=true. Ordinary Questions are known unknowns, not blockers.
 - History is accepted past change. Evidence is what was said or observed and cannot silently override Current State.
 - Project Rules constrain interpretation.
@@ -413,6 +414,7 @@ Non-negotiable rules:
 - Relevant open Reviews must be visible in the main answer under needs_review, never hidden only in sources.
 - confirmed blockers must remain distinct from ordinary open Questions. For a blocker, include its exact 'blocks' dependency in detail.
 - Evidence may describe activity/claims but may not silently override Current State.
+- An open Review's proposed content is not yet true. Never describe it as "confirmed", "established", or as resolving its linked Question -- it is proposed and awaiting review, the linked Question is still open, and Current State has not changed.
 - Unknown must remain unknown. Do not infer absence from missing information.
 - Refinement may change format, audience, length, focus, or ordering; it may not change project truth.{refinement_guidance}
 - For meeting prep, frame relevant Questions as opportunities to get answered.
