@@ -30,6 +30,9 @@ const genericReview=[
   'What needs review?',
   'List every open review',
   'Show me the open reviews',
+  'Show me pending reviews',
+  'What should I approve?',
+  'What do I need to approve?',
 ];
 for(const q of genericReview){
   const intent=api.detectAskIntent(q);
@@ -42,6 +45,9 @@ const genericQuestions=[
   'Show unresolved questions',
   'What questions are still open?',
   'List all open questions',
+  'List every open question',
+  'What still needs answering?',
+  'What has not been answered?',
 ];
 for(const q of genericQuestions){
   const intent=api.detectAskIntent(q);
@@ -50,17 +56,38 @@ for(const q of genericQuestions){
   check(`"${q}" renders a routing card`, html.includes('ask-routing-card') && html.includes('data-anchor="open-items-questions"'), html.slice(0,120));
 }
 
+const genericBlockers=[
+  'What needs my attention?',
+  'What requires attention?',
+];
+for(const q of genericBlockers){
+  const intent=api.detectAskIntent(q);
+  check(`generic attention phrasing detected as "blockers": "${q}"`, intent?.kind==='blockers', JSON.stringify(intent));
+  const html=api.intentAskHtml(intent);
+  check(`"${q}" renders a routing card`, html.includes('ask-routing-card') && html.includes('data-anchor="open-items-blockers"'), html.slice(0,120));
+}
+
 // A topic qualifier means the person wants an answer scoped to that topic,
 // not a raw count -- must NOT route to the generic card.
 const topicQualified=[
   'What needs review related to security?',
   'Show unresolved questions about security',
   'What reviews are open on the automation topic?',
+  'What needs my attention on the security review?',
 ];
 for(const q of topicQualified){
   const intent=api.detectAskIntent(q);
-  check(`topic-qualified phrasing is not routed: "${q}"`, intent?.kind!=='pending' && intent?.kind!=='open', JSON.stringify(intent));
+  check(`topic-qualified phrasing is not routed: "${q}"`, !['pending','open','blockers'].includes(intent?.kind), JSON.stringify(intent));
 }
+
+// "What changed?" and "Show current project state" are deliberately left as
+// normal Ask answers (History/Current State), not converted to a routing
+// card in this pass -- those already render a synthesized, information-rich
+// answer (context-app.js's 'history'/'status' kinds), and misrouting
+// well-tested existing behavior carries more risk than the reviews/questions
+// cases above, which had no comparable synthesized answer to lose.
+check('"What changed?" is left as a normal answer, not a routing card', api.detectAskIntent('What changed?')?.kind!=='pending' && api.detectAskIntent('What changed?')?.kind!=='open' && api.detectAskIntent('What changed?')?.kind!=='blockers');
+check('"Show current project state" is left as a normal answer, not a routing card', !['pending','open','blockers'].includes(api.detectAskIntent('Show current project state')?.kind));
 
 console.log(`\n${pass} passed, ${fail} failed`);
 if(fail) process.exit(1);

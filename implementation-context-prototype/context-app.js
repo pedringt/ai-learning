@@ -465,15 +465,18 @@
     if(has(/\b(what is most important|whats most important|what should we prioritize|highest priority|top priority|what comes first)\b/)) return {kind:'unknown-context',unknownType:'priority'};
     if(has(/\b(are we on track|are we behind|are we ahead|schedule health|timeline health)\b/)) return {kind:'progress-inference'};
 
-    if(has(/\b(blocker|blockers|blocking|blocked|holding us up|hold us up|in the way|stop us|stopping us|prevent us|waiting on|needs attention|need attention)\b/)) return {kind:has(/\b(who owns|owner|ownership)\b/)?'blocker-owners':'blockers'};
+    if(has(/\b(blocker|blockers|blocking|blocked|holding us up|hold us up|in the way|stop us|stopping us|prevent us|waiting on|needs attention|need attention|requires attention|needs my attention|require my attention)\b/)){
+      if(has(/\b(who owns|owner|ownership)\b/)) return {kind:'blocker-owners'};
+      if(!askTopics(q).length) return {kind:'blockers'};
+    }
     // "pending"/"open" are the generic-inventory kinds that route to a compact
     // Open Items card instead of a synthesized answer (see intentAskHtml). A
     // topic word ("...related to security") means the person wants an answer
     // scoped to that topic, not a raw count -- fall through so
     // structuredAskResult's topic-filtered branch handles it instead.
-    if(has(/\b(needs review|need review|pending review|awaiting review|review first|evidence.*incorporated|new evidence|open review|open reviews|pending reviews)\b/) && !askTopics(q).length) return {kind:'pending'};
+    if(has(/\b(needs review|need review|pending review|awaiting review|review first|evidence.*incorporated|new evidence|open review|open reviews|pending reviews|should i approve|need to approve|needs? to be approved|what to approve|what should i approve|what do i need to approve)\b/) && !askTopics(q).length) return {kind:'pending'};
     if(has(/\b(current status|where are we|catch me up|what should i know|project status|status of|overall status|summarize the project|summarize project|project summary|what are we building|what are we making)\b/)) return {kind:'status'};
-    if(has(/\b(open questions|still open|unresolved|unknowns|dont know|do not know|havent figured|have not figured|what havent we figured out|still need to figure|assumptions.*validated|what isnt decided|what is not decided)\b/) && !askTopics(q).length) return {kind:'open'};
+    if(has(/\b(open questions?|still open|unresolved|unknowns|dont know|do not know|havent figured|have not figured|what havent we figured out|still need to figure|assumptions.*validated|what isnt decided|what is not decided|needs answering|need answering|still needs answering|not been answered|hasnt been answered|has not been answered|remains unanswered|not yet answered)\b/) && !askTopics(q).length) return {kind:'open'};
     if(has(/\b(what have we decided|what did we decide|decisions|decision about|agreed on|established about)\b/)) return {kind:'decisions'};
     if(has(/\b(original plan|how did we get here|what changed our minds|superseded|used to|history|historical|previously|originally|how.*change|before vs|before versus|different now)\b/)) return {kind:'history'};
     if(has(/\b(in scope|out of scope|scope|must haves|must have|can wait|requires a human|require a human|account changes|send directly|send to customers|what arent we doing|what are we not doing|what shouldnt.*do|what should not.*do)\b/)) return {kind:'scope'};
@@ -621,7 +624,7 @@
     if(i.kind==='premise-correction')return premiseCorrectionHtml(i);
     if(i.kind==='progress-inference')return progressInferenceHtml();
     if(i.kind==='blocker-owners')return blockerOwnersHtml();
-    if(i.kind==='blockers')return compactOpenHtml('Items that may be blocking or constraining progress','State does not know that every unresolved item is a confirmed blocker. These are the unresolved dependencies and review items most likely to constrain implementation.');
+    if(i.kind==='blockers'){ const n=openQuestions().filter(q=>q.blocking).length; return routingCardHtml('What may be blocking progress',n===1?'1 question is blocking progress.':`${n} questions are blocking progress.`,n,'open-items','open-items-blockers'); }
     if(i.kind==='pending'){ const n=pendingReviews().length; return routingCardHtml('What needs review',n===1?'1 review is waiting on a decision.':`${n} reviews are waiting on a decision.`,n,'open-items','open-items-reviews'); }
     if(i.kind==='open'){ const n=openQuestions().length; return routingCardHtml('What is not settled yet',n===1?'1 question is open.':`${n} questions are open.`,n,'open-items','open-items-questions'); }
     if(i.kind==='status')return scenarioResult({topics:['automation','security','feature-access','success-metrics','operations'],output:'summary'});
@@ -1452,7 +1455,7 @@
     // A plain URL hash won't survive this: context-history.js's own click
     // listener rewrites location.hash back to the bare view route (e.g.
     // #settings) on every navigation, shortly after this handler returns.
-    const v=e.target.closest('[data-view]'); if(v){ navigateTo(v.dataset.view); if(v.dataset.anchor) window.__stateScrollAnchor=v.dataset.anchor; return; }
+    const v=e.target.closest('[data-view]'); if(v){ if(v.dataset.anchor) window.__stateScrollAnchor=v.dataset.anchor; navigateTo(v.dataset.view); return; }
     const dateFilter=e.target.closest('.notes-date-filters [data-date-filter]'); if(dateFilter){ state.notesDateFilter=dateFilter.dataset.dateFilter; renderNotes(); return; }
     const noteFilter=e.target.closest('.notes-filters [data-filter]'); if(noteFilter){ state.notesFilter=noteFilter.dataset.filter; renderNotes(); return; }
     const reviewFilter=e.target.closest('.review-filters [data-review-filter]'); if(reviewFilter){ state.reviewFilter=reviewFilter.dataset.reviewFilter; renderReview(); return; }
@@ -1646,7 +1649,7 @@
   window.STATE_ASK_ROUTING=Object.freeze({
     askRoutingCardHtml(raw){
       const kind=detectAskIntent(raw)?.kind;
-      if(kind!=='pending'&&kind!=='open')return null;
+      if(kind!=='pending'&&kind!=='open'&&kind!=='blockers')return null;
       return intentAskHtml({kind});
     }
   });

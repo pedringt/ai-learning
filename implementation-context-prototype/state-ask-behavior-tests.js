@@ -38,8 +38,12 @@ const smarterRouting=[
  ['What are we building?','status'],['Summarize the project.','status'],['What should we do next?','readiness']
 ];
 smarterRouting.forEach(([q,e])=>check(`smart route: ${q}`,route(q)===e,`got ${route(q)}`));
+// Plain "what's blocking" is a generic inventory question, so it now routes
+// to a compact Open Items card (like 'pending'/'open') rather than listing
+// blocker details -- see state-ask-routing-card-tests.js for the fuller
+// routing-card coverage.
 let b=api.intentAskHtml(api.detectAskIntent('What is blocking us?'));
-check('blockers surface unresolved material',/may be blocking or constraining progress/.test(b)&&/Pending Review|Open Question/.test(b));
+check('blockers route to the Open Items card',/ask-routing-card/.test(b)&&/data-anchor="open-items-blockers"/.test(b));
 let slack=api.intentAskHtml(api.detectAskIntent('Turn the current project state into a Slack update'));
 let support=api.intentAskHtml(api.detectAskIntent('Write a short status update for the support team'));
 check('Slack and Support artifacts differ',slack!==support);
