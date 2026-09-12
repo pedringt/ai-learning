@@ -947,7 +947,11 @@
   function renderOpenItems(){
     const anchor=window.__stateScrollAnchor;
     const section=anchor&&anchor.startsWith('open-items-')?anchor.slice('open-items-'.length):null;
-    if(section && state.openItemSections[section]) state.openItemSections[section]=false;
+    // Force-expand unconditionally, not just when already truthy -- the
+    // stored value starts out `null` (meaning "use the default collapse
+    // rule"), and Open Questions defaults to collapsed once there are more
+    // than 5, so a `null` check alone left the target section collapsed.
+    if(section) state.openItemSections[section]=false;
     root.innerHTML=OPEN_ITEMS_VIEW.render(openItemsProps());
     if(section){
       delete window.__stateScrollAnchor;
@@ -1636,7 +1640,7 @@
     history.replaceState(history.state,'',location.pathname+(cleanedSearch?`?${cleanedSearch}`:'')+'#settings');
     navigateTo('settings');
   }
-  window.STATE_ASK_TEST_API={state,detectAskIntent,findScenario,structuredAskResult,scenarioResult,intentAskHtml,submitAsk,upsertBackendReview,replaceBackendOpenReviews,mapApiReview,looksLikeQuestion,hasExplicitUpdateIntent,linkedReviewFor,questionDialogHtml,renderOverview,historyType,syncApiHistory};
+  window.STATE_ASK_TEST_API={state,detectAskIntent,findScenario,structuredAskResult,scenarioResult,intentAskHtml,submitAsk,upsertBackendReview,replaceBackendOpenReviews,mapApiReview,looksLikeQuestion,hasExplicitUpdateIntent,linkedReviewFor,questionDialogHtml,renderOverview,renderOpenItems,historyType,syncApiHistory};
   // The live Ask State drawer (context-product-polish.js's runAsk) is the
   // only Ask surface a user actually reaches -- this module's own
   // submitAsk()/renderOverview() Ask path is legacy from before the drawer

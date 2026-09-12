@@ -87,6 +87,19 @@ for(const q of topicQualified){
 // well-tested existing behavior carries more risk than the reviews/questions
 // cases above, which had no comparable synthesized answer to lose.
 check('"What changed?" is left as a normal answer, not a routing card', api.detectAskIntent('What changed?')?.kind!=='pending' && api.detectAskIntent('What changed?')?.kind!=='open' && api.detectAskIntent('What changed?')?.kind!=='blockers');
+
+// The routing card's CTA sets window.__stateScrollAnchor and navigates to
+// Open Items, which renderOpenItems() consumes to force-expand the target
+// section. openItemSections.questions starts out `null` (not `false`), and
+// Open Questions defaults to collapsed once there are more than 5 -- a
+// force-expand that only fires on a truthy stored value (an earlier version
+// of this fix) leaves `null` alone and the section stays collapsed.
+context.window.__stateScrollAnchor='open-items-questions';
+api.state.data.questions=Array.from({length:8},(_,i)=>({id:`q-anchor-test-${i}`,text:`Test question ${i}`,status:'open',blocking:false,origin:'test'}));
+check('openItemSections.questions starts null (the default-collapse case)', api.state.openItemSections.questions===null);
+api.renderOpenItems();
+check('routing anchor force-expands Open Questions even from the null default', api.state.openItemSections.questions===false);
+check('the scroll anchor is consumed after use', context.window.__stateScrollAnchor===undefined);
 check('"Show current project state" is left as a normal answer, not a routing card', !['pending','open','blockers'].includes(api.detectAskIntent('Show current project state')?.kind));
 
 console.log(`\n${pass} passed, ${fail} failed`);
