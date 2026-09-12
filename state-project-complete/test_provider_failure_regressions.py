@@ -115,3 +115,48 @@ def test_unrepairable_authority_or_content_errors_still_fail_atomically():
     p = copy.deepcopy(BASE)
     p["review_recommendations"][0]["existing_review_id"] = "made-up-review"
     assert_fails_atomically(p, "invalid_review_reference")
+
+
+def test_existing_review_id_with_mismatched_review_type_is_repaired_not_rejected():
+    """Regression coverage for a staging finding (2026-09-13): a provider
+    correctly linked evidence to an existing open Review (demo-review-retention,
+    stored type state_at_risk) but labeled its own recommendation
+    proposed_update. Validation hard-rejected the whole evidence submission
+    with review_type_mismatch even though the reference itself was exactly
+    right -- a mechanical labeling slip, not a substantive authority problem.
+
+    The existing Review's type is an application fact the provider was
+    already shown; software now treats it as authoritative for any
+    recommendation that references it via existing_review_id, the same way
+    it already owns concurrency versions. The evidence must be saved and
+    linked to the existing Review, and no duplicate Review is created.
+    """
+    conn = db()
+    conn.execute(
+        "INSERT INTO review_issues(id, review_type, decision_question, why_consequential, status) "
+        "VALUES ('demo-review-retention', 'state_at_risk', 'Is the vendor retention window acceptable?', "
+        "'Vendor retention terms were unconfirmed.', 'open')"
+    )
+    conn.commit()
+
+    p = copy.deepcopy(BASE)
+    rec = p["review_recommendations"][0]
+    rec["review_action"] = "update_existing"
+    rec["existing_review_id"] = "demo-review-retention"
+    rec["review_type"] = "proposed_update"  # mismatches the persisted state_at_risk
+
+    result = process_evidence(conn, evidence_id="e1", provider=PayloadProvider(p))
+
+    assert result.processing_status == "succeeded"
+    # No duplicate Review was created; the existing one is still the only one.
+    assert conn.execute("SELECT count(*) FROM review_issues").fetchone()[0] == 1
+    row = conn.execute(
+        "SELECT review_type, status FROM review_issues WHERE id='demo-review-retention'"
+    ).fetchone()
+    assert row["review_type"] == "state_at_risk"
+    assert row["status"] == "open"
+    # The new evidence is linked to the existing Review.
+    assert conn.execute(
+        "SELECT count(*) FROM review_evidence WHERE review_id='demo-review-retention' AND evidence_id='e1'"
+    ).fetchone()[0] == 1
+    conn.close()

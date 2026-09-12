@@ -76,6 +76,9 @@ def normalize_provider_payload(
     missing proposal statements/rationales, human-resolution fields, or
     contradictory review_action/existing_review_id combinations. Those remain
     validation failures because repairing them would require guessing intent.
+    The one exception is review_type on a valid, in-context existing_review_id:
+    that Review's type is already an application fact the model was shown, so
+    relabeling review_type to match is mechanical, not a guess.
     """
     result = copy.deepcopy(dict(payload))
 
@@ -124,6 +127,22 @@ def normalize_provider_payload(
         recommendation["review_type"] = _normalize_enum(
             recommendation.get("review_type"), {"proposed_update", "state_at_risk", "missing_understanding", "open_question"}
         )
+
+        # A referenced existing Review's type is an application fact, not a
+        # model judgment -- the model already chose to continue that specific
+        # Review by supplying its existing_review_id. Relabeling review_type
+        # to match is a mechanical correction of a redundant field, exactly
+        # like the concurrency-version injection below, not a guess at
+        # intent. Only the supplied context snapshot is trusted here (the
+        # same authority the model itself was shown); an unknown or
+        # not-in-context existing_review_id is left untouched so semantic
+        # validation still reports the real reference/lifecycle problem.
+        if recommendation.get("review_action") == "update_existing":
+            existing_review_id = recommendation.get("existing_review_id")
+            if isinstance(existing_review_id, str):
+                context_review = context.open_reviews.get(existing_review_id)
+                if context_review is not None:
+                    recommendation["review_type"] = context_review.review_type
 
         affected = _dedupe_strings(recommendation.get("affected_state_item_ids"))
         if isinstance(affected, list):
@@ -184,8 +203,18 @@ def normalize_provider_payload(
 
         # missing_understanding + update/retire is mechanically incompatible.
         # When the model explicitly targets existing State, the canonical
-        # review type is proposed_update.
-        if recommendation.get("review_type") == "missing_understanding" and has_existing_state_change:
+        # review type is proposed_update. Skip this for an existing Review:
+        # its type is already authoritative (set above from context), and
+        # relabeling it here would just reintroduce the mismatch this
+        # function exists to prevent. A genuine incompatibility (an
+        # existing missing_understanding Review paired with an update/retire
+        # proposal) is a real problem, not a mechanical one -- it still
+        # surfaces via illegal_review_proposal_combination.
+        if (
+            recommendation.get("review_type") == "missing_understanding"
+            and has_existing_state_change
+            and recommendation.get("review_action") != "update_existing"
+        ):
             recommendation["review_type"] = "proposed_update"
 
         # The mirror case: proposed_update requires at least one proposed
@@ -201,8 +230,14 @@ def normalize_provider_payload(
         # downgrade -- it does not invent a proposed change (that would
         # require guessing intent, which this function deliberately avoids),
         # it only relabels "no concrete change" from an invalid combination
-        # into a valid, honest one: "more understanding is needed."
-        if recommendation.get("review_type") == "proposed_update" and len(proposals) == 0:
+        # into a valid, honest one: "more understanding is needed." Skipped
+        # for an existing Review for the same reason as above: its type is
+        # already authoritative.
+        if (
+            recommendation.get("review_type") == "proposed_update"
+            and len(proposals) == 0
+            and recommendation.get("review_action") != "update_existing"
+        ):
             recommendation["review_type"] = "missing_understanding"
 
         # An open_question Review proposes a durable unknown, never a State
