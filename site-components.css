@@ -229,13 +229,7 @@ body > main.wrap:has(> .capability-local-nav){
   justify-content:initial!important;
   gap:initial!important;
 }
-.capability-shell > .page-intro{
-  width:100%!important;
-  max-width:900px!important;
-  min-height:148px!important;
-  margin:0 0 24px!important;
-  padding:0!important;
-}
+.capability-shell > .page-intro{width:100%!important;padding:0!important}
 .capability-shell > .capability-local-nav{
   width:100%!important;
   max-width:none!important;
@@ -809,17 +803,17 @@ body>main.site-page{
 
 /* v96.01 portfolio hierarchy */
 .home-option-d-links .home-feature-primary{border-color:var(--purple);background:var(--softp);box-shadow:0 0 0 1px color-mix(in srgb,var(--purple) 12%,transparent)}
-.home-option-d-links .home-feature-primary strong{font-size:18px}.applied-major-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}.applied-secondary-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}.applied-secondary-grid>.nav-card,.applied-secondary-grid>.card{grid-column:auto!important}@media(max-width:900px){.applied-secondary-grid{grid-template-columns:1fr!important}}
+.home-option-d-links .home-feature-primary strong{}.applied-major-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}.applied-secondary-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}.applied-secondary-grid>.nav-card,.applied-secondary-grid>.card{grid-column:auto!important}@media(max-width:900px){.applied-secondary-grid{grid-template-columns:1fr!important}}
 
 /* v96.02 — Home project hierarchy */
 .home-option-d-links>a.home-project-card{align-items:flex-start;justify-content:flex-start;text-align:left;padding:22px;min-height:210px}
-.home-option-d-links>a.home-feature-primary{padding:26px;min-height:230px;border-width:2px;background:linear-gradient(145deg,color-mix(in srgb,var(--softp) 88%,var(--card)),var(--card));box-shadow:0 14px 34px color-mix(in srgb,var(--purple) 8%,transparent)}
+.home-option-d-links>a.home-feature-primary{padding:26px;min-height:230px;border-width:2px}
 .home-option-d-links .home-project-kicker{margin:0 0 10px;color:var(--purple);font-size:10.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase}
 .home-option-d-links .home-project-card strong{font-size:20px;letter-spacing:-.02em}
 .home-option-d-links .home-feature-primary strong{font-size:26px}
 .home-option-d-links .home-project-card p{margin:10px 0 18px;color:var(--muted);font-size:14px;line-height:1.55;max-width:680px}
 .home-option-d-links .home-project-path{margin-top:auto;color:var(--purple);font-size:12px;font-weight:800}
-.home-option-d-links .home-feature-secondary{background:linear-gradient(180deg,var(--card),color-mix(in srgb,var(--softp) 12%,var(--card)))}
+.home-option-d-links .home-feature-secondary{}
 @media(max-width:760px){.home-option-d-links>a.home-project-card,.home-option-d-links>a.home-feature-primary{min-height:0;padding:20px}.home-option-d-links .home-feature-primary strong{font-size:22px}}
 
 /* v96.04 — canonical case-study content system.
@@ -830,19 +824,15 @@ body:has(>main.case-system-page){
   font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
   font-size:15px;line-height:1.62;
 }
-.case-system-page .case-page-content{max-width:1060px;margin:0 auto}
+.case-system-page .case-page-content{margin:0 auto}
 .case-system-page .case-page-content>.section,
-.case-system-page .case-page-content>.legal-section{
-  margin:0;padding:28px 0;border-top:1px solid var(--border);background:transparent;
-}
+.case-system-page .case-page-content>.legal-section{margin:0;border-top:1px solid var(--border);background:transparent}
 .case-system-page .case-page-content>:first-child{border-top:0;padding-top:4px}
-.case-system-page .case-page-content h2{
-  margin:0 0 10px;font-size:24px;line-height:1.22;letter-spacing:-.022em;
-}
+.case-system-page .case-page-content h2{margin:0 0 10px}
 .case-system-page .case-page-content h2:not(:first-child){margin-top:30px}
-.case-system-page .case-page-content h3{margin:22px 0 7px;font-size:17px;line-height:1.3}
+.case-system-page .case-page-content h3{margin:22px 0 7px;line-height:1.3}
 .case-system-page .case-page-content p,
-.case-system-page .case-page-content li{font-size:15px;line-height:1.62}
+.case-system-page .case-page-content li{}
 .case-system-page .case-page-content p{max-width:820px;margin:0 0 13px;color:var(--muted)}
 .case-system-page .case-page-content li{color:var(--muted);margin:4px 0}
 .case-system-page .case-page-content strong{color:var(--ink)}
@@ -852,18 +842,12 @@ body:has(>main.case-system-page){
    two exact contexts (e.g. .legal-feature-card .kicker) silently got no styling at all.
    Made a real reusable class instead of a pattern repeated per-container. */
 .case-system-page .kicker{margin:0 0 5px;color:var(--purple);font-size:10px;font-weight:850;letter-spacing:.08em;text-transform:uppercase}
-.case-system-page .summary-head h2{margin:0 0 7px;font-size:26px;line-height:1.2;letter-spacing:-.025em}
-.case-system-page .summary-head p{margin:0;color:var(--muted);font-size:15px;line-height:1.58}
+.case-system-page .summary-head h2{margin:0 0 7px;line-height:1.2;letter-spacing:-.025em}
+.case-system-page .summary-head p{margin:0;color:var(--muted);line-height:1.58}
 
 /* Shared artifact/path cards — promoted from Meridian instead of living in index.html. */
 .case-system-page .case-path-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin:18px 0 28px}
-.case-system-page .primary-artifact{
-  display:flex;min-height:176px;flex-direction:column;padding:17px 18px;
-  border:1px solid var(--border);border-radius:14px;background:var(--card);
-  color:var(--ink)!important;text-decoration:none!important;
-  box-shadow:0 5px 18px rgba(20,18,40,.045);
-  transition:border-color .15s ease,transform .15s ease,background .15s ease;
-}
+.case-system-page .primary-artifact{display:flex;flex-direction:column;border:1px solid var(--border);border-radius:14px;background:var(--card);color:var(--ink)!important;text-decoration:none!important;box-shadow:0 5px 18px rgba(20,18,40,.045);transition:border-color .15s ease,transform .15s ease,background .15s ease}
 .case-system-page .primary-artifact:hover{border-color:var(--purple);transform:translateY(-1px);background:color-mix(in srgb,var(--softp) 35%,var(--card))}
 .case-system-page .primary-artifact .artifact-label{display:block;margin:0 0 6px;color:var(--purple);font-size:10.5px;font-weight:850;letter-spacing:.075em;text-transform:uppercase}
 .case-system-page .primary-artifact strong{display:block;margin:0 0 6px;color:var(--ink);font-size:16px;line-height:1.25}
@@ -912,11 +896,11 @@ body:has(>main.case-system-page){
 
 /* v96.05 — case-study composition + interaction consistency pass.
    Stable project shell above subnav; page-specific identity starts below it. */
-.case-system-page .meridian-case-hero{min-height:108px!important}
+.case-system-page .meridian-case-hero{}
 .case-system-page .case-overview-meta{margin:0 0 28px}
 .case-system-page .case-overview-meta .meridian-context-grid{margin-top:0!important}
 .case-system-page .case-section-intro{margin:0 0 26px;padding:2px 0 22px;border-bottom:1px solid var(--border)}
-.case-system-page .case-section-intro h2{margin:0 0 7px!important;font-size:27px!important;line-height:1.18!important;letter-spacing:-.027em!important}
+.case-system-page .case-section-intro h2{margin:0 0 7px!important;line-height:1.18!important;letter-spacing:-.027em!important}
 .case-system-page .case-section-intro p{max-width:820px;margin:0!important;color:var(--muted);font-size:15px;line-height:1.58}
 .case-system-page .case-page-content>.legal-section{border:0!important;border-top:1px solid var(--border)!important;border-radius:0!important;box-shadow:none!important}
 .case-system-page .case-page-content>.legal-section:first-of-type{border-top:0!important}
@@ -951,11 +935,11 @@ body:has(>main.case-system-page){
 .case-system-page .limit-grid,.case-system-page .restraint-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin:16px 0}.case-system-page .limit-grid strong,.case-system-page .restraint-grid strong{display:block;font-size:14px;line-height:1.35}
 
 /* Product decisions: pair evidence with the resulting product judgment. */
-.case-system-page .decision-stack{display:grid;gap:12px;margin:20px 0}
-.case-system-page .decision-card{display:grid;grid-template-columns:46px minmax(0,1fr) minmax(0,1fr);gap:18px;padding:18px;border:1px solid var(--border);border-radius:14px;background:var(--card)}
+.case-system-page .decision-stack{display:grid;margin:20px 0}
+.case-system-page .decision-card{display:grid;grid-template-columns:46px minmax(0,1fr) minmax(0,1fr);gap:18px;border:1px solid var(--border);border-radius:14px;background:var(--card)}
 .case-system-page .decision-num{display:grid;place-items:center;width:34px;height:34px;border-radius:10px;background:var(--softp);color:var(--purple);font-size:11px;font-weight:900}
 .case-system-page .decision-label{display:block;margin-bottom:5px;color:var(--muted);font-size:9.5px;font-weight:850;letter-spacing:.075em;text-transform:uppercase}
-.case-system-page .decision-card strong{display:block;font-size:14px;line-height:1.4}.case-system-page .decision-card p{margin:6px 0 0!important;font-size:13px!important;line-height:1.5!important}
+.case-system-page .decision-card strong{display:block;font-size:14px;line-height:1.4}.case-system-page .decision-card p{margin:6px 0 0!important}
 .case-system-page .receipt-grid .mini-ui{margin-top:12px}
 
 /* Full Investigation: keep the manuscript, collapse the chapter-scale scroll. */
@@ -1173,10 +1157,7 @@ body:has(.meridian-breadcrumb span:last-child) .meridian-heading .eyebrow{displa
   margin:0!important;padding:15px 16px;border:1px solid var(--border);border-radius:12px;background:var(--soft);
   font-size:12.75px!important;line-height:1.5!important;
 }
-.case-system-page .legal-evidence-page .evidence-disclosure-panel{
-  max-width:100%;margin:18px 0 32px!important;padding:0 20px!important;border:1px solid var(--border)!important;
-  border-radius:16px!important;background:var(--card)!important;box-shadow:0 6px 20px rgba(24,20,48,.035);overflow:hidden;
-}
+.case-system-page .legal-evidence-page .evidence-disclosure-panel{margin:18px 0 32px!important;padding:0 20px!important;border:1px solid var(--border)!important;border-radius:16px!important;background:var(--card)!important;box-shadow:0 6px 20px rgba(24,20,48,.035);overflow:hidden}
 .case-system-page .legal-evidence-page .evidence-disclosure{border-bottom:1px solid var(--border)}
 .case-system-page .legal-evidence-page .evidence-disclosure:last-child{border-bottom:0}
 .case-system-page .legal-evidence-page .evidence-disclosure summary{padding:17px 2px}
@@ -1189,7 +1170,7 @@ body:has(.meridian-breadcrumb span:last-child) .meridian-heading .eyebrow{displa
 .case-system-page .deep-dive-page .investigation-intro,
 .case-system-page .deep-dive-page .investigation-orientation,
 .case-system-page .deep-dive-page .investigation-chapters{width:100%!important;max-width:none!important;margin-left:0!important;margin-right:0!important}
-.case-system-page .deep-dive-page .investigation-intro{padding:2px 0 4px}
+.case-system-page .deep-dive-page .investigation-intro{}
 .case-system-page .deep-dive-page .investigation-intro>p{max-width:820px!important;margin-left:0!important;margin-right:0!important}
 .case-system-page .deep-dive-page .chapter-body>p,
 .case-system-page .deep-dive-page .chapter-body>ul,
@@ -1246,14 +1227,9 @@ body:has(.meridian-breadcrumb span:last-child) .meridian-heading .eyebrow{displa
 
 /* UNKNOWN is a finding, not a second hero. This intentionally overrides legacy .unknown-story sizing. */
 .case-system-page .implementation-overview-page .unknown-story.compact-finding-card,
-.case-system-page .deep-dive-page .unknown-story.compact-finding-card{
-  width:min(100%,760px)!important;max-width:760px!important;margin:18px 0 24px!important;
-  padding:17px 20px!important;box-sizing:border-box!important;
-}
+.case-system-page .deep-dive-page .unknown-story.compact-finding-card{margin:18px 0 24px!important;box-sizing:border-box!important}
 .case-system-page .implementation-overview-page .unknown-story.compact-finding-card h2,
-.case-system-page .deep-dive-page .unknown-story.compact-finding-card h2{
-  margin:0 0 7px!important;font-size:22px!important;line-height:1.15!important;
-}
+.case-system-page .deep-dive-page .unknown-story.compact-finding-card h2{margin:0 0 7px!important;line-height:1.15!important}
 .case-system-page .implementation-overview-page .unknown-story.compact-finding-card p,
 .case-system-page .deep-dive-page .unknown-story.compact-finding-card p{
   margin:0 0 7px!important;font-size:13.5px!important;line-height:1.52!important;
@@ -1365,7 +1341,7 @@ body:has(.meridian-breadcrumb span:last-child) .meridian-heading .eyebrow{displa
 /* v5 — restore restrained color hierarchy; remove bright/gradient home treatments. */
 .home-option-d-links>a.home-feature-primary{background:var(--softp)!important;border-color:color-mix(in srgb,var(--purple) 45%,var(--border))!important;box-shadow:none!important}
 .home-option-d-links .home-feature-secondary{background:var(--card)!important}
-.home-prototype-jump{grid-column:1;display:flex!important;align-items:center;justify-content:space-between;gap:18px;margin-top:-8px;padding:11px 14px!important;min-height:0!important;border:1px solid var(--border)!important;border-radius:10px;background:color-mix(in srgb,var(--softp) 60%,var(--card))!important;text-decoration:none!important}
+.home-prototype-jump{grid-column:1;align-items:center;justify-content:space-between;gap:18px;margin-top:-8px;padding:11px 14px!important;min-height:0!important;border:1px solid var(--border)!important;border-radius:10px;background:color-mix(in srgb,var(--softp) 60%,var(--card))!important;text-decoration:none!important}
 .home-prototype-jump span{color:var(--muted);font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.07em}.home-prototype-jump strong{color:var(--purple);font-size:12px!important}
 .case-system-page .case-card,.case-system-page .legal-card,.case-system-page .capability-card{background:var(--card)!important}
 .case-system-page .case-card:nth-child(3n+1),.case-system-page .legal-card:nth-child(3n+1),.case-system-page .capability-card:nth-child(3n+1){border-top:3px solid color-mix(in srgb,var(--purple) 58%,var(--border))!important}
@@ -1391,7 +1367,7 @@ body:has(.meridian-breadcrumb span:last-child) .meridian-heading .eyebrow{displa
 .home-prototype-jump{display:none!important}
 
 /* V7 Legal AI: one-page editorial case study with selective color and fewer containers. */
-.legal-single-case{max-width:1120px}.legal-story{max-width:1000px;margin:0 auto 80px}.legal-story-section{padding:38px 0;border-top:1px solid var(--border)}.legal-story-section:first-child{border-top:0}.legal-story .kicker{margin-bottom:8px;color:var(--purple);font-size:10px;font-weight:850;letter-spacing:.09em;text-transform:uppercase}.legal-story h2{max-width:780px;margin:0 0 12px;font-size:28px;line-height:1.16}.legal-story h3{font-size:17px;line-height:1.3;margin:4px 0 7px}.legal-story p{max-width:800px;color:var(--muted);font-size:15px;line-height:1.65}.legal-opening{padding:28px 32px 30px!important;border-left:4px solid var(--purple)!important;background:color-mix(in srgb,var(--softp) 48%,var(--card))}.legal-opening p{font-size:16px}.legal-landing{margin:16px 0 0!important;color:var(--ink)!important}.section-intro{margin-bottom:20px}.legal-evidence-strip{display:flex;flex-wrap:wrap;gap:8px;margin:18px 0}.legal-evidence-strip span{padding:7px 10px;border-radius:999px;background:var(--softp);color:var(--purple);font-size:11px;font-weight:750}.legal-method{max-width:800px;margin-top:18px;border-top:1px solid var(--border);padding-top:12px}.legal-method summary{cursor:pointer;color:var(--muted);font-size:12px;font-weight:750}.legal-method p{font-size:13px}.legal-findings{padding-left:28px;padding-right:28px;background:color-mix(in srgb,var(--softp) 30%,var(--card))}.finding-decision{display:grid;grid-template-columns:1.15fr .85fr;gap:28px;padding:20px 0;border-top:1px solid color-mix(in srgb,var(--purple) 18%,var(--border))}.finding-decision:first-of-type{border-top:0}.finding-label,.decision-side>span,.legal-example-flow span{color:var(--purple);font-size:9px;font-weight:850;letter-spacing:.08em;text-transform:uppercase}.finding-decision p{margin:0;font-size:13.5px}.decision-side{padding-left:18px;border-left:2px solid color-mix(in srgb,var(--purple) 40%,var(--border))}.decision-side p{color:var(--ink)}.legal-example-flow{display:grid;grid-template-columns:1fr auto 1fr auto 1fr auto 1fr;align-items:stretch;gap:9px;margin:24px 0}.legal-example-flow>div{padding:15px;border:1px solid var(--border);border-radius:10px;background:var(--card)}.legal-example-flow>div:nth-of-type(2),.legal-example-flow>div:nth-of-type(3){background:color-mix(in srgb,var(--softp) 38%,var(--card))}.legal-example-flow strong{display:block;margin-top:7px;font-size:12.5px;line-height:1.45}.legal-example-flow>b{align-self:center;color:var(--purple)}.legal-example-caption{font-size:13px!important}.legal-decision{padding:34px 32px;background:var(--softp);border-top:0;border-radius:14px}.legal-decision p{color:var(--ink)}.legal-ruled-out{padding-top:13px;border-top:1px solid color-mix(in srgb,var(--purple) 20%,var(--border))}.stop-pair{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:20px}.stop-pair p{margin:0;padding:16px 18px;border-left:3px solid var(--purple);background:color-mix(in srgb,var(--softp) 25%,var(--card));font-size:13px}.legal-learning{padding-bottom:10px}.text-link{color:var(--purple);font-weight:800;text-decoration:none}.text-link:hover{text-decoration:underline}
+.legal-single-case{}.legal-story{margin:0 auto 80px}.legal-story-section{border-top:1px solid var(--border)}.legal-story-section:first-child{border-top:0}.legal-story .kicker{margin-bottom:8px;color:var(--purple);font-size:10px;font-weight:850;letter-spacing:.09em;text-transform:uppercase}.legal-story h2{max-width:780px;margin:0 0 12px;line-height:1.16}.legal-story h3{font-size:17px;line-height:1.3;margin:4px 0 7px}.legal-story p{max-width:800px;color:var(--muted)}.legal-opening{}.legal-opening p{}.legal-landing{margin:16px 0 0!important;color:var(--ink)!important}.section-intro{}.legal-evidence-strip{display:flex;flex-wrap:wrap}.legal-evidence-strip span{border-radius:999px;background:var(--softp);color:var(--purple);font-size:11px;font-weight:750}.legal-method{max-width:800px;border-top:1px solid var(--border)}.legal-method summary{cursor:pointer;color:var(--muted);font-size:12px;font-weight:750}.legal-method p{font-size:13px}.legal-findings{padding-left:28px;padding-right:28px}.finding-decision{display:grid;grid-template-columns:1.15fr .85fr;border-top:1px solid color-mix(in srgb,var(--purple) 18%,var(--border))}.finding-decision:first-of-type{border-top:0}.finding-label,.decision-side>span,.legal-example-flow span{color:var(--purple);font-size:9px;font-weight:850;letter-spacing:.08em;text-transform:uppercase}.finding-decision p{margin:0}.decision-side{padding-left:18px;border-left:2px solid color-mix(in srgb,var(--purple) 40%,var(--border))}.decision-side p{color:var(--ink)}.legal-example-flow{display:grid;grid-template-columns:1fr auto 1fr auto 1fr auto 1fr;align-items:stretch}.legal-example-flow>div{border:1px solid var(--border);background:var(--card)}.legal-example-flow>div:nth-of-type(2),.legal-example-flow>div:nth-of-type(3){background:color-mix(in srgb,var(--softp) 38%,var(--card))}.legal-example-flow strong{display:block;margin-top:7px;line-height:1.45}.legal-example-flow>b{align-self:center;color:var(--purple)}.legal-example-caption{font-size:13px!important}.legal-decision{border-top:0}.legal-decision p{color:var(--ink)}.legal-ruled-out{border-top:1px solid color-mix(in srgb,var(--purple) 20%,var(--border))}.stop-pair{display:grid;grid-template-columns:1fr 1fr}.stop-pair p{margin:0;border-left:3px solid var(--purple);background:color-mix(in srgb,var(--softp) 25%,var(--card));font-size:13px}.legal-learning{}.text-link{color:var(--purple);font-weight:800;text-decoration:none}.text-link:hover{text-decoration:underline}
 @media(max-width:760px){.legal-opening,.legal-findings,.legal-decision{padding:24px 18px!important}.finding-decision,.stop-pair{grid-template-columns:1fr}.decision-side{padding:12px 0 0;border-left:0;border-top:2px solid color-mix(in srgb,var(--purple) 40%,var(--border))}.legal-example-flow{grid-template-columns:1fr}.legal-example-flow>b{transform:rotate(90deg);justify-self:center}.legal-story h2{font-size:23px}}
 .home-option-d-links>.home-project-with-prototype{min-height:230px;border:2px solid color-mix(in srgb,var(--purple) 45%,var(--border));border-radius:14px;background:var(--softp);box-shadow:none}
 .home-option-d-links>.home-project-with-prototype:hover{border-color:var(--purple)}
@@ -1410,7 +1386,7 @@ body:has(.meridian-breadcrumb span:last-child) .meridian-heading .eyebrow{displa
 .home-more-primary{display:inline-flex;align-items:center;min-height:36px;padding:8px 12px;border:1px solid color-mix(in srgb,var(--purple) 36%,var(--border));border-radius:8px;background:var(--softp);color:var(--purple)!important;font-size:12px!important;font-weight:850;white-space:nowrap}
 .home-more-primary:hover{border-color:var(--purple);text-decoration:none!important}
 
-.learning-principles{margin:38px 0 28px;padding:30px 0;border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
+.learning-principles{border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
 .learning-principles h2{margin:6px 0 8px;font-size:28px;letter-spacing:-.02em}
 .learning-principles>.section-lead{max-width:790px;margin-bottom:20px}
 .principles-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0;border-top:1px solid var(--border)}
@@ -1420,7 +1396,7 @@ body:has(.meridian-breadcrumb span:last-child) .meridian-heading .eyebrow{displa
 .principles-grid p{margin:0;color:var(--muted);font-size:13px;line-height:1.55}
 
 /* Case-study shell: the newer cases should visibly belong to the same site. */
-.case-system-page>.meridian-case-hero,.legal-single-case>.meridian-case-hero{margin-top:12px;padding:24px 26px!important;border:1px solid color-mix(in srgb,var(--purple) 22%,var(--border));border-radius:13px;background:color-mix(in srgb,var(--softp) 48%,var(--card));min-height:0!important}
+.case-system-page>.meridian-case-hero,.legal-single-case>.meridian-case-hero{margin-top:12px;padding:24px 26px!important;border:1px solid color-mix(in srgb,var(--purple) 22%,var(--border));border-radius:13px;min-height:0!important}
 .case-system-page>.meridian-case-hero:after,.legal-single-case>.meridian-case-hero:after{width:48px;height:3px;margin-top:15px;background:var(--purple)}
 .case-system-page .meridian-section-nav{border-bottom-color:color-mix(in srgb,var(--purple) 22%,var(--border))}
 .case-system-page .meridian-section-links a.current{color:var(--purple);border-bottom-color:var(--purple)}
@@ -1430,14 +1406,14 @@ body:has(.meridian-breadcrumb span:last-child) .meridian-heading .eyebrow{displa
 /* Legal AI is a short case study, not a separately centered article. */
 .legal-single-case{max-width:1180px!important}
 .legal-single-case .legal-story{width:100%;max-width:none;margin:0 0 58px!important;padding:0!important}
-.legal-single-case .legal-story-section{width:100%;max-width:none;padding:26px 0}
+.legal-single-case .legal-story-section{width:100%;max-width:none}
 .legal-single-case .legal-story-section>h2,.legal-single-case .legal-story-section>.section-intro,.legal-single-case .legal-story-section>p,.legal-single-case .legal-story-section>.kicker,.legal-single-case .legal-story-section>.legal-method{max-width:840px}
-.legal-single-case .legal-opening{max-width:none!important;margin-top:18px;padding:22px 24px!important;border-left:4px solid var(--purple)!important;border-radius:10px;background:color-mix(in srgb,var(--softp) 54%,var(--card))}
-.legal-single-case .legal-findings{max-width:none!important;padding:24px!important;border-left:4px solid color-mix(in srgb,var(--purple2) 70%,var(--purple));border-radius:10px;background:color-mix(in srgb,var(--softp) 34%,var(--card))}
-.legal-single-case .finding-decision{max-width:980px}
+.legal-single-case .legal-opening{max-width:none!important;margin-top:18px;border-radius:10px}
+.legal-single-case .legal-findings{max-width:none!important;border-left:4px solid color-mix(in srgb,var(--purple2) 70%,var(--purple))}
+.legal-single-case .finding-decision{}
 .legal-single-case .legal-example{padding-bottom:28px}
 .legal-single-case .legal-example-flow{max-width:1040px}
-.legal-single-case .legal-decision{max-width:980px!important;margin:4px 0;padding:23px 25px!important;border-left:4px solid var(--purple);background:color-mix(in srgb,var(--softp) 63%,var(--card))}
+.legal-single-case .legal-decision{max-width:980px!important;margin:4px 0}
 .legal-single-case .legal-stop .stop-pair{max-width:900px}
 .legal-single-case .legal-learning{max-width:860px}
 
@@ -1475,7 +1451,7 @@ body:has(.meridian-breadcrumb span:last-child) .meridian-heading .eyebrow{displa
 .case-system-page .deep-dive-note{margin-top:18px!important;margin-bottom:24px!important}
 .case-system-page .deep-dive-page>.deep-dive-note:first-child{overflow:visible!important}
 /* Newer cases use the canonical shared tokens, without project-specific invented violets. */
-.case-system-page>.meridian-case-hero,.legal-single-case>.meridian-case-hero{background:var(--softp)!important;border-color:var(--border)!important}
+.case-system-page>.meridian-case-hero,.legal-single-case>.meridian-case-hero{}
 .legal-single-case .legal-opening,.legal-single-case .legal-findings,.legal-single-case .legal-decision{background:var(--soft)!important;border-color:var(--purple)!important}
 @media(max-width:700px){.plain-finding-band{align-items:flex-start;flex-direction:column}.finding-motif{white-space:normal}.home-feature-pair .home-project-card,.home-feature-pair .home-feature-primary{min-height:0!important}}
 
@@ -1517,7 +1493,7 @@ body:has(.meridian-breadcrumb span:last-child) .meridian-heading .eyebrow{displa
 .legal-single-case .decision-side{background:transparent!important}
 .legal-single-case .legal-example-flow>div{border-radius:0!important;border-width:0 0 1px!important;background:transparent!important;padding:12px 6px!important}
 .legal-single-case .legal-example-flow>div:nth-of-type(2),.legal-single-case .legal-example-flow>div:nth-of-type(3){background:transparent!important}
-.legal-single-case .legal-decision{padding:26px 0!important;border-radius:0!important;background:transparent!important;border-top:2px solid var(--purple)!important;border-bottom:1px solid var(--border)!important}
+.legal-single-case .legal-decision{border-radius:0!important;background:transparent!important;border-top:2px solid var(--purple)!important;border-bottom:1px solid var(--border)!important}
 .legal-single-case .stop-pair p{background:transparent!important;padding:10px 14px!important}
 .legal-single-case .legal-evidence-strip span{background:transparent!important;border:1px solid var(--border)!important;color:var(--muted)!important}
 @media(max-width:760px){.legal-single-case .finding-decision{grid-template-columns:1fr}}
@@ -1574,7 +1550,7 @@ body:has(.meridian-breadcrumb span:last-child) .meridian-heading .eyebrow{displa
 .legal-paper .paper-ruled{padding-left:16px;border-left:3px solid var(--purple);color:var(--ink)!important}
 .legal-paper .paper-next-grid{max-width:760px;display:grid;grid-template-columns:1fr 1fr;gap:28px;margin-top:20px}
 .legal-paper .paper-next-grid p{margin:0!important;padding-top:12px;border-top:1px solid var(--border);font-size:13.5px!important;line-height:1.55!important}
-.legal-paper .paper-learning{max-width:760px;padding:28px 0 0;border-top:1px solid var(--border)}
+.legal-paper .paper-learning{padding:28px 0 0;border-top:1px solid var(--border)}
 .legal-paper .paper-learning p{margin:0 0 12px;color:var(--muted);font-size:13.5px;line-height:1.58}
 .legal-paper .paper-sources{max-width:760px;margin-top:20px;padding-top:14px;border-top:1px solid var(--border);color:var(--muted)}
 .legal-paper .paper-sources h3{margin:0 0 8px;font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
