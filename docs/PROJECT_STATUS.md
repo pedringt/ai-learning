@@ -14,6 +14,12 @@ _Last updated: September 10, 2026 after the reviewer-orientation / Ask cleanup w
 - `main` and `staging` contain the same reviewed product/UI changes; this handoff update itself is a documentation-only commit on `main`.
 - **Hard rule: all product/site changes go to `staging` first. Never push or merge product/site changes to `main` without the user's explicit confirmation.**
 
+### Direct-to-main exception — September 12, 2026
+
+The user explicitly confirmed a small, isolated exception to the staging-first rule above: a copy-only edit to `implementation-context.html` (the "Lingering Questions" section, formerly "What I'd test next," and the closing "Where I landed" paragraph) was pushed straight to `main`, bypassing `staging` entirely. Reason: `staging` had unrelated cleanup work actively in progress at the time, and this change was pure case-study text with no product/UI/behavior impact, so routing it through `staging` and cherry-picking back out was judged riskier than a small direct commit.
+
+**Consequence: `staging` does NOT have this change.** `main` and `staging` are no longer identical on `implementation-context.html` as of this note. Before promoting `staging` to `main` again (or otherwise reconciling the branches), check whether `staging`'s copy of `implementation-context.html` still has the old "What I'd test next" wording — if so, merge/rebase carefully so this direct-to-main edit isn't silently overwritten or reverted. Do not treat this note as an ongoing exception to the hard rule; it applies only to this one commit.
+
 Production site:
 
 - Portfolio: https://ai-learning-rouge.vercel.app/
