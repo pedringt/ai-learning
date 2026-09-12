@@ -69,8 +69,14 @@ data.notes.unshift({id:'n-test-auto',title:'Leadership pilot target',text:'Leade
 data.reviews.unshift({id:'r-test-auto',evidenceId:'n-test-auto',topics:['automation'],status:'pending',title:'Leadership proposed a 25% pilot target',unresolved:'Whether 25% should become the accepted pilot target.'});
 let pending=api.intentAskHtml(api.detectAskIntent('Are we targeting 25%?'));
 check('pending 25% is not promoted to truth',/Not established/.test(pending)&&/unreviewed information/.test(pending));
+// "What needs review?" is a generic inventory question, so it now routes to
+// a compact Open Items card (count + CTA) rather than listing review
+// titles -- Open Items is the authoritative place to see what a review is
+// actually about. Confirm the count reflects the newly-added pending
+// review instead of asserting on title text no longer rendered here.
 let needsReview=api.intentAskHtml(api.detectAskIntent('What needs review?'));
-check('pending automation evidence appears in review answer',/25% pilot target/.test(needsReview));
+const pendingCount=data.reviews.filter(r=>r.status==='pending').length;
+check('pending automation evidence is reflected in the review routing card',needsReview.includes('ask-routing-card')&&needsReview.includes(`>${pendingCount}<`)&&needsReview.includes('data-anchor="open-items-reviews"'));
 // Accept the controlled mutation: update maintained Current State, preserve history, clear review.
 const k=data.knowledge.find(x=>x.id==='k-autonomy'); const before=k.statement;
 k.statement='Leadership confirmed the first pilot should target 25% autonomous resolution. Human review remains required for customer-facing responses.'; k.support=['n-test-auto'];

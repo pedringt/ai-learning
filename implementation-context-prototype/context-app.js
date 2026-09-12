@@ -466,9 +466,14 @@
     if(has(/\b(are we on track|are we behind|are we ahead|schedule health|timeline health)\b/)) return {kind:'progress-inference'};
 
     if(has(/\b(blocker|blockers|blocking|blocked|holding us up|hold us up|in the way|stop us|stopping us|prevent us|waiting on|needs attention|need attention)\b/)) return {kind:has(/\b(who owns|owner|ownership)\b/)?'blocker-owners':'blockers'};
-    if(has(/\b(needs review|need review|pending review|awaiting review|review first|evidence.*incorporated|new evidence)\b/)) return {kind:'pending'};
+    // "pending"/"open" are the generic-inventory kinds that route to a compact
+    // Open Items card instead of a synthesized answer (see intentAskHtml). A
+    // topic word ("...related to security") means the person wants an answer
+    // scoped to that topic, not a raw count -- fall through so
+    // structuredAskResult's topic-filtered branch handles it instead.
+    if(has(/\b(needs review|need review|pending review|awaiting review|review first|evidence.*incorporated|new evidence|open review|open reviews|pending reviews)\b/) && !askTopics(q).length) return {kind:'pending'};
     if(has(/\b(current status|where are we|catch me up|what should i know|project status|status of|overall status|summarize the project|summarize project|project summary|what are we building|what are we making)\b/)) return {kind:'status'};
-    if(has(/\b(open questions|still open|unresolved|unknowns|dont know|do not know|havent figured|have not figured|what havent we figured out|still need to figure|assumptions.*validated|what isnt decided|what is not decided)\b/)) return {kind:'open'};
+    if(has(/\b(open questions|still open|unresolved|unknowns|dont know|do not know|havent figured|have not figured|what havent we figured out|still need to figure|assumptions.*validated|what isnt decided|what is not decided)\b/) && !askTopics(q).length) return {kind:'open'};
     if(has(/\b(what have we decided|what did we decide|decisions|decision about|agreed on|established about)\b/)) return {kind:'decisions'};
     if(has(/\b(original plan|how did we get here|what changed our minds|superseded|used to|history|historical|previously|originally|how.*change|before vs|before versus|different now)\b/)) return {kind:'history'};
     if(has(/\b(in scope|out of scope|scope|must haves|must have|can wait|requires a human|require a human|account changes|send directly|send to customers|what arent we doing|what are we not doing|what shouldnt.*do|what should not.*do)\b/)) return {kind:'scope'};
@@ -487,6 +492,14 @@
     return null;
   }
 
+  // A generic inventory question ("what needs review?", "list every open
+  // review") is really a navigation request. Answering it with a synthesized
+  // list risks Ask quietly drifting out of sync with Open Items, the
+  // authoritative view for these counts. Route there instead: a count plus a
+  // link, nothing Ask has to keep consistent on its own.
+  function routingCardHtml(title,lede,count,view,anchor){
+    return `<div class="result-label">Open Items</div><div class="ask-routing-card"><h2>${esc(title)}</h2><p class="result-lede">${esc(lede)}</p><div class="ask-routing-count">${count}</div><button class="btn primary" data-view="${esc(view)}" data-anchor="${esc(anchor)}">Open Items →</button></div>`;
+  }
   function unresolvedBundle(){ return {questions:openQuestions(),reviews:pendingReviews()}; }
   function compactOpenHtml(title,lede){
     const {questions,reviews}=unresolvedBundle();
@@ -609,8 +622,8 @@
     if(i.kind==='progress-inference')return progressInferenceHtml();
     if(i.kind==='blocker-owners')return blockerOwnersHtml();
     if(i.kind==='blockers')return compactOpenHtml('Items that may be blocking or constraining progress','State does not know that every unresolved item is a confirmed blocker. These are the unresolved dependencies and review items most likely to constrain implementation.');
-    if(i.kind==='pending')return compactOpenHtml('What needs review','Pending evidence has not changed Current State yet.');
-    if(i.kind==='open')return compactOpenHtml('What is not settled yet','These questions and pending reviews are intentionally preserved as unresolved.');
+    if(i.kind==='pending'){ const n=pendingReviews().length; return routingCardHtml('What needs review',n===1?'1 review is waiting on a decision.':`${n} reviews are waiting on a decision.`,n,'open-items','open-items-reviews'); }
+    if(i.kind==='open'){ const n=openQuestions().length; return routingCardHtml('What is not settled yet',n===1?'1 question is open.':`${n} questions are open.`,n,'open-items','open-items-questions'); }
     if(i.kind==='status')return scenarioResult({topics:['automation','security','feature-access','success-metrics','operations'],output:'summary'});
     if(i.kind==='decisions')return `<div class="result-label">Current State</div><h2>Decisions currently reflected in the project</h2><div class="structured-results">${state.data.knowledge.filter(k=>k.state==='current').slice(0,8).map(k=>`<article class="structured-result"><span class="knowledge-status current">Current State</span><h3>${esc(k.title)}</h3><p>${esc(k.statement)}</p></article>`).join('')}</div>`;
     if(i.kind==='history')return structuredAskHtml({kind:'history',items:state.data.history.slice().sort(sortDateAsc)});
@@ -923,7 +936,21 @@
       renderDraftNote:n=>NOTES_VIEW.draftNoteRow(n)
     };
   }
-  function renderOpenItems(){ root.innerHTML=OPEN_ITEMS_VIEW.render(openItemsProps()); }
+  // An Ask routing card ("What needs review?") can ask to land directly on
+  // one Open Items section instead of the top of the page, via
+  // window.__stateScrollAnchor (same mechanism the Settings Slack banner
+  // uses) -- cleared once consumed so it only fires for the navigation that
+  // requested it.
+  function renderOpenItems(){
+    const anchor=window.__stateScrollAnchor;
+    const section=anchor&&anchor.startsWith('open-items-')?anchor.slice('open-items-'.length):null;
+    if(section && state.openItemSections[section]) state.openItemSections[section]=false;
+    root.innerHTML=OPEN_ITEMS_VIEW.render(openItemsProps());
+    if(section){
+      delete window.__stateScrollAnchor;
+      setTimeout(()=>document.querySelector(`.open-items-${section}`)?.scrollIntoView({block:'start'}),60);
+    }
+  }
   function renderReview(){ return renderOpenItems(); }
   function reviewCard(r,expanded=true,accordion=false){ return OPEN_ITEMS_VIEW.reviewCard(r,expanded,accordion,state.data.notes.find(n=>n.id===r.evidenceId)); }
   function linkedReviewFor(questionId){
@@ -1607,6 +1634,22 @@
     navigateTo('settings');
   }
   window.STATE_ASK_TEST_API={state,detectAskIntent,findScenario,structuredAskResult,scenarioResult,intentAskHtml,submitAsk,upsertBackendReview,replaceBackendOpenReviews,mapApiReview,looksLikeQuestion,hasExplicitUpdateIntent,linkedReviewFor,questionDialogHtml,renderOverview,historyType,syncApiHistory};
+  // The live Ask State drawer (context-product-polish.js's runAsk) is the
+  // only Ask surface a user actually reaches -- this module's own
+  // submitAsk()/renderOverview() Ask path is legacy from before the drawer
+  // existed and is exercised only by this file's unit tests. Generic
+  // inventory questions ("What needs review?") still need to route to a
+  // compact Open Items card instead of a live-backend answer, so expose the
+  // detection+render step here (where detectAskIntent/intentAskHtml/the real
+  // backend-hydrated review and question counts already live) for the
+  // drawer to call before it ever calls the Ask backend.
+  window.STATE_ASK_ROUTING=Object.freeze({
+    askRoutingCardHtml(raw){
+      const kind=detectAskIntent(raw)?.kind;
+      if(kind!=='pending'&&kind!=='open')return null;
+      return intentAskHtml({kind});
+    }
+  });
   // Called by context-history.js's popstate handler after it re-activates the
   // History tab, so a Back press that lands on a topic-detail browser-history
   // entry actually restores that topic filter instead of always landing on

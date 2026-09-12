@@ -298,6 +298,16 @@
       ui.payload=null;ui.resolvedContext=[];ui.answerStateSignature=null;ui.stale=false;
       renderDrawerResult('<div class="ask-readonly-message"><h3>Ask State is read-only.</h3><p>Typing here never changes the project record. Use Add Evidence when you have new project information State should evaluate.</p><button class="btn primary" type="button" data-review-batch-action="open-add-evidence">Add Evidence</button></div>');return;
     }
+    // A generic inventory question ("What needs review?", "List every open
+    // review") is a navigation request, not something that needs a live
+    // backend answer -- Open Items is already the authoritative, live view
+    // for these counts. Route there directly and skip the Ask backend call
+    // entirely so this never risks drifting out of sync with it.
+    const routingHtml=window.STATE_ASK_ROUTING?.askRoutingCardHtml?.(clean);
+    if(routingHtml){
+      ui.payload=null;ui.resolvedContext=[];ui.answerStateSignature=null;ui.stale=false;
+      renderDrawerResult(routingHtml);return;
+    }
     if(!ASK?.submit){renderDrawerResult('<div class="ask-live-error"><h2>Ask is temporarily unavailable.</h2><p>The Ask module did not load.</p></div>');return;}
     const requestId=++ui.requestId;ui.running=true;ui.stale=false;ui.payload=null;ui.resolvedContext=[];
     const statePromise=currentStateSignature();const resolvedPromise=relevantResolvedDecisions(clean);
