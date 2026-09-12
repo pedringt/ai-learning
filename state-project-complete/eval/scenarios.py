@@ -172,6 +172,55 @@ SCENARIOS = [
         state_items=BASE_STATE,
         notes="A specific, attributed, concrete commitment -- should reach review even though it isn't a scope/security topic.",
     ),
+    Scenario(
+        id="authority_question_removing_human_review",
+        category="executive_authority_statement",
+        expected=MUST_REVIEW,
+        content=(
+            "Leadership asked whether we can remove human review from the "
+            "pilot entirely to speed things up."
+        ),
+        state_items=BASE_STATE,
+        notes=(
+            "Not a decision or even a stated opinion -- just a question. But it's "
+            "attributed to leadership (the same authority bar that makes "
+            "clear_decision_budget and authority_statement_launch_date "
+            "MUST_REVIEW) and it targets the single core safety boundary the "
+            "whole product exists to protect (human review), not a routine "
+            "detail. Distinct from old_info_resurfacing_autonomy (AMBIGUOUS): "
+            "that one is unattributed idle circling-back on an automation "
+            "percentage; this one is authority actively floating removing "
+            "review itself. Should create an open_question Review tracking "
+            "whether leadership is reconsidering the requirement -- not a "
+            "state change, since nothing has been decided."
+        ),
+    ),
+    Scenario(
+        id="authority_question_removing_human_review_scoped",
+        category="executive_authority_statement",
+        expected=AMBIGUOUS,
+        content=(
+            "Leadership asked whether we can remove human review for low-risk "
+            "password reset answers, but Security has not approved that change."
+        ),
+        state_items=BASE_STATE,
+        notes=(
+            "The exact literal wording from the live staging QA pass that "
+            "originally produced no Review (2026-09-12). Empirically tested "
+            "against the real model (9 runs total): passed (review_recommended) "
+            "8/8 times in isolation, but failed once when run as part of the "
+            "full ~35-scenario batch -- roughly 89% consistent, not reliably "
+            "either way. Narrower than authority_question_removing_human_review "
+            "(scoped to password-reset only, and explicitly says Security has "
+            "not approved it), which may read as more speculative/already-"
+            "blocked. Classified AMBIGUOUS rather than MUST_REVIEW because a "
+            "hard assert here would itself be flaky, not because the case is "
+            "unimportant -- this is genuine borderline model judgment on the "
+            "safety-boundary line, worth watching if it recurs, not a "
+            "reliably-reproducible prompt gap the way the original repro "
+            "looked from a single live QA pass."
+        ),
+    ),
 
     # --- Non-authoritative opinions -----------------------------------------
     Scenario(
