@@ -431,6 +431,31 @@ SCENARIOS = [
         questions=(("q-vendor-owner", "Who owns the vendor security review?", False),),
         notes="Partially addresses an open Question without fully resolving it.",
     ),
+
+    # --- Unresolved ownership gaps (newly surfaced, not answering an existing Question)
+    Scenario(
+        id="unresolved_ownership_escalation_scoring",
+        category="ownership_gap",
+        expected=MUST_REVIEW,
+        content="We still need to know who owns escalation-quality scoring during the pilot.",
+        state_items=BASE_STATE,
+        notes=(
+            "The exact literal wording from the live staging QA pass "
+            "(2026-09-12) that produced no Review or Question. Unlike "
+            "question_answer_partial_vendor_owner, this isn't answering an "
+            "existing tracked Question -- it's surfacing a brand-new "
+            "ownership gap. It's also not a neutral observation like "
+            "observation_billing_volume/observation_friday_spike (NO_REVIEW): "
+            "those describe patterns with no stated need; this explicitly says "
+            "'we still need to know', and it's tied to k-escalation, an "
+            "existing safety-adjacent State item (tickets the assistant isn't "
+            "confident about go to a human rather than a guess) -- not knowing "
+            "who owns measuring whether that mechanism is actually working "
+            "well is a real coverage gap, not routine missing detail. Expected "
+            "open_question, testing whether the model treats an unattributed "
+            "'we need to know X' the same way it treats an attributed decision."
+        ),
+    ),
     Scenario(
         id="question_answer_conflicting_launch_gate",
         category="conflicting_answers",
