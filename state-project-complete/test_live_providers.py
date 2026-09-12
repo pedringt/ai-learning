@@ -10,7 +10,7 @@ import sys
 import unittest
 from unittest.mock import Mock, patch
 
-sys.path.insert(0, "phase2_current")
+sys.path.insert(0, "interpretation_runtime")
 
 from database_migration_backed import get_test_db
 from interpretation_pipeline_integrated import process_evidence
@@ -83,7 +83,7 @@ class MockLiveProviderTests(unittest.TestCase):
     @patch('anthropic_provider.AnthropicProvider.client')
     def test_anthropic_mock_interpret(self, mock_client):
         """Test Anthropic provider with mocked response."""
-        from state_spike.semantic_validation import InterpretationContextSnapshot, StateContextItem
+        from validation.semantic_validation import InterpretationContextSnapshot, StateContextItem
         
         # Mock Claude's response
         mock_response = Mock()
@@ -140,7 +140,7 @@ class MockLiveProviderTests(unittest.TestCase):
         provider = AnthropicProvider()
         
         # Import InterpretationContextSnapshot
-        from state_spike.semantic_validation import InterpretationContextSnapshot, StateContextItem
+        from validation.semantic_validation import InterpretationContextSnapshot, StateContextItem
         
         # Build mock context
         context = InterpretationContextSnapshot(
@@ -163,7 +163,7 @@ class MockLiveProviderTests(unittest.TestCase):
     @patch('openai_provider.OpenAIProvider.client')
     def test_openai_mock_interpret(self, mock_client):
         """Test OpenAI provider with mocked response."""
-        from state_spike.semantic_validation import InterpretationContextSnapshot, StateContextItem
+        from validation.semantic_validation import InterpretationContextSnapshot, StateContextItem
         
         # Mock OpenAI's response
         mock_response = Mock()

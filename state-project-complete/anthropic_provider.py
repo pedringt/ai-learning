@@ -18,9 +18,9 @@ from typing import Any, Mapping
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent / "phase2_current"))
+sys.path.insert(0, str(Path(__file__).resolve().parent / "interpretation_runtime"))
 
-from state_spike.semantic_validation import InterpretationContextSnapshot
+from validation.semantic_validation import InterpretationContextSnapshot
 from provider_output_schema import PROVIDER_OUTPUT_SCHEMA
 from provider_json import extract_json_object
 from question_review_prompt import QUESTION_REVIEW_GUIDANCE

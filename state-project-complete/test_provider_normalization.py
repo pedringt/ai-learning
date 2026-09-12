@@ -2,11 +2,11 @@ import copy
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent / "phase2_current"))
+sys.path.insert(0, str(Path(__file__).resolve().parent / "interpretation_runtime"))
 
-from state_spike.provider_normalization import normalize_provider_payload
-from state_spike.interpretation_validation import validate_schema
-from state_spike.semantic_validation import InterpretationContextSnapshot, StateContextItem
+from validation.provider_normalization import normalize_provider_payload
+from validation.interpretation_validation import validate_schema
+from validation.semantic_validation import InterpretationContextSnapshot, StateContextItem
 
 
 def context():

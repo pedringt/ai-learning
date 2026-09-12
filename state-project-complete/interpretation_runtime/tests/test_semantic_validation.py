@@ -1,7 +1,7 @@
 import copy
 import unittest
 
-from state_spike.semantic_validation import (
+from validation.semantic_validation import (
     ApplicationStateSnapshot,
     InterpretationContextSnapshot,
     ReviewContextItem,

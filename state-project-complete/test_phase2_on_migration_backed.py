@@ -15,9 +15,9 @@ import sys
 import unittest
 
 # Set up paths for Phase 2 modules
-sys.path.insert(0, "phase2_current")
+sys.path.insert(0, "interpretation_runtime")
 
-from state_spike.fake_provider import FakeProvider, GOLDEN_OUTPUTS
+from validation.fake_provider import FakeProvider, GOLDEN_OUTPUTS
 
 # Use integrated pipeline on migration-backed schema
 from database_migration_backed import get_test_db

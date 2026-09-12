@@ -22,11 +22,11 @@ from jsonschema import Draft202012Validator, FormatChecker
 from fastapi.testclient import TestClient
 from api import Settings, create_app
 
-# The runtime validates against phase2_current/state_spike/schemas/. A byte-identical
+# The runtime validates against interpretation_runtime/validation/schemas/. A byte-identical
 # duplicate used to sit at state-project-complete/schemas/, read by nothing but the
 # drift check below -- a copy kept alive by the test that watched it for drift. The
 # copy is gone; this validates against the schema the runtime actually uses.
-RUNTIME_SCHEMA = json.loads((Path(__file__).parent / 'phase2_current/state_spike/schemas/structured_interpretation.schema.json').read_text())
+RUNTIME_SCHEMA = json.loads((Path(__file__).parent / 'interpretation_runtime/validation/schemas/structured_interpretation.schema.json').read_text())
 RUNTIME_VALIDATOR = Draft202012Validator(RUNTIME_SCHEMA, format_checker=FormatChecker())
 
 class Provider:
