@@ -46,25 +46,23 @@ The user is writing State evals in another chat. Keep software regressions separ
 
 A future main promotion needs the user's explicit confirmation in that conversation, a fresh diff/CI check, and verification of the staging/frontend/backend revisions. Migration 009 is part of the feature; do not deploy only the UI. No database reset, extra live-model run, broad cleanup, or additional feature work is part of this pause request.
 
-### Additional user note: reset-data loading feedback (pending)
+### Additional user note: reset-data loading feedback (resolved 2026-09-12)
 
 The user noted after the pause: "resetting data modal probably needs a loading state so the user knows it's working."
 
-**Recorded for follow-up only; not reproduced or fixed in this documentation update.** Inspect the actual rendered reset flow before assuming loading logic is absent. Start with the `reset-demo` handler, `showDialog`, and `hydrateBackend` in `implementation-context-prototype/context-app.js`, including any later modal/UI overrides.
+**Fixed on `staging`, commit `3952c99`.** Root cause: Settings' own `reset-demo` handler (`implementation-context-prototype/context-settings.js`) only disabled the button during the call, with no spinner or loading copy -- `context-app.js` already had a properly-built loading dialog for the same reset action (reachable from the demo-help modal's "Reset example data →" link), just not wired to the Settings button. Settings now shows the same "Restoring Northstar…" loading dialog immediately on confirm, and a styled failure dialog with a clear recovery path (Refresh page for a timeout, otherwise Close + the button re-enabled) instead of a native `window.alert`. Verified live with a mocked `resetDemo()`: loading dialog appears immediately, and on failure the button re-enables and no reload is attempted (so a timed-out request that actually succeeded server-side is never silently repeated).
 
-Keep the treatment small: immediately show an obvious busy indicator and concise copy such as **Resetting example data...** after confirmation. Prevent duplicate reset submissions and keep visible feedback through both the reset request and the following workspace refresh. Show completion only once the refreshed data is ready. A failure or timeout must leave a clear recovery path, not a stuck spinner or a misleading success message; a timed-out request may still have completed on the server, so do not automatically repeat the reset. Do not add invented progress percentages.
-
-When implementation is requested, add delayed-response, duplicate-click, success, and failure/timeout coverage using an isolated or mocked reset endpoint, and check desktop/mobile visibility. This note does not authorize resetting shared staging or production data, implementing the change during the pause, or merging to main.
-
-### Additional user note: wide-screen Ask State launcher alignment (pending)
+### Additional user note: wide-screen Ask State launcher alignment (resolved 2026-09-12)
 
 The user reports that on very wide desktop screens the Ask State button moves far to the right while the rest of the app stays within its constrained layout, making the button feel detached from the product.
 
-**Recorded for follow-up only; not visually reproduced or fixed in this documentation update.** The base `.ask-state-launcher` rule in `implementation-context-prototype/context-product-polish.js` uses `position:fixed; right:24px; bottom:24px`, consistent with anchoring to the viewport rather than the app. Verify computed styles, later overrides, and the actual app container before choosing the fix.
+**Fixed on `staging`, commit `ff0c183` (initial fix), refined in `7ec55f8`.** The base `.ask-state-launcher` rule was `position:fixed; right:24px; bottom:24px`, anchored to the viewport rather than the app. Root cause on investigation: the main content column is left-anchored next to the sidebar at a width that varies per view (readable-measure caps, not a fixed page width) -- there's no single constant "app width" to anchor a CSS rule to. Fixed with a small JS helper (`repositionLauncher()` in `context-product-polish.js`) that measures the active view's actual right edge and repositions the launcher relative to it, re-run on resize and on every view change. Verified live at multiple viewport widths.
 
-Keep the launcher available while scrolling, but align its horizontal position with the app's right edge once the viewport exceeds the app width. Reuse the real layout dimensions rather than inventing another maximum width. Preserve ordinary desktop spacing and the existing mobile icon/tap target. Check the opened drawer's relationship to the launcher without turning this into an Ask redesign.
+### Additional finding: Ask can link to a Review Open Items hasn't hydrated (resolved 2026-09-12)
 
-When implementation is requested, verify normal desktop and wide/ultrawide viewports (for example 1440, 1920, 2560 and 3440 CSS pixels), resizing, scrolling, navigation, drawer opening/closing, and mobile. Check for overlap and horizontal overflow. This is a small responsive-layout follow-up, not a Review logic issue or permission to change the paused app or main now.
+Found via a QA pass cross-checking live behavior against source: Ask queries the backend fresh on every question, but Open Items only hydrates its local review list once (`hydrateBackend()`), so Ask could surface an inline "Review →" link for a Review Open Items hadn't loaded yet. Clicking it silently no-op'd -- no dialog, no error, indistinguishable from a broken button.
+
+**Fixed on `staging`, commit `e053868`.** A local-lookup miss now triggers one re-fetch of the open-reviews list from the backend (`refreshOpenReviews()` in `context-app.js`) before giving up; if the Review still isn't found (e.g. it was actually accepted/rejected in the meantime), a clear message and an Open Items CTA replace the silent no-op.
 
 ## Current production state
 
