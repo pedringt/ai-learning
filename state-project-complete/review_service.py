@@ -184,33 +184,24 @@ def resolve_review(connection: Connection, review_id: str, decision: Decision, n
             ).fetchall()
             latest_evidence_id = evidence_rows[0]["id"] if evidence_rows else None
             linked_questions = connection.execute(
-                "SELECT question_id FROM review_questions WHERE review_id=?", (review_id,)
+                "SELECT question_id, evidence_id FROM review_questions WHERE review_id=?", (review_id,)
             ).fetchall()
-            # KNOWN PROVENANCE GAP (logged 2026-09-07 logic review, not fixed
-            # here -- flagged as future hardening, not expanded into this
-            # pass): every Question this Review resolves gets stamped with
-            # latest_evidence_id, the single most-recently-submitted Evidence
-            # linked to the whole Review -- not necessarily the Evidence that
-            # actually established THAT Question's specific answer. If Review
-            # R has two linked Evidence items (A resolves Q1, B resolves Q2,
-            # B submitted after A), both Q1 and Q2 end up attributed to B.
-            # The schema has no way to do better today: review_questions only
-            # stores (review_id, question_id), with no evidence_id column, so
-            # there's no per-link record of which Evidence resolved which
-            # Question. A real fix needs a migration adding that column,
-            # populated in interpretation_pipeline_integrated.py's
-            # resolves_question_ids insert loop (which does know the current
-            # evidence_id at insert time), plus this query joining on it
-            # instead of applying one latest_evidence_id to every linked
-            # Question. Not attempted here since it's a schema change, not a
-            # narrow fix -- resolution and status remain correct either way,
-            # only the source_evidence_id attribution can be imprecise for
-            # this specific multi-evidence, multi-question case.
+            # Each row's own evidence_id (migration 010) is the Evidence whose
+            # interpretation actually inserted this specific Review-Question
+            # link -- more precise than latest_evidence_id, which is just
+            # whichever Evidence has the latest submitted_at across every
+            # review_evidence row for this Review, including ones with no
+            # bearing on this Question (e.g. a manually-linked adversarial
+            # relationship, same pattern as seed_demo.py's demo-review-retention/
+            # ask-evidence-vendor-retention link). Rows from before that
+            # migration have no evidence_id recorded, so fall back to the
+            # previous review-wide approximation for those only.
             for linked in linked_questions:
+                source_evidence_id = linked["evidence_id"] or latest_evidence_id
                 connection.execute(
                     "UPDATE questions SET status='resolved', resolved_at=CURRENT_TIMESTAMP, "
                     "resolution='Resolved by reviewed evidence', source_evidence_id=? WHERE id=? AND status='open'",
-                    (latest_evidence_id, linked["question_id"]),
+                    (source_evidence_id, linked["question_id"]),
                 )
             # REMOVED: Unsafe backward-compatibility fallback that resolved Questions based solely
             # on source_type.startswith("question_response:"). Question resolution now comes only

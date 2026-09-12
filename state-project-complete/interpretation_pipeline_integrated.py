@@ -304,8 +304,8 @@ def _persist_success(
                         "question_not_open", f"Question {question_id!r} is not open"
                     )
                 connection.execute(
-                    "INSERT OR IGNORE INTO review_questions(review_id, question_id) VALUES (?, ?)",
-                    (review_id, question_id),
+                    "INSERT OR IGNORE INTO review_questions(review_id, question_id, evidence_id) VALUES (?, ?, ?)",
+                    (review_id, question_id, evidence_id),
                 )
 
             # Create Proposals. When new Evidence updates an existing Review, a

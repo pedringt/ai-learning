@@ -283,8 +283,30 @@ def test_api_returns_authoritative_result_and_question_collection(tmp_path):
         assert client.get('/api/bootstrap').json()['questions'][0]['text'] == TEXT
 
 
+def _snapshot(db, tables):
+    """Row snapshot for before/after migration comparisons, with None-valued
+    columns dropped. A migration adding a nullable column (e.g. 010's
+    review_questions.evidence_id) correctly makes existing rows gain that key
+    with a None value -- that's not data loss, so an exact dict-equality
+    comparison would fail on every future migration that adds an optional
+    column, regardless of whether real data was preserved."""
+    return {
+        t: [{k: v for k, v in dict(r).items() if v is not None} for r in db.execute(f'SELECT * FROM {t} ORDER BY 1').fetchall()]
+        for t in tables
+    }
+
+
 def test_migration_from_existing_sqlite_preserves_history_links_and_reenables_fk(tmp_path):
     db = connect_sqlite(str(tmp_path/'upgrade.db'))
+    # [:8] specifically: migration 009 needs a special Python-side step
+    # (extend_review_constraints() in review_question_migration.py, since
+    # SQLite can't ALTER a CHECK constraint) that only runs inside the real
+    # initialize_db() runner, not from replaying a migration file's raw SQL.
+    # Stopping at [:8] means initialize_db() below still has 009 (and 010) to
+    # apply for real, exercising that path -- an [:-1]-style "one migration
+    # behind current" slice would mark 009 as already-applied in
+    # schema_migrations without ever running its Python step, since this loop
+    # only replays SQL, breaking the CHECK constraint it's supposed to widen.
     for path in _get_migration_files()[:8]:
         for sql in _migration_statements(path):
             db.execute(sql)
@@ -292,11 +314,11 @@ def test_migration_from_existing_sqlite_preserves_history_links_and_reenables_fk
         db.commit()
     bootstrap_demo_data(db)
     tables = ['evidence','review_issues','review_evidence','review_state_items','review_questions','proposed_state_changes','history_transitions','questions']
-    before = {t: [dict(r) for r in db.execute(f'SELECT * FROM {t} ORDER BY 1').fetchall()] for t in tables}
+    before = _snapshot(db, tables)
     initialize_db(db)
     assert db.execute('PRAGMA foreign_keys').fetchone()[0] == 1
     assert db.execute('PRAGMA foreign_key_check').fetchall() == []
-    assert {t: [dict(r) for r in db.execute(f'SELECT * FROM {t} ORDER BY 1').fetchall()] for t in tables} == before
+    assert _snapshot(db, tables) == before
     initialize_db(db)  # Idempotent second startup.
     result, _ = suggest(db)
     assert result.processing_status == 'succeeded'
@@ -356,6 +378,7 @@ def test_postgres_upgrade_preserves_existing_records():
     try:
         with connect(url) as db:
             db.execute(f'SET search_path TO {schema}'); db.commit()
+            # See the sqlite version of this test for why [:8] specifically.
             for path in _get_migration_files()[:8]:
                 for sql in _migration_statements(path):
                     db.execute(sql)
@@ -363,10 +386,10 @@ def test_postgres_upgrade_preserves_existing_records():
                 db.commit()
             bootstrap_demo_data(db)
             tables = ['evidence','review_issues','review_evidence','review_state_items','review_questions','proposed_state_changes','history_transitions','questions']
-            before = {t: [dict(r) for r in db.execute(f'SELECT * FROM {t} ORDER BY 1').fetchall()] for t in tables}
+            before = _snapshot(db, tables)
             db.commit()
             initialize_db(db)
-            assert {t: [dict(r) for r in db.execute(f'SELECT * FROM {t} ORDER BY 1').fetchall()] for t in tables} == before
+            assert _snapshot(db, tables) == before
             db.commit()
             result, _ = suggest(db)
             assert result.processing_status == 'succeeded'
