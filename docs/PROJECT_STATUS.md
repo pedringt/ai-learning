@@ -213,7 +213,7 @@ Do not revisit homepage hierarchy just because older reviews said work was burie
 
 The flagship story is intentionally concise:
 
-**Problem -> What I built -> Key product decision -> How it evolved -> What I'd test next -> Where I landed**
+**Problem -> What I built -> Key product decision -> Lingering Questions -> Where I landed**
 
 Detailed debugging/eval and architecture/cost material lives in the supporting cases rather than being duplicated on the flagship page.
 
