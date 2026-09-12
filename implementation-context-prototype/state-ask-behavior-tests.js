@@ -8,6 +8,7 @@ vm.runInContext(fs.readFileSync(path.join(dir,'context-data.js'),'utf8'),context
 vm.runInContext(fs.readFileSync(path.join(dir,'context-notes-view.js'),'utf8'),context);
 vm.runInContext(fs.readFileSync(path.join(dir,'context-open-items-view.js'),'utf8'),context);
 vm.runInContext(fs.readFileSync(path.join(dir,'context-project-view.js'),'utf8'),context);
+vm.runInContext(fs.readFileSync(path.join(dir,'context-backend-sync.js'),'utf8'),context);
 // Ask behavior tests exercise the deterministic Ask contract only. Keep backend
 // hydration disabled here so network/runtime failures cannot pollute test output.
 context.window.STATE_API=null;

@@ -8,14 +8,19 @@ API_JS = (FRONTEND / "context-api.js").read_text()
 NOTES_VIEW_JS = (FRONTEND / "context-notes-view.js").read_text()
 OPEN_ITEMS_VIEW_JS = (FRONTEND / "context-open-items-view.js").read_text()
 PROJECT_VIEW_JS = (FRONTEND / "context-project-view.js").read_text()
+BACKEND_SYNC_JS = (FRONTEND / "context-backend-sync.js").read_text()
 
 
 def test_live_reviews_use_backend_payload_not_placeholder_values():
-    assert "proposed:'Review'" not in JS
-    assert "unresolved:'?'" not in JS
+    # mapApiReview's own body moved to context-backend-sync.js 2026-09-12;
+    # context-app.js keeps a same-name wrapper (see comment on
+    # test_r81_notes_filters_share_one_date_status_search_pipeline for the
+    # precedent this follows).
+    assert "proposed:'Review'" not in BACKEND_SYNC_JS
+    assert "unresolved:'?'" not in BACKEND_SYNC_JS
     assert "mapApiReview" in JS
-    assert "affected_state_items" in JS
-    assert "proposed_changes" not in JS or "proposals" in JS
+    assert "affected_state_items" in BACKEND_SYNC_JS
+    assert "proposed_changes" not in BACKEND_SYNC_JS or "proposals" in BACKEND_SYNC_JS
 
 
 def test_live_review_resolution_calls_backend_and_refreshes_state():
@@ -40,14 +45,14 @@ def test_backend_state_and_reviews_rehydrate_after_refresh():
 
 
 def test_retire_review_does_not_render_undefined_statement():
-    assert "Retire: ${p.proposed_statement}" not in JS
-    assert 'Retire current understanding' in JS
+    assert "Retire: ${p.proposed_statement}" not in BACKEND_SYNC_JS
+    assert 'Retire current understanding' in BACKEND_SYNC_JS
 
 
 def test_backend_state_sync_reconciles_retired_items():
-    assert 'const activeIds=new Set' in JS
-    assert "if(!activeIds.has(k.id)) k.state='retired'" in JS
-    assert 'k.backendManaged=true' in JS
+    assert 'const activeIds=new Set' in BACKEND_SYNC_JS
+    assert "if(!activeIds.has(k.id)) k.state='retired'" in BACKEND_SYNC_JS
+    assert 'k.backendManaged=true' in BACKEND_SYNC_JS
 
 
 def test_backend_review_results_are_upserted_not_blindly_appended():
@@ -62,7 +67,7 @@ def test_hydration_reconciles_stale_backend_reviews():
 
 
 def test_frontend_hides_superseded_proposals_from_open_review_card():
-    assert "const proposals=(r.proposals||[]).filter(p=>!p.status || p.status==='pending');" in JS
+    assert "const proposals=(r.proposals||[]).filter(p=>!p.status || p.status==='pending');" in BACKEND_SYNC_JS
 
 
 def test_notes_rehydrate_complete_evidence_archive_with_date_filters():
@@ -316,8 +321,10 @@ def test_r85_integrity_and_polish_contracts():
 
 def test_r86_notes_link_into_review_and_history_workflow():
     app = (FRONTEND / "context-app.js").read_text(encoding="utf-8")
+    # reviewIds:open.map(...) moved to context-backend-sync.js's syncApiEvidence
+    # 2026-09-12, alongside the rest of the backend mapping/sync layer.
     assert "data-action=\"open-note-reviews\"" in app
-    assert "reviewIds:open.map(r=>r.id)" in app
+    assert "reviewIds:open.map(r=>r.id)" in BACKEND_SYNC_JS
     assert "state.expandedReviewId=ids[0]" in app
     assert "data-action=\"open-note-history\"" in app
     assert "historyEvidenceId" in app

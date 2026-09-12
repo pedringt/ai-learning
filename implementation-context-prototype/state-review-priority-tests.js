@@ -27,6 +27,7 @@ vm.runInContext(fs.readFileSync(path.join(dir,'context-data.js'),'utf8'),context
 vm.runInContext(fs.readFileSync(path.join(dir,'context-notes-view.js'),'utf8'),context);
 vm.runInContext(fs.readFileSync(path.join(dir,'context-open-items-view.js'),'utf8'),context);
 vm.runInContext(fs.readFileSync(path.join(dir,'context-project-view.js'),'utf8'),context);
+vm.runInContext(fs.readFileSync(path.join(dir,'context-backend-sync.js'),'utf8'),context);
 context.window.STATE_API=null;
 vm.runInContext(fs.readFileSync(path.join(dir,'context-app.js'),'utf8'),context);
 const api=context.window.STATE_ASK_TEST_API;

@@ -5,6 +5,7 @@
   const NOTES_VIEW = window.STATE_NOTES_VIEW;
   const OPEN_ITEMS_VIEW = window.STATE_OPEN_ITEMS_VIEW;
   const PROJECT_VIEW = window.STATE_PROJECT_VIEW;
+  const BACKEND_SYNC = window.STATE_BACKEND_SYNC;
   const clone = x => JSON.parse(JSON.stringify(x));
   const initial = clone(D);
   const state = {
@@ -394,18 +395,7 @@
     return score>=60?best:null;
   }
 
-  const askTopicTerms={
-    'feature-access':['feature access','plan access','entitlement','entitlements','grandfathered','plan matrix'],
-    'automation':['automation','automate','automatically','autonomy','autonomous','auto send','auto-send','send replies','send responses'],
-    'security':['security','human review','review boundary','unsafe','high risk','high-risk','read only','read-only','account changing','account-changing'],
-    'success-metrics':['evaluation','evaluate','metrics','success metric','threshold','quality'],
-    'data':['data','retention','deletion','logging','customer data','account changing','account-changing','write action','write actions','read only','read-only'],
-    'vendor':['vendor','maya','retention','sub processor','sub-processor'],
-    'operations':['training','enablement','implementation','rollout','feedback'],
-    'scope':['pilot scope','scope','tier 1','tier1'],
-    'workflow':['workflow','human review','draft','rep review'],
-    'knowledge':['knowledge','grounding','source','sources','documentation','slack']
-  };
+  const askTopicTerms = BACKEND_SYNC.askTopicTerms;
 
   /* ----------------------------------------------------------------------
      Ask — intent and deterministic scenarios
@@ -413,9 +403,7 @@
      Routes a question to a known intent or fixture scenario. This is the
      no-backend path; it also backs the deterministic Ask behavior suite.
      ------------------------------------------------------------------- */
-  function askTopics(q){
-    return Object.entries(askTopicTerms).filter(([,terms])=>terms.some(t=>q.includes(t))).map(([topic])=>topic);
-  }
+  function askTopics(q){ return BACKEND_SYNC.askTopics(q); }
   function overlapsTopics(item,topics){ return (item.topics||[]).some(t=>topics.includes(t)); }
   function structuredAskResult(raw){
     const q=norm(raw), topics=askTopics(q); if(!topics.length)return null;
@@ -873,13 +861,7 @@
     if(!safeQuery)return escaped;
     return escaped.replace(new RegExp(`(${safeQuery})`,'ig'),'<mark>$1</mark>');
   }
-  const demoEvidenceDates={
-    'demo-review-access-evidence':'2026-08-27T16:10:00',
-    'demo-review-launch-evidence':'2026-08-28T09:30:00',
-    'demo-review-escalation-evidence':'2026-08-28T13:45:00',
-    'demo-review-retention-evidence':'2026-08-29T10:20:00'
-  };
-  function evidenceDisplayTimestamp(e){return e?.source_type==='demo_seed'&&demoEvidenceDates[e.id]?demoEvidenceDates[e.id]:e?.submitted_at;}
+  function evidenceDisplayTimestamp(e){ return BACKEND_SYNC.evidenceDisplayTimestamp(e); }
 
   function historySources(h){
     const items=h.evidenceItems||h.evidence_items||[];
@@ -1154,18 +1136,6 @@
 
   function showAddDialog(prefill=''){ showDialog(`<span class="eyebrow">Evidence</span><h2 id="dialogTitle">Add Evidence</h2><p>Add project information State should evaluate. It is preserved as Evidence first and cannot change Current State without Review.</p><textarea id="addInfoText" rows="7" aria-label="Evidence" placeholder="Paste a finding, decision, meeting update, or other project information...">${esc(prefill)}</textarea><div class="note-example-picker"><span class="meta-label">Try an example</span><div class="note-example-chips"><button type="button" data-action="sample-info" data-sample="plan">New plan</button><button type="button" data-action="sample-info" data-sample="research">Research finding</button><button type="button" data-action="sample-info" data-sample="constraint">Decision / constraint</button></div></div><div class="dialog-actions"><button class="btn primary" data-action="save-info">Add Evidence</button><button class="btn secondary" data-action="close-dialog">Cancel</button></div>`); }
 
-  function reviewTypeTitle(type){
-    if(type==='state_at_risk') return 'Current State may be at risk';
-    if(type==='missing_understanding') return 'More understanding is needed';
-    if(type==='open_question') return 'Question to track';
-    return 'Review needed';
-  }
-
-  function proposedText(proposals){
-    if(!proposals?.length) return 'Review the evidence and decide whether Current State should change.';
-    return proposals.map(p=>p.operation==='retire' ? `Retire current understanding${p.state_item_id?` (${p.state_item_id})`:''}` : p.proposed_statement).join(' • ');
-  }
-
   // toFront defaults to true for the live "I just submitted evidence and it
   // produced a Review" call sites, where showing the newest review first is
   // the right UX. Bulk hydration passes toFront:false -- appending in the
@@ -1175,234 +1145,37 @@
   // Workspace's attention list then disagreed with Ask about what mattered
   // most, since Ask fetches reviews fresh and never goes through this
   // reversal. Found via live QA 2026-09-07.
-  function upsertBackendReview(review,{toFront=true}={}){
-    const existingIndex=state.data.reviews.findIndex(x=>x.id===review.id);
-    if(existingIndex>=0){
-      state.data.reviews[existingIndex]={...state.data.reviews[existingIndex],...review};
-      return state.data.reviews[existingIndex];
-    }
-    if(toFront) state.data.reviews.unshift(review); else state.data.reviews.push(review);
-    return review;
-  }
+  function upsertBackendReview(review,{toFront=true}={}){ return BACKEND_SYNC.upsertBackendReview(state.data.reviews,review,{toFront}); }
 
-  function replaceBackendOpenReviews(rawReviews){
-    const openIds=new Set((rawReviews||[]).map(r=>r.id));
-    state.data.reviews=state.data.reviews.filter(r=>!r.backendReviewId || openIds.has(r.backendReviewId));
-  }
+  function replaceBackendOpenReviews(rawReviews){ state.data.reviews=BACKEND_SYNC.replaceBackendOpenReviews(state.data.reviews,rawReviews); }
 
-  function mapApiReview(r, fallbackEvidence=''){
-    const proposals=(r.proposals||[]).filter(p=>!p.status || p.status==='pending');
-    const affected=r.affected_state_items||[];
-    const current=r.review_type==='open_question'
-      ? 'Current State will stay unchanged. This Review is about tracking an unknown.'
-      : affected.length
-      ? affected.map(x=>x.statement).join(' • ')
-      : proposals.some(p=>p.operation==='create')
-        ? 'No matching Current State item exists yet.'
-        : 'No Current State change has been applied yet.';
-    const unresolved=r.review_type==='proposed_update'
-      ? 'Nothing beyond this proposed change is established by the evidence.'
-      : r.decision_question;
-    const rationale=proposals.map(p=>p.rationale).filter(Boolean).join(' ');
-    return {
-      id:r.id,
-      backendReviewId:r.id,
-      evidenceId:r.evidence_id,
-      topics:affected.map(x=>x.topic).filter(Boolean),
-      status:'pending',
-      title:reviewTypeTitle(r.review_type),
-      summary:r.decision_question,
-      proposed:proposedText(proposals),
-      questionToCreate:r.question_to_create||null,
-      unresolved,
-      current,
-      evidence:r.evidence_content||fallbackEvidence,
-      evidenceSourceType:r.evidence_source_type||'',
-      // Only an explicit backend resolves_question_ids counts as a resolving
-      // link -- a review is never inferred to resolve a question just
-      // because its evidence happened to come from answering one (that used
-      // to fall back to a caller-supplied questionId here; removed 2026-09-07
-      // after a live-testing review found it could show "Answer found ·
-      // Awaiting review" even when the backend returned no such relationship
-      // at all). "Answer found · Awaiting review" must only appear when the
-      // backend actually says so.
-      resolvesQuestionIds:[...(r.resolves_question_ids||[])],
-      resolvesQuestionId:(r.resolves_question_ids||[])[0],
-      establishes:rationale||r.why_consequential,
-      doesNot:r.review_type==='proposed_update'
-        ? 'The proposed change does not become Current State until you accept it.'
-        : 'The evidence does not automatically resolve the uncertainty or change Current State.',
-      whyConsequential:r.why_consequential,
-      reviewType:r.review_type,
-      proposals,
-      affectedStateItems:affected,
-    };
-  }
-
+  function mapApiReview(r, fallbackEvidence=''){ return BACKEND_SYNC.mapApiReview(r,fallbackEvidence); }
 
   /* ----------------------------------------------------------------------
      Backend mapping and sync
 
      Translates API payloads into the client's shape and reconciles them with
      local state. Nothing here decides anything; it only mirrors the server.
+     Moved into context-backend-sync.js (window.STATE_BACKEND_SYNC) 2026-09-12
+     -- these are thin wrappers so every existing call site keeps working.
      ------------------------------------------------------------------- */
-  function inferProjectArea(item){
-    const text=norm(`${item.topic||''} ${item.statement||''}`);
-    if(/security|risk|data|privacy|human review|sensitive|claim|read only|readonly|account change|refund|ownership change|autonomy|vip/.test(text)) return 'safety';
-    if(/evaluation|metric|launch|rollout|timeline|phase|pilot date|threshold/.test(text)) return 'evaluation';
-    return 'product';
-  }
+  function inferProjectArea(item){ return BACKEND_SYNC.inferProjectArea(item); }
 
-  function titleForStateItem(item){
-    if(item.topic && item.topic!=='uncategorized') return item.topic;
-    const first=String(item.statement||'').split(/[.!?]/)[0].trim();
-    return first.length && first.length<=64 ? first : 'Reviewed understanding';
-  }
+  function titleForStateItem(item){ return BACKEND_SYNC.titleForStateItem(item); }
 
-  function formatBackendDate(value){
-    if(!value)return '';
-    const d=new Date(value); if(Number.isNaN(d.getTime()))return String(value).slice(0,10);
-    return d.toLocaleDateString(undefined,{month:'short',day:'numeric'});
-  }
-  function sourceLabel(source){
-    if((source||'').startsWith('question_response:'))return 'Question response';
-    if(source==='working_note')return 'Working note';
-    if(source==='demo_history'||source==='demo_seed')return 'Project note';
-    if(source==='manual_note')return 'Project update';
-    return String(source||'Note').replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase());
-  }
-  // topicName is looked up from state.data.knowledge (may be a retired item
-  // by the time this renders, but syncApiState marks items retired rather
-  // than deleting them, so the topic label survives). A generic fallback
-  // headline like "Current understanding updated" told a scanning user
-  // nothing about what actually changed -- every entry looked the same.
-  // Found via live QA 2026-09-07.
-  function historyType(item,topicName){
-    const verb=item.transition_type==='created'?'established':item.transition_type==='retired'?'retired':'updated';
-    return topicName?`${topicName} ${verb}`:`Current understanding ${verb}`;
-  }
-  function syncApiHistory(items){
-    // Internal record ids (k-rollout, q-retention, ...) must never reach
-    // user-facing History copy -- reuses the same stripping OPEN_ITEMS_VIEW
-    // already applies to review text, rather than a third duplicate regex.
-    const clean=value=>OPEN_ITEMS_VIEW?.cleanReviewCopy?OPEN_ITEMS_VIEW.cleanReviewCopy(value):String(value||'');
-    const backend=(items||[]).map(h=>{
-      const topicName=state.data.knowledge.find(k=>k.id===h.state_item_id)?.title;
-      return {
-        ...h, id:h.id, backendManaged:true, knowledgeId:h.state_item_id,
-        date:formatBackendDate(h.changed_at), dateISO:h.changed_at, type:historyType(h,topicName),
-        before:clean(h.old_statement)||'Not previously established', after:clean(h.new_statement),
-        reason:clean(h.decision_question||h.proposal_rationale)||'Reviewed project evidence',
-        decision:'Human accepted this change', evidenceItems:h.evidence_items||[]
-      };
-    });
-    state.data.history=backend;
-    const byEvidence=new Map();
-    for(const h of backend){
-      for(const e of (h.evidenceItems||h.evidence_items||[])){
-        const links=byEvidence.get(e.id)||[]; links.push(h); byEvidence.set(e.id,links);
-      }
-    }
-    for(const n of state.data.notes){
-      if(!n.evidenceId)continue;
-      const links=byEvidence.get(n.evidenceId)||[];
-      n.historyIds=links.map(h=>h.id);
-      n.historyKnowledgeIds=[...new Set(links.map(h=>h.knowledgeId).filter(Boolean))];
-      if(links.length && n.status==='reviewed')n.status='accepted';
-    }
-  }
-  function syncApiEvidence(items,openReviews,resolvedReviews){
-    const collect=(reviews)=>{
-      const map=new Map();
-      for(const r of (reviews||[]))for(const e of (r.evidence_items||[])){const rows=map.get(e.id)||[];rows.push(r);map.set(e.id,rows);}
-      return map;
-    };
-    const openByEvidence=collect(openReviews);
-    const resolvedByEvidence=collect(resolvedReviews);
-    const backendNotes=(items||[]).map(e=>{
-      const open=openByEvidence.get(e.id)||[], resolved=resolvedByEvidence.get(e.id)||[];
-      const reviewStatusKnown=Array.isArray(openReviews)&&Array.isArray(resolvedReviews);
-      // 'reviewed' means a human actually looked at a Review for this
-      // evidence (resolved.length>0), whether or not it changed Current
-      // State. That's distinct from 'no_review_needed': the model judged
-      // the evidence non-consequential and no Review was ever created, so
-      // no human was ever involved. Collapsing these into one status/label
-      // (as this used to) reads as "a human reviewed and approved this"
-      // for evidence nobody ever reviewed -- exactly the interpret/
-      // authorize distinction State's authority model exists to preserve.
-      const status=e.processing_status==='failed'?'failed'
-        :!reviewStatusKnown?'unknown'
-        :open.length?'pending'
-        :resolved.some(r=>r.resolution==='updated')?'accepted'
-        :resolved.length?'reviewed'
-        :e.processing_status==='processed'?'no_review_needed'
-        :'working';
-      const displayTime=evidenceDisplayTimestamp(e);
-      return {id:`api-note-${e.id}`,title:sourceLabel(e.source_type),text:e.content,source:sourceLabel(e.source_type),date:formatBackendDate(displayTime),dateISO:displayTime,submittedISO:displayTime,topics:[],status,reviewId:open[0]?.id||null,reviewIds:open.map(r=>r.id),resolvedReviewIds:resolved.map(r=>r.id),historyIds:[],historyKnowledgeIds:[],evidenceId:e.id,backendManaged:true};
-    });
-    const local=state.data.notes.filter(n=>!n.backendManaged && !n.evidenceId);
-    state.data.notes=[...backendNotes,...local];
-  }
+  function formatBackendDate(value){ return BACKEND_SYNC.formatBackendDate(value); }
+  function sourceLabel(source){ return BACKEND_SYNC.sourceLabel(source); }
+  function historyType(item,topicName){ return BACKEND_SYNC.historyType(item,topicName); }
+  function syncApiHistory(items){ state.data.history=BACKEND_SYNC.syncApiHistory(state.data.knowledge,state.data.notes,items); }
+  function syncApiEvidence(items,openReviews,resolvedReviews){ state.data.notes=BACKEND_SYNC.syncApiEvidence(items,openReviews,resolvedReviews,state.data.notes); }
 
-  function syncApiState(items){
-    const incoming=items||[];
-    const activeIds=new Set(incoming.map(item=>item.id));
-    // A non-empty backend State response is authoritative. Fixture knowledge is
-    // an offline/demo fallback only; never merge absent fixture facts into a
-    // live backend Current State, because that creates two competing truths.
-    for(const k of state.data.knowledge){
-      if(!activeIds.has(k.id)) k.state='retired';
-    }
-    for(const item of incoming){
-      let k=state.data.knowledge.find(x=>x.id===item.id);
-      if(k){
-        k.statement=item.statement;
-        k.state='current';
-        k.backendManaged=true;
-        k.lastConfirmed=formatBackendDate(item.updated_at||item.created_at);
-        k.lastConfirmedISO=item.updated_at||item.created_at||todayISO();
-      }else{
-        state.data.knowledge.push({
-          id:item.id,
-          projectArea:inferProjectArea(item),
-          title:titleForStateItem(item),
-          topics:item.topic&&item.topic!=='uncategorized'?[norm(item.topic).replace(/\s+/g,'-')]:[],
-          statement:item.statement,
-          support:[],
-          state:'current',
-          lastConfirmed:formatBackendDate(item.updated_at||item.created_at),
-          lastConfirmedISO:item.updated_at||item.created_at||todayISO(),
-          backendManaged:true
-        });
-      }
-    }
-  }
+  function syncApiState(items){ BACKEND_SYNC.syncApiState(state.data.knowledge,items); }
 
-  function questionTextKey(value){ return norm(value); }
+  function questionTextKey(value){ return BACKEND_SYNC.questionTextKey(value); }
 
-  function remapQuestionReferences(oldId,newId){
-    if(!oldId || !newId || oldId===newId)return;
-    for(const review of state.data.reviews){
-      if(review.resolvesQuestionId===oldId) review.resolvesQuestionId=newId;
-      if(Array.isArray(review.resolvesQuestionIds)) review.resolvesQuestionIds=review.resolvesQuestionIds.map(id=>id===oldId?newId:id);
-    }
-  }
+  function remapQuestionReferences(oldId,newId){ BACKEND_SYNC.remapQuestionReferences(state.data.reviews,oldId,newId); }
 
-  function syncApiQuestions(items){
-    const previous=[...state.data.questions];
-    const backendTexts=new Set((items||[]).map(q=>questionTextKey(q.text)));
-    const backend=(items||[]).map(q=>{
-      const fixture=previous.find(x=>!x.backendManaged && questionTextKey(x.text)===questionTextKey(q.text));
-      if(fixture) remapQuestionReferences(fixture.id,q.id);
-      return {
-        id:q.id,text:q.text,status:q.status,blocking:!!q.blocking,blocks:q.blocks||null,
-        origin:q.origin||fixture?.origin||'Added from Workspace',
-        created:fixture?.created||formatBackendDate(q.created_at),createdISO:fixture?.createdISO||q.created_at,
-        topics:fixture?.topics?.length?fixture.topics:askTopics(norm(q.text)),backendManaged:true
-      };
-    });
-    state.data.questions=backend;
-  }
+  function syncApiQuestions(items){ state.data.questions=BACKEND_SYNC.syncApiQuestions(state.data.questions,items,state.data.reviews); }
 
 
   async function createBackendQuestion(text){ return API.createQuestion(text,{origin:'Added from Workspace',blocking:false}); }
@@ -1596,11 +1369,7 @@
     return note.id;
   }
 
-  function syncApiDrafts(items){
-    const drafts=(items||[]).map(d=>({id:`draft-${d.id}`,draftId:d.id,title:d.title,text:d.content,source:'Working note',date:formatBackendDate(d.updated_at||d.created_at),dateISO:d.updated_at||d.created_at,topics:[],status:'working',backendDraft:true}));
-    const others=state.data.notes.filter(n=>!n.backendDraft);
-    state.data.notes=[...drafts,...others];
-  }
+  function syncApiDrafts(items){ state.data.notes=BACKEND_SYNC.syncApiDrafts(state.data.notes,items); }
 
   async function sendNoteToReview(id){
     const n=state.data.notes.find(x=>x.id===id); if(!n||n.status==='pending')return;
