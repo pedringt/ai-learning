@@ -59,10 +59,7 @@
     html body .workspace-status-card .workspace-status-body{display:block!important;flex:0 0 auto!important;height:auto!important;min-height:0!important;margin-top:0!important}
     html body .workspace-status-card .state-fact-preview{display:block!important;flex:0 0 auto!important;height:auto!important;min-height:0!important;padding-top:0!important;justify-content:flex-start!important}
     html body .workspace-status-card .state-fact-preview>ul{margin:0!important}
-
-    /* Attention header is one real row. */
-    html body .workspace-attention .workspace-attention-head{display:flex!important;align-items:flex-start!important;justify-content:space-between!important;gap:16px!important}
-    html body .workspace-attention .workspace-attention-head>div{display:flex!important;align-items:center!important;gap:12px!important;min-width:0!important;min-height:38px!important;padding-left:0!important;position:static!important;flex:1 1 auto!important}
+    html body .workspace-attention .workspace-attention-head>div{display:flex!important;align-items:center!important;gap:12px!important;min-height:38px!important;padding-left:0!important;position:static!important;flex:1 1 auto!important}
     html body .workspace-attention .workspace-attention-head .attention-head-icon{position:static!important;display:grid!important;place-items:center!important;flex:0 0 38px!important;width:38px!important;height:38px!important;margin:0!important;transform:none!important;top:auto!important;left:auto!important}
     html body .workspace-attention .workspace-attention-head h3{margin:0!important;line-height:1.25!important;align-self:center!important}
     html body .workspace-attention .workspace-attention-head .eyebrow,

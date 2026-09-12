@@ -24,13 +24,18 @@ API = os.environ.get("STATE_API_BASE", "http://127.0.0.1:8000")
 WIDTHS = [("desktop", 1440, 900), ("tablet", 834, 1112), ("phone", 390, 844)]
 THEMES = ["light", "dark"]
 
-# (slug, url, nav button selector to click after load)
+# (slug, url, nav button selector to click after load). Selectors target
+# [data-view=...] without a nav-container prefix and add :visible -- the
+# sidebar nav and mobile nav both carry the same data-view buttons, and only
+# one is shown at a given width (see the mobile-nav CSS split in index.html's
+# state-mobile-nav block), so a prefixed selector resolves to the desktop
+# button even at the 390px phone width, where it's hidden and unclickable.
 STATE_VIEWS = [
     ("workspace", None),
-    ("project", '.sidebar-nav [data-view="project-overview"]'),
-    ("open-items", '.sidebar-nav [data-view="open-items"]'),
-    ("notes", '.sidebar-nav [data-view="notes"]'),
-    ("history", '.sidebar-nav [data-view="history"]'),
+    ("project", '[data-view="project-overview"]:visible'),
+    ("open-items", '[data-view="open-items"]:visible'),
+    ("notes", '[data-view="notes"]:visible'),
+    ("history", '[data-view="history"]:visible'),
 ]
 PORTFOLIO_PAGES = [
     ("home", "/index.html"),

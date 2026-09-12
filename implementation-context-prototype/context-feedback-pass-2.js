@@ -13,12 +13,11 @@
     if(document.getElementById('state-feedback-pass-2')) return;
     const s=document.createElement('style'); s.id='state-feedback-pass-2'; s.textContent=`
       /* compact desktop navigation */
-      .sidebar-nav{display:flex!important;flex-direction:column!important;gap:4px!important}
-      .sidebar-nav .nav-item{min-height:48px!important;padding:10px 16px!important;margin:0!important;border-radius:12px!important;gap:12px!important}
+      .sidebar-nav{display:flex!important;flex-direction:column!important}
+      .sidebar-nav .nav-item{border-radius:12px!important;gap:12px!important}
       .sidebar-nav .nav-item .nav-icon{width:24px!important;height:24px!important}
       .sidebar-nav .nav-item .nav-icon svg{width:24px!important;height:24px!important}
-      .app-sidebar{position:sticky!important;top:0!important;height:calc(100vh - var(--topbar-height,0px))!important;min-height:0!important;padding-bottom:112px!important;align-self:start!important}
-      .app-sidebar>.demo-help-button.state-help-card{position:absolute!important;left:18px!important;right:18px!important;bottom:18px!important}
+      .app-sidebar>.demo-help-button.state-help-card{left:18px!important}
       /* attention rows: icon/text anchored left, action anchored right */
       .attention-item{display:grid!important;grid-template-columns:54px minmax(0,1fr) auto 22px!important;column-gap:14px!important;padding:16px 22px!important;align-items:center!important}
       .attention-item .attention-icon{grid-column:1!important;justify-self:start!important}
@@ -69,8 +68,7 @@
       body:not(.v88-dark) .history-page .history-change>p:first-child{background:#f7f8fb!important;border-color:#e0e6ee!important}
       body:not(.v88-dark) .history-page .history-change>p:last-child{background:#eef9f3!important;border-color:#cfe9dc!important}
       /* workspace card links use one pattern */
-      .workspace-status-card{position:relative!important}.workspace-status-card .state-fact-preview>.text-button{position:absolute!important;top:22px!important;right:22px!important;margin:0!important;font-size:12px!important;font-weight:700!important}
-      .workspace-status-card .state-fact-preview{padding-top:2px!important}.workspace-status-card .state-fact-preview p{padding-right:130px!important}
+      .workspace-status-card{position:relative!important}.workspace-status-card .state-fact-preview>.text-button{position:absolute!important;top:22px!important;right:22px!important;margin:0!important}.workspace-status-card .state-fact-preview p{padding-right:130px!important}
       @media(max-width:760px){
         .app-sidebar{position:static!important;height:auto!important;padding-bottom:0!important}
         .attention-item{grid-template-columns:44px minmax(0,1fr) auto!important}
