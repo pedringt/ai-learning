@@ -206,6 +206,21 @@
     const launcher=document.getElementById('askStateLauncher');if(!launcher)return;
     const hide=ui.drawerOpen;
     launcher.classList.toggle('is-hidden',hide);
+    repositionLauncher(launcher);
+  }
+  function repositionLauncher(launcher){
+    // The main content column is left-anchored next to the sidebar with a
+    // width that varies per view (readable-measure caps, not a fixed page
+    // width), so on wide desktop viewports a viewport-edge-pinned launcher
+    // drifts away from whatever the current page actually renders. Anchor it
+    // to the active view's right edge instead, above the mobile breakpoint
+    // where the drawer already goes full-width and this doesn't apply.
+    if(window.innerWidth<=760){launcher.style.removeProperty('right');return;}
+    const activePage=document.querySelector('.view-root')?.firstElementChild;
+    if(!activePage){launcher.style.removeProperty('right');return;}
+    const contentRight=activePage.getBoundingClientRect().right;
+    const gap=Math.max(22,Math.round(window.innerWidth-contentRight-22));
+    launcher.style.setProperty('right',gap+'px','important');
   }
 
   async function currentStateSignature(){
