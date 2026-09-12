@@ -228,7 +228,9 @@ def _grounding_rules() -> str:
     return f"""- Today's date is {date.today().isoformat()}. When referencing a specific date from a record, compare it to today: if that date has already passed, describe it as overdue, still unresolved, or needing follow-up -- never as upcoming or a future next step.
 - Section, group, and category titles must accurately describe the actual conceptual domain of their contents (for example, do not label access or security constraints as retention constraints, or vice versa). If items span more than one domain, either split them into separate sections or use a domain-neutral title.
 - Consequentiality ordering must stay consistent for the same underlying records across every job and every refinement in this conversation. A refinement may narrow, reformat, or shorten what is shown, but it must select from what a fuller answer to the same request would already treat as most important -- never independently re-rank the same records into a different priority order, and never introduce a record that a fuller answer would have omitted.
-- An open Review's proposed statement, number, or decision is not yet true and does not close its linked Question, no matter how certain the underlying Evidence sounds (e.g. "Legal confirmed X"). Never describe an open Review's content as "confirmed", "established", "accepted", or as resolving/answering/closing a Question -- describe it as proposed and awaiting review, and state plainly that the linked Question remains open and Current State has not changed. Only an item actually present in Current State, or a Question actually absent from the open Questions list, may be described as settled."""
+- An open Review's proposed statement, number, or decision is not yet true and does not close its linked Question, no matter how certain the underlying Evidence sounds (e.g. "Legal confirmed X"). Never describe an open Review's content as "confirmed", "established", "accepted", or as resolving/answering/closing a Question -- describe it as proposed and awaiting review, and state plainly that the linked Question remains open and Current State has not changed. Only an item actually present in Current State, or a Question actually absent from the open Questions list, may be described as settled.
+- The words "confirmed" and "resolved" (as a section title, headline, or plain claim) are reserved for something actually in Current State, or a Question actually closed -- never for anything whose only support is an open Review, Evidence, or an open Question, even when the Evidence text itself uses that word. Evidence saying "Legal confirmed X" describes what a source reported to Evidence, not an accepted fact -- phrase it as "Evidence reports Legal said X" or "Legal is reported to have said X", never as "X is confirmed" or "X (Confirmed)". This applies to short labels exactly as much as full sentences: a section titled "Retention Terms: Legal Confirmed" or "Confirmed Retention and Deletion" is the same violation as a sentence claiming retention is confirmed, just shorter -- titles and headlines get the identical scrutiny as prose, they are not exempt because they are brief.
+- If the user's question itself assumes or asserts something is resolved, confirmed, decided, or settled (e.g. "Since X is resolved, what can move forward?") and that is not actually true given Current State, open Reviews, and open Questions, correct that false premise plainly before answering anything else in the response -- e.g. "X is not resolved yet: evidence exists, but the Review has not been accepted and the Question remains open." Never adopt the user's framing and answer as though the premise were already true."""
 
 
 def _one_call_prompt(query: str, candidates: Mapping[str, Any], previous_answer: Mapping[str, Any] | None) -> str:
@@ -266,7 +268,7 @@ CRITICAL: Append mode (conversational) means: include the full prior answer as-i
 
 Authority rules are non-negotiable:
 - Current State governs what is true, allowed, or in scope now.
-- Open Reviews qualify Current State; they never replace it, and their proposed content is not yet true. Never describe an open Review's proposed statement as "confirmed", "established", or as resolving its linked Question -- it is proposed and awaiting review, the linked Question is still open, and Current State has not changed. Include a Review when it materially challenges State used by the answer, but phrase it as pending, not settled.
+- Open Reviews qualify Current State; they never replace it, and their proposed content is not yet true. Never describe an open Review's proposed statement as "confirmed", "established", or as resolving its linked Question -- not even when the underlying Evidence itself uses the word "confirmed" (that describes what a source reported, not an accepted fact). It is proposed and awaiting review, the linked Question is still open, and Current State has not changed. Include a Review when it materially challenges State used by the answer, but phrase it as pending, not settled. If the user's own question assumes something is already resolved/confirmed that isn't, correct that false premise plainly before answering anything else.
 - A Question is blocking only when its supplied record says blocking=true. Ordinary Questions are known unknowns, not blockers.
 - History is accepted past change. Evidence is what was said or observed and cannot silently override Current State.
 - Project Rules constrain interpretation.
@@ -434,6 +436,46 @@ Selected validated context:
 Use record IDs on items whenever they correspond to a source record. Suggested refinements should be short actions."""
 
 
+def _match_case(replacement: str, matched: str) -> str:
+    if matched.isupper():
+        return replacement.upper()
+    if matched[:1].isupper():
+        return replacement[:1].upper() + replacement[1:]
+    return replacement
+
+
+_SETTLED_WORD_REPLACEMENTS = (
+    (re.compile(r"\(\s*confirmed\s*\)", re.I), lambda m: ""),
+    (re.compile(r"\(\s*resolved\s*\)", re.I), lambda m: ""),
+    (re.compile(r"\bconfirmed\b", re.I), lambda m: _match_case("reported", m.group(0))),
+    (re.compile(r"\bresolved\b", re.I), lambda m: _match_case("pending", m.group(0))),
+)
+
+
+def _soften_unearned_settled_words(value: str | None) -> str | None:
+    """Headlines and section titles are the one place the model reliably
+    keeps reaching for "Confirmed"/"Resolved" as a compact status badge
+    (e.g. "Retention Terms: Legal Confirmed", "Confirmed Retention and
+    Deletion") even when full-sentence prose elsewhere in the same answer
+    correctly hedges ("not yet confirmed", "awaiting review"). Found via
+    live QA (2026-09-07, then again 2026-09-12): the _grounding_rules()
+    instruction banning this explicitly, including for short labels, still
+    left the model non-compliant on a live provider often enough (~0% pass
+    in a repeated live check) that prompt wording alone isn't sufficient
+    here -- this is the deterministic backstop. Only called when the
+    answer's own selected context actually includes an open Review or open
+    Question (has_pending_material in _validate_synthesis), so a genuinely
+    fully-settled answer's headline is never touched.
+    """
+    if not value:
+        return value
+    text = value
+    for pattern, replacement in _SETTLED_WORD_REPLACEMENTS:
+        text = pattern.sub(replacement, text)
+    text = re.sub(r"\s{2,}", " ", text).strip(" -–—:;,.")
+    return text or value
+
+
 def _clean_visible_ask_text(value: str | None, internal_ids: set[str]) -> str | None:
     """Remove implementation identifiers from prose shown to users."""
     if value is None:
@@ -464,7 +506,11 @@ def _validate_synthesis(answer: AskSynthesis, selection: AskSelection, context: 
     canonical_reviews = {x["id"]: x for x in context.get("reviews", [])}
     canonical_questions = {x["id"]: x for x in context.get("questions", [])}
 
+    has_pending_material = bool(context.get("reviews")) or bool(context.get("questions"))
+
     answer.headline = _clean_visible_ask_text(answer.headline, all_internal_ids) or "Project answer"
+    if has_pending_material:
+        answer.headline = _soften_unearned_settled_words(answer.headline)
     answer.summary = _clean_visible_ask_text(answer.summary, all_internal_ids) or "See the grounded project details below."
     answer.suggested_refinements = [
         cleaned for value in answer.suggested_refinements
@@ -474,6 +520,8 @@ def _validate_synthesis(answer: AskSynthesis, selection: AskSelection, context: 
     clean_sections = []
     for section in answer.sections:
         section.title = _clean_visible_ask_text(section.title, all_internal_ids) or "Project context"
+        if has_pending_material:
+            section.title = _soften_unearned_settled_words(section.title)
         clean_items = []
         for item in section.items:
             if item.record_type == "none":

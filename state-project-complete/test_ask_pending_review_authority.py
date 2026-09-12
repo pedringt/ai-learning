@@ -9,17 +9,59 @@ what a Question's status or Current State's content actually is.
 
 The existing "Open Reviews qualify Current State; they never replace it"
 rule was too soft to reliably stop the model from narrating a Review's
-proposed content as settled fact. This asserts the strengthened, explicit
-rule (added to _one_call_prompt, _synthesis_prompt, and the shared
-_grounding_rules()) is actually present in the assembled prompt text --
-a static guardrail against the instruction being silently dropped or
-weakened in a future edit. It cannot prove the model complies (that needs
-a live-provider eval), but it can prove the instruction is still there.
+proposed content as settled fact. The static tests below assert the
+strengthened, explicit rule (added to _one_call_prompt, _synthesis_prompt,
+and the shared _grounding_rules()) is actually present in the assembled
+prompt text -- a guardrail against the instruction being silently dropped
+or weakened in a future edit. They cannot prove the model complies, only
+that the instruction is still there.
+
+A second live-QA pass (2026-09-12) on the FIRST fix still found "30-Day
+Confirmed" language, and a worse case: asking "Since retention is
+resolved, what can move forward?" (a false premise -- the Review was
+still open) got answered as though the premise were true ("Retention
+resolved..."). The rule was strengthened further (banning "confirmed"/
+"resolved" as a label even when Evidence itself uses that word, and
+requiring an explicit false-premise correction).
+
+A repeated live check afterward found the prompt-only fix still let
+"Confirmed"/"Resolved" through as a short headline/section-title badge
+often enough (0/8 in one run) that prompt wording alone isn't reliable
+here -- see _soften_unearned_settled_words in ask_service.py for the
+deterministic code-level backstop added on top: it rewrites those exact
+words in the answer's headline and section titles (never in prose, where
+the model does usually hedge correctly) whenever the selected context
+includes any open Review or open Question. test_soften_unearned_settled_words_*
+below unit-tests that function directly, with no API call needed.
+test_the_exact_reported_repro_no_longer_treats_pending_evidence_as_settled
+verifies the full pipeline live, against the real model, with the exact
+repro evidence and both exact questions from the QA pass -- run that one
+locally with a funded ANTHROPIC_API_KEY; the unit tests are what CI-like
+environments without one can still rely on.
 """
 from __future__ import annotations
 
-from ask_contract import AskSelection
-from ask_service import _grounding_rules, _one_call_prompt, _synthesis_prompt
+import os
+import re
+
+import pytest
+
+from ask_contract import AskAnswerItem, AskAnswerSection, AskSelection, AskSynthesis
+from ask_provider import LiveAskProvider
+from ask_service import (
+    _grounding_rules, _one_call_prompt, _soften_unearned_settled_words,
+    _synthesis_prompt, _validate_synthesis, run_ask,
+)
+from database_migration_backed import get_test_db
+from anthropic_provider import AnthropicProvider
+from interpretation_pipeline_integrated import process_evidence
+from seed_demo import bootstrap_demo_data
+
+requires_anthropic_key = pytest.mark.skipif(
+    not os.getenv("ANTHROPIC_API_KEY"),
+    reason="ANTHROPIC_API_KEY not set -- this test checks real model compliance with "
+    "the authority-language rule, not just that the rule text exists.",
+)
 
 _CANDIDATES = {"state": [], "reviews": [], "questions": [], "history": [], "evidence": [], "rules": []}
 
@@ -47,3 +89,146 @@ def test_synthesis_prompt_forbids_confirmed_language_for_open_reviews():
     prompt = _synthesis_prompt("What are the confirmed retention terms?", selection, context, None)
     assert "not yet true" in prompt
     assert '"confirmed"' in prompt
+
+
+def test_soften_unearned_settled_words_rewrites_bare_confirmed_and_resolved():
+    assert _soften_unearned_settled_words("Retention Terms: Legal Confirmed") == "Retention Terms: Legal Reported"
+    assert _soften_unearned_settled_words("Confirmed Retention and Deletion") == "Reported Retention and Deletion"
+    assert _soften_unearned_settled_words("Retention resolved") == "Retention pending"
+    assert _soften_unearned_settled_words("30-Day Retention (Confirmed)") == "30-Day Retention"
+    assert _soften_unearned_settled_words("Retention Terms (Resolved)") == "Retention Terms"
+
+
+def test_soften_unearned_settled_words_leaves_clean_text_alone():
+    assert _soften_unearned_settled_words("What needs review") == "What needs review"
+    assert _soften_unearned_settled_words(None) is None
+    assert _soften_unearned_settled_words("") == ""
+
+
+def _selection_and_context_with_open_review():
+    selection = AskSelection(
+        job="current_fact", state_ids=[], review_ids=["r-1"], blocking_question_ids=[],
+        question_ids=[], history_ids=[], evidence_ids=[],
+    )
+    context = {
+        "state": [], "history": [], "evidence": [], "rules": [],
+        "reviews": [{"id": "r-1", "review_type": "proposed_update", "decision_question": "Is this confirmed?", "why_consequential": "x", "affected_state_ids": [], "evidence_ids": []}],
+        "questions": [],
+    }
+    return selection, context
+
+
+def test_validate_synthesis_softens_headline_and_titles_when_context_has_an_open_review():
+    selection, context = _selection_and_context_with_open_review()
+    answer = AskSynthesis(
+        job="current_fact",
+        headline="Retention Terms: Legal Confirmed",
+        summary="Legal confirmed the terms, but the Review is still open and the Question remains unresolved.",
+        sections=[AskAnswerSection(kind="other", title="Confirmed Retention and Deletion", items=[
+            AskAnswerItem(text="Some free-text detail that says confirmed too", record_type="none"),
+        ])],
+    )
+    cleaned = _validate_synthesis(answer, selection, context)
+    assert "Confirmed" not in cleaned.headline and "confirmed" not in cleaned.headline
+    assert "Confirmed" not in cleaned.sections[0].title and "confirmed" not in cleaned.sections[0].title
+    # Full prose (summary, free-text items) is left to the prompt rules, not
+    # the code-level backstop, since the model reliably hedges there already
+    # and blind word-replacement in longer sentences risks garbling meaning.
+    assert "confirmed" in cleaned.summary.lower()
+
+
+def test_validate_synthesis_leaves_headline_alone_when_nothing_is_pending():
+    selection = AskSelection(
+        job="current_fact", state_ids=["k-1"], review_ids=[], blocking_question_ids=[],
+        question_ids=[], history_ids=[], evidence_ids=[],
+    )
+    context = {"state": [{"id": "k-1", "topic": "x", "statement": "y"}], "reviews": [], "questions": [], "history": [], "evidence": [], "rules": []}
+    answer = AskSynthesis(job="current_fact", headline="Data Boundary Confirmed", summary="Established in Current State.", sections=[])
+    cleaned = _validate_synthesis(answer, selection, context)
+    assert cleaned.headline == "Data Boundary Confirmed", (
+        "With no open Review or Question anywhere in context, there's nothing pending to "
+        "protect against -- the backstop must not touch a headline about something genuinely settled."
+    )
+
+
+@requires_anthropic_key
+def test_the_exact_reported_repro_no_longer_treats_pending_evidence_as_settled():
+    """Live reproduction of the exact 2026-09-12 QA repro, against the real
+    model and real demo Current State/Questions: submit the exact retention
+    Evidence, let intake create its Review the normal way, then ask the two
+    exact questions from the report and check the answers hold the
+    authority line -- not by asserting the model never writes "confirmed"
+    or "resolved" anywhere (those words alone are ambiguous: "not yet
+    confirmed" is exactly the correct answer), but by asserting the
+    combination that would actually leak the bug: the words appearing
+    WITHOUT any nearby hedge ("not", "pending", "awaiting", "n't", "yet",
+    "open", "before").
+
+    Only checks Ask's own generated prose (headline, summary, section
+    titles, and free-text items) -- not item text/detail for record_type
+    review/question/blocking_question/evidence, which _validate_synthesis
+    overwrites with the record's own stored fields or the Evidence's own
+    quoted content (a decision_question or a source quote is allowed to
+    contain "confirmed"; that wording comes from evidence intake's own
+    prompt in anthropic_provider.py, a separate subsystem this fix does
+    not touch).
+    """
+    provider = AnthropicProvider()
+    ask_provider = LiveAskProvider(provider)
+    with get_test_db() as conn:
+        bootstrap_demo_data(conn)
+        conn.execute(
+            "INSERT INTO evidence(id, content) VALUES (?, ?)",
+            ("e-retention-repro", "Legal confirmed vendor retention is 30 days for pilot "
+             "prompts and outputs, with deletion available on request."),
+        )
+        intake = None
+        for _ in range(3):
+            intake = process_evidence(conn, evidence_id="e-retention-repro", provider=provider)
+            if intake.processing_status == "succeeded" and intake.review_ids:
+                break
+        assert intake.processing_status == "succeeded", "Evidence intake setup failed (a separate, already-flaky pipeline path unrelated to this fix) even after retries."
+        assert intake.review_ids, "Evidence intake itself should still create the linked Review (already covered elsewhere); nothing to check Ask against otherwise."
+
+        hedges = ("not ", "n't ", "pending", "awaiting", "yet", "open", "before", "hasn't", "has not")
+
+        def _unhedged_claims(text, word):
+            hits = []
+            lowered = text.lower()
+            start = 0
+            while True:
+                idx = lowered.find(word, start)
+                if idx == -1:
+                    break
+                window = lowered[max(0, idx - 40):idx + len(word) + 20]
+                if not any(h in window for h in hedges):
+                    hits.append(text[max(0, idx - 40):idx + len(word) + 20])
+                start = idx + len(word)
+            return hits
+
+        def _flat_text(payload):
+            answer = payload.get("answer", {})
+            parts = [answer.get("headline", ""), answer.get("summary", "")]
+            for section in answer.get("sections", []):
+                parts.append(section.get("title", ""))
+                for item in section.get("items", []):
+                    if item.get("record_type") not in (None, "none"):
+                        continue
+                    parts.append(item.get("text", ""))
+                    parts.append(item.get("detail", "") or "")
+            return " ".join(parts)
+
+        confirmed_payload = run_ask(conn, ask_provider, "What are the confirmed retention terms?")
+        confirmed_text = _flat_text(confirmed_payload)
+        for word in ("confirmed", "resolved"):
+            bad = _unhedged_claims(confirmed_text, word)
+            assert not bad, f"Unhedged '{word}' claim(s) about pending retention evidence: {bad}"
+
+        premise_payload = run_ask(conn, ask_provider, "Since retention is resolved, what can move forward?")
+        premise_text = _flat_text(premise_payload)
+        assert re.search(r"not\s+(yet\s+)?resolved|isn.t resolved|hasn.t been resolved", premise_text, re.I), (
+            f"Expected the false premise ('retention is resolved') to be corrected explicitly; got: {premise_text[:400]}"
+        )
+        for word in ("confirmed", "resolved"):
+            bad = _unhedged_claims(premise_text, word)
+            assert not bad, f"Unhedged '{word}' claim(s) after a false-premise question: {bad}"
