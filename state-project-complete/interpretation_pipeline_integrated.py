@@ -82,8 +82,9 @@ def _filter_duplicate_current_state_creates(connection: Connection, payload: Map
     }
     recommendations = []
     for rec in payload.get("review_recommendations", []):
+        original_proposals = rec.get("proposed_changes", [])
         kept = []
-        for proposal in rec.get("proposed_changes", []):
+        for proposal in original_proposals:
             is_duplicate_create = (
                 proposal.get("operation") == "create"
                 and _normalize_review_text(proposal.get("proposed_statement", "")) in active_statements
@@ -93,8 +94,17 @@ def _filter_duplicate_current_state_creates(connection: Connection, payload: Map
         rec["proposed_changes"] = kept
         # A missing-understanding Review with nothing left to establish is a
         # no-op, so do not create a human decision merely because the model
-        # failed to notice an exact existing fact.
-        if kept or rec.get("review_type") != "missing_understanding":
+        # failed to notice an exact existing fact -- but only when dedup is
+        # what emptied it. A recommendation that already had no
+        # proposed_changes before this filter ran (e.g. provider_normalization's
+        # proposed_update -> missing_understanding downgrade, for evidence the
+        # model judged consequential but couldn't state a concrete resulting
+        # fact for) is a real "flag this, more understanding needed" Review,
+        # not a duplicate -- dropping it here would silently swallow evidence
+        # a human was supposed to see, the same failure the schema violation
+        # this downgrade exists to avoid was causing, just quieter.
+        became_empty_via_dedup = bool(original_proposals) and not kept
+        if not (rec.get("review_type") == "missing_understanding" and became_empty_via_dedup):
             recommendations.append(rec)
     payload["review_recommendations"] = recommendations
     payload["outcome"] = "review_recommended" if recommendations else "no_review"

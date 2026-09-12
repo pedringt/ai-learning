@@ -188,6 +188,23 @@ def normalize_provider_payload(
         if recommendation.get("review_type") == "missing_understanding" and has_existing_state_change:
             recommendation["review_type"] = "proposed_update"
 
+        # The mirror case: proposed_update requires at least one proposed
+        # change (canonical schema: minItems 1), but a provider sometimes
+        # judges evidence consequential enough for review without managing to
+        # articulate a concrete resulting statement -- e.g. a delegated
+        # approval ("we can move forward on X") with no existing State item to
+        # compare against. Rejecting the whole submission with schema_violation
+        # in that case blocks genuinely consequential evidence from ever
+        # reaching a human, which is a bigger failure than a slightly
+        # mis-classified review type. missing_understanding's own schema
+        # allows an empty proposed_changes list, so this is a safe, mechanical
+        # downgrade -- it does not invent a proposed change (that would
+        # require guessing intent, which this function deliberately avoids),
+        # it only relabels "no concrete change" from an invalid combination
+        # into a valid, honest one: "more understanding is needed."
+        if recommendation.get("review_type") == "proposed_update" and len(proposals) == 0:
+            recommendation["review_type"] = "missing_understanding"
+
         # An open_question Review proposes a durable unknown, never a State
         # mutation or an answer to an existing Question. Keep the provider's
         # semantic choice, but remove harmless empty presentation metadata so

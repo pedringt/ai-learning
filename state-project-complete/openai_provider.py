@@ -294,7 +294,7 @@ Respond ONLY with JSON in this structure:
 Remember:
 - Evidence alone does not change State (only humans can authorize)
 - review_type determines what kind of proposal is legal:
-  - proposed_update: use when Evidence changes or retires an EXISTING State item; proposed_changes may use update or retire (and may also include create when a grouped decision genuinely adds new State).
+  - proposed_update: use when Evidence changes or retires an EXISTING State item; proposed_changes may use update or retire (and may also include create when a grouped decision genuinely adds new State). Requires at least one proposed_changes entry; with none, use missing_understanding or state_at_risk instead.
   - missing_understanding: use only when the missing understanding is NOT already represented in Current State; every proposed_change in a missing_understanding review MUST use operation "create". Never use update or retire inside missing_understanding.
   - state_at_risk: use when Evidence creates uncertainty/risk around existing State but does not yet establish a replacement; normally use no proposed_changes.
   - Preserve epistemic status exactly: approved != implemented/enabled/deployed; planned != committed; capable != enabled. Never widen a narrow statement beyond the Evidence.

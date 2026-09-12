@@ -63,6 +63,25 @@ def test_missing_understanding_with_update_becomes_proposed_update():
     validate_schema(payload)
 
 
+def test_proposed_update_with_no_proposed_changes_becomes_missing_understanding():
+    """Regression coverage for a real staging failure (2026-09-12): a provider
+    judged evidence ("VP says we can move forward on auto drafting billing
+    questions") consequential enough for review but emitted review_type
+    proposed_update with an empty proposed_changes list -- invalid per the
+    canonical schema's minItems:1 rule for that type, which used to reject the
+    whole /api/evidence submission with schema_violation before this evidence
+    ever reached a human. missing_understanding's schema allows an empty
+    proposed_changes list, so downgrading to it is a safe, mechanical repair
+    that doesn't invent a proposed change."""
+    raw = base_update()
+    raw["review_recommendations"][0]["review_type"] = "proposed_update"
+    raw["review_recommendations"][0]["affected_state_item_ids"] = []
+    raw["review_recommendations"][0]["proposed_changes"] = []
+    payload = normalize_provider_payload(raw, context=context())
+    assert payload["review_recommendations"][0]["review_type"] == "missing_understanding"
+    validate_schema(payload)
+
+
 def test_create_strips_state_id_and_version():
     raw = base_update()
     proposal = raw["review_recommendations"][0]["proposed_changes"][0]
