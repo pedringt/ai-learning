@@ -500,8 +500,8 @@
   // list risks Ask quietly drifting out of sync with Open Items, the
   // authoritative view for these counts. Route there instead: a count plus a
   // link, nothing Ask has to keep consistent on its own.
-  function routingCardHtml(title,lede,count,view,anchor){
-    return `<div class="result-label">Open Items</div><div class="ask-routing-card"><h2>${esc(title)}</h2><p class="result-lede">${esc(lede)}</p><div class="ask-routing-count">${count}</div><button class="btn primary" data-view="${esc(view)}" data-anchor="${esc(anchor)}">Open Items →</button></div>`;
+  function routingCardHtml({category,sentence,detail,count,view,anchor}){
+    return `<div class="result-label">Open Items</div><div class="ask-routing-card"><div class="ask-routing-card-head"><span class="ask-routing-category">${esc(category)}</span><span class="ask-routing-count">${count}</span></div><p class="ask-routing-sentence">${esc(sentence)}</p>${detail?`<p class="ask-routing-detail">${esc(detail)}</p>`:''}<button class="btn primary" data-view="${esc(view)}" data-anchor="${esc(anchor)}">Open Items →</button></div>`;
   }
   function unresolvedBundle(){ return {questions:openQuestions(),reviews:pendingReviews()}; }
   function compactOpenHtml(title,lede){
@@ -624,9 +624,9 @@
     if(i.kind==='premise-correction')return premiseCorrectionHtml(i);
     if(i.kind==='progress-inference')return progressInferenceHtml();
     if(i.kind==='blocker-owners')return blockerOwnersHtml();
-    if(i.kind==='blockers'){ const n=openQuestions().filter(q=>q.blocking).length; return routingCardHtml('What may be blocking progress',n===1?'1 question is blocking progress.':`${n} questions are blocking progress.`,n,'open-items','open-items-blockers'); }
-    if(i.kind==='pending'){ const n=pendingReviews().length; return routingCardHtml('What needs review',n===1?'1 review is waiting on a decision.':`${n} reviews are waiting on a decision.`,n,'open-items','open-items-reviews'); }
-    if(i.kind==='open'){ const n=openQuestions().length; return routingCardHtml('What is not settled yet',n===1?'1 question is open.':`${n} questions are open.`,n,'open-items','open-items-questions'); }
+    if(i.kind==='blockers'){ const n=openQuestions().filter(q=>q.blocking).length; return routingCardHtml({category:'Blockers',sentence:n===1?'1 question is blocking progress.':`${n} questions are blocking progress.`,detail:'Resolve these to keep the project moving.',count:n,view:'open-items',anchor:'open-items-blockers'}); }
+    if(i.kind==='pending'){ const n=pendingReviews().length; return routingCardHtml({category:'Reviews',sentence:n===1?'1 review is waiting on a decision.':`${n} reviews are waiting on a decision.`,detail:'Waiting on a decision from you.',count:n,view:'open-items',anchor:'open-items-reviews'}); }
+    if(i.kind==='open'){ const n=openQuestions().length; return routingCardHtml({category:'Questions',sentence:n===1?'1 question is open.':`${n} questions are open.`,detail:'Not yet answered in the project record.',count:n,view:'open-items',anchor:'open-items-questions'}); }
     if(i.kind==='status')return scenarioResult({topics:['automation','security','feature-access','success-metrics','operations'],output:'summary'});
     if(i.kind==='decisions')return `<div class="result-label">Current State</div><h2>Decisions currently reflected in the project</h2><div class="structured-results">${state.data.knowledge.filter(k=>k.state==='current').slice(0,8).map(k=>`<article class="structured-result"><span class="knowledge-status current">Current State</span><h3>${esc(k.title)}</h3><p>${esc(k.statement)}</p></article>`).join('')}</div>`;
     if(i.kind==='history')return structuredAskHtml({kind:'history',items:state.data.history.slice().sort(sortDateAsc)});

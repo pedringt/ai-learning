@@ -1036,8 +1036,10 @@ body.v88-dark .project-outline{background:#17151d!important;border-color:var(--l
       html body #askStateDrawer .ask-live-answer,html body #askStateDrawer .ask-live-answer *{overflow-wrap:anywhere!important}
     }
     @media(max-width:480px){html body .page-head{display:block!important}html body .page-head>.btn{margin-top:12px!important;width:100%!important}html body .prototype-productbar .product-divider{display:none!important}html body .prototype-productbar .product-name{margin-right:3px!important}html body #askStateDrawer{width:96vw!important;max-width:96vw!important}}
-.ask-routing-card{border:1px solid var(--line);background:var(--surface2);border-radius:12px;padding:20px;margin-top:8px;display:flex;align-items:center;gap:18px;flex-wrap:wrap}
-.ask-routing-card h2{margin:0;font-size:18px;font-family:Inter,ui-sans-serif,system-ui,sans-serif;flex:1 1 220px}
-.ask-routing-card .result-lede{margin:4px 0 0;font-size:13px;max-width:none}
-.ask-routing-count{font-size:28px;font-weight:850;color:var(--accent);line-height:1}
-.ask-routing-card .btn{flex:0 0 auto}
+.ask-routing-card{border:1px solid var(--line);background:var(--surface2);border-radius:10px;padding:14px 16px;margin-top:8px;max-width:420px}
+.ask-routing-card-head{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.ask-routing-category{font-size:11px;text-transform:uppercase;letter-spacing:.08em;font-weight:850;color:var(--muted)}
+.ask-routing-count{display:inline-grid;place-items:center;min-width:22px;height:22px;padding:0 6px;border-radius:999px;background:var(--accent-soft);color:var(--accent);font-size:12px;font-weight:850}
+.ask-routing-sentence{margin:8px 0 0;font-size:13px;color:var(--ink)}
+.ask-routing-detail{margin:3px 0 0;font-size:12px;color:var(--muted)}
+.ask-routing-card .btn{margin-top:12px}

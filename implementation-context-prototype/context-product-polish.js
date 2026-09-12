@@ -21,6 +21,7 @@
     ["What's blocking implementation?", 'What is blocking implementation planning right now? Distinguish confirmed blocking Questions from other unresolved items and pending Reviews.'],
     ['What are we still unsure about?', 'What is still unresolved? Keep open Questions and pending Evidence separate from accepted Current State.']
   ];
+  window.STATE_ASK_STARTERS = starters.map(([label, prompt]) => ({label, prompt}));
 
   const ui = {
     drawerOpen: false,
@@ -291,7 +292,7 @@
     if(api?.hasExplicitUpdateIntent)return api.hasExplicitUpdateIntent(query);
     return /\b(add (this|that|it)|please add|update (the )?(current )?state|record (this|that)|please record|note that|for the record|log (this|that))\b/i.test(query);
   }
-  async function runAsk(query){
+  async function runAsk(query,{skipRouting=false}={}){
     const clean=String(query||'').trim();if(!clean)return;
     ui.query=clean;syncAskInputs();openAskDrawer({focus:false});
     if(explicitMutationIntent(clean)){
@@ -303,7 +304,7 @@
     // backend answer -- Open Items is already the authoritative, live view
     // for these counts. Route there directly and skip the Ask backend call
     // entirely so this never risks drifting out of sync with it.
-    const routingHtml=window.STATE_ASK_ROUTING?.askRoutingCardHtml?.(clean);
+    const routingHtml=skipRouting?null:window.STATE_ASK_ROUTING?.askRoutingCardHtml?.(clean);
     if(routingHtml){
       ui.payload=null;ui.resolvedContext=[];ui.answerStateSignature=null;ui.stale=false;
       renderDrawerResult(routingHtml);return;
@@ -350,7 +351,7 @@
   });
 
   document.addEventListener('click',event=>{
-    const prompt=event.target.closest?.('[data-review-batch-prompt]');if(prompt){event.preventDefault();event.stopPropagation();runAsk(prompt.dataset.reviewBatchPrompt);return;}
+    const prompt=event.target.closest?.('[data-review-batch-prompt]');if(prompt){event.preventDefault();event.stopPropagation();runAsk(prompt.dataset.reviewBatchPrompt,{skipRouting:true});return;}
     const copyContext=event.target.closest?.('[data-action="open-copy-context"]');if(copyContext){event.preventDefault();event.stopPropagation();openCopyContextDialog();return;}
     const confirmCopy=event.target.closest?.('[data-review-batch-action="copy-context-confirm"]');if(confirmCopy){event.preventDefault();event.stopPropagation();confirmCopyContext();return;}
     const action=event.target.closest?.('[data-review-batch-action]');if(!action)return;
