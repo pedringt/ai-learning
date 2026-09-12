@@ -24,7 +24,7 @@
       var local = location.protocol === 'file:';
       document.write('<link rel="icon" href="' + (local ? '../favicon.svg' : '/favicon.svg') + '">');
       document.write('<link rel="stylesheet" href="' + (local ? '../site-shell.css' : '/site-shell.css') + '">');
-      document.write('<link rel="stylesheet" href="' + (local ? 'context-tool.css?v=r80-open-questions-expand-fix' : '/implementation-context-prototype/context-tool.css?v=r80-open-questions-expand-fix') + '">');
+      document.write('<link rel="stylesheet" href="' + (local ? 'context-tool.css?v=r81-review-link-refresh-fix' : '/implementation-context-prototype/context-tool.css?v=r81-review-link-refresh-fix') + '">');
     })();
   </script>
   <style id="state-mobile-nav">
@@ -65,7 +65,7 @@
       var local = location.protocol === 'file:';
       document.write('<script src="' + (local ? '../site-shell.js' : '/site-shell.js') + '"><\/script>');
       if(!local) document.write('<script src="/api/state-config.js"><\/script>');
-      var v='r80-open-questions-expand-fix';
+      var v='r81-review-link-refresh-fix';
       ['context-analytics.js','context-data.js','context-api.js','context-ask.js','context-ask-followup.js','context-notes-view.js','context-open-items-view.js','context-project-view.js','context-backend-sync.js','context-app.js','context-history.js','context-provenance.js','context-quickwins.js','context-product-polish.js','context-settings.js','context-sources.js','context-design-pass.js','context-feedback-pass.js','context-feedback-pass-2.js','context-feedback-pass-3.js','context-feedback-pass-4.js','context-attention-alignment.js','context-final-mobile.js'].forEach(function(file){document.write('<script src="'+(local?'':'/implementation-context-prototype/')+file+'?v='+v+'"><\/script>');});
       document.write('<script>requestAnimationFrame(function(){requestAnimationFrame(function(){document.documentElement.classList.remove("state-prepaint");clearTimeout(window.__stateRevealTimer);});});<\/script>');
     })();

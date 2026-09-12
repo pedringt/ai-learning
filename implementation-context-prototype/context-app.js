@@ -1185,6 +1185,29 @@
 
   function mapApiReview(r, fallbackEvidence=''){ return BACKEND_SYNC.mapApiReview(r,fallbackEvidence); }
 
+  // Ask queries the backend fresh on every question, but Open Items only
+  // hydrates its local review list once (hydrateBackend()) -- so Ask can
+  // surface a "Review ->" link for a Review Open Items hasn't loaded yet.
+  // Found via live QA 2026-09-12: clicking that link did a local-only lookup
+  // and silently no-op'd on a miss. Refresh the open-reviews list from the
+  // backend (same prune-then-upsert shape hydrateBackend() itself uses) so a
+  // miss gets one real chance to resolve before giving up.
+  async function refreshOpenReviews(){
+    if(!API)return;
+    try{
+      const rawReviews=(await API.getReviews('open')).items||[];
+      replaceBackendOpenReviews(rawReviews);
+      for(const raw of (rawReviews||[])){
+        const note=state.data.notes.find(n=>n.evidenceId===raw.evidence_id);
+        const mapped=mapApiReview(raw,raw.evidence_content||'');
+        mapped.evidenceId=note?.id||`api-note-${raw.evidence_id}`;
+        upsertBackendReview(mapped,{toFront:false});
+      }
+    }catch(error){
+      console.warn('Could not refresh open reviews.',error);
+    }
+  }
+
   /* ----------------------------------------------------------------------
      Backend mapping and sync
 
@@ -1445,7 +1468,17 @@
     if(e.target.closest('[data-action="dismiss-review-banner"]')){ state.reviewBannerDismissed=true; renderOverview(); return; }
     if(e.target.closest('[data-action="dismiss-nudge"]')){ const btn=e.target.closest('[data-action="dismiss-nudge"]'); state.dismissedNudges.add(btn.dataset.nudge); renderReview(); return; }
     const projectJump=e.target.closest('[data-project-jump]'); if(projectJump){const target=projectJump.dataset.projectJump;if(state.view!=='project-overview'){state.view='project-overview';render();requestAnimationFrame(()=>scrollProjectTarget(target));}else{updateNav();updateProjectSubnavActive(target);scrollProjectTarget(target);}return;}
-    const relatedReview=e.target.closest('[data-action="open-related-review"]'); if(relatedReview){ const r=state.data.reviews.find(x=>x.id===relatedReview.dataset.reviewId); if(r) showDialog(`<span class="eyebrow">Pending Review</span><h2 id="dialogTitle">Related evidence may affect this Current State</h2>${reviewCard(r,true,false)}`); return;}
+    const relatedReview=e.target.closest('[data-action="open-related-review"]');
+    if(relatedReview){
+      const reviewId=relatedReview.dataset.reviewId;
+      const existing=state.data.reviews.find(x=>x.id===reviewId);
+      if(existing){ showDialog(`<span class="eyebrow">Pending Review</span><h2 id="dialogTitle">Related evidence may affect this Current State</h2>${reviewCard(existing,true,false)}`); return; }
+      await refreshOpenReviews();
+      const found=state.data.reviews.find(x=>x.id===reviewId);
+      if(found) showDialog(`<span class="eyebrow">Pending Review</span><h2 id="dialogTitle">Related evidence may affect this Current State</h2>${reviewCard(found,true,false)}`);
+      else showDialog(`<span class="eyebrow">Review unavailable</span><h2 id="dialogTitle">This review is no longer open</h2><p>It may have just been accepted, rejected, or changed since this answer was generated. Open Items now reflects the latest reviews.</p><div class="dialog-actions"><button class="btn primary" data-action="dismiss-and-open-items">Open Items →</button></div>`);
+      return;
+    }
         const topicHistory=e.target.closest('[data-action="view-topic-history"]'); if(topicHistory){if(!overlay.hidden)closeDialog();state.historyTopic=topicHistory.dataset.knowledgeId;navigateTo('history',{preserveHistoryTopic:true});window.STATE_HISTORY_NAV?.pushHistoryTopic?.(state.historyTopic);return;}
     const clearHistory=e.target.closest('[data-action="clear-history-topic"]'); if(clearHistory){state.historyTopic=null;renderHistory();window.STATE_HISTORY_NAV?.pushHistoryTopic?.(null);return;}
     const clearHistoryEvidence=e.target.closest('[data-action="clear-history-evidence"]'); if(clearHistoryEvidence){state.historyEvidenceId=null;renderHistory();window.STATE_HISTORY_NAV?.pushHistoryTopic?.(null);return;}
@@ -1564,6 +1597,7 @@
     else if(act==='reload-page'){window.location.reload();}
     else if(act==='review-receipt-project'){const area=a.dataset.projectArea||'product';closeDialog();navigateTo('project-overview');requestAnimationFrame(()=>{scrollProjectTarget(`project-${area}`);const target=a.dataset.stateId?[...document.querySelectorAll('[data-state-id]')].find(el=>el.dataset.stateId===a.dataset.stateId)?.closest('.project-wiki-topic'):null;if(target){target.classList.add('is-recently-updated');setTimeout(()=>target.classList.remove('is-recently-updated'),2200);}});}
     else if(act==='close-dialog'){if(!state.isAnalyzing)closeDialog();}
+    else if(act==='dismiss-and-open-items'){closeDialog();navigateTo('open-items');}
     else if(act==='retry-analysis'){ const evidenceId=a.dataset.evidenceId; state.isAnalyzing=true; showDialog(analyzingDialog()); startAnalysisClock(); try{await retryEvidenceAnalysis(evidenceId); state.isAnalyzing=false; stopAnalysisClock(); await hydrateBackend(); showDialog(`<span class="eyebrow">Done</span><h2 id="dialogTitle">Analysis complete.</h2><p>Open Items now reflects anything that needs your decision.</p><div class="dialog-actions"><button class="btn primary" data-action="go-review">View Open Items</button></div>`);}catch(err){state.isAnalyzing=false;stopAnalysisClock();showDialog(`<span class="eyebrow">Still unavailable</span><h2 id="dialogTitle">Your note is still safe.</h2><p>${esc(err.message)}</p><div class="dialog-actions"><button class="btn primary" data-action="close-dialog">Close</button></div>`);} }
     else if(act==='sample-info'){ const t=document.getElementById('addInfoText'); const samples=state.data.sampleInformationOptions||{}; const value=samples[a.dataset.sample]||state.data.sampleInformation; if(t){t.value=value;t.focus();t.setSelectionRange(t.value.length,t.value.length);} }
     else if(act==='save-info')saveInformation();
@@ -1640,7 +1674,7 @@
     history.replaceState(history.state,'',location.pathname+(cleanedSearch?`?${cleanedSearch}`:'')+'#settings');
     navigateTo('settings');
   }
-  window.STATE_ASK_TEST_API={state,detectAskIntent,findScenario,structuredAskResult,scenarioResult,intentAskHtml,submitAsk,upsertBackendReview,replaceBackendOpenReviews,mapApiReview,looksLikeQuestion,hasExplicitUpdateIntent,linkedReviewFor,questionDialogHtml,renderOverview,renderOpenItems,historyType,syncApiHistory};
+  window.STATE_ASK_TEST_API={state,detectAskIntent,findScenario,structuredAskResult,scenarioResult,intentAskHtml,submitAsk,upsertBackendReview,replaceBackendOpenReviews,mapApiReview,looksLikeQuestion,hasExplicitUpdateIntent,linkedReviewFor,questionDialogHtml,renderOverview,renderOpenItems,refreshOpenReviews,historyType,syncApiHistory};
   // The live Ask State drawer (context-product-polish.js's runAsk) is the
   // only Ask surface a user actually reaches -- this module's own
   // submitAsk()/renderOverview() Ask path is legacy from before the drawer
