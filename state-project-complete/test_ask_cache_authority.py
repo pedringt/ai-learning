@@ -120,3 +120,21 @@ def test_a_cache_hit_reports_its_own_cost_not_the_original_call(tmp_path):
         assert timing["cache_hit"] is True
         assert timing["provider_ms"] == 0
         assert timing["total_ms"] == 0
+
+
+def test_question_creation_review_invalidates_cached_ask_without_state_change(tmp_path):
+    from test_question_review_creation import QuestionProvider
+    ask_provider = FakeAskProvider()
+    settings = Settings(database_path=str(tmp_path / 'question-review.db'), cors_origins=[], demo_bootstrap=True)
+    with TestClient(create_app(settings, provider=QuestionProvider(), ask_provider=ask_provider)) as client:
+        review = client.post('/api/evidence', json={'content':'An audit raises a concern about draft checking.'}).json()['reviews'][0]
+        query = {'query':'What needs review?'}
+        assert client.post('/api/ask', json=query).status_code == 200
+        assert client.post('/api/ask', json=query).json()['timing']['cache_hit'] is True
+        before = client.get('/api/state').json()
+        response = client.post(f"/api/reviews/{review['id']}/resolve", json={'decision':'accept','expected_question_proposal_id':review['question_to_create']['id']})
+        assert response.status_code == 200, response.text
+        after = client.post('/api/ask', json=query)
+        assert after.status_code == 200, after.text
+        assert after.json()['timing'].get('cache_hit') is not True
+        assert client.get('/api/state').json() == before

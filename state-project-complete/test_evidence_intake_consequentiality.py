@@ -32,7 +32,7 @@ import sys
 
 import pytest
 
-sys.path.insert(0, "phase2_current")
+sys.path.insert(0, "interpretation_runtime")
 
 from anthropic_provider import AnthropicProvider
 from database_migration_backed import get_test_db
@@ -273,4 +273,49 @@ def test_vague_observation_without_a_decision_does_not_reach_review():
     assert len(result.review_ids) == 0, (
         f"Expected no_review for a volume observation with no decision or approval "
         f"implied; got review_type(s): {result.review_ids}"
+    )
+
+
+@requires_anthropic_key
+def test_narrower_variant_of_existing_open_question_still_reaches_review():
+    """A second real live-QA miss (2026-09-12), reproduced against the real
+    seed_demo.py data rather than a synthetic Current State: the demo's own
+    open Question q-review already asks "What evidence would justify
+    reconsidering human review?" -- and against that pre-existing Question,
+    this exact Evidence (attributed to leadership, floating a narrower,
+    concrete sub-case) returned no review 6/6 times.
+
+    Root cause found in question_review_prompt.py: "do not suggest another
+    Question for the same unknown already tracked" was being over-applied --
+    the model treated this narrower, more concrete variant as the same
+    unknown as the existing broader Question and silently dropped it,
+    instead of creating its own open_question the way test_vp_billing_note_
+    is_a_regression_case_and_must_reach_review's evidence does for an
+    unrelated topic. Fixed by clarifying that a narrower variant of an
+    existing open Question is still a distinct, trackable signal. Re-ran
+    against this exact repro afterward: 14/16 (~88%) now correctly reach
+    review, up from 0/6 before the fix -- kept at an assert-on-miss
+    threshold here (a single run) since a live-provider suite can't hard-
+    assert every run at less than 100% reliability without becoming flaky
+    itself; see eval/scenarios.py's authority_question_removing_human_review_
+    scoped for the higher-volume empirical rate.
+    """
+    result = _process(
+        "Leadership asked whether we can remove human review for low-risk "
+        "password reset answers, but Security has not approved that change.",
+        {
+            "k-security": (
+                "security",
+                "Human review remains required for the pilot. Security wants agreed "
+                "high-risk failure categories and evidence across them before that "
+                "boundary is reconsidered.",
+            ),
+        },
+        questions=(("q-review", "What evidence would justify reconsidering human review?", False),),
+    )
+    assert len(result.review_ids) > 0, (
+        "This is the exact regression: real production returned no review "
+        "recommendations for this Evidence against the real demo Current State "
+        "and open Questions, because it read as the same already-tracked unknown "
+        "as q-review instead of a distinct, narrower signal."
     )

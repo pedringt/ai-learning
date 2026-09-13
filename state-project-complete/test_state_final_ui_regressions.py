@@ -114,15 +114,15 @@ def test_add_evidence_modal_uses_neutral_surface_and_blue_action():
         browser.close(); pw.stop()
 
 
-def test_coarse_stale_answer_warning_is_not_surfaced():
+def test_project_record_refresh_warning_is_not_hidden_by_late_styles():
     pw, browser, page = _page()
     try:
         page.locator("#askStateLauncher").click()
         page.evaluate("""() => {
           const result=document.getElementById('askStateDrawerResult');
-          result.innerHTML='<div class="ask-state-stale"><span>Current State has changed since this answer was generated.</span><button>Refresh answer</button></div>';
+          result.innerHTML='<div class="ask-state-stale"><span>The project record has changed since this answer was generated.</span><button>Refresh answer</button></div>';
         }""")
-        assert not page.locator("#askStateDrawer .ask-state-stale").is_visible()
+        assert page.locator("#askStateDrawer .ask-state-stale").is_visible()
     finally:
         browser.close(); pw.stop()
 

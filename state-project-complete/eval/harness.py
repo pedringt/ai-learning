@@ -26,7 +26,7 @@ from dotenv import load_dotenv
 # already set in the real environment.
 load_dotenv(Path(__file__).resolve().parent.parent / ".env")
 
-sys.path.insert(0, "phase2_current")
+sys.path.insert(0, "interpretation_runtime")
 
 from anthropic_provider import AnthropicProvider
 from database_migration_backed import get_test_db

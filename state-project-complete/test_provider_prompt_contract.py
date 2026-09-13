@@ -117,7 +117,16 @@ def test_anthropic_prompt_is_compact_and_does_not_repeat_json_skeleton():
     # instruction measurably fixed fewer of the two confirmed misses than
     # this fuller one. Compactness still matters; this is headroom for a
     # specific, evidence-backed instruction, not an invitation to bloat.
-    assert len(prompt) < 4000
+    # Question proposals add a bounded shared rule set, not another model call.
+    # Bumped again -> 6300 2026-09-12: a live QA repro ("Leadership asked
+    # whether we can remove human review for low-risk password reset
+    # answers...") missed review 6/6 times against the real demo data
+    # because "do not suggest another Question for the same unknown already
+    # tracked" over-suppressed a narrower, more concrete variant of an
+    # already-open Question. The added guidance (question_review_prompt.py)
+    # measurably fixed it (0/6 -> 14/16 on repeated live runs); same
+    # evidence-backed bar as the first bump, not scope creep.
+    assert len(prompt) < 6300
 
 
 def test_provider_output_schema_stays_below_anthropic_complexity_budget():
@@ -171,3 +180,13 @@ def test_provider_prompt_exposes_open_questions_without_promoting_them_to_blocke
         assert 'resolves_question_ids' in prompt
         assert 'blocking' in prompt.lower()
         assert ('do not infer' in prompt.lower() or 'must not infer' in prompt.lower())
+
+
+def test_both_providers_explain_reviewed_question_authority_and_duplicates():
+    for provider_cls in (AnthropicProvider, OpenAIProvider):
+        prompt = _prompt(provider_cls())
+        assert 'open_question' in prompt
+        assert 'non-blocking' in prompt
+        assert 'Check open_questions' in prompt
+        assert 'not an established fact' in prompt
+        assert '500 characters' in prompt

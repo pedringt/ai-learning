@@ -7,6 +7,10 @@ from typing import Literal
 
 from db import Connection
 from interpretation_pipeline_integrated import new_id
+from question_review_service import (
+    QuestionReviewConflictError, create_or_find_question, normalized_question_text,
+    question_proposal_read_model, resolve_question_proposal,
+)
 
 
 class ReviewNotFoundError(KeyError):
@@ -75,24 +79,18 @@ def list_questions(connection: Connection, status: str = "open") -> list[dict]:
 
 
 def _normalized_question_text(value: str) -> str:
-    return " ".join((value or "").casefold().split())
+    return normalized_question_text(value)
 
 
 def create_question(connection: Connection, question_id: str, text: str, *, origin: str = "Added from Workspace", blocking: bool = False, blocks: str | None = None) -> dict:
-    cleaned = text.strip()
-    # Creating the same open question twice should be idempotent from the UI's
-    # point of view. This also lets the frontend safely bootstrap demo questions
-    # into the authoritative backend without duplicating them on every reload.
-    for existing in list_questions(connection, "open"):
-        if _normalized_question_text(existing["text"]) == _normalized_question_text(cleaned):
-            return existing
-    connection.execute(
-        "INSERT INTO questions(id, text, status, blocking, blocks, origin) VALUES (?, ?, 'open', ?, ?, ?)",
-        (question_id, cleaned, 1 if blocking else 0, blocks, origin),
-    )
-    connection.commit()
-    row = connection.execute("SELECT * FROM questions WHERE id=?", (question_id,)).fetchone()
-    return dict(row)
+    connection.execute("BEGIN IMMEDIATE")
+    try:
+        item, _ = create_or_find_question(connection, question_id, text, origin=origin, blocking=blocking, blocks=blocks)
+        connection.execute("COMMIT")
+        return item
+    except Exception:
+        connection.execute("ROLLBACK")
+        raise
 
 
 def update_question_blocking(connection: Connection, question_id: str, blocking: bool, blocks: str | None = None) -> dict:
@@ -124,12 +122,12 @@ def stop_question(connection: Connection, question_id: str) -> None:
     connection.commit()
 
 
-def resolve_review(connection: Connection, review_id: str, decision: Decision, note: str | None = None) -> None:
+def resolve_review(connection: Connection, review_id: str, decision: Decision, note: str | None = None, *, expected_question_proposal_id: str | None = None, expected_existing_question_id: str | None = None) -> dict | None:
     """Resolve one review atomically; only ``accept`` may mutate Current State."""
     connection.row_factory = sqlite3.Row
     connection.execute("BEGIN IMMEDIATE")
     try:
-        review_sql = "SELECT id, status FROM review_issues WHERE id=?"
+        review_sql = "SELECT id, status, review_type FROM review_issues WHERE id=?"
         if getattr(connection, "is_postgres", False):
             review_sql += " FOR UPDATE"
         review = connection.execute(review_sql, (review_id,)).fetchone()
@@ -137,6 +135,22 @@ def resolve_review(connection: Connection, review_id: str, decision: Decision, n
             raise ReviewNotFoundError(review_id)
         if review["status"] != "open":
             raise ReviewConflictError("Review is already resolved")
+
+        if decision not in {"accept", "keep", "reject"}:
+            raise ReviewConflictError("Invalid Review decision")
+        if review["review_type"] == "open_question":
+            try:
+                outcome = resolve_question_proposal(connection, review_id, decision, expected_question_proposal_id, expected_existing_question_id)
+            except QuestionReviewConflictError as exc:
+                raise ReviewConflictError(str(exc)) from exc
+            connection.execute(
+                "UPDATE review_issues SET status='resolved', resolution=?, resolution_note=?, "
+                "resolved_at=CURRENT_TIMESTAMP WHERE id=?", (outcome["resolution"], note, review_id)
+            )
+            connection.execute("COMMIT")
+            return outcome
+        if expected_question_proposal_id is not None:
+            raise ReviewConflictError("The Review outcome changed. Refresh and review it again.")
 
         proposals = connection.execute(
             "SELECT * FROM proposed_state_changes WHERE review_id=? AND status='pending' ORDER BY created_at, id",
@@ -170,33 +184,24 @@ def resolve_review(connection: Connection, review_id: str, decision: Decision, n
             ).fetchall()
             latest_evidence_id = evidence_rows[0]["id"] if evidence_rows else None
             linked_questions = connection.execute(
-                "SELECT question_id FROM review_questions WHERE review_id=?", (review_id,)
+                "SELECT question_id, evidence_id FROM review_questions WHERE review_id=?", (review_id,)
             ).fetchall()
-            # KNOWN PROVENANCE GAP (logged 2026-09-07 logic review, not fixed
-            # here -- flagged as future hardening, not expanded into this
-            # pass): every Question this Review resolves gets stamped with
-            # latest_evidence_id, the single most-recently-submitted Evidence
-            # linked to the whole Review -- not necessarily the Evidence that
-            # actually established THAT Question's specific answer. If Review
-            # R has two linked Evidence items (A resolves Q1, B resolves Q2,
-            # B submitted after A), both Q1 and Q2 end up attributed to B.
-            # The schema has no way to do better today: review_questions only
-            # stores (review_id, question_id), with no evidence_id column, so
-            # there's no per-link record of which Evidence resolved which
-            # Question. A real fix needs a migration adding that column,
-            # populated in interpretation_pipeline_integrated.py's
-            # resolves_question_ids insert loop (which does know the current
-            # evidence_id at insert time), plus this query joining on it
-            # instead of applying one latest_evidence_id to every linked
-            # Question. Not attempted here since it's a schema change, not a
-            # narrow fix -- resolution and status remain correct either way,
-            # only the source_evidence_id attribution can be imprecise for
-            # this specific multi-evidence, multi-question case.
+            # Each row's own evidence_id (migration 010) is the Evidence whose
+            # interpretation actually inserted this specific Review-Question
+            # link -- more precise than latest_evidence_id, which is just
+            # whichever Evidence has the latest submitted_at across every
+            # review_evidence row for this Review, including ones with no
+            # bearing on this Question (e.g. a manually-linked adversarial
+            # relationship, same pattern as seed_demo.py's demo-review-retention/
+            # ask-evidence-vendor-retention link). Rows from before that
+            # migration have no evidence_id recorded, so fall back to the
+            # previous review-wide approximation for those only.
             for linked in linked_questions:
+                source_evidence_id = linked["evidence_id"] or latest_evidence_id
                 connection.execute(
                     "UPDATE questions SET status='resolved', resolved_at=CURRENT_TIMESTAMP, "
                     "resolution='Resolved by reviewed evidence', source_evidence_id=? WHERE id=? AND status='open'",
-                    (latest_evidence_id, linked["question_id"]),
+                    (source_evidence_id, linked["question_id"]),
                 )
             # REMOVED: Unsafe backward-compatibility fallback that resolved Questions based solely
             # on source_type.startswith("question_response:"). Question resolution now comes only
@@ -294,6 +299,54 @@ def list_evidence(connection: Connection) -> list[dict]:
     )]
 
 
+def _related_open_review_refs(
+    connection: Connection, *, review_id: str, state_ids: list[str], question_ids: list[str]
+) -> list[dict]:
+    """Other open Reviews that share a linked State item or Question.
+
+    Deliberately structural, not semantic: two Reviews of different types
+    (e.g. a state_at_risk "is this trustworthy?" and a proposed_update
+    "should Current State now say this?") can both be legitimate, separate
+    human decisions about the same underlying topic -- software must not
+    guess that they're actually the same decision and merge or supersede
+    one automatically (see _matching_open_review_id, which only dedupes
+    exact create-time duplicates for this same reason). This only surfaces
+    the mechanical fact "these Reviews are linked to the same State item or
+    Question" as a pointer for the human reviewer to judge, mirroring a real
+    staging finding (2026-09-13): new evidence about vendor retention
+    created a second, differently-typed open Review instead of linking to
+    the existing one, and there was no way for a reviewer looking at either
+    Review to see the other existed.
+    """
+    related_ids: set[str] = set()
+    if state_ids:
+        placeholders = ",".join("?" * len(state_ids))
+        related_ids.update(
+            r["review_id"] for r in connection.execute(
+                f"SELECT DISTINCT review_id FROM review_state_items WHERE state_item_id IN ({placeholders})",
+                state_ids,
+            ).fetchall()
+        )
+    if question_ids:
+        placeholders = ",".join("?" * len(question_ids))
+        related_ids.update(
+            r["review_id"] for r in connection.execute(
+                f"SELECT DISTINCT review_id FROM review_questions WHERE question_id IN ({placeholders})",
+                question_ids,
+            ).fetchall()
+        )
+    related_ids.discard(review_id)
+    if not related_ids:
+        return []
+    placeholders = ",".join("?" * len(related_ids))
+    rows = connection.execute(
+        f"SELECT id, review_type, decision_question FROM review_issues "
+        f"WHERE status='open' AND id IN ({placeholders}) ORDER BY created_at, id",
+        list(related_ids),
+    ).fetchall()
+    return [dict(row) for row in rows]
+
+
 def list_reviews(connection: Connection, status: str = "open") -> list[dict]:
     """Return each Review exactly once, even when multiple Evidence items are linked.
 
@@ -339,6 +392,14 @@ def list_reviews(connection: Connection, status: str = "open") -> list[dict]:
         item["resolves_question_ids"] = [q["question_id"] for q in connection.execute(
             "SELECT question_id FROM review_questions WHERE review_id=? ORDER BY question_id", (row["id"],)
         ).fetchall()]
+        item["related_open_reviews"] = _related_open_review_refs(
+            connection,
+            review_id=row["id"],
+            state_ids=[s["id"] for s in item["affected_state_items"]],
+            question_ids=item["resolves_question_ids"],
+        )
+        if item["review_type"] == "open_question":
+            item["question_to_create"] = question_proposal_read_model(connection, row["id"])
         result.append(item)
     return result
 

@@ -102,7 +102,8 @@
           "enum": [
             "proposed_update",
             "state_at_risk",
-            "missing_understanding"
+            "missing_understanding",
+            "open_question"
           ]
         },
         "decision_question": {
@@ -210,6 +211,38 @@
                     }
                   ]
                 }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "review_type": {
+                "const": "open_question"
+              }
+            },
+            "required": [
+              "review_type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "affected_state_item_ids": {
+                "maxItems": 0
+              },
+              "proposed_changes": {
+                "maxItems": 0
+              },
+              "resolves_question_ids": {
+                "maxItems": 0
+              },
+              "grouping_reason": false,
+              "decision_question": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 500,
+                "pattern": "\\S"
               }
             }
           }

@@ -31,16 +31,10 @@
   if(portfolioPage){
     const supportingGrid=portfolioPage.querySelector('.applied-secondary-grid');
     if(supportingGrid){
-      const oldCostCard=supportingGrid.querySelector('a[href="state-ai-search-learning.html"]');
-      if(oldCostCard){
-        oldCostCard.href='state-architecture-cost.html';
-        const tag=oldCostCard.querySelector('.tag');
-        const title=oldCostCard.querySelector('h3');
-        const intro=oldCostCard.querySelector('.card-intro');
-        if(tag) tag.textContent='State · Architecture & cost';
-        if(title) title.textContent='State Architecture & Cost: Before vs. After';
-        if(intro) intro.textContent='I revisited my pre-build architecture and cost assumptions after building State, comparing what I expected with what actually mattered: model choice, context size, latency, deterministic boundaries, and where generation earned its cost.';
-      }
+      // index.html's own card already carries the correct href/title/copy as
+      // of 2026-09-13 -- this used to rewrite a stale state-ai-search-learning.html
+      // href and its text at runtime; kept only as the insertion anchor below.
+      const oldCostCard=supportingGrid.querySelector('a[href="state-architecture-cost.html"]');
       if(!supportingGrid.querySelector('a[href="state-testing-debugging.html"]')){
         const testing=document.createElement('a');
         testing.className='card nav-card applied-secondary';

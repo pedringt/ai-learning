@@ -10,9 +10,9 @@ This is the missing link between Phase 2 (interpretation) and Phase 1 (acceptanc
 import sys
 import unittest
 
-sys.path.insert(0, "phase2_current")
+sys.path.insert(0, "interpretation_runtime")
 
-from state_spike.fake_provider import FakeProvider, GOLDEN_OUTPUTS
+from validation.fake_provider import FakeProvider, GOLDEN_OUTPUTS
 
 from database_migration_backed import get_test_db
 from interpretation_pipeline_integrated import process_evidence, new_id

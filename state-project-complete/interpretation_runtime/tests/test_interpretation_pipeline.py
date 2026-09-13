@@ -2,8 +2,8 @@ import copy
 import sqlite3
 import unittest
 
-from state_spike.fake_provider import FakeProvider, GOLDEN_OUTPUTS
-from state_spike.interpretation_pipeline import create_pipeline_schema, process_evidence
+from validation.fake_provider import FakeProvider, GOLDEN_OUTPUTS
+from validation.interpretation_pipeline import create_pipeline_schema, process_evidence
 
 
 STATES = {

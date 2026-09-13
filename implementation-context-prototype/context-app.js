@@ -5,6 +5,7 @@
   const NOTES_VIEW = window.STATE_NOTES_VIEW;
   const OPEN_ITEMS_VIEW = window.STATE_OPEN_ITEMS_VIEW;
   const PROJECT_VIEW = window.STATE_PROJECT_VIEW;
+  const BACKEND_SYNC = window.STATE_BACKEND_SYNC;
   const clone = x => JSON.parse(JSON.stringify(x));
   const initial = clone(D);
   const state = {
@@ -394,18 +395,7 @@
     return score>=60?best:null;
   }
 
-  const askTopicTerms={
-    'feature-access':['feature access','plan access','entitlement','entitlements','grandfathered','plan matrix'],
-    'automation':['automation','automate','automatically','autonomy','autonomous','auto send','auto-send','send replies','send responses'],
-    'security':['security','human review','review boundary','unsafe','high risk','high-risk','read only','read-only','account changing','account-changing'],
-    'success-metrics':['evaluation','evaluate','metrics','success metric','threshold','quality'],
-    'data':['data','retention','deletion','logging','customer data','account changing','account-changing','write action','write actions','read only','read-only'],
-    'vendor':['vendor','maya','retention','sub processor','sub-processor'],
-    'operations':['training','enablement','implementation','rollout','feedback'],
-    'scope':['pilot scope','scope','tier 1','tier1'],
-    'workflow':['workflow','human review','draft','rep review'],
-    'knowledge':['knowledge','grounding','source','sources','documentation','slack']
-  };
+  const askTopicTerms = BACKEND_SYNC.askTopicTerms;
 
   /* ----------------------------------------------------------------------
      Ask — intent and deterministic scenarios
@@ -413,9 +403,7 @@
      Routes a question to a known intent or fixture scenario. This is the
      no-backend path; it also backs the deterministic Ask behavior suite.
      ------------------------------------------------------------------- */
-  function askTopics(q){
-    return Object.entries(askTopicTerms).filter(([,terms])=>terms.some(t=>q.includes(t))).map(([topic])=>topic);
-  }
+  function askTopics(q){ return BACKEND_SYNC.askTopics(q); }
   function overlapsTopics(item,topics){ return (item.topics||[]).some(t=>topics.includes(t)); }
   function structuredAskResult(raw){
     const q=norm(raw), topics=askTopics(q); if(!topics.length)return null;
@@ -477,10 +465,18 @@
     if(has(/\b(what is most important|whats most important|what should we prioritize|highest priority|top priority|what comes first)\b/)) return {kind:'unknown-context',unknownType:'priority'};
     if(has(/\b(are we on track|are we behind|are we ahead|schedule health|timeline health)\b/)) return {kind:'progress-inference'};
 
-    if(has(/\b(blocker|blockers|blocking|blocked|holding us up|hold us up|in the way|stop us|stopping us|prevent us|waiting on|needs attention|need attention)\b/)) return {kind:has(/\b(who owns|owner|ownership)\b/)?'blocker-owners':'blockers'};
-    if(has(/\b(needs review|need review|pending review|awaiting review|review first|evidence.*incorporated|new evidence)\b/)) return {kind:'pending'};
+    if(has(/\b(blocker|blockers|blocking|blocked|holding us up|hold us up|in the way|stop us|stopping us|prevent us|waiting on|needs attention|need attention|requires attention|needs my attention|require my attention)\b/)){
+      if(has(/\b(who owns|owner|ownership)\b/)) return {kind:'blocker-owners'};
+      if(!askTopics(q).length) return {kind:'blockers'};
+    }
+    // "pending"/"open" are the generic-inventory kinds that route to a compact
+    // Open Items card instead of a synthesized answer (see intentAskHtml). A
+    // topic word ("...related to security") means the person wants an answer
+    // scoped to that topic, not a raw count -- fall through so
+    // structuredAskResult's topic-filtered branch handles it instead.
+    if(has(/\b(needs review|need review|pending review|awaiting review|review first|evidence.*incorporated|new evidence|open review|open reviews|pending reviews|should i approve|need to approve|needs? to be approved|what to approve|what should i approve|what do i need to approve)\b/) && !askTopics(q).length) return {kind:'pending'};
     if(has(/\b(current status|where are we|catch me up|what should i know|project status|status of|overall status|summarize the project|summarize project|project summary|what are we building|what are we making)\b/)) return {kind:'status'};
-    if(has(/\b(open questions|still open|unresolved|unknowns|dont know|do not know|havent figured|have not figured|what havent we figured out|still need to figure|assumptions.*validated|what isnt decided|what is not decided)\b/)) return {kind:'open'};
+    if(has(/\b(open questions?|still open|unresolved|unknowns|dont know|do not know|havent figured|have not figured|what havent we figured out|still need to figure|assumptions.*validated|what isnt decided|what is not decided|needs answering|need answering|still needs answering|not been answered|hasnt been answered|has not been answered|remains unanswered|not yet answered)\b/) && !askTopics(q).length) return {kind:'open'};
     if(has(/\b(what have we decided|what did we decide|decisions|decision about|agreed on|established about)\b/)) return {kind:'decisions'};
     if(has(/\b(original plan|how did we get here|what changed our minds|superseded|used to|history|historical|previously|originally|how.*change|before vs|before versus|different now)\b/)) return {kind:'history'};
     if(has(/\b(in scope|out of scope|scope|must haves|must have|can wait|requires a human|require a human|account changes|send directly|send to customers|what arent we doing|what are we not doing|what shouldnt.*do|what should not.*do)\b/)) return {kind:'scope'};
@@ -499,6 +495,14 @@
     return null;
   }
 
+  // A generic inventory question ("what needs review?", "list every open
+  // review") is really a navigation request. Answering it with a synthesized
+  // list risks Ask quietly drifting out of sync with Open Items, the
+  // authoritative view for these counts. Route there instead: a count plus a
+  // link, nothing Ask has to keep consistent on its own.
+  function routingCardHtml({category,sentence,detail,count,view,anchor}){
+    return `<div class="result-label">Open Items</div><div class="ask-routing-card"><div class="ask-routing-card-head"><span class="ask-routing-category">${esc(category)}</span><span class="ask-routing-count">${count}</span></div><p class="ask-routing-sentence">${esc(sentence)}</p>${detail?`<p class="ask-routing-detail">${esc(detail)}</p>`:''}<button class="btn primary" data-view="${esc(view)}" data-anchor="${esc(anchor)}">Open Items →</button></div>`;
+  }
   function unresolvedBundle(){ return {questions:openQuestions(),reviews:pendingReviews()}; }
   function compactOpenHtml(title,lede){
     const {questions,reviews}=unresolvedBundle();
@@ -620,9 +624,9 @@
     if(i.kind==='premise-correction')return premiseCorrectionHtml(i);
     if(i.kind==='progress-inference')return progressInferenceHtml();
     if(i.kind==='blocker-owners')return blockerOwnersHtml();
-    if(i.kind==='blockers')return compactOpenHtml('Items that may be blocking or constraining progress','State does not know that every unresolved item is a confirmed blocker. These are the unresolved dependencies and review items most likely to constrain implementation.');
-    if(i.kind==='pending')return compactOpenHtml('What needs review','Pending evidence has not changed Current State yet.');
-    if(i.kind==='open')return compactOpenHtml('What is not settled yet','These questions and pending reviews are intentionally preserved as unresolved.');
+    if(i.kind==='blockers'){ const n=openQuestions().filter(q=>q.blocking).length; return routingCardHtml({category:'Blockers',sentence:n===1?'1 question is blocking progress.':`${n} questions are blocking progress.`,detail:'Resolve these to keep the project moving.',count:n,view:'open-items',anchor:'open-items-blockers'}); }
+    if(i.kind==='pending'){ const n=pendingReviews().length; return routingCardHtml({category:'Reviews',sentence:n===1?'1 review is waiting on a decision.':`${n} reviews are waiting on a decision.`,detail:'Waiting on a decision from you.',count:n,view:'open-items',anchor:'open-items-reviews'}); }
+    if(i.kind==='open'){ const n=openQuestions().length; return routingCardHtml({category:'Questions',sentence:n===1?'1 question is open.':`${n} questions are open.`,detail:'Not yet answered in the project record.',count:n,view:'open-items',anchor:'open-items-questions'}); }
     if(i.kind==='status')return scenarioResult({topics:['automation','security','feature-access','success-metrics','operations'],output:'summary'});
     if(i.kind==='decisions')return `<div class="result-label">Current State</div><h2>Decisions currently reflected in the project</h2><div class="structured-results">${state.data.knowledge.filter(k=>k.state==='current').slice(0,8).map(k=>`<article class="structured-result"><span class="knowledge-status current">Current State</span><h3>${esc(k.title)}</h3><p>${esc(k.statement)}</p></article>`).join('')}</div>`;
     if(i.kind==='history')return structuredAskHtml({kind:'history',items:state.data.history.slice().sort(sortDateAsc)});
@@ -873,13 +877,7 @@
     if(!safeQuery)return escaped;
     return escaped.replace(new RegExp(`(${safeQuery})`,'ig'),'<mark>$1</mark>');
   }
-  const demoEvidenceDates={
-    'demo-review-access-evidence':'2026-08-27T16:10:00',
-    'demo-review-launch-evidence':'2026-08-28T09:30:00',
-    'demo-review-escalation-evidence':'2026-08-28T13:45:00',
-    'demo-review-retention-evidence':'2026-08-29T10:20:00'
-  };
-  function evidenceDisplayTimestamp(e){return e?.source_type==='demo_seed'&&demoEvidenceDates[e.id]?demoEvidenceDates[e.id]:e?.submitted_at;}
+  function evidenceDisplayTimestamp(e){ return BACKEND_SYNC.evidenceDisplayTimestamp(e); }
 
   function historySources(h){
     const items=h.evidenceItems||h.evidence_items||[];
@@ -941,7 +939,25 @@
       renderDraftNote:n=>NOTES_VIEW.draftNoteRow(n)
     };
   }
-  function renderOpenItems(){ root.innerHTML=OPEN_ITEMS_VIEW.render(openItemsProps()); }
+  // An Ask routing card ("What needs review?") can ask to land directly on
+  // one Open Items section instead of the top of the page, via
+  // window.__stateScrollAnchor (same mechanism the Settings Slack banner
+  // uses) -- cleared once consumed so it only fires for the navigation that
+  // requested it.
+  function renderOpenItems(){
+    const anchor=window.__stateScrollAnchor;
+    const section=anchor&&anchor.startsWith('open-items-')?anchor.slice('open-items-'.length):null;
+    // Force-expand unconditionally, not just when already truthy -- the
+    // stored value starts out `null` (meaning "use the default collapse
+    // rule"), and Open Questions defaults to collapsed once there are more
+    // than 5, so a `null` check alone left the target section collapsed.
+    if(section) state.openItemSections[section]=false;
+    root.innerHTML=OPEN_ITEMS_VIEW.render(openItemsProps());
+    if(section){
+      delete window.__stateScrollAnchor;
+      setTimeout(()=>document.querySelector(`.open-items-${section}`)?.scrollIntoView({block:'start'}),60);
+    }
+  }
   function renderReview(){ return renderOpenItems(); }
   function reviewCard(r,expanded=true,accordion=false){ return OPEN_ITEMS_VIEW.reviewCard(r,expanded,accordion,state.data.notes.find(n=>n.id===r.evidenceId)); }
   function linkedReviewFor(questionId){
@@ -970,6 +986,7 @@
   function decideReview(id,decision){
     const r=state.data.reviews.find(x=>x.id===id);
     if(!r||r.status!=='pending')return;
+    if(r.reviewType==='open_question'){executeQuestionReviewDecision(id,decision);return;}
     window.StateAnalytics?.track(decision==='update'?'review_accepted':'review_rejected',{reviewId:id});
     const isGeneric=r.id?.startsWith('r-info-') || (Array.isArray(r.proposals) && r.proposals.length===0);
     if(decision==='update' && !isGeneric){
@@ -978,6 +995,54 @@
       return;
     }
     executeReviewDecision(id,decision,isGeneric);
+  }
+
+  const pendingQuestionDecisions=new Set();
+  async function executeQuestionReviewDecision(id,decision){
+    const r=state.data.reviews.find(x=>x.id===id);
+    if(!r||r.status!=='pending'||pendingQuestionDecisions.has(id))return;
+    const proposal=r.questionToCreate;
+    if(!r.backendReviewId||!proposal?.id||proposal.status!=='pending'){
+      showToast('Question suggestion unavailable. Refresh and review it again.');return;
+    }
+    pendingQuestionDecisions.add(id);
+    const buttons=[...document.querySelectorAll('[data-review]')].filter(b=>b.dataset.review===id);
+    buttons.forEach(b=>{b.disabled=true;});
+    let result;
+    try{
+      result=await API.resolveReview(r.backendReviewId,decision==='update'?'accept':'keep',{
+        questionProposalId:proposal.id,existingQuestionId:proposal.existing_question_id||null
+      });
+    }catch(error){
+      // A timeout can happen after the server commits. Never claim that nothing
+      // changed or optimistically retry a write whose outcome is unknown.
+      showToast(error?.status===409?'This Review changed. Refresh and review it again.':'Could not confirm the result. Refresh before trying again.');
+      if(error?.status===409)await hydrateBackend();
+      return;
+    }finally{
+      pendingQuestionDecisions.delete(id);
+      buttons.forEach(b=>{b.disabled=false;});
+    }
+    // Publish only server-confirmed effects. The existing Question collection
+    // feeds Open Items, Workspace counts and Ask; never invent a local Question.
+    r.status=decision;
+    if(Array.isArray(result.questions))syncApiQuestions(result.questions);
+    if(Array.isArray(result.open_reviews))replaceBackendOpenReviews(result.open_reviews);
+    const note=state.data.notes.find(n=>n.id===r.evidenceId);
+    if(note){
+      note.reviewIds=(note.reviewIds||[]).filter(reviewId=>reviewId!==id);
+      note.reviewId=note.reviewIds[0]||null;
+      note.status=note.reviewIds.length?'pending':'reviewed';
+    }
+    state.expandedReviewId=null;
+    if(result.question){state.openItemSections.questions=false;state.openQuestionsExpanded=true;}
+    closeDialog();render();
+    showToast(result.resolution==='question_created'?'Question created. Current State was not changed.':result.resolution==='question_linked'?'Linked to the existing Question. Current State was not changed.':'Review complete. No Question was created.');
+    window.StateAnalytics?.track('review_decision',{reviewId:id,outcome:result.resolution,kind:'open_question'});
+    // Ask stays read-only; an already visible answer is a snapshot, so flag it
+    // for refresh immediately rather than leaving a closed Review as current.
+    document.dispatchEvent(new Event('state-project-record-changed'));
+    try{await hydrateBackend();}catch(error){console.warn('Review saved; refresh needed.',error);}
   }
 
   async function executeReviewDecision(id,decision,isGeneric){
@@ -995,6 +1060,7 @@
       try{
         const apiDecision=decision==='update'?'accept':'keep';
         const result=await API.resolveReview(r.backendReviewId,apiDecision);
+        if(Array.isArray(result.questions))syncApiQuestions(result.questions);
         const note=state.data.notes.find(n=>n.id===r.evidenceId);
         if(note)note.status=decision==='update'?'accepted':'reviewed';
         if(decision==='update'){
@@ -1057,7 +1123,7 @@
       ['4. Know','Accepted changes update Current State. Previous decisions remain in History.'],
       ['5. Ask','Use Ask State to understand the project without changing it.']
     ];
-    showDialog(`<span class="eyebrow">How this works</span><h2 id="dialogTitle">State keeps accepted understanding separate from new information.</h2><div class="state-help-steps">${steps.map(([title,body])=>`<div class="state-help-step"><strong>${esc(title)}</strong><span>${esc(body)}</span></div>`).join('')}</div><p class="demo-flow-principle">AI interprets → software enforces → people decide</p><div class="demo-start"><span class="meta-label">Good places to start</span><button class="demo-start-action" data-action="demo-start-ask"><strong>Ask about Northstar</strong><span>Put a useful project question in Ask →</span></button><button class="demo-start-action" data-action="demo-start-note"><strong>Add a sample note</strong><span>Try new project information and see how Review handles it →</span></button><button class="demo-start-action" data-action="demo-start-project"><strong>Explore Current State</strong><span>Read the maintained view of what the project currently treats as true →</span></button></div><div class="demo-reset-help"><div><strong>Want to start over?</strong><span>Restore the curated Northstar starting scenario. You can also reset Northstar from Settings.</span></div><button class="text-button demo-reset-link" data-action="confirm-demo-reset">Reset example data →</button></div><div class="dialog-actions demo-help-actions"><button class="btn primary" data-action="close-dialog">Got it</button></div>`);
+    showDialog(`<span class="eyebrow">How this works</span><h2 id="dialogTitle">State keeps accepted understanding separate from new information.</h2><div class="state-help-steps">${steps.map(([title,body])=>`<div class="state-help-step"><strong>${esc(title)}</strong><span>${esc(body)}</span></div>`).join('')}</div><p class="demo-flow-principle">AI interprets → software enforces → people decide</p><div class="demo-start"><span class="meta-label">Good places to start</span><button class="demo-start-action" data-action="demo-start-ask"><strong>Ask about Northstar</strong><span>Put a useful project question in Ask →</span></button><button class="demo-start-action" data-action="demo-start-note"><strong>Add a sample note</strong><span>Try new project information and see how Review handles it →</span></button><button class="demo-start-action" data-action="demo-start-project"><strong>Explore Current State</strong><span>Read the maintained view of what the project currently treats as true →</span></button><button class="demo-start-action" data-action="show-reviewer-guide"><strong>Take the quick tour</strong><span>Bring back the Workspace walkthrough banner →</span></button></div><div class="demo-reset-help"><div><strong>Want to start over?</strong><span>Restore the curated Northstar starting scenario. You can also reset Northstar from Settings.</span></div><button class="text-button demo-reset-link" data-action="confirm-demo-reset">Reset example data →</button></div><div class="dialog-actions demo-help-actions"><button class="btn primary" data-action="close-dialog">Got it</button></div>`);
   }
 
   function showDialog(html){
@@ -1104,17 +1170,6 @@
 
   function showAddDialog(prefill=''){ showDialog(`<span class="eyebrow">Evidence</span><h2 id="dialogTitle">Add Evidence</h2><p>Add project information State should evaluate. It is preserved as Evidence first and cannot change Current State without Review.</p><textarea id="addInfoText" rows="7" aria-label="Evidence" placeholder="Paste a finding, decision, meeting update, or other project information...">${esc(prefill)}</textarea><div class="note-example-picker"><span class="meta-label">Try an example</span><div class="note-example-chips"><button type="button" data-action="sample-info" data-sample="plan">New plan</button><button type="button" data-action="sample-info" data-sample="research">Research finding</button><button type="button" data-action="sample-info" data-sample="constraint">Decision / constraint</button></div></div><div class="dialog-actions"><button class="btn primary" data-action="save-info">Add Evidence</button><button class="btn secondary" data-action="close-dialog">Cancel</button></div>`); }
 
-  function reviewTypeTitle(type){
-    if(type==='state_at_risk') return 'Current State may be at risk';
-    if(type==='missing_understanding') return 'More understanding is needed';
-    return 'Review needed';
-  }
-
-  function proposedText(proposals){
-    if(!proposals?.length) return 'Review the evidence and decide whether Current State should change.';
-    return proposals.map(p=>p.operation==='retire' ? `Retire current understanding${p.state_item_id?` (${p.state_item_id})`:''}` : p.proposed_statement).join(' • ');
-  }
-
   // toFront defaults to true for the live "I just submitted evidence and it
   // produced a Review" call sites, where showing the newest review first is
   // the right UX. Bulk hydration passes toFront:false -- appending in the
@@ -1124,231 +1179,60 @@
   // Workspace's attention list then disagreed with Ask about what mattered
   // most, since Ask fetches reviews fresh and never goes through this
   // reversal. Found via live QA 2026-09-07.
-  function upsertBackendReview(review,{toFront=true}={}){
-    const existingIndex=state.data.reviews.findIndex(x=>x.id===review.id);
-    if(existingIndex>=0){
-      state.data.reviews[existingIndex]={...state.data.reviews[existingIndex],...review};
-      return state.data.reviews[existingIndex];
+  function upsertBackendReview(review,{toFront=true}={}){ return BACKEND_SYNC.upsertBackendReview(state.data.reviews,review,{toFront}); }
+
+  function replaceBackendOpenReviews(rawReviews){ state.data.reviews=BACKEND_SYNC.replaceBackendOpenReviews(state.data.reviews,rawReviews); }
+
+  function mapApiReview(r, fallbackEvidence=''){ return BACKEND_SYNC.mapApiReview(r,fallbackEvidence); }
+
+  // Ask queries the backend fresh on every question, but Open Items only
+  // hydrates its local review list once (hydrateBackend()) -- so Ask can
+  // surface a "Review ->" link for a Review Open Items hasn't loaded yet.
+  // Found via live QA 2026-09-12: clicking that link did a local-only lookup
+  // and silently no-op'd on a miss. Refresh the open-reviews list from the
+  // backend (same prune-then-upsert shape hydrateBackend() itself uses) so a
+  // miss gets one real chance to resolve before giving up.
+  async function refreshOpenReviews(){
+    if(!API)return;
+    try{
+      const rawReviews=(await API.getReviews('open')).items||[];
+      replaceBackendOpenReviews(rawReviews);
+      for(const raw of (rawReviews||[])){
+        const note=state.data.notes.find(n=>n.evidenceId===raw.evidence_id);
+        const mapped=mapApiReview(raw,raw.evidence_content||'');
+        mapped.evidenceId=note?.id||`api-note-${raw.evidence_id}`;
+        upsertBackendReview(mapped,{toFront:false});
+      }
+    }catch(error){
+      console.warn('Could not refresh open reviews.',error);
     }
-    if(toFront) state.data.reviews.unshift(review); else state.data.reviews.push(review);
-    return review;
   }
-
-  function replaceBackendOpenReviews(rawReviews){
-    const openIds=new Set((rawReviews||[]).map(r=>r.id));
-    state.data.reviews=state.data.reviews.filter(r=>!r.backendReviewId || openIds.has(r.backendReviewId));
-  }
-
-  function mapApiReview(r, fallbackEvidence=''){
-    const proposals=(r.proposals||[]).filter(p=>!p.status || p.status==='pending');
-    const affected=r.affected_state_items||[];
-    const current=affected.length
-      ? affected.map(x=>x.statement).join(' • ')
-      : proposals.some(p=>p.operation==='create')
-        ? 'No matching Current State item exists yet.'
-        : 'No Current State change has been applied yet.';
-    const unresolved=r.review_type==='proposed_update'
-      ? 'Nothing beyond this proposed change is established by the evidence.'
-      : r.decision_question;
-    const rationale=proposals.map(p=>p.rationale).filter(Boolean).join(' ');
-    return {
-      id:r.id,
-      backendReviewId:r.id,
-      evidenceId:r.evidence_id,
-      topics:affected.map(x=>x.topic).filter(Boolean),
-      status:'pending',
-      title:reviewTypeTitle(r.review_type),
-      summary:r.decision_question,
-      proposed:proposedText(proposals),
-      unresolved,
-      current,
-      evidence:r.evidence_content||fallbackEvidence,
-      evidenceSourceType:r.evidence_source_type||'',
-      // Only an explicit backend resolves_question_ids counts as a resolving
-      // link -- a review is never inferred to resolve a question just
-      // because its evidence happened to come from answering one (that used
-      // to fall back to a caller-supplied questionId here; removed 2026-09-07
-      // after a live-testing review found it could show "Answer found ·
-      // Awaiting review" even when the backend returned no such relationship
-      // at all). "Answer found · Awaiting review" must only appear when the
-      // backend actually says so.
-      resolvesQuestionIds:[...(r.resolves_question_ids||[])],
-      resolvesQuestionId:(r.resolves_question_ids||[])[0],
-      establishes:rationale||r.why_consequential,
-      doesNot:r.review_type==='proposed_update'
-        ? 'The proposed change does not become Current State until you accept it.'
-        : 'The evidence does not automatically resolve the uncertainty or change Current State.',
-      whyConsequential:r.why_consequential,
-      reviewType:r.review_type,
-      proposals,
-      affectedStateItems:affected,
-    };
-  }
-
 
   /* ----------------------------------------------------------------------
      Backend mapping and sync
 
      Translates API payloads into the client's shape and reconciles them with
      local state. Nothing here decides anything; it only mirrors the server.
+     Moved into context-backend-sync.js (window.STATE_BACKEND_SYNC) 2026-09-12
+     -- these are thin wrappers so every existing call site keeps working.
      ------------------------------------------------------------------- */
-  function inferProjectArea(item){
-    const text=norm(`${item.topic||''} ${item.statement||''}`);
-    if(/security|risk|data|privacy|human review|sensitive|claim|read only|readonly|account change|refund|ownership change|autonomy|vip/.test(text)) return 'safety';
-    if(/evaluation|metric|launch|rollout|timeline|phase|pilot date|threshold/.test(text)) return 'evaluation';
-    return 'product';
-  }
+  function inferProjectArea(item){ return BACKEND_SYNC.inferProjectArea(item); }
 
-  function titleForStateItem(item){
-    if(item.topic && item.topic!=='uncategorized') return item.topic;
-    const first=String(item.statement||'').split(/[.!?]/)[0].trim();
-    return first.length && first.length<=64 ? first : 'Reviewed understanding';
-  }
+  function titleForStateItem(item){ return BACKEND_SYNC.titleForStateItem(item); }
 
-  function formatBackendDate(value){
-    if(!value)return '';
-    const d=new Date(value); if(Number.isNaN(d.getTime()))return String(value).slice(0,10);
-    return d.toLocaleDateString(undefined,{month:'short',day:'numeric'});
-  }
-  function sourceLabel(source){
-    if((source||'').startsWith('question_response:'))return 'Question response';
-    if(source==='working_note')return 'Working note';
-    if(source==='demo_history'||source==='demo_seed')return 'Project note';
-    if(source==='manual_note')return 'Project update';
-    return String(source||'Note').replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase());
-  }
-  // topicName is looked up from state.data.knowledge (may be a retired item
-  // by the time this renders, but syncApiState marks items retired rather
-  // than deleting them, so the topic label survives). A generic fallback
-  // headline like "Current understanding updated" told a scanning user
-  // nothing about what actually changed -- every entry looked the same.
-  // Found via live QA 2026-09-07.
-  function historyType(item,topicName){
-    const verb=item.transition_type==='created'?'established':item.transition_type==='retired'?'retired':'updated';
-    return topicName?`${topicName} ${verb}`:`Current understanding ${verb}`;
-  }
-  function syncApiHistory(items){
-    // Internal record ids (k-rollout, q-retention, ...) must never reach
-    // user-facing History copy -- reuses the same stripping OPEN_ITEMS_VIEW
-    // already applies to review text, rather than a third duplicate regex.
-    const clean=value=>OPEN_ITEMS_VIEW?.cleanReviewCopy?OPEN_ITEMS_VIEW.cleanReviewCopy(value):String(value||'');
-    const backend=(items||[]).map(h=>{
-      const topicName=state.data.knowledge.find(k=>k.id===h.state_item_id)?.title;
-      return {
-        ...h, id:h.id, backendManaged:true, knowledgeId:h.state_item_id,
-        date:formatBackendDate(h.changed_at), dateISO:h.changed_at, type:historyType(h,topicName),
-        before:clean(h.old_statement)||'Not previously established', after:clean(h.new_statement),
-        reason:clean(h.decision_question||h.proposal_rationale)||'Reviewed project evidence',
-        decision:'Human accepted this change', evidenceItems:h.evidence_items||[]
-      };
-    });
-    state.data.history=backend;
-    const byEvidence=new Map();
-    for(const h of backend){
-      for(const e of (h.evidenceItems||h.evidence_items||[])){
-        const links=byEvidence.get(e.id)||[]; links.push(h); byEvidence.set(e.id,links);
-      }
-    }
-    for(const n of state.data.notes){
-      if(!n.evidenceId)continue;
-      const links=byEvidence.get(n.evidenceId)||[];
-      n.historyIds=links.map(h=>h.id);
-      n.historyKnowledgeIds=[...new Set(links.map(h=>h.knowledgeId).filter(Boolean))];
-      if(links.length && n.status==='reviewed')n.status='accepted';
-    }
-  }
-  function syncApiEvidence(items,openReviews,resolvedReviews){
-    const collect=(reviews)=>{
-      const map=new Map();
-      for(const r of (reviews||[]))for(const e of (r.evidence_items||[])){const rows=map.get(e.id)||[];rows.push(r);map.set(e.id,rows);}
-      return map;
-    };
-    const openByEvidence=collect(openReviews);
-    const resolvedByEvidence=collect(resolvedReviews);
-    const backendNotes=(items||[]).map(e=>{
-      const open=openByEvidence.get(e.id)||[], resolved=resolvedByEvidence.get(e.id)||[];
-      const reviewStatusKnown=Array.isArray(openReviews)&&Array.isArray(resolvedReviews);
-      // 'reviewed' means a human actually looked at a Review for this
-      // evidence (resolved.length>0), whether or not it changed Current
-      // State. That's distinct from 'no_review_needed': the model judged
-      // the evidence non-consequential and no Review was ever created, so
-      // no human was ever involved. Collapsing these into one status/label
-      // (as this used to) reads as "a human reviewed and approved this"
-      // for evidence nobody ever reviewed -- exactly the interpret/
-      // authorize distinction State's authority model exists to preserve.
-      const status=e.processing_status==='failed'?'failed'
-        :!reviewStatusKnown?'unknown'
-        :open.length?'pending'
-        :resolved.some(r=>r.resolution==='updated')?'accepted'
-        :resolved.length?'reviewed'
-        :e.processing_status==='processed'?'no_review_needed'
-        :'working';
-      const displayTime=evidenceDisplayTimestamp(e);
-      return {id:`api-note-${e.id}`,title:sourceLabel(e.source_type),text:e.content,source:sourceLabel(e.source_type),date:formatBackendDate(displayTime),dateISO:displayTime,submittedISO:displayTime,topics:[],status,reviewId:open[0]?.id||null,reviewIds:open.map(r=>r.id),resolvedReviewIds:resolved.map(r=>r.id),historyIds:[],historyKnowledgeIds:[],evidenceId:e.id,backendManaged:true};
-    });
-    const local=state.data.notes.filter(n=>!n.backendManaged && !n.evidenceId);
-    state.data.notes=[...backendNotes,...local];
-  }
+  function formatBackendDate(value){ return BACKEND_SYNC.formatBackendDate(value); }
+  function sourceLabel(source){ return BACKEND_SYNC.sourceLabel(source); }
+  function historyType(item,topicName){ return BACKEND_SYNC.historyType(item,topicName); }
+  function syncApiHistory(items){ state.data.history=BACKEND_SYNC.syncApiHistory(state.data.knowledge,state.data.notes,items); }
+  function syncApiEvidence(items,openReviews,resolvedReviews){ state.data.notes=BACKEND_SYNC.syncApiEvidence(items,openReviews,resolvedReviews,state.data.notes); }
 
-  function syncApiState(items){
-    const incoming=items||[];
-    const activeIds=new Set(incoming.map(item=>item.id));
-    // A non-empty backend State response is authoritative. Fixture knowledge is
-    // an offline/demo fallback only; never merge absent fixture facts into a
-    // live backend Current State, because that creates two competing truths.
-    for(const k of state.data.knowledge){
-      if(!activeIds.has(k.id)) k.state='retired';
-    }
-    for(const item of incoming){
-      let k=state.data.knowledge.find(x=>x.id===item.id);
-      if(k){
-        k.statement=item.statement;
-        k.state='current';
-        k.backendManaged=true;
-        k.lastConfirmed=formatBackendDate(item.updated_at||item.created_at);
-        k.lastConfirmedISO=item.updated_at||item.created_at||todayISO();
-      }else{
-        state.data.knowledge.push({
-          id:item.id,
-          projectArea:inferProjectArea(item),
-          title:titleForStateItem(item),
-          topics:item.topic&&item.topic!=='uncategorized'?[norm(item.topic).replace(/\s+/g,'-')]:[],
-          statement:item.statement,
-          support:[],
-          state:'current',
-          lastConfirmed:formatBackendDate(item.updated_at||item.created_at),
-          lastConfirmedISO:item.updated_at||item.created_at||todayISO(),
-          backendManaged:true
-        });
-      }
-    }
-  }
+  function syncApiState(items){ BACKEND_SYNC.syncApiState(state.data.knowledge,items); }
 
-  function questionTextKey(value){ return norm(value); }
+  function questionTextKey(value){ return BACKEND_SYNC.questionTextKey(value); }
 
-  function remapQuestionReferences(oldId,newId){
-    if(!oldId || !newId || oldId===newId)return;
-    for(const review of state.data.reviews){
-      if(review.resolvesQuestionId===oldId) review.resolvesQuestionId=newId;
-      if(Array.isArray(review.resolvesQuestionIds)) review.resolvesQuestionIds=review.resolvesQuestionIds.map(id=>id===oldId?newId:id);
-    }
-  }
+  function remapQuestionReferences(oldId,newId){ BACKEND_SYNC.remapQuestionReferences(state.data.reviews,oldId,newId); }
 
-  function syncApiQuestions(items){
-    const previous=[...state.data.questions];
-    const backendTexts=new Set((items||[]).map(q=>questionTextKey(q.text)));
-    const backend=(items||[]).map(q=>{
-      const fixture=previous.find(x=>!x.backendManaged && questionTextKey(x.text)===questionTextKey(q.text));
-      if(fixture) remapQuestionReferences(fixture.id,q.id);
-      return {
-        id:q.id,text:q.text,status:q.status,blocking:!!q.blocking,blocks:q.blocks||null,
-        origin:q.origin||fixture?.origin||'Added from Workspace',
-        created:fixture?.created||formatBackendDate(q.created_at),createdISO:fixture?.createdISO||q.created_at,
-        topics:fixture?.topics?.length?fixture.topics:askTopics(norm(q.text)),backendManaged:true
-      };
-    });
-    state.data.questions=backend;
-  }
+  function syncApiQuestions(items){ state.data.questions=BACKEND_SYNC.syncApiQuestions(state.data.questions,items,state.data.reviews); }
 
 
   async function createBackendQuestion(text){ return API.createQuestion(text,{origin:'Added from Workspace',blocking:false}); }
@@ -1542,11 +1426,7 @@
     return note.id;
   }
 
-  function syncApiDrafts(items){
-    const drafts=(items||[]).map(d=>({id:`draft-${d.id}`,draftId:d.id,title:d.title,text:d.content,source:'Working note',date:formatBackendDate(d.updated_at||d.created_at),dateISO:d.updated_at||d.created_at,topics:[],status:'working',backendDraft:true}));
-    const others=state.data.notes.filter(n=>!n.backendDraft);
-    state.data.notes=[...drafts,...others];
-  }
+  function syncApiDrafts(items){ state.data.notes=BACKEND_SYNC.syncApiDrafts(state.data.notes,items); }
 
   async function sendNoteToReview(id){
     const n=state.data.notes.find(x=>x.id===id); if(!n||n.status==='pending')return;
@@ -1588,7 +1468,17 @@
     if(e.target.closest('[data-action="dismiss-review-banner"]')){ state.reviewBannerDismissed=true; renderOverview(); return; }
     if(e.target.closest('[data-action="dismiss-nudge"]')){ const btn=e.target.closest('[data-action="dismiss-nudge"]'); state.dismissedNudges.add(btn.dataset.nudge); renderReview(); return; }
     const projectJump=e.target.closest('[data-project-jump]'); if(projectJump){const target=projectJump.dataset.projectJump;if(state.view!=='project-overview'){state.view='project-overview';render();requestAnimationFrame(()=>scrollProjectTarget(target));}else{updateNav();updateProjectSubnavActive(target);scrollProjectTarget(target);}return;}
-    const relatedReview=e.target.closest('[data-action="open-related-review"]'); if(relatedReview){ const r=state.data.reviews.find(x=>x.id===relatedReview.dataset.reviewId); if(r) showDialog(`<span class="eyebrow">Pending Review</span><h2 id="dialogTitle">Related evidence may affect this Current State</h2>${reviewCard(r,true,false)}`); return;}
+    const relatedReview=e.target.closest('[data-action="open-related-review"]');
+    if(relatedReview){
+      const reviewId=relatedReview.dataset.reviewId;
+      const existing=state.data.reviews.find(x=>x.id===reviewId);
+      if(existing){ showDialog(`<span class="eyebrow">Pending Review</span><h2 id="dialogTitle">Related evidence may affect this Current State</h2>${reviewCard(existing,true,false)}`); return; }
+      await refreshOpenReviews();
+      const found=state.data.reviews.find(x=>x.id===reviewId);
+      if(found) showDialog(`<span class="eyebrow">Pending Review</span><h2 id="dialogTitle">Related evidence may affect this Current State</h2>${reviewCard(found,true,false)}`);
+      else showDialog(`<span class="eyebrow">Review unavailable</span><h2 id="dialogTitle">This review is no longer open</h2><p>It may have just been accepted, rejected, or changed since this answer was generated. Open Items now reflects the latest reviews.</p><div class="dialog-actions"><button class="btn primary" data-action="dismiss-and-open-items">Open Items →</button></div>`);
+      return;
+    }
         const topicHistory=e.target.closest('[data-action="view-topic-history"]'); if(topicHistory){if(!overlay.hidden)closeDialog();state.historyTopic=topicHistory.dataset.knowledgeId;navigateTo('history',{preserveHistoryTopic:true});window.STATE_HISTORY_NAV?.pushHistoryTopic?.(state.historyTopic);return;}
     const clearHistory=e.target.closest('[data-action="clear-history-topic"]'); if(clearHistory){state.historyTopic=null;renderHistory();window.STATE_HISTORY_NAV?.pushHistoryTopic?.(null);return;}
     const clearHistoryEvidence=e.target.closest('[data-action="clear-history-evidence"]'); if(clearHistoryEvidence){state.historyEvidenceId=null;renderHistory();window.STATE_HISTORY_NAV?.pushHistoryTopic?.(null);return;}
@@ -1602,7 +1492,7 @@
     // A plain URL hash won't survive this: context-history.js's own click
     // listener rewrites location.hash back to the bare view route (e.g.
     // #settings) on every navigation, shortly after this handler returns.
-    const v=e.target.closest('[data-view]'); if(v){ navigateTo(v.dataset.view); if(v.dataset.anchor) window.__stateScrollAnchor=v.dataset.anchor; return; }
+    const v=e.target.closest('[data-view]'); if(v){ if(v.dataset.anchor) window.__stateScrollAnchor=v.dataset.anchor; navigateTo(v.dataset.view); return; }
     const dateFilter=e.target.closest('.notes-date-filters [data-date-filter]'); if(dateFilter){ state.notesDateFilter=dateFilter.dataset.dateFilter; renderNotes(); return; }
     const noteFilter=e.target.closest('.notes-filters [data-filter]'); if(noteFilter){ state.notesFilter=noteFilter.dataset.filter; renderNotes(); return; }
     const reviewFilter=e.target.closest('.review-filters [data-review-filter]'); if(reviewFilter){ state.reviewFilter=reviewFilter.dataset.reviewFilter; renderReview(); return; }
@@ -1707,6 +1597,7 @@
     else if(act==='reload-page'){window.location.reload();}
     else if(act==='review-receipt-project'){const area=a.dataset.projectArea||'product';closeDialog();navigateTo('project-overview');requestAnimationFrame(()=>{scrollProjectTarget(`project-${area}`);const target=a.dataset.stateId?[...document.querySelectorAll('[data-state-id]')].find(el=>el.dataset.stateId===a.dataset.stateId)?.closest('.project-wiki-topic'):null;if(target){target.classList.add('is-recently-updated');setTimeout(()=>target.classList.remove('is-recently-updated'),2200);}});}
     else if(act==='close-dialog'){if(!state.isAnalyzing)closeDialog();}
+    else if(act==='dismiss-and-open-items'){closeDialog();navigateTo('open-items');}
     else if(act==='retry-analysis'){ const evidenceId=a.dataset.evidenceId; state.isAnalyzing=true; showDialog(analyzingDialog()); startAnalysisClock(); try{await retryEvidenceAnalysis(evidenceId); state.isAnalyzing=false; stopAnalysisClock(); await hydrateBackend(); showDialog(`<span class="eyebrow">Done</span><h2 id="dialogTitle">Analysis complete.</h2><p>Open Items now reflects anything that needs your decision.</p><div class="dialog-actions"><button class="btn primary" data-action="go-review">View Open Items</button></div>`);}catch(err){state.isAnalyzing=false;stopAnalysisClock();showDialog(`<span class="eyebrow">Still unavailable</span><h2 id="dialogTitle">Your note is still safe.</h2><p>${esc(err.message)}</p><div class="dialog-actions"><button class="btn primary" data-action="close-dialog">Close</button></div>`);} }
     else if(act==='sample-info'){ const t=document.getElementById('addInfoText'); const samples=state.data.sampleInformationOptions||{}; const value=samples[a.dataset.sample]||state.data.sampleInformation; if(t){t.value=value;t.focus();t.setSelectionRange(t.value.length,t.value.length);} }
     else if(act==='save-info')saveInformation();
@@ -1783,7 +1674,23 @@
     history.replaceState(history.state,'',location.pathname+(cleanedSearch?`?${cleanedSearch}`:'')+'#settings');
     navigateTo('settings');
   }
-  window.STATE_ASK_TEST_API={state,detectAskIntent,findScenario,structuredAskResult,scenarioResult,intentAskHtml,submitAsk,upsertBackendReview,replaceBackendOpenReviews,mapApiReview,looksLikeQuestion,hasExplicitUpdateIntent,linkedReviewFor,questionDialogHtml,renderOverview,historyType,syncApiHistory};
+  window.STATE_ASK_TEST_API={state,detectAskIntent,findScenario,structuredAskResult,scenarioResult,intentAskHtml,submitAsk,upsertBackendReview,replaceBackendOpenReviews,mapApiReview,looksLikeQuestion,hasExplicitUpdateIntent,linkedReviewFor,questionDialogHtml,renderOverview,renderOpenItems,refreshOpenReviews,historyType,syncApiHistory};
+  // The live Ask State drawer (context-product-polish.js's runAsk) is the
+  // only Ask surface a user actually reaches -- this module's own
+  // submitAsk()/renderOverview() Ask path is legacy from before the drawer
+  // existed and is exercised only by this file's unit tests. Generic
+  // inventory questions ("What needs review?") still need to route to a
+  // compact Open Items card instead of a live-backend answer, so expose the
+  // detection+render step here (where detectAskIntent/intentAskHtml/the real
+  // backend-hydrated review and question counts already live) for the
+  // drawer to call before it ever calls the Ask backend.
+  window.STATE_ASK_ROUTING=Object.freeze({
+    askRoutingCardHtml(raw){
+      const kind=detectAskIntent(raw)?.kind;
+      if(kind!=='pending'&&kind!=='open'&&kind!=='blockers')return null;
+      return intentAskHtml({kind});
+    }
+  });
   // Called by context-history.js's popstate handler after it re-activates the
   // History tab, so a Back press that lands on a topic-detail browser-history
   // entry actually restores that topic filter instead of always landing on

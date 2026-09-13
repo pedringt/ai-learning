@@ -25,15 +25,16 @@ from pathlib import Path
 from typing import Any, Mapping, Protocol
 
 from db import Connection
+from question_review_service import persist_question_proposal
 
 logger = logging.getLogger("state.interpretation")
 
 # Import Phase 2's validation logic unchanged
-sys.path.insert(0, str(Path(__file__).resolve().parent / "phase2_current"))
+sys.path.insert(0, str(Path(__file__).resolve().parent / "interpretation_runtime"))
 
-from state_spike.interpretation_validation import StructuredInterpretationSchemaError, validate_schema
-from state_spike.provider_normalization import normalize_provider_payload
-from state_spike.semantic_validation import (
+from validation.interpretation_validation import StructuredInterpretationSchemaError, validate_schema
+from validation.provider_normalization import normalize_provider_payload
+from validation.semantic_validation import (
     ApplicationStateSnapshot,
     InterpretationContextSnapshot,
     ReviewContextItem,
@@ -81,8 +82,9 @@ def _filter_duplicate_current_state_creates(connection: Connection, payload: Map
     }
     recommendations = []
     for rec in payload.get("review_recommendations", []):
+        original_proposals = rec.get("proposed_changes", [])
         kept = []
-        for proposal in rec.get("proposed_changes", []):
+        for proposal in original_proposals:
             is_duplicate_create = (
                 proposal.get("operation") == "create"
                 and _normalize_review_text(proposal.get("proposed_statement", "")) in active_statements
@@ -92,8 +94,17 @@ def _filter_duplicate_current_state_creates(connection: Connection, payload: Map
         rec["proposed_changes"] = kept
         # A missing-understanding Review with nothing left to establish is a
         # no-op, so do not create a human decision merely because the model
-        # failed to notice an exact existing fact.
-        if kept or rec.get("review_type") != "missing_understanding":
+        # failed to notice an exact existing fact -- but only when dedup is
+        # what emptied it. A recommendation that already had no
+        # proposed_changes before this filter ran (e.g. provider_normalization's
+        # proposed_update -> missing_understanding downgrade, for evidence the
+        # model judged consequential but couldn't state a concrete resulting
+        # fact for) is a real "flag this, more understanding needed" Review,
+        # not a duplicate -- dropping it here would silently swallow evidence
+        # a human was supposed to see, the same failure the schema violation
+        # this downgrade exists to avoid was causing, just quieter.
+        became_empty_via_dedup = bool(original_proposals) and not kept
+        if not (rec.get("review_type") == "missing_understanding" and became_empty_via_dedup):
             recommendations.append(rec)
     payload["review_recommendations"] = recommendations
     payload["outcome"] = "review_recommended" if recommendations else "no_review"
@@ -247,6 +258,15 @@ def _persist_success(
             if review_id not in review_ids:
                 review_ids.append(review_id)
 
+            if rec["review_type"] == "open_question":
+                # The suggested Question lives on this Review only. It is not
+                # inserted into questions until a person authorizes it.
+                connection.execute(
+                    "UPDATE review_issues SET decision_question=?, why_consequential=? WHERE id=?",
+                    (rec["decision_question"].strip(), rec["why_consequential"], review_id),
+                )
+                persist_question_proposal(connection, review_id, evidence_id, rec["decision_question"])
+
             # Link Evidence to Review
             connection.execute(
                 "INSERT OR IGNORE INTO review_evidence(review_id, evidence_id) VALUES (?, ?)",
@@ -294,8 +314,8 @@ def _persist_success(
                         "question_not_open", f"Question {question_id!r} is not open"
                     )
                 connection.execute(
-                    "INSERT OR IGNORE INTO review_questions(review_id, question_id) VALUES (?, ?)",
-                    (review_id, question_id),
+                    "INSERT OR IGNORE INTO review_questions(review_id, question_id, evidence_id) VALUES (?, ?, ?)",
+                    (review_id, question_id, evidence_id),
                 )
 
             # Create Proposals. When new Evidence updates an existing Review, a

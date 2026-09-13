@@ -8,6 +8,7 @@ vm.runInContext(fs.readFileSync(path.join(dir,'context-data.js'),'utf8'),context
 vm.runInContext(fs.readFileSync(path.join(dir,'context-notes-view.js'),'utf8'),context);
 vm.runInContext(fs.readFileSync(path.join(dir,'context-open-items-view.js'),'utf8'),context);
 vm.runInContext(fs.readFileSync(path.join(dir,'context-project-view.js'),'utf8'),context);
+vm.runInContext(fs.readFileSync(path.join(dir,'context-backend-sync.js'),'utf8'),context);
 // Ask behavior tests exercise the deterministic Ask contract only. Keep backend
 // hydration disabled here so network/runtime failures cannot pollute test output.
 context.window.STATE_API=null;
@@ -37,8 +38,12 @@ const smarterRouting=[
  ['What are we building?','status'],['Summarize the project.','status'],['What should we do next?','readiness']
 ];
 smarterRouting.forEach(([q,e])=>check(`smart route: ${q}`,route(q)===e,`got ${route(q)}`));
+// Plain "what's blocking" is a generic inventory question, so it now routes
+// to a compact Open Items card (like 'pending'/'open') rather than listing
+// blocker details -- see state-ask-routing-card-tests.js for the fuller
+// routing-card coverage.
 let b=api.intentAskHtml(api.detectAskIntent('What is blocking us?'));
-check('blockers surface unresolved material',/may be blocking or constraining progress/.test(b)&&/Pending Review|Open Question/.test(b));
+check('blockers route to the Open Items card',/ask-routing-card/.test(b)&&/data-anchor="open-items-blockers"/.test(b));
 let slack=api.intentAskHtml(api.detectAskIntent('Turn the current project state into a Slack update'));
 let support=api.intentAskHtml(api.detectAskIntent('Write a short status update for the support team'));
 check('Slack and Support artifacts differ',slack!==support);
@@ -68,8 +73,14 @@ data.notes.unshift({id:'n-test-auto',title:'Leadership pilot target',text:'Leade
 data.reviews.unshift({id:'r-test-auto',evidenceId:'n-test-auto',topics:['automation'],status:'pending',title:'Leadership proposed a 25% pilot target',unresolved:'Whether 25% should become the accepted pilot target.'});
 let pending=api.intentAskHtml(api.detectAskIntent('Are we targeting 25%?'));
 check('pending 25% is not promoted to truth',/Not established/.test(pending)&&/unreviewed information/.test(pending));
+// "What needs review?" is a generic inventory question, so it now routes to
+// a compact Open Items card (count + CTA) rather than listing review
+// titles -- Open Items is the authoritative place to see what a review is
+// actually about. Confirm the count reflects the newly-added pending
+// review instead of asserting on title text no longer rendered here.
 let needsReview=api.intentAskHtml(api.detectAskIntent('What needs review?'));
-check('pending automation evidence appears in review answer',/25% pilot target/.test(needsReview));
+const pendingCount=data.reviews.filter(r=>r.status==='pending').length;
+check('pending automation evidence is reflected in the review routing card',needsReview.includes('ask-routing-card')&&needsReview.includes(`>${pendingCount}<`)&&needsReview.includes('data-anchor="open-items-reviews"'));
 // Accept the controlled mutation: update maintained Current State, preserve history, clear review.
 const k=data.knowledge.find(x=>x.id==='k-autonomy'); const before=k.statement;
 k.statement='Leadership confirmed the first pilot should target 25% autonomous resolution. Human review remains required for customer-facing responses.'; k.support=['n-test-auto'];

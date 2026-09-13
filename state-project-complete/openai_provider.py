@@ -17,10 +17,11 @@ from typing import Any, Mapping
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent / "phase2_current"))
+sys.path.insert(0, str(Path(__file__).resolve().parent / "interpretation_runtime"))
 
-from state_spike.semantic_validation import InterpretationContextSnapshot
+from validation.semantic_validation import InterpretationContextSnapshot
 from provider_json import extract_json_object
+from question_review_prompt import QUESTION_REVIEW_GUIDANCE
 
 
 logger = logging.getLogger("state.provider.openai")
@@ -255,6 +256,8 @@ Content: {evidence.get('content')}
 
 ## Your Task
 
+{QUESTION_REVIEW_GUIDANCE}
+
 Analyze the Evidence against Current State and open Reviews.
 
 Include grouping_reason ONLY when a recommendation groups multiple affected State items or multiple proposed changes. Omit grouping_reason for a single-item/single-change recommendation.
@@ -269,7 +272,7 @@ Respond ONLY with JSON in this structure:
     {{
       "review_action": "create" | "update_existing",
       "existing_review_id": "review_...",  // only if update_existing
-      "review_type": "proposed_update" | "state_at_risk" | "missing_understanding",
+      "review_type": "proposed_update" | "state_at_risk" | "missing_understanding" | "open_question",
       "decision_question": "What decision must a human make?",
       "why_consequential": "Why does this matter?",
       "affected_state_item_ids": ["state_01", "state_02"],
@@ -291,7 +294,7 @@ Respond ONLY with JSON in this structure:
 Remember:
 - Evidence alone does not change State (only humans can authorize)
 - review_type determines what kind of proposal is legal:
-  - proposed_update: use when Evidence changes or retires an EXISTING State item; proposed_changes may use update or retire (and may also include create when a grouped decision genuinely adds new State).
+  - proposed_update: use when Evidence changes or retires an EXISTING State item; proposed_changes may use update or retire (and may also include create when a grouped decision genuinely adds new State). Requires at least one proposed_changes entry; with none, use missing_understanding or state_at_risk instead.
   - missing_understanding: use only when the missing understanding is NOT already represented in Current State; every proposed_change in a missing_understanding review MUST use operation "create". Never use update or retire inside missing_understanding.
   - state_at_risk: use when Evidence creates uncertainty/risk around existing State but does not yet establish a replacement; normally use no proposed_changes.
   - Preserve epistemic status exactly: approved != implemented/enabled/deployed; planned != committed; capable != enabled. Never widen a narrow statement beyond the Evidence.

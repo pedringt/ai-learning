@@ -3,7 +3,7 @@ from __future__ import annotations
 from copy import deepcopy
 from typing import Any, Mapping
 
-from phase2_current.state_spike.semantic_validation import InterpretationContextSnapshot
+from interpretation_runtime.validation.semantic_validation import InterpretationContextSnapshot
 
 
 class FakeProvider:

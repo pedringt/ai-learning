@@ -142,7 +142,7 @@
     deleteDraft: draftId => request(`/api/drafts/${encodeURIComponent(draftId)}`, {method:'DELETE'}),
     submitEvidence: (content, sourceType = 'manual_note') => jsonPost('/api/evidence', {content, source_type: sourceType}),
     retryEvidenceAnalysis: evidenceId => request(`/api/evidence/${encodeURIComponent(evidenceId)}/reanalyze`, {method:'POST'}),
-    resolveReview: (reviewId, decision) => jsonPost(`/api/reviews/${encodeURIComponent(reviewId)}/resolve`, {decision}),
+    resolveReview: (reviewId, decision, options = {}) => jsonPost(`/api/reviews/${encodeURIComponent(reviewId)}/resolve`, {decision, ...(options.questionProposalId ? {expected_question_proposal_id:options.questionProposalId, expected_existing_question_id:options.existingQuestionId||null} : {})}),
     createQuestion: (text, options = {}) => jsonPost('/api/questions', {text, origin: options.origin || 'Added from Workspace', blocking: !!options.blocking, ...(options.blocks ? {blocks: options.blocks} : {})}),
     setQuestionBlocking: (questionId, blocking, blocks = null) => request(`/api/questions/${encodeURIComponent(questionId)}/blocking`, {method:'PATCH', headers:{'Content-Type':'application/json'}, body:JSON.stringify({blocking, blocks})}),
     stopQuestion: questionId => request(`/api/questions/${encodeURIComponent(questionId)}/stop`, {method:'POST'}),

@@ -8,14 +8,19 @@ API_JS = (FRONTEND / "context-api.js").read_text()
 NOTES_VIEW_JS = (FRONTEND / "context-notes-view.js").read_text()
 OPEN_ITEMS_VIEW_JS = (FRONTEND / "context-open-items-view.js").read_text()
 PROJECT_VIEW_JS = (FRONTEND / "context-project-view.js").read_text()
+BACKEND_SYNC_JS = (FRONTEND / "context-backend-sync.js").read_text()
 
 
 def test_live_reviews_use_backend_payload_not_placeholder_values():
-    assert "proposed:'Review'" not in JS
-    assert "unresolved:'?'" not in JS
+    # mapApiReview's own body moved to context-backend-sync.js 2026-09-12;
+    # context-app.js keeps a same-name wrapper (see comment on
+    # test_r81_notes_filters_share_one_date_status_search_pipeline for the
+    # precedent this follows).
+    assert "proposed:'Review'" not in BACKEND_SYNC_JS
+    assert "unresolved:'?'" not in BACKEND_SYNC_JS
     assert "mapApiReview" in JS
-    assert "affected_state_items" in JS
-    assert "proposed_changes" not in JS or "proposals" in JS
+    assert "affected_state_items" in BACKEND_SYNC_JS
+    assert "proposed_changes" not in BACKEND_SYNC_JS or "proposals" in BACKEND_SYNC_JS
 
 
 def test_live_review_resolution_calls_backend_and_refreshes_state():
@@ -40,14 +45,14 @@ def test_backend_state_and_reviews_rehydrate_after_refresh():
 
 
 def test_retire_review_does_not_render_undefined_statement():
-    assert "Retire: ${p.proposed_statement}" not in JS
-    assert 'Retire current understanding' in JS
+    assert "Retire: ${p.proposed_statement}" not in BACKEND_SYNC_JS
+    assert 'Retire current understanding' in BACKEND_SYNC_JS
 
 
 def test_backend_state_sync_reconciles_retired_items():
-    assert 'const activeIds=new Set' in JS
-    assert "if(!activeIds.has(k.id)) k.state='retired'" in JS
-    assert 'k.backendManaged=true' in JS
+    assert 'const activeIds=new Set' in BACKEND_SYNC_JS
+    assert "if(!activeIds.has(k.id)) k.state='retired'" in BACKEND_SYNC_JS
+    assert 'k.backendManaged=true' in BACKEND_SYNC_JS
 
 
 def test_backend_review_results_are_upserted_not_blindly_appended():
@@ -62,7 +67,7 @@ def test_hydration_reconciles_stale_backend_reviews():
 
 
 def test_frontend_hides_superseded_proposals_from_open_review_card():
-    assert "const proposals=(r.proposals||[]).filter(p=>!p.status || p.status==='pending');" in JS
+    assert "const proposals=(r.proposals||[]).filter(p=>!p.status || p.status==='pending');" in BACKEND_SYNC_JS
 
 
 def test_notes_rehydrate_complete_evidence_archive_with_date_filters():
@@ -296,9 +301,15 @@ def test_r85_integrity_and_polish_contracts():
     # assertion; removed that indirection along with the rename.
     assert 'data-view="project-overview">Current State</button>' in html
     assert "window.scrollTo({top:0,behavior:'auto'})" in app
-    # n.backendManaged?'':`<button ...>Edit</button>` moved to context-notes-view.js
-    # 2026-09-06 (see comment on test_r81_notes_filters_share_one_date_status_search_pipeline).
-    assert "n.backendManaged?'':`<button" in NOTES_VIEW_JS
+    # The inline n.backendManaged?'':`<button ...>Edit</button>` ternary moved
+    # to context-notes-view.js 2026-09-06 (see comment on
+    # test_r81_notes_filters_share_one_date_status_search_pipeline), then was
+    # itself refactored into a named isEditableDraft(n) helper -- same
+    # invariant (a backend-managed note never gets an Edit action), different
+    # shape. Check the helper's own backendManaged guard and that the Edit
+    # button is gated on it, rather than pinning the retired inline ternary.
+    assert "if(n.backendManaged) return false;" in NOTES_VIEW_JS
+    assert 'editable?`<button class="text-button" data-action="edit-note"' in NOTES_VIEW_JS
     assert "getDrafts" in api_js and "createDraft" in api_js and "updateDraft" in api_js and "deleteDraft" in api_js
     assert "setQuestionBlocking" in api_js and "What does this block?" in app
     # notesFilterSummary() moved to context-notes-view.js 2026-09-06.
@@ -316,8 +327,10 @@ def test_r85_integrity_and_polish_contracts():
 
 def test_r86_notes_link_into_review_and_history_workflow():
     app = (FRONTEND / "context-app.js").read_text(encoding="utf-8")
+    # reviewIds:open.map(...) moved to context-backend-sync.js's syncApiEvidence
+    # 2026-09-12, alongside the rest of the backend mapping/sync layer.
     assert "data-action=\"open-note-reviews\"" in app
-    assert "reviewIds:open.map(r=>r.id)" in app
+    assert "reviewIds:open.map(r=>r.id)" in BACKEND_SYNC_JS
     assert "state.expandedReviewId=ids[0]" in app
     assert "data-action=\"open-note-history\"" in app
     assert "historyEvidenceId" in app
@@ -348,17 +361,27 @@ def test_r861_grounded_ask_module_and_release_assets_are_self_contained():
 
     # All State-owned JS/CSS assets use one release token so a deployment cannot
     # accidentally serve a mix of old and new frontend files from cache.
-    versioned = re.findall(r"([\w./-]+\.(?:js|css))\?v=([\w.-]+)", html)
-    assert versioned, "index.html no longer cache-busts its assets"
+    # context-tool.css's ?v=TOKEN is a literal string in the HTML, but the JS
+    # files are assembled at runtime (file+'?v='+v) rather than ever appearing
+    # as a literal "file.js?v=TOKEN" substring -- a plain regex scan for that
+    # pattern (as this test originally did) stopped matching any JS file once
+    # the loader moved to that array+forEach shape, without the token itself
+    # ever actually drifting. Check the CSS literal and the JS loader's `v`
+    # variable agree, then check the loader's own file-list array separately.
+    css_versions = set(re.findall(r"context-tool\.css\?v=([\w.-]+)", html))
+    js_version_match = re.search(r"var v='([\w.-]+)'", html)
+    assert css_versions and js_version_match, "index.html no longer cache-busts its assets"
+    assert css_versions == {js_version_match.group(1)}, \
+        f"CSS and JS release tokens have drifted apart: {css_versions} vs {js_version_match.group(1)}"
 
-    referenced = {Path(src).name for src, _ in versioned}
+    file_list_match = re.search(r"\[('context-[^\]]+)\]\.forEach", html)
+    assert file_list_match, "could not find the JS loader's file list in index.html"
+    referenced = set(re.findall(r"'([\w.-]+\.js)'", file_list_match.group(1)))
     assert {"context-ask.js", "context-app.js", "context-history.js", "context-quickwins.js"} <= referenced
 
-    versions = {token for _, token in versioned}
-    assert len(versions) == 1, f"assets carry mismatched cache-bust versions: {sorted(versions)}"
-
-    for src, _ in versioned:
-        assert (FRONTEND / Path(src).name).exists(), f"{src} is referenced but does not exist"
+    for name in referenced:
+        assert (FRONTEND / name).exists(), f"{name} is referenced but does not exist"
+    assert (FRONTEND / "context-tool.css").exists()
 
 
 def test_r95_workspace_attention_has_a_fast_independent_load_path():

@@ -76,6 +76,9 @@ def normalize_provider_payload(
     missing proposal statements/rationales, human-resolution fields, or
     contradictory review_action/existing_review_id combinations. Those remain
     validation failures because repairing them would require guessing intent.
+    The one exception is review_type on a valid, in-context existing_review_id:
+    that Review's type is already an application fact the model was shown, so
+    relabeling review_type to match is mechanical, not a guess.
     """
     result = copy.deepcopy(dict(payload))
 
@@ -122,8 +125,24 @@ def normalize_provider_payload(
                 "update_existing" if recommendation.get("existing_review_id") else "create"
             )
         recommendation["review_type"] = _normalize_enum(
-            recommendation.get("review_type"), {"proposed_update", "state_at_risk", "missing_understanding"}
+            recommendation.get("review_type"), {"proposed_update", "state_at_risk", "missing_understanding", "open_question"}
         )
+
+        # A referenced existing Review's type is an application fact, not a
+        # model judgment -- the model already chose to continue that specific
+        # Review by supplying its existing_review_id. Relabeling review_type
+        # to match is a mechanical correction of a redundant field, exactly
+        # like the concurrency-version injection below, not a guess at
+        # intent. Only the supplied context snapshot is trusted here (the
+        # same authority the model itself was shown); an unknown or
+        # not-in-context existing_review_id is left untouched so semantic
+        # validation still reports the real reference/lifecycle problem.
+        if recommendation.get("review_action") == "update_existing":
+            existing_review_id = recommendation.get("existing_review_id")
+            if isinstance(existing_review_id, str):
+                context_review = context.open_reviews.get(existing_review_id)
+                if context_review is not None:
+                    recommendation["review_type"] = context_review.review_type
 
         affected = _dedupe_strings(recommendation.get("affected_state_item_ids"))
         if isinstance(affected, list):
@@ -184,9 +203,66 @@ def normalize_provider_payload(
 
         # missing_understanding + update/retire is mechanically incompatible.
         # When the model explicitly targets existing State, the canonical
-        # review type is proposed_update.
-        if recommendation.get("review_type") == "missing_understanding" and has_existing_state_change:
+        # review type is proposed_update. Skip this for an existing Review:
+        # its type is already authoritative (set above from context), and
+        # relabeling it here would just reintroduce the mismatch this
+        # function exists to prevent. A genuine incompatibility (an
+        # existing missing_understanding Review paired with an update/retire
+        # proposal) is a real problem, not a mechanical one -- it still
+        # surfaces via illegal_review_proposal_combination.
+        if (
+            recommendation.get("review_type") == "missing_understanding"
+            and has_existing_state_change
+            and recommendation.get("review_action") != "update_existing"
+        ):
             recommendation["review_type"] = "proposed_update"
+
+        # The mirror case: proposed_update requires at least one proposed
+        # change (canonical schema: minItems 1), but a provider sometimes
+        # judges evidence consequential enough for review without managing to
+        # articulate a concrete resulting statement -- e.g. a delegated
+        # approval ("we can move forward on X") with no existing State item to
+        # compare against. Rejecting the whole submission with schema_violation
+        # in that case blocks genuinely consequential evidence from ever
+        # reaching a human, which is a bigger failure than a slightly
+        # mis-classified review type. missing_understanding's own schema
+        # allows an empty proposed_changes list, so this is a safe, mechanical
+        # downgrade -- it does not invent a proposed change (that would
+        # require guessing intent, which this function deliberately avoids),
+        # it only relabels "no concrete change" from an invalid combination
+        # into a valid, honest one: "more understanding is needed." Skipped
+        # for an existing Review for the same reason as above: its type is
+        # already authoritative.
+        if (
+            recommendation.get("review_type") == "proposed_update"
+            and len(proposals) == 0
+            and recommendation.get("review_action") != "update_existing"
+        ):
+            recommendation["review_type"] = "missing_understanding"
+
+        # An open_question Review proposes a durable unknown, never an answer
+        # to an existing Question -- the canonical schema forbids
+        # resolves_question_ids entirely for this type. A model raising a new
+        # unknown sometimes also points resolves_question_ids at a related
+        # existing Question (e.g. "this new unknown is basically
+        # q-retention"), which isn't a concrete answer to that Question --
+        # accepting this open_question Review would never resolve it -- but
+        # the schema violation still hard-rejected the whole evidence
+        # submission (live staging QA, 2026-09-13). Clearing it keeps the
+        # model's own type choice (open_question) rather than rerouting to a
+        # different type or inventing which Question it actually answers, so
+        # the evidence and Review still reach a human instead of being
+        # discarded. Deliberately narrow: unlike this one optional,
+        # redundant-with-the-type-itself field, a *non-empty*
+        # affected_state_item_ids or proposed_changes on an open_question
+        # recommendation is left uncorrected and still fails -- those are
+        # required fields the schema also constrains to empty for this type,
+        # but a model populating them signals a more fundamental confusion
+        # about what open_question means, not a mechanical labeling slip (see
+        # test_invalid_or_mixed_outcomes_are_rejected_without_side_effects).
+        if recommendation.get("review_type") == "open_question":
+            recommendation.pop("resolves_question_ids", None)
+            recommendation.pop("grouping_reason", None)
 
         # grouping_reason is presentation metadata, not authority. It is legal
         # only when there is actual grouping; remove accidental singleton use.

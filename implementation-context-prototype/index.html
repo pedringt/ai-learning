@@ -24,29 +24,13 @@
       var local = location.protocol === 'file:';
       document.write('<link rel="icon" href="' + (local ? '../favicon.svg' : '/favicon.svg') + '">');
       document.write('<link rel="stylesheet" href="' + (local ? '../site-shell.css' : '/site-shell.css') + '">');
-      document.write('<link rel="stylesheet" href="' + (local ? 'context-tool.css?v=r73-mobile-pass' : '/implementation-context-prototype/context-tool.css?v=r73-mobile-pass') + '">');
+      document.write('<link rel="stylesheet" href="' + (local ? 'context-tool.css?v=r83-quick-tour-consolidation' : '/implementation-context-prototype/context-tool.css?v=r83-quick-tour-consolidation') + '">');
     })();
   </script>
-  <style id="state-critical-modal">
-    #overlay{position:fixed!important;inset:0!important;z-index:2147483000!important;display:flex;align-items:flex-start!important;justify-content:center!important;overflow-y:auto!important;box-sizing:border-box!important;padding:max(20px,env(safe-area-inset-top)) 18px max(20px,env(safe-area-inset-bottom))!important;}
-    #overlay[hidden]{display:none!important;}
-    #overlay>.dialog{position:relative!important;margin:0 auto!important;width:min(620px,100%)!important;max-height:calc(100dvh - 40px)!important;overflow:auto!important;overscroll-behavior:contain!important;}
-    body.modal-open .topbar,body.modal-open .prototype-productbar{z-index:0!important;}
-    .project-settings-button{display:none!important;}
-    .ask-live-answer .ask-answer-item,.ask-live-answer .ask-answer-item>div,.ask-live-answer .ask-answer-item .ask-item-detail{border-top:0!important;border-bottom:0!important;box-shadow:none!important;}
-    .ask-live-answer .ask-answer-item::before,.ask-live-answer .ask-answer-item::after{border:0!important;box-shadow:none!important;}
-    .ask-quick-starts{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;}
-    .ask-quick-starts button{white-space:normal;text-align:left;}
-    .ask-grounding{margin-top:18px;}
-    .open-items-count-summary{display:inline-block;margin-bottom:4px;font-weight:600;}
-    .workspace-attention:not(.is-clear) .eyebrow,.workspace-attention:not(.is-clear) h3{color:var(--ink)!important;}
-    .ask-title-row>div>p.ask-state-description{display:block!important;}
+  <style id="state-mobile-nav">
     @media(max-width:760px){
-      #overlay{padding:max(14px,env(safe-area-inset-top)) 12px max(14px,env(safe-area-inset-bottom))!important;}
-      #overlay>.dialog{max-height:calc(100dvh - 28px)!important;}
       .sidebar-nav,.app-sidebar>.demo-help-button{display:none!important;}
       .mobile-primary-nav,.mobile-subnav{display:flex!important;}
-      .ask-quick-starts{display:grid;grid-template-columns:1fr 1fr;}
     }
     .mobile-primary-nav,.mobile-subnav{display:none;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;gap:4px;margin:0 -12px;padding:2px 0 2px 12px;position:relative;}
     .mobile-primary-nav::-webkit-scrollbar,.mobile-subnav::-webkit-scrollbar{display:none;}
@@ -59,88 +43,6 @@
     .mobile-primary-nav .nav-count{width:auto!important;height:auto!important;min-width:16px!important;padding:0 5px!important;border-radius:999px!important;background:var(--accent-soft);color:var(--accent);font-weight:750;}
     .mobile-primary-nav .nav-count[hidden]{display:none!important;}
     .mobile-subnav[hidden]{display:none!important;}
-    @media(max-width:480px){.ask-quick-starts{grid-template-columns:1fr;}}
-  </style>
-  <style id="state-final-r62">
-    html body:not(.v88-dark) .prototype-productbar{color:#172b49!important}
-    html body:not(.v88-dark) .prototype-productbar .product-tagline{color:#304a6d!important;font-weight:650!important;opacity:1!important}
-    html body .page-head>div>p,html body .workspace-section-hint{font-size:13.5px!important;line-height:1.5!important}
-    html body .open-items-page .open-items-kicker,html body .open-items-page .review-kicker,html body .open-items-page .open-item-label{font-size:10.5px!important}
-    html body .open-items-page .open-items-section-description,html body .open-items-page .review-source-meta,html body .open-items-page .open-question-meta{font-size:12px!important;line-height:1.45!important}
-    html body .open-items-page details.reasoning summary,html body .open-items-page details.reasoning p{font-size:12px!important;line-height:1.45!important}
-    html body .open-items-page .review-actions .btn{font-size:12.5px!important}
-    html body .notes-page .note-index-main h3{font-size:14.5px!important}
-    html body .notes-page .note-index-main p{font-size:13.5px!important;line-height:1.52!important;overflow-wrap:anywhere!important;word-break:break-word!important}
-    html body .notes-page .note-source,html body .notes-page .note-date,html body .notes-page .note-expand-label,html body .notes-page .note-index-row .text-button{font-size:11.5px!important}
-    html body .history-page .history-entry-date,html body .history-page .decision-line{font-size:11.5px!important}
-    html body .history-page .history-change>p{font-size:13.5px!important;line-height:1.5!important}
-    html body .settings-page .settings-section p,html body .settings-page .settings-behavior-list li,html body .settings-page .source-description,html body .settings-page .slack-preview-row span,html body .settings-page .settings-rule-copy span{font-size:12.5px!important;line-height:1.48!important}
-    html body .settings-page .settings-rule-copy strong,html body .settings-page .settings-project-name label{font-size:10.5px!important}
-    html body .dialog p,html body .dialog textarea{font-size:13.5px!important}
-    html body .dialog .btn{font-size:12.5px!important}
-    html body .open-items-page .open-items-count-summary{display:none!important}
-    html body .open-items-page .review-page-count{display:none!important}
-    html body .open-items-page .review-kicker{display:none!important}
-    html body .open-items-page .review-card-title{font-size:15.5px!important;line-height:1.38!important;font-weight:720!important;max-width:720px!important}
-    html body .open-items-page .review-card-toggle{padding:17px 8px!important}
-    html body .open-items-page .review-card:first-child .review-card-toggle{border-left:3px solid #7867b5!important;padding-left:13px!important}
-    html body .open-items-page .review-card:first-child .review-card-title{font-weight:800!important}
-    html body .open-items-page .review-source-meta{margin-top:6px!important;color:#7a8494!important}
-    html body .open-items-page .open-items-section-title{font-size:18px!important}
-    html body .open-items-page .open-question-title{font-size:14px!important;font-weight:680!important}
-    html body .notes-page .note-index-row:has(.note-status--pending) [data-action='edit-note'],html body .notes-page .note-index-row:has(.note-status--reviewed) [data-action='edit-note'],html body .notes-page .note-index-row:has(.note-status--no-review-needed) [data-action='edit-note'],html body .notes-page .note-index-row:has(.note-status--unknown) [data-action='edit-note']{display:none!important}
-    html body .notes-page .note-immutable-hint{font-size:12px!important;color:#6d7788!important}
-    html body #askStateDrawer{border-radius:18px 0 0 18px!important;overflow:hidden!important}
-    html body #askStateDrawer .ask-state-drawer-inner,html body #askStateDrawer .ask-state-drawer-body{border-radius:18px 0 0 18px!important}
-    html body #askStateDrawer .ask-live-answer{font-size:13.5px!important;line-height:1.5!important}
-    html body #askStateDrawer .ask-answer-actions .text-button,html body #askStateDrawer [data-action*='copy']{font-size:11.5px!important}
-    @media(max-width:760px){
-      html body .prototype-productbar{padding:9px 14px!important;gap:6px!important;align-items:flex-start!important;flex-wrap:wrap!important}
-      html body .prototype-productbar .product-tagline{flex:1 1 210px!important;font-size:11.5px!important;line-height:1.35!important}
-      html body .software-shell{min-width:0!important}
-      html body .app-sidebar,html body .app-workspace,html body .view-root,html body .page{min-width:0!important;max-width:100%!important}
-      html body .app-workspace{padding-left:14px!important;padding-right:14px!important}
-      html body .page-head{gap:12px!important;align-items:flex-start!important}
-      html body .page-head h2{font-size:27px!important;line-height:1.12!important}
-      html body .page-head>.btn{min-height:40px!important;white-space:nowrap!important}
-      html body .open-items-page .open-items-sections{gap:25px!important}
-      html body .open-items-page .open-items-section-head{padding-bottom:10px!important}
-      html body .open-items-page .review-card,html body .open-items-page .compact-review,html body .open-items-page .open-question-list{max-width:100%!important}
-      html body .open-items-page .review-card-toggle{padding:15px 4px!important}
-      html body .open-items-page .review-card:first-child .review-card-toggle{padding-left:10px!important}
-      html body .open-items-page .review-card-title{font-size:15px!important;overflow-wrap:anywhere!important}
-      html body .open-items-page .review-decision-context{max-width:100%!important}
-      html body .open-items-page .review-context-block{padding:10px 11px!important}
-      html body .open-items-page .review-actions{display:grid!important;grid-template-columns:1fr!important}
-      html body .open-items-page .review-actions .btn{width:100%!important;min-height:42px!important}
-      html body .open-items-page .open-question-row{padding-top:13px!important;padding-bottom:13px!important}
-      html body .open-items-page .open-question-title,html body .open-items-page .open-question-meta{max-width:none!important;overflow-wrap:anywhere!important}
-      html body .notes-page article.simple-note.note-index-row{grid-template-columns:1fr!important;gap:7px!important;padding:14px 0!important}
-      html body .notes-page .note-date{grid-row:auto!important}
-      html body .notes-page .note-index-status{justify-self:start!important;grid-column:1!important}
-      html body .notes-page .note-index-main{min-width:0!important}
-      html body .notes-page .note-index-main p,html body .notes-page .note-full-text{max-width:100%!important;overflow-wrap:anywhere!important;word-break:break-word!important}
-      html body .notes-page .inline-actions.note-actions{flex-wrap:wrap!important;gap:8px!important}
-      html body .notes-page .notes-toolbar,html body .notes-page .notes-filter-row{min-width:0!important;max-width:100%!important;flex-wrap:wrap!important}
-      html body .notes-page .notes-search{width:100%!important;max-width:100%!important}
-      html body .history-page .history-entry{padding-bottom:22px!important;margin-bottom:22px!important}
-      html body .history-page .history-entry h3{font-size:17px!important}
-      html body .history-page .history-change{grid-template-columns:1fr!important;max-width:100%!important}
-      html body .settings-page{max-width:100%!important}
-      html body .settings-page .settings-section-head,html body .settings-page .slack-preview-row,html body .settings-page .source-row{align-items:flex-start!important;flex-wrap:wrap!important}
-      html body .settings-page .settings-project-name{max-width:100%!important}
-      html body .settings-page .settings-project-name input{width:100%!important;box-sizing:border-box!important}
-      html body .settings-page .settings-actions{flex-wrap:wrap!important}
-      html body .dialog{padding:17px!important;width:100%!important;border-radius:12px!important}
-      html body .dialog h2{font-size:20px!important;overflow-wrap:anywhere!important}
-      html body .dialog .dialog-actions{display:grid!important;grid-template-columns:1fr!important}
-      html body .dialog .dialog-actions .btn{width:100%!important;min-height:42px!important}
-      html body #askStateDrawer{width:min(94vw,420px)!important;max-width:94vw!important;border-radius:16px 0 0 16px!important}
-      html body #askStateDrawer .ask-state-drawer-inner,html body #askStateDrawer .ask-state-drawer-body{border-radius:16px 0 0 16px!important}
-      html body #askStateDrawer .ask-state-starters button{width:100%!important;max-width:100%!important;white-space:normal!important;text-align:left!important;min-height:42px!important}
-      html body #askStateDrawer .ask-live-answer,html body #askStateDrawer .ask-live-answer *{overflow-wrap:anywhere!important}
-    }
-    @media(max-width:480px){html body .page-head{display:block!important}html body .page-head>.btn{margin-top:12px!important;width:100%!important}html body .prototype-productbar .product-divider{display:none!important}html body .prototype-productbar .product-name{margin-right:3px!important}html body #askStateDrawer{width:96vw!important;max-width:96vw!important}}
   </style>
 </head>
 <body>
@@ -163,8 +65,8 @@
       var local = location.protocol === 'file:';
       document.write('<script src="' + (local ? '../site-shell.js' : '/site-shell.js') + '"><\/script>');
       if(!local) document.write('<script src="/api/state-config.js"><\/script>');
-      var v='r73-mobile-pass';
-      ['context-analytics.js','context-data.js','context-api.js','context-ask.js','context-ask-followup.js','context-notes-view.js','context-open-items-view.js','context-project-view.js','context-app.js','context-history.js','context-provenance.js','context-quickwins.js','context-product-polish.js','context-settings.js','context-sources.js','context-design-pass.js','context-feedback-pass.js','context-feedback-pass-2.js','context-feedback-pass-3.js','context-feedback-pass-4.js','context-attention-alignment.js','context-final-mobile.js'].forEach(function(file){document.write('<script src="'+(local?'':'/implementation-context-prototype/')+file+'?v='+v+'"><\/script>');});
+      var v='r83-quick-tour-consolidation';
+      ['context-analytics.js','context-data.js','context-api.js','context-ask.js','context-ask-followup.js','context-notes-view.js','context-open-items-view.js','context-project-view.js','context-backend-sync.js','context-app.js','context-history.js','context-provenance.js','context-quickwins.js','context-product-polish.js','context-settings.js','context-sources.js','context-design-pass.js','context-feedback-pass.js','context-feedback-pass-2.js','context-feedback-pass-3.js','context-feedback-pass-4.js','context-attention-alignment.js','context-final-mobile.js'].forEach(function(file){document.write('<script src="'+(local?'':'/implementation-context-prototype/')+file+'?v='+v+'"><\/script>');});
       document.write('<script>requestAnimationFrame(function(){requestAnimationFrame(function(){document.documentElement.classList.remove("state-prepaint");clearTimeout(window.__stateRevealTimer);});});<\/script>');
     })();
   </script>

@@ -18,11 +18,12 @@ from typing import Any, Mapping
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent / "phase2_current"))
+sys.path.insert(0, str(Path(__file__).resolve().parent / "interpretation_runtime"))
 
-from state_spike.semantic_validation import InterpretationContextSnapshot
+from validation.semantic_validation import InterpretationContextSnapshot
 from provider_output_schema import PROVIDER_OUTPUT_SCHEMA
 from provider_json import extract_json_object
+from question_review_prompt import QUESTION_REVIEW_GUIDANCE
 
 _RELEVANCE_SCHEMA = {
     "type": "object",
@@ -312,10 +313,11 @@ Evidence never changes State directly; a human decides Reviews.
 {rules_prompt}{self._format_evidence_with_question_context(evidence)}
 
 <instructions>
+{QUESTION_REVIEW_GUIDANCE}
 Compare the Evidence with Current State and open Reviews. Return the semantic interpretation in the supplied JSON schema.
 
-- If Evidence does not materially change, threaten, or fill maintained understanding, return no recommendations and explain briefly.
-- proposed_update: use when Evidence changes or retires existing State. update/retire must use an exact State ID shown above. A grouped proposed_update may also create new State.
+- If Evidence does not materially change, threaten, or fill maintained understanding or raise a consequential unknown worth tracking, return no recommendations and explain briefly.
+- proposed_update: use when Evidence changes or retires existing State. update/retire must use an exact State ID shown above. A grouped proposed_update may also create new State. Requires at least one proposed_changes entry; with none, use missing_understanding or state_at_risk instead.
 - missing_understanding: use for information not represented in Current State. Its proposals must be create operations only. Create proposals have no state_item_id. A concrete, attributed decision (a budget approval, a launch date, a new capability, a scope change) is consequential even when Current State has no existing item on that topic -- the absence of a related item is a reason to use missing_understanding, not a reason to treat the Evidence as non-consequential.
 - state_at_risk: use when Evidence makes existing State uncertain without establishing a replacement; normally emit no proposal.
 - Set existing_review_id only when an open Review above is clearly the same pending human decision; use its exact Review ID. Otherwise omit it so software creates a new Review.

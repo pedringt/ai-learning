@@ -21,6 +21,7 @@
     ["What's blocking implementation?", 'What is blocking implementation planning right now? Distinguish confirmed blocking Questions from other unresolved items and pending Reviews.'],
     ['What are we still unsure about?', 'What is still unresolved? Keep open Questions and pending Evidence separate from accepted Current State.']
   ];
+  window.STATE_ASK_STARTERS = starters.map(([label, prompt]) => ({label, prompt}));
 
   const ui = {
     drawerOpen: false,
@@ -206,12 +207,33 @@
     const launcher=document.getElementById('askStateLauncher');if(!launcher)return;
     const hide=ui.drawerOpen;
     launcher.classList.toggle('is-hidden',hide);
+    repositionLauncher(launcher);
+  }
+  function repositionLauncher(launcher){
+    // The main content column is left-anchored next to the sidebar with a
+    // width that varies per view (readable-measure caps, not a fixed page
+    // width), so on wide desktop viewports a viewport-edge-pinned launcher
+    // drifts away from whatever the current page actually renders. Anchor it
+    // to the active view's right edge instead, above the mobile breakpoint
+    // where the drawer already goes full-width and this doesn't apply.
+    if(window.innerWidth<=760){launcher.style.removeProperty('right');return;}
+    const activePage=document.querySelector('.view-root')?.firstElementChild;
+    if(!activePage){launcher.style.removeProperty('right');return;}
+    const contentRight=activePage.getBoundingClientRect().right;
+    const gap=Math.max(22,Math.round(window.innerWidth-contentRight-22));
+    launcher.style.setProperty('right',gap+'px','important');
   }
 
   async function currentStateSignature(){
     if(!API?.getState) return null;
     try{
-      const raw=await API.getState();const items=asList(raw,['state','items','results']).map(x=>({id:x.id||'',version:x.version||0,statement:x.statement||x.text||''})).sort((a,b)=>String(a.id).localeCompare(String(b.id)));return JSON.stringify(items);
+      const [raw,reviews,questions]=await Promise.all([API.getState(),API.getReviews('open'),API.getQuestions('open')]);
+      const sorted=items=>items.sort((a,b)=>String(a.id).localeCompare(String(b.id)));
+      return JSON.stringify({
+        state:sorted(asList(raw,['state','items','results']).map(x=>({id:x.id||'',version:x.version||0,statement:x.statement||x.text||''}))),
+        reviews:sorted(asList(reviews,['reviews','items']).map(x=>({id:x.id,type:x.review_type,text:x.decision_question,questionProposal:x.question_to_create?.id||null}))),
+        questions:sorted(asList(questions,['questions','items']).map(x=>({id:x.id,text:x.text,blocking:!!x.blocking,blocks:x.blocks||null})))
+      });
     }catch(_){return null;}
   }
   function queryTerms(query){
@@ -250,13 +272,19 @@
   function renderFinalAsk(){
     if(!ui.payload){renderDrawerResult('<div class="ask-live-error"><h2>Ask is temporarily unavailable.</h2><p>State did not receive a grounded answer.</p></div>');return;}
     let html=sanitizeAskHtml(ASK?.render?.(ui.payload) || '<div class="ask-live-error"><h2>Ask is temporarily unavailable.</h2></div>');
-    if(ui.stale)html=`<div class="ask-state-stale"><span>Current State has changed since this answer was generated.</span><button class="text-button" type="button" data-review-batch-action="refresh-ask">Refresh answer →</button></div>${html}`;
+    if(ui.stale)html=`<div class="ask-state-stale"><span>The project record has changed since this answer was generated.</span><button class="text-button" type="button" data-review-batch-action="refresh-ask">Refresh answer →</button></div>${html}`;
     html+=resolvedDecisionMarkup(ui.resolvedContext);
     renderDrawerResult(html);
   }
+  document.addEventListener('state-project-record-changed',()=>{if(ui.payload){ui.stale=true;renderFinalAsk();}});
   async function checkAnswerFreshness(){
-    if(!ui.payload||!ui.answerStateSignature)return;
-    const current=await currentStateSignature();if(current===null)return;const next=current!==ui.answerStateSignature;if(next!==ui.stale){ui.stale=next;renderFinalAsk();}
+    if(!ui.payload||!ui.answerStateSignature||ui.running)return;
+    const answer=ui.payload,signature=ui.answerStateSignature,requestId=ui.requestId;
+    const current=await currentStateSignature();
+    // Opening the drawer can launch this check just before Refresh starts a
+    // new request. A late check for the old answer cannot mark the new one stale.
+    if(current===null||ui.running||ui.payload!==answer||ui.requestId!==requestId||ui.answerStateSignature!==signature)return;
+    const next=current!==signature;if(next!==ui.stale){ui.stale=next;renderFinalAsk();}
   }
   function explicitMutationIntent(query){
     const api=APP();
@@ -264,12 +292,22 @@
     if(api?.hasExplicitUpdateIntent)return api.hasExplicitUpdateIntent(query);
     return /\b(add (this|that|it)|please add|update (the )?(current )?state|record (this|that)|please record|note that|for the record|log (this|that))\b/i.test(query);
   }
-  async function runAsk(query){
+  async function runAsk(query,{skipRouting=false}={}){
     const clean=String(query||'').trim();if(!clean)return;
     ui.query=clean;syncAskInputs();openAskDrawer({focus:false});
     if(explicitMutationIntent(clean)){
       ui.payload=null;ui.resolvedContext=[];ui.answerStateSignature=null;ui.stale=false;
       renderDrawerResult('<div class="ask-readonly-message"><h3>Ask State is read-only.</h3><p>Typing here never changes the project record. Use Add Evidence when you have new project information State should evaluate.</p><button class="btn primary" type="button" data-review-batch-action="open-add-evidence">Add Evidence</button></div>');return;
+    }
+    // A generic inventory question ("What needs review?", "List every open
+    // review") is a navigation request, not something that needs a live
+    // backend answer -- Open Items is already the authoritative, live view
+    // for these counts. Route there directly and skip the Ask backend call
+    // entirely so this never risks drifting out of sync with it.
+    const routingHtml=skipRouting?null:window.STATE_ASK_ROUTING?.askRoutingCardHtml?.(clean);
+    if(routingHtml){
+      ui.payload=null;ui.resolvedContext=[];ui.answerStateSignature=null;ui.stale=false;
+      renderDrawerResult(routingHtml);return;
     }
     if(!ASK?.submit){renderDrawerResult('<div class="ask-live-error"><h2>Ask is temporarily unavailable.</h2><p>The Ask module did not load.</p></div>');return;}
     const requestId=++ui.requestId;ui.running=true;ui.stale=false;ui.payload=null;ui.resolvedContext=[];
@@ -313,7 +351,7 @@
   });
 
   document.addEventListener('click',event=>{
-    const prompt=event.target.closest?.('[data-review-batch-prompt]');if(prompt){event.preventDefault();event.stopPropagation();runAsk(prompt.dataset.reviewBatchPrompt);return;}
+    const prompt=event.target.closest?.('[data-review-batch-prompt]');if(prompt){event.preventDefault();event.stopPropagation();runAsk(prompt.dataset.reviewBatchPrompt,{skipRouting:true});return;}
     const copyContext=event.target.closest?.('[data-action="open-copy-context"]');if(copyContext){event.preventDefault();event.stopPropagation();openCopyContextDialog();return;}
     const confirmCopy=event.target.closest?.('[data-review-batch-action="copy-context-confirm"]');if(confirmCopy){event.preventDefault();event.stopPropagation();confirmCopyContext();return;}
     const action=event.target.closest?.('[data-review-batch-action]');if(!action)return;

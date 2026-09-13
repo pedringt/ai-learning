@@ -61,7 +61,6 @@
       /* The global Current-State signature warning is too coarse: any unrelated
          accepted change marks every answer stale. Hide it until freshness can
          be tied to the state records the answer actually used. */
-      body #askStateDrawer .ask-state-stale{display:none!important}
 
       /* Ask answers: compact hierarchy and small utilities. */
       body #askStateDrawer .ask-live-answer>h2,body #askStateDrawer .ask-live-answer .ask-answer-head h2{font-size:20px!important;line-height:1.22!important;letter-spacing:-.015em!important;margin:7px 0 9px!important}

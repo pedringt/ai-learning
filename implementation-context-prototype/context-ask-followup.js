@@ -92,7 +92,6 @@
 
   const GUIDE_KEY = 'stateReviewerGuideDismissedV1';
   const root = document.getElementById('viewRoot');
-  const sidebar = document.querySelector('.app-sidebar');
 
   function isDismissed() {
     try { return localStorage.getItem(GUIDE_KEY) === 'true'; }
@@ -119,10 +118,6 @@
       .state-reviewer-guide-start{min-height:38px;padding:8px 11px;border:1px solid #b9cbe0;border-radius:9px;background:#fff;color:#1769e8;font:inherit;font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap}
       .state-reviewer-guide-dismiss{min-width:38px;min-height:38px;border:0;background:transparent;color:#6b778a;font:inherit;font-size:20px;line-height:1;cursor:pointer;border-radius:8px}
       .state-reviewer-guide-dismiss:hover,.state-reviewer-guide-dismiss:focus-visible{background:#edf3f9;color:#26344c}
-      .state-reviewer-guide-reopen{display:flex;width:100%;min-height:40px;margin-top:8px;padding:9px 12px;align-items:center;justify-content:flex-start;border:1px solid var(--line);border-radius:10px;background:transparent;color:var(--muted);font:inherit;font-size:12px;font-weight:700;text-align:left;cursor:pointer;box-sizing:border-box}
-      .state-reviewer-guide-reopen[hidden]{display:none!important}
-      .state-reviewer-guide-reopen:hover,.state-reviewer-guide-reopen:focus-visible{border-color:#b9cbe0;background:var(--surface2);color:var(--ink);text-decoration:none}
-      .state-mobile-help .state-reviewer-guide-reopen{width:100%;margin:8px 0 0;padding:9px 12px;min-height:44px}
       .ask-current-state-link{white-space:nowrap}
       .project-maintained-fact.is-ask-target{outline:2px solid rgba(23,105,232,.28);outline-offset:5px;border-radius:6px}
       body.v88-dark .state-reviewer-guide{background:#171b22;border-color:#303946;color:#eef2f7}
@@ -130,8 +125,6 @@
       body.v88-dark .state-reviewer-guide-copy p{color:#b5bfcc}
       body.v88-dark .state-reviewer-guide-start{background:#202631;border-color:#44556c;color:#9fc6ff}
       body.v88-dark .state-reviewer-guide-dismiss{color:#aeb8c5}
-      body.v88-dark .state-reviewer-guide-reopen{border-color:#303946;color:#b5bfcc}
-      body.v88-dark .state-reviewer-guide-reopen:hover,body.v88-dark .state-reviewer-guide-reopen:focus-visible{border-color:#44556c;background:#202631;color:#eef2f7}
       @media(max-width:760px){
         .state-reviewer-guide{grid-template-columns:1fr;gap:11px;margin:0 14px 14px;padding:13px 14px}
         .state-reviewer-guide-actions{justify-content:flex-start}
@@ -148,35 +141,21 @@
     return `<aside class="state-reviewer-guide" aria-label="Quick tour of State"><div class="state-reviewer-guide-copy"><strong>Exploring State?</strong><p>Start with Open Items to see what needs attention, check Current State for what the project treats as true, then try Ask State to use that context.</p></div><div class="state-reviewer-guide-actions"><button type="button" class="state-reviewer-guide-start" data-view="open-items">Start with Open Items →</button><button type="button" class="state-reviewer-guide-dismiss" data-action="dismiss-reviewer-guide" aria-label="Dismiss quick tour">×</button></div></aside>`;
   }
 
-  function ensureReopenControls() {
-    if (sidebar && !sidebar.querySelector('.state-reviewer-guide-reopen')) {
-      const existingHelp = sidebar.querySelector('.demo-help-button');
-      const reopen = document.createElement('button');
-      reopen.type = 'button';
-      reopen.className = 'state-reviewer-guide-reopen';
-      reopen.dataset.action = 'show-reviewer-guide';
-      reopen.textContent = 'Quick tour';
-      if (existingHelp) existingHelp.after(reopen); else sidebar.appendChild(reopen);
-    }
-    const mobileHelp = root?.querySelector('.state-mobile-help');
-    if (mobileHelp && !mobileHelp.querySelector('.state-reviewer-guide-reopen')) {
-      const reopen = document.createElement('button');
-      reopen.type = 'button';
-      reopen.className = 'state-reviewer-guide-reopen';
-      reopen.dataset.action = 'show-reviewer-guide';
-      reopen.textContent = 'Quick tour →';
-      mobileHelp.appendChild(reopen);
-    }
-  }
-
+  // A separate, always-visible "Quick tour" button used to live permanently
+  // in the sidebar (and mobile help area) as the only way to bring the
+  // banner back after dismissing it. That meant two permanent "orient me"
+  // entry points competing on every single page (this one, and "Need help?").
+  // Consolidated 2026-09-12: the reopen entry point now lives inside the
+  // Need Help modal (context-app.js's showDemoHelp(), a "Take the quick
+  // tour" action) instead of its own persistent chip; this module only
+  // needs to handle the [data-action="show-reviewer-guide"] click, wherever
+  // it comes from.
   function syncReviewerGuide() {
     if (!root) return;
     addGuideStyles();
-    ensureReopenControls();
     const overview = root.querySelector('.overview');
     const existing = root.querySelector('.state-reviewer-guide');
     const showBanner = !!overview && !isDismissed();
-    document.querySelectorAll('.state-reviewer-guide-reopen').forEach(control => { control.hidden = showBanner; });
     if (!showBanner) {
       existing?.remove();
       return;
@@ -237,6 +216,18 @@
     const reopen = event.target.closest?.('[data-action="show-reviewer-guide"]');
     if (reopen) {
       setDismissed(false);
+      // Now only reachable from inside the Need Help modal (context-app.js's
+      // showDemoHelp()) -- close it directly via the shared overlay/dialogBody
+      // elements, the same cross-module approach context-settings.js's
+      // showSettingsDialog() already uses, since closeDialog() itself is a
+      // private closure in context-app.js.
+      const overlay = document.getElementById('overlay');
+      if (overlay && !overlay.hidden) {
+        overlay.hidden = true;
+        const dialogBody = document.getElementById('dialogBody');
+        if (dialogBody) dialogBody.innerHTML = '';
+        document.body.classList.remove('modal-open');
+      }
       const workspace = document.querySelector('[data-view="overview"]');
       if (workspace && !root?.querySelector('.overview')) workspace.click();
       requestAnimationFrame(syncReviewerGuide);

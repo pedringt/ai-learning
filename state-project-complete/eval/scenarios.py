@@ -172,6 +172,55 @@ SCENARIOS = [
         state_items=BASE_STATE,
         notes="A specific, attributed, concrete commitment -- should reach review even though it isn't a scope/security topic.",
     ),
+    Scenario(
+        id="authority_question_removing_human_review",
+        category="executive_authority_statement",
+        expected=MUST_REVIEW,
+        content=(
+            "Leadership asked whether we can remove human review from the "
+            "pilot entirely to speed things up."
+        ),
+        state_items=BASE_STATE,
+        notes=(
+            "Not a decision or even a stated opinion -- just a question. But it's "
+            "attributed to leadership (the same authority bar that makes "
+            "clear_decision_budget and authority_statement_launch_date "
+            "MUST_REVIEW) and it targets the single core safety boundary the "
+            "whole product exists to protect (human review), not a routine "
+            "detail. Distinct from old_info_resurfacing_autonomy (AMBIGUOUS): "
+            "that one is unattributed idle circling-back on an automation "
+            "percentage; this one is authority actively floating removing "
+            "review itself. Should create an open_question Review tracking "
+            "whether leadership is reconsidering the requirement -- not a "
+            "state change, since nothing has been decided."
+        ),
+    ),
+    Scenario(
+        id="authority_question_removing_human_review_scoped",
+        category="executive_authority_statement",
+        expected=AMBIGUOUS,
+        content=(
+            "Leadership asked whether we can remove human review for low-risk "
+            "password reset answers, but Security has not approved that change."
+        ),
+        state_items=BASE_STATE,
+        notes=(
+            "The exact literal wording from the live staging QA pass that "
+            "originally produced no Review (2026-09-12). Empirically tested "
+            "against the real model (9 runs total): passed (review_recommended) "
+            "8/8 times in isolation, but failed once when run as part of the "
+            "full ~35-scenario batch -- roughly 89% consistent, not reliably "
+            "either way. Narrower than authority_question_removing_human_review "
+            "(scoped to password-reset only, and explicitly says Security has "
+            "not approved it), which may read as more speculative/already-"
+            "blocked. Classified AMBIGUOUS rather than MUST_REVIEW because a "
+            "hard assert here would itself be flaky, not because the case is "
+            "unimportant -- this is genuine borderline model judgment on the "
+            "safety-boundary line, worth watching if it recurs, not a "
+            "reliably-reproducible prompt gap the way the original repro "
+            "looked from a single live QA pass."
+        ),
+    ),
 
     # --- Non-authoritative opinions -----------------------------------------
     Scenario(
@@ -381,6 +430,31 @@ SCENARIOS = [
         state_items=BASE_STATE,
         questions=(("q-vendor-owner", "Who owns the vendor security review?", False),),
         notes="Partially addresses an open Question without fully resolving it.",
+    ),
+
+    # --- Unresolved ownership gaps (newly surfaced, not answering an existing Question)
+    Scenario(
+        id="unresolved_ownership_escalation_scoring",
+        category="ownership_gap",
+        expected=MUST_REVIEW,
+        content="We still need to know who owns escalation-quality scoring during the pilot.",
+        state_items=BASE_STATE,
+        notes=(
+            "The exact literal wording from the live staging QA pass "
+            "(2026-09-12) that produced no Review or Question. Unlike "
+            "question_answer_partial_vendor_owner, this isn't answering an "
+            "existing tracked Question -- it's surfacing a brand-new "
+            "ownership gap. It's also not a neutral observation like "
+            "observation_billing_volume/observation_friday_spike (NO_REVIEW): "
+            "those describe patterns with no stated need; this explicitly says "
+            "'we still need to know', and it's tied to k-escalation, an "
+            "existing safety-adjacent State item (tickets the assistant isn't "
+            "confident about go to a human rather than a guess) -- not knowing "
+            "who owns measuring whether that mechanism is actually working "
+            "well is a real coverage gap, not routine missing detail. Expected "
+            "open_question, testing whether the model treats an unattributed "
+            "'we need to know X' the same way it treats an attributed decision."
+        ),
     ),
     Scenario(
         id="question_answer_conflicting_launch_gate",

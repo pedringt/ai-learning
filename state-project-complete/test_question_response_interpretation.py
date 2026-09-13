@@ -469,3 +469,99 @@ class TestReinterpretationClearsStaleQuestionLinks:
             "resolves a Question must not resolve that Question via a stale link "
             "from an earlier interpretation."
         )
+
+
+class TestQuestionResolutionEvidenceProvenance:
+    """Regression coverage for a logic-review finding (2026-09-07, fixed
+    2026-09-13 via migration 010): resolve_review() used to stamp every
+    Question a Review resolves with "the most recently submitted Evidence
+    linked to the whole Review" (via review_evidence), which is not
+    necessarily the Evidence whose interpretation actually established that
+    Question's answer -- a *different* Evidence item can get linked to the
+    same Review later with no bearing on this Question at all (the same
+    pattern as seed_demo.py's demo-review-retention /
+    ask-evidence-vendor-retention manual link). review_questions now records
+    evidence_id per row, at the point each link is actually created.
+    """
+
+    def test_resolved_question_is_attributed_to_the_evidence_that_actually_resolved_it(self, db):
+        question_id = db.execute(
+            "INSERT INTO questions(id, text, status) VALUES(?, ?, ?) RETURNING id",
+            ("Q_provenance", "Does the new contract cover data residency?", "open"),
+        ).fetchone()[0]
+
+        db.execute(
+            "INSERT INTO evidence(id, content, source_type, submitted_at) VALUES (?, ?, ?, '2026-09-01T00:00:00')",
+            ("ev_resolving", "The contract confirms data residency terms, which answers Q_provenance.", "manual_note"),
+        )
+        db.commit()
+
+        payload = {
+            "summary": "Contract confirms data residency.",
+            "topics": ["data"],
+            "outcome": "review_recommended",
+            "review_recommendations": [{
+                "review_action": "create",
+                "review_type": "proposed_update",
+                "decision_question": "Should the data residency understanding change?",
+                "why_consequential": "Contract terms may answer an open question.",
+                "affected_state_item_ids": [],
+                "resolves_question_ids": [question_id],
+                "proposed_changes": [],
+            }],
+        }
+        result = _persist_success(db, evidence_id="ev_resolving", provider=DummyProvider(), payload=payload)
+        review_id = result.review_ids[0]
+
+        # A second, unrelated Evidence item gets linked to the same Review
+        # later -- e.g. an adversarial/navigation link added by hand, not
+        # through the interpretation pipeline -- with a later submitted_at
+        # than the Evidence that actually resolved Q_provenance.
+        db.execute(
+            "INSERT INTO evidence(id, content, source_type, submitted_at) VALUES (?, ?, ?, '2026-09-02T00:00:00')",
+            ("ev_unrelated_later", "An unrelated later note linked to the same Review for navigation.", "manual_note"),
+        )
+        db.execute(
+            "INSERT OR IGNORE INTO review_evidence(review_id, evidence_id) VALUES (?, ?)",
+            (review_id, "ev_unrelated_later"),
+        )
+        db.commit()
+
+        accept_review(db, review_id, "Accepted")
+        question = db.execute(
+            "SELECT status, source_evidence_id FROM questions WHERE id=?", (question_id,)
+        ).fetchone()
+        assert question["status"] == "resolved"
+        assert question["source_evidence_id"] == "ev_resolving", (
+            "Question must be attributed to the Evidence whose interpretation actually "
+            "resolved it, not to whichever Evidence happens to have the latest "
+            "submitted_at across every review_evidence link on the Review."
+        )
+
+    def test_review_questions_rows_from_before_the_evidence_id_migration_fall_back_to_latest_linked_evidence(self, db):
+        """Pre-migration rows have no recorded evidence_id; resolve_review()
+        must still resolve them using the prior review-wide approximation
+        rather than leaving source_evidence_id unset."""
+        question_id = db.execute(
+            "INSERT INTO questions(id, text, status) VALUES(?, ?, ?) RETURNING id",
+            ("Q_legacy", "Is the legacy link still valid?", "open"),
+        ).fetchone()[0]
+        db.execute(
+            "INSERT INTO evidence(id, content, source_type) VALUES (?, ?, ?)",
+            ("ev_legacy", "Legacy evidence with no recorded review_questions.evidence_id.", "manual_note"),
+        )
+        db.execute(
+            "INSERT INTO review_issues(id, review_type, decision_question, why_consequential, status) "
+            "VALUES ('review_legacy', 'proposed_update', 'Legacy?', 'Legacy row.', 'open')"
+        )
+        db.execute("INSERT INTO review_evidence(review_id, evidence_id) VALUES ('review_legacy', 'ev_legacy')")
+        # Simulates a row inserted before migration 010 -- no evidence_id.
+        db.execute("INSERT INTO review_questions(review_id, question_id) VALUES ('review_legacy', ?)", (question_id,))
+        db.commit()
+
+        accept_review(db, "review_legacy", "Accepted")
+        question = db.execute(
+            "SELECT status, source_evidence_id FROM questions WHERE id=?", (question_id,)
+        ).fetchone()
+        assert question["status"] == "resolved"
+        assert question["source_evidence_id"] == "ev_legacy"

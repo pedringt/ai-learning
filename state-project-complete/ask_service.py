@@ -111,6 +111,8 @@ def _compact_candidates(connection: Any) -> dict[str, list[dict]]:
             "affected_state_ids": [s["id"] for s in x.get("affected_state_items", [])],
             "evidence_ids": [e["id"] for e in x.get("evidence_items", [])],
             "question_ids": list(x.get("resolves_question_ids", [])),
+            **({"question_to_create": {key: x["question_to_create"].get(key) for key in
+                 ("id", "text", "evidence_id", "existing_question_id")}} if x.get("question_to_create") else {}),
         } for x in reviews],
         "questions": [{"id": x["id"], "text": x["text"], "blocking": bool(x["blocking"]), "blocks": x["blocks"], "authority": "known_unknown"} for x in questions],
         "history": [{
@@ -225,7 +227,10 @@ def _grounding_rules() -> str:
     """
     return f"""- Today's date is {date.today().isoformat()}. When referencing a specific date from a record, compare it to today: if that date has already passed, describe it as overdue, still unresolved, or needing follow-up -- never as upcoming or a future next step.
 - Section, group, and category titles must accurately describe the actual conceptual domain of their contents (for example, do not label access or security constraints as retention constraints, or vice versa). If items span more than one domain, either split them into separate sections or use a domain-neutral title.
-- Consequentiality ordering must stay consistent for the same underlying records across every job and every refinement in this conversation. A refinement may narrow, reformat, or shorten what is shown, but it must select from what a fuller answer to the same request would already treat as most important -- never independently re-rank the same records into a different priority order, and never introduce a record that a fuller answer would have omitted."""
+- Consequentiality ordering must stay consistent for the same underlying records across every job and every refinement in this conversation. A refinement may narrow, reformat, or shorten what is shown, but it must select from what a fuller answer to the same request would already treat as most important -- never independently re-rank the same records into a different priority order, and never introduce a record that a fuller answer would have omitted.
+- An open Review's proposed statement, number, or decision is not yet true and does not close its linked Question, no matter how certain the underlying Evidence sounds (e.g. "Legal confirmed X"). Never describe an open Review's content as "confirmed", "established", "accepted", or as resolving/answering/closing a Question -- describe it as proposed and awaiting review, and state plainly that the linked Question remains open and Current State has not changed. Only an item actually present in Current State, or a Question actually absent from the open Questions list, may be described as settled.
+- The words "confirmed" and "resolved" (as a section title, headline, or plain claim) are reserved for something actually in Current State, or a Question actually closed -- never for anything whose only support is an open Review, Evidence, or an open Question, even when the Evidence text itself uses that word. Evidence saying "Legal confirmed X" describes what a source reported to Evidence, not an accepted fact -- phrase it as "Evidence reports Legal said X" or "Legal is reported to have said X", never as "X is confirmed" or "X (Confirmed)". This applies to short labels exactly as much as full sentences: a section titled "Retention Terms: Legal Confirmed" or "Confirmed Retention and Deletion" is the same violation as a sentence claiming retention is confirmed, just shorter -- titles and headlines get the identical scrutiny as prose, they are not exempt because they are brief.
+- If the user's question itself assumes or asserts something is resolved, confirmed, decided, or settled (e.g. "Since X is resolved, what can move forward?") and that is not actually true given Current State, open Reviews, and open Questions, correct that false premise plainly before answering anything else in the response -- e.g. "X is not resolved yet: evidence exists, but the Review has not been accepted and the Question remains open." Never adopt the user's framing and answer as though the premise were already true."""
 
 
 def _one_call_prompt(query: str, candidates: Mapping[str, Any], previous_answer: Mapping[str, Any] | None) -> str:
@@ -263,11 +268,12 @@ CRITICAL: Append mode (conversational) means: include the full prior answer as-i
 
 Authority rules are non-negotiable:
 - Current State governs what is true, allowed, or in scope now.
-- Open Reviews qualify Current State; they never replace it. Include a Review when it materially challenges State used by the answer.
+- Open Reviews qualify Current State; they never replace it, and their proposed content is not yet true. Never describe an open Review's proposed statement as "confirmed", "established", or as resolving its linked Question -- not even when the underlying Evidence itself uses the word "confirmed" (that describes what a source reported, not an accepted fact). It is proposed and awaiting review, the linked Question is still open, and Current State has not changed. Include a Review when it materially challenges State used by the answer, but phrase it as pending, not settled. If the user's own question assumes something is already resolved/confirmed that isn't, correct that false premise plainly before answering anything else.
 - A Question is blocking only when its supplied record says blocking=true. Ordinary Questions are known unknowns, not blockers.
 - History is accepted past change. Evidence is what was said or observed and cannot silently override Current State.
 - Project Rules constrain interpretation.
 - Unknown must remain unknown. Newer does not mean more authoritative. Approval does not mean implementation.
+- An open_question Review proposes tracking an unknown, not a State change. Its suggested Question is not yet an open Question or a fact. After authorization the ordinary Question record is still an unknown, never proof of its premise.
 - Optimize for relevance, not completeness. Omit tempting recent noise.
 - Refinement may change format, audience, length, focus, or ordering, but never project truth.{refinement_guidance}
 - For meeting prep, frame relevant Questions as opportunities to get answered.
@@ -410,6 +416,7 @@ Non-negotiable rules:
 - Relevant open Reviews must be visible in the main answer under needs_review, never hidden only in sources.
 - confirmed blockers must remain distinct from ordinary open Questions. For a blocker, include its exact 'blocks' dependency in detail.
 - Evidence may describe activity/claims but may not silently override Current State.
+- An open Review's proposed content is not yet true. Never describe it as "confirmed", "established", or as resolving its linked Question -- it is proposed and awaiting review, the linked Question is still open, and Current State has not changed.
 - Unknown must remain unknown. Do not infer absence from missing information.
 - Refinement may change format, audience, length, focus, or ordering; it may not change project truth.{refinement_guidance}
 - For meeting prep, frame relevant Questions as opportunities to get answered.
@@ -429,6 +436,166 @@ Selected validated context:
 Use record IDs on items whenever they correspond to a source record. Suggested refinements should be short actions."""
 
 
+def _match_case(replacement: str, matched: str) -> str:
+    if matched.isupper():
+        return replacement.upper()
+    if matched[:1].isupper():
+        return replacement[:1].upper() + replacement[1:]
+    return replacement
+
+
+# Shared between the headline/title backstop and the full-prose backstop
+# below: a piece of text containing one of these is already correctly
+# hedged and must be left completely alone by either backstop. Defined once
+# up here after a real bug caught this on a live run: the headline backstop
+# used to swap "resolved" unconditionally, and mangled an already-correct
+# "Retention is not yet resolved" into the nonsensical "not yet pending".
+_PENDING_HEDGE_PHRASES = (
+    "evidence says", "evidence reports", "pending review", "awaiting review",
+    "not yet confirmed", "not yet accepted", "not yet established", "not yet approved",
+    "not yet decided", "not yet resolved", "still open", "still pending",
+    "remains open", "remains unresolved", "remains unaccepted", "proposed",
+    "suggests", "appears to", "reportedly", "reported to", "is reported",
+)
+
+# "not yet resolved" above only catches that one exact phrase. In practice a
+# model negates a target word in several equally valid ways the fixed phrase
+# list can never fully enumerate -- "not resolved yet", "not confirmed
+# retention yet", "does not treat retention as resolved" -- and each one
+# missed by the list let the word-replacement regexes below run anyway and
+# garble an already-correct, already-hedged sentence (live staging QA,
+# 2026-09-13 found two of these in the same answer). Generic rule instead of
+# another fixed phrase: if a negation appears anywhere before one of the
+# target words in the sentence, the claim is already negated and the whole
+# sentence is left alone, regardless of how many words or what verb sits in
+# between. This is deliberately broader than a bounded word-count window --
+# every reported garbling case so far came from under-matching an
+# already-hedged sentence, never from over-matching one that genuinely needed
+# the replacement, so the safer failure mode here is to skip a sentence, not
+# to mangle it.
+_NEGATION_RE = re.compile(r"\bnot\b|n['’]t\b", re.I)
+_SETTLED_TARGET_WORD_RE = re.compile(
+    r"\b(?:confirmed|resolved|resolves|established|approved|decided|known|blocking)\b", re.I
+)
+
+
+def _already_hedged(text: str) -> bool:
+    lowered = text.lower()
+    if any(hedge in lowered for hedge in _PENDING_HEDGE_PHRASES):
+        return True
+    negation = _NEGATION_RE.search(lowered)
+    return bool(negation and _SETTLED_TARGET_WORD_RE.search(lowered, negation.end()))
+
+
+_SETTLED_WORD_REPLACEMENTS = (
+    (re.compile(r"\(\s*confirmed\s*\)", re.I), lambda m: ""),
+    (re.compile(r"\(\s*resolved\s*\)", re.I), lambda m: ""),
+    (re.compile(r"\bconfirmed\b", re.I), lambda m: _match_case("reported", m.group(0))),
+    (re.compile(r"\bresolved\b", re.I), lambda m: _match_case("pending", m.group(0))),
+)
+
+
+def _soften_unearned_settled_words(value: str | None) -> str | None:
+    """Headlines and section titles are the one place the model reliably
+    keeps reaching for "Confirmed"/"Resolved" as a compact status badge
+    (e.g. "Retention Terms: Legal Confirmed", "Confirmed Retention and
+    Deletion") even when full-sentence prose elsewhere in the same answer
+    correctly hedges ("not yet confirmed", "awaiting review"). Found via
+    live QA (2026-09-07, then again 2026-09-12): the _grounding_rules()
+    instruction banning this explicitly, including for short labels, still
+    left the model non-compliant on a live provider often enough (~0% pass
+    in a repeated live check) that prompt wording alone isn't sufficient
+    here -- this is the deterministic backstop. Only called when the
+    answer's own selected context actually includes an open Review or open
+    Question (has_pending_material in _validate_synthesis), so a genuinely
+    fully-settled answer's headline is never touched. Checks for an
+    existing hedge first (see _already_hedged) so an already-correct
+    headline is never touched either.
+    """
+    if not value:
+        return value
+    if _already_hedged(value):
+        return value
+    text = value
+    for pattern, replacement in _SETTLED_WORD_REPLACEMENTS:
+        text = pattern.sub(replacement, text)
+    text = re.sub(r"\s{2,}", " ", text).strip(" -–—:;,.")
+    return text or value
+
+
+# Full-sentence prose companion to _soften_unearned_settled_words. Live
+# testing after the headline/title fix (2026-09-12) still found unhedged
+# claims occasionally slipping into prose (summary, free-text items) --
+# narrower in scope than the headline fix on purpose, per explicit
+# direction: only rewrite a sentence that both (a) contains one of these
+# settled-sounding words/phrases and (b) is not already hedged per
+# _already_hedged above. A sentence that already hedges ("not yet
+# confirmed", "pending review") is left completely alone -- this must
+# never touch or garble a sentence the model already got right.
+_UNEARNED_SETTLED_PROSE_REPLACEMENTS = (
+    # A Review's own resolution status is a different claim from a State
+    # claim the generic word replacements below are built for. "The launch
+    # date is decided" -> "the launch date is proposed (not yet decided)"
+    # reads fine because a proposed *value* makes sense; the same template
+    # applied to "that Review is decided" instead claims the Review itself
+    # "is proposed" (as if it hadn't been created yet), which is nonsense --
+    # the Review already exists and is open; what's unsettled is its
+    # resolution. Matched and replaced first, with wording that reuses none
+    # of the other patterns' target words, so it can never be reprocessed by
+    # a later pattern in this same pass. Live staging QA, 2026-09-13: "Until
+    # that Review is proposed (not yet decided)..." was the exact garble.
+    (
+        re.compile(r"\b(the|that|this)\s+review\s+(?:is|has\s+been)\s+(?:decided|resolved|confirmed|approved)\b", re.I),
+        lambda m: f"{m.group(1)} Review remains open",
+    ),
+    (re.compile(r"\bhas\s+confirmed\b", re.I), lambda m: _match_case("is reported to have said", m.group(0))),
+    (re.compile(r"\bconfirmed\b", re.I), lambda m: _match_case("reported (pending Review)", m.group(0))),
+    (re.compile(r"\bresolves\b", re.I), lambda m: _match_case("may address (Review still open)", m.group(0))),
+    # "reportedly addressed, pending Review" (through 2026-09-13) read as an
+    # awkward, wordy comma-splice wherever it landed ("these are reportedly
+    # addressed, pending Review"). Restyled to the same short "X (not yet Y)"
+    # template already used for established/approved/decided/known below, so
+    # the whole family reads consistently and slots cleanly into a sentence.
+    (re.compile(r"\bresolved\b", re.I), lambda m: _match_case("reported (not yet resolved)", m.group(0))),
+    (re.compile(r"\bestablished\b", re.I), lambda m: _match_case("proposed (not yet established)", m.group(0))),
+    (re.compile(r"\bapproved\b", re.I), lambda m: _match_case("proposed for approval (not yet approved)", m.group(0))),
+    (re.compile(r"\bdecided\b", re.I), lambda m: _match_case("proposed (not yet decided)", m.group(0))),
+    (re.compile(r"\bnow\s+known\b", re.I), lambda m: _match_case("reported (not yet confirmed)", m.group(0))),
+    (re.compile(r"\bno\s+longer\s+blocking\b", re.I), lambda m: _match_case("reported as potentially no longer blocking, pending Review", m.group(0))),
+)
+
+_SENTENCE_SPLIT_RE = re.compile(r"(?<=[.!?])\s+")
+
+
+def _soften_unearned_settled_prose(value: str | None) -> str | None:
+    """Sentence-scoped companion to _soften_unearned_settled_words: rewrites
+    an unhedged settled-sounding claim within full prose (Ask's summary,
+    and free-text item text/detail), leaving any sentence that already
+    hedges completely untouched. Narrow by design -- this is a deterministic
+    backstop for a specific, recurring trust failure (Ask narrating pending
+    Review/Evidence/Question material as settled), not a general rewriter,
+    per explicit direction after live testing showed prompt wording alone
+    isn't reliable here (~1/4 pass in a small live sample). Only called
+    when the answer's own selected context includes an open Review or open
+    Question (has_pending_material in _validate_synthesis).
+    """
+    if not value:
+        return value
+    sentences = _SENTENCE_SPLIT_RE.split(value)
+    rewritten = []
+    for sentence in sentences:
+        if _already_hedged(sentence):
+            rewritten.append(sentence)
+            continue
+        fixed = sentence
+        for pattern, replacement in _UNEARNED_SETTLED_PROSE_REPLACEMENTS:
+            fixed = pattern.sub(replacement, fixed)
+        rewritten.append(fixed)
+    text = " ".join(rewritten)
+    text = re.sub(r"\s{2,}", " ", text).strip()
+    return text or value
+
+
 def _clean_visible_ask_text(value: str | None, internal_ids: set[str]) -> str | None:
     """Remove implementation identifiers from prose shown to users."""
     if value is None:
@@ -441,6 +608,14 @@ def _clean_visible_ask_text(value: str | None, internal_ids: set[str]) -> str | 
             text = re.sub(rf"(?<![A-Za-z0-9_]){re.escape(internal_id)}(?![A-Za-z0-9_])", "", text, flags=re.IGNORECASE)
     text = re.sub(r"\b(?:state|question|evidence|review|proposal)_[a-z0-9]+\b", "", text, flags=re.IGNORECASE)
     text = re.sub(r"\b(?:ask-evidence|state|question|evidence|review|proposal|k|q)-[a-z0-9-]+\b", "", text, flags=re.IGNORECASE)
+    # A model sometimes cites an internal ID as an inline parenthetical, e.g.
+    # "Retention is confirmed (review_1)." Stripping the ID above is correct
+    # (it's an implementation detail, not something a user should see), but
+    # left alone it strands the empty citation shell: "confirmed ()." Found
+    # via live staging QA (2026-09-13). Only a parenthetical that is now
+    # nothing but whitespace/punctuation is removed -- one with other real
+    # words left inside ("(see the linked Review)") is untouched.
+    text = re.sub(r"\(\s*(?:[,;]\s*)*\)", "", text)
     text = re.sub(r"\s+([,.;:])", r"\1", text)
     text = re.sub(r"\s{2,}", " ", text).strip(" -–—:;,.")
     return text or None
@@ -459,8 +634,14 @@ def _validate_synthesis(answer: AskSynthesis, selection: AskSelection, context: 
     canonical_reviews = {x["id"]: x for x in context.get("reviews", [])}
     canonical_questions = {x["id"]: x for x in context.get("questions", [])}
 
+    has_pending_material = bool(context.get("reviews")) or bool(context.get("questions"))
+
     answer.headline = _clean_visible_ask_text(answer.headline, all_internal_ids) or "Project answer"
+    if has_pending_material:
+        answer.headline = _soften_unearned_settled_words(answer.headline)
     answer.summary = _clean_visible_ask_text(answer.summary, all_internal_ids) or "See the grounded project details below."
+    if has_pending_material:
+        answer.summary = _soften_unearned_settled_prose(answer.summary)
     answer.suggested_refinements = [
         cleaned for value in answer.suggested_refinements
         if (cleaned := _clean_visible_ask_text(value, all_internal_ids))
@@ -469,11 +650,16 @@ def _validate_synthesis(answer: AskSynthesis, selection: AskSelection, context: 
     clean_sections = []
     for section in answer.sections:
         section.title = _clean_visible_ask_text(section.title, all_internal_ids) or "Project context"
+        if has_pending_material:
+            section.title = _soften_unearned_settled_words(section.title)
         clean_items = []
         for item in section.items:
             if item.record_type == "none":
                 item.text = _clean_visible_ask_text(item.text, all_internal_ids) or "Project context"
                 item.detail = _clean_visible_ask_text(item.detail, all_internal_ids)
+                if has_pending_material:
+                    item.text = _soften_unearned_settled_prose(item.text)
+                    item.detail = _soften_unearned_settled_prose(item.detail)
                 clean_items.append(item)
                 continue
             if item.record_id and item.record_id in allowed.get(item.record_type, set()):

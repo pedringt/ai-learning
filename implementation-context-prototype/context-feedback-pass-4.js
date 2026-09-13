@@ -7,10 +7,7 @@
     s.id=STYLE_ID;
     s.textContent=`
       /* Product chrome */
-      html body:not(.v88-dark) .prototype-productbar{background:#b9cee8!important;border-bottom-color:#9fb9d8!important;color:#263d5e!important}
-
-      /* Workspace: one obvious action area, otherwise calm. */
-      html body .workspace-attention{background:#fff!important;border:1px solid #e1e5eb!important;border-top:4px solid #d4a0a7!important;box-shadow:none!important}
+      html body:not(.v88-dark) .prototype-productbar{border-bottom-color:#9fb9d8!important}
       html body .workspace-attention .workspace-attention-head p{display:none!important}
       html body .workspace-attention .attention-list{background:transparent!important;border:0!important;border-radius:0!important;overflow:visible!important}
       html body .workspace-attention .attention-item{background:transparent!important;border:0!important;border-top:1px solid #e6e8ee!important;border-radius:0!important;box-shadow:none!important;transition:none!important}
@@ -33,7 +30,7 @@
       html body .open-items-page .open-items-section-description{font-size:12px!important;line-height:1.42!important;color:#6f7888!important;max-width:650px!important}
       html body .open-items-page .open-items-section-body{padding:0!important;background:transparent!important}
       html body .open-items-page .review-card,html body .open-items-page .compact-review{max-width:820px!important;margin:0!important;background:#fff!important;border:0!important;border-bottom:1px solid #e4e8ee!important;border-radius:0!important;box-shadow:none!important}
-      html body .open-items-page .review-card-toggle{padding:15px 4px!important;background:transparent!important;border:0!important}
+      html body .open-items-page .review-card-toggle{background:transparent!important;border:0!important}
       html body .open-items-page .review-card-toggle:hover{background:#fafbfc!important}
       html body .open-items-page .review-kicker{font-size:10px!important;letter-spacing:.06em!important;color:#66569a!important}
       html body .open-items-page .review-card-title{font-size:14.5px!important;line-height:1.4!important;color:#17223a!important}
@@ -53,7 +50,6 @@
       html body .open-items-page .open-question-list{max-width:760px!important;border:0!important;border-radius:0!important;background:transparent!important;overflow:visible!important}
       html body .open-items-page .open-question-row{width:100%!important;padding:13px 4px!important;background:#fff!important;border:0!important;border-bottom:1px solid #e4e8ee!important;border-radius:0!important;box-shadow:none!important}
       html body .open-items-page .open-question-row:hover{background:#fafbfc!important;transform:none!important}
-      html body .open-items-page .open-question-row.is-blocking{background:#fff!important;border-left:2px solid #d2a260!important;padding-left:10px!important}
       html body .open-items-page .open-item-label{display:inline-flex!important;width:auto!important;padding:2px 6px!important;border-radius:999px!important;font-size:9px!important;letter-spacing:.05em!important}
       html body .open-items-page .open-item-label.blocking{background:#fff7ec!important;color:#95601d!important}
       html body .open-items-page .open-item-label.question{background:#edf4ff!important;color:#315f9a!important}
@@ -75,17 +71,14 @@
       html body .history-page .history-entry{border-bottom:1px solid #dfe4eb!important;padding:0 0 28px!important;margin:0 0 28px!important}
       html body .history-page .history-entry:last-child{border-bottom:0!important}
       html body .history-page .history-entry:hover,html body .history-page .history-entry.is-linked:hover{background:transparent!important;border-left:0!important;box-shadow:none!important;transform:none!important;outline:0!important}
-      html body .history-page .history-entry-date{display:block!important;width:auto!important;padding:0!important;border:0!important;border-radius:0!important;background:transparent!important;color:#798394!important;font-size:10.5px!important;font-weight:750!important;letter-spacing:.04em!important;text-transform:uppercase!important}
+      html body .history-page .history-entry-date{width:auto!important;border:0!important;border-radius:0!important;background:transparent!important;color:#798394!important;font-size:10.5px!important;font-weight:750!important;letter-spacing:.04em!important;text-transform:uppercase!important}
       html body .history-page .history-entry h3{font-size:18px!important;line-height:1.25!important;margin:5px 0 11px!important;color:#17223a!important}
-      html body .history-page .history-change{gap:9px!important;max-width:820px!important}
+      html body .history-page .history-change{gap:9px!important}
       html body .history-page .history-change>p{padding:11px 13px!important;border-radius:9px!important;font-size:12.5px!important;line-height:1.45!important}
       html body:not(.v88-dark) .history-page .history-change>p:first-child{background:#f7f8fa!important;border-color:#e2e6eb!important}
       html body:not(.v88-dark) .history-page .history-change>p:last-child{background:#edf8f2!important;border-color:#cae6d6!important}
       html body .history-page .decision-line{margin-top:9px!important;font-size:10.5px!important;color:#687386!important}
-
-      /* Settings: conventional preferences page. */
-      html body .settings-page{max-width:820px!important}
-      html body .settings-page .settings-section{background:transparent!important;border:0!important;border-radius:0!important;box-shadow:none!important;padding:20px 0!important;margin:0!important;border-bottom:1px solid #e1e5eb!important}
+      html body .settings-page .settings-section{margin:0!important;border-bottom:1px solid #e1e5eb!important}
       html body .settings-page .settings-section:first-of-type{padding-top:6px!important}
       html body .settings-page .settings-section:last-child{border-bottom:0!important}
       html body .settings-page .settings-quiet{background:transparent!important}
@@ -135,7 +128,6 @@
       html body #askStateDrawer .state-ask-reset{position:absolute!important;right:6px!important;top:50%!important;transform:translateY(-50%)!important;width:31px!important;height:31px!important;padding:0!important;border:0!important;background:transparent!important;color:#677389!important;font-size:21px!important;line-height:31px!important;z-index:20!important;cursor:pointer!important}
       html body #askStateDrawer .state-ask-reset::before,html body #askStateDrawer .state-ask-reset::after{content:none!important;display:none!important}
       html body #askStateDrawer.has-answer .ask-state-starters,html body #askStateDrawer.is-generating .ask-state-starters{display:none!important}
-      html body #askStateDrawer .ask-state-stale{display:none!important}
       html body #askStateDrawer .ask-state-starters{grid-template-columns:minmax(0,1fr)!important;width:100%!important}
       html body #askStateDrawer .ask-state-starters button{width:100%!important;min-width:0!important;max-width:100%!important;white-space:normal!important;text-align:left!important}
       html body #askStateDrawer .ask-copy-answer{min-height:27px!important;height:27px!important;padding:0 7px!important;font-size:10px!important}

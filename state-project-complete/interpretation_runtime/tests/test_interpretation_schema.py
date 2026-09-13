@@ -1,7 +1,7 @@
 import copy
 import unittest
 
-from state_spike.interpretation_validation import (
+from validation.interpretation_validation import (
     StructuredInterpretationSchemaError,
     validate_schema,
 )

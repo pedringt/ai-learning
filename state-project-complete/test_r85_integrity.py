@@ -6,7 +6,7 @@ from fastapi.testclient import TestClient
 
 from api import Settings, create_app
 from database_migration_backed import initialize_db
-from seed_demo import bootstrap_demo_data
+from seed_demo import DEMO_EVIDENCE_DATES, bootstrap_demo_data
 
 
 class NoopProvider:
@@ -85,7 +85,8 @@ def test_new_demo_seed_evidence_uses_historical_dates(tmp_path):
     conn.row_factory = sqlite3.Row
     initialize_db(conn)
     bootstrap_demo_data(conn)
-    rows = conn.execute("SELECT submitted_at FROM evidence WHERE source_type='demo_seed' ORDER BY id").fetchall()
-    assert len(rows) == 4
-    assert all(str(row["submitted_at"]).startswith("2026-08-") for row in rows)
+    rows = conn.execute("SELECT id, submitted_at FROM evidence WHERE source_type='demo_seed' ORDER BY id").fetchall()
+    assert len(rows) == len(DEMO_EVIDENCE_DATES)
+    expected = {f"{rid}-evidence": submitted_at for rid, submitted_at in DEMO_EVIDENCE_DATES.items()}
+    assert {row["id"]: row["submitted_at"] for row in rows} == expected
     conn.close()
