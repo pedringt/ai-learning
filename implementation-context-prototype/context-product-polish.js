@@ -26,6 +26,7 @@
   const ui = {
     drawerOpen: false,
     query: '',
+    skipRouting: false,
     payload: null,
     resolvedContext: [],
     answerStateSignature: null,
@@ -294,7 +295,17 @@
   }
   async function runAsk(query,{skipRouting=false}={}){
     const clean=String(query||'').trim();if(!clean)return;
-    ui.query=clean;syncAskInputs();openAskDrawer({focus:false});
+    // Persisted alongside the query (not just used inline below) so a later
+    // refresh-ask on this same query -- which doesn't get a fresh
+    // {skipRouting} from its caller -- knows whether this text is trusted
+    // starter wording rather than running it back through the classifier.
+    // A long starter instruction like "...keep accepted Current State,
+    // pending Reviews, and unresolved Questions clearly separate." trips
+    // the same generic-inventory classifier a bare "What needs review?"
+    // would, silently swapping the real answer for a static Open Items
+    // count card on refresh even though the initial ask (which does pass
+    // skipRouting) got a real one.
+    ui.query=clean;ui.skipRouting=skipRouting;syncAskInputs();openAskDrawer({focus:false});
     if(explicitMutationIntent(clean)){
       ui.payload=null;ui.resolvedContext=[];ui.answerStateSignature=null;ui.stale=false;
       renderDrawerResult('<div class="ask-readonly-message"><h3>Ask State is read-only.</h3><p>Typing here never changes the project record. Use Add Evidence when you have new project information State should evaluate.</p><button class="btn primary" type="button" data-review-batch-action="open-add-evidence">Add Evidence</button></div>');return;
@@ -359,7 +370,7 @@
     if(type==='open-ask')openAskDrawer();
     else if(type==='close-ask')closeAskDrawer();
     else if(type==='copy-ask-answer'&&ui.payload)writeClipboard(portableAskText(ui.payload,ui.resolvedContext)).then(()=>showToast('Ask answer copied with State labels.'));
-    else if(type==='refresh-ask')runAsk(ui.query);
+    else if(type==='refresh-ask')runAsk(ui.query,{skipRouting:ui.skipRouting});
     else if(type==='open-add-evidence'){closeAskDrawer();document.querySelector('[data-action="add-info"]')?.click();}
   },true);
 
