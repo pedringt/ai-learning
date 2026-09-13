@@ -117,7 +117,20 @@
       const close=e.target.closest?.('#askStateDrawer .ask-state-drawer-close');
       if(close){e.preventDefault();e.stopImmediatePropagation();const d=document.getElementById('askStateDrawer'),l=document.getElementById('askStateLauncher');if(d)d.hidden=true;if(l)l.classList.remove('is-hidden');return}
       const starter=e.target.closest?.('#askStateDrawer [data-review-batch-prompt]');
-      if(starter){e.preventDefault();e.stopImmediatePropagation();const input=document.getElementById('askStateDrawerInput'),form=document.querySelector('#askStateDrawer [data-review-batch-form="ask"]');if(!input||!form)return;input.value=starter.dataset.reviewBatchPrompt||starter.textContent.trim();input.dispatchEvent(new Event('input',{bubbles:true}));form.requestSubmit()}
+      // Re-fire a real click on the same element rather than reimplementing
+      // "fill the input and submit" here: that reimplementation used
+      // form.requestSubmit(), which only ever reaches runAsk() through the
+      // plain form-submit handler in context-product-polish.js -- the one
+      // that (correctly) treats untrusted text through the classifier. The
+      // starter's own click handler passes {skipRouting:true} for exactly
+      // this text; on mobile, this pointerup handler's preventDefault +
+      // stopImmediatePropagation was suppressing that click handler from
+      // ever running at all, so tapping a starter here on mobile always
+      // hit the classifier fresh and (for 3 of the 5 starters, whose
+      // instruction wording trips it -- see state-ask-starter-routing-
+      // tests.js) rendered the static Open Items card instead of a real
+      // answer, unlike the same tap on desktop.
+      if(starter){e.preventDefault();e.stopImmediatePropagation();starter.click();return}
     },true);
   }
 
