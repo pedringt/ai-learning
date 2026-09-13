@@ -215,7 +215,6 @@ def test_missing_proposal_token_and_double_accept_fail_closed(db):
 @pytest.mark.parametrize('change', [
     {'affected_state_item_ids': ['unknown']},
     {'proposed_changes': [{'operation': 'create', 'proposed_statement': 'Review was removed.', 'rationale': 'unsafe'}]},
-    {'resolves_question_ids': ['unknown']},
     {'blocking': True}, {'status': 'resolved'}, {'decision_question': '   '},
     {'decision_question': 'x' * 501},
 ])
@@ -223,6 +222,27 @@ def test_invalid_or_mixed_outcomes_are_rejected_without_side_effects(db, change)
     result, _ = suggest(db, change=change)
     assert result.processing_status == 'failed'
     assert list_reviews(db) == [] and list_questions(db) == [] and list_state(db) == []
+
+
+def test_open_question_with_resolves_question_ids_is_repaired_not_rejected(db):
+    """Product decision (2026-09-13, live staging finding): unlike the other
+    open_question schema violations above (a populated affected_state_item_ids
+    or proposed_changes signals a more fundamental confusion about what
+    open_question means, and must still fail), resolves_question_ids is
+    optional and redundant with the type itself -- open_question always
+    means "this is a new unknown, not an answer to an existing one". A model
+    pointing it at a real, valid open Question (not fabricated/unknown, as in
+    the other tests here) is a mechanical labeling slip, not a sign the whole
+    submission is untrustworthy, so it's cleared instead of hard-rejecting
+    evidence that otherwise correctly identified a new open Question."""
+    q_id = create_question(db, uuid.uuid4().hex, 'What are the vendor retention terms?')['id']
+    result, _ = suggest(db, change={'resolves_question_ids': [q_id]})
+    assert result.processing_status == 'succeeded'
+    review = next(r for r in list_reviews(db) if r['review_type'] == 'open_question')
+    assert review['resolves_question_ids'] == []
+    # The pre-existing Question is untouched -- still open, not resolved by
+    # a Review that never legally could have resolved it.
+    assert any(q['id'] == q_id for q in list_questions(db))
 
 
 def test_atomic_rollback_does_not_leave_question_if_review_update_fails(db):

@@ -551,7 +551,12 @@ _UNEARNED_SETTLED_PROSE_REPLACEMENTS = (
     (re.compile(r"\bhas\s+confirmed\b", re.I), lambda m: _match_case("is reported to have said", m.group(0))),
     (re.compile(r"\bconfirmed\b", re.I), lambda m: _match_case("reported (pending Review)", m.group(0))),
     (re.compile(r"\bresolves\b", re.I), lambda m: _match_case("may address (Review still open)", m.group(0))),
-    (re.compile(r"\bresolved\b", re.I), lambda m: _match_case("reportedly addressed, pending Review", m.group(0))),
+    # "reportedly addressed, pending Review" (through 2026-09-13) read as an
+    # awkward, wordy comma-splice wherever it landed ("these are reportedly
+    # addressed, pending Review"). Restyled to the same short "X (not yet Y)"
+    # template already used for established/approved/decided/known below, so
+    # the whole family reads consistently and slots cleanly into a sentence.
+    (re.compile(r"\bresolved\b", re.I), lambda m: _match_case("reported (not yet resolved)", m.group(0))),
     (re.compile(r"\bestablished\b", re.I), lambda m: _match_case("proposed (not yet established)", m.group(0))),
     (re.compile(r"\bapproved\b", re.I), lambda m: _match_case("proposed for approval (not yet approved)", m.group(0))),
     (re.compile(r"\bdecided\b", re.I), lambda m: _match_case("proposed (not yet decided)", m.group(0))),

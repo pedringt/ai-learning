@@ -117,6 +117,49 @@ def test_unrepairable_authority_or_content_errors_still_fail_atomically():
     assert_fails_atomically(p, "invalid_review_reference")
 
 
+def test_open_question_with_illegal_resolves_question_ids_is_repaired_not_rejected():
+    """Regression coverage for a staging finding (2026-09-13): a provider
+    correctly chose review_type open_question for evidence raising a new
+    unknown, but also pointed resolves_question_ids at a related existing
+    Question ("q-retention") -- illegal per schema, since open_question can
+    never resolve a Question (it IS the new unknown, not an answer to an
+    old one). The resulting schema_violation hard-rejected the entire
+    evidence submission even though the review_type choice itself was fine.
+    resolves_question_ids is simply cleared -- software does not invent
+    which Question, if any, this new unknown actually answers.
+    """
+    conn = db()
+    conn.execute(
+        "INSERT INTO questions(id, text, status, blocking) VALUES "
+        "('q-retention', 'What are the vendor retention terms?', 'open', 0)"
+    )
+    conn.commit()
+
+    p = {
+        "summary": "Legal confirmed vendor retention is 30 days.",
+        "topics": ["retention"],
+        "review_recommendations": [{
+            "review_action": "create",
+            "review_type": "open_question",
+            "decision_question": "Does the confirmed 30-day window cover pilot outputs as well as prompts?",
+            "why_consequential": "Scope of what's covered is still unclear.",
+            "affected_state_item_ids": [],
+            "proposed_changes": [],
+            "resolves_question_ids": ["q-retention"],
+        }],
+    }
+
+    result = process_evidence(conn, evidence_id="e1", provider=PayloadProvider(p))
+
+    assert result.processing_status == "succeeded"
+    # A Review was created for the new open_question, but it must not be
+    # recorded as resolving the (unrelated, still-open) existing Question.
+    assert conn.execute("SELECT count(*) FROM review_issues").fetchone()[0] == 1
+    assert conn.execute("SELECT count(*) FROM review_questions").fetchone()[0] == 0
+    assert conn.execute("SELECT status FROM questions WHERE id='q-retention'").fetchone()[0] == "open"
+    conn.close()
+
+
 def test_existing_review_id_with_mismatched_review_type_is_repaired_not_rejected():
     """Regression coverage for a staging finding (2026-09-13): a provider
     correctly linked evidence to an existing open Review (demo-review-retention,

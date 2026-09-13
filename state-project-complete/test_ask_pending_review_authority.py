@@ -249,6 +249,18 @@ def test_soften_unearned_settled_prose_rewrites_an_unhedged_sentence():
     assert "is reported to have said" in fixed
 
 
+def test_soften_unearned_settled_prose_uses_the_shorter_resolved_phrasing():
+    """Real staging QA finding (2026-09-13): the old "reportedly addressed,
+    pending Review" wording read as an awkward comma-splice wherever it
+    landed, e.g. "Until these are reportedly addressed, pending Review...".
+    Restyled to match the same short "X (not yet Y)" template already used
+    for established/approved/decided/known, for both readability and to
+    read consistently as one family of hedges."""
+    fixed = _soften_unearned_settled_prose("Until these are resolved, nothing changes.")
+    assert "reported (not yet resolved)" in fixed
+    assert "reportedly addressed" not in fixed
+
+
 def test_soften_unearned_settled_prose_leaves_hedged_sentences_alone():
     hedged = [
         "Legal has not yet confirmed retention terms.",

@@ -240,13 +240,28 @@ def normalize_provider_payload(
         ):
             recommendation["review_type"] = "missing_understanding"
 
-        # An open_question Review proposes a durable unknown, never a State
-        # mutation or an answer to an existing Question. Keep the provider's
-        # semantic choice, but remove harmless empty presentation metadata so
-        # canonical validation sees the minimal legal shape.
+        # An open_question Review proposes a durable unknown, never an answer
+        # to an existing Question -- the canonical schema forbids
+        # resolves_question_ids entirely for this type. A model raising a new
+        # unknown sometimes also points resolves_question_ids at a related
+        # existing Question (e.g. "this new unknown is basically
+        # q-retention"), which isn't a concrete answer to that Question --
+        # accepting this open_question Review would never resolve it -- but
+        # the schema violation still hard-rejected the whole evidence
+        # submission (live staging QA, 2026-09-13). Clearing it keeps the
+        # model's own type choice (open_question) rather than rerouting to a
+        # different type or inventing which Question it actually answers, so
+        # the evidence and Review still reach a human instead of being
+        # discarded. Deliberately narrow: unlike this one optional,
+        # redundant-with-the-type-itself field, a *non-empty*
+        # affected_state_item_ids or proposed_changes on an open_question
+        # recommendation is left uncorrected and still fails -- those are
+        # required fields the schema also constrains to empty for this type,
+        # but a model populating them signals a more fundamental confusion
+        # about what open_question means, not a mechanical labeling slip (see
+        # test_invalid_or_mixed_outcomes_are_rejected_without_side_effects).
         if recommendation.get("review_type") == "open_question":
-            if recommendation.get("resolves_question_ids") == []:
-                recommendation.pop("resolves_question_ids", None)
+            recommendation.pop("resolves_question_ids", None)
             recommendation.pop("grouping_reason", None)
 
         # grouping_reason is presentation metadata, not authority. It is legal
