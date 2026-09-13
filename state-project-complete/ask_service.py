@@ -458,10 +458,27 @@ _PENDING_HEDGE_PHRASES = (
     "suggests", "appears to", "reportedly", "reported to", "is reported",
 )
 
+# "not yet resolved" above only catches that exact word order. A model just
+# as often writes the negation the other way around -- "not resolved yet",
+# "not confirmed retention yet" -- which is an equally valid, already-hedged
+# claim but was missed by the phrase list, so the word-replacement regexes
+# below ran anyway and stranded "yet" after the inserted replacement clause:
+# "is not resolved yet" became the nonsensical "is not reportedly addressed,
+# pending Review yet" (live staging QA, 2026-09-13). Generic pattern, not
+# another fixed phrase, since this word-order flip applies to any of the
+# target words (confirmed/resolved/established/approved/decided), not just
+# "resolved", and one or more words (a direct object, an adverb) can sit
+# between "not" and "yet" ("not confirmed retention yet"). Bounded to a
+# handful of words so it can't accidentally span into an unrelated clause
+# later in a long sentence.
+_NOT_WORD_YET_RE = re.compile(r"\bnot\b(?:\s+\w+){1,4}\s+yet\b", re.I)
+
 
 def _already_hedged(text: str) -> bool:
     lowered = text.lower()
-    return any(hedge in lowered for hedge in _PENDING_HEDGE_PHRASES)
+    if any(hedge in lowered for hedge in _PENDING_HEDGE_PHRASES):
+        return True
+    return bool(_NOT_WORD_YET_RE.search(lowered))
 
 
 _SETTLED_WORD_REPLACEMENTS = (

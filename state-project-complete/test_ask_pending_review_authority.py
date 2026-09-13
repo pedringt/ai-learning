@@ -114,6 +114,27 @@ def test_soften_unearned_settled_words_does_not_mangle_an_already_hedged_headlin
     assert _soften_unearned_settled_words("Legal has not yet confirmed retention") == "Legal has not yet confirmed retention"
 
 
+def test_soften_unearned_settled_prose_does_not_mangle_the_reversed_not_x_yet_word_order():
+    """Real staging QA finding (2026-09-13): the hedge-phrase list only knew
+    the "not yet resolved" word order. A model that instead wrote "not
+    resolved yet" wasn't recognized as already-hedged, so the sentence-level
+    backstop ran anyway and stranded the sentence's "yet" after the inserted
+    replacement clause: "retention is not resolved yet" became the
+    nonsensical "retention is not reportedly addressed, pending Review yet".
+    Both word orders must be left completely alone."""
+    already_correct = [
+        "Retention is not resolved yet.",
+        "Legal has not confirmed retention yet.",
+        "This is not established yet.",
+        "The change was not approved yet.",
+        "Leadership has not decided yet.",
+    ]
+    for sentence in already_correct:
+        assert _soften_unearned_settled_prose(sentence) == sentence, (
+            f"Already-hedged sentence must be left byte-for-byte alone: {sentence!r}"
+        )
+
+
 def _selection_and_context_with_open_review():
     selection = AskSelection(
         job="current_fact", state_ids=[], review_ids=["r-1"], blocking_question_ids=[],
