@@ -197,6 +197,13 @@
         html body #askStateDrawer .ask-item-link{min-height:34px!important;display:inline-flex!important;align-items:center!important;padding:5px 6px!important}
         html body .state-mobile-help{display:block!important;margin:30px 0 72px!important;padding:18px 2px 0!important;border-top:1px solid #e1e6ed!important}
         html body .state-mobile-help button{display:inline-flex!important;min-height:40px!important;align-items:center!important;padding:4px 0!important;border:0!important;background:transparent!important;color:#68768a!important;font:inherit!important;font-size:12px!important;font-weight:700!important;cursor:pointer!important}
+        html body .notes-page article.simple-note.note-index-row{display:block!important}
+        html body .notes-page .note-feed-icon{float:left!important;margin:0 10px 6px 0!important}
+        html body .notes-page .note-index-main{display:block!important;min-width:0!important}
+        html body .notes-page .note-index-status{display:block!important;clear:left!important;width:100%!important;margin:8px 0 0!important}
+        html body .notes-page .note-index-status .note-status{display:inline-block!important;background:none!important;border:0!important;padding:0!important;min-height:0!important;border-radius:0!important;box-shadow:none!important;margin-left:0!important}
+        html body .notes-page .note-index-status .note-review-link,
+        html body .notes-page .note-index-status .note-history-link{display:block!important;width:100%!important;min-height:0!important;padding:0!important;text-align:left!important;white-space:normal!important}
       }
       @media(max-width:480px){
         html body .prototype-productbar .product-tagline,
