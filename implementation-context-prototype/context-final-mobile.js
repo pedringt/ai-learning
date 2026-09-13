@@ -164,6 +164,9 @@
       html body .analysis-pulse{background:#4b82bd!important}
 
       @media(max-width:760px){
+        html body .mobile-subnav.is-pinned{position:fixed!important;top:0!important;left:0!important;right:0!important;margin:0!important;width:auto!important;z-index:9!important;background:var(--bg,#fff)!important;padding:8px 12px 10px!important;border-bottom:1px solid var(--line)!important;box-shadow:0 2px 8px rgba(24,20,48,.08)!important}
+        html body.v88-dark .mobile-subnav.is-pinned{background:#14131a!important}
+        html body .settings-page .settings-actions .text-button{font-size:11.5px!important;font-weight:700!important}
         html body .app-workspace{padding-left:0!important;padding-right:0!important}
         html body .prototype-productbar{align-items:center!important;flex-wrap:nowrap!important;padding:10px 14px!important;min-height:48px!important}
         html body .prototype-productbar .product-name{font-size:18px!important}
@@ -268,7 +271,46 @@
     if(window.__stateFinalMobileTimer){clearTimeout(window.__stateFinalMobileTimer);delete window.__stateFinalMobileTimer;}
   }
 
-  function run(){installStyles();loadAttentionAlignment();keepFinalStyleLast();removeWorkspaceAttentionIcon();ensureMobileHelp();syncMobileAskLauncher();reveal();}
+  // CSS position:sticky does not take effect for this element in this
+  // layout (verified: even inline !important sticky + resetting every
+  // overflow/transform/contain/filter property up the ancestor chain has
+  // no effect, while position:fixed on the same element works normally).
+  // This polyfills the same natural-until-scrolled-past behavior with a
+  // sentinel + scroll listener instead of relying on sticky.
+  let subnavSentinel=null;
+  function syncSubnavSentinel(){
+    const nav=document.getElementById('mobileProjectSubnav');
+    if(!nav){subnavSentinel=null;return;}
+    if(!subnavSentinel||subnavSentinel.nextElementSibling!==nav||subnavSentinel.parentElement!==nav.parentElement){
+      subnavSentinel=nav.previousElementSibling&&nav.previousElementSibling.classList?.contains('mobile-subnav-sentinel')
+        ? nav.previousElementSibling
+        : document.createElement('div');
+      subnavSentinel.className='mobile-subnav-sentinel';
+      subnavSentinel.style.cssText='height:0;margin:0;padding:0;pointer-events:none';
+      if(subnavSentinel.nextElementSibling!==nav) nav.parentElement.insertBefore(subnavSentinel,nav);
+    }
+    updateSubnavPin();
+  }
+  function updateSubnavPin(){
+    const nav=document.getElementById('mobileProjectSubnav');
+    if(!nav||!subnavSentinel)return;
+    if(nav.hidden||window.matchMedia('(max-width:760px)').matches===false){
+      if(nav.classList.contains('is-pinned')){nav.classList.remove('is-pinned');subnavSentinel.style.height='0';}
+      return;
+    }
+    const shouldPin=subnavSentinel.getBoundingClientRect().top<=0;
+    if(shouldPin&&!nav.classList.contains('is-pinned')){
+      subnavSentinel.style.height=nav.offsetHeight+'px';
+      nav.classList.add('is-pinned');
+    }else if(!shouldPin&&nav.classList.contains('is-pinned')){
+      nav.classList.remove('is-pinned');
+      subnavSentinel.style.height='0';
+    }
+  }
+  window.addEventListener('scroll',()=>{if(subnavSentinel)updateSubnavPin();},{passive:true});
+  window.addEventListener('resize',()=>{if(subnavSentinel)updateSubnavPin();},{passive:true});
+
+  function run(){installStyles();loadAttentionAlignment();keepFinalStyleLast();removeWorkspaceAttentionIcon();ensureMobileHelp();syncMobileAskLauncher();syncSubnavSentinel();reveal();}
   let queued=false;
   const schedule=()=>{
     if(movingStyle||queued)return;
@@ -281,6 +323,7 @@
       removeWorkspaceAttentionIcon();
       ensureMobileHelp();
       syncMobileAskLauncher();
+      syncSubnavSentinel();
       reveal();
     });
   };
