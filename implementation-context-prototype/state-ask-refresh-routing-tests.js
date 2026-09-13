@@ -67,6 +67,12 @@ function refreshButton(){
   el.closest=sel=>sel==='[data-review-batch-action]'?el:null;
   return el;
 }
+function askForm(inputValue){
+  const input={value:inputValue};
+  const el={querySelector:sel=>sel==='input'?input:null};
+  el.closest=sel=>sel==='[data-review-batch-form="ask"]'?el:null;
+  return el;
+}
 function fire(type,target){
   const event={target,preventDefault(){},stopPropagation(){}};
   (listeners[type]||[]).forEach(handler=>handler(event));
@@ -134,6 +140,30 @@ function check(name,ok,detail=''){if(ok){pass++;console.log('✓',name);}else{fa
     !resultHtml.includes('ask-routing-card'), resultHtml.slice(0,160));
   check('refreshing renders the real synthesized answer',
     resultHtml.includes('Real answer for: '+starter.prompt), resultHtml.slice(0,160));
+
+  // A second, more common way to hit the same gap: after clicking the
+  // starter chip, the drawer's input holds that starter's full text.
+  // Pressing Enter or tapping "Ask" again resubmits it through the plain
+  // form-submit handler, not the chip's own skipRouting:true click handler.
+  calls.length=0;
+  fire('submit',askForm(starter.prompt));
+  await flush();await flush();await flush();
+  check('resubmitting the untouched starter text via the form still reaches the real backend',
+    calls.includes(starter.prompt), JSON.stringify(calls));
+  const resubmitHtml=elementsById['askStateDrawerResult']?.innerHTML||'';
+  check('resubmitting the untouched starter text does not swap in the static routing card',
+    !resubmitHtml.includes('ask-routing-card'), resubmitHtml.slice(0,160));
+
+  // But editing that text first must still go through the classifier like
+  // any other typed question -- trust is for exact resubmission only.
+  const edited=starter.prompt+' Keep it very short.';
+  calls.length=0;
+  fire('submit',askForm(edited));
+  await flush();await flush();await flush();
+  check('editing the starter text before resubmitting loses the trust and hits the classifier',
+    (elementsById['askStateDrawerResult']?.innerHTML||'').includes('ask-routing-card'), JSON.stringify(calls));
+  check('an edited starter question never reaches the real backend once misclassified',
+    calls.length===0, JSON.stringify(calls));
 
   console.log(`\n${pass} passed, ${fail} failed`);
   if(fail)process.exit(1);

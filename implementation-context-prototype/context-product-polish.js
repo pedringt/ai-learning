@@ -354,7 +354,15 @@
   }
 
   document.addEventListener('submit',event=>{
-    const form=event.target.closest('[data-review-batch-form="ask"]');if(!form)return;event.preventDefault();event.stopPropagation();const input=form.querySelector('input');runAsk(input?.value||ui.query);
+    const form=event.target.closest('[data-review-batch-form="ask"]');if(!form)return;event.preventDefault();event.stopPropagation();
+    const input=form.querySelector('input');const value=input?.value||ui.query;
+    // Submitting the drawer's own input (Enter, or tapping Ask again) is
+    // indistinguishable here from a typed question -- except when the value
+    // is untouched from a starter click, which already set ui.skipRouting.
+    // Trust that only when the text still matches exactly; any edit means
+    // this is a real typed question and must go through the classifier like
+    // one, same as before.
+    runAsk(value,{skipRouting:value===ui.query&&ui.skipRouting});
   },true);
 
   document.addEventListener('input',event=>{
