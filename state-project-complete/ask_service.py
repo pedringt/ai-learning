@@ -458,27 +458,33 @@ _PENDING_HEDGE_PHRASES = (
     "suggests", "appears to", "reportedly", "reported to", "is reported",
 )
 
-# "not yet resolved" above only catches that exact word order. A model just
-# as often writes the negation the other way around -- "not resolved yet",
-# "not confirmed retention yet" -- which is an equally valid, already-hedged
-# claim but was missed by the phrase list, so the word-replacement regexes
-# below ran anyway and stranded "yet" after the inserted replacement clause:
-# "is not resolved yet" became the nonsensical "is not reportedly addressed,
-# pending Review yet" (live staging QA, 2026-09-13). Generic pattern, not
-# another fixed phrase, since this word-order flip applies to any of the
-# target words (confirmed/resolved/established/approved/decided), not just
-# "resolved", and one or more words (a direct object, an adverb) can sit
-# between "not" and "yet" ("not confirmed retention yet"). Bounded to a
-# handful of words so it can't accidentally span into an unrelated clause
-# later in a long sentence.
-_NOT_WORD_YET_RE = re.compile(r"\bnot\b(?:\s+\w+){1,4}\s+yet\b", re.I)
+# "not yet resolved" above only catches that one exact phrase. In practice a
+# model negates a target word in several equally valid ways the fixed phrase
+# list can never fully enumerate -- "not resolved yet", "not confirmed
+# retention yet", "does not treat retention as resolved" -- and each one
+# missed by the list let the word-replacement regexes below run anyway and
+# garble an already-correct, already-hedged sentence (live staging QA,
+# 2026-09-13 found two of these in the same answer). Generic rule instead of
+# another fixed phrase: if a negation appears anywhere before one of the
+# target words in the sentence, the claim is already negated and the whole
+# sentence is left alone, regardless of how many words or what verb sits in
+# between. This is deliberately broader than a bounded word-count window --
+# every reported garbling case so far came from under-matching an
+# already-hedged sentence, never from over-matching one that genuinely needed
+# the replacement, so the safer failure mode here is to skip a sentence, not
+# to mangle it.
+_NEGATION_RE = re.compile(r"\bnot\b|n['’]t\b", re.I)
+_SETTLED_TARGET_WORD_RE = re.compile(
+    r"\b(?:confirmed|resolved|resolves|established|approved|decided|known|blocking)\b", re.I
+)
 
 
 def _already_hedged(text: str) -> bool:
     lowered = text.lower()
     if any(hedge in lowered for hedge in _PENDING_HEDGE_PHRASES):
         return True
-    return bool(_NOT_WORD_YET_RE.search(lowered))
+    negation = _NEGATION_RE.search(lowered)
+    return bool(negation and _SETTLED_TARGET_WORD_RE.search(lowered, negation.end()))
 
 
 _SETTLED_WORD_REPLACEMENTS = (
@@ -527,6 +533,21 @@ def _soften_unearned_settled_words(value: str | None) -> str | None:
 # confirmed", "pending review") is left completely alone -- this must
 # never touch or garble a sentence the model already got right.
 _UNEARNED_SETTLED_PROSE_REPLACEMENTS = (
+    # A Review's own resolution status is a different claim from a State
+    # claim the generic word replacements below are built for. "The launch
+    # date is decided" -> "the launch date is proposed (not yet decided)"
+    # reads fine because a proposed *value* makes sense; the same template
+    # applied to "that Review is decided" instead claims the Review itself
+    # "is proposed" (as if it hadn't been created yet), which is nonsense --
+    # the Review already exists and is open; what's unsettled is its
+    # resolution. Matched and replaced first, with wording that reuses none
+    # of the other patterns' target words, so it can never be reprocessed by
+    # a later pattern in this same pass. Live staging QA, 2026-09-13: "Until
+    # that Review is proposed (not yet decided)..." was the exact garble.
+    (
+        re.compile(r"\b(the|that|this)\s+review\s+(?:is|has\s+been)\s+(?:decided|resolved|confirmed|approved)\b", re.I),
+        lambda m: f"{m.group(1)} Review remains open",
+    ),
     (re.compile(r"\bhas\s+confirmed\b", re.I), lambda m: _match_case("is reported to have said", m.group(0))),
     (re.compile(r"\bconfirmed\b", re.I), lambda m: _match_case("reported (pending Review)", m.group(0))),
     (re.compile(r"\bresolves\b", re.I), lambda m: _match_case("may address (Review still open)", m.group(0))),
@@ -582,6 +603,14 @@ def _clean_visible_ask_text(value: str | None, internal_ids: set[str]) -> str | 
             text = re.sub(rf"(?<![A-Za-z0-9_]){re.escape(internal_id)}(?![A-Za-z0-9_])", "", text, flags=re.IGNORECASE)
     text = re.sub(r"\b(?:state|question|evidence|review|proposal)_[a-z0-9]+\b", "", text, flags=re.IGNORECASE)
     text = re.sub(r"\b(?:ask-evidence|state|question|evidence|review|proposal|k|q)-[a-z0-9-]+\b", "", text, flags=re.IGNORECASE)
+    # A model sometimes cites an internal ID as an inline parenthetical, e.g.
+    # "Retention is confirmed (review_1)." Stripping the ID above is correct
+    # (it's an implementation detail, not something a user should see), but
+    # left alone it strands the empty citation shell: "confirmed ()." Found
+    # via live staging QA (2026-09-13). Only a parenthetical that is now
+    # nothing but whitespace/punctuation is removed -- one with other real
+    # words left inside ("(see the linked Review)") is untouched.
+    text = re.sub(r"\(\s*(?:[,;]\s*)*\)", "", text)
     text = re.sub(r"\s+([,.;:])", r"\1", text)
     text = re.sub(r"\s{2,}", " ", text).strip(" -–—:;,.")
     return text or None

@@ -49,8 +49,8 @@ import pytest
 from ask_contract import AskAnswerItem, AskAnswerSection, AskSelection, AskSynthesis
 from ask_provider import LiveAskProvider
 from ask_service import (
-    _grounding_rules, _one_call_prompt, _soften_unearned_settled_prose, _soften_unearned_settled_words,
-    _synthesis_prompt, _validate_synthesis, run_ask,
+    _clean_visible_ask_text, _grounding_rules, _one_call_prompt, _soften_unearned_settled_prose,
+    _soften_unearned_settled_words, _synthesis_prompt, _validate_synthesis, run_ask,
 )
 from database_migration_backed import get_test_db
 from anthropic_provider import AnthropicProvider
@@ -133,6 +133,65 @@ def test_soften_unearned_settled_prose_does_not_mangle_the_reversed_not_x_yet_wo
         assert _soften_unearned_settled_prose(sentence) == sentence, (
             f"Already-hedged sentence must be left byte-for-byte alone: {sentence!r}"
         )
+
+
+def test_soften_unearned_settled_prose_does_not_mangle_a_negation_with_words_in_between():
+    """Real staging QA finding (2026-09-13): "Current State does not treat
+    retention as resolved." is already a correctly hedged/negated claim, but
+    neither hedge phrase nor the "not ... yet" pattern caught it (the
+    negation and the target word are separated by "treat retention as", and
+    there's no "yet" at all), so it got rewritten into the confusing
+    "Current State does not treat retention as reportedly addressed, pending
+    Review." Any negation before a target word anywhere in the sentence must
+    leave it alone, regardless of what verb or object sits in between."""
+    already_correct = [
+        "Current State does not treat retention as resolved.",
+        "Current State doesn't treat retention as resolved.",
+        "Legal has not confirmed the vendor's proposed terms.",
+        "This isn't approved by Security yet.",
+    ]
+    for sentence in already_correct:
+        assert _soften_unearned_settled_prose(sentence) == sentence, (
+            f"Already-hedged sentence must be left byte-for-byte alone: {sentence!r}"
+        )
+
+
+def test_soften_unearned_settled_prose_rewrites_a_reviews_own_outcome_without_saying_it_is_proposed():
+    """Real staging QA finding (2026-09-13): "Until that Review is decided,
+    ..." was rewritten by the generic "decided" replacement into "Until that
+    Review is proposed (not yet decided), ..." -- which wrongly claims the
+    Review itself "is proposed" (as if not yet created) rather than saying
+    its resolution is unsettled. A Review's own outcome needs different
+    wording than a State-claim word like "decided"/"resolved"/"confirmed"/
+    "approved" gets everywhere else."""
+    cases = {
+        "Until that Review is decided, nothing changes.": "that Review remains open",
+        "The Review is resolved.": "The Review remains open",
+        "This Review has been confirmed.": "This Review remains open",
+    }
+    for sentence, expected_fragment in cases.items():
+        fixed = _soften_unearned_settled_prose(sentence)
+        assert expected_fragment in fixed, f"{sentence!r} -> {fixed!r}"
+        assert "is proposed" not in fixed, f"Must not claim the Review itself is proposed: {fixed!r}"
+
+
+def test_clean_visible_ask_text_removes_the_empty_citation_left_behind_by_id_stripping():
+    """Real staging QA finding (2026-09-13): a model citing an internal ID
+    inline, e.g. "Retention is confirmed (review_1).", had the ID correctly
+    stripped as an implementation detail, but the surrounding parentheses
+    were left behind as a dangling, contentless "()" -- a citation-looking
+    artifact with nothing in it. A parenthetical that still has other real
+    words in it must be left alone."""
+    internal_ids = {"review_1", "k-data", "q-retention"}
+    # _clean_visible_ask_text already strips trailing sentence punctuation as
+    # part of its existing whitespace/punctuation cleanup -- unrelated to this
+    # fix, so these assertions match that pre-existing behavior.
+    assert _clean_visible_ask_text("Retention is confirmed (review_1).", internal_ids) == "Retention is confirmed"
+    assert _clean_visible_ask_text("Retention is confirmed (k-data, q-retention).", internal_ids) == "Retention is confirmed"
+    assert _clean_visible_ask_text("See the linked Review (review_1) for details.", internal_ids) == "See the linked Review for details"
+    assert _clean_visible_ask_text("See the linked Review (the one about retention) for details.", internal_ids) == (
+        "See the linked Review (the one about retention) for details"
+    ), "A parenthetical with real, non-ID content must be left completely alone."
 
 
 def _selection_and_context_with_open_review():
