@@ -203,7 +203,7 @@
         html body .notes-page article.simple-note.note-index-row{display:block!important}
         html body .notes-page .note-feed-icon{float:left!important;margin:0 10px 6px 0!important}
         html body .notes-page .note-index-main{display:block!important;min-width:0!important}
-        html body .notes-page .note-index-status{display:block!important;clear:left!important;width:100%!important;margin:8px 0 0!important}
+        html body .notes-page .note-index-status{display:block!important;clear:left!important;width:100%!important;margin:8px 0 0!important;padding:8px 0 0!important;border-top:1px solid #edf0f4!important}
         html body .notes-page .note-index-status .note-status{display:inline-block!important;background:none!important;border:0!important;padding:0!important;min-height:0!important;border-radius:0!important;box-shadow:none!important;margin-left:0!important}
         html body .notes-page .note-index-status .note-review-link,
         html body .notes-page .note-index-status .note-history-link{display:block!important;width:100%!important;min-height:0!important;padding:0!important;text-align:left!important;white-space:normal!important}
