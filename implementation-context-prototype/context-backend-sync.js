@@ -85,6 +85,14 @@
       reviewType:r.review_type,
       proposals,
       affectedStateItems:affected,
+      // Structural pointer only -- software never decides that a
+      // differently-typed open Review touching the same State item/Question
+      // is "the same decision" as this one (see review_service.py's
+      // _related_open_review_refs). Surfaced so a reviewer looking at one
+      // Review can see a related one exists, added 2026-09-13 after a
+      // staging finding where new evidence created a second open Review on
+      // the same topic with no way to notice the first one from either.
+      relatedOpenReviews:(r.related_open_reviews||[]).map(x=>({id:x.id,reviewType:x.review_type,decisionQuestion:x.decision_question})),
     };
   }
 

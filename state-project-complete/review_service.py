@@ -299,6 +299,54 @@ def list_evidence(connection: Connection) -> list[dict]:
     )]
 
 
+def _related_open_review_refs(
+    connection: Connection, *, review_id: str, state_ids: list[str], question_ids: list[str]
+) -> list[dict]:
+    """Other open Reviews that share a linked State item or Question.
+
+    Deliberately structural, not semantic: two Reviews of different types
+    (e.g. a state_at_risk "is this trustworthy?" and a proposed_update
+    "should Current State now say this?") can both be legitimate, separate
+    human decisions about the same underlying topic -- software must not
+    guess that they're actually the same decision and merge or supersede
+    one automatically (see _matching_open_review_id, which only dedupes
+    exact create-time duplicates for this same reason). This only surfaces
+    the mechanical fact "these Reviews are linked to the same State item or
+    Question" as a pointer for the human reviewer to judge, mirroring a real
+    staging finding (2026-09-13): new evidence about vendor retention
+    created a second, differently-typed open Review instead of linking to
+    the existing one, and there was no way for a reviewer looking at either
+    Review to see the other existed.
+    """
+    related_ids: set[str] = set()
+    if state_ids:
+        placeholders = ",".join("?" * len(state_ids))
+        related_ids.update(
+            r["review_id"] for r in connection.execute(
+                f"SELECT DISTINCT review_id FROM review_state_items WHERE state_item_id IN ({placeholders})",
+                state_ids,
+            ).fetchall()
+        )
+    if question_ids:
+        placeholders = ",".join("?" * len(question_ids))
+        related_ids.update(
+            r["review_id"] for r in connection.execute(
+                f"SELECT DISTINCT review_id FROM review_questions WHERE question_id IN ({placeholders})",
+                question_ids,
+            ).fetchall()
+        )
+    related_ids.discard(review_id)
+    if not related_ids:
+        return []
+    placeholders = ",".join("?" * len(related_ids))
+    rows = connection.execute(
+        f"SELECT id, review_type, decision_question FROM review_issues "
+        f"WHERE status='open' AND id IN ({placeholders}) ORDER BY created_at, id",
+        list(related_ids),
+    ).fetchall()
+    return [dict(row) for row in rows]
+
+
 def list_reviews(connection: Connection, status: str = "open") -> list[dict]:
     """Return each Review exactly once, even when multiple Evidence items are linked.
 
@@ -344,6 +392,12 @@ def list_reviews(connection: Connection, status: str = "open") -> list[dict]:
         item["resolves_question_ids"] = [q["question_id"] for q in connection.execute(
             "SELECT question_id FROM review_questions WHERE review_id=? ORDER BY question_id", (row["id"],)
         ).fetchall()]
+        item["related_open_reviews"] = _related_open_review_refs(
+            connection,
+            review_id=row["id"],
+            state_ids=[s["id"] for s in item["affected_state_items"]],
+            question_ids=item["resolves_question_ids"],
+        )
         if item["review_type"] == "open_question":
             item["question_to_create"] = question_proposal_read_model(connection, row["id"])
         result.append(item)
