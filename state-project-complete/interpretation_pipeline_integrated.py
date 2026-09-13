@@ -68,11 +68,21 @@ def _normalize_review_text(value: str) -> str:
 
 
 def _filter_duplicate_current_state_creates(connection: Connection, payload: Mapping[str, Any]) -> Mapping[str, Any]:
-    """Treat exact restatements of active Current State as no change.
+    """Enforce two software-owned no-Review invariants (state.md #104).
 
     The model may recommend a missing-understanding/create Review for wording
     that State already maintains. Software owns the invariant that exact
     maintained understanding is not duplicated or sent back for needless Review.
+
+    Software also owns the invariant that every created Review carries a real
+    human decision: a proposed Current State change, an at-risk fact naming
+    what is uncertain, an existing Question resolution, or a new Question to
+    track. A missing_understanding recommendation with nothing left in
+    proposed_changes has none of those -- its only possible human action would
+    be a bare acknowledgment (Mark reviewed) with nothing to Update, Adjust, or
+    Leave unchanged. Dropping it here, before schema/semantic validation, means
+    prompt guidance is backed by an enforced guarantee rather than trusting the
+    model to comply every time.
     """
     active_statements = {
         _normalize_review_text(row["statement"])
@@ -92,20 +102,21 @@ def _filter_duplicate_current_state_creates(connection: Connection, payload: Map
             if not is_duplicate_create:
                 kept.append(proposal)
         rec["proposed_changes"] = kept
-        # A missing-understanding Review with nothing left to establish is a
-        # no-op, so do not create a human decision merely because the model
-        # failed to notice an exact existing fact -- but only when dedup is
-        # what emptied it. A recommendation that already had no
-        # proposed_changes before this filter ran (e.g. provider_normalization's
-        # proposed_update -> missing_understanding downgrade, for evidence the
-        # model judged consequential but couldn't state a concrete resulting
-        # fact for) is a real "flag this, more understanding needed" Review,
-        # not a duplicate -- dropping it here would silently swallow evidence
-        # a human was supposed to see, the same failure the schema violation
-        # this downgrade exists to avoid was causing, just quieter.
-        became_empty_via_dedup = bool(original_proposals) and not kept
-        if not (rec.get("review_type") == "missing_understanding" and became_empty_via_dedup):
-            recommendations.append(rec)
+        # A missing_understanding Review with no concrete proposed_changes left
+        # -- whether it started empty (the model judged Evidence consequential
+        # but never articulated a resulting fact) or became empty via the
+        # dedup above -- has no real human decision behind it. An earlier
+        # version of this filter kept the "started empty" case as a standing
+        # Review, on the theory that silently discarding it was a bigger
+        # failure than a generic card. In practice that standing Review's only
+        # action was a bare acknowledgment (Mark reviewed) with nothing to
+        # decide, which #104 rules out at the interpretation layer: if Evidence
+        # is consequential enough to need a human, missing_understanding must
+        # say what it establishes; if it can't, there is no Review to make,
+        # and the Evidence is preserved as Evidence only (no_review below).
+        if rec.get("review_type") == "missing_understanding" and not kept:
+            continue
+        recommendations.append(rec)
     payload["review_recommendations"] = recommendations
     payload["outcome"] = "review_recommended" if recommendations else "no_review"
     if recommendations:

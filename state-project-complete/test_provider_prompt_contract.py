@@ -126,7 +126,20 @@ def test_anthropic_prompt_is_compact_and_does_not_repeat_json_skeleton():
     # already-open Question. The added guidance (question_review_prompt.py)
     # measurably fixed it (0/6 -> 14/16 on repeated live runs); same
     # evidence-backed bar as the first bump, not scope creep.
-    assert len(prompt) < 6300
+    # Bumped again -> 8100 2026-09-13: state.md #104 added consequentiality
+    # filtering, decision-sized grouping, and no-acknowledgment-only-Review
+    # instructions (consequentiality_guidance.py, shared with openai_provider.py
+    # the same way question_review_prompt.py already is). This is a required
+    # product behavior change, not incidental bloat; the shared guidance module
+    # is kept deliberately terse and is measured here like any other addition.
+    # A first, shorter version of the guidance measurably regressed the
+    # eval_scenarios.py 'clear_decision_contract_signed' case (3/4 live runs
+    # missed an unambiguous milestone approval, vs 0/3 on the prior prompt) --
+    # the consequentiality-filter framing let the model substitute downstream
+    # open_question/state_at_risk follow-ups for recording the milestone
+    # itself. The added "record the milestone itself too" instruction fixed
+    # it; the extra length is that fix, not scope creep.
+    assert len(prompt) < 8100
 
 
 def test_provider_output_schema_stays_below_anthropic_complexity_budget():

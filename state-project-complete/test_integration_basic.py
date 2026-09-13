@@ -187,18 +187,27 @@ class IntegrationBasicTest(unittest.TestCase):
             "review_recommendations": [
                 {
                     # Missing required "decision_question" field — schema violation.
-                    # (Not "review_action" or an empty proposed_changes list on
-                    # proposed_update: both are now mechanically repaired by
-                    # provider_normalization.py -- review_action is derived from
-                    # existing_review_id presence, and proposed_update with no
-                    # proposed_changes is downgraded to missing_understanding.
-                    # decision_question has no such repair; normalize_provider_payload's
-                    # own docstring says it deliberately never synthesizes prose fields.)
+                    # (Not "review_action": that's mechanically repaired by
+                    # provider_normalization.py, which derives it from
+                    # existing_review_id presence. decision_question has no such
+                    # repair; normalize_provider_payload's own docstring says it
+                    # deliberately never synthesizes prose fields. A concrete
+                    # proposed_changes entry is included so this recommendation
+                    # is not also dropped by the separate #104 no-acknowledgment
+                    # filter in interpretation_pipeline_integrated.py, which
+                    # would otherwise mask the schema violation this test exists
+                    # to catch behind a silent no_review.)
                     "review_action": "create",
                     "review_type": "proposed_update",
                     "why_consequential": "Evidence is new",
                     "affected_state_item_ids": [],
-                    "proposed_changes": [],
+                    "proposed_changes": [
+                        {
+                            "operation": "create",
+                            "proposed_statement": "Something new was established.",
+                            "rationale": "Evidence states this directly.",
+                        }
+                    ],
                 }
             ],
         }
@@ -231,20 +240,24 @@ class IntegrationBasicTest(unittest.TestCase):
         ).fetchone()
         self.assertEqual(evidence[0], "failed")
 
-    def test_proposed_update_with_no_proposed_changes_reaches_review_as_missing_understanding(self) -> None:
-        """Regression coverage for a real staging failure (2026-09-12): a
-        provider judged evidence consequential enough for review but emitted
-        review_type proposed_update with an empty proposed_changes list --
-        invalid per the canonical schema (proposed_update requires at least
-        one proposed change), which used to reject the whole /api/evidence
-        submission with schema_violation before a human ever saw it.
-        provider_normalization.py now downgrades this to missing_understanding,
-        whose schema allows an empty proposed_changes list. This must still
-        create a real Review a human can see -- not silently vanish into
-        _filter_duplicate_current_state_creates()'s "empty missing_understanding
-        is a no-op duplicate" rule, which is for provable duplicates only
-        (see the next test), not for evidence that never had a proposed change
-        to begin with."""
+    def test_proposed_update_with_no_proposed_changes_becomes_no_review(self) -> None:
+        """Regression coverage, updated for state.md #104: a provider that
+        judges Evidence consequential but emits review_type proposed_update
+        with an empty proposed_changes list -- invalid per the canonical
+        schema (proposed_update requires at least one proposed change) -- used
+        to reject the whole /api/evidence submission with schema_violation
+        before a human ever saw it (real staging failure, 2026-09-12).
+        provider_normalization.py downgrades this to missing_understanding,
+        whose schema allows an empty proposed_changes list, so the submission
+        no longer hard-fails.
+
+        #104 changed what happens next: a missing_understanding Review with no
+        concrete proposed_changes has nothing for a human to Update, Adjust, or
+        Leave unchanged -- its only action would be a bare acknowledgment. So
+        _filter_duplicate_current_state_creates() now drops it instead of
+        creating a standing Review, and the interpretation succeeds as
+        no_review. The Evidence itself is preserved either way; what changed is
+        that State no longer manufactures an acknowledgment-only Review for it."""
         evidence_id = self._insert_evidence("VP says we can move forward on auto drafting billing questions")
 
         provider = SimpleTestProvider(name="test-fake", model_identifier="fake-no-op-v1")
@@ -267,13 +280,15 @@ class IntegrationBasicTest(unittest.TestCase):
         result = process_evidence(self.conn, evidence_id=evidence_id, provider=provider)
 
         self.assertEqual(result.processing_status, "succeeded")
-        self.assertEqual(len(result.review_ids), 1)
+        self.assertEqual(len(result.review_ids), 0)
 
-        review = self.conn.execute(
-            "SELECT review_type, status FROM review_issues WHERE id=?", (result.review_ids[0],)
+        review_count = self.conn.execute("SELECT COUNT(*) FROM review_issues").fetchone()[0]
+        self.assertEqual(review_count, 0)
+
+        evidence = self.conn.execute(
+            "SELECT processing_status FROM evidence WHERE id=?", (evidence_id,)
         ).fetchone()
-        self.assertEqual(review[0], "missing_understanding")
-        self.assertEqual(review[1], "open")
+        self.assertEqual(evidence[0], "processed")
 
     def test_missing_understanding_that_only_duplicates_active_state_is_still_a_no_op(self) -> None:
         """Regression safety for the fix above: a missing_understanding Review

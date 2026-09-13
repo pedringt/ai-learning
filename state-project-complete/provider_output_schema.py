@@ -32,9 +32,10 @@ PROVIDER_OUTPUT_SCHEMA = {
                         "type": "string",
                         "enum": ["proposed_update", "state_at_risk", "missing_understanding", "open_question"],
                         "description": (
-                            "Use proposed_update for a change to existing Current State; state_at_risk when existing Current State may be unreliable without a replacement; "
-                            "missing_understanding for a new consequential fact that should become Current State; open_question when Evidence raises a consequential unresolved unknown "
-                            "that should be tracked but does not justify a Current State change. Do not use open_question when an equivalent open Question already exists or when the Evidence answers an existing Question."
+                            "Use proposed_update for a change to existing Current State; state_at_risk when existing Current State named in affected_state_item_ids may be unreliable without a replacement (the human decision is whether to keep tracking that risk); "
+                            "missing_understanding for a new consequential fact that should become Current State -- it must state that concrete fact as a create proposal, never an empty proposed_changes list; "
+                            "open_question when Evidence raises a consequential unresolved unknown that should be tracked but does not justify a Current State change. Do not use open_question when an equivalent open Question already exists or when the Evidence answers an existing Question. "
+                            "Never choose a review_type whose only resulting human action would be a bare acknowledgment with nothing to Update, Adjust, or Leave unchanged -- if no review_type can carry a real decision, omit this recommendation entirely."
                         ),
                     },
                     "decision_question": {

@@ -24,6 +24,7 @@ from validation.semantic_validation import InterpretationContextSnapshot
 from provider_output_schema import PROVIDER_OUTPUT_SCHEMA
 from provider_json import extract_json_object
 from question_review_prompt import QUESTION_REVIEW_GUIDANCE
+from consequentiality_guidance import CONSEQUENTIALITY_AND_GROUPING_GUIDANCE
 
 _RELEVANCE_SCHEMA = {
     "type": "object",
@@ -314,12 +315,13 @@ Evidence never changes State directly; a human decides Reviews.
 
 <instructions>
 {QUESTION_REVIEW_GUIDANCE}
+{CONSEQUENTIALITY_AND_GROUPING_GUIDANCE}
 Compare the Evidence with Current State and open Reviews. Return the semantic interpretation in the supplied JSON schema.
 
 - If Evidence does not materially change, threaten, or fill maintained understanding or raise a consequential unknown worth tracking, return no recommendations and explain briefly.
 - proposed_update: use when Evidence changes or retires existing State. update/retire must use an exact State ID shown above. A grouped proposed_update may also create new State. Requires at least one proposed_changes entry; with none, use missing_understanding or state_at_risk instead.
-- missing_understanding: use for information not represented in Current State. Its proposals must be create operations only. Create proposals have no state_item_id. A concrete, attributed decision (a budget approval, a launch date, a new capability, a scope change) is consequential even when Current State has no existing item on that topic -- the absence of a related item is a reason to use missing_understanding, not a reason to treat the Evidence as non-consequential.
-- state_at_risk: use when Evidence makes existing State uncertain without establishing a replacement; normally emit no proposal.
+- missing_understanding: use for information not represented in Current State. Its proposals must be create operations only, and must state the concrete new fact -- do not emit missing_understanding with an empty proposed_changes list. Create proposals have no state_item_id. A concrete, attributed decision (a budget approval, a launch date, a new capability, a scope change) is consequential even when Current State has no existing item on that topic -- the absence of a related item is a reason to use missing_understanding, not a reason to treat the Evidence as non-consequential.
+- state_at_risk: use when Evidence makes specific existing State (named in affected_state_item_ids) uncertain without establishing a replacement; normally emit no proposal, but always name the at-risk State item(s) so the human decision is "keep tracking this risk or not," never a bare acknowledgment.
 - Set existing_review_id only when an open Review above is clearly the same pending human decision; use its exact Review ID. Otherwise omit it so software creates a new Review.
 - resolves_question_ids: include an exact open Question ID only when this Evidence concretely answers it and accepting the Review would establish that answer. Scoped Question responses should be interpreted against the shown Question, but source UI alone is never sufficient. Notes may answer Questions indirectly.
 - Blocking is application-owned dependency metadata; never infer it from urgency or missing detail.

@@ -22,6 +22,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent / "interpretation_runtime
 from validation.semantic_validation import InterpretationContextSnapshot
 from provider_json import extract_json_object
 from question_review_prompt import QUESTION_REVIEW_GUIDANCE
+from consequentiality_guidance import CONSEQUENTIALITY_AND_GROUPING_GUIDANCE
 
 
 logger = logging.getLogger("state.provider.openai")
@@ -257,6 +258,7 @@ Content: {evidence.get('content')}
 ## Your Task
 
 {QUESTION_REVIEW_GUIDANCE}
+{CONSEQUENTIALITY_AND_GROUPING_GUIDANCE}
 
 Analyze the Evidence against Current State and open Reviews.
 
@@ -295,8 +297,8 @@ Remember:
 - Evidence alone does not change State (only humans can authorize)
 - review_type determines what kind of proposal is legal:
   - proposed_update: use when Evidence changes or retires an EXISTING State item; proposed_changes may use update or retire (and may also include create when a grouped decision genuinely adds new State). Requires at least one proposed_changes entry; with none, use missing_understanding or state_at_risk instead.
-  - missing_understanding: use only when the missing understanding is NOT already represented in Current State; every proposed_change in a missing_understanding review MUST use operation "create". Never use update or retire inside missing_understanding.
-  - state_at_risk: use when Evidence creates uncertainty/risk around existing State but does not yet establish a replacement; normally use no proposed_changes.
+  - missing_understanding: use only when the missing understanding is NOT already represented in Current State; every proposed_change in a missing_understanding review MUST use operation "create" and must state the concrete new fact. Never emit missing_understanding with an empty proposed_changes list just to register that something happened -- if you cannot articulate the concrete fact, this is not the right outcome. Never use update or retire inside missing_understanding.
+  - state_at_risk: use when Evidence creates uncertainty/risk around specific existing State (named in affected_state_item_ids) but does not yet establish a replacement; normally use no proposed_changes, but always name the at-risk item(s) so the human decision is "keep tracking this risk or not," never a bare acknowledgment.
   - Preserve epistemic status exactly: approved != implemented/enabled/deployed; planned != committed; capable != enabled. Never widen a narrow statement beyond the Evidence.
   - Do not manufacture follow-up work from unspecified details. Missing implementation specifics are not themselves consequential maintained understanding.
   - Example: “Password reset tickets were approved for automation.” If new, propose only that approval as maintained understanding; do not infer implementation, deployment, universal coverage, or removal of review.
