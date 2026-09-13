@@ -307,8 +307,19 @@
       subnavSentinel.style.height='0';
     }
   }
-  window.addEventListener('scroll',()=>{if(subnavSentinel)updateSubnavPin();},{passive:true});
-  window.addEventListener('resize',()=>{if(subnavSentinel)updateSubnavPin();},{passive:true});
+  // Listen on document with capture:true, not just window: on some mobile
+  // browsers (notably iOS Safari) the box that actually scrolls -- and so
+  // the element the 'scroll' event fires on -- ends up being <body>, not
+  // the window/document, once body has any non-'visible' overflow-x/-y
+  // (this codebase sets html,body{overflow-x:hidden} for mobile, which
+  // browsers then coerce the other axis to 'auto' on, making body its own
+  // scroll container). A window-only listener silently never fires there.
+  // capture:true on document catches the event during capture regardless
+  // of which element it targets.
+  const onScroll=()=>{if(subnavSentinel)updateSubnavPin();};
+  document.addEventListener('scroll',onScroll,{passive:true,capture:true});
+  window.addEventListener('scroll',onScroll,{passive:true});
+  window.addEventListener('resize',onScroll,{passive:true});
 
   function run(){installStyles();loadAttentionAlignment();keepFinalStyleLast();removeWorkspaceAttentionIcon();ensureMobileHelp();syncMobileAskLauncher();syncSubnavSentinel();reveal();}
   let queued=false;
