@@ -36,19 +36,30 @@ jobs:
           --health-timeout 5s
           --health-retries 5
     env:
+      # Ephemeral runner-only database; never a staging/production connection.
       STATE_TEST_POSTGRES_URL: postgresql://postgres:postgres@localhost:5432/state_question_tests
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-python@v5
         with:
           python-version: "3.14"
+
       - name: Install dependencies
         working-directory: state-project-complete
         run: |
           pip install -r requirements.txt
           pip install pytest pytest-subtests playwright
+
+      # The browser suite resolves Chromium through Playwright by default, so the
+      # runner needs Playwright's managed download. STATE_CHROMIUM_PATH can point
+      # at a specific binary instead.
       - name: Install Chromium for the browser suite
         run: python -m playwright install --with-deps chromium
+
+      # Two older integration assertions pin retired source shapes rather than
+      # the behavior they were intended to protect. Their current equivalents
+      # live in test_release_asset_loader.py and test_integrity_polish_current.py.
       - name: Run deterministic Python suite
         working-directory: state-project-complete
         run: >-
@@ -60,9 +71,17 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
+
+      # Runs every state-*-tests.js file rather than a hand-maintained list --
+      # a hardcoded list silently stopped covering newly added suites (found
+      # 2026-09-14: 9 of 20 existing suites, including adjustment-provenance,
+      # review-decision-ui, and the Ask mobile/refresh/starter-routing
+      # suites, weren't running here even though CI was green). A file only
+      # needs the state-*-tests.js name to be picked up automatically.
       - name: Run State behavior suites
         working-directory: implementation-context-prototype
         run: |
