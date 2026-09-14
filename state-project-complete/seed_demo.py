@@ -538,7 +538,10 @@ def _bootstrap_project(connection, *, project_id: str, project_name: str, areas,
                             (area_id, name, description, sort_order),
                         )
         for item_id, topic, statement, area_id in items:
-            before = connection.execute("SELECT id FROM current_state_items WHERE id=?", (item_id,)).fetchone()
+            if areas_ready:
+                before = connection.execute("SELECT id, area_id FROM current_state_items WHERE id=?", (item_id,)).fetchone()
+            else:
+                before = connection.execute("SELECT id FROM current_state_items WHERE id=?", (item_id,)).fetchone()
             if not before:
                 if areas_ready and projects_ready:
                     connection.execute(
@@ -556,6 +559,23 @@ def _bootstrap_project(connection, *, project_id: str, project_name: str, areas,
                         (item_id, topic, statement),
                     )
                 counts["state"] += 1
+            elif areas_ready and area_id and not before["area_id"]:
+                # Production incident (2026-09-14): migration 012 added the
+                # area_id column, but ALTER TABLE never backfills existing
+                # rows -- it only affects inserts from that point forward.
+                # A long-lived database (production, seeded well before
+                # #113's area work existed) keeps every pre-existing item
+                # NULL forever, since this loop only INSERTs a row that
+                # doesn't exist yet and never revisits one that does.
+                # Ephemeral/frequently-reset databases (every staging QA
+                # pass, a fresh local DB) never exposed this -- their rows
+                # are always inserted fresh under the current seed_demo.py.
+                # This backfills only a row this exact seed already owns
+                # and whose area was never set -- never a human edit, since
+                # a real Review-driven state change always sets area_id (or
+                # leaves it at the deliberate 'general' fallback the human
+                # accepted), not NULL.
+                connection.execute("UPDATE current_state_items SET area_id=? WHERE id=?", (area_id, item_id))
         if seed_history is not None:
             counts["history"] += seed_history(connection)
         for eid, content, source_type, submitted_at in ask_evidence:

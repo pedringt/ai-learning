@@ -248,7 +248,22 @@
   function openAskDrawer({focus=true}={}){
     ensureAskShell();ui.drawerOpen=true;const drawer=document.getElementById('askStateDrawer');if(drawer)drawer.hidden=false;document.body.classList.add('ask-state-drawer-open');syncAskInputs();syncLauncherVisibility();if(focus)requestAnimationFrame(()=>document.getElementById('askStateDrawerInput')?.focus());checkAnswerFreshness();
   }
-  function closeAskDrawer(){ui.drawerOpen=false;document.getElementById('askStateDrawer')?.setAttribute('hidden','');document.body.classList.remove('ask-state-drawer-open');syncLauncherVisibility();}
+  function closeAskDrawer(){
+    // QA follow-up (2026-09-14): closing while an answer was still loading
+    // used to just hide the drawer -- the request kept running, and its
+    // result was still live to land the moment the drawer reopened, even
+    // though the user had already dismissed it. Every callback in
+    // runAsk()'s streaming/submit path already guards on
+    // `requestId!==ui.requestId`, exactly the mechanism
+    // resetForProjectSwitch() uses -- bumping it here (rather than only on
+    // a project switch) makes closing behave like a real cancel: no stale
+    // answer can land later, and running is cleared immediately so a new
+    // question can be asked right away instead of waiting out the old one.
+    // This does not abort the underlying network/model call server-side --
+    // only what the client does with its result.
+    if(ui.running){ui.requestId++;ui.running=false;ui.streamRaw='';}
+    ui.drawerOpen=false;document.getElementById('askStateDrawer')?.setAttribute('hidden','');document.body.classList.remove('ask-state-drawer-open');syncLauncherVisibility();
+  }
   // state.md QA follow-up: Ask's drawer state (the last-rendered answer,
   // in-flight query, resolved-context signature) used to survive a project
   // switch untouched -- one project's answer stayed fully visible under the
