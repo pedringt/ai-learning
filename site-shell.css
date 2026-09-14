@@ -500,3 +500,42 @@ body.v88-dark .home-state-copy .home-state-lead + p,
   #ai-cs-mock [data-page="learn"] .learning-curriculum-intro::after{font-size:10.5px!important;}
   #ai-cs-mock [data-page="learn"] .learning-item > b::after{font-size:9px!important;margin-left:5px!important;}
 }
+
+/* v98.6 — keep the legend in the Reference Library row instead of the intro copy. */
+#ai-cs-mock [data-page="learn"] .learning-curriculum-intro::after{
+  content:none!important;
+}
+#ai-cs-mock [data-page="learn"] .learning-stages > .section-kicker{
+  align-items:center!important;
+}
+#ai-cs-mock [data-page="learn"] .learning-stages > .section-kicker::after{
+  content:'DEEPENS IN PRACTICE · real-world proficiency grows on the job'!important;
+  height:auto!important;
+  min-height:1px!important;
+  flex:1 1 auto!important;
+  padding-left:18px!important;
+  background:linear-gradient(90deg,var(--border),var(--border)) left center / calc(100% - 315px) 1px no-repeat!important;
+  color:color-mix(in srgb,var(--muted) 76%,transparent)!important;
+  font-size:10px!important;
+  line-height:1.2!important;
+  font-weight:650!important;
+  letter-spacing:.03em!important;
+  text-align:right!important;
+  text-transform:none!important;
+  white-space:nowrap!important;
+}
+@media(max-width:760px){
+  #ai-cs-mock [data-page="learn"] .learning-stages > .section-kicker::after{
+    content:'DEEPENS IN PRACTICE · grows through real work'!important;
+    background:linear-gradient(90deg,var(--border),var(--border)) left center / calc(100% - 240px) 1px no-repeat!important;
+    font-size:9px!important;
+  }
+}
+@media(max-width:520px){
+  #ai-cs-mock [data-page="learn"] .learning-stages > .section-kicker::after{
+    content:''!important;
+    background:var(--border)!important;
+    height:1px!important;
+    padding-left:0!important;
+  }
+}
