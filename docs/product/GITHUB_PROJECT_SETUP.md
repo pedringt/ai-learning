@@ -1,12 +1,12 @@
-# State GitHub Project setup
+# State GitHub Project
 
-GitHub is the project system of record for State. This is the one-time setup for the visual PM layer on top of Issues and PRs.
+GitHub is the project system of record for State. The **State Product** Project is the visual PM layer on top of Issues and PRs.
 
 ## Project
 
-Create a GitHub Project named **State Product** and connect it to `pedringt/ai-learning`.
+Use the existing GitHub Project named **State Product** connected to `pedringt/ai-learning`.
 
-Issue #119 tracks this one-time setup.
+Issue #119 tracked the one-time setup and was completed on 2026-09-14. Do not create a second State Project unless Paige explicitly asks for one.
 
 ## Fields
 
@@ -21,7 +21,7 @@ Keep the field set intentionally small.
 - Staging
 - Done
 
-### Type
+### Work Type
 
 - Feature
 - Bug
@@ -65,7 +65,7 @@ Table view showing:
 
 - Title
 - Status
-- Type
+- Work Type
 - Priority
 - Product Area
 - Release
@@ -76,6 +76,23 @@ Sort highest priority first. Use this for triage and planning.
 
 Roadmap view containing only larger features/product bets with meaningful timing. Do not put every bug on the roadmap.
 
+## How Claude should use the Project
+
+- Read the relevant Issue before starting tracked work. Use the Issue for scope and the Project for current work state.
+- When live GitHub Project access is available, treat the Project's Status and custom fields as current. If Project access is unavailable, do not guess a board state from old conversation context.
+- Use the statuses consistently:
+  - **Backlog**: worth tracking, not ready to start.
+  - **Ready**: defined enough for a person or agent to start.
+  - **In progress**: actively being worked.
+  - **QA**: implementation is complete and is being tested/reviewed.
+  - **Staging**: QA passed and the change is actually on staging awaiting final approval.
+  - **Done**: work is complete and, where relevant, released/promoted.
+- When creating or triaging an item, set **Work Type**, **Priority**, and **Product Area** when the right value is clear. Set **Release** only when it is useful.
+- Do not move an item to **QA** just because code exists, or to **Staging** just because tests pass. The status must match reality.
+- Passing tests never grants deployment permission. Follow `CLAUDE.md` and `RELEASE.md` for staging/main authorization gates.
+- If implementation or QA reveals a separate reproducible bug, AI behavior failure, or unresolved product question, create or recommend a separate Issue rather than hiding it in chat or unrelated scope.
+- Keep the Project current when Project access is available, but do not use it as the durable knowledge base for product decisions or risks.
+
 ## Intake rules
 
 - New actionable work should be an Issue, not a row of prose in a planning document.
@@ -84,15 +101,19 @@ Roadmap view containing only larger features/product bets with meaningful timing
 - A Product ambiguity found during QA becomes a Product question Issue unless Paige resolves it immediately.
 - Reproducible QA bugs should ultimately get regression protection when practical.
 
-## Suggested automation after the Project exists
+## Project automation
 
-Use GitHub Project built-in workflows to:
+Keep automation deliberately simple. The current board uses these built-in workflow rules:
 
-1. Auto-add new Issues/PRs from `pedringt/ai-learning`.
-2. Set newly added items to **Backlog** unless manually triaged otherwise.
-3. Move closed Issues/merged PRs to **Done** where GitHub can do so reliably.
+1. When an item is added to the Project, set **Status = Backlog**.
+2. When an Issue is closed, set **Status = Done**.
+3. When a pull request is merged, set **Status = Done**.
 
-Avoid elaborate automation initially. The goal is less manual tracking, not a workflow-engine project.
+Keep **Ready**, **In progress**, **QA**, and **Staging** as judgment-based states rather than trying to infer them automatically.
+
+If auto-add is enabled later, scope it to new Issues/PRs from `pedringt/ai-learning` rather than broad account activity.
+
+Avoid elaborate automation. The goal is less manual tracking, not a workflow-engine project.
 
 ## What does not belong in the Project
 
