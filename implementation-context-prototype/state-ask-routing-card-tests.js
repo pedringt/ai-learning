@@ -2,10 +2,17 @@
 // ("What needs review?", "List every open review") should route to a
 // compact Open Items card (count + CTA) instead of a synthesized answer, so
 // Ask never becomes a second, potentially-inconsistent source of truth for
-// counts the real Open Items view already tracks. A topic-qualified variant
-// of the same question ("open items related to security") should NOT route
-// -- the person wants an answer scoped to that topic, which is what
-// structuredAskResult's topic-filtered branch already provides.
+// counts the real Open Items view already tracks.
+//
+// state.md #115: a topic-qualified variant ("open items related to
+// security") used to be deliberately excluded from routing, so it would
+// fall through to a Northstar-specific topic-filtered fixture answer
+// (structuredAskResult) instead. That fallback was dead code (unreachable
+// from any live UI) and has been deleted, along with the topic guard here
+// -- there is no longer a topic-scoped alternative to preserve, and the
+// live backend Ask (which the drawer calls for anything the card doesn't
+// handle) is a strictly better, project-neutral answer to a topic-qualified
+// inventory question than a raw count ever was. So these now route too.
 const fs=require('fs'), vm=require('vm'), path=require('path');
 const dir=__dirname;
 
@@ -67,17 +74,17 @@ for(const q of genericBlockers){
   check(`"${q}" renders a routing card`, html.includes('ask-routing-card') && html.includes('data-anchor="open-items-blockers"'), html.slice(0,120));
 }
 
-// A topic qualifier means the person wants an answer scoped to that topic,
-// not a raw count -- must NOT route to the generic card.
+// A topic qualifier no longer excludes a query from routing (#115: no
+// topic-scoped fallback destination exists to preserve it for) -- the
+// underlying inventory-question phrasing still routes to the same card.
 const topicQualified=[
-  'What needs review related to security?',
-  'Show unresolved questions about security',
-  'What reviews are open on the automation topic?',
-  'What needs my attention on the security review?',
+  ['What needs review related to security?','pending'],
+  ['Show unresolved questions about security','open'],
+  ['What needs my attention on the security review?','blockers'],
 ];
-for(const q of topicQualified){
+for(const [q,kind] of topicQualified){
   const intent=api.detectAskIntent(q);
-  check(`topic-qualified phrasing is not routed: "${q}"`, !['pending','open','blockers'].includes(intent?.kind), JSON.stringify(intent));
+  check(`topic-qualified phrasing still routes: "${q}"`, intent?.kind===kind, JSON.stringify(intent));
 }
 
 // "What changed?" and "Show current project state" are deliberately left as

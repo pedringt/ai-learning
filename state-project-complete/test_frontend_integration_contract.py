@@ -440,7 +440,11 @@ def test_r9_ask_vertical_slice_has_dedicated_module_and_backend_endpoint():
     assert "context-ask.js" in html
     assert "ask: (query, previousAnswer = null)" in api_js
     assert "@app.post(\"/api/ask\")" in backend
-    assert "ASK?.canHandle(raw,previousLive)" in app
+    # state.md #115: ASK?.canHandle(raw,previousLive) belonged to context-app.js's
+    # submitAsk(), the legacy no-backend Ask pipeline from before the live Ask
+    # State drawer existed -- deleted as dead code, unreachable from any live
+    # UI. The drawer's own runAsk() (context-product-polish.js) calls the
+    # backend directly; it has no canHandle-style gate to assert on.
     assert "Meeting brief" in ask_js
     assert "Related open items" in ask_js
     assert "View open items →" in ask_js
@@ -472,7 +476,10 @@ def test_r16_release_hardening_removes_control_chars_and_keeps_word_boundary_rou
     # already look like a question -- this asserts the new regex's word
     # boundaries are still intact rather than pinning the retired one.
     assert "\\b(add (this|that|it)|please add|update (the )?(current )?state|record (this|that)|please record|note that|for the record|log (this|that))\\b" in app
-    assert "\\b(changed|change|history|historical|originally" in app
+    # state.md #115: the wantsHistory/topic-scoped regex this line used to
+    # pin belonged to structuredAskResult(), part of the legacy no-backend
+    # Ask fallback layer deleted as dead code (unreachable from any live
+    # UI) -- there is no live equivalent to assert on in its place.
 
 
 def test_r16_mobile_workspace_nav_has_horizontal_overflow_affordance():
@@ -495,10 +502,16 @@ def test_followup_rendering_obeys_payload_mode_and_preserves_previous_answer_sta
     ask = (FRONTEND / "context-ask.js").read_text()
     app = (FRONTEND / "context-app.js").read_text()
     assert "followup_mode:'new'" in ask
-    assert "payload?.followup_mode" in app
-    # A fresh/topic-shift question must not carry the stale answer into the
-    # loading/streaming state either -- not just the final rendered state.
-    # (Regression: 2026-09-06 live QA found the old answer stayed fully
-    # visible for the entire loading wait on a topic shift.)
-    assert "const visiblePrevious=followupMode==='new'?null:previousLive;" in app
+    # state.md #115: payload?.followup_mode and visiblePrevious belonged to
+    # context-app.js's submitAsk(), which tracked a previous answer across
+    # asks to support append-vs-replace followup rendering. Deleted as dead
+    # code (unreachable from any live UI, per this module's own comment
+    # next to STATE_ASK_TEST_API). The live Ask State drawer
+    # (context-product-polish.js's runAsk()) always passes previousLive=null
+    # to ASK.submit/submitStream -- it does not thread followup context
+    # through this module at all -- so the "stale answer during loading"
+    # regression this test used to also guard against in context-app.js
+    # cannot recur here; it never shows a previous answer during loading in
+    # the first place. context-ask.js's own followup rendering (used by the
+    # drawer) is covered by state-ask-followup-tests.js.
     assert "raw.resolution==='updated' && source.startsWith('question_response:')" not in app

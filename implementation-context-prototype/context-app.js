@@ -39,7 +39,6 @@
     ? (state.backendStatus.reviews==='loaded' ? state.data.reviews.filter(r => r.status === 'pending' && r.backendReviewId) : [])
     : state.data.reviews.filter(r => r.status === 'pending');
   const uiPendingReviews = () => pendingReviews();
-  const accessUpdated = () => state.data.reviews.find(r => r.id==='r-access')?.status === 'update';
   const securityUpdated = () => state.data.reviews.find(r => r.id==='r-security')?.status === 'update';
   const todayISO = () => { const d=new Date(); const pad=n=>String(n).padStart(2,'0'); return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`; };
   const todayLabel = () => new Intl.DateTimeFormat('en-US',{month:'short',day:'numeric'}).format(new Date());
@@ -400,126 +399,29 @@
     ASK?.activateWaitStates?.(root);
   }
 
-  function findScenario(query){
-    const q=norm(query);
-    if(!q) return null;
-    let best=null, score=0;
-    for(const s of state.data.askScenarios){
-      for(const alias of s.aliases){
-        const a=norm(alias);
-        let n=0;
-        if(q===a) n=100;
-        else if(a.length>=12 && (q.includes(a)||a.includes(q))) n=82;
-        else {
-          const stop=new Set(['what','know','about','this','that','have','with','from','your','project','still','does','when','where','which','would','could','should','anything','something','into']);
-          const words=a.split(' ').filter(w=>w.length>3&&!stop.has(w));
-          const hits=words.filter(w=>q.split(' ').includes(w)).length;
-          if(words.length>=2 && hits===words.length) n=72;
-          else if(words.length>=3 && hits>=Math.ceil(words.length*.75)) n=60;
-        }
-        if(n>score){ score=n; best=s; }
-      }
-    }
-    return score>=60?best:null;
-  }
-
-  const askTopicTerms = BACKEND_SYNC.askTopicTerms;
-
-  /* ----------------------------------------------------------------------
-     Ask — intent and deterministic scenarios
-
-     Routes a question to a known intent or fixture scenario. This is the
-     no-backend path; it also backs the deterministic Ask behavior suite.
-     ------------------------------------------------------------------- */
-  function askTopics(q){ return BACKEND_SYNC.askTopics(q); }
-  function overlapsTopics(item,topics){ return (item.topics||[]).some(t=>topics.includes(t)); }
-  function structuredAskResult(raw){
-    const q=norm(raw), topics=askTopics(q); if(!topics.length)return null;
-    const wantsHistory=/\b(changed|change|history|historical|originally|original|previously|before|used to|why did|superseded|earlier)\b/.test(q) || (q.includes('why') && (q.includes('slack')||q.includes('auto send')||q.includes('autonomous')));
-    const wantsNotes=/\b(note|notes|evidence|source|sources|find|show me|material)\b/.test(q);
-    const wantsOpen=/\b(open|unresolved|unknown|pending|waiting|still need|not know)\b/.test(q);
-    if(wantsHistory){
-      const items=state.data.history.filter(h=>{
-        if(h.knowledgeId) return overlapsTopics(state.data.knowledge.find(k=>k.id===h.knowledgeId)||{},topics);
-        const text=norm(`${h.before} ${h.after} ${h.reason} ${h.type}`);
-        return topics.some(topic=>(askTopicTerms[topic]||[topic]).some(term=>text.includes(norm(term))));
-      });
-      if(items.length)return {kind:'history',topics,items:items.slice().sort(sortDateAsc)};
-    }
-    if(wantsOpen){
-      const questions=openQuestions().filter(x=>overlapsTopics(x,topics));
-      const reviews=pendingReviews().filter(x=>overlapsTopics(x,topics));
-      if(questions.length||reviews.length)return {kind:'open',topics,questions,reviews};
-    }
-    if(wantsNotes){
-      const items=state.data.notes.filter(n=>overlapsTopics(n,topics));
-      if(items.length)return {kind:'notes',topics,items:items.slice().sort(sortDateDesc).slice(0,6)};
-    }
-    const current=state.data.knowledge.filter(k=>k.state==='current'&&overlapsTopics(k,topics));
-    if(current.length)return {kind:'current',topics,items:current.slice(0,5)};
-    return null;
-  }
-  function structuredAskHtml(r){
-    if(r.kind==='current') return `<div class="result-label">Current State</div><h2>What State currently knows</h2><div class="structured-results">${r.items.map(k=>`<article class="structured-result"><span class="knowledge-status current">Current State</span><h3>${esc(k.title)}</h3><p>${esc(k.statement)}</p></article>`).join('')}</div>`;
-    if(r.kind==='notes') return `<div class="result-label">Project evidence</div><h2>Relevant notes</h2><p class="result-lede">Notes are evidence and working material; they are not automatically Current State.</p><div class="structured-results">${r.items.map(n=>`<article class="structured-result"><span class="knowledge-status ${n.status==='pending'?'pending':'evidence'}">${n.status==='pending'?'Pending Review':'Evidence'}</span><h3>${esc(n.title)}</h3><span class="note-source">${esc(n.source)} · ${esc(n.date)}</span><p>${esc(n.text)}</p></article>`).join('')}</div>`;
-    if(r.kind==='open') return `<div class="result-label">Open Items</div><h2>What is not settled yet</h2><div class="structured-results">${r.reviews.map(x=>`<article class="structured-result"><span class="knowledge-status pending">Pending Review</span><h3>${esc(x.title)}</h3><p>${esc(x.unresolved)}</p></article>`).join('')}${r.questions.map(x=>`<article class="structured-result"><span class="knowledge-status question">Open Question</span><h3>${esc(x.text)}</h3><p>${esc(x.origin)}</p></article>`).join('')}</div>`;
-    return `<div class="result-label">History</div><h2>How this understanding changed</h2><div class="structured-results">${r.items.map(h=>`<article class="structured-result"><span class="knowledge-status history">Historical</span><h3>${esc(h.type)}</h3><span class="note-source">${esc(h.date)} · ${esc(h.reason)}</span><p><strong>Before:</strong> ${esc(h.before)}</p><p><strong>After:</strong> ${esc(h.after)}</p></article>`).join('')}</div>`;
-  }
-
+  // state.md #115: this used to be a much larger legacy Ask layer (a
+  // no-backend fallback pipeline predating the live Ask State drawer) full
+  // of Northstar-specific canned answers, a vendor contact, percentages,
+  // and Tier-1/support/security narrative templates -- none of it reachable
+  // from any live UI (the drawer's runAsk(), in context-product-polish.js,
+  // is the only Ask surface a user actually reaches, and it never falls
+  // back into this module). Deleted rather than isolated: it was dead code,
+  // not a real fallback path, so the smallest safe fix was removal.
+  //
+  // What's left is a genuinely live, project-neutral bridge: STATE_ASK_ROUTING
+  // (below) lets runAsk() check whether a query is a generic inventory
+  // request ("what needs review?", "what's blocking?", "what's still open?")
+  // before calling the backend, and show a compact count-and-link card
+  // instead of spending a live Ask call on a question Open Items already
+  // answers authoritatively. detectAskIntent() only classifies the three
+  // kinds that card actually uses; everything else falls through to null,
+  // which means "let the real backend Ask answer this."
   function detectAskIntent(raw){
     const q=norm(raw); if(!q)return null;
     const has=(re)=>re.test(q);
-    const audience=has(/\b(support|support team|reps|agents)\b/)?'support':has(/\b(security|infosec)\b/)?'security':has(/\b(leadership|exec|executive|boss)\b/)?'leadership':'general';
-    const channel=has(/\b(slack|channel|post)\b/)?'slack':has(/\b(email|e mail)\b/)?'email':has(/\b(standup|stand up)\b/)?'standup':has(/\b(tldr|tl dr|talking points)\b/)?'brief':'update';
-
-    // Output job is separate from project topic so the same state can render differently by audience/channel.
-    if(has(/\b(write|draft|turn|create|generate|summarize|summary|update|post)\b/) && has(/\b(slack|email|standup|status update|weekly update|project update|leadership update|support update|security update|talking points|tldr|tl dr)\b/)) return {kind:'artifact',audience,channel};
-
-    // Correct a false premise before ordinary topic routing can accidentally reinforce it.
-    if(has(/\b(why did we|when did we|did we|we decided|we agreed|decision was|target is)\b/) && has(/\b(50|fifty|0|zero)\b/) && has(/\b(automation|autonomy|autonomous|percent|percentage|resolution|target)\b/)) return {kind:'premise-correction',topic:'automation'};
-
-    // Questions that ask State to predict, approve, prioritize, or invent a value become explicit unknowns with useful context.
-    if(has(/\b(when is launch|launch date|when will we launch|how long until.*launch|when will.*ready|how long until.*ready)\b/)) return {kind:'unknown-context',unknownType:'launch-date'};
-    if(has(/\b(what will roi be|what is roi|roi estimate|expected roi)\b/)) return {kind:'unknown-context',unknownType:'roi'};
-    if(has(/\b(will security approve|will infosec approve|will security sign off)\b/)) return {kind:'unknown-context',unknownType:'security-approval'};
-    if(has(/\b(will this work|will (this|the) pilot succeed|is the pilot going to succeed|will we succeed)\b/)) return {kind:'unknown-context',unknownType:'future-success'};
-    if(has(/\b(is this safe|is the risk acceptable|are the risks acceptable|acceptable risk)\b/)) return {kind:'unknown-context',unknownType:'risk-acceptance'};
-    if(has(/\b(can we ship|should we ship|can we launch|should we launch|go live now|ready to ship)\b/)) return {kind:'unknown-context',unknownType:'launch-decision'};
-    if(has(/\b(should we automate|can this be autonomous|can we make this autonomous|should this be autonomous|remove human review)\b/)) return {kind:'unknown-context',unknownType:'autonomy-decision'};
-    if(has(/\b(which source should we use|what source should we use|authoritative replacement|replacement source|which system.*authority)\b/) && has(/\b(feature|access|entitlement|authoritative|source)\b/)) return {kind:'unknown-context',unknownType:'authority-choice'};
-    if(has(/\b(how accurate|accuracy threshold|what threshold|launch blocking thresholds?|launch-blocking thresholds?|how good does it need|what quality level)\b/)) return {kind:'unknown-context',unknownType:'thresholds'};
-    if(has(/\b(who makes the final.*decision|who makes.*launch decision|who signs off|final approver|final approval owner)\b/)) return {kind:'unknown-context',unknownType:'signoff'};
-    if(has(/\b(what will this cost|how much will this cost|what is the budget|whats the budget|budget for|cost estimate)\b/)) return {kind:'unknown-context',unknownType:'cost'};
-    if(has(/\b(what is most important|whats most important|what should we prioritize|highest priority|top priority|what comes first)\b/)) return {kind:'unknown-context',unknownType:'priority'};
-    if(has(/\b(are we on track|are we behind|are we ahead|schedule health|timeline health)\b/)) return {kind:'progress-inference'};
-
-    if(has(/\b(blocker|blockers|blocking|blocked|holding us up|hold us up|in the way|stop us|stopping us|prevent us|waiting on|needs attention|need attention|requires attention|needs my attention|require my attention)\b/)){
-      if(has(/\b(who owns|owner|ownership)\b/)) return {kind:'blocker-owners'};
-      if(!askTopics(q).length) return {kind:'blockers'};
-    }
-    // "pending"/"open" are the generic-inventory kinds that route to a compact
-    // Open Items card instead of a synthesized answer (see intentAskHtml). A
-    // topic word ("...related to security") means the person wants an answer
-    // scoped to that topic, not a raw count -- fall through so
-    // structuredAskResult's topic-filtered branch handles it instead.
-    if(has(/\b(needs review|need review|pending review|awaiting review|review first|evidence.*incorporated|new evidence|open review|open reviews|pending reviews|should i approve|need to approve|needs? to be approved|what to approve|what should i approve|what do i need to approve)\b/) && !askTopics(q).length) return {kind:'pending'};
-    if(has(/\b(current status|where are we|catch me up|what should i know|project status|status of|overall status|summarize the project|summarize project|project summary|what are we building|what are we making)\b/)) return {kind:'status'};
-    if(has(/\b(open questions?|still open|unresolved|unknowns|dont know|do not know|havent figured|have not figured|what havent we figured out|still need to figure|assumptions.*validated|what isnt decided|what is not decided|needs answering|need answering|still needs answering|not been answered|hasnt been answered|has not been answered|remains unanswered|not yet answered)\b/) && !askTopics(q).length) return {kind:'open'};
-    if(has(/\b(what have we decided|what did we decide|decisions|decision about|agreed on|established about)\b/)) return {kind:'decisions'};
-    if(has(/\b(original plan|how did we get here|what changed our minds|superseded|used to|history|historical|previously|originally|how.*change|before vs|before versus|different now)\b/)) return {kind:'history'};
-    if(has(/\b(in scope|out of scope|scope|must haves|must have|can wait|requires a human|require a human|account changes|send directly|send to customers|what arent we doing|what are we not doing|what shouldnt.*do|what should not.*do)\b/)) return {kind:'scope'};
-    if(has(/\b(who is this for|how will reps|how do reps|human review happen|if the ai is wrong|training|workflow)\b/)) return {kind:'workflow'};
-    if(has(/\b(prepare|prep|brief me|meeting|questions to ask|decisions needed)\b/) && has(/\b(security|support|leadership|meeting)\b/)) return {kind:'meeting',audience};
-    if(has(/\b(what does security care about|what does infosec care about|security|safety|governance|high risk|high-risk|guardrail|sensitive|escalation rule|human review)\b/)) return {kind:'security'};
-    if(has(/\b(who owns|who needs to approve|who approves|who are we waiting on|stakeholder|what does .* care about)\b/)) return {kind:'stakeholders'};
-    if(has(/\b(automation target|autonomy target|autonomous resolution|how autonomous|how much.*automate|percent.*automate|percentage.*automate|trying for [0-9]+|targeting [0-9]+|[0-9]+ percent|0 target|0 the target|zero percent)\b/)) return {kind:'automation'};
-    if(has(/\b(authoritative|authoritative source|grounding|source of truth|needed data|what data|read only|read-only|plan rules|account exceptions|slack.*source|source conflict)\b/)) return {kind:'data'};
-    if(has(/\b(success|metrics|evaluate|evaluation|what good looks like|what does good look like|response time|reviewer edits|unsupported claims|failure severity|stop criteria|expand criteria)\b/)) return {kind:'evaluation'};
-    if(has(/\b(ready to build|ready to pilot|ready to launch|ready for implementation|whats next|what is next|what should we do next|what do we do next|next steps|resolve first|started tomorrow|start tomorrow)\b/)) return {kind:'readiness'};
-    if(has(/\b(contradiction|contradictions|conflict|conflicts|outdated|superseded|disagree|disagreement|reconcile)\b/)) return {kind:'compare'};
-    if(has(/\b(how do we know|where did that come from|confirmed|assumption|confidence|provenance|what evidence|was this reviewed)\b/)) return {kind:'provenance'};
-    if(has(/\b(who knows|who reviews|who approves|who unblocks|contact|owner)\b/)) return {kind:'contacts'};
-    if(has(/\b(find|show me|where did we discuss|pull up|retrieve)\b/)) return {kind:'retrieve'};
+    if(has(/\b(blocker|blockers|blocking|blocked|holding us up|hold us up|in the way|stop us|stopping us|prevent us|waiting on|needs attention|need attention|requires attention|needs my attention|require my attention)\b/)) return {kind:'blockers'};
+    if(has(/\b(needs review|need review|pending review|awaiting review|review first|evidence.*incorporated|new evidence|open review|open reviews|pending reviews|should i approve|need to approve|needs? to be approved|what to approve|what should i approve|what do i need to approve)\b/)) return {kind:'pending'};
+    if(has(/\b(open questions?|still open|unresolved|unknowns|dont know|do not know|havent figured|have not figured|what havent we figured out|still need to figure|assumptions.*validated|what isnt decided|what is not decided|needs answering|need answering|still needs answering|not been answered|hasnt been answered|has not been answered|remains unanswered|not yet answered)\b/)) return {kind:'open'};
     return null;
   }
 
@@ -531,152 +433,25 @@
   function routingCardHtml({category,sentence,detail,count,view,anchor}){
     return `<div class="result-label">Open Items</div><div class="ask-routing-card"><div class="ask-routing-card-head"><span class="ask-routing-category">${esc(category)}</span><span class="ask-routing-count">${count}</span></div><p class="ask-routing-sentence">${esc(sentence)}</p>${detail?`<p class="ask-routing-detail">${esc(detail)}</p>`:''}<button class="btn primary" data-view="${esc(view)}" data-anchor="${esc(anchor)}">Open Items →</button></div>`;
   }
-  function unresolvedBundle(){ return {questions:openQuestions(),reviews:pendingReviews()}; }
-  function compactOpenHtml(title,lede){
-    const {questions,reviews}=unresolvedBundle();
-    return `<div class="result-label">Open Items</div><h2>${esc(title)}</h2><p class="result-lede">${esc(lede)}</p><div class="structured-results">${reviews.slice(0,4).map(x=>`<article class="structured-result"><span class="knowledge-status pending">Pending Review</span><h3>${esc(x.title)}</h3><p>${esc(x.unresolved)}</p></article>`).join('')}${questions.slice(0,5).map(x=>`<article class="structured-result"><span class="knowledge-status question">Open Question</span><h3>${esc(x.text)}</h3><p>${esc(x.origin)}</p></article>`).join('')}</div>`;
-  }
-  function artifactHtml(intent){
-    const support=intent.audience==='support', security=intent.audience==='security', leadership=intent.audience==='leadership';
-    const label=`Draft · ${support?'support team ':security?'security ':leadership?'leadership ':''}${intent.channel==='slack'?'Slack update':intent.channel==='email'?'email':intent.channel==='standup'?'standup update':intent.channel==='brief'?'talking points':'project update'}`;
-    if(intent.channel==='slack') return `<div class="result-label">${esc(label)}</div><div class="draft polished-draft"><p><strong>Northstar update</strong></p><ul><li>Discovery is nearly complete; first implementation remains Tier 1 troubleshooting with human review.</li><li>Still unresolved: authoritative feature-access source, vendor retention terms, and launch-blocking evaluation thresholds.</li><li>No autonomous-resolution target is established; the earlier 50% request is not a commitment.</li><li>Next: review pending evidence and turn settled discovery into the implementation backlog.</li></ul></div><button class="btn secondary" data-action="copy-draft">Copy draft</button>`;
-    if(support) return scenarioResult({topics:['automation','operations'],output:'support-draft'});
-    if(leadership) return scenarioResult({topics:['automation','security','feature-access','operations'],output:'draft'});
-    if(security) return `<div class="result-label">${esc(label)}</div><div class="draft polished-draft"><p><strong>Northstar security update</strong></p><p>The first implementation remains read-only and human-reviewed. Account-changing actions are out of scope. High-risk failures are being treated separately from average quality.</p><p>Open items are the authoritative account-level source for feature access, confirmation of vendor retention/deletion terms, and explicit launch-blocking evaluation thresholds. No safe autonomous-resolution percentage has been established.</p></div><button class="btn secondary" data-action="copy-draft">Copy draft</button>`;
-    return scenarioResult({topics:['automation','security','feature-access','operations'],output:'summary'});
-  }
-  function reasoningFrame({label='Not established',title,known,implication,resolve}){
-    return `<div class="result-label">${esc(label)}</div><h2>${esc(title)}</h2><div class="answer-prose reasoning-frame"><p><strong>What State knows:</strong> ${esc(known)}</p><p><strong>What that means:</strong> ${esc(implication)}</p><p><strong>What would resolve it:</strong> ${esc(resolve)}</p></div>`;
-  }
-
-  function unknownContextHtml(type){
-    const frames={
-      'launch-date':{
-        title:'There is no accepted launch date yet.',
-        known:'Implementation planning can proceed with the bounded Tier 1, human-reviewed use case.',
-        implication:'State cannot honestly judge a launch date or schedule variance while feature-access authority, vendor retention terms, and launch-blocking evaluation thresholds remain unresolved.',
-        resolve:'Agree the remaining launch gates and record an accepted implementation and launch plan.'
-      },
-      'roi':{
-        title:'ROI has not been established.',
-        known:'The pilot has workflow and quality measures, including response time, reviewer edits, escalation behavior, unsupported claims, and failure severity.',
-        implication:'Those measures can show whether the pilot is useful and safe, but State does not have accepted production volume, cost, or realized-effort data needed for a reliable ROI estimate.',
-        resolve:'Define the cost model and collect enough pilot or production usage evidence to calculate value against it.'
-      },
-      'security-approval':{
-        title:'Future Security approval is not known.',
-        known:'The pilot is read-only, human-reviewed, excludes account-changing actions, and Security has asked for high-risk failure categories and evidence.',
-        implication:'Those controls describe the current boundary; they do not establish that Security will approve launch or a future reduction in human review.',
-        resolve:'Close the retention and evaluation-threshold questions, test the agreed high-risk categories, and record Security’s decision.'
-      },
-      'future-success':{
-        title:'The pilot outcome is not known yet.',
-        known:'The team has defined a bounded workflow and a multi-dimensional evaluation approach rather than a single automation metric.',
-        implication:'State can describe how success will be evaluated, but it cannot predict whether the pilot will meet those measures before evidence exists.',
-        resolve:'Run the pilot against the agreed measures and compare the results with explicit launch or expansion criteria.'
-      },
-      'risk-acceptance':{
-        title:'Risk acceptance has not been recorded.',
-        known:'The first implementation is read-only and human-reviewed; sensitive account actions are out of scope, and unsupported claims are treated as high-risk failures.',
-        implication:'Those safeguards reduce exposure, but State should not convert safeguards into a judgment that the remaining risk is acceptable.',
-        resolve:'Define the unacceptable failure categories and thresholds, test against them, and record the responsible reviewer’s risk decision.'
-      },
-      'launch-decision':{
-        title:'No launch decision is recorded.',
-        known:'Implementation planning can proceed, but launch criteria still require explicit thresholds and several security/data questions remain open.',
-        implication:'The project is far enough along to plan implementation, not far enough for State to recommend or declare launch.',
-        resolve:'Close the launch gates, review the pilot evidence, and record the human launch decision.'
-      },
-      'autonomy-decision':{
-        title:'No decision to make the pilot autonomous is established.',
-        known:'Leadership asked whether 50% autonomous resolution might be achievable, while the current pilot still requires human review.',
-        implication:'A leadership question is not an autonomy target, and current safeguards should not be silently relaxed because a percentage was discussed.',
-        resolve:'Collect evidence across agreed high-risk failure categories and explicitly review whether any workflow can safely move beyond human review.'
-      },
-      'authority-choice':{
-        title:'No authoritative replacement source has been selected yet.',
-        known:'Plan rules are a useful input, but account-level exceptions mean plan alone cannot determine effective feature access.',
-        implication:'State can explain why the old authority model is insufficient, but it should not invent which system becomes authoritative.',
-        resolve:'Identify and validate the account-level source that reliably reflects effective entitlements, then record that source as Current State.'
-      },
-      'thresholds':{
-        title:'Launch-blocking quality thresholds are not established yet.',
-        known:'The pilot will evaluate response time, reviewer edits, escalation behavior, unsupported claims, and failure severity, with high-risk failures treated separately.',
-        implication:'The evaluation dimensions are known, but there is not yet an accepted numeric or categorical boundary that State can call “good enough to launch.”',
-        resolve:'Agree which failure categories block launch and the acceptable limits for each, then record those thresholds.'
-      },
-      'signoff':{
-        title:'A final launch decision owner is not established in State.',
-        known:'Support owns frontline workflow and feedback; Security owns risk and data-boundary review; Leadership is asking about eventual autonomy.',
-        implication:'Known stakeholder responsibilities do not prove who has final launch authority.',
-        resolve:'Assign and record the final decision right, including any required Security or operational approvals.'
-      },
-      'cost':{
-        title:'No accepted budget or cost estimate is recorded.',
-        known:'State has the bounded pilot workflow and the operational/evaluation work still required.',
-        implication:'That is enough to discuss implementation scope, not enough to invent vendor, model, engineering, support, or review costs.',
-        resolve:'Define the expected usage, technical architecture, vendor/model pricing, implementation effort, and ongoing human-review load.'
-      },
-      'priority':{
-        title:'No explicit priority ranking is recorded.',
-        known:'The unresolved items with direct launch implications are feature-access authority, vendor retention terms, and launch-blocking evaluation thresholds.',
-        implication:'State can surface impact and dependencies, but it should not silently turn them into a ranked roadmap.',
-        resolve:'Have the project owner rank the remaining work or record a sequencing decision based on dependencies and risk.'
-      }
-    };
-    return reasoningFrame(frames[type]||{title:'That is not established yet.',known:'State has related project context.',implication:'The available context does not support the requested conclusion.',resolve:'Record the missing decision or evidence before treating it as known.'});
-  }
-
-  function premiseCorrectionHtml(i){
-    if(i.topic==='automation') return `<div class="result-label">Premise correction</div><h2>We did not decide on a 50% or 0% automation target.</h2><div class="answer-prose"><p><strong>Current State:</strong> Leadership asked whether 50% autonomous resolution was achievable, but that request did not become a commitment. “Not established” also does not mean 0%.</p><p><strong>Why this matters:</strong> The first implementation remains human-reviewed, and any future autonomy decision depends on evidence across agreed high-risk failure categories.</p></div>${sourceDisclosure(['n-leadership-followup','n-security-workshop'])}`;
-    return fallbackResult();
-  }
-
-  function progressInferenceHtml(){
-    return reasoningFrame({
-      label:'Cannot determine from current state',
-      title:'State cannot honestly say whether the project is ahead or behind.',
-      known:'Discovery is nearly complete and implementation planning is next; the bounded Tier 1 workflow is established, while several launch-critical questions remain unresolved.',
-      implication:'There is meaningful progress, but no accepted launch date or complete delivery baseline exists to compare against.',
-      resolve:'Record an implementation schedule or launch baseline; then State can compare actual progress with it.'
-    });
-  }
-
-  function blockerOwnersHtml(){
-    return `<div class="result-label">Open dependencies</div><h2>Likely constraints and the ownership State can actually support</h2><div class="structured-results"><article class="structured-result"><span class="knowledge-status question">Open Question</span><h3>Authoritative feature-access source</h3><p><strong>Ownership:</strong> not fully assigned. Support can validate workflow reality; Security has a dependency because customer/account data is involved.</p></article><article class="structured-result"><span class="knowledge-status pending">Pending Review</span><h3>Vendor retention and deletion terms</h3><p><strong>Ownership:</strong> Security/Legal confirmation is still needed; the vendor contact can supply source material but cannot make the internal decision.</p></article><article class="structured-result"><span class="knowledge-status question">Open Question</span><h3>Launch-blocking evaluation thresholds</h3><p><strong>Ownership:</strong> Security has defined the risk requirement, but State does not record one final owner for setting the launch threshold.</p></article></div><p class="result-lede">State is deliberately not inventing a single owner where the project record only shows shared dependencies.</p>`;
-  }
-
   function intentAskHtml(i){
-    if(i.kind==='artifact')return artifactHtml(i);
-    if(i.kind==='unknown-context')return unknownContextHtml(i.unknownType);
-    if(i.kind==='premise-correction')return premiseCorrectionHtml(i);
-    if(i.kind==='progress-inference')return progressInferenceHtml();
-    if(i.kind==='blocker-owners')return blockerOwnersHtml();
     if(i.kind==='blockers'){ const n=openQuestions().filter(q=>q.blocking).length; return routingCardHtml({category:'Blockers',sentence:n===1?'1 question is blocking progress.':`${n} questions are blocking progress.`,detail:'Resolve these to keep the project moving.',count:n,view:'open-items',anchor:'open-items-blockers'}); }
     if(i.kind==='pending'){ const n=pendingReviews().length; return routingCardHtml({category:'Reviews',sentence:n===1?'1 review is waiting on a decision.':`${n} reviews are waiting on a decision.`,detail:'Waiting on a decision from you.',count:n,view:'open-items',anchor:'open-items-reviews'}); }
     if(i.kind==='open'){ const n=openQuestions().length; return routingCardHtml({category:'Questions',sentence:n===1?'1 question is open.':`${n} questions are open.`,detail:'Not yet answered in the project record.',count:n,view:'open-items',anchor:'open-items-questions'}); }
-    if(i.kind==='status')return scenarioResult({topics:['automation','security','feature-access','success-metrics','operations'],output:'summary'});
-    if(i.kind==='decisions')return `<div class="result-label">Current State</div><h2>Decisions currently reflected in the project</h2><div class="structured-results">${state.data.knowledge.filter(k=>k.state==='current').slice(0,8).map(k=>`<article class="structured-result"><span class="knowledge-status current">Current State</span><h3>${esc(k.title)}</h3><p>${esc(k.statement)}</p></article>`).join('')}</div>`;
-    if(i.kind==='history')return structuredAskHtml({kind:'history',items:state.data.history.slice().sort(sortDateAsc)});
-    if(i.kind==='scope')return `<div class="result-label">Scope & requirements</div><h2>The first implementation is deliberately bounded.</h2><div class="answer-prose"><p>It is a Tier 1 troubleshooting assistant that assembles context and drafts a response. A rep reviews before anything customer-facing is sent.</p><p><strong>Out of scope:</strong> account-changing actions, autonomous customer sends, and Slack as a retrieval source until governance is resolved.</p></div>${sourceDisclosure(['n-scope','n-data-flow'])}`;
-    if(i.kind==='workflow')return `<div class="result-label">Users & workflow</div><h2>Support reps stay in the decision loop.</h2><div class="answer-prose"><p>The assistant is for Tier 1 support reps. It retrieves approved context and drafts; the rep verifies, edits if needed, and sends. Training is task-based around the workflow and escalation boundaries.</p></div>${sourceDisclosure(['n-scope','n-training'])}`;
-    if(i.kind==='stakeholders'||i.kind==='contacts')return `<div class="result-label">Stakeholders & ownership</div><h2>Known owners and dependencies</h2><div class="answer-prose"><p>Support owns the frontline workflow and feedback. Security owns risk and data-boundary review. Leadership is asking about eventual autonomy but has not established a delivery target. Maya Chen is the vendor support contact for access and sandbox questions.</p></div>${sourceDisclosure(['n-contact','n-security-workshop','n-leadership-followup'])}`;
-    if(i.kind==='security')return scenarioResult({topics:['security','data','feature-access'],output:'meeting'});
-    if(i.kind==='automation')return scenarioResult({topics:['automation'],output:'unknown'});
-    if(i.kind==='data')return `<div class="result-label">Data & grounding</div><h2>Use minimum, read-only data and keep authority explicit.</h2><div class="answer-prose"><p>Approved knowledge and selected account context are the intended grounding sources. Plan rules alone are not sufficient for effective feature access once account-level exceptions are considered; the authoritative replacement source is still unresolved.</p><p>Slack is excluded from the first retrieval set until ownership, freshness, and governance are resolved.</p></div>${pendingNotice(pendingFor(['data','feature-access']))}${sourceDisclosure(['n-data-flow','n-discovery'])}`;
-    if(i.kind==='evaluation')return `<div class="result-label">Evaluation & success</div><h2>Success is not a single automation metric.</h2><div class="answer-prose"><p>The pilot is being evaluated on response time, reviewer edits, escalation behavior, unsupported claims, and failure severity. High-risk categories need explicit launch-blocking thresholds before launch.</p></div>${pendingNotice(pendingFor(['success-metrics','security']))}${sourceDisclosure(['n-test-cases','n-security-workshop'])}`;
-    if(i.kind==='readiness')return scenarioResult({topics:['operations','scope'],output:'pilot-start'});
-    if(i.kind==='meeting')return i.audience==='security'?scenarioResult({topics:['security','data','feature-access'],output:'meeting'}):`<div class="result-label">Meeting prep</div><h2>Carry the settled state, the unresolved decisions, and the asks.</h2>${compactOpenHtml('Decisions still needed','Use these open items to shape the meeting agenda.')}`;
-    if(i.kind==='compare')return `<div class="result-label">Reconcile project knowledge</div><h2>The main known tension is feature-access authority.</h2><div class="answer-prose"><p>Earlier work treated plan rules as sufficient. Later ticket evidence showed account-level exceptions can make nominal plan and effective access diverge. That older assumption is historical, not current truth.</p><p>Pending evidence remains visibly separate until review; rejected or superseded ideas should not silently re-enter Current State.</p></div>${sourceDisclosure(['n-discovery','n-support'])}`;
-    if(i.kind==='provenance')return `<div class="result-label">Evidence & provenance</div><h2>State separates reviewed understanding from evidence and unresolved material.</h2><div class="answer-prose"><p>Current State is the maintained reviewed layer. Notes are evidence or working material. Pending Review can challenge Current State without changing it. History preserves what used to be believed and why it changed.</p></div>${sourceDisclosure(['n-discovery','n-security-workshop'])}`;
-    if(i.kind==='retrieve'){ const q=norm(state.resultQuery),topics=askTopics(q); const notes=state.data.notes.filter(n=>!topics.length||overlapsTopics(n,topics)).slice().sort(sortDateDesc).slice(0,8); return `<div class="result-label">Find & retrieve</div><h2>${notes.length?'Relevant project material':'No matching project material found'}</h2>${notes.length?`<div class="result-note-list">${notes.map(simpleNote).join('')}</div>`:'<p class="result-lede">State does not have a reliable matching note for that request.</p>'}`; }
-    return fallbackResult();
+    return null;
   }
 
   function pendingFor(topics){
     return pendingReviews().filter(r => r.topics.some(t=>topics.includes(t)));
   }
 
+  // Also live (via STATE_ASK_TEST_API -> context-product-polish.js's APP()):
+  // runAsk() calls these two through explicitMutationIntent() to decide
+  // whether typed Ask input should open the read-only "use Add Evidence"
+  // message instead of asking. They look like leftovers from the deleted
+  // legacy submitAsk() pipeline -- they used to live right next to it -- but
+  // they are a real, separate live dependency; do not delete them assuming
+  // they died with it.
+  //
   // A question mark, or a leading interrogative word, is enough to treat
   // input as a question. Anything that looks like a question must never be
   // redirected into the update flow, no matter what other words it contains.
@@ -695,175 +470,7 @@
     return /\b(add (this|that|it)|please add|update (the )?(current )?state|record (this|that)|please record|note that|for the record|log (this|that))\b/i.test(text);
   }
 
-  async function submitAsk(query){
-    const raw=(query ?? document.getElementById('askInput')?.value ?? state.askInputDraft ?? '').trim(); if(!raw)return;
-    state.askInputDraft='';
-    if(!looksLikeQuestion(raw) && hasExplicitUpdateIntent(raw)){
-      showAddDialog(raw); return;
-    }
-    const previousLive=state.result?.liveAsk||null;
-    const followupMode=ASK?.followupMode?.(raw,previousLive)||'new';
-    // A fresh/topic-shift question must not show the old answer while the new
-    // one is loading -- otherwise the stale answer sits on screen for the
-    // entire wait, which reads as State "falling back" to it even though the
-    // final swap (driven by the backend's own followup_mode) was always correct.
-    const visiblePrevious=followupMode==='new'?null:previousLive;
-    if(ASK?.canHandle(raw,previousLive)){
-      state.resultQuery=raw;
-      window.StateAnalytics?.trackAskQuery(raw,{followupMode});
-      if(followupMode!=='new'&&previousLive) window.StateAnalytics?.track('ask_refinement_used',{followupMode});
-      if(ASK.canStream?.(raw)){
-        state.result={liveAskStreaming:true,liveAskStreamRaw:'',liveAskPreview:null,previousLive:visiblePrevious,pendingInput:''};
-        renderOverview();
-        try{
-          const payload=await ASK.submitStream(raw,previousLive,{
-            preview: preview=>{
-              if(state.result?.liveAskStreaming){
-                state.result={...state.result,liveAskPreview:preview};
-                paintStreamingAsk();
-              }
-            },
-            delta: event=>{
-              if(state.result?.liveAskStreaming){
-                state.result={...state.result,liveAskStreamRaw:(state.result.liveAskStreamRaw||'')+(event?.text||'')};
-                paintStreamingAsk();
-              }
-            },
-          });
-          const answerTop=root.querySelector('.answer-content')?.getBoundingClientRect().top ?? null;
-          state.result={liveAsk:payload,previousLive:(payload?.followup_mode||(previousLive?'append':'new'))==='append'?previousLive:null};
-          state.refinements=[];
-          window.StateAnalytics?.track('ask_completed',{streamed:true});
-          renderOverview();
-          if(answerTop!==null){
-            requestAnimationFrame(()=>{
-              const nextTop=root.querySelector('.answer-content')?.getBoundingClientRect().top;
-              if(typeof nextTop==='number') window.scrollBy(0,nextTop-answerTop);
-            });
-          }
-          return;
-        }catch(err){
-          // A streamed draft is not authoritative until final validation succeeds.
-          // If finalization fails after useful text has already streamed, retry once
-          // through the normal grounded Ask path instead of dropping the user into
-          // an error immediately.
-          const streamedDraft=state.result?.liveAskStreamRaw||'';
-          if(streamedDraft.trim()){
-            state.result={...state.result,liveAskRetrying:true,liveAskPreview:{...(state.result?.liveAskPreview||{}),retrying:true}};
-            paintStreamingAsk();
-            try{
-              const payload=await ASK.submit(raw,previousLive);
-              const answerTop=root.querySelector('.answer-content')?.getBoundingClientRect().top ?? null;
-              state.result={liveAsk:payload,previousLive:(payload?.followup_mode||(previousLive?'append':'new'))==='append'?previousLive:null};
-              state.refinements=[];
-              window.StateAnalytics?.track('ask_completed',{streamed:true,retried:true});
-              renderOverview();
-              if(answerTop!==null){
-                requestAnimationFrame(()=>{
-                  const nextTop=root.querySelector('.answer-content')?.getBoundingClientRect().top;
-                  if(typeof nextTop==='number') window.scrollBy(0,nextTop-answerTop);
-                });
-              }
-              return;
-            }catch(fallbackErr){
-              err=fallbackErr;
-            }
-          }
-          state.result={liveAskError:err?.message||'State could not produce a grounded answer. Please try again.',previousLive:visiblePrevious};
-          window.StateAnalytics?.track('ask_failed',{streamed:true,message:String(err?.message||'').slice(0,200)});
-        }
-        renderOverview();
-        return;
-      }
-      state.result={liveAskLoading:true,liveAskPreview:null,previousLive:visiblePrevious,pendingInput:''};
-      renderOverview();
-      try{
-        const payload=await ASK.submit(raw,previousLive);
-        state.result={liveAsk:payload,previousLive:(payload?.followup_mode||(previousLive?'append':'new'))==='append'?previousLive:null};
-        state.refinements=[];
-        window.StateAnalytics?.track('ask_completed',{streamed:false});
-      }catch(err){
-        state.result={liveAskError:err?.message||'State could not produce a grounded answer. Please try again.',previousLive:visiblePrevious};
-        window.StateAnalytics?.track('ask_failed',{streamed:false,message:String(err?.message||'').slice(0,200)});
-      }
-      renderOverview();
-      return;
-    }
-    state.resultQuery=raw; state.refinements=[];
-    const q=norm(raw);
-    const intent=detectAskIntent(raw);
-    const explicitStructured=/\b(changed|change|history|historical|originally|original|previously|before|used to|superseded|earlier|note|notes|evidence|source|sources|find|show me|material|open|unresolved|unknown|pending|waiting|still need|not know)\b/.test(q);
-    let structured=intent?null:(explicitStructured?structuredAskResult(raw):null);
-    let scenario=(intent||structured)?null:findScenario(raw);
-    if(!intent && !scenario && !structured) structured=structuredAskResult(raw);
-    if(!scenario && !structured && state.lastScenario && /\b(shorter|shorten|brief|focus|evidence|sources|slack|email|executive)\b/.test(q)){
-      let kind=q.includes('short')||q.includes('brief')?'shorter':q.includes('evidence')||q.includes('source')?'evidence':'exec';
-      state.refinements=[kind]; scenario=state.lastScenario;
-    }
-    state.result=intent?{intent}:scenario?{scenario}:structured?{structured}:{fallback:true}; if(scenario)state.lastScenario=scenario;
-    renderOverview();
-  }
 
-
-
-  /* ----------------------------------------------------------------------
-     Ask — submission and results
-
-     Sends the question, manages the loading and refinement states, and renders
-     what comes back. followup_mode from the backend decides replace vs append.
-     ------------------------------------------------------------------- */
-  function sourceDisclosure(ids){
-    const notes=ids.map(id=>state.data.notes.find(n=>n.id===id)).filter(Boolean);
-    return `<details class="evidence"><summary>Supporting evidence · ${notes.length}</summary>${notes.map(n=>`<article><strong>${esc(n.title)}</strong><span>${esc(n.source)} · ${esc(n.date)}</span><p>${esc(n.text)}</p></article>`).join('')}</details>`;
-  }
-
-  function pendingNotice(items){
-    if(!items.length)return '';
-    return `<aside class="pending-notice"><div><span class="status-dot"></span><strong>There is unreviewed information relevant to this response.</strong><p>It has not been used as established project knowledge.</p></div><div class="inline-actions"><button class="btn small primary" data-action="review-now" data-review="${items[0].id}">Review now</button><button class="btn small secondary" data-action="continue-current">Continue as is</button></div></aside>`;
-  }
-
-  function scenarioResult(s){
-    const pending=pendingFor(s.topics);
-    const refined=state.refinements[state.refinements.length-1];
-    if(refined) return refinedResult(refined,s,pending);
-    if(s.output==='unknown') { const autonomy=state.data.knowledge.find(k=>k.id==='k-autonomy'); const m=autonomy?.statement?.match(/(?:target(?:ing)?|target is|target should be)\s+(\d+)%/i); const pct=m?m[1]:null; if(pct) return `<div class="result-label">Current State</div><h2>${esc(pct)}% autonomous resolution is the accepted pilot target.</h2><div class="answer-prose"><p>${esc(autonomy.statement)}</p></div>${pendingNotice(pending)}${sourceDisclosure(autonomy.support||[])}`; return `<div class="result-label">Based on current reviewed understanding</div><h2>Not established</h2><div class="answer-prose"><p>The project has not established what percentage of troubleshooting can safely be automated. Troubleshooting is the leading pilot direction, but no supported automation percentage has been established yet.</p><p><strong>Unknown is not 0%.</strong> The project is deliberately keeping that distinction unresolved.</p></div>${pendingNotice(pending)}<button class="text-button result-action" data-action="track-question" data-question="What percentage of troubleshooting can safely be automated?">Track as open question →</button>${sourceDisclosure(['n-discovery','n-leadership'])}`; }
-    if(s.output==='contact') return `<div class="result-label">Project contact</div><h2>Maya Chen</h2><div class="answer-prose"><p>Maya is the vendor support contact for the pilot. She coordinates access and sandbox questions and can pull in engineering for integration issues.</p><p>The weekly vendor check-in is Thursday at 10:00 AM during discovery.</p></div>${sourceDisclosure(['n-contact','n-cadence'])}`;
-    if(s.output==='pilot-start') return `<div class="result-label">Implementation readiness</div><h2>Discovery is nearly complete; implementation planning is next.</h2><div class="answer-prose"><p>The project has a bounded Tier 1 use case, a read-only/human-reviewed operating model, an initial data-flow, an evaluation approach, and a training outline.</p><p><strong>Still blocking a final implementation backlog:</strong> authoritative feature-access source, Security confirmation of vendor retention terms, and agreed launch-blocking evaluation cases. A committed pilot launch date is not recorded in the workspace.</p></div>${pendingNotice(pending)}${sourceDisclosure(['n-implementation-readiness','n-handoff','n-weekly'])}`;
-    if(s.output==='answer'){
-      const text=accessUpdated()?'Plan rules alone are not sufficient to determine effective customer feature access. A Senior Support Rep reported temporary and grandfathered exceptions; the authoritative account-level source is still unresolved.':'The current reviewed understanding uses standard plan rules as a troubleshooting input when checking feature access.';
-      return `<div class="result-label">Based on current reviewed understanding</div><h2>${accessUpdated()?'Plan rules are only part of the answer.':'Plan rules are the current working input.'}</h2><p class="result-lede">${esc(text)}</p>${pendingNotice(pending)}${sourceDisclosure(accessUpdated()?['n-discovery','n-support']:['n-discovery'])}`;
-    }
-    if(s.output==='meeting') return `<div class="result-label">Security meeting briefing</div><h2>What to carry into the Security conversation</h2>${pendingNotice(pending)}<div class="answer-prose"><h3>Current direction</h3><p>The first implementation is assistive and read-only: Tier 1 troubleshooting drafts, approved knowledge, selected account context, and a human review before anything customer-facing is sent. Account-changing actions remain out of scope.</p><h3>What Security has already established</h3><p>High-risk failures need to be evaluated separately from average quality. Wrong-account data exposure, unsafe security guidance, unsupported entitlement claims, and fabricated policy/exception guidance are launch-sensitive categories.</p><h3>What still needs resolution</h3><p>${accessUpdated()?'Plan rules alone are not sufficient to determine effective customer feature access; the authoritative account-level source is still unresolved.':'New Support evidence may weaken the plan-rules assumption, but it is still awaiting review.'} Vendor retention/deletion terms also still need confirmation against the actual agreement.</p><p>The project has <strong>not</strong> established a safe automation percentage. The current question is whether the human-reviewed pilot is safe enough to implement, not how quickly review can be removed.</p></div>${sourceDisclosure(accessUpdated()?['n-security-workshop','n-data-flow','n-vendor-security','n-support']:['n-security-workshop','n-data-flow','n-vendor-security'])}`;
-    if(s.output==='summary') return `<div class="result-label">Weekly project summary · Aug 24–29</div><h2>Discovery is nearly complete; the remaining work is implementation readiness.</h2>${pendingNotice(pending)}<div class="deliverable-section"><h3>What changed</h3><ul class="generated-list"><li>The pilot scope is now a human-reviewed, read-only Tier 1 troubleshooting assistant rather than a broad support-automation effort.</li><li>The team sketched the minimum data path and agreed not to include account-write actions or Slack ingestion in the first implementation.</li><li>Representative evaluation cases are being written around documented how-to, ambiguity, stale documentation, access mismatches, unsafe actions, and cases where escalation is the correct answer.</li></ul><h3>Current decisions</h3><ul class="generated-list"><li>Human review remains required before customer-facing responses.</li><li>Success will be judged with response time, reviewer edits, escalation behavior, unsupported-claim checks, and failure severity, not a single automation-rate metric.</li><li>The 50% autonomy idea remains an aspirational leadership question, not an implementation commitment.</li></ul><h3>Still unresolved</h3><ul class="generated-list"><li>${accessUpdated()?'Plan rules are confirmed as insufficient by themselves; the authoritative account-level source still needs to be named.':'Feature-access authority is still unsettled, and new Support evidence is waiting for review.'}</li><li>Vendor retention/deletion terms need Security confirmation against the agreement.</li><li>Launch-blocking evaluation thresholds still need to be set.</li></ul><h3>Next based on the information recorded here</h3><p>Review the two pending evidence items, finish the high-risk evaluation cases, confirm vendor data terms, and turn the settled discovery into an implementation backlog. The workspace does not record a committed pilot launch date.</p></div>${sourceDisclosure(['n-weekly','n-implementation-readiness','n-test-cases','n-handoff','n-leadership-followup'])}`;
-    if(s.output==='change') return `<div class="result-label">What changed this week</div><h2>The project moved from broad discovery toward implementation readiness.</h2><div class="answer-prose"><p>The team finalized a narrow human-reviewed Tier 1 pilot direction, sketched the read-only data flow, started turning discovery into evaluation cases, and drafted the implementation handoff.</p><p>${accessUpdated()?'A consequential access assumption also changed after review: plan rules alone are no longer treated as sufficient for effective feature access.':'Two consequential pieces of new evidence are still waiting for review, so they have not changed maintained understanding yet.'}</p><p>The 50% autonomy idea remains aspirational rather than a delivery requirement.</p></div>${pendingNotice(pending)}${sourceDisclosure(['n-weekly','n-implementation-readiness','n-test-cases','n-handoff'])}`;
-    if(s.output==='draft') return `<div class="result-label">Draft · leadership update</div><div class="draft polished-draft"><p><strong>Northstar implementation update</strong></p><p>Discovery is nearing completion. We have narrowed the first implementation to a read-only Tier 1 troubleshooting assistant with human review before customer-facing responses. The team has also aligned on the initial data path, evaluation approach, and representative test categories.</p><p>The main remaining implementation-readiness items are feature-access authority, confirmation of vendor retention terms, and launch-blocking evaluation thresholds. ${accessUpdated()?'Reviewed Support evidence confirms that plan rules alone are not sufficient for effective access decisions; the authoritative account source still needs to be established.':'New Support evidence may change the feature-access assumption, but it is still awaiting review and is not being presented here as settled project truth.'}</p><p>The earlier 50% autonomy idea remains an aspirational question rather than a delivery commitment. The immediate goal is to prove value and quality in a bounded human-reviewed pilot, then make any autonomy decision from evidence.</p></div>${pendingNotice(pending)}<button class="btn secondary" data-action="copy-draft">Copy draft</button>${sourceDisclosure(['n-weekly','n-leadership-followup','n-implementation-readiness'])}`;
-    if(s.output==='support-draft') return `<div class="result-label">Draft · support team update</div><div class="draft polished-draft"><p><strong>Pilot update for Support</strong></p><p>We’re close to wrapping discovery for the Northstar project. The first version is still scoped to Tier 1 troubleshooting, will remain read-only, and will require a rep to review anything before it goes to a customer.</p><p>We’re now turning the discovery work into test cases and implementation requirements. The biggest open item for Support is feature access: plan rules are useful, but we still need to confirm what source should win when an account has an exception. We’re also finalizing the feedback path so reps can flag bad suggestions without creating a separate process if the existing QA workflow can handle it.</p><p>No autonomous-send target has been committed for the first pilot.</p></div><button class="btn secondary" data-action="copy-draft">Copy draft</button>${sourceDisclosure(['n-scope','n-training','n-implementation-readiness'])}`;
-    if(s.output==='questions') return `<div class="result-label">Known unknowns</div><h2>${openQuestions().length} open questions</h2><div class="compact-list">${openQuestions().slice(0,6).map(q=>`<article><strong>${esc(q.text)}</strong><span>${esc(q.origin)}</span></article>`).join('')}</div><button class="btn secondary" data-view="open-items">Open Items →</button>`;
-    if(s.output==='retrieve') return `<div class="result-label">Notes · feature access</div><h2>Project material about plan and feature access</h2>${pendingNotice(pending)}<div class="result-note-list">${state.data.notes.filter(n=>n.topics.includes('feature-access')).map(simpleNote).join('')}</div>`;
-    return fallbackResult();
-  }
-
-  function refinedResult(kind,s,pending){
-    if(kind==='shorter') return `<div class="result-label">Refined result</div><h2>Short version</h2><p class="result-lede">${s.output==='meeting'?'Human review stays. Safe autonomy is unknown. Feature-access authority is unresolved.':'The current answer has been shortened without changing project knowledge.'}</p>${pendingNotice(pending)}`;
-    if(kind==='auth') return `<div class="result-label">Refined result · authentication focus</div><h2>Authentication and access boundaries</h2><p class="result-lede">Login issues can have multiple causes, while consequential account changes remain human-controlled. Feature-access authority is ${accessUpdated()?'explicitly unresolved after review':'potentially challenged by pending Support evidence'}.</p>${pendingNotice(pending)}`;
-    if(kind==='evidence') return `<div class="result-label">Evidence view</div><h2>What this result is based on</h2>${sourceDisclosure(accessUpdated()?['n-discovery','n-security','n-support']:['n-discovery','n-security'])}`;
-    return `<div class="result-label">Refined result</div><h2>Executive version</h2><p class="result-lede">Troubleshooting remains the pilot focus, but the project is preserving unresolved safety and authority questions rather than turning them into assumptions.</p>${pendingNotice(pending)}`;
-  }
-
-  function fallbackResult(){
-    const statusRank={pending:0,accepted:1,reviewed:2,no_review_needed:3};
-    const topics=askTopics(norm(state.resultQuery));
-    const notes=topics.length?state.data.notes.filter(n=>overlapsTopics(n,topics)).slice().sort((a,b)=>{
-      const ra=statusRank[a.status]??99, rb=statusRank[b.status]??99;
-      return ra!==rb?ra-rb:sortDateDesc(a,b);
-    }).slice(0,3):[];
-    const trackActions=`<div class="inline-actions"><button class="btn primary" data-action="track-question" data-question="${esc(state.resultQuery)}">Track as open question →</button><button class="btn secondary" data-view="notes">Browse Notes</button></div>`;
-    if(notes.length) return `<div class="result-label">Related material</div><h2>Ask didn’t find an exact match, but here’s what State knows about that topic.</h2><div class="result-note-list">${notes.map(simpleNote).join('')}</div>${trackActions}`;
-    const examples=['What changed this week?','What needs review right now?','Show me security notes','What’s unresolved?'];
-    return `<div class="result-label">Project knowledge</div><h2>Ask doesn’t recognize that phrasing yet.</h2><p class="result-lede">I’d rather leave this unresolved than route you to an unrelated canned answer. Try one of these instead:</p><div class="ask-example-list">${examples.map(x=>`<button class="prompt" data-action="example-prompt" data-prompt="${esc(x)}">${esc(x)}</button>`).join('')}</div>${trackActions}`;
-  }
-
-  function refine(){ const v=norm(document.getElementById('refineInput')?.value||''); if(!v)return; let kind='exec'; if(v.includes('short'))kind='shorter'; else if(v.includes('auth'))kind='auth'; else if(v.includes('evidence')||v.includes('support'))kind='evidence'; state.refinements.push(kind); renderOverview(); }
 
   /* ----------------------------------------------------------------------
      Notes
@@ -1601,11 +1208,9 @@
     const sectionToggle=e.target.closest('[data-action="toggle-open-item-section"]'); if(sectionToggle){ const key=sectionToggle.dataset.section; const reviews=uiPendingReviews(), questions=openQuestions(); const count=key==='reviews'?reviews.length:key==='blockers'?questions.filter(q=>q.blocking).length:questions.filter(q=>!q.blocking).length; const current=state.openItemSections[key]===null?(key==='questions'&&count>5):!!state.openItemSections[key]; state.openItemSections[key]=!current; renderOpenItems(); return; }
     const reviewToggle=e.target.closest('[data-action="toggle-review-card"]'); if(reviewToggle){ const id=reviewToggle.dataset.reviewId; const wasOpen=state.expandedReviewId===id; state.expandedReviewId=state.expandedReviewId===id?null:id; if(!wasOpen) window.StateAnalytics?.track('review_opened',{reviewId:id}); renderOpenItems(); return; }
     const provenanceToggle=e.target.closest('[data-action="toggle-provenance"]'); if(provenanceToggle){ const body=provenanceToggle.parentElement?.querySelector('.project-provenance-body'); if(body){ const expanded=!body.hidden; body.hidden=expanded; provenanceToggle.setAttribute('aria-expanded',String(!expanded)); provenanceToggle.textContent=expanded?'Why this is current →':'Hide why this is current'; if(!expanded) window.StateAnalytics?.track('provenance_opened'); } return; }
-    const p=e.target.closest('[data-prompt]'); if(p){ submitAsk(p.dataset.prompt); return; }
     const a=e.target.closest('[data-action]'); if(!a)return;
     const act=a.dataset.action;
-    if(act==='ask-submit')submitAsk();
-    else if(act==='open-specific-review'){closeDialog();state.expandedReviewId=a.dataset.reviewId;state.openItemSections.reviews=false;navigateTo('open-items');}
+    if(act==='open-specific-review'){closeDialog();state.expandedReviewId=a.dataset.reviewId;state.openItemSections.reviews=false;navigateTo('open-items');}
     else if(act==='toggle-open-questions'){state.openQuestionsExpanded=!state.openQuestionsExpanded;renderOpenItems();}
     else if(act==='show-demo-help'){showDemoHelp();}
     else if(act==='demo-start-ask'){
@@ -1621,13 +1226,8 @@
     else if(act==='project-settings')showProjectSettings();
     else if(act==='save-project-rule'){const text=document.getElementById('projectRuleText')?.value.trim();const category=document.getElementById('projectRuleCategory')?.value||'Interpretation';if(text){try{const rule=await API.createRule(text,category);if(!state.projectRules.some(x=>x.id===rule.id))state.projectRules.push(rule);showProjectSettings();}catch(err){showDialog(`<span class="eyebrow">Couldn’t save rule</span><h2 id="dialogTitle">Rule was not added.</h2><p>${esc(err.message)}</p>`);}}}
     else if(act==='delete-project-rule'){try{await API.deleteRule(a.dataset.ruleId);state.projectRules=state.projectRules.filter(x=>x.id!==a.dataset.ruleId);showProjectSettings();}catch(err){showDialog(`<span class="eyebrow">Couldn’t remove rule</span><h2 id="dialogTitle">Rule is still active.</h2><p>${esc(err.message)}</p>`);}}
-    else if(act==='example-prompt'){const q=a.dataset.prompt;closeDialog();navigateTo('overview');submitAsk(q);}
     else if(act==='copy-result'){const text=state.result?.liveAsk&&ASK?.portableText?ASK.portableText(state.result.liveAsk,liveRecordStatus()):(document.querySelector('.answer-content')?.innerText||'');const label='Copy';navigator.clipboard?.writeText(text);a.textContent='Copied';setTimeout(()=>a.textContent=label,1200);}
-    else if(act==='refresh-answer'){const q=state.resultQuery;if(!q)return;state.result=null;await submitAsk(q);}
-
-
     else if(act==='toggle-projects'){state.projectMenuOpen=!state.projectMenuOpen;render();}
-    else if(act==='ask-result')submitAsk(document.getElementById('resultAskInput')?.value);
     else if(act==='retry-hydration'){await hydrateBackend();}
     else if(act==='clear-note-filters'){state.notesDateFilter='all';state.notesFilter='all';state.notesSearch='';renderNotes();}
     else if(act==='clear-history-search'){state.historySearch='';renderHistory();}
@@ -1691,7 +1291,6 @@
       }
     }
     else if(act==='close-result'||act==='new-ask'){const oldAskInput=document.getElementById('askInput');if(oldAskInput)oldAskInput.value='';state.result=null;state.resultQuery='';state.askInputDraft='';state.refinements=[];renderOverview();requestAnimationFrame(()=>document.getElementById('askInput')?.focus());}
-    else if(act==='refine-submit')refine();
     else if(act==='go-open-question'){const q=state.data.questions.find(x=>x.id===a.dataset.questionId);if(q)showDialog(questionDialogHtml(q));}
     else if(act==='add-info'||act==='suggest-update')showAddDialog();
     else if(act==='something-changed')showAddDialog('',{description:'What changed or what is incorrect? Add what you learned — State will compare it with Current State.'});
@@ -1714,7 +1313,6 @@
     else if(act==='review-acknowledge-risk'||act==='review-dismiss-risk')decideReview(a.dataset.review,act==='review-acknowledge-risk'?'acknowledge-risk':'dismiss-risk');
     else if(act==='open-adjust-review')openAdjustDialog(a.dataset.review);
     else if(act==='confirm-review-adjust')confirmReviewAdjust(a.dataset.review);
-    else if(act==='ask-access-again'){closeDialog();navigateTo('overview');state.resultQuery='What determines customer feature access?';state.result={scenario:state.data.askScenarios.find(s=>s.id==='access')};renderOverview();}
     else if(act==='add-question')showDialog(`<span class="eyebrow">Known unknown</span><h2 id="dialogTitle">Add a question</h2><input id="manualQuestion" class="dialog-input" aria-label="New project question" placeholder="What does the project still need to establish?"/><div class="dialog-actions"><button class="btn primary" data-action="save-question">Track question</button><button class="btn secondary" data-action="close-dialog">Cancel</button></div>`);
     else if(act==='save-question'){const t=document.getElementById('manualQuestion')?.value;closeDialog();addQuestion(t);}
     else if(act==='confirm-stop-question'){const q=state.data.questions.find(q=>q.id===a.dataset.questionId);if(q)showDialog(`<span class="eyebrow">Open question</span><h2 id="dialogTitle">Stop tracking this question?</h2><p>It will be removed from the open questions list. This does not change any reviewed project understanding.</p><div class="dialog-actions"><button class="btn primary" data-action="stop-question" data-question-id="${q.id}">Stop tracking</button><button class="btn secondary" data-action="close-dialog">Cancel</button></div>`);}
@@ -1744,7 +1342,6 @@
   },{passive:true});
 
   document.addEventListener('keydown',e=>{
-    if(e.key==='Enter'&&e.target.id==='askInput')submitAsk();
     if((e.key==='Enter'||e.key===' ')&&e.target.matches('.note-index-row[data-action="toggle-note"]')){e.preventDefault();const id=e.target.dataset.noteId;if(state.expandedNotes.has(id))state.expandedNotes.delete(id);else state.expandedNotes.add(id);renderNotes();}
     if((e.key==='Enter'||e.key===' ')&&e.target.matches('.history-entry.is-linked[data-action="view-topic-history"]')){e.preventDefault();e.target.click();}
     if(e.key==='Escape'&&state.projectMenuOpen){state.projectMenuOpen=false;updateNav();document.getElementById('projectSwitcher')?.focus();return;}
@@ -1780,16 +1377,20 @@
     history.replaceState(history.state,'',location.pathname+(cleanedSearch?`?${cleanedSearch}`:'')+'#settings');
     navigateTo('settings');
   }
-  window.STATE_ASK_TEST_API={state,detectAskIntent,findScenario,structuredAskResult,scenarioResult,intentAskHtml,submitAsk,upsertBackendReview,replaceBackendOpenReviews,mapApiReview,looksLikeQuestion,hasExplicitUpdateIntent,linkedReviewFor,questionDialogHtml,renderOverview,renderOpenItems,refreshOpenReviews,historyType,syncApiHistory,addDialogHtml,historyEntry};
-  // The live Ask State drawer (context-product-polish.js's runAsk) is the
-  // only Ask surface a user actually reaches -- this module's own
-  // submitAsk()/renderOverview() Ask path is legacy from before the drawer
-  // existed and is exercised only by this file's unit tests. Generic
+  window.STATE_ASK_TEST_API={state,detectAskIntent,intentAskHtml,looksLikeQuestion,hasExplicitUpdateIntent,upsertBackendReview,replaceBackendOpenReviews,mapApiReview,linkedReviewFor,questionDialogHtml,renderOverview,renderOpenItems,refreshOpenReviews,historyType,syncApiHistory,addDialogHtml,historyEntry};
+  // state.md #115: the live Ask State drawer (context-product-polish.js's
+  // runAsk) is the only Ask surface a user actually reaches. Generic
   // inventory questions ("What needs review?") still need to route to a
-  // compact Open Items card instead of a live-backend answer, so expose the
-  // detection+render step here (where detectAskIntent/intentAskHtml/the real
-  // backend-hydrated review and question counts already live) for the
-  // drawer to call before it ever calls the Ask backend.
+  // compact Open Items card instead of spending a live backend Ask call, so
+  // expose the detection+render step here (where detectAskIntent/
+  // intentAskHtml/the real backend-hydrated review and question counts
+  // already live) for the drawer to call before it ever calls the Ask
+  // backend. detectAskIntent/intentAskHtml only handle those three routing
+  // kinds now -- the much larger Northstar-specific legacy fallback layer
+  // that used to live in this module (canned scenario answers, a vendor
+  // contact, percentages, Tier-1/support/security narrative templates) was
+  // dead code, unreachable from any live UI, and has been deleted rather
+  // than generalized.
   window.STATE_ASK_ROUTING=Object.freeze({
     askRoutingCardHtml(raw){
       const kind=detectAskIntent(raw)?.kind;

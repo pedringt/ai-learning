@@ -3,22 +3,6 @@
   const todayISO = () => { const d=new Date(); const pad=n=>String(n).padStart(2,'0'); return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`; };
   const OPEN_ITEMS_VIEW = window.STATE_OPEN_ITEMS_VIEW;
 
-  const askTopicTerms={
-    'feature-access':['feature access','plan access','entitlement','entitlements','grandfathered','plan matrix'],
-    'automation':['automation','automate','automatically','autonomy','autonomous','auto send','auto-send','send replies','send responses'],
-    'security':['security','human review','review boundary','unsafe','high risk','high-risk','read only','read-only','account changing','account-changing'],
-    'success-metrics':['evaluation','evaluate','metrics','success metric','threshold','quality'],
-    'data':['data','retention','deletion','logging','customer data','account changing','account-changing','write action','write actions','read only','read-only'],
-    'vendor':['vendor','maya','retention','sub processor','sub-processor'],
-    'operations':['training','enablement','implementation','rollout','feedback'],
-    'scope':['pilot scope','scope','tier 1','tier1'],
-    'workflow':['workflow','human review','draft','rep review'],
-    'knowledge':['knowledge','grounding','source','sources','documentation','slack']
-  };
-  function askTopics(q){
-    return Object.entries(askTopicTerms).filter(([,terms])=>terms.some(t=>q.includes(t))).map(([topic])=>topic);
-  }
-
   const demoEvidenceDates={
     'demo-review-access-evidence':'2026-08-27T16:10:00',
     'demo-review-launch-evidence':'2026-08-28T09:30:00',
@@ -301,7 +285,13 @@
         id:q.id,text:q.text,status:q.status,blocking:!!q.blocking,blocks:q.blocks||null,
         origin:q.origin||fixture?.origin||'Added from Workspace',
         created:fixture?.created||formatBackendDate(q.created_at),createdISO:fixture?.createdISO||q.created_at,
-        topics:fixture?.topics?.length?fixture.topics:askTopics(norm(q.text)),backendManaged:true
+        // state.md #115: this used to fall back to askTopics(), a Northstar
+        // keyword classifier (guessed a topic tag from words like "tier 1"
+        // or a vendor's name). No known question this project record didn't
+        // itself already tag (via the fixture-carried topics above) gets a
+        // guessed topic anymore -- an empty array is an honest "untagged",
+        // not a wrong guess dressed up as one.
+        topics:fixture?.topics?.length?fixture.topics:[],backendManaged:true
       };
     });
     return backend;
@@ -314,7 +304,7 @@
   }
 
   window.STATE_BACKEND_SYNC = Object.freeze({
-    askTopics, askTopicTerms, evidenceDisplayTimestamp,
+    evidenceDisplayTimestamp,
     mapApiReview, upsertBackendReview, replaceBackendOpenReviews,
     titleForStateItem, formatBackendDate, sourceLabel, historyType,
     syncApiHistory, syncApiEvidence, syncApiState,

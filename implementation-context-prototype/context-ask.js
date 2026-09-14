@@ -224,7 +224,13 @@
     // headline/summary text above them is still whatever was written when
     // this answer was generated -- it can't safely rewrite itself (see
     // isItemResolved). Surface that instead of leaving it silently stale.
-    const staleNotice=resolvedCount>0?`<div class="ask-stale-notice"><span>${resolvedCount===1?'An item shown here has':`${resolvedCount} items shown here have`} since been resolved. This summary wasn't regenerated.</span><button class="text-button" data-action="refresh-answer">Refresh this answer →</button></div>`:'';
+    // state.md #115: this used to say data-action="refresh-answer", handled
+    // only by context-app.js's now-deleted legacy submitAsk() fallback --
+    // the live drawer never wired that attribute to anything, so clicking
+    // it did nothing (harmless while submitAsk existed as an unused no-op
+    // target, but would throw once that dead code was removed). Reuse the
+    // drawer's own actually-wired refresh control instead.
+    const staleNotice=resolvedCount>0?`<div class="ask-stale-notice"><span>${resolvedCount===1?'An item shown here has':`${resolvedCount} items shown here have`} since been resolved. This summary wasn't regenerated.</span><button class="text-button" type="button" data-review-batch-action="refresh-ask">Refresh this answer →</button></div>`:'';
     return `<div class="ask-live-answer"><div class="ask-answer-head"><div class="result-label">${esc(a.job==='meeting_prep'?'Meeting prep':'State Ask')}</div><div class="ask-answer-actions"><button class="btn secondary ask-copy-answer" data-action="copy-result">Copy</button><button class="btn secondary ask-new-session" data-action="new-ask">New ask</button></div></div><h2>${esc(a.headline)}</h2><p class="result-lede">${esc(a.summary)}</p>${staleNotice}${sections}${notes}${refinements?`<div class="ask-refinement-chips">${refinements}</div>`:''}${relatedOpenItemsAside(a,liveStatus,payload)}</div>`;
   }
   const INITIAL_WAIT_MESSAGES=['Finding the project context that matters for this question…','Checking Current State against open Reviews and Questions…','Keeping unresolved information unresolved…','Shaping the grounded answer around the useful parts…'];const LONG_WAIT_MESSAGES=['Still working. Checking the answer against the project record…','Still working — making sure Reviews qualify rather than silently replace Current State…'];const REFINEMENT_WAIT_MESSAGES=['Refining the existing answer without changing the underlying project truth…','Keeping the same grounding while changing the format and emphasis…','Still working — checking the refinement against the project record…'];const waitTimers=new WeakMap();
