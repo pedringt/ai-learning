@@ -395,9 +395,20 @@
       : blockingCount===0
         ? 'None are currently blocking progress.'
         : `${blockingCount} ${blockingCount===1?'is':'are'} currently blocking progress.`;
+    // QA follow-up (2026-09-14): the previous bullet-list preview here
+    // (checkmarked real facts, not just a count) was removed for showing
+    // hardcoded Northstar text on every project -- its DOM-scraping data
+    // source could never work. The card design itself was preferred over
+    // the plain count that replaced it; this rebuilds it against
+    // state.data.knowledge directly (already correctly project-scoped
+    // everywhere else in this file), never falling back to fixed text.
+    // isProjectUniversalMeta excludes "Project stage"/"Project outcome" --
+    // headline framing, not itself an example of a specific fact.
+    const previewFacts=stateLoaded?(state.data.knowledge||[]).filter(k=>k.state==='current'&&!isProjectUniversalMeta(k)).slice(0,4):[];
+    const factPreviewHtml=previewFacts.length?`<ul class="state-fact-preview">${previewFacts.map(k=>`<li>${esc(k.statement||k.title)}</li>`).join('')}</ul>`:'';
     return `<section class="workspace-status-card"><span class="eyebrow">Current State</span><div class="workspace-status-body">
       <div class="workspace-status-item"><strong class="workspace-status-value">${!historyLoaded?(state.backendStatus.history==='error'?'Recent change unavailable':'…'):lastUpdated?`Updated ${esc(lastUpdated)}`:'Not yet established'}</strong><div class="workspace-status-row"><span>${!historyLoaded&&state.backendStatus.history!=='error'?'Loading most recent change…':lastLabel?esc(lastLabel):'Most recent change.'}</span></div></div>
-      <div class="workspace-status-item"><strong class="workspace-status-value">${stateLoaded?`${establishedCount} established fact${establishedCount===1?'':'s'}`:state.backendStatus.state==='error'?'Established facts unavailable':'… established facts'}</strong><div class="workspace-status-row"><span>What the project currently treats as true.</span><button class="text-button" data-view="project-overview">Browse Current State →</button></div></div>
+      <div class="workspace-status-item"><strong class="workspace-status-value">${stateLoaded?`${establishedCount} established fact${establishedCount===1?'':'s'}`:state.backendStatus.state==='error'?'Established facts unavailable':'… established facts'}</strong><div class="workspace-status-row"><span>What the project currently treats as true.</span><button class="text-button" data-view="project-overview">Browse Current State →</button></div>${factPreviewHtml}</div>
       <div class="workspace-status-item"><strong class="workspace-status-value${questionsLoaded&&openCount===0?' is-clear':''}">${esc(openHeadline)}</strong><div class="workspace-status-row"><span>${openSupportText}</span><button class="text-button" data-view="open-items">Open Items →</button></div></div>
     </div></section>`;
   }
