@@ -397,7 +397,13 @@
       if(requestId!==ui.requestId)return;
       ui.payload=payload;ui.answerStateSignature=await statePromise;ui.resolvedContext=await resolvedPromise;ui.running=false;ui.streamRaw='';renderFinalAsk();
     }catch(error){
-      if(requestId!==ui.requestId)return;ui.running=false;ui.streamRaw='';renderDrawerResult(`<div class="ask-live-error"><h2>Ask is temporarily unavailable.</h2><p>${esc(error?.message||'Please try again.')}</p></div>`);
+      if(requestId!==ui.requestId)return;ui.running=false;ui.streamRaw='';
+      // QA follow-up (2026-09-14): the backend's own 503 fallback text is
+      // literally "Ask is temporarily unavailable. Please try again." --
+      // identical to this card's hardcoded headline, so that specific
+      // failure rendered the same sentence twice in a row. A distinct
+      // headline can't collide with whatever the error message says.
+      renderDrawerResult(`<div class="ask-live-error"><h2>Ask couldn't answer that.</h2><p>${esc(error?.message||'Please try again.')}</p></div>`);
     }
   }
 

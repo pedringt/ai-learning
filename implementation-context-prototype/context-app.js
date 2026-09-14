@@ -122,9 +122,17 @@
     // spec -- forces its horizontal overflow to clip too, so a menu
     // positioned relative to it (its old behavior) got its right edge cut
     // off rather than overlapping the main content. Fixed positioning,
-    // anchored to the button's own on-screen rect, escapes that clipping
-    // entirely since neither .sidebar-project nor .app-sidebar establishes
-    // a transformed containing block.
+    // anchored to the button's own on-screen rect, escapes that clipping.
+    // QA follow-up (2026-09-14): raising z-index alone didn't fix the
+    // follow-up overlap bug -- .app-sidebar is position:sticky, which
+    // establishes its own stacking context, and a position:fixed
+    // descendant's z-index is only compared against siblings *within* that
+    // context, not the page at large, so it stayed trapped beneath
+    // ordinary content elsewhere on the page no matter how high its
+    // z-index went. Moving the element to be a direct child of <body> (the
+    // same pattern the toast and dialog overlay already use) escapes every
+    // ancestor stacking context, not just this one.
+    if(pm&&typeof document.body?.appendChild==='function'&&pm.parentElement!==document.body)document.body.appendChild(pm);
     if(pm&&ps&&state.projectMenuOpen){
       const rect=ps.getBoundingClientRect();
       pm.style.position='fixed';
@@ -1520,7 +1528,11 @@
       else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus();}
     }
   });
-  document.addEventListener('click',e=>{ if(state.projectMenuOpen && !e.target.closest('.sidebar-project') && !e.target.closest('[data-action="toggle-projects"]')){state.projectMenuOpen=false;updateNav();} });
+  // #projectMenu is reparented to document.body (see updateNav()) to escape
+  // the sidebar's stacking context, so an outside-click check scoped only to
+  // .sidebar-project would treat every click inside the now-detached menu
+  // itself as "outside" and close it before a switch-project click could land.
+  document.addEventListener('click',e=>{ if(state.projectMenuOpen && !e.target.closest('.sidebar-project') && !e.target.closest('#projectMenu') && !e.target.closest('[data-action="toggle-projects"]')){state.projectMenuOpen=false;updateNav();} });
   overlay.addEventListener('click',e=>{if(e.target===overlay && !state.isAnalyzing) closeDialog();});
   // The Slack "Connect Slack" OAuth round trip ends with the backend
   // redirecting the browser back here with ?slack_connect=success|error.
