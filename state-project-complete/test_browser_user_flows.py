@@ -87,6 +87,11 @@ def _mock_api_script(hydration_ms: int = 120, ask_ms: int = 180, resolved_review
           createQuestion:async(text)=>({{id:'q-new',text,status:'open',blocking:false,origin:'Added from Workspace'}}),
           resolveReview:async(id,decision)=>{{ await sleep(null,650); return {{review_id:id,decision,state:[],open_reviews:[],history:[]}}; }},
           resetDemo:async()=>({{status:'reset'}}),
+          // state.md #114: exercised by ensureProjectsList(), called
+          // unconditionally from hydrateBackend() -- without these, every
+          // test in this file would throw on load.
+          getProjects:()=>sleep({{items:[{{id:'northstar',name:'Northstar'}},{{id:'juniper',name:'Juniper Office Move'}}]}}, {hydration_ms}),
+          switchProject:async(projectId)=>({{id:projectId,name:projectId==='juniper'?'Juniper Office Move':'Northstar'}}),
         }};
       }})();
     """
@@ -296,6 +301,10 @@ def test_demo_help_start_actions_are_clickable_and_reset_is_discoverable():
     # inline #askInput) via the same synthetic data-review-batch-prompt
     # click the drawer's own starter chips use, and actually submits the
     # question rather than only prefilling it.
+    # state.md #114: the starter question text itself was generalized away
+    # from "...the Northstar pilot?" (Northstar-specific) to a project-
+    # neutral "...this project?" so a different active project never sees
+    # Northstar's own wording baked into a demo-help action.
     pw, browser, page = _launch_page(hydration_ms=10)
     try:
         page.locator('.demo-help-button').click()
@@ -304,8 +313,30 @@ def test_demo_help_start_actions_are_clickable_and_reset_is_discoverable():
         page.locator('[data-action="demo-start-ask"]').click()
         assert page.locator('#askStateDrawer[hidden]').count() == 0
         box = page.locator('#askStateDrawerInput')
-        assert box.input_value() == 'What should I know about the Northstar pilot?'
+        assert box.input_value() == 'What should I know about this project?'
         page.get_by_text('Jane Smith', exact=True).wait_for(timeout=2000)
+    finally:
+        browser.close(); pw.stop()
+
+
+def test_project_switcher_lists_real_projects_and_switches_active_one():
+    # state.md #114: the project menu used to be four hardcoded buttons in
+    # index.html (three of them permanently disabled) -- it's now built from
+    # GET /api/projects, and clicking an entry calls POST /api/projects/switch
+    # and re-hydrates the whole app against the new project.
+    pw, browser, page = _launch_page(hydration_ms=10)
+    try:
+        page.get_by_text('Northstar', exact=False).first.wait_for(timeout=2000)
+        page.locator('#projectSwitcher').click()
+        menu = page.locator('#projectMenu')
+        assert menu.locator('button', has_text='Northstar').count() == 1
+        assert menu.locator('button', has_text='Juniper Office Move').count() == 1
+        assert menu.locator('button.active', has_text='Northstar').count() == 1
+
+        menu.locator('button', has_text='Juniper Office Move').click()
+        page.wait_for_timeout(60)
+        assert page.locator('#projectSwitcher').inner_text().strip().startswith('Juniper Office Move')
+        assert page.locator('#projectMenu[hidden]').count() == 1  # closed after switching
     finally:
         browser.close(); pw.stop()
 

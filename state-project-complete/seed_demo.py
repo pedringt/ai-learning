@@ -254,8 +254,137 @@ ASK_RULES = [
 ]
 
 
+# ---------------------------------------------------------------------------
+# state.md #114: a second, deliberately non-software seeded project (Juniper
+# Office Move), so State's genericity can be tested in the real product
+# rather than argued about. Same shapes as Northstar's data above --
+# AREAS/ITEMS/QUESTIONS/REVIEWS/RESOLVED_REVIEWS -- with project_id='juniper'
+# stamped at insert time by _bootstrap_project(). No AI/pilot/support-rep/
+# Tier-1/vendor-retention language anywhere below: if any of that leaks into
+# a rendered Juniper page, it came from product code, not this fixture.
+# ---------------------------------------------------------------------------
+JUNIPER_AREAS = [
+    ("facilities", "Location & facilities", "Where the new office is and what it needs to be ready.", 10),
+    ("vendors", "Vendors & logistics", "Who is doing the move and what they're responsible for.", 20),
+    ("budget", "Budget", "What the move costs and what has been approved.", 30),
+    ("timeline", "Timeline & dependencies", "When things happen and what has to be true first.", 40),
+]
+
+# id, topic, statement, area_id. area_id is None for the two universal facts.
+JUNIPER_ITEMS = [
+    ("j-stage", "Project stage", "The lease is signed; vendor selection and furniture ordering are next.", None),
+    ("j-outcome", "Project outcome", "Relocate the team to the new office with minimal downtime and no lost equipment.", None),
+    ("j-location", "Destination", "The new office is at 400 Harbor Way, Suite 200, a 12,000 sq ft floor.", "facilities"),
+    ("j-lease-end", "Current lease end date", "The current lease at the old office ends October 31.", "facilities"),
+    ("j-capacity", "Desk capacity", "The new space holds 40 desks, up from 28 at the current office.", "facilities"),
+    ("j-constraint", "Facilities constraint", "The building does not allow deliveries or moves outside 7am-7pm on weekdays, or before 9am on weekends.", "facilities"),
+    ("j-move-date", "Move date", "The move is scheduled for the weekend of November 8-9.", "timeline"),
+    ("j-vendor", "Moving vendor", "Acme Movers is the contracted moving vendor for the relocation weekend.", "vendors"),
+    ("j-it-vendor", "IT relocation", "TechMove Logistics handles server rack and network equipment relocation, separate from the general moving vendor.", "vendors"),
+    ("j-storage", "Temporary storage", "A temporary storage unit was reserved in case the move date slipped; it is on hold pending final confirmation.", "vendors"),
+    ("j-budget-amount", "Approved budget", "The move budget is approved at $85,000, covering moving services, furniture, and IT relocation.", "budget"),
+]
+
+JUNIPER_QUESTIONS = [
+    ("jq-permit", "When will the occupancy permit for the new office be issued?", 1, "Move-in date confirmation", "Facilities coordination"),
+    ("jq-elevator", "Is the freight elevator reserved for the move weekend?", 1, "Moving vendor schedule", "Building management"),
+    ("jq-internet", "When will the internet circuit be activated at the new office?", 0, None, "IT planning"),
+    ("jq-furniture", "When will the new furniture be delivered relative to the move date?", 0, None, "Vendor coordination"),
+    ("jq-badge", "Who is issuing building access badges for the new office?", 0, None, "Facilities coordination"),
+    ("jq-parking", "How many parking spots are included in the new lease?", 0, None, "Lease review"),
+]
+
+JUNIPER_REVIEWS = [
+    {  # shape: update an existing Current State fact
+        "id": "demo-juniper-review-vendor-schedule", "review_type": "proposed_update",
+        "decision_question": "Should Current State reflect the moving vendor's revised schedule?",
+        "why_consequential": "Acme Movers pushed the load-in window later in the day, which affects the facilities access window.",
+        "evidence_id": "demo-juniper-review-vendor-schedule-evidence",
+        "evidence_text": "Vendor coordination call: Acme Movers can no longer start load-in before 9am on November 8 due to another job that morning.",
+        "evidence_date": "2026-09-05 10:00:00",
+        "proposals": [{"state_item_id": "j-vendor", "operation": "update",
+                        "proposed_statement": "Acme Movers is the contracted moving vendor for the relocation weekend, with load-in starting no earlier than 9am on November 8.",
+                        "rationale": "Acme Movers moved their earliest start time later due to a scheduling conflict."}],
+        "resolves_question_ids": [],
+    },
+    {  # shape: create a new Current State fact, and it also answers an open
+       # Question (jq-internet) without that being the review's only point.
+        "id": "demo-juniper-review-internet-date", "review_type": "missing_understanding",
+        "decision_question": "Should Current State record the confirmed internet activation date?",
+        "why_consequential": "Facilities planning depends on knowing whether connectivity is ready before or after the move.",
+        "evidence_id": "demo-juniper-review-internet-date-evidence",
+        "evidence_text": "ISP confirmation email: the internet circuit at 400 Harbor Way will be activated November 5.",
+        "evidence_date": "2026-09-06 09:30:00",
+        "proposals": [{"state_item_id": None, "operation": "create",
+                        "proposed_statement": "Internet circuit activation is confirmed for November 5, three days before the move.",
+                        "rationale": "The ISP confirmed a specific activation date."}],
+        "resolves_question_ids": ["jq-internet"],
+    },
+    {  # shape: state_at_risk / consequential uncertainty without a
+       # replacement fact -- pre-linked to the equivalent existing Question
+       # (jq-elevator) the same way Northstar's retention example is, so
+       # "Keep tracking" preserves it rather than creating a duplicate.
+        "id": "demo-juniper-review-elevator", "review_type": "state_at_risk",
+        "decision_question": "Is the freight elevator reservation confirmed for the move weekend?",
+        "why_consequential": "Building management has not confirmed the elevator reservation; without it the move date may need to shift.",
+        "evidence_id": "demo-juniper-review-elevator-evidence",
+        "evidence_text": "Building management follow-up: the freight elevator request is logged but not yet confirmed for November 8-9.",
+        "evidence_date": "2026-09-06 15:00:00",
+        "proposals": [], "resolves_question_ids": [],
+    },
+    {  # shape: update an existing fact (budget), a different domain than
+       # the other update example above.
+        "id": "demo-juniper-review-budget", "review_type": "proposed_update",
+        "decision_question": "Should Current State reflect the updated moving budget?",
+        "why_consequential": "Adding IT relocation scope raised the total above the originally approved figure.",
+        "evidence_id": "demo-juniper-review-budget-evidence",
+        "evidence_text": "Finance approval note: the move budget is increased to $95,000 to cover the added IT relocation scope with TechMove Logistics.",
+        "evidence_date": "2026-09-07 11:00:00",
+        "proposals": [{"state_item_id": "j-budget-amount", "operation": "update",
+                        "proposed_statement": "The move budget is approved at $95,000, covering moving services, furniture, and IT relocation.",
+                        "rationale": "Finance approved a budget increase to cover added IT relocation scope."}],
+        "resolves_question_ids": [],
+    },
+    {  # shape: retire an existing Current State fact
+        "id": "demo-juniper-review-retire-storage", "review_type": "proposed_update",
+        "decision_question": "Should the temporary storage fact be retired now that the move date is confirmed?",
+        "why_consequential": "The storage unit was a contingency for a slipped move date; the date is now firm and the contingency no longer applies.",
+        "evidence_id": "demo-juniper-review-retire-storage-evidence",
+        "evidence_text": "Vendor coordination note: with the November 8-9 date locked, the standby storage unit hold can be released.",
+        "evidence_date": "2026-09-07 16:00:00",
+        "proposals": [{"state_item_id": "j-storage", "operation": "retire",
+                        "proposed_statement": "The temporary storage contingency is no longer needed; the move date is confirmed.",
+                        "rationale": "The standby storage unit was only needed if the move date slipped."}],
+        "resolves_question_ids": [],
+    },
+]
+
+JUNIPER_RESOLVED_REVIEWS = [
+    {  # shape: Evidence answers an existing Question without requiring a
+       # Current State change.
+        "id": "demo-juniper-review-resolved-parking", "review_type": "state_at_risk",
+        "decision_question": "Does the lease documentation answer how many parking spots are included?",
+        "why_consequential": "Legal's lease review already covered this exact question.",
+        "evidence_id": "demo-juniper-review-resolved-parking-evidence",
+        "evidence_text": "Legal lease review summary: the lease includes 15 reserved parking spots at no additional cost, confirmed in section 4.2.",
+        "evidence_date": "2026-09-04 13:00:00",
+        "proposals": [],
+        "resolution": "confirmed_current",
+        "resolution_note": "Lease documentation already answers this; no Current State change needed.",
+        "resolved_at": "2026-09-04 14:00:00",
+        "resolved_question_id": "jq-parking",
+    },
+]
+
+
 def _seed_accepted_history(connection) -> int:
     """Create synthetic but fully linked accepted provenance for untouched demo State."""
+    # Same pre-#114 schema guard as _bootstrap_project (this always seeds
+    # Northstar, so a fixed 'northstar' literal is correct whenever the
+    # column exists at all).
+    projects_ready = connection.execute(
+        "SELECT 1 FROM schema_migrations WHERE version='013_projects'"
+    ).fetchone() is not None
     seeded = 0
     for slug, state_id, before_statement, after_statement, rationale, evidence_text, changed_at in HISTORY_SCENARIOS:
         history_id = f"demo-history-{slug}"
@@ -276,11 +405,18 @@ def _seed_accepted_history(connection) -> int:
             "INSERT OR IGNORE INTO evidence(id,content,source_type,processing_status,submitted_at) VALUES (?,?,'demo_history','processed',?)",
             (eid, evidence_text, changed_at),
         )
-        connection.execute(
-            "INSERT INTO review_issues(id,review_type,decision_question,why_consequential,status,resolution,resolution_note,created_at,resolved_at) "
-            "VALUES (?, 'proposed_update', ?, ?, 'resolved', 'updated', 'Accepted in the Northstar demo baseline.', ?, ?)",
-            (rid, f"Should Current State update {state_id} based on this reviewed evidence?", rationale, changed_at, changed_at),
-        )
+        if projects_ready:
+            connection.execute(
+                "INSERT INTO review_issues(id,review_type,decision_question,why_consequential,status,resolution,resolution_note,created_at,resolved_at,project_id) "
+                "VALUES (?, 'proposed_update', ?, ?, 'resolved', 'updated', 'Accepted in the Northstar demo baseline.', ?, ?, 'northstar')",
+                (rid, f"Should Current State update {state_id} based on this reviewed evidence?", rationale, changed_at, changed_at),
+            )
+        else:
+            connection.execute(
+                "INSERT INTO review_issues(id,review_type,decision_question,why_consequential,status,resolution,resolution_note,created_at,resolved_at) "
+                "VALUES (?, 'proposed_update', ?, ?, 'resolved', 'updated', 'Accepted in the Northstar demo baseline.', ?, ?)",
+                (rid, f"Should Current State update {state_id} based on this reviewed evidence?", rationale, changed_at, changed_at),
+            )
         connection.execute("INSERT INTO review_evidence(review_id,evidence_id) VALUES (?,?)", (rid, eid))
         connection.execute("INSERT INTO review_state_items(review_id,state_item_id) VALUES (?,?)", (rid, state_id))
         connection.execute(
@@ -301,21 +437,35 @@ def _seed_accepted_history(connection) -> int:
     return seeded
 
 
-def bootstrap_demo_data(connection, *, manage_transaction: bool = True) -> dict[str, int]:
-    """Insert missing demo records without overwriting anything already present."""
+def _bootstrap_project(connection, *, project_id: str, project_name: str, areas, items, questions, reviews, resolved_reviews,
+                        manage_transaction: bool = True, seed_history=None, ask_evidence=(), ask_rules=()) -> dict[str, int]:
+    """state.md #114: the shared engine behind bootstrap_demo_data() (Northstar)
+    and bootstrap_juniper_demo_data() (Juniper Office Move) -- same insertion
+    logic, parameterized by project_id and that project's own AREAS/ITEMS/
+    QUESTIONS/REVIEWS/RESOLVED_REVIEWS data, so the two seeded projects can
+    never drift into inconsistent seeding behavior. Every insert below is
+    stamped with project_id; every idempotency/lookup query filters by it, so
+    running this for one project never touches another project's rows.
+    """
     counts = {"state": 0, "questions": 0, "reviews": 0, "history": 0, "evidence": 0, "rules": 0}
     if manage_transaction:
         connection.execute("BEGIN IMMEDIATE")
     try:
-        # Guard against a pre-#113 schema (migration 012 not yet applied):
-        # some tests deliberately seed data at an older schema snapshot to
-        # exercise a later initialize_db() migrating it forward (see
-        # test_migration_from_existing_sqlite_preserves_history_links_and_reenables_fk).
-        # project_areas/area_id don't exist yet in that snapshot, so fall back
-        # to the pre-#113 3-column insert rather than failing to seed at all.
+        # Guard against a pre-#113/#114 schema (migrations 012/013 not yet
+        # applied): some tests deliberately seed data at an older schema
+        # snapshot to exercise a later initialize_db() migrating it forward
+        # (see test_migration_from_existing_sqlite_preserves_history_links_and_reenables_fk).
+        # project_areas/area_id/project_id don't exist yet in that snapshot,
+        # so fall back to the pre-#113/#114 column set rather than failing to
+        # seed at all.
         areas_ready = connection.execute(
             "SELECT 1 FROM schema_migrations WHERE version='012_project_areas'"
         ).fetchone() is not None
+        projects_ready = connection.execute(
+            "SELECT 1 FROM schema_migrations WHERE version='013_projects'"
+        ).fetchone() is not None
+        if projects_ready:
+            connection.execute("INSERT OR IGNORE INTO projects(id, name) VALUES (?, ?)", (project_id, project_name))
         # Same guard, for #112's richer Review gallery: open_question Reviews
         # and proposed_questions need migration 009; review_questions.evidence_id
         # needs migration 010. Both are no-ops (rather than failures) on an
@@ -328,16 +478,27 @@ def bootstrap_demo_data(connection, *, manage_transaction: bool = True) -> dict[
             "SELECT 1 FROM schema_migrations WHERE version='010_review_questions_evidence_source'"
         ).fetchone() is not None
         if areas_ready:
-            for area_id, name, description, sort_order in AREAS:
+            for area_id, name, description, sort_order in areas:
                 if not connection.execute("SELECT id FROM project_areas WHERE id=?", (area_id,)).fetchone():
-                    connection.execute(
-                        "INSERT INTO project_areas(id, name, description, sort_order) VALUES (?, ?, ?, ?)",
-                        (area_id, name, description, sort_order),
-                    )
-        for item_id, topic, statement, area_id in ITEMS:
+                    if projects_ready:
+                        connection.execute(
+                            "INSERT INTO project_areas(id, name, description, sort_order, project_id) VALUES (?, ?, ?, ?, ?)",
+                            (area_id, name, description, sort_order, project_id),
+                        )
+                    else:
+                        connection.execute(
+                            "INSERT INTO project_areas(id, name, description, sort_order) VALUES (?, ?, ?, ?)",
+                            (area_id, name, description, sort_order),
+                        )
+        for item_id, topic, statement, area_id in items:
             before = connection.execute("SELECT id FROM current_state_items WHERE id=?", (item_id,)).fetchone()
             if not before:
-                if areas_ready:
+                if areas_ready and projects_ready:
+                    connection.execute(
+                        "INSERT INTO current_state_items(id, topic, statement, version, area_id, project_id) VALUES (?, ?, ?, 1, ?, ?)",
+                        (item_id, topic, statement, area_id, project_id),
+                    )
+                elif areas_ready:
                     connection.execute(
                         "INSERT INTO current_state_items(id, topic, statement, version, area_id) VALUES (?, ?, ?, 1, ?)",
                         (item_id, topic, statement, area_id),
@@ -348,41 +509,73 @@ def bootstrap_demo_data(connection, *, manage_transaction: bool = True) -> dict[
                         (item_id, topic, statement),
                     )
                 counts["state"] += 1
-        counts["history"] += _seed_accepted_history(connection)
-        for eid, content, source_type, submitted_at in ASK_EVIDENCE:
+        if seed_history is not None:
+            counts["history"] += seed_history(connection)
+        for eid, content, source_type, submitted_at in ask_evidence:
             if not connection.execute("SELECT id FROM evidence WHERE id=?", (eid,)).fetchone():
-                connection.execute(
-                    "INSERT INTO evidence(id,content,source_type,processing_status,submitted_at) VALUES (?,?,?,'processed',?)",
-                    (eid, content, source_type, submitted_at),
-                )
+                if projects_ready:
+                    connection.execute(
+                        "INSERT INTO evidence(id,content,source_type,processing_status,submitted_at,project_id) VALUES (?,?,?,'processed',?,?)",
+                        (eid, content, source_type, submitted_at, project_id),
+                    )
+                else:
+                    connection.execute(
+                        "INSERT INTO evidence(id,content,source_type,processing_status,submitted_at) VALUES (?,?,?,'processed',?)",
+                        (eid, content, source_type, submitted_at),
+                    )
                 counts["evidence"] += 1
-        for rule_id, statement, category in ASK_RULES:
+        for rule_id, statement, category in ask_rules:
             if not connection.execute("SELECT id FROM project_rules WHERE id=?", (rule_id,)).fetchone():
-                connection.execute(
-                    "INSERT INTO project_rules(id,statement,rationale,status) VALUES (?,?,?,'active')",
-                    (rule_id, statement, category),
-                )
+                if projects_ready:
+                    connection.execute(
+                        "INSERT INTO project_rules(id,statement,rationale,status,project_id) VALUES (?,?,?,'active',?)",
+                        (rule_id, statement, category, project_id),
+                    )
+                else:
+                    connection.execute(
+                        "INSERT INTO project_rules(id,statement,rationale,status) VALUES (?,?,?,'active')",
+                        (rule_id, statement, category),
+                    )
                 counts["rules"] += 1
-        for qid, text, blocking, blocks, origin in QUESTIONS:
+        for qid, text, blocking, blocks, origin in questions:
             before = connection.execute("SELECT id FROM questions WHERE id=?", (qid,)).fetchone()
             if not before:
-                connection.execute("INSERT INTO questions(id,text,status,blocking,blocks,origin) VALUES (?,?,'open',?,?,?)", (qid,text,blocking,blocks,origin))
+                if projects_ready:
+                    connection.execute(
+                        "INSERT INTO questions(id,text,status,blocking,blocks,origin,project_id) VALUES (?,?,'open',?,?,?,?)",
+                        (qid, text, blocking, blocks, origin, project_id),
+                    )
+                else:
+                    connection.execute(
+                        "INSERT INTO questions(id,text,status,blocking,blocks,origin) VALUES (?,?,'open',?,?,?)",
+                        (qid, text, blocking, blocks, origin),
+                    )
                 counts["questions"] += 1
-        for review in REVIEWS:
+        for review in reviews:
             rid = review["id"]
             if review["review_type"] == "open_question" and not open_question_ready:
                 continue
             if connection.execute("SELECT id FROM review_issues WHERE id=?", (rid,)).fetchone():
                 continue
             eid = review["evidence_id"]
-            connection.execute(
-                "INSERT OR IGNORE INTO evidence(id,content,source_type,processing_status,submitted_at) VALUES (?,?,'demo_seed','processed',?)",
-                (eid, review["evidence_text"], review["evidence_date"]),
-            )
-            connection.execute(
-                "INSERT INTO review_issues(id,review_type,decision_question,why_consequential,status) VALUES (?,?,?,?,'open')",
-                (rid, review["review_type"], review["decision_question"], review["why_consequential"]),
-            )
+            if projects_ready:
+                connection.execute(
+                    "INSERT OR IGNORE INTO evidence(id,content,source_type,processing_status,submitted_at,project_id) VALUES (?,?,'demo_seed','processed',?,?)",
+                    (eid, review["evidence_text"], review["evidence_date"], project_id),
+                )
+                connection.execute(
+                    "INSERT INTO review_issues(id,review_type,decision_question,why_consequential,status,project_id) VALUES (?,?,?,?,'open',?)",
+                    (rid, review["review_type"], review["decision_question"], review["why_consequential"], project_id),
+                )
+            else:
+                connection.execute(
+                    "INSERT OR IGNORE INTO evidence(id,content,source_type,processing_status,submitted_at) VALUES (?,?,'demo_seed','processed',?)",
+                    (eid, review["evidence_text"], review["evidence_date"]),
+                )
+                connection.execute(
+                    "INSERT INTO review_issues(id,review_type,decision_question,why_consequential,status) VALUES (?,?,?,?,'open')",
+                    (rid, review["review_type"], review["decision_question"], review["why_consequential"]),
+                )
             connection.execute("INSERT OR IGNORE INTO review_evidence(review_id,evidence_id) VALUES (?,?)", (rid, eid))
             for proposal in review["proposals"]:
                 state_id = proposal["state_item_id"]
@@ -408,21 +601,33 @@ def bootstrap_demo_data(connection, *, manage_transaction: bool = True) -> dict[
                 persist_question_proposal(connection, rid, eid, review["question_proposal_text"])
             counts["reviews"] += 1
 
-        for review in RESOLVED_REVIEWS:
+        for review in resolved_reviews:
             rid = review["id"]
             if connection.execute("SELECT id FROM review_issues WHERE id=?", (rid,)).fetchone():
                 continue
             eid = review["evidence_id"]
-            connection.execute(
-                "INSERT OR IGNORE INTO evidence(id,content,source_type,processing_status,submitted_at) VALUES (?,?,'demo_seed','processed',?)",
-                (eid, review["evidence_text"], review["evidence_date"]),
-            )
-            connection.execute(
-                "INSERT INTO review_issues(id,review_type,decision_question,why_consequential,status,resolution,resolution_note,resolved_at) "
-                "VALUES (?,?,?,?,'resolved',?,?,?)",
-                (rid, review["review_type"], review["decision_question"], review["why_consequential"],
-                 review["resolution"], review["resolution_note"], review["resolved_at"]),
-            )
+            if projects_ready:
+                connection.execute(
+                    "INSERT OR IGNORE INTO evidence(id,content,source_type,processing_status,submitted_at,project_id) VALUES (?,?,'demo_seed','processed',?,?)",
+                    (eid, review["evidence_text"], review["evidence_date"], project_id),
+                )
+                connection.execute(
+                    "INSERT INTO review_issues(id,review_type,decision_question,why_consequential,status,resolution,resolution_note,resolved_at,project_id) "
+                    "VALUES (?,?,?,?,'resolved',?,?,?,?)",
+                    (rid, review["review_type"], review["decision_question"], review["why_consequential"],
+                     review["resolution"], review["resolution_note"], review["resolved_at"], project_id),
+                )
+            else:
+                connection.execute(
+                    "INSERT OR IGNORE INTO evidence(id,content,source_type,processing_status,submitted_at) VALUES (?,?,'demo_seed','processed',?)",
+                    (eid, review["evidence_text"], review["evidence_date"]),
+                )
+                connection.execute(
+                    "INSERT INTO review_issues(id,review_type,decision_question,why_consequential,status,resolution,resolution_note,resolved_at) "
+                    "VALUES (?,?,?,?,'resolved',?,?,?)",
+                    (rid, review["review_type"], review["decision_question"], review["why_consequential"],
+                     review["resolution"], review["resolution_note"], review["resolved_at"]),
+                )
             connection.execute("INSERT OR IGNORE INTO review_evidence(review_id,evidence_id) VALUES (?,?)", (rid, eid))
             for proposal in review["proposals"]:
                 state_id = proposal["state_item_id"]
@@ -447,17 +652,18 @@ def bootstrap_demo_data(connection, *, manage_transaction: bool = True) -> dict[
                 )
             counts["reviews"] += 1
 
-        # Ask adversarial relationships: the vendor claim is relevant to the open
-        # retention Review, which also affects the current data boundary. Linking
-        # the blocker makes provenance/action navigation deterministic. (#111:
-        # this k-data link is a real cross-reference for Ask's related-item
-        # selection, not "the Current State fact this Review challenges" --
-        # frontend Review-card display must not conflate the two; see
-        # context-backend-sync.js's mapApiReview.)
-        if connection.execute("SELECT id FROM review_issues WHERE id='demo-review-retention'").fetchone():
-            connection.execute("INSERT OR IGNORE INTO review_evidence(review_id,evidence_id) VALUES ('demo-review-retention','ask-evidence-vendor-retention')")
-            connection.execute("INSERT OR IGNORE INTO review_state_items(review_id,state_item_id) VALUES ('demo-review-retention','k-data')")
-            connection.execute("INSERT OR IGNORE INTO review_questions(review_id,question_id) VALUES ('demo-review-retention','q-retention')")
+        if project_id == "northstar":
+            # Ask adversarial relationships: the vendor claim is relevant to the open
+            # retention Review, which also affects the current data boundary. Linking
+            # the blocker makes provenance/action navigation deterministic. (#111:
+            # this k-data link is a real cross-reference for Ask's related-item
+            # selection, not "the Current State fact this Review challenges" --
+            # frontend Review-card display must not conflate the two; see
+            # context-backend-sync.js's mapApiReview.)
+            if connection.execute("SELECT id FROM review_issues WHERE id='demo-review-retention'").fetchone():
+                connection.execute("INSERT OR IGNORE INTO review_evidence(review_id,evidence_id) VALUES ('demo-review-retention','ask-evidence-vendor-retention')")
+                connection.execute("INSERT OR IGNORE INTO review_state_items(review_id,state_item_id) VALUES ('demo-review-retention','k-data')")
+                connection.execute("INSERT OR IGNORE INTO review_questions(review_id,question_id) VALUES ('demo-review-retention','q-retention')")
         if manage_transaction:
             connection.execute("COMMIT")
     except Exception:
@@ -467,29 +673,66 @@ def bootstrap_demo_data(connection, *, manage_transaction: bool = True) -> dict[
     return counts
 
 
-def reset_demo_data(connection) -> dict[str, int]:
-    """Atomically remove session changes and restore the curated Northstar baseline."""
+def bootstrap_demo_data(connection, *, manage_transaction: bool = True) -> dict[str, int]:
+    """Insert missing Northstar demo records without overwriting anything present."""
+    return _bootstrap_project(
+        connection, project_id="northstar", project_name="Northstar", areas=AREAS, items=ITEMS, questions=QUESTIONS,
+        reviews=REVIEWS, resolved_reviews=RESOLVED_REVIEWS, manage_transaction=manage_transaction,
+        seed_history=_seed_accepted_history, ask_evidence=ASK_EVIDENCE, ask_rules=ASK_RULES,
+    )
+
+
+def bootstrap_juniper_demo_data(connection, *, manage_transaction: bool = True) -> dict[str, int]:
+    """Insert missing Juniper Office Move demo records (state.md #114) without
+    overwriting anything present. No accepted-history backfill or Ask
+    evidence/rules -- Juniper is a smaller, deliberately non-software fixture
+    proving genericity, not a second full Northstar-sized gallery."""
+    return _bootstrap_project(
+        connection, project_id="juniper", project_name="Juniper Office Move", areas=JUNIPER_AREAS, items=JUNIPER_ITEMS,
+        questions=JUNIPER_QUESTIONS, reviews=JUNIPER_REVIEWS, resolved_reviews=JUNIPER_RESOLVED_REVIEWS,
+        manage_transaction=manage_transaction,
+    )
+
+
+_PROJECT_DEPENDENT_TABLES = (
+    # (table, column-that-scopes-it-to-a-project -- either its own project_id
+    # or a subquery through the parent row that has one)
+    ("history_transitions", "state_item_id IN (SELECT id FROM current_state_items WHERE project_id=?)"),
+    ("proposed_questions", "review_id IN (SELECT id FROM review_issues WHERE project_id=?)"),
+    ("review_questions", "review_id IN (SELECT id FROM review_issues WHERE project_id=?)"),
+    ("review_state_items", "review_id IN (SELECT id FROM review_issues WHERE project_id=?)"),
+    ("review_evidence", "review_id IN (SELECT id FROM review_issues WHERE project_id=?)"),
+    ("interpretation_records", "evidence_id IN (SELECT id FROM evidence WHERE project_id=?)"),
+    ("proposed_state_changes", "review_id IN (SELECT id FROM review_issues WHERE project_id=?)"),
+    ("review_issues", "project_id=?"),
+    ("questions", "project_id=?"),
+    ("draft_notes", "project_id=?"),
+    ("evidence", "project_id=?"),
+    ("current_state_items", "project_id=?"),
+    ("project_rules", "project_id=?"),
+)
+
+
+def reset_demo_data(connection, project_id: str = "northstar") -> dict[str, int]:
+    """Atomically remove session changes and restore one project's curated
+    baseline (state.md #114: project_id defaults to 'northstar' so every
+    pre-#114 caller keeps resetting exactly what it always reset).
+
+    Deletes only that project's rows -- dependent tables (history_transitions,
+    review_questions, etc., which have no project_id column of their own) are
+    scoped via a subquery through their project-scoped parent -- so resetting
+    Juniper can never touch Northstar's data or vice versa. Delete order still
+    matters (dependents first) exactly as before; this only narrows each
+    DELETE's WHERE clause, not the order.
+    """
     connection.execute("BEGIN IMMEDIATE")
     try:
         # Delete dependents first so this works with both SQLite and PostgreSQL
         # regardless of whether a particular foreign key cascades.
-        for table in (
-            "history_transitions",
-            "proposed_questions",
-            "review_questions",
-            "review_state_items",
-            "review_evidence",
-            "interpretation_records",
-            "proposed_state_changes",
-            "review_issues",
-            "questions",
-            "draft_notes",
-            "evidence",
-            "current_state_items",
-            "project_rules",
-        ):
-            connection.execute(f"DELETE FROM {table}")
-        counts = bootstrap_demo_data(connection, manage_transaction=False)
+        for table, scope_clause in _PROJECT_DEPENDENT_TABLES:
+            connection.execute(f"DELETE FROM {table} WHERE {scope_clause}", (project_id,))
+        seeder = bootstrap_demo_data if project_id == "northstar" else bootstrap_juniper_demo_data
+        counts = seeder(connection, manage_transaction=False)
         connection.execute("COMMIT")
         return counts
     except Exception:
@@ -504,7 +747,9 @@ def main() -> None:
     with connect(database_url) as connection:
         initialize_db(connection)
         counts = bootstrap_demo_data(connection)
+        juniper_counts = bootstrap_juniper_demo_data(connection)
     print(f"Northstar demo seed complete: {counts}")
+    print(f"Juniper Office Move demo seed complete: {juniper_counts}")
 
 
 if __name__ == "__main__":

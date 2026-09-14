@@ -5,7 +5,7 @@ from __future__ import annotations
 import sqlite3
 from typing import Literal
 
-from db import Connection
+from db import Connection, project_id_of
 from interpretation_pipeline_integrated import new_id
 from question_review_service import (
     QuestionReviewConflictError, create_or_find_question, matching_open_question,
@@ -39,7 +39,8 @@ def _normalized_statement(value: str | None) -> str:
 def list_draft_notes(connection: Connection) -> list[dict]:
     connection.row_factory = sqlite3.Row
     rows = connection.execute(
-        "SELECT id, title, content, created_at, updated_at FROM draft_notes ORDER BY updated_at DESC, id DESC"
+        "SELECT id, title, content, created_at, updated_at FROM draft_notes WHERE project_id=? ORDER BY updated_at DESC, id DESC",
+        (project_id_of(connection),),
     ).fetchall()
     return [dict(row) for row in rows]
 
@@ -48,8 +49,8 @@ def create_draft_note(connection: Connection, draft_id: str, title: str, content
     clean_title = (title or "Untitled note").strip() or "Untitled note"
     clean_content = content.strip()
     connection.execute(
-        "INSERT INTO draft_notes(id, title, content) VALUES (?, ?, ?)",
-        (draft_id, clean_title, clean_content),
+        "INSERT INTO draft_notes(id, title, content, project_id) VALUES (?, ?, ?, ?)",
+        (draft_id, clean_title, clean_content, project_id_of(connection)),
     )
     connection.commit()
     return dict(connection.execute(
@@ -58,7 +59,9 @@ def create_draft_note(connection: Connection, draft_id: str, title: str, content
 
 
 def update_draft_note(connection: Connection, draft_id: str, title: str, content: str) -> dict:
-    existing = connection.execute("SELECT id FROM draft_notes WHERE id=?", (draft_id,)).fetchone()
+    existing = connection.execute(
+        "SELECT id FROM draft_notes WHERE id=? AND project_id=?", (draft_id, project_id_of(connection))
+    ).fetchone()
     if existing is None:
         raise ReviewNotFoundError(draft_id)
     clean_title = (title or "Untitled note").strip() or "Untitled note"
@@ -74,7 +77,9 @@ def update_draft_note(connection: Connection, draft_id: str, title: str, content
 
 
 def delete_draft_note(connection: Connection, draft_id: str) -> None:
-    existing = connection.execute("SELECT id FROM draft_notes WHERE id=?", (draft_id,)).fetchone()
+    existing = connection.execute(
+        "SELECT id FROM draft_notes WHERE id=? AND project_id=?", (draft_id, project_id_of(connection))
+    ).fetchone()
     if existing is None:
         raise ReviewNotFoundError(draft_id)
     connection.execute("DELETE FROM draft_notes WHERE id=?", (draft_id,))
@@ -85,7 +90,8 @@ def list_questions(connection: Connection, status: str = "open") -> list[dict]:
     connection.row_factory = sqlite3.Row
     rows = connection.execute(
         "SELECT id, text, status, blocking, blocks, origin, created_at, resolved_at, resolution, source_evidence_id "
-        "FROM questions WHERE status=? ORDER BY blocking DESC, created_at, id", (status,)
+        "FROM questions WHERE status=? AND project_id=? ORDER BY blocking DESC, created_at, id",
+        (status, project_id_of(connection)),
     ).fetchall()
     return [dict(row) for row in rows]
 
@@ -107,7 +113,7 @@ def create_question(connection: Connection, question_id: str, text: str, *, orig
 
 def update_question_blocking(connection: Connection, question_id: str, blocking: bool, blocks: str | None = None) -> dict:
     existing = connection.execute(
-        "SELECT id FROM questions WHERE id=? AND status='open'", (question_id,)
+        "SELECT id FROM questions WHERE id=? AND status='open' AND project_id=?", (question_id, project_id_of(connection))
     ).fetchone()
     if existing is None:
         raise ReviewNotFoundError(question_id)
@@ -123,7 +129,7 @@ def update_question_blocking(connection: Connection, question_id: str, blocking:
 
 def stop_question(connection: Connection, question_id: str) -> None:
     existing = connection.execute(
-        "SELECT id FROM questions WHERE id=? AND status='open'", (question_id,)
+        "SELECT id FROM questions WHERE id=? AND status='open' AND project_id=?", (question_id, project_id_of(connection))
     ).fetchone()
     if existing is None:
         raise ReviewNotFoundError(question_id)
@@ -146,10 +152,10 @@ def resolve_review(connection: Connection, review_id: str, decision: Decision, n
     connection.row_factory = sqlite3.Row
     connection.execute("BEGIN IMMEDIATE")
     try:
-        review_sql = "SELECT id, status, review_type, decision_question FROM review_issues WHERE id=?"
+        review_sql = "SELECT id, status, review_type, decision_question FROM review_issues WHERE id=? AND project_id=?"
         if getattr(connection, "is_postgres", False):
             review_sql += " FOR UPDATE"
-        review = connection.execute(review_sql, (review_id,)).fetchone()
+        review = connection.execute(review_sql, (review_id, project_id_of(connection))).fetchone()
         if review is None:
             raise ReviewNotFoundError(review_id)
         if review["status"] != "open":
@@ -345,7 +351,8 @@ def _apply_proposal(connection: Connection, proposal: dict, *, adjusted_statemen
     if operation == "create":
         wanted = _normalized_statement(final_statement)
         existing_rows = connection.execute(
-            "SELECT id, statement FROM current_state_items WHERE status='active'"
+            "SELECT id, statement FROM current_state_items WHERE status='active' AND project_id=?",
+            (project_id_of(connection),),
         ).fetchall()
         if any(_normalized_statement(row["statement"]) == wanted for row in existing_rows):
             # Defense in depth: even a stale/manual Review (or a human
@@ -355,8 +362,8 @@ def _apply_proposal(connection: Connection, proposal: dict, *, adjusted_statemen
             return
         state_id = new_id("state")
         connection.execute(
-            "INSERT INTO current_state_items(id, topic, statement, version, effective_date) VALUES (?, ?, ?, 1, ?)",
-            (state_id, "uncategorized", final_statement, proposal["effective_date"]),
+            "INSERT INTO current_state_items(id, topic, statement, version, effective_date, project_id) VALUES (?, ?, ?, 1, ?, ?)",
+            (state_id, "uncategorized", final_statement, proposal["effective_date"], project_id_of(connection)),
         )
         old_statement, old_effective_date, from_version, to_version = None, None, None, 1
         new_effective_date = proposal["effective_date"]
@@ -417,41 +424,47 @@ def _apply_proposal(connection: Connection, proposal: dict, *, adjusted_statemen
 
 
 def list_state(connection: Connection) -> list[dict]:
-    """Current State facts, each carrying its own area assignment (#111).
+    """Current State facts for the connection's active project (#114), each
+    carrying its own area assignment (#113).
 
     area_id/area_name/area_description/area_sort_order are always populated:
     an item with no area_id (never assigned, or an area since deleted) falls
-    back to the guaranteed 'general' area rather than a domain-specific
-    default -- software enforces the fallback, not the view layer, so every
-    consumer (Project page, a future project switcher) sees the same answer.
+    back to a literal "General" (#114: simplified away from a stored
+    per-project row -- it's a universal, non-project-specific concept, not
+    project data) rather than a domain-specific default -- software enforces
+    the fallback, not the view layer, so every consumer (Project page,
+    the project switcher) sees the same answer.
     """
     connection.row_factory = sqlite3.Row
+    pid = project_id_of(connection)
     return [dict(row) for row in connection.execute(
         "SELECT s.id, s.topic, s.statement, s.status, s.version, s.effective_date, s.created_at, s.updated_at, "
-        "COALESCE(s.area_id, 'general') AS area_id, COALESCE(a.name, g.name) AS area_name, "
-        "COALESCE(a.description, g.description) AS area_description, "
-        "COALESCE(a.sort_order, g.sort_order) AS area_sort_order "
+        "COALESCE(s.area_id, 'general') AS area_id, COALESCE(a.name, 'General') AS area_name, "
+        "COALESCE(a.description, 'Reviewed facts that do not yet belong to a more specific part of the project.') AS area_description, "
+        "COALESCE(a.sort_order, 999) AS area_sort_order "
         "FROM current_state_items s "
-        "LEFT JOIN project_areas a ON a.id = s.area_id "
-        "LEFT JOIN project_areas g ON g.id = 'general' "
-        "WHERE s.status='active' ORDER BY s.topic, s.created_at, s.id"
+        "LEFT JOIN project_areas a ON a.id = s.area_id AND a.project_id = s.project_id "
+        "WHERE s.status='active' AND s.project_id=? ORDER BY s.topic, s.created_at, s.id",
+        (pid,),
     )]
 
 
 def list_project_areas(connection: Connection) -> list[dict]:
     connection.row_factory = sqlite3.Row
     return [dict(row) for row in connection.execute(
-        "SELECT id, name, description, sort_order FROM project_areas ORDER BY sort_order, name"
+        "SELECT id, name, description, sort_order FROM project_areas WHERE project_id=? ORDER BY sort_order, name",
+        (project_id_of(connection),),
     )]
 
 
 
 def list_evidence(connection: Connection) -> list[dict]:
-    """Return the complete Evidence archive newest-first."""
+    """Return the complete Evidence archive newest-first, for the connection's active project."""
     connection.row_factory = sqlite3.Row
     return [dict(row) for row in connection.execute(
         "SELECT id, content, source_type, processing_status, supersedes_evidence_id, submitted_at "
-        "FROM evidence ORDER BY submitted_at DESC, id DESC"
+        "FROM evidence WHERE project_id=? ORDER BY submitted_at DESC, id DESC",
+        (project_id_of(connection),),
     )]
 
 
@@ -497,8 +510,8 @@ def _related_open_review_refs(
     placeholders = ",".join("?" * len(related_ids))
     rows = connection.execute(
         f"SELECT id, review_type, decision_question FROM review_issues "
-        f"WHERE status='open' AND id IN ({placeholders}) ORDER BY created_at, id",
-        list(related_ids),
+        f"WHERE status='open' AND project_id=? AND id IN ({placeholders}) ORDER BY created_at, id",
+        [project_id_of(connection), *related_ids],
     ).fetchall()
     return [dict(row) for row in rows]
 
@@ -518,9 +531,9 @@ def list_reviews(connection: Connection, status: str = "open") -> list[dict]:
     """
     connection.row_factory = sqlite3.Row
     rows = connection.execute(
-        "SELECT r.* FROM review_issues r WHERE r.status=? "
+        "SELECT r.* FROM review_issues r WHERE r.status=? AND r.project_id=? "
         "ORDER BY (r.review_type='state_at_risk') DESC, r.created_at, r.id",
-        (status,),
+        (status, project_id_of(connection)),
     ).fetchall()
     result = []
     for row in rows:
@@ -576,7 +589,9 @@ def list_history(connection: Connection) -> list[dict]:
         "FROM history_transitions h "
         "JOIN proposed_state_changes p ON p.id=h.proposed_change_id "
         "JOIN review_issues r ON r.id=p.review_id "
-        "ORDER BY h.changed_at DESC, h.id DESC"
+        "WHERE r.project_id=? "
+        "ORDER BY h.changed_at DESC, h.id DESC",
+        (project_id_of(connection),),
     ).fetchall()
     result = []
     for row in rows:
@@ -595,7 +610,8 @@ def list_history(connection: Connection) -> list[dict]:
 def list_project_rules(connection: Connection) -> list[dict]:
     connection.row_factory = sqlite3.Row
     rows = connection.execute(
-        "SELECT id, statement AS text, COALESCE(rationale, 'Interpretation') AS category, created_at FROM project_rules WHERE status='active' ORDER BY created_at, id"
+        "SELECT id, statement AS text, COALESCE(rationale, 'Interpretation') AS category, created_at FROM project_rules WHERE status='active' AND project_id=? ORDER BY created_at, id",
+        (project_id_of(connection),),
     ).fetchall()
     return [dict(row) for row in rows]
 
@@ -607,8 +623,8 @@ def create_project_rule(connection: Connection, rule_id: str, text: str, categor
         if " ".join(existing["text"].casefold().split()) == normalized:
             return existing
     connection.execute(
-        "INSERT INTO project_rules(id, statement, rationale, status) VALUES (?, ?, ?, 'active')",
-        (rule_id, cleaned, category),
+        "INSERT INTO project_rules(id, statement, rationale, status, project_id) VALUES (?, ?, ?, 'active', ?)",
+        (rule_id, cleaned, category, project_id_of(connection)),
     )
     connection.commit()
     row = connection.execute("SELECT id, statement AS text, COALESCE(rationale, 'Interpretation') AS category, created_at FROM project_rules WHERE id=?", (rule_id,)).fetchone()
@@ -616,7 +632,9 @@ def create_project_rule(connection: Connection, rule_id: str, text: str, categor
 
 
 def delete_project_rule(connection: Connection, rule_id: str) -> None:
-    existing = connection.execute("SELECT id FROM project_rules WHERE id=?", (rule_id,)).fetchone()
+    existing = connection.execute(
+        "SELECT id FROM project_rules WHERE id=? AND project_id=?", (rule_id, project_id_of(connection))
+    ).fetchone()
     if existing is None:
         raise ReviewNotFoundError(rule_id)
     connection.execute("UPDATE project_rules SET status='retired', retired_at=CURRENT_TIMESTAMP WHERE id=?", (rule_id,))

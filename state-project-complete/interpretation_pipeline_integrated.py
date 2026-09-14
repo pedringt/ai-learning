@@ -24,7 +24,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Mapping, Protocol
 
-from db import Connection
+from db import Connection, project_id_of
 from question_review_service import persist_question_proposal
 
 logger = logging.getLogger("state.interpretation")
@@ -87,7 +87,8 @@ def _filter_duplicate_current_state_creates(connection: Connection, payload: Map
     active_statements = {
         _normalize_review_text(row["statement"])
         for row in connection.execute(
-            "SELECT statement FROM current_state_items WHERE status='active'"
+            "SELECT statement FROM current_state_items WHERE status='active' AND project_id=?",
+            (project_id_of(connection),),
         ).fetchall()
     }
     recommendations = []
@@ -135,8 +136,8 @@ def _matching_open_review_id(connection: Connection, recommendation: Mapping[str
     wanted = _normalize_review_text(recommendation["decision_question"])
     rows = connection.execute(
         "SELECT id, decision_question FROM review_issues "
-        "WHERE status='open' AND review_type=? ORDER BY created_at, id",
-        (recommendation["review_type"],),
+        "WHERE status='open' AND review_type=? AND project_id=? ORDER BY created_at, id",
+        (recommendation["review_type"], project_id_of(connection)),
     ).fetchall()
     for row in rows:
         if _normalize_review_text(row["decision_question"]) == wanted:
@@ -152,14 +153,15 @@ def capture_context(connection: Connection) -> InterpretationContextSnapshot:
     freshly fetched State/Review context after the model returns.
     """
     connection.row_factory = sqlite3.Row
+    pid = project_id_of(connection)
 
     states = {
         row["id"]: StateContextItem(row["id"], row["version"])
-        for row in connection.execute("SELECT id, version FROM current_state_items WHERE status='active'")
+        for row in connection.execute("SELECT id, version FROM current_state_items WHERE status='active' AND project_id=?", (pid,))
     }
     reviews = {
         row["id"]: ReviewContextItem(row["id"], row["review_type"], row["status"])
-        for row in connection.execute("SELECT id, review_type, status FROM review_issues WHERE status='open'")
+        for row in connection.execute("SELECT id, review_type, status FROM review_issues WHERE status='open' AND project_id=?", (pid,))
     }
     return InterpretationContextSnapshot(state_items=states, open_reviews=reviews)
 
@@ -172,14 +174,15 @@ def application_snapshot(connection: Connection) -> ApplicationStateSnapshot:
     validation) but only active State items (retired items are not targets).
     """
     connection.row_factory = sqlite3.Row
+    pid = project_id_of(connection)
 
     states = {
         row["id"]: StateContextItem(row["id"], row["version"])
-        for row in connection.execute("SELECT id, version FROM current_state_items WHERE status='active'")
+        for row in connection.execute("SELECT id, version FROM current_state_items WHERE status='active' AND project_id=?", (pid,))
     }
     reviews = {
         row["id"]: ReviewContextItem(row["id"], row["review_type"], row["status"])
-        for row in connection.execute("SELECT id, review_type, status FROM review_issues")
+        for row in connection.execute("SELECT id, review_type, status FROM review_issues WHERE project_id=?", (pid,))
     }
     return ApplicationStateSnapshot(state_items=states, reviews=reviews)
 
@@ -237,9 +240,9 @@ def _persist_success(
                 if review_id is None:
                     review_id = new_id("review")
                     connection.execute(
-                        "INSERT INTO review_issues(id, review_type, decision_question, why_consequential, status) "
-                        "VALUES (?, ?, ?, ?, ?)",
-                        (review_id, rec["review_type"], rec["decision_question"], rec["why_consequential"], "open"),
+                        "INSERT INTO review_issues(id, review_type, decision_question, why_consequential, status, project_id) "
+                        "VALUES (?, ?, ?, ?, ?, ?)",
+                        (review_id, rec["review_type"], rec["decision_question"], rec["why_consequential"], "open", project_id_of(connection)),
                     )
                 else:
                     reused_existing = True
@@ -312,10 +315,10 @@ def _persist_success(
             if reused_existing:
                 connection.execute("DELETE FROM review_questions WHERE review_id=?", (review_id,))
             for question_id in rec.get("resolves_question_ids", []):
-                question_sql = "SELECT id, status FROM questions WHERE id=?"
+                question_sql = "SELECT id, status FROM questions WHERE id=? AND project_id=?"
                 if getattr(connection, "is_postgres", False):
                     question_sql += " FOR UPDATE"
-                question = connection.execute(question_sql, (question_id,)).fetchone()
+                question = connection.execute(question_sql, (question_id, project_id_of(connection))).fetchone()
                 if question is None:
                     raise StructuredInterpretationSemanticError(
                         "invalid_question_reference", f"Question {question_id!r} does not exist"
@@ -485,8 +488,8 @@ def process_evidence(
     if not getattr(connection, "is_postgres", False) and getattr(connection, "in_transaction", False):
         connection.commit()
     evidence = connection.execute(
-        "SELECT id, content, source_type FROM evidence WHERE id=?",
-        (evidence_id,),
+        "SELECT id, content, source_type FROM evidence WHERE id=? AND project_id=?",
+        (evidence_id, project_id_of(connection)),
     ).fetchone()
     if evidence is None:
         raise KeyError(evidence_id)
@@ -497,8 +500,8 @@ def process_evidence(
     if source_type.startswith("question_response:"):
         question_id = source_type.split(":", 1)[1]
         question = connection.execute(
-            "SELECT id, text, blocking, blocks FROM questions WHERE id=?",
-            (question_id,),
+            "SELECT id, text, blocking, blocks FROM questions WHERE id=? AND project_id=?",
+            (question_id, project_id_of(connection)),
         ).fetchone()
         if question:
             evidence_dict["response_to_question"] = {

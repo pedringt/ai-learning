@@ -51,6 +51,7 @@ class Connection:
         self._is_postgres = self._detect_postgres(raw_connection)
         self._in_transaction = False
         self._row_factory = None
+        self._project_id = "northstar"
     
     @staticmethod
     def _detect_postgres(conn: Any) -> bool:
@@ -61,6 +62,25 @@ class Connection:
     def is_postgres(self) -> bool:
         """Whether this wrapper is backed by PostgreSQL."""
         return self._is_postgres
+
+    @property
+    def project_id(self) -> str:
+        """state.md #114: which project's rows this connection reads/writes.
+
+        Defaults to 'northstar' so every pre-#114 call site (in particular
+        every existing test, which never mentions a project) keeps behaving
+        exactly as before -- only api.py's get_connection() ever sets this
+        to something else, after resolving the app's single active-project
+        pointer. Not itself a security boundary (this is a single-instance
+        demo app with no auth); it's a correctness/isolation mechanism so a
+        second seeded project's data can never leak into Northstar's views
+        or vice versa.
+        """
+        return self._project_id
+
+    @project_id.setter
+    def project_id(self, value: str) -> None:
+        self._project_id = value
 
     @property
     def row_factory(self):
@@ -315,3 +335,15 @@ def connect(database_url: str | None = None) -> Connection:
 def get_connection(database_url: str | None = None) -> Connection:
     """Backward-compatible alias for tests and older integration code."""
     return connect(database_url)
+
+
+def project_id_of(connection: Any) -> str:
+    """Read connection.project_id defensively (state.md #114).
+
+    A handful of call sites pass a raw, unwrapped sqlite3.Connection
+    (initialize_db() wraps its argument locally rather than mutating it in
+    place, so the caller's own reference stays unwrapped) -- those have no
+    project_id attribute at all. getattr(..., 'northstar') makes every such
+    call site behave exactly as it did before #114 introduced projects.
+    """
+    return getattr(connection, "project_id", "northstar")

@@ -22,6 +22,15 @@
   document.body.classList.remove('modal-open');
   const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const norm = s => String(s).toLowerCase().replace(/[’']/g,'').replace(/[^a-z0-9\s]/g,' ').replace(/\s+/g,' ').trim();
+  // state.md #114: the Workspace header's stage subtitle used to read
+  // D.project.stage, a static pre-hydration placeholder that never updated
+  // after switching projects. "Project stage" is matched by topic label
+  // (same convention as context-project-view.js's projectOrientation()), not
+  // a fixed id, so a different project's own stage fact works identically.
+  function currentProjectStage(){
+    const stage=state.data.knowledge.find(k=>k.state==='current'&&norm(k.title||'')==='project stage');
+    return stage?.statement||'';
+  }
   // No backendStatus.questions==='loaded' gate: the fast attention-only
   // hydration path (see hydrateBackend()) can populate real, backendManaged
   // question data well before the slower full bootstrap flips that status
@@ -70,6 +79,28 @@
     });
   }
 
+  // state.md #114: the project switcher's entries are generated from the
+  // real project list (state.data.projects, fetched once via
+  // ensureProjectsList()) instead of the four hardcoded/disabled buttons
+  // index.html used to carry. Also keeps the switcher button's own label in
+  // sync with whichever project is actually active.
+  function syncProjectMenu(){
+    const label=document.getElementById('projectSwitcher');
+    const name=state.data.project?.name||'Project';
+    if(label&&label.dataset&&label.dataset.name!==name){
+      label.dataset.name=name;
+      label.innerHTML=`${esc(name)} <span>⌄</span>`;
+    }
+    const menu=document.getElementById('projectMenu');
+    if(!menu||!menu.dataset)return;
+    const projects=state.data.projects||[];
+    const activeId=state.data.project?.id;
+    const signature=projects.map(p=>p.id).join(',')+'|'+activeId;
+    if(menu.dataset.signature===signature)return;
+    menu.dataset.signature=signature;
+    menu.innerHTML=projects.map(p=>`<button data-action="switch-project" data-project-id="${esc(p.id)}"${p.id===activeId?' class="active"':''}>${esc(p.name)}${p.id===activeId?' <span>Current</span>':''}</button>`).join('');
+  }
+
   function updateNav(){
     document.querySelectorAll('[data-view]').forEach(b => b.classList.toggle('active', b.dataset.view===state.view));
     const projectActive=state.view==='project-overview';
@@ -78,6 +109,7 @@
     document.querySelectorAll('#projectSubnav, #mobileProjectSubnav').forEach(sub=>{sub.hidden=!projectActive;});
     const openItemsCount=uiPendingReviews().length+openQuestions().filter(q=>q.blocking).length;
     document.querySelectorAll('#openItemsActionCount, #mobileOpenItemsCount').forEach(actionCount=>{actionCount.textContent=openItemsCount;actionCount.hidden=!openItemsCount;actionCount.setAttribute('aria-label',`${openItemsCount} items need attention`);});
+    syncProjectMenu();
     const pm=document.getElementById('projectMenu'), ps=document.getElementById('projectSwitcher'); if(pm)pm.hidden=!state.projectMenuOpen; if(ps)ps.setAttribute('aria-expanded',state.projectMenuOpen?'true':'false');
     document.querySelector('.mobile-primary-nav .nav-item.active')?.scrollIntoView({block:'nearest',inline:'nearest'});
   }
@@ -386,7 +418,7 @@
     // read-only utility reached from the floating Ask State control
     // (context-product-polish.js), not a Workspace feature.
     root.innerHTML = `<section class="overview pristine">
-      <section class="overview-heading"><div class="overview-heading-row"><div><span class="eyebrow">Workspace</span><h2>Northstar</h2>${D.project?.stage?`<p class="overview-stage">${esc(D.project.stage)}</p>`:''}</div><button class="btn secondary overview-add" data-action="add-info">+ Add Evidence</button></div></section>
+      <section class="overview-heading"><div class="overview-heading-row"><div><span class="eyebrow">Workspace</span><h2>${esc(state.data.project?.name||'Project')}</h2>${currentProjectStage()?`<p class="overview-stage">${esc(currentProjectStage())}</p>`:''}</div><button class="btn secondary overview-add" data-action="add-info">+ Add Evidence</button></div></section>
       ${workspaceAttentionHtml()}
       <div class="workspace-below-grid">
         ${whatChangedHtml()}
@@ -824,7 +856,8 @@
       ['4. Know','Accepted changes update Current State. Previous decisions remain in History.'],
       ['5. Ask','Use Ask State to understand the project without changing it.']
     ];
-    showDialog(`<span class="eyebrow">How this works</span><h2 id="dialogTitle">State keeps accepted understanding separate from new information.</h2><div class="state-help-steps">${steps.map(([title,body])=>`<div class="state-help-step"><strong>${esc(title)}</strong><span>${esc(body)}</span></div>`).join('')}</div><p class="demo-flow-principle">AI interprets → software enforces → people decide</p><div class="demo-start"><span class="meta-label">Good places to start</span><button class="demo-start-action" data-action="demo-start-ask"><strong>Ask about Northstar</strong><span>Put a useful project question in Ask →</span></button><button class="demo-start-action" data-action="demo-start-note"><strong>Add a sample note</strong><span>Try new project information and see how Review handles it →</span></button><button class="demo-start-action" data-action="demo-start-project"><strong>Explore Current State</strong><span>Read the maintained view of what the project currently treats as true →</span></button><button class="demo-start-action" data-action="show-reviewer-guide"><strong>Take the quick tour</strong><span>Bring back the Workspace walkthrough banner →</span></button></div><div class="demo-reset-help"><div><strong>Want to start over?</strong><span>Restore the curated Northstar starting scenario. You can also reset Northstar from Settings.</span></div><button class="text-button demo-reset-link" data-action="confirm-demo-reset">Reset example data →</button></div><div class="dialog-actions demo-help-actions"><button class="btn primary" data-action="close-dialog">Got it</button></div>`);
+    const projectName=state.data.project?.name||'this project';
+    showDialog(`<span class="eyebrow">How this works</span><h2 id="dialogTitle">State keeps accepted understanding separate from new information.</h2><div class="state-help-steps">${steps.map(([title,body])=>`<div class="state-help-step"><strong>${esc(title)}</strong><span>${esc(body)}</span></div>`).join('')}</div><p class="demo-flow-principle">AI interprets → software enforces → people decide</p><div class="demo-start"><span class="meta-label">Good places to start</span><button class="demo-start-action" data-action="demo-start-ask"><strong>Ask about ${esc(projectName)}</strong><span>Put a useful project question in Ask →</span></button><button class="demo-start-action" data-action="demo-start-note"><strong>Add a sample note</strong><span>Try new project information and see how Review handles it →</span></button><button class="demo-start-action" data-action="demo-start-project"><strong>Explore Current State</strong><span>Read the maintained view of what the project currently treats as true →</span></button><button class="demo-start-action" data-action="show-reviewer-guide"><strong>Take the quick tour</strong><span>Bring back the Workspace walkthrough banner →</span></button></div><div class="demo-reset-help"><div><strong>Want to start over?</strong><span>Restore the curated ${esc(projectName)} starting scenario. You can also reset ${esc(projectName)} from Settings.</span></div><button class="text-button demo-reset-link" data-action="confirm-demo-reset">Reset example data →</button></div><div class="dialog-actions demo-help-actions"><button class="btn primary" data-action="close-dialog">Got it</button></div>`);
   }
 
   function showDialog(html){
@@ -866,7 +899,7 @@
     const rulesStatus=state.backendStatus.rules;
     const rows=rulesStatus==='error'?'<div class="open-items-empty unavailable-inline">Project Rules could not be loaded. Try again before making changes.</div>':state.projectRules.length?state.projectRules.map(rule=>`<div class="project-rule-row"><div><span class="open-item-label question">${esc(rule.category)}</span><p>${esc(rule.text)}</p></div><button class="text-button" data-action="delete-project-rule" data-rule-id="${rule.id}">Remove</button></div>`).join(''):'<div class="open-items-empty">No project-specific rules yet.</div>';
     const form=rulesStatus==='error'?'':`<div class="project-rule-form"><label for="projectRuleCategory">Category</label><select id="projectRuleCategory"><option>Authority</option><option>Review</option><option>Sources</option><option selected>Interpretation</option></select><label for="projectRuleText">New rule</label><textarea id="projectRuleText" rows="3" placeholder="Example: Slack is supporting evidence, not authoritative approval."></textarea><button class="btn primary" data-action="save-project-rule">Add rule</button></div>`;
-    showDialog(`<span class="eyebrow">Project settings</span><h2 id="dialogTitle">Rules</h2><p>Rules tell State how to interpret evidence and when to interrupt you. They are not Current State and State cannot change them on its own.</p><p class="settings-note">Rules apply to future analysis. Existing Reviews are not reinterpreted automatically.</p><div class="project-rule-list">${rows}</div>${form}<div class="demo-reset-zone"><span class="eyebrow">Example data</span><p>Restore Northstar to the curated starting scenario with open Reviews, blockers, Questions, Notes, Rules, and History.</p><button class="btn secondary danger-light" data-action="confirm-demo-reset">Reset example data</button></div>`);
+    showDialog(`<span class="eyebrow">Project settings</span><h2 id="dialogTitle">Rules</h2><p>Rules tell State how to interpret evidence and when to interrupt you. They are not Current State and State cannot change them on its own.</p><p class="settings-note">Rules apply to future analysis. Existing Reviews are not reinterpreted automatically.</p><div class="project-rule-list">${rows}</div>${form}<div class="demo-reset-zone"><span class="eyebrow">Example data</span><p>Restore ${esc(state.data.project?.name||'this project')} to the curated starting scenario with open Reviews, blockers, Questions, Notes, Rules, and History.</p><button class="btn secondary danger-light" data-action="confirm-demo-reset">Reset example data</button></div>`);
   }
 
   // state.md #108: entering Add Evidence from Current State's "Something
@@ -952,10 +985,25 @@
 
   async function retryEvidenceAnalysis(evidenceId){ return API.retryEvidenceAnalysis(evidenceId); }
 
+  // state.md #114: fetched once and cached -- the set of selectable projects
+  // essentially never changes within a session, so this never needs to be
+  // part of every hydrateBackend() round trip.
+  async function ensureProjectsList(){
+    if(state.data.projects)return;
+    try{
+      const payload=await API.getProjects();
+      state.data.projects=payload.items||[];
+      updateNav();
+    }catch(err){
+      console.warn('Project list unavailable; the switcher will stay empty until a retry.',err);
+    }
+  }
+
   async function hydrateBackend(){
     if(!API)return;
+    ensureProjectsList();
     const loadStatus=document.getElementById('appLoadStatus');
-    if(loadStatus){loadStatus.textContent='Opening Northstar…';loadStatus.hidden=false;}
+    if(loadStatus){loadStatus.textContent=`Opening ${state.data.project?.name||'the project'}…`;loadStatus.hidden=false;}
     state.workspaceAttentionStatus='loading';
     renderWorkspaceAttentionOnly();
     // Load the first action layer separately while the rest of the project opens.
@@ -985,6 +1033,12 @@
     let byKey;
     try{
       const payload=await API.getBootstrap();
+      // state.md #114: the active project's identity comes from the backend
+      // on every hydration -- never assumed to still be Northstar. Falls
+      // back to whatever state.data.project already held (the static
+      // pre-hydration placeholder, or the last-known project) if this
+      // particular payload didn't carry one.
+      if(payload.project) state.data.project={...state.data.project,...payload.project};
       const fulfilled=items=>({status:'fulfilled',value:{items:items||[]}});
       byKey={
         state:fulfilled(payload.state), evidence:fulfilled(payload.evidence),
@@ -1219,7 +1273,7 @@
       // Ask State drawer (context-product-polish.js) the same way its own
       // starter chips do, via a synthetic click on its data-review-batch-prompt
       // delegated listener.
-      const proxy=document.createElement('button');proxy.type='button';proxy.dataset.reviewBatchPrompt='What should I know about the Northstar pilot?';document.body.appendChild(proxy);proxy.click();proxy.remove();
+      const proxy=document.createElement('button');proxy.type='button';proxy.dataset.reviewBatchPrompt='What should I know about this project?';document.body.appendChild(proxy);proxy.click();proxy.remove();
     }
     else if(act==='demo-start-note'){closeDialog();showAddDialog(state.data.sampleInformationOptions?.plan||state.data.sampleInformation||'');}
     else if(act==='demo-start-project'){closeDialog();navigateTo('project-overview');}
@@ -1228,6 +1282,41 @@
     else if(act==='delete-project-rule'){try{await API.deleteRule(a.dataset.ruleId);state.projectRules=state.projectRules.filter(x=>x.id!==a.dataset.ruleId);showProjectSettings();}catch(err){showDialog(`<span class="eyebrow">Couldn’t remove rule</span><h2 id="dialogTitle">Rule is still active.</h2><p>${esc(err.message)}</p>`);}}
     else if(act==='copy-result'){const text=state.result?.liveAsk&&ASK?.portableText?ASK.portableText(state.result.liveAsk,liveRecordStatus()):(document.querySelector('.answer-content')?.innerText||'');const label='Copy';navigator.clipboard?.writeText(text);a.textContent='Copied';setTimeout(()=>a.textContent=label,1200);}
     else if(act==='toggle-projects'){state.projectMenuOpen=!state.projectMenuOpen;render();}
+    else if(act==='switch-project'){
+      const projectId=a.dataset.projectId;
+      if(!projectId||projectId===state.data.project?.id){state.projectMenuOpen=false;render();return;}
+      state.projectMenuOpen=false;
+      state.isAnalyzing=true;
+      showDialog(`<span class="eyebrow">Switching projects</span><h2 id="dialogTitle">Opening ${esc(a.textContent.replace('Current','').trim())}…</h2><p>Loading Current State, Reviews, Questions, History, and Rules for this project.</p>`);
+      try{
+        const summary=await API.switchProject(projectId);
+        state.data.project={...state.data.project,...summary};
+        // Clear every locally-held record before re-hydrating -- never fall
+        // back to context-data.js's static Northstar fixture here, or its
+        // placeholder facts would flash on screen while the new project's
+        // real data loads. The same "never let a stale project's records
+        // leak into the next one" guarantee syncApiState() already gives a
+        // single project, extended across a project switch.
+        state.data.knowledge=[];
+        state.data.reviews=[];
+        state.data.questions=[];
+        state.data.notes=[];
+        state.data.history=[];
+        state.data.drafts=[];
+        state.projectRules=[];
+        state.view='overview';
+        state.result=null;state.resultQuery='';state.expandedReviewId=null;
+        state.backendStatus={state:'loading',evidence:'loading',reviews:'loading',history:'loading',questions:'loading',rules:'loading',drafts:'loading'};
+        state.isAnalyzing=false;
+        closeDialog();
+        render();
+        await hydrateBackend();
+        window.StateAnalytics?.track('project_switched',{projectId});
+      }catch(err){
+        state.isAnalyzing=false;
+        showDialog(`<span class="eyebrow">Couldn't switch projects</span><h2 id="dialogTitle">The project was not changed.</h2><p>${esc(err.message)}</p><div class="dialog-actions"><button class="btn primary" data-action="close-dialog">Close</button></div>`);
+      }
+    }
     else if(act==='retry-hydration'){await hydrateBackend();}
     else if(act==='clear-note-filters'){state.notesDateFilter='all';state.notesFilter='all';state.notesSearch='';renderNotes();}
     else if(act==='clear-history-search'){state.historySearch='';renderHistory();}
@@ -1294,8 +1383,8 @@
     else if(act==='go-open-question'){const q=state.data.questions.find(x=>x.id===a.dataset.questionId);if(q)showDialog(questionDialogHtml(q));}
     else if(act==='add-info'||act==='suggest-update')showAddDialog();
     else if(act==='something-changed')showAddDialog('',{description:'What changed or what is incorrect? Add what you learned — State will compare it with Current State.'});
-    else if(act==='confirm-demo-reset'){showDialog(`<span class="eyebrow">Reset to starting scenario</span><h2 id="dialogTitle">Restore the Northstar starting scenario?</h2><p>This removes everything created during testing and restores the same curated starting State, open Reviews, blockers, Questions, Notes, Rules, and History.</p><div class="dialog-actions"><button class="btn primary" data-action="reset-demo">Reset Northstar</button><button class="btn secondary" data-action="project-settings">Cancel</button></div>`);}
-    else if(act==='reset-demo'){state.isAnalyzing=true;showDialog(`<span class="eyebrow">Resetting Northstar</span><h2 id="dialogTitle">Restoring Northstar…</h2><p>Rebuilding the curated starting scenario.</p>`);try{await API.resetDemo();await hydrateBackend();state.result=null;state.resultQuery='';state.askInputDraft='';state.isAnalyzing=false;closeDialog();navigateTo('overview');}catch(err){state.isAnalyzing=false;showDialog(`<span class="eyebrow">Reset failed</span><h2 id="dialogTitle">Northstar was not reset.</h2><p>${esc(err.message)}</p><div class="dialog-actions">${err?.isTimeout?'<button class="btn primary" data-action="reload-page">Refresh page</button>':''}<button class="btn secondary" data-action="close-dialog">Close</button></div>`);}}
+    else if(act==='confirm-demo-reset'){const projectName=state.data.project?.name||'this project';showDialog(`<span class="eyebrow">Reset to starting scenario</span><h2 id="dialogTitle">Restore the ${esc(projectName)} starting scenario?</h2><p>This removes everything created during testing and restores the same curated starting State, open Reviews, blockers, Questions, Notes, Rules, and History.</p><div class="dialog-actions"><button class="btn primary" data-action="reset-demo">Reset ${esc(projectName)}</button><button class="btn secondary" data-action="project-settings">Cancel</button></div>`);}
+    else if(act==='reset-demo'){const projectName=state.data.project?.name||'this project';state.isAnalyzing=true;showDialog(`<span class="eyebrow">Resetting ${esc(projectName)}</span><h2 id="dialogTitle">Restoring ${esc(projectName)}…</h2><p>Rebuilding the curated starting scenario.</p>`);try{await API.resetDemo();await hydrateBackend();state.result=null;state.resultQuery='';state.askInputDraft='';state.isAnalyzing=false;closeDialog();navigateTo('overview');}catch(err){state.isAnalyzing=false;showDialog(`<span class="eyebrow">Reset failed</span><h2 id="dialogTitle">${esc(projectName)} was not reset.</h2><p>${esc(err.message)}</p><div class="dialog-actions">${err?.isTimeout?'<button class="btn primary" data-action="reload-page">Refresh page</button>':''}<button class="btn secondary" data-action="close-dialog">Close</button></div>`);}}
     else if(act==='reload-page'){window.location.reload();}
     else if(act==='review-receipt-project'){const area=a.dataset.projectArea||'general';closeDialog();navigateTo('project-overview');requestAnimationFrame(()=>{scrollProjectTarget(`project-${area}`);const target=a.dataset.stateId?[...document.querySelectorAll('[data-state-id]')].find(el=>el.dataset.stateId===a.dataset.stateId)?.closest('.project-wiki-topic'):null;if(target){target.classList.add('is-recently-updated');setTimeout(()=>target.classList.remove('is-recently-updated'),2200);}});}
     else if(act==='close-dialog'){if(!state.isAnalyzing)closeDialog();}

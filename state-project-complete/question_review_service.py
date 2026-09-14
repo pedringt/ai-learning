@@ -7,6 +7,8 @@ from __future__ import annotations
 
 import uuid
 
+from db import project_id_of
+
 
 class QuestionReviewConflictError(RuntimeError):
     pass
@@ -17,8 +19,15 @@ def normalized_question_text(value: str) -> str:
 
 
 def matching_open_question(connection, text: str) -> dict | None:
+    """state.md #114: scoped to the connection's active project -- an
+    equivalent-looking Question in a different project must never be
+    treated as the same tracked unknown (or silently dedupe into it)."""
     wanted = normalized_question_text(text)
-    for row in connection.execute("SELECT * FROM questions WHERE status='open' ORDER BY created_at, id").fetchall():
+    rows = connection.execute(
+        "SELECT * FROM questions WHERE status='open' AND project_id=? ORDER BY created_at, id",
+        (project_id_of(connection),),
+    ).fetchall()
+    for row in rows:
         if normalized_question_text(row['text']) == wanted:
             return dict(row)
     return None
@@ -42,9 +51,9 @@ def create_or_find_question(connection, question_id: str, text: str, *,
     if existing:
         return existing, False  # Never overwrite existing provenance/blocking.
     connection.execute(
-        "INSERT INTO questions(id,text,status,blocking,blocks,origin,source_evidence_id) "
-        "VALUES (?,?,'open',?,?,?,?)",
-        (question_id, cleaned, int(blocking), (blocks or '').strip() or None, origin, source_evidence_id),
+        "INSERT INTO questions(id,text,status,blocking,blocks,origin,source_evidence_id,project_id) "
+        "VALUES (?,?,'open',?,?,?,?,?)",
+        (question_id, cleaned, int(blocking), (blocks or '').strip() or None, origin, source_evidence_id, project_id_of(connection)),
     )
     return dict(connection.execute('SELECT * FROM questions WHERE id=?', (question_id,)).fetchone()), True
 

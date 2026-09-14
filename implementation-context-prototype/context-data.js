@@ -1,5 +1,6 @@
 window.PROJECT_CONTEXT_DATA = {
   project: {
+    id: 'northstar',
     name: 'Northstar',
     stage: 'Late discovery · implementation planning next',
     description: 'A support-AI discovery project that has narrowed to a reviewed basic troubleshooting assistant. Most core discovery is complete; the team is resolving the remaining security, access-authority, and evaluation questions before implementation planning.',

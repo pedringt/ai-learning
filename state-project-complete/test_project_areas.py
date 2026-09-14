@@ -46,10 +46,13 @@ def db(request, tmp_path):
             admin.commit()
 
 
-def test_migration_seeds_exactly_one_guaranteed_general_fallback_area(db):
-    areas = list_project_areas(db)
-    assert [a['id'] for a in areas] == ['general']
-    assert areas[0]['name'] == 'General'
+def test_migration_seeds_no_areas_by_default(db):
+    """state.md #114: the 'General' fallback (see the next test down) is no
+    longer a stored row -- #113's original design seeded exactly one, but a
+    stored row would have needed a duplicate per project, for a concept
+    that's genuinely universal, not project data. A brand-new project starts
+    with zero project_areas rows until it defines its own."""
+    assert list_project_areas(db) == []
 
 
 def test_a_project_can_define_its_own_areas_with_no_code_change(db):
@@ -60,7 +63,7 @@ def test_a_project_can_define_its_own_areas_with_no_code_change(db):
                ('budget', 'Budget', 'What the move costs and what has been approved.', 10))
     db.commit()
     areas = list_project_areas(db)
-    assert [a['id'] for a in areas] == ['facilities', 'budget', 'general']
+    assert [a['id'] for a in areas] == ['facilities', 'budget']
     assert areas[0]['name'] == 'Location & facilities'
     assert areas[1]['description'] == 'What the move costs and what has been approved.'
 

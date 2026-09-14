@@ -25,7 +25,7 @@ from database_migration_backed import initialize_db
 from db import connect
 from interpretation_pipeline_integrated import InterpretationProvider, new_id, process_evidence
 from openai_provider import OpenAIProvider
-from seed_demo import bootstrap_demo_data, reset_demo_data
+from seed_demo import bootstrap_demo_data, bootstrap_juniper_demo_data, reset_demo_data
 from ask_contract import AskRequest
 from ask_provider import LiveAskProvider
 from ask_service import ask_cache_key, run_ask, stream_ask_events
@@ -242,6 +242,11 @@ class ResolutionInput(BaseModel):
     adjustments: list[ProposalAdjustmentInput] | None = Field(default=None, max_length=20)
 
 
+class ProjectSwitchInput(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    project_id: str = Field(min_length=1, max_length=100)
+
+
 class ProjectRuleInput(BaseModel):
     model_config = ConfigDict(extra="forbid")
     text: str = Field(min_length=1, max_length=2_000)
@@ -348,12 +353,34 @@ def create_app(settings: Settings | None = None, provider: InterpretationProvide
 
     @contextmanager
     def get_connection():
-        """Get a database connection using the unified abstraction."""
+        """Get a database connection using the unified abstraction.
+
+        state.md #114: also resolves the app's single active-project pointer
+        onto the connection (connection.project_id), so every existing
+        handler below becomes project-aware for free -- none of their own
+        bodies need to change. The active_project table may not exist yet
+        (the very first connection opened during lifespan startup, before
+        initialize_db() has run its migrations) -- in that case the
+        Connection's own 'northstar' default stands, which is correct for a
+        brand-new database anyway.
+        """
         connection = connect(settings.connection_url())
         try:
+            try:
+                row = connection.execute("SELECT project_id FROM active_project WHERE id=1").fetchone()
+                if row:
+                    connection.project_id = row["project_id"]
+            except Exception:
+                pass
             yield connection
         finally:
             connection.close()
+
+    def _active_project_summary(connection) -> dict:
+        row = connection.execute(
+            "SELECT id, name FROM projects WHERE id=?", (connection.project_id,)
+        ).fetchone()
+        return dict(row) if row else {"id": connection.project_id, "name": connection.project_id.title()}
 
     @asynccontextmanager
     async def lifespan(_: FastAPI):
@@ -364,7 +391,11 @@ def create_app(settings: Settings | None = None, provider: InterpretationProvide
             initialize_db(connection)
             if settings.demo_bootstrap:
                 seeded = bootstrap_demo_data(connection)
-                logger.info("Demo bootstrap: %s", seeded)
+                logger.info("Demo bootstrap (Northstar): %s", seeded)
+                # state.md #114: seed the second, contrasting project too, so
+                # it's selectable immediately without a manual API call.
+                juniper_seeded = bootstrap_juniper_demo_data(connection)
+                logger.info("Demo bootstrap (Juniper Office Move): %s", juniper_seeded)
             if settings.slack_team_id and settings.slack_test_channel_id:
                 ensure_channel_approved(
                     connection,
@@ -451,6 +482,7 @@ def create_app(settings: Settings | None = None, provider: InterpretationProvide
         """Load the project workspace in one round trip."""
         with get_connection() as connection:
             return {
+                "project": _active_project_summary(connection),
                 "state": list_state(connection),
                 "evidence": list_evidence(connection),
                 "open_reviews": list_reviews(connection, "open"),
@@ -460,6 +492,31 @@ def create_app(settings: Settings | None = None, provider: InterpretationProvide
                 "rules": list_project_rules(connection),
                 "drafts": list_draft_notes(connection),
             }
+
+    @app.get("/api/projects")
+    def get_projects() -> dict:
+        """state.md #114: every selectable project, for the project switcher."""
+        with get_connection() as connection:
+            rows = connection.execute("SELECT id, name FROM projects ORDER BY name").fetchall()
+            return {"items": [dict(row) for row in rows], "active": _active_project_summary(connection)}
+
+    @app.post("/api/projects/switch")
+    def switch_project(payload: ProjectSwitchInput) -> dict:
+        """state.md #114: change the app's single active-project pointer.
+
+        Every subsequent request's get_connection() resolves this new value,
+        so switching swaps the entire project context (Current State,
+        Reviews, Questions, History, Rules, Ask) without any other endpoint
+        needing to know a switch happened.
+        """
+        with get_connection() as connection:
+            exists = connection.execute("SELECT id FROM projects WHERE id=?", (payload.project_id,)).fetchone()
+            if exists is None:
+                raise HTTPException(status_code=404, detail="Project not found")
+            connection.execute("UPDATE active_project SET project_id=? WHERE id=1", (payload.project_id,))
+            connection.commit()
+            connection.project_id = payload.project_id
+            return _active_project_summary(connection)
 
     @app.get("/api/attention")
     def get_attention() -> dict:
@@ -475,7 +532,10 @@ def create_app(settings: Settings | None = None, provider: InterpretationProvide
         if not settings.demo_bootstrap:
             raise HTTPException(status_code=404, detail="Demo reset is unavailable")
         with get_connection() as connection:
-            counts = reset_demo_data(connection)
+            # state.md #114: resets whichever project is currently active --
+            # never both, and never the other project's data (reset_demo_data
+            # scopes every delete to this one project_id).
+            counts = reset_demo_data(connection, connection.project_id)
             return {"status": "reset", "counts": counts, "seeded": counts}
 
     @app.get("/api/drafts")
@@ -516,8 +576,8 @@ def create_app(settings: Settings | None = None, provider: InterpretationProvide
                 raise HTTPException(status_code=503, detail=str(exc)) from exc
         with get_connection() as connection:
             connection.execute(
-                "INSERT INTO evidence(id, content, source_type) VALUES (?, ?, ?)",
-                (evidence_id, payload.content.strip(), payload.source_type),
+                "INSERT INTO evidence(id, content, source_type, project_id) VALUES (?, ?, ?, ?)",
+                (evidence_id, payload.content.strip(), payload.source_type, connection.project_id),
             )
             connection.commit()
             result = process_evidence(connection, evidence_id=evidence_id, provider=selected_provider)
