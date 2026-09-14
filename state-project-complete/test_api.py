@@ -159,17 +159,20 @@ class DemoExperienceApiTests(unittest.TestCase):
                 bootstrap = client.get("/api/bootstrap")
                 self.assertEqual(bootstrap.status_code, 200)
                 self.assertEqual(len(bootstrap.json()["state"]), 25)
-                self.assertEqual(len(bootstrap.json()["open_reviews"]), 4)
+                self.assertEqual(len(bootstrap.json()["open_reviews"]), 7)
                 attention = client.get("/api/attention")
                 self.assertEqual(attention.status_code, 200)
-                self.assertEqual(len(attention.json()["open_reviews"]), 4)
-                self.assertEqual(len(attention.json()["questions"]), 20)
+                self.assertEqual(len(attention.json()["open_reviews"]), 7)
+                # state.md #112: q-review is answered by a seeded resolved
+                # Review with no Current State change, so 19 of the 20
+                # seeded Questions stay open.
+                self.assertEqual(len(attention.json()["questions"]), 19)
                 client.post("/api/questions", json={"text": "Temporary demo question"})
                 reset = client.post("/api/demo/reset")
                 self.assertEqual(reset.status_code, 200)
                 self.assertEqual(reset.json()["status"], "reset")
                 questions = client.get("/api/questions?status=open").json()["items"]
-                self.assertEqual(len(questions), 20)
+                self.assertEqual(len(questions), 19)
                 self.assertNotIn("Temporary demo question", {item["text"] for item in questions})
 
     def test_reset_route_is_hidden_outside_demo_mode(self):

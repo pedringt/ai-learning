@@ -6,7 +6,7 @@ from fastapi.testclient import TestClient
 
 from api import Settings, create_app
 from database_migration_backed import initialize_db
-from seed_demo import DEMO_EVIDENCE_DATES, bootstrap_demo_data
+from seed_demo import REVIEWS, RESOLVED_REVIEWS, bootstrap_demo_data
 
 
 class NoopProvider:
@@ -86,7 +86,11 @@ def test_new_demo_seed_evidence_uses_historical_dates(tmp_path):
     initialize_db(conn)
     bootstrap_demo_data(conn)
     rows = conn.execute("SELECT id, submitted_at FROM evidence WHERE source_type='demo_seed' ORDER BY id").fetchall()
-    assert len(rows) == len(DEMO_EVIDENCE_DATES)
-    expected = {f"{rid}-evidence": submitted_at for rid, submitted_at in DEMO_EVIDENCE_DATES.items()}
+    # state.md #112: evidence_id is explicit per review now (not always
+    # f"{rid}-evidence") and two Reviews can share one Evidence item (see
+    # demo-review-create-budget/demo-review-eval-redesign), so dedupe by
+    # evidence_id rather than assuming a 1:1 review-to-evidence mapping.
+    expected = {r["evidence_id"]: r["evidence_date"] for r in (*REVIEWS, *RESOLVED_REVIEWS)}
+    assert len(rows) == len(expected)
     assert {row["id"]: row["submitted_at"] for row in rows} == expected
     conn.close()

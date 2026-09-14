@@ -281,7 +281,14 @@ def test_demo_reset_clears_pending_and_decided_question_proposals(db):
     authorize(db, review, p)
     suggest(db, 'Does the weekend queue need a review audit?')
     counts = reset_demo_data(db)
-    assert counts and db.execute('SELECT count(*) AS n FROM proposed_questions').fetchone()['n'] == 0
+    # state.md #112: the demo gallery itself seeds exactly one pending
+    # proposed_questions row (demo-review-owner-question, deliberately
+    # matching an existing open Question's text to demo the "link rather
+    # than duplicate" case) -- reset must restore that one, not zero, while
+    # still clearing every session-created proposal from suggest() above.
+    assert counts
+    remaining = db.execute("SELECT review_id, text, status FROM proposed_questions").fetchall()
+    assert [r['review_id'] for r in remaining] == ['demo-review-owner-question']
     assert not any(q['text'] == TEXT for q in list_questions(db))
 
 

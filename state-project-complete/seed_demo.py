@@ -11,6 +11,7 @@ from __future__ import annotations
 import os
 from database_migration_backed import initialize_db
 from db import connect
+from question_review_service import persist_question_proposal
 
 # state.md #113: Northstar's own areas -- generalization means Northstar
 # fills the Current State organization with its own data instead of the
@@ -76,11 +77,150 @@ QUESTIONS = [
     ("q-ask-expansion-owner", "Who has final authority to approve expanding the pilot beyond Tier 1?", 0, None, "Scope governance"),
 ]
 
+# state.md #112: seed data doubles as a manual Review-shape regression
+# gallery, not just realistic Northstar content -- each entry below exists to
+# demonstrate one distinct human-decision pattern (see the "shape:" note on
+# each), across varied domains (scope, target metric, schedule, vendor,
+# budget, policy, ownership) rather than repeating the same update-a-fact
+# shape or making every example about vendor security/data retention.
+# Roughly 6-8 stay visibly pending at once (below); two more shapes that
+# don't need to be pending -- "a Question answered with no State change" and
+# "Leave unchanged" -- are seeded already resolved, further down. Backend-only
+# edge cases (malformed provider output, concurrency races, stale versions)
+# belong in automated tests, not here.
 REVIEWS = [
-    ("demo-review-access", "proposed_update", "Should Current State explicitly require account-level confirmation for access exceptions?", "Ticket evidence shows plan rules can diverge from effective account access.", "k-access", "Feature access requires an authoritative account-level check when plan rules and effective entitlements conflict.", "Representative ticket review found grandfathered packages and temporary entitlements that do not match the standard plan matrix."),
-    ("demo-review-launch", "proposed_update", "Should launch readiness explicitly require a severe-failure threshold?", "The evaluation plan needs a deterministic launch gate rather than only aggregate quality metrics.", "k-launch", "Pilot launch requires an agreed threshold for severe unsupported-claim failures as well as acceptable escalation behavior.", "Security asked for explicit launch-blocking thresholds for agreed high-risk failure categories."),
-    ("demo-review-escalation", "proposed_update", "Should the escalation path preserve the assistant's evidence and attempted steps?", "Support needs enough context to continue safely without repeating the assistant's work.", "k-escalation", "Cases that cannot be supported confidently stay with the rep, follow the existing escalation path, and carry forward the relevant evidence and attempted troubleshooting.", "Support workflow review asked that escalations preserve what the assistant relied on and already tried."),
-    ("demo-review-retention", "state_at_risk", "Are the vendor's stated retention terms authoritative enough for pilot planning?", "The vendor described proposed terms, but Security and Legal have not confirmed the agreement.", None, None, "Vendor follow-up described retention and logging behavior that still requires contractual confirmation."),
+    {  # shape: update an existing Current State fact
+        "id": "demo-review-access", "review_type": "proposed_update",
+        "decision_question": "Should Current State explicitly require account-level confirmation for access exceptions?",
+        "why_consequential": "Ticket evidence shows plan rules can diverge from effective account access.",
+        "evidence_id": "demo-review-access-evidence",
+        "evidence_text": "Representative ticket review found grandfathered packages and temporary entitlements that do not match the standard plan matrix.",
+        "evidence_date": "2026-08-27 16:10:00",
+        "proposals": [{"state_item_id": "k-access", "operation": "update",
+                        "proposed_statement": "Feature access requires an authoritative account-level check when plan rules and effective entitlements conflict.",
+                        "rationale": "Ticket evidence shows plan rules can diverge from effective account access."}],
+        "resolves_question_ids": [],
+    },
+    {  # shape: Evidence that answers an existing Question AND supports a State change
+        "id": "demo-review-launch", "review_type": "proposed_update",
+        "decision_question": "Should launch readiness explicitly require a severe-failure threshold?",
+        "why_consequential": "The evaluation plan needs a deterministic launch gate rather than only aggregate quality metrics -- and directly answers the open threshold question.",
+        "evidence_id": "demo-review-launch-evidence",
+        "evidence_text": "Security asked for explicit launch-blocking thresholds for agreed high-risk failure categories.",
+        "evidence_date": "2026-08-28 09:30:00",
+        "proposals": [{"state_item_id": "k-launch", "operation": "update",
+                        "proposed_statement": "Pilot launch requires an agreed threshold for severe unsupported-claim failures as well as acceptable escalation behavior.",
+                        "rationale": "Security asked for explicit launch-blocking thresholds for agreed high-risk failure categories."}],
+        "resolves_question_ids": ["q-thresholds"],
+    },
+    {  # shape: state_at_risk / consequential uncertainty without a replacement fact
+        "id": "demo-review-retention", "review_type": "state_at_risk",
+        "decision_question": "Are the vendor's stated retention terms authoritative enough for pilot planning?",
+        "why_consequential": "The vendor described proposed terms, but Security and Legal have not confirmed the agreement.",
+        "evidence_id": "demo-review-retention-evidence",
+        "evidence_text": "Vendor follow-up described retention and logging behavior that still requires contractual confirmation.",
+        "evidence_date": "2026-08-29 10:20:00",
+        "proposals": [], "resolves_question_ids": [],
+    },
+    {  # shape: retire an existing Current State fact
+        "id": "demo-review-retire-vip", "review_type": "proposed_update",
+        "decision_question": "Should the VIP exception carve-out be retired now that standard escalation covers it?",
+        "why_consequential": "A separate carve-out for VIP accounts creates two competing escalation paths if the standard one already handles the same cases.",
+        "evidence_id": "demo-review-retire-vip-evidence",
+        "evidence_text": "Workflow review found no VIP case in the last quarter that the standard escalation path could not have handled on its own.",
+        "evidence_date": "2026-08-30 11:00:00",
+        "proposals": [{"state_item_id": "k-vip", "operation": "retire",
+                        "proposed_statement": "VIP accounts now follow the standard escalation path; no separate carve-out remains necessary.",
+                        "rationale": "No VIP case in the last quarter needed handling beyond the standard escalation path."}],
+        "resolves_question_ids": [],
+    },
+    {  # shape: create a new Current State fact -- shares evidence with
+       # demo-review-eval-redesign below (one Evidence item, two independent
+       # Reviews: a planning note that separately surfaces a budget figure
+       # and revised evaluation criteria, each its own decidable question).
+        "id": "demo-review-create-budget", "review_type": "missing_understanding",
+        "decision_question": "Should Current State record the approved pilot budget?",
+        "why_consequential": "Implementation planning depends on a known budget ceiling, and none is currently recorded.",
+        "evidence_id": "demo-review-q3-planning-evidence",
+        "evidence_text": "Q3 planning session: the pilot budget is approved at $40,000 for discovery and first implementation. Separately, the team agreed the evaluation criteria and sample definition need to be revised together before the next test round.",
+        "evidence_date": "2026-08-31 13:30:00",
+        "proposals": [{"state_item_id": None, "operation": "create",
+                        "proposed_statement": "The pilot budget is approved at $40,000, covering discovery and the first implementation phase.",
+                        "rationale": "Implementation planning depends on a known budget ceiling."}],
+        "resolves_question_ids": [],
+    },
+    {  # shape: grouped Review with multiple closely related proposals that
+       # belong to one human decision (revising evaluation criteria and the
+       # sample definition together, since one without the other leaves the
+       # evaluation plan internally inconsistent). Shares evidence with
+       # demo-review-create-budget above (item 9: one Evidence, two Reviews).
+        "id": "demo-review-eval-redesign", "review_type": "proposed_update",
+        "decision_question": "Should Current State adopt the revised evaluation sample and monitoring split together?",
+        "why_consequential": "The sample definition and monitoring split were redesigned as one package; adopting only one would leave the evaluation plan internally inconsistent.",
+        "evidence_id": "demo-review-q3-planning-evidence",
+        "evidence_text": "Q3 planning session: the pilot budget is approved at $40,000 for discovery and first implementation. Separately, the team agreed the evaluation sample and monitoring split need to be revised together before the next test round.",
+        "evidence_date": "2026-08-31 13:30:00",
+        "proposals": [
+            {"state_item_id": "k-sample", "operation": "update",
+             "proposed_statement": "Evaluation includes representative routine cases plus edge cases from the agreed high-risk categories, redrawn from the revised Q3 sample definition rather than the original draft set.",
+             "rationale": "The sample definition was revised in the Q3 planning session."},
+            {"state_item_id": "k-monitoring", "operation": "update",
+             "proposed_statement": "Pilot monitoring tracks severe failures and escalation behavior separately from aggregate speed or edit-rate improvements, reported against the revised Q3 sample split rather than the original draft grouping.",
+             "rationale": "The monitoring split was revised alongside the sample definition and the two must move together."},
+        ],
+        "resolves_question_ids": [],
+    },
+    {  # shape: proposed new Question that should link to an equivalent
+       # existing Question rather than duplicate it -- the proposed text
+       # below exactly matches q-owner-threshold's, so State's own dedup
+       # (exact normalized-text match) surfaces "Already tracked" instead of
+       # creating a second Question for the same unknown.
+        "id": "demo-review-owner-question", "review_type": "open_question",
+        "decision_question": "Who owns the final launch-threshold decision?",
+        "why_consequential": "A second team raised the same ownership gap independently, without knowing it was already an open Question.",
+        "evidence_id": "demo-review-owner-question-evidence",
+        "evidence_text": "Rollout planning meeting: nobody in the room could say who has final sign-off on the launch thresholds once they are proposed.",
+        "evidence_date": "2026-09-01 09:15:00",
+        "proposals": [], "resolves_question_ids": [],
+        "question_proposal_text": "Who owns the final launch-threshold decision?",
+    },
+]
+
+# Resolved examples -- demonstrate shapes that don't need to stay in the
+# visible pending gallery (state.md #112's demo-volume constraint).
+RESOLVED_REVIEWS = [
+    {  # shape: Evidence answers an existing Question without requiring a
+       # Current State change -- accepted with no proposals, so the linked
+       # Question resolves and Current State never moves.
+        "id": "demo-review-resolved-review-question", "review_type": "state_at_risk",
+        "decision_question": "Does the Security discovery note answer what would justify reconsidering human review?",
+        "why_consequential": "Security's own discovery notes describe exactly the evidence category the open Question was waiting on.",
+        "evidence_id": "demo-review-resolved-review-question-evidence",
+        "evidence_text": "Security discovery follow-up: the categories of evidence that would justify reconsidering the human-review boundary are the same ones already being tracked for launch thresholds -- no new boundary decision is needed yet.",
+        "evidence_date": "2026-09-03 14:00:00",
+        "proposals": [],
+        "resolution": "confirmed_current",
+        "resolution_note": "Confirmed the existing human-review boundary already covers this; no Current State change needed.",
+        "resolved_at": "2026-09-04 10:00:00",
+        "resolved_question_id": "q-review",
+    },
+    {  # shape: Leave unchanged / rejected interpretation -- a real proposal
+       # existed, but the human decided current wording already covers it;
+       # Evidence is preserved, Current State does not move.
+        "id": "demo-review-resolved-leave-unchanged", "review_type": "proposed_update",
+        "decision_question": "Should the escalation path explicitly restate that it preserves the assistant's evidence and attempted steps?",
+        "why_consequential": "Support asked whether the escalation path needed to spell this out, since it already carries the relevant context forward implicitly.",
+        "evidence_id": "demo-review-resolved-leave-unchanged-evidence",
+        "evidence_text": "Support workflow review asked whether escalations preserve what the assistant relied on and already tried.",
+        "evidence_date": "2026-08-28 13:45:00",
+        "proposals": [{"state_item_id": "k-escalation", "operation": "update",
+                        "proposed_statement": "Cases that cannot be supported confidently stay with the rep, follow the existing escalation path, and carry forward the relevant evidence and attempted troubleshooting -- restated for clarity.",
+                        "rationale": "Support asked whether this needed to be spelled out explicitly."}],
+        "resolution": "not_applied",
+        "resolution_note": "Current wording already covers this; no change needed.",
+        "resolved_at": "2026-08-29 09:00:00",
+        "resolved_question_id": None,
+    },
 ]
 
 
@@ -112,14 +252,6 @@ ASK_EVIDENCE = [
 ASK_RULES = [
     ("rule-ask-slack-authority", "Slack is supporting evidence, not authoritative approval.", "Sources"),
 ]
-
-DEMO_EVIDENCE_DATES = {
-    "demo-review-access": "2026-08-27 16:10:00",
-    "demo-review-launch": "2026-08-28 09:30:00",
-    "demo-review-escalation": "2026-08-28 13:45:00",
-    "demo-review-retention": "2026-08-29 10:20:00",
-}
-
 
 
 def _seed_accepted_history(connection) -> int:
@@ -184,6 +316,17 @@ def bootstrap_demo_data(connection, *, manage_transaction: bool = True) -> dict[
         areas_ready = connection.execute(
             "SELECT 1 FROM schema_migrations WHERE version='012_project_areas'"
         ).fetchone() is not None
+        # Same guard, for #112's richer Review gallery: open_question Reviews
+        # and proposed_questions need migration 009; review_questions.evidence_id
+        # needs migration 010. Both are no-ops (rather than failures) on an
+        # older snapshot -- the affected entries simply aren't seeded there,
+        # which is fine since nothing has been lost that ever existed.
+        open_question_ready = connection.execute(
+            "SELECT 1 FROM schema_migrations WHERE version='009_question_review_proposals'"
+        ).fetchone() is not None
+        review_question_evidence_ready = connection.execute(
+            "SELECT 1 FROM schema_migrations WHERE version='010_review_questions_evidence_source'"
+        ).fetchone() is not None
         if areas_ready:
             for area_id, name, description, sort_order in AREAS:
                 if not connection.execute("SELECT id FROM project_areas WHERE id=?", (area_id,)).fetchone():
@@ -225,18 +368,83 @@ def bootstrap_demo_data(connection, *, manage_transaction: bool = True) -> dict[
             if not before:
                 connection.execute("INSERT INTO questions(id,text,status,blocking,blocks,origin) VALUES (?,?,'open',?,?,?)", (qid,text,blocking,blocks,origin))
                 counts["questions"] += 1
-        for rid, rtype, question, why, state_id, proposed, evidence_text in REVIEWS:
+        for review in REVIEWS:
+            rid = review["id"]
+            if review["review_type"] == "open_question" and not open_question_ready:
+                continue
             if connection.execute("SELECT id FROM review_issues WHERE id=?", (rid,)).fetchone():
                 continue
-            eid = f"{rid}-evidence"
-            connection.execute("INSERT OR IGNORE INTO evidence(id,content,source_type,processing_status,submitted_at) VALUES (?,?,'demo_seed','processed',?)", (eid,evidence_text,DEMO_EVIDENCE_DATES[rid]))
-            connection.execute("INSERT INTO review_issues(id,review_type,decision_question,why_consequential,status) VALUES (?,?,?,?,'open')", (rid,rtype,question,why))
-            connection.execute("INSERT OR IGNORE INTO review_evidence(review_id,evidence_id) VALUES (?,?)", (rid,eid))
-            if state_id and proposed:
-                row=connection.execute("SELECT version FROM current_state_items WHERE id=?",(state_id,)).fetchone()
-                if row:
-                    connection.execute("INSERT OR IGNORE INTO review_state_items(review_id,state_item_id) VALUES (?,?)",(rid,state_id))
-                    connection.execute("INSERT INTO proposed_state_changes(id,review_id,state_item_id,proposed_statement,rationale,expected_state_version,status,operation) VALUES (?,?,?,?,?,?,'pending','update')", (f"{rid}-proposal",rid,state_id,proposed,why,row["version"]))
+            eid = review["evidence_id"]
+            connection.execute(
+                "INSERT OR IGNORE INTO evidence(id,content,source_type,processing_status,submitted_at) VALUES (?,?,'demo_seed','processed',?)",
+                (eid, review["evidence_text"], review["evidence_date"]),
+            )
+            connection.execute(
+                "INSERT INTO review_issues(id,review_type,decision_question,why_consequential,status) VALUES (?,?,?,?,'open')",
+                (rid, review["review_type"], review["decision_question"], review["why_consequential"]),
+            )
+            connection.execute("INSERT OR IGNORE INTO review_evidence(review_id,evidence_id) VALUES (?,?)", (rid, eid))
+            for proposal in review["proposals"]:
+                state_id = proposal["state_item_id"]
+                if state_id:
+                    row = connection.execute("SELECT version FROM current_state_items WHERE id=?", (state_id,)).fetchone()
+                    if not row:
+                        continue
+                    connection.execute("INSERT OR IGNORE INTO review_state_items(review_id,state_item_id) VALUES (?,?)", (rid, state_id))
+                    expected_version = row["version"]
+                else:
+                    expected_version = None
+                connection.execute(
+                    "INSERT INTO proposed_state_changes(id,review_id,state_item_id,proposed_statement,rationale,expected_state_version,status,operation) VALUES (?,?,?,?,?,?,'pending',?)",
+                    (f"{rid}-proposal-{state_id or 'new'}", rid, state_id, proposal["proposed_statement"], proposal["rationale"], expected_version, proposal["operation"]),
+                )
+            for qid in review.get("resolves_question_ids", []):
+                if connection.execute("SELECT id FROM questions WHERE id=?", (qid,)).fetchone():
+                    if review_question_evidence_ready:
+                        connection.execute("INSERT OR IGNORE INTO review_questions(review_id,question_id,evidence_id) VALUES (?,?,?)", (rid, qid, eid))
+                    else:
+                        connection.execute("INSERT OR IGNORE INTO review_questions(review_id,question_id) VALUES (?,?)", (rid, qid))
+            if review["review_type"] == "open_question":
+                persist_question_proposal(connection, rid, eid, review["question_proposal_text"])
+            counts["reviews"] += 1
+
+        for review in RESOLVED_REVIEWS:
+            rid = review["id"]
+            if connection.execute("SELECT id FROM review_issues WHERE id=?", (rid,)).fetchone():
+                continue
+            eid = review["evidence_id"]
+            connection.execute(
+                "INSERT OR IGNORE INTO evidence(id,content,source_type,processing_status,submitted_at) VALUES (?,?,'demo_seed','processed',?)",
+                (eid, review["evidence_text"], review["evidence_date"]),
+            )
+            connection.execute(
+                "INSERT INTO review_issues(id,review_type,decision_question,why_consequential,status,resolution,resolution_note,resolved_at) "
+                "VALUES (?,?,?,?,'resolved',?,?,?)",
+                (rid, review["review_type"], review["decision_question"], review["why_consequential"],
+                 review["resolution"], review["resolution_note"], review["resolved_at"]),
+            )
+            connection.execute("INSERT OR IGNORE INTO review_evidence(review_id,evidence_id) VALUES (?,?)", (rid, eid))
+            for proposal in review["proposals"]:
+                state_id = proposal["state_item_id"]
+                row = connection.execute("SELECT version FROM current_state_items WHERE id=?", (state_id,)).fetchone() if state_id else None
+                if state_id and row:
+                    connection.execute("INSERT OR IGNORE INTO review_state_items(review_id,state_item_id) VALUES (?,?)", (rid, state_id))
+                connection.execute(
+                    "INSERT INTO proposed_state_changes(id,review_id,state_item_id,proposed_statement,rationale,expected_state_version,status,operation,decided_at) "
+                    "VALUES (?,?,?,?,?,?,'not_applied',?,?)",
+                    (f"{rid}-proposal-{state_id or 'new'}", rid, state_id, proposal["proposed_statement"], proposal["rationale"],
+                     row["version"] if row else None, proposal["operation"], review["resolved_at"]),
+                )
+            resolved_qid = review.get("resolved_question_id")
+            if resolved_qid and connection.execute("SELECT id FROM questions WHERE id=? AND status='open'", (resolved_qid,)).fetchone():
+                if review_question_evidence_ready:
+                    connection.execute("INSERT OR IGNORE INTO review_questions(review_id,question_id,evidence_id) VALUES (?,?,?)", (rid, resolved_qid, eid))
+                else:
+                    connection.execute("INSERT OR IGNORE INTO review_questions(review_id,question_id) VALUES (?,?)", (rid, resolved_qid))
+                connection.execute(
+                    "UPDATE questions SET status='resolved', resolved_at=?, resolution='Resolved by reviewed evidence', source_evidence_id=? WHERE id=?",
+                    (review["resolved_at"], eid, resolved_qid),
+                )
             counts["reviews"] += 1
 
         # Ask adversarial relationships: the vendor claim is relevant to the open

@@ -9,15 +9,23 @@ def test_demo_seed_is_idempotent_and_stress_sized(tmp_path):
         initialize_db(connection)
         first = bootstrap_demo_data(connection)
         second = bootstrap_demo_data(connection)
-        assert first == {"state": 25, "questions": 20, "reviews": 4, "history": 10, "evidence": 5, "rules": 1}
+        assert first == {"state": 25, "questions": 20, "reviews": 9, "history": 10, "evidence": 5, "rules": 1}
         assert second == {"state": 0, "questions": 0, "reviews": 0, "history": 0, "evidence": 0, "rules": 0}
         assert connection.execute("SELECT count(*) AS n FROM current_state_items").fetchone()["n"] == 25
-        assert connection.execute("SELECT count(*) AS n FROM questions WHERE status='open'").fetchone()["n"] == 20
+        # state.md #112: one seeded Question (q-review) is answered by a
+        # resolved gallery Review with no Current State change, so 19 stay
+        # open out of 20 total.
+        assert connection.execute("SELECT count(*) AS n FROM questions WHERE status='open'").fetchone()["n"] == 19
         assert connection.execute("SELECT count(*) AS n FROM questions WHERE blocking=1").fetchone()["n"] == 3
-        assert connection.execute("SELECT count(*) AS n FROM review_issues WHERE status='open'").fetchone()["n"] == 4
+        # state.md #112: 6-8 visible pending Reviews across every major
+        # decision shape (see REVIEWS' own "shape:" comments), plus two more
+        # shapes seeded already resolved (RESOLVED_REVIEWS) so the pending
+        # gallery doesn't get flooded.
+        assert connection.execute("SELECT count(*) AS n FROM review_issues WHERE status='open'").fetchone()["n"] == 7
         assert connection.execute("SELECT count(*) AS n FROM history_transitions").fetchone()["n"] == 10
-        assert connection.execute("SELECT count(*) AS n FROM review_issues WHERE status='resolved'").fetchone()["n"] == 10
+        assert connection.execute("SELECT count(*) AS n FROM review_issues WHERE status='resolved'").fetchone()["n"] == 12
         assert connection.execute("SELECT count(*) AS n FROM proposed_state_changes WHERE status='accepted'").fetchone()["n"] == 10
+        assert connection.execute("SELECT count(*) AS n FROM proposed_questions").fetchone()["n"] == 1
 
 
 def test_demo_seed_never_overwrites_existing_state(tmp_path):
@@ -43,7 +51,7 @@ def test_demo_reset_removes_session_changes_and_restores_baseline(tmp_path):
         connection.commit()
         counts = reset_demo_data(connection)
         pilot = connection.execute("SELECT statement,version FROM current_state_items WHERE id='k-pilot'").fetchone()
-        assert counts == {"state": 25, "questions": 20, "reviews": 4, "history": 10, "evidence": 5, "rules": 1}
+        assert counts == {"state": 25, "questions": 20, "reviews": 9, "history": 10, "evidence": 5, "rules": 1}
         assert pilot["statement"].startswith("The core pilot use case is Tier 1")
         assert pilot["version"] == 2
         assert connection.execute("SELECT count(*) AS n FROM draft_notes").fetchone()["n"] == 0
@@ -75,8 +83,8 @@ def test_environment_loaded_app_bootstraps_real_demo_dataset(tmp_path, monkeypat
         history = client.get("/api/history").json()["items"]
     assert health["demo_bootstrap"] is True
     assert len(state) == 25
-    assert len([q for q in questions if q["status"] == "open"]) == 20
-    assert len(reviews) == 4
+    assert len([q for q in questions if q["status"] == "open"]) == 19
+    assert len(reviews) == 7
     assert len(history) == 10
 
 
@@ -86,21 +94,25 @@ def test_r86_history_backfill_does_not_stale_existing_demo_open_reviews(tmp_path
         initialize_db(connection)
         # Simulate the R8.5 deployed shape: baseline State + Questions + open demo Reviews,
         # but no synthetic accepted History yet.
-        from seed_demo import AREAS, ITEMS, QUESTIONS, REVIEWS, DEMO_EVIDENCE_DATES
+        from seed_demo import AREAS, ITEMS, QUESTIONS, REVIEWS
         for area_id, name, description, sort_order in AREAS:
             connection.execute("INSERT INTO project_areas(id, name, description, sort_order) VALUES (?, ?, ?, ?)", (area_id, name, description, sort_order))
         for item_id, topic, statement, area_id in ITEMS:
             connection.execute("INSERT INTO current_state_items(id, topic, statement, version, area_id) VALUES (?, ?, ?, 1, ?)", (item_id, topic, statement, area_id))
         for qid, text, blocking, blocks, origin in QUESTIONS:
             connection.execute("INSERT INTO questions(id,text,status,blocking,blocks,origin) VALUES (?,?,'open',?,?,?)", (qid,text,blocking,blocks,origin))
-        for rid, rtype, question, why, state_id, proposed, evidence_text in REVIEWS:
-            eid=f"{rid}-evidence"
-            connection.execute("INSERT INTO evidence(id,content,source_type,processing_status,submitted_at) VALUES (?,?,'demo_seed','processed',?)", (eid,evidence_text,DEMO_EVIDENCE_DATES[rid]))
-            connection.execute("INSERT INTO review_issues(id,review_type,decision_question,why_consequential,status) VALUES (?,?,?,?,'open')", (rid,rtype,question,why))
-            connection.execute("INSERT INTO review_evidence(review_id,evidence_id) VALUES (?,?)", (rid,eid))
-            if state_id and proposed:
-                connection.execute("INSERT INTO review_state_items(review_id,state_item_id) VALUES (?,?)", (rid,state_id))
-                connection.execute("INSERT INTO proposed_state_changes(id,review_id,state_item_id,proposed_statement,rationale,expected_state_version,status,operation) VALUES (?,?,?,?,?,1,'pending','update')", (f"{rid}-proposal",rid,state_id,proposed,why))
+        for review in REVIEWS:
+            rid = review["id"]
+            eid = review["evidence_id"]
+            connection.execute("INSERT OR IGNORE INTO evidence(id,content,source_type,processing_status,submitted_at) VALUES (?,?,'demo_seed','processed',?)", (eid, review["evidence_text"], review["evidence_date"]))
+            connection.execute("INSERT INTO review_issues(id,review_type,decision_question,why_consequential,status) VALUES (?,?,?,?,'open')", (rid, review["review_type"], review["decision_question"], review["why_consequential"]))
+            connection.execute("INSERT OR IGNORE INTO review_evidence(review_id,evidence_id) VALUES (?,?)", (rid, eid))
+            for proposal in review["proposals"]:
+                state_id = proposal["state_item_id"]
+                if state_id:
+                    connection.execute("INSERT INTO review_state_items(review_id,state_item_id) VALUES (?,?)", (rid, state_id))
+                connection.execute("INSERT INTO proposed_state_changes(id,review_id,state_item_id,proposed_statement,rationale,expected_state_version,status,operation) VALUES (?,?,?,?,?,?,'pending',?)",
+                                    (f"{rid}-proposal-{state_id or 'new'}", rid, state_id, proposal["proposed_statement"], proposal["rationale"], 1 if state_id else None, proposal["operation"]))
         connection.commit()
         result=bootstrap_demo_data(connection)
         assert result["history"] == 10
