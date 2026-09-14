@@ -62,6 +62,29 @@ _LOOKUP_ANCHORS = {
     "count", "number", "vendor", "location", "office", "person", "name",
 }
 
+# "date"/"deadline" lookups (e.g. "has the launch date been decided?") were
+# being stripped from candidates entirely: the strict anchor-match below only
+# checked for the literal token "date" in a record's text, but a record that
+# actually names a date ("committed for November 3rd") never contains that
+# word. Confirmed live (2026-09-13, state.md #105 long-note stress test
+# follow-up): a genuinely relevant open Review was silently removed here,
+# before the model ever saw it, no matter how the Ask prompt itself was
+# worded -- this is a mechanical retrieval bug, not a model judgment gap.
+_MONTH_NAMES = {
+    "january", "february", "march", "april", "may", "june", "july", "august",
+    "september", "october", "november", "december",
+    "jan", "feb", "mar", "apr", "jun", "jul", "aug", "sep", "sept", "oct", "nov", "dec",
+}
+_DATE_VALUE_PATTERN = re.compile(
+    r"\b(?:\d{4}-\d{1,2}-\d{1,2}|\d{1,2}/\d{1,2}/\d{2,4}|\d{1,2}(?:st|nd|rd|th)\b)"
+)
+
+
+def _record_mentions_a_date_value(text: str) -> bool:
+    if _DATE_VALUE_PATTERN.search(text):
+        return True
+    return bool(_MONTH_NAMES & set(re.findall(r"[a-z]+", text)))
+
 
 def _parse_json(text: str) -> Mapping[str, Any]:
     try:
@@ -167,8 +190,12 @@ def _filter_candidate_payload(query: str, payload: Mapping[str, Any]) -> dict[st
         for record in records:
             if not isinstance(record, Mapping):
                 continue
-            body_tokens = {_normalize_token(token) for token in re.findall(r"[a-z0-9]+", _record_text(record))}
-            if not (anchor_terms & body_tokens):
+            record_text = _record_text(record)
+            body_tokens = {_normalize_token(token) for token in re.findall(r"[a-z0-9]+", record_text)}
+            anchor_matched = bool(anchor_terms & body_tokens)
+            if not anchor_matched and anchor_terms & {"date", "deadline"} and _record_mentions_a_date_value(record_text):
+                anchor_matched = True
+            if not anchor_matched:
                 continue
             # If the lookup names a subject as well as an attribute, require the
             # record to match that subject too. "Security contact" must not

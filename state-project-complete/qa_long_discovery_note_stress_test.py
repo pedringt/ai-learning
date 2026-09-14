@@ -139,9 +139,10 @@ def main() -> int:
                 connection, ask_provider,
                 "What is our current retention and access policy for the pilot, and is anything still unresolved?",
             )
-            print(json.dumps(ask_result.get("headline"), indent=2))
-            print(json.dumps(ask_result.get("summary"), indent=2))
-            for section in ask_result.get("sections", []):
+            answer = ask_result.get("answer", {})
+            print(json.dumps(answer.get("headline"), indent=2))
+            print(json.dumps(answer.get("summary"), indent=2))
+            for section in answer.get("sections", []):
                 print(f"[{section.get('title')}]")
                 for item in section.get("items", []):
                     print(f"  - {item.get('text')}")

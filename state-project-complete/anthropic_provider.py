@@ -52,7 +52,14 @@ class AnthropicProvider:
         """
         self.name = "anthropic"
         self.model_identifier = model_identifier or os.getenv("CLAUDE_MODEL", "claude-haiku-4-5-20251001")
-        self.max_tokens = int(os.getenv("CLAUDE_MAX_TOKENS", "1200"))
+        # Bumped 1200 -> 2000 2026-09-13: the #105 long discovery-note stress
+        # test hit stop_reason="max_tokens" on a dense, multi-topic note after
+        # consequentiality_guidance.py's completeness-scan instruction (state.md
+        # #104 follow-up) made the model enumerate more distinct recommendations
+        # per call -- a real reliability regression (whole interpretation fails,
+        # not just one fact dropped), not scope creep. 2000 matches the OpenAI
+        # adapter's existing default for the same schema/instructions.
+        self.max_tokens = int(os.getenv("CLAUDE_MAX_TOKENS", "2000"))
         self.timeout_seconds = float(os.getenv("CLAUDE_TIMEOUT_SECONDS", "30"))
         # A temperature=0 override was added and stress-tested here 2026-09-07
         # (see eval/scaling_experiment.py and repeated single-scenario reruns,

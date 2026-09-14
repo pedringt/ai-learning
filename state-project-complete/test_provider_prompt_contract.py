@@ -49,7 +49,7 @@ def test_anthropic_low_latency_defaults(monkeypatch):
     monkeypatch.delenv('CLAUDE_MAX_TOKENS', raising=False)
     provider = AnthropicProvider(api_key='test')
     assert provider.model_identifier == 'claude-haiku-4-5-20251001'
-    assert provider.max_tokens == 1200
+    assert provider.max_tokens == 2000
 
 
 def test_anthropic_prompt_maps_missing_understanding_to_create_only():
@@ -139,7 +139,19 @@ def test_anthropic_prompt_is_compact_and_does_not_repeat_json_skeleton():
     # open_question/state_at_risk follow-ups for recording the milestone
     # itself. The added "record the milestone itself too" instruction fixed
     # it; the extra length is that fix, not scope creep.
-    assert len(prompt) < 8100
+    # Bumped again -> 8900 2026-09-13: the #105 long discovery-note stress
+    # test (docs handoff to the user) found two more real misses at this
+    # prompt length: a grouped operating policy (dashboard read-only + dual
+    # escalation sign-off) was dropped in 3/5 raw live samples, and an
+    # explicit Question answer (q-retention) was missed in 4/5 -- both
+    # observed directly from process_evidence()'s output, not guessed at.
+    # Added a "re-scan Evidence paragraph by paragraph for every distinct
+    # consequential claim" instruction and a "check each open Question
+    # against Evidence before finalizing resolves_question_ids" instruction.
+    # Both are completeness/recall instructions for genuinely consequential
+    # material already covered by the existing consequentiality bar -- they
+    # do not lower that bar or ask the model to review more aggressively.
+    assert len(prompt) < 8900
 
 
 def test_provider_output_schema_stays_below_anthropic_complexity_budget():
