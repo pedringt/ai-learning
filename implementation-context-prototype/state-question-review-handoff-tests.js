@@ -78,7 +78,7 @@ const proposedReview={
 };
 const proposedReviewHtml=openItems.reviewCard(proposedReview,true,false);
 check('proposed Review uses Update Current State',
-  proposedReviewHtml.includes('>Update<') && !proposedReviewHtml.includes('>Update understanding<'));
+  proposedReviewHtml.includes('>Update Current State<') && !proposedReviewHtml.includes('>Update understanding<'));
 check('proposed Review offers Adjust',
   proposedReviewHtml.includes('>Adjust<') && proposedReviewHtml.includes('data-action="open-adjust-review"'));
 check('proposed Review uses Leave unchanged, not the old Keep Current State label',
