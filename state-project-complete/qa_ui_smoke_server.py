@@ -1,8 +1,16 @@
-"""Local-only dev server for manually verifying state.md #107's Review UI in
-a real browser against a real (local, throwaway) backend -- no live model
-calls, no staging/production traffic. Seeds several concrete Review
-scenarios directly via SQL so the click-through doesn't depend on model
-judgment or cost API credits.
+"""Local-only dev server for manually verifying state.md #107/#108's Review
+and Add Evidence UI in a real browser against a real (local, throwaway)
+backend -- no live model calls, no staging/production traffic. Seeds several
+concrete Review scenarios directly via SQL so the #107 click-through doesn't
+depend on model judgment or cost API credits.
+
+For #108 (the "Something changed?" -> Add Evidence entry point), a small
+deterministic provider stands in for the real interpreter so a genuine
+correction and a genuine new fact submitted live through the UI still
+produce a real Review through the real pipeline -- without a live model
+call. Anything else raises loudly rather than guessing, so an unexpected
+submission during exploratory testing doesn't silently produce confusing
+output.
 
 Usage: uvicorn qa_ui_smoke_server:app --port 8000
 """
@@ -16,12 +24,55 @@ from database_migration_backed import initialize_db
 from db import connect
 
 
-class _UnusedProvider:
-    name = "unused"
-    model_identifier = "unused"
+class _DeterministicProvider:
+    """Recognizes the exact #108 QA submissions; raises on anything else."""
+
+    name = "qa-deterministic"
+    model_identifier = "qa-deterministic-v1"
 
     def interpret(self, *, context, evidence):
-        raise RuntimeError("This smoke server never calls interpret(); all Reviews are pre-seeded.")
+        content = (evidence.get("content") or "").strip()
+        if "launch date was never October 1" in content:
+            return {
+                "summary": "Corrects the recorded launch date.",
+                "topics": ["launch"],
+                "outcome": "review_recommended",
+                "review_recommendations": [{
+                    "review_action": "create",
+                    "review_type": "proposed_update",
+                    "decision_question": "Should the recorded launch date change to November 3?",
+                    "why_consequential": "Evidence directly contradicts the currently maintained launch date.",
+                    "affected_state_item_ids": ["k-launch"],
+                    "proposed_changes": [{
+                        "operation": "update",
+                        "state_item_id": "k-launch",
+                        "expected_version": 1,
+                        "proposed_statement": "Pilot launch is planned for November 3.",
+                        "rationale": "Evidence states the October 1 date was never correct.",
+                    }],
+                }],
+            }
+        if "approved a rollback plan" in content:
+            return {
+                "summary": "A new rollback plan was approved; not previously tracked.",
+                "topics": ["rollout"],
+                "outcome": "review_recommended",
+                "review_recommendations": [{
+                    "review_action": "create",
+                    "review_type": "missing_understanding",
+                    "decision_question": "Should the approved rollback plan be tracked?",
+                    "why_consequential": "This is a new, concrete decision not yet reflected in Current State.",
+                    "affected_state_item_ids": [],
+                    "proposed_changes": [{
+                        "operation": "create",
+                        "proposed_statement": "A rollback plan is approved if the pilot underperforms.",
+                        "rationale": "Evidence states this directly.",
+                    }],
+                }],
+            }
+        raise RuntimeError(
+            f"_DeterministicProvider does not recognize this QA submission: {content[:80]!r}"
+        )
 
 
 _db_path = tempfile.NamedTemporaryFile(suffix=".db", delete=False).name
@@ -141,7 +192,7 @@ connection.execute(
 
 connection.commit()
 
-app = create_app(Settings(database_path=_db_path, provider="anthropic", cors_origins=["*"]), provider=_UnusedProvider())
+app = create_app(Settings(database_path=_db_path, provider="anthropic", cors_origins=["*"]), provider=_DeterministicProvider())
 print(f"Seeded temp DB at {_db_path}")
 print("Scenarios: r-normal (update), r-risk (state_at_risk), r-answers-question (resolves a Question),")
 print("r-grouped (2 proposals), r-question (open_question suggestion)")
