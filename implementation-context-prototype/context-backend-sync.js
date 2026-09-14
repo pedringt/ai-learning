@@ -168,12 +168,20 @@
     const clean=value=>OPEN_ITEMS_VIEW?.cleanReviewCopy?OPEN_ITEMS_VIEW.cleanReviewCopy(value):String(value||'');
     const backend=(items||[]).map(h=>{
       const topicName=knowledge.find(k=>k.id===h.state_item_id)?.title;
+      // state.md #106/#109 holistic pass: a materially human-adjusted accept
+      // gets its own decision line and its original AI wording surfaced as
+      // provenance -- new_statement (after, below) stays the only
+      // authoritative current value either way; aiProposed is never shown
+      // as an alternate "now".
+      const adjusted=!!h.accepted_as_adjusted;
       return {
         ...h, id:h.id, backendManaged:true, knowledgeId:h.state_item_id,
         date:formatBackendDate(h.changed_at), dateISO:h.changed_at, type:historyType(h,topicName),
         before:clean(h.old_statement)||'Not previously established', after:clean(h.new_statement),
         reason:clean(h.decision_question||h.proposal_rationale)||'Reviewed project evidence',
-        decision:'Human accepted this change', evidenceItems:h.evidence_items||[]
+        decision: adjusted ? 'Human adjusted and accepted this change' : 'Human accepted this change',
+        aiProposed: adjusted ? clean(h.ai_proposed_statement) : null,
+        evidenceItems:h.evidence_items||[]
       };
     });
     const byEvidence=new Map();

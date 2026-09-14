@@ -483,10 +483,17 @@ def list_reviews(connection: Connection, status: str = "open") -> list[dict]:
 
 
 def list_history(connection: Connection) -> list[dict]:
-    """Return accepted State transitions with the Review/Evidence provenance needed by History UI."""
+    """Return accepted State transitions with the Review/Evidence provenance needed by History UI.
+
+    p.proposed_statement is aliased separately from h.new_statement: for an
+    accepted_as_adjusted transition (#106), new_statement is the human's
+    final approved wording, while ai_proposed_statement is the AI's original
+    proposal -- provenance, not an alternate current value. They are equal
+    for an ordinary (non-adjusted) transition.
+    """
     connection.row_factory = sqlite3.Row
     rows = connection.execute(
-        "SELECT h.*, p.review_id, p.rationale AS proposal_rationale, "
+        "SELECT h.*, p.review_id, p.rationale AS proposal_rationale, p.proposed_statement AS ai_proposed_statement, "
         "r.decision_question, r.why_consequential, r.resolution, r.resolution_note "
         "FROM history_transitions h "
         "JOIN proposed_state_changes p ON p.id=h.proposed_change_id "
