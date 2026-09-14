@@ -23,6 +23,7 @@ _Last updated: September 14, 2026 Pacific time, end of session. This section rep
 - "Subnav click does nothing while Ask is open" — confirmed real by the user via screen recording, but did not reproduce in an isolated local test with real seeded-shape content. Needs the actual deployed environment's exact conditions to diagnose further.
 - `project_areas.id` is a bare global primary key, not project-scoped — a documented, deliberately-deferred scaling risk. Fine with today's two projects (their area ids don't collide), needs a real schema fix (composite key) before a third project is added.
 - Occasional Ask grammar glitches in generated prose — live-model output text, not something a code fix can reliably address.
+- Ask's "What should I know?" starter (job `meeting_prep`) visibly grows then shrinks on first ask: `context-ask.js`'s `renderStream()` shows every field from the model's raw, untrimmed streaming JSON as it arrives, but `_normalize_meeting_prep()` (`ask_service.py:771`) only merges/caps sections and items (2-4 items/section, 4 sections max) *after* the stream finishes — so the live draft is always bigger than the final answer for this job. Not a correctness bug (the final content is intentionally tighter), but the streaming preview doesn't reflect the eventual shape. User-confirmed 2026-09-14, deferred — fix would be applying the same caps live during streaming, or showing a lighter "drafting…" state instead of the raw growing draft for `meeting_prep` specifically.
 
 ### Branch state (historical — #104-#108, already shipped)
 
