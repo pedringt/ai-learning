@@ -200,26 +200,39 @@ def test_modal_geometry_remains_top_safe_at_phone_width():
         browser.close(); pw.stop()
 
 def test_project_reads_as_wiki_and_keeps_atomic_facts_collapsed_by_default():
+    # state.md #113: area names/descriptions come entirely from each Current
+    # State item's own areaName/areaDescription (set server-side, from
+    # project-defined project_areas data -- see review_service.py's
+    # list_state()), not from area/subsection names hardcoded in
+    # context-project-view.js. The three area names used here ("Scope &
+    # workflow", "Human controls", "Measurement") are deliberately not
+    # Northstar's actual seeded area names, to prove the page just reflects
+    # whatever data it's given rather than a fixed Northstar taxonomy.
     pw, browser, page = _launch_page(hydration_ms=10)
     try:
         page.wait_for_timeout(40)
         page.evaluate("""() => {
           const t=window.STATE_ASK_TEST_API;
+          const workflow={projectArea:'workflow',areaName:'Scope & workflow',areaDescription:'What the team is building and how it fits together.',areaSortOrder:10};
+          const controls={projectArea:'controls',areaName:'Human controls',areaDescription:'Where a person must stay in the loop.',areaSortOrder:20};
+          const measurement={projectArea:'measurement',areaName:'Measurement',areaDescription:'How the team knows if this is working.',areaSortOrder:30};
           t.state.data.knowledge=[
-            {id:'k-stage',title:'Project stage',statement:'Late discovery is nearly complete.',state:'current',projectArea:'evaluation',topics:['stage']},
-            {id:'k-outcome',title:'Project outcome',statement:'Reduce repetitive support effort without sacrificing human control.',state:'current',projectArea:'product',topics:['outcome']},
-            {id:'k-pilot',title:'Pilot direction',statement:'The core pilot use case is Tier 1 troubleshooting assistance.',state:'current',projectArea:'product',topics:['pilot']},
-            {id:'k-entry',title:'Workflow fit',statement:'The assistant supports the rep inside the existing troubleshooting workflow.',state:'current',projectArea:'product',topics:['workflow']},
-            {id:'k-security',title:'Human review boundary',statement:'Human review remains required for the pilot.',state:'current',projectArea:'safety',topics:['security']},
-            {id:'k-readonly',title:'Read-only boundary',statement:'The assistant may retrieve information but may not execute account changes.',state:'current',projectArea:'safety',topics:['safety']},
-            {id:'k-eval',title:'Evaluation direction',statement:'The pilot is judged on quality, escalation behavior, and severe failures.',state:'current',projectArea:'evaluation',topics:['evaluation']},
+            {id:'k-stage',title:'Project stage',statement:'Late discovery is nearly complete.',state:'current',topics:['stage']},
+            {id:'k-outcome',title:'Project outcome',statement:'Reduce repetitive support effort without sacrificing human control.',state:'current',topics:['outcome']},
+            {id:'k-pilot',title:'Current direction',statement:'The core pilot use case is Tier 1 troubleshooting assistance.',state:'current',...workflow,topics:['pilot']},
+            {id:'k-entry',title:'Workflow fit',statement:'The assistant supports the rep inside the existing troubleshooting workflow.',state:'current',...workflow,topics:['workflow']},
+            {id:'k-security',title:'Human review boundary',statement:'Human review remains required for the pilot.',state:'current',...controls,topics:['security']},
+            {id:'k-readonly',title:'Read-only boundary',statement:'The assistant may retrieve information but may not execute account changes.',state:'current',...controls,topics:['safety']},
+            {id:'k-eval',title:'Evaluation direction',statement:'The pilot is judged on quality, escalation behavior, and severe failures.',state:'current',...measurement,topics:['evaluation']},
           ];
           t.state.backendStatus.state='loaded';
         }""")
         page.locator('.sidebar-nav [data-view="project-overview"]').click()
-        assert page.get_by_text('Pilot scope & workflow', exact=True).is_visible()
-        assert page.get_by_text('Human control', exact=True).is_visible()
-        assert page.get_by_text('How success is judged', exact=True).is_visible()
+        # Area names now also appear in the (equally data-driven) subnav, so
+        # scope to the section heading specifically rather than any match.
+        assert page.locator('h3', has_text='Scope & workflow').is_visible()
+        assert page.locator('h3', has_text='Human controls').is_visible()
+        assert page.locator('h3', has_text='Measurement').is_visible()
         assert page.locator('.project-wiki-prose').count() >= 3
         assert page.locator('.project-maintained-facts[open]').count() == 0
         assert page.locator('.project-wiki-prose p').filter(has_text='The core pilot use case is Tier 1 troubleshooting assistance.').first.is_visible()

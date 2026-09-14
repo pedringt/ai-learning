@@ -171,9 +171,13 @@ def test_r8_long_project_and_open_items_scaling_contract():
     assert "const reviewTopics=new Set(reviews.flatMap(r=>r.topics||[]));" in OPEN_ITEMS_VIEW_JS
     # Both gained extra parameters (pendingFor, history, knowledge) when they
     # moved to context-project-view.js 2026-09-06, since they can no longer
-    # close over context-app.js's `state`.
-    assert "function projectWikiTopic(topic,items,pendingFor,history)" in PROJECT_VIEW_JS
-    assert "function projectOutlineSection(id,a,knowledge,pendingFor,history)" in PROJECT_VIEW_JS
+    # close over context-app.js's `state`. state.md #113 collapsed the old
+    # two-tier area/subsection hierarchy (projectOutlineSection wrapping
+    # per-subsection projectWikiTopic calls, each keyed by a hardcoded area
+    # id) into one area-level function driven by each fact's own area_id/
+    # area_name, since subsections were themselves a hardcoded-per-area
+    # concept with no project-neutral equivalent.
+    assert "function projectOutlineSection(area,items,pendingFor,history)" in PROJECT_VIEW_JS
     assert "project-section-sticky" in PROJECT_VIEW_JS
     assert ".app-sidebar{position:sticky" in css
 
@@ -210,10 +214,18 @@ def test_r81_project_nav_hides_empty_sections_and_orientation_uses_state():
     # projectMetaIds copy) stayed in context-app.js. projectOrientation() and
     # the header that reads its stage/outcome moved to context-project-view.js
     # 2026-09-06.
+    #
+    # state.md #113: subnav area buttons and area grouping generalized away
+    # from Northstar's fixed k-stage/k-outcome ids and hardcoded area keys.
+    # The subnav is now (re)built from PROJECT_VIEW.visibleAreas() -- which
+    # only returns areas with at least one current fact, so "hides empty
+    # sections" is now inherent rather than a per-button visibility check --
+    # and "Project stage"/"Project outcome" are matched by topic label so a
+    # different project's own universal facts work the same way.
     app = (FRONTEND / "context-app.js").read_text(encoding="utf-8")
-    assert "currentKnowledge(area).length===0" in app
-    assert "k-stage" in app and "k-outcome" in app
-    assert "k-stage" in PROJECT_VIEW_JS and "k-outcome" in PROJECT_VIEW_JS
+    assert "PROJECT_VIEW.visibleAreas(state.data.knowledge)" in app
+    assert "'project stage'" in app and "'project outcome'" in app
+    assert "'project stage'" in PROJECT_VIEW_JS and "'project outcome'" in PROJECT_VIEW_JS
     assert "orientation.stage" in PROJECT_VIEW_JS and "orientation.outcome" in PROJECT_VIEW_JS
 
 
@@ -395,11 +407,17 @@ def test_r95_workspace_attention_has_a_fast_independent_load_path():
 
 def test_r19_project_summary_and_modal_actions_stay_compact():
     app = (FRONTEND / "context-app.js").read_text(encoding="utf-8")
-    # current-direction-list moved to context-project-view.js 2026-09-06.
     # project-fact-count was deliberately removed 2026-09-07 (UX review
     # batch, item 14) along with the header's fact count.
+    #
+    # state.md #113: the "Current direction" bullet chips (current-direction-
+    # list) were themselves removed, not relocated -- their labeling
+    # (Pilot/Guardrail/Focus) was Northstar phrase-matching with no
+    # project-neutral equivalent, and Stage/Outcome in the header meta list
+    # already cover the "universal current direction" concept the issue asks
+    # to keep.
     assert 'class="project-fact-count"' not in PROJECT_VIEW_JS
-    assert 'class="current-direction-list"' in PROJECT_VIEW_JS
+    assert 'class="current-direction-list"' not in PROJECT_VIEW_JS
     assert 'data-action="close-dialog">Done' not in app
     assert 'data-action="close-dialog">Done' not in PROJECT_VIEW_JS
 

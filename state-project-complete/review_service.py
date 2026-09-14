@@ -417,10 +417,31 @@ def _apply_proposal(connection: Connection, proposal: dict, *, adjusted_statemen
 
 
 def list_state(connection: Connection) -> list[dict]:
+    """Current State facts, each carrying its own area assignment (#111).
+
+    area_id/area_name/area_description/area_sort_order are always populated:
+    an item with no area_id (never assigned, or an area since deleted) falls
+    back to the guaranteed 'general' area rather than a domain-specific
+    default -- software enforces the fallback, not the view layer, so every
+    consumer (Project page, a future project switcher) sees the same answer.
+    """
     connection.row_factory = sqlite3.Row
     return [dict(row) for row in connection.execute(
-        "SELECT id, topic, statement, status, version, effective_date, created_at, updated_at "
-        "FROM current_state_items WHERE status='active' ORDER BY topic, created_at, id"
+        "SELECT s.id, s.topic, s.statement, s.status, s.version, s.effective_date, s.created_at, s.updated_at, "
+        "COALESCE(s.area_id, 'general') AS area_id, COALESCE(a.name, g.name) AS area_name, "
+        "COALESCE(a.description, g.description) AS area_description, "
+        "COALESCE(a.sort_order, g.sort_order) AS area_sort_order "
+        "FROM current_state_items s "
+        "LEFT JOIN project_areas a ON a.id = s.area_id "
+        "LEFT JOIN project_areas g ON g.id = 'general' "
+        "WHERE s.status='active' ORDER BY s.topic, s.created_at, s.id"
+    )]
+
+
+def list_project_areas(connection: Connection) -> list[dict]:
+    connection.row_factory = sqlite3.Row
+    return [dict(row) for row in connection.execute(
+        "SELECT id, name, description, sort_order FROM project_areas ORDER BY sort_order, name"
     )]
 
 

@@ -12,32 +12,45 @@ import os
 from database_migration_backed import initialize_db
 from db import connect
 
+# state.md #113: Northstar's own areas -- generalization means Northstar
+# fills the Current State organization with its own data instead of the
+# product defining it in view JavaScript. id, name, description, sort_order.
+AREAS = [
+    ("scope-workflow", "Scope & workflow", "What the assistant currently does, where it fits, and how the support workflow is expected to work.", 10),
+    ("security-data", "Security & data", "The current boundaries that keep the first implementation controlled and reviewable.", 20),
+    ("evaluation-rollout", "Evaluation & rollout", "How the pilot will be judged and what needs to be true before broader use.", 30),
+]
+
+# id, topic, statement, area_id. area_id is None for the two universal facts
+# (Project stage/outcome) -- excluded from area grouping by topic label, not
+# by id, so a different project's own stage/outcome facts work the same way
+# without this file's IDs meaning anything special to the view layer.
 ITEMS = [
-    ("k-stage", "Project stage", "Late discovery is nearly complete; implementation planning is next once the remaining launch-critical security, access-authority, and evaluation questions are resolved."),
-    ("k-outcome", "Project outcome", "Reduce repetitive support effort without sacrificing response quality or human control."),
-    ("k-pilot", "Pilot direction", "The core pilot use case is Tier 1 troubleshooting assistance. AI drafts and assembles context; a support rep reviews before anything customer-facing is sent."),
-    ("k-entry", "Workflow fit", "The assistant supports the rep inside the existing troubleshooting workflow rather than replacing the support queue or customer conversation."),
-    ("k-grounding", "Approved knowledge", "Troubleshooting guidance is grounded in approved support material and relevant account context when that context is available."),
-    ("k-escalation", "Escalation path", "Cases that cannot be supported confidently from available information stay with the rep and follow the existing escalation path."),
-    ("k-access", "Feature access", "Standard plan rules are one troubleshooting input, but effective customer access can require account-level confirmation when exceptions exist."),
-    ("k-password", "Password reset automation", "Password-reset tickets are approved for automation, but approval does not by itself establish that automation has been implemented or deployed."),
-    ("k-login", "Login troubleshooting", "Login and authentication troubleshooting are in the first-pilot scope when the assistant can ground guidance without changing the customer account."),
-    ("k-handoff", "Rep handoff", "The assistant should preserve the relevant evidence and attempted troubleshooting when a case is handed back to a rep or escalated."),
-    ("k-autonomy", "Autonomy target", "Leadership has asked whether 50% autonomous resolution is achievable, but discovery has not established a safe automation percentage and the first implementation remains human-reviewed."),
-    ("k-security", "Human review boundary", "Human review remains required for the pilot. Security wants agreed high-risk failure categories and evidence across them before that boundary is reconsidered."),
-    ("k-data", "Data boundary", "The pilot uses the minimum customer and account data needed for troubleshooting, remains read-only, and avoids account-changing actions in the first implementation."),
-    ("k-sensitive", "Sensitive actions", "Billing adjustments, ownership changes, refunds, and other sensitive account actions remain outside the assistant's first implementation."),
-    ("k-claims", "Unsupported claims", "Unsupported claims about customer configuration, outages, or feature availability are treated as high-risk failures during pilot evaluation."),
-    ("k-vip", "VIP exception", "VIP and other specially handled accounts continue through manual support workflows unless a separately reviewed rule establishes otherwise."),
-    ("k-slack", "Support Slack", "Support Slack is not an approved retrieval source for the first pilot while ownership, freshness, and data-governance questions remain unresolved."),
-    ("k-readonly", "Read-only boundary", "The first implementation may retrieve and synthesize information but may not execute account changes on the customer's behalf."),
-    ("k-eval", "Evaluation direction", "The pilot is evaluated with response-time improvement, reviewer edits, escalation behavior, unsupported-claim checks, and failure severity rather than a single automation metric."),
-    ("k-launch", "Launch readiness", "Implementation planning can proceed with the bounded use case, but pilot launch still requires agreed thresholds for high-risk failures and escalation behavior."),
-    ("k-feedback", "Rep feedback", "Pilot feedback distinguishes harmless edits from corrections that indicate the assistant misunderstood the case or relied on unsupported information."),
-    ("k-training", "Rep enablement", "Rep training covers when to use the assistant, what still requires manual verification, how to inspect support for an answer, and how to flag a bad suggestion."),
-    ("k-rollout", "Rollout sequence", "Rollout begins with a bounded internal pilot before any broader support-team availability is considered."),
-    ("k-sample", "Evaluation sample", "Evaluation includes representative routine cases plus edge cases from the agreed high-risk categories; ticket volume alone does not define the test set."),
-    ("k-monitoring", "Pilot monitoring", "Pilot monitoring tracks severe failures and escalation behavior separately from aggregate speed or edit-rate improvements."),
+    ("k-stage", "Project stage", "Late discovery is nearly complete; implementation planning is next once the remaining launch-critical security, access-authority, and evaluation questions are resolved.", None),
+    ("k-outcome", "Project outcome", "Reduce repetitive support effort without sacrificing response quality or human control.", None),
+    ("k-pilot", "Current direction", "The core pilot use case is Tier 1 troubleshooting assistance. AI drafts and assembles context; a support rep reviews before anything customer-facing is sent.", "scope-workflow"),
+    ("k-entry", "Workflow fit", "The assistant supports the rep inside the existing troubleshooting workflow rather than replacing the support queue or customer conversation.", "scope-workflow"),
+    ("k-grounding", "Approved knowledge", "Troubleshooting guidance is grounded in approved support material and relevant account context when that context is available.", "scope-workflow"),
+    ("k-escalation", "Escalation path", "Cases that cannot be supported confidently from available information stay with the rep and follow the existing escalation path.", "scope-workflow"),
+    ("k-access", "Feature access", "Standard plan rules are one troubleshooting input, but effective customer access can require account-level confirmation when exceptions exist.", "scope-workflow"),
+    ("k-password", "Password reset automation", "Password-reset tickets are approved for automation, but approval does not by itself establish that automation has been implemented or deployed.", "scope-workflow"),
+    ("k-login", "Login troubleshooting", "Login and authentication troubleshooting are in the first-pilot scope when the assistant can ground guidance without changing the customer account.", "scope-workflow"),
+    ("k-handoff", "Rep handoff", "The assistant should preserve the relevant evidence and attempted troubleshooting when a case is handed back to a rep or escalated.", "scope-workflow"),
+    ("k-autonomy", "Autonomy target", "Leadership has asked whether 50% autonomous resolution is achievable, but discovery has not established a safe automation percentage and the first implementation remains human-reviewed.", "security-data"),
+    ("k-security", "Human review boundary", "Human review remains required for the pilot. Security wants agreed high-risk failure categories and evidence across them before that boundary is reconsidered.", "security-data"),
+    ("k-data", "Data boundary", "The pilot uses the minimum customer and account data needed for troubleshooting, remains read-only, and avoids account-changing actions in the first implementation.", "security-data"),
+    ("k-sensitive", "Sensitive actions", "Billing adjustments, ownership changes, refunds, and other sensitive account actions remain outside the assistant's first implementation.", "security-data"),
+    ("k-claims", "Unsupported claims", "Unsupported claims about customer configuration, outages, or feature availability are treated as high-risk failures during pilot evaluation.", "evaluation-rollout"),
+    ("k-vip", "VIP exception", "VIP and other specially handled accounts continue through manual support workflows unless a separately reviewed rule establishes otherwise.", "security-data"),
+    ("k-slack", "Support Slack", "Support Slack is not an approved retrieval source for the first pilot while ownership, freshness, and data-governance questions remain unresolved.", "security-data"),
+    ("k-readonly", "Read-only boundary", "The first implementation may retrieve and synthesize information but may not execute account changes on the customer's behalf.", "security-data"),
+    ("k-eval", "Evaluation direction", "The pilot is evaluated with response-time improvement, reviewer edits, escalation behavior, unsupported-claim checks, and failure severity rather than a single automation metric.", "evaluation-rollout"),
+    ("k-launch", "Launch readiness", "Implementation planning can proceed with the bounded use case, but pilot launch still requires agreed thresholds for high-risk failures and escalation behavior.", "evaluation-rollout"),
+    ("k-feedback", "Rep feedback", "Pilot feedback distinguishes harmless edits from corrections that indicate the assistant misunderstood the case or relied on unsupported information.", "evaluation-rollout"),
+    ("k-training", "Rep enablement", "Rep training covers when to use the assistant, what still requires manual verification, how to inspect support for an answer, and how to flag a bad suggestion.", "evaluation-rollout"),
+    ("k-rollout", "Rollout sequence", "Rollout begins with a bounded internal pilot before any broader support-team availability is considered.", "evaluation-rollout"),
+    ("k-sample", "Evaluation sample", "Evaluation includes representative routine cases plus edge cases from the agreed high-risk categories; ticket volume alone does not define the test set.", "evaluation-rollout"),
+    ("k-monitoring", "Pilot monitoring", "Pilot monitoring tracks severe failures and escalation behavior separately from aggregate speed or edit-rate improvements.", "evaluation-rollout"),
 ]
 
 QUESTIONS = [
@@ -162,10 +175,35 @@ def bootstrap_demo_data(connection, *, manage_transaction: bool = True) -> dict[
     if manage_transaction:
         connection.execute("BEGIN IMMEDIATE")
     try:
-        for item in ITEMS:
-            before = connection.execute("SELECT id FROM current_state_items WHERE id=?", (item[0],)).fetchone()
+        # Guard against a pre-#113 schema (migration 012 not yet applied):
+        # some tests deliberately seed data at an older schema snapshot to
+        # exercise a later initialize_db() migrating it forward (see
+        # test_migration_from_existing_sqlite_preserves_history_links_and_reenables_fk).
+        # project_areas/area_id don't exist yet in that snapshot, so fall back
+        # to the pre-#113 3-column insert rather than failing to seed at all.
+        areas_ready = connection.execute(
+            "SELECT 1 FROM schema_migrations WHERE version='012_project_areas'"
+        ).fetchone() is not None
+        if areas_ready:
+            for area_id, name, description, sort_order in AREAS:
+                if not connection.execute("SELECT id FROM project_areas WHERE id=?", (area_id,)).fetchone():
+                    connection.execute(
+                        "INSERT INTO project_areas(id, name, description, sort_order) VALUES (?, ?, ?, ?)",
+                        (area_id, name, description, sort_order),
+                    )
+        for item_id, topic, statement, area_id in ITEMS:
+            before = connection.execute("SELECT id FROM current_state_items WHERE id=?", (item_id,)).fetchone()
             if not before:
-                connection.execute("INSERT INTO current_state_items(id, topic, statement, version) VALUES (?, ?, ?, 1)", item)
+                if areas_ready:
+                    connection.execute(
+                        "INSERT INTO current_state_items(id, topic, statement, version, area_id) VALUES (?, ?, ?, 1, ?)",
+                        (item_id, topic, statement, area_id),
+                    )
+                else:
+                    connection.execute(
+                        "INSERT INTO current_state_items(id, topic, statement, version) VALUES (?, ?, ?, 1)",
+                        (item_id, topic, statement),
+                    )
                 counts["state"] += 1
         counts["history"] += _seed_accepted_history(connection)
         for eid, content, source_type, submitted_at in ASK_EVIDENCE:

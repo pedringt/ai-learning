@@ -2,54 +2,36 @@
   const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const norm = s => String(s).toLowerCase().replace(/[’']/g,'').replace(/[^a-z0-9\s]/g,' ').replace(/\s+/g,' ').trim();
 
-  const projectAreas = {
-    product:{name:'Product & Workflow', description:'What the assistant currently does, where it fits, and how the support workflow is expected to work.'},
-    safety:{name:'Safety & Constraints', description:'The current boundaries that keep the first implementation controlled and reviewable.'},
-    evaluation:{name:'Evaluation & Rollout', description:'How the pilot will be judged and what needs to be true before broader use.'}
-  };
+  // state.md #113: the Project page's organization must come from project
+  // data (each Current State item's own area_id/area_name, set server-side
+  // -- see review_service.py's list_state()), not from areas/subsections/
+  // keyword vocabulary hardcoded here for one specific project. A different
+  // project changes its own facts and area assignments; this file never
+  // needs to change.
+  //
+  // "Project stage" and "Project outcome" are the two universal facts every
+  // project is expected to maintain (topic label match, not a fixed id --
+  // any project's seed/authored data can supply them under these exact
+  // topic names). They render in the page header instead of inside an area
+  // group, the same as before generalization.
+  const UNIVERSAL_TOPICS = new Set(['project stage','project outcome']);
+  const isUniversalMeta = k => UNIVERSAL_TOPICS.has(norm(k.title||''));
 
-  // Duplicated from context-app.js's own currentKnowledge()/projectMetaIds
-  // (which updateNav() there still needs) rather than shared -- this is a
-  // two-line pure filter, and the two call sites don't need to stay in sync
-  // through a shared reference. knowledge is state.data.knowledge, passed in
-  // by the caller.
-  const projectMetaIds=new Set(['k-stage','k-outcome']);
-  function currentKnowledge(knowledge,area){ return knowledge.filter(k=>k.state==='current' && (!area || (!projectMetaIds.has(k.id)&&k.projectArea===area))); }
+  // knowledge is state.data.knowledge, passed in by the caller.
+  function currentKnowledge(knowledge,areaId){ return knowledge.filter(k=>k.state==='current' && (!areaId || (!isUniversalMeta(k)&&(k.projectArea||'general')===areaId))); }
 
-  function projectGroup(k,area){
-    const text=norm(`${k.title||''} ${k.statement||''} ${(k.topics||[]).join(' ')}`);
-    if(area==='product'){
-      if(/scope|pilot|tier 1|tier 2|password|login/.test(text)) return 'Scope';
-      if(/access|ground|knowledge|source|entitlement/.test(text)) return 'Knowledge & access';
-      return 'Workflow';
+  // Areas themselves are derived from whatever facts are presently active --
+  // no separate area-list fetch, and a project with zero facts in an area
+  // never renders an empty section for it.
+  function visibleAreas(knowledge){
+    const byId=new Map();
+    for(const k of knowledge){
+      if(k.state!=='current'||isUniversalMeta(k)) continue;
+      const id=k.projectArea||'general';
+      if(!byId.has(id)) byId.set(id,{id,name:k.areaName||'General',description:k.areaDescription||'',sortOrder:k.areaSortOrder??999});
     }
-    if(area==='safety'){
-      if(/data|privacy|retention|slack|source/.test(text)) return 'Data & sources';
-      if(/human review|autonomy|sensitive|read.only|vip|account change/.test(text)) return 'Control boundaries';
-      return 'Risk controls';
-    }
-    if(/launch|rollout|training|enablement/.test(text)) return 'Rollout';
-    if(/feedback|monitor|sample|metric|evaluation|claim|failure/.test(text)) return 'Measurement';
-    return 'Readiness';
+    return [...byId.values()].sort((a,b)=>a.sortOrder-b.sortOrder||a.name.localeCompare(b.name));
   }
-
-  const projectWikiTopics={
-    product:[
-      {id:'pilot-workflow',title:'Pilot scope & workflow',description:'What the first pilot is for and how it fits into support.',matches:k=>['k-pilot','k-entry','k-login','k-password'].includes(k.id)||projectGroup(k,'product')==='Scope'},
-      {id:'knowledge-access',title:'Knowledge & access',description:'What the assistant can rely on when it answers and how access is determined.',matches:k=>['k-grounding','k-access'].includes(k.id)||projectGroup(k,'product')==='Knowledge & access'},
-      {id:'escalation-handoff',title:'Escalation & handoff',description:'What happens when the assistant cannot safely carry the case forward.',matches:k=>['k-escalation','k-handoff'].includes(k.id)||projectGroup(k,'product')==='Workflow'},
-    ],
-    safety:[
-      {id:'human-control',title:'Human control',description:'Where human judgment remains required and what would be needed to revisit that boundary.',matches:k=>['k-security','k-autonomy'].includes(k.id)},
-      {id:'action-boundaries',title:'Action boundaries',description:'What the assistant is and is not allowed to do in the first implementation.',matches:k=>['k-readonly','k-sensitive','k-vip'].includes(k.id)||projectGroup(k,'safety')==='Control boundaries'},
-      {id:'data-sources',title:'Data & sources',description:'The current rules for customer data and approved retrieval sources.',matches:k=>['k-data','k-slack'].includes(k.id)||projectGroup(k,'safety')==='Data & sources'},
-    ],
-    evaluation:[
-      {id:'success',title:'How success is judged',description:'The evidence the team will use to decide whether the pilot is working safely and usefully.',matches:k=>['k-eval','k-feedback','k-sample','k-monitoring','k-claims'].includes(k.id)||projectGroup(k,'evaluation')==='Measurement'},
-      {id:'readiness',title:'Launch readiness',description:'What still has to be true before the pilot is ready to launch.',matches:k=>['k-launch'].includes(k.id)||projectGroup(k,'evaluation')==='Readiness'},
-      {id:'rollout',title:'Rollout & enablement',description:'How the pilot expands and how reps are prepared to use it.',matches:k=>['k-training','k-rollout'].includes(k.id)||projectGroup(k,'evaluation')==='Rollout'},
-    ]
-  };
 
   // pendingFor: context-app.js's pendingFor(topics) (backend-aware, so
   // injected rather than reimplemented here). history: state.data.history.
@@ -78,37 +60,24 @@
     return paragraphs;
   }
 
-  function projectWikiTopic(topic,items,pendingFor,history){
+  function projectOutlineSection(area,items,pendingFor,history){
     if(!items.length) return '';
     const paragraphs=projectWikiParagraphs(items);
     const maintained=`<details class="project-maintained-facts"><summary>Maintained from ${items.length} Current State ${items.length===1?'fact':'facts'}</summary><ul>${items.map(k=>projectFact(k,pendingFor,history)).join('')}</ul></details>`;
-    return `<section class="project-wiki-topic" id="project-topic-${topic.id}" data-state-ids="${items.map(x=>esc(x.id)).join(' ')}"><div class="project-wiki-topic-head"><h4>${esc(topic.title)}</h4><p>${esc(topic.description)}</p></div><div class="project-wiki-prose">${paragraphs.map(text=>`<p>${esc(text)}</p>`).join('')}</div>${maintained}</section>`;
+    return `<section class="project-outline-section project-wiki-section" id="project-${esc(area.id)}"><div class="project-section-sticky"><h3>${esc(area.name)}</h3></div>${area.description?`<p class="project-outline-description">${esc(area.description)}</p>`:''}<div class="project-wiki-prose">${paragraphs.map(text=>`<p>${esc(text)}</p>`).join('')}</div>${maintained}</section>`;
   }
 
-  function projectOutlineSection(id,a,knowledge,pendingFor,history){
-    const items=currentKnowledge(knowledge,id);
-    if(!items.length)return '';
-    const topics=projectWikiTopics[id]||[];
-    const assigned=new Set();
-    const blocks=[];
-    for(const topic of topics){
-      const matched=items.filter(k=>!assigned.has(k.id)&&topic.matches(k));
-      matched.forEach(k=>assigned.add(k.id));
-      if(matched.length) blocks.push(projectWikiTopic(topic,matched,pendingFor,history));
-    }
-    const leftover=items.filter(k=>!assigned.has(k.id));
-    if(leftover.length) blocks.push(projectWikiTopic({id:`${id}-other`,title:'Additional maintained understanding',description:'Other reviewed facts that belong to this part of the project.'},leftover,pendingFor,history));
-    return `<section class="project-outline-section project-wiki-section" id="project-${id}"><div class="project-section-sticky"><h3>${esc(a.name)}</h3></div><p class="project-outline-description">${esc(a.description)}</p>${blocks.join('')}</section>`;
-  }
-
+  // Universal facts are matched by topic label (see UNIVERSAL_TOPICS), not a
+  // fixed id, so a different project's own "Project stage"/"Project outcome"
+  // facts work identically without editing this file. Current direction
+  // falls back to a neutral message rather than assuming any project fact
+  // describes a "direction" -- a project that hasn't authored one yet simply
+  // shows no direction summary instead of a Northstar-shaped placeholder.
   function projectOrientation(knowledge){
-    const byId=id=>knowledge.find(k=>k.id===id&&k.state==='current');
-    const pilot=byId('k-pilot'), stage=byId('k-stage'), outcome=byId('k-outcome');
+    const byTopic=name=>knowledge.find(k=>k.state==='current'&&norm(k.title||'')===name);
+    const stage=byTopic('project stage'), outcome=byTopic('project outcome');
     const current=knowledge.filter(k=>k.state==='current');
-    const direction=pilot?.statement || 'Reviewed project direction has not been established yet.';
     return {
-      description: stage ? `${direction} ${stage.statement}` : direction,
-      direction,
       stage: stage?.statement || 'Stage not yet established in Current State.',
       outcome: outcome?.statement || 'Outcome not yet established in Current State.',
       count: current.length
@@ -130,13 +99,10 @@
     if(backendState==='error'){
       return `<article class="page project-page project-document"><div class="empty-state unavailable-state"><h2>Current State is temporarily unavailable.</h2><p>State is not substituting placeholder facts while the authoritative project data cannot be loaded.</p><button class="btn secondary" data-action="retry-hydration">Try again</button></div></article>`;
     }
-    const visible=Object.entries(projectAreas).filter(([id])=>currentKnowledge(knowledge,id).length);
+    const areas=visibleAreas(knowledge);
     const orientation=projectOrientation(knowledge);
-    const directionParts=orientation.direction.split(/(?<=[.!?])\s+/).filter(Boolean);
-    const directionLabel=text=>/two weeks|support reps|pilot runs/i.test(text)?'Pilot':/reviews?|customer-facing|human/i.test(text)?'Guardrail':'Focus';
-    const directionSummary=directionParts.map(text=>`<li><strong>${directionLabel(text)}</strong><span>${esc(text)}</span></li>`).join('');
-    return `<article class="page project-page project-document"><header class="project-document-head" id="project-top"><div class="project-head-row"><div class="project-title-line"><h2>${esc(projectName)}</h2></div><button class="btn secondary project-head-copy-context" data-action="open-copy-context">Copy context</button><button class="btn secondary project-settings-button" data-action="project-settings">Project settings</button></div><p class="project-document-summary">The maintained project wiki: a readable view of what the team currently treats as true.</p><dl class="project-document-meta"><div><dt>Stage</dt><dd>${esc(orientation.stage)}</dd></div><div><dt>Outcome</dt><dd>${esc(orientation.outcome)}</dd></div></dl><div class="something-changed-cta"><div><strong>Something changed?</strong><span>Add new information and State will review whether Current State should change.</span></div><button class="btn secondary" data-action="something-changed">Add Evidence</button></div></header><section class="project-document-intro" aria-labelledby="currentDirectionTitle"><strong id="currentDirectionTitle">Current direction</strong><ul class="current-direction-list">${directionSummary}</ul></section><div class="project-outline">${visible.map(([id,a])=>projectOutlineSection(id,a,knowledge,pendingFor,history)).join('')||'<div class="empty-state"><h3>No Current State yet.</h3><p>Reviewed project understanding will appear here as a clean outline.</p></div>'}</div></article>`;
+    return `<article class="page project-page project-document"><header class="project-document-head" id="project-top"><div class="project-head-row"><div class="project-title-line"><h2>${esc(projectName)}</h2></div><button class="btn secondary project-head-copy-context" data-action="open-copy-context">Copy context</button><button class="btn secondary project-settings-button" data-action="project-settings">Project settings</button></div><p class="project-document-summary">The maintained project wiki: a readable view of what the team currently treats as true.</p><dl class="project-document-meta"><div><dt>Stage</dt><dd>${esc(orientation.stage)}</dd></div><div><dt>Outcome</dt><dd>${esc(orientation.outcome)}</dd></div></dl><div class="something-changed-cta"><div><strong>Something changed?</strong><span>Add new information and State will review whether Current State should change.</span></div><button class="btn secondary" data-action="something-changed">Add Evidence</button></div></header><div class="project-outline">${areas.map(area=>projectOutlineSection(area,currentKnowledge(knowledge,area.id),pendingFor,history)).join('')||'<div class="empty-state"><h3>No Current State yet.</h3><p>Reviewed project understanding will appear here as a clean outline.</p></div>'}</div></article>`;
   }
 
-  window.STATE_PROJECT_VIEW = Object.freeze({render});
+  window.STATE_PROJECT_VIEW = Object.freeze({render, visibleAreas});
 })();

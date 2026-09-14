@@ -135,13 +135,6 @@
      Translates API payloads into the client's shape and reconciles them with
      local state. Nothing here decides anything; it only mirrors the server.
      ------------------------------------------------------------------- */
-  function inferProjectArea(item){
-    const text=norm(`${item.topic||''} ${item.statement||''}`);
-    if(/security|risk|data|privacy|human review|sensitive|claim|read only|readonly|account change|refund|ownership change|autonomy|vip/.test(text)) return 'safety';
-    if(/evaluation|metric|launch|rollout|timeline|phase|pilot date|threshold/.test(text)) return 'evaluation';
-    return 'product';
-  }
-
   function titleForStateItem(item){
     if(item.topic && item.topic!=='uncategorized') return item.topic;
     const first=String(item.statement||'').split(/[.!?]/)[0].trim();
@@ -252,16 +245,30 @@
     }
     for(const item of incoming){
       let k=knowledge.find(x=>x.id===item.id);
+      // #113: area_id/area_name/area_description/area_sort_order and title
+      // (topic) always come from the backend (list_state() -- see api.py) --
+      // never guessed client-side from statement keywords, and never left at
+      // whatever an offline/demo fixture guessed before hydration. The
+      // backend is authoritative for both an existing local item and a
+      // brand-new one.
       if(k){
         k.statement=item.statement;
         k.state='current';
         k.backendManaged=true;
+        k.title=titleForStateItem(item);
+        k.projectArea=item.area_id||'general';
+        k.areaName=item.area_name||'General';
+        k.areaDescription=item.area_description||'';
+        k.areaSortOrder=item.area_sort_order??999;
         k.lastConfirmed=formatBackendDate(item.updated_at||item.created_at);
         k.lastConfirmedISO=item.updated_at||item.created_at||todayISO();
       }else{
         knowledge.push({
           id:item.id,
-          projectArea:inferProjectArea(item),
+          projectArea:item.area_id||'general',
+          areaName:item.area_name||'General',
+          areaDescription:item.area_description||'',
+          areaSortOrder:item.area_sort_order??999,
           title:titleForStateItem(item),
           topics:item.topic&&item.topic!=='uncategorized'?[norm(item.topic).replace(/\s+/g,'-')]:[],
           statement:item.statement,
@@ -309,7 +316,7 @@
   window.STATE_BACKEND_SYNC = Object.freeze({
     askTopics, askTopicTerms, evidenceDisplayTimestamp,
     mapApiReview, upsertBackendReview, replaceBackendOpenReviews,
-    inferProjectArea, titleForStateItem, formatBackendDate, sourceLabel, historyType,
+    titleForStateItem, formatBackendDate, sourceLabel, historyType,
     syncApiHistory, syncApiEvidence, syncApiState,
     questionTextKey, remapQuestionReferences, syncApiQuestions, syncApiDrafts,
   });

@@ -86,9 +86,11 @@ def test_r86_history_backfill_does_not_stale_existing_demo_open_reviews(tmp_path
         initialize_db(connection)
         # Simulate the R8.5 deployed shape: baseline State + Questions + open demo Reviews,
         # but no synthetic accepted History yet.
-        from seed_demo import ITEMS, QUESTIONS, REVIEWS, DEMO_EVIDENCE_DATES
-        for item in ITEMS:
-            connection.execute("INSERT INTO current_state_items(id, topic, statement, version) VALUES (?, ?, ?, 1)", item)
+        from seed_demo import AREAS, ITEMS, QUESTIONS, REVIEWS, DEMO_EVIDENCE_DATES
+        for area_id, name, description, sort_order in AREAS:
+            connection.execute("INSERT INTO project_areas(id, name, description, sort_order) VALUES (?, ?, ?, ?)", (area_id, name, description, sort_order))
+        for item_id, topic, statement, area_id in ITEMS:
+            connection.execute("INSERT INTO current_state_items(id, topic, statement, version, area_id) VALUES (?, ?, ?, 1, ?)", (item_id, topic, statement, area_id))
         for qid, text, blocking, blocks, origin in QUESTIONS:
             connection.execute("INSERT INTO questions(id,text,status,blocking,blocks,origin) VALUES (?,?,'open',?,?,?)", (qid,text,blocking,blocks,origin))
         for rid, rtype, question, why, state_id, proposed, evidence_text in REVIEWS:

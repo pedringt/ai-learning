@@ -47,17 +47,38 @@
   const sortDateAsc = (a,b) => isoValue(a).localeCompare(isoValue(b));
   const sortDateDesc = (a,b) => isoValue(b).localeCompare(isoValue(a));
 
+  // #113: the Current State subnav's area links are generated from the
+  // project's own current facts (PROJECT_VIEW.visibleAreas, the same list
+  // that decides the page body's sections) rather than three area buttons
+  // hardcoded in index.html -- a different project's areas appear here
+  // without editing this file or its markup. Only the static "Overview"
+  // jump button is kept in the HTML; area buttons are (re)built each time
+  // and diffed by area id so an unrelated updateNav() call doesn't fight the
+  // user mid-scroll (updateProjectSubnavActive still runs after this).
+  function syncProjectSubnav(){
+    const areas=state.backendStatus.state==='loaded'?PROJECT_VIEW.visibleAreas(state.data.knowledge):[];
+    document.querySelectorAll('#projectSubnav, #mobileProjectSubnav').forEach(sub=>{
+      const existingIds=[...sub.querySelectorAll('[data-project-area]')].map(b=>b.dataset.projectArea).join(',');
+      if(existingIds===areas.map(a=>a.id).join(',')) return;
+      sub.querySelectorAll('[data-project-area]').forEach(b=>b.remove());
+      for(const area of areas){
+        const btn=document.createElement('button');
+        btn.dataset.projectJump=`project-${area.id}`;
+        btn.dataset.projectArea=area.id;
+        btn.textContent=area.name;
+        sub.appendChild(btn);
+      }
+    });
+  }
+
   function updateNav(){
     document.querySelectorAll('[data-view]').forEach(b => b.classList.toggle('active', b.dataset.view===state.view));
     const projectActive=state.view==='project-overview';
     const projectToggle=document.querySelector('.project-nav-toggle'); if(projectToggle) projectToggle.classList.toggle('active',projectActive);
+    syncProjectSubnav();
     document.querySelectorAll('#projectSubnav, #mobileProjectSubnav').forEach(sub=>{sub.hidden=!projectActive;});
     const openItemsCount=uiPendingReviews().length+openQuestions().filter(q=>q.blocking).length;
     document.querySelectorAll('#openItemsActionCount, #mobileOpenItemsCount').forEach(actionCount=>{actionCount.textContent=openItemsCount;actionCount.hidden=!openItemsCount;actionCount.setAttribute('aria-label',`${openItemsCount} items need attention`);});
-    document.querySelectorAll('[data-project-area]').forEach(b=>{
-      const area=b.dataset.projectArea;
-      b.hidden=state.backendStatus.state!=='loaded'||currentKnowledge(area).length===0;
-    });
     const pm=document.getElementById('projectMenu'), ps=document.getElementById('projectSwitcher'); if(pm)pm.hidden=!state.projectMenuOpen; if(ps)ps.setAttribute('aria-expanded',state.projectMenuOpen?'true':'false');
     document.querySelector('.mobile-primary-nav .nav-item.active')?.scrollIntoView({block:'nearest',inline:'nearest'});
   }
@@ -141,8 +162,15 @@
   }
 
 
-  const projectMetaIds=new Set(['k-stage','k-outcome']);
-  function currentKnowledge(area){ return state.data.knowledge.filter(k=>k.state==='current' && (!area || (!projectMetaIds.has(k.id)&&k.projectArea===area))); }
+  // #113: "Project stage"/"Project outcome" are matched by topic label, not
+  // a fixed id, so a different project's own universal facts are excluded
+  // from area grouping the same way -- mirrors context-project-view.js's
+  // isUniversalMeta (duplicated rather than shared: a two-line pure
+  // predicate, same reasoning as this file's other small duplications of
+  // that module's helpers).
+  const projectUniversalTopics=new Set(['project stage','project outcome']);
+  function isProjectUniversalMeta(k){ return projectUniversalTopics.has(norm(k.title||'')); }
+  function currentKnowledge(area){ return state.data.knowledge.filter(k=>k.state==='current' && (!area || (!isProjectUniversalMeta(k)&&(k.projectArea||'general')===area))); }
 
   /* ----------------------------------------------------------------------
      Project view
@@ -1127,8 +1155,8 @@
             const adjusted=adjustments?.find(a=>a.proposal_id===proposal.id)?.adjusted_statement;
             const text=adjusted||proposal.proposed_statement||'';
             const matched=(result.state||[]).find(item=>norm(item.statement)===norm(text)) || (proposal.state_item_id?(result.state||[]).find(item=>item.id===proposal.state_item_id):null);
-            if(matched) receiptItems.push({id:matched.id,statement:matched.statement,area:inferProjectArea(matched)||matched.projectArea||'product'});
-            else if(text) receiptItems.push({id:proposal.state_item_id||'',statement:text,area:'product'});
+            if(matched) receiptItems.push({id:matched.id,statement:matched.statement,area:matched.area_id||'general'});
+            else if(text) receiptItems.push({id:proposal.state_item_id||'',statement:text,area:'general'});
           }
         }
         if(decision==='acknowledge-risk'&&result.question){state.openItemSections.questions=false;state.openQuestionsExpanded=true;}
@@ -1176,7 +1204,7 @@
   function showDecisionComplete({items=[]}={}){
     const primary=items[0];
     const line=primary?truncateText(primary.statement,180):'The reviewed change is now part of Current State.';
-    showDialog(`<span class="eyebrow">Review complete</span><h2 id="dialogTitle">Current State updated</h2><p>${esc(line)}</p><div class="dialog-actions"><button class="btn primary" data-action="review-receipt-project" data-project-area="${esc(primary?.area||'product')}" data-state-id="${esc(primary?.id||'')}">View Current State</button>${primary?.id?`<button class="btn secondary" data-action="view-topic-history" data-knowledge-id="${esc(primary.id)}">View History</button>`:'<button class="btn secondary" data-view="history">View History</button>'}</div>`);
+    showDialog(`<span class="eyebrow">Review complete</span><h2 id="dialogTitle">Current State updated</h2><p>${esc(line)}</p><div class="dialog-actions"><button class="btn primary" data-action="review-receipt-project" data-project-area="${esc(primary?.area||'general')}" data-state-id="${esc(primary?.id||'')}">View Current State</button>${primary?.id?`<button class="btn secondary" data-action="view-topic-history" data-knowledge-id="${esc(primary.id)}">View History</button>`:'<button class="btn secondary" data-view="history">View History</button>'}</div>`);
   }
 
 
@@ -1292,8 +1320,6 @@
      Moved into context-backend-sync.js (window.STATE_BACKEND_SYNC) 2026-09-12
      -- these are thin wrappers so every existing call site keeps working.
      ------------------------------------------------------------------- */
-  function inferProjectArea(item){ return BACKEND_SYNC.inferProjectArea(item); }
-
   function titleForStateItem(item){ return BACKEND_SYNC.titleForStateItem(item); }
 
   function formatBackendDate(value){ return BACKEND_SYNC.formatBackendDate(value); }
@@ -1672,7 +1698,7 @@
     else if(act==='confirm-demo-reset'){showDialog(`<span class="eyebrow">Reset to starting scenario</span><h2 id="dialogTitle">Restore the Northstar starting scenario?</h2><p>This removes everything created during testing and restores the same curated starting State, open Reviews, blockers, Questions, Notes, Rules, and History.</p><div class="dialog-actions"><button class="btn primary" data-action="reset-demo">Reset Northstar</button><button class="btn secondary" data-action="project-settings">Cancel</button></div>`);}
     else if(act==='reset-demo'){state.isAnalyzing=true;showDialog(`<span class="eyebrow">Resetting Northstar</span><h2 id="dialogTitle">Restoring Northstar…</h2><p>Rebuilding the curated starting scenario.</p>`);try{await API.resetDemo();await hydrateBackend();state.result=null;state.resultQuery='';state.askInputDraft='';state.isAnalyzing=false;closeDialog();navigateTo('overview');}catch(err){state.isAnalyzing=false;showDialog(`<span class="eyebrow">Reset failed</span><h2 id="dialogTitle">Northstar was not reset.</h2><p>${esc(err.message)}</p><div class="dialog-actions">${err?.isTimeout?'<button class="btn primary" data-action="reload-page">Refresh page</button>':''}<button class="btn secondary" data-action="close-dialog">Close</button></div>`);}}
     else if(act==='reload-page'){window.location.reload();}
-    else if(act==='review-receipt-project'){const area=a.dataset.projectArea||'product';closeDialog();navigateTo('project-overview');requestAnimationFrame(()=>{scrollProjectTarget(`project-${area}`);const target=a.dataset.stateId?[...document.querySelectorAll('[data-state-id]')].find(el=>el.dataset.stateId===a.dataset.stateId)?.closest('.project-wiki-topic'):null;if(target){target.classList.add('is-recently-updated');setTimeout(()=>target.classList.remove('is-recently-updated'),2200);}});}
+    else if(act==='review-receipt-project'){const area=a.dataset.projectArea||'general';closeDialog();navigateTo('project-overview');requestAnimationFrame(()=>{scrollProjectTarget(`project-${area}`);const target=a.dataset.stateId?[...document.querySelectorAll('[data-state-id]')].find(el=>el.dataset.stateId===a.dataset.stateId)?.closest('.project-wiki-topic'):null;if(target){target.classList.add('is-recently-updated');setTimeout(()=>target.classList.remove('is-recently-updated'),2200);}});}
     else if(act==='close-dialog'){if(!state.isAnalyzing)closeDialog();}
     else if(act==='dismiss-and-open-items'){closeDialog();navigateTo('open-items');}
     else if(act==='retry-analysis'){ const evidenceId=a.dataset.evidenceId; state.isAnalyzing=true; showDialog(analyzingDialog()); startAnalysisClock(); try{await retryEvidenceAnalysis(evidenceId); state.isAnalyzing=false; stopAnalysisClock(); await hydrateBackend(); showDialog(`<span class="eyebrow">Done</span><h2 id="dialogTitle">Analysis complete.</h2><p>Open Items now reflects anything that needs your decision.</p><div class="dialog-actions"><button class="btn primary" data-action="go-review">View Open Items</button></div>`);}catch(err){state.isAnalyzing=false;stopAnalysisClock();showDialog(`<span class="eyebrow">Still unavailable</span><h2 id="dialogTitle">Your note is still safe.</h2><p>${esc(err.message)}</p><div class="dialog-actions"><button class="btn primary" data-action="close-dialog">Close</button></div>`);} }

@@ -64,6 +64,7 @@ from review_service import (
     list_history,
     list_reviews,
     list_state,
+    list_project_areas,
     list_questions,
     create_question,
     stop_question,
@@ -599,6 +600,15 @@ def create_app(settings: Settings | None = None, provider: InterpretationProvide
     def get_state() -> dict:
         with get_connection() as connection:
             return {"items": list_state(connection)}
+
+    @app.get("/api/project-areas")
+    def get_project_areas() -> dict:
+        """The project-defined Current State taxonomy (state.md #113) --
+        each item in GET /api/state already carries its own area_id/area_name
+        denormalized, so this is for introspection/settings use, not required
+        for rendering the Project page."""
+        with get_connection() as connection:
+            return {"items": list_project_areas(connection)}
 
     @app.get("/api/reviews")
     def get_reviews(status: Literal["open", "resolved"] = Query(default="open")) -> dict:
