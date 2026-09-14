@@ -213,12 +213,32 @@ class EvidenceInput(BaseModel):
         return value
 
 
+class ProposalAdjustmentInput(BaseModel):
+    """state.md #106: a human-revised statement for one pending proposal.
+
+    The original AI ``proposed_statement`` is never touched by this --
+    review_service.py persists this text separately and applies it instead
+    of the AI's own wording only for this one acceptance.
+    """
+    model_config = ConfigDict(extra="forbid")
+    proposal_id: str = Field(min_length=1, max_length=100)
+    adjusted_statement: str = Field(min_length=1, max_length=4_000)
+
+    @field_validator("adjusted_statement")
+    @classmethod
+    def adjusted_statement_not_blank(cls, value: str) -> str:
+        if not value.strip():
+            raise ValueError("adjusted_statement must not be blank")
+        return value
+
+
 class ResolutionInput(BaseModel):
     model_config = ConfigDict(extra="forbid")
     decision: Literal["accept", "keep", "reject"]
     note: str | None = Field(default=None, max_length=2_000)
     expected_question_proposal_id: str | None = Field(default=None, min_length=1, max_length=100)
     expected_existing_question_id: str | None = Field(default=None, min_length=1, max_length=100)
+    adjustments: list[ProposalAdjustmentInput] | None = Field(default=None, max_length=20)
 
 
 class ProjectRuleInput(BaseModel):
@@ -587,11 +607,16 @@ def create_app(settings: Settings | None = None, provider: InterpretationProvide
 
     @app.post("/api/reviews/{review_id}/resolve")
     def post_resolution(review_id: str, payload: ResolutionInput) -> dict:
+        adjustments = (
+            {item.proposal_id: item.adjusted_statement for item in payload.adjustments}
+            if payload.adjustments else None
+        )
         with get_connection() as connection:
             try:
                 outcome = resolve_review(connection, review_id, payload.decision, payload.note,
                                          expected_question_proposal_id=payload.expected_question_proposal_id,
-                                         expected_existing_question_id=payload.expected_existing_question_id)
+                                         expected_existing_question_id=payload.expected_existing_question_id,
+                                         adjustments=adjustments)
             except ReviewNotFoundError as exc:
                 raise HTTPException(status_code=404, detail="Review not found") from exc
             except ReviewConflictError as exc:

@@ -76,6 +76,28 @@ class ApiWorkflowTests(unittest.TestCase):
         self.assertEqual(after["version"], 2)
         self.assertEqual(len(resolved.json()["history"]), 1)
 
+    def test_resolve_with_adjustment_persists_human_wording_and_preserves_ai_proposal(self):
+        """state.md #106 API wiring: ProposalAdjustmentInput -> resolve_review."""
+        response = self.client.post("/api/evidence", json={"content": "Launch moved to October 15."})
+        review_id = response.json()["reviews"][0]["id"]
+        proposal_id = self.client.get("/api/reviews?status=open").json()["items"][0]["proposals"][0]["id"]
+
+        resolved = self.client.post(
+            f"/api/reviews/{review_id}/resolve",
+            json={
+                "decision": "accept",
+                "adjustments": [{"proposal_id": proposal_id, "adjusted_statement": "Launch is October 22, pending final sign-off."}],
+            },
+        )
+        self.assertEqual(resolved.status_code, 200)
+        after = resolved.json()["state"][0]
+        self.assertEqual(after["statement"], "Launch is October 22, pending final sign-off.")
+
+        history_items = resolved.json()["history"]
+        self.assertEqual(len(history_items), 1)
+        self.assertEqual(history_items[0]["new_statement"], "Launch is October 22, pending final sign-off.")
+        self.assertEqual(history_items[0]["accepted_as_adjusted"], 1)
+
     def test_keep_and_reject_do_not_mutate_current_state(self):
         for decision in ("keep", "reject"):
             response = self.client.post("/api/evidence", json={"content": f"Candidate date for {decision}."})

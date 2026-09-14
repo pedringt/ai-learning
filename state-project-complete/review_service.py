@@ -24,6 +24,18 @@ class ReviewConflictError(RuntimeError):
 Decision = Literal["accept", "keep", "reject"]
 
 
+def _normalized_statement(value: str | None) -> str:
+    """Stable identity normalization for comparing proposed/adjusted wording.
+
+    Matches the whitespace/casefold convention already used for exact-match
+    comparisons elsewhere (interpretation_pipeline_integrated.py's
+    _normalize_review_text, question_review_service.py's
+    normalized_question_text) so "no real change" is judged the same way
+    everywhere in the codebase.
+    """
+    return " ".join((value or "").split()).casefold()
+
+
 def list_draft_notes(connection: Connection) -> list[dict]:
     connection.row_factory = sqlite3.Row
     rows = connection.execute(
@@ -122,8 +134,15 @@ def stop_question(connection: Connection, question_id: str) -> None:
     connection.commit()
 
 
-def resolve_review(connection: Connection, review_id: str, decision: Decision, note: str | None = None, *, expected_question_proposal_id: str | None = None, expected_existing_question_id: str | None = None) -> dict | None:
-    """Resolve one review atomically; only ``accept`` may mutate Current State."""
+def resolve_review(connection: Connection, review_id: str, decision: Decision, note: str | None = None, *, expected_question_proposal_id: str | None = None, expected_existing_question_id: str | None = None, adjustments: dict[str, str] | None = None) -> dict | None:
+    """Resolve one review atomically; only ``accept`` may mutate Current State.
+
+    ``adjustments`` (state.md #106) maps a pending proposal's id to a human-
+    revised statement to apply instead of the AI's own ``proposed_statement``
+    -- the original AI text is never overwritten, only accompanied. Only
+    meaningful when ``decision == "accept"``; ignored (but validated, so a
+    stale/mistargeted adjustment still fails loudly) otherwise.
+    """
     connection.row_factory = sqlite3.Row
     connection.execute("BEGIN IMMEDIATE")
     try:
@@ -139,6 +158,8 @@ def resolve_review(connection: Connection, review_id: str, decision: Decision, n
         if decision not in {"accept", "keep", "reject"}:
             raise ReviewConflictError("Invalid Review decision")
         if review["review_type"] == "open_question":
+            if adjustments:
+                raise ReviewConflictError("A Question suggestion has no wording to adjust")
             try:
                 outcome = resolve_question_proposal(connection, review_id, decision, expected_question_proposal_id, expected_existing_question_id)
             except QuestionReviewConflictError as exc:
@@ -157,9 +178,35 @@ def resolve_review(connection: Connection, review_id: str, decision: Decision, n
             (review_id,),
         ).fetchall()
 
+        adjustments = adjustments or {}
+        if adjustments:
+            pending_by_id = {p["id"]: p for p in proposals}
+            for proposal_id, adjusted_statement in adjustments.items():
+                proposal = pending_by_id.get(proposal_id)
+                if proposal is None:
+                    raise ReviewConflictError("The Review outcome changed. Refresh and review it again.")
+                if proposal["operation"] == "retire":
+                    raise ReviewConflictError("A retirement has no proposed wording to adjust")
+                if not (adjusted_statement or "").strip():
+                    raise ReviewConflictError("An adjusted statement cannot be blank")
+
+        # A materially adjusted proposal means the human changed what State
+        # would say beyond the AI's own interpretation. State's authority
+        # model requires a real decision behind a Question resolution --
+        # accepting a revised statement doesn't establish that the *original*
+        # resolves_question_ids linkage still holds, so this Review's linked
+        # Questions are left open rather than silently auto-resolved (#106).
+        # An adjustment that normalizes identical to the AI's own proposed
+        # text is not material and doesn't trigger this.
+        any_material_adjustment = any(
+            _normalized_statement(adjustments.get(p["id"])) != _normalized_statement(p["proposed_statement"])
+            for p in proposals
+            if p["id"] in adjustments
+        )
+
         if decision == "accept":
             for proposal in proposals:
-                _apply_proposal(connection, proposal)
+                _apply_proposal(connection, proposal, adjusted_statement=adjustments.get(proposal["id"]))
             proposal_status = "accepted"
             resolution = "updated" if proposals else "confirmed_current"
         else:
@@ -176,7 +223,7 @@ def resolve_review(connection: Connection, review_id: str, decision: Decision, n
             "resolved_at=CURRENT_TIMESTAMP WHERE id=?",
             (resolution, note, review_id),
         )
-        if decision == "accept":
+        if decision == "accept" and not any_material_adjustment:
             evidence_rows = connection.execute(
                 "SELECT e.id, e.source_type FROM evidence e JOIN review_evidence re ON re.evidence_id=e.id "
                 "WHERE re.review_id=? ORDER BY e.submitted_at DESC, e.id DESC",
@@ -218,21 +265,41 @@ def accept_review(connection: Connection, review_id: str, note: str | None = Non
     """Backward-compatible helper for older tests/integrations."""
     resolve_review(connection, review_id, "accept", note)
 
-def _apply_proposal(connection: Connection, proposal: dict) -> None:
+def _apply_proposal(connection: Connection, proposal: dict, *, adjusted_statement: str | None = None) -> None:
+    """Apply one accepted proposal, using a human adjustment if supplied.
+
+    state.md #106: ``proposal["proposed_statement"]`` -- the original AI
+    text -- is never overwritten. When ``adjusted_statement`` is given, it is
+    persisted alongside the original (never replacing it) and is what
+    actually becomes Current State; ``proposed_statement`` remains the
+    auditable record of what the AI proposed.
+    """
     operation = proposal["operation"] or "update"
+    has_adjustment = adjusted_statement is not None
+    final_statement = adjusted_statement if has_adjustment else proposal["proposed_statement"]
+    accepted_as_adjusted = has_adjustment and _normalized_statement(adjusted_statement) != _normalized_statement(proposal["proposed_statement"])
+
+    if has_adjustment:
+        connection.execute(
+            "UPDATE proposed_state_changes SET adjusted_statement=? WHERE id=?",
+            (adjusted_statement, proposal["id"]),
+        )
+
     if operation == "create":
-        wanted = " ".join((proposal["proposed_statement"] or "").split()).casefold()
+        wanted = _normalized_statement(final_statement)
         existing_rows = connection.execute(
             "SELECT id, statement FROM current_state_items WHERE status='active'"
         ).fetchall()
-        if any(" ".join((row["statement"] or "").split()).casefold() == wanted for row in existing_rows):
-            # Defense in depth: even a stale/manual Review cannot create an
-            # exact duplicate of understanding State already maintains.
+        if any(_normalized_statement(row["statement"]) == wanted for row in existing_rows):
+            # Defense in depth: even a stale/manual Review (or a human
+            # adjustment that happens to restate an already-active fact)
+            # cannot create an exact duplicate of understanding State
+            # already maintains.
             return
         state_id = new_id("state")
         connection.execute(
             "INSERT INTO current_state_items(id, topic, statement, version, effective_date) VALUES (?, ?, ?, 1, ?)",
-            (state_id, "uncategorized", proposal["proposed_statement"], proposal["effective_date"]),
+            (state_id, "uncategorized", final_statement, proposal["effective_date"]),
         )
         old_statement, old_effective_date, from_version, to_version = None, None, None, 1
         new_effective_date = proposal["effective_date"]
@@ -251,12 +318,22 @@ def _apply_proposal(connection: Connection, proposal: dict) -> None:
             raise ReviewConflictError(
                 f"State item {state_id} changed after interpretation; refresh and review again"
             )
+        if (
+            operation != "retire"
+            and has_adjustment
+            and _normalized_statement(final_statement) == _normalized_statement(current["statement"])
+        ):
+            # #106: a human adjustment that ends up restating exactly what is
+            # already Current State is not a change. Do not manufacture a
+            # version bump or a History row that would misleadingly suggest
+            # something was updated.
+            return
         old_statement = current["statement"]
         old_effective_date = current["effective_date"]
         from_version = current["version"]
         to_version = from_version + 1
         transition_type = "retired" if operation == "retire" else "updated"
-        new_statement = proposal["proposed_statement"]
+        new_statement = final_statement
         new_effective_date = proposal["effective_date"] or old_effective_date
         if operation == "retire":
             connection.execute(
@@ -271,12 +348,13 @@ def _apply_proposal(connection: Connection, proposal: dict) -> None:
 
     connection.execute(
         "INSERT INTO history_transitions(id, state_item_id, proposed_change_id, transition_type, "
-        "old_statement, new_statement, old_effective_date, new_effective_date, from_version, to_version) "
-        "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        "old_statement, new_statement, old_effective_date, new_effective_date, from_version, to_version, "
+        "accepted_as_adjusted) "
+        "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
         (
             new_id("history"), state_id, proposal["id"], transition_type,
-            old_statement, proposal["proposed_statement"], old_effective_date,
-            new_effective_date, from_version, to_version,
+            old_statement, final_statement, old_effective_date,
+            new_effective_date, from_version, to_version, 1 if accepted_as_adjusted else 0,
         ),
     )
 

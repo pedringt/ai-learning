@@ -316,6 +316,25 @@ def _snapshot(db, tables):
     }
 
 
+def _assert_no_existing_data_lost(after, before):
+    """Assert every column/value present before migration is still present
+    and unchanged after -- but allow a migration to add a brand-new column
+    with a non-null default (e.g. 011's history_transitions.accepted_as_adjusted
+    defaulting to 0 for pre-existing rows). _snapshot() already drops
+    None-valued columns for the nullable case; a NOT NULL DEFAULT column is
+    never None; so it survives that filter as a key that simply didn't exist
+    in `before` at all. Exact dict equality would fail on that new key
+    regardless of whether any existing data changed, which is what this
+    checks instead: before is a subset of after, row for row."""
+    assert set(before.keys()) == set(after.keys())
+    for table, before_rows in before.items():
+        after_rows = after[table]
+        assert len(before_rows) == len(after_rows), f"{table} row count changed"
+        for before_row, after_row in zip(before_rows, after_rows):
+            for key, value in before_row.items():
+                assert after_row.get(key) == value, f"{table}.{key} changed: {value!r} -> {after_row.get(key)!r}"
+
+
 def test_migration_from_existing_sqlite_preserves_history_links_and_reenables_fk(tmp_path):
     db = connect_sqlite(str(tmp_path/'upgrade.db'))
     # [:8] specifically: migration 009 needs a special Python-side step
@@ -338,7 +357,7 @@ def test_migration_from_existing_sqlite_preserves_history_links_and_reenables_fk
     initialize_db(db)
     assert db.execute('PRAGMA foreign_keys').fetchone()[0] == 1
     assert db.execute('PRAGMA foreign_key_check').fetchall() == []
-    assert _snapshot(db, tables) == before
+    _assert_no_existing_data_lost(_snapshot(db, tables), before)
     initialize_db(db)  # Idempotent second startup.
     result, _ = suggest(db)
     assert result.processing_status == 'succeeded'
@@ -409,7 +428,7 @@ def test_postgres_upgrade_preserves_existing_records():
             before = _snapshot(db, tables)
             db.commit()
             initialize_db(db)
-            assert _snapshot(db, tables) == before
+            _assert_no_existing_data_lost(_snapshot(db, tables), before)
             db.commit()
             result, _ = suggest(db)
             assert result.processing_status == 'succeeded'
