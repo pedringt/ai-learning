@@ -79,21 +79,29 @@ const proposedReview={
 const proposedReviewHtml=openItems.reviewCard(proposedReview,true,false);
 check('proposed Review uses Update Current State',
   proposedReviewHtml.includes('>Update Current State<') && !proposedReviewHtml.includes('>Update understanding<'));
-check('proposed Review uses Keep Current State',
-  proposedReviewHtml.includes('>Keep Current State<') && !proposedReviewHtml.includes('>Leave unchanged<'));
+check('proposed Review offers Adjust',
+  proposedReviewHtml.includes('>Adjust<') && proposedReviewHtml.includes('data-action="open-adjust-review"'));
+check('proposed Review uses Leave unchanged, not the old Keep Current State label',
+  proposedReviewHtml.includes('>Leave unchanged<') && !proposedReviewHtml.includes('>Keep Current State<'));
 
+// state.md #107: a Review that reaches the human with no proposal to act on
+// (state_at_risk, or any defensive fallback) gets wording specific to its
+// own real decision -- never the old generic "Mark reviewed" acknowledgment,
+// and never silently reusing the ordinary Update/Leave-unchanged pair either.
 const noProposalReview={
-  id:'r-info-copy',status:'pending',summary:'Review context',
+  id:'r-info-copy',status:'pending',summary:'Review context',reviewType:'state_at_risk',
   current:'Current State stays the same.',evidence:'Useful contextual evidence.',
   establishes:'Context was reviewed.',proposals:[],
 };
 const noProposalReviewHtml=openItems.reviewCard(noProposalReview,true,false);
-check('zero-proposal Review uses Mark reviewed instead of Accept as reviewed evidence',
-  noProposalReviewHtml.includes('>Mark reviewed<') && !noProposalReviewHtml.includes('Accept as reviewed evidence'));
-check('zero-proposal Review does not add redundant no-change explainer inside the card',
+check('checkOnly Review does not use the old generic Mark reviewed label',
+  !noProposalReviewHtml.includes('>Mark reviewed<') && !noProposalReviewHtml.includes('Accept as reviewed evidence'));
+check('checkOnly Review offers its own two decision-specific actions',
+  noProposalReviewHtml.includes('data-action="review-acknowledge-risk"') && noProposalReviewHtml.includes('data-action="review-dismiss-risk"'));
+check('checkOnly Review does not add redundant no-change explainer inside the card',
   !noProposalReviewHtml.includes('No Current State change is proposed.'));
-check('zero-proposal Review has only the Mark reviewed decision',
-  !noProposalReviewHtml.includes('>Keep Current State<') && !noProposalReviewHtml.includes('data-action="review-keep"'));
+check('checkOnly Review has no Update/Adjust/Leave-unchanged actions',
+  !noProposalReviewHtml.includes('data-action="review-update"') && !noProposalReviewHtml.includes('data-action="open-adjust-review"') && !noProposalReviewHtml.includes('data-action="review-keep"'));
 
 const separatedReviewHtml=openItems.reviewCard(proposedReview,false,true);
 check('Review records have subtle spacing and a theme-aware top divider between records',
@@ -121,9 +129,10 @@ const renderedOpenItems=openItems.render({
   openItemSections:{reviews:null,blockers:null,questions:null,drafts:null},
   renderDraftNote:()=>'',
 });
-check('Open Items keeps the explanation once at the top of the page',
-  renderedOpenItems.includes('Reviews may propose a Current State change, suggest a Question, or simply need a human check.') &&
-  renderedOpenItems.includes('Blocking and open questions stay visible here too.'));
+// state.md #107: short, embedded education copy replaces the older, longer
+// top-of-page explanation -- still appears exactly once, not per-Review.
+check('Open Items keeps the short #107 explanation once at the top of the page',
+  renderedOpenItems.includes('Update Current State if it looks right, adjust it if it needs changes, or leave Current State unchanged.'));
 check('Open Items removes repeated section descriptions and old hierarchy copy',
   !renderedOpenItems.includes('Human decisions waiting on you.') &&
   !renderedOpenItems.includes('Questions stopping progress.') &&

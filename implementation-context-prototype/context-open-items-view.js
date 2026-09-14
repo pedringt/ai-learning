@@ -25,30 +25,24 @@
   setTimeout(polishExploringBanner,0);
   setTimeout(polishExploringBanner,250);
 
-  // The legacy Review controller still uses the evidence-submission toast for
-  // zero-proposal Reviews. Keep the underlying Review resolution untouched and
-  // correct only the user-facing confirmation after "Mark reviewed" succeeds.
-  document.addEventListener('click',event=>{
-    const trigger=event.target.closest?.('[data-action="review-update"]');
-    if(!trigger||String(trigger.textContent||'').trim()!=='Mark reviewed')return;
-    const oldCopy='Added as Evidence. Current State did not need a Review.';
-    const observer=new MutationObserver(()=>{
-      const toast=document.querySelector('.state-toast');
-      if(toast&&String(toast.textContent||'').trim()===oldCopy){
-        toast.textContent='Reviewed. Current State was not changed.';
-        observer.disconnect();
-      }
-    });
-    observer.observe(document.body,{childList:true,subtree:true,characterData:true});
-    setTimeout(()=>observer.disconnect(),5000);
-  },true);
-
   // sourceNote: the note this review's evidence came from (state.data.notes
   // resolved by evidenceId), or undefined. Passed in rather than looked up
   // here so this module never needs the whole notes array just for one field.
+  //
+  // state.md #107: every Review type gets wording for its OWN real decision
+  // instead of forcing everything through one interaction shape.
+  //   - open_question: Create/Link Question, Dismiss suggestion (unchanged).
+  //   - checkOnly (state_at_risk, or any Review that reached here with no
+  //     proposal to act on): a human check on an uncertainty, never a
+  //     generic "Mark reviewed" acknowledgment -- the two actions answer the
+  //     Review's own decision_question directly.
+  //   - everything else (proposed_update / missing_understanding with at
+  //     least one proposal): Update Current State / Adjust / Leave unchanged.
   function reviewCard(r,expanded=true,accordion=false,sourceNote){
-    const generic=r.id.startsWith('r-info-') || (Array.isArray(r.proposals) && r.proposals.length===0);
     const isQuestionReview=r.reviewType==='open_question';
+    const proposals=Array.isArray(r.proposals)?r.proposals:[];
+    const checkOnly=!isQuestionReview && proposals.length===0;
+    const adjustableCount=proposals.filter(p=>p.operation!=='retire').length;
     const questionProposal=r.questionToCreate;
     const questionReady=!!questionProposal?.id&&questionProposal.status==='pending';
     const meaningfulUnresolved=r.unresolved && !/^nothing beyond this proposed change/i.test(cleanReviewCopy(r.unresolved));
@@ -60,9 +54,9 @@
     if(accordion&&!expanded) return `<article class="review-record is-collapsed" style="${recordStyle}" data-review-card="${r.id}"><button type="button" class="open-question-row review-record-toggle" style="${rowStyle}" data-action="toggle-review-card" data-review-id="${r.id}" aria-expanded="false">${head}</button></article>`;
     const actions=isQuestionReview
       ? `<button class="btn primary" data-action="review-update" data-review="${r.id}"${questionReady?'':' disabled'}>${questionProposal?.existing_question_id?'Link existing Question':'Create Question'}</button><button class="btn secondary" data-action="review-keep" data-review="${r.id}"${questionReady?'':' disabled'}>Dismiss suggestion</button>`
-      : generic
-      ? `<button class="btn primary" data-action="review-update" data-review="${r.id}">Mark reviewed</button>`
-      : `<button class="btn primary" data-action="review-update" data-review="${r.id}">Update Current State</button><button class="btn secondary" data-action="review-keep" data-review="${r.id}">Keep Current State</button>`;
+      : checkOnly
+      ? `<button class="btn primary" data-action="review-acknowledge-risk" data-review="${r.id}">Still uncertain — keep it flagged</button><button class="btn secondary" data-action="review-dismiss-risk" data-review="${r.id}">Not a concern</button>`
+      : `<button class="btn primary" data-action="review-update" data-review="${r.id}">Update Current State</button>${adjustableCount?`<button class="btn secondary" data-action="open-adjust-review" data-review="${r.id}">Adjust</button>`:''}<button class="btn secondary" data-action="review-keep" data-review="${r.id}">Leave unchanged</button>`;
     // A related open Review is a structural pointer only (same State item or
     // Question as this one) -- never a claim that the two are the same
     // decision. Shown plainly, not as an action, so the human decides
@@ -70,9 +64,24 @@
     const relatedBlock=(r.relatedOpenReviews||[]).length
       ? `<div class="review-context-block review-related-block"><span>${r.relatedOpenReviews.length>1?'Related open reviews':'Related open review'}</span>${r.relatedOpenReviews.map(x=>`<p>&ldquo;${esc(x.decisionQuestion)}&rdquo;</p>`).join('')}</div>`
       : '';
-    const body=`<div class="review-decision-context"><div class="review-context-block"><span>Current understanding</span><p>${esc(cleanReviewCopy(r.current))}</p></div><div class="review-context-block review-evidence-block"><span>${isQuestionReview?(questionProposal?.existing_question_id?'Already tracked':'Question to track'):generic?'What the evidence says':'Proposed change'}</span><p>${esc(isQuestionReview?(questionReady?questionProposal.existing_question_text||questionProposal.text:'Question suggestion unavailable. Refresh and review it again.'):generic?cleanReviewCopy(r.evidence):cleanReviewCopy(r.proposed))}</p></div>${!generic&&meaningfulUnresolved?`<div class="review-context-block"><span>Still unresolved</span><p>${esc(cleanReviewCopy(r.unresolved))}</p></div>`:''}${relatedBlock}</div><div class="review-actions">${actions}</div><details class="reasoning"><summary>Why / source</summary><p><strong>Evidence:</strong> ${esc(r.evidence)}</p><p><strong>Establishes:</strong> ${esc(r.establishes)}</p>${r.doesNot?`<p><strong>Does not establish:</strong> ${esc(r.doesNot)}</p>`:''}</details>`;
+    const body=`<div class="review-decision-context"><div class="review-context-block"><span>Current understanding</span><p>${esc(cleanReviewCopy(r.current))}</p></div><div class="review-context-block review-evidence-block"><span>${isQuestionReview?(questionProposal?.existing_question_id?'Already tracked':'Question to track'):checkOnly?'What the evidence says':'Proposed change'}</span><p>${esc(isQuestionReview?(questionReady?questionProposal.existing_question_text||questionProposal.text:'Question suggestion unavailable. Refresh and review it again.'):checkOnly?cleanReviewCopy(r.evidence):cleanReviewCopy(r.proposed))}</p></div>${!checkOnly&&meaningfulUnresolved?`<div class="review-context-block"><span>Still unresolved</span><p>${esc(cleanReviewCopy(r.unresolved))}</p></div>`:''}${relatedBlock}</div><div class="review-actions">${actions}</div><details class="reasoning"><summary>Why / source</summary><p><strong>Evidence:</strong> ${esc(r.evidence)}</p><p><strong>Establishes:</strong> ${esc(r.establishes)}</p>${r.doesNot?`<p><strong>Does not establish:</strong> ${esc(r.doesNot)}</p>`:''}</details>`;
     if(accordion) return `<article class="review-record is-expanded" style="${recordStyle}" data-review-card="${r.id}"><button type="button" class="open-question-row review-record-toggle" style="${rowStyle}" data-action="toggle-review-card" data-review-id="${r.id}" aria-expanded="true">${head}</button><div class="review-card-body" style="padding:0 16px 16px 16px!important;box-sizing:border-box">${body}</div></article>`;
     return `<article class="review-card compact-review" data-review-card="${r.id}"><span class="review-row-head open-question-copy"><span class="open-item-label review">Review</span><span class="review-card-title open-question-title">${esc(r.summary)}</span>${sourceMeta?`<span class="review-source-meta open-question-meta">Evidence · ${esc(sourceMeta)}</span>`:''}</span><div class="review-card-body">${body}</div></article>`;
+  }
+
+  // #107 Adjust flow: correcting State's interpretation before it becomes
+  // Current State, never editing Current State directly. Each adjustable
+  // proposal (anything but a retirement, which has no wording to revise)
+  // shows the original AI text plainly next to an editable revision, so the
+  // human always sees what changed and what didn't.
+  function adjustDialogHtml(r){
+    const proposals=(Array.isArray(r.proposals)?r.proposals:[]).filter(p=>p.operation!=='retire');
+    const blocks=proposals.map(p=>{
+      const aiText=p.proposed_statement||'';
+      const label=p.operation==='create'?'New understanding':'Proposed change';
+      return `<div class="adjust-proposal-block"><span class="adjust-proposal-label">${esc(label)}</span><div class="adjust-ai-text"><span class="adjust-ai-tag">State proposed</span><p>${esc(aiText)}</p></div><label class="adjust-textarea-label" for="adjust-${esc(p.id)}">Your revision</label><textarea id="adjust-${esc(p.id)}" class="adjust-proposal-text" data-proposal-id="${esc(p.id)}" rows="3">${esc(aiText)}</textarea></div>`;
+    }).join('');
+    return `<span class="eyebrow">Adjust State's interpretation</span><h2 id="dialogTitle">Revise before updating Current State</h2><p>Correct what State understood from the evidence — this is not a direct edit to Current State. The original AI interpretation stays on record either way.</p>${blocks}<div class="dialog-actions"><button class="btn secondary" data-action="close-dialog">Cancel</button><button class="btn primary" data-action="confirm-review-adjust" data-review="${esc(r.id)}">Update Current State</button></div>`;
   }
 
   function questionCard(q,linkedReview){
@@ -135,8 +144,8 @@
     const draftBody=draftsLoading?'<div class="open-items-empty" role="status">Loading drafts…</div>':draftsUnavailable?'<div class="open-items-empty unavailable-inline">Draft notes could not be loaded.</div>':draftNotes.length?`<div class="open-question-list">${draftNotes.map(renderDraftNote).join('')}</div>`:'<div class="open-items-empty">No draft notes waiting to be submitted.</div>';
     const questionBody=questionUnavailable?'<div class="open-items-empty unavailable-inline">Open questions could not be loaded. <button class="text-button" data-action="retry-hydration">Try again</button></div>':waiting.length?`<div class="open-question-list" style="border-top:0">${visibleWaiting.map(q=>questionCard(q,linkedReviewFor(q))).join('')}</div>${waiting.length>5?`<button class="open-questions-more" data-action="toggle-open-questions" aria-expanded="${openQuestionsExpanded?'true':'false'}">${openQuestionsExpanded?'Show fewer questions':`Show ${remaining} more questions`} <span aria-hidden="true">${openQuestionsExpanded?'↑':'↓'}</span></button>`:''}`:'<div class="open-items-empty">No other open questions.</div>';
     const actionTotal=(reviewUnavailable?0:reviews.length)+(questionUnavailable?0:blockers.length);
-    return `<section class="page collection-page open-items-page"><div class="page-head"><div><div class="review-title-row"><h2>Open Items</h2>${actionTotal?`<span class="count-badge review-page-count" aria-label="${actionTotal} items need attention">${actionTotal}</span>`:''}</div><p>Reviews may propose a Current State change, suggest a Question, or simply need a human check. Blocking and open questions stay visible here too.</p></div><button class="btn secondary" data-action="add-question">+ Add question</button></div><div class="open-items-sections">${openItemSection('Needs your review',reviewUnavailable?'Unavailable':reviews.length,'reviews',reviewBody,!reviews.length&&!reviewUnavailable,openItemSections)}${openItemSection('Blocking questions',questionUnavailable?'Unavailable':blockers.length,'blockers',blockerBody,!blockers.length&&!questionUnavailable,openItemSections)}${openItemSection('Open questions',questionUnavailable?'Unavailable':waiting.length,'questions',questionBody,!waiting.length&&!questionUnavailable,openItemSections)}${openItemSection('Draft notes',draftsLoading?'…':draftsUnavailable?'Unavailable':draftNotes.length,'drafts',draftBody,draftsStatus==='loaded'&&!draftNotes.length,openItemSections)}</div></section>`;
+    return `<section class="page collection-page open-items-page"><div class="page-head"><div><div class="review-title-row"><h2>Open Items</h2>${actionTotal?`<span class="count-badge review-page-count" aria-label="${actionTotal} items need attention">${actionTotal}</span>`:''}</div><p>Review what State thinks new information means. Update Current State if it looks right, adjust it if it needs changes, or leave Current State unchanged. A few Reviews ask a different question, like whether to track a new unknown.</p></div><button class="btn secondary" data-action="add-question">+ Add question</button></div><div class="open-items-sections">${openItemSection('Needs your review',reviewUnavailable?'Unavailable':reviews.length,'reviews',reviewBody,!reviews.length&&!reviewUnavailable,openItemSections)}${openItemSection('Blocking questions',questionUnavailable?'Unavailable':blockers.length,'blockers',blockerBody,!blockers.length&&!questionUnavailable,openItemSections)}${openItemSection('Open questions',questionUnavailable?'Unavailable':waiting.length,'questions',questionBody,!waiting.length&&!questionUnavailable,openItemSections)}${openItemSection('Draft notes',draftsLoading?'…':draftsUnavailable?'Unavailable':draftNotes.length,'drafts',draftBody,draftsStatus==='loaded'&&!draftNotes.length,openItemSections)}</div></section>`;
   }
 
-  window.STATE_OPEN_ITEMS_VIEW = Object.freeze({render,reviewCard,questionDialogHtml,cleanReviewCopy});
+  window.STATE_OPEN_ITEMS_VIEW = Object.freeze({render,reviewCard,adjustDialogHtml,questionDialogHtml,cleanReviewCopy});
 })();
