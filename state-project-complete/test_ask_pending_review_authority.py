@@ -226,6 +226,35 @@ def test_validate_synthesis_softens_headline_and_titles_when_context_has_an_open
     assert "confirmed" in cleaned.summary.lower()
 
 
+def test_validate_synthesis_softens_headline_when_review_exists_but_was_not_selected():
+    """Live-QA bug (2026-09-14): the selector LLM call is non-deterministic, so
+    the same question run twice could select a pending Review into `context`
+    on one run and omit it on another -- meaning the hedging backstop only
+    fired sometimes for an identical underlying fact (pilot budget "approved"
+    vs. "not yet approved" across two runs of the same prompt). The backstop
+    must key off the deterministic candidate pool for this query, not off
+    what the selector happened to choose, so this case -- an open Review the
+    selector skipped over -- still gets hedged.
+    """
+    selection = AskSelection(
+        job="current_fact", state_ids=["k-1"], review_ids=[], blocking_question_ids=[],
+        question_ids=[], history_ids=[], evidence_ids=[],
+    )
+    context = {"state": [{"id": "k-1", "topic": "x", "statement": "y"}], "reviews": [], "questions": [], "history": [], "evidence": [], "rules": []}
+    candidates = {
+        "state": [{"id": "k-1", "topic": "x", "statement": "y"}], "history": [], "evidence": [], "rules": [],
+        "reviews": [{"id": "r-1", "review_type": "proposed_update", "decision_question": "Is the budget approved?", "why_consequential": "x", "affected_state_ids": [], "evidence_ids": []}],
+        "questions": [],
+    }
+    answer = AskSynthesis(job="current_fact", headline="Pilot Budget", summary="The pilot budget is approved at $40,000.", sections=[])
+    cleaned = _validate_synthesis(answer, selection, context, candidates)
+    assert "approved at $40,000" not in cleaned.summary, (
+        "The pending Review in the candidate pool was skipped by the selector, but the claim "
+        "must still be hedged -- otherwise the same question can answer 'approved' on one run "
+        "and 'not yet approved' on another depending on non-deterministic selection."
+    )
+
+
 def test_validate_synthesis_leaves_headline_alone_when_nothing_is_pending():
     selection = AskSelection(
         job="current_fact", state_ids=["k-1"], review_ids=[], blocking_question_ids=[],
