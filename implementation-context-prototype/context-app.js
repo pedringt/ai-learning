@@ -348,7 +348,12 @@
       return `<section class="workspace-recent"><div class="workspace-recent-head"><span class="eyebrow">What changed</span><button class="text-button" data-view="history">History →</button></div><p class="workspace-section-hint" role="status">${state.backendStatus.history==='error'?'Recent changes are unavailable.':'Loading recent changes…'}</p></section>`;
     }
     const entries=(state.data.history||[]).slice().sort(sortDateDesc).slice(0,3);
-    if(!entries.length) return '';
+    // QA follow-up (2026-09-14): returning '' here for a project with no
+    // History yet (e.g. Juniper, freshly seeded) made the whole "What
+    // Changed" card vanish, leaving "Current State" alone stretched across
+    // the row -- confirmed live, read as broken rather than "nothing here
+    // yet." An explicit empty state keeps the two-card layout intact.
+    if(!entries.length) return `<section class="workspace-recent"><div class="workspace-recent-head"><span class="eyebrow">What changed</span><button class="text-button" data-view="history">History →</button></div><p class="workspace-section-hint">No changes recorded yet.</p></section>`;
     const rows=entries.map(h=>{
       const date=h.date||formatBackendDate(h.changed_at);
       const topic=state.backendStatus.state==='loaded'&&h.knowledgeId?state.data.knowledge.find(k=>k.id===h.knowledgeId):null;
