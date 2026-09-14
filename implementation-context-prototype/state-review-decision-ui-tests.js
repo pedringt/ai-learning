@@ -28,7 +28,7 @@ const normalReview={
 };
 const normalHtml=openItems.reviewCard(normalReview,true,false);
 check('normal update review shows Update Current State, Adjust, and Leave unchanged',
-  normalHtml.includes('>Update Current State<') && normalHtml.includes('>Adjust<') && normalHtml.includes('>Leave unchanged<'));
+  normalHtml.includes('>Update<') && normalHtml.includes('>Adjust<') && normalHtml.includes('>Leave unchanged<'));
 check('normal update review\'s Adjust button targets the right review',
   normalHtml.includes('data-action="open-adjust-review" data-review="r-normal"'));
 
@@ -74,7 +74,7 @@ const answersQuestionReview={
 };
 const answersQuestionHtml=openItems.reviewCard(answersQuestionReview,true,false);
 check('a Review that would also resolve a Question still uses the ordinary three actions',
-  answersQuestionHtml.includes('>Update Current State<') && answersQuestionHtml.includes('>Adjust<') && answersQuestionHtml.includes('>Leave unchanged<'));
+  answersQuestionHtml.includes('>Update<') && answersQuestionHtml.includes('>Adjust<') && answersQuestionHtml.includes('>Leave unchanged<'));
 
 // --- 6. New Question suggestion (open_question) is unchanged ---------------
 const questionReview={
@@ -131,7 +131,7 @@ const retireOnlyHtml=openItems.reviewCard(retireOnlyReview,true,false);
 check('a retire-only review has no Adjust button',
   !retireOnlyHtml.includes('data-action="open-adjust-review"'));
 check('a retire-only review still offers Update Current State and Leave unchanged',
-  retireOnlyHtml.includes('>Update Current State<') && retireOnlyHtml.includes('>Leave unchanged<'));
+  retireOnlyHtml.includes('>Update<') && retireOnlyHtml.includes('>Leave unchanged<'));
 
 const mixedReview={
   ...normalReview,id:'r-mixed',

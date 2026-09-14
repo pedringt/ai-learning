@@ -4,6 +4,21 @@
     : 'https://state-api-6waw.onrender.com';
   const base = window.STATE_API_BASE || document.documentElement?.dataset?.apiBase || inferredBase;
 
+  // The backend used to resolve "which project" purely from a shared,
+  // global server-side pointer -- a tab that switched projects moved *every*
+  // tab's writes, including ones that never touched the switcher. Every
+  // request now tells the server which project this tab actually believes
+  // is active, so a stale tab keeps writing to the project it last loaded
+  // instead of wherever some other tab most recently switched to. Set via
+  // setActiveProject() as soon as a tab knows its project (initial
+  // hydration, or a completed switch); requests made before that point omit
+  // the header and the server falls back to its own default.
+  let activeProjectId = null;
+  function setActiveProject(projectId) { activeProjectId = projectId || null; }
+  function projectHeaders(extra = {}) {
+    return activeProjectId ? {...extra, 'X-State-Project-Id': activeProjectId} : extra;
+  }
+
   // Plain fetch() has no timeout: a request against a backend that's mid
   // restart (e.g. a Render redeploy) can hang indefinitely with no error
   // and no visible feedback, even though the write may have already gone
@@ -15,7 +30,7 @@
     const timeoutId = setTimeout(() => controller.abort(), 30000);
     let response;
     try {
-      response = await fetch(`${base}${path}`, {...options, signal: controller.signal});
+      response = await fetch(`${base}${path}`, {...options, headers: projectHeaders(options.headers), signal: controller.signal});
     } catch (err) {
       if (err.name === 'AbortError') {
         const timeoutError = new Error('This is taking longer than expected. The request may still complete on the server -- try refreshing before trying again.');
@@ -68,7 +83,7 @@
     try {
       response = await fetch(`${base}/api/ask/stream`, {
         method: 'POST',
-        headers: {'Content-Type':'application/json', 'Accept':'text/event-stream'},
+        headers: projectHeaders({'Content-Type':'application/json', 'Accept':'text/event-stream'}),
         body: JSON.stringify({query, ...(previousAnswer ? {previous_answer: previousAnswer} : {})}),
         signal: controller.signal,
       });
@@ -128,6 +143,7 @@
 
   window.STATE_API = Object.freeze({
     base,
+    setActiveProject,
     getAttention: () => request('/api/attention'),
     getBootstrap: () => request('/api/bootstrap'),
     getState: () => request('/api/state'),

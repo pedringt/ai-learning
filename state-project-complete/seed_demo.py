@@ -91,7 +91,7 @@ QUESTIONS = [
 REVIEWS = [
     {  # shape: update an existing Current State fact
         "id": "demo-review-access", "review_type": "proposed_update",
-        "decision_question": "Should Current State explicitly require account-level confirmation for access exceptions?",
+        "decision_question": "Does feature access need an account-level confirmation step for exceptions?",
         "why_consequential": "Ticket evidence shows plan rules can diverge from effective account access.",
         "evidence_id": "demo-review-access-evidence",
         "evidence_text": "Representative ticket review found grandfathered packages and temporary entitlements that do not match the standard plan matrix.",
@@ -139,14 +139,15 @@ REVIEWS = [
        # Reviews: a planning note that separately surfaces a budget figure
        # and revised evaluation criteria, each its own decidable question).
         "id": "demo-review-create-budget", "review_type": "missing_understanding",
-        "decision_question": "Should Current State record the approved pilot budget?",
+        "decision_question": "Is the approved pilot budget ready to be recorded?",
         "why_consequential": "Implementation planning depends on a known budget ceiling, and none is currently recorded.",
         "evidence_id": "demo-review-q3-planning-evidence",
         "evidence_text": "Q3 planning session: the pilot budget is approved at $40,000 for discovery and first implementation. Separately, the team agreed the evaluation criteria and sample definition need to be revised together before the next test round.",
         "evidence_date": "2026-08-31 13:30:00",
         "proposals": [{"state_item_id": None, "operation": "create",
                         "proposed_statement": "The pilot budget is approved at $40,000, covering discovery and the first implementation phase.",
-                        "rationale": "Implementation planning depends on a known budget ceiling."}],
+                        "rationale": "Implementation planning depends on a known budget ceiling.",
+                        "area_id": "evaluation-rollout"}],
         "resolves_question_ids": [],
     },
     {  # shape: grouped Review with multiple closely related proposals that
@@ -155,7 +156,7 @@ REVIEWS = [
        # evaluation plan internally inconsistent). Shares evidence with
        # demo-review-create-budget above (item 9: one Evidence, two Reviews).
         "id": "demo-review-eval-redesign", "review_type": "proposed_update",
-        "decision_question": "Should Current State adopt the revised evaluation sample and monitoring split together?",
+        "decision_question": "Should the evaluation sample and monitoring split be revised together?",
         "why_consequential": "The sample definition and monitoring split were redesigned as one package; adopting only one would leave the evaluation plan internally inconsistent.",
         "evidence_id": "demo-review-q3-planning-evidence",
         "evidence_text": "Q3 planning session: the pilot budget is approved at $40,000 for discovery and first implementation. Separately, the team agreed the evaluation sample and monitoring split need to be revised together before the next test round.",
@@ -297,7 +298,7 @@ JUNIPER_QUESTIONS = [
 JUNIPER_REVIEWS = [
     {  # shape: update an existing Current State fact
         "id": "demo-juniper-review-vendor-schedule", "review_type": "proposed_update",
-        "decision_question": "Should Current State reflect the moving vendor's revised schedule?",
+        "decision_question": "Should the moving vendor's revised schedule be recorded?",
         "why_consequential": "Acme Movers pushed the load-in window later in the day, which affects the facilities access window.",
         "evidence_id": "demo-juniper-review-vendor-schedule-evidence",
         "evidence_text": "Vendor coordination call: Acme Movers can no longer start load-in before 9am on November 8 due to another job that morning.",
@@ -310,14 +311,15 @@ JUNIPER_REVIEWS = [
     {  # shape: create a new Current State fact, and it also answers an open
        # Question (jq-internet) without that being the review's only point.
         "id": "demo-juniper-review-internet-date", "review_type": "missing_understanding",
-        "decision_question": "Should Current State record the confirmed internet activation date?",
+        "decision_question": "Is the internet activation date confirmed and ready to be recorded?",
         "why_consequential": "Facilities planning depends on knowing whether connectivity is ready before or after the move.",
         "evidence_id": "demo-juniper-review-internet-date-evidence",
         "evidence_text": "ISP confirmation email: the internet circuit at 400 Harbor Way will be activated November 5.",
         "evidence_date": "2026-09-06 09:30:00",
         "proposals": [{"state_item_id": None, "operation": "create",
                         "proposed_statement": "Internet circuit activation is confirmed for November 5, three days before the move.",
-                        "rationale": "The ISP confirmed a specific activation date."}],
+                        "rationale": "The ISP confirmed a specific activation date.",
+                        "area_id": "timeline"}],
         "resolves_question_ids": ["jq-internet"],
     },
     {  # shape: state_at_risk / consequential uncertainty without a
@@ -330,12 +332,23 @@ JUNIPER_REVIEWS = [
         "evidence_id": "demo-juniper-review-elevator-evidence",
         "evidence_text": "Building management follow-up: the freight elevator request is logged but not yet confirmed for November 8-9.",
         "evidence_date": "2026-09-06 15:00:00",
-        "proposals": [], "resolves_question_ids": [],
+        # QA follow-up (2026-09-14): this comment always claimed the pre-link
+        # below existed "the same way Northstar's retention example is," but
+        # resolves_question_ids was actually left empty -- resolve_review's
+        # state_at_risk/keep path only checks for an existing link via
+        # review_questions (populated from this list at seed time below), so
+        # with no link here it fell through to create_or_find_question(),
+        # which only dedupes on exact normalized text -- and this Review's
+        # decision_question ("reservation confirmed") doesn't textually match
+        # jq-elevator's wording ("reserved"), so a real second Question was
+        # created for the same real-world unknown. Listing it here actually
+        # links it, closing the gap the comment described but never did.
+        "proposals": [], "resolves_question_ids": ["jq-elevator"],
     },
     {  # shape: update an existing fact (budget), a different domain than
        # the other update example above.
         "id": "demo-juniper-review-budget", "review_type": "proposed_update",
-        "decision_question": "Should Current State reflect the updated moving budget?",
+        "decision_question": "Should the updated moving budget be recorded?",
         "why_consequential": "Adding IT relocation scope raised the total above the originally approved figure.",
         "evidence_id": "demo-juniper-review-budget-evidence",
         "evidence_text": "Finance approval note: the move budget is increased to $95,000 to cover the added IT relocation scope with TechMove Logistics.",
@@ -356,6 +369,22 @@ JUNIPER_REVIEWS = [
                         "proposed_statement": "The temporary storage contingency is no longer needed; the move date is confirmed.",
                         "rationale": "The standby storage unit was only needed if the move date slipped."}],
         "resolves_question_ids": [],
+    },
+    {  # QA follow-up (2026-09-14): the only seeded open_question Review
+       # (Northstar's demo-review-owner-question) was deliberately a dedup
+       # case -- it always shows "Link existing Question," so the Create
+       # Question path (a genuinely new unknown, no existing match) had no
+       # seeded example anywhere to click through. This question's text
+       # doesn't match any of JUNIPER_QUESTIONS above, so it exercises that
+       # path instead.
+        "id": "demo-juniper-review-shredding-question", "review_type": "open_question",
+        "decision_question": "Who is responsible for confidential document shredding before the move?",
+        "why_consequential": "Old lease files and HR paperwork can't just be boxed and moved; someone needs to own getting them destroyed first.",
+        "evidence_id": "demo-juniper-review-shredding-question-evidence",
+        "evidence_text": "Office coordinator note: nobody has said who's arranging shredding for the old file cabinets before the move.",
+        "evidence_date": "2026-09-08 10:00:00",
+        "proposals": [], "resolves_question_ids": [],
+        "question_proposal_text": "Who is responsible for confidential document shredding before the move?",
     },
 ]
 
@@ -477,8 +506,26 @@ def _bootstrap_project(connection, *, project_id: str, project_name: str, areas,
         review_question_evidence_ready = connection.execute(
             "SELECT 1 FROM schema_migrations WHERE version='010_review_questions_evidence_source'"
         ).fetchone() is not None
+        proposed_area_ready = connection.execute(
+            "SELECT 1 FROM schema_migrations WHERE version='014_proposed_area'"
+        ).fetchone() is not None
         if areas_ready:
             for area_id, name, description, sort_order in areas:
+                # QA follow-up (2026-09-14): project_areas.id is a bare
+                # global PRIMARY KEY (migration 012), not composite with
+                # project_id -- a real scaling risk flagged for whenever a
+                # third project is added, since two projects sharing an area
+                # id (plausible: "budget", "timeline") would collide. Not
+                # fixed here: scoping *this* check by project_id without
+                # first making the PK composite would turn today's silent
+                # skip into a hard IntegrityError on the INSERT below the
+                # moment two projects actually share an id -- worse, not
+                # better. The real fix is a schema migration giving
+                # project_areas a composite (id, project_id) key before a
+                # third project is seeded; deliberately left as a known,
+                # documented limitation rather than a half-fix under this
+                # pass's time budget. Northstar's and Juniper's own area ids
+                # don't collide today, so this doesn't affect either.
                 if not connection.execute("SELECT id FROM project_areas WHERE id=?", (area_id,)).fetchone():
                     if projects_ready:
                         connection.execute(
@@ -587,10 +634,16 @@ def _bootstrap_project(connection, *, project_id: str, project_name: str, areas,
                     expected_version = row["version"]
                 else:
                     expected_version = None
-                connection.execute(
-                    "INSERT INTO proposed_state_changes(id,review_id,state_item_id,proposed_statement,rationale,expected_state_version,status,operation) VALUES (?,?,?,?,?,?,'pending',?)",
-                    (f"{rid}-proposal-{state_id or 'new'}", rid, state_id, proposal["proposed_statement"], proposal["rationale"], expected_version, proposal["operation"]),
-                )
+                if proposed_area_ready:
+                    connection.execute(
+                        "INSERT INTO proposed_state_changes(id,review_id,state_item_id,proposed_statement,rationale,expected_state_version,status,operation,proposed_area_id) VALUES (?,?,?,?,?,?,'pending',?,?)",
+                        (f"{rid}-proposal-{state_id or 'new'}", rid, state_id, proposal["proposed_statement"], proposal["rationale"], expected_version, proposal["operation"], proposal.get("area_id")),
+                    )
+                else:
+                    connection.execute(
+                        "INSERT INTO proposed_state_changes(id,review_id,state_item_id,proposed_statement,rationale,expected_state_version,status,operation) VALUES (?,?,?,?,?,?,'pending',?)",
+                        (f"{rid}-proposal-{state_id or 'new'}", rid, state_id, proposal["proposed_statement"], proposal["rationale"], expected_version, proposal["operation"]),
+                    )
             for qid in review.get("resolves_question_ids", []):
                 if connection.execute("SELECT id FROM questions WHERE id=?", (qid,)).fetchone():
                     if review_question_evidence_ready:

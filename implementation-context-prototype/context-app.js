@@ -87,8 +87,15 @@
   function syncProjectMenu(){
     const label=document.getElementById('projectSwitcher');
     const name=state.data.project?.name||'Project';
+    const activeIdForLabel=state.data.project?.id||'';
     if(label&&label.dataset&&label.dataset.name!==name){
       label.dataset.name=name;
+      // projectId lets other modules (Copy Context, Ask starters) read
+      // which project is actually live from the DOM without importing
+      // context-app.js's own module-scoped state -- see QA follow-up notes
+      // in context-product-polish.js for why the static DATA.project fixture
+      // couldn't be trusted for this.
+      label.dataset.projectId=activeIdForLabel;
       label.innerHTML=`${esc(name)} <span>⌄</span>`;
     }
     const menu=document.getElementById('projectMenu');
@@ -111,6 +118,20 @@
     document.querySelectorAll('#openItemsActionCount, #mobileOpenItemsCount').forEach(actionCount=>{actionCount.textContent=openItemsCount;actionCount.hidden=!openItemsCount;actionCount.setAttribute('aria-label',`${openItemsCount} items need attention`);});
     syncProjectMenu();
     const pm=document.getElementById('projectMenu'), ps=document.getElementById('projectSwitcher'); if(pm)pm.hidden=!state.projectMenuOpen; if(ps)ps.setAttribute('aria-expanded',state.projectMenuOpen?'true':'false');
+    // The sidebar scrolls (overflow-y:auto on desktop) which -- per the CSS
+    // spec -- forces its horizontal overflow to clip too, so a menu
+    // positioned relative to it (its old behavior) got its right edge cut
+    // off rather than overlapping the main content. Fixed positioning,
+    // anchored to the button's own on-screen rect, escapes that clipping
+    // entirely since neither .sidebar-project nor .app-sidebar establishes
+    // a transformed containing block.
+    if(pm&&ps&&state.projectMenuOpen){
+      const rect=ps.getBoundingClientRect();
+      pm.style.position='fixed';
+      pm.style.top=`${rect.bottom+6}px`;
+      pm.style.left=`${rect.left}px`;
+      pm.style.width=`${Math.max(rect.width,260)}px`;
+    }
     document.querySelector('.mobile-primary-nav .nav-item.active')?.scrollIntoView({block:'nearest',inline:'nearest'});
   }
 
@@ -643,12 +664,25 @@
     const text=String(value||'').replace(/\s+/g,' ').trim();
     return text.length>max?`${text.slice(0,max-1).replace(/\s+\S*$/,'')}…`:text;
   }
-  function showToast(message){
+  // QA follow-up (2026-09-14): resolving an open_question Review used to
+  // confirm which Question the evidence landed on ("Linked to the existing
+  // Question", "Question created") in a toast with no way to actually see
+  // that Question -- a dead end for the one message whose entire point is
+  // telling you where something went. `action` opens it directly; the
+  // toast stays up longer while an action is offered so there's time to
+  // click it.
+  function showToast(message,action=null){
     document.querySelector('.state-toast')?.remove();
     const toast=document.createElement('div');
-    toast.className='state-toast';toast.setAttribute('role','status');toast.textContent=message;
+    toast.className='state-toast';toast.setAttribute('role','status');
+    const text=document.createElement('span');text.textContent=message;toast.appendChild(text);
+    if(action){
+      const btn=document.createElement('button');btn.type='button';btn.className='state-toast-action';btn.textContent=action.label;
+      btn.addEventListener('click',()=>{toast.remove();action.onClick();});
+      toast.appendChild(btn);
+    }
     document.body.appendChild(toast);
-    setTimeout(()=>toast.remove(),2600);
+    setTimeout(()=>toast.remove(),action?5200:2600);
   }
 
   // state.md #107: decision tokens beyond the schema-level accept/keep/reject
@@ -685,7 +719,7 @@
     window.StateAnalytics?.track(decision==='update'?'review_accepted':decision==='dismiss-risk'?'review_rejected':'review_kept',{reviewId:id});
     if(decision==='update' && !checkOnly){
       const proposalText=(r.proposals||[]).map(p=>p.proposed_statement).filter(Boolean).join(' • ') || r.proposed || '';
-      showDialog(`<span class="eyebrow">Review decision</span><h2 id="dialogTitle">Update Current State?</h2><p>This changes what the project currently treats as true and records the decision in History.</p>${proposalText?`<div class="review-confirm-change"><span>Change</span><strong>${esc(truncateText(proposalText,210))}</strong></div>`:''}<div class="dialog-actions"><button class="btn secondary" data-action="close-dialog">Cancel</button><button class="btn primary" data-action="confirm-review-update" data-review="${esc(id)}">Update Current State</button></div>`);
+      showDialog(`<span class="eyebrow">Review decision</span><h2 id="dialogTitle">Update Current State?</h2><p>This changes what the project currently treats as true and records the decision in History.</p>${proposalText?`<div class="review-confirm-change"><span>Change</span><strong>${esc(truncateText(proposalText,210))}</strong></div>`:''}<div class="dialog-actions"><button class="btn secondary" data-action="close-dialog">Cancel</button><button class="btn primary" data-action="confirm-review-update" data-review="${esc(id)}">Update</button></div>`);
       return;
     }
     executeReviewDecision(id,decision,checkOnly);
@@ -752,7 +786,9 @@
     state.expandedReviewId=null;
     if(result.question){state.openItemSections.questions=false;state.openQuestionsExpanded=true;}
     closeDialog();render();
-    showToast(result.resolution==='question_created'?'Question created. Current State was not changed.':result.resolution==='question_linked'?'Linked to the existing Question. Current State was not changed.':'Review complete. No Question was created.');
+    const toastMessage=result.resolution==='question_created'?'Question created. Current State was not changed.':result.resolution==='question_linked'?'Linked to the existing Question. Current State was not changed.':'Review complete. No Question was created.';
+    const landedQuestion=result.question&&state.data.questions.find(x=>x.id===result.question.id);
+    showToast(toastMessage,landedQuestion?{label:'View',onClick:()=>showDialog(questionDialogHtml(landedQuestion))}:null);
     window.StateAnalytics?.track('review_decision',{reviewId:id,outcome:result.resolution,kind:'open_question'});
     // Ask stays read-only; an already visible answer is a snapshot, so flag it
     // for refresh immediately rather than leaving a closed Review as current.
@@ -1038,7 +1074,7 @@
       // back to whatever state.data.project already held (the static
       // pre-hydration placeholder, or the last-known project) if this
       // particular payload didn't carry one.
-      if(payload.project) state.data.project={...state.data.project,...payload.project};
+      if(payload.project){state.data.project={...state.data.project,...payload.project};API.setActiveProject(payload.project.id);}
       const fulfilled=items=>({status:'fulfilled',value:{items:items||[]}});
       byKey={
         state:fulfilled(payload.state), evidence:fulfilled(payload.evidence),
@@ -1290,6 +1326,8 @@
       showDialog(`<span class="eyebrow">Switching projects</span><h2 id="dialogTitle">Opening ${esc(a.textContent.replace('Current','').trim())}…</h2><p>Loading Current State, Reviews, Questions, History, and Rules for this project.</p>`);
       try{
         const summary=await API.switchProject(projectId);
+        API.setActiveProject?.(summary.id);
+        window.STATE_ASK_UI?.resetForProjectSwitch(summary.id);
         state.data.project={...state.data.project,...summary};
         // Clear every locally-held record before re-hydrating -- never fall
         // back to context-data.js's static Northstar fixture here, or its
@@ -1308,9 +1346,18 @@
         state.result=null;state.resultQuery='';state.expandedReviewId=null;
         state.backendStatus={state:'loading',evidence:'loading',reviews:'loading',history:'loading',questions:'loading',rules:'loading',drafts:'loading'};
         state.isAnalyzing=false;
-        closeDialog();
         render();
-        await hydrateBackend();
+        // Keep the "Switching projects" dialog up for the whole hydration,
+        // not just the quick switch call -- closing it right after the
+        // switch (the old behavior) meant it disappeared before the actual
+        // Current State/Reviews/Questions/History/Rules fetches it describes
+        // had even started, so it either flashed for a moment or, on a slow
+        // connection, closed while the new project's data was still empty.
+        // A minimum-visible floor keeps it from flashing even when both the
+        // switch and the hydration happen to be near-instant.
+        const minVisible=new Promise(resolve=>setTimeout(resolve,450));
+        await Promise.all([hydrateBackend(),minVisible]);
+        closeDialog();
         window.StateAnalytics?.track('project_switched',{projectId});
       }catch(err){
         state.isAnalyzing=false;

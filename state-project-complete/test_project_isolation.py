@@ -70,7 +70,7 @@ def test_switching_project_id_changes_every_read(both_projects):
     j_state, j_reviews, j_questions = list_state(db), list_reviews(db), list_questions(db)
 
     assert len(ns_state) == 25 and len(j_state) == 11
-    assert len(ns_reviews) == 7 and len(j_reviews) == 5
+    assert len(ns_reviews) == 7 and len(j_reviews) == 6
     assert len(ns_questions) == 19 and len(j_questions) == 5
 
 
@@ -161,7 +161,7 @@ def test_resetting_one_project_does_not_mutate_the_other(both_projects):
     review = next(r for r in list_reviews(db) if r['review_type'] == 'proposed_update' and r['proposals'])
     resolve_review(db, review['id'], 'accept')
     reset_counts = reset_demo_data(db, 'juniper')
-    assert reset_counts['state'] == 11 and reset_counts['reviews'] == 6
+    assert reset_counts['state'] == 11 and reset_counts['reviews'] == 7
 
     db.project_id = 'northstar'
     assert list_state(db) == ns_before_state

@@ -92,7 +92,17 @@ def resolve_question_proposal(connection, review_id: str, decision: str,
     proposal = connection.execute(
         "SELECT * FROM proposed_questions WHERE review_id=? AND status='pending'", (review_id,)
     ).fetchone()
-    if proposal is None or not expected_proposal_id or proposal['id'] != expected_proposal_id:
+    # QA follow-up (2026-09-14): one message used to cover three different
+    # causes -- no pending proposal at all, the caller never supplied an id
+    # to check, and the id it supplied being genuinely stale. "This Question
+    # suggestion changed" is only true of the third; a caller who simply
+    # omitted or misnamed the expected_question_proposal_id field (an API
+    # integration bug, not a stale-data race) got told to "refresh and
+    # review it again," which does nothing since nothing on the server
+    # actually changed.
+    if not expected_proposal_id:
+        raise QuestionReviewConflictError('expected_question_proposal_id is required to resolve a Question Review.')
+    if proposal is None or proposal['id'] != expected_proposal_id:
         raise QuestionReviewConflictError('This Question suggestion changed. Refresh and review it again.')
     # Defense in depth against a malformed/manual DB record: the Create Question
     # label must never authorize a hidden State change or resolve another Question.

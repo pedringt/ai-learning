@@ -14,14 +14,52 @@
     return text.length > max ? `${text.slice(0, max - 1).replace(/\s+\S*$/, '')}…` : text;
   };
 
-  const starters = [
+  // QA follow-up (2026-09-14): these used to be one fixed list for every
+  // project. Two problems: "Prep me for my next meeting" implied a calendar
+  // State has no access to (renamed below to be honest about what it
+  // actually returns), and "Why did we keep human review?" is Northstar-only
+  // vocabulary that's nonsensical on Juniper -- confirmed live. Rather than
+  // go fully dynamic/generated (a real cost and a real risk of suggesting
+  // something structurally odd for a thin project record), starters stay
+  // static wording but are now chosen per project, decided explicitly rather
+  // than inferred. The three GENERIC starters cover project-agnostic
+  // capability shapes (prioritized briefing, recent change, open unknowns);
+  // PROJECT_STARTERS supplies the "why" and "blockers" shapes with wording
+  // grounded in each project's own real content; an unrecognized project id
+  // (a future third project, or this module loading before hydration)
+  // falls back to GENERIC_FALLBACK_EXTRA -- worded to assume nothing about
+  // the project's domain, per the same guardrail #114 was built around.
+  const GENERIC_STARTERS = [
     ['What should I know?', 'Give me the most consequential project briefing for right now. Prioritize what matters most, then keep accepted Current State, pending Reviews, and unresolved Questions clearly separate.'],
-    ['Prep me for my next meeting', 'Prepare a concise meeting brief from the project record. Focus on settled decisions, decisions that need review, useful unresolved questions, and the most relevant recent change.'],
-    ['Why did we keep human review?', 'Why did we keep human review for the pilot? Use Current State and History, and keep unresolved assumptions separate.'],
-    ["What's blocking implementation?", 'What is blocking implementation planning right now? Distinguish confirmed blocking Questions from other unresolved items and pending Reviews.'],
-    ['What are we still unsure about?', 'What is still unresolved? Keep open Questions and pending Evidence separate from accepted Current State.']
+    ['What changed recently?', 'What changed most recently in the project record? Use History and keep it distinct from anything still pending or unresolved.'],
+    ['What are we still unsure about?', 'What is still unresolved? Keep open Questions and pending Evidence separate from accepted Current State.'],
   ];
-  window.STATE_ASK_STARTERS = starters.map(([label, prompt]) => ({label, prompt}));
+  const PROJECT_STARTERS = {
+    northstar: [
+      ['Why did we keep human review?', 'Why did we keep human review for the pilot? Use Current State and History, and keep unresolved assumptions separate.'],
+      ["What's blocking implementation?", 'What is blocking implementation planning right now? Distinguish confirmed blocking Questions from other unresolved items and pending Reviews.'],
+    ],
+    juniper: [
+      ['Why is the move budgeted at $85,000?', 'Why is the move budgeted at $85,000? Use Current State and History, and keep unresolved assumptions separate.'],
+      ["What's blocking the move?", 'What is blocking the office move right now? Distinguish confirmed blocking Questions from other unresolved items and pending Reviews.'],
+    ],
+  };
+  const GENERIC_FALLBACK_EXTRA = [
+    ['Why was that decided?', "Pick the project's most consequential settled decision and explain why it was decided, grounded in Current State and History. Keep unresolved assumptions separate."],
+    ["What's blocking us?", 'What is blocking progress on this project right now? Distinguish confirmed blocking Questions from other unresolved items and pending Reviews.'],
+  ];
+  function startersFor(projectId) {
+    return [...GENERIC_STARTERS, ...(PROJECT_STARTERS[projectId] || GENERIC_FALLBACK_EXTRA)];
+  }
+  function liveProjectId() {
+    return document.getElementById('projectSwitcher')?.dataset?.projectId || DATA.project?.id || 'northstar';
+  }
+  function publishStarters(projectId) {
+    const list = startersFor(projectId);
+    window.STATE_ASK_STARTERS = list.map(([label, prompt]) => ({label, prompt}));
+    return list;
+  }
+  let starters = publishStarters(liveProjectId());
 
   const ui = {
     drawerOpen: false,
@@ -150,7 +188,14 @@
   }
   function buildContextText(mode,task){
     const data=ui.copyContextData || fallbackContext();
-    const project=DATA.project?.name || document.querySelector('.project-title-line h2')?.textContent?.trim() || 'Project';
+    // QA follow-up (2026-09-14): DATA is window.PROJECT_CONTEXT_DATA, the
+    // static pre-hydration fixture (context-data.js) -- its project.name
+    // was always literally "Northstar" and, being truthy, always won over
+    // the '||' fallbacks below it, so Copy Context labeled every project
+    // "Northstar" even on Juniper (confirmed live). #projectSwitcher's own
+    // dataset.name is kept in sync with the real active project by
+    // syncProjectMenu() and is present on every view, so it's tried first now.
+    const project=document.getElementById('projectSwitcher')?.dataset?.name || document.querySelector('.project-title-line h2')?.textContent?.trim() || DATA.project?.name || 'Project';
     const lines=['PROJECT CONTEXT FROM STATE',`Project: ${project}`];
     if(task) lines.push(`Task: ${task}`);
     lines.push('', 'Use this as maintained project context. CURRENT STATE is accepted project understanding. PENDING REVIEWS and OPEN QUESTIONS are not accepted facts. If another source conflicts with this context, call out the conflict instead of smoothing it over.', '', 'CURRENT STATE');
@@ -170,7 +215,7 @@
     const area=document.createElement('textarea');area.value=text;area.style.position='fixed';area.style.opacity='0';document.body.appendChild(area);area.select();document.execCommand('copy');area.remove();
   }
   function openCopyContextDialog(){
-    openOverlay('<span class="eyebrow">Copy context</span><h2 id="dialogTitle">Take Current State with you.</h2><p class="copy-context-intro">Copy a clean context package to Claude, ChatGPT, another AI tool, or wherever you continue the work.</p><div class="copy-context-options"><label class="copy-context-option"><input type="radio" name="copyContextMode" value="working" checked><span><strong>Working context</strong><span>Current State plus pending Reviews and open Questions. Recommended when another tool needs both settled and unresolved context.</span></span></label><label class="copy-context-option"><input type="radio" name="copyContextMode" value="state"><span><strong>Current State only</strong><span>Only the project understanding the team currently treats as accepted.</span></span></label></div><div class="copy-context-task"><label for="copyContextTask">What are you working on? <span class="quiet-meta">Optional</span></label><input id="copyContextTask" autocomplete="off" placeholder="e.g. Prepare the pilot implementation plan"></div><p class="copy-context-status" id="copyContextStatus" role="status"></p><div class="dialog-actions"><button class="btn secondary" data-action="close-dialog">Cancel</button><button class="btn primary" data-review-batch-action="copy-context-confirm" disabled>Loading context…</button></div>');
+    openOverlay('<span class="eyebrow">Copy context</span><h2 id="dialogTitle">Take Current State with you.</h2><p class="copy-context-intro">Copy a clean context package to Claude, ChatGPT, another AI tool, or wherever you continue the work.</p><div class="copy-context-options"><label class="copy-context-option"><input type="radio" name="copyContextMode" value="working" checked><span><strong>Working context</strong><span>Current State plus pending Reviews and open Questions. Recommended when another tool needs both settled and unresolved context.</span></span></label><label class="copy-context-option"><input type="radio" name="copyContextMode" value="state"><span><strong>Current State only</strong><span>Only the project understanding the team currently treats as accepted.</span></span></label></div><div class="copy-context-task"><label for="copyContextTask">What are you working on? <span class="quiet-meta">Optional</span></label><input id="copyContextTask" autocomplete="off" placeholder="e.g. Prepare the next planning update"></div><p class="copy-context-status" id="copyContextStatus" role="status"></p><div class="dialog-actions"><button class="btn secondary" data-action="close-dialog">Cancel</button><button class="btn primary" data-review-batch-action="copy-context-confirm" disabled>Loading context…</button></div>');
     ui.copyContextData=null;
     loadCopyContext().then(data=>{
       ui.copyContextData=data;
@@ -204,6 +249,23 @@
     ensureAskShell();ui.drawerOpen=true;const drawer=document.getElementById('askStateDrawer');if(drawer)drawer.hidden=false;document.body.classList.add('ask-state-drawer-open');syncAskInputs();syncLauncherVisibility();if(focus)requestAnimationFrame(()=>document.getElementById('askStateDrawerInput')?.focus());checkAnswerFreshness();
   }
   function closeAskDrawer(){ui.drawerOpen=false;document.getElementById('askStateDrawer')?.setAttribute('hidden','');document.body.classList.remove('ask-state-drawer-open');syncLauncherVisibility();}
+  // state.md QA follow-up: Ask's drawer state (the last-rendered answer,
+  // in-flight query, resolved-context signature) used to survive a project
+  // switch untouched -- one project's answer stayed fully visible under the
+  // other project's banner, since nothing here was wired into the switch.
+  // Called from the project switcher so a switch always leaves Ask closed
+  // and empty rather than showing a stale, now-mislabeled answer.
+  function resetForProjectSwitch(projectId){
+    ui.query='';ui.skipRouting=false;ui.payload=null;ui.resolvedContext=[];
+    ui.answerStateSignature=null;ui.stale=false;ui.running=false;ui.streamRaw='';ui.requestId++;
+    renderDrawerResult('');
+    syncAskInputs();
+    closeAskDrawer();
+    starters=publishStarters(projectId||liveProjectId());
+    const holder=document.querySelector('.ask-state-starters');
+    if(holder)holder.innerHTML=starters.map(([label,prompt])=>`<button type="button" data-review-batch-prompt="${esc(prompt)}">${esc(label)}</button>`).join('');
+  }
+  window.STATE_ASK_UI={resetForProjectSwitch};
   function syncLauncherVisibility(){
     const launcher=document.getElementById('askStateLauncher');if(!launcher)return;
     const hide=ui.drawerOpen;

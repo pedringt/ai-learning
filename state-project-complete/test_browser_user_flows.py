@@ -92,6 +92,7 @@ def _mock_api_script(hydration_ms: int = 120, ask_ms: int = 180, resolved_review
           // test in this file would throw on load.
           getProjects:()=>sleep({{items:[{{id:'northstar',name:'Northstar'}},{{id:'juniper',name:'Juniper Office Move'}}]}}, {hydration_ms}),
           switchProject:async(projectId)=>({{id:projectId,name:projectId==='juniper'?'Juniper Office Move':'Northstar'}}),
+          setActiveProject:()=>{{}},
         }};
       }})();
     """

@@ -122,7 +122,7 @@ function check(name,ok,detail=''){if(ok){pass++;console.log('✓',name);}else{fa
 
   const misclassified=[
     {label:'What should I know?', expectKind:'pending'},
-    {label:'Prep me for my next meeting', expectKind:'pending'},
+    {label:'What changed recently?', expectKind:'open'},
     {label:'What are we still unsure about?', expectKind:'open'},
   ];
 

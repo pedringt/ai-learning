@@ -328,6 +328,24 @@ def accept_review(connection: Connection, review_id: str, note: str | None = Non
     """Backward-compatible helper for older tests/integrations."""
     resolve_review(connection, review_id, "accept", note)
 
+
+def _validated_area_id(connection: Connection, area_id: str | None) -> str | None:
+    """Confirm a proposed area actually belongs to the active project.
+
+    A missing, unrecognized, or cross-project area_id is ignored rather than
+    raising -- the caller falls back to the existing 'general' bucket
+    (state.md #113's guaranteed fallback), the same behavior as before this
+    field existed, so an untrusted or stale value can never break a Review
+    accept.
+    """
+    if not area_id:
+        return None
+    row = connection.execute(
+        "SELECT id FROM project_areas WHERE id=? AND project_id=?",
+        (area_id, project_id_of(connection)),
+    ).fetchone()
+    return area_id if row else None
+
 def _apply_proposal(connection: Connection, proposal: dict, *, adjusted_statement: str | None = None) -> None:
     """Apply one accepted proposal, using a human adjustment if supplied.
 
@@ -361,9 +379,10 @@ def _apply_proposal(connection: Connection, proposal: dict, *, adjusted_statemen
             # already maintains.
             return
         state_id = new_id("state")
+        area_id = _validated_area_id(connection, proposal["proposed_area_id"] if "proposed_area_id" in proposal.keys() else None)
         connection.execute(
-            "INSERT INTO current_state_items(id, topic, statement, version, effective_date, project_id) VALUES (?, ?, ?, 1, ?, ?)",
-            (state_id, "uncategorized", final_statement, proposal["effective_date"], project_id_of(connection)),
+            "INSERT INTO current_state_items(id, topic, statement, version, effective_date, project_id, area_id) VALUES (?, ?, ?, 1, ?, ?, ?)",
+            (state_id, "uncategorized", final_statement, proposal["effective_date"], project_id_of(connection), area_id),
         )
         old_statement, old_effective_date, from_version, to_version = None, None, None, 1
         new_effective_date = proposal["effective_date"]

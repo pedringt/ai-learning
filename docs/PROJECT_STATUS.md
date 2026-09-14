@@ -2,13 +2,15 @@
 
 This is the canonical current-state handoff for State and the surrounding portfolio. Read this first, then verify the repository before relying on older handoffs or conversation memory.
 
-## Resume here: Review-quality work done, awaiting staging/preview review
+## Resume here: #110-#117 done and pushed to staging; QA-flagged fixes landed
 
-_Last updated: September 14, 2026 Pacific time, at the end of the #104-#108 implementation session, handed off to a fresh chat at the user's request._
+_Last updated: September 14, 2026 Pacific time. This section replaces the stale "#104-#108, awaiting staging" summary below it (those issues shipped and merged well before this update; the section header just hadn't been refreshed since)._
 
-**Issues #104-#108 (see #109 tracker) are fully implemented, tested, and holistically QA'd on a local branch. Nothing has been pushed to `origin` and nothing has touched `staging` or `main`. The user said they'd be comfortable moving to a staging/preview review next, but that has not happened yet — do not push, open a PR, or promote anything without the user confirming that's the next step in the new conversation.**
+**All of #110-#117 (the generalization/release-hardening tracker) are implemented, tested, and pushed to `staging`** — including #114 (a second seeded project, "Juniper Office Move," with a real project switcher and full cross-project isolation). Two rounds of staging QA against that work (a full pass, then a "hammer pass" hitting every Review scenario plus live Evidence/Ask calls) found a real P0 (a stale browser tab's write landing in whichever project another tab most recently switched to) and a P1 (Ask fabricating a quoted "AI proposed X, human approved Y" provenance story for a Review that was actually left unchanged, with no backing History record) — both are now fixed on `staging`, along with several P2s (new Review-created facts always landing in "General," a `state_at_risk` dedup gap producing a duplicate Question on Juniper, Copy Context always labeling the project "Northstar," Ask starters carrying Northstar-specific vocabulary onto Juniper) and a round of UI polish (project switcher dropdown clipping/hover, a flash-then-vanish "switching projects" modal, a stale Ask answer surviving a project switch, Review headline/button wording, a collapsed decision-types explainer, a seeded example of the "Create Question" path, and a link from the question-created/linked toast to the actual Question).
 
-### Branch state
+**Not verified live this pass**: the Ask grounding-rule fix for the fabrication bug is prompt text only — added in the same place and style as the codebase's other hallucination-prevention rules, but not re-run against a live model call in this session (no live-model spend was authorized). Re-verify with a live Ask call against the same repro (resolve a Review with `decision: "reject"`, then ask what was adjusted) before treating that specific fix as proven. `project_areas.id` being a bare global primary key (not project-scoped) is a known, documented, deliberately-deferred scaling risk — fine with today's two projects (their area ids don't collide), but needs a real schema fix before a third project is added.
+
+### Branch state (historical — #104-#108, already shipped)
 
 - Branch: **`review-quality-104-105`**, created off `staging` at commit `d9a1009`.
 - **Not pushed to origin.** `git ls-remote --heads origin review-quality-104-105` returns nothing. Pushing it is the first step before any PR or staging preview.

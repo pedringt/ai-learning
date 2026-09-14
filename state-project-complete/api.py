@@ -7,6 +7,7 @@ import json
 import os
 from collections import OrderedDict
 from contextlib import asynccontextmanager, contextmanager
+from contextvars import ContextVar
 from copy import deepcopy
 from threading import Lock
 from typing import Literal
@@ -55,6 +56,17 @@ def _build_rev() -> str:
 
 STATE_BUILD_REV = _build_rev()
 logger = logging.getLogger("state.api")
+
+# state.md QA follow-up: the active project used to be resolved purely from a
+# shared, global `active_project` DB row. A stale browser tab -- one that had
+# not re-synced after another tab called /api/projects/switch -- would still
+# have its writes land wherever the *server* currently pointed, silently and
+# invisibly. Each request now carries the project the client actually
+# believes is active (X-State-Project-Id), captured here per-request via a
+# contextvar so get_connection() can honor it without every route handler
+# needing to accept a Request parameter. The DB row remains only as the
+# bootstrap default for a client that hasn't loaded a project yet.
+_request_project_id: ContextVar[str | None] = ContextVar("_request_project_id", default=None)
 
 
 from review_service import (
@@ -355,14 +367,21 @@ def create_app(settings: Settings | None = None, provider: InterpretationProvide
     def get_connection():
         """Get a database connection using the unified abstraction.
 
-        state.md #114: also resolves the app's single active-project pointer
-        onto the connection (connection.project_id), so every existing
-        handler below becomes project-aware for free -- none of their own
-        bodies need to change. The active_project table may not exist yet
-        (the very first connection opened during lifespan startup, before
-        initialize_db() has run its migrations) -- in that case the
-        Connection's own 'northstar' default stands, which is correct for a
-        brand-new database anyway.
+        state.md #114: also resolves the active project onto the connection
+        (connection.project_id), so every existing handler below becomes
+        project-aware for free -- none of their own bodies need to change.
+
+        Resolution order: the requesting client's own X-State-Project-Id
+        header (see _request_project_id above) wins when present and valid,
+        so each browser tab's writes land wherever *it* believes it is,
+        independent of what any other tab most recently switched the shared
+        active_project row to. Falls back to that shared row -- the
+        bootstrap default for a client that hasn't loaded a project yet, or
+        a caller that predates the header. The active_project table may not
+        exist yet (the very first connection opened during lifespan
+        startup, before initialize_db() has run its migrations) -- in that
+        case the Connection's own 'northstar' default stands, which is
+        correct for a brand-new database anyway.
         """
         connection = connect(settings.connection_url())
         try:
@@ -372,6 +391,14 @@ def create_app(settings: Settings | None = None, provider: InterpretationProvide
                     connection.project_id = row["project_id"]
             except Exception:
                 pass
+            requested = _request_project_id.get()
+            if requested and requested != connection.project_id:
+                try:
+                    exists = connection.execute("SELECT id FROM projects WHERE id=?", (requested,)).fetchone()
+                except Exception:
+                    exists = None
+                if exists:
+                    connection.project_id = requested
             yield connection
         finally:
             connection.close()
@@ -457,14 +484,18 @@ def create_app(settings: Settings | None = None, provider: InterpretationProvide
         allow_origins=settings.cors_origins,
         allow_credentials=False,
         allow_methods=["GET", "POST", "PATCH", "DELETE"],
-        allow_headers=["Content-Type"],
+        allow_headers=["Content-Type", "X-State-Project-Id"],
     )
 
     @app.middleware("http")
     async def request_id_middleware(request: Request, call_next):
         request_id = request.headers.get("X-Request-ID") or uuid.uuid4().hex[:12]
+        project_token = _request_project_id.set(request.headers.get("X-State-Project-Id") or None)
         started = time.perf_counter()
-        response = await call_next(request)
+        try:
+            response = await call_next(request)
+        finally:
+            _request_project_id.reset(project_token)
         elapsed_ms = (time.perf_counter() - started) * 1000
         response.headers["X-Request-ID"] = request_id
         logger.info(

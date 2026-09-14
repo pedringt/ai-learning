@@ -78,7 +78,7 @@ const proposedReview={
 };
 const proposedReviewHtml=openItems.reviewCard(proposedReview,true,false);
 check('proposed Review uses Update Current State',
-  proposedReviewHtml.includes('>Update Current State<') && !proposedReviewHtml.includes('>Update understanding<'));
+  proposedReviewHtml.includes('>Update<') && !proposedReviewHtml.includes('>Update understanding<'));
 check('proposed Review offers Adjust',
   proposedReviewHtml.includes('>Adjust<') && proposedReviewHtml.includes('data-action="open-adjust-review"'));
 check('proposed Review uses Leave unchanged, not the old Keep Current State label',
@@ -132,7 +132,9 @@ const renderedOpenItems=openItems.render({
 // state.md #107: short, embedded education copy replaces the older, longer
 // top-of-page explanation -- still appears exactly once, not per-Review.
 check('Open Items keeps the short #107 explanation once at the top of the page',
-  renderedOpenItems.includes('Update Current State if it looks right, adjust it if it needs changes, or leave Current State unchanged.'));
+  renderedOpenItems.includes('Review what State thinks new information means, then decide what happens to Current State.'));
+check('Open Items puts the full decision breakdown behind a collapsed disclosure, not inline',
+  renderedOpenItems.includes('<details class="review-help">') && renderedOpenItems.includes('What do these decisions mean?'));
 check('Open Items removes repeated section descriptions and old hierarchy copy',
   !renderedOpenItems.includes('Human decisions waiting on you.') &&
   !renderedOpenItems.includes('Questions stopping progress.') &&
@@ -174,7 +176,7 @@ const questionReview=api.mapApiReview({id:'review-question',review_type:'open_qu
 check('mapping preserves the backend Question proposal token', questionReview.questionToCreate.id==='question-proposal-1');
 const questionReviewHtml=openItems.reviewCard(questionReview,true,false);
 check('Question Review discloses the unchanged Current State',questionReviewHtml.includes('Current State will stay unchanged'));
-check('Question Review uses Create Question, not Mark reviewed or Update Current State',questionReviewHtml.includes('>Create Question<')&&!questionReviewHtml.includes('>Mark reviewed<')&&!questionReviewHtml.includes('>Update Current State<'));
+check('Question Review uses Create Question, not Mark reviewed or Update Current State',questionReviewHtml.includes('>Create Question<')&&!questionReviewHtml.includes('>Mark reviewed<')&&!questionReviewHtml.includes('>Update<'));
 check('Question Review includes a decline action in the same flow',questionReviewHtml.includes('>Dismiss suggestion<'));
 const existingQuestionHtml=openItems.reviewCard({...questionReview,questionToCreate:{...proposedQuestion,existing_question_id:'question-existing',existing_question_text:'Are agents checking drafts?'}},true,false);
 check('duplicate Question is explained before authorization',existingQuestionHtml.includes('>Already tracked<')&&existingQuestionHtml.includes('>Link existing Question<'));
