@@ -81,3 +81,23 @@ Use GitHub Issues/Projects/PRs/Actions plus repo Markdown for State product oper
 
 **Why**  
 The code, QA, agents, work tracking, and durable product context can stay linked instead of being duplicated across systems.
+
+---
+
+### DEC-005 — State is a portfolio/learning product, not an external pilot
+
+**Status:** Settled  
+**Date:** 2026-09-14  
+**Related:** `PRODUCT_BRIEF.md`, `METRICS.md`, Issue #121
+
+**Decision**  
+State will not be planned or represented as a product being rolled out to a real user group. Other people may interact with it as portfolio reviewers or demo visitors. Product-management exercises may deliberately model what a real deployment would require, but they must be labeled as hypothetical/learning work rather than real customer or pilot activity.
+
+**Why**  
+The goal is to demonstrate applied AI product judgment and learn realistic product practices without inventing users, adoption, customer evidence, or production outcomes that do not exist.
+
+**Rejected / deferred**  
+Creating fake pilot plans, adoption metrics, stakeholder reports, or customer evidence to make the portfolio project appear more mature than it is.
+
+**Revisit when**  
+Only if Paige explicitly decides to turn State into a product intended for real external/team use.
