@@ -10,6 +10,27 @@ environments before relying on it or older conversation memory.
 For State QA, read [QA.md](QA.md). It is the canonical QA contract and should
 be used instead of inventing a new test plan in each session.
 
+For product decisions, risks, metrics, and PM workflow, use
+[docs/product/](docs/product/). Before reopening a settled behavior or proposing
+a materially different product rule, check `DECISIONS.md` and `RISKS.md`.
+Actionable work belongs in GitHub Issues/Projects rather than being buried in
+long-lived prose docs.
+
+## Product-operating defaults
+
+- Durable settled product choices go in `docs/product/DECISIONS.md`; do not
+  casually reopen them without new evidence or an explicit product question.
+- Material trust/authority/isolation/review-burden risks go in
+  `docs/product/RISKS.md`; implementation work to mitigate a risk belongs in an
+  Issue.
+- AI behavior failures should be separated from ordinary software bugs. Use
+  outcome-based expectations and the eval registry in `docs/evals/`.
+- P0/P1 incidents that teach something important about the product or QA system
+  should use `docs/incidents/TEMPLATE.md` and add durable regression/eval
+  protection where practical.
+- Use `RELEASE.md` for release-readiness gates. Passing tests alone does not
+  imply permission or readiness to promote.
+
 ## QA defaults
 
 - A request to QA, test, review, inspect, investigate, or smoke-test is
