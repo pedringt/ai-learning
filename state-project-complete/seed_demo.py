@@ -203,7 +203,11 @@ def bootstrap_demo_data(connection, *, manage_transaction: bool = True) -> dict[
 
         # Ask adversarial relationships: the vendor claim is relevant to the open
         # retention Review, which also affects the current data boundary. Linking
-        # the blocker makes provenance/action navigation deterministic.
+        # the blocker makes provenance/action navigation deterministic. (#111:
+        # this k-data link is a real cross-reference for Ask's related-item
+        # selection, not "the Current State fact this Review challenges" --
+        # frontend Review-card display must not conflate the two; see
+        # context-backend-sync.js's mapApiReview.)
         if connection.execute("SELECT id FROM review_issues WHERE id='demo-review-retention'").fetchone():
             connection.execute("INSERT OR IGNORE INTO review_evidence(review_id,evidence_id) VALUES ('demo-review-retention','ask-evidence-vendor-retention')")
             connection.execute("INSERT OR IGNORE INTO review_state_items(review_id,state_item_id) VALUES ('demo-review-retention','k-data')")

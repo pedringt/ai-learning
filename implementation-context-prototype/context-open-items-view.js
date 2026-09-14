@@ -55,7 +55,7 @@
     const actions=isQuestionReview
       ? `<button class="btn primary" data-action="review-update" data-review="${r.id}"${questionReady?'':' disabled'}>${questionProposal?.existing_question_id?'Link existing Question':'Create Question'}</button><button class="btn secondary" data-action="review-keep" data-review="${r.id}"${questionReady?'':' disabled'}>Dismiss suggestion</button>`
       : checkOnly
-      ? `<button class="btn primary" data-action="review-acknowledge-risk" data-review="${r.id}">Still uncertain — keep it flagged</button><button class="btn secondary" data-action="review-dismiss-risk" data-review="${r.id}">Not a concern</button>`
+      ? `<button class="btn primary" data-action="review-acknowledge-risk" data-review="${r.id}">Keep tracking</button><button class="btn secondary" data-action="review-dismiss-risk" data-review="${r.id}">Dismiss concern</button>`
       : `<button class="btn primary" data-action="review-update" data-review="${r.id}">Update Current State</button>${adjustableCount?`<button class="btn secondary" data-action="open-adjust-review" data-review="${r.id}">Adjust</button>`:''}<button class="btn secondary" data-action="review-keep" data-review="${r.id}">Leave unchanged</button>`;
     // A related open Review is a structural pointer only (same State item or
     // Question as this one) -- never a claim that the two are the same

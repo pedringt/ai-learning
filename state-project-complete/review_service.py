@@ -8,8 +8,8 @@ from typing import Literal
 from db import Connection
 from interpretation_pipeline_integrated import new_id
 from question_review_service import (
-    QuestionReviewConflictError, create_or_find_question, normalized_question_text,
-    question_proposal_read_model, resolve_question_proposal,
+    QuestionReviewConflictError, create_or_find_question, matching_open_question,
+    normalized_question_text, question_proposal_read_model, resolve_question_proposal,
 )
 
 
@@ -146,7 +146,7 @@ def resolve_review(connection: Connection, review_id: str, decision: Decision, n
     connection.row_factory = sqlite3.Row
     connection.execute("BEGIN IMMEDIATE")
     try:
-        review_sql = "SELECT id, status, review_type FROM review_issues WHERE id=?"
+        review_sql = "SELECT id, status, review_type, decision_question FROM review_issues WHERE id=?"
         if getattr(connection, "is_postgres", False):
             review_sql += " FOR UPDATE"
         review = connection.execute(review_sql, (review_id,)).fetchone()
@@ -170,6 +170,63 @@ def resolve_review(connection: Connection, review_id: str, decision: Decision, n
             )
             connection.execute("COMMIT")
             return outcome
+        if review["review_type"] == "state_at_risk" and decision == "keep":
+            # "Keep tracking" on a state_at_risk Review (#111) must persist the
+            # uncertainty as a real Question rather than just resolving the
+            # Review -- otherwise the UI promises a kept concern the data model
+            # never actually produces. "accept"/"reject" are unaffected by this
+            # branch and fall through to the ordinary path below unchanged:
+            # "accept" is also used (via a linked review_questions row, not the
+            # checkOnly UI) to resolve an existing Question from reviewed
+            # evidence with no state change, and "reject" already has the
+            # correct no-op-beyond-resolving-the-Review behavior there.
+            #
+            # The interpretation pipeline may have already linked this risk to
+            # an existing open Question it judged equivalent (resolves_question_ids
+            # at Review-creation time, e.g. seed_demo.py's retention example).
+            # Preserving that link is what "not duplicating an equivalent
+            # existing Question" means here -- no new Question needed.
+            linked = connection.execute(
+                "SELECT question_id FROM review_questions WHERE review_id=? ORDER BY question_id",
+                (review_id,),
+            ).fetchall()
+            if linked:
+                question = dict(connection.execute(
+                    "SELECT * FROM questions WHERE id=?", (linked[0]["question_id"],)
+                ).fetchone())
+                created = False
+            else:
+                question_text = (review["decision_question"] or "").strip()
+                if not question_text:
+                    raise ReviewConflictError("This Review has no uncertainty to track")
+                if getattr(connection, "is_postgres", False):
+                    connection.execute("LOCK TABLE questions IN SHARE ROW EXCLUSIVE MODE")
+                if expected_existing_question_id:
+                    existing = matching_open_question(connection, question_text)
+                    if not existing or existing["id"] != expected_existing_question_id:
+                        raise ReviewConflictError("The existing Question changed. Refresh and review it again.")
+                evidence_row = connection.execute(
+                    "SELECT e.id FROM evidence e JOIN review_evidence re ON re.evidence_id=e.id "
+                    "WHERE re.review_id=? ORDER BY e.submitted_at DESC, e.id DESC LIMIT 1",
+                    (review_id,),
+                ).fetchone()
+                question, created = create_or_find_question(
+                    connection, new_id("question"), question_text,
+                    origin="Kept from a flagged uncertainty Review",
+                    source_evidence_id=evidence_row["id"] if evidence_row else None,
+                )
+                connection.execute(
+                    "INSERT OR IGNORE INTO review_questions(review_id, question_id, evidence_id) VALUES (?, ?, ?)",
+                    (review_id, question["id"], evidence_row["id"] if evidence_row else None),
+                )
+            resolution = "question_created" if created else "question_linked"
+            connection.execute(
+                "UPDATE review_issues SET status='resolved', resolution=?, resolution_note=?, "
+                "resolved_at=CURRENT_TIMESTAMP WHERE id=?",
+                (resolution, note, review_id),
+            )
+            connection.execute("COMMIT")
+            return {"resolution": resolution, "question": question, "question_created": created}
         if expected_question_proposal_id is not None:
             raise ReviewConflictError("The Review outcome changed. Refresh and review it again.")
 

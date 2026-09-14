@@ -42,8 +42,17 @@
   function mapApiReview(r, fallbackEvidence=''){
     const proposals=(r.proposals||[]).filter(p=>!p.status || p.status==='pending');
     const affected=r.affected_state_items||[];
-    const current=r.review_type==='open_question'
-      ? 'Current State will stay unchanged. This Review is about tracking an unknown.'
+    // #111: a state_at_risk Review's linked affected_state_items can be a
+    // cross-reference for other consumers (Ask's related-item selection --
+    // see seed_demo.py's demo-review-retention/k-data link) rather than "the
+    // Current State fact this Review challenges" -- state_at_risk has no such
+    // fact by definition (it means existing State may be unreliable with no
+    // replacement yet), so showing it as Current understanding produced an
+    // unrelated-looking answer in live QA. Only proposed_update/missing_
+    // understanding Reviews, which genuinely propose a change to a specific
+    // item, use affected_state_items here.
+    const current=(r.review_type==='open_question'||r.review_type==='state_at_risk')
+      ? 'Current State will stay unchanged. This Review is about tracking an uncertainty, not a specific fact.'
       : affected.length
       ? affected.map(x=>x.statement).join(' • ')
       : proposals.some(p=>p.operation==='create')

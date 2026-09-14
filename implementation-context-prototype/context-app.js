@@ -991,9 +991,16 @@
   // by openAdjustDialog/confirmReviewAdjust since it opens a dialog first
   // rather than resolving immediately.
   const REVIEW_API_DECISION={update:'accept','keep-current':'keep','acknowledge-risk':'keep','dismiss-risk':'reject'};
-  function reviewDecisionToast(decision){
-    if(decision==='acknowledge-risk')return 'Reviewed. Still flagged as uncertain — Current State was not changed.';
-    if(decision==='dismiss-risk')return 'Reviewed. No longer a concern — Current State was not changed.';
+  // #111: "Keep tracking" must persist the uncertainty as a real Question, not
+  // just resolve the Review, so the toast reflects the server's actual outcome
+  // (question_created/question_linked) rather than assuming a fixed message.
+  function reviewDecisionToast(decision,result){
+    if(decision==='acknowledge-risk'){
+      if(result?.resolution==='question_created')return 'Added as an open question to keep tracking. Current State was not changed.';
+      if(result?.resolution==='question_linked')return 'Linked to an existing open question. Current State was not changed.';
+      return 'Reviewed. Still flagged as uncertain — Current State was not changed.';
+    }
+    if(decision==='dismiss-risk')return 'Dismissed. No longer tracked as an open question. Current State was not changed.';
     return 'Current State left unchanged. Evidence is preserved.';
   }
 
@@ -1124,9 +1131,10 @@
             else if(text) receiptItems.push({id:proposal.state_item_id||'',statement:text,area:'product'});
           }
         }
+        if(decision==='acknowledge-risk'&&result.question){state.openItemSections.questions=false;state.openQuestionsExpanded=true;}
         updateNav(); render();
         if(lightweight) closeDialog(); // no interstitial was shown for these outcomes
-        if(lightweight) showToast(decision==='update'?'Added as Evidence. Current State did not need a Review.':reviewDecisionToast(decision));
+        if(lightweight) showToast(decision==='update'?'Added as Evidence. Current State did not need a Review.':reviewDecisionToast(decision,result));
         else showDecisionComplete({items:receiptItems});
         // Resolution response is authoritative; revalidate deterministically after it has rendered.
         await hydrateBackend();

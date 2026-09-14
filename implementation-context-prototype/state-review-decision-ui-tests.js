@@ -58,8 +58,8 @@ check('state_at_risk review does not show Update/Adjust/Leave unchanged',
   !riskHtml.includes('data-action="review-update"') && !riskHtml.includes('data-action="open-adjust-review"') && !riskHtml.includes('data-action="review-keep"'));
 check('state_at_risk review does not fall back to a generic Mark reviewed label',
   !riskHtml.includes('>Mark reviewed<'));
-check('state_at_risk review offers its own real decision, phrased for this Review',
-  riskHtml.includes('>Still uncertain — keep it flagged<') && riskHtml.includes('>Not a concern<'));
+check('state_at_risk review offers its own real decision, phrased domain-neutrally (#111)',
+  riskHtml.includes('>Keep tracking<') && riskHtml.includes('>Dismiss concern<'));
 check('state_at_risk actions map to acknowledge-risk/dismiss-risk data-actions',
   riskHtml.includes('data-action="review-acknowledge-risk" data-review="r-risk"') && riskHtml.includes('data-action="review-dismiss-risk" data-review="r-risk"'));
 
