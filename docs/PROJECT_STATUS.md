@@ -31,9 +31,9 @@ State is a portfolio and learning product. There is no planned external pilot or
 
 ## Branch and deployment state
 
-The application baseline immediately before the QA/product-ops cleanup work was commit `afdc24582624c3d40cbc1b721eded8a48d1a68d6`, which had been aligned on both `main` and `staging`. Verify the current branch heads when resuming work rather than assuming they are still identical.
+The current application baseline immediately before the QA/product-ops cleanup is the latest `main`/`staging` product state after the September 14 fixes. Verify the current branch heads when resuming work rather than assuming they are still identical.
 
-That baseline includes the latest user-facing fixes from the September 14 QA pass, including Ask cancellation/abort handling, project-switch cancellation behavior, and the remaining Review scroll path fix.
+That baseline includes the latest user-facing fixes from the September 14 QA pass, including Ask cancellation/abort handling, project-switch cancellation behavior, Review scroll fixes, Ask hedging stabilization, and the updated Review action label.
 
 Production surfaces:
 
@@ -51,13 +51,13 @@ Hard release rule: product/site changes go through `staging` first unless the us
 
 ## Latest verified QA baseline
 
-Application commit `afdc24582624c3d40cbc1b721eded8a48d1a68d6` records a green deterministic verification baseline of:
+Application commit `afdc24582624c3d40cbc1b721eded8a48d1a68d6` recorded a green deterministic verification baseline of:
 
 - 479 Python tests passed
 - 18 frontend VM/behavior suites passed
 - 15 Playwright browser tests passed
 
-Treat those as evidence for that commit, not a permanent claim about future heads.
+Treat those as evidence for that commit, not a permanent claim about future heads. Use the current GitHub Actions results for newer commits.
 
 For routine QA, use the repository-root `QA.md` and `Makefile`:
 
@@ -100,6 +100,10 @@ Do not weaken these without an explicit product decision:
 See `docs/product/RISKS.md` for the maintained register. The most important implementation-specific known risk is:
 
 - `project_areas.id` is a global primary key rather than project-scoped. It works for the two current seeded projects because their IDs do not collide, but it should be redesigned before expanding the project model further.
+
+Known UX issue:
+
+- Ask's **What should I know?** starter (`meeting_prep`) can visibly grow and then shrink on the first streamed answer. The raw streaming preview renders more model output than the post-stream normalizer ultimately keeps. The final answer is intentionally capped, so this is a presentation mismatch rather than a grounding/correctness failure. A future fix should either apply the same caps during streaming or use a lighter drafting state for this job.
 
 Also keep model/provider drift, fabricated provenance, cross-project leakage, unnecessary Review burden, latency/cost, and sensitive-data exposure in view when making AI changes.
 
