@@ -1,0 +1,89 @@
+name: AI behavior failure
+description: Report model judgment, interpretation, grounding, or eval failures
+title: "[AI behavior] "
+body:
+  - type: markdown
+    attributes:
+      value: "Use this when the system technically runs but the AI interprets, routes, grounds, or explains something incorrectly. Do not treat model output alone as ground truth."
+  - type: dropdown
+    id: area
+    attributes:
+      label: Behavior area
+      options:
+        - Evidence interpretation
+        - Consequentiality / Review routing
+        - Question creation / resolution
+        - Ask grounding / synthesis
+        - Provenance / uncertainty
+        - Review burden
+        - Other
+    validations:
+      required: true
+  - type: dropdown
+    id: environment
+    attributes:
+      label: Environment
+      options:
+        - Local real-model run
+        - Staging
+        - Production
+        - Eval harness
+        - Not sure
+    validations:
+      required: true
+  - type: textarea
+    id: input
+    attributes:
+      label: Input / evidence / context
+      description: Include only the minimum context needed to reproduce the judgment.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected product outcome
+      description: Describe the expected action/outcome, not exact model wording.
+    validations:
+      required: true
+  - type: textarea
+    id: observed
+    attributes:
+      label: Observed behavior
+    validations:
+      required: true
+  - type: dropdown
+    id: dimension
+    attributes:
+      label: Eval dimension
+      options:
+        - Integrity
+        - Consequentiality
+        - Review burden
+        - Ask grounding
+        - Product ambiguity / expected behavior not settled
+    validations:
+      required: true
+  - type: dropdown
+    id: severity
+    attributes:
+      label: Suggested severity
+      options:
+        - P0 - integrity / authority / isolation failure
+        - P1 - major wrong or misleading behavior
+        - P2 - meaningful bounded failure
+        - P3 - low-risk quality issue
+        - Not sure
+    validations:
+      required: true
+  - type: textarea
+    id: impact
+    attributes:
+      label: Why it matters
+      description: Explain what a user might wrongly believe or do, or how much unnecessary review this creates.
+    validations:
+      required: true
+  - type: textarea
+    id: protection
+    attributes:
+      label: Regression / eval protection idea
+      description: If known, say whether this belongs in deterministic tests, fake-model pipeline coverage, or a real-model eval.
