@@ -16,6 +16,10 @@ a materially different product rule, check `DECISIONS.md` and `RISKS.md`.
 Actionable work belongs in GitHub Issues/Projects rather than being buried in
 long-lived prose docs.
 
+For the State GitHub Project workflow, fields, statuses, and board conventions,
+read [docs/product/GITHUB_PROJECT_SETUP.md](docs/product/GITHUB_PROJECT_SETUP.md).
+The existing Project is **State Product**; do not create a duplicate Project.
+
 ## Product-operating defaults
 
 - Durable settled product choices go in `docs/product/DECISIONS.md`; do not
@@ -30,6 +34,27 @@ long-lived prose docs.
   protection where practical.
 - Use `RELEASE.md` for release-readiness gates. Passing tests alone does not
   imply permission or readiness to promote.
+
+## GitHub Project defaults
+
+- Read the relevant Issue before starting tracked work. Use the Issue for scope
+  and the **State Product** Project for current work state.
+- When live GitHub Project access is available, keep Status and custom fields
+  current. If Project access is unavailable, do not guess the board state from
+  conversation memory.
+- Use **Backlog** for tracked but not-ready work, **Ready** when scope is clear
+  enough to start, **In progress** while actively working, **QA** only after
+  implementation is complete, **Staging** only when the change is actually on
+  staging, and **Done** when the work is complete and, where relevant,
+  released/promoted.
+- When creating or triaging work, set **Work Type**, **Priority**, and
+  **Product Area** when the right value is clear. Use **Release** only when it
+  adds useful planning context.
+- Do not infer **QA** or **Staging** from a passing test or open PR. Passing
+  tests never grant staging/main promotion permission.
+- If implementation or QA reveals a separate reproducible bug, AI behavior
+  failure, or unresolved product question, create or recommend a separate
+  Issue instead of hiding it in chat or unrelated scope.
 
 ## QA defaults
 
