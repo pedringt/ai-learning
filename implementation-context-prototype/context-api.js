@@ -25,14 +25,30 @@
   // through server-side. Abort after a generous window instead, and mark
   // the error so callers can show a "try refreshing" hint rather than a
   // generic failure.
+  // QA follow-up (2026-09-14): closing Ask while an answer was still
+  // loading used to only stop the *rendering* of whatever arrived later --
+  // the request itself, and its live-model cost, kept running server-side
+  // regardless. `options.signal`, when supplied, actually aborts the
+  // underlying fetch (chained into this function's own internal timeout
+  // controller, since fetch only accepts one signal).
   async function request(path, options = {}) {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 30000);
+    const externalSignal = options.signal;
+    if (externalSignal) {
+      if (externalSignal.aborted) controller.abort();
+      else externalSignal.addEventListener('abort', () => controller.abort(), {once: true});
+    }
     let response;
     try {
       response = await fetch(`${base}${path}`, {...options, headers: projectHeaders(options.headers), signal: controller.signal});
     } catch (err) {
       if (err.name === 'AbortError') {
+        if (externalSignal?.aborted) {
+          const cancelledError = new Error('Cancelled.');
+          cancelledError.isCancelled = true;
+          throw cancelledError;
+        }
         const timeoutError = new Error('This is taking longer than expected. The request may still complete on the server -- try refreshing before trying again.');
         timeoutError.isTimeout = true;
         throw timeoutError;
@@ -54,10 +70,11 @@
     return payload;
   }
 
-  const jsonPost = (path, body) => request(path, {
+  const jsonPost = (path, body, signal) => request(path, {
     method: 'POST',
     headers: {'Content-Type': 'application/json'},
     body: JSON.stringify(body),
+    ...(signal ? {signal} : {}),
   });
 
   // Unlike request() above, this has no single request/response round trip
@@ -70,11 +87,20 @@
   // indefinitely with no recovery path, the same failure mode already
   // fixed for plain API calls in request() above.
   const STREAM_INACTIVITY_TIMEOUT_MS = 45000;
-  async function askStream(query, previousAnswer = null, handlers = {}) {
+  async function askStream(query, previousAnswer = null, handlers = {}, externalSignal) {
     const controller = new AbortController();
     let watchdog = setTimeout(() => controller.abort(), STREAM_INACTIVITY_TIMEOUT_MS);
     const resetWatchdog = () => { clearTimeout(watchdog); watchdog = setTimeout(() => controller.abort(), STREAM_INACTIVITY_TIMEOUT_MS); };
-    const timeoutError = () => {
+    if (externalSignal) {
+      if (externalSignal.aborted) controller.abort();
+      else externalSignal.addEventListener('abort', () => controller.abort(), {once: true});
+    }
+    const abortReason = () => {
+      if (externalSignal?.aborted) {
+        const err = new Error('Cancelled.');
+        err.isCancelled = true;
+        return err;
+      }
       const err = new Error('This is taking longer than expected. Please try again.');
       err.isTimeout = true;
       return err;
@@ -89,7 +115,7 @@
       });
     } catch (err) {
       clearTimeout(watchdog);
-      throw err.name === 'AbortError' ? timeoutError() : err;
+      throw err.name === 'AbortError' ? abortReason() : err;
     }
     if (!response.ok) {
       clearTimeout(watchdog);
@@ -121,7 +147,7 @@
         try {
           ({value, done} = await reader.read());
         } catch (err) {
-          throw err.name === 'AbortError' ? timeoutError() : err;
+          throw err.name === 'AbortError' ? abortReason() : err;
         }
         resetWatchdog();
         buffer += decoder.decode(value || new Uint8Array(), {stream: !done});
@@ -175,6 +201,6 @@
     // Free-form Ask streams visible answer text while the final grounded payload
     // is still validated server-side. Product-owned starters remain deterministic.
     askStream,
-    ask: (query, previousAnswer = null) => jsonPost('/api/ask', {query, ...(previousAnswer ? {previous_answer: previousAnswer} : {})}),
+    ask: (query, previousAnswer = null, signal) => jsonPost('/api/ask', {query, ...(previousAnswer ? {previous_answer: previousAnswer} : {})}, signal),
   });
 })();

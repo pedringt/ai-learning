@@ -99,7 +99,7 @@ const context={
   HTMLElement:function(){},
   MutationObserver:function(){this.observe=()=>{};this.disconnect=()=>{};},
   console,setTimeout,clearInterval(){},setInterval(){return 0;},
-  URLSearchParams,history:{replaceState(){}},
+  URLSearchParams,history:{replaceState(){}},AbortController,
 };
 vm.createContext(context);
 vm.runInContext(fs.readFileSync(path.join(dir,'context-data.js'),'utf8'),context);

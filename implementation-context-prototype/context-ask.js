@@ -78,8 +78,8 @@
   function followupMode(query,previousPayload){return previousPayload?'append':'new';}
   function canHandle(query){return !!API?.ask&&!!String(query||'').trim();}
   function canStream(query){return !starterKind(query,null)&&!!API?.askStream&&!!String(query||'').trim();}
-  async function submitStream(query,previousPayload=null,handlers={}){return API.askStream(query,previousPayload?.answer||null,handlers);}
-  async function submit(query,previousPayload=null){const kind=starterKind(query,previousPayload);if(kind)return fastStarterPayload(kind);return API.ask(query,previousPayload?.answer||null);}
+  async function submitStream(query,previousPayload=null,handlers={},signal){return API.askStream(query,previousPayload?.answer||null,handlers,signal);}
+  async function submit(query,previousPayload=null,signal){const kind=starterKind(query,previousPayload);if(kind)return fastStarterPayload(kind);return API.ask(query,previousPayload?.answer||null,signal);}
 
   const labelFor=type=>({review:'Needs review',blocking_question:'Blocking',question:'Open question',state:'Current State',history:'History',evidence:'Project evidence'}[type]||'');
   // The answer's item list is a snapshot from when it was generated. An item
