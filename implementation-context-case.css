@@ -39,11 +39,11 @@
   .case-system-page .unknown-cell+.unknown-cell{border-left:0;border-top:1px solid var(--border)}
   .case-system-page .unknown-title{font-size:24px}
   .case-system-page .learning-table{grid-template-columns:1fr}
-  .case-system-page .learning-head:nth-child(2){display:none}
+  .case-system-page .learning-head{display:none}
   .case-system-page .learning-row{display:block}
   .case-system-page .learning-row>div:nth-child(2){border-left:0}
-  .case-system-page .learning-row>div:first-child:before{content:'I started out thinking';display:block;margin-bottom:4px;color:var(--muted);font-size:9.5px;font-weight:850;letter-spacing:.065em;text-transform:uppercase}
-  .case-system-page .learning-row>div:nth-child(2):before{content:'I ended up thinking';display:block;margin-bottom:4px;color:var(--purple);font-size:9.5px;font-weight:850;letter-spacing:.065em;text-transform:uppercase}
+  .case-system-page .learning-row>div:first-child:before{content:attr(data-label);display:block;margin-bottom:4px;color:var(--muted);font-size:9.5px;font-weight:850;letter-spacing:.065em;text-transform:uppercase}
+  .case-system-page .learning-row>div:nth-child(2):before{content:attr(data-label);display:block;margin-bottom:4px;color:var(--purple);font-size:9.5px;font-weight:850;letter-spacing:.065em;text-transform:uppercase}
 }
 
 /* v96.06 — evidence artifact should read as evidence, not a second hero. */
