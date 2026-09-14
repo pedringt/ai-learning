@@ -347,11 +347,12 @@
     if(state.backendStatus.history!=='loaded'){
       return `<section class="workspace-recent"><div class="workspace-recent-head"><span class="eyebrow">What changed</span><button class="text-button" data-view="history">History →</button></div><p class="workspace-section-hint" role="status">${state.backendStatus.history==='error'?'Recent changes are unavailable.':'Loading recent changes…'}</p></section>`;
     }
-    // 5, not 3: paired with Current State's now-truncated bullet preview
-    // (same grid row, stretched to equal height) -- more real items here
-    // gives this card content to fill that height with instead of leaving
-    // it blank (QA follow-up, 2026-09-14).
-    const entries=(state.data.history||[]).slice().sort(sortDateDesc).slice(0,5);
+    // 4, matching Current State's own fact-preview cap exactly (both grid
+    // cells, same row, stretched to equal height): 5 overshot it the other
+    // way -- more real rows here than Current State ever shows, still
+    // leaving a mismatch just flipped in direction (QA follow-up,
+    // 2026-09-14, round 2).
+    const entries=(state.data.history||[]).slice().sort(sortDateDesc).slice(0,4);
     // QA follow-up (2026-09-14): returning '' here for a project with no
     // History yet (e.g. Juniper, freshly seeded) made the whole "What
     // Changed" card vanish, leaving "Current State" alone stretched across
