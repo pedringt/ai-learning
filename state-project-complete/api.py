@@ -390,13 +390,27 @@ def create_app(settings: Settings | None = None, provider: InterpretationProvide
                 if row:
                     connection.project_id = row["project_id"]
             except Exception:
-                pass
+                # Production incident (2026-09-14): on Postgres, a failed
+                # SELECT against a not-yet-existing table poisons the whole
+                # transaction until an explicit ROLLBACK -- unlike SQLite,
+                # which just raises and leaves the connection otherwise
+                # usable. On a brand-new database (the very first lifespan
+                # startup, before initialize_db() has created anything),
+                # this speculative lookup always fails here, and without the
+                # rollback below, initialize_db()'s very next statement
+                # (CREATE TABLE IF NOT EXISTS schema_migrations) died with
+                # psycopg2.errors.InFailedSqlTransaction -- a crash loop
+                # that never surfaced against SQLite-backed staging.
+                if connection.is_postgres:
+                    connection.rollback()
             requested = _request_project_id.get()
             if requested and requested != connection.project_id:
                 try:
                     exists = connection.execute("SELECT id FROM projects WHERE id=?", (requested,)).fetchone()
                 except Exception:
                     exists = None
+                    if connection.is_postgres:
+                        connection.rollback()
                 if exists:
                     connection.project_id = requested
             yield connection
