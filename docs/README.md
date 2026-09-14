@@ -1,66 +1,52 @@
 # Documentation
 
-Start with the [repository README](../README.md) — it covers the authority
-model, architecture, running locally, tests and deployment.
+Start with the [repository README](../README.md) and [PROJECT_STATUS.md](PROJECT_STATUS.md).
 
-| Directory | Contents |
+Current operating docs:
+
+| Path | Purpose |
 |---|---|
-| `product/` | PM-facing decisions, risks, metrics, and GitHub Project setup |
-| `qa/` | Reusable QA instructions, manual trust pass, and report format |
+| `product/` | Product brief, decisions, risks, metrics, privacy assumptions, and GitHub Project conventions |
+| `qa/` | Reusable QA instructions, manual trust pass, and report templates |
 | `evals/` | PM-facing eval registry and behavior dimensions |
 | `incidents/` | Incident/postmortem process and template |
 | `architecture/` | Current behavioral specifications |
-| `deployment/` | Deployment procedure and checklist |
-| `history/` | Point-in-time records — reviews, refactors, editorial and UX passes |
+| `history/` | Point-in-time and superseded implementation records |
 
-## product/
+## Product
 
-- **`README.md`** — product operating-system index.
-- **`DECISIONS.md`** — settled product decisions and why they were made.
-- **`RISKS.md`** — material AI/product risks and mitigations.
-- **`METRICS.md`** — candidate product-health metrics for a future pilot.
-- **`GITHUB_PROJECT_SETUP.md`** — one-time State GitHub Project configuration.
+- `product/PRODUCT_BRIEF.md`: canonical product definition and portfolio-vs-real-product boundary
+- `product/DECISIONS.md`: settled product decisions
+- `product/RISKS.md`: maintained risk register
+- `product/METRICS.md`: quality, latency, cost, and review-burden measurement design
+- `product/DATA_PRIVACY.md`: current demo-data assumptions and hypothetical real-company requirements
+- `product/GITHUB_PROJECT_SETUP.md`: State Product board conventions
 
-## qa/
+## QA
 
-See root **`QA.md`** first. The `qa/` folder contains the Cowork exploratory
-instructions, Paige's short manual release trust pass, a report template, and a
-quick command cheat sheet.
+Read root `QA.md` first. The `qa/` folder contains Cowork exploratory instructions, the manual release trust pass, a report template, and a quick-command cheat sheet.
 
-## evals/
+## Evals
 
-- **`README.md`** — PM-facing eval registry. Executable eval code remains in
-  `state-project-complete/eval/`.
+`evals/README.md` is the PM-facing registry. Executable eval code remains in `state-project-complete/eval/`.
 
-## incidents/
+## Incidents
 
-- **`README.md`** — when and how to write an incident review.
-- **`TEMPLATE.md`** — short postmortem template focused on impact, root cause,
-  why QA missed it, and durable regression/eval protection.
+- `incidents/README.md`: when and how to write an incident review
+- `incidents/TEMPLATE.md`: short template focused on impact, root cause, why QA missed it, fix, and durable protection
 
-## architecture/
+## Architecture
 
-- **`ASK_GOLDEN_BEHAVIOR_SPEC_R9.md`** — the golden behavior contract for Ask.
-  Current. Read this before changing Ask.
+- `architecture/ASK_GOLDEN_BEHAVIOR_SPEC_R9.md`: current Ask behavior contract
+- `architecture/REVIEW_SUGGESTED_QUESTIONS.md`: Review-to-Question behavior and rollout notes
+- `architecture/SLACK_INTEGRATION_PLAN.md`: Slack integration design/history
 
-## deployment/
+## Release and deployment
 
-- **`DEPLOYMENT_CHECKLIST.md`** — deployment procedure and failure playbook.
-- Root **`RELEASE.md`** adds product/release-readiness gates around the technical
-  deployment procedure.
+Use root `RELEASE.md` for the current release, verification, and rollback process.
 
-## history/
+The old v7 Postgres migration deployment checklist was moved to `history/DEPLOYMENT_CHECKLIST_V7_POSTGRES.md`. It is preserved for provenance only and is not current operational guidance.
 
-These are dated snapshots of work already completed. They are kept for
-provenance and are **not** a description of the current system — where they
-disagree with the repository README, the README is correct.
+## History
 
-- `DEEP_REVIEW_REPORT.md` — full repository QA pass (September 2, 2026)
-- `REFACTORING_SUMMARY.md` — the SQLite/Postgres database abstraction refactor
-- `BACKEND_REFACTORING_STATUS.md` — backend validation status at the time of that refactor
-- `IMPLEMENTATION_SUMMARY.md` — implementation notes with line references that have since moved
-- `CHANGES_APPLIED.md` — a change log from an earlier pass
-- `MANAGER_READY_SUMMARY.md` — the review package prepared September 3, 2026
-- `EDITORIAL_PASS_NOTES.md` — copy and editorial decisions
-- `UX_INFORMATION_ARCHITECTURE_R5.md`, `UX_INFORMATION_ARCHITECTURE_R6.md` — successive IA revisions
-- `STATE_DEFERRED_QA_NOTES_2026-09-03.md` — QA items deliberately deferred
+Files under `history/` are point-in-time records. Keep them when they explain how the product evolved, but do not treat them as current operating instructions when they disagree with the repository README, `PROJECT_STATUS.md`, `QA.md`, or `RELEASE.md`.
