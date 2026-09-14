@@ -64,7 +64,7 @@
       // Keeping the button always present (disabled + a title on the
       // retire-only case) keeps the row's shape predictable across every
       // Review of this type.
-      : `<button class="btn primary" data-action="review-update" data-review="${r.id}">Update</button><button class="btn secondary" data-action="open-adjust-review" data-review="${r.id}"${adjustableCount?'':' disabled title="Nothing to adjust -- every proposal here retires a fact rather than proposing wording."'}>Adjust</button><button class="btn secondary" data-action="review-keep" data-review="${r.id}">Leave unchanged</button>`;
+      : `<button class="btn primary" data-action="review-update" data-review="${r.id}">Update Current State</button><button class="btn secondary" data-action="open-adjust-review" data-review="${r.id}"${adjustableCount?'':' disabled title="Nothing to adjust -- every proposal here retires a fact rather than proposing wording."'}>Adjust</button><button class="btn secondary" data-action="review-keep" data-review="${r.id}">Leave unchanged</button>`;
     // A related open Review is a structural pointer only (same State item or
     // Question as this one) -- never a claim that the two are the same
     // decision. Shown plainly, not as an action, so the human decides

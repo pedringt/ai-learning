@@ -666,7 +666,10 @@ def _clean_visible_ask_text(value: str | None, internal_ids: set[str]) -> str | 
     return text or None
 
 
-def _validate_synthesis(answer: AskSynthesis, selection: AskSelection, context: Mapping[str, Any]) -> AskSynthesis:
+def _validate_synthesis(
+    answer: AskSynthesis, selection: AskSelection, context: Mapping[str, Any],
+    candidates: Mapping[str, list[dict]] | None = None,
+) -> AskSynthesis:
     allowed: dict[str, set[str]] = {
         "state": {x["id"] for x in context.get("state", [])},
         "review": {x["id"] for x in context.get("reviews", [])},
@@ -679,7 +682,20 @@ def _validate_synthesis(answer: AskSynthesis, selection: AskSelection, context: 
     canonical_reviews = {x["id"]: x for x in context.get("reviews", [])}
     canonical_questions = {x["id"]: x for x in context.get("questions", [])}
 
-    has_pending_material = bool(context.get("reviews")) or bool(context.get("questions"))
+    # Bug fix (2026-09-14, live QA): this used to check `context` -- the
+    # *selected* reviews/questions for this run -- so whether the hedging
+    # backstop below fired depended on the selector model's non-deterministic
+    # choice of what to include, not on whether pending material actually
+    # exists. Two runs of the identical question could select the same
+    # underlying Review differently and get a hedged vs. unhedged answer
+    # about the same fact (e.g. pilot budget "approved" vs. "not yet
+    # approved"). `candidates` is the deterministic, pre-selection pool for
+    # this query, so checking it instead removes that source of
+    # inconsistency while preserving the original intent: a genuinely
+    # fully-settled project (no pending Reviews/Questions at all) still never
+    # gets its answer touched by this backstop.
+    pending_pool = candidates if candidates is not None else context
+    has_pending_material = bool(pending_pool.get("reviews")) or bool(pending_pool.get("questions"))
 
     answer.headline = _clean_visible_ask_text(answer.headline, all_internal_ids) or "Project answer"
     if has_pending_material:
@@ -829,7 +845,7 @@ def _finalize_ask_result(
     validation_started = time.perf_counter()
     selection = _validate_selection(AskSelection.model_validate(_bounded_selection_raw(selection_raw)), candidates)
     context = _selected_context(selection, candidates)
-    answer = apply_refinement_transform(query, _normalize_meeting_prep(_validate_synthesis(AskSynthesis.model_validate(answer_raw), selection, context)))
+    answer = apply_refinement_transform(query, _normalize_meeting_prep(_validate_synthesis(AskSynthesis.model_validate(answer_raw), selection, context, candidates)))
     validation_ms = round((time.perf_counter() - validation_started) * 1000)
 
     selected_open = set(selection.review_ids + selection.blocking_question_ids + selection.question_ids)
