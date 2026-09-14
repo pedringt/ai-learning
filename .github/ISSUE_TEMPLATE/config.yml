@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: State QA process
+    url: https://github.com/pedringt/ai-learning/blob/staging/QA.md
+    about: Read the canonical QA contract before creating QA-process work.
+  - name: Product operating docs
+    url: https://github.com/pedringt/ai-learning/tree/staging/docs/product
+    about: Decisions, risks, metrics, and GitHub Project setup.
