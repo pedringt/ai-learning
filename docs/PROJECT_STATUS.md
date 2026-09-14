@@ -2,49 +2,51 @@
 
 This is the canonical current-state handoff for State and the surrounding portfolio. Read this first, then verify the repository before relying on older handoffs or conversation memory.
 
-## Resume here: paused for user review
+## Resume here: Review-quality work done, awaiting staging/preview review
 
-_Last updated: September 10, 2026 Pacific time, after the user chose to pause and requested a GitHub handoff for Claude._
+_Last updated: September 14, 2026 Pacific time, at the end of the #104-#108 implementation session, handed off to a fresh chat at the user's request._
 
-**The AI-suggested Questions feature is implemented on staging, not waiting to be built. Automated checks and a live staging walkthrough passed. The user has not yet reported the results of their own hands-on review. Work is paused; do not make further product changes or promote to main without a new request.**
+**Issues #104-#108 (see #109 tracker) are fully implemented, tested, and holistically QA'd on a local branch. Nothing has been pushed to `origin` and nothing has touched `staging` or `main`. The user said they'd be comfortable moving to a staging/preview review next, but that has not happened yet — do not push, open a PR, or promote anything without the user confirming that's the next step in the new conversation.**
 
-For this feature, read these files from **`staging`**, not the older copies on `main`:
+### Branch state
 
-1. This file: current status, boundaries, and next action.
-2. [Question Review implementation and test guide](architecture/REVIEW_SUGGESTED_QUESTIONS.md): settled product decisions, file map, test commands, and the exact manual walkthrough shared with the user.
-3. [Deployed live QA report](history/QUESTION_REVIEW_LIVE_QA_2026-09-10.md): actual live results, runner correction, two Ask quality findings, retained test data, and artifact references.
-4. Root `README.md` for general runtime setup and component ownership.
+- Branch: **`review-quality-104-105`**, created off `staging` at commit `d9a1009`.
+- **Not pushed to origin.** `git ls-remote --heads origin review-quality-104-105` returns nothing. Pushing it is the first step before any PR or staging preview.
+- 7 commits ahead of the `staging` branch point, all local:
 
-### Verified checkpoints before this documentation-only handoff
-
-| Checkpoint | Commit / result |
+| Commit | What it did |
 | --- | --- |
-| Production `main` | `3f87909afd6391544d0c267c0bd50d2f2544bc8d` |
-| Staging before the pause handoff | `bfe6d83d7cbef2fa8ea9ad1bfcff303e9fd5f3d3`, 10 commits ahead of main, none behind |
-| Question feature implementation | `5c1f2bc51e25db6f75e099123736abd5ac43c7d3` |
-| Live walkthrough source | `8ce2c7a0d6da633b7961f58c066ef8eaf21904d7` |
-| Latest checked pre-handoff CI | Run `34544899127`, success on `bfe6d83` |
-| Successful live-model walkthrough | Run `34544596269`, all eight checks passed |
+| `36370b0` | #104/#105: consequentiality filtering, decision-sized Review grouping, no-acknowledgment-only Reviews |
+| `41b9706` | #104/#105 follow-up: fixed 3 real gaps the long discovery-note stress test found (a dropped grouped policy, a missed Question-resolution link, and an Ask retrieval bug traced to a mechanical filter bug, not a model gap) |
+| `255c578` | #106: human-adjusted Review proposals without losing AI provenance |
+| `6eb9837` | #107: Review decision UI — Update/Adjust/Leave unchanged, removed "Mark reviewed" |
+| `5289f40` | #108: "Something changed?" entry point from Current State to Add Evidence |
+| `96e8d36` | Added `qa_holistic_server.py`, a reusable local QA tool (real demo data + real live provider, no staging/prod traffic) |
+| `757dc6c` | Fixed the one real gap the holistic pass found: #106's adjustment provenance is now visible in History and available to Ask (was stored correctly on the backend but invisible everywhere downstream) |
 
-These are checkpoints, not a promise that branch heads will stay fixed. This handoff adds documentation only. Fetch current refs and compare before making changes; do not restore staging to an older SHA or overwrite work from another session.
+- Full deterministic test suite (backend pytest + all 20 frontend JS suites) is green. The only non-green results across this whole session were isolated live-model judgment tests, each individually confirmed to be pre-existing model variance (reproduced on baseline code), not regressions from this work.
+- All GitHub issue findings are posted as comments on [#104](https://github.com/pedringt/ai-learning/issues/104), [#105](https://github.com/pedringt/ai-learning/issues/105), [#106](https://github.com/pedringt/ai-learning/issues/106), [#107](https://github.com/pedringt/ai-learning/issues/107), [#108](https://github.com/pedringt/ai-learning/issues/108), and the tracker [#109](https://github.com/pedringt/ai-learning/issues/109) (all checkboxes checked). Read #109's comment thread top to bottom for the full narrative if you need more than this summary.
 
-```sh
-git status --short --branch
-git fetch origin
-git log -1 --oneline origin/main
-git log -1 --oneline origin/staging
-git diff --stat origin/main..origin/staging
-```
+### What's actually in the branch
 
-Preserve any local uncommitted work. Read `origin/staging:docs/PROJECT_STATUS.md` with `git show` if switching branches would disturb the working tree.
+- **#104/#105** (`state-project-complete/`): `consequentiality_guidance.py` (shared prompt guidance for both providers), pipeline-level enforcement that a `missing_understanding` Review can't be created with nothing to propose, and a mechanical fix to `ask_provider.py`'s date-lookup candidate filter (was silently dropping records that named a date without containing the literal word "date").
+- **#106**: migration `011_review_proposal_adjustments.sql` adds `proposed_state_changes.adjusted_statement` and `history_transitions.accepted_as_adjusted`. `resolve_review()` takes an optional `adjustments` dict; a materially-adjusted accept doesn't auto-resolve a linked Question (conservative by design).
+- **#107** (`implementation-context-prototype/`): `context-open-items-view.js`'s `reviewCard()` now branches on review type — ordinary Update/Adjust/Leave-unchanged, bespoke `state_at_risk` wording ("Still uncertain — keep it flagged" / "Not a concern"), `open_question` unchanged. New `adjustDialogHtml()` for the Adjust flow.
+- **#108**: one "Something changed?" CTA in Current State's page header (`context-project-view.js`), reusing the exact Add Evidence dialog with only the description copy swapped.
+- **Provenance fix**: `list_history()` now returns `ai_proposed_statement`; History shows a distinct decision line and a "State proposed"/"Human approved" block only for adjusted transitions; Ask's candidate context and grounding rules can explain an adjustment without ever treating the AI's original wording as current.
+- `index.html`'s frontend cache-bust version token is now `r109-adjustment-provenance` (bumped correctly in both places it needs to match — a test, `test_release_asset_loader.py`, now enforces this after catching a real mismatch mid-session).
+
+### Known, deliberately-not-fixed items
+
+- **Hallucinated Question ID**: one live interpretation call referenced a non-existent Question ID and failed safely (Evidence preserved, no bad Review created, retry succeeded). Documented on #109 as a candidate for a future hardening issue ("validate model-returned Question IDs and reject unknown ones more gracefully"), explicitly not bundled into the provenance fix.
+- **Cosmetic copy repetition**: a Review's "Still unresolved" block sometimes just repeats its own `decision_question` verbatim. Noted, not staging-blocking.
+- A visual-quality look at the Adjust dialog/buttons by the user themselves (not just Claude's verification) is still open — the user said they'd do that once the branch is on a preview/staging surface.
 
 ### Next action when the user returns
 
-Help the user complete the manual staging walkthrough in the feature guide and collect any specific confusion or unexpected outcome. Do not rerun the entire implementation or reopen settled UI decisions. A different model outcome is evidence for the separate eval exercise, not a reason to keep rewriting an input until the desired result appears.
+The user's stated plan, in order: push the branch → staging/preview review → fix anything found there → update the case study (sprinkled into existing sections, not expanded) → then, with explicit confirmation, consider `staging`/`main`. Do not skip ahead — each step needs the user's go-ahead in the new conversation, same as every phase in this one did. Do not re-run the full holistic QA pass from scratch; if something needs re-checking, do a focused check on just that thing (that's what the user asked for last time this came up).
 
-The user is writing State evals in another chat. Keep software regressions separate from model judgment: the central eval choice is **supported State change vs consequential unresolved Question vs neither**. Carry forward the exact-duplicate limit, internal-ID leakage, and evidence-attribution findings described below and in the live report. Do not claim the separate eval dataset has been updated here.
-
-A future main promotion needs the user's explicit confirmation in that conversation, a fresh diff/CI check, and verification of the staging/frontend/backend revisions. Migration 009 is part of the feature; do not deploy only the UI. No database reset, extra live-model run, broad cleanup, or additional feature work is part of this pause request.
+The strongest new case-study takeaway from this work, per the user: *"Human review only works if the system is selective about what reaches people and makes each decision clear enough to act on"* — backed now by the long discovery-note test, the Ask retrieval bug, and the Adjust/provenance work as concrete evidence. Save that framing for the case-study update step; don't act on it before then.
 
 ### Additional user note: reset-data loading feedback (resolved 2026-09-12)
 
