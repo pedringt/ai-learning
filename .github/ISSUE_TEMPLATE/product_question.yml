@@ -1,0 +1,57 @@
+name: Product question
+description: Capture an unsettled State product decision before implementation
+title: "[Product question] "
+body:
+  - type: markdown
+    attributes:
+      value: "Use this when QA or design exposes an unsettled product choice. Do not force a test expectation until the product decision is made."
+  - type: dropdown
+    id: area
+    attributes:
+      label: Product area
+      options:
+        - Evidence
+        - Reviews
+        - Questions
+        - Current State
+        - Ask
+        - Platform / project model
+        - Cross-cutting
+    validations:
+      required: true
+  - type: textarea
+    id: decision
+    attributes:
+      label: Decision needed
+      description: State the product question as a concrete choice.
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: Context / trigger
+      description: What scenario, QA finding, user need, or tradeoff exposed this question?
+    validations:
+      required: true
+  - type: textarea
+    id: options
+    attributes:
+      label: Options considered
+      description: List the main alternatives if they are known.
+    validations:
+      required: true
+  - type: textarea
+    id: consequences
+    attributes:
+      label: Product consequences
+      description: How could each choice affect trust, authority, review burden, UX, provenance, or complexity?
+  - type: textarea
+    id: objects
+    attributes:
+      label: State objects affected
+      placeholder: "Evidence / Reviews / Questions / Current State / History / Ask"
+  - type: textarea
+    id: links
+    attributes:
+      label: Related evidence
+      description: Link relevant QA findings, Issues, PRs, eval cases, or decision-log entries.

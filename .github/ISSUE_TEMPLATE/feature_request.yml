@@ -1,0 +1,52 @@
+name: Feature request
+description: Propose a State product improvement or new capability
+title: "[Feature] "
+body:
+  - type: dropdown
+    id: area
+    attributes:
+      label: Product area
+      options:
+        - Evidence
+        - Reviews
+        - Questions
+        - Current State
+        - Ask
+        - Platform / integrations
+        - Cross-cutting
+    validations:
+      required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem / user need
+      description: Start with the problem rather than the requested implementation.
+    validations:
+      required: true
+  - type: textarea
+    id: outcome
+    attributes:
+      label: Desired outcome
+      description: What should become easier, safer, clearer, or more useful?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Possible approach
+      description: Optional. Describe a solution idea if one is already useful.
+  - type: textarea
+    id: success
+    attributes:
+      label: How would we know it worked?
+      description: Prefer observable user/product outcomes over implementation completion.
+  - type: textarea
+    id: risks
+    attributes:
+      label: Risks / authority implications
+      description: Could this affect Current State authority, provenance, uncertainty, review burden, cost, or project isolation?
+  - type: textarea
+    id: links
+    attributes:
+      label: Related context
+      description: Link related Issues, PRs, decisions, risks, research, or QA findings.

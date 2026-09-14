@@ -1,0 +1,54 @@
+name: State QA Release
+
+on:
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  release-qa:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: state_question_tests
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      STATE_TEST_POSTGRES_URL: postgresql://postgres:postgres@localhost:5432/state_question_tests
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      QA_BASE_REF: origin/staging
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Install Python dependencies
+        working-directory: state-project-complete
+        run: |
+          pip install -r requirements.txt
+          pip install pytest pytest-subtests playwright
+      - name: Install Chromium
+        run: python -m playwright install --with-deps chromium
+      - name: Run release QA
+        run: make qa-release
+      - name: Explain missing live-model credential
+        if: failure()
+        run: |
+          if [ -z "${ANTHROPIC_API_KEY:-}" ]; then
+            echo "If the log says a model-sensitive change requires ANTHROPIC_API_KEY, add that repository Actions secret or run the live-model check through the authorized staging workflow instead."
+          fi

@@ -11,7 +11,7 @@
 # .github/workflows/ anyway. Both are resolved -- the freeze lifted and the
 # cleanup PRs (#14-#17) are merged -- so it's activated here.
 
-name: tests
+name: State QA Fast
 
 on:
   pull_request:
