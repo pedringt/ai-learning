@@ -133,3 +133,21 @@ def test_clean_visible_ask_text_strips_leaked_internal_field_names():
         assert cleaned is None or "ai_proposed_statement" not in cleaned
         assert cleaned is None or "new_statement" not in cleaned
         assert cleaned is None or "accepted_as_adjusted" not in cleaned
+
+
+def test_clean_visible_ask_text_preserves_legitimate_project_terminology():
+    """Regression guard for a real bug found in staging-hardening review
+    (2026-09-14): the first fix for the leak above used a blanket regex
+    that stripped ANY underscore-joined token, not just known internal
+    field names -- so it also silently deleted legitimate project
+    terminology a user might ask about or a record might quote, changing
+    answer meaning rather than just formatting (e.g. "The vendor must meet
+    SOC_2 controls." became "The vendor must meet controls."). The fix
+    must strip only the known internal field/key names in
+    _INTERNAL_JSON_FIELD_NAMES, not every underscore-shaped token.
+    """
+    legitimate_terms = ["SOC_2", "api_v2", "feature_flag_beta", "review_quality_104_105", "snake_case"]
+    for term in legitimate_terms:
+        text = f"The vendor must meet {term} controls"
+        cleaned = _clean_visible_ask_text(text, set())
+        assert cleaned is not None and term in cleaned, f"legitimate terminology was stripped: {term!r} from {text!r} -> {cleaned!r}"

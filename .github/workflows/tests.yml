@@ -76,17 +76,29 @@ jobs:
         with:
           node-version: "22"
 
+      # Runs every state-*-tests.js file rather than a hand-maintained list --
+      # a hardcoded list silently stopped covering newly added suites (found
+      # 2026-09-14: 9 of 20 existing suites, including adjustment-provenance,
+      # review-decision-ui, and the Ask mobile/refresh/starter-routing
+      # suites, weren't running here even though CI was green). A file only
+      # needs the state-*-tests.js name to be picked up automatically.
       - name: Run State behavior suites
         working-directory: implementation-context-prototype
         run: |
-          node state-ask-behavior-tests.js
-          node state-ask-followup-tests.js
-          node state-ask-loading-visibility-tests.js
-          node state-provenance-behavior-tests.js
-          node state-ask-intent-tests.js
-          node state-question-review-handoff-tests.js
-          node state-workspace-hierarchy-tests.js
-          node state-review-priority-tests.js
-          node state-history-copy-tests.js
-          node state-analytics-tests.js
-          node state-attention-breakdown-tests.js
+          shopt -s nullglob
+          files=(state-*-tests.js)
+          if [ ${#files[@]} -eq 0 ]; then
+            echo "No state-*-tests.js files found -- failing so a rename/move doesn't silently drop coverage."
+            exit 1
+          fi
+          echo "Running ${#files[@]} suites: ${files[*]}"
+          status=0
+          for f in "${files[@]}"; do
+            echo "::group::$f"
+            if ! node "$f"; then
+              status=1
+              echo "FAILED: $f"
+            fi
+            echo "::endgroup::"
+          done
+          exit $status

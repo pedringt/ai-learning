@@ -608,6 +608,31 @@ def _soften_unearned_settled_prose(value: str | None) -> str | None:
     return text or value
 
 
+# Exact JSON field/key names (and a few fixed enum values) that appear in the
+# context blob or previous_answer JSON given to the model -- the only tokens
+# a model could plausibly echo verbatim as a leaked implementation detail.
+# Deliberately an explicit list, not a "strip anything with an underscore"
+# regex: a blanket underscore-shaped-token strip (tried 2026-09-14, reverted
+# same day) also deleted legitimate project terminology a user might
+# reasonably ask about or a record might legitimately contain -- SOC_2,
+# api_v2, feature_flag_beta, review_quality_104_105, or a Note quoting
+# someone's own snake_case -- silently changing answer meaning, not just
+# formatting. Extend this set when a new internal field name is added to
+# _compact_candidates, AskSelection, or AskSynthesis's schema.
+_INTERNAL_JSON_FIELD_NAMES = frozenset({
+    "ai_proposed_statement", "accepted_as_adjusted", "new_statement", "old_statement",
+    "state_item_id", "decision_question", "why_consequential", "affected_state_ids",
+    "affected_state_items", "evidence_ids", "evidence_items", "question_ids",
+    "question_to_create", "existing_question_id", "review_type", "resolves_question_ids",
+    "changed_at", "submitted_at", "source_type", "record_type", "record_id",
+    "state_ids", "review_ids", "history_ids", "blocking_question_ids",
+    "source_ids", "uncertainty_ids", "suggested_refinements",
+    "governing_current_fact", "qualifies_current_state", "known_unknown",
+    "accepted_past_transition", "supporting_or_event_evidence", "interpretation_guardrail",
+    "needs_review", "recent_context", "open_attention",
+})
+
+
 def _clean_visible_ask_text(value: str | None, internal_ids: set[str]) -> str | None:
     """Remove implementation identifiers from prose shown to users."""
     if value is None:
@@ -620,14 +645,13 @@ def _clean_visible_ask_text(value: str | None, internal_ids: set[str]) -> str | 
             text = re.sub(rf"(?<![A-Za-z0-9_]){re.escape(internal_id)}(?![A-Za-z0-9_])", "", text, flags=re.IGNORECASE)
     text = re.sub(r"\b(?:state|question|evidence|review|proposal)_[a-z0-9]+\b", "", text, flags=re.IGNORECASE)
     text = re.sub(r"\b(?:ask-evidence|state|question|evidence|review|proposal|k|q)-[a-z0-9-]+\b", "", text, flags=re.IGNORECASE)
-    # Defensively strip any snake_case-identifier-shaped token the model might
-    # echo from the JSON context it was given (e.g. ai_proposed_statement,
-    # new_statement, accepted_as_adjusted) -- an underscore-joined lowercase
-    # token never legitimately appears in natural prose, so this is safe to
-    # remove outright rather than trying to enumerate every field name by hand.
-    # Found via live staging QA (2026-09-14): Ask's adjustment-provenance
-    # citations leaked raw field names as visible answer text.
-    text = re.sub(r"\b[a-z][a-z0-9]*(?:_[a-z0-9]+)+\b", "", text, flags=re.IGNORECASE)
+    # Defensively strip known internal field/key names the model might echo
+    # from the JSON context it was given (e.g. ai_proposed_statement,
+    # accepted_as_adjusted). Found via live staging QA (2026-09-14): Ask's
+    # adjustment-provenance citations leaked raw field names as visible
+    # answer text. Narrow by design -- see _INTERNAL_JSON_FIELD_NAMES.
+    for field_name in _INTERNAL_JSON_FIELD_NAMES:
+        text = re.sub(rf"\b{re.escape(field_name)}\b", "", text, flags=re.IGNORECASE)
     # A model sometimes cites an internal ID as an inline parenthetical, e.g.
     # "Retention is confirmed (review_1)." Stripping the ID above is correct
     # (it's an implementation detail, not something a user should see), but
