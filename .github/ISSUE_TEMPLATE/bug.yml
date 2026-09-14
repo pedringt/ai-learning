@@ -1,0 +1,78 @@
+name: Bug
+description: Report reproducible incorrect State behavior
+title: "[Bug] "
+body:
+  - type: markdown
+    attributes:
+      value: "Use this for confirmed/reproducible software behavior. Use the AI behavior form when the central problem is model judgment, grounding, or interpretation."
+  - type: dropdown
+    id: area
+    attributes:
+      label: Product area
+      options:
+        - Evidence
+        - Reviews
+        - Questions
+        - Current State
+        - Ask
+        - Platform / deployment
+        - Portfolio / case study
+        - Not sure
+    validations:
+      required: true
+  - type: dropdown
+    id: environment
+    attributes:
+      label: Environment
+      options:
+        - Local
+        - Staging
+        - Production
+        - Not sure
+    validations:
+      required: true
+  - type: dropdown
+    id: severity
+    attributes:
+      label: Suggested severity
+      description: P0/P1 should explain the integrity or user-impact reason below.
+      options:
+        - P0 - integrity / authority / data isolation failure
+        - P1 - major wrong or misleading behavior
+        - P2 - meaningful bounded defect
+        - P3 - low-risk polish / clarity
+        - Not sure
+    validations:
+      required: true
+  - type: textarea
+    id: observed
+    attributes:
+      label: What happened?
+      description: Describe the user-visible behavior.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What should have happened?
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction
+      description: Smallest reliable sequence, inputs, project, and relevant IDs/links if available.
+    validations:
+      required: true
+  - type: textarea
+    id: impact
+    attributes:
+      label: Why it matters
+      description: Include trust, authority, user burden, data integrity, or release impact when relevant.
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Supporting evidence
+      description: Screenshots, logs, QA report, related PR/issue, or other context.
