@@ -5,9 +5,38 @@ model, architecture, running locally, tests and deployment.
 
 | Directory | Contents |
 |---|---|
+| `product/` | PM-facing decisions, risks, metrics, and GitHub Project setup |
+| `qa/` | Reusable QA instructions, manual trust pass, and report format |
+| `evals/` | PM-facing eval registry and behavior dimensions |
+| `incidents/` | Incident/postmortem process and template |
 | `architecture/` | Current behavioral specifications |
 | `deployment/` | Deployment procedure and checklist |
 | `history/` | Point-in-time records — reviews, refactors, editorial and UX passes |
+
+## product/
+
+- **`README.md`** — product operating-system index.
+- **`DECISIONS.md`** — settled product decisions and why they were made.
+- **`RISKS.md`** — material AI/product risks and mitigations.
+- **`METRICS.md`** — candidate product-health metrics for a future pilot.
+- **`GITHUB_PROJECT_SETUP.md`** — one-time State GitHub Project configuration.
+
+## qa/
+
+See root **`QA.md`** first. The `qa/` folder contains the Cowork exploratory
+instructions, Paige's short manual release trust pass, a report template, and a
+quick command cheat sheet.
+
+## evals/
+
+- **`README.md`** — PM-facing eval registry. Executable eval code remains in
+  `state-project-complete/eval/`.
+
+## incidents/
+
+- **`README.md`** — when and how to write an incident review.
+- **`TEMPLATE.md`** — short postmortem template focused on impact, root cause,
+  why QA missed it, and durable regression/eval protection.
 
 ## architecture/
 
@@ -17,6 +46,8 @@ model, architecture, running locally, tests and deployment.
 ## deployment/
 
 - **`DEPLOYMENT_CHECKLIST.md`** — deployment procedure and failure playbook.
+- Root **`RELEASE.md`** adds product/release-readiness gates around the technical
+  deployment procedure.
 
 ## history/
 
