@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import sqlite3
 
-from ask_service import _compact_candidates, _grounding_rules
+from ask_service import _clean_visible_ask_text, _compact_candidates, _grounding_rules
 from database_migration_backed import get_test_db
 from review_service import list_history, resolve_review
 
@@ -102,7 +102,34 @@ def test_ask_candidates_carry_adjustment_provenance_only_for_adjusted_transition
 
 def test_grounding_rules_explain_adjustment_provenance_without_treating_it_as_current():
     rules = _grounding_rules()
-    assert "accepted_as_adjusted" in rules
-    assert "ai_proposed_statement" in rules
-    assert "new_statement is the only authoritative current value" in rules
+    assert "The approved wording is the only authoritative current value" in rules
     assert "never an alternate current fact" in rules
+    # Regression guard (state.md #106/#109 holistic follow-up, staging QA
+    # 2026-09-14): the rules text used to spell out raw field/key names
+    # (accepted_as_adjusted, ai_proposed_statement) as vocabulary for the
+    # model, which primed it to echo those exact identifiers as visible
+    # answer text. The rules must describe the concept in plain language and
+    # explicitly forbid surfacing raw field/key names instead.
+    assert "accepted_as_adjusted" not in rules
+    assert "ai_proposed_statement" not in rules
+    assert "never surface a raw internal field or key name" in rules
+
+
+def test_clean_visible_ask_text_strips_leaked_internal_field_names():
+    """Pins the exact staging QA finding (2026-09-14): Ask's adjustment-
+    provenance citations echoed raw internal field names as visible answer
+    text (e.g. "ai_proposed_statement omitted 'verified by Security' clause",
+    and a bare "new_statement from" trailing a citation line). No known
+    internal field/key name should survive _clean_visible_ask_text, even if
+    a future prompt change reintroduces the model's temptation to echo one.
+    """
+    leaked_examples = [
+        "Recently accepted (2026-09-14) with human adjustment; ai_proposed_statement omitted 'verified by Security' clause",
+        "Human's revised (accepted) version: 'Feature access...'\nnew_statement from",
+        "AI's original proposal: 'Feature access requires...'\nai_proposed_statement",
+    ]
+    for leaked in leaked_examples:
+        cleaned = _clean_visible_ask_text(leaked, set())
+        assert cleaned is None or "ai_proposed_statement" not in cleaned
+        assert cleaned is None or "new_statement" not in cleaned
+        assert cleaned is None or "accepted_as_adjusted" not in cleaned
