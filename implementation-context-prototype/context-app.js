@@ -404,12 +404,25 @@
     // everywhere else in this file), never falling back to fixed text.
     // isProjectUniversalMeta excludes "Project stage"/"Project outcome" --
     // headline framing, not itself an example of a specific fact.
+    // QA follow-up (2026-09-14), round 2: the first rebuild created a bare
+    // <ul class="state-fact-preview"> and left the original three status
+    // rows visible, producing a tall stack of both layouts at once. Two
+    // things were missed: (1) context-attention-alignment.js has its own
+    // separate decorator (search "workspace-status-card" there) that only
+    // activates when .state-fact-preview contains the exact structure the
+    // original factPreview() built -- a <p> subtitle and a .text-button
+    // Browse link inside it, which it relocates into the header (icon +
+    // title + "Browse ->") -- a bare <ul> made it a no-op. (2) a CSS rule
+    // (deleted along with the broken feature, restored in context-tool.css)
+    // is what hides the three status-item rows once the preview exists, so
+    // only the focused card -- header, subtitle, bullets -- shows.
     const previewFacts=stateLoaded?(state.data.knowledge||[]).filter(k=>k.state==='current'&&!isProjectUniversalMeta(k)).slice(0,4):[];
-    const factPreviewHtml=previewFacts.length?`<ul class="state-fact-preview">${previewFacts.map(k=>`<li>${esc(k.statement||k.title)}</li>`).join('')}</ul>`:'';
+    const factPreviewHtml=previewFacts.length?`<div class="state-fact-preview"><p>What's treated as true.</p><ul>${previewFacts.map(k=>`<li>${esc(k.statement||k.title)}</li>`).join('')}</ul><button class="text-button" data-view="project-overview">Browse Current State →</button></div>`:'';
     return `<section class="workspace-status-card"><span class="eyebrow">Current State</span><div class="workspace-status-body">
       <div class="workspace-status-item"><strong class="workspace-status-value">${!historyLoaded?(state.backendStatus.history==='error'?'Recent change unavailable':'…'):lastUpdated?`Updated ${esc(lastUpdated)}`:'Not yet established'}</strong><div class="workspace-status-row"><span>${!historyLoaded&&state.backendStatus.history!=='error'?'Loading most recent change…':lastLabel?esc(lastLabel):'Most recent change.'}</span></div></div>
-      <div class="workspace-status-item"><strong class="workspace-status-value">${stateLoaded?`${establishedCount} established fact${establishedCount===1?'':'s'}`:state.backendStatus.state==='error'?'Established facts unavailable':'… established facts'}</strong><div class="workspace-status-row"><span>What the project currently treats as true.</span><button class="text-button" data-view="project-overview">Browse Current State →</button></div>${factPreviewHtml}</div>
+      <div class="workspace-status-item"><strong class="workspace-status-value">${stateLoaded?`${establishedCount} established fact${establishedCount===1?'':'s'}`:state.backendStatus.state==='error'?'Established facts unavailable':'… established facts'}</strong><div class="workspace-status-row"><span>What the project currently treats as true.</span><button class="text-button" data-view="project-overview">Browse Current State →</button></div></div>
       <div class="workspace-status-item"><strong class="workspace-status-value${questionsLoaded&&openCount===0?' is-clear':''}">${esc(openHeadline)}</strong><div class="workspace-status-row"><span>${openSupportText}</span><button class="text-button" data-view="open-items">Open Items →</button></div></div>
+      ${factPreviewHtml}
     </div></section>`;
   }
   function renderWorkspaceAttentionOnly(){

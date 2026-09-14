@@ -1065,7 +1065,9 @@ body.v88-dark .project-outline{background:#17151d!important;border-color:var(--l
 .btn:disabled{opacity:.5;cursor:not-allowed}
 .btn.primary:disabled{background:var(--muted);border-color:var(--muted)}
 html body .overview-stage.overview-stage--plain.overview-stage--plain{display:block!important;width:auto!important;max-width:640px!important;margin-top:7px!important;padding:0!important;border:0!important;border-radius:0!important;background:transparent!important;box-shadow:none!important;font-size:13px!important;font-weight:600!important;color:var(--muted)!important;white-space:normal!important}
-.state-fact-preview{list-style:none;margin:10px 0 0;padding:0}
+.workspace-status-card .workspace-status-item{display:none!important}
+.state-fact-preview{margin:10px 0 0}
+.state-fact-preview ul{list-style:none;margin:0;padding:0}
 .state-fact-preview li{position:relative;padding:8px 0 8px 22px;border-top:1px solid var(--line);font-size:12.5px;line-height:1.45;color:var(--ink)}
 .state-fact-preview li:first-child{border-top:0}
 .state-fact-preview li::before{content:'✓';position:absolute;left:0;top:8px;color:var(--accent);font-weight:800}

@@ -171,11 +171,14 @@
       const oldBrowse=preview.querySelector(':scope > .text-button');
       if(!browse&&oldBrowse){browse=oldBrowse;browse.classList.add('current-state-browse');eyebrow.appendChild(browse)}
 
-      const list=preview.querySelector(':scope > ul');
-      if(list&&list.children.length<4){
-        const fact=window.PROJECT_CONTEXT_DATA?.knowledge?.find?.(item=>item.id==='k-entry'&&item.state==='current')?.statement;
-        if(fact){const li=document.createElement('li');li.textContent=fact;list.appendChild(li)}
-      }
+      // QA follow-up (2026-09-14): this used to pad a short fact list out
+      // toward 4 items using window.PROJECT_CONTEXT_DATA's static k-entry
+      // statement -- Northstar's own fixture, unconditionally, regardless
+      // of which project is actually active. Doesn't affect today's two
+      // seeded projects (both have well over 4 real facts) but is the same
+      // leak class as the rest of this pass; a real fact count under 4
+      // should just show fewer bullets, not synthesize one from another
+      // project's fixture data.
 
       important(card,'align-self',mobile?'start':'stretch');
       important(card,'height',mobile?'auto':'100%');
