@@ -1055,8 +1055,9 @@ body.v88-dark .project-outline{background:#17151d!important;border-color:var(--l
 .review-help-trigger{color:var(--accent);font-weight:800;cursor:default;border-bottom:1px dotted var(--accent)}
 .review-help-panel{display:none;position:absolute;z-index:20;top:100%;left:0;margin-top:8px;border:1px solid var(--line);border-radius:10px;background:var(--surface);box-shadow:0 16px 36px rgba(28,24,45,.12);border-spacing:0;width:max-content;max-width:min(560px,calc(100vw - 32px))}
 .review-help:hover .review-help-panel,.review-help:focus .review-help-panel,.review-help:focus-within .review-help-panel{display:table}
-.review-help-panel th{text-align:left;font-weight:800;color:var(--ink);white-space:nowrap;vertical-align:top;padding:10px 16px 10px 14px}
-.review-help-panel td{color:var(--muted);vertical-align:top;padding:10px 14px 10px 0}
+.review-help-panel th{text-align:left;font-weight:800;color:var(--ink);white-space:nowrap;vertical-align:top;padding:10px 16px 10px 14px;border-top:1px solid var(--line)}
+.review-help-panel td{color:var(--muted);vertical-align:top;padding:10px 14px 10px 0;border-top:1px solid var(--line)}
+.review-help-panel tr:first-child th,.review-help-panel tr:first-child td{border-top:0}
 .review-help-panel tr:first-child th,.review-help-panel tr:first-child td{padding-top:14px}
 .review-help-panel tr:last-child th,.review-help-panel tr:last-child td{padding-bottom:14px}
 .state-toast{display:flex;align-items:center;gap:12px}
