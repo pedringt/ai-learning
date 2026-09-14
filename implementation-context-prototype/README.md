@@ -1,31 +1,39 @@
-# State — frontend
+# State frontend
 
-This directory is the **authoritative State frontend**. It is what the live site
-loads and what every frontend test reads.
+This directory is the authoritative State frontend. It is what the live product loads and what the frontend behavior suites exercise.
 
-Full documentation — the authority model, architecture, how to run the backend,
-deployment, and known debt — lives in the [repository README](../README.md).
-This file exists so nobody has to guess whether this directory or some other
-copy is the real one. It is.
+For the product model, current project status, QA process, release rules, and known risks, start at the repository root:
 
-## Files
+- `README.md`
+- `docs/PROJECT_STATUS.md`
+- `QA.md`
+- `RELEASE.md`
+- `docs/product/README.md`
+
+## Main files
 
 | File | Responsibility |
 |---|---|
 | `index.html` | Application shell and navigation |
-| `context-app.js` | Routing, rendering, state transitions, Review decisions, Questions, Notes, History |
-| `context-api.js` | Backend HTTP client |
-| `context-ask.js` | Ask UI and result rendering |
-| `context-data.js` | Deterministic fixture used when the backend is unreachable |
+| `context-app.js` | Routing, controller orchestration, dialogs, state transitions |
+| `context-api.js` | Backend HTTP client and Ask streaming |
+| `context-ask.js` | Ask UI and answer rendering |
+| `context-ask-followup.js` | Ask follow-up/refinement behavior |
+| `context-backend-sync.js` | Backend payload to frontend-shape mapping |
+| `context-notes-view.js` | Notes rendering |
+| `context-open-items-view.js` | Reviews and Questions rendering |
+| `context-project-view.js` | Current State rendering |
+| `context-settings.js` | Rules and Slack settings |
+| `context-data.js` | Deterministic local/test fixture |
 | `context-tool.css` | Product styling |
 
-## Running it
+The historically named `context-*-pass.js` files are still live runtime code. Do not remove or consolidate them just because their names look temporary. Previous investigation found real layout/race regressions when seemingly redundant behavior was removed.
 
-`index.html` opens directly from the filesystem; it detects `file://` and
-switches to relative asset paths.
+## Running locally
 
-By default it talks to the deployed backend. To point it at a local one, set the
-API base before `context-api.js` loads:
+`index.html` can open from `file://`; it switches to relative asset paths automatically.
+
+To use a local backend, set the API base before `context-api.js` loads:
 
 ```html
 <script>window.STATE_API_BASE = 'http://127.0.0.1:8000';</script>
@@ -35,13 +43,19 @@ or set `data-api-base` on the `<html>` element.
 
 ## Tests
 
+From the repository root, the preferred deterministic check is:
+
 ```bash
-node state-ask-behavior-tests.js
-# 81 passed, 0 failed
+make qa-fast
 ```
 
-This suite covers deterministic Ask routing and behavior. Browser flow tests and
-the frontend integration contract live with the backend suite in
-`../state-project-complete/` and read the files in this directory directly.
+CI runs every `state-*-tests.js` file automatically. To run only the frontend suites by hand:
 
-See `STATE-ASK-EVALUATION-MAP.md` for what the Ask suite covers.
+```bash
+cd implementation-context-prototype
+for f in state-*-tests.js; do node "$f" || exit 1; done
+```
+
+Browser-flow and frontend integration tests live under `../state-project-complete/` and read this directory directly.
+
+See `STATE-ASK-EVALUATION-MAP.md` for the Ask behavior/evaluation map.
