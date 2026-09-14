@@ -140,9 +140,14 @@ before anything reaches the client.)
 | Interpreting new Evidence | Schema and type validation |
 | Proposing Current State changes | Authority checks |
 | Ask synthesis | Version checks before a change applies |
-| Matching a new Question to an existing one | Atomic, all-or-nothing writes |
-| | Duplicate detection |
+| | Atomic, all-or-nothing writes |
+| | Question deduplication (exact normalized-text match, no fuzzy matching) |
 | | Stripping internal ids from AI-facing text |
+
+Question matching (`question_review_service.py`'s `matching_open_question()`)
+case-folds and collapses whitespace on both sides, then requires an exact
+match against open Questions in the same project. There is no embedding or
+LLM-based similarity check.
 
 Anything that has to be correct every single time, not just usually, lives
 in software.
