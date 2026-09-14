@@ -73,6 +73,22 @@
   // this list can't do that to its own settings.
   async function rules(){try{const payload=await api()?.getRules?.();return {items:payload?.items||payload||[],failed:false};}catch(error){console.warn('Settings could not load project rules.',error);return {items:[],failed:true};}}
 
+  // QA follow-up (2026-09-14): this placeholder was a fixed string
+  // ("Example: Security approvals must be explicit.") and stayed
+  // Northstar-flavored on every project, Juniper included. Static-but-
+  // project-scoped, matching the same decision already made for Ask's
+  // starter prompts: known projects get a grounded example; an
+  // unrecognized project (or this module loading before the switcher's
+  // dataset is synced) gets fully generic wording rather than assuming a
+  // domain.
+  const RULE_EXAMPLES={
+    northstar: 'Example: Security approvals must be explicit.',
+    juniper: 'Example: Vendor contracts must be signed before work begins.',
+  };
+  function rulePlaceholder(){
+    const projectId=document.getElementById('projectSwitcher')?.dataset?.projectId;
+    return RULE_EXAMPLES[projectId] || 'Example: a constraint this project must always follow when interpreting new information.';
+  }
   function rulesCountMarkup(rulesState){
     if(rulesState.loading) return '…';
     if(rulesState.failed) return 'unavailable';
@@ -159,7 +175,7 @@
       <div class="page-head"><h2>Settings</h2><p>Configure Northstar, its Evidence sources, and the safeguards around Current State.</p></div>
       <section class="settings-section settings-quiet"><div class="settings-section-head"><div><h3>How State works</h3><p>Safeguards that protect the human authorization model.</p></div></div><ul class="settings-behavior-list"><li>Evidence cannot change Current State automatically.</li><li>Questions require Review before resolution.</li><li>Ignored Evidence is excluded from active reasoning.</li><li>Evidence history stays available so accepted changes remain explainable.</li></ul></section>
       <section class="settings-section"><div class="settings-section-head"><div><h3>Project</h3><p>Basic information State uses for this project.</p></div></div><div class="settings-project-name"><label for="settings-project-name">Project name</label><input id="settings-project-name" value="Northstar" readonly aria-readonly="true"><p>Project renaming isn't available for this example project.</p></div>
-        <details class="settings-rules"><summary><span>Project rules <span class="settings-rules-count">${rulesCountMarkup(state)}</span></span></summary><div class="settings-rules-body"><p>Rules tell State how to interpret information for this project.</p><form class="settings-rule-form" data-settings-action="add-rule"><label>Add a project rule<input name="rule" autocomplete="off" placeholder="Example: Security approvals must be explicit."></label><label>Category<select name="category"><option>Authority</option><option>Review</option><option>Sources</option><option selected>Interpretation</option></select></label><button class="btn secondary" type="submit">Add rule</button></form><ul class="settings-rule-list">${rulesListMarkup(state)}</ul></div></details>
+        <details class="settings-rules"><summary><span>Project rules <span class="settings-rules-count">${rulesCountMarkup(state)}</span></span></summary><div class="settings-rules-body"><p>Rules tell State how to interpret information for this project.</p><form class="settings-rule-form" data-settings-action="add-rule"><label>Add a project rule<input name="rule" autocomplete="off" placeholder="${esc(rulePlaceholder())}"></label><label>Category<select name="category"><option>Authority</option><option>Review</option><option>Sources</option><option selected>Interpretation</option></select></label><button class="btn secondary" type="submit">Add rule</button></form><ul class="settings-rule-list">${rulesListMarkup(state)}</ul></div></details>
       </section>
       <section class="settings-section settings-slack" id="settings-slack"><div class="settings-section-head"><div class="settings-slack-intro"><h3 class="settings-slack-heading">${sourceIcon('slack')}<span>Slack</span></h3><p>Bring useful project conversations into State as Evidence. Slack never changes Current State directly.</p></div><div class="settings-actions"><a class="btn secondary" href="${esc((api()?.base||'')+'/api/integrations/slack/oauth/start')}">${slack.health?.connected?'Reconnect Slack':'Connect Slack'}</a>${slack.health?.connected?'<button class="text-button" type="button" data-settings-action="confirm-disconnect-slack">Disconnect</button>':''}</div></div>${slackConnectNoticeMarkup(connectNotice)}<p class="settings-slack-status ${slackStatusClass(slack)}">${slackStatusLine(slack)}</p><div class="slack-preview" aria-label="Slack channel activity">${slackChannelsMarkup(slack)}</div></section>
       <section class="settings-section"><div class="settings-section-head"><div><h3>Other Sources</h3><p>Places State can gather project information from planning, discovery, documentation, and collaboration.</p></div></div><div class="settings-callout"><strong>Sources provide Evidence. They never change Current State directly.</strong></div><div class="source-list settings-source-grid" aria-label="Planned sources">

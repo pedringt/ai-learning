@@ -682,7 +682,17 @@
       toast.appendChild(btn);
     }
     document.body.appendChild(toast);
-    setTimeout(()=>toast.remove(),action?5200:2600);
+    // QA follow-up (2026-09-14): a toast with a "View" action still vanished
+    // fast enough that a real person reading it could miss the link before
+    // clicking it. Longer base duration, and pausing the countdown on
+    // hover/focus -- so reading it (or moving toward the button) doesn't
+    // race the timer -- rather than picking an even longer fixed delay that
+    // just as easily proves too short for someone slower to react.
+    let remaining=action?9000:2600, timer=null, startedAt=0;
+    const arm=()=>{startedAt=Date.now();timer=setTimeout(()=>toast.remove(),remaining);};
+    const pause=()=>{if(!timer)return;clearTimeout(timer);timer=null;remaining-=Date.now()-startedAt;};
+    if(action){toast.addEventListener('mouseenter',pause);toast.addEventListener('mouseleave',arm);toast.addEventListener('focusin',pause);toast.addEventListener('focusout',arm);}
+    arm();
   }
 
   // state.md #107: decision tokens beyond the schema-level accept/keep/reject
@@ -1127,6 +1137,25 @@
     for(const [key,result] of Object.entries(byKey)) if(result.status==='rejected') console.warn(`Backend ${key} unavailable:`,result.reason);
     if(loadStatus)loadStatus.hidden=true;
     updateNav();
+    // QA follow-up (2026-09-14): a fresh page load paints the Workspace
+    // heading from context-data.js's static pre-hydration placeholder
+    // before this function has ever run -- on Juniper, that's a real
+    // project name ("Northstar") rendered under the wrong project, not
+    // just an empty state. updateNav() above already refreshes the sidebar
+    // switcher (syncProjectMenu()), but the overview heading itself is only
+    // repainted by a full renderOverview(), which hydration deliberately
+    // avoids doing every time (see the Ask-typing note below) -- so the
+    // stale heading sat there, self-correcting only on the next unrelated
+    // full render (switching views, opening the project menu). Patch it
+    // directly here instead of waiting for that.
+    if(state.view==='overview'){
+      const heading=root.querySelector('.overview-heading h2');
+      const wantName=state.data.project?.name||'Project';
+      if(heading&&heading.textContent!==wantName)heading.textContent=wantName;
+      const stageEl=root.querySelector('.overview-heading .overview-stage');
+      const wantStage=currentProjectStage();
+      if(stageEl&&wantStage&&stageEl.textContent!==wantStage)stageEl.textContent=wantStage;
+    }
     // Backend hydration must never replace the Ask DOM while a person is typing.
     // Workspace attention can update independently; other views may rerender normally.
     if(state.view==='overview'){

@@ -133,8 +133,8 @@ const renderedOpenItems=openItems.render({
 // top-of-page explanation -- still appears exactly once, not per-Review.
 check('Open Items keeps the short #107 explanation once at the top of the page',
   renderedOpenItems.includes('Review what State thinks new information means, then decide what happens to Current State.'));
-check('Open Items puts the full decision breakdown behind a collapsed disclosure, not inline',
-  renderedOpenItems.includes('<details class="review-help">') && renderedOpenItems.includes('What do these decisions mean?'));
+check('Open Items puts the full decision breakdown behind a hover reveal, not inline',
+  renderedOpenItems.includes('class="review-help-panel"') && renderedOpenItems.includes('What do these decisions mean?'));
 check('Open Items removes repeated section descriptions and old hierarchy copy',
   !renderedOpenItems.includes('Human decisions waiting on you.') &&
   !renderedOpenItems.includes('Questions stopping progress.') &&

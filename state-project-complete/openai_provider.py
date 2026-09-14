@@ -23,6 +23,7 @@ from validation.semantic_validation import InterpretationContextSnapshot
 from provider_json import extract_json_object
 from question_review_prompt import QUESTION_REVIEW_GUIDANCE
 from consequentiality_guidance import CONSEQUENTIALITY_AND_GROUPING_GUIDANCE
+from db import project_id_of
 
 
 logger = logging.getLogger("state.provider.openai")
@@ -204,15 +205,29 @@ class OpenAIProvider:
                 }
 
         questions = {}
-        for row in connection.execute(
-            "SELECT id, text, blocking, blocks FROM questions WHERE status='open' ORDER BY created_at, id"
-        ).fetchall():
+        # QA follow-up (2026-09-14): both this and the rules query below had
+        # no project_id filter -- every open Question and every active rule
+        # across every project was being shown to whichever project's
+        # Evidence was actually being interpreted. Falls back to the
+        # unscoped query on a pre-migration-013 schema (no project_id column
+        # yet) rather than failing outright.
+        try:
+            question_rows = connection.execute(
+                "SELECT id, text, blocking, blocks FROM questions WHERE status='open' AND project_id=? ORDER BY created_at, id",
+                (project_id_of(connection),),
+            ).fetchall()
+        except Exception:
+            question_rows = connection.execute(
+                "SELECT id, text, blocking, blocks FROM questions WHERE status='open' ORDER BY created_at, id"
+            ).fetchall()
+        for row in question_rows:
             questions[row[0]] = {"text": row[1], "blocking": bool(row[2]), "blocks": row[3]}
 
         rules = []
         try:
             rule_rows = connection.execute(
-                "SELECT statement, COALESCE(rationale, 'Interpretation') FROM project_rules WHERE status='active' ORDER BY created_at, id"
+                "SELECT statement, COALESCE(rationale, 'Interpretation') FROM project_rules WHERE status='active' AND project_id=? ORDER BY created_at, id",
+                (project_id_of(connection),),
             ).fetchall()
         except Exception:
             rule_rows = []
