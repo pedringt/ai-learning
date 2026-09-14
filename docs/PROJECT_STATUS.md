@@ -31,9 +31,9 @@ State is a portfolio and learning product. There is no planned external pilot or
 
 ## Branch and deployment state
 
-As of this update, `main` and `staging` are aligned at commit `afdc24582624c3d40cbc1b721eded8a48d1a68d6`.
+The application baseline immediately before the QA/product-ops cleanup work was commit `afdc24582624c3d40cbc1b721eded8a48d1a68d6`, which had been aligned on both `main` and `staging`. Verify the current branch heads when resuming work rather than assuming they are still identical.
 
-That commit includes the latest user-facing fixes from the September 14 QA pass, including Ask cancellation/abort handling, project-switch cancellation behavior, and the remaining Review scroll path fix.
+That baseline includes the latest user-facing fixes from the September 14 QA pass, including Ask cancellation/abort handling, project-switch cancellation behavior, and the remaining Review scroll path fix.
 
 Production surfaces:
 
@@ -51,7 +51,7 @@ Hard release rule: product/site changes go through `staging` first unless the us
 
 ## Latest verified QA baseline
 
-The latest application commit on `main` records a green deterministic verification baseline of:
+Application commit `afdc24582624c3d40cbc1b721eded8a48d1a68d6` records a green deterministic verification baseline of:
 
 - 479 Python tests passed
 - 18 frontend VM/behavior suites passed
