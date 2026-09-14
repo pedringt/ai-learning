@@ -347,7 +347,11 @@
     if(state.backendStatus.history!=='loaded'){
       return `<section class="workspace-recent"><div class="workspace-recent-head"><span class="eyebrow">What changed</span><button class="text-button" data-view="history">History →</button></div><p class="workspace-section-hint" role="status">${state.backendStatus.history==='error'?'Recent changes are unavailable.':'Loading recent changes…'}</p></section>`;
     }
-    const entries=(state.data.history||[]).slice().sort(sortDateDesc).slice(0,3);
+    // 5, not 3: paired with Current State's now-truncated bullet preview
+    // (same grid row, stretched to equal height) -- more real items here
+    // gives this card content to fill that height with instead of leaving
+    // it blank (QA follow-up, 2026-09-14).
+    const entries=(state.data.history||[]).slice().sort(sortDateDesc).slice(0,5);
     // QA follow-up (2026-09-14): returning '' here for a project with no
     // History yet (e.g. Juniper, freshly seeded) made the whole "What
     // Changed" card vanish, leaving "Current State" alone stretched across
@@ -417,7 +421,11 @@
     // is what hides the three status-item rows once the preview exists, so
     // only the focused card -- header, subtitle, bullets -- shows.
     const previewFacts=stateLoaded?(state.data.knowledge||[]).filter(k=>k.state==='current'&&!isProjectUniversalMeta(k)).slice(0,4):[];
-    const factPreviewHtml=previewFacts.length?`<div class="state-fact-preview"><p>What's treated as true.</p><ul>${previewFacts.map(k=>`<li>${esc(k.statement||k.title)}</li>`).join('')}</ul><button class="text-button" data-view="project-overview">Browse Current State →</button></div>`:'';
+    // Truncated: this is a glance/preview (Browse -> reaches the full
+    // text), not a place for a full-paragraph fact -- an untruncated real
+    // statement can run several lines, growing this card unevenly against
+    // its paired "What Changed" card (QA follow-up, 2026-09-14).
+    const factPreviewHtml=previewFacts.length?`<div class="state-fact-preview"><p>What's treated as true.</p><ul>${previewFacts.map(k=>`<li>${esc(truncateText(k.statement||k.title,120))}</li>`).join('')}</ul><button class="text-button" data-view="project-overview">Browse Current State →</button></div>`:'';
     return `<section class="workspace-status-card"><span class="eyebrow">Current State</span><div class="workspace-status-body">
       <div class="workspace-status-item"><strong class="workspace-status-value">${!historyLoaded?(state.backendStatus.history==='error'?'Recent change unavailable':'…'):lastUpdated?`Updated ${esc(lastUpdated)}`:'Not yet established'}</strong><div class="workspace-status-row"><span>${!historyLoaded&&state.backendStatus.history!=='error'?'Loading most recent change…':lastLabel?esc(lastLabel):'Most recent change.'}</span></div></div>
       <div class="workspace-status-item"><strong class="workspace-status-value">${stateLoaded?`${establishedCount} established fact${establishedCount===1?'':'s'}`:state.backendStatus.state==='error'?'Established facts unavailable':'… established facts'}</strong><div class="workspace-status-row"><span>What the project currently treats as true.</span><button class="text-button" data-view="project-overview">Browse Current State →</button></div></div>
