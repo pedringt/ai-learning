@@ -7,14 +7,22 @@ canonical current-state doc for the State project (what shipped, what's
 next, working rules, core product constraints). Then verify the repo/live
 environments before relying on it or older conversation memory.
 
+Before materially changing State's product thesis, target user, core workflow,
+or success definition, read
+[docs/product/PRODUCT_BRIEF.md](docs/product/PRODUCT_BRIEF.md). State is a
+portfolio/learning product, not an external pilot. Other people may interact
+with it as portfolio reviewers or demo visitors. Realistic "if this were a real
+product" exercises are encouraged, but never invent customers, adoption,
+pilot results, or production-user evidence.
+
 For State QA, read [QA.md](QA.md). It is the canonical QA contract and should
 be used instead of inventing a new test plan in each session.
 
-For product decisions, risks, metrics, and PM workflow, use
-[docs/product/](docs/product/). Before reopening a settled behavior or proposing
-a materially different product rule, check `DECISIONS.md` and `RISKS.md`.
-Actionable work belongs in GitHub Issues/Projects rather than being buried in
-long-lived prose docs.
+For product decisions, risks, metrics, data/privacy assumptions, and PM workflow,
+use [docs/product/](docs/product/). Before reopening a settled behavior or
+proposing a materially different product rule, check `DECISIONS.md` and
+`RISKS.md`. Actionable work belongs in GitHub Issues/Projects rather than being
+buried in long-lived prose docs.
 
 For the State GitHub Project workflow, fields, statuses, and board conventions,
 read [docs/product/GITHUB_PROJECT_SETUP.md](docs/product/GITHUB_PROJECT_SETUP.md).
@@ -24,16 +32,23 @@ The existing Project is **State Product**; do not create a duplicate Project.
 
 - Durable settled product choices go in `docs/product/DECISIONS.md`; do not
   casually reopen them without new evidence or an explicit product question.
-- Material trust/authority/isolation/review-burden risks go in
-  `docs/product/RISKS.md`; implementation work to mitigate a risk belongs in an
-  Issue.
+- Material trust/authority/isolation/review-burden/privacy/cost/latency risks go
+  in `docs/product/RISKS.md`; implementation work to mitigate a risk belongs in
+  an Issue.
 - AI behavior failures should be separated from ordinary software bugs. Use
   outcome-based expectations and the eval registry in `docs/evals/`.
+- Treat provider/model/prompt/retrieval/context/tool-schema changes as product
+  changes when they can affect semantics, cost, latency, or data handling. Use
+  the AI/model section of the PR template and `RELEASE.md` rather than treating
+  them as ordinary dependency/config changes.
+- Before adding a source/connector or sending new categories of content to a
+  model, trace, log, or third party, read `docs/product/DATA_PRIVACY.md` and
+  update the privacy/risk assumptions if needed.
 - P0/P1 incidents that teach something important about the product or QA system
   should use `docs/incidents/TEMPLATE.md` and add durable regression/eval
   protection where practical.
-- Use `RELEASE.md` for release-readiness gates. Passing tests alone does not
-  imply permission or readiness to promote.
+- Use `RELEASE.md` for release-readiness and rollback/recovery gates. Passing
+  tests alone does not imply permission or readiness to promote.
 
 ## GitHub Project defaults
 
