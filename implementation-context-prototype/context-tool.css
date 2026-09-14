@@ -1064,3 +1064,4 @@ body.v88-dark .project-outline{background:#17151d!important;border-color:var(--l
 .state-toast-action{border:0;background:none;color:var(--surface);font-weight:850;text-decoration:underline;cursor:pointer;padding:0;font-size:13px;white-space:nowrap}
 .btn:disabled{opacity:.5;cursor:not-allowed}
 .btn.primary:disabled{background:var(--muted);border-color:var(--muted)}
+html body .overview-stage.overview-stage--plain.overview-stage--plain{display:block!important;width:auto!important;max-width:640px!important;margin-top:7px!important;padding:0!important;border:0!important;border-radius:0!important;background:transparent!important;box-shadow:none!important;font-size:13px!important;font-weight:600!important;color:var(--muted)!important;white-space:normal!important}

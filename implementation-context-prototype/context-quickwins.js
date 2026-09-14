@@ -195,12 +195,36 @@
       title.insertAdjacentElement('afterend',orientation);
     }
     const stage=heading.querySelector('.overview-stage');
+    // QA follow-up (2026-09-14): this pill/dot treatment assumes a short
+    // "current phase · next step" pair split on a literal middle-dot -- it
+    // was built against a specific old wording. The actual seeded stage
+    // text uses "is nearly complete; implementation planning is next..."
+    // (a semicolon, and a "next" phrase that's itself a full clause, not a
+    // short label), so the split silently found nothing and stuffed an
+    // entire long sentence into one dot-prefixed pill sized for a couple
+    // words -- exactly the "extremely long and weird" rendering flagged in
+    // QA. Rather than chase this specific wording with another magic
+    // separator (fragile the same way against the next rewording, and
+    // against any other project's own stage text), only pill-ify when a
+    // short, clean split actually exists; anything else stays as plain
+    // flowing text instead of being forced into a shape built for a phrase
+    // a fraction of its length.
+    const MAX_PILL_PHRASE_LENGTH=60;
     if(stage && stage.dataset.mockStyled!=='true'){
       const raw=stage.textContent.trim();
       const parts=raw.split('·').map(s=>s.trim()).filter(Boolean);
       const current=parts[0]||raw;
       const next=(parts[1]||'').replace(/\s+next$/i,'').trim();
-      stage.innerHTML=`<span class="workspace-stage-pill">${esc(current)}</span>${next?`<span class="workspace-stage-divider" aria-hidden="true"></span><span class="workspace-next-step">Next: ${esc(next.charAt(0).toUpperCase()+next.slice(1))}</span><span class="workspace-next-arrow" aria-hidden="true">›</span>`:''}`;
+      if(current.length<=MAX_PILL_PHRASE_LENGTH && (!next||next.length<=MAX_PILL_PHRASE_LENGTH)){
+        stage.innerHTML=`<span class="workspace-stage-pill">${esc(current)}</span>${next?`<span class="workspace-stage-divider" aria-hidden="true"></span><span class="workspace-next-step">Next: ${esc(next.charAt(0).toUpperCase()+next.slice(1))}</span><span class="workspace-next-arrow" aria-hidden="true">›</span>`:''}`;
+      }else{
+        // Other files style .overview-stage itself (not just its inner
+        // pill span) as a small fixed-size capsule -- this modifier
+        // overrides that back to plain flowing text for the un-pill-ified
+        // case, rather than leaving long prose squeezed into a pill-shaped
+        // box regardless of what's inside it.
+        stage.classList.add('overview-stage--plain');
+      }
       stage.dataset.mockStyled='true';
     }
   }
