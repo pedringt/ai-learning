@@ -120,16 +120,18 @@ check('grouped review\'s Adjust dialog shows one editable block per proposal',
 check('grouped Adjust dialog preserves each proposal\'s own AI text distinctly',
   groupedAdjustHtml.includes('Retention is 30 days.') && groupedAdjustHtml.includes('Access is five named agents.'));
 
-// A retirement has no wording to adjust -- Adjust must not appear for a
-// Review whose only proposal is a retire, and a retire mixed into a grouped
-// Review must not get its own (nonsensical) editable block.
+// A retirement has no wording to adjust -- Adjust must be disabled (not
+// absent: state.md QA follow-up 2026-09-14, a vanishing button read as
+// confusing/broken) for a Review whose only proposal is a retire, and a
+// retire mixed into a grouped Review must not get its own (nonsensical)
+// editable block.
 const retireOnlyReview={
   ...normalReview,id:'r-retire-only',
   proposals:[{id:'p-retire',operation:'retire',state_item_id:'k-old',proposed_statement:'Old statement being retired.'}],
 };
 const retireOnlyHtml=openItems.reviewCard(retireOnlyReview,true,false);
-check('a retire-only review has no Adjust button',
-  !retireOnlyHtml.includes('data-action="open-adjust-review"'));
+check('a retire-only review shows Adjust disabled, not absent',
+  retireOnlyHtml.includes('data-action="open-adjust-review"') && /data-action="open-adjust-review"[^>]*\sdisabled/.test(retireOnlyHtml));
 check('a retire-only review still offers Update Current State and Leave unchanged',
   retireOnlyHtml.includes('>Update<') && retireOnlyHtml.includes('>Leave unchanged<'));
 

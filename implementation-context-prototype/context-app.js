@@ -122,9 +122,17 @@
     // spec -- forces its horizontal overflow to clip too, so a menu
     // positioned relative to it (its old behavior) got its right edge cut
     // off rather than overlapping the main content. Fixed positioning,
-    // anchored to the button's own on-screen rect, escapes that clipping
-    // entirely since neither .sidebar-project nor .app-sidebar establishes
-    // a transformed containing block.
+    // anchored to the button's own on-screen rect, escapes that clipping.
+    // QA follow-up (2026-09-14): raising z-index alone didn't fix the
+    // follow-up overlap bug -- .app-sidebar is position:sticky, which
+    // establishes its own stacking context, and a position:fixed
+    // descendant's z-index is only compared against siblings *within* that
+    // context, not the page at large, so it stayed trapped beneath
+    // ordinary content elsewhere on the page no matter how high its
+    // z-index went. Moving the element to be a direct child of <body> (the
+    // same pattern the toast and dialog overlay already use) escapes every
+    // ancestor stacking context, not just this one.
+    if(pm&&typeof document.body?.appendChild==='function'&&pm.parentElement!==document.body)document.body.appendChild(pm);
     if(pm&&ps&&state.projectMenuOpen){
       const rect=ps.getBoundingClientRect();
       pm.style.position='fixed';
@@ -573,7 +581,14 @@
     return `<details class="history-sources"><summary>Source notes · ${items.length}</summary><div class="history-source-list">${items.map(e=>`<article><span>${esc(formatBackendDate(evidenceDisplayTimestamp(e)))} · ${esc(sourceLabel(e.source_type))}</span><p>${historyHighlight(e.content)}</p></article>`).join('')}</div></details>`;
   }
   function historyEntry(h, topicMode=false){
-    const linked=!!h.knowledgeId&&!topicMode;
+    // QA follow-up (2026-09-14): a whole History-list card used to be
+    // clickable (styled as a button, with a "View this topic ->" footer)
+    // to filter the list down to just that topic. On review, that added no
+    // real information -- the card already shows everything about itself
+    // inline -- so per the user's call it's removed here. The two other,
+    // clearly-labeled entry points into the same topic-scoped History view
+    // (project-view's "History ->" link, and the review-confirmation
+    // dialog's "View History" button) are untouched.
     const before=h.before??h.old_statement??'Not previously established';
     const after=h.after??h.new_statement??'';
     const reason=h.reason||h.decision_question||h.proposal_rationale||'Reviewed project evidence';
@@ -585,7 +600,7 @@
     const adjustedProvenance=h.accepted_as_adjusted&&h.aiProposed
       ? `<div class="history-change history-adjusted-provenance"><p><span>State proposed</span>${historyHighlight(h.aiProposed)}</p><p><span>Human approved</span>${historyHighlight(after)}</p></div>`
       : '';
-    return `<article class="history-entry${linked?' is-linked':''}"${linked?` data-action="view-topic-history" data-knowledge-id="${h.knowledgeId}" tabindex="0" role="button" aria-label="View topic history for ${esc(state.data.knowledge.find(k=>k.id===h.knowledgeId)?.title||h.type)}"`:''}><div class="history-entry-date">${esc(h.date||formatBackendDate(h.changed_at))}</div><div class="history-entry-body"><span class="history-reason">${historyHighlight(reason)}</span><h3>${historyHighlight(h.type||historyType(h))}</h3><div class="history-change"><p><span>Before</span>${historyHighlight(before)}</p><p><span>Now</span>${historyHighlight(after)}</p></div>${adjustedProvenance}<p class="decision-line">${historyHighlight(decision)}</p>${historySources(h)}${linked?'<span class="history-entry-link">View this topic →</span>':''}</div></article>`;
+    return `<article class="history-entry"><div class="history-entry-date">${esc(h.date||formatBackendDate(h.changed_at))}</div><div class="history-entry-body"><span class="history-reason">${historyHighlight(reason)}</span><h3>${historyHighlight(h.type||historyType(h))}</h3><div class="history-change"><p><span>Before</span>${historyHighlight(before)}</p><p><span>Now</span>${historyHighlight(after)}</p></div>${adjustedProvenance}<p class="decision-line">${historyHighlight(decision)}</p>${historySources(h)}</div></article>`;
   }
   function updateHistoryResults(){
     const list=document.getElementById('historyList');
@@ -682,7 +697,17 @@
       toast.appendChild(btn);
     }
     document.body.appendChild(toast);
-    setTimeout(()=>toast.remove(),action?5200:2600);
+    // QA follow-up (2026-09-14): a toast with a "View" action still vanished
+    // fast enough that a real person reading it could miss the link before
+    // clicking it. Longer base duration, and pausing the countdown on
+    // hover/focus -- so reading it (or moving toward the button) doesn't
+    // race the timer -- rather than picking an even longer fixed delay that
+    // just as easily proves too short for someone slower to react.
+    let remaining=action?9000:2600, timer=null, startedAt=0;
+    const arm=()=>{startedAt=Date.now();timer=setTimeout(()=>toast.remove(),remaining);};
+    const pause=()=>{if(!timer)return;clearTimeout(timer);timer=null;remaining-=Date.now()-startedAt;};
+    if(action){toast.addEventListener('mouseenter',pause);toast.addEventListener('mouseleave',arm);toast.addEventListener('focusin',pause);toast.addEventListener('focusout',arm);}
+    arm();
   }
 
   // state.md #107: decision tokens beyond the schema-level accept/keep/reject
@@ -1127,6 +1152,25 @@
     for(const [key,result] of Object.entries(byKey)) if(result.status==='rejected') console.warn(`Backend ${key} unavailable:`,result.reason);
     if(loadStatus)loadStatus.hidden=true;
     updateNav();
+    // QA follow-up (2026-09-14): a fresh page load paints the Workspace
+    // heading from context-data.js's static pre-hydration placeholder
+    // before this function has ever run -- on Juniper, that's a real
+    // project name ("Northstar") rendered under the wrong project, not
+    // just an empty state. updateNav() above already refreshes the sidebar
+    // switcher (syncProjectMenu()), but the overview heading itself is only
+    // repainted by a full renderOverview(), which hydration deliberately
+    // avoids doing every time (see the Ask-typing note below) -- so the
+    // stale heading sat there, self-correcting only on the next unrelated
+    // full render (switching views, opening the project menu). Patch it
+    // directly here instead of waiting for that.
+    if(state.view==='overview'){
+      const heading=root.querySelector('.overview-heading h2');
+      const wantName=state.data.project?.name||'Project';
+      if(heading&&heading.textContent!==wantName)heading.textContent=wantName;
+      const stageEl=root.querySelector('.overview-heading .overview-stage');
+      const wantStage=currentProjectStage();
+      if(stageEl&&wantStage&&stageEl.textContent!==wantStage)stageEl.textContent=wantStage;
+    }
     // Backend hydration must never replace the Ask DOM while a person is typing.
     // Workspace attention can update independently; other views may rerender normally.
     if(state.view==='overview'){
@@ -1283,7 +1327,10 @@
     const clearHistoryEvidence=e.target.closest('[data-action="clear-history-evidence"]'); if(clearHistoryEvidence){state.historyEvidenceId=null;renderHistory();window.STATE_HISTORY_NAV?.pushHistoryTopic?.(null);return;}
     const noteReviews=e.target.closest('[data-action="open-note-reviews"]'); if(noteReviews){
       const n=state.data.notes.find(x=>x.id===noteReviews.dataset.noteId); const ids=n?.reviewIds||[];
-      if(ids.length===1){state.expandedReviewId=ids[0];state.openItemSections.reviews=false;navigateTo('open-items');}
+      if(ids.length===1){
+        state.expandedReviewId=ids[0];state.openItemSections.reviews=false;navigateTo('open-items');
+        root.querySelector(`[data-review-card="${CSS.escape(ids[0])}"]`)?.scrollIntoView({block:'center'});
+      }
       else if(ids.length>1){const rows=ids.map(id=>state.data.reviews.find(r=>r.id===id)).filter(Boolean).map(r=>`<button class="related-review-choice" data-action="open-specific-review" data-review-id="${r.id}"><strong>${esc(r.summary||r.title)}</strong><span>${esc(r.whyConsequential||'Needs your decision')}</span></button>`).join('');showDialog(`<span class="eyebrow">In review</span><h2 id="dialogTitle">This note is connected to ${ids.length} Reviews.</h2><div class="related-review-list">${rows}</div><div class="dialog-actions"><button class="btn secondary" data-action="close-dialog">Close</button></div>`);}
       return;
     }
@@ -1300,7 +1347,18 @@
     const provenanceToggle=e.target.closest('[data-action="toggle-provenance"]'); if(provenanceToggle){ const body=provenanceToggle.parentElement?.querySelector('.project-provenance-body'); if(body){ const expanded=!body.hidden; body.hidden=expanded; provenanceToggle.setAttribute('aria-expanded',String(!expanded)); provenanceToggle.textContent=expanded?'Why this is current →':'Hide why this is current'; if(!expanded) window.StateAnalytics?.track('provenance_opened'); } return; }
     const a=e.target.closest('[data-action]'); if(!a)return;
     const act=a.dataset.action;
-    if(act==='open-specific-review'){closeDialog();state.expandedReviewId=a.dataset.reviewId;state.openItemSections.reviews=false;navigateTo('open-items');}
+    if(act==='open-specific-review'){
+      closeDialog();
+      const reviewId=a.dataset.reviewId;
+      state.expandedReviewId=reviewId;
+      state.openItemSections.reviews=false;
+      navigateTo('open-items');
+      // QA follow-up (2026-09-14): navigateTo() always scrolls to top, so
+      // the review opened here (often well down the list) rendered
+      // expanded but off-screen -- the user landed at the top of Open
+      // Items with no visible sign that their click did anything.
+      root.querySelector(`[data-review-card="${CSS.escape(reviewId)}"]`)?.scrollIntoView({block:'center'});
+    }
     else if(act==='toggle-open-questions'){state.openQuestionsExpanded=!state.openQuestionsExpanded;renderOpenItems();}
     else if(act==='show-demo-help'){showDemoHelp();}
     else if(act==='demo-start-ask'){
@@ -1479,7 +1537,6 @@
 
   document.addEventListener('keydown',e=>{
     if((e.key==='Enter'||e.key===' ')&&e.target.matches('.note-index-row[data-action="toggle-note"]')){e.preventDefault();const id=e.target.dataset.noteId;if(state.expandedNotes.has(id))state.expandedNotes.delete(id);else state.expandedNotes.add(id);renderNotes();}
-    if((e.key==='Enter'||e.key===' ')&&e.target.matches('.history-entry.is-linked[data-action="view-topic-history"]')){e.preventDefault();e.target.click();}
     if(e.key==='Escape'&&state.projectMenuOpen){state.projectMenuOpen=false;updateNav();document.getElementById('projectSwitcher')?.focus();return;}
     if(e.key==='Escape'&&!overlay.hidden && !state.isAnalyzing){closeDialog();return;}
     if(e.key==='Tab'&&!overlay.hidden){
@@ -1491,7 +1548,11 @@
       else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus();}
     }
   });
-  document.addEventListener('click',e=>{ if(state.projectMenuOpen && !e.target.closest('.sidebar-project') && !e.target.closest('[data-action="toggle-projects"]')){state.projectMenuOpen=false;updateNav();} });
+  // #projectMenu is reparented to document.body (see updateNav()) to escape
+  // the sidebar's stacking context, so an outside-click check scoped only to
+  // .sidebar-project would treat every click inside the now-detached menu
+  // itself as "outside" and close it before a switch-project click could land.
+  document.addEventListener('click',e=>{ if(state.projectMenuOpen && !e.target.closest('.sidebar-project') && !e.target.closest('#projectMenu') && !e.target.closest('[data-action="toggle-projects"]')){state.projectMenuOpen=false;updateNav();} });
   overlay.addEventListener('click',e=>{if(e.target===overlay && !state.isAnalyzing) closeDialog();});
   // The Slack "Connect Slack" OAuth round trip ends with the backend
   // redirecting the browser back here with ?slack_connect=success|error.

@@ -438,7 +438,7 @@ def test_r9_ask_vertical_slice_has_dedicated_module_and_backend_endpoint():
     html = (frontend / "index.html").read_text(encoding="utf-8")
     backend = (Path(__file__).parent / "api.py").read_text(encoding="utf-8")
     assert "context-ask.js" in html
-    assert "ask: (query, previousAnswer = null)" in api_js
+    assert "ask: (query, previousAnswer = null, signal)" in api_js
     assert "@app.post(\"/api/ask\")" in backend
     # state.md #115: ASK?.canHandle(raw,previousLive) belonged to context-app.js's
     # submitAsk(), the legacy no-backend Ask pipeline from before the live Ask

@@ -18,9 +18,21 @@
     return 'Review needed';
   }
 
-  function proposedText(proposals){
+  function proposedText(proposals,affected=[]){
     if(!proposals?.length) return 'Review the evidence and decide whether Current State should change.';
-    return proposals.map(p=>p.operation==='retire' ? `Retire current understanding${p.state_item_id?` (${p.state_item_id})`:''}` : p.proposed_statement).join(' • ');
+    // QA follow-up (2026-09-14): a retire proposal used to show the raw
+    // internal state_item_id ("Retire current understanding (j-storage)")
+    // -- a user-visible id leak, the same class of thing the Ask grounding
+    // rules were written to forbid. affected_state_items (already fetched
+    // for the "Current understanding" block above) carries the real
+    // statement text for the same id, so retire proposals can name what's
+    // actually being retired instead.
+    const statementFor=id=>affected.find(x=>x.id===id)?.statement;
+    return proposals.map(p=>{
+      if(p.operation!=='retire')return p.proposed_statement;
+      const statement=statementFor(p.state_item_id);
+      return statement?`Retire: "${statement}"`:'Retire current understanding.';
+    }).join(' • ');
   }
 
   function mapApiReview(r, fallbackEvidence=''){
@@ -54,7 +66,7 @@
       status:'pending',
       title:reviewTypeTitle(r.review_type),
       summary:r.decision_question,
-      proposed:proposedText(proposals),
+      proposed:proposedText(proposals,affected),
       questionToCreate:r.question_to_create||null,
       unresolved,
       current,

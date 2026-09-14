@@ -25,6 +25,7 @@ from provider_output_schema import PROVIDER_OUTPUT_SCHEMA
 from provider_json import extract_json_object
 from question_review_prompt import QUESTION_REVIEW_GUIDANCE
 from consequentiality_guidance import CONSEQUENTIALITY_AND_GROUPING_GUIDANCE
+from db import project_id_of
 
 _RELEVANCE_SCHEMA = {
     "type": "object",
@@ -280,9 +281,21 @@ class AnthropicProvider:
                 }
 
         questions = {}
-        for row in connection.execute(
-            "SELECT id, text, blocking, blocks FROM questions WHERE status='open' ORDER BY created_at, id"
-        ).fetchall():
+        # QA follow-up (2026-09-14): same unscoped-query bug as project_rules
+        # below -- every open Question across every project was being shown
+        # to the model interpreting this project's Evidence. Falls back to
+        # the unscoped query on a pre-migration-013 schema (no project_id
+        # column yet) rather than failing outright.
+        try:
+            question_rows = connection.execute(
+                "SELECT id, text, blocking, blocks FROM questions WHERE status='open' AND project_id=? ORDER BY created_at, id",
+                (project_id_of(connection),),
+            ).fetchall()
+        except Exception:
+            question_rows = connection.execute(
+                "SELECT id, text, blocking, blocks FROM questions WHERE status='open' ORDER BY created_at, id"
+            ).fetchall()
+        for row in question_rows:
             questions[row[0]] = {
                 "text": row[1],
                 "blocking": bool(row[2]),
@@ -291,8 +304,16 @@ class AnthropicProvider:
 
         rules = []
         try:
+            # QA follow-up (2026-09-14): this query had no project_id filter
+            # at all, unlike review_service.list_project_rules() (which the
+            # Settings page and Ask both correctly go through) -- so a rule
+            # added under one project was being fed into every project's
+            # live evidence interpretation, including projects that never
+            # saw or authorized it. Same class of leak #114 was built to
+            # prevent, just in a code path outside review_service.
             rule_rows = connection.execute(
-                "SELECT statement, COALESCE(rationale, 'Interpretation') FROM project_rules WHERE status='active' ORDER BY created_at, id"
+                "SELECT statement, COALESCE(rationale, 'Interpretation') FROM project_rules WHERE status='active' AND project_id=? ORDER BY created_at, id",
+                (project_id_of(connection),),
             ).fetchall()
         except Exception:
             rule_rows = []

@@ -56,7 +56,15 @@
       ? `<button class="btn primary" data-action="review-update" data-review="${r.id}"${questionReady?'':' disabled'}>${questionProposal?.existing_question_id?'Link existing Question':'Create Question'}</button><button class="btn secondary" data-action="review-keep" data-review="${r.id}"${questionReady?'':' disabled'}>Dismiss suggestion</button>`
       : checkOnly
       ? `<button class="btn primary" data-action="review-acknowledge-risk" data-review="${r.id}">Keep tracking</button><button class="btn secondary" data-action="review-dismiss-risk" data-review="${r.id}">Dismiss concern</button>`
-      : `<button class="btn primary" data-action="review-update" data-review="${r.id}">Update</button>${adjustableCount?`<button class="btn secondary" data-action="open-adjust-review" data-review="${r.id}">Adjust</button>`:''}<button class="btn secondary" data-action="review-keep" data-review="${r.id}">Leave unchanged</button>`;
+      // QA follow-up (2026-09-14): Adjust used to simply disappear for a
+      // retire-only review (nothing left to reword once every proposal is
+      // "remove this fact"), leaving the three-button row silently down to
+      // two with no explanation -- flagged as confusing, since a person
+      // can't tell whether that's intentional or something failed to load.
+      // Keeping the button always present (disabled + a title on the
+      // retire-only case) keeps the row's shape predictable across every
+      // Review of this type.
+      : `<button class="btn primary" data-action="review-update" data-review="${r.id}">Update</button><button class="btn secondary" data-action="open-adjust-review" data-review="${r.id}"${adjustableCount?'':' disabled title="Nothing to adjust -- every proposal here retires a fact rather than proposing wording."'}>Adjust</button><button class="btn secondary" data-action="review-keep" data-review="${r.id}">Leave unchanged</button>`;
     // A related open Review is a structural pointer only (same State item or
     // Question as this one) -- never a claim that the two are the same
     // decision. Shown plainly, not as an action, so the human decides
@@ -151,7 +159,10 @@
     // coverage without turning into a text dump above every Review. A
     // native <details> keeps the default view to one sentence and puts the
     // full breakdown one click away instead of always on screen.
-    const reviewHelp=`<details class="review-help"><summary>What do these decisions mean?</summary><dl><dt>Update</dt><dd>Accept the proposed change -- Current State changes and the decision is recorded in History.</dd><dt>Adjust</dt><dd>Correct the wording before it becomes Current State, rather than accepting it as proposed.</dd><dt>Leave unchanged</dt><dd>Current State stays as it is. The evidence is kept on record even though nothing changed.</dd><dt>Keep tracking / Dismiss concern</dt><dd>For a Review flagging that existing Current State may be unreliable: keep the uncertainty tracked as an open Question, or dismiss the concern.</dd><dt>Create Question / Link existing Question</dt><dd>For a Review about a new unknown rather than a fact: start tracking it as a Question, or attach this evidence to one already being tracked.</dd></dl></details>`;
+    // Hover (or keyboard focus, for anyone who can't hover) reveals the
+    // table instead of requiring a click to expand -- same content as the
+    // earlier <details> version, lighter to reach.
+    const reviewHelp=`<span class="review-help" tabindex="0"><span class="review-help-trigger">What do these decisions mean?</span><table class="review-help-panel"><tbody><tr><th>Update</th><td>Accept the proposed change -- Current State changes and the decision is recorded in History.</td></tr><tr><th>Adjust</th><td>Correct the wording before it becomes Current State, rather than accepting it as proposed.</td></tr><tr><th>Leave unchanged</th><td>Current State stays as it is. The evidence is kept on record even though nothing changed.</td></tr><tr><th>Keep tracking / Dismiss concern</th><td>For a Review flagging that existing Current State may be unreliable: keep the uncertainty tracked as an open Question, or dismiss the concern.</td></tr><tr><th>Create Question / Link existing Question</th><td>For a Review about a new unknown rather than a fact: start tracking it as a Question, or attach this evidence to one already being tracked.</td></tr></tbody></table></span>`;
     return `<section class="page collection-page open-items-page"><div class="page-head"><div><div class="review-title-row"><h2>Open Items</h2>${actionTotal?`<span class="count-badge review-page-count" aria-label="${actionTotal} items need attention">${actionTotal}</span>`:''}</div><p>Review what State thinks new information means, then decide what happens to Current State.</p>${reviewHelp}</div><button class="btn secondary" data-action="add-question">+ Add question</button></div><div class="open-items-sections">${openItemSection('Needs your review',reviewUnavailable?'Unavailable':reviews.length,'reviews',reviewBody,!reviews.length&&!reviewUnavailable,openItemSections)}${openItemSection('Blocking questions',questionUnavailable?'Unavailable':blockers.length,'blockers',blockerBody,!blockers.length&&!questionUnavailable,openItemSections)}${openItemSection('Open questions',questionUnavailable?'Unavailable':waiting.length,'questions',questionBody,!waiting.length&&!questionUnavailable,openItemSections)}${openItemSection('Draft notes',draftsLoading?'…':draftsUnavailable?'Unavailable':draftNotes.length,'drafts',draftBody,draftsStatus==='loaded'&&!draftNotes.length,openItemSections)}</div></section>`;
   }
 

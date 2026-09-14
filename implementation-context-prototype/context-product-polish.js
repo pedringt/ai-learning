@@ -248,7 +248,22 @@
   function openAskDrawer({focus=true}={}){
     ensureAskShell();ui.drawerOpen=true;const drawer=document.getElementById('askStateDrawer');if(drawer)drawer.hidden=false;document.body.classList.add('ask-state-drawer-open');syncAskInputs();syncLauncherVisibility();if(focus)requestAnimationFrame(()=>document.getElementById('askStateDrawerInput')?.focus());checkAnswerFreshness();
   }
-  function closeAskDrawer(){ui.drawerOpen=false;document.getElementById('askStateDrawer')?.setAttribute('hidden','');document.body.classList.remove('ask-state-drawer-open');syncLauncherVisibility();}
+  function closeAskDrawer(){
+    // QA follow-up (2026-09-14): closing while an answer was still loading
+    // used to just hide the drawer -- the request (and its live-model
+    // cost) kept running server-side regardless, and its result was still
+    // live to land the moment the drawer reopened even though the user had
+    // already dismissed it. abortController.abort() now actually cancels
+    // the underlying fetch/stream (threaded through context-ask.js into
+    // context-api.js); bumping requestId is the same guard every callback
+    // in runAsk()'s streaming/submit path already checks (the mechanism
+    // resetForProjectSwitch() also uses), belt-and-suspenders in case the
+    // abort's rejection arrives after something else already changed
+    // requestId. running is cleared immediately either way, so a new
+    // question can be asked right away instead of waiting out the old one.
+    if(ui.running){ui.abortController?.abort();ui.requestId++;ui.running=false;ui.streamRaw='';}
+    ui.drawerOpen=false;document.getElementById('askStateDrawer')?.setAttribute('hidden','');document.body.classList.remove('ask-state-drawer-open');syncLauncherVisibility();
+  }
   // state.md QA follow-up: Ask's drawer state (the last-rendered answer,
   // in-flight query, resolved-context signature) used to survive a project
   // switch untouched -- one project's answer stayed fully visible under the
@@ -256,11 +271,16 @@
   // Called from the project switcher so a switch always leaves Ask closed
   // and empty rather than showing a stale, now-mislabeled answer.
   function resetForProjectSwitch(projectId){
+    // closeAskDrawer() first, while ui.running still reflects reality: it
+    // guards its own abort on ui.running, so clearing that flag here
+    // before calling it (the previous order) meant a project switch mid-
+    // answer never actually cancelled the in-flight request -- only
+    // closing the drawer directly did.
+    closeAskDrawer();
     ui.query='';ui.skipRouting=false;ui.payload=null;ui.resolvedContext=[];
     ui.answerStateSignature=null;ui.stale=false;ui.running=false;ui.streamRaw='';ui.requestId++;
     renderDrawerResult('');
     syncAskInputs();
-    closeAskDrawer();
     starters=publishStarters(projectId||liveProjectId());
     const holder=document.querySelector('.ask-state-starters');
     if(holder)holder.innerHTML=starters.map(([label,prompt])=>`<button type="button" data-review-batch-prompt="${esc(prompt)}">${esc(label)}</button>`).join('');
@@ -384,6 +404,12 @@
     }
     if(!ASK?.submit){renderDrawerResult('<div class="ask-live-error"><h2>Ask is temporarily unavailable.</h2><p>The Ask module did not load.</p></div>');return;}
     const requestId=++ui.requestId;ui.running=true;ui.stale=false;ui.payload=null;ui.resolvedContext=[];
+    // QA follow-up (2026-09-14): closing Ask mid-answer used to only stop
+    // the drawer from *showing* whatever arrived later -- the request kept
+    // running (and costing) server-side. This controller's signal threads
+    // through to the real fetch/stream in context-api.js, so
+    // closeAskDrawer() can now actually cancel the in-flight call.
+    ui.abortController=new AbortController();
     const statePromise=currentStateSignature();const resolvedPromise=relevantResolvedDecisions(clean);
     renderDrawerResult('<div class="ask-live-loading"><span class="ask-loading-mark" aria-hidden="true"></span><div><strong>Checking the project record…</strong><p>Keeping accepted, pending, and unresolved information separate.</p></div></div>');
     try{
@@ -392,12 +418,18 @@
         payload=await ASK.submitStream(clean,null,{
           preview:preview=>{if(requestId!==ui.requestId)return;const html=ASK.renderStream?.('',preview);if(html)renderDrawerResult(html);},
           delta:event=>{if(requestId!==ui.requestId)return;ui.streamRaw=(ui.streamRaw||'')+(event?.text||'');const html=ASK.renderStream?.(ui.streamRaw,null);if(html)renderDrawerResult(html);}
-        });
-      }else payload=await ASK.submit(clean,null);
+        },ui.abortController.signal);
+      }else payload=await ASK.submit(clean,null,ui.abortController.signal);
       if(requestId!==ui.requestId)return;
       ui.payload=payload;ui.answerStateSignature=await statePromise;ui.resolvedContext=await resolvedPromise;ui.running=false;ui.streamRaw='';renderFinalAsk();
     }catch(error){
-      if(requestId!==ui.requestId)return;ui.running=false;ui.streamRaw='';renderDrawerResult(`<div class="ask-live-error"><h2>Ask is temporarily unavailable.</h2><p>${esc(error?.message||'Please try again.')}</p></div>`);
+      if(requestId!==ui.requestId)return;ui.running=false;ui.streamRaw='';
+      // QA follow-up (2026-09-14): the backend's own 503 fallback text is
+      // literally "Ask is temporarily unavailable. Please try again." --
+      // identical to this card's hardcoded headline, so that specific
+      // failure rendered the same sentence twice in a row. A distinct
+      // headline can't collide with whatever the error message says.
+      renderDrawerResult(`<div class="ask-live-error"><h2>Ask couldn't answer that.</h2><p>${esc(error?.message||'Please try again.')}</p></div>`);
     }
   }
 
