@@ -126,3 +126,26 @@ Human review can reject a bad proposal but cannot correct an important fact the 
 
 **Rejected / deferred**  
 Making the normal model globally more aggressive; limiting promotion to `no_review_needed`; hiding promotion after any prior Current State change; allowing promotion to bypass Review; treating omission detection as solved by this feature. Systematic omission detection remains separate work.
+
+---
+
+### DEC-007 — Baseline Setup is an explicit project lifecycle
+
+**Status:** Settled  
+**Date:** 2026-09-15  
+**Related:** Issue #155; Issues #144, #146
+
+**Decision**  
+A new user-created project remains in **Baseline Setup** until a person explicitly finishes establishing its starting understanding. Accepting the first Current State fact does not end bootstrap behavior.
+
+During Baseline Setup, State may internally split a large source into bounded interpretation chunks while preserving the original source as one immutable Evidence item. Interpretation should favor useful baseline coverage, surface explicit important Questions, keep Current State proposals independently maintainable, and use a small set of project-derived organizational areas where helpful. Areas are organizational metadata, not authoritative facts, and are persisted only after associated material is human-authorized.
+
+Before the person finishes Baseline Setup, State should show a coverage summary across the intended starting Evidence. Structural coverage warnings may identify material that deserves another look, but they are not proof that something is missing and do not authorize State changes.
+
+After Baseline Setup is explicitly finished, normal ongoing interpretation becomes the default. Explicit human promotion remains available as a recovery path for later omissions.
+
+**Why**  
+Dogfooding AI Notes and State planning material showed opposite failure modes from the old `Current State is empty` trigger: one large source was over-compressed into broad blobs, while later baseline material disappeared after early facts were accepted. A real project may need many notes or documents to establish its starting picture, so baseline construction must span multiple Evidence items and human decisions rather than end after the first acceptance.
+
+**Rejected / deferred**  
+Ending bootstrap when Current State first becomes non-empty; requiring people to manually split large source documents; solving large-input failures only by raising the model token ceiling; autonomous baseline acceptance; treating structural coverage as a complete semantic omission detector.
