@@ -42,6 +42,55 @@
         testing.innerHTML='<span class="tag">State · Validation</span><h3>Testing & Debugging State</h3><p class="card-intro">How I used hands-on testing, AI-assisted automated coverage, and failure investigation to distinguish model, retrieval, implementation, and product-design problems instead of treating every bad AI result as a prompt problem.</p>';
         supportingGrid.insertBefore(testing,oldCostCard||supportingGrid.firstChild);
       }
+      if(!supportingGrid.querySelector('a[href="state-managed-agent-tracing.html"]')){
+        const tracing=document.createElement('a');
+        tracing.className='card nav-card applied-secondary';
+        tracing.href='state-managed-agent-tracing.html';
+        tracing.innerHTML='<span class="tag">Agent tracing &amp; authority</span><h3>Debugging a Read-Only Agent</h3><p class="card-intro">A controlled State Question Investigator exercise where tracing showed that the agent found the right evidence but overstated what it established, leading to a targeted authority fix and exact-case retest.</p>';
+        const testingCard=supportingGrid.querySelector('a[href="state-testing-debugging.html"]');
+        if(testingCard?.nextSibling) supportingGrid.insertBefore(tracing,testingCard.nextSibling); else supportingGrid.appendChild(tracing);
+      }
+    }
+  }
+
+  /* Surface the controlled Managed Agents exercise beside the existing
+     reliability and observability references instead of inventing a new
+     learning-resource treatment. */
+  const learningPage=document.querySelector('[data-page="learn"]');
+  if(learningPage&&!learningPage.querySelector('a[href="cheat-sheets/Claude_Managed_Agents_Tracing_Cheat_Sheet.pdf"]')){
+    const observability=learningPage.querySelector('a[href="cheat-sheets/State_Learning_Cheat_Sheet_05_Production_Reliability_and_Observability.pdf"]');
+    const resourceRow=observability?.closest('.resource-row');
+    if(resourceRow){
+      const tracingResource=document.createElement('a');
+      tracingResource.className='resource-link';
+      tracingResource.href='cheat-sheets/Claude_Managed_Agents_Tracing_Cheat_Sheet.pdf';
+      tracingResource.target='_blank';
+      tracingResource.rel='noopener noreferrer';
+      tracingResource.textContent='Managed agents + tracing';
+      resourceRow.appendChild(tracingResource);
+    }
+  }
+
+  /* Keep the eval cheat sheet with the Learning Guide's Quality, Risk &
+     Governance material. Reuse the existing resource-row/link classes so it
+     behaves like the rest of the learning library on desktop and mobile. */
+  if(learningPage&&!learningPage.querySelector('a[href="cheat-sheets/AI_Product_Evals_Cheat_Sheet.pdf"]')){
+    const qualityStage=learningPage.querySelector('#quality-evals');
+    const practice=qualityStage?.querySelector('.stage-group.practice');
+    let resourceRow=qualityStage?.querySelector('.resource-row');
+    if(!resourceRow&&practice){
+      resourceRow=document.createElement('div');
+      resourceRow.className='resource-row';
+      practice.insertAdjacentElement('afterend',resourceRow);
+    }
+    if(resourceRow){
+      const evalResource=document.createElement('a');
+      evalResource.className='resource-link';
+      evalResource.href='cheat-sheets/AI_Product_Evals_Cheat_Sheet.pdf';
+      evalResource.target='_blank';
+      evalResource.rel='noopener noreferrer';
+      evalResource.textContent='AI Product Evals Cheat Sheet';
+      resourceRow.appendChild(evalResource);
     }
   }
 
