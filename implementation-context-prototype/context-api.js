@@ -197,6 +197,7 @@
     resetDemo: () => request('/api/demo/reset', {method:'POST'}),
     // state.md #114: the project switcher.
     getProjects: () => request('/api/projects'),
+    createProject: name => jsonPost('/api/projects', {name}),
     switchProject: projectId => jsonPost('/api/projects/switch', {project_id: projectId}),
     // Free-form Ask streams visible answer text while the final grounded payload
     // is still validated server-side. Product-owned starters remain deterministic.

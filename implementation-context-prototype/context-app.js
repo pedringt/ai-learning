@@ -105,7 +105,8 @@
     const signature=projects.map(p=>p.id).join(',')+'|'+activeId;
     if(menu.dataset.signature===signature)return;
     menu.dataset.signature=signature;
-    menu.innerHTML=projects.map(p=>`<button data-action="switch-project" data-project-id="${esc(p.id)}"${p.id===activeId?' class="active"':''}>${esc(p.name)}${p.id===activeId?' <span>Current</span>':''}</button>`).join('');
+    menu.innerHTML=projects.map(p=>`<button data-action="switch-project" data-project-id="${esc(p.id)}"${p.id===activeId?' class="active"':''}>${esc(p.name)}${p.id===activeId?' <span>Current</span>':''}</button>`).join('')
+      +`<button class="project-menu-new" data-action="new-project">+ New project</button>`;
   }
 
   function updateNav(){
@@ -1098,6 +1099,37 @@
     }
   }
 
+  // Shared by switch-project and save-new-project: point the app at
+  // projectId and fully re-hydrate. Callers own their own loading/error
+  // dialogs since the copy differs ("switching" vs "creating").
+  async function activateProject(projectId){
+    const summary=await API.switchProject(projectId);
+    API.setActiveProject?.(summary.id);
+    window.STATE_ASK_UI?.resetForProjectSwitch(summary.id);
+    state.data.project={...state.data.project,...summary};
+    // Clear every locally-held record before re-hydrating -- never fall
+    // back to context-data.js's static Northstar fixture here, or its
+    // placeholder facts would flash on screen while the new project's
+    // real data loads.
+    state.data.knowledge=[];
+    state.data.reviews=[];
+    state.data.questions=[];
+    state.data.notes=[];
+    state.data.history=[];
+    state.data.drafts=[];
+    state.projectRules=[];
+    state.view='overview';
+    state.result=null;state.resultQuery='';state.expandedReviewId=null;
+    state.backendStatus={state:'loading',evidence:'loading',reviews:'loading',history:'loading',questions:'loading',rules:'loading',drafts:'loading'};
+    state.isAnalyzing=false;
+    render();
+    // A minimum-visible floor keeps the loading dialog from flashing even
+    // when both the switch and the hydration happen to be near-instant.
+    const minVisible=new Promise(resolve=>setTimeout(resolve,450));
+    await Promise.all([hydrateBackend(),minVisible]);
+    closeDialog();
+  }
+
   async function hydrateBackend(){
     if(!API)return;
     ensureProjectsList();
@@ -1421,43 +1453,30 @@
       state.isAnalyzing=true;
       showDialog(`<span class="eyebrow">Switching projects</span><h2 id="dialogTitle">Opening ${esc(a.textContent.replace('Current','').trim())}…</h2><p>Loading Current State, Reviews, Questions, History, and Rules for this project.</p>`);
       try{
-        const summary=await API.switchProject(projectId);
-        API.setActiveProject?.(summary.id);
-        window.STATE_ASK_UI?.resetForProjectSwitch(summary.id);
-        state.data.project={...state.data.project,...summary};
-        // Clear every locally-held record before re-hydrating -- never fall
-        // back to context-data.js's static Northstar fixture here, or its
-        // placeholder facts would flash on screen while the new project's
-        // real data loads. The same "never let a stale project's records
-        // leak into the next one" guarantee syncApiState() already gives a
-        // single project, extended across a project switch.
-        state.data.knowledge=[];
-        state.data.reviews=[];
-        state.data.questions=[];
-        state.data.notes=[];
-        state.data.history=[];
-        state.data.drafts=[];
-        state.projectRules=[];
-        state.view='overview';
-        state.result=null;state.resultQuery='';state.expandedReviewId=null;
-        state.backendStatus={state:'loading',evidence:'loading',reviews:'loading',history:'loading',questions:'loading',rules:'loading',drafts:'loading'};
-        state.isAnalyzing=false;
-        render();
-        // Keep the "Switching projects" dialog up for the whole hydration,
-        // not just the quick switch call -- closing it right after the
-        // switch (the old behavior) meant it disappeared before the actual
-        // Current State/Reviews/Questions/History/Rules fetches it describes
-        // had even started, so it either flashed for a moment or, on a slow
-        // connection, closed while the new project's data was still empty.
-        // A minimum-visible floor keeps it from flashing even when both the
-        // switch and the hydration happen to be near-instant.
-        const minVisible=new Promise(resolve=>setTimeout(resolve,450));
-        await Promise.all([hydrateBackend(),minVisible]);
-        closeDialog();
+        await activateProject(projectId);
         window.StateAnalytics?.track('project_switched',{projectId});
       }catch(err){
         state.isAnalyzing=false;
         showDialog(`<span class="eyebrow">Couldn't switch projects</span><h2 id="dialogTitle">The project was not changed.</h2><p>${esc(err.message)}</p><div class="dialog-actions"><button class="btn primary" data-action="close-dialog">Close</button></div>`);
+      }
+    }
+    else if(act==='new-project'){
+      state.projectMenuOpen=false;
+      showDialog(`<span class="eyebrow">New project</span><h2 id="dialogTitle">Start a blank project</h2><p>Creates an empty project with no seeded Current State, Reviews, or Rules — a fresh place to build understanding from scratch.</p><label for="newProjectName" class="new-project-label">Project name</label><input id="newProjectName" class="dialog-input" type="text" maxlength="200" placeholder="e.g. AI Notes" autofocus /><div class="dialog-actions"><button class="btn primary" data-action="save-new-project">Create project</button><button class="btn secondary" data-action="close-dialog">Cancel</button></div>`);
+    }
+    else if(act==='save-new-project'){
+      const name=document.getElementById('newProjectName')?.value.trim();
+      if(!name)return;
+      state.isAnalyzing=true;
+      showDialog(`<span class="eyebrow">Creating project</span><h2 id="dialogTitle">Setting up ${esc(name)}…</h2>`);
+      try{
+        const project=await API.createProject(name);
+        state.data.projects=[...(state.data.projects||[]),project];
+        await activateProject(project.id);
+        window.StateAnalytics?.track('project_created',{projectId:project.id});
+      }catch(err){
+        state.isAnalyzing=false;
+        showDialog(`<span class="eyebrow">Couldn't create project</span><h2 id="dialogTitle">The project was not created.</h2><p>${esc(err.message)}</p><div class="dialog-actions"><button class="btn primary" data-action="close-dialog">Close</button></div>`);
       }
     }
     else if(act==='retry-hydration'){await hydrateBackend();}

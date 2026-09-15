@@ -259,6 +259,19 @@ class ProjectSwitchInput(BaseModel):
     project_id: str = Field(min_length=1, max_length=100)
 
 
+class ProjectCreateInput(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    name: str = Field(min_length=1, max_length=200)
+
+    @field_validator("name")
+    @classmethod
+    def name_not_blank(cls, value: str) -> str:
+        stripped = value.strip()
+        if not stripped:
+            raise ValueError("Project name cannot be blank")
+        return stripped
+
+
 class ProjectRuleInput(BaseModel):
     model_config = ConfigDict(extra="forbid")
     text: str = Field(min_length=1, max_length=2_000)
@@ -544,6 +557,20 @@ def create_app(settings: Settings | None = None, provider: InterpretationProvide
         with get_connection() as connection:
             rows = connection.execute("SELECT id, name FROM projects ORDER BY name").fetchall()
             return {"items": [dict(row) for row in rows], "active": _active_project_summary(connection)}
+
+    @app.post("/api/projects")
+    def create_project(payload: ProjectCreateInput) -> dict:
+        """Issue #129: let a user start a genuinely blank project (no seeded
+        state, areas, or rules) so State's bootstrap behavior can be observed
+        from nothing rather than only from the seeded Northstar/Juniper demos.
+        """
+        with get_connection() as connection:
+            project_id = new_id("project")
+            connection.execute(
+                "INSERT INTO projects(id, name) VALUES (?, ?)", (project_id, payload.name)
+            )
+            connection.commit()
+            return {"id": project_id, "name": payload.name}
 
     @app.post("/api/projects/switch")
     def switch_project(payload: ProjectSwitchInput) -> dict:

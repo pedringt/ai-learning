@@ -209,3 +209,38 @@ def test_api_bootstrap_reports_the_active_project(tmp_path):
 
         bad = client.post('/api/projects/switch', json={'project_id': 'nonexistent'})
         assert bad.status_code == 404
+
+
+def test_create_project_starts_genuinely_blank(tmp_path):
+    """Issue #129: a created project must have no seeded state/reviews/
+    questions/rules -- only bootstrap_demo_data/bootstrap_juniper_demo_data
+    seed content, and create_project must never call either.
+    """
+    settings = Settings(database_path=str(tmp_path / 'api.db'), cors_origins=[], demo_bootstrap=True)
+    with TestClient(create_app(settings)) as client:
+        created = client.post('/api/projects', json={'name': 'AI Notes'})
+        assert created.status_code == 200
+        project = created.json()
+        assert project['name'] == 'AI Notes'
+        assert project['id'] not in ('northstar', 'juniper')
+
+        projects = client.get('/api/projects').json()
+        assert project['id'] in {p['id'] for p in projects['items']}
+
+        switched = client.post('/api/projects/switch', json={'project_id': project['id']})
+        assert switched.status_code == 200
+        assert switched.json() == project
+
+        bootstrap = client.get('/api/bootstrap', headers={'X-State-Project-Id': project['id']}).json()
+        assert bootstrap['project'] == project
+        assert bootstrap['state'] == []
+        assert bootstrap['open_reviews'] == []
+        assert bootstrap['questions'] == []
+        assert bootstrap['rules'] == []
+
+
+def test_create_project_rejects_blank_name(tmp_path):
+    settings = Settings(database_path=str(tmp_path / 'api.db'), cors_origins=[], demo_bootstrap=True)
+    with TestClient(create_app(settings)) as client:
+        response = client.post('/api/projects', json={'name': '   '})
+        assert response.status_code == 422
