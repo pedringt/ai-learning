@@ -12,6 +12,7 @@ from __future__ import annotations
 import sys
 
 import api_core as _core
+from baseline_draft import register_baseline_draft_routes
 from baseline_setup import install_baseline_extensions, register_baseline_routes
 from baseline_resilience import install_baseline_resilience
 
@@ -29,6 +30,7 @@ def create_app(settings=None, provider=None, ask_provider=None):
         ask_provider=ask_provider,
     )
     register_baseline_routes(application, application.state.settings)
+    register_baseline_draft_routes(application, application.state.settings)
     return application
 
 
