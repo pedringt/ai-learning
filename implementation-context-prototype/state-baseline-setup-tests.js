@@ -10,7 +10,7 @@ let pass=0,fail=0;
 function check(name,ok,detail=''){if(ok){pass++;console.log('✓',name)}else{fail++;console.error('✗',name,detail)}}
 
 check('Baseline Setup module is loaded by the product shell', html.includes("'context-baseline-setup.js'"));
-check('new baseline shell asset version is present', html.includes("r110-baseline-setup"));
+check('new baseline shell asset version is present', html.includes("r111-baseline-feedback"));
 check('status endpoint is project-scoped', source.includes("'/api/baseline'") && source.includes("'X-State-Project-Id'"));
 check('finish action is explicit', source.includes("'/api/baseline/finish'") && source.includes('Finish Baseline Setup'));
 check('copy says setup survives accepted facts until explicit finish', source.includes('stays active across multiple notes and accepted facts until you explicitly finish it'));
