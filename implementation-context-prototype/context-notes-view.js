@@ -104,10 +104,11 @@
     const editable=isEditableDraft(n);
     const statusClass=n.status==='pending'?'pending':(n.status==='accepted'||n.status==='reviewed')?'reviewed':n.status==='no_review_needed'?'no-review-needed':n.status==='failed'?'failed':n.status==='unknown'?'unknown':'draft';
     const statusBadge=noteStatusControl(n,statusClass);
+    const canProposeForCurrentState=!!n.evidenceId && ['accepted','reviewed','no_review_needed'].includes(n.status);
     const reviewAction=n.status==='failed'&&n.evidenceId
       ? `<button class="text-button" data-action="retry-analysis" data-evidence-id="${n.evidenceId}">Retry analysis</button>`
-      : n.status==='no_review_needed'&&n.evidenceId
-        ? `<button class="text-button" data-action="promote-evidence" data-evidence-id="${n.evidenceId}">Ask State to reconsider this</button>`
+      : canProposeForCurrentState
+        ? `<button class="text-button" data-action="promote-evidence" data-evidence-id="${n.evidenceId}">Propose for Current State</button>`
         : !editable
           ? ''
           : `<button class="text-button" data-action="send-note-review" data-note-id="${n.id}">Submit for review</button>`;
