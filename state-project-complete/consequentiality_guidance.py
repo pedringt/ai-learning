@@ -17,3 +17,31 @@ CONSEQUENTIALITY_AND_GROUPING_GUIDANCE = """
 - Dense Evidence often bundles several distinct consequential items (e.g. one milestone AND a separate new policy, in the same note). Before finalizing, re-scan the Evidence paragraph by paragraph: each distinct consequential claim needs its own recommendation (grouped only when it is genuinely one coherent decision) -- do not stop early and let a few salient recommendations stand in for the rest of the Evidence.
 - Before finalizing, check each open Question shown above against this Evidence: if Evidence concretely establishes the answer, include that Question's ID in resolves_question_ids on the recommendation that reflects the answer, even when that recommendation's main subject is something else (e.g. a security-approval update that also happens to answer a retention Question).
 """
+
+#: Injected only when a project has zero active Current State items (see
+# anthropic_provider.py/openai_provider.py's `_build_prompt`). Normal
+# operation's consequentiality bar is calibrated against comparison with
+# existing Current State; a brand-new or newly-adopted project has little or
+# none to compare against, so applying that same bar silently produces
+# "no_review" for real project knowledge with nothing for the user to
+# reject or correct (2026-09-15 product finding: substantive first-evidence
+# notes describing real project facts were returned no_review, while the
+# same facts phrased as an explicit current-state statement were not).
+BOOTSTRAP_GUIDANCE = """
+- Current State is empty for this project -- there is nothing yet to compare Evidence against. Apply a bootstrap bar instead of the normal comparison-based one: bias toward coverage over strict filtering, since missing real project knowledge while establishing a baseline is more costly than proposing a few extra items for a human to review.
+- Test each candidate fact against: would losing or misunderstanding this information materially affect someone's understanding of the project, how they operate it, evaluate it, or make decisions about it? If yes, propose it as missing_understanding even if it would not clear the normal bar once Current State already covered similar ground.
+- Likely-consequential bootstrap information: product purpose and scope, important project rules, authority/governance rules, major technical architecture facts, current priorities, important constraints, decisions that materially affect future work, and meaningful unresolved questions (as open_question recommendations, not missing_understanding).
+- Do not propose low-level implementation detail or incidental historical facts as Current State just because Current State is empty -- the bootstrap bar is lower, not absent.
+- If this Evidence contains several distinct baseline facts, still use the decision-sized grouping principle above (one Review per coherent topic/area) rather than one giant Review or a flood of one-line Reviews.
+"""
+
+#: Injected only for Evidence the user explicitly asked State to reconsider
+# (the "promote" escape hatch -- api.py's POST /api/evidence/{id}/promote).
+# This does not bypass Review or let AI mutate Current State directly: it
+# only asks the model not to silently decline solely on the consequentiality
+# bar, since the whole point is a human who already decided this matters.
+# Normal schema/semantic validation and the same accept/reject Review still
+# apply after this.
+USER_PROMOTION_GUIDANCE = """
+The user has explicitly asked State to reconsider this Evidence for Current State -- they believe it matters even though an earlier pass did not propose anything for it. Formulate the most accurate proposal(s) you can from it; you may still interpret and word it appropriately, but do not return no_review solely because it would not otherwise clear the normal consequentiality bar. Only decline (no_review) if the Evidence is genuinely empty, unintelligible, or already exactly represented in Current State -- and say so plainly in no_review_explanation if you do.
+"""

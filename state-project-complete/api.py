@@ -824,8 +824,7 @@ def create_app(settings: Settings | None = None, provider: InterpretationProvide
             content = content[:100_000]
         return _submit_evidence(request, content, "uploaded_note", source_name=filename or None)
 
-    @app.post("/api/evidence/{evidence_id}/reanalyze")
-    def reanalyze_evidence(evidence_id: str, request: Request) -> dict:
+    def _reanalyze(request: Request, evidence_id: str, *, user_requested_maintenance: bool = False, failure_message: str) -> dict:
         selected_provider = request.app.state.provider
         if selected_provider is None:
             try:
@@ -834,10 +833,20 @@ def create_app(settings: Settings | None = None, provider: InterpretationProvide
             except RuntimeError as exc:
                 raise HTTPException(status_code=503, detail=str(exc)) from exc
         with get_connection() as connection:
-            exists = connection.execute("SELECT id FROM evidence WHERE id=?", (evidence_id,)).fetchone()
+            # Blank-project bug report (2026-09-15) pattern repeated: this
+            # existence check used to be unscoped by project, so an
+            # evidence_id from another project would pass it and then hit
+            # process_evidence()'s own project-scoped SELECT, raising an
+            # uncaught KeyError (a 500) instead of a clean 404.
+            exists = connection.execute(
+                "SELECT id FROM evidence WHERE id=? AND project_id=?", (evidence_id, connection.project_id)
+            ).fetchone()
             if exists is None:
                 raise HTTPException(status_code=404, detail="Evidence not found")
-            result = process_evidence(connection, evidence_id=evidence_id, provider=selected_provider)
+            result = process_evidence(
+                connection, evidence_id=evidence_id, provider=selected_provider,
+                user_requested_maintenance=user_requested_maintenance,
+            )
             reviews = list_reviews(connection, "open")
             created_reviews = [item for item in reviews if item["id"] in result.review_ids]
             if result.processing_status == "failed":
@@ -851,7 +860,7 @@ def create_app(settings: Settings | None = None, provider: InterpretationProvide
                     "code": error_code,
                     "evidence_id": evidence_id,
                     "interpretation_record_id": result.interpretation_record_id,
-                    "error_details": {"error_message": "The analysis service could not complete this request. Please retry analysis."},
+                    "error_details": {"error_message": failure_message},
                 })
             return {
                 "evidence_id": evidence_id,
@@ -859,6 +868,29 @@ def create_app(settings: Settings | None = None, provider: InterpretationProvide
                 "processing_status": result.processing_status,
                 "reviews": created_reviews,
             }
+
+    @app.post("/api/evidence/{evidence_id}/reanalyze")
+    def reanalyze_evidence(evidence_id: str, request: Request) -> dict:
+        return _reanalyze(
+            request, evidence_id,
+            failure_message="The analysis service could not complete this request. Please retry analysis.",
+        )
+
+    @app.post("/api/evidence/{evidence_id}/promote")
+    def promote_evidence(evidence_id: str, request: Request) -> dict:
+        """Explicit human promotion (product direction, 2026-09-15): the
+        consequentiality classifier already ran once and found nothing to
+        review. The user is telling State this Evidence matters anyway.
+        Re-runs interpretation with USER_PROMOTION_GUIDANCE in effect so the
+        model doesn't silently decline solely on the consequentiality bar --
+        it can still interpret/word the proposal, and normal schema/semantic
+        validation plus human Review/accept still apply unchanged. This is
+        not a way to write Current State directly.
+        """
+        return _reanalyze(
+            request, evidence_id, user_requested_maintenance=True,
+            failure_message="The analysis service could not complete this request. Please try again.",
+        )
 
     @app.get("/api/evidence")
     def get_evidence() -> dict:

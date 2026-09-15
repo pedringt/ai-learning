@@ -106,9 +106,11 @@
     const statusBadge=noteStatusControl(n,statusClass);
     const reviewAction=n.status==='failed'&&n.evidenceId
       ? `<button class="text-button" data-action="retry-analysis" data-evidence-id="${n.evidenceId}">Retry analysis</button>`
-      : !editable
-        ? ''
-        : `<button class="text-button" data-action="send-note-review" data-note-id="${n.id}">Submit for review</button>`;
+      : n.status==='no_review_needed'&&n.evidenceId
+        ? `<button class="text-button" data-action="promote-evidence" data-evidence-id="${n.evidenceId}">Ask State to reconsider this</button>`
+        : !editable
+          ? ''
+          : `<button class="text-button" data-action="send-note-review" data-note-id="${n.id}">Submit for review</button>`;
     const body=editing
       ? `<div class="note-inline-editor"><input class="dialog-input" id="editNoteTitle-${n.id}" value="${esc(n.title)}" aria-label="Note title"><textarea id="editNoteText-${n.id}" rows="8" aria-label="Note text">${esc(n.text)}</textarea><div class="inline-actions"><button class="btn primary" data-action="save-note-edit" data-note-id="${n.id}">Save changes</button><button class="btn secondary" data-action="cancel-note-edit" data-note-id="${n.id}">Cancel</button></div></div>`
       : expanded

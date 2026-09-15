@@ -24,7 +24,11 @@ from validation.semantic_validation import InterpretationContextSnapshot
 from provider_output_schema import PROVIDER_OUTPUT_SCHEMA
 from provider_json import extract_json_object
 from question_review_prompt import QUESTION_REVIEW_GUIDANCE
-from consequentiality_guidance import CONSEQUENTIALITY_AND_GROUPING_GUIDANCE
+from consequentiality_guidance import (
+    BOOTSTRAP_GUIDANCE,
+    CONSEQUENTIALITY_AND_GROUPING_GUIDANCE,
+    USER_PROMOTION_GUIDANCE,
+)
 from db import project_id_of
 
 _RELEVANCE_SCHEMA = {
@@ -322,6 +326,11 @@ class AnthropicProvider:
 
         rules_prompt = '' if not rules else '<project_rules>\n' + chr(10).join(f"- [{r['category']}] {r['text']}" for r in rules) + '\n</project_rules>\n\n'
 
+        # Bootstrap mode: a project with zero active Current State has
+        # nothing for the normal comparison-based bar to compare against.
+        # See consequentiality_guidance.py's BOOTSTRAP_GUIDANCE docstring.
+        bootstrap_guidance = BOOTSTRAP_GUIDANCE if not states else ""
+
         # The API constrains structural JSON. Keep this prompt focused on semantic
         # interpretation and cross-field meaning rather than repeating the full schema.
         prompt = f"""You maintain a project's reviewed Current State from immutable Evidence.
@@ -344,6 +353,7 @@ Evidence never changes State directly; a human decides Reviews.
 <instructions>
 {QUESTION_REVIEW_GUIDANCE}
 {CONSEQUENTIALITY_AND_GROUPING_GUIDANCE}
+{bootstrap_guidance}
 Compare the Evidence with Current State and open Reviews. Return the semantic interpretation in the supplied JSON schema.
 
 - If Evidence does not materially change, threaten, or fill maintained understanding or raise a consequential unknown worth tracking, return no recommendations and explain briefly.
@@ -426,5 +436,15 @@ Compare the Evidence with Current State and open Reviews. Return the semantic in
                 lines.append(f"- Status: Blocking (depends: {question_context['blocks']})")
             lines.append("Interpret terse wording against this Question. Include its ID in resolves_question_ids only when the Evidence concretely answers it.")
             lines.append("</question_response_context>")
-        
+
+        # Explicit human promotion (api.py's POST /api/evidence/{id}/promote):
+        # the user is overriding a prior "nothing to review" outcome, not
+        # submitting new content -- see USER_PROMOTION_GUIDANCE's docstring
+        # for why this doesn't weaken the authority model.
+        if evidence.get("user_requested_maintenance"):
+            lines.append("")
+            lines.append("<user_promotion>")
+            lines.append(USER_PROMOTION_GUIDANCE.strip())
+            lines.append("</user_promotion>")
+
         return "\n".join(lines)

@@ -191,6 +191,7 @@
       return request('/api/evidence/upload', {method: 'POST', body});
     },
     retryEvidenceAnalysis: evidenceId => request(`/api/evidence/${encodeURIComponent(evidenceId)}/reanalyze`, {method:'POST'}),
+    promoteEvidence: evidenceId => request(`/api/evidence/${encodeURIComponent(evidenceId)}/promote`, {method:'POST'}),
     resolveReview: (reviewId, decision, options = {}) => jsonPost(`/api/reviews/${encodeURIComponent(reviewId)}/resolve`, {decision, ...(options.questionProposalId ? {expected_question_proposal_id:options.questionProposalId, expected_existing_question_id:options.existingQuestionId||null} : {}), ...(options.adjustments?.length ? {adjustments:options.adjustments} : {})}),
     createQuestion: (text, options = {}) => jsonPost('/api/questions', {text, origin: options.origin || 'Added from Workspace', blocking: !!options.blocking, ...(options.blocks ? {blocks: options.blocks} : {})}),
     setQuestionBlocking: (questionId, blocking, blocks = null) => request(`/api/questions/${encodeURIComponent(questionId)}/blocking`, {method:'PATCH', headers:{'Content-Type':'application/json'}, body:JSON.stringify({blocking, blocks})}),

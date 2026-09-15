@@ -471,6 +471,8 @@ def process_evidence(
     connection: Connection,
     evidence_id: str,
     provider: InterpretationProvider,
+    *,
+    user_requested_maintenance: bool = False,
 ) -> ProcessResult:
     """Orchestrate full interpretation pipeline: validation → persistence.
 
@@ -481,6 +483,13 @@ def process_evidence(
     5. Persist atomically (success) or fail safely (failure only)
 
     All-or-nothing semantics: one invalid Review/Proposal rejects entire interpretation.
+
+    user_requested_maintenance: set only by api.py's POST /api/evidence/{id}/promote
+    (the explicit human-promotion escape hatch) -- tells the provider the user
+    is overriding a prior "nothing to review" outcome. This never bypasses
+    Review or writes Current State directly; it only changes how the model
+    weighs consequentiality for this one interpretation call. See
+    consequentiality_guidance.py's USER_PROMOTION_GUIDANCE.
     """
     # Evidence is immutable input and must exist as a committed record before
     # interpretation starts its own atomic persistence transaction. This also
@@ -515,6 +524,9 @@ def process_evidence(
                 evidence_id,
                 question_id,
             )
+
+    if user_requested_maintenance:
+        evidence_dict["user_requested_maintenance"] = True
 
     context = capture_context(connection)
     # Do not hold a PostgreSQL transaction open while waiting on the model.

@@ -1635,6 +1635,24 @@
     else if(act==='close-dialog'){if(!state.isAnalyzing)closeDialog();}
     else if(act==='dismiss-and-open-items'){closeDialog();navigateTo('open-items');}
     else if(act==='retry-analysis'){ const evidenceId=a.dataset.evidenceId; state.isAnalyzing=true; showDialog(analyzingDialog()); startAnalysisClock(); try{await retryEvidenceAnalysis(evidenceId); state.isAnalyzing=false; stopAnalysisClock(); await hydrateBackend(); showDialog(`<span class="eyebrow">Done</span><h2 id="dialogTitle">Analysis complete.</h2><p>Open Items now reflects anything that needs your decision.</p><div class="dialog-actions"><button class="btn primary" data-action="go-review">View Open Items</button></div>`);}catch(err){state.isAnalyzing=false;stopAnalysisClock();showDialog(`<span class="eyebrow">Still unavailable</span><h2 id="dialogTitle">Your note is still safe.</h2><p>${esc(err.message)}</p><div class="dialog-actions"><button class="btn primary" data-action="close-dialog">Close</button></div>`);} }
+    else if(act==='promote-evidence'){
+      const evidenceId=a.dataset.evidenceId;
+      state.isAnalyzing=true;
+      showDialog(`<span class="eyebrow">Reconsidering</span><h2 id="dialogTitle">Asking State to reconsider this note…</h2><p>State will look again and decide what, if anything, belongs in Current State.</p>`);
+      try{
+        const result=await API.promoteEvidence(evidenceId);
+        state.isAnalyzing=false;
+        await hydrateBackend();
+        if((result.reviews||[]).length){
+          showDialog(`<span class="eyebrow">Review created</span><h2 id="dialogTitle">State found something to review.</h2><p>${result.reviews.length===1?'1 Review needs your decision.':`${result.reviews.length} Reviews need your decisions.`}</p><div class="dialog-actions"><button class="btn primary" data-action="go-review">View Review</button></div>`);
+        }else{
+          showDialog(`<span class="eyebrow">Still no review</span><h2 id="dialogTitle">State still didn't find anything to propose.</h2><p>The note is preserved as Evidence either way. You can edit it to add more detail and try again, or leave it as reference material.</p>`);
+        }
+      }catch(err){
+        state.isAnalyzing=false;
+        showDialog(`<span class="eyebrow">Couldn't reconsider</span><h2 id="dialogTitle">This note is still safe.</h2><p>${esc(err.message)}</p><div class="dialog-actions"><button class="btn primary" data-action="close-dialog">Close</button></div>`);
+      }
+    }
     else if(act==='sample-info'){ const t=document.getElementById('addInfoText'); const samples=state.data.sampleInformationOptions||{}; const value=samples[a.dataset.sample]||state.data.sampleInformation; if(t){t.value=value;t.focus();t.setSelectionRange(t.value.length,t.value.length);} }
     else if(act==='save-info')saveInformation();
     else if(act==='go-review'){closeDialog();navigateTo('open-items');}
