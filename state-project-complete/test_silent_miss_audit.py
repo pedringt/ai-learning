@@ -1,12 +1,10 @@
 import json
 import sqlite3
 import sys
-import types
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
 sys.path.insert(0, str(ROOT))
-sys.path.insert(0, str(ROOT / "eval"))
 
 
 class Conn:
@@ -39,11 +37,6 @@ class Cursor:
         row = self.cursor.fetchone()
         return dict(row) if row else None
 
-
-db = types.ModuleType("db")
-db.project_id_of = lambda connection: getattr(connection, "project_id", "northstar")
-db.connect = lambda _url=None: Conn()
-sys.modules["db"] = db
 
 from eval.silent_miss_audit import (  # noqa: E402
     create_audit_bundle,
