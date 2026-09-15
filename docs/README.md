@@ -1,6 +1,8 @@
 # Documentation
 
 Start with the [repository README](../README.md) and [PROJECT_STATUS.md](PROJECT_STATUS.md).
+For a plainer, onboarding-style walkthrough of State's product model and
+system rules, see **[`how-state-works.md`](how-state-works.md)**.
 
 Current operating docs:
 
