@@ -13,10 +13,12 @@ import sys
 
 import api_core as _core
 from baseline_setup import install_baseline_extensions, register_baseline_routes
+from baseline_resilience import install_baseline_resilience
 
 # Patch the authority-bearing runtime hooks before constructing the deployment
 # app. Baseline Setup still uses the existing Review/human authorization path.
 install_baseline_extensions(_core)
+install_baseline_resilience()
 _core_create_app = _core.create_app
 
 
