@@ -235,6 +235,10 @@
 .learning-stories strong{display:block;max-width:760px;font-size:17px;line-height:1.4}
 .learning-stories p{max-width:860px!important;margin:7px 0 0!important;color:var(--muted);font-size:14px!important;line-height:1.65!important}
 @media(max-width:760px){.state-model-grid{grid-template-columns:1fr}.state-model-grid article,.state-model-grid article:nth-child(3n+2),.state-model-grid article:nth-child(3n+3){padding:16px 0;border-left:0}.state-model-grid article+article{border-top:1px solid var(--border)}}
+.evidence-principle{max-width:1000px;margin:22px 0 26px;padding:22px 26px;border:1px solid var(--border);border-radius:16px;background:var(--softp)}
+.evidence-principle strong{display:block;font-size:19px;line-height:1.42;font-weight:800;color:var(--ink);letter-spacing:-.01em}
+.evidence-principle p{margin:10px 0 0!important;color:var(--muted);font-size:14px!important;line-height:1.6!important}
+@media(max-width:760px){.evidence-principle{padding:18px 20px}.evidence-principle strong{font-size:17px}}
 
 /* v10 feedback pass: balanced decision grid and light unresolved-tradeoff treatment. */
 .decision-receipts .qa-receipt{grid-column:auto;border-color:var(--border);background:var(--card)}
