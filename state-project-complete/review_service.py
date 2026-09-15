@@ -481,7 +481,7 @@ def list_evidence(connection: Connection) -> list[dict]:
     """Return the complete Evidence archive newest-first, for the connection's active project."""
     connection.row_factory = sqlite3.Row
     return [dict(row) for row in connection.execute(
-        "SELECT id, content, source_type, processing_status, supersedes_evidence_id, submitted_at "
+        "SELECT id, content, source_type, source_name, processing_status, supersedes_evidence_id, submitted_at "
         "FROM evidence WHERE project_id=? ORDER BY submitted_at DESC, id DESC",
         (project_id_of(connection),),
     )]
@@ -558,7 +558,7 @@ def list_reviews(connection: Connection, status: str = "open") -> list[dict]:
     for row in rows:
         item = dict(row)
         evidence_rows = connection.execute(
-            "SELECT e.id, e.content, e.source_type, e.submitted_at "
+            "SELECT e.id, e.content, e.source_type, e.source_name, e.submitted_at "
             "FROM evidence e JOIN review_evidence re ON re.evidence_id=e.id "
             "WHERE re.review_id=? ORDER BY e.submitted_at DESC, e.id DESC",
             (row["id"],),
@@ -616,7 +616,7 @@ def list_history(connection: Connection) -> list[dict]:
     for row in rows:
         item = dict(row)
         evidence_rows = connection.execute(
-            "SELECT e.id, e.content, e.source_type, e.submitted_at "
+            "SELECT e.id, e.content, e.source_type, e.source_name, e.submitted_at "
             "FROM evidence e JOIN review_evidence re ON re.evidence_id=e.id "
             "WHERE re.review_id=? ORDER BY e.submitted_at, e.id",
             (row["review_id"],),

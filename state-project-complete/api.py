@@ -16,7 +16,7 @@ import secrets
 import uuid
 import time
 
-from fastapi import FastAPI, HTTPException, Query, Request
+from fastapi import FastAPI, File, HTTPException, Query, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse, StreamingResponse
 from pydantic import BaseModel, ConfigDict, Field, field_validator
@@ -637,8 +637,12 @@ def create_app(settings: Settings | None = None, provider: InterpretationProvide
                 raise HTTPException(status_code=404, detail="Draft note not found") from exc
             return {"draft_id": draft_id, "status": "deleted"}
 
-    @app.post("/api/evidence", status_code=201)
-    def interpret_evidence(payload: EvidenceInput, request: Request) -> dict:
+    def _submit_evidence(request: Request, content: str, source_type: str, source_name: str | None = None) -> dict:
+        """Insert one Evidence row and run it through the normal interpretation
+        pipeline. Shared by the manual-paste and file-upload intake paths so
+        an upload gets the exact same authority/consequentiality treatment as
+        typed Evidence -- see interpret_evidence and upload_evidence below.
+        """
         evidence_id = new_id("evidence")
         selected_provider = request.app.state.provider
         if selected_provider is None:
@@ -648,8 +652,8 @@ def create_app(settings: Settings | None = None, provider: InterpretationProvide
                 raise HTTPException(status_code=503, detail=str(exc)) from exc
         with get_connection() as connection:
             connection.execute(
-                "INSERT INTO evidence(id, content, source_type, project_id) VALUES (?, ?, ?, ?)",
-                (evidence_id, payload.content.strip(), payload.source_type, connection.project_id),
+                "INSERT INTO evidence(id, content, source_type, source_name, project_id) VALUES (?, ?, ?, ?, ?)",
+                (evidence_id, content, source_type, source_name, connection.project_id),
             )
             connection.commit()
             result = process_evidence(connection, evidence_id=evidence_id, provider=selected_provider)
@@ -686,6 +690,56 @@ def create_app(settings: Settings | None = None, provider: InterpretationProvide
                 "processing_status": result.processing_status,
                 "reviews": created_reviews,
             }
+
+    @app.post("/api/evidence", status_code=201)
+    def interpret_evidence(payload: EvidenceInput, request: Request) -> dict:
+        return _submit_evidence(request, payload.content.strip(), payload.source_type)
+
+    # Issue #140: the simplest reliable upload set -- plain text and Markdown,
+    # matching what the product goal called for first. docx/pdf extraction
+    # is real added surface area (new dependencies, format-specific failure
+    # modes) and deliberately deferred rather than bundled in here.
+    _UPLOAD_EXTENSIONS = {".txt", ".md"}
+    _UPLOAD_MAX_BYTES = 300_000
+
+    @app.post("/api/evidence/upload", status_code=201)
+    async def upload_evidence(request: Request, file: UploadFile = File(...)) -> dict:
+        filename = (file.filename or "").strip()
+        extension = filename[filename.rfind("."):].lower() if "." in filename else ""
+        if extension not in _UPLOAD_EXTENSIONS:
+            raise HTTPException(
+                status_code=422,
+                detail={"code": "unsupported_file_type", "error_details": {
+                    "error_message": "State can currently read .txt and .md files. Other formats aren't supported yet.",
+                }},
+            )
+        raw = await file.read()
+        if len(raw) > _UPLOAD_MAX_BYTES:
+            raise HTTPException(
+                status_code=422,
+                detail={"code": "file_too_large", "error_details": {
+                    "error_message": "That file is too large to upload as Evidence right now.",
+                }},
+            )
+        try:
+            content = raw.decode("utf-8").strip()
+        except UnicodeDecodeError:
+            raise HTTPException(
+                status_code=422,
+                detail={"code": "unreadable_file", "error_details": {
+                    "error_message": "That file doesn't look like plain text State can read.",
+                }},
+            )
+        if not content:
+            raise HTTPException(
+                status_code=422,
+                detail={"code": "empty_file", "error_details": {
+                    "error_message": "That file has no readable text to add as Evidence.",
+                }},
+            )
+        if len(content) > 100_000:
+            content = content[:100_000]
+        return _submit_evidence(request, content, "uploaded_note", source_name=filename or None)
 
     @app.post("/api/evidence/{evidence_id}/reanalyze")
     def reanalyze_evidence(evidence_id: str, request: Request) -> dict:

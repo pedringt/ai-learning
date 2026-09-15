@@ -1010,7 +1010,7 @@
   // view.js's questionDialogHtml) so it's directly testable without a DOM.
   function addDialogHtml(prefill='',{description}={}){
     const desc=description||'Add project information State should evaluate. It is preserved as Evidence first and cannot change Current State without Review.';
-    return `<span class="eyebrow">Evidence</span><h2 id="dialogTitle">Add Evidence</h2><p>${esc(desc)}</p><textarea id="addInfoText" rows="7" aria-label="Evidence" placeholder="Paste a finding, decision, meeting update, or other project information...">${esc(prefill)}</textarea><div class="note-example-picker"><span class="meta-label">Try an example</span><div class="note-example-chips"><button type="button" data-action="sample-info" data-sample="plan">New plan</button><button type="button" data-action="sample-info" data-sample="research">Research finding</button><button type="button" data-action="sample-info" data-sample="constraint">Decision / constraint</button></div></div><div class="dialog-actions"><button class="btn primary" data-action="save-info">Add Evidence</button><button class="btn secondary" data-action="close-dialog">Cancel</button></div>`;
+    return `<span class="eyebrow">Evidence</span><h2 id="dialogTitle">Add Evidence</h2><p>${esc(desc)}</p><textarea id="addInfoText" rows="7" aria-label="Evidence" placeholder="Paste a finding, decision, meeting update, or other project information...">${esc(prefill)}</textarea><div class="note-example-picker"><span class="meta-label">Try an example</span><div class="note-example-chips"><button type="button" data-action="sample-info" data-sample="plan">New plan</button><button type="button" data-action="sample-info" data-sample="research">Research finding</button><button type="button" data-action="sample-info" data-sample="constraint">Decision / constraint</button></div></div><div class="dialog-actions"><button class="btn primary" data-action="save-info">Add Evidence</button><button class="btn secondary" data-action="close-dialog">Cancel</button></div><div class="upload-evidence-row"><span>or</span><label class="text-button upload-evidence-label" for="uploadInfoFile">Upload a .txt or .md file</label><input id="uploadInfoFile" type="file" accept=".txt,.md,text/plain,text/markdown" hidden /></div>`;
   }
   function showAddDialog(prefill='',options={}){ showDialog(addDialogHtml(prefill,options)); }
 
@@ -1323,6 +1323,34 @@
     }catch(e){ await showAnalysisFailure(e); }
   }
 
+  // Issue #140: same Evidence -> interpretation -> Review flow as
+  // saveInformation() above, just sourced from an uploaded file instead of
+  // the textarea. The backend does the actual reading/decoding/validation;
+  // this only needs to surface its errors the same way saveInformation does.
+  async function uploadInformation(file){
+    if(!file)return;
+    state.isAnalyzing=true;
+    showDialog(analyzingDialog());
+    startAnalysisClock();
+    try{
+      const result=await API.uploadEvidence(file);
+      const stamp=Date.now(), noteId='n-'+stamp;
+      let preview=`Uploaded: ${file.name}`;
+      try{ const text=(await file.text()).trim(); if(text) preview=text; }catch(readErr){ console.warn('Could not read file content for local preview; the backend already parsed it.',readErr); }
+      const apiReviews=(result.reviews||[]).map(r=>mapApiReview(r,preview));
+      state.data.notes.unshift({id:noteId,title:file.name,text:preview,source:'Uploaded file',date:todayLabel(),dateISO:todayISO(),topics:[],status:apiReviews.length?'pending':'no_review_needed',reviewId:apiReviews[0]?.id||null,reviewIds:apiReviews.map(r=>r.id),evidenceId:result.evidence_id});
+      apiReviews.forEach(r=>{r.evidenceId=noteId; upsertBackendReview(r);});
+      state.reviewBannerDismissed=false;
+      state.isAnalyzing=false; stopAnalysisClock();
+      updateNav();
+      if(apiReviews.length){
+        showDialog(`<span class="eyebrow">Evidence added</span><h2 id="dialogTitle">Evidence added</h2><p>${apiReviews.length===1?'1 Review needs your decision.':`${apiReviews.length} Reviews need your decisions.`}</p><div class="dialog-actions"><button class="btn primary" data-action="go-review">View Review</button></div>`);
+      }else{
+        showDialog(`<span class="eyebrow">Evidence added</span><h2 id="dialogTitle">Evidence added</h2><p>Added as Evidence. Current State did not need a Review.</p>`);
+      }
+    }catch(e){ await showAnalysisFailure(e); }
+  }
+
 
   /* ----------------------------------------------------------------------
      Actions and events
@@ -1572,7 +1600,7 @@
     else if(act==='copy-draft'){navigator.clipboard?.writeText(a.closest('.answer-stage')?.querySelector('.draft')?.innerText || '');a.textContent='Copied';}
   });
 
-  document.addEventListener('change',e=>{ if(e.target.id==='notesStatusFilter'){state.notesFilter=e.target.value;renderNotes();} });
+  document.addEventListener('change',e=>{ if(e.target.id==='notesStatusFilter'){state.notesFilter=e.target.value;renderNotes();} else if(e.target.id==='uploadInfoFile'){const file=e.target.files&&e.target.files[0]; e.target.value=''; if(file)uploadInformation(file);} });
 
   document.addEventListener('input',e=>{
     if(e.target.id==='notesSearch'){

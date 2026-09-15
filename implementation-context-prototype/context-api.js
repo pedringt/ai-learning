@@ -183,6 +183,13 @@
     updateDraft: (draftId, title, content) => request(`/api/drafts/${encodeURIComponent(draftId)}`, {method:'PATCH', headers:{'Content-Type':'application/json'}, body:JSON.stringify({title, content})}),
     deleteDraft: draftId => request(`/api/drafts/${encodeURIComponent(draftId)}`, {method:'DELETE'}),
     submitEvidence: (content, sourceType = 'manual_note') => jsonPost('/api/evidence', {content, source_type: sourceType}),
+    // Issue #140: upload a .txt/.md file as Evidence. multipart/form-data --
+    // no Content-Type header here, the browser sets its own boundary.
+    uploadEvidence: file => {
+      const body = new FormData();
+      body.append('file', file);
+      return request('/api/evidence/upload', {method: 'POST', body});
+    },
     retryEvidenceAnalysis: evidenceId => request(`/api/evidence/${encodeURIComponent(evidenceId)}/reanalyze`, {method:'POST'}),
     resolveReview: (reviewId, decision, options = {}) => jsonPost(`/api/reviews/${encodeURIComponent(reviewId)}/resolve`, {decision, ...(options.questionProposalId ? {expected_question_proposal_id:options.questionProposalId, expected_existing_question_id:options.existingQuestionId||null} : {}), ...(options.adjustments?.length ? {adjustments:options.adjustments} : {})}),
     createQuestion: (text, options = {}) => jsonPost('/api/questions', {text, origin: options.origin || 'Added from Workspace', blocking: !!options.blocking, ...(options.blocks ? {blocks: options.blocks} : {})}),
