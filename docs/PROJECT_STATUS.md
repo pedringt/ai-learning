@@ -2,7 +2,7 @@
 
 This is the canonical current-state handoff for State and the surrounding portfolio. Read this first, then verify the repository and live environments before relying on older notes or conversation memory.
 
-_Last updated: September 14, 2026 Pacific time._
+_Last updated: September 15, 2026 Pacific time._
 
 ## Current product state
 
@@ -31,9 +31,17 @@ State is a portfolio and learning product. There is no planned external pilot or
 
 ## Branch and deployment state
 
-The current application baseline immediately before the QA/product-ops cleanup is the latest `main`/`staging` product state after the September 14 fixes. Verify the current branch heads when resuming work rather than assuming they are still identical.
+`staging` is at `ca308a0` (verified deployed to `state-api-staging`). `main` has not been updated with the September 15 work below; promotion needs explicit authorization. Verify the current branch heads when resuming work rather than assuming they are still identical.
 
-That baseline includes the latest user-facing fixes from the September 14 QA pass, including Ask cancellation/abort handling, project-switch cancellation behavior, Review scroll fixes, Ask hedging stabilization, and the updated Review action label.
+September 15 additions on `staging`, on top of the September 14 QA baseline:
+
+- Fixed the blank-project bug cluster: Notes cross-project leakage (`syncApiEvidence()` matched static fixture notes via a double-negative filter), a hydration race on rapid project switching, missing Reset/Delete project lifecycle controls (two separate Settings surfaces both needed the fix), and a non-state-aware onboarding banner.
+- Added bootstrap mode (`BOOTSTRAP_GUIDANCE`, active only when a project's Current State is empty) and explicit human promotion (`POST /api/evidence/{id}/promote`, the "Ask State to reconsider this" button) so a person can force State to reconsider Evidence it previously declined. Neither path bypasses Review or writes Current State directly. Verified against the real Anthropic model, not just mocked providers.
+- Added drag-and-drop file upload to the Add Evidence dialog; drops of more than one file are rejected with a message rather than silently truncated to the first file.
+- Fixed a cross-project 500 in `_reanalyze()` (unscoped evidence-id lookup let a cross-project id crash instead of 404ing); affects both `/reanalyze` and the new `/promote`.
+- Filed [#145](https://github.com/pedringt/ai-learning/issues/145): production `state-api` has no persistent disk and no Postgres anywhere in the Render account, so every production deploy wipes non-seeded project data. Not yet fixed, pending an infra decision (disk vs. Postgres).
+- Filed [#146](https://github.com/pedringt/ai-learning/issues/146): the promote button only appears on a Note when State generated zero Reviews for it (`no_review_needed`). It does not appear when State generated Reviews that never produced a Current State create/update (e.g. all resolved as open questions) -- confirmed live on staging, where this is exactly the case blocking one user-created project's baseline. Not yet fixed.
+- Confirmed staging's own ephemeral-storage risk in practice, not just by inspection: two user-created staging projects' ids changed mid-session across redeploys, discarding their Notes/Current State. Tracked as R-014 in `docs/product/RISKS.md` (accepted staging tradeoff, distinct from the production risk in #145).
 
 Production surfaces:
 
