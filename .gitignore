@@ -10,3 +10,4 @@ node_modules/
 qa/deployed/playwright-report/
 qa/deployed/test-results/
 qa/deployed/qa-report.json
+state-project-complete/eval/traces/

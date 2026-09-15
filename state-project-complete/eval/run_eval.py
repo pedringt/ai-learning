@@ -9,14 +9,9 @@ Usage (from state-project-complete/):
     ANTHROPIC_API_KEY=sk-... python3 -m eval.run_eval
     ANTHROPIC_API_KEY=sk-... python3 -m eval.run_eval --json results.json
 
-Prints a report grouped by category with a precision/recall summary, in
-the spirit of the doc's example:
-
-    40 evidence events
-    12 should have required review
-    State surfaced 11
-    2 additional unnecessary Reviews
-    1 important miss
+Every scenario is now run through interpretation_trace.py. The report keeps the
+trace ID/path beside the eval result so a failed case can be diagnosed at the
+first divergent layer instead of guessed at from the final verdict alone.
 """
 from __future__ import annotations
 
@@ -31,6 +26,10 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from eval.harness import REQUIRES_KEY_REASON, precision_recall, run_all
 from eval.scenarios import SCENARIOS
+
+
+def _trace_suffix(result) -> str:
+    return f" [trace {result.trace_id}]" if result.trace_id else ""
 
 
 def main():
@@ -62,24 +61,24 @@ def main():
     if errored:
         print(f"\n{len(errored)} scenario(s) errored (pipeline failure, not a judgment result):")
         for r in errored:
-            print(f"  - {r.scenario.id}: {r.error}")
+            print(f"  - {r.scenario.id}: {r.error}{_trace_suffix(r)}")
 
     if stats["false_negatives"]:
         print("\n--- MISSES (expected must_review, got no_review) ---")
         for r in stats["false_negatives"]:
-            print(f"  [{r.scenario.category}] {r.scenario.id}: {r.scenario.content[:90]}")
+            print(f"  [{r.scenario.category}] {r.scenario.id}: {r.scenario.content[:90]}{_trace_suffix(r)}")
 
     if stats["false_positives"]:
         print("\n--- UNNECESSARY REVIEWS (expected no_review, got must_review) ---")
         for r in stats["false_positives"]:
-            print(f"  [{r.scenario.category}] {r.scenario.id}: {r.scenario.content[:90]}")
+            print(f"  [{r.scenario.category}] {r.scenario.id}: {r.scenario.content[:90]}{_trace_suffix(r)}")
 
     ambiguous = [r for r in results if r.scenario.expected == "ambiguous"]
     if ambiguous:
         print("\n--- AMBIGUOUS (no ground truth -- shown for visibility only) ---")
         for r in ambiguous:
             verdict = "reviewed" if r.review_recommended else "not reviewed"
-            print(f"  [{r.scenario.category}] {r.scenario.id}: {verdict}")
+            print(f"  [{r.scenario.category}] {r.scenario.id}: {verdict}{_trace_suffix(r)}")
 
     print("\n--- BY CATEGORY ---")
     by_category = {}
@@ -109,6 +108,8 @@ def main():
                     "matches_expected": r.matches_expected,
                     "processing_status": r.processing_status,
                     "error": r.error,
+                    "trace_id": r.trace_id,
+                    "trace_path": r.trace_path,
                 }
                 for r in results
             ],

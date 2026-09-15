@@ -30,7 +30,7 @@ sys.path.insert(0, "interpretation_runtime")
 
 from anthropic_provider import AnthropicProvider
 from database_migration_backed import get_test_db
-from interpretation_pipeline_integrated import process_evidence
+from interpretation_trace import TracePolicy, run_traced_interpretation
 
 from eval.scenarios import SCENARIOS, Scenario
 
@@ -39,6 +39,8 @@ REQUIRES_KEY_REASON = (
     "not pipeline mechanics, so it cannot run against a scripted fake "
     "provider. Set the key and re-run locally for a real signal."
 )
+
+DEFAULT_TRACE_DIR = Path(__file__).resolve().parent / "traces"
 
 
 class _DBContext:
@@ -80,6 +82,8 @@ class ScenarioResult:
     review_recommended: bool
     processing_status: str
     error: str = ""
+    trace_id: str = ""
+    trace_path: str = ""
 
     @property
     def matches_expected(self) -> bool:
@@ -93,6 +97,11 @@ class ScenarioResult:
         return True  # ambiguous: always counts as "not wrong"
 
 
+def _trace_directory() -> Path:
+    configured = os.getenv("STATE_EVAL_TRACE_DIR", "").strip()
+    return Path(configured).expanduser() if configured else DEFAULT_TRACE_DIR
+
+
 def run_scenario(scenario: Scenario, provider=None) -> ScenarioResult:
     conn = _seeded_connection(scenario)
     try:
@@ -101,15 +110,20 @@ def run_scenario(scenario: Scenario, provider=None) -> ScenarioResult:
             (f"e-{scenario.id}", scenario.content),
         )
         conn.commit()
-        result = process_evidence(
+        traced = run_traced_interpretation(
             conn,
             evidence_id=f"e-{scenario.id}",
             provider=provider or AnthropicProvider(),
+            policy=TracePolicy.eval_debug(),
+            trace_dir=_trace_directory(),
         )
+        result = traced.process_result
         return ScenarioResult(
             scenario=scenario,
             review_recommended=len(result.review_ids) > 0,
             processing_status=result.processing_status,
+            trace_id=traced.trace_id,
+            trace_path=traced.trace_path or "",
         )
     except Exception as exc:  # pragma: no cover -- surfaced in the report, not swallowed
         return ScenarioResult(
