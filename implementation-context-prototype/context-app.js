@@ -1712,6 +1712,45 @@
   // itself as "outside" and close it before a switch-project click could land.
   document.addEventListener('click',e=>{ if(state.projectMenuOpen && !e.target.closest('.sidebar-project') && !e.target.closest('#projectMenu') && !e.target.closest('[data-action="toggle-projects"]')){state.projectMenuOpen=false;updateNav();} });
   overlay.addEventListener('click',e=>{if(e.target===overlay && !state.isAnalyzing) closeDialog();});
+  // Drag-and-drop onto the Add Evidence dialog, reusing the exact same
+  // uploadInformation() path as the file-picker link -- no new backend or
+  // upload logic, just another way to hand it a File. Scoped to whenever
+  // #addInfoText is present (i.e. the Add Evidence dialog is open) rather
+  // than a dedicated listener target, since dialogBody's contents are
+  // fully replaced on every showDialog() call. dragenter/dragleave use a
+  // counter (not a boolean) because both fire once per descendant element
+  // as the pointer crosses it, not just once for the dialog as a whole --
+  // a boolean would drop the highlight while still dragging over a child.
+  let dragDepth=0;
+  const dialogEl=()=>document.querySelector('.dialog');
+  overlay.addEventListener('dragenter',e=>{
+    if(!document.getElementById('addInfoText'))return;
+    e.preventDefault();
+    dragDepth++;
+    dialogEl()?.classList.add('dialog-drag-over');
+  });
+  overlay.addEventListener('dragover',e=>{
+    if(!document.getElementById('addInfoText'))return;
+    e.preventDefault();
+  });
+  overlay.addEventListener('dragleave',e=>{
+    if(!document.getElementById('addInfoText'))return;
+    dragDepth=Math.max(0,dragDepth-1);
+    if(dragDepth===0)dialogEl()?.classList.remove('dialog-drag-over');
+  });
+  overlay.addEventListener('drop',e=>{
+    if(!document.getElementById('addInfoText'))return;
+    e.preventDefault();
+    dragDepth=0;
+    dialogEl()?.classList.remove('dialog-drag-over');
+    const files=e.dataTransfer?.files;
+    if(!files||!files.length)return;
+    if(files.length>1){
+      showDialog(`<span class="eyebrow">One file at a time</span><h2 id="dialogTitle">Drop a single file.</h2><p>State can take one file per upload right now. Try dragging just one, or use the file picker to choose one at a time.</p><div class="dialog-actions"><button class="btn primary" data-action="close-dialog">Close</button></div>`);
+      return;
+    }
+    uploadInformation(files[0]);
+  });
   // The Slack "Connect Slack" OAuth round trip ends with the backend
   // redirecting the browser back here with ?slack_connect=success|error.
   // Land directly on Settings' Slack section with that result instead of
