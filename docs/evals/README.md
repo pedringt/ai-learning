@@ -43,6 +43,8 @@ The executable consequentiality scenarios are currently defined in:
 - `state-project-complete/eval/sequences.py`
 - `state-project-complete/eval/run_eval.py`
 
+Targeted model-sensitive regressions also live alongside the State test suite when a single failure needs stronger semantic assertions than review/no-review alone. `test_bootstrap_mixed_spec_eval.py` protects the bootstrap case where one realistic planning/spec document contains settled decisions, tentative ideas, and explicit open questions: the expected outcome includes both at least one proposed maintained fact and at least one proposed Question, without pinning exact model wording.
+
 When a real failure reveals a missing behavior case, add it to the cheapest layer that can reliably catch it. Not every AI-facing bug needs a paid real-model eval; deterministic and fake-provider regression tests are preferable when they can express the invariant.
 
 ## Minimum behavior families to retain
@@ -53,6 +55,7 @@ When a real failure reveals a missing behavior case, add it to the cheapest laye
 - evidence that both resolves a Question and supports a state change;
 - evidence that should open a new Question;
 - ambiguous/incomplete/conflicting evidence;
+- mixed planning/spec Evidence that combines settled decisions, tentative ideas, and explicit open questions, especially during bootstrap;
 - high-consequence claims requiring review/audit;
 - stale proposals/concurrent edits;
 - grouped proposals with mixed outcomes;
