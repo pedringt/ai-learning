@@ -28,20 +28,26 @@ CONSEQUENTIALITY_AND_GROUPING_GUIDANCE = """
 # notes describing real project facts were returned no_review, while the
 # same facts phrased as an explicit current-state statement were not).
 BOOTSTRAP_GUIDANCE = """
-- Current State is empty for this project -- there is nothing yet to compare Evidence against. Apply a bootstrap bar instead of the normal comparison-based one: bias toward coverage over strict filtering, since missing real project knowledge while establishing a baseline is more costly than proposing a few extra items for a human to review.
-- Test each candidate fact against: would losing or misunderstanding this information materially affect someone's understanding of the project, how they operate it, evaluate it, or make decisions about it? If yes, propose it as missing_understanding even if it would not clear the normal bar once Current State already covered similar ground.
-- Likely-consequential bootstrap information: product purpose and scope, important project rules, authority/governance rules, major technical architecture facts, current priorities, important constraints, decisions that materially affect future work, and meaningful unresolved questions (as open_question recommendations, not missing_understanding).
-- Do not propose low-level implementation detail or incidental historical facts as Current State just because Current State is empty -- the bootstrap bar is lower, not absent.
-- If this Evidence contains several distinct baseline facts, still use the decision-sized grouping principle above (one Review per coherent topic/area) rather than one giant Review or a flood of one-line Reviews.
+- Current State is empty. Use a bootstrap bar and favor coverage: missing baseline knowledge is costlier than proposing a few extra items for human review.
+- Ask: would losing or misunderstanding this fact materially affect project understanding, operation, evaluation, or decisions? If yes, propose it as missing_understanding.
+- Likely baseline facts include purpose/scope, project rules, authority/governance, major architecture, current priorities, important constraints, consequential decisions, and meaningful unresolved questions (as open_question).
+- Planning/spec documents may mix settled decisions, tentative ideas, and open questions. Do not classify the whole document from tone or words like "should"; preserve settled decisions as facts and unresolved items as Questions.
+- Do not promote incidental history or low-level implementation detail merely because State is empty.
+- Group distinct baseline facts by coherent decision/topic rather than one giant Review or many one-line Reviews.
 """
 
-#: Injected only for Evidence the user explicitly asked State to reconsider
-# (the "promote" escape hatch -- api.py's POST /api/evidence/{id}/promote).
-# This does not bypass Review or let AI mutate Current State directly: it
-# only asks the model not to silently decline solely on the consequentiality
-# bar, since the whole point is a human who already decided this matters.
-# Normal schema/semantic validation and the same accept/reject Review still
+#: Injected only when a person explicitly asks State to propose Evidence for
+# Current State (the "promote" escape hatch -- api.py's
+# POST /api/evidence/{id}/promote). This action is available even when the
+# same Evidence already produced other Reviews or Questions: a prior partial
+# interpretation must not prevent a person from saying "you missed something
+# I want maintained." The person is deciding that the Evidence deserves
+# Current State consideration; the model still decides what the Evidence
+# actually establishes and how to phrase it.
+#
+# This does not bypass Review or let AI mutate Current State directly. Normal
+# schema/semantic validation, stale/version protection, and human Review still
 # apply after this.
 USER_PROMOTION_GUIDANCE = """
-The user has explicitly asked State to reconsider this Evidence for Current State -- they believe it matters even though an earlier pass did not propose anything for it. Formulate the most accurate proposal(s) you can from it; you may still interpret and word it appropriately, but do not return no_review solely because it would not otherwise clear the normal consequentiality bar. Only decline (no_review) if the Evidence is genuinely empty, unintelligible, or already exactly represented in Current State -- and say so plainly in no_review_explanation if you do.
+The user has explicitly asked State to propose this Evidence for Current State. Treat the consequentiality decision as human-supplied for this pass: do not decline merely because the Evidence would not clear the normal consequentiality bar, and do not decline because this Evidence already produced another Review or Question. Re-read the Evidence for maintained facts that may have been missed and formulate the most accurate proposal(s) you can. Preserve uncertainty: settled decisions and established facts may become Current State proposals, while genuinely unresolved or tentative material should remain Questions/Evidence rather than being forced into Current State. Do not invent detail or convert uncertainty into certainty. Return no_review only when there is no maintainable fact to propose (for example the Evidence is empty/unintelligible, establishes only unresolved speculation, or the relevant fact is already exactly represented in Current State or an equivalent open proposal), and explain that plainly in no_review_explanation.
 """
