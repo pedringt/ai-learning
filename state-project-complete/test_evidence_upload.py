@@ -100,7 +100,7 @@ class EvidenceUploadTests(unittest.TestCase):
     def test_unsupported_extension_is_rejected_with_a_clear_error(self):
         response = self.client.post(
             "/api/evidence/upload",
-            files={"file": ("scan.pdf", b"%PDF-1.4 fake bytes", "application/pdf")},
+            files={"file": ("deck.pptx", b"fake bytes", "application/octet-stream")},
         )
         self.assertEqual(response.status_code, 422)
         self.assertEqual(response.json()["detail"]["code"], "unsupported_file_type")
@@ -124,7 +124,7 @@ class EvidenceUploadTests(unittest.TestCase):
     def test_oversized_file_is_rejected(self):
         response = self.client.post(
             "/api/evidence/upload",
-            files={"file": ("huge.txt", b"x" * 300_001, "text/plain")},
+            files={"file": ("huge.txt", b"x" * 15_000_001, "text/plain")},
         )
         self.assertEqual(response.status_code, 422)
         self.assertEqual(response.json()["detail"]["code"], "file_too_large")
