@@ -202,6 +202,7 @@
     getSlackHealth: () => request('/api/integrations/slack/health'),
     disconnectSlack: () => request('/api/integrations/slack/disconnect', {method:'POST'}),
     resetDemo: () => request('/api/demo/reset', {method:'POST'}),
+    deleteProject: projectId => request(`/api/projects/${encodeURIComponent(projectId)}`, {method:'DELETE'}),
     // state.md #114: the project switcher.
     getProjects: () => request('/api/projects'),
     createProject: name => jsonPost('/api/projects', {name}),

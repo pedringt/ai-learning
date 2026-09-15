@@ -137,8 +137,36 @@
     document.head.appendChild(style);
   }
 
-  function guideMarkup() {
-    return `<aside class="state-reviewer-guide" aria-label="Quick tour of State"><div class="state-reviewer-guide-copy"><strong>Exploring State?</strong><p>Start with Open Items to see what needs attention, check Current State for what the project treats as true, then try Ask State to use that context.</p></div><div class="state-reviewer-guide-actions"><button type="button" class="state-reviewer-guide-start" data-view="open-items">Start with Open Items →</button><button type="button" class="state-reviewer-guide-dismiss" data-action="dismiss-reviewer-guide" aria-label="Dismiss quick tour">×</button></div></aside>`;
+  // Blank-project bug report (2026-09-15): a brand-new project showed the
+  // exact same "Exploring State?" tour banner as an established one, even
+  // though Open Items/Current State -- what that banner points at -- are
+  // both empty. onboardingStage() reads the app's own state (exposed via
+  // context-app.js's window.STATE_ASK_TEST_API, available by the time this
+  // runs off a MutationObserver callback, i.e. after a real render) to pick
+  // one of three banners. Absence of that hook (older bundle, test harness
+  // without context-app.js loaded) falls back to the original banner.
+  function onboardingStage() {
+    const data = window.STATE_ASK_TEST_API?.state?.data;
+    if (!data) return 'established';
+    if (!(data.notes || []).length) return 'no_evidence';
+    // syncApiState() never removes a knowledge item on an empty backend
+    // response, only tags it state:'retired' (context-backend-sync.js) --
+    // the same pattern every other "is anything actually established"
+    // check in this codebase already follows (context-app.js/
+    // context-project-view.js's currentKnowledge()), so this needs the
+    // same filter rather than a raw .length check.
+    if (!(data.knowledge || []).some(k => k.state === 'current')) return 'evidence_not_established';
+    return 'established';
+  }
+
+  function guideMarkup(stage) {
+    if (stage === 'no_evidence') {
+      return `<aside class="state-reviewer-guide" aria-label="Add your first evidence" data-guide-stage="no_evidence"><div class="state-reviewer-guide-copy"><strong>Add your first evidence</strong><p>Add notes from a meeting, document, or other project source. State will interpret what matters and surface anything that needs your review.</p></div><div class="state-reviewer-guide-actions"><button type="button" class="state-reviewer-guide-start" data-action="add-info">Add Evidence →</button><button type="button" class="state-reviewer-guide-dismiss" data-action="dismiss-reviewer-guide" aria-label="Dismiss quick tour">×</button></div></aside>`;
+    }
+    if (stage === 'evidence_not_established') {
+      return `<aside class="state-reviewer-guide" aria-label="Review what State found" data-guide-stage="evidence_not_established"><div class="state-reviewer-guide-copy"><strong>State is reviewing your evidence</strong><p>Check Open Items for anything that needs a decision. Current State fills in once you accept a proposal.</p></div><div class="state-reviewer-guide-actions"><button type="button" class="state-reviewer-guide-start" data-view="open-items">Go to Open Items →</button><button type="button" class="state-reviewer-guide-dismiss" data-action="dismiss-reviewer-guide" aria-label="Dismiss quick tour">×</button></div></aside>`;
+    }
+    return `<aside class="state-reviewer-guide" aria-label="Quick tour of State" data-guide-stage="established"><div class="state-reviewer-guide-copy"><strong>Exploring State?</strong><p>Start with Open Items to see what needs attention, check Current State for what the project treats as true, then try Ask State to use that context.</p></div><div class="state-reviewer-guide-actions"><button type="button" class="state-reviewer-guide-start" data-view="open-items">Start with Open Items →</button><button type="button" class="state-reviewer-guide-dismiss" data-action="dismiss-reviewer-guide" aria-label="Dismiss quick tour">×</button></div></aside>`;
   }
 
   // A separate, always-visible "Quick tour" button used to live permanently
@@ -160,7 +188,9 @@
       existing?.remove();
       return;
     }
-    if (!existing) overview.insertAdjacentHTML('afterbegin', guideMarkup());
+    const stage = onboardingStage();
+    if (!existing) { overview.insertAdjacentHTML('afterbegin', guideMarkup(stage)); return; }
+    if (existing.dataset.guideStage !== stage) existing.outerHTML = guideMarkup(stage);
   }
 
   function decorateAskCurrentStateLinks() {
@@ -249,4 +279,6 @@
     syncReviewerGuide();
     decorateAskCurrentStateLinks();
   }
+
+  window.STATE_ONBOARDING_TEST_API = {onboardingStage, guideMarkup, syncReviewerGuide};
 })();

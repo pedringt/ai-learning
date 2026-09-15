@@ -26,7 +26,9 @@ from database_migration_backed import initialize_db
 from db import connect
 from interpretation_pipeline_integrated import InterpretationProvider, new_id, process_evidence
 from openai_provider import OpenAIProvider
-from seed_demo import bootstrap_demo_data, bootstrap_juniper_demo_data, reset_demo_data
+from seed_demo import (
+    SEEDED_PROJECT_IDS, bootstrap_demo_data, bootstrap_juniper_demo_data, delete_project_data, reset_demo_data,
+)
 from ask_contract import AskRequest
 from ask_provider import LiveAskProvider
 from ask_service import ask_cache_key, run_ask, stream_ask_events
@@ -430,11 +432,20 @@ def create_app(settings: Settings | None = None, provider: InterpretationProvide
         finally:
             connection.close()
 
+    def _with_seeded_flag(project: dict) -> dict:
+        """Issue #140 follow-up (blank-project lifecycle controls): every
+        project-shaped API response carries `seeded` so the frontend can show
+        Reset for the two curated demo projects and Delete for everything
+        else, without hardcoding project ids client-side.
+        """
+        return {**project, "seeded": project["id"] in SEEDED_PROJECT_IDS}
+
     def _active_project_summary(connection) -> dict:
         row = connection.execute(
             "SELECT id, name FROM projects WHERE id=?", (connection.project_id,)
         ).fetchone()
-        return dict(row) if row else {"id": connection.project_id, "name": connection.project_id.title()}
+        project = dict(row) if row else {"id": connection.project_id, "name": connection.project_id.title()}
+        return _with_seeded_flag(project)
 
     @asynccontextmanager
     async def lifespan(_: FastAPI):
@@ -556,7 +567,7 @@ def create_app(settings: Settings | None = None, provider: InterpretationProvide
         """state.md #114: every selectable project, for the project switcher."""
         with get_connection() as connection:
             rows = connection.execute("SELECT id, name FROM projects ORDER BY name").fetchall()
-            return {"items": [dict(row) for row in rows], "active": _active_project_summary(connection)}
+            return {"items": [_with_seeded_flag(dict(row)) for row in rows], "active": _active_project_summary(connection)}
 
     @app.post("/api/projects")
     def create_project(payload: ProjectCreateInput) -> dict:
@@ -570,7 +581,7 @@ def create_app(settings: Settings | None = None, provider: InterpretationProvide
                 "INSERT INTO projects(id, name) VALUES (?, ?)", (project_id, payload.name)
             )
             connection.commit()
-            return {"id": project_id, "name": payload.name}
+            return _with_seeded_flag({"id": project_id, "name": payload.name})
 
     @app.post("/api/projects/switch")
     def switch_project(payload: ProjectSwitchInput) -> dict:
@@ -604,11 +615,38 @@ def create_app(settings: Settings | None = None, provider: InterpretationProvide
         if not settings.demo_bootstrap:
             raise HTTPException(status_code=404, detail="Demo reset is unavailable")
         with get_connection() as connection:
+            # Blank-project bug report (2026-09-15): a user-created project has
+            # no curated baseline to reset TO -- see reset_demo_data's own
+            # guard for what this used to silently do instead.
+            if connection.project_id not in SEEDED_PROJECT_IDS:
+                raise HTTPException(status_code=403, detail="This project has no example baseline to reset to.")
             # state.md #114: resets whichever project is currently active --
             # never both, and never the other project's data (reset_demo_data
             # scopes every delete to this one project_id).
             counts = reset_demo_data(connection, connection.project_id)
             return {"status": "reset", "counts": counts, "seeded": counts}
+
+    @app.delete("/api/projects/{project_id}")
+    def delete_project(project_id: str) -> dict:
+        """Blank-project bug report (2026-09-15), lifecycle controls: only a
+        user-created project can be deleted -- a seeded demo project has
+        Reset instead (it's the one thing that would leave the app with no
+        curated example to show a reviewer). delete_project_data repoints
+        active_project at the fallback project in the same transaction if the
+        deleted project was the active one, so this never returns pointing
+        at a project that no longer exists.
+        """
+        with get_connection() as connection:
+            exists = connection.execute("SELECT id FROM projects WHERE id=?", (project_id,)).fetchone()
+            if exists is None:
+                raise HTTPException(status_code=404, detail="Project not found")
+            if project_id in SEEDED_PROJECT_IDS:
+                raise HTTPException(status_code=403, detail="Seeded example projects can't be deleted. Use Reset instead.")
+            was_active = connection.project_id == project_id
+            delete_project_data(connection, project_id)
+            if was_active:
+                connection.project_id = "northstar"
+            return {"status": "deleted", "id": project_id, "active": _active_project_summary(connection)}
 
     @app.get("/api/drafts")
     def get_drafts() -> dict:

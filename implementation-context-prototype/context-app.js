@@ -10,7 +10,7 @@
   const initial = clone(D);
   const state = {
     data: clone(D), view:'overview', result:null, resultQuery:'', askInputDraft:'', projectMenuOpen:false, refinements:[], lastScenario:null,
-    addedSample:false, pendingCreated:false, reviewBannerDismissed:false, dialogReturnFocus:null, expandedNotes:new Set(), noteComposerOpen:false, editingNoteId:null, dismissedNudges:new Set(), historyTopic:null, historyEvidenceId:null, historySearch:'', notesFilter:'all', notesDateFilter:'all', notesSearch:'', isAnalyzing:false, openQuestionsExpanded:false, expandedReviewId:null, openItemSections:{reviews:false,blockers:false,drafts:true,questions:null}, projectRules:[], workspaceAttentionStatus:'loading', backendStatus:{state:'loading',evidence:'loading',reviews:'loading',history:'loading',questions:'loading',rules:'loading',drafts:'loading'}
+    addedSample:false, pendingCreated:false, reviewBannerDismissed:false, dialogReturnFocus:null, expandedNotes:new Set(), noteComposerOpen:false, editingNoteId:null, dismissedNudges:new Set(), historyTopic:null, historyEvidenceId:null, historySearch:'', notesFilter:'all', notesDateFilter:'all', notesSearch:'', isAnalyzing:false, openQuestionsExpanded:false, expandedReviewId:null, openItemSections:{reviews:false,blockers:false,drafts:true,questions:null}, projectRules:[], workspaceAttentionStatus:'loading', backendStatus:{state:'loading',evidence:'loading',reviews:'loading',history:'loading',questions:'loading',rules:'loading',drafts:'loading'}, hydrationGeneration:0
   };
 
   const root = document.getElementById('viewRoot');
@@ -96,6 +96,13 @@
       // in context-product-polish.js for why the static DATA.project fixture
       // couldn't be trusted for this.
       label.dataset.projectId=activeIdForLabel;
+      // Blank-project bug report (2026-09-15): context-settings.js's
+      // full-page Settings view is a separate module with no access to
+      // this closure's `state` -- it reads project identity off this same
+      // dataset (see its rulePlaceholder()) rather than duplicating a
+      // second source of truth, so lifecycle controls (Reset vs Delete)
+      // there need the same seeded flag available here.
+      label.dataset.seeded=String(state.data.project?.seeded!==false);
       label.innerHTML=`${esc(name)} <span>⌄</span>`;
     }
     const menu=document.getElementById('projectMenu');
@@ -957,7 +964,13 @@
       ['5. Ask','Use Ask State to understand the project without changing it.']
     ];
     const projectName=state.data.project?.name||'this project';
-    showDialog(`<span class="eyebrow">How this works</span><h2 id="dialogTitle">State keeps accepted understanding separate from new information.</h2><div class="state-help-steps">${steps.map(([title,body])=>`<div class="state-help-step"><strong>${esc(title)}</strong><span>${esc(body)}</span></div>`).join('')}</div><p class="demo-flow-principle">AI interprets → software enforces → people decide</p><div class="demo-start"><span class="meta-label">Good places to start</span><button class="demo-start-action" data-action="demo-start-ask"><strong>Ask about ${esc(projectName)}</strong><span>Put a useful project question in Ask →</span></button><button class="demo-start-action" data-action="demo-start-note"><strong>Add a sample note</strong><span>Try new project information and see how Review handles it →</span></button><button class="demo-start-action" data-action="demo-start-project"><strong>Explore Current State</strong><span>Read the maintained view of what the project currently treats as true →</span></button><button class="demo-start-action" data-action="show-reviewer-guide"><strong>Take the quick tour</strong><span>Bring back the Workspace walkthrough banner →</span></button></div><div class="demo-reset-help"><div><strong>Want to start over?</strong><span>Restore the curated ${esc(projectName)} starting scenario. You can also reset ${esc(projectName)} from Settings.</span></div><button class="text-button demo-reset-link" data-action="confirm-demo-reset">Reset example data →</button></div><div class="dialog-actions demo-help-actions"><button class="btn primary" data-action="close-dialog">Got it</button></div>`);
+    // Blank-project bug report (2026-09-15): don't offer "Reset example
+    // data" here for a user-created project -- it has no baseline (the
+    // backend would 403 it). Its lifecycle action (Delete) lives in
+    // Settings only, not mixed into this orientation modal.
+    const resetHelp=state.data.project?.seeded!==false
+      ?`<div class="demo-reset-help"><div><strong>Want to start over?</strong><span>Restore the curated ${esc(projectName)} starting scenario. You can also reset ${esc(projectName)} from Settings.</span></div><button class="text-button demo-reset-link" data-action="confirm-demo-reset">Reset example data →</button></div>`:'';
+    showDialog(`<span class="eyebrow">How this works</span><h2 id="dialogTitle">State keeps accepted understanding separate from new information.</h2><div class="state-help-steps">${steps.map(([title,body])=>`<div class="state-help-step"><strong>${esc(title)}</strong><span>${esc(body)}</span></div>`).join('')}</div><p class="demo-flow-principle">AI interprets → software enforces → people decide</p><div class="demo-start"><span class="meta-label">Good places to start</span><button class="demo-start-action" data-action="demo-start-ask"><strong>Ask about ${esc(projectName)}</strong><span>Put a useful project question in Ask →</span></button><button class="demo-start-action" data-action="demo-start-note"><strong>Add a sample note</strong><span>Try new project information and see how Review handles it →</span></button><button class="demo-start-action" data-action="demo-start-project"><strong>Explore Current State</strong><span>Read the maintained view of what the project currently treats as true →</span></button><button class="demo-start-action" data-action="show-reviewer-guide"><strong>Take the quick tour</strong><span>Bring back the Workspace walkthrough banner →</span></button></div>${resetHelp}<div class="dialog-actions demo-help-actions"><button class="btn primary" data-action="close-dialog">Got it</button></div>`);
   }
 
   function showDialog(html){
@@ -999,7 +1012,19 @@
     const rulesStatus=state.backendStatus.rules;
     const rows=rulesStatus==='error'?'<div class="open-items-empty unavailable-inline">Project Rules could not be loaded. Try again before making changes.</div>':state.projectRules.length?state.projectRules.map(rule=>`<div class="project-rule-row"><div><span class="open-item-label question">${esc(rule.category)}</span><p>${esc(rule.text)}</p></div><button class="text-button" data-action="delete-project-rule" data-rule-id="${rule.id}">Remove</button></div>`).join(''):'<div class="open-items-empty">No project-specific rules yet.</div>';
     const form=rulesStatus==='error'?'':`<div class="project-rule-form"><label for="projectRuleCategory">Category</label><select id="projectRuleCategory"><option>Authority</option><option>Review</option><option>Sources</option><option selected>Interpretation</option></select><label for="projectRuleText">New rule</label><textarea id="projectRuleText" rows="3" placeholder="Example: Slack is supporting evidence, not authoritative approval."></textarea><button class="btn primary" data-action="save-project-rule">Add rule</button></div>`;
-    showDialog(`<span class="eyebrow">Project settings</span><h2 id="dialogTitle">Rules</h2><p>Rules tell State how to interpret evidence and when to interrupt you. They are not Current State and State cannot change them on its own.</p><p class="settings-note">Rules apply to future analysis. Existing Reviews are not reinterpreted automatically.</p><div class="project-rule-list">${rows}</div>${form}<div class="demo-reset-zone"><span class="eyebrow">Example data</span><p>Restore ${esc(state.data.project?.name||'this project')} to the curated starting scenario with open Reviews, blockers, Questions, Notes, Rules, and History.</p><button class="btn secondary danger-light" data-action="confirm-demo-reset">Reset example data</button></div>`);
+    const projectName=state.data.project?.name||'this project';
+    // Blank-project bug report (2026-09-15), item 3: a seeded demo project
+    // (Northstar/Juniper) can be Reset to its curated baseline but never
+    // Deleted (there'd be nothing to restore it from); a user-created
+    // project can be Deleted but never Reset (it has no baseline). Default
+    // to treating an unknown/missing `seeded` flag as seeded -- the backend
+    // still enforces this either way, but the UI should never offer a
+    // Delete button that surprises someone on Northstar/Juniper.
+    const isSeeded=state.data.project?.seeded!==false;
+    const lifecycleZone=isSeeded
+      ?`<div class="demo-reset-zone"><span class="eyebrow">Example data</span><p>Restore ${esc(projectName)} to the curated starting scenario with open Reviews, blockers, Questions, Notes, Rules, and History.</p><button class="btn secondary danger-light" data-action="confirm-demo-reset">Reset example data</button></div>`
+      :`<div class="demo-reset-zone"><span class="eyebrow">Delete project</span><p>Permanently remove ${esc(projectName)} and everything in it: Notes, Evidence, Reviews, Questions, Current State, and History. This cannot be undone.</p><button class="btn secondary danger-light" data-action="confirm-delete-project">Delete project</button></div>`;
+    showDialog(`<span class="eyebrow">Project settings</span><h2 id="dialogTitle">Rules</h2><p>Rules tell State how to interpret evidence and when to interrupt you. They are not Current State and State cannot change them on its own.</p><p class="settings-note">Rules apply to future analysis. Existing Reviews are not reinterpreted automatically.</p><div class="project-rule-list">${rows}</div>${form}${lifecycleZone}`);
   }
 
   // state.md #108: entering Add Evidence from Current State's "Something
@@ -1130,8 +1155,19 @@
     closeDialog();
   }
 
+  // Bug report (2026-09-15): rapidly creating/switching projects could let
+  // an earlier, still-in-flight hydrateBackend() call for the PREVIOUS
+  // project land after a newer call already started -- its stale response
+  // would overwrite state.data.notes/reviews/etc. with the old project's
+  // data (and even reset API's activeProjectId back via payload.project,
+  // see below), which read as "notes from another project leaking into a
+  // new one." Every hydrateBackend() call claims the next generation
+  // number up front; a call whose generation is no longer the latest by
+  // the time its response arrives discards that response instead of
+  // applying it.
   async function hydrateBackend(){
     if(!API)return;
+    const myGeneration=++state.hydrationGeneration;
     ensureProjectsList();
     const loadStatus=document.getElementById('appLoadStatus');
     if(loadStatus){loadStatus.textContent=`Opening ${state.data.project?.name||'the project'}…`;loadStatus.hidden=false;}
@@ -1139,6 +1175,7 @@
     renderWorkspaceAttentionOnly();
     // Load the first action layer separately while the rest of the project opens.
     API.getAttention().then(payload=>{
+      if(myGeneration!==state.hydrationGeneration)return;
       syncApiQuestions(payload.questions||[]);
       replaceBackendOpenReviews(payload.open_reviews||[]);
       for(const raw of (payload.open_reviews||[])){
@@ -1164,6 +1201,7 @@
     let byKey;
     try{
       const payload=await API.getBootstrap();
+      if(myGeneration!==state.hydrationGeneration)return;
       // state.md #114: the active project's identity comes from the backend
       // on every hydration -- never assumed to still be Northstar. Falls
       // back to whatever state.data.project already held (the static
@@ -1183,6 +1221,7 @@
         API.getState(), API.getEvidence(), API.getReviews('open'), API.getReviews('resolved'), API.getHistory(), API.getQuestions('open'), API.getRules(), API.getDrafts()
       ];
       const results=await Promise.allSettled(calls);
+      if(myGeneration!==state.hydrationGeneration)return;
       byKey=Object.fromEntries(keys.map((key,i)=>[key,results[i]]));
     }
     const payloadOf=result=>result.status==='fulfilled'?result.value:{items:[]};
@@ -1575,6 +1614,22 @@
     else if(act==='something-changed')showAddDialog('',{description:'What changed or what is incorrect? Add what you learned — State will compare it with Current State.'});
     else if(act==='confirm-demo-reset'){const projectName=state.data.project?.name||'this project';showDialog(`<span class="eyebrow">Reset to starting scenario</span><h2 id="dialogTitle">Restore the ${esc(projectName)} starting scenario?</h2><p>This removes everything created during testing and restores the same curated starting State, open Reviews, blockers, Questions, Notes, Rules, and History.</p><div class="dialog-actions"><button class="btn primary" data-action="reset-demo">Reset ${esc(projectName)}</button><button class="btn secondary" data-action="project-settings">Cancel</button></div>`);}
     else if(act==='reset-demo'){const projectName=state.data.project?.name||'this project';state.isAnalyzing=true;showDialog(`<span class="eyebrow">Resetting ${esc(projectName)}</span><h2 id="dialogTitle">Restoring ${esc(projectName)}…</h2><p>Rebuilding the curated starting scenario.</p>`);try{await API.resetDemo();await hydrateBackend();state.result=null;state.resultQuery='';state.askInputDraft='';state.isAnalyzing=false;closeDialog();navigateTo('overview');}catch(err){state.isAnalyzing=false;showDialog(`<span class="eyebrow">Reset failed</span><h2 id="dialogTitle">${esc(projectName)} was not reset.</h2><p>${esc(err.message)}</p><div class="dialog-actions">${err?.isTimeout?'<button class="btn primary" data-action="reload-page">Refresh page</button>':''}<button class="btn secondary" data-action="close-dialog">Close</button></div>`);}}
+    else if(act==='confirm-delete-project'){const projectName=state.data.project?.name||'this project';showDialog(`<span class="eyebrow">Delete project</span><h2 id="dialogTitle">Permanently delete ${esc(projectName)}?</h2><p>This removes all of its Notes, Evidence, Reviews, Questions, Current State, and History. This cannot be undone.</p><div class="dialog-actions"><button class="btn primary" data-action="delete-project">Delete ${esc(projectName)}</button><button class="btn secondary" data-action="project-settings">Cancel</button></div>`);}
+    else if(act==='delete-project'){
+      const projectId=state.data.project?.id, projectName=state.data.project?.name||'this project';
+      if(!projectId)return;
+      state.isAnalyzing=true;
+      showDialog(`<span class="eyebrow">Deleting</span><h2 id="dialogTitle">Deleting ${esc(projectName)}…</h2>`);
+      try{
+        const result=await API.deleteProject(projectId);
+        state.data.projects=(state.data.projects||[]).filter(p=>p.id!==projectId);
+        await activateProject(result.active.id);
+        window.StateAnalytics?.track('project_deleted',{projectId});
+      }catch(err){
+        state.isAnalyzing=false;
+        showDialog(`<span class="eyebrow">Couldn't delete project</span><h2 id="dialogTitle">${esc(projectName)} was not deleted.</h2><p>${esc(err.message)}</p><div class="dialog-actions"><button class="btn primary" data-action="close-dialog">Close</button></div>`);
+      }
+    }
     else if(act==='reload-page'){window.location.reload();}
     else if(act==='review-receipt-project'){const area=a.dataset.projectArea||'general';closeDialog();navigateTo('project-overview');requestAnimationFrame(()=>{scrollProjectTarget(`project-${area}`);const target=a.dataset.stateId?[...document.querySelectorAll('[data-state-id]')].find(el=>el.dataset.stateId===a.dataset.stateId)?.closest('.project-wiki-topic'):null;if(target){target.classList.add('is-recently-updated');setTimeout(()=>target.classList.remove('is-recently-updated'),2200);}});}
     else if(act==='close-dialog'){if(!state.isAnalyzing)closeDialog();}
@@ -1659,7 +1714,7 @@
     history.replaceState(history.state,'',location.pathname+(cleanedSearch?`?${cleanedSearch}`:'')+'#settings');
     navigateTo('settings');
   }
-  window.STATE_ASK_TEST_API={state,detectAskIntent,intentAskHtml,looksLikeQuestion,hasExplicitUpdateIntent,upsertBackendReview,replaceBackendOpenReviews,mapApiReview,linkedReviewFor,questionDialogHtml,renderOverview,renderOpenItems,refreshOpenReviews,historyType,syncApiHistory,addDialogHtml,historyEntry};
+  window.STATE_ASK_TEST_API={state,detectAskIntent,intentAskHtml,looksLikeQuestion,hasExplicitUpdateIntent,upsertBackendReview,replaceBackendOpenReviews,mapApiReview,linkedReviewFor,questionDialogHtml,renderOverview,renderOpenItems,refreshOpenReviews,historyType,syncApiHistory,addDialogHtml,historyEntry,hydrateBackend,showProjectSettings};
   // state.md #115: the live Ask State drawer (context-product-polish.js's
   // runAsk) is the only Ask surface a user actually reaches. Generic
   // inventory questions ("What needs review?") still need to route to a

@@ -226,7 +226,22 @@
       const displayTime=evidenceDisplayTimestamp(e);
       return {id:`api-note-${e.id}`,title:sourceLabel(e.source_type),text:e.content,source:sourceLabel(e.source_type),date:formatBackendDate(displayTime),dateISO:displayTime,submittedISO:displayTime,topics:[],status,reviewId:open[0]?.id||null,reviewIds:open.map(r=>r.id),resolvedReviewIds:resolved.map(r=>r.id),historyIds:[],historyKnowledgeIds:[],evidenceId:e.id,backendManaged:true};
     });
-    const local=notes.filter(n=>!n.backendManaged && !n.evidenceId);
+    // Blank-project bug report (2026-09-15): this used to be
+    // `n=>!n.backendManaged && !n.evidenceId` -- meant to preserve
+    // in-progress draft notes (syncApiDrafts() owns that slice of the
+    // array) across an evidence hydration cycle, but that double-negative
+    // also matched the static Northstar fixture notes baked into
+    // context-data.js's initial state.data (clone(D), rendered before any
+    // real hydration completes) -- those are neither backendManaged nor
+    // evidenceId'd either. Once a real (even genuinely empty) evidence
+    // response had been applied to ANY project, those 27 fixture notes
+    // never actually left state.data.notes; they just kept getting
+    // re-included here forever, indistinguishable from a real draft.
+    // Naming the actual thing this is meant to keep (a draft) instead of
+    // excluding by elimination fixes both: a blank project now shows zero
+    // notes, and Northstar/Juniper genuinely reflect their backend Evidence
+    // instead of a permanent client-side fixture overlay.
+    const local=notes.filter(n=>n.backendDraft);
     return [...backendNotes,...local];
   }
 
