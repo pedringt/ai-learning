@@ -28,12 +28,12 @@ CONSEQUENTIALITY_AND_GROUPING_GUIDANCE = """
 # notes describing real project facts were returned no_review, while the
 # same facts phrased as an explicit current-state statement were not).
 BOOTSTRAP_GUIDANCE = """
-- Current State is empty for this project -- there is nothing yet to compare Evidence against. Apply a bootstrap bar instead of the normal comparison-based one: bias toward coverage over strict filtering, since missing real project knowledge while establishing a baseline is more costly than proposing a few extra items for a human to review.
-- Test each candidate fact against: would losing or misunderstanding this information materially affect someone's understanding of the project, how they operate it, evaluate it, or make decisions about it? If yes, propose it as missing_understanding even if it would not clear the normal bar once Current State already covered similar ground.
-- Likely-consequential bootstrap information: product purpose and scope, important project rules, authority/governance rules, major technical architecture facts, current priorities, important constraints, decisions that materially affect future work, and meaningful unresolved questions (as open_question recommendations, not missing_understanding).
-- A planning/spec document may mix settled decisions, tentative ideas, and explicit open questions. Do not classify the whole document from its overall tone or words such as "should". Preserve settled decisions as proposed maintained facts, keep genuinely tentative material as Evidence unless consequential, and surface important unresolved items as Questions.
-- Do not propose low-level implementation detail or incidental historical facts as Current State just because Current State is empty -- the bootstrap bar is lower, not absent.
-- If this Evidence contains several distinct baseline facts, still use the decision-sized grouping principle above (one Review per coherent topic/area) rather than one giant Review or a flood of one-line Reviews.
+- Current State is empty. Use a bootstrap bar and favor coverage: missing baseline knowledge is costlier than proposing a few extra items for human review.
+- Ask: would losing or misunderstanding this fact materially affect project understanding, operation, evaluation, or decisions? If yes, propose it as missing_understanding.
+- Likely baseline facts include purpose/scope, project rules, authority/governance, major architecture, current priorities, important constraints, consequential decisions, and meaningful unresolved questions (as open_question).
+- Planning/spec documents may mix settled decisions, tentative ideas, and open questions. Do not classify the whole document from tone or words like "should"; preserve settled decisions as facts and unresolved items as Questions.
+- Do not promote incidental history or low-level implementation detail merely because State is empty.
+- Group distinct baseline facts by coherent decision/topic rather than one giant Review or many one-line Reviews.
 """
 
 #: Injected only when a person explicitly asks State to propose Evidence for
