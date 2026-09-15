@@ -3,7 +3,9 @@
 -- migration lands; newly-created project_* rows have NULL until the person
 -- explicitly finishes baseline setup.
 ALTER TABLE projects ADD COLUMN baseline_completed_at TIMESTAMP;
-UPDATE projects SET baseline_completed_at = CURRENT_TIMESTAMP WHERE id LIKE 'project_%';
+-- substr() is supported by both SQLite and PostgreSQL and avoids a literal %
+-- pattern, which psycopg2 would otherwise interpret as parameter syntax.
+UPDATE projects SET baseline_completed_at = CURRENT_TIMESTAMP WHERE substr(id, 1, 8) = 'project_';
 
 -- Optional organizational hints from the baseline interpretation model.
 -- They remain proposals only. A project area is created only inside the
