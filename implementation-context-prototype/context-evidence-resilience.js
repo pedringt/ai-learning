@@ -2,20 +2,32 @@
   const prior = window.STATE_API;
   if (!prior) return;
 
-  // Baseline imports can legitimately fan out into several bounded model calls.
-  // Keep ordinary API requests on the existing 30s timeout, but give Evidence
-  // intake/reanalysis enough time to finish instead of telling the user a write
-  // failed while the server is still successfully processing it.
+  // Ongoing Evidence/reanalysis can still take time. Baseline Setup now has a
+  // dedicated fast-acknowledge path that stores Evidence first and analyzes it
+  // in the background, so the two-minute window is retained only as a fallback
+  // for the existing synchronous routes.
   const LONG_EVIDENCE_TIMEOUT_MS = 120000;
+  const BASELINE_ACK_TIMEOUT_MS = 30000;
+  const BASELINE_POLL_INTERVAL_MS = 1500;
+  const BASELINE_POLL_MAX_MS = 300000;
+  let baselinePollGeneration = 0;
+
+  function currentProjectId() {
+    return document.getElementById('projectSwitcher')?.dataset?.projectId || '';
+  }
 
   function projectHeaders(extra = {}) {
-    const projectId = document.getElementById('projectSwitcher')?.dataset?.projectId || '';
+    const projectId = currentProjectId();
     return projectId ? {...extra, 'X-State-Project-Id': projectId} : extra;
   }
 
-  async function evidenceRequest(path, options = {}) {
+  function baselineIsActive() {
+    return document.body.classList.contains('state-baseline-active');
+  }
+
+  async function request(path, options = {}, timeoutMs = LONG_EVIDENCE_TIMEOUT_MS) {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), LONG_EVIDENCE_TIMEOUT_MS);
+    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
     let response;
     try {
       response = await fetch(`${prior.base}${path}`, {
@@ -47,22 +59,98 @@
     return payload;
   }
 
-  function submitEvidence(content, sourceType = 'manual_note') {
-    return evidenceRequest('/api/evidence', {
+  function isBaselineRouteMismatch(error) {
+    return error?.status === 409 && error?.payload?.detail?.code === 'baseline_not_active';
+  }
+
+  function notifyBaselineSettled() {
+    window.STATE_ASK_TEST_API?.hydrateBackend?.();
+    document.dispatchEvent(new Event('state-project-record-changed'));
+  }
+
+  function pollBaselineUntilSettled(projectId) {
+    const generation = ++baselinePollGeneration;
+    const startedAt = Date.now();
+
+    const tick = async () => {
+      if (generation !== baselinePollGeneration) return;
+      if (!projectId || currentProjectId() !== projectId || !baselineIsActive()) return;
+      if (Date.now() - startedAt > BASELINE_POLL_MAX_MS) return;
+
+      try {
+        const summary = await request('/api/baseline/draft', {}, BASELINE_ACK_TIMEOUT_MS);
+        if (generation !== baselinePollGeneration || currentProjectId() !== projectId) return;
+        const processing = summary?.counts?.processing_evidence || 0;
+        if (processing > 0) {
+          setTimeout(tick, BASELINE_POLL_INTERVAL_MS);
+          return;
+        }
+        notifyBaselineSettled();
+      } catch (error) {
+        // Polling is only a presentation convenience. Evidence is already
+        // durable, so a transient read failure must never cause a second write.
+        if (generation !== baselinePollGeneration || currentProjectId() !== projectId) return;
+        setTimeout(tick, BASELINE_POLL_INTERVAL_MS);
+      }
+    };
+
+    setTimeout(tick, BASELINE_POLL_INTERVAL_MS);
+  }
+
+  function afterBaselineAck(payload) {
+    const projectId = currentProjectId();
+    document.dispatchEvent(new CustomEvent('state-baseline-analysis-started', {
+      detail: {evidenceId: payload?.evidence_id || null},
+    }));
+    // context-app temporarily assumes a zero-Review response means analysis is
+    // finished. Rehydrate immediately so the authoritative pending Evidence
+    // status replaces that optimistic local label while background work runs.
+    setTimeout(() => window.STATE_ASK_TEST_API?.hydrateBackend?.(), 0);
+    pollBaselineUntilSettled(projectId);
+    return payload;
+  }
+
+  async function submitEvidence(content, sourceType = 'manual_note') {
+    if (baselineIsActive()) {
+      try {
+        const payload = await request('/api/baseline/evidence', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({content, source_type: sourceType}),
+        }, BASELINE_ACK_TIMEOUT_MS);
+        return afterBaselineAck(payload);
+      } catch (error) {
+        if (!isBaselineRouteMismatch(error)) throw error;
+      }
+    }
+    return request('/api/evidence', {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
       body: JSON.stringify({content, source_type: sourceType}),
     });
   }
 
-  function uploadEvidence(file) {
+  async function uploadEvidence(file) {
+    if (baselineIsActive()) {
+      const baselineBody = new FormData();
+      baselineBody.append('file', file);
+      try {
+        const payload = await request('/api/baseline/evidence/upload', {
+          method: 'POST',
+          body: baselineBody,
+        }, BASELINE_ACK_TIMEOUT_MS);
+        return afterBaselineAck(payload);
+      } catch (error) {
+        if (!isBaselineRouteMismatch(error)) throw error;
+      }
+    }
     const body = new FormData();
     body.append('file', file);
-    return evidenceRequest('/api/evidence/upload', {method: 'POST', body});
+    return request('/api/evidence/upload', {method: 'POST', body});
   }
 
   function retryEvidenceAnalysis(evidenceId) {
-    return evidenceRequest(`/api/evidence/${encodeURIComponent(evidenceId)}/reanalyze`, {method: 'POST'});
+    return request(`/api/evidence/${encodeURIComponent(evidenceId)}/reanalyze`, {method: 'POST'});
   }
 
   window.STATE_API = Object.freeze({
@@ -72,5 +160,11 @@
     retryEvidenceAnalysis,
   });
 
-  window.STATE_EVIDENCE_RESILIENCE_TEST_API = Object.freeze({LONG_EVIDENCE_TIMEOUT_MS});
+  window.STATE_EVIDENCE_RESILIENCE_TEST_API = Object.freeze({
+    LONG_EVIDENCE_TIMEOUT_MS,
+    BASELINE_ACK_TIMEOUT_MS,
+    BASELINE_POLL_INTERVAL_MS,
+    BASELINE_POLL_MAX_MS,
+    baselineIsActive,
+  });
 })();
