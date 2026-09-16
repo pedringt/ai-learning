@@ -2,7 +2,7 @@
 
 *A compact, living reference for AI product, customer success, and consulting.*
 
-Keep the durable ideas. Use linked sources and deeper references when more detail is useful.
+Keep the durable ideas. Use deeper references when more detail is useful.
 
 ---
 
@@ -16,19 +16,25 @@ Define what should become more reliable, faster, easier, or cheaper before decid
 
 ### Use AI where flexibility earns its complexity
 
-AI is useful when the work requires interpretation, synthesis, generation, or handling messy variation. Deterministic software is usually better when rules are stable and exact behavior matters.
+Use AI for interpretation, synthesis, generation, and messy variation. Use deterministic software for arithmetic, exact validation, policy checks, and authoritative writes when the right answer is fully determined by the inputs.
 
-**Ask:** Which parts need flexible reasoning, and which should stay deterministic?
+**Ask:** Which parts need flexible judgment, and which should be exact?
 
 ### Bring AI to the workflow
 
-Do not force every job through a prompt box. Text, voice, files, images, and embedded AI are useful when they remove real workflow friction.
+Do not force every job through a prompt box. Text, voice, files, images, embedded assistance, and agents are useful when they remove real workflow friction.
 
 **Ask:** Does this interaction make the job easier, or is it just novelty?
 
+### Separate business capabilities from the interface
+
+The useful part of a product is not only its screens. Data, rules, permissions, workflows, and actions can be exposed through APIs, MCP, or skills while the system of record still owns the authoritative behavior.
+
+**Ask:** If the original interface changes or disappears, where do the rules and actions still live?
+
 ### Keep the maintenance test in view
 
-A workflow should still earn its cost as models improve and commodity AI gets better. Avoid building a product around a gap that may disappear without creating durable workflow value.
+A workflow should still earn its cost as models improve and commodity AI gets better. Avoid building around a temporary capability gap without creating durable workflow value.
 
 **Ask:** If the AI improves, does this product or workflow still earn its maintenance cost?
 
@@ -38,23 +44,27 @@ A workflow should still earn its cost as models improve and commodity AI gets be
 
 ### Design the system, not just the model
 
-AI product quality comes from the full system: context, retrieval, tools, permissions, instructions, memory/state, evals, fallbacks, and human review.
+Quality comes from the model plus the system around it: what context reaches it, which tools and permissions it has, and what software or people check the result.
 
 **Ask:** How reliable is the whole system at completing this specific job?
 
-### Diagnose the failing layer before changing the prompt
+### Centralize the rules that must not drift
 
-A bad AI answer may come from retrieval, stale context, routing, tools, permissions, application logic, or the model itself. Trace the answer backward before assuming the prompt needs changing.
+Important enterprise limits should not depend on prompt wording or each builder's preference. Enforce the rules that matter centrally when local users or workspaces should not be able to weaken them.
 
-**Product habit:** Find the failing layer before choosing the fix.
+**Ask:** Which limits must be impossible for a local user or workspace to loosen?
 
-### Route work by difficulty
+### Diagnose multi-step failures at the first bad step
 
-Not every task needs the strongest model. Routine work can use faster or cheaper models while difficult or higher-risk cases escalate.
+A final success or failure score can hide the real bug. Trace a long agent run back to the first wrong response or tool action, then separate that root cause from later steps that only inherited the mistake.
 
-Model choice is a product decision involving quality, speed, cost, and risk.
+**Product habit:** Fix the step where the failure starts, not the last place it becomes visible.
 
-**Ask:** Which steps truly need the strongest model?
+### Route work by difficulty and measure the real cost
+
+Routine steps can use faster or cheaper models while uncertain or higher-risk work escalates. Compare models by the cost of an acceptable outcome, including retries, extra turns, review, and rework, rather than token price alone.
+
+**Ask:** What does one successful outcome cost at the quality level the business actually needs?
 
 ### Long-running agents need scaffolding
 
@@ -64,27 +74,33 @@ For longer tasks, keep important progress, dependencies, goals, and state outsid
 
 ### Design workflows to survive interruption
 
-Multi-step AI work may time out, fail halfway through, receive the same request twice, or pause for human input. Save progress explicitly and make retries safe so the workflow can continue without losing work or repeating an action.
+Multi-step AI work may time out, fail halfway through, receive the same request twice, or pause for human input. Save progress explicitly and make retries safe so the workflow can continue without losing work or repeating a consequential action.
 
 **Ask:** If this stops halfway through or runs twice, what happens?
 
 ### Memory and project state are not the same thing
 
-Better model memory helps continuity, but important project truth may still need an external maintained record with clear authority.
+Better model memory helps continuity, but important project truth may still need an explicitly maintained record with clear authority.
 
-**Ask:** What should the AI remember, and what needs to be explicitly maintained outside it?
+**Ask:** What should the AI remember, and what needs to be maintained outside it?
 
-### Keep access controlled and close to the source
+### Treat the agent layer and model provider as separate choices
 
-Agents may need information from several business systems. When practical, give them controlled access to authoritative sources using normal identity and permission rules instead of creating giant copied data stores.
+The workflow, skills, permissions, and user experience do not have to come from the same vendor as the model. Keeping those layers separable can reduce lock-in and make model changes less disruptive.
 
-**Key term:** **Federated access** means securely reaching multiple existing sources without first merging them into one database.
+**Ask:** Can we change the model or provider without rebuilding the agent experience?
 
-### Agent infrastructure is becoming a product layer
+### Keep access user-scoped, revocable, and close to the source
 
-Managed agent platforms can increasingly provide sessions, tool execution, sandboxes, and orchestration. Product teams can focus more on the workflow, permissions, tools, and evaluation instead of building every part of the agent loop themselves.
+Prefer controlled access to authoritative systems over giant copied data dumps. When a user connects a source, keep the permission narrow, tie it to that person's identity, and make it revocable.
 
-**Ask:** What infrastructure do we truly need to own?
+**Ask:** Whose identity is the agent acting under, what exact access was granted, and can it be revoked?
+
+### Ground data analysis in shared business definitions
+
+AI can query the right data and still reach the wrong business conclusion if terms such as active customer, churn, or revenue are ambiguous. Give analysis a small semantic layer with the definitions that matter before asking the model to reason over the data.
+
+**Ask:** Which business definitions must be fixed before the AI starts analyzing?
 
 ---
 
@@ -98,21 +114,45 @@ A model may be able to do something without being allowed to do it. Scope access
 
 ### Put risky execution behind trusted boundaries
 
-AI can interpret a request or choose a workflow while conventional software checks policy, performs consequential actions, records changes, and pauses for approval when needed.
+AI can interpret a request or choose a workflow while conventional software checks policy, performs consequential actions, records changes, and pauses for approval. When an agent must run code or inspect untrusted files, isolate that work from the main system.
 
 **Key term:** **Execution boundary** is the line between what AI may interpret or decide and what trusted systems or humans may actually change.
 
 ### More autonomy requires a stronger trust loop
 
-As AI gets more freedom to act, checkpoints, permissions, recovery, observability, auditability, and human escalation become more important.
+As AI gets more freedom to act, the system needs stronger limits, checkpoints, recovery paths, and human escalation. Good conversation is not enough protection for a long-running or customer-facing agent.
 
-**Key term:** **Auditability** means being able to trace what the AI did, which tools it used, and where its results came from.
+**Ask:** What new control becomes necessary when this system gets more autonomy?
+
+### Require evidence before increasing risk
+
+Before giving an AI more autonomy, access, or scope, write down the important failure modes, safeguards, eval evidence, monitoring, and remaining uncertainty. The goal is not paperwork; it is a testable reason for proceeding.
+
+**Ask:** What evidence would justify giving this system more autonomy, access, or scope?
+
+### Observe behavior from the outside
+
+Do not treat the model's hidden reasoning as the audit record. Record observable evidence such as tool calls, data access, approvals, outputs, and outcome checks so behavior can be inspected independently.
+
+**Ask:** What evidence would let us verify the agent behaved correctly without trusting its own explanation?
 
 ### Evaluate workflows, not demos
 
-One impressive answer proves little. Test representative scenarios, edge cases, and failures to determine whether the system is good enough for its actual job.
+One impressive answer proves little. Use repeatable scenarios and edge cases before release, then keep evaluating real behavior after release.
 
 **Key term:** **Evals** are repeatable tests of AI behavior against the job you need done.
+
+### Let deterministic checks prove what they can
+
+Use exact checks for hard rules, formats, calculations, permissions, and other things software can prove directly. Use AI judgment for nuanced criteria, and calibrate it against human review where the stakes justify it.
+
+**Ask:** What can this reviewer verify directly, and what still requires judgment?
+
+### Monitor system health and AI quality separately
+
+Infrastructure can be healthy while an agent still misunderstands the user or chooses the wrong action. Track operational health and user-facing quality as different layers.
+
+**Ask:** Is the system running correctly, and is the AI actually succeeding at the job?
 
 ### Valid output can still be wrong
 
@@ -130,19 +170,17 @@ Unknown, proposed, inferred, and confirmed information are not interchangeable. 
 
 ## Operate and Improve It
 
-### Define the test before generating the work
+### Separate adoption from value
 
-For important outputs, establish the evaluation criteria first. Then generate or review the work against those criteria.
+Usage tells you whether people are trying an AI feature. Outcome metrics tell you whether it actually improves the job. Track both without treating seats, sessions, or message counts as proof of business value.
 
-For higher-stakes work, use a separate review pass or another model as an evaluator.
+**Ask:** What user or business outcome should improve if this is genuinely useful?
 
-**Useful for:** Specs, research, QA plans, presentations, prompts, and AI-generated code.
+### Define success before asking AI to evaluate it
 
-### Use AI to draft evals, not to define success for you
+AI can help draft test cases, edge cases, rubrics, and expected behaviors. The product person still decides what good means and which failures matter.
 
-AI can help generate test cases, edge cases, rubrics, and expected behaviors. The product person still decides what good means, reviews the cases, fills gaps, and interprets failures.
-
-**Product habit:** Let AI accelerate test design while keeping ownership of the evaluation criteria.
+**Product habit:** Let AI accelerate eval design without delegating the definition of success.
 
 ### AI can accelerate QA without replacing hands-on testing
 
@@ -152,15 +190,13 @@ Use AI to generate test ideas, automate repetitive coverage, inspect logs, and i
 
 ### Turn real failures into reusable evals
 
-When AI produces a meaningful bad result, save the scenario and the behavior you expected. Evals should evolve from real usage and failures, not only the cases imagined before launch.
+When AI produces a meaningful bad result, save the scenario and the behavior you expected. A failure you can replay is more useful than a vague warning to be careful.
 
-A failure you can replay is more valuable than a vague warning to "be careful."
-
-**Product habit:** Turn customer risks and production failures into concrete test cases.
+**Product habit:** Turn customer risks and real failures into concrete test cases.
 
 ### Observe after you ship
 
-Pre-launch evals are only part of the loop. Logs, traces, user feedback, failures, latency, cost, and human review burden show what needs attention in real use.
+Pre-launch evals are only part of the loop. Real usage shows what needs attention, including quality failures that do not produce an obvious technical error.
 
 **Product habit:** Test before launch, observe after launch, and turn meaningful failures into new evals.
 
@@ -180,27 +216,97 @@ When a long task changes direction, give the AI the new constraint and ask it to
 
 **Key term:** **Steering** means changing or adding instructions while AI work is already underway.
 
+### Define the test before generating the work
+
+For important outputs, establish the evaluation criteria first, then generate or review against them. For higher-stakes work, use a separate review pass.
+
+**Why:** It makes quality less dependent on whether the first answer happens to look convincing.
+
+### Use a two-stage verifier
+
+Run cheap deterministic checks first: required facts, valid fields, correct links, expected structure, and other hard conditions. Then use AI judgment only for the parts that genuinely require interpretation.
+
+**Why:** It reduces cost and makes failures easier to diagnose.
+
+### Verify the assumptions that can change the decision
+
+When AI gives a recommendation, identify the few claims or assumptions that would change the conclusion if they were wrong. Verify those with sources, tools, or calculations, then revise the recommendation if needed.
+
+**Why:** Verification effort goes to the facts that actually matter.
+
+### Choose context deliberately when delegating
+
+Give continuation work the relevant prior context. Give an independent reviewer or self-contained research task a clean context so earlier reasoning does not anchor it unnecessarily.
+
+**Why:** Inherit context for continuity; isolate it for independent checks.
+
+### Load context progressively
+
+Start with a compact source map or index, then bring in only the files, sections, or records the task actually needs.
+
+**Why:** Less irrelevant context reduces distraction, repeated cost, and stale information crowding out the current source of truth.
+
+### Fan out, then merge
+
+For a complex question, split the work into a few focused branches with different jobs, then reconcile conflicts against explicit criteria instead of simply averaging the answers.
+
+**Why:** Parallel exploration improves coverage while keeping each branch focused.
+
+### Turn good one-off work into a reusable skill
+
+When a recurring AI task works well, capture the trigger, inputs, tools, steps, checks, and expected output as a reusable skill, runbook, or project instruction.
+
+**Why:** Reusable procedures make AI work more consistent and easier to improve.
+
+### Give data work a mini semantic layer
+
+Before asking AI to analyze a spreadsheet, dashboard, or database extract, write down the few business definitions that could change the answer and tell the model to flag anything still ambiguous.
+
+**Why:** It helps prevent a polished analysis from quietly using the wrong meaning of a metric.
+
+### Preflight tool use before letting the AI act
+
+Before an agent uses tools, distinguish read-only steps from reversible and consequential ones. State what evidence is needed and where approval should be required; keep real permissions and approval gates outside the prompt.
+
+**Why:** Risky assumptions become visible before action.
+
+### Test permission boundaries deliberately
+
+Run a task while intentionally withholding one source or permission. Watch whether the agent states what it cannot know, asks for access, or quietly invents missing information.
+
+**Why:** This is a fast check of whether the system respects access boundaries and uncertainty.
+
+### Map an interface into capabilities
+
+For an existing workflow, ignore the current screens and map the user goal, data, action, permission or approval, and system of record. Then decide which capabilities could be exposed to AI without recreating the whole UI.
+
+**Why:** It reveals whether you are redesigning the job or merely putting a chat box on top of old screens.
+
 ### Use AI as a collaborator, not the authority
 
-Delegate drafting, synthesis, implementation, debugging, exploration, and first-pass QA while keeping product decisions, acceptance criteria, and consequential approvals explicit.
+Delegate drafting, synthesis, implementation, debugging, and exploration while keeping product decisions, acceptance criteria, and consequential approvals explicit.
 
 **Ask:** What judgment am I delegating, and should I be?
 
 ---
 
-## Emerging Patterns
+## AI Discovery & AEO
 
-### Design for AI-mediated discovery
+### Optimize for accurate AI understanding
 
-People increasingly ask AI systems for recommendations and answers instead of navigating lists of search results. Useful content needs to be understandable, attributable, and easy for answer engines to retrieve and represent accurately.
+Answer Engine Optimization is useful when AI systems act as a customer's research layer. The goal is not to game ChatGPT; it is to make accurate, current, differentiating information easy for AI systems to find and understand.
 
-**Key term:** **AEO (Answer Engine Optimization)** means improving how well information can be found and represented in AI-generated answers.
+**Ask:** When an AI evaluates our product for a customer, what does it understand correctly and where does that understanding break down?
 
-### Use multiple agents when specialization earns the coordination cost
+### Test it like a buyer
 
-Specialized agents can work in separate contexts on parts of a larger job, but more agents also create more coordination, evaluation, and failure paths.
+Use a small repeatable test instead of one impressive prompt:
 
-**Key term:** **Multi-agent orchestration** is one agent or system coordinating specialized agents across parts of a larger task.
+- ask realistic buyer questions
+- try multiple models and small wording variations
+- inspect the visible sources behind the answer
+- note what information is missing, stale, or ambiguous
+- rerun the same tests over time
 
 ---
 
@@ -208,47 +314,119 @@ Specialized agents can work in separate contexts on parts of a larger job, but m
 
 ### Agent harness
 
-Orchestration around a model for context, tools, and multi-step work.
+The orchestration layer around a model that manages context, tools, and the flow of multi-step work.
 
-### Auditability
+### Agent skill
 
-Ability to trace actions, tool use, sources, and decisions.
+A reusable set of instructions and tool-use patterns for doing one specific job consistently.
+
+### Context isolation
+
+Giving a subtask only the context it needs so unrelated history does not bias or clutter the work.
 
 ### Evals
 
-Repeatable tests of AI behavior against an intended job.
+Repeatable tests that measure whether an AI system behaves well enough for its intended job.
 
-### Execution boundary
+### Offline eval
 
-Where AI interpretation stops and trusted execution or human approval begins.
+A test run before release against known cases where you can define expected behavior.
 
-### Federated access
+### Online eval
 
-Permissioned access to existing sources without first copying them into one database.
+A check on live behavior after release, often without one pre-written correct answer.
+
+### LLM as judge
+
+Using one language model to grade another output against a written rubric. Useful for nuanced checks, but it needs calibration and can share model biases.
 
 ### Long-horizon agent
 
 An AI system pursuing a goal across many steps or an extended workflow.
 
-### Model routing
-
-Choosing models by task difficulty, cost, speed, or risk.
-
-### Multimodal interface
-
-An interface using more than one mode, such as text, voice, images, or files.
-
 ### Scaffolding
 
-External structure and saved state that keep AI oriented during complex work.
+External structure, tools, and saved state that help AI stay oriented during complex work.
 
-### Semantic validation
+### Execution boundary
 
-Checking whether an output's meaning fits product rules, context, and known facts.
+The boundary between what AI may interpret or decide and what trusted software or people may actually change.
+
+### Safety case
+
+A structured, evidence-backed argument that a system is safe enough for a defined use or change, including the remaining uncertainty.
+
+### Auditability
+
+The ability to trace actions, tool use, sources, and decisions after the fact.
+
+### Monitorability
+
+How well you can detect whether an AI system is behaving safely and correctly while it works.
+
+### Defense in depth
+
+Using several independent safeguards so one failure does not remove all protection.
+
+### Sandbox
+
+An isolated environment where an agent can run code, inspect files, or use tools without direct access to the main production system.
+
+### Model routing
+
+Choosing different models for different tasks based on difficulty, cost, speed, or risk.
 
 ### Steering
 
-Changing or adding instructions while an AI task is underway.
+Changing or adding instructions while an AI task is already underway.
+
+### Multimodal interface
+
+An interface that accepts or produces more than one mode, such as text, voice, images, or files.
+
+### Federated access
+
+Controlled access to multiple existing data sources without first copying them into one database.
+
+### OAuth scope
+
+A specific permission granted to an app or agent. Narrow scopes help keep access limited to what the user actually approved.
+
+### Prompt injection
+
+When instructions hidden in user input, files, websites, or retrieved content try to make the model ignore its intended rules or take unsafe actions.
+
+### Fan-out / fan-in
+
+Splitting one problem into focused parallel branches, then merging the results through a final synthesis or decision step.
+
+### Semantic layer
+
+Shared definitions and relationships that explain what business data means so people and AI use metrics consistently.
+
+### Agent trajectory
+
+The sequence of model responses, tool calls, observations, and decisions across an agent run.
+
+### Trace / span
+
+A trace is the recorded end-to-end run. A span is one operation inside it, such as a model call, retrieval, or tool call.
+
+### Silent quality failure
+
+The software executes without an obvious technical error, but the AI still fails the user by misunderstanding the goal, choosing the wrong tool, or producing an unacceptable result.
+
+### Outcome metric
+
+A measure of the user or business result achieved, rather than an adoption signal such as seats, sessions, or message count.
+
+### Headless architecture
+
+A design where useful data, business logic, permissions, and actions can be accessed independently of the original user interface while the source system still owns the rules.
+
+### Semantic validation
+
+Checking whether an output's meaning fits product rules, context, and known facts rather than only checking its structure.
 
 ---
 
@@ -260,15 +438,34 @@ Use these during product discovery, design reviews, client conversations, and AI
 2. How reliable is the whole system at that job, not just the model in a demo?
 3. What is authoritative, and how does the AI get grounded in it?
 4. What can the AI see, decide, and do? What still requires a person?
-5. Which parts need flexible AI reasoning, and which should be deterministic?
-6. What failure would be merely annoying versus genuinely harmful?
-7. What representative scenarios and real failures should become evals?
-8. What important project state should live outside the model?
-9. How will we recover when a multi-step agent gets something wrong?
-10. If this fails halfway through or runs twice, can it recover safely?
-11. How will we inspect what the agent actually did after the fact?
-12. Do all steps need the strongest model, or can we route work differently?
-13. Does this interaction fit the user's real workflow, or are we adding AI-shaped friction?
-14. Which source systems does the AI truly need, and can access remain permissioned?
-15. What are we measuring after launch: quality, latency, cost, review burden, and user value?
-16. If the AI improves, does this product or workflow still earn its maintenance cost?
+5. Which limits must be centrally enforced so builders or users cannot weaken them?
+6. Which parts need flexible AI reasoning, and which should be deterministic?
+7. What failure would be merely annoying versus genuinely harmful?
+8. What representative scenarios and edge cases should become evals?
+9. Which checks can be deterministic, which need an LLM judge, and how will we calibrate the judge?
+10. What can this AI verify directly by running a test, script, calculation, or tool call?
+11. What should we test before release, and what should we monitor on live traffic?
+12. What important project state should live outside the model?
+13. How will we recover when a multi-step agent gets something wrong?
+14. How will we inspect what the agent actually did after the fact?
+15. What can we observe directly instead of relying on the model to explain itself?
+16. Do all steps need the strongest model, or can we route work differently?
+17. What are we optimizing for in model selection: speed, cost, quality, or risk?
+18. What budget, iteration, or time cap should stop an agent before it runs away?
+19. Does this interaction fit the user's real workflow, or are we adding AI-shaped friction?
+20. Which source systems does the AI truly need, and can access remain permissioned?
+21. Whose identity is the agent acting under, what exact scopes are granted, and can they be revoked?
+22. What happens when the agent lacks a source or permission: does it fail clearly or guess?
+23. What untrusted content could reach the model, and what stops it from becoming an instruction?
+24. If the AI improves, does this product or workflow still earn its maintenance cost?
+25. Which subtasks should inherit existing context, and which should get a clean context?
+26. Which recurring jobs should become a reusable skill or runbook?
+27. Which business definitions or metric rules must be fixed before AI analyzes the data?
+28. Which step caused this agent failure, and which later failures only inherited it?
+29. Are infrastructure health and agent quality being monitored separately?
+30. What does one successful outcome cost after retries, turns, and review?
+31. Which context can be loaded only when needed instead of sent every time?
+32. Are we measuring adoption, actual workflow use, and user or business value separately?
+33. What evidence would justify giving this system more autonomy, access, or scope?
+34. Can we change the model or provider without rebuilding the agent workflow?
+35. If the interface changes or disappears, where do the authoritative business rules, permissions, and actions still live?
