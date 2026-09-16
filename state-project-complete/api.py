@@ -13,6 +13,7 @@ import sys
 
 import api_core as _core
 from baseline_draft import register_baseline_draft_routes
+from baseline_fact_recovery import install_baseline_fact_recovery
 from baseline_prompt_hardening import install_baseline_prompt_hardening
 from baseline_review_visibility import install_baseline_review_visibility
 from baseline_setup import install_baseline_extensions, register_baseline_routes
@@ -24,6 +25,7 @@ install_baseline_extensions(_core)
 install_baseline_prompt_hardening()
 install_baseline_review_visibility(_core)
 install_baseline_resilience()
+install_baseline_fact_recovery()
 _core_create_app = _core.create_app
 
 
