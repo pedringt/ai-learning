@@ -24,7 +24,7 @@ test.describe('Portfolio -> State entry', () => {
     const diag = attachDiagnostics(page);
     await gotoWithBypass(page, '/');
     await expect(page.getByRole('link', { name: /Open State/i }).first()).toBeVisible();
-    await expect(page.getByRole('link', { name: /Read case study/i }).first()).toBeVisible();
+    await expect(page.getByRole('link', { name: /Read (?:the )?case study/i }).first()).toBeVisible();
     diag.assertClean(expect);
   });
 
@@ -185,7 +185,10 @@ test.describe('Review + Question resolution (deterministic demo data)', () => {
     await page.locator('.sidebar-nav [data-view="open-items"]').click();
 
     const questionRow = page.locator('.open-question-item[data-question-id="q-thresholds"]');
-    await expect(questionRow).toHaveClass(/is-awaiting-review/, { timeout: 15_000 });
+    await expect(questionRow).toBeVisible({ timeout: 15_000 });
+    await questionRow.locator('summary').click();
+    await expect(questionRow.getByText(/Answer found · Awaiting review/i)).toBeVisible();
+    await expect(questionRow.locator('[data-action="open-specific-review"]')).toBeVisible();
 
     const reviewCard = await expandReviewCard(page, 'demo-review-launch');
     await confirmProposedUpdate(page, reviewCard);
