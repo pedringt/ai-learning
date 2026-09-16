@@ -236,7 +236,7 @@ test.describe('Review + Question resolution (deterministic demo data)', () => {
     await expect(reviewCard).toHaveCount(0, { timeout: 10_000 });
 
     const after = await backendJson(request, '/api/state');
-    const afterVip = (after.items || before).find(s => s.id === 'k-vip');
+    const afterVip = (after.items || after).find(s => s.id === 'k-vip');
     expect(afterVip?.statement).toEqual(beforeVip?.statement);
     diag.assertClean(expect);
   });
