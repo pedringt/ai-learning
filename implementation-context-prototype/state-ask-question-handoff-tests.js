@@ -13,8 +13,9 @@ check('test API is exposed',!!api);
 const answerable='The approved launch date is October 12, according to Current State.';
 check('answerable Ask response does not offer a Question handoff',api.handoffFor('When is launch?',answerable,[]).kind===null);
 
-const unanswerable='State does not currently have enough information to answer this.';
+const unanswerable='State does not have enough confirmed information to answer.';
 const add=api.handoffFor('Which vendor owns the migration?',unanswerable,[]);
+check('real backend abstention wording is recognized',api.isUnanswerableAnswer(unanswerable));
 check('unanswerable Ask response offers Add as Question',add.kind==='add',JSON.stringify(add));
 check('Add handoff preserves the Ask query for prefilling',add.query==='Which vendor owns the migration?',add.query);
 const addHtml=api.handoffMarkup(add);
@@ -37,6 +38,7 @@ const closed=[{id:'q-4',text:'Which vendor owns the migration?',status:'stopped'
 check('closed/stopped matching Question does not count as an existing open Question',api.handoffFor('Which vendor owns the migration?',unanswerable,closed).kind==='add');
 
 for(const wording of [
+  'State does not currently have enough information to answer this.',
   'There is not enough project context to determine that.',
   'State cannot reliably answer this from the current project record.',
   'No relevant project records were found.',
