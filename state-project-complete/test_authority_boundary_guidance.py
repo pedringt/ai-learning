@@ -6,17 +6,22 @@ from openai_provider import OpenAIProvider
 
 def _prompt(provider):
     context = InterpretationContextSnapshot(
-        state_items={
-            "k-sensitive": {
-                "id": "k-sensitive",
-                "topic": "Sensitive actions",
-                "statement": "Billing adjustments and other sensitive account actions remain outside the first implementation.",
-                "version": 1,
-            }
-        },
+        state_items={"k-sensitive": {"version": 1}},
         open_reviews={},
     )
     connection = sqlite3.connect(":memory:")
+    connection.execute(
+        "CREATE TABLE current_state_items (id TEXT, topic TEXT, statement TEXT, effective_date TEXT)"
+    )
+    connection.execute(
+        "INSERT INTO current_state_items VALUES (?, ?, ?, ?)",
+        (
+            "k-sensitive",
+            "Sensitive actions",
+            "Billing adjustments and other sensitive account actions remain outside the first implementation.",
+            None,
+        ),
+    )
     connection.execute(
         "CREATE TABLE questions (id TEXT, text TEXT, status TEXT, blocking INTEGER, blocks TEXT, created_at TEXT)"
     )
