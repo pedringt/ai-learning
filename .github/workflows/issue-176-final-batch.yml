@@ -1,0 +1,138 @@
+name: Issue 176 final pre-send batch
+
+on:
+  push:
+    branches:
+      - feature/issue-176-final-pre-send-batch
+    paths:
+      - .github/workflows/issue-176-final-batch.yml
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feature/issue-176-final-pre-send-batch
+          fetch-depth: 0
+      - name: Apply approved final batch
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+
+          def replace_once(path, old, new):
+              p = Path(path)
+              text = p.read_text()
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f"{path}: expected 1 match, found {count}: {old[:80]!r}")
+              p.write_text(text.replace(old, new, 1))
+
+          def regex_once(path, pattern, new):
+              p = Path(path)
+              text = p.read_text()
+              text2, count = re.subn(pattern, new, text, count=1, flags=re.S)
+              if count != 1:
+                  raise SystemExit(f"{path}: expected regex once, found {count}: {pattern}")
+              p.write_text(text2)
+
+          # index.html: supporting-work hierarchy, homepage precision, learning heading,
+          # and one compact Business Solutions Map reference card.
+          new_polish = '''<style id="issue176-final-polish">
+          #ai-cs-mock [data-page="portfolio"] .applied-secondary-grid{grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:12px!important;align-items:stretch!important;grid-auto-rows:auto!important}
+          #ai-cs-mock [data-page="portfolio"] .applied-secondary-grid>.applied-secondary{align-self:stretch!important;height:100%!important;min-height:0!important;padding:15px 16px!important;gap:0!important;justify-content:flex-start!important}
+          #ai-cs-mock [data-page="portfolio"] .applied-secondary-grid>.applied-secondary .tag{padding:4px 7px!important;font-size:10px!important;letter-spacing:.045em!important}
+          #ai-cs-mock [data-page="portfolio"] .applied-secondary-grid>.applied-secondary h3{margin:7px 0!important;font-size:17px!important;line-height:1.24!important;letter-spacing:-.01em!important}
+          #ai-cs-mock [data-page="portfolio"] .applied-secondary-grid>.applied-secondary .card-intro{margin:0!important;font-size:12.8px!important;line-height:1.5!important}
+          #ai-cs-mock [data-page="portfolio"] .applied-secondary-grid>.applied-secondary::after{margin-top:auto!important;padding-top:12px!important;font-size:11.5px!important}
+          #ai-cs-mock [data-page="home"] .home-quiet-ending{display:block!important;visibility:visible!important;opacity:1!important;position:static!important;width:auto!important;height:auto!important;max-height:none!important;overflow:visible!important;margin:38px 0 0!important;padding:22px 0 2px!important;border-top:1px solid var(--border)!important;color:var(--ink)!important}
+          #ai-cs-mock [data-page="home"] .home-quiet-ending h2{margin:0 0 7px!important;font-size:18px!important;line-height:1.3!important;letter-spacing:-.01em!important}
+          #ai-cs-mock [data-page="home"] .home-quiet-ending p{max-width:800px!important;margin:0!important;color:var(--muted)!important;font-size:14px!important;line-height:1.62!important}
+          #ai-cs-mock [data-page="home"] .home-quiet-ending>span{display:block!important;margin-top:10px!important}
+          #ai-cs-mock [data-page="home"] .home-quiet-ending a{color:var(--purple)!important;font-size:13px!important;font-weight:800!important;text-decoration:none!important}
+          #ai-cs-mock [data-page="home"] .home-quiet-ending a:hover{text-decoration:underline!important}
+          #ai-cs-mock [data-page="learn"] .learning-reference-map{margin:24px 0 8px;padding:18px 20px;border:1px solid var(--border);border-radius:16px;background:linear-gradient(180deg,var(--card),color-mix(in srgb,var(--soft) 45%,var(--card)));display:grid;grid-template-columns:minmax(0,1fr) auto;gap:20px;align-items:center}
+          #ai-cs-mock [data-page="learn"] .learning-reference-map .reference-label{font-size:10.5px;font-weight:850;letter-spacing:.075em;text-transform:uppercase;color:var(--purple)}
+          #ai-cs-mock [data-page="learn"] .learning-reference-map h3{margin:4px 0 5px;font-size:18px;line-height:1.3}
+          #ai-cs-mock [data-page="learn"] .learning-reference-map p{margin:0;max-width:780px;color:var(--muted);font-size:13.5px;line-height:1.55}
+          #ai-cs-mock [data-page="learn"] .learning-reference-map>a{display:inline-flex;align-items:center;justify-content:center;padding:9px 12px;border:1px solid var(--border);border-radius:10px;background:var(--card);color:var(--purple);font-size:12.5px;font-weight:800;text-decoration:none;white-space:nowrap}
+          @media(max-width:980px){#ai-cs-mock [data-page="portfolio"] .applied-secondary-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}}
+          @media(max-width:620px){#ai-cs-mock [data-page="portfolio"] .applied-secondary-grid{grid-template-columns:1fr!important}#ai-cs-mock [data-page="portfolio"] .applied-secondary-grid>.applied-secondary{padding:15px!important}#ai-cs-mock [data-page="home"] .home-quiet-ending{margin-top:32px!important;padding-top:19px!important}#ai-cs-mock [data-page="learn"] .learning-reference-map{grid-template-columns:1fr;padding:16px}#ai-cs-mock [data-page="learn"] .learning-reference-map>a{justify-self:start}}
+          </style>'''
+          regex_once('index.html', r'<style id="issue176-final-polish">.*?</style>', new_polish)
+          replace_once('index.html', 'I found evidence of a real compliance gap, along with a harder commercial reality:', 'I found evidence of a real governance and workflow gap, along with a harder commercial reality:')
+          replace_once('index.html', 'I investigated a documented compliance gap and found that the firms with the clearest structural need may be the least attractive clients to pursue one at a time.', 'I investigated a documented governance and workflow gap and found that the firms with the clearest structural need may be the least attractive clients to pursue one at a time.')
+          replace_once('index.html', '<h2>How I’m approaching the learning</h2>', '<h2>How I’m learning</h2>')
+          library_marker = '</section>\n<section aria-labelledby="building-next-heading" class="learning-next">'
+          library_card = '''</section>
+          <section class="learning-reference-map" aria-label="AI Business Solutions Map reference">
+          <div><span class="reference-label">Reference map</span><h3>AI Business Solutions Map</h3><p>A reference for where businesses are applying AI beyond chatbots, and the recurring product patterns underneath those use cases.</p></div>
+          <a href="ai-business-solutions-map.html">Open the map →</a>
+          </section>
+          <section aria-labelledby="building-next-heading" class="learning-next">'''
+          replace_once('index.html', library_marker, library_card)
+
+          # State case study precision pass.
+          replace_once('implementation-context.html', 'Current State only changes when the evidence supports it and a person authorizes it. A Review can instead preserve the evidence or keep an unresolved Question visible. The rest of State supports that same boundary between what came in and what the project has actually accepted.', 'New Evidence is interpreted into a Review, and a person decides whether Current State should change. A Review can instead leave Current State unchanged or keep an unresolved Question visible. The rest of State supports that same boundary between what came in and what the project has actually accepted.')
+          replace_once('implementation-context.html', 'Building State was a genuinely useful learning exercise. If it were a real product, a few questions would still be open.', 'Building State was a genuinely useful learning exercise. If State were used by a real team, a few questions would still be open.')
+          replace_once('implementation-context.html', 'A carefully maintained Claude artifact probably could have handled my immediate personal need. I kept going because State gave me a connected project for working through AI product questions that would have been much less useful to study separately.', 'A carefully maintained Claude artifact probably could have handled my immediate personal need. I kept going because State let me explore the broader product problem: how AI interpretation, software rules, and human authority should work together to maintain project understanding.')
+
+          # How State Works repetition cleanup.
+          replace_once('state-how-it-works.html', '<p>People authorize any consequential change to it. New projects first build a Starting State from existing project material; after that, the same Evidence → Review → Current State model keeps that understanding up to date.</p>', '<p>New projects first build a Starting State from existing project material; after that, the same Evidence → Review → Current State model keeps that understanding up to date.</p>')
+          replace_once('state-how-it-works.html', '<h2>Evidence comes in. A person decides what it means.</h2>', '<h2>Evidence comes in. AI interprets it. A person decides what becomes authoritative.</h2>')
+          replace_once('state-how-it-works.html', '<p>Accepting a Review is the only thing that actually changes Current State, and every accepted change lands in <strong>History</strong>. Not every Review is about Current State, though: some raise a <strong>Question</strong> instead, a known unknown the team tracks rather than resolves immediately. <strong>Ask</strong> sits outside this loop entirely; it reads across Current State, Reviews, Questions, and History to answer questions, but has no path back into any of them.</p>', '<p>A Review is where a person decides whether an AI interpretation should affect the maintained project understanding. Some Reviews propose a Current State change; others raise a <strong>Question</strong> instead, a known unknown the team tracks rather than resolves immediately. <strong>Ask</strong> sits outside the decision loop and reads across the maintained context.</p>')
+          replace_once('state-how-it-works.html', '<p>A new user-created project begins in <strong>Baseline Setup</strong>. A person can add existing project material or enter what they already know, and State uses the normal Evidence and Review pipeline to assemble a Starting State. Setup changes how the AI looks for baseline coverage; it does not change who has authority. Proposed facts still need human Review before they become Current State, and unresolved unknowns stay Questions.</p>', '<p>A new user-created project begins in <strong>Baseline Setup</strong>. A person can add existing project material or enter what they already know, and State uses that material to propose a Starting State through the normal Evidence and Review flow. During setup, the AI looks for broad baseline coverage while unresolved unknowns stay Questions.</p>')
+          replace_once('state-how-it-works.html', '<p>Evidence isn\'t automatically treated as true. It becomes consequential only when interpreting it produces something a person actually needs to review. If State initially decides a piece of Evidence does not need a Review, a person can ask State to reconsider it; reconsideration can create a Review, but it still cannot change Current State directly.</p>', '<p>Evidence isn\'t automatically treated as true. If State initially decides it does not need a Review, a person can ask State to reconsider it. Reconsideration reruns interpretation and may surface a Review.</p>')
+          replace_once('state-how-it-works.html', '<p><strong>Current State</strong> is the maintained answer to what the project treats as true right now. Each item is versioned and changes only through an authorized Review. If an update was based on an older version of that item, State rejects it rather than overwriting a decision made in the meantime.</p>', '<p><strong>Current State</strong> is the maintained answer to what the project treats as true right now. Each item is versioned. If an update was based on an older version of that item, State rejects it rather than overwriting a decision made in the meantime.</p>')
+          replace_once('state-how-it-works.html', '<p>Ask is a <strong>read-only</strong> synthesis layer over State. It can use accepted Current State, pending Reviews, open Questions, and relevant Evidence and History to answer a question about the project, and it keeps established facts, pending decisions, and unresolved Questions distinct rather than flattening them into one summary.</p><p>Ask cannot create, modify, or authorize Current State, a Review, or a Question. A query that reads like an instruction is redirected into the Evidence workflow instead of being executed as a command. The interface can stream answers and continue with follow-up questions, but every Ask turn remains read-only.</p>', '<p>Ask synthesizes accepted Current State, pending Reviews, open Questions, and relevant Evidence and History to answer questions about the project. It keeps established facts, pending decisions, and unresolved Questions distinct rather than flattening them into one summary.</p><p>It has no write path into Current State, Reviews, or Questions. A query that reads like an instruction is redirected into the Evidence workflow instead of being executed as a command. The interface can stream answers and continue with follow-up questions.</p>')
+
+          # Legal AI credibility/precision pass.
+          replace_once('legal-ai-governance.html', 'Nine of eleven published AI-sanctions cases in this sample trace to the same root cause: a review step existed on paper but was never actually enforced, including one case where the supervising attorney signed off without reading the filing. Bar rules require the review to actually happen. Whether it should also be provable is my own interpretation, not something the rules themselves spell out.', 'Across the AI-sanctions cases I sampled, a recurring failure was inadequate human review, including one case where the supervising attorney signed off without reading the filing. ABA guidance makes clear that using AI does not remove a lawyer’s existing ethical responsibilities. Making review explicit and, where useful, recording that it happened is my governance response, not a rule-mandated workflow.')
+          replace_once('legal-ai-governance.html', 'Every firm AI policy in my sample gave data confidentiality a dedicated section, and it maps directly to attorneys’ existing obligation under bar Rule 1.6. It’s one of the most solidly evidenced pieces of this research.', 'Every firm AI policy in my sample gave data confidentiality a dedicated section, which lines up with attorneys’ existing confidentiality duties, including ABA Model Rule 1.6. It’s one of the most solidly evidenced pieces of this research.')
+          replace_once('legal-ai-governance.html', '<div class="kicker">What this practiced</div>', '<div class="kicker">What I practiced</div>')
+
+          # Meridian: make the simulated nature explicit anywhere the prose could sound real.
+          replace_once('meridian.html', 'That led to a direct discovery pass with the 8 reps, which corrected an earlier assumption: only 2 of 8 reps do a first-touch acknowledgment, not the "mixed model" I’d been told, which changed the first-response target below.', 'That led me to simulate a discovery pass with the 8 reps, which corrected an earlier assumption: only 2 of 8 reps do a first-touch acknowledgment, not the "mixed model" I’d been told, which changed the first-response target below.')
+          replace_once('meridian.html', 'Direct rep discovery showed that’s rare, only 2 of 8 reps do it. I trust reps’ account of their own behavior over the earlier secondhand answer, so I revised the target down to ~7 hrs: still a real improvement, but more modest than I’d first assumed.', 'Simulated rep discovery showed that’s rare, only 2 of 8 reps do it. I revised the target down to ~7 hrs: still a real improvement, but more modest than I’d first assumed.')
+          replace_once('meridian.html', 'a simulated 90-day data pull put average replies per ticket at 2.3', 'a simulated 90-day dataset put average replies per ticket at 2.3')
+
+          # Supporting case-study wording.
+          replace_once('state-managed-agent-tracing.html', 'dangerously overconfident interpretation', 'overconfident interpretation')
+          replace_once('state-ai-evals.html', '<strong>Zero tolerated uncertainty failures</strong>', '<strong>Zero tolerance for uncertainty failures</strong>')
+          replace_once('state-architecture-cost.html', '<h2>The final product kept more work deterministic than a typical “AI-first” design might.</h2>', '<h2>The working product kept more work deterministic than I initially expected.</h2>')
+
+          # New compact Learning Library reference page.
+          map_page = '''<!DOCTYPE html>
+          <html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width,initial-scale=1" name="viewport"/>
+          <link href="favicon.svg" rel="icon"/>
+          <title>AI Business Solutions Map · AI Learning Portfolio</title>
+          <meta content="A compact reference for common AI business solution families, reusable workflow patterns, and recurring product questions." name="description"/>
+          <style>
+          *{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;background:var(--bg);color:var(--ink);line-height:1.55}.map-wrap{max-width:1080px;margin:0 auto;padding:40px 32px 80px}.map-head{max-width:860px}.map-eyebrow,.map-kicker{font-size:11px;font-weight:850;letter-spacing:.075em;text-transform:uppercase;color:var(--purple)}.map-title{font-size:clamp(34px,5vw,52px);line-height:1.05;letter-spacing:-.035em;margin:8px 0 12px}.map-lead{font-size:17px;color:var(--muted);max-width:820px;margin:0}.map-section{margin-top:42px}.map-section h2{font-size:24px;line-height:1.2;letter-spacing:-.02em;margin:0 0 8px}.map-pattern{margin-top:24px;border:1px solid var(--border);border-radius:16px;padding:18px;background:var(--soft)}.map-flow{display:flex;flex-wrap:wrap;gap:7px;align-items:center;margin-top:10px}.map-step{background:var(--card);border:1px solid var(--border);border-radius:999px;padding:7px 10px;font-size:12.5px;font-weight:780}.map-arrow{color:var(--muted);font-size:12px}.map-pattern p,.map-family p,.map-note{color:var(--muted);font-size:13.5px}.map-pattern p{margin:10px 0 0}.map-families{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px 18px;margin-top:14px}.map-family{border-top:1px solid var(--border);padding:13px 2px 3px}.map-family b{font-size:14.5px}.map-family p{margin:3px 0 0}.map-pm{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px 20px;margin-top:14px}.map-q{padding:10px 0;border-top:1px solid var(--border);font-size:14px}.map-q b{display:block;margin-bottom:2px}.map-q span{color:var(--muted);font-size:13px}.map-practiced{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}.map-chip{border:1px solid color-mix(in srgb,var(--purple) 28%,var(--border));background:color-mix(in srgb,var(--softp) 62%,var(--card));border-radius:999px;padding:7px 10px;font-size:12.5px}.map-chip b{color:var(--purple)}body.v88-dark{--ink:#f5f5f7;--muted:#b6b6c2;--border:#34343d;--soft:#19191f;--softp:#1b1a22;--card:#15151b;--bg:#101014;--purple:#b9adff;--purple2:#a79aff}@media(max-width:760px){.map-wrap{padding:28px 20px 60px}.map-families,.map-pm{grid-template-columns:1fr}}
+          </style><link href="site-shell.css" rel="stylesheet"/><link href="site-components.css" rel="stylesheet"/></head><body>
+          <div class="topbar"><div class="topinner"><a class="brand-button" href="index.html"><span class="brand">AI <span>Learning Portfolio</span></span></a><nav aria-label="Primary pages" class="nav"><a href="index.html">Home</a><a href="index.html#portfolio">Applied Work</a><a aria-current="page" href="index.html#learn">Learning Library</a></nav><div class="top-actions"><button aria-label="Switch to dark mode" aria-pressed="false" class="theme-toggle" id="v922ThemeToggle" title="Switch to dark mode" type="button">☾</button><select aria-label="Choose page" id="v922MobileNav"><option value="index.html">Home</option><option value="index.html#portfolio">Applied Work</option><option selected="" value="index.html#learn">Learning Library</option></select></div></div></div>
+          <main class="map-wrap"><header class="map-head"><div class="map-eyebrow">Learning Library · Reference map</div><h1 class="map-title">AI Business Solutions Map</h1><p class="map-lead">A compact reference for the kinds of business problems AI consultancies work on today. It is a map for breadth, not a checklist of things I need to build.</p></header>
+          <section class="map-pattern"><div class="map-kicker">Reusable pattern</div><div class="map-flow" aria-label="Find, Extract, Classify, Synthesize, Recommend, Generate, Decide, Act, Monitor"><span class="map-step">Find</span><span class="map-arrow">→</span><span class="map-step">Extract</span><span class="map-arrow">→</span><span class="map-step">Classify</span><span class="map-arrow">→</span><span class="map-step">Synthesize</span><span class="map-arrow">→</span><span class="map-step">Recommend</span><span class="map-arrow">→</span><span class="map-step">Generate</span><span class="map-arrow">→</span><span class="map-step">Decide</span><span class="map-arrow">→</span><span class="map-step">Act</span><span class="map-arrow">→</span><span class="map-step">Monitor</span></div><p>Not every solution uses every step. The useful question is which parts need AI judgment, which should be deterministic, and where a person or trusted system retains authority.</p></section>
+          <section class="map-section"><div class="map-kicker">Solution families</div><h2>Where the work tends to show up</h2><div class="map-families"><div class="map-family"><b>Knowledge &amp; research</b><p>Enterprise search, research assistants, project knowledge, competitive intelligence.</p></div><div class="map-family"><b>Documents &amp; content</b><p>Extraction, classification, contract review, claims processing, RFPs.</p></div><div class="map-family"><b>Workflow &amp; agents</b><p>Routing, approvals, multi-step operations, and controlled system actions.</p></div><div class="map-family"><b>Customer &amp; revenue</b><p>Support, sales, marketing, personalization, and customer-facing assistance.</p></div><div class="map-family"><b>Back-office operations</b><p>Finance, procurement, HR, legal, compliance, and risk work.</p></div><div class="map-family"><b>Technology</b><p>IT, cybersecurity, software development, and analytics.</p></div><div class="map-family"><b>Physical operations</b><p>Manufacturing, field service, logistics, and supply chain.</p></div><div class="map-family"><b>Industry-specific applications</b><p>Insurance, healthcare, retail, government/public sector, and R&amp;D.</p></div></div></section>
+          <section class="map-section"><div class="map-kicker">Product questions that repeat</div><h2>The domain changes. The PM questions often do not.</h2><div class="map-pm"><div class="map-q"><b>Reliability</b><span>What must be right, and what kinds of failure matter most?</span></div><div class="map-q"><b>Context &amp; data</b><span>What information is authoritative, current, and actually needed?</span></div><div class="map-q"><b>Human approval</b><span>Where can AI assist, and where must a person decide?</span></div><div class="map-q"><b>Permissions</b><span>What can the system see or do, under whose identity, and with what limits?</span></div><div class="map-q"><b>Failure handling</b><span>What happens when the model, data, tool, or workflow is wrong or unavailable?</span></div><div class="map-q"><b>Measurement &amp; ROI</b><span>What user or business outcome should improve enough to justify the complexity?</span></div><div class="map-q"><b>Monitoring</b><span>How will we detect silent quality problems after release?</span></div><div class="map-q"><b>Rollout</b><span>What should start narrow, and what evidence would justify more scope or autonomy?</span></div></div></section>
+          <section class="map-section"><div class="map-kicker">Contexts practiced so far</div><h2>A breadth marker, not a completion checklist.</h2><p class="map-note">I can add to this as exercises use genuinely different business contexts.</p><div class="map-practiced"><span class="map-chip"><b>Project knowledge</b> · State</span><span class="map-chip"><b>Customer support</b> · Meridian</span><span class="map-chip"><b>Legal / compliance</b> · Legal AI</span><span class="map-chip"><b>Software / product development</b> · State testing, evals, tracing, architecture</span></div></section>
+          </main><script defer src="site-shell.js"></script></body></html>'''
+          Path('ai-business-solutions-map.html').write_text(map_page)
+
+          # Self-remove this one-off helper so the PR contains only site changes.
+          Path('.github/workflows/issue-176-final-batch.yml').unlink()
+          PY
+      - name: Commit approved site changes
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git diff --cached --check
+          git commit -m "Apply final pre-send portfolio precision pass"
+          git push origin HEAD:feature/issue-176-final-pre-send-batch
