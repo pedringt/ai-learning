@@ -1,0 +1,69 @@
+<section class="view" data-page="learn" id="learn">
+<div class="hero learning-hero page-intro">
+<div class="eyebrow">Learning Library</div>
+<h2 aria-level="1" class="route-title" role="heading">A map of what I want to understand about applied AI work</h2>
+<p class="lead">This is a coverage map, not a course. I use it to see where I’m strong, where I’m thin, and what deserves deeper study as projects raise new questions.</p>
+</div>
+<div class="band"><h3 style="margin:0 0 6px">The lifecycle I’m learning around</h3><p style="margin:0;color:var(--muted)">Understand the business → identify the opportunity → design it → make it trustworthy → get it adopted → prove value → improve it.</p></div>
+<section aria-label="Learning coverage areas" class="learning-stages">
+<div class="section-kicker"><span>Coverage map</span></div>
+<h2>Ten areas I want to keep developing.</h2>
+<p class="section-lead learning-curriculum-intro">Technical AI knowledge is one part of the map. The rest is the judgment needed to turn it into useful, trustworthy work.</p>
+
+<details class="learning-stage" id="discovery-workflows">
+<summary><span class="stage-num">01</span><span class="stage-main"><b>Business &amp; Workflow Discovery</b><small>Understand the business today before deciding what should change.</small><span class="topic-preview">stakeholders · current workflow · pain points · baselines · constraints · readiness</span></span></summary>
+<div class="stage-body"><div class="stage-group"><h3>What I want to understand</h3><div class="learning-item"><p>The goal is to get enough evidence about the current workflow and its constraints to know whether a worthwhile problem exists. I should be able to explain what happens today, where it breaks down, who feels the pain, and what baseline I would use to judge improvement.</p></div></div><div class="resource-row"><a class="resource-link" href="cheat-sheets/MERIDIAN_DISCOVERY_QUESTIONS_REASONING.pdf" target="_blank" rel="noopener noreferrer">Discovery questions</a></div></div>
+</details>
+
+<details class="learning-stage" id="product-strategy">
+<summary><span class="stage-num">02</span><span class="stage-main"><b>AI Opportunity &amp; Product Judgment</b><small>Decide whether AI belongs in the solution and what kind of intervention makes sense.</small><span class="topic-preview">AI vs rules · assistance vs automation · agents · build/configure/buy · feasibility · prioritization</span></span></summary>
+<div class="stage-body"><div class="stage-group"><h3>What I want to understand</h3><div class="learning-item"><p>A real problem does not automatically justify an AI feature. I want to compare plausible interventions, make the tradeoffs explicit, and be willing to recommend a simpler approach or no build at all when the evidence points there.</p></div></div><div class="resource-row"><a class="resource-link" href="cheat-sheets/BUILD_BOOST_BUY_DECISION_TREE.pdf" target="_blank" rel="noopener noreferrer">Build / boost / buy</a></div></div>
+</details>
+
+<details class="learning-stage" id="ai-foundations">
+<summary><span class="stage-num">03</span><span class="stage-main"><b>AI Systems &amp; Technical Fluency</b><small>Know enough about the system to scope, question, troubleshoot, and communicate well.</small><span class="topic-preview">models · context · retrieval/RAG · tools/MCP · agents · memory/state · APIs · routing · cost/latency</span></span></summary>
+<div class="stage-body"><div class="stage-group"><h3>What I want to understand</h3><div class="learning-item"><p>I do not need an engineering curriculum, but I do need a working mental model of what the model sees, how information and tools reach it, where state lives, and what software enforces around it. That lets me separate model behavior from surrounding system behavior and have better conversations with engineers.</p></div></div><div class="resource-row"><a class="resource-link" href="cheat-sheets/State_Learning_Cheat_Sheet_02_Anatomy_of_an_LLM_Application.pdf" target="_blank" rel="noopener noreferrer">LLM application anatomy</a><a class="resource-link" href="cheat-sheets/State_Learning_Cheat_Sheet_06_Building_Software_with_AI.pdf" target="_blank" rel="noopener noreferrer">Building software with AI</a></div></div>
+</details>
+
+<details class="learning-stage" id="quality-evals">
+<summary><span class="stage-num">04</span><span class="stage-main"><b>Quality, Evals &amp; Reliability</b><small>Know how to decide whether the system is good enough and where failures come from.</small><span class="topic-preview">eval design · deterministic tests · AI judges · tracing · grounding · safe failure · monitoring</span></span></summary>
+<div class="stage-body"><div class="stage-group"><h3>What I want to understand</h3><div class="learning-item"><p>I want to define good behavior before launch, test representative and high-risk cases, and diagnose failures at the right layer. Reliability also means knowing what happens when the model, retrieval, or tools are wrong or unavailable.</p></div></div><div class="resource-row"><a class="resource-link" href="cheat-sheets/AI_Product_Evals_Cheat_Sheet.pdf" target="_blank" rel="noopener noreferrer">AI product evals</a><a class="resource-link" href="cheat-sheets/State_Learning_Cheat_Sheet_04_Testing_and_Evaluating_Probabilistic_Systems.pdf" target="_blank" rel="noopener noreferrer">Testing probabilistic systems</a><a class="resource-link" href="cheat-sheets/State_Learning_Cheat_Sheet_05_Production_Reliability_and_Observability.pdf" target="_blank" rel="noopener noreferrer">Reliability &amp; observability</a><a class="resource-link" href="cheat-sheets/Claude_Managed_Agents_Tracing_Cheat_Sheet.pdf" target="_blank" rel="noopener noreferrer">Managed agents + tracing</a></div></div>
+</details>
+
+<details class="learning-stage" id="governance-human-control">
+<summary><span class="stage-num">05</span><span class="stage-main"><b>Governance, Risk &amp; Human Control</b><small>Define what the AI may do, what software must enforce, and what people must authorize.</small><span class="topic-preview">permissions · decision rights · human review · privacy/security · auditability · escalation · recovery</span></span></summary>
+<div class="stage-body"><div class="stage-group"><h3>What I want to understand</h3><div class="learning-item"><p>For consequential work, authority should be visible: the model can interpret, software can enforce, and people can authorize. The system should make that boundary clear before something goes wrong and leave a path to inspect, challenge, and recover from decisions.</p></div></div></div>
+</details>
+
+<details class="learning-stage" id="ai-ux-workflow-design">
+<summary><span class="stage-num">06</span><span class="stage-main"><b>AI UX &amp; Workflow Design</b><small>Design the human/AI workflow, not just an AI control inside an existing screen.</small><span class="topic-preview">division of labor · trust · uncertainty · review UX · approvals · conversational UI · agent UX</span></span></summary>
+<div class="stage-body"><div class="stage-group"><h3>What I want to understand</h3><div class="learning-item"><p>I want users to know what the AI is doing, what they still own, and what to do when the output is uncertain or wrong. Good AI UX should reduce cognitive load and make correction, approval, and recovery easier instead of hiding uncertainty behind a polished answer.</p></div></div></div>
+</details>
+
+<details class="learning-stage" id="implementation-adoption">
+<summary><span class="stage-num">07</span><span class="stage-main"><b>Implementation, Adoption &amp; Change</b><small>Turn a technically sound idea into something an organization can actually use and sustain.</small><span class="topic-preview">pilots · rollout · stakeholder alignment · training · trust · resistance · ownership · support</span></span></summary>
+<div class="stage-body"><div class="stage-group"><h3>What I want to understand</h3><div class="learning-item"><p>A working prototype does not create value if it does not fit the workflow or if people do not trust, understand, or own it. I want to diagnose adoption problems as product and operating signals, not assume more training is always the fix.</p></div></div></div>
+</details>
+
+<details class="learning-stage" id="measurement-business">
+<summary><span class="stage-num">08</span><span class="stage-main"><b>Business Value &amp; Continuous Improvement</b><small>Connect the work to measurable outcomes and decide what should happen after launch.</small><span class="topic-preview">baselines · outcome metrics · ROI · cost per successful outcome · adoption vs value · optimization</span></span></summary>
+<div class="stage-body"><div class="stage-group"><h3>What I want to understand</h3><div class="learning-item"><p>I want to distinguish usage from value, connect quality and human effort to business outcomes, and make post-launch decisions from evidence. Expansion is only one possible outcome; changing, replacing, or stopping the solution can be the right call.</p></div></div></div>
+</details>
+
+<details class="learning-stage" id="ai-consulting-client-work">
+<summary><span class="stage-num">09</span><span class="stage-main"><b>AI Consulting &amp; Client Work</b><small>Move from vague AI interest to a clear, realistic recommendation a client can act on.</small><span class="topic-preview">discovery conversations · readiness · expectation setting · simple explanations · recommendations · uncertainty</span></span></summary>
+<div class="stage-body"><div class="stage-group"><h3>What I want to understand</h3><div class="learning-item"><p>Client work starts with understanding the business problem, not selling a predetermined AI answer. I want to explain technical tradeoffs in plain language, surface missing evidence, manage expectations, and guide decisions without pretending uncertainty has disappeared.</p></div></div><div class="resource-row"><a class="resource-link" href="cheat-sheets/AI_Customer_Success_Guide_to_Debugging_Claude_Agents.pdf" target="_blank" rel="noopener noreferrer">Debugging AI agents for customer-facing work</a></div></div>
+</details>
+
+<details class="learning-stage" id="ai-landscape-edge">
+<summary><span class="stage-num">10</span><span class="stage-main"><b>AI Landscape &amp; Professional Edge</b><small>Keep up with changes that materially affect product or client decisions without turning this into a news archive.</small><span class="topic-preview">model/platform changes · enterprise patterns · standards · power-user techniques · terminology · market shifts</span></span></summary>
+<div class="stage-body"><div class="stage-group"><h3>What I want to understand</h3><div class="learning-item"><p>The landscape matters when it changes what is feasible, reliable, economical, or easy to adopt. I want enough awareness of major shifts to update recommendations, while keeping the rest of the Library organized around durable product work.</p></div></div><div class="stage-group"><h3>Optional references</h3><div class="resource-row"><a class="resource-link" href="ai-professional-edge.html" target="_blank" rel="noopener">AI Professional Edge</a><a class="resource-link" href="https://academy.claude.com/" rel="noopener noreferrer" target="_blank">Anthropic Academy</a><a class="resource-link" href="https://academy.claude.com/all?category=fluency&amp;kind=tutorial" rel="noopener noreferrer" target="_blank">AI Fluency tutorials</a><a class="resource-link" href="https://docs.anthropic.com/" rel="noopener noreferrer" target="_blank">Anthropic docs</a></div></div></div>
+</details>
+</section>
+<section aria-labelledby="building-next-heading" class="learning-next">
+<div class="section-kicker"><span>How I use the map</span></div>
+<h2 id="building-next-heading">Projects drive the learning.</h2>
+<p class="section-lead">I come back here to spot thin areas and choose what deserves deeper study next. Exercises stay in a separate learning plan so this page can stay a map rather than a curriculum.</p>
+<div class="learning-how-note"><strong>Working effectively with AI as a collaborator</strong><p>I use AI for exploration, building, and review, but separate those phases and check outputs against evidence. Product judgment and consequential decisions stay mine.</p><div class="resource-row"><a class="resource-link" href="cheat-sheets/State_Learning_Cheat_Sheet_06_Building_Software_with_AI.pdf" target="_blank" rel="noopener noreferrer">Building software with AI</a></div></div>
+</section>
+</section>
