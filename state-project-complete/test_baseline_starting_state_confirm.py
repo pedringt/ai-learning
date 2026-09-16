@@ -92,7 +92,8 @@ class StartingStateConfirmationTests(unittest.TestCase):
         return response.json()
 
     def test_question_review_stays_individual_and_blocks_bulk_confirmation(self):
-        self._submit("Open product question: How should baseline coverage be checked?")
+        result = self._submit("Open product question: How should baseline coverage be checked?")
+        self.assertEqual(len(result["reviews"]), 1)
         draft = self._draft()
         self.assertFalse(draft["can_confirm"])
         self.assertEqual(draft["counts"]["needs_individual_review"], 1)
@@ -108,8 +109,8 @@ class StartingStateConfirmationTests(unittest.TestCase):
     def test_confirm_applies_and_rejects_routine_facts_in_one_authorization(self):
         first_evidence = "First baseline note about what State is."
         second_evidence = "Second baseline note about the project boundary."
-        self._submit(first_evidence)
-        self._submit(second_evidence)
+        self.assertEqual(self._submit(first_evidence)["reviews"], [])
+        self.assertEqual(self._submit(second_evidence)["reviews"], [])
 
         draft = self._draft()
         self.assertTrue(draft["can_confirm"])
@@ -153,9 +154,13 @@ class StartingStateConfirmationTests(unittest.TestCase):
         evidence = self.client.get("/api/evidence", headers=self.headers).json()["items"]
         self.assertEqual({item["content"] for item in evidence}, {first_evidence, second_evidence})
 
+        # The interpretation pipeline grouped these two routine creates into one
+        # Review, so accepting one proposal and removing the other is correctly
+        # recorded as one partially-applied human decision.
         resolved = self.client.get("/api/reviews?status=resolved", headers=self.headers).json()["items"]
-        resolutions = {item["resolution"] for item in resolved}
-        self.assertEqual(resolutions, {"updated", "not_applied"})
+        self.assertEqual(len(resolved), 1)
+        self.assertEqual(resolved[0]["resolution"], "partially_applied")
+        self.assertEqual({p["status"] for p in resolved[0]["proposals"]}, {"accepted", "not_applied"})
         self.assertEqual(self.client.get("/api/baseline", headers=self.headers).json()["status"], "established")
 
     def test_confirmation_requires_an_exhaustive_current_draft(self):
@@ -170,7 +175,10 @@ class StartingStateConfirmationTests(unittest.TestCase):
         self.assertEqual(stale.status_code, 409, stale.text)
         self.assertEqual(stale.json()["detail"]["code"], "baseline_draft_changed")
         self.assertEqual(self.client.get("/api/state", headers=self.headers).json()["items"], [])
-        self.assertEqual(len(self.client.get("/api/reviews", headers=self.headers).json()["items"]), 2)
+        self.assertEqual(self.client.get("/api/reviews", headers=self.headers).json()["items"], [])
+        refreshed = self._draft()
+        self.assertEqual(refreshed["counts"]["proposed_items"], 2)
+        self.assertTrue(refreshed["can_confirm"])
 
     def test_confirmation_rolls_back_everything_if_one_fact_is_invalid(self):
         self._submit("First baseline note about what State is.")
@@ -187,7 +195,10 @@ class StartingStateConfirmationTests(unittest.TestCase):
         self.assertEqual(failed.status_code, 422, failed.text)
         self.assertEqual(failed.json()["detail"]["code"], "blank_starting_state_fact")
         self.assertEqual(self.client.get("/api/state", headers=self.headers).json()["items"], [])
-        self.assertEqual(len(self.client.get("/api/reviews", headers=self.headers).json()["items"]), 2)
+        self.assertEqual(self.client.get("/api/reviews", headers=self.headers).json()["items"], [])
+        refreshed = self._draft()
+        self.assertEqual(refreshed["counts"]["proposed_items"], 2)
+        self.assertTrue(refreshed["can_confirm"])
         self.assertEqual(self.client.get("/api/baseline", headers=self.headers).json()["status"], "baseline_setup")
 
 

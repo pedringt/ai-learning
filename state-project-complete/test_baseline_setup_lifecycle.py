@@ -90,6 +90,17 @@ class BaselineLifecycleApiTests(unittest.TestCase):
         self.assertEqual(response.status_code, 201, response.text)
         return response.json()
 
+    def _draft(self):
+        response = self.client.get("/api/baseline/draft", headers=self.headers)
+        self.assertEqual(response.status_code, 200, response.text)
+        return response.json()
+
+    def _routine_review_ref(self):
+        draft = self._draft()
+        proposed = [item for item in draft["draft"]["items"] if item["kind"] == "proposed"]
+        self.assertTrue(proposed)
+        return {"id": proposed[0]["review_id"]}
+
     def _accept(self, review, expected_question_proposal_id=None):
         payload = {"decision": "accept"}
         if expected_question_proposal_id:
@@ -109,7 +120,9 @@ class BaselineLifecycleApiTests(unittest.TestCase):
         self.assertFalse(seeded["can_finish"])
 
     def test_baseline_stays_active_after_first_accepted_fact_and_creates_area_on_accept(self):
-        review = self._submit("First baseline note about what State is.")["reviews"][0]
+        result = self._submit("First baseline note about what State is.")
+        self.assertEqual(result["reviews"], [])
+        review = self._routine_review_ref()
         self.assertEqual(self.client.get("/api/project-areas", headers=self.headers).json()["items"], [])
         self._accept(review)
         baseline = self.client.get("/api/baseline", headers=self.headers).json()
@@ -120,25 +133,37 @@ class BaselineLifecycleApiTests(unittest.TestCase):
         self.assertEqual(state[0]["area_name"], "Product")
         self.assertEqual(state[0]["topic"], "Purpose")
 
+    def test_routine_baseline_facts_live_in_starting_state_not_review_queue(self):
+        result = self._submit("First baseline note about what State is.")
+        self.assertEqual(result["reviews"], [])
+        self.assertEqual(self.client.get("/api/reviews", headers=self.headers).json()["items"], [])
+        self.assertEqual(self.client.get("/api/attention", headers=self.headers).json()["open_reviews"], [])
+        self.assertEqual(self.client.get("/api/bootstrap", headers=self.headers).json()["open_reviews"], [])
+
+        draft = self._draft()
+        self.assertEqual(draft["counts"]["proposed_items"], 1)
+        self.assertEqual(draft["counts"]["needs_individual_review"], 0)
+        self.assertTrue(draft["can_confirm"])
+
     def test_starting_state_draft_shows_pending_fact_without_authorizing_it(self):
-        review = self._submit("First baseline note about what State is.")["reviews"][0]
+        result = self._submit("First baseline note about what State is.")
+        self.assertEqual(result["reviews"], [])
         self.assertEqual(self.client.get("/api/state", headers=self.headers).json()["items"], [])
 
-        draft = self.client.get("/api/baseline/draft", headers=self.headers)
-        self.assertEqual(draft.status_code, 200, draft.text)
-        payload = draft.json()
+        payload = self._draft()
         self.assertEqual(payload["authority"], "draft_only")
         self.assertEqual(payload["counts"]["current_items"], 0)
         self.assertEqual(payload["counts"]["proposed_items"], 1)
         self.assertEqual(payload["draft"]["items"][0]["kind"], "proposed")
-        self.assertEqual(payload["draft"]["items"][0]["review_id"], review["id"])
+        self.assertTrue(payload["draft"]["items"][0]["review_id"])
         self.assertEqual(payload["draft"]["items"][0]["area_name"], "Product")
 
     def test_starting_state_draft_reconciles_accepted_fact_without_duplicate(self):
-        review = self._submit("First baseline note about what State is.")["reviews"][0]
+        self._submit("First baseline note about what State is.")
+        review = self._routine_review_ref()
         self._accept(review)
 
-        payload = self.client.get("/api/baseline/draft", headers=self.headers).json()
+        payload = self._draft()
         self.assertEqual(payload["counts"]["current_items"], 1)
         self.assertEqual(payload["counts"]["proposed_items"], 0)
         self.assertEqual(len(payload["draft"]["items"]), 1)
@@ -148,6 +173,8 @@ class BaselineLifecycleApiTests(unittest.TestCase):
     def test_explicit_question_becomes_question_only_after_human_acceptance(self):
         review = self._submit("Open product question: How should baseline coverage be checked?")["reviews"][0]
         self.assertEqual(review["review_type"], "open_question")
+        actionable = self.client.get("/api/reviews", headers=self.headers).json()["items"]
+        self.assertEqual([item["id"] for item in actionable], [review["id"]])
         self.assertEqual(self.client.get("/api/questions", headers=self.headers).json()["items"], [])
         self._accept(review, review["question_to_create"]["id"])
         questions = self.client.get("/api/questions", headers=self.headers).json()["items"]
@@ -158,14 +185,15 @@ class BaselineLifecycleApiTests(unittest.TestCase):
         review = self._submit("Open product question: How should baseline coverage be checked?")["reviews"][0]
         self.assertEqual(self.client.get("/api/questions", headers=self.headers).json()["items"], [])
 
-        payload = self.client.get("/api/baseline/draft", headers=self.headers).json()
+        payload = self._draft()
         self.assertEqual(payload["counts"]["current_questions"], 0)
         self.assertEqual(payload["counts"]["proposed_questions"], 1)
         self.assertEqual(payload["draft"]["questions"][0]["kind"], "proposed")
         self.assertEqual(payload["draft"]["questions"][0]["review_id"], review["id"])
 
     def test_finish_is_human_controlled_and_blocked_by_pending_review(self):
-        review = self._submit("First baseline note about what State is.")["reviews"][0]
+        self._submit("First baseline note about what State is.")
+        review = self._routine_review_ref()
         blocked = self.client.post("/api/baseline/finish", headers=self.headers)
         self.assertEqual(blocked.status_code, 409)
         self.assertEqual(blocked.json()["detail"]["code"], "baseline_not_ready")
