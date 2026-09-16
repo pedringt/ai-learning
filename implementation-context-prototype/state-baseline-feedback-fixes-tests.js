@@ -2,17 +2,21 @@ const fs=require('fs'), path=require('path');
 const dir=__dirname;
 const index=fs.readFileSync(path.join(dir,'index.html'),'utf8');
 const evidence=fs.readFileSync(path.join(dir,'context-evidence-resilience.js'),'utf8');
+const setup=fs.readFileSync(path.join(dir,'context-baseline-setup.js'),'utf8');
 const polish=fs.readFileSync(path.join(dir,'context-baseline-polish.js'),'utf8');
 let pass=0,fail=0;
-function check(name,ok,detail=''){if(ok){pass++;console.log('✓',name)}else{fail++;console.error('✗',name,detail)}}
+function check(name,ok,detail=''){if(ok){pass++;console.log('ok',name)}else{fail++;console.error('FAIL',name,detail)}}
 check('evidence resilience loads before context-app',index.indexOf('context-evidence-resilience.js')>0&&index.indexOf('context-evidence-resilience.js')<index.indexOf('context-app.js'));
 check('baseline polish loads after baseline setup',index.indexOf('context-baseline-polish.js')>index.indexOf('context-baseline-setup.js'));
-check('long Evidence gets a two-minute client window',evidence.includes('LONG_EVIDENCE_TIMEOUT_MS = 120000'));
+check('long Evidence still gets a two-minute client window',evidence.includes('LONG_EVIDENCE_TIMEOUT_MS = 120000'));
 check('paste and upload both use the long Evidence request',evidence.includes("evidenceRequest('/api/evidence'")&&evidence.includes("evidenceRequest('/api/evidence/upload'"));
 check('reanalysis also uses the long Evidence request',evidence.includes('/reanalyze'));
 check('baseline mode hides the competing onboarding banner',polish.includes('state-baseline-active .state-reviewer-guide'));
-check('finish uses the shared State overlay',polish.includes("getElementById('overlay')")&&polish.includes('data-baseline-confirm-finish'));
-check('polish does not use browser-native confirm',!polish.includes('window.confirm('));
-check('long baseline analysis copy sets correct expectation',polish.includes('couple of minutes'));
+check('old Finish Baseline interception is gone',!polish.includes('data-baseline-finish')&&!polish.includes('window.confirm('));
+check('banner avoids the oversized primary button treatment',setup.includes('btn secondary baseline-review-button')&&!setup.includes('primary-button'));
+check('banner has compact force-safe styling',polish.includes('#baselineSetupBanner')&&polish.includes('box-shadow:none!important'));
+check('legacy setup description is hidden from project wiki',polish.includes('Baseline section created from human-authorized project material.')&&polish.includes('project-outline-description'));
+check('banner copy typo is corrected at presentation time',polish.includes("replace('Starting State State assembles','Starting State that State assembles')"));
+check('starting-source patience copy remains explicit',polish.includes('starting sources can take a little while'));
 console.log(`\n${pass} passed, ${fail} failed`);
 if(fail)process.exit(1);
