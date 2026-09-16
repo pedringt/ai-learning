@@ -12,7 +12,7 @@ _INSTALLED = False
 
 _QUALITY_GUIDANCE = r"""
 <baseline_setup_quality_checks>
-Baseline Setup is assembling one editable Starting State. Do not manufacture a separate Review merely because a routine starting fact will eventually become Current State. Straightforward, unambiguous, durable new facts may use missing_understanding create proposals; the product reviews those routine creates together in the Starting State draft.
+Baseline Setup is assembling one editable Starting State. Straightforward, unambiguous, durable starting facts still MUST be emitted as missing_understanding create proposals when the Evidence establishes them. Those proposals are internal draft material: software keeps them out of the individual Review queue and presents them together in the Starting State draft. Do not return no_review merely because a routine baseline fact does not need its own approval click.
 
 Reserve an individual Review for real human judgment:
 - an explicit unresolved Question;
@@ -21,6 +21,7 @@ Reserve an individual Review for real human judgment:
 - a risk to already-maintained Current State; or
 - a proposed change to an already-maintained fact.
 If sources disagree and the available Evidence does not establish which is current, DO NOT choose one just to complete the baseline. Surface the uncertainty as an open_question or state_at_risk as appropriate.
+If one source mixes settled facts with unresolved Questions, handle both independently. Explicit Questions must not crowd out or replace the durable facts the same source clearly establishes.
 
 Quality checks for the Starting State:
 - Project stage and Project outcome are special header facts. Only use those topics when Evidence actually establishes lifecycle stage or outcome. Purpose, scope, or a general status narrative is not a stage/outcome merely because it sounds important.
