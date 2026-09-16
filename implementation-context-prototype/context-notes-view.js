@@ -104,11 +104,14 @@
     const editable=isEditableDraft(n);
     const statusClass=n.status==='pending'?'pending':(n.status==='accepted'||n.status==='reviewed')?'reviewed':n.status==='no_review_needed'?'no-review-needed':n.status==='failed'?'failed':n.status==='unknown'?'unknown':'draft';
     const statusBadge=noteStatusControl(n,statusClass);
+    const canProposeForCurrentState=!!n.evidenceId && ['accepted','reviewed','no_review_needed'].includes(n.status);
     const reviewAction=n.status==='failed'&&n.evidenceId
       ? `<button class="text-button" data-action="retry-analysis" data-evidence-id="${n.evidenceId}">Retry analysis</button>`
-      : !editable
-        ? ''
-        : `<button class="text-button" data-action="send-note-review" data-note-id="${n.id}">Submit for review</button>`;
+      : canProposeForCurrentState
+        ? `<button class="text-button" data-action="promote-evidence" data-evidence-id="${n.evidenceId}">Propose for Current State</button>`
+        : !editable
+          ? ''
+          : `<button class="text-button" data-action="send-note-review" data-note-id="${n.id}">Submit for review</button>`;
     const body=editing
       ? `<div class="note-inline-editor"><input class="dialog-input" id="editNoteTitle-${n.id}" value="${esc(n.title)}" aria-label="Note title"><textarea id="editNoteText-${n.id}" rows="8" aria-label="Note text">${esc(n.text)}</textarea><div class="inline-actions"><button class="btn primary" data-action="save-note-edit" data-note-id="${n.id}">Save changes</button><button class="btn secondary" data-action="cancel-note-edit" data-note-id="${n.id}">Cancel</button></div></div>`
       : expanded
@@ -134,7 +137,7 @@
     const visibleNotes=notesLoading?[]:filteredNotes(notes,ui);
     const liveWarning=ui.evidenceStatus==='error'||ui.draftsStatus==='error'?`<div class="collection-warning"><strong>Some live Notes data is unavailable.</strong><span>${ui.evidenceStatus==='error'?'Saved Evidence could not be loaded. ':''}${ui.draftsStatus==='error'?'Saved drafts could not be loaded.':''}</span><button class="text-button" data-action="retry-hydration">Try again</button></div>`:'';
     const filterSummary=notesFilterSummary(visibleNotes,notes.length,ui);
-    return `<section class="page collection-page notes-page"><div class="page-head"><div><span class="eyebrow">Project memory</span><h2>Notes</h2><p class="notes-product-purpose">Keep working notes and browse information State has received. Use Review, Current State, and History for downstream detail.</p><p class="notes-disclosure">Northstar's seed data mixes notes adapted from my real discovery/product work with simulated project notes created to exercise retrieval, review, and maintained-context workflows.</p></div><button class="btn primary notes-add" data-action="new-note">+ New note</button></div>${liveWarning}${composer}${notesLoading?'<p class="workspace-section-hint" role="status">Loading Notes…</p>':`<div class="notes-toolbar notes-toolbar--stacked"><div class="notes-filter-row">${dateFilters}${filters}</div><input class="notes-search" id="notesSearch" type="search" placeholder="Search all notes" aria-label="Search notes" value="${esc(ui.notesSearch||'')}"></div>${filterSummary}<div class="note-results simple-notes" id="notesList">${visibleNotes.length?visibleNotes.map(n=>simpleNote(n,ui.expandedNotes,ui.editingNoteId)).join(''):'<div class="empty-state"><h3>Nothing here.</h3><p>No notes match these filters.</p></div>'}</div>`}</section>`;
+    return `<section class="page collection-page notes-page"><div class="page-head"><div><span class="eyebrow">Project memory</span><h2>Notes</h2><p class="notes-product-purpose">Keep working notes and browse information State has received. Use Review, Current State, and History for downstream detail.</p><p class="notes-disclosure">Northstar's seed data mixes notes adapted from my real discovery/product work with simulated project notes created to exercise retrieval, review, and maintained-context workflows.</p></div><div class="notes-add-actions"><button class="btn primary notes-add" data-action="add-info">+ Add Evidence</button><button class="btn secondary notes-add" data-action="new-note">+ Draft note</button></div></div><p class="notes-add-hint"><strong>Add Evidence</strong> is analyzed right away and can surface a Review or Question. <strong>Draft note</strong> stays private until you send it for review.</p>${liveWarning}${composer}${notesLoading?'<p class="workspace-section-hint" role="status">Loading Notes…</p>':`<div class="notes-toolbar notes-toolbar--stacked"><div class="notes-filter-row">${dateFilters}${filters}</div><input class="notes-search" id="notesSearch" type="search" placeholder="Search all notes" aria-label="Search notes" value="${esc(ui.notesSearch||'')}"></div>${filterSummary}<div class="note-results simple-notes" id="notesList">${visibleNotes.length?visibleNotes.map(n=>simpleNote(n,ui.expandedNotes,ui.editingNoteId)).join(''):'<div class="empty-state"><h3>Nothing here.</h3><p>No notes match these filters.</p></div>'}</div>`}</section>`;
   }
 
   window.STATE_NOTES_VIEW = Object.freeze({render,filteredNotes,notesFilterSummary,simpleNote,draftNoteRow});

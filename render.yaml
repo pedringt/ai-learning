@@ -33,8 +33,10 @@ services:
         value: "1"
       - key: CLAUDE_MODEL
         value: claude-haiku-4-5-20251001
+      # Chunking is the primary large-input safeguard. Keep enough structured
+      # output headroom for dense chunks with several legitimate proposals.
       - key: CLAUDE_MAX_TOKENS
-        value: "1200"
+        value: "2000"
       - key: CLAUDE_TIMEOUT_SECONDS
         value: "30"
       - key: CORS_ORIGINS

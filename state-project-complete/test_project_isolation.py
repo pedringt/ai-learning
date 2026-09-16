@@ -192,16 +192,17 @@ def test_api_bootstrap_reports_the_active_project(tmp_path):
     settings = Settings(database_path=str(tmp_path / 'api.db'), cors_origins=[], demo_bootstrap=True)
     with TestClient(create_app(settings)) as client:
         bootstrap = client.get('/api/bootstrap').json()
-        assert bootstrap['project'] == {'id': 'northstar', 'name': 'Northstar'}
+        assert bootstrap['project'] == {'id': 'northstar', 'name': 'Northstar', 'seeded': True}
         assert len(bootstrap['state']) == 25
 
         projects = client.get('/api/projects').json()
         assert {p['id'] for p in projects['items']} == {'northstar', 'juniper'}
+        assert all(p['seeded'] for p in projects['items'])
         assert projects['active']['id'] == 'northstar'
 
         switched = client.post('/api/projects/switch', json={'project_id': 'juniper'})
         assert switched.status_code == 200
-        assert switched.json() == {'id': 'juniper', 'name': 'Juniper Office Move'}
+        assert switched.json() == {'id': 'juniper', 'name': 'Juniper Office Move', 'seeded': True}
 
         bootstrap2 = client.get('/api/bootstrap').json()
         assert bootstrap2['project']['id'] == 'juniper'
@@ -209,3 +210,53 @@ def test_api_bootstrap_reports_the_active_project(tmp_path):
 
         bad = client.post('/api/projects/switch', json={'project_id': 'nonexistent'})
         assert bad.status_code == 404
+
+
+def test_create_project_starts_genuinely_blank(tmp_path):
+    """Issue #129: a created project must have no seeded state/reviews/
+    questions/rules -- only bootstrap_demo_data/bootstrap_juniper_demo_data
+    seed content, and create_project must never call either.
+    """
+    settings = Settings(database_path=str(tmp_path / 'api.db'), cors_origins=[], demo_bootstrap=True)
+    with TestClient(create_app(settings)) as client:
+        created = client.post('/api/projects', json={'name': 'AI Notes'})
+        assert created.status_code == 200
+        project = created.json()
+        assert project['name'] == 'AI Notes'
+        assert project['id'] not in ('northstar', 'juniper')
+
+        projects = client.get('/api/projects').json()
+        assert project['id'] in {p['id'] for p in projects['items']}
+
+        switched = client.post('/api/projects/switch', json={'project_id': project['id']})
+        assert switched.status_code == 200
+        assert switched.json() == project
+
+        bootstrap = client.get('/api/bootstrap', headers={'X-State-Project-Id': project['id']}).json()
+        assert bootstrap['project'] == project
+        assert bootstrap['state'] == []
+        assert bootstrap['open_reviews'] == []
+        assert bootstrap['questions'] == []
+        assert bootstrap['rules'] == []
+        # Blank-project bug report (2026-09-15): Notes/Evidence were the one
+        # surface this suite never actually asserted on for a freshly
+        # created project -- everything else here was already covered.
+        assert bootstrap['evidence'] == []
+        assert bootstrap['drafts'] == []
+
+        evidence_via_header = client.get('/api/evidence', headers={'X-State-Project-Id': project['id']}).json()
+        assert evidence_via_header['items'] == []
+        drafts_via_header = client.get('/api/drafts', headers={'X-State-Project-Id': project['id']}).json()
+        assert drafts_via_header['items'] == []
+
+        # Northstar's own seeded Evidence must still be there and must never
+        # have leaked into the new project above.
+        northstar_evidence = client.get('/api/evidence', headers={'X-State-Project-Id': 'northstar'}).json()
+        assert len(northstar_evidence['items']) > 0
+
+
+def test_create_project_rejects_blank_name(tmp_path):
+    settings = Settings(database_path=str(tmp_path / 'api.db'), cors_origins=[], demo_bootstrap=True)
+    with TestClient(create_app(settings)) as client:
+        response = client.post('/api/projects', json={'name': '   '})
+        assert response.status_code == 422

@@ -151,7 +151,19 @@ def test_anthropic_prompt_is_compact_and_does_not_repeat_json_skeleton():
     # Both are completeness/recall instructions for genuinely consequential
     # material already covered by the existing consequentiality bar -- they
     # do not lower that bar or ask the model to review more aggressively.
-    assert len(prompt) < 8900
+    # Bumped again -> 10500 2026-09-15: BOOTSTRAP_GUIDANCE (consequentiality_
+    # guidance.py) added for a real product finding on staging -- a
+    # brand-new project's substantive first-evidence notes were returned
+    # no_review because the normal bar is calibrated against comparison with
+    # existing Current State, which an empty project has none of. Verified
+    # against the real model: the same reference-doc content that previously
+    # got no_review now correctly gets a Review under bootstrap guidance,
+    # while genuinely vague content (e.g. "State needs a Question Agent.")
+    # still correctly stays no_review even under the lower bar -- this is
+    # new required behavior for the empty-Current-State case, not bloat.
+    # This test's own `_prompt()` fixture always passes empty state_items,
+    # so it measures the bootstrap-mode prompt specifically.
+    assert len(prompt) < 10500
 
 
 def test_provider_output_schema_stays_below_anthropic_complexity_budget():

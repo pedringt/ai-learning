@@ -786,6 +786,14 @@ _PROJECT_DEPENDENT_TABLES = (
 )
 
 
+#: The only two projects with a known curated baseline to restore. Every
+# other project is user-created (state.md #129's blank-project flow) and has
+# no seed data of its own -- see reset_demo_data/delete_project_data below,
+# which gate on this instead of "is it named northstar" so a third seeded
+# project could be added here without hunting down every call site.
+SEEDED_PROJECT_IDS = frozenset({"northstar", "juniper"})
+
+
 def reset_demo_data(connection, project_id: str = "northstar") -> dict[str, int]:
     """Atomically remove session changes and restore one project's curated
     baseline (state.md #114: project_id defaults to 'northstar' so every
@@ -797,7 +805,17 @@ def reset_demo_data(connection, project_id: str = "northstar") -> dict[str, int]
     Juniper can never touch Northstar's data or vice versa. Delete order still
     matters (dependents first) exactly as before; this only narrows each
     DELETE's WHERE clause, not the order.
+
+    project_id MUST be a seeded project. Blank-project bug report
+    (2026-09-15): before this guard, "reset" on a user-created project quietly
+    wiped its data and then ran bootstrap_juniper_demo_data() -- which
+    hardcodes project_id="juniper" internally -- so the INSERTs landed on
+    (or were silently ignored against, via INSERT OR IGNORE, since the real
+    Juniper project's rows already own those ids) the WRONG project, leaving
+    the user's project empty while claiming to have "restored the baseline."
     """
+    if project_id not in SEEDED_PROJECT_IDS:
+        raise ValueError(f"{project_id!r} is not a seeded project and has no baseline to reset to.")
     connection.execute("BEGIN IMMEDIATE")
     try:
         # Delete dependents first so this works with both SQLite and PostgreSQL
@@ -808,6 +826,34 @@ def reset_demo_data(connection, project_id: str = "northstar") -> dict[str, int]
         counts = seeder(connection, manage_transaction=False)
         connection.execute("COMMIT")
         return counts
+    except Exception:
+        connection.execute("ROLLBACK")
+        raise
+
+
+def delete_project_data(connection, project_id: str, *, fallback_project_id: str = "northstar") -> None:
+    """Permanently delete a user-created project and every row scoped to it.
+
+    The inverse of reset_demo_data: a SEEDED project has no "delete" (there's
+    nothing to restore it from afterward), and a user-created project has no
+    "reset" (there's no baseline). If project_id is the app's currently
+    active project, active_project is repointed at fallback_project_id in
+    the same transaction so no request is ever left resolving a project that
+    no longer exists.
+    """
+    if project_id in SEEDED_PROJECT_IDS:
+        raise ValueError(f"{project_id!r} is a seeded project and cannot be deleted.")
+    connection.execute("BEGIN IMMEDIATE")
+    try:
+        for table, scope_clause in _PROJECT_DEPENDENT_TABLES:
+            connection.execute(f"DELETE FROM {table} WHERE {scope_clause}", (project_id,))
+        connection.execute("DELETE FROM project_areas WHERE project_id=?", (project_id,))
+        connection.execute(
+            "UPDATE active_project SET project_id=? WHERE id=1 AND project_id=?",
+            (fallback_project_id, project_id),
+        )
+        connection.execute("DELETE FROM projects WHERE id=?", (project_id,))
+        connection.execute("COMMIT")
     except Exception:
         connection.execute("ROLLBACK")
         raise

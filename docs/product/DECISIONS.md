@@ -101,3 +101,51 @@ Creating fake pilot plans, adoption metrics, stakeholder reports, or customer ev
 
 **Revisit when**  
 Only if Paige explicitly decides to turn State into a product intended for real external/team use.
+
+---
+
+### DEC-006 — Bootstrap, normal interpretation, and explicit promotion are distinct paths
+
+**Status:** Settled  
+**Date:** 2026-09-15  
+**Related:** Issues #129, #144, #146
+
+**Decision**  
+State has three distinct ways of deciding what reaches human Review:
+
+1. **Bootstrap/backfill:** when a project has no established Current State, interpretation should bias more toward coverage so an existing project's baseline can be reconstructed without requiring every important fact to already have a State item to compare against.
+2. **Normal ongoing interpretation:** once Current State exists, State should remain selective and escalate only consequential new facts, changes, contradictions, qualifications, or important unknowns.
+3. **Explicit human promotion:** a person may say that processed Evidence contains something they want proposed for Current State. For that pass, the consequentiality decision is human-supplied. AI still interprets what the Evidence actually establishes and may preserve unresolved material as a Question rather than inventing certainty. Promotion always creates a Review path and never writes Current State directly.
+
+Explicit promotion must remain available after partial prior interpretation. It is not limited to Evidence that received zero Reviews: State may have surfaced only Questions, or may have captured one Current State fact while missing another. An unresolved existing Review should be completed before offering another promotion from the same Evidence to avoid duplicate concurrent proposals.
+
+Mixed planning/spec documents must be interpreted item by item. Words such as “should” do not by themselves make the entire document tentative; settled decisions, tentative ideas, and explicit open questions can coexist in one source.
+
+**Why**  
+Human review can reject a bad proposal but cannot correct an important fact the model never surfaced. The problem is especially acute during adoption/backfill, when a mature project may have substantial existing knowledge but little or no Current State yet. Explicit promotion gives the human authority a recovery path without making normal interpretation noisier or allowing direct writes.
+
+**Rejected / deferred**  
+Making the normal model globally more aggressive; limiting promotion to `no_review_needed`; hiding promotion after any prior Current State change; allowing promotion to bypass Review; treating omission detection as solved by this feature. Systematic omission detection remains separate work.
+
+---
+
+### DEC-007 — Baseline Setup is an explicit project lifecycle
+
+**Status:** Settled  
+**Date:** 2026-09-15  
+**Related:** Issue #155; Issues #144, #146
+
+**Decision**  
+A new user-created project remains in **Baseline Setup** until a person explicitly finishes establishing its starting understanding. Accepting the first Current State fact does not end bootstrap behavior.
+
+During Baseline Setup, State may internally split a large source into bounded interpretation chunks while preserving the original source as one immutable Evidence item. Interpretation should favor useful baseline coverage, surface explicit important Questions, keep Current State proposals independently maintainable, and use a small set of project-derived organizational areas where helpful. Areas are organizational metadata, not authoritative facts, and are persisted only after associated material is human-authorized.
+
+Before the person finishes Baseline Setup, State should show a coverage summary across the intended starting Evidence. Structural coverage warnings may identify material that deserves another look, but they are not proof that something is missing and do not authorize State changes.
+
+After Baseline Setup is explicitly finished, normal ongoing interpretation becomes the default. Explicit human promotion remains available as a recovery path for later omissions.
+
+**Why**  
+Dogfooding AI Notes and State planning material showed opposite failure modes from the old `Current State is empty` trigger: one large source was over-compressed into broad blobs, while later baseline material disappeared after early facts were accepted. A real project may need many notes or documents to establish its starting picture, so baseline construction must span multiple Evidence items and human decisions rather than end after the first acceptance.
+
+**Rejected / deferred**  
+Ending bootstrap when Current State first becomes non-empty; requiring people to manually split large source documents; solving large-input failures only by raising the model token ceiling; autonomous baseline acceptance; treating structural coverage as a complete semantic omission detector.

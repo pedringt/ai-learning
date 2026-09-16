@@ -22,7 +22,11 @@ sys.path.insert(0, str(Path(__file__).resolve().parent / "interpretation_runtime
 from validation.semantic_validation import InterpretationContextSnapshot
 from provider_json import extract_json_object
 from question_review_prompt import QUESTION_REVIEW_GUIDANCE
-from consequentiality_guidance import CONSEQUENTIALITY_AND_GROUPING_GUIDANCE
+from consequentiality_guidance import (
+    BOOTSTRAP_GUIDANCE,
+    CONSEQUENTIALITY_AND_GROUPING_GUIDANCE,
+    USER_PROMOTION_GUIDANCE,
+)
 from db import project_id_of
 
 
@@ -234,6 +238,10 @@ class OpenAIProvider:
         for row in rule_rows:
             rules.append({"text": row[0], "category": row[1]})
 
+        # Bootstrap mode: see anthropic_provider.py's matching comment and
+        # consequentiality_guidance.py's BOOTSTRAP_GUIDANCE docstring.
+        bootstrap_guidance = BOOTSTRAP_GUIDANCE if not states else ""
+
         # Format prompt (identical to Anthropic, both providers use same schema)
         prompt = f"""You are an AI assistant helping maintain project context and decision-making.
 
@@ -269,11 +277,13 @@ You must recommend whether a Review is needed and what changes (if any) to propo
 ID: {evidence.get('id')}
 Content: {evidence.get('content')}
 {self._format_openai_question_context(evidence)}
+{self._format_openai_promotion_context(evidence)}
 
 ## Your Task
 
 {QUESTION_REVIEW_GUIDANCE}
 {CONSEQUENTIALITY_AND_GROUPING_GUIDANCE}
+{bootstrap_guidance}
 
 Analyze the Evidence against Current State and open Reviews.
 
@@ -385,5 +395,15 @@ Remember:
             lines.append(f"- **Status**: Blocking (depends: {question_context['blocks']})")
         lines.append("")
         lines.append("Interpret terse wording in the context of this specific Question. However, merely being submitted from the Question UI does not itself prove it is sufficient to resolve the Question — include the Question ID in resolves_question_ids only when the Evidence actually establishes a concrete answer.")
-        
+
+        return "\n".join(lines)
+
+    def _format_openai_promotion_context(self, evidence: Mapping[str, Any]) -> str:
+        """Format the explicit-promotion instruction, mirroring
+        anthropic_provider.py's user_promotion block. See
+        USER_PROMOTION_GUIDANCE's docstring for why this doesn't bypass
+        Review or weaken the authority model."""
+        if not evidence.get("user_requested_maintenance"):
+            return ""
+        lines = ["", "### User Promotion", USER_PROMOTION_GUIDANCE.strip()]
         return "\n".join(lines)

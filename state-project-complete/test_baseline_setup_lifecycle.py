@@ -1,0 +1,248 @@
+"""Regression coverage for Issue #155 Baseline Setup and #163 Starting State draft."""
+from __future__ import annotations
+
+import tempfile
+import unittest
+from pathlib import Path
+
+from fastapi.testclient import TestClient
+
+from baseline_api import Settings, create_app
+from baseline_setup import (
+    merge_interpretation_payloads,
+    record_interpretation_metadata,
+    split_evidence_text,
+    strip_internal_provider_metadata,
+)
+
+
+class BaselineFixtureProvider:
+    name = "baseline-fixture"
+    model_identifier = "baseline-fixture-v1"
+
+    def interpret(self, *, context, evidence, connection=None):
+        content = evidence["content"]
+        if "open product question" in content.lower():
+            raw = {
+                "summary": "The evidence states an unresolved product question.",
+                "topics": ["product questions"],
+                "outcome": "review_recommended",
+                "review_recommendations": [{
+                    "review_action": "create",
+                    "review_type": "open_question",
+                    "decision_question": "How should baseline coverage be checked?",
+                    "why_consequential": "The baseline process is not yet settled.",
+                    "affected_state_item_ids": [],
+                    "proposed_changes": [],
+                }],
+            }
+        else:
+            first = "first" in content.lower()
+            raw = {
+                "summary": "The evidence establishes a durable baseline fact.",
+                "topics": ["product" if first else "development"],
+                "outcome": "review_recommended",
+                "review_recommendations": [{
+                    "review_action": "create",
+                    "review_type": "missing_understanding",
+                    "decision_question": "Should Current State record this baseline fact?",
+                    "why_consequential": "The fact is needed to understand the project baseline.",
+                    "affected_state_item_ids": [],
+                    "proposed_changes": [{
+                        "operation": "create",
+                        "proposed_statement": (
+                            "State maintains a trustworthy understanding of what a project currently treats as true."
+                            if first else "State is primarily a learning and portfolio project."
+                        ),
+                        "rationale": "The Evidence states this directly.",
+                        "proposed_area_name": "Product" if first else "Development",
+                        "proposed_topic": "Purpose" if first else "Product boundary",
+                    }],
+                }],
+            }
+        record_interpretation_metadata(evidence["id"], raw, [raw])
+        return strip_internal_provider_metadata(raw)
+
+
+class BaselineLifecycleApiTests(unittest.TestCase):
+    def setUp(self):
+        self.tempdir = tempfile.TemporaryDirectory()
+        self.db_path = str(Path(self.tempdir.name) / "state.db")
+        self.client_context = TestClient(create_app(
+            Settings(database_path=self.db_path, cors_origins=[], demo_bootstrap=True),
+            provider=BaselineFixtureProvider(),
+        ))
+        self.client = self.client_context.__enter__()
+        created = self.client.post("/api/projects", json={"name": "State Planning"})
+        self.assertEqual(created.status_code, 200)
+        self.project = created.json()
+        self.headers = {"X-State-Project-Id": self.project["id"]}
+
+    def tearDown(self):
+        self.client_context.__exit__(None, None, None)
+        self.tempdir.cleanup()
+
+    def _submit(self, content):
+        response = self.client.post(
+            "/api/evidence", headers=self.headers,
+            json={"content": content, "source_type": "manual_note"},
+        )
+        self.assertEqual(response.status_code, 201, response.text)
+        return response.json()
+
+    def _draft(self):
+        response = self.client.get("/api/baseline/draft", headers=self.headers)
+        self.assertEqual(response.status_code, 200, response.text)
+        return response.json()
+
+    def _routine_review_ref(self):
+        draft = self._draft()
+        proposed = [item for item in draft["draft"]["items"] if item["kind"] == "proposed"]
+        self.assertTrue(proposed)
+        return {"id": proposed[0]["review_id"]}
+
+    def _accept(self, review, expected_question_proposal_id=None):
+        payload = {"decision": "accept"}
+        if expected_question_proposal_id:
+            payload["expected_question_proposal_id"] = expected_question_proposal_id
+        response = self.client.post(
+            f"/api/reviews/{review['id']}/resolve", headers=self.headers, json=payload,
+        )
+        self.assertEqual(response.status_code, 200, response.text)
+        return response.json()
+
+    def test_user_project_starts_baseline_while_seeded_project_is_established(self):
+        baseline = self.client.get("/api/baseline", headers=self.headers).json()
+        self.assertEqual(baseline["status"], "baseline_setup")
+        self.assertTrue(baseline["can_finish"])
+        seeded = self.client.get("/api/baseline", headers={"X-State-Project-Id": "northstar"}).json()
+        self.assertEqual(seeded["status"], "established")
+        self.assertFalse(seeded["can_finish"])
+
+    def test_baseline_stays_active_after_first_accepted_fact_and_creates_area_on_accept(self):
+        result = self._submit("First baseline note about what State is.")
+        self.assertEqual(result["reviews"], [])
+        review = self._routine_review_ref()
+        self.assertEqual(self.client.get("/api/project-areas", headers=self.headers).json()["items"], [])
+        self._accept(review)
+        baseline = self.client.get("/api/baseline", headers=self.headers).json()
+        self.assertEqual(baseline["status"], "baseline_setup")
+        self.assertEqual(baseline["counts"]["current_state"], 1)
+        self.assertEqual(baseline["counts"]["project_areas"], 1)
+        state = self.client.get("/api/state", headers=self.headers).json()["items"]
+        self.assertEqual(state[0]["area_name"], "Product")
+        self.assertEqual(state[0]["topic"], "Purpose")
+
+    def test_routine_baseline_facts_live_in_starting_state_not_review_queue(self):
+        result = self._submit("First baseline note about what State is.")
+        self.assertEqual(result["reviews"], [])
+        self.assertEqual(self.client.get("/api/reviews", headers=self.headers).json()["items"], [])
+        self.assertEqual(self.client.get("/api/attention", headers=self.headers).json()["open_reviews"], [])
+        self.assertEqual(self.client.get("/api/bootstrap", headers=self.headers).json()["open_reviews"], [])
+
+        draft = self._draft()
+        self.assertEqual(draft["counts"]["proposed_items"], 1)
+        self.assertEqual(draft["counts"]["needs_individual_review"], 0)
+        self.assertTrue(draft["can_confirm"])
+
+    def test_starting_state_draft_shows_pending_fact_without_authorizing_it(self):
+        result = self._submit("First baseline note about what State is.")
+        self.assertEqual(result["reviews"], [])
+        self.assertEqual(self.client.get("/api/state", headers=self.headers).json()["items"], [])
+
+        payload = self._draft()
+        self.assertEqual(payload["authority"], "draft_only")
+        self.assertEqual(payload["counts"]["current_items"], 0)
+        self.assertEqual(payload["counts"]["proposed_items"], 1)
+        self.assertEqual(payload["draft"]["items"][0]["kind"], "proposed")
+        self.assertTrue(payload["draft"]["items"][0]["review_id"])
+        self.assertEqual(payload["draft"]["items"][0]["area_name"], "Product")
+
+    def test_starting_state_draft_reconciles_accepted_fact_without_duplicate(self):
+        self._submit("First baseline note about what State is.")
+        review = self._routine_review_ref()
+        self._accept(review)
+
+        payload = self._draft()
+        self.assertEqual(payload["counts"]["current_items"], 1)
+        self.assertEqual(payload["counts"]["proposed_items"], 0)
+        self.assertEqual(len(payload["draft"]["items"]), 1)
+        self.assertEqual(payload["draft"]["items"][0]["kind"], "current")
+        self.assertEqual(payload["draft"]["items"][0]["area_description"], "")
+
+    def test_explicit_question_becomes_question_only_after_human_acceptance(self):
+        review = self._submit("Open product question: How should baseline coverage be checked?")["reviews"][0]
+        self.assertEqual(review["review_type"], "open_question")
+        actionable = self.client.get("/api/reviews", headers=self.headers).json()["items"]
+        self.assertEqual([item["id"] for item in actionable], [review["id"]])
+        self.assertEqual(self.client.get("/api/questions", headers=self.headers).json()["items"], [])
+        self._accept(review, review["question_to_create"]["id"])
+        questions = self.client.get("/api/questions", headers=self.headers).json()["items"]
+        self.assertEqual(len(questions), 1)
+        self.assertEqual(questions[0]["text"], "How should baseline coverage be checked?")
+
+    def test_starting_state_draft_includes_proposed_question_without_creating_it(self):
+        review = self._submit("Open product question: How should baseline coverage be checked?")["reviews"][0]
+        self.assertEqual(self.client.get("/api/questions", headers=self.headers).json()["items"], [])
+
+        payload = self._draft()
+        self.assertEqual(payload["counts"]["current_questions"], 0)
+        self.assertEqual(payload["counts"]["proposed_questions"], 1)
+        self.assertEqual(payload["draft"]["questions"][0]["kind"], "proposed")
+        self.assertEqual(payload["draft"]["questions"][0]["review_id"], review["id"])
+
+    def test_finish_is_human_controlled_and_blocked_by_pending_review(self):
+        self._submit("First baseline note about what State is.")
+        review = self._routine_review_ref()
+        blocked = self.client.post("/api/baseline/finish", headers=self.headers)
+        self.assertEqual(blocked.status_code, 409)
+        self.assertEqual(blocked.json()["detail"]["code"], "baseline_not_ready")
+        self._accept(review)
+        finished = self.client.post("/api/baseline/finish", headers=self.headers)
+        self.assertEqual(finished.status_code, 200)
+        self.assertEqual(finished.json()["status"], "established")
+
+
+class BaselineChunkingTests(unittest.TestCase):
+    def test_question_dense_note_is_bounded_even_when_short(self):
+        source = """## Open product questions
+- Question one?
+- Question two?
+- Question three?
+- Question four?
+- Question five?
+- Question six?
+"""
+        chunks = split_evidence_text(source, max_chars=5000)
+        self.assertGreater(len(chunks), 1)
+        self.assertEqual(sum(chunk.count("?") for chunk in chunks), 6)
+        self.assertTrue(all(chunk.count("?") <= 2 for chunk in chunks))
+        self.assertTrue(all("Open product questions" in chunk for chunk in chunks))
+
+    def test_large_source_is_split_without_requiring_separate_evidence(self):
+        source = "\n\n".join(f"Section {i}. " + ("detail " * 120) for i in range(8))
+        chunks = split_evidence_text(source, max_chars=900)
+        self.assertGreater(len(chunks), 1)
+        self.assertTrue(all(len(chunk) <= 900 for chunk in chunks))
+
+    def test_chunk_merge_dedupes_exact_repeated_recommendation(self):
+        recommendation = {
+            "review_action": "create", "review_type": "missing_understanding",
+            "decision_question": "Should State record the project purpose?",
+            "why_consequential": "It is baseline knowledge.", "affected_state_item_ids": [],
+            "proposed_changes": [{
+                "operation": "create", "proposed_statement": "State maintains current project truth.",
+                "rationale": "The source says so.",
+            }],
+        }
+        payload = {
+            "summary": "Purpose found.", "topics": ["purpose"],
+            "outcome": "review_recommended", "review_recommendations": [recommendation],
+        }
+        merged = merge_interpretation_payloads([payload, payload])
+        self.assertEqual(len(merged["review_recommendations"]), 1)
+        self.assertEqual(len(merged["review_recommendations"][0]["proposed_changes"]), 1)
+
+
+if __name__ == "__main__":
+    unittest.main()
