@@ -179,7 +179,7 @@ body.v88-dark .card,body.v88-dark .band{box-shadow:none}
 <div class="flow-connector"></div>
 <div class="flow-step"><span class="flow-num">7</span><div class="flow-content owner-human"><span class="owner-tag">Human</span><b>Escalate to human-only handling</b><span>shows the most recent AI draft plus the full thread for context; otherwise the ticket loops back to step 3 for the next reply</span></div></div>
 </div>
-<p class="small">The 5+ exchange threshold isn’t arbitrary: a simulated 90-day data pull put average replies per ticket at 2.3, with about 12% of tickets running past 4 exchanges. The escalate-on-request signal was added after simulated rep discovery, since it doesn’t require inferring anything.</p>
+<p class="small">The 5+ exchange threshold isn’t arbitrary: a simulated 90-day dataset put average replies per ticket at 2.3, with about 12% of tickets running past 4 exchanges. The escalate-on-request signal was added after simulated rep discovery, since it doesn’t require inferring anything.</p>
 
 <h2>Discovery questions that changed the design</h2>
 <p>These questions most directly reshaped the pilot. I included the resolution for each one, not only the original question.</p>
@@ -188,7 +188,7 @@ body.v88-dark .card,body.v88-dark .band{box-shadow:none}
 <div class="resolution"><b>Resolution:</b> the field exists but is inconsistently used, so instead of requiring reps to remember it, I used two hard system timestamps every ticket already has (first-reply-sent, resolved/closed) with no new tracking system or change in how reps work needed.</div></div>
 
 <div class="qcard"><b class="qnum">Did discovery cover rep-level habits?</b>Does Meridian’s internal guidebook, or the product manager’s discovery work, already cover how reps actually work day to day, or just pilot scope and business goals?
-<div class="resolution"><b>Resolution:</b> discovery covered scope and boundary rules, not rep-level instinct, which is better gathered directly than relayed secondhand. That led to a direct discovery pass with the 8 reps, which corrected an earlier assumption: only 2 of 8 reps do a first-touch acknowledgment, not the "mixed model" I’d been told, which changed the first-response target below.</div></div>
+<div class="resolution"><b>Resolution:</b> discovery covered scope and boundary rules, not rep-level instinct, which is better gathered directly than relayed secondhand. That led me to simulate a discovery pass with the 8 reps, which corrected an earlier assumption: only 2 of 8 reps do a first-touch acknowledgment, not the "mixed model" I’d been told, which changed the first-response target below.</div></div>
 
 <div class="qcard"><b class="qnum">Billing access approval scope</b>Does giving the AI read-only access to billing/account-status data need the same approval process as the money/security action categories, even though it couldn’t act on that data, just see it?
 <div class="resolution"><b>Resolution:</b> asking why reps look this up manually surfaced that the field already exists via an existing nightly sync, just configured to show on the Tier 2 view, not Tier 1. Turning it on for Tier 1 is a display-config fix, not a new integration or approval process, and solves the question it was asking about.</div></div>
@@ -208,7 +208,7 @@ body.v88-dark .card,body.v88-dark .band{box-shadow:none}
 
 <div class="metric"><div class="metric-target"><b>First-response time:</b> ~7 hrs blended, down from &gt;8 hrs, revised down from an earlier ~6 hr estimate.</div>
 <p>AI drafting a response the moment a ticket arrives removes the compose-from-scratch step before a human opens it, which should modestly speed things up even for tickets resolved in one reply.</p>
-<div class="shift">Changed my mind again: the original ~6 hr target assumed a meaningful "mixed workflow" where some tickets got a distinct, extra-fast first-touch acknowledgment. Direct rep discovery showed that’s rare, only 2 of 8 reps do it. I trust reps’ account of their own behavior over the earlier secondhand answer, so I revised the target down to ~7 hrs: still a real improvement, but more modest than I’d first assumed.</div></div>
+<div class="shift">Changed my mind again: the original ~6 hr target assumed a meaningful "mixed workflow" where some tickets got a distinct, extra-fast first-touch acknowledgment. Simulated rep discovery showed that’s rare, only 2 of 8 reps do it. I revised the target down to ~7 hrs: still a real improvement, but more modest than I’d first assumed.</div></div>
 
 <div class="metric"><div class="metric-target"><b>Customer satisfaction score:</b> monitor, no hard pilot target.</div>
 <p>The link between faster response and customer satisfaction is an assumption, not a proven cause and effect. At this stage the more honest goal is proving AI accuracy and reliability; it’s a signal worth watching, not a metric to be pinned to yet.</p></div>
