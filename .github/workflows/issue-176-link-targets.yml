@@ -1,0 +1,99 @@
+name: Issue 176 link-target cleanup
+
+on:
+  push:
+    branches:
+      - issue-176-link-targets
+    paths:
+      - .github/workflows/issue-176-link-targets.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch-links:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: issue-176-link-targets
+          fetch-depth: 0
+
+      - name: Apply approved new-tab behavior
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from html.parser import HTMLParser
+          from pathlib import Path
+
+          state_href = 'implementation-context-prototype/index.html'
+          map_href = 'ai-business-solutions-map.html'
+
+          state_files = {
+              'index.html': 2,
+              'implementation-context.html': 2,
+              'state-how-it-works.html': 1,
+              'state-testing-debugging.html': 1,
+              'state-ai-evals.html': 1,
+              'state-managed-agent-tracing.html': 1,
+          }
+
+          def add_new_tab(path_str, href, expected, label):
+              path = Path(path_str)
+              text = path.read_text(encoding='utf-8')
+              old = f'href="{href}"'
+              new = f'href="{href}" target="_blank" rel="noopener noreferrer"'
+              if new in text:
+                  raise SystemExit(f'{label}: target/rel already present unexpectedly')
+              count = text.count(old)
+              if count != expected:
+                  raise SystemExit(f'{label}: expected {expected} href match(es), found {count}')
+              path.write_text(text.replace(old, new), encoding='utf-8')
+
+          for file_name, expected in state_files.items():
+              add_new_tab(file_name, state_href, expected, f'{file_name} State links')
+
+          add_new_tab('index.html', map_href, 1, 'AI Business Solutions Map link')
+
+          class Parser(HTMLParser):
+              pass
+
+          for file_name, expected in state_files.items():
+              text = Path(file_name).read_text(encoding='utf-8')
+              target = f'href="{state_href}" target="_blank" rel="noopener noreferrer"'
+              if text.count(target) != expected:
+                  raise SystemExit(f'{file_name}: expected {expected} explicit new-tab State link(s)')
+              Parser().feed(text)
+
+          index = Path('index.html').read_text(encoding='utf-8')
+          map_target = f'href="{map_href}" target="_blank" rel="noopener noreferrer"'
+          if index.count(map_target) != 1:
+              raise SystemExit('index.html: AI Business Solutions Map link is not explicitly new-tab')
+
+          total_state = sum(
+              Path(file_name).read_text(encoding='utf-8').count(
+                  f'href="{state_href}" target="_blank" rel="noopener noreferrer"'
+              )
+              for file_name in state_files
+          )
+          if total_state != 8:
+              raise SystemExit(f'Expected 8 explicit new-tab State links, found {total_state}')
+
+          print('Verified 8 State product links + 1 Business Solutions Map link open in a new tab.')
+          PY
+
+      - name: Check patch
+        shell: bash
+        run: |
+          git diff --check
+          git diff --stat
+
+      - name: Commit scoped cleanup
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git rm .github/workflows/issue-176-link-targets.yml
+          git add index.html implementation-context.html state-how-it-works.html state-testing-debugging.html state-ai-evals.html state-managed-agent-tracing.html
+          git commit -m "Open State and Library references in new tabs"
+          git push origin HEAD:issue-176-link-targets
