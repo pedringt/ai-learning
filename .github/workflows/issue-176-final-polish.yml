@@ -18,125 +18,43 @@ jobs:
         with:
           ref: feature/issue-176-final-home-card-polish
           fetch-depth: 0
-
       - name: Apply final scoped fixes
         shell: bash
         run: |
           python3 - <<'PY'
           from pathlib import Path
           from html.parser import HTMLParser
-
           path = Path('index.html')
           text = path.read_text(encoding='utf-8')
-
           old = "AI is moving quickly, so I’m learning the current tools without treating them as the curriculum. I’m focusing on the product skills that should remain useful as the technology changes."
           new = "AI is moving quickly, so I’m learning the current tools without treating them as the curriculum. I’m focusing on the underlying principles, patterns, and product skills that should remain useful as models and platforms change."
-          count = text.count(old)
-          if count != 1:
-              raise SystemExit(f'Expected one homepage learning paragraph, found {count}')
+          if text.count(old) != 1:
+              raise SystemExit(f'Expected one homepage learning paragraph, found {text.count(old)}')
           text = text.replace(old, new)
-
           if 'id="issue176-final-polish"' in text:
               raise SystemExit('Final polish style already exists')
-
-          style = r'''
-<style id="issue176-final-polish">
-/* Issue #176 final review fixes: keep supporting work compact and make the
-   learning philosophy visible without turning it into another homepage hero. */
-#ai-cs-mock [data-page="portfolio"] .applied-secondary-grid{
-  align-items:start!important;
-  grid-auto-rows:auto!important;
-}
-#ai-cs-mock [data-page="portfolio"] .applied-secondary-grid>.applied-secondary{
-  align-self:start!important;
-  height:auto!important;
-  min-height:0!important;
-  padding:18px 20px!important;
-  gap:0!important;
-  justify-content:flex-start!important;
-}
-#ai-cs-mock [data-page="portfolio"] .applied-secondary-grid>.applied-secondary h3{
-  margin:8px 0 9px!important;
-  line-height:1.25!important;
-}
-#ai-cs-mock [data-page="portfolio"] .applied-secondary-grid>.applied-secondary .card-intro{
-  margin:0!important;
-}
-#ai-cs-mock [data-page="portfolio"] .applied-secondary-grid>.applied-secondary::after{
-  margin-top:15px!important;
-  padding-top:0!important;
-}
-
-#ai-cs-mock [data-page="home"] .home-quiet-ending{
-  display:block!important;
-  visibility:visible!important;
-  opacity:1!important;
-  position:static!important;
-  width:auto!important;
-  height:auto!important;
-  max-height:none!important;
-  overflow:visible!important;
-  margin:38px 0 0!important;
-  padding:22px 0 2px!important;
-  border-top:1px solid var(--border)!important;
-  color:var(--ink)!important;
-}
-#ai-cs-mock [data-page="home"] .home-quiet-ending h2{
-  margin:0 0 7px!important;
-  font-size:18px!important;
-  line-height:1.3!important;
-  letter-spacing:-.01em!important;
-}
-#ai-cs-mock [data-page="home"] .home-quiet-ending p{
-  max-width:800px!important;
-  margin:0!important;
-  color:var(--muted)!important;
-  font-size:14px!important;
-  line-height:1.62!important;
-}
-#ai-cs-mock [data-page="home"] .home-quiet-ending>span{
-  display:block!important;
-  margin-top:10px!important;
-}
-#ai-cs-mock [data-page="home"] .home-quiet-ending a{
-  color:var(--purple)!important;
-  font-size:13px!important;
-  font-weight:800!important;
-  text-decoration:none!important;
-}
-#ai-cs-mock [data-page="home"] .home-quiet-ending a:hover{text-decoration:underline!important;}
-@media(max-width:620px){
-  #ai-cs-mock [data-page="portfolio"] .applied-secondary-grid>.applied-secondary{padding:17px!important;}
-  #ai-cs-mock [data-page="home"] .home-quiet-ending{margin-top:32px!important;padding-top:19px!important;}
-}
-</style>
-'''
-          marker = '</head>'
-          if text.count(marker) != 1:
+          style = '<style id="issue176-final-polish">#ai-cs-mock [data-page="portfolio"] .applied-secondary-grid{align-items:start!important;grid-auto-rows:auto!important}#ai-cs-mock [data-page="portfolio"] .applied-secondary-grid>.applied-secondary{align-self:start!important;height:auto!important;min-height:0!important;padding:18px 20px!important;gap:0!important;justify-content:flex-start!important}#ai-cs-mock [data-page="portfolio"] .applied-secondary-grid>.applied-secondary h3{margin:8px 0 9px!important;line-height:1.25!important}#ai-cs-mock [data-page="portfolio"] .applied-secondary-grid>.applied-secondary .card-intro{margin:0!important}#ai-cs-mock [data-page="portfolio"] .applied-secondary-grid>.applied-secondary::after{margin-top:15px!important;padding-top:0!important}#ai-cs-mock [data-page="home"] .home-quiet-ending{display:block!important;visibility:visible!important;opacity:1!important;position:static!important;width:auto!important;height:auto!important;max-height:none!important;overflow:visible!important;margin:38px 0 0!important;padding:22px 0 2px!important;border-top:1px solid var(--border)!important;color:var(--ink)!important}#ai-cs-mock [data-page="home"] .home-quiet-ending h2{margin:0 0 7px!important;font-size:18px!important;line-height:1.3!important;letter-spacing:-.01em!important}#ai-cs-mock [data-page="home"] .home-quiet-ending p{max-width:800px!important;margin:0!important;color:var(--muted)!important;font-size:14px!important;line-height:1.62!important}#ai-cs-mock [data-page="home"] .home-quiet-ending>span{display:block!important;margin-top:10px!important}#ai-cs-mock [data-page="home"] .home-quiet-ending a{color:var(--purple)!important;font-size:13px!important;font-weight:800!important;text-decoration:none!important}#ai-cs-mock [data-page="home"] .home-quiet-ending a:hover{text-decoration:underline!important}@media(max-width:620px){#ai-cs-mock [data-page="portfolio"] .applied-secondary-grid>.applied-secondary{padding:17px!important}#ai-cs-mock [data-page="home"] .home-quiet-ending{margin-top:32px!important;padding-top:19px!important}}</style>\n'
+          if text.count('</head>') != 1:
               raise SystemExit('Could not identify a single </head> marker')
-          text = text.replace(marker, style + marker)
-
+          text = text.replace('</head>', style + '</head>')
           if text.count('class="home-quiet-ending"') != 1:
               raise SystemExit('Homepage learning block is missing or duplicated')
           if text.count('class="card nav-card applied-secondary"') != 5:
               raise SystemExit('Unexpected supporting-card count')
           if text.count(new) != 1:
               raise SystemExit('Updated homepage learning copy is missing or duplicated')
-
           class Parser(HTMLParser):
               pass
           Parser().feed(text)
           path.write_text(text, encoding='utf-8')
           print('Scoped index patch applied and HTML parser check passed')
           PY
-
       - name: Verify diff
         shell: bash
         run: |
           git diff --check
           git diff --stat
           git diff -- index.html | sed -n '1,220p'
-
       - name: Remove helper and commit the site change
         shell: bash
         run: |
