@@ -10,7 +10,7 @@ from fastapi.testclient import TestClient
 from ask_service import _compact_candidates
 from baseline_api import Settings, create_app
 from baseline_setup import record_interpretation_metadata, strip_internal_provider_metadata
-from db import connect
+from db import connect_sqlite
 
 
 class DenseBaselineFixtureProvider:
@@ -95,7 +95,7 @@ class BaselineReviewBurdenTests(unittest.TestCase):
         self.assertEqual(len(attention["open_reviews"]), 1)
         self.assertEqual(attention["open_reviews"][0]["review_type"], "open_question")
 
-        connection = connect(self.db_path)
+        connection = connect_sqlite(self.db_path)
         try:
             connection.project_id = self.project["id"]
             ask_reviews = _compact_candidates(connection)["reviews"]

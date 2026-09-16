@@ -9,7 +9,7 @@ from fastapi.testclient import TestClient
 
 from baseline_api import Settings, create_app
 import baseline_setup
-from db import connect
+from db import connect_sqlite
 
 
 class BaselinePromptHardeningTests(unittest.TestCase):
@@ -28,7 +28,7 @@ class BaselinePromptHardeningTests(unittest.TestCase):
         self.tempdir.cleanup()
 
     def _prompt(self, project_id):
-        connection = connect(self.db_path)
+        connection = connect_sqlite(self.db_path)
         try:
             connection.project_id = project_id
             return baseline_setup.baseline_prompt_guidance(
