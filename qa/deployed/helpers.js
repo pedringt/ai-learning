@@ -2,14 +2,34 @@ const BACKEND_URL = process.env.STATE_BACKEND_URL || 'https://state-api-staging.
 const REQUIRED_BACKEND_HOST = 'state-api-staging.onrender.com';
 const BYPASS_SECRET = process.env.VERCEL_AUTOMATION_BYPASS_SECRET || '';
 
+function backendHost(url, label = 'STATE_BACKEND_URL') {
+  try {
+    return new URL(url).host;
+  } catch {
+    throw new Error(`${label} is not a valid URL: ${url}`);
+  }
+}
+
+function assertKnownStagingHost(action, url = BACKEND_URL, label = 'STATE_BACKEND_URL') {
+  const host = backendHost(url, label);
+  if (host !== REQUIRED_BACKEND_HOST) {
+    throw new Error(
+      `Refusing to ${action}: target host "${host}" is not the known staging ` +
+      `backend "${REQUIRED_BACKEND_HOST}". Aborting rather than mutating an unexpected environment.`
+    );
+  }
+}
+
 /**
  * Navigates past Vercel's Deployment Protection using the query-param +
  * set-cookie method, NOT extraHTTPHeaders. extraHTTPHeaders applies to every
- * request in the browser context -- including the page's own cross-origin
- * fetches to the Render backend -- which turns those into CORS preflights
- * the backend doesn't allow, breaking every API call. The query param only
- * ever touches the Vercel origin and sets a same-origin cookie, so backend
- * requests are never affected.
+ * request in the browser context, including the page's own cross-origin
+ * fetches to Render, and can create unwanted CORS preflights.
+ *
+ * After navigation, also fail closed if the deployed State page exposes a
+ * backend URL other than the known staging Render host. Deep QA includes UI
+ * writes, so a miswired staging frontend must never be allowed to mutate a
+ * different environment.
  */
 async function gotoWithBypass(page, path) {
   if (!BYPASS_SECRET) {
@@ -19,12 +39,15 @@ async function gotoWithBypass(page, path) {
   }
   const separator = path.includes('?') ? '&' : '?';
   const url = `${path}${separator}x-vercel-protection-bypass=${encodeURIComponent(BYPASS_SECRET)}&x-vercel-set-bypass-cookie=true`;
-  return page.goto(url);
+  const response = await page.goto(url);
+  const configuredBackend = await page.evaluate(() => window.STATE_API?.base || '').catch(() => '');
+  if (configuredBackend) {
+    assertKnownStagingHost('run browser Deep QA writes', configuredBackend, 'window.STATE_API.base');
+  }
+  return response;
 }
 
-// Harmless noise this suite should not fail on. Kept narrow on purpose --
-// the point of Deep QA is to make real failures visible, not to suppress
-// broad categories of console/network activity.
+// Harmless noise this suite should not fail on. Kept narrow on purpose.
 const CONSOLE_ALLOWLIST = [
   /favicon/i,
   /google-analytics|googletagmanager|analytics/i,
@@ -35,9 +58,7 @@ const NETWORK_ALLOWLIST_URL = [
 
 /**
  * Attaches console/pageerror/network listeners to a page and returns a
- * diagnostics object the caller can assert against at any point. Call
- * assertClean() near the end of a test for a clear failure message instead
- * of a generic Playwright timeout when something logged an error.
+ * diagnostics object the caller can assert against near the end of a test.
  */
 function attachDiagnostics(page) {
   const consoleErrors = [];
@@ -73,25 +94,9 @@ function attachDiagnostics(page) {
   };
 }
 
-function assertKnownStagingHost(action) {
-  let host;
-  try {
-    host = new URL(BACKEND_URL).host;
-  } catch {
-    throw new Error(`STATE_BACKEND_URL is not a valid URL: ${BACKEND_URL}`);
-  }
-  if (host !== REQUIRED_BACKEND_HOST) {
-    throw new Error(
-      `Refusing to ${action}: target host "${host}" is not the known staging ` +
-      `backend "${REQUIRED_BACKEND_HOST}". Aborting rather than mutating an unexpected environment.`
-    );
-  }
-}
-
 /**
- * Resets Northstar demo data to its curated baseline via the backend's own
- * reset endpoint. Refuses to run against anything but the known staging
- * host so a misconfigured STATE_BACKEND_URL cannot mutate another environment.
+ * Resets Northstar demo data to its curated baseline. Refuses to run against
+ * anything but the known staging host.
  */
 async function resetDemoData(request) {
   assertKnownStagingHost('reset demo data');
@@ -114,12 +119,9 @@ async function backendJson(request, path) {
 }
 
 /**
- * POSTs JSON to the backend. Same host guard as resetDemoData -- this can
- * create real records (for example Evidence or a temporary QA project) on
- * whatever host it targets, so it only runs against the known staging backend.
- *
- * Default timeout is 60s, not Playwright's 15s default: a POST /api/evidence
- * call runs a real interpretation round-trip and can take longer than 15s.
+ * POSTs JSON to the backend. This can create real records, so it only runs
+ * against the known staging backend. The default timeout accommodates a real
+ * interpretation round-trip when the endpoint invokes the model.
  */
 async function backendPost(request, path, data, { timeout = 60_000 } = {}) {
   assertKnownStagingHost(`POST ${path}`);
@@ -130,8 +132,7 @@ async function backendPost(request, path, data, { timeout = 60_000 } = {}) {
 
 /**
  * DELETEs a resource on the known staging backend. Used by the Baseline
- * lifecycle test to remove its own temporary project after analysis has
- * settled and the active project has been switched back to Northstar.
+ * lifecycle test to remove its temporary project after all analysis settles.
  */
 async function backendDelete(request, path, { timeout = 60_000 } = {}) {
   assertKnownStagingHost(`DELETE ${path}`);
