@@ -13,6 +13,7 @@ import sys
 
 import api_core as _core
 import baseline_async_intake as _baseline_async_intake
+from baseline_dogfood_fixes import install_baseline_dogfood_fixes
 from baseline_draft import register_baseline_draft_routes
 from baseline_fact_recovery import install_baseline_fact_recovery
 from baseline_manual_setup import register_baseline_manual_setup_routes
@@ -29,6 +30,9 @@ install_baseline_extensions(_core)
 # persisted exactly like synchronous Evidence intake.
 _baseline_async_intake.process_evidence = _core.process_evidence
 install_baseline_prompt_hardening()
+# Dogfood fixes need to patch the source splitter before resilience captures it,
+# and make queued Baseline work/delete cleanup safe before routes are registered.
+install_baseline_dogfood_fixes(_core, _baseline_async_intake)
 install_baseline_review_visibility(_core)
 install_baseline_resilience()
 install_baseline_fact_recovery()
