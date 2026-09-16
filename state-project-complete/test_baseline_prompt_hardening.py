@@ -38,13 +38,16 @@ class BaselinePromptHardeningTests(unittest.TestCase):
         finally:
             connection.close()
 
-    def test_baseline_prompt_reserves_reviews_for_real_judgment(self):
+    def test_baseline_prompt_keeps_routine_facts_as_draft_proposals(self):
         prompt = self._prompt(self.project["id"])
         self.assertIn("<baseline_setup_quality_checks>", prompt)
-        self.assertIn("Do not manufacture a separate Review", prompt)
+        self.assertIn("MUST be emitted as missing_understanding create proposals", prompt)
+        self.assertIn("internal draft material", prompt)
+        self.assertIn("Do not return no_review merely because", prompt)
         self.assertIn("If sources disagree", prompt)
         self.assertIn("DO NOT choose one", prompt)
         self.assertIn("open_question or state_at_risk", prompt)
+        self.assertIn("Explicit Questions must not crowd out or replace", prompt)
 
     def test_baseline_prompt_locks_in_dogfood_quality_findings(self):
         prompt = self._prompt(self.project["id"])
