@@ -8,9 +8,16 @@
   // for the existing synchronous routes.
   const LONG_EVIDENCE_TIMEOUT_MS = 120000;
   const BASELINE_ACK_TIMEOUT_MS = 30000;
+  const BASELINE_POLL_INTERVAL_MS = 1500;
+  const BASELINE_POLL_MAX_MS = 300000;
+  let baselinePollGeneration = 0;
+
+  function currentProjectId() {
+    return document.getElementById('projectSwitcher')?.dataset?.projectId || '';
+  }
 
   function projectHeaders(extra = {}) {
-    const projectId = document.getElementById('projectSwitcher')?.dataset?.projectId || '';
+    const projectId = currentProjectId();
     return projectId ? {...extra, 'X-State-Project-Id': projectId} : extra;
   }
 
@@ -56,7 +63,42 @@
     return error?.status === 409 && error?.payload?.detail?.code === 'baseline_not_active';
   }
 
+  function notifyBaselineSettled() {
+    window.STATE_ASK_TEST_API?.hydrateBackend?.();
+    document.dispatchEvent(new Event('state-project-record-changed'));
+  }
+
+  function pollBaselineUntilSettled(projectId) {
+    const generation = ++baselinePollGeneration;
+    const startedAt = Date.now();
+
+    const tick = async () => {
+      if (generation !== baselinePollGeneration) return;
+      if (!projectId || currentProjectId() !== projectId || !baselineIsActive()) return;
+      if (Date.now() - startedAt > BASELINE_POLL_MAX_MS) return;
+
+      try {
+        const summary = await request('/api/baseline/draft', {}, BASELINE_ACK_TIMEOUT_MS);
+        if (generation !== baselinePollGeneration || currentProjectId() !== projectId) return;
+        const processing = summary?.counts?.processing_evidence || 0;
+        if (processing > 0) {
+          setTimeout(tick, BASELINE_POLL_INTERVAL_MS);
+          return;
+        }
+        notifyBaselineSettled();
+      } catch (error) {
+        // Polling is only a presentation convenience. Evidence is already
+        // durable, so a transient read failure must never cause a second write.
+        if (generation !== baselinePollGeneration || currentProjectId() !== projectId) return;
+        setTimeout(tick, BASELINE_POLL_INTERVAL_MS);
+      }
+    };
+
+    setTimeout(tick, BASELINE_POLL_INTERVAL_MS);
+  }
+
   function afterBaselineAck(payload) {
+    const projectId = currentProjectId();
     document.dispatchEvent(new CustomEvent('state-baseline-analysis-started', {
       detail: {evidenceId: payload?.evidence_id || null},
     }));
@@ -64,6 +106,7 @@
     // finished. Rehydrate immediately so the authoritative pending Evidence
     // status replaces that optimistic local label while background work runs.
     setTimeout(() => window.STATE_ASK_TEST_API?.hydrateBackend?.(), 0);
+    pollBaselineUntilSettled(projectId);
     return payload;
   }
 
@@ -120,6 +163,8 @@
   window.STATE_EVIDENCE_RESILIENCE_TEST_API = Object.freeze({
     LONG_EVIDENCE_TIMEOUT_MS,
     BASELINE_ACK_TIMEOUT_MS,
+    BASELINE_POLL_INTERVAL_MS,
+    BASELINE_POLL_MAX_MS,
     baselineIsActive,
   });
 })();

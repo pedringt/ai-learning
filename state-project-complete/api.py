@@ -12,9 +12,10 @@ from __future__ import annotations
 import sys
 
 import api_core as _core
-from baseline_async_intake import register_baseline_async_intake_routes
+import baseline_async_intake as _baseline_async_intake
 from baseline_draft import register_baseline_draft_routes
 from baseline_fact_recovery import install_baseline_fact_recovery
+from baseline_manual_setup import register_baseline_manual_setup_routes
 from baseline_prompt_hardening import install_baseline_prompt_hardening
 from baseline_review_visibility import install_baseline_review_visibility
 from baseline_setup import install_baseline_extensions, register_baseline_routes
@@ -23,6 +24,10 @@ from baseline_resilience import install_baseline_resilience
 # Patch the authority-bearing runtime hooks before constructing the deployment
 # app. Baseline Setup still uses the existing Review/human authorization path.
 install_baseline_extensions(_core)
+# The async module imports the canonical pipeline before composition. Point its
+# background worker at the composed hook so Baseline area/topic metadata is
+# persisted exactly like synchronous Evidence intake.
+_baseline_async_intake.process_evidence = _core.process_evidence
 install_baseline_prompt_hardening()
 install_baseline_review_visibility(_core)
 install_baseline_resilience()
@@ -38,7 +43,8 @@ def create_app(settings=None, provider=None, ask_provider=None):
     )
     register_baseline_routes(application, application.state.settings)
     register_baseline_draft_routes(application, application.state.settings)
-    register_baseline_async_intake_routes(application, application.state.settings)
+    _baseline_async_intake.register_baseline_async_intake_routes(application, application.state.settings)
+    register_baseline_manual_setup_routes(application, application.state.settings)
     return application
 
 
