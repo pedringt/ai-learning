@@ -14,6 +14,9 @@ check('reanalysis also uses the long Evidence request',evidence.includes('/reana
 check('baseline mode hides the competing onboarding banner',polish.includes('state-baseline-active .state-reviewer-guide'));
 check('old Finish Baseline interception is gone',!polish.includes('data-baseline-finish')&&!polish.includes('window.confirm('));
 check('banner avoids the oversized primary button treatment',setup.includes('btn secondary baseline-review-button')&&!setup.includes('primary-button'));
+check('banner has compact force-safe styling',polish.includes('#baselineSetupBanner')&&polish.includes('box-shadow:none!important'));
+check('legacy setup description is hidden from project wiki',polish.includes('Baseline section created from human-authorized project material.')&&polish.includes('project-outline-description'));
+check('banner copy typo is corrected at presentation time',polish.includes("replace('Starting State State assembles','Starting State that State assembles')"));
 check('starting-source patience copy remains explicit',polish.includes('starting sources can take a little while'));
 console.log(`\n${pass} passed, ${fail} failed`);
 if(fail)process.exit(1);
