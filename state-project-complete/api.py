@@ -12,6 +12,7 @@ from __future__ import annotations
 import sys
 
 import api_core as _core
+from baseline_async_intake import register_baseline_async_intake_routes
 from baseline_draft import register_baseline_draft_routes
 from baseline_fact_recovery import install_baseline_fact_recovery
 from baseline_prompt_hardening import install_baseline_prompt_hardening
@@ -37,6 +38,7 @@ def create_app(settings=None, provider=None, ask_provider=None):
     )
     register_baseline_routes(application, application.state.settings)
     register_baseline_draft_routes(application, application.state.settings)
+    register_baseline_async_intake_routes(application, application.state.settings)
     return application
 
 
