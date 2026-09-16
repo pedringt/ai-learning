@@ -3,7 +3,7 @@
     'a','an','and','are','as','at','be','can','could','did','do','does','for','from','has','have','how','i','in','is','it','me','my','of','on','or','please','should','tell','that','the','this','to','was','we','what','when','where','which','who','why','will','with','would','you','your'
   ]);
   const UNANSWERABLE_PATTERNS = [
-    /\b(?:state|the project record)?\s*(?:does not|doesn't|doesn’t) (?:currently )?have enough (?:information|evidence|context)\b/i,
+    /\b(?:state|the project record)?\s*(?:does not|doesn't|doesn’t) (?:currently )?have enough (?:confirmed )?(?:information|evidence|context)\b/i,
     /\bnot enough (?:project )?(?:information|evidence|context) (?:to|for) (?:answer|determine|establish)\b/i,
     /\b(?:cannot|can't|can’t|unable to) (?:reliably )?answer (?:this|that|the question)?\b/i,
     /\bno relevant (?:project )?(?:records?|information|evidence|context) (?:were |was )?(?:found|available|recorded)?\b/i,
