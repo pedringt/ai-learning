@@ -24,12 +24,19 @@ If sources disagree and the available Evidence does not establish which is curre
 If one source mixes settled facts with unresolved Questions, handle both independently. Explicit Questions must not crowd out or replace the durable facts the same source clearly establishes.
 
 Quality checks for the Starting State:
+- Treat meaningful source headings and numbered sections as strong organization signals. If the source already separates Product overview, Product principles, Product structure, Technical approach, Development focus, Evaluation, Open questions, or comparable sections, preserve that organization unless two headings are clearly the same durable category.
+- Every baseline create proposal MUST include a useful non-empty proposed_area_name and proposed_topic. "General" is a last resort only when the source truly provides no meaningful organization and no coherent category can be inferred from the fact. Never place most of a structured source into General.
+- If the source has no useful headings, infer a SMALL coherent taxonomy from the content. Reuse equivalent categories across facts and earlier sources instead of creating a new area for every sentence.
+- Decompose the source into independently maintainable facts. A project definition, authority rule, product principle, product surface, technical approach, development priority, and evaluation rule are different facts even when they appear in the same paragraph or chunk. Do not summarize an entire section or multiple sections into one giant Current State statement.
+- Preserve explicit bullets and named items when they can change independently. It is better to produce several concise draft facts under one stable section than one long fact containing a whole list of unrelated decisions or principles.
 - Project stage and Project outcome are special header facts. Only use those topics when Evidence actually establishes lifecycle stage or outcome. Purpose, scope, or a general status narrative is not a stage/outcome merely because it sounds important.
 - Preserve explicit named lists and their counts. Never say a plan has N exercises/components/items while naming only some of them or collapsing the rest into vague wording. Split independently changing named items into maintainable facts when they are durable enough for Current State.
 - Setup coverage commentary such as "recent work is not fully specified" or "more Evidence may be needed" is setup feedback, not durable project truth. Surface a Question/coverage warning when consequential; do not store the warning as Current State.
 - Prefer a small coherent area taxonomy. Reuse an existing or clearly equivalent broad area instead of near-duplicate headings such as "Governance" plus "Governance & Controls" or "Project Scope" plus "Project Purpose & Scope".
 - Preserve hierarchy and framing. A learning exercise belongs under the learning plan/learning area unless the Evidence explicitly establishes it as a real active initiative. Hypotheticals, examples, options, and planned exercises must stay labeled as such.
 - Never create a Current State fact or area description that merely says it was created during Baseline Setup or from human-authorized material. That is provenance/process metadata, not project truth.
+
+Before returning, check the proposed Starting State against the source's major sections. If a major section contains clearly established durable project knowledge and none of that knowledge is represented by a create proposal, add the missing maintainable fact(s). Open Questions should remain Questions rather than being converted into Current State.
 </baseline_setup_quality_checks>
 """.strip()
 
