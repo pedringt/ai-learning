@@ -539,3 +539,53 @@ body.v88-dark .home-state-copy .home-state-lead + p,
     padding-left:0!important;
   }
 }
+
+/* v98.7 — keep homepage supporting proof compact and secondary. */
+#ai-cs-mock [data-page="home"] .home-more-applied .section-kicker{
+  margin:28px 0 6px!important;
+}
+#ai-cs-mock [data-page="home"] .home-more-applied .home-supporting-row{
+  display:flex!important;
+  flex-wrap:wrap!important;
+  align-items:center!important;
+  gap:8px 20px!important;
+  margin-top:0!important;
+}
+#ai-cs-mock [data-page="home"] .home-more-applied .home-supporting-row a{
+  display:inline-flex!important;
+  flex-direction:row!important;
+  align-items:center!important;
+  gap:3px!important;
+  padding:5px 0!important;
+  border:0!important;
+  color:var(--purple)!important;
+  font-size:14px!important;
+  line-height:1.35!important;
+  font-weight:750!important;
+  text-decoration:none!important;
+}
+#ai-cs-mock [data-page="home"] .home-more-applied .home-supporting-row a:hover{
+  text-decoration:underline!important;
+}
+#ai-cs-mock [data-page="home"] .home-more-applied .home-supporting-row a span{
+  display:none!important;
+}
+#ai-cs-mock [data-page="home"] .home-more-applied .home-supporting-row a strong{
+  font:inherit!important;
+}
+#ai-cs-mock [data-page="home"] .home-more-applied .home-supporting-row a strong::after{
+  content:' →';
+}
+#ai-cs-mock [data-page="home"] .home-more-applied .home-supporting-row a[href="meridian.html"]{
+  display:none!important;
+}
+#ai-cs-mock [data-page="home"] .home-quiet-ending{
+  display:none!important;
+}
+@media(max-width:620px){
+  #ai-cs-mock [data-page="home"] .home-more-applied .home-supporting-row{
+    display:grid!important;
+    grid-template-columns:1fr!important;
+    gap:2px!important;
+  }
+}
