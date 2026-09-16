@@ -1,5 +1,7 @@
 (() => {
   const esc = value => String(value ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+  const LEGACY_EVIDENCE_SUCCESS='Added as Evidence. Current State did not need a Review.';
+  const BASELINE_EVIDENCE_SUCCESS='Added as Evidence. Review Starting State to see what State extracted. Questions and conflicts stay in Review.';
   let activeRequest = 0;
   let latestDraft = null;
 
@@ -8,12 +10,13 @@
     const style=document.createElement('style');
     style.id='state-baseline-setup-styles';
     style.textContent=`
-      .baseline-setup-banner{margin:0 0 14px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--surface);box-shadow:none}
-      .baseline-setup-row{display:flex;align-items:center;justify-content:space-between;gap:14px}
-      .baseline-setup-copy-wrap{min-width:0}.baseline-setup-title{font-weight:800;font-size:13px;margin:0 0 2px;color:var(--ink)}
-      .baseline-setup-copy{margin:0;color:var(--muted);font-size:12px;line-height:1.4}
-      .baseline-setup-meta{margin-top:4px;color:var(--muted);font-size:11px;line-height:1.35}
-      .baseline-review-button{flex:0 0 auto;min-height:32px!important;padding:6px 10px!important;white-space:nowrap}
+      .baseline-setup-banner{margin:24px 30px 0;padding:12px 14px;border:1px solid var(--line);border-radius:10px;background:var(--surface);box-shadow:none}
+      body.state-baseline-active .app-workspace>.view-root{padding-top:16px}
+      .baseline-setup-row{display:flex;align-items:center;justify-content:space-between;gap:18px}
+      .baseline-setup-copy-wrap{min-width:0}.baseline-setup-title{font-weight:800;font-size:14px;margin:0 0 3px;color:var(--ink)}
+      .baseline-setup-copy{margin:0;color:var(--muted);font-size:12.5px;line-height:1.45}
+      .baseline-setup-meta{margin-top:5px;color:var(--muted);font-size:11.5px;line-height:1.35}
+      .baseline-review-button{flex:0 0 auto;min-height:34px!important;padding:7px 11px!important;white-space:nowrap}
       .baseline-draft-dialog{min-width:0}.baseline-draft-intro{margin-bottom:16px;color:var(--muted)}
       .baseline-draft-attention{margin:14px 0;padding:12px;border:1px solid var(--line);border-radius:10px;background:var(--surface2)}
       .baseline-draft-attention h3,.baseline-draft-section h3{margin:0 0 8px;font-size:14px}
@@ -34,7 +37,7 @@
       .baseline-draft-question .baseline-draft-badge{display:block;margin-bottom:3px}
       .baseline-draft-actions{display:flex;justify-content:flex-end;gap:8px;align-items:center;margin-top:18px;padding-top:14px;border-top:1px solid var(--line)}
       .baseline-draft-status{margin-right:auto;font-size:11px;color:var(--muted);max-width:360px}
-      @media(max-width:760px){.baseline-setup-row{align-items:flex-start;flex-direction:column}.baseline-review-button{width:100%}.baseline-draft-grid{grid-template-columns:1fr}.baseline-draft-actions{align-items:stretch;flex-direction:column}.baseline-draft-status{margin-right:0}.baseline-draft-actions .btn{width:100%}}
+      @media(max-width:760px){.baseline-setup-banner{margin:14px 0 0}.baseline-setup-row{align-items:flex-start;flex-direction:column}.baseline-review-button{width:100%}.baseline-draft-grid{grid-template-columns:1fr}.baseline-draft-actions{align-items:stretch;flex-direction:column}.baseline-draft-status{margin-right:0}.baseline-draft-actions .btn{width:100%}}
     `;
     document.head.appendChild(style);
   }
@@ -83,10 +86,11 @@
     const processing=c.processing_evidence||0;
     const failed=c.failed_evidence||0;
     const statusParts=[`${factCount} draft fact${factCount===1?'':'s'}`,`${questionCount} question${questionCount===1?'':'s'}`];
+    if(!factCount&&questionCount) statusParts.push('Starting State may be incomplete');
     if(attention) statusParts.push(`${attention} need${attention===1?'s':''} review`);
     if(processing) statusParts.push(`${processing} analyzing`);
     if(failed) statusParts.push(`${failed} failed`);
-    banner.innerHTML=`<div class="baseline-setup-row"><div class="baseline-setup-copy-wrap"><p class="baseline-setup-title">Set up Current State</p><p class="baseline-setup-copy">Add the project's starting material, then review the Starting State State assembles. Questions and conflicts stay in Review.</p><div class="baseline-setup-meta">${esc(statusParts.join(' · '))}</div></div><button type="button" class="btn secondary baseline-review-button" data-baseline-review-starting>Review Starting State</button></div>`;
+    banner.innerHTML=`<div class="baseline-setup-row"><div class="baseline-setup-copy-wrap"><p class="baseline-setup-title">Set up Current State</p><p class="baseline-setup-copy">Add the project's starting material, then review the Starting State that State assembles. Questions and conflicts stay in Review.</p><div class="baseline-setup-meta">${esc(statusParts.join(' · '))}</div></div><button type="button" class="btn secondary baseline-review-button" data-baseline-review-starting>Review Starting State</button></div>`;
     banner.hidden=false;
     document.body.classList.add('state-baseline-active');
   }
@@ -108,6 +112,17 @@
     if(overlay) overlay.hidden=true;
     if(body) body.innerHTML='';
     document.body.classList.remove('modal-open');
+  }
+
+  function rewriteBaselineEvidenceSuccess(){
+    if(!document.body.classList.contains('state-baseline-active')) return;
+    const body=document.getElementById('dialogBody');
+    if(!body) return;
+    body.querySelectorAll('p').forEach(paragraph=>{
+      if(String(paragraph.textContent||'').trim()===LEGACY_EVIDENCE_SUCCESS){
+        paragraph.textContent=BASELINE_EVIDENCE_SUCCESS;
+      }
+    });
   }
 
   function groupedFacts(items){
@@ -144,10 +159,13 @@
     const facts=groups.map(group=>`<section class="baseline-draft-area"><h4 class="baseline-draft-area-title">${esc(group.name)}</h4>${group.items.map(factHtml).join('')}</section>`).join('') || '<p class="baseline-draft-intro">No Starting State facts yet. Add project material first, or confirm an intentionally empty baseline.</p>';
     const attention=attentionHtml(summary.needs_individual_review||[]);
     const questions=questionsHtml(summary.draft?.questions||[]);
+    const factCount=(c.current_items||0)+(c.proposed_items||0);
+    const questionCount=(c.current_questions||0)+(c.proposed_questions||0);
     let status='Confirming is one human authorization for the routine draft facts shown here.';
     if(c.processing_evidence) status='Some Evidence is still being analyzed. Wait for it to finish before confirming.';
     else if(c.failed_evidence) status='Retry failed Evidence before confirming.';
     else if(c.needs_individual_review) status='Resolve the flagged Reviews first. Routine draft facts do not need separate Review clicks.';
+    else if(!factCount&&questionCount) status='State found Questions but no Starting State facts. This may be incomplete; review the source before confirming.';
     return `<div class="baseline-draft-dialog"><span class="eyebrow">Baseline Setup</span><h2 id="dialogTitle">Review your Starting State</h2><p class="baseline-draft-intro">This is the project picture State assembled from your starting material. Edit routine facts, move them between sections, or remove misunderstandings. Nothing below becomes Current State until you confirm it.</p>${attention}<section class="baseline-draft-section"><h3>Starting State</h3>${facts}</section>${questions}<div class="baseline-draft-actions"><span class="baseline-draft-status">${esc(status)}</span><button type="button" class="btn secondary" data-action="close-dialog">Cancel</button><button type="button" class="btn primary" data-baseline-confirm-starting ${summary.can_confirm?'':'disabled'}>Confirm Starting State</button></div></div>`;
   }
 
@@ -241,6 +259,8 @@
       let timer=null;
       new MutationObserver(()=>{clearTimeout(timer);timer=setTimeout(refresh,250);}).observe(root,{childList:true,subtree:true});
     }
+    const dialogBody=document.getElementById('dialogBody');
+    if(dialogBody)new MutationObserver(()=>rewriteBaselineEvidenceSuccess()).observe(dialogBody,{childList:true,subtree:true,characterData:true});
     refresh();
   }
 
