@@ -18,6 +18,12 @@ State maintains one current, versioned understanding of a project. It
 updates only through an authorized decision, and every accepted change is
 recorded.
 
+New user-created projects begin in Baseline Setup so existing project
+material can be turned into a reviewed Starting State before the project
+settles into the normal ongoing Evidence -> Review -> Current State loop.
+Baseline Setup changes interpretation and organization behavior, not the
+authority boundary.
+
 ## 2. Core objects
 
 | Object | Contract |
@@ -28,6 +34,9 @@ recorded.
 | **Question** | A known unknown the team is tracking. Open by default; can additionally be marked blocking. |
 | **History** | The record of accepted transitions: before, after, reason, decision, and source, written once per actual Current State transition. |
 | **Ask** | A read-only, grounded query interface. Reads Current State, Reviews, Questions, History, and Evidence. Cannot modify any of them. |
+
+Starting State / Baseline Setup is a setup workflow, not a seventh core
+object. It uses the same six objects and the same authority model.
 
 ## 3. System rules and invariants
 
@@ -40,8 +49,9 @@ code path exists.
 | Handled by AI | Handled by deterministic software |
 |---|---|
 | Interpreting new Evidence | Schema and type validation |
-| Proposing Current State changes | Authority checks |
-| Ask synthesis | Version checks before a change applies |
+| Proposing Current State changes | Semantic validation of model output |
+| Ask synthesis | Authority checks |
+| | Version checks before a change applies |
 | | Atomic, all-or-nothing writes |
 | | Question deduplication (exact normalized-text match, no fuzzy matching) |
 | | Stripping internal ids from AI-facing text |
@@ -55,15 +65,65 @@ inference." There is no embedding or LLM-based similarity check.
 (Implementation: `review_service.py`'s `resolve_review()` enforces the
 authorization boundary. `Decision = Literal["accept", "keep", "reject"]`.)
 
-## 4. Evidence lifecycle
+## 4. Starting a project: Baseline Setup
 
-- Created from a Note, an approved Slack message, or manual entry.
+New user-created projects enter Baseline Setup until a person explicitly
+finishes it. Seeded demo projects do not use this lifecycle. The setup state
+is tracked on the project (`projects.baseline_completed_at`).
+
+Baseline Setup changes what State asks the model to look for, not what the
+model is allowed to do:
+
+- Existing project material is still stored as immutable Evidence.
+- State interprets that Evidence and proposes normal Reviews and Questions.
+- Proposed Current State facts still need an accepted Review before they
+  become current.
+- Explicit unresolved unknowns stay Questions rather than being smoothed
+  into facts.
+- Accepted facts can be organized into useful project areas/topics, but the
+  organizational metadata is applied only after the human accept succeeds.
+
+The setup guidance favors broad coverage of durable starting knowledge such
+as purpose, scope, rules, architecture, priorities, constraints, evaluation,
+important decisions, and unresolved questions. It also asks the model to
+preserve meaningful source structure, reuse a small stable set of areas, and
+split independently maintainable facts instead of summarizing an entire
+source into one giant Current State statement.
+
+Large or question-dense sources can be split into bounded interpretation
+chunks so one model call does not have to carry the whole source. The stored
+Evidence remains one immutable item and provenance continues to point to the
+original source. Software merges only exact normalized duplicates across
+chunk outputs; it does not fuzzy-guess that two differently worded claims
+mean the same thing (`baseline_setup.py`).
+
+Before Baseline Setup can finish, structural coverage checks require no open
+Reviews and no failed or still-processing Evidence. Finishing setup only
+marks the project as established; it does not itself create Current State or
+Questions. Any facts/questions already present got there through the normal
+Review path.
+
+## 5. Evidence lifecycle
+
+- Created from a Note, a supported uploaded document, an approved Slack
+  message, or other manual Evidence entry.
+- Upload currently supports `.txt`, `.md`, text-based `.pdf`, and `.docx`.
+  PDF/DOCX text is extracted before interpretation. Image-only/scanned PDFs
+  with no extractable text are rejected rather than stored as empty Evidence.
 - Immutable once created.
 - A correction creates new Evidence rather than editing the original.
 - Zero or more Reviews can reference a given piece of Evidence.
 - Not itself a claim about what's true, only a record of what was seen.
 
-## 5. Review lifecycle
+If a piece of processed Evidence produced no Review, a person can explicitly
+ask State to reconsider it (`POST /api/evidence/{id}/promote`). That reruns
+the interpretation with user-requested-maintenance context and may create a
+Review. It never writes Current State directly; Current State remains
+unchanged until a resulting Review is accepted. The reconsider/reanalyze
+paths are project-scoped, so Evidence from one project cannot be acted on
+through another project.
+
+## 6. Review lifecycle
 
 Not every Review is a Current State proposal. `review_issues.review_type`
 has four values (`provider_output_schema.py`'s enum:
@@ -121,7 +181,7 @@ Proposal-level states, distinct from the Review decision itself:
 Multiple proposals from the same Evidence are bundled into one Review and
 decided together. There is no per-proposal partial acceptance.
 
-## 6. Question lifecycle
+## 7. Question lifecycle
 
 - Created open by default.
 - Blocking is set explicitly, never inferred from wording.
@@ -139,7 +199,7 @@ decided together. There is no per-proposal partial acceptance.
   open Questions in the same project (`matching_open_question()`) before
   it's created.
 
-## 7. Current State rules
+## 8. Current State rules
 
 Each Current State item has one active, versioned value:
 
@@ -155,7 +215,7 @@ an exact normalized duplicate create and version-checks each item
 individually; two differently worded items could in principle describe the
 same underlying fact.
 
-## 8. History rules
+## 9. History rules
 
 - Written when an accepted Review produces a Current State transition, not
   on every accepted Review. `_apply_proposal()` inserts the
@@ -168,7 +228,7 @@ same underlying fact.
 - Records before, after, reason, decision, and source together.
 - Not a duplicate or cache of Current State's present values.
 
-## 9. Ask contract
+## 10. Ask contract
 
 - **Reads**: accepted Current State, pending Reviews, open Questions, and
   relevant Evidence and History, bounded by the application rather than the
@@ -179,42 +239,56 @@ same underlying fact.
 - **Cannot do**: create, accept, or modify a Review, Question, or Current
   State. A query that reads like an instruction is redirected to Add
   Evidence instead of acted on.
+- **Interaction**: the UI can stream answers, accept follow-up questions,
+  and cancel in-progress requests. Those interaction features do not weaken
+  the read-only authority boundary.
 
 (Implementation: `ask_service.py`. Selection and synthesis are separate
 model calls, validated against `ask_contract.py`'s bounded Pydantic schemas
 before anything reaches the client.)
 
-## 10. Source behavior
+## 11. Source behavior
 
 - Manual Notes are entered by hand and become Evidence directly.
+- Supported file uploads become Evidence after text extraction. Current
+  support is TXT/Markdown, text-based PDF, and DOCX; unsupported, corrupt,
+  empty, or non-text PDFs fail with a clear validation error.
 - Slack messages become Evidence automatically only from explicitly
   approved channels.
 - Channel approval is a manual, per-channel step; inviting the bot is not
   the same as approving it (`slack_intake_service.py`).
-- Every other source is out of scope today.
+- Accepted changes can be shared back to Slack; that outbound sharing does
+  not make Slack an authority for Current State.
 
-## 11. Failure and stale-data behavior
+## 12. Failure and stale-data behavior
 
 | Situation | System response |
 |---|---|
 | An AI interpretation looks wrong or unsupported | Stays a pending Review. Nothing reaches Current State without an accepted decision. |
+| Model output matches the schema but violates State's semantic rules | Rejected by semantic validation before it reaches the product. |
 | A proposal is stale (Current State changed since it was created) | Accept is blocked on a version check. The client is told to refresh and review again. |
 | Newer Evidence updates the same Review with a replacement proposal for the same State item | The older pending proposal on that Review is marked superseded. Unrelated open Reviews are never affected. |
 | The AI provider fails or times out | The request fails closed with an error, not a guess or a partial, unlabeled answer. |
-| Model output doesn't match the expected schema | Rejected by validation before it reaches the client. |
+| Model output doesn't match the expected schema | Rejected by structural validation before it reaches the client. |
+| An uploaded file is unsupported, unreadable, empty, or has no extractable text | Rejected with a clear client error; no empty Evidence is silently created. |
 | A speculative query fails inside a transaction (Postgres only) | Must be explicitly rolled back before the next statement runs, or every subsequent statement on that connection fails. Bit us once in production (see `CLAUDE.md`); SQLite's more forgiving error handling won't catch this class of bug in local/staging testing. |
 
-## 12. Testing and evals
+## 13. Testing and evals
 
 Backend and frontend behavior is covered by several hundred deterministic
-tests (authority checks, version conflicts, duplicate detection, response
-shape), supplemented by hands-on QA against realistic, messy input, and by
-evals that judge Ask's grounding/hedging behavior and the review pipeline's
-consequentiality calls against expected outcomes rather than just checking
-for a valid response. See `docs/evals/` for the PM-facing eval registry and
-`state-project-complete/eval/` for the executable eval code.
+tests (authority checks, version conflicts, duplicate detection, project
+isolation, validation, response shape), supplemented by hands-on QA against
+realistic, messy input, and by evals that judge Ask's grounding/hedging
+behavior and the review pipeline's consequentiality calls against expected
+outcomes rather than just checking for a valid response. See `docs/evals/`
+for the PM-facing eval registry and `state-project-complete/eval/` for the
+executable eval code.
 
-## 13. Known limitations
+Baseline Setup, document upload, Evidence reconsideration, project
+isolation, and the deployed user flows also have dedicated deterministic or
+browser regression coverage.
+
+## 14. Known limitations
 
 - No multi-user roles or permissions.
 - Not load-tested at real team scale. A known N+1 query pattern in
@@ -222,16 +296,20 @@ for a valid response. See `docs/evals/` for the PM-facing eval registry and
 - `project_areas.id` is a bare global primary key, not project-scoped yet.
   Fine with today's two seeded projects; needs a composite key before a
   third project with colliding area ids is added.
+- The portfolio deployment does not yet provide durable persistence for
+  user-created project data across backend redeploys. Seeded data comes back;
+  user-created data can be lost until the storage architecture is fixed.
 - Ask's generated prose occasionally has minor grammar issues, since that's
   live model output rather than something a code fix reliably controls.
 
 See `docs/PROJECT_STATUS.md` for the current, frequently-updated state of
 these and any newer findings.
 
-## 14. Go deeper
+## 15. Go deeper
 
 - Case study and product decisions: `implementation-context.html`.
 - Public behavioral-contract page (this document's counterpart):
   `state-how-it-works.html`.
+- Baseline Setup implementation: `state-project-complete/baseline_setup.py`.
 - Source: [repository README](../README.md), `state-project-complete/`
   (backend), `implementation-context-prototype/` (frontend).
