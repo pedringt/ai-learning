@@ -10,23 +10,29 @@ Do not describe hypothetical enterprise controls in this file as controls that a
 
 ## Portfolio analytics boundary
 
-State uses lightweight portfolio/demo analytics to learn how reviewers use the prototype. These events are product-learning signals, not part of Current State and not a second project record.
+The first State Product Health dashboard is based on State-owned lifecycle records and existing operational telemetry. It does not require a paid browser-analytics product.
 
-### What analytics may include
+### Current browser behavior
+
+`context-analytics.js` does not load Vercel Web Analytics and does not send custom events anywhere by default.
+
+Existing product call sites still use a compatibility interface so a future first-party collector can be added deliberately without rewriting the UI. If such a collector is installed, owner/QA activity marked with `paigeOwnerMode` remains excluded.
+
+### What a future first-party collector may include
+
+Only metadata needed for product learning, such as:
 
 - anonymous per-tab session id;
 - referral label such as `?ref=kim-review`;
 - active project id;
 - environment and frontend build label;
-- event names and bounded operational metadata such as Ask outcome, route, and timing;
-- Ask query text, capped at 300 characters, because the Ask drawer visibly discloses that reviewer questions may be captured for product learning.
+- event names and bounded operational metadata such as route, outcome, or timing.
 
-Owner/QA activity marked with `paigeOwnerMode` is excluded from reviewer analytics.
+### What browser analytics must not include
 
-### What analytics must not include
+Browser analytics must not include:
 
-Generic analytics events must not include:
-
+- raw Ask query text;
 - Evidence bodies;
 - Current State statements;
 - uploaded file contents;
@@ -34,18 +40,9 @@ Generic analytics events must not include:
 - model prompts;
 - credentials, secrets, or tokens.
 
-Outbound-link analytics record the destination origin only, not the full URL, because URL paths or query strings may themselves contain sensitive information.
+Outbound-link events, if a future collector is installed, should record destination origin only rather than full URLs because URL paths and query strings can contain sensitive information.
 
-### Raw Ask-query retention
-
-Raw Ask text is the one intentional content-bearing analytics exception in the portfolio demo. The current implementation does **not** enforce a deletion window itself; query text may remain for as long as the configured analytics provider retains custom-event data. Treat that as an explicit portfolio limitation, not as an enterprise-ready retention control.
-
-Before State is used with real company or customer data, either:
-
-1. configure and verify a documented retention/deletion window for raw Ask text; or
-2. stop sending raw Ask text and keep only non-content metadata or approved derived categories.
-
-Do not claim a shorter retention period unless the deployed analytics system actually enforces it.
+Any future change that actually enables browser-event persistence must define where the events are stored, how long they are retained, and how they can be deleted before the implementation is treated as release-ready.
 
 ## If State were a real company product
 
