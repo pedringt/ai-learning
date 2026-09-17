@@ -1,9 +1,6 @@
-// Regression coverage for context-analytics.js -- the lightweight,
-// privacy-conscious event tracker added for the "Next Marching Orders"
-// Phase 1 analytics work (see docs/PROJECT_STATUS.md). Verifies: ref/session
-// attribution is captured and reused, owner mode suppresses tracking
-// entirely, Ask query text only ever goes out through trackAskQuery, and
-// the "State demo opened" event fires once on load.
+// Regression coverage for context-analytics.js. The compatibility layer must
+// stay inert by default, preserve safe metadata for a future first-party sink,
+// and fail closed on project/user content.
 const fs=require('fs'), vm=require('vm'), path=require('path');
 const dir=__dirname;
 
@@ -16,98 +13,114 @@ function makeStorage(){
   };
 }
 
-function freshContext({search='',ownerMode=false}={}){
+function freshContext({search='',ownerMode=false,hostname='state.example',projectId='northstar',withSink=false}={}){
   const events=[];
+  const listeners={};
   const localStorage=makeStorage();
   const sessionStorage=makeStorage();
   if(ownerMode) localStorage.setItem('paigeOwnerMode','true');
-  const stub={appendChild(){},addEventListener(){}};
+  const projectSwitcher={dataset:{projectId}};
+  const appendedScripts=[];
   const document={
     readyState:'complete',
-    createElement(){return {};},
-    head:stub,
-    addEventListener(event,cb){ if(event==='click') document._click=cb; else if(event==='DOMContentLoaded') document._domReady=cb; },
-    _click:null,
-    _domReady:null,
+    currentScript:{src:`https://${hostname}/implementation-context-prototype/context-analytics.js?v=test-build`},
+    createElement(tag){return {tagName:tag};},
+    head:{appendChild(node){appendedScripts.push(node);}},
+    getElementById(id){return id==='projectSwitcher'?projectSwitcher:null;},
+    addEventListener(event,cb){(listeners[event]=listeners[event]||[]).push(cb);},
   };
-  const va=function(){ events.push(Array.from(arguments)); };
-  const location={href:'https://state.example/app'+search,origin:'https://state.example',search};
-  const context={
-    window:{va,location},
-    document,
-    localStorage,
-    sessionStorage,
-    location,
-    URL,
-    URLSearchParams,
-    console,
-  };
+  const location={href:`https://${hostname}/app${search}`,origin:`https://${hostname}`,search,hostname,protocol:'https:'};
+  const window={location};
+  if(withSink) window.StateAnalyticsSink=(event)=>events.push(event);
+  const context={window,document,localStorage,sessionStorage,location,URL,URLSearchParams,console,Date,Math};
   vm.createContext(context);
   vm.runInContext(fs.readFileSync(path.join(dir,'context-analytics.js'),'utf8'),context);
-  return {context,events};
+  function dispatch(type,event){for(const cb of listeners[type]||[])cb(event);}
+  function analyticsEvents(name){return events.filter(event=>!name||event.name===name);}
+  return {context,events,dispatch,analyticsEvents,appendedScripts};
 }
 
 let pass=0,fail=0;
 function check(name,ok,detail=''){if(ok){pass++;console.log('✓',name)}else{fail++;console.error('✗',name,detail)}}
 
-// --- basic tracking + session/ref attribution ---------------------------
+// --- zero-cost default -----------------------------------------------------
 {
-  const {context,events}=freshContext({search:'?ref=kim-review'});
+  const {context,events,appendedScripts}=freshContext();
   context.window.StateAnalytics.track('workspace_viewed',{view:'overview'});
-  const [name,payload]=events[events.length-1];
-  check('track() sends the event name', name==='event');
-  check('track() carries the event name in payload.name', payload.name==='workspace_viewed');
-  check('ref query param is captured into the event payload', payload.data.ref==='kim-review');
-  check('a session id is attached', typeof payload.data.session==='string' && payload.data.session.length>0);
+  check('no browser analytics events are sent without an explicit first-party sink',events.length===0);
+  check('analytics module does not inject a Vercel analytics script',appendedScripts.length===1 && appendedScripts[0].tagName==='style');
+  check('default analytics state reports no sink',context.window.StateAnalytics.hasSink()===false);
 }
 
-// --- ref persists across calls even after the query param is gone -------
+// --- optional first-party sink keeps safe metadata ------------------------
 {
-  const {context,events}=freshContext({search:'?ref=kim-review'});
+  const {context,analyticsEvents}=freshContext({search:'?ref=kim-review',withSink:true});
+  context.window.StateAnalytics.track('workspace_viewed',{view:'overview'});
+  const payload=analyticsEvents('workspace_viewed').pop();
+  check('future first-party sink receives event name',payload.name==='workspace_viewed');
+  check('ref query param is captured',payload.data.ref==='kim-review');
+  check('a session id is attached',typeof payload.data.session==='string'&&payload.data.session.length>0);
+  check('active project id is attached',payload.data.project_id==='northstar');
+  check('environment is attached',payload.data.environment==='production');
+  check('frontend build label is attached',payload.data.build==='test-build');
+  check('safe event metadata is preserved',payload.data.view==='overview');
+}
+
+// --- ref persists across calls --------------------------------------------
+{
+  const {context,analyticsEvents}=freshContext({search:'?ref=kim-review',withSink:true});
   context.window.StateAnalytics.track('workspace_viewed');
   context.location.search='';
   context.window.StateAnalytics.track('open_items_viewed');
-  const last=events[events.length-1][1];
-  check('ref is remembered for later events in the same session even once the URL param is gone', last.data.ref==='kim-review');
+  check('ref is remembered for later events in the same session',analyticsEvents('open_items_viewed').pop().data.ref==='kim-review');
 }
 
-// --- no ref param falls back to 'direct' ---------------------------------
+// --- environment labeling -------------------------------------------------
 {
-  const {context,events}=freshContext();
+  const {context,analyticsEvents}=freshContext({hostname:'ai-learning-git-staging-cairn10.vercel.app',withSink:true});
   context.window.StateAnalytics.track('workspace_viewed');
-  const last=events[events.length-1][1];
-  check('ordinary traffic with no ?ref= is labeled direct', last.data.ref==='direct');
+  check('staging/preview host is labeled staging',analyticsEvents('workspace_viewed').pop().data.environment==='staging');
 }
 
-// --- owner mode suppresses all tracking -----------------------------------
+// --- owner mode suppresses even a configured sink -------------------------
 {
-  const {context,events}=freshContext({ownerMode:true});
+  const {context,events}=freshContext({ownerMode:true,withSink:true});
   context.window.StateAnalytics.track('workspace_viewed');
-  check('owner mode (paigeOwnerMode) suppresses tracking so QA/dev usage does not pollute reviewer analytics', events.length===0);
+  check('owner mode suppresses tracking',events.length===0);
 }
 
-// --- Ask query text only goes out through trackAskQuery -------------------
+// --- project/user content fails closed ------------------------------------
 {
-  const {context,events}=freshContext();
-  context.window.StateAnalytics.trackAskQuery('What is blocking launch?',{followupMode:'new'});
-  const [,payload]=events[events.length-1];
-  check('trackAskQuery names the event ask_submitted', payload.name==='ask_submitted');
-  check('trackAskQuery carries the actual query text', payload.data.query==='What is blocking launch?');
-  check('trackAskQuery still carries session/ref attribution', payload.data.ref==='direct' && !!payload.data.session);
+  const {context,analyticsEvents}=freshContext({withSink:true});
+  context.window.StateAnalytics.track('privacy_probe',{
+    query:'secret question',
+    evidence_content:'secret evidence',
+    answer:'secret answer',
+    current_state:'secret state',
+    prompt:'secret prompt',
+    token:'secret token',
+    safe_count:3
+  });
+  const data=analyticsEvents('privacy_probe').pop().data;
+  check('content-bearing fields are dropped',
+    !('query'in data)&&!('evidence_content'in data)&&!('answer'in data)&&!('current_state'in data)&&!('prompt'in data)&&!('token'in data));
+  check('safe metadata survives privacy filtering',data.safe_count===3);
 }
 
-// --- ask query text is truncated, not stored unbounded ---------------------
+// --- compatibility helper never forwards raw Ask text ---------------------
 {
-  const {context,events}=freshContext();
-  context.window.StateAnalytics.trackAskQuery('x'.repeat(1000));
-  const [,payload]=events[events.length-1];
-  check('overly long Ask queries are truncated before being sent', payload.data.query.length<=300);
+  const {context,analyticsEvents}=freshContext({withSink:true});
+  context.window.StateAnalytics.trackAskQuery('What is blocking launch?',{source:'typed'});
+  const payload=analyticsEvents('ask_submitted').pop();
+  check('trackAskQuery preserves event compatibility',payload.name==='ask_submitted');
+  check('trackAskQuery does not forward raw query text',!('query'in payload.data));
+  check('safe Ask metadata may still be preserved',payload.data.source==='typed');
 }
 
-// --- state_demo_opened fires once on load (document already complete) -----
+// --- state_demo_opened reaches an installed sink --------------------------
 {
-  const {events}=freshContext();
-  check('state_demo_opened fires on module load', events.some(([,p])=>p.name==='state_demo_opened'));
+  const {analyticsEvents}=freshContext({withSink:true});
+  check('state_demo_opened reaches a configured first-party sink',analyticsEvents('state_demo_opened').length===1);
 }
 
 console.log(`\n${pass} passed, ${fail} failed`);

@@ -1,47 +1,29 @@
-/* State product analytics -- lightweight, privacy-conscious event tracking.
+/* State product analytics compatibility layer.
 
-   Goals (see docs/PROJECT_STATUS.md "Next Marching Orders" -- Phase 1):
-   - distinguish reviewer traffic from owner/QA traffic via a ?ref= parameter
-   - portfolio-level events (State demo opened) and State-level events
-     (view changes, Review decisions, Ask usage, Copy context) so real
-     reviewer behavior becomes observable
-   - Ask queries are the most valuable signal, so they are tracked too --
-     but only with an always-visible disclosure in the Ask State drawer
-     (see context-product-polish.js's drawer help text), never silently.
+   State's first Product Health dashboard should be built from authoritative
+   State records and existing backend telemetry, not a paid browser-analytics
+   product. This module therefore does not load Vercel Web Analytics and does
+   not send custom events anywhere by default.
 
-   Reuses the existing lightweight infrastructure already on the portfolio
-   pages (Vercel Web Analytics' custom-event beacon, `window.va('event', ...)`)
-   rather than standing up new analytics infrastructure, per the "avoid
-   heavyweight analytics infrastructure" guidance. No new dependency, no
-   server-side component, no PII collected -- only an anonymous per-tab
-   session id, the ?ref= label, event names, and the specific properties
-   listed at each call site.
+   Existing product call sites can continue to call StateAnalytics.track(). A
+   future first-party collector may explicitly install window.StateAnalyticsSink
+   before/while the app runs. The sink receives metadata-only event objects;
+   raw Ask queries and project content are intentionally excluded.
 
-   Respects the same owner-mode opt-out already used on the portfolio pages
-   (`localStorage.paigeOwnerMode==='true'`, toggled via ?owner=true/false),
-   so QA/dev browsing marked as owner mode does not pollute reviewer
-   analytics -- this is what keeps internal usage from dominating the data,
-   per the doc's explicit concern. */
+   Owner/QA mode remains an opt-out even when a future sink is installed. */
 (function () {
   'use strict';
 
   var OWNER_KEY = 'paigeOwnerMode';
   var SESSION_KEY = 'stateAnalyticsSessionId';
   var REF_KEY = 'stateAnalyticsRef';
+  var ownScript = document.currentScript && document.currentScript.src;
+  var BUILD = 'unversioned';
+  try { BUILD = new URL(ownScript || '', window.location.href).searchParams.get('v') || BUILD; } catch (_) {}
 
   function ownerMode() {
     try { return localStorage.getItem(OWNER_KEY) === 'true'; }
     catch (_) { return false; }
-  }
-
-  function ensureBeacon() {
-    if (ownerMode()) return;
-    if (window.va) return;
-    window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
-    var s = document.createElement('script');
-    s.defer = true;
-    s.src = '/_vercel/insights/script.js';
-    document.head.appendChild(s);
   }
 
   function sessionId() {
@@ -55,10 +37,6 @@
     } catch (_) { return 'no-storage'; }
   }
 
-  // A reviewer link looks like ?ref=kim-review. Captured once per session
-  // and reused on every event after, including ones that happen after the
-  // query param itself has been navigated away from (e.g. deep inside the
-  // State app). Falls back to 'direct' for ordinary/no-referral traffic.
   function refLabel() {
     try {
       var params = new URLSearchParams(window.location.search);
@@ -71,19 +49,60 @@
     } catch (_) { return 'direct'; }
   }
 
-  function track(name, props) {
-    if (!name || ownerMode()) return;
-    ensureBeacon();
-    var payload = Object.assign({ ref: refLabel(), session: sessionId() }, props || {});
-    try { window.va('event', { name: name, data: payload }); } catch (_) { /* analytics must never break the product */ }
+  function environmentLabel() {
+    var hostname = String(window.location && window.location.hostname || '');
+    if (window.location && window.location.protocol === 'file:') return 'local';
+    if (/localhost|127\.0\.0\.1/i.test(hostname)) return 'local';
+    if (/(^|[-.])staging([-.]|$)|-git-/i.test(hostname)) return 'staging';
+    return 'production';
   }
 
-  // Ask query text is genuinely useful product research (see doc: "Ask
-  // queries are especially valuable"), but it's user-entered content, so it
-  // is only ever sent under this one function -- callers should not read
-  // ui/query text into any other track() call.
-  function trackAskQuery(query, props) {
-    track('ask_submitted', Object.assign({ query: String(query || '').slice(0, 300) }, props || {}));
+  function projectId() {
+    var switcher = document.getElementById && document.getElementById('projectSwitcher');
+    return switcher && switcher.dataset && switcher.dataset.projectId
+      ? switcher.dataset.projectId
+      : 'unresolved';
+  }
+
+  function safeProps(props) {
+    var input = props || {};
+    var result = {};
+    Object.keys(input).forEach(function (key) {
+      // Browser analytics are metadata-only. Keep this broad on purpose: a
+      // future call site should fail closed rather than leak project/user text.
+      if (/(query|evidence|content|statement|answer|prompt|upload|credential|secret|token|current[_-]?state)/i.test(key)) return;
+      result[key] = input[key];
+    });
+    return result;
+  }
+
+  function baseContext() {
+    return {
+      ref: refLabel(),
+      session: sessionId(),
+      project_id: projectId(),
+      environment: environmentLabel(),
+      build: BUILD
+    };
+  }
+
+  function eventSink() {
+    return typeof window.StateAnalyticsSink === 'function' ? window.StateAnalyticsSink : null;
+  }
+
+  function track(name, props) {
+    if (!name || ownerMode()) return;
+    var sink = eventSink();
+    if (!sink) return;
+    try {
+      sink({ name: name, data: Object.assign(baseContext(), safeProps(props)) });
+    } catch (_) { /* analytics must never break the product */ }
+  }
+
+  // Kept for compatibility with older call sites. Query text is deliberately
+  // ignored; only safe metadata supplied in props may reach a future sink.
+  function trackAskQuery(_query, props) {
+    track('ask_submitted', props || {});
   }
 
   window.StateAnalytics = {
@@ -91,19 +110,23 @@
     trackAskQuery: trackAskQuery,
     refLabel: refLabel,
     sessionId: sessionId,
-    ownerMode: ownerMode
+    ownerMode: ownerMode,
+    environmentLabel: environmentLabel,
+    projectId: projectId,
+    build: BUILD,
+    hasSink: function () { return !!eventSink(); }
   };
 
-  // Generic outbound-link tracker -- covers "source link opened" without
-  // instrumenting every individual source-rendering call site. Only fires
-  // for links leaving the current origin (external evidence/source links,
-  // not in-app navigation, which already has its own view-change tracking).
+  // Preserve the event contract for a future first-party sink without sending
+  // full external URLs. Paths and query strings may contain sensitive context.
   document.addEventListener('click', function (e) {
     var link = e.target && e.target.closest && e.target.closest('a[href]');
     if (!link) return;
     try {
       var url = new URL(link.href, window.location.href);
-      if (url.origin !== window.location.origin) track('outbound_link_opened', { href: url.href });
+      if (url.origin !== window.location.origin) {
+        track('outbound_link_opened', { destination_origin: url.origin });
+      }
     } catch (_) { /* ignore malformed hrefs */ }
   });
 
