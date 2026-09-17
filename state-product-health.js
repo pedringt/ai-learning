@@ -43,11 +43,18 @@
     return (projects || []).find(project => project.id === projectId) || null;
   }
 
+  function mergeProjectRegistry(current, incoming) {
+    const byId = new Map();
+    for (const project of (current || [])) if (project && project.id) byId.set(project.id, project);
+    for (const project of (incoming || [])) if (project && project.id) byId.set(project.id, project);
+    return Array.from(byId.values()).sort((a, b) => String(a.name || '').localeCompare(String(b.name || '')));
+  }
+
   function contentFree(payload) {
     const text = JSON.stringify(payload || {}).toLowerCase();
     const forbidden = ['decision_question','new_statement','old_statement','evidence_content','ask_query','answer_body','prompt_text'];
     return forbidden.every(key => !text.includes(key));
   }
 
-  return { shouldRetry, withStartupRetry, pct, hoursLabel, latencyLabel, scopeProject, contentFree };
+  return { shouldRetry, withStartupRetry, pct, hoursLabel, latencyLabel, scopeProject, mergeProjectRegistry, contentFree };
 });
