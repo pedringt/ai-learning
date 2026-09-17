@@ -2,117 +2,99 @@
 
 ## Current portfolio reality
 
-State is a portfolio/learning product, not a deployed company system with real teams using it.
+State is a portfolio/learning product, not a deployed company system with real teams. Public/demo data should be seeded, synthetic, or test content. Portfolio reviewers should not submit confidential employer information, customer data, credentials, regulated data, or sensitive personal information.
 
-The intended data for the public/demo experience is seeded, synthetic, or test content. Portfolio reviewers may enter demo information while exploring the product, but they should **not** submit confidential employer information, customer data, credentials, regulated data, or sensitive personal information.
+Do not describe hypothetical enterprise controls as already implemented unless the repository and deployed system enforce them.
 
-Do not describe hypothetical enterprise controls in this file as controls that are already implemented unless the repository and deployed system actually enforce them.
+## Product Analytics privacy boundary
 
-## Portfolio analytics boundary
+The internal Product Analytics page is intentionally **content-minimizing**. Its purpose is to understand product use, workflow burden, reliability, and controlled AI quality without turning analytics access into project-content access.
 
-The first State Product Health dashboard is based on State-owned lifecycle records and existing operational telemetry. It does not require a paid browser-analytics product.
+### What may be persisted as product analytics
 
-### Current browser behavior
-
-`context-analytics.js` does not load Vercel Web Analytics and does not send custom events anywhere by default.
-
-Existing product call sites still use a compatibility interface so a future first-party collector can be added deliberately without rewriting the UI. If such a collector is installed, owner/QA activity marked with `paigeOwnerMode` remains excluded.
-
-### What a future first-party collector may include
-
-Only metadata needed for product learning, such as:
+Only approved metadata such as:
 
 - anonymous per-tab session id;
-- referral label such as `?ref=kim-review`;
-- active project id;
-- environment and frontend build label;
-- event names and bounded operational metadata such as route, outcome, or timing.
+- project id when known;
+- environment and build label;
+- referral label;
+- approved State view name;
+- event outcome/status;
+- bounded duration in milliseconds;
+- outbound destination origin only.
 
-### What browser analytics must not include
+The browser and server both use explicit schemas/allowlists. Unknown properties are not treated as safe by default.
 
-Browser analytics must not include:
+### What product analytics must not contain
 
-- raw Ask query text;
+- raw Ask query text or Ask answer bodies;
 - Evidence bodies;
+- Review decision text/rationale;
+- Question text;
 - Current State statements;
-- uploaded file contents;
-- Ask answer bodies;
-- model prompts;
-- credentials, secrets, or tokens.
+- uploaded file contents or filenames when avoidable;
+- model prompts/responses;
+- traces containing source content;
+- credentials, secrets, access tokens, or full external URLs with paths/query strings.
 
-Outbound-link events, if a future collector is installed, should record destination origin only rather than full URLs because URL paths and query strings can contain sensitive information.
+Authoritative Evidence/Review/Question/History records remain in State because the product itself needs them. The analytics store does not copy that content.
 
-Any future change that actually enables browser-event persistence must define where the events are stored, how long they are retained, and how they can be deleted before the implementation is treated as release-ready.
+## Analytics storage and retention
+
+State's first-party usage metadata is stored in `product_analytics_events` in the existing State database. Controlled eval aggregates are stored separately in `product_eval_runs`.
+
+- usage events: retain up to **90 days**;
+- controlled eval aggregates: retain up to **365 days**;
+- pruning happens opportunistically during analytics reads/writes;
+- staging remains ephemeral and may lose analytics data after deploys/restarts.
+
+Because State has no authenticated admin role in the portfolio demo, the current cross-project Product Analytics page is appropriate only for synthetic/demo data. A real company deployment would require authenticated admin authorization/RBAC before exposing cross-project aggregate analytics.
+
+Product Analytics access should not imply permission to open the underlying project. The dashboard therefore avoids a direct `Open State` project-content affordance.
+
+## Controlled eval data
+
+Reusable eval fixtures should remain synthetic/curated unless a separately approved privacy-safe process exists for real customer data.
+
+The dashboard may ingest aggregate eval results such as precision, recall, miss/error counts, build, provider, and model identifier. It must not ingest scenario Evidence, prompts, model responses, or trace bodies merely to make a dashboard richer.
+
+Eval result ingestion requires a server-side `STATE_EVAL_INGEST_KEY`. The key must never be shipped to the browser.
 
 ## If State were a real company product
 
-Before connecting real Slack channels, documents, transcripts, or other company sources, product and engineering would need explicit decisions and controls in the following areas.
+Before connecting real Slack channels, documents, transcripts, or other company sources, product and engineering would need explicit controls for:
 
 ### Source authorization and least privilege
-
-- Connect only sources a customer/admin has explicitly approved.
-- Use the narrowest practical scopes and channel/document permissions.
-- Preserve source identity and provenance so imported information can be traced back to an authorized source.
-- Do not let a model or agent expand its own access beyond the permissions granted by the system.
+- Connect only sources a customer/admin explicitly approved.
+- Use narrow scopes and preserve source identity/provenance.
+- Never let an AI model expand its own access.
 
 ### Sensitive data and secrets
-
-- Define which categories of personal, customer, financial, health, legal, credential, and other sensitive data may or may not enter the system.
-- Detect or block obvious secrets and credentials where practical.
-- Avoid placing unnecessary sensitive source text in prompts, traces, logs, error reports, or analytics.
-- Treat a change that sends a new category of data to a model/provider as a product and privacy change, not merely an implementation detail.
+- Define which categories of personal, financial, health, legal, credential, and customer data may enter State.
+- Detect/block obvious secrets where practical.
+- Keep unnecessary source text out of logs, traces, errors, and analytics.
 
 ### Model/provider data handling
-
-For every provider/model used with real company data, verify rather than assume:
-
-- whether prompts/outputs are retained and for how long;
-- whether customer data can be used for provider training;
-- regional/data-residency options where relevant;
-- subprocessors and contractual terms;
-- deletion and incident-response expectations.
-
-A provider switch or model-hosting change should trigger a fresh check if the data-handling terms differ.
+Verify provider retention, training use, residency, subprocessors, deletion, and incident expectations. A provider/model change can be a privacy change.
 
 ### Retention and deletion
-
-- Define retention separately for Evidence, Current State, Questions, Reviews, History, logs, traces, and uploaded source files.
-- Decide what deletion means when Evidence/History are intentionally immutable for audit purposes.
-- Make customer/account deletion behavior explicit rather than assuming database-row deletion is sufficient.
-- Ensure backups and observability systems follow the intended retention policy.
-
-### Logging, tracing, and evals
-
-- Prefer metadata and redacted excerpts over full sensitive payloads when full content is unnecessary.
-- Control who can view traces and logs.
-- Keep production/customer data out of reusable eval fixtures unless there is an approved, privacy-safe process for doing so.
-- Separate synthetic eval data from real customer data.
+Define retention independently for Evidence, Current State, Questions, Reviews, History, source files, traces, logs, usage analytics, and eval aggregates. Account/project deletion behavior must include analytics metadata where applicable.
 
 ### Tenant/project isolation
+Project/customer identity must be explicit at every read/write boundary. Cross-project exposure is a release-blocking integrity/privacy failure. Authorization belongs in software, not prompts.
 
-- Project/customer identity must be explicit at every read/write boundary.
-- Cross-project or cross-customer data exposure is a release-blocking integrity/privacy failure.
-- Authorization must be enforced by software, not by prompt instructions or model behavior.
-
-### Human transparency and consent
-
-- Make it clear when information is being sent to an AI model.
-- For meeting/transcription sources, define notice/consent requirements before ingesting recordings or transcripts.
-- Give users/admins a clear understanding of which sources are connected and how to disable them.
+### Human transparency
+Make it clear when information is sent to an AI model and which sources are connected. Meeting/transcription sources require explicit notice/consent decisions before use.
 
 ## Change-review rule
 
-A PR should explicitly call out a data/privacy impact when it:
+A PR should explicitly call out data/privacy impact when it:
 
 - adds a new source or connector;
-- sends new fields/content to a model or third party;
-- changes logging/tracing payloads;
+- sends new data to a model/third party;
+- changes logging/tracing/analytics payloads;
 - changes retention/deletion behavior;
-- changes project/tenant authorization boundaries;
-- changes provider/model in a way that affects data handling.
+- changes tenant/admin authorization boundaries;
+- changes provider/model data handling.
 
-When one of those changes is material, update `RISKS.md` and this file as needed before treating the change as release-ready.
-
-## Portfolio boundary
-
-These requirements are intentionally written as if State were being prepared for real company use because that is useful AI PM practice. They are **not** evidence that State has real customers, production company integrations, or an external pilot.
+Update `RISKS.md` and this file when those changes are material.
