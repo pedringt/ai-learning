@@ -7,9 +7,7 @@ qa-bootstrap:
 qa-fast: qa-python qa-js
 
 qa-python:
-	cd state-project-complete && python -m pytest -q \
-		--deselect=test_frontend_integration_contract.py::test_r861_grounded_ask_module_and_release_assets_are_self_contained \
-		--deselect=test_frontend_integration_contract.py::test_r85_integrity_and_polish_contracts
+	cd state-project-complete && python -m pytest -q
 
 qa-js:
 	@set -eu; cd implementation-context-prototype; \
