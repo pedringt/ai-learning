@@ -1,127 +1,26 @@
-// Regression coverage for context-analytics.js. The compatibility layer must
-// stay inert by default, preserve safe metadata for a future first-party sink,
-// and fail closed on project/user content.
+// Regression coverage for State's metadata-only first-party analytics collector.
 const fs=require('fs'), vm=require('vm'), path=require('path');
 const dir=__dirname;
-
-function makeStorage(){
-  const data={};
-  return {
-    getItem(k){return Object.prototype.hasOwnProperty.call(data,k)?data[k]:null;},
-    setItem(k,v){data[k]=String(v);},
-    removeItem(k){delete data[k];},
-  };
-}
-
-function freshContext({search='',ownerMode=false,hostname='state.example',projectId='northstar',withSink=false}={}){
-  const events=[];
-  const listeners={};
-  const localStorage=makeStorage();
-  const sessionStorage=makeStorage();
-  if(ownerMode) localStorage.setItem('paigeOwnerMode','true');
+function makeStorage(){const data={};return{getItem:k=>Object.prototype.hasOwnProperty.call(data,k)?data[k]:null,setItem:(k,v)=>data[k]=String(v),removeItem:k=>delete data[k]};}
+function freshContext({search='',ownerMode=false,hostname='state.example',projectId='northstar',externalSink=false}={}){
+  const events=[],requests=[],listeners={};
+  const localStorage=makeStorage(),sessionStorage=makeStorage();if(ownerMode)localStorage.setItem('paigeOwnerMode','true');
   const projectSwitcher={dataset:{projectId}};
-  const appendedScripts=[];
-  const document={
-    readyState:'complete',
-    currentScript:{src:`https://${hostname}/implementation-context-prototype/context-analytics.js?v=test-build`},
-    createElement(tag){return {tagName:tag};},
-    head:{appendChild(node){appendedScripts.push(node);}},
-    getElementById(id){return id==='projectSwitcher'?projectSwitcher:null;},
-    addEventListener(event,cb){(listeners[event]=listeners[event]||[]).push(cb);},
-  };
+  const document={readyState:'complete',currentScript:{src:`https://${hostname}/implementation-context-prototype/context-analytics.js?v=test-build`},createElement:tag=>({tagName:tag}),head:{appendChild(){}},getElementById:id=>id==='projectSwitcher'?projectSwitcher:null,addEventListener:(event,cb)=>(listeners[event]=listeners[event]||[]).push(cb)};
   const location={href:`https://${hostname}/app${search}`,origin:`https://${hostname}`,search,hostname,protocol:'https:'};
-  const window={location};
-  if(withSink) window.StateAnalyticsSink=(event)=>events.push(event);
-  const context={window,document,localStorage,sessionStorage,location,URL,URLSearchParams,console,Date,Math};
-  vm.createContext(context);
-  vm.runInContext(fs.readFileSync(path.join(dir,'context-analytics.js'),'utf8'),context);
-  function dispatch(type,event){for(const cb of listeners[type]||[])cb(event);}
-  function analyticsEvents(name){return events.filter(event=>!name||event.name===name);}
-  return {context,events,dispatch,analyticsEvents,appendedScripts};
+  const window={location};if(externalSink)window.StateAnalyticsSink=event=>events.push(event);
+  const fetch=(url,options={})=>{requests.push({url,options,payload:options.body?JSON.parse(options.body):null});return Promise.resolve({ok:true});};
+  const context={window,document,localStorage,sessionStorage,location,URL,URLSearchParams,console,Date,Math,Set,fetch};vm.createContext(context);vm.runInContext(fs.readFileSync(path.join(dir,'context-analytics.js'),'utf8'),context);
+  return{context,events,requests,dispatch:(type,event)=>{for(const cb of listeners[type]||[])cb(event);}};
 }
+let pass=0;function check(name,fn){try{fn();pass++;console.log('✓',name)}catch(e){console.error('✗',name);throw e}}
 
-let pass=0,fail=0;
-function check(name,ok,detail=''){if(ok){pass++;console.log('✓',name)}else{fail++;console.error('✗',name,detail)}}
-
-// --- zero-cost default -----------------------------------------------------
-{
-  const {context,events,appendedScripts}=freshContext();
-  context.window.StateAnalytics.track('workspace_viewed',{view:'overview'});
-  check('no browser analytics events are sent without an explicit first-party sink',events.length===0);
-  check('analytics module does not inject a Vercel analytics script',appendedScripts.length===1 && appendedScripts[0].tagName==='style');
-  check('default analytics state reports no sink',context.window.StateAnalytics.hasSink()===false);
-}
-
-// --- optional first-party sink keeps safe metadata ------------------------
-{
-  const {context,analyticsEvents}=freshContext({search:'?ref=kim-review',withSink:true});
-  context.window.StateAnalytics.track('workspace_viewed',{view:'overview'});
-  const payload=analyticsEvents('workspace_viewed').pop();
-  check('future first-party sink receives event name',payload.name==='workspace_viewed');
-  check('ref query param is captured',payload.data.ref==='kim-review');
-  check('a session id is attached',typeof payload.data.session==='string'&&payload.data.session.length>0);
-  check('active project id is attached',payload.data.project_id==='northstar');
-  check('environment is attached',payload.data.environment==='production');
-  check('frontend build label is attached',payload.data.build==='test-build');
-  check('safe event metadata is preserved',payload.data.view==='overview');
-}
-
-// --- ref persists across calls --------------------------------------------
-{
-  const {context,analyticsEvents}=freshContext({search:'?ref=kim-review',withSink:true});
-  context.window.StateAnalytics.track('workspace_viewed');
-  context.location.search='';
-  context.window.StateAnalytics.track('open_items_viewed');
-  check('ref is remembered for later events in the same session',analyticsEvents('open_items_viewed').pop().data.ref==='kim-review');
-}
-
-// --- environment labeling -------------------------------------------------
-{
-  const {context,analyticsEvents}=freshContext({hostname:'ai-learning-git-staging-cairn10.vercel.app',withSink:true});
-  context.window.StateAnalytics.track('workspace_viewed');
-  check('staging/preview host is labeled staging',analyticsEvents('workspace_viewed').pop().data.environment==='staging');
-}
-
-// --- owner mode suppresses even a configured sink -------------------------
-{
-  const {context,events}=freshContext({ownerMode:true,withSink:true});
-  context.window.StateAnalytics.track('workspace_viewed');
-  check('owner mode suppresses tracking',events.length===0);
-}
-
-// --- project/user content fails closed ------------------------------------
-{
-  const {context,analyticsEvents}=freshContext({withSink:true});
-  context.window.StateAnalytics.track('privacy_probe',{
-    query:'secret question',
-    evidence_content:'secret evidence',
-    answer:'secret answer',
-    current_state:'secret state',
-    prompt:'secret prompt',
-    token:'secret token',
-    safe_count:3
-  });
-  const data=analyticsEvents('privacy_probe').pop().data;
-  check('content-bearing fields are dropped',
-    !('query'in data)&&!('evidence_content'in data)&&!('answer'in data)&&!('current_state'in data)&&!('prompt'in data)&&!('token'in data));
-  check('safe metadata survives privacy filtering',data.safe_count===3);
-}
-
-// --- compatibility helper never forwards raw Ask text ---------------------
-{
-  const {context,analyticsEvents}=freshContext({withSink:true});
-  context.window.StateAnalytics.trackAskQuery('What is blocking launch?',{source:'typed'});
-  const payload=analyticsEvents('ask_submitted').pop();
-  check('trackAskQuery preserves event compatibility',payload.name==='ask_submitted');
-  check('trackAskQuery does not forward raw query text',!('query'in payload.data));
-  check('safe Ask metadata may still be preserved',payload.data.source==='typed');
-}
-
-// --- state_demo_opened reaches an installed sink --------------------------
-{
-  const {analyticsEvents}=freshContext({withSink:true});
-  check('state_demo_opened reaches a configured first-party sink',analyticsEvents('state_demo_opened').length===1);
-}
-
-console.log(`\n${pass} passed, ${fail} failed`);
-if(fail) process.exit(1);
+check('default collector sends state_demo_opened to first-party API',()=>{const {requests}=freshContext({hostname:'ai-learning-git-staging-cairn10.vercel.app'});if(!requests.length)throw new Error('no request');if(!requests[0].url.startsWith('https://state-api-staging.onrender.com/api/analytics/events'))throw new Error(requests[0].url);if(requests[0].payload.name!=='state_demo_opened')throw new Error('wrong event');});
+check('collector includes metadata context but no project content',()=>{const {context,requests}=freshContext();context.window.StateAnalytics.track('view_opened',{view:'overview',query:'secret',safe_count:4,evidence_content:'secret'});const p=requests.at(-1).payload;if(p.view!=='overview'||p.project_id!=='northstar'||!p.session_id)throw new Error('missing safe metadata');for(const key of ['query','safe_count','evidence_content'])if(key in p)throw new Error(`leaked ${key}`);});
+check('explicit allowlist drops unknown event properties',()=>{const {context,requests}=freshContext();context.window.StateAnalytics.track('ask_failed',{outcome:'timeout',duration_ms:30000,status_code:504,reason:'private detail'});const p=requests.at(-1).payload;if(p.outcome!=='timeout'||p.duration_ms!==30000||p.status_code!==504)throw new Error('safe fields missing');if('reason'in p)throw new Error('unknown field leaked');});
+check('unsupported event names are ignored',()=>{const {context,requests}=freshContext();const before=requests.length;context.window.StateAnalytics.track('capture_everything',{outcome:'x'});if(requests.length!==before)throw new Error('unsupported event sent');});
+check('owner mode suppresses first-party collection',()=>{const {context,requests}=freshContext({ownerMode:true});const before=requests.length;context.window.StateAnalytics.track('view_opened',{view:'overview'});if(requests.length!==before)throw new Error('owner event sent');});
+check('raw Ask query never enters event payload',()=>{const {context,requests}=freshContext();context.window.StateAnalytics.trackAskQuery('What is the secret launch plan?',{outcome:'submitted'});const p=requests.at(-1).payload;if(p.name!=='ask_submitted'||'query'in p)throw new Error('Ask query leaked');});
+check('outbound links store origin only',()=>{const {dispatch,requests}=freshContext();dispatch('click',{target:{closest:sel=>sel==='a[href]'?{href:'https://example.com/private/path?token=secret'}:null}});const p=requests.at(-1).payload;if(p.destination_origin!=='https://example.com')throw new Error(JSON.stringify(p));});
+check('external sink remains supported for tests/integrations',()=>{const {context,events}=freshContext({externalSink:true});context.window.StateAnalytics.track('view_opened',{view:'history'});if(events.at(-1).name!=='view_opened')throw new Error('sink not called');});
+console.log(`\n${pass} passed, 0 failed`);
