@@ -31,7 +31,7 @@ from eval.review_interpretation_scenarios import SCENARIOS as REVIEW_SCENARIOS
 
 def _record(url: str, key: str, payload: dict) -> None:
     request = urllib.request.Request(
-        url.rstrip("/") + "/api/admin/eval-runs",
+        url.rstrip("/") + "/api/admin/quality-eval-runs",
         data=json.dumps(payload).encode("utf-8"),
         headers={"Content-Type": "application/json", "X-State-Eval-Key": key},
         method="POST",
@@ -117,9 +117,16 @@ def _analytics_payload(report: dict, provider) -> dict:
             "recall": summary["recall"],
             "false_positives": summary["false_positives"],
             "false_negatives": summary["false_negatives"],
+            "interpretation_accuracy": summary["interpretation_accuracy"],
         })
     else:
-        common["ask_grounding"] = summary["ask_grounding"]
+        common.update({
+            "ask_grounding": summary["ask_grounding"],
+            "uncertainty_accuracy": summary["uncertainty_accuracy"],
+            "open_item_accuracy": summary["open_item_accuracy"],
+            "authority_accuracy": summary["authority_accuracy"],
+            "overall_pass_rate": summary["overall_pass_rate"],
+        })
     return common
 
 
