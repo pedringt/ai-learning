@@ -31,9 +31,8 @@ jobs:
           out_dir.mkdir(exist_ok=True)
 
           for filename, meta in manifest.items():
-              chunk_dir = staging / meta['dir']
-              parts = [(chunk_dir / f'{i:02d}.txt').read_text().strip() for i in range(meta['chunks'])]
-              data = base64.b64decode(''.join(parts))
+              source = staging / f'{filename}.b64'
+              data = base64.b64decode(source.read_text().strip())
               digest = hashlib.sha256(data).hexdigest()
               if digest != meta['sha256']:
                   raise SystemExit(f'SHA mismatch for {filename}: {digest} != {meta["sha256"]}')
