@@ -7,6 +7,18 @@
   const mobile=document.getElementById('v922MobileNav');
   const isDark=()=>body.classList.contains('v88-dark');
 
+  /* Portfolio traffic analytics. The domain restriction keeps staging,
+     previews, and local QA out of the real portfolio numbers. */
+  if(!document.querySelector('script[data-umami-portfolio]')){
+    const analytics=document.createElement('script');
+    analytics.defer=true;
+    analytics.src='https://cloud.umami.is/script.js';
+    analytics.setAttribute('data-website-id','238c100f-0a08-472c-9eb3-22acc2c795fa');
+    analytics.setAttribute('data-domains','ai-learning-rouge.vercel.app');
+    analytics.setAttribute('data-umami-portfolio','true');
+    document.head.appendChild(analytics);
+  }
+
   /* Keep the portfolio anonymous for now while still positioning the work as
      applied AI product work rather than only a learning exercise. */
   if(document.title.includes('AI Learning Portfolio')) document.title=document.title.replace('AI Learning Portfolio','Applied AI Product Portfolio');
