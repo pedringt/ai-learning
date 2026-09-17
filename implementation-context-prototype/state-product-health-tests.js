@@ -38,5 +38,23 @@ const H = require('../state-product-health.js');
     assert.equal(H.latencyLabel(4200),'4.2s');
   });
 
+  await check('quality summary exposes only aggregate Review and controlled-eval metrics',()=>{
+    const summary=H.qualitySummary({
+      live_review_quality:{resolved_reviews:10,accepted_as_proposed_rate:.5,material_edit_rate:.2,rejection_or_not_applied_rate:.1},
+      controlled_evals:{
+        latest_review_interpretation:{interpretation_accuracy:.8},
+        latest_ask_quality:{ask_grounding:.9},
+        recent:[{suite:'ask_quality',ask_grounding:.9}],
+      },
+    });
+    assert.equal(summary.resolvedReviews,10);
+    assert.equal(summary.acceptedAsProposedRate,.5);
+    assert.equal(summary.materialEditRate,.2);
+    assert.equal(summary.latestReview.interpretation_accuracy,.8);
+    assert.equal(summary.latestAsk.ask_grounding,.9);
+    assert.equal(summary.recent.length,1);
+    assert.equal(H.contentFree(summary),true);
+  });
+
   console.log(`\n${pass} passed, 0 failed`);
 })().catch(()=>process.exit(1));
