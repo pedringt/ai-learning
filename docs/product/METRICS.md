@@ -1,88 +1,94 @@
-# State product health metrics
+# State product analytics and quality metrics
 
-State is a portfolio/learning product, not a planned external pilot. Other people may interact with it as portfolio reviewers or demo visitors, but there is no intended rollout to a real user group.
+State is a portfolio/learning product, not a real customer rollout. The analytics surface is therefore a **product-management learning exercise** using demo/reviewer activity, authoritative State lifecycle records, controlled evals, and operational telemetry. Do not describe these signals as customer adoption, retention, or production usage.
 
-This file is an AI PM exercise in measurement design: define how State would be evaluated if a real team used it, and use tests, curated scenarios, model evals, and reviewer flows to gather product-quality evidence where practical. Do not present hypothetical measures, synthetic results, or reviewer interactions as production user metrics.
+## Product questions
 
-## North-star question
+The admin dashboard should help answer four questions:
 
-**If a real team used State, would it help them maintain trustworthy project truth with less ambiguity and acceptable human review effort?**
+1. **Are people using State?**
+2. **How are they using it?**
+3. **Where is the workflow creating friction or failing?**
+4. **Is the AI behaving well enough to trust the product?**
 
-## Recommended metric set
+No single score can answer all four.
 
-### 1. Consequential change recall
+## Product usage signals
 
-Of evidence/events that truly should require human judgment, how often does State surface them for Review?
+Use privacy-safe metadata only.
 
-Why it matters: missing a consequential change is more dangerous than creating a small amount of extra review work.
+- demo sessions in recent windows;
+- projects with measured usage;
+- major State views used;
+- Ask submitted/completed/failed;
+- Evidence source mix;
+- Reviews and Questions opened/resolved;
+- authorized Current State changes;
+- processing failures and aging work.
 
-### 2. Review precision
+Raw activity volume is not success. A large Review count may mean adoption, unnecessary escalation, or accumulating burden.
 
+## Authoritative product outcomes
+
+Do not duplicate facts State already owns in browser analytics.
+
+- Evidence received: `evidence.submitted_at`, source, processing status
+- Review lifecycle: `review_issues.created_at`, `resolved_at`, status/resolution
+- Question lifecycle: `questions.created_at`, `resolved_at`, status/blocking
+- Actual Current State changes: **History transitions only**
+
+A reviewed Evidence item can legitimately leave Current State unchanged, answer/open a Question, or require follow-up. None of those should be rewritten into a fake linear funnel.
+
+## AI quality metrics
+
+Controlled eval results are a separate dataset from product usage.
+
+### Consequential-change recall
+Of events that truly should require human judgment, how often does State surface them for Review?
+
+### Review precision
 Of items State sends to Review, how many genuinely require a human decision?
 
-Why it matters: too many low-value Reviews create fatigue and undermine the review model.
+### State integrity failures
+Track unsupported, stale, cross-project, incorrectly versioned, or authority-violating outcomes separately from ordinary UX errors. High-severity integrity failures are release-blocking.
 
-### 3. Review burden
+### Ask grounding
+Sample whether Ask distinguishes Current State, pending Reviews, open Questions, uncertainty, and History/provenance correctly.
 
-Reviews requiring action per meaningful evidence event, plus time/steps to resolve a typical Review.
+### Question usefulness
+Evaluate whether State surfaces real consequential unknowns rather than producing vague/noisy Questions.
 
-Why it matters: human authorization is only viable if the workflow stays selective and actionable.
+Controlled eval runs must retain build/model/provider metadata where available so regressions can be compared across product changes. Synthetic or controlled results must always be labeled as such.
 
-### 4. State integrity failure rate
+## AI reliability and efficiency
 
-Rate of failures where Current State becomes unsupported, stale, cross-project, incorrectly versioned, or otherwise violates the authority model.
+Where State owns trustworthy telemetry, track:
 
-Target posture: these are high-severity events; some categories should effectively be zero-tolerance release blockers.
+- provider/model success and failure;
+- AI latency, preferably p50/p95 when sample size supports it;
+- input/output tokens only where actually captured;
+- timeout/recovery behavior.
 
-### 5. Ask grounding quality
+Do not invent token counts from text length. Do not show dollar cost until State has both trustworthy token data and a versioned provider/model pricing source.
 
-Share of sampled Ask answers that correctly distinguish Current State, pending Reviews, open Questions, uncertainty, and History/provenance.
+## Interpreting combinations
 
-Track serious failures separately, especially fabricated quotes, decisions, or certainty.
+The useful PM work comes from combining signals rather than optimizing one number.
 
-### 6. Question usefulness
+Examples:
 
-For Questions created or maintained by State: how many represent real consequential unknowns, and how many are later resolved by meaningful evidence?
+- Review volume rises while Review precision falls → investigate over-escalation.
+- Ask use grows while grounding evals regress → popular feature, quality risk.
+- Evidence grows while Review backlog ages → human authorization may be becoming burdensome.
+- State changes remain low with low Review burden → may be perfectly healthy if Evidence usually confirms existing understanding.
 
-Why it matters: Questions should make uncertainty explicit, not become a dumping ground for vague concerns.
-
-### 7. Workflow completion / recovery
-
-Can a reviewer complete key flows (add evidence, review, adjust/update/leave unchanged, create/link a Question, inspect History, Ask) without dead ends or unclear recovery?
-
-### 8. AI response latency
-
-Track the time required for model-dependent tasks such as Evidence interpretation and Ask, including typical and slow-tail behavior.
-
-Why it matters: a correct AI workflow can still be unusable if the user waits too long for routine actions. When measuring, prefer p50/p95 or a similarly honest distribution instead of one best-case number.
-
-### 9. Model cost / efficiency
-
-Track approximate model cost per meaningful task, such as one Evidence interpretation or one Ask request, against a representative context size.
-
-Why it matters: quality improvements that multiply cost or context size may not be viable in a real product. Cost should be considered together with quality and latency, not optimized in isolation.
-
-## Practical measurement approach for this project
-
-Because State has no real user rollout, prefer evidence that is honest about its source:
-
-- deterministic regression results for hard integrity rules;
-- curated product scenarios for consequentiality and review burden;
-- targeted real-model evals for semantic/model behavior;
-- timed runs for latency;
-- provider usage/cost estimates for representative calls;
-- manual portfolio-review flows for clarity, recovery, and trust observations.
-
-If a number comes from a synthetic test, eval set, or portfolio review, label it that way. Do not call it adoption, retention, customer success, or production usage.
+Treat these as investigation prompts, not automatic conclusions.
 
 ## Guardrails
 
-- Do not optimize for raw number of Reviews, Questions, Evidence items, or Ask queries. Those are usage counts, not success.
-- Segment severe integrity failures from ordinary UX errors.
-- Pair quantitative metrics with sampled qualitative review because schema-valid output can still be semantically wrong.
-- Choose a small useful subset before adding instrumentation. A real AI PM should know what decision a metric will support before collecting it.
-- Treat quality, latency, and cost as a three-way product tradeoff. Improving one does not automatically justify harming the other two.
-
-## PM follow-up
-
-Issue #121 tracks choosing the first small metric set and documenting how each would be measured if State were a real team product. This is a learning/portfolio exercise, not preparation for an actual pilot.
+- No composite health score.
+- No raw Ask text, Evidence, Review text, Question text, Current State statements, prompts, answers, or uploaded content in product analytics.
+- Separate usage/live signals from controlled evals.
+- Separate severe integrity failures from ordinary UX errors.
+- Prefer a small metric set tied to a product decision over collecting every click.
+- Preserve the portfolio boundary: demo/reviewer activity is not customer adoption.

@@ -1,114 +1,26 @@
-// Regression coverage for context-analytics.js -- the lightweight,
-// privacy-conscious event tracker added for the "Next Marching Orders"
-// Phase 1 analytics work (see docs/PROJECT_STATUS.md). Verifies: ref/session
-// attribution is captured and reused, owner mode suppresses tracking
-// entirely, Ask query text only ever goes out through trackAskQuery, and
-// the "State demo opened" event fires once on load.
+// Regression coverage for State's metadata-only first-party analytics collector.
 const fs=require('fs'), vm=require('vm'), path=require('path');
 const dir=__dirname;
-
-function makeStorage(){
-  const data={};
-  return {
-    getItem(k){return Object.prototype.hasOwnProperty.call(data,k)?data[k]:null;},
-    setItem(k,v){data[k]=String(v);},
-    removeItem(k){delete data[k];},
-  };
+function makeStorage(){const data={};return{getItem:k=>Object.prototype.hasOwnProperty.call(data,k)?data[k]:null,setItem:(k,v)=>data[k]=String(v),removeItem:k=>delete data[k]};}
+function freshContext({search='',ownerMode=false,hostname='state.example',projectId='northstar',externalSink=false}={}){
+  const events=[],requests=[],listeners={};
+  const localStorage=makeStorage(),sessionStorage=makeStorage();if(ownerMode)localStorage.setItem('paigeOwnerMode','true');
+  const projectSwitcher={dataset:{projectId}};
+  const document={readyState:'complete',currentScript:{src:`https://${hostname}/implementation-context-prototype/context-analytics.js?v=test-build`},createElement:tag=>({tagName:tag}),head:{appendChild(){}},getElementById:id=>id==='projectSwitcher'?projectSwitcher:null,addEventListener:(event,cb)=>(listeners[event]=listeners[event]||[]).push(cb)};
+  const location={href:`https://${hostname}/app${search}`,origin:`https://${hostname}`,search,hostname,protocol:'https:'};
+  const window={location};if(externalSink)window.StateAnalyticsSink=event=>events.push(event);
+  const fetch=(url,options={})=>{requests.push({url,options,payload:options.body?JSON.parse(options.body):null});return Promise.resolve({ok:true});};
+  const context={window,document,localStorage,sessionStorage,location,URL,URLSearchParams,console,Date,Math,Set,fetch};vm.createContext(context);vm.runInContext(fs.readFileSync(path.join(dir,'context-analytics.js'),'utf8'),context);
+  return{context,events,requests,dispatch:(type,event)=>{for(const cb of listeners[type]||[])cb(event);}};
 }
+let pass=0;function check(name,fn){try{fn();pass++;console.log('✓',name)}catch(e){console.error('✗',name);throw e}}
 
-function freshContext({search='',ownerMode=false}={}){
-  const events=[];
-  const localStorage=makeStorage();
-  const sessionStorage=makeStorage();
-  if(ownerMode) localStorage.setItem('paigeOwnerMode','true');
-  const stub={appendChild(){},addEventListener(){}};
-  const document={
-    readyState:'complete',
-    createElement(){return {};},
-    head:stub,
-    addEventListener(event,cb){ if(event==='click') document._click=cb; else if(event==='DOMContentLoaded') document._domReady=cb; },
-    _click:null,
-    _domReady:null,
-  };
-  const va=function(){ events.push(Array.from(arguments)); };
-  const location={href:'https://state.example/app'+search,origin:'https://state.example',search};
-  const context={
-    window:{va,location},
-    document,
-    localStorage,
-    sessionStorage,
-    location,
-    URL,
-    URLSearchParams,
-    console,
-  };
-  vm.createContext(context);
-  vm.runInContext(fs.readFileSync(path.join(dir,'context-analytics.js'),'utf8'),context);
-  return {context,events};
-}
-
-let pass=0,fail=0;
-function check(name,ok,detail=''){if(ok){pass++;console.log('✓',name)}else{fail++;console.error('✗',name,detail)}}
-
-// --- basic tracking + session/ref attribution ---------------------------
-{
-  const {context,events}=freshContext({search:'?ref=kim-review'});
-  context.window.StateAnalytics.track('workspace_viewed',{view:'overview'});
-  const [name,payload]=events[events.length-1];
-  check('track() sends the event name', name==='event');
-  check('track() carries the event name in payload.name', payload.name==='workspace_viewed');
-  check('ref query param is captured into the event payload', payload.data.ref==='kim-review');
-  check('a session id is attached', typeof payload.data.session==='string' && payload.data.session.length>0);
-}
-
-// --- ref persists across calls even after the query param is gone -------
-{
-  const {context,events}=freshContext({search:'?ref=kim-review'});
-  context.window.StateAnalytics.track('workspace_viewed');
-  context.location.search='';
-  context.window.StateAnalytics.track('open_items_viewed');
-  const last=events[events.length-1][1];
-  check('ref is remembered for later events in the same session even once the URL param is gone', last.data.ref==='kim-review');
-}
-
-// --- no ref param falls back to 'direct' ---------------------------------
-{
-  const {context,events}=freshContext();
-  context.window.StateAnalytics.track('workspace_viewed');
-  const last=events[events.length-1][1];
-  check('ordinary traffic with no ?ref= is labeled direct', last.data.ref==='direct');
-}
-
-// --- owner mode suppresses all tracking -----------------------------------
-{
-  const {context,events}=freshContext({ownerMode:true});
-  context.window.StateAnalytics.track('workspace_viewed');
-  check('owner mode (paigeOwnerMode) suppresses tracking so QA/dev usage does not pollute reviewer analytics', events.length===0);
-}
-
-// --- Ask query text only goes out through trackAskQuery -------------------
-{
-  const {context,events}=freshContext();
-  context.window.StateAnalytics.trackAskQuery('What is blocking launch?',{followupMode:'new'});
-  const [,payload]=events[events.length-1];
-  check('trackAskQuery names the event ask_submitted', payload.name==='ask_submitted');
-  check('trackAskQuery carries the actual query text', payload.data.query==='What is blocking launch?');
-  check('trackAskQuery still carries session/ref attribution', payload.data.ref==='direct' && !!payload.data.session);
-}
-
-// --- ask query text is truncated, not stored unbounded ---------------------
-{
-  const {context,events}=freshContext();
-  context.window.StateAnalytics.trackAskQuery('x'.repeat(1000));
-  const [,payload]=events[events.length-1];
-  check('overly long Ask queries are truncated before being sent', payload.data.query.length<=300);
-}
-
-// --- state_demo_opened fires once on load (document already complete) -----
-{
-  const {events}=freshContext();
-  check('state_demo_opened fires on module load', events.some(([,p])=>p.name==='state_demo_opened'));
-}
-
-console.log(`\n${pass} passed, ${fail} failed`);
-if(fail) process.exit(1);
+check('default collector sends state_demo_opened to first-party API',()=>{const {requests}=freshContext({hostname:'ai-learning-git-staging-cairn10.vercel.app'});if(!requests.length)throw new Error('no request');if(!requests[0].url.startsWith('https://state-api-staging.onrender.com/api/analytics/events'))throw new Error(requests[0].url);if(requests[0].payload.name!=='state_demo_opened')throw new Error('wrong event');});
+check('collector includes metadata context but no project content',()=>{const {context,requests}=freshContext();context.window.StateAnalytics.track('view_opened',{view:'overview',query:'secret',safe_count:4,evidence_content:'secret'});const p=requests.at(-1).payload;if(p.view!=='overview'||p.project_id!=='northstar'||!p.session_id)throw new Error('missing safe metadata');for(const key of ['query','safe_count','evidence_content'])if(key in p)throw new Error(`leaked ${key}`);});
+check('explicit allowlist drops unknown event properties',()=>{const {context,requests}=freshContext();context.window.StateAnalytics.track('ask_failed',{outcome:'timeout',duration_ms:30000,status_code:504,reason:'private detail'});const p=requests.at(-1).payload;if(p.outcome!=='timeout'||p.duration_ms!==30000||p.status_code!==504)throw new Error('safe fields missing');if('reason'in p)throw new Error('unknown field leaked');});
+check('unsupported event names are ignored',()=>{const {context,requests}=freshContext();const before=requests.length;context.window.StateAnalytics.track('capture_everything',{outcome:'x'});if(requests.length!==before)throw new Error('unsupported event sent');});
+check('owner mode suppresses first-party collection',()=>{const {context,requests}=freshContext({ownerMode:true});const before=requests.length;context.window.StateAnalytics.track('view_opened',{view:'overview'});if(requests.length!==before)throw new Error('owner event sent');});
+check('raw Ask query never enters event payload',()=>{const {context,requests}=freshContext();context.window.StateAnalytics.trackAskQuery('What is the secret launch plan?',{outcome:'submitted'});const p=requests.at(-1).payload;if(p.name!=='ask_submitted'||'query'in p)throw new Error('Ask query leaked');});
+check('outbound links store origin only',()=>{const {dispatch,requests}=freshContext();dispatch('click',{target:{closest:sel=>sel==='a[href]'?{href:'https://example.com/private/path?token=secret'}:null}});const p=requests.at(-1).payload;if(p.destination_origin!=='https://example.com')throw new Error(JSON.stringify(p));});
+check('external sink remains supported for tests/integrations',()=>{const {context,events}=freshContext({externalSink:true});context.window.StateAnalytics.track('view_opened',{view:'history'});if(events.at(-1).name!=='view_opened')throw new Error('sink not called');});
+console.log(`\n${pass} passed, 0 failed`);
