@@ -1,0 +1,12 @@
+{
+  "AI_Customer_Success_Guide_to_Debugging_Claude_Agents.pdf": {"sha256":"81db301072dcf6ab47522eaf16c6c536ea1a7bf0a48d7c334d1889e43285d49b","bytes":49458},
+  "AI_Governance_Risk_PM_Cheat_Sheet.pdf": {"sha256":"d6d507b1b329e4e5c2bf535915df8534ed298a2921c6ee0e5869dcafc76d29b5","bytes":6855},
+  "AI_Product_Evals_Cheat_Sheet.pdf": {"sha256":"03625936110ffb65b5f18f3f74e113849ad317effbf922bb5df8ba248dbe840c","bytes":31206},
+  "BUILD_BOOST_BUY_DECISION_TREE.pdf": {"sha256":"3dcdc03023bb4afdbe04b8059a1af3530adb84a6b8369804aadd19bea3b3cc75","bytes":20495},
+  "Claude_Managed_Agents_Tracing_Cheat_Sheet.pdf": {"sha256":"b3db52a2df6aaac5ea6c5389ff5182607b2753113fa0934c0cb18568147a0552","bytes":23400},
+  "MERIDIAN_DISCOVERY_QUESTIONS_REASONING.pdf": {"sha256":"7fc5c26a5aa180a899e69e992a479576b13d2ea92a85223c3f1449ec9ab7c2ef","bytes":22798},
+  "State_Learning_Cheat_Sheet_02_Anatomy_of_an_LLM_Application.pdf": {"sha256":"1959de26d4d149479e93233e762e9477c97c8de9a9d8facb8832674fef02c6c1","bytes":23123},
+  "State_Learning_Cheat_Sheet_04_Testing_and_Evaluating_Probabilistic_Systems.pdf": {"sha256":"517ce53cb385ddca5a4770bf194af24063a6c898f7765b28c38fb3f50e53c81d","bytes":22530},
+  "State_Learning_Cheat_Sheet_05_Production_Reliability_and_Observability.pdf": {"sha256":"7443bc089f46147290d8bf84fbc3db0ae410c72d129e47834bd48c3ad807daf1","bytes":23785},
+  "State_Learning_Cheat_Sheet_06_Building_Software_with_AI.pdf": {"sha256":"bf1e4284c943625a78d70ae099c5bd74249bf9f013d5038b8e0c66d8b45ed681","bytes":25135}
+}
