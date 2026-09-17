@@ -11,17 +11,12 @@
 
    Reuses the existing lightweight infrastructure already on the portfolio
    pages (Vercel Web Analytics' custom-event beacon, `window.va('event', ...)`)
-   rather than standing up new analytics infrastructure, per the "avoid
-   heavyweight analytics infrastructure" guidance. No new dependency, no
-   server-side component, no PII collected -- only an anonymous per-tab
-   session id, the ?ref= label, deployment context, event names, and the
-   specific properties listed at each call site.
+   rather than standing up new analytics infrastructure. No new dependency or
+   analytics backend is added here.
 
    Respects the same owner-mode opt-out already used on the portfolio pages
    (`localStorage.paigeOwnerMode==='true'`, toggled via ?owner=true/false),
-   so QA/dev browsing marked as owner mode does not pollute reviewer
-   analytics -- this is what keeps internal usage from dominating the data,
-   per the doc's explicit concern. */
+   so QA/dev browsing marked as owner mode does not pollute reviewer analytics. */
 (function () {
   'use strict';
 
@@ -60,8 +55,7 @@
 
   // A reviewer link looks like ?ref=kim-review. Captured once per session
   // and reused on every event after, including ones that happen after the
-  // query param itself has been navigated away from (e.g. deep inside the
-  // State app). Falls back to 'direct' for ordinary/no-referral traffic.
+  // query param itself has been navigated away from. Falls back to 'direct'.
   function refLabel() {
     try {
       var params = new URLSearchParams(window.location.search);
@@ -125,10 +119,8 @@
     try { window.va('event', { name: name, data: payload }); } catch (_) { /* analytics must never break the product */ }
   }
 
-  // Ask query text is genuinely useful product research (see doc: "Ask
-  // queries are especially valuable"), but it's user-entered content, so it
-  // is only ever sent under this one function -- callers should not read
-  // ui/query text into any other track() call.
+  // Ask query text is user-entered content, so this is the only analytics
+  // function allowed to send it. It is deliberately bounded to 300 chars.
   function trackAskQuery(query, props) {
     track('ask_submitted', Object.assign({ query: String(query || '').slice(0, 300) }, props || {}));
   }
@@ -144,16 +136,130 @@
     build: BUILD
   };
 
-  // Generic outbound-link tracker -- covers "source link opened" without
-  // instrumenting every individual source-rendering call site. Only fires
-  // for links leaving the current origin (external evidence/source links,
-  // not in-app navigation, which already has its own view-change tracking).
+  // Ask lifecycle instrumentation lives at the shared STATE_ASK boundary so
+  // product logic stays untouched. context-analytics.js loads before
+  // context-ask.js; this setter wraps the finished Ask module when it is
+  // published, then context-product-polish.js captures the wrapped version.
+  var askModule = window.STATE_ASK;
+  var pendingAsk = null;
+  var lastStarterQuery = null;
+  function nowMs() { return window.performance && typeof window.performance.now === 'function' ? window.performance.now() : Date.now(); }
+  function roundedDuration(startedAt) { return Math.max(0, Math.round(nowMs() - startedAt)); }
+  function beginAsk(query, source) {
+    var clean = String(query || '').trim();
+    if (!clean) return null;
+    var interaction = { query: clean, source: source || 'typed', startedAt: nowMs(), submitted: false, backendStarted: false };
+    pendingAsk = interaction;
+    // If the UI handles the request locally (read-only mutation warning or
+    // routing to an authoritative State surface), no STATE_ASK method runs.
+    // One tick later, classify it as routed rather than silently losing it.
+    window.setTimeout(function () {
+      if (pendingAsk !== interaction || interaction.backendStarted) return;
+      emitAskSubmitted(interaction);
+      track('ask_completed', { source: interaction.source, outcome: 'routed', duration_ms: roundedDuration(interaction.startedAt) });
+      pendingAsk = null;
+    }, 0);
+    return interaction;
+  }
+  function emitAskSubmitted(interaction) {
+    if (!interaction || interaction.submitted) return;
+    interaction.submitted = true;
+    trackAskQuery(interaction.query, { source: interaction.source });
+  }
+  function consumeAsk(query) {
+    var clean = String(query || '').trim();
+    var interaction = pendingAsk && pendingAsk.query === clean
+      ? pendingAsk
+      : { query: clean, source: 'unknown', startedAt: nowMs(), submitted: false, backendStarted: false };
+    interaction.backendStarted = true;
+    emitAskSubmitted(interaction);
+    return interaction;
+  }
+  function finishAsk(interaction, outcome, payload) {
+    if (!interaction) return;
+    var timing = payload && payload.timing || {};
+    track('ask_completed', {
+      source: interaction.source,
+      outcome: outcome,
+      duration_ms: roundedDuration(interaction.startedAt),
+      pipeline: timing.pipeline || null,
+      backend_total_ms: Number.isFinite(timing.total_ms) ? timing.total_ms : null,
+      provider_ms: Number.isFinite(timing.provider_ms) ? timing.provider_ms : null,
+      first_token_ms: Number.isFinite(timing.first_token_ms) ? timing.first_token_ms : null
+    });
+    if (pendingAsk === interaction) pendingAsk = null;
+  }
+  function wrapAsk(value) {
+    if (!value || value.__stateAnalyticsWrapped) return value;
+    var wrapped = {};
+    Object.keys(value).forEach(function (key) { wrapped[key] = value[key]; });
+    ['submit', 'submitStream'].forEach(function (method) {
+      if (typeof value[method] !== 'function') return;
+      wrapped[method] = async function () {
+        var args = Array.prototype.slice.call(arguments);
+        var interaction = consumeAsk(args[0]);
+        try {
+          var result = await value[method].apply(value, args);
+          finishAsk(interaction, 'answered', result);
+          return result;
+        } catch (error) {
+          var outcome = error && error.isCancelled ? 'cancelled' : (error && error.isTimeout ? 'failed_timeout' : 'failed');
+          finishAsk(interaction, outcome, null);
+          throw error;
+        }
+      };
+    });
+    Object.defineProperty(wrapped, '__stateAnalyticsWrapped', { value: true, enumerable: false });
+    return Object.freeze(wrapped);
+  }
+  try {
+    Object.defineProperty(window, 'STATE_ASK', {
+      configurable: true,
+      get: function () { return askModule; },
+      set: function (value) { askModule = wrapAsk(value); }
+    });
+    if (askModule) askModule = wrapAsk(askModule);
+  } catch (_) { /* analytics must never block Ask initialization */ }
+
+  // Capture intent before the Ask UI's own handlers run. This is how the
+  // shared wrapper can distinguish a starter, typed submission, and refresh
+  // without importing or changing product-owned UI state.
+  document.addEventListener('click', function (e) {
+    var prompt = e.target && e.target.closest && e.target.closest('[data-review-batch-prompt]');
+    if (prompt) {
+      lastStarterQuery = String(prompt.dataset.reviewBatchPrompt || '').trim();
+      beginAsk(lastStarterQuery, 'starter');
+      return;
+    }
+    var action = e.target && e.target.closest && e.target.closest('[data-review-batch-action]');
+    if (!action) return;
+    var type = action.dataset.reviewBatchAction;
+    if (type === 'refresh-ask') {
+      var input = document.getElementById && document.getElementById('askStateDrawerInput');
+      beginAsk(input && input.value || '', 'refresh');
+    } else if (type === 'copy-ask-answer') {
+      track('ask_answer_copied');
+    }
+  }, true);
+
+  document.addEventListener('submit', function (e) {
+    var form = e.target && e.target.closest && e.target.closest('[data-review-batch-form="ask"]');
+    if (!form) return;
+    var input = form.querySelector && form.querySelector('input');
+    var query = String(input && input.value || '').trim();
+    beginAsk(query, query && query === lastStarterQuery ? 'starter' : 'typed');
+    if (query !== lastStarterQuery) lastStarterQuery = null;
+  }, true);
+
+  // Generic outbound-link tracker. Do not send the full URL: query strings
+  // and paths can themselves contain sensitive source information. Origin is
+  // enough to learn which external service reviewers opened.
   document.addEventListener('click', function (e) {
     var link = e.target && e.target.closest && e.target.closest('a[href]');
     if (!link) return;
     try {
       var url = new URL(link.href, window.location.href);
-      if (url.origin !== window.location.origin) track('outbound_link_opened', { href: url.href });
+      if (url.origin !== window.location.origin) track('outbound_link_opened', { destination_origin: url.origin });
     } catch (_) { /* ignore malformed hrefs */ }
   });
 
