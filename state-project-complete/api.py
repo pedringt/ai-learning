@@ -22,6 +22,7 @@ from baseline_review_visibility import install_baseline_review_visibility
 from baseline_setup import install_baseline_extensions, register_baseline_routes
 from baseline_resilience import install_baseline_resilience
 from product_analytics import register_product_analytics
+from quality_analytics_api import register_quality_analytics
 
 # Patch the authority-bearing runtime hooks before constructing the deployment
 # app. Baseline Setup still uses the existing Review/human authorization path.
@@ -51,6 +52,7 @@ def create_app(settings=None, provider=None, ask_provider=None):
     _baseline_async_intake.register_baseline_async_intake_routes(application, application.state.settings)
     register_baseline_manual_setup_routes(application, application.state.settings)
     register_product_analytics(application, application.state.settings)
+    register_quality_analytics(application, application.state.settings)
     return application
 
 
