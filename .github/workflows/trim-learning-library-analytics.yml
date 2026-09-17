@@ -1,0 +1,83 @@
+name: Trim Product Analytics learning section
+
+on:
+  push:
+    branches:
+      - trim-learning-library-analytics
+    paths:
+      - .github/workflows/trim-learning-library-analytics.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: trim-learning-library-analytics
+          fetch-depth: 0
+
+      - name: Trim Learning Library area 08
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path('index.html')
+          text = path.read_text(encoding='utf-8')
+
+          old = '''<div class="stage-body"><div class="stage-group"><h3>What I want to understand</h3>
+<div class="learning-item"><p><strong>Measurement strategy.</strong> Translate business goals into product outcomes, user behaviors, metrics, and baselines. I want to distinguish primary and supporting metrics from guardrails and vanity metrics, and be clear about what a number can and cannot prove.</p></div>
+<div class="learning-item"><p><strong>Instrumentation &amp; analytics QA.</strong> Decide what events, properties, timestamps, and outcomes need to exist before launch, then check whether the data is trustworthy. Missing, duplicate, mistimed, or contaminated events can make a clean dashboard tell the wrong story.</p></div>
+<div class="learning-item"><p><strong>Product behavior.</strong> Use funnels, activation, adoption, retention, cohorts, segmentation, feature usage, errors, and workflow completion to understand what people actually do instead of relying on raw activity counts.</p></div>
+<div class="learning-item"><p><strong>Experimentation &amp; evidence.</strong> Read A/B tests and useful before/after comparisons with enough statistical judgment to consider sample size, uncertainty, practical significance, guardrails, segment effects, and the difference between correlation and causation.</p></div>
+<div class="learning-item"><p><strong>AI-assisted analytics.</strong> Use AI to accelerate SQL, exploration, hypotheses, first-pass charts, and summaries, then verify the population, filters, joins, time windows, and metric definitions. The goal is enough SQL and data fluency to inspect AI-generated work, not memorizing advanced syntax.</p></div>
+<div class="learning-item"><p><strong>AI products as an extension.</strong> For AI products, add eval quality, human review and correction, latency, cost, and failure signals on top of normal product analytics. Connect model metrics → product metrics → business metrics instead of assuming a better eval score automatically means a better user or business outcome.</p></div>
+</div></div>'''
+
+          new = '''<div class="stage-body"><div class="stage-group"><h3>What I want to understand</h3><div class="learning-item"><p>I want to define meaningful product outcomes, make sure the right data is captured, and use product analytics and experiments to understand what users are actually doing. I also want to use AI to accelerate analysis while being able to verify the data, queries, and conclusions. For AI products, that means connecting model and eval performance to normal product and business outcomes.</p></div></div></div>'''
+
+          count = text.count(old)
+          if count != 1:
+              raise SystemExit(f'Expected exactly one Stage 08 detail block, found {count}')
+
+          text = text.replace(old, new, 1)
+
+          required = [
+              'Product Analytics, Measurement &amp; Business Value',
+              'success metrics · instrumentation · funnels/cohorts · experimentation · AI-assisted analysis · ROI',
+              'connecting model and eval performance to normal product and business outcomes',
+          ]
+          for needle in required:
+              if needle not in text:
+                  raise SystemExit(f'Missing expected text: {needle}')
+
+          removed = [
+              '<strong>Measurement strategy.</strong>',
+              '<strong>Instrumentation &amp; analytics QA.</strong>',
+              '<strong>Product behavior.</strong>',
+              '<strong>Experimentation &amp; evidence.</strong>',
+              '<strong>AI-assisted analytics.</strong>',
+              '<strong>AI products as an extension.</strong>',
+          ]
+          for needle in removed:
+              if needle in text:
+                  raise SystemExit(f'Old detailed block still present: {needle}')
+
+          path.write_text(text, encoding='utf-8')
+          PY
+
+          git diff --check
+
+      - name: Remove one-off helper and commit
+        shell: bash
+        run: |
+          rm .github/workflows/trim-learning-library-analytics.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html .github/workflows/trim-learning-library-analytics.yml
+          git diff --cached --check
+          git commit -m "Trim Product Analytics learning section"
+          git push origin HEAD:trim-learning-library-analytics
