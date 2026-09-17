@@ -8,6 +8,45 @@ The intended data for the public/demo experience is seeded, synthetic, or test c
 
 Do not describe hypothetical enterprise controls in this file as controls that are already implemented unless the repository and deployed system actually enforce them.
 
+## Portfolio analytics boundary
+
+State uses lightweight portfolio/demo analytics to learn how reviewers use the prototype. These events are product-learning signals, not part of Current State and not a second project record.
+
+### What analytics may include
+
+- anonymous per-tab session id;
+- referral label such as `?ref=kim-review`;
+- active project id;
+- environment and frontend build label;
+- event names and bounded operational metadata such as Ask outcome, route, and timing;
+- Ask query text, capped at 300 characters, because the Ask drawer visibly discloses that reviewer questions may be captured for product learning.
+
+Owner/QA activity marked with `paigeOwnerMode` is excluded from reviewer analytics.
+
+### What analytics must not include
+
+Generic analytics events must not include:
+
+- Evidence bodies;
+- Current State statements;
+- uploaded file contents;
+- Ask answer bodies;
+- model prompts;
+- credentials, secrets, or tokens.
+
+Outbound-link analytics record the destination origin only, not the full URL, because URL paths or query strings may themselves contain sensitive information.
+
+### Raw Ask-query retention
+
+Raw Ask text is the one intentional content-bearing analytics exception in the portfolio demo. The current implementation does **not** enforce a deletion window itself; query text may remain for as long as the configured analytics provider retains custom-event data. Treat that as an explicit portfolio limitation, not as an enterprise-ready retention control.
+
+Before State is used with real company or customer data, either:
+
+1. configure and verify a documented retention/deletion window for raw Ask text; or
+2. stop sending raw Ask text and keep only non-content metadata or approved derived categories.
+
+Do not claim a shorter retention period unless the deployed analytics system actually enforces it.
+
 ## If State were a real company product
 
 Before connecting real Slack channels, documents, transcripts, or other company sources, product and engineering would need explicit decisions and controls in the following areas.
