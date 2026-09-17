@@ -1,18 +1,18 @@
 # State analytics foundation
 
-This document defines which data a future State dashboard should use and which measurements are intentionally **not** treated as project truth.
+This document defines which data a future State Product Health dashboard should use and which measurements are intentionally **not** treated as project truth.
 
 ## Principle
 
-State already owns the authoritative lifecycle record for project understanding. A dashboard should aggregate that record rather than duplicate it into analytics.
+State already owns the authoritative lifecycle record for project understanding. A dashboard should aggregate that record rather than duplicate it into a browser analytics product.
 
-Product/demo analytics answer a different question: how are people using State?
+Operational model telemetry answers a second question: how slow and reliable are AI-backed flows, and what token usage is available from the provider?
 
-Operational model telemetry answers a third question: how expensive, slow, and reliable are AI-backed flows?
+Optional product-usage analytics answer a third question: how are people using State? Those signals are useful, but they are not required for the first dashboard and should not create a paid dependency for this portfolio project.
 
-Keep those three layers separate.
+Keep those layers separate.
 
-## Project Pulse data sources
+## Project Health data sources
 
 Use the database as the source of truth for project-health/dashboard calculations.
 
@@ -28,32 +28,21 @@ Use the database as the source of truth for project-health/dashboard calculation
 
 Do not infer a Current State change from Evidence or Review counts. A reviewed item may leave State unchanged, answer/open a Question, or create another human follow-up.
 
-## Product/demo analytics contract
+## Browser analytics boundary
 
-Every browser analytics event carries:
+The first Product Health dashboard does **not** depend on Vercel custom events or another paid browser-analytics service.
 
-- anonymous per-tab session id;
-- referral label;
-- active project id when hydrated;
-- environment (`local`, `staging`, `production`);
-- frontend build label from the loaded asset version.
+`context-analytics.js` now acts as a compatibility layer for existing product call sites:
 
-Owner/QA mode suppresses these events.
+- it does not load Vercel Web Analytics;
+- it does not send events anywhere by default;
+- it does not send raw Ask query text;
+- it preserves a metadata-only event contract so a future first-party collector can be added without rewriting all call sites;
+- owner/QA mode remains an opt-out if a future collector is installed.
 
-### Ask lifecycle
+A future first-party sink may receive event name plus safe metadata such as anonymous session id, referral label, active project id, environment, build label, route/outcome metadata, and timing. Content-bearing fields are filtered out.
 
-Ask instrumentation distinguishes:
-
-- source: typed, starter, refresh, or unknown/fallback;
-- submitted query;
-- outcome: answered, routed, cancelled, timeout failure, or other failure;
-- total browser-observed duration;
-- backend timing returned by Ask when available (`pipeline`, total, provider, first-token);
-- copy-answer action.
-
-Locally handled Ask requests are recorded as `routed` rather than pretending a model answered them.
-
-Raw query text is limited to the disclosed `ask_submitted` event and capped at 300 characters. Generic analytics payloads reject content-bearing property names. Ask answer bodies, Evidence bodies, Current State text, uploaded content, prompts, credentials, and secrets are outside the analytics contract.
+The first dashboard should not wait on this optional behavior layer.
 
 ## Operational AI metrics currently available
 
@@ -80,12 +69,14 @@ This is a known instrumentation gap. Do not invent token counts from text length
 
 ### Ask
 
-Ask already returns backend timing metadata and the browser analytics layer records it on successful answers. Depending on the path, this includes:
+Ask already returns backend timing metadata to the UI. Depending on the path, this includes:
 
 - pipeline;
 - total backend duration;
 - provider duration;
 - first-token duration for streaming.
+
+The first Product Health dashboard may expose this timing only if it is stored or otherwise made available through State-owned telemetry. Browser custom events are not the persistence mechanism.
 
 Ask does not currently persist provider token usage.
 
@@ -97,22 +88,27 @@ That is intentional. A trustworthy estimate needs a versioned price source tied 
 
 Until that mechanism exists, dashboards should show cost as unavailable rather than fabricate an estimate. Token counts and latency can still support efficiency analysis where the provider exposes them.
 
-## Dashboard implications
+## Dashboard implication
 
-A future dashboard can be built in two layers:
+Build the first dashboard as a separate internal/portfolio Product Health surface rather than adding analytics clutter to the normal State workflow.
 
-1. **Project Pulse** — computed from Evidence, Reviews, proposals, History, and Questions.
-2. **Owner/product analytics** — reviewer behavior, Ask behavior, provenance/copy actions, operational timing, and clearly labeled eval/test evidence.
+Start with:
 
-Do not combine those layers into one overall “health score.” Show the underlying conditions directly.
+1. **Project Health** — computed from Evidence, Reviews, proposals, History, and Questions.
+2. **Operational AI signals** — clearly labeled model/provider timing, success/failure, and token data where State already owns trustworthy telemetry.
+
+Behavioral product analytics can be added later through a State-owned first-party collector if the learning value justifies it.
+
+Do not combine these layers into one overall “health score.” Show the underlying conditions directly.
 
 ## Verification expectations
 
 Regression coverage should protect:
 
-- owner-mode suppression;
-- Ask lifecycle classification;
-- project/environment/build context;
-- content exclusion from generic analytics;
+- no paid browser analytics dependency by default;
+- no raw Ask query capture in browser analytics;
+- owner-mode suppression when a future sink is installed;
+- project/environment/build metadata for that optional sink;
+- content exclusion from browser analytics;
 - authoritative lifecycle timestamps for State changes, no-change Reviews, and Questions;
 - the rule that no-State-change Review outcomes do not manufacture History.
