@@ -24,6 +24,20 @@ const H = require('../state-product-health.js');
     catch(error){assert.equal(calls,2);}
   });
 
+  await check('project registry keeps all projects after scoped responses',()=>{
+    const all=[{id:'northstar',name:'Northstar'},{id:'juniper-office-move',name:'Juniper Office Move'}];
+    const scoped=[{id:'northstar',name:'Northstar'}];
+    const merged=H.mergeProjectRegistry(all,scoped);
+    assert.deepEqual(merged.map(project=>project.id).sort(),['juniper-office-move','northstar']);
+  });
+
+  await check('project registry can build from scoped-first then all-project response',()=>{
+    const scoped=[{id:'northstar',name:'Northstar'}];
+    const all=[{id:'northstar',name:'Northstar'},{id:'juniper-office-move',name:'Juniper Office Move'}];
+    const merged=H.mergeProjectRegistry(H.mergeProjectRegistry([],scoped),all);
+    assert.deepEqual(merged.map(project=>project.id).sort(),['juniper-office-move','northstar']);
+  });
+
   await check('dashboard payload content minimizer rejects project-content fields',()=>{
     assert.equal(H.contentFree({overview:{demo_sessions_30d:2},usage:{ask_completed_30d:1}}),true);
     assert.equal(H.contentFree({review:{decision_question:'Should we launch?'}}),false);

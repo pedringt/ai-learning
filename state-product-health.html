@@ -55,6 +55,7 @@
     const empty=t=>`<div class="empty">${esc(t)}</div>`;
     const countRows=obj=>Object.entries(obj||{}).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`<div class="row"><span>${esc(k.replaceAll('_',' '))}</span><span>${esc(v)}</span></div>`).join('');
     const pct=v=>v==null?'Not measured':`${Math.round(Number(v)*1000)/10}%`;
+    let projectRegistry=[];
 
     async function request(path){
       const controller=new AbortController();
@@ -90,7 +91,9 @@
     }
 
     function populateScopes(data,selected){
-      const projects=data.projects||[];
+      const incoming=data.projects||[];
+      if(incoming.length>projectRegistry.length) projectRegistry=incoming;
+      const projects=projectRegistry.length?projectRegistry:incoming;
       select.innerHTML=`<option value="">All projects</option>`+projects.map(p=>`<option value="${esc(p.id)}"${p.id===selected?' selected':''}>${esc(p.name)}</option>`).join('');
       select.disabled=false;
     }
@@ -99,7 +102,11 @@
       dashboard.classList.add('loading');status.hidden=false;status.className='notice status';status.innerHTML='Loading State analytics…';
       const path='/api/admin/product-analytics'+(projectId?`?project_id=${encodeURIComponent(projectId)}`:'');
       try{
-        const data=await H.withStartupRetry(()=>request(path),()=>{status.className='notice status waking';status.textContent='State’s staging API is waking up. Retrying once…';});
+        if(projectId&&!projectRegistry.length){
+          const registryData=await request('/api/admin/product-analytics');
+          projectRegistry=registryData.projects||[];
+        }
+        const data=await H.withStartupRetry(()=>request(path),()=>{status.className='notice status waking';status.textContent='State’s API is waking up. Retrying once…';});
         if(!H.contentFree(data)) throw new Error('Analytics payload failed the content-minimization check.');
         render(data);populateScopes(data,projectId);status.hidden=true;dashboard.classList.remove('loading');
         const url=new URL(location.href);projectId?url.searchParams.set('project',projectId):url.searchParams.delete('project');history.replaceState(null,'',url);
