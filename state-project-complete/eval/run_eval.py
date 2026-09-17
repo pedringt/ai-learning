@@ -1,17 +1,10 @@
 #!/usr/bin/env python3
-"""Runnable evaluation mechanism for the State consequentiality eval set
-(see eval/scenarios.py). Exercises the REAL AnthropicProvider -- this
-measures model judgment quality, not pipeline mechanics -- so it requires a
-live ANTHROPIC_API_KEY and skips cleanly (exit 0, clear message) without
-one, matching the convention used throughout this test suite.
+"""Run State's consequentiality eval set against the real Anthropic provider.
 
-Usage (from state-project-complete/):
-    ANTHROPIC_API_KEY=sk-... python3 -m eval.run_eval
-    ANTHROPIC_API_KEY=sk-... python3 -m eval.run_eval --json results.json
-
-Every scenario is now run through interpretation_trace.py. The report keeps the
-trace ID/path beside the eval result so a failed case can be diagnosed at the
-first divergent layer instead of guessed at from the final verdict alone.
+Optional outputs:
+- ``--json PATH`` writes a structured report.
+- ``--record-url URL`` posts only aggregate eval metrics to State's product
+  analytics store. Test-case content and traces are never posted.
 """
 from __future__ import annotations
 
@@ -20,6 +13,7 @@ import json
 import os
 import sys
 import time
+import urllib.request
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
@@ -32,9 +26,69 @@ def _trace_suffix(result) -> str:
     return f" [trace {result.trace_id}]" if result.trace_id else ""
 
 
+def _aggregate_report(results, stats, elapsed):
+    errored = [r for r in results if r.processing_status == "error"]
+    return {
+        "elapsed_seconds": elapsed,
+        "summary": {
+            "total": len(results),
+            "should_have_reviewed": stats["should_have_reviewed"],
+            "surfaced_for_review": stats["surfaced_for_review"],
+            "precision": stats["precision"],
+            "recall": stats["recall"],
+            "false_positives": len(stats["false_positives"]),
+            "false_negatives": len(stats["false_negatives"]),
+            "errors": len(errored),
+        },
+        "results": [
+            {
+                "id": r.scenario.id,
+                "category": r.scenario.category,
+                "expected": r.scenario.expected,
+                "review_recommended": r.review_recommended,
+                "matches_expected": r.matches_expected,
+                "processing_status": r.processing_status,
+                "error": r.error,
+                "trace_id": r.trace_id,
+                "trace_path": r.trace_path,
+            }
+            for r in results
+        ],
+    }
+
+
+def _record_aggregate(url: str, key: str, report: dict) -> None:
+    summary = report["summary"]
+    payload = {
+        "suite": "consequentiality",
+        "run_kind": "controlled_eval",
+        "build": os.getenv("RENDER_GIT_COMMIT", os.getenv("GITHUB_SHA", "local"))[:120],
+        "provider": "anthropic",
+        "model_identifier": os.getenv("ANTHROPIC_MODEL", "configured-default")[:160],
+        "total": summary["total"],
+        "precision": summary["precision"],
+        "recall": summary["recall"],
+        "false_positives": summary["false_positives"],
+        "false_negatives": summary["false_negatives"],
+        "errors": summary["errors"],
+        "high_severity_failures": summary["false_negatives"],
+    }
+    request = urllib.request.Request(
+        url.rstrip("/") + "/api/admin/eval-runs",
+        data=json.dumps(payload).encode("utf-8"),
+        headers={"Content-Type": "application/json", "X-State-Eval-Key": key},
+        method="POST",
+    )
+    with urllib.request.urlopen(request, timeout=15) as response:
+        if response.status >= 300:
+            raise RuntimeError(f"Eval ingestion returned HTTP {response.status}")
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--json", metavar="PATH", help="also write a JSON report to this path")
+    parser.add_argument("--record-url", metavar="URL", help="State API base URL for aggregate eval ingestion")
+    parser.add_argument("--record-key", metavar="KEY", help="ingestion key; defaults to STATE_EVAL_INGEST_KEY")
     args = parser.parse_args()
 
     if not os.getenv("ANTHROPIC_API_KEY"):
@@ -48,6 +102,7 @@ def main():
 
     errored = [r for r in results if r.processing_status == "error"]
     stats = precision_recall(results)
+    report = _aggregate_report(results, stats, elapsed)
 
     print(f"{len(results)} evidence events processed in {elapsed:.1f}s")
     print(f"{stats['should_have_reviewed']} should have required review")
@@ -90,32 +145,19 @@ def main():
         print(f"  {category}: {len(rs)} scenario(s) -- {status}")
 
     if args.json:
-        payload = {
-            "elapsed_seconds": elapsed,
-            "summary": {
-                "total": len(results),
-                "should_have_reviewed": stats["should_have_reviewed"],
-                "surfaced_for_review": stats["surfaced_for_review"],
-                "precision": stats["precision"],
-                "recall": stats["recall"],
-            },
-            "results": [
-                {
-                    "id": r.scenario.id,
-                    "category": r.scenario.category,
-                    "expected": r.scenario.expected,
-                    "review_recommended": r.review_recommended,
-                    "matches_expected": r.matches_expected,
-                    "processing_status": r.processing_status,
-                    "error": r.error,
-                    "trace_id": r.trace_id,
-                    "trace_path": r.trace_path,
-                }
-                for r in results
-            ],
-        }
-        Path(args.json).write_text(json.dumps(payload, indent=2))
+        Path(args.json).write_text(json.dumps(report, indent=2))
         print(f"\nWrote JSON report to {args.json}")
+
+    if args.record_url:
+        record_key = args.record_key or os.getenv("STATE_EVAL_INGEST_KEY", "")
+        if not record_key:
+            print("\nEval result was not recorded: STATE_EVAL_INGEST_KEY is not set.")
+        else:
+            try:
+                _record_aggregate(args.record_url, record_key, report)
+                print("\nRecorded aggregate eval metrics in State Product Analytics.")
+            except Exception as exc:
+                print(f"\nWARNING: eval ran, but aggregate analytics ingestion failed: {exc}")
 
     return 1 if (stats["false_negatives"] or errored) else 0
 
