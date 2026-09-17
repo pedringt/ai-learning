@@ -14,8 +14,8 @@
    rather than standing up new analytics infrastructure, per the "avoid
    heavyweight analytics infrastructure" guidance. No new dependency, no
    server-side component, no PII collected -- only an anonymous per-tab
-   session id, the ?ref= label, event names, and the specific properties
-   listed at each call site.
+   session id, the ?ref= label, deployment context, event names, and the
+   specific properties listed at each call site.
 
    Respects the same owner-mode opt-out already used on the portfolio pages
    (`localStorage.paigeOwnerMode==='true'`, toggled via ?owner=true/false),
@@ -28,6 +28,9 @@
   var OWNER_KEY = 'paigeOwnerMode';
   var SESSION_KEY = 'stateAnalyticsSessionId';
   var REF_KEY = 'stateAnalyticsRef';
+  var ownScript = document.currentScript && document.currentScript.src;
+  var BUILD = 'unversioned';
+  try { BUILD = new URL(ownScript || '', window.location.href).searchParams.get('v') || BUILD; } catch (_) {}
 
   function ownerMode() {
     try { return localStorage.getItem(OWNER_KEY) === 'true'; }
@@ -71,10 +74,54 @@
     } catch (_) { return 'direct'; }
   }
 
+  function environmentLabel() {
+    var hostname = String(window.location && window.location.hostname || '');
+    if (window.location && window.location.protocol === 'file:') return 'local';
+    if (/localhost|127\.0\.0\.1/i.test(hostname)) return 'local';
+    if (/(^|[-.])staging([-.]|$)|-git-/i.test(hostname)) return 'staging';
+    return 'production';
+  }
+
+  function projectId() {
+    var switcher = document.getElementById && document.getElementById('projectSwitcher');
+    return switcher && switcher.dataset && switcher.dataset.projectId
+      ? switcher.dataset.projectId
+      : 'unresolved';
+  }
+
+  // Generic analytics should carry metadata, not project content. Raw Ask
+  // query text has one intentional, disclosed exception through
+  // trackAskQuery(). Everything else drops obviously content-bearing keys so
+  // a future call site cannot accidentally beacon Evidence, Current State,
+  // prompts, answers, uploads, or credentials under a familiar property name.
+  function safeProps(name, props) {
+    var input = props || {};
+    var result = {};
+    Object.keys(input).forEach(function (key) {
+      if (key === 'query' && name === 'ask_submitted') {
+        result[key] = input[key];
+        return;
+      }
+      if (/(evidence|content|statement|answer|prompt|upload|credential|secret|current[_-]?state)/i.test(key)) return;
+      result[key] = input[key];
+    });
+    return result;
+  }
+
+  function baseContext() {
+    return {
+      ref: refLabel(),
+      session: sessionId(),
+      project_id: projectId(),
+      environment: environmentLabel(),
+      build: BUILD
+    };
+  }
+
   function track(name, props) {
     if (!name || ownerMode()) return;
     ensureBeacon();
-    var payload = Object.assign({ ref: refLabel(), session: sessionId() }, props || {});
+    var payload = Object.assign(baseContext(), safeProps(name, props));
     try { window.va('event', { name: name, data: payload }); } catch (_) { /* analytics must never break the product */ }
   }
 
@@ -91,7 +138,10 @@
     trackAskQuery: trackAskQuery,
     refLabel: refLabel,
     sessionId: sessionId,
-    ownerMode: ownerMode
+    ownerMode: ownerMode,
+    environmentLabel: environmentLabel,
+    projectId: projectId,
+    build: BUILD
   };
 
   // Generic outbound-link tracker -- covers "source link opened" without
