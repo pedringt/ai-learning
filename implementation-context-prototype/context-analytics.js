@@ -1,31 +1,28 @@
-/* State product analytics compatibility layer.
-
-   State's first Product Health dashboard should be built from authoritative
-   State records and existing backend telemetry, not a paid browser-analytics
-   product. This module therefore does not load Vercel Web Analytics and does
-   not send custom events anywhere by default.
-
-   Existing product call sites can continue to call StateAnalytics.track(). A
-   future first-party collector may explicitly install window.StateAnalyticsSink
-   before/while the app runs. The sink receives metadata-only event objects;
-   raw Ask queries and project content are intentionally excluded.
-
-   Owner/QA mode remains an opt-out even when a future sink is installed. */
+/* State product analytics: metadata only, first-party, content-free. */
 (function () {
   'use strict';
 
   var OWNER_KEY = 'paigeOwnerMode';
   var SESSION_KEY = 'stateAnalyticsSessionId';
   var REF_KEY = 'stateAnalyticsRef';
+  var PROJECT_KEY = 'stateAnalyticsProjectId';
   var ownScript = document.currentScript && document.currentScript.src;
   var BUILD = 'unversioned';
   try { BUILD = new URL(ownScript || '', window.location.href).searchParams.get('v') || BUILD; } catch (_) {}
+
+  var SAFE_PROP_KEYS = new Set([
+    'outcome','source_type','duration_ms','view','destination_origin','status_code'
+  ]);
+  var SAFE_EVENT_NAMES = new Set([
+    'state_demo_opened','view_opened','outbound_link_opened','ask_submitted',
+    'ask_completed','ask_failed','ask_cancelled','api_failure'
+  ]);
+  var SAFE_VIEWS = new Set(['overview','open-items','project-overview','notes','history','settings']);
 
   function ownerMode() {
     try { return localStorage.getItem(OWNER_KEY) === 'true'; }
     catch (_) { return false; }
   }
-
   function sessionId() {
     try {
       var id = sessionStorage.getItem(SESSION_KEY);
@@ -36,19 +33,14 @@
       return id;
     } catch (_) { return 'no-storage'; }
   }
-
   function refLabel() {
     try {
       var params = new URLSearchParams(window.location.search);
       var ref = params.get('ref');
-      if (ref) {
-        sessionStorage.setItem(REF_KEY, ref);
-        return ref;
-      }
+      if (ref) { sessionStorage.setItem(REF_KEY, ref); return ref; }
       return sessionStorage.getItem(REF_KEY) || 'direct';
     } catch (_) { return 'direct'; }
   }
-
   function environmentLabel() {
     var hostname = String(window.location && window.location.hostname || '');
     if (window.location && window.location.protocol === 'file:') return 'local';
@@ -56,88 +48,107 @@
     if (/(^|[-.])staging([-.]|$)|-git-/i.test(hostname)) return 'staging';
     return 'production';
   }
-
-  function projectId() {
-    var switcher = document.getElementById && document.getElementById('projectSwitcher');
-    return switcher && switcher.dataset && switcher.dataset.projectId
-      ? switcher.dataset.projectId
-      : 'unresolved';
+  function inferredApiBase() {
+    return environmentLabel() === 'staging'
+      ? 'https://state-api-staging.onrender.com'
+      : 'https://state-api-6waw.onrender.com';
   }
-
+  function projectId() {
+    try {
+      var saved = sessionStorage.getItem(PROJECT_KEY);
+      if (saved) return saved;
+    } catch (_) {}
+    var switcher = document.getElementById && document.getElementById('projectSwitcher');
+    return switcher && switcher.dataset && switcher.dataset.projectId ? switcher.dataset.projectId : 'unresolved';
+  }
+  function setProjectId(value) {
+    try {
+      if (value) sessionStorage.setItem(PROJECT_KEY, String(value));
+      else sessionStorage.removeItem(PROJECT_KEY);
+    } catch (_) {}
+  }
   function safeProps(props) {
-    var input = props || {};
-    var result = {};
+    var input = props || {}, result = {};
     Object.keys(input).forEach(function (key) {
-      // Browser analytics are metadata-only. Keep this broad on purpose: a
-      // future call site should fail closed rather than leak project/user text.
-      if (/(query|evidence|content|statement|answer|prompt|upload|credential|secret|token|current[_-]?state)/i.test(key)) return;
-      result[key] = input[key];
+      if (!SAFE_PROP_KEYS.has(key)) return;
+      var value = input[key];
+      if (key === 'view' && value && !SAFE_VIEWS.has(String(value))) return;
+      if (key === 'destination_origin' && value) {
+        try {
+          var u = new URL(String(value));
+          value = u.origin;
+        } catch (_) { return; }
+      }
+      result[key] = value;
     });
     return result;
   }
-
   function baseContext() {
     return {
-      ref: refLabel(),
-      session: sessionId(),
+      session_id: sessionId(),
       project_id: projectId(),
       environment: environmentLabel(),
-      build: BUILD
+      build: BUILD,
+      ref_label: refLabel()
     };
   }
-
-  function eventSink() {
-    return typeof window.StateAnalyticsSink === 'function' ? window.StateAnalyticsSink : null;
-  }
-
-  function track(name, props) {
-    if (!name || ownerMode()) return;
-    var sink = eventSink();
-    if (!sink) return;
+  function firstPartySink(event) {
+    if (typeof fetch !== 'function' || !event || !SAFE_EVENT_NAMES.has(event.name)) return;
+    var payload = Object.assign({name:event.name}, event.data || {});
     try {
-      sink({ name: name, data: Object.assign(baseContext(), safeProps(props)) });
-    } catch (_) { /* analytics must never break the product */ }
+      fetch(inferredApiBase() + '/api/analytics/events', {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify(payload),
+        keepalive:true
+      }).catch(function () {});
+    } catch (_) {}
   }
-
-  // Kept for compatibility with older call sites. Query text is deliberately
-  // ignored; only safe metadata supplied in props may reach a future sink.
-  function trackAskQuery(_query, props) {
-    track('ask_submitted', props || {});
+  function eventSink() {
+    return typeof window.StateAnalyticsSink === 'function' ? window.StateAnalyticsSink : firstPartySink;
   }
+  function track(name, props) {
+    if (!name || ownerMode() || !SAFE_EVENT_NAMES.has(name)) return;
+    var sink = eventSink();
+    try { sink({name:name, data:Object.assign(baseContext(), safeProps(props))}); }
+    catch (_) { /* analytics must never break State */ }
+  }
+  function trackAskQuery(_query, props) { track('ask_submitted', props || {}); }
 
   window.StateAnalytics = {
-    track: track,
-    trackAskQuery: trackAskQuery,
-    refLabel: refLabel,
-    sessionId: sessionId,
-    ownerMode: ownerMode,
-    environmentLabel: environmentLabel,
-    projectId: projectId,
-    build: BUILD,
-    hasSink: function () { return !!eventSink(); }
+    track:track,
+    trackAskQuery:trackAskQuery,
+    refLabel:refLabel,
+    sessionId:sessionId,
+    ownerMode:ownerMode,
+    environmentLabel:environmentLabel,
+    projectId:projectId,
+    setProjectId:setProjectId,
+    build:BUILD,
+    hasSink:function(){ return typeof fetch === 'function' || typeof window.StateAnalyticsSink === 'function'; }
   };
 
-  // Preserve the event contract for a future first-party sink without sending
-  // full external URLs. Paths and query strings may contain sensitive context.
   document.addEventListener('click', function (e) {
+    var viewTarget = e.target && e.target.closest && e.target.closest('[data-view]');
+    if (viewTarget && SAFE_VIEWS.has(String(viewTarget.dataset.view || ''))) {
+      track('view_opened', {view:viewTarget.dataset.view});
+    }
     var link = e.target && e.target.closest && e.target.closest('a[href]');
     if (!link) return;
     try {
       var url = new URL(link.href, window.location.href);
-      if (url.origin !== window.location.origin) {
-        track('outbound_link_opened', { destination_origin: url.origin });
-      }
-    } catch (_) { /* ignore malformed hrefs */ }
+      if (url.origin !== window.location.origin) track('outbound_link_opened', {destination_origin:url.origin});
+    } catch (_) {}
   });
 
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', function () { track('state_demo_opened'); }, { once: true });
+    document.addEventListener('DOMContentLoaded', function(){ track('state_demo_opened'); }, {once:true});
   } else {
     track('state_demo_opened');
   }
 })();
 
-/* Ask already links its cited records inline. Hide the duplicate grounding appendix and open-items summary. */
+/* Ask already links cited records inline. Hide the duplicate grounding appendix. */
 (function () {
   var style = document.createElement('style');
   style.id = 'state-ask-redundancy-cleanup';
