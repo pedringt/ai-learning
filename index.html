@@ -4,8 +4,8 @@
 <head><link href="favicon.svg" rel="icon"/>
 <meta charset="utf-8"/>
 <meta content="width=device-width,initial-scale=1" name="viewport"/>
-<title>Applied AI Product Portfolio</title>
-<meta content="A practical AI learning portfolio focused on applied product judgment, trustworthy AI systems, and evidence-led decisions." name="description"/><meta content="website" property="og:type"/><meta content="Applied AI Product Portfolio" property="og:title"/><meta content="A practical AI learning portfolio focused on applied product judgment, trustworthy AI systems, and evidence-led decisions." property="og:description"/><meta content="summary" name="twitter:card"/><meta content="Applied AI Product Portfolio" name="twitter:title"/><meta content="A practical AI learning portfolio focused on applied product judgment, trustworthy AI systems, and evidence-led decisions." name="twitter:description"/>
+<title>Authentic Ignorance | Applied AI + Product Work</title>
+<meta content="A practical AI learning portfolio focused on applied product judgment, trustworthy AI systems, and evidence-led decisions." name="description"/><meta content="website" property="og:type"/><meta content="Authentic Ignorance | Applied AI + Product Work" property="og:title"/><meta content="A practical AI learning portfolio focused on applied product judgment, trustworthy AI systems, and evidence-led decisions." property="og:description"/><meta content="summary" name="twitter:card"/><meta content="Authentic Ignorance | Applied AI + Product Work" name="twitter:title"/><meta content="A practical AI learning portfolio focused on applied product judgment, trustworthy AI systems, and evidence-led decisions." name="twitter:description"/>
 <style id="v893-style">
 
 
@@ -1066,7 +1066,7 @@ body.v88-dark .learning-how-note strong{color:#f5f2fb!important}
 }
 </style>
 <main class="shell" id="main-content">
-<div class="topbar"><div class="topinner"><button aria-label="Go to home" class="brand-button" data-brand-home="" type="button"><span class="brand">AI <span>Learning Portfolio</span></span></button><nav aria-label="Primary pages" class="nav"><button class="active" data-view="home">Home</button><button data-view="portfolio">Applied Work</button><button data-view="learn">Learning Library</button></nav><div class="top-actions"><button aria-label="Switch to dark mode" aria-pressed="false" class="theme-toggle" id="themeToggle" title="Switch to dark mode" type="button">☾</button><select aria-label="Choose page" id="mobileNav"><option value="home">Home</option><option value="portfolio">Applied Work</option><option value="learn">Learning Library</option></select></div></div></div>
+<div class="topbar"><div class="topinner"><button aria-label="Go to home" class="brand-button" data-brand-home="" type="button"><span class="brand">Authentic <span>Ignorance</span></span></button><nav aria-label="Primary pages" class="nav"><button class="active" data-view="home">Home</button><button data-view="portfolio">Applied Work</button><button data-view="learn">Learning Library</button></nav><div class="top-actions"><button aria-label="Switch to dark mode" aria-pressed="false" class="theme-toggle" id="themeToggle" title="Switch to dark mode" type="button">☾</button><select aria-label="Choose page" id="mobileNav"><option value="home">Home</option><option value="portfolio">Applied Work</option><option value="learn">Learning Library</option></select></div></div></div>
 <section class="view active" data-page="home" id="home">
 <div class="hero"><h1>AI doesn’t know <span>what it doesn’t know.</span></h1><p class="lead">AI can take you further, faster. The real skill is knowing when to let it work, when to question it, and when to take back control.</p></div>
 <div class="home-start"><div class="home-applied-heading"><div class="section-kicker"><span>Applied work · start here</span></div></div>
@@ -1367,7 +1367,7 @@ body.v88-dark .learning-how-note strong{color:#f5f2fb!important}
   if(themeToggle)themeToggle.addEventListener('click',()=>setTheme(!root.classList.contains('dark'),true));
   const valid=new Set(views.map(v=>v.dataset.page));
   const learningIds=new Set([...root.querySelectorAll('details.learning-stage[id]')].map(el=>el.id));
-  const pageTitles={home:'Applied AI Product Portfolio',portfolio:'Applied Work · AI Learning Portfolio',learn:'Learning Library · AI Learning Portfolio'};
+  const pageTitles={home:'Authentic Ignorance | Applied AI + Product Work',portfolio:'Applied Work · Authentic Ignorance',learn:'Learning Library · Authentic Ignorance'};
   const pageFromHash=()=>{const h=location.hash.replace(/^#/,''); if(learningIds.has(h))return'learn'; return valid.has(h)?h:'home';};
   const render=(name,scroll=false)=>{if(!valid.has(name))name='home'; const navName=name; views.forEach(v=>v.classList.toggle('active',v.dataset.page===name)); nav.forEach(b=>b.classList.toggle('active',b.dataset.view===navName)); if(mobile)mobile.value=navName; document.title=pageTitles[name]||pageTitles.home; if(scroll)root.scrollIntoView({behavior:'smooth',block:'start'});};
   const go=(name,hash)=>{if(!valid.has(name))name='home'; const dest=hash||('#'+name); if(location.hash!==dest)history.pushState({page:name},'',dest); render(name,true); if(hash&&hash.includes('-'))requestAnimationFrame(()=>document.getElementById(hash.slice(1))?.scrollIntoView({behavior:'smooth',block:'start'}));};
