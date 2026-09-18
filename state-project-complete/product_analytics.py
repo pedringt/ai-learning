@@ -135,52 +135,6 @@ def _age_bucket(created_at, now: datetime) -> str:
     return "over_7d"
 
 
-def _ensure_schema(connection) -> None:
-    connection.execute(
-        """
-        CREATE TABLE IF NOT EXISTS product_analytics_events (
-            id TEXT PRIMARY KEY,
-            event_name TEXT NOT NULL,
-            session_id TEXT,
-            project_id TEXT,
-            environment TEXT,
-            build TEXT,
-            ref_label TEXT,
-            outcome TEXT,
-            source_type TEXT,
-            duration_ms INTEGER,
-            view_name TEXT,
-            destination_origin TEXT,
-            status_code INTEGER,
-            occurred_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
-        )
-        """
-    )
-    connection.execute(
-        """
-        CREATE TABLE IF NOT EXISTS product_eval_runs (
-            id TEXT PRIMARY KEY,
-            suite TEXT NOT NULL,
-            run_kind TEXT NOT NULL,
-            build TEXT,
-            provider TEXT,
-            model_identifier TEXT,
-            total INTEGER NOT NULL,
-            precision REAL,
-            recall REAL,
-            false_positives INTEGER NOT NULL DEFAULT 0,
-            false_negatives INTEGER NOT NULL DEFAULT 0,
-            errors INTEGER NOT NULL DEFAULT 0,
-            high_severity_failures INTEGER NOT NULL DEFAULT 0,
-            question_usefulness REAL,
-            ask_grounding REAL,
-            created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
-        )
-        """
-    )
-    connection.commit()
-
-
 def _prune(connection, now: datetime) -> None:
     event_cutoff = (now - timedelta(days=EVENT_RETENTION_DAYS)).strftime("%Y-%m-%d %H:%M:%S")
     eval_cutoff = (now - timedelta(days=EVAL_RETENTION_DAYS)).strftime("%Y-%m-%d %H:%M:%S")
@@ -267,8 +221,9 @@ def _aggregate(connection, project_id: str | None, now: datetime) -> dict:
     history_params = (project_id,) if project_id else ()
     history = _rows(
         connection,
-        "SELECT h.id,s.project_id,h.changed_at FROM history_transitions h "
-        "JOIN current_state_items s ON s.id=h.state_item_id" + history_where,
+        "SELECT h.id,s.project_id,h.changed_at,p.review_id FROM history_transitions h "
+        "JOIN current_state_items s ON s.id=h.state_item_id "
+        "LEFT JOIN proposed_state_changes p ON p.id=h.proposed_change_id" + history_where,
         history_params,
     )
     interpretation_where = " WHERE e.project_id=?" if project_id else ""
@@ -286,6 +241,7 @@ def _aggregate(connection, project_id: str | None, now: datetime) -> dict:
     evidence_30 = [x for x in evidence if _within(x.get("submitted_at"), now, 30)]
     history_7 = [x for x in history if _within(x.get("changed_at"), now, 7)]
     history_30 = [x for x in history if _within(x.get("changed_at"), now, 30)]
+    state_change_review_ids = {x.get("review_id") for x in history if x.get("review_id")}
     opened_reviews_30 = [x for x in reviews if _within(x.get("created_at"), now, 30)]
     resolved_reviews_30 = [x for x in reviews if x.get("status") == "resolved" and _within(x.get("resolved_at"), now, 30)]
     opened_questions_30 = [x for x in questions if _within(x.get("created_at"), now, 30)]
@@ -406,7 +362,9 @@ def _aggregate(connection, project_id: str | None, now: datetime) -> dict:
             "median_review_resolution_hours": round(median(review_durations), 1) if review_durations else None,
             "median_question_resolution_hours": round(median(question_durations), 1) if question_durations else None,
             "evidence_processing_failures": sum(1 for x in evidence if x.get("processing_status") == "failed"),
-            "resolved_reviews_without_state_change_30d": max(0, len(resolved_reviews_30) - len({x.get("project_id") for x in history_30} if False else [])),
+            "resolved_reviews_without_state_change_30d": sum(
+                1 for review in resolved_reviews_30 if review.get("id") not in state_change_review_ids
+            ),
         },
         "reliability": {
             "interpretation_succeeded": len(interpretation_success),
@@ -436,19 +394,10 @@ def _aggregate(connection, project_id: str | None, now: datetime) -> dict:
 def register_product_analytics(application: FastAPI, settings) -> None:
     """Register metadata-only analytics collection and aggregate admin routes."""
 
-    def get_connection():
-        connection = connect(settings.connection_url())
-        try:
-            _ensure_schema(connection)
-            yield connection
-        finally:
-            connection.close()
-
     @application.post("/api/analytics/events", status_code=202)
     def post_product_event(payload: ProductEventInput) -> dict:
         connection = connect(settings.connection_url())
         try:
-            _ensure_schema(connection)
             _prune(connection, _utcnow())
             project_id = _normalize_project_id(payload.project_id)
             if project_id and not _project_exists(connection, project_id):
@@ -463,7 +412,6 @@ def register_product_analytics(application: FastAPI, settings) -> None:
     def get_product_analytics(project_id: str | None = Query(default=None, max_length=120)) -> dict:
         connection = connect(settings.connection_url())
         try:
-            _ensure_schema(connection)
             now = _utcnow()
             _prune(connection, now)
             return _aggregate(connection, _normalize_project_id(project_id), now)
@@ -479,7 +427,6 @@ def register_product_analytics(application: FastAPI, settings) -> None:
             raise HTTPException(status_code=403, detail="Invalid eval ingestion key")
         connection = connect(settings.connection_url())
         try:
-            _ensure_schema(connection)
             _prune(connection, _utcnow())
             run_id = f"eval_{uuid.uuid4().hex[:16]}"
             connection.execute(
@@ -512,8 +459,7 @@ def register_product_analytics(application: FastAPI, settings) -> None:
         if is_ask:
             connection = connect(settings.connection_url())
             try:
-                _ensure_schema(connection)
-                _insert_event(connection, ProductEventInput(
+                    _insert_event(connection, ProductEventInput(
                     name="ask_submitted",
                     project_id=request.headers.get("X-State-Project-Id"),
                     environment=getattr(settings, "environment", None),
@@ -527,8 +473,7 @@ def register_product_analytics(application: FastAPI, settings) -> None:
             elapsed_ms = int((time.perf_counter() - started) * 1000)
             connection = connect(settings.connection_url())
             try:
-                _ensure_schema(connection)
-                _insert_event(connection, ProductEventInput(
+                    _insert_event(connection, ProductEventInput(
                     name="ask_failed" if is_ask else "api_failure",
                     project_id=request.headers.get("X-State-Project-Id"),
                     environment=getattr(settings, "environment", None),
@@ -544,8 +489,7 @@ def register_product_analytics(application: FastAPI, settings) -> None:
             event_name = "ask_completed" if is_ask and response.status_code < 400 else ("ask_failed" if is_ask else "api_failure")
             connection = connect(settings.connection_url())
             try:
-                _ensure_schema(connection)
-                _insert_event(connection, ProductEventInput(
+                    _insert_event(connection, ProductEventInput(
                     name=event_name,
                     project_id=request.headers.get("X-State-Project-Id"),
                     environment=getattr(settings, "environment", None),
