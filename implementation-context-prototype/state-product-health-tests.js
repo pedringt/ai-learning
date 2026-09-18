@@ -38,6 +38,12 @@ const H = require('../state-product-health.js');
     assert.deepEqual(merged.map(project=>project.id).sort(),['juniper-office-move','northstar']);
   });
 
+  await check('analytics API base prefers shared runtime configuration',()=>{
+    assert.equal(H.apiBase({STATE_API_BASE:'https://configured.example/'}),'https://configured.example');
+    assert.equal(H.apiBase({location:{hostname:'preview-git-staging.example'}}),'https://state-api-staging.onrender.com');
+    assert.equal(H.apiBase({location:{hostname:'example.com'}}),'https://state-api-6waw.onrender.com');
+  });
+
   await check('dashboard payload content minimizer rejects project-content fields',()=>{
     assert.equal(H.contentFree({overview:{demo_sessions_30d:2},usage:{ask_completed_30d:1}}),true);
     assert.equal(H.contentFree({review:{decision_question:'Should we launch?'}}),false);
