@@ -1033,21 +1033,21 @@ body.v88-dark #ai-cs-mock{background:#101014!important;color:#f5f5f7!important;-
 
 /* v98 feedback correction: curated home + intentional State feature + compact Learning Guide note */
 .home-state-feature{
-  max-width:1020px!important;
-  margin:14px auto 0!important;
-  padding:30px 32px 28px!important;
-  min-height:330px!important;
+  margin-top:14px!important;
+  padding:30px 32px!important;
   border:1px solid var(--border)!important;
   border-top:4px solid var(--purple)!important;
   border-radius:18px!important;
-  background:linear-gradient(180deg,var(--softp) 0%,var(--card) 70%)!important;
-  display:flex!important;
-  flex-direction:column!important;
+  background:linear-gradient(180deg,var(--softp) 0%,var(--card) 64%)!important;
+  display:grid!important;
+  grid-template-columns:minmax(0,1fr) auto!important;
+  gap:30px!important;
+  align-items:end!important;
   box-shadow:0 10px 28px rgba(41,31,72,.06)!important;
 }
-.home-state-feature h2{font-size:clamp(2.35rem,4vw,3rem)!important;margin:4px 0 20px!important;letter-spacing:-.04em!important;line-height:1.02!important}
-.home-state-copy{min-width:0!important}.home-state-copy p{max-width:790px!important}.home-state-lead{font-size:1.125rem!important;line-height:1.62!important;font-weight:400!important;color:var(--muted)!important}
-.home-state-actions{display:flex!important;gap:10px!important;flex-wrap:wrap!important;align-items:center!important;justify-content:flex-end!important;min-width:0!important;margin-top:auto!important;padding-top:30px!important}
+.home-state-feature h2{font-size:clamp(2.35rem,5vw,4rem)!important;margin:4px 0 12px!important;letter-spacing:-.045em!important;line-height:.98!important}
+.home-state-copy{min-width:0!important}.home-state-copy p{max-width:780px!important}.home-state-lead{font-size:1.08rem!important;line-height:1.58!important}
+.home-state-actions{display:flex!important;gap:10px!important;flex-wrap:wrap!important;align-items:center!important;justify-content:flex-end!important;min-width:270px!important}
 .home-state-actions a{display:inline-flex!important;align-items:center!important;justify-content:center!important;min-height:46px!important;padding:11px 16px!important;border-radius:11px!important;border:1px solid var(--border)!important;text-decoration:none!important;font-size:14px!important;line-height:1.2!important;font-weight:800!important;white-space:nowrap!important}
 .home-state-actions .home-state-primary{background:var(--purple)!important;color:#fff!important;border-color:var(--purple)!important;min-width:158px!important}
 .home-state-actions .home-state-secondary{background:var(--card)!important;color:var(--purple)!important;border-color:#cfc8ee!important}
@@ -1059,10 +1059,8 @@ body.v88-dark #ai-cs-mock{background:#101014!important;color:#f5f5f7!important;-
 .learning-how-note strong{color:var(--ink)!important}
 body.v88-dark .learning-how-note strong{color:#f5f2fb!important}
 @media(max-width:760px){
-  .home-state-feature{max-width:none!important;padding:24px!important;min-height:0!important}
-  .home-state-feature h2{margin-bottom:14px!important}
-  .home-state-lead{font-size:1rem!important}
-  .home-state-actions{justify-content:flex-start!important;align-items:stretch!important;padding-top:22px!important}
+  .home-state-feature{grid-template-columns:1fr!important;padding:24px!important;gap:20px!important}
+  .home-state-actions{justify-content:flex-start!important;min-width:0!important;align-items:stretch!important}
   .home-state-actions a{flex:1 1 160px!important;text-align:center!important}
   
 }
@@ -1072,7 +1070,7 @@ body.v88-dark .learning-how-note strong{color:#f5f2fb!important}
 <section class="view active" data-page="home" id="home">
 <div class="hero"><h1>AI doesn’t know <span>what it doesn’t know.</span></h1><p class="lead">AI can take you further, faster. The real skill is knowing when to let it work, when to question it, and when to take back control.</p></div>
 <div class="home-start"><div class="home-applied-heading"><div class="section-kicker"><span>Applied work · start here</span></div></div>
-<article class="home-state-feature"><div class="home-state-copy"><span class="home-project-kicker">Flagship project · Working product</span><h2>State: A project-context tool</h2><p class="home-state-lead">State helps teams keep a reliable, up-to-date understanding of a project as new information arrives. It uses AI to interpret evidence, software to enforce rules, and human review to decide what becomes current state.</p></div><div class="home-state-actions"><a class="home-state-primary" href="implementation-context-prototype/index.html" target="_blank" rel="noopener noreferrer">Open State →</a><a class="home-state-secondary" href="implementation-context.html">Read the case study →</a></div></article>
+<article class="home-state-feature"><div class="home-state-copy"><span class="home-project-kicker">Flagship project · Working product</span><h2>State: A project-context tool</h2><p class="home-state-lead">State helps teams maintain a reliable current understanding of a project as new information arrives. New evidence becomes reviewable changes, and only human-approved updates become Current State.</p></div><div class="home-state-actions"><a class="home-state-primary" href="implementation-context-prototype/index.html" target="_blank" rel="noopener noreferrer">Open State →</a><a class="home-state-secondary" href="implementation-context.html">Read the case study →</a></div></article>
 <a class="home-project-card home-feature-wide home-legal-feature" href="legal-ai-governance.html"><div class="home-feature-wide-text"><span class="home-project-kicker">Opportunity evaluation</span><strong>Legal AI Governance</strong><p>I found a real legal AI governance problem, but the evidence didn’t yet support turning it into a consulting offering.</p></div><span class="home-project-path">Read the evaluation →</span></a>
 <div class="home-more-applied"><div class="section-kicker"><span>More applied work</span></div><div class="home-supporting-row"><a href="state-testing-debugging.html"><strong>Testing &amp; Debugging State</strong><span>Hands-on QA, automated coverage, and failure investigation</span></a><a href="state-managed-agent-tracing.html"><strong>Agent tracing</strong><span>Tracing a read-only agent to separate retrieval success from an authority failure</span></a><a href="state-ai-evals.html"><strong>AI evals for State</strong><span>Practical eval cases tied to State’s highest-risk behaviors</span></a><a href="meridian.html"><strong>Meridian AI Support Pilot</strong><span>A simulated support pilot shaped by discovery and evidence-led iteration</span></a></div></div></div>
 </section>
