@@ -23,12 +23,12 @@ Core invariants:
 
 - AI can propose. It cannot authorize a Current State change.
 - Evidence is immutable. Corrections supersede rather than rewrite.
-- Consequential changes go through Review.
+- Current State changes require explicit human authorization. During normal operation, consequential changes go through Review; Baseline Setup separately confirms routine Starting State facts.
 - Accepted changes update Current State and History atomically.
 - Stale proposals fail closed through version checks.
 - Schema-valid output can still be semantically wrong.
 - Unknown must never be silently converted into `0`, `false`, or absent.
-- Ask is read-only and must not present pending proposals or uncertainty as settled fact.
+- Ask cannot directly mutate project records and must not present pending proposals or uncertainty as settled fact. An unanswered Ask can hand a Question to a person to review and add.
 - Project data must remain isolated across projects.
 
 ## Repository map
@@ -62,7 +62,7 @@ State currently includes:
 - project switching with seeded Northstar and Juniper Office Move examples
 - Evidence/Notes intake
 - AI interpretation with deterministic validation and human authority checks
-- grouped Reviews with independent outcomes
+- grouped Reviews whose pending proposals currently share one Review-level decision
 - human adjustment of AI proposals while preserving provenance
 - Question creation/linking/resolution flows
 - Current State as a readable project wiki
@@ -71,7 +71,7 @@ State currently includes:
 - project rules in Settings
 - Slack as the shipped external integration, with approved-channel intake and Slack sharing
 
-The backend supports SQLite locally and Postgres in deployed environments through `db.py` and numbered migrations.
+The backend supports SQLite and Postgres through `db.py` and numbered migrations. The current production portfolio deployment uses persistent SQLite on Render; staging uses ephemeral SQLite.
 
 ## Running locally
 
