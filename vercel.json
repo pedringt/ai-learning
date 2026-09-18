@@ -1,6 +1,20 @@
 {
   "cleanUrls": true,
   "trailingSlash": false,
+  "redirects": [
+    {
+      "source": "/:path*",
+      "has": [
+        {
+          "type": "header",
+          "key": "host",
+          "value": "ai-learning-rouge.vercel.app"
+        }
+      ],
+      "destination": "https://www.authenticignorance.site/:path*",
+      "permanent": true
+    }
+  ],
   "headers": [
     {
       "source": "/implementation-context-prototype/(.*)",
