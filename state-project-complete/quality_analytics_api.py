@@ -35,36 +35,6 @@ class QualityEvalRunInput(BaseModel):
     overall_pass_rate: float | None = Field(default=None, ge=0, le=1)
 
 
-def _ensure_schema(connection) -> None:
-    connection.execute(
-        """
-        CREATE TABLE IF NOT EXISTS product_quality_eval_runs (
-            id TEXT PRIMARY KEY,
-            suite TEXT NOT NULL,
-            run_kind TEXT NOT NULL,
-            build TEXT,
-            provider TEXT,
-            model_identifier TEXT,
-            total INTEGER NOT NULL,
-            errors INTEGER NOT NULL DEFAULT 0,
-            high_severity_failures INTEGER NOT NULL DEFAULT 0,
-            precision REAL,
-            recall REAL,
-            false_positives INTEGER NOT NULL DEFAULT 0,
-            false_negatives INTEGER NOT NULL DEFAULT 0,
-            interpretation_accuracy REAL,
-            ask_grounding REAL,
-            uncertainty_accuracy REAL,
-            open_item_accuracy REAL,
-            authority_accuracy REAL,
-            overall_pass_rate REAL,
-            created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
-        )
-        """
-    )
-    connection.commit()
-
-
 def _project_exists(connection, project_id: str) -> bool:
     return connection.execute("SELECT id FROM projects WHERE id=?", (project_id,)).fetchone() is not None
 
@@ -74,7 +44,7 @@ def _rows(connection, query: str, params=()) -> list[dict]:
 
 
 def _eval_view(connection) -> dict:
-    rows = _rows(connection, "SELECT * FROM product_quality_eval_runs ORDER BY created_at DESC LIMIT 24")
+    rows = _rows(connection, "SELECT * FROM product_eval_runs WHERE suite IN (?, ?) ORDER BY created_at DESC LIMIT 24", ("review_interpretation", "ask_quality"))
     latest_review = next((row for row in rows if row.get("suite") == "review_interpretation"), None)
     latest_ask = next((row for row in rows if row.get("suite") == "ask_quality"), None)
     return {
@@ -90,7 +60,6 @@ def register_quality_analytics(application: FastAPI, settings) -> None:
         normalized = (project_id or "").strip() or None
         connection = connect(settings.connection_url())
         try:
-            _ensure_schema(connection)
             if normalized and not _project_exists(connection, normalized):
                 raise HTTPException(status_code=404, detail="Project not found")
             return {
@@ -111,11 +80,10 @@ def register_quality_analytics(application: FastAPI, settings) -> None:
             raise HTTPException(status_code=403, detail="Invalid eval ingestion key")
         connection = connect(settings.connection_url())
         try:
-            _ensure_schema(connection)
             run_id = f"quality_eval_{uuid.uuid4().hex[:16]}"
             connection.execute(
                 """
-                INSERT INTO product_quality_eval_runs(
+                INSERT INTO product_eval_runs(
                     id,suite,run_kind,build,provider,model_identifier,total,errors,high_severity_failures,
                     precision,recall,false_positives,false_negatives,interpretation_accuracy,ask_grounding,
                     uncertainty_accuracy,open_item_accuracy,authority_accuracy,overall_pass_rate
