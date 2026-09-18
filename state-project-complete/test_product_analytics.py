@@ -91,6 +91,20 @@ class ProductAnalyticsTests(unittest.TestCase):
         self.assertNotIn("Beta secret text", serialized)
         self.assertNotIn("Beta private question", serialized)
 
+    def test_product_eval_card_ignores_review_and_ask_quality_suites(self):
+        self.connection.execute(
+            "INSERT INTO product_eval_runs(id,suite,run_kind,total,recall,precision,created_at) "
+            "VALUES ('eval-main','consequentiality','controlled_eval',10,0.9,0.8,'2026-09-17 10:00:00')"
+        )
+        self.connection.execute(
+            "INSERT INTO product_eval_runs(id,suite,run_kind,total,ask_grounding,created_at) "
+            "VALUES ('eval-ask','ask_quality','controlled_eval',8,0.95,'2026-09-17 12:00:00')"
+        )
+        self.connection.commit()
+
+        data = _aggregate(self.connection, None, datetime(2026, 9, 17, 13, 0, tzinfo=timezone.utc))
+        self.assertEqual(data["evals"]["latest"]["suite"], "consequentiality")
+
     def test_resolved_reviews_without_state_change_uses_history_linkage(self):
         now = datetime(2026, 9, 17, 13, 0, tzinfo=timezone.utc)
         self.connection.execute(
