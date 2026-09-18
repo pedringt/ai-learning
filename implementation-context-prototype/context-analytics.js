@@ -49,6 +49,8 @@
     return 'production';
   }
   function inferredApiBase() {
+    var configured = window.STATE_API_BASE || (document.documentElement && document.documentElement.dataset && document.documentElement.dataset.apiBase);
+    if (configured) return String(configured).replace(/\/$/, '');
     return environmentLabel() === 'staging'
       ? 'https://state-api-staging.onrender.com'
       : 'https://state-api-6waw.onrender.com';
