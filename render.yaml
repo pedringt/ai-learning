@@ -40,7 +40,7 @@ services:
       - key: CLAUDE_TIMEOUT_SECONDS
         value: "30"
       - key: CORS_ORIGINS
-        value: http://localhost:3000,https://ai-learning-rouge.vercel.app
+        value: http://localhost:3000,https://ai-learning-rouge.vercel.app,https://authenticignorance.site,https://www.authenticignorance.site
       # Slack Phase 1 (deterministic intake only; see
       # docs/architecture/SLACK_INTEGRATION_PLAN.md). Unset SLACK_SIGNING_SECRET
       # disables the /api/integrations/slack/events endpoint outright (503).
