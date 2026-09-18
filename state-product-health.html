@@ -49,8 +49,7 @@
     const H=window.STATE_PRODUCT_HEALTH;
     const status=document.getElementById('status'),dashboard=document.getElementById('dashboard'),select=document.getElementById('scopeSelect');
     const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-    const env=/(^|[-.])staging([-.]|$)|-git-/i.test(location.hostname)?'staging':'production';
-    const API_BASE=env==='staging'?'https://state-api-staging.onrender.com':'https://state-api-6waw.onrender.com';
+    const API_BASE=H.apiBase(window);
     const metric=(v,label)=>`<div class="metric"><strong>${esc(v)}</strong><span>${esc(label)}</span></div>`;
     const empty=t=>`<div class="empty">${esc(t)}</div>`;
     const countRows=obj=>Object.entries(obj||{}).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`<div class="row"><span>${esc(k.replaceAll('_',' '))}</span><span>${esc(v)}</span></div>`).join('');
