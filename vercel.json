@@ -1,6 +1,41 @@
 {
   "cleanUrls": true,
   "trailingSlash": false,
+  "redirects": [
+    {
+      "source": "/",
+      "has": [
+        {
+          "type": "host",
+          "value": "ai-learning-rouge.vercel.app"
+        }
+      ],
+      "destination": "https://www.authenticignorance.site/",
+      "permanent": true
+    },
+    {
+      "source": "/index.html",
+      "has": [
+        {
+          "type": "host",
+          "value": "ai-learning-rouge.vercel.app"
+        }
+      ],
+      "destination": "https://www.authenticignorance.site/",
+      "permanent": true
+    },
+    {
+      "source": "/:path*",
+      "has": [
+        {
+          "type": "host",
+          "value": "ai-learning-rouge.vercel.app"
+        }
+      ],
+      "destination": "https://www.authenticignorance.site/:path*",
+      "permanent": true
+    }
+  ],
   "headers": [
     {
       "source": "/implementation-context-prototype/(.*)",

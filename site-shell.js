@@ -14,19 +14,19 @@
     analytics.defer=true;
     analytics.src='https://cloud.umami.is/script.js';
     analytics.setAttribute('data-website-id','238c100f-0a08-472c-9eb3-22acc2c795fa');
-    analytics.setAttribute('data-domains','ai-learning-rouge.vercel.app');
+    analytics.setAttribute('data-domains','www.authenticignorance.site,authenticignorance.site');
     analytics.setAttribute('data-umami-portfolio','true');
     document.head.appendChild(analytics);
   }
 
-  /* Keep the portfolio anonymous for now while still positioning the work as
-     applied AI product work rather than only a learning exercise. */
-  if(document.title.includes('AI Learning Portfolio')) document.title=document.title.replace('AI Learning Portfolio','Applied AI Product Portfolio');
+  /* Keep portfolio branding consistent across standalone pages. */
+  document.title=document.title
+    .replace('AI Learning Portfolio','Authentic Ignorance')
+    .replace('Applied AI Product Portfolio','Authentic Ignorance');
   document.querySelectorAll('meta[property="og:title"],meta[name="twitter:title"]').forEach(meta=>{
-    if((meta.content||'').includes('AI Learning Portfolio')) meta.content=meta.content.replace('AI Learning Portfolio','Applied AI Product Portfolio');
-  });
-  document.querySelectorAll('meta[name="description"],meta[property="og:description"],meta[name="twitter:description"]').forEach(meta=>{
-    if((meta.content||'').toLowerCase().includes('ai learning portfolio')) meta.content=meta.content.replace(/ai learning portfolio/ig,'applied AI product portfolio');
+    meta.content=(meta.content||'')
+      .replace('AI Learning Portfolio','Authentic Ignorance')
+      .replace('Applied AI Product Portfolio','Authentic Ignorance');
   });
   const homeHero=document.querySelector('[data-page="home"] .hero');
   if(homeHero&&!homeHero.querySelector('.professional-context')){
