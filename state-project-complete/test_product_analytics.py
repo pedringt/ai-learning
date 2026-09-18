@@ -5,7 +5,7 @@ from datetime import datetime, timezone
 from pydantic import ValidationError
 
 from database_migration_backed import get_test_db
-from product_analytics import ProductEventInput, _aggregate, _ensure_schema, _insert_event
+from product_analytics import ProductEventInput, _aggregate, _insert_event
 
 
 class ProductAnalyticsTests(unittest.TestCase):
@@ -14,7 +14,6 @@ class ProductAnalyticsTests(unittest.TestCase):
         self.connection = self._db.__enter__()
         self.connection.row_factory = sqlite3.Row
         self.addCleanup(self._db.__exit__, None, None, None)
-        _ensure_schema(self.connection)
         self.connection.execute("INSERT OR IGNORE INTO projects(id,name) VALUES ('beta','Beta')")
         self.connection.commit()
 
@@ -70,6 +69,33 @@ class ProductAnalyticsTests(unittest.TestCase):
         self.assertNotIn("Northstar private question", serialized)
         self.assertNotIn("Beta secret text", serialized)
         self.assertNotIn("Beta private question", serialized)
+
+    def test_resolved_reviews_without_state_change_uses_history_linkage(self):
+        now = datetime(2026, 9, 17, 13, 0, tzinfo=timezone.utc)
+        self.connection.execute(
+            "INSERT INTO review_issues(id,review_type,decision_question,why_consequential,status,resolution,resolved_at,project_id) "
+            "VALUES ('r-change','proposed_update','Private?','Private','resolved','updated','2026-09-17 12:00:00','northstar')"
+        )
+        self.connection.execute(
+            "INSERT INTO review_issues(id,review_type,decision_question,why_consequential,status,resolution,resolved_at,project_id) "
+            "VALUES ('r-no-change','missing_understanding','Private?','Private','resolved','confirmed_current','2026-09-17 12:00:00','northstar')"
+        )
+        self.connection.execute(
+            "INSERT INTO proposed_state_changes(id,review_id,proposed_statement,rationale,status,operation) "
+            "VALUES ('p-change','r-change','Private statement','Private','accepted','create')"
+        )
+        self.connection.execute(
+            "INSERT INTO current_state_items(id,topic,statement,project_id) "
+            "VALUES ('s-change','private','Private statement','northstar')"
+        )
+        self.connection.execute(
+            "INSERT INTO history_transitions(id,state_item_id,proposed_change_id,transition_type,new_statement,to_version,changed_at) "
+            "VALUES ('h-change','s-change','p-change','created','Private statement',1,'2026-09-17 12:00:00')"
+        )
+        self.connection.commit()
+
+        data = _aggregate(self.connection, "northstar", now)
+        self.assertEqual(data["outcomes_and_friction"]["resolved_reviews_without_state_change_30d"], 1)
 
     def test_no_composite_health_score(self):
         data = _aggregate(self.connection, None, datetime.now(timezone.utc))
