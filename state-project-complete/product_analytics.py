@@ -236,7 +236,7 @@ def _aggregate(connection, project_id: str | None, now: datetime) -> dict:
     )
     event_where = " WHERE project_id=?" if project_id else ""
     events = _rows(connection, "SELECT * FROM product_analytics_events" + event_where, params)
-    eval_runs = _rows(connection, "SELECT * FROM product_eval_runs ORDER BY created_at DESC LIMIT 20")
+    eval_runs = _rows(\n        connection,\n        "SELECT * FROM product_eval_runs WHERE suite NOT IN (?, ?) ORDER BY created_at DESC LIMIT 20",\n        ("review_interpretation", "ask_quality"),\n    )
 
     evidence_30 = [x for x in evidence if _within(x.get("submitted_at"), now, 30)]
     history_7 = [x for x in history if _within(x.get("changed_at"), now, 7)]
