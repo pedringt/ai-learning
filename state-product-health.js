@@ -53,6 +53,15 @@
     return Array.from(byId.values()).sort((a, b) => String(a.name || '').localeCompare(String(b.name || '')));
   }
 
+  function apiBase(root) {
+    const configured = root?.STATE_API_BASE || root?.document?.documentElement?.dataset?.apiBase;
+    if (configured) return String(configured).replace(/\/$/, '');
+    const hostname = String(root?.location?.hostname || '');
+    return /(^|[-.])staging([-.]|$)|-git-/i.test(hostname)
+      ? 'https://state-api-staging.onrender.com'
+      : 'https://state-api-6waw.onrender.com';
+  }
+
   function contentFree(payload) {
     const text = JSON.stringify(payload || {}).toLowerCase();
     const forbidden = ['decision_question','new_statement','old_statement','evidence_content','ask_query','answer_body','prompt_text'];
@@ -80,8 +89,7 @@
     const esc = value => String(value ?? '').replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
     const percent = value => value == null ? 'Not measured' : `${Math.round(Number(value) * 1000) / 10}%`;
     const metric = (value, label) => `<div class="metric"><strong>${esc(value)}</strong><span>${esc(label)}</span></div>`;
-    const env = /(^|[-.])staging([-.]|$)|-git-/i.test(root.location.hostname) ? 'staging' : 'production';
-    const apiBase = env === 'staging' ? 'https://state-api-staging.onrender.com' : 'https://state-api-6waw.onrender.com';
+    const base = apiBase(root);
 
     function evalCard(title, run, kind) {
       if (!run) return `<div class="empty">No ${esc(title.toLowerCase())} run has been recorded yet.</div>`;
@@ -112,7 +120,7 @@
       try {
         const projectId = new URLSearchParams(root.location.search).get('project') || '';
         const path = '/api/admin/quality-analytics' + (projectId ? `?project_id=${encodeURIComponent(projectId)}` : '');
-        const response = await root.fetch(apiBase + path);
+        const response = await root.fetch(base + path);
         if (!response.ok) return;
         render(await response.json());
       } catch (_) {
@@ -130,5 +138,5 @@
     else setTimeout(refresh, 0);
   }
 
-  return { shouldRetry, withStartupRetry, pct, hoursLabel, latencyLabel, scopeProject, mergeProjectRegistry, contentFree, qualitySummary, initQualityEnhancement };
+  return { shouldRetry, withStartupRetry, pct, hoursLabel, latencyLabel, scopeProject, mergeProjectRegistry, apiBase, contentFree, qualitySummary, initQualityEnhancement };
 });
