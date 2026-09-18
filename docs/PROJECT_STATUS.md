@@ -2,7 +2,7 @@
 
 This is the canonical current-state handoff for State and the surrounding portfolio. Read this first, then verify the repository and live environments before relying on older notes or conversation memory.
 
-_Last updated: September 15, 2026 Pacific time._
+_Last updated: September 18, 2026 Pacific time._
 
 ## Current product state
 
@@ -16,13 +16,13 @@ The product currently includes:
 
 - immutable Evidence/Notes intake
 - AI interpretation with schema and semantic validation
-- human-authorized Reviews
+- human-authorized Reviews plus Baseline Setup confirmation for routine Starting State facts
 - human adjustment of AI proposals while preserving the original proposal for provenance
 - Open and Blocking Questions
 - Review-to-Question creation/linking/resolution flows
 - Current State as a readable maintained project wiki
 - History with accepted transition provenance
-- Ask with authority-aware grounding, streaming, follow-ups, cancellation, and project isolation
+- Ask with authority-aware grounding, streaming, follow-ups, cancellation, project isolation, and a human-reviewed handoff for unanswered Questions
 - project rules in Settings
 - project switching with the Northstar and Juniper Office Move seeded examples
 - Slack intake from approved channels plus sharing accepted changes back to Slack
@@ -31,23 +31,24 @@ State is a portfolio and learning product. There is no planned external pilot or
 
 ## Branch and deployment state
 
-`staging` is at `ca308a0` (verified deployed to `state-api-staging`). `main` has not been updated with the September 15 work below; promotion needs explicit authorization. Verify the current branch heads when resuming work rather than assuming they are still identical.
+As of September 18, `main` contains the September 15-18 State product and portfolio work. `staging` was synced forward from `main` on September 18 and may also contain staging-only analytics/eval work. Always verify current branch heads before resuming work rather than relying on this snapshot.
 
-September 15 additions on `staging`, on top of the September 14 QA baseline:
+Recent product changes now present on `main` include:
 
 - Fixed the blank-project bug cluster: Notes cross-project leakage (`syncApiEvidence()` matched static fixture notes via a double-negative filter), a hydration race on rapid project switching, missing Reset/Delete project lifecycle controls (two separate Settings surfaces both needed the fix), and a non-state-aware onboarding banner.
-- Added bootstrap mode (`BOOTSTRAP_GUIDANCE`, active only when a project's Current State is empty) and explicit human promotion (`POST /api/evidence/{id}/promote`, the "Ask State to reconsider this" button) so a person can force State to reconsider Evidence it previously declined. Neither path bypasses Review or writes Current State directly. Verified against the real Anthropic model, not just mocked providers.
+- Added explicit Baseline Setup for new user-created projects. State assembles a draft Starting State from preserved Evidence; routine starting facts can be confirmed together, while conflicts, consequential ambiguity, and important unresolved choices stay in individual Reviews or Questions. A person explicitly confirms the Starting State before setup ends.
+- Expanded explicit Evidence promotion (`POST /api/evidence/{id}/promote`) into the current **Propose for Current State** recovery path. It can be used after earlier Reviews have resolved, or after the Evidence already changed one State fact, when a person believes State missed another fact. It is hidden while an unresolved Review from that Evidence is still open. Promotion reruns interpretation and never bypasses Review, validation, stale protection, provenance, or human authorization.
 - Added drag-and-drop file upload to the Add Evidence dialog; drops of more than one file are rejected with a message rather than silently truncated to the first file.
 - Fixed a cross-project 500 in `_reanalyze()` (unscoped evidence-id lookup let a cross-project id crash instead of 404ing); affects both `/reanalyze` and the new `/promote`.
-- Filed [#145](https://github.com/pedringt/ai-learning/issues/145): production `state-api` has no persistent disk and no Postgres anywhere in the Render account, so every production deploy wipes non-seeded project data. Not yet fixed, pending an infra decision (disk vs. Postgres).
-- Filed [#146](https://github.com/pedringt/ai-learning/issues/146): the promote button only appears on a Note when State generated zero Reviews for it (`no_review_needed`). It does not appear when State generated Reviews that never produced a Current State create/update (e.g. all resolved as open questions) -- confirmed live on staging, where this is exactly the case blocking one user-created project's baseline. Not yet fixed.
+- Fixed [#145](https://github.com/pedringt/ai-learning/issues/145): production `state-api` now uses a Render persistent disk with SQLite at `/var/data/state.db`. A user-created project was verified to survive a separate redeploy. Staging remains intentionally ephemeral.
+- Fixed [#146](https://github.com/pedringt/ai-learning/issues/146): **Propose for Current State** is no longer limited to Evidence that originally produced zero Reviews. It remains available after resolved Reviews and after one accepted State change when another fact may have been missed, subject to the unresolved-Review guard above.
 - Confirmed staging's own ephemeral-storage risk in practice, not just by inspection: two user-created staging projects' ids changed mid-session across redeploys, discarding their Notes/Current State. Tracked as R-014 in `docs/product/RISKS.md` (accepted staging tradeoff, distinct from the production risk in #145).
 
 Production surfaces:
 
-- Portfolio: `https://ai-learning-rouge.vercel.app/`
-- State case study: `https://ai-learning-rouge.vercel.app/implementation-context`
-- State product: `https://ai-learning-rouge.vercel.app/implementation-context-prototype/`
+- Portfolio: `https://www.authenticignorance.site/`
+- State case study: `https://www.authenticignorance.site/implementation-context`
+- State product: `https://www.authenticignorance.site/implementation-context-prototype/`
 - Production API: Render `state-api`
 
 Staging surfaces:
@@ -98,8 +99,8 @@ Do not weaken these without an explicit product decision:
 - Stale proposals fail closed.
 - Unknown is not equivalent to `0`, `false`, or absent.
 - Schema-valid model output can still be semantically wrong.
-- Ask is read-only and cannot present pending proposals or uncertainty as settled fact.
-- Review outcomes are independent.
+- Ask does not directly authorize mutations and cannot present pending proposals or uncertainty as settled fact. An unanswered Ask may hand a Question to a person to review/add.
+- Review resolution is review-level in the current implementation: multiple pending proposals bundled into one Review receive the same Review decision.
 - Project data must stay isolated across projects.
 - Provenance must remain available for consequential accepted changes and human-adjusted AI proposals.
 
@@ -131,8 +132,11 @@ The repo now uses a GitHub-first operating model:
 
 Open learning exercises include:
 
-- **#121**: define a small set of State product-quality metrics as an AI PM exercise, without pretending a real pilot exists
 - **#122**: write a short incident review from a real recent production/deployment failure
+
+Completed measurement work:
+
+- **#121**: defined State product-quality metrics as an AI PM exercise without inventing a real pilot or customer results
 
 ## Documentation ownership
 
