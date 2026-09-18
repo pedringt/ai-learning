@@ -17,6 +17,27 @@ class ProductAnalyticsTests(unittest.TestCase):
         self.connection.execute("INSERT OR IGNORE INTO projects(id,name) VALUES ('beta','Beta')")
         self.connection.commit()
 
+    def test_analytics_schema_is_migration_backed_and_quality_evals_share_one_table(self):
+        tables = {
+            row[0] for row in self.connection.execute(
+                "SELECT name FROM sqlite_master WHERE type='table'"
+            ).fetchall()
+        }
+        self.assertIn("product_analytics_events", tables)
+        self.assertIn("product_eval_runs", tables)
+        self.assertNotIn("product_quality_eval_runs", tables)
+        columns = {
+            info[1] for info in self.connection.execute("PRAGMA table_info(product_eval_runs)")
+        }
+        for column in (
+            "interpretation_accuracy",
+            "uncertainty_accuracy",
+            "open_item_accuracy",
+            "authority_accuracy",
+            "overall_pass_rate",
+        ):
+            self.assertIn(column, columns)
+
     def test_event_schema_fails_closed_on_content_fields(self):
         with self.assertRaises(ValidationError):
             ProductEventInput(name="state_demo_opened", query="secret project question")
