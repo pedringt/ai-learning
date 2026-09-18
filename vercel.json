@@ -3,6 +3,28 @@
   "trailingSlash": false,
   "redirects": [
     {
+      "source": "/",
+      "has": [
+        {
+          "type": "host",
+          "value": "ai-learning-rouge.vercel.app"
+        }
+      ],
+      "destination": "https://www.authenticignorance.site/",
+      "permanent": true
+    },
+    {
+      "source": "/index.html",
+      "has": [
+        {
+          "type": "host",
+          "value": "ai-learning-rouge.vercel.app"
+        }
+      ],
+      "destination": "https://www.authenticignorance.site/",
+      "permanent": true
+    },
+    {
       "source": "/:path*",
       "has": [
         {
