@@ -236,7 +236,11 @@ def _aggregate(connection, project_id: str | None, now: datetime) -> dict:
     )
     event_where = " WHERE project_id=?" if project_id else ""
     events = _rows(connection, "SELECT * FROM product_analytics_events" + event_where, params)
-    eval_runs = _rows(\n        connection,\n        "SELECT * FROM product_eval_runs WHERE suite NOT IN (?, ?) ORDER BY created_at DESC LIMIT 20",\n        ("review_interpretation", "ask_quality"),\n    )
+    eval_runs = _rows(
+        connection,
+        "SELECT * FROM product_eval_runs WHERE suite NOT IN (?, ?) ORDER BY created_at DESC LIMIT 20",
+        ("review_interpretation", "ask_quality"),
+    )
 
     evidence_30 = [x for x in evidence if _within(x.get("submitted_at"), now, 30)]
     history_7 = [x for x in history if _within(x.get("changed_at"), now, 7)]
@@ -459,7 +463,7 @@ def register_product_analytics(application: FastAPI, settings) -> None:
         if is_ask:
             connection = connect(settings.connection_url())
             try:
-                    _insert_event(connection, ProductEventInput(
+                _insert_event(connection, ProductEventInput(
                     name="ask_submitted",
                     project_id=request.headers.get("X-State-Project-Id"),
                     environment=getattr(settings, "environment", None),
@@ -473,7 +477,7 @@ def register_product_analytics(application: FastAPI, settings) -> None:
             elapsed_ms = int((time.perf_counter() - started) * 1000)
             connection = connect(settings.connection_url())
             try:
-                    _insert_event(connection, ProductEventInput(
+                _insert_event(connection, ProductEventInput(
                     name="ask_failed" if is_ask else "api_failure",
                     project_id=request.headers.get("X-State-Project-Id"),
                     environment=getattr(settings, "environment", None),
@@ -489,7 +493,7 @@ def register_product_analytics(application: FastAPI, settings) -> None:
             event_name = "ask_completed" if is_ask and response.status_code < 400 else ("ask_failed" if is_ask else "api_failure")
             connection = connect(settings.connection_url())
             try:
-                    _insert_event(connection, ProductEventInput(
+                _insert_event(connection, ProductEventInput(
                     name=event_name,
                     project_id=request.headers.get("X-State-Project-Id"),
                     environment=getattr(settings, "environment", None),
