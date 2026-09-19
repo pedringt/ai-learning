@@ -82,6 +82,52 @@
     };
   }
 
+  // A run recorded from a developer machine reports build "local"; say so plainly.
+  function buildLabel(build) {
+    const value = String(build ?? '').trim();
+    if (!value || value === 'unknown') return 'unknown build';
+    return value === 'local' ? 'local run' : value;
+  }
+
+  // Runs are stored as UTC ("YYYY-MM-DD HH:MM:SS"). Fixed-format output keeps the
+  // label identical for every viewer and every locale.
+  function runTimeLabel(createdAt) {
+    if (!createdAt) return '';
+    const text = String(createdAt).trim();
+    const parsed = new Date(/[zZ]|[+-]\d\d:?\d\d$/.test(text) ? text : text.replace(' ', 'T') + 'Z');
+    if (Number.isNaN(parsed.getTime())) return '';
+    return parsed.toISOString().slice(0, 16).replace('T', ' ') + ' UTC';
+  }
+
+  // One recorded run is a single noisy sample; show the spread across the recent
+  // runs of the same suite so a lone number does not read as a stable rate.
+  function metricRange(runs, suite, key) {
+    const values = (runs || [])
+      .filter(run => run && run.suite === suite && run[key] != null && !Number.isNaN(Number(run[key])))
+      .map(run => Number(run[key]));
+    if (values.length < 2) return null;
+    return { min: Math.min(...values), max: Math.max(...values), count: values.length };
+  }
+
+  function recentRunLabel(run) {
+    const parts = [String(run?.suite || 'unknown suite').replaceAll('_', ' ')];
+    if (run?.model_identifier) parts.push(run.model_identifier);
+    parts.push(buildLabel(run?.build));
+    const when = runTimeLabel(run?.created_at);
+    if (when) parts.push(when);
+    return parts.join(' · ');
+  }
+
+  // The original consequentiality eval panel. Its empty state must describe only
+  // that suite: the Review and Ask quality evals have their own sections (#225).
+  function consequentialityEvalMarkup(latest, h) {
+    const heading = '<div class="section-title">Controlled consequentiality eval</div>';
+    if (!latest) {
+      return heading + h.empty('No consequentiality eval has been recorded yet. Existing evals can be ingested without storing test-case content.');
+    }
+    return heading + `<div class="eval-callout"><div class="eval-label">Latest ${h.esc(latest.run_kind || 'controlled eval')}</div><div class="metrics" style="grid-template-columns:repeat(2,minmax(0,1fr));margin-top:10px">${h.metric(h.pct(latest.recall), 'Consequential-change recall')}${h.metric(h.pct(latest.precision), 'Review precision')}${h.metric(latest.false_negatives || 0, 'Important misses')}${h.metric(latest.high_severity_failures || 0, 'High-severity failures')}</div><p class="footnote">Suite: ${h.esc(latest.suite)} · Build: ${h.esc(buildLabel(latest.build))} · ${h.esc(latest.provider || 'provider unknown')} ${latest.model_identifier ? '· ' + h.esc(latest.model_identifier) : ''}</p></div>`;
+  }
+
   function initQualityEnhancement(root) {
     if (!root || !root.document || root.__STATE_QUALITY_ENHANCEMENT__) return;
     root.__STATE_QUALITY_ENHANCEMENT__ = true;
@@ -91,12 +137,18 @@
     const metric = (value, label) => `<div class="metric"><strong>${esc(value)}</strong><span>${esc(label)}</span></div>`;
     const base = apiBase(root);
 
-    function evalCard(title, run, kind) {
+    function rangeNote(recent, suite, key, label) {
+      const range = metricRange(recent, suite, key);
+      if (!range) return '';
+      return `<p class="footnote">${esc(label)} across the last ${range.count} runs: ${esc(percent(range.min))} to ${esc(percent(range.max))}. A single run is one sample, not a stable rate.</p>`;
+    }
+
+    function evalCard(title, run, kind, recent) {
       if (!run) return `<div class="empty">No ${esc(title.toLowerCase())} run has been recorded yet.</div>`;
       if (kind === 'review') {
-        return `<div class="eval-callout"><div class="eval-label">${esc(title)}</div><div class="metrics" style="grid-template-columns:repeat(3,minmax(0,1fr));margin-top:10px">${metric(percent(run.recall),'Review recall')}${metric(percent(run.precision),'Review precision')}${metric(percent(run.interpretation_accuracy),'Interpretation accuracy')}</div><p class="footnote">High-severity failures: ${esc(run.high_severity_failures || 0)} · Build: ${esc(run.build || 'unknown')} · ${esc(run.provider || 'provider unknown')} ${run.model_identifier ? '· ' + esc(run.model_identifier) : ''}</p></div>`;
+        return `<div class="eval-callout"><div class="eval-label">${esc(title)}</div><div class="metrics" style="grid-template-columns:repeat(3,minmax(0,1fr));margin-top:10px">${metric(percent(run.recall),'Review recall')}${metric(percent(run.precision),'Review precision')}${metric(percent(run.interpretation_accuracy),'Interpretation accuracy')}</div><p class="footnote">High-severity failures: ${esc(run.high_severity_failures || 0)} · Errors: ${esc(run.errors || 0)} · Build: ${esc(buildLabel(run.build))} · ${esc(run.provider || 'provider unknown')} ${run.model_identifier ? '· ' + esc(run.model_identifier) : ''}</p>${rangeNote(recent, 'review_interpretation', 'interpretation_accuracy', 'Interpretation accuracy')}</div>`;
       }
-      return `<div class="eval-callout"><div class="eval-label">${esc(title)}</div><div class="metrics" style="grid-template-columns:repeat(3,minmax(0,1fr));margin-top:10px">${metric(percent(run.ask_grounding),'Grounding')}${metric(percent(run.authority_accuracy),'Authority handling')}${metric(percent(run.uncertainty_accuracy),'Uncertainty handling')}</div><p class="footnote">Open-item accuracy: ${esc(percent(run.open_item_accuracy))} · Overall pass rate: ${esc(percent(run.overall_pass_rate))} · High-severity failures: ${esc(run.high_severity_failures || 0)}</p></div>`;
+      return `<div class="eval-callout"><div class="eval-label">${esc(title)}</div><div class="metrics" style="grid-template-columns:repeat(3,minmax(0,1fr));margin-top:10px">${metric(percent(run.ask_grounding),'Grounding')}${metric(percent(run.authority_accuracy),'Authority handling')}${metric(percent(run.uncertainty_accuracy),'Uncertainty handling')}</div><p class="footnote">Open-item accuracy: ${esc(percent(run.open_item_accuracy))} · Overall pass rate: ${esc(percent(run.overall_pass_rate))} · High-severity failures: ${esc(run.high_severity_failures || 0)} · Errors: ${esc(run.errors || 0)}</p>${rangeNote(recent, 'ask_quality', 'overall_pass_rate', 'Overall pass rate')}</div>`;
     }
 
     function render(data) {
@@ -108,11 +160,11 @@
       const summary = qualitySummary(data);
       const recent = summary.recent.slice(0, 6).map(run => {
         const primary = run.suite === 'review_interpretation' ? percent(run.interpretation_accuracy) : percent(run.ask_grounding);
-        return `<div class="row"><span>${esc(run.suite.replaceAll('_',' '))} · ${esc(run.build || 'unknown build')}</span><span>${esc(primary)}</span></div>`;
+        return `<div class="row"><span>${esc(recentRunLabel(run))}</span><span>${esc(primary)}</span></div>`;
       }).join('');
       const section = doc.createElement('div');
       section.id = 'qualityAnalyticsExtra';
-      section.innerHTML = `<div class="section-title">Live Review outcomes · 30d</div><div class="metrics" style="grid-template-columns:repeat(2,minmax(0,1fr))">${metric(summary.resolvedReviews,'Resolved Reviews')}${metric(percent(summary.acceptedAsProposedRate),'Accepted as proposed')}${metric(percent(summary.materialEditRate),'Accepted with material edits')}${metric(percent(summary.rejectionRate),'Rejected / not applied')}</div><p class="footnote">Material edits measure human correction effort. They do not automatically mean the AI was wrong.</p><div class="section-title">Controlled Review interpretation eval</div>${evalCard('Latest Review interpretation eval', summary.latestReview, 'review')}<div class="section-title">Controlled Ask eval</div>${evalCard('Latest Ask quality eval', summary.latestAsk, 'ask')}<div class="section-title">Recent controlled eval runs</div><div class="rows">${recent || '<div class="empty">No Review/Ask quality eval history recorded yet.</div>'}</div>`;
+      section.innerHTML = `<div class="section-title">Live Review outcomes · 30d</div><div class="metrics" style="grid-template-columns:repeat(2,minmax(0,1fr))">${metric(summary.resolvedReviews,'Resolved Reviews')}${metric(percent(summary.acceptedAsProposedRate),'Accepted as proposed')}${metric(percent(summary.materialEditRate),'Accepted with material edits')}${metric(percent(summary.rejectionRate),'Rejected / not applied')}</div><p class="footnote">Material edits measure human correction effort. They do not automatically mean the AI was wrong.</p><div class="section-title">Controlled Review interpretation eval</div>${evalCard('Latest Review interpretation eval', summary.latestReview, 'review', summary.recent)}<div class="section-title">Controlled Ask eval</div>${evalCard('Latest Ask quality eval', summary.latestAsk, 'ask', summary.recent)}<div class="section-title">Recent controlled eval runs</div><div class="rows">${recent || '<div class="empty">No Review/Ask quality eval history recorded yet.</div>'}</div>`;
       panel.appendChild(section);
     }
 
@@ -138,5 +190,5 @@
     else setTimeout(refresh, 0);
   }
 
-  return { shouldRetry, withStartupRetry, pct, hoursLabel, latencyLabel, scopeProject, mergeProjectRegistry, apiBase, contentFree, qualitySummary, initQualityEnhancement };
+  return { shouldRetry, withStartupRetry, pct, hoursLabel, latencyLabel, scopeProject, mergeProjectRegistry, apiBase, contentFree, qualitySummary, buildLabel, runTimeLabel, metricRange, recentRunLabel, consequentialityEvalMarkup, initQualityEnhancement };
 });
