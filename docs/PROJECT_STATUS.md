@@ -31,7 +31,7 @@ State is a portfolio and learning product. There is no planned external pilot or
 
 ## Branch and deployment state
 
-**Snapshot on Sept 19 evening (verify before relying on it):** `main` = `c957842` (production). `staging` = `c5afbb6`, **62 commits ahead**. `main` is an ancestor of `staging`, so promotion is a clean fast-forward-able merge. There are no open PRs. **Nothing from the last three days has been promoted, and promotion is currently on hold** (see "Release gate" below).
+**Snapshot on Sept 19 evening (verify before relying on it):** `main` = `c957842` (production). `staging` = at or after `7ef2837` (the #230 fix; was `c5afbb6`, 62 commits ahead; recount with `git rev-list --count main..staging`). `main` is an ancestor of `staging`, so promotion is a clean fast-forward-able merge. There are no open PRs. **Nothing from the last three days has been promoted, and promotion is currently on hold** (see "Release gate" below).
 
 What is on `staging` but not on `main` (all verified on the deployed staging environment):
 
@@ -69,7 +69,7 @@ Hard release rule: product/site changes go through `staging` first unless the us
 
 ## Latest verified QA baseline
 
-On `staging` head `c5afbb6` (Sept 19): State QA Fast is green in CI, and `make qa-fast` passes locally (607 Python tests, 96 skipped because they need a real model key or Postgres, plus every `state-*-tests.js` suite, including the new `state-base-path-tests.js`). Locally `qa-fast` makes **no** real-model calls even when a `.env` exists (#224).
+On `staging` head `7ef2837` (Sept 19; `make qa-fast` re-run there: 610 passed, 96 skipped, all JS suites green; the earlier line below describes `c5afbb6`): State QA Fast is green in CI, and `make qa-fast` passes locally (607 Python tests, 96 skipped because they need a real model key or Postgres, plus every `state-*-tests.js` suite, including the new `state-base-path-tests.js`). Locally `qa-fast` makes **no** real-model calls even when a `.env` exists (#224).
 
 **State Deep QA is NOT green on this revision** (see "Release gate" below): 13 of 14 tests pass every run; the Baseline Setup lifecycle test fails intermittently.
 
@@ -157,11 +157,13 @@ Things a new session must know about this work:
 - The app must never hard-code `/implementation-context-prototype/`. `state-base-path-tests.js` fails if any app source does.
 - Backend `CORS_ORIGINS` today: staging = `http://localhost:3000` + `ai-learning-git-staging`, four old `ai-learning-git-pr{1..4}-…` preview origins, and `https://state-git-staging-cairn10.vercel.app`; production = `http://localhost:3000`, `https://ai-learning-rouge.vercel.app`, `https://authenticignorance.site`, `https://www.authenticignorance.site`, and `https://state.authenticignorance.site`. `STATE_FRONTEND_BASE_URL` (where Slack connect lands) is unchanged on purpose.
 
-## Release gate: promotion to `main` is on hold (#230)
+## Release gate: fix for #230 is on staging; promotion still on hold pending Paige
 
 Paige set "State Deep QA passes" as the bar for opening the `staging` -> `main` PR. On `c5afbb6` (backend and both frontends verified identical to it) it was run 4 times: **13 of 14 tests pass every run, including every authority-relevant one; only the Baseline Setup lifecycle test fails, 4 of 4 runs, each for a different reason** (model output that failed schema validation, a manual-add that did not redraw, facts all in one area, and zero facts with no error logged). The evidence indicates this is **not** caused by the promotion diff: no Baseline frontend or backend module changed since the last green run (Sept 16); 8/8 uploads on `main`'s backend and 8/8 on `staging`'s each produced exactly 3 facts; the manual-add sequence passed 5/5 on `main`'s full stack and 5/5 on `staging`'s in a real browser. But it is still red.
 
-**Paige's decision: fix first.** The work is in #230: reproduce deterministically the suspected stale-dialog race (the review dialog opened while analysis is still running may never redraw when analysis completes; the poller in `context-baseline-dogfood-fixes.js` stops at `processing_evidence == 0` and re-hydrates), fix it in the app, and decide whether the Deep QA assertions (exactly 3 facts, more than 1 area) should tolerate model variance or use a deterministic provider for that flow. Changing what the test asserts is Paige's call. Then re-run Deep QA (`gh workflow run deep-qa.yml --ref staging`, a few cents of real-model calls) and only then consider the PR. The PR is **not open**; nothing has been promoted.
+**Paige's decision: fix first. Fix landed on `staging` (`7ef2837`, 2026-09-19).** Findings: (1) the review dialog rendered a one-time snapshot, so opened during analysis it never redrew when analysis finished (reproduced deterministically); the banner also re-shows its review button briefly during analysis because two banner renderers compete, which is how a fast click or Deep QA opens the dialog early; (2) the manual-add path reopened the dialog by clicking that banner button, a silent no-op when the button is absent (Deep QA run 2). The dialog now watches the draft while analysis runs and redraws (keeping edits, removed facts and focus), drops out-of-order responses, and reopens directly after a manual add. Tests: `state-project-complete/test_baseline_dialog_redraw_browser.py` (3 real-browser tests, no model calls; all fail on the old frontend). `make qa-fast` green. **Deep QA on `7ef2837`: 4 of 4 runs green** (runs 35470920751, 35471009623, 35471088545, 35471167944), against 0 of 4 before. Not proof by itself: two failure causes are model variance the fix does not touch (schema-violating output; all facts in one area).
+
+**Still Paige's call:** whether the Deep QA Baseline assertions (exactly 3 facts, more than 1 area) should tolerate model variance or use a deterministic provider, and whether 4 of 4 is enough to open the `staging` -> `main` PR. Also open: a failed Baseline analysis offers no retry in the Baseline UI (#231). The PR is **not open**; nothing has been promoted.
 
 Promotion checklist reminders (`RELEASE.md`): explicit destination-specific authorization each time; confirm CI on the exact revision; migrations 016/017, backend and frontends promote together; recovery plan (revert the merge; Vercel instant rollback for frontends; the migrations are additive and backward compatible, so reverting code after they ran is safe). A production Render redeploy takes about 50 s.
 
@@ -170,9 +172,9 @@ Promotion checklist reminders (`RELEASE.md`): explicit destination-specific auth
 Snapshot at the end of Sept 19:
 
 - **In progress:** #228 (the split; steps 1-3 done).
-- **Staging** (done and verified on staging, awaiting promotion): #194, #206, #220, #221, #222, #223, #224, #225, #226.
-- **Ready:** #230 (P1, the Deep QA / Baseline finding above; **first thing to work on**), #227 (P2: Ask's prose backstop rewrites "approved" to "proposed for approval (not yet approved)" even for approved Current State), #136 (P2, project-area ids; downgraded from P1), #135, #138, #139 (tech-debt audits; each explicitly allows deciding the current state is acceptable).
-- **Backlog:** #229 (P2: the app renders half-dark in dark-mode browsers, pre-existing), #195 and #196 (cheat sheets; Paige is producing the content and will say when the PDFs are ready), #142 (**a learning placeholder that may never ship in State; leave it alone**).
+- **Staging** (done and verified on staging, awaiting promotion): #230 (fix only; assertion-tolerance decision and #231 remain), #194, #206, #220, #221, #222, #223, #224, #225, #226.
+- **Ready:** #227 (P2: Ask's prose backstop rewrites "approved" to "proposed for approval (not yet approved)" even for approved Current State), #136 (P2, project-area ids; downgraded from P1), #135, #138, #139 (tech-debt audits; each explicitly allows deciding the current state is acceptable).
+- **Backlog:** #231 (P2: failed Baseline analysis has no retry in the Baseline UI), #229 (P2: the app renders half-dark in dark-mode browsers, pre-existing), #195 and #196 (cheat sheets; Paige is producing the content and will say when the PDFs are ready), #142 (**a learning placeholder that may never ship in State; leave it alone**).
 - Board notes: the Priority field only has P0/P1/P2 (the setup doc also lists P3); new issues land in Backlog. `gh` now has Project scope, so Status and fields can be set with `gh project item-edit`.
 
 Completed learning/measurement work includes:
