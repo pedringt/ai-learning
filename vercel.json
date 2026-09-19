@@ -34,6 +34,50 @@
       ],
       "destination": "https://www.authenticignorance.site/:path*",
       "permanent": true
+    },
+    {
+      "source": "/implementation-context-prototype",
+      "has": [
+        {
+          "type": "host",
+          "value": "www.authenticignorance.site"
+        }
+      ],
+      "destination": "https://state.authenticignorance.site/",
+      "permanent": false
+    },
+    {
+      "source": "/implementation-context-prototype/index.html",
+      "has": [
+        {
+          "type": "host",
+          "value": "www.authenticignorance.site"
+        }
+      ],
+      "destination": "https://state.authenticignorance.site/",
+      "permanent": false
+    },
+    {
+      "source": "/implementation-context-prototype/:path*",
+      "has": [
+        {
+          "type": "host",
+          "value": "www.authenticignorance.site"
+        }
+      ],
+      "destination": "https://state.authenticignorance.site/:path*",
+      "permanent": false
+    },
+    {
+      "source": "/state-product-health",
+      "has": [
+        {
+          "type": "host",
+          "value": "www.authenticignorance.site"
+        }
+      ],
+      "destination": "https://state.authenticignorance.site/state-product-health",
+      "permanent": false
     }
   ],
   "headers": [
