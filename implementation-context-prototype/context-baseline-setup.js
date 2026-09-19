@@ -169,17 +169,87 @@
     return `<div class="baseline-draft-dialog"><span class="eyebrow">Baseline Setup</span><h2 id="dialogTitle">Review your Starting State</h2><p class="baseline-draft-intro">This is the project picture State assembled from your starting material. Edit routine facts, move them between sections, or remove misunderstandings. Nothing below becomes Current State until you confirm it.</p>${attention}<section class="baseline-draft-section"><h3>Starting State</h3>${facts}</section>${questions}<div class="baseline-draft-actions"><span class="baseline-draft-status">${esc(status)}</span><button type="button" class="btn secondary" data-action="close-dialog">Cancel</button><button type="button" class="btn primary" data-baseline-confirm-starting ${summary.can_confirm?'':'disabled'}>Confirm Starting State</button></div></div>`;
   }
 
+  // The review dialog is a snapshot of the draft. If it is opened while
+  // Evidence is still being analyzed (#230), it must keep itself current:
+  // watch the draft until analysis settles and redraw when it changes.
+  let dialogRequest=0,dialogPollTimer=null,shownSignature='';
+  const DIALOG_POLL_MS=1500,DIALOG_POLL_MAX=200;
+  const draftDialogOpen=()=>!!document.querySelector('.baseline-draft-dialog');
+  const draftSignature=summary=>JSON.stringify([summary.status,summary.can_confirm,summary.counts||{},summary.draft||{},summary.needs_individual_review||[]]);
+  const FACT_FIELDS=['area','topic','statement'];
+
+  function captureEdits(){
+    const edits=new Map();
+    document.querySelectorAll('.baseline-draft-fact[data-proposal-id]').forEach(card=>{
+      const edit={removed:card.dataset.removed==='true'};
+      FACT_FIELDS.forEach(field=>{edit[field]=card.querySelector(`[data-baseline-${field}]`)?.value;});
+      edits.set(card.dataset.proposalId,edit);
+    });
+    const active=document.activeElement,card=active?.closest?.('.baseline-draft-fact[data-proposal-id]');
+    const field=card&&FACT_FIELDS.find(name=>active.matches(`[data-baseline-${name}]`));
+    return {edits,focus:field?{id:card.dataset.proposalId,field}:null};
+  }
+
+  function restoreEdits({edits,focus}){
+    document.querySelectorAll('.baseline-draft-fact[data-proposal-id]').forEach(card=>{
+      const edit=edits.get(card.dataset.proposalId);if(!edit)return;
+      FACT_FIELDS.forEach(field=>{const input=card.querySelector(`[data-baseline-${field}]`);if(input&&edit[field]!==undefined)input.value=edit[field];});
+      if(edit.removed)card.querySelector('[data-baseline-remove-fact]')?.click();
+    });
+    if(!focus)return;
+    const card=[...document.querySelectorAll('.baseline-draft-fact[data-proposal-id]')].find(node=>node.dataset.proposalId===focus.id);
+    const input=card?.querySelector(`[data-baseline-${focus.field}]`);
+    if(input&&!input.disabled){input.focus();input.setSelectionRange?.(input.value.length,input.value.length);}
+  }
+
+  function renderDraftDialog(summary){
+    const kept=captureEdits();
+    shownSignature=draftSignature(summary);
+    showDialog(draftDialogHtml(summary));
+    restoreEdits(kept);
+    watchOpenDraft(summary);
+  }
+
+  function watchOpenDraft(summary){
+    clearTimeout(dialogPollTimer);
+    if(!(summary?.counts?.processing_evidence>0))return;
+    const id=projectId(),requestId=dialogRequest;let attempts=0;
+    const stale=()=>requestId!==dialogRequest||projectId()!==id||!draftDialogOpen();
+    const tick=async()=>{
+      if(stale())return;
+      attempts++;
+      let pending=true;
+      try{
+        const next=await baselineRequest('/api/baseline/draft');
+        if(stale())return;
+        latestDraft=next;
+        if(next.status!=='baseline_setup'){closeDialog();renderBanner(next);return;}
+        const changed=draftSignature(next)!==shownSignature;
+        // Redrawing would discard a half-typed new fact; wait for that form to close.
+        if(changed&&!document.querySelector('[data-baseline-new-fact-form]')){renderDraftDialog(next);return;}
+        pending=changed||(next.counts?.processing_evidence||0)>0;
+      }catch(error){ /* keep watching; the next tick retries */ }
+      if(pending&&attempts<DIALOG_POLL_MAX)dialogPollTimer=setTimeout(tick,DIALOG_POLL_MS);
+    };
+    dialogPollTimer=setTimeout(tick,DIALOG_POLL_MS);
+  }
+
   async function openDraft(){
+    const requestId=++dialogRequest;
+    clearTimeout(dialogPollTimer);
     showDialog('<span class="eyebrow">Baseline Setup</span><h2 id="dialogTitle">Loading Starting State...</h2>');
     try{
       const summary=await baselineRequest('/api/baseline/draft');
+      if(requestId!==dialogRequest)return; // a newer open superseded this response
       latestDraft=summary;
       if(summary.status!=='baseline_setup'){ closeDialog(); renderBanner(summary); return; }
-      showDialog(draftDialogHtml(summary));
+      renderDraftDialog(summary);
     }catch(error){
+      if(requestId!==dialogRequest)return;
       showDialog(`<span class="eyebrow">Baseline Setup</span><h2 id="dialogTitle">Starting State is unavailable.</h2><p>${esc(error.message||'Please try again.')}</p><div class="dialog-actions"><button class="btn primary" type="button" data-action="close-dialog">Close</button></div>`);
     }
   }
+  window.STATE_BASELINE_SETUP={openDraft};
 
   function collectDecisions(){
     return [...document.querySelectorAll('.baseline-draft-fact[data-proposal-id]')].map(card=>({
