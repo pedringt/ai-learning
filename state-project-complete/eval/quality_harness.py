@@ -300,6 +300,10 @@ def review_quality_metrics(results: list[ReviewQualityResult]) -> dict[str, Any]
     false_negative = [r for r in results if r.scenario.review_needed and not r.review_recommended]
     scored = [r for r in results if r.processing_status != "error"]
     interpretation_correct = [r for r in scored if r.interpretation_correct]
+    # Errored scenarios are left out of the rates (they could not be scored) but
+    # still count as high-severity failures: a high-severity case that never ran
+    # cannot be assumed to pass, so this fails closed. The separate `errors`
+    # count keeps harness/software faults distinguishable from model misses (#222).
     high_severity_failures = [r for r in results if r.scenario.severity == "high" and not r.passed]
     return {
         "total": len(results),
@@ -314,6 +318,8 @@ def review_quality_metrics(results: list[ReviewQualityResult]) -> dict[str, Any]
 
 
 def ask_quality_metrics(results: list[AskQualityResult]) -> dict[str, Any]:
+    # Same error policy as review_quality_metrics: excluded from rates, counted as
+    # high-severity failures, and reported separately in `errors` (#222).
     completed = [r for r in results if not r.error]
     def rate(predicate):
         return sum(1 for r in completed if predicate(r)) / len(completed) if completed else None

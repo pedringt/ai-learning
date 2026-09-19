@@ -104,3 +104,26 @@ class QualityEvalDatasetTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class ErrorAccountingTests(unittest.TestCase):
+    """Errored scenarios: excluded from rates, counted as high-severity, reported separately (#222)."""
+
+    def _result(self, scenario, *, error="", ok=True):
+        from eval.quality_harness import AskQualityResult
+
+        return AskQualityResult(
+            scenario=scenario, answer=None if error else {"answer": "x"},
+            required_facts_ok=ok, forbidden_claims_ok=ok, uncertainty_ok=ok,
+            open_item_ok=ok, authority_ok=ok, error=error,
+        )
+
+    def test_ask_error_is_separate_from_rates_but_counts_as_high_severity(self):
+        from eval.quality_harness import ask_quality_metrics
+
+        high = next(s for s in ASK_SCENARIOS if s.severity == "high")
+        metrics = ask_quality_metrics([self._result(high), self._result(high, error="boom", ok=False)])
+        self.assertEqual(metrics["total"], 2)
+        self.assertEqual(metrics["errors"], 1)
+        self.assertEqual(metrics["overall_pass_rate"], 1.0)  # only the completed case is scored
+        self.assertEqual(metrics["high_severity_failures"], 1)  # the errored high-severity case fails closed
