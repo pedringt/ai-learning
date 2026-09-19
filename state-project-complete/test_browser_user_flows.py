@@ -102,7 +102,7 @@ def _launch_page(hydration_ms: int = 120, ask_ms: int = 180, resolved_review_ms:
     pw = sync_playwright().start()
     browser = _launch_chromium(pw)
     page = browser.new_page(viewport={"width": 1398, "height": 986})
-    css = (ROOT / "site-shell.css").read_text() + "\n" + (FRONT / "context-tool.css").read_text()
+    css = (FRONT / "state-shell.css").read_text() + "\n" + (FRONT / "context-tool.css").read_text()
     page.set_content(f"<!doctype html><html><head><style>{css}</style></head><body>{_body_markup()}</body></html>")
     page.add_script_tag(content=(FRONT / "context-data.js").read_text())
     page.add_script_tag(content=_mock_api_script(hydration_ms, ask_ms, resolved_review_ms))
@@ -137,7 +137,9 @@ def test_workspace_hydration_does_not_replace_focused_ask_input():
         browser.close(); pw.stop()
 
 
-def test_shared_modal_is_never_hidden_under_portfolio_header():
+def test_shared_modal_is_never_hidden_under_the_product_bar():
+    # State no longer carries the portfolio header (#228); the modal must still
+    # sit above the app's own product bar.
     pw, browser, page = _launch_page(hydration_ms=10)
     try:
         page.locator('[data-action="add-info"]').click()
@@ -148,8 +150,9 @@ def test_shared_modal_is_never_hidden_under_portfolio_header():
         assert close and close["y"] >= dialog["y"]
         assert dialog["y"] + dialog["height"] <= 976
         overlay_z = int(page.locator("#overlay").evaluate("e=>getComputedStyle(e).zIndex"))
-        topbar_z = int(page.locator(".topbar").evaluate("e=>getComputedStyle(e).zIndex"))
-        assert overlay_z > topbar_z
+        bar_z = page.locator(".prototype-productbar").evaluate("e=>getComputedStyle(e).zIndex")
+        bar_z = 0 if bar_z == "auto" else int(bar_z)
+        assert overlay_z > bar_z
         page.locator('[data-action="close-dialog"]').first.click()
         page.locator('.demo-help-button').click()
         help_box = page.locator(".dialog").bounding_box()

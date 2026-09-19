@@ -1,5 +1,5 @@
 const assert = require('assert');
-const H = require('../state-product-health.js');
+const H = require('./state-product-health.js');
 
 (async()=>{
   let pass=0;
