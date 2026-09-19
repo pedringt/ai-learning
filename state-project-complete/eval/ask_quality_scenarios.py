@@ -22,7 +22,9 @@ class AskQualityScenario:
     pending_reviews: tuple[str, ...] = field(default_factory=tuple)
     open_questions: tuple[str, ...] = field(default_factory=tuple)
     history: tuple[tuple[str, str, str], ...] = field(default_factory=tuple)
-    required_facts: tuple[str, ...] = field(default_factory=tuple)
+    # Each entry is a required fact: either one phrase, or a tuple of acceptable
+    # phrasings of the same fact (any one satisfies it).
+    required_facts: tuple[str | tuple[str, ...], ...] = field(default_factory=tuple)
     forbidden_claims: tuple[str, ...] = field(default_factory=tuple)
     should_express_uncertainty: bool = False
     should_reference_open_item: bool = False
@@ -61,7 +63,7 @@ SCENARIOS = (
         question="What percentage of tickets will be fully autonomous?",
         current_state=(("automation", "A safe autonomous-resolution percentage has not been established."),),
         open_questions=("What autonomous-resolution percentage is safe and achievable?",),
-        required_facts=("not established",),
+        required_facts=(("not established", "not yet established", "not been established"),),
         forbidden_claims=("0%", "50%"),
         should_express_uncertainty=True,
         should_reference_open_item=True,
@@ -109,7 +111,7 @@ SCENARIOS = (
         category="conflict",
         question="Does the vendor train on customer content?",
         current_state=(("security", "The approved enterprise terms state customer content is not used for model training."),),
-        pending_reviews=("New legal evidence may contradict the approved enterprise-terms interpretation."),
+        pending_reviews=("New legal evidence may contradict the approved enterprise-terms interpretation.",),
         required_facts=("not used",),
         forbidden_claims=("definitely uses customer content",),
         should_express_uncertainty=True,

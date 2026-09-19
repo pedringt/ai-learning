@@ -1,6 +1,7 @@
 import unittest
 
-from eval.ask_quality_scenarios import SCENARIOS as ASK_SCENARIOS
+from eval.ask_quality_scenarios import SCENARIOS as ASK_SCENARIOS, AskQualityScenario
+from eval.quality_harness import score_ask_answer
 from eval.review_interpretation_scenarios import SCENARIOS as REVIEW_SCENARIOS
 
 
@@ -53,6 +54,41 @@ class QualityEvalDatasetTests(unittest.TestCase):
         self.assertTrue(any(scenario.should_distinguish_proposal_from_truth for scenario in ASK_SCENARIOS))
         self.assertTrue(any(scenario.should_express_uncertainty for scenario in ASK_SCENARIOS))
         self.assertTrue(any(scenario.should_reference_open_item for scenario in ASK_SCENARIOS))
+
+    def test_scenario_collection_fields_are_tuples_not_bare_strings(self):
+        # A parenthesised string without a trailing comma is a str, and the seeder
+        # then iterates it character by character (issue #222).
+        for scenario in (*REVIEW_SCENARIOS, *ASK_SCENARIOS):
+            for name in (
+                "current_state", "open_questions", "pending_reviews", "history",
+                "required_facts", "forbidden_claims",
+            ):
+                if hasattr(scenario, name):
+                    self.assertIsInstance(getattr(scenario, name), tuple, f"{scenario.id}.{name}")
+
+    def test_required_fact_accepts_any_listed_phrasing(self):
+        scenario = AskQualityScenario(
+            id="t", category="uncertainty", question="q", current_state=(),
+            required_facts=(("not established", "not yet established"),),
+        )
+        for wording in ("It is not established.", "The figure is not yet established."):
+            self.assertTrue(score_ask_answer(scenario, {"answer": wording}).required_facts_ok, wording)
+        self.assertFalse(score_ask_answer(scenario, {"answer": "It is 40%."}).required_facts_ok)
+
+    def test_plain_string_required_fact_still_matches(self):
+        scenario = AskQualityScenario(
+            id="t", category="x", question="q", current_state=(), required_facts=("security",),
+        )
+        self.assertTrue(score_ask_answer(scenario, {"answer": "Security has not signed off."}).required_facts_ok)
+        self.assertFalse(score_ask_answer(scenario, {"answer": "Nothing blocks launch."}).required_facts_ok)
+
+    def test_uncertainty_language_recognises_common_hedges(self):
+        scenario = AskQualityScenario(
+            id="t", category="x", question="q", current_state=(), should_express_uncertainty=True,
+        )
+        for wording in ("Readiness cannot be confirmed.", "The question remains open.", "It is unanswered."):
+            self.assertTrue(score_ask_answer(scenario, {"answer": wording}).uncertainty_ok, wording)
+        self.assertFalse(score_ask_answer(scenario, {"answer": "Launch is on October 1."}).uncertainty_ok)
 
     def test_ask_cases_define_a_checkable_expectation(self):
         for scenario in ASK_SCENARIOS:

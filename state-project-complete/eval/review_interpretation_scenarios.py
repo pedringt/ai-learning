@@ -54,7 +54,7 @@ SCENARIOS = (
     ReviewInterpretationScenario(
         id="review_question_answer_only",
         category="question_answer_no_state_change",
-        evidence="Legal confirmed the vendor retention review is complete and the answer to the open contract question is no.",
+        evidence="Legal answered the open contract question: the proposed contract does not permit the disputed retention behavior.",
         current_state=(("vendor", "Vendor contract review is still underway."),),
         open_questions=("Does the proposed contract permit the disputed retention behavior?",),
         expected_action="answer_question",
@@ -100,6 +100,7 @@ SCENARIOS = (
         category="unknown_semantics",
         evidence="We still do not know the target autonomous-resolution percentage.",
         current_state=(("automation", "A safe automation percentage has not been established."),),
+        review_needed=False,
         expected_action="preserve_evidence_only",
         must_preserve_uncertainty=True,
         severity="high",

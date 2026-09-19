@@ -235,6 +235,7 @@ def _has_uncertainty_language(text: str) -> bool:
     signals = (
         "unknown", "not established", "not decided", "pending", "open question",
         "unresolved", "uncertain", "awaiting review", "not enough", "has not been approved",
+        "cannot be confirmed", "cannot be determined", "remains open", "unanswered",
     )
     return any(signal in text for signal in signals)
 
@@ -251,7 +252,10 @@ def _distinguishes_proposal(text: str) -> bool:
 
 def score_ask_answer(scenario: AskQualityScenario, answer: dict[str, Any]) -> AskQualityResult:
     text = _normalize(_flatten_strings(answer))
-    required_ok = all(_normalize(fact) in text for fact in scenario.required_facts)
+    required_ok = all(
+        any(_normalize(phrase) in text for phrase in ((fact,) if isinstance(fact, str) else fact))
+        for fact in scenario.required_facts
+    )
     forbidden_ok = all(_normalize(claim) not in text for claim in scenario.forbidden_claims)
     uncertainty_ok = (not scenario.should_express_uncertainty) or _has_uncertainty_language(text)
     open_item_ok = (not scenario.should_reference_open_item) or _has_open_item_language(text)
