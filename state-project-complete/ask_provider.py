@@ -62,6 +62,11 @@ _LOOKUP_ANCHORS = {
     "count", "number", "vendor", "location", "office", "person", "name",
 }
 
+# Anchors that name an entity rather than a requested attribute. They only make
+# the lookup guard strict when nothing else in the question gives it a topic
+# ("Who is the vendor?"); see _filter_candidate_payload and #223.
+_ENTITY_ANCHORS = {"vendor", "office", "person"}
+
 # "date"/"deadline" lookups (e.g. "has the launch date been decided?") were
 # being stripped from candidates entirely: the strict anchor-match below only
 # checked for the literal token "date" in a record's text, but a record that
@@ -181,6 +186,12 @@ def _filter_candidate_payload(query: str, payload: Mapping[str, Any]) -> dict[st
     if not anchor_terms:
         return data
     topic_terms = normalized_query - anchor_terms
+    # An entity noun that is the only anchor and sits alongside other content
+    # terms is the subject of the question, not the attribute being looked up
+    # ("Does the vendor train on customer content?"). Filtering on it would drop
+    # the governing fact and any pending Review that qualifies it (#223).
+    if topic_terms and not (anchor_terms - _ENTITY_ANCHORS):
+        return data
 
     for bucket in ("state", "reviews", "questions", "history", "evidence"):
         records = data.get(bucket)

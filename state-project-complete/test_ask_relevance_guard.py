@@ -151,3 +151,75 @@ def test_guard_explicitly_distinguishes_grounding_from_relevance():
     hardened = _harden_prompt_for_relevance(_prompt("What is the pilot budget?"))
     assert "Grounded is not the same as relevant" in hardened
     assert "State does not have enough confirmed information" in hardened
+
+
+# --- #223: an entity noun ("vendor") used as the subject is not a lookup anchor ---
+# "Does the vendor train on customer content?" asks about a topic; it is not a
+# lookup for "the vendor" attribute. The strict anchor guard used to drop the
+# governing Current State fact AND the pending Review that qualifies it,
+# because neither literally contained the word "vendor".
+
+_VENDOR_TRAINING_PAYLOAD = {
+    "state": [{
+        "id": "terms",
+        "statement": "The approved enterprise terms state customer content is not used for model training.",
+        "authority": "governing_current_fact",
+    }],
+    "reviews": [{
+        "id": "legal-review",
+        "decision_question": "New legal evidence may contradict the approved enterprise-terms interpretation.",
+        "authority": "qualifies_current_state",
+    }],
+    "questions": [], "history": [], "evidence": [], "rules": [],
+}
+
+
+def test_entity_noun_as_subject_keeps_governing_fact_and_pending_review():
+    filtered = _filter_candidate_payload("Does the vendor train on customer content?", _VENDOR_TRAINING_PAYLOAD)
+    assert [x["id"] for x in filtered["state"]] == ["terms"]
+    assert [x["id"] for x in filtered["reviews"]] == ["legal-review"]
+
+
+def test_entity_noun_as_subject_survives_full_prompt_hardening():
+    import json
+    prompt = (
+        "You are State Ask.\n\nUser request: Does the vendor train on customer content?\n"
+        "Previous answer (for refinement only): null\n\n"
+        f"Authority-tagged candidate records:\n{json.dumps(_VENDOR_TRAINING_PAYLOAD)}\n\nReturn JSON only."
+    )
+    hardened = _harden_prompt_for_relevance(prompt)
+    assert "not used for model training" in hardened
+    assert "may contradict the approved enterprise-terms" in hardened
+
+
+def test_bare_entity_lookup_is_still_strict():
+    payload = {
+        "state": [
+            {"id": "scope", "statement": "Billing adjustments remain outside the pilot."},
+            {"id": "vendor", "statement": "The vendor is Acme Support Co."},
+        ],
+        "reviews": [], "questions": [], "history": [], "evidence": [], "rules": [],
+    }
+    filtered = _filter_candidate_payload("Who is the vendor?", payload)
+    assert [x["id"] for x in filtered["state"]] == ["vendor"]
+
+
+def test_entity_noun_with_a_real_attribute_anchor_is_still_strict():
+    payload = {
+        "state": [
+            {"id": "bystander", "statement": "Billing adjustments remain outside the pilot."},
+            {"id": "contact", "statement": "Vendor contact: Morgan Lee."},
+        ],
+        "reviews": [], "questions": [], "history": [], "evidence": [], "rules": [],
+    }
+    filtered = _filter_candidate_payload("Who is the vendor contact?", payload)
+    assert [x["id"] for x in filtered["state"]] == ["contact"]
+
+
+def test_office_as_subject_keeps_records_that_do_not_say_office():
+    payload = {
+        "state": [{"id": "move", "statement": "The move is scheduled for October 3."}],
+        "reviews": [], "questions": [], "history": [], "evidence": [], "rules": [],
+    }
+    filtered = _filter_candidate_payload("Is the office move on schedule?", payload)
+    assert [x["id"] for x in filtered["state"]] == ["move"]
