@@ -272,3 +272,9 @@
   .case-system-page .definition-list dt{margin-top:8px}
   .case-system-page .three-col{grid-template-columns:1fr;gap:16px}
 }
+/* State case study "What changed for me": lead-in, one quote, one short supporting paragraph. */
+.question-shift.is-quote{padding:20px 24px 18px}
+.question-shift.is-quote .shift-lead{margin:0 0 6px!important;font-size:14px!important;line-height:1.4!important}
+.question-shift.is-quote strong{max-width:640px;font-size:21px;line-height:1.35}
+.question-shift.is-quote .shift-support{max-width:680px;margin:14px 0 0!important;padding-top:12px;border-top:1px solid rgba(91,75,199,.18);font-size:15px!important;line-height:1.55!important}
+@media(max-width:760px){.question-shift.is-quote{padding:16px}.question-shift.is-quote strong{font-size:18px}}
