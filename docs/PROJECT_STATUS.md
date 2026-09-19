@@ -108,7 +108,7 @@ Do not weaken these without an explicit product decision:
 
 See `docs/product/RISKS.md` for the maintained register. The most important implementation-specific known risk is:
 
-- `project_areas.id` is a global primary key rather than project-scoped. It works for the two current seeded projects because their IDs do not collide, but it should be redesigned before expanding the project model further.
+- `project_areas.id` is a global primary key rather than project-scoped (R-009, tracked as #136, P2). It works because the two seeded projects use non-colliding hand-chosen IDs and user-created projects generate `area_<uuid>` IDs, so it is not biting today. Redesign it before adding another hand-seeded project or any path where a person or model chooses an area ID; the migration needs real Postgres coverage.
 
 Known UX issue:
 
