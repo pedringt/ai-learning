@@ -69,4 +69,6 @@ See `STATE-ASK-EVALUATION-MAP.md` for the Ask behavior/evaluation map.
 
 This folder is deployed as its own Vercel project, `state` (Root Directory `implementation-context-prototype`, production branch `main`). It is self-contained: it must not load files from the repository root. An Ignored Build Step skips builds for pushes that do not touch this folder.
 
+Which backend the page calls is decided by `api/state-config.js`: a **production** deployment (the `main` branch) uses the production API, and every **preview** deployment (for example the `staging` branch) uses the staging API. A Vercel project's very first deployment is labelled production whatever branch it came from, so check `window.STATE_API_BASE` on a new project's first preview before testing against it.
+
 During the move to its own subdomain (#228) the portfolio deployment still serves this folder at `/implementation-context-prototype/`; the root `api/state-config.js` stays for that until the portfolio stops serving the app.
