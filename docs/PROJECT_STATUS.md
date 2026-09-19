@@ -153,7 +153,7 @@ Decision (Paige, Sept 19): **Option A**. A second Vercel project from this same 
 Things a new session must know about this work:
 
 - **The `state` project's two production URLs (`state-cairn10.vercel.app`, `state-eight-theta.vercel.app`) currently serve a stale staging-branch build that calls the *production* API** (Vercel labels a project's first deployment "production" whatever its branch; `api/state-config.js` picks the API from the environment). They are behind Vercel login and CORS blocks them, but **do not use them for testing.** They are replaced when `main` deploys. Use `state-git-staging-cairn10.vercel.app` (staging API).
-- Not yet verified: that the `state` project's production branch is `main`, and that the Ignored Build Step really skips pushes that don't touch the app folder. Confirm at step 4 / on the next docs-only push.
+- **Verified:** the Ignored Build Step works (a docs-only push, `d5a4053`, left the `state` project's deployment CANCELED while the portfolio project built). **Not yet verified:** that the `state` project's production branch is `main` (the API does not expose it; a `staging` push produced a preview, so it is not `staging`). Confirm at step 4 when `main` deploys.
 - The app must never hard-code `/implementation-context-prototype/`. `state-base-path-tests.js` fails if any app source does.
 - Backend `CORS_ORIGINS` today: staging = `http://localhost:3000` + `ai-learning-git-staging`, four old `ai-learning-git-pr{1..4}-…` preview origins, and `https://state-git-staging-cairn10.vercel.app`; production = `http://localhost:3000`, `https://ai-learning-rouge.vercel.app`, `https://authenticignorance.site`, `https://www.authenticignorance.site`, and `https://state.authenticignorance.site`. `STATE_FRONTEND_BASE_URL` (where Slack connect lands) is unchanged on purpose.
 
@@ -171,8 +171,8 @@ Snapshot at the end of Sept 19:
 
 - **In progress:** #228 (the split; steps 1-3 done).
 - **Staging** (done and verified on staging, awaiting promotion): #194, #206, #220, #221, #222, #223, #224, #225, #226.
-- **Ready:** #227 (P2: Ask's prose backstop rewrites "approved" to "proposed for approval (not yet approved)" even for approved Current State), #136 (P2, project-area ids; downgraded from P1), #135, #138, #139 (tech-debt audits; each explicitly allows deciding the current state is acceptable).
-- **Backlog:** #230 (P1, the Deep QA / Baseline finding above; **first thing to work on**), #229 (P2: the app renders half-dark in dark-mode browsers, pre-existing), #195 and #196 (cheat sheets; Paige is producing the content and will say when the PDFs are ready), #142 (**a learning placeholder that may never ship in State; leave it alone**).
+- **Ready:** #230 (P1, the Deep QA / Baseline finding above; **first thing to work on**), #227 (P2: Ask's prose backstop rewrites "approved" to "proposed for approval (not yet approved)" even for approved Current State), #136 (P2, project-area ids; downgraded from P1), #135, #138, #139 (tech-debt audits; each explicitly allows deciding the current state is acceptable).
+- **Backlog:** #229 (P2: the app renders half-dark in dark-mode browsers, pre-existing), #195 and #196 (cheat sheets; Paige is producing the content and will say when the PDFs are ready), #142 (**a learning placeholder that may never ship in State; leave it alone**).
 - Board notes: the Priority field only has P0/P1/P2 (the setup doc also lists P3); new issues land in Backlog. `gh` now has Project scope, so Status and fields can be set with `gh project item-edit`.
 
 Completed learning/measurement work includes:
