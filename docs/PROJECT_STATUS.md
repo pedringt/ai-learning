@@ -56,9 +56,9 @@ Production surfaces (today):
 
 - Portfolio: `https://www.authenticignorance.site/` (the apex `authenticignorance.site` 308-redirects to `www`)
 - State case study: `https://www.authenticignorance.site/implementation-context`
-- State product: `https://www.authenticignorance.site/implementation-context-prototype/`
+- State product: `https://state.authenticignorance.site` (attached to the Vercel `state` project on Sept 19; also still served at the old path `https://www.authenticignorance.site/implementation-context-prototype/` until #228 step 5)
 - Production API: Render `state-api` (`https://state-api-6waw.onrender.com`)
-- Planned: the State product moves to `https://state.authenticignorance.site` (#228; the domain is not attached yet).
+- The portfolio's State links still point at the old path; step 5 of #228 repoints them and adds redirects.
 
 Staging surfaces (all behind Vercel login; Vercel Auth "all except custom domains"):
 
@@ -145,18 +145,18 @@ Decision (Paige, Sept 19): **Option A**. A second Vercel project from this same 
 | Step | Status |
 |---|---|
 | 1. Make the app self-contained (own shell, header, functions, dashboard; relative asset paths via `window.__STATE_BASE`) | **Done and on `main` (production) since Sept 19 (#234).** Proven behavior-neutral: computed styles of every element in all six views, at 1280 and 375 px, are identical before and after apart from the added "Case study" link. |
-| 2. Create the Vercel project `state` | **Done.** Root Directory `implementation-context-prototype`, Ignored Build Step `git diff HEAD^ HEAD --quiet .`, same protection as the portfolio project. **No custom domain attached.** |
+| 2. Create the Vercel project `state` | **Done.** Root Directory `implementation-context-prototype`, Ignored Build Step `git diff HEAD^ HEAD --quiet .`, same protection as the portfolio project. Custom domain `state.authenticignorance.site` attached Sept 19 (step 4). |
 | 3. Add the new origins to backend `CORS_ORIGINS` | **Done and verified** on both Render services (additive only). |
-| 4. Promote to `main`, confirm `state` builds `main` as production against the production API, attach `state.authenticignorance.site`, then set `STATE_FRONTEND_BASE_URL` on both services and check the Slack app's URL settings | **Partly done (Sept 19, #234).** Done and verified: `main` promoted; the `state` project built `main` as **production** (READY, ref `main`), so its production branch is `main`; production `state-api` serves `fef27b2`. **Still to do, needs Paige's explicit go-ahead (production infrastructure):** attach `state.authenticignorance.site`, set `STATE_FRONTEND_BASE_URL` on both Render services, check the Slack app's URL settings. |
+| 4. Promote to `main`, confirm `state` builds `main` as production against the production API, attach `state.authenticignorance.site`, then set `STATE_FRONTEND_BASE_URL` on both services and check the Slack app's URL settings | **Done except the Slack check (Sept 19).** `main` promoted (#234); the `state` project builds `main` as production; `state.authenticignorance.site` attached to the `state` project (verified: valid Let's Encrypt certificate, HTTPS 200, the app loads and calls only the production API, no CORS or console errors); `STATE_FRONTEND_BASE_URL` set on both Render services (production `https://state.authenticignorance.site`, staging `https://state-git-staging-cairn10.vercel.app`), each redeploy verified live and the Slack-connect landing URL confirmed from outside (`/api/integrations/slack/oauth/callback` redirects to the new value). **Still to do, Paige only:** check the Slack app's URL settings in Slack's admin console (the OAuth redirect URL is the backend's, so it should not need changing). The production restart took about a minute. |
 | 5. Portfolio: point the 8 links (6 pages) at the subdomain in a new tab, redirect the old `/implementation-context-prototype/*`, stop serving the app and the root `api/state-config.js` from the portfolio deployment | Not started (after 4). |
 | 6. Repoint `deep-qa.yml` (hard-codes the old staging URL and the portfolio Vercel project id), the Playwright/`qa/deployed` specs and `tools/`; update `QA.md` and `RELEASE.md`; trim the portfolio-only selectors that were copied into `state-shell.*` | Not started. |
 
 Things a new session must know about this work:
 
-- **The `state` project now has a real production deployment: `main` at `fef27b2` (READY).** Its two `state-*.vercel.app` production URLs (`state-cairn10.vercel.app`, `state-eight-theta.vercel.app`) are aliases of the production deployment; they used to serve a stale staging-branch build (Vercel labels a project's first deployment "production" whatever its branch) and were not re-checked individually after the merge. They are behind Vercel login and CORS-limited. No custom domain is attached yet. `api/state-config.js` picks the production API when `VERCEL_ENV` is `production`.
+- **The `state` project now has a real production deployment: `main` at `fef27b2` (READY).** Its two `state-*.vercel.app` production URLs (`state-cairn10.vercel.app`, `state-eight-theta.vercel.app`) are aliases of the production deployment; they used to serve a stale staging-branch build (Vercel labels a project's first deployment "production" whatever its branch) and were not re-checked individually after the merge. They are behind Vercel login and CORS-limited. The custom domain `state.authenticignorance.site` was attached on Sept 19 (step 4). `api/state-config.js` picks the production API when `VERCEL_ENV` is `production`.
 - **Verified:** the Ignored Build Step works (a docs-only push, `d5a4053`, left the `state` project's deployment CANCELED while the portfolio project built), and the `state` project's production branch is `main` (its production deployment is ref `main`, built at the merge). One more thing for step 5: the old dashboard URL `/state-product-health` now 404s on production because the page moved into the app folder (`/implementation-context-prototype/state-product-health` works); nothing in the repo links to the old path and the dashboard is internal, so only a bookmark breaks; step 5's redirects should cover it.
 - The app must never hard-code `/implementation-context-prototype/`. `state-base-path-tests.js` fails if any app source does.
-- Backend `CORS_ORIGINS` today: staging = `http://localhost:3000` + `ai-learning-git-staging`, four old `ai-learning-git-pr{1..4}-…` preview origins, and `https://state-git-staging-cairn10.vercel.app`; production = `http://localhost:3000`, `https://ai-learning-rouge.vercel.app`, `https://authenticignorance.site`, `https://www.authenticignorance.site`, and `https://state.authenticignorance.site`. `STATE_FRONTEND_BASE_URL` (where Slack connect lands) is unchanged on purpose.
+- `STATE_FRONTEND_BASE_URL` (where Slack connect lands; the backend appends `?slack_connect=…#settings-slack`): production is now `https://state.authenticignorance.site`, staging is `https://state-git-staging-cairn10.vercel.app`. **Previous values, for rollback:** staging was `https://ai-learning-git-staging-cairn10.vercel.app/implementation-context-prototype/index.html` (read from the live redirect before the change); production's was not read before the change, but by the same pattern it was almost certainly `https://www.authenticignorance.site/implementation-context-prototype/index.html` (inferred, unverified). Backend `CORS_ORIGINS` today: staging = `http://localhost:3000` + `ai-learning-git-staging`, four old `ai-learning-git-pr{1..4}-…` preview origins, and `https://state-git-staging-cairn10.vercel.app`; production = `http://localhost:3000`, `https://ai-learning-rouge.vercel.app`, `https://authenticignorance.site`, `https://www.authenticignorance.site`, and `https://state.authenticignorance.site`. `STATE_FRONTEND_BASE_URL` was changed on Sept 19 (see the previous-values note above).
 
 ## Release gate (#230): resolved; promoted to `main` on Sept 19 (#234)
 
@@ -174,7 +174,7 @@ Promotion checklist reminders (`RELEASE.md`): explicit destination-specific auth
 
 Snapshot after the Sept 19 promotion:
 
-- **In progress:** #228 (the split; steps 1-3 done and on production; step 4 partly done: `main` promoted and the `state` project builds `main` as production; domain, `STATE_FRONTEND_BASE_URL` and Slack URL check still pending Paige's go-ahead; steps 5-6 not started).
+- **In progress:** #228 (the split; steps 1-4 done except the Slack app URL check, which only Paige can do; step 5 (portfolio links and redirects, including the old `/state-product-health` URL) and step 6 (repoint `deep-qa.yml`, `qa/deployed`, `tools/`, docs) not started).
 - **Staging:** empty. Released in #234 and moved to Done (issues closed): #230, #194, #206, #220, #221, #222, #223, #224, #225, #226.
 - **Ready:** #227 (P2: Ask's prose backstop rewrites "approved" to "proposed for approval (not yet approved)" even for approved Current State), #136 (P2, project-area ids; downgraded from P1), #135, #138, #139 (tech-debt audits, now with Work Type Tech debt and Product Area Platform; no Priority set; each explicitly allows deciding the current state is acceptable).
 - **Backlog:** #231 (P2: failed Baseline analysis has no retry in the Baseline UI), #232 (P2: Evidence added right after load can go to the seed project), #233 (P2: Baseline decomposition eval), #229 (P2: the app renders half-dark in dark-mode browsers, pre-existing), #195 and #196 (cheat sheets; Paige is producing the content and will say when the PDFs are ready), #142 (**a learning placeholder that may never ship in State; leave it alone**).
@@ -226,7 +226,7 @@ When starting a new work session:
 
 1. Read this file.
 2. Verify `main`/`staging` heads and any relevant open PRs.
-3. Check the relevant GitHub Issue/Project item. Start with #228 (the split): its comments hold the evidence and next steps, and step 4's remainder needs Paige's explicit go-ahead. #230 is closed.
+3. Check the relevant GitHub Issue/Project item. Start with #228 (the split): its comments hold the evidence and next steps; step 5 is next and changes the live portfolio, so get Paige's go-ahead. #230 is closed.
 4. Read `docs/product/PRODUCT_BRIEF.md` and `docs/product/DECISIONS.md` if product behavior is involved.
 5. Read `QA.md` before testing or changing QA behavior.
 6. Do not deploy or promote because tests passed. Follow `RELEASE.md` and get explicit authorization.
