@@ -149,3 +149,20 @@ Dogfooding AI Notes and State planning material showed opposite failure modes fr
 
 **Rejected / deferred**  
 Ending bootstrap when Current State first becomes non-empty; requiring people to manually split large source documents; solving large-input failures only by raising the model token ceiling; autonomous baseline acceptance; treating structural coverage as a complete semantic omission detector.
+
+---
+
+### DEC-008 — The Deep QA gate measures the app; model quality is observed, not gated
+
+**Status:** Settled  
+**Date:** 2026-09-19  
+**Related:** Issue #230; R-016; Issue #231
+
+**Decision**  
+The State Deep QA Baseline lifecycle test uses two tiers of checks. **Hard checks** fail the gate because they mean the app or the analysis path is broken: the review dialog does not stay stale during analysis, at least one draft fact appears (zero facts is a real failure), a manually added fact adds exactly one row, and confirming Starting State and later Evidence work. **Soft observations** (the number of facts, the number of areas, use of the "General" area) are recorded as annotations in the report and job summary but never fail the gate. The real model stays in the loop on the deployed stack.
+
+**Why**  
+The test used to require exactly 3 facts and more than one area from a real model. The same file yields 2 or 3 facts and 1 or 2 areas, so the gate failed intermittently for reasons that were not regressions, blocking promotion on model variance. App correctness and model quality are different questions and should not share one pass/fail.
+
+**Rejected / deferred**  
+A deterministic provider for this flow (it would need a test-only provider switch on a deployed server, and would stop exercising the real model path where the schema-violation failure occurred; deterministic lifecycle coverage already runs in `make qa-fast`); silently retrying schema-violating output in the test (hides a real product reliability problem, tracked in R-016 and #231). Model quality for Baseline decomposition is deferred to an eval (follow-up issue).
