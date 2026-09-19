@@ -222,7 +222,7 @@
     const script=document.createElement('script');
     script.dataset.stateAttentionAlignment='true';
     const local=location.protocol==='file:';
-    script.src=(local?'':'/implementation-context-prototype/')+'context-attention-alignment.js?v=r69-last-mile';
+    script.src=(window.__STATE_BASE||'')+'context-attention-alignment.js?v=r69-last-mile';
     document.head.appendChild(script);
   }
 

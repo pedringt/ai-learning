@@ -13,7 +13,7 @@
   if(!document.querySelector('script[data-state-final-mobile]')){
     const finalScript=document.createElement('script');
     finalScript.dataset.stateFinalMobile='1';
-    finalScript.src=(location.protocol==='file:'?'context-final-mobile.js?v=r63-mobile-final':'/implementation-context-prototype/context-final-mobile.js?v=r63-mobile-final');
+    finalScript.src=(window.__STATE_BASE||'')+'context-final-mobile.js?v=r63-mobile-final';
     finalScript.addEventListener('error',()=>document.documentElement.classList.remove('state-final-mobile-pending'),{once:true});
     document.head.appendChild(finalScript);
   }

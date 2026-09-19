@@ -112,7 +112,7 @@
   if(!document.querySelector('link[data-final-freeze-polish]')){
     const polish=document.createElement('link');
     polish.rel='stylesheet';
-    polish.href='final-freeze-polish.css';
+    polish.href=(window.__STATE_BASE||'')+'final-freeze-polish.css';
     polish.dataset.finalFreezePolish='true';
     document.head.appendChild(polish);
   }
