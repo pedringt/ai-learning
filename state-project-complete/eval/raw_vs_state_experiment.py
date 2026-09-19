@@ -40,7 +40,11 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from eval.harness import REQUIRES_KEY_REASON  # noqa: E402 (triggers dotenv load)
+from eval.env import load_local_env  # noqa: E402
+
+load_local_env()
+
+from eval.harness import REQUIRES_KEY_REASON  # noqa: E402
 
 MODEL = os.getenv("CLAUDE_MODEL", "claude-haiku-4-5-20251001")
 

@@ -1,3 +1,6 @@
+/* State's own shell stylesheet.
+ * Copied from the portfolio's site-shell.css so the State app no longer depends on the portfolio deployment (#228).
+ * It still contains portfolio-page selectors that do nothing inside State; trimming them is a separate cleanup. */
 
 /* v93 shared site shell — single source of truth for global header/navigation */
 :root{
@@ -589,29 +592,4 @@ body.v88-dark .home-state-copy .home-state-lead + p,
     grid-template-columns:1fr!important;
     gap:2px!important;
   }
-}
-/* Homepage rhythm (staging feedback): "More applied work" reads as part of the
-   project cards above it; "How I work with AI" reads as a deliberate closing line
-   with one full-width divider instead of a border plus a second kicker rule. */
-#ai-cs-mock [data-page="home"] .home-more-applied .section-kicker{
-  margin:12px 0 4px!important;
-}
-#ai-cs-mock [data-page="home"] .home-principle{
-  max-width:none!important;
-  margin-top:56px!important;
-  padding-top:26px!important;
-  border-top:1px solid var(--border)!important;
-}
-#ai-cs-mock [data-page="home"] .home-principle .section-kicker{
-  margin:0 0 6px!important;
-}
-#ai-cs-mock [data-page="home"] .home-principle .section-kicker::after{
-  display:none!important;
-}
-#ai-cs-mock [data-page="home"] .home-principle h2,
-#ai-cs-mock [data-page="home"] .home-principle p{
-  max-width:760px;
-}
-@media(max-width:820px){
-  #ai-cs-mock [data-page="home"] .home-principle{margin-top:40px!important;padding-top:20px!important}
 }

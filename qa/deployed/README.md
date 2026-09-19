@@ -32,10 +32,28 @@ scope changes.
 
 The Baseline flow intentionally exercises the current user path end to end:
 create a blank project, upload one starting source, wait for the Starting State
-draft, verify the structured source is decomposed into organized facts, add a
-missing fact, confirm Starting State, verify Current State, then submit ordinary
-Evidence after Baseline is complete. The temporary project is switched away
-from and deleted after all background analysis has settled.
+draft, add a missing fact, confirm Starting State, verify Current State, then
+submit ordinary Evidence after Baseline is complete. The temporary project is
+switched away from and deleted after all background analysis has settled.
+
+The real model's output for that file varies run to run, so the test separates
+two kinds of checks (DEC-008). **Hard checks fail the gate:** the review dialog
+does not stay stuck on "still being analyzed", at least one draft fact appears
+(zero facts is a real failure), adding a fact adds exactly one row, and confirm
+and the later Evidence flow work. **Soft observations never fail the gate:** the
+number of facts, the number of areas, and whether "General" was used are
+recorded as `model-quality` annotations and printed in the job summary
+(`NOTE`, or `WARN` when the split differs from the ideal of 3 facts, more than
+one area, no "General"). Model quality is tracked in evals, not in this gate.
+
+If the model raises a real Question or Review for the sample source, State
+correctly blocks Confirm until a person resolves it. The test then verifies the
+block (Confirm disabled, the flagged item listed) and reports the run as
+**skipped: inconclusive** with the reason, because the confirm and follow-up
+Evidence steps were not exercised. Re-run; a skipped Baseline test is not a pass.
+After Confirm the test waits for the page reload and for the app to open the
+temporary project, and asserts the follow-up Evidence request targets that
+project (see #232).
 
 ## One-time setup this needs (Paige, not Claude)
 

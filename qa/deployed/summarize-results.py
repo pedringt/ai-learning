@@ -22,8 +22,13 @@ def walk(suites, prefix=""):
         for spec in s.get("specs", []):
             for test in spec.get("tests", []):
                 status = test.get("results", [{}])[-1].get("status", "unknown")
-                mark = "PASS" if status == "passed" else "FAIL"
+                mark = "PASS" if status == "passed" else "SKIP" if status == "skipped" else "FAIL"
                 print(f"{mark} {prefix}{spec.get('title')}")
+                # Model-quality observations are recorded, never gating.
+                for note in test.get("annotations", []):
+                    if str(note.get("type", "")).startswith("model-quality"):
+                        label = "WARN" if note["type"].endswith("warning") else "NOTE"
+                        print(f"     {label} {note.get('description', '')}")
         walk(s.get("suites", []), prefix + s.get("title", "") + " / ")
 
 

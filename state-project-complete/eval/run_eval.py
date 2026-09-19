@@ -18,6 +18,10 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
+from eval.env import load_local_env
+
+load_local_env()
+
 from eval.harness import REQUIRES_KEY_REASON, precision_recall, run_all
 from eval.scenarios import SCENARIOS
 

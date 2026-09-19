@@ -1,5 +1,5 @@
 const path=require('path');
-const diagnostic=require(path.join(__dirname,'..','api','state-diagnostic.js'));
+const diagnostic=require(path.join(__dirname,'api','state-diagnostic.js'));
 
 let pass=0,fail=0;
 function check(name,ok,detail=''){

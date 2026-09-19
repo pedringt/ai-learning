@@ -18,13 +18,9 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import List
 
-from dotenv import load_dotenv
-
-# Loads state-project-complete/.env if present, so a real key can be dropped
-# into a plain gitignored file (no terminal/shell export required) --
-# harmless no-op if the file doesn't exist, and never overrides a variable
-# already set in the real environment.
-load_dotenv(Path(__file__).resolve().parent.parent / ".env")
+# NOTE: this module must not load .env at import time. Tests import it, and a
+# loaded ANTHROPIC_API_KEY would un-skip the real-model tests under
+# `make qa-fast` (#224). Eval entrypoints call eval.env.load_local_env().
 
 sys.path.insert(0, "interpretation_runtime")
 

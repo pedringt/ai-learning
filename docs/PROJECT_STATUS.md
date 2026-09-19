@@ -2,7 +2,7 @@
 
 This is the canonical current-state handoff for State and the surrounding portfolio. Read this first, then verify the repository and live environments before relying on older notes or conversation memory.
 
-_Last updated: September 18, 2026 Pacific time._
+_Last updated: September 19, 2026 (evening), Pacific time. Written as a handoff for a fresh session._
 
 ## Current product state
 
@@ -31,9 +31,16 @@ State is a portfolio and learning product. There is no planned external pilot or
 
 ## Branch and deployment state
 
-As of September 18, `main` contains the September 15-18 State product and portfolio work. `staging` was synced forward from `main` on September 18 and may also contain staging-only analytics/eval work. Always verify current branch heads before resuming work rather than relying on this snapshot.
+**Snapshot on Sept 19 evening (verify before relying on it):** `main` = `c957842` (production). `staging` = at or after `502b097` (the #230 fix is `7ef2837`, the Deep QA change `b6586e2` and `502b097`; was `c5afbb6`, 62 commits ahead; recount with `git rev-list --count main..staging`). `main` is an ancestor of `staging`, so promotion is a clean fast-forward-able merge. There are no open PRs. **Nothing from the last three days has been promoted, and promotion is currently on hold** (see "Release gate" below).
 
-Recent product changes now present on `main` include:
+What is on `staging` but not on `main` (all verified on the deployed staging environment):
+
+- **Portfolio content:** homepage "How I work with AI" block (#221); Learning Library additions in stages 02/05/06/07/09 (#221, #220); the Human + AI Workflow Design cheat sheet and its Stage 06 link (#194).
+- **State app self-contained** (#228 step 1): the app no longer loads portfolio files; it has its own shell, header ("Case study" link back to the portfolio) and functions; the analytics dashboard moved from the portfolio root into the app folder (`/state-product-health` on `main` becomes `/implementation-context-prototype/state-product-health`).
+- **Backend (Render production would redeploy):** Ask relevance fix for entity nouns like "vendor" (#223); new aggregate-only quality-analytics endpoints (#206); database migrations **016 and 017** (rehearsed on a production-shaped copy: 15 -> 17 applied, only the five new columns added, second boot clean; production is SQLite on a persistent disk, so the Sept 14 Postgres failure class does not apply).
+- **QA/tooling:** eval harness fixes (#222), `make qa-fast` no longer makes paid model calls when a `.env` exists (#224), dashboard fixes (#225, #226).
+
+Already on `main` (earlier work):
 
 - Fixed the blank-project bug cluster: Notes cross-project leakage (`syncApiEvidence()` matched static fixture notes via a double-negative filter), a hydration race on rapid project switching, missing Reset/Delete project lifecycle controls (two separate Settings surfaces both needed the fix), and a non-state-aware onboarding banner.
 - Added explicit Baseline Setup for new user-created projects. State assembles a draft Starting State from preserved Evidence; routine starting facts can be confirmed together, while conflicts, consequential ambiguity, and important unresolved choices stay in individual Reviews or Questions. A person explicitly confirms the Starting State before setup ends.
@@ -44,29 +51,29 @@ Recent product changes now present on `main` include:
 - Fixed [#146](https://github.com/pedringt/ai-learning/issues/146): **Propose for Current State** is no longer limited to Evidence that originally produced zero Reviews. It remains available after resolved Reviews and after one accepted State change when another fact may have been missed, subject to the unresolved-Review guard above.
 - Confirmed staging's own ephemeral-storage risk in practice, not just by inspection: two user-created staging projects' ids changed mid-session across redeploys, discarding their Notes/Current State. Tracked as R-014 in `docs/product/RISKS.md` (accepted staging tradeoff, distinct from the production risk in #145).
 
-Production surfaces:
+Production surfaces (today):
 
-- Portfolio: `https://www.authenticignorance.site/`
+- Portfolio: `https://www.authenticignorance.site/` (the apex `authenticignorance.site` 308-redirects to `www`)
 - State case study: `https://www.authenticignorance.site/implementation-context`
 - State product: `https://www.authenticignorance.site/implementation-context-prototype/`
-- Production API: Render `state-api`
+- Production API: Render `state-api` (`https://state-api-6waw.onrender.com`)
+- Planned: the State product moves to `https://state.authenticignorance.site` (#228; the domain is not attached yet).
 
-Staging surfaces:
+Staging surfaces (all behind Vercel login; Vercel Auth "all except custom domains"):
 
-- Frontend: Vercel staging/preview for the `staging` branch
-- Backend: `https://state-api-staging.onrender.com`
+- Portfolio + State at the old path: `https://ai-learning-git-staging-cairn10.vercel.app/` (Vercel project `ai-learning`)
+- State on its own project, served at a domain root: `https://state-git-staging-cairn10.vercel.app/` (Vercel project `state`, created Sept 19)
+- Backend: `https://state-api-staging.onrender.com` (free tier: sleeps when idle and **loses all its data on every restart or redeploy**, R-014)
 
 Hard release rule: product/site changes go through `staging` first unless the user explicitly authorizes a narrow exception. Promotion to `main` always requires explicit current authorization. Passing tests is not permission to deploy.
 
 ## Latest verified QA baseline
 
-Application commit `afdc24582624c3d40cbc1b721eded8a48d1a68d6` recorded a green deterministic verification baseline of:
+On `staging` head `7ef2837` (Sept 19; `make qa-fast` re-run there: 610 passed, 96 skipped, all JS suites green; the earlier line below describes `c5afbb6`): State QA Fast is green in CI, and `make qa-fast` passes locally (607 Python tests, 96 skipped because they need a real model key or Postgres, plus every `state-*-tests.js` suite, including the new `state-base-path-tests.js`). Locally `qa-fast` makes **no** real-model calls even when a `.env` exists (#224).
 
-- 479 Python tests passed
-- 18 frontend VM/behavior suites passed
-- 15 Playwright browser tests passed
+**State Deep QA is NOT green on this revision** (see "Release gate" below): 13 of 14 tests pass every run; the Baseline Setup lifecycle test fails intermittently.
 
-Treat those as evidence for that commit, not a permanent claim about future heads. Use the current GitHub Actions results for newer commits.
+Treat numbers here as evidence for that commit, not a permanent claim. Use current GitHub Actions results for newer commits.
 
 For routine QA, use the repository-root `QA.md` and `Makefile`:
 
@@ -108,7 +115,7 @@ Do not weaken these without an explicit product decision:
 
 See `docs/product/RISKS.md` for the maintained register. The most important implementation-specific known risk is:
 
-- `project_areas.id` is a global primary key rather than project-scoped. It works for the two current seeded projects because their IDs do not collide, but it should be redesigned before expanding the project model further.
+- `project_areas.id` is a global primary key rather than project-scoped (R-009, tracked as #136, P2). It works because the two seeded projects use non-colliding hand-chosen IDs and user-created projects generate `area_<uuid>` IDs, so it is not biting today. Redesign it before adding another hand-seeded project or any path where a person or model chooses an area ID; the migration needs real Postgres coverage.
 
 Known UX issue:
 
@@ -130,13 +137,72 @@ The repo now uses a GitHub-first operating model:
 - `docs/evals/` for evals
 - `docs/incidents/` for incident learning
 
-Open learning exercises include:
+## In flight: moving State to its own Vercel project and subdomain (#228)
 
-- **#122**: write a short incident review from a real recent production/deployment failure
+Decision (Paige, Sept 19): **Option A**. A second Vercel project from this same repo (Root Directory `implementation-context-prototype/`), served at `state.authenticignorance.site`. No repo extraction for State for now. **New products (for example Tastemake) start in their own repo.** The full research, coupling list and rehearsal notes are in the comments on #228.
 
-Completed measurement work:
+| Step | Status |
+|---|---|
+| 1. Make the app self-contained (own shell, header, functions, dashboard; relative asset paths via `window.__STATE_BASE`) | **Done on `staging`**, verified live. Proven behavior-neutral: computed styles of every element in all six views, at 1280 and 375 px, are identical before and after apart from the added "Case study" link. |
+| 2. Create the Vercel project `state` | **Done.** Root Directory `implementation-context-prototype`, Ignored Build Step `git diff HEAD^ HEAD --quiet .`, same protection as the portfolio project. **No custom domain attached.** |
+| 3. Add the new origins to backend `CORS_ORIGINS` | **Done and verified** on both Render services (additive only). |
+| 4. Promote to `main`, confirm `state` builds `main` as production against the production API, attach `state.authenticignorance.site`, then set `STATE_FRONTEND_BASE_URL` on both services and check the Slack app's URL settings | **Not started. Blocked by the Release gate below.** Needs Paige's explicit authorization. |
+| 5. Portfolio: point the 8 links (6 pages) at the subdomain in a new tab, redirect the old `/implementation-context-prototype/*`, stop serving the app and the root `api/state-config.js` from the portfolio deployment | Not started (after 4). |
+| 6. Repoint `deep-qa.yml` (hard-codes the old staging URL and the portfolio Vercel project id), the Playwright/`qa/deployed` specs and `tools/`; update `QA.md` and `RELEASE.md`; trim the portfolio-only selectors that were copied into `state-shell.*` | Not started. |
+
+Things a new session must know about this work:
+
+- **The `state` project's two production URLs (`state-cairn10.vercel.app`, `state-eight-theta.vercel.app`) currently serve a stale staging-branch build that calls the *production* API** (Vercel labels a project's first deployment "production" whatever its branch; `api/state-config.js` picks the API from the environment). They are behind Vercel login and CORS blocks them, but **do not use them for testing.** They are replaced when `main` deploys. Use `state-git-staging-cairn10.vercel.app` (staging API).
+- **Verified:** the Ignored Build Step works (a docs-only push, `d5a4053`, left the `state` project's deployment CANCELED while the portfolio project built). **Not yet verified:** that the `state` project's production branch is `main` (the API does not expose it; a `staging` push produced a preview, so it is not `staging`). Confirm at step 4 when `main` deploys.
+- The app must never hard-code `/implementation-context-prototype/`. `state-base-path-tests.js` fails if any app source does.
+- Backend `CORS_ORIGINS` today: staging = `http://localhost:3000` + `ai-learning-git-staging`, four old `ai-learning-git-pr{1..4}-…` preview origins, and `https://state-git-staging-cairn10.vercel.app`; production = `http://localhost:3000`, `https://ai-learning-rouge.vercel.app`, `https://authenticignorance.site`, `https://www.authenticignorance.site`, and `https://state.authenticignorance.site`. `STATE_FRONTEND_BASE_URL` (where Slack connect lands) is unchanged on purpose.
+
+## Release gate: fix for #230 is on staging; promotion still on hold pending Paige
+
+Paige set "State Deep QA passes" as the bar for opening the `staging` -> `main` PR. On `c5afbb6` (backend and both frontends verified identical to it) it was run 4 times: **13 of 14 tests pass every run, including every authority-relevant one; only the Baseline Setup lifecycle test fails, 4 of 4 runs, each for a different reason** (model output that failed schema validation, a manual-add that did not redraw, facts all in one area, and zero facts with no error logged). The evidence indicates this is **not** caused by the promotion diff: no Baseline frontend or backend module changed since the last green run (Sept 16); 8/8 uploads on `main`'s backend and 8/8 on `staging`'s each produced exactly 3 facts; the manual-add sequence passed 5/5 on `main`'s full stack and 5/5 on `staging`'s in a real browser. But it is still red.
+
+**Paige's decision: fix first. Fix landed on `staging` (`7ef2837`, 2026-09-19).** Findings: (1) the review dialog rendered a one-time snapshot, so opened during analysis it never redrew when analysis finished (reproduced deterministically); the banner also re-shows its review button briefly during analysis because two banner renderers compete, which is how a fast click or Deep QA opens the dialog early; (2) the manual-add path reopened the dialog by clicking that banner button, a silent no-op when the button is absent (Deep QA run 2). The dialog now watches the draft while analysis runs and redraws (keeping edits, removed facts and focus), drops out-of-order responses, and reopens directly after a manual add. Tests: `state-project-complete/test_baseline_dialog_redraw_browser.py` (3 real-browser tests, no model calls; all fail on the old frontend). `make qa-fast` green. **Deep QA on `7ef2837`: 4 of 4 runs green** (runs 35470920751, 35471009623, 35471088545, 35471167944), against 0 of 4 before. Not proof by itself: two failure causes are model variance the fix does not touch (schema-violating output; all facts in one area).
+
+**Deep QA assertions (Paige chose option C, DEC-008, 2026-09-19):** hard checks gate (dialog not stale, at least 1 fact, manual add adds one row, confirm and follow-up Evidence work); model-quality observations (fact count, area count, "General") are recorded as annotations and printed in the job summary, never failing. Two further paths surfaced on the first runs of the new spec (`b6586e2`, both red): (1) the model sometimes raises a real Question/Review for the sample source, so Confirm is correctly blocked; the test now verifies the block and reports the run as **skipped (inconclusive)**; (2) a latent app race: right after Confirm's page reload the app still shows its seed project (Northstar) until hydration finishes, and Evidence added in that window is sent to Northstar (#232); the test now waits out the reload and asserts the Evidence request's project header. **Deep QA on `502b097`: 4 of 4 green** (35472154538, 35472228559, 35472323146, 35472396403; 14 of 14 expected, 0 skipped, the model split the file ideally every time). Overall since the fix: 8 green, 2 red, and both reds explained above; still a small sample, and a skipped Baseline test means re-run, not pass.
+
+**Still Paige's call:** whether this is enough to open the `staging` -> `main` PR. Related: #231 (no retry for failed Baseline analysis), #232 (Evidence sent to the seed project right after load; pre-existing, P2), #233 (Baseline decomposition eval, so model quality still has an owner). The PR is **not open**; nothing has been promoted.
+
+Promotion checklist reminders (`RELEASE.md`): explicit destination-specific authorization each time; confirm CI on the exact revision; migrations 016/017, backend and frontends promote together; recovery plan (revert the merge; Vercel instant rollback for frontends; the migrations are additive and backward compatible, so reverting code after they ran is safe). A production Render redeploy takes about 50 s.
+
+## Work tracking (GitHub Project "State", https://github.com/users/pedringt/projects/1)
+
+Snapshot at the end of Sept 19:
+
+- **In progress:** #228 (the split; steps 1-3 done).
+- **Staging** (done and verified on staging, awaiting promotion): #230 (fix and Deep QA change done; only the promotion decision remains), #194, #206, #220, #221, #222, #223, #224, #225, #226.
+- **Ready:** #227 (P2: Ask's prose backstop rewrites "approved" to "proposed for approval (not yet approved)" even for approved Current State), #136 (P2, project-area ids; downgraded from P1), #135, #138, #139 (tech-debt audits; each explicitly allows deciding the current state is acceptable).
+- **Backlog:** #231 (P2: failed Baseline analysis has no retry in the Baseline UI), #232 (P2: Evidence added right after load can go to the seed project), #233 (P2: Baseline decomposition eval), #229 (P2: the app renders half-dark in dark-mode browsers, pre-existing), #195 and #196 (cheat sheets; Paige is producing the content and will say when the PDFs are ready), #142 (**a learning placeholder that may never ship in State; leave it alone**).
+- Board notes: the Priority field only has P0/P1/P2 (the setup doc also lists P3); new issues land in Backlog. `gh` now has Project scope, so Status and fields can be set with `gh project item-edit`.
+
+Completed learning/measurement work includes:
 
 - **#121**: defined State product-quality metrics as an AI PM exercise without inventing a real pilot or customer results
+- **#122**: completed the State incident review from the September 14 production/deployment failure
+- **#133**: repo metadata set; 27 merged/superseded remote branches pruned (only `main` and `staging` remain on GitHub); auto-delete of merged branches stays OFF
+
+## Infrastructure reference
+
+- **Vercel** (team `team_UxrzvAczWhPiXlO3nvWPAu5b`, one team): project `ai-learning` = `prj_acxPDHf89pEox4gOGMsVcHJLtoUc` (portfolio and, for now, State at the old path; domains `www.` and apex `authenticignorance.site`; DNS is managed by Vercel: `ns1/ns2.vercel-dns.com`); project `state` = `prj_zQtHJg96oM7Ol4qTapiwk1mV8iRl`. Hobby plan: builds are rate-limited, so batch pushes.
+- **Render** (workspace `tea-dabo6p3tqb8s73d21u2g`, the only one): `state-api-staging` = `srv-dadloi8n74is73ajsg50` (branch `staging`, free, deploys only on `state-project-complete/**` changes); `state-api` = `srv-dabogoajnfac73dp7h1g` (branch `main`, persistent disk at `/var/data`). The Render MCP tool can write env vars but **cannot read them**; read a value in the dashboard (Environment tab, "Show secret") before changing it, and add to it, never blindly replace it (staging's `CORS_ORIGINS` had four origins that were not documented anywhere).
+- **GitHub Actions secrets** (names only): `VERCEL_TOKEN`, `VERCEL_AUTOMATION_BYPASS_SECRET` (both used by Deep QA for the portfolio project). A new bypass secret would be needed to run Deep QA against the `state` project.
+- **`STATE_EVAL_INGEST_KEY`** is set on the staging backend only. Recorded eval runs live in staging's ephemeral database and vanish on restart; re-record with `python -m eval.run_quality_evals --record-url https://state-api-staging.onrender.com` from `state-project-complete/`. Keep the key out of chat and shell history (use a hidden prompt), and rotate it if it was ever displayed.
+
+## Working notes for the next session (lessons from Sept 19)
+
+- **Test the real deployed URL shape before claiming a frontend change works.** Vercel `cleanUrls` serves the app at `/implementation-context-prototype` (no trailing slash); plain relative asset URLs broke staging for a few minutes because my local server did not emulate that. Emulate `cleanUrls` locally, and check that *every* loaded asset returns 200.
+- **One model sample proves nothing.** The Baseline flow varies run to run (2-3 facts, 1-2 areas, occasionally malformed output). Compare code versions with repeated runs on the same machine at the same time. Check your probe before trusting its conclusion: an early probe here read the wrong response field and produced a false "stuck for 2 minutes" finding.
+- **Rehearse migrations on a production-shaped database:** build it with `main`'s own code (including its lazily created tables), then boot `staging`'s code on a copy.
+- **Confirm which origin/backend a page really uses** (`window.STATE_API_BASE`); a new Vercel project's first deployment is labelled production.
+- **Shell traps on this machine:** the default shell is zsh (no word-splitting of unquoted variables; `$var:x` is a modifier). Use `bash -c '...'` for loops over a variable. Python from python.org lacks root certificates: set `SSL_CERT_FILE="$(.venv/bin/python -c 'import certifi;print(certifi.where())')"` for HTTPS from scripts. Do not name a script `inspect.py`.
+- **Log search tools:** the Render log filter does not support `|` alternation; use one term per query.
+- **The browser's HTTP cache lies during local verification.** Serve with `Cache-Control: no-store` and clear localStorage before snapshotting; saved state changes what the app renders.
+- **Paige prefers hand-run steps one at a time**, `cd` first, and never pasting secrets into chat.
+- **Never present pending proposals as settled truth; never weaken the authority model to make a test pass.** Report failures faithfully, including your own mistakes.
 
 ## Documentation ownership
 
@@ -159,7 +225,7 @@ When starting a new work session:
 
 1. Read this file.
 2. Verify `main`/`staging` heads and any relevant open PRs.
-3. Check the relevant GitHub Issue/Project item.
+3. Check the relevant GitHub Issue/Project item. Start with #230 (release gate) and #228 (the split): their comments hold the evidence and next steps.
 4. Read `docs/product/PRODUCT_BRIEF.md` and `docs/product/DECISIONS.md` if product behavior is involved.
 5. Read `QA.md` before testing or changing QA behavior.
 6. Do not deploy or promote because tests passed. Follow `RELEASE.md` and get explicit authorization.

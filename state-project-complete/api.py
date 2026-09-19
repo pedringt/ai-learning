@@ -22,17 +22,19 @@ from baseline_review_visibility import install_baseline_review_visibility
 from baseline_setup import install_baseline_extensions, register_baseline_routes
 from baseline_resilience import install_baseline_resilience
 from product_analytics import register_product_analytics
+from quality_analytics_api import register_quality_analytics
 
-# Patch the authority-bearing runtime hooks before constructing the deployment
-# app. Baseline Setup still uses the existing Review/human authorization path.
+# Baseline runtime composition order is intentional and is part of the adapter
+# contract around api_core. Keep this sequence explicit:
+# 1) install the core Baseline extensions;
+# 2) point async intake at the composed processing hook;
+# 3) install prompt/dogfood patches before resilience captures the splitter;
+# 4) install visibility/resilience/recovery last.
+# This keeps the wrapper understandable without turning these adapters into
+# another hidden dependency chain.
 install_baseline_extensions(_core)
-# The async module imports the canonical pipeline before composition. Point its
-# background worker at the composed hook so Baseline area/topic metadata is
-# persisted exactly like synchronous Evidence intake.
 _baseline_async_intake.process_evidence = _core.process_evidence
 install_baseline_prompt_hardening()
-# Dogfood fixes need to patch the source splitter before resilience captures it,
-# and make queued Baseline work/delete cleanup safe before routes are registered.
 install_baseline_dogfood_fixes(_core, _baseline_async_intake)
 install_baseline_review_visibility(_core)
 install_baseline_resilience()
@@ -51,6 +53,7 @@ def create_app(settings=None, provider=None, ask_provider=None):
     _baseline_async_intake.register_baseline_async_intake_routes(application, application.state.settings)
     register_baseline_manual_setup_routes(application, application.state.settings)
     register_product_analytics(application, application.state.settings)
+    register_quality_analytics(application, application.state.settings)
     return application
 
 

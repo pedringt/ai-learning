@@ -126,7 +126,7 @@
       closeManualDialog();
       window.STATE_ASK_TEST_API?.hydrateBackend?.();
       document.dispatchEvent(new Event('state-project-record-changed'));
-      setTimeout(()=>document.querySelector('[data-baseline-review-starting]')?.click(),200);
+      setTimeout(()=>{const open=window.STATE_BASELINE_SETUP?.openDraft;if(open)open();else document.querySelector('[data-baseline-review-starting]')?.click()},200);
     }catch(error){
       button.disabled=false;button.textContent='Add to Starting State';if(status)status.textContent=error.message||'Could not add those facts.';
     }

@@ -13,9 +13,9 @@ def test_state_release_assets_share_one_dynamic_version_token():
     token = token_match.group(1)
 
     # Only inspect the versioned State loader that follows the shared release
-    # token. index.html also writes ../site-shell.js earlier, but that file is
-    # intentionally outside implementation-context-prototype and is not part of
-    # State's cache-busted release asset array.
+    # token. index.html also writes state-shell.js earlier, but that file is
+    # State's own shell (not the portfolio's) and is not part of State's
+    # cache-busted release asset array; vercel.json revalidates it instead.
     loader = html[token_match.end():]
     array_match = re.search(r"\[(.*?)\]\.forEach\(function\(file\)", loader, re.S)
     assert array_match, "index.html no longer defines the State JS release asset list"
