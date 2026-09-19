@@ -164,5 +164,8 @@ The State Deep QA Baseline lifecycle test uses two tiers of checks. **Hard check
 **Why**  
 The test used to require exactly 3 facts and more than one area from a real model. The same file yields 2 or 3 facts and 1 or 2 areas, so the gate failed intermittently for reasons that were not regressions, blocking promotion on model variance. App correctness and model quality are different questions and should not share one pass/fail.
 
+**Also**  
+If the model raises a Review that blocks Confirm (State's authority rule working as designed), the test verifies the block and reports the run as skipped (inconclusive), not passed or failed, because confirm and follow-up Evidence were not exercised.
+
 **Rejected / deferred**  
 A deterministic provider for this flow (it would need a test-only provider switch on a deployed server, and would stop exercising the real model path where the schema-violation failure occurred; deterministic lifecycle coverage already runs in `make qa-fast`); silently retrying schema-violating output in the test (hides a real product reliability problem, tracked in R-016 and #231). Model quality for Baseline decomposition is deferred to an eval (follow-up issue).

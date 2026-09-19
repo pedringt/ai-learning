@@ -340,11 +340,34 @@ test.describe.serial('Baseline Setup lifecycle (real deployed staging)', () => {
 
     const confirmButton = page.locator('[data-baseline-confirm-starting]');
     await expect(confirmButton).toBeVisible();
+
+    // The model sometimes raises a real Question or Review for this source. State
+    // must then block Confirm until a person resolves it (authority rule), so the
+    // rest of this lifecycle cannot run. Verify the rule held, then report the run
+    // as skipped (inconclusive), never as a pass or a failure of the app.
+    const flagged = page.locator('.baseline-draft-attention li');
+    if (await flagged.count() > 0) {
+      await expect(confirmButton).toBeDisabled();
+      const draftNow = await backendJson(request, '/api/baseline/draft');
+      expect(draftNow.needs_individual_review.length).toBeGreaterThan(0);
+      test.info().annotations.push({
+        type: 'model-quality-warning',
+        description: `Model raised ${draftNow.needs_individual_review.length} Review(s) for the sample source: ${draftNow.needs_individual_review.map(r => r.decision_question).join(' | ')}. Confirm was correctly blocked; confirm and follow-up Evidence were NOT exercised. Inconclusive: re-run.`,
+      });
+      test.skip(true, 'Inconclusive: the model raised a Review, so Confirm was blocked by design. Re-run.');
+    }
+
     await expect(confirmButton).toBeEnabled();
+    // Confirming reloads the page. Wait for the reload and for the app to finish
+    // opening THIS project: until then the app still shows its seed project
+    // (Northstar) and would send new Evidence there.
+    await page.evaluate(() => { window.__preReload = true; });
     await confirmButton.click();
 
     await expect(page.locator('#baselineSetupBanner')).toBeHidden({ timeout: 30_000 });
+    await page.waitForFunction(() => window.__preReload === undefined, null, { timeout: 15_000 }).catch(() => {});
     await expect(page.locator('#appLoadStatus')).toBeHidden({ timeout: 30_000 });
+    await expect(page.locator('#projectSwitcher')).toHaveAttribute('data-project-id', projectId, { timeout: 30_000 });
 
     const currentState = await backendJson(request, '/api/state');
     const currentItems = currentState.items || currentState;
@@ -369,6 +392,8 @@ test.describe.serial('Baseline Setup lifecycle (real deployed staging)', () => {
     await page.locator('[data-action="save-info"]').click();
     const evidenceResponse = await normalEvidenceResponse;
     expect(evidenceResponse.status()).toBe(201);
+    // The write must have gone to this project, not the seed project.
+    expect(evidenceResponse.request().headers()['x-state-project-id']).toBe(projectId);
     await expect(page.locator('#baselineSetupBanner')).toBeHidden();
 
     await expect(async () => {

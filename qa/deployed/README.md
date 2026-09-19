@@ -46,6 +46,15 @@ recorded as `model-quality` annotations and printed in the job summary
 (`NOTE`, or `WARN` when the split differs from the ideal of 3 facts, more than
 one area, no "General"). Model quality is tracked in evals, not in this gate.
 
+If the model raises a real Question or Review for the sample source, State
+correctly blocks Confirm until a person resolves it. The test then verifies the
+block (Confirm disabled, the flagged item listed) and reports the run as
+**skipped: inconclusive** with the reason, because the confirm and follow-up
+Evidence steps were not exercised. Re-run; a skipped Baseline test is not a pass.
+After Confirm the test waits for the page reload and for the app to open the
+temporary project, and asserts the follow-up Evidence request targets that
+project (see #232).
+
 ## One-time setup this needs (Paige, not Claude)
 
 Two GitHub Actions secrets on `pedringt/ai-learning` are required. Set both
