@@ -120,6 +120,13 @@ const H = require('../state-product-health.js');
     assert.equal(H.recentRunLabel({suite:'ask_quality'}),'ask quality · unknown build');
   });
 
+  await check('recent run parts keep the time separate so the date never wraps mid-value',()=>{
+    const parts=H.recentRunParts({suite:'ask_quality',model_identifier:'claude-haiku-4-5-20251001',build:'local',created_at:'2026-09-19 18:24:01'});
+    assert.equal(parts.title,'ask quality · claude-haiku-4-5-20251001 · local run');
+    assert.equal(parts.when,'2026-09-19 18:24 UTC');
+    assert.equal(H.recentRunParts({suite:'ask_quality'}).when,'');
+  });
+
   await check('metric range needs at least two runs of the same suite',()=>{
     const runs=[
       {suite:'review_interpretation',interpretation_accuracy:.875},

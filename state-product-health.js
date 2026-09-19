@@ -109,13 +109,18 @@
     return { min: Math.min(...values), max: Math.max(...values), count: values.length };
   }
 
-  function recentRunLabel(run) {
+  // Split so the page can put the time on its own line instead of letting a long
+  // label wrap in the middle of the date.
+  function recentRunParts(run) {
     const parts = [String(run?.suite || 'unknown suite').replaceAll('_', ' ')];
     if (run?.model_identifier) parts.push(run.model_identifier);
     parts.push(buildLabel(run?.build));
-    const when = runTimeLabel(run?.created_at);
-    if (when) parts.push(when);
-    return parts.join(' · ');
+    return { title: parts.join(' · '), when: runTimeLabel(run?.created_at) };
+  }
+
+  function recentRunLabel(run) {
+    const { title, when } = recentRunParts(run);
+    return when ? `${title} · ${when}` : title;
   }
 
   // The original consequentiality eval panel. Its empty state must describe only
@@ -160,7 +165,8 @@
       const summary = qualitySummary(data);
       const recent = summary.recent.slice(0, 6).map(run => {
         const primary = run.suite === 'review_interpretation' ? percent(run.interpretation_accuracy) : percent(run.ask_grounding);
-        return `<div class="row"><span>${esc(recentRunLabel(run))}</span><span>${esc(primary)}</span></div>`;
+        const parts = recentRunParts(run);
+        return `<div class="row"><span>${esc(parts.title)}${parts.when ? `<br><small style="color:var(--muted);font-weight:400">${esc(parts.when)}</small>` : ''}</span><span>${esc(primary)}</span></div>`;
       }).join('');
       const section = doc.createElement('div');
       section.id = 'qualityAnalyticsExtra';
@@ -190,5 +196,5 @@
     else setTimeout(refresh, 0);
   }
 
-  return { shouldRetry, withStartupRetry, pct, hoursLabel, latencyLabel, scopeProject, mergeProjectRegistry, apiBase, contentFree, qualitySummary, buildLabel, runTimeLabel, metricRange, recentRunLabel, consequentialityEvalMarkup, initQualityEnhancement };
+  return { shouldRetry, withStartupRetry, pct, hoursLabel, latencyLabel, scopeProject, mergeProjectRegistry, apiBase, contentFree, qualitySummary, buildLabel, runTimeLabel, metricRange, recentRunLabel, recentRunParts, consequentialityEvalMarkup, initQualityEnhancement };
 });
