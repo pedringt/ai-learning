@@ -7,7 +7,7 @@ qa-bootstrap:
 qa-fast: qa-python qa-js
 
 qa-python:
-	cd state-project-complete && python -m pytest -q
+	cd state-project-complete && env -u ANTHROPIC_API_KEY -u OPENAI_API_KEY python -m pytest -q
 
 qa-js:
 	@set -eu; cd implementation-context-prototype; \

@@ -18,6 +18,10 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "interpretation_runtime"))
 
+from eval.env import load_local_env
+
+load_local_env()
+
 from anthropic_provider import AnthropicProvider
 from eval.ask_quality_scenarios import SCENARIOS as ASK_SCENARIOS
 from eval.quality_harness import (

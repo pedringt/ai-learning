@@ -23,6 +23,10 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
+from eval.env import load_local_env  # noqa: E402
+
+load_local_env()
+
 from eval.harness import REQUIRES_KEY_REASON, run_scenario  # noqa: E402
 from eval.scenarios import Scenario  # noqa: E402
 
