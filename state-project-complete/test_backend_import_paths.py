@@ -15,7 +15,8 @@ NESTED = SERVICE / 'interpretation_runtime'  # the package's own tests use bare 
 
 
 def _service_modules():
-    return [p for p in SERVICE.glob('*.py') if p.name != Path(__file__).name]
+    # Top level plus eval/ (the paid eval scripts had copied the shim too).
+    return [p for p in [*SERVICE.glob('*.py'), *SERVICE.glob('eval/*.py')] if p.name != Path(__file__).name]
 
 
 def test_no_service_module_imports_the_validation_package_by_its_bare_name():

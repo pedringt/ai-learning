@@ -13,7 +13,6 @@ from __future__ import annotations
 
 import os
 import sqlite3
-import sys
 from dataclasses import dataclass
 from pathlib import Path
 from typing import List
@@ -22,7 +21,6 @@ from typing import List
 # loaded ANTHROPIC_API_KEY would un-skip the real-model tests under
 # `make qa-fast` (#224). Eval entrypoints call eval.env.load_local_env().
 
-sys.path.insert(0, "interpretation_runtime")
 
 from anthropic_provider import AnthropicProvider
 from database_migration_backed import get_test_db
