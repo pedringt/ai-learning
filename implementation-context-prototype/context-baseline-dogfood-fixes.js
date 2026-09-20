@@ -45,18 +45,18 @@
       meta=`${processing} source${processing===1?'':'s'} analyzing${facts||questions?` · ${countText(summary)}`:''}`;
       actions='<div class="baseline-dogfood-actions"><button type="button" class="btn secondary" data-baseline-add-starting>Add more material</button></div>';
     }else if(failed){
-      title='Some starting material needs attention';copy='State could not finish analyzing every starting source. Review what was assembled, or add the source again after fixing the problem.';meta=countText(summary);
-      actions='<div class="baseline-dogfood-actions"><button type="button" class="btn secondary" data-baseline-add-starting>Add more material</button><button type="button" class="btn primary" data-baseline-review-starting>Review Starting State</button></div>';
+      title='Some starting material needs attention';copy='State could not finish analyzing one or more starting sources. Your material is saved. Retry the analysis, or review what was assembled.';meta=countText(summary);
+      actions='<div class="baseline-dogfood-actions"><button type="button" class="btn secondary" data-baseline-add-starting>Add more material</button><button type="button" class="btn secondary" data-baseline-review-starting>Review Starting State</button><button type="button" class="btn primary" data-baseline-retry-failed>Retry failed analysis</button></div>';
     }else{
       title='Starting State ready to review';
       copy=!facts&&questions?'State found unresolved Questions but no durable Starting State facts. Add more material or review the source before confirming an empty baseline.':'Review the project picture State assembled. You can edit, move, remove, or add missing facts before confirming it.';
       meta=countText(summary);
       actions='<div class="baseline-dogfood-actions"><button type="button" class="btn secondary" data-baseline-add-starting>Add more material</button><button type="button" class="btn primary" data-baseline-review-starting>Review Starting State</button></div>';
     }
-    const signature=JSON.stringify({title,copy,meta,actions});
+    const signature=JSON.stringify({title,copy,meta,actions,retryMessage:failed&&!processing?(window.STATE_BASELINE_SETUP?.retryMessage||''):''});
     if(banner.dataset.dogfoodSignature===signature&&banner.querySelector('[data-baseline-dogfood-owned]'))return;
     banner.dataset.dogfoodSignature=signature;banner.dataset.baselineDogfoodOwned='true';
-    banner.innerHTML=`<div class="baseline-setup-row" data-baseline-dogfood-owned><div class="baseline-setup-copy-wrap"><p class="baseline-setup-title">${esc(title)}</p><p class="baseline-setup-copy">${esc(copy)}</p>${meta?`<div class="baseline-setup-meta">${esc(meta)}</div>`:''}</div>${actions}</div>`;
+    banner.innerHTML=`<div class="baseline-setup-row" data-baseline-dogfood-owned><div class="baseline-setup-copy-wrap"><p class="baseline-setup-title">${esc(title)}</p><p class="baseline-setup-copy">${esc(copy)}</p>${meta?`<div class="baseline-setup-meta">${esc(meta)}</div>`:''}${failed&&!processing?`<div class="baseline-retry-status" data-baseline-retry-status aria-live="polite">${esc(window.STATE_BASELINE_SETUP?.retryMessage||'')}</div>`:''}</div>${actions}</div>`;
     banner.hidden=false;document.body.classList.add('state-baseline-active');syncWorkspaceEmptyStates();
   }
 
@@ -109,7 +109,7 @@
 
   function addStyles(){
     if(document.getElementById('state-baseline-dogfood-fixes-styles'))return;const style=document.createElement('style');style.id='state-baseline-dogfood-fixes-styles';style.textContent=`
-      #baselineSetupBanner .baseline-setup-row{align-items:center}#baselineSetupBanner .baseline-dogfood-actions{display:flex;align-items:center;justify-content:flex-end;gap:8px;flex:0 0 auto}#baselineSetupBanner .baseline-dogfood-actions .btn{width:auto!important;min-height:34px!important;padding:7px 11px!important;font-size:12px!important;white-space:nowrap}
+      #baselineSetupBanner .baseline-setup-row{align-items:center}#baselineSetupBanner .baseline-retry-status{margin-top:6px;color:var(--muted);font-size:11.5px;line-height:1.4}#baselineSetupBanner .baseline-retry-status:empty{display:none}#baselineSetupBanner .baseline-dogfood-actions{display:flex;align-items:center;justify-content:flex-end;gap:8px;flex:0 0 auto}#baselineSetupBanner .baseline-dogfood-actions .btn{width:auto!important;min-height:34px!important;padding:7px 11px!important;font-size:12px!important;white-space:nowrap}
       .baseline-draft-actions [data-baseline-confirm-starting]{white-space:nowrap!important;flex:0 0 auto;min-width:max-content}.baseline-add-fact{margin:2px 0 10px}.baseline-inline-new-fact{margin:8px 0 14px;padding:12px;border:1px dashed var(--line);border-radius:9px;background:var(--surface2)}.baseline-inline-new-actions{display:flex;gap:8px;justify-content:flex-end;align-items:center;margin-top:8px}.baseline-inline-new-status{margin-right:auto;color:var(--muted);font-size:11px}
       .baseline-starting-upload{display:flex;align-items:center;gap:8px;margin:5px 0 12px;color:var(--muted);font-size:12px}.baseline-starting-upload label{cursor:pointer;padding:7px 10px}.baseline-starting-filename{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.baseline-starting-status{min-height:18px;color:var(--muted);font-size:11px}
       html body .workspace-attention.is-clear.dogfood-caught-up{border-color:color-mix(in srgb,var(--good) 24%,var(--line))!important;background:color-mix(in srgb,var(--surface) 94%,#eaf7ee)!important;box-shadow:none!important}html body .workspace-attention.is-clear.dogfood-caught-up .attention-head-icon{background:#eaf7ee!important;border-color:#cfe8d7!important;color:#277b45!important;box-shadow:none!important}html body .workspace-attention.is-clear.dogfood-caught-up .attention-head-icon::before{color:#277b45!important}html body .workspace-attention .dogfood-quiet-link{color:var(--muted)!important;font-weight:650!important;font-size:11.5px!important}

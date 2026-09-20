@@ -10,7 +10,7 @@
   const initial = clone(D);
   const state = {
     data: clone(D), view:'overview', result:null, resultQuery:'', askInputDraft:'', projectMenuOpen:false, refinements:[], lastScenario:null,
-    addedSample:false, pendingCreated:false, reviewBannerDismissed:false, dialogReturnFocus:null, expandedNotes:new Set(), noteComposerOpen:false, editingNoteId:null, dismissedNudges:new Set(), historyTopic:null, historyEvidenceId:null, historySearch:'', notesFilter:'all', notesDateFilter:'all', notesSearch:'', isAnalyzing:false, openQuestionsExpanded:false, expandedReviewId:null, openItemSections:{reviews:false,blockers:false,drafts:true,questions:null}, projectRules:[], workspaceAttentionStatus:'loading', backendStatus:{state:'loading',evidence:'loading',reviews:'loading',history:'loading',questions:'loading',rules:'loading',drafts:'loading'}, hydrationGeneration:0
+    addedSample:false, pendingCreated:false, reviewBannerDismissed:false, dialogReturnFocus:null, expandedNotes:new Set(), noteComposerOpen:false, editingNoteId:null, dismissedNudges:new Set(), historyTopic:null, historyEvidenceId:null, historySearch:'', notesFilter:'all', notesDateFilter:'all', notesSearch:'', isAnalyzing:false, openQuestionsExpanded:false, expandedReviewId:null, openItemSections:{reviews:false,blockers:false,drafts:true,questions:null}, projectRules:[], workspaceAttentionStatus:'loading', backendStatus:{state:'loading',evidence:'loading',reviews:'loading',history:'loading',questions:'loading',rules:'loading',drafts:'loading'}, projectConfirmed:false, hydrationGeneration:0
   };
 
   const root = document.getElementById('viewRoot');
@@ -88,21 +88,28 @@
     const label=document.getElementById('projectSwitcher');
     const name=state.data.project?.name||'Project';
     const activeIdForLabel=state.data.project?.id||'';
-    if(label&&label.dataset&&label.dataset.name!==name){
+    // Publish the project's id only once the server has confirmed it (#232). Until then
+    // state.data.project is the seed fixture (Northstar), and other modules build their
+    // X-State-Project-Id header from this attribute: sending the seed's id would write
+    // to Northstar while this tab is about to open a different project. Left unset,
+    // they omit the header and the server uses its own active project, which is the
+    // one this tab is about to open. (Analytics already treats "unset" as unresolved.)
+    const idConfirmed=state.projectConfirmed===true;
+    if(label&&label.dataset&&(label.dataset.name!==name||(idConfirmed&&label.dataset.projectId!==activeIdForLabel))){
       label.dataset.name=name;
       // projectId lets other modules (Copy Context, Ask starters) read
       // which project is actually live from the DOM without importing
       // context-app.js's own module-scoped state -- see QA follow-up notes
       // in context-product-polish.js for why the static DATA.project fixture
       // couldn't be trusted for this.
-      label.dataset.projectId=activeIdForLabel;
+      if(idConfirmed)label.dataset.projectId=activeIdForLabel;
       // Blank-project bug report (2026-09-15): context-settings.js's
       // full-page Settings view is a separate module with no access to
       // this closure's `state` -- it reads project identity off this same
       // dataset (see its rulePlaceholder()) rather than duplicating a
       // second source of truth, so lifecycle controls (Reset vs Delete)
       // there need the same seeded flag available here.
-      label.dataset.seeded=String(state.data.project?.seeded!==false);
+      if(idConfirmed)label.dataset.seeded=String(state.data.project?.seeded!==false);
       label.innerHTML=`${esc(name)} <span>⌄</span>`;
     }
     const menu=document.getElementById('projectMenu');
@@ -1132,6 +1139,7 @@
     API.setActiveProject?.(summary.id);
     window.STATE_ASK_UI?.resetForProjectSwitch(summary.id);
     state.data.project={...state.data.project,...summary};
+    state.projectConfirmed=true;
     // Clear every locally-held record before re-hydrating -- never fall
     // back to context-data.js's static Northstar fixture here, or its
     // placeholder facts would flash on screen while the new project's
@@ -1207,7 +1215,7 @@
       // back to whatever state.data.project already held (the static
       // pre-hydration placeholder, or the last-known project) if this
       // particular payload didn't carry one.
-      if(payload.project){state.data.project={...state.data.project,...payload.project};API.setActiveProject(payload.project.id);}
+      if(payload.project){state.data.project={...state.data.project,...payload.project};state.projectConfirmed=true;API.setActiveProject(payload.project.id);}
       const fulfilled=items=>({status:'fulfilled',value:{items:items||[]}});
       byKey={
         state:fulfilled(payload.state), evidence:fulfilled(payload.evidence),

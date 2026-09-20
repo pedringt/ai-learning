@@ -579,8 +579,49 @@ _UNEARNED_SETTLED_PROSE_REPLACEMENTS = (
 
 _SENTENCE_SPLIT_RE = re.compile(r"(?<=[.!?])\s+")
 
+_WORD_RE = re.compile(r"[a-z0-9]+")
 
-def _soften_unearned_settled_prose(value: str | None) -> str | None:
+
+def _words(text: str) -> list[str]:
+    return _WORD_RE.findall(text.lower())
+
+
+def _governing_state_ngrams(statements) -> frozenset:
+    """Every three-word run in the governing Current State statements (#227).
+
+    The prose backstop below rewrites settled-sounding words because Ask must not
+    narrate *pending* material as settled. A sentence that is quoting an approved,
+    governing Current State item is not doing that, and rewriting it makes Ask tell
+    the reader an established fact is not yet established. Three words is
+    deliberately more than a coincidence: "approved enterprise terms" from the state
+    statement protects a sentence quoting it, while "the terms are approved" (a claim
+    about something pending) shares no such run and is still softened. Comparison is
+    on lowercased alphanumeric words, so case, hyphens and punctuation don't matter.
+    """
+    grams: set = set()
+    for statement in statements:
+        tokens = _words(statement or "")
+        grams.update(zip(tokens, tokens[1:], tokens[2:]))
+    return frozenset(grams)
+
+
+def _quotes_governing_state(text: str, match: "re.Match[str]", governing_ngrams: frozenset) -> bool:
+    """True if a three-word run around `match` appears in a governing state statement."""
+    if not governing_ngrams:
+        return False
+    before = _words(text[:match.start()])[-2:]
+    inside = _words(match.group(0))
+    after = _words(text[match.end():])[:2]
+    sequence = before + inside + after
+    first, end = len(before), len(before) + len(inside)
+    for start in range(max(0, first - 2), end):
+        gram = tuple(sequence[start:start + 3])
+        if len(gram) == 3 and start + 3 > first and gram in governing_ngrams:
+            return True
+    return False
+
+
+def _soften_unearned_settled_prose(value: str | None, governing_ngrams: frozenset = frozenset()) -> str | None:
     """Sentence-scoped companion to _soften_unearned_settled_words: rewrites
     an unhedged settled-sounding claim within full prose (Ask's summary,
     and free-text item text/detail), leaving any sentence that already
@@ -591,6 +632,11 @@ def _soften_unearned_settled_prose(value: str | None) -> str | None:
     isn't reliable here (~1/4 pass in a small live sample). Only called
     when the answer's own selected context includes an open Review or open
     Question (has_pending_material in _validate_synthesis).
+
+    `governing_ngrams` (see _governing_state_ngrams, #227): a matched word is left
+    alone when the wording around it quotes a governing Current State statement
+    verbatim, so an approved, established fact is never rewritten into an
+    unapproved one. Everything else is still softened.
     """
     if not value:
         return value
@@ -602,7 +648,11 @@ def _soften_unearned_settled_prose(value: str | None) -> str | None:
             continue
         fixed = sentence
         for pattern, replacement in _UNEARNED_SETTLED_PROSE_REPLACEMENTS:
-            fixed = pattern.sub(replacement, fixed)
+            current = fixed
+            fixed = pattern.sub(
+                lambda m, r=replacement, t=current: m.group(0) if _quotes_governing_state(t, m, governing_ngrams) else r(m),
+                current,
+            )
         rewritten.append(fixed)
     text = " ".join(rewritten)
     text = re.sub(r"\s{2,}", " ", text).strip()
@@ -696,13 +746,19 @@ def _validate_synthesis(
     # gets its answer touched by this backstop.
     pending_pool = candidates if candidates is not None else context
     has_pending_material = bool(pending_pool.get("reviews")) or bool(pending_pool.get("questions"))
+    # Governing Current State wording the backstop must not rewrite (#227). Uses the
+    # candidate pool as well as the selected context, for the same reason as above:
+    # what the selector happened to choose must not change how the answer is worded.
+    governing_ngrams = _governing_state_ngrams(
+        x.get("statement", "") for x in [*context.get("state", []), *((candidates or {}).get("state", []))]
+    )
 
     answer.headline = _clean_visible_ask_text(answer.headline, all_internal_ids) or "Project answer"
     if has_pending_material:
         answer.headline = _soften_unearned_settled_words(answer.headline)
     answer.summary = _clean_visible_ask_text(answer.summary, all_internal_ids) or "See the grounded project details below."
     if has_pending_material:
-        answer.summary = _soften_unearned_settled_prose(answer.summary)
+        answer.summary = _soften_unearned_settled_prose(answer.summary, governing_ngrams)
     answer.suggested_refinements = [
         cleaned for value in answer.suggested_refinements
         if (cleaned := _clean_visible_ask_text(value, all_internal_ids))
@@ -719,8 +775,8 @@ def _validate_synthesis(
                 item.text = _clean_visible_ask_text(item.text, all_internal_ids) or "Project context"
                 item.detail = _clean_visible_ask_text(item.detail, all_internal_ids)
                 if has_pending_material:
-                    item.text = _soften_unearned_settled_prose(item.text)
-                    item.detail = _soften_unearned_settled_prose(item.detail)
+                    item.text = _soften_unearned_settled_prose(item.text, governing_ngrams)
+                    item.detail = _soften_unearned_settled_prose(item.detail, governing_ngrams)
                 clean_items.append(item)
                 continue
             if item.record_id and item.record_id in allowed.get(item.record_type, set()):
