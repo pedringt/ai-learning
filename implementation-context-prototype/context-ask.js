@@ -171,8 +171,15 @@
       const msg=bits.length?`Grounded in ${bits.join(', ')}. Drafting the answer…`:'Grounded context ready. Drafting the answer…';
       return `<div class="ask-live-loading has-grounded-preview"><span class="ask-loading-mark" aria-hidden="true"></span><div><strong>Grounded context ready</strong><p>${esc(msg)}</p><p class="ask-loading-note">Suggested prompts above answer instantly from what's already known -- this one runs a live check against the full project record.</p></div></div>`;
     }
+    // meeting_prep is reshaped after the stream ends (the backend's _normalize_meeting_prep merges repeated
+    // sections, drops duplicate records and caps items and sections), so drawing its sections live shows more
+    // than the final answer keeps and the draft visibly shrinks (#239). Stream only the headline and summary,
+    // which the normalizer never changes, and hold the sections back for the final answer. The job is the first
+    // field of the answer, so it is known before any section streams.
+    const holdSections=/"job"\s*:\s*"meeting_prep"/.test(raw||'');
     let body='';
     for(const field of fields){
+      if(holdSections&&field.key!=='headline'&&field.key!=='summary')continue;
       const cursor=field.complete?'':'<span class="ask-stream-cursor" aria-hidden="true"></span>';
       if(field.key==='headline')body+=`<h2>${esc(field.value)}${cursor}</h2>`;
       else if(field.key==='summary')body+=`<p class="result-lede">${esc(field.value)}${cursor}</p>`;
@@ -180,6 +187,7 @@
       else if(field.key==='text')body+=`<div class="ask-stream-item">${esc(field.value)}${cursor}</div>`;
       else if(field.key==='detail'&&field.value)body+=`<div class="ask-stream-detail">${esc(field.value)}${cursor}</div>`;
     }
+    if(holdSections)body+='<div class="ask-stream-finalizing">Choosing what belongs in the brief…</div>';
     return `<div class="ask-live-answer ask-streaming-draft" aria-busy="true"><div class="result-label">State Ask · Drafting</div>${body}</div>`;
   }
 
