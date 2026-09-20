@@ -63,16 +63,17 @@ def _consolidate_duplicate_open_reviews(connection: Connection) -> None:
     Older production builds could create a new Review for the same pending
     decision when repeated Evidence arrived. This startup repair is deliberately
     conservative: only exact normalized decision-question + review-type matches
-    are merged.
+    **within the same project** are merged (#238: a Review belongs to one project,
+    so identical wording in two projects is two decisions, never one).
     """
     rows = connection.execute(
-        "SELECT id, review_type, decision_question, created_at FROM review_issues "
+        "SELECT id, project_id, review_type, decision_question, created_at FROM review_issues "
         "WHERE status='open' ORDER BY created_at, id"
     ).fetchall()
-    keepers: dict[tuple[str, str], str] = {}
+    keepers: dict[tuple[str, str, str], str] = {}
     duplicate_to_keeper: dict[str, str] = {}
     for row in rows:
-        key = (row["review_type"], _normalize_review_text(row["decision_question"]))
+        key = (row["project_id"], row["review_type"], _normalize_review_text(row["decision_question"]))
         keeper = keepers.get(key)
         if keeper is None:
             keepers[key] = row["id"]
@@ -148,10 +149,18 @@ def _consolidate_duplicate_open_reviews(connection: Connection) -> None:
 
 
 def _install_open_review_uniqueness(connection: Connection) -> None:
-    """Database backstop: one exact normalized open decision per review type."""
+    """Database backstop: one exact normalized open decision per review type, per project.
+
+    The first version of this index (`uq_open_review_identity`) had no project_id, so an open
+    Review in one project made another project's Evidence fail with a 500 when it raised the same
+    Review (#238), although the application-level check (`_matching_open_review_id`) is project
+    scoped. Existing databases still carry the old index, so it is dropped here; the drop and the
+    create are idempotent and run on every startup.
+    """
+    connection.execute("DROP INDEX IF EXISTS uq_open_review_identity")
     connection.execute(
-        "CREATE UNIQUE INDEX IF NOT EXISTS uq_open_review_identity "
-        "ON review_issues(review_type, lower(trim(decision_question))) WHERE status='open'"
+        "CREATE UNIQUE INDEX IF NOT EXISTS uq_open_review_identity_by_project "
+        "ON review_issues(project_id, review_type, lower(trim(decision_question))) WHERE status='open'"
     )
 
 

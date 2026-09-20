@@ -158,7 +158,7 @@ def test_startup_consolidates_legacy_duplicate_open_reviews():
     with get_test_db() as connection:
         # Simulate a database created by the older build before the uniqueness
         # backstop existed.
-        connection.execute("DROP INDEX uq_open_review_identity")
+        connection.execute("DROP INDEX uq_open_review_identity_by_project")
         connection.execute(
             "INSERT INTO review_issues(id, review_type, decision_question, why_consequential, status) VALUES (?, ?, ?, ?, 'open')",
             ("r-old", "missing_understanding", "Should access exceptions be represented?", "old"),
