@@ -2,7 +2,7 @@
 
 This is the canonical current-state handoff for State and the surrounding portfolio. Read this first, then verify the repository and live environments before relying on older notes or conversation memory.
 
-_Last updated: September 19, 2026 (evening), Pacific time. Written as a handoff for a fresh session._
+_Last updated: September 20, 2026 (afternoon), Pacific time. Written as a handoff for a fresh session._
 
 ## Current product state
 
@@ -31,7 +31,7 @@ State is a portfolio and learning product. There is no planned external pilot or
 
 ## Branch and deployment state
 
-**Snapshot on Sept 19 night (verify before relying on it):** `main` = `ffbc59e` (production; PR #236, merged Sept 20 01:01 UTC; before it `94710ae` = PR #235, before that `fef27b2` = PR #234). `staging` = `main` plus five items **not yet promoted**: #229 (`1943f45`, State is light-only), #138 (`1126e93`, backend import cleanup), #135 (`10fd6a8`, dev-only stress notes removed and the frontend map), #139 (`fd93edf`, homepage inline-style cleanup and `tools/style_parity.py`) and docs commits; recount with `git rev-list --count main..staging`. No open PRs. Verified on production after #236: Render `/health` build `ffbc59e`, clean boot, both Vercel production deployments READY, live app on `state.authenticignorance.site` serves the new code and passes a read-only smoke (six views, production API only, no console errors, a live Ask question with the pending-vs-confirmed boundary intact). **Sept 19: `staging` was promoted to `main` with Paige's explicit authorization (PR #234, 71 commits, 61 files).** Verified on production: Render `state-api` `/health` build is `fef27b2`; first-boot logs show a clean startup with no errors (migrations 016/017 are not logged, so their application is inferred from a clean boot and normal serving, not read directly); the Vercel production deployments of both `ai-learning` and `state` are READY at `fef27b2`; read-only smoke requests to the live site and the production API returned 200. Rollback: revert the merge commit (`git revert -m 1 fef27b2`), Vercel instant rollback for the frontends; the migrations are additive, so reverting code after they ran is safe.
+**Snapshot on Sept 19 night (verify before relying on it):** `main` = `ffbc59e` (production; PR #236, merged Sept 20 01:01 UTC; before it `94710ae` = PR #235, before that `fef27b2` = PR #234). `staging` = `main` plus five items **not yet promoted**: #229 (`1943f45`, State is light-only), #138 (`1126e93`, backend import cleanup), #135 (`10fd6a8`, dev-only stress notes removed and the frontend map), #139 (`fd93edf`, homepage inline-style cleanup and `tools/style_parity.py`) and docs commits; recount with `git rev-list --count main..staging`. **Open PR #237** (`staging` -> `main`, holds exactly those five items; **not merged**, Paige is holding it): its `Vercel – state` check fails with "Deployment rate limited — retry in 24 hours" (Hobby build limit, stamped 02:25 UTC Sept 20 after about two dozen pushes), so merging now would likely leave the State frontend one release behind on production while Render and the portfolio update. Its other checks are green (`python`, `javascript`, a real-model consequentiality eval of 36 scenarios at 100% precision and recall, Deep QA 14 of 14). Re-check that Vercel status before merging; nothing may be merged without Paige's explicit go-ahead. Verified on production after #236: Render `/health` build `ffbc59e`, clean boot, both Vercel production deployments READY, live app on `state.authenticignorance.site` serves the new code and passes a read-only smoke (six views, production API only, no console errors, a live Ask question with the pending-vs-confirmed boundary intact). **Sept 19: `staging` was promoted to `main` with Paige's explicit authorization (PR #234, 71 commits, 61 files).** Verified on production: Render `state-api` `/health` build is `fef27b2`; first-boot logs show a clean startup with no errors (migrations 016/017 are not logged, so their application is inferred from a clean boot and normal serving, not read directly); the Vercel production deployments of both `ai-learning` and `state` are READY at `fef27b2`; read-only smoke requests to the live site and the production API returned 200. Rollback: revert the merge commit (`git revert -m 1 fef27b2`), Vercel instant rollback for the frontends; the migrations are additive, so reverting code after they ran is safe.
 
 Promoted to `main` in #234 on Sept 19 and now live on production (all verified on staging first):
 
@@ -116,7 +116,8 @@ Do not weaken these without an explicit product decision:
 
 See `docs/product/RISKS.md` for the maintained register. The most important implementation-specific known risk is:
 
-- `project_areas.id` is a global primary key rather than project-scoped (R-009, tracked as #136, P2). It works because the two seeded projects use non-colliding hand-chosen IDs and user-created projects generate `area_<uuid>` IDs, so it is not biting today. Redesign it before adding another hand-seeded project or any path where a person or model chooses an area ID; the migration needs real Postgres coverage.
+- `project_areas.id` is a global primary key rather than project-scoped (R-009, #136, P2, Backlog). **Decided Sept 19 (Paige): option C, no schema change.** Seeding an area id that is already taken now raises instead of silently skipping, and tests pin that hand-seeded ids are unique across seeded projects and that user projects generate `area_<uuid>` ids. The structural limit remains; it just cannot be hit silently. Reopen the composite-key migration (option A) if a third hand-seeded project is proposed, if any path lets a person or model choose an area id, or if real user projects are expected on production (production holds only the two demo projects, which makes the migration cheapest now). Proposal, options and the migration plan: `docs/architecture/PROPOSAL_136_PROJECT_SCOPED_AREA_IDS.md`.
+- **#238 (P1, Ready): the open-Review uniqueness index `uq_open_review_identity` had no `project_id`**, so Evidence in one project could fail with a 500 when another project had the same open Review. Fixed in the batch below (verified on SQLite and on Postgres 16.2).
 
 Known UX issue:
 
@@ -170,6 +171,19 @@ Paige set "State Deep QA passes" as the bar for opening the `staging` -> `main` 
 
 Promotion checklist reminders (`RELEASE.md`): explicit destination-specific authorization each time; confirm CI on the exact revision; migrations 016/017, backend and frontends promote together; recovery plan (revert the merge; Vercel instant rollback for frontends; the migrations are additive and backward compatible, so reverting code after they ran is safe). A production Render redeploy takes about 50 s.
 
+## Finished local work, not yet pushed (Sept 20)
+
+Everything below is committed locally and merged into one integration branch, `batch-next` (based on `staging` @ `7f5e4c6`). **Nothing here is pushed.** The plan is to push it once, after PR #237 is dealt with, because every push to `staging` costs two Vercel builds (see the working notes). On that combination: `make qa-fast` is green (662 Python passed, 104 skipped; all 31 JS suites 0 failed) and the whole Python suite with real Postgres 16.2 enabled is green (716 passed, 50 skipped, all real-model tests). No model calls were made.
+
+| Item | What it is | Notes for shipping |
+|---|---|---|
+| #238 (P1) | Scope the open-Review uniqueness backstop to a project (`database_migration_backed.py`, one new test file) | Touches `state-project-complete/`, so it restarts Render production: verify `/health` build SHA with `scripts/verify-render-deploy.sh`. Ship it as its own small PR if possible. |
+| #136 (option C) | Loud area-id collision guard, tests, proposal doc, R-009 reworded | No migration. |
+| #233 | Baseline decomposition eval (`eval/baseline_decomposition.py`, `run_baseline_decomposition.py`, tests) | **The first paid run (Sept 20, 24 calls) is retracted.** The harness injected the plain `AnthropicProvider`; the deployed app uses the Baseline provider (area schema, Baseline prompt guidance, chunking, area metadata), and `create_app(provider=...)` uses what it is given as-is, so every fact landed in "General". `real_provider()` now builds the deployed provider and `run_scenarios` refuses a plain one. The scorer also separates hedged from asserted mentions and flags an invented year or amount. **No valid baseline exists yet**: a re-run is 24 paid calls and needs Paige's go-ahead. An audit found no other harness affected. |
+| #228 step 6 (draft) | Deep QA runs the State tests against the `state` Vercel project when `VERCEL_AUTOMATION_BYPASS_SECRET_STATE` exists; unchanged behavior otherwise | Off until Paige creates that GitHub Actions secret (Vercel `state` project -> Settings -> Deployment Protection -> Protection Bypass for Automation, then `gh secret set VERCEL_AUTOMATION_BYPASS_SECRET_STATE --repo pedringt/ai-learning` without pasting the value in chat), then one Deep QA run. |
+
+Two comments were posted on GitHub on Sept 20: the #136 decision and the #233 correction.
+
 ## Work tracking (GitHub Project "State", https://github.com/users/pedringt/projects/1)
 
 Snapshot after the Sept 19 promotion:
@@ -190,7 +204,7 @@ Completed learning/measurement work includes:
 
 - **Vercel** (team `team_UxrzvAczWhPiXlO3nvWPAu5b`, one team): project `ai-learning` = `prj_acxPDHf89pEox4gOGMsVcHJLtoUc` (portfolio and, for now, State at the old path; domains `www.` and apex `authenticignorance.site`; DNS is managed by Vercel: `ns1/ns2.vercel-dns.com`); project `state` = `prj_zQtHJg96oM7Ol4qTapiwk1mV8iRl`. Hobby plan: builds are rate-limited, so batch pushes.
 - **Render** (workspace `tea-dabo6p3tqb8s73d21u2g`, the only one): `state-api-staging` = `srv-dadloi8n74is73ajsg50` (branch `staging`, free, deploys only on `state-project-complete/**` changes); `state-api` = `srv-dabogoajnfac73dp7h1g` (branch `main`, persistent disk at `/var/data`). The Render MCP tool can write env vars but **cannot read them**; read a value in the dashboard (Environment tab, "Show secret") before changing it, and add to it, never blindly replace it (staging's `CORS_ORIGINS` had four origins that were not documented anywhere).
-- **GitHub Actions secrets** (names only): `VERCEL_TOKEN`, `VERCEL_AUTOMATION_BYPASS_SECRET` (both used by Deep QA for the portfolio project). A new bypass secret would be needed to run Deep QA against the `state` project.
+- **GitHub Actions secrets** (names only): `VERCEL_TOKEN`, `VERCEL_AUTOMATION_BYPASS_SECRET` (both used by Deep QA for the portfolio project). `VERCEL_AUTOMATION_BYPASS_SECRET_STATE` is **not created yet** (Paige creates it); the drafted step 6 uses it to run Deep QA against the `state` project.
 - **`STATE_EVAL_INGEST_KEY`** is set on the staging backend only. Recorded eval runs live in staging's ephemeral database and vanish on restart; re-record with `python -m eval.run_quality_evals --record-url https://state-api-staging.onrender.com` from `state-project-complete/`. Keep the key out of chat and shell history (use a hidden prompt), and rotate it if it was ever displayed.
 
 ## Working notes for the next session (lessons from Sept 19)
@@ -203,6 +217,9 @@ Completed learning/measurement work includes:
 - **Log search tools:** the Render log filter does not support `|` alternation; use one term per query.
 - **The browser's HTTP cache lies during local verification.** Serve with `Cache-Control: no-store` and clear localStorage before snapshotting; saved state changes what the app renders.
 - **Paige prefers hand-run steps one at a time**, `cd` first, and never pasting secrets into chat.
+- **Batch pushes (Paige, Sept 20).** About two dozen `staging` pushes in one session hit the Vercel Hobby limit, which put a failing check on the promotion PR. Stack finished work on a local branch, verify the combination, fold doc updates into the same push as the code, and push once. Do not spend a push to test whether a limit has cleared.
+- **A harness that disagrees with the deployed app is a wiring bug until proven otherwise.** The first Baseline eval run measured a plain provider, not the deployed one, and reported "all General" as a model finding. A result that is identical in every run is a smell. Build test providers the way the deployed app does (`baseline_setup._provider_from_env`).
+- **Run schema-touching changes on real Postgres before shipping.** No Postgres or Docker is installed locally; use the embedded `pgserver` recipe (scratch venv on the system Python, project venv with `STATE_TEST_POSTGRES_URL`); CI runs `postgres:16`.
 - **Never present pending proposals as settled truth; never weaken the authority model to make a test pass.** Report failures faithfully, including your own mistakes.
 
 ## Documentation ownership
@@ -229,7 +246,7 @@ When starting a new work session:
 
 1. Read this file.
 2. Verify `main`/`staging` heads and any relevant open PRs.
-3. Check the relevant GitHub Issue/Project item. Start with #228 (the split): its comments hold the evidence and next steps. Steps 1-5 are live; step 6 comes next (needs a bypass secret from Paige). Other open items: Ready (#136, #135, #138, #139) and Backlog (#233, #229, #195, #196, #142; #142 is a learning placeholder, leave it alone).
+3. Check the relevant GitHub Issue/Project item. Start with #228 (the split): its comments hold the evidence and next steps. Steps 1-5 are live; step 6 comes next (needs a bypass secret from Paige). Other open items: PR #237 (held on the Vercel limit), Ready #238 (P1, fixed in the local batch), Backlog #136 (decided: option C), #233, #195, #196, #142 (#142 is a learning placeholder, leave it alone).
 4. Read `docs/product/PRODUCT_BRIEF.md` and `docs/product/DECISIONS.md` if product behavior is involved.
 5. Read `QA.md` before testing or changing QA behavior.
 6. Do not deploy or promote because tests passed. Follow `RELEASE.md` and get explicit authorization.
