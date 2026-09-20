@@ -2,8 +2,8 @@
 """Run the Baseline decomposition eval (#233) against the real model.
 
 Measures how the real model turns a source into a Starting State: failures, expected-fact recall,
-number of sections, use of the "General" last-resort area, unresolved items recorded as facts, and
-open items raised. Model output varies, so each source is run several times and the report gives
+number of sections, use of the "General" last-resort area, unresolved items recorded as facts (hedged
+mentions are counted apart), years/amounts the source never states, and open items raised. Model output varies, so each source is run several times and the report gives
 rates. This is PAID: it makes one real model call per source per repeat (4 sources x --repeats).
 It is not part of the release gate; the Deep QA gate only records how a single sample splits.
 
@@ -43,6 +43,7 @@ def print_report(report: dict) -> None:
         print(f"    failed {_fmt(s['failed_rate'])} | facts {s['facts_mean']} | sections {s['areas_mean']} "
               f"(enough {_fmt(s['enough_areas_rate'])}, 'General' used {_fmt(s['general_used_rate'])})")
         print(f"    expected-fact recall {_fmt(s['recall_mean'])} | unresolved-as-fact {_fmt(s['suspect_rate'])} "
+              f"(hedged mention {_fmt(s['hedged_mention_rate'])}) | invented year/amount {_fmt(s['invented_rate'])} "
               f"| open items {s['open_items_mean']} (blocked Confirm {_fmt(s['blocked_confirm_rate'])}, as expected {_fmt(s['open_items_as_expected_rate'])})")
         missed = sorted({m for r in entry["runs"] for m in r["missed"]})
         if missed:
@@ -50,7 +51,7 @@ def print_report(report: dict) -> None:
     o = report["overall"]
     print(f"\n  overall: failed {_fmt(o['failed_rate'])}, recall {_fmt(o['recall_mean'])}, "
           f"enough sections {_fmt(o['enough_areas_rate'])}, 'General' used {_fmt(o['general_used_rate'])}, "
-          f"unresolved-as-fact {_fmt(o['suspect_rate'])}, Confirm blocked {_fmt(o['blocked_confirm_rate'])}")
+          f"unresolved-as-fact {_fmt(o['suspect_rate'])}, invented year/amount {_fmt(o['invented_rate'])}, Confirm blocked {_fmt(o['blocked_confirm_rate'])}")
 
 
 def main() -> int:

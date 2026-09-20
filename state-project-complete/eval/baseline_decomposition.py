@@ -10,7 +10,10 @@ run to run, so every source is run several times and the report gives RATES, not
 - failed: analysis failed (for example schema-violating model output), leaving an empty draft
 - expected-fact recall: how many of the facts a person would expect actually appear in the draft
 - sections: number of distinct areas, and how often the "General" last-resort area is used
-- suspect: an unresolved or merely-considered item recorded as an established fact
+- suspect: an unresolved or merely-considered item recorded as an established fact. A statement that
+  mentions the item but hedges it ("under consideration", "not yet decided") is counted separately as
+  a hedged mention, not as suspect (the first real run showed most raw flags were correctly hedged)
+- invented: a year or dollar amount that appears in a fact but nowhere in the source
 - open items raised, and how often that blocked Confirm (a Review the person must resolve)
 
 The provider is injectable so the harness itself is tested without a model (see
@@ -134,6 +137,31 @@ def _has_all(statement: str, words: Iterable[str]) -> bool:
     return True
 
 
+# Words that mark a statement as leaving something open. A fact that mentions an unresolved item AND
+# carries one of these is reporting the uncertainty, not recording the item as settled. Deliberately NOT
+# included: "if" and "could". A bare condition ("with a contingency to move to October 14 if testing slips")
+# turns a considered date into a plan of record and drops the source's "not decided", which is the failure
+# this exists to catch (seen in the first paid run).
+_HEDGE = re.compile(
+    r"\b(consider(?:ing|ed|ation)?|not (?:yet |been )*(?:decided|confirmed|settled|final|approved)|"
+    r"undecided|unresolved|undetermined|pending|tentative(?:ly)?|possibly|possible|potential(?:ly)?|"
+    r"no decision|may|might|whether|proposed|under discussion|to be (?:decided|determined|confirmed))\b"
+)
+_YEAR = re.compile(r"\b(?:19|20)\d{2}\b")
+_MONEY = re.compile(r"\$\s?\d[\d,]*(?:\.\d+)?")
+
+
+def _is_hedged(statement: str) -> bool:
+    return bool(_HEDGE.search(_norm(statement)))
+
+
+def _specifics(text: str) -> set[str]:
+    """Years and dollar amounts in `text`, normalized so "$ 180,000" and "$180,000" compare equal."""
+    found = {m.group(0) for m in _YEAR.finditer(text or "")}
+    found |= {re.sub(r"[\s,]", "", m.group(0)) for m in _MONEY.finditer(text or "")}
+    return found
+
+
 def score_run(scenario: DecompositionScenario, draft: dict[str, Any]) -> dict[str, Any]:
     """Score one Baseline draft (the payload of GET /api/baseline/draft) against a scenario."""
     counts = draft.get("counts") or {}
@@ -143,11 +171,18 @@ def score_run(scenario: DecompositionScenario, draft: dict[str, Any]) -> dict[st
     questions = (draft.get("draft") or {}).get("questions", [])
     needs_review = draft.get("needs_individual_review") or []
     hits = [any(_has_all(s, group) for s in statements) for group in scenario.expected_facts]
-    suspect = [group for group in scenario.unresolved if any(_has_all(s, group) for s in statements)]
+    # An unresolved item is "suspect" only when some statement mentions it WITHOUT hedging; a statement that
+    # mentions it and hedges is a hedged mention (the model reporting the uncertainty, which is fine).
+    mentions = [(group, s) for group in scenario.unresolved for s in statements if _has_all(s, group)]
+    unhedged = [(group, s) for group, s in mentions if not _is_hedged(s)]
+    hedged = [(group, s) for group, s in mentions if _is_hedged(s)]
+    suspect = sorted({group for group, _ in unhedged})
+    grounded = _specifics(scenario.source)
+    invented = sorted({tok for st in statements for tok in _specifics(st)} - grounded)
     open_items = len(questions) + len(needs_review)
     return {
-        # What the draft actually said, so a person can judge the automatic flags below
-        # (a fact that merely MENTIONS an unresolved item, correctly hedged, is flagged too).
+        # What the draft actually said, so a person can judge the automatic flags below (the hedge check is a
+        # keyword heuristic and can be wrong in both directions).
         "facts_detail": [{"area": i.get("area_name") or "General", "topic": i.get("topic") or "", "statement": i.get("statement") or ""} for i in items],
         "open_item_texts": [str(q.get("text", ""))[:200] for q in questions] + [str(r.get("decision_question", ""))[:200] for r in needs_review],
         "failed": int(counts.get("failed_evidence", 0)) > 0,
@@ -159,7 +194,10 @@ def score_run(scenario: DecompositionScenario, draft: dict[str, Any]) -> dict[st
         "missed": [" + ".join(group) for group, hit in zip(scenario.expected_facts, hits) if not hit],
         "suspect": len(suspect),
         "suspect_groups": [" + ".join(group) for group in suspect],
-        "suspect_statements": [st for st in statements if any(_has_all(st, group) for group in scenario.unresolved)],
+        "suspect_statements": sorted({st for _, st in unhedged}),
+        "hedged_mentions": len({st for _, st in hedged}),
+        "hedged_statements": sorted({st for _, st in hedged}),
+        "invented": invented,
         "open_items": open_items,
         "blocked_confirm": not draft.get("can_confirm", True) and not counts.get("failed_evidence", 0),
         "expected_open_items_ok": None if scenario.expects_open_items is None else (open_items > 0) == scenario.expects_open_items,
@@ -187,6 +225,8 @@ def summarize(runs: list[dict[str, Any]]) -> dict[str, Any]:
         "general_used_rate": rate(lambda r: r["general_used"], ok),
         "recall_mean": mean("recall"),
         "suspect_rate": rate(lambda r: r["suspect"] > 0, ok),
+        "hedged_mention_rate": rate(lambda r: r["hedged_mentions"] > 0, ok),
+        "invented_rate": rate(lambda r: bool(r["invented"]), ok),
         "open_items_mean": mean("open_items"),
         "blocked_confirm_rate": rate(lambda r: r["blocked_confirm"], ok),
         "open_items_as_expected_rate": rate(lambda r: r["expected_open_items_ok"], checked),

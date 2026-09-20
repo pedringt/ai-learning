@@ -60,7 +60,7 @@ def test_score_run_measures_recall_sections_general_and_suspect_facts():
     draft = _draft(
         [("General", "Store", "We will use Postgres for the reporting store."),
          ("General", "Beta", "The beta will be invite-only."),
-         ("General", "Auth", "Whether to support SSO at launch is undecided.")],
+         ("General", "Auth", "SSO will be supported at launch.")],
         questions=["Should we support SSO at launch?"],
     )
     scored = score_run(scenario, draft)
@@ -69,6 +69,59 @@ def test_score_run_measures_recall_sections_general_and_suspect_facts():
     assert scored["suspect"] == 1 and "SSO" in scored["suspect_statements"][0]     # flagged, and the text is kept to judge it
     assert scored["open_items"] == 1 and scored["expected_open_items_ok"] is True
     assert [f["area"] for f in scored["facts_detail"]] == ["General"] * 3
+
+
+KESTREL = next(s for s in SCENARIOS if s.id == "hedged_change")
+
+
+def test_a_hedged_mention_of_an_unresolved_item_is_not_suspect_but_an_unhedged_one_is():
+    # Wording modeled on what the real model wrote in the first paid run (#233).
+    hedged = score_run(KESTREL, _draft([
+        ("Schedule", "Migration", "Migration to the new billing system is scheduled for September 30; moving it to October 14 is under consideration but has not been decided."),
+        ("Schedule", "Fallback", "The date may be deferred to October 14 if testing slips, pending decision."),
+        ("People", "Lead", "Tomas Reyes is the migration lead.")]))
+    assert hedged["suspect"] == 0 and hedged["hedged_mentions"] == 2 and not hedged["suspect_statements"]
+    assert hedged["recall"] == 1.0
+
+    asserted = score_run(KESTREL, _draft([
+        ("Schedule", "Migration", "The migration was moved to October 14."),
+        ("People", "Lead", "Tomas Reyes is the migration lead."),
+        ("Schedule", "Baseline", "Migration is scheduled for September 30.")]))
+    assert asserted["suspect"] == 1 and "moved to October 14" in asserted["suspect_statements"][0]
+    assert asserted["hedged_mentions"] == 0
+
+    # A bare condition is not a hedge: it presents the considered date as a contingency plan and drops "not decided".
+    contingency = score_run(KESTREL, _draft([("General", "", "Migration is scheduled for September 30, with a contingency to move to October 14 if testing slips.")]))
+    assert contingency["suspect"] == 1 and contingency["hedged_mentions"] == 0
+
+    plain_no = score_run(KESTREL, _draft([("General", "", "October 14 is being considered as a contingency date, but no decision has been made.")]))
+    assert plain_no["suspect"] == 0 and plain_no["hedged_mentions"] == 1
+
+    mixed = score_run(KESTREL, _draft([
+        ("Schedule", "A", "Moving to October 14 is under consideration."),
+        ("Schedule", "B", "The migration is on October 14.")]))
+    assert mixed["suspect"] == 1 and mixed["hedged_mentions"] == 1      # one hedged, one asserted: still flagged
+
+
+def test_a_year_or_amount_that_the_source_never_states_is_flagged_as_invented():
+    # The first paid run wrote "September 30, 2024" for a source that gives no year.
+    invented = score_run(KESTREL, _draft([("Schedule", "Migration", "The migration is scheduled for September 30, 2024.")]))
+    assert invented["invented"] == ["2024"]
+
+    # A year the source does state is grounded, as is an amount written differently.
+    atlas = SCENARIOS[0]
+    grounded = score_run(atlas, _draft([("Delivery", "Launch", "The target launch date is October 15, 2026.")]))
+    assert grounded["invented"] == []
+    plan = next(s for s in SCENARIOS if s.id == "structured_plan")
+    money = score_run(plan, _draft([("Budget", "Total", "The approved budget is $ 180,000."), ("Budget", "Extra", "A reserve of $25,000 is set.")]))
+    assert money["invented"] == ["$25000"]
+
+
+def test_summarize_reports_hedged_mention_and_invented_rates():
+    clean = score_run(KESTREL, _draft([("Schedule", "M", "Scheduled for September 30, but October 14 is being considered.")]))
+    bad = score_run(KESTREL, _draft([("Schedule", "M", "Scheduled for September 30, 2024.")]))
+    summary = summarize([clean, bad])
+    assert summary["hedged_mention_rate"] == 0.5 and summary["invented_rate"] == 0.5 and summary["suspect_rate"] == 0.0
 
 
 def test_score_run_records_failure_and_a_blocked_confirm():
