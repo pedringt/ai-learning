@@ -2,6 +2,20 @@ const BACKEND_URL = process.env.STATE_BACKEND_URL || 'https://state-api-staging.
 const REQUIRED_BACKEND_HOST = 'state-api-staging.onrender.com';
 const BYPASS_SECRET = process.env.VERCEL_AUTOMATION_BYPASS_SECRET || '';
 
+// #228 step 6: State now has its own Vercel project. When STATE_APP_URL is set, the State app tests
+// navigate to that project's staging URL and use ITS bypass secret (each Vercel project has its own).
+// When it is unset, everything behaves as before: the app is reached through the portfolio deployment.
+const STATE_APP_URL = (process.env.STATE_APP_URL || '').replace(/\/$/, '');
+const BYPASS_SECRET_STATE = process.env.VERCEL_AUTOMATION_BYPASS_SECRET_STATE || '';
+const STATE_URL = STATE_APP_URL ? `${STATE_APP_URL}/` : '/implementation-context-prototype/index.html';
+
+function bypassSecretFor(target) {
+  return STATE_APP_URL && target.startsWith(STATE_APP_URL) ? BYPASS_SECRET_STATE : BYPASS_SECRET;
+}
+function bypassSecretName(target) {
+  return STATE_APP_URL && target.startsWith(STATE_APP_URL) ? 'VERCEL_AUTOMATION_BYPASS_SECRET_STATE' : 'VERCEL_AUTOMATION_BYPASS_SECRET';
+}
+
 function backendHost(url, label = 'STATE_BACKEND_URL') {
   try {
     return new URL(url).host;
@@ -32,13 +46,14 @@ function assertKnownStagingHost(action, url = BACKEND_URL, label = 'STATE_BACKEN
  * different environment.
  */
 async function gotoWithBypass(page, path) {
-  if (!BYPASS_SECRET) {
+  const secret = bypassSecretFor(path);
+  if (!secret) {
     throw new Error(
-      'VERCEL_AUTOMATION_BYPASS_SECRET is not set. See qa/deployed/README.md.'
+      `${bypassSecretName(path)} is not set. See qa/deployed/README.md.`
     );
   }
   const separator = path.includes('?') ? '&' : '?';
-  const url = `${path}${separator}x-vercel-protection-bypass=${encodeURIComponent(BYPASS_SECRET)}&x-vercel-set-bypass-cookie=true`;
+  const url = `${path}${separator}x-vercel-protection-bypass=${encodeURIComponent(secret)}&x-vercel-set-bypass-cookie=true`;
   const response = await page.goto(url);
   const configuredBackend = await page.evaluate(() => window.STATE_API?.base || '').catch(() => '');
   if (configuredBackend) {
@@ -148,6 +163,9 @@ module.exports = {
   backendPost,
   backendDelete,
   gotoWithBypass,
+  STATE_URL,
+  STATE_APP_URL,
+  bypassSecretFor,
   BACKEND_URL,
   REQUIRED_BACKEND_HOST,
 };

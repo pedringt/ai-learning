@@ -159,6 +159,10 @@ jobs:
         working-directory: qa/deployed
         env:
           VERCEL_AUTOMATION_BYPASS_SECRET: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
+          # #228 step 6: once the `state` Vercel project's bypass secret exists, the State app tests run against that
+          # project's staging URL. Until then STATE_APP_URL stays empty and they run through the portfolio deployment as before.
+          VERCEL_AUTOMATION_BYPASS_SECRET_STATE: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET_STATE }}
+          STATE_APP_URL: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET_STATE && 'https://state-git-staging-cairn10.vercel.app' || '' }}
         run: npx playwright test
 
       - name: Write result summary

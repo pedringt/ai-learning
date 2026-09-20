@@ -14,6 +14,13 @@ if (!BYPASS_SECRET) {
   );
 }
 
+if (process.env.STATE_APP_URL && !process.env.VERCEL_AUTOMATION_BYPASS_SECRET_STATE) {
+  throw new Error(
+    'STATE_APP_URL is set, so VERCEL_AUTOMATION_BYPASS_SECRET_STATE (the bypass secret of the Vercel ' +
+    '`state` project) is required too. See qa/deployed/README.md.'
+  );
+}
+
 module.exports = defineConfig({
   testDir: '.',
   testMatch: '**/*.spec.js',
