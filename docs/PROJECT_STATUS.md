@@ -184,6 +184,8 @@ Everything below was pushed to `staging` in **one push** on Sept 20 (`7f5e4c6` -
 
 | #239 (P2) | Ask starter no longer grows then shrinks while streaming (`context-ask.js`, one new JS suite) | Frontend only, so it builds on Vercel but does not restart Render. |
 
+**Verification after the push (Sept 20):** staging is `daad6f6` (the batch plus two docs commits and the `state` README note). The `state` Vercel project skipped the first two builds (Ignored Build Step, tip commit not in the app folder; an API redeploy is skipped by the same rule), so the tip commit was made to touch `implementation-context-prototype/` and `state` then built `daad6f6` and serves the #239 code. **State Deep QA on `daad6f6`, first run with the step 6 wiring** (frontend = `state` staging, backend = Render staging on `99fdcc1`): run 1 passed 13 of 14 (the real-model *VP billing note reaches Review* check got 0 Reviews; staging logs show a clean, valid model response and no validation warnings, so it looks like model variance, but the model's output was not captured and it is **unresolved**); the rerun passed **14 of 14, 0 skipped**. Whether that check should keep hard-gating is an open product decision for Paige. PR #237's title and body were rewritten to match what it now carries (27+ commits, #238 index swap, rollback caveat). CI is green on the head and the PR is `CLEAN`; **merge still needs Paige's explicit authorization.**
+
 Two comments were posted on GitHub on Sept 20: the #136 decision and the #233 correction.
 
 ## Work tracking (GitHub Project "State", https://github.com/users/pedringt/projects/1)
