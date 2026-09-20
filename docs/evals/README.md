@@ -20,6 +20,10 @@ Does State require human attention only when judgment/authorization is genuinely
 
 Does Ask accurately distinguish Current State, Questions, Reviews, History, and uncertainty without inventing decisions or provenance?
 
+### Baseline decomposition
+
+Does the model turn a starting source into a useful Starting State: several sensible sections instead of one blob, the facts a person would expect, undecided items kept out of the facts, and few failures? Model output varies run to run, so this dimension is measured as **rates over repeated runs**, not as a pass/fail (DEC-008: the Deep QA gate only records how one sample splits).
+
 ## Canonical case shape
 
 For each meaningful case, record:
@@ -42,6 +46,10 @@ The executable consequentiality scenarios are currently defined in:
 - `state-project-complete/eval/scenarios.py`
 - `state-project-complete/eval/sequences.py`
 - `state-project-complete/eval/run_eval.py`
+
+The Baseline decomposition eval (#233) is defined in `state-project-complete/eval/baseline_decomposition.py` (four synthetic sources, scoring, aggregation) and run with `python -m eval.run_baseline_decomposition` (`--dry-run` shows the plan and the number of paid calls without making any; `--route paste|upload`; `--repeats N`; `--json PATH` keeps the actual fact text so the automatic "unresolved recorded as a fact" flag can be judged by a person). It is **paid** (one real model call per source per repeat, 12 by default), is not part of any release gate, and gives a fresh database to every run so results are not contaminated by cross-run state (#238). Its deterministic harness tests are `test_baseline_decomposition_eval.py` (no model). The script loads `state-project-complete/.env`, so a key in that file makes it run for real even when the shell has none; use `--dry-run` to check it.
+
+First observations (2026-09-20, an unplanned first run: paste route, 3 runs per source, `claude-haiku-4-5`; treat as provisional): failed 0 of 12; expected-fact recall 97%; **every source came back in the single "General" area** (including the five-heading plan), which does not match what Deep QA sees on the upload route (2-3 areas), so the paste and upload routes should be compared before drawing conclusions; the merely-considered "October 14" date was flagged as an established fact in 3 of 3 runs (unverified: the run did not keep the fact text, so this may be a correctly hedged statement); Confirm was blocked by a Review in 42% of runs.
 
 Targeted model-sensitive regressions also live alongside the State test suite when a single failure needs stronger semantic assertions than review/no-review alone. `test_bootstrap_mixed_spec_eval.py` protects the bootstrap case where one realistic planning/spec document contains settled decisions, tentative ideas, and explicit open questions: the expected outcome includes both at least one proposed maintained fact and at least one proposed Question, without pinning exact model wording.
 
