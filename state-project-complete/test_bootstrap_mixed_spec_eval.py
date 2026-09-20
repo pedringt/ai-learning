@@ -16,11 +16,9 @@ from __future__ import annotations
 
 import os
 import sqlite3
-import sys
 
 import pytest
 
-sys.path.insert(0, "interpretation_runtime")
 
 from anthropic_provider import AnthropicProvider
 from database_migration_backed import get_test_db

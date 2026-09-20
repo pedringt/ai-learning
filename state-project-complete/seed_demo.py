@@ -511,22 +511,20 @@ def _bootstrap_project(connection, *, project_id: str, project_name: str, areas,
         ).fetchone() is not None
         if areas_ready:
             for area_id, name, description, sort_order in areas:
-                # QA follow-up (2026-09-14): project_areas.id is a bare
-                # global PRIMARY KEY (migration 012), not composite with
-                # project_id -- a real scaling risk flagged for whenever a
-                # third project is added, since two projects sharing an area
-                # id (plausible: "budget", "timeline") would collide. Not
-                # fixed here: scoping *this* check by project_id without
-                # first making the PK composite would turn today's silent
-                # skip into a hard IntegrityError on the INSERT below the
-                # moment two projects actually share an id -- worse, not
-                # better. The real fix is a schema migration giving
-                # project_areas a composite (id, project_id) key before a
-                # third project is seeded; deliberately left as a known,
-                # documented limitation rather than a half-fix under this
-                # pass's time budget. Northstar's and Juniper's own area ids
-                # don't collide today, so this doesn't affect either.
-                if not connection.execute("SELECT id FROM project_areas WHERE id=?", (area_id,)).fetchone():
+                # project_areas.id is a bare global PRIMARY KEY (migration 012, #136 / R-009), not
+                # composite with project_id, so two projects cannot share an area id ("budget",
+                # "timeline"). Making the key composite is a schema migration that has been
+                # deliberately deferred (see docs/architecture/PROPOSAL_136_PROJECT_SCOPED_AREA_IDS.md).
+                # Until then a collision must be LOUD: this used to skip the insert silently, leaving
+                # the second project without its area. Re-seeding the same project stays idempotent.
+                existing = connection.execute("SELECT * FROM project_areas WHERE id=?", (area_id,)).fetchone()
+                if existing is not None and projects_ready and existing["project_id"] != project_id:
+                    raise RuntimeError(
+                        f"Area id {area_id!r} for project {project_id!r} is already used by project "
+                        f"{existing['project_id']!r}. project_areas.id is a global key (#136), so hand-seeded "
+                        "area ids must be unique across projects."
+                    )
+                if existing is None:
                     if projects_ready:
                         connection.execute(
                             "INSERT INTO project_areas(id, name, description, sort_order, project_id) VALUES (?, ?, ?, ?, ?)",

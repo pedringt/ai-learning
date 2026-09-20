@@ -86,3 +86,13 @@ provider time.
 pip install playwright pillow
 python -m playwright install chromium
 ```
+
+## style_parity.py
+
+Proves a CSS cleanup is appearance-neutral by comparing the full computed style of every element (plus `::before` / `::after`) between two copies of the static site, across views, phone/desktop widths and light/dark. Run old-vs-old first (must be 0), then old-vs-new. See `docs/architecture/PORTFOLIO_INLINE_STYLES.md`.
+
+```
+git worktree add /tmp/old HEAD
+python tools/style_parity.py --old /tmp/old --new .
+```
+

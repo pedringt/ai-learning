@@ -18,10 +18,8 @@ import logging
 import sqlite3
 import inspect
 import uuid
-import sys
 import traceback
 from dataclasses import dataclass
-from pathlib import Path
 from typing import Any, Mapping, Protocol
 
 from db import Connection, project_id_of
@@ -30,11 +28,10 @@ from question_review_service import persist_question_proposal
 logger = logging.getLogger("state.interpretation")
 
 # Import Phase 2's validation logic unchanged
-sys.path.insert(0, str(Path(__file__).resolve().parent / "interpretation_runtime"))
 
-from validation.interpretation_validation import StructuredInterpretationSchemaError, validate_schema
-from validation.provider_normalization import normalize_provider_payload
-from validation.semantic_validation import (
+from interpretation_runtime.validation.interpretation_validation import StructuredInterpretationSchemaError, validate_schema
+from interpretation_runtime.validation.provider_normalization import normalize_provider_payload
+from interpretation_runtime.validation.semantic_validation import (
     ApplicationStateSnapshot,
     InterpretationContextSnapshot,
     ReviewContextItem,

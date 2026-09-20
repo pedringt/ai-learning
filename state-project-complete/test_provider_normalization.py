@@ -1,12 +1,9 @@
 import copy
-import sys
-from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent / "interpretation_runtime"))
 
-from validation.provider_normalization import normalize_provider_payload
-from validation.interpretation_validation import validate_schema
-from validation.semantic_validation import InterpretationContextSnapshot, StateContextItem
+from interpretation_runtime.validation.provider_normalization import normalize_provider_payload
+from interpretation_runtime.validation.interpretation_validation import validate_schema
+from interpretation_runtime.validation.semantic_validation import InterpretationContextSnapshot, StateContextItem
 
 
 def context():

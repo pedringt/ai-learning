@@ -7,12 +7,10 @@ This test suite proves the complete deterministic path:
 This is the missing link between Phase 2 (interpretation) and Phase 1 (acceptance).
 """
 
-import sys
 import unittest
 
-sys.path.insert(0, "interpretation_runtime")
 
-from validation.fake_provider import FakeProvider, GOLDEN_OUTPUTS
+from interpretation_runtime.validation.fake_provider import FakeProvider, GOLDEN_OUTPUTS
 
 from database_migration_backed import get_test_db
 from interpretation_pipeline_integrated import process_evidence, new_id

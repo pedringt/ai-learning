@@ -78,6 +78,32 @@ Automation:
 
 This does not change production protection.
 
+### 3. `VERCEL_AUTOMATION_BYPASS_SECRET_STATE` (optional; #228 step 6)
+
+State now has its own Vercel project (`state`), and each Vercel project has its own bypass secret. Until this
+secret exists, the State app tests run through the portfolio deployment exactly as before. Once it exists,
+the workflow sets `STATE_APP_URL` to the `state` project's staging URL
+(`https://state-git-staging-cairn10.vercel.app`) and the State app tests navigate there with **this** secret,
+while the portfolio tests keep using secret 1.
+
+1. Vercel dashboard -> **`state`** project (not `ai-learning`) -> **Settings** -> **Deployment Protection**.
+2. Under **Protection Bypass for Automation**, generate a secret.
+3. Copy the value, then run:
+   ```bash
+   gh secret set VERCEL_AUTOMATION_BYPASS_SECRET_STATE --repo pedringt/ai-learning
+   ```
+   (`gh` prompts for the value; do not paste it into chat.)
+4. Run **State Deep QA** once on `staging` and confirm it passes against the `state` project. The job summary
+   still shows the portfolio's frontend revision; the `state` project only builds when files under
+   `implementation-context-prototype/` change, so "behind HEAD" is normal for it.
+
+Locally, set `STATE_APP_URL` and `VERCEL_AUTOMATION_BYPASS_SECRET_STATE` alongside the existing variables. If
+`STATE_APP_URL` is set without the secret, the config refuses to run rather than silently falling back.
+
+Not yet repointed (follow-ups): `question-review-live.js` and its workflow, and `tools/*.py`, still use the
+portfolio's old `/implementation-context-prototype/` path. Once Deep QA has passed against the `state` project,
+the old in-portfolio app copy and the root `api/state-config.js` can be removed.
+
 ### 2. `VERCEL_TOKEN`
 
 Used only by preflight to ask Vercel which commit is actually deployed. Create

@@ -13,10 +13,8 @@ const {
   backendJson,
   backendPost,
   backendDelete,
-  gotoWithBypass,
-} = require('./helpers');
+  gotoWithBypass, STATE_URL } = require('./helpers');
 
-const STATE_URL = '/implementation-context-prototype/index.html';
 
 
 test.describe('Portfolio -> State entry', () => {
