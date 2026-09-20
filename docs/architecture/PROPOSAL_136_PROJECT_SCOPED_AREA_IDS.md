@@ -1,6 +1,6 @@
 # Proposal for #136: project-scoped area identifiers
 
-Status: **proposal, not implemented.** Prepared 2026-09-20 from a read-only audit. It needs a decision from Paige. Related: R-009, R-014, migration 012/013/014.
+Status: **Decided: option C (no schema change)** by Paige on 2026-09-19. Option A (composite key) is deferred, not rejected; see "Decision" below for when to reopen it. Prepared 2026-09-20 from a read-only audit. Related: R-009, R-014, migration 012/013/014.
 
 ## The problem, precisely
 
@@ -56,7 +56,14 @@ Rewrite existing ids with a project prefix and generate prefixed ids for new are
 4. Before deploying: copy the production database file (or confirm a disk snapshot). Deploy, verify `/health`, check the boot logs, run a read-only smoke.
 5. Update R-009 and the seed comment; close #136.
 
-## Decisions needed from Paige
+## Decision
 
-1. C now and A later (recommended), or A now?
-2. If A: is production expected to get real user projects soon (which sets the deadline), and is a maintenance-window-style deploy (backup, then deploy, then verify) acceptable?
+**Option C, chosen by Paige (2026-09-19).** It is implemented on this branch: the seed check is project-scoped and raises on a real collision, tests pin that hand-seeded area ids are unique across seeded projects and that user projects generate `area_<uuid>` ids, and R-009 is reworded (the structural limit remains, but it can no longer be hit silently).
+
+This does **not** meet #136's original "done when" (two projects using the same local area id). The issue should stay open as a deferred item (Backlog), not be closed.
+
+**Reopen option A (the composite-key migration, plan above) when any of these becomes true:**
+
+- a third hand-seeded project is proposed (the uniqueness test will fail first, which is the intended alarm);
+- any path lets a person or a model choose an area id instead of generating `area_<uuid>`;
+- real user-created projects are expected on production. Production holds only the two seeded demo projects today (7 areas), which makes the migration cheapest now; it gets more expensive once real data lands. If that is coming, do A **before** it, with the rehearsal and backup steps in the plan above.
