@@ -67,7 +67,7 @@ See `STATE-ASK-EVALUATION-MAP.md` for the Ask behavior/evaluation map.
 
 ## Deployment
 
-This folder is deployed as its own Vercel project, `state` (Root Directory `implementation-context-prototype`, production branch `main`). It is self-contained: it must not load files from the repository root. An Ignored Build Step skips builds for pushes that do not touch this folder.
+This folder is deployed as its own Vercel project, `state` (Root Directory `implementation-context-prototype`, production branch `main`). It is self-contained: it must not load files from the repository root. An Ignored Build Step (`git diff HEAD^ HEAD --quiet .`) skips builds for pushes that do not touch this folder. **It only compares the last commit of a push with its parent**, so a multi-commit push whose tip commit is outside this folder (for example a docs-only commit) skips the build even when earlier commits changed the app, and the `Vercel – state` check still shows green ("Canceled by Ignored Build Step"). A redeploy from the Vercel API is skipped by the same rule. To force a build, make sure the tip commit of the push touches this folder (or change the project's Ignored Build Step, which is a dashboard setting). Check which commit the `state` project last built before verifying a change here.
 
 Which backend the page calls is decided by `api/state-config.js`: a **production** deployment (the `main` branch) uses the production API, and every **preview** deployment (for example the `staging` branch) uses the staging API. A Vercel project's very first deployment is labelled production whatever branch it came from, so check `window.STATE_API_BASE` on a new project's first preview before testing against it.
 
