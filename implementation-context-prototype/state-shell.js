@@ -6,9 +6,7 @@
 (()=>{
   const root=document.documentElement;
   const body=document.body;
-  const btn=document.getElementById('v922ThemeToggle');
   const mobile=document.getElementById('v922MobileNav');
-  const isDark=()=>body.classList.contains('v88-dark');
 
   /* Keep portfolio branding consistent across standalone pages. */
   document.title=document.title
@@ -233,19 +231,11 @@
     document.head.appendChild(learningMobileFix);
   }
 
-  const applyIcon=()=>{
-    if(!btn)return;
-    const dark=isDark();
-    btn.textContent=dark?'☀':'☾';
-    btn.setAttribute('aria-pressed',dark?'true':'false');
-    btn.setAttribute('aria-label',dark?'Switch to light mode':'Switch to dark mode');
-    btn.title=dark?'Switch to light mode':'Switch to dark mode';
-  };
-  const savedTheme=localStorage.getItem('ai-cs-theme');
-  const systemDark=!!(window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches);
-  if(savedTheme==='dark'||(!savedTheme&&systemDark)) body.classList.add('v88-dark');
-  applyIcon();
-  if(btn) btn.addEventListener('click',()=>{body.classList.toggle('v88-dark');localStorage.setItem('ai-cs-theme',isDark()?'dark':'light');applyIcon();});
+  // State is light-only (#229). Its styling is written for light mode and its theme toggle is
+  // hidden, so following the browser's dark-mode preference (or a theme saved on this origin by
+  // the portfolio) only flipped a handful of rules to dark and left the app half-dark.
+  // Never add the dark class.
+  body.classList.remove('v88-dark');
   if(mobile) mobile.addEventListener('change',()=>{ location.href=mobile.value; });
   document.addEventListener('click',e=>{document.querySelectorAll('.secondary-menu[open]').forEach(d=>{if(!d.contains(e.target))d.removeAttribute('open');});});
 
