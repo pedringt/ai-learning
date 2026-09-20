@@ -12,7 +12,7 @@ from pathlib import Path
 import pytest
 
 from eval.baseline_decomposition import (
-    ROUTES, SCENARIOS, DecompositionScenario, _has_all, run_scenarios, score_run, summarize,
+    ROUTES, SCENARIOS, DecompositionScenario, _has_all, real_provider, run_scenarios, score_run, summarize,
 )
 from test_baseline_setup_lifecycle import BaselineFixtureProvider
 
@@ -166,6 +166,34 @@ def test_a_provider_that_fails_shows_up_as_a_failure_rate_not_a_crash():
 
     report = run_scenarios(Down(), SCENARIOS[:1], repeats=2)
     assert report["overall"]["failed_rate"] == 1.0 and report["overall"]["recall_mean"] is None
+
+
+def test_a_plain_interpretation_provider_is_rejected_because_it_would_measure_the_harness_not_the_model(monkeypatch):
+    # #233: injecting the plain AnthropicProvider drops the area schema, the Baseline prompt guidance and the
+    # metadata that stores areas, so every fact comes back in "General". The first real run measured exactly that.
+    import anthropic_provider
+    import openai_provider
+
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "dummy-not-a-key")     # construction only; nothing is ever called
+    monkeypatch.setenv("OPENAI_API_KEY", "dummy-not-a-key")
+    for plain in (anthropic_provider.AnthropicProvider(), openai_provider.OpenAIProvider()):
+        with pytest.raises(ValueError, match="real_provider"):
+            run_scenarios(plain, SCENARIOS[:1], repeats=1)
+
+
+def test_real_provider_is_the_baseline_provider_the_deployed_app_uses(monkeypatch):
+    import socket
+
+    import anthropic_provider
+    from baseline_setup import _provider_from_env
+
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "dummy-not-a-key")
+    monkeypatch.setattr(socket.socket, "connect", lambda *a, **k: (_ for _ in ()).throw(AssertionError("network attempted")))
+    provider = real_provider()
+    assert isinstance(provider, anthropic_provider.AnthropicProvider)
+    assert type(provider) is not anthropic_provider.AnthropicProvider                          # the Baseline subclass
+    assert type(provider).__name__ == type(_provider_from_env(type("S", (), {"provider": "anthropic"})())).__name__ == "BaselineAnthropicProvider"
+    assert "proposed_area_name" in str(anthropic_provider.PROVIDER_OUTPUT_SCHEMA)               # area hints are in the schema
 
 
 def test_unknown_route_is_rejected():

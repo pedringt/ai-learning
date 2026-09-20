@@ -28,7 +28,7 @@ from eval.env import load_local_env
 
 load_local_env()
 
-from eval.baseline_decomposition import ROUTES, SCENARIOS, run_scenarios
+from eval.baseline_decomposition import ROUTES, SCENARIOS, real_provider, run_scenarios
 
 
 def _fmt(value):
@@ -76,11 +76,9 @@ def main() -> int:
         print("SKIPPED: ANTHROPIC_API_KEY is required because this eval measures real model output.")
         return 0
 
-    from anthropic_provider import AnthropicProvider
-
     print(f"Running {len(scenarios)} source(s) x {args.repeats} via the '{args.route}' route against the real "
-          f"AnthropicProvider ({calls} model call(s))...")
-    report = run_scenarios(AnthropicProvider(), scenarios, repeats=args.repeats, route=args.route)
+          f"Baseline provider ({calls} model call(s))...")
+    report = run_scenarios(real_provider(), scenarios, repeats=args.repeats, route=args.route)
     print_report(report)
     if args.json:
         Path(args.json).write_text(json.dumps(report, indent=2))

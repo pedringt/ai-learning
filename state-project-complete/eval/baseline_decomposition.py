@@ -236,6 +236,35 @@ def summarize(runs: list[dict[str, Any]]) -> dict[str, Any]:
 ROUTES = ("paste", "upload")
 
 
+def real_provider():
+    """The provider the deployed app uses for Baseline analysis (needs the provider's API key in the environment).
+
+    This is NOT the plain `AnthropicProvider`. The deployed app swaps in `baseline_setup._provider_from_env`,
+    whose provider subclass adds the area/topic fields to the output schema, the Baseline prompt guidance
+    (including "never place most of a structured source into General"), chunking of long sources, and the
+    metadata that stores each fact's area. `create_app(provider=...)` uses whatever it is given as-is, so
+    handing it a plain provider silently drops all of that: every fact comes back in "General" whatever the
+    model does. That is exactly what the first real run of this eval measured (#233), so the first results
+    described the harness, not the model.
+    """
+    from types import SimpleNamespace
+
+    from baseline_setup import _provider_from_env
+
+    return _provider_from_env(SimpleNamespace(provider="anthropic"))
+
+
+def _reject_plain_provider(provider) -> None:
+    import anthropic_provider
+    import openai_provider
+
+    if type(provider) in (anthropic_provider.AnthropicProvider, openai_provider.OpenAIProvider):
+        raise ValueError(
+            "This provider is the plain interpretation provider, not the Baseline one the deployed app uses "
+            "(no area/topic schema, no Baseline prompt guidance, no chunking). Build it with real_provider()."
+        )
+
+
 def run_scenarios(provider, scenarios: Iterable[DecompositionScenario] = SCENARIOS, repeats: int = 3,
                   database_dir: str | None = None, timeout_seconds: float = 180.0, route: str = "paste") -> dict[str, Any]:
     """Run each scenario `repeats` times against `provider` through the real API path.
@@ -246,6 +275,7 @@ def run_scenarios(provider, scenarios: Iterable[DecompositionScenario] = SCENARI
     """
     if route not in ROUTES:
         raise ValueError(f"route must be one of {ROUTES}")
+    _reject_plain_provider(provider)
     from fastapi.testclient import TestClient
 
     from api import Settings, create_app
