@@ -163,10 +163,10 @@
     const questionCount=(c.current_questions||0)+(c.proposed_questions||0);
     let status='Confirming is one human authorization for the routine draft facts shown here.';
     if(c.processing_evidence) status='Some Evidence is still being analyzed. Wait for it to finish before confirming.';
-    else if(c.failed_evidence) status='Retry failed Evidence before confirming.';
+    else if(c.failed_evidence) status='Some starting material could not be analyzed. Retry the analysis before confirming.';
     else if(c.needs_individual_review) status='Resolve the flagged Reviews first. Routine draft facts do not need separate Review clicks.';
     else if(!factCount&&questionCount) status='State found Questions but no Starting State facts. This may be incomplete; review the source before confirming.';
-    return `<div class="baseline-draft-dialog"><span class="eyebrow">Baseline Setup</span><h2 id="dialogTitle">Review your Starting State</h2><p class="baseline-draft-intro">This is the project picture State assembled from your starting material. Edit routine facts, move them between sections, or remove misunderstandings. Nothing below becomes Current State until you confirm it.</p>${attention}<section class="baseline-draft-section"><h3>Starting State</h3>${facts}</section>${questions}<div class="baseline-draft-actions"><span class="baseline-draft-status">${esc(status)}</span><button type="button" class="btn secondary" data-action="close-dialog">Cancel</button><button type="button" class="btn primary" data-baseline-confirm-starting ${summary.can_confirm?'':'disabled'}>Confirm Starting State</button></div></div>`;
+    return `<div class="baseline-draft-dialog"><span class="eyebrow">Baseline Setup</span><h2 id="dialogTitle">Review your Starting State</h2><p class="baseline-draft-intro">This is the project picture State assembled from your starting material. Edit routine facts, move them between sections, or remove misunderstandings. Nothing below becomes Current State until you confirm it.</p>${attention}<section class="baseline-draft-section"><h3>Starting State</h3>${facts}</section>${questions}<div class="baseline-draft-actions"><span class="baseline-draft-status">${esc(status)}</span>${c.failed_evidence&&!c.processing_evidence?'<button type="button" class="btn secondary" data-baseline-retry-failed>Retry failed analysis</button>':''}<button type="button" class="btn secondary" data-action="close-dialog">Cancel</button><button type="button" class="btn primary" data-baseline-confirm-starting ${summary.can_confirm?'':'disabled'}>Confirm Starting State</button></div></div>`;
   }
 
   // The review dialog is a snapshot of the draft. If it is opened while
@@ -249,7 +249,7 @@
       showDialog(`<span class="eyebrow">Baseline Setup</span><h2 id="dialogTitle">Starting State is unavailable.</h2><p>${esc(error.message||'Please try again.')}</p><div class="dialog-actions"><button class="btn primary" type="button" data-action="close-dialog">Close</button></div>`);
     }
   }
-  window.STATE_BASELINE_SETUP={openDraft};
+  window.STATE_BASELINE_SETUP={openDraft,retryFailedAnalysis,get retryMessage(){return retryMessage}};
 
   function collectDecisions(){
     return [...document.querySelectorAll('.baseline-draft-fact[data-proposal-id]')].map(card=>({
@@ -259,6 +259,38 @@
       topic:card.querySelector('[data-baseline-topic]')?.value||'',
       area_name:card.querySelector('[data-baseline-area]')?.value||'General',
     }));
+  }
+
+  // Retry every source whose analysis failed (#231). The backend already supports this
+  // (POST /api/evidence/{id}/reanalyze, the same call the Notes view uses); the Baseline
+  // UI told the person to retry but never offered it.
+  // The message lives here, not only in the DOM: the banner is re-rendered by two renderers
+  // whenever the view refreshes, and would otherwise lose it a moment after a failed retry.
+  let retrying=false,retryMessage='';
+  async function retryFailedAnalysis(button){
+    if(retrying)return;retrying=true;
+    const buttons=[...document.querySelectorAll('[data-baseline-retry-failed]')],labels=new Map(buttons.map(b=>[b,b.textContent]));
+    const say=text=>{retryMessage=text;document.querySelectorAll('[data-baseline-retry-status]').forEach(node=>{node.textContent=text});const dialogStatus=document.querySelector('.baseline-draft-status');if(dialogStatus&&text)dialogStatus.textContent=text};
+    buttons.forEach(b=>{b.disabled=true;b.textContent='Retrying…'});say('');
+    let recovered=false;
+    try{
+      const payload=await baselineRequest('/api/evidence');
+      const failed=(payload?.items||payload||[]).filter(item=>item.processing_status==='failed');
+      for(let i=0;i<failed.length;i++){
+        if(failed.length>1)buttons.forEach(b=>{b.textContent=`Retrying ${i+1} of ${failed.length}…`});
+        await window.STATE_API.retryEvidenceAnalysis(failed[i].id);
+      }
+      recovered=true;retryMessage='';
+    }catch(error){
+      const detail=String(error?.message||'').trim();
+      say(`Retry did not finish${detail?': '+detail.replace(/[.\s]+$/,''):''}. Your starting material is still saved; you can try again.`);
+    }finally{
+      retrying=false;
+      buttons.forEach(b=>{b.disabled=false;b.textContent=labels.get(b)});
+      window.STATE_ASK_TEST_API?.hydrateBackend?.();
+      document.dispatchEvent(new Event('state-project-record-changed'));
+      if(recovered&&draftDialogOpen())openDraft();
+    }
   }
 
   async function confirmStartingState(button){
@@ -315,6 +347,9 @@
     if(openReviews){
       event.preventDefault();closeDialog();document.querySelector('[data-view="open-items"]')?.click();return;
     }
+
+    const retryFailed=event.target.closest?.('[data-baseline-retry-failed]');
+    if(retryFailed&&!retryFailed.disabled){event.preventDefault();retryFailedAnalysis(retryFailed);return;}
 
     const confirm=event.target.closest?.('[data-baseline-confirm-starting]');
     if(confirm&&!confirm.disabled){event.preventDefault();confirmStartingState(confirm);}
