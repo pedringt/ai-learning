@@ -166,6 +166,30 @@ def test_a_provider_that_fails_shows_up_as_a_failure_rate_not_a_crash():
 
     report = run_scenarios(Down(), SCENARIOS[:1], repeats=2)
     assert report["overall"]["failed_rate"] == 1.0 and report["overall"]["recall_mean"] is None
+    # the cause is kept, so a real failure can be told apart (here: the provider raised)
+    runs = report["scenarios"][SCENARIOS[0].id]["runs"]
+    assert {r["failure_code"] for r in runs} == {"provider_error"} and all("provider unavailable" in r["failure_message"] for r in runs)
+    assert report["overall"]["failure_codes"] == {"provider_error": 2}
+
+
+def test_schema_violating_model_output_is_recorded_as_a_schema_violation():
+    class Malformed:
+        name = "malformed"
+        model_identifier = "malformed-v1"
+
+        def interpret(self, **kwargs):
+            return {"summary": "this is not the required structure"}
+
+    report = run_scenarios(Malformed(), SCENARIOS[:1], repeats=1)
+    run = report["scenarios"][SCENARIOS[0].id]["runs"][0]
+    assert run["failed"] and run["failure_code"] == "schema_violation" and run["failure_message"]
+    assert report["overall"]["failure_codes"] == {"schema_violation": 1}
+
+
+def test_a_successful_run_carries_no_failure_cause_and_no_failure_codes():
+    report = run_scenarios(BaselineFixtureProvider(), SCENARIOS[:1], repeats=1)
+    run = report["scenarios"][SCENARIOS[0].id]["runs"][0]
+    assert not run["failed"] and run["failure_code"] is None and report["overall"]["failure_codes"] == {}
 
 
 def test_a_plain_interpretation_provider_is_rejected_because_it_would_measure_the_harness_not_the_model(monkeypatch):

@@ -7,7 +7,9 @@ For each synthetic source it runs Baseline analysis through the real API path (a
 POST /api/baseline/evidence, then GET /api/baseline/draft) and scores the draft. Model output varies
 run to run, so every source is run several times and the report gives RATES, not a single pass/fail:
 
-- failed: analysis failed (for example schema-violating model output), leaving an empty draft
+- failed: analysis failed (for example schema-violating model output), leaving an empty draft; the cause
+  (error code and message, read from the failed interpretation record) is kept with the run so a failure can
+  be told apart: schema_violation, a semantic code, or provider_error (which includes hitting max_tokens)
 - expected-fact recall: how many of the facts a person would expect actually appear in the draft
 - sections: number of distinct areas, and how often the "General" last-resort area is used
 - suspect: an unresolved or merely-considered item recorded as an established fact. A statement that
@@ -162,6 +164,30 @@ def _specifics(text: str) -> set[str]:
     return found
 
 
+def failure_cause(database_path: str) -> dict[str, Any]:
+    """Why the most recent analysis in this run's database failed: {"failure_code", "failure_message"}."""
+    import json
+
+    from db import connect
+
+    connection = connect(f"sqlite://{database_path}")
+    try:
+        row = connection.execute(
+            "SELECT error_code, structured_result FROM interpretation_records "
+            "WHERE processing_status='failed' ORDER BY rowid DESC LIMIT 1"
+        ).fetchone()
+    finally:
+        connection.close()
+    if row is None:
+        return {"failure_code": "unknown", "failure_message": "no failed interpretation record found"}
+    message = ""
+    try:
+        message = str(json.loads(row["structured_result"] or "{}").get("error_message") or "")
+    except (TypeError, ValueError):
+        message = str(row["structured_result"] or "")
+    return {"failure_code": row["error_code"] or "unknown", "failure_message": message.strip().splitlines()[0][:300] if message.strip() else ""}
+
+
 def score_run(scenario: DecompositionScenario, draft: dict[str, Any]) -> dict[str, Any]:
     """Score one Baseline draft (the payload of GET /api/baseline/draft) against a scenario."""
     counts = draft.get("counts") or {}
@@ -186,6 +212,8 @@ def score_run(scenario: DecompositionScenario, draft: dict[str, Any]) -> dict[st
         "facts_detail": [{"area": i.get("area_name") or "General", "topic": i.get("topic") or "", "statement": i.get("statement") or ""} for i in items],
         "open_item_texts": [str(q.get("text", ""))[:200] for q in questions] + [str(r.get("decision_question", ""))[:200] for r in needs_review],
         "failed": int(counts.get("failed_evidence", 0)) > 0,
+        "failure_code": None,       # filled in by run_scenarios for a failed run (it owns the database)
+        "failure_message": None,
         "facts": len(items),
         "areas": len(areas),
         "general_used": "general" in areas,
@@ -219,6 +247,8 @@ def summarize(runs: list[dict[str, Any]]) -> dict[str, Any]:
     return {
         "runs": n,
         "failed_rate": rate(lambda r: r["failed"], runs),
+        "failure_codes": {code: sum(1 for r in runs if r["failed"] and (r.get("failure_code") or "unknown") == code)
+                          for code in sorted({(r.get("failure_code") or "unknown") for r in runs if r["failed"]})},
         "facts_mean": mean("facts"),
         "areas_mean": mean("areas"),
         "enough_areas_rate": rate(lambda r: r["enough_areas"], ok),
@@ -308,6 +338,8 @@ def run_scenarios(provider, scenarios: Iterable[DecompositionScenario] = SCENARI
                             break
                         time.sleep(0.5)
                 result = score_run(scenario, draft)
+                if result["failed"]:
+                    result.update(failure_cause(settings.database_path))
                 result["submit_status"] = response.status_code
                 runs.append(result)
             per_scenario[scenario.id] = {"title": scenario.title, "summary": summarize(runs), "runs": runs}

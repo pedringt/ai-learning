@@ -45,11 +45,14 @@ def print_report(report: dict) -> None:
         print(f"    expected-fact recall {_fmt(s['recall_mean'])} | unresolved-as-fact {_fmt(s['suspect_rate'])} "
               f"(hedged mention {_fmt(s['hedged_mention_rate'])}) | invented year/amount {_fmt(s['invented_rate'])} "
               f"| open items {s['open_items_mean']} (blocked Confirm {_fmt(s['blocked_confirm_rate'])}, as expected {_fmt(s['open_items_as_expected_rate'])})")
+        for r in entry["runs"]:
+            if r["failed"]:
+                print(f"    FAILED: {r.get('failure_code')}: {r.get('failure_message')}")
         missed = sorted({m for r in entry["runs"] for m in r["missed"]})
         if missed:
             print(f"    facts missed in at least one run: {', '.join(missed)}")
     o = report["overall"]
-    print(f"\n  overall: failed {_fmt(o['failed_rate'])}, recall {_fmt(o['recall_mean'])}, "
+    print(f"\n  overall: failed {_fmt(o['failed_rate'])}{' ' + str(o['failure_codes']) if o.get('failure_codes') else ''}, recall {_fmt(o['recall_mean'])}, "
           f"enough sections {_fmt(o['enough_areas_rate'])}, 'General' used {_fmt(o['general_used_rate'])}, "
           f"unresolved-as-fact {_fmt(o['suspect_rate'])}, invented year/amount {_fmt(o['invented_rate'])}, Confirm blocked {_fmt(o['blocked_confirm_rate'])}")
 
