@@ -169,3 +169,23 @@ If the model raises a Review that blocks Confirm (State's authority rule working
 
 **Rejected / deferred**  
 A deterministic provider for this flow (it would need a test-only provider switch on a deployed server, and would stop exercising the real model path where the schema-violation failure occurred; deterministic lifecycle coverage already runs in `make qa-fast`); silently retrying schema-violating output in the test (hides a real product reliability problem, tracked in R-016 and #231). Model quality for Baseline decomposition is deferred to an eval (follow-up issue).
+
+---
+
+### DEC-009 — Baseline analysis does not retry automatically for now; measure first
+
+**Status:** Settled  
+**Date:** 2026-09-20  
+**Related:** R-016; Issues #231, #233, #240; DEC-008
+
+**Decision**  
+When Baseline Setup analysis fails (for example the model returns output that fails schema validation), State does **not** retry automatically. The failure stays visible and the person can retry by hand from the Baseline UI (#231). Paige approved a measure-first approach: measure the real failure rate with the corrected Baseline decomposition eval (#233), and add an automatic retry only if that rate is meaningfully above a few percent.
+
+**Why**  
+The first valid measurement (Sept 20, Haiku 4.5, the Baseline provider the deployed app uses) was **1 failed analysis in 36 real calls (about 3%)**, and the cause was not identified: it did not reproduce in 12 targeted re-runs, and the call logs rule out a routine truncation (largest output 895 of 2,000 tokens, every call ended normally) and a timeout (7 to 10 s against 30 s). One failure in 36 is too few to say the rate is real, and a retry costs another model call and added latency, and can hide a real reliability signal (DEC-008 already declines to retry silently in the test for that reason).
+
+**Revisit when**  
+A real failure is recorded with a `schema_violation` code (the eval now records the failure code and message), or a larger measurement shows a rate meaningfully above a few percent. If revisited, the smallest option is one retry, only for `schema_violation`, in the background, recording both attempts (Ask already retries once on a contract failure).
+
+**Rejected / deferred**  
+An automatic retry now (no evidence it is needed); a repair pass that sends the invalid output back to the model (a new prompt, so a product change that needs its own eval); keeping the valid parts of a bad output (edges toward AI deciding what counts as valid); prevention by tuning chunk size or output limits (needs failure data first).
