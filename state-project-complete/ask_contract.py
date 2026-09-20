@@ -38,6 +38,30 @@ class AskAnswerSection(BaseModel):
     title: str = Field(min_length=1, max_length=160)
     items: list[AskAnswerItem] = Field(default_factory=list, max_length=8)
 
+# The final shape of a meeting-prep answer (#246). `_normalize_meeting_prep` in ask_service.py enforces these
+# after the model answers, and the prompt states them (the text is generated from these same values), so the
+# model writes the final shape and a live-streamed answer does not shrink or reshuffle when it finishes.
+# Change them here and both follow; a test keeps the two in step.
+MEETING_PREP_SECTION_ORDER = (
+    "needs_review", "questions", "established", "recent_context", "changes", "open_attention", "draft", "other",
+)
+MEETING_PREP_ITEM_CAPS = {
+    "needs_review": 2, "questions": 4, "established": 3, "recent_context": 2,
+    "changes": 2, "open_attention": 3, "draft": 4, "other": 2,
+}
+MEETING_PREP_MAX_SECTIONS = 4
+MEETING_PREP_MAX_REFINEMENTS = 3
+# Kinds the normalizer retitles. `draft` and `other` keep the model's own short title.
+MEETING_PREP_SECTION_TITLES = {
+    "needs_review": "Decisions needed",
+    "questions": "Get these answered",
+    "established": "Useful context",
+    "recent_context": "Recent context",
+    "changes": "What changed",
+    "open_attention": "Useful context",
+}
+
+
 class AskSynthesis(BaseModel):
     model_config = ConfigDict(extra="forbid")
     job: AskJob
