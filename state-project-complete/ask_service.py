@@ -706,6 +706,27 @@ _INTERNAL_JSON_FIELD_NAMES = frozenset({
 })
 
 
+# Seeded demo record ids are hand-written slugs with a prefix: "demo-review-retention" (Northstar) and
+# "demo-juniper-review-elevator" (Juniper). The generated-id shape patterns in _clean_visible_ask_text recognise
+# only the tail ("review-elevator"), which used to leave the prefix behind as a mangled fragment such as
+# "Demo-juniper- qualifies this risk." (#247), so the whole slug is removed first.
+_DEMO_SLUG_ID = re.compile(
+    r"\bdemo-(?:(?:northstar|juniper)-)?(?:review|state|question|evidence|proposal|history)-[a-z0-9-]+\b", re.IGNORECASE
+)
+
+
+def _candidate_pool_ids(candidates: Mapping[str, list[dict]] | None) -> set[str]:
+    """Every record id the model was shown for this Ask, whether or not it selected the record (#247).
+
+    The model can echo the id of a record it did not select, and only ids in the scrubber's exact-id list are
+    removed regardless of shape (some, like Juniper's "jq-elevator", match no shape pattern at all)."""
+    ids: set[str] = set()
+    for bucket in (candidates or {}).values():
+        if isinstance(bucket, list):
+            ids.update(str(x["id"]) for x in bucket if isinstance(x, dict) and x.get("id"))
+    return ids
+
+
 def _clean_visible_ask_text(value: str | None, internal_ids: set[str]) -> str | None:
     """Remove implementation identifiers from prose shown to users."""
     if value is None:
@@ -716,6 +737,7 @@ def _clean_visible_ask_text(value: str | None, internal_ids: set[str]) -> str | 
     for internal_id in sorted(internal_ids, key=len, reverse=True):
         if internal_id:
             text = re.sub(rf"(?<![A-Za-z0-9_]){re.escape(internal_id)}(?![A-Za-z0-9_])", "", text, flags=re.IGNORECASE)
+    text = _DEMO_SLUG_ID.sub("", text)
     text = re.sub(r"\b(?:state|question|evidence|review|proposal)_[a-z0-9]+\b", "", text, flags=re.IGNORECASE)
     text = re.sub(r"\b(?:ask-evidence|state|question|evidence|review|proposal|k|q)-[a-z0-9-]+\b", "", text, flags=re.IGNORECASE)
     # Defensively strip known internal field/key names the model might echo
@@ -751,6 +773,7 @@ def _validate_synthesis(
         "question": {x["id"] for x in context.get("questions", []) if not x["blocking"]},
     }
     all_internal_ids = set().union(*allowed.values(), {x["id"] for x in context.get("rules", [])})
+    all_internal_ids |= _candidate_pool_ids(candidates)          # ids the model was shown, selected or not (#247)
     canonical_reviews = {x["id"]: x for x in context.get("reviews", [])}
     canonical_questions = {x["id"]: x for x in context.get("questions", [])}
 
