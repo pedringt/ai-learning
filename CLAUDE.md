@@ -30,6 +30,8 @@ For the State GitHub Project workflow, fields, statuses, and board conventions, 
 - When creating or triaging work, set **Work Type**, **Priority**, and **Product Area** when the right value is clear. Use **Release** only when it adds useful planning context.
 - Do not infer **QA** or **Staging** from a passing test or open PR. Passing tests never grant staging/main promotion permission.
 - If implementation or QA reveals a separate reproducible bug, AI behavior failure, or unresolved product question, create or recommend a separate Issue instead of hiding it in chat or unrelated scope.
+- Setting a board item to Done auto-closes its issue, and `gh issue close --comment` then posts no comment: post the explanatory comment with `gh issue comment`.
+- The production demo data is writable by anyone, and other sessions may test on the live site. If it drifts from the baseline in `docs/PROJECT_STATUS.md`, reset Northstar (`POST /api/demo/reset` with the header `X-State-Project-Id: northstar`) only with Paige's OK.
 
 ## QA defaults
 
@@ -40,6 +42,8 @@ For the State GitHub Project workflow, fields, statuses, and board conventions, 
 - When an authorized fix closes a reproducible bug, add regression coverage whenever practical so future QA can move left into the cheaper layer.
 - For deployed staging browser QA, use the existing **State Deep QA** GitHub Action only after the change is authorized on staging.
 - For a human exploratory pass, use `docs/qa/MANUAL_RELEASE.md`. For Cowork, use `docs/qa/COWORK.md`.
+- Real-model calls cost money: state the call count and the estimated cost, dry-run first, and get a yes. `make qa-fast` must never call a model: after adding eval code check that the skipped count is unchanged and grep the log for `api.anthropic.com`. Eval scripts load `.env` (#224): put reusable code in a library module, keep the script thin, and import only the library from tests.
+- A prompt change needs a before/after measurement on the affected suites (see `docs/evals/`) and the Ask-quality eval (`python -m eval.run_quality_evals --suite ask`) before promotion; never loosen a scorer to make a check pass.
 
 ## Workflow rules
 
@@ -52,3 +56,5 @@ For the State GitHub Project workflow, fields, statuses, and board conventions, 
 - Production `state-api` deploys from `main`. `state-api-staging` auto-deploy is scoped to `state-project-complete/` changes, so frontend-only staging pushes do not needlessly bounce it. If a push/merge touches no `state-project-complete/` files, an unchanged staging `/health` build is expected rather than evidence of a stale deploy.
 - After any push that changes `state-project-complete/` on a Render-backed branch, verify the actual deployed build before trusting it or smoke-testing further. Run `scripts/verify-render-deploy.sh <service>/health [expected-sha]` and compare the `/health` build field to the expected commit. Do not rely only on the Render dashboard/API reporting a deploy as live.
 - Postgres transaction failures behave differently from SQLite. On Postgres, a failed statement leaves the transaction aborted until an explicit rollback. Code that catches a speculative database error and continues must call `connection.rollback()` when `connection.is_postgres` before issuing more SQL. This exact class of bug caused the September 14 production first-boot crash loop and will not be caught by SQLite-only staging behavior.
+- Vercel is on the free plan: 100 deployments per day, team-wide (skipped builds appear to count, and Tastemake shares the budget). Batch pushes, and after a promotion confirm the served frontend code and both Vercel projects' statuses, not just green checks. Never "Promote" a staging preview deployment to production: its `api/state-config.js` points at the staging API.
+- Production `state-api` on Render has no health-check path, so each deploy causes about a minute of 502s. Avoid deploying while others may be testing the live site.

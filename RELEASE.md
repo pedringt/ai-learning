@@ -56,7 +56,9 @@ Then:
 - confirm CI for the exact revision;
 - confirm any migrations/backend/frontend pieces are promoted together as required;
 - avoid overwriting known main-only/staging-only work;
-- record the release in the relevant PR/Issue/project view.
+- record the release in the relevant PR/Issue/project view;
+- check both Vercel projects' statuses on the merge (the free plan caps deployments at 100 per day team-wide; a refused build leaves the frontend stale while the backend deploys) and never promote a staging preview deployment to production;
+- remember that a production Render deploy causes about a minute of 502s (no health-check path), so avoid deploying while someone is testing the live site.
 
 ## Rollback / recovery
 
@@ -75,3 +77,5 @@ Rollback is itself a deployment/promotion action. Do not change staging or produ
 - Run a focused production smoke check that does not create unsafe test data.
 - If a P0/P1 escapes, use `docs/incidents/TEMPLATE.md` and add permanent regression/eval protection where practical.
 - Move completed work to Done only after the intended environment is actually verified.
+- Confirm the served frontend, not just green checks: for example fetch the deployed JS and check that it contains the new code, and check the production backend's `/health` build against the merge commit.
+- If the live demo data may have been touched (other sessions can test on production), compare it with the baseline in `docs/PROJECT_STATUS.md` and reset Northstar only with Paige's OK.
