@@ -67,7 +67,13 @@ See `STATE-ASK-EVALUATION-MAP.md` for the Ask behavior/evaluation map.
 
 ## Deployment
 
-This folder is deployed as its own Vercel project, `state` (Root Directory `implementation-context-prototype`, production branch `main`). It is self-contained: it must not load files from the repository root. An Ignored Build Step (`git diff HEAD^ HEAD --quiet .`) skips builds for pushes that do not touch this folder. **It only compares the last commit of a push with its parent**, so a multi-commit push whose tip commit is outside this folder (for example a docs-only commit) skips the build even when earlier commits changed the app, and the `Vercel – state` check still shows green ("Canceled by Ignored Build Step"). A redeploy from the Vercel API is skipped by the same rule. To force a build, make sure the tip commit of the push touches this folder (or change the project's Ignored Build Step, which is a dashboard setting). Check which commit the `state` project last built before verifying a change here.
+This folder is deployed as its own Vercel project, `state` (Root Directory `implementation-context-prototype`, production branch `main`). It is self-contained: it must not load files from the repository root. An Ignored Build Step skips builds for pushes that do not change this folder. Since Sept 20 it compares against the **last commit this branch successfully deployed** (`VERCEL_GIT_PREVIOUS_SHA`), so a batched push builds if *any* commit since then touched this folder, even when the tip commit is docs-only. It **fails open**: it builds when there is no previous deployment, when the commit was already deployed, or when the previous commit is not in Vercel's clone. The setting (Project Settings, Git, Ignored Build Step) is:
+
+```
+[ -z "$VERCEL_GIT_PREVIOUS_SHA" ] && exit 1; [ "$VERCEL_GIT_PREVIOUS_SHA" = "$(git rev-parse HEAD)" ] && exit 1; git diff --quiet "$VERCEL_GIT_PREVIOUS_SHA" HEAD -- .
+```
+
+Its logic was tested on five scenarios in a scratch repo, but **it has not yet been observed on a real push**: after the first batched push, confirm that the `state` project built (Vercel deployment `READY`, not `CANCELED`). To roll back, set the command to the previous value, `git diff HEAD^ HEAD --quiet .`, which looks only at the tip commit of a push. That old rule skipped a batched push whose tip commit was docs-only even though earlier commits changed the app (the `Vercel – state` check still showed green, "Canceled by Ignored Build Step"), and it also skipped API redeploys.
 
 Which backend the page calls is decided by `api/state-config.js`: a **production** deployment (the `main` branch) uses the production API, and every **preview** deployment (for example the `staging` branch) uses the staging API. A Vercel project's very first deployment is labelled production whatever branch it came from, so check `window.STATE_API_BASE` on a new project's first preview before testing against it.
 

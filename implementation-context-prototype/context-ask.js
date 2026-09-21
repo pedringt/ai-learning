@@ -150,6 +150,9 @@
         if(ch==='"'){complete=true;break;}
       }
       const value=decodeJsonStringFragment(raw.slice(i,j))
+        // Seeded demo ids are prefixed slugs ("demo-review-retention", "demo-juniper-review-elevator"); remove the whole slug first so the
+        // shape patterns below do not leave the prefix behind as "Demo-juniper-" (#247). Mirrors _DEMO_SLUG_ID in ask_service.py.
+        .replace(/\bdemo-(?:(?:northstar|juniper)-)?(?:review|state|question|evidence|proposal|history)-[a-z0-9-]+\b/gi,'')
         .replace(/\b(?:state|question|evidence|review|proposal)_[a-z0-9]+\b/gi,'')
         .replace(/\b(?:ask-evidence|state|question|evidence|review|proposal|k|q)-[a-z0-9-]+\b/gi,'')
         .replace(/\s+([,.;:])/g,'$1')
@@ -171,15 +174,13 @@
       const msg=bits.length?`Grounded in ${bits.join(', ')}. Drafting the answer…`:'Grounded context ready. Drafting the answer…';
       return `<div class="ask-live-loading has-grounded-preview"><span class="ask-loading-mark" aria-hidden="true"></span><div><strong>Grounded context ready</strong><p>${esc(msg)}</p><p class="ask-loading-note">Suggested prompts above answer instantly from what's already known -- this one runs a live check against the full project record.</p></div></div>`;
     }
-    // meeting_prep is reshaped after the stream ends (the backend's _normalize_meeting_prep merges repeated
-    // sections, drops duplicate records and caps items and sections), so drawing its sections live shows more
-    // than the final answer keeps and the draft visibly shrinks (#239). Stream only the headline and summary,
-    // which the normalizer never changes, and hold the sections back for the final answer. The job is the first
-    // field of the answer, so it is known before any section streams.
-    const holdSections=/"job"\s*:\s*"meeting_prep"/.test(raw||'');
+    // Everything streams live, including meeting_prep. The backend reshapes a meeting_prep answer after the stream
+    // ends (_normalize_meeting_prep: merge, reorder, cap, retitle), which used to make the draft grow and then
+    // shrink (#239). The prompt now states that final shape, generated from the same constants the normalizer
+    // uses (#246), and a real-model A/B measured 83% of answers already in final shape (0% before), with order
+    // and titles never changing. The rare residual is one over-cap bullet trimmed at the end.
     let body='';
     for(const field of fields){
-      if(holdSections&&field.key!=='headline'&&field.key!=='summary')continue;
       const cursor=field.complete?'':'<span class="ask-stream-cursor" aria-hidden="true"></span>';
       if(field.key==='headline')body+=`<h2>${esc(field.value)}${cursor}</h2>`;
       else if(field.key==='summary')body+=`<p class="result-lede">${esc(field.value)}${cursor}</p>`;
@@ -187,7 +188,6 @@
       else if(field.key==='text')body+=`<div class="ask-stream-item">${esc(field.value)}${cursor}</div>`;
       else if(field.key==='detail'&&field.value)body+=`<div class="ask-stream-detail">${esc(field.value)}${cursor}</div>`;
     }
-    if(holdSections)body+='<div class="ask-stream-finalizing">Choosing what belongs in the brief…</div>';
     return `<div class="ask-live-answer ask-streaming-draft" aria-busy="true"><div class="result-label">State Ask · Drafting</div>${body}</div>`;
   }
 

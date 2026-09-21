@@ -8,7 +8,10 @@ import time
 from datetime import date
 from typing import Any, Iterator, Mapping, Protocol
 
-from ask_contract import AskSelection, AskSynthesis
+from ask_contract import (
+    MEETING_PREP_ITEM_CAPS, MEETING_PREP_MAX_REFINEMENTS, MEETING_PREP_MAX_SECTIONS, MEETING_PREP_SECTION_ORDER,
+    MEETING_PREP_SECTION_TITLES, AskSelection, AskSynthesis,
+)
 from ask_refinement_transforms import apply_refinement_transform, detect_refinement_type
 from review_service import list_evidence, list_history, list_project_rules, list_questions, list_reviews, list_state
 
@@ -246,6 +249,26 @@ def _grounding_rules() -> str:
 - Live QA (2026-09-14) found Ask invent a specific, quoted "the AI proposed X, the human approved Y" adjustment story -- complete with two fabricated quoted sentences -- for a Review that had actually been left unchanged, with zero backing History record. This is a hallucination on exactly the claim State exists to make trustworthy, and it is never acceptable: a question about what changed, what was adjusted, or what the AI originally proposed for a specific item MUST be answered only from an actual supplied History record showing that item's original-vs-approved wording. If no such record exists among the supplied candidates -- including when the Review was left unchanged, rejected, or never adjusted -- say so plainly (e.g. "This was left unchanged; there is no adjustment or accepted revision to compare") instead of answering as if one exists. Never construct, paraphrase, or infer wording for "what the AI proposed" or "what was approved" from anything other than a real supplied record -- not from the Review's current proposed statement, not from general plausibility, not from a similar-sounding case."""
 
 
+def meeting_prep_shape_guidance() -> str:
+    """Prompt text stating the final shape of a meeting-prep answer, generated from the same constants
+    `_normalize_meeting_prep` enforces (#246), so the model writes what the backend would keep and the prompt
+    and the normalizer cannot drift apart."""
+    kinds = []
+    for kind in MEETING_PREP_SECTION_ORDER:
+        title = MEETING_PREP_SECTION_TITLES.get(kind)
+        label = f'`{kind}` titled "{title}"' if title else f"`{kind}` (your own short title)"
+        cap = MEETING_PREP_ITEM_CAPS[kind]
+        kinds.append(f"{label}, at most {cap} item{'' if cap == 1 else 's'}")
+    return (
+        "This paragraph applies ONLY when the job you choose is `meeting_prep`; for every other job, ignore it and use your own concise section "
+        "titles and structure. For a `meeting_prep` answer, write it in its final shape, because the client shows it exactly as you write it. "
+        f"Use only these section kinds, each at most once, in exactly this order, with at most {MEETING_PREP_MAX_SECTIONS} sections in total "
+        "(leave a kind out rather than padding it): " + "; ".join(kinds) + ". "
+        "Put Current State items in an `established` section. Never list the same record twice, even across sections. "
+        f"Give at most {MEETING_PREP_MAX_REFINEMENTS} suggested refinements."
+    )
+
+
 def _one_call_prompt(query: str, candidates: Mapping[str, Any], previous_answer: Mapping[str, Any] | None) -> str:
     previous = json.dumps(previous_answer, ensure_ascii=False)[:12000] if previous_answer else "null"
     
@@ -304,7 +327,7 @@ Previous answer (for refinement only): {previous}
 Authority-tagged candidate records:
 {json.dumps(candidates, ensure_ascii=False)}
 
-Return the required JSON object with both `selection` and `answer`. Every answer record_id must be present in the selection and candidate records. Relevant Reviews must appear visibly in the main answer, not only in source_ids. For meeting prep: use at most 4 sections, at most 4 items per section, and at most 3 established Current State items. Prefer one synthesized opening over many State cards. Do not create a section titled Current State or Open Reviews Qualifying Current State. Keep the full answer comfortably under 500 words.
+Return the required JSON object with both `selection` and `answer`. Every answer record_id must be present in the selection and candidate records. Relevant Reviews must appear visibly in the main answer, not only in source_ids. {meeting_prep_shape_guidance()} Prefer one synthesized opening over many State cards. Do not create a section titled Current State or Open Reviews Qualifying Current State. Keep the full answer comfortably under 500 words.
 Use concise adaptive sections and short suggested refinements."""
 
 def _selector_prompt(query: str, candidates: Mapping[str, Any], previous_answer: Mapping[str, Any] | None) -> str:
@@ -684,6 +707,27 @@ _INTERNAL_JSON_FIELD_NAMES = frozenset({
 })
 
 
+# Seeded demo record ids are hand-written slugs with a prefix: "demo-review-retention" (Northstar) and
+# "demo-juniper-review-elevator" (Juniper). The generated-id shape patterns in _clean_visible_ask_text recognise
+# only the tail ("review-elevator"), which used to leave the prefix behind as a mangled fragment such as
+# "Demo-juniper- qualifies this risk." (#247), so the whole slug is removed first.
+_DEMO_SLUG_ID = re.compile(
+    r"\bdemo-(?:(?:northstar|juniper)-)?(?:review|state|question|evidence|proposal|history)-[a-z0-9-]+\b", re.IGNORECASE
+)
+
+
+def _candidate_pool_ids(candidates: Mapping[str, list[dict]] | None) -> set[str]:
+    """Every record id the model was shown for this Ask, whether or not it selected the record (#247).
+
+    The model can echo the id of a record it did not select, and only ids in the scrubber's exact-id list are
+    removed regardless of shape (some, like Juniper's "jq-elevator", match no shape pattern at all)."""
+    ids: set[str] = set()
+    for bucket in (candidates or {}).values():
+        if isinstance(bucket, list):
+            ids.update(str(x["id"]) for x in bucket if isinstance(x, dict) and x.get("id"))
+    return ids
+
+
 def _clean_visible_ask_text(value: str | None, internal_ids: set[str]) -> str | None:
     """Remove implementation identifiers from prose shown to users."""
     if value is None:
@@ -694,6 +738,7 @@ def _clean_visible_ask_text(value: str | None, internal_ids: set[str]) -> str | 
     for internal_id in sorted(internal_ids, key=len, reverse=True):
         if internal_id:
             text = re.sub(rf"(?<![A-Za-z0-9_]){re.escape(internal_id)}(?![A-Za-z0-9_])", "", text, flags=re.IGNORECASE)
+    text = _DEMO_SLUG_ID.sub("", text)
     text = re.sub(r"\b(?:state|question|evidence|review|proposal)_[a-z0-9]+\b", "", text, flags=re.IGNORECASE)
     text = re.sub(r"\b(?:ask-evidence|state|question|evidence|review|proposal|k|q)-[a-z0-9-]+\b", "", text, flags=re.IGNORECASE)
     # Defensively strip known internal field/key names the model might echo
@@ -729,6 +774,7 @@ def _validate_synthesis(
         "question": {x["id"] for x in context.get("questions", []) if not x["blocking"]},
     }
     all_internal_ids = set().union(*allowed.values(), {x["id"] for x in context.get("rules", [])})
+    all_internal_ids |= _candidate_pool_ids(candidates)          # ids the model was shown, selected or not (#247)
     canonical_reviews = {x["id"]: x for x in context.get("reviews", [])}
     canonical_questions = {x["id"]: x for x in context.get("questions", [])}
 
@@ -830,7 +876,7 @@ def _normalize_meeting_prep(answer: AskSynthesis) -> AskSynthesis:
         return answer
     from ask_contract import AskAnswerSection
 
-    priority = {"needs_review": 0, "questions": 1, "established": 2, "recent_context": 3, "changes": 4, "open_attention": 5, "draft": 6, "other": 7}
+    priority = {kind: index for index, kind in enumerate(MEETING_PREP_SECTION_ORDER)}
     merged: dict[str, AskAnswerSection] = {}
     seen_records: set[tuple[str, str]] = set()
     for section in answer.sections:
@@ -840,15 +886,7 @@ def _normalize_meeting_prep(answer: AskSynthesis) -> AskSynthesis:
             kind = "established"
         target = merged.get(kind)
         if not target:
-            titles = {
-                "needs_review": "Decisions needed",
-                "questions": "Get these answered",
-                "established": "Useful context",
-                "recent_context": "Recent context",
-                "changes": "What changed",
-                "open_attention": "Useful context",
-            }
-            target = AskAnswerSection(kind=kind, title=titles.get(kind, section.title), items=[])
+            target = AskAnswerSection(kind=kind, title=MEETING_PREP_SECTION_TITLES.get(kind, section.title), items=[])
             merged[kind] = target
         for item in section.items:
             key = (item.record_type, item.record_id or item.text.strip().lower())
@@ -862,14 +900,13 @@ def _normalize_meeting_prep(answer: AskSynthesis) -> AskSynthesis:
                     item.detail = detail.split(":", 1)[1].strip()
             target.items.append(item)
 
-    caps = {"needs_review": 2, "questions": 4, "established": 3, "recent_context": 2, "changes": 2, "open_attention": 3, "draft": 4, "other": 2}
     sections = []
     for kind, section in sorted(merged.items(), key=lambda kv: priority.get(kv[0], 99)):
-        section.items = section.items[:caps.get(kind, 3)]
+        section.items = section.items[:MEETING_PREP_ITEM_CAPS.get(kind, 3)]
         if section.items:
             sections.append(section)
-    answer.sections = sections[:4]
-    answer.suggested_refinements = answer.suggested_refinements[:3]
+    answer.sections = sections[:MEETING_PREP_MAX_SECTIONS]
+    answer.suggested_refinements = answer.suggested_refinements[:MEETING_PREP_MAX_REFINEMENTS]
     return answer
 
 
