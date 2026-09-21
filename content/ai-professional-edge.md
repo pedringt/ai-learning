@@ -44,7 +44,7 @@ A workflow should still earn its cost as models improve and commodity AI gets be
 
 ### Design the system, not just the model
 
-Quality comes from the model plus the system around it: what context reaches it, which tools and permissions it has, and what software or people check the result.
+Quality comes from the model plus the system around it: context, retrieval, tools, permissions, state, checks, fallbacks, and human review.
 
 **Ask:** How reliable is the whole system at completing this specific job?
 
@@ -66,11 +66,11 @@ Routine steps can use faster or cheaper models while uncertain or higher-risk wo
 
 **Ask:** What does one successful outcome cost at the quality level the business actually needs?
 
-### Long-running agents need scaffolding
+### Keep long-running state explicit and trustworthy
 
-For longer tasks, keep important progress, dependencies, goals, and state outside the model instead of expecting it to reconstruct everything from conversation history.
+For longer tasks, keep important progress, decisions, dependencies, and goals outside the model. Treat saved memory and compaction summaries as future inputs that can influence later behavior, so keep them attributable, bounded, and unable to silently override higher-priority rules.
 
-**Key term:** **Scaffolding** is external structure, tools, and saved state that help AI stay oriented.
+**Ask:** What state must survive, who can write it, and how is it validated before later runs trust it?
 
 ### Design workflows to survive interruption
 
@@ -78,11 +78,11 @@ Multi-step AI work may time out, fail halfway through, receive the same request 
 
 **Ask:** If this stops halfway through or runs twice, what happens?
 
-### Memory and project state are not the same thing
+### Separate knowledge from procedure
 
-Better model memory helps continuity, but important project truth may still need an explicitly maintained record with clear authority.
+Retrieval is good at bringing the right facts into context. Skills and runbooks are better for teaching a repeatable method, including what order to follow, which checks to run, and which failure modes to catch.
 
-**Ask:** What should the AI remember, and what needs to be maintained outside it?
+**Ask:** Does this job fail because the AI lacks information, or because it applies the wrong procedure?
 
 ### Treat the agent layer and model provider as separate choices
 
@@ -118,17 +118,11 @@ AI can interpret a request or choose a workflow while conventional software chec
 
 **Key term:** **Execution boundary** is the line between what AI may interpret or decide and what trusted systems or humans may actually change.
 
-### More autonomy requires a stronger trust loop
+### Increase autonomy progressively, based on evidence
 
-As AI gets more freedom to act, the system needs stronger limits, checkpoints, recovery paths, and human escalation. Good conversation is not enough protection for a long-running or customer-facing agent.
+Do not jump from fully supervised to fully autonomous. Give the AI more freedom action by action as reliability evidence, safeguards, observability, and recovery paths justify it, while keeping stronger controls around higher-consequence actions.
 
-**Ask:** What new control becomes necessary when this system gets more autonomy?
-
-### Require evidence before increasing risk
-
-Before giving an AI more autonomy, access, or scope, write down the important failure modes, safeguards, eval evidence, monitoring, and remaining uncertainty. The goal is not paperwork; it is a testable reason for proceeding.
-
-**Ask:** What evidence would justify giving this system more autonomy, access, or scope?
+**Ask:** What evidence would justify giving this specific action more autonomy, access, or scope?
 
 ### Observe behavior from the outside
 
@@ -188,17 +182,11 @@ Use AI to generate test ideas, automate repetitive coverage, inspect logs, and i
 
 **Ask:** Did the system pass its tests, and does the product actually feel right?
 
-### Turn real failures into reusable evals
+### Turn failures into regression tests, then diagnose from traces
 
-When AI produces a meaningful bad result, save the scenario and the behavior you expected. A failure you can replay is more useful than a vague warning to be careful.
+Save meaningful bad cases with the expected behavior. Compare successful and failed runs, find the first recurring divergence, make one targeted change, and rerun the eval set before promoting it. Keep a few held-out cases so fixing known failures does not quietly break something else.
 
-**Product habit:** Turn customer risks and real failures into concrete test cases.
-
-### Observe after you ship
-
-Pre-launch evals are only part of the loop. Real usage shows what needs attention, including quality failures that do not produce an obvious technical error.
-
-**Product habit:** Test before launch, observe after launch, and turn meaningful failures into new evals.
+**Product habit:** Test before launch, learn from production failures, and turn important failures into reusable protection.
 
 ---
 
@@ -214,7 +202,7 @@ Keep stable goals, decisions, constraints, current status, and known issues in a
 
 When a long task changes direction, give the AI the new constraint and ask it to identify what changes while preserving work that is still useful.
 
-**Key term:** **Steering** means changing or adding instructions while AI work is already underway.
+**Why:** Changing direction without throwing away valid work is faster and keeps continuity.
 
 ### Define the test before generating the work
 
@@ -234,17 +222,11 @@ When AI gives a recommendation, identify the few claims or assumptions that woul
 
 **Why:** Verification effort goes to the facts that actually matter.
 
-### Choose context deliberately when delegating
+### Delegate with deliberate context
 
-Give continuation work the relevant prior context. Give an independent reviewer or self-contained research task a clean context so earlier reasoning does not anchor it unnecessarily.
+Give continuation work the prior context it needs, give independent reviewers a clean context, and load large sources progressively instead of dumping everything into every task.
 
-**Why:** Inherit context for continuity; isolate it for independent checks.
-
-### Load context progressively
-
-Start with a compact source map or index, then bring in only the files, sections, or records the task actually needs.
-
-**Why:** Less irrelevant context reduces distraction, repeated cost, and stale information crowding out the current source of truth.
+**Why:** Inherit context for continuity, isolate it for independent checks, and keep irrelevant or stale material from crowding out the current source of truth.
 
 ### Fan out, then merge
 
@@ -257,12 +239,6 @@ For a complex question, split the work into a few focused branches with differen
 When a recurring AI task works well, capture the trigger, inputs, tools, steps, checks, and expected output as a reusable skill, runbook, or project instruction.
 
 **Why:** Reusable procedures make AI work more consistent and easier to improve.
-
-### Give data work a mini semantic layer
-
-Before asking AI to analyze a spreadsheet, dashboard, or database extract, write down the few business definitions that could change the answer and tell the model to flag anything still ambiguous.
-
-**Why:** It helps prevent a polished analysis from quietly using the wrong meaning of a metric.
 
 ### Preflight tool use before letting the AI act
 
@@ -314,35 +290,27 @@ Use a small repeatable test instead of one impressive prompt:
 
 ### Agent harness
 
-The orchestration layer around a model that manages context, tools, and the flow of multi-step work.
+The orchestration layer around a model that manages context, tools, state, and the flow of multi-step work.
 
 ### Agent skill
 
-A reusable set of instructions and tool-use patterns for doing one specific job consistently.
+A reusable procedure that tells an agent how to do one kind of job, including the method, tools, checks, and expected output.
 
 ### Context isolation
 
 Giving a subtask only the context it needs so unrelated history does not bias or clutter the work.
 
+### Compaction
+
+Compressing older context into a smaller summary so a long-running agent can keep working. Because that summary shapes future behavior, treat it as persisted state that deserves validation and boundaries.
+
 ### Evals
 
 Repeatable tests that measure whether an AI system behaves well enough for its intended job.
 
-### Offline eval
-
-A test run before release against known cases where you can define expected behavior.
-
-### Online eval
-
-A check on live behavior after release, often without one pre-written correct answer.
-
 ### LLM as judge
 
 Using one language model to grade another output against a written rubric. Useful for nuanced checks, but it needs calibration and can share model biases.
-
-### Long-horizon agent
-
-An AI system pursuing a goal across many steps or an extended workflow.
 
 ### Scaffolding
 
@@ -352,17 +320,13 @@ External structure, tools, and saved state that help AI stay oriented during com
 
 The boundary between what AI may interpret or decide and what trusted software or people may actually change.
 
-### Safety case
+### Progressive autonomy
 
-A structured, evidence-backed argument that a system is safe enough for a defined use or change, including the remaining uncertainty.
+Giving an AI system more freedom action by action as evidence, safeguards, and recovery paths justify it rather than switching from fully supervised to fully autonomous at once.
 
 ### Auditability
 
 The ability to trace actions, tool use, sources, and decisions after the fact.
-
-### Monitorability
-
-How well you can detect whether an AI system is behaving safely and correctly while it works.
 
 ### Defense in depth
 
@@ -375,18 +339,6 @@ An isolated environment where an agent can run code, inspect files, or use tools
 ### Model routing
 
 Choosing different models for different tasks based on difficulty, cost, speed, or risk.
-
-### Steering
-
-Changing or adding instructions while an AI task is already underway.
-
-### Multimodal interface
-
-An interface that accepts or produces more than one mode, such as text, voice, images, or files.
-
-### Federated access
-
-Controlled access to multiple existing data sources without first copying them into one database.
 
 ### OAuth scope
 
@@ -403,10 +355,6 @@ Splitting one problem into focused parallel branches, then merging the results t
 ### Semantic layer
 
 Shared definitions and relationships that explain what business data means so people and AI use metrics consistently.
-
-### Agent trajectory
-
-The sequence of model responses, tool calls, observations, and decisions across an agent run.
 
 ### Trace / span
 
@@ -434,38 +382,26 @@ Checking whether an output's meaning fits product rules, context, and known fact
 
 Use these during product discovery, design reviews, client conversations, and AI feature proposals.
 
-1. What job are we actually trying to make more reliable, faster, or easier?
+1. What job are we actually trying to make more reliable, faster, or easier, and how will we know it improved?
 2. How reliable is the whole system at that job, not just the model in a demo?
 3. What is authoritative, and how does the AI get grounded in it?
-4. What can the AI see, decide, and do? What still requires a person?
-5. Which limits must be centrally enforced so builders or users cannot weaken them?
-6. Which parts need flexible AI reasoning, and which should be deterministic?
-7. What failure would be merely annoying versus genuinely harmful?
-8. What representative scenarios and edge cases should become evals?
-9. Which checks can be deterministic, which need an LLM judge, and how will we calibrate the judge?
-10. What can this AI verify directly by running a test, script, calculation, or tool call?
-11. What should we test before release, and what should we monitor on live traffic?
-12. What important project state should live outside the model?
-13. How will we recover when a multi-step agent gets something wrong?
-14. How will we inspect what the agent actually did after the fact?
-15. What can we observe directly instead of relying on the model to explain itself?
-16. Do all steps need the strongest model, or can we route work differently?
-17. What are we optimizing for in model selection: speed, cost, quality, or risk?
-18. What budget, iteration, or time cap should stop an agent before it runs away?
-19. Does this interaction fit the user's real workflow, or are we adding AI-shaped friction?
-20. Which source systems does the AI truly need, and can access remain permissioned?
-21. Whose identity is the agent acting under, what exact scopes are granted, and can they be revoked?
-22. What happens when the agent lacks a source or permission: does it fail clearly or guess?
-23. What untrusted content could reach the model, and what stops it from becoming an instruction?
-24. If the AI improves, does this product or workflow still earn its maintenance cost?
-25. Which subtasks should inherit existing context, and which should get a clean context?
-26. Which recurring jobs should become a reusable skill or runbook?
-27. Which business definitions or metric rules must be fixed before AI analyzes the data?
-28. Which step caused this agent failure, and which later failures only inherited it?
-29. Are infrastructure health and agent quality being monitored separately?
-30. What does one successful outcome cost after retries, turns, and review?
-31. Which context can be loaded only when needed instead of sent every time?
-32. Are we measuring adoption, actual workflow use, and user or business value separately?
-33. What evidence would justify giving this system more autonomy, access, or scope?
-34. Can we change the model or provider without rebuilding the agent workflow?
-35. If the interface changes or disappears, where do the authoritative business rules, permissions, and actions still live?
+4. Which parts need flexible AI judgment, and which should be deterministic?
+5. What can the AI see, decide, and do, and what still requires a person?
+6. What failure would be merely annoying versus genuinely harmful?
+7. What representative scenarios should we test before release, and what should we keep evaluating after launch?
+8. Which checks can software prove directly, and which genuinely require AI or human judgment?
+9. What important state must persist outside the model, who can write it, and how are those writes validated?
+10. If a multi-step agent fails, where did the first bad step occur and how will the workflow recover?
+11. What observable evidence would let us verify what the AI actually did?
+12. Which work needs the strongest model, and what does one acceptable outcome cost after retries and review?
+13. What budget, iteration, or time cap should stop an agent before it runs away?
+14. Does this interaction fit the user's real workflow, or are we adding AI-shaped friction?
+15. Which sources does the AI need, whose identity is it acting under, what access is granted, and what happens when access is missing?
+16. What untrusted content could reach the model, and what stops it from becoming an instruction?
+17. If the underlying AI improves, does this workflow still earn its maintenance cost?
+18. Which tasks should inherit existing context, which need a clean context, and what can be loaded only when needed?
+19. Does this job need more facts, or a better procedure for applying the facts?
+20. Which business definitions must be fixed before AI analyzes the data?
+21. Are we measuring adoption, actual workflow use, and user or business value separately?
+22. What evidence would justify giving this specific action more autonomy, access, or scope?
+23. Can the model provider or interface change without rebuilding the authoritative workflow underneath it?
