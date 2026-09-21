@@ -87,6 +87,15 @@ def test_the_guidance_names_every_kind_title_and_cap_and_is_generated_from_the_c
     assert len(_normalized(_answer([_section("needs_review", 3)])).sections[0].items) == 1
 
 
+def test_the_guidance_says_it_applies_only_to_meeting_prep_so_other_jobs_keep_their_own_titles():
+    # #246: the first wording, given no such scope, coincided with an Ask-quality scenario (a plain current_fact
+    # question) passing 3 of 7 tries instead of 6 of 6; the fixed section titles may have leaked into other jobs.
+    text = meeting_prep_shape_guidance()
+    assert "applies ONLY when the job you choose is `meeting_prep`" in text
+    assert "for every other job, ignore it and use your own concise section titles" in text
+    assert text.index("ONLY") < text.index("`needs_review`")                                   # the scope comes before the titles
+
+
 def test_the_one_call_prompt_carries_the_guidance_and_no_longer_the_loose_legacy_limits():
     prompt = _one_call_prompt("Give me a briefing", {"state": [], "reviews": [], "questions": [], "history": [], "evidence": [], "rules": []}, None)
     assert meeting_prep_shape_guidance() in prompt

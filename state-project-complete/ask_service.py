@@ -260,7 +260,8 @@ def meeting_prep_shape_guidance() -> str:
         cap = MEETING_PREP_ITEM_CAPS[kind]
         kinds.append(f"{label}, at most {cap} item{'' if cap == 1 else 's'}")
     return (
-        "For meeting prep, write the answer in its final shape, because the client shows it exactly as you write it. "
+        "This paragraph applies ONLY when the job you choose is `meeting_prep`; for every other job, ignore it and use your own concise section "
+        "titles and structure. For a `meeting_prep` answer, write it in its final shape, because the client shows it exactly as you write it. "
         f"Use only these section kinds, each at most once, in exactly this order, with at most {MEETING_PREP_MAX_SECTIONS} sections in total "
         "(leave a kind out rather than padding it): " + "; ".join(kinds) + ". "
         "Put Current State items in an `established` section. Never list the same record twice, even across sections. "
