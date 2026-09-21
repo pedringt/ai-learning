@@ -304,7 +304,12 @@ def connect_sqlite(path: str = ":memory:") -> Connection:
     """Connect to SQLite database."""
     if path != ":memory:":
         Path(path).expanduser().resolve().parent.mkdir(parents=True, exist_ok=True)
-    raw_conn = sqlite3.connect(path)
+    # check_same_thread=False: a request's connection is used strictly one step at a time, but the streaming Ask
+    # endpoint is a generator that the web server steps through on a pool of worker threads, so the thread that
+    # closes the connection is not always the one that opened it. With SQLite's default check that raised
+    # "SQLite objects created in a thread can only be used in that same thread" on close, after the answer was
+    # already generated, and the person saw "Ask is temporarily unavailable" (production, Sept 21).
+    raw_conn = sqlite3.connect(path, check_same_thread=False)
     raw_conn.row_factory = sqlite3.Row
     raw_conn.execute("PRAGMA foreign_keys = ON")
     return Connection(raw_conn)
