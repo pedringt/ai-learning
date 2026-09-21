@@ -150,6 +150,9 @@
         if(ch==='"'){complete=true;break;}
       }
       const value=decodeJsonStringFragment(raw.slice(i,j))
+        // Seeded demo ids are prefixed slugs ("demo-review-retention", "demo-juniper-review-elevator"); remove the whole slug first so the
+        // shape patterns below do not leave the prefix behind as "Demo-juniper-" (#247). Mirrors _DEMO_SLUG_ID in ask_service.py.
+        .replace(/\bdemo-(?:(?:northstar|juniper)-)?(?:review|state|question|evidence|proposal|history)-[a-z0-9-]+\b/gi,'')
         .replace(/\b(?:state|question|evidence|review|proposal)_[a-z0-9]+\b/gi,'')
         .replace(/\b(?:ask-evidence|state|question|evidence|review|proposal|k|q)-[a-z0-9-]+\b/gi,'')
         .replace(/\s+([,.;:])/g,'$1')
