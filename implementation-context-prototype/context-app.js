@@ -500,7 +500,7 @@
     // read-only utility reached from the floating Ask State control
     // (context-product-polish.js), not a Workspace feature.
     root.innerHTML = `<section class="overview pristine">
-      <section class="overview-heading"><div class="overview-heading-row"><div><span class="eyebrow">Workspace</span><h2>${esc(state.data.project?.name||'Project')}</h2>${currentProjectStage()?`<p class="overview-stage">${esc(currentProjectStage())}</p>`:''}</div><button class="btn secondary overview-add" data-action="add-info">+ Add Evidence</button></div></section>
+      <section class="overview-heading"><div class="overview-heading-row"><div><h2>Workspace</h2>${currentProjectStage()?`<p class="overview-stage">${esc(currentProjectStage())}</p>`:''}</div><button class="btn secondary overview-add" data-action="add-info">+ Add Evidence</button></div></section>
       ${workspaceAttentionHtml()}
       <div class="workspace-below-grid">
         ${whatChangedHtml()}
@@ -1042,7 +1042,7 @@
   // view.js's questionDialogHtml) so it's directly testable without a DOM.
   function addDialogHtml(prefill='',{description}={}){
     const desc=description||'Add project information State should evaluate. It is preserved as Evidence first and cannot change Current State without Review.';
-    return `<span class="eyebrow">Evidence</span><h2 id="dialogTitle">Add Evidence</h2><p>${esc(desc)}</p><textarea id="addInfoText" rows="7" aria-label="Evidence" placeholder="Paste a finding, decision, meeting update, or other project information...">${esc(prefill)}</textarea><div class="upload-evidence-row"><span>or</span><label class="text-button upload-evidence-label" for="uploadInfoFile">Upload a file (.txt, .md, .pdf, .docx)</label><input id="uploadInfoFile" type="file" accept=".txt,.md,.pdf,.docx,text/plain,text/markdown,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document" hidden /></div><div class="note-example-picker"><span class="meta-label">Try an example</span><div class="note-example-chips"><button type="button" data-action="sample-info" data-sample="plan">New plan</button><button type="button" data-action="sample-info" data-sample="research">Research finding</button><button type="button" data-action="sample-info" data-sample="constraint">Decision / constraint</button></div></div><div class="dialog-actions"><button class="btn primary" data-action="save-info">Add Evidence</button><button class="btn secondary" data-action="close-dialog">Cancel</button></div>`;
+    return `<span class="eyebrow">Evidence</span><h2 id="dialogTitle">Add Evidence</h2><p class="evidence-project-context">Adding to <strong>${esc(state.data.project?.name||'this project')}</strong></p><p>${esc(desc)}</p><textarea id="addInfoText" rows="7" aria-label="Evidence" placeholder="Paste a finding, decision, meeting update, or other project information...">${esc(prefill)}</textarea><div class="upload-evidence-row"><span>or</span><label class="text-button upload-evidence-label" for="uploadInfoFile">Upload a file (.txt, .md, .pdf, .docx)</label><input id="uploadInfoFile" type="file" accept=".txt,.md,.pdf,.docx,text/plain,text/markdown,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document" hidden /></div><div class="note-example-picker"><span class="meta-label">Try an example</span><div class="note-example-chips"><button type="button" data-action="sample-info" data-sample="plan">New plan</button><button type="button" data-action="sample-info" data-sample="research">Research finding</button><button type="button" data-action="sample-info" data-sample="constraint">Decision / constraint</button></div></div><div class="dialog-actions"><button class="btn primary" data-action="save-info">Add Evidence</button><button class="btn secondary" data-action="close-dialog">Cancel</button></div>`;
   }
   function showAddDialog(prefill='',options={}){ showDialog(addDialogHtml(prefill,options)); }
 
@@ -1269,21 +1269,10 @@
     for(const [key,result] of Object.entries(byKey)) if(result.status==='rejected') console.warn(`Backend ${key} unavailable:`,result.reason);
     if(loadStatus)loadStatus.hidden=true;
     updateNav();
-    // QA follow-up (2026-09-14): a fresh page load paints the Workspace
-    // heading from context-data.js's static pre-hydration placeholder
-    // before this function has ever run -- on Juniper, that's a real
-    // project name ("Northstar") rendered under the wrong project, not
-    // just an empty state. updateNav() above already refreshes the sidebar
-    // switcher (syncProjectMenu()), but the overview heading itself is only
-    // repainted by a full renderOverview(), which hydration deliberately
-    // avoids doing every time (see the Ask-typing note below) -- so the
-    // stale heading sat there, self-correcting only on the next unrelated
-    // full render (switching views, opening the project menu). Patch it
-    // directly here instead of waiting for that.
+    // Workspace owns a stable page title. Hydration updates project context
+    // through the persistent switcher and may refresh the stage copy, but it
+    // must not replace the Workspace heading with the active project name.
     if(state.view==='overview'){
-      const heading=root.querySelector('.overview-heading h2');
-      const wantName=state.data.project?.name||'Project';
-      if(heading&&heading.textContent!==wantName)heading.textContent=wantName;
       const stageEl=root.querySelector('.overview-heading .overview-stage');
       const wantStage=currentProjectStage();
       if(stageEl&&wantStage&&stageEl.textContent!==wantStage)stageEl.textContent=wantStage;

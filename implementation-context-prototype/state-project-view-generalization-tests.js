@@ -39,8 +39,8 @@ check('a non-software project renders its own area names, not a software-project
   officeHtml.includes('Location &amp; facilities') && officeHtml.includes('Vendors &amp; logistics') && officeHtml.includes('Budget'));
 check('a non-software project never mentions AI/pilot/support concepts it was not given',
   !/pilot|assistant|support rep|tier 1|security\b/i.test(officeHtml));
-check('the office move renders its own project name in the header',
-  officeHtml.includes('Juniper Office Move'));
+check('the Current State page uses the stable section title instead of repeating the project name',
+  officeHtml.includes('<h2>Current State</h2>') && !officeHtml.includes('<h2>Juniper Office Move</h2>'));
 check('Stage/Outcome come from the topic-labeled universal facts, not a fixed id',
   officeHtml.includes('Lease is signed; vendor selection is next.') && officeHtml.includes('Relocate the team with minimal downtime'));
 check('universal Stage/Outcome facts are excluded from area body sections',
