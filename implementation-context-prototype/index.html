@@ -28,7 +28,7 @@
       window.__STATE_BASE = /(^|\/)index(\.html)?$/.test(path) ? path.replace(/index(\.html)?$/, '') : (path.slice(-1) === '/' ? path : path + '/');
       document.write('<link rel="icon" href="' + window.__STATE_BASE + 'favicon.svg">');
       document.write('<link rel="stylesheet" href="' + window.__STATE_BASE + 'state-shell.css">');
-      document.write('<link rel="stylesheet" href="' + window.__STATE_BASE + 'context-tool.css?v=r117-current-state-page-header">');
+      document.write('<link rel="stylesheet" href="' + window.__STATE_BASE + 'context-tool.css?v=r118-current-state-feedback">');
     })();
   </script>
   <style id="state-mobile-nav">
@@ -68,7 +68,7 @@
       var local = location.protocol === 'file:';
       document.write('<script src="' + window.__STATE_BASE + 'state-shell.js"><\/script>');
       if(!local) document.write('<script src="/api/state-config.js"><\/script>');
-      var v='r117-current-state-page-header';
+      var v='r118-current-state-feedback';
       ['context-analytics.js','context-data.js','context-api.js','context-evidence-resilience.js','context-ask.js','context-ask-followup.js','context-notes-view.js','context-open-items-view.js','context-project-view.js','context-backend-sync.js','context-app.js','context-baseline-setup.js','context-baseline-polish.js','context-baseline-dogfood-fixes.js','context-history.js','context-provenance.js','context-quickwins.js','context-product-polish.js','context-ask-question-handoff.js','context-settings.js','context-sources.js','context-design-pass.js','context-feedback-pass.js','context-feedback-pass-2.js','context-feedback-pass-3.js','context-feedback-pass-4.js','context-attention-alignment.js','context-final-mobile.js'].forEach(function(file){document.write('<script src="'+window.__STATE_BASE+file+'?v='+v+'"><\/script>');});
       document.write('<script>requestAnimationFrame(function(){requestAnimationFrame(function(){document.documentElement.classList.remove("state-prepaint");clearTimeout(window.__stateRevealTimer);});});<\/script>');
     })();

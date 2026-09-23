@@ -719,7 +719,7 @@ body.v88-dark .current-direction-list span{color:#e3dfe8}
 /* state.md #108: visually secondary to the page's own heading/summary --
    same treatment as .demo-reset-help, a distinct class since the two are
    unrelated concepts that should be free to evolve independently. */
-.something-changed-cta{display:flex;align-items:center;justify-content:space-between;gap:18px;margin-top:16px;padding:13px 14px;border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:9px;background:var(--surface2)}
+.something-changed-cta{display:flex;align-items:center;justify-content:space-between;gap:18px;margin-top:16px;padding:13px 14px;border:1px solid var(--line);border-radius:9px;background:var(--surface2)}
 .something-changed-cta strong,.something-changed-cta span{display:block}.something-changed-cta strong{font-size:12px}.something-changed-cta span{margin-top:2px;font-size:11px;color:var(--muted)}
 .something-changed-cta>button{flex:0 0 auto}
 /* Consolidated max-width:600px breakpoint (2026-09-06): merges two

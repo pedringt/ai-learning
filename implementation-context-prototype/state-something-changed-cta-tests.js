@@ -42,8 +42,8 @@ check('CTA uses the agreed short label',
   html.includes('<strong>Something changed?</strong>'));
 check('CTA explains the consequence without implying direct editing',
   html.includes('Add new information and State will review whether Current State should change.'));
-check('CTA button says Add Evidence, reusing the existing flow\'s own label',
-  /data-action="something-changed">Add Evidence<\/button>/.test(html));
+check('CTA button keeps the established outlined Add Evidence treatment',
+  /class="btn secondary" data-action="something-changed">Add Evidence<\/button>/.test(html));
 check('CTA sits below the page header and metadata, before the Current State document',
   html.indexOf('</header>') < html.indexOf('class="project-document-meta"') &&
   html.indexOf('class="project-document-meta"') < html.indexOf('data-action="something-changed"') &&
