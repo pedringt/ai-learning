@@ -1269,21 +1269,10 @@
     for(const [key,result] of Object.entries(byKey)) if(result.status==='rejected') console.warn(`Backend ${key} unavailable:`,result.reason);
     if(loadStatus)loadStatus.hidden=true;
     updateNav();
-    // QA follow-up (2026-09-14): a fresh page load paints the Workspace
-    // heading from context-data.js's static pre-hydration placeholder
-    // before this function has ever run -- on Juniper, that's a real
-    // project name ("Northstar") rendered under the wrong project, not
-    // just an empty state. updateNav() above already refreshes the sidebar
-    // switcher (syncProjectMenu()), but the overview heading itself is only
-    // repainted by a full renderOverview(), which hydration deliberately
-    // avoids doing every time (see the Ask-typing note below) -- so the
-    // stale heading sat there, self-correcting only on the next unrelated
-    // full render (switching views, opening the project menu). Patch it
-    // directly here instead of waiting for that.
+    // Workspace owns a stable page title. Hydration updates project context
+    // through the persistent switcher and may refresh the stage copy, but it
+    // must not replace the Workspace heading with the active project name.
     if(state.view==='overview'){
-      const heading=root.querySelector('.overview-heading h2');
-      const wantName=state.data.project?.name||'Project';
-      if(heading&&heading.textContent!==wantName)heading.textContent=wantName;
       const stageEl=root.querySelector('.overview-heading .overview-stage');
       const wantStage=currentProjectStage();
       if(stageEl&&wantStage&&stageEl.textContent!==wantStage)stageEl.textContent=wantStage;
