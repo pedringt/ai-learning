@@ -61,21 +61,9 @@
       .workspace-status-card .state-fact-preview li{padding-top:9px!important;padding-bottom:9px!important}
       .workspace-status-card .state-fact-preview>.text-button{font-size:11.5px!important;font-weight:700!important}
 
-      /* Current State: one readable wiki, no hero-card/database feel. */
+      /* Current State: keep the maintained document readable without exposing
+         the underlying atomic fact list as a second competing surface. */
       .project-page-toolbar{display:none!important}
-      .project-page .project-document-head{background:transparent!important;border:0!important;border-bottom:1px solid #dfe6ef!important;box-shadow:none!important;border-radius:0!important;padding:2px 0 20px!important;margin:0 0 20px!important}
-      .project-page .project-head-row{display:flex!important;align-items:center!important;gap:12px!important}
-      .project-page .project-title-line{min-width:0!important}
-      .project-page .project-title-line h2{font-family:'Lora',Georgia,serif!important;font-size:38px!important;line-height:1.08!important;letter-spacing:-.03em!important;margin:0!important;color:#173d79!important}
-      .project-page .project-document-summary{margin:8px 0 20px!important;font-size:13.5px!important;line-height:1.5!important;color:#5f6b80!important}
-      .project-page .project-meta-heading{display:block!important;margin:0 0 13px!important;font-size:11px!important;font-weight:800!important;letter-spacing:.12em!important;text-transform:uppercase!important;color:#403a79!important}
-      .project-page .project-document-meta{display:grid!important;grid-template-columns:1fr 1fr!important;gap:0!important;margin:0!important}
-      .project-page .project-document-meta>div{padding:0 28px 0 0!important}
-      .project-page .project-document-meta>div+div{border-left:1px solid #d8dce7!important;padding:0 0 0 28px!important}
-      .project-page .project-document-meta dt{font-size:10.5px!important;font-weight:800!important;letter-spacing:.09em!important;text-transform:uppercase!important;color:#65687a!important;margin:0 0 7px!important}
-      .project-page .project-document-meta dd{font-size:14px!important;line-height:1.48!important;font-weight:600!important;margin:0!important;color:#222b3d!important}
-      .project-page .project-head-copy-context{display:inline-flex!important;margin-left:auto!important;padding:5px 7px!important;border:0!important;background:transparent!important;color:#31598f!important;box-shadow:none!important;font-size:11px!important;font-weight:700!important}
-      .project-page .project-head-copy-context:hover{background:#eef4fc!important}
       .project-page .project-maintained-facts,.project-page .project-provenance,.project-page .project-fact-provenance,.project-page [class*="provenance"]{display:none!important}
       .project-page .project-wiki-topic{padding:15px 0 17px!important}
       .project-page .project-wiki-topic-head{margin-bottom:5px!important}
@@ -170,13 +158,6 @@
         .workspace-status-card .state-fact-preview>.text-button{position:static!important;margin-top:8px!important}
         .workspace-status-card .state-fact-preview p{padding-right:0!important}
 
-        .project-page .project-document-head{padding:0 0 16px!important;margin-bottom:16px!important}
-        .project-page .project-title-line h2{font-size:30px!important}
-        .project-page .project-document-summary{margin:6px 0 16px!important;font-size:13px!important}
-        .project-page .project-document-meta{grid-template-columns:1fr!important}
-        .project-page .project-document-meta>div{padding:0!important}
-        .project-page .project-document-meta>div+div{border-left:0!important;border-top:1px solid #e2e6ed!important;padding:12px 0 0!important;margin-top:12px!important}
-        .project-page .project-head-copy-context{font-size:10.5px!important}
         .project-page .project-wiki-prose p{font-size:13px!important;line-height:1.58!important}
 
         .open-items-page .open-items-section-head{padding:11px 13px!important}
@@ -237,20 +218,8 @@
 
   function simplifyCurrentState(){
     document.querySelectorAll('.project-page .project-maintained-facts').forEach(el=>{el.hidden=true;});
-    const head=document.querySelector('.project-page .project-document-head');
-    if(!head) return;
-    const row=head.querySelector('.project-head-row');
     const toolbar=document.querySelector('.project-page-toolbar');
-    const copy=(toolbar&&toolbar.querySelector('.project-head-copy-context'))||head.querySelector('.project-head-copy-context');
-    if(row&&copy&&copy.parentElement!==row) row.appendChild(copy);
     toolbar?.remove();
-    const meta=head.querySelector('.project-document-meta');
-    if(meta&&!head.querySelector('.project-meta-heading')){
-      const label=document.createElement('span');
-      label.className='project-meta-heading';
-      label.textContent='Project status';
-      meta.before(label);
-    }
   }
 
   function styleEvidenceCallout(){

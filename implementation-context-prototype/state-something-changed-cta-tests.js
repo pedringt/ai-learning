@@ -44,8 +44,10 @@ check('CTA explains the consequence without implying direct editing',
   html.includes('Add new information and State will review whether Current State should change.'));
 check('CTA button says Add Evidence, reusing the existing flow\'s own label',
   /data-action="something-changed">Add Evidence<\/button>/.test(html));
-check('CTA sits in the page header, not beside individual Current State facts',
-  html.indexOf('data-action="something-changed"') < html.indexOf('Fact A'));
+check('CTA sits below the page header and metadata, before the Current State document',
+  html.indexOf('</header>') < html.indexOf('class="project-document-meta"') &&
+  html.indexOf('class="project-document-meta"') < html.indexOf('data-action="something-changed"') &&
+  html.indexOf('data-action="something-changed"') < html.indexOf('class="project-outline"'));
 
 // --- Add Evidence dialog: same flow, only the description line changes -----
 const defaultDialog=api.addDialogHtml();

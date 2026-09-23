@@ -41,6 +41,16 @@ check('a non-software project never mentions AI/pilot/support concepts it was no
   !/pilot|assistant|support rep|tier 1|security\b/i.test(officeHtml));
 check('the Current State page uses the stable section title instead of repeating the project name',
   officeHtml.includes('<h2>Current State</h2>') && !officeHtml.includes('<h2>Juniper Office Move</h2>'));
+check('Current State uses the shared page header with normal page actions',
+  officeHtml.includes('class="page-head project-page-head current-state-page-head"') &&
+  officeHtml.includes('class="current-state-page-actions"') &&
+  officeHtml.includes('>Copy context</button>') && officeHtml.includes('>Project settings</button>'));
+check('Stage and Outcome sit below the page header before the evidence callout',
+  officeHtml.indexOf('</header><dl class="project-document-meta">')>0 &&
+  officeHtml.indexOf('class="project-document-meta"')<officeHtml.indexOf('class="something-changed-cta"'));
+check('the evidence callout remains below metadata with a primary Add Evidence action',
+  officeHtml.includes('<strong>Something changed?</strong>') &&
+  officeHtml.includes('class="btn primary" data-action="something-changed">Add Evidence</button>'));
 check('Stage/Outcome come from the topic-labeled universal facts, not a fixed id',
   officeHtml.includes('Lease is signed; vendor selection is next.') && officeHtml.includes('Relocate the team with minimal downtime'));
 check('universal Stage/Outcome facts are excluded from area body sections',
