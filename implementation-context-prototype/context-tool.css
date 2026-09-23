@@ -239,6 +239,13 @@ body.v88-dark .deliverable-section p,
 body.v88-dark .note-card p,
 body.v88-dark .history-list p{color:#d4d0da!important}
 
+/* Project context: make the persistent project switcher easy to verify at a glance. */
+.sidebar-project .project-switcher{min-height:42px!important;padding:9px 11px!important;font-size:14px!important;font-weight:700!important;border-radius:9px!important;gap:8px!important}
+.sidebar-project .project-switcher::before{content:'◆';font-size:9px;color:var(--accent);flex:0 0 auto}
+.sidebar-project .project-switcher span{margin-left:auto}
+.evidence-project-context{margin:4px 0 10px!important;font-size:12.5px!important;line-height:1.4!important;color:var(--muted)!important}
+.evidence-project-context strong{color:var(--ink)!important;font-weight:750!important}
+
 /* Project: readable, automatically organized Current State */
 .project-nav-group{margin:2px 0}.project-nav-toggle{width:100%;display:flex!important;align-items:center}.project-nav-toggle.active{color:var(--ink)}.project-chevron{font-size:11px;color:var(--muted)}
 .project-subnav{display:grid;gap:2px;margin:0 0 8px 14px;padding-left:11px;border-left:1px solid var(--line)}.project-subnav button{border:0;background:none;text-align:left;color:var(--muted);font-size:11.5px;font-weight:720;padding:7px 9px;border-radius:7px;cursor:pointer}.project-subnav button:hover{background:var(--surface2);color:var(--ink)}.project-subnav button.active{background:var(--accent-soft);color:var(--accent)}
