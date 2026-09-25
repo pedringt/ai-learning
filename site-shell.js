@@ -14,7 +14,7 @@
     analytics.defer=true;
     analytics.src='https://cloud.umami.is/script.js';
     analytics.setAttribute('data-website-id','238c100f-0a08-472c-9eb3-22acc2c795fa');
-    analytics.setAttribute('data-domains','contextswitch.tech,www.contextswitch.tech,authenticignorance.site,www.authenticignorance.site');
+    analytics.setAttribute('data-domains','www.contextswitch.tech,contextswitch.tech,authenticignorance.site,www.authenticignorance.site');
     analytics.setAttribute('data-umami-portfolio','true');
     document.head.appendChild(analytics);
   }
