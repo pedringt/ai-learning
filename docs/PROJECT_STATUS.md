@@ -4,6 +4,23 @@ This is the canonical current-state handoff for State and the surrounding portfo
 
 _Last updated: September 22, 2026 (evening), Pacific time. Written as a handoff for a fresh session._
 
+## Sept 25, 2026 handoff update: Context Switch migration
+
+**Use this section over older domain/deployment notes below.** The older material is retained as project history.
+
+- Portfolio brand is now **Context Switch**. Primary URL: `https://www.contextswitch.tech/`. The apex `contextswitch.tech` redirects to `www`.
+- State production URL is now `https://state.contextswitch.tech/` and is attached to the separate Vercel **state** project. State is still in this repository; only deployment/project separation is complete. Repo extraction remains a separate decision under #228.
+- Current production `main` after the migration cleanup: `8f4534d160764e131bfce8ce8fc6a550c4f6cdd9` (PR #267). Rebrand landed in #265; canonical-host/CSS redirect fix in #266; legacy-host/header cleanup in #267.
+- Both Vercel production projects, **ai-learning** and **state**, were READY after #267. The CSS regression caused by a self-redirect on `www.contextswitch.tech` was fixed in #266.
+- Production backend remains Render `state-api` at `https://state-api-6waw.onrender.com`. Its CORS configuration was updated Sept 25 to allow the new State origin; after redeploy, normal State API requests returned 200 and CORS preflights returned 200.
+- The State frontend loads its API base from `/api/state-config.js`; production currently resolves that to `https://state-api-6waw.onrender.com`.
+- Old hosts are preserved for compatibility. A browser-level fallback now sends `ai-learning-rouge.vercel.app`, `authenticignorance.site`, `www.authenticignorance.site`, and `state.authenticignorance.site` to the new Context Switch hosts. **Remaining polish:** Vercel still serves HTTP 200 on some legacy hosts before the JS fallback runs; #228 should track converting those to true HTTP redirects if desired.
+- Vercel is now **Pro**, not Hobby/free. Ignore older notes about the 100-deploy/day Hobby limit. Still batch changes sensibly because this repo deploys two Vercel projects.
+- Homepage visible branding is `Context Switch`, including the top-left brand. Main portfolio page titles/metadata and State case-study links were migrated.
+- Smoke test after the migration: homepage assets (`site-shell.css`, `site-components.css`, `site-shell.js`) returned 200; major portfolio pages returned 200 with Context Switch titles; `state.contextswitch.tech` and `state.contextswitch.tech/state-product-health` returned 200.
+- Do not merge the old Professional Edge promotion PR #264 as-is. It predates the Context Switch migration and its staging branch is behind current main. Reapply/rebase only the intended Professional Edge content changes onto current main/staging.
+
+
 ## At a glance (Sept 22, 2026): read this first
 
 - **Production is live and healthy.** `main` = `e5814ee`. State's *backend* is unchanged since PR #250 (Render `state-api` still serves build `24e9d009663b`); the app, the portfolio and the case study return 200. Both Vercel projects (`state`, `ai-learning`) are READY on the current head.
