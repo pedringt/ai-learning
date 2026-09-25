@@ -57,7 +57,7 @@ Then:
 - confirm any migrations/backend/frontend pieces are promoted together as required;
 - avoid overwriting known main-only/staging-only work;
 - record the release in the relevant PR/Issue/project view;
-- check both Vercel projects' statuses on the merge (the free plan caps deployments at 100 per day team-wide; a refused build leaves the frontend stale while the backend deploys) and never promote a staging preview deployment to production;
+- check both Vercel projects' statuses on the merge (the account is now on Vercel Pro; still verify both frontend projects because a failed or canceled build can leave one surface stale while another deploys) and never promote a staging preview deployment to production;
 - remember that a production Render deploy causes about a minute of 502s (no health-check path), so avoid deploying while someone is testing the live site.
 
 ## Rollback / recovery
