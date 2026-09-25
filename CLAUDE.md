@@ -12,6 +12,14 @@ For product decisions, risks, metrics, data/privacy assumptions, and PM workflow
 
 For the State GitHub Project workflow, fields, statuses, and board conventions, read [docs/product/GITHUB_PROJECT_SETUP.md](docs/product/GITHUB_PROJECT_SETUP.md). The existing Project is **State Product**; do not create a duplicate Project.
 
+
+## Current production domains
+
+- Portfolio: `https://www.contextswitch.tech/`
+- State: `https://state.contextswitch.tech/`
+- Production API: `https://state-api-6waw.onrender.com`
+- Legacy Authentic Ignorance and `ai-learning-rouge.vercel.app` hosts are compatibility-only and should not be used in new links.
+
 ## Product-operating defaults
 
 - Durable settled product choices go in `docs/product/DECISIONS.md`; do not casually reopen them without new evidence or an explicit product question.
@@ -51,10 +59,10 @@ For the State GitHub Project workflow, fields, statuses, and board conventions, 
 - `main` is protected. Do not attempt direct pushes. Changes to `main` must go through a pull request and the required `python` and `javascript` checks must pass.
 - Only merge/promote `staging` to `main` with the user's explicit authorization each time. Passing CI is never permission to promote.
 - Keep GitHub's **Automatically delete head branches** setting off while `staging` is used as a long-lived promotion branch. A `staging` to `main` PR must not delete `staging` after merge.
-- Vercel (frontend) is on the Hobby plan and build-rate limited; the user does not want to upgrade. Batch pushes and avoid back-to-back staging deploys.
+- Vercel (frontend) is on Pro. The old Hobby-plan deployment-limit warning is obsolete, but this repository still drives two Vercel projects (`ai-learning` and `state`), so batch unnecessary pushes.
 - Two separate Render backends exist: `state-api` (production, paid, always-on) and `state-api-staging` (free tier, sleeps after idle). A slow first staging request after idle can be expected.
 - Production `state-api` deploys from `main`. `state-api-staging` auto-deploy is scoped to `state-project-complete/` changes, so frontend-only staging pushes do not needlessly bounce it. If a push/merge touches no `state-project-complete/` files, an unchanged staging `/health` build is expected rather than evidence of a stale deploy.
 - After any push that changes `state-project-complete/` on a Render-backed branch, verify the actual deployed build before trusting it or smoke-testing further. Run `scripts/verify-render-deploy.sh <service>/health [expected-sha]` and compare the `/health` build field to the expected commit. Do not rely only on the Render dashboard/API reporting a deploy as live.
 - Postgres transaction failures behave differently from SQLite. On Postgres, a failed statement leaves the transaction aborted until an explicit rollback. Code that catches a speculative database error and continues must call `connection.rollback()` when `connection.is_postgres` before issuing more SQL. This exact class of bug caused the September 14 production first-boot crash loop and will not be caught by SQLite-only staging behavior.
-- Vercel is on the free plan: 100 deployments per day, team-wide (skipped builds appear to count, and Tastemake shares the budget). Batch pushes, and after a promotion confirm the served frontend code and both Vercel projects' statuses, not just green checks. Never "Promote" a staging preview deployment to production: its `api/state-config.js` points at the staging API.
+- Vercel is on Pro. After a promotion confirm the served frontend code and both Vercel projects' statuses, not just green checks. Never "Promote" a staging preview deployment to production: its `api/state-config.js` points at the staging API.
 - Production `state-api` on Render has no health-check path, so each deploy causes about a minute of 502s. Avoid deploying while others may be testing the live site.

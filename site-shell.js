@@ -1,3 +1,4 @@
+(function(){const h=location.hostname;if(h==='ai-learning-rouge.vercel.app'||h==='authenticignorance.site'||h==='www.authenticignorance.site'){location.replace('https://www.contextswitch.tech'+location.pathname+location.search+location.hash);}})();
 
 /* v93 shared shell behavior for standalone artifact pages */
 (()=>{
@@ -14,19 +15,19 @@
     analytics.defer=true;
     analytics.src='https://cloud.umami.is/script.js';
     analytics.setAttribute('data-website-id','238c100f-0a08-472c-9eb3-22acc2c795fa');
-    analytics.setAttribute('data-domains','www.authenticignorance.site,authenticignorance.site');
+    analytics.setAttribute('data-domains','www.contextswitch.tech,contextswitch.tech,authenticignorance.site,www.authenticignorance.site');
     analytics.setAttribute('data-umami-portfolio','true');
     document.head.appendChild(analytics);
   }
 
   /* Keep portfolio branding consistent across standalone pages. */
   document.title=document.title
-    .replace('AI Learning Portfolio','Authentic Ignorance')
-    .replace('Applied AI Product Portfolio','Authentic Ignorance');
+    .replace('AI Learning Portfolio','Context Switch')
+    .replace('Applied AI Product Portfolio','Context Switch');
   document.querySelectorAll('meta[property="og:title"],meta[name="twitter:title"]').forEach(meta=>{
     meta.content=(meta.content||'')
-      .replace('AI Learning Portfolio','Authentic Ignorance')
-      .replace('Applied AI Product Portfolio','Authentic Ignorance');
+      .replace('AI Learning Portfolio','Context Switch')
+      .replace('Applied AI Product Portfolio','Context Switch');
   });
   const homeHero=document.querySelector('[data-page="home"] .hero');
   if(homeHero&&!homeHero.querySelector('.professional-context')){

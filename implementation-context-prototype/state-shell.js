@@ -1,3 +1,4 @@
+(function(){const h=location.hostname;if(h==='state.authenticignorance.site'){location.replace('https://state.contextswitch.tech'+location.pathname+location.search+location.hash);}})();
 
 /* State's own shell behavior.
  * Copied from the portfolio's site-shell.js so the State app no longer depends on the portfolio deployment (#228).
@@ -10,12 +11,12 @@
 
   /* Keep portfolio branding consistent across standalone pages. */
   document.title=document.title
-    .replace('AI Learning Portfolio','Authentic Ignorance')
-    .replace('Applied AI Product Portfolio','Authentic Ignorance');
+    .replace('AI Learning Portfolio','Context Switch')
+    .replace('Applied AI Product Portfolio','Context Switch');
   document.querySelectorAll('meta[property="og:title"],meta[name="twitter:title"]').forEach(meta=>{
     meta.content=(meta.content||'')
-      .replace('AI Learning Portfolio','Authentic Ignorance')
-      .replace('Applied AI Product Portfolio','Authentic Ignorance');
+      .replace('AI Learning Portfolio','Context Switch')
+      .replace('Applied AI Product Portfolio','Context Switch');
   });
   const homeHero=document.querySelector('[data-page="home"] .hero');
   if(homeHero&&!homeHero.querySelector('.professional-context')){
