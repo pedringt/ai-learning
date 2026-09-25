@@ -4,6 +4,8 @@
 
 Keep the durable ideas. Use deeper references when more detail is useful.
 
+<!-- edge-review: 2026-09-25 -->
+
 ---
 
 ## Decide Where AI Belongs
