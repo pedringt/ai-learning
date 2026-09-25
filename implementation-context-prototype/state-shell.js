@@ -1,3 +1,4 @@
+(function(){const h=location.hostname;if(h==='state.authenticignorance.site'){location.replace('https://state.contextswitch.tech'+location.pathname+location.search+location.hash);}})();
 
 /* State's own shell behavior.
  * Copied from the portfolio's site-shell.js so the State app no longer depends on the portfolio deployment (#228).

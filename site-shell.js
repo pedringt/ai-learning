@@ -1,3 +1,4 @@
+(function(){const h=location.hostname;if(h==='ai-learning-rouge.vercel.app'||h==='authenticignorance.site'||h==='www.authenticignorance.site'){location.replace('https://www.contextswitch.tech'+location.pathname+location.search+location.hash);}})();
 
 /* v93 shared shell behavior for standalone artifact pages */
 (()=>{
