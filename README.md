@@ -145,12 +145,13 @@ The current release and rollback procedure lives in `RELEASE.md`. Older deployme
 
 | Surface | Host | Source |
 |---|---|---|
-| Portfolio + State frontend production | Vercel | `main` |
+| Portfolio production (`www.contextswitch.tech`) | Vercel project `ai-learning` | `main` |
+| State frontend production (`state.contextswitch.tech`) | Vercel project `state` | `main` |
 | State API production (`state-api`) | Render | `main` |
 | State frontend staging | Vercel preview/staging deployment | `staging` |
 | State API staging (`state-api-staging`) | Render | `staging` |
 
-Vercel is intentionally kept on the Hobby plan, so avoid unnecessary repeated deploys. The staging Render service can sleep after idle.
+Vercel is currently on Pro. This repository still deploys both the `ai-learning` and `state` Vercel projects, so avoid unnecessary repeated deploys. The staging Render service can sleep after idle.
 
 Secrets such as database URLs, model API keys, and Slack credentials belong in deployment environment settings and are never committed.
 
