@@ -40,7 +40,7 @@
       "has": [
         {
           "type": "host",
-          "value": "www.contextswitch.tech"
+          "value": "contextswitch.tech"
         }
       ],
       "destination": "https://www.contextswitch.tech/:path*",
