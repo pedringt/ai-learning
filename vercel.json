@@ -10,7 +10,7 @@
           "value": "ai-learning-rouge.vercel.app"
         }
       ],
-      "destination": "https://contextswitch.tech/:path*",
+      "destination": "https://www.contextswitch.tech/:path*",
       "permanent": true
     },
     {
@@ -21,7 +21,7 @@
           "value": "authenticignorance.site"
         }
       ],
-      "destination": "https://contextswitch.tech/:path*",
+      "destination": "https://www.contextswitch.tech/:path*",
       "permanent": true
     },
     {
@@ -32,7 +32,7 @@
           "value": "www.authenticignorance.site"
         }
       ],
-      "destination": "https://contextswitch.tech/:path*",
+      "destination": "https://www.contextswitch.tech/:path*",
       "permanent": true
     },
     {
@@ -54,7 +54,7 @@
           "value": "www.contextswitch.tech"
         }
       ],
-      "destination": "https://contextswitch.tech/:path*",
+      "destination": "https://www.contextswitch.tech/:path*",
       "permanent": true
     },
     {
@@ -120,6 +120,28 @@
           "value": "public, max-age=0, must-revalidate"
         }
       ]
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/",
+      "has": [
+        {
+          "type": "host",
+          "value": "state.contextswitch.tech"
+        }
+      ],
+      "destination": "/implementation-context-prototype"
+    },
+    {
+      "source": "/:path*",
+      "has": [
+        {
+          "type": "host",
+          "value": "state.contextswitch.tech"
+        }
+      ],
+      "destination": "/implementation-context-prototype/:path*"
     }
   ]
 }
