@@ -3,28 +3,6 @@
   "trailingSlash": false,
   "redirects": [
     {
-      "source": "/",
-      "has": [
-        {
-          "type": "host",
-          "value": "ai-learning-rouge.vercel.app"
-        }
-      ],
-      "destination": "https://www.authenticignorance.site/",
-      "permanent": true
-    },
-    {
-      "source": "/index.html",
-      "has": [
-        {
-          "type": "host",
-          "value": "ai-learning-rouge.vercel.app"
-        }
-      ],
-      "destination": "https://www.authenticignorance.site/",
-      "permanent": true
-    },
-    {
       "source": "/:path*",
       "has": [
         {
@@ -32,7 +10,40 @@
           "value": "ai-learning-rouge.vercel.app"
         }
       ],
-      "destination": "https://www.authenticignorance.site/:path*",
+      "destination": "https://www.contextswitch.tech/:path*",
+      "permanent": true
+    },
+    {
+      "source": "/:path*",
+      "has": [
+        {
+          "type": "host",
+          "value": "authenticignorance.site"
+        }
+      ],
+      "destination": "https://www.contextswitch.tech/:path*",
+      "permanent": true
+    },
+    {
+      "source": "/:path*",
+      "has": [
+        {
+          "type": "host",
+          "value": "www.authenticignorance.site"
+        }
+      ],
+      "destination": "https://www.contextswitch.tech/:path*",
+      "permanent": true
+    },
+    {
+      "source": "/:path*",
+      "has": [
+        {
+          "type": "host",
+          "value": "www.contextswitch.tech"
+        }
+      ],
+      "destination": "https://www.contextswitch.tech/:path*",
       "permanent": true
     },
     {
@@ -40,10 +51,10 @@
       "has": [
         {
           "type": "host",
-          "value": "www.authenticignorance.site"
+          "value": "www.contextswitch.tech"
         }
       ],
-      "destination": "https://state.authenticignorance.site/",
+      "destination": "https://state.contextswitch.tech/",
       "permanent": false
     },
     {
@@ -51,10 +62,10 @@
       "has": [
         {
           "type": "host",
-          "value": "www.authenticignorance.site"
+          "value": "www.contextswitch.tech"
         }
       ],
-      "destination": "https://state.authenticignorance.site/",
+      "destination": "https://state.contextswitch.tech/",
       "permanent": false
     },
     {
@@ -62,10 +73,10 @@
       "has": [
         {
           "type": "host",
-          "value": "www.authenticignorance.site"
+          "value": "www.contextswitch.tech"
         }
       ],
-      "destination": "https://state.authenticignorance.site/:path*",
+      "destination": "https://state.contextswitch.tech/:path*",
       "permanent": false
     },
     {
@@ -73,10 +84,10 @@
       "has": [
         {
           "type": "host",
-          "value": "www.authenticignorance.site"
+          "value": "www.contextswitch.tech"
         }
       ],
-      "destination": "https://state.authenticignorance.site/state-product-health",
+      "destination": "https://state.contextswitch.tech/state-product-health",
       "permanent": false
     }
   ],
@@ -84,13 +95,19 @@
     {
       "source": "/implementation-context-prototype/(.*)",
       "headers": [
-        {"key": "Cache-Control", "value": "public, max-age=0, must-revalidate"}
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=0, must-revalidate"
+        }
       ]
     },
     {
       "source": "/site-shell.css",
       "headers": [
-        {"key": "Cache-Control", "value": "public, max-age=0, must-revalidate"}
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=0, must-revalidate"
+        }
       ]
     }
   ]

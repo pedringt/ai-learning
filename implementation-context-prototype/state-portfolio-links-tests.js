@@ -6,8 +6,8 @@
 // redirect there would send it to the production State app.
 const fs=require('fs'),path=require('path');
 const root=path.join(__dirname,'..');
-const SUBDOMAIN='https://state.authenticignorance.site/';
-const PROD_HOST='www.authenticignorance.site';
+const SUBDOMAIN='https://state.contextswitch.tech/';
+const PROD_HOST='www.contextswitch.tech';
 let pass=0,fail=0;
 function check(name,ok,detail=''){if(ok){pass++;console.log('ok',name)}else{fail++;console.error('FAIL',name,detail)}}
 
@@ -41,7 +41,7 @@ check('those redirects apply on the production host only (never on staging/previ
 check('those redirects are temporary until the move has proven stable',legacy.every(r=>r.permanent===false));
 check('the specific index.html rule comes before the catch-all so it is not shadowed',
   sources.indexOf('/implementation-context-prototype/index.html')<sources.indexOf('/implementation-context-prototype/:path*'));
-check('the existing ai-learning-rouge redirect to www is untouched',redirects.some(r=>r.source==='/:path*'&&(r.has||[]).some(h=>h.value==='ai-learning-rouge.vercel.app')&&r.destination==='https://www.authenticignorance.site/:path*'));
+check('the legacy Vercel redirect points to Context Switch',redirects.some(r=>r.source==='/:path*'&&(r.has||[]).some(h=>h.value==='ai-learning-rouge.vercel.app')&&r.destination==='https://www.contextswitch.tech/:path*'));
 
 console.log(`\n${pass} passed, ${fail} failed`);
 if(fail)process.exit(1);
