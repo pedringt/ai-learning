@@ -3,25 +3,14 @@
   "trailingSlash": false,
   "redirects": [
     {
-      "source": "/",
+      "source": "/:path*",
       "has": [
         {
           "type": "host",
           "value": "ai-learning-rouge.vercel.app"
         }
       ],
-      "destination": "https://contextswitch.tech/",
-      "permanent": true
-    },
-    {
-      "source": "/index.html",
-      "has": [
-        {
-          "type": "host",
-          "value": "ai-learning-rouge.vercel.app"
-        }
-      ],
-      "destination": "https://contextswitch.tech/",
+      "destination": "https://contextswitch.tech/:path*",
       "permanent": true
     },
     {
@@ -29,7 +18,40 @@
       "has": [
         {
           "type": "host",
-          "value": "ai-learning-rouge.vercel.app"
+          "value": "authenticignorance.site"
+        }
+      ],
+      "destination": "https://contextswitch.tech/:path*",
+      "permanent": true
+    },
+    {
+      "source": "/:path*",
+      "has": [
+        {
+          "type": "host",
+          "value": "www.authenticignorance.site"
+        }
+      ],
+      "destination": "https://contextswitch.tech/:path*",
+      "permanent": true
+    },
+    {
+      "source": "/:path*",
+      "has": [
+        {
+          "type": "host",
+          "value": "state.authenticignorance.site"
+        }
+      ],
+      "destination": "https://state.contextswitch.tech/:path*",
+      "permanent": true
+    },
+    {
+      "source": "/:path*",
+      "has": [
+        {
+          "type": "host",
+          "value": "www.contextswitch.tech"
         }
       ],
       "destination": "https://contextswitch.tech/:path*",
