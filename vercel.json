@@ -40,17 +40,6 @@
       "has": [
         {
           "type": "host",
-          "value": "state.authenticignorance.site"
-        }
-      ],
-      "destination": "https://state.contextswitch.tech/:path*",
-      "permanent": true
-    },
-    {
-      "source": "/:path*",
-      "has": [
-        {
-          "type": "host",
           "value": "www.contextswitch.tech"
         }
       ],
@@ -120,28 +109,6 @@
           "value": "public, max-age=0, must-revalidate"
         }
       ]
-    }
-  ],
-  "rewrites": [
-    {
-      "source": "/",
-      "has": [
-        {
-          "type": "host",
-          "value": "state.contextswitch.tech"
-        }
-      ],
-      "destination": "/implementation-context-prototype"
-    },
-    {
-      "source": "/:path*",
-      "has": [
-        {
-          "type": "host",
-          "value": "state.contextswitch.tech"
-        }
-      ],
-      "destination": "/implementation-context-prototype/:path*"
     }
   ]
 }
