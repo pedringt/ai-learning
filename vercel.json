@@ -62,7 +62,7 @@
       "has": [
         {
           "type": "host",
-          "value": "contextswitch.tech"
+          "value": "www.contextswitch.tech"
         }
       ],
       "destination": "https://state.contextswitch.tech/",
@@ -73,7 +73,7 @@
       "has": [
         {
           "type": "host",
-          "value": "contextswitch.tech"
+          "value": "www.contextswitch.tech"
         }
       ],
       "destination": "https://state.contextswitch.tech/",
@@ -84,7 +84,7 @@
       "has": [
         {
           "type": "host",
-          "value": "contextswitch.tech"
+          "value": "www.contextswitch.tech"
         }
       ],
       "destination": "https://state.contextswitch.tech/:path*",
@@ -95,7 +95,7 @@
       "has": [
         {
           "type": "host",
-          "value": "contextswitch.tech"
+          "value": "www.contextswitch.tech"
         }
       ],
       "destination": "https://state.contextswitch.tech/state-product-health",
