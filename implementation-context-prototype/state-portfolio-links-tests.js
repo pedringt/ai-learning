@@ -41,7 +41,7 @@ check('those redirects apply on the production host only (never on staging/previ
 check('those redirects are temporary until the move has proven stable',legacy.every(r=>r.permanent===false));
 check('the specific index.html rule comes before the catch-all so it is not shadowed',
   sources.indexOf('/implementation-context-prototype/index.html')<sources.indexOf('/implementation-context-prototype/:path*'));
-check('the legacy Vercel redirect points to Context Switch',redirects.some(r=>r.source==='/:path*'&&(r.has||[]).some(h=>h.value==='ai-learning-rouge.vercel.app')&&r.destination==='https://contextswitch.tech/:path*'));
+check('the legacy Vercel redirect points to Context Switch',redirects.some(r=>r.source==='/:path*'&&(r.has||[]).some(h=>h.value==='ai-learning-rouge.vercel.app')&&r.destination==='https://www.contextswitch.tech/:path*'));
 
 console.log(`\n${pass} passed, ${fail} failed`);
 if(fail)process.exit(1);
