@@ -10,7 +10,7 @@
           "value": "ai-learning-rouge.vercel.app"
         }
       ],
-      "destination": "https://www.authenticignorance.site/",
+      "destination": "https://contextswitch.tech/",
       "permanent": true
     },
     {
@@ -21,7 +21,7 @@
           "value": "ai-learning-rouge.vercel.app"
         }
       ],
-      "destination": "https://www.authenticignorance.site/",
+      "destination": "https://contextswitch.tech/",
       "permanent": true
     },
     {
@@ -32,7 +32,7 @@
           "value": "ai-learning-rouge.vercel.app"
         }
       ],
-      "destination": "https://www.authenticignorance.site/:path*",
+      "destination": "https://contextswitch.tech/:path*",
       "permanent": true
     },
     {
@@ -40,10 +40,10 @@
       "has": [
         {
           "type": "host",
-          "value": "www.authenticignorance.site"
+          "value": "contextswitch.tech"
         }
       ],
-      "destination": "https://state.authenticignorance.site/",
+      "destination": "https://state.contextswitch.tech/",
       "permanent": false
     },
     {
@@ -51,10 +51,10 @@
       "has": [
         {
           "type": "host",
-          "value": "www.authenticignorance.site"
+          "value": "contextswitch.tech"
         }
       ],
-      "destination": "https://state.authenticignorance.site/",
+      "destination": "https://state.contextswitch.tech/",
       "permanent": false
     },
     {
@@ -62,10 +62,10 @@
       "has": [
         {
           "type": "host",
-          "value": "www.authenticignorance.site"
+          "value": "contextswitch.tech"
         }
       ],
-      "destination": "https://state.authenticignorance.site/:path*",
+      "destination": "https://state.contextswitch.tech/:path*",
       "permanent": false
     },
     {
@@ -73,10 +73,10 @@
       "has": [
         {
           "type": "host",
-          "value": "www.authenticignorance.site"
+          "value": "contextswitch.tech"
         }
       ],
-      "destination": "https://state.authenticignorance.site/state-product-health",
+      "destination": "https://state.contextswitch.tech/state-product-health",
       "permanent": false
     }
   ],
@@ -84,13 +84,19 @@
     {
       "source": "/implementation-context-prototype/(.*)",
       "headers": [
-        {"key": "Cache-Control", "value": "public, max-age=0, must-revalidate"}
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=0, must-revalidate"
+        }
       ]
     },
     {
       "source": "/site-shell.css",
       "headers": [
-        {"key": "Cache-Control", "value": "public, max-age=0, must-revalidate"}
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=0, must-revalidate"
+        }
       ]
     }
   ]
