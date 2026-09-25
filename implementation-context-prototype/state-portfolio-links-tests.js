@@ -7,7 +7,7 @@
 const fs=require('fs'),path=require('path');
 const root=path.join(__dirname,'..');
 const SUBDOMAIN='https://state.contextswitch.tech/';
-const PROD_HOST='contextswitch.tech';
+const PROD_HOST='www.contextswitch.tech';
 let pass=0,fail=0;
 function check(name,ok,detail=''){if(ok){pass++;console.log('ok',name)}else{fail++;console.error('FAIL',name,detail)}}
 
