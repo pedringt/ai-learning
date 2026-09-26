@@ -5,63 +5,82 @@
 <meta charset="utf-8"/>
 <meta content="width=device-width,initial-scale=1" name="viewport"/>
 <title>NARC · Context Switch</title>
-<meta content="A product case study about using a short satirical workplace game to make proxy metrics, missing context, and algorithmic management understandable through play." name="description"/>
+<meta content="A case study about a playful AI workplace-surveillance game that turns proxy metrics, incomplete context, adaptive monitoring, and automated judgment into playable systems." name="description"/>
 <link href="site-shell.css" rel="stylesheet"/>
 <link href="site-components.css" rel="stylesheet"/>
 <link href="implementation-context-case.css?v=r2-product-visuals" rel="stylesheet"/>
 <link href="site-polish.css" rel="stylesheet"/>
+<style>
+.case-system-page .meridian-case-hero{padding-top:18px;padding-bottom:30px}
+.case-system-page .meridian-case-hero .lead{max-width:900px}
+.case-system-page .case-meta{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px;margin-top:26px}
+.case-system-page .case-meta span{min-width:0;line-height:1.45}
+.case-system-page .meridian-product-callout{margin-top:24px}
+@media(max-width:800px){.case-system-page .case-meta{grid-template-columns:1fr}.case-system-page .meridian-case-hero{padding-bottom:24px}}
+</style>
 </head>
 <body>
 <div class="topbar"><div class="topinner"><a class="brand-button" href="index.html"><span class="brand">Context <span>Switch</span></span></a><nav aria-label="Primary pages" class="nav"><a href="index.html">Home</a><a aria-current="page" href="index.html#portfolio">Applied Work</a><a href="index.html#learn">Learning Library</a></nav><div class="top-actions"><button aria-label="Switch to dark mode" aria-pressed="false" class="theme-toggle" id="v922ThemeToggle" title="Switch to dark mode" type="button">☾</button><select aria-label="Choose page" id="v922MobileNav"><option value="index.html">Home</option><option selected value="index.html#portfolio">Applied Work</option><option value="index.html#learn">Learning Library</option></select></div></div></div>
+
 <main class="meridian-page-shell case-system-page" id="main-content">
 <div class="meridian-heading"><nav class="site-breadcrumb" aria-label="Breadcrumb"><ol><li><a href="index.html#portfolio">Applied Work</a></li><li aria-current="page">NARC</li></ol></nav></div>
+
 <header class="meridian-case-hero flagship-hero">
 <h1>NARC</h1>
-<p class="lead">NARC is a short satirical workplace-surveillance game about the gap between what a monitoring system can observe and what is actually true. I built it to make proxy metrics, missing context, and algorithmic management understandable through play instead of explanation alone.</p>
-<div class="case-meta"><span><b>My role</b> Product concept, game design, UX, testing &amp; final decisions</span><span><b>AI collaborator</b> Research, writing, engineering &amp; QA support</span><span><b>Status</b> Working portfolio game</span></div>
+<p class="lead">NARC is a deliberately playful portfolio project about AI workplace monitoring. I used satire and game mechanics to explore what happens when incomplete signals become confident automated judgments, and to push myself to use AI more creatively than I had in my more serious product work.</p>
+<div class="case-meta"><span><b>My role</b> Product concept, game design, UX, testing &amp; final decisions</span><span><b>AI collaborator</b> Creative exploration, writing, prototyping, engineering &amp; QA</span><span><b>Status</b> Experimental portfolio game</span></div>
 </header>
-<aside class="meridian-product-callout"><div><span>Play NARC</span><strong>Try the workday</strong><p>A compressed fictional workday where being productive and looking productive are not always the same thing.</p></div><a class="meridian-primary-action" href="https://narc-opal.vercel.app/" target="_blank" rel="noopener noreferrer">Play NARC <span aria-hidden="true">↗</span></a></aside>
+
+<aside class="meridian-product-callout"><div><span>Play NARC</span><strong>Try one chaotic workday</strong><p>A short fictional workday where being productive and looking productive are not always the same thing.</p></div><a class="meridian-primary-action" href="https://narc-opal.vercel.app/" target="_blank" rel="noopener noreferrer">Play NARC <span aria-hidden="true">↗</span></a></aside>
+
 <article class="case-page-content flagship-case">
 <section class="section narrative-open">
-<div class="kicker">The problem</div>
-<h2>A system can measure activity perfectly and still misunderstand the work.</h2>
-<p>Workplace monitoring becomes interesting when a proxy starts standing in for the thing an organization actually cares about. Presence can look like productivity. Fast responses can look like commitment. Quiet focus can look like inactivity.</p>
-<p>I wanted to make that failure mode felt rather than simply describe it, so I turned it into a gameable system.</p>
+<div class="kicker">The idea</div>
+<h2>The interesting failure is not false data. It is true data interpreted too confidently.</h2>
+<p>Marcus really is late a lot. Priya really is chatty. Luis really is away from his desk. NARC can observe factual signals, but it often lacks the context needed to know what those signals mean. The game is about what happens when an organization treats that partial view as objective truth.</p>
 </section>
 
 <section class="section product-model">
 <div class="kicker">What I built</div>
-<h2>A fictional company laptop where visible behavior keeps colliding with real work.</h2>
-<div class="human-flow"><span>Notice</span><b>→</b><span>Choose</span><b>→</b><span class="accent">Act</span><b>→</b><span class="accent">NARC interprets</span><b>→</b><span>Consequences</span></div>
-<p>The player juggles messages, email, files, deadlines, coworker requests, and interruptions while NARC watches only what its fictional monitoring system can see. The game rewards learning the difference between the real goal and the signals used to judge it.</p>
+<h2>A playable AI system where the player can resist, exploit, or benefit from automated judgment.</h2>
+<div class="human-flow"><span>Observe</span><b>→</b><span>AI infers</span><b>→</b><span class="accent">People react</span><b>→</b><span class="accent">System adapts</span><b>→</b><span>New incentives</span></div>
 <div class="state-model-grid">
-<article><span>Visible activity</span><strong>The proxy</strong><p>NARC turns observable traces into a simplified picture of the employee.</p></article>
-<article><span>Real work</span><strong>The missing context</strong><p>Important work can be quiet, slow, or invisible to the system measuring it.</p></article>
-<article><span>Counterplay</span><strong>People adapt to measurement</strong><p>Focus Time and the keepalive tool let the player see how metrics change behavior once people understand them.</p></article>
-<article><span>Social choices</span><strong>The data is not neutral</strong><p>Coworker reports, favors, and sabotage show how human incentives can enter an apparently objective system.</p></article>
+<article><span>Proxy metrics</span><strong>Visible activity stands in for real value</strong><p>Chat volume, attendance traces, Focus Time, and activity signals can look meaningful even when they leave important work out.</p></article>
+<article><span>Ambiguous evidence</span><strong>The signal can be real and the judgment still wrong</strong><p>NARC often sees something factual. The failure comes from missing context and overconfident interpretation.</p></article>
+<article><span>Player complicity</span><strong>The human is not automatically the safeguard</strong><p>The player can protect coworkers, stay neutral, accept flattering assessments, game the metrics, or weaponize NARC against someone.</p></article>
+<article><span>Adaptive monitoring</span><strong>The model changes because people change</strong><p>Employees learn to exploit Focus Time, the behavior spreads, and NARC changes how it interprets the same signal.</p></article>
 </div>
 </section>
 
 <section class="section seam-learning">
-<div class="kicker">The key product decisions</div>
-<h2>The system had to be understandable enough to game and wrong enough to reveal the point.</h2>
+<div class="kicker">Designing the AI failure</div>
+<h2>NARC had to be plausible, incomplete, learnable, and gameable.</h2>
 <div class="surface-grid">
-<article><span>Designed imperfection</span><strong>NARC does not get complete context</strong><p>The point is not an all-knowing AI making mistakes at random. Its conclusions come from partial evidence, so the player can learn why a plausible inference may still be wrong.</p></article>
-<article><span>Comedy as explanation</span><strong>The joke carries the concept</strong><p>A mouse jiggler is funny, but it also makes the proxy problem concrete: once activity becomes the target, people optimize activity instead of the underlying work.</p></article>
-<article><span>Short enough to finish</span><strong>One busy day beat a larger simulation</strong><p>I cut the concept down to a roughly 15-minute portfolio experience. The goal is a complete idea with meaningful choices, not a long management game.</p></article>
+<article><span>Explainability as UX</span><strong>If the player cannot understand a judgment, the system is not finished</strong><p>Playtesting repeatedly exposed moments where a rule technically worked but the player could not tell why NARC issued a status, flag, or consequence.</p></article>
+<article><span>Human review</span><strong>Adding a person does not automatically fix the system</strong><p>Manual context, review routing, and Culture Champion create opportunities to interrupt automated judgment, but humans can still be rushed, biased by the summary, or choose not to intervene.</p></article>
+<article><span>Comedy as a design tool</span><strong>The joke carries the system idea</strong><p>Mouse jigglers, Trusted Operator, Communication Load, and absurd workplace evidence make proxy metrics and model adaptation discoverable through consequences instead of a lecture.</p></article>
 </div>
 </section>
 
 <section class="section next-tests">
-<div class="kicker">What changed</div>
-<h2>The strongest version became a game about institutional trust, not just surveillance.</h2>
-<div class="question-shift is-quote"><span>Earlier framing</span><p class="shift-lead">An AI watches employees and gets things wrong.</p><strong>The more interesting problem is what happens when an organization acts on those incomplete judgments.</strong><p class="shift-support">That made consequences, coworker behavior, incentives, and the player's ability to exploit the system more important than adding more monitoring features.</p></div>
+<div class="kicker">A creative stretch</div>
+<h2>I used AI as a design partner, systems prototyper, critic, and code collaborator.</h2>
+<p>I did not ask AI to generate a finished game. I used it to expand the premise, turn abstract AI failure modes into playable mechanics, brainstorm and pressure-test narrative branches, prototype systems quickly, inspect older implementations, and critique each build after I played it.</p>
+<p>The product decisions stayed mine. I chose what to keep, what to cut, when a joke was doing useful work, when a mechanic was confusing, and which older ideas were worth recovering rather than reverting wholesale.</p>
+</section>
+
+<section class="section next-tests">
+<div class="kicker">What changed through playtesting</div>
+<h2>The biggest revisions were structural, not cosmetic.</h2>
+<p>An earlier version spread the concept across multiple days. I compressed it into one deliberately busy workday so a portfolio visitor could reach the core idea quickly. Later playtests restored coworker personality, sabotage and protection choices, clearer consequences, better tutorial state, slower message replies, and more explanation around rewards such as Trusted Operator.</p>
+<p>That loop became part of the creative process: play, notice what feels empty or unclear, trace why, then use AI to help explore specific changes quickly.</p>
 </section>
 
 <section class="section current-conclusion">
 <div class="kicker">Where I landed</div>
-<h2>Interactive systems can make abstract AI risks easier to understand than a warning label can.</h2>
-<p>NARC let me explore a different kind of AI product work: designing the failure itself. The useful lesson is not that monitoring is always wrong. It is that a measurable signal can become dangerously persuasive when the organization forgets what the signal leaves out.</p>
+<h2>AI does not have to invent facts to create a bad outcome.</h2>
+<p>A system can observe something real, make a plausible inference, and still be dangerously incomplete once an organization gives that inference authority. NARC let me explore that idea through incentives, humor, adaptation, and player choice instead of treating it as an ethics lecture.</p>
+<p>It also gave me a different kind of AI project: State is mostly disciplined product and systems design, Tastemake explores preference modeling, and NARC is where I used AI most visibly for creative exploration, satire, narrative systems, and playful interaction design.</p>
 <div class="closing-links"><a class="meridian-primary-action" href="https://narc-opal.vercel.app/" target="_blank" rel="noopener noreferrer">Play NARC ↗</a><a class="text-link" href="https://github.com/pedringt/narc" target="_blank" rel="noopener noreferrer">View GitHub ↗</a></div>
 </section>
 </article>
