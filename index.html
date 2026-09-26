@@ -440,14 +440,14 @@
 @media(max-width:620px){.applied-major-grid,.applied-secondary-grid,.applied-support-grid,.home-option-d-links{grid-template-columns:1fr!important}}
 </style></link><style>
 /* Featured project hierarchy */
-.home-feature-grid{display:grid;grid-template-columns:minmax(0,1.75fr) minmax(280px,.75fr);gap:16px;margin-top:14px;align-items:stretch}
+.home-feature-grid{display:grid;grid-template-columns:minmax(0,3fr) minmax(340px,2fr);gap:18px;margin-top:14px;align-items:stretch}
 .home-state-feature{margin:0;padding:34px;border:1px solid var(--line);border-radius:22px;background:var(--card);display:flex;flex-direction:column;justify-content:space-between;gap:28px;box-shadow:0 12px 34px rgba(41,31,72,.07)}
-.home-state-feature h2{font-size:clamp(2.2rem,5vw,4rem);margin:4px 0 12px;letter-spacing:-.04em}.home-state-feature p{max-width:760px}.home-state-lead{font-size:1.14rem}
+.home-state-feature h2{font-size:clamp(2.4rem,4vw,3.5rem);margin:6px 0 14px;letter-spacing:-.04em}.home-state-feature p{max-width:700px}.home-state-lead{font-size:1.08rem;line-height:1.65}
 .home-state-actions,.home-project-actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
-.home-state-actions a,.home-project-actions a{font-weight:750;text-decoration:none;padding:10px 14px;border-radius:12px;border:1px solid var(--line)}
-.home-state-actions .home-state-primary,.home-project-actions .home-project-primary{background:var(--purple);color:#fff;border-color:var(--purple)}
-.home-project-card{border:1px solid var(--line);border-radius:22px;background:var(--card);padding:26px;display:flex;flex-direction:column;justify-content:space-between;gap:22px}
-.home-project-card h3{font-size:clamp(1.65rem,3vw,2.25rem);margin:6px 0 10px;letter-spacing:-.03em}.home-project-card p{margin:0;color:var(--muted);line-height:1.65}
+.home-state-actions a,.home-project-actions a{display:inline-flex;align-items:center;justify-content:center;font-size:14px;line-height:1.2;font-weight:750;text-decoration:none;padding:11px 15px;border-radius:12px;border:1px solid var(--line);white-space:nowrap}
+.home-state-actions .home-state-primary,.home-project-actions .home-project-primary{background:var(--purple)!important;color:#fff!important;-webkit-text-fill-color:#fff!important;border-color:var(--purple)!important;opacity:1!important;visibility:visible!important}
+.home-project-card{border:1px solid var(--line);border-radius:22px;background:var(--card);padding:30px;display:flex;flex-direction:column;justify-content:space-between;gap:24px}
+.home-project-card h3{font-size:clamp(1.85rem,3vw,2.45rem);margin:8px 0 12px;letter-spacing:-.03em}.home-project-card p{margin:0;color:var(--muted);line-height:1.68}
 .home-project-card .tag{align-self:flex-start}.home-project-card .home-project-actions{margin-top:auto}
 .home-project-wide{margin-top:16px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:28px;align-items:end}
 .home-project-wide .home-project-copy{max-width:760px}
@@ -548,7 +548,7 @@ body.v88-dark .learning-how-note strong{color:#f5f2fb!important}
 <div class="hero"><h1>AI doesn’t know <span>what it doesn’t know.</span></h1><p class="lead">AI can take you further, faster. The real skill is knowing when to let it work, when to question it, and when to take back control.</p></div>
 <div class="home-start"><div class="home-applied-heading"><div class="section-kicker"><span>Applied work · start here</span></div></div>
 <div class="home-feature-grid">
-<article class="home-state-feature"><div class="home-state-copy"><span class="home-project-kicker">Flagship project</span><h2>State: A project-context experiment</h2><p class="home-state-lead">State helps teams keep a reliable, up-to-date picture of what’s true in a project. AI interprets new evidence, software enforces the rules, and people decide what actually becomes Current State.</p></div><div class="home-state-actions"><a class="home-state-primary" href="https://state.contextswitch.tech/" target="_blank" rel="noopener noreferrer">Open State ↗</a><a class="home-state-secondary" href="implementation-context.html">Read the case study →</a></div></article>
+<article class="home-state-feature"><div class="home-state-copy"><span class="home-project-kicker">Flagship · project-context experiment</span><h2>State</h2><p class="home-state-lead">State helps teams keep a reliable, up-to-date picture of what’s true in a project. AI interprets new evidence, software enforces the rules, and people decide what actually becomes Current State.</p></div><div class="home-state-actions"><a class="home-state-primary" href="https://state.contextswitch.tech/" target="_blank" rel="noopener noreferrer">Open State ↗</a><a class="home-state-secondary" href="implementation-context.html">Read the case study →</a></div></article>
 <article class="home-project-card"><div><span class="tag">Taste modeling &amp; personalization</span><h3>Tastemake</h3><p>A recommendation experiment where users can refine not only what they like, but what the system thinks those likes mean.</p></div><div class="home-project-actions"><a href="tastemake.html">Read case study →</a><a class="home-project-primary" href="https://tastemake.vercel.app/" target="_blank" rel="noopener noreferrer">Open Tastemake ↗</a></div></article>
 </div>
 <article class="home-project-card home-project-wide"><div class="home-project-copy"><span class="tag">Creative AI experiment</span><h3>NARC</h3><p>A playful workplace-surveillance game about what happens when incomplete signals become confident AI judgments, and people start adapting to the system measuring them.</p></div><div class="home-project-actions"><a href="narc.html">Read case study →</a><a class="home-project-primary" href="https://narc-opal.vercel.app/" target="_blank" rel="noopener noreferrer">Play NARC ↗</a></div></article>
