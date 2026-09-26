@@ -4,6 +4,18 @@ This is the canonical current-state handoff for State and the surrounding portfo
 
 _Last updated: September 22, 2026 (evening), Pacific time. Written as a handoff for a fresh session._
 
+## Sept 26, 2026 handoff update: Tastemake case study (branch `case-study-tastemake`)
+
+**Parked on its own feature branch, off `staging`, until Paige authorizes promotion.** `main` and `staging` are unchanged by this branch.
+
+- Adds `tastemake.html`, a standalone Context Switch case study covering Tastemake's core differentiator: item feedback → inferred taste → taste-model feedback → refined profile. Users can correct not just recommendations but the model's interpretation of their reactions.
+- Homepage now shows **State and Tastemake side by side** as the two featured projects (`.home-feature-grid`: State larger on the left, Tastemake companion card on the right). The old homepage "More Applied Work" strip and "How I work with AI" ending were removed to make room; that supporting work still lives on the Applied Work page.
+- Applied Work page restructured into **Primary work** (State, Tastemake), **Opportunity evaluation** (Legal AI Governance, unchanged content), and **Supporting work** (unchanged). Intro copy updated to "Different ways to design, test, and create with AI."
+- Live project link used on this branch: `https://tastemake.vercel.app/` — a temporary Vercel URL, not a final subdomain.
+- This branch does **not** include NARC. NARC's case study and cards are on a separate branch, `case-study-narc`, layered on top of this one, since Tastemake is expected to be ready first.
+
+**Before this should move toward staging:** re-verify the live Tastemake product against the case-study claims (do not assume this handoff's product details are still current), decide whether to set up `tastemake.contextswitch.tech` and replace the temporary Vercel URL, do a full desktop/tablet/mobile/dark-mode visual QA pass (especially the feature-grid at the 860px/760px breakpoints), check all internal and external links, then update issues #242 and #244 with verification results. Only merge to `staging` with Paige's explicit authorization, same as any other promotion.
+
 ## Sept 25, 2026 handoff update: Context Switch migration
 
 **Use this section over older domain/deployment notes below.** The older material is retained as project history.
