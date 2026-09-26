@@ -16,6 +16,17 @@ _Last updated: September 22, 2026 (evening), Pacific time. Written as a handoff 
 
 **Before this should move toward staging:** re-verify the live Tastemake product against the case-study claims (do not assume this handoff's product details are still current), decide whether to set up `tastemake.contextswitch.tech` and replace the temporary Vercel URL, do a full desktop/tablet/mobile/dark-mode visual QA pass (especially the feature-grid at the 860px/760px breakpoints), check all internal and external links, then update issues #242 and #244 with verification results. Only merge to `staging` with Paige's explicit authorization, same as any other promotion.
 
+## Sept 26, 2026 handoff update: NARC case study (branch `case-study-narc`, built on top of `case-study-tastemake`)
+
+**Parked on its own feature branch, layered on top of `case-study-tastemake`, until Paige authorizes promotion.** `main` and `staging` are unchanged by this branch. This branch cannot merge before `case-study-tastemake` does, since it's built on top of it (rebase onto `staging` after Tastemake lands, don't merge NARC first).
+
+- Adds `narc.html`, a standalone Context Switch case study: a playful workplace-surveillance game about AI inference from incomplete signals, proxy metrics, and people adapting to the system judging them.
+- Homepage: adds a full-width NARC card (`.home-project-wide`) below the State/Tastemake feature grid.
+- Applied Work: adds NARC as a third card in **Primary work**, alongside State and Tastemake.
+- Live project link used on this branch: `https://narc-opal.vercel.app/` — a temporary Vercel URL, not a final subdomain.
+
+**Before this should move toward staging:** everything `case-study-tastemake`'s checklist says, plus: re-verify the live NARC product against the case-study claims, decide whether to set up `narc.contextswitch.tech`, visual-QA the full-width NARC card specifically (it wasn't reviewed independently of the combined draft), then update issues #269 and #244 with verification results.
+
 ## Sept 25, 2026 handoff update: Context Switch migration
 
 **Use this section over older domain/deployment notes below.** The older material is retained as project history.
