@@ -4,6 +4,126 @@ This is the canonical current-state handoff for State and the surrounding portfo
 
 _Last updated: September 22, 2026 (evening), Pacific time. Written as a handoff for a fresh session._
 
+## Sept 25, 2026 handoff update: Tastemake + NARC portfolio package
+
+**Use this section for the current Tastemake/NARC portfolio work. This work is intentionally parked on a feature branch until the underlying projects are ready for final portfolio release.**
+
+### Where the work lives
+
+- Feature branch: `portfolio-tastemake-narc-case-studies`
+- Base workflow remains: feature branch -> `staging` -> `main`, with Paige's explicit authorization required for each promotion target.
+- Latest implementation commit before this handoff update: `19830cb7e032b948393449e745367f15767d8f50`.
+- Latest known READY Vercel preview from that implementation: `https://ai-learning-pxzzj7ybu-cairn10.vercel.app/`.
+- `main` and `staging` have **not** been changed by this case-study branch.
+
+### What is already built on the branch
+
+- Added `tastemake.html` and `narc.html` as dedicated Context Switch case studies.
+- Homepage now treats **State, Tastemake, and NARC** as the three featured projects:
+  - State = flagship
+  - Tastemake = smaller companion card beside State
+  - NARC = wide card underneath
+- Removed the old homepage **More Applied Work** strip. Supporting work remains on the Applied Work page.
+- Removed the homepage **How I work with AI** ending to reduce density.
+- Applied Work now presents State, Tastemake, and NARC as primary work; Legal AI remains an opportunity evaluation and older artifacts remain supporting work.
+- Added live-project actions on Home, Applied Work, and inside both new case studies. External live-project links open in a new tab.
+- Homepage card layout was rebalanced after review to roughly 60/40 for State/Tastemake, with a full-width NARC card below.
+- Fixed the featured-card primary buttons so `Open Tastemake` and `Play NARC` render visible white text rather than an empty purple button.
+- Case-study hero metadata on Tastemake/NARC was loosened into a responsive three-column layout so the opening does not feel compressed.
+
+### Portfolio-level framing
+
+Homepage hero remains:
+
+> **AI doesn’t know what it doesn’t know.**
+
+Do not narrow the whole portfolio into an "AI safety" or "human control" site. The three projects intentionally show different modes of AI product work:
+
+- **State:** disciplined product/system design. AI interprets project evidence, software enforces rules, people authorize truth.
+- **Tastemake:** taste modeling and personalization. Users can refine not only item preferences but the model Tastemake builds from those preferences.
+- **NARC:** creative AI exploration. A playful systems-design experiment using satire, narrative mechanics, proxy metrics, incomplete context, and adaptive monitoring.
+
+Applied Work intro on this branch is now:
+
+> **Different ways to design, test, and create with AI**
+
+with supporting copy about deciding what AI should do, what people should control, learning from failure, and using AI to open new ways to build and explore.
+
+### Tastemake case-study thesis
+
+The key differentiator is **item feedback -> inferred taste -> taste-model feedback -> refined profile**.
+
+The strongest summary is:
+
+> **Most recommenders let you react to items. Tastemake also lets you react to the model built from those reactions.**
+
+Important product points already represented in `tastemake.html`:
+
+- Loved / Liked / Didn't like are experienced taste evidence.
+- Save / Not interested are intent signals and should not silently become claims about taste or identity.
+- The Taste Profile is a working hypothesis, not a personality label.
+- Users can confirm, reject, strengthen, weaken, contextualize, or domain-limit inferred patterns.
+- User-confirmed information stays distinct from the AI's original inference.
+- Cross-medium taste can span Watch, Read, and Play without assuming every preference transfers across domains.
+- AI is constrained: software controls eligibility, evidence semantics, and allowed state changes; the model interprets/ranks/explains within those boundaries.
+- Invalid model output should fall back rather than be trusted.
+- Recommendation misses are learning opportunities about which taste assumption failed.
+- The Outer Wilds miss is the concrete case-study example: "discovery/exploration" was too broad and later testing refined the boundary.
+- Browse was added to reduce recall burden during cold start while preserving the rule that browsing alone is not taste evidence.
+- Be explicit that the candidate-retrieval layer is still fairly conventional. The differentiated work is currently in how Tastemake learns, represents, and lets users refine taste.
+
+Current live link used on the branch: `https://tastemake.vercel.app/`.
+
+### NARC case-study thesis
+
+Do not frame NARC primarily as an "AI ethics game." It is a **playable systems-design experiment** and a deliberate creative stretch.
+
+The core idea:
+
+> **The interesting failure is not false data. It is true data interpreted too confidently.**
+
+Important points already represented in `narc.html`:
+
+- NARC is intentionally playful and should read as a fun creative portfolio project.
+- The AI often sees a factual signal but lacks the context needed to judge what that signal means.
+- Proxy metrics include visible activity, Focus Time, chat/attendance traces, and keepalive behavior.
+- The player is complicit, not just a victim: they can protect coworkers, game the system, accept flattering judgments, remain neutral, or weaponize NARC.
+- Focus Time illustrates an adaptive socio-technical loop: measurement changes behavior, behavior spreads, then the model changes how it interprets the same signal.
+- Human review is a possible safeguard but not a magic fix; humans can be rushed, biased by the AI summary, incentivized, or choose not to intervene.
+- Explainability is treated as UX. If the player cannot understand why NARC made a judgment or awarded a status, the mechanic is not finished.
+- The broader multi-day concept was intentionally compressed into one dense workday to reduce time-to-insight for portfolio visitors.
+- Humor is functional: it makes proxy metrics, surveillance, model adaptation, and automated consequences approachable enough to explore through play.
+- AI was used as a creative collaborator, systems prototyper, critic, writing/code partner, QA aid, and implementation-history bridge. Paige made the product decisions and chose what stayed, changed, or was cut.
+- Playtesting materially changed the system, not just visuals: coworker characterization, tutorial state, pacing, message timing, explanation, content density, and protection/sabotage mechanics all changed.
+
+Current live link used on the branch: `https://narc-opal.vercel.app/`.
+
+### Final release gate after Tastemake and NARC are done
+
+When Paige says the two source projects are portfolio-ready, a new session should:
+
+1. Verify the current production versions of `pedringt/tastemake` and `pedringt/narc`; do not assume this handoff's product details or URLs are still current.
+2. Do an uncoached portfolio-review pass of both live products before promoting the case studies.
+3. Set up/verify clean project domains if desired:
+   - `tastemake.contextswitch.tech`
+   - `narc.contextswitch.tech`
+4. Replace the temporary Vercel project URLs everywhere on the portfolio branch with the verified subdomains.
+5. Re-read both case studies against the final products and update only facts that have materially changed. Keep them compact.
+6. Visual-QA Home at desktop/tablet/mobile:
+   - State/Tastemake top row has breathing room.
+   - State remains clearly primary without becoming oversized.
+   - Tastemake is not squeezed into a sidebar.
+   - NARC wide card feels intentionally secondary to State but still substantial.
+   - Open/Play button labels are visible in light and dark mode.
+7. Visual-QA `tastemake.html` and `narc.html`, especially hero spacing, metadata wrapping, callout spacing, and mobile behavior.
+8. Test all internal case-study links and all external project/GitHub links. External project links should open in a new tab.
+9. Update issues #242, #244, #245, and #269 with final verification results.
+10. Only then merge this feature work into `staging` if Paige explicitly names staging. Verify there before asking for/receiving explicit `main` promotion authorization.
+
+### Known verification limitation at handoff
+
+The Vercel branch deployment reached READY, but automated fetches of the protected preview were redirected through Vercel SSO. Source checks and deployment state were verified; Paige visually reviewed the preview and identified/fixed the latest homepage spacing/button-label issues. A fresh session should still perform a final browser/visual pass before promotion.
+
 ## Sept 25, 2026 handoff update: Context Switch migration
 
 **Use this section over older domain/deployment notes below.** The older material is retained as project history.
