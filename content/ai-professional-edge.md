@@ -106,6 +106,18 @@ The workflow, skills, permissions, and user experience do not have to come from 
 
 **Ask:** Can we change the model or provider without rebuilding the agent experience?
 
+### Behavior contracts may become more important than model selection
+
+Today, teams often choose a specific model first. A more mature pattern may be to define the behavior a workflow needs, such as quality, latency, cost, tool support, output structure, and risk tolerance, then map that contract to an approved model or model configuration.
+
+**Why:** Models change quickly. The durable product requirement is the behavior the job needs, while the underlying model may become a replaceable implementation detail.
+
+### Treat model behavior like a versioned dependency
+
+A stable API does not guarantee stable product behavior. A provider can change the model behind an alias or managed preset and shift outputs, tool use, refusals, latency, cost, or edge-case handling without any change to your own code.
+
+**Product habit:** Track the resolved model or configuration, run affected evals after known upstream changes, and use small scheduled behavioral canaries to catch changes you were not explicitly told about.
+
 ---
 
 ## Tools & Systems Worth Knowing
@@ -212,6 +224,10 @@ The software executes without an obvious technical error, but the AI still fails
 
 A design where useful data, business logic, permissions, and actions can be accessed independently of the original user interface while the source system still owns the rules.
 
+### Behavioral canary
+
+A small set of critical eval cases run regularly to detect meaningful drift in AI behavior before a full regression suite is needed.
+
 ---
 
 ## Questions I'm Adding to My Toolkit
@@ -223,4 +239,5 @@ These are the questions that still feel useful beyond the shorter durable set.
 3. If a multi-step agent fails, where did the first bad step occur and how will the workflow recover?
 4. Which business definitions must be fixed before AI analyzes the data?
 5. Can the model provider or interface change without rebuilding the authoritative workflow underneath it?
-6. If the underlying AI improves, does this workflow still earn its maintenance cost?
+6. Can this model, alias, or preset change underneath us, and how will we know if that changes product behavior?
+7. If the underlying AI improves, does this workflow still earn its maintenance cost?
