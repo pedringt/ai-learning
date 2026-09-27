@@ -74,9 +74,17 @@
     if(neon?.configured&&neon.available===false) return {kind:'warn',title:'Database health could not be read',detail:'Neon is configured, but its project health request failed.'};
     return null;
   }
+  function externalQualityAttention(q){
+    if(!q) return null;
+    const items=Array.isArray(q.attention)?q.attention:[];
+    if(!items.length) return {kind:'unknown',title:'Quality status unavailable',detail:'No project-specific quality attention signal was returned.'};
+    const priority={bad:3,warn:2,unknown:1,good:0};
+    return [...items].sort((a,b)=>priority[b.kind]-priority[a.kind])[0];
+  }
   function overallAttention(data){
     const signals=[deliveryAttention(data.delivery)];
     if(data.quality) signals.push(qualityAttention(data.quality));
+    const external=externalQualityAttention(data.externalQuality);if(external) signals.push(external);
     const infra=infrastructureAttention(data.platform);if(infra) signals.push(infra);
     const priority={bad:3,warn:2,unknown:1,good:0};
     return signals.sort((a,b)=>priority[b.kind]-priority[a.kind])[0];
@@ -90,12 +98,14 @@
   async function loadStateQuality(root){return normalizeQuality(await jsonFetch('/api/project-health-state-quality?env='+pageEnvironment(root)));}
   async function loadPlatform(project){return await jsonFetch('/api/project-health-platform?project='+encodeURIComponent(project.id));}
   async function loadRunInfo(project){try{return await jsonFetch('/api/project-health-run?project='+encodeURIComponent(project.id));}catch(error){if(error.status===404)return null;throw error;}}
+  async function loadExternalQuality(project){try{return await jsonFetch('/api/project-health-project-quality?project='+encodeURIComponent(project.id));}catch(error){if(error.status===404)return null;throw error;}}
 
   async function loadProject(project,root){
-    const data={project,delivery:null,staging:null,quality:null,platform:null,runInfo:null,errors:[]};
+    const data={project,delivery:null,staging:null,quality:null,externalQuality:null,platform:null,runInfo:null,errors:[]};
     try{data.delivery=await loadGitHubProject(project,project.branch);}catch(e){data.errors.push('Delivery: '+e.message);}
     if(project.stagingBranch){try{data.staging=await loadGitHubProject(project,project.stagingBranch);}catch(e){data.errors.push('Staging: '+e.message);}}
     if(project.quality==='state'){try{data.quality=await loadStateQuality(root);}catch(e){data.errors.push('Quality: '+e.message);}}
+    else {try{data.externalQuality=await loadExternalQuality(project);}catch(e){data.errors.push('Quality: '+e.message);}}
     try{data.platform=await loadPlatform(project);}catch(e){data.errors.push('Platform: '+e.message);}
     try{data.runInfo=await loadRunInfo(project);}catch(e){data.errors.push('Run controls: '+e.message);}
     return data;
@@ -125,9 +135,17 @@
     if(a?.configured) return 'Analytics unavailable';
     return 'Analytics not connected';
   }
+  function projectQualityLabel(data){
+    if(data.project.quality==='state') return data.quality?qualityAttention(data.quality).title:'Quality unavailable';
+    const q=data.externalQuality;if(!q) return 'Quality unavailable';
+    const top=externalQualityAttention(q);
+    if(q.project==='tastemake'&&q.ci?.conclusion==='success'&&top?.kind==='good') return 'QA + eval rules healthy';
+    if(q.project==='narc'&&q.recorded?.recorded_all_suites_green) return q.recorded.full_playtest_pending?'Tests green · playtest pending':'Recorded tests green';
+    return top?.title||'Quality loaded';
+  }
   function cardMarkup(data,active){
     const att=overallAttention(data),d=data.delivery;
-    const quality=data.project.quality==='state'?(data.quality?qualityAttention(data.quality).title:'Quality unavailable'):'Project-specific checks next';
+    const quality=projectQualityLabel(data);
     return '<article class="project-card '+(active?'active':'')+'" data-project="'+esc(data.project.id)+'" tabindex="0" role="button" aria-label="Open '+esc(data.project.name)+' health">'+
       '<div class="card-head"><div><h2>'+esc(data.project.name)+'</h2><p>'+esc(data.project.description)+'</p></div><span class="status-pill '+esc(att.kind)+'">'+esc(att.kind==='good'?'Healthy':att.kind==='bad'?'Needs attention':'Check')+'</span></div>'+
       '<div class="signal-list">'+
@@ -140,10 +158,13 @@
   }
 
   function renderDetail(data,doc){
-    const p=data.project,d=data.delivery,s=data.staging,q=data.quality,platform=data.platform,run=data.runInfo;
+    const p=data.project,d=data.delivery,s=data.staging,q=data.quality,externalQ=data.externalQuality,platform=data.platform,run=data.runInfo;
     doc.getElementById('detailTitle').textContent=p.name;doc.getElementById('detailCopy').textContent=p.description;doc.getElementById('repoLink').href=repoUrl(p.repo);
 
-    const notices=[deliveryAttention(d)];if(p.quality==='state')notices.push(qualityAttention(q));const infra=infrastructureAttention(platform);if(infra)notices.push(infra);
+    const notices=[deliveryAttention(d)];
+    if(p.quality==='state') notices.push(qualityAttention(q));
+    else if(externalQ?.attention) notices.push(...externalQ.attention);
+    const infra=infrastructureAttention(platform);if(infra)notices.push(infra);
     if(platform?.analytics?.configured&&platform.analytics.available===false) notices.push({kind:'warn',title:'Site analytics unavailable',detail:'Vercel Web Analytics is configured but did not return usable counts.'});
     doc.getElementById('attentionPanel').innerHTML='<h3>What needs attention?</h3><p class="panel-copy">Concrete signals first. No combined health score.</p><div class="rows">'+notices.map(attentionMarkup).join('')+'</div>';
 
@@ -171,8 +192,28 @@
     if(p.quality==='state'){
       const review=q?.review,ask=q?.ask;
       doc.getElementById('qualityPanel').innerHTML='<h3>Product quality</h3><p class="panel-copy">State uses its existing aggregate controlled-eval records. Project content is not copied here.</p><div class="metrics">'+metric(review?percent(review.interpretation_accuracy):'Not run','Review interpretation')+metric(ask?percent(ask.ask_grounding):'Not run','Ask grounding')+metric(ask?percent(ask.authority_accuracy):'Not run','Ask authority handling')+'</div><p class="footnote">Resolved Reviews · 30d: '+esc(q?.resolvedReviews??'Not loaded')+'. Material edits measure human correction effort, not automatically AI error.</p>';
+    }else if(p.id==='tastemake'&&externalQ){
+      const endpoint=externalQ.endpoint||{},base=externalQ.baseline||{},ci=externalQ.ci||{};
+      const groups=(externalQ.check_groups||[]).map(g=>'<div class="run-callout"><strong>'+esc(g.name)+'</strong><p>'+esc(g.detail)+'</p></div>').join('');
+      doc.getElementById('qualityPanel').innerHTML='<h3>Product quality</h3><p class="panel-copy">Recommendation quality is evaluated against grounding, calibration, user authority, cross-domain restraint, and validator defenses.</p>'+
+        '<div class="metrics">'+
+        metric(ci.conclusion==='success'?'Passing':(ci.conclusion||'Unknown'),'Main QA workflow')+
+        metric((endpoint.rule_checks?.passed??'—')+'/'+(endpoint.rule_checks?.total??'—'),'Endpoint rule checks')+
+        metric((endpoint.validator_self_test?.caught??'—')+'/'+(endpoint.validator_self_test?.total??'—'),'Bad outputs caught')+
+        '</div>'+
+        '<div class="run-summary" style="margin-top:12px">'+groups+'</div>'+
+        '<p class="footnote">Baseline comparison: '+esc(base.valid_fixture_outputs?.passed??'—')+'/'+esc(base.valid_fixture_outputs?.total??'—')+' fixtures kept all proposals. '+esc(externalQ.caveat||'')+' Source commit '+esc(shortSha(externalQ.source_commit))+'.</p>';
+    }else if(p.id==='narc'&&externalQ){
+      const suites=(externalQ.suites||[]).map(s=>'<div class="run-callout"><strong>'+esc(s.name)+'</strong><p>'+esc(s.detail)+'</p><p class="footnote">'+esc(s.command)+'</p></div>').join('');
+      doc.getElementById('qualityPanel').innerHTML='<h3>Product quality</h3><p class="panel-copy">NARC quality is mostly deterministic: branch/state consistency, authored consequences, and desktop integration. Human playtesting remains a separate product-quality gate.</p>'+
+        '<div class="metrics">'+
+        metric(externalQ.recorded?.recorded_all_suites_green?'3/3':'Unknown','Suites recorded green')+
+        metric(externalQ.recorded?.full_playtest_pending?'Pending':'Recorded','Full first-run playtest')+
+        metric(externalQ.analytics_blocked_until_playtest?'Blocked':'Open','Gameplay analytics')+
+        '</div><div class="run-summary" style="margin-top:12px">'+suites+'</div>'+
+        '<p class="footnote">'+esc(externalQ.caveat||'')+' Source commit '+esc(shortSha(externalQ.source_commit))+'.</p>';
     }else{
-      doc.getElementById('qualityPanel').innerHTML='<h3>Product quality</h3><p class="panel-copy">The common shell is live; '+esc(p.name)+'-specific quality checks are intentionally not fabricated.</p><div class="empty">Next: connect the checks that actually define quality for this product.</div>';
+      doc.getElementById('qualityPanel').innerHTML='<h3>Product quality</h3><p class="panel-copy">'+esc(p.name)+' quality data could not be loaded.</p><div class="empty">Missing data stays missing rather than being guessed.</div>';
     }
 
     const runButton=doc.getElementById('runChecksButton');
@@ -232,5 +273,5 @@
     await refreshAll();
   }
 
-  return {PROJECTS,pageEnvironment,vercelFromStatus,deliveryHealth,normalizeQuality,qualityAttention,deliveryAttention,infrastructureAttention,overallAttention,percent,shortSha,loadProject,infraCardLabel,analyticsLabel,init};
+  return {PROJECTS,pageEnvironment,vercelFromStatus,deliveryHealth,normalizeQuality,qualityAttention,externalQualityAttention,deliveryAttention,infrastructureAttention,overallAttention,projectQualityLabel,percent,shortSha,loadProject,infraCardLabel,analyticsLabel,init};
 });
