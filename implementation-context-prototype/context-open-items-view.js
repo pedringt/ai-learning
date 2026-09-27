@@ -2,29 +2,6 @@
   const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const cleanReviewCopy=value=>String(value||'').replace(/\*\*/g,'').replace(/\b(?:state|question|evidence|review|proposal)_[a-z0-9]+\b/gi,'').replace(/\b(?:ask-evidence|state|question|evidence|review|proposal|k|q)-[a-z0-9-]+\b/gi,'').replace(/\s+([,.;:])/g,'$1').replace(/\s{2,}/g,' ').trim();
 
-  // Keep the Workspace orientation banner visually distinct from the pale app
-  // canvas without introducing another heavy card treatment. The banner is
-  // added by late product-polish code, so locate it by its stable CTA rather
-  // than coupling this module to that helper's internal class name.
-  function polishExploringBanner(){
-    const trigger=[...document.querySelectorAll('button,a')].find(el=>String(el.textContent||'').includes('Start with Open Items'));
-    if(!trigger)return;
-    let banner=trigger.parentElement;
-    while(banner&&banner!==document.body&&!String(banner.textContent||'').includes('Exploring State?')) banner=banner.parentElement;
-    if(!banner||banner===document.body)return;
-    banner.style?.setProperty?.('background','#fff','important');
-    trigger.style?.setProperty?.('border','0','important');
-    trigger.style?.setProperty?.('background','transparent','important');
-    trigger.style?.setProperty?.('box-shadow','none','important');
-    trigger.style?.setProperty?.('border-radius','0','important');
-    trigger.style?.setProperty?.('padding','4px 0','important');
-    trigger.style?.setProperty?.('min-height','0','important');
-    trigger.style?.setProperty?.('color','#1769e8','important');
-  }
-  document.addEventListener('DOMContentLoaded',polishExploringBanner,{once:true});
-  setTimeout(polishExploringBanner,0);
-  setTimeout(polishExploringBanner,250);
-
   // sourceNote: the note this review's evidence came from (state.data.notes
   // resolved by evidenceId), or undefined. Passed in rather than looked up
   // here so this module never needs the whole notes array just for one field.
