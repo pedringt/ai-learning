@@ -40,7 +40,7 @@ assert.strictEqual(
   'good'
 );
 assert.strictEqual(
-  H.overallAttention({vercel:{kind:'good'}},severe).kind,
+  H.overallAttention({delivery:{vercel:{kind:'good'}},quality:severe,platform:null}).kind,
   'bad'
 );
 
