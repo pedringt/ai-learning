@@ -6,7 +6,8 @@ const RUNS={
     label:'State controlled Review + Ask checks',
     paid_model_calls:true,
     minimum_controlled_cases:16,
-    note:'Runs 8 Review interpretation cases, 8 Ask quality cases, plus the existing live walkthrough job. Exact provider cost varies with model output and is not calculated here.'
+    costEstimateEnv:'PROJECT_HEALTH_RUN_COST_ESTIMATE_STATE',
+    note:'Runs 8 Review interpretation cases, 8 Ask quality cases, plus the existing live walkthrough job. The dashboard will not enable the run control until an explicit cost estimate is configured.'
   }
 };
 
@@ -15,21 +16,29 @@ function readBody(req){
   try{return JSON.parse(req.body||'{}');}catch(_){return {};}
 }
 
+function runInfo(projectId){
+  const run=RUNS[projectId];
+  if(!run) return null;
+  const costEstimate=String(process.env[run.costEstimateEnv]||'').trim();
+  return {
+    configured:!!(process.env.GITHUB_TOKEN&&process.env.PROJECT_HEALTH_RUN_KEY&&costEstimate),
+    project:projectId,
+    label:run.label,
+    ref:run.ref,
+    paid_model_calls:run.paid_model_calls,
+    minimum_controlled_cases:run.minimum_controlled_cases,
+    estimated_cost:costEstimate||null,
+    note:run.note
+  };
+}
+
 module.exports=async function handler(req,res){
   if(req.method==='GET'){
     const projectId=String(req.query?.project||'state').toLowerCase();
-    const run=RUNS[projectId];
-    if(!run){res.status(404).json({configured:false,detail:'No dashboard-run workflow is configured for this project yet.'});return;}
+    const info=runInfo(projectId);
+    if(!info){res.status(404).json({configured:false,detail:'No dashboard-run workflow is configured for this project yet.'});return;}
     res.setHeader('Cache-Control','no-store');
-    res.status(200).json({
-      configured:!!(process.env.GITHUB_TOKEN&&process.env.PROJECT_HEALTH_RUN_KEY),
-      project:projectId,
-      label:run.label,
-      ref:run.ref,
-      paid_model_calls:run.paid_model_calls,
-      minimum_controlled_cases:run.minimum_controlled_cases,
-      note:run.note
-    });
+    res.status(200).json(info);
     return;
   }
 
@@ -42,10 +51,11 @@ module.exports=async function handler(req,res){
   const body=readBody(req);
   const projectId=String(body.project||'').toLowerCase();
   const run=RUNS[projectId];
-  if(!run){res.status(404).json({detail:'No runnable workflow is configured for this project yet.'});return;}
+  const info=runInfo(projectId);
+  if(!run||!info){res.status(404).json({detail:'No runnable workflow is configured for this project yet.'});return;}
 
-  if(!process.env.GITHUB_TOKEN||!process.env.PROJECT_HEALTH_RUN_KEY){
-    res.status(503).json({detail:'Dashboard-run credentials are not configured yet.'});
+  if(!info.configured){
+    res.status(503).json({detail:'Dashboard-run credentials and cost estimate are not configured yet.'});
     return;
   }
 
@@ -55,8 +65,8 @@ module.exports=async function handler(req,res){
     return;
   }
 
-  if(body.confirm_paid_model_calls!==true){
-    res.status(400).json({detail:'Paid model-call confirmation is required before starting this workflow.'});
+  if(body.confirm_paid_model_calls!==true || body.estimated_cost!==info.estimated_cost){
+    res.status(400).json({detail:'Paid model-call confirmation for the displayed cost estimate is required before starting this workflow.'});
     return;
   }
 
@@ -86,8 +96,9 @@ module.exports=async function handler(req,res){
     project:projectId,
     label:run.label,
     ref:run.ref,
+    estimated_cost:info.estimated_cost,
     actions_url:'https://github.com/'+run.repo+'/actions'
   });
 };
 
-module.exports._test={RUNS};
+module.exports._test={RUNS,runInfo};
