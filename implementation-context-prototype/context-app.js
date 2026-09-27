@@ -1,6 +1,3 @@
-Warning: truncated output (original token count: 35614)
-Total output lines: 1804
-
 (() => {
   const D = window.PROJECT_CONTEXT_DATA;
   const API = window.STATE_API;
@@ -553,7 +550,874 @@ Total output lines: 1804
   // authoritative view for these counts. Route there instead: a count plus a
   // link, nothing Ask has to keep consistent on its own.
   function routingCardHtml({category,sentence,detail,count,view,anchor}){
-    return `<div class="result-label">Open Items</div><div class="ask-routing-card"><div class="ask-routing-card-head"><span class="ask-routing-category">${esc(category)}</span><span class="ask-routing-co…15614 tokens truncated…iReviews.length?'pending':'no_review_needed'; n.reviewId=apiReviews[0]?.id||null; n.reviewIds=apiReviews.map(r=>r.id); n.evidenceId=result.evidence_id;
+    return `<div class="result-label">Open Items</div><div class="ask-routing-card"><div class="ask-routing-card-head"><span class="ask-routing-category">${esc(category)}</span><span class="ask-routing-count">${count}</span></div><p class="ask-routing-sentence">${esc(sentence)}</p>${detail?`<p class="ask-routing-detail">${esc(detail)}</p>`:''}<button class="btn primary" data-view="${esc(view)}" data-anchor="${esc(anchor)}">Open Items →</button></div>`;
+  }
+  function intentAskHtml(i){
+    if(i.kind==='blockers'){ const n=openQuestions().filter(q=>q.blocking).length; return routingCardHtml({category:'Blockers',sentence:n===1?'1 question is blocking progress.':`${n} questions are blocking progress.`,detail:'Resolve these to keep the project moving.',count:n,view:'open-items',anchor:'open-items-blockers'}); }
+    if(i.kind==='pending'){ const n=pendingReviews().length; return routingCardHtml({category:'Reviews',sentence:n===1?'1 review is waiting on a decision.':`${n} reviews are waiting on a decision.`,detail:'Waiting on a decision from you.',count:n,view:'open-items',anchor:'open-items-reviews'}); }
+    if(i.kind==='open'){ const n=openQuestions().length; return routingCardHtml({category:'Questions',sentence:n===1?'1 question is open.':`${n} questions are open.`,detail:'Not yet answered in the project record.',count:n,view:'open-items',anchor:'open-items-questions'}); }
+    return null;
+  }
+
+  function pendingFor(topics){
+    return pendingReviews().filter(r => r.topics.some(t=>topics.includes(t)));
+  }
+
+  // Also live (via STATE_ASK_TEST_API -> context-product-polish.js's APP()):
+  // runAsk() calls these two through explicitMutationIntent() to decide
+  // whether typed Ask input should open the read-only "use Add Evidence"
+  // message instead of asking. They look like leftovers from the deleted
+  // legacy submitAsk() pipeline -- they used to live right next to it -- but
+  // they are a real, separate live dependency; do not delete them assuming
+  // they died with it.
+  //
+  // A question mark, or a leading interrogative word, is enough to treat
+  // input as a question. Anything that looks like a question must never be
+  // redirected into the update flow, no matter what other words it contains.
+  function looksLikeQuestion(text){
+    const q=text.trim();
+    if(/\?\s*$/.test(q))return true;
+    return /^(who|what|when|where|why|how|which|did|does|do|is|are|was|were|can|could|should|would|will|has|have|had)\b/i.test(q);
+  }
+  // Only explicit update intent should route input into "Add a project
+  // update" -- Ask is the default for everything else, including plain
+  // statements with no imperative marker. The old heuristic (any past-tense
+  // "approved"/"confirmed"/etc. plus a topic word) fired on ordinary
+  // questions like "Did Security confirm retention terms?" and opened the
+  // update dialog instead of answering.
+  function hasExplicitUpdateIntent(text){
+    return /\b(add (this|that|it)|please add|update (the )?(current )?state|record (this|that)|please record|note that|for the record|log (this|that))\b/i.test(text);
+  }
+
+
+
+  /* ----------------------------------------------------------------------
+     Notes
+
+     Rendering (filtering, the note/draft row markup, and the composer) lives
+     in context-notes-view.js -- these are thin wrappers that gather the
+     relevant slice of `state` and hand it to that module's frozen API, so
+     every existing call site below (renderNotes(), simpleNote(n), etc.) is
+     unchanged.
+     ------------------------------------------------------------------- */
+  function notesUiState(){
+    return {noteComposerOpen:state.noteComposerOpen,notesFilter:state.notesFilter,notesDateFilter:state.notesDateFilter,notesSearch:state.notesSearch,expandedNotes:state.expandedNotes,editingNoteId:state.editingNoteId,evidenceStatus:state.backendStatus.evidence,draftsStatus:state.backendStatus.drafts};
+  }
+  function filteredNotes(){ return NOTES_VIEW.filteredNotes(state.data.notes,notesUiState()); }
+  function notesFilterSummary(notes){ return NOTES_VIEW.notesFilterSummary(notes,state.data.notes.length,notesUiState()); }
+  function simpleNote(n){ return NOTES_VIEW.simpleNote(n,state.expandedNotes,state.editingNoteId); }
+  function draftNoteRow(n){ return NOTES_VIEW.draftNoteRow(n); }
+  function renderNotes(){ root.innerHTML=NOTES_VIEW.render(state.data.notes,notesUiState()); }
+
+  function historySearchText(h){
+    const evidence=(h.evidenceItems||h.evidence_items||[]).map(e=>e.content||'').join(' ');
+    return `${h.type||''} ${h.before??h.old_statement??''} ${h.after??h.new_statement??''} ${h.reason||''} ${h.decision_question||''} ${h.proposal_rationale||''} ${h.why_consequential||''} ${evidence}`;
+  }
+  function historyEntries(){
+    const all=state.data.history.slice().sort(sortDateDesc);
+    const topic=state.historyTopic;
+    const evidenceId=state.historyEvidenceId;
+    let scoped=topic?all.filter(h=>h.knowledgeId===topic):all;
+    if(evidenceId) scoped=scoped.filter(h=>(h.evidenceItems||h.evidence_items||[]).some(e=>e.id===evidenceId));
+    const q=norm(state.historySearch);
+    return q?scoped.filter(h=>norm(historySearchText(h)).includes(q)):scoped;
+  }
+  function historyHighlight(value){
+    const raw=String(value??'');
+    const query=state.historySearch.trim();
+    if(!query)return esc(raw);
+    const escaped=esc(raw);
+    const safeQuery=query.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+    if(!safeQuery)return escaped;
+    return escaped.replace(new RegExp(`(${safeQuery})`,'ig'),'<mark>$1</mark>');
+  }
+  function evidenceDisplayTimestamp(e){ return BACKEND_SYNC.evidenceDisplayTimestamp(e); }
+
+  function historySources(h){
+    const items=h.evidenceItems||h.evidence_items||[];
+    if(!items.length)return '';
+    return `<details class="history-sources"><summary>Source notes · ${items.length}</summary><div class="history-source-list">${items.map(e=>`<article><span>${esc(formatBackendDate(evidenceDisplayTimestamp(e)))} · ${esc(sourceLabel(e.source_type))}</span><p>${historyHighlight(e.content)}</p></article>`).join('')}</div></details>`;
+  }
+  function historyEntry(h, topicMode=false){
+    // QA follow-up (2026-09-14): a whole History-list card used to be
+    // clickable (styled as a button, with a "View this topic ->" footer)
+    // to filter the list down to just that topic. On review, that added no
+    // real information -- the card already shows everything about itself
+    // inline -- so per the user's call it's removed here. The two other,
+    // clearly-labeled entry points into the same topic-scoped History view
+    // (project-view's "History ->" link, and the review-confirmation
+    // dialog's "View History" button) are untouched.
+    const before=h.before??h.old_statement??'Not previously established';
+    const after=h.after??h.new_statement??'';
+    const reason=h.reason||h.decision_question||h.proposal_rationale||'Reviewed project evidence';
+    const decision=h.decision||(h.accepted_as_adjusted?'Human adjusted and accepted this change':'Human accepted this change');
+    // state.md #106/#109: the only distinction from an ordinary transition --
+    // no diff viewer, just the two wordings side by side. new_statement
+    // (rendered as "Now" above and "Human approved" here) stays the only
+    // authoritative current value in both blocks.
+    const adjustedProvenance=h.accepted_as_adjusted&&h.aiProposed
+      ? `<div class="history-change history-adjusted-provenance"><p><span>State proposed</span>${historyHighlight(h.aiProposed)}</p><p><span>Human approved</span>${historyHighlight(after)}</p></div>`
+      : '';
+    return `<article class="history-entry"><div class="history-entry-date">${esc(h.date||formatBackendDate(h.changed_at))}</div><div class="history-entry-body"><span class="history-reason">${historyHighlight(reason)}</span><h3>${historyHighlight(h.type||historyType(h))}</h3><div class="history-change"><p><span>Before</span>${historyHighlight(before)}</p><p><span>Now</span>${historyHighlight(after)}</p></div>${adjustedProvenance}<p class="decision-line">${historyHighlight(decision)}</p>${historySources(h)}</div></article>`;
+  }
+  function updateHistoryResults(){
+    const list=document.getElementById('historyList');
+    const entries=historyEntries();
+    const topicKnowledge=state.historyTopic?state.data.knowledge.find(k=>k.id===state.historyTopic):null;
+    if(list) list.innerHTML=entries.length?entries.map(h=>historyEntry(h,!!topicKnowledge)).join(''):(state.historySearch?'<div class="empty-state"><h3>No matching changes.</h3><p>Try a broader History search.</p></div>':'<div class="empty-state"><h3>No Current State changes yet.</h3><p>When reviewed Notes change the Project, that transition will appear here.</p></div>');
+    const count=document.getElementById('historyResultCount');
+    const total=(state.historyEvidenceId?state.data.history.filter(h=>(h.evidenceItems||h.evidence_items||[]).some(e=>e.id===state.historyEvidenceId)):state.historyTopic?state.data.history.filter(h=>h.knowledgeId===state.historyTopic):state.data.history).length;
+    if(count) count.textContent=`${entries.length} of ${total} changes`;
+    const clear=document.getElementById('clearHistorySearch'); if(clear) clear.hidden=!state.historySearch.trim();
+  }
+
+  function renderHistory(){
+    if(state.backendStatus.history==='error'){
+      root.innerHTML=`<section class="page collection-page history-page"><div class="empty-state unavailable-state"><h2>History is temporarily unavailable.</h2><p>Accepted project changes cannot be loaded right now.</p><button class="btn secondary" data-action="retry-hydration">Try again</button></div></section>`;
+      return;
+    }
+    if(state.backendStatus.history!=='loaded'){
+      root.innerHTML=`<section class="page collection-page history-page"><div class="page-head"><div><h2>History</h2><p role="status">Loading History…</p></div></div></section>`;
+      return;
+    }
+    const entries=historyEntries();
+    const topic=state.historyTopic;
+    const topicKnowledge=topic?state.data.knowledge.find(k=>k.id===topic):null;
+    const evidenceNote=state.historyEvidenceId?state.data.notes.find(n=>n.evidenceId===state.historyEvidenceId):null;
+    const total=(state.historyEvidenceId?state.data.history.filter(h=>(h.evidenceItems||h.evidence_items||[]).some(e=>e.id===state.historyEvidenceId)):topic?state.data.history.filter(h=>h.knowledgeId===topic):state.data.history).length;
+    root.innerHTML=`<section class="page collection-page history-page"><div class="page-head"><div><span class="eyebrow">From notes to Current State</span><h2>History</h2><p>${topicKnowledge?`How project evidence changed the maintained understanding of ${esc(topicKnowledge.title)}.`:'The meaningful changes extracted from Notes and accepted into Current State. This is the bridge between what came in and what the Project says now.'}</p></div></div>${evidenceNote?`<div class="history-context"><strong>From note: ${esc(evidenceNote.title)}</strong><span>${total} accepted change${total===1?'':'s'}</span><button class="text-button" data-action="clear-history-evidence">View all history →</button></div>`:topicKnowledge?`<div class="history-context"><strong>${esc(topicKnowledge.title)}</strong><span>${total} recorded change${total===1?'':'s'}</span><button class="text-button" data-action="clear-history-topic">View all history →</button></div>`:''}<div class="history-toolbar"><input class="history-search" id="historySearch" type="search" placeholder="Search history" aria-label="Search accepted project changes" value="${esc(state.historySearch)}"><span class="history-result-count" id="historyResultCount" aria-live="polite">${entries.length} of ${total} changes</span><button class="text-button" id="clearHistorySearch" data-action="clear-history-search"${state.historySearch?'':' hidden'}>Clear search</button></div><div class="history-list" id="historyList">${entries.length?entries.map(h=>historyEntry(h,!!topicKnowledge)).join(''):(state.historySearch?'<div class="empty-state"><h3>No matching changes.</h3><p>Try a broader History search.</p></div>':'<div class="empty-state"><h3>No Current State changes yet.</h3><p>When reviewed Notes change the Project, that transition will appear here.</p></div>')}</div></section>`;
+  }
+
+  /* ----------------------------------------------------------------------
+     Open Items and Reviews
+
+     Rendering (review/question cards, section collapsing, the page itself)
+     lives in context-open-items-view.js -- see the comment above the Notes
+     wrappers for why. decideReview() below is where a human decision
+     becomes a State change; it stays here since it mutates `state` and
+     talks to the backend, which the view module deliberately never does.
+     ------------------------------------------------------------------- */
+  function openItemsProps(){
+    return {
+      reviewsStatus:state.backendStatus.reviews,questionsStatus:state.backendStatus.questions,draftsStatus:state.backendStatus.drafts,
+      reviews:uiPendingReviews(),questions:openQuestions(),
+      draftNotes:state.data.notes.filter(n=>n.status==='working'||n.status==='draft'||!!n.backendDraft),
+      notes:state.data.notes,
+      openQuestionsExpanded:state.openQuestionsExpanded,expandedReviewId:state.expandedReviewId,openItemSections:state.openItemSections,
+      renderDraftNote:n=>NOTES_VIEW.draftNoteRow(n)
+    };
+  }
+  // An Ask routing card ("What needs review?") can ask to land directly on
+  // one Open Items section instead of the top of the page, via
+  // window.__stateScrollAnchor (same mechanism the Settings Slack banner
+  // uses) -- cleared once consumed so it only fires for the navigation that
+  // requested it.
+  function renderOpenItems(){
+    const anchor=window.__stateScrollAnchor;
+    const section=anchor&&anchor.startsWith('open-items-')?anchor.slice('open-items-'.length):null;
+    // Force-expand unconditionally, not just when already truthy -- the
+    // stored value starts out `null` (meaning "use the default collapse
+    // rule"), and Open Questions defaults to collapsed once there are more
+    // than 5, so a `null` check alone left the target section collapsed.
+    if(section) state.openItemSections[section]=false;
+    root.innerHTML=OPEN_ITEMS_VIEW.render(openItemsProps());
+    if(section){
+      delete window.__stateScrollAnchor;
+      setTimeout(()=>document.querySelector(`.open-items-${section}`)?.scrollIntoView({block:'start'}),60);
+    }
+  }
+  function renderReview(){ return renderOpenItems(); }
+  function reviewCard(r,expanded=true,accordion=false){ return OPEN_ITEMS_VIEW.reviewCard(r,expanded,accordion,state.data.notes.find(n=>n.id===r.evidenceId)); }
+  function linkedReviewFor(questionId){
+    return state.data.reviews.find(r=>r.status==='pending' && (r.resolvesQuestionIds?.includes(questionId) || r.resolvesQuestionId===questionId));
+  }
+  function questionDialogHtml(q){ return OPEN_ITEMS_VIEW.questionDialogHtml(q,linkedReviewFor(q.id)); }
+
+  function truncateText(value,max=190){
+    const text=String(value||'').replace(/\s+/g,' ').trim();
+    return text.length>max?`${text.slice(0,max-1).replace(/\s+\S*$/,'')}…`:text;
+  }
+  // QA follow-up (2026-09-14): resolving an open_question Review used to
+  // confirm which Question the evidence landed on ("Linked to the existing
+  // Question", "Question created") in a toast with no way to actually see
+  // that Question -- a dead end for the one message whose entire point is
+  // telling you where something went. `action` opens it directly; the
+  // toast stays up longer while an action is offered so there's time to
+  // click it.
+  function showToast(message,action=null){
+    document.querySelector('.state-toast')?.remove();
+    const toast=document.createElement('div');
+    toast.className='state-toast';toast.setAttribute('role','status');
+    const text=document.createElement('span');text.textContent=message;toast.appendChild(text);
+    if(action){
+      const btn=document.createElement('button');btn.type='button';btn.className='state-toast-action';btn.textContent=action.label;
+      btn.addEventListener('click',()=>{toast.remove();action.onClick();});
+      toast.appendChild(btn);
+    }
+    document.body.appendChild(toast);
+    // QA follow-up (2026-09-14): a toast with a "View" action still vanished
+    // fast enough that a real person reading it could miss the link before
+    // clicking it. Longer base duration, and pausing the countdown on
+    // hover/focus -- so reading it (or moving toward the button) doesn't
+    // race the timer -- rather than picking an even longer fixed delay that
+    // just as easily proves too short for someone slower to react.
+    let remaining=action?9000:2600, timer=null, startedAt=0;
+    const arm=()=>{startedAt=Date.now();timer=setTimeout(()=>toast.remove(),remaining);};
+    const pause=()=>{if(!timer)return;clearTimeout(timer);timer=null;remaining-=Date.now()-startedAt;};
+    if(action){toast.addEventListener('mouseenter',pause);toast.addEventListener('mouseleave',arm);toast.addEventListener('focusin',pause);toast.addEventListener('focusout',arm);}
+    arm();
+  }
+
+  // state.md #107: decision tokens beyond the schema-level accept/keep/reject
+  // -- 'acknowledge-risk'/'dismiss-risk' (checkOnly/state_at_risk reviews) and
+  // 'keep-current' (ordinary Leave unchanged) all map to a real backend
+  // decision (see REVIEW_API_DECISION below); 'adjust' is handled separately
+  // by openAdjustDialog/confirmReviewAdjust since it opens a dialog first
+  // rather than resolving immediately.
+  const REVIEW_API_DECISION={update:'accept','keep-current':'keep','acknowledge-risk':'keep','dismiss-risk':'reject'};
+  // #111: "Keep tracking" must persist the uncertainty as a real Question, not
+  // just resolve the Review, so the toast reflects the server's actual outcome
+  // (question_created/question_linked) rather than assuming a fixed message.
+  function reviewDecisionToast(decision,result){
+    if(decision==='acknowledge-risk'){
+      if(result?.resolution==='question_created')return 'Added as an open question to keep tracking. Current State was not changed.';
+      if(result?.resolution==='question_linked')return 'Linked to an existing open question. Current State was not changed.';
+      return 'Reviewed. Still flagged as uncertain — Current State was not changed.';
+    }
+    if(decision==='dismiss-risk')return 'Dismissed. No longer tracked as an open question. Current State was not changed.';
+    return 'Current State left unchanged. Evidence is preserved.';
+  }
+
+  // A consequential update (real proposals, not a checkOnly/uncertainty-only
+  // review) confirms before mutating anything -- Current State is what the
+  // project treats as true, so changing it deserves an explicit step. Every
+  // other decision (Leave unchanged, and the checkOnly acknowledge/dismiss
+  // pair) never changes Current State, so it skips the confirmation and uses
+  // lighter feedback (a toast, no interstitial loading modal) instead.
+  function decideReview(id,decision){
+    const r=state.data.reviews.find(x=>x.id===id);
+    if(!r||r.status!=='pending')return;
+    if(r.reviewType==='open_question'){executeQuestionReviewDecision(id,decision);return;}
+    const checkOnly=!Array.isArray(r.proposals)||r.proposals.length===0;
+    window.StateAnalytics?.track(decision==='update'?'review_accepted':decision==='dismiss-risk'?'review_rejected':'review_kept',{reviewId:id});
+    if(decision==='update' && !checkOnly){
+      const proposalText=(r.proposals||[]).map(p=>p.proposed_statement).filter(Boolean).join(' • ') || r.proposed || '';
+      showDialog(`<span class="eyebrow">Review decision</span><h2 id="dialogTitle">Update Current State?</h2><p>This changes what the project currently treats as true and records the decision in History.</p>${proposalText?`<div class="review-confirm-change"><span>Change</span><strong>${esc(truncateText(proposalText,210))}</strong></div>`:''}<div class="dialog-actions"><button class="btn secondary" data-action="close-dialog">Cancel</button><button class="btn primary" data-action="confirm-review-update" data-review="${esc(id)}">Update</button></div>`);
+      return;
+    }
+    executeReviewDecision(id,decision,checkOnly);
+  }
+
+  function openAdjustDialog(id){
+    const r=state.data.reviews.find(x=>x.id===id);
+    if(r&&r.status==='pending') showDialog(OPEN_ITEMS_VIEW.adjustDialogHtml(r));
+  }
+
+  // #107: Leave unchanged normally just resolves the Review. The one
+  // exception is a Review that, if accepted, would have resolved a specific
+  // open Question -- leaving it unchanged means that Question's answer
+  // didn't pan out, so it's worth a lightweight, optional check on whether
+  // it's still worth tracking. Scoped to exactly one linked Question; a
+  // Review spanning several linked Questions skips this rather than
+  // building a multi-question chooser (state.md #107: no giant correction
+  // form). Reuses the existing "Stop tracking" Question action verbatim.
+  function maybeOfferToStopTrackingResolvedQuestion(r){
+    const questionIds=r.resolvesQuestionIds||[];
+    if(questionIds.length!==1)return;
+    const q=state.data.questions.find(x=>x.id===questionIds[0]);
+    if(!q||q.status!=='open')return;
+    showDialog(`<span class="eyebrow">Still unresolved</span><h2 id="dialogTitle">Keep tracking this question?</h2><p>This evidence didn't establish an answer after all.</p><p><strong>${esc(q.text)}</strong></p><div class="dialog-actions"><button class="btn secondary" data-action="close-dialog">Yes, keep tracking</button><button class="btn primary" data-action="stop-question" data-question-id="${esc(q.id)}">No, close it</button></div>`);
+  }
+
+  const pendingQuestionDecisions=new Set();
+  async function executeQuestionReviewDecision(id,decision){
+    const r=state.data.reviews.find(x=>x.id===id);
+    if(!r||r.status!=='pending'||pendingQuestionDecisions.has(id))return;
+    const proposal=r.questionToCreate;
+    if(!r.backendReviewId||!proposal?.id||proposal.status!=='pending'){
+      showToast('Question suggestion unavailable. Refresh and review it again.');return;
+    }
+    pendingQuestionDecisions.add(id);
+    const buttons=[...document.querySelectorAll('[data-review]')].filter(b=>b.dataset.review===id);
+    buttons.forEach(b=>{b.disabled=true;});
+    let result;
+    try{
+      result=await API.resolveReview(r.backendReviewId,decision==='update'?'accept':'keep',{
+        questionProposalId:proposal.id,existingQuestionId:proposal.existing_question_id||null
+      });
+    }catch(error){
+      // A timeout can happen after the server commits. Never claim that nothing
+      // changed or optimistically retry a write whose outcome is unknown.
+      showToast(error?.status===409?'This Review changed. Refresh and review it again.':'Could not confirm the result. Refresh before trying again.');
+      if(error?.status===409)await hydrateBackend();
+      return;
+    }finally{
+      pendingQuestionDecisions.delete(id);
+      buttons.forEach(b=>{b.disabled=false;});
+    }
+    // Publish only server-confirmed effects. The existing Question collection
+    // feeds Open Items, Workspace counts and Ask; never invent a local Question.
+    r.status=decision;
+    if(Array.isArray(result.questions))syncApiQuestions(result.questions);
+    if(Array.isArray(result.open_reviews))replaceBackendOpenReviews(result.open_reviews);
+    const note=state.data.notes.find(n=>n.id===r.evidenceId);
+    if(note){
+      note.reviewIds=(note.reviewIds||[]).filter(reviewId=>reviewId!==id);
+      note.reviewId=note.reviewIds[0]||null;
+      note.status=note.reviewIds.length?'pending':'reviewed';
+    }
+    state.expandedReviewId=null;
+    if(result.question){state.openItemSections.questions=false;state.openQuestionsExpanded=true;}
+    closeDialog();render();
+    const toastMessage=result.resolution==='question_created'?'Question created. Current State was not changed.':result.resolution==='question_linked'?'Linked to the existing Question. Current State was not changed.':'Review complete. No Question was created.';
+    const landedQuestion=result.question&&state.data.questions.find(x=>x.id===result.question.id);
+    showToast(toastMessage,landedQuestion?{label:'View',onClick:()=>showDialog(questionDialogHtml(landedQuestion))}:null);
+    window.StateAnalytics?.track('review_decision',{reviewId:id,outcome:result.resolution,kind:'open_question'});
+    // Ask stays read-only; an already visible answer is a snapshot, so flag it
+    // for refresh immediately rather than leaving a closed Review as current.
+    document.dispatchEvent(new Event('state-project-record-changed'));
+    try{await hydrateBackend();}catch(error){console.warn('Review saved; refresh needed.',error);}
+  }
+
+  async function executeReviewDecision(id,decision,checkOnly,adjustments){
+    const r=state.data.reviews.find(x=>x.id===id);
+    if(!r||r.status!=='pending')return;
+    state.expandedReviewId=null;
+    const lightweight=decision!=='update'||checkOnly;
+
+    if(r.backendReviewId){
+      const previousStatus=r.status;
+      r.status=decision;
+      render();
+      if(!lightweight) showDialog(`<span class="eyebrow">Updating</span><h2 id="dialogTitle">Updating Current State…</h2><p>Saving the reviewed decision to the project record.</p>`);
+      try{
+        const apiDecision=REVIEW_API_DECISION[decision]||'keep';
+        const result=await API.resolveReview(r.backendReviewId,apiDecision,adjustments?.length?{adjustments}:{});
+        // result.questions is the authoritative post-resolution open-Questions
+        // list (see api.py). A #106 materially-adjusted accept can correctly
+        // leave a linked Question open, so this full replacement is the only
+        // source of truth for Question status here -- no local re-marking on
+        // top of it, which would silently overwrite a Question the backend
+        // deliberately left open.
+        if(Array.isArray(result.questions))syncApiQuestions(result.questions);
+        const note=state.data.notes.find(n=>n.id===r.evidenceId);
+        if(note)note.status=decision==='update'?'accepted':'reviewed';
+        if(decision==='update'){
+          for(const p of (r.proposals||[])) if(p.operation==='retire'&&p.state_item_id){ const k=state.data.knowledge.find(x=>x.id===p.state_item_id); if(k)k.state='retired'; }
+          syncApiState(result.state||[]);
+        }
+        const receiptItems=[];
+        if(decision==='update'){
+          for(const proposal of (r.proposals||[])){
+            if(proposal.operation==='retire') continue;
+            const adjusted=adjustments?.find(a=>a.proposal_id===proposal.id)?.adjusted_statement;
+            const text=adjusted||proposal.proposed_statement||'';
+            const matched=(result.state||[]).find(item=>norm(item.statement)===norm(text)) || (proposal.state_item_id?(result.state||[]).find(item=>item.id===proposal.state_item_id):null);
+            if(matched) receiptItems.push({id:matched.id,statement:matched.statement,area:matched.area_id||'general'});
+            else if(text) receiptItems.push({id:proposal.state_item_id||'',statement:text,area:'general'});
+          }
+        }
+        if(decision==='acknowledge-risk'&&result.question){state.openItemSections.questions=false;state.openQuestionsExpanded=true;}
+        updateNav(); render();
+        if(lightweight) closeDialog(); // no interstitial was shown for these outcomes
+        if(lightweight) showToast(decision==='update'?'Added as Evidence. Current State did not need a Review.':reviewDecisionToast(decision,result));
+        else showDecisionComplete({items:receiptItems});
+        // Resolution response is authoritative; revalidate deterministically after it has rendered.
+        await hydrateBackend();
+        if(decision==='keep-current') maybeOfferToStopTrackingResolvedQuestion(r);
+      }catch(e){
+        r.status=previousStatus;
+        render();
+        showDialog(`<span class="eyebrow">Couldn’t complete review</span><h2 id="dialogTitle">Nothing was changed.</h2><p>${esc(e.message)}</p><div class="dialog-actions"><button class="btn primary" data-action="close-dialog">Close</button></div>`);
+      }
+      return;
+    }
+
+    r.status=decision;
+    const note=state.data.notes.find(n=>n.id===r.evidenceId); if(note)note.status=decision==='update'?'accepted':'reviewed';
+    const receiptItems=[];
+    if(decision==='update'){
+      if(r.id==='r-access'){ const k=state.data.knowledge.find(k=>k.id==='k-access'); if(k){k.statement=k.afterReview;receiptItems.push({id:k.id,statement:k.statement,area:k.projectArea||'product'});} }
+      if(r.questionToCreate && !state.data.questions.some(q=>q.id===r.questionToCreate.id)) state.data.questions.push(clone(r.questionToCreate));
+      if(r.resolvesQuestionId){ const q=state.data.questions.find(q=>q.id===r.resolvesQuestionId); if(q){ q.status='resolved'; q.resolution='Resolved by reviewed Security follow-up'; } }
+      state.data.history.unshift({id:'h-'+Date.now(),date:todayLabel(),dateISO:todayISO(),knowledgeId:r.id==='r-access'?'k-access':(r.id==='r-security'?'k-security':null),type:r.resolvesQuestionId?'Current understanding updated · open question resolved':(r.id.startsWith('r-info-')?'Evidence accepted without state change':'Current understanding updated'),before:r.current,after:r.id.startsWith('r-info-')?r.current:r.proposed,reason:r.id==='r-security'?'Security follow-up':r.id.startsWith('r-info-')?'Added project information':'Senior Support Rep interview',decision:'Human chose Update understanding'});
+    } else state.data.history.unshift({id:'h-'+Date.now(),date:todayLabel(),dateISO:todayISO(),type:'Current understanding kept',before:r.current,after:r.current,reason:'Senior Support Rep interview preserved as evidence',decision:'Human chose Leave understanding unchanged'});
+    render();
+    if(lightweight) showToast(decision==='update'?'Added as Evidence. Current State did not need a Review.':reviewDecisionToast(decision));
+    else showDecisionComplete({items:receiptItems});
+  }
+
+  async function confirmReviewAdjust(id){
+    const r=state.data.reviews.find(x=>x.id===id);
+    if(!r||r.status!=='pending')return;
+    const textareas=[...document.querySelectorAll('.adjust-proposal-text')];
+    const adjustments=textareas
+      .map(t=>({proposal_id:t.dataset.proposalId,adjusted_statement:t.value.trim()}))
+      .filter(a=>a.adjusted_statement);
+    if(!adjustments.length){showToast('Add a revision before updating.');return;}
+    closeDialog();
+    await executeReviewDecision(id,'update',false,adjustments);
+  }
+
+  function showDecisionComplete({items=[]}={}){
+    const primary=items[0];
+    const line=primary?truncateText(primary.statement,180):'The reviewed change is now part of Current State.';
+    showDialog(`<span class="eyebrow">Review complete</span><h2 id="dialogTitle">Current State updated</h2><p>${esc(line)}</p><div class="dialog-actions"><button class="btn primary" data-action="review-receipt-project" data-project-area="${esc(primary?.area||'general')}" data-state-id="${esc(primary?.id||'')}">View Current State</button>${primary?.id?`<button class="btn secondary" data-action="view-topic-history" data-knowledge-id="${esc(primary.id)}">View History</button>`:'<button class="btn secondary" data-view="history">View History</button>'}</div>`);
+  }
+
+
+  function showDemoHelp(){
+    window.StateAnalytics?.track('orientation_opened');
+    const steps=[
+      ['1. Add','Add Evidence. Capture a finding, decision, or meeting update. Approved Slack conversations can also become Evidence automatically.'],
+      ['2. State interprets','AI compares new Evidence with Current State and identifies possible changes or unresolved Questions.'],
+      ['3. Review & decide','Review proposed changes. Accept, reject/leave unchanged, or keep uncertainty open before Current State changes.'],
+      ['4. Know','Accepted changes update Current State. Previous decisions remain in History.'],
+      ['5. Ask','Use Ask State to understand the project without changing it.']
+    ];
+    const projectName=state.data.project?.name||'this project';
+    // Blank-project bug report (2026-09-15): don't offer "Reset example
+    // data" here for a user-created project -- it has no baseline (the
+    // backend would 403 it). Its lifecycle action (Delete) lives in
+    // Settings only, not mixed into this orientation modal.
+    const resetHelp=state.data.project?.seeded!==false
+      ?`<div class="demo-reset-help"><div><strong>Want to start over?</strong><span>Restore the curated ${esc(projectName)} starting scenario. You can also reset ${esc(projectName)} from Settings.</span></div><button class="text-button demo-reset-link" data-action="confirm-demo-reset">Reset example data →</button></div>`:'';
+    showDialog(`<span class="eyebrow">How this works</span><h2 id="dialogTitle">State keeps accepted understanding separate from new information.</h2><div class="state-help-steps">${steps.map(([title,body])=>`<div class="state-help-step"><strong>${esc(title)}</strong><span>${esc(body)}</span></div>`).join('')}</div><p class="demo-flow-principle">AI interprets → software enforces → people decide</p><div class="demo-start"><span class="meta-label">Good places to start</span><button class="demo-start-action" data-action="demo-start-ask"><strong>Ask about ${esc(projectName)}</strong><span>Put a useful project question in Ask →</span></button><button class="demo-start-action" data-action="demo-start-note"><strong>Add a sample note</strong><span>Try new project information and see how Review handles it →</span></button><button class="demo-start-action" data-action="demo-start-project"><strong>Explore Current State</strong><span>Read the maintained view of what the project currently treats as true →</span></button><button class="demo-start-action" data-action="show-reviewer-guide"><strong>Take the quick tour</strong><span>Bring back the Workspace walkthrough banner →</span></button></div>${resetHelp}<div class="dialog-actions demo-help-actions"><button class="btn primary" data-action="close-dialog">Got it</button></div>`);
+  }
+
+  function showDialog(html){
+    if(overlay.hidden) state.dialogReturnFocus=document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    // Showing any new dialog invalidates a previous auto-close timer (if any)
+    // so it can never fire against a different, later dialog. Callers that
+    // want this one to auto-close call autoCloseDialog() right after.
+    state.autoCloseToken=null;
+    dialogBody.innerHTML=html; overlay.hidden=false; overlay.scrollTop=0; document.body.classList.add('modal-open');
+    const dialog=document.querySelector('.dialog');
+    if(dialog) dialog.scrollTop=0;
+    const closeButton=dialog?.querySelector('.dialog-close');
+    if(closeButton){ closeButton.disabled=!!state.isAnalyzing; closeButton.hidden=!!state.isAnalyzing; }
+    requestAnimationFrame(()=>{
+      overlay.scrollTop=0; if(dialog) dialog.scrollTop=0;
+      const first=dialog?.querySelector('[autofocus], input:not([type="hidden"]), textarea, select');
+      (first||dialog)?.focus({preventScroll:true});
+      overlay.scrollTop=0; if(dialog) dialog.scrollTop=0;
+    });
+  }
+  function closeDialog(){
+    overlay.hidden=true; dialogBody.innerHTML=''; document.body.classList.remove('modal-open');
+    state.autoCloseToken=null;
+    const target=state.dialogReturnFocus; state.dialogReturnFocus=null;
+    if(target && document.contains(target)) requestAnimationFrame(()=>target.focus());
+  }
+  // Info-only confirmations (no action buttons) otherwise sit on top of the
+  // page indefinitely: their full-screen backdrop silently absorbs the
+  // user's next click as a dismiss instead of letting it reach whatever was
+  // actually clicked underneath (e.g. a sidebar nav tab), so it looks like
+  // that first click did nothing. Auto-close after a readable delay instead
+  // of requiring an explicit dismissal for dialogs with nothing to act on.
+  function autoCloseDialog(delay=2200){
+    const token=Symbol();
+    state.autoCloseToken=token;
+    setTimeout(()=>{ if(state.autoCloseToken===token && !overlay.hidden) closeDialog(); },delay);
+  }
+  function showProjectSettings(){
+    const rulesStatus=state.backendStatus.rules;
+    const rows=rulesStatus==='error'?'<div class="open-items-empty unavailable-inline">Project Rules could not be loaded. Try again before making changes.</div>':state.projectRules.length?state.projectRules.map(rule=>`<div class="project-rule-row"><div><span class="open-item-label question">${esc(rule.category)}</span><p>${esc(rule.text)}</p></div><button class="text-button" data-action="delete-project-rule" data-rule-id="${rule.id}">Remove</button></div>`).join(''):'<div class="open-items-empty">No project-specific rules yet.</div>';
+    const form=rulesStatus==='error'?'':`<div class="project-rule-form"><label for="projectRuleCategory">Category</label><select id="projectRuleCategory"><option>Authority</option><option>Review</option><option>Sources</option><option selected>Interpretation</option></select><label for="projectRuleText">New rule</label><textarea id="projectRuleText" rows="3" placeholder="Example: Slack is supporting evidence, not authoritative approval."></textarea><button class="btn primary" data-action="save-project-rule">Add rule</button></div>`;
+    const projectName=state.data.project?.name||'this project';
+    // Blank-project bug report (2026-09-15), item 3: a seeded demo project
+    // (Northstar/Juniper) can be Reset to its curated baseline but never
+    // Deleted (there'd be nothing to restore it from); a user-created
+    // project can be Deleted but never Reset (it has no baseline). Default
+    // to treating an unknown/missing `seeded` flag as seeded -- the backend
+    // still enforces this either way, but the UI should never offer a
+    // Delete button that surprises someone on Northstar/Juniper.
+    const isSeeded=state.data.project?.seeded!==false;
+    const lifecycleZone=isSeeded
+      ?`<div class="demo-reset-zone"><span class="eyebrow">Example data</span><p>Restore ${esc(projectName)} to the curated starting scenario with open Reviews, blockers, Questions, Notes, Rules, and History.</p><button class="btn secondary danger-light" data-action="confirm-demo-reset">Reset example data</button></div>`
+      :`<div class="demo-reset-zone"><span class="eyebrow">Delete project</span><p>Permanently remove ${esc(projectName)} and everything in it: Notes, Evidence, Reviews, Questions, Current State, and History. This cannot be undone.</p><button class="btn secondary danger-light" data-action="confirm-delete-project">Delete project</button></div>`;
+    showDialog(`<span class="eyebrow">Project settings</span><h2 id="dialogTitle">Rules</h2><p>Rules tell State how to interpret evidence and when to interrupt you. They are not Current State and State cannot change them on its own.</p><p class="settings-note">Rules apply to future analysis. Existing Reviews are not reinterpreted automatically.</p><div class="project-rule-list">${rows}</div>${form}${lifecycleZone}`);
+  }
+
+  // state.md #108: entering Add Evidence from Current State's "Something
+  // changed?" CTA uses the exact same dialog/flow/endpoint as every other
+  // entry point -- only the guiding description line changes, and only as
+  // UI copy. No prefill, no special correction object, no direct edit.
+  // addDialogHtml is a pure function (same pattern as context-open-items-
+  // view.js's questionDialogHtml) so it's directly testable without a DOM.
+  function addDialogHtml(prefill='',{description}={}){
+    const desc=description||'Add project information State should evaluate. It is preserved as Evidence first and cannot change Current State without Review.';
+    return `<span class="eyebrow">Evidence</span><h2 id="dialogTitle">Add Evidence</h2><p class="evidence-project-context">Adding to <strong>${esc(state.data.project?.name||'this project')}</strong></p><p>${esc(desc)}</p><textarea id="addInfoText" rows="7" aria-label="Evidence" placeholder="Paste a finding, decision, meeting update, or other project information...">${esc(prefill)}</textarea><div class="upload-evidence-row"><span>or</span><label class="text-button upload-evidence-label" for="uploadInfoFile">Upload a file (.txt, .md, .pdf, .docx)</label><input id="uploadInfoFile" type="file" accept=".txt,.md,.pdf,.docx,text/plain,text/markdown,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document" hidden /></div><div class="note-example-picker"><span class="meta-label">Try an example</span><div class="note-example-chips"><button type="button" data-action="sample-info" data-sample="plan">New plan</button><button type="button" data-action="sample-info" data-sample="research">Research finding</button><button type="button" data-action="sample-info" data-sample="constraint">Decision / constraint</button></div></div><div class="dialog-actions"><button class="btn primary" data-action="save-info">Add Evidence</button><button class="btn secondary" data-action="close-dialog">Cancel</button></div>`;
+  }
+  function showAddDialog(prefill='',options={}){ showDialog(addDialogHtml(prefill,options)); }
+
+  // toFront defaults to true for the live "I just submitted evidence and it
+  // produced a Review" call sites, where showing the newest review first is
+  // the right UX. Bulk hydration passes toFront:false -- appending in the
+  // order the loop encounters them (the backend's own consequentiality
+  // order, see list_reviews) -- because calling this per-review with the
+  // default unshift inside a hydration loop silently reverses that order:
+  // Workspace's attention list then disagreed with Ask about what mattered
+  // most, since Ask fetches reviews fresh and never goes through this
+  // reversal. Found via live QA 2026-09-07.
+  function upsertBackendReview(review,{toFront=true}={}){ return BACKEND_SYNC.upsertBackendReview(state.data.reviews,review,{toFront}); }
+
+  function replaceBackendOpenReviews(rawReviews){ state.data.reviews=BACKEND_SYNC.replaceBackendOpenReviews(state.data.reviews,rawReviews); }
+
+  function mapApiReview(r, fallbackEvidence=''){ return BACKEND_SYNC.mapApiReview(r,fallbackEvidence); }
+
+  // Ask queries the backend fresh on every question, but Open Items only
+  // hydrates its local review list once (hydrateBackend()) -- so Ask can
+  // surface a "Review ->" link for a Review Open Items hasn't loaded yet.
+  // Found via live QA 2026-09-12: clicking that link did a local-only lookup
+  // and silently no-op'd on a miss. Refresh the open-reviews list from the
+  // backend (same prune-then-upsert shape hydrateBackend() itself uses) so a
+  // miss gets one real chance to resolve before giving up.
+  async function refreshOpenReviews(){
+    if(!API)return;
+    try{
+      const rawReviews=(await API.getReviews('open')).items||[];
+      replaceBackendOpenReviews(rawReviews);
+      for(const raw of (rawReviews||[])){
+        const note=state.data.notes.find(n=>n.evidenceId===raw.evidence_id);
+        const mapped=mapApiReview(raw,raw.evidence_content||'');
+        mapped.evidenceId=note?.id||`api-note-${raw.evidence_id}`;
+        upsertBackendReview(mapped,{toFront:false});
+      }
+    }catch(error){
+      console.warn('Could not refresh open reviews.',error);
+    }
+  }
+
+  /* ----------------------------------------------------------------------
+     Backend mapping and sync
+
+     Translates API payloads into the client's shape and reconciles them with
+     local state. Nothing here decides anything; it only mirrors the server.
+     Moved into context-backend-sync.js (window.STATE_BACKEND_SYNC) 2026-09-12
+     -- these are thin wrappers so every existing call site keeps working.
+     ------------------------------------------------------------------- */
+  function titleForStateItem(item){ return BACKEND_SYNC.titleForStateItem(item); }
+
+  function formatBackendDate(value){ return BACKEND_SYNC.formatBackendDate(value); }
+  function sourceLabel(source){ return BACKEND_SYNC.sourceLabel(source); }
+  function historyType(item,topicName){ return BACKEND_SYNC.historyType(item,topicName); }
+  function syncApiHistory(items){ state.data.history=BACKEND_SYNC.syncApiHistory(state.data.knowledge,state.data.notes,items); }
+  function syncApiEvidence(items,openReviews,resolvedReviews){ state.data.notes=BACKEND_SYNC.syncApiEvidence(items,openReviews,resolvedReviews,state.data.notes); }
+
+  function syncApiState(items){ BACKEND_SYNC.syncApiState(state.data.knowledge,items); }
+
+  function questionTextKey(value){ return BACKEND_SYNC.questionTextKey(value); }
+
+  function remapQuestionReferences(oldId,newId){ BACKEND_SYNC.remapQuestionReferences(state.data.reviews,oldId,newId); }
+
+  function syncApiQuestions(items){ state.data.questions=BACKEND_SYNC.syncApiQuestions(state.data.questions,items,state.data.reviews); }
+
+
+  async function createBackendQuestion(text){ return API.createQuestion(text,{origin:'Added from Workspace',blocking:false}); }
+
+  async function submitEvidence(text, sourceType='manual_note'){
+    return API.submitEvidence(text,sourceType);
+  }
+
+  async function retryEvidenceAnalysis(evidenceId){ return API.retryEvidenceAnalysis(evidenceId); }
+
+  // state.md #114: fetched once and cached -- the set of selectable projects
+  // essentially never changes within a session, so this never needs to be
+  // part of every hydrateBackend() round trip.
+  async function ensureProjectsList(){
+    if(state.data.projects)return;
+    try{
+      const payload=await API.getProjects();
+      state.data.projects=payload.items||[];
+      updateNav();
+    }catch(err){
+      console.warn('Project list unavailable; the switcher will stay empty until a retry.',err);
+    }
+  }
+
+  // Shared by switch-project and save-new-project: point the app at
+  // projectId and fully re-hydrate. Callers own their own loading/error
+  // dialogs since the copy differs ("switching" vs "creating").
+  async function activateProject(projectId){
+    const summary=await API.switchProject(projectId);
+    API.setActiveProject?.(summary.id);
+    window.STATE_ASK_UI?.resetForProjectSwitch(summary.id);
+    state.data.project={...state.data.project,...summary};
+    state.projectConfirmed=true;
+    // Clear every locally-held record before re-hydrating -- never fall
+    // back to context-data.js's static Northstar fixture here, or its
+    // placeholder facts would flash on screen while the new project's
+    // real data loads.
+    state.data.knowledge=[];
+    state.data.reviews=[];
+    state.data.questions=[];
+    state.data.notes=[];
+    state.data.history=[];
+    state.data.drafts=[];
+    state.projectRules=[];
+    state.view='overview';
+    state.result=null;state.resultQuery='';state.expandedReviewId=null;
+    state.backendStatus={state:'loading',evidence:'loading',reviews:'loading',history:'loading',questions:'loading',rules:'loading',drafts:'loading'};
+    state.isAnalyzing=false;
+    render();
+    // A minimum-visible floor keeps the loading dialog from flashing even
+    // when both the switch and the hydration happen to be near-instant.
+    const minVisible=new Promise(resolve=>setTimeout(resolve,450));
+    await Promise.all([hydrateBackend(),minVisible]);
+    closeDialog();
+  }
+
+  // Bug report (2026-09-15): rapidly creating/switching projects could let
+  // an earlier, still-in-flight hydrateBackend() call for the PREVIOUS
+  // project land after a newer call already started -- its stale response
+  // would overwrite state.data.notes/reviews/etc. with the old project's
+  // data (and even reset API's activeProjectId back via payload.project,
+  // see below), which read as "notes from another project leaking into a
+  // new one." Every hydrateBackend() call claims the next generation
+  // number up front; a call whose generation is no longer the latest by
+  // the time its response arrives discards that response instead of
+  // applying it.
+  async function hydrateBackend(){
+    if(!API)return;
+    const myGeneration=++state.hydrationGeneration;
+    ensureProjectsList();
+    const loadStatus=document.getElementById('appLoadStatus');
+    if(loadStatus){loadStatus.textContent=`Opening ${state.data.project?.name||'the project'}…`;loadStatus.hidden=false;}
+    state.workspaceAttentionStatus='loading';
+    renderWorkspaceAttentionOnly();
+    // Load the first action layer separately while the rest of the project opens.
+    API.getAttention().then(payload=>{
+      if(myGeneration!==state.hydrationGeneration)return;
+      syncApiQuestions(payload.questions||[]);
+      replaceBackendOpenReviews(payload.open_reviews||[]);
+      for(const raw of (payload.open_reviews||[])){
+        const note=state.data.notes.find(n=>n.evidenceId===raw.evidence_id);
+        const mapped=mapApiReview(raw,raw.evidence_content||'');
+        mapped.evidenceId=note?.id||`api-note-${raw.evidence_id}`;
+        upsertBackendReview(mapped,{toFront:false});
+      }
+      state.backendStatus.reviews='loaded';
+      state.backendStatus.questions='loaded';
+      state.workspaceAttentionStatus='loaded';
+      updateNav();
+      renderWorkspaceAttentionOnly();
+      // This is the only point where the fast path's real question/review
+      // data reaches the page before the slower full bootstrap -- What
+      // Changed/Current State need to redraw here too, or they keep
+      // showing whatever they computed at initial mount.
+      renderWorkspaceBelowGridOnly();
+    }).catch(attentionError=>{
+      console.warn('Fast attention load unavailable; full Workspace load will continue.',attentionError);
+    });
+    const keys=['state','evidence','open','resolved','history','questions','rules','drafts'];
+    let byKey;
+    try{
+      const payload=await API.getBootstrap();
+      if(myGeneration!==state.hydrationGeneration)return;
+      // state.md #114: the active project's identity comes from the backend
+      // on every hydration -- never assumed to still be Northstar. Falls
+      // back to whatever state.data.project already held (the static
+      // pre-hydration placeholder, or the last-known project) if this
+      // particular payload didn't carry one.
+      if(payload.project){state.data.project={...state.data.project,...payload.project};state.projectConfirmed=true;API.setActiveProject(payload.project.id);}
+      const fulfilled=items=>({status:'fulfilled',value:{items:items||[]}});
+      byKey={
+        state:fulfilled(payload.state), evidence:fulfilled(payload.evidence),
+        open:fulfilled(payload.open_reviews), resolved:fulfilled(payload.resolved_reviews),
+        history:fulfilled(payload.history), questions:fulfilled(payload.questions),
+        rules:fulfilled(payload.rules), drafts:fulfilled(payload.drafts)
+      };
+    }catch(bootstrapError){
+      console.warn('Workspace bootstrap unavailable; retrying individual resources.',bootstrapError);
+      const calls=[
+        API.getState(), API.getEvidence(), API.getReviews('open'), API.getReviews('resolved'), API.getHistory(), API.getQuestions('open'), API.getRules(), API.getDrafts()
+      ];
+      const results=await Promise.allSettled(calls);
+      if(myGeneration!==state.hydrationGeneration)return;
+      byKey=Object.fromEntries(keys.map((key,i)=>[key,results[i]]));
+    }
+    const payloadOf=result=>result.status==='fulfilled'?result.value:{items:[]};
+    state.backendStatus.state=byKey.state.status==='fulfilled'?'loaded':'error';
+    state.backendStatus.evidence=byKey.evidence.status==='fulfilled'?'loaded':'error';
+    state.backendStatus.reviews=(byKey.open.status==='fulfilled'&&byKey.resolved.status==='fulfilled')?'loaded':'error';
+    state.backendStatus.history=byKey.history.status==='fulfilled'?'loaded':'error';
+    state.backendStatus.questions=byKey.questions.status==='fulfilled'?'loaded':'error';
+    state.backendStatus.rules=byKey.rules.status==='fulfilled'?'loaded':'error';
+    state.backendStatus.drafts=byKey.drafts.status==='fulfilled'?'loaded':'error';
+
+    if(byKey.state.status==='fulfilled') syncApiState(payloadOf(byKey.state).items||[]);
+    if(byKey.rules.status==='fulfilled') state.projectRules=payloadOf(byKey.rules).items||[];
+    if(byKey.drafts.status==='fulfilled') syncApiDrafts(payloadOf(byKey.drafts).items||[]);
+    if(byKey.evidence.status==='fulfilled') syncApiEvidence(
+      payloadOf(byKey.evidence).items||[],
+      byKey.open.status==='fulfilled'?payloadOf(byKey.open).items||[]:null,
+      byKey.resolved.status==='fulfilled'?payloadOf(byKey.resolved).items||[]:null
+    );
+    if(byKey.history.status==='fulfilled') syncApiHistory(payloadOf(byKey.history).items||[]);
+    if(byKey.questions.status==='fulfilled'){
+      syncApiQuestions(payloadOf(byKey.questions).items||[]);
+    }else{
+      state.data.questions=[];
+    }
+    if(byKey.open.status==='fulfilled'){
+      const openItems=payloadOf(byKey.open).items||[];
+      replaceBackendOpenReviews(openItems);
+      for(const raw of openItems){
+        const note=state.data.notes.find(n=>n.evidenceId===raw.evidence_id);
+        const mapped=mapApiReview(raw,raw.evidence_content||''); mapped.evidenceId=note?.id||`api-note-${raw.evidence_id}`; upsertBackendReview(mapped,{toFront:false});
+      }
+    }else{
+      state.data.reviews=state.data.reviews.filter(r=>!r.backendReviewId);
+    }
+    state.workspaceAttentionStatus=(byKey.open.status==='fulfilled'&&byKey.questions.status==='fulfilled')?'loaded':'error';
+    for(const [key,result] of Object.entries(byKey)) if(result.status==='rejected') console.warn(`Backend ${key} unavailable:`,result.reason);
+    if(loadStatus)loadStatus.hidden=true;
+    updateNav();
+    // Workspace owns a stable page title. Hydration updates project context
+    // through the persistent switcher and may refresh the stage copy, but it
+    // must not replace the Workspace heading with the active project name.
+    if(state.view==='overview'){
+      const stageEl=root.querySelector('.overview-heading .overview-stage');
+      const wantStage=currentProjectStage();
+      if(stageEl&&wantStage&&stageEl.textContent!==wantStage)stageEl.textContent=wantStage;
+    }
+    // Backend hydration must never replace the Ask DOM while a person is typing.
+    // Workspace attention can update independently; other views may rerender normally.
+    if(state.view==='overview'){
+      if(!state.result){
+        const updated=renderWorkspaceAttentionOnly();
+        if(!updated){
+          const askPanel=root.querySelector('.ask-panel');
+          if(askPanel){
+            const holder=document.createElement('div');
+            holder.innerHTML=workspaceAttentionHtml();
+            if(holder.firstElementChild) askPanel.insertAdjacentElement('afterend',holder.firstElementChild);
+          }
+        }
+        // Same reasoning as the fast attention path above: the full
+        // bootstrap is what actually populates state.data.history/knowledge
+        // with real values, but nothing was re-drawing What
+        // Changed/Current State to reflect them -- they stayed frozen at
+        // whatever the very first synchronous render computed, on every
+        // page load, not just during the fast-path race window.
+        renderWorkspaceBelowGridOnly();
+      }
+      return;
+    }
+    render();
+  }
+
+  let analysisClock=null;
+
+  /* ----------------------------------------------------------------------
+     Hydration
+
+     Loads the project on open. getAttention() is a deliberate fast path so the
+     attention row can render before the rest of the project arrives.
+     ------------------------------------------------------------------- */
+  function analyzingDialog(){
+    return `<div class="analysis-state"><div class="analysis-orbit" aria-hidden="true"><span></span><span></span><span></span></div><span class="eyebrow">Analyzing evidence</span><h2 id="dialogTitle">Working out what this changes…</h2><p>Comparing the note with Current State and deciding whether anything needs your review.</p><div class="analysis-progress"><span class="analysis-pulse" aria-hidden="true"></span><span id="analysisElapsed">Starting analysis…</span></div><p class="analysis-patience">A thorough comparison can take around 10–20 seconds.</p></div>`;
+  }
+  function startAnalysisClock(){
+    clearInterval(analysisClock);
+    const started=Date.now();
+    const update=()=>{
+      const el=document.getElementById('analysisElapsed');
+      if(!el)return;
+      const seconds=Math.max(0,Math.floor((Date.now()-started)/1000));
+      el.textContent=seconds<2?'Starting analysis…':`Analyzing… ${seconds}s`;
+    };
+    update(); analysisClock=setInterval(update,1000);
+  }
+  function stopAnalysisClock(){ clearInterval(analysisClock); analysisClock=null; }
+  async function showAnalysisFailure(error,{draftMessage='This update needs another try.',safeContext='Your note'}={}){
+    state.isAnalyzing=false; stopAnalysisClock();
+    if(error?.evidenceId){
+      await hydrateBackend();
+      showDialog(`<span class="eyebrow">Saved, but not analyzed</span><h2 id="dialogTitle">${esc(safeContext)} is safe.</h2><p>The Evidence was saved, but analysis did not finish. Retry analysis without submitting it again.</p><div class="dialog-actions"><button class="btn primary" data-action="retry-analysis" data-evidence-id="${esc(error.evidenceId)}">Retry analysis</button><button class="btn secondary" data-action="close-dialog">Close</button></div>`);
+      return;
+    }
+    showDialog(`<span class="eyebrow">Couldn’t analyze</span><h2 id="dialogTitle">${esc(draftMessage)}</h2><p>${esc(error?.message||'Analysis failed.')}</p><div class="dialog-actions"><button class="btn primary" data-action="close-dialog">Close</button></div>`);
+  }
+
+  async function saveInformation(){
+    const text=document.getElementById('addInfoText')?.value.trim();
+    if(!text)return;
+    state.isAnalyzing=true;
+    showDialog(analyzingDialog());
+    startAnalysisClock();
+    try{
+      const result=await submitEvidence(text,'manual_note');
+      const stamp=Date.now(), noteId='n-'+stamp;
+      const apiReviews=(result.reviews||[]).map(r=>mapApiReview(r,text));
+      state.data.notes.unshift({id:noteId,title:'Project update',text,source:'Update',date:todayLabel(),dateISO:todayISO(),topics:[],status:apiReviews.length?'pending':'no_review_needed',reviewId:apiReviews[0]?.id||null,reviewIds:apiReviews.map(r=>r.id),evidenceId:result.evidence_id});
+      apiReviews.forEach(r=>{r.evidenceId=noteId; upsertBackendReview(r);});
+      state.reviewBannerDismissed=false;
+      state.isAnalyzing=false; stopAnalysisClock();
+      updateNav();
+      if(apiReviews.length){
+        showDialog(`<span class="eyebrow">Evidence added</span><h2 id="dialogTitle">Evidence added</h2><p>${apiReviews.length===1?'1 Review needs your decision.':`${apiReviews.length} Reviews need your decisions.`}</p><div class="dialog-actions"><button class="btn primary" data-action="go-review">View Review</button></div>`);
+      }else{
+        showDialog(`<span class="eyebrow">Evidence added</span><h2 id="dialogTitle">Evidence added</h2><p>Added as Evidence. Current State did not need a Review.</p>`);
+      }
+    }catch(e){ await showAnalysisFailure(e); }
+  }
+
+  // Issue #140: same Evidence -> interpretation -> Review flow as
+  // saveInformation() above, just sourced from an uploaded file instead of
+  // the textarea. The backend does the actual reading/decoding/validation;
+  // this only needs to surface its errors the same way saveInformation does.
+  async function uploadInformation(file){
+    if(!file)return;
+    state.isAnalyzing=true;
+    showDialog(analyzingDialog());
+    startAnalysisClock();
+    try{
+      const result=await API.uploadEvidence(file);
+      const stamp=Date.now(), noteId='n-'+stamp;
+      let preview=`Uploaded: ${file.name}`;
+      try{ const text=(await file.text()).trim(); if(text) preview=text; }catch(readErr){ console.warn('Could not read file content for local preview; the backend already parsed it.',readErr); }
+      const apiReviews=(result.reviews||[]).map(r=>mapApiReview(r,preview));
+      state.data.notes.unshift({id:noteId,title:file.name,text:preview,source:'Uploaded file',date:todayLabel(),dateISO:todayISO(),topics:[],status:apiReviews.length?'pending':'no_review_needed',reviewId:apiReviews[0]?.id||null,reviewIds:apiReviews.map(r=>r.id),evidenceId:result.evidence_id});
+      apiReviews.forEach(r=>{r.evidenceId=noteId; upsertBackendReview(r);});
+      state.reviewBannerDismissed=false;
+      state.isAnalyzing=false; stopAnalysisClock();
+      updateNav();
+      if(apiReviews.length){
+        showDialog(`<span class="eyebrow">Evidence added</span><h2 id="dialogTitle">Evidence added</h2><p>${apiReviews.length===1?'1 Review needs your decision.':`${apiReviews.length} Reviews need your decisions.`}</p><div class="dialog-actions"><button class="btn primary" data-action="go-review">View Review</button></div>`);
+      }else{
+        showDialog(`<span class="eyebrow">Evidence added</span><h2 id="dialogTitle">Evidence added</h2><p>Added as Evidence. Current State did not need a Review.</p>`);
+      }
+    }catch(e){ await showAnalysisFailure(e); }
+  }
+
+
+  /* ----------------------------------------------------------------------
+     Actions and events
+
+     The click/keyboard surface. Every user action funnels through here.
+     ------------------------------------------------------------------- */
+  async function saveWorkingNote(title,text){
+    const clean=(text||'').trim(); if(!clean)return null;
+    const cleanTitle=(title||'Untitled note').trim()||'Untitled note';
+    const draft=await API.createDraft(cleanTitle,clean);
+    const note={id:`draft-${draft.id}`,draftId:draft.id,title:draft.title,text:draft.content,source:'Working note',date:formatBackendDate(draft.updated_at||draft.created_at),dateISO:draft.updated_at||draft.created_at,topics:[],status:'working',backendDraft:true};
+    state.data.notes=state.data.notes.filter(n=>n.draftId!==draft.id);
+    state.data.notes.unshift(note);
+    return note.id;
+  }
+
+  function syncApiDrafts(items){ state.data.notes=BACKEND_SYNC.syncApiDrafts(state.data.notes,items); }
+
+  async function sendNoteToReview(id){
+    const n=state.data.notes.find(x=>x.id===id); if(!n||n.status==='pending')return;
+    state.isAnalyzing=true; showDialog(analyzingDialog()); startAnalysisClock();
+    try{
+      const result=await submitEvidence(n.text,'working_note');
+      const apiReviews=(result.reviews||[]).map(r=>mapApiReview(r,n.text));
+      if(n.draftId){try{await API.deleteDraft(n.draftId);}catch(err){console.warn('Evidence saved but draft cleanup failed:',err);}}
+      n.backendDraft=false; n.draftId=null; n.backendManaged=true; n.status=apiReviews.length?'pending':'no_review_needed'; n.reviewId=apiReviews[0]?.id||null; n.reviewIds=apiReviews.map(r=>r.id); n.evidenceId=result.evidence_id;
       apiReviews.forEach(r=>{r.evidenceId=n.id; upsertBackendReview(r);});
       state.reviewBannerDismissed=false; state.isAnalyzing=false; stopAnalysisClock(); updateNav();
       if(apiReviews.length) showDialog(`<span class="eyebrow">Evidence added</span><h2 id="dialogTitle">Evidence added</h2><p>${apiReviews.length===1?'1 Review needs your decision.':`${apiReviews.length} Reviews need your decisions.`}</p><div class="dialog-actions"><button class="btn primary" data-action="go-review">View Review</button><button class="btn secondary" data-action="go-notes">Back to Notes</button></div>`);
