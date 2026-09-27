@@ -507,6 +507,9 @@
         ${currentStateHtml()}
       </div>
     </section>`;
+    // Keep Workspace decorations in the same render task as their container.
+    ASK?.syncWorkspaceDecorations?.();
+    window.STATE_WORKSPACE_SOURCES?.decorate?.();
     // The Ask loading and refinement nodes are emitted here, and renderOverview
     // is called directly on the Ask paths rather than always through render(),
     // so activate the rotating wait states at the point they are created.
@@ -1509,7 +1512,7 @@
     else if(act==='save-project-rule'){const text=document.getElementById('projectRuleText')?.value.trim();const category=document.getElementById('projectRuleCategory')?.value||'Interpretation';if(text){try{const rule=await API.createRule(text,category);if(!state.projectRules.some(x=>x.id===rule.id))state.projectRules.push(rule);showProjectSettings();}catch(err){showDialog(`<span class="eyebrow">Couldn’t save rule</span><h2 id="dialogTitle">Rule was not added.</h2><p>${esc(err.message)}</p>`);}}}
     else if(act==='delete-project-rule'){try{await API.deleteRule(a.dataset.ruleId);state.projectRules=state.projectRules.filter(x=>x.id!==a.dataset.ruleId);showProjectSettings();}catch(err){showDialog(`<span class="eyebrow">Couldn’t remove rule</span><h2 id="dialogTitle">Rule is still active.</h2><p>${esc(err.message)}</p>`);}}
     else if(act==='copy-result'){const text=state.result?.liveAsk&&ASK?.portableText?ASK.portableText(state.result.liveAsk,liveRecordStatus()):(document.querySelector('.answer-content')?.innerText||'');const label='Copy';navigator.clipboard?.writeText(text);a.textContent='Copied';setTimeout(()=>a.textContent=label,1200);}
-    else if(act==='toggle-projects'){state.projectMenuOpen=!state.projectMenuOpen;render();}
+    else if(act==='toggle-projects'){state.projectMenuOpen=!state.projectMenuOpen;updateNav();}
     else if(act==='switch-project'){
       const projectId=a.dataset.projectId;
       if(!projectId||projectId===state.data.project?.id){state.projectMenuOpen=false;render();return;}
