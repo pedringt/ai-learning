@@ -65,6 +65,7 @@
     });
   }
 
+  window.STATE_WORKSPACE_SOURCES = Object.freeze({decorate});
   decorate();
   new MutationObserver(() => requestAnimationFrame(decorate)).observe(root,{childList:true,subtree:true});
 })();
