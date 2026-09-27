@@ -40,6 +40,14 @@ assert.strictEqual(
   'good'
 );
 assert.strictEqual(
+  H.infrastructureAttention({render:{configured:true,environments:{production:{ok:true},staging:{ok:false}}}}).kind,
+  'warn'
+);
+assert.strictEqual(
+  H.infrastructureAttention({render:{configured:true,environments:{production:{ok:false},staging:{ok:true}}}}).kind,
+  'bad'
+);
+assert.strictEqual(
   H.overallAttention({delivery:{vercel:{kind:'good'}},quality:severe,platform:null}).kind,
   'bad'
 );
