@@ -86,6 +86,7 @@
     submitStream,
     submit,
     render,
+    syncWorkspaceDecorations: syncReviewerGuide,
   });
 
   if (typeof document === 'undefined') return;
@@ -110,12 +111,12 @@
     const style = document.createElement('style');
     style.id = 'state-reviewer-guide-styles';
     style.textContent = `
-      .state-reviewer-guide{position:relative;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:16px;align-items:center;margin:0 0 16px;padding:14px 16px;border:1px solid #d9e3f0;border-radius:12px;background:#f7faff;color:#26344c;box-sizing:border-box}
+      .state-reviewer-guide{position:relative;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:16px;align-items:center;margin:0 0 16px;padding:14px 16px;border:1px solid #d9e3f0;border-radius:12px;background:#fff;color:#26344c;box-sizing:border-box}
       .state-reviewer-guide-copy{min-width:0}
       .state-reviewer-guide-copy strong{display:block;margin-bottom:3px;font-size:13px;color:#18253a}
       .state-reviewer-guide-copy p{margin:0;font-size:12.5px;line-height:1.5;color:#59677d}
       .state-reviewer-guide-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:flex-end}
-      .state-reviewer-guide-start{min-height:38px;padding:8px 11px;border:1px solid #b9cbe0;border-radius:9px;background:#fff;color:#1769e8;font:inherit;font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap}
+      .state-reviewer-guide-start{display:inline-flex;align-items:center;min-height:0;padding:4px 0;border:0;border-radius:0;background:transparent;box-shadow:none;color:#1769e8;font:inherit;font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap}
       .state-reviewer-guide-dismiss{min-width:38px;min-height:38px;border:0;background:transparent;color:#6b778a;font:inherit;font-size:20px;line-height:1;cursor:pointer;border-radius:8px}
       .state-reviewer-guide-dismiss:hover,.state-reviewer-guide-dismiss:focus-visible{background:#edf3f9;color:#26344c}
       .ask-current-state-link{white-space:nowrap}
@@ -123,7 +124,7 @@
       body.v88-dark .state-reviewer-guide{background:#171b22;border-color:#303946;color:#eef2f7}
       body.v88-dark .state-reviewer-guide-copy strong{color:#f2f5f8}
       body.v88-dark .state-reviewer-guide-copy p{color:#b5bfcc}
-      body.v88-dark .state-reviewer-guide-start{background:#202631;border-color:#44556c;color:#9fc6ff}
+      body.v88-dark .state-reviewer-guide-start{background:transparent;border-color:transparent;color:#9fc6ff}
       body.v88-dark .state-reviewer-guide-dismiss{color:#aeb8c5}
       @media(max-width:760px){
         .state-reviewer-guide{grid-template-columns:1fr;gap:11px;margin:0 14px 14px;padding:13px 14px}
