@@ -65,8 +65,10 @@
   function infrastructureAttention(platform){
     const render=platform?.render;
     if(render?.configured){
-      const envs=Object.values(render.environments||{});
-      if(envs.some(x=>!x.ok)) return {kind:'bad',title:'Backend health needs attention',detail:'At least one configured Render environment is not responding successfully.'};
+      const production=render.environments?.production;
+      const staging=render.environments?.staging;
+      if(production&&!production.ok) return {kind:'bad',title:'Production backend needs attention',detail:'The production Render health endpoint is not responding successfully.'};
+      if(staging&&!staging.ok) return {kind:'warn',title:'Staging backend is not responding',detail:'State staging is on Render free tier and may simply be asleep; production health is evaluated separately.'};
     }
     const neon=platform?.neon;
     if(neon?.configured&&neon.available===false) return {kind:'warn',title:'Database health could not be read',detail:'Neon is configured, but its project health request failed.'};
@@ -107,9 +109,11 @@
   function infraCardLabel(platform){
     const render=platform?.render;
     if(render?.configured){
-      const envs=Object.values(render.environments||{});
-      if(envs.some(x=>!x.ok)) return 'Backend needs attention';
-      if(envs.length) return 'Backend healthy';
+      const production=render.environments?.production;
+      const staging=render.environments?.staging;
+      if(production&&!production.ok) return 'Production backend down';
+      if(production?.ok&&staging&&!staging.ok) return 'Prod healthy · staging asleep?';
+      if(production?.ok) return 'Backend healthy';
     }
     const neon=platform?.neon;
     if(neon?.configured&&neon.available) return 'Database connected';
