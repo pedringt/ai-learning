@@ -51,6 +51,7 @@ The repository root also contains the public portfolio site.
 | `docs/PROJECT_STATUS.md` | Canonical current-state handoff. Read this first when resuming work. |
 | `QA.md` | Canonical QA contract. |
 | `RELEASE.md` | Current release and rollback gate. |
+| `docs/GITHUB_PROMOTION_WORKFLOW.md` | Cross-chat GitHub merge and promotion workflow, including recovery from missing local Git credentials. |
 | `CLAUDE.md` | Instructions for Claude/AI coding sessions. |
 
 The historically named frontend files such as `context-feedback-pass*.js`, `context-design-pass.js`, `context-attention-alignment.js`, and `context-final-mobile.js` are still live runtime code. Their names look temporary, but prior cleanup investigation found they are not safe to delete casually.
