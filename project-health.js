@@ -21,6 +21,19 @@
     return first||'Change title unavailable';
   }
   function repoUrl(repo){return 'https://github.com/'+repo;}
+  function githubCommitUrl(repo,sha){return /^[0-9a-f]{7,40}$/i.test(String(sha||''))?repoUrl(repo)+'/commit/'+encodeURIComponent(sha):null;}
+  function pullRequestNumber(message){
+    const first=String(message||'').split(/\r?\n/)[0]||'';
+    const merge=first.match(/^Merge pull request #(\d+) from /i);
+    const squash=first.match(/\(#(\d+)\)$/);
+    return merge?.[1]||squash?.[1]||null;
+  }
+  function githubPullRequestUrl(repo,number){return /^\d+$/.test(String(number||''))?repoUrl(repo)+'/pull/'+number:null;}
+  function githubLink(label,url){return url?'<a href="'+esc(url)+'" target="_blank" rel="noopener noreferrer">'+esc(label)+'</a>':esc(label);}
+  function changeUrl(repo,delivery){return githubPullRequestUrl(repo,pullRequestNumber(delivery?.message))||githubCommitUrl(repo,delivery?.sha);}
+  function commitLabel(repo,sha){return githubLink(shortSha(sha),githubCommitUrl(repo,sha));}
+  function htmlRow(label,value){return '<div class="row"><span>'+esc(label)+'</span><span>'+value+'</span></div>';}
+  function linkedRow(label,value,url){return htmlRow(label,githubLink(value,url));}
   function githubApi(path){return 'https://api.github.com'+path;}
   function pageEnvironment(root){const host=String(root?.location?.hostname||'');return /(^|[-.])staging([-.]|$)|-git-/i.test(host)?'staging':'production';}
 
@@ -318,7 +331,7 @@
       '<div class="card-head"><div><h2>'+esc(data.project.name)+'</h2><p>'+esc(data.project.description)+'</p></div><span class="status-pill '+esc(att.kind)+'">'+esc(att.kind==='good'?'Healthy':att.kind==='bad'?'Needs attention':'Check')+'</span></div>'+
       '<div class="card-focus">'+esc(att.title)+'</div>'+
       '<div class="signal-list">'+
-      '<div class="signal change-signal"><span class="signal-label">Latest change</span><span class="signal-value">'+esc(d?commitTitle(d.message):(pending.has('Delivery')?'Checking…':'Unavailable'))+'</span><span class="change-date">'+esc(d?'Updated '+fmtDate(d.updatedAt):(pending.has('Delivery')?'':'Date unavailable'))+'</span></div>'+
+      '<div class="signal change-signal"><span class="signal-label">Latest change</span><span class="signal-value">'+(d?githubLink(commitTitle(d.message),changeUrl(data.project.repo,d)):esc(pending.has('Delivery')?'Checking…':'Unavailable'))+'</span><span class="change-date">'+esc(d?'Updated '+fmtDate(d.updatedAt):(pending.has('Delivery')?'':'Date unavailable'))+'</span></div>'+
       '<div class="signal"><span class="signal-label">Delivery</span><span class="signal-value">'+esc(d?.vercel?.label||(pending.has('Delivery')?'Checking…':'Unavailable'))+'</span></div>'+
       '<div class="signal"><span class="signal-label">Infrastructure</span><span class="signal-value">'+esc(data.platform?infraCardLabel(data.platform):(infraPending?'Checking…':'Unavailable'))+'</span></div>'+
       '<div class="signal"><span class="signal-label">Site analytics</span><span class="signal-value">'+esc(data.platform?.analytics?analyticsLabel(data.platform):(pending.has('Analytics')?'Checking…':'Open project to load'))+'</span></div>'+
@@ -333,14 +346,19 @@
     const notices=attentionItems(data);
     doc.getElementById('attentionPanel').innerHTML='<h3>What needs attention?</h3><p class="panel-copy">Only exceptions and decisions that deserve attention show here. Healthy checks stay in their own sections.</p><div class="rows">'+notices.map(attentionMarkup).join('')+'</div>';
 
-    const prod=d?row('Production branch',d.branch)+row('Latest change',commitTitle(d.message))+row('Updated',fmtDate(d.updatedAt))+row('Commit',shortSha(d.sha))+row('Vercel',d.vercel.label):'<div class="empty">Production delivery data could not be loaded.</div>';
-    const stage=s?'<div style="margin-top:12px">'+row('Staging branch',s.branch)+row('Latest change',commitTitle(s.message))+row('Updated',fmtDate(s.updatedAt))+row('Commit',shortSha(s.sha))+row('Staging Vercel',s.vercel.label)+'</div>':'';
+    const prod=d?row('Production branch',d.branch)+linkedRow('Latest change',commitTitle(d.message),changeUrl(p.repo,d))+row('Updated',fmtDate(d.updatedAt))+linkedRow('Commit',shortSha(d.sha),githubCommitUrl(p.repo,d.sha))+row('Vercel',d.vercel.label):'<div class="empty">Production delivery data could not be loaded.</div>';
+    const stage=s?'<div style="margin-top:12px">'+row('Staging branch',s.branch)+linkedRow('Latest change',commitTitle(s.message),changeUrl(p.repo,s))+row('Updated',fmtDate(s.updatedAt))+linkedRow('Commit',shortSha(s.sha),githubCommitUrl(p.repo,s.sha))+row('Staging Vercel',s.vercel.label)+'</div>':'';
     doc.getElementById('deliveryPanel').innerHTML='<h3>Delivery</h3><p class="panel-copy">GitHub branch heads plus Vercel commit status.</p><div class="rows">'+prod+stage+'</div>';
 
     const pending=pendingSet(data),r=platform?.render,n=platform?.neon;
     let infraHtml='';
     if(r?.configured){
-      infraHtml+=Object.entries(r.environments||{}).map(([name,x])=>row('Render '+name,(x.ok?'Healthy':'Unavailable')+(x.build?' · '+shortSha(x.build):'')+(x.latency_ms!=null?' · '+x.latency_ms+'ms':''))).join('');
+      infraHtml+=Object.entries(r.environments||{}).map(([name,x])=>{
+        const parts=[esc(x.ok?'Healthy':'Unavailable')];
+        if(x.build) parts.push(githubLink(shortSha(x.build),githubCommitUrl(p.repo,x.build)));
+        if(x.latency_ms!=null) parts.push(esc(x.latency_ms+'ms'));
+        return htmlRow('Render '+name,parts.join(' · '));
+      }).join('');
       if(p.id==='state'&&!r.environments?.staging) infraHtml+=row('Render staging',pending.has('Staging backend')?'Checking…':'Open State to check staging');
     }else if(p.id==='state') infraHtml+=row('Render',pending.has('Production backend')?'Checking production…':'Unavailable');
     else infraHtml+=row('Render','Not used by this project');
@@ -375,7 +393,7 @@
         metric((endpoint.validator_self_test?.caught??'—')+'/'+(endpoint.validator_self_test?.total??'—'),'Bad outputs caught')+
         '</div>'+
         '<div class="run-summary" style="margin-top:12px">'+groups+'</div>'+
-        '<p class="footnote">Baseline comparison: '+esc(base.valid_fixture_outputs?.passed??'—')+'/'+esc(base.valid_fixture_outputs?.total??'—')+' fixtures kept all proposals. '+esc(externalQ.caveat||'')+' Source commit '+esc(shortSha(externalQ.source_commit))+'.</p>';
+        '<p class="footnote">Baseline comparison: '+esc(base.valid_fixture_outputs?.passed??'—')+'/'+esc(base.valid_fixture_outputs?.total??'—')+' fixtures kept all proposals. '+esc(externalQ.caveat||'')+' Source commit '+githubLink(shortSha(externalQ.source_commit),githubCommitUrl(p.repo,externalQ.source_commit))+'.</p>';
     }else if(p.id==='narc'&&externalQ){
       const suites=(externalQ.suites||[]).map(s=>'<div class="run-callout"><strong>'+esc(s.name)+'</strong><p>'+esc(s.detail)+'</p><p class="footnote">'+esc(s.command)+'</p></div>').join('');
       doc.getElementById('qualityPanel').innerHTML='<h3>Product quality</h3><p class="panel-copy">NARC quality is mostly deterministic: branch/state consistency, authored consequences, and desktop integration. Human playtesting remains a separate product-quality gate.</p>'+
@@ -384,7 +402,7 @@
         metric(externalQ.recorded?.full_playtest_pending?'Pending':'Recorded','Full first-run playtest')+
         metric(externalQ.analytics_blocked_until_playtest?'Blocked':'Open','Gameplay analytics')+
         '</div><div class="run-summary" style="margin-top:12px">'+suites+'</div>'+
-        '<p class="footnote">'+esc(externalQ.caveat||'')+' Source commit '+esc(shortSha(externalQ.source_commit))+'.</p>';
+        '<p class="footnote">'+esc(externalQ.caveat||'')+' Source commit '+githubLink(shortSha(externalQ.source_commit),githubCommitUrl(p.repo,externalQ.source_commit))+'.</p>';
     }else{
       doc.getElementById('qualityPanel').innerHTML='<h3>Product quality</h3><p class="panel-copy">'+esc(p.name)+' quality data could not be loaded.</p><div class="empty">Missing data stays missing rather than being guessed.</div>';
     }
@@ -393,15 +411,15 @@
     if(p.id==='state'){
       const recent=Array.isArray(q?.recent)?q.recent.slice(0,4):[];
       historyHtml=recent.length
-        ? recent.map(item=>row((item.suite||item.eval_suite||'Controlled eval').replaceAll('_',' '),[item.build?shortSha(item.build):null,item.model||null,item.created_at?fmtDate(item.created_at):null].filter(Boolean).join(' · '))).join('')
+        ? recent.map(item=>htmlRow((item.suite||item.eval_suite||'Controlled eval').replaceAll('_',' '),[item.build?commitLabel(p.repo,item.build):null,item.model?esc(item.model):null,item.created_at?esc(fmtDate(item.created_at)):null].filter(Boolean).join(' · '))).join('')
         : '<div class="empty">No recent controlled-eval history is available yet.</div>';
     }else if(p.id==='tastemake'&&externalQ){
-      historyHtml=row('Source commit',shortSha(externalQ.source_commit))+
+      historyHtml=linkedRow('Source commit',shortSha(externalQ.source_commit),githubCommitUrl(p.repo,externalQ.source_commit))+
         row('Latest QA',externalQ.ci?.updated_at?fmtDate(externalQ.ci.updated_at):'Unknown')+
         row('Eval contract',externalQ.endpoint?.contract||externalQ.baseline?.contract||'Unknown')+
         row('Reports','Baseline + endpoint snapshots');
     }else if(p.id==='narc'&&externalQ){
-      historyHtml=row('Source commit',shortSha(externalQ.source_commit))+
+      historyHtml=linkedRow('Source commit',shortSha(externalQ.source_commit),githubCommitUrl(p.repo,externalQ.source_commit))+
         row('Recorded verification',externalQ.recorded?.recorded_all_suites_green?'All 3 suites green':'Not confirmed')+
         row('Next quality gate',externalQ.recorded?.full_playtest_pending?'Full ~15-minute playtest':'No pending playtest recorded');
     }else{
@@ -513,8 +531,8 @@
       ensureDetails(activeId);
     }
 
-    cards.addEventListener('click',event=>{const card=event.target.closest?.('.project-card');if(card)select(card.dataset.project);});
-    cards.addEventListener('keydown',event=>{const card=event.target.closest?.('.project-card');if(card&&(event.key==='Enter'||event.key===' ')){event.preventDefault();select(card.dataset.project);}});
+    cards.addEventListener('click',event=>{if(event.target.closest?.('a,button'))return;const card=event.target.closest?.('.project-card');if(card)select(card.dataset.project);});
+    cards.addEventListener('keydown',event=>{if(event.target.closest?.('a,button'))return;const card=event.target.closest?.('.project-card');if(card&&(event.key==='Enter'||event.key===' ')){event.preventDefault();select(card.dataset.project);}});
 
     async function refreshAll(){
       if(refresh.disabled)return;
@@ -568,5 +586,5 @@
     await refreshAll();
   }
 
-  return {PROJECTS,pageEnvironment,vercelFromStatus,deliveryHealth,commitTitle,normalizeQuality,qualityAttention,externalQualityAttention,deliveryAttention,infrastructureAttention,allAttentionSignals,attentionItems,overallAttention,projectQualityLabel,percent,shortSha,pendingSet,mergePlatform,emptyProjectData,safeExternalQualitySnapshot,serializeProjectData,hydrateProjectData,loadProject,loadProjectDetails,infraCardLabel,analyticsLabel,progressText,init};
+  return {PROJECTS,pageEnvironment,vercelFromStatus,deliveryHealth,commitTitle,githubCommitUrl,pullRequestNumber,githubPullRequestUrl,changeUrl,normalizeQuality,qualityAttention,externalQualityAttention,deliveryAttention,infrastructureAttention,allAttentionSignals,attentionItems,overallAttention,projectQualityLabel,percent,shortSha,pendingSet,mergePlatform,emptyProjectData,safeExternalQualitySnapshot,serializeProjectData,hydrateProjectData,loadProject,loadProjectDetails,infraCardLabel,analyticsLabel,progressText,init};
 });
