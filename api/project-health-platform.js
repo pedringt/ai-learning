@@ -22,9 +22,11 @@ const PROJECTS={
 async function timedJson(url,options={}){
   const started=Date.now();
   const controller=new AbortController();
-  const timer=setTimeout(()=>controller.abort(),12000);
+  const timeoutMs=Number(options.timeoutMs||8000);
+  const fetchOptions={...options};delete fetchOptions.timeoutMs;
+  const timer=setTimeout(()=>controller.abort(),timeoutMs);
   try{
-    const response=await fetch(url,{...options,signal:controller.signal});
+    const response=await fetch(url,{...fetchOptions,signal:controller.signal});
     const payload=await response.json().catch(()=>({}));
     return {ok:response.ok,status:response.status,payload,latency_ms:Date.now()-started};
   }catch(error){
@@ -49,7 +51,7 @@ function safeRenderHealth(result){
 async function renderHealth(project){
   if(!project.render) return {configured:false};
   const entries=await Promise.all(Object.entries(project.render).map(async ([environment,url])=>{
-    return [environment,safeRenderHealth(await timedJson(url,{headers:{Accept:'application/json'}}))];
+    return [environment,safeRenderHealth(await timedJson(url,{headers:{Accept:'application/json'},timeoutMs:5000}))];
   }));
   return {configured:true,environments:Object.fromEntries(entries)};
 }
@@ -129,7 +131,7 @@ module.exports=async function handler(req,res){
     vercelAnalytics(project),
     neonHealth(project)
   ]);
-  res.setHeader('Cache-Control','no-store');
+  res.setHeader('Cache-Control','s-maxage=20, stale-while-revalidate=90');
   res.status(200).json({
     project:projectId,
     render,
