@@ -1,21 +1,62 @@
-# Manual only: makes real model calls against staging.
-# Do not add this to automatic CI. The walkthrough creates temporary staging records;
-# the quality evals use controlled test databases and post aggregate metrics only.
-name: Question Review live staging check
+# Manual only: makes real model calls. Controlled evals use temporary test
+# databases and record aggregate metrics only.
+name: State AI quality check
 on:
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      suite:
+        description: Which AI behavior to check
+        required: true
+        default: all
+        type: choice
+        options:
+          - all
+          - review
+          - ask
+      record_environment:
+        description: Where to record aggregate results
+        required: true
+        default: production
+        type: choice
+        options:
+          - production
+          - staging
 permissions:
   contents: read
 concurrency:
-  group: question-review-live-staging
+  group: state-ai-quality-check-staging
   cancel-in-progress: false
-
-env:
-  STATE_BACKEND_URL: https://state-api-staging.onrender.com
-
 jobs:
-  walkthrough:
+  quality:
     if: github.ref == 'refs/heads/staging'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install quality-check dependencies
+        run: pip install -r state-project-complete/requirements.txt
+      - name: Run controlled AI quality checks
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          STATE_EVAL_INGEST_KEY: ${{ secrets.STATE_EVAL_INGEST_KEY }}
+          CLAUDE_MODEL: ${{ vars.CLAUDE_MODEL }}
+        run: |
+          if [ "${{ inputs.record_environment }}" = "staging" ]; then
+            RECORD_URL="https://state-api-staging.onrender.com"
+          else
+            RECORD_URL="https://state-api-6waw.onrender.com"
+          fi
+          python state-project-complete/eval/run_quality_evals.py \
+            --suite "${{ inputs.suite }}" \
+            --record-url "$RECORD_URL"
+
+  walkthrough:
+    if: github.ref == 'refs/heads/staging' && inputs.suite == 'all'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -43,133 +84,3 @@ jobs:
           path: qa/deployed/question-live-results/
           retention-days: 7
           if-no-files-found: warn
-
-  quality-evals:
-    if: github.ref == 'refs/heads/staging'
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.14'
-
-      - name: Install State dependencies
-        working-directory: state-project-complete
-        run: pip install -r requirements.txt
-
-      - name: Preflight eval secrets and staging API
-        env:
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-          STATE_EVAL_INGEST_KEY: ${{ secrets.STATE_EVAL_INGEST_KEY }}
-        run: |
-          if [ -z "$ANTHROPIC_API_KEY" ]; then
-            echo "::error::ANTHROPIC_API_KEY repository secret is required."
-            exit 1
-          fi
-          if [ -z "$STATE_EVAL_INGEST_KEY" ]; then
-            echo "::error::STATE_EVAL_INGEST_KEY repository secret is required and must match staging Render."
-            exit 1
-          fi
-          curl -fsS --retry 6 --retry-delay 5 --retry-all-errors --max-time 20 "$STATE_BACKEND_URL/health" > /tmp/state-health.json
-          python - <<'PY'
-          import json
-          payload = json.load(open('/tmp/state-health.json'))
-          print("Staging backend build:", payload.get("build", "unknown"))
-          PY
-
-      - name: Run Review and Ask controlled evals
-        id: evals
-        working-directory: state-project-complete
-        env:
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-          STATE_EVAL_INGEST_KEY: ${{ secrets.STATE_EVAL_INGEST_KEY }}
-        run: |
-          set +e
-          python eval/run_quality_evals.py             --suite all             --json quality-eval-report.json             --record-url "$STATE_BACKEND_URL"
-          status=$?
-          echo "exit_code=$status" >> "$GITHUB_OUTPUT"
-          # Recording is verified separately below. Keep going so failures still
-          # produce an artifact and dashboard verification signal.
-          exit 0
-
-      - name: Verify both aggregate eval runs reached staging analytics
-        working-directory: state-project-complete
-        run: |
-          curl -fsS --retry 4 --retry-delay 3 --retry-all-errors --max-time 20             "$STATE_BACKEND_URL/api/admin/quality-analytics"             -o quality-analytics.json
-          python - <<'PY'
-          import json, os, sys
-          data = json.load(open("quality-analytics.json"))
-          controlled = data.get("controlled_evals") or {}
-          expected = os.environ["GITHUB_SHA"]
-          checks = {
-              "review_interpretation": controlled.get("latest_review_interpretation"),
-              "ask_quality": controlled.get("latest_ask_quality"),
-          }
-          failed = False
-          for suite, run in checks.items():
-              build = (run or {}).get("build")
-              ok = build == expected
-              print(f"{suite}: build={build!r} expected={expected!r} recorded={ok}")
-              failed = failed or not ok
-          if failed:
-              print("One or both quality eval aggregates were not recorded for this workflow SHA.", file=sys.stderr)
-              sys.exit(1)
-          PY
-
-      - name: Write aggregate eval summary
-        if: always()
-        working-directory: state-project-complete
-        run: |
-          python - <<'PY' >> "$GITHUB_STEP_SUMMARY"
-          import json
-          from pathlib import Path
-
-          print("## State controlled quality evals")
-          print()
-          path = Path("quality-eval-report.json")
-          if not path.exists():
-              print("No eval report was produced. See the job logs for setup/provider errors.")
-              raise SystemExit(0)
-
-          data = json.loads(path.read_text())
-          for report in data.get("reports", []):
-              summary = report.get("summary", {})
-              print(f"### {report.get('suite', 'unknown suite')}")
-              print()
-              print(f"- Cases: {summary.get('total', 0)}")
-              for key, value in summary.items():
-                  if key == "total":
-                      continue
-                  if isinstance(value, float):
-                      value = f"{value:.1%}"
-                  print(f"- {key.replace('_', ' ').title()}: {value}")
-              print()
-          print("Only aggregate metrics are posted to Product Analytics. The detailed artifact contains controlled test outputs, not project content.")
-          PY
-
-      - name: Save detailed controlled eval report
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: state-quality-evals
-          path: state-project-complete/quality-eval-report.json
-          retention-days: 14
-          if-no-files-found: warn
-
-      - name: Mark eval-quality failures after recording diagnostics
-        if: always()
-        env:
-          EVAL_EXIT_CODE: ${{ steps.evals.outputs.exit_code }}
-        run: |
-          if [ -z "$EVAL_EXIT_CODE" ]; then
-            echo "::error::The eval runner did not complete."
-            exit 1
-          fi
-          if [ "$EVAL_EXIT_CODE" != "0" ]; then
-            echo "::error::The controlled evals recorded one or more failing cases. Review the summary and artifact."
-            exit "$EVAL_EXIT_CODE"
-          fi
