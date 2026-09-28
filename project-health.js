@@ -137,7 +137,7 @@
       quality:s.quality||null,
       externalQuality:s.externalQuality||null,
       platform:s.platform||null,
-      runInfo:s.runInfo||null,
+      runInfo:null,
       errors:[],
       pending:new Set(),
       timings:{},
@@ -156,7 +156,7 @@
       quality:data.quality,
       externalQuality:data.externalQuality,
       platform:data.platform,
-      runInfo:data.runInfo,
+      runInfo:null,
       snapshotAt:new Date().toISOString()
     };
   }
