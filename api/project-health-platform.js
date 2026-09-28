@@ -58,31 +58,60 @@ async function renderSignal(project,environment){
 
 function isoDay(date){return date.toISOString().slice(0,10);}
 
-async function vercelAnalytics(project){
-  const token=process.env.VERCEL_TOKEN;
-  if(!token) return {configured:false,reason:'VERCEL_TOKEN not configured'};
-  const until=new Date();
-  const since=new Date(until.getTime()-30*24*60*60*1000);
+async function analyticsWindow(project,token,since,until){
   const qs=new URLSearchParams({
     projectId:project.vercelProjectId,
     since:isoDay(since),
     until:isoDay(until),
     teamId:TEAM_ID
   });
-  const result=await timedJson('https://api.vercel.com/v1/query/web-analytics/visits/count?'+qs.toString(),{
+  return timedJson('https://api.vercel.com/v1/query/web-analytics/visits/count?'+qs.toString(),{
     headers:{Authorization:'Bearer '+token,Accept:'application/json'},
     timeoutMs:4500
   });
-  if(!result.ok){
-    return {configured:true,available:false,status:result.status,error:result.error||result.payload?.error?.message||result.payload?.message||'Web Analytics unavailable'};
+}
+
+function numericCount(value){
+  const number=Number(value);
+  return Number.isFinite(number)?number:null;
+}
+
+function percentDelta(current,previous){
+  if(current==null||previous==null||previous===0) return null;
+  return Math.round(((current-previous)/previous)*1000)/10;
+}
+
+async function vercelAnalytics(project){
+  const token=process.env.VERCEL_TOKEN;
+  if(!token) return {configured:false,reason:'VERCEL_TOKEN not configured'};
+  const until=new Date();
+  const since=new Date(until.getTime()-30*24*60*60*1000);
+  const previousUntil=new Date(since.getTime()-24*60*60*1000);
+  const previousSince=new Date(previousUntil.getTime()-30*24*60*60*1000);
+  const [currentResult,previousResult]=await Promise.all([
+    analyticsWindow(project,token,since,until),
+    analyticsWindow(project,token,previousSince,previousUntil)
+  ]);
+  if(!currentResult.ok){
+    return {configured:true,available:false,status:currentResult.status,error:currentResult.error||currentResult.payload?.error?.message||currentResult.payload?.message||'Web Analytics unavailable'};
   }
-  const data=result.payload?.data||{};
+  const current=currentResult.payload?.data||{};
+  const previous=previousResult.ok?(previousResult.payload?.data||{}):{};
+  const pageviews=numericCount(current.pageviews);
+  const visitors=numericCount(current.visitors);
+  const previousPageviews=numericCount(previous.pageviews);
+  const previousVisitors=numericCount(previous.visitors);
   return {
     configured:true,
     available:true,
     period_days:30,
-    pageviews:Number.isFinite(Number(data.pageviews))?Number(data.pageviews):null,
-    visitors:Number.isFinite(Number(data.visitors))?Number(data.visitors):null
+    pageviews,
+    visitors,
+    previous_pageviews:previousPageviews,
+    previous_visitors:previousVisitors,
+    pageviews_delta_pct:percentDelta(pageviews,previousPageviews),
+    visitors_delta_pct:percentDelta(visitors,previousVisitors),
+    comparison_available:previousResult.ok
   };
 }
 
@@ -151,4 +180,4 @@ module.exports=async function handler(req,res){
   });
 };
 
-module.exports._test={safeRenderHealth,PROJECTS};
+module.exports._test={safeRenderHealth,numericCount,percentDelta,PROJECTS};
