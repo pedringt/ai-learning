@@ -81,13 +81,25 @@
     const priority={bad:3,warn:2,unknown:1,good:0};
     return [...items].sort((a,b)=>priority[b.kind]-priority[a.kind])[0];
   }
-  function overallAttention(data){
+  function allAttentionSignals(data){
     const signals=[deliveryAttention(data.delivery)];
     if(data.quality) signals.push(qualityAttention(data.quality));
     const external=externalQualityAttention(data.externalQuality);if(external) signals.push(external);
     const infra=infrastructureAttention(data.platform);if(infra) signals.push(infra);
+    if(data.platform?.analytics?.configured&&data.platform.analytics.available===false){
+      signals.push({kind:'warn',title:'Site analytics unavailable',detail:'Vercel Web Analytics is configured but did not return usable counts.'});
+    }
+    return signals;
+  }
+  function overallAttention(data){
     const priority={bad:3,warn:2,unknown:1,good:0};
-    return signals.sort((a,b)=>priority[b.kind]-priority[a.kind])[0];
+    return allAttentionSignals(data).sort((a,b)=>priority[b.kind]-priority[a.kind])[0];
+  }
+  function attentionItems(data){
+    const signals=allAttentionSignals(data);
+    const issues=signals.filter(item=>item.kind!=='good');
+    if(issues.length) return issues;
+    return [{kind:'good',title:'Nothing urgent needs attention',detail:'The connected delivery, infrastructure, and product-quality signals look healthy.'}];
   }
 
   async function loadGitHubProject(project,branchName){
@@ -146,8 +158,9 @@
   function cardMarkup(data,active){
     const att=overallAttention(data),d=data.delivery;
     const quality=projectQualityLabel(data);
-    return '<article class="project-card '+(active?'active':'')+'" data-project="'+esc(data.project.id)+'" tabindex="0" role="button" aria-label="Open '+esc(data.project.name)+' health">'+
+    return '<article class="project-card '+(active?'active':'')+'" data-kind="'+esc(att.kind)+'" data-project="'+esc(data.project.id)+'" tabindex="0" role="button" aria-label="Open '+esc(data.project.name)+' health">'+
       '<div class="card-head"><div><h2>'+esc(data.project.name)+'</h2><p>'+esc(data.project.description)+'</p></div><span class="status-pill '+esc(att.kind)+'">'+esc(att.kind==='good'?'Healthy':att.kind==='bad'?'Needs attention':'Check')+'</span></div>'+
+      '<div class="card-focus">'+esc(att.title)+'</div>'+
       '<div class="signal-list">'+
       '<div class="signal"><span class="signal-label">Latest commit</span><span class="signal-value">'+esc(shortSha(d?.sha))+'</span></div>'+
       '<div class="signal"><span class="signal-label">Delivery</span><span class="signal-value">'+esc(d?.vercel?.label||'Unavailable')+'</span></div>'+
@@ -161,12 +174,8 @@
     const p=data.project,d=data.delivery,s=data.staging,q=data.quality,externalQ=data.externalQuality,platform=data.platform,run=data.runInfo;
     doc.getElementById('detailTitle').textContent=p.name;doc.getElementById('detailCopy').textContent=p.description;doc.getElementById('repoLink').href=repoUrl(p.repo);
 
-    const notices=[deliveryAttention(d)];
-    if(p.quality==='state') notices.push(qualityAttention(q));
-    else if(externalQ?.attention) notices.push(...externalQ.attention);
-    const infra=infrastructureAttention(platform);if(infra)notices.push(infra);
-    if(platform?.analytics?.configured&&platform.analytics.available===false) notices.push({kind:'warn',title:'Site analytics unavailable',detail:'Vercel Web Analytics is configured but did not return usable counts.'});
-    doc.getElementById('attentionPanel').innerHTML='<h3>What needs attention?</h3><p class="panel-copy">Concrete signals first. No combined health score.</p><div class="rows">'+notices.map(attentionMarkup).join('')+'</div>';
+    const notices=attentionItems(data);
+    doc.getElementById('attentionPanel').innerHTML='<h3>What needs attention?</h3><p class="panel-copy">Only exceptions and decisions that deserve attention show here. Healthy checks stay in their own sections.</p><div class="rows">'+notices.map(attentionMarkup).join('')+'</div>';
 
     const prod=d?row('Production branch',d.branch)+row('Latest commit',shortSha(d.sha))+row('Vercel',d.vercel.label)+row('Commit time',fmtDate(d.updatedAt)):'<div class="empty">Production delivery data could not be loaded.</div>';
     const stage=s?'<div style="margin-top:12px">'+row('Staging branch',s.branch)+row('Staging commit',shortSha(s.sha))+row('Staging Vercel',s.vercel.label)+'</div>':'';
@@ -216,6 +225,36 @@
       doc.getElementById('qualityPanel').innerHTML='<h3>Product quality</h3><p class="panel-copy">'+esc(p.name)+' quality data could not be loaded.</p><div class="empty">Missing data stays missing rather than being guessed.</div>';
     }
 
+    let historyHtml='';
+    if(p.id==='state'){
+      const recent=Array.isArray(q?.recent)?q.recent.slice(0,4):[];
+      historyHtml=recent.length
+        ? recent.map(item=>row((item.suite||item.eval_suite||'Controlled eval').replaceAll('_',' '),[item.build?shortSha(item.build):null,item.model||null,item.created_at?fmtDate(item.created_at):null].filter(Boolean).join(' · '))).join('')
+        : '<div class="empty">No recent controlled-eval history is available yet.</div>';
+    }else if(p.id==='tastemake'&&externalQ){
+      historyHtml=row('Source commit',shortSha(externalQ.source_commit))+
+        row('Latest QA',externalQ.ci?.updated_at?fmtDate(externalQ.ci.updated_at):'Unknown')+
+        row('Eval contract',externalQ.endpoint?.contract||externalQ.baseline?.contract||'Unknown')+
+        row('Reports','Baseline + endpoint snapshots');
+    }else if(p.id==='narc'&&externalQ){
+      historyHtml=row('Source commit',shortSha(externalQ.source_commit))+
+        row('Recorded verification',externalQ.recorded?.recorded_all_suites_green?'All 3 suites green':'Not confirmed')+
+        row('Next quality gate',externalQ.recorded?.full_playtest_pending?'Full ~15-minute playtest':'No pending playtest recorded');
+    }else{
+      historyHtml='<div class="empty">No quality history is connected for this project yet.</div>';
+    }
+    doc.getElementById('historyPanel').innerHTML='<h3>Recent quality context</h3><p class="panel-copy">Enough history to spot regressions without turning this into a trace explorer.</p><div class="rows">'+historyHtml+'</div>';
+
+    const connections=[];
+    connections.push({label:'GitHub + Vercel delivery',value:d?'Connected':'Unavailable'});
+    if(r?.configured) connections.push({label:'Render backend',value:'Connected'});
+    else if(p.id==='state') connections.push({label:'Render backend',value:'Unavailable'});
+    else connections.push({label:'Render backend',value:'Not used'});
+    connections.push({label:'Site analytics',value:platform?.analytics?.available?'Connected':'Set up later'});
+    connections.push({label:'Neon health',value:n?.available?'Connected':'Set up later'});
+    connections.push({label:'Run health checks',value:run?.configured?'Ready':'Set up later'});
+    doc.getElementById('connectionsPanel').innerHTML='<h3>Connections</h3><p class="panel-copy">A setup checklist, not a health warning. Missing optional credentials do not make a project unhealthy.</p><div class="rows">'+connections.map(item=>row(item.label,item.value)).join('')+'</div>';
+
     const runButton=doc.getElementById('runChecksButton');
     if(run?.configured){runButton.disabled=false;runButton.textContent='Run health checks';runButton.title='';}
     else{runButton.disabled=true;runButton.textContent=run?'Finish run setup':'Checks not wired yet';runButton.title=run?'Configure server-side GitHub credentials, admin key, and an explicit cost estimate.':'No dashboard-run workflow is configured for this project yet.';}
@@ -246,8 +285,8 @@
   }
 
   async function init(root){
-    const doc=root.document,cards=doc.getElementById('projectCards'),status=doc.getElementById('status'),refresh=doc.getElementById('refreshButton'),runButton=doc.getElementById('runChecksButton');
-    if(!cards||!status||!refresh||!runButton)return;
+    const doc=root.document,cards=doc.getElementById('projectCards'),status=doc.getElementById('status'),summary=doc.getElementById('overviewSummary'),refresh=doc.getElementById('refreshButton'),runButton=doc.getElementById('runChecksButton');
+    if(!cards||!status||!summary||!refresh||!runButton)return;
     let state=[],activeId=new URLSearchParams(root.location.search).get('project')||'state';
 
     function activeData(){return state.find(item=>item.project.id===activeId)||null;}
@@ -264,7 +303,12 @@
       const results=await Promise.all(PROJECTS.map(project=>loadProject(project,root)));state=results;
       cards.innerHTML=results.map(item=>cardMarkup(item,item.project.id===activeId)).join('');wireCards();select(activeId);
       const errors=results.flatMap(item=>item.errors.map(error=>item.project.name+': '+error));
-      status.innerHTML=errors.length?'<strong>Some signals are unavailable.</strong> '+esc(errors.join(' · ')):'<strong>Health refreshed.</strong> Delivery, connected infrastructure, analytics, and project-specific quality signals are up to date.';
+      const attentionCount=results.filter(item=>overallAttention(item).kind==='bad'||overallAttention(item).kind==='warn').length;
+      const analyticsConnected=results.filter(item=>item.platform?.analytics?.available).length;
+      summary.innerHTML='<span class="summary-chip"><strong>'+results.length+'</strong> projects</span>'+
+        '<span class="summary-chip"><strong>'+attentionCount+'</strong> need a look</span>'+
+        '<span class="summary-chip"><strong>'+analyticsConnected+'/'+results.length+'</strong> analytics connected</span>';
+      status.innerHTML=errors.length?'<strong>Some sources could not be read.</strong> The dashboard is showing everything else it could verify.':'<strong>Up to date.</strong> Connected delivery, infrastructure, and product-quality signals were refreshed.';
       refresh.disabled=false;
     }
 
@@ -273,5 +317,5 @@
     await refreshAll();
   }
 
-  return {PROJECTS,pageEnvironment,vercelFromStatus,deliveryHealth,normalizeQuality,qualityAttention,externalQualityAttention,deliveryAttention,infrastructureAttention,overallAttention,projectQualityLabel,percent,shortSha,loadProject,infraCardLabel,analyticsLabel,init};
+  return {PROJECTS,pageEnvironment,vercelFromStatus,deliveryHealth,normalizeQuality,qualityAttention,externalQualityAttention,deliveryAttention,infrastructureAttention,allAttentionSignals,attentionItems,overallAttention,projectQualityLabel,percent,shortSha,loadProject,infraCardLabel,analyticsLabel,init};
 });
