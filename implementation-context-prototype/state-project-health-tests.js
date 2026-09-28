@@ -48,8 +48,33 @@ assert.strictEqual(
   'bad'
 );
 assert.strictEqual(
-  H.overallAttention({delivery:{vercel:{kind:'good'}},quality:severe,platform:null}).kind,
+  H.overallAttention({delivery:{vercel:{kind:'good'}},quality:severe,externalQuality:null,platform:null}).kind,
   'bad'
+);
+
+const tastemakeQuality={
+  project:'tastemake',
+  ci:{conclusion:'success'},
+  attention:[{kind:'good',title:'Latest recorded Tastemake checks look healthy',detail:'ok'}]
+};
+assert.strictEqual(H.externalQualityAttention(tastemakeQuality).kind,'good');
+assert.strictEqual(
+  H.projectQualityLabel({project:{id:'tastemake'},externalQuality:tastemakeQuality}),
+  'QA + eval rules healthy'
+);
+
+const narcQuality={
+  project:'narc',
+  recorded:{recorded_all_suites_green:true,full_playtest_pending:true},
+  attention:[{kind:'warn',title:'Full first-run playtest still pending',detail:'pending'}]
+};
+assert.strictEqual(
+  H.projectQualityLabel({project:{id:'narc'},externalQuality:narcQuality}),
+  'Tests green · playtest pending'
+);
+assert.strictEqual(
+  H.overallAttention({delivery:{vercel:{kind:'good'}},quality:null,externalQuality:narcQuality,platform:null}).kind,
+  'warn'
 );
 
 console.log('Project Health shell tests passed');

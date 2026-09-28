@@ -2,6 +2,7 @@ const assert=require('assert');
 
 const platform=require('../api/project-health-platform.js')._test;
 const runApi=require('../api/project-health-run.js')._test;
+const projectQuality=require('../api/project-health-project-quality.js')._test;
 
 assert.deepStrictEqual(Object.keys(platform.PROJECTS),['state','tastemake','narc']);
 assert.strictEqual(platform.PROJECTS.state.vercelProjectId,'prj_zQtHJg96oM7Ol4qTapiwk1mV8iRl');
@@ -36,5 +37,39 @@ for(const [key,value] of Object.entries(saved)){
   if(value===undefined) delete process.env[key];
   else process.env[key]=value;
 }
+
+const evalSummary=projectQuality.summarizeEval({
+  producer:'endpoint',
+  contract:'2026-09-22',
+  fixtures:[
+    {id:'a',error:null,scores:[
+      {kind:'rule',name:'grounded',pass:true},
+      {kind:'quality',name:'all proposals valid',pass:true},
+      {kind:'quality',name:'grounding coverage',pass:null,detail:'ok'}
+    ]},
+    {id:'b',error:null,scores:[
+      {kind:'rule',name:'grounded',pass:false},
+      {kind:'quality',name:'all proposals valid',pass:false}
+    ]}
+  ],
+  selfTest:[{caught:true},{caught:false}]
+});
+assert.deepStrictEqual(evalSummary.rule_checks,{passed:1,total:2,failed:1});
+assert.deepStrictEqual(evalSummary.valid_fixture_outputs,{passed:1,total:2,failed:1});
+assert.deepStrictEqual(evalSummary.validator_self_test,{caught:1,total:2,missed:1});
+assert.deepStrictEqual(evalSummary.failing_fixtures,['b']);
+
+const attention=projectQuality.tastemakeAttention(
+  {valid_fixture_outputs:{failed:2}},
+  {rule_checks:{failed:0},validator_self_test:{missed:0}},
+  {conclusion:'success'}
+);
+assert.strictEqual(attention[0].kind,'warn');
+assert.match(attention[0].title,/Baseline/);
+
+assert.deepStrictEqual(
+  projectQuality.parseNarcHandoff('All three test suites are green on main as of this commit. The only real next step is #70 — a full ~15-minute playtest. #88 analytics stays blocked until then.'),
+  {recorded_all_suites_green:true,full_playtest_pending:true,analytics_blocked_until_playtest:true}
+);
 
 console.log('Project Health API tests passed');
