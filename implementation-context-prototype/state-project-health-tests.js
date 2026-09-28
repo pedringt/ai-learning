@@ -139,6 +139,23 @@ assert.strictEqual(serialized.projectId,'state');
 assert.strictEqual(serialized.delivery.sha,'abc123');
 assert.strictEqual(Object.prototype.hasOwnProperty.call(serialized,'pending'),false);
 
+assert.strictEqual(H.changedSinceVisit({lastSeenSha:'old',delivery:{sha:'new'}}),true);
+assert.strictEqual(H.changedSinceVisit({lastSeenSha:'same',delivery:{sha:'same'}}),false);
+assert.strictEqual(H.trendText(12.5),'↑ 12.5% vs previous 30 days');
+assert.strictEqual(H.trendText(-4),'↓ 4% vs previous 30 days');
+
+const reviewItems=H.activityReviewItems({
+  project:{id:'state',name:'State'},
+  activity:{
+    available:true,
+    deployments:{recent_failures:[{id:'dpl_bad',message:'Build failed',created_at:100,recovered:true,recovered_at:200,url:'https://vercel.com/example'}]},
+    runtime:{issues:[{key:'/api/ask|boom',path:'/api/ask',message:'boom',status:500,count:3,last_seen:300,source_url:'https://vercel.com/example'}]}
+  }
+});
+assert.strictEqual(reviewItems.length,2);
+assert.strictEqual(reviewItems[0].kind,'runtime');
+assert.strictEqual(reviewItems[1].resolved,true);
+
 const safeQuality=H.safeExternalQualitySnapshot({
   project:'tastemake',
   endpoint:{rule_checks:{passed:2,total:2},grounding_findings:[{detail:'private-ish detail'}],failing_fixtures:['x']}
