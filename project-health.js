@@ -130,7 +130,7 @@
   function pendingSet(data){return data?.pending instanceof Set?data.pending:new Set();}
   function productOpenItems(data){
     const items=[],pending=pendingSet(data);
-    if(pending.has('Quality')) return items;
+    if(!data?.project||pending.has('Quality')) return items;
     if(data.project.quality==='state'){
       if(!data.quality&&!data.fresh)return items;
       const q=qualityAttention(data.quality);
