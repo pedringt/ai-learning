@@ -55,3 +55,17 @@ Project Health may show deployment metadata, service reachability/build identifi
 It must not expose provider tokens, database connection strings, raw logs, visitor identities, State project content, prompts, answers, Evidence, Review text, Question text, Current State statements, or detailed traces.
 
 See `docs/product/DATA_PRIVACY.md` and R-020 in `docs/product/RISKS.md`.
+
+
+### On-demand investigation
+
+The first investigation version is limited to failed Vercel deployments and failed GitHub checks. It verifies the current allowlisted branch server-side, reads the matching provider evidence, and may follow up with Vercel build output or the related commit/PR when the first source is inconclusive. It sends bounded, sanitized evidence to Anthropic for one short summary. The model cannot call tools or select URLs.
+
+Configure these server-side in the Project Health Vercel project before enabling the feature:
+
+- `ANTHROPIC_API_KEY`
+- `PROJECT_HEALTH_INVESTIGATION_KEY`, a separate admin key used only to authorize investigation requests
+
+The existing `VERCEL_TOKEN` is used to read Vercel deployment metadata/build output. GitHub check details are read from the public repository API. Do not reuse `PROJECT_HEALTH_RUN_KEY`; that key is only for dispatching paid State eval runs.
+
+The UI asks for confirmation before sending one investigation request to Anthropic. Each request is read-only, limited to the selected project/environment, and uses one model summary call with a fixed output-token cap. Logs/check output are treated as untrusted text and never executed. No Slack, database, code-writing, workflow-dispatch, issue-creation, or deployment access is included.
