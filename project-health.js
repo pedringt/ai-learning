@@ -241,7 +241,8 @@
     const data=emptyProjectData(project,seed);
     const run=makeRunner(data,onUpdate);
     const core=[
-      run('Delivery',loadGitHubProject(project,project.branch),value=>{data.delivery=value;})
+      run('Delivery',loadGitHubProject(project,project.branch),value=>{data.delivery=value;}),
+      run('Activity',loadActivity(project),value=>{data.activity=value;})
     ];
     if(project.id==='state'){
       core.push(run('Production backend',loadPlatformSignal(project,'production-render'),value=>{data.platform=mergePlatform(data.platform,value);}));
@@ -252,6 +253,7 @@
     data.qualityPromise=qualityTask;
     await Promise.all(core);
     data.fresh=true;
+    data.checkedAt=new Date().toISOString();
     if(typeof onUpdate==='function')onUpdate(data);
     return data;
   }
@@ -262,7 +264,8 @@
     const project=data.project,run=makeRunner(data,onUpdate);
     const tasks=[
       run('Analytics',loadPlatformSignal(project,'analytics'),value=>{data.platform=mergePlatform(data.platform,value);}),
-      run('Neon',loadPlatformSignal(project,'neon'),value=>{data.platform=mergePlatform(data.platform,value);})
+      run('Neon',loadPlatformSignal(project,'neon'),value=>{data.platform=mergePlatform(data.platform,value);}),
+      run('Open work',loadOpenPullRequests(project),value=>{data.openPullRequests=Array.isArray(value)?value:[];})
     ];
     if(project.id==='state'){
       tasks.push(
@@ -274,6 +277,7 @@
     await Promise.all(tasks);
     data.detailLoaded=true;
     data.detailLoading=false;
+    data.detailCheckedAt=new Date().toISOString();
     if(typeof onUpdate==='function')onUpdate(data);
     return data;
   }
