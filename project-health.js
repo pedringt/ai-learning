@@ -199,16 +199,17 @@
   async function loadProject(project,root,onUpdate,seed){
     const data=emptyProjectData(project,seed);
     const run=makeRunner(data,onUpdate);
-    const tasks=[
-      run('Delivery',loadGitHubProject(project,project.branch),value=>{data.delivery=value;}),
-      project.quality==='state'
-        ? run('Quality',loadStateQuality(root),value=>{data.quality=value;})
-        : run('Quality',loadExternalQuality(project),value=>{data.externalQuality=value;})
+    const core=[
+      run('Delivery',loadGitHubProject(project,project.branch),value=>{data.delivery=value;})
     ];
     if(project.id==='state'){
-      tasks.push(run('Production backend',loadPlatformSignal(project,'production-render'),value=>{data.platform=mergePlatform(data.platform,value);}));
+      core.push(run('Production backend',loadPlatformSignal(project,'production-render'),value=>{data.platform=mergePlatform(data.platform,value);}));
     }
-    await Promise.all(tasks);
+    const qualityTask=project.quality==='state'
+      ? run('Quality',loadStateQuality(root),value=>{data.quality=value;})
+      : run('Quality',loadExternalQuality(project),value=>{data.externalQuality=value;});
+    data.qualityPromise=qualityTask;
+    await Promise.all(core);
     data.fresh=true;
     if(typeof onUpdate==='function')onUpdate(data);
     return data;
@@ -503,7 +504,7 @@
         const seed=state[index];
         const item=await loadProject(project,root,partial=>{
           state[index]=partial;
-          scheduleRender();
+          scheduleRender();persist();
         },seed);
         state[index]=item;
         completed.add(project.id);
@@ -516,7 +517,7 @@
       await Promise.all(jobs);
       const errors=state.flatMap(item=>item.errors.map(error=>item.project.name+': '+error));
       root.PROJECT_HEALTH_LAST_TIMINGS=Object.fromEntries(state.map(item=>[item.project.id,{...item.timings}]));
-      status.innerHTML=errors.length?'<strong>Refresh complete with some unavailable sources.</strong> Everything else was updated as it arrived.':'<strong>Core health is up to date.</strong> Detailed signals load when you open a project.';
+      status.innerHTML=errors.length?'<strong>Core refresh complete with some unavailable sources.</strong> Remaining quality/detail signals continue independently.':'<strong>Core health is up to date.</strong> Product quality may still be finishing; detailed signals load when you open a project.';
       refresh.disabled=false;
       ensureDetails(activeId);
     }
