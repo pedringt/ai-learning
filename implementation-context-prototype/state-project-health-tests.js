@@ -1,5 +1,6 @@
 // Project Health combined-branch regression coverage.
 const assert=require('assert');
+const fs=require('fs');
 const H=require('../project-health.js');
 
 assert.deepStrictEqual(H.PROJECTS.map(p=>p.id),['state','tastemake','narc']);
@@ -156,6 +157,9 @@ const reviewItems=H.activityReviewItems({
 assert.strictEqual(reviewItems.length,2);
 assert.strictEqual(reviewItems[0].kind,'runtime');
 assert.strictEqual(reviewItems[1].resolved,true);
+assert.strictEqual(reviewItems[0].owner,'Engineering');
+assert.match(reviewItems[0].impact,/Users may be seeing errors/);
+assert.strictEqual(reviewItems[1].owner,'No action');
 
 const safeQuality=H.safeExternalQualitySnapshot({
   project:'tastemake',
@@ -164,5 +168,22 @@ const safeQuality=H.safeExternalQualitySnapshot({
 assert.strictEqual(safeQuality.endpoint.rule_checks.passed,2);
 assert.strictEqual(Object.prototype.hasOwnProperty.call(safeQuality.endpoint,'grounding_findings'),false);
 assert.strictEqual(Object.prototype.hasOwnProperty.call(safeQuality.endpoint,'failing_fixtures'),false);
+
+
+const healthHtml=fs.readFileSync(require.resolve('../project-health.html'),'utf8');
+assert.match(healthHtml,/Portfolio demo · simulated incident/);
+assert.match(healthHtml,/See a bounded investigation/);
+assert.match(healthHtml,/How Project Health works/);
+assert.match(healthHtml,/Role & attribution/);
+assert.match(healthHtml,/Why I built it:/);
+assert.match(healthHtml,/productFocusPanel/);
+assert.match(H.PROJECTS[0].focus,/Keep project truth trustworthy/);
+assert.ok(H.PROJECTS[1].evidence.includes('Candidate breadth'));
+assert.match(H.PROJECTS[1].nextDecision,/canonical store/);
+assert.match(H.PROJECTS[2].nextDecision,/first-play flow/);
+assert.match(healthHtml,/No code, configuration, deployment, or live AI call was changed or triggered/);
+assert.match(healthHtml,/Copy engineer handoff/);
+assert.match(healthHtml,/Project Health helps product owners spot problems across live products/);
+assert.match(H.PROJECTS[0].description,/Human-reviewed project truth system/);
 
 console.log('Project Health shell tests passed');
