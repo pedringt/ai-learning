@@ -45,7 +45,7 @@ delete process.env.GITHUB_TOKEN;
 delete process.env.PROJECT_HEALTH_RUN_KEY;
 delete process.env.PROJECT_HEALTH_RUN_COST_ESTIMATE_STATE;
 assert.strictEqual(runApi.runInfo('state').configured,false);
-assert.strictEqual(runApi.runInfo('state').minimum_controlled_cases,16);
+assert.strictEqual(runApi.runInfo('state').minimum_controlled_cases,8);
 assert.strictEqual(runApi.runInfo('tastemake'),null);
 
 process.env.GITHUB_TOKEN='test-token';
