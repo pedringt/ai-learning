@@ -156,7 +156,15 @@
     if(['Delivery','Quality','Production backend'].some(label=>pending.has(label))) return {kind:'unknown',title:'Checking project health',detail:'Core signals are still loading.'};
     const liveIncidents=activityReviewItems(data).filter(item=>!item.resolved);
     if(liveIncidents.length) return {kind:'bad',title:liveIncidents[0].title,detail:liveIncidents[0].impact};
-    const quality=productOpenItems(data);
+    let quality=productOpenItems(data);
+    if(!data?.project&&data?.quality){
+      const fallback=qualityAttention(data.quality);
+      if(['bad','warn'].includes(fallback.kind)) quality=[fallback];
+    }
+    if(!data?.project&&data?.externalQuality){
+      const fallback=externalQualityAttention(data.externalQuality);
+      if(fallback&&['bad','warn'].includes(fallback.kind)) quality=[fallback];
+    }
     if(quality.some(item=>item.kind==='bad')) return quality.find(item=>item.kind==='bad');
     if(quality.length) return quality[0];
     const delivery=deliveryAttention(data.delivery);
