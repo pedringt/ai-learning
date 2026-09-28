@@ -183,7 +183,15 @@
   function attentionItems(data){
     const incidents=activityReviewItems(data).filter(item=>!item.resolved).map(item=>({kind:'bad',title:item.title,detail:item.impact,owner:item.owner}));
     if(incidents.length) return incidents;
-    const open=productOpenItems(data);
+    let open=productOpenItems(data);
+    if(!data?.project&&data?.quality){
+      const fallback=qualityAttention(data.quality);
+      if(['bad','warn'].includes(fallback.kind)) open=[fallback];
+    }
+    if(!data?.project&&data?.externalQuality){
+      const fallback=externalQualityAttention(data.externalQuality);
+      if(fallback&&['bad','warn'].includes(fallback.kind)) open=[fallback];
+    }
     if(open.length) return open;
     const pending=pendingSet(data);
     if(pending.size) return [{kind:'unknown',title:'Still checking',detail:'Some connected signals are still loading.'}];
