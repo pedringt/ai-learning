@@ -1,16 +1,62 @@
-# Manual only: makes real model calls and creates temporary staging records.
-# Do not add this to automatic CI. The script never resets the demo or touches main.
-name: Question Review live staging check
+# Manual only: makes real model calls. Controlled evals use temporary test
+# databases and record aggregate metrics only.
+name: State AI quality check
 on:
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      suite:
+        description: Which AI behavior to check
+        required: true
+        default: all
+        type: choice
+        options:
+          - all
+          - review
+          - ask
+      record_environment:
+        description: Where to record aggregate results
+        required: true
+        default: production
+        type: choice
+        options:
+          - production
+          - staging
 permissions:
   contents: read
 concurrency:
-  group: question-review-live-staging
+  group: state-ai-quality-check-staging
   cancel-in-progress: false
 jobs:
-  walkthrough:
+  quality:
     if: github.ref == 'refs/heads/staging'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install quality-check dependencies
+        run: pip install -r state-project-complete/requirements.txt
+      - name: Run controlled AI quality checks
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          STATE_EVAL_INGEST_KEY: ${{ secrets.STATE_EVAL_INGEST_KEY }}
+          CLAUDE_MODEL: ${{ vars.CLAUDE_MODEL }}
+        run: |
+          if [ "${{ inputs.record_environment }}" = "staging" ]; then
+            RECORD_URL="https://state-api-staging.onrender.com"
+          else
+            RECORD_URL="https://state-api-6waw.onrender.com"
+          fi
+          python state-project-complete/eval/run_quality_evals.py \
+            --suite "${{ inputs.suite }}" \
+            --record-url "$RECORD_URL"
+
+  walkthrough:
+    if: github.ref == 'refs/heads/staging' && inputs.suite == 'all'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
