@@ -468,6 +468,7 @@
     async function ensureDetails(id){
       const data=state.find(item=>item.project.id===id);if(!data)return;
       await loadProjectDetails(data,root,partial=>{scheduleRender();persist();});
+      root.PROJECT_HEALTH_LAST_TIMINGS=Object.fromEntries(state.map(item=>[item.project.id,{...item.timings}]));
       scheduleRender();persist();
     }
 
