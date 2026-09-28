@@ -157,6 +157,9 @@ const reviewItems=H.activityReviewItems({
 assert.strictEqual(reviewItems.length,2);
 assert.strictEqual(reviewItems[0].kind,'runtime');
 assert.strictEqual(reviewItems[1].resolved,true);
+assert.strictEqual(reviewItems[0].owner,'Engineering');
+assert.match(reviewItems[0].impact,/Users may be seeing errors/);
+assert.strictEqual(reviewItems[1].owner,'No action');
 
 const safeQuality=H.safeExternalQualitySnapshot({
   project:'tastemake',
@@ -179,6 +182,8 @@ assert.ok(H.PROJECTS[1].evidence.includes('Candidate breadth'));
 assert.match(H.PROJECTS[1].nextDecision,/canonical store/);
 assert.match(H.PROJECTS[2].nextDecision,/first-play flow/);
 assert.match(healthHtml,/No code, configuration, deployment, or live AI call was changed or triggered/);
+assert.match(healthHtml,/Copy engineer handoff/);
+assert.match(healthHtml,/Project Health helps product owners spot problems across live products/);
 assert.match(H.PROJECTS[0].description,/Human-reviewed project truth system/);
 
 console.log('Project Health shell tests passed');
