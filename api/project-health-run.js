@@ -37,7 +37,7 @@ module.exports=async function handler(req,res){
     const projectId=String(req.query?.project||'state').toLowerCase();
     const info=runInfo(projectId);
     if(!info){res.status(404).json({configured:false,detail:'No dashboard-run workflow is configured for this project yet.'});return;}
-    res.setHeader('Cache-Control','no-store');
+    res.setHeader('Cache-Control','s-maxage=300, stale-while-revalidate=1800');
     res.status(200).json(info);
     return;
   }

@@ -107,4 +107,39 @@ assert.strictEqual(
 );
 assert.strictEqual(H.progressText(3,3,[]),'Finishing refresh…');
 
+const blank=H.emptyProjectData(H.PROJECTS[0]);
+assert.strictEqual(blank.project.id,'state');
+assert.ok(blank.pending instanceof Set);
+assert.strictEqual(blank.pending.size,0);
+assert.deepStrictEqual(blank.errors,[]);
+assert.strictEqual(blank.fresh,false);
+
+const pendingOnly=H.emptyProjectData(H.PROJECTS[0]);
+pendingOnly.pending.add('Delivery');
+assert.strictEqual(H.overallAttention(pendingOnly).kind,'unknown');
+
+const mergedPlatform=H.mergePlatform(
+  {render:{configured:true,environments:{production:{ok:true}}}},
+  {render:{configured:true,environments:{staging:{ok:false}}}}
+);
+assert.strictEqual(mergedPlatform.render.environments.production.ok,true);
+assert.strictEqual(mergedPlatform.render.environments.staging.ok,false);
+
+const serialized=H.serializeProjectData({
+  ...blank,
+  delivery:{sha:'abc123'},
+  pending:new Set(['Delivery'])
+});
+assert.strictEqual(serialized.projectId,'state');
+assert.strictEqual(serialized.delivery.sha,'abc123');
+assert.strictEqual(Object.prototype.hasOwnProperty.call(serialized,'pending'),false);
+
+const safeQuality=H.safeExternalQualitySnapshot({
+  project:'tastemake',
+  endpoint:{rule_checks:{passed:2,total:2},grounding_findings:[{detail:'private-ish detail'}],failing_fixtures:['x']}
+});
+assert.strictEqual(safeQuality.endpoint.rule_checks.passed,2);
+assert.strictEqual(Object.prototype.hasOwnProperty.call(safeQuality.endpoint,'grounding_findings'),false);
+assert.strictEqual(Object.prototype.hasOwnProperty.call(safeQuality.endpoint,'failing_fixtures'),false);
+
 console.log('Project Health shell tests passed');

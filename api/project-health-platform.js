@@ -22,9 +22,11 @@ const PROJECTS={
 async function timedJson(url,options={}){
   const started=Date.now();
   const controller=new AbortController();
-  const timer=setTimeout(()=>controller.abort(),12000);
+  const timeoutMs=Number(options.timeoutMs||5000);
+  const fetchOptions={...options};delete fetchOptions.timeoutMs;
+  const timer=setTimeout(()=>controller.abort(),timeoutMs);
   try{
-    const response=await fetch(url,{...options,signal:controller.signal});
+    const response=await fetch(url,{...fetchOptions,signal:controller.signal});
     const payload=await response.json().catch(()=>({}));
     return {ok:response.ok,status:response.status,payload,latency_ms:Date.now()-started};
   }catch(error){
@@ -46,12 +48,12 @@ function safeRenderHealth(result){
   };
 }
 
-async function renderHealth(project){
-  if(!project.render) return {configured:false};
-  const entries=await Promise.all(Object.entries(project.render).map(async ([environment,url])=>{
-    return [environment,safeRenderHealth(await timedJson(url,{headers:{Accept:'application/json'}}))];
-  }));
-  return {configured:true,environments:Object.fromEntries(entries)};
+async function renderSignal(project,environment){
+  const url=project.render?.[environment];
+  if(!url) return {configured:false};
+  const timeoutMs=environment==='staging'?3500:4000;
+  const result=await timedJson(url,{headers:{Accept:'application/json'},timeoutMs});
+  return {configured:true,environments:{[environment]:safeRenderHealth(result)}};
 }
 
 function isoDay(date){return date.toISOString().slice(0,10);}
@@ -68,7 +70,8 @@ async function vercelAnalytics(project){
     teamId:TEAM_ID
   });
   const result=await timedJson('https://api.vercel.com/v1/query/web-analytics/visits/count?'+qs.toString(),{
-    headers:{Authorization:'Bearer '+token,Accept:'application/json'}
+    headers:{Authorization:'Bearer '+token,Accept:'application/json'},
+    timeoutMs:4500
   });
   if(!result.ok){
     return {configured:true,available:false,status:result.status,error:result.error||result.payload?.error?.message||result.payload?.message||'Web Analytics unavailable'};
@@ -91,8 +94,8 @@ async function neonHealth(project){
   }
   const headers={Authorization:'Bearer '+token,Accept:'application/json'};
   const [projectResult,branchesResult]=await Promise.all([
-    timedJson('https://console.neon.tech/api/v2/projects/'+encodeURIComponent(projectId),{headers}),
-    timedJson('https://console.neon.tech/api/v2/projects/'+encodeURIComponent(projectId)+'/branches?limit=100',{headers})
+    timedJson('https://console.neon.tech/api/v2/projects/'+encodeURIComponent(projectId),{headers,timeoutMs:4500}),
+    timedJson('https://console.neon.tech/api/v2/projects/'+encodeURIComponent(projectId)+'/branches?limit=100',{headers,timeoutMs:4500})
   ]);
   if(!projectResult.ok){
     return {configured:true,available:false,status:projectResult.status,error:projectResult.error||projectResult.payload?.message||'Neon project unavailable'};
@@ -119,22 +122,28 @@ module.exports=async function handler(req,res){
     return;
   }
   const projectId=String(req.query?.project||'').toLowerCase();
+  const signal=String(req.query?.signal||'production-render').toLowerCase();
   const project=PROJECTS[projectId];
   if(!project){
     res.status(400).json({detail:'Unknown project'});
     return;
   }
-  const [render,analytics,neon]=await Promise.all([
-    renderHealth(project),
-    vercelAnalytics(project),
-    neonHealth(project)
-  ]);
-  res.setHeader('Cache-Control','no-store');
+
+  let payload;
+  if(signal==='production-render') payload={render:await renderSignal(project,'production')};
+  else if(signal==='staging-render') payload={render:await renderSignal(project,'staging')};
+  else if(signal==='analytics') payload={analytics:await vercelAnalytics(project)};
+  else if(signal==='neon') payload={neon:await neonHealth(project)};
+  else {
+    res.status(400).json({detail:'Unknown platform signal'});
+    return;
+  }
+
+  res.setHeader('Cache-Control',signal.includes('render')?'s-maxage=15, stale-while-revalidate=60':'s-maxage=120, stale-while-revalidate=600');
   res.status(200).json({
     project:projectId,
-    render,
-    neon,
-    analytics,
+    signal,
+    ...payload,
     privacy:{
       content_included:false,
       analytics_scope:'aggregate Web Analytics counts only'

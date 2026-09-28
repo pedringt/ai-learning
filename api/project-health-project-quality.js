@@ -13,15 +13,28 @@ const SOURCES={
   }
 };
 
+async function timedFetch(url,options={},timeoutMs=5000){
+  const controller=new AbortController();
+  const timer=setTimeout(()=>controller.abort(),timeoutMs);
+  try{
+    return await fetch(url,{...options,signal:controller.signal});
+  }catch(error){
+    if(error?.name==='AbortError') throw new Error('Quality source timed out');
+    throw error;
+  }finally{
+    clearTimeout(timer);
+  }
+}
+
 async function githubJson(path){
-  const response=await fetch('https://api.github.com'+path,{headers:{Accept:'application/vnd.github+json','User-Agent':'context-switch-project-health'}});
+  const response=await timedFetch('https://api.github.com'+path,{headers:{Accept:'application/vnd.github+json','User-Agent':'context-switch-project-health'}});
   const payload=await response.json().catch(()=>({}));
   if(!response.ok) throw new Error(payload?.message||('GitHub request failed: '+response.status));
   return payload;
 }
 
 async function githubText(repo,path,ref){
-  const response=await fetch('https://raw.githubusercontent.com/'+repo+'/'+encodeURIComponent(ref)+'/'+path,{headers:{'User-Agent':'context-switch-project-health'}});
+  const response=await timedFetch('https://raw.githubusercontent.com/'+repo+'/'+encodeURIComponent(ref)+'/'+path,{headers:{'User-Agent':'context-switch-project-health'}});
   if(!response.ok) throw new Error('GitHub file request failed: '+response.status);
   return response.text();
 }
@@ -41,7 +54,7 @@ function summarizeEval(report){
     fixture_errors:errors,
     rule_checks:{passed:rules.filter(x=>x.pass===true).length,total:rules.length,failed:rules.filter(x=>x.pass===false).length},
     valid_fixture_outputs:{passed:validity.filter(x=>x.pass===true).length,total:validity.length,failed:validity.filter(x=>x.pass===false).length},
-    grounding_findings:grounding.map((x,i)=>({fixture:fixtures[i]?.id||null,detail:x.detail||''})),
+    grounding_checks:grounding.length,
     validator_self_test:{caught:self.filter(x=>x.caught===true).length,total:self.length,missed:self.filter(x=>x.caught!==true).length},
     failing_fixtures:fixtures.filter(f=>(f.scores||[]).some(s=>s.pass===false)).map(f=>f.id)
   };
@@ -127,7 +140,7 @@ module.exports=async function handler(req,res){
     if(project==='tastemake') payload=await tastemake();
     else if(project==='narc') payload=await narc();
     else {res.status(404).json({detail:'No external quality adapter for this project'});return;}
-    res.setHeader('Cache-Control','s-maxage=60, stale-while-revalidate=300');
+    res.setHeader('Cache-Control','s-maxage=300, stale-while-revalidate=1800');
     res.status(200).json(payload);
   }catch(error){
     res.setHeader('Cache-Control','no-store');
