@@ -6,9 +6,9 @@
   'use strict';
 
   const PROJECTS=[
-    {id:'state',name:'State',description:'Maintained project truth with human-authorized Current State.',repo:'pedringt/ai-learning',branch:'main',stagingBranch:'staging',quality:'state'},
-    {id:'tastemake',name:'Tastemake',description:'Taste-learning recommendations and preference discovery.',repo:'pedringt/tastemake',branch:'main'},
-    {id:'narc',name:'NARC',description:'Workplace-surveillance satire game and branching system.',repo:'pedringt/narc',branch:'main'}
+    {id:'state',name:'State',description:'Human-reviewed project truth system with maintained Current State.',repo:'pedringt/ai-learning',branch:'main',stagingBranch:'staging',quality:'state'},
+    {id:'tastemake',name:'Tastemake',description:'Taste-learning recommendation prototype built around preference discovery.',repo:'pedringt/tastemake',branch:'main'},
+    {id:'narc',name:'NARC',description:'Workplace-surveillance satire game with branching consequences.',repo:'pedringt/narc',branch:'main'}
   ];
   const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   function shortSha(sha){return sha?String(sha).slice(0,7):'Unknown';}
@@ -544,8 +544,8 @@
   }
 
   async function init(root){
-    const doc=root.document,cards=doc.getElementById('projectCards'),status=doc.getElementById('status'),summary=doc.getElementById('overviewSummary'),reviewInbox=doc.getElementById('reviewInbox'),refresh=doc.getElementById('refreshButton'),qualityPanel=doc.getElementById('qualityPanel');
-    if(!cards||!status||!summary||!reviewInbox||!refresh||!qualityPanel)return;
+    const doc=root.document,cards=doc.getElementById('projectCards'),status=doc.getElementById('status'),summary=doc.getElementById('overviewSummary'),reviewInbox=doc.getElementById('reviewInbox'),refresh=doc.getElementById('refreshButton'),qualityPanel=doc.getElementById('qualityPanel'),runDemoButton=doc.getElementById('runDemoButton'),demoResult=doc.getElementById('demoResult');
+    if(!cards||!status||!summary||!reviewInbox||!refresh||!qualityPanel||!runDemoButton||!demoResult)return;
     const cached=loadSnapshot(root);
     let state=PROJECTS.map(project=>hydrateProjectData(project,cached?.projects?.find(item=>item.projectId===project.id)));
     let activeId=new URLSearchParams(root.location.search).get('project')||'state';
@@ -575,7 +575,7 @@
     function renderReviewInbox(){
       const items=unreviewedItems();
       if(!items.length){
-        reviewInbox.innerHTML='<section class="panel"><h3>Needs review</h3><p class="panel-copy">Meaningful delivery and runtime problems appear here. Healthy logs stay out of the way.</p><div class="review-empty">Nothing new needs review.</div></section>';
+        reviewInbox.innerHTML='<section class="panel"><h3>Needs review</h3><p class="panel-copy">Deployment failures, runtime errors, and quality problems appear here when they deserve attention. Healthy logs stay out of the way.</p><div class="review-empty">Nothing new needs review right now. <button class="button small" type="button" data-open-demo>Try the investigation demo</button></div></section>';
         return;
       }
       const rows=items.slice(0,6).map(item=>{
@@ -695,6 +695,12 @@
     renderNow();
     refresh.addEventListener('click',refreshAll);
     reviewInbox.addEventListener('click',event=>{
+      const demoButton=event.target.closest?.('[data-open-demo]');
+      if(demoButton){
+        doc.getElementById('investigationDemo')?.scrollIntoView({behavior:'smooth',block:'center'});
+        runDemoButton.focus();
+        return;
+      }
       const button=event.target.closest?.('[data-review-key]');
       if(!button)return;
       const reviewed=reviewedState();
@@ -702,6 +708,26 @@
       saveReviewedState(reviewed);
       renderNow();
     });
+    function resetDemo(){
+      doc.querySelectorAll('[data-demo-step]').forEach(step=>step.classList.remove('active'));
+      demoResult.classList.remove('active');
+      runDemoButton.disabled=false;
+      runDemoButton.textContent='Run demo';
+    }
+    function runDemo(){
+      resetDemo();
+      runDemoButton.disabled=true;
+      runDemoButton.textContent='Investigating…';
+      const steps=Array.from(doc.querySelectorAll('[data-demo-step]'));
+      const timers=[0,450,900,1350];
+      steps.forEach((step,index)=>root.setTimeout(()=>step.classList.add('active'),timers[index]));
+      root.setTimeout(()=>{
+        demoResult.classList.add('active');
+        runDemoButton.disabled=false;
+        runDemoButton.textContent='Replay demo';
+      },1800);
+    }
+    runDemoButton.addEventListener('click',runDemo);
     qualityPanel.addEventListener('click',async event=>{
       const button=event.target.closest?.('[data-run-checks]');
       if(!button)return;
