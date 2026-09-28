@@ -283,6 +283,50 @@
   }
 
   function fmtDate(value){if(!value)return'Unknown';const d=new Date(value);return Number.isNaN(d.getTime())?'Unknown':d.toLocaleString([],{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'});}
+  function relativeAge(value){
+    if(!value)return'not checked yet';
+    const time=new Date(value).getTime();if(Number.isNaN(time))return'unknown';
+    const minutes=Math.max(0,Math.round((Date.now()-time)/60000));
+    if(minutes<1)return'just now';
+    if(minutes<60)return minutes+'m ago';
+    const hours=Math.round(minutes/60);if(hours<24)return hours+'h ago';
+    return Math.round(hours/24)+'d ago';
+  }
+  function changedSinceVisit(data){return !!(data?.lastSeenSha&&data?.delivery?.sha&&data.lastSeenSha!==data.delivery.sha);}
+  function trendText(value){
+    if(value==null||Number.isNaN(Number(value)))return'No comparison yet';
+    const n=Number(value);if(Math.abs(n)<0.1)return'About the same as the previous 30 days';
+    return (n>0?'↑ ':'↓ ')+Math.abs(n)+'% vs previous 30 days';
+  }
+  function activityReviewItems(data){
+    const activity=data?.activity;if(!activity?.available)return[];
+    const items=[];
+    for(const failure of activity.deployments?.recent_failures||[]){
+      items.push({
+        key:data.project.id+':deploy:'+failure.id,
+        project:data.project.name,
+        kind:'deployment',
+        title:failure.recovered?'Deployment failed, then recovered':'Production deployment failed',
+        detail:(failure.message||'Deployment failure')+(failure.recovered&&failure.recovered_at?' · recovered '+relativeAge(failure.recovered_at):''),
+        observedAt:failure.created_at,
+        resolved:!!failure.recovered,
+        url:failure.url||null
+      });
+    }
+    for(const issue of activity.runtime?.issues||[]){
+      items.push({
+        key:data.project.id+':runtime:'+issue.key,
+        project:data.project.name,
+        kind:'runtime',
+        title:(issue.status?('HTTP '+issue.status+' · '):'')+(issue.path||'Runtime error'),
+        detail:(issue.count>1?issue.count+' occurrences · ':'')+(issue.message||'Runtime error'),
+        observedAt:issue.last_seen,
+        resolved:false,
+        url:issue.source_url||null
+      });
+    }
+    return items.sort((a,b)=>(b.observedAt||0)-(a.observedAt||0));
+  }
   function row(label,value){return '<div class="row"><span>'+esc(label)+'</span><span>'+esc(value)+'</span></div>';}
   function metric(value,label){return '<div class="metric"><strong>'+esc(value)+'</strong><span>'+esc(label)+'</span></div>';}
   function attentionMarkup(item){return '<div class="attention '+esc(item.kind||'')+'"><strong>'+esc(item.title)+'</strong><p>'+esc(item.detail)+'</p></div>';}
@@ -320,7 +364,6 @@
       '<div class="card-focus">Checking connected sources…</div>'+
       '<div class="signal-list">'+
       '<div class="signal"><span class="signal-label">Delivery</span><span class="signal-value">Checking…</span></div>'+
-      '<div class="signal"><span class="signal-label">Infrastructure</span><span class="signal-value">Checking…</span></div>'+
       '<div class="signal"><span class="signal-label">Product quality</span><span class="signal-value">Checking…</span></div>'+
       '</div></article>';
   }
@@ -328,17 +371,15 @@
     const att=overallAttention(data),d=data.delivery;
     const pending=pendingSet(data);
     const quality=projectQualityLabel(data);
-    const infraPending=pending.has('Production backend')||pending.has('Staging backend')||pending.has('Neon');
+    const changePrefix=changedSinceVisit(data)?'New since last visit · ':'';
     return '<article class="project-card '+(active?'active':'')+'" data-kind="'+esc(att.kind)+'" data-project="'+esc(data.project.id)+'" tabindex="0" role="button" aria-label="Open '+esc(data.project.name)+' health">'+
       '<div class="card-head"><div><h2>'+esc(data.project.name)+'</h2><p>'+esc(data.project.description)+'</p></div><span class="status-pill '+esc(att.kind)+'">'+esc(att.kind==='good'?'Healthy':att.kind==='bad'?'Needs attention':'Check')+'</span></div>'+
       '<div class="card-focus">'+esc(att.title)+'</div>'+
       '<div class="signal-list">'+
-      '<div class="signal change-signal"><span class="signal-label">Latest change</span><span class="signal-value">'+esc(d?commitTitle(d.message):(pending.has('Delivery')?'Checking…':'Unavailable'))+'</span><span class="change-date">'+esc(d?'Updated '+fmtDate(d.updatedAt):(pending.has('Delivery')?'':'Date unavailable'))+'</span></div>'+
+      '<div class="signal change-signal"><span class="signal-label">'+esc(changePrefix+'Latest change')+'</span><span class="signal-value">'+esc(d?commitTitle(d.message):(pending.has('Delivery')?'Checking…':'Unavailable'))+'</span><span class="change-date">'+esc(d?'Updated '+fmtDate(d.updatedAt):(pending.has('Delivery')?'':'Date unavailable'))+'</span></div>'+
       '<div class="signal"><span class="signal-label">Delivery</span><span class="signal-value">'+esc(d?.vercel?.label||(pending.has('Delivery')?'Checking…':'Unavailable'))+'</span></div>'+
-      '<div class="signal"><span class="signal-label">Infrastructure</span><span class="signal-value">'+esc(data.platform?infraCardLabel(data.platform):(infraPending?'Checking…':'Unavailable'))+'</span></div>'+
-      '<div class="signal"><span class="signal-label">Site analytics</span><span class="signal-value">'+esc(data.platform?.analytics?analyticsLabel(data.platform):(pending.has('Analytics')?'Checking…':'Open project to load'))+'</span></div>'+
       '<div class="signal"><span class="signal-label">Product quality</span><span class="signal-value">'+esc((data.quality||data.externalQuality)?quality:(pending.has('Quality')?'Checking…':'Unavailable'))+'</span></div>'+
-      '</div></article>';
+      '</div><div class="freshness">Checked '+esc(relativeAge(data.checkedAt))+'</div></article>';
   }
 
   function renderDetail(data,doc){
