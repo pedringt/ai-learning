@@ -279,14 +279,15 @@
     const att=overallAttention(data),d=data.delivery;
     const pending=pendingSet(data);
     const quality=projectQualityLabel(data);
+    const infraPending=pending.has('Production backend')||pending.has('Staging backend')||pending.has('Neon');
     return '<article class="project-card '+(active?'active':'')+'" data-kind="'+esc(att.kind)+'" data-project="'+esc(data.project.id)+'" tabindex="0" role="button" aria-label="Open '+esc(data.project.name)+' health">'+
       '<div class="card-head"><div><h2>'+esc(data.project.name)+'</h2><p>'+esc(data.project.description)+'</p></div><span class="status-pill '+esc(att.kind)+'">'+esc(att.kind==='good'?'Healthy':att.kind==='bad'?'Needs attention':'Check')+'</span></div>'+
       '<div class="card-focus">'+esc(att.title)+'</div>'+
       '<div class="signal-list">'+
       '<div class="signal"><span class="signal-label">Latest commit</span><span class="signal-value">'+esc(d?shortSha(d.sha):(pending.has('Delivery')?'Checking…':'Unavailable'))+'</span></div>'+
       '<div class="signal"><span class="signal-label">Delivery</span><span class="signal-value">'+esc(d?.vercel?.label||(pending.has('Delivery')?'Checking…':'Unavailable'))+'</span></div>'+
-      '<div class="signal"><span class="signal-label">Infrastructure</span><span class="signal-value">'+esc(data.platform?infraCardLabel(data.platform):(pending.has('Platform')?'Checking…':'Unavailable'))+'</span></div>'+
-      '<div class="signal"><span class="signal-label">Site analytics</span><span class="signal-value">'+esc(data.platform?analyticsLabel(data.platform):(pending.has('Platform')?'Checking…':'Unavailable'))+'</span></div>'+
+      '<div class="signal"><span class="signal-label">Infrastructure</span><span class="signal-value">'+esc(data.platform?infraCardLabel(data.platform):(infraPending?'Checking…':'Unavailable'))+'</span></div>'+
+      '<div class="signal"><span class="signal-label">Site analytics</span><span class="signal-value">'+esc(data.platform?.analytics?analyticsLabel(data.platform):(pending.has('Analytics')?'Checking…':'Open project to load'))+'</span></div>'+
       '<div class="signal"><span class="signal-label">Product quality</span><span class="signal-value">'+esc((data.quality||data.externalQuality)?quality:(pending.has('Quality')?'Checking…':'Unavailable'))+'</span></div>'+
       '</div></article>';
   }
