@@ -383,87 +383,101 @@
   }
 
   function renderDetail(data,doc){
-    const p=data.project,d=data.delivery,s=data.staging,q=data.quality,externalQ=data.externalQuality,platform=data.platform,run=data.runInfo;
-    doc.getElementById('detailTitle').textContent=p.name;doc.getElementById('detailCopy').textContent=p.description;doc.getElementById('repoLink').href=repoUrl(p.repo);
+    const p=data.project,d=data.delivery,s=data.staging,q=data.quality,externalQ=data.externalQuality,platform=data.platform,run=data.runInfo,activity=data.activity;
+    doc.getElementById('detailTitle').textContent=p.name;
+    doc.getElementById('detailCopy').textContent=p.description;
+    doc.getElementById('repoLink').href=repoUrl(p.repo);
 
     const notices=attentionItems(data);
     doc.getElementById('attentionPanel').innerHTML='<h3>What needs attention?</h3><p class="panel-copy">Only exceptions and decisions that deserve attention show here. Healthy checks stay in their own sections.</p><div class="rows">'+notices.map(attentionMarkup).join('')+'</div>';
 
+    const vercelUrl='https://vercel.com/cairn10/'+encodeURIComponent(p.id);
     const prod=d?row('Production branch',d.branch)+row('Latest change',commitTitle(d.message))+row('Updated',fmtDate(d.updatedAt))+row('Commit',shortSha(d.sha))+row('Vercel',d.vercel.label):'<div class="empty">Production delivery data could not be loaded.</div>';
     const stage=s?'<div style="margin-top:12px">'+row('Staging branch',s.branch)+row('Latest change',commitTitle(s.message))+row('Updated',fmtDate(s.updatedAt))+row('Commit',shortSha(s.sha))+row('Staging Vercel',s.vercel.label)+'</div>':'';
-    doc.getElementById('deliveryPanel').innerHTML='<h3>Delivery</h3><p class="panel-copy">GitHub branch heads plus Vercel commit status.</p><div class="rows">'+prod+stage+'</div>';
+    doc.getElementById('deliveryPanel').innerHTML='<h3>Delivery</h3><p class="panel-copy">Current branch and deployment state. Older operational context lives under Recent context.</p><div class="rows">'+prod+stage+'</div><p class="footnote"><a href="'+esc(vercelUrl)+'" target="_blank" rel="noopener noreferrer">Open '+esc(p.name)+' in Vercel</a></p>';
 
     const pending=pendingSet(data),r=platform?.render,n=platform?.neon;
     let infraHtml='';
     if(r?.configured){
-      infraHtml+=Object.entries(r.environments||{}).map(([name,x])=>row('Render '+name,(x.ok?'Healthy':'Unavailable')+(x.build?' · '+shortSha(x.build):'')+(x.latency_ms!=null?' · '+x.latency_ms+'ms':''))).join('');
-      if(p.id==='state'&&!r.environments?.staging) infraHtml+=row('Render staging',pending.has('Staging backend')?'Checking…':'Open State to check staging');
+      const production=r.environments?.production;
+      if(production) infraHtml+=row('Render production',production.ok?'Healthy':'Unavailable');
+      const staging=r.environments?.staging;
+      if(staging&&!staging.ok) infraHtml+=row('Render staging','Unavailable · may be asleep');
+      else if(p.id==='state'&&!staging&&pending.has('Staging backend')) infraHtml+=row('Render staging','Checking…');
     }else if(p.id==='state') infraHtml+=row('Render',pending.has('Production backend')?'Checking production…':'Unavailable');
-    else infraHtml+=row('Render','Not used by this project');
-    if(n?.configured&&n.available) infraHtml+=row('Neon',[(n.name||'Connected'),n.primary_branch?('branch '+n.primary_branch):null,n.branch_count!=null?(n.branch_count+' branches'):null].filter(Boolean).join(' · '));
+    if(n?.configured&&n.available) infraHtml+=row('Neon','Connected');
     else if(n?.configured) infraHtml+=row('Neon','Configured, but unavailable');
-    else infraHtml+=row('Neon','Not connected');
-    doc.getElementById('infrastructurePanel').innerHTML='<h3>Infrastructure</h3><p class="panel-copy">Service/database health without exposing credentials or project content.</p><div class="rows">'+infraHtml+'</div>';
+    else infraHtml+=row('Neon',p.id==='state'?'Not connected':'Not used or not connected');
+    doc.getElementById('infrastructurePanel').innerHTML='<h3>Infrastructure</h3><p class="panel-copy">Healthy services stay compact. Detail matters here mainly when something is wrong.</p><div class="rows">'+infraHtml+'</div>';
 
     const a=platform?.analytics;
     if(pending.has('Analytics')){
-      doc.getElementById('analyticsPanel').innerHTML='<h3>Site analytics</h3><p class="panel-copy">Traffic belongs alongside quality and reliability.</p><div class="empty">Checking analytics…</div>';
+      doc.getElementById('analyticsPanel').innerHTML='<h3>Usage</h3><p class="panel-copy">Production Web Analytics with a simple previous-period comparison.</p><div class="empty">Checking analytics…</div>';
     }else if(a?.available){
-      doc.getElementById('analyticsPanel').innerHTML='<h3>Site analytics</h3><p class="panel-copy">Production Vercel Web Analytics, aggregate counts only.</p><div class="metrics">'+metric(a.visitors??'—','Visitors · 30d')+metric(a.pageviews??'—','Page views · 30d')+'</div><p class="footnote">No raw visitor identities, project content, prompts, or answers are copied into Project Health.</p>';
+      const visitorTrend=trendText(a.visitors_delta_pct);
+      const pageTrend=trendText(a.pageviews_delta_pct);
+      const visitorClass=a.visitors_delta_pct==null?'flat':Number(a.visitors_delta_pct)>0?'up':Number(a.visitors_delta_pct)<0?'down':'flat';
+      const pageClass=a.pageviews_delta_pct==null?'flat':Number(a.pageviews_delta_pct)>0?'up':Number(a.pageviews_delta_pct)<0?'down':'flat';
+      doc.getElementById('analyticsPanel').innerHTML='<h3>Usage</h3><p class="panel-copy">Production Vercel Web Analytics, aggregate counts only.</p><div class="metrics">'+metric(a.visitors??'—','Visitors · 30d')+metric(a.pageviews??'—','Page views · 30d')+'</div><div class="trend '+visitorClass+'">'+esc(visitorTrend)+'</div><div class="trend '+pageClass+'">'+esc(pageTrend)+'</div><p class="footnote">No raw visitor identities, project content, prompts, or answers are copied into Project Health.</p>';
     }else{
-      doc.getElementById('analyticsPanel').innerHTML='<h3>Site analytics</h3><p class="panel-copy">Traffic belongs alongside quality and reliability.</p><div class="empty">'+esc(a?.configured?'Web Analytics is configured but unavailable for this project.':'Add a server-side VERCEL_TOKEN to show production visitors and page views here.')+'</div>';
+      doc.getElementById('analyticsPanel').innerHTML='<h3>Usage</h3><p class="panel-copy">Traffic belongs alongside quality and reliability when it has useful context.</p><div class="empty">'+esc(a?.configured?'Web Analytics is configured but unavailable for this project.':'Usage analytics are not connected yet.')+'</div>';
     }
 
+    let qualityHtml='';
     if(p.quality==='state'){
       const review=q?.review,ask=q?.ask;
       if(!q&&pending.has('Quality')){
-        doc.getElementById('qualityPanel').innerHTML='<h3>Product quality</h3><p class="panel-copy">State uses its existing aggregate controlled-eval records.</p><div class="empty">Checking State quality…</div>';
+        qualityHtml='<h3>Product quality</h3><p class="panel-copy">State uses its existing aggregate controlled-eval records.</p><div class="empty">Checking State quality…</div>';
       }else{
-        doc.getElementById('qualityPanel').innerHTML='<h3>Product quality</h3><p class="panel-copy">State uses its existing aggregate controlled-eval records. Project content is not copied here.</p><div class="metrics">'+metric(review?percent(review.interpretation_accuracy):'Not run','Review interpretation')+metric(ask?percent(ask.ask_grounding):'Not run','Ask grounding')+metric(ask?percent(ask.authority_accuracy):'Not run','Ask authority handling')+'</div><p class="footnote">Resolved Reviews · 30d: '+esc(q?.resolvedReviews??'Not loaded')+'. Material edits measure human correction effort, not automatically AI error.</p>';
+        qualityHtml='<h3>Product quality</h3><p class="panel-copy">State uses aggregate controlled-eval records. Project content is not copied here.</p><div class="metrics">'+metric(review?percent(review.interpretation_accuracy):'Not run','Review interpretation')+metric(ask?percent(ask.ask_grounding):'Not run','Ask grounding')+metric(ask?percent(ask.authority_accuracy):'Not run','Ask authority handling')+'</div><p class="footnote">Resolved Reviews · 30d: '+esc(q?.resolvedReviews??'Not loaded')+'. Material edits measure human correction effort, not automatically AI error.</p>';
       }
+      let runAction='';
+      if(pending.has('Run controls')) runAction='<button class="button small" type="button" disabled>Checking run setup…</button>';
+      else if(run?.configured) runAction='<button class="button small primary" type="button" data-run-checks>Run health checks</button><span class="footnote">Estimated cost '+esc(run.estimated_cost||'not configured')+'. Paid calls require confirmation.</span>';
+      else if(run) runAction='<button class="button small" type="button" disabled>Finish run setup</button>';
+      if(runAction) qualityHtml+='<div class="quality-actions">'+runAction+'</div>';
     }else if(p.id==='tastemake'&&externalQ){
       const endpoint=externalQ.endpoint||{},base=externalQ.baseline||{},ci=externalQ.ci||{};
       const groups=(externalQ.check_groups||[]).map(g=>'<div class="run-callout"><strong>'+esc(g.name)+'</strong><p>'+esc(g.detail)+'</p></div>').join('');
-      doc.getElementById('qualityPanel').innerHTML='<h3>Product quality</h3><p class="panel-copy">Recommendation quality is evaluated against grounding, calibration, user authority, cross-domain restraint, and validator defenses.</p>'+
-        '<div class="metrics">'+
-        metric(ci.conclusion==='success'?'Passing':(ci.conclusion||'Unknown'),'Main QA workflow')+
-        metric((endpoint.rule_checks?.passed??'—')+'/'+(endpoint.rule_checks?.total??'—'),'Endpoint rule checks')+
-        metric((endpoint.validator_self_test?.caught??'—')+'/'+(endpoint.validator_self_test?.total??'—'),'Bad outputs caught')+
-        '</div>'+
+      qualityHtml='<h3>Product quality</h3><p class="panel-copy">Recommendation quality is evaluated against grounding, calibration, user authority, cross-domain restraint, and validator defenses.</p>'+
+        '<div class="metrics">'+metric(ci.conclusion==='success'?'Passing':(ci.conclusion||'Unknown'),'Main QA workflow')+metric((endpoint.rule_checks?.passed??'—')+'/'+(endpoint.rule_checks?.total??'—'),'Endpoint rule checks')+metric((endpoint.validator_self_test?.caught??'—')+'/'+(endpoint.validator_self_test?.total??'—'),'Bad outputs caught')+'</div>'+
         '<div class="run-summary" style="margin-top:12px">'+groups+'</div>'+
         '<p class="footnote">Baseline comparison: '+esc(base.valid_fixture_outputs?.passed??'—')+'/'+esc(base.valid_fixture_outputs?.total??'—')+' fixtures kept all proposals. '+esc(externalQ.caveat||'')+' Source commit '+esc(shortSha(externalQ.source_commit))+'.</p>';
     }else if(p.id==='narc'&&externalQ){
-      const suites=(externalQ.suites||[]).map(s=>'<div class="run-callout"><strong>'+esc(s.name)+'</strong><p>'+esc(s.detail)+'</p><p class="footnote">'+esc(s.command)+'</p></div>').join('');
-      doc.getElementById('qualityPanel').innerHTML='<h3>Product quality</h3><p class="panel-copy">NARC quality is mostly deterministic: branch/state consistency, authored consequences, and desktop integration. Human playtesting remains a separate product-quality gate.</p>'+
-        '<div class="metrics">'+
-        metric(externalQ.recorded?.recorded_all_suites_green?'3/3':'Unknown','Suites recorded green')+
-        metric(externalQ.recorded?.full_playtest_pending?'Pending':'Recorded','Full first-run playtest')+
-        metric(externalQ.analytics_blocked_until_playtest?'Blocked':'Open','Gameplay analytics')+
-        '</div><div class="run-summary" style="margin-top:12px">'+suites+'</div>'+
+      const suites=(externalQ.suites||[]).map(item=>'<div class="run-callout"><strong>'+esc(item.name)+'</strong><p>'+esc(item.detail)+'</p><p class="footnote">'+esc(item.command)+'</p></div>').join('');
+      qualityHtml='<h3>Product quality</h3><p class="panel-copy">NARC quality is mostly deterministic: branch/state consistency, authored consequences, and desktop integration. Human playtesting remains a separate product-quality gate.</p>'+
+        '<div class="metrics">'+metric(externalQ.recorded?.recorded_all_suites_green?'3/3':'Unknown','Suites recorded green')+metric(externalQ.recorded?.full_playtest_pending?'Pending':'Recorded','Full first-run playtest')+metric(externalQ.analytics_blocked_until_playtest?'Blocked':'Open','Gameplay analytics')+'</div><div class="run-summary" style="margin-top:12px">'+suites+'</div>'+
         '<p class="footnote">'+esc(externalQ.caveat||'')+' Source commit '+esc(shortSha(externalQ.source_commit))+'.</p>';
     }else{
-      doc.getElementById('qualityPanel').innerHTML='<h3>Product quality</h3><p class="panel-copy">'+esc(p.name)+' quality data could not be loaded.</p><div class="empty">Missing data stays missing rather than being guessed.</div>';
+      qualityHtml='<h3>Product quality</h3><p class="panel-copy">'+esc(p.name)+' quality data could not be loaded.</p><div class="empty">Missing data stays missing rather than being guessed.</div>';
     }
+    doc.getElementById('qualityPanel').innerHTML=qualityHtml;
 
     let historyHtml='';
-    if(p.id==='state'){
-      const recent=Array.isArray(q?.recent)?q.recent.slice(0,4):[];
-      historyHtml=recent.length
-        ? recent.map(item=>row((item.suite||item.eval_suite||'Controlled eval').replaceAll('_',' '),[item.build?shortSha(item.build):null,item.model||null,item.created_at?fmtDate(item.created_at):null].filter(Boolean).join(' · '))).join('')
-        : '<div class="empty">No recent controlled-eval history is available yet.</div>';
-    }else if(p.id==='tastemake'&&externalQ){
-      historyHtml=row('Source commit',shortSha(externalQ.source_commit))+
-        row('Latest QA',externalQ.ci?.updated_at?fmtDate(externalQ.ci.updated_at):'Unknown')+
-        row('Eval contract',externalQ.endpoint?.contract||externalQ.baseline?.contract||'Unknown')+
-        row('Reports','Baseline + endpoint snapshots');
-    }else if(p.id==='narc'&&externalQ){
-      historyHtml=row('Source commit',shortSha(externalQ.source_commit))+
-        row('Recorded verification',externalQ.recorded?.recorded_all_suites_green?'All 3 suites green':'Not confirmed')+
-        row('Next quality gate',externalQ.recorded?.full_playtest_pending?'Full ~15-minute playtest':'No pending playtest recorded');
-    }else{
-      historyHtml='<div class="empty">No quality history is connected for this project yet.</div>';
+    if(activity?.available){
+      const dep=activity.deployments||{};
+      historyHtml+=row('Production deploys · 7d',(dep.total??'—')+' total · '+(dep.failed??'—')+' failed');
+      const recovered=(dep.recent_failures||[]).filter(item=>item.recovered).length;
+      if(recovered)historyHtml+=row('Recovered failures · 7d',String(recovered));
+      const runtimeCount=(activity.runtime?.issues||[]).reduce((total,item)=>total+Number(item.count||0),0);
+      historyHtml+=row('Runtime errors · latest deploy',activity.runtime?.available?String(runtimeCount):'Unavailable');
     }
-    doc.getElementById('historyPanel').innerHTML='<h3>Recent quality context</h3><p class="panel-copy">Enough history to spot regressions without turning this into a trace explorer.</p><div class="rows">'+historyHtml+'</div>';
+    const prs=Array.isArray(data.openPullRequests)?data.openPullRequests:[];
+    historyHtml+=row('Open pull requests',String(prs.length));
+    if(prs.length) historyHtml+=prs.slice(0,2).map(pr=>row('In progress','#'+pr.number+' · '+String(pr.title||'Untitled').slice(0,80))).join('');
+
+    if(p.id==='state'){
+      const recent=Array.isArray(q?.recent)?q.recent.slice(0,3):[];
+      historyHtml+=recent.length
+        ? recent.map(item=>row((item.suite||item.eval_suite||'Controlled eval').replaceAll('_',' '),[item.build?shortSha(item.build):null,item.model||null,item.created_at?fmtDate(item.created_at):null].filter(Boolean).join(' · '))).join('')
+        : '';
+    }else if(p.id==='tastemake'&&externalQ){
+      historyHtml+=row('Latest QA',externalQ.ci?.updated_at?fmtDate(externalQ.ci.updated_at):'Unknown')+row('Eval contract',externalQ.endpoint?.contract||externalQ.baseline?.contract||'Unknown');
+    }else if(p.id==='narc'&&externalQ){
+      historyHtml+=row('Recorded verification',externalQ.recorded?.recorded_all_suites_green?'All 3 suites green':'Not confirmed')+row('Next quality gate',externalQ.recorded?.full_playtest_pending?'Full ~15-minute playtest':'No pending playtest recorded');
+    }
+    if(!historyHtml)historyHtml='<div class="empty">No recent context is available yet.</div>';
+    doc.getElementById('historyPanel').innerHTML='<h3>Recent context</h3><p class="panel-copy">A small reliability and work history, not a full trace explorer.</p><div class="rows">'+historyHtml+'</div><p class="footnote">Detail checked '+esc(relativeAge(data.detailCheckedAt||data.checkedAt))+'.</p>';
 
     const connections=[];
     connections.push({label:'GitHub + Vercel delivery',value:d?'Connected':'Unavailable'});
@@ -473,22 +487,7 @@
     connections.push({label:'Site analytics',value:platform?.analytics?.available?'Connected':'Set up later'});
     connections.push({label:'Neon health',value:n?.available?'Connected':'Set up later'});
     connections.push({label:'Run health checks',value:run?.configured?'Ready':'Set up later'});
-    doc.getElementById('connectionsPanel').innerHTML='<h3>Connections</h3><p class="panel-copy">A setup checklist, not a health warning. Missing optional credentials do not make a project unhealthy.</p><div class="rows">'+connections.map(item=>row(item.label,item.value)).join('')+'</div>';
-
-    const runButton=doc.getElementById('runChecksButton');
-    if(p.id!=='state'){
-      runButton.disabled=true;runButton.textContent='Checks not wired yet';runButton.title='No dashboard-run workflow is configured for this project yet.';
-    }else if(pending.has('Run controls')){
-      runButton.disabled=true;runButton.textContent='Checking run setup';runButton.title='';
-    }else if(run?.configured){runButton.disabled=false;runButton.textContent='Run health checks';runButton.title='';}
-    else{runButton.disabled=true;runButton.textContent=run?'Finish run setup':'Checks not wired yet';runButton.title=run?'Configure server-side GitHub credentials, admin key, and an explicit cost estimate.':'Open State to load run configuration.';}
-    if(pending.has('Run controls')){
-      doc.getElementById('runPanel').innerHTML='<h3>Run health checks</h3><p class="panel-copy">Checking State run configuration…</p><div class="empty">This does not start any model calls.</div>';
-    }else if(run){
-      doc.getElementById('runPanel').innerHTML='<h3>Run health checks</h3><p class="panel-copy">Start the project\'s controlled checks without leaving this dashboard.</p><div class="run-summary"><div class="run-callout"><strong>'+esc(run.label)+'</strong><p>'+esc(run.note)+'</p></div>'+row('Controlled cases',run.minimum_controlled_cases!=null?('At least '+run.minimum_controlled_cases):'Not specified')+row('Estimated cost',run.estimated_cost||'Not configured')+row('Target branch',run.ref||'Unknown')+'</div><p class="footnote">The button stays disabled until a cost estimate is configured. Starting a run also requires an admin key and an explicit confirmation of paid model calls.</p>';
-    }else{
-      doc.getElementById('runPanel').innerHTML='<h3>Run health checks</h3><p class="panel-copy">This project does not have a dashboard-run workflow yet.</p><div class="empty">Its existing automated tests still contribute through GitHub delivery status. A dedicated health-check workflow can be added later.</div>';
-    }
+    doc.getElementById('connectionsPanel').innerHTML='<details class="setup-details"><summary>Connections & setup</summary><p class="panel-copy">Optional setup status. Missing optional credentials do not make a project unhealthy.</p><div class="rows">'+connections.map(item=>row(item.label,item.value)).join('')+'</div></details>';
   }
 
   async function dispatchRun(data,root){
