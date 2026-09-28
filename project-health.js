@@ -544,8 +544,8 @@
   }
 
   async function init(root){
-    const doc=root.document,cards=doc.getElementById('projectCards'),status=doc.getElementById('status'),summary=doc.getElementById('overviewSummary'),refresh=doc.getElementById('refreshButton'),runButton=doc.getElementById('runChecksButton');
-    if(!cards||!status||!summary||!refresh||!runButton)return;
+    const doc=root.document,cards=doc.getElementById('projectCards'),status=doc.getElementById('status'),summary=doc.getElementById('overviewSummary'),reviewInbox=doc.getElementById('reviewInbox'),refresh=doc.getElementById('refreshButton'),qualityPanel=doc.getElementById('qualityPanel');
+    if(!cards||!status||!summary||!reviewInbox||!refresh||!qualityPanel)return;
     const cached=loadSnapshot(root);
     let state=PROJECTS.map(project=>hydrateProjectData(project,cached?.projects?.find(item=>item.projectId===project.id)));
     let activeId=new URLSearchParams(root.location.search).get('project')||'state';
@@ -560,18 +560,44 @@
       }).join('');
     }
 
+    const reviewStorageKey='project-health-reviewed:'+pageEnvironment(root);
+    function reviewedState(){
+      try{return JSON.parse(root.localStorage?.getItem(reviewStorageKey)||'{}')||{};}catch(_){return{};}
+    }
+    function saveReviewedState(value){
+      try{root.localStorage?.setItem(reviewStorageKey,JSON.stringify(value));}catch(_){}
+    }
+    function currentReviewItems(){return state.flatMap(activityReviewItems);}
+    function unreviewedItems(){
+      const reviewed=reviewedState();
+      return currentReviewItems().filter(item=>!reviewed[item.key]);
+    }
+    function renderReviewInbox(){
+      const items=unreviewedItems();
+      if(!items.length){
+        reviewInbox.innerHTML='<section class="panel"><h3>Needs review</h3><p class="panel-copy">Meaningful delivery and runtime problems appear here. Healthy logs stay out of the way.</p><div class="review-empty">Nothing new needs review.</div></section>';
+        return;
+      }
+      const rows=items.slice(0,6).map(item=>{
+        const source=item.url?'<a class="button small" href="'+esc(item.url)+'" target="_blank" rel="noopener noreferrer">View source</a>':'';
+        const stateLabel=item.resolved?'Recovered':'New';
+        return '<div class="review-item"><div><strong>'+esc(item.project)+' · '+esc(item.title)+'</strong><div class="review-meta">'+esc(stateLabel)+' · '+esc(relativeAge(item.observedAt))+' · '+esc(item.detail)+'</div></div><div class="review-actions">'+source+'<button class="button small" type="button" data-review-key="'+esc(item.key)+'">Mark reviewed</button></div></div>';
+      }).join('');
+      reviewInbox.innerHTML='<section class="panel"><h3>Needs review</h3><p class="panel-copy">A small error inbox from recent production deploys and bounded runtime error signals.</p><div class="review-list">'+rows+'</div></section>';
+    }
     function renderSummary(){
       const fresh=state.filter(item=>item?.fresh);
-      const attentionCount=fresh.filter(item=>['bad','warn'].includes(overallAttention(item).kind)).length;
-      const analyticsConnected=state.filter(item=>item?.platform?.analytics?.available).length;
-      summary.innerHTML='<span class="summary-chip"><strong>'+fresh.length+'/'+PROJECTS.length+'</strong> core checked</span>'+
-        '<span class="summary-chip"><strong>'+attentionCount+'</strong> need a look</span>'+
-        '<span class="summary-chip"><strong>'+analyticsConnected+'/'+PROJECTS.length+'</strong> analytics connected</span>';
+      const reviewCount=unreviewedItems().length;
+      const changedCount=fresh.filter(changedSinceVisit).length;
+      const checked=fresh.map(item=>item.checkedAt).filter(Boolean).sort().pop();
+      summary.innerHTML='<span class="summary-chip"><strong>'+reviewCount+'</strong> need review</span>'+
+        '<span class="summary-chip"><strong>'+changedCount+'</strong> changed since last visit</span>'+
+        '<span class="summary-chip"><strong>'+esc(checked?relativeAge(checked):'checking')+'</strong> last checked</span>';
     }
 
     function renderNow(){
       renderQueued=false;
-      renderCards();renderSummary();
+      renderCards();renderSummary();renderReviewInbox();
       const data=activeData();if(data)renderDetail(data,doc);
       root.PROJECT_HEALTH_LAST_TIMINGS=Object.fromEntries(state.map(item=>[item.project.id,{...item.timings}]));
     }
@@ -668,9 +694,24 @@
     }
     renderNow();
     refresh.addEventListener('click',refreshAll);
-    runButton.addEventListener('click',async()=>{const data=activeData();if(!data)return;runButton.disabled=true;try{await dispatchRun(data,root);}catch(_){}finally{renderDetail(data,doc);}});
+    reviewInbox.addEventListener('click',event=>{
+      const button=event.target.closest?.('[data-review-key]');
+      if(!button)return;
+      const reviewed=reviewedState();
+      reviewed[button.dataset.reviewKey]=new Date().toISOString();
+      saveReviewedState(reviewed);
+      renderNow();
+    });
+    qualityPanel.addEventListener('click',async event=>{
+      const button=event.target.closest?.('[data-run-checks]');
+      if(!button)return;
+      const data=activeData();if(!data)return;
+      button.disabled=true;
+      try{await dispatchRun(data,root);}catch(_){}
+      finally{renderDetail(data,doc);}
+    });
     await refreshAll();
   }
 
-  return {PROJECTS,pageEnvironment,vercelFromStatus,deliveryHealth,commitTitle,githubCommitUrl,pullRequestNumber,githubPullRequestUrl,changeUrl,normalizeQuality,qualityAttention,externalQualityAttention,deliveryAttention,infrastructureAttention,allAttentionSignals,attentionItems,overallAttention,projectQualityLabel,percent,shortSha,pendingSet,mergePlatform,emptyProjectData,safeExternalQualitySnapshot,serializeProjectData,hydrateProjectData,loadProject,loadProjectDetails,infraCardLabel,analyticsLabel,progressText,init};
+  return {PROJECTS,pageEnvironment,vercelFromStatus,deliveryHealth,commitTitle,githubCommitUrl,pullRequestNumber,githubPullRequestUrl,changeUrl,normalizeQuality,qualityAttention,externalQualityAttention,deliveryAttention,infrastructureAttention,allAttentionSignals,attentionItems,overallAttention,projectQualityLabel,percent,shortSha,pendingSet,mergePlatform,emptyProjectData,safeExternalQualitySnapshot,serializeProjectData,hydrateProjectData,loadProject,loadProjectDetails,infraCardLabel,analyticsLabel,relativeAge,changedSinceVisit,trendText,activityReviewItems,progressText,init};
 });
