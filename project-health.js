@@ -156,11 +156,16 @@
     return {
       project,
       delivery:s.delivery||null,
+      lastSeenSha:s.lastSeenSha||s.delivery?.sha||null,
       staging:s.staging||null,
       quality:s.quality||null,
       externalQuality:s.externalQuality||null,
       platform:s.platform||null,
+      activity:s.activity||null,
+      openPullRequests:Array.isArray(s.openPullRequests)?s.openPullRequests:[],
       runInfo:null,
+      checkedAt:s.checkedAt||null,
+      detailCheckedAt:s.detailCheckedAt||null,
       errors:[],
       pending:new Set(),
       timings:{},
@@ -191,7 +196,11 @@
       quality:data.quality,
       externalQuality:safeExternalQualitySnapshot(data.externalQuality),
       platform:data.platform,
+      activity:data.activity,
+      openPullRequests:data.openPullRequests,
       runInfo:null,
+      checkedAt:data.checkedAt,
+      detailCheckedAt:data.detailCheckedAt,
       snapshotAt:new Date().toISOString()
     };
   }
