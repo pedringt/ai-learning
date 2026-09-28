@@ -153,3 +153,7 @@ assert.strictEqual(Object.prototype.hasOwnProperty.call(safeQuality.endpoint,'gr
 assert.strictEqual(Object.prototype.hasOwnProperty.call(safeQuality.endpoint,'failing_fixtures'),false);
 
 console.log('Project Health shell tests passed');
+
+assert.strictEqual(H.PROJECTS.find(p=>p.id==='state').siteUrl,'https://state.contextswitch.tech/');
+assert.strictEqual(H.PROJECTS.find(p=>p.id==='tastemake').siteUrl,null);
+assert.strictEqual(H.PROJECTS.find(p=>p.id==='narc').siteUrl,undefined);
