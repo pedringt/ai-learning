@@ -67,7 +67,7 @@ const tastemakeQuality={
 assert.strictEqual(H.externalQualityAttention(tastemakeQuality).kind,'good');
 assert.strictEqual(
   H.projectQualityLabel({project:{id:'tastemake'},externalQuality:tastemakeQuality}),
-  'QA + eval rules healthy'
+  'Recommendation checks healthy'
 );
 
 const narcQuality={
@@ -77,7 +77,7 @@ const narcQuality={
 };
 assert.strictEqual(
   H.projectQualityLabel({project:{id:'narc'},externalQuality:narcQuality}),
-  'Tests green · playtest pending'
+  'Automated checks pass · playtest open'
 );
 assert.strictEqual(
   H.overallAttention({delivery:{vercel:{kind:'good'}},quality:null,externalQuality:narcQuality,platform:null}).kind,
@@ -92,7 +92,7 @@ const quiet=H.attentionItems({
 });
 assert.strictEqual(quiet.length,1);
 assert.strictEqual(quiet[0].kind,'good');
-assert.match(quiet[0].title,/Nothing urgent/);
+assert.match(quiet[0].title,/Nothing needs action/);
 
 const mixed=H.attentionItems({
   delivery:{vercel:{kind:'good'}},
@@ -103,6 +103,7 @@ const mixed=H.attentionItems({
 assert.strictEqual(mixed.length,1);
 assert.strictEqual(mixed[0].kind,'warn');
 assert.match(mixed[0].title,/playtest/i);
+assert.strictEqual(H.projectStatus({...blank,delivery:{vercel:{kind:'good'}},externalQuality:narcQuality,fresh:true}).label,'Watch');
 
 assert.strictEqual(
   H.progressText(0,3,['State','Tastemake','NARC']),
@@ -171,21 +172,29 @@ assert.strictEqual(Object.prototype.hasOwnProperty.call(safeQuality.endpoint,'fa
 
 
 const healthHtml=fs.readFileSync(require.resolve('../project-health.html'),'utf8');
-assert.match(healthHtml,/Portfolio demo · simulated incident/);
-assert.match(healthHtml,/See a bounded investigation/);
+assert.match(healthHtml,/Product health triage/);
+assert.match(healthHtml,/Spot problems, understand what they mean for users/);
 assert.match(healthHtml,/How Project Health works/);
 assert.match(healthHtml,/Role & attribution/);
-assert.match(healthHtml,/Why I built it:/);
 assert.match(healthHtml,/productFocusPanel/);
-assert.match(H.PROJECTS[0].focus,/Keep project truth trustworthy/);
-assert.ok(H.PROJECTS[1].evidence.includes('Candidate breadth'));
+assert.doesNotMatch(healthHtml,/See a bounded investigation/);
+assert.doesNotMatch(healthHtml,/id="investigationDemo"/);
+assert.match(H.PROJECTS[0].focus,/without giving AI authority/);
+assert.ok(H.PROJECTS[1].evidence.includes('Recommendation breadth'));
 assert.match(H.PROJECTS[1].nextDecision,/canonical store/);
 assert.match(H.PROJECTS[2].nextDecision,/first-play flow/);
-assert.match(healthHtml,/No code, configuration, deployment, or live AI call was changed or triggered/);
-assert.match(healthHtml,/Copy engineer handoff/);
-assert.match(healthHtml,/Project Health helps product owners spot problems across live products/);
 assert.match(H.PROJECTS[0].description,/Human-reviewed project truth system/);
 assert.strictEqual(H.infrastructureAttention({render:{configured:true,environments:{production:{ok:true}}}}),null);
 
+const unopenedState={...H.emptyProjectData(H.PROJECTS[0]),fresh:true,quality:H.normalizeQuality({controlled_evals:{latest_review_interpretation:null,latest_ask_quality:null}})};
+assert.strictEqual(H.productOpenItems(unopenedState).length,1);
+assert.strictEqual(H.projectStatus(unopenedState).label,'Watch');
+assert.strictEqual(H.releaseReadiness({...unopenedState,delivery:{vercel:{kind:'good'}}}).label,'Watch');
+assert.ok(H.setupGaps({...unopenedState,platform:{analytics:{configured:false,available:false},neon:{configured:false,available:false}},runInfo:{configured:false}}).some(item=>item.label==='AI cost'));
+
+const workflowText=fs.readFileSync(require.resolve('../.github/workflows/question-review-live.yml'),'utf8');
+assert.match(workflowText,/suite:/);
+assert.match(workflowText,/record_environment:/);
+assert.match(workflowText,/run_quality_evals\.py/);
 
 console.log('Project Health shell tests passed');
