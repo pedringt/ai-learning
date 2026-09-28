@@ -129,11 +129,14 @@
   }
   function pendingSet(data){return data?.pending instanceof Set?data.pending:new Set();}
   function productOpenItems(data){
-    const items=[];
+    const items=[],pending=pendingSet(data);
+    if(pending.has('Quality')) return items;
     if(data.project.quality==='state'){
+      if(!data.quality&&!data.fresh)return items;
       const q=qualityAttention(data.quality);
       if(['bad','warn'].includes(q.kind)) items.push({...q,category:'quality',owner:'Product'});
     }else{
+      if(!data.externalQuality&&!data.fresh)return items;
       const q=externalQualityAttention(data.externalQuality);
       if(q&&['bad','warn'].includes(q.kind)) items.push({...q,category:'quality',owner:'Product'});
     }
