@@ -107,4 +107,10 @@ assert.strictEqual(
 );
 assert.strictEqual(H.progressText(3,3,[]),'Finishing refresh…');
 
+const blank=H.emptyProjectData(H.PROJECTS[0]);
+assert.strictEqual(blank.project.id,'state');
+assert.ok(blank.pending instanceof Set);
+assert.strictEqual(blank.pending.size,0);
+assert.deepStrictEqual(blank.errors,[]);
+
 console.log('Project Health shell tests passed');
