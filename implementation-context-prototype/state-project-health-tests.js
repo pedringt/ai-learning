@@ -77,4 +77,24 @@ assert.strictEqual(
   'warn'
 );
 
+const quiet=H.attentionItems({
+  delivery:{vercel:{kind:'good'}},
+  quality:healthy,
+  externalQuality:null,
+  platform:null
+});
+assert.strictEqual(quiet.length,1);
+assert.strictEqual(quiet[0].kind,'good');
+assert.match(quiet[0].title,/Nothing urgent/);
+
+const mixed=H.attentionItems({
+  delivery:{vercel:{kind:'good'}},
+  quality:null,
+  externalQuality:narcQuality,
+  platform:null
+});
+assert.strictEqual(mixed.length,1);
+assert.strictEqual(mixed[0].kind,'warn');
+assert.match(mixed[0].title,/playtest/i);
+
 console.log('Project Health shell tests passed');
