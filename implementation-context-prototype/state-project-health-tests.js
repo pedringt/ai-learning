@@ -9,6 +9,11 @@ assert.strictEqual(
   'Make Project Health load progressively and cache safely'
 );
 assert.strictEqual(H.commitTitle('Show PR titles on project cards\n\nAdditional details'), 'Show PR titles on project cards');
+assert.strictEqual(H.githubCommitUrl('pedringt/ai-learning','0123456789abcdef0123456789abcdef01234567'),'https://github.com/pedringt/ai-learning/commit/0123456789abcdef0123456789abcdef01234567');
+assert.strictEqual(H.githubCommitUrl('pedringt/ai-learning','not-a-sha'),null);
+assert.strictEqual(H.pullRequestNumber('Merge pull request #286 from pedringt/docs'), '286');
+assert.strictEqual(H.pullRequestNumber('Project Health links (#287)'), '287');
+assert.strictEqual(H.changeUrl('pedringt/ai-learning',{sha:'0123456789abcdef0123456789abcdef01234567',message:'Merge pull request #286 from pedringt/docs'}),'https://github.com/pedringt/ai-learning/pull/286');
 
 assert.deepStrictEqual(
   H.vercelFromStatus({statuses:[{context:'Vercel – app',state:'success'}]}).kind,
