@@ -302,18 +302,22 @@
     const stage=s?'<div style="margin-top:12px">'+row('Staging branch',s.branch)+row('Staging commit',shortSha(s.sha))+row('Staging Vercel',s.vercel.label)+'</div>':'';
     doc.getElementById('deliveryPanel').innerHTML='<h3>Delivery</h3><p class="panel-copy">GitHub branch heads plus Vercel commit status.</p><div class="rows">'+prod+stage+'</div>';
 
-    const r=platform?.render,n=platform?.neon;
+    const pending=pendingSet(data),r=platform?.render,n=platform?.neon;
     let infraHtml='';
     if(r?.configured){
       infraHtml+=Object.entries(r.environments||{}).map(([name,x])=>row('Render '+name,(x.ok?'Healthy':'Unavailable')+(x.build?' · '+shortSha(x.build):'')+(x.latency_ms!=null?' · '+x.latency_ms+'ms':''))).join('');
-    }else infraHtml+=row('Render','Not used by this project');
+      if(p.id==='state'&&!r.environments?.staging) infraHtml+=row('Render staging',pending.has('Staging backend')?'Checking…':'Open State to check staging');
+    }else if(p.id==='state') infraHtml+=row('Render',pending.has('Production backend')?'Checking production…':'Unavailable');
+    else infraHtml+=row('Render','Not used by this project');
     if(n?.configured&&n.available) infraHtml+=row('Neon',[(n.name||'Connected'),n.primary_branch?('branch '+n.primary_branch):null,n.branch_count!=null?(n.branch_count+' branches'):null].filter(Boolean).join(' · '));
     else if(n?.configured) infraHtml+=row('Neon','Configured, but unavailable');
     else infraHtml+=row('Neon','Not connected');
     doc.getElementById('infrastructurePanel').innerHTML='<h3>Infrastructure</h3><p class="panel-copy">Service/database health without exposing credentials or project content.</p><div class="rows">'+infraHtml+'</div>';
 
     const a=platform?.analytics;
-    if(a?.available){
+    if(pending.has('Analytics')){
+      doc.getElementById('analyticsPanel').innerHTML='<h3>Site analytics</h3><p class="panel-copy">Traffic belongs alongside quality and reliability.</p><div class="empty">Checking analytics…</div>';
+    }else if(a?.available){
       doc.getElementById('analyticsPanel').innerHTML='<h3>Site analytics</h3><p class="panel-copy">Production Vercel Web Analytics, aggregate counts only.</p><div class="metrics">'+metric(a.visitors??'—','Visitors · 30d')+metric(a.pageviews??'—','Page views · 30d')+'</div><p class="footnote">No raw visitor identities, project content, prompts, or answers are copied into Project Health.</p>';
     }else{
       doc.getElementById('analyticsPanel').innerHTML='<h3>Site analytics</h3><p class="panel-copy">Traffic belongs alongside quality and reliability.</p><div class="empty">'+esc(a?.configured?'Web Analytics is configured but unavailable for this project.':'Add a server-side VERCEL_TOKEN to show production visitors and page views here.')+'</div>';
@@ -321,7 +325,11 @@
 
     if(p.quality==='state'){
       const review=q?.review,ask=q?.ask;
-      doc.getElementById('qualityPanel').innerHTML='<h3>Product quality</h3><p class="panel-copy">State uses its existing aggregate controlled-eval records. Project content is not copied here.</p><div class="metrics">'+metric(review?percent(review.interpretation_accuracy):'Not run','Review interpretation')+metric(ask?percent(ask.ask_grounding):'Not run','Ask grounding')+metric(ask?percent(ask.authority_accuracy):'Not run','Ask authority handling')+'</div><p class="footnote">Resolved Reviews · 30d: '+esc(q?.resolvedReviews??'Not loaded')+'. Material edits measure human correction effort, not automatically AI error.</p>';
+      if(!q&&pending.has('Quality')){
+        doc.getElementById('qualityPanel').innerHTML='<h3>Product quality</h3><p class="panel-copy">State uses its existing aggregate controlled-eval records.</p><div class="empty">Checking State quality…</div>';
+      }else{
+        doc.getElementById('qualityPanel').innerHTML='<h3>Product quality</h3><p class="panel-copy">State uses its existing aggregate controlled-eval records. Project content is not copied here.</p><div class="metrics">'+metric(review?percent(review.interpretation_accuracy):'Not run','Review interpretation')+metric(ask?percent(ask.ask_grounding):'Not run','Ask grounding')+metric(ask?percent(ask.authority_accuracy):'Not run','Ask authority handling')+'</div><p class="footnote">Resolved Reviews · 30d: '+esc(q?.resolvedReviews??'Not loaded')+'. Material edits measure human correction effort, not automatically AI error.</p>';
+      }
     }else if(p.id==='tastemake'&&externalQ){
       const endpoint=externalQ.endpoint||{},base=externalQ.baseline||{},ci=externalQ.ci||{};
       const groups=(externalQ.check_groups||[]).map(g=>'<div class="run-callout"><strong>'+esc(g.name)+'</strong><p>'+esc(g.detail)+'</p></div>').join('');
@@ -377,9 +385,15 @@
     doc.getElementById('connectionsPanel').innerHTML='<h3>Connections</h3><p class="panel-copy">A setup checklist, not a health warning. Missing optional credentials do not make a project unhealthy.</p><div class="rows">'+connections.map(item=>row(item.label,item.value)).join('')+'</div>';
 
     const runButton=doc.getElementById('runChecksButton');
-    if(run?.configured){runButton.disabled=false;runButton.textContent='Run health checks';runButton.title='';}
-    else{runButton.disabled=true;runButton.textContent=run?'Finish run setup':'Checks not wired yet';runButton.title=run?'Configure server-side GitHub credentials, admin key, and an explicit cost estimate.':'No dashboard-run workflow is configured for this project yet.';}
-    if(run){
+    if(p.id!=='state'){
+      runButton.disabled=true;runButton.textContent='Checks not wired yet';runButton.title='No dashboard-run workflow is configured for this project yet.';
+    }else if(pending.has('Run controls')){
+      runButton.disabled=true;runButton.textContent='Checking run setup';runButton.title='';
+    }else if(run?.configured){runButton.disabled=false;runButton.textContent='Run health checks';runButton.title='';}
+    else{runButton.disabled=true;runButton.textContent=run?'Finish run setup':'Checks not wired yet';runButton.title=run?'Configure server-side GitHub credentials, admin key, and an explicit cost estimate.':'Open State to load run configuration.';}
+    if(pending.has('Run controls')){
+      doc.getElementById('runPanel').innerHTML='<h3>Run health checks</h3><p class="panel-copy">Checking State run configuration…</p><div class="empty">This does not start any model calls.</div>';
+    }else if(run){
       doc.getElementById('runPanel').innerHTML='<h3>Run health checks</h3><p class="panel-copy">Start the project\'s controlled checks without leaving this dashboard.</p><div class="run-summary"><div class="run-callout"><strong>'+esc(run.label)+'</strong><p>'+esc(run.note)+'</p></div>'+row('Controlled cases',run.minimum_controlled_cases!=null?('At least '+run.minimum_controlled_cases):'Not specified')+row('Estimated cost',run.estimated_cost||'Not configured')+row('Target branch',run.ref||'Unknown')+'</div><p class="footnote">The button stays disabled until a cost estimate is configured. Starting a run also requires an admin key and an explicit confirmation of paid model calls.</p>';
     }else{
       doc.getElementById('runPanel').innerHTML='<h3>Run health checks</h3><p class="panel-copy">This project does not have a dashboard-run workflow yet.</p><div class="empty">Its existing automated tests still contribute through GitHub delivery status. A dedicated health-check workflow can be added later.</div>';
