@@ -120,7 +120,8 @@ assert.ok(blank.pending instanceof Set);
 assert.strictEqual(blank.pending.size,0);
 assert.deepStrictEqual(blank.errors,[]);
 assert.strictEqual(blank.fresh,false);
-assert.strictEqual(H.projectStatus({...blank,delivery:{vercel:{kind:'good'}},externalQuality:narcQuality,fresh:true}).label,'Watch');
+const narcBlank=H.emptyProjectData(H.PROJECTS[2]);
+assert.strictEqual(H.projectStatus({...narcBlank,delivery:{vercel:{kind:'good'}},externalQuality:narcQuality,fresh:true}).label,'Watch');
 
 const pendingOnly=H.emptyProjectData(H.PROJECTS[0]);
 pendingOnly.pending.add('Delivery');
