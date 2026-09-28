@@ -3,11 +3,11 @@ const RUNS={
     repo:'pedringt/ai-learning',
     workflow:'question-review-live.yml',
     ref:'staging',
-    label:'State controlled Review + Ask checks',
+    label:'State AI quality checks',
     paid_model_calls:true,
-    minimum_controlled_cases:16,
+    minimum_controlled_cases:8,
     costEstimateEnv:'PROJECT_HEALTH_RUN_COST_ESTIMATE_STATE',
-    note:'Runs 8 Review interpretation cases, 8 Ask quality cases, plus the existing live walkthrough job. The dashboard will not enable the run control until an explicit cost estimate is configured.'
+    note:'Runs controlled checks for update understanding, answer quality, or both. Aggregate results can be recorded back into the selected Project Health environment.'
   }
 };
 
@@ -69,6 +69,8 @@ module.exports=async function handler(req,res){
     res.status(400).json({detail:'Paid model-call confirmation for the displayed cost estimate is required before starting this workflow.'});
     return;
   }
+  const suite=['all','review','ask'].includes(String(body.suite||'all'))?String(body.suite||'all'):'all';
+  const recordEnvironment=String(body.record_environment||'production')==='staging'?'staging':'production';
 
   const response=await fetch(
     'https://api.github.com/repos/'+run.repo+'/actions/workflows/'+encodeURIComponent(run.workflow)+'/dispatches',
@@ -80,7 +82,7 @@ module.exports=async function handler(req,res){
         'X-GitHub-Api-Version':'2022-11-28',
         'Content-Type':'application/json'
       },
-      body:JSON.stringify({ref:run.ref})
+      body:JSON.stringify({ref:run.ref,inputs:{suite,record_environment:recordEnvironment}})
     }
   );
 
@@ -97,6 +99,8 @@ module.exports=async function handler(req,res){
     label:run.label,
     ref:run.ref,
     estimated_cost:info.estimated_cost,
+    suite,
+    record_environment:recordEnvironment,
     actions_url:'https://github.com/'+run.repo+'/actions'
   });
 };
