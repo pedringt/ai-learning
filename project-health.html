@@ -16,9 +16,11 @@
     .detail{display:none}.detail.active{display:block}.detail-head{display:flex;justify-content:space-between;gap:20px;align-items:flex-end;margin-bottom:16px}.detail-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}.detail h2{margin:0;font-size:30px;letter-spacing:-.035em}.detail-copy{margin:4px 0 0;color:var(--muted)}.grid{display:grid;grid-template-columns:repeat(12,1fr);gap:16px}.panel{grid-column:span 12;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:20px}.panel.half{grid-column:span 6}.panel h3{margin:0;font-size:20px;letter-spacing:-.02em}.panel-copy{margin:3px 0 14px;color:var(--muted);font-size:13px}.rows{display:grid;gap:8px}.row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:14px;padding:10px 12px;border:1px solid var(--line);border-radius:11px;background:#fff}.row span:last-child{font-weight:800;overflow-wrap:anywhere;text-align:right}.empty{padding:14px;border:1px dashed #c9c3b7;border-radius:11px;color:var(--muted);background:rgba(255,255,255,.4)}.attention{padding:14px;border-left:4px solid var(--warn);border-radius:10px;background:#fff8ed}.attention.good{border-left-color:var(--good);background:#f1f7f3}.attention.bad{border-left-color:var(--danger);background:#fff2ef}.attention strong{display:block}.attention p{margin:3px 0 0;color:var(--muted)}.metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}.metric{padding:14px;border:1px solid var(--line);border-radius:12px;background:#fff}.metric strong{display:block;font-size:25px;line-height:1.05;letter-spacing:-.04em}.metric span{display:block;margin-top:5px;color:var(--muted);font-size:12px}.footnote{margin:12px 0 0;color:var(--muted);font-size:12px}.run-summary{display:grid;gap:10px}.run-callout{padding:14px;border:1px solid var(--line);border-radius:12px;background:#fff}.run-callout strong{display:block}.run-callout p{margin:4px 0 0;color:var(--muted);font-size:13px}.footer{margin-top:26px;color:var(--muted);font-size:12px}
     .row a,.signal-value a,.footnote a{color:var(--accent);text-decoration:underline;text-underline-offset:2px}
     .investigation-result{margin-top:14px;padding:14px;border:1px solid var(--line);border-radius:12px;background:#f5f8f5}.investigation-result pre{font:inherit;white-space:pre-wrap;overflow-wrap:anywhere;margin:8px 0}.investigation-sources{font-size:12px}.investigation-sources a{color:var(--accent);text-decoration:underline}
+    .hero-note{max-width:760px;margin:10px 0 0;color:var(--muted);font-size:13px}.hero-note strong{color:var(--ink)}
     .review-inbox{margin:0 0 24px}.review-inbox .panel{padding:18px 20px}.review-list{display:grid;gap:10px}.review-item{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:16px;align-items:center;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:#fff}.review-item strong{display:block}.review-meta{margin-top:3px;color:var(--muted);font-size:12px}.review-actions{display:flex;gap:7px;flex-wrap:wrap;justify-content:flex-end}.review-empty{padding:12px 0;color:var(--muted)}.trend{font-size:12px;font-weight:750;margin-top:4px}.trend.up{color:var(--good)}.trend.down{color:var(--danger)}.trend.flat{color:var(--muted)}.freshness{font-size:11px;color:var(--muted)}.quality-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:12px}.setup-details summary{cursor:pointer;font-weight:800}.setup-details[open] summary{margin-bottom:10px}
-    @media(max-width:850px){.hero{grid-template-columns:1fr}.overview-grid{grid-template-columns:1fr}.panel.half{grid-column:span 12}.metrics{grid-template-columns:repeat(2,minmax(0,1fr))}}
-    @media(max-width:560px){.shell{padding:22px 14px 48px}.topbar,.detail-head{align-items:flex-start;flex-direction:column}.detail-actions{justify-content:flex-start}.metrics{grid-template-columns:1fr}.row{grid-template-columns:1fr}.row span:last-child{text-align:left}.hero{margin-top:8px}}
+    .demo-panel{margin:0 0 28px;padding:20px;border:1px solid var(--line);border-radius:var(--radius);background:linear-gradient(135deg,#fffdf8,#f1f5f1)}.demo-head{display:flex;justify-content:space-between;gap:18px;align-items:flex-start}.demo-head h2{margin:0;font-size:23px;letter-spacing:-.03em}.demo-head p{margin:5px 0 0;color:var(--muted);font-size:13px;max-width:700px}.demo-badge{display:inline-flex;padding:5px 8px;border-radius:999px;background:#eee8da;font-size:11px;font-weight:800;white-space:nowrap}.demo-flow{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:16px 0}.demo-step{min-height:104px;padding:12px;border:1px solid var(--line);border-radius:11px;background:#fff;opacity:.45;transition:.25s ease}.demo-step.active{opacity:1;border-color:#9bb2a3;box-shadow:0 8px 20px rgba(56,98,77,.08)}.demo-step strong{display:block;font-size:12px}.demo-step span{display:block;margin-top:4px;color:var(--muted);font-size:12px}.demo-result{display:none;margin-top:12px;padding:14px;border:1px solid #b7c9bd;border-radius:12px;background:#f4f8f5}.demo-result.active{display:block}.demo-result strong{display:block}.demo-result p{margin:5px 0;color:var(--muted);font-size:13px}.demo-boundary{margin-top:8px;font-size:12px;font-weight:800;color:var(--good)}.explainer{margin-top:28px}.explainer-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}.explainer-card{padding:14px;border:1px solid var(--line);border-radius:12px;background:var(--surface)}.explainer-card strong{display:block;font-size:13px}.explainer-card p{margin:5px 0 0;color:var(--muted);font-size:12px}.attribution{display:grid;grid-template-columns:1fr 1fr;gap:12px}.attribution-block{padding:14px;border:1px solid var(--line);border-radius:12px;background:#fff}.attribution-block strong{display:block}.attribution-block p{margin:5px 0 0;color:var(--muted);font-size:13px}
+    @media(max-width:850px){.hero{grid-template-columns:1fr}.overview-grid{grid-template-columns:1fr}.panel.half{grid-column:span 12}.metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.demo-flow,.explainer-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.attribution{grid-template-columns:1fr}}
+    @media(max-width:560px){.shell{padding:22px 14px 48px}.topbar,.detail-head,.demo-head{align-items:flex-start;flex-direction:column}.detail-actions{justify-content:flex-start}.metrics,.demo-flow,.explainer-grid{grid-template-columns:1fr}.row{grid-template-columns:1fr}.row span:last-child{text-align:left}.hero{margin-top:8px}}
   </style>
 </head>
 <body>
@@ -32,7 +34,8 @@
       <div>
         <div class="eyebrow">Portfolio operations</div>
         <h1>Project Health</h1>
-        <p class="lede">One place to see which projects need attention, whether the latest builds are healthy, how the sites are being used, and whether project-specific quality checks are holding up.</p>
+        <p class="lede">One place to see what changed, what needs attention, and whether each project is still healthy. Project Health combines delivery, quality, usage, and operational signals without replacing the underlying tools.</p>
+        <p class="hero-note">When something fails, a bounded AI investigator can explain the evidence on request. It cannot change code, configuration, or deployments.</p>
       </div>
       <button class="button primary" id="refreshButton" type="button">Refresh health</button>
     </section>
@@ -41,6 +44,28 @@
     <div id="overviewSummary" class="overview-summary" aria-live="polite"></div>
 
     <section class="review-inbox" id="reviewInbox" aria-live="polite"></section>
+
+    <section class="demo-panel" id="investigationDemo" aria-live="polite">
+      <div class="demo-head">
+        <div>
+          <span class="demo-badge">Portfolio demo · simulated incident</span>
+          <h2>See a bounded investigation</h2>
+          <p>A fixed, sanitized failure shows how the investigator starts narrow, expands only when needed, and stops at an explanation instead of taking action.</p>
+        </div>
+        <button class="button primary" id="runDemoButton" type="button">Run demo</button>
+      </div>
+      <div class="demo-flow" aria-label="Investigation demo steps">
+        <div class="demo-step" data-demo-step="1"><strong>1 · Failure detected</strong><span>Preview deployment fails after a configuration change.</span></div>
+        <div class="demo-step" data-demo-step="2"><strong>2 · Check suggested evidence</strong><span>Vercel build output shows the failing route, but not the root cause.</span></div>
+        <div class="demo-step" data-demo-step="3"><strong>3 · Expand one level</strong><span>The related change introduced a required environment variable.</span></div>
+        <div class="demo-step" data-demo-step="4"><strong>4 · Explain, do not act</strong><span>The agent returns a likely cause and what a human should verify next.</span></div>
+      </div>
+      <div class="demo-result" id="demoResult">
+        <strong>Likely cause</strong>
+        <p>The deployment began failing after the related change introduced a required configuration value. The build evidence points to that code path, and the new variable is not available in this preview environment. Verify the environment configuration before changing code.</p>
+        <div class="demo-boundary">Read-only demo. No code, configuration, deployment, or live AI call was changed or triggered.</div>
+      </div>
+    </section>
 
     <section class="overview-grid" id="projectCards" aria-live="polite"></section>
 
@@ -64,6 +89,27 @@
         <section class="panel half" id="qualityPanel"></section>
         <section class="panel half" id="historyPanel"></section>
         <section class="panel half" id="connectionsPanel"></section>
+      </div>
+    </section>
+
+    <section class="panel explainer">
+      <h3>How Project Health works</h3>
+      <p class="panel-copy">The dashboard separates deterministic monitoring from AI interpretation and keeps consequential actions human-controlled.</p>
+      <div class="explainer-grid">
+        <div class="explainer-card"><strong>Signals</strong><p>GitHub, Vercel, Render, Neon, product-specific quality checks, and aggregate usage.</p></div>
+        <div class="explainer-card"><strong>Software decides</strong><p>What data to fetch, what counts as a failure, and which evidence the investigator may access.</p></div>
+        <div class="explainer-card"><strong>AI helps</strong><p>On request, it explains selected failures when deterministic signals alone are not enough.</p></div>
+        <div class="explainer-card"><strong>Human decides</strong><p>A person verifies the diagnosis and chooses whether any code, configuration, or deployment should change.</p></div>
+      </div>
+      <p class="footnote"><strong>Quality is project-specific.</strong> State measures interpretation and grounded answers. Tastemake checks recommendation grounding and calibration. NARC relies mostly on deterministic gameplay tests plus human playtesting.</p>
+    </section>
+
+    <section class="panel explainer">
+      <h3>Role & attribution</h3>
+      <p class="panel-copy">This is an applied AI product exercise, not a claim that the implementation was written by hand.</p>
+      <div class="attribution">
+        <div class="attribution-block"><strong>My work</strong><p>Product framing, workflow design, guardrails, quality model, failure behavior, QA, and iteration.</p></div>
+        <div class="attribution-block"><strong>AI-assisted work</strong><p>Implementation support, code generation, research support, and the bounded failure-investigation summary.</p></div>
       </div>
     </section>
 
