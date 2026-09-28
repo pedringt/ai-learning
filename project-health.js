@@ -666,21 +666,23 @@
       (gaps.length?'<h4 style="margin:18px 0 8px">Coverage gaps</h4><div class="coverage-grid">'+gaps.map(item=>'<div class="coverage-item"><strong>'+esc(item.label)+'</strong><span>'+esc(item.detail)+'</span></div>').join('')+'</div>':'');
   }
 
-  async function dispatchRun(data,root){
+  async function dispatchRun(data,root,suite='all'){
     const run=data.runInfo;if(!run?.configured)return;
-    const message=run.label+'\n\nAt least '+run.minimum_controlled_cases+' controlled cases plus the existing walkthrough.\nEstimated cost: '+run.estimated_cost+'\n\nStart this paid model-backed health check?';
+    const labels={all:'all AI quality checks',review:'update-understanding checks',ask:'answer-quality checks'};
+    const cases=suite==='all'?Math.max(16,Number(run.minimum_controlled_cases||8)):Number(run.minimum_controlled_cases||8);
+    const message='Run '+(labels[suite]||labels.all)+'?\n\nAbout '+cases+' controlled scenarios will use paid model calls.\nEstimated cost: '+run.estimated_cost+'\n\nResults are recorded as aggregate quality data. Start the run?';
     if(!root.confirm(message)) return;
     let key=root.sessionStorage.getItem('project-health-admin-key')||'';
     if(!key) key=root.prompt('Project Health admin key')||'';
     if(!key) return;
     root.sessionStorage.setItem('project-health-admin-key',key);
     try{
-      const payload=await jsonFetch('/api/project-health-run',{method:'POST',headers:{'Content-Type':'application/json','X-Project-Health-Key':key},body:JSON.stringify({project:data.project.id,confirm_paid_model_calls:true,estimated_cost:run.estimated_cost})});
-      root.alert('Health checks started. Results will appear here after the workflow records them.');
+      const payload=await jsonFetch('/api/project-health-run',{method:'POST',headers:{'Content-Type':'application/json','X-Project-Health-Key':key},body:JSON.stringify({project:data.project.id,suite,record_environment:pageEnvironment(root),confirm_paid_model_calls:true,estimated_cost:run.estimated_cost})});
+      root.alert('AI quality checks started. Refresh Project Health after the workflow finishes to see the recorded results.');
       return payload;
     }catch(error){
       if(error.status===401) root.sessionStorage.removeItem('project-health-admin-key');
-      root.alert('Could not start health checks: '+error.message);
+      root.alert('Could not start the quality checks: '+error.message);
       throw error;
     }
   }
@@ -692,12 +694,13 @@
   }
 
   async function init(root){
-    const doc=root.document,cards=doc.getElementById('projectCards'),status=doc.getElementById('status'),summary=doc.getElementById('overviewSummary'),reviewInbox=doc.getElementById('reviewInbox'),refresh=doc.getElementById('refreshButton'),qualityPanel=doc.getElementById('qualityPanel'),runDemoButton=doc.getElementById('runDemoButton'),demoResult=doc.getElementById('demoResult'),copyDemoHandoff=doc.getElementById('copyDemoHandoff');
-    if(!cards||!status||!summary||!reviewInbox||!refresh||!qualityPanel||!runDemoButton||!demoResult||!copyDemoHandoff)return;
+    const doc=root.document,cards=doc.getElementById('projectCards'),status=doc.getElementById('status'),summary=doc.getElementById('overviewSummary'),reviewInbox=doc.getElementById('reviewInbox'),refresh=doc.getElementById('refreshButton'),qualityPanel=doc.getElementById('qualityPanel');
+    if(!cards||!status||!summary||!reviewInbox||!refresh||!qualityPanel)return;
     const cached=loadSnapshot(root);
     let state=PROJECTS.map(project=>hydrateProjectData(project,cached?.projects?.find(item=>item.projectId===project.id)));
     let activeId=new URLSearchParams(root.location.search).get('project')||'state';
     let renderQueued=false,refreshGeneration=0;
+    const demoState={phase:'idle',step:0,timers:[]};
 
     function activeData(){return state.find(item=>item.project.id===activeId)||null;}
 
@@ -716,29 +719,64 @@
       try{root.localStorage?.setItem(reviewStorageKey,JSON.stringify(value));}catch(_){}
     }
     function currentReviewItems(){return state.flatMap(activityReviewItems);}
-    function unreviewedItems(){
-      const reviewed=reviewedState();
-      return currentReviewItems().filter(item=>!reviewed[item.key]);
+    function currentIncidents(){return currentReviewItems().filter(item=>!item.resolved);}
+    function openProductItems(){return state.flatMap(item=>productOpenItems(item).map(open=>({...open,project:item.project.name})));}
+
+    function demoTimeline(){
+      const steps=[
+        'Checking the failed Vercel deployment',
+        'Build output found, but the cause is not clear yet',
+        'Expanding to the related GitHub change',
+        'Preparing a product-friendly engineering handoff'
+      ];
+      return '<div class="demo-timeline">'+steps.map((label,index)=>{
+        const done=demoState.phase==='done'||demoState.step>index;
+        const active=demoState.phase==='running'&&demoState.step===index;
+        return '<div class="demo-timeline-item '+(done?'done ':'')+(active?'active':'')+'">'+esc(label)+'</div>';
+      }).join('')+'</div>';
     }
+    function demoReport(){
+      return '<div class="demo-report"><dl>'+
+        '<dt>What happened</dt><dd>The latest Tastemake version failed during deployment and did not go live.</dd>'+
+        '<dt>Likely cause</dt><dd>The related change introduced a required environment setting that is missing in this environment.</dd>'+
+        '<dt>User impact</dt><dd>No outage. People are still using the previous production version.</dd>'+
+        '<dt>Owner</dt><dd>Engineering</dd>'+
+        '<dt>What I checked</dt><dd>Failed Vercel deployment, build output, and the related GitHub change.</dd>'+
+        '<dt>Not checked</dt><dd>Secret values, database contents, or user-session data.</dd>'+
+        '<dt>Next step</dt><dd>Verify the environment setting before changing application code, then rerun the deployment.</dd>'+
+        '<dt>Confidence</dt><dd>Moderate. The build output and code change point to the same explanation, but the environment value itself is intentionally not visible.</dd>'+
+        '</dl><div class="quality-actions"><button class="button small primary" type="button" data-demo-copy>Copy engineer handoff</button><button class="button small" type="button" data-demo-replay>Replay</button></div><p class="footnote">Simulated with fixed, sanitized evidence. No live AI call or infrastructure change occurs.</p></div>';
+    }
+    function demoIncidentMarkup(){
+      return '<div class="review-item"><div><span class="review-kind demo">Demo incident</span><strong>Tastemake · Production deploy failed</strong>'+
+        '<div class="review-meta">Simulated with fixed, sanitized evidence · a realistic replay of the live investigation workflow</div>'+
+        '<div class="review-meta"><strong>Impact:</strong> The new version did not go live. Existing production remains available. · <strong>Owner:</strong> Engineering</div>'+
+        (demoState.phase==='idle'?'':demoTimeline())+
+        (demoState.phase==='done'?demoReport():'')+
+        '</div><div class="review-actions">'+(demoState.phase==='idle'?'<button class="button small primary" type="button" data-demo-start>Investigate failure</button>':demoState.phase==='running'?'<button class="button small" type="button" disabled>Investigating…</button>':'')+'</div></div>';
+    }
+
     function renderReviewInbox(){
-      const items=unreviewedItems();
+      const items=currentIncidents(),reviewed=reviewedState();
       if(!items.length){
-        reviewInbox.innerHTML='<section class="panel"><h3>Needs review</h3><p class="panel-copy">Deployment failures, runtime errors, and quality problems appear here when they deserve attention. Healthy logs stay out of the way.</p><div class="review-empty">Nothing new needs review right now. <button class="button small" type="button" data-open-demo>Try the investigation demo</button></div></section>';
+        reviewInbox.innerHTML='<section class="panel"><h3>Incidents</h3><div class="review-empty">No live incidents need attention right now.</div>'+demoIncidentMarkup()+'</section>';
         return;
       }
       const rows=items.slice(0,6).map(item=>{
-        const source=item.url?'<a class="button small" href="'+esc(item.url)+'" target="_blank" rel="noopener noreferrer">View source</a>':'';
-        const stateLabel=item.resolved?'Recovered':'New';
-        return '<div class="review-item"><div><strong>'+esc(item.project)+' · '+esc(item.title)+'</strong><div class="review-meta">'+esc(stateLabel)+' · '+esc(relativeAge(item.observedAt))+' · '+esc(item.detail)+'</div><div class="review-meta"><strong>Impact:</strong> '+esc(item.impact||'Unknown')+' · <strong>Owner:</strong> '+esc(item.owner||'Unknown')+'</div></div><div class="review-actions">'+source+'<button class="button small" type="button" data-review-key="'+esc(item.key)+'">Mark reviewed</button></div></div>';
+        const source=item.url?'<a class="button small" href="'+esc(item.url)+'" target="_blank" rel="noopener noreferrer">View evidence</a>':'';
+        const isReviewed=!!reviewed[item.key];
+        return '<div class="review-item"><div><span class="review-kind incident">Live incident</span><strong>'+esc(item.project)+' · '+esc(item.title)+'</strong><div class="review-meta">'+esc(relativeAge(item.observedAt))+' · '+esc(item.detail)+'</div><div class="review-meta"><strong>Impact:</strong> '+esc(item.impact||'Unknown')+' · <strong>Owner:</strong> '+esc(item.owner||'Unknown')+'</div></div><div class="review-actions">'+source+(isReviewed?'<span class="status-pill healthy">Reviewed</span>':'<button class="button small" type="button" data-review-key="'+esc(item.key)+'">Mark reviewed</button>')+'</div></div>';
       }).join('');
-      reviewInbox.innerHTML='<section class="panel"><h3>Needs review</h3><p class="panel-copy">A small error inbox from recent production deploys and bounded runtime error signals.</p><div class="review-list">'+rows+'</div></section>';
+      reviewInbox.innerHTML='<section class="panel"><h3>Incidents</h3><div class="review-list" style="margin-top:12px">'+rows+'</div></section>';
     }
     function renderSummary(){
       const fresh=state.filter(item=>item?.fresh);
-      const reviewCount=unreviewedItems().length;
+      const incidentCount=currentIncidents().length;
+      const openCount=openProductItems().length;
       const changedCount=fresh.filter(changedSinceVisit).length;
       const checked=fresh.map(item=>item.checkedAt).filter(Boolean).sort().pop();
-      summary.innerHTML='<span class="summary-chip"><strong>'+reviewCount+'</strong> need review</span>'+
+      summary.innerHTML='<span class="summary-chip incident"><strong>'+incidentCount+'</strong> '+(incidentCount===1?'incident':'incidents')+'</span>'+
+        '<span class="summary-chip open"><strong>'+openCount+'</strong> open '+(openCount===1?'item':'items')+'</span>'+
         '<span class="summary-chip"><strong>'+changedCount+'</strong> changed since last visit</span>'+
         '<span class="summary-chip"><strong>'+esc(checked?relativeAge(checked):'checking')+'</strong> last checked</span>';
     }
@@ -759,7 +797,7 @@
 
     async function ensureDetails(id){
       const data=state.find(item=>item.project.id===id);if(!data)return;
-      await loadProjectDetails(data,root,partial=>{scheduleRender();});
+      await loadProjectDetails(data,root,()=>{scheduleRender();});
       scheduleRender();persist();
     }
 
@@ -770,6 +808,21 @@
       ensureDetails(activeId);
     }
 
+    function clearDemoTimers(){demoState.timers.forEach(id=>root.clearTimeout(id));demoState.timers=[];}
+    function startDemo(){
+      clearDemoTimers();
+      demoState.phase='running';demoState.step=0;renderNow();
+      const points=[[700,1],[2100,2],[3900,3],[5600,4]];
+      for(const [delay,step] of points){
+        demoState.timers.push(root.setTimeout(()=>{demoState.step=step;renderNow();},delay));
+      }
+      demoState.timers.push(root.setTimeout(()=>{demoState.phase='done';demoState.step=4;renderNow();},7200));
+    }
+    async function copyDemoHandoff(button){
+      const text=['Tastemake engineering handoff','','Issue','The latest version failed during deployment and did not go live.','','User impact','No outage. People are still using the previous production version.','','Likely cause','The related change introduced a required environment setting that is missing in this environment.','','Evidence checked','Failed Vercel deployment, build output, related GitHub change.','','Not checked','Secret values, database contents, user-session data.','','Suggested starting point','Verify the environment setting before changing application code, then rerun the deployment.','','Confidence','Moderate. The build output and code change point to the same explanation, but the environment value itself is intentionally not visible.','','Demo replay using fixed, sanitized evidence.'].join('\n');
+      try{await root.navigator.clipboard.writeText(text);button.textContent='Copied';root.setTimeout(()=>{button.textContent='Copy engineer handoff';},1500);}catch(_){root.prompt('Copy engineering handoff',text);}
+    }
+
     cards.addEventListener('click',event=>{if(event.target.closest?.('a,button'))return;const card=event.target.closest?.('.project-card');if(card)select(card.dataset.project);});
     cards.addEventListener('keydown',event=>{if(event.target.closest?.('a,button'))return;const card=event.target.closest?.('.project-card');if(card&&(event.key==='Enter'||event.key===' ')){event.preventDefault();select(card.dataset.project);}});
 
@@ -777,17 +830,16 @@
     deliveryPanel.addEventListener('click',async event=>{
       const copyButton=event.target.closest?.('[data-copy-handoff]');
       if(copyButton){
-        const data=activeData();const investigation=data?.investigation;
-        if(!data||!investigation?.report)return;
+        const data=activeData(),investigation=data?.investigation;if(!data||!investigation?.report)return;
         const sources=(investigation.sources||[]).map(source=>'- '+source.label+': '+source.url).join('\n');
-        const text=[data.project.name+' engineering handoff','',investigation.report,'',sources?'Sources:\n'+sources:'','', 'Generated by Project Health. Read-only investigation; verify before changing anything.'].filter(Boolean).join('\n');
+        const text=[data.project.name+' engineering handoff','',investigation.report,'',sources?'Evidence:\n'+sources:'','', 'Generated by Project Health. Read-only investigation; verify before changing anything.'].filter(Boolean).join('\n');
         try{await root.navigator.clipboard.writeText(text);copyButton.textContent='Copied';root.setTimeout(()=>{copyButton.textContent='Copy engineer handoff';},1500);}catch(_){root.prompt('Copy engineering handoff',text);}
         return;
       }
       const button=event.target.closest?.('[data-investigate]');
       if(!button)return;
       const data=activeData();if(!data)return;
-      if(!root.confirm('This checks the selected failed signal and a small number of related sources. It sends bounded check/deployment details to Anthropic for one summary and may incur a small API charge. Continue?'))return;
+      if(!root.confirm('Investigate this failure? Project Health will check only the relevant bounded evidence and send a sanitized summary to Anthropic. It cannot change code, configuration, or deployments.'))return;
       let key=root.sessionStorage.getItem('project-health-investigation-key')||'';
       if(!key)key=root.prompt('Project Health investigation key')||'';
       if(!key)return;
@@ -828,77 +880,41 @@
         if(generation!==refreshGeneration)return;
         state[index]=item;
         completed.add(project.id);
-        if(item.qualityPromise){
-          item.qualityPromise.finally(()=>{if(generation===refreshGeneration){scheduleRender();persist();}});
-        }
+        if(item.qualityPromise)item.qualityPromise.finally(()=>{if(generation===refreshGeneration){scheduleRender();persist();}});
         scheduleRender();
-        if(completed.size<PROJECTS.length){
-          status.textContent=progressText(completed.size,PROJECTS.length,pendingNames());
-        }
+        if(completed.size<PROJECTS.length)status.textContent=progressText(completed.size,PROJECTS.length,pendingNames());
       });
 
       await Promise.all(jobs);
       if(generation!==refreshGeneration)return;
       const errors=state.flatMap(item=>item.errors.map(error=>item.project.name+': '+error));
       persist();
-      status.innerHTML=errors.length?'<strong>Core refresh complete with some unavailable sources.</strong> Remaining quality/detail signals continue independently.':'<strong>Core health is up to date.</strong> Product quality may still be finishing; detailed signals load when you open a project.';
+      status.innerHTML=errors.length?'<strong>Refresh finished with some coverage gaps.</strong> The dashboard keeps unavailable data separate from product incidents.':'<strong>Health is up to date.</strong>';
       refresh.disabled=false;
       ensureDetails(activeId);
     }
 
-    if(cached?.savedAt){
-      status.innerHTML='<strong>Showing the last good snapshot.</strong> Last checked '+esc(fmtDate(cached.savedAt))+'. Refreshing current health…';
-    }
+    if(cached?.savedAt)status.innerHTML='<strong>Showing the last good snapshot.</strong> Last checked '+esc(fmtDate(cached.savedAt))+'. Refreshing current health…';
     renderNow();
     refresh.addEventListener('click',refreshAll);
-    reviewInbox.addEventListener('click',event=>{
-      const demoButton=event.target.closest?.('[data-open-demo]');
-      if(demoButton){
-        doc.getElementById('investigationDemo')?.scrollIntoView({behavior:'smooth',block:'center'});
-        runDemoButton.focus();
-        return;
+    reviewInbox.addEventListener('click',async event=>{
+      const reviewButton=event.target.closest?.('[data-review-key]');
+      if(reviewButton){
+        const reviewed=reviewedState();reviewed[reviewButton.dataset.reviewKey]=new Date().toISOString();saveReviewedState(reviewed);renderNow();return;
       }
-      const button=event.target.closest?.('[data-review-key]');
-      if(!button)return;
-      const reviewed=reviewedState();
-      reviewed[button.dataset.reviewKey]=new Date().toISOString();
-      saveReviewedState(reviewed);
-      renderNow();
-    });
-    function resetDemo(){
-      doc.querySelectorAll('[data-demo-step]').forEach(step=>step.classList.remove('active'));
-      demoResult.classList.remove('active');
-      runDemoButton.disabled=false;
-      runDemoButton.textContent='Run demo';
-    }
-    function runDemo(){
-      resetDemo();
-      runDemoButton.disabled=true;
-      runDemoButton.textContent='Investigating…';
-      const steps=Array.from(doc.querySelectorAll('[data-demo-step]'));
-      const timers=[0,450,900,1350];
-      steps.forEach((step,index)=>root.setTimeout(()=>step.classList.add('active'),timers[index]));
-      root.setTimeout(()=>{
-        demoResult.classList.add('active');
-        runDemoButton.disabled=false;
-        runDemoButton.textContent='Replay demo';
-      },1800);
-    }
-    runDemoButton.addEventListener('click',runDemo);
-    copyDemoHandoff.addEventListener('click',async()=>{
-      const text=['Project Health demo · engineering handoff','','What happened','The preview deployment failed while building the changed code path.','','Likely cause','The related change introduced a required configuration value that is not available in this preview environment.','','User impact','No production outage. The new version did not go live, so the previous production version remains available.','','Owner','Engineering','','Recommended next step','Verify the preview environment configuration before changing code, then rerun the deployment.','','Sources checked','Vercel build output · related GitHub change','','Read-only simulated incident. No live AI call or infrastructure change occurred.'].join('\n');
-      try{await root.navigator.clipboard.writeText(text);copyDemoHandoff.textContent='Copied';root.setTimeout(()=>{copyDemoHandoff.textContent='Copy engineer handoff';},1500);}catch(_){root.prompt('Copy engineering handoff',text);}
+      if(event.target.closest?.('[data-demo-start]')||event.target.closest?.('[data-demo-replay]')){startDemo();return;}
+      const copy=event.target.closest?.('[data-demo-copy]');if(copy){await copyDemoHandoff(copy);}
     });
     qualityPanel.addEventListener('click',async event=>{
       const button=event.target.closest?.('[data-run-checks]');
       if(!button)return;
       const data=activeData();if(!data)return;
       button.disabled=true;
-      try{await dispatchRun(data,root);}catch(_){}
+      try{await dispatchRun(data,root,button.dataset.runChecks||'all');}catch(_){}
       finally{renderDetail(data,doc);}
     });
     await refreshAll();
   }
 
-  return {PROJECTS,pageEnvironment,vercelFromStatus,deliveryHealth,commitTitle,githubCommitUrl,pullRequestNumber,githubPullRequestUrl,changeUrl,normalizeQuality,qualityAttention,externalQualityAttention,deliveryAttention,infrastructureAttention,allAttentionSignals,attentionItems,overallAttention,projectQualityLabel,percent,shortSha,pendingSet,mergePlatform,emptyProjectData,safeExternalQualitySnapshot,serializeProjectData,hydrateProjectData,loadProject,loadProjectDetails,infraCardLabel,analyticsLabel,relativeAge,changedSinceVisit,trendText,activityReviewItems,progressText,init};
+  return {PROJECTS,pageEnvironment,vercelFromStatus,deliveryHealth,commitTitle,githubCommitUrl,pullRequestNumber,githubPullRequestUrl,changeUrl,normalizeQuality,qualityAttention,externalQualityAttention,deliveryAttention,infrastructureAttention,allAttentionSignals,attentionItems,overallAttention,productOpenItems,projectStatus,setupGaps,releaseReadiness,projectQualityLabel,evalScore,percent,shortSha,pendingSet,mergePlatform,emptyProjectData,safeExternalQualitySnapshot,serializeProjectData,hydrateProjectData,loadProject,loadProjectDetails,infraCardLabel,analyticsLabel,relativeAge,changedSinceVisit,trendText,activityReviewItems,progressText,init};
 });
