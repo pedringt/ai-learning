@@ -343,6 +343,8 @@
         kind:'deployment',
         title:failure.recovered?'Deployment failed, then recovered':'Production deployment failed',
         detail:(failure.message||'Deployment failure')+(failure.recovered&&failure.recovered_at?' · recovered '+relativeAge(failure.recovered_at):''),
+        impact:failure.recovered?'A later deployment recovered the failed release.':'The latest change did not deploy; the previous production version should remain available.',
+        owner:failure.recovered?'No action':'Engineering',
         observedAt:failure.created_at,
         resolved:!!failure.recovered,
         url:failure.url||null
@@ -355,6 +357,8 @@
         kind:'runtime',
         title:(issue.status?('HTTP '+issue.status+' · '):'')+(issue.path||'Runtime error'),
         detail:(issue.count>1?issue.count+' occurrences · ':'')+(issue.message||'Runtime error'),
+        impact:'Users may be seeing errors on this route; scope is unknown until the signal is investigated.',
+        owner:'Engineering',
         observedAt:issue.last_seen,
         resolved:false,
         url:issue.source_url||null
@@ -440,7 +444,7 @@
     const prod=d?row('Production branch',d.branch)+linkedRow('Latest change',commitTitle(d.message),changeUrl(p.repo,d))+row('Updated',fmtDate(d.updatedAt))+linkedRow('Commit',shortSha(d.sha),githubCommitUrl(p.repo,d.sha))+htmlRow('Vercel',esc(d.vercel.label)+(d.vercel.kind==='bad'?investigateButton('vercel','production','Investigate'):''))+checkRow(d):'<div class="empty">Production delivery data could not be loaded.</div>';
     const stage=s?'<div style="margin-top:12px">'+row('Staging branch',s.branch)+linkedRow('Latest change',commitTitle(s.message),changeUrl(p.repo,s))+row('Updated',fmtDate(s.updatedAt))+linkedRow('Commit',shortSha(s.sha),githubCommitUrl(p.repo,s.sha))+htmlRow('Staging Vercel',esc(s.vercel.label)+(s.vercel.kind==='bad'?investigateButton('vercel','staging','Investigate'):''))+checkRow(s)+'</div>':'';
     const investigation=data.investigation;
-    const investigationHtml=investigation?.loading?'<div class="investigation-result" role="status">Checking the failed signal and relevant read-only sources…</div>':investigation?.error?'<div class="investigation-result" role="status"><strong>Investigation unavailable</strong><p>'+esc(investigation.error)+'</p></div>':investigation?.report?'<div class="investigation-result"><strong>Investigation · '+esc(fmtDate(investigation.observedAt))+'</strong><pre>'+esc(investigation.report)+'</pre><div class="investigation-sources"><strong>Sources checked</strong>'+investigation.sources.map(source=>githubLink(esc(source.label),source.url)).join(' · ')+'</div><p class="footnote">Read-only investigation. The likely cause is a hypothesis; verify before changing anything.</p></div>':'';
+    const investigationHtml=investigation?.loading?'<div class="investigation-result" role="status">Checking the failed signal and relevant read-only sources…</div>':investigation?.error?'<div class="investigation-result" role="status"><strong>Investigation unavailable</strong><p>'+esc(investigation.error)+'</p></div>':investigation?.report?'<div class="investigation-result"><strong>Investigation · '+esc(fmtDate(investigation.observedAt))+'</strong><pre>'+esc(investigation.report)+'</pre><div class="investigation-sources"><strong>Sources checked</strong>'+investigation.sources.map(source=>githubLink(esc(source.label),source.url)).join(' · ')+'</div><div class="quality-actions"><button class="button small" type="button" data-copy-handoff>Copy engineer handoff</button></div><p class="footnote">Read-only investigation. The likely cause is a hypothesis; verify before changing anything.</p></div>':'';
     doc.getElementById('deliveryPanel').innerHTML='<h3>Delivery</h3><p class="panel-copy">Current branch and deployment state. Older operational context lives under Recent context.</p><div class="rows">'+prod+stage+'</div>'+investigationHtml;
 
     const pending=pendingSet(data),r=platform?.render,n=platform?.neon;
@@ -617,7 +621,7 @@
       const rows=items.slice(0,6).map(item=>{
         const source=item.url?'<a class="button small" href="'+esc(item.url)+'" target="_blank" rel="noopener noreferrer">View source</a>':'';
         const stateLabel=item.resolved?'Recovered':'New';
-        return '<div class="review-item"><div><strong>'+esc(item.project)+' · '+esc(item.title)+'</strong><div class="review-meta">'+esc(stateLabel)+' · '+esc(relativeAge(item.observedAt))+' · '+esc(item.detail)+'</div></div><div class="review-actions">'+source+'<button class="button small" type="button" data-review-key="'+esc(item.key)+'">Mark reviewed</button></div></div>';
+        return '<div class="review-item"><div><strong>'+esc(item.project)+' · '+esc(item.title)+'</strong><div class="review-meta">'+esc(stateLabel)+' · '+esc(relativeAge(item.observedAt))+' · '+esc(item.detail)+'</div><div class="review-meta"><strong>Impact:</strong> '+esc(item.impact||'Unknown')+' · <strong>Owner:</strong> '+esc(item.owner||'Unknown')+'</div></div><div class="review-actions">'+source+'<button class="button small" type="button" data-review-key="'+esc(item.key)+'">Mark reviewed</button></div></div>';
       }).join('');
       reviewInbox.innerHTML='<section class="panel"><h3>Needs review</h3><p class="panel-copy">A small error inbox from recent production deploys and bounded runtime error signals.</p><div class="review-list">'+rows+'</div></section>';
     }
@@ -663,6 +667,15 @@
 
     const deliveryPanel=doc.getElementById('deliveryPanel');
     deliveryPanel.addEventListener('click',async event=>{
+      const copyButton=event.target.closest?.('[data-copy-handoff]');
+      if(copyButton){
+        const data=activeData();const investigation=data?.investigation;
+        if(!data||!investigation?.report)return;
+        const sources=(investigation.sources||[]).map(source=>'- '+source.label+': '+source.url).join('\n');
+        const text=[data.project.name+' engineering handoff','',investigation.report,'',sources?'Sources:\n'+sources:'','', 'Generated by Project Health. Read-only investigation; verify before changing anything.'].filter(Boolean).join('\n');
+        try{await root.navigator.clipboard.writeText(text);copyButton.textContent='Copied';root.setTimeout(()=>{copyButton.textContent='Copy engineer handoff';},1500);}catch(_){root.prompt('Copy engineering handoff',text);}
+        return;
+      }
       const button=event.target.closest?.('[data-investigate]');
       if(!button)return;
       const data=activeData();if(!data)return;
