@@ -584,8 +584,8 @@
   }
 
   async function init(root){
-    const doc=root.document,cards=doc.getElementById('projectCards'),status=doc.getElementById('status'),summary=doc.getElementById('overviewSummary'),reviewInbox=doc.getElementById('reviewInbox'),refresh=doc.getElementById('refreshButton'),qualityPanel=doc.getElementById('qualityPanel'),runDemoButton=doc.getElementById('runDemoButton'),demoResult=doc.getElementById('demoResult');
-    if(!cards||!status||!summary||!reviewInbox||!refresh||!qualityPanel||!runDemoButton||!demoResult)return;
+    const doc=root.document,cards=doc.getElementById('projectCards'),status=doc.getElementById('status'),summary=doc.getElementById('overviewSummary'),reviewInbox=doc.getElementById('reviewInbox'),refresh=doc.getElementById('refreshButton'),qualityPanel=doc.getElementById('qualityPanel'),runDemoButton=doc.getElementById('runDemoButton'),demoResult=doc.getElementById('demoResult'),copyDemoHandoff=doc.getElementById('copyDemoHandoff');
+    if(!cards||!status||!summary||!reviewInbox||!refresh||!qualityPanel||!runDemoButton||!demoResult||!copyDemoHandoff)return;
     const cached=loadSnapshot(root);
     let state=PROJECTS.map(project=>hydrateProjectData(project,cached?.projects?.find(item=>item.projectId===project.id)));
     let activeId=new URLSearchParams(root.location.search).get('project')||'state';
@@ -777,6 +777,10 @@
       },1800);
     }
     runDemoButton.addEventListener('click',runDemo);
+    copyDemoHandoff.addEventListener('click',async()=>{
+      const text=['Project Health demo · engineering handoff','','What happened','The preview deployment failed while building the changed code path.','','Likely cause','The related change introduced a required configuration value that is not available in this preview environment.','','User impact','No production outage. The new version did not go live, so the previous production version remains available.','','Owner','Engineering','','Recommended next step','Verify the preview environment configuration before changing code, then rerun the deployment.','','Sources checked','Vercel build output · related GitHub change','','Read-only simulated incident. No live AI call or infrastructure change occurred.'].join('\n');
+      try{await root.navigator.clipboard.writeText(text);copyDemoHandoff.textContent='Copied';root.setTimeout(()=>{copyDemoHandoff.textContent='Copy engineer handoff';},1500);}catch(_){root.prompt('Copy engineering handoff',text);}
+    });
     qualityPanel.addEventListener('click',async event=>{
       const button=event.target.closest?.('[data-run-checks]');
       if(!button)return;
