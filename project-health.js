@@ -114,12 +114,38 @@
 
   async function loadProject(project,root){
     const data={project,delivery:null,staging:null,quality:null,externalQuality:null,platform:null,runInfo:null,errors:[]};
-    try{data.delivery=await loadGitHubProject(project,project.branch);}catch(e){data.errors.push('Delivery: '+e.message);}
-    if(project.stagingBranch){try{data.staging=await loadGitHubProject(project,project.stagingBranch);}catch(e){data.errors.push('Staging: '+e.message);}}
-    if(project.quality==='state'){try{data.quality=await loadStateQuality(root);}catch(e){data.errors.push('Quality: '+e.message);}}
-    else {try{data.externalQuality=await loadExternalQuality(project);}catch(e){data.errors.push('Quality: '+e.message);}}
-    try{data.platform=await loadPlatform(project);}catch(e){data.errors.push('Platform: '+e.message);}
-    try{data.runInfo=await loadRunInfo(project);}catch(e){data.errors.push('Run controls: '+e.message);}
+    const tasks=[
+      loadGitHubProject(project,project.branch)
+        .then(value=>{data.delivery=value;})
+        .catch(e=>{data.errors.push('Delivery: '+e.message);}),
+      loadPlatform(project)
+        .then(value=>{data.platform=value;})
+        .catch(e=>{data.errors.push('Platform: '+e.message);}),
+      loadRunInfo(project)
+        .then(value=>{data.runInfo=value;})
+        .catch(e=>{data.errors.push('Run controls: '+e.message);})
+    ];
+    if(project.stagingBranch){
+      tasks.push(
+        loadGitHubProject(project,project.stagingBranch)
+          .then(value=>{data.staging=value;})
+          .catch(e=>{data.errors.push('Staging: '+e.message);})
+      );
+    }
+    if(project.quality==='state'){
+      tasks.push(
+        loadStateQuality(root)
+          .then(value=>{data.quality=value;})
+          .catch(e=>{data.errors.push('Quality: '+e.message);})
+      );
+    }else{
+      tasks.push(
+        loadExternalQuality(project)
+          .then(value=>{data.externalQuality=value;})
+          .catch(e=>{data.errors.push('Quality: '+e.message);})
+      );
+    }
+    await Promise.all(tasks);
     return data;
   }
 
@@ -154,6 +180,16 @@
     if(q.project==='tastemake'&&q.ci?.conclusion==='success'&&top?.kind==='good') return 'QA + eval rules healthy';
     if(q.project==='narc'&&q.recorded?.recorded_all_suites_green) return q.recorded.full_playtest_pending?'Tests green · playtest pending':'Recorded tests green';
     return top?.title||'Quality loaded';
+  }
+  function loadingCardMarkup(project,active){
+    return '<article class="project-card '+(active?'active':'')+'" data-kind="unknown" data-project="'+esc(project.id)+'" tabindex="0" role="button" aria-label="Open '+esc(project.name)+' health">'+
+      '<div class="card-head"><div><h2>'+esc(project.name)+'</h2><p>'+esc(project.description)+'</p></div><span class="status-pill unknown">Checking</span></div>'+
+      '<div class="card-focus">Checking connected sources…</div>'+
+      '<div class="signal-list">'+
+      '<div class="signal"><span class="signal-label">Delivery</span><span class="signal-value">Checking…</span></div>'+
+      '<div class="signal"><span class="signal-label">Infrastructure</span><span class="signal-value">Checking…</span></div>'+
+      '<div class="signal"><span class="signal-label">Product quality</span><span class="signal-value">Checking…</span></div>'+
+      '</div></article>';
   }
   function cardMarkup(data,active){
     const att=overallAttention(data),d=data.delivery;
@@ -284,6 +320,12 @@
     }
   }
 
+  function progressText(done,total,pendingNames){
+    if(done>=total) return 'Finishing refresh…';
+    const pending=Array.isArray(pendingNames)&&pendingNames.length?pendingNames.join(', '):'remaining projects';
+    return 'Refreshing '+done+' of '+total+' projects… '+pending+' still checking.';
+  }
+
   async function init(root){
     const doc=root.document,cards=doc.getElementById('projectCards'),status=doc.getElementById('status'),summary=doc.getElementById('overviewSummary'),refresh=doc.getElementById('refreshButton'),runButton=doc.getElementById('runChecksButton');
     if(!cards||!status||!summary||!refresh||!runButton)return;
@@ -298,17 +340,51 @@
     }
     function wireCards(){cards.querySelectorAll('.project-card').forEach(card=>{card.addEventListener('click',()=>select(card.dataset.project));card.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();select(card.dataset.project);}});});}
 
-    async function refreshAll(){
-      refresh.disabled=true;status.textContent='Refreshing project health…';
-      const results=await Promise.all(PROJECTS.map(project=>loadProject(project,root)));state=results;
-      cards.innerHTML=results.map(item=>cardMarkup(item,item.project.id===activeId)).join('');wireCards();select(activeId);
-      const errors=results.flatMap(item=>item.errors.map(error=>item.project.name+': '+error));
-      const attentionCount=results.filter(item=>overallAttention(item).kind==='bad'||overallAttention(item).kind==='warn').length;
-      const analyticsConnected=results.filter(item=>item.platform?.analytics?.available).length;
-      summary.innerHTML='<span class="summary-chip"><strong>'+results.length+'</strong> projects</span>'+
+    function renderCards(){
+      cards.innerHTML=PROJECTS.map(project=>{
+        const item=state.find(entry=>entry&&entry.project.id===project.id);
+        return item?cardMarkup(item,project.id===activeId):loadingCardMarkup(project,project.id===activeId);
+      }).join('');
+      wireCards();
+      const data=activeData();if(data)renderDetail(data,doc);
+    }
+
+    function renderSummary(){
+      const loaded=state.filter(Boolean);
+      const attentionCount=loaded.filter(item=>overallAttention(item).kind==='bad'||overallAttention(item).kind==='warn').length;
+      const analyticsConnected=loaded.filter(item=>item.platform?.analytics?.available).length;
+      summary.innerHTML='<span class="summary-chip"><strong>'+loaded.length+'/'+PROJECTS.length+'</strong> checked</span>'+
         '<span class="summary-chip"><strong>'+attentionCount+'</strong> need a look</span>'+
-        '<span class="summary-chip"><strong>'+analyticsConnected+'/'+results.length+'</strong> analytics connected</span>';
-      status.innerHTML=errors.length?'<strong>Some sources could not be read.</strong> The dashboard is showing everything else it could verify.':'<strong>Up to date.</strong> Connected delivery, infrastructure, and product-quality signals were refreshed.';
+        '<span class="summary-chip"><strong>'+analyticsConnected+'/'+PROJECTS.length+'</strong> analytics connected</span>';
+    }
+
+    async function refreshAll(){
+      if(refresh.disabled)return;
+      refresh.disabled=true;
+      const previous=new Map(state.filter(Boolean).map(item=>[item.project.id,item]));
+      const freshState=PROJECTS.map(project=>previous.get(project.id)||null);
+      state=freshState;
+      renderCards();renderSummary();
+
+      const completed=new Set();
+      const pendingNames=()=>PROJECTS.filter(project=>!completed.has(project.id)).map(project=>project.name);
+      status.textContent=progressText(0,PROJECTS.length,pendingNames());
+
+      const jobs=PROJECTS.map(async project=>{
+        const item=await loadProject(project,root);
+        const index=PROJECTS.findIndex(p=>p.id===project.id);
+        state[index]=item;
+        completed.add(project.id);
+        renderCards();renderSummary();
+        if(completed.size<PROJECTS.length){
+          status.textContent=progressText(completed.size,PROJECTS.length,pendingNames());
+        }
+      });
+
+      await Promise.all(jobs);
+      const results=state.filter(Boolean);
+      const errors=results.flatMap(item=>item.errors.map(error=>item.project.name+': '+error));
+      status.innerHTML=errors.length?'<strong>Refresh complete with some unavailable sources.</strong> Everything else was updated as it arrived.':'<strong>Up to date.</strong> All connected project sources finished refreshing.';
       refresh.disabled=false;
     }
 
@@ -317,5 +393,5 @@
     await refreshAll();
   }
 
-  return {PROJECTS,pageEnvironment,vercelFromStatus,deliveryHealth,normalizeQuality,qualityAttention,externalQualityAttention,deliveryAttention,infrastructureAttention,allAttentionSignals,attentionItems,overallAttention,projectQualityLabel,percent,shortSha,loadProject,infraCardLabel,analyticsLabel,init};
+  return {PROJECTS,pageEnvironment,vercelFromStatus,deliveryHealth,normalizeQuality,qualityAttention,externalQualityAttention,deliveryAttention,infrastructureAttention,allAttentionSignals,attentionItems,overallAttention,projectQualityLabel,percent,shortSha,loadProject,infraCardLabel,analyticsLabel,progressText,init};
 });
