@@ -109,8 +109,11 @@
   }
 
   async function loadGitHubProject(project,branchName){
-    const branch=await jsonFetch(githubApi('/repos/'+project.repo+'/branches/'+encodeURIComponent(branchName)),{headers:{Accept:'application/vnd.github+json'}});
-    const status=await jsonFetch(githubApi('/repos/'+project.repo+'/commits/'+branch.commit.sha+'/status'),{headers:{Accept:'application/vnd.github+json'}});
+    const headers={Accept:'application/vnd.github+json'};
+    const [branch,status]=await Promise.all([
+      jsonFetch(githubApi('/repos/'+project.repo+'/branches/'+encodeURIComponent(branchName)),{headers,timeoutMs:6000}),
+      jsonFetch(githubApi('/repos/'+project.repo+'/commits/'+encodeURIComponent(branchName)+'/status'),{headers,timeoutMs:6000})
+    ]);
     return deliveryHealth(branch,status);
   }
   async function loadStateQuality(root){return normalizeQuality(await jsonFetch('/api/project-health-state-quality?env='+pageEnvironment(root),{timeoutMs:7000}));}
