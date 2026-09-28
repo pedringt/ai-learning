@@ -17,6 +17,9 @@ module.exports=async function handler(req,res){
     }
     res.status(200).send(text);
   }catch(error){
-    res.status(502).json({detail:'State quality API unavailable'});
+    const timedOut=error?.name==='AbortError';
+    res.status(timedOut?504:502).json({detail:timedOut?'State quality API is still waking up':'State quality API unavailable'});
+  }finally{
+    clearTimeout(timer);
   }
 };
