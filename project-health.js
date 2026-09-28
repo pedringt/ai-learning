@@ -6,8 +6,8 @@
   'use strict';
 
   const PROJECTS=[
-    {id:'state',name:'State',description:'Maintained project truth with human-authorized Current State.',repo:'pedringt/ai-learning',branch:'main',stagingBranch:'staging',quality:'state'},
-    {id:'tastemake',name:'Tastemake',description:'Taste-learning recommendations and preference discovery.',repo:'pedringt/tastemake',branch:'main'},
+    {id:'state',name:'State',description:'Maintained project truth with human-authorized Current State.',repo:'pedringt/ai-learning',branch:'main',stagingBranch:'staging',quality:'state',siteUrl:'https://state.contextswitch.tech/',siteLabel:'Open State'},
+    {id:'tastemake',name:'Tastemake',description:'Taste-learning recommendations and preference discovery.',repo:'pedringt/tastemake',branch:'main',siteUrl:null,siteLabel:'Open prototype'},
     {id:'narc',name:'NARC',description:'Workplace-surveillance satire game and branching system.',repo:'pedringt/narc',branch:'main'}
   ];
   const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -341,13 +341,13 @@
 
   function renderDetail(data,doc){
     const p=data.project,d=data.delivery,s=data.staging,q=data.quality,externalQ=data.externalQuality,platform=data.platform,run=data.runInfo;
-    doc.getElementById('detailTitle').textContent=p.name;doc.getElementById('detailCopy').textContent=p.description;doc.getElementById('repoLink').href=repoUrl(p.repo);
+    doc.getElementById('detailTitle').textContent=p.name;doc.getElementById('detailCopy').textContent=p.description;doc.getElementById('repoLink').href=repoUrl(p.repo);const siteLink=doc.getElementById('siteLink');siteLink.hidden=!p.siteUrl;if(p.siteUrl){siteLink.href=p.siteUrl;siteLink.textContent='Open live site';}
 
     const notices=attentionItems(data);
     doc.getElementById('attentionPanel').innerHTML='<h3>What needs attention?</h3><p class="panel-copy">Only exceptions and decisions that deserve attention show here. Healthy checks stay in their own sections.</p><div class="rows">'+notices.map(attentionMarkup).join('')+'</div>';
 
-    const prod=d?row('Production branch',d.branch)+linkedRow('Latest change',commitTitle(d.message),changeUrl(p.repo,d))+row('Updated',fmtDate(d.updatedAt))+linkedRow('Commit',shortSha(d.sha),githubCommitUrl(p.repo,d.sha))+row('Vercel',d.vercel.label):'<div class="empty">Production delivery data could not be loaded.</div>';
-    const stage=s?'<div style="margin-top:12px">'+row('Staging branch',s.branch)+linkedRow('Latest change',commitTitle(s.message),changeUrl(p.repo,s))+row('Updated',fmtDate(s.updatedAt))+linkedRow('Commit',shortSha(s.sha),githubCommitUrl(p.repo,s.sha))+row('Staging Vercel',s.vercel.label)+'</div>':'';
+    const prod=d?row('Production branch',githubLink(d.branch,'https://github.com/'+p.repo+'/tree/'+encodeURIComponent(d.branch)))+linkedRow('Latest change',commitTitle(d.message),changeUrl(p.repo,d))+row('Updated',fmtDate(d.updatedAt))+linkedRow('Commit',shortSha(d.sha),githubCommitUrl(p.repo,d.sha))+linkedRow('Vercel',d.vercel.label,'https://vercel.com/cairn10/'+(p.id==='state'?'state':p.id)): '<div class="empty">Production delivery data could not be loaded.</div>';
+    const stage=s?'<div style="margin-top:12px">'+row('Staging branch',githubLink(s.branch,'https://github.com/'+p.repo+'/tree/'+encodeURIComponent(s.branch)))+linkedRow('Latest change',commitTitle(s.message),changeUrl(p.repo,s))+row('Updated',fmtDate(s.updatedAt))+linkedRow('Commit',shortSha(s.sha),githubCommitUrl(p.repo,s.sha))+linkedRow('Staging Vercel',s.vercel.label,'https://vercel.com/cairn10/'+(p.id==='state'?'state':p.id))+'</div>':'';
     doc.getElementById('deliveryPanel').innerHTML='<h3>Delivery</h3><p class="panel-copy">GitHub branch heads plus Vercel commit status.</p><div class="rows">'+prod+stage+'</div>';
 
     const pending=pendingSet(data),r=platform?.render,n=platform?.neon;
