@@ -103,7 +103,6 @@ const mixed=H.attentionItems({
 assert.strictEqual(mixed.length,1);
 assert.strictEqual(mixed[0].kind,'warn');
 assert.match(mixed[0].title,/playtest/i);
-assert.strictEqual(H.projectStatus({...blank,delivery:{vercel:{kind:'good'}},externalQuality:narcQuality,fresh:true}).label,'Watch');
 
 assert.strictEqual(
   H.progressText(0,3,['State','Tastemake','NARC']),
@@ -121,6 +120,7 @@ assert.ok(blank.pending instanceof Set);
 assert.strictEqual(blank.pending.size,0);
 assert.deepStrictEqual(blank.errors,[]);
 assert.strictEqual(blank.fresh,false);
+assert.strictEqual(H.projectStatus({...blank,delivery:{vercel:{kind:'good'}},externalQuality:narcQuality,fresh:true}).label,'Watch');
 
 const pendingOnly=H.emptyProjectData(H.PROJECTS[0]);
 pendingOnly.pending.add('Delivery');
