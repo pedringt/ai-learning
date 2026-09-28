@@ -185,5 +185,7 @@ assert.match(healthHtml,/No code, configuration, deployment, or live AI call was
 assert.match(healthHtml,/Copy engineer handoff/);
 assert.match(healthHtml,/Project Health helps product owners spot problems across live products/);
 assert.match(H.PROJECTS[0].description,/Human-reviewed project truth system/);
+assert.strictEqual(H.infrastructureAttention({render:{configured:true,environments:{production:{ok:true}}}}),null);
+
 
 console.log('Project Health shell tests passed');
