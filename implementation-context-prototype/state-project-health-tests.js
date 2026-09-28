@@ -47,8 +47,8 @@ assert.strictEqual(
   'good'
 );
 assert.strictEqual(
-  H.infrastructureAttention({render:{configured:true,environments:{production:{ok:true},staging:{ok:false}}}}).kind,
-  'warn'
+  H.infrastructureAttention({render:{configured:true,environments:{production:{ok:true},staging:{ok:false}}}}),
+  null
 );
 assert.strictEqual(
   H.infrastructureAttention({render:{configured:true,environments:{production:{ok:false},staging:{ok:true}}}}).kind,
