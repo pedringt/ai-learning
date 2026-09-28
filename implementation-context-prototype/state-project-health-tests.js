@@ -1,5 +1,6 @@
 // Project Health combined-branch regression coverage.
 const assert=require('assert');
+const fs=require('fs');
 const H=require('../project-health.js');
 
 assert.deepStrictEqual(H.PROJECTS.map(p=>p.id),['state','tastemake','narc']);
@@ -164,5 +165,14 @@ const safeQuality=H.safeExternalQualitySnapshot({
 assert.strictEqual(safeQuality.endpoint.rule_checks.passed,2);
 assert.strictEqual(Object.prototype.hasOwnProperty.call(safeQuality.endpoint,'grounding_findings'),false);
 assert.strictEqual(Object.prototype.hasOwnProperty.call(safeQuality.endpoint,'failing_fixtures'),false);
+
+
+const healthHtml=fs.readFileSync(require.resolve('../project-health.html'),'utf8');
+assert.match(healthHtml,/Portfolio demo · simulated incident/);
+assert.match(healthHtml,/See a bounded investigation/);
+assert.match(healthHtml,/How Project Health works/);
+assert.match(healthHtml,/Role & attribution/);
+assert.match(healthHtml,/No code, configuration, deployment, or live AI call was changed or triggered/);
+assert.match(H.PROJECTS[0].description,/Human-reviewed project truth system/);
 
 console.log('Project Health shell tests passed');
