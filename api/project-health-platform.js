@@ -180,4 +180,4 @@ module.exports=async function handler(req,res){
   });
 };
 
-module.exports._test={safeRenderHealth,PROJECTS};
+module.exports._test={safeRenderHealth,numericCount,percentDelta,PROJECTS};
