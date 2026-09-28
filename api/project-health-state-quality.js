@@ -9,7 +9,7 @@ module.exports=async function handler(req,res){
   try{
     const response=await fetch(base+'/api/admin/quality-analytics',{headers:{'Accept':'application/json'},signal:controller.signal});
     const text=await response.text();
-    res.setHeader('Cache-Control','s-maxage=20, stale-while-revalidate=90');
+    res.setHeader('Cache-Control','s-maxage=60, stale-while-revalidate=300');
     res.setHeader('Content-Type','application/json; charset=utf-8');
     if(!response.ok){
       res.status(response.status).send(text||JSON.stringify({detail:'State quality API request failed'}));
