@@ -97,4 +97,14 @@ assert.strictEqual(mixed.length,1);
 assert.strictEqual(mixed[0].kind,'warn');
 assert.match(mixed[0].title,/playtest/i);
 
+assert.strictEqual(
+  H.progressText(0,3,['State','Tastemake','NARC']),
+  'Refreshing 0 of 3 projects… State, Tastemake, NARC still checking.'
+);
+assert.strictEqual(
+  H.progressText(2,3,['State']),
+  'Refreshing 2 of 3 projects… State still checking.'
+);
+assert.strictEqual(H.progressText(3,3,[]),'Finishing refresh…');
+
 console.log('Project Health shell tests passed');
