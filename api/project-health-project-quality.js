@@ -54,7 +54,7 @@ function summarizeEval(report){
     fixture_errors:errors,
     rule_checks:{passed:rules.filter(x=>x.pass===true).length,total:rules.length,failed:rules.filter(x=>x.pass===false).length},
     valid_fixture_outputs:{passed:validity.filter(x=>x.pass===true).length,total:validity.length,failed:validity.filter(x=>x.pass===false).length},
-    grounding_findings:grounding.map((x,i)=>({fixture:fixtures[i]?.id||null,detail:x.detail||''})),
+    grounding_checks:grounding.length,
     validator_self_test:{caught:self.filter(x=>x.caught===true).length,total:self.length,missed:self.filter(x=>x.caught!==true).length},
     failing_fixtures:fixtures.filter(f=>(f.scores||[]).some(s=>s.pass===false)).map(f=>f.id)
   };
