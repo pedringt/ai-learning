@@ -172,6 +172,12 @@ assert.match(healthHtml,/Portfolio demo · simulated incident/);
 assert.match(healthHtml,/See a bounded investigation/);
 assert.match(healthHtml,/How Project Health works/);
 assert.match(healthHtml,/Role & attribution/);
+assert.match(healthHtml,/Why I built it:/);
+assert.match(healthHtml,/productFocusPanel/);
+assert.match(H.PROJECTS[0].focus,/Keep project truth trustworthy/);
+assert.ok(H.PROJECTS[1].evidence.includes('Candidate breadth'));
+assert.match(H.PROJECTS[1].nextDecision,/canonical store/);
+assert.match(H.PROJECTS[2].nextDecision,/first-play flow/);
 assert.match(healthHtml,/No code, configuration, deployment, or live AI call was changed or triggered/);
 assert.match(H.PROJECTS[0].description,/Human-reviewed project truth system/);
 
