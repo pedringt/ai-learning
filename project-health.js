@@ -58,9 +58,13 @@
     return {kind:'unknown',label:'Vercel status unclear',contexts:matches};
   }
 
-  function deliveryHealth(branch,status){
+  function deliveryHealth(branch,status,checkRuns){
     const commit=branch?.commit||{};
-    return {branch:branch?.name||'Unknown',sha:commit.sha||null,vercel:vercelFromStatus(status),updatedAt:commit.commit?.committer?.date||commit.commit?.author?.date||null,message:commit.commit?.message||''};
+    const failedChecks=(Array.isArray(checkRuns?.check_runs)?checkRuns.check_runs:[])
+      .filter(item=>['failure','timed_out','action_required','startup_failure'].includes(String(item.conclusion||'').toLowerCase()))
+      .slice(0,10)
+      .map(item=>({name:String(item.name||'Failed check').slice(0,120),conclusion:String(item.conclusion||'').slice(0,40),title:String(item.output?.title||'').slice(0,160),url:/^https:\/\/github\.com\//.test(String(item.html_url||item.details_url||''))?(item.html_url||item.details_url):null}));
+    return {branch:branch?.name||'Unknown',sha:commit.sha||null,vercel:vercelFromStatus(status),failedChecks,updatedAt:commit.commit?.committer?.date||commit.commit?.author?.date||null,message:commit.commit?.message||''};
   }
 
   function normalizeQuality(payload){
@@ -80,6 +84,7 @@
   function deliveryAttention(d){
     if(!d) return {kind:'warn',title:'Delivery status unavailable',detail:'GitHub or deployment status could not be loaded.'};
     if(d.vercel.kind==='bad') return {kind:'bad',title:'Deployment needs attention',detail:'GitHub reports a failed Vercel deployment for the latest commit.'};
+    if(Array.isArray(d.failedChecks)&&d.failedChecks.length) return {kind:'bad',title:'GitHub checks failed',detail:d.failedChecks.length+' GitHub check'+(d.failedChecks.length===1?'':'s')+' failed for the latest commit.'};
     if(d.vercel.kind==='warn') return {kind:'warn',title:'Deployment is still running',detail:'The latest Vercel deployment has not finished yet.'};
     if(d.vercel.kind==='good') return {kind:'good',title:'Latest deployment looks healthy',detail:'GitHub reports successful Vercel status for the latest commit.'};
     return {kind:'warn',title:'Deployment status is not connected',detail:'The latest commit loaded, but no Vercel commit status was available.'};
@@ -141,11 +146,12 @@
 
   async function loadGitHubProject(project,branchName){
     const headers={Accept:'application/vnd.github+json'};
-    const [branch,status]=await Promise.all([
+    const [branch,status,checkRuns]=await Promise.all([
       jsonFetch(githubApi('/repos/'+project.repo+'/branches/'+encodeURIComponent(branchName)),{headers,timeoutMs:6000}),
-      jsonFetch(githubApi('/repos/'+project.repo+'/commits/'+encodeURIComponent(branchName)+'/status'),{headers,timeoutMs:6000})
+      jsonFetch(githubApi('/repos/'+project.repo+'/commits/'+encodeURIComponent(branchName)+'/status'),{headers,timeoutMs:6000}),
+      jsonFetch(githubApi('/repos/'+project.repo+'/commits/'+encodeURIComponent(branchName)+'/check-runs?per_page=10'),{headers,timeoutMs:6000}).catch(()=>({check_runs:[]}))
     ]);
-    return deliveryHealth(branch,status);
+    return deliveryHealth(branch,status,checkRuns);
   }
   async function loadStateQuality(root){return normalizeQuality(await jsonFetch('/api/project-health-state-quality?env='+pageEnvironment(root),{timeoutMs:7000}));}
   async function loadPlatformSignal(project,signal){return await jsonFetch('/api/project-health-platform?project='+encodeURIComponent(project.id)+'&signal='+encodeURIComponent(signal),{timeoutMs:6500});}
@@ -346,9 +352,14 @@
     const notices=attentionItems(data);
     doc.getElementById('attentionPanel').innerHTML='<h3>What needs attention?</h3><p class="panel-copy">Only exceptions and decisions that deserve attention show here. Healthy checks stay in their own sections.</p><div class="rows">'+notices.map(attentionMarkup).join('')+'</div>';
 
-    const prod=d?row('Production branch',d.branch)+linkedRow('Latest change',commitTitle(d.message),changeUrl(p.repo,d))+row('Updated',fmtDate(d.updatedAt))+linkedRow('Commit',shortSha(d.sha),githubCommitUrl(p.repo,d.sha))+row('Vercel',d.vercel.label):'<div class="empty">Production delivery data could not be loaded.</div>';
-    const stage=s?'<div style="margin-top:12px">'+row('Staging branch',s.branch)+linkedRow('Latest change',commitTitle(s.message),changeUrl(p.repo,s))+row('Updated',fmtDate(s.updatedAt))+linkedRow('Commit',shortSha(s.sha),githubCommitUrl(p.repo,s.sha))+row('Staging Vercel',s.vercel.label)+'</div>':'';
-    doc.getElementById('deliveryPanel').innerHTML='<h3>Delivery</h3><p class="panel-copy">GitHub branch heads plus Vercel commit status.</p><div class="rows">'+prod+stage+'</div>';
+    const investigationBusy=!!data.investigation?.loading;
+    const investigateButton=(type,environment,label)=>'<button class="button small" type="button" data-investigate="'+esc(type)+'" data-environment="'+esc(environment)+'"'+(investigationBusy?' disabled':'')+'>'+esc(label)+'</button>';
+    const checkRow=x=>Array.isArray(x?.failedChecks)&&x.failedChecks.length?htmlRow('GitHub checks',esc(x.failedChecks.map(c=>c.name).join(', '))+investigateButton('github-check',x===s?'staging':'production','Investigate')):'';
+    const prod=d?row('Production branch',d.branch)+linkedRow('Latest change',commitTitle(d.message),changeUrl(p.repo,d))+row('Updated',fmtDate(d.updatedAt))+linkedRow('Commit',shortSha(d.sha),githubCommitUrl(p.repo,d.sha))+htmlRow('Vercel',esc(d.vercel.label)+(d.vercel.kind==='bad'?investigateButton('vercel','production','Investigate'):''))+checkRow(d):'<div class="empty">Production delivery data could not be loaded.</div>';
+    const stage=s?'<div style="margin-top:12px">'+row('Staging branch',s.branch)+linkedRow('Latest change',commitTitle(s.message),changeUrl(p.repo,s))+row('Updated',fmtDate(s.updatedAt))+linkedRow('Commit',shortSha(s.sha),githubCommitUrl(p.repo,s.sha))+htmlRow('Staging Vercel',esc(s.vercel.label)+(s.vercel.kind==='bad'?investigateButton('vercel','staging','Investigate'):''))+checkRow(s)+'</div>':'';
+    const investigation=data.investigation;
+    const investigationHtml=investigation?.loading?'<div class="investigation-result" role="status">Checking the failed signal and relevant read-only sources…</div>':investigation?.error?'<div class="investigation-result" role="status"><strong>Investigation unavailable</strong><p>'+esc(investigation.error)+'</p></div>':investigation?.report?'<div class="investigation-result"><strong>Investigation · '+esc(fmtDate(investigation.observedAt))+'</strong><pre>'+esc(investigation.report)+'</pre><div class="investigation-sources"><strong>Sources checked</strong>'+investigation.sources.map(source=>githubLink(esc(source.label),source.url)).join(' · ')+'</div><p class="footnote">Read-only investigation. The likely cause is a hypothesis; verify before changing anything.</p></div>':'';
+    doc.getElementById('deliveryPanel').innerHTML='<h3>Delivery</h3><p class="panel-copy">GitHub branch heads, checks, and Vercel deployment status.</p><div class="rows">'+prod+stage+'</div>'+investigationHtml;
 
     const pending=pendingSet(data),r=platform?.render,n=platform?.neon;
     let infraHtml='';
@@ -533,6 +544,27 @@
 
     cards.addEventListener('click',event=>{if(event.target.closest?.('a,button'))return;const card=event.target.closest?.('.project-card');if(card)select(card.dataset.project);});
     cards.addEventListener('keydown',event=>{if(event.target.closest?.('a,button'))return;const card=event.target.closest?.('.project-card');if(card&&(event.key==='Enter'||event.key===' ')){event.preventDefault();select(card.dataset.project);}});
+
+    const deliveryPanel=doc.getElementById('deliveryPanel');
+    deliveryPanel.addEventListener('click',async event=>{
+      const button=event.target.closest?.('[data-investigate]');
+      if(!button)return;
+      const data=activeData();if(!data)return;
+      if(!root.confirm('This checks the selected failed signal and a small number of related sources. It sends bounded check/deployment details to Anthropic for one summary and may incur a small API charge. Continue?'))return;
+      let key=root.sessionStorage.getItem('project-health-investigation-key')||'';
+      if(!key)key=root.prompt('Project Health investigation key')||'';
+      if(!key)return;
+      root.sessionStorage.setItem('project-health-investigation-key',key);
+      data.investigation={loading:true};renderNow();
+      try{
+        const payload=await jsonFetch('/api/project-health-investigate',{method:'POST',headers:{'Content-Type':'application/json','X-Project-Health-Key':key},body:JSON.stringify({project:data.project.id,environment:button.dataset.environment,signalType:button.dataset.investigate}),timeoutMs:30000});
+        data.investigation={report:payload.report,sources:Array.isArray(payload.sources)?payload.sources:[],observedAt:payload.observedAt};
+      }catch(error){
+        if(error.status===401)root.sessionStorage.removeItem('project-health-investigation-key');
+        data.investigation={error:error.message||'Could not complete the investigation.'};
+      }
+      renderNow();
+    });
 
     async function refreshAll(){
       if(refresh.disabled)return;
