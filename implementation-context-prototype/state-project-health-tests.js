@@ -134,4 +134,12 @@ assert.strictEqual(serialized.projectId,'state');
 assert.strictEqual(serialized.delivery.sha,'abc123');
 assert.strictEqual(Object.prototype.hasOwnProperty.call(serialized,'pending'),false);
 
+const safeQuality=H.safeExternalQualitySnapshot({
+  project:'tastemake',
+  endpoint:{rule_checks:{passed:2,total:2},grounding_findings:[{detail:'private-ish detail'}],failing_fixtures:['x']}
+});
+assert.strictEqual(safeQuality.endpoint.rule_checks.passed,2);
+assert.strictEqual(Object.prototype.hasOwnProperty.call(safeQuality.endpoint,'grounding_findings'),false);
+assert.strictEqual(Object.prototype.hasOwnProperty.call(safeQuality.endpoint,'failing_fixtures'),false);
+
 console.log('Project Health shell tests passed');
