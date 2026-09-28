@@ -98,13 +98,23 @@
   function overallAttention(data){
     const priority={bad:3,warn:2,unknown:1,good:0};
     const signals=allAttentionSignals(data);
+    const pending=pendingSet(data);
     if(!signals.length) return {kind:'unknown',title:'Checking project health',detail:'Connected signals are still loading.'};
-    return signals.sort((a,b)=>priority[b.kind]-priority[a.kind])[0];
+    const sorted=signals.sort((a,b)=>priority[b.kind]-priority[a.kind]);
+    if(priority[sorted[0].kind]>=2) return sorted[0];
+    if(['Delivery','Quality','Production backend'].some(label=>pending.has(label))){
+      return {kind:'unknown',title:'Finishing health check',detail:'Core signals are still arriving.'};
+    }
+    return sorted[0];
   }
   function attentionItems(data){
     const signals=allAttentionSignals(data);
-    const issues=signals.filter(item=>item.kind!=='good');
+    const issues=signals.filter(item=>item.kind==='bad'||item.kind==='warn');
     if(issues.length) return issues;
+    const pending=pendingSet(data);
+    if(pending.size){
+      return [{kind:'unknown',title:'Still checking',detail:Array.from(pending).join(', ')+' still '+(pending.size===1?'is':'are')+' loading.'}];
+    }
     return [{kind:'good',title:'Nothing urgent needs attention',detail:'The connected delivery, infrastructure, and product-quality signals look healthy.'}];
   }
 
@@ -463,7 +473,7 @@
       const fresh=state.filter(item=>item?.fresh);
       const attentionCount=fresh.filter(item=>['bad','warn'].includes(overallAttention(item).kind)).length;
       const analyticsConnected=state.filter(item=>item?.platform?.analytics?.available).length;
-      summary.innerHTML='<span class="summary-chip"><strong>'+fresh.length+'/'+PROJECTS.length+'</strong> checked</span>'+
+      summary.innerHTML='<span class="summary-chip"><strong>'+fresh.length+'/'+PROJECTS.length+'</strong> core checked</span>'+
         '<span class="summary-chip"><strong>'+attentionCount+'</strong> need a look</span>'+
         '<span class="summary-chip"><strong>'+analyticsConnected+'/'+PROJECTS.length+'</strong> analytics connected</span>';
     }
@@ -472,6 +482,7 @@
       renderQueued=false;
       renderCards();renderSummary();
       const data=activeData();if(data)renderDetail(data,doc);
+      root.PROJECT_HEALTH_LAST_TIMINGS=Object.fromEntries(state.map(item=>[item.project.id,{...item.timings}]));
     }
     function scheduleRender(){
       if(renderQueued)return;
@@ -483,8 +494,7 @@
 
     async function ensureDetails(id){
       const data=state.find(item=>item.project.id===id);if(!data)return;
-      await loadProjectDetails(data,root,partial=>{scheduleRender();persist();});
-      root.PROJECT_HEALTH_LAST_TIMINGS=Object.fromEntries(state.map(item=>[item.project.id,{...item.timings}]));
+      await loadProjectDetails(data,root,partial=>{scheduleRender();});
       scheduleRender();persist();
     }
 
@@ -516,11 +526,14 @@
         const seed=state[index];
         const item=await loadProject(project,root,partial=>{
           state[index]=partial;
-          scheduleRender();persist();
+          scheduleRender();
         },seed);
         state[index]=item;
         completed.add(project.id);
-        scheduleRender();persist();
+        if(item.qualityPromise){
+          item.qualityPromise.finally(()=>{scheduleRender();persist();});
+        }
+        scheduleRender();
         if(completed.size<PROJECTS.length){
           status.textContent=progressText(completed.size,PROJECTS.length,pendingNames());
         }
@@ -528,7 +541,7 @@
 
       await Promise.all(jobs);
       const errors=state.flatMap(item=>item.errors.map(error=>item.project.name+': '+error));
-      root.PROJECT_HEALTH_LAST_TIMINGS=Object.fromEntries(state.map(item=>[item.project.id,{...item.timings}]));
+      persist();
       status.innerHTML=errors.length?'<strong>Core refresh complete with some unavailable sources.</strong> Remaining quality/detail signals continue independently.':'<strong>Core health is up to date.</strong> Product quality may still be finishing; detailed signals load when you open a project.';
       refresh.disabled=false;
       ensureDetails(activeId);
