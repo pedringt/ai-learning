@@ -151,13 +151,25 @@
     };
   }
 
+  function safeExternalQualitySnapshot(value){
+    if(!value)return null;
+    const copy=JSON.parse(JSON.stringify(value));
+    for(const key of ['baseline','endpoint']){
+      if(copy[key]){
+        delete copy[key].grounding_findings;
+        delete copy[key].failing_fixtures;
+      }
+    }
+    return copy;
+  }
+
   function serializeProjectData(data){
     return {
       projectId:data.project.id,
       delivery:data.delivery,
       staging:data.staging,
       quality:data.quality,
-      externalQuality:data.externalQuality,
+      externalQuality:safeExternalQualitySnapshot(data.externalQuality),
       platform:data.platform,
       runInfo:null,
       snapshotAt:new Date().toISOString()
@@ -531,5 +543,5 @@
     await refreshAll();
   }
 
-  return {PROJECTS,pageEnvironment,vercelFromStatus,deliveryHealth,normalizeQuality,qualityAttention,externalQualityAttention,deliveryAttention,infrastructureAttention,allAttentionSignals,attentionItems,overallAttention,projectQualityLabel,percent,shortSha,pendingSet,mergePlatform,emptyProjectData,serializeProjectData,hydrateProjectData,loadProject,loadProjectDetails,infraCardLabel,analyticsLabel,progressText,init};
+  return {PROJECTS,pageEnvironment,vercelFromStatus,deliveryHealth,normalizeQuality,qualityAttention,externalQualityAttention,deliveryAttention,infrastructureAttention,allAttentionSignals,attentionItems,overallAttention,projectQualityLabel,percent,shortSha,pendingSet,mergePlatform,emptyProjectData,safeExternalQualitySnapshot,serializeProjectData,hydrateProjectData,loadProject,loadProjectDetails,infraCardLabel,analyticsLabel,progressText,init};
 });
