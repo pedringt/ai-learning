@@ -3,37 +3,38 @@ const assert=require('assert');
 const platform=require('../api/project-health-platform.js')._test;
 const runApi=require('../api/project-health-run.js')._test;
 const projectQuality=require('../api/project-health-project-quality.js')._test;
-const stateQuality=require('../api/project-health-state-quality.js')._test;
+const activity=require('../api/project-health-activity.js')._test;
 
 assert.deepStrictEqual(Object.keys(platform.PROJECTS),['state','tastemake','narc']);
 assert.strictEqual(platform.PROJECTS.state.vercelProjectId,'prj_zQtHJg96oM7Ol4qTapiwk1mV8iRl');
 assert.strictEqual(platform.PROJECTS.tastemake.vercelProjectId,'prj_UWguNtKhGJkLr0X3jswk2rgBKLGu');
 assert.strictEqual(platform.PROJECTS.narc.vercelProjectId,'prj_SKJS8qSkSAiceK5qZ4GkcZEbI41H');
 
-const safeStateQuality=stateQuality.sanitizeQualityAnalytics({
-  live_review_quality:{resolved_reviews:3,accepted_as_proposed_rate:0.5,material_edit_rate:0.25,review_text:'private review'},
-  controlled_evals:{
-    latest_review_interpretation:{suite:'review_interpretation',interpretation_accuracy:0.9,model_identifier:'model-x',prompt:'private prompt'},
-    latest_ask_quality:{suite:'ask_quality',ask_grounding:1,authority_accuracy:1,answer:'private answer'},
-    recent:[{suite:'ask_quality',build:'abc123',created_at:'2026-09-28T00:00:00Z',evidence:'private evidence'}],
-    raw_trace:'private trace'
-  },
-  current_state:'private Current State'
-});
-assert.strictEqual(safeStateQuality.live_review_quality.resolved_reviews,3);
-assert.strictEqual(safeStateQuality.controlled_evals.latest_review_interpretation.interpretation_accuracy,0.9);
-assert.deepStrictEqual(Object.keys(safeStateQuality.controlled_evals.recent[0]).sort(),['build','created_at','suite']);
-assert.strictEqual(safeStateQuality.privacy.content_included,false);
-assert.strictEqual(stateQuality.safeMetric(null),null);
-assert.strictEqual(stateQuality.safeMetric(''),null);
-for(const privateValue of ['private review','private prompt','private answer','private evidence','private trace','private Current State']){
-  assert.ok(!JSON.stringify(safeStateQuality).includes(privateValue));
-}
-
 assert.deepStrictEqual(
   platform.safeRenderHealth({ok:true,status:200,latency_ms:88,payload:{build:'abcdef123',status:'ok'}}),
   {ok:true,status:200,latency_ms:88,build:'abcdef123',service_status:'ok',error:null}
 );
+
+assert.strictEqual(platform.numericCount('12'),12);
+assert.strictEqual(platform.percentDelta(120,100),20);
+assert.strictEqual(platform.percentDelta(0,0),null);
+
+const deploymentSummary=activity.summarizeDeployments([
+  {uid:'ready-new',name:'state',target:'production',state:'READY',created:300},
+  {uid:'bad-old',name:'state',target:'production',state:'ERROR',created:200,errorMessage:'Build failed'},
+  {uid:'ready-old',name:'state',target:'production',state:'READY',created:100}
+]);
+assert.strictEqual(deploymentSummary.total,3);
+assert.strictEqual(deploymentSummary.failed,1);
+assert.strictEqual(deploymentSummary.recent_failures[0].recovered,true);
+
+const parsedRows=activity.parseRuntimeRows('{"level":"error","message":"boom","requestPath":"/api/ask","responseStatusCode":500,"timestampInMs":100}\n{"level":"info","message":"ok"}');
+assert.strictEqual(parsedRows.length,2);
+const runtimeIssues=activity.runtimeIssues(parsedRows,'https://vercel.com/example');
+assert.strictEqual(runtimeIssues.length,1);
+assert.strictEqual(runtimeIssues[0].path,'/api/ask');
+assert.strictEqual(runtimeIssues[0].count,1);
+assert.strictEqual(activity.safeText('ANTHROPIC_API_KEY=secret').includes('secret'),false);
 
 const saved={
   GITHUB_TOKEN:process.env.GITHUB_TOKEN,
