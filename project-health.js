@@ -8,21 +8,27 @@
   const PROJECTS=[
     {
       id:'state',name:'State',description:'Human-reviewed project truth system with maintained Current State.',repo:'pedringt/ai-learning',branch:'main',stagingBranch:'staging',quality:'state',
-      focus:'Keep project truth trustworthy without giving AI authority to mutate Current State.',
-      evidence:['Review interpretation','Ask grounding','Authority handling','Review burden'],
-      nextDecision:'Does bounded investigation add enough value to justify broader failure coverage without weakening human control?'
+      focus:'Keep project truth trustworthy without giving AI authority to change Current State on its own.',
+      evidence:['Understands updates','Answers stay grounded','Respects decision authority','Review burden'],
+      nextDecision:'Expand failure investigation only if it stays useful without weakening human control.',
+      nextReview:'After the next recorded AI quality check.',
+      owner:'Product'
     },
     {
       id:'tastemake',name:'Tastemake',description:'Taste-learning recommendation prototype built around preference discovery.',repo:'pedringt/tastemake',branch:'main',
-      focus:'Improve recommendation diversity without weakening grounding.',
-      evidence:['Candidate breadth','Validator failures','Obvious/irrelevant feedback','Repeat engagement'],
-      nextDecision:'Does the canonical store materially improve candidate quality before expanding to more domains?'
+      focus:'Improve recommendation variety without weakening relevance or grounding.',
+      evidence:['Recommendation breadth','Irrelevant suggestions','Validator catches','Repeat engagement'],
+      nextDecision:'Decide whether the canonical store improves recommendation quality enough to expand further.',
+      nextReview:'After the next recommendation-quality pass.',
+      owner:'Product'
     },
     {
       id:'narc',name:'NARC',description:'Workplace-surveillance satire game with branching consequences.',repo:'pedringt/narc',branch:'main',
       focus:'Make the first playthrough feel like a coherent workplace simulation rather than a stack of mechanics.',
-      evidence:['Full first-run playtest','Branch consistency','Confusing choices','Replayable endings'],
-      nextDecision:'Is the current first-play flow clear enough before adding more branches and mechanics?'
+      evidence:['First-run playtest','Branch consistency','Confusing choices','Replayable endings'],
+      nextDecision:'Decide whether the first-play flow is clear enough before adding more branches and mechanics.',
+      nextReview:'After the full first-run playtest.',
+      owner:'Product'
     }
   ];
   const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -88,75 +94,106 @@
   }
   function percent(v){return v==null||Number.isNaN(Number(v))?'Not measured':(Math.round(Number(v)*1000)/10)+'%';}
   function qualityAttention(q){
-    if(!q) return {kind:'unknown',title:'Quality not loaded',detail:'No project-specific quality data is available yet.'};
+    if(!q) return {kind:'unknown',title:'Quality data is not available yet',detail:'Project Health could not load a recent quality result.'};
     const runs=[q.review,q.ask].filter(Boolean);
-    if(!runs.length) return {kind:'warn',title:'Run controlled checks',detail:'No Review or Ask quality run has been recorded yet.'};
+    if(!runs.length) return {kind:'warn',title:'AI quality checks have not been recorded yet',detail:'Run the controlled checks to see how State handles understanding, evidence, uncertainty, and decision authority.'};
     const severe=runs.reduce((n,r)=>n+Number(r.high_severity_failures||0),0);
-    if(severe>0) return {kind:'bad',title:'AI quality needs attention',detail:severe+' high-severity controlled eval failure'+(severe===1?'':'s')+' in the latest State checks.'};
-    if(runs.some(r=>Number(r.failed_cases||0)>0||(r.overall_pass_rate!=null&&Number(r.overall_pass_rate)<1))) return {kind:'warn',title:'Review the latest quality failures',detail:'The latest controlled evals contain one or more failed cases.'};
-    return {kind:'good',title:'Latest State quality checks look healthy',detail:'No high-severity failures were reported in the latest recorded Review and Ask runs.'};
+    if(severe>0) return {kind:'bad',title:'A serious AI quality check failed',detail:severe+' high-impact failure'+(severe===1?'':'s')+' appeared in the latest recorded checks.'};
+    if(runs.some(r=>Number(r.failed_cases||0)>0||(r.overall_pass_rate!=null&&Number(r.overall_pass_rate)<1))) return {kind:'warn',title:'Some AI quality checks need a look',detail:'At least one controlled scenario did not behave as expected.'};
+    return {kind:'good',title:'AI quality checks are healthy',detail:'The latest recorded checks did not report a high-impact failure.'};
   }
   function deliveryAttention(d){
-    if(!d) return {kind:'warn',title:'Delivery status unavailable',detail:'GitHub or deployment status could not be loaded.'};
-    if(d.vercel.kind==='bad') return {kind:'bad',title:'Deployment needs attention',detail:'GitHub reports a failed Vercel deployment for the latest commit.'};
-    if(Array.isArray(d.failedChecks)&&d.failedChecks.length) return {kind:'bad',title:'GitHub checks failed',detail:d.failedChecks.length+' GitHub check'+(d.failedChecks.length===1?'':'s')+' failed for the latest commit.'};
-    if(d.vercel.kind==='warn') return {kind:'warn',title:'Deployment is still running',detail:'The latest Vercel deployment has not finished yet.'};
-    if(d.vercel.kind==='good') return {kind:'good',title:'Latest deployment looks healthy',detail:'GitHub reports successful Vercel status for the latest commit.'};
-    return {kind:'warn',title:'Deployment status is not connected',detail:'The latest commit loaded, but no Vercel commit status was available.'};
+    if(!d) return {kind:'warn',title:'Delivery status is unavailable',detail:'Project Health could not confirm the latest release status.'};
+    if(d.vercel.kind==='bad') return {kind:'bad',title:'The latest version did not deploy',detail:'The existing production version should still be available while engineering reviews the failed release.'};
+    if(Array.isArray(d.failedChecks)&&d.failedChecks.length) return {kind:'bad',title:'A release check failed',detail:'An automated check failed before this change could be trusted.'};
+    if(d.vercel.kind==='warn') return {kind:'warn',title:'A deployment is still finishing',detail:'No action is needed unless it stays pending longer than expected.'};
+    if(d.vercel.kind==='good') return {kind:'good',title:'Delivery is healthy',detail:'The latest release completed successfully.'};
+    return {kind:'warn',title:'Deployment status is not connected',detail:'Project Health can see the latest change but cannot confirm its Vercel result.'};
   }
   function infrastructureAttention(platform){
     const render=platform?.render;
     if(render?.configured){
       const production=render.environments?.production;
-      const staging=render.environments?.staging;
-      if(production&&!production.ok) return {kind:'bad',title:'Production backend needs attention',detail:'The production Render health endpoint is not responding successfully.'};
-      if(staging&&!staging.ok) return {kind:'warn',title:'Staging backend is not responding',detail:'State staging is on Render free tier and may simply be asleep; production health is evaluated separately.'};
+      if(production&&!production.ok) return {kind:'bad',title:'Production service is unavailable',detail:'Users may be affected because the production backend is not responding successfully.'};
     }
     const neon=platform?.neon;
-    if(neon?.configured&&neon.available===false) return {kind:'warn',title:'Database health could not be read',detail:'Neon is configured, but its project health request failed.'};
+    if(neon?.configured&&neon.available===false) return {kind:'warn',title:'Database health could not be checked',detail:'This is a monitoring gap unless there is another sign of user impact.'};
     return null;
   }
   function externalQualityAttention(q){
     if(!q) return null;
     const items=Array.isArray(q.attention)?q.attention:[];
-    if(!items.length) return {kind:'unknown',title:'Quality status unavailable',detail:'No project-specific quality attention signal was returned.'};
+    if(!items.length) return {kind:'unknown',title:'Quality status unavailable',detail:'No project-specific quality signal was returned.'};
     const priority={bad:3,warn:2,unknown:1,good:0};
     return [...items].sort((a,b)=>priority[b.kind]-priority[a.kind])[0];
   }
   function pendingSet(data){return data?.pending instanceof Set?data.pending:new Set();}
+  function productOpenItems(data){
+    const items=[];
+    if(data.project.quality==='state'){
+      const q=qualityAttention(data.quality);
+      if(['bad','warn'].includes(q.kind)) items.push({...q,category:'quality',owner:'Product'});
+    }else{
+      const q=externalQualityAttention(data.externalQuality);
+      if(q&&['bad','warn'].includes(q.kind)) items.push({...q,category:'quality',owner:'Product'});
+    }
+    return items;
+  }
   function allAttentionSignals(data){
     const pending=pendingSet(data),signals=[];
     if(data.delivery) signals.push(deliveryAttention(data.delivery));
-    else if(data.fresh&& !pending.has('Delivery')) signals.push(deliveryAttention(null));
+    else if(data.fresh&&!pending.has('Delivery')) signals.push(deliveryAttention(null));
     if(data.quality) signals.push(qualityAttention(data.quality));
     const external=externalQualityAttention(data.externalQuality);if(external) signals.push(external);
     const infra=infrastructureAttention(data.platform);if(infra) signals.push(infra);
-    if(data.platform?.analytics?.configured&&data.platform.analytics.available===false&&!pending.has('Analytics')){
-      signals.push({kind:'warn',title:'Site analytics unavailable',detail:'Vercel Web Analytics is configured but did not return usable counts.'});
-    }
     return signals;
   }
   function overallAttention(data){
-    const priority={bad:3,warn:2,unknown:1,good:0};
-    const signals=allAttentionSignals(data);
     const pending=pendingSet(data);
-    if(!signals.length) return {kind:'unknown',title:'Checking project health',detail:'Connected signals are still loading.'};
-    const sorted=signals.sort((a,b)=>priority[b.kind]-priority[a.kind]);
-    if(priority[sorted[0].kind]>=2) return sorted[0];
-    if(['Delivery','Quality','Production backend'].some(label=>pending.has(label))){
-      return {kind:'unknown',title:'Finishing health check',detail:'Core signals are still arriving.'};
-    }
-    return sorted[0];
+    if(['Delivery','Quality','Production backend'].some(label=>pending.has(label))) return {kind:'unknown',title:'Checking project health',detail:'Core signals are still loading.'};
+    const liveIncidents=activityReviewItems(data).filter(item=>!item.resolved);
+    if(liveIncidents.length) return {kind:'bad',title:liveIncidents[0].title,detail:liveIncidents[0].impact};
+    const quality=productOpenItems(data);
+    if(quality.some(item=>item.kind==='bad')) return quality.find(item=>item.kind==='bad');
+    if(quality.length) return quality[0];
+    const delivery=deliveryAttention(data.delivery);
+    if(delivery.kind==='bad') return delivery;
+    const infra=infrastructureAttention(data.platform);
+    if(infra?.kind==='bad') return infra;
+    return {kind:'good',title:'Healthy',detail:'No current incident or product-quality action needs attention.'};
+  }
+  function projectStatus(data){
+    const att=overallAttention(data);
+    if(att.kind==='unknown') return {key:'checking',label:'Checking',kind:'unknown'};
+    if(att.kind==='bad') return {key:'action',label:'Action',kind:'bad'};
+    if(att.kind==='warn') return {key:'watch',label:'Watch',kind:'warn'};
+    return {key:'healthy',label:'Healthy',kind:'good'};
   }
   function attentionItems(data){
-    const signals=allAttentionSignals(data);
-    const issues=signals.filter(item=>item.kind==='bad'||item.kind==='warn');
-    if(issues.length) return issues;
+    const incidents=activityReviewItems(data).filter(item=>!item.resolved).map(item=>({kind:'bad',title:item.title,detail:item.impact,owner:item.owner}));
+    if(incidents.length) return incidents;
+    const open=productOpenItems(data);
+    if(open.length) return open;
     const pending=pendingSet(data);
-    if(pending.size){
-      return [{kind:'unknown',title:'Still checking',detail:Array.from(pending).join(', ')+' still '+(pending.size===1?'is':'are')+' loading.'}];
-    }
-    return [{kind:'good',title:'Nothing urgent needs attention',detail:'The connected delivery, infrastructure, and product-quality signals look healthy.'}];
+    if(pending.size) return [{kind:'unknown',title:'Still checking',detail:'Some connected signals are still loading.'}];
+    return [{kind:'good',title:'Nothing needs action right now',detail:'No current incident or product-quality action is open.'}];
+  }
+  function setupGaps(data){
+    const gaps=[],p=data.project,platform=data.platform,run=data.runInfo;
+    if(platform?.analytics?.configured===false||(!platform?.analytics?.available&&!pendingSet(data).has('Analytics'))) gaps.push({label:'Usage analytics',detail:'Not connected yet. This limits trend and adoption context.'});
+    if(p.id==='state'&&!platform?.neon?.available) gaps.push({label:'Database health',detail:'Not connected or unavailable. This is a monitoring gap, not a product incident.'});
+    if(p.id==='state'&&run&&!run.configured) gaps.push({label:'Run AI quality checks',detail:'Dashboard-run setup is incomplete.'});
+    gaps.push({label:'AI cost',detail:'Project-level model spend is not connected yet.'});
+    gaps.push({label:'AI response speed',detail:'User-facing AI latency is not connected yet.'});
+    return gaps;
+  }
+  function releaseReadiness(data){
+    const incidents=activityReviewItems(data).filter(item=>!item.resolved);
+    const open=productOpenItems(data);
+    if(incidents.length||open.some(item=>item.kind==='bad')) return {label:'Hold',detail:'Resolve the current high-impact issue before treating the next release as ready.'};
+    if(open.length) return {label:'Watch',detail:'Delivery is healthy, but a product-quality check or human review is still open.'};
+    if(data.delivery?.vercel?.kind==='good') return {label:'Ready',detail:'Delivery is healthy and there is no current high-impact quality issue.'};
+    return {label:'Unknown',detail:'There is not enough current evidence to call this release-ready.'};
   }
 
   async function loadGitHubProject(project,branchName){
