@@ -34,8 +34,8 @@
       <div>
         <div class="eyebrow">Portfolio operations</div>
         <h1>Project Health</h1>
-        <p class="lede">One place to see what changed, what needs attention, and whether each project is still healthy. Project Health combines delivery, quality, usage, and operational signals without replacing the underlying tools.</p>
-        <p class="hero-note">When something fails, a bounded AI investigator can explain the evidence on request. It cannot change code, configuration, or deployments.</p>
+        <p class="lede">Project Health helps product owners spot problems across live products, understand impact, investigate failures without digging through engineering tools, and hand engineers a grounded summary of what happened and where to look.</p>
+        <p class="hero-note">It combines delivery status, runtime signals, usage, and product-specific quality checks. A read-only investigation agent can inspect only the sources relevant to a failure and produce an engineering handoff. It cannot change code, configuration, or deployments.</p>
         <p class="hero-note"><strong>Why I built it:</strong> as the portfolio grew to several live AI products, checking delivery, infrastructure, analytics, and project-specific quality in separate tools made it harder to tell what actually needed attention. Project Health is the filtered operating layer above those systems.</p>
       </div>
       <button class="button primary" id="refreshButton" type="button">Refresh health</button>
@@ -62,8 +62,17 @@
         <div class="demo-step" data-demo-step="4"><strong>4 · Explain, do not act</strong><span>The agent returns a likely cause and what a human should verify next.</span></div>
       </div>
       <div class="demo-result" id="demoResult">
+        <strong>What happened</strong>
+        <p>The preview deployment failed while building the changed code path.</p>
         <strong>Likely cause</strong>
-        <p>The deployment began failing after the related change introduced a required configuration value. The build evidence points to that code path, and the new variable is not available in this preview environment. Verify the environment configuration before changing code.</p>
+        <p>The related change introduced a required configuration value that is not available in this preview environment.</p>
+        <strong>User impact</strong>
+        <p>No production outage. The new version did not go live, so the previous production version remains available.</p>
+        <strong>Owner</strong>
+        <p>Engineering</p>
+        <strong>Recommended next step</strong>
+        <p>Verify the preview environment configuration before changing code, then rerun the deployment.</p>
+        <div class="quality-actions"><button class="button small" id="copyDemoHandoff" type="button">Copy engineer handoff</button></div>
         <div class="demo-boundary">Read-only demo. No code, configuration, deployment, or live AI call was changed or triggered.</div>
       </div>
     </section>
