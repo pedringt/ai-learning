@@ -157,6 +157,8 @@
   async function loadPlatformSignal(project,signal){return await jsonFetch('/api/project-health-platform?project='+encodeURIComponent(project.id)+'&signal='+encodeURIComponent(signal),{timeoutMs:6500});}
   async function loadRunInfo(project){if(project.id!=='state')return null;try{return await jsonFetch('/api/project-health-run?project=state',{timeoutMs:5000});}catch(error){if(error.status===404)return null;throw error;}}
   async function loadExternalQuality(project){try{return await jsonFetch('/api/project-health-project-quality?project='+encodeURIComponent(project.id),{timeoutMs:7000});}catch(error){if(error.status===404)return null;throw error;}}
+  async function loadActivity(project){try{const payload=await jsonFetch('/api/project-health-activity?project='+encodeURIComponent(project.id),{timeoutMs:7500});return payload?.activity||null;}catch(error){if(error.status===404)return null;throw error;}}
+  async function loadOpenPullRequests(project){try{return await jsonFetch(githubApi('/repos/'+project.repo+'/pulls?state=open&per_page=5'),{headers:{Accept:'application/vnd.github+json'},timeoutMs:6000});}catch(_){return[];}}
 
   function mergePlatform(current,fragment){
     const next={...(current||{})};
@@ -173,11 +175,17 @@
     return {
       project,
       delivery:s.delivery||null,
+      lastSeenSha:s.lastSeenSha||s.delivery?.sha||null,
       staging:s.staging||null,
       quality:s.quality||null,
       externalQuality:s.externalQuality||null,
       platform:s.platform||null,
+      activity:s.activity||null,
+      openPullRequests:Array.isArray(s.openPullRequests)?s.openPullRequests:[],
       runInfo:null,
+      checkedAt:s.checkedAt||null,
+      detailCheckedAt:s.detailCheckedAt||null,
+      investigation:s.investigation||null,
       errors:[],
       pending:new Set(),
       timings:{},
@@ -208,7 +216,11 @@
       quality:data.quality,
       externalQuality:safeExternalQualitySnapshot(data.externalQuality),
       platform:data.platform,
+      activity:data.activity,
+      openPullRequests:data.openPullRequests,
       runInfo:null,
+      checkedAt:data.checkedAt,
+      detailCheckedAt:data.detailCheckedAt,
       snapshotAt:new Date().toISOString()
     };
   }
@@ -249,7 +261,8 @@
     const data=emptyProjectData(project,seed);
     const run=makeRunner(data,onUpdate);
     const core=[
-      run('Delivery',loadGitHubProject(project,project.branch),value=>{data.delivery=value;})
+      run('Delivery',loadGitHubProject(project,project.branch),value=>{data.delivery=value;}),
+      run('Activity',loadActivity(project),value=>{data.activity=value;})
     ];
     if(project.id==='state'){
       core.push(run('Production backend',loadPlatformSignal(project,'production-render'),value=>{data.platform=mergePlatform(data.platform,value);}));
@@ -260,6 +273,7 @@
     data.qualityPromise=qualityTask;
     await Promise.all(core);
     data.fresh=true;
+    data.checkedAt=new Date().toISOString();
     if(typeof onUpdate==='function')onUpdate(data);
     return data;
   }
@@ -270,7 +284,8 @@
     const project=data.project,run=makeRunner(data,onUpdate);
     const tasks=[
       run('Analytics',loadPlatformSignal(project,'analytics'),value=>{data.platform=mergePlatform(data.platform,value);}),
-      run('Neon',loadPlatformSignal(project,'neon'),value=>{data.platform=mergePlatform(data.platform,value);})
+      run('Neon',loadPlatformSignal(project,'neon'),value=>{data.platform=mergePlatform(data.platform,value);}),
+      run('Open work',loadOpenPullRequests(project),value=>{data.openPullRequests=Array.isArray(value)?value:[];})
     ];
     if(project.id==='state'){
       tasks.push(
@@ -282,11 +297,56 @@
     await Promise.all(tasks);
     data.detailLoaded=true;
     data.detailLoading=false;
+    data.detailCheckedAt=new Date().toISOString();
     if(typeof onUpdate==='function')onUpdate(data);
     return data;
   }
 
   function fmtDate(value){if(!value)return'Unknown';const d=new Date(value);return Number.isNaN(d.getTime())?'Unknown':d.toLocaleString([],{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'});}
+  function relativeAge(value){
+    if(!value)return'not checked yet';
+    const time=new Date(value).getTime();if(Number.isNaN(time))return'unknown';
+    const minutes=Math.max(0,Math.round((Date.now()-time)/60000));
+    if(minutes<1)return'just now';
+    if(minutes<60)return minutes+'m ago';
+    const hours=Math.round(minutes/60);if(hours<24)return hours+'h ago';
+    return Math.round(hours/24)+'d ago';
+  }
+  function changedSinceVisit(data){return !!(data?.lastSeenSha&&data?.delivery?.sha&&data.lastSeenSha!==data.delivery.sha);}
+  function trendText(value){
+    if(value==null||Number.isNaN(Number(value)))return'No comparison yet';
+    const n=Number(value);if(Math.abs(n)<0.1)return'About the same as the previous 30 days';
+    return (n>0?'↑ ':'↓ ')+Math.abs(n)+'% vs previous 30 days';
+  }
+  function activityReviewItems(data){
+    const activity=data?.activity;if(!activity?.available)return[];
+    const items=[];
+    for(const failure of activity.deployments?.recent_failures||[]){
+      items.push({
+        key:data.project.id+':deploy:'+failure.id,
+        project:data.project.name,
+        kind:'deployment',
+        title:failure.recovered?'Deployment failed, then recovered':'Production deployment failed',
+        detail:(failure.message||'Deployment failure')+(failure.recovered&&failure.recovered_at?' · recovered '+relativeAge(failure.recovered_at):''),
+        observedAt:failure.created_at,
+        resolved:!!failure.recovered,
+        url:failure.url||null
+      });
+    }
+    for(const issue of activity.runtime?.issues||[]){
+      items.push({
+        key:data.project.id+':runtime:'+issue.key,
+        project:data.project.name,
+        kind:'runtime',
+        title:(issue.status?('HTTP '+issue.status+' · '):'')+(issue.path||'Runtime error'),
+        detail:(issue.count>1?issue.count+' occurrences · ':'')+(issue.message||'Runtime error'),
+        observedAt:issue.last_seen,
+        resolved:false,
+        url:issue.source_url||null
+      });
+    }
+    return items.sort((a,b)=>(b.observedAt||0)-(a.observedAt||0));
+  }
   function row(label,value){return '<div class="row"><span>'+esc(label)+'</span><span>'+esc(value)+'</span></div>';}
   function metric(value,label){return '<div class="metric"><strong>'+esc(value)+'</strong><span>'+esc(label)+'</span></div>';}
   function attentionMarkup(item){return '<div class="attention '+esc(item.kind||'')+'"><strong>'+esc(item.title)+'</strong><p>'+esc(item.detail)+'</p></div>';}
