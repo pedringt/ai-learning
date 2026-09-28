@@ -458,7 +458,7 @@
     const cached=loadSnapshot(root);
     let state=PROJECTS.map(project=>hydrateProjectData(project,cached?.projects?.find(item=>item.projectId===project.id)));
     let activeId=new URLSearchParams(root.location.search).get('project')||'state';
-    let renderQueued=false;
+    let renderQueued=false,refreshGeneration=0;
 
     function activeData(){return state.find(item=>item.project.id===activeId)||null;}
 
@@ -511,6 +511,7 @@
     async function refreshAll(){
       if(refresh.disabled)return;
       refresh.disabled=true;
+      const generation=++refreshGeneration;
       state=PROJECTS.map(project=>{
         const previous=state.find(item=>item.project.id===project.id);
         return emptyProjectData(project,previous);
@@ -525,13 +526,15 @@
         const index=PROJECTS.findIndex(p=>p.id===project.id);
         const seed=state[index];
         const item=await loadProject(project,root,partial=>{
+          if(generation!==refreshGeneration)return;
           state[index]=partial;
           scheduleRender();
         },seed);
+        if(generation!==refreshGeneration)return;
         state[index]=item;
         completed.add(project.id);
         if(item.qualityPromise){
-          item.qualityPromise.finally(()=>{scheduleRender();persist();});
+          item.qualityPromise.finally(()=>{if(generation===refreshGeneration){scheduleRender();persist();}});
         }
         scheduleRender();
         if(completed.size<PROJECTS.length){
@@ -540,6 +543,7 @@
       });
 
       await Promise.all(jobs);
+      if(generation!==refreshGeneration)return;
       const errors=state.flatMap(item=>item.errors.map(error=>item.project.name+': '+error));
       persist();
       status.innerHTML=errors.length?'<strong>Core refresh complete with some unavailable sources.</strong> Remaining quality/detail signals continue independently.':'<strong>Core health is up to date.</strong> Product quality may still be finishing; detailed signals load when you open a project.';
