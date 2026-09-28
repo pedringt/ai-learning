@@ -17,9 +17,10 @@
   function pageEnvironment(root){const host=String(root?.location?.hostname||'');return /(^|[-.])staging([-.]|$)|-git-/i.test(host)?'staging':'production';}
 
   async function jsonFetch(url,options={}){
-    const controller=new AbortController();const timer=setTimeout(()=>controller.abort(),15000);
+    const controller=new AbortController();const timeoutMs=Number(options.timeoutMs||10000);const timer=setTimeout(()=>controller.abort(),timeoutMs);
+    const fetchOptions={...options};delete fetchOptions.timeoutMs;
     try{
-      const response=await fetch(url,{...options,signal:controller.signal,headers:{Accept:'application/json',...(options.headers||{})}});
+      const response=await fetch(url,{...fetchOptions,signal:controller.signal,headers:{Accept:'application/json',...(fetchOptions.headers||{})}});
       const payload=await response.json().catch(()=>({}));
       if(!response.ok){const error=new Error(payload?.detail||payload?.message||('Request failed: '+response.status));error.status=response.status;throw error;}
       return payload;
@@ -81,19 +82,24 @@
     const priority={bad:3,warn:2,unknown:1,good:0};
     return [...items].sort((a,b)=>priority[b.kind]-priority[a.kind])[0];
   }
+  function pendingSet(data){return data?.pending instanceof Set?data.pending:new Set();}
   function allAttentionSignals(data){
-    const signals=[deliveryAttention(data.delivery)];
+    const pending=pendingSet(data),signals=[];
+    if(data.delivery) signals.push(deliveryAttention(data.delivery));
+    else if(data.fresh&& !pending.has('Delivery')) signals.push(deliveryAttention(null));
     if(data.quality) signals.push(qualityAttention(data.quality));
     const external=externalQualityAttention(data.externalQuality);if(external) signals.push(external);
     const infra=infrastructureAttention(data.platform);if(infra) signals.push(infra);
-    if(data.platform?.analytics?.configured&&data.platform.analytics.available===false){
+    if(data.platform?.analytics?.configured&&data.platform.analytics.available===false&&!pending.has('Analytics')){
       signals.push({kind:'warn',title:'Site analytics unavailable',detail:'Vercel Web Analytics is configured but did not return usable counts.'});
     }
     return signals;
   }
   function overallAttention(data){
     const priority={bad:3,warn:2,unknown:1,good:0};
-    return allAttentionSignals(data).sort((a,b)=>priority[b.kind]-priority[a.kind])[0];
+    const signals=allAttentionSignals(data);
+    if(!signals.length) return {kind:'unknown',title:'Checking project health',detail:'Connected signals are still loading.'};
+    return signals.sort((a,b)=>priority[b.kind]-priority[a.kind])[0];
   }
   function attentionItems(data){
     const signals=allAttentionSignals(data);
@@ -107,39 +113,123 @@
     const status=await jsonFetch(githubApi('/repos/'+project.repo+'/commits/'+branch.commit.sha+'/status'),{headers:{Accept:'application/vnd.github+json'}});
     return deliveryHealth(branch,status);
   }
-  async function loadStateQuality(root){return normalizeQuality(await jsonFetch('/api/project-health-state-quality?env='+pageEnvironment(root)));}
-  async function loadPlatform(project){return await jsonFetch('/api/project-health-platform?project='+encodeURIComponent(project.id));}
-  async function loadRunInfo(project){try{return await jsonFetch('/api/project-health-run?project='+encodeURIComponent(project.id));}catch(error){if(error.status===404)return null;throw error;}}
-  async function loadExternalQuality(project){try{return await jsonFetch('/api/project-health-project-quality?project='+encodeURIComponent(project.id));}catch(error){if(error.status===404)return null;throw error;}}
+  async function loadStateQuality(root){return normalizeQuality(await jsonFetch('/api/project-health-state-quality?env='+pageEnvironment(root),{timeoutMs:7000}));}
+  async function loadPlatformSignal(project,signal){return await jsonFetch('/api/project-health-platform?project='+encodeURIComponent(project.id)+'&signal='+encodeURIComponent(signal),{timeoutMs:6500});}
+  async function loadRunInfo(project){if(project.id!=='state')return null;try{return await jsonFetch('/api/project-health-run?project=state',{timeoutMs:5000});}catch(error){if(error.status===404)return null;throw error;}}
+  async function loadExternalQuality(project){try{return await jsonFetch('/api/project-health-project-quality?project='+encodeURIComponent(project.id),{timeoutMs:7000});}catch(error){if(error.status===404)return null;throw error;}}
 
-  function emptyProjectData(project){
-    return {project,delivery:null,staging:null,quality:null,externalQuality:null,platform:null,runInfo:null,errors:[],pending:new Set()};
+  function mergePlatform(current,fragment){
+    const next={...(current||{})};
+    if(fragment?.render){
+      next.render={...(next.render||{}),...fragment.render,environments:{...(next.render?.environments||{}),...(fragment.render.environments||{})}};
+    }
+    if(Object.prototype.hasOwnProperty.call(fragment||{},'analytics')) next.analytics=fragment.analytics;
+    if(Object.prototype.hasOwnProperty.call(fragment||{},'neon')) next.neon=fragment.neon;
+    return next;
   }
 
-  async function loadProject(project,root,onUpdate){
-    const data=emptyProjectData(project);
+  function emptyProjectData(project,seed){
+    const s=seed||{};
+    return {
+      project,
+      delivery:s.delivery||null,
+      staging:s.staging||null,
+      quality:s.quality||null,
+      externalQuality:s.externalQuality||null,
+      platform:s.platform||null,
+      runInfo:s.runInfo||null,
+      errors:[],
+      pending:new Set(),
+      timings:{},
+      fresh:false,
+      detailLoaded:false,
+      detailLoading:false,
+      snapshotAt:s.snapshotAt||null
+    };
+  }
+
+  function serializeProjectData(data){
+    return {
+      projectId:data.project.id,
+      delivery:data.delivery,
+      staging:data.staging,
+      quality:data.quality,
+      externalQuality:data.externalQuality,
+      platform:data.platform,
+      runInfo:data.runInfo,
+      snapshotAt:new Date().toISOString()
+    };
+  }
+
+  function hydrateProjectData(project,saved){
+    return emptyProjectData(project,saved&&saved.projectId===project.id?saved:null);
+  }
+
+  function snapshotKey(root){return 'project-health-snapshot:'+pageEnvironment(root);}
+  function loadSnapshot(root){
+    try{
+      const raw=root.localStorage?.getItem(snapshotKey(root));if(!raw)return null;
+      const parsed=JSON.parse(raw);
+      if(!parsed?.savedAt||!Array.isArray(parsed.projects))return null;
+      if(Date.now()-new Date(parsed.savedAt).getTime()>24*60*60*1000)return null;
+      return parsed;
+    }catch(_){return null;}
+  }
+  function saveSnapshot(root,state){
+    try{
+      root.localStorage?.setItem(snapshotKey(root),JSON.stringify({savedAt:new Date().toISOString(),projects:state.map(serializeProjectData)}));
+    }catch(_){}
+  }
+
+  function makeRunner(data,onUpdate){
     const notify=()=>{if(typeof onUpdate==='function')onUpdate(data);};
-    const run=(label,promise,apply)=>{
+    return (label,promise,apply)=>{
+      const started=Date.now();
       data.pending.add(label);notify();
       return promise
         .then(value=>{apply(value);})
         .catch(e=>{data.errors.push(label+': '+e.message);})
-        .finally(()=>{data.pending.delete(label);notify();});
+        .finally(()=>{data.timings[label]=Date.now()-started;data.pending.delete(label);notify();});
     };
+  }
+
+  async function loadProject(project,root,onUpdate,seed){
+    const data=emptyProjectData(project,seed);
+    const run=makeRunner(data,onUpdate);
     const tasks=[
       run('Delivery',loadGitHubProject(project,project.branch),value=>{data.delivery=value;}),
-      run('Platform',loadPlatform(project),value=>{data.platform=value;}),
-      run('Run controls',loadRunInfo(project),value=>{data.runInfo=value;})
+      project.quality==='state'
+        ? run('Quality',loadStateQuality(root),value=>{data.quality=value;})
+        : run('Quality',loadExternalQuality(project),value=>{data.externalQuality=value;})
     ];
-    if(project.stagingBranch){
-      tasks.push(run('Staging',loadGitHubProject(project,project.stagingBranch),value=>{data.staging=value;}));
-    }
-    if(project.quality==='state'){
-      tasks.push(run('Quality',loadStateQuality(root),value=>{data.quality=value;}));
-    }else{
-      tasks.push(run('Quality',loadExternalQuality(project),value=>{data.externalQuality=value;}));
+    if(project.id==='state'){
+      tasks.push(run('Production backend',loadPlatformSignal(project,'production-render'),value=>{data.platform=mergePlatform(data.platform,value);}));
     }
     await Promise.all(tasks);
+    data.fresh=true;
+    if(typeof onUpdate==='function')onUpdate(data);
+    return data;
+  }
+
+  async function loadProjectDetails(data,root,onUpdate){
+    if(!data||data.detailLoaded||data.detailLoading)return data;
+    data.detailLoading=true;
+    const project=data.project,run=makeRunner(data,onUpdate);
+    const tasks=[
+      run('Analytics',loadPlatformSignal(project,'analytics'),value=>{data.platform=mergePlatform(data.platform,value);}),
+      run('Neon',loadPlatformSignal(project,'neon'),value=>{data.platform=mergePlatform(data.platform,value);})
+    ];
+    if(project.id==='state'){
+      tasks.push(
+        run('Staging delivery',loadGitHubProject(project,project.stagingBranch),value=>{data.staging=value;}),
+        run('Staging backend',loadPlatformSignal(project,'staging-render'),value=>{data.platform=mergePlatform(data.platform,value);}),
+        run('Run controls',loadRunInfo(project),value=>{data.runInfo=value;})
+      );
+    }
+    await Promise.all(tasks);
+    data.detailLoaded=true;
+    data.detailLoading=false;
+    if(typeof onUpdate==='function')onUpdate(data);
     return data;
   }
 
@@ -187,7 +277,7 @@
   }
   function cardMarkup(data,active){
     const att=overallAttention(data),d=data.delivery;
-    const pending=data.pending instanceof Set?data.pending:new Set();
+    const pending=pendingSet(data);
     const quality=projectQualityLabel(data);
     return '<article class="project-card '+(active?'active':'')+'" data-kind="'+esc(att.kind)+'" data-project="'+esc(data.project.id)+'" tabindex="0" role="button" aria-label="Open '+esc(data.project.name)+' health">'+
       '<div class="card-head"><div><h2>'+esc(data.project.name)+'</h2><p>'+esc(data.project.description)+'</p></div><span class="status-pill '+esc(att.kind)+'">'+esc(att.kind==='good'?'Healthy':att.kind==='bad'?'Needs attention':'Check')+'</span></div>'+
@@ -324,40 +414,66 @@
   async function init(root){
     const doc=root.document,cards=doc.getElementById('projectCards'),status=doc.getElementById('status'),summary=doc.getElementById('overviewSummary'),refresh=doc.getElementById('refreshButton'),runButton=doc.getElementById('runChecksButton');
     if(!cards||!status||!summary||!refresh||!runButton)return;
-    let state=[],activeId=new URLSearchParams(root.location.search).get('project')||'state';
+    const cached=loadSnapshot(root);
+    let state=PROJECTS.map(project=>hydrateProjectData(project,cached?.projects?.find(item=>item.projectId===project.id)));
+    let activeId=new URLSearchParams(root.location.search).get('project')||'state';
+    let renderQueued=false;
 
     function activeData(){return state.find(item=>item.project.id===activeId)||null;}
-    function select(id){
-      activeId=PROJECTS.some(p=>p.id===id)?id:'state';
-      cards.querySelectorAll('.project-card').forEach(card=>card.classList.toggle('active',card.dataset.project===activeId));
-      const data=activeData();if(data)renderDetail(data,doc);
-      const url=new URL(root.location.href);url.searchParams.set('project',activeId);root.history.replaceState(null,'',url);
-    }
-    function wireCards(){cards.querySelectorAll('.project-card').forEach(card=>{card.addEventListener('click',()=>select(card.dataset.project));card.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();select(card.dataset.project);}});});}
 
     function renderCards(){
       cards.innerHTML=PROJECTS.map(project=>{
         const item=state.find(entry=>entry&&entry.project.id===project.id);
         return item?cardMarkup(item,project.id===activeId):loadingCardMarkup(project,project.id===activeId);
       }).join('');
-      wireCards();
-      const data=activeData();if(data)renderDetail(data,doc);
     }
 
     function renderSummary(){
-      const loaded=state.filter(Boolean);
-      const attentionCount=loaded.filter(item=>overallAttention(item).kind==='bad'||overallAttention(item).kind==='warn').length;
-      const analyticsConnected=loaded.filter(item=>item.platform?.analytics?.available).length;
-      summary.innerHTML='<span class="summary-chip"><strong>'+loaded.length+'/'+PROJECTS.length+'</strong> checked</span>'+
+      const fresh=state.filter(item=>item?.fresh);
+      const attentionCount=fresh.filter(item=>['bad','warn'].includes(overallAttention(item).kind)).length;
+      const analyticsConnected=state.filter(item=>item?.platform?.analytics?.available).length;
+      summary.innerHTML='<span class="summary-chip"><strong>'+fresh.length+'/'+PROJECTS.length+'</strong> checked</span>'+
         '<span class="summary-chip"><strong>'+attentionCount+'</strong> need a look</span>'+
         '<span class="summary-chip"><strong>'+analyticsConnected+'/'+PROJECTS.length+'</strong> analytics connected</span>';
     }
 
+    function renderNow(){
+      renderQueued=false;
+      renderCards();renderSummary();
+      const data=activeData();if(data)renderDetail(data,doc);
+    }
+    function scheduleRender(){
+      if(renderQueued)return;
+      renderQueued=true;
+      const schedule=root.requestAnimationFrame||((fn)=>root.setTimeout(fn,16));
+      schedule(renderNow);
+    }
+    function persist(){saveSnapshot(root,state);}
+
+    async function ensureDetails(id){
+      const data=state.find(item=>item.project.id===id);if(!data)return;
+      await loadProjectDetails(data,root,partial=>{scheduleRender();persist();});
+      scheduleRender();persist();
+    }
+
+    function select(id){
+      activeId=PROJECTS.some(p=>p.id===id)?id:'state';
+      scheduleRender();
+      const url=new URL(root.location.href);url.searchParams.set('project',activeId);root.history.replaceState(null,'',url);
+      ensureDetails(activeId);
+    }
+
+    cards.addEventListener('click',event=>{const card=event.target.closest?.('.project-card');if(card)select(card.dataset.project);});
+    cards.addEventListener('keydown',event=>{const card=event.target.closest?.('.project-card');if(card&&(event.key==='Enter'||event.key===' ')){event.preventDefault();select(card.dataset.project);}});
+
     async function refreshAll(){
       if(refresh.disabled)return;
       refresh.disabled=true;
-      state=PROJECTS.map(project=>emptyProjectData(project));
-      renderCards();renderSummary();
+      state=PROJECTS.map(project=>{
+        const previous=state.find(item=>item.project.id===project.id);
+        return emptyProjectData(project,previous);
+      });
+      scheduleRender();
 
       const completed=new Set();
       const pendingNames=()=>PROJECTS.filter(project=>!completed.has(project.id)).map(project=>project.name);
@@ -365,30 +481,35 @@
 
       const jobs=PROJECTS.map(async project=>{
         const index=PROJECTS.findIndex(p=>p.id===project.id);
+        const seed=state[index];
         const item=await loadProject(project,root,partial=>{
           state[index]=partial;
-          renderCards();renderSummary();
-          if(activeId===project.id) renderDetail(partial,doc);
-        });
+          scheduleRender();
+        },seed);
         state[index]=item;
         completed.add(project.id);
-        renderCards();renderSummary();
+        scheduleRender();persist();
         if(completed.size<PROJECTS.length){
           status.textContent=progressText(completed.size,PROJECTS.length,pendingNames());
         }
       });
 
       await Promise.all(jobs);
-      const results=state.filter(Boolean);
-      const errors=results.flatMap(item=>item.errors.map(error=>item.project.name+': '+error));
-      status.innerHTML=errors.length?'<strong>Refresh complete with some unavailable sources.</strong> Everything else was updated as it arrived.':'<strong>Up to date.</strong> All connected project sources finished refreshing.';
+      const errors=state.flatMap(item=>item.errors.map(error=>item.project.name+': '+error));
+      root.PROJECT_HEALTH_LAST_TIMINGS=Object.fromEntries(state.map(item=>[item.project.id,{...item.timings}]));
+      status.innerHTML=errors.length?'<strong>Refresh complete with some unavailable sources.</strong> Everything else was updated as it arrived.':'<strong>Core health is up to date.</strong> Detailed signals load when you open a project.';
       refresh.disabled=false;
+      ensureDetails(activeId);
     }
 
+    if(cached?.savedAt){
+      status.innerHTML='<strong>Showing the last good snapshot.</strong> Last checked '+esc(fmtDate(cached.savedAt))+'. Refreshing current health…';
+    }
+    renderNow();
     refresh.addEventListener('click',refreshAll);
     runButton.addEventListener('click',async()=>{const data=activeData();if(!data)return;runButton.disabled=true;try{await dispatchRun(data,root);}catch(_){}finally{renderDetail(data,doc);}});
     await refreshAll();
   }
 
-  return {PROJECTS,pageEnvironment,vercelFromStatus,deliveryHealth,normalizeQuality,qualityAttention,externalQualityAttention,deliveryAttention,infrastructureAttention,allAttentionSignals,attentionItems,overallAttention,projectQualityLabel,percent,shortSha,emptyProjectData,loadProject,infraCardLabel,analyticsLabel,progressText,init};
+  return {PROJECTS,pageEnvironment,vercelFromStatus,deliveryHealth,normalizeQuality,qualityAttention,externalQualityAttention,deliveryAttention,infrastructureAttention,allAttentionSignals,attentionItems,overallAttention,projectQualityLabel,percent,shortSha,pendingSet,mergePlatform,emptyProjectData,serializeProjectData,hydrateProjectData,loadProject,loadProjectDetails,infraCardLabel,analyticsLabel,progressText,init};
 });
