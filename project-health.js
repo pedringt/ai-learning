@@ -464,9 +464,10 @@
     else if(n?.configured) infraHtml+=row('Neon','Configured, but unavailable');
     else infraHtml+=row('Neon',p.id==='state'?'Not connected':'Not used or not connected');
     const infraAttention=infrastructureAttention(data);
-    const infraHealthy=infraAttention.kind==='good';
+    const infraHealthy=!infraAttention||infraAttention.kind==='good';
+    const infraTitle=infraHealthy?'✓ Production services healthy':esc(infraAttention?.title||'Infrastructure needs attention');
     doc.getElementById('infrastructurePanel').innerHTML='<h3>Infrastructure</h3><p class="panel-copy">Healthy infrastructure stays subordinate until something needs attention.</p>'+
-      '<div class="infra-summary"><strong>'+(infraHealthy?'✓ Production services healthy':esc(infraAttention.title))+'</strong></div>'+
+      '<div class="infra-summary"><strong>'+infraTitle+'</strong></div>'+
       '<details class="infra-details"'+(infraHealthy?'':' open')+'><summary>'+(infraHealthy?'Show service details':'Show evidence')+'</summary><div class="rows" style="margin-top:8px">'+infraHtml+'</div></details>';
 
     const a=platform?.analytics;
