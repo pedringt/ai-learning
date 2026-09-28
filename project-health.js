@@ -112,38 +112,32 @@
   async function loadRunInfo(project){try{return await jsonFetch('/api/project-health-run?project='+encodeURIComponent(project.id));}catch(error){if(error.status===404)return null;throw error;}}
   async function loadExternalQuality(project){try{return await jsonFetch('/api/project-health-project-quality?project='+encodeURIComponent(project.id));}catch(error){if(error.status===404)return null;throw error;}}
 
-  async function loadProject(project,root){
-    const data={project,delivery:null,staging:null,quality:null,externalQuality:null,platform:null,runInfo:null,errors:[]};
+  function emptyProjectData(project){
+    return {project,delivery:null,staging:null,quality:null,externalQuality:null,platform:null,runInfo:null,errors:[],pending:new Set()};
+  }
+
+  async function loadProject(project,root,onUpdate){
+    const data=emptyProjectData(project);
+    const notify=()=>{if(typeof onUpdate==='function')onUpdate(data);};
+    const run=(label,promise,apply)=>{
+      data.pending.add(label);notify();
+      return promise
+        .then(value=>{apply(value);})
+        .catch(e=>{data.errors.push(label+': '+e.message);})
+        .finally(()=>{data.pending.delete(label);notify();});
+    };
     const tasks=[
-      loadGitHubProject(project,project.branch)
-        .then(value=>{data.delivery=value;})
-        .catch(e=>{data.errors.push('Delivery: '+e.message);}),
-      loadPlatform(project)
-        .then(value=>{data.platform=value;})
-        .catch(e=>{data.errors.push('Platform: '+e.message);}),
-      loadRunInfo(project)
-        .then(value=>{data.runInfo=value;})
-        .catch(e=>{data.errors.push('Run controls: '+e.message);})
+      run('Delivery',loadGitHubProject(project,project.branch),value=>{data.delivery=value;}),
+      run('Platform',loadPlatform(project),value=>{data.platform=value;}),
+      run('Run controls',loadRunInfo(project),value=>{data.runInfo=value;})
     ];
     if(project.stagingBranch){
-      tasks.push(
-        loadGitHubProject(project,project.stagingBranch)
-          .then(value=>{data.staging=value;})
-          .catch(e=>{data.errors.push('Staging: '+e.message);})
-      );
+      tasks.push(run('Staging',loadGitHubProject(project,project.stagingBranch),value=>{data.staging=value;}));
     }
     if(project.quality==='state'){
-      tasks.push(
-        loadStateQuality(root)
-          .then(value=>{data.quality=value;})
-          .catch(e=>{data.errors.push('Quality: '+e.message);})
-      );
+      tasks.push(run('Quality',loadStateQuality(root),value=>{data.quality=value;}));
     }else{
-      tasks.push(
-        loadExternalQuality(project)
-          .then(value=>{data.externalQuality=value;})
-          .catch(e=>{data.errors.push('Quality: '+e.message);})
-      );
+      tasks.push(run('Quality',loadExternalQuality(project),value=>{data.externalQuality=value;}));
     }
     await Promise.all(tasks);
     return data;
@@ -193,16 +187,17 @@
   }
   function cardMarkup(data,active){
     const att=overallAttention(data),d=data.delivery;
+    const pending=data.pending instanceof Set?data.pending:new Set();
     const quality=projectQualityLabel(data);
     return '<article class="project-card '+(active?'active':'')+'" data-kind="'+esc(att.kind)+'" data-project="'+esc(data.project.id)+'" tabindex="0" role="button" aria-label="Open '+esc(data.project.name)+' health">'+
       '<div class="card-head"><div><h2>'+esc(data.project.name)+'</h2><p>'+esc(data.project.description)+'</p></div><span class="status-pill '+esc(att.kind)+'">'+esc(att.kind==='good'?'Healthy':att.kind==='bad'?'Needs attention':'Check')+'</span></div>'+
       '<div class="card-focus">'+esc(att.title)+'</div>'+
       '<div class="signal-list">'+
-      '<div class="signal"><span class="signal-label">Latest commit</span><span class="signal-value">'+esc(shortSha(d?.sha))+'</span></div>'+
-      '<div class="signal"><span class="signal-label">Delivery</span><span class="signal-value">'+esc(d?.vercel?.label||'Unavailable')+'</span></div>'+
-      '<div class="signal"><span class="signal-label">Infrastructure</span><span class="signal-value">'+esc(infraCardLabel(data.platform))+'</span></div>'+
-      '<div class="signal"><span class="signal-label">Site analytics</span><span class="signal-value">'+esc(analyticsLabel(data.platform))+'</span></div>'+
-      '<div class="signal"><span class="signal-label">Product quality</span><span class="signal-value">'+esc(quality)+'</span></div>'+
+      '<div class="signal"><span class="signal-label">Latest commit</span><span class="signal-value">'+esc(d?shortSha(d.sha):(pending.has('Delivery')?'Checking…':'Unavailable'))+'</span></div>'+
+      '<div class="signal"><span class="signal-label">Delivery</span><span class="signal-value">'+esc(d?.vercel?.label||(pending.has('Delivery')?'Checking…':'Unavailable'))+'</span></div>'+
+      '<div class="signal"><span class="signal-label">Infrastructure</span><span class="signal-value">'+esc(data.platform?infraCardLabel(data.platform):(pending.has('Platform')?'Checking…':'Unavailable'))+'</span></div>'+
+      '<div class="signal"><span class="signal-label">Site analytics</span><span class="signal-value">'+esc(data.platform?analyticsLabel(data.platform):(pending.has('Platform')?'Checking…':'Unavailable'))+'</span></div>'+
+      '<div class="signal"><span class="signal-label">Product quality</span><span class="signal-value">'+esc((data.quality||data.externalQuality)?quality:(pending.has('Quality')?'Checking…':'Unavailable'))+'</span></div>'+
       '</div></article>';
   }
 
@@ -361,9 +356,7 @@
     async function refreshAll(){
       if(refresh.disabled)return;
       refresh.disabled=true;
-      const previous=new Map(state.filter(Boolean).map(item=>[item.project.id,item]));
-      const freshState=PROJECTS.map(project=>previous.get(project.id)||null);
-      state=freshState;
+      state=PROJECTS.map(project=>emptyProjectData(project));
       renderCards();renderSummary();
 
       const completed=new Set();
@@ -371,8 +364,12 @@
       status.textContent=progressText(0,PROJECTS.length,pendingNames());
 
       const jobs=PROJECTS.map(async project=>{
-        const item=await loadProject(project,root);
         const index=PROJECTS.findIndex(p=>p.id===project.id);
+        const item=await loadProject(project,root,partial=>{
+          state[index]=partial;
+          renderCards();renderSummary();
+          if(activeId===project.id) renderDetail(partial,doc);
+        });
         state[index]=item;
         completed.add(project.id);
         renderCards();renderSummary();
@@ -393,5 +390,5 @@
     await refreshAll();
   }
 
-  return {PROJECTS,pageEnvironment,vercelFromStatus,deliveryHealth,normalizeQuality,qualityAttention,externalQualityAttention,deliveryAttention,infrastructureAttention,allAttentionSignals,attentionItems,overallAttention,projectQualityLabel,percent,shortSha,loadProject,infraCardLabel,analyticsLabel,progressText,init};
+  return {PROJECTS,pageEnvironment,vercelFromStatus,deliveryHealth,normalizeQuality,qualityAttention,externalQualityAttention,deliveryAttention,infrastructureAttention,allAttentionSignals,attentionItems,overallAttention,projectQualityLabel,percent,shortSha,emptyProjectData,loadProject,infraCardLabel,analyticsLabel,progressText,init};
 });
