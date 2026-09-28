@@ -12,6 +12,14 @@
   ];
   const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   function shortSha(sha){return sha?String(sha).slice(0,7):'Unknown';}
+  function commitTitle(message){
+    const sections=String(message||'').split(/\r?\n\s*\r?\n/).map(section=>section.trim()).filter(Boolean);
+    const first=sections[0]?.split(/\r?\n/)[0]?.trim()||'';
+    if(/^Merge pull request #\d+ from /i.test(first)||/^Merge branch .+ into /i.test(first)){
+      return sections[1]?.split(/\r?\n/)[0]?.trim()||'Change title unavailable';
+    }
+    return first||'Change title unavailable';
+  }
   function repoUrl(repo){return 'https://github.com/'+repo;}
   function githubApi(path){return 'https://api.github.com'+path;}
   function pageEnvironment(root){const host=String(root?.location?.hostname||'');return /(^|[-.])staging([-.]|$)|-git-/i.test(host)?'staging':'production';}
@@ -310,7 +318,7 @@
       '<div class="card-head"><div><h2>'+esc(data.project.name)+'</h2><p>'+esc(data.project.description)+'</p></div><span class="status-pill '+esc(att.kind)+'">'+esc(att.kind==='good'?'Healthy':att.kind==='bad'?'Needs attention':'Check')+'</span></div>'+
       '<div class="card-focus">'+esc(att.title)+'</div>'+
       '<div class="signal-list">'+
-      '<div class="signal"><span class="signal-label">Latest commit</span><span class="signal-value">'+esc(d?shortSha(d.sha):(pending.has('Delivery')?'Checking…':'Unavailable'))+'</span></div>'+
+      '<div class="signal change-signal"><span class="signal-label">Latest change</span><span class="signal-value">'+esc(d?commitTitle(d.message):(pending.has('Delivery')?'Checking…':'Unavailable'))+'</span><span class="change-date">'+esc(d?'Updated '+fmtDate(d.updatedAt):(pending.has('Delivery')?'':'Date unavailable'))+'</span></div>'+
       '<div class="signal"><span class="signal-label">Delivery</span><span class="signal-value">'+esc(d?.vercel?.label||(pending.has('Delivery')?'Checking…':'Unavailable'))+'</span></div>'+
       '<div class="signal"><span class="signal-label">Infrastructure</span><span class="signal-value">'+esc(data.platform?infraCardLabel(data.platform):(infraPending?'Checking…':'Unavailable'))+'</span></div>'+
       '<div class="signal"><span class="signal-label">Site analytics</span><span class="signal-value">'+esc(data.platform?.analytics?analyticsLabel(data.platform):(pending.has('Analytics')?'Checking…':'Open project to load'))+'</span></div>'+
@@ -325,8 +333,8 @@
     const notices=attentionItems(data);
     doc.getElementById('attentionPanel').innerHTML='<h3>What needs attention?</h3><p class="panel-copy">Only exceptions and decisions that deserve attention show here. Healthy checks stay in their own sections.</p><div class="rows">'+notices.map(attentionMarkup).join('')+'</div>';
 
-    const prod=d?row('Production branch',d.branch)+row('Latest commit',shortSha(d.sha))+row('Vercel',d.vercel.label)+row('Commit time',fmtDate(d.updatedAt)):'<div class="empty">Production delivery data could not be loaded.</div>';
-    const stage=s?'<div style="margin-top:12px">'+row('Staging branch',s.branch)+row('Staging commit',shortSha(s.sha))+row('Staging Vercel',s.vercel.label)+'</div>':'';
+    const prod=d?row('Production branch',d.branch)+row('Latest change',commitTitle(d.message))+row('Updated',fmtDate(d.updatedAt))+row('Commit',shortSha(d.sha))+row('Vercel',d.vercel.label):'<div class="empty">Production delivery data could not be loaded.</div>';
+    const stage=s?'<div style="margin-top:12px">'+row('Staging branch',s.branch)+row('Latest change',commitTitle(s.message))+row('Updated',fmtDate(s.updatedAt))+row('Commit',shortSha(s.sha))+row('Staging Vercel',s.vercel.label)+'</div>':'';
     doc.getElementById('deliveryPanel').innerHTML='<h3>Delivery</h3><p class="panel-copy">GitHub branch heads plus Vercel commit status.</p><div class="rows">'+prod+stage+'</div>';
 
     const pending=pendingSet(data),r=platform?.render,n=platform?.neon;
@@ -560,5 +568,5 @@
     await refreshAll();
   }
 
-  return {PROJECTS,pageEnvironment,vercelFromStatus,deliveryHealth,normalizeQuality,qualityAttention,externalQualityAttention,deliveryAttention,infrastructureAttention,allAttentionSignals,attentionItems,overallAttention,projectQualityLabel,percent,shortSha,pendingSet,mergePlatform,emptyProjectData,safeExternalQualitySnapshot,serializeProjectData,hydrateProjectData,loadProject,loadProjectDetails,infraCardLabel,analyticsLabel,progressText,init};
+  return {PROJECTS,pageEnvironment,vercelFromStatus,deliveryHealth,commitTitle,normalizeQuality,qualityAttention,externalQualityAttention,deliveryAttention,infrastructureAttention,allAttentionSignals,attentionItems,overallAttention,projectQualityLabel,percent,shortSha,pendingSet,mergePlatform,emptyProjectData,safeExternalQualitySnapshot,serializeProjectData,hydrateProjectData,loadProject,loadProjectDetails,infraCardLabel,analyticsLabel,progressText,init};
 });
