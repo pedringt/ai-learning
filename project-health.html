@@ -14,6 +14,9 @@
     .overview-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin:18px 0 28px}.project-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:18px;box-shadow:0 12px 30px rgba(65,59,47,.04);cursor:pointer;transition:.15s ease}.project-card:hover{transform:translateY(-1px);border-color:#c9c2b5}.project-card.active{outline:2px solid rgba(56,98,77,.25);border-color:#8fa795}.card-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}.project-card h2{margin:0;font-size:23px;letter-spacing:-.03em}.project-card p{margin:5px 0 14px;color:var(--muted);font-size:13px}.status-pill{display:inline-flex;align-items:center;gap:6px;padding:5px 8px;border-radius:999px;background:var(--soft);font-size:11px;font-weight:800;white-space:nowrap}.status-pill.good{background:#e8f2ec;color:var(--good)}.status-pill.warn,.status-pill.unknown{background:#f6ecdd;color:var(--warn)}.status-pill.bad{background:#f7e4e1;color:var(--danger)}
     .signal-list{display:grid;gap:8px}.signal{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:start;padding-top:8px;border-top:1px solid #eee9df}.signal:first-child{border-top:0;padding-top:0}.signal-label{font-size:12px;color:var(--muted)}.signal-value{font-size:12px;font-weight:800;text-align:right}.change-signal{grid-template-columns:minmax(0,1fr);gap:3px}.change-signal .signal-value{text-align:left;overflow-wrap:anywhere}.change-date{font-size:11px;color:var(--muted)}.card-focus{margin:0 0 13px;padding:10px 11px;border-radius:10px;background:var(--soft);font-size:12px;font-weight:750}.project-card[data-kind="bad"] .card-focus{background:#fff0ed;color:var(--danger)}.project-card[data-kind="warn"] .card-focus{background:#fff7e9;color:var(--warn)}.project-card[data-kind="good"] .card-focus{background:#edf6f0;color:var(--good)}
     .detail{display:none}.detail.active{display:block}.detail-head{display:flex;justify-content:space-between;gap:20px;align-items:flex-end;margin-bottom:16px}.detail-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}.detail h2{margin:0;font-size:30px;letter-spacing:-.035em}.detail-copy{margin:4px 0 0;color:var(--muted)}.grid{display:grid;grid-template-columns:repeat(12,1fr);gap:16px}.panel{grid-column:span 12;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:20px}.panel.half{grid-column:span 6}.panel h3{margin:0;font-size:20px;letter-spacing:-.02em}.panel-copy{margin:3px 0 14px;color:var(--muted);font-size:13px}.rows{display:grid;gap:8px}.row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:14px;padding:10px 12px;border:1px solid var(--line);border-radius:11px;background:#fff}.row span:last-child{font-weight:800;overflow-wrap:anywhere;text-align:right}.empty{padding:14px;border:1px dashed #c9c3b7;border-radius:11px;color:var(--muted);background:rgba(255,255,255,.4)}.attention{padding:14px;border-left:4px solid var(--warn);border-radius:10px;background:#fff8ed}.attention.good{border-left-color:var(--good);background:#f1f7f3}.attention.bad{border-left-color:var(--danger);background:#fff2ef}.attention strong{display:block}.attention p{margin:3px 0 0;color:var(--muted)}.metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}.metric{padding:14px;border:1px solid var(--line);border-radius:12px;background:#fff}.metric strong{display:block;font-size:25px;line-height:1.05;letter-spacing:-.04em}.metric span{display:block;margin-top:5px;color:var(--muted);font-size:12px}.footnote{margin:12px 0 0;color:var(--muted);font-size:12px}.run-summary{display:grid;gap:10px}.run-callout{padding:14px;border:1px solid var(--line);border-radius:12px;background:#fff}.run-callout strong{display:block}.run-callout p{margin:4px 0 0;color:var(--muted);font-size:13px}.footer{margin-top:26px;color:var(--muted);font-size:12px}
+    .row a,.signal-value a,.footnote a{color:var(--accent);text-decoration:underline;text-underline-offset:2px}
+    .investigation-result{margin-top:14px;padding:14px;border:1px solid var(--line);border-radius:12px;background:#f5f8f5}.investigation-result pre{font:inherit;white-space:pre-wrap;overflow-wrap:anywhere;margin:8px 0}.investigation-sources{font-size:12px}.investigation-sources a{color:var(--accent);text-decoration:underline}
+    .review-inbox{margin:0 0 24px}.review-inbox .panel{padding:18px 20px}.review-list{display:grid;gap:10px}.review-item{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:16px;align-items:center;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:#fff}.review-item strong{display:block}.review-meta{margin-top:3px;color:var(--muted);font-size:12px}.review-actions{display:flex;gap:7px;flex-wrap:wrap;justify-content:flex-end}.review-empty{padding:12px 0;color:var(--muted)}.trend{font-size:12px;font-weight:750;margin-top:4px}.trend.up{color:var(--good)}.trend.down{color:var(--danger)}.trend.flat{color:var(--muted)}.freshness{font-size:11px;color:var(--muted)}.quality-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:12px}.setup-details summary{cursor:pointer;font-weight:800}.setup-details[open] summary{margin-bottom:10px}
     @media(max-width:850px){.hero{grid-template-columns:1fr}.overview-grid{grid-template-columns:1fr}.panel.half{grid-column:span 12}.metrics{grid-template-columns:repeat(2,minmax(0,1fr))}}
     @media(max-width:560px){.shell{padding:22px 14px 48px}.topbar,.detail-head{align-items:flex-start;flex-direction:column}.detail-actions{justify-content:flex-start}.metrics{grid-template-columns:1fr}.row{grid-template-columns:1fr}.row span:last-child{text-align:left}.hero{margin-top:8px}}
   </style>
@@ -37,6 +40,8 @@
     <div id="status" class="notice">Loading project health…</div>
     <div id="overviewSummary" class="overview-summary" aria-live="polite"></div>
 
+    <section class="review-inbox" id="reviewInbox" aria-live="polite"></section>
+
     <section class="overview-grid" id="projectCards" aria-live="polite"></section>
 
     <section class="detail active" id="projectDetail" aria-live="polite">
@@ -47,7 +52,6 @@
           <p class="detail-copy" id="detailCopy"></p>
         </div>
         <div class="detail-actions">
-          <button class="button primary" id="runChecksButton" type="button" disabled>Run health checks</button>
           <a class="button" id="repoLink" target="_blank" rel="noopener noreferrer">Open repository</a>
         </div>
       </div>
@@ -60,7 +64,6 @@
         <section class="panel half" id="qualityPanel"></section>
         <section class="panel half" id="historyPanel"></section>
         <section class="panel half" id="connectionsPanel"></section>
-        <section class="panel" id="runPanel"></section>
       </div>
     </section>
 

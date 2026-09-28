@@ -3,6 +3,7 @@ const assert=require('assert');
 const platform=require('../api/project-health-platform.js')._test;
 const runApi=require('../api/project-health-run.js')._test;
 const projectQuality=require('../api/project-health-project-quality.js')._test;
+const activity=require('../api/project-health-activity.js')._test;
 
 assert.deepStrictEqual(Object.keys(platform.PROJECTS),['state','tastemake','narc']);
 assert.strictEqual(platform.PROJECTS.state.vercelProjectId,'prj_zQtHJg96oM7Ol4qTapiwk1mV8iRl');
@@ -13,6 +14,27 @@ assert.deepStrictEqual(
   platform.safeRenderHealth({ok:true,status:200,latency_ms:88,payload:{build:'abcdef123',status:'ok'}}),
   {ok:true,status:200,latency_ms:88,build:'abcdef123',service_status:'ok',error:null}
 );
+
+assert.strictEqual(platform.numericCount('12'),12);
+assert.strictEqual(platform.percentDelta(120,100),20);
+assert.strictEqual(platform.percentDelta(0,0),null);
+
+const deploymentSummary=activity.summarizeDeployments([
+  {uid:'ready-new',name:'state',target:'production',state:'READY',created:300},
+  {uid:'bad-old',name:'state',target:'production',state:'ERROR',created:200,errorMessage:'Build failed'},
+  {uid:'ready-old',name:'state',target:'production',state:'READY',created:100}
+]);
+assert.strictEqual(deploymentSummary.total,3);
+assert.strictEqual(deploymentSummary.failed,1);
+assert.strictEqual(deploymentSummary.recent_failures[0].recovered,true);
+
+const parsedRows=activity.parseRuntimeRows('{"level":"error","message":"boom","requestPath":"/api/ask","responseStatusCode":500,"timestampInMs":100}\n{"level":"info","message":"ok"}');
+assert.strictEqual(parsedRows.length,2);
+const runtimeIssues=activity.runtimeIssues(parsedRows,'https://vercel.com/example');
+assert.strictEqual(runtimeIssues.length,1);
+assert.strictEqual(runtimeIssues[0].path,'/api/ask');
+assert.strictEqual(runtimeIssues[0].count,1);
+assert.strictEqual(activity.safeText('ANTHROPIC_API_KEY=secret').includes('secret'),false);
 
 const saved={
   GITHUB_TOKEN:process.env.GITHUB_TOKEN,
