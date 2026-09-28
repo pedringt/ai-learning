@@ -153,3 +153,14 @@ assert.strictEqual(Object.prototype.hasOwnProperty.call(safeQuality.endpoint,'gr
 assert.strictEqual(Object.prototype.hasOwnProperty.call(safeQuality.endpoint,'failing_fixtures'),false);
 
 console.log('Project Health shell tests passed');
+
+
+const failedDelivery = H.deliveryHealth(
+  {name:'main',commit:{sha:'a'.repeat(40),commit:{message:'Latest deployment change'}}},
+  {statuses:[{context:'Vercel – app',state:'failure'}]},
+  {check_runs:[{name:'unit tests',conclusion:'failure',html_url:'https://github.com/pedringt/ai-learning/checks/1'}]}
+);
+assert.strictEqual(failedDelivery.vercel.kind,'bad');
+assert.strictEqual(failedDelivery.failedChecks.length,1);
+assert.strictEqual(H.deliveryAttention(failedDelivery).kind,'bad');
+assert.strictEqual(H.deliveryAttention({vercel:{kind:'good'},failedChecks:[{name:'unit tests'}]}).title,'GitHub checks failed');
