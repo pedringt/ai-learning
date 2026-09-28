@@ -110,5 +110,10 @@
         }
       ]
     }
-  ]
+  ],
+  "functions": {
+    "api/project-health-investigate.js": {
+      "maxDuration": 60
+    }
+  }
 }
