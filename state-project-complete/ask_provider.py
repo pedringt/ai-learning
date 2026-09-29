@@ -3,6 +3,8 @@ from __future__ import annotations
 
 import json
 import re
+import time
+from contextvars import ContextVar
 from typing import Any, Iterator, Mapping
 
 from ask_contract import ANSWER_JSON_SCHEMA, ONE_CALL_ASK_JSON_SCHEMA, SELECTOR_JSON_SCHEMA
@@ -17,6 +19,12 @@ ASK_ONE_CALL_MAX_TOKENS = 2400
 # keeps the provider's normal retry behavior; Ask uses a single bounded attempt.
 ASK_TIMEOUT_SECONDS = 30.0
 ASK_MAX_RETRIES = 0
+
+# Per-request model-call metadata for Product Health. ContextVar keeps concurrent
+# Ask requests isolated even though the LiveAskProvider instance is cached.
+_ASK_CALL_METRICS: ContextVar[list[dict[str, Any]] | None] = ContextVar(
+    "_ASK_CALL_METRICS", default=None
+)
 
 
 _RELEVANCE_GUARD = """\
@@ -279,6 +287,29 @@ class LiveAskProvider:
             max_retries=ASK_MAX_RETRIES,
         )
 
+    def _capture_call_metrics(self, started: float, usage: Any = None) -> None:
+        """Capture metadata only. Never retain prompts, answers, or grounded context."""
+        input_tokens = getattr(usage, "input_tokens", None)
+        output_tokens = getattr(usage, "output_tokens", None)
+        if input_tokens is None:
+            input_tokens = getattr(usage, "prompt_tokens", None)
+        if output_tokens is None:
+            output_tokens = getattr(usage, "completion_tokens", None)
+        rows = list(_ASK_CALL_METRICS.get() or [])
+        rows.append({
+            "provider": self.name,
+            "model_identifier": self.model_identifier,
+            "duration_ms": int(round((time.perf_counter() - started) * 1000)),
+            "input_tokens": input_tokens,
+            "output_tokens": output_tokens,
+        })
+        _ASK_CALL_METRICS.set(rows)
+
+    def drain_call_metrics(self) -> list[dict[str, Any]]:
+        rows = list(_ASK_CALL_METRICS.get() or [])
+        _ASK_CALL_METRICS.set([])
+        return rows
+
     def run(self, prompt: str) -> Mapping[str, Any]:
         """Select relevant context and synthesize in one provider round-trip."""
         return self._call(_harden_prompt_for_relevance(prompt), ONE_CALL_ASK_JSON_SCHEMA, max_tokens=ASK_ONE_CALL_MAX_TOKENS)
@@ -287,6 +318,7 @@ class LiveAskProvider:
         """Stream the one-call Ask JSON text as the model generates it."""
         prompt = _harden_prompt_for_relevance(prompt)
         if self.name == "anthropic":
+            started = time.perf_counter()
             with self._anthropic_client().messages.stream(
                 model=self.model_identifier,
                 max_tokens=ASK_ONE_CALL_MAX_TOKENS,
@@ -296,18 +328,25 @@ class LiveAskProvider:
                 for text in stream.text_stream:
                     if text:
                         yield text
+                final_message = stream.get_final_message() if hasattr(stream, "get_final_message") else None
+                self._capture_call_metrics(started, getattr(final_message, "usage", None))
             return
         if self.name == "openai":
+            started = time.perf_counter()
             response = self.provider.client.chat.completions.create(
                 model=self.model_identifier,
                 max_tokens=ASK_ONE_CALL_MAX_TOKENS,
                 messages=[{"role": "user", "content": prompt + "\nReturn JSON only."}],
                 stream=True,
             )
+            usage = None
             for chunk in response:
+                if getattr(chunk, "usage", None) is not None:
+                    usage = chunk.usage
                 text = getattr(chunk.choices[0].delta, "content", None) if getattr(chunk, "choices", None) else None
                 if text:
                     yield text
+            self._capture_call_metrics(started, usage)
             return
         raise RuntimeError(f"Configured provider {self.name!r} does not support streaming Ask")
 
@@ -319,22 +358,26 @@ class LiveAskProvider:
 
     def _call(self, prompt: str, schema: Mapping[str, Any], *, max_tokens: int) -> Mapping[str, Any]:
         if self.name == "anthropic":
+            started = time.perf_counter()
             message = self._anthropic_client().messages.create(
                 model=self.model_identifier,
                 max_tokens=max_tokens,
                 output_config={"format": {"type": "json_schema", "schema": schema}},
                 messages=[{"role": "user", "content": prompt}],
             )
+            self._capture_call_metrics(started, getattr(message, "usage", None))
             text = next((getattr(block, "text", None) for block in message.content if getattr(block, "text", None)), None)
             if not text:
                 raise RuntimeError("Anthropic returned no Ask content")
             return _parse_json(text)
         if self.name == "openai":
+            started = time.perf_counter()
             response = self.provider.client.chat.completions.create(
                 model=self.model_identifier,
                 max_tokens=max_tokens,
                 messages=[{"role": "user", "content": prompt + "\nReturn JSON only."}],
             )
+            self._capture_call_metrics(started, getattr(response, "usage", None))
             text = response.choices[0].message.content
             if not text:
                 raise RuntimeError("OpenAI returned no Ask content")
