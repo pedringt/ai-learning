@@ -57,6 +57,12 @@
   function linkedRow(label,value,url){return htmlRow(label,githubLink(value,url));}
   function githubApi(path){return 'https://api.github.com'+path;}
   function pageEnvironment(root){const host=String(root?.location?.hostname||'');return /(^|[-.])staging([-.]|$)|-git-/i.test(host)?'staging':'production';}
+  function protectedControlsUrl(data,params={}){
+    const url=new URL('https://ai-learning-git-staging-cairn10.vercel.app/project-health');
+    if(data?.project?.id)url.searchParams.set('project',data.project.id);
+    for(const [key,value] of Object.entries(params)){if(value!=null&&value!=='')url.searchParams.set(key,String(value));}
+    return url.toString();
+  }
 
   async function jsonFetch(url,options={}){
     const controller=new AbortController();const timeoutMs=Number(options.timeoutMs||10000);const timer=setTimeout(()=>controller.abort(),timeoutMs);
@@ -601,9 +607,8 @@
       if(pending.has('Run controls')){
         qualityHtml+='<div class="eval-actions"><span class="footnote">Checking whether dashboard-run controls are ready…</span></div>';
       }else if(run?.configured){
-        const disabled=run.can_run_here===false?' disabled':'';
-        qualityHtml+='<div class="eval-actions"><button class="button small primary" type="button" data-run-checks="all"'+disabled+'>Run all AI checks</button><button class="button small" type="button" data-run-checks="review"'+disabled+'>Check update understanding</button><button class="button small" type="button" data-run-checks="ask"'+disabled+'>Check answer quality</button></div>'+
-          '<p class="footnote">'+(run.can_run_here===false?'Paid eval runs are available from a protected preview or staging deployment. No admin key entry is required there.':'Estimated model cost: '+esc(run.estimated_cost||'not configured')+'. You will confirm before any paid run starts.')+'</p>';
+        qualityHtml+='<div class="eval-actions"><button class="button small primary" type="button" data-run-checks="all">Run all AI checks</button><button class="button small" type="button" data-run-checks="review">Check update understanding</button><button class="button small" type="button" data-run-checks="ask">Check answer quality</button></div>'+
+          '<p class="footnote">'+(run.can_run_here===false?'Running a check opens the protected control surface. Vercel handles access, so no admin key is required.':'Estimated model cost: '+esc(run.estimated_cost||'not configured')+'. You will confirm before any paid run starts.')+'</p>';
       }else if(run){
         qualityHtml+='<p class="footnote">Running AI checks from the dashboard still needs setup. Existing recorded results can still appear here.</p>';
       }
@@ -751,6 +756,10 @@
 
   async function dispatchRun(data,root,suite='all'){
     const run=data.runInfo;if(!run?.configured)return;
+    if(run.can_run_here===false){
+      root.location.assign(protectedControlsUrl(data,{control:'evals',suite}));
+      return;
+    }
     const labels={all:'all AI quality checks',review:'update-understanding checks',ask:'answer-quality checks'};
     const cases=suite==='all'?Math.max(16,Number(run.minimum_controlled_cases||8)):Number(run.minimum_controlled_cases||8);
     const message='Run '+(labels[suite]||labels.all)+'?\n\nAbout '+cases+' controlled scenarios will use paid model calls.\nEstimated cost: '+run.estimated_cost+'\n\nResults are recorded as aggregate quality data. Start the run?';
@@ -926,6 +935,10 @@
 
     async function runAgentInvestigation(data,signalType,environment='production'){
       if(!data)return;
+      if(pageEnvironment(root)==='production'){
+        root.location.assign(protectedControlsUrl(data,{control:'investigate',signal:signalType,environment}));
+        return;
+      }
       data.investigation={loading:true};renderNow();
       try{
         const payload=await jsonFetch('/api/project-health-investigate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({project:data.project.id,environment,signalType}),timeoutMs:30000});
@@ -1027,5 +1040,5 @@
     await refreshAll();
   }
 
-  return {PROJECTS,pageEnvironment,vercelFromStatus,deliveryHealth,commitTitle,githubCommitUrl,pullRequestNumber,githubPullRequestUrl,changeUrl,normalizeQuality,qualityAttention,externalQualityAttention,deliveryAttention,infrastructureAttention,allAttentionSignals,attentionItems,overallAttention,productOpenItems,projectStatus,setupGaps,releaseReadiness,projectQualityLabel,evalScore,percent,shortSha,pendingSet,mergePlatform,emptyProjectData,safeExternalQualitySnapshot,serializeProjectData,hydrateProjectData,loadProject,loadProjectDetails,infraCardLabel,analyticsLabel,relativeAge,changedSinceVisit,trendText,activityReviewItems,progressText,quickProjectCheck,init};
+  return {PROJECTS,pageEnvironment,protectedControlsUrl,vercelFromStatus,deliveryHealth,commitTitle,githubCommitUrl,pullRequestNumber,githubPullRequestUrl,changeUrl,normalizeQuality,qualityAttention,externalQualityAttention,deliveryAttention,infrastructureAttention,allAttentionSignals,attentionItems,overallAttention,productOpenItems,projectStatus,setupGaps,releaseReadiness,projectQualityLabel,evalScore,percent,shortSha,pendingSet,mergePlatform,emptyProjectData,safeExternalQualitySnapshot,serializeProjectData,hydrateProjectData,loadProject,loadProjectDetails,infraCardLabel,analyticsLabel,relativeAge,changedSinceVisit,trendText,activityReviewItems,progressText,quickProjectCheck,init};
 });

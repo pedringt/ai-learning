@@ -6,6 +6,11 @@ const H=require('../project-health.js');
 assert.deepStrictEqual(H.PROJECTS.map(p=>p.id),['state','tastemake','narc']);
 assert.strictEqual(H.pageEnvironment({location:{hostname:'ai-learning-git-staging-cairn10.vercel.app'}}),'staging');
 assert.strictEqual(H.pageEnvironment({location:{hostname:'www.authenticignorance.site'}}),'production');
+const protectedUrl=new URL(H.protectedControlsUrl({project:{id:'state'}},{control:'evals',suite:'all'}));
+assert.strictEqual(protectedUrl.hostname,'ai-learning-git-staging-cairn10.vercel.app');
+assert.strictEqual(protectedUrl.searchParams.get('project'),'state');
+assert.strictEqual(protectedUrl.searchParams.get('control'),'evals');
+assert.strictEqual(protectedUrl.searchParams.get('suite'),'all');
 assert.strictEqual(
   H.commitTitle('Merge pull request #284 from pedringt/project-health-streaming-refresh\n\nMake Project Health load progressively and cache safely'),
   'Make Project Health load progressively and cache safely'
