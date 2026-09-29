@@ -1,6 +1,7 @@
 """Privacy-safe Review/Ask quality analytics endpoints for State."""
 from __future__ import annotations
 
+import json
 import os
 import uuid
 from typing import Literal
@@ -10,6 +11,17 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from db import connect
 from review_quality_analytics import derive_review_quality
+
+
+class QualityEvalFailure(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    scenario_id: str = Field(min_length=1, max_length=120)
+    category: str | None = Field(default=None, max_length=120)
+    severity: Literal["low", "medium", "high"] = "medium"
+    expected: str | None = Field(default=None, max_length=240)
+    observed: str | None = Field(default=None, max_length=240)
+    failed_checks: list[str] = Field(default_factory=list, max_length=8)
 
 
 class QualityEvalRunInput(BaseModel):
@@ -33,6 +45,7 @@ class QualityEvalRunInput(BaseModel):
     open_item_accuracy: float | None = Field(default=None, ge=0, le=1)
     authority_accuracy: float | None = Field(default=None, ge=0, le=1)
     overall_pass_rate: float | None = Field(default=None, ge=0, le=1)
+    failure_details: list[QualityEvalFailure] = Field(default_factory=list, max_length=16)
 
 
 def _project_exists(connection, project_id: str) -> bool:
@@ -43,8 +56,19 @@ def _rows(connection, query: str, params=()) -> list[dict]:
     return [dict(row) for row in connection.execute(query, params).fetchall()]
 
 
+def _eval_row(row: dict) -> dict:
+    result = dict(row)
+    raw = result.pop("failure_details_json", None)
+    try:
+        parsed = json.loads(raw) if raw else []
+    except (TypeError, ValueError):
+        parsed = []
+    result["failure_details"] = parsed if isinstance(parsed, list) else []
+    return result
+
+
 def _eval_view(connection) -> dict:
-    rows = _rows(connection, "SELECT * FROM product_eval_runs WHERE suite IN (?, ?) ORDER BY created_at DESC LIMIT 24", ("review_interpretation", "ask_quality"))
+    rows = [_eval_row(row) for row in _rows(connection, "SELECT * FROM product_eval_runs WHERE suite IN (?, ?) ORDER BY created_at DESC LIMIT 24", ("review_interpretation", "ask_quality"))]
     latest_review = next((row for row in rows if row.get("suite") == "review_interpretation"), None)
     latest_ask = next((row for row in rows if row.get("suite") == "ask_quality"), None)
     return {
@@ -86,8 +110,8 @@ def register_quality_analytics(application: FastAPI, settings) -> None:
                 INSERT INTO product_eval_runs(
                     id,suite,run_kind,build,provider,model_identifier,total,errors,high_severity_failures,
                     precision,recall,false_positives,false_negatives,interpretation_accuracy,ask_grounding,
-                    uncertainty_accuracy,open_item_accuracy,authority_accuracy,overall_pass_rate
-                ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+                    uncertainty_accuracy,open_item_accuracy,authority_accuracy,overall_pass_rate,failure_details_json
+                ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
                 """,
                 (
                     run_id,payload.suite,payload.run_kind,payload.build,payload.provider,payload.model_identifier,
@@ -95,6 +119,7 @@ def register_quality_analytics(application: FastAPI, settings) -> None:
                     payload.false_positives,payload.false_negatives,payload.interpretation_accuracy,
                     payload.ask_grounding,payload.uncertainty_accuracy,payload.open_item_accuracy,
                     payload.authority_accuracy,payload.overall_pass_rate,
+                    json.dumps([item.model_dump() for item in payload.failure_details], separators=(",", ":")),
                 ),
             )
             connection.commit()
