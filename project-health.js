@@ -525,12 +525,12 @@
   function stateEvalHistory(q){
     const rows=Array.isArray(q?.recent)?q.recent.slice(0,8):[];
     if(!rows.length)return'';
-    return '<details class="eval-history"><summary>See recent check details</summary><div style="margin-top:10px">'+rows.map(item=>{
+    return '<div class="eval-history"><h4>Recent check details</h4><div class="run-summary">'+rows.map(item=>{
       const score=evalScore(item);
       const meta=[item.created_at?fmtDate(item.created_at):null,item.total!=null?item.total+' scenarios':null,item.high_severity_failures!=null?item.high_severity_failures+' high-impact failures':null].filter(Boolean).join(' · ');
       const technical=[item.provider,item.model_identifier,item.build].filter(Boolean).join(' · ');
-      return '<details class="eval-run-row"><summary><strong>'+esc(evalSuiteLabel(item))+'</strong> · '+esc(score==null?'Score unavailable':percent(score))+'</summary><span>'+esc(meta||'Aggregate result recorded')+'</span>'+(technical?'<span>Technical record: '+esc(technical)+'</span>':'')+'</details>';
-    }).join('')+'<p class="footnote">Only aggregate results are stored here. Controlled scenario content stays out of Project Health.</p></div></details>';
+      return '<div class="eval-run-row"><strong>'+esc(evalSuiteLabel(item))+' · '+esc(score==null?'Score unavailable':percent(score))+'</strong><span>'+esc(meta||'Aggregate result recorded')+'</span>'+(technical?'<span>Technical record: '+esc(technical)+'</span>':'')+'</div>';
+    }).join('')+'<p class="footnote">Only aggregate results are stored here. Controlled scenario content stays out of Project Health.</p></div></div>';
   }
   function investigationResultHtml(investigation){
     if(investigation?.loading) return '<div class="investigation-result agent-result" role="status"><div class="agent-kicker">Read-only investigation agent</div><strong>Checking the project…</strong><p>Starting with current health signals and expanding only when the evidence points somewhere specific.</p></div>';
@@ -619,9 +619,9 @@
         stateEvalCard('Main automated checks',ci.conclusion==='success'?'Passing':(ci.conclusion||'Unknown'),'Confirms the current code still passes its automated quality gates.','')+
         stateEvalCard('Baseline outputs kept',(base.valid_fixture_outputs?.passed??'—')+'/'+(base.valid_fixture_outputs?.total??'—'),'A comparison point for whether quality is improving or regressing.','')+
         '</div>'+
-        '<details class="eval-history"><summary>See what these checks cover</summary><div class="run-summary" style="margin-top:10px">'+
+        '<div class="eval-history"><h4>What these checks cover</h4><div class="run-summary">'+
         (externalQ.check_groups||[]).map(g=>'<div class="run-callout"><strong>'+esc(g.name)+'</strong><p>'+esc(g.detail)+'</p></div>').join('')+
-        '<p class="footnote">'+esc(externalQ.caveat||'')+'</p></div></details>';
+        '<p class="footnote">'+esc(externalQ.caveat||'')+'</p></div></div>';
     }else if(p.id==='narc'&&externalQ){
       qualityHtml='<h3>Product quality · Game checks</h3>'+
         '<div class="eval-overview"><div><strong>'+(externalQ.recorded?.recorded_all_suites_green?'Automated checks are passing':'Automated check status is unclear')+'</strong><span>'+(externalQ.recorded?.full_playtest_pending?'Human first-run playtest is still open.':'Latest playtest gate is recorded.')+'</span></div></div>'+
@@ -629,9 +629,9 @@
         stateEvalCard('Automated game checks',externalQ.recorded?.recorded_all_suites_green?'3/3 passing':'Unknown','Checks branches, consequences, endings, time rules, and desktop behavior.','')+
         stateEvalCard('Human first-run playtest',externalQ.recorded?.full_playtest_pending?'Still needed':'Recorded','This is the check that tells us whether the experience actually makes sense to a player.','')+
         '</div>'+
-        '<details class="eval-history"><summary>See automated check details</summary><div class="run-summary" style="margin-top:10px">'+
+        '<div class="eval-history"><h4>Automated check details</h4><div class="run-summary">'+
         (externalQ.suites||[]).map(item=>'<div class="run-callout"><strong>'+esc(item.name)+'</strong><p>'+esc(item.detail)+'</p></div>').join('')+
-        '<p class="footnote">'+esc(externalQ.caveat||'')+'</p></div></details>';
+        '<p class="footnote">'+esc(externalQ.caveat||'')+'</p></div></div>';
     }else{
       qualityHtml='<h3>Product quality</h3><div class="empty" style="margin-top:12px">Quality data is not available right now.</div>';
     }
