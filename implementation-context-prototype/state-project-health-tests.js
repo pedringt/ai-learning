@@ -133,6 +133,8 @@ const mergedPlatform=H.mergePlatform(
 );
 assert.strictEqual(mergedPlatform.render.environments.production.ok,true);
 assert.strictEqual(mergedPlatform.render.environments.staging.ok,false);
+const mergedAiPlatform=H.mergePlatform({}, {aiTelemetry:{configured:true,available:true,response_speed:{sample_size:2,p50_ms:1200,p95_ms:2400},cost:{estimated_usd:0.01}}});
+assert.strictEqual(mergedAiPlatform.aiTelemetry.response_speed.p50_ms,1200);
 
 const serialized=H.serializeProjectData({
   ...blank,
@@ -192,6 +194,11 @@ assert.strictEqual(H.productOpenItems(unopenedState).length,1);
 assert.strictEqual(H.projectStatus(unopenedState).label,'Watch');
 assert.strictEqual(H.releaseReadiness({...unopenedState,delivery:{vercel:{kind:'good'}}}).label,'Watch');
 assert.ok(H.setupGaps({...unopenedState,platform:{analytics:{configured:false,available:false},neon:{configured:false,available:false}},runInfo:{configured:false}}).some(item=>item.label==='AI cost'));
+const stateWithAi={...unopenedState,platform:{analytics:{configured:true,available:true},neon:{configured:true,available:true},aiTelemetry:{configured:true,available:true,cost:{partial:true}}},runInfo:{configured:true}};
+assert.ok(!H.setupGaps(stateWithAi).some(item=>item.label==='AI response speed'));
+assert.ok(H.setupGaps(stateWithAi).some(item=>item.label==='AI cost coverage'));
+const narcWithNoAi={...H.emptyProjectData(H.PROJECTS[2]),fresh:true,platform:{analytics:{configured:true,available:true},aiTelemetry:{configured:false,not_applicable:true}}};
+assert.ok(!H.setupGaps(narcWithNoAi).some(item=>/^AI /.test(item.label)));
 
 const workflowText=fs.readFileSync(require.resolve('../.github/workflows/question-review-live.yml'),'utf8');
 assert.match(workflowText,/suite:/);

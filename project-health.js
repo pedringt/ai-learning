@@ -198,12 +198,16 @@
     return [{kind:'good',title:'Nothing needs action right now',detail:'No current incident or product-quality action is open.'}];
   }
   function setupGaps(data){
-    const gaps=[],p=data.project,platform=data.platform,run=data.runInfo;
+    const gaps=[],p=data.project,platform=data.platform,run=data.runInfo,ai=platform?.aiTelemetry;
     if(platform?.analytics?.configured===false||(!platform?.analytics?.available&&!pendingSet(data).has('Analytics'))) gaps.push({label:'Usage analytics',detail:'Not connected yet. This limits trend and adoption context.'});
     if(p.id==='state'&&!platform?.neon?.available) gaps.push({label:'Database health',detail:'Not connected or unavailable. This is a monitoring gap, not a product incident.'});
     if(p.id==='state'&&run&&!run.configured) gaps.push({label:'Run AI quality checks',detail:'Dashboard-run setup is incomplete.'});
-    gaps.push({label:'AI cost',detail:'Project-level model spend is not connected yet.'});
-    gaps.push({label:'AI response speed',detail:'User-facing AI latency is not connected yet.'});
+    if(p.id!=='narc'&&!pendingSet(data).has('AI operations')&&!ai?.available){
+      gaps.push({label:'AI cost',detail:'Estimated model spend is not available yet.'});
+      gaps.push({label:'AI response speed',detail:'Observed model response speed is not available yet.'});
+    }else if(p.id==='state'&&ai?.available&&ai.cost?.partial){
+      gaps.push({label:'AI cost coverage',detail:'Interpretation cost is estimated from recorded tokens. Ask token cost is not persisted yet, so this is intentionally partial.'});
+    }
     return gaps;
   }
   function releaseReadiness(data){
@@ -238,6 +242,7 @@
     }
     if(Object.prototype.hasOwnProperty.call(fragment||{},'analytics')) next.analytics=fragment.analytics;
     if(Object.prototype.hasOwnProperty.call(fragment||{},'neon')) next.neon=fragment.neon;
+    if(Object.prototype.hasOwnProperty.call(fragment||{},'aiTelemetry')) next.aiTelemetry=fragment.aiTelemetry;
     return next;
   }
 
@@ -355,6 +360,7 @@
     const project=data.project,run=makeRunner(data,onUpdate);
     const tasks=[
       run('Analytics',loadPlatformSignal(project,'analytics'),value=>{data.platform=mergePlatform(data.platform,value);}),
+      run('AI operations',loadPlatformSignal(project,'ai-telemetry'),value=>{data.platform=mergePlatform(data.platform,value);}),
       run('Neon',loadPlatformSignal(project,'neon'),value=>{data.platform=mergePlatform(data.platform,value);}),
       run('Open work',loadOpenPullRequests(project),value=>{data.openPullRequests=Array.isArray(value)?value:[];})
     ];
@@ -424,6 +430,18 @@
   }
   function row(label,value){return '<div class="row"><span>'+esc(label)+'</span><span>'+esc(value)+'</span></div>';}
   function metric(value,label){return '<div class="metric"><strong>'+esc(value)+'</strong><span>'+esc(label)+'</span></div>';}
+  function durationLabel(ms){
+    if(ms==null||Number.isNaN(Number(ms)))return'No calls yet';
+    const value=Number(ms);
+    return value<1000?Math.round(value)+' ms':(Math.round(value/100)/10)+' s';
+  }
+  function costLabel(value){
+    if(value==null||Number.isNaN(Number(value)))return'Not measured';
+    const amount=Number(value);
+    if(amount===0)return'$0.00';
+    if(amount<0.01)return'$'+amount.toFixed(4);
+    return'$'+amount.toFixed(2);
+  }
   function attentionMarkup(item){return '<div class="attention '+esc(item.kind||'')+'"><strong>'+esc(item.title)+'</strong><p>'+esc(item.detail)+'</p></div>';}
 
   function infraCardLabel(platform){
@@ -673,15 +691,35 @@
       '<div class="rows" style="margin-top:10px">'+infraHtml+'</div>';
 
     // Connections and coverage gaps stay visible; they are setup context, not incidents.
+    const ai=platform?.aiTelemetry;
     const connections=[];
     connections.push({label:'Code + deployments',value:d?'Connected':'Unavailable'});
     connections.push({label:'Backend health',value:r?.configured?'Connected':(p.id==='state'?'Unavailable':'Not used')});
     connections.push({label:'Usage analytics',value:platform?.analytics?.available?'Connected':'Not connected'});
     connections.push({label:'Database health',value:n?.available?'Connected':(p.id==='state'?'Not connected':'Not used')});
+    connections.push({label:'AI operations',value:ai?.not_applicable?'Not used':ai?.available?'Connected':pending.has('AI operations')?'Checking…':'Not connected'});
     if(p.id==='state') connections.push({label:'Run AI quality checks',value:run?.configured?'Ready':'Setup needed'});
+    let aiHtml='';
+    if(pending.has('AI operations')){
+      aiHtml='<h4 style="margin:18px 0 8px">AI operations</h4><div class="empty">Checking AI cost and response speed…</div>';
+    }else if(ai?.available){
+      const samples=Number(ai.response_speed?.sample_size||0);
+      const speedScope=ai.response_speed?.scope||'AI calls';
+      const costScope=ai.cost?.scope||'recorded AI calls';
+      aiHtml='<h4 style="margin:18px 0 8px">AI operations · last '+esc(ai.period_days||30)+' days</h4>'+
+        '<div class="metrics">'+
+        metric(samples?durationLabel(ai.response_speed?.p50_ms):'No calls yet','Typical response speed')+
+        metric(samples?durationLabel(ai.response_speed?.p95_ms):'No calls yet','Slower-end response speed')+
+        metric(costLabel(ai.cost?.estimated_usd),'Estimated AI cost')+
+        '</div>'+
+        '<p class="footnote">Speed: '+esc(speedScope)+'. Cost: '+esc(costScope)+'. '+esc(ai.note||'Operational metadata only; no project or user content is included.')+'</p>';
+    }else if(ai?.not_applicable){
+      aiHtml='<p class="footnote"><strong>AI operations:</strong> Not applicable. NARC does not make runtime AI calls.</p>';
+    }
     const gaps=setupGaps(data);
     doc.getElementById('connectionsPanel').innerHTML='<h3>Connections & coverage</h3>'+
       '<div class="rows" style="margin-top:12px">'+connections.map(item=>row(item.label,item.value)).join('')+'</div>'+
+      aiHtml+
       (gaps.length?'<h4 style="margin:18px 0 8px">Coverage gaps</h4><div class="coverage-grid">'+gaps.map(item=>'<div class="coverage-item"><strong>'+esc(item.label)+'</strong><span>'+esc(item.detail)+'</span></div>').join('')+'</div>':'');
   }
 
