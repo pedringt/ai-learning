@@ -539,7 +539,8 @@
     }).join('')+'<p class="footnote">Only aggregate results are stored here. Controlled scenario content stays out of Project Health.</p></div></div>';
   }
   function investigationResultHtml(investigation){
-    if(investigation?.loading) return '<div class="investigation-result agent-result" role="status"><div class="agent-kicker">Read-only investigation agent</div><strong>Checking the project…</strong><p>Starting with current health signals and expanding only when the evidence points somewhere specific.</p></div>';
+    if(investigation?.openingProtected) return '<div class="investigation-result agent-result" role="status"><div class="agent-kicker">Read-only investigation agent</div><strong>Opening protected investigation…</strong><p>Vercel will verify access before the live AI investigation starts.</p></div>';
+    if(investigation?.loading) return '<div class="investigation-result agent-result" role="status"><div class="agent-kicker">Read-only investigation agent</div><strong>Checking current health signals…</strong><p>Starting with current health signals and expanding only when the evidence points somewhere specific.</p></div>';
     if(investigation?.error) return '<div class="investigation-result agent-result" role="status"><div class="agent-kicker">Read-only investigation agent</div><strong>Investigation unavailable</strong><p>'+esc(investigation.error)+'</p></div>';
     if(investigation?.quickCheck){
       const checks=Array.isArray(investigation.checks)?investigation.checks:[];
@@ -564,6 +565,11 @@
     if(projectCheckButton){
       projectCheckButton.disabled=!!data.investigation?.loading;
       projectCheckButton.textContent=data.investigation?.loading?'Checking project…':'Investigate project';
+    }
+    const investigationPanel=doc.getElementById('investigationPanel');
+    if(investigationPanel){
+      investigationPanel.innerHTML=investigationResultHtml(data.investigation);
+      investigationPanel.hidden=!data.investigation;
     }
 
     const notices=attentionItems(data),readiness=releaseReadiness(data);
@@ -697,8 +703,7 @@
     doc.getElementById('deliveryPanel').innerHTML='<div class="panel-title-row"><h3>Delivery</h3><span class="readiness-pill '+esc(readiness.label.toLowerCase())+'">Release '+esc(readiness.label)+'</span></div>'+
       '<div class="delivery-summary '+deliveryClass+'" style="margin-top:12px">'+esc(deliveryText)+'</div>'+
       '<div class="delivery-environments">'+environmentBlock('Production',d)+(s?environmentBlock('Staging',s):'')+'</div>'+
-      '<div class="quality-actions">'+prodInvestigate+checkInvestigate+'</div>'+
-      investigationResultHtml(data.investigation);
+      '<div class="quality-actions">'+prodInvestigate+checkInvestigate+'</div>';
 
     // Infrastructure stays visible, grouped as services rather than settings rows.
     const r=platform?.render,n=platform?.neon;
@@ -933,13 +938,24 @@
     cards.addEventListener('click',event=>{if(event.target.closest?.('a,button'))return;const card=event.target.closest?.('.project-card');if(card)select(card.dataset.project);});
     cards.addEventListener('keydown',event=>{if(event.target.closest?.('a,button'))return;const card=event.target.closest?.('.project-card');if(card&&(event.key==='Enter'||event.key===' ')){event.preventDefault();select(card.dataset.project);}});
 
+    function revealInvestigation(){
+      const panel=doc.getElementById('investigationPanel');
+      if(!panel)return;
+      panel.hidden=false;
+      panel.scrollIntoView?.({behavior:'smooth',block:'nearest'});
+      panel.focus?.({preventScroll:true});
+    }
+
     async function runAgentInvestigation(data,signalType,environment='production'){
       if(!data)return;
       if(pageEnvironment(root)==='production'){
-        root.location.assign(protectedControlsUrl(data,{control:'investigate',signal:signalType,environment}));
+        data.investigation={openingProtected:true};
+        renderNow();
+        revealInvestigation();
+        root.setTimeout(()=>root.location.assign(protectedControlsUrl(data,{control:'investigate',signal:signalType,environment})),80);
         return;
       }
-      data.investigation={loading:true};renderNow();
+      data.investigation={loading:true};renderNow();revealInvestigation();
       try{
         const payload=await jsonFetch('/api/project-health-investigate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({project:data.project.id,environment,signalType}),timeoutMs:30000});
         data.investigation={report:payload.report,sources:Array.isArray(payload.sources)?payload.sources:[],observedAt:payload.observedAt};
@@ -961,18 +977,21 @@
       if(Array.isArray(data.delivery?.failedChecks)&&data.delivery.failedChecks.length){await runAgentInvestigation(data,'github-check','production');return;}
       data.investigation=quickProjectCheck(data);
       renderNow();
+      revealInvestigation();
+    });
+
+    const investigationPanel=doc.getElementById('investigationPanel');
+    if(investigationPanel)investigationPanel.addEventListener('click',async event=>{
+      const copyButton=event.target.closest?.('[data-copy-handoff]');
+      if(!copyButton)return;
+      const data=activeData(),investigation=data?.investigation;if(!data||!investigation?.report)return;
+      const sources=(investigation.sources||[]).map(source=>'- '+source.label+': '+source.url).join('\n');
+      const text=[data.project.name+' engineering handoff','',investigation.report,'',sources?'Evidence:\n'+sources:'','', 'Generated by Project Health. Read-only investigation; verify before changing anything.'].filter(Boolean).join('\n');
+      try{await root.navigator.clipboard.writeText(text);copyButton.textContent='Copied';root.setTimeout(()=>{copyButton.textContent='Copy engineer handoff';},1500);}catch(_){root.prompt('Copy engineering handoff',text);}
     });
 
     const deliveryPanel=doc.getElementById('deliveryPanel');
     deliveryPanel.addEventListener('click',async event=>{
-      const copyButton=event.target.closest?.('[data-copy-handoff]');
-      if(copyButton){
-        const data=activeData(),investigation=data?.investigation;if(!data||!investigation?.report)return;
-        const sources=(investigation.sources||[]).map(source=>'- '+source.label+': '+source.url).join('\n');
-        const text=[data.project.name+' engineering handoff','',investigation.report,'',sources?'Evidence:\n'+sources:'','', 'Generated by Project Health. Read-only investigation; verify before changing anything.'].filter(Boolean).join('\n');
-        try{await root.navigator.clipboard.writeText(text);copyButton.textContent='Copied';root.setTimeout(()=>{copyButton.textContent='Copy engineer handoff';},1500);}catch(_){root.prompt('Copy engineering handoff',text);}
-        return;
-      }
       const button=event.target.closest?.('[data-investigate]');
       if(!button)return;
       const data=activeData();if(!data)return;
