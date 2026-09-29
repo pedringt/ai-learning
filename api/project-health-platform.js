@@ -147,16 +147,19 @@ async function aiTelemetry(project){
         priced_calls:Number(cost.priced_calls||0),
         unpriced_calls:Number(cost.unpriced_calls||0),
         pricing_as_of:cost.pricing_as_of||null,
-        scope:cost.scope||'recorded interpretation calls only',
-        partial:true
+        scope:cost.scope||'recorded State model calls',
+        partial:Number(cost.unpriced_calls||0)>0
       },
       tokens:{
         input:Number(tokens.input||0),
         output:Number(tokens.output||0),
         sample_size:Number(tokens.sample_size||0)
       },
+      operations:reliability.model_calls_by_operation||{},
       last_call_at:null,
-      note:'Response speed covers Ask. Estimated cost currently covers recorded interpretation calls, so it is intentionally partial.'
+      note:Number(cost.unpriced_calls||0)>0
+        ?'Response speed covers Ask. Cost includes recorded State model calls with known pricing; unpriced calls are excluded.'
+        :'Response speed covers Ask. Cost includes recorded interpretation and Ask model calls.'
     };
   }
   const payload=result.payload||{};
