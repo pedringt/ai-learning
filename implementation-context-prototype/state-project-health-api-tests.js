@@ -41,6 +41,7 @@ assert.strictEqual(runtimeIssues.length,1);
 assert.strictEqual(runtimeIssues[0].path,'/api/ask');
 assert.strictEqual(runtimeIssues[0].count,1);
 assert.strictEqual(activity.safeText('ANTHROPIC_API_KEY=secret').includes('secret'),false);
+assert.strictEqual(activity.safeText('vcp_supersecrettoken').includes('supersecrettoken'),false);
 
 const safeFailure=stateQuality.safeFailureDetail({
   scenario_id:'review_direct_reversal',
