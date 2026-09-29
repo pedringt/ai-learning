@@ -13,6 +13,7 @@ import json
 import logging
 import os
 import time
+import uuid
 from typing import Any, Mapping
 
 
@@ -165,6 +166,31 @@ class AnthropicProvider:
             "provider_done provider=anthropic model=%s elapsed_ms=%.0f input_tokens=%s output_tokens=%s stop_reason=%s",
             self.model_identifier, elapsed_ms, input_tokens, output_tokens, stop_reason,
         )
+        # Product Health needs durable operational metadata rather than scraping logs.
+        # Store only model/timing/token counts. Prompts, Evidence and model output never
+        # enter this table, and telemetry failure must never fail interpretation.
+        try:
+            connection.execute(
+                """
+                INSERT INTO model_call_metrics(
+                    id, project_id, operation, provider, model_identifier,
+                    duration_ms, input_tokens, output_tokens
+                ) VALUES (?,?,?,?,?,?,?,?)
+                """,
+                (
+                    f"model_call_{uuid.uuid4().hex[:16]}",
+                    project_id_of(connection),
+                    "interpretation",
+                    self.name,
+                    self.model_identifier,
+                    int(round(elapsed_ms)),
+                    input_tokens,
+                    output_tokens,
+                ),
+            )
+            connection.commit()
+        except Exception:
+            logger.warning("Could not persist model-call telemetry", exc_info=True)
 
         # Structured outputs can still be non-schema text on refusal or be
         # truncated at max_tokens. Fail explicitly instead of surfacing a
