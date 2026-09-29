@@ -18,10 +18,12 @@ class QualityEvalDatasetTests(unittest.TestCase):
             "answer_question_and_update_state",
             "open_question",
             "preserve_evidence_only",
+            "update_state_and_open_question",
         }.issubset(actions))
         self.assertTrue(any(not scenario.review_needed for scenario in REVIEW_SCENARIOS))
         self.assertTrue(any(scenario.must_preserve_uncertainty for scenario in REVIEW_SCENARIOS))
         self.assertTrue(any(scenario.severity == "high" for scenario in REVIEW_SCENARIOS))
+        self.assertEqual(len(REVIEW_SCENARIOS), 13)
 
     def test_review_expectations_are_internally_consistent(self):
         for scenario in REVIEW_SCENARIOS:
@@ -35,6 +37,9 @@ class QualityEvalDatasetTests(unittest.TestCase):
                 self.assertTrue(scenario.should_change_state, scenario.id)
             if scenario.expected_action == "open_question":
                 self.assertTrue(scenario.should_open_question, scenario.id)
+            if scenario.expected_action == "update_state_and_open_question":
+                self.assertTrue(scenario.should_change_state, scenario.id)
+                self.assertTrue(scenario.should_open_question, scenario.id)
 
     def test_question_answer_scenario_accepts_supported_state_update(self):
         scenario = next(s for s in REVIEW_SCENARIOS if s.id == "review_question_answer_only")
@@ -45,6 +50,17 @@ class QualityEvalDatasetTests(unittest.TestCase):
             observed_action="answer_question_and_update_state",
             processing_status="succeeded",
             proposed_state_text="The proposed contract does not permit the disputed retention behavior.",
+        )
+        self.assertTrue(result.interpretation_correct)
+
+    def test_question_answer_scenario_accepts_equivalent_legal_wording(self):
+        scenario = next(s for s in REVIEW_SCENARIOS if s.id == "review_question_answer_only")
+        result = ReviewQualityResult(
+            scenario=scenario,
+            review_recommended=True,
+            observed_action="answer_question_and_update_state",
+            processing_status="succeeded",
+            proposed_state_text="Legal confirmed the disputed behavior is not permitted under the proposed contract.",
         )
         self.assertTrue(result.interpretation_correct)
 
@@ -82,6 +98,9 @@ class QualityEvalDatasetTests(unittest.TestCase):
         self.assertTrue(any(scenario.should_distinguish_proposal_from_truth for scenario in ASK_SCENARIOS))
         self.assertTrue(any(scenario.should_express_uncertainty for scenario in ASK_SCENARIOS))
         self.assertTrue(any(scenario.should_reference_open_item for scenario in ASK_SCENARIOS))
+        self.assertEqual(len(ASK_SCENARIOS), 10)
+        self.assertIn("superseded_review", categories)
+        self.assertIn("outcome_vs_reason", categories)
 
     def test_scenario_collection_fields_are_tuples_not_bare_strings(self):
         # A parenthesised string without a trailing comma is a str, and the seeder
