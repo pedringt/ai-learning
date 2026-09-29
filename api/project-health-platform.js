@@ -4,6 +4,7 @@ const PROJECTS={
   state:{
     vercelProjectId:'prj_zQtHJg96oM7Ol4qTapiwk1mV8iRl',
     neonProjectEnv:'PROJECT_HEALTH_NEON_PROJECT_STATE',
+    aiTelemetry:{kind:'state',url:'https://state-api-6waw.onrender.com/api/admin/product-analytics'},
     render:{
       production:'https://state-api-6waw.onrender.com/health',
       staging:'https://state-api-staging.onrender.com/health'
@@ -11,11 +12,13 @@ const PROJECTS={
   },
   tastemake:{
     vercelProjectId:'prj_UWguNtKhGJkLr0X3jswk2rgBKLGu',
-    neonProjectEnv:'PROJECT_HEALTH_NEON_PROJECT_TASTEMAKE'
+    neonProjectEnv:'PROJECT_HEALTH_NEON_PROJECT_TASTEMAKE',
+    aiTelemetry:{kind:'tastemake',url:'https://tastemake.vercel.app/api/ai-metrics'}
   },
   narc:{
     vercelProjectId:'prj_SKJS8qSkSAiceK5qZ4GkcZEbI41H',
-    neonProjectEnv:'PROJECT_HEALTH_NEON_PROJECT_NARC'
+    neonProjectEnv:'PROJECT_HEALTH_NEON_PROJECT_NARC',
+    aiTelemetry:{kind:'none'}
   }
 };
 
@@ -115,6 +118,70 @@ async function vercelAnalytics(project){
   };
 }
 
+async function aiTelemetry(project){
+  const config=project.aiTelemetry;
+  if(!config||config.kind==='none'){
+    return {configured:false,not_applicable:true,reason:'This product does not make runtime AI calls.'};
+  }
+  const result=await timedJson(config.url,{headers:{Accept:'application/json'},timeoutMs:6500});
+  if(!result.ok){
+    return {configured:true,available:false,status:result.status,error:result.error||result.payload?.detail||result.payload?.error||'AI telemetry unavailable'};
+  }
+  if(config.kind==='state'){
+    const reliability=result.payload?.reliability||{};
+    const speed=reliability.ask_latency_ms||{};
+    const cost=reliability.model_cost||{};
+    const tokens=reliability.token_usage||{};
+    return {
+      configured:true,
+      available:true,
+      period_days:30,
+      response_speed:{
+        scope:'user-facing Ask requests',
+        sample_size:Number(speed.sample_size||0),
+        p50_ms:numericCount(speed.p50),
+        p95_ms:numericCount(speed.p95)
+      },
+      cost:{
+        estimated_usd:cost.estimated_usd==null?null:Number(cost.estimated_usd),
+        priced_calls:Number(cost.priced_calls||0),
+        unpriced_calls:Number(cost.unpriced_calls||0),
+        pricing_as_of:cost.pricing_as_of||null,
+        scope:cost.scope||'recorded interpretation calls only',
+        partial:true
+      },
+      tokens:{
+        input:Number(tokens.input||0),
+        output:Number(tokens.output||0),
+        sample_size:Number(tokens.sample_size||0)
+      },
+      last_call_at:null,
+      note:'Response speed covers Ask. Estimated cost currently covers recorded interpretation calls, so it is intentionally partial.'
+    };
+  }
+  const payload=result.payload||{};
+  return {
+    configured:payload.configured!==false,
+    available:payload.available!==false,
+    period_days:Number(payload.period_days||30),
+    response_speed:{
+      scope:'live recommendation model calls',
+      sample_size:Number(payload.sample_count||0),
+      p50_ms:numericCount(payload.latency_ms?.p50),
+      p95_ms:numericCount(payload.latency_ms?.p95)
+    },
+    cost:{
+      estimated_usd:payload.estimated_cost_usd==null?null:Number(payload.estimated_cost_usd),
+      pricing_as_of:payload.pricing_as_of||null,
+      scope:payload.scope||'live recommendation model calls',
+      partial:false
+    },
+    tokens:payload.tokens||null,
+    last_call_at:payload.last_call_at||null,
+    note:'Metadata only. Recommendation content and user taste data are not included.'
+  };
+}
+
 async function neonHealth(project){
   const token=process.env.NEON_API_KEY;
   const projectId=process.env[project.neonProjectEnv];
@@ -163,6 +230,7 @@ module.exports=async function handler(req,res){
   else if(signal==='staging-render') payload={render:await renderSignal(project,'staging')};
   else if(signal==='analytics') payload={analytics:await vercelAnalytics(project)};
   else if(signal==='neon') payload={neon:await neonHealth(project)};
+  else if(signal==='ai-telemetry') payload={aiTelemetry:await aiTelemetry(project)};
   else {
     res.status(400).json({detail:'Unknown platform signal'});
     return;
@@ -175,7 +243,7 @@ module.exports=async function handler(req,res){
     ...payload,
     privacy:{
       content_included:false,
-      analytics_scope:'aggregate Web Analytics counts only'
+      analytics_scope:'aggregate Web Analytics counts and metadata-only AI operations telemetry'
     }
   });
 };
