@@ -2,25 +2,13 @@
 
 *A compact, living reference for the AI techniques, product patterns, tools, and questions I am actively using or watching.*
 
-Durable principles live in Durable AI Knowledge. This page stays closer to current practice and should get shorter as ideas become second nature.
+Durable principles live in Durable AI Knowledge. Day-to-day efficiency habits live in the Efficient AI Use for Product Work cheat sheet. This page stays closer to current patterns, tools, vocabulary, and techniques that may change.
 
-<!-- edge-review: 2026-09-25 -->
+<!-- edge-review: 2026-09-28 -->
 
 ---
 
 ## Ways I Work With AI
-
-### Separate project state from today's task
-
-Keep stable goals, decisions, constraints, current status, and known issues in a small source of truth. Give the model today's specific task separately.
-
-**Why:** Cleaner context makes long projects and cross-model handoffs more reliable.
-
-### Steer instead of restarting
-
-When a long task changes direction, give the AI the new constraint and ask what changes while preserving work that is still useful.
-
-**Why:** Changing direction without throwing away valid work is faster and keeps continuity.
 
 ### Define the test before generating the work
 
@@ -33,30 +21,6 @@ For important outputs, establish the evaluation criteria first, then generate or
 When AI gives a recommendation, identify the few claims or assumptions that would change the conclusion if they were wrong. Verify those with sources, tools, or calculations.
 
 **Why:** Verification effort goes to the facts that actually matter.
-
-### Delegate with deliberate context
-
-Give continuation work the prior context it needs, give independent reviewers a clean context, and load large sources progressively instead of dumping everything into every task.
-
-**Why:** Inherit context for continuity, isolate it for independent checks, and keep stale material from crowding out the current source of truth.
-
-### Fan out, then merge
-
-For a complex question, split the work into focused branches with different jobs, then reconcile conflicts against explicit criteria instead of averaging the answers.
-
-**Why:** Parallel exploration improves coverage while keeping each branch focused.
-
-### Turn good one-off work into a reusable skill
-
-When a recurring AI task works well, capture the trigger, inputs, tools, steps, checks, and expected output as a reusable skill, runbook, or project instruction.
-
-**Why:** Reusable procedures make AI work more consistent and easier to improve.
-
-### Preflight tool use before letting the AI act
-
-Before an agent uses tools, distinguish read-only steps from reversible and consequential ones. State what evidence is needed and where approval should be required.
-
-**Why:** Risky assumptions become visible before action.
 
 ### Test permission boundaries deliberately
 
