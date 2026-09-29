@@ -205,15 +205,24 @@
   }
   function setupGaps(data){
     const gaps=[],p=data.project,platform=data.platform,run=data.runInfo,ai=platform?.aiTelemetry;
-    if(platform?.analytics?.configured===false) gaps.push({label:'Usage analytics',detail:'Not connected yet. This limits trend and adoption context.'});
-    else if(platform?.analytics?.configured&&!platform?.analytics?.available&&!pendingSet(data).has('Analytics')) gaps.push({label:'Usage analytics',detail:'Connected, but Vercel has not returned usable analytics data yet.'});
+    if(platform?.analytics?.configured===false) gaps.push({label:'Usage analytics',detail:analyticsGapDetail(platform.analytics)});
+    else if(platform?.analytics?.configured&&!platform?.analytics?.available&&!pendingSet(data).has('Analytics')) gaps.push({label:'Usage analytics',detail:analyticsGapDetail(platform.analytics)});
+    if(data?.activity?.available&&data.activity?.runtime?.available===false){
+      const status=Number(data.activity.runtime.status||0);
+      const detail=[401,403].includes(status)
+        ?'Project Health can read deployments, but its Vercel token cannot read runtime logs.'
+        :status===404
+          ?'The latest deployment does not expose runtime logs through the Vercel log endpoint.'
+          :'Project Health could not read the bounded runtime-log stream for the latest deployment.';
+      gaps.push({label:'Runtime error visibility',detail});
+    }
     if(p.id==='state'&&!platform?.neon?.available) gaps.push({label:'Database health',detail:'Not connected or unavailable. This is a monitoring gap, not a product incident.'});
     if(p.id==='state'&&run&&!run.configured) gaps.push({label:'Run AI quality checks',detail:'Dashboard-run setup is incomplete.'});
     if(p.id!=='narc'&&!pendingSet(data).has('AI operations')&&!ai?.available){
       gaps.push({label:'AI cost',detail:'Estimated model spend is not available yet.'});
       gaps.push({label:'AI response speed',detail:'Observed model response speed is not available yet.'});
     }else if(p.id==='state'&&ai?.available&&ai.cost?.partial){
-      gaps.push({label:'AI cost coverage',detail:'Interpretation cost is estimated from recorded tokens. Ask token cost is not persisted yet, so this is intentionally partial.'});
+      gaps.push({label:'AI cost coverage',detail:'Some recorded model calls do not have known pricing, so they are excluded from the estimate.'});
     }
     return gaps;
   }
@@ -471,11 +480,26 @@
     if(neon?.configured&&neon.available) return 'Database connected';
     return 'No extra infra connected';
   }
+  function analyticsConnectionValue(platform,pending=false){
+    const a=platform?.analytics;
+    if(pending)return'Checking…';
+    if(a?.available)return'Connected';
+    if(a?.configured&&[401,403].includes(Number(a.status)))return'Access denied';
+    if(a?.configured&&Number(a.status)===404)return'Dataset unavailable';
+    if(a?.configured)return'Temporarily unavailable';
+    return'Not connected';
+  }
+  function analyticsGapDetail(analytics){
+    const a=analytics||{};
+    if(a.configured===false)return'Not connected yet. This limits trend and adoption context.';
+    if([401,403].includes(Number(a.status)))return'Vercel rejected the dashboard token for this project. Update the token scope or permissions.';
+    if(Number(a.status)===404)return'Vercel could not return this project’s Web Analytics dataset. Verify project access and analytics availability.';
+    return'Vercel Web Analytics is connected, but the latest query failed. Try again before treating this as missing usage.';
+  }
   function analyticsLabel(platform){
     const a=platform?.analytics;
     if(a?.available) return (a.visitors??'—')+' visitors · 30d';
-    if(a?.configured) return 'Analytics unavailable';
-    return 'Analytics not connected';
+    return analyticsConnectionValue(platform);
   }
   function projectQualityLabel(data){
     if(data.project.quality==='state'){
@@ -745,7 +769,7 @@
     const connections=[];
     connections.push({label:'Code + deployments',value:d?'Connected':'Unavailable'});
     connections.push({label:'Backend health',value:r?.configured?'Connected':(p.id==='state'?'Unavailable':'Not used')});
-    connections.push({label:'Usage analytics',value:platform?.analytics?.available?'Connected':platform?.analytics?.configured?'Connected · waiting for data':'Not connected'});
+    connections.push({label:'Usage analytics',value:analyticsConnectionValue(platform,pending.has('Analytics'))});
     connections.push({label:'Database health',value:n?.available?'Connected':(p.id==='state'?'Not connected':'Not used')});
     connections.push({label:'AI operations',value:ai?.not_applicable?'Not used':ai?.available?'Connected':pending.has('AI operations')?'Checking…':'Not connected'});
     if(p.id==='state'){
@@ -846,11 +870,12 @@
   function quickProjectCheck(data){
     const checks=[];
     const delivery=data?.delivery;
-    const runtimeIssues=Array.isArray(data?.activity?.runtime?.issues)?data.activity.runtime.issues:[];
+    const runtimeSignal=data?.activity?.runtime;
+    const runtimeIssues=Array.isArray(runtimeSignal?.issues)?runtimeSignal.issues:[];
     const quality=projectQualityLabel(data);
     checks.push({label:'Production deployment',value:delivery?.vercel?.kind==='good'?'Healthy':delivery?.vercel?.label||'Unknown'});
     checks.push({label:'Automated quality',value:quality||'Unknown'});
-    checks.push({label:'User-facing server errors',value:runtimeIssues.length?runtimeIssues.length+' signal'+(runtimeIssues.length===1?'':'s'):'None found in bounded check'});
+    checks.push({label:'User-facing server errors',value:runtimeSignal?.available===false?'Runtime log signal unavailable':runtimeIssues.length?runtimeIssues.length+' signal'+(runtimeIssues.length===1?'':'s'):'None found in bounded check'});
     const render=data?.platform?.render?.environments?.production;
     if(render) checks.push({label:'Production backend',value:render.ok?'Healthy':'Unavailable'});
     const hasIssue=checks.some(item=>/needs action|failed|unavailable|signal/i.test(String(item.value||'')));
@@ -1313,5 +1338,5 @@
     }
   }
 
-  return {PROJECTS,pageEnvironment,protectedControlsUrl,vercelFromStatus,deliveryHealth,commitTitle,githubCommitUrl,pullRequestNumber,githubPullRequestUrl,changeUrl,normalizeQuality,qualityAttention,externalQualityAttention,deliveryAttention,infrastructureAttention,allAttentionSignals,attentionItems,overallAttention,productOpenItems,projectStatus,setupGaps,releaseReadiness,projectQualityLabel,evalScore,percent,shortSha,pendingSet,mergePlatform,emptyProjectData,safeExternalQualitySnapshot,serializeProjectData,hydrateProjectData,loadProject,loadProjectDetails,infraCardLabel,analyticsLabel,relativeAge,changedSinceVisit,trendText,activityReviewItems,progressText,quickProjectCheck,evalRunComplete,qualityInvestigation,projectHandoff,init};
+  return {PROJECTS,pageEnvironment,protectedControlsUrl,vercelFromStatus,deliveryHealth,commitTitle,githubCommitUrl,pullRequestNumber,githubPullRequestUrl,changeUrl,normalizeQuality,qualityAttention,externalQualityAttention,deliveryAttention,infrastructureAttention,allAttentionSignals,attentionItems,overallAttention,productOpenItems,projectStatus,setupGaps,releaseReadiness,projectQualityLabel,evalScore,percent,shortSha,pendingSet,mergePlatform,emptyProjectData,safeExternalQualitySnapshot,serializeProjectData,hydrateProjectData,loadProject,loadProjectDetails,infraCardLabel,analyticsConnectionValue,analyticsGapDetail,analyticsLabel,relativeAge,changedSinceVisit,trendText,activityReviewItems,progressText,quickProjectCheck,evalRunComplete,qualityInvestigation,projectHandoff,init};
 });
