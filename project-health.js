@@ -924,9 +924,28 @@
     cards.addEventListener('click',event=>{if(event.target.closest?.('a,button'))return;const card=event.target.closest?.('.project-card');if(card)select(card.dataset.project);});
     cards.addEventListener('keydown',event=>{if(event.target.closest?.('a,button'))return;const card=event.target.closest?.('.project-card');if(card&&(event.key==='Enter'||event.key===' ')){event.preventDefault();select(card.dataset.project);}});
 
+    async function runAgentInvestigation(data,signalType,environment='production'){
+      if(!data)return;
+      data.investigation={loading:true};renderNow();
+      try{
+        const payload=await jsonFetch('/api/project-health-investigate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({project:data.project.id,environment,signalType}),timeoutMs:30000});
+        data.investigation={report:payload.report,sources:Array.isArray(payload.sources)?payload.sources:[],observedAt:payload.observedAt};
+      }catch(error){
+        if(error.status===401||error.status===403){
+          data.investigation=quickProjectCheck(data);
+          data.investigation.summary='A live issue is visible, but the AI investigation agent is restricted to a protected preview or staging deployment. This public view ran the deterministic project check instead.';
+        }else{
+          data.investigation={error:error.message||'Could not complete the investigation.'};
+        }
+      }
+      renderNow();
+    }
+
     const projectCheckButton=doc.getElementById('projectCheckButton');
-    if(projectCheckButton)projectCheckButton.addEventListener('click',()=>{
+    if(projectCheckButton)projectCheckButton.addEventListener('click',async()=>{
       const data=activeData();if(!data)return;
+      if(data.delivery?.vercel?.kind==='bad'){await runAgentInvestigation(data,'vercel','production');return;}
+      if(Array.isArray(data.delivery?.failedChecks)&&data.delivery.failedChecks.length){await runAgentInvestigation(data,'github-check','production');return;}
       data.investigation=quickProjectCheck(data);
       renderNow();
     });
@@ -944,20 +963,8 @@
       const button=event.target.closest?.('[data-investigate]');
       if(!button)return;
       const data=activeData();if(!data)return;
-      if(!root.confirm('Investigate this failure? Project Health will check only the relevant bounded evidence and send a sanitized summary to Anthropic. It cannot change code, configuration, or deployments.'))return;
-      let key=root.sessionStorage.getItem('project-health-investigation-key')||'';
-      if(!key)key=root.prompt('Project Health investigation key')||'';
-      if(!key)return;
-      root.sessionStorage.setItem('project-health-investigation-key',key);
-      data.investigation={loading:true};renderNow();
-      try{
-        const payload=await jsonFetch('/api/project-health-investigate',{method:'POST',headers:{'Content-Type':'application/json','X-Project-Health-Key':key},body:JSON.stringify({project:data.project.id,environment:button.dataset.environment,signalType:button.dataset.investigate}),timeoutMs:30000});
-        data.investigation={report:payload.report,sources:Array.isArray(payload.sources)?payload.sources:[],observedAt:payload.observedAt};
-      }catch(error){
-        if(error.status===401)root.sessionStorage.removeItem('project-health-investigation-key');
-        data.investigation={error:error.message||'Could not complete the investigation.'};
-      }
-      renderNow();
+      if(!root.confirm('Run the read-only investigation agent? It will inspect only bounded evidence relevant to this failure and cannot change code, configuration, or deployments.'))return;
+      await runAgentInvestigation(data,button.dataset.investigate,button.dataset.environment);
     });
 
     async function refreshAll(){
