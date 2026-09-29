@@ -68,6 +68,7 @@ def _review_report(provider) -> dict:
                 "error": r.error,
                 "trace_id": r.trace_id,
                 "trace_path": r.trace_path,
+                "proposed_state_text": r.proposed_state_text,
             }
             for r in results
         ],
@@ -119,7 +120,11 @@ def _failure_details(report: dict) -> list[dict]:
             if row.get("processing_status") and row.get("processing_status") != "succeeded":
                 failed_checks.append("processing")
             expected = row.get("expected_action")
-            observed = row.get("observed_action") or row.get("processing_status") or row.get("error")
+            observed_action = row.get("observed_action") or row.get("processing_status") or row.get("error")
+            proposal = str(row.get("proposed_state_text") or "").strip()
+            observed = observed_action
+            if proposal:
+                observed += " | proposed State: " + proposal[:180]
         else:
             failed_checks = [
                 name for name, ok in (
