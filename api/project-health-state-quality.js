@@ -8,6 +8,19 @@ const RUN_FIELDS=[
   'authority_accuracy','overall_pass_rate','created_at'
 ];
 
+function safeFailureDetail(value){
+  if(!value||typeof value!=='object'||Array.isArray(value)) return null;
+  const result={};
+  for(const field of ['scenario_id','category','severity','expected','observed']){
+    const item=value[field];
+    if(item===null||typeof item==='string') result[field]=item;
+  }
+  result.failed_checks=Array.isArray(value.failed_checks)
+    ?value.failed_checks.filter(item=>typeof item==='string').slice(0,8).map(item=>item.slice(0,80))
+    :[];
+  return result.scenario_id?result:null;
+}
+
 function safeRun(value){
   if(!value||typeof value!=='object'||Array.isArray(value)) return null;
   const result={};
@@ -15,6 +28,9 @@ function safeRun(value){
     const item=value[field];
     if(item===null||['string','number','boolean'].includes(typeof item)) result[field]=item;
   }
+  result.failure_details=Array.isArray(value.failure_details)
+    ?value.failure_details.slice(0,16).map(safeFailureDetail).filter(Boolean)
+    :[];
   return result;
 }
 
@@ -64,4 +80,4 @@ module.exports=async function handler(req,res){
     clearTimeout(timer);
   }
 };
-module.exports._test={safeRun,safeMetric,sanitizeQualityAnalytics};
+module.exports._test={safeFailureDetail,safeRun,safeMetric,sanitizeQualityAnalytics};
