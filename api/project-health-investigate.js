@@ -151,8 +151,11 @@ module.exports=async function handler(req,res){
   const environment=String(body.environment||'production').toLowerCase();
   const signalType=String(body.signalType||'');
   if(!project||!project.branches[environment]||!['vercel','github-check'].includes(signalType))return response(res,400,{detail:'Unsupported project, environment, or signal.'});
-  if(!process.env.PROJECT_HEALTH_INVESTIGATION_KEY)return response(res,503,{configured:false,detail:'Investigation access is not configured yet.'});
-  if(!constantTimeEqual(req.headers?.['x-project-health-key'],process.env.PROJECT_HEALTH_INVESTIGATION_KEY))return response(res,401,{detail:'Investigation key required.'});
+  const protectedPreview=String(process.env.VERCEL_ENV||'').toLowerCase()!=='production';
+  if(!protectedPreview){
+    if(!process.env.PROJECT_HEALTH_INVESTIGATION_KEY)return response(res,503,{configured:false,detail:'Investigation access is not configured yet.'});
+    if(!constantTimeEqual(req.headers?.['x-project-health-key'],process.env.PROJECT_HEALTH_INVESTIGATION_KEY))return response(res,403,{detail:'AI investigation is available from a protected preview or staging deployment.'});
+  }
   if(!process.env.ANTHROPIC_API_KEY||!process.env.VERCEL_TOKEN)return response(res,503,{configured:false,detail:'The server-side model and Vercel read connections are not configured.'});
   const branch=await fetchBranch(project,environment);
   if(!branch)return response(res,502,{detail:'Could not verify the current project branch.'});
