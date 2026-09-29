@@ -9,6 +9,11 @@ assert.deepStrictEqual(Object.keys(platform.PROJECTS),['state','tastemake','narc
 assert.strictEqual(platform.PROJECTS.state.vercelProjectId,'prj_zQtHJg96oM7Ol4qTapiwk1mV8iRl');
 assert.strictEqual(platform.PROJECTS.tastemake.vercelProjectId,'prj_UWguNtKhGJkLr0X3jswk2rgBKLGu');
 assert.strictEqual(platform.PROJECTS.narc.vercelProjectId,'prj_SKJS8qSkSAiceK5qZ4GkcZEbI41H');
+assert.strictEqual(platform.PROJECTS.state.aiTelemetry.kind,'state');
+assert.match(platform.PROJECTS.state.aiTelemetry.url,/state-api-6waw/);
+assert.strictEqual(platform.PROJECTS.tastemake.aiTelemetry.kind,'tastemake');
+assert.match(platform.PROJECTS.tastemake.aiTelemetry.url,/tastemake\.vercel\.app/);
+assert.strictEqual(platform.PROJECTS.narc.aiTelemetry.kind,'none');
 
 assert.deepStrictEqual(
   platform.safeRenderHealth({ok:true,status:200,latency_ms:88,payload:{build:'abcdef123',status:'ok'}}),
