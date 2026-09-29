@@ -585,14 +585,7 @@
           '<div class="eval-overview"><div><strong>'+esc(qa.title)+'</strong><span>'+(latestDate?'Last checked '+esc(fmtDate(latestDate))+' · ':'')+esc(total||'—')+' scenarios · '+esc(severe)+' high-impact failures</span></div></div>'+
           '<div class="eval-grid">'+cards.join('')+'</div>'+stateEvalHistory(q);
       }
-      if(pending.has('Run controls')){
-        qualityHtml+='<div class="eval-actions"><span class="footnote">Checking whether dashboard-run controls are ready…</span></div>';
-      }else if(run?.configured){
-        qualityHtml+='<div class="eval-actions"><button class="button small primary" type="button" data-run-checks="all">Run all AI checks</button><button class="button small" type="button" data-run-checks="review">Check update understanding</button><button class="button small" type="button" data-run-checks="ask">Check answer quality</button></div>'+
-          '<p class="footnote">Estimated model cost: '+esc(run.estimated_cost||'not configured')+'. You will confirm before any paid run starts.</p>';
-      }else if(run){
-        qualityHtml+='<p class="footnote">Running AI checks from the dashboard still needs setup. Existing recorded results can still appear here.</p>';
-      }
+      qualityHtml+='<p class="footnote">Running AI quality checks from this dashboard is paused for now. Existing recorded results will still appear here.</p>';
       qualityHtml+='<p class="footnote">Resolved Reviews · 30d: '+esc(q?.resolvedReviews??'Not loaded')+'. Project content is not copied into this dashboard.</p>';
     }else if(p.id==='tastemake'&&externalQ){
       const endpoint=externalQ.endpoint||{},base=externalQ.baseline||{},ci=externalQ.ci||{};
@@ -698,7 +691,7 @@
     connections.push({label:'Usage analytics',value:platform?.analytics?.available?'Connected':'Not connected'});
     connections.push({label:'Database health',value:n?.available?'Connected':(p.id==='state'?'Not connected':'Not used')});
     connections.push({label:'AI operations',value:ai?.not_applicable?'Not used':ai?.available?'Connected':pending.has('AI operations')?'Checking…':'Not connected'});
-    if(p.id==='state') connections.push({label:'Run AI quality checks',value:run?.configured?'Ready':'Setup needed'});
+    if(p.id==='state') connections.push({label:'AI quality evals',value:'Paused'});
     let aiHtml='';
     if(pending.has('AI operations')){
       aiHtml='<h4 style="margin:18px 0 8px">AI operations</h4><div class="empty">Checking AI cost and response speed…</div>';
