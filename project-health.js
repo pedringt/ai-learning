@@ -610,6 +610,7 @@
           '<div class="eval-overview"><div><strong>'+esc(qa.title)+'</strong><span>'+(latestDate?'Last checked '+esc(fmtDate(latestDate))+' · ':'')+esc(total||'—')+' scenarios · '+esc(severe)+' high-impact failures</span></div></div>'+
           '<div class="eval-grid">'+cards.join('')+'</div>'+stateEvalHistory(q);
       }
+      qualityHtml+='<p class="footnote"><a href="/state-evals">View eval details →</a></p>';
       if(pending.has('Run controls')){
         qualityHtml+='<div class="eval-actions"><span class="footnote">Checking whether dashboard-run controls are ready…</span></div>';
       }else if(run?.configured){
