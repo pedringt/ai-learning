@@ -47,6 +47,23 @@ const severe=H.normalizeQuality({
 });
 assert.strictEqual(H.qualityAttention(severe).kind,'bad');
 
+const detailedSevere=H.normalizeQuality({
+  controlled_evals:{
+    latest_review_interpretation:{
+      suite:'review_interpretation',interpretation_accuracy:.875,high_severity_failures:1,created_at:'2026-09-29T10:00:00Z',
+      failure_details:[{scenario_id:'review_direct_reversal',category:'direct_reversal',severity:'high',expected:'update_state',observed:'preserve_evidence_only',failed_checks:['interpretation']}]
+    },
+    latest_ask_quality:{suite:'ask_quality',overall_pass_rate:1,ask_grounding:1,high_severity_failures:0}
+  }
+});
+const qualityInvestigation=H.qualityInvestigation({project:H.PROJECTS[0],quality:detailedSevere});
+assert.strictEqual(qualityInvestigation.qualityInvestigation,true);
+assert.match(qualityInvestigation.report,/review_direct_reversal/);
+assert.match(qualityInvestigation.report,/Product \+ Engineering/);
+
+const legacyQualityInvestigation=H.qualityInvestigation({project:H.PROJECTS[0],quality:severe});
+assert.match(legacyQualityInvestigation.report,/older run/);
+
 assert.strictEqual(
   H.deliveryAttention({vercel:{kind:'good'}}).kind,
   'good'
@@ -185,6 +202,7 @@ assert.match(healthHtml,/Spot problems, understand what they mean for users/);
 assert.match(healthHtml,/How Project Health works/);
 assert.match(healthHtml,/Role & attribution/);
 assert.match(healthHtml,/id="projectCheckButton"/);
+assert.match(healthHtml,/id="prepareHandoffButton"/);
 assert.match(healthHtml,/productFocusPanel/);
 assert.doesNotMatch(healthHtml,/See a bounded investigation/);
 assert.doesNotMatch(healthHtml,/id="investigationDemo"/);
@@ -203,6 +221,14 @@ assert.ok(H.setupGaps({...unopenedState,platform:{analytics:{configured:false,av
 const stateWithAi={...unopenedState,platform:{analytics:{configured:true,available:true},neon:{configured:true,available:true},aiTelemetry:{configured:true,available:true,cost:{partial:true}}},runInfo:{configured:true}};
 assert.ok(!H.setupGaps(stateWithAi).some(item=>item.label==='AI response speed'));
 assert.ok(H.setupGaps(stateWithAi).some(item=>item.label==='AI cost coverage'));
+
+const handoff=H.projectHandoff({
+  ...stateWithAi,
+  delivery:{sha:'abc1234',message:'Ship handoff feature',updatedAt:'2026-09-29T10:00:00Z',vercel:{kind:'good'}}
+});
+assert.strictEqual(handoff.handoff,true);
+assert.match(handoff.handoffText,/State project handoff/);
+assert.match(handoff.handoffText,/Next decision/);
 const narcWithNoAi={...H.emptyProjectData(H.PROJECTS[2]),fresh:true,platform:{analytics:{configured:true,available:true},aiTelemetry:{configured:false,not_applicable:true}}};
 assert.ok(!H.setupGaps(narcWithNoAi).some(item=>/^AI /.test(item.label)));
 
@@ -226,7 +252,10 @@ assert.match(evalDetailsHtml,/16 controlled scenarios/);
 assert.match(evalDetailsHtml,/Update understanding/);
 assert.match(evalDetailsHtml,/Answer quality/);
 assert.match(evalDetailsHtml,/Synthetic controlled scenarios/);
-assert.match(fs.readFileSync(require.resolve('../project-health.js'),'utf8'),/View eval details/);
+const projectHealthSource=fs.readFileSync(require.resolve('../project-health.js'),'utf8');
+assert.match(projectHealthSource,/View eval details/);
+assert.match(projectHealthSource,/data-attention-action="ai-quality"/);
+assert.match(projectHealthSource,/Prepare handoff|prepareHandoffButton/);
 
 const workflowText=fs.readFileSync(require.resolve('../.github/workflows/question-review-live.yml'),'utf8');
 assert.match(workflowText,/suite:/);

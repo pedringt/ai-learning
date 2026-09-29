@@ -4,6 +4,7 @@ const platform=require('../api/project-health-platform.js')._test;
 const runApi=require('../api/project-health-run.js')._test;
 const projectQuality=require('../api/project-health-project-quality.js')._test;
 const activity=require('../api/project-health-activity.js')._test;
+const stateQuality=require('../api/project-health-state-quality.js')._test;
 
 assert.deepStrictEqual(Object.keys(platform.PROJECTS),['state','tastemake','narc']);
 assert.strictEqual(platform.PROJECTS.state.vercelProjectId,'prj_zQtHJg96oM7Ol4qTapiwk1mV8iRl');
@@ -40,6 +41,19 @@ assert.strictEqual(runtimeIssues.length,1);
 assert.strictEqual(runtimeIssues[0].path,'/api/ask');
 assert.strictEqual(runtimeIssues[0].count,1);
 assert.strictEqual(activity.safeText('ANTHROPIC_API_KEY=secret').includes('secret'),false);
+
+const safeFailure=stateQuality.safeFailureDetail({
+  scenario_id:'review_direct_reversal',
+  category:'direct_reversal',
+  severity:'high',
+  expected:'update_state',
+  observed:'preserve_evidence_only',
+  failed_checks:['interpretation'],
+  raw_answer:'private model output'
+});
+assert.strictEqual(safeFailure.scenario_id,'review_direct_reversal');
+assert.strictEqual(Object.prototype.hasOwnProperty.call(safeFailure,'raw_answer'),false);
+assert.deepStrictEqual(safeFailure.failed_checks,['interpretation']);
 
 const saved={
   GITHUB_TOKEN:process.env.GITHUB_TOKEN,
