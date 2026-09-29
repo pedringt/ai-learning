@@ -82,10 +82,14 @@ class ReviewQualityResult:
         allowed = self.scenario.allowed_actions or (self.scenario.expected_action,)
         if self.observed_action not in allowed:
             return False
-        if self.observed_action == "answer_question_and_update_state":
+        if self.observed_action in {"update_state", "answer_question_and_update_state", "update_state_and_open_question"}:
             text = _normalize(self.proposed_state_text)
             if self.scenario.required_state_update_phrases and not all(
-                _normalize(phrase) in text for phrase in self.scenario.required_state_update_phrases
+                any(
+                    _normalize(option) in text
+                    for option in ((required,) if isinstance(required, str) else required)
+                )
+                for required in self.scenario.required_state_update_phrases
             ):
                 return False
             if any(_normalize(phrase) in text for phrase in self.scenario.forbidden_state_update_phrases):
@@ -103,6 +107,19 @@ def _seed_review_scenario(connection, scenario: ReviewInterpretationScenario) ->
             "INSERT INTO current_state_items(id, topic, statement, version) VALUES (?, ?, ?, 1)",
             (f"quality-state-{idx}", topic, statement),
         )
+    for idx, text in enumerate(scenario.pending_reviews):
+        review_id = f"quality-pending-review-{idx}"
+        connection.execute(
+            "INSERT INTO review_issues(id, review_type, decision_question, why_consequential, status) VALUES (?, 'proposed_update', ?, 'Controlled pending Review', 'open')",
+            (review_id, text),
+        )
+        state_id = "quality-state-0" if scenario.current_state else None
+        if state_id:
+            connection.execute(
+                "INSERT INTO proposed_state_changes(id, review_id, state_item_id, proposed_statement, rationale, expected_state_version, status, operation) "
+                "VALUES (?, ?, ?, ?, 'Controlled pending Review', 1, 'pending', 'update')",
+                (f"quality-pending-proposal-{idx}", review_id, state_id, text),
+            )
     for idx, text in enumerate(scenario.open_questions):
         connection.execute(
             "INSERT INTO questions(id, text, status, blocking) VALUES (?, ?, 'open', 0)",
@@ -132,6 +149,8 @@ def _observed_review_outcome(connection, review_ids: list[str]) -> tuple[str, st
 
     if state_changes and linked_questions:
         return "answer_question_and_update_state", proposed_state_text
+    if state_changes and proposed_questions:
+        return "update_state_and_open_question", proposed_state_text
     if state_changes:
         return "update_state", proposed_state_text
     if proposed_questions:
