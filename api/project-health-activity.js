@@ -69,7 +69,7 @@ async function timedRuntimeText(url,options={}){
 function safeText(value,max=220){
   return String(value||'')
     .replace(/\bBearer\s+[^\s]+/gi,'Bearer [REDACTED]')
-    .replace(/\b(?:sk-ant-[A-Za-z0-9_-]+|gh[pousr]_[A-Za-z0-9_]+|vercel_[A-Za-z0-9_-]+)\b/gi,'[REDACTED_TOKEN]')
+    .replace(/\b(?:sk-ant-[A-Za-z0-9_-]+|gh[pousr]_[A-Za-z0-9_]+|vercel_[A-Za-z0-9_-]+|vcp_[A-Za-z0-9_-]+)\b/gi,'[REDACTED_TOKEN]')
     .replace(/\b([A-Z0-9_]*(?:KEY|TOKEN|SECRET|PASSWORD))\s*[:=]\s*[^\s,;]+/gi,'$1=[REDACTED]')
     .replace(/https?:\/\/[^\s]+/g,'[URL]')
     .slice(0,max);
