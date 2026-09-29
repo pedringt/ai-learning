@@ -48,6 +48,17 @@ class QualityEvalDatasetTests(unittest.TestCase):
         )
         self.assertTrue(result.interpretation_correct)
 
+    def test_question_answer_scenario_accepts_equivalent_legal_wording(self):
+        scenario = next(s for s in REVIEW_SCENARIOS if s.id == "review_question_answer_only")
+        result = ReviewQualityResult(
+            scenario=scenario,
+            review_recommended=True,
+            observed_action="answer_question_and_update_state",
+            processing_status="succeeded",
+            proposed_state_text="Legal confirmed the disputed behavior is not permitted under the proposed contract.",
+        )
+        self.assertTrue(result.interpretation_correct)
+
     def test_question_answer_scenario_rejects_overbroad_state_update(self):
         scenario = next(s for s in REVIEW_SCENARIOS if s.id == "review_question_answer_only")
         result = ReviewQualityResult(
