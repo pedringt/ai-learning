@@ -1,7 +1,7 @@
 import unittest
 
 from eval.ask_quality_scenarios import SCENARIOS as ASK_SCENARIOS, AskQualityScenario
-from eval.quality_harness import score_ask_answer
+from eval.quality_harness import ReviewQualityResult, score_ask_answer
 from eval.review_interpretation_scenarios import SCENARIOS as REVIEW_SCENARIOS
 
 
@@ -35,6 +35,34 @@ class QualityEvalDatasetTests(unittest.TestCase):
                 self.assertTrue(scenario.should_change_state, scenario.id)
             if scenario.expected_action == "open_question":
                 self.assertTrue(scenario.should_open_question, scenario.id)
+
+    def test_question_answer_scenario_accepts_supported_state_update(self):
+        scenario = next(s for s in REVIEW_SCENARIOS if s.id == "review_question_answer_only")
+        self.assertIn("answer_question_and_update_state", scenario.allowed_actions)
+        result = ReviewQualityResult(
+            scenario=scenario,
+            review_recommended=True,
+            observed_action="answer_question_and_update_state",
+            processing_status="succeeded",
+            proposed_state_text="The proposed contract does not permit the disputed retention behavior.",
+        )
+        self.assertTrue(result.interpretation_correct)
+
+    def test_question_answer_scenario_rejects_overbroad_state_update(self):
+        scenario = next(s for s in REVIEW_SCENARIOS if s.id == "review_question_answer_only")
+        result = ReviewQualityResult(
+            scenario=scenario,
+            review_recommended=True,
+            observed_action="answer_question_and_update_state",
+            processing_status="succeeded",
+            proposed_state_text="The contract review is complete and the contract is approved.",
+        )
+        self.assertFalse(result.interpretation_correct)
+
+    def test_known_unknown_noise_case_is_medium_severity(self):
+        scenario = next(s for s in REVIEW_SCENARIOS if s.id == "review_unknown_not_false")
+        self.assertEqual(scenario.severity, "medium")
+        self.assertEqual(scenario.expected_action, "preserve_evidence_only")
 
     def test_ask_scenario_ids_are_unique(self):
         ids = [scenario.id for scenario in ASK_SCENARIOS]
