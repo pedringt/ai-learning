@@ -32,6 +32,9 @@ class ReviewInterpretationScenario:
     open_questions: tuple[str, ...] = field(default_factory=tuple)
     review_needed: bool = True
     expected_action: ExpectedAction = "preserve_evidence_only"
+    allowed_actions: tuple[ExpectedAction, ...] = field(default_factory=tuple)
+    required_state_update_phrases: tuple[str, ...] = field(default_factory=tuple)
+    forbidden_state_update_phrases: tuple[str, ...] = field(default_factory=tuple)
     should_change_state: bool = False
     should_answer_question: bool = False
     should_open_question: bool = False
@@ -58,9 +61,12 @@ SCENARIOS = (
         current_state=(("vendor", "Vendor contract review is still underway."),),
         open_questions=("Does the proposed contract permit the disputed retention behavior?",),
         expected_action="answer_question",
+        allowed_actions=("answer_question", "answer_question_and_update_state"),
+        required_state_update_phrases=("does not permit", "retention"),
+        forbidden_state_update_phrases=("contract review is complete", "contract is approved", "review is complete"),
         should_answer_question=True,
         severity="medium",
-        rationale="Question resolution is meaningful even when no maintained fact should be rewritten.",
+        rationale="The Question must resolve. A supported durable State update is also acceptable, but it must not imply the broader contract review is complete.",
     ),
     ReviewInterpretationScenario(
         id="review_question_and_state_change",
@@ -103,8 +109,8 @@ SCENARIOS = (
         review_needed=False,
         expected_action="preserve_evidence_only",
         must_preserve_uncertainty=True,
-        severity="high",
-        rationale="Unknown must not be converted into zero, false, or an invented target.",
+        severity="medium",
+        rationale="An unknown already represented accurately in Current State should stay unknown without creating redundant tracking work.",
     ),
     ReviewInterpretationScenario(
         id="review_non_authoritative_opinion",

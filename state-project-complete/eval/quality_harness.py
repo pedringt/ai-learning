@@ -70,6 +70,7 @@ class ReviewQualityResult:
     processing_status: str
     trace_id: str = ""
     trace_path: str = ""
+    proposed_state_text: str = ""
     error: str = ""
 
     @property
@@ -78,7 +79,18 @@ class ReviewQualityResult:
 
     @property
     def interpretation_correct(self) -> bool:
-        return self.observed_action == self.scenario.expected_action
+        allowed = self.scenario.allowed_actions or (self.scenario.expected_action,)
+        if self.observed_action not in allowed:
+            return False
+        if self.observed_action == "answer_question_and_update_state":
+            text = _normalize(self.proposed_state_text)
+            if self.scenario.required_state_update_phrases and not all(
+                _normalize(phrase) in text for phrase in self.scenario.required_state_update_phrases
+            ):
+                return False
+            if any(_normalize(phrase) in text for phrase in self.scenario.forbidden_state_update_phrases):
+                return False
+        return True
 
     @property
     def passed(self) -> bool:
@@ -99,14 +111,16 @@ def _seed_review_scenario(connection, scenario: ReviewInterpretationScenario) ->
     connection.commit()
 
 
-def _observed_review_action(connection, review_ids: list[str]) -> str:
+def _observed_review_outcome(connection, review_ids: list[str]) -> tuple[str, str]:
     if not review_ids:
-        return "preserve_evidence_only"
+        return "preserve_evidence_only", ""
     placeholders = ",".join("?" for _ in review_ids)
-    state_changes = connection.execute(
-        f"SELECT COUNT(*) AS n FROM proposed_state_changes WHERE review_id IN ({placeholders}) AND status='pending'",
+    state_rows = connection.execute(
+        f"SELECT proposed_statement FROM proposed_state_changes WHERE review_id IN ({placeholders}) AND status='pending'",
         tuple(review_ids),
-    ).fetchone()["n"]
+    ).fetchall()
+    state_changes = len(state_rows)
+    proposed_state_text = " ".join(str(row["proposed_statement"] or "") for row in state_rows)
     proposed_questions = connection.execute(
         f"SELECT COUNT(*) AS n FROM proposed_questions WHERE review_id IN ({placeholders}) AND status='pending'",
         tuple(review_ids),
@@ -117,14 +131,14 @@ def _observed_review_action(connection, review_ids: list[str]) -> str:
     ).fetchone()["n"]
 
     if state_changes and linked_questions:
-        return "answer_question_and_update_state"
+        return "answer_question_and_update_state", proposed_state_text
     if state_changes:
-        return "update_state"
+        return "update_state", proposed_state_text
     if proposed_questions:
-        return "open_question"
+        return "open_question", ""
     if linked_questions:
-        return "answer_question"
-    return "preserve_evidence_only"
+        return "answer_question", ""
+    return "preserve_evidence_only", ""
 
 
 def run_review_quality_scenario(scenario: ReviewInterpretationScenario, provider) -> ReviewQualityResult:
@@ -142,13 +156,15 @@ def run_review_quality_scenario(scenario: ReviewInterpretationScenario, provider
         )
         process_result = traced.process_result
         review_ids = list(process_result.review_ids)
+        observed_action, proposed_state_text = _observed_review_outcome(connection, review_ids)
         return ReviewQualityResult(
             scenario=scenario,
             review_recommended=bool(review_ids),
-            observed_action=_observed_review_action(connection, review_ids),
+            observed_action=observed_action,
             processing_status=process_result.processing_status,
             trace_id=traced.trace_id,
             trace_path=traced.trace_path or "",
+            proposed_state_text=proposed_state_text,
         )
     except Exception as exc:
         return ReviewQualityResult(
