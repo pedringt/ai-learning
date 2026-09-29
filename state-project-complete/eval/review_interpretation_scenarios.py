@@ -17,6 +17,7 @@ ExpectedAction = Literal[
     "update_state",
     "answer_question",
     "answer_question_and_update_state",
+    "update_state_and_open_question",
     "open_question",
     "preserve_evidence_only",
 ]
@@ -30,10 +31,11 @@ class ReviewInterpretationScenario:
     evidence: str
     current_state: tuple[tuple[str, str], ...]
     open_questions: tuple[str, ...] = field(default_factory=tuple)
+    pending_reviews: tuple[str, ...] = field(default_factory=tuple)
     review_needed: bool = True
     expected_action: ExpectedAction = "preserve_evidence_only"
     allowed_actions: tuple[ExpectedAction, ...] = field(default_factory=tuple)
-    required_state_update_phrases: tuple[str, ...] = field(default_factory=tuple)
+    required_state_update_phrases: tuple[str | tuple[str, ...], ...] = field(default_factory=tuple)
     forbidden_state_update_phrases: tuple[str, ...] = field(default_factory=tuple)
     should_change_state: bool = False
     should_answer_question: bool = False
@@ -62,7 +64,7 @@ SCENARIOS = (
         open_questions=("Does the proposed contract permit the disputed retention behavior?",),
         expected_action="answer_question",
         allowed_actions=("answer_question", "answer_question_and_update_state"),
-        required_state_update_phrases=("does not permit", "retention"),
+        required_state_update_phrases=(("does not permit", "doesn't permit", "not permit", "not permitted", "prohibits", "not allowed"),),
         forbidden_state_update_phrases=("contract review is complete", "contract is approved", "review is complete"),
         should_answer_question=True,
         severity="medium",
@@ -132,5 +134,66 @@ SCENARIOS = (
         must_preserve_uncertainty=True,
         severity="high",
         rationale="A consequential leadership question deserves attention but must not be converted into a decision.",
+    ),
+    ReviewInterpretationScenario(
+        id="review_partial_reversal",
+        category="partial_reversal",
+        evidence="Security paused password-reset automation for privileged-account resets only. Standard password-reset automation remains approved.",
+        current_state=(("automation", "Password-reset automation is approved for all reset tickets."),),
+        expected_action="update_state",
+        required_state_update_phrases=("privileged", "standard"),
+        forbidden_state_update_phrases=("all password-reset automation is paused", "password-reset automation is paused for all"),
+        should_change_state=True,
+        severity="high",
+        rationale="A scoped reversal should update only the affected scope rather than overcorrecting the whole maintained fact.",
+    ),
+    ReviewInterpretationScenario(
+        id="review_new_fact_with_downstream_question",
+        category="decision_plus_downstream_unknown",
+        evidence="The project owner approved a mandatory 30-minute training session before pilot access. The approval is final, but the training date has not been scheduled.",
+        current_state=(("training", "Pilot training requirements have not been decided."),),
+        expected_action="update_state_and_open_question",
+        required_state_update_phrases=("mandatory", "30-minute"),
+        should_change_state=True,
+        should_open_question=True,
+        severity="high",
+        rationale="A settled decision should become proposed State while a separate execution unknown can remain a Question.",
+    ),
+    ReviewInterpretationScenario(
+        id="review_new_evidence_over_pending_review",
+        category="supersedes_pending_review",
+        evidence="Finance corrected the earlier estimate: the approved pilot budget cap is $35,000, not $50,000.",
+        current_state=(("budget", "The pilot budget cap has not been established."),),
+        pending_reviews=("Pending proposal: set the pilot budget cap to $50,000 based on the earlier Finance estimate.",),
+        expected_action="update_state",
+        required_state_update_phrases=(("$35,000", "35,000", "35000"),),
+        forbidden_state_update_phrases=("$50,000", "50,000", "50000"),
+        should_change_state=True,
+        severity="high",
+        rationale="New authoritative evidence should supersede a stale pending proposal rather than preserve competing pending truth.",
+    ),
+    ReviewInterpretationScenario(
+        id="review_authority_disagreement",
+        category="authority_conflict",
+        evidence="An engineer recommends removing human review for low-risk password resets. The Security owner explicitly decided that human review remains required for all customer-facing password-reset output.",
+        current_state=(("safety", "Human review is required for customer-facing password-reset output."),),
+        review_needed=False,
+        expected_action="preserve_evidence_only",
+        severity="high",
+        rationale="A lower-authority opinion should not displace an explicit decision from the responsible authority, especially when Current State already matches that decision.",
+    ),
+    ReviewInterpretationScenario(
+        id="review_partial_question_answer",
+        category="partial_question_answer",
+        evidence="Security approved Slack as an evidence source for #product and #support. Other project channels are still under review.",
+        current_state=(("sources", "Slack is not yet approved as a general evidence source."),),
+        open_questions=("Will Slack be approved as an evidence source for all project channels?",),
+        expected_action="update_state",
+        required_state_update_phrases=("#product", "#support"),
+        forbidden_state_update_phrases=("all project channels", "slack is approved for all"),
+        should_change_state=True,
+        must_preserve_uncertainty=True,
+        severity="high",
+        rationale="Partial approval should be recorded at the approved scope without falsely resolving the broader Question.",
     ),
 )
