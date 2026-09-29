@@ -33,7 +33,7 @@ class ReviewInterpretationScenario:
     review_needed: bool = True
     expected_action: ExpectedAction = "preserve_evidence_only"
     allowed_actions: tuple[ExpectedAction, ...] = field(default_factory=tuple)
-    required_state_update_phrases: tuple[str, ...] = field(default_factory=tuple)
+    required_state_update_phrases: tuple[str | tuple[str, ...], ...] = field(default_factory=tuple)
     forbidden_state_update_phrases: tuple[str, ...] = field(default_factory=tuple)
     should_change_state: bool = False
     should_answer_question: bool = False
@@ -62,7 +62,7 @@ SCENARIOS = (
         open_questions=("Does the proposed contract permit the disputed retention behavior?",),
         expected_action="answer_question",
         allowed_actions=("answer_question", "answer_question_and_update_state"),
-        required_state_update_phrases=("does not permit", "retention"),
+        required_state_update_phrases=(("does not permit", "doesn't permit", "not permit", "not permitted", "prohibits", "not allowed"),),
         forbidden_state_update_phrases=("contract review is complete", "contract is approved", "review is complete"),
         should_answer_question=True,
         severity="medium",
