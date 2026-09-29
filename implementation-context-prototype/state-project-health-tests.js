@@ -30,6 +30,19 @@ assert.strictEqual(
   'unknown'
 );
 
+assert.strictEqual(H.analyticsConnectionValue({analytics:{available:true,visitors:1}}),'Connected');
+assert.strictEqual(H.analyticsConnectionValue({analytics:{configured:true,available:false,status:403}}),'Access denied');
+assert.strictEqual(H.analyticsConnectionValue({analytics:{configured:true,available:false,status:404}}),'Dataset unavailable');
+const analyticsDeniedGaps=H.setupGaps({
+  project:H.PROJECTS[0],
+  platform:{analytics:{configured:true,available:false,status:403}},
+  activity:{available:true,runtime:{available:false,status:403}},
+  pending:new Set(),
+  runInfo:null
+});
+assert.match(analyticsDeniedGaps.find(item=>item.label==='Usage analytics').detail,/token/i);
+assert.match(analyticsDeniedGaps.find(item=>item.label==='Runtime error visibility').detail,/token/i);
+
 const healthy=H.normalizeQuality({
   live_review_quality:{resolved_reviews:4,material_edit_rate:.25},
   controlled_evals:{

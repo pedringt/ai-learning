@@ -3,8 +3,10 @@ from __future__ import annotations
 
 import json
 import hashlib
+import logging
 import re
 import time
+import uuid
 from datetime import date
 from typing import Any, Iterator, Mapping, Protocol
 
@@ -13,11 +15,46 @@ from ask_contract import (
     MEETING_PREP_SECTION_TITLES, AskSelection, AskSynthesis,
 )
 from ask_refinement_transforms import apply_refinement_transform, detect_refinement_type
+from db import project_id_of
 from review_service import list_evidence, list_history, list_project_rules, list_questions, list_reviews, list_state
+
+logger = logging.getLogger("state.ask")
 
 
 class AskProvider(Protocol):
     def run(self, prompt: str) -> Mapping[str, Any]: ...
+
+
+def _persist_model_call_metrics(connection: Any, provider: Any) -> None:
+    """Persist metadata-only Ask call telemetry without risking the Ask response."""
+    drain = getattr(provider, "drain_call_metrics", None)
+    if not callable(drain):
+        return
+    rows = drain()
+    if not rows:
+        return
+    try:
+        project_id = project_id_of(connection)
+        for row in rows:
+            connection.execute(
+                "INSERT INTO model_call_metrics("
+                "id, project_id, operation, provider, model_identifier, "
+                "duration_ms, input_tokens, output_tokens"
+                ") VALUES (?,?,?,?,?,?,?,?)",
+                (
+                    f"model_call_{uuid.uuid4().hex[:16]}",
+                    project_id,
+                    "ask",
+                    str(row.get("provider") or "unknown"),
+                    str(row.get("model_identifier") or "unknown"),
+                    int(row.get("duration_ms") or 0),
+                    row.get("input_tokens"),
+                    row.get("output_tokens"),
+                ),
+            )
+        connection.commit()
+    except Exception:
+        logger.warning("Could not persist Ask model-call telemetry", exc_info=True)
 
 
 _SELECTION_LIMITS = {
@@ -1068,6 +1105,7 @@ def stream_ask_events(
         chunks.append(text)
         yield "delta", {"text": text}
     provider_ms = round((time.perf_counter() - provider_started) * 1000)
+    _persist_model_call_metrics(connection, provider)
     combined = _parse_streamed_json("".join(chunks))
     selection_raw = combined.get("selection")
     answer_raw = combined.get("answer")
@@ -1123,6 +1161,7 @@ def run_ask(connection: Any, provider: AskProvider, query: str, previous_answer:
         provider_ms = round((time.perf_counter() - provider_started) * 1000)
         pipeline = "two_call_compat"
 
+    _persist_model_call_metrics(connection, provider)
     return _finalize_ask_result(
         candidates, selection_raw, answer_raw, pipeline=pipeline,
         context_ms=context_ms, provider_ms=provider_ms, total_started=total_started,

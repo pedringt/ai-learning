@@ -313,6 +313,7 @@ def _aggregate(connection, project_id: str | None, now: datetime) -> dict:
     provider_models = Counter(f"{x.get('provider') or 'unknown'} / {x.get('model_identifier') or 'unknown'}" for x in interpretations)
     model_calls_30 = [x for x in model_calls if _within(x.get("occurred_at"), now, 30)]
     model_latencies = [float(x["duration_ms"]) for x in model_calls_30 if x.get("duration_ms") is not None]
+    model_calls_by_operation = Counter((x.get("operation") or "unknown") for x in model_calls_30)
     input_tokens_30 = sum(int(x.get("input_tokens") or 0) for x in model_calls_30)
     output_tokens_30 = sum(int(x.get("output_tokens") or 0) for x in model_calls_30)
     priced_costs = [cost for cost in (_estimated_model_cost(x) for x in model_calls_30) if cost is not None]
@@ -409,16 +410,17 @@ def _aggregate(connection, project_id: str | None, now: datetime) -> dict:
             "ask_latency_ms": {"sample_size": len(ask_latencies), "p50": _percentile(ask_latencies, 0.5), "p95": _percentile(ask_latencies, 0.95)},
             "model_latency_ms": {"sample_size": len(model_latencies), "p50": _percentile(model_latencies, 0.5), "p95": _percentile(model_latencies, 0.95)},
             "token_usage": {"period_days": 30, "input": input_tokens_30, "output": output_tokens_30, "sample_size": len(model_calls_30)},
-            "token_usage_note": "Recorded interpretation calls only; Ask token usage is not persisted yet.",
+            "model_calls_by_operation": dict(model_calls_by_operation),
+            "token_usage_note": "Recorded State model calls, including interpretation and Ask.",
             "model_cost": {
                 "period_days": 30,
                 "estimated_usd": round(sum(priced_costs), 6) if priced_costs else (0.0 if model_calls_30 and not unpriced_model_calls else None),
                 "priced_calls": len(priced_costs),
                 "unpriced_calls": unpriced_model_calls,
                 "pricing_as_of": MODEL_PRICING_AS_OF,
-                "scope": "recorded interpretation calls only",
+                "scope": "recorded State model calls",
             },
-            "model_cost_note": "Estimated from recorded tokens using versioned Claude API list pricing. Ask model cost is not included yet.",
+            "model_cost_note": "Estimated from recorded tokens using versioned API list pricing. Calls without known pricing remain unpriced.",
         },
         "evals": {
             "label": "Controlled evals — separate from demo usage",

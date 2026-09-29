@@ -146,15 +146,21 @@ class ProductAnalyticsTests(unittest.TestCase):
             "VALUES (?,?,?,?,?,?,?,?,?)",
             ("model-2","northstar","interpretation","anthropic","claude-haiku-4-5-20251001",2500,2000,400,"2026-09-17 12:05:00"),
         )
+        self.connection.execute(
+            "INSERT INTO model_call_metrics(id,project_id,operation,provider,model_identifier,duration_ms,input_tokens,output_tokens,occurred_at) "
+            "VALUES (?,?,?,?,?,?,?,?,?)",
+            ("model-ask","northstar","ask","anthropic","claude-haiku-4-5-20251001",900,500,100,"2026-09-17 12:10:00"),
+        )
         self.connection.commit()
 
         data = _aggregate(self.connection, "northstar", datetime(2026, 9, 17, 13, 0, tzinfo=timezone.utc))
         reliability = data["reliability"]
-        self.assertEqual(reliability["model_latency_ms"]["sample_size"], 2)
-        self.assertEqual(reliability["model_latency_ms"]["p50"], 2000.0)
-        self.assertEqual(reliability["token_usage"]["input"], 3000)
-        self.assertEqual(reliability["token_usage"]["output"], 600)
-        self.assertAlmostEqual(reliability["model_cost"]["estimated_usd"], 0.006, places=6)
+        self.assertEqual(reliability["model_latency_ms"]["sample_size"], 3)
+        self.assertEqual(reliability["model_latency_ms"]["p50"], 1500.0)
+        self.assertEqual(reliability["token_usage"]["input"], 3500)
+        self.assertEqual(reliability["token_usage"]["output"], 700)
+        self.assertEqual(reliability["model_calls_by_operation"], {"interpretation": 2, "ask": 1})
+        self.assertAlmostEqual(reliability["model_cost"]["estimated_usd"], 0.007, places=6)
         self.assertEqual(reliability["model_cost"]["pricing_as_of"], "2026-05-27")
         columns = {info[1] for info in self.connection.execute("PRAGMA table_info(model_call_metrics)")}
         for forbidden in ("prompt", "content", "answer", "evidence", "query"):
