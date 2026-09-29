@@ -18,7 +18,7 @@ assert.strictEqual(T.PROJECTS.unknown,undefined);
 function makeResponse(){return {statusCode:200,headers:{},setHeader(k,v){this.headers[k]=v;},status(n){this.statusCode=n;return this;},json(value){this.payload=value;return this;}};}
 async function withEnv(patch,run){const old={};for(const [key,value] of Object.entries(patch)){old[key]=process.env[key];if(value==null)delete process.env[key];else process.env[key]=value;}try{return await run();}finally{for(const [key,value] of Object.entries(old)){if(value==null)delete process.env[key];else process.env[key]=value;}}}
 (async()=>{
-  await withEnv({PROJECT_HEALTH_INVESTIGATION_KEY:'secret',ANTHROPIC_API_KEY:'model-key',VERCEL_TOKEN:'vercel-key'},async()=>{
+  await withEnv({PROJECT_HEALTH_INVESTIGATION_KEY:'secret',ANTHROPIC_API_KEY:'model-key',VERCEL_TOKEN:'vercel-key',VERCEL_ENV:'production'},async()=>{
     let calls=0,anthropicBody=null;
     const originalFetch=global.fetch;
     global.fetch=async(url,options={})=>{
@@ -44,10 +44,10 @@ async function withEnv(patch,run){const old={};for(const [key,value] of Object.e
       assert.ok(anthropicBody.messages[0].content.length<9000);
     }finally{global.fetch=originalFetch;}
   });
-  await withEnv({PROJECT_HEALTH_INVESTIGATION_KEY:'secret',ANTHROPIC_API_KEY:'model-key',VERCEL_TOKEN:'vercel-key'},async()=>{
+  await withEnv({PROJECT_HEALTH_INVESTIGATION_KEY:'secret',ANTHROPIC_API_KEY:'model-key',VERCEL_TOKEN:'vercel-key',VERCEL_ENV:'production'},async()=>{
     let calls=0;const originalFetch=global.fetch;
     global.fetch=async(url)=>{calls++;throw new Error('should not fetch before auth');};
-    try{const res=makeResponse();await handler({method:'POST',headers:{},body:{project:'state',environment:'production',signalType:'vercel'}},res);assert.strictEqual(res.statusCode,401);assert.strictEqual(calls,0);}finally{global.fetch=originalFetch;}
+    try{const res=makeResponse();await handler({method:'POST',headers:{},body:{project:'state',environment:'production',signalType:'vercel'}},res);assert.strictEqual(res.statusCode,403);assert.strictEqual(calls,0);}finally{global.fetch=originalFetch;}
   });
   console.log('Project Health investigation API tests passed');
 })().catch(error=>{console.error(error);process.exitCode=1;});
