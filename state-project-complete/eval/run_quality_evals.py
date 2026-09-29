@@ -102,6 +102,49 @@ def _ask_report(provider) -> dict:
     }
 
 
+def _failure_details(report: dict) -> list[dict]:
+    details = []
+    is_review = report["suite"] == "review_interpretation"
+    for row in report["results"]:
+        if row.get("passed"):
+            continue
+        if is_review:
+            failed_checks = [
+                name for name, ok in (
+                    ("review_needed", row.get("review_needed_correct")),
+                    ("interpretation", row.get("interpretation_correct")),
+                )
+                if ok is False
+            ]
+            if row.get("processing_status") and row.get("processing_status") != "succeeded":
+                failed_checks.append("processing")
+            expected = row.get("expected_action")
+            observed = row.get("observed_action") or row.get("processing_status") or row.get("error")
+        else:
+            failed_checks = [
+                name for name, ok in (
+                    ("grounding", row.get("grounding_ok")),
+                    ("required_facts", row.get("required_facts_ok")),
+                    ("forbidden_claims", row.get("forbidden_claims_ok")),
+                    ("uncertainty", row.get("uncertainty_ok")),
+                    ("open_item", row.get("open_item_ok")),
+                    ("authority", row.get("authority_ok")),
+                )
+                if ok is False
+            ]
+            expected = "Grounded answer that preserves uncertainty, open items, and decision authority"
+            observed = "Failed checks: " + ", ".join(failed_checks) if failed_checks else (row.get("error") or "Behavior did not meet the controlled expectation")
+        details.append({
+            "scenario_id": row["id"],
+            "category": row.get("category"),
+            "severity": row.get("severity", "medium"),
+            "expected": str(expected)[:240] if expected else None,
+            "observed": str(observed)[:240] if observed else None,
+            "failed_checks": failed_checks[:8],
+        })
+    return details[:16]
+
+
 def _analytics_payload(report: dict, provider) -> dict:
     summary = report["summary"]
     common = {
@@ -113,6 +156,7 @@ def _analytics_payload(report: dict, provider) -> dict:
         "total": summary["total"],
         "errors": summary["errors"],
         "high_severity_failures": summary["high_severity_failures"],
+        "failure_details": _failure_details(report),
     }
     if report["suite"] == "review_interpretation":
         common.update({
