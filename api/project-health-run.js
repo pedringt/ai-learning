@@ -5,7 +5,7 @@ const RUNS={
     ref:'staging',
     label:'State AI quality checks',
     paid_model_calls:true,
-    minimum_controlled_cases:8,
+    minimum_controlled_cases:10,
     costEstimateEnv:'PROJECT_HEALTH_RUN_COST_ESTIMATE_STATE',
     note:'Runs controlled checks for update understanding, answer quality, or both. Aggregate results can be recorded back into the selected Project Health environment.'
   }

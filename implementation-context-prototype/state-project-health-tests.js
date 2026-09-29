@@ -47,6 +47,29 @@ const severe=H.normalizeQuality({
 });
 assert.strictEqual(H.qualityAttention(severe).kind,'bad');
 
+const mediumOnly=H.normalizeQuality({
+  controlled_evals:{
+    latest_review_interpretation:{
+      suite:'review_interpretation',interpretation_accuracy:.75,high_severity_failures:0,total:8,created_at:'2026-09-29 17:56:46',
+      failure_details:[
+        {scenario_id:'review_question_answer_only',severity:'medium',expected:'answer_question',observed:'answer_question_and_update_state',failed_checks:['interpretation']},
+        {scenario_id:'review_unknown_not_false',severity:'medium',expected:'preserve_evidence_only',observed:'open_question',failed_checks:['review_needed','interpretation']}
+      ]
+    },
+    latest_ask_quality:{suite:'ask_quality',overall_pass_rate:1,ask_grounding:1,high_severity_failures:0,total:8,created_at:'2026-09-29 17:56:46'},
+    recent:[
+      {suite:'review_interpretation',interpretation_accuracy:.75,high_severity_failures:0,total:8,created_at:'2026-09-29 17:56:46'},
+      {suite:'review_interpretation',interpretation_accuracy:.625,high_severity_failures:2,total:8,created_at:'2026-09-29 03:28:03'}
+    ]
+  }
+});
+assert.strictEqual(H.qualityAttention(mediumOnly).kind,'warn');
+const mediumInvestigation=H.qualityInvestigation({project:H.PROJECTS[0],quality:mediumOnly});
+assert.match(mediumInvestigation.report,/75%/);
+assert.match(mediumInvestigation.report,/0 high-impact failures/);
+assert.match(mediumInvestigation.report,/improved 12\.5 points/);
+assert.match(mediumInvestigation.report,/workflow noise rather than false truth/);
+
 const detailedSevere=H.normalizeQuality({
   controlled_evals:{
     latest_review_interpretation:{
@@ -63,6 +86,10 @@ assert.match(qualityInvestigation.report,/Product \+ Engineering/);
 
 const legacyQualityInvestigation=H.qualityInvestigation({project:H.PROJECTS[0],quality:severe});
 assert.match(legacyQualityInvestigation.report,/older run/);
+
+assert.strictEqual(H.evalRunComplete(mediumOnly,{suite:'review',baselineReview:'2026-09-29 03:28:03',baselineAsk:null}),true);
+assert.strictEqual(H.evalRunComplete(mediumOnly,{suite:'all',baselineReview:'2026-09-29 03:28:03',baselineAsk:'2026-09-29 16:09:10'}),true);
+assert.strictEqual(H.evalRunComplete(mediumOnly,{suite:'all',baselineReview:'2026-09-29 17:56:46',baselineAsk:'2026-09-29 17:56:46'}),false);
 
 assert.strictEqual(
   H.deliveryAttention({vercel:{kind:'good'}}).kind,
@@ -248,7 +275,7 @@ assert.ok(quick.checks.some(item=>item.label==='Production backend'&&item.value=
 
 const evalDetailsHtml=fs.readFileSync(require.resolve('../state-evals.html'),'utf8');
 assert.match(evalDetailsHtml,/State eval details/);
-assert.match(evalDetailsHtml,/16 controlled scenarios/);
+assert.match(evalDetailsHtml,/23 controlled scenarios/);
 assert.match(evalDetailsHtml,/Update understanding/);
 assert.match(evalDetailsHtml,/Answer quality/);
 assert.match(evalDetailsHtml,/Synthetic controlled scenarios/);
@@ -256,6 +283,8 @@ const projectHealthSource=fs.readFileSync(require.resolve('../project-health.js'
 assert.match(projectHealthSource,/View eval details/);
 assert.match(projectHealthSource,/data-attention-action="ai-quality"/);
 assert.match(projectHealthSource,/Prepare handoff|prepareHandoffButton/);
+assert.match(projectHealthSource,/AI checks are running/);
+assert.match(projectHealthSource,/checks automatically/);
 
 const workflowText=fs.readFileSync(require.resolve('../.github/workflows/question-review-live.yml'),'utf8');
 assert.match(workflowText,/suite:/);

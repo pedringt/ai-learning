@@ -115,20 +115,20 @@ async function unchanged() {
     baseline = await get('/api/bootstrap'); report.baseline = baseline; save();
     report.checks.push({ name: 'Frontend and backend match staging feature code', status: 'passed' });
 
-    await check('Live concern -> Review -> Question; Ask freshness and reload', async item => {
-      const content = "During today's Northstar pilot spot-check, two support reps said they sometimes approve AI drafts after reading only the opening sentence. We have not measured how often this happens or whether the remaining text is checked. Human review is still required; no policy or scope change has been approved.";
+    await check('Consequential unknown -> Review -> Question; Ask freshness and reload', async item => {
+      const content = "Northstar pilot planning surfaced one unresolved governance question: who has authority to pause the pilot if severe AI failures appear? No owner or decision rule has been established, and nothing in Current State answers this.";
       await page.locator('[data-action="add-info"]:visible').first().click();
       await page.locator('#addInfoText').fill(content);
       const response = page.waitForResponse(r => r.url() === API + '/api/evidence' && r.request().method() === 'POST', { timeout: 75000 });
       await page.locator('[data-action="save-info"]').click();
       const res = await response; expect(res.ok()).toBeTruthy();
-      const result = recordSubmission('rubber-stamp concern (browser)', content, await res.json());
+      const result = recordSubmission('pause-authority unknown (browser)', content, await res.json());
       const r = questionReview(result); item.reviewId = r.id;
       expect((await get('/api/questions')).items).toEqual(baseline.questions);
       await unchanged();
       await openReview(r.id);
       await page.locator('#askStateLauncher').click();
-      const query = 'What do we know about whether Northstar agents carefully check AI drafts before approving them? Separate accepted facts from unresolved concerns.';
+      const query = 'Who has authority to pause the Northstar pilot if severe AI failures appear? Separate accepted facts from unresolved concerns.';
       await page.locator('#askStateDrawerInput').fill(query); await page.locator('#askStateDrawerInput').press('Enter');
       await completedAsk();
       report.asks.before = await page.locator('#askStateDrawerResult').innerText(); save();
@@ -166,11 +166,18 @@ async function unchanged() {
       expect(result.reviews).toHaveLength(0); expect((await get('/api/questions')).items).toEqual(before); await unchanged();
     });
 
-    await check('A definite approval proposes State, not an unknown', async item => {
+    await check('A definite approval records State even if execution remains open', async item => {
       const result = await evidence('narrow approved fact', 'The Northstar project owner approved a mandatory 30-minute training session for all pilot support reps before they receive access to the AI draft tool. The approval is final. Training has not happened yet.');
       item.reviewTypes = (result.reviews || []).map(r => r.review_type);
-      expect((result.reviews || []).some(r => r.review_type !== 'open_question' && r.proposals.some(p => p.status === 'pending'))).toBeTruthy();
-      expect((result.reviews || []).some(r => r.review_type === 'open_question')).toBe(false); await unchanged();
+      const stateReviews = (result.reviews || []).filter(r => r.review_type !== 'open_question' && r.proposals.some(p => p.status === 'pending'));
+      expect(stateReviews.length, 'The approved training fact must be proposed for Current State').toBeGreaterThan(0);
+      const stateText = stateReviews.flatMap(r => r.proposals).map(p => norm(p.proposed_statement)).join(' ');
+      expect(stateText).toContain('training');
+      const questionReviews = (result.reviews || []).filter(r => r.review_type === 'open_question');
+      for (const review of questionReviews) {
+        expect(norm(review.decision_question), 'Any extra Question must be a downstream execution unknown, not doubt about the approved fact').not.toContain('should the mandatory');
+      }
+      await unchanged();
     });
 
     await check('Dismiss suggestion keeps State, History and Questions unchanged', async item => {
