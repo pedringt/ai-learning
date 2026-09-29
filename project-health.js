@@ -449,7 +449,13 @@
     if(amount<0.01)return'$'+amount.toFixed(4);
     return'$'+amount.toFixed(2);
   }
-  function attentionMarkup(item){return '<div class="attention '+esc(item.kind||'')+'"><strong>'+esc(item.title)+'</strong><p>'+esc(item.detail)+'</p></div>';}
+  function attentionMarkup(item){
+    const content='<strong>'+esc(item.title)+'</strong><p>'+esc(item.detail)+'</p>';
+    if(item.category==='quality'&&['bad','warn'].includes(item.kind)){
+      return '<button class="attention attention-action '+esc(item.kind||'')+'" type="button" data-attention-action="ai-quality" aria-label="Investigate '+esc(item.title)+'">'+content+'<span class="attention-action-label">Investigate this issue →</span></button>';
+    }
+    return '<div class="attention '+esc(item.kind||'')+'">'+content+'</div>';
+  }
 
   function infraCardLabel(platform){
     const render=platform?.render;
@@ -539,6 +545,7 @@
     }).join('')+'<p class="footnote">Only aggregate results are stored here. Controlled scenario content stays out of Project Health.</p></div></div>';
   }
   function investigationResultHtml(investigation){
+    if(investigation?.handoff) return '<div class="investigation-result agent-result"><div class="agent-kicker">Handoff preview</div><strong>Project handoff ready to review</strong><pre>'+esc(investigation.handoffText||investigation.report||'')+'</pre><div class="quality-actions"><button class="button small primary" type="button" data-copy-project-handoff>Copy handoff</button></div><p class="footnote">Project Health assembled this from the currently loaded delivery, quality, investigation, and product-decision signals. Review it before sharing.</p></div>';
     if(investigation?.openingProtected) return '<div class="investigation-result agent-result" role="status"><div class="agent-kicker">Read-only investigation agent</div><strong>Opening protected investigation…</strong><p>Vercel will verify access before the live AI investigation starts.</p></div>';
     if(investigation?.loading) return '<div class="investigation-result agent-result" role="status"><div class="agent-kicker">Read-only investigation agent</div><strong>Checking current health signals…</strong><p>Starting with current health signals and expanding only when the evidence points somewhere specific.</p></div>';
     if(investigation?.error) return '<div class="investigation-result agent-result" role="status"><div class="agent-kicker">Read-only investigation agent</div><strong>Investigation unavailable</strong><p>'+esc(investigation.error)+'</p></div>';
@@ -549,10 +556,12 @@
         '<p class="footnote">No AI model was called for this fallback. It uses the health data already loaded by Project Health.</p></div>';
     }
     if(!investigation?.report)return'';
-    return '<div class="investigation-result agent-result"><div class="agent-kicker">Read-only investigation agent</div><strong>Agent investigation · '+esc(fmtDate(investigation.observedAt))+'</strong><pre>'+esc(investigation.report)+'</pre>'+
-      '<div class="investigation-sources"><strong>Evidence checked</strong> '+investigation.sources.map(source=>githubLink(esc(source.label),source.url)).join(' · ')+'</div>'+
+    const label=investigation.qualityInvestigation?'AI quality investigation':'Read-only investigation agent';
+    const title=investigation.qualityInvestigation?'Quality investigation · '+esc(fmtDate(investigation.observedAt)):'Agent investigation · '+esc(fmtDate(investigation.observedAt));
+    return '<div class="investigation-result agent-result"><div class="agent-kicker">'+label+'</div><strong>'+title+'</strong><pre>'+esc(investigation.report)+'</pre>'+
+      ((investigation.sources||[]).length?'<div class="investigation-sources"><strong>Evidence checked</strong> '+investigation.sources.map(source=>githubLink(esc(source.label),source.url)).join(' · ')+'</div>':'')+
       '<div class="quality-actions"><button class="button small" type="button" data-copy-handoff>Copy engineer handoff</button></div>'+
-      '<p class="footnote">The agent can inspect bounded evidence and draft a handoff. It cannot change code, configuration, or deployments.</p></div>';
+      '<p class="footnote">'+(investigation.qualityInvestigation?'This investigation uses the recorded controlled-eval evidence already loaded by Project Health. No extra model call was made.':'The agent can inspect bounded evidence and draft a handoff. It cannot change code, configuration, or deployments.')+'</p></div>';
   }
 
   function renderDetail(data,doc){
@@ -806,6 +815,101 @@
     };
   }
 
+  function qualityInvestigation(data){
+    const quality=data?.quality||{};
+    const runs=[
+      {label:'Update understanding',run:quality.review},
+      {label:'Answer quality',run:quality.ask}
+    ].filter(item=>item.run);
+    const affected=runs.filter(item=>{
+      const score=evalScore(item.run);
+      return Number(item.run?.high_severity_failures||0)>0||(score!=null&&score<1);
+    });
+    const severe=affected.reduce((n,item)=>n+Number(item.run?.high_severity_failures||0),0);
+    const details=affected.flatMap(item=>(Array.isArray(item.run?.failure_details)?item.run.failure_details:[]).map(detail=>({...detail,suiteLabel:item.label})));
+    const latestDate=affected.map(item=>item.run?.created_at).filter(Boolean).sort().pop()||new Date().toISOString();
+    const affectedLines=affected.length
+      ?affected.map(item=>item.label+': '+percent(evalScore(item.run))+' pass rate · '+Number(item.run?.high_severity_failures||0)+' high-impact failure'+(Number(item.run?.high_severity_failures||0)===1?'':'s')).join('\n')
+      :'No failing suite could be identified from the latest aggregate record.';
+    const detailLines=details.length
+      ?details.map(detail=>'- '+detail.suiteLabel+' / '+detail.scenario_id+' ('+(detail.severity||'unknown')+'): '+(detail.observed||('Failed checks: '+((detail.failed_checks||[]).join(', ')||'not recorded')))).join('\n')
+      :'- Exact failed-scenario metadata was not recorded for this older run. Project Health can identify the affected suite and aggregate severity, but not safely reconstruct which scenario failed.';
+    const report=[
+      'What happened',
+      (severe||'One or more')+' high-impact AI quality failure'+(severe===1?' was':'s were')+' recorded in the latest controlled checks.',
+      '',
+      'Affected checks',
+      affectedLines,
+      '',
+      'Failed scenarios',
+      detailLines,
+      '',
+      'User impact',
+      'This is a controlled quality signal, not evidence of a production outage. It means at least one behavior State is expected to handle safely did not meet the test contract.',
+      '',
+      'Recommended next step',
+      details.length?'Start with the failed scenario metadata above, reproduce the behavior, then rerun the same controlled suite after the fix.':'Open the eval details, inspect the affected suite, and rerun the controlled checks after the next change so future failures record scenario-level metadata.',
+      '',
+      'Owner',
+      'Product + Engineering',
+      '',
+      'Confidence',
+      details.length?'High for which controlled scenarios failed because the runner recorded scenario-level metadata. Root cause still needs engineering review.':'Moderate. The aggregate failure is recorded, but this older run did not persist scenario-level failure metadata.'
+    ].join('\n');
+    return {
+      report,
+      sources:[{label:'State eval details',url:'/state-evals',observedAt:latestDate}],
+      observedAt:latestDate,
+      qualityInvestigation:true
+    };
+  }
+
+  function projectHandoff(data){
+    const status=projectStatus(data);
+    const notices=attentionItems(data).filter(item=>item.kind!=='good');
+    const latestQuality=data?.project?.quality==='state'&&data.quality
+      ?[data.quality.review,data.quality.ask].filter(Boolean).map(run=>evalSuiteLabel(run)+': '+percent(evalScore(run))+' · '+Number(run.high_severity_failures||0)+' high-impact failures').join('\n')
+      :projectQualityLabel(data);
+    const release=data?.delivery
+      ?commitTitle(data.delivery.message)+' · '+shortSha(data.delivery.sha)+' · '+fmtDate(data.delivery.updatedAt)
+      :'Unavailable';
+    const issueText=notices.length?notices.map(item=>'- '+item.title+': '+item.detail).join('\n'):'- Nothing currently needs action.';
+    const prior=data?.investigation?.report&&!data.investigation?.handoff?data.investigation.report:'No focused investigation has been added to this handoff yet.';
+    const handoffText=[
+      data.project.name+' project handoff',
+      '',
+      'Current status',
+      status.label+' · '+(overallAttention(data).title||'No current issue'),
+      '',
+      'What needs attention',
+      issueText,
+      '',
+      'Latest release',
+      release,
+      '',
+      'Product quality',
+      latestQuality||'Unavailable',
+      '',
+      'Latest investigation',
+      prior,
+      '',
+      'Next decision',
+      data.project.nextDecision,
+      '',
+      'Next review',
+      data.project.nextReview,
+      '',
+      'Generated from Project Health. Review before sharing or acting on it.'
+    ].join('\n');
+    return {
+      handoff:true,
+      handoffText,
+      report:handoffText,
+      observedAt:new Date().toISOString(),
+      sources:[]
+    };
+  }
+
   async function init(root){
     const doc=root.document,cards=doc.getElementById('projectCards'),status=doc.getElementById('status'),summary=doc.getElementById('overviewSummary'),reviewInbox=doc.getElementById('reviewInbox'),refresh=doc.getElementById('refreshButton'),qualityPanel=doc.getElementById('qualityPanel');
     if(!cards||!status||!summary||!reviewInbox||!refresh||!qualityPanel)return;
@@ -976,16 +1080,46 @@
       const data=activeData();if(!data)return;
       if(data.delivery?.vercel?.kind==='bad'){await runAgentInvestigation(data,'vercel','production');return;}
       if(Array.isArray(data.delivery?.failedChecks)&&data.delivery.failedChecks.length){await runAgentInvestigation(data,'github-check','production');return;}
+      if(data.project.quality==='state'&&['bad','warn'].includes(qualityAttention(data.quality).kind)){
+        data.investigation=qualityInvestigation(data);renderNow();revealInvestigation();return;
+      }
       data.investigation=quickProjectCheck(data);
       renderNow();
       revealInvestigation();
     });
 
+    const prepareHandoffButton=doc.getElementById('prepareHandoffButton');
+    if(prepareHandoffButton)prepareHandoffButton.addEventListener('click',()=>{
+      const data=activeData();if(!data)return;
+      data.investigation=projectHandoff(data);
+      renderNow();
+      revealInvestigation();
+    });
+
+    const attentionPanel=doc.getElementById('attentionPanel');
+    if(attentionPanel)attentionPanel.addEventListener('click',event=>{
+      const action=event.target.closest?.('[data-attention-action]');
+      if(!action)return;
+      const data=activeData();if(!data)return;
+      if(action.dataset.attentionAction==='ai-quality'){
+        data.investigation=qualityInvestigation(data);
+        renderNow();
+        revealInvestigation();
+      }
+    });
+
     const investigationPanel=doc.getElementById('investigationPanel');
     if(investigationPanel)investigationPanel.addEventListener('click',async event=>{
+      const projectCopy=event.target.closest?.('[data-copy-project-handoff]');
       const copyButton=event.target.closest?.('[data-copy-handoff]');
-      if(!copyButton)return;
-      const data=activeData(),investigation=data?.investigation;if(!data||!investigation?.report)return;
+      const data=activeData(),investigation=data?.investigation;if(!data||!investigation)return;
+      if(projectCopy){
+        const text=investigation.handoffText||investigation.report||'';
+        if(!text)return;
+        try{await root.navigator.clipboard.writeText(text);projectCopy.textContent='Copied';root.setTimeout(()=>{projectCopy.textContent='Copy handoff';},1500);}catch(_){root.prompt('Copy project handoff',text);}
+        return;
+      }
+      if(!copyButton||!investigation.report)return;
       const sources=(investigation.sources||[]).map(source=>'- '+source.label+': '+source.url).join('\n');
       const text=[data.project.name+' engineering handoff','',investigation.report,'',sources?'Evidence:\n'+sources:'','', 'Generated by Project Health. Read-only investigation; verify before changing anything.'].filter(Boolean).join('\n');
       try{await root.navigator.clipboard.writeText(text);copyButton.textContent='Copied';root.setTimeout(()=>{copyButton.textContent='Copy engineer handoff';},1500);}catch(_){root.prompt('Copy engineering handoff',text);}
@@ -1060,5 +1194,5 @@
     await refreshAll();
   }
 
-  return {PROJECTS,pageEnvironment,protectedControlsUrl,vercelFromStatus,deliveryHealth,commitTitle,githubCommitUrl,pullRequestNumber,githubPullRequestUrl,changeUrl,normalizeQuality,qualityAttention,externalQualityAttention,deliveryAttention,infrastructureAttention,allAttentionSignals,attentionItems,overallAttention,productOpenItems,projectStatus,setupGaps,releaseReadiness,projectQualityLabel,evalScore,percent,shortSha,pendingSet,mergePlatform,emptyProjectData,safeExternalQualitySnapshot,serializeProjectData,hydrateProjectData,loadProject,loadProjectDetails,infraCardLabel,analyticsLabel,relativeAge,changedSinceVisit,trendText,activityReviewItems,progressText,quickProjectCheck,init};
+  return {PROJECTS,pageEnvironment,protectedControlsUrl,vercelFromStatus,deliveryHealth,commitTitle,githubCommitUrl,pullRequestNumber,githubPullRequestUrl,changeUrl,normalizeQuality,qualityAttention,externalQualityAttention,deliveryAttention,infrastructureAttention,allAttentionSignals,attentionItems,overallAttention,productOpenItems,projectStatus,setupGaps,releaseReadiness,projectQualityLabel,evalScore,percent,shortSha,pendingSet,mergePlatform,emptyProjectData,safeExternalQualitySnapshot,serializeProjectData,hydrateProjectData,loadProject,loadProjectDetails,infraCardLabel,analyticsLabel,relativeAge,changedSinceVisit,trendText,activityReviewItems,progressText,quickProjectCheck,qualityInvestigation,projectHandoff,init};
 });
