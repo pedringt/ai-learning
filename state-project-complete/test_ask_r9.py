@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 from copy import deepcopy
+import time
+from types import SimpleNamespace
 
 from fastapi.testclient import TestClient
 
@@ -8,6 +10,7 @@ from api import Settings, create_app
 from database_migration_backed import initialize_db
 from db import connect
 from seed_demo import bootstrap_demo_data
+from ask_provider import LiveAskProvider
 from ask_service import run_ask
 
 
@@ -338,3 +341,57 @@ def test_natural_refinement_phrases_share_one_replace_classifier():
     ]
     for phrase in append_phrases:
         assert _followup_mode(phrase, previous) == "append", phrase
+
+
+def test_live_ask_provider_captures_metadata_only_call_metrics():
+    provider = SimpleNamespace(name="anthropic", model_identifier="claude-haiku-4-5-20251001")
+    live = LiveAskProvider(provider)
+    live._capture_call_metrics(
+        time.perf_counter() - 0.01,
+        SimpleNamespace(input_tokens=123, output_tokens=45),
+    )
+    rows = live.drain_call_metrics()
+    assert len(rows) == 1
+    assert rows[0]["provider"] == "anthropic"
+    assert rows[0]["model_identifier"] == "claude-haiku-4-5-20251001"
+    assert rows[0]["input_tokens"] == 123
+    assert rows[0]["output_tokens"] == 45
+    assert rows[0]["duration_ms"] >= 0
+    assert set(rows[0]) == {"provider", "model_identifier", "duration_ms", "input_tokens", "output_tokens"}
+
+
+class FakeTelemetryOneCallProvider(FakeOneCallAskProvider):
+    def __init__(self):
+        super().__init__()
+        self._metrics = [{
+            "provider": "anthropic",
+            "model_identifier": "claude-haiku-4-5-20251001",
+            "duration_ms": 850,
+            "input_tokens": 1000,
+            "output_tokens": 120,
+        }]
+
+    def drain_call_metrics(self):
+        rows = list(self._metrics)
+        self._metrics = []
+        return rows
+
+
+def test_run_ask_persists_model_call_metrics(tmp_path):
+    conn = seeded_connection(tmp_path)
+    provider = FakeTelemetryOneCallProvider()
+    try:
+        run_ask(conn, provider, "Prep me for the security meeting.")
+        row = conn.execute(
+            "SELECT operation,provider,model_identifier,duration_ms,input_tokens,output_tokens "
+            "FROM model_call_metrics WHERE operation='ask' ORDER BY occurred_at DESC LIMIT 1"
+        ).fetchone()
+        assert row is not None
+        assert row["operation"] == "ask"
+        assert row["provider"] == "anthropic"
+        assert row["model_identifier"] == "claude-haiku-4-5-20251001"
+        assert row["duration_ms"] == 850
+        assert row["input_tokens"] == 1000
+        assert row["output_tokens"] == 120
+    finally:
+        conn.close()
