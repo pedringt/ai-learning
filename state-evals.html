@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>State eval details · Context Switch</title>
+  <style>
+    :root{--ink:#202825;--muted:#69736e;--line:#ded9ce;--paper:#f5f2ea;--surface:#fffdf8;--soft:#ece8de;--accent:#38624d;--warn:#8a5b22;--danger:#8b3a32;--good:#2e6b4d;--radius:16px}
+    *{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font:15px/1.5 Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}a{color:var(--accent);text-underline-offset:2px}.shell{max-width:1080px;margin:0 auto;padding:32px 24px 72px}.topbar{display:flex;justify-content:space-between;gap:16px;align-items:center;margin-bottom:32px}.brand{font-weight:850;letter-spacing:-.025em}.button{display:inline-flex;align-items:center;justify-content:center;min-height:40px;padding:9px 13px;border:1px solid var(--line);border-radius:10px;background:var(--surface);color:inherit;text-decoration:none;font-weight:750}.eyebrow{font-size:12px;font-weight:850;letter-spacing:.09em;text-transform:uppercase;color:var(--accent)}h1{margin:5px 0 8px;font-size:clamp(34px,5vw,54px);line-height:1;letter-spacing:-.045em}.lede{max-width:780px;margin:0;color:var(--muted);font-size:17px}.note{margin:18px 0 24px;padding:14px 16px;border:1px solid var(--line);border-radius:12px;background:rgba(255,255,255,.55);color:var(--muted)}.note strong{color:var(--ink)}.summary-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin:0 0 24px}.summary-card,.panel,.scenario{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius)}.summary-card{padding:18px}.summary-card strong{display:block;font-size:18px}.summary-card .score{font-size:30px;font-weight:850;letter-spacing:-.04em;margin:3px 0}.summary-card p{margin:4px 0 0;color:var(--muted);font-size:13px}.panel{padding:20px;margin-top:18px}.panel h2{margin:0;font-size:24px;letter-spacing:-.03em}.panel-copy{margin:4px 0 14px;color:var(--muted)}.tabs{display:flex;gap:8px;flex-wrap:wrap;margin:16px 0}.tab{min-height:40px;padding:8px 12px;border:1px solid var(--line);border-radius:999px;background:var(--surface);font:inherit;font-weight:800;cursor:pointer;color:var(--ink)}.tab.active{background:var(--ink);border-color:var(--ink);color:white}.suite-intro{padding:14px;border-radius:12px;background:var(--soft);margin-bottom:12px}.suite-intro strong{display:block}.suite-intro p{margin:4px 0 0;color:var(--muted)}.scenario-list{display:grid;gap:10px}.scenario{padding:16px}.scenario-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}.scenario h3{margin:0;font-size:17px}.severity{display:inline-flex;padding:4px 7px;border-radius:999px;background:var(--soft);font-size:10px;font-weight:850;text-transform:uppercase;letter-spacing:.05em;white-space:nowrap}.severity.high{background:#f7e4e1;color:var(--danger)}.severity.medium{background:#f6ecdd;color:var(--warn)}.severity.low{background:#e8f2ec;color:var(--good)}.scenario-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px}.detail{padding-top:10px;border-top:1px solid #eee9df}.detail strong{display:block;font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}.detail p{margin:4px 0 0}.why{grid-column:1/-1}.run-list{display:grid;gap:8px;margin-top:12px}.run-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;padding:11px 12px;border:1px solid var(--line);border-radius:11px;background:#fff}.run-row strong,.run-row span{display:block}.run-row span{color:var(--muted);font-size:12px}.status{margin-top:12px;color:var(--muted);font-size:13px}.sources{display:flex;gap:12px;flex-wrap:wrap;margin-top:14px;font-size:12px}.footer{margin-top:28px;color:var(--muted);font-size:12px}
+    @media(max-width:720px){.summary-grid,.scenario-grid{grid-template-columns:1fr}.why{grid-column:auto}.run-row{grid-template-columns:1fr}.topbar{align-items:flex-start;flex-direction:column}.shell{padding:22px 14px 48px}}
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <div class="topbar">
+      <div class="brand">Context Switch <span style="color:var(--muted)">/ State evals</span></div>
+      <a class="button" href="/project-health?project=state">Back to Project Health</a>
+    </div>
+
+    <div class="eyebrow">Controlled AI evaluation</div>
+    <h1>State eval details</h1>
+    <p class="lede">A read-only view of the controlled scenarios used to test whether State interprets project updates correctly and answers from maintained project truth.</p>
+
+    <div class="note"><strong>Synthetic controlled scenarios.</strong> These cases are deliberately constructed test data, not customer or private project content. State records aggregate run metrics in Project Health; raw production content and model transcripts are not published here.</div>
+
+    <section class="summary-grid" aria-label="Latest eval summaries">
+      <div class="summary-card" id="reviewSummary"><strong>Update understanding</strong><div class="score">Loading…</div><p>Checking the latest recorded run.</p></div>
+      <div class="summary-card" id="askSummary"><strong>Answer quality</strong><div class="score">Loading…</div><p>Checking the latest recorded run.</p></div>
+    </section>
+
+    <section class="panel">
+      <h2>16 controlled scenarios</h2>
+      <p class="panel-copy">The scenario catalog is the product contract. Each case describes the setup, the behavior State should produce, and why that behavior matters.</p>
+      <div class="tabs" role="tablist" aria-label="Eval suites">
+        <button class="tab active" type="button" data-suite="review" role="tab" aria-selected="true">Update understanding · 8</button>
+        <button class="tab" type="button" data-suite="ask" role="tab" aria-selected="false">Answer quality · 8</button>
+      </div>
+      <div id="suiteIntro" class="suite-intro"></div>
+      <div id="scenarioList" class="scenario-list"></div>
+      <div class="sources">
+        <a href="https://github.com/pedringt/ai-learning/blob/main/state-project-complete/eval/review_interpretation_scenarios.py" target="_blank" rel="noopener noreferrer">Review scenario source ↗</a>
+        <a href="https://github.com/pedringt/ai-learning/blob/main/state-project-complete/eval/ask_quality_scenarios.py" target="_blank" rel="noopener noreferrer">Ask scenario source ↗</a>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>Recent run history</h2>
+      <p class="panel-copy">Project Health persists aggregate metrics by suite, model, build, and run time. Individual model transcripts stay out of this public portfolio view.</p>
+      <div id="runHistory" class="run-list"><div class="status">Loading recent runs…</div></div>
+    </section>
+
+    <p class="footer">The evals measure behavior rather than exact wording. Human authorization remains separate from model interpretation.</p>
+  </main>
+
+  <script>
+  (function(){
+    'use strict';
+    const scenarios={
+      review:[
+        {id:'review_direct_reversal',title:'Direct reversal',severity:'high',setup:'Approved truth says password-reset automation is allowed. New security evidence says it has been paused after an incident.',expected:'Recommend a Current State update that reflects the reversal. The model proposes; a human still authorizes the change.',why:'A concrete authority-backed reversal should update maintained truth rather than leave stale information active.'},
+        {id:'review_question_answer_only',title:'Answer a question without rewriting truth',severity:'medium',setup:'A legal response answers an open contract question, while the broader vendor review is still underway.',expected:'Resolve the open Question without changing the maintained vendor-status fact.',why:'Question resolution is useful even when there is no reason to rewrite Current State.'},
+        {id:'review_question_and_state_change',title:'Answer a question and update State',severity:'high',setup:'Leadership approves Slack as an evidence source, resolving an open governance question and contradicting the current exclusion.',expected:'Propose both Question resolution and a Current State update.',why:'One piece of reviewed evidence can legitimately resolve an unknown and support a maintained-fact change.'},
+        {id:'review_ambiguity_opens_question',title:'Ambiguous evidence stays ambiguous',severity:'high',setup:'Support believes billing drafts may already be happening, but nobody can confirm whether the workflow is enabled.',expected:'Open an explicit Question and preserve the existing Current State.',why:'Unclear evidence should become an unknown, not a silently invented fact.'},
+        {id:'review_duplicate_confirmation',title:'Duplicate confirmation',severity:'low',setup:'New evidence merely repeats that password-reset automation remains approved.',expected:'Preserve the evidence without creating unnecessary human review work.',why:'Repeated confirmation should not increase review burden when nothing actually changed.'},
+        {id:'review_unknown_not_false',title:'Unknown does not become false',severity:'high',setup:'The target autonomous-resolution percentage is still unknown, matching Current State.',expected:'Preserve the uncertainty and avoid converting unknown into 0%, false, or an invented target.',why:'Missing knowledge must remain missing knowledge.'},
+        {id:'review_non_authoritative_opinion',title:'Opinion is not authority',severity:'medium',setup:'An engineer personally thinks human review should eventually be removed.',expected:'Keep the evidence but do not propose a Current State change.',why:'A personal opinion is not sufficient authority to change project truth.'},
+        {id:'review_tentative_high_consequence',title:'High-consequence proposal is not a decision',severity:'high',setup:'Leadership asks whether human review could be removed for low-risk cases, but no decision has been made.',expected:'Open a Question, preserve uncertainty, and leave Current State unchanged.',why:'Consequential possibilities deserve attention without being promoted into decisions.'}
+      ],
+      ask:[
+        {id:'ask_current_over_stale',title:'Prefer current truth over stale history',severity:'high',setup:'History says password-reset automation was approved. Current State says it is paused after an incident.',expected:'Answer that automation is paused and do not claim it is currently approved.',why:'Ask should privilege maintained Current State over old truth.'},
+        {id:'ask_pending_review_not_truth',title:'Pending review is not approved truth',severity:'high',setup:'Current State says customer-facing output remains human-reviewed. A pending Review asks whether some cases can skip review.',expected:'Report the human-review requirement and distinguish the proposal from established truth.',why:'A pending Review must never be presented as an approved decision.'},
+        {id:'ask_unknown_stays_unknown',title:'Unknown stays unknown',severity:'high',setup:'No safe autonomous-resolution percentage has been established, and an open Question asks what it should be.',expected:'Say the percentage is not established, express uncertainty, and reference the unresolved item.',why:'The model should not turn an unknown into a number.'},
+        {id:'ask_change_summary',title:'Summarize a change in the right direction',severity:'medium',setup:'History shows Slack moving from excluded to approved starting next sprint.',expected:'Explain that Slack is now approved starting next sprint, without reverting to the stale exclusion.',why:'Change summaries should preserve old-versus-new direction.'},
+        {id:'ask_false_premise',title:'Correct a false premise',severity:'high',setup:'The question assumes support was fully automated, while Current State says the first implementation remains human-reviewed.',expected:'Correct the premise, preserve uncertainty about future automation, and reference the open Question.',why:'Ask should not accept a user’s false premise as project truth.'},
+        {id:'ask_blocker_not_omitted',title:'Do not omit a consequential blocker',severity:'high',setup:'A launch target exists, but Security approval of the production data path is still a blocking open Question.',expected:'Surface the Security blocker and avoid declaring the project simply ready.',why:'Broad readiness answers must include consequential unresolved blockers.'},
+        {id:'ask_conflicting_evidence',title:'Surface unresolved conflicting evidence',severity:'high',setup:'Current State reflects approved enterprise terms, while a pending legal Review may contradict that interpretation.',expected:'Report maintained truth while clearly surfacing the unresolved conflict and uncertainty.',why:'Ask should distinguish current authority from evidence that may later change it.'},
+        {id:'ask_question_answer_no_state_mutation',title:'Question resolution is not a State mutation',severity:'medium',setup:'The vendor contract remains under review, but a separate vendor-retention Question may have been answered.',expected:'Distinguish the resolved Question from any change to Current State.',why:'Answers to open Questions and maintained facts are different product concepts.'}
+      ]
+    };
+    const suiteCopy={
+      review:{title:'Update understanding',text:'Tests how State interprets new Evidence against Current State and open Questions before anything is allowed to change.'},
+      ask:{title:'Answer quality',text:'Tests whether Ask stays grounded, handles uncertainty, surfaces open items, and respects the boundary between proposals and approved truth.'}
+    };
+    const list=document.getElementById('scenarioList');
+    const intro=document.getElementById('suiteIntro');
+    const tabs=[...document.querySelectorAll('[data-suite]')];
+    const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
+    const pct=value=>value==null||Number.isNaN(Number(value))?'Not measured':(Math.round(Number(value)*1000)/10)+'%';
+    const fmt=value=>{const d=new Date(value);return Number.isNaN(d.getTime())?'Unknown':d.toLocaleString([],{month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit'});};
+    function renderSuite(name){
+      const copy=suiteCopy[name];
+      intro.innerHTML='<strong>'+esc(copy.title)+'</strong><p>'+esc(copy.text)+'</p>';
+      list.innerHTML=scenarios[name].map(item=>
+        '<article class="scenario" data-scenario="'+esc(item.id)+'">'+
+          '<div class="scenario-head"><div><div class="eyebrow">'+esc(item.id)+'</div><h3>'+esc(item.title)+'</h3></div><span class="severity '+esc(item.severity)+'">'+esc(item.severity)+' severity</span></div>'+
+          '<div class="scenario-grid">'+
+            '<div class="detail"><strong>Controlled setup</strong><p>'+esc(item.setup)+'</p></div>'+
+            '<div class="detail"><strong>Expected behavior</strong><p>'+esc(item.expected)+'</p></div>'+
+            '<div class="detail why"><strong>Why it matters</strong><p>'+esc(item.why)+'</p></div>'+
+          '</div>'+
+        '</article>'
+      ).join('');
+      tabs.forEach(tab=>{const active=tab.dataset.suite===name;tab.classList.toggle('active',active);tab.setAttribute('aria-selected',String(active));});
+    }
+    tabs.forEach(tab=>tab.addEventListener('click',()=>renderSuite(tab.dataset.suite)));
+    renderSuite('review');
+
+    function suiteSummary(element,label,run,metric){
+      if(!run){element.innerHTML='<strong>'+esc(label)+'</strong><div class="score">No run yet</div><p>No recorded aggregate result is available.</p>';return;}
+      element.innerHTML='<strong>'+esc(label)+'</strong><div class="score">'+esc(pct(metric))+'</div><p>'+esc(run.total??'—')+' scenarios · '+esc(run.high_severity_failures??0)+' high-impact failures · '+esc(fmt(run.created_at))+'</p>';
+    }
+    fetch('/api/project-health-state-quality?env=production',{headers:{Accept:'application/json'}})
+      .then(response=>response.ok?response.json():Promise.reject(new Error('Quality data unavailable')))
+      .then(payload=>{
+        const controlled=payload?.controlled_evals||{};
+        const review=controlled.latest_review_interpretation||null;
+        const ask=controlled.latest_ask_quality||null;
+        suiteSummary(document.getElementById('reviewSummary'),'Update understanding',review,review?.interpretation_accuracy);
+        suiteSummary(document.getElementById('askSummary'),'Answer quality',ask,ask?.overall_pass_rate??ask?.ask_grounding);
+        const rows=Array.isArray(controlled.recent)?controlled.recent.slice(0,12):[];
+        document.getElementById('runHistory').innerHTML=rows.length?rows.map(run=>{
+          const metric=run.suite==='review_interpretation'?run.interpretation_accuracy:run.overall_pass_rate;
+          const label=run.suite==='review_interpretation'?'Update understanding':'Answer quality';
+          const tech=[run.provider,run.model_identifier,run.build].filter(Boolean).join(' · ');
+          return '<div class="run-row"><div><strong>'+esc(label)+' · '+esc(pct(metric))+'</strong><span>'+esc(fmt(run.created_at))+' · '+esc(run.total??'—')+' scenarios · '+esc(run.high_severity_failures??0)+' high-impact failures</span></div><span>'+esc(tech||'Technical record unavailable')+'</span></div>';
+        }).join(''):'<div class="status">No recorded runs yet.</div>';
+      })
+      .catch(()=>{
+        document.getElementById('reviewSummary').innerHTML='<strong>Update understanding</strong><div class="score">Unavailable</div><p>The live aggregate result could not be loaded.</p>';
+        document.getElementById('askSummary').innerHTML='<strong>Answer quality</strong><div class="score">Unavailable</div><p>The live aggregate result could not be loaded.</p>';
+        document.getElementById('runHistory').innerHTML='<div class="status">Recent aggregate run history is temporarily unavailable. The scenario catalog above is still the current controlled test design.</div>';
+      });
+  })();
+  </script>
+</body>
+</html>
