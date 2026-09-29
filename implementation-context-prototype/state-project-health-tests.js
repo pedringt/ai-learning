@@ -220,6 +220,14 @@ assert.strictEqual(quick.title,'No immediate issue found');
 assert.ok(quick.checks.some(item=>item.label==='Production deployment'&&item.value==='Healthy'));
 assert.ok(quick.checks.some(item=>item.label==='Production backend'&&item.value==='Healthy'));
 
+const evalDetailsHtml=fs.readFileSync(require.resolve('../state-evals.html'),'utf8');
+assert.match(evalDetailsHtml,/State eval details/);
+assert.match(evalDetailsHtml,/16 controlled scenarios/);
+assert.match(evalDetailsHtml,/Update understanding/);
+assert.match(evalDetailsHtml,/Answer quality/);
+assert.match(evalDetailsHtml,/Synthetic controlled scenarios/);
+assert.match(fs.readFileSync(require.resolve('../project-health.js'),'utf8'),/View eval details/);
+
 const workflowText=fs.readFileSync(require.resolve('../.github/workflows/question-review-live.yml'),'utf8');
 assert.match(workflowText,/suite:/);
 assert.match(workflowText,/record_environment:/);
