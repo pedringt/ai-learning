@@ -203,7 +203,7 @@ assert.ok(!H.setupGaps(narcWithNoAi).some(item=>/^AI /.test(item.label)));
 
 
 const quick=H.quickProjectCheck({
-  project:{id:'state'},
+  project:{id:'state',quality:'state'},
   delivery:{vercel:{kind:'good',label:'Vercel deploy healthy'}},
   externalQuality:null,
   quality:healthy,
