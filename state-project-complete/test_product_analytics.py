@@ -25,6 +25,7 @@ class ProductAnalyticsTests(unittest.TestCase):
         }
         self.assertIn("product_analytics_events", tables)
         self.assertIn("product_eval_runs", tables)
+        self.assertIn("model_call_metrics", tables)
         self.assertNotIn("product_quality_eval_runs", tables)
         columns = {
             info[1] for info in self.connection.execute("PRAGMA table_info(product_eval_runs)")
@@ -131,6 +132,32 @@ class ProductAnalyticsTests(unittest.TestCase):
 
         data = _aggregate(self.connection, "northstar", now)
         self.assertEqual(data["outcomes_and_friction"]["resolved_reviews_without_state_change_30d"], 1)
+
+
+    def test_model_call_telemetry_is_metadata_only_and_aggregated(self):
+        self.connection.execute(
+            "INSERT INTO model_call_metrics(id,project_id,operation,provider,model_identifier,duration_ms,input_tokens,output_tokens,occurred_at) "
+            "VALUES (?,?,?,?,?,?,?,?,?)",
+            ("model-1","northstar","interpretation","anthropic","claude-haiku-4-5-20251001",1500,1000,200,"2026-09-17 12:00:00"),
+        )
+        self.connection.execute(
+            "INSERT INTO model_call_metrics(id,project_id,operation,provider,model_identifier,duration_ms,input_tokens,output_tokens,occurred_at) "
+            "VALUES (?,?,?,?,?,?,?,?,?)",
+            ("model-2","northstar","interpretation","anthropic","claude-haiku-4-5-20251001",2500,2000,400,"2026-09-17 12:05:00"),
+        )
+        self.connection.commit()
+
+        data = _aggregate(self.connection, "northstar", datetime(2026, 9, 17, 13, 0, tzinfo=timezone.utc))
+        reliability = data["reliability"]
+        self.assertEqual(reliability["model_latency_ms"]["sample_size"], 2)
+        self.assertEqual(reliability["model_latency_ms"]["p50"], 2000.0)
+        self.assertEqual(reliability["token_usage"]["input"], 3000)
+        self.assertEqual(reliability["token_usage"]["output"], 600)
+        self.assertAlmostEqual(reliability["model_cost"]["estimated_usd"], 0.006, places=6)
+        self.assertEqual(reliability["model_cost"]["pricing_as_of"], "2026-05-27")
+        columns = {info[1] for info in self.connection.execute("PRAGMA table_info(model_call_metrics)")}
+        for forbidden in ("prompt", "content", "answer", "evidence", "query"):
+            self.assertNotIn(forbidden, columns)
 
     def test_no_composite_health_score(self):
         data = _aggregate(self.connection, None, datetime.now(timezone.utc))
