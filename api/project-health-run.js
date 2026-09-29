@@ -20,11 +20,10 @@ function runInfo(projectId){
   const run=RUNS[projectId];
   if(!run) return null;
   const costEstimate=String(process.env[run.costEstimateEnv]||'').trim();
-  const protectedPreview=String(process.env.VERCEL_ENV||'').toLowerCase()!=='production';
   return {
     configured:!!(process.env.GITHUB_TOKEN&&costEstimate),
-    can_run_here:protectedPreview,
-    protection:'Vercel preview authentication',
+    can_run_here:true,
+    protection:'Dashboard paid-run confirmation',
     project:projectId,
     label:run.label,
     ref:run.ref,
@@ -40,7 +39,7 @@ module.exports=async function handler(req,res){
     const projectId=String(req.query?.project||'state').toLowerCase();
     const info=runInfo(projectId);
     if(!info){res.status(404).json({configured:false,detail:'No dashboard-run workflow is configured for this project yet.'});return;}
-    res.setHeader('Cache-Control','s-maxage=300, stale-while-revalidate=1800');
+    res.setHeader('Cache-Control','no-store');
     res.status(200).json(info);
     return;
   }
@@ -59,11 +58,6 @@ module.exports=async function handler(req,res){
 
   if(!info.configured){
     res.status(503).json({detail:'Dashboard-run credentials and cost estimate are not configured yet.'});
-    return;
-  }
-
-  if(!info.can_run_here){
-    res.status(403).json({detail:'Paid eval runs are only available from a protected preview or staging deployment.'});
     return;
   }
 
