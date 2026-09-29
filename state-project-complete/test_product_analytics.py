@@ -36,6 +36,7 @@ class ProductAnalyticsTests(unittest.TestCase):
             "open_item_accuracy",
             "authority_accuracy",
             "overall_pass_rate",
+            "failure_details_json",
         ):
             self.assertIn(column, columns)
 
