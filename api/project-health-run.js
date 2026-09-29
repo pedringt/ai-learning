@@ -20,8 +20,11 @@ function runInfo(projectId){
   const run=RUNS[projectId];
   if(!run) return null;
   const costEstimate=String(process.env[run.costEstimateEnv]||'').trim();
+  const protectedPreview=String(process.env.VERCEL_ENV||'').toLowerCase()!=='production';
   return {
-    configured:!!(process.env.GITHUB_TOKEN&&process.env.PROJECT_HEALTH_RUN_KEY&&costEstimate),
+    configured:!!(process.env.GITHUB_TOKEN&&costEstimate),
+    can_run_here:protectedPreview,
+    protection:'Vercel preview authentication',
     project:projectId,
     label:run.label,
     ref:run.ref,
@@ -59,9 +62,8 @@ module.exports=async function handler(req,res){
     return;
   }
 
-  const supplied=String(req.headers['x-project-health-key']||'');
-  if(!supplied||supplied!==process.env.PROJECT_HEALTH_RUN_KEY){
-    res.status(401).json({detail:'Admin key required'});
+  if(!info.can_run_here){
+    res.status(403).json({detail:'Paid eval runs are only available from a protected preview or staging deployment.'});
     return;
   }
 

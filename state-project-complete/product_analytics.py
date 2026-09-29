@@ -123,6 +123,25 @@ def _percentile(values: list[float], p: float) -> float | None:
     return round(value, 1)
 
 
+MODEL_PRICING_AS_OF = "2026-05-27"
+_HAIKU_45_PRICING = {"input": 1.0, "output": 5.0}
+
+
+def _model_rates(model_identifier: str | None) -> dict[str, float] | None:
+    model = str(model_identifier or "")
+    return _HAIKU_45_PRICING if model.startswith("claude-haiku-4-5") else None
+
+
+def _estimated_model_cost(row: dict) -> float | None:
+    rates = _model_rates(row.get("model_identifier"))
+    if rates is None or row.get("input_tokens") is None or row.get("output_tokens") is None:
+        return None
+    return (
+        float(row.get("input_tokens") or 0) * rates["input"]
+        + float(row.get("output_tokens") or 0) * rates["output"]
+    ) / 1_000_000
+
+
 def _age_bucket(created_at, now: datetime) -> str:
     dt = _parse_ts(created_at)
     if not dt:
@@ -234,6 +253,13 @@ def _aggregate(connection, project_id: str | None, now: datetime) -> dict:
         "FROM interpretation_records ir JOIN evidence e ON e.id=ir.evidence_id" + interpretation_where,
         interpretation_params,
     )
+    model_where = " WHERE project_id=?" if project_id else ""
+    model_calls = _rows(
+        connection,
+        "SELECT project_id,operation,provider,model_identifier,duration_ms,input_tokens,output_tokens,occurred_at "
+        "FROM model_call_metrics" + model_where,
+        params,
+    )
     event_where = " WHERE project_id=?" if project_id else ""
     events = _rows(connection, "SELECT * FROM product_analytics_events" + event_where, params)
     eval_runs = _rows(
@@ -285,6 +311,12 @@ def _aggregate(connection, project_id: str | None, now: datetime) -> dict:
     interpretation_success = [x for x in interpretations if x.get("processing_status") == "succeeded"]
     interpretation_failed = [x for x in interpretations if x.get("processing_status") == "failed"]
     provider_models = Counter(f"{x.get('provider') or 'unknown'} / {x.get('model_identifier') or 'unknown'}" for x in interpretations)
+    model_calls_30 = [x for x in model_calls if _within(x.get("occurred_at"), now, 30)]
+    model_latencies = [float(x["duration_ms"]) for x in model_calls_30 if x.get("duration_ms") is not None]
+    input_tokens_30 = sum(int(x.get("input_tokens") or 0) for x in model_calls_30)
+    output_tokens_30 = sum(int(x.get("output_tokens") or 0) for x in model_calls_30)
+    priced_costs = [cost for cost in (_estimated_model_cost(x) for x in model_calls_30) if cost is not None]
+    unpriced_model_calls = sum(1 for x in model_calls_30 if _estimated_model_cost(x) is None)
 
     project_summaries = []
     for project in projects:
@@ -375,10 +407,18 @@ def _aggregate(connection, project_id: str | None, now: datetime) -> dict:
             "interpretation_failed": len(interpretation_failed),
             "provider_models": dict(provider_models),
             "ask_latency_ms": {"sample_size": len(ask_latencies), "p50": _percentile(ask_latencies, 0.5), "p95": _percentile(ask_latencies, 0.95)},
-            "token_usage": None,
-            "token_usage_note": "Token counts are not persisted consistently across State model paths yet.",
-            "model_cost": None,
-            "model_cost_note": "State does not fabricate a dollar estimate without versioned pricing and trustworthy token data.",
+            "model_latency_ms": {"sample_size": len(model_latencies), "p50": _percentile(model_latencies, 0.5), "p95": _percentile(model_latencies, 0.95)},
+            "token_usage": {"period_days": 30, "input": input_tokens_30, "output": output_tokens_30, "sample_size": len(model_calls_30)},
+            "token_usage_note": "Recorded interpretation calls only; Ask token usage is not persisted yet.",
+            "model_cost": {
+                "period_days": 30,
+                "estimated_usd": round(sum(priced_costs), 6) if priced_costs else (0.0 if model_calls_30 and not unpriced_model_calls else None),
+                "priced_calls": len(priced_costs),
+                "unpriced_calls": unpriced_model_calls,
+                "pricing_as_of": MODEL_PRICING_AS_OF,
+                "scope": "recorded interpretation calls only",
+            },
+            "model_cost_note": "Estimated from recorded tokens using versioned Claude API list pricing. Ask model cost is not included yet.",
         },
         "evals": {
             "label": "Controlled evals — separate from demo usage",
