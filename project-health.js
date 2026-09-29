@@ -542,7 +542,7 @@
       const meta=[item.created_at?fmtDate(item.created_at):null,item.total!=null?item.total+' scenarios':null,item.high_severity_failures!=null?item.high_severity_failures+' high-impact failures':null].filter(Boolean).join(' · ');
       const technical=[item.provider,item.model_identifier,item.build].filter(Boolean).join(' · ');
       return '<div class="eval-run-row"><strong>'+esc(evalSuiteLabel(item))+' · '+esc(score==null?'Score unavailable':percent(score))+'</strong><span>'+esc(meta||'Aggregate result recorded')+'</span>'+(technical?'<span>Technical record: '+esc(technical)+'</span>':'')+'</div>';
-    }).join('')+'<p class="footnote">Only aggregate results are stored here. Controlled scenario content stays out of Project Health.</p></div></div>';
+    }).join('')+'<p class="footnote">Aggregate results are stored for every run. Failed controlled scenarios may also store the scenario ID and pass/fail metadata; private project content and full model transcripts stay out of Project Health.</p></div></div>';
   }
   function investigationResultHtml(investigation){
     if(investigation?.handoff) return '<div class="investigation-result agent-result"><div class="agent-kicker">Handoff preview</div><strong>Project handoff ready to review</strong><pre>'+esc(investigation.handoffText||investigation.report||'')+'</pre><div class="quality-actions"><button class="button small primary" type="button" data-copy-project-handoff>Copy handoff</button></div><p class="footnote">Project Health assembled this from the currently loaded delivery, quality, investigation, and product-decision signals. Review it before sharing.</p></div>';
