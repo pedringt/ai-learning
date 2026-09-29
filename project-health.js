@@ -105,7 +105,7 @@
     if(!runs.length) return {kind:'warn',title:'AI quality checks have not been recorded yet',detail:'Run the controlled checks to see how State handles understanding, evidence, uncertainty, and decision authority.'};
     const severe=runs.reduce((n,r)=>n+Number(r.high_severity_failures||0),0);
     if(severe>0) return {kind:'bad',title:'A serious AI quality check failed',detail:severe+' high-impact failure'+(severe===1?'':'s')+' appeared in the latest recorded checks.'};
-    if(runs.some(r=>Number(r.failed_cases||0)>0||(r.overall_pass_rate!=null&&Number(r.overall_pass_rate)<1))) return {kind:'warn',title:'Some AI quality checks need a look',detail:'At least one controlled scenario did not behave as expected.'};
+    if(runs.some(r=>{const score=evalScore(r);return Number(r.failed_cases||0)>0||(score!=null&&score<1);})) return {kind:'warn',title:'Some AI quality checks need a look',detail:'At least one controlled scenario did not behave as expected.'};
     return {kind:'good',title:'AI quality checks are healthy',detail:'The latest recorded checks did not report a high-impact failure.'};
   }
   function deliveryAttention(d){
@@ -275,6 +275,7 @@
       fresh:false,
       detailLoaded:false,
       detailLoading:false,
+      qualityRun:null,
       snapshotAt:s.snapshotAt||null
     };
   }
@@ -620,10 +621,16 @@
           '<div class="eval-grid">'+cards.join('')+'</div>'+stateEvalHistory(q);
       }
       qualityHtml+='<p class="footnote"><a href="/state-evals">View eval details →</a></p>';
+      const activeEvalRun=data.qualityRun;
+      if(activeEvalRun){
+        const delayed=activeEvalRun.state==='delayed';
+        qualityHtml+='<div class="eval-run-status '+(delayed?'warn':'')+'" role="status"><strong>'+(delayed?'Run started · waiting for a newer result':'AI checks are running…')+'</strong><span>Started '+esc(fmtDate(activeEvalRun.startedAt))+'. The previous results stay visible until the new run finishes; this page checks automatically.</span></div>';
+      }
       if(pending.has('Run controls')){
         qualityHtml+='<div class="eval-actions"><span class="footnote">Checking whether dashboard-run controls are ready…</span></div>';
       }else if(run?.configured){
-        qualityHtml+='<div class="eval-actions"><button class="button small primary" type="button" data-run-checks="all">Run all AI checks</button><button class="button small" type="button" data-run-checks="review">Check update understanding</button><button class="button small" type="button" data-run-checks="ask">Check answer quality</button></div>'+
+        const runDisabled=activeEvalRun?' disabled':'';
+        qualityHtml+='<div class="eval-actions"><button class="button small primary" type="button" data-run-checks="all"'+runDisabled+'>'+(activeEvalRun?'AI checks running…':'Run all AI checks')+'</button><button class="button small" type="button" data-run-checks="review"'+runDisabled+'>Check update understanding</button><button class="button small" type="button" data-run-checks="ask"'+runDisabled+'>Check answer quality</button></div>'+
           '<p class="footnote">'+(run.can_run_here===false?'Running a check opens the protected control surface. Vercel handles access, so no admin key is required.':'Estimated model cost: '+esc(run.estimated_cost||'not configured')+'. You will confirm before any paid run starts.')+'</p>';
       }else if(run){
         qualityHtml+='<p class="footnote">Running AI checks from the dashboard still needs setup. Existing recorded results can still appear here.</p>';
@@ -769,6 +776,41 @@
       (gaps.length?'<h4 style="margin:18px 0 8px">Coverage gaps</h4><div class="coverage-grid">'+gaps.map(item=>'<div class="coverage-item"><strong>'+esc(item.label)+'</strong><span>'+esc(item.detail)+'</span></div>').join('')+'</div>':'');
   }
 
+  function evalRunStorageKey(root){return 'project-health-eval-run:'+pageEnvironment(root);}
+  function loadEvalRunState(root){
+    try{
+      const raw=root.localStorage?.getItem(evalRunStorageKey(root));if(!raw)return null;
+      const parsed=JSON.parse(raw);
+      if(!parsed?.startedAt||Date.now()-new Date(parsed.startedAt).getTime()>10*60*1000){root.localStorage?.removeItem(evalRunStorageKey(root));return null;}
+      return parsed;
+    }catch(_){return null;}
+  }
+  function saveEvalRunState(root,value){
+    try{
+      if(value)root.localStorage?.setItem(evalRunStorageKey(root),JSON.stringify(value));
+      else root.localStorage?.removeItem(evalRunStorageKey(root));
+    }catch(_){}
+  }
+  function evalRunComplete(quality,runState){
+    if(!quality||!runState)return false;
+    const changed=(run,baseline)=>!!run?.created_at&&String(run.created_at)!==String(baseline||'');
+    if(runState.suite==='review')return changed(quality.review,runState.baselineReview);
+    if(runState.suite==='ask')return changed(quality.ask,runState.baselineAsk);
+    return changed(quality.review,runState.baselineReview)&&changed(quality.ask,runState.baselineAsk);
+  }
+  function evalFailureImpact(detail){
+    const id=String(detail?.scenario_id||'');
+    if(id==='review_direct_reversal')return 'Risk: stale Current State could remain active after authoritative evidence reverses it.';
+    if(id==='review_question_answer_only')return 'Risk: the Question was handled, but the eval could not confirm that an optional State update stayed inside the evidence.';
+    if(id==='review_unknown_not_false')return 'Risk: extra Review/Question burden for an uncertainty already represented in Current State; this is workflow noise rather than false truth.';
+    if(id==='review_ambiguity_opens_question')return 'Risk: ambiguous evidence could be treated as established truth instead of an explicit unknown.';
+    return 'Risk: controlled behavior differed from the product contract and needs scenario-level review.';
+  }
+  function previousEvalRun(quality,current){
+    if(!current)return null;
+    return (Array.isArray(quality?.recent)?quality.recent:[]).find(item=>item?.suite===current.suite&&String(item.created_at||'')!==String(current.created_at||''))||null;
+  }
+
   async function dispatchRun(data,root,suite='all'){
     const run=data.runInfo;if(!run?.configured)return;
     if(run.can_run_here===false){
@@ -781,8 +823,14 @@
     if(!root.confirm(message)) return;
     try{
       const payload=await jsonFetch('/api/project-health-run',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({project:data.project.id,suite,record_environment:pageEnvironment(root),confirm_paid_model_calls:true,estimated_cost:run.estimated_cost})});
-      root.alert('AI quality checks started. Refresh Project Health after the workflow finishes to see the recorded results.');
-      return payload;
+      return {
+        ...payload,
+        suite,
+        startedAt:new Date().toISOString(),
+        baselineReview:data.quality?.review?.created_at||null,
+        baselineAsk:data.quality?.ask?.created_at||null,
+        state:'running'
+      };
     }catch(error){
       root.alert('Could not start the quality checks: '+error.message);
       throw error;
@@ -825,36 +873,61 @@
       const score=evalScore(item.run);
       return Number(item.run?.high_severity_failures||0)>0||(score!=null&&score<1);
     });
-    const severe=affected.reduce((n,item)=>n+Number(item.run?.high_severity_failures||0),0);
     const details=affected.flatMap(item=>(Array.isArray(item.run?.failure_details)?item.run.failure_details:[]).map(detail=>({...detail,suiteLabel:item.label})));
-    const latestDate=affected.map(item=>item.run?.created_at).filter(Boolean).sort().pop()||new Date().toISOString();
-    const affectedLines=affected.length
-      ?affected.map(item=>item.label+': '+percent(evalScore(item.run))+' pass rate · '+Number(item.run?.high_severity_failures||0)+' high-impact failure'+(Number(item.run?.high_severity_failures||0)===1?'':'s')).join('\n')
-      :'No failing suite could be identified from the latest aggregate record.';
-    const detailLines=details.length
-      ?details.map(detail=>'- '+detail.suiteLabel+' / '+detail.scenario_id+' ('+(detail.severity||'unknown')+'): '+(detail.observed||('Failed checks: '+((detail.failed_checks||[]).join(', ')||'not recorded')))).join('\n')
-      :'- Exact failed-scenario metadata was not recorded for this older run. Project Health can identify the affected suite and aggregate severity, but not safely reconstruct which scenario failed.';
+    const severe=affected.reduce((n,item)=>n+Number(item.run?.high_severity_failures||0),0);
+    const latestDate=runs.map(item=>item.run?.created_at).filter(Boolean).sort().pop()||new Date().toISOString();
+    const review=quality.review,ask=quality.ask;
+    const reviewScore=evalScore(review),askScore=evalScore(ask);
+    const previousReview=previousEvalRun(quality,review);
+    const previousReviewScore=evalScore(previousReview);
+    const reviewCount=review?.total!=null&&reviewScore!=null?Math.round(Number(review.total)*reviewScore):null;
+    const currentLines=[];
+    if(review)currentLines.push('Update understanding: '+percent(reviewScore)+(reviewCount!=null?' ('+reviewCount+'/'+review.total+' scenarios)':'')+' · '+Number(review.high_severity_failures||0)+' high-impact failures');
+    if(ask)currentLines.push('Answer quality: '+percent(askScore)+' · '+Number(ask.high_severity_failures||0)+' high-impact failures');
+    const failedLines=details.length?details.map(detail=>{
+      const expected=detail.expected?'Expected: '+detail.expected+'. ':'';
+      const observed=detail.observed?'Observed: '+detail.observed+'. ':'';
+      const checks=(detail.failed_checks||[]).length?'Failed checks: '+detail.failed_checks.join(', ')+'. ':'';
+      return '- '+detail.suiteLabel+' / '+detail.scenario_id+' ('+(detail.severity||'unknown')+'). '+expected+observed+checks+evalFailureImpact(detail);
+    }):['- Exact scenario metadata is unavailable for this older run, so Project Health can only report the suite-level result.'];
+    const improvements=[];
+    if(reviewScore!=null&&previousReviewScore!=null){
+      const delta=Math.round((reviewScore-previousReviewScore)*1000)/10;
+      improvements.push('- Update understanding '+(delta>=0?'improved ':'declined ')+Math.abs(delta)+' points from '+percent(previousReviewScore)+' to '+percent(reviewScore)+'.');
+    }
+    if(review&&previousReview&&Number(previousReview.high_severity_failures||0)!==Number(review.high_severity_failures||0)){
+      improvements.push('- High-impact failures changed from '+Number(previousReview.high_severity_failures||0)+' to '+Number(review.high_severity_failures||0)+'.');
+    }
+    if(!severe&&details.length) improvements.push('- The current misses are medium severity; no current controlled scenario is reporting a high-impact truth failure.');
+    const nextStep=details.length
+      ?'Review the remaining scenario-level misses below. Fix product behavior only where the contract is still right; adjust the eval where the observed behavior is acceptable. Then rerun the affected suite and compare against this run.'
+      :'Inspect the affected suite and rerun after the next change so future failures record scenario-level evidence.';
     const report=[
-      'What happened',
-      (severe||'One or more')+' high-impact AI quality failure'+(severe===1?' was':'s were')+' recorded in the latest controlled checks.',
+      'Current assessment',
+      currentLines.join('\n')||'No current controlled-eval result is available.',
       '',
-      'Affected checks',
-      affectedLines,
+      'What failed',
+      failedLines.join('\n'),
       '',
-      'Failed scenarios',
-      detailLines,
+      'Why this matters',
+      severe>0
+        ?'At least one current failure can affect maintained project truth or another high-impact behavior.'
+        :'The current failures are quality/workflow misses rather than a production outage or a recorded high-impact truth failure.',
       '',
-      'User impact',
-      'This is a controlled quality signal, not evidence of a production outage. It means at least one behavior State is expected to handle safely did not meet the test contract.',
+      'What changed since the previous run',
+      improvements.length?improvements.join('\n'):'- No directly comparable earlier run is available.',
       '',
-      'Recommended next step',
-      details.length?'Start with the failed scenario metadata above, reproduce the behavior, then rerun the same controlled suite after the fix.':'Open the eval details, inspect the affected suite, and rerun the controlled checks after the next change so future failures record scenario-level metadata.',
+      'Recommended next action',
+      nextStep,
+      '',
+      'Technical context',
+      [review?.model_identifier||ask?.model_identifier,review?.build||ask?.build].filter(Boolean).join(' · ')||'Model/build metadata unavailable',
       '',
       'Owner',
       'Product + Engineering',
       '',
       'Confidence',
-      details.length?'High for which controlled scenarios failed because the runner recorded scenario-level metadata. Root cause still needs engineering review.':'Moderate. The aggregate failure is recorded, but this older run did not persist scenario-level failure metadata.'
+      details.length?'High confidence in which controlled scenarios failed because the latest run persisted scenario-level metadata. Root cause still requires interpreting each scenario against the product contract.':'Moderate confidence because this older run does not include scenario-level failure metadata.'
     ].join('\n');
     return {
       report,
@@ -1183,16 +1256,62 @@
       }
 
     });
+    let evalPollTimer=null;
+    async function pollEvalResults(data){
+      if(!data?.qualityRun)return;
+      if(evalPollTimer)root.clearTimeout(evalPollTimer);
+      const runState=data.qualityRun;
+      try{
+        const latest=await loadStateQuality(root);
+        data.quality=latest;
+        if(evalRunComplete(latest,runState)){
+          data.qualityRun=null;
+          saveEvalRunState(root,null);
+          persist();
+          renderNow();
+          return;
+        }
+      }catch(_){}
+      const age=Date.now()-new Date(runState.startedAt).getTime();
+      if(age>4*60*1000)runState.state='delayed';
+      if(age<10*60*1000){
+        renderNow();
+        evalPollTimer=root.setTimeout(()=>pollEvalResults(data),7000);
+      }else{
+        data.qualityRun=null;
+        saveEvalRunState(root,null);
+        renderNow();
+      }
+    }
+
     qualityPanel.addEventListener('click',async event=>{
       const button=event.target.closest?.('[data-run-checks]');
       if(!button)return;
-      const data=activeData();if(!data)return;
+      const data=activeData();if(!data||data.qualityRun)return;
       button.disabled=true;
-      try{await dispatchRun(data,root,button.dataset.runChecks||'all');}catch(_){}
-      finally{renderDetail(data,doc);}
+      try{
+        const started=await dispatchRun(data,root,button.dataset.runChecks||'all');
+        if(started?.started){
+          data.qualityRun=started;
+          saveEvalRunState(root,started);
+          renderNow();
+          pollEvalResults(data);
+        }
+      }catch(_){renderDetail(data,doc);}
     });
     await refreshAll();
+    const resumedRun=loadEvalRunState(root);
+    if(resumedRun){
+      const stateData=state.find(item=>item.project.id==='state');
+      if(stateData&&!evalRunComplete(stateData.quality,resumedRun)){
+        stateData.qualityRun=resumedRun;
+        renderNow();
+        pollEvalResults(stateData);
+      }else{
+        saveEvalRunState(root,null);
+      }
+    }
   }
 
-  return {PROJECTS,pageEnvironment,protectedControlsUrl,vercelFromStatus,deliveryHealth,commitTitle,githubCommitUrl,pullRequestNumber,githubPullRequestUrl,changeUrl,normalizeQuality,qualityAttention,externalQualityAttention,deliveryAttention,infrastructureAttention,allAttentionSignals,attentionItems,overallAttention,productOpenItems,projectStatus,setupGaps,releaseReadiness,projectQualityLabel,evalScore,percent,shortSha,pendingSet,mergePlatform,emptyProjectData,safeExternalQualitySnapshot,serializeProjectData,hydrateProjectData,loadProject,loadProjectDetails,infraCardLabel,analyticsLabel,relativeAge,changedSinceVisit,trendText,activityReviewItems,progressText,quickProjectCheck,qualityInvestigation,projectHandoff,init};
+  return {PROJECTS,pageEnvironment,protectedControlsUrl,vercelFromStatus,deliveryHealth,commitTitle,githubCommitUrl,pullRequestNumber,githubPullRequestUrl,changeUrl,normalizeQuality,qualityAttention,externalQualityAttention,deliveryAttention,infrastructureAttention,allAttentionSignals,attentionItems,overallAttention,productOpenItems,projectStatus,setupGaps,releaseReadiness,projectQualityLabel,evalScore,percent,shortSha,pendingSet,mergePlatform,emptyProjectData,safeExternalQualitySnapshot,serializeProjectData,hydrateProjectData,loadProject,loadProjectDetails,infraCardLabel,analyticsLabel,relativeAge,changedSinceVisit,trendText,activityReviewItems,progressText,quickProjectCheck,evalRunComplete,qualityInvestigation,projectHandoff,init};
 });
