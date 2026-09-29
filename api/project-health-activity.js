@@ -23,23 +23,53 @@ async function timedJson(url,options={}){
   }finally{clearTimeout(timer);}
 }
 
-async function timedText(url,options={}){
+async function timedRuntimeText(url,options={}){
   const controller=new AbortController();
-  const timer=setTimeout(()=>controller.abort(),Number(options.timeoutMs||6000));
+  const timeoutMs=Number(options.timeoutMs||4500);
+  const timer=setTimeout(()=>controller.abort(),timeoutMs);
   const fetchOptions={...options};delete fetchOptions.timeoutMs;
+  let response=null;
+  let text='';
   try{
-    const response=await fetch(url,{...fetchOptions,signal:controller.signal});
-    const text=await response.text();
-    return {ok:response.ok,status:response.status,text};
+    response=await fetch(url,{...fetchOptions,signal:controller.signal});
+    if(!response.ok){
+      text=await response.text().catch(()=>'');
+      return {ok:false,status:response.status,text,error:null};
+    }
+    if(!response.body?.getReader){
+      text=await response.text();
+      return {ok:true,status:response.status,text};
+    }
+    const reader=response.body.getReader();
+    const decoder=new TextDecoder();
+    try{
+      while(true){
+        const {done,value}=await reader.read();
+        if(done)break;
+        if(value)text+=decoder.decode(value,{stream:true});
+        if(text.split(/\r?\n/).length>MAX_RUNTIME_ROWS||text.length>250000){
+          await reader.cancel().catch(()=>{});
+          break;
+        }
+      }
+      text+=decoder.decode();
+    }catch(error){
+      if(error?.name!=='AbortError')throw error;
+      // Runtime logs are a stream. Reaching the bounded read timeout after the
+      // connection succeeded still means the signal is available; keep whatever
+      // rows arrived instead of reporting a false monitoring outage.
+    }
+    return {ok:true,status:response.status,text};
   }catch(error){
-    return {ok:false,status:null,text:'',error:error?.name==='AbortError'?'timeout':'unavailable'};
+    if(response?.ok&&error?.name==='AbortError')return {ok:true,status:response.status,text};
+    return {ok:false,status:response?.status||null,text,error:error?.name==='AbortError'?'timeout':'unavailable'};
   }finally{clearTimeout(timer);}
 }
 
 function safeText(value,max=220){
   return String(value||'')
     .replace(/\bBearer\s+[^\s]+/gi,'Bearer [REDACTED]')
-    .replace(/\b(?:sk-ant-[A-Za-z0-9_-]+|gh[pousr]_[A-Za-z0-9_]+|vercel_[A-Za-z0-9_-]+)\b/gi,'[REDACTED_TOKEN]')
+    .replace(/\b(?:sk-ant-[A-Za-z0-9_-]+|gh[pousr]_[A-Za-z0-9_]+|vercel_[A-Za-z0-9_-]+|vcp_[A-Za-z0-9_-]+)\b/gi,'[REDACTED_TOKEN]')
     .replace(/\b([A-Z0-9_]*(?:KEY|TOKEN|SECRET|PASSWORD))\s*[:=]\s*[^\s,;]+/gi,'$1=[REDACTED]')
     .replace(/https?:\/\/[^\s]+/g,'[URL]')
     .slice(0,max);
@@ -142,16 +172,20 @@ async function loadActivity(project){
   const latest=summary.latest;
   let runtime=[];
   let runtimeAvailable=false;
+  let runtimeStatus=null;
+  let runtimeError=null;
   if(latest&&String(latest.state||'').toUpperCase()==='READY'){
     const deploymentId=String(latest.uid||latest.id||'');
     const deploymentUrl=deploymentId?'https://vercel.com/'+TEAM_SLUG+'/'+project.slug+'/'+encodeURIComponent(deploymentId):null;
     if(deploymentId){
       const logQs=new URLSearchParams({teamId:TEAM_ID});
-      const logs=await timedText('https://api.vercel.com/v1/projects/'+encodeURIComponent(project.vercelProjectId)+'/deployments/'+encodeURIComponent(deploymentId)+'/runtime-logs?'+logQs,{
-        headers:{Authorization:'Bearer '+token,Accept:'application/json'},
-        timeoutMs:5000
+      const logs=await timedRuntimeText('https://api.vercel.com/v1/projects/'+encodeURIComponent(project.vercelProjectId)+'/deployments/'+encodeURIComponent(deploymentId)+'/runtime-logs?'+logQs,{
+        headers:{Authorization:'Bearer '+token,Accept:'application/stream+json'},
+        timeoutMs:4500
       });
       runtimeAvailable=logs.ok;
+      runtimeStatus=logs.status;
+      runtimeError=logs.ok?null:(logs.error||safeText(logs.text,180)||'Runtime logs unavailable');
       if(logs.ok)runtime=runtimeIssues(parseRuntimeRows(logs.text),deploymentUrl);
     }
   }
@@ -169,6 +203,8 @@ async function loadActivity(project){
     },
     runtime:{
       available:runtimeAvailable,
+      status:runtimeStatus,
+      error:runtimeError,
       issues:runtime
     },
     observed_at:new Date().toISOString()
@@ -199,4 +235,4 @@ module.exports=async function handler(req,res){
   });
 };
 
-module.exports._test={PROJECTS,safeText,summarizeDeployments,parseRuntimeRows,runtimeIssues};
+module.exports._test={PROJECTS,safeText,summarizeDeployments,parseRuntimeRows,runtimeIssues,timedRuntimeText};
