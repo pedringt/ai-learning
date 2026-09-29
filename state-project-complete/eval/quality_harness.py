@@ -85,7 +85,11 @@ class ReviewQualityResult:
         if self.observed_action == "answer_question_and_update_state":
             text = _normalize(self.proposed_state_text)
             if self.scenario.required_state_update_phrases and not all(
-                _normalize(phrase) in text for phrase in self.scenario.required_state_update_phrases
+                any(
+                    _normalize(option) in text
+                    for option in ((required,) if isinstance(required, str) else required)
+                )
+                for required in self.scenario.required_state_update_phrases
             ):
                 return False
             if any(_normalize(phrase) in text for phrase in self.scenario.forbidden_state_update_phrases):
