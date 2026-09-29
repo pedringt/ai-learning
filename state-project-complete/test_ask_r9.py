@@ -346,6 +346,7 @@ def test_natural_refinement_phrases_share_one_replace_classifier():
 def test_live_ask_provider_captures_metadata_only_call_metrics():
     provider = SimpleNamespace(name="anthropic", model_identifier="claude-haiku-4-5-20251001")
     live = LiveAskProvider(provider)
+    live.drain_call_metrics()
     live._capture_call_metrics(
         time.perf_counter() - 0.01,
         SimpleNamespace(input_tokens=123, output_tokens=45),
