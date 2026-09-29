@@ -53,7 +53,7 @@ delete process.env.PROJECT_HEALTH_RUN_COST_ESTIMATE_STATE;
 process.env.VERCEL_ENV='production';
 assert.strictEqual(runApi.runInfo('state').configured,false);
 assert.strictEqual(runApi.runInfo('state').minimum_controlled_cases,8);
-assert.strictEqual(runApi.runInfo('state').can_run_here,false);
+assert.strictEqual(runApi.runInfo('state').can_run_here,true);
 assert.strictEqual(runApi.runInfo('tastemake'),null);
 
 process.env.GITHUB_TOKEN='test-token';
