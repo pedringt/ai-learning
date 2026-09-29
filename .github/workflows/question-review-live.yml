@@ -1,5 +1,5 @@
 # Manual only: makes real model calls. Controlled evals use temporary test
-# databases and record aggregate metrics only.
+# databases and record aggregate metrics plus limited failure metadata for failed synthetic scenarios.
 name: State AI quality check
 on:
   workflow_dispatch:
