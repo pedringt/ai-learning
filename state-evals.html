@@ -21,7 +21,7 @@
     <h1>State eval details</h1>
     <p class="lede">A read-only view of the controlled scenarios used to test whether State interprets project updates correctly and answers from maintained project truth.</p>
 
-    <div class="note"><strong>Synthetic controlled scenarios.</strong> These cases are deliberately constructed test data, not customer or private project content. State records aggregate run metrics in Project Health; raw production content and model transcripts are not published here.</div>
+    <div class="note"><strong>Synthetic controlled scenarios.</strong> These cases are deliberately constructed test data, not customer or private project content. State records aggregate run metrics and, for failed controlled scenarios, limited scenario IDs and pass/fail metadata. Raw production content and full model transcripts are not published here.</div>
 
     <section class="summary-grid" aria-label="Latest eval summaries">
       <div class="summary-card" id="reviewSummary"><strong>Update understanding</strong><div class="score">Loading…</div><p>Checking the latest recorded run.</p></div>
@@ -45,7 +45,7 @@
 
     <section class="panel">
       <h2>Recent run history</h2>
-      <p class="panel-copy">Project Health persists aggregate metrics by suite, model, build, and run time. Individual model transcripts stay out of this public portfolio view.</p>
+      <p class="panel-copy">Project Health persists aggregate metrics by suite, model, build, and run time. Failed controlled scenarios can also retain limited failure metadata; individual model transcripts stay out of this public portfolio view.</p>
       <div id="runHistory" class="run-list"><div class="status">Loading recent runs…</div></div>
     </section>
 
