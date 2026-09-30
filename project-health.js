@@ -909,26 +909,29 @@
         :'<div class="attention good" style="margin-top:12px"><strong>Nothing needs attention right now</strong><p>No current incident or product-quality action is open.</p></div>');
 
     const reviewIsDependency=/^(after|when|once)\b|next recorded/i.test(String(p.nextReview||''));
+    const nextDecision=operationalNextDecision(data);
     doc.getElementById('productFocusPanel').innerHTML=
       '<h3>Product focus</h3><div class="focus-grid" style="margin-top:10px">'+
       '<div class="focus-block"><strong>Current goal</strong><p>'+esc(p.focus)+'</p></div>'+
       '<div class="focus-block"><strong>Watching</strong><div class="evidence-list">'+p.evidence.map(item=>'<span class="evidence-chip">'+esc(item)+'</span>').join('')+'</div></div>'+
-      '<div class="focus-block"><strong>Next decision</strong><p>'+esc(p.nextDecision)+'</p></div>'+
+      '<div class="focus-block decision-now"><strong>Next decision</strong><p>'+esc(nextDecision)+'</p></div>'+
       '</div><div class="focus-followup"><strong>'+(reviewIsDependency?'Waiting on':'Next review')+'</strong><span>'+esc(p.nextReview)+'</span></div>';
 
     const overviewQuality=p.quality==='state'?qualityAttention(q):externalQualityAttention(externalQ);
     const overviewDelivery=deliveryAttention(d);
     const overviewInfra=infrastructureAttention(data);
+    const runtimeStatus=productionRuntime(data);
     const aSummary=platform?.analytics;
-    const statusLabel=kind=>kind==='bad'?'Needs attention':kind==='warn'?'Watch':kind==='good'?'Healthy':'Unknown';
+    const statusLabel=kind=>kind==='bad'?'Needs attention':kind==='warn'?'Watch':kind==='good'?'Healthy':kind==='available'?'Data available':'Unknown';
     const qualityTime=p.quality==='state'
       ?[q?.review?.created_at,q?.ask?.created_at].filter(Boolean).sort().pop()
       :(externalQ?.ci?.updated_at||externalQ?.recorded?.updated_at||data.checkedAt);
     const healthRows=[
       {label:'AI quality',kind:overviewQuality?.kind||'unknown',detail:overviewQuality?.title||'Quality status unavailable',tab:'ai-quality',fresh:freshnessMeta(qualityTime,data.checkedAt,72)},
-      {label:'Delivery',kind:overviewDelivery?.kind||'unknown',detail:overviewDelivery?.title||'Delivery status unavailable',tab:'delivery',fresh:freshnessMeta(d?.updatedAt,data.checkedAt,24)},
+      {label:'Production',kind:runtimeStatus.kind,detail:runtimeStatus.detail,tab:'delivery',fresh:freshnessMeta(data.detailCheckedAt||d?.updatedAt||data.checkedAt,data.checkedAt,24)},
+      {label:'Release pipeline',kind:overviewDelivery?.kind||'unknown',detail:overviewDelivery?.title||'Release status unavailable',tab:'delivery',fresh:freshnessMeta(d?.updatedAt,data.checkedAt,24)},
       {label:'Infrastructure',kind:overviewInfra?.kind||'good',detail:overviewInfra?.title||'Production services healthy',tab:'infra',fresh:freshnessMeta(data.detailCheckedAt||data.checkedAt,data.checkedAt,6)},
-      {label:'Usage',kind:pending.has('Analytics')?'unknown':aSummary?.available?'good':'unknown',detail:pending.has('Analytics')?'Checking usage…':aSummary?.available?((aSummary.visitors??0)+' visitors · '+(aSummary.pageviews??0)+' page views · 30d'):(aSummary?.configured?'Connected, but comparison data is not available yet':'Usage analytics are not connected'),tab:'activity',fresh:freshnessMeta(data.detailCheckedAt||data.checkedAt,data.checkedAt,24)}
+      {label:'Usage',kind:pending.has('Analytics')?'unknown':aSummary?.available?'available':'unknown',detail:pending.has('Analytics')?'Checking usage…':aSummary?.available?((aSummary.visitors??0)+' visitors · '+(aSummary.pageviews??0)+' page views · 30d'):(aSummary?.configured?'Connected, but comparison data is not available yet':'Usage analytics are not connected'),tab:'activity',fresh:freshnessMeta(data.detailCheckedAt||data.checkedAt,data.checkedAt,24)}
     ];
     const changes=meaningfulChanges(data);
     const sinceLabel=data.lastVisit?.savedAt?fmtDate(data.lastVisit.savedAt):'your previous saved visit';
@@ -1020,7 +1023,15 @@
       const visitorTrend=trendText(a.visitors_delta_pct),pageTrend=trendText(a.pageviews_delta_pct);
       const visitorClass=a.visitors_delta_pct==null?'flat':Number(a.visitors_delta_pct)>0?'up':Number(a.visitors_delta_pct)<0?'down':'flat';
       const pageClass=a.pageviews_delta_pct==null?'flat':Number(a.pageviews_delta_pct)>0?'up':Number(a.pageviews_delta_pct)<0?'down':'flat';
-      doc.getElementById('analyticsPanel').innerHTML='<h3>Usage</h3><div class="metrics" style="margin-top:12px">'+metric(a.visitors??'—','Visitors · 30d')+metric(a.pageviews??'—','Page views · 30d')+'</div><div class="trend '+visitorClass+'">'+esc(visitorTrend)+'</div><div class="trend '+pageClass+'">'+esc(pageTrend)+'</div>';
+      const hasVisitorComparison=a.visitors_delta_pct!=null&&!Number.isNaN(Number(a.visitors_delta_pct));
+      const hasPageComparison=a.pageviews_delta_pct!=null&&!Number.isNaN(Number(a.pageviews_delta_pct));
+      const trends=!hasVisitorComparison&&!hasPageComparison
+        ?'<div class="usage-comparison-empty">No previous 30-day period to compare yet</div>'
+        :'<div class="usage-trends">'+
+          '<div class="trend '+visitorClass+'"><strong>Visitors:</strong> '+esc(visitorTrend)+'</div>'+
+          '<div class="trend '+pageClass+'"><strong>Page views:</strong> '+esc(pageTrend)+'</div>'+
+          '</div>';
+      doc.getElementById('analyticsPanel').innerHTML='<h3>Usage</h3><div class="metrics" style="margin-top:12px">'+metric(a.visitors??'—','Visitors · 30d')+metric(a.pageviews??'—','Page views · 30d')+'</div>'+trends;
     }else{
       analyticsPanel.innerHTML='';
     }
