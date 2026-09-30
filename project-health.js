@@ -1386,6 +1386,7 @@
     async function ensureDetails(id){
       const data=state.find(item=>item.project.id===id);if(!data)return;
       await loadProjectDetails(data,root,()=>{scheduleRender();});
+      reconcileInvestigationHistory(data);
       scheduleRender();persist();
     }
 
@@ -1579,6 +1580,7 @@
 
       await Promise.all(jobs);
       if(generation!==refreshGeneration)return;
+      state.forEach(reconcileInvestigationHistory);
       const errors=state.flatMap(item=>item.errors.map(error=>item.project.name+': '+error));
       persist();
       status.innerHTML=errors.length?'<strong>Refresh finished with some coverage gaps.</strong> The dashboard keeps unavailable data separate from product incidents.':'<strong>Health is up to date.</strong>';
@@ -1607,6 +1609,7 @@
         if(evalRunComplete(latest,runState)){
           data.qualityRun=null;
           saveEvalRunState(root,null);
+          reconcileInvestigationHistory(data);
           persist();
           renderNow();
           return;
