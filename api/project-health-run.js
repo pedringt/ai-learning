@@ -16,14 +16,18 @@ function readBody(req){
   try{return JSON.parse(req.body||'{}');}catch(_){return {};}
 }
 
+function isProtectedEnvironment(){
+  return String(process.env.VERCEL_ENV||'development').toLowerCase()!=='production';
+}
+
 function runInfo(projectId){
   const run=RUNS[projectId];
   if(!run) return null;
   const costEstimate=String(process.env[run.costEstimateEnv]||'').trim();
   return {
     configured:!!(process.env.GITHUB_TOKEN&&costEstimate),
-    can_run_here:true,
-    protection:'Dashboard paid-run confirmation',
+    can_run_here:isProtectedEnvironment(),
+    protection:isProtectedEnvironment()?'Protected preview + paid-run confirmation':'Protected preview required',
     project:projectId,
     label:run.label,
     ref:run.ref,
@@ -55,6 +59,11 @@ module.exports=async function handler(req,res){
   const run=RUNS[projectId];
   const info=runInfo(projectId);
   if(!run||!info){res.status(404).json({detail:'No runnable workflow is configured for this project yet.'});return;}
+
+  if(!info.can_run_here){
+    res.status(403).json({detail:'Paid AI quality checks can only be started from the protected Project Health preview.'});
+    return;
+  }
 
   if(!info.configured){
     res.status(503).json({detail:'Dashboard-run credentials and cost estimate are not configured yet.'});
@@ -101,4 +110,4 @@ module.exports=async function handler(req,res){
   });
 };
 
-module.exports._test={RUNS,runInfo};
+module.exports._test={RUNS,runInfo,isProtectedEnvironment};
