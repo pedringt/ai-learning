@@ -393,12 +393,32 @@
   function activityTimelineItems(data){
     const p=data?.project||{},d=data?.delivery,q=data?.quality,externalQ=data?.externalQuality,activity=data?.activity;
     const items=[];
-    if(d?.updatedAt)items.push({when:d.updatedAt,type:'Release',title:'Production release',detail:commitTitle(d.message)+' · '+shortSha(d.sha)});
+    if(d?.updatedAt)items.push({when:d.updatedAt,type:'Release',category:'releases',title:'Production release',detail:commitTitle(d.message)+' · '+shortSha(d.sha)});
     if(activity?.available){
       const dep=activity.deployments||{};
+      const failures=(dep.recent_failures||[]).filter(item=>item.created_at).slice().sort((a,b)=>(dateMs(a.created_at)||0)-(dateMs(b.created_at)||0));
+      const failureGroups=[];
+      for(const failure of failures){
+        const last=failureGroups[failureGroups.length-1];
+        const near=last&&Math.abs((dateMs(failure.created_at)||0)-(dateMs(last.items[last.items.length-1].created_at)||0))<=5*60*1000;
+        if(near)last.items.push(failure);
+        else failureGroups.push({items:[failure]});
+      }
+      for(const group of failureGroups){
+        const first=group.items[0],last=group.items[group.items.length-1],count=group.items.length;
+        items.push({
+          when:last.created_at,
+          startWhen:first.created_at,
+          endWhen:last.created_at,
+          type:'Release incident',
+          category:'releases',
+          title:count>1?'Deployment failure · '+count+' attempts':'Deployment failure',
+          detail:count>1?'A new release failed '+count+' times in a short window. Production stayed on the previous healthy release.':(first.message||'Production deployment failed'),
+          attempts:group.items.map(item=>({when:item.created_at,detail:item.message||'Deployment failed'}))
+        });
+      }
       const recoveryGroups=new Map();
       for(const failure of dep.recent_failures||[]){
-        if(failure.created_at)items.push({when:failure.created_at,type:'Incident / recovery',title:'Deployment failed',detail:failure.message||'Production deployment failed'});
         if(failure.recovered&&failure.recovered_at){
           const key=String(failure.recovered_at);
           const current=recoveryGroups.get(key)||{when:failure.recovered_at,count:0};
@@ -409,34 +429,47 @@
       for(const recovery of recoveryGroups.values()){
         items.push({
           when:recovery.when,
-          type:'Incident / recovery',
-          title:'Deployment recovered'+(recovery.count>1?' ×'+recovery.count:''),
-          detail:recovery.count>1?'Multiple failed release attempts were superseded by a later healthy deployment.':'A later release restored a healthy production state.'
+          type:'Release',
+          category:'releases',
+          title:'Deployment recovered'+(recovery.count>1?' · '+recovery.count+' attempts':''),
+          detail:recovery.count>1?'A later healthy deployment superseded the failed release attempts.':'A later release restored a healthy production state.'
         });
       }
       for(const issue of activity.runtime?.issues||[]){
-        if(issue.last_seen)items.push({when:issue.last_seen,type:'Incident / recovery',title:'Runtime signal',detail:(issue.path||'Server route')+(issue.count?' · '+issue.count+' occurrences':'')});
+        if(issue.last_seen)items.push({when:issue.last_seen,type:'Release incident',category:'releases',title:'Runtime signal',detail:(issue.path||'Server route')+(issue.count?' · '+issue.count+' occurrences':'')});
       }
     }
     const prs=Array.isArray(data?.openPullRequests)?data.openPullRequests:[];
     for(const pr of prs.slice(0,4)){
       const when=pr.updated_at||pr.created_at;
-      if(when)items.push({when,type:'Release',title:'Open PR · '+(pr.number?'#'+pr.number:'work in progress'),detail:String(pr.title||'Untitled')});
+      if(when)items.push({when,type:'Release',category:'releases',title:'Open PR · '+(pr.number?'#'+pr.number:'work in progress'),detail:String(pr.title||'Untitled')});
     }
     if(p.id==='state'&&Array.isArray(q?.recent)){
       for(const item of q.recent.slice(0,6)){
-        if(item.created_at)items.push({when:item.created_at,type:'Quality check',title:evalSuiteLabel(item)+' checked',detail:(evalScore(item)==null?'Score unavailable':percent(evalScore(item)))+' · '+Number(item.high_severity_failures||0)+' high-impact failures'});
+        if(item.created_at)items.push({when:item.created_at,type:'Quality check',category:'quality',title:evalSuiteLabel(item)+' checked',detail:(evalScore(item)==null?'Score unavailable':percent(evalScore(item)))+' · '+Number(item.high_severity_failures||0)+' high-impact failures'});
       }
     }else if(p.id==='tastemake'&&externalQ?.ci?.updated_at){
-      items.push({when:externalQ.ci.updated_at,type:'Quality check',title:'Recommendation quality checks updated',detail:externalQ.ci.conclusion==='success'?'Automated recommendation checks passed.':'Latest check result recorded.'});
+      items.push({when:externalQ.ci.updated_at,type:'Quality check',category:'quality',title:'Recommendation quality checks updated',detail:externalQ.ci.conclusion==='success'?'Automated recommendation checks passed.':'Latest check result recorded.'});
     }else if(p.id==='narc'&&externalQ?.recorded?.updated_at){
-      items.push({when:externalQ.recorded.updated_at,type:'Quality check',title:'Game quality record updated',detail:externalQ.recorded.full_playtest_pending?'Full first-run playtest still open.':'Latest recorded quality state.'});
+      items.push({when:externalQ.recorded.updated_at,type:'Quality check',category:'quality',title:'Game quality record updated',detail:externalQ.recorded.full_playtest_pending?'Full first-run playtest still open.':'Latest recorded quality state.'});
     }
     for(const item of data?.investigationHistory||[]){
-      items.push({when:item.observedAt,type:'Investigation',title:item.trigger||'Project check',detail:(item.summary||'Investigation completed')+(item.resolvedAt?' · later resolved':'')});
-      if(item.resolvedAt)items.push({when:item.resolvedAt,type:'Incident / recovery',title:'Investigated issue resolved',detail:item.trigger||'Project investigation'});
+      items.push({when:item.observedAt,type:'Investigation',category:'investigations',title:item.trigger||'Project check',detail:(item.summary||'Investigation completed')+(item.resolvedAt?' · later resolved':'')});
+      if(item.resolvedAt)items.push({when:item.resolvedAt,type:'Investigation',category:'investigations',title:'Investigated issue resolved',detail:item.trigger||'Project investigation'});
     }
     return items.sort((a,b)=>(dateMs(b.when)||0)-(dateMs(a.when)||0));
+  }
+  function activityDayLabel(when){
+    const date=new Date(when),now=new Date(),yesterday=new Date(now);yesterday.setDate(now.getDate()-1);
+    const key=d=>[d.getFullYear(),d.getMonth(),d.getDate()].join('-');
+    if(key(date)===key(now))return'Today';
+    if(key(date)===key(yesterday))return'Yesterday';
+    return date.toLocaleDateString('en-US',{month:'short',day:'numeric',year:date.getFullYear()===now.getFullYear()?undefined:'numeric'});
+  }
+  function activityTimeRange(item){
+    if(!item?.startWhen||!item?.endWhen||dateMs(item.startWhen)===dateMs(item.endWhen))return fmtDate(item?.when);
+    const opts={hour:'numeric',minute:'2-digit'};
+    return new Date(item.startWhen).toLocaleTimeString('en-US',opts)+'–'+new Date(item.endWhen).toLocaleTimeString('en-US',opts);
   }
 
   async function loadGitHubProject(project,branchName){
@@ -944,6 +977,17 @@
       (trend?'<span class="trend">'+esc(trend)+'</span>':'')+
       '</div></div>';
   }
+  function stateScenarioCard(title,score,run,trend,note){
+    const pass=scenarioPassLabel(run,score)||'Scenario count unavailable';
+    const trendClass=/^Down /i.test(String(trend||''))?'down':/^Up /i.test(String(trend||''))?'up':'flat';
+    return '<div class="eval-card compact state-scenario-card"><strong>'+esc(title)+'</strong>'+
+      '<div class="scenario-result">'+esc(pass.replace(' passed',' scenarios passed'))+'</div>'+
+      '<div class="eval-card-meta">'+
+        (note?'<span class="failure">'+esc(note)+'</span>':'<span class="healthy-note">No high-impact failures</span>')+
+        (trend?'<span class="trend '+trendClass+'">'+esc(trend)+'</span>':'')+
+        '<span class="score-secondary">'+esc(percent(score))+'</span>'+
+      '</div></div>';
+  }
   function scenarioPassLabel(run,score){
     const total=Number(run?.total||0),value=Number(score);
     if(!total||!Number.isFinite(value))return'';
@@ -999,8 +1043,8 @@
     const shouldInvestigateFirst=currentQuality?.kind==='bad'||deliveryAttentionForData(data).kind==='bad'||activityReviewItems(data).some(item=>!item.resolved);
     if(projectCheckButton){
       projectCheckButton.disabled=!!data.investigation?.loading;
-      projectCheckButton.textContent=data.investigation?.loading?'Investigating…':shouldInvestigateFirst?'Investigate current issues':'Investigate project';
-      projectCheckButton.classList.toggle('primary',!!shouldInvestigateFirst&&!shouldRunChecksFirst);
+      projectCheckButton.textContent=data.investigation?.loading?'Investigating…':'Investigate';
+      projectCheckButton.classList.toggle('primary',!!shouldInvestigateFirst);
       projectCheckButton.style.order=shouldRunChecksFirst?'2':'1';
     }
     if(headerRunChecksButton){
@@ -1009,7 +1053,7 @@
       const runInfoLoading=!run&&(!data.fresh||pending.has('Run controls'));
       headerRunChecksButton.hidden=false;
       headerRunChecksButton.disabled=!!activeEvalRun||runInfoLoading||!run?.configured;
-      headerRunChecksButton.textContent=activeEvalRun?'Checks running…':data.qualityRunCompletedAt?(p.id==='state'?'View AI eval results':p.id==='tastemake'?'View recommendation results':'View game check results'):baseLabel;
+      headerRunChecksButton.textContent=activeEvalRun?'Running…':data.qualityRunCompletedAt?(p.id==='state'?'View AI eval results':p.id==='tastemake'?'View recommendation results':'View game check results'):baseLabel;
       headerRunChecksButton.title=runInfoLoading?'Checking run availability…':(!run?.configured?'Run controls are unavailable for this project.':'');
       headerRunChecksButton.classList.toggle('primary',!!shouldRunChecksFirst);
       headerRunChecksButton.style.order=shouldRunChecksFirst?'1':'2';
@@ -1079,7 +1123,7 @@
     changesPanel.innerHTML=changes.length
       ?'<div class="panel-title-row"><div><h3>Changed since last visit</h3><p class="panel-copy">Compared with '+esc(sinceLabel)+'. Only meaningful changes are shown.</p></div><span class="readiness-pill watch">'+esc(changes.length)+' change'+(changes.length===1?'':'s')+'</span></div><div class="change-list" style="margin-top:6px">'+changes.slice(0,8).map(item=>'<button class="change-item" type="button" data-tab-target="'+esc(item.tab||'activity')+'"'+(item.section?' data-section-target="'+esc(item.section)+'"':'')+'><span class="change-dot"></span><div><div class="change-item-head"><strong>'+esc(item.title)+'</strong><span class="change-time">'+esc(relativeAge(item.observedAt))+'</span></div><span class="change-detail">'+esc(item.detail)+'</span></div></button>').join('')+'</div>'
       :'<div class="changes-zero" role="status"><span aria-hidden="true">✓</span><strong>No meaningful changes since your last visit</strong></div>';
-    doc.getElementById('overviewHealthPanel').innerHTML='<div class="panel-title-row"><h3>Project health</h3></div>'+
+    doc.getElementById('overviewHealthPanel').innerHTML='<div class="panel-title-row"><h3>System health</h3></div>'+
       '<div class="overview-health" style="margin-top:10px">'+healthRows.map(item=>{
         const showFreshness=item.fresh?.stale||['bad','warn','unknown'].includes(item.kind);
         return '<button class="overview-health-row health-card '+esc(item.kind||'unknown')+'" type="button" data-tab-target="'+esc(item.tab)+'"'+(item.section?' data-section-target="'+esc(item.section)+'"':'')+'>'+
@@ -1106,10 +1150,10 @@
         const staleResults=stateEvalResultsStale(q);
         const cards=[];
         const noteFor=check=>{const count=failureCheckCount(q,check);return count?count+' high-impact failure'+(count===1?'':'s'):'';};
-        if(review?.interpretation_accuracy!=null) cards.push(stateEvalCard('Update understanding',percent(review.interpretation_accuracy),scenarioPassLabel(review,review.interpretation_accuracy),evalTrend(q.recent,'review_interpretation'),noteFor('interpretation')));
-        if(ask?.ask_grounding!=null) cards.push(stateEvalCard('Evidence grounding',percent(ask.ask_grounding),scenarioPassLabel(ask,ask.ask_grounding),evalTrend(q.recent,'ask_quality'),noteFor('grounding')));
-        if(ask?.authority_accuracy!=null) cards.push(stateEvalCard('Decision authority',percent(ask.authority_accuracy),scenarioPassLabel(ask,ask.authority_accuracy),'',noteFor('authority')));
-        if(ask?.uncertainty_accuracy!=null) cards.push(stateEvalCard('Uncertainty handling',percent(ask.uncertainty_accuracy),scenarioPassLabel(ask,ask.uncertainty_accuracy),'',noteFor('uncertainty')));
+        if(review?.interpretation_accuracy!=null) cards.push(stateScenarioCard('Update understanding',review.interpretation_accuracy,review,evalTrend(q.recent,'review_interpretation'),noteFor('interpretation')));
+        if(ask?.ask_grounding!=null) cards.push(stateScenarioCard('Evidence grounding',ask.ask_grounding,ask,evalTrend(q.recent,'ask_quality'),noteFor('grounding')));
+        if(ask?.authority_accuracy!=null) cards.push(stateScenarioCard('Decision authority',ask.authority_accuracy,ask,'',noteFor('authority')));
+        if(ask?.uncertainty_accuracy!=null) cards.push(stateScenarioCard('Uncertainty handling',ask.uncertainty_accuracy,ask,'',noteFor('uncertainty')));
         const failureSummary=qualityFailureClassSummary(q);
         const failureDetailHtml=failureSummary.details?.length
           ?'<div class="failure-list">'+failureSummary.details.map(detail=>
@@ -1141,16 +1185,15 @@
         qualityHtml+='<div class="eval-run-status '+(delayed?'warn':'')+'" role="status"><strong>'+(delayed?'Run started · waiting for a newer result':'AI evals are running…')+'</strong><span>Started '+esc(fmtDate(activeEvalRun.startedAt))+'. The previous results stay visible until the new run finishes; this page checks automatically.</span></div>';
       }
       if(pending.has('Run controls')&&!run){
-        qualityHtml+='<div class="eval-actions"><button class="button small primary" type="button" disabled>Run all AI evals</button><span class="footnote">Checking run availability…</span></div>';
-      }else if(run?.configured){
-        const runDisabled=activeEvalRun?' disabled':'';
-        qualityHtml+='<div class="eval-actions"><button class="button small primary" type="button" data-run-checks="all"'+runDisabled+'>'+(activeEvalRun?'AI evals running…':'Run all AI evals')+'</button></div>'+
+        qualityHtml+='<div class="eval-actions"><span class="footnote">Checking run availability…</span></div>';
+      }else if(run?.configured&&!activeEvalRun){
+        qualityHtml+='<div class="eval-actions"><button class="button small primary" type="button" data-run-checks="all">Run all AI evals</button></div>'+
           '<div class="eval-suite-actions"><strong>Run a specific eval suite</strong><p>State has two controlled eval areas. Rerun one when you are checking a targeted change.</p><div class="suite-action-grid">'+
-          '<button class="button small suite-action" type="button" data-run-checks="review"'+runDisabled+'><span class="suite-action-copy"><strong>Update understanding</strong><span>How State interprets new evidence and proposed truth changes.</span></span><span class="suite-action-run">Run →</span></button>'+
-          '<button class="button small suite-action" type="button" data-run-checks="ask"'+runDisabled+'><span class="suite-action-copy"><strong>Answer quality</strong><span>Grounding, uncertainty, and decision authority in answers.</span></span><span class="suite-action-run">Run →</span></button>'+
+          '<button class="button small suite-action" type="button" data-run-checks="review"><span class="suite-action-copy"><strong>Update understanding</strong><span>How State interprets new evidence and proposed truth changes.</span></span><span class="suite-action-run">Run →</span></button>'+
+          '<button class="button small suite-action" type="button" data-run-checks="ask"><span class="suite-action-copy"><strong>Answer quality</strong><span>Grounding, uncertainty, and decision authority in answers.</span></span><span class="suite-action-run">Run →</span></button>'+
           '</div></div>'+
           '<p class="footnote">Estimated model cost: '+esc(run.estimated_cost||'not configured')+'. You will confirm before any paid run starts.</p>';
-      }else if(run){
+      }else if(run&&!activeEvalRun){
         qualityHtml+='<p class="footnote">Running AI evals from the dashboard still needs setup. Existing recorded results can still appear here.</p>';
       }
       qualityHtml+='<p class="footnote">Resolved Reviews · 30d: '+esc(q?.resolvedReviews??'Not loaded')+'. Project content is not copied into this dashboard.</p>';
@@ -1223,8 +1266,28 @@
 
     // Chronological activity tells an operating story rather than exposing raw events.
     const timelineItems=activityTimelineItems(data);
-    const timelineHtml=timelineItems.length?'<div class="timeline">'+timelineItems.slice(0,18).map(item=>'<div class="timeline-item"><span class="timeline-time">'+esc(fmtDate(item.when))+'</span><span class="timeline-marker"></span><div class="timeline-content"><span class="activity-type">'+esc(item.type||'Activity')+'</span><strong>'+esc(item.title)+'</strong><span>'+esc(item.detail||'')+'</span></div></div>').join('')+'</div>':'<div class="empty">No recent activity is available yet.</div>';
-    doc.getElementById('historyPanel').innerHTML='<h3>Activity</h3><p class="panel-copy">A chronological operating history across releases, quality checks, investigations, and recovery.</p><div style="margin-top:12px">'+timelineHtml+'</div>';
+    const activityFilter=data.activityFilter||'all';
+    const filteredTimeline=activityFilter==='all'?timelineItems:timelineItems.filter(item=>item.category===activityFilter);
+    const groupedDays=[];
+    for(const item of filteredTimeline.slice(0,30)){
+      const label=activityDayLabel(item.when);
+      let group=groupedDays[groupedDays.length-1];
+      if(!group||group.label!==label){group={label,items:[]};groupedDays.push(group);}
+      group.items.push(item);
+    }
+    const activityItemMarkup=item=>{
+      const attempts=Array.isArray(item.attempts)&&item.attempts.length>1
+        ?'<details class="activity-attempts"><summary>Show '+item.attempts.length+' attempts</summary><div>'+item.attempts.map(attempt=>'<div class="activity-attempt"><span>'+esc(fmtDate(attempt.when))+'</span><span>'+esc(attempt.detail)+'</span></div>').join('')+'</div></details>'
+        :'';
+      return '<div class="timeline-item"><span class="timeline-time">'+esc(activityTimeRange(item))+'</span><span class="timeline-marker"></span><div class="timeline-content"><span class="activity-type">'+esc(item.type||'Activity')+'</span><strong>'+esc(item.title)+'</strong><span>'+esc(item.detail||'')+'</span>'+attempts+'</div></div>';
+    };
+    const timelineHtml=filteredTimeline.length
+      ?'<div class="activity-day-groups">'+groupedDays.map(group=>'<section class="activity-day"><h4>'+esc(group.label)+'</h4><div class="timeline">'+group.items.map(activityItemMarkup).join('')+'</div></section>').join('')+'</div>'
+      :'<div class="empty">No activity matches this filter yet.</div>';
+    const activityFilters=[['all','All'],['releases','Releases'],['quality','Quality'],['investigations','Investigations']];
+    doc.getElementById('historyPanel').innerHTML='<div class="panel-title-row"><div><h3>Activity</h3><p class="panel-copy">A chronological operating history across releases, quality checks, investigations, and recovery.</p></div></div>'+
+      '<div class="activity-filters" role="group" aria-label="Filter activity">'+activityFilters.map(([key,label])=>'<button class="activity-filter '+(activityFilter===key?'active':'')+'" type="button" data-activity-filter="'+key+'">'+label+'</button>').join('')+'</div>'+
+      '<div style="margin-top:12px">'+timelineHtml+'</div>';
     const overviewActivity=timelineItems.length?'<div class="activity-list">'+timelineItems.slice(0,3).map(item=>'<div class="activity-item"><span class="activity-type">'+esc(item.type||'Activity')+'</span><strong>'+esc(item.title)+'</strong><span>'+esc(relativeAge(item.when))+' · '+esc(item.detail||'')+'</span></div>').join('')+'</div>':'<div class="empty">No recent activity is available yet.</div>';
     doc.getElementById('overviewActivityPanel').innerHTML='<div class="panel-title-row"><h3>Recent activity</h3><button class="button small" type="button" data-tab-target="activity">View timeline</button></div><div style="margin-top:12px">'+overviewActivity+'</div>';
 
@@ -1727,6 +1790,8 @@
       reviewInbox.innerHTML='<section class="panel"><div class="panel-title-row"><h3>Incidents</h3><span class="readiness-pill watch">'+items.length+' unreviewed</span></div><div class="review-list" style="margin-top:10px">'+rows+'</div></section>';
     }
     function renderSummary(){
+      if(PROJECTS.length<=3){summary.innerHTML='';summary.hidden=true;return;}
+      summary.hidden=false;
       const fresh=state.filter(item=>item?.fresh);
       const actionCount=fresh.filter(item=>projectStatus(item).key==='action').length;
       const watchCount=fresh.filter(item=>projectStatus(item).key==='watch').length;
@@ -1834,6 +1899,12 @@
       else dialog.setAttribute('open','');
     }
     if(projectDetail)projectDetail.addEventListener('click',event=>{
+      const activityFilterButton=event.target.closest?.('[data-activity-filter]');
+      if(activityFilterButton){
+        const data=activeData();
+        if(data){data.activityFilter=activityFilterButton.dataset.activityFilter||'all';renderNow();}
+        return;
+      }
       const systemsButton=event.target.closest?.('[data-open-systems]');
       if(systemsButton){
         setActiveTab('overview');
