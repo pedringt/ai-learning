@@ -690,7 +690,7 @@
         key:data.project.id+':deploy:'+failure.id,
         project:data.project.name,
         kind:'deployment',
-        title:failure.recovered?'Deployment failed, then recovered':'Production deployment failed',
+        title:failure.recovered?'Deployment failed, then recovered':'Release blocked · production unaffected',
         detail:(failure.message||'Deployment failure')+(failure.recovered&&failure.recovered_at?' · recovered '+relativeAge(failure.recovered_at):''),
         impact:failure.recovered?'A later deployment recovered the failed release.':'The latest change did not deploy; the previous production version should remain available.',
         owner:failure.recovered?'No action':'Engineering',
@@ -964,11 +964,15 @@
         if(ask?.ask_grounding!=null) cards.push(stateEvalCard('Answers stayed supported by evidence',percent(ask.ask_grounding),'Did answers stick to known project information instead of filling gaps?',evalTrend(q.recent,'ask_quality')));
         if(ask?.authority_accuracy!=null) cards.push(stateEvalCard('Respected decision authority',percent(ask.authority_accuracy),'Did State keep proposed changes separate from approved project truth?',''));
         if(ask?.uncertainty_accuracy!=null) cards.push(stateEvalCard('Handled uncertainty clearly',percent(ask.uncertainty_accuracy),'Did State say when the available evidence was not enough?',''));
+        const failureSummary=qualityFailureClassSummary(q);
+        const failureClassText=failureSummary.classes.length?'Main failure areas: '+failureSummary.classes.join(', ')+'.':'Open the failed scenarios to see the affected behavior.';
         qualityHtml='<h3>Product quality · AI checks</h3>'+
-          '<div class="eval-overview"><div><strong>'+esc(qa.title)+'</strong><span>'+(latestDate?'Last checked '+esc(fmtDate(latestDate))+' · ':'')+(staleResults?'Previous run · rerun required':esc(total||'—')+' scenarios · '+esc(severe)+' high-impact failures')+'</span></div></div>'+
+          '<div class="eval-overview"><div><strong>'+esc(qa.title)+'</strong><span>'+(latestDate?'Last checked '+esc(fmtDate(latestDate))+' · ':'')+(staleResults?'Previous run · rerun required':esc(total||'—')+' scenarios')+'</span></div></div>'+
           (staleResults
             ?'<div class="run-callout stale-quality-summary"><strong>What to know from the last run</strong><p>The previous run recorded '+esc(severe)+' high-impact miss'+(severe===1?'':'es')+', but '+esc(stateEvalStaleReason(q).toLowerCase())+' Run the checks again before treating those scores as current.</p></div>'
-            :'<div class="eval-grid">'+cards.join('')+'</div>')+stateEvalHistory(q);
+            :failureSummary.count
+              ?'<div class="run-callout quality-failure-summary"><strong>'+esc(failureSummary.count)+' high-impact failure'+(failureSummary.count===1?'':'s')+' require review</strong><p>'+esc(failureClassText)+'</p></div><div class="eval-grid">'+cards.join('')+'</div>'
+              :'<div class="eval-grid">'+cards.join('')+'</div>')+stateEvalHistory(q);
       }
       qualityHtml+='<p class="footnote"><a href="/state-evals">View eval details →</a></p>';
       const activeEvalRun=data.qualityRun;
@@ -1036,49 +1040,20 @@
       analyticsPanel.innerHTML='';
     }
 
-    // Chronological activity timeline across releases, evals, investigations, and open work.
-    const timelineItems=[];
-    if(d?.updatedAt) timelineItems.push({when:d.updatedAt,title:'Production release',detail:commitTitle(d.message)+' · '+shortSha(d.sha)});
-    if(activity?.available){
-      const dep=activity.deployments||{};
-      for(const failure of dep.recent_failures||[]){
-        if(failure.created_at) timelineItems.push({when:failure.created_at,title:'Deployment failed',detail:failure.message||'Production deployment failed'});
-        if(failure.recovered&&failure.recovered_at) timelineItems.push({when:failure.recovered_at,title:'Deployment recovered',detail:'A later release restored a healthy production state.'});
-      }
-      for(const issue of activity.runtime?.issues||[]){
-        if(issue.last_seen) timelineItems.push({when:issue.last_seen,title:'Runtime signal',detail:(issue.path||'Server route')+(issue.count?' · '+issue.count+' occurrences':'')});
-      }
-    }
-    const prs=Array.isArray(data.openPullRequests)?data.openPullRequests:[];
-    for(const pr of prs.slice(0,4)){
-      const when=pr.updated_at||pr.created_at;
-      if(when) timelineItems.push({when,title:'Open PR · '+(pr.number?'#'+pr.number:'work in progress'),detail:String(pr.title||'Untitled')});
-    }
-    if(p.id==='state'&&Array.isArray(q?.recent)){
-      for(const item of q.recent.slice(0,6)){
-        if(item.created_at) timelineItems.push({when:item.created_at,title:evalSuiteLabel(item)+' checked',detail:(evalScore(item)==null?'Score unavailable':percent(evalScore(item)))+' · '+Number(item.high_severity_failures||0)+' high-impact failures'});
-      }
-    }else if(p.id==='tastemake'&&externalQ?.ci?.updated_at){
-      timelineItems.push({when:externalQ.ci.updated_at,title:'Recommendation quality checks updated',detail:externalQ.ci.conclusion==='success'?'Automated recommendation checks passed.':'Latest check result recorded.'});
-    }else if(p.id==='narc'&&externalQ?.recorded?.updated_at){
-      timelineItems.push({when:externalQ.recorded.updated_at,title:'Game quality record updated',detail:externalQ.recorded.full_playtest_pending?'Full first-run playtest still open.':'Latest recorded quality state.'});
-    }
-    for(const item of data.investigationHistory||[]){
-      timelineItems.push({when:item.observedAt,title:'Investigation · '+(item.trigger||'Project check'),detail:(item.summary||'Investigation completed')+(item.resolvedAt?' · later resolved':'')});
-      if(item.resolvedAt) timelineItems.push({when:item.resolvedAt,title:'Investigated issue resolved',detail:item.trigger||'Project investigation'});
-    }
-    timelineItems.sort((a,b)=>(dateMs(b.when)||0)-(dateMs(a.when)||0));
-    const timelineHtml=timelineItems.length?'<div class="timeline">'+timelineItems.slice(0,18).map(item=>'<div class="timeline-item"><span class="timeline-time">'+esc(fmtDate(item.when))+'</span><span class="timeline-marker"></span><div class="timeline-content"><strong>'+esc(item.title)+'</strong><span>'+esc(item.detail||'')+'</span></div></div>').join('')+'</div>':'<div class="empty">No recent activity is available yet.</div>';
+    // Chronological activity tells an operating story rather than exposing raw events.
+    const timelineItems=activityTimelineItems(data);
+    const timelineHtml=timelineItems.length?'<div class="timeline">'+timelineItems.slice(0,18).map(item=>'<div class="timeline-item"><span class="timeline-time">'+esc(fmtDate(item.when))+'</span><span class="timeline-marker"></span><div class="timeline-content"><span class="activity-type">'+esc(item.type||'Activity')+'</span><strong>'+esc(item.title)+'</strong><span>'+esc(item.detail||'')+'</span></div></div>').join('')+'</div>':'<div class="empty">No recent activity is available yet.</div>';
     doc.getElementById('historyPanel').innerHTML='<h3>Activity</h3><p class="panel-copy">A chronological operating history across releases, quality checks, investigations, and recovery.</p><div style="margin-top:12px">'+timelineHtml+'</div>';
-    const overviewActivity=timelineItems.length?'<div class="activity-list">'+timelineItems.slice(0,3).map(item=>'<div class="activity-item"><strong>'+esc(item.title)+'</strong><span>'+esc(relativeAge(item.when))+' · '+esc(item.detail||'')+'</span></div>').join('')+'</div>':'<div class="empty">No recent activity is available yet.</div>';
+    const overviewActivity=timelineItems.length?'<div class="activity-list">'+timelineItems.slice(0,3).map(item=>'<div class="activity-item"><span class="activity-type">'+esc(item.type||'Activity')+'</span><strong>'+esc(item.title)+'</strong><span>'+esc(relativeAge(item.when))+' · '+esc(item.detail||'')+'</span></div>').join('')+'</div>':'<div class="empty">No recent activity is available yet.</div>';
     doc.getElementById('overviewActivityPanel').innerHTML='<div class="panel-title-row"><h3>Recent activity</h3><button class="button small" type="button" data-tab-target="activity">View timeline</button></div><div style="margin-top:12px">'+overviewActivity+'</div>';
 
-    // Delivery: product summary plus always-visible grouped evidence.
+    // Delivery separates what users have now from whether the next release can ship.
     const investigationBusy=!!data.investigation?.loading;
     const investigateButton=(type,environment,label)=>'<button class="button small" type="button" data-investigate="'+esc(type)+'" data-environment="'+esc(environment)+'"'+(investigationBusy?' disabled':'')+'>'+esc(label)+'</button>';
     const deliveryKind=d?.vercel?.kind||'unknown';
-    const deliveryText=deliveryKind==='good'?'Production is healthy':deliveryKind==='bad'?'The latest version did not go live':deliveryKind==='warn'?'A deployment is still finishing':'Delivery status is unavailable';
+    const pipelineText=deliveryKind==='good'?'Latest release deployed successfully':deliveryKind==='bad'?'Latest release attempt did not deploy':deliveryKind==='warn'?'Latest release attempt is still finishing':'Release status is unavailable';
     const deliveryClass=deliveryKind==='bad'?'bad':deliveryKind==='warn'?'warn':'';
+    const runtime=productionRuntime(data);
     const environmentBlock=(label,item)=>{
       if(!item)return'<div class="delivery-environment"><div class="delivery-environment-head"><strong>'+esc(label)+'</strong><span>Unavailable</span></div></div>';
       const status=item.vercel?.kind==='good'?'Healthy':item.vercel?.kind==='bad'?'Needs attention':item.vercel?.kind==='warn'?'Watch':'Unknown';
@@ -1089,8 +1064,11 @@
     const prodInvestigate=d?.vercel?.kind==='bad'?investigateButton('vercel','production','Investigate failure'):'';
     const checkInvestigate=Array.isArray(d?.failedChecks)&&d.failedChecks.length?investigateButton('github-check','production','Investigate failed check'):'';
     doc.getElementById('deliveryPanel').innerHTML='<div class="panel-title-row"><h3>Delivery</h3><span class="readiness-pill '+esc(readiness.label.toLowerCase())+'">Release '+esc(readiness.label)+'</span></div>'+
-      '<div class="delivery-summary '+deliveryClass+'" style="margin-top:12px">'+esc(deliveryText)+'</div>'+
-      '<div class="delivery-environments">'+environmentBlock('Production',d)+(s?environmentBlock('Staging',s):'')+'</div>'+
+      '<div class="delivery-split" style="margin-top:12px">'+
+        '<div class="delivery-concept"><span class="activity-type">Runtime</span><strong>Current production</strong><span class="delivery-status '+esc(runtime.kind)+'">'+esc(runtime.label)+'</span><p>'+esc(runtime.detail)+'</p></div>'+
+        '<div class="delivery-concept '+deliveryClass+'"><span class="activity-type">Release pipeline</span><strong>'+esc(pipelineText)+'</strong><span class="delivery-status '+esc(deliveryKind)+'">'+esc(deliveryKind==='good'?'Healthy':deliveryKind==='bad'?'Attention needed':deliveryKind==='warn'?'Watch':'Unknown')+'</span><p>'+esc(readiness.detail)+'</p></div>'+
+      '</div>'+
+      '<div class="delivery-environments">'+environmentBlock('Latest production release attempt',d)+(s?environmentBlock('Staging release',s):'')+'</div>'+
       '<div class="quality-actions">'+prodInvestigate+checkInvestigate+'</div>';
 
     // Infrastructure stays visible, grouped as services rather than settings rows.
@@ -1785,7 +1763,8 @@
       state.forEach(reconcileInvestigationHistory);
       const errors=state.flatMap(item=>item.errors.map(error=>item.project.name+': '+error));
       persist();
-      status.innerHTML=errors.length?'<strong>Refresh finished with some coverage gaps.</strong> The dashboard keeps unavailable data separate from product incidents.':'<strong>Health is up to date.</strong>';
+      const coverageGapCount=state.reduce((n,item)=>n+setupGaps(item).length,0);
+      status.innerHTML='<strong>Updated just now</strong>'+(coverageGapCount?' · '+coverageGapCount+' coverage '+(coverageGapCount===1?'gap':'gaps'):'')+(errors.length?' · some signals unavailable':'');
       refresh.disabled=false;
       ensureDetails(activeId);
     }
