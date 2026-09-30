@@ -626,9 +626,16 @@
       headerRunChecksButton.textContent=activeEvalRun?'AI checks running…':'Run AI checks';
     }
     const investigationPanel=doc.getElementById('investigationPanel');
-    if(investigationPanel){
-      investigationPanel.innerHTML=investigationResultHtml(data.investigation);
-      investigationPanel.hidden=!data.investigation;
+    const investigationDrawerTitle=doc.getElementById('investigationDrawerTitle');
+    const investigationDrawerStatus=doc.getElementById('investigationDrawerStatus');
+    const drawerPrepareHandoffButton=doc.getElementById('drawerPrepareHandoffButton');
+    if(investigationPanel) investigationPanel.innerHTML=investigationResultHtml(data.investigation);
+    if(investigationDrawerTitle) investigationDrawerTitle.textContent=p.name+' investigation';
+    if(investigationDrawerStatus){
+      investigationDrawerStatus.textContent=data.investigation?.loading?'Running…':data.investigation?.handoff?'Handoff ready':data.investigation?'Latest result available':'';
+    }
+    if(drawerPrepareHandoffButton){
+      drawerPrepareHandoffButton.hidden=!data.investigation||!!data.investigation.loading||!!data.investigation.openingProtected||!!data.investigation.handoff;
     }
 
     const notices=attentionItems(data),readiness=releaseReadiness(data);
@@ -1051,7 +1058,7 @@
   }
 
   async function init(root){
-    const doc=root.document,cards=doc.getElementById('projectCards'),status=doc.getElementById('status'),summary=doc.getElementById('overviewSummary'),reviewInbox=doc.getElementById('reviewInbox'),refresh=doc.getElementById('refreshButton'),qualityPanel=doc.getElementById('qualityPanel'),projectTabs=doc.getElementById('projectTabs'),projectDetail=doc.getElementById('projectDetail');
+    const doc=root.document,cards=doc.getElementById('projectCards'),status=doc.getElementById('status'),summary=doc.getElementById('overviewSummary'),reviewInbox=doc.getElementById('reviewInbox'),refresh=doc.getElementById('refreshButton'),qualityPanel=doc.getElementById('qualityPanel'),projectTabs=doc.getElementById('projectTabs'),projectDetail=doc.getElementById('projectDetail'),investigationDrawer=doc.getElementById('investigationDrawer'),investigationBackdrop=doc.getElementById('investigationBackdrop'),closeInvestigationDrawerButton=doc.getElementById('closeInvestigationDrawer'),drawerPrepareHandoffButton=doc.getElementById('drawerPrepareHandoffButton');
     if(!cards||!status||!summary||!reviewInbox||!refresh||!qualityPanel)return;
     const cached=loadSnapshot(root);
     let state=PROJECTS.map(project=>hydrateProjectData(project,cached?.projects?.find(item=>item.projectId===project.id)));
@@ -1059,7 +1066,7 @@
     let activeId=initialParams.get('project')||'state';
     const allowedTabs=new Set(['overview','ai-quality','delivery','infra','activity']);
     let activeTab=allowedTabs.has(initialParams.get('tab'))?initialParams.get('tab'):'overview';
-    let renderQueued=false,refreshGeneration=0;
+    let renderQueued=false,refreshGeneration=0,investigationDrawerOpen=false;
     const demoState={phase:'idle',step:0,timers:[]};
 
     function activeData(){return state.find(item=>item.project.id===activeId)||null;}
@@ -1176,6 +1183,7 @@
     }
 
     function select(id){
+      closeInvestigationDrawer();
       activeId=PROJECTS.some(p=>p.id===id)?id:'state';
       scheduleRender();
       const url=new URL(root.location.href);url.searchParams.set('project',activeId);url.searchParams.set('tab',activeTab);root.history.replaceState(null,'',url);
@@ -1209,13 +1217,30 @@
       if(target)setActiveTab(target.dataset.tabTarget);
     });
 
-    function revealInvestigation(){
+    if(closeInvestigationDrawerButton)closeInvestigationDrawerButton.addEventListener('click',closeInvestigationDrawer);
+    if(investigationBackdrop)investigationBackdrop.addEventListener('click',closeInvestigationDrawer);
+    doc.addEventListener('keydown',event=>{if(event.key==='Escape'&&investigationDrawerOpen)closeInvestigationDrawer();});
+
+    function openInvestigationDrawer(){
+      if(!investigationDrawer)return;
+      investigationDrawerOpen=true;
+      investigationDrawer.hidden=false;
+      investigationDrawer.setAttribute('aria-hidden','false');
+      if(investigationBackdrop) investigationBackdrop.hidden=false;
       const panel=doc.getElementById('investigationPanel');
-      if(!panel)return;
-      panel.hidden=false;
-      panel.scrollIntoView?.({behavior:'smooth',block:'nearest'});
-      panel.focus?.({preventScroll:true});
+      panel?.focus?.({preventScroll:true});
+      doc.body?.classList?.add('drawer-open');
     }
+    function closeInvestigationDrawer(){
+      investigationDrawerOpen=false;
+      if(investigationDrawer){
+        investigationDrawer.hidden=true;
+        investigationDrawer.setAttribute('aria-hidden','true');
+      }
+      if(investigationBackdrop) investigationBackdrop.hidden=true;
+      doc.body?.classList?.remove('drawer-open');
+    }
+    function revealInvestigation(){openInvestigationDrawer();}
 
     async function runAgentInvestigation(data,signalType,environment='production'){
       if(!data)return;
@@ -1268,8 +1293,7 @@
       revealInvestigation();
     });
 
-    const prepareHandoffButton=doc.getElementById('prepareHandoffButton');
-    if(prepareHandoffButton)prepareHandoffButton.addEventListener('click',()=>{
+    if(drawerPrepareHandoffButton)drawerPrepareHandoffButton.addEventListener('click',()=>{
       const data=activeData();if(!data)return;
       data.investigation=projectHandoff(data);
       renderNow();
