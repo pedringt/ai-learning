@@ -822,7 +822,7 @@
       return '<button class="attention attention-action '+esc(item.kind||'')+'" type="button" data-section-target="deliveryPanel">'+content+'<span class="attention-action-label">View delivery evidence →</span></button>';
     }
     if(item.category==='infrastructure'){
-      return '<button class="attention attention-action '+esc(item.kind||'')+'" type="button" data-section-target="infrastructurePanel">'+content+'<span class="attention-action-label">View infrastructure →</span></button>';
+      return '<button class="attention attention-action '+esc(item.kind||'')+'" type="button" data-section-target="systemsDetails">'+content+'<span class="attention-action-label">View systems &amp; connections →</span></button>';
     }
     return '<div class="attention '+esc(item.kind||'')+'">'+content+'</div>';
   }
@@ -1222,7 +1222,7 @@
       ?'<details class="compact-delivery"><summary><div class="compact-delivery-summary"><strong>Delivery</strong><span>Production &amp; release pipeline healthy · View details</span></div></summary>'+deliveryDetails+'</details>'
       :'<div class="panel-title-row"><h3>Delivery</h3><span class="readiness-pill '+esc(readiness.label.toLowerCase())+'">Release '+esc(readiness.label)+'</span></div>'+deliveryDetails;
 
-    // Infrastructure stays visible, grouped as services rather than settings rows.
+    // Infrastructure details live one layer down under Systems & connections.
     const r=platform?.render,n=platform?.neon;
     const infraCards=[];
     if(r?.configured){
@@ -1240,7 +1240,7 @@
       '<div class="delivery-summary '+(infraAttention?.kind==='bad'?'bad':infraAttention?.kind==='warn'?'warn':'')+'" style="margin-top:12px">'+esc(infraAttention?.title||'Production services healthy')+'</div>'+
       '<div class="service-grid">'+infraCards.map(item=>'<div class="service-card"><strong>'+esc(item.label)+'</strong><span class="service-status">'+esc(item.status)+'</span><span class="service-detail">'+esc(item.detail)+'</span>'+(item.url?'<a href="'+esc(item.url)+'" target="_blank" rel="noopener noreferrer">Open '+esc(item.detail.split(' · ')[0])+' ↗</a>':'')+'</div>').join('')+'</div>';
 
-    // Connections and coverage gaps stay visible; they are setup context, not incidents.
+    // Connections and coverage gaps are setup context, so they stay behind the Systems & connections disclosure.
     const ai=platform?.aiTelemetry;
     const connections=[];
     connections.push({label:'Code + deployments',value:d?'Connected':'Unavailable'});
