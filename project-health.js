@@ -603,10 +603,31 @@
     doc.getElementById('detailTitle').textContent=p.name;
     doc.getElementById('detailCopy').textContent=p.description;
     doc.getElementById('repoLink').href=repoUrl(p.repo);
+    const headerRunChecksButton=doc.getElementById('headerRunChecksButton');
+    if(headerRunChecksButton)headerRunChecksButton.addEventListener('click',async()=>{
+      const data=activeData();if(!data||data.project.id!=='state'||data.qualityRun)return;
+      try{
+        const started=await dispatchRun(data,root,'all');
+        if(started?.started){
+          data.qualityRun=started;
+          saveEvalRunState(root,started);
+          renderNow();
+          pollEvalResults(data);
+        }
+      }catch(_){renderNow();}
+    });
+
     const projectCheckButton=doc.getElementById('projectCheckButton');
     if(projectCheckButton){
       projectCheckButton.disabled=!!data.investigation?.loading;
       projectCheckButton.textContent=data.investigation?.loading?'Checking project…':'Investigate project';
+    }
+    const headerRunChecksButton=doc.getElementById('headerRunChecksButton');
+    if(headerRunChecksButton){
+      const activeEvalRun=data.qualityRun;
+      headerRunChecksButton.hidden=!(p.id==='state'&&run?.configured);
+      headerRunChecksButton.disabled=!!activeEvalRun;
+      headerRunChecksButton.textContent=activeEvalRun?'AI checks running…':'Run AI checks';
     }
     const investigationPanel=doc.getElementById('investigationPanel');
     if(investigationPanel){
@@ -1034,11 +1055,14 @@
   }
 
   async function init(root){
-    const doc=root.document,cards=doc.getElementById('projectCards'),status=doc.getElementById('status'),summary=doc.getElementById('overviewSummary'),reviewInbox=doc.getElementById('reviewInbox'),refresh=doc.getElementById('refreshButton'),qualityPanel=doc.getElementById('qualityPanel');
+    const doc=root.document,cards=doc.getElementById('projectCards'),status=doc.getElementById('status'),summary=doc.getElementById('overviewSummary'),reviewInbox=doc.getElementById('reviewInbox'),refresh=doc.getElementById('refreshButton'),qualityPanel=doc.getElementById('qualityPanel'),projectTabs=doc.getElementById('projectTabs'),projectDetail=doc.getElementById('projectDetail');
     if(!cards||!status||!summary||!reviewInbox||!refresh||!qualityPanel)return;
     const cached=loadSnapshot(root);
     let state=PROJECTS.map(project=>hydrateProjectData(project,cached?.projects?.find(item=>item.projectId===project.id)));
-    let activeId=new URLSearchParams(root.location.search).get('project')||'state';
+    const initialParams=new URLSearchParams(root.location.search);
+    let activeId=initialParams.get('project')||'state';
+    const allowedTabs=new Set(['overview','ai-quality','delivery','infra','activity']);
+    let activeTab=allowedTabs.has(initialParams.get('tab'))?initialParams.get('tab'):'overview';
     let renderQueued=false,refreshGeneration=0;
     const demoState={phase:'idle',step:0,timers:[]};
 
@@ -1117,10 +1141,28 @@
         '<span class="summary-chip"><strong>'+esc(checked?relativeAge(checked):'checking')+'</strong> last updated</span>';
     }
 
+    function applyTabState(){
+      if(projectTabs){
+        projectTabs.querySelectorAll('[data-tab]').forEach(button=>{
+          const selected=button.dataset.tab===activeTab;
+          button.classList.toggle('active',selected);
+          button.setAttribute('aria-selected',selected?'true':'false');
+        });
+      }
+      doc.querySelectorAll('[data-tab-panel]').forEach(panel=>{panel.hidden=panel.dataset.tabPanel!==activeTab;});
+    }
+    function setActiveTab(tab,updateUrl=true){
+      activeTab=allowedTabs.has(tab)?tab:'overview';
+      applyTabState();
+      if(updateUrl){
+        const url=new URL(root.location.href);url.searchParams.set('project',activeId);url.searchParams.set('tab',activeTab);root.history.replaceState(null,'',url);
+      }
+    }
     function renderNow(){
       renderQueued=false;
       renderCards();renderSummary();renderReviewInbox();
       const data=activeData();if(data)renderDetail(data,doc);
+      applyTabState();
       root.PROJECT_HEALTH_LAST_TIMINGS=Object.fromEntries(state.map(item=>[item.project.id,{...item.timings}]));
     }
     function scheduleRender(){
@@ -1140,7 +1182,7 @@
     function select(id){
       activeId=PROJECTS.some(p=>p.id===id)?id:'state';
       scheduleRender();
-      const url=new URL(root.location.href);url.searchParams.set('project',activeId);root.history.replaceState(null,'',url);
+      const url=new URL(root.location.href);url.searchParams.set('project',activeId);url.searchParams.set('tab',activeTab);root.history.replaceState(null,'',url);
       ensureDetails(activeId);
     }
 
@@ -1161,6 +1203,15 @@
 
     cards.addEventListener('click',event=>{if(event.target.closest?.('a,button'))return;const card=event.target.closest?.('.project-card');if(card)select(card.dataset.project);});
     cards.addEventListener('keydown',event=>{if(event.target.closest?.('a,button'))return;const card=event.target.closest?.('.project-card');if(card&&(event.key==='Enter'||event.key===' ')){event.preventDefault();select(card.dataset.project);}});
+
+    if(projectTabs)projectTabs.addEventListener('click',event=>{
+      const button=event.target.closest?.('[data-tab]');
+      if(button)setActiveTab(button.dataset.tab);
+    });
+    if(projectDetail)projectDetail.addEventListener('click',event=>{
+      const target=event.target.closest?.('[data-tab-target]');
+      if(target)setActiveTab(target.dataset.tabTarget);
+    });
 
     function revealInvestigation(){
       const panel=doc.getElementById('investigationPanel');
