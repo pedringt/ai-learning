@@ -59,7 +59,7 @@ class QualityEvalDatasetTests(unittest.TestCase):
         result = score_ask_answer(
             scenario,
             {
-                "answer": "The approved enterprise terms say customer content is not used for model training. New legal evidence is under review, so that interpretation may change."
+                "answer": "The approved enterprise terms say customer content is not used for model training. New legal evidence is under review, so the interpretation is uncertain and may change."
             },
         )
         self.assertTrue(result.authority_ok)
