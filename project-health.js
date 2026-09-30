@@ -951,7 +951,7 @@
         ['Neon',p.links?.neon],
         [p.id==='state'?'State eval details':p.id==='tastemake'?'Recommendation checks':'Game checks',p.links?.quality]
       ].filter(item=>item[1]);
-      linksMenu.innerHTML=links.map(([label,url])=>'<a href="'+esc(url)+'" target="_blank" rel="noopener noreferrer">'+esc(label)+'</a>').join('');
+      linksMenu.innerHTML='<button type="button" data-open-systems>Systems &amp; connections</button>'+links.map(([label,url])=>'<a href="'+esc(url)+'" target="_blank" rel="noopener noreferrer">'+esc(label)+'</a>').join('');
     }
     const projectCheckButton=doc.getElementById('projectCheckButton');
     const headerRunChecksButton=doc.getElementById('headerRunChecksButton');
@@ -968,9 +968,11 @@
     if(headerRunChecksButton){
       const activeEvalRun=data.qualityRun;
       const baseLabel=run?.button_label||(p.id==='state'?'Run AI evals':p.id==='tastemake'?'Run recommendation checks':'Run game checks');
-      headerRunChecksButton.hidden=!run?.configured;
-      headerRunChecksButton.disabled=!!activeEvalRun;
+      const runInfoLoading=!run&&(!data.fresh||pending.has('Run controls'));
+      headerRunChecksButton.hidden=false;
+      headerRunChecksButton.disabled=!!activeEvalRun||runInfoLoading||!!(run&&!run.configured);
       headerRunChecksButton.textContent=activeEvalRun?'Checks running…':data.qualityRunCompletedAt?'View quality results':baseLabel;
+      headerRunChecksButton.title=runInfoLoading?'Checking run availability…':(run&&!run.configured?'Run controls are not configured for this project.':'');
       headerRunChecksButton.classList.toggle('primary',!!shouldRunChecksFirst);
       headerRunChecksButton.style.order=shouldRunChecksFirst?'1':'2';
     }
