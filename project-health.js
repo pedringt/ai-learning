@@ -1652,15 +1652,11 @@
     }
     function renderSummary(){
       const fresh=state.filter(item=>item?.fresh);
-      const incidentCount=unreviewedIncidents().length;
       const actionCount=fresh.filter(item=>projectStatus(item).key==='action').length;
       const watchCount=fresh.filter(item=>projectStatus(item).key==='watch').length;
-      const checked=fresh.map(item=>item.checkedAt).filter(Boolean).sort().pop();
-      summary.innerHTML='<button class="summary-chip summary-action '+(summaryFilter==='all'?'active':'')+'" type="button" data-summary-filter="all"><strong>'+PROJECTS.length+'</strong> projects</button>'+
-        (actionCount?'<button class="summary-chip summary-action incident '+(summaryFilter==='action'?'active':'')+'" type="button" data-summary-filter="action"><strong>'+actionCount+'</strong> need action</button>':'')+
-        (watchCount?'<button class="summary-chip summary-action open '+(summaryFilter==='watch'?'active':'')+'" type="button" data-summary-filter="watch"><strong>'+watchCount+'</strong> watch</button>':'')+
-        (incidentCount?'<button class="summary-chip summary-action incident" type="button" data-summary-incidents><strong>'+incidentCount+'</strong> '+(incidentCount===1?'incident':'incidents')+'</button>':'')+
-        '<span class="summary-chip summary-meta"><strong>'+esc(checked?relativeAge(checked):'checking')+'</strong> last updated</span>';
+      summary.innerHTML=
+        (actionCount?'<button class="summary-chip summary-action incident '+(summaryFilter==='action'?'active':'')+'" type="button" data-summary-filter="action"><strong>'+actionCount+'</strong> '+(actionCount===1?'needs':'need')+' attention</button>':'')+
+        (watchCount?'<button class="summary-chip summary-action open '+(summaryFilter==='watch'?'active':'')+'" type="button" data-summary-filter="watch"><strong>'+watchCount+'</strong> watch</button>':'');
     }
 
     function applyTabState(){
@@ -1733,7 +1729,8 @@
     summary.addEventListener('click',event=>{
       const filterButton=event.target.closest?.('[data-summary-filter]');
       if(filterButton){
-        summaryFilter=filterButton.dataset.summaryFilter||'all';
+        const requested=filterButton.dataset.summaryFilter||'all';
+        summaryFilter=summaryFilter===requested?'all':requested;
         const candidates=state.filter(item=>item?.fresh&&(summaryFilter==='all'||projectStatus(item).key===summaryFilter));
         if(summaryFilter!=='all'&&candidates.length&&!candidates.some(item=>item.project.id===activeId))select(candidates[0].project.id);
         else renderNow();
@@ -1754,12 +1751,23 @@
       if(button)setActiveTab(button.dataset.tab);
     });
     if(projectDetail)projectDetail.addEventListener('click',event=>{
+      const systemsButton=event.target.closest?.('[data-open-systems]');
+      if(systemsButton){
+        setActiveTab('overview');
+        const systems=doc.getElementById('systemsDetails');
+        if(systems)systems.open=true;
+        const menu=doc.getElementById('projectActionMenu');
+        if(menu)menu.open=false;
+        root.setTimeout(()=>systems?.scrollIntoView?.({behavior:'smooth',block:'start'}),0);
+        return;
+      }
       const target=event.target.closest?.('[data-tab-target],[data-section-target]');
       if(!target)return;
       const tab=target.dataset.tabTarget||'overview';
       setActiveTab(tab);
       if(target.dataset.sectionTarget){
         const section=doc.getElementById(target.dataset.sectionTarget);
+        if(section?.tagName==='DETAILS')section.open=true;
         root.setTimeout(()=>section?.scrollIntoView?.({behavior:'smooth',block:'start'}),0);
       }
     });
@@ -1924,10 +1932,8 @@
       await Promise.all(jobs);
       if(generation!==refreshGeneration)return;
       state.forEach(reconcileInvestigationHistory);
-      const errors=state.flatMap(item=>item.errors.map(error=>item.project.name+': '+error));
       persist();
-      const coverageGapCount=errors.length;
-      status.innerHTML='<strong>Updated just now</strong>'+(coverageGapCount?' · '+coverageGapCount+' coverage '+(coverageGapCount===1?'gap':'gaps'):'')+(errors.length?' · some signals unavailable':'');
+      status.innerHTML='<strong>Updated just now</strong>';
       refresh.disabled=false;
       ensureDetails(activeId);
     }
