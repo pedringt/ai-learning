@@ -864,15 +864,17 @@
         const total=runs.reduce((n,item)=>n+Number(item?.total||0),0);
         const severe=runs.reduce((n,item)=>n+Number(item?.high_severity_failures||0),0);
         const qa=qualityAttention(q);
-        const staleContract=stateEvalResultsStale(q);
+        const staleResults=stateEvalResultsStale(q);
         const cards=[];
         if(review?.interpretation_accuracy!=null) cards.push(stateEvalCard('Understood updates correctly',percent(review.interpretation_accuracy),'Did State interpret the project update the way the product expected?',evalTrend(q.recent,'review_interpretation')));
         if(ask?.ask_grounding!=null) cards.push(stateEvalCard('Answers stayed supported by evidence',percent(ask.ask_grounding),'Did answers stick to known project information instead of filling gaps?',evalTrend(q.recent,'ask_quality')));
         if(ask?.authority_accuracy!=null) cards.push(stateEvalCard('Respected decision authority',percent(ask.authority_accuracy),'Did State keep proposed changes separate from approved project truth?',''));
         if(ask?.uncertainty_accuracy!=null) cards.push(stateEvalCard('Handled uncertainty clearly',percent(ask.uncertainty_accuracy),'Did State say when the available evidence was not enough?',''));
         qualityHtml='<h3>Product quality · AI checks</h3>'+
-          '<div class="eval-overview"><div><strong>'+esc(qa.title)+'</strong><span>'+(latestDate?'Last checked '+esc(fmtDate(latestDate))+' · ':'')+(staleContract?'Recorded under the previous eval contract · rerun required':esc(total||'—')+' scenarios · '+esc(severe)+' high-impact failures')+'</span></div></div>'+
-          '<div class="eval-grid">'+cards.join('')+'</div>'+stateEvalHistory(q);
+          '<div class="eval-overview"><div><strong>'+esc(qa.title)+'</strong><span>'+(latestDate?'Last checked '+esc(fmtDate(latestDate))+' · ':'')+(staleResults?'Previous run · rerun required':esc(total||'—')+' scenarios · '+esc(severe)+' high-impact failures')+'</span></div></div>'+
+          (staleResults
+            ?'<div class="run-callout stale-quality-summary"><strong>What to know from the last run</strong><p>The previous run recorded '+esc(severe)+' high-impact miss'+(severe===1?'':'es')+', but '+esc(stateEvalStaleReason(q).toLowerCase())+' Run the checks again before treating those scores as current.</p></div>'
+            :'<div class="eval-grid">'+cards.join('')+'</div>')+stateEvalHistory(q);
       }
       qualityHtml+='<p class="footnote"><a href="/state-evals">View eval details →</a></p>';
       const activeEvalRun=data.qualityRun;
@@ -1247,9 +1249,11 @@
       :'Unavailable';
     const issueText=notices.length?notices.map(item=>'- '+item.title+': '+item.detail).join('\n'):'- Nothing currently needs action.';
     const investigation=data?.investigation;
-    const prior=investigation?.handoff
-      ?'The latest drawer state is already a handoff preview.'
-      :investigation?.report
+    const prior=investigation?.qualityInvestigation&&data?.project?.quality==='state'&&stateEvalResultsStale(data.quality)
+      ?'Historical AI-quality investigation from the previous State behavior. See eval details if you need the old scenario-level evidence; rerun the checks before treating it as current.'
+      :investigation?.handoff
+        ?'The latest drawer state is already a handoff preview.'
+        :investigation?.report
         ?investigation.report
         :investigation?.quickCheck
           ?[
@@ -1260,6 +1264,7 @@
           :investigation?.error
             ?'Investigation unavailable: '+investigation.error
             :'No focused investigation has been added to this handoff yet.';
+    const handoffReviewIsDependency=/^(after|when|once)\b|next recorded/i.test(String(data.project.nextReview||''));
     const handoffText=[
       data.project.name+' project handoff',
       '',
@@ -1281,7 +1286,7 @@
       'Next decision',
       data.project.nextDecision,
       '',
-      'Next review',
+      handoffReviewIsDependency?'Waiting on':'Next review',
       data.project.nextReview,
       '',
       'Generated from Project Health. Review before sharing or acting on it.'
