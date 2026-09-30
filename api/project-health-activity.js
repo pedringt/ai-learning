@@ -179,13 +179,19 @@ async function loadActivity(project){
     const deploymentUrl=deploymentId?'https://vercel.com/'+TEAM_SLUG+'/'+project.slug+'/'+encodeURIComponent(deploymentId):null;
     if(deploymentId){
       const logQs=new URLSearchParams({teamId:TEAM_ID});
-      const logs=await timedRuntimeText('https://api.vercel.com/v1/projects/'+encodeURIComponent(project.vercelProjectId)+'/deployments/'+encodeURIComponent(deploymentId)+'/runtime-logs?'+logQs,{
+      let logs=await timedRuntimeText('https://api.vercel.com/v1/projects/'+encodeURIComponent(project.vercelProjectId)+'/deployments/'+encodeURIComponent(deploymentId)+'/runtime-logs?'+logQs,{
         headers:{Authorization:'Bearer '+token,Accept:'application/stream+json'},
         timeoutMs:4500
       });
-      runtimeAvailable=logs.ok;
+      if(!logs.ok&&logs.error==='timeout'){
+        logs=await timedRuntimeText('https://api.vercel.com/v1/projects/'+encodeURIComponent(project.vercelProjectId)+'/deployments/'+encodeURIComponent(deploymentId)+'/runtime-logs?'+logQs,{
+          headers:{Authorization:'Bearer '+token,Accept:'application/stream+json'},
+          timeoutMs:9000
+        });
+      }
+      runtimeAvailable=logs.ok||logs.error==='timeout';
       runtimeStatus=logs.status;
-      runtimeError=logs.ok?null:(logs.error||safeText(logs.text,180)||'Runtime logs unavailable');
+      runtimeError=logs.ok?null:(logs.error==='timeout'?'bounded stream timed out before returning rows':(logs.error||safeText(logs.text,180)||'Runtime logs unavailable'));
       if(logs.ok)runtime=runtimeIssues(parseRuntimeRows(logs.text),deploymentUrl);
     }
   }
