@@ -152,7 +152,7 @@ assert.strictEqual(H.stateEvalResultsStale(behaviorStaleQuality),true);
 assert.match(H.qualityAttention(behaviorStaleQuality).detail,/behavior these checks measure changed/i);
 const behaviorStaleInvestigation=H.qualityInvestigation({project:H.PROJECTS[0],quality:behaviorStaleQuality});
 assert.strictEqual(behaviorStaleInvestigation.staleEvalBehavior,true);
-assert.match(behaviorStaleInvestigation.report,/old scores no longer describe the current product/i);
+assert.match(behaviorStaleInvestigation.report,/recorded failures are historical and should not be treated as current product failures/i);
 
 const duplicateCheckQuality=H.normalizeQuality({
   controlled_evals:{
