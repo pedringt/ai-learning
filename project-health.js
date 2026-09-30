@@ -253,8 +253,8 @@
   }
   function setupGaps(data){
     const gaps=[],p=data.project,platform=data.platform,run=data.runInfo,ai=platform?.aiTelemetry;
-    if(platform?.analytics?.configured===false) gaps.push({label:'Usage analytics',detail:analyticsGapDetail(platform.analytics)});
-    else if(platform?.analytics?.configured&&!platform?.analytics?.available&&!pendingSet(data).has('Analytics')) gaps.push({label:'Usage analytics',detail:analyticsGapDetail(platform.analytics)});
+    if(platform?.analytics?.configured===false) gaps.push({label:'Site analytics',detail:analyticsGapDetail(platform.analytics)});
+    else if(platform?.analytics?.configured&&!platform?.analytics?.available&&!pendingSet(data).has('Analytics')) gaps.push({label:'Site analytics',detail:analyticsGapDetail(platform.analytics)});
     if(data?.activity?.available&&data.activity?.runtime?.available===false){
       const status=Number(data.activity.runtime.status||0);
       const detail=[401,403].includes(status)
@@ -723,15 +723,20 @@
       openPullRequests:Array.isArray(saved.openPullRequests)?saved.openPullRequests.length:0
     };
   }
+  function healthStateLabel(kind){
+    return kind==='bad'?'Needs attention':kind==='warn'?'Watch':kind==='good'?'Healthy':kind==='available'?'Data available':'Unknown';
+  }
   function meaningfulChanges(data){
     const before=data?.lastVisit;
     if(!before)return[];
     const items=[];
     if(before.deliverySha&&data.delivery?.sha&&before.deliverySha!==data.delivery.sha){
-      items.push({title:'New production release',detail:commitTitle(data.delivery.message)+' · '+shortSha(data.delivery.sha),observedAt:data.delivery.updatedAt||data.checkedAt,tab:'overview',section:'deliveryPanel'});
+      items.push({title:'New production release',detail:commitTitle(data.delivery.message),observedAt:data.delivery.updatedAt||data.checkedAt,tab:'overview',section:'deliveryPanel'});
     }
     if(before.deliveryKind&&data.delivery?.vercel?.kind&&before.deliveryKind!==data.delivery.vercel.kind){
-      items.push({title:'Delivery status changed',detail:(before.deliveryKind||'unknown')+' → '+data.delivery.vercel.kind,observedAt:data.delivery.updatedAt||data.checkedAt,tab:'overview',section:'deliveryPanel'});
+      const previousDelivery=before.deliveryKind||'unknown',currentDelivery=data.delivery.vercel.kind;
+      const improved=currentDelivery==='good'&&previousDelivery!=='good';
+      items.push({title:improved?'Delivery status improved':'Delivery status changed',detail:healthStateLabel(previousDelivery)+' → '+healthStateLabel(currentDelivery),observedAt:data.delivery.updatedAt||data.checkedAt,tab:'overview',section:'deliveryPanel'});
     }
     const currentQ=qualitySnapshot(data),oldQ=before.quality||{};
     if(currentQ.reviewAt&&oldQ.reviewAt&&String(currentQ.reviewAt)!==String(oldQ.reviewAt)){
@@ -747,11 +752,11 @@
     }
     const analytics=data.platform?.analytics;
     if(before.analyticsAvailable!==null&&analytics&&before.analyticsAvailable!==analytics.available){
-      items.push({title:'Analytics availability changed',detail:(before.analyticsAvailable?'Available':'Unavailable')+' → '+(analytics.available?'Available':'Unavailable'),observedAt:data.detailCheckedAt||data.checkedAt,tab:'overview',section:'systemsDetails'});
+      items.push({title:'Site analytics availability changed',detail:(before.analyticsAvailable?'Available':'Unavailable')+' → '+(analytics.available?'Available':'Unavailable'),observedAt:data.detailCheckedAt||data.checkedAt,tab:'overview',section:'systemsDetails'});
     }
     if(analytics?.available&&before.analyticsPageviews!=null&&Number(analytics.pageviews)!==Number(before.analyticsPageviews)){
       const diff=Number(analytics.pageviews)-Number(before.analyticsPageviews);
-      items.push({title:'Usage changed',detail:(diff>=0?'+':'')+diff+' page views in the current 30-day window',observedAt:data.detailCheckedAt||data.checkedAt,tab:'overview',section:'analyticsPanel'});
+      items.push({title:'Site analytics changed',detail:(diff>=0?'+':'')+diff+' page views in the current 30-day window',observedAt:data.detailCheckedAt||data.checkedAt,tab:'overview',section:'analyticsPanel'});
     }
     const prCount=Array.isArray(data.openPullRequests)?data.openPullRequests.length:0;
     if(Number(before.openPullRequests||0)!==prCount){
@@ -1043,17 +1048,24 @@
       {label:'Production',kind:runtimeStatus.kind,status:runtimeStatus.label,detail:runtimeStatus.detail,tab:'overview',section:'deliveryPanel',fresh:freshnessMeta(data.detailCheckedAt||d?.updatedAt||data.checkedAt,data.checkedAt,24)},
       {label:'Release pipeline',kind:overviewDelivery?.kind||'unknown',detail:overviewDelivery?.title||'Release status unavailable',tab:'overview',section:'deliveryPanel',fresh:freshnessMeta(d?.updatedAt,data.checkedAt,24)},
       ...(overviewInfra&&['bad','warn'].includes(overviewInfra.kind)?[{label:'Infrastructure',kind:overviewInfra.kind,detail:overviewInfra.title,tab:'overview',section:'systemsDetails',fresh:freshnessMeta(data.detailCheckedAt||data.checkedAt,data.checkedAt,6)}]:[]),
-      {label:'Usage',kind:pending.has('Analytics')?'unknown':aSummary?.available?'available':'unknown',status:aSummary?.available?'Data available':null,detail:pending.has('Analytics')?'Checking usage…':aSummary?.available?((aSummary.visitors??0)+' visitors · '+(aSummary.pageviews??0)+' page views · 30d'):(aSummary?.configured?'Connected, but comparison data is not available yet':'Usage analytics are not connected'),tab:'overview',section:aSummary?.available?'analyticsPanel':'systemsDetails',fresh:freshnessMeta(data.detailCheckedAt||data.checkedAt,data.checkedAt,24)}
+      {label:'Site analytics',kind:pending.has('Analytics')?'unknown':aSummary?.available?'available':'unknown',status:aSummary?.available?'Data available':null,detail:pending.has('Analytics')?'Checking site analytics…':aSummary?.available?((aSummary.visitors??0)+' visitors · '+(aSummary.pageviews??0)+' page views · 30d'):(aSummary?.configured?'Connected, but comparison data is not available yet':'Site analytics are not connected'),tab:'overview',section:aSummary?.available?'analyticsPanel':'systemsDetails',fresh:freshnessMeta(data.detailCheckedAt||data.checkedAt,data.checkedAt,24)}
     ];
     const changes=meaningfulChanges(data);
     const sinceLabel=data.lastVisit?.savedAt?fmtDate(data.lastVisit.savedAt):'your previous saved visit';
     const changesPanel=doc.getElementById('changesPanel');
     changesPanel.classList.toggle('compact-zero',!changes.length);
     changesPanel.innerHTML=changes.length
-      ?'<div class="panel-title-row"><div><h3>Changed since last visit</h3><p class="panel-copy">Compared with '+esc(sinceLabel)+'. Only meaningful changes are shown.</p></div><span class="readiness-pill watch">'+esc(changes.length)+' change'+(changes.length===1?'':'s')+'</span></div><div class="change-list" style="margin-top:8px">'+changes.slice(0,8).map(item=>'<button class="change-item" type="button" data-tab-target="'+esc(item.tab||'activity')+'"'+(item.section?' data-section-target="'+esc(item.section)+'"':'')+'><span class="change-dot"></span><div><strong>'+esc(item.title)+'</strong><span>'+esc(item.detail)+'</span></div></button>').join('')+'</div>'
+      ?'<div class="panel-title-row"><div><h3>Changed since last visit</h3><p class="panel-copy">Compared with '+esc(sinceLabel)+'. Only meaningful changes are shown.</p></div><span class="readiness-pill watch">'+esc(changes.length)+' change'+(changes.length===1?'':'s')+'</span></div><div class="change-list" style="margin-top:6px">'+changes.slice(0,8).map(item=>'<button class="change-item" type="button" data-tab-target="'+esc(item.tab||'activity')+'"'+(item.section?' data-section-target="'+esc(item.section)+'"':'')+'><span class="change-dot"></span><div><div class="change-item-head"><strong>'+esc(item.title)+'</strong><span class="change-time">'+esc(relativeAge(item.observedAt))+'</span></div><span class="change-detail">'+esc(item.detail)+'</span></div></button>').join('')+'</div>'
       :'<div class="changes-zero" role="status"><span aria-hidden="true">✓</span><strong>No meaningful changes since your last visit</strong></div>';
     doc.getElementById('overviewHealthPanel').innerHTML='<div class="panel-title-row"><h3>Project health</h3></div>'+
-      '<div class="overview-health" style="margin-top:6px">'+healthRows.map(item=>'<button class="overview-health-row" type="button" data-tab-target="'+esc(item.tab)+'"'+(item.section?' data-section-target="'+esc(item.section)+'"':'')+'><div><strong>'+esc(item.label)+'</strong><span class="health-status '+esc(item.kind)+'">'+esc(item.status||statusLabel(item.kind))+'</span><span class="health-detail">'+esc(item.detail)+'</span><span class="signal-meta '+(item.fresh?.stale?'stale':'')+'">'+esc(item.fresh?.label||'Freshness unknown')+'</span></div><span class="health-chevron" aria-hidden="true">›</span></button>').join('')+'</div>';
+      '<div class="overview-health" style="margin-top:10px">'+healthRows.map(item=>{
+        const showFreshness=item.fresh?.stale||['bad','warn','unknown'].includes(item.kind);
+        return '<button class="overview-health-row health-card '+esc(item.kind||'unknown')+'" type="button" data-tab-target="'+esc(item.tab)+'"'+(item.section?' data-section-target="'+esc(item.section)+'"':'')+'>'+
+          '<div class="health-card-head"><strong>'+esc(item.label)+'</strong><span class="health-status '+esc(item.kind)+'">'+esc(item.status||statusLabel(item.kind))+'</span></div>'+
+          '<span class="health-detail">'+esc(item.detail)+'</span>'+
+          (showFreshness?'<span class="signal-meta '+(item.fresh?.stale?'stale':'')+'">'+esc(item.fresh?.label||'Freshness unknown')+'</span>':'')+
+        '</button>';
+      }).join('')+'</div>';
 
     // Product quality / evals
     let qualityHtml='';
@@ -1181,7 +1193,7 @@
           '<div class="trend '+visitorClass+'"><strong>Visitors:</strong> '+esc(visitorTrend)+'</div>'+
           '<div class="trend '+pageClass+'"><strong>Page views:</strong> '+esc(pageTrend)+'</div>'+
           '</div>';
-      doc.getElementById('analyticsPanel').innerHTML='<h3>Usage</h3><div class="metrics" style="margin-top:12px">'+metric(a.visitors??'—','Visitors · 30d')+metric(a.pageviews??'—','Page views · 30d')+'</div>'+trends;
+      doc.getElementById('analyticsPanel').innerHTML='<h3>Site analytics</h3><div class="metrics" style="margin-top:12px">'+metric(a.visitors??'—','Visitors · 30d')+metric(a.pageviews??'—','Page views · 30d')+'</div>'+trends;
     }else{
       analyticsPanel.innerHTML='';
     }
@@ -1247,7 +1259,7 @@
     const connections=[];
     connections.push({label:'Code + deployments',value:d?'Connected':'Unavailable'});
     connections.push({label:'Backend health',value:r?.configured?'Connected':(p.id==='state'?'Unavailable':'Not used')});
-    connections.push({label:'Usage analytics',value:analyticsConnectionValue(platform,pending.has('Analytics'))});
+    connections.push({label:'Site analytics',value:analyticsConnectionValue(platform,pending.has('Analytics'))});
     connections.push({label:'Database health',value:n?.available?'Connected':(p.id==='state'?'Not connected':'Not used')});
     connections.push({label:'AI operations',value:ai?.not_applicable?'Not used':ai?.available?'Connected':pending.has('AI operations')?'Checking…':'Not connected'});
     if(p.id==='state'){
