@@ -919,7 +919,7 @@
 
     const overviewQuality=p.quality==='state'?qualityAttention(q):externalQualityAttention(externalQ);
     const overviewDelivery=deliveryAttention(d);
-    const overviewInfra=infrastructureAttention(data);
+    const overviewInfra=infrastructureAttention(platform);
     const runtimeStatus=productionRuntime(data);
     const aSummary=platform?.analytics;
     const statusLabel=kind=>kind==='bad'?'Needs attention':kind==='warn'?'Watch':kind==='good'?'Healthy':kind==='available'?'Data available':'Unknown';
@@ -928,10 +928,10 @@
       :(externalQ?.ci?.updated_at||externalQ?.recorded?.updated_at||data.checkedAt);
     const healthRows=[
       {label:'AI quality',kind:overviewQuality?.kind||'unknown',detail:overviewQuality?.title||'Quality status unavailable',tab:'ai-quality',fresh:freshnessMeta(qualityTime,data.checkedAt,72)},
-      {label:'Production',kind:runtimeStatus.kind,detail:runtimeStatus.detail,tab:'delivery',fresh:freshnessMeta(data.detailCheckedAt||d?.updatedAt||data.checkedAt,data.checkedAt,24)},
+      {label:'Production',kind:runtimeStatus.kind,status:runtimeStatus.label,detail:runtimeStatus.detail,tab:'delivery',fresh:freshnessMeta(data.detailCheckedAt||d?.updatedAt||data.checkedAt,data.checkedAt,24)},
       {label:'Release pipeline',kind:overviewDelivery?.kind||'unknown',detail:overviewDelivery?.title||'Release status unavailable',tab:'delivery',fresh:freshnessMeta(d?.updatedAt,data.checkedAt,24)},
       {label:'Infrastructure',kind:overviewInfra?.kind||'good',detail:overviewInfra?.title||'Production services healthy',tab:'infra',fresh:freshnessMeta(data.detailCheckedAt||data.checkedAt,data.checkedAt,6)},
-      {label:'Usage',kind:pending.has('Analytics')?'unknown':aSummary?.available?'available':'unknown',detail:pending.has('Analytics')?'Checking usage…':aSummary?.available?((aSummary.visitors??0)+' visitors · '+(aSummary.pageviews??0)+' page views · 30d'):(aSummary?.configured?'Connected, but comparison data is not available yet':'Usage analytics are not connected'),tab:'activity',fresh:freshnessMeta(data.detailCheckedAt||data.checkedAt,data.checkedAt,24)}
+      {label:'Usage',kind:pending.has('Analytics')?'unknown':aSummary?.available?'available':'unknown',status:aSummary?.available?'Data available':null,detail:pending.has('Analytics')?'Checking usage…':aSummary?.available?((aSummary.visitors??0)+' visitors · '+(aSummary.pageviews??0)+' page views · 30d'):(aSummary?.configured?'Connected, but comparison data is not available yet':'Usage analytics are not connected'),tab:'activity',fresh:freshnessMeta(data.detailCheckedAt||data.checkedAt,data.checkedAt,24)}
     ];
     const changes=meaningfulChanges(data);
     const sinceLabel=data.lastVisit?.savedAt?fmtDate(data.lastVisit.savedAt):'your previous saved visit';
@@ -942,7 +942,7 @@
       :'<button class="changes-zero" type="button" data-tab-target="activity"><span aria-hidden="true">✓</span><strong>No meaningful changes since your last visit</strong></button>';
     const overviewGaps=setupGaps(data);
     doc.getElementById('overviewHealthPanel').innerHTML='<div class="panel-title-row"><h3>Project health</h3>'+(overviewGaps.length?'<span class="readiness-pill watch">'+esc(overviewGaps.length)+' coverage '+(overviewGaps.length===1?'gap':'gaps')+'</span>':'')+'</div>'+
-      '<div class="overview-health" style="margin-top:6px">'+healthRows.map(item=>'<button class="overview-health-row" type="button" data-tab-target="'+esc(item.tab)+'"><div><strong>'+esc(item.label)+'</strong><span class="health-status '+esc(item.kind)+'">'+esc(statusLabel(item.kind))+'</span><span class="health-detail">'+esc(item.detail)+'</span><span class="signal-meta '+(item.fresh?.stale?'stale':'')+'">'+esc(item.fresh?.label||'Freshness unknown')+'</span></div><span class="health-chevron" aria-hidden="true">›</span></button>').join('')+'</div>';
+      '<div class="overview-health" style="margin-top:6px">'+healthRows.map(item=>'<button class="overview-health-row" type="button" data-tab-target="'+esc(item.tab)+'"><div><strong>'+esc(item.label)+'</strong><span class="health-status '+esc(item.kind)+'">'+esc(item.status||statusLabel(item.kind))+'</span><span class="health-detail">'+esc(item.detail)+'</span><span class="signal-meta '+(item.fresh?.stale?'stale':'')+'">'+esc(item.fresh?.label||'Freshness unknown')+'</span></div><span class="health-chevron" aria-hidden="true">›</span></button>').join('')+'</div>';
 
     // Product quality / evals
     let qualityHtml='';
@@ -1066,7 +1066,7 @@
     doc.getElementById('deliveryPanel').innerHTML='<div class="panel-title-row"><h3>Delivery</h3><span class="readiness-pill '+esc(readiness.label.toLowerCase())+'">Release '+esc(readiness.label)+'</span></div>'+
       '<div class="delivery-split" style="margin-top:12px">'+
         '<div class="delivery-concept"><span class="activity-type">Runtime</span><strong>Current production</strong><span class="delivery-status '+esc(runtime.kind)+'">'+esc(runtime.label)+'</span><p>'+esc(runtime.detail)+'</p></div>'+
-        '<div class="delivery-concept '+deliveryClass+'"><span class="activity-type">Release pipeline</span><strong>'+esc(pipelineText)+'</strong><span class="delivery-status '+esc(deliveryKind)+'">'+esc(deliveryKind==='good'?'Healthy':deliveryKind==='bad'?'Attention needed':deliveryKind==='warn'?'Watch':'Unknown')+'</span><p>'+esc(readiness.detail)+'</p></div>'+
+        '<div class="delivery-concept '+deliveryClass+'"><span class="activity-type">Release pipeline</span><strong>'+esc(pipelineText)+'</strong><span class="delivery-status '+esc(deliveryKind)+'">'+esc(deliveryKind==='good'?'Healthy':deliveryKind==='bad'?'Attention needed':deliveryKind==='warn'?'Watch':'Unknown')+'</span><p>'+esc(deliveryAttention(d).detail)+'</p></div>'+
       '</div>'+
       '<div class="delivery-environments">'+environmentBlock('Latest production release attempt',d)+(s?environmentBlock('Staging release',s):'')+'</div>'+
       '<div class="quality-actions">'+prodInvestigate+checkInvestigate+'</div>';
@@ -1364,7 +1364,7 @@
       prior,
       '',
       'Next decision',
-      data.project.nextDecision,
+      operationalNextDecision(data),
       '',
       handoffReviewIsDependency?'Waiting on':'Next review',
       data.project.nextReview,
@@ -1763,7 +1763,7 @@
       state.forEach(reconcileInvestigationHistory);
       const errors=state.flatMap(item=>item.errors.map(error=>item.project.name+': '+error));
       persist();
-      const coverageGapCount=state.reduce((n,item)=>n+setupGaps(item).length,0);
+      const coverageGapCount=errors.length;
       status.innerHTML='<strong>Updated just now</strong>'+(coverageGapCount?' · '+coverageGapCount+' coverage '+(coverageGapCount===1?'gap':'gaps'):'')+(errors.length?' · some signals unavailable':'');
       refresh.disabled=false;
       ensureDetails(activeId);
@@ -1845,5 +1845,5 @@
     }
   }
 
-  return {PROJECTS,pageEnvironment,vercelFromStatus,deliveryHealth,commitTitle,githubCommitUrl,pullRequestNumber,githubPullRequestUrl,changeUrl,normalizeQuality,qualityAttention,externalQualityAttention,deliveryAttention,infrastructureAttention,allAttentionSignals,attentionItems,overallAttention,productOpenItems,projectStatus,setupGaps,releaseReadiness,projectQualityLabel,evalScore,percent,shortSha,pendingSet,mergePlatform,emptyProjectData,safeExternalQualitySnapshot,serializeProjectData,hydrateProjectData,loadProject,loadProjectDetails,infraCardLabel,analyticsConnectionValue,analyticsGapDetail,analyticsLabel,relativeAge,changedSinceVisit,meaningfulChanges,freshnessMeta,stateEvalContractStale,stateEvalBehaviorStale,stateEvalResultsStale,stateEvalStaleReason,trendText,activityReviewItems,progressText,quickProjectCheck,evalRunComplete,qualityInvestigation,projectHandoff,init};
+  return {PROJECTS,pageEnvironment,vercelFromStatus,deliveryHealth,commitTitle,githubCommitUrl,pullRequestNumber,githubPullRequestUrl,changeUrl,normalizeQuality,qualityAttention,externalQualityAttention,deliveryAttention,infrastructureAttention,allAttentionSignals,attentionItems,overallAttention,productOpenItems,projectStatus,setupGaps,releaseReadiness,productionRuntime,operationalNextDecision,qualityFailureClassSummary,activityTimelineItems,projectQualityLabel,evalScore,percent,shortSha,pendingSet,mergePlatform,emptyProjectData,safeExternalQualitySnapshot,serializeProjectData,hydrateProjectData,loadProject,loadProjectDetails,infraCardLabel,analyticsConnectionValue,analyticsGapDetail,analyticsLabel,relativeAge,changedSinceVisit,meaningfulChanges,freshnessMeta,stateEvalContractStale,stateEvalBehaviorStale,stateEvalResultsStale,stateEvalStaleReason,trendText,activityReviewItems,progressText,quickProjectCheck,evalRunComplete,qualityInvestigation,projectHandoff,init};
 });
