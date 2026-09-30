@@ -142,7 +142,10 @@
     if(data.project.quality==='state'){
       if(!data.quality&&!data.fresh)return items;
       const q=qualityAttention(data.quality);
-      if(['bad','warn'].includes(q.kind)) items.push({...q,category:'quality',owner:q.owner||'Product',nextAction:q.nextAction||'Review the latest quality evidence.'});
+      if(['bad','warn'].includes(q.kind)){
+        const noRecordedRuns=![q.review,q.ask].filter(Boolean).length;
+        items.push({...q,category:'quality',action:noRecordedRuns||stateEvalContractStale(q)?'run-ai-checks':'investigate-quality',owner:q.owner||'Product',nextAction:q.nextAction||(noRecordedRuns?'Run the controlled AI quality checks.':'Review the latest quality evidence.')});
+      }
     }else{
       if(!data.externalQuality&&!data.fresh)return items;
       const q=externalQualityAttention(data.externalQuality);
@@ -614,6 +617,7 @@
     const meta=(item.owner||item.nextAction)?'<div class="attention-meta">'+(item.owner?'Owner: '+esc(item.owner):'')+(item.owner&&item.nextAction?' · ':'')+(item.nextAction?'Next: '+esc(item.nextAction):'')+'</div>':'';
     const content='<strong>'+esc(item.title)+'</strong><p>'+esc(item.detail)+'</p>'+meta;
     if(item.category==='quality'&&['bad','warn'].includes(item.kind)){
+      if(item.action==='run-ai-checks') return '<button class="attention attention-action '+esc(item.kind||'')+'" type="button" data-attention-action="run-ai-checks" aria-label="Run AI checks">'+content+'<span class="attention-action-label">Run AI checks →</span></button>';
       return '<button class="attention attention-action '+esc(item.kind||'')+'" type="button" data-attention-action="ai-quality" aria-label="Investigate '+esc(item.title)+'">'+content+'<span class="attention-action-label">Investigate this issue →</span></button>';
     }
     if(item.category==='delivery'){
@@ -753,16 +757,24 @@
     doc.getElementById('detailCopy').textContent=p.description;
     doc.getElementById('repoLink').href=repoUrl(p.repo);
     const projectCheckButton=doc.getElementById('projectCheckButton');
+    const headerRunChecksButton=doc.getElementById('headerRunChecksButton');
+    const currentQuality=p.quality==='state'?qualityAttention(q):externalQualityAttention(externalQ);
+    const noRecordedStateRuns=p.id==='state'&&![q?.review,q?.ask].filter(Boolean).length;
+    const shouldRunChecksFirst=p.id==='state'&&run?.configured&&(noRecordedStateRuns||stateEvalContractStale(q));
+    const shouldInvestigateFirst=currentQuality?.kind==='bad'||deliveryAttention(d).kind==='bad';
     if(projectCheckButton){
       projectCheckButton.disabled=!!data.investigation?.loading;
-      projectCheckButton.textContent=data.investigation?.loading?'Checking project…':data.investigation?'View investigation':'Investigate project';
+      projectCheckButton.textContent=data.investigation?.loading?'Checking project…':data.investigation?'View investigation':shouldInvestigateFirst?'Investigate failure':'Investigate project';
+      projectCheckButton.classList.toggle('primary',!!shouldInvestigateFirst&&!shouldRunChecksFirst);
+      projectCheckButton.style.order=shouldRunChecksFirst?'2':'1';
     }
-    const headerRunChecksButton=doc.getElementById('headerRunChecksButton');
     if(headerRunChecksButton){
       const activeEvalRun=data.qualityRun;
       headerRunChecksButton.hidden=!(p.id==='state'&&run?.configured);
       headerRunChecksButton.disabled=!!activeEvalRun;
       headerRunChecksButton.textContent=activeEvalRun?'AI checks running…':data.qualityRunCompletedAt?'View AI results':'Run AI checks';
+      headerRunChecksButton.classList.toggle('primary',!!shouldRunChecksFirst);
+      headerRunChecksButton.style.order=shouldRunChecksFirst?'1':'2';
     }
     const investigationPanel=doc.getElementById('investigationPanel');
     const investigationDrawerTitle=doc.getElementById('investigationDrawerTitle');
@@ -797,13 +809,13 @@
         ?'<div class="attention-list">'+actionable.map(item=>attentionMarkup(item)).join('')+'</div>'
         :'<div class="attention good" style="margin-top:12px"><strong>Nothing needs attention right now</strong><p>No current incident or product-quality action is open.</p></div>');
 
+    const reviewIsDependency=/^(after|when|once)\b|next recorded/i.test(String(p.nextReview||''));
     doc.getElementById('productFocusPanel').innerHTML=
-      '<h3>Product focus</h3><div class="focus-grid" style="margin-top:12px">'+
+      '<h3>Product focus</h3><div class="focus-grid" style="margin-top:10px">'+
       '<div class="focus-block"><strong>Current goal</strong><p>'+esc(p.focus)+'</p></div>'+
       '<div class="focus-block"><strong>Watching</strong><div class="evidence-list">'+p.evidence.map(item=>'<span class="evidence-chip">'+esc(item)+'</span>').join('')+'</div></div>'+
       '<div class="focus-block"><strong>Next decision</strong><p>'+esc(p.nextDecision)+'</p></div>'+
-      '<div class="focus-block"><strong>Next review</strong><p>'+esc(p.nextReview)+'</p></div>'+
-      '</div>';
+      '</div><div class="focus-followup"><strong>'+(reviewIsDependency?'Waiting on':'Next review')+'</strong><span>'+esc(p.nextReview)+'</span></div>';
 
     const overviewQuality=p.quality==='state'?qualityAttention(q):externalQualityAttention(externalQ);
     const overviewDelivery=deliveryAttention(d);
@@ -821,11 +833,14 @@
     ];
     const changes=meaningfulChanges(data);
     const sinceLabel=data.lastVisit?.savedAt?fmtDate(data.lastVisit.savedAt):'your previous saved visit';
-    doc.getElementById('changesPanel').innerHTML='<div class="panel-title-row"><div><h3>Changed since last visit</h3><p class="panel-copy">Compared with '+esc(sinceLabel)+'. Only meaningful changes are shown.</p></div><span class="readiness-pill '+(changes.length?'watch':'ready')+'">'+esc(changes.length)+' change'+(changes.length===1?'':'s')+'</span></div>'+
-      (changes.length?'<div class="change-list" style="margin-top:10px">'+changes.slice(0,8).map(item=>'<button class="change-item" type="button" data-tab-target="'+esc(item.tab||'activity')+'"><span class="change-dot"></span><div><strong>'+esc(item.title)+'</strong><span>'+esc(item.detail)+'</span></div></button>').join('')+'</div>':'<div class="empty" style="margin-top:10px">No meaningful changes detected since the previous saved visit.</div>');
+    const changesPanel=doc.getElementById('changesPanel');
+    changesPanel.classList.toggle('compact-zero',!changes.length);
+    changesPanel.innerHTML=changes.length
+      ?'<div class="panel-title-row"><div><h3>Changed since last visit</h3><p class="panel-copy">Compared with '+esc(sinceLabel)+'. Only meaningful changes are shown.</p></div><span class="readiness-pill watch">'+esc(changes.length)+' change'+(changes.length===1?'':'s')+'</span></div><div class="change-list" style="margin-top:8px">'+changes.slice(0,8).map(item=>'<button class="change-item" type="button" data-tab-target="'+esc(item.tab||'activity')+'"><span class="change-dot"></span><div><strong>'+esc(item.title)+'</strong><span>'+esc(item.detail)+'</span></div></button>').join('')+'</div>'
+      :'<button class="changes-zero" type="button" data-tab-target="activity"><span aria-hidden="true">✓</span><strong>No meaningful changes since your last visit</strong></button>';
     const overviewGaps=setupGaps(data);
     doc.getElementById('overviewHealthPanel').innerHTML='<div class="panel-title-row"><h3>Project health</h3>'+(overviewGaps.length?'<span class="readiness-pill watch">'+esc(overviewGaps.length)+' coverage '+(overviewGaps.length===1?'gap':'gaps')+'</span>':'')+'</div>'+
-      '<div class="overview-health" style="margin-top:8px">'+healthRows.map(item=>'<div class="overview-health-row"><div><strong>'+esc(item.label)+' · '+esc(statusLabel(item.kind))+'</strong><span>'+esc(item.detail)+'</span><span class="signal-meta '+(item.fresh?.stale?'stale':'')+'">'+esc(item.fresh?.label||'Freshness unknown')+'</span></div><button type="button" data-tab-target="'+esc(item.tab)+'">View</button></div>').join('')+'</div>';
+      '<div class="overview-health" style="margin-top:6px">'+healthRows.map(item=>'<button class="overview-health-row" type="button" data-tab-target="'+esc(item.tab)+'"><div><strong>'+esc(item.label)+'</strong><span class="health-status '+esc(item.kind)+'">'+esc(statusLabel(item.kind))+'</span><span class="health-detail">'+esc(item.detail)+'</span><span class="signal-meta '+(item.fresh?.stale?'stale':'')+'">'+esc(item.fresh?.label||'Freshness unknown')+'</span></div><span class="health-chevron" aria-hidden="true">›</span></button>').join('')+'</div>';
 
     // Product quality / evals
     let qualityHtml='';
@@ -896,20 +911,17 @@
     }
     doc.getElementById('qualityPanel').innerHTML=qualityHtml;
 
-    // Usage
+    // Usage only gets a standalone Overview section when there is real usage data to show.
     const a=platform?.analytics;
-    if(pending.has('Analytics')){
-      doc.getElementById('analyticsPanel').innerHTML='<h3>Usage</h3><div class="empty" style="margin-top:12px">Checking usage…</div>';
-    }else if(a?.available){
+    const analyticsPanel=doc.getElementById('analyticsPanel');
+    analyticsPanel.classList.toggle('usage-hidden',!a?.available);
+    if(a?.available){
       const visitorTrend=trendText(a.visitors_delta_pct),pageTrend=trendText(a.pageviews_delta_pct);
       const visitorClass=a.visitors_delta_pct==null?'flat':Number(a.visitors_delta_pct)>0?'up':Number(a.visitors_delta_pct)<0?'down':'flat';
       const pageClass=a.pageviews_delta_pct==null?'flat':Number(a.pageviews_delta_pct)>0?'up':Number(a.pageviews_delta_pct)<0?'down':'flat';
       doc.getElementById('analyticsPanel').innerHTML='<h3>Usage</h3><div class="metrics" style="margin-top:12px">'+metric(a.visitors??'—','Visitors · 30d')+metric(a.pageviews??'—','Page views · 30d')+'</div><div class="trend '+visitorClass+'">'+esc(visitorTrend)+'</div><div class="trend '+pageClass+'">'+esc(pageTrend)+'</div>';
     }else{
-      const usageMessage=a?.configured
-        ?(a?.status===404||/not found/i.test(String(a?.error||''))?'Connected · waiting for analytics data to arrive.':'Connected · analytics data is temporarily unavailable.')
-        :'Usage analytics are not connected yet.';
-      doc.getElementById('analyticsPanel').innerHTML='<h3>Usage</h3><div class="empty" style="margin-top:12px">'+esc(usageMessage)+'</div>';
+      analyticsPanel.innerHTML='';
     }
 
     // Chronological activity timeline across releases, evals, investigations, and open work.
@@ -1381,11 +1393,13 @@
     function renderSummary(){
       const fresh=state.filter(item=>item?.fresh);
       const incidentCount=currentIncidents().length;
-      const attentionCount=fresh.filter(item=>['action','watch'].includes(projectStatus(item).key)).length;
+      const actionCount=fresh.filter(item=>projectStatus(item).key==='action').length;
+      const watchCount=fresh.filter(item=>projectStatus(item).key==='watch').length;
       const checked=fresh.map(item=>item.checkedAt).filter(Boolean).sort().pop();
       summary.innerHTML='<span class="summary-chip"><strong>'+PROJECTS.length+'</strong> projects</span>'+
-        '<span class="summary-chip open"><strong>'+attentionCount+'</strong> need attention</span>'+
-        '<span class="summary-chip incident"><strong>'+incidentCount+'</strong> active '+(incidentCount===1?'incident':'incidents')+'</span>'+
+        (actionCount?'<span class="summary-chip incident"><strong>'+actionCount+'</strong> need action</span>':'')+
+        (watchCount?'<span class="summary-chip open"><strong>'+watchCount+'</strong> watch</span>':'')+
+        (incidentCount?'<span class="summary-chip incident"><strong>'+incidentCount+'</strong> active '+(incidentCount===1?'incident':'incidents')+'</span>':'')+
         '<span class="summary-chip"><strong>'+esc(checked?relativeAge(checked):'checking')+'</strong> last updated</span>';
     }
 
@@ -1566,6 +1580,11 @@
       const action=event.target.closest?.('[data-attention-action]');
       if(!action)return;
       const data=activeData();if(!data)return;
+      if(action.dataset.attentionAction==='run-ai-checks'){
+        const runButton=doc.getElementById('headerRunChecksButton');
+        if(runButton&&!runButton.disabled)runButton.click();
+        return;
+      }
       if(action.dataset.attentionAction==='ai-quality'){
         setActiveTab('ai-quality');
         data.investigation=qualityInvestigation(data);
