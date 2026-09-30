@@ -776,7 +776,8 @@
     }
     if(drawerCopyHandoffButton){
       const busy=!!data.investigation?.loading||!!data.investigation?.openingProtected;
-      drawerCopyHandoffButton.hidden=!data.investigation||busy;
+      const copyable=!!(data.investigation?.report||data.investigation?.quickCheck||data.investigation?.handoff);
+      drawerCopyHandoffButton.hidden=busy||!copyable;
     }
     if(drawerRunAgainButton){
       const busy=!!data.investigation?.loading||!!data.investigation?.openingProtected;
@@ -1222,7 +1223,20 @@
       ?commitTitle(data.delivery.message)+' · '+shortSha(data.delivery.sha)+' · '+fmtDate(data.delivery.updatedAt)
       :'Unavailable';
     const issueText=notices.length?notices.map(item=>'- '+item.title+': '+item.detail).join('\n'):'- Nothing currently needs action.';
-    const prior=data?.investigation?.report&&!data.investigation?.handoff?data.investigation.report:'No focused investigation has been added to this handoff yet.';
+    const investigation=data?.investigation;
+    const prior=investigation?.handoff
+      ?'The latest drawer state is already a handoff preview.'
+      :investigation?.report
+        ?investigation.report
+        :investigation?.quickCheck
+          ?[
+              investigation.title||'Project check complete',
+              investigation.summary||'',
+              ...(Array.isArray(investigation.checks)?investigation.checks.map(item=>'- '+item.label+': '+item.value):[])
+            ].filter(Boolean).join('\n')
+          :investigation?.error
+            ?'Investigation unavailable: '+investigation.error
+            :'No focused investigation has been added to this handoff yet.';
     const handoffText=[
       data.project.name+' project handoff',
       '',
