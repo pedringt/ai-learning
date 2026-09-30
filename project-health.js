@@ -572,13 +572,13 @@
       run('Analytics',loadPlatformSignal(project,'analytics'),value=>{data.platform=mergePlatform(data.platform,value);}),
       run('AI operations',loadPlatformSignal(project,'ai-telemetry'),value=>{data.platform=mergePlatform(data.platform,value);}),
       run('Neon',loadPlatformSignal(project,'neon'),value=>{data.platform=mergePlatform(data.platform,value);}),
-      run('Open work',loadOpenPullRequests(project),value=>{data.openPullRequests=Array.isArray(value)?value:[];})
+      run('Open work',loadOpenPullRequests(project),value=>{data.openPullRequests=Array.isArray(value)?value:[];}),
+      run('Run controls',loadRunInfo(project),value=>{data.runInfo=value;})
     ];
     if(project.id==='state'){
       tasks.push(
         run('Staging delivery',loadGitHubProject(project,project.stagingBranch),value=>{data.staging=value;}),
-        run('Staging backend',loadPlatformSignal(project,'staging-render'),value=>{data.platform=mergePlatform(data.platform,value);}),
-        run('Run controls',loadRunInfo(project),value=>{data.runInfo=value;})
+        run('Staging backend',loadPlatformSignal(project,'staging-render'),value=>{data.platform=mergePlatform(data.platform,value);})
       );
     }
     await Promise.all(tasks);
