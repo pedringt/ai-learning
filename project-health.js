@@ -140,6 +140,22 @@
     if(d.vercel.kind==='good') return {kind:'good',title:'Delivery is healthy',detail:'The latest release completed successfully.'};
     return {kind:'warn',title:'Deployment status is not connected',detail:'Project Health can see the latest change but cannot confirm its Vercel result.'};
   }
+  function deliveryAttentionForData(data){
+    const fallback=deliveryAttention(data?.delivery);
+    const activity=data?.activity;
+    if(!activity?.available) return fallback;
+    const liveDeployment=activityReviewItems(data).find(item=>item.kind==='deployment'&&!item.resolved);
+    if(liveDeployment) return {kind:'bad',title:liveDeployment.title,detail:liveDeployment.impact};
+    if(fallback.kind==='bad'&&data?.delivery?.vercel?.kind==='bad'){
+      return {
+        kind:'good',
+        title:'No active production release failure',
+        detail:'The failed Vercel status belongs to a preview or superseded attempt. Current production deployment history has no unresolved release failure.'
+      };
+    }
+    return fallback;
+  }
+
   function infrastructureAttention(platform){
     const render=platform?.render;
     if(render?.configured){
@@ -177,8 +193,8 @@
   }
   function allAttentionSignals(data){
     const pending=pendingSet(data),signals=[];
-    if(data.delivery) signals.push(deliveryAttention(data.delivery));
-    else if(data.fresh&&!pending.has('Delivery')) signals.push(deliveryAttention(null));
+    if(data.delivery) signals.push(deliveryAttentionForData(data));
+    else if(data.fresh&&!pending.has('Delivery')) signals.push(deliveryAttentionForData(data));
     if(data.quality) signals.push(qualityAttention(data.quality));
     const external=externalQualityAttention(data.externalQuality);if(external) signals.push(external);
     const infra=infrastructureAttention(data.platform);if(infra) signals.push(infra);
@@ -200,7 +216,7 @@
     }
     if(quality.some(item=>item.kind==='bad')) return quality.find(item=>item.kind==='bad');
     if(quality.length) return quality[0];
-    const delivery=deliveryAttention(data.delivery);
+    const delivery=deliveryAttentionForData(data);
     if(delivery.kind==='bad') return delivery;
     const infra=infrastructureAttention(data.platform);
     if(infra?.kind==='bad') return infra;
@@ -226,7 +242,7 @@
       if(fallback&&['bad','warn'].includes(fallback.kind)) open=[fallback];
     }
     if(open.length) return open;
-    const delivery=deliveryAttention(data.delivery);
+    const delivery=deliveryAttentionForData(data);
     if(delivery.kind==='bad') return [{...delivery,category:'delivery',owner:'Engineering',nextAction:'Open the failed deployment/check evidence and identify the first actionable cause.'}];
     const infra=infrastructureAttention(data.platform);
     if(infra&&['bad','warn'].includes(infra.kind)) return [{...infra,category:'infrastructure',owner:'Engineering',nextAction:'Verify whether this is a real service problem or a monitoring/coverage gap.'}];
@@ -290,7 +306,7 @@
       if(q?.kind==='bad')return 'Review the failing product-quality signal and decide whether the next change should address it.';
       if(q?.kind==='warn')return 'Decide whether the watched quality signal needs action before expanding scope.';
     }
-    const delivery=deliveryAttention(data?.delivery);
+    const delivery=deliveryAttentionForData(data);
     if(delivery.kind==='bad')return 'Decide whether to retry the failed release or supersede it with the current branch.';
     const infra=infrastructureAttention(data?.platform);
     if(infra?.kind==='bad')return 'Confirm user impact and assign the infrastructure response.';
