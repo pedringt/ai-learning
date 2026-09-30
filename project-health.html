@@ -124,7 +124,7 @@
         </div>
         <div class="detail-actions">
           <button class="button primary" id="projectCheckButton" type="button">Investigate project</button>
-          <button class="button" id="headerRunChecksButton" type="button" hidden>Run AI checks</button>
+          <button class="button" id="headerRunChecksButton" type="button" hidden>Run AI evals</button>
           <details class="action-menu" id="projectActionMenu">
             <summary class="button project-links-button" aria-label="Project links">Project links ▾</summary>
             <div class="action-menu-popover" id="projectLinksMenu">
@@ -136,9 +136,7 @@
 
       <nav class="project-tabs" id="projectTabs" aria-label="Project health sections">
         <button class="project-tab active" type="button" data-tab="overview">Overview</button>
-        <button class="project-tab" type="button" data-tab="ai-quality">AI Quality</button>
-        <button class="project-tab" type="button" data-tab="delivery">Delivery</button>
-        <button class="project-tab" type="button" data-tab="infra">Infra</button>
+        <button class="project-tab" type="button" data-tab="ai-quality">Quality</button>
         <button class="project-tab" type="button" data-tab="activity">Activity</button>
       </nav>
 
@@ -150,9 +148,9 @@
         <section class="panel half" id="analyticsPanel" data-tab-panel="overview"></section>
         <section class="panel half" id="overviewActivityPanel" data-tab-panel="overview"></section>
         <section class="panel" id="qualityPanel" data-tab-panel="ai-quality" hidden></section>
-        <section class="panel" id="deliveryPanel" data-tab-panel="delivery" hidden></section>
-        <section class="panel" id="infrastructurePanel" data-tab-panel="infra" hidden></section>
-        <section class="panel" id="connectionsPanel" data-tab-panel="infra" hidden></section>
+        <section class="panel" id="deliveryPanel" data-tab-panel="overview"></section>
+        <section class="panel" id="infrastructurePanel" data-tab-panel="overview"></section>
+        <section class="panel" id="connectionsPanel" data-tab-panel="overview"></section>
         <section class="panel" id="historyPanel" data-tab-panel="activity" hidden></section>
       </div>
     </section>

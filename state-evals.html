@@ -6,7 +6,7 @@
   <title>State eval details · Context Switch</title>
   <style>
     :root{--ink:#202825;--muted:#69736e;--line:#ded9ce;--paper:#f5f2ea;--surface:#fffdf8;--soft:#ece8de;--accent:#38624d;--warn:#8a5b22;--danger:#8b3a32;--good:#2e6b4d;--radius:16px}
-    *{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font:15px/1.5 Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}a{color:var(--accent);text-underline-offset:2px}.shell{max-width:1080px;margin:0 auto;padding:32px 24px 72px}.topbar{display:flex;justify-content:space-between;gap:16px;align-items:center;margin-bottom:32px}.brand{font-weight:850;letter-spacing:-.025em}.button{display:inline-flex;align-items:center;justify-content:center;min-height:40px;padding:9px 13px;border:1px solid var(--line);border-radius:10px;background:var(--surface);color:inherit;text-decoration:none;font-weight:750}.eyebrow{font-size:12px;font-weight:850;letter-spacing:.09em;text-transform:uppercase;color:var(--accent)}h1{margin:5px 0 8px;font-size:clamp(34px,5vw,54px);line-height:1;letter-spacing:-.045em}.lede{max-width:780px;margin:0;color:var(--muted);font-size:17px}.note{margin:18px 0 24px;padding:14px 16px;border:1px solid var(--line);border-radius:12px;background:rgba(255,255,255,.55);color:var(--muted)}.note strong{color:var(--ink)}.summary-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin:0 0 24px}.summary-card,.panel,.scenario{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius)}.summary-card{padding:18px}.summary-card strong{display:block;font-size:18px}.summary-card .score{font-size:30px;font-weight:850;letter-spacing:-.04em;margin:3px 0}.summary-card p{margin:4px 0 0;color:var(--muted);font-size:13px}.panel{padding:20px;margin-top:18px}.panel h2{margin:0;font-size:24px;letter-spacing:-.03em}.panel-copy{margin:4px 0 14px;color:var(--muted)}.tabs{display:flex;gap:8px;flex-wrap:wrap;margin:16px 0}.tab{min-height:40px;padding:8px 12px;border:1px solid var(--line);border-radius:999px;background:var(--surface);font:inherit;font-weight:800;cursor:pointer;color:var(--ink)}.tab.active{background:var(--ink);border-color:var(--ink);color:white}.suite-intro{padding:14px;border-radius:12px;background:var(--soft);margin-bottom:12px}.suite-intro strong{display:block}.suite-intro p{margin:4px 0 0;color:var(--muted)}.scenario-list{display:grid;gap:10px}.scenario{padding:16px}.scenario-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}.scenario h3{margin:0;font-size:17px}.severity{display:inline-flex;padding:4px 7px;border-radius:999px;background:var(--soft);font-size:10px;font-weight:850;text-transform:uppercase;letter-spacing:.05em;white-space:nowrap}.severity.high{background:#f7e4e1;color:var(--danger)}.severity.medium{background:#f6ecdd;color:var(--warn)}.severity.low{background:#e8f2ec;color:var(--good)}.scenario-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px}.detail{padding-top:10px;border-top:1px solid #eee9df}.detail strong{display:block;font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}.detail p{margin:4px 0 0}.why{grid-column:1/-1}.run-list{display:grid;gap:8px;margin-top:12px}.run-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;padding:11px 12px;border:1px solid var(--line);border-radius:11px;background:#fff}.run-row strong,.run-row span{display:block}.run-row span{color:var(--muted);font-size:12px}.status{margin-top:12px;color:var(--muted);font-size:13px}.sources{display:flex;gap:12px;flex-wrap:wrap;margin-top:14px;font-size:12px}.footer{margin-top:28px;color:var(--muted);font-size:12px}
+    *{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font:15px/1.5 Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}a{color:var(--accent);text-underline-offset:2px}.shell{max-width:1080px;margin:0 auto;padding:32px 24px 72px}.topbar{display:flex;justify-content:space-between;gap:16px;align-items:center;margin-bottom:32px}.brand{font-weight:850;letter-spacing:-.025em}.button{display:inline-flex;align-items:center;justify-content:center;min-height:40px;padding:9px 13px;border:1px solid var(--line);border-radius:10px;background:var(--surface);color:inherit;text-decoration:none;font-weight:750}.eyebrow{font-size:12px;font-weight:850;letter-spacing:.09em;text-transform:uppercase;color:var(--accent)}h1{margin:5px 0 8px;font-size:clamp(34px,5vw,54px);line-height:1;letter-spacing:-.045em}.lede{max-width:780px;margin:0;color:var(--muted);font-size:17px}.note{margin:18px 0 24px;padding:14px 16px;border:1px solid var(--line);border-radius:12px;background:rgba(255,255,255,.55);color:var(--muted)}.note strong{color:var(--ink)}.summary-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin:0 0 24px}.summary-card,.panel,.scenario{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius)}.summary-card{padding:18px}.summary-card strong{display:block;font-size:18px}.summary-card .score{font-size:30px;font-weight:850;letter-spacing:-.04em;margin:3px 0}.summary-card p{margin:4px 0 0;color:var(--muted);font-size:13px}.panel{padding:20px;margin-top:18px}.panel h2{margin:0;font-size:24px;letter-spacing:-.03em}.panel-copy{margin:4px 0 14px;color:var(--muted)}.tabs{display:flex;gap:8px;flex-wrap:wrap;margin:16px 0}.tab{min-height:40px;padding:8px 12px;border:1px solid var(--line);border-radius:999px;background:var(--surface);font:inherit;font-weight:800;cursor:pointer;color:var(--ink)}.tab.active{background:var(--ink);border-color:var(--ink);color:white}.suite-intro{padding:14px;border-radius:12px;background:var(--soft);margin-bottom:12px}.suite-intro strong{display:block}.suite-intro p{margin:4px 0 0;color:var(--muted)}.scenario-list{display:grid;gap:10px}.scenario{padding:16px}.scenario.failed{border-color:#d9a39e;box-shadow:0 0 0 2px rgba(139,58,50,.08)}.failure-panel{border-color:#d9a39e;background:#fff8f6}.failure-item{padding:14px 0;border-top:1px solid var(--line)}.failure-item:first-child{border-top:0}.failure-item h3{margin:0 0 6px}.failure-meta{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0}.failure-meta span{display:inline-flex;padding:4px 7px;border-radius:999px;background:#f7e4e1;color:var(--danger);font-size:11px;font-weight:800}.failure-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.scenario-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}.scenario h3{margin:0;font-size:17px}.severity{display:inline-flex;padding:4px 7px;border-radius:999px;background:var(--soft);font-size:10px;font-weight:850;text-transform:uppercase;letter-spacing:.05em;white-space:nowrap}.severity.high{background:#f7e4e1;color:var(--danger)}.severity.medium{background:#f6ecdd;color:var(--warn)}.severity.low{background:#e8f2ec;color:var(--good)}.scenario-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px}.detail{padding-top:10px;border-top:1px solid #eee9df}.detail strong{display:block;font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}.detail p{margin:4px 0 0}.why{grid-column:1/-1}.run-list{display:grid;gap:8px;margin-top:12px}.run-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;padding:11px 12px;border:1px solid var(--line);border-radius:11px;background:#fff}.run-row strong,.run-row span{display:block}.run-row span{color:var(--muted);font-size:12px}.status{margin-top:12px;color:var(--muted);font-size:13px}.sources{display:flex;gap:12px;flex-wrap:wrap;margin-top:14px;font-size:12px}.footer{margin-top:28px;color:var(--muted);font-size:12px}
     @media(max-width:720px){.summary-grid,.scenario-grid{grid-template-columns:1fr}.why{grid-column:auto}.run-row{grid-template-columns:1fr}.topbar{align-items:flex-start;flex-direction:column}.shell{padding:22px 14px 48px}}
   </style>
 </head>
@@ -14,7 +14,7 @@
   <main class="shell">
     <div class="topbar">
       <div class="brand">Context Switch <span style="color:var(--muted)">/ State evals</span></div>
-      <a class="button" href="/project-health?project=state">Back to Project Health</a>
+      <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="button" id="runEvalsButton" type="button">Run AI evals</button><a class="button" href="/project-health?project=state&tab=ai-quality">Back to Project Health</a></div>
     </div>
 
     <div class="eyebrow">Controlled AI evaluation</div>
@@ -26,6 +26,12 @@
     <section class="summary-grid" aria-label="Latest eval summaries">
       <div class="summary-card" id="reviewSummary"><strong>Update understanding</strong><div class="score">Loading…</div><p>Checking the latest recorded run.</p></div>
       <div class="summary-card" id="askSummary"><strong>Answer quality</strong><div class="score">Loading…</div><p>Checking the latest recorded run.</p></div>
+    </section>
+
+    <section class="panel failure-panel" id="failurePanel" hidden>
+      <h2>Failed scenarios</h2>
+      <p class="panel-copy">Start here. These are the scenarios that failed in the latest recorded AI eval run.</p>
+      <div id="failureList"></div>
     </section>
 
     <section class="panel">
@@ -94,11 +100,12 @@
     const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
     const pct=value=>value==null||Number.isNaN(Number(value))?'Not measured':(Math.round(Number(value)*1000)/10)+'%';
     const fmt=value=>{const d=new Date(value);return Number.isNaN(d.getTime())?'Unknown':d.toLocaleString([],{month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit'});};
+    let failedScenarioIds=new Set();
     function renderSuite(name){
       const copy=suiteCopy[name];
       intro.innerHTML='<strong>'+esc(copy.title)+'</strong><p>'+esc(copy.text)+'</p>';
       list.innerHTML=scenarios[name].map(item=>
-        '<article class="scenario" data-scenario="'+esc(item.id)+'">'+
+        '<article class="scenario '+(failedScenarioIds.has(item.id)?'failed':'')+'" data-scenario="'+esc(item.id)+'">'+
           '<div class="scenario-head"><div><div class="eyebrow">'+esc(item.id)+'</div><h3>'+esc(item.title)+'</h3></div><span class="severity '+esc(item.severity)+'">'+esc(item.severity)+' severity</span></div>'+
           '<div class="scenario-grid">'+
             '<div class="detail"><strong>Controlled setup</strong><p>'+esc(item.setup)+'</p></div>'+
@@ -124,6 +131,36 @@
         const ask=controlled.latest_ask_quality||null;
         suiteSummary(document.getElementById('reviewSummary'),'Update understanding',review,review?.interpretation_accuracy);
         suiteSummary(document.getElementById('askSummary'),'Answer quality',ask,ask?.overall_pass_rate??ask?.ask_grounding);
+        const failures=[
+          ...(Array.isArray(review?.failure_details)?review.failure_details.map(item=>({...item,suite:'review'})):[]),
+          ...(Array.isArray(ask?.failure_details)?ask.failure_details.map(item=>({...item,suite:'ask'})):[])
+        ];
+        failedScenarioIds=new Set(failures.map(item=>item.scenario_id).filter(Boolean));
+        const failurePanel=document.getElementById('failurePanel');
+        const failureList=document.getElementById('failureList');
+        if(failures.length){
+          failurePanel.hidden=false;
+          failureList.innerHTML=failures.map(item=>{
+            const catalog=(scenarios[item.suite]||[]).find(row=>row.id===item.scenario_id)||{};
+            const checks=(item.failed_checks||[]).map(check=>'<span>'+esc(check)+'</span>').join('');
+            return '<article class="failure-item"><h3>'+esc(catalog.title||item.scenario_id||'Failed scenario')+'</h3><div class="eyebrow">'+esc(item.scenario_id||'')+'</div>'+
+              '<div class="failure-meta"><span>'+esc(item.severity||catalog.severity||'unknown')+' severity</span>'+checks+'</div>'+
+              (item.expected?'<p><strong>Expected:</strong> '+esc(item.expected)+'</p>':'')+
+              (item.observed?'<p><strong>Observed:</strong> '+esc(item.observed)+'</p>':'')+
+              (catalog.why?'<p><strong>Why it matters:</strong> '+esc(catalog.why)+'</p>':'')+
+              '<div class="failure-actions"><a class="button" href="/project-health?project=state&tab=ai-quality&investigate=quality&failure='+encodeURIComponent(item.scenario_id||'')+'">Investigate this failure</a><button class="button" type="button" data-jump-failure="'+esc(item.scenario_id)+'" data-suite="'+esc(item.suite)+'">View scenario below</button></div></article>';
+          }).join('');
+          failureList.querySelectorAll('[data-jump-failure]').forEach(button=>button.addEventListener('click',()=>{
+            renderSuite(button.dataset.suite);
+            document.querySelector('[data-scenario="'+CSS.escape(button.dataset.jumpFailure)+'"]')?.scrollIntoView({behavior:'smooth',block:'center'});
+          }));
+          const requested=new URLSearchParams(location.search).get('failure');
+          const target=failures.find(item=>item.scenario_id===requested)||failures[0];
+          if(target){renderSuite(target.suite);}
+        }else{
+          failurePanel.hidden=true;
+          renderSuite('review');
+        }
         const rows=Array.isArray(controlled.recent)?controlled.recent.slice(0,12):[];
         document.getElementById('runHistory').innerHTML=rows.length?rows.map(run=>{
           const metric=run.suite==='review_interpretation'?run.interpretation_accuracy:run.overall_pass_rate;
@@ -132,6 +169,25 @@
           return '<div class="run-row"><div><strong>'+esc(label)+' · '+esc(pct(metric))+'</strong><span>'+esc(fmt(run.created_at))+' · '+esc(run.total??'—')+' scenarios · '+esc(run.high_severity_failures??0)+' high-impact failures</span></div><span>'+esc(tech||'Technical record unavailable')+'</span></div>';
         }).join(''):'<div class="status">No recorded runs yet.</div>';
       })
+    document.getElementById('runEvalsButton')?.addEventListener('click',async()=>{
+      const button=document.getElementById('runEvalsButton');
+      try{
+        const infoResponse=await fetch('/api/project-health-run?project=state',{headers:{Accept:'application/json'}});
+        const info=await infoResponse.json();
+        if(!infoResponse.ok||!info.configured)throw new Error(info.detail||'AI evals are not configured.');
+        if(!confirm('Run all State AI evals?\n\nEstimated model cost: '+(info.estimated_cost||'not available')+'\n\nYou will stay on this page while the run starts.'))return;
+        button.disabled=true;button.textContent='Starting AI evals…';
+        const response=await fetch('/api/project-health-run',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({project:'state',suite:'all',record_environment:'production',confirm_paid_model_calls:true,estimated_cost:info.estimated_cost})});
+        const payload=await response.json().catch(()=>({}));
+        if(!response.ok)throw new Error(payload.detail||'Could not start AI evals.');
+        button.textContent='AI evals running…';
+        setTimeout(()=>{button.disabled=false;button.textContent='Run AI evals';},10000);
+      }catch(error){
+        alert(error.message||'Could not start AI evals.');
+        button.disabled=false;button.textContent='Run AI evals';
+      }
+    });
+
       .catch(()=>{
         document.getElementById('reviewSummary').innerHTML='<strong>Update understanding</strong><div class="score">Unavailable</div><p>The live aggregate result could not be loaded.</p>';
         document.getElementById('askSummary').innerHTML='<strong>Answer quality</strong><div class="score">Unavailable</div><p>The live aggregate result could not be loaded.</p>';

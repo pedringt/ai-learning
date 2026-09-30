@@ -339,6 +339,13 @@ const activeDeployItem=H.activityReviewItems({
 })[0];
 assert.match(activeDeployItem.title,/Release blocked/);
 assert.match(activeDeployItem.impact,/previous production version/i);
+const previewOnlyDelivery={
+  project:{id:'state',name:'State'},
+  delivery:{vercel:{kind:'bad'},failedChecks:[]},
+  activity:{available:true,deployments:{recent_failures:[]},runtime:{issues:[]}}
+};
+assert.strictEqual(H.deliveryAttentionForData(previewOnlyDelivery).kind,'good');
+assert.match(H.deliveryAttentionForData(previewOnlyDelivery).title,/No active production release failure/);
 
 const safeQuality=H.safeExternalQualitySnapshot({
   project:'tastemake',
@@ -362,6 +369,13 @@ assert.match(healthHtml,/investigation-drawer\[hidden\].*display:none!important/
 assert.match(healthHtml,/drawer-copy\[hidden\].*display:none!important/);
 assert.match(healthHtml,/id="projectActionMenu"/);
 assert.match(healthHtml,/Project links ▾/);
+assert.match(healthHtml,/data-tab="overview"/);
+assert.match(healthHtml,/data-tab="ai-quality"/);
+assert.match(healthHtml,/data-tab="activity"/);
+assert.doesNotMatch(healthHtml,/data-tab="delivery"/);
+assert.doesNotMatch(healthHtml,/data-tab="infra"/);
+assert.match(healthHtml,/id="deliveryPanel" data-tab-panel="overview"/);
+assert.match(healthHtml,/id="infrastructurePanel" data-tab-panel="overview"/);
 assert.match(healthHtml,/id="projectLinksMenu"/);
 assert.match(healthHtml,/\.button\[hidden\]\{display:none!important\}/);
 assert.doesNotMatch(healthHtml,/>More<\/summary>/);
@@ -404,7 +418,7 @@ const handoff=H.projectHandoff({
 assert.strictEqual(handoff.handoff,true);
 assert.match(handoff.handoffText,/State project handoff/);
 assert.match(handoff.handoffText,/Next decision/);
-assert.match(handoff.handoffText,/No immediate product decision|Rerun the AI quality checks|Review the quality miss|Review the high-impact failure class/);
+assert.match(handoff.handoffText,/No immediate product decision|Rerun the AI evals|Review the quality miss|Review the high-impact failure class/);
 const narcWithNoAi={...H.emptyProjectData(H.PROJECTS[2]),fresh:true,platform:{analytics:{configured:true,available:true},aiTelemetry:{configured:false,not_applicable:true}}};
 assert.ok(!H.setupGaps(narcWithNoAi).some(item=>/^AI /.test(item.label)));
 
@@ -438,6 +452,9 @@ assert.match(evalDetailsHtml,/23 controlled scenarios/);
 assert.match(evalDetailsHtml,/Update understanding/);
 assert.match(evalDetailsHtml,/Answer quality/);
 assert.match(evalDetailsHtml,/Synthetic controlled scenarios/);
+assert.match(evalDetailsHtml,/Failed scenarios/);
+assert.match(evalDetailsHtml,/Run AI evals/);
+assert.match(evalDetailsHtml,/Investigate this failure/);
 const runApiSource=fs.readFileSync(require.resolve('../api/project-health-run.js'),'utf8');
 assert.match(runApiSource,/already running/);
 assert.match(runApiSource,/RUN_COOLDOWN_MS/);
@@ -454,7 +471,7 @@ assert.match(projectHealthSource,/View quality results/);
 assert.match(projectHealthSource,/setActiveTab\('ai-quality'\)/);
 assert.doesNotMatch(projectHealthSource,/ai-learning-git-staging-cairn10\.vercel\.app\/project-health/);
 assert.doesNotMatch(projectHealthSource,/control:'investigate'/);
-assert.match(projectHealthSource,/AI checks are running/);
+assert.match(projectHealthSource,/AI evals are running/);
 assert.match(projectHealthSource,/Starting checks/);
 assert.doesNotMatch(projectHealthSource,/control:'evals'/);
 assert.match(projectHealthSource,/checks automatically/);
