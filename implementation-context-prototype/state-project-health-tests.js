@@ -49,7 +49,7 @@ const analyticsDeniedGaps=H.setupGaps({
   pending:new Set(),
   runInfo:null
 });
-assert.match(analyticsDeniedGaps.find(item=>item.label==='Usage analytics').detail,/token/i);
+assert.match(analyticsDeniedGaps.find(item=>item.label==='Site analytics').detail,/token/i);
 assert.match(analyticsDeniedGaps.find(item=>item.label==='Runtime error visibility').detail,/token/i);
 
 const healthy=H.normalizeQuality({
@@ -330,7 +330,7 @@ const usageChanges=H.meaningfulChanges({
   checkedAt:'2026-09-30T01:00:00Z',
   detailCheckedAt:'2026-09-30T01:00:00Z'
 });
-assert.strictEqual(usageChanges.find(item=>item.title==='Usage changed').section,'analyticsPanel');
+assert.strictEqual(usageChanges.find(item=>item.title==='Site analytics changed').section,'analyticsPanel');
 const analyticsAvailabilityChanges=H.meaningfulChanges({
   project:{quality:null},
   lastVisit:{deliverySha:'same',deliveryKind:'good',quality:{},analyticsAvailable:false,analyticsPageviews:null,openPullRequests:0,savedAt:'2026-09-29T01:00:00Z'},
@@ -340,7 +340,18 @@ const analyticsAvailabilityChanges=H.meaningfulChanges({
   checkedAt:'2026-09-30T01:00:00Z',
   detailCheckedAt:'2026-09-30T01:00:00Z'
 });
-assert.strictEqual(analyticsAvailabilityChanges.find(item=>item.title==='Analytics availability changed').section,'systemsDetails');
+assert.strictEqual(analyticsAvailabilityChanges.find(item=>item.title==='Site analytics availability changed').section,'systemsDetails');
+const releaseAndDeliveryChanges=H.meaningfulChanges({
+  project:{quality:null},
+  lastVisit:{deliverySha:'oldsha',deliveryKind:'bad',quality:{},analyticsAvailable:null,analyticsPageviews:null,openPullRequests:0,savedAt:'2026-09-29T01:00:00Z'},
+  delivery:{sha:'20d0bd7abcdef',message:'Promote Project Health action destination cleanup',vercel:{kind:'good'},updatedAt:'2026-09-30T01:00:00Z'},
+  platform:{},
+  openPullRequests:[],
+  checkedAt:'2026-09-30T01:00:00Z'
+});
+assert.strictEqual(releaseAndDeliveryChanges.find(item=>item.title==='New production release').detail,'Promote Project Health action destination cleanup');
+assert.strictEqual(releaseAndDeliveryChanges.find(item=>item.title==='Delivery status improved').detail,'Needs attention → Healthy');
+assert.doesNotMatch(releaseAndDeliveryChanges.find(item=>item.title==='New production release').detail,/20d0bd7/);
 assert.match(H.freshnessMeta('2026-09-30T01:00:00Z','2026-09-30T01:00:00Z',9999).label,/Updated|May be stale/);
 assert.strictEqual(H.trendText(12.5),'↑ 12.5% vs previous 30 days');
 assert.strictEqual(H.trendText(-4),'↓ 4% vs previous 30 days');
@@ -520,6 +531,11 @@ assert.match(projectHealthSource,/activityTimelineItems/);
 assert.match(projectHealthSource,/Deployment recovered.*×/);
 assert.match(projectHealthSource,/No previous 30-day period to compare yet/);
 assert.match(projectHealthSource,/Release pipeline/);
+assert.match(projectHealthSource,/label:'Site analytics'/);
+assert.match(projectHealthSource,/Site analytics changed/);
+assert.match(projectHealthSource,/health-card-head/);
+assert.match(projectHealthSource,/showFreshness=item\.fresh\?\.stale/);
+assert.doesNotMatch(projectHealthSource,/health-chevron/);
 assert.match(projectHealthSource,/Data available/);
 assert.match(projectHealthSource,/operationalNextDecision/);
 assert.match(projectHealthSource,/Full AI eval details/);
