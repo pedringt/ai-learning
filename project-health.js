@@ -181,8 +181,9 @@
       if(!data.quality&&!data.fresh)return items;
       const q=qualityAttention(data.quality);
       if(['bad','warn'].includes(q.kind)){
-        const noRecordedRuns=![q.review,q.ask].filter(Boolean).length;
-        items.push({...q,category:'quality',action:noRecordedRuns||stateEvalResultsStale(q)?'run-ai-checks':'review-ai-evals',owner:q.owner||'Product',nextAction:q.nextAction||(noRecordedRuns?'Run the controlled AI evals.':'Review the failed scenario evidence.')});
+        const noRecordedRuns=![data.quality?.review,data.quality?.ask].filter(Boolean).length;
+        const staleResults=stateEvalResultsStale(data.quality);
+        items.push({...q,category:'quality',action:noRecordedRuns||staleResults?'run-ai-checks':'review-ai-evals',owner:q.owner||'Product',nextAction:q.nextAction||(noRecordedRuns||staleResults?'Run the controlled AI evals.':'Review the failed scenario evidence.')});
       }
     }else{
       if(!data.externalQuality&&!data.fresh)return items;
