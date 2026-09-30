@@ -227,3 +227,11 @@ def test_both_providers_explain_reviewed_question_authority_and_duplicates():
         assert 'Check open_questions' in prompt
         assert 'not an established fact' in prompt
         assert '500 characters' in prompt
+
+
+def test_both_providers_keep_partial_answers_and_authority_disagreements_bounded():
+    for provider_cls in (AnthropicProvider, OpenAIProvider):
+        prompt = _prompt(provider_cls()).lower()
+        assert 'lower-authority opinion' in prompt
+        assert 'leave the broader question open' in prompt
+        assert 'does not prove adjacent work is complete' in prompt
