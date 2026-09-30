@@ -122,6 +122,12 @@
     return {resolvedReviews:Number(live.resolved_reviews||0),acceptedAsProposedRate:live.accepted_as_proposed_rate,materialEditRate:live.material_edit_rate,review:controlled.latest_review_interpretation||null,ask:controlled.latest_ask_quality||null,recent:Array.isArray(controlled.recent)?controlled.recent:[]};
   }
   function percent(v){return v==null||Number.isNaN(Number(v))?'Not measured':(Math.round(Number(v)*1000)/10)+'%';}
+  function highImpactText(value){const n=Number(value||0);return n+' high-impact failure'+(n===1?'':'s');}
+  function modelDisplayName(value){
+    const raw=String(value||'');
+    if(raw==='claude-haiku-4-5-20251001')return'Claude Haiku 4.5';
+    return raw||'Model unavailable';
+  }
   function qualityAttention(q){
     if(!q) return {kind:'unknown',title:'Quality data is not available yet',detail:'Project Health could not load a recent quality result.'};
     const runs=[q.review,q.ask].filter(Boolean);
@@ -344,6 +350,22 @@
         whatHappened:'The answer did not surface a blocking open item that materially changes whether the project is ready.',
         expected:'Include the blocker and make the remaining uncertainty explicit.',
         why:'A user could make a launch decision without seeing a known blocking dependency.'
+      };
+    }
+    if(id==='review_new_evidence_over_pending_review'){
+      return {
+        title:'New authoritative evidence did not supersede a stale pending proposal',
+        whatHappened:'State preserved the new Finance correction as Evidence instead of proposing the corrected budget cap for human review.',
+        expected:'Reuse the existing Review, propose the corrected $35,000 State change, and allow software to supersede the stale $50,000 pending proposal.',
+        why:'A stale pending proposal can remain the apparent next change even after authoritative evidence has corrected it.'
+      };
+    }
+    if(id==='ask_known_outcome_unknown_reason'){
+      return {
+        title:'Known outcome was answered without preserving an unknown reason',
+        whatHappened:'State knew that the Northstar pilot was paused, but the answer did not clearly say that the reason for the pause was not established.',
+        expected:'State the known pause and explicitly say the reason is unknown or not established unless a supplied record supports it.',
+        why:'A user could mistake an inferred explanation for maintained project truth.'
       };
     }
     const category=String(detail?.category||detail?.scenario_id||'controlled behavior').replaceAll('_',' ').trim();
@@ -1408,64 +1430,38 @@
   function qualityInvestigation(data,scenarioId){
     const quality=data?.quality||{};
     const runs=[
-      {label:'Update understanding',run:quality.review},
-      {label:'Answer quality',run:quality.ask}
+      {label:'Update understanding',key:'review',run:quality.review},
+      {label:'Answer quality',key:'ask',run:quality.ask}
     ].filter(item=>item.run);
     const affected=runs.filter(item=>{
       const score=evalScore(item.run);
       return Number(item.run?.high_severity_failures||0)>0||(score!=null&&score<1);
     });
-    const allDetails=affected.flatMap(item=>(Array.isArray(item.run?.failure_details)?item.run.failure_details:[]).map(detail=>({...detail,suiteLabel:item.label})));
+    const allDetails=affected.flatMap(item=>(Array.isArray(item.run?.failure_details)?item.run.failure_details:[]).map(detail=>({...detail,suiteLabel:item.label,suiteKey:item.key})));
     const details=scenarioId?allDetails.filter(detail=>String(detail.scenario_id||'')===String(scenarioId)):allDetails;
-    const severe=affected.reduce((n,item)=>n+Number(item.run?.high_severity_failures||0),0);
+    const targeted=scenarioId&&details.length?details[0]:null;
     const latestDate=runs.map(item=>item.run?.created_at).filter(Boolean).sort().pop()||new Date().toISOString();
     const review=quality.review,ask=quality.ask;
-    const reviewScore=evalScore(review),askScore=evalScore(ask);
-    const previousReview=previousEvalRun(quality,review);
-    const previousReviewScore=evalScore(previousReview);
-    const reviewCount=review?.total!=null&&reviewScore!=null?Math.round(Number(review.total)*reviewScore):null;
-    const currentLines=[];
-    if(review)currentLines.push('Update understanding: '+percent(reviewScore)+(reviewCount!=null?' ('+reviewCount+'/'+review.total+' scenarios)':'')+' · '+Number(review.high_severity_failures||0)+' high-impact failures');
-    if(ask)currentLines.push('Answer quality: '+percent(askScore)+' · '+Number(ask.high_severity_failures||0)+' high-impact failures');
-    const failedLines=details.length?details.map(detail=>{
-      const expected=detail.expected?'Expected: '+detail.expected+'. ':'';
-      const observed=detail.observed?'Observed: '+detail.observed+'. ':'';
-      const observedAlreadyListsChecks=/^Failed checks:/i.test(String(detail.observed||''));
-      const checks=!observedAlreadyListsChecks&&(detail.failed_checks||[]).length?'Failed checks: '+detail.failed_checks.join(', ')+'. ':'';
-      return '- '+detail.suiteLabel+' / '+detail.scenario_id+' ('+(detail.severity||'unknown')+'). '+expected+observed+checks+evalFailureImpact(detail);
-    }):['- Exact scenario metadata is unavailable for this older run, so Project Health can only report the suite-level result.'];
-    const improvements=[];
-    if(reviewScore!=null&&previousReviewScore!=null){
-      const delta=Math.round((reviewScore-previousReviewScore)*1000)/10;
-      improvements.push('- Update understanding '+(delta>=0?'improved ':'declined ')+Math.abs(delta)+' points from '+percent(previousReviewScore)+' to '+percent(reviewScore)+'.');
+    const overallLines=[];
+    if(review){
+      const score=evalScore(review),passed=review?.total!=null&&score!=null?Math.round(Number(review.total)*score):null;
+      overallLines.push('Update understanding: '+percent(score)+(passed!=null?' ('+passed+'/'+review.total+' scenarios)':'')+' · '+highImpactText(review.high_severity_failures));
     }
-    if(review&&previousReview&&Number(previousReview.high_severity_failures||0)!==Number(review.high_severity_failures||0)){
-      improvements.push('- High-impact failures changed from '+Number(previousReview.high_severity_failures||0)+' to '+Number(review.high_severity_failures||0)+'.');
-    }
-    if(!severe&&details.length) improvements.push('- The current misses are medium severity; no current controlled scenario is reporting a high-impact truth failure.');
-    const nextStep=details.length
-      ?'Review the remaining scenario-level misses below. Fix product behavior only where the contract is still right; adjust the eval where the observed behavior is acceptable. Then rerun the affected suite and compare against this run.'
-      :'Inspect the affected suite and rerun after the next change so future failures record scenario-level evidence.';
+    if(ask)overallLines.push('Answer quality: '+percent(evalScore(ask))+' · '+highImpactText(ask.high_severity_failures));
+
     if(stateEvalResultsStale(quality)){
-      const historical=currentLines.length?currentLines.map(line=>'- '+line).join('\n'):'- No historical aggregate result is available.';
       const report=[
         'Current assessment',
         stateEvalStaleReason(quality)+' The recorded failures are historical and should not be treated as current product failures.',
         '',
         'Historical result',
-        historical,
-        '',
-        'Why this changed',
-        stateEvalBehaviorStale(quality)?'State behavior changed after this run, so the old scores no longer describe the current product.':'The eval expectations changed after this run, so the old scores no longer describe the current contract.',
+        overallLines.length?overallLines.map(line=>'- '+line).join('\n'):'- No historical aggregate result is available.',
         '',
         'Recommended next action',
         'Rerun the controlled AI evals. Use the new run as the current baseline before changing State behavior.',
         '',
-        'Owner',
-        'Product',
-        '',
-        'Confidence',
-        'High confidence that the recorded run is stale relative to the current State behavior or eval contract. No claim is being made yet about how a fresh run will score.'
+        'Next checkpoint',
+        'After the fresh AI eval run is recorded.'
       ].join('\n');
       return {
         report,
@@ -1474,42 +1470,69 @@
         qualityInvestigation:true,
         staleEvalContract:stateEvalContractStale(quality),
         staleEvalBehavior:stateEvalBehaviorStale(quality),
-        staleEvalResults:true
+        staleEvalResults:true,
+        nextCheckpoint:'After the fresh AI eval run is recorded.'
       };
     }
 
+    const failedLines=details.length?details.map(detail=>{
+      const explanation=failureExplanation(detail);
+      return '- '+detail.suiteLabel+' / '+detail.scenario_id+' ('+(detail.severity||'unknown')+'). '+explanation.whatHappened;
+    }):['- Exact scenario metadata is unavailable for this older run, so Project Health can only report the suite-level result.'];
+
+    const relevantRun=targeted?(targeted.suiteKey==='review'?review:ask):null;
+    const previousRelevant=relevantRun?previousEvalRun(quality,relevantRun):null;
+    const relevantScore=evalScore(relevantRun),previousScore=evalScore(previousRelevant);
+    const changeLines=[];
+    if(relevantRun&&previousRelevant&&relevantScore!=null&&previousScore!=null){
+      const delta=Math.round((relevantScore-previousScore)*1000)/10;
+      changeLines.push('- '+targeted.suiteLabel+' '+(delta>=0?'improved ':'declined ')+Math.abs(delta)+' points from '+percent(previousScore)+' to '+percent(relevantScore)+'.');
+    }
+    if(relevantRun&&previousRelevant&&Number(previousRelevant.high_severity_failures||0)!==Number(relevantRun.high_severity_failures||0)){
+      changeLines.push('- '+targeted.suiteLabel+' high-impact failures changed from '+Number(previousRelevant.high_severity_failures||0)+' to '+Number(relevantRun.high_severity_failures||0)+'.');
+    }
+
+    const why=targeted
+      ?failureExplanation(targeted).why
+      :(details.length?'At least one current failure can affect maintained project truth or another high-impact behavior.':'The current miss is a quality/workflow issue rather than a production outage.');
+    const nextStep=targeted
+      ?'Review this scenario against the product contract. If the expected behavior is still correct, fix State behavior and rerun '+targeted.suiteLabel+'. If the observed behavior is acceptable, update the eval instead.'
+      :details.length
+        ?'Review each failed scenario against the product contract. Fix State behavior only where the contract is still right; update the eval where the observed behavior is acceptable. Then rerun the affected suite.'
+        :'Inspect the affected suite and rerun after the next change so future failures record scenario-level evidence.';
+    const nextCheckpoint=targeted?'After '+targeted.suiteLabel+' is rerun.':'After the affected eval suite is rerun.';
+    const technical=[modelDisplayName((targeted?.suiteKey==='review'?review?.model_identifier:targeted?.suiteKey==='ask'?ask?.model_identifier:(review?.model_identifier||ask?.model_identifier))),shortSha((targeted?.suiteKey==='review'?review?.build:targeted?.suiteKey==='ask'?ask?.build:(review?.build||ask?.build)))].filter(Boolean).join(' · ');
     const report=[
-      'Current assessment',
-      currentLines.join('\n')||'No current controlled-eval result is available.',
+      'Investigation scope',
+      targeted?(targeted.suiteLabel+' · '+targeted.scenario_id):'Current AI eval failures',
       '',
       'What failed',
       failedLines.join('\n'),
       '',
       'Why this matters',
-      severe>0
-        ?'At least one current failure can affect maintained project truth or another high-impact behavior.'
-        :'The current failures are quality/workflow misses rather than a production outage or a recorded high-impact truth failure.',
-      '',
-      'What changed since the previous run',
-      improvements.length?improvements.join('\n'):'- No directly comparable earlier run is available.',
+      why,
+      ...(changeLines.length?['','What changed since the previous run',changeLines.join('\n')]:[]),
       '',
       'Recommended next action',
       nextStep,
       '',
+      'Overall AI eval status',
+      overallLines.join('\n')||'No current controlled-eval result is available.',
+      '',
+      'Next checkpoint',
+      nextCheckpoint,
+      '',
       'Technical context',
-      [review?.model_identifier||ask?.model_identifier,review?.build||ask?.build].filter(Boolean).join(' · ')||'Model/build metadata unavailable',
-      '',
-      'Owner',
-      'Product + Engineering',
-      '',
-      'Confidence',
-      details.length?'High confidence in which controlled scenarios failed because the latest run persisted scenario-level metadata. Root cause still requires interpreting each scenario against the product contract.':'Moderate confidence because this older run does not include scenario-level failure metadata.'
+      technical||'Model/build metadata unavailable'
     ].join('\n');
     return {
       report,
       sources:[{label:'State eval details',url:'/state-evals',observedAt:latestDate}],
       observedAt:latestDate,
-      qualityInvestigation:true
+      qualityInvestigation:true,
+      scenarioId:targeted?.scenario_id||null,
+      affectedSuite:targeted?.suiteLabel||null,
+      nextCheckpoint
     };
   }
 
@@ -1519,15 +1542,15 @@
     const latestQuality=data?.project?.quality==='state'&&data.quality
       ?(stateEvalResultsStale(data.quality)
         ?'Needs rerun · '+stateEvalStaleReason(data.quality)+' Historical failures are not treated as current product failures.'
-        :[data.quality.review,data.quality.ask].filter(Boolean).map(run=>evalSuiteLabel(run)+': '+percent(evalScore(run))+' · '+Number(run.high_severity_failures||0)+' high-impact failures').join('\n'))
+        :[data.quality.review,data.quality.ask].filter(Boolean).map(run=>evalSuiteLabel(run)+': '+percent(evalScore(run))+' · '+highImpactText(run.high_severity_failures)).join('\n'))
       :projectQualityLabel(data);
     const release=data?.delivery
-      ?commitTitle(data.delivery.message)+' · '+shortSha(data.delivery.sha)+' · '+fmtDate(data.delivery.updatedAt)
+      ?commitTitle(data.delivery.message)+' · '+fmtDate(data.delivery.updatedAt)
       :'Unavailable';
     const issueText=notices.length?notices.map(item=>'- '+item.title+': '+item.detail).join('\n'):'- Nothing currently needs action.';
     const investigation=data?.investigation;
     const prior=investigation?.qualityInvestigation&&data?.project?.quality==='state'&&stateEvalResultsStale(data.quality)
-      ?'Historical AI-quality investigation from the previous State behavior. See eval details if you need the old scenario-level evidence; rerun the checks before treating it as current.'
+      ?'Historical AI-quality investigation from the previous State behavior. Rerun the checks before treating it as current.'
       :investigation?.handoff
         ?'The latest drawer state is already a handoff preview.'
         :investigation?.report
@@ -1541,8 +1564,11 @@
           :investigation?.error
             ?'Investigation unavailable: '+investigation.error
             :'No focused investigation has been added to this handoff yet.';
-    const handoffReviewIsDependency=/^(after|when|once)\b|next recorded/i.test(String(data.project.nextReview||''));
-    const handoffText=[
+    const hasActionableInvestigation=!!(investigation?.report||investigation?.quickCheck);
+    const checkpoint=investigation?.qualityInvestigation
+      ?(investigation.nextCheckpoint||'After the affected eval suite is rerun.')
+      :data.project.nextReview;
+    const handoffParts=[
       data.project.name+' project handoff',
       '',
       'Current status',
@@ -1558,16 +1584,19 @@
       latestQuality||'Unavailable',
       '',
       'Latest investigation',
-      prior,
+      prior
+    ];
+    if(!hasActionableInvestigation){
+      handoffParts.push('','Next decision',operationalNextDecision(data));
+    }
+    handoffParts.push(
       '',
-      'Next decision',
-      operationalNextDecision(data),
-      '',
-      handoffReviewIsDependency?'Waiting on':'Next review',
-      data.project.nextReview,
+      'Next checkpoint',
+      checkpoint,
       '',
       'Generated from Project Health. Review before sharing or acting on it.'
-    ].join('\n');
+    );
+    const handoffText=handoffParts.join('\n');
     return {
       handoff:true,
       handoffText,
