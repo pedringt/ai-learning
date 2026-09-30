@@ -111,7 +111,7 @@ body.v88-dark .card,body.v88-dark .band{box-shadow:none}
 
 .cta-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:20px}
 .cta{display:inline-flex;align-items:center;justify-content:center;text-decoration:none;border-radius:10px;padding:10px 14px;font-size:13px;font-weight:800}
-.cta.primary{background:var(--purple);color:#111}
+.cta.primary{background:var(--purple);color:#fff}
 .cta.secondary{border:1px solid var(--border);background:var(--card);color:var(--ink)}
 .cta:hover{transform:translateY(-1px)}
 </style>
@@ -290,18 +290,19 @@ body.v88-dark .card,body.v88-dark .band{box-shadow:none}
   <div class="flow-row"><div class="flow-num">4</div><div class="flow-card"><strong>Return a handoff, not a verdict</strong><p>Summarize the assessment, evidence, impact, uncertainty, and likely next step so a human can decide what changes.</p></div></div>
 </div>
 
-<h2>QA changed the product, not just the polish</h2>
-<p>The dashboard became more useful when testing exposed places where the product model itself was weak.</p>
-
+<h2>What changed after using it</h2>
 <div class="before-after">
-  <div class="ba-card"><div class="label">Observed</div><h3>A failed eval looked definitive</h3><p>The system could surface a red result without helping distinguish product behavior from a questionable test expectation.</p></div>
-  <div class="ba-card"><div class="label">Changed</div><h3>Failure became an investigation state</h3><p>The workflow now needs to preserve the evidence and uncertainty behind the result instead of treating the score as the conclusion.</p></div>
+  <div class="ba-card">
+    <div class="label">Investigation output</div>
+    <h3>Raw evidence was not enough</h3>
+    <p>The first versions surfaced plenty of evidence, but not in a shape I could quickly act on. I changed the output around a product handoff: current assessment, evidence, impact, uncertainty, and next step.</p>
+  </div>
 
-  <div class="ba-card"><div class="label">Observed</div><h3>Investigation output was too dense</h3><p>More evidence did not automatically make the result more useful to a product person.</p></div>
-  <div class="ba-card"><div class="label">Changed</div><h3>The handoff got a clearer shape</h3><p>Assessment, evidence, impact, uncertainty, and next action became the useful unit.</p></div>
-
-  <div class="ba-card"><div class="label">Observed</div><h3>The page became one long scan</h3><p>Adding more signals started recreating the density the dashboard was supposed to reduce.</p></div>
-  <div class="ba-card"><div class="label">Changed</div><h3>Overview and detail were separated</h3><p>The information architecture moved toward a short attention view with deeper project detail when needed.</p></div>
+  <div class="ba-card">
+    <div class="label">Information architecture</div>
+    <h3>More data made the overview worse</h3>
+    <p>As integrations accumulated, the dashboard started recreating the clutter it was supposed to solve. I split the experience into a short attention view and deeper project detail.</p>
+  </div>
 </div>
 
 <h2>What I did, and what AI helped with</h2>
