@@ -111,9 +111,10 @@
     if(!q) return {kind:'unknown',title:'Quality data is not available yet',detail:'Project Health could not load a recent quality result.'};
     const runs=[q.review,q.ask].filter(Boolean);
     if(!runs.length) return {kind:'warn',title:'AI quality checks have not been recorded yet',detail:'Run the controlled checks to see how State handles understanding, evidence, uncertainty, and decision authority.'};
+    if(stateEvalContractStale(q)) return {kind:'warn',title:'AI quality checks need to be rerun',detail:'The latest recorded results predate the current eval contract, so their old failures should not be treated as current product failures.',nextAction:'Run the controlled AI quality checks again.',owner:'Product'};
     const severe=runs.reduce((n,r)=>n+Number(r.high_severity_failures||0),0);
-    if(severe>0) return {kind:'bad',title:'A serious AI quality check failed',detail:severe+' high-impact failure'+(severe===1?'':'s')+' appeared in the latest recorded checks.'};
-    if(runs.some(r=>{const score=evalScore(r);return Number(r.failed_cases||0)>0||(score!=null&&score<1);})) return {kind:'warn',title:'Some AI quality checks need a look',detail:'At least one controlled scenario did not behave as expected.'};
+    if(severe>0) return {kind:'bad',title:'A serious AI quality check failed',detail:severe+' high-impact failure'+(severe===1?'':'s')+' appeared in the latest recorded checks.',nextAction:'Review the failed scenario evidence and decide whether product behavior or the eval contract is wrong.',owner:'Product'};
+    if(runs.some(r=>{const score=evalScore(r);return Number(r.failed_cases||0)>0||(score!=null&&score<1);})) return {kind:'warn',title:'Some AI quality checks need a look',detail:'At least one controlled scenario did not behave as expected.',nextAction:'Review the scenario-level miss, then rerun the affected suite.',owner:'Product'};
     return {kind:'good',title:'AI quality checks are healthy',detail:'The latest recorded checks did not report a high-impact failure.'};
   }
   function deliveryAttention(d){
@@ -148,11 +149,11 @@
     if(data.project.quality==='state'){
       if(!data.quality&&!data.fresh)return items;
       const q=qualityAttention(data.quality);
-      if(['bad','warn'].includes(q.kind)) items.push({...q,category:'quality',owner:'Product'});
+      if(['bad','warn'].includes(q.kind)) items.push({...q,category:'quality',owner:q.owner||'Product',nextAction:q.nextAction||'Review the latest quality evidence.'});
     }else{
       if(!data.externalQuality&&!data.fresh)return items;
       const q=externalQualityAttention(data.externalQuality);
-      if(q&&['bad','warn'].includes(q.kind)) items.push({...q,category:'quality',owner:'Product'});
+      if(q&&['bad','warn'].includes(q.kind)) items.push({...q,category:'quality',owner:'Product',nextAction:'Review the project-specific quality evidence.'});
     }
     return items;
   }
@@ -208,9 +209,9 @@
     }
     if(open.length) return open;
     const delivery=deliveryAttention(data.delivery);
-    if(delivery.kind==='bad') return [{...delivery,category:'delivery',owner:'Engineering'}];
+    if(delivery.kind==='bad') return [{...delivery,category:'delivery',owner:'Engineering',nextAction:'Open the failed deployment/check evidence and identify the first actionable cause.'}];
     const infra=infrastructureAttention(data.platform);
-    if(infra&&['bad','warn'].includes(infra.kind)) return [{...infra,category:'infrastructure',owner:'Engineering'}];
+    if(infra&&['bad','warn'].includes(infra.kind)) return [{...infra,category:'infrastructure',owner:'Engineering',nextAction:'Verify whether this is a real service problem or a monitoring/coverage gap.'}];
     const pending=pendingSet(data);
     if(pending.size) return [{kind:'unknown',title:'Still checking',detail:'Some connected signals are still loading.'}];
     return [{kind:'good',title:'Nothing needs action right now',detail:'No current incident, product-quality action, delivery failure, or infrastructure issue is open.'}];
@@ -280,6 +281,7 @@
       project,
       delivery:s.delivery||null,
       lastSeenSha:s.lastSeenSha||s.delivery?.sha||null,
+      lastVisit:visitBaseline(s),
       staging:s.staging||null,
       quality:s.quality||null,
       externalQuality:s.externalQuality||null,
