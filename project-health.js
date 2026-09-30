@@ -7,7 +7,7 @@
 
   const PROJECTS=[
     {
-      id:'state',name:'State',description:'Human-reviewed project truth system with maintained Current State.',repo:'pedringt/ai-learning',branch:'main',stagingBranch:'staging',quality:'state',
+      id:'state',name:'State',description:'Human-reviewed project truth system with maintained Current State.',repo:'pedringt/ai-learning',branch:'main',stagingBranch:'staging',quality:'state',releasePath:'implementation-context-prototype',
       focus:'Keep project truth trustworthy without giving AI authority to change Current State on its own.',
       evidence:['Understands updates','Answers stay grounded','Respects decision authority','Review burden'],
       nextDecision:'Expand failure investigation only if it stays useful without weakening human control.',
@@ -111,9 +111,10 @@
     if(!q) return {kind:'unknown',title:'Quality data is not available yet',detail:'Project Health could not load a recent quality result.'};
     const runs=[q.review,q.ask].filter(Boolean);
     if(!runs.length) return {kind:'warn',title:'AI quality checks have not been recorded yet',detail:'Run the controlled checks to see how State handles understanding, evidence, uncertainty, and decision authority.'};
+    if(stateEvalContractStale(q)) return {kind:'warn',title:'AI quality checks need to be rerun',detail:'The latest recorded results predate the current eval contract, so their old failures should not be treated as current product failures.',nextAction:'Run the controlled AI quality checks again.',owner:'Product'};
     const severe=runs.reduce((n,r)=>n+Number(r.high_severity_failures||0),0);
-    if(severe>0) return {kind:'bad',title:'A serious AI quality check failed',detail:severe+' high-impact failure'+(severe===1?'':'s')+' appeared in the latest recorded checks.'};
-    if(runs.some(r=>{const score=evalScore(r);return Number(r.failed_cases||0)>0||(score!=null&&score<1);})) return {kind:'warn',title:'Some AI quality checks need a look',detail:'At least one controlled scenario did not behave as expected.'};
+    if(severe>0) return {kind:'bad',title:'A serious AI quality check failed',detail:severe+' high-impact failure'+(severe===1?'':'s')+' appeared in the latest recorded checks.',nextAction:'Review the failed scenario evidence and decide whether product behavior or the eval contract is wrong.',owner:'Product'};
+    if(runs.some(r=>{const score=evalScore(r);return Number(r.failed_cases||0)>0||(score!=null&&score<1);})) return {kind:'warn',title:'Some AI quality checks need a look',detail:'At least one controlled scenario did not behave as expected.',nextAction:'Review the scenario-level miss, then rerun the affected suite.',owner:'Product'};
     return {kind:'good',title:'AI quality checks are healthy',detail:'The latest recorded checks did not report a high-impact failure.'};
   }
   function deliveryAttention(d){
@@ -148,11 +149,11 @@
     if(data.project.quality==='state'){
       if(!data.quality&&!data.fresh)return items;
       const q=qualityAttention(data.quality);
-      if(['bad','warn'].includes(q.kind)) items.push({...q,category:'quality',owner:'Product'});
+      if(['bad','warn'].includes(q.kind)) items.push({...q,category:'quality',owner:q.owner||'Product',nextAction:q.nextAction||'Review the latest quality evidence.'});
     }else{
       if(!data.externalQuality&&!data.fresh)return items;
       const q=externalQualityAttention(data.externalQuality);
-      if(q&&['bad','warn'].includes(q.kind)) items.push({...q,category:'quality',owner:'Product'});
+      if(q&&['bad','warn'].includes(q.kind)) items.push({...q,category:'quality',owner:'Product',nextAction:'Review the project-specific quality evidence.'});
     }
     return items;
   }
@@ -208,9 +209,9 @@
     }
     if(open.length) return open;
     const delivery=deliveryAttention(data.delivery);
-    if(delivery.kind==='bad') return [{...delivery,category:'delivery',owner:'Engineering'}];
+    if(delivery.kind==='bad') return [{...delivery,category:'delivery',owner:'Engineering',nextAction:'Open the failed deployment/check evidence and identify the first actionable cause.'}];
     const infra=infrastructureAttention(data.platform);
-    if(infra&&['bad','warn'].includes(infra.kind)) return [{...infra,category:'infrastructure',owner:'Engineering'}];
+    if(infra&&['bad','warn'].includes(infra.kind)) return [{...infra,category:'infrastructure',owner:'Engineering',nextAction:'Verify whether this is a real service problem or a monitoring/coverage gap.'}];
     const pending=pendingSet(data);
     if(pending.size) return [{kind:'unknown',title:'Still checking',detail:'Some connected signals are still loading.'}];
     return [{kind:'good',title:'Nothing needs action right now',detail:'No current incident, product-quality action, delivery failure, or infrastructure issue is open.'}];
@@ -249,19 +250,40 @@
 
   async function loadGitHubProject(project,branchName){
     const headers={Accept:'application/vnd.github+json'};
-    const [branch,status,checkRuns]=await Promise.all([
-      jsonFetch(githubApi('/repos/'+project.repo+'/branches/'+encodeURIComponent(branchName)),{headers,timeoutMs:6000}),
-      jsonFetch(githubApi('/repos/'+project.repo+'/commits/'+encodeURIComponent(branchName)+'/status'),{headers,timeoutMs:6000}),
-      jsonFetch(githubApi('/repos/'+project.repo+'/commits/'+encodeURIComponent(branchName)+'/check-runs?per_page=10'),{headers,timeoutMs:6000}).catch(()=>({check_runs:[]}))
+    const branch=await jsonFetch(githubApi('/repos/'+project.repo+'/branches/'+encodeURIComponent(branchName)),{headers,timeoutMs:6000});
+    let selectedCommit=branch?.commit||null;
+    if(project.releasePath){
+      try{
+        const commits=await jsonFetch(githubApi('/repos/'+project.repo+'/commits?sha='+encodeURIComponent(branchName)+'&path='+encodeURIComponent(project.releasePath)+'&per_page=1'),{headers,timeoutMs:6000});
+        if(Array.isArray(commits)&&commits[0]) selectedCommit=commits[0];
+      }catch(_){}
+    }
+    const selectedSha=selectedCommit?.sha||branch?.commit?.sha||branchName;
+    const [status,checkRuns]=await Promise.all([
+      jsonFetch(githubApi('/repos/'+project.repo+'/commits/'+encodeURIComponent(selectedSha)+'/status'),{headers,timeoutMs:6000}),
+      jsonFetch(githubApi('/repos/'+project.repo+'/commits/'+encodeURIComponent(selectedSha)+'/check-runs?per_page=10'),{headers,timeoutMs:6000}).catch(()=>({check_runs:[]}))
     ]);
-    return deliveryHealth(branch,status,checkRuns);
+    return deliveryHealth({name:branch?.name||branchName,commit:selectedCommit},status,checkRuns);
   }
   async function loadStateQuality(root){return normalizeQuality(await jsonFetch('/api/project-health-state-quality?env='+pageEnvironment(root),{timeoutMs:7000}));}
   async function loadPlatformSignal(project,signal){return await jsonFetch('/api/project-health-platform?project='+encodeURIComponent(project.id)+'&signal='+encodeURIComponent(signal),{timeoutMs:6500});}
   async function loadRunInfo(project){if(project.id!=='state')return null;try{return await jsonFetch('/api/project-health-run?project=state',{timeoutMs:5000});}catch(error){if(error.status===404)return null;throw error;}}
   async function loadExternalQuality(project){try{return await jsonFetch('/api/project-health-project-quality?project='+encodeURIComponent(project.id),{timeoutMs:7000});}catch(error){if(error.status===404)return null;throw error;}}
   async function loadActivity(project){try{const payload=await jsonFetch('/api/project-health-activity?project='+encodeURIComponent(project.id),{timeoutMs:7500});return payload?.activity||null;}catch(error){if(error.status===404)return null;throw error;}}
-  async function loadOpenPullRequests(project){try{return await jsonFetch(githubApi('/repos/'+project.repo+'/pulls?state=open&per_page=5'),{headers:{Accept:'application/vnd.github+json'},timeoutMs:6000});}catch(_){return[];}}
+  async function loadOpenPullRequests(project){
+    try{
+      const headers={Accept:'application/vnd.github+json'};
+      const pulls=await jsonFetch(githubApi('/repos/'+project.repo+'/pulls?state=open&per_page=5'),{headers,timeoutMs:6000});
+      if(!project.releasePath||!Array.isArray(pulls))return Array.isArray(pulls)?pulls:[];
+      const scoped=await Promise.all(pulls.map(async pr=>{
+        try{
+          const files=await jsonFetch(githubApi('/repos/'+project.repo+'/pulls/'+encodeURIComponent(pr.number)+'/files?per_page=100'),{headers,timeoutMs:5000});
+          return Array.isArray(files)&&files.some(file=>String(file.filename||'').startsWith(project.releasePath+'/'))?pr:null;
+        }catch(_){return null;}
+      }));
+      return scoped.filter(Boolean);
+    }catch(_){return[];}
+  }
 
   function mergePlatform(current,fragment){
     const next={...(current||{})};
@@ -280,6 +302,7 @@
       project,
       delivery:s.delivery||null,
       lastSeenSha:s.lastSeenSha||s.delivery?.sha||null,
+      lastVisit:s.lastVisit||visitBaseline(s),
       staging:s.staging||null,
       quality:s.quality||null,
       externalQuality:s.externalQuality||null,
@@ -290,6 +313,7 @@
       checkedAt:s.checkedAt||null,
       detailCheckedAt:s.detailCheckedAt||null,
       investigation:s.investigation||null,
+      investigationHistory:Array.isArray(s.investigationHistory)?s.investigationHistory:[],
       errors:[],
       pending:new Set(),
       timings:{},
@@ -340,7 +364,7 @@
       const raw=root.localStorage?.getItem(snapshotKey(root));if(!raw)return null;
       const parsed=JSON.parse(raw);
       if(!parsed?.savedAt||!Array.isArray(parsed.projects))return null;
-      if(Date.now()-new Date(parsed.savedAt).getTime()>24*60*60*1000)return null;
+      if(Date.now()-new Date(parsed.savedAt).getTime()>30*24*60*60*1000)return null;
       return parsed;
     }catch(_){return null;}
   }
@@ -348,6 +372,28 @@
     try{
       root.localStorage?.setItem(snapshotKey(root),JSON.stringify({savedAt:new Date().toISOString(),projects:state.map(serializeProjectData)}));
     }catch(_){}
+  }
+
+  function investigationHistoryKey(root,projectId){return 'project-health-investigations:'+pageEnvironment(root)+':'+projectId;}
+  function loadInvestigationHistory(root,projectId){
+    try{
+      const rows=JSON.parse(root.localStorage?.getItem(investigationHistoryKey(root,projectId))||'[]');
+      return Array.isArray(rows)?rows.slice(0,20):[];
+    }catch(_){return[];}
+  }
+  function saveInvestigationHistory(root,projectId,rows){
+    try{root.localStorage?.setItem(investigationHistoryKey(root,projectId),JSON.stringify((rows||[]).slice(0,20)));}catch(_){}
+  }
+  function investigationHistorySummary(investigation){
+    if(!investigation)return'Investigation completed';
+    if(investigation.staleEvalContract)return'Quality result needs a fresh eval run';
+    if(investigation.quickCheck)return investigation.title||'Quick project check completed';
+    if(investigation.error)return 'Investigation failed: '+investigation.error;
+    if(investigation.report){
+      const first=String(investigation.report).split(/\n+/).map(line=>line.trim()).find(line=>line&&!/^(Current assessment|What failed|Why this matters|Recommended next action)$/i.test(line));
+      return first||'Investigation completed';
+    }
+    return'Investigation completed';
   }
 
   function makeRunner(data,onUpdate){
@@ -408,17 +454,104 @@
     return data;
   }
 
-  function fmtDate(value){if(!value)return'Unknown';const d=new Date(value);return Number.isNaN(d.getTime())?'Unknown':d.toLocaleString([],{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'});}
+  const STATE_EVAL_CONTRACT_UPDATED_AT='2026-09-30T00:30:24Z';
+  function dateMs(value){
+    if(value==null||value==='')return NaN;
+    if(typeof value==='number')return value<1e12?value*1000:value;
+    const raw=String(value);
+    if(/^\d+$/.test(raw)){const n=Number(raw);return n<1e12?n*1000:n;}
+    const normalized=/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(raw)?raw.replace(' ','T')+'Z':raw;
+    return new Date(normalized).getTime();
+  }
+  function fmtDate(value){if(!value)return'Unknown';const d=new Date(Number.isNaN(dateMs(value))?value:dateMs(value));return Number.isNaN(d.getTime())?'Unknown':d.toLocaleString([],{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'});}
   function relativeAge(value){
     if(!value)return'not checked yet';
-    const time=new Date(value).getTime();if(Number.isNaN(time))return'unknown';
+    const time=dateMs(value);if(Number.isNaN(time))return'unknown';
     const minutes=Math.max(0,Math.round((Date.now()-time)/60000));
     if(minutes<1)return'just now';
     if(minutes<60)return minutes+'m ago';
     const hours=Math.round(minutes/60);if(hours<24)return hours+'h ago';
     return Math.round(hours/24)+'d ago';
   }
-  function changedSinceVisit(data){return !!(data?.lastSeenSha&&data?.delivery?.sha&&data.lastSeenSha!==data.delivery.sha);}
+  function stateEvalContractStale(q){
+    const runs=[q?.review,q?.ask].filter(Boolean);
+    if(!runs.length)return false;
+    const contract=dateMs(STATE_EVAL_CONTRACT_UPDATED_AT);
+    return runs.some(run=>{const when=dateMs(run.created_at);return Number.isFinite(when)&&when<contract;});
+  }
+  function freshnessMeta(value,fallback,staleHours=24){
+    const ts=value||fallback;
+    if(!ts)return {label:'Freshness unknown',stale:true};
+    const ageMs=Math.max(0,Date.now()-dateMs(ts));
+    if(!Number.isFinite(ageMs))return {label:'Freshness unknown',stale:true};
+    const stale=ageMs>staleHours*60*60*1000;
+    return {label:(stale?'May be stale · ':'Updated ')+relativeAge(ts),stale};
+  }
+  function qualitySnapshot(data){
+    if(data?.project?.quality==='state'){
+      const review=data.quality?.review,ask=data.quality?.ask;
+      return {
+        reviewAt:review?.created_at||null,
+        askAt:ask?.created_at||null,
+        reviewScore:evalScore(review),
+        askScore:evalScore(ask),
+        severe:Number(review?.high_severity_failures||0)+Number(ask?.high_severity_failures||0)
+      };
+    }
+    const q=data?.externalQuality||{};
+    return {updatedAt:q?.ci?.updated_at||q?.recorded?.updated_at||null,status:JSON.stringify(q?.attention||[])};
+  }
+  function visitBaseline(saved){
+    if(!saved)return null;
+    const projectId=saved.projectId||saved.project?.id||null;
+    const pseudo={project:{quality:projectId==='state'?'state':null},quality:saved.quality,externalQuality:saved.externalQuality};
+    return {
+      savedAt:saved.snapshotAt||saved.checkedAt||null,
+      deliverySha:saved.delivery?.sha||null,
+      deliveryKind:saved.delivery?.vercel?.kind||null,
+      quality:qualitySnapshot(pseudo),
+      analyticsAvailable:saved.platform?.analytics?.available??null,
+      analyticsPageviews:saved.platform?.analytics?.pageviews??null,
+      openPullRequests:Array.isArray(saved.openPullRequests)?saved.openPullRequests.length:0
+    };
+  }
+  function meaningfulChanges(data){
+    const before=data?.lastVisit;
+    if(!before)return[];
+    const items=[];
+    if(before.deliverySha&&data.delivery?.sha&&before.deliverySha!==data.delivery.sha){
+      items.push({title:'New production release',detail:commitTitle(data.delivery.message)+' · '+shortSha(data.delivery.sha),observedAt:data.delivery.updatedAt||data.checkedAt});
+    }
+    if(before.deliveryKind&&data.delivery?.vercel?.kind&&before.deliveryKind!==data.delivery.vercel.kind){
+      items.push({title:'Delivery status changed',detail:(before.deliveryKind||'unknown')+' → '+data.delivery.vercel.kind,observedAt:data.delivery.updatedAt||data.checkedAt});
+    }
+    const currentQ=qualitySnapshot(data),oldQ=before.quality||{};
+    if(currentQ.reviewAt&&oldQ.reviewAt&&String(currentQ.reviewAt)!==String(oldQ.reviewAt)){
+      const delta=currentQ.reviewScore!=null&&oldQ.reviewScore!=null?Math.round((currentQ.reviewScore-oldQ.reviewScore)*1000)/10:null;
+      items.push({title:'Update-understanding eval changed',detail:(delta==null?'New controlled run recorded':(delta>=0?'Improved ':'Declined ')+Math.abs(delta)+' points')+' · '+percent(currentQ.reviewScore),observedAt:currentQ.reviewAt});
+    }
+    if(currentQ.askAt&&oldQ.askAt&&String(currentQ.askAt)!==String(oldQ.askAt)){
+      const delta=currentQ.askScore!=null&&oldQ.askScore!=null?Math.round((currentQ.askScore-oldQ.askScore)*1000)/10:null;
+      items.push({title:'Answer-quality eval changed',detail:(delta==null?'New controlled run recorded':(delta>=0?'Improved ':'Declined ')+Math.abs(delta)+' points')+' · '+percent(currentQ.askScore),observedAt:currentQ.askAt});
+    }
+    if(currentQ.severe!=null&&oldQ.severe!=null&&currentQ.severe!==oldQ.severe){
+      items.push({title:'High-impact quality failures changed',detail:oldQ.severe+' → '+currentQ.severe,observedAt:data.checkedAt});
+    }
+    const analytics=data.platform?.analytics;
+    if(before.analyticsAvailable!==null&&analytics&&before.analyticsAvailable!==analytics.available){
+      items.push({title:'Analytics availability changed',detail:(before.analyticsAvailable?'Available':'Unavailable')+' → '+(analytics.available?'Available':'Unavailable'),observedAt:data.detailCheckedAt||data.checkedAt});
+    }
+    if(analytics?.available&&before.analyticsPageviews!=null&&Number(analytics.pageviews)!==Number(before.analyticsPageviews)){
+      const diff=Number(analytics.pageviews)-Number(before.analyticsPageviews);
+      items.push({title:'Usage changed',detail:(diff>=0?'+':'')+diff+' page views in the current 30-day window',observedAt:data.detailCheckedAt||data.checkedAt});
+    }
+    const prCount=Array.isArray(data.openPullRequests)?data.openPullRequests.length:0;
+    if(Number(before.openPullRequests||0)!==prCount){
+      items.push({title:'Open work changed',detail:Number(before.openPullRequests||0)+' → '+prCount+' open pull requests',observedAt:data.detailCheckedAt||data.checkedAt});
+    }
+    return items.sort((a,b)=>(dateMs(b.observedAt)||0)-(dateMs(a.observedAt)||0));
+  }
+  function changedSinceVisit(data){return meaningfulChanges(data).length>0;}
   function trendText(value){
     if(value==null||Number.isNaN(Number(value)))return'No comparison yet';
     const n=Number(value);if(Math.abs(n)<0.1)return'About the same as the previous 30 days';
@@ -472,7 +605,8 @@
     return'$'+amount.toFixed(2);
   }
   function attentionMarkup(item){
-    const content='<strong>'+esc(item.title)+'</strong><p>'+esc(item.detail)+'</p>';
+    const meta=(item.owner||item.nextAction)?'<div class="attention-meta">'+(item.owner?'Owner: '+esc(item.owner):'')+(item.owner&&item.nextAction?' · ':'')+(item.nextAction?'Next: '+esc(item.nextAction):'')+'</div>':'';
+    const content='<strong>'+esc(item.title)+'</strong><p>'+esc(item.detail)+'</p>'+meta;
     if(item.category==='quality'&&['bad','warn'].includes(item.kind)){
       return '<button class="attention attention-action '+esc(item.kind||'')+'" type="button" data-attention-action="ai-quality" aria-label="Investigate '+esc(item.title)+'">'+content+'<span class="attention-action-label">Investigate this issue →</span></button>';
     }
@@ -588,7 +722,7 @@
     }).join('')+'<p class="footnote">Aggregate results are stored for every run. Failed controlled scenarios may also store the scenario ID and pass/fail metadata; private project content and full model transcripts stay out of Project Health.</p></div></div>';
   }
   function investigationResultHtml(investigation){
-    if(investigation?.handoff) return '<div class="investigation-result agent-result"><div class="agent-kicker">Handoff preview</div><strong>Project handoff ready to review</strong><pre>'+esc(investigation.handoffText||investigation.report||'')+'</pre><div class="quality-actions"><button class="button small primary" type="button" data-copy-project-handoff>Copy handoff</button></div><p class="footnote">Project Health assembled this from the currently loaded delivery, quality, investigation, and product-decision signals. Review it before sharing.</p></div>';
+    if(investigation?.handoff) return '<div class="investigation-result agent-result"><div class="agent-kicker">Handoff preview</div><strong>Project handoff ready to review</strong><pre>'+esc(investigation.handoffText||investigation.report||'')+'</pre><p class="footnote">Project Health assembled this from the currently loaded delivery, quality, investigation, and product-decision signals. Review it before sharing.</p></div>';
     if(investigation?.openingProtected) return '<div class="investigation-result agent-result" role="status"><div class="agent-kicker">Read-only investigation agent</div><strong>Opening protected investigation…</strong><p>Vercel will verify access before the live AI investigation starts.</p></div>';
     if(investigation?.loading) return '<div class="investigation-result agent-result" role="status"><div class="agent-kicker">Read-only investigation agent</div><strong>Checking current health signals…</strong><p>Starting with current health signals and expanding only when the evidence points somewhere specific.</p></div>';
     if(investigation?.error) return '<div class="investigation-result agent-result" role="status"><div class="agent-kicker">Read-only investigation agent</div><strong>Investigation unavailable</strong><p>'+esc(investigation.error)+'</p></div>';
@@ -603,7 +737,7 @@
     const title=investigation.qualityInvestigation?'Quality investigation · '+esc(fmtDate(investigation.observedAt)):'Agent investigation · '+esc(fmtDate(investigation.observedAt));
     return '<div class="investigation-result agent-result"><div class="agent-kicker">'+label+'</div><strong>'+title+'</strong><pre>'+esc(investigation.report)+'</pre>'+
       ((investigation.sources||[]).length?'<div class="investigation-sources"><strong>Evidence checked</strong> '+investigation.sources.map(source=>githubLink(esc(source.label),source.url)).join(' · ')+'</div>':'')+
-      '<div class="quality-actions"><button class="button small" type="button" data-copy-handoff>Copy engineer handoff</button></div>'+
+
       '<p class="footnote">'+(investigation.qualityInvestigation?'This investigation uses the recorded controlled-eval evidence already loaded by Project Health. No extra model call was made.':'The agent can inspect bounded evidence and draft a handoff. It cannot change code, configuration, or deployments.')+'</p></div>';
   }
 
@@ -628,19 +762,27 @@
     const investigationPanel=doc.getElementById('investigationPanel');
     const investigationDrawerTitle=doc.getElementById('investigationDrawerTitle');
     const investigationDrawerStatus=doc.getElementById('investigationDrawerStatus');
-    const drawerPrepareHandoffButton=doc.getElementById('drawerPrepareHandoffButton');
+    const drawerCopyHandoffButton=doc.getElementById('drawerCopyHandoffButton');
     const investigationDrawerFooter=doc.getElementById('investigationDrawerFooter');
     const drawerRunAgainButton=doc.getElementById('drawerRunAgainButton');
-    if(investigationPanel) investigationPanel.innerHTML=investigationResultHtml(data.investigation);
+    const historyRows=Array.isArray(data.investigationHistory)?data.investigationHistory:[];
+    const historyHtml=historyRows.length
+      ?'<div class="history-section"><h4>Previous investigations</h4>'+historyRows.slice(0,5).map(item=>'<div class="activity-item"><strong>'+esc(item.trigger||'Investigation')+'</strong><span>'+esc(fmtDate(item.observedAt))+' · '+esc(item.summary||'Investigation completed')+(item.resolvedAt?' · Resolved '+esc(relativeAge(item.resolvedAt)):'')+'</span></div>').join('')+'</div>'
+      :'';
+    if(investigationPanel) investigationPanel.innerHTML=investigationResultHtml(data.investigation)+historyHtml;
     if(investigationDrawerTitle) investigationDrawerTitle.textContent=p.name+' investigation';
     if(investigationDrawerStatus){
-      investigationDrawerStatus.textContent=data.investigation?.loading?'Running…':data.investigation?.handoff?'Handoff ready':data.investigation?'Latest result available':'';
+      investigationDrawerStatus.textContent=data.investigation?.loading?'Running…':data.investigation?'Latest result available':historyRows.length?'Previous results available':'';
     }
-    if(drawerPrepareHandoffButton){
+    if(drawerCopyHandoffButton){
       const busy=!!data.investigation?.loading||!!data.investigation?.openingProtected;
-      drawerPrepareHandoffButton.hidden=!data.investigation||busy||!!data.investigation.handoff;
-      if(drawerRunAgainButton) drawerRunAgainButton.hidden=!data.investigation||busy;
-      if(investigationDrawerFooter) investigationDrawerFooter.hidden=drawerPrepareHandoffButton.hidden&&(drawerRunAgainButton?.hidden!==false);
+      const copyable=!!(data.investigation?.report||data.investigation?.quickCheck||data.investigation?.handoff);
+      drawerCopyHandoffButton.hidden=busy||!copyable;
+    }
+    if(drawerRunAgainButton){
+      const busy=!!data.investigation?.loading||!!data.investigation?.openingProtected;
+      drawerRunAgainButton.hidden=!data.investigation||busy;
+      if(investigationDrawerFooter) investigationDrawerFooter.hidden=drawerRunAgainButton.hidden;
     }
 
     const notices=attentionItems(data),readiness=releaseReadiness(data);
@@ -663,15 +805,22 @@
     const overviewInfra=infrastructureAttention(data);
     const aSummary=platform?.analytics;
     const statusLabel=kind=>kind==='bad'?'Needs attention':kind==='warn'?'Watch':kind==='good'?'Healthy':'Unknown';
+    const qualityTime=p.quality==='state'
+      ?[q?.review?.created_at,q?.ask?.created_at].filter(Boolean).sort().pop()
+      :(externalQ?.ci?.updated_at||externalQ?.recorded?.updated_at||data.checkedAt);
     const healthRows=[
-      {label:'AI quality',kind:overviewQuality?.kind||'unknown',detail:overviewQuality?.title||'Quality status unavailable',tab:'ai-quality'},
-      {label:'Delivery',kind:overviewDelivery?.kind||'unknown',detail:overviewDelivery?.title||'Delivery status unavailable',tab:'delivery'},
-      {label:'Infrastructure',kind:overviewInfra?.kind||'good',detail:overviewInfra?.title||'Production services healthy',tab:'infra'},
-      {label:'Usage',kind:pending.has('Analytics')?'unknown':aSummary?.available?'good':'unknown',detail:pending.has('Analytics')?'Checking usage…':aSummary?.available?((aSummary.visitors??0)+' visitors · '+(aSummary.pageviews??0)+' page views · 30d'):(aSummary?.configured?'Connected, but comparison data is not available yet':'Usage analytics are not connected'),tab:'activity'}
+      {label:'AI quality',kind:overviewQuality?.kind||'unknown',detail:overviewQuality?.title||'Quality status unavailable',tab:'ai-quality',fresh:freshnessMeta(qualityTime,data.checkedAt,72)},
+      {label:'Delivery',kind:overviewDelivery?.kind||'unknown',detail:overviewDelivery?.title||'Delivery status unavailable',tab:'delivery',fresh:freshnessMeta(d?.updatedAt,data.checkedAt,24)},
+      {label:'Infrastructure',kind:overviewInfra?.kind||'good',detail:overviewInfra?.title||'Production services healthy',tab:'infra',fresh:freshnessMeta(data.detailCheckedAt||data.checkedAt,data.checkedAt,6)},
+      {label:'Usage',kind:pending.has('Analytics')?'unknown':aSummary?.available?'good':'unknown',detail:pending.has('Analytics')?'Checking usage…':aSummary?.available?((aSummary.visitors??0)+' visitors · '+(aSummary.pageviews??0)+' page views · 30d'):(aSummary?.configured?'Connected, but comparison data is not available yet':'Usage analytics are not connected'),tab:'activity',fresh:freshnessMeta(data.detailCheckedAt||data.checkedAt,data.checkedAt,24)}
     ];
+    const changes=meaningfulChanges(data);
+    const sinceLabel=data.lastVisit?.savedAt?fmtDate(data.lastVisit.savedAt):'your previous saved visit';
+    doc.getElementById('changesPanel').innerHTML='<div class="panel-title-row"><div><h3>Changed since last visit</h3><p class="panel-copy">Compared with '+esc(sinceLabel)+'. Only meaningful changes are shown.</p></div><span class="readiness-pill '+(changes.length?'watch':'ready')+'">'+esc(changes.length)+' change'+(changes.length===1?'':'s')+'</span></div>'+
+      (changes.length?'<div class="change-list" style="margin-top:10px">'+changes.slice(0,8).map(item=>'<div class="change-item"><span class="change-dot"></span><div><strong>'+esc(item.title)+'</strong><span>'+esc(item.detail)+'</span></div></div>').join('')+'</div>':'<div class="empty" style="margin-top:10px">No meaningful changes detected since the previous saved visit.</div>');
     const overviewGaps=setupGaps(data);
     doc.getElementById('overviewHealthPanel').innerHTML='<div class="panel-title-row"><h3>Project health</h3>'+(overviewGaps.length?'<span class="readiness-pill watch">'+esc(overviewGaps.length)+' coverage '+(overviewGaps.length===1?'gap':'gaps')+'</span>':'')+'</div>'+
-      '<div class="overview-health" style="margin-top:8px">'+healthRows.map(item=>'<div class="overview-health-row"><div><strong>'+esc(item.label)+' · '+esc(statusLabel(item.kind))+'</strong><span>'+esc(item.detail)+'</span></div><button type="button" data-tab-target="'+esc(item.tab)+'">View</button></div>').join('')+'</div>';
+      '<div class="overview-health" style="margin-top:8px">'+healthRows.map(item=>'<div class="overview-health-row"><div><strong>'+esc(item.label)+' · '+esc(statusLabel(item.kind))+'</strong><span>'+esc(item.detail)+'</span><span class="signal-meta '+(item.fresh?.stale?'stale':'')+'">'+esc(item.fresh?.label||'Freshness unknown')+'</span></div><button type="button" data-tab-target="'+esc(item.tab)+'">View</button></div>').join('')+'</div>';
 
     // Product quality / evals
     let qualityHtml='';
@@ -687,13 +836,14 @@
         const total=runs.reduce((n,item)=>n+Number(item?.total||0),0);
         const severe=runs.reduce((n,item)=>n+Number(item?.high_severity_failures||0),0);
         const qa=qualityAttention(q);
+        const staleContract=stateEvalContractStale(q);
         const cards=[];
         if(review?.interpretation_accuracy!=null) cards.push(stateEvalCard('Understood updates correctly',percent(review.interpretation_accuracy),'Did State interpret the project update the way the product expected?',evalTrend(q.recent,'review_interpretation')));
         if(ask?.ask_grounding!=null) cards.push(stateEvalCard('Answers stayed supported by evidence',percent(ask.ask_grounding),'Did answers stick to known project information instead of filling gaps?',evalTrend(q.recent,'ask_quality')));
         if(ask?.authority_accuracy!=null) cards.push(stateEvalCard('Respected decision authority',percent(ask.authority_accuracy),'Did State keep proposed changes separate from approved project truth?',''));
         if(ask?.uncertainty_accuracy!=null) cards.push(stateEvalCard('Handled uncertainty clearly',percent(ask.uncertainty_accuracy),'Did State say when the available evidence was not enough?',''));
         qualityHtml='<h3>Product quality · AI checks</h3>'+
-          '<div class="eval-overview"><div><strong>'+esc(qa.title)+'</strong><span>'+(latestDate?'Last checked '+esc(fmtDate(latestDate))+' · ':'')+esc(total||'—')+' scenarios · '+esc(severe)+' high-impact failures</span></div></div>'+
+          '<div class="eval-overview"><div><strong>'+esc(qa.title)+'</strong><span>'+(latestDate?'Last checked '+esc(fmtDate(latestDate))+' · ':'')+(staleContract?'Recorded under the previous eval contract · rerun required':esc(total||'—')+' scenarios · '+esc(severe)+' high-impact failures')+'</span></div></div>'+
           '<div class="eval-grid">'+cards.join('')+'</div>'+stateEvalHistory(q);
       }
       qualityHtml+='<p class="footnote"><a href="/state-evals">View eval details →</a></p>';
@@ -757,28 +907,42 @@
       doc.getElementById('analyticsPanel').innerHTML='<h3>Usage</h3><div class="empty" style="margin-top:12px">'+esc(usageMessage)+'</div>';
     }
 
-    // Recent activity / lightweight history
-    const activityItems=[];
+    // Chronological activity timeline across releases, evals, investigations, and open work.
+    const timelineItems=[];
+    if(d?.updatedAt) timelineItems.push({when:d.updatedAt,title:'Production release',detail:commitTitle(d.message)+' · '+shortSha(d.sha)});
     if(activity?.available){
-      const dep=activity.deployments||{},recovered=(dep.recent_failures||[]).filter(item=>item.recovered);
-      activityItems.push({title:(dep.total||0)+' production releases in the last '+(activity.lookback_days||7)+' days',detail:(dep.failed||0)+' failed · '+recovered.length+' recovered'});
-      const runtimeCount=(activity.runtime?.issues||[]).reduce((total,item)=>total+Number(item.count||0),0);
-      activityItems.push({title:runtimeCount?'User-facing errors were observed':'No user-facing server errors found in the latest release',detail:runtimeCount?runtimeCount+' bounded error occurrences need context.':'The latest bounded runtime check is clear.'});
+      const dep=activity.deployments||{};
+      for(const failure of dep.recent_failures||[]){
+        if(failure.created_at) timelineItems.push({when:failure.created_at,title:'Deployment failed',detail:failure.message||'Production deployment failed'});
+        if(failure.recovered&&failure.recovered_at) timelineItems.push({when:failure.recovered_at,title:'Deployment recovered',detail:'A later release restored a healthy production state.'});
+      }
+      for(const issue of activity.runtime?.issues||[]){
+        if(issue.last_seen) timelineItems.push({when:issue.last_seen,title:'Runtime signal',detail:(issue.path||'Server route')+(issue.count?' · '+issue.count+' occurrences':'')});
+      }
     }
     const prs=Array.isArray(data.openPullRequests)?data.openPullRequests:[];
-    if(prs.length) activityItems.push({title:prs.length+' '+(prs.length===1?'change is':'changes are')+' still being worked on',detail:prs.slice(0,2).map(pr=>String(pr.title||'Untitled')).join(' · ')});
-    if(p.id==='state'&&Array.isArray(q?.recent)&&q.recent.length){
-      const item=q.recent[0];
-      activityItems.push({title:evalSuiteLabel(item)+' was checked',detail:item.created_at?fmtDate(item.created_at):'Latest aggregate result recorded'});
-    }else if(p.id==='tastemake'&&externalQ){
-      activityItems.push({title:'Recommendation quality checks '+(externalQ.ci?.conclusion==='success'?'passed':'updated'),detail:externalQ.ci?.updated_at?fmtDate(externalQ.ci.updated_at):'Latest run recorded'});
-    }else if(p.id==='narc'&&externalQ?.recorded?.full_playtest_pending){
-      activityItems.push({title:'Full first-run playtest is still open',detail:'Automated checks are not a substitute for the human playthrough.'});
+    for(const pr of prs.slice(0,4)){
+      const when=pr.updated_at||pr.created_at;
+      if(when) timelineItems.push({when,title:'Open PR · '+(pr.number?'#'+pr.number:'work in progress'),detail:String(pr.title||'Untitled')});
     }
-    const activityHtml=activityItems.length?'<div class="activity-list">'+activityItems.slice(0,5).map(item=>'<div class="activity-item"><strong>'+esc(item.title)+'</strong><span>'+esc(item.detail)+'</span></div>').join('')+'</div>':'<div class="empty">No recent activity is available yet.</div>';
-    doc.getElementById('historyPanel').innerHTML='<h3>Activity</h3><p class="panel-copy">Meaningful releases, quality checks, work in progress, and user-facing signals.</p><div style="margin-top:12px">'+activityHtml+'</div>';
-    const overviewActivity=activityItems.length?'<div class="activity-list">'+activityItems.slice(0,3).map(item=>'<div class="activity-item"><strong>'+esc(item.title)+'</strong><span>'+esc(item.detail)+'</span></div>').join('')+'</div>':'<div class="empty">No recent activity is available yet.</div>';
-    doc.getElementById('overviewActivityPanel').innerHTML='<div class="panel-title-row"><h3>Recent activity</h3><button class="button small" type="button" data-tab-target="activity">View all activity</button></div><div style="margin-top:12px">'+overviewActivity+'</div>';
+    if(p.id==='state'&&Array.isArray(q?.recent)){
+      for(const item of q.recent.slice(0,6)){
+        if(item.created_at) timelineItems.push({when:item.created_at,title:evalSuiteLabel(item)+' checked',detail:(evalScore(item)==null?'Score unavailable':percent(evalScore(item)))+' · '+Number(item.high_severity_failures||0)+' high-impact failures'});
+      }
+    }else if(p.id==='tastemake'&&externalQ?.ci?.updated_at){
+      timelineItems.push({when:externalQ.ci.updated_at,title:'Recommendation quality checks updated',detail:externalQ.ci.conclusion==='success'?'Automated recommendation checks passed.':'Latest check result recorded.'});
+    }else if(p.id==='narc'&&externalQ?.recorded?.updated_at){
+      timelineItems.push({when:externalQ.recorded.updated_at,title:'Game quality record updated',detail:externalQ.recorded.full_playtest_pending?'Full first-run playtest still open.':'Latest recorded quality state.'});
+    }
+    for(const item of data.investigationHistory||[]){
+      timelineItems.push({when:item.observedAt,title:'Investigation · '+(item.trigger||'Project check'),detail:(item.summary||'Investigation completed')+(item.resolvedAt?' · later resolved':'')});
+      if(item.resolvedAt) timelineItems.push({when:item.resolvedAt,title:'Investigated issue resolved',detail:item.trigger||'Project investigation'});
+    }
+    timelineItems.sort((a,b)=>(dateMs(b.when)||0)-(dateMs(a.when)||0));
+    const timelineHtml=timelineItems.length?'<div class="timeline">'+timelineItems.slice(0,18).map(item=>'<div class="timeline-item"><span class="timeline-time">'+esc(fmtDate(item.when))+'</span><span class="timeline-marker"></span><div class="timeline-content"><strong>'+esc(item.title)+'</strong><span>'+esc(item.detail||'')+'</span></div></div>').join('')+'</div>':'<div class="empty">No recent activity is available yet.</div>';
+    doc.getElementById('historyPanel').innerHTML='<h3>Activity</h3><p class="panel-copy">A chronological operating history across releases, quality checks, investigations, and recovery.</p><div style="margin-top:12px">'+timelineHtml+'</div>';
+    const overviewActivity=timelineItems.length?'<div class="activity-list">'+timelineItems.slice(0,3).map(item=>'<div class="activity-item"><strong>'+esc(item.title)+'</strong><span>'+esc(relativeAge(item.when))+' · '+esc(item.detail||'')+'</span></div>').join('')+'</div>':'<div class="empty">No recent activity is available yet.</div>';
+    doc.getElementById('overviewActivityPanel').innerHTML='<div class="panel-title-row"><h3>Recent activity</h3><button class="button small" type="button" data-tab-target="activity">View timeline</button></div><div style="margin-top:12px">'+overviewActivity+'</div>';
 
     // Delivery: product summary plus always-visible grouped evidence.
     const investigationBusy=!!data.investigation?.loading;
@@ -891,10 +1055,6 @@
 
   async function dispatchRun(data,root,suite='all'){
     const run=data.runInfo;if(!run?.configured)return;
-    if(run.can_run_here===false){
-      root.location.assign(protectedControlsUrl(data,{control:'evals',suite}));
-      return;
-    }
     const labels={all:'all AI quality checks',review:'update-understanding checks',ask:'answer-quality checks'};
     const cases=suite==='all'?Math.max(16,Number(run.minimum_controlled_cases||8)):Number(run.minimum_controlled_cases||8);
     const message='Run '+(labels[suite]||labels.all)+'?\n\nAbout '+cases+' controlled scenarios will use paid model calls.\nEstimated cost: '+run.estimated_cost+'\n\nResults are recorded as aggregate quality data. Start the run?';
@@ -966,7 +1126,8 @@
     const failedLines=details.length?details.map(detail=>{
       const expected=detail.expected?'Expected: '+detail.expected+'. ':'';
       const observed=detail.observed?'Observed: '+detail.observed+'. ':'';
-      const checks=(detail.failed_checks||[]).length?'Failed checks: '+detail.failed_checks.join(', ')+'. ':'';
+      const observedAlreadyListsChecks=/^Failed checks:/i.test(String(detail.observed||''));
+      const checks=!observedAlreadyListsChecks&&(detail.failed_checks||[]).length?'Failed checks: '+detail.failed_checks.join(', ')+'. ':'';
       return '- '+detail.suiteLabel+' / '+detail.scenario_id+' ('+(detail.severity||'unknown')+'). '+expected+observed+checks+evalFailureImpact(detail);
     }):['- Exact scenario metadata is unavailable for this older run, so Project Health can only report the suite-level result.'];
     const improvements=[];
@@ -981,6 +1142,36 @@
     const nextStep=details.length
       ?'Review the remaining scenario-level misses below. Fix product behavior only where the contract is still right; adjust the eval where the observed behavior is acceptable. Then rerun the affected suite and compare against this run.'
       :'Inspect the affected suite and rerun after the next change so future failures record scenario-level evidence.';
+    if(stateEvalContractStale(quality)){
+      const historical=currentLines.length?currentLines.map(line=>'- '+line).join('\n'):'- No historical aggregate result is available.';
+      const report=[
+        'Current assessment',
+        'The latest recorded AI quality run predates the current eval contract. Its failures are historical and should not be treated as current product failures.',
+        '',
+        'Historical result',
+        historical,
+        '',
+        'Why this changed',
+        'Project Health updated the eval expectations after reviewing these scenario-level misses. The partial Slack approval may preserve an unresolved question, and the authority check now recognizes explicit unresolved review language.',
+        '',
+        'Recommended next action',
+        'Rerun the controlled AI quality checks. Use the new run as the current baseline before changing State behavior.',
+        '',
+        'Owner',
+        'Product',
+        '',
+        'Confidence',
+        'High confidence that the recorded run is stale relative to the current eval contract. No claim is being made yet about how the revised checks will score.'
+      ].join('\n');
+      return {
+        report,
+        sources:[{label:'State eval details',url:'/state-evals',observedAt:latestDate}],
+        observedAt:latestDate,
+        qualityInvestigation:true,
+        staleEvalContract:true
+      };
+    }
+
     const report=[
       'Current assessment',
       currentLines.join('\n')||'No current controlled-eval result is available.',
@@ -1020,13 +1211,28 @@
     const status=projectStatus(data);
     const notices=attentionItems(data).filter(item=>item.kind!=='good');
     const latestQuality=data?.project?.quality==='state'&&data.quality
-      ?[data.quality.review,data.quality.ask].filter(Boolean).map(run=>evalSuiteLabel(run)+': '+percent(evalScore(run))+' · '+Number(run.high_severity_failures||0)+' high-impact failures').join('\n')
+      ?(stateEvalContractStale(data.quality)
+        ?'Needs rerun · the latest recorded AI quality results predate the current eval contract. Historical failures are not treated as current product failures.'
+        :[data.quality.review,data.quality.ask].filter(Boolean).map(run=>evalSuiteLabel(run)+': '+percent(evalScore(run))+' · '+Number(run.high_severity_failures||0)+' high-impact failures').join('\n'))
       :projectQualityLabel(data);
     const release=data?.delivery
       ?commitTitle(data.delivery.message)+' · '+shortSha(data.delivery.sha)+' · '+fmtDate(data.delivery.updatedAt)
       :'Unavailable';
     const issueText=notices.length?notices.map(item=>'- '+item.title+': '+item.detail).join('\n'):'- Nothing currently needs action.';
-    const prior=data?.investigation?.report&&!data.investigation?.handoff?data.investigation.report:'No focused investigation has been added to this handoff yet.';
+    const investigation=data?.investigation;
+    const prior=investigation?.handoff
+      ?'The latest drawer state is already a handoff preview.'
+      :investigation?.report
+        ?investigation.report
+        :investigation?.quickCheck
+          ?[
+              investigation.title||'Project check complete',
+              investigation.summary||'',
+              ...(Array.isArray(investigation.checks)?investigation.checks.map(item=>'- '+item.label+': '+item.value):[])
+            ].filter(Boolean).join('\n')
+          :investigation?.error
+            ?'Investigation unavailable: '+investigation.error
+            :'No focused investigation has been added to this handoff yet.';
     const handoffText=[
       data.project.name+' project handoff',
       '',
@@ -1063,10 +1269,11 @@
   }
 
   async function init(root){
-    const doc=root.document,cards=doc.getElementById('projectCards'),status=doc.getElementById('status'),summary=doc.getElementById('overviewSummary'),reviewInbox=doc.getElementById('reviewInbox'),refresh=doc.getElementById('refreshButton'),qualityPanel=doc.getElementById('qualityPanel'),projectTabs=doc.getElementById('projectTabs'),projectDetail=doc.getElementById('projectDetail'),investigationDrawer=doc.getElementById('investigationDrawer'),investigationBackdrop=doc.getElementById('investigationBackdrop'),closeInvestigationDrawerButton=doc.getElementById('closeInvestigationDrawer'),drawerPrepareHandoffButton=doc.getElementById('drawerPrepareHandoffButton');
+    const doc=root.document,cards=doc.getElementById('projectCards'),status=doc.getElementById('status'),summary=doc.getElementById('overviewSummary'),reviewInbox=doc.getElementById('reviewInbox'),refresh=doc.getElementById('refreshButton'),qualityPanel=doc.getElementById('qualityPanel'),projectTabs=doc.getElementById('projectTabs'),projectDetail=doc.getElementById('projectDetail'),investigationDrawer=doc.getElementById('investigationDrawer'),investigationBackdrop=doc.getElementById('investigationBackdrop'),closeInvestigationDrawerButton=doc.getElementById('closeInvestigationDrawer'),drawerRunAgainButton=doc.getElementById('drawerRunAgainButton'),drawerCopyHandoffButton=doc.getElementById('drawerCopyHandoffButton');
     if(!cards||!status||!summary||!reviewInbox||!refresh||!qualityPanel)return;
     const cached=loadSnapshot(root);
     let state=PROJECTS.map(project=>hydrateProjectData(project,cached?.projects?.find(item=>item.projectId===project.id)));
+    state.forEach(item=>{item.investigationHistory=loadInvestigationHistory(root,item.project.id);});
     const initialParams=new URLSearchParams(root.location.search);
     let activeId=initialParams.get('project')||'state';
     const allowedTabs=new Set(['overview','ai-quality','delivery','infra','activity']);
@@ -1075,6 +1282,34 @@
     const demoState={phase:'idle',step:0,timers:[]};
 
     function activeData(){return state.find(item=>item.project.id===activeId)||null;}
+
+    function recordInvestigation(data,investigation,trigger){
+      if(!data||!investigation||investigation.loading||investigation.openingProtected)return;
+      const row={
+        id:String(investigation.observedAt||new Date().toISOString())+':'+String(trigger||'project'),
+        observedAt:investigation.observedAt||new Date().toISOString(),
+        trigger:trigger||'project check',
+        summary:investigationHistorySummary(investigation),
+        evidence:(investigation.sources||[]).map(source=>source.label).filter(Boolean),
+        qualityInvestigation:!!investigation.qualityInvestigation,
+        quickCheck:!!investigation.quickCheck,
+        needsAttentionAtRun:overallAttention(data).kind!=='good',
+        resolvedAt:null
+      };
+      const rows=Array.isArray(data.investigationHistory)?data.investigationHistory:[];
+      data.investigationHistory=[row,...rows.filter(item=>item.id!==row.id)].slice(0,20);
+      saveInvestigationHistory(root,data.project.id,data.investigationHistory);
+    }
+    function reconcileInvestigationHistory(data){
+      if(!data||!Array.isArray(data.investigationHistory)||!data.investigationHistory.length)return;
+      if(overallAttention(data).kind!=='good')return;
+      let changed=false;
+      data.investigationHistory=data.investigationHistory.map((item,index)=>{
+        if(index===0&&item.needsAttentionAtRun&&!item.resolvedAt){changed=true;return {...item,resolvedAt:new Date().toISOString()};}
+        return item;
+      });
+      if(changed)saveInvestigationHistory(root,data.project.id,data.investigationHistory);
+    }
 
     function renderCards(){
       cards.innerHTML=PROJECTS.map(project=>{
@@ -1184,6 +1419,7 @@
     async function ensureDetails(id){
       const data=state.find(item=>item.project.id===id);if(!data)return;
       await loadProjectDetails(data,root,()=>{scheduleRender();});
+      reconcileInvestigationHistory(data);
       scheduleRender();persist();
     }
 
@@ -1268,12 +1504,15 @@
           data.investigation={error:error.message||'Could not complete the investigation.'};
         }
       }
+      recordInvestigation(data,data.investigation,signalType==='vercel'?'Deployment failure':'Failed release check');
       renderNow();
     }
 
     const headerRunChecksButton=doc.getElementById('headerRunChecksButton');
     if(headerRunChecksButton)headerRunChecksButton.addEventListener('click',async()=>{
       const data=activeData();if(!data||data.project.id!=='state'||data.qualityRun)return;
+      headerRunChecksButton.disabled=true;
+      headerRunChecksButton.textContent='Starting AI checks…';
       try{
         const started=await dispatchRun(data,root,'all');
         if(started?.started){
@@ -1281,6 +1520,8 @@
           saveEvalRunState(root,started);
           renderNow();
           pollEvalResults(data);
+        }else{
+          renderNow();
         }
       }catch(_){renderNow();}
     });
@@ -1290,9 +1531,10 @@
       if(data.delivery?.vercel?.kind==='bad'){await runAgentInvestigation(data,'vercel','production');return;}
       if(Array.isArray(data.delivery?.failedChecks)&&data.delivery.failedChecks.length){await runAgentInvestigation(data,'github-check','production');return;}
       if(data.project.quality==='state'&&['bad','warn'].includes(qualityAttention(data.quality).kind)){
-        data.investigation=qualityInvestigation(data);renderNow();revealInvestigation();return;
+        data.investigation=qualityInvestigation(data);recordInvestigation(data,data.investigation,'AI quality');renderNow();revealInvestigation();return;
       }
       data.investigation=quickProjectCheck(data);
+      recordInvestigation(data,data.investigation,'Project check');
       renderNow();
       revealInvestigation();
     }
@@ -1308,11 +1550,16 @@
       await startProjectInvestigation(data);
     });
 
-    if(drawerPrepareHandoffButton)drawerPrepareHandoffButton.addEventListener('click',()=>{
-      const data=activeData();if(!data)return;
-      data.investigation=projectHandoff(data);
-      renderNow();
-      revealInvestigation();
+    if(drawerCopyHandoffButton)drawerCopyHandoffButton.addEventListener('click',async()=>{
+      const data=activeData();if(!data||!data.investigation)return;
+      const handoff=projectHandoff(data);
+      const text=handoff.handoffText||handoff.report||'';
+      if(!text)return;
+      try{
+        await root.navigator.clipboard.writeText(text);
+        drawerCopyHandoffButton.textContent='Copied';
+        root.setTimeout(()=>{drawerCopyHandoffButton.textContent='Copy handoff';},1500);
+      }catch(_){root.prompt('Copy project handoff',text);}
     });
 
     const attentionPanel=doc.getElementById('attentionPanel');
@@ -1322,27 +1569,12 @@
       const data=activeData();if(!data)return;
       if(action.dataset.attentionAction==='ai-quality'){
         data.investigation=qualityInvestigation(data);
+        recordInvestigation(data,data.investigation,'AI quality');
         renderNow();
         revealInvestigation();
       }
     });
 
-    const investigationPanel=doc.getElementById('investigationPanel');
-    if(investigationPanel)investigationPanel.addEventListener('click',async event=>{
-      const projectCopy=event.target.closest?.('[data-copy-project-handoff]');
-      const copyButton=event.target.closest?.('[data-copy-handoff]');
-      const data=activeData(),investigation=data?.investigation;if(!data||!investigation)return;
-      if(projectCopy){
-        const text=investigation.handoffText||investigation.report||'';
-        if(!text)return;
-        try{await root.navigator.clipboard.writeText(text);projectCopy.textContent='Copied';root.setTimeout(()=>{projectCopy.textContent='Copy handoff';},1500);}catch(_){root.prompt('Copy project handoff',text);}
-        return;
-      }
-      if(!copyButton||!investigation.report)return;
-      const sources=(investigation.sources||[]).map(source=>'- '+source.label+': '+source.url).join('\n');
-      const text=[data.project.name+' engineering handoff','',investigation.report,'',sources?'Evidence:\n'+sources:'','', 'Generated by Project Health. Read-only investigation; verify before changing anything.'].filter(Boolean).join('\n');
-      try{await root.navigator.clipboard.writeText(text);copyButton.textContent='Copied';root.setTimeout(()=>{copyButton.textContent='Copy engineer handoff';},1500);}catch(_){root.prompt('Copy engineering handoff',text);}
-    });
 
     const deliveryPanel=doc.getElementById('deliveryPanel');
     deliveryPanel.addEventListener('click',async event=>{
@@ -1385,6 +1617,7 @@
 
       await Promise.all(jobs);
       if(generation!==refreshGeneration)return;
+      state.forEach(reconcileInvestigationHistory);
       const errors=state.flatMap(item=>item.errors.map(error=>item.project.name+': '+error));
       persist();
       status.innerHTML=errors.length?'<strong>Refresh finished with some coverage gaps.</strong> The dashboard keeps unavailable data separate from product incidents.':'<strong>Health is up to date.</strong>';
@@ -1413,6 +1646,7 @@
         if(evalRunComplete(latest,runState)){
           data.qualityRun=null;
           saveEvalRunState(root,null);
+          reconcileInvestigationHistory(data);
           persist();
           renderNow();
           return;
@@ -1434,7 +1668,9 @@
       const button=event.target.closest?.('[data-run-checks]');
       if(!button)return;
       const data=activeData();if(!data||data.qualityRun)return;
+      const originalLabel=button.textContent;
       button.disabled=true;
+      button.textContent='Starting…';
       try{
         const started=await dispatchRun(data,root,button.dataset.runChecks||'all');
         if(started?.started){
@@ -1442,6 +1678,9 @@
           saveEvalRunState(root,started);
           renderNow();
           pollEvalResults(data);
+        }else{
+          button.disabled=false;
+          button.textContent=originalLabel;
         }
       }catch(_){renderDetail(data,doc);}
     });
@@ -1459,5 +1698,5 @@
     }
   }
 
-  return {PROJECTS,pageEnvironment,protectedControlsUrl,vercelFromStatus,deliveryHealth,commitTitle,githubCommitUrl,pullRequestNumber,githubPullRequestUrl,changeUrl,normalizeQuality,qualityAttention,externalQualityAttention,deliveryAttention,infrastructureAttention,allAttentionSignals,attentionItems,overallAttention,productOpenItems,projectStatus,setupGaps,releaseReadiness,projectQualityLabel,evalScore,percent,shortSha,pendingSet,mergePlatform,emptyProjectData,safeExternalQualitySnapshot,serializeProjectData,hydrateProjectData,loadProject,loadProjectDetails,infraCardLabel,analyticsConnectionValue,analyticsGapDetail,analyticsLabel,relativeAge,changedSinceVisit,trendText,activityReviewItems,progressText,quickProjectCheck,evalRunComplete,qualityInvestigation,projectHandoff,init};
+  return {PROJECTS,pageEnvironment,protectedControlsUrl,vercelFromStatus,deliveryHealth,commitTitle,githubCommitUrl,pullRequestNumber,githubPullRequestUrl,changeUrl,normalizeQuality,qualityAttention,externalQualityAttention,deliveryAttention,infrastructureAttention,allAttentionSignals,attentionItems,overallAttention,productOpenItems,projectStatus,setupGaps,releaseReadiness,projectQualityLabel,evalScore,percent,shortSha,pendingSet,mergePlatform,emptyProjectData,safeExternalQualitySnapshot,serializeProjectData,hydrateProjectData,loadProject,loadProjectDetails,infraCardLabel,analyticsConnectionValue,analyticsGapDetail,analyticsLabel,relativeAge,changedSinceVisit,meaningfulChanges,freshnessMeta,stateEvalContractStale,trendText,activityReviewItems,progressText,quickProjectCheck,evalRunComplete,qualityInvestigation,projectHandoff,init};
 });
