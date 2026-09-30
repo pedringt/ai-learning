@@ -275,7 +275,8 @@
     const paths=Array.isArray(project?.evalBehaviorPaths)?project.evalBehaviorPaths:[];
     if(!paths.length)return null;
     const headers={Accept:'application/vnd.github+json'};
-    const rows=await Promise.all(paths.map(path=>jsonFetch(githubApi('/repos/'+project.repo+'/commits?sha='+encodeURIComponent(project.branch)+'&path='+encodeURIComponent(path)+'&per_page=1'),{headers,timeoutMs:6000}).catch(()=>[])));
+    const behaviorBranch=project.stagingBranch||project.branch;
+    const rows=await Promise.all(paths.map(path=>jsonFetch(githubApi('/repos/'+project.repo+'/commits?sha='+encodeURIComponent(behaviorBranch)+'&path='+encodeURIComponent(path)+'&per_page=1'),{headers,timeoutMs:6000}).catch(()=>[])));
     const commits=rows.flat().filter(Boolean);
     commits.sort((a,b)=>(dateMs(b?.commit?.committer?.date||b?.commit?.author?.date)||0)-(dateMs(a?.commit?.committer?.date||a?.commit?.author?.date)||0));
     const latest=commits[0];
