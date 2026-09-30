@@ -1249,18 +1249,40 @@
 
   async function dispatchRun(data,root,suite='all'){
     const run=data.runInfo;if(!run?.configured)return;
-    const labels={all:'all AI quality checks',review:'update-understanding checks',ask:'answer-quality checks'};
-    const cases=suite==='all'?Math.max(16,Number(run.minimum_controlled_cases||8)):Number(run.minimum_controlled_cases||8);
-    const message='Run '+(labels[suite]||labels.all)+'?\n\nAbout '+cases+' controlled scenarios will use paid model calls.\nEstimated cost: '+run.estimated_cost+'\n\nResults are recorded as aggregate quality data. Start the run?';
-    if(!root.confirm(message)) return;
+    const projectId=data.project.id;
+    if(run.paid_model_calls){
+      const labels={all:'all AI quality checks',review:'update-understanding checks',ask:'answer-quality checks'};
+      const cases=suite==='all'?Math.max(16,Number(run.minimum_controlled_cases||8)):Number(run.minimum_controlled_cases||8);
+      const message='Run '+(labels[suite]||labels.all)+'?\n\nAbout '+cases+' controlled scenarios will use paid model calls.\nEstimated cost: '+run.estimated_cost+'\n\nResults are recorded as aggregate quality data. Start the run?';
+      if(!root.confirm(message)) return;
+    }else{
+      const message='Run '+String(run.label||'quality checks')+'?\n\nThis starts the project\'s existing GitHub Actions quality workflow. No paid model calls are part of this dashboard run.';
+      if(!root.confirm(message)) return;
+    }
     try{
-      const payload=await jsonFetch('/api/project-health-run',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({project:data.project.id,suite,record_environment:pageEnvironment(root),confirm_paid_model_calls:true,estimated_cost:run.estimated_cost})});
+      const baselineUpdatedAt=projectId==='state'
+        ?null
+        :(data.externalQuality?.ci?.updated_at||data.externalQuality?.recorded?.updated_at||null);
+      const payload=await jsonFetch('/api/project-health-run',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({
+          project:projectId,
+          suite,
+          record_environment:pageEnvironment(root),
+          confirm_paid_model_calls:!!run.paid_model_calls,
+          estimated_cost:run.estimated_cost,
+          baseline_updated_at:baselineUpdatedAt
+        })
+      });
       return {
         ...payload,
+        project:projectId,
         suite,
         startedAt:new Date().toISOString(),
         baselineReview:data.quality?.review?.created_at||null,
         baselineAsk:data.quality?.ask?.created_at||null,
+        baselineUpdatedAt,
         state:'running'
       };
     }catch(error){
