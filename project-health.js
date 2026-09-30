@@ -780,15 +780,22 @@
     const overviewInfra=infrastructureAttention(data);
     const aSummary=platform?.analytics;
     const statusLabel=kind=>kind==='bad'?'Needs attention':kind==='warn'?'Watch':kind==='good'?'Healthy':'Unknown';
+    const qualityTime=p.quality==='state'
+      ?[q?.review?.created_at,q?.ask?.created_at].filter(Boolean).sort().pop()
+      :(externalQ?.ci?.updated_at||externalQ?.recorded?.updated_at||data.checkedAt);
     const healthRows=[
-      {label:'AI quality',kind:overviewQuality?.kind||'unknown',detail:overviewQuality?.title||'Quality status unavailable',tab:'ai-quality'},
-      {label:'Delivery',kind:overviewDelivery?.kind||'unknown',detail:overviewDelivery?.title||'Delivery status unavailable',tab:'delivery'},
-      {label:'Infrastructure',kind:overviewInfra?.kind||'good',detail:overviewInfra?.title||'Production services healthy',tab:'infra'},
-      {label:'Usage',kind:pending.has('Analytics')?'unknown':aSummary?.available?'good':'unknown',detail:pending.has('Analytics')?'Checking usage…':aSummary?.available?((aSummary.visitors??0)+' visitors · '+(aSummary.pageviews??0)+' page views · 30d'):(aSummary?.configured?'Connected, but comparison data is not available yet':'Usage analytics are not connected'),tab:'activity'}
+      {label:'AI quality',kind:overviewQuality?.kind||'unknown',detail:overviewQuality?.title||'Quality status unavailable',tab:'ai-quality',fresh:freshnessMeta(qualityTime,data.checkedAt,72)},
+      {label:'Delivery',kind:overviewDelivery?.kind||'unknown',detail:overviewDelivery?.title||'Delivery status unavailable',tab:'delivery',fresh:freshnessMeta(d?.updatedAt,data.checkedAt,24)},
+      {label:'Infrastructure',kind:overviewInfra?.kind||'good',detail:overviewInfra?.title||'Production services healthy',tab:'infra',fresh:freshnessMeta(data.detailCheckedAt||data.checkedAt,data.checkedAt,6)},
+      {label:'Usage',kind:pending.has('Analytics')?'unknown':aSummary?.available?'good':'unknown',detail:pending.has('Analytics')?'Checking usage…':aSummary?.available?((aSummary.visitors??0)+' visitors · '+(aSummary.pageviews??0)+' page views · 30d'):(aSummary?.configured?'Connected, but comparison data is not available yet':'Usage analytics are not connected'),tab:'activity',fresh:freshnessMeta(data.detailCheckedAt||data.checkedAt,data.checkedAt,24)}
     ];
+    const changes=meaningfulChanges(data);
+    const sinceLabel=data.lastVisit?.savedAt?fmtDate(data.lastVisit.savedAt):'your previous saved visit';
+    doc.getElementById('changesPanel').innerHTML='<div class="panel-title-row"><div><h3>Changed since last visit</h3><p class="panel-copy">Compared with '+esc(sinceLabel)+'. Only meaningful changes are shown.</p></div><span class="readiness-pill '+(changes.length?'watch':'ready')+'">'+esc(changes.length)+' change'+(changes.length===1?'':'s')+'</span></div>'+
+      (changes.length?'<div class="change-list" style="margin-top:10px">'+changes.slice(0,8).map(item=>'<div class="change-item"><span class="change-dot"></span><div><strong>'+esc(item.title)+'</strong><span>'+esc(item.detail)+'</span></div></div>').join('')+'</div>':'<div class="empty" style="margin-top:10px">No meaningful changes detected since the previous saved visit.</div>');
     const overviewGaps=setupGaps(data);
     doc.getElementById('overviewHealthPanel').innerHTML='<div class="panel-title-row"><h3>Project health</h3>'+(overviewGaps.length?'<span class="readiness-pill watch">'+esc(overviewGaps.length)+' coverage '+(overviewGaps.length===1?'gap':'gaps')+'</span>':'')+'</div>'+
-      '<div class="overview-health" style="margin-top:8px">'+healthRows.map(item=>'<div class="overview-health-row"><div><strong>'+esc(item.label)+' · '+esc(statusLabel(item.kind))+'</strong><span>'+esc(item.detail)+'</span></div><button type="button" data-tab-target="'+esc(item.tab)+'">View</button></div>').join('')+'</div>';
+      '<div class="overview-health" style="margin-top:8px">'+healthRows.map(item=>'<div class="overview-health-row"><div><strong>'+esc(item.label)+' · '+esc(statusLabel(item.kind))+'</strong><span>'+esc(item.detail)+'</span><span class="signal-meta '+(item.fresh?.stale?'stale':'')+'">'+esc(item.fresh?.label||'Freshness unknown')+'</span></div><button type="button" data-tab-target="'+esc(item.tab)+'">View</button></div>').join('')+'</div>';
 
     // Product quality / evals
     let qualityHtml='';
