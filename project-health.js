@@ -920,12 +920,28 @@
     const pending=pendingSet(data);
     doc.getElementById('detailTitle').textContent=p.name;
     doc.getElementById('detailCopy').textContent=p.description;
-    doc.getElementById('repoLink').href=repoUrl(p.repo);
+    const repoLink=doc.getElementById('repoLink');
+    if(repoLink)repoLink.href=repoUrl(p.repo);
+    const qualityTab=doc.querySelector?.('[data-tab="ai-quality"]');
+    if(qualityTab)qualityTab.textContent=p.qualityLabel||'Quality';
+    const linksMenu=doc.getElementById('projectLinksMenu');
+    if(linksMenu){
+      const links=[
+        ['Live project',p.links?.live],
+        ['GitHub repository',repoUrl(p.repo)],
+        ['Vercel',p.links?.vercel],
+        ['Render · production',p.links?.renderProduction],
+        ['Render · staging',p.links?.renderStaging],
+        ['Neon',p.links?.neon],
+        [p.id==='state'?'State eval details':p.id==='tastemake'?'Recommendation checks':'Game checks',p.links?.quality]
+      ].filter(item=>item[1]);
+      linksMenu.innerHTML=links.map(([label,url])=>'<a href="'+esc(url)+'" target="_blank" rel="noopener noreferrer">'+esc(label)+'</a>').join('');
+    }
     const projectCheckButton=doc.getElementById('projectCheckButton');
     const headerRunChecksButton=doc.getElementById('headerRunChecksButton');
     const currentQuality=p.quality==='state'?qualityAttention(q):externalQualityAttention(externalQ);
     const noRecordedStateRuns=p.id==='state'&&![q?.review,q?.ask].filter(Boolean).length;
-    const shouldRunChecksFirst=p.id==='state'&&run?.configured&&(noRecordedStateRuns||stateEvalResultsStale(q));
+    const shouldRunChecksFirst=!!(run?.configured&&(p.id!=='state'||noRecordedStateRuns||stateEvalResultsStale(q)));
     const shouldInvestigateFirst=currentQuality?.kind==='bad'||deliveryAttention(d).kind==='bad';
     if(projectCheckButton){
       projectCheckButton.disabled=!!data.investigation?.loading;
@@ -935,9 +951,10 @@
     }
     if(headerRunChecksButton){
       const activeEvalRun=data.qualityRun;
-      headerRunChecksButton.hidden=!(p.id==='state'&&run?.configured);
+      const baseLabel=run?.button_label||(p.id==='state'?'Run AI checks':p.id==='tastemake'?'Run recommendation checks':'Run game checks');
+      headerRunChecksButton.hidden=!run?.configured;
       headerRunChecksButton.disabled=!!activeEvalRun;
-      headerRunChecksButton.textContent=activeEvalRun?'AI checks running…':data.qualityRunCompletedAt?'View AI results':'Run AI checks';
+      headerRunChecksButton.textContent=activeEvalRun?'Checks running…':data.qualityRunCompletedAt?'View quality results':baseLabel;
       headerRunChecksButton.classList.toggle('primary',!!shouldRunChecksFirst);
       headerRunChecksButton.style.order=shouldRunChecksFirst?'1':'2';
     }
