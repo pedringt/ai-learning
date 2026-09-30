@@ -70,6 +70,12 @@ The workflow, skills, permissions, and user experience do not have to come from 
 
 **Ask:** Can we change the model or provider without rebuilding the agent experience?
 
+### Treat persistent bots as standing product roles
+
+AI products are increasingly moving from one-off chat interactions toward persistent bots that can hold a role, retain relevant context, use approved tools, and continue a workflow across sessions.
+
+**Ask:** When does a repeated workflow deserve a standing AI worker instead of an on-demand assistant?
+
 ### Behavior contracts may become more important than model selection
 
 Today, teams often choose a specific model first. A more mature pattern may be to define the behavior a workflow needs, such as quality, latency, cost, tool support, output structure, and risk tolerance, then map that contract to an approved model or model configuration.
@@ -142,11 +148,25 @@ Realtime voice and local or hybrid execution are making latency, privacy, connec
 
 **Ask:** Does this job benefit enough from immediacy or local execution to justify a different architecture?
 
+### Persistent and shared bots
+
+Personal and team bots point toward a different product model: instead of opening a fresh chat each time, people may work with named AI roles that keep context, use assigned tools, and operate within defined permissions over time.
+
+**Ask:** If this bot became a long-running coworker, what should it remember, what should it forget, and when should it ask a person before acting?
+
 ---
 
 ## Working Vocabulary
 
 These are the terms I still find useful enough to keep visible.
+
+### Bot
+
+A broad, informal term for AI set up to do a job. Some bots only respond to requests; others are more capable and persistent.
+
+### Agent
+
+A more specific kind of bot that can choose steps or tools to pursue a goal within defined permissions and stopping rules.
 
 ### Agent harness
 
@@ -205,3 +225,4 @@ These are the questions that still feel useful beyond the shorter durable set.
 5. Can the model provider or interface change without rebuilding the authoritative workflow underneath it?
 6. Can this model, alias, or preset change underneath us, and how will we know if that changes product behavior?
 7. If the underlying AI improves, does this workflow still earn its maintenance cost?
+8. If this were a standing AI worker instead of a one-off interaction, what would it own, remember, access, and need approval for?
