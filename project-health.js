@@ -939,7 +939,7 @@
     return top?.title||'Quality loaded';
   }
   function loadingCardMarkup(project,active){
-    return '<button class="project-switcher-item '+(active?'active':'')+'" data-kind="unknown" data-project="'+esc(project.id)+'" type="button" aria-pressed="'+(active?'true':'false')+'">'+
+    return '<button class="project-switcher-item '+(active?'active':'')+'" data-kind="unknown" data-project="'+esc(project.id)+'" type="button" aria-pressed="'+(active?'true':'false')+'" aria-busy="true">'+
       '<span class="project-switcher-main"><strong>'+esc(project.name)+'</strong><span>Checking project health…</span></span>'+
       '<span class="status-pill unknown">Checking</span></button>';
   }
@@ -1043,6 +1043,7 @@
     const shouldInvestigateFirst=currentQuality?.kind==='bad'||deliveryAttentionForData(data).kind==='bad'||activityReviewItems(data).some(item=>!item.resolved);
     if(projectCheckButton){
       projectCheckButton.disabled=!!data.investigation?.loading;
+      projectCheckButton.setAttribute('aria-busy',data.investigation?.loading?'true':'false');
       projectCheckButton.textContent=data.investigation?.loading?'Investigating…':'Investigate';
       projectCheckButton.classList.add('primary');
       projectCheckButton.style.order='1';
