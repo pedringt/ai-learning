@@ -507,10 +507,10 @@
     if(!runs.length||!Number.isFinite(changed))return false;
     return runs.some(run=>{const when=dateMs(run.created_at);return Number.isFinite(when)&&when<changed;});
   }
-  function stateEvalResultsStale(q){return stateEvalResultsStale(q)||stateEvalBehaviorStale(q);}
+  function stateEvalResultsStale(q){return stateEvalContractStale(q)||stateEvalBehaviorStale(q);}
   function stateEvalStaleReason(q){
     if(stateEvalBehaviorStale(q))return'The State behavior these checks measure changed after the latest recorded run.';
-    if(stateEvalResultsStale(q))return'The eval contract changed after the latest recorded run.';
+    if(stateEvalContractStale(q))return'The eval contract changed after the latest recorded run.';
     return'';
   }
   function freshnessMeta(value,fallback,staleHours=24){
