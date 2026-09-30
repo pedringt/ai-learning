@@ -41,6 +41,30 @@ class QualityEvalDatasetTests(unittest.TestCase):
                 self.assertTrue(scenario.should_change_state, scenario.id)
                 self.assertTrue(scenario.should_open_question, scenario.id)
 
+    def test_partial_approval_allows_state_update_with_open_question(self):
+        scenario = next(s for s in REVIEW_SCENARIOS if s.id == "review_partial_question_answer")
+        self.assertIn("update_state", scenario.allowed_actions)
+        self.assertIn("update_state_and_open_question", scenario.allowed_actions)
+        result = ReviewQualityResult(
+            scenario=scenario,
+            review_recommended=True,
+            observed_action="update_state_and_open_question",
+            processing_status="succeeded",
+            proposed_state_text="Slack is approved for #product and #support. Other channels remain under review.",
+        )
+        self.assertTrue(result.interpretation_correct)
+
+    def test_authority_eval_accepts_unresolved_review_wording(self):
+        scenario = next(s for s in ASK_SCENARIOS if s.id == "ask_conflicting_evidence")
+        result = score_ask_answer(
+            scenario,
+            {
+                "answer": "The approved enterprise terms say customer content is not used for model training. New legal evidence is under review, so that interpretation may change."
+            },
+        )
+        self.assertTrue(result.authority_ok)
+        self.assertTrue(result.passed)
+
     def test_question_answer_scenario_accepts_supported_state_update(self):
         scenario = next(s for s in REVIEW_SCENARIOS if s.id == "review_question_answer_only")
         self.assertIn("answer_question_and_update_state", scenario.allowed_actions)
