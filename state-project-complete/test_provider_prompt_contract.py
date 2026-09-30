@@ -234,4 +234,4 @@ def test_both_providers_keep_partial_answers_and_authority_disagreements_bounded
         prompt = _prompt(provider_cls()).lower()
         assert 'lower-authority disagreement' in prompt
         assert 'partial answers leave broader questions open' in prompt
-        assert 'never widen scope beyond evidence' in prompt
+        assert 'do not widen scope' in prompt
