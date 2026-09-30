@@ -1111,8 +1111,8 @@
         const runDisabled=activeEvalRun?' disabled':'';
         qualityHtml+='<div class="eval-actions"><button class="button small primary" type="button" data-run-checks="all"'+runDisabled+'>'+(activeEvalRun?'AI evals running…':'Run all AI evals')+'</button></div>'+
           '<div class="eval-suite-actions"><strong>Run a specific eval suite</strong><p>State has two controlled eval areas. Rerun one when you are checking a targeted change.</p><div class="suite-action-grid">'+
-          '<button class="button small suite-action" type="button" data-run-checks="review"'+runDisabled+'><strong>Update understanding</strong><span>How State interprets new evidence and proposed truth changes.</span></button>'+
-          '<button class="button small suite-action" type="button" data-run-checks="ask"'+runDisabled+'><strong>Answer quality</strong><span>Grounding, uncertainty, and decision authority in answers.</span></button>'+
+          '<button class="button small suite-action" type="button" data-run-checks="review"'+runDisabled+'><span class="suite-action-copy"><strong>Update understanding</strong><span>How State interprets new evidence and proposed truth changes.</span></span><span class="suite-action-run">Run →</span></button>'+
+          '<button class="button small suite-action" type="button" data-run-checks="ask"'+runDisabled+'><span class="suite-action-copy"><strong>Answer quality</strong><span>Grounding, uncertainty, and decision authority in answers.</span></span><span class="suite-action-run">Run →</span></button>'+
           '</div></div>'+
           '<p class="footnote">Estimated model cost: '+esc(run.estimated_cost||'not configured')+'. You will confirm before any paid run starts.</p>';
       }else if(run){
