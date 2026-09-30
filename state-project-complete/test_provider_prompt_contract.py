@@ -233,5 +233,5 @@ def test_both_providers_keep_partial_answers_and_authority_disagreements_bounded
     for provider_cls in (AnthropicProvider, OpenAIProvider):
         prompt = _prompt(provider_cls()).lower()
         assert 'lower-authority opinion' in prompt
-        assert 'leave the broader question open' in prompt
-        assert 'does not prove adjacent work is complete' in prompt
+        assert 'broader question stays open' in prompt
+        assert 'never widen a narrow answer' in prompt
