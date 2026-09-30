@@ -522,34 +522,34 @@
     if(!before)return[];
     const items=[];
     if(before.deliverySha&&data.delivery?.sha&&before.deliverySha!==data.delivery.sha){
-      items.push({title:'New production release',detail:commitTitle(data.delivery.message)+' · '+shortSha(data.delivery.sha),observedAt:data.delivery.updatedAt||data.checkedAt});
+      items.push({title:'New production release',detail:commitTitle(data.delivery.message)+' · '+shortSha(data.delivery.sha),observedAt:data.delivery.updatedAt||data.checkedAt,tab:'delivery'});
     }
     if(before.deliveryKind&&data.delivery?.vercel?.kind&&before.deliveryKind!==data.delivery.vercel.kind){
-      items.push({title:'Delivery status changed',detail:(before.deliveryKind||'unknown')+' → '+data.delivery.vercel.kind,observedAt:data.delivery.updatedAt||data.checkedAt});
+      items.push({title:'Delivery status changed',detail:(before.deliveryKind||'unknown')+' → '+data.delivery.vercel.kind,observedAt:data.delivery.updatedAt||data.checkedAt,tab:'delivery'});
     }
     const currentQ=qualitySnapshot(data),oldQ=before.quality||{};
     if(currentQ.reviewAt&&oldQ.reviewAt&&String(currentQ.reviewAt)!==String(oldQ.reviewAt)){
       const delta=currentQ.reviewScore!=null&&oldQ.reviewScore!=null?Math.round((currentQ.reviewScore-oldQ.reviewScore)*1000)/10:null;
-      items.push({title:'Update-understanding eval changed',detail:(delta==null?'New controlled run recorded':(delta>=0?'Improved ':'Declined ')+Math.abs(delta)+' points')+' · '+percent(currentQ.reviewScore),observedAt:currentQ.reviewAt});
+      items.push({title:'Update-understanding eval changed',detail:(delta==null?'New controlled run recorded':(delta>=0?'Improved ':'Declined ')+Math.abs(delta)+' points')+' · '+percent(currentQ.reviewScore),observedAt:currentQ.reviewAt,tab:'ai-quality'});
     }
     if(currentQ.askAt&&oldQ.askAt&&String(currentQ.askAt)!==String(oldQ.askAt)){
       const delta=currentQ.askScore!=null&&oldQ.askScore!=null?Math.round((currentQ.askScore-oldQ.askScore)*1000)/10:null;
-      items.push({title:'Answer-quality eval changed',detail:(delta==null?'New controlled run recorded':(delta>=0?'Improved ':'Declined ')+Math.abs(delta)+' points')+' · '+percent(currentQ.askScore),observedAt:currentQ.askAt});
+      items.push({title:'Answer-quality eval changed',detail:(delta==null?'New controlled run recorded':(delta>=0?'Improved ':'Declined ')+Math.abs(delta)+' points')+' · '+percent(currentQ.askScore),observedAt:currentQ.askAt,tab:'ai-quality'});
     }
     if(currentQ.severe!=null&&oldQ.severe!=null&&currentQ.severe!==oldQ.severe){
-      items.push({title:'High-impact quality failures changed',detail:oldQ.severe+' → '+currentQ.severe,observedAt:data.checkedAt});
+      items.push({title:'High-impact quality failures changed',detail:oldQ.severe+' → '+currentQ.severe,observedAt:data.checkedAt,tab:'ai-quality'});
     }
     const analytics=data.platform?.analytics;
     if(before.analyticsAvailable!==null&&analytics&&before.analyticsAvailable!==analytics.available){
-      items.push({title:'Analytics availability changed',detail:(before.analyticsAvailable?'Available':'Unavailable')+' → '+(analytics.available?'Available':'Unavailable'),observedAt:data.detailCheckedAt||data.checkedAt});
+      items.push({title:'Analytics availability changed',detail:(before.analyticsAvailable?'Available':'Unavailable')+' → '+(analytics.available?'Available':'Unavailable'),observedAt:data.detailCheckedAt||data.checkedAt,tab:'activity'});
     }
     if(analytics?.available&&before.analyticsPageviews!=null&&Number(analytics.pageviews)!==Number(before.analyticsPageviews)){
       const diff=Number(analytics.pageviews)-Number(before.analyticsPageviews);
-      items.push({title:'Usage changed',detail:(diff>=0?'+':'')+diff+' page views in the current 30-day window',observedAt:data.detailCheckedAt||data.checkedAt});
+      items.push({title:'Usage changed',detail:(diff>=0?'+':'')+diff+' page views in the current 30-day window',observedAt:data.detailCheckedAt||data.checkedAt,tab:'activity'});
     }
     const prCount=Array.isArray(data.openPullRequests)?data.openPullRequests.length:0;
     if(Number(before.openPullRequests||0)!==prCount){
-      items.push({title:'Open work changed',detail:Number(before.openPullRequests||0)+' → '+prCount+' open pull requests',observedAt:data.detailCheckedAt||data.checkedAt});
+      items.push({title:'Open work changed',detail:Number(before.openPullRequests||0)+' → '+prCount+' open pull requests',observedAt:data.detailCheckedAt||data.checkedAt,tab:'activity'});
     }
     return items.sort((a,b)=>(dateMs(b.observedAt)||0)-(dateMs(a.observedAt)||0));
   }
@@ -759,7 +759,7 @@
       const activeEvalRun=data.qualityRun;
       headerRunChecksButton.hidden=!(p.id==='state'&&run?.configured);
       headerRunChecksButton.disabled=!!activeEvalRun;
-      headerRunChecksButton.textContent=activeEvalRun?'AI checks running…':'Run AI checks';
+      headerRunChecksButton.textContent=activeEvalRun?'AI checks running…':data.qualityRunCompletedAt?'View AI results':'Run AI checks';
     }
     const investigationPanel=doc.getElementById('investigationPanel');
     const investigationDrawerTitle=doc.getElementById('investigationDrawerTitle');
@@ -819,7 +819,7 @@
     const changes=meaningfulChanges(data);
     const sinceLabel=data.lastVisit?.savedAt?fmtDate(data.lastVisit.savedAt):'your previous saved visit';
     doc.getElementById('changesPanel').innerHTML='<div class="panel-title-row"><div><h3>Changed since last visit</h3><p class="panel-copy">Compared with '+esc(sinceLabel)+'. Only meaningful changes are shown.</p></div><span class="readiness-pill '+(changes.length?'watch':'ready')+'">'+esc(changes.length)+' change'+(changes.length===1?'':'s')+'</span></div>'+
-      (changes.length?'<div class="change-list" style="margin-top:10px">'+changes.slice(0,8).map(item=>'<div class="change-item"><span class="change-dot"></span><div><strong>'+esc(item.title)+'</strong><span>'+esc(item.detail)+'</span></div></div>').join('')+'</div>':'<div class="empty" style="margin-top:10px">No meaningful changes detected since the previous saved visit.</div>');
+      (changes.length?'<div class="change-list" style="margin-top:10px">'+changes.slice(0,8).map(item=>'<button class="change-item" type="button" data-tab-target="'+esc(item.tab||'activity')+'"><span class="change-dot"></span><div><strong>'+esc(item.title)+'</strong><span>'+esc(item.detail)+'</span></div></button>').join('')+'</div>':'<div class="empty" style="margin-top:10px">No meaningful changes detected since the previous saved visit.</div>');
     const overviewGaps=setupGaps(data);
     doc.getElementById('overviewHealthPanel').innerHTML='<div class="panel-title-row"><h3>Project health</h3>'+(overviewGaps.length?'<span class="readiness-pill watch">'+esc(overviewGaps.length)+' coverage '+(overviewGaps.length===1?'gap':'gaps')+'</span>':'')+'</div>'+
       '<div class="overview-health" style="margin-top:8px">'+healthRows.map(item=>'<div class="overview-health-row"><div><strong>'+esc(item.label)+' · '+esc(statusLabel(item.kind))+'</strong><span>'+esc(item.detail)+'</span><span class="signal-meta '+(item.fresh?.stale?'stale':'')+'">'+esc(item.fresh?.label||'Freshness unknown')+'</span></div><button type="button" data-tab-target="'+esc(item.tab)+'">View</button></div>').join('')+'</div>';
@@ -1398,6 +1398,9 @@
     }
     function setActiveTab(tab,updateUrl=true){
       activeTab=allowedTabs.has(tab)?tab:'overview';
+      if(activeTab==='ai-quality'){
+        const data=activeData();if(data)data.qualityRunCompletedAt=null;
+      }
       applyTabState();
       if(updateUrl){
         const url=new URL(root.location.href);url.searchParams.set('project',activeId);url.searchParams.set('tab',activeTab);root.history.replaceState(null,'',url);
@@ -1501,13 +1504,16 @@
     const headerRunChecksButton=doc.getElementById('headerRunChecksButton');
     if(headerRunChecksButton)headerRunChecksButton.addEventListener('click',async()=>{
       const data=activeData();if(!data||data.project.id!=='state'||data.qualityRun)return;
+      if(data.qualityRunCompletedAt){setActiveTab('ai-quality');renderNow();return;}
       headerRunChecksButton.disabled=true;
       headerRunChecksButton.textContent='Starting AI checks…';
       try{
         const started=await dispatchRun(data,root,'all');
         if(started?.started){
           data.qualityRun=started;
+          data.qualityRunCompletedAt=null;
           saveEvalRunState(root,started);
+          setActiveTab('ai-quality');
           renderNow();
           pollEvalResults(data);
         }else{
@@ -1558,6 +1564,7 @@
       if(!action)return;
       const data=activeData();if(!data)return;
       if(action.dataset.attentionAction==='ai-quality'){
+        setActiveTab('ai-quality');
         data.investigation=qualityInvestigation(data);
         recordInvestigation(data,data.investigation,'AI quality');
         renderNow();
@@ -1635,6 +1642,7 @@
         data.quality=latest;
         if(evalRunComplete(latest,runState)){
           data.qualityRun=null;
+          data.qualityRunCompletedAt=activeTab==='ai-quality'?null:new Date().toISOString();
           saveEvalRunState(root,null);
           reconcileInvestigationHistory(data);
           persist();
@@ -1665,7 +1673,9 @@
         const started=await dispatchRun(data,root,button.dataset.runChecks||'all');
         if(started?.started){
           data.qualityRun=started;
+          data.qualityRunCompletedAt=null;
           saveEvalRunState(root,started);
+          setActiveTab('ai-quality');
           renderNow();
           pollEvalResults(data);
         }else{
