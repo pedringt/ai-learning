@@ -2,6 +2,7 @@
 const assert=require('assert');
 const fs=require('fs');
 const H=require('../project-health.js');
+const RUN_API=require('../api/project-health-run.js')._test;
 
 assert.deepStrictEqual(H.PROJECTS.map(p=>p.id),['state','tastemake','narc']);
 assert.strictEqual(H.pageEnvironment({location:{hostname:'ai-learning-git-staging-cairn10.vercel.app',search:''}}),'staging');
@@ -13,6 +14,18 @@ assert.strictEqual(protectedUrl.hostname,'ai-learning-git-staging-cairn10.vercel
 assert.strictEqual(protectedUrl.searchParams.get('project'),'state');
 assert.strictEqual(protectedUrl.searchParams.get('control'),'evals');
 assert.strictEqual(protectedUrl.searchParams.get('suite'),'all');
+
+const priorToken=process.env.GITHUB_TOKEN;
+const priorCost=process.env.PROJECT_HEALTH_RUN_COST_ESTIMATE_STATE;
+process.env.GITHUB_TOKEN='test-token';
+process.env.PROJECT_HEALTH_RUN_COST_ESTIMATE_STATE='<$0.25 per full run';
+const publicRunInfo=RUN_API.runInfo('state');
+assert.strictEqual(publicRunInfo.configured,true);
+assert.strictEqual(publicRunInfo.can_run_here,true);
+assert.match(publicRunInfo.protection,/Public run/);
+assert.strictEqual(RUN_API.RUN_COOLDOWN_MS,10*60*1000);
+if(priorToken==null)delete process.env.GITHUB_TOKEN;else process.env.GITHUB_TOKEN=priorToken;
+if(priorCost==null)delete process.env.PROJECT_HEALTH_RUN_COST_ESTIMATE_STATE;else process.env.PROJECT_HEALTH_RUN_COST_ESTIMATE_STATE=priorCost;
 assert.strictEqual(
   H.commitTitle('Merge pull request #284 from pedringt/project-health-streaming-refresh\n\nMake Project Health load progressively and cache safely'),
   'Make Project Health load progressively and cache safely'
@@ -65,16 +78,16 @@ assert.strictEqual(H.qualityAttention(severe).kind,'bad');
 const mediumOnly=H.normalizeQuality({
   controlled_evals:{
     latest_review_interpretation:{
-      suite:'review_interpretation',interpretation_accuracy:.75,high_severity_failures:0,total:8,created_at:'2026-09-29 17:56:46',
+      suite:'review_interpretation',interpretation_accuracy:.75,high_severity_failures:0,total:8,created_at:'2026-09-30 00:45:46',
       failure_details:[
         {scenario_id:'review_question_answer_only',severity:'medium',expected:'answer_question',observed:'answer_question_and_update_state',failed_checks:['interpretation']},
         {scenario_id:'review_unknown_not_false',severity:'medium',expected:'preserve_evidence_only',observed:'open_question',failed_checks:['review_needed','interpretation']}
       ]
     },
-    latest_ask_quality:{suite:'ask_quality',overall_pass_rate:1,ask_grounding:1,high_severity_failures:0,total:8,created_at:'2026-09-29 17:56:46'},
+    latest_ask_quality:{suite:'ask_quality',overall_pass_rate:1,ask_grounding:1,high_severity_failures:0,total:8,created_at:'2026-09-30 00:45:46'},
     recent:[
-      {suite:'review_interpretation',interpretation_accuracy:.75,high_severity_failures:0,total:8,created_at:'2026-09-29 17:56:46'},
-      {suite:'review_interpretation',interpretation_accuracy:.625,high_severity_failures:2,total:8,created_at:'2026-09-29 03:28:03'}
+      {suite:'review_interpretation',interpretation_accuracy:.75,high_severity_failures:0,total:8,created_at:'2026-09-30 00:45:46'},
+      {suite:'review_interpretation',interpretation_accuracy:.625,high_severity_failures:2,total:8,created_at:'2026-09-30 00:35:03'}
     ]
   }
 });
@@ -88,7 +101,7 @@ assert.match(mediumInvestigation.report,/workflow noise rather than false truth/
 const detailedSevere=H.normalizeQuality({
   controlled_evals:{
     latest_review_interpretation:{
-      suite:'review_interpretation',interpretation_accuracy:.875,high_severity_failures:1,created_at:'2026-09-29T10:00:00Z',
+      suite:'review_interpretation',interpretation_accuracy:.875,high_severity_failures:1,created_at:'2026-09-30T01:00:00Z',
       failure_details:[{scenario_id:'review_direct_reversal',category:'direct_reversal',severity:'high',expected:'update_state',observed:'preserve_evidence_only',failed_checks:['interpretation']}]
     },
     latest_ask_quality:{suite:'ask_quality',overall_pass_rate:1,ask_grounding:1,high_severity_failures:0}
@@ -102,9 +115,48 @@ assert.match(qualityInvestigation.report,/Product \+ Engineering/);
 const legacyQualityInvestigation=H.qualityInvestigation({project:H.PROJECTS[0],quality:severe});
 assert.match(legacyQualityInvestigation.report,/older run/);
 
+const staleRecordedQuality=H.normalizeQuality({
+  controlled_evals:{
+    latest_review_interpretation:{
+      suite:'review_interpretation',interpretation_accuracy:.923076923,high_severity_failures:1,total:13,created_at:'2026-09-29 19:26:17',
+      failure_details:[{scenario_id:'review_partial_question_answer',severity:'high',expected:'update_state',observed:'update_state_and_open_question',failed_checks:['interpretation']}]
+    },
+    latest_ask_quality:{
+      suite:'ask_quality',overall_pass_rate:.9,ask_grounding:1,authority_accuracy:.9,high_severity_failures:1,total:10,created_at:'2026-09-29 19:26:18',
+      failure_details:[{scenario_id:'ask_conflicting_evidence',severity:'high',expected:'preserve authority',observed:'Failed checks: authority',failed_checks:['authority']}]
+    }
+  }
+});
+assert.strictEqual(H.stateEvalContractStale(staleRecordedQuality),true);
+assert.strictEqual(H.qualityAttention(staleRecordedQuality).kind,'warn');
+const staleInvestigation=H.qualityInvestigation({project:H.PROJECTS[0],quality:staleRecordedQuality});
+assert.strictEqual(staleInvestigation.staleEvalContract,true);
+assert.match(staleInvestigation.report,/predates the current eval contract/);
+const staleHandoff=H.projectHandoff({
+  ...H.emptyProjectData(H.PROJECTS[0]),
+  fresh:true,
+  quality:staleRecordedQuality,
+  delivery:{sha:'abc',message:'Latest release',updatedAt:'2026-09-30T01:00:00Z',vercel:{kind:'good'}},
+  platform:null
+});
+assert.match(staleHandoff.handoffText,/Needs rerun/);
+assert.doesNotMatch(staleHandoff.handoffText,/A serious AI quality check failed/);
+
+const duplicateCheckQuality=H.normalizeQuality({
+  controlled_evals:{
+    latest_review_interpretation:{suite:'review_interpretation',interpretation_accuracy:1,high_severity_failures:0,total:13,created_at:'2026-09-30 01:10:00'},
+    latest_ask_quality:{
+      suite:'ask_quality',overall_pass_rate:.9,ask_grounding:1,authority_accuracy:.9,high_severity_failures:1,total:10,created_at:'2026-09-30 01:10:01',
+      failure_details:[{scenario_id:'ask_conflicting_evidence',severity:'high',expected:'preserve authority',observed:'Failed checks: authority',failed_checks:['authority']}]
+    }
+  }
+});
+const duplicateCheckReport=H.qualityInvestigation({project:H.PROJECTS[0],quality:duplicateCheckQuality}).report;
+assert.strictEqual((duplicateCheckReport.match(/Failed checks: authority/g)||[]).length,1);
+
 assert.strictEqual(H.evalRunComplete(mediumOnly,{suite:'review',baselineReview:'2026-09-29 03:28:03',baselineAsk:null}),true);
 assert.strictEqual(H.evalRunComplete(mediumOnly,{suite:'all',baselineReview:'2026-09-29 03:28:03',baselineAsk:'2026-09-29 16:09:10'}),true);
-assert.strictEqual(H.evalRunComplete(mediumOnly,{suite:'all',baselineReview:'2026-09-29 17:56:46',baselineAsk:'2026-09-29 17:56:46'}),false);
+assert.strictEqual(H.evalRunComplete(mediumOnly,{suite:'all',baselineReview:'2026-09-30 00:45:46',baselineAsk:'2026-09-30 00:45:46'}),false);
 
 assert.strictEqual(
   H.deliveryAttention({vercel:{kind:'good'}}).kind,
@@ -209,8 +261,9 @@ assert.strictEqual(serialized.projectId,'state');
 assert.strictEqual(serialized.delivery.sha,'abc123');
 assert.strictEqual(Object.prototype.hasOwnProperty.call(serialized,'pending'),false);
 
-assert.strictEqual(H.changedSinceVisit({lastSeenSha:'old',delivery:{sha:'new'}}),true);
-assert.strictEqual(H.changedSinceVisit({lastSeenSha:'same',delivery:{sha:'same'}}),false);
+assert.strictEqual(H.changedSinceVisit({project:{quality:null},lastVisit:{deliverySha:'old',quality:{},analyticsAvailable:null,openPullRequests:0},delivery:{sha:'new'},platform:{},openPullRequests:[],checkedAt:'2026-09-30T01:00:00Z'}),true);
+assert.strictEqual(H.changedSinceVisit({project:{quality:null},lastVisit:{deliverySha:'same',quality:{},analyticsAvailable:null,openPullRequests:0},delivery:{sha:'same'},platform:{},openPullRequests:[],checkedAt:'2026-09-30T01:00:00Z'}),false);
+assert.match(H.freshnessMeta('2026-09-30T01:00:00Z','2026-09-30T01:00:00Z',9999).label,/Updated|May be stale/);
 assert.strictEqual(H.trendText(12.5),'↑ 12.5% vs previous 30 days');
 assert.strictEqual(H.trendText(-4),'↓ 4% vs previous 30 days');
 
@@ -244,9 +297,11 @@ assert.match(healthHtml,/Spot problems, understand what they mean for users/);
 assert.match(healthHtml,/How Project Health works/);
 assert.match(healthHtml,/Role & attribution/);
 assert.match(healthHtml,/id="projectCheckButton"/);
-assert.match(healthHtml,/id="drawerPrepareHandoffButton"/);
+assert.match(healthHtml,/id="drawerCopyHandoffButton"/);
+assert.match(healthHtml,/id="changesPanel"/);
 assert.match(healthHtml,/id="investigationDrawer"[^>]*hidden/);
 assert.match(healthHtml,/investigation-drawer\[hidden\].*display:none!important/);
+assert.match(healthHtml,/drawer-copy\[hidden\].*display:none!important/);
 assert.match(healthHtml,/id="projectActionMenu"/);
 assert.doesNotMatch(healthHtml,/id="prepareHandoffButton"/);
 assert.match(healthHtml,/productFocusPanel/);
@@ -257,6 +312,7 @@ assert.ok(H.PROJECTS[1].evidence.includes('Recommendation breadth'));
 assert.match(H.PROJECTS[1].nextDecision,/canonical store/);
 assert.match(H.PROJECTS[2].nextDecision,/first-play flow/);
 assert.match(H.PROJECTS[0].description,/Human-reviewed project truth system/);
+assert.strictEqual(H.PROJECTS[0].releasePath,'implementation-context-prototype');
 assert.strictEqual(H.infrastructureAttention({render:{configured:true,environments:{production:{ok:true}}}}),null);
 
 const unopenedState={...H.emptyProjectData(H.PROJECTS[0]),fresh:true,quality:H.normalizeQuality({controlled_evals:{latest_review_interpretation:null,latest_ask_quality:null}})};
@@ -292,17 +348,37 @@ assert.strictEqual(quick.title,'No immediate issue found');
 assert.ok(quick.checks.some(item=>item.label==='Production deployment'&&item.value==='Healthy'));
 assert.ok(quick.checks.some(item=>item.label==='Production backend'&&item.value==='Healthy'));
 
+const quickHandoff=H.projectHandoff({
+  ...H.emptyProjectData(H.PROJECTS[0]),
+  fresh:true,
+  quality:healthy,
+  delivery:{sha:'abc',message:'State release',updatedAt:'2026-09-30T01:00:00Z',vercel:{kind:'good'}},
+  investigation:quick
+});
+assert.match(quickHandoff.handoffText,/No immediate issue found/);
+assert.match(quickHandoff.handoffText,/Production deployment: Healthy/);
+
 const evalDetailsHtml=fs.readFileSync(require.resolve('../state-evals.html'),'utf8');
 assert.match(evalDetailsHtml,/State eval details/);
 assert.match(evalDetailsHtml,/23 controlled scenarios/);
 assert.match(evalDetailsHtml,/Update understanding/);
 assert.match(evalDetailsHtml,/Answer quality/);
 assert.match(evalDetailsHtml,/Synthetic controlled scenarios/);
+const runApiSource=fs.readFileSync(require.resolve('../api/project-health-run.js'),'utf8');
+assert.match(runApiSource,/already running/);
+assert.match(runApiSource,/RUN_COOLDOWN_MS/);
+assert.doesNotMatch(runApiSource,/can only be started from the protected Project Health preview/);
 const projectHealthSource=fs.readFileSync(require.resolve('../project-health.js'),'utf8');
 assert.match(projectHealthSource,/View eval details/);
 assert.match(projectHealthSource,/data-attention-action="ai-quality"/);
-assert.match(projectHealthSource,/drawerPrepareHandoffButton/);
+assert.match(projectHealthSource,/drawerCopyHandoffButton/);
+assert.match(projectHealthSource,/Changed since last visit/);
+assert.match(projectHealthSource,/Previous investigations/);
+assert.match(projectHealthSource,/commits\?sha=/);
+assert.match(projectHealthSource,/project\.releasePath/);
 assert.match(projectHealthSource,/AI checks are running/);
+assert.match(projectHealthSource,/Starting AI checks/);
+assert.doesNotMatch(projectHealthSource,/control:'evals'/);
 assert.match(projectHealthSource,/checks automatically/);
 
 const workflowText=fs.readFileSync(require.resolve('../.github/workflows/question-review-live.yml'),'utf8');

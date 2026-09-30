@@ -68,8 +68,9 @@ delete process.env.PROJECT_HEALTH_RUN_COST_ESTIMATE_STATE;
 process.env.VERCEL_ENV='production';
 assert.strictEqual(runApi.runInfo('state').configured,false);
 assert.strictEqual(runApi.runInfo('state').minimum_controlled_cases,10);
-assert.strictEqual(runApi.runInfo('state').can_run_here,false);
-assert.strictEqual(runApi.isProtectedEnvironment(),false);
+assert.strictEqual(runApi.runInfo('state').can_run_here,true);
+assert.match(runApi.runInfo('state').protection,/Public run/);
+assert.strictEqual(runApi.RUN_COOLDOWN_MS,10*60*1000);
 assert.strictEqual(runApi.runInfo('tastemake'),null);
 
 process.env.GITHUB_TOKEN='test-token';
@@ -78,7 +79,6 @@ process.env.VERCEL_ENV='preview';
 const ready=runApi.runInfo('state');
 assert.strictEqual(ready.configured,true);
 assert.strictEqual(ready.can_run_here,true);
-assert.strictEqual(runApi.isProtectedEnvironment(),true);
 assert.strictEqual(ready.estimated_cost,'$0.10-$0.25');
 
 for(const [key,value] of Object.entries(saved)){
