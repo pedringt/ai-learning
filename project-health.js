@@ -581,7 +581,8 @@
     return'$'+amount.toFixed(2);
   }
   function attentionMarkup(item){
-    const content='<strong>'+esc(item.title)+'</strong><p>'+esc(item.detail)+'</p>';
+    const meta=(item.owner||item.nextAction)?'<div class="attention-meta">'+(item.owner?'Owner: '+esc(item.owner):'')+(item.owner&&item.nextAction?' · ':'')+(item.nextAction?'Next: '+esc(item.nextAction):'')+'</div>':'';
+    const content='<strong>'+esc(item.title)+'</strong><p>'+esc(item.detail)+'</p>'+meta;
     if(item.category==='quality'&&['bad','warn'].includes(item.kind)){
       return '<button class="attention attention-action '+esc(item.kind||'')+'" type="button" data-attention-action="ai-quality" aria-label="Investigate '+esc(item.title)+'">'+content+'<span class="attention-action-label">Investigate this issue →</span></button>';
     }
