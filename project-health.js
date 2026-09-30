@@ -958,10 +958,10 @@
     const currentQuality=p.quality==='state'?qualityAttention(q):externalQualityAttention(externalQ);
     const noRecordedStateRuns=p.id==='state'&&![q?.review,q?.ask].filter(Boolean).length;
     const shouldRunChecksFirst=!!(run?.configured&&(p.id!=='state'||noRecordedStateRuns||stateEvalResultsStale(q)));
-    const shouldInvestigateFirst=currentQuality?.kind==='bad'||deliveryAttention(d).kind==='bad';
+    const shouldInvestigateFirst=currentQuality?.kind==='bad'||deliveryAttentionForData(data).kind==='bad'||activityReviewItems(data).some(item=>!item.resolved);
     if(projectCheckButton){
       projectCheckButton.disabled=!!data.investigation?.loading;
-      projectCheckButton.textContent=data.investigation?.loading?'Checking project…':data.investigation?'View investigation':shouldInvestigateFirst?'Investigate failure':'Investigate project';
+      projectCheckButton.textContent=data.investigation?.loading?'Investigating…':shouldInvestigateFirst?'Investigate current issues':'Investigate project';
       projectCheckButton.classList.toggle('primary',!!shouldInvestigateFirst&&!shouldRunChecksFirst);
       projectCheckButton.style.order=shouldRunChecksFirst?'2':'1';
     }
@@ -1822,10 +1822,14 @@
 
     async function startProjectInvestigation(data){
       if(!data)return;
-      if(data.delivery?.vercel?.kind==='bad'){await runAgentInvestigation(data,'vercel','production');return;}
-      if(Array.isArray(data.delivery?.failedChecks)&&data.delivery.failedChecks.length){await runAgentInvestigation(data,'github-check','production');return;}
+      const liveIncident=activityReviewItems(data).find(item=>!item.resolved);
+      if(liveIncident?.kind==='deployment'){await runAgentInvestigation(data,'vercel','production');return;}
       if(data.project.quality==='state'&&['bad','warn'].includes(qualityAttention(data.quality).kind)){
-        data.investigation=qualityInvestigation(data);recordInvestigation(data,data.investigation,'AI quality');renderNow();revealInvestigation();return;
+        data.investigation=qualityInvestigation(data);recordInvestigation(data,data.investigation,'AI eval');renderNow();revealInvestigation();return;
+      }
+      if(deliveryAttentionForData(data).kind==='bad'){
+        const failedChecks=Array.isArray(data.delivery?.failedChecks)?data.delivery.failedChecks:[];
+        await runAgentInvestigation(data,failedChecks.length?'github-check':'vercel','production');return;
       }
       data.investigation=quickProjectCheck(data);
       recordInvestigation(data,data.investigation,'Project check');
@@ -1835,8 +1839,7 @@
 
     const projectCheckButton=doc.getElementById('projectCheckButton');
     if(projectCheckButton)projectCheckButton.addEventListener('click',async()=>{
-      const data=activeData();if(!data)return;
-      if(data.investigation&&!data.investigation.loading){revealInvestigation();return;}
+      const data=activeData();if(!data||data.investigation?.loading)return;
       await startProjectInvestigation(data);
     });
     if(drawerRunAgainButton)drawerRunAgainButton.addEventListener('click',async()=>{
