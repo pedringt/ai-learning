@@ -4,7 +4,9 @@ const fs=require('fs');
 const H=require('../project-health.js');
 
 assert.deepStrictEqual(H.PROJECTS.map(p=>p.id),['state','tastemake','narc']);
-assert.strictEqual(H.pageEnvironment({location:{hostname:'ai-learning-git-staging-cairn10.vercel.app'}}),'staging');
+assert.strictEqual(H.pageEnvironment({location:{hostname:'ai-learning-git-staging-cairn10.vercel.app',search:''}}),'staging');
+assert.strictEqual(H.pageEnvironment({location:{hostname:'ai-learning-b19hocddc-cairn10.vercel.app',search:''}}),'staging');
+assert.strictEqual(H.pageEnvironment({location:{hostname:'www.contextswitch.tech',search:'?env=staging'}}),'staging');
 assert.strictEqual(H.pageEnvironment({location:{hostname:'www.authenticignorance.site'}}),'production');
 const protectedUrl=new URL(H.protectedControlsUrl({project:{id:'state'}},{control:'evals',suite:'all'}));
 assert.strictEqual(protectedUrl.hostname,'ai-learning-git-staging-cairn10.vercel.app');
