@@ -407,7 +407,7 @@
   }
   function investigationHistorySummary(investigation){
     if(!investigation)return'Investigation completed';
-    if(investigation.staleEvalContract)return'Quality result needs a fresh eval run';
+    if(investigation.staleEvalResults||investigation.staleEvalContract||investigation.staleEvalBehavior)return'Quality result needs a fresh eval run';
     if(investigation.quickCheck)return investigation.title||'Quick project check completed';
     if(investigation.error)return 'Investigation failed: '+investigation.error;
     if(investigation.report){
@@ -1241,7 +1241,7 @@
     const notices=attentionItems(data).filter(item=>item.kind!=='good');
     const latestQuality=data?.project?.quality==='state'&&data.quality
       ?(stateEvalResultsStale(data.quality)
-        ?'Needs rerun · the latest recorded AI quality results predate the current eval contract. Historical failures are not treated as current product failures.'
+        ?'Needs rerun · '+stateEvalStaleReason(data.quality)+' Historical failures are not treated as current product failures.'
         :[data.quality.review,data.quality.ask].filter(Boolean).map(run=>evalSuiteLabel(run)+': '+percent(evalScore(run))+' · '+Number(run.high_severity_failures||0)+' high-impact failures').join('\n'))
       :projectQualityLabel(data);
     const release=data?.delivery
