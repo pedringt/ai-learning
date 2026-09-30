@@ -7,7 +7,7 @@
 
   const PROJECTS=[
     {
-      id:'state',name:'State',description:'Human-reviewed project truth system with maintained Current State.',repo:'pedringt/ai-learning',branch:'main',stagingBranch:'staging',quality:'state',
+      id:'state',name:'State',description:'Human-reviewed project truth system with maintained Current State.',repo:'pedringt/ai-learning',branch:'main',stagingBranch:'staging',quality:'state',releasePath:'implementation-context-prototype',
       focus:'Keep project truth trustworthy without giving AI authority to change Current State on its own.',
       evidence:['Understands updates','Answers stay grounded','Respects decision authority','Review burden'],
       nextDecision:'Expand failure investigation only if it stays useful without weakening human control.',
@@ -250,19 +250,40 @@
 
   async function loadGitHubProject(project,branchName){
     const headers={Accept:'application/vnd.github+json'};
-    const [branch,status,checkRuns]=await Promise.all([
-      jsonFetch(githubApi('/repos/'+project.repo+'/branches/'+encodeURIComponent(branchName)),{headers,timeoutMs:6000}),
-      jsonFetch(githubApi('/repos/'+project.repo+'/commits/'+encodeURIComponent(branchName)+'/status'),{headers,timeoutMs:6000}),
-      jsonFetch(githubApi('/repos/'+project.repo+'/commits/'+encodeURIComponent(branchName)+'/check-runs?per_page=10'),{headers,timeoutMs:6000}).catch(()=>({check_runs:[]}))
+    const branch=await jsonFetch(githubApi('/repos/'+project.repo+'/branches/'+encodeURIComponent(branchName)),{headers,timeoutMs:6000});
+    let selectedCommit=branch?.commit||null;
+    if(project.releasePath){
+      try{
+        const commits=await jsonFetch(githubApi('/repos/'+project.repo+'/commits?sha='+encodeURIComponent(branchName)+'&path='+encodeURIComponent(project.releasePath)+'&per_page=1'),{headers,timeoutMs:6000});
+        if(Array.isArray(commits)&&commits[0]) selectedCommit=commits[0];
+      }catch(_){}
+    }
+    const selectedSha=selectedCommit?.sha||branch?.commit?.sha||branchName;
+    const [status,checkRuns]=await Promise.all([
+      jsonFetch(githubApi('/repos/'+project.repo+'/commits/'+encodeURIComponent(selectedSha)+'/status'),{headers,timeoutMs:6000}),
+      jsonFetch(githubApi('/repos/'+project.repo+'/commits/'+encodeURIComponent(selectedSha)+'/check-runs?per_page=10'),{headers,timeoutMs:6000}).catch(()=>({check_runs:[]}))
     ]);
-    return deliveryHealth(branch,status,checkRuns);
+    return deliveryHealth({name:branch?.name||branchName,commit:selectedCommit},status,checkRuns);
   }
   async function loadStateQuality(root){return normalizeQuality(await jsonFetch('/api/project-health-state-quality?env='+pageEnvironment(root),{timeoutMs:7000}));}
   async function loadPlatformSignal(project,signal){return await jsonFetch('/api/project-health-platform?project='+encodeURIComponent(project.id)+'&signal='+encodeURIComponent(signal),{timeoutMs:6500});}
   async function loadRunInfo(project){if(project.id!=='state')return null;try{return await jsonFetch('/api/project-health-run?project=state',{timeoutMs:5000});}catch(error){if(error.status===404)return null;throw error;}}
   async function loadExternalQuality(project){try{return await jsonFetch('/api/project-health-project-quality?project='+encodeURIComponent(project.id),{timeoutMs:7000});}catch(error){if(error.status===404)return null;throw error;}}
   async function loadActivity(project){try{const payload=await jsonFetch('/api/project-health-activity?project='+encodeURIComponent(project.id),{timeoutMs:7500});return payload?.activity||null;}catch(error){if(error.status===404)return null;throw error;}}
-  async function loadOpenPullRequests(project){try{return await jsonFetch(githubApi('/repos/'+project.repo+'/pulls?state=open&per_page=5'),{headers:{Accept:'application/vnd.github+json'},timeoutMs:6000});}catch(_){return[];}}
+  async function loadOpenPullRequests(project){
+    try{
+      const headers={Accept:'application/vnd.github+json'};
+      const pulls=await jsonFetch(githubApi('/repos/'+project.repo+'/pulls?state=open&per_page=5'),{headers,timeoutMs:6000});
+      if(!project.releasePath||!Array.isArray(pulls))return Array.isArray(pulls)?pulls:[];
+      const scoped=await Promise.all(pulls.map(async pr=>{
+        try{
+          const files=await jsonFetch(githubApi('/repos/'+project.repo+'/pulls/'+encodeURIComponent(pr.number)+'/files?per_page=100'),{headers,timeoutMs:5000});
+          return Array.isArray(files)&&files.some(file=>String(file.filename||'').startsWith(project.releasePath+'/'))?pr:null;
+        }catch(_){return null;}
+      }));
+      return scoped.filter(Boolean);
+    }catch(_){return[];}
+  }
 
   function mergePlatform(current,fragment){
     const next={...(current||{})};
