@@ -1044,19 +1044,17 @@
     if(projectCheckButton){
       projectCheckButton.disabled=!!data.investigation?.loading;
       projectCheckButton.textContent=data.investigation?.loading?'Investigating…':'Investigate';
-      projectCheckButton.classList.toggle('primary',!!shouldInvestigateFirst);
-      projectCheckButton.style.order=shouldRunChecksFirst?'2':'1';
+      projectCheckButton.classList.add('primary');
+      projectCheckButton.style.order='1';
     }
     if(headerRunChecksButton){
       const activeEvalRun=data.qualityRun;
-      const baseLabel=run?.button_label||(p.id==='state'?'Run AI evals':p.id==='tastemake'?'Run recommendation checks':'Run game checks');
-      const runInfoLoading=!run&&(!data.fresh||pending.has('Run controls'));
-      headerRunChecksButton.hidden=false;
-      headerRunChecksButton.disabled=!!activeEvalRun||runInfoLoading||!run?.configured;
-      headerRunChecksButton.textContent=activeEvalRun?'Running…':data.qualityRunCompletedAt?(p.id==='state'?'View AI eval results':p.id==='tastemake'?'View recommendation results':'View game check results'):baseLabel;
-      headerRunChecksButton.title=runInfoLoading?'Checking run availability…':(!run?.configured?'Run controls are unavailable for this project.':'');
-      headerRunChecksButton.classList.toggle('primary',!!shouldRunChecksFirst);
-      headerRunChecksButton.style.order=shouldRunChecksFirst?'1':'2';
+      headerRunChecksButton.hidden=!activeEvalRun;
+      headerRunChecksButton.disabled=true;
+      headerRunChecksButton.textContent=activeEvalRun?'Running…':'';
+      headerRunChecksButton.title=activeEvalRun?'Quality checks are running. Open Quality for details.':'';
+      headerRunChecksButton.classList.remove('primary');
+      headerRunChecksButton.style.order='2';
     }
     const investigationPanel=doc.getElementById('investigationPanel');
     const investigationDrawerTitle=doc.getElementById('investigationDrawerTitle');
