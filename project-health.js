@@ -7,7 +7,7 @@
 
   const PROJECTS=[
     {
-      id:'state',name:'State',description:'Human-reviewed project truth system with maintained Current State.',repo:'pedringt/ai-learning',branch:'main',stagingBranch:'staging',quality:'state',releasePaths:['implementation-context-prototype','state-project-complete'],releaseIgnore:/project health|dashboard/i,
+      id:'state',name:'State',description:'Human-reviewed project truth system with maintained Current State.',repo:'pedringt/ai-learning',branch:'main',stagingBranch:'staging',quality:'state',releasePaths:['implementation-context-prototype','state-project-complete'],releaseIgnore:/project health|dashboard|assertion/i,evalBehaviorPaths:['state-project-complete/question_review_prompt.py','state-project-complete/ask_service.py','state-project-complete/anthropic_provider.py'],
       focus:'Keep project truth trustworthy without giving AI authority to change Current State on its own.',
       evidence:['Understands updates','Answers stay grounded','Respects decision authority','Review burden'],
       nextDecision:'Expand failure investigation only if it stays useful without weakening human control.',
@@ -104,7 +104,7 @@
     if(!q) return {kind:'unknown',title:'Quality data is not available yet',detail:'Project Health could not load a recent quality result.'};
     const runs=[q.review,q.ask].filter(Boolean);
     if(!runs.length) return {kind:'warn',title:'AI quality checks have not been recorded yet',detail:'Run the controlled checks to see how State handles understanding, evidence, uncertainty, and decision authority.'};
-    if(stateEvalContractStale(q)) return {kind:'warn',title:'AI quality checks need to be rerun',detail:'The latest recorded results predate the current eval contract, so their old failures should not be treated as current product failures.',nextAction:'Run the controlled AI quality checks again.',owner:'Product'};
+    if(stateEvalResultsStale(q)) return {kind:'warn',title:'AI quality checks need to be rerun',detail:stateEvalStaleReason(q)+' Historical failures are not treated as current product failures.',nextAction:'Run the controlled AI quality checks again.',owner:'Product'};
     const severe=runs.reduce((n,r)=>n+Number(r.high_severity_failures||0),0);
     if(severe>0) return {kind:'bad',title:'A serious AI quality check failed',detail:severe+' high-impact failure'+(severe===1?'':'s')+' appeared in the latest recorded checks.',nextAction:'Review the failed scenario evidence and decide whether product behavior or the eval contract is wrong.',owner:'Product'};
     if(runs.some(r=>{const score=evalScore(r);return Number(r.failed_cases||0)>0||(score!=null&&score<1);})) return {kind:'warn',title:'Some AI quality checks need a look',detail:'At least one controlled scenario did not behave as expected.',nextAction:'Review the scenario-level miss, then rerun the affected suite.',owner:'Product'};
@@ -144,7 +144,7 @@
       const q=qualityAttention(data.quality);
       if(['bad','warn'].includes(q.kind)){
         const noRecordedRuns=![q.review,q.ask].filter(Boolean).length;
-        items.push({...q,category:'quality',action:noRecordedRuns||stateEvalContractStale(q)?'run-ai-checks':'investigate-quality',owner:q.owner||'Product',nextAction:q.nextAction||(noRecordedRuns?'Run the controlled AI quality checks.':'Review the latest quality evidence.')});
+        items.push({...q,category:'quality',action:noRecordedRuns||stateEvalResultsStale(q)?'run-ai-checks':'investigate-quality',owner:q.owner||'Product',nextAction:q.nextAction||(noRecordedRuns?'Run the controlled AI quality checks.':'Review the latest quality evidence.')});
       }
     }else{
       if(!data.externalQuality&&!data.fresh)return items;
@@ -271,6 +271,17 @@
     return deliveryHealth({name:branch?.name||branchName,commit:selectedCommit},status,checkRuns);
   }
   async function loadStateQuality(root){return normalizeQuality(await jsonFetch('/api/project-health-state-quality?env='+pageEnvironment(root),{timeoutMs:7000}));}
+  async function loadStateEvalBehavior(project){
+    const paths=Array.isArray(project?.evalBehaviorPaths)?project.evalBehaviorPaths:[];
+    if(!paths.length)return null;
+    const headers={Accept:'application/vnd.github+json'};
+    const behaviorBranch=project.stagingBranch||project.branch;
+    const rows=await Promise.all(paths.map(path=>jsonFetch(githubApi('/repos/'+project.repo+'/commits?sha='+encodeURIComponent(behaviorBranch)+'&path='+encodeURIComponent(path)+'&per_page=1'),{headers,timeoutMs:6000}).catch(()=>[])));
+    const commits=rows.flat().filter(Boolean);
+    commits.sort((a,b)=>(dateMs(b?.commit?.committer?.date||b?.commit?.author?.date)||0)-(dateMs(a?.commit?.committer?.date||a?.commit?.author?.date)||0));
+    const latest=commits[0];
+    return latest?{sha:latest.sha||null,updatedAt:latest.commit?.committer?.date||latest.commit?.author?.date||null}:null;
+  }
   async function loadPlatformSignal(project,signal){return await jsonFetch('/api/project-health-platform?project='+encodeURIComponent(project.id)+'&signal='+encodeURIComponent(signal),{timeoutMs:6500});}
   async function loadRunInfo(project){if(project.id!=='state')return null;try{return await jsonFetch('/api/project-health-run?project=state',{timeoutMs:5000});}catch(error){if(error.status===404)return null;throw error;}}
   async function loadExternalQuality(project){try{return await jsonFetch('/api/project-health-project-quality?project='+encodeURIComponent(project.id),{timeoutMs:7000});}catch(error){if(error.status===404)return null;throw error;}}
@@ -313,6 +324,7 @@
       lastVisit:s.lastVisit||visitBaseline(s),
       staging:s.staging||null,
       quality:s.quality||null,
+      qualityBehaviorUpdatedAt:s.qualityBehaviorUpdatedAt||null,
       externalQuality:s.externalQuality||null,
       platform:s.platform||null,
       activity:s.activity||null,
@@ -352,6 +364,7 @@
       delivery:data.delivery,
       staging:data.staging,
       quality:data.quality,
+      qualityBehaviorUpdatedAt:data.qualityBehaviorUpdatedAt||null,
       externalQuality:safeExternalQualitySnapshot(data.externalQuality),
       platform:data.platform,
       activity:data.activity,
@@ -395,7 +408,7 @@
   }
   function investigationHistorySummary(investigation){
     if(!investigation)return'Investigation completed';
-    if(investigation.staleEvalContract)return'Quality result needs a fresh eval run';
+    if(investigation.staleEvalResults||investigation.staleEvalContract||investigation.staleEvalBehavior)return'Quality result needs a fresh eval run';
     if(investigation.quickCheck)return investigation.title||'Quick project check completed';
     if(investigation.error)return 'Investigation failed: '+investigation.error;
     if(investigation.report){
@@ -426,9 +439,10 @@
     ];
     if(project.id==='state'){
       core.push(run('Production backend',loadPlatformSignal(project,'production-render'),value=>{data.platform=mergePlatform(data.platform,value);}));
+      core.push(run('Quality behavior',loadStateEvalBehavior(project),value=>{data.qualityBehaviorUpdatedAt=value?.updatedAt||null;if(data.quality)data.quality.behaviorUpdatedAt=data.qualityBehaviorUpdatedAt;}));
     }
     const qualityTask=project.quality==='state'
-      ? run('Quality',loadStateQuality(root),value=>{data.quality=value;})
+      ? run('Quality',loadStateQuality(root),value=>{data.quality=value;if(data.qualityBehaviorUpdatedAt)data.quality.behaviorUpdatedAt=data.qualityBehaviorUpdatedAt;})
       : run('Quality',loadExternalQuality(project),value=>{data.externalQuality=value;});
     data.qualityPromise=qualityTask;
     await Promise.all(core);
@@ -487,6 +501,18 @@
     if(!runs.length)return false;
     const contract=dateMs(STATE_EVAL_CONTRACT_UPDATED_AT);
     return runs.some(run=>{const when=dateMs(run.created_at);return Number.isFinite(when)&&when<contract;});
+  }
+  function stateEvalBehaviorStale(q){
+    const runs=[q?.review,q?.ask].filter(Boolean);
+    const changed=dateMs(q?.behaviorUpdatedAt);
+    if(!runs.length||!Number.isFinite(changed))return false;
+    return runs.some(run=>{const when=dateMs(run.created_at);return Number.isFinite(when)&&when<changed;});
+  }
+  function stateEvalResultsStale(q){return stateEvalContractStale(q)||stateEvalBehaviorStale(q);}
+  function stateEvalStaleReason(q){
+    if(stateEvalBehaviorStale(q))return'The State behavior these checks measure changed after the latest recorded run.';
+    if(stateEvalContractStale(q))return'The eval contract changed after the latest recorded run.';
+    return'';
   }
   function freshnessMeta(value,fallback,staleHours=24){
     const ts=value||fallback;
@@ -679,24 +705,16 @@
     return top?.title||'Quality loaded';
   }
   function loadingCardMarkup(project,active){
-    return '<article class="project-card '+(active?'active':'')+'" data-kind="unknown" data-project="'+esc(project.id)+'" tabindex="0" role="button" aria-label="Open '+esc(project.name)+' health">'+
-      '<div class="card-head"><div><h2>'+esc(project.name)+'</h2><p>'+esc(project.description)+'</p></div><span class="status-pill unknown">Checking</span></div>'+
-      '<div class="signal-list">'+
-      '<div class="signal"><span class="signal-label">Delivery</span><span class="signal-value">Checking…</span></div>'+
-      '<div class="signal"><span class="signal-label">Quality</span><span class="signal-value">Checking…</span></div>'+
-      '</div></article>';
+    return '<button class="project-switcher-item '+(active?'active':'')+'" data-kind="unknown" data-project="'+esc(project.id)+'" type="button" aria-pressed="'+(active?'true':'false')+'">'+
+      '<span class="project-switcher-main"><strong>'+esc(project.name)+'</strong><span>Checking project health…</span></span>'+
+      '<span class="status-pill unknown">Checking</span></button>';
   }
   function cardMarkup(data,active){
-    const status=projectStatus(data),d=data.delivery,pending=pendingSet(data);
-    const quality=projectQualityLabel(data);
-    const changePrefix=changedSinceVisit(data)?'New · ':'';
-    return '<article class="project-card '+(active?'active':'')+'" data-kind="'+esc(status.kind)+'" data-project="'+esc(data.project.id)+'" tabindex="0" role="button" aria-label="Open '+esc(data.project.name)+' health">'+
-      '<div class="card-head"><div><h2>'+esc(data.project.name)+'</h2><p>'+esc(data.project.description)+'</p></div><span class="status-pill '+esc(status.key)+'">'+esc(status.label)+'</span></div>'+
-      '<div class="signal-list">'+
-      '<div class="signal change-signal"><span class="signal-label">'+esc(changePrefix+'Latest release')+'</span><span class="signal-value">'+(d?githubLink(commitTitle(d.message),changeUrl(data.project.repo,d)):esc(pending.has('Delivery')?'Checking…':'Unavailable'))+'</span><span class="change-date">'+esc(d?'Updated '+fmtDate(d.updatedAt):(pending.has('Delivery')?'':'Date unavailable'))+'</span></div>'+
-      '<div class="signal"><span class="signal-label">Delivery</span><span class="signal-value">'+esc(d?.vercel?.kind==='good'?'Healthy':d?.vercel?.kind==='bad'?'Needs action':d?.vercel?.kind==='warn'?'In progress':(pending.has('Delivery')?'Checking…':'Unavailable'))+'</span></div>'+
-      '<div class="signal"><span class="signal-label">Quality</span><span class="signal-value">'+esc((data.quality||data.externalQuality)?quality:(pending.has('Quality')?'Checking…':'Unavailable'))+'</span></div>'+
-      '</div><div class="freshness">Checked '+esc(relativeAge(data.checkedAt))+'</div></article>';
+    const status=projectStatus(data),pending=pendingSet(data);
+    const signal=pending.size?'Checking project health…':overallAttention(data).title;
+    return '<button class="project-switcher-item '+(active?'active':'')+'" data-kind="'+esc(status.kind)+'" data-project="'+esc(data.project.id)+'" type="button" aria-pressed="'+(active?'true':'false')+'">'+
+      '<span class="project-switcher-main"><strong>'+esc(data.project.name)+'</strong><span>'+esc(signal||'No current issue')+'</span></span>'+
+      '<span class="status-pill '+esc(status.key)+'">'+esc(status.label)+'</span></button>';
   }
   function evalSuiteLabel(run){
     const suite=String(run?.suite||run?.eval_suite||'').toLowerCase();
@@ -721,16 +739,7 @@
   function stateEvalCard(title,value,description,trend){
     return '<div class="eval-card"><strong>'+esc(title)+'</strong><div class="score">'+esc(value)+'</div><p>'+esc(description)+'</p>'+(trend?'<p><strong>'+esc(trend)+'</strong></p>':'')+'</div>';
   }
-  function stateEvalHistory(q){
-    const rows=Array.isArray(q?.recent)?q.recent.slice(0,8):[];
-    if(!rows.length)return'';
-    return '<div class="eval-history"><h4>Recent check details</h4><div class="run-summary">'+rows.map(item=>{
-      const score=evalScore(item);
-      const meta=[item.created_at?fmtDate(item.created_at):null,item.total!=null?item.total+' scenarios':null,item.high_severity_failures!=null?item.high_severity_failures+' high-impact failures':null].filter(Boolean).join(' · ');
-      const technical=[item.provider,item.model_identifier,item.build].filter(Boolean).join(' · ');
-      return '<div class="eval-run-row"><strong>'+esc(evalSuiteLabel(item))+' · '+esc(score==null?'Score unavailable':percent(score))+'</strong><span>'+esc(meta||'Aggregate result recorded')+'</span>'+(technical?'<span>Technical record: '+esc(technical)+'</span>':'')+'</div>';
-    }).join('')+'<p class="footnote">Aggregate results are stored for every run. Failed controlled scenarios may also store the scenario ID and pass/fail metadata; private project content and full model transcripts stay out of Project Health.</p></div></div>';
-  }
+  function stateEvalHistory(){return'';}
   function investigationResultHtml(investigation){
     if(investigation?.handoff) return '<div class="investigation-result agent-result"><div class="agent-kicker">Handoff preview</div><strong>Project handoff ready to review</strong><pre>'+esc(investigation.handoffText||investigation.report||'')+'</pre><p class="footnote">Project Health assembled this from the currently loaded delivery, quality, investigation, and product-decision signals. Review it before sharing.</p></div>';
     if(investigation?.loading) return '<div class="investigation-result agent-result" role="status"><div class="agent-kicker">Read-only investigation agent</div><strong>Checking current health signals…</strong><p>Starting with current health signals and expanding only when the evidence points somewhere specific.</p></div>';
@@ -760,7 +769,7 @@
     const headerRunChecksButton=doc.getElementById('headerRunChecksButton');
     const currentQuality=p.quality==='state'?qualityAttention(q):externalQualityAttention(externalQ);
     const noRecordedStateRuns=p.id==='state'&&![q?.review,q?.ask].filter(Boolean).length;
-    const shouldRunChecksFirst=p.id==='state'&&run?.configured&&(noRecordedStateRuns||stateEvalContractStale(q));
+    const shouldRunChecksFirst=p.id==='state'&&run?.configured&&(noRecordedStateRuns||stateEvalResultsStale(q));
     const shouldInvestigateFirst=currentQuality?.kind==='bad'||deliveryAttention(d).kind==='bad';
     if(projectCheckButton){
       projectCheckButton.disabled=!!data.investigation?.loading;
@@ -856,15 +865,17 @@
         const total=runs.reduce((n,item)=>n+Number(item?.total||0),0);
         const severe=runs.reduce((n,item)=>n+Number(item?.high_severity_failures||0),0);
         const qa=qualityAttention(q);
-        const staleContract=stateEvalContractStale(q);
+        const staleResults=stateEvalResultsStale(q);
         const cards=[];
         if(review?.interpretation_accuracy!=null) cards.push(stateEvalCard('Understood updates correctly',percent(review.interpretation_accuracy),'Did State interpret the project update the way the product expected?',evalTrend(q.recent,'review_interpretation')));
         if(ask?.ask_grounding!=null) cards.push(stateEvalCard('Answers stayed supported by evidence',percent(ask.ask_grounding),'Did answers stick to known project information instead of filling gaps?',evalTrend(q.recent,'ask_quality')));
         if(ask?.authority_accuracy!=null) cards.push(stateEvalCard('Respected decision authority',percent(ask.authority_accuracy),'Did State keep proposed changes separate from approved project truth?',''));
         if(ask?.uncertainty_accuracy!=null) cards.push(stateEvalCard('Handled uncertainty clearly',percent(ask.uncertainty_accuracy),'Did State say when the available evidence was not enough?',''));
         qualityHtml='<h3>Product quality · AI checks</h3>'+
-          '<div class="eval-overview"><div><strong>'+esc(qa.title)+'</strong><span>'+(latestDate?'Last checked '+esc(fmtDate(latestDate))+' · ':'')+(staleContract?'Recorded under the previous eval contract · rerun required':esc(total||'—')+' scenarios · '+esc(severe)+' high-impact failures')+'</span></div></div>'+
-          '<div class="eval-grid">'+cards.join('')+'</div>'+stateEvalHistory(q);
+          '<div class="eval-overview"><div><strong>'+esc(qa.title)+'</strong><span>'+(latestDate?'Last checked '+esc(fmtDate(latestDate))+' · ':'')+(staleResults?'Previous run · rerun required':esc(total||'—')+' scenarios · '+esc(severe)+' high-impact failures')+'</span></div></div>'+
+          (staleResults
+            ?'<div class="run-callout stale-quality-summary"><strong>What to know from the last run</strong><p>The previous run recorded '+esc(severe)+' high-impact miss'+(severe===1?'':'es')+', but '+esc(stateEvalStaleReason(q).toLowerCase())+' Run the checks again before treating those scores as current.</p></div>'
+            :'<div class="eval-grid">'+cards.join('')+'</div>')+stateEvalHistory(q);
       }
       qualityHtml+='<p class="footnote"><a href="/state-evals">View eval details →</a></p>';
       const activeEvalRun=data.qualityRun;
@@ -1159,17 +1170,17 @@
     const nextStep=details.length
       ?'Review the remaining scenario-level misses below. Fix product behavior only where the contract is still right; adjust the eval where the observed behavior is acceptable. Then rerun the affected suite and compare against this run.'
       :'Inspect the affected suite and rerun after the next change so future failures record scenario-level evidence.';
-    if(stateEvalContractStale(quality)){
+    if(stateEvalResultsStale(quality)){
       const historical=currentLines.length?currentLines.map(line=>'- '+line).join('\n'):'- No historical aggregate result is available.';
       const report=[
         'Current assessment',
-        'The latest recorded AI quality run predates the current eval contract. Its failures are historical and should not be treated as current product failures.',
+        stateEvalStaleReason(quality)+' The recorded failures are historical and should not be treated as current product failures.',
         '',
         'Historical result',
         historical,
         '',
         'Why this changed',
-        'Project Health updated the eval expectations after reviewing these scenario-level misses. The partial Slack approval may preserve an unresolved question, and the authority check now recognizes explicit unresolved review language.',
+        stateEvalBehaviorStale(quality)?'State behavior changed after this run, so the old scores no longer describe the current product.':'The eval expectations changed after this run, so the old scores no longer describe the current contract.',
         '',
         'Recommended next action',
         'Rerun the controlled AI quality checks. Use the new run as the current baseline before changing State behavior.',
@@ -1178,14 +1189,16 @@
         'Product',
         '',
         'Confidence',
-        'High confidence that the recorded run is stale relative to the current eval contract. No claim is being made yet about how the revised checks will score.'
+        'High confidence that the recorded run is stale relative to the current State behavior or eval contract. No claim is being made yet about how a fresh run will score.'
       ].join('\n');
       return {
         report,
         sources:[{label:'State eval details',url:'/state-evals',observedAt:latestDate}],
         observedAt:latestDate,
         qualityInvestigation:true,
-        staleEvalContract:true
+        staleEvalContract:stateEvalContractStale(quality),
+        staleEvalBehavior:stateEvalBehaviorStale(quality),
+        staleEvalResults:true
       };
     }
 
@@ -1228,8 +1241,8 @@
     const status=projectStatus(data);
     const notices=attentionItems(data).filter(item=>item.kind!=='good');
     const latestQuality=data?.project?.quality==='state'&&data.quality
-      ?(stateEvalContractStale(data.quality)
-        ?'Needs rerun · the latest recorded AI quality results predate the current eval contract. Historical failures are not treated as current product failures.'
+      ?(stateEvalResultsStale(data.quality)
+        ?'Needs rerun · '+stateEvalStaleReason(data.quality)+' Historical failures are not treated as current product failures.'
         :[data.quality.review,data.quality.ask].filter(Boolean).map(run=>evalSuiteLabel(run)+': '+percent(evalScore(run))+' · '+Number(run.high_severity_failures||0)+' high-impact failures').join('\n'))
       :projectQualityLabel(data);
     const release=data?.delivery
@@ -1237,9 +1250,11 @@
       :'Unavailable';
     const issueText=notices.length?notices.map(item=>'- '+item.title+': '+item.detail).join('\n'):'- Nothing currently needs action.';
     const investigation=data?.investigation;
-    const prior=investigation?.handoff
-      ?'The latest drawer state is already a handoff preview.'
-      :investigation?.report
+    const prior=investigation?.qualityInvestigation&&data?.project?.quality==='state'&&stateEvalResultsStale(data.quality)
+      ?'Historical AI-quality investigation from the previous State behavior. See eval details if you need the old scenario-level evidence; rerun the checks before treating it as current.'
+      :investigation?.handoff
+        ?'The latest drawer state is already a handoff preview.'
+        :investigation?.report
         ?investigation.report
         :investigation?.quickCheck
           ?[
@@ -1250,6 +1265,7 @@
           :investigation?.error
             ?'Investigation unavailable: '+investigation.error
             :'No focused investigation has been added to this handoff yet.';
+    const handoffReviewIsDependency=/^(after|when|once)\b|next recorded/i.test(String(data.project.nextReview||''));
     const handoffText=[
       data.project.name+' project handoff',
       '',
@@ -1271,7 +1287,7 @@
       'Next decision',
       data.project.nextDecision,
       '',
-      'Next review',
+      handoffReviewIsDependency?'Waiting on':'Next review',
       data.project.nextReview,
       '',
       'Generated from Project Health. Review before sharing or acting on it.'
@@ -1295,6 +1311,7 @@
     let activeId=initialParams.get('project')||'state';
     const allowedTabs=new Set(['overview','ai-quality','delivery','infra','activity']);
     let activeTab=allowedTabs.has(initialParams.get('tab'))?initialParams.get('tab'):'overview';
+    let summaryFilter='all';
     let renderQueued=false,refreshGeneration=0,investigationDrawerOpen=false;
     const demoState={phase:'idle',step:0,timers:[]};
 
@@ -1329,10 +1346,17 @@
     }
 
     function renderCards(){
-      cards.innerHTML=PROJECTS.map(project=>{
+      const visible=PROJECTS.filter(project=>{
+        if(summaryFilter==='all')return true;
+        const item=state.find(entry=>entry&&entry.project.id===project.id);
+        if(!item?.fresh)return false;
+        return projectStatus(item).key===summaryFilter;
+      });
+      cards.innerHTML=visible.map(project=>{
         const item=state.find(entry=>entry&&entry.project.id===project.id);
         return item?cardMarkup(item,project.id===activeId):loadingCardMarkup(project,project.id===activeId);
       }).join('');
+      cards.hidden=!visible.length;
     }
 
     const reviewStorageKey='project-health-reviewed:'+pageEnvironment(root);
@@ -1380,27 +1404,30 @@
         '</div><div class="review-actions">'+(demoState.phase==='idle'?'<button class="button small primary" type="button" data-demo-start>Investigate failure</button>':demoState.phase==='running'?'<button class="button small" type="button" disabled>Investigating…</button>':'')+'</div></div>';
     }
 
+    function unreviewedIncidents(){
+      const reviewed=reviewedState();
+      return currentIncidents().filter(item=>!reviewed[item.key]);
+    }
     function renderReviewInbox(){
-      const items=currentIncidents(),reviewed=reviewedState();
+      const items=unreviewedIncidents();
       if(!items.length){reviewInbox.innerHTML='';return;}
       const rows=items.slice(0,6).map(item=>{
         const source=item.url?'<a class="button small" href="'+esc(item.url)+'" target="_blank" rel="noopener noreferrer">View evidence</a>':'';
-        const isReviewed=!!reviewed[item.key];
-        return '<div class="review-item"><div><span class="review-kind incident">Live incident</span><strong>'+esc(item.project)+' · '+esc(item.title)+'</strong><div class="review-meta">'+esc(relativeAge(item.observedAt))+' · '+esc(item.detail)+'</div><div class="review-meta"><strong>Impact:</strong> '+esc(item.impact||'Unknown')+' · <strong>Owner:</strong> '+esc(item.owner||'Unknown')+'</div></div><div class="review-actions">'+source+(isReviewed?'<span class="status-pill healthy">Reviewed</span>':'<button class="button small" type="button" data-review-key="'+esc(item.key)+'">Mark reviewed</button>')+'</div></div>';
+        return '<div class="review-item"><div><span class="review-kind incident">Live incident</span><strong>'+esc(item.project)+' · '+esc(item.title)+'</strong><div class="review-meta">'+esc(relativeAge(item.observedAt))+' · '+esc(item.detail)+'</div><div class="review-meta"><strong>Impact:</strong> '+esc(item.impact||'Unknown')+' · <strong>Owner:</strong> '+esc(item.owner||'Unknown')+'</div></div><div class="review-actions">'+source+'<button class="button small" type="button" data-review-key="'+esc(item.key)+'">Mark reviewed</button></div></div>';
       }).join('');
-      reviewInbox.innerHTML='<section class="panel"><h3>Incidents</h3><div class="review-list" style="margin-top:12px">'+rows+'</div></section>';
+      reviewInbox.innerHTML='<section class="panel"><div class="panel-title-row"><h3>Incidents</h3><span class="readiness-pill watch">'+items.length+' unreviewed</span></div><div class="review-list" style="margin-top:10px">'+rows+'</div></section>';
     }
     function renderSummary(){
       const fresh=state.filter(item=>item?.fresh);
-      const incidentCount=currentIncidents().length;
+      const incidentCount=unreviewedIncidents().length;
       const actionCount=fresh.filter(item=>projectStatus(item).key==='action').length;
       const watchCount=fresh.filter(item=>projectStatus(item).key==='watch').length;
       const checked=fresh.map(item=>item.checkedAt).filter(Boolean).sort().pop();
-      summary.innerHTML='<span class="summary-chip"><strong>'+PROJECTS.length+'</strong> projects</span>'+
-        (actionCount?'<span class="summary-chip incident"><strong>'+actionCount+'</strong> need action</span>':'')+
-        (watchCount?'<span class="summary-chip open"><strong>'+watchCount+'</strong> watch</span>':'')+
-        (incidentCount?'<span class="summary-chip incident"><strong>'+incidentCount+'</strong> active '+(incidentCount===1?'incident':'incidents')+'</span>':'')+
-        '<span class="summary-chip"><strong>'+esc(checked?relativeAge(checked):'checking')+'</strong> last updated</span>';
+      summary.innerHTML='<button class="summary-chip summary-action '+(summaryFilter==='all'?'active':'')+'" type="button" data-summary-filter="all"><strong>'+PROJECTS.length+'</strong> projects</button>'+
+        (actionCount?'<button class="summary-chip summary-action incident '+(summaryFilter==='action'?'active':'')+'" type="button" data-summary-filter="action"><strong>'+actionCount+'</strong> need action</button>':'')+
+        (watchCount?'<button class="summary-chip summary-action open '+(summaryFilter==='watch'?'active':'')+'" type="button" data-summary-filter="watch"><strong>'+watchCount+'</strong> watch</button>':'')+
+        (incidentCount?'<button class="summary-chip summary-action incident" type="button" data-summary-incidents><strong>'+incidentCount+'</strong> '+(incidentCount===1?'incident':'incidents')+'</button>':'')+
+        '<span class="summary-chip summary-meta"><strong>'+esc(checked?relativeAge(checked):'checking')+'</strong> last updated</span>';
     }
 
     function applyTabState(){
@@ -1468,8 +1495,26 @@
       try{await root.navigator.clipboard.writeText(text);button.textContent='Copied';root.setTimeout(()=>{button.textContent='Copy engineer handoff';},1500);}catch(_){root.prompt('Copy engineering handoff',text);}
     }
 
-    cards.addEventListener('click',event=>{if(event.target.closest?.('a,button'))return;const card=event.target.closest?.('.project-card');if(card)select(card.dataset.project);});
-    cards.addEventListener('keydown',event=>{if(event.target.closest?.('a,button'))return;const card=event.target.closest?.('.project-card');if(card&&(event.key==='Enter'||event.key===' ')){event.preventDefault();select(card.dataset.project);}});
+    cards.addEventListener('click',event=>{const item=event.target.closest?.('.project-switcher-item');if(item)select(item.dataset.project);});
+
+    summary.addEventListener('click',event=>{
+      const filterButton=event.target.closest?.('[data-summary-filter]');
+      if(filterButton){
+        summaryFilter=filterButton.dataset.summaryFilter||'all';
+        const candidates=state.filter(item=>item?.fresh&&(summaryFilter==='all'||projectStatus(item).key===summaryFilter));
+        if(summaryFilter!=='all'&&candidates.length&&!candidates.some(item=>item.project.id===activeId))select(candidates[0].project.id);
+        else renderNow();
+        return;
+      }
+      if(event.target.closest?.('[data-summary-incidents]')){
+        const first=unreviewedIncidents()[0];
+        if(first){
+          const data=state.find(item=>item.project.name===first.project);
+          if(data&&data.project.id!==activeId)select(data.project.id);
+          reviewInbox.scrollIntoView?.({behavior:'smooth',block:'start'});
+        }
+      }
+    });
 
     if(projectTabs)projectTabs.addEventListener('click',event=>{
       const button=event.target.closest?.('[data-tab]');
@@ -1720,5 +1765,5 @@
     }
   }
 
-  return {PROJECTS,pageEnvironment,vercelFromStatus,deliveryHealth,commitTitle,githubCommitUrl,pullRequestNumber,githubPullRequestUrl,changeUrl,normalizeQuality,qualityAttention,externalQualityAttention,deliveryAttention,infrastructureAttention,allAttentionSignals,attentionItems,overallAttention,productOpenItems,projectStatus,setupGaps,releaseReadiness,projectQualityLabel,evalScore,percent,shortSha,pendingSet,mergePlatform,emptyProjectData,safeExternalQualitySnapshot,serializeProjectData,hydrateProjectData,loadProject,loadProjectDetails,infraCardLabel,analyticsConnectionValue,analyticsGapDetail,analyticsLabel,relativeAge,changedSinceVisit,meaningfulChanges,freshnessMeta,stateEvalContractStale,trendText,activityReviewItems,progressText,quickProjectCheck,evalRunComplete,qualityInvestigation,projectHandoff,init};
+  return {PROJECTS,pageEnvironment,vercelFromStatus,deliveryHealth,commitTitle,githubCommitUrl,pullRequestNumber,githubPullRequestUrl,changeUrl,normalizeQuality,qualityAttention,externalQualityAttention,deliveryAttention,infrastructureAttention,allAttentionSignals,attentionItems,overallAttention,productOpenItems,projectStatus,setupGaps,releaseReadiness,projectQualityLabel,evalScore,percent,shortSha,pendingSet,mergePlatform,emptyProjectData,safeExternalQualitySnapshot,serializeProjectData,hydrateProjectData,loadProject,loadProjectDetails,infraCardLabel,analyticsConnectionValue,analyticsGapDetail,analyticsLabel,relativeAge,changedSinceVisit,meaningfulChanges,freshnessMeta,stateEvalContractStale,stateEvalBehaviorStale,stateEvalResultsStale,stateEvalStaleReason,trendText,activityReviewItems,progressText,quickProjectCheck,evalRunComplete,qualityInvestigation,projectHandoff,init};
 });
