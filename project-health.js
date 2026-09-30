@@ -603,20 +603,6 @@
     doc.getElementById('detailTitle').textContent=p.name;
     doc.getElementById('detailCopy').textContent=p.description;
     doc.getElementById('repoLink').href=repoUrl(p.repo);
-    const headerRunChecksButton=doc.getElementById('headerRunChecksButton');
-    if(headerRunChecksButton)headerRunChecksButton.addEventListener('click',async()=>{
-      const data=activeData();if(!data||data.project.id!=='state'||data.qualityRun)return;
-      try{
-        const started=await dispatchRun(data,root,'all');
-        if(started?.started){
-          data.qualityRun=started;
-          saveEvalRunState(root,started);
-          renderNow();
-          pollEvalResults(data);
-        }
-      }catch(_){renderNow();}
-    });
-
     const projectCheckButton=doc.getElementById('projectCheckButton');
     if(projectCheckButton){
       projectCheckButton.disabled=!!data.investigation?.loading;
@@ -1244,6 +1230,20 @@
       }
       renderNow();
     }
+
+    const headerRunChecksButton=doc.getElementById('headerRunChecksButton');
+    if(headerRunChecksButton)headerRunChecksButton.addEventListener('click',async()=>{
+      const data=activeData();if(!data||data.project.id!=='state'||data.qualityRun)return;
+      try{
+        const started=await dispatchRun(data,root,'all');
+        if(started?.started){
+          data.qualityRun=started;
+          saveEvalRunState(root,started);
+          renderNow();
+          pollEvalResults(data);
+        }
+      }catch(_){renderNow();}
+    });
 
     const projectCheckButton=doc.getElementById('projectCheckButton');
     if(projectCheckButton)projectCheckButton.addEventListener('click',async()=>{
