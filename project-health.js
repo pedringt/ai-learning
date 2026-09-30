@@ -697,7 +697,7 @@
     }).join('')+'<p class="footnote">Aggregate results are stored for every run. Failed controlled scenarios may also store the scenario ID and pass/fail metadata; private project content and full model transcripts stay out of Project Health.</p></div></div>';
   }
   function investigationResultHtml(investigation){
-    if(investigation?.handoff) return '<div class="investigation-result agent-result"><div class="agent-kicker">Handoff preview</div><strong>Project handoff ready to review</strong><pre>'+esc(investigation.handoffText||investigation.report||'')+'</pre><div class="quality-actions"><button class="button small primary" type="button" data-copy-project-handoff>Copy handoff</button></div><p class="footnote">Project Health assembled this from the currently loaded delivery, quality, investigation, and product-decision signals. Review it before sharing.</p></div>';
+    if(investigation?.handoff) return '<div class="investigation-result agent-result"><div class="agent-kicker">Handoff preview</div><strong>Project handoff ready to review</strong><pre>'+esc(investigation.handoffText||investigation.report||'')+'</pre><p class="footnote">Project Health assembled this from the currently loaded delivery, quality, investigation, and product-decision signals. Review it before sharing.</p></div>';
     if(investigation?.openingProtected) return '<div class="investigation-result agent-result" role="status"><div class="agent-kicker">Read-only investigation agent</div><strong>Opening protected investigation…</strong><p>Vercel will verify access before the live AI investigation starts.</p></div>';
     if(investigation?.loading) return '<div class="investigation-result agent-result" role="status"><div class="agent-kicker">Read-only investigation agent</div><strong>Checking current health signals…</strong><p>Starting with current health signals and expanding only when the evidence points somewhere specific.</p></div>';
     if(investigation?.error) return '<div class="investigation-result agent-result" role="status"><div class="agent-kicker">Read-only investigation agent</div><strong>Investigation unavailable</strong><p>'+esc(investigation.error)+'</p></div>';
@@ -712,7 +712,7 @@
     const title=investigation.qualityInvestigation?'Quality investigation · '+esc(fmtDate(investigation.observedAt)):'Agent investigation · '+esc(fmtDate(investigation.observedAt));
     return '<div class="investigation-result agent-result"><div class="agent-kicker">'+label+'</div><strong>'+title+'</strong><pre>'+esc(investigation.report)+'</pre>'+
       ((investigation.sources||[]).length?'<div class="investigation-sources"><strong>Evidence checked</strong> '+investigation.sources.map(source=>githubLink(esc(source.label),source.url)).join(' · ')+'</div>':'')+
-      '<div class="quality-actions"><button class="button small" type="button" data-copy-handoff>Copy engineer handoff</button></div>'+
+
       '<p class="footnote">'+(investigation.qualityInvestigation?'This investigation uses the recorded controlled-eval evidence already loaded by Project Health. No extra model call was made.':'The agent can inspect bounded evidence and draft a handoff. It cannot change code, configuration, or deployments.')+'</p></div>';
   }
 
@@ -737,19 +737,26 @@
     const investigationPanel=doc.getElementById('investigationPanel');
     const investigationDrawerTitle=doc.getElementById('investigationDrawerTitle');
     const investigationDrawerStatus=doc.getElementById('investigationDrawerStatus');
-    const drawerPrepareHandoffButton=doc.getElementById('drawerPrepareHandoffButton');
+    const drawerCopyHandoffButton=doc.getElementById('drawerCopyHandoffButton');
     const investigationDrawerFooter=doc.getElementById('investigationDrawerFooter');
     const drawerRunAgainButton=doc.getElementById('drawerRunAgainButton');
-    if(investigationPanel) investigationPanel.innerHTML=investigationResultHtml(data.investigation);
+    const historyRows=Array.isArray(data.investigationHistory)?data.investigationHistory:[];
+    const historyHtml=historyRows.length
+      ?'<div class="history-section"><h4>Previous investigations</h4>'+historyRows.slice(0,5).map(item=>'<div class="activity-item"><strong>'+esc(item.trigger||'Investigation')+'</strong><span>'+esc(fmtDate(item.observedAt))+' · '+esc(item.summary||'Investigation completed')+(item.resolvedAt?' · Resolved '+esc(relativeAge(item.resolvedAt)):'')+'</span></div>').join('')+'</div>'
+      :'';
+    if(investigationPanel) investigationPanel.innerHTML=investigationResultHtml(data.investigation)+historyHtml;
     if(investigationDrawerTitle) investigationDrawerTitle.textContent=p.name+' investigation';
     if(investigationDrawerStatus){
-      investigationDrawerStatus.textContent=data.investigation?.loading?'Running…':data.investigation?.handoff?'Handoff ready':data.investigation?'Latest result available':'';
+      investigationDrawerStatus.textContent=data.investigation?.loading?'Running…':data.investigation?'Latest result available':historyRows.length?'Previous results available':'';
     }
-    if(drawerPrepareHandoffButton){
+    if(drawerCopyHandoffButton){
       const busy=!!data.investigation?.loading||!!data.investigation?.openingProtected;
-      drawerPrepareHandoffButton.hidden=!data.investigation||busy||!!data.investigation.handoff;
-      if(drawerRunAgainButton) drawerRunAgainButton.hidden=!data.investigation||busy;
-      if(investigationDrawerFooter) investigationDrawerFooter.hidden=drawerPrepareHandoffButton.hidden&&(drawerRunAgainButton?.hidden!==false);
+      drawerCopyHandoffButton.hidden=!data.investigation||busy;
+    }
+    if(drawerRunAgainButton){
+      const busy=!!data.investigation?.loading||!!data.investigation?.openingProtected;
+      drawerRunAgainButton.hidden=!data.investigation||busy;
+      if(investigationDrawerFooter) investigationDrawerFooter.hidden=drawerRunAgainButton.hidden;
     }
 
     const notices=attentionItems(data),readiness=releaseReadiness(data);
