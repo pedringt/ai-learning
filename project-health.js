@@ -616,7 +616,7 @@
     const projectCheckButton=doc.getElementById('projectCheckButton');
     if(projectCheckButton){
       projectCheckButton.disabled=!!data.investigation?.loading;
-      projectCheckButton.textContent=data.investigation?.loading?'Checking project…':'Investigate project';
+      projectCheckButton.textContent=data.investigation?.loading?'Checking project…':data.investigation?'View investigation':'Investigate project';
     }
     const headerRunChecksButton=doc.getElementById('headerRunChecksButton');
     if(headerRunChecksButton){
@@ -630,14 +630,17 @@
     const investigationDrawerStatus=doc.getElementById('investigationDrawerStatus');
     const drawerPrepareHandoffButton=doc.getElementById('drawerPrepareHandoffButton');
     const investigationDrawerFooter=doc.getElementById('investigationDrawerFooter');
+    const drawerRunAgainButton=doc.getElementById('drawerRunAgainButton');
     if(investigationPanel) investigationPanel.innerHTML=investigationResultHtml(data.investigation);
     if(investigationDrawerTitle) investigationDrawerTitle.textContent=p.name+' investigation';
     if(investigationDrawerStatus){
       investigationDrawerStatus.textContent=data.investigation?.loading?'Running…':data.investigation?.handoff?'Handoff ready':data.investigation?'Latest result available':'';
     }
     if(drawerPrepareHandoffButton){
-      drawerPrepareHandoffButton.hidden=!data.investigation||!!data.investigation.loading||!!data.investigation.openingProtected||!!data.investigation.handoff;
-      if(investigationDrawerFooter) investigationDrawerFooter.hidden=drawerPrepareHandoffButton.hidden;
+      const busy=!!data.investigation?.loading||!!data.investigation?.openingProtected;
+      drawerPrepareHandoffButton.hidden=!data.investigation||busy||!!data.investigation.handoff;
+      if(drawerRunAgainButton) drawerRunAgainButton.hidden=!data.investigation||busy;
+      if(investigationDrawerFooter) investigationDrawerFooter.hidden=drawerPrepareHandoffButton.hidden&&(drawerRunAgainButton?.hidden!==false);
     }
 
     const notices=attentionItems(data),readiness=releaseReadiness(data);
@@ -1282,9 +1285,8 @@
       }catch(_){renderNow();}
     });
 
-    const projectCheckButton=doc.getElementById('projectCheckButton');
-    if(projectCheckButton)projectCheckButton.addEventListener('click',async()=>{
-      const data=activeData();if(!data)return;
+    async function startProjectInvestigation(data){
+      if(!data)return;
       if(data.delivery?.vercel?.kind==='bad'){await runAgentInvestigation(data,'vercel','production');return;}
       if(Array.isArray(data.delivery?.failedChecks)&&data.delivery.failedChecks.length){await runAgentInvestigation(data,'github-check','production');return;}
       if(data.project.quality==='state'&&['bad','warn'].includes(qualityAttention(data.quality).kind)){
@@ -1293,6 +1295,17 @@
       data.investigation=quickProjectCheck(data);
       renderNow();
       revealInvestigation();
+    }
+
+    const projectCheckButton=doc.getElementById('projectCheckButton');
+    if(projectCheckButton)projectCheckButton.addEventListener('click',async()=>{
+      const data=activeData();if(!data)return;
+      if(data.investigation&&!data.investigation.loading&&!data.investigation.openingProtected){revealInvestigation();return;}
+      await startProjectInvestigation(data);
+    });
+    if(drawerRunAgainButton)drawerRunAgainButton.addEventListener('click',async()=>{
+      const data=activeData();if(!data)return;
+      await startProjectInvestigation(data);
     });
 
     if(drawerPrepareHandoffButton)drawerPrepareHandoffButton.addEventListener('click',()=>{
