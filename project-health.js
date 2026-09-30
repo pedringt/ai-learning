@@ -1762,16 +1762,16 @@
 
     const headerRunChecksButton=doc.getElementById('headerRunChecksButton');
     if(headerRunChecksButton)headerRunChecksButton.addEventListener('click',async()=>{
-      const data=activeData();if(!data||data.project.id!=='state'||data.qualityRun)return;
+      const data=activeData();if(!data||!data.runInfo?.configured||data.qualityRun)return;
       if(data.qualityRunCompletedAt){setActiveTab('ai-quality');renderNow();return;}
       headerRunChecksButton.disabled=true;
-      headerRunChecksButton.textContent='Starting AI checks…';
+      headerRunChecksButton.textContent='Starting checks…';
       try{
         const started=await dispatchRun(data,root,'all');
         if(started?.started){
           data.qualityRun=started;
           data.qualityRunCompletedAt=null;
-          saveEvalRunState(root,started);
+          saveEvalRunState(root,started,data.project.id);
           setActiveTab('ai-quality');
           renderNow();
           pollEvalResults(data);
@@ -1897,18 +1897,28 @@
       }
 
     });
-    let evalPollTimer=null;
+    const evalPollTimers=new Map();
     async function pollEvalResults(data){
       if(!data?.qualityRun)return;
-      if(evalPollTimer)root.clearTimeout(evalPollTimer);
+      const projectId=data.project.id;
+      const existing=evalPollTimers.get(projectId);
+      if(existing)root.clearTimeout(existing);
       const runState=data.qualityRun;
       try{
-        const latest=await loadStateQuality(root);
-        data.quality=latest;
-        if(evalRunComplete(latest,runState)){
+        let complete=false;
+        if(projectId==='state'){
+          const latest=await loadStateQuality(root);
+          data.quality=latest;
+          complete=evalRunComplete(latest,runState);
+        }else{
+          const latest=await loadExternalQuality(data.project);
+          data.externalQuality=latest;
+          complete=externalQualityRunComplete(latest,runState);
+        }
+        if(complete){
           data.qualityRun=null;
           data.qualityRunCompletedAt=activeTab==='ai-quality'?null:new Date().toISOString();
-          saveEvalRunState(root,null);
+          saveEvalRunState(root,null,projectId);
           reconcileInvestigationHistory(data);
           persist();
           renderNow();
@@ -1919,10 +1929,10 @@
       if(age>4*60*1000)runState.state='delayed';
       if(age<10*60*1000){
         renderNow();
-        evalPollTimer=root.setTimeout(()=>pollEvalResults(data),7000);
+        evalPollTimers.set(projectId,root.setTimeout(()=>pollEvalResults(data),7000));
       }else{
         data.qualityRun=null;
-        saveEvalRunState(root,null);
+        saveEvalRunState(root,null,projectId);
         renderNow();
       }
     }
@@ -1939,7 +1949,7 @@
         if(started?.started){
           data.qualityRun=started;
           data.qualityRunCompletedAt=null;
-          saveEvalRunState(root,started);
+          saveEvalRunState(root,started,data.project.id);
           setActiveTab('ai-quality');
           renderNow();
           pollEvalResults(data);
@@ -1950,15 +1960,20 @@
       }catch(_){renderDetail(data,doc);}
     });
     await refreshAll();
-    const resumedRun=loadEvalRunState(root);
-    if(resumedRun){
-      const stateData=state.find(item=>item.project.id==='state');
-      if(stateData&&!evalRunComplete(stateData.quality,resumedRun)){
-        stateData.qualityRun=resumedRun;
+    for(const project of PROJECTS){
+      const resumedRun=loadEvalRunState(root,project.id);
+      if(!resumedRun)continue;
+      const data=state.find(item=>item.project.id===project.id);
+      if(!data){saveEvalRunState(root,null,project.id);continue;}
+      const complete=project.id==='state'
+        ?evalRunComplete(data.quality,resumedRun)
+        :externalQualityRunComplete(data.externalQuality,resumedRun);
+      if(!complete){
+        data.qualityRun=resumedRun;
         renderNow();
-        pollEvalResults(stateData);
+        pollEvalResults(data);
       }else{
-        saveEvalRunState(root,null);
+        saveEvalRunState(root,null,project.id);
       }
     }
   }
