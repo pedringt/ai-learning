@@ -909,7 +909,16 @@
     return (delta>0?'Up ':'Down ')+Math.abs(delta)+' points vs previous run';
   }
   function stateEvalCard(title,value,description,trend,note){
-    return '<div class="eval-card"><strong>'+esc(title)+'</strong><div class="score">'+esc(value)+'</div><p>'+esc(description)+'</p>'+(note?'<p class="eval-card-note"><strong>'+esc(note)+'</strong></p>':'')+(trend?'<p><strong>'+esc(trend)+'</strong></p>':'')+'</div>';
+    return '<div class="eval-card compact"><strong>'+esc(title)+'</strong><div class="score">'+esc(value)+'</div><div class="eval-card-meta">'+
+      (description?'<span>'+esc(description)+'</span>':'')+
+      (note?'<span class="failure">'+esc(note)+'</span>':'')+
+      (trend?'<span class="trend">'+esc(trend)+'</span>':'')+
+      '</div></div>';
+  }
+  function scenarioPassLabel(run,score){
+    const total=Number(run?.total||0),value=Number(score);
+    if(!total||!Number.isFinite(value))return'';
+    return Math.round(total*value)+' / '+total+' passed';
   }
   function stateEvalHistory(){return'';}
   function investigationResultHtml(investigation){
@@ -1060,22 +1069,33 @@
         const qa=qualityAttention(q);
         const staleResults=stateEvalResultsStale(q);
         const cards=[];
-        const noteFor=check=>{const count=failureCheckCount(q,check);return count?count+' high-impact miss'+(count===1?'':'es'):'';};
-        if(review?.interpretation_accuracy!=null) cards.push(stateEvalCard('Understood updates correctly',percent(review.interpretation_accuracy),'Did State interpret the project update the way the product expected?',evalTrend(q.recent,'review_interpretation'),noteFor('interpretation')));
-        if(ask?.ask_grounding!=null) cards.push(stateEvalCard('Answers stayed supported by evidence',percent(ask.ask_grounding),'Did answers stick to known project information instead of filling gaps?',evalTrend(q.recent,'ask_quality'),noteFor('grounding')));
-        if(ask?.authority_accuracy!=null) cards.push(stateEvalCard('Respected decision authority',percent(ask.authority_accuracy),'Did State keep proposed changes separate from approved project truth?','',noteFor('authority')));
-        if(ask?.uncertainty_accuracy!=null) cards.push(stateEvalCard('Handled uncertainty clearly',percent(ask.uncertainty_accuracy),'Did State say when the available evidence was not enough?','',noteFor('uncertainty')));
+        const noteFor=check=>{const count=failureCheckCount(q,check);return count?count+' high-impact failure'+(count===1?'':'s'):'';};
+        if(review?.interpretation_accuracy!=null) cards.push(stateEvalCard('Update understanding',percent(review.interpretation_accuracy),scenarioPassLabel(review,review.interpretation_accuracy),evalTrend(q.recent,'review_interpretation'),noteFor('interpretation')));
+        if(ask?.ask_grounding!=null) cards.push(stateEvalCard('Evidence grounding',percent(ask.ask_grounding),scenarioPassLabel(ask,ask.ask_grounding),evalTrend(q.recent,'ask_quality'),noteFor('grounding')));
+        if(ask?.authority_accuracy!=null) cards.push(stateEvalCard('Decision authority',percent(ask.authority_accuracy),scenarioPassLabel(ask,ask.authority_accuracy),'',noteFor('authority')));
+        if(ask?.uncertainty_accuracy!=null) cards.push(stateEvalCard('Uncertainty handling',percent(ask.uncertainty_accuracy),scenarioPassLabel(ask,ask.uncertainty_accuracy),'',noteFor('uncertainty')));
         const failureSummary=qualityFailureClassSummary(q);
-        const primaryFailure=failureSummary.details?.[0]||null;
-        const failureDetailHtml=primaryFailure
-          ?'<div class="quality-failure-detail"><strong>'+esc(primaryFailure.title)+'</strong><p><b>What happened:</b> '+esc(primaryFailure.whatHappened)+'</p><p><b>Expected:</b> '+esc(primaryFailure.expected)+'</p><p><b>Why it matters:</b> '+esc(primaryFailure.why)+'</p><div class="quality-actions"><button class="button small primary" type="button" data-investigate-quality>Investigate this failure</button><a class="button small" href="/state-evals?failure='+encodeURIComponent(primaryFailure.scenario_id||'')+'">View failed scenario</a></div></div>'
-          :'<p>Open the failed scenarios to see the affected behavior.</p>';
+        const failureDetailHtml=failureSummary.details?.length
+          ?'<div class="failure-list">'+failureSummary.details.map(detail=>
+              '<div class="failure-item-compact">'+
+                '<div class="eyebrow">'+esc(detail.suite||'AI eval')+'</div>'+
+                '<h4>'+esc(detail.title)+'</h4>'+
+                '<div class="failure-facts"><strong>Observed</strong><span>'+esc(detail.whatHappened)+'</span><strong>Expected</strong><span>'+esc(detail.expected)+'</span><strong>Why it matters</strong><span>'+esc(detail.why)+'</span></div>'+
+                '<div class="quality-actions"><button class="button small primary" type="button" data-investigate-quality data-failure-id="'+esc(detail.scenario_id||'')+'">Investigate failure</button><a class="button small" href="/state-evals?failure='+encodeURIComponent(detail.scenario_id||'')+'">View scenario</a></div>'+
+              '</div>'
+            ).join('')+'</div>'
+          :'';
+        const statusText=staleResults
+          ?'Previous run · rerun required'
+          :(failureSummary.count
+            ?esc(total||'—')+' scenarios · '+failureSummary.count+' high-impact failure'+(failureSummary.count===1?'':'s')
+            :esc(total||'—')+' scenarios · no high-impact failures');
         qualityHtml='<h3>Product quality · AI evals</h3>'+
-          '<div class="eval-overview"><div><strong>'+esc(qa.title)+'</strong><span>'+(latestDate?'Last checked '+esc(fmtDate(latestDate))+' · ':'')+(staleResults?'Previous run · rerun required':esc(total||'—')+' scenarios')+'</span></div></div>'+
+          '<div class="eval-overview"><div><strong>AI eval status</strong><span>'+(latestDate?'Last checked '+esc(fmtDate(latestDate))+' · ':'')+statusText+'</span></div></div>'+
           (staleResults
-            ?'<div class="run-callout stale-quality-summary"><strong>What to know from the last run</strong><p>The previous run recorded '+esc(severe)+' high-impact miss'+(severe===1?'':'es')+', but '+esc(stateEvalStaleReason(q).toLowerCase())+' Run the checks again before treating those scores as current.</p></div>'
+            ?'<div class="run-callout stale-quality-summary"><strong>Previous results need a rerun</strong><p>'+esc(stateEvalStaleReason(q))+' Run the evals again before treating these scores as current.</p></div>'
             :failureSummary.count
-              ?'<div class="run-callout quality-failure-summary"><strong>'+esc(failureSummary.count)+' high-impact scenario'+(failureSummary.count===1?'':'s')+' need review</strong><p>'+esc(Math.max(0,total-failureSummary.count))+' of '+esc(total)+' scenarios did not report a high-impact failure.</p>'+failureDetailHtml+'<p class="footnote"><a href="/state-evals">Review failed scenario →</a></p></div><div class="eval-grid">'+cards.join('')+'</div>'
+              ?'<div class="run-callout quality-failure-summary"><strong>Failures requiring review</strong>'+failureDetailHtml+'</div><div class="eval-grid">'+cards.join('')+'</div>'
               :'<div class="eval-grid">'+cards.join('')+'</div>')+stateEvalHistory(q);
       }
       qualityHtml+='<p class="footnote"><a href="/state-evals">View eval details →</a></p>';
@@ -1084,11 +1104,15 @@
         const delayed=activeEvalRun.state==='delayed';
         qualityHtml+='<div class="eval-run-status '+(delayed?'warn':'')+'" role="status"><strong>'+(delayed?'Run started · waiting for a newer result':'AI evals are running…')+'</strong><span>Started '+esc(fmtDate(activeEvalRun.startedAt))+'. The previous results stay visible until the new run finishes; this page checks automatically.</span></div>';
       }
-      if(pending.has('Run controls')){
-        qualityHtml+='<div class="eval-actions"><span class="footnote">Checking whether dashboard-run controls are ready…</span></div>';
+      if(pending.has('Run controls')&&!run){
+        qualityHtml+='<div class="eval-actions"><button class="button small primary" type="button" disabled>Run all AI evals</button><span class="footnote">Checking run availability…</span></div>';
       }else if(run?.configured){
         const runDisabled=activeEvalRun?' disabled':'';
-        qualityHtml+='<div class="eval-actions"><button class="button small primary" type="button" data-run-checks="all"'+runDisabled+'>'+(activeEvalRun?'AI evals running…':'Run all AI evals')+'</button><button class="button small" type="button" data-run-checks="review"'+runDisabled+'>Check update understanding</button><button class="button small" type="button" data-run-checks="ask"'+runDisabled+'>Check answer quality</button></div>'+
+        qualityHtml+='<div class="eval-actions"><button class="button small primary" type="button" data-run-checks="all"'+runDisabled+'>'+(activeEvalRun?'AI evals running…':'Run all AI evals')+'</button></div>'+
+          '<div class="eval-suite-actions"><strong>Run a specific eval suite</strong><p>State has two controlled eval areas. Rerun one when you are checking a targeted change.</p><div class="suite-action-grid">'+
+          '<button class="button small suite-action" type="button" data-run-checks="review"'+runDisabled+'><strong>Update understanding</strong><span>How State interprets new evidence and proposed truth changes.</span></button>'+
+          '<button class="button small suite-action" type="button" data-run-checks="ask"'+runDisabled+'><strong>Answer quality</strong><span>Grounding, uncertainty, and decision authority in answers.</span></button>'+
+          '</div></div>'+
           '<p class="footnote">Estimated model cost: '+esc(run.estimated_cost||'not configured')+'. You will confirm before any paid run starts.</p>';
       }else if(run){
         qualityHtml+='<p class="footnote">Running AI evals from the dashboard still needs setup. Existing recorded results can still appear here.</p>';
