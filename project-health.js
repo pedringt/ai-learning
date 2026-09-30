@@ -1043,18 +1043,22 @@
         const qa=qualityAttention(q);
         const staleResults=stateEvalResultsStale(q);
         const cards=[];
-        if(review?.interpretation_accuracy!=null) cards.push(stateEvalCard('Understood updates correctly',percent(review.interpretation_accuracy),'Did State interpret the project update the way the product expected?',evalTrend(q.recent,'review_interpretation')));
-        if(ask?.ask_grounding!=null) cards.push(stateEvalCard('Answers stayed supported by evidence',percent(ask.ask_grounding),'Did answers stick to known project information instead of filling gaps?',evalTrend(q.recent,'ask_quality')));
-        if(ask?.authority_accuracy!=null) cards.push(stateEvalCard('Respected decision authority',percent(ask.authority_accuracy),'Did State keep proposed changes separate from approved project truth?',''));
-        if(ask?.uncertainty_accuracy!=null) cards.push(stateEvalCard('Handled uncertainty clearly',percent(ask.uncertainty_accuracy),'Did State say when the available evidence was not enough?',''));
+        const noteFor=check=>{const count=failureCheckCount(q,check);return count?count+' high-impact miss'+(count===1?'':'es'):'';};
+        if(review?.interpretation_accuracy!=null) cards.push(stateEvalCard('Understood updates correctly',percent(review.interpretation_accuracy),'Did State interpret the project update the way the product expected?',evalTrend(q.recent,'review_interpretation'),noteFor('interpretation')));
+        if(ask?.ask_grounding!=null) cards.push(stateEvalCard('Answers stayed supported by evidence',percent(ask.ask_grounding),'Did answers stick to known project information instead of filling gaps?',evalTrend(q.recent,'ask_quality'),noteFor('grounding')));
+        if(ask?.authority_accuracy!=null) cards.push(stateEvalCard('Respected decision authority',percent(ask.authority_accuracy),'Did State keep proposed changes separate from approved project truth?','',noteFor('authority')));
+        if(ask?.uncertainty_accuracy!=null) cards.push(stateEvalCard('Handled uncertainty clearly',percent(ask.uncertainty_accuracy),'Did State say when the available evidence was not enough?','',noteFor('uncertainty')));
         const failureSummary=qualityFailureClassSummary(q);
-        const failureClassText=failureSummary.classes.length?'Main failure areas: '+failureSummary.classes.join(', ')+'.':'Open the failed scenarios to see the affected behavior.';
+        const primaryFailure=failureSummary.details?.[0]||null;
+        const failureDetailHtml=primaryFailure
+          ?'<div class="quality-failure-detail"><strong>'+esc(primaryFailure.title)+'</strong><p><b>What happened:</b> '+esc(primaryFailure.whatHappened)+'</p><p><b>Expected:</b> '+esc(primaryFailure.expected)+'</p><p><b>Why it matters:</b> '+esc(primaryFailure.why)+'</p></div>'
+          :'<p>Open the failed scenarios to see the affected behavior.</p>';
         qualityHtml='<h3>Product quality · AI checks</h3>'+
           '<div class="eval-overview"><div><strong>'+esc(qa.title)+'</strong><span>'+(latestDate?'Last checked '+esc(fmtDate(latestDate))+' · ':'')+(staleResults?'Previous run · rerun required':esc(total||'—')+' scenarios')+'</span></div></div>'+
           (staleResults
             ?'<div class="run-callout stale-quality-summary"><strong>What to know from the last run</strong><p>The previous run recorded '+esc(severe)+' high-impact miss'+(severe===1?'':'es')+', but '+esc(stateEvalStaleReason(q).toLowerCase())+' Run the checks again before treating those scores as current.</p></div>'
             :failureSummary.count
-              ?'<div class="run-callout quality-failure-summary"><strong>'+esc(failureSummary.count)+' high-impact failure'+(failureSummary.count===1?'':'s')+' require review</strong><p>'+esc(failureClassText)+'</p></div><div class="eval-grid">'+cards.join('')+'</div>'
+              ?'<div class="run-callout quality-failure-summary"><strong>'+esc(failureSummary.count)+' high-impact scenario'+(failureSummary.count===1?'':'s')+' need review</strong><p>'+esc(Math.max(0,total-failureSummary.count))+' of '+esc(total)+' scenarios did not report a high-impact failure.</p>'+failureDetailHtml+'<p class="footnote"><a href="/state-evals">Review failed scenario →</a></p></div><div class="eval-grid">'+cards.join('')+'</div>'
               :'<div class="eval-grid">'+cards.join('')+'</div>')+stateEvalHistory(q);
       }
       qualityHtml+='<p class="footnote"><a href="/state-evals">View eval details →</a></p>';
