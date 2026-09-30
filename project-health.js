@@ -1387,7 +1387,7 @@
     };
   }
 
-  function qualityInvestigation(data){
+  function qualityInvestigation(data,scenarioId){
     const quality=data?.quality||{};
     const runs=[
       {label:'Update understanding',run:quality.review},
@@ -1397,7 +1397,8 @@
       const score=evalScore(item.run);
       return Number(item.run?.high_severity_failures||0)>0||(score!=null&&score<1);
     });
-    const details=affected.flatMap(item=>(Array.isArray(item.run?.failure_details)?item.run.failure_details:[]).map(detail=>({...detail,suiteLabel:item.label})));
+    const allDetails=affected.flatMap(item=>(Array.isArray(item.run?.failure_details)?item.run.failure_details:[]).map(detail=>({...detail,suiteLabel:item.label})));
+    const details=scenarioId?allDetails.filter(detail=>String(detail.scenario_id||'')===String(scenarioId)):allDetails;
     const severe=affected.reduce((n,item)=>n+Number(item.run?.high_severity_failures||0),0);
     const latestDate=runs.map(item=>item.run?.created_at).filter(Boolean).sort().pop()||new Date().toISOString();
     const review=quality.review,ask=quality.ask;
@@ -2016,8 +2017,8 @@
       const investigate=event.target.closest?.('[data-investigate-quality]');
       if(investigate){
         const data=activeData();if(!data)return;
-        data.investigation=qualityInvestigation(data);
-        recordInvestigation(data,data.investigation,'AI eval');
+        data.investigation=qualityInvestigation(data,investigate.dataset.failureId||null);
+        recordInvestigation(data,data.investigation,investigate.dataset.failureId?'AI eval failure · '+investigate.dataset.failureId:'AI eval');
         renderNow();revealInvestigation();return;
       }
       const button=event.target.closest?.('[data-run-checks]');
@@ -2046,11 +2047,13 @@
     if(requestedInvestigation==='quality'){
       const data=activeData();
       if(data?.project?.id==='state'&&data.quality){
-        data.investigation=qualityInvestigation(data);
-        recordInvestigation(data,data.investigation,'AI eval');
+        const requestedFailure=initialParams.get('failure');
+        data.investigation=qualityInvestigation(data,requestedFailure||null);
+        recordInvestigation(data,data.investigation,requestedFailure?'AI eval failure · '+requestedFailure:'AI eval');
         renderNow();
         revealInvestigation();
         const url=new URL(root.location.href);
+        url.searchParams.delete('failure');
         url.searchParams.delete('investigate');
         root.history.replaceState(null,'',url);
       }
