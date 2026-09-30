@@ -1067,7 +1067,7 @@
         const failureSummary=qualityFailureClassSummary(q);
         const primaryFailure=failureSummary.details?.[0]||null;
         const failureDetailHtml=primaryFailure
-          ?'<div class="quality-failure-detail"><strong>'+esc(primaryFailure.title)+'</strong><p><b>What happened:</b> '+esc(primaryFailure.whatHappened)+'</p><p><b>Expected:</b> '+esc(primaryFailure.expected)+'</p><p><b>Why it matters:</b> '+esc(primaryFailure.why)+'</p></div>'
+          ?'<div class="quality-failure-detail"><strong>'+esc(primaryFailure.title)+'</strong><p><b>What happened:</b> '+esc(primaryFailure.whatHappened)+'</p><p><b>Expected:</b> '+esc(primaryFailure.expected)+'</p><p><b>Why it matters:</b> '+esc(primaryFailure.why)+'</p><div class="quality-actions"><button class="button small primary" type="button" data-investigate-quality>Investigate this failure</button><a class="button small" href="/state-evals?failure='+encodeURIComponent(primaryFailure.scenario_id||'')+'">View failed scenario</a></div></div>'
           :'<p>Open the failed scenarios to see the affected behavior.</p>';
         qualityHtml='<h3>Product quality · AI evals</h3>'+
           '<div class="eval-overview"><div><strong>'+esc(qa.title)+'</strong><span>'+(latestDate?'Last checked '+esc(fmtDate(latestDate))+' · ':'')+(staleResults?'Previous run · rerun required':esc(total||'—')+' scenarios')+'</span></div></div>'+
@@ -1980,6 +1980,13 @@
     }
 
     qualityPanel.addEventListener('click',async event=>{
+      const investigate=event.target.closest?.('[data-investigate-quality]');
+      if(investigate){
+        const data=activeData();if(!data)return;
+        data.investigation=qualityInvestigation(data);
+        recordInvestigation(data,data.investigation,'AI eval');
+        renderNow();revealInvestigation();return;
+      }
       const button=event.target.closest?.('[data-run-checks]');
       if(!button)return;
       const data=activeData();if(!data||data.qualityRun)return;
