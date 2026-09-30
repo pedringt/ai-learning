@@ -1169,8 +1169,10 @@
     // Delivery separates what users have now from whether the next release can ship.
     const investigationBusy=!!data.investigation?.loading;
     const investigateButton=(type,environment,label)=>'<button class="button small" type="button" data-investigate="'+esc(type)+'" data-environment="'+esc(environment)+'"'+(investigationBusy?' disabled':'')+'>'+esc(label)+'</button>';
-    const deliveryKind=d?.vercel?.kind||'unknown';
-    const pipelineText=deliveryKind==='good'?'Latest release deployed successfully':deliveryKind==='bad'?'Latest release attempt did not deploy':deliveryKind==='warn'?'Latest release attempt is still finishing':'Release status is unavailable';
+    const pipeline=deliveryAttentionForData(data);
+    const deliveryKind=pipeline.kind||'unknown';
+    const rawPreviewFailure=d?.vercel?.kind==='bad'&&deliveryKind==='good';
+    const pipelineText=rawPreviewFailure?'No active production release failure':deliveryKind==='good'?'Latest production release is healthy':deliveryKind==='bad'?'Latest production release attempt did not deploy':deliveryKind==='warn'?'Latest production release attempt is still finishing':'Release status is unavailable';
     const deliveryClass=deliveryKind==='bad'?'bad':deliveryKind==='warn'?'warn':'';
     const runtime=productionRuntime(data);
     const environmentBlock=(label,item)=>{
@@ -1181,14 +1183,14 @@
         '<a class="delivery-release" href="'+esc(changeUrl(p.repo,item)||repoUrl(p.repo))+'" target="_blank" rel="noopener noreferrer">'+esc(commitTitle(item.message))+'</a>'+
         '<div class="delivery-meta"><span>Updated '+esc(fmtDate(item.updatedAt))+'</span><span>'+githubLink(shortSha(item.sha),githubCommitUrl(p.repo,item.sha))+'</span><span>'+esc(item.vercel?.label||'Deployment status unavailable')+'</span>'+(vercelTarget?'<span>'+githubLink('Open in Vercel ↗',vercelTarget)+'</span>':'')+'</div></div>';
     };
-    const prodInvestigate=d?.vercel?.kind==='bad'?investigateButton('vercel','production','Investigate failure'):'';
+    const prodInvestigate=deliveryKind==='bad'?investigateButton('vercel','production','Investigate deployment'):'';
     const checkInvestigate=Array.isArray(d?.failedChecks)&&d.failedChecks.length?investigateButton('github-check','production','Investigate failed check'):'';
     doc.getElementById('deliveryPanel').innerHTML='<div class="panel-title-row"><h3>Delivery</h3><span class="readiness-pill '+esc(readiness.label.toLowerCase())+'">Release '+esc(readiness.label)+'</span></div>'+
       '<div class="delivery-split" style="margin-top:12px">'+
         '<div class="delivery-concept"><span class="activity-type">Runtime</span><strong>Current production</strong><span class="delivery-status '+esc(runtime.kind)+'">'+esc(runtime.label)+'</span><p>'+esc(runtime.detail)+'</p></div>'+
-        '<div class="delivery-concept '+deliveryClass+'"><span class="activity-type">Release pipeline</span><strong>'+esc(pipelineText)+'</strong><span class="delivery-status '+esc(deliveryKind)+'">'+esc(deliveryKind==='good'?'Healthy':deliveryKind==='bad'?'Attention needed':deliveryKind==='warn'?'Watch':'Unknown')+'</span><p>'+esc(deliveryAttention(d).detail)+'</p></div>'+
+        '<div class="delivery-concept '+deliveryClass+'"><span class="activity-type">Release pipeline</span><strong>'+esc(pipelineText)+'</strong><span class="delivery-status '+esc(deliveryKind)+'">'+esc(deliveryKind==='good'?'Healthy':deliveryKind==='bad'?'Attention needed':deliveryKind==='warn'?'Watch':'Unknown')+'</span><p>'+esc(pipeline.detail)+'</p></div>'+
       '</div>'+
-      '<div class="delivery-environments">'+environmentBlock('Latest production release attempt',d)+(s?environmentBlock('Staging release',s):'')+'</div>'+
+      '<div class="delivery-environments">'+(rawPreviewFailure?'<div class="delivery-environment"><div class="delivery-environment-head"><div><strong>Production release</strong></div><span class="delivery-status good">Healthy</span></div><div class="delivery-meta"><span>The failed Vercel status on the referenced commit was a preview or superseded attempt, not an active production release failure.</span>'+(p.links?.vercel?'<span>'+githubLink('Open in Vercel ↗',p.links.vercel)+'</span>':'')+'</div></div>':environmentBlock('Latest production release attempt',d))+(s?environmentBlock('Staging release',s):'')+'</div>'+
       '<div class="quality-actions">'+prodInvestigate+checkInvestigate+'</div>';
 
     // Infrastructure stays visible, grouped as services rather than settings rows.
