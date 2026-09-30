@@ -26,11 +26,13 @@ assert.strictEqual(platform.percentDelta(120,100),20);
 assert.strictEqual(platform.percentDelta(0,0),null);
 
 const deploymentSummary=activity.summarizeDeployments([
+  {uid:'preview-cancel',name:'state',target:null,state:'CANCELED',created:400,errorMessage:'Preview canceled'},
   {uid:'ready-new',name:'state',target:'production',state:'READY',created:300},
   {uid:'bad-old',name:'state',target:'production',state:'ERROR',created:200,errorMessage:'Build failed'},
   {uid:'ready-old',name:'state',target:'production',state:'READY',created:100}
 ]);
 assert.strictEqual(deploymentSummary.total,3);
+assert.ok(!deploymentSummary.recent_failures.some(item=>item.id==='preview-cancel'));
 assert.strictEqual(deploymentSummary.failed,1);
 assert.strictEqual(deploymentSummary.recent_failures[0].recovered,true);
 
@@ -82,7 +84,10 @@ assert.strictEqual(runApi.runInfo('state').minimum_controlled_cases,10);
 assert.strictEqual(runApi.runInfo('state').can_run_here,true);
 assert.match(runApi.runInfo('state').protection,/Public run/);
 assert.strictEqual(runApi.RUN_COOLDOWN_MS,10*60*1000);
-assert.strictEqual(runApi.runInfo('tastemake'),null);
+assert.strictEqual(runApi.runInfo('tastemake').configured,false);
+assert.strictEqual(runApi.runInfo('tastemake').paid_model_calls,false);
+assert.strictEqual(runApi.runInfo('tastemake').button_label,'Run recommendation checks');
+assert.strictEqual(runApi.runInfo('narc').button_label,'Run game checks');
 
 process.env.GITHUB_TOKEN='test-token';
 process.env.PROJECT_HEALTH_RUN_COST_ESTIMATE_STATE='$0.10-$0.25';
@@ -91,6 +96,8 @@ const ready=runApi.runInfo('state');
 assert.strictEqual(ready.configured,true);
 assert.strictEqual(ready.can_run_here,true);
 assert.strictEqual(ready.estimated_cost,'$0.10-$0.25');
+assert.strictEqual(runApi.runInfo('tastemake').configured,true);
+assert.strictEqual(runApi.runInfo('narc').configured,true);
 
 for(const [key,value] of Object.entries(saved)){
   if(value===undefined) delete process.env[key];

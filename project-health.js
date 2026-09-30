@@ -12,7 +12,16 @@
       evidence:['Understands updates','Answers stay grounded','Respects decision authority','Review burden'],
       nextDecision:'Expand failure investigation only if it stays useful without weakening human control.',
       nextReview:'After the next recorded AI quality check.',
-      owner:'Product'
+      owner:'Product',
+      qualityLabel:'AI Quality',
+      links:{
+        live:'https://state.contextswitch.tech',
+        vercel:'https://vercel.com/cairn10/state',
+        renderProduction:'https://dashboard.render.com/web/srv-dabogoajnfac73dp7h1g',
+        renderStaging:'https://dashboard.render.com/web/srv-dadloi8n74is73ajsg50',
+        neon:'https://console.neon.tech',
+        quality:'/state-evals'
+      }
     },
     {
       id:'tastemake',name:'Tastemake',description:'Taste-learning recommendation prototype built around preference discovery.',repo:'pedringt/tastemake',branch:'main',
@@ -20,7 +29,14 @@
       evidence:['Recommendation breadth','Irrelevant suggestions','Validator catches','Repeat engagement'],
       nextDecision:'Decide whether the canonical store improves recommendation quality enough to expand further.',
       nextReview:'After the next recommendation-quality pass.',
-      owner:'Product'
+      owner:'Product',
+      qualityLabel:'Recommendation Quality',
+      links:{
+        live:'https://tastemake.vercel.app',
+        vercel:'https://vercel.com/cairn10/tastemake',
+        neon:'https://console.neon.tech',
+        quality:'https://github.com/pedringt/tastemake/actions/workflows/test.yml'
+      }
     },
     {
       id:'narc',name:'NARC',description:'Workplace-surveillance satire game with branching consequences.',repo:'pedringt/narc',branch:'main',
@@ -28,7 +44,13 @@
       evidence:['First-run playtest','Branch consistency','Confusing choices','Replayable endings'],
       nextDecision:'Decide whether the first-play flow is clear enough before adding more branches and mechanics.',
       nextReview:'After the full first-run playtest.',
-      owner:'Product'
+      owner:'Product',
+      qualityLabel:'Game Quality',
+      links:{
+        live:'https://narc-opal.vercel.app',
+        vercel:'https://vercel.com/cairn10/narc',
+        quality:'https://github.com/pedringt/narc/actions/workflows/quality-checks.yml'
+      }
     }
   ];
   const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -106,7 +128,7 @@
     if(!runs.length) return {kind:'warn',title:'AI quality checks have not been recorded yet',detail:'Run the controlled checks to see how State handles understanding, evidence, uncertainty, and decision authority.'};
     if(stateEvalResultsStale(q)) return {kind:'warn',title:'AI quality checks need to be rerun',detail:stateEvalStaleReason(q)+' Historical failures are not treated as current product failures.',nextAction:'Run the controlled AI quality checks again.',owner:'Product'};
     const severe=runs.reduce((n,r)=>n+Number(r.high_severity_failures||0),0);
-    if(severe>0) return {kind:'bad',title:'A serious AI quality check failed',detail:severe+' high-impact failure'+(severe===1?'':'s')+' appeared in the latest recorded checks.',nextAction:'Review the failed scenario evidence and decide whether product behavior or the eval contract is wrong.',owner:'Product'};
+    if(severe>0) return {kind:'bad',title:severe+' high-impact AI scenario'+(severe===1?'':'s')+' need review',detail:'Most aggregate quality signals may still look healthy; review the specific failed scenario'+(severe===1?'':'s')+' before deciding whether product behavior or the eval contract should change.',nextAction:'Review the failed scenario evidence and decide whether product behavior or the eval contract is wrong.',owner:'Product'};
     if(runs.some(r=>{const score=evalScore(r);return Number(r.failed_cases||0)>0||(score!=null&&score<1);})) return {kind:'warn',title:'Some AI quality checks need a look',detail:'At least one controlled scenario did not behave as expected.',nextAction:'Review the scenario-level miss, then rerun the affected suite.',owner:'Product'};
     return {kind:'good',title:'AI quality checks are healthy',detail:'The latest recorded checks did not report a high-impact failure.'};
   }
@@ -275,15 +297,59 @@
     if(Array.isArray(data?.openPullRequests)&&data.openPullRequests.length)return 'Decide whether the current open work is ready for the next release.';
     return 'No immediate product decision is required. Continue the current goal until the next review.';
   }
-  function qualityFailureClassSummary(q){
+  function failureCheckCount(q,check){
     const runs=[q?.review,q?.ask].filter(Boolean);
-    const details=runs.flatMap(run=>Array.isArray(run?.failure_details)?run.failure_details:[]);
+    return runs.flatMap(run=>Array.isArray(run?.failure_details)?run.failure_details:[])
+      .filter(item=>String(item?.severity||'').toLowerCase()==='high')
+      .filter(item=>(item?.failed_checks||[]).some(name=>String(name).toLowerCase()===String(check).toLowerCase())).length;
+  }
+  function failureExplanation(detail){
+    const id=String(detail?.scenario_id||'');
+    if(id==='ask_conflicting_evidence'){
+      return {
+        title:'Conflicting evidence was not handled cautiously enough',
+        whatHappened:'State did not fully preserve the unresolved conflict between approved Current State and newer contradictory evidence in its answer.',
+        expected:'Report the maintained truth, explicitly surface the unresolved conflict, and avoid treating the newer evidence as settled.',
+        why:'A user could leave believing a disputed project fact is settled when it still needs human review.'
+      };
+    }
+    if(id==='review_direct_reversal'){
+      return {
+        title:'Authoritative reversal was not applied correctly',
+        whatHappened:'State did not interpret evidence that directly reversed an existing maintained fact the way the product contract expected.',
+        expected:'Recognize the authoritative reversal and propose the corresponding Current State change for human review.',
+        why:'Stale project truth could remain active after authoritative evidence changes it.'
+      };
+    }
+    if(id==='ask_blocker_not_omitted'){
+      return {
+        title:'A consequential blocker was omitted from a readiness answer',
+        whatHappened:'The answer did not surface a blocking open item that materially changes whether the project is ready.',
+        expected:'Include the blocker and make the remaining uncertainty explicit.',
+        why:'A user could make a launch decision without seeing a known blocking dependency.'
+      };
+    }
+    const category=String(detail?.category||detail?.scenario_id||'controlled behavior').replaceAll('_',' ').trim();
+    return {
+      title:category.charAt(0).toUpperCase()+category.slice(1)+' needs review',
+      whatHappened:detail?.observed?String(detail.observed).replaceAll('_',' '):'Observed behavior differed from the controlled product expectation.',
+      expected:detail?.expected?String(detail.expected).replaceAll('_',' '):'Follow the controlled product contract for this scenario.',
+      why:evalFailureImpact(detail).replace(/^Risk:\s*/,'')
+    };
+  }
+  function qualityFailureClassSummary(q){
+    const runs=[{suite:'update understanding',run:q?.review},{suite:'answer quality',run:q?.ask}].filter(item=>item.run);
+    const details=runs.flatMap(({suite,run})=>(Array.isArray(run?.failure_details)?run.failure_details:[]).map(item=>({...item,suite})));
     const high=details.filter(item=>String(item?.severity||'').toLowerCase()==='high');
     const names=[...new Set(high.map(item=>{
       const category=String(item?.category||item?.scenario_id||'').replaceAll('_',' ').trim();
       return category||'controlled behavior';
     }))];
-    return {count:runs.reduce((n,run)=>n+Number(run?.high_severity_failures||0),0),classes:names.slice(0,3)};
+    return {
+      count:runs.reduce((n,item)=>n+Number(item.run?.high_severity_failures||0),0),
+      classes:names.slice(0,3),
+      details:high.map(item=>({...item,...failureExplanation(item)}))
+    };
   }
   function activityTimelineItems(data){
     const p=data?.project||{},d=data?.delivery,q=data?.quality,externalQ=data?.externalQuality,activity=data?.activity;
@@ -373,7 +439,7 @@
     return latest?{sha:latest.sha||null,updatedAt:latest.commit?.committer?.date||latest.commit?.author?.date||null}:null;
   }
   async function loadPlatformSignal(project,signal){return await jsonFetch('/api/project-health-platform?project='+encodeURIComponent(project.id)+'&signal='+encodeURIComponent(signal),{timeoutMs:6500});}
-  async function loadRunInfo(project){if(project.id!=='state')return null;try{return await jsonFetch('/api/project-health-run?project=state',{timeoutMs:5000});}catch(error){if(error.status===404)return null;throw error;}}
+  async function loadRunInfo(project){try{return await jsonFetch('/api/project-health-run?project='+encodeURIComponent(project.id),{timeoutMs:5000});}catch(error){if(error.status===404)return null;throw error;}}
   async function loadExternalQuality(project){try{return await jsonFetch('/api/project-health-project-quality?project='+encodeURIComponent(project.id),{timeoutMs:7000});}catch(error){if(error.status===404)return null;throw error;}}
   async function loadActivity(project){try{const payload=await jsonFetch('/api/project-health-activity?project='+encodeURIComponent(project.id),{timeoutMs:7500});return payload?.activity||null;}catch(error){if(error.status===404)return null;throw error;}}
   async function loadOpenPullRequests(project){
@@ -550,13 +616,13 @@
       run('Analytics',loadPlatformSignal(project,'analytics'),value=>{data.platform=mergePlatform(data.platform,value);}),
       run('AI operations',loadPlatformSignal(project,'ai-telemetry'),value=>{data.platform=mergePlatform(data.platform,value);}),
       run('Neon',loadPlatformSignal(project,'neon'),value=>{data.platform=mergePlatform(data.platform,value);}),
-      run('Open work',loadOpenPullRequests(project),value=>{data.openPullRequests=Array.isArray(value)?value:[];})
+      run('Open work',loadOpenPullRequests(project),value=>{data.openPullRequests=Array.isArray(value)?value:[];}),
+      run('Run controls',loadRunInfo(project),value=>{data.runInfo=value;})
     ];
     if(project.id==='state'){
       tasks.push(
         run('Staging delivery',loadGitHubProject(project,project.stagingBranch),value=>{data.staging=value;}),
-        run('Staging backend',loadPlatformSignal(project,'staging-render'),value=>{data.platform=mergePlatform(data.platform,value);}),
-        run('Run controls',loadRunInfo(project),value=>{data.runInfo=value;})
+        run('Staging backend',loadPlatformSignal(project,'staging-render'),value=>{data.platform=mergePlatform(data.platform,value);})
       );
     }
     await Promise.all(tasks);
@@ -826,8 +892,8 @@
     if(Math.abs(delta)<0.1)return'Stable vs previous run';
     return (delta>0?'Up ':'Down ')+Math.abs(delta)+' points vs previous run';
   }
-  function stateEvalCard(title,value,description,trend){
-    return '<div class="eval-card"><strong>'+esc(title)+'</strong><div class="score">'+esc(value)+'</div><p>'+esc(description)+'</p>'+(trend?'<p><strong>'+esc(trend)+'</strong></p>':'')+'</div>';
+  function stateEvalCard(title,value,description,trend,note){
+    return '<div class="eval-card"><strong>'+esc(title)+'</strong><div class="score">'+esc(value)+'</div><p>'+esc(description)+'</p>'+(note?'<p class="eval-card-note"><strong>'+esc(note)+'</strong></p>':'')+(trend?'<p><strong>'+esc(trend)+'</strong></p>':'')+'</div>';
   }
   function stateEvalHistory(){return'';}
   function investigationResultHtml(investigation){
@@ -854,12 +920,28 @@
     const pending=pendingSet(data);
     doc.getElementById('detailTitle').textContent=p.name;
     doc.getElementById('detailCopy').textContent=p.description;
-    doc.getElementById('repoLink').href=repoUrl(p.repo);
+    const repoLink=doc.getElementById('repoLink');
+    if(repoLink)repoLink.href=repoUrl(p.repo);
+    const qualityTab=doc.querySelector?.('[data-tab="ai-quality"]');
+    if(qualityTab)qualityTab.textContent=p.qualityLabel||'Quality';
+    const linksMenu=doc.getElementById('projectLinksMenu');
+    if(linksMenu){
+      const links=[
+        ['Live project',p.links?.live],
+        ['GitHub repository',repoUrl(p.repo)],
+        ['Vercel',p.links?.vercel],
+        ['Render · production',p.links?.renderProduction],
+        ['Render · staging',p.links?.renderStaging],
+        ['Neon',p.links?.neon],
+        [p.id==='state'?'State eval details':p.id==='tastemake'?'Recommendation checks':'Game checks',p.links?.quality]
+      ].filter(item=>item[1]);
+      linksMenu.innerHTML=links.map(([label,url])=>'<a href="'+esc(url)+'" target="_blank" rel="noopener noreferrer">'+esc(label)+'</a>').join('');
+    }
     const projectCheckButton=doc.getElementById('projectCheckButton');
     const headerRunChecksButton=doc.getElementById('headerRunChecksButton');
     const currentQuality=p.quality==='state'?qualityAttention(q):externalQualityAttention(externalQ);
     const noRecordedStateRuns=p.id==='state'&&![q?.review,q?.ask].filter(Boolean).length;
-    const shouldRunChecksFirst=p.id==='state'&&run?.configured&&(noRecordedStateRuns||stateEvalResultsStale(q));
+    const shouldRunChecksFirst=!!(run?.configured&&(p.id!=='state'||noRecordedStateRuns||stateEvalResultsStale(q)));
     const shouldInvestigateFirst=currentQuality?.kind==='bad'||deliveryAttention(d).kind==='bad';
     if(projectCheckButton){
       projectCheckButton.disabled=!!data.investigation?.loading;
@@ -869,9 +951,10 @@
     }
     if(headerRunChecksButton){
       const activeEvalRun=data.qualityRun;
-      headerRunChecksButton.hidden=!(p.id==='state'&&run?.configured);
+      const baseLabel=run?.button_label||(p.id==='state'?'Run AI checks':p.id==='tastemake'?'Run recommendation checks':'Run game checks');
+      headerRunChecksButton.hidden=!run?.configured;
       headerRunChecksButton.disabled=!!activeEvalRun;
-      headerRunChecksButton.textContent=activeEvalRun?'AI checks running…':data.qualityRunCompletedAt?'View AI results':'Run AI checks';
+      headerRunChecksButton.textContent=activeEvalRun?'Checks running…':data.qualityRunCompletedAt?'View quality results':baseLabel;
       headerRunChecksButton.classList.toggle('primary',!!shouldRunChecksFirst);
       headerRunChecksButton.style.order=shouldRunChecksFirst?'1':'2';
     }
@@ -927,7 +1010,7 @@
       ?[q?.review?.created_at,q?.ask?.created_at].filter(Boolean).sort().pop()
       :(externalQ?.ci?.updated_at||externalQ?.recorded?.updated_at||data.checkedAt);
     const healthRows=[
-      {label:'AI quality',kind:overviewQuality?.kind||'unknown',detail:overviewQuality?.title||'Quality status unavailable',tab:'ai-quality',fresh:freshnessMeta(qualityTime,data.checkedAt,72)},
+      {label:p.qualityLabel||'Quality',kind:overviewQuality?.kind||'unknown',detail:overviewQuality?.title||'Quality status unavailable',tab:'ai-quality',fresh:freshnessMeta(qualityTime,data.checkedAt,72)},
       {label:'Production',kind:runtimeStatus.kind,status:runtimeStatus.label,detail:runtimeStatus.detail,tab:'delivery',fresh:freshnessMeta(data.detailCheckedAt||d?.updatedAt||data.checkedAt,data.checkedAt,24)},
       {label:'Release pipeline',kind:overviewDelivery?.kind||'unknown',detail:overviewDelivery?.title||'Release status unavailable',tab:'delivery',fresh:freshnessMeta(d?.updatedAt,data.checkedAt,24)},
       {label:'Infrastructure',kind:overviewInfra?.kind||'good',detail:overviewInfra?.title||'Production services healthy',tab:'infra',fresh:freshnessMeta(data.detailCheckedAt||data.checkedAt,data.checkedAt,6)},
@@ -960,18 +1043,22 @@
         const qa=qualityAttention(q);
         const staleResults=stateEvalResultsStale(q);
         const cards=[];
-        if(review?.interpretation_accuracy!=null) cards.push(stateEvalCard('Understood updates correctly',percent(review.interpretation_accuracy),'Did State interpret the project update the way the product expected?',evalTrend(q.recent,'review_interpretation')));
-        if(ask?.ask_grounding!=null) cards.push(stateEvalCard('Answers stayed supported by evidence',percent(ask.ask_grounding),'Did answers stick to known project information instead of filling gaps?',evalTrend(q.recent,'ask_quality')));
-        if(ask?.authority_accuracy!=null) cards.push(stateEvalCard('Respected decision authority',percent(ask.authority_accuracy),'Did State keep proposed changes separate from approved project truth?',''));
-        if(ask?.uncertainty_accuracy!=null) cards.push(stateEvalCard('Handled uncertainty clearly',percent(ask.uncertainty_accuracy),'Did State say when the available evidence was not enough?',''));
+        const noteFor=check=>{const count=failureCheckCount(q,check);return count?count+' high-impact miss'+(count===1?'':'es'):'';};
+        if(review?.interpretation_accuracy!=null) cards.push(stateEvalCard('Understood updates correctly',percent(review.interpretation_accuracy),'Did State interpret the project update the way the product expected?',evalTrend(q.recent,'review_interpretation'),noteFor('interpretation')));
+        if(ask?.ask_grounding!=null) cards.push(stateEvalCard('Answers stayed supported by evidence',percent(ask.ask_grounding),'Did answers stick to known project information instead of filling gaps?',evalTrend(q.recent,'ask_quality'),noteFor('grounding')));
+        if(ask?.authority_accuracy!=null) cards.push(stateEvalCard('Respected decision authority',percent(ask.authority_accuracy),'Did State keep proposed changes separate from approved project truth?','',noteFor('authority')));
+        if(ask?.uncertainty_accuracy!=null) cards.push(stateEvalCard('Handled uncertainty clearly',percent(ask.uncertainty_accuracy),'Did State say when the available evidence was not enough?','',noteFor('uncertainty')));
         const failureSummary=qualityFailureClassSummary(q);
-        const failureClassText=failureSummary.classes.length?'Main failure areas: '+failureSummary.classes.join(', ')+'.':'Open the failed scenarios to see the affected behavior.';
+        const primaryFailure=failureSummary.details?.[0]||null;
+        const failureDetailHtml=primaryFailure
+          ?'<div class="quality-failure-detail"><strong>'+esc(primaryFailure.title)+'</strong><p><b>What happened:</b> '+esc(primaryFailure.whatHappened)+'</p><p><b>Expected:</b> '+esc(primaryFailure.expected)+'</p><p><b>Why it matters:</b> '+esc(primaryFailure.why)+'</p></div>'
+          :'<p>Open the failed scenarios to see the affected behavior.</p>';
         qualityHtml='<h3>Product quality · AI checks</h3>'+
           '<div class="eval-overview"><div><strong>'+esc(qa.title)+'</strong><span>'+(latestDate?'Last checked '+esc(fmtDate(latestDate))+' · ':'')+(staleResults?'Previous run · rerun required':esc(total||'—')+' scenarios')+'</span></div></div>'+
           (staleResults
             ?'<div class="run-callout stale-quality-summary"><strong>What to know from the last run</strong><p>The previous run recorded '+esc(severe)+' high-impact miss'+(severe===1?'':'es')+', but '+esc(stateEvalStaleReason(q).toLowerCase())+' Run the checks again before treating those scores as current.</p></div>'
             :failureSummary.count
-              ?'<div class="run-callout quality-failure-summary"><strong>'+esc(failureSummary.count)+' high-impact failure'+(failureSummary.count===1?'':'s')+' require review</strong><p>'+esc(failureClassText)+'</p></div><div class="eval-grid">'+cards.join('')+'</div>'
+              ?'<div class="run-callout quality-failure-summary"><strong>'+esc(failureSummary.count)+' high-impact scenario'+(failureSummary.count===1?'':'s')+' need review</strong><p>'+esc(Math.max(0,total-failureSummary.count))+' of '+esc(total)+' scenarios did not report a high-impact failure.</p>'+failureDetailHtml+'<p class="footnote"><a href="/state-evals">Review failed scenario →</a></p></div><div class="eval-grid">'+cards.join('')+'</div>'
               :'<div class="eval-grid">'+cards.join('')+'</div>')+stateEvalHistory(q);
       }
       qualityHtml+='<p class="footnote"><a href="/state-evals">View eval details →</a></p>';
@@ -1017,6 +1104,22 @@
     }else{
       qualityHtml='<h3>Product quality</h3><div class="empty" style="margin-top:12px">Quality data is not available right now.</div>';
     }
+    if(p.id!=='state'&&run){
+      const activeQualityRun=data.qualityRun;
+      if(activeQualityRun){
+        const delayed=activeQualityRun.state==='delayed';
+        qualityHtml+='<div class="eval-run-status '+(delayed?'warn':'')+'" role="status"><strong>'+(delayed?'Run started · waiting for a newer result':'Quality checks are running…')+'</strong><span>Started '+esc(fmtDate(activeQualityRun.startedAt))+'. The latest recorded results stay visible until the workflow finishes.</span></div>';
+      }
+      if(pending.has('Run controls')){
+        qualityHtml+='<div class="eval-actions"><span class="footnote">Checking whether dashboard-run controls are ready…</span></div>';
+      }else if(run.configured){
+        const runDisabled=activeQualityRun?' disabled':'';
+        qualityHtml+='<div class="eval-actions"><button class="button small primary" type="button" data-run-checks="all"'+runDisabled+'>'+(activeQualityRun?'Checks running…':esc(run.button_label||'Run quality checks'))+'</button></div>'+
+          '<p class="footnote">This dashboard run uses the project\'s existing GitHub Actions workflow and does not make paid model calls.</p>';
+      }else{
+        qualityHtml+='<p class="footnote">Running these checks from the dashboard still needs GitHub workflow access. Existing recorded results can still appear here.</p>';
+      }
+    }
     doc.getElementById('qualityPanel').innerHTML=qualityHtml;
 
     // Usage only gets a standalone Overview section when there is real usage data to show.
@@ -1057,9 +1160,10 @@
     const environmentBlock=(label,item)=>{
       if(!item)return'<div class="delivery-environment"><div class="delivery-environment-head"><strong>'+esc(label)+'</strong><span>Unavailable</span></div></div>';
       const status=item.vercel?.kind==='good'?'Healthy':item.vercel?.kind==='bad'?'Needs attention':item.vercel?.kind==='warn'?'Watch':'Unknown';
+      const vercelTarget=(item.vercel?.contexts||[]).map(context=>context?.target_url).find(url=>/^https:\/\/vercel\.com\//.test(String(url||'')))||p.links?.vercel;
       return '<div class="delivery-environment"><div class="delivery-environment-head"><div><strong>'+esc(label)+'</strong><span class="branch-label">'+esc(item.branch)+'</span></div><span class="delivery-status '+esc(item.vercel?.kind||'unknown')+'">'+esc(status)+'</span></div>'+
         '<a class="delivery-release" href="'+esc(changeUrl(p.repo,item)||repoUrl(p.repo))+'" target="_blank" rel="noopener noreferrer">'+esc(commitTitle(item.message))+'</a>'+
-        '<div class="delivery-meta"><span>Updated '+esc(fmtDate(item.updatedAt))+'</span><span>'+githubLink(shortSha(item.sha),githubCommitUrl(p.repo,item.sha))+'</span><span>'+esc(item.vercel?.label||'Deployment status unavailable')+'</span></div></div>';
+        '<div class="delivery-meta"><span>Updated '+esc(fmtDate(item.updatedAt))+'</span><span>'+githubLink(shortSha(item.sha),githubCommitUrl(p.repo,item.sha))+'</span><span>'+esc(item.vercel?.label||'Deployment status unavailable')+'</span>'+(vercelTarget?'<span>'+githubLink('Open in Vercel ↗',vercelTarget)+'</span>':'')+'</div></div>';
     };
     const prodInvestigate=d?.vercel?.kind==='bad'?investigateButton('vercel','production','Investigate failure'):'';
     const checkInvestigate=Array.isArray(d?.failedChecks)&&d.failedChecks.length?investigateButton('github-check','production','Investigate failed check'):'';
@@ -1076,18 +1180,18 @@
     const infraCards=[];
     if(r?.configured){
       const production=r.environments?.production;
-      if(production) infraCards.push({label:'Production backend',status:production.ok?'Healthy':'Unavailable',detail:'Render'});
+      if(production) infraCards.push({label:'Production backend',status:production.ok?'Healthy':'Unavailable',detail:'Render',url:p.links?.renderProduction});
       const stagingEnv=r.environments?.staging;
-      if(stagingEnv) infraCards.push({label:'Staging backend',status:stagingEnv.ok?'Healthy':'Unknown',detail:stagingEnv.ok?'Render':'Render · no recent successful response observed; production unaffected'});
-      else if(p.id==='state'&&pending.has('Staging backend')) infraCards.push({label:'Staging backend',status:'Checking…',detail:'Render'});
-    }else if(p.id==='state') infraCards.push({label:'Production backend',status:pending.has('Production backend')?'Checking…':'Unavailable',detail:'Render'});
-    if(n?.configured&&n.available) infraCards.push({label:'Database',status:'Connected',detail:'Neon'});
-    else if(n?.configured) infraCards.push({label:'Database',status:'Temporarily unavailable',detail:'Neon'});
-    else infraCards.push({label:'Database',status:p.id==='state'?'Not connected yet':'Not used',detail:p.id==='state'?'Neon':'No database dependency'});
+      if(stagingEnv) infraCards.push({label:'Staging backend',status:stagingEnv.ok?'Healthy':'Unknown',detail:stagingEnv.ok?'Render':'Render · no recent successful response observed; production unaffected',url:p.links?.renderStaging});
+      else if(p.id==='state'&&pending.has('Staging backend')) infraCards.push({label:'Staging backend',status:'Checking…',detail:'Render',url:p.links?.renderStaging});
+    }else if(p.id==='state') infraCards.push({label:'Production backend',status:pending.has('Production backend')?'Checking…':'Unavailable',detail:'Render',url:p.links?.renderProduction});
+    if(n?.configured&&n.available) infraCards.push({label:'Database',status:'Connected',detail:'Neon',url:p.links?.neon});
+    else if(n?.configured) infraCards.push({label:'Database',status:'Temporarily unavailable',detail:'Neon',url:p.links?.neon});
+    else infraCards.push({label:'Database',status:p.id==='state'?'Not connected yet':'Not used',detail:p.id==='state'?'Neon':'No database dependency',url:p.id==='state'?p.links?.neon:null});
     const infraAttention=infrastructureAttention(platform);
     doc.getElementById('infrastructurePanel').innerHTML='<h3>Infrastructure</h3>'+
       '<div class="delivery-summary '+(infraAttention?.kind==='bad'?'bad':infraAttention?.kind==='warn'?'warn':'')+'" style="margin-top:12px">'+esc(infraAttention?.title||'Production services healthy')+'</div>'+
-      '<div class="service-grid">'+infraCards.map(item=>'<div class="service-card"><strong>'+esc(item.label)+'</strong><span class="service-status">'+esc(item.status)+'</span><span class="service-detail">'+esc(item.detail)+'</span></div>').join('')+'</div>';
+      '<div class="service-grid">'+infraCards.map(item=>'<div class="service-card"><strong>'+esc(item.label)+'</strong><span class="service-status">'+esc(item.status)+'</span><span class="service-detail">'+esc(item.detail)+'</span>'+(item.url?'<a href="'+esc(item.url)+'" target="_blank" rel="noopener noreferrer">Open '+esc(item.detail.split(' · ')[0])+' ↗</a>':'')+'</div>').join('')+'</div>';
 
     // Connections and coverage gaps stay visible; they are setup context, not incidents.
     const ai=platform?.aiTelemetry;
@@ -1125,19 +1229,22 @@
       (gaps.length?'<h4 style="margin:18px 0 8px">Coverage gaps</h4><div class="coverage-grid">'+gaps.map(item=>'<div class="coverage-item"><strong>'+esc(item.label)+'</strong><span>'+esc(item.detail)+'</span></div>').join('')+'</div>':'');
   }
 
-  function evalRunStorageKey(root){return 'project-health-eval-run:'+pageEnvironment(root);}
-  function loadEvalRunState(root){
+  function evalRunStorageKey(root,projectId){return 'project-health-eval-run:'+pageEnvironment(root)+':'+String(projectId||'state');}
+  function loadEvalRunState(root,projectId){
     try{
-      const raw=root.localStorage?.getItem(evalRunStorageKey(root));if(!raw)return null;
+      const key=evalRunStorageKey(root,projectId);
+      const raw=root.localStorage?.getItem(key);if(!raw)return null;
       const parsed=JSON.parse(raw);
-      if(!parsed?.startedAt||Date.now()-new Date(parsed.startedAt).getTime()>10*60*1000){root.localStorage?.removeItem(evalRunStorageKey(root));return null;}
+      if(!parsed?.startedAt||Date.now()-new Date(parsed.startedAt).getTime()>10*60*1000){root.localStorage?.removeItem(key);return null;}
       return parsed;
     }catch(_){return null;}
   }
-  function saveEvalRunState(root,value){
+  function saveEvalRunState(root,value,projectId){
     try{
-      if(value)root.localStorage?.setItem(evalRunStorageKey(root),JSON.stringify(value));
-      else root.localStorage?.removeItem(evalRunStorageKey(root));
+      const id=projectId||value?.project||'state';
+      const key=evalRunStorageKey(root,id);
+      if(value)root.localStorage?.setItem(key,JSON.stringify(value));
+      else root.localStorage?.removeItem(key);
     }catch(_){}
   }
   function evalRunComplete(quality,runState){
@@ -1146,6 +1253,12 @@
     if(runState.suite==='review')return changed(quality.review,runState.baselineReview);
     if(runState.suite==='ask')return changed(quality.ask,runState.baselineAsk);
     return changed(quality.review,runState.baselineReview)&&changed(quality.ask,runState.baselineAsk);
+  }
+  function externalQualityRunComplete(externalQuality,runState){
+    if(!externalQuality||!runState)return false;
+    const ci=externalQuality.ci;
+    if(!ci?.updated_at||String(ci.updated_at)===String(runState.baselineUpdatedAt||''))return false;
+    return String(ci.status||'').toLowerCase()==='completed'||!!ci.conclusion;
   }
   function evalFailureImpact(detail){
     const id=String(detail?.scenario_id||'');
@@ -1162,18 +1275,40 @@
 
   async function dispatchRun(data,root,suite='all'){
     const run=data.runInfo;if(!run?.configured)return;
-    const labels={all:'all AI quality checks',review:'update-understanding checks',ask:'answer-quality checks'};
-    const cases=suite==='all'?Math.max(16,Number(run.minimum_controlled_cases||8)):Number(run.minimum_controlled_cases||8);
-    const message='Run '+(labels[suite]||labels.all)+'?\n\nAbout '+cases+' controlled scenarios will use paid model calls.\nEstimated cost: '+run.estimated_cost+'\n\nResults are recorded as aggregate quality data. Start the run?';
-    if(!root.confirm(message)) return;
+    const projectId=data.project.id;
+    if(run.paid_model_calls){
+      const labels={all:'all AI quality checks',review:'update-understanding checks',ask:'answer-quality checks'};
+      const cases=suite==='all'?Math.max(16,Number(run.minimum_controlled_cases||8)):Number(run.minimum_controlled_cases||8);
+      const message='Run '+(labels[suite]||labels.all)+'?\n\nAbout '+cases+' controlled scenarios will use paid model calls.\nEstimated cost: '+run.estimated_cost+'\n\nResults are recorded as aggregate quality data. Start the run?';
+      if(!root.confirm(message)) return;
+    }else{
+      const message='Run '+String(run.label||'quality checks')+'?\n\nThis starts the project\'s existing GitHub Actions quality workflow. No paid model calls are part of this dashboard run.';
+      if(!root.confirm(message)) return;
+    }
     try{
-      const payload=await jsonFetch('/api/project-health-run',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({project:data.project.id,suite,record_environment:pageEnvironment(root),confirm_paid_model_calls:true,estimated_cost:run.estimated_cost})});
+      const baselineUpdatedAt=projectId==='state'
+        ?null
+        :(data.externalQuality?.ci?.updated_at||data.externalQuality?.recorded?.updated_at||null);
+      const payload=await jsonFetch('/api/project-health-run',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({
+          project:projectId,
+          suite,
+          record_environment:pageEnvironment(root),
+          confirm_paid_model_calls:!!run.paid_model_calls,
+          estimated_cost:run.estimated_cost,
+          baseline_updated_at:baselineUpdatedAt
+        })
+      });
       return {
         ...payload,
+        project:projectId,
         suite,
         startedAt:new Date().toISOString(),
         baselineReview:data.quality?.review?.created_at||null,
         baselineAsk:data.quality?.ask?.created_at||null,
+        baselineUpdatedAt,
         state:'running'
       };
     }catch(error){
@@ -1644,16 +1779,16 @@
 
     const headerRunChecksButton=doc.getElementById('headerRunChecksButton');
     if(headerRunChecksButton)headerRunChecksButton.addEventListener('click',async()=>{
-      const data=activeData();if(!data||data.project.id!=='state'||data.qualityRun)return;
+      const data=activeData();if(!data||!data.runInfo?.configured||data.qualityRun)return;
       if(data.qualityRunCompletedAt){setActiveTab('ai-quality');renderNow();return;}
       headerRunChecksButton.disabled=true;
-      headerRunChecksButton.textContent='Starting AI checks…';
+      headerRunChecksButton.textContent='Starting checks…';
       try{
         const started=await dispatchRun(data,root,'all');
         if(started?.started){
           data.qualityRun=started;
           data.qualityRunCompletedAt=null;
-          saveEvalRunState(root,started);
+          saveEvalRunState(root,started,data.project.id);
           setActiveTab('ai-quality');
           renderNow();
           pollEvalResults(data);
@@ -1779,18 +1914,28 @@
       }
 
     });
-    let evalPollTimer=null;
+    const evalPollTimers=new Map();
     async function pollEvalResults(data){
       if(!data?.qualityRun)return;
-      if(evalPollTimer)root.clearTimeout(evalPollTimer);
+      const projectId=data.project.id;
+      const existing=evalPollTimers.get(projectId);
+      if(existing)root.clearTimeout(existing);
       const runState=data.qualityRun;
       try{
-        const latest=await loadStateQuality(root);
-        data.quality=latest;
-        if(evalRunComplete(latest,runState)){
+        let complete=false;
+        if(projectId==='state'){
+          const latest=await loadStateQuality(root);
+          data.quality=latest;
+          complete=evalRunComplete(latest,runState);
+        }else{
+          const latest=await loadExternalQuality(data.project);
+          data.externalQuality=latest;
+          complete=externalQualityRunComplete(latest,runState);
+        }
+        if(complete){
           data.qualityRun=null;
           data.qualityRunCompletedAt=activeTab==='ai-quality'?null:new Date().toISOString();
-          saveEvalRunState(root,null);
+          saveEvalRunState(root,null,projectId);
           reconcileInvestigationHistory(data);
           persist();
           renderNow();
@@ -1801,10 +1946,10 @@
       if(age>4*60*1000)runState.state='delayed';
       if(age<10*60*1000){
         renderNow();
-        evalPollTimer=root.setTimeout(()=>pollEvalResults(data),7000);
+        evalPollTimers.set(projectId,root.setTimeout(()=>pollEvalResults(data),7000));
       }else{
         data.qualityRun=null;
-        saveEvalRunState(root,null);
+        saveEvalRunState(root,null,projectId);
         renderNow();
       }
     }
@@ -1821,7 +1966,7 @@
         if(started?.started){
           data.qualityRun=started;
           data.qualityRunCompletedAt=null;
-          saveEvalRunState(root,started);
+          saveEvalRunState(root,started,data.project.id);
           setActiveTab('ai-quality');
           renderNow();
           pollEvalResults(data);
@@ -1832,18 +1977,23 @@
       }catch(_){renderDetail(data,doc);}
     });
     await refreshAll();
-    const resumedRun=loadEvalRunState(root);
-    if(resumedRun){
-      const stateData=state.find(item=>item.project.id==='state');
-      if(stateData&&!evalRunComplete(stateData.quality,resumedRun)){
-        stateData.qualityRun=resumedRun;
+    for(const project of PROJECTS){
+      const resumedRun=loadEvalRunState(root,project.id);
+      if(!resumedRun)continue;
+      const data=state.find(item=>item.project.id===project.id);
+      if(!data){saveEvalRunState(root,null,project.id);continue;}
+      const complete=project.id==='state'
+        ?evalRunComplete(data.quality,resumedRun)
+        :externalQualityRunComplete(data.externalQuality,resumedRun);
+      if(!complete){
+        data.qualityRun=resumedRun;
         renderNow();
-        pollEvalResults(stateData);
+        pollEvalResults(data);
       }else{
-        saveEvalRunState(root,null);
+        saveEvalRunState(root,null,project.id);
       }
     }
   }
 
-  return {PROJECTS,pageEnvironment,vercelFromStatus,deliveryHealth,commitTitle,githubCommitUrl,pullRequestNumber,githubPullRequestUrl,changeUrl,normalizeQuality,qualityAttention,externalQualityAttention,deliveryAttention,infrastructureAttention,allAttentionSignals,attentionItems,overallAttention,productOpenItems,projectStatus,setupGaps,releaseReadiness,productionRuntime,operationalNextDecision,qualityFailureClassSummary,activityTimelineItems,projectQualityLabel,evalScore,percent,shortSha,pendingSet,mergePlatform,emptyProjectData,safeExternalQualitySnapshot,serializeProjectData,hydrateProjectData,loadProject,loadProjectDetails,infraCardLabel,analyticsConnectionValue,analyticsGapDetail,analyticsLabel,relativeAge,changedSinceVisit,meaningfulChanges,freshnessMeta,stateEvalContractStale,stateEvalBehaviorStale,stateEvalResultsStale,stateEvalStaleReason,trendText,activityReviewItems,progressText,quickProjectCheck,evalRunComplete,qualityInvestigation,projectHandoff,init};
+  return {PROJECTS,pageEnvironment,vercelFromStatus,deliveryHealth,commitTitle,githubCommitUrl,pullRequestNumber,githubPullRequestUrl,changeUrl,normalizeQuality,qualityAttention,externalQualityAttention,deliveryAttention,infrastructureAttention,allAttentionSignals,attentionItems,overallAttention,productOpenItems,projectStatus,setupGaps,releaseReadiness,productionRuntime,operationalNextDecision,qualityFailureClassSummary,failureCheckCount,failureExplanation,activityTimelineItems,projectQualityLabel,evalScore,percent,shortSha,pendingSet,mergePlatform,emptyProjectData,safeExternalQualitySnapshot,serializeProjectData,hydrateProjectData,loadProject,loadProjectDetails,infraCardLabel,analyticsConnectionValue,analyticsGapDetail,analyticsLabel,relativeAge,changedSinceVisit,meaningfulChanges,freshnessMeta,stateEvalContractStale,stateEvalBehaviorStale,stateEvalResultsStale,stateEvalStaleReason,trendText,activityReviewItems,progressText,quickProjectCheck,evalRunComplete,externalQualityRunComplete,qualityInvestigation,projectHandoff,init};
 });
