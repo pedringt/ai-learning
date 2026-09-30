@@ -148,7 +148,7 @@
               (item.expected?'<p><strong>Expected:</strong> '+esc(item.expected)+'</p>':'')+
               (item.observed?'<p><strong>Observed:</strong> '+esc(item.observed)+'</p>':'')+
               (catalog.why?'<p><strong>Why it matters:</strong> '+esc(catalog.why)+'</p>':'')+
-              '<div class="failure-actions"><a class="button" href="/project-health?project=state&tab=ai-quality">Investigate this failure</a><button class="button" type="button" data-jump-failure="'+esc(item.scenario_id)+'" data-suite="'+esc(item.suite)+'">View scenario below</button></div></article>';
+              '<div class="failure-actions"><a class="button" href="/project-health?project=state&tab=ai-quality&investigate=quality&failure='+encodeURIComponent(item.scenario_id||'')+'">Investigate this failure</a><button class="button" type="button" data-jump-failure="'+esc(item.scenario_id)+'" data-suite="'+esc(item.suite)+'">View scenario below</button></div></article>';
           }).join('');
           failureList.querySelectorAll('[data-jump-failure]').forEach(button=>button.addEventListener('click',()=>{
             renderSuite(button.dataset.suite);
