@@ -68,6 +68,9 @@ const severe=H.normalizeQuality({
   }
 });
 assert.strictEqual(H.qualityAttention(severe).kind,'bad');
+const severeStateOpen=H.productOpenItems({project:H.PROJECTS[0],quality:severe,fresh:true,pending:new Set()});
+assert.strictEqual(severeStateOpen[0].action,'review-ai-evals');
+assert.match(severeStateOpen[0].nextAction,/Review the failed scenario evidence/);
 
 const mediumOnly=H.normalizeQuality({
   controlled_evals:{
@@ -318,6 +321,26 @@ assert.strictEqual(Object.prototype.hasOwnProperty.call(serialized,'pending'),fa
 
 assert.strictEqual(H.changedSinceVisit({project:{quality:null},lastVisit:{deliverySha:'old',quality:{},analyticsAvailable:null,openPullRequests:0},delivery:{sha:'new'},platform:{},openPullRequests:[],checkedAt:'2026-09-30T01:00:00Z'}),true);
 assert.strictEqual(H.changedSinceVisit({project:{quality:null},lastVisit:{deliverySha:'same',quality:{},analyticsAvailable:null,openPullRequests:0},delivery:{sha:'same'},platform:{},openPullRequests:[],checkedAt:'2026-09-30T01:00:00Z'}),false);
+const usageChanges=H.meaningfulChanges({
+  project:{quality:null},
+  lastVisit:{deliverySha:'same',deliveryKind:'good',quality:{},analyticsAvailable:true,analyticsPageviews:10,openPullRequests:0,savedAt:'2026-09-29T01:00:00Z'},
+  delivery:{sha:'same',vercel:{kind:'good'}},
+  platform:{analytics:{available:true,pageviews:12}},
+  openPullRequests:[],
+  checkedAt:'2026-09-30T01:00:00Z',
+  detailCheckedAt:'2026-09-30T01:00:00Z'
+});
+assert.strictEqual(usageChanges.find(item=>item.title==='Usage changed').section,'analyticsPanel');
+const analyticsAvailabilityChanges=H.meaningfulChanges({
+  project:{quality:null},
+  lastVisit:{deliverySha:'same',deliveryKind:'good',quality:{},analyticsAvailable:false,analyticsPageviews:null,openPullRequests:0,savedAt:'2026-09-29T01:00:00Z'},
+  delivery:{sha:'same',vercel:{kind:'good'}},
+  platform:{analytics:{available:true,pageviews:12}},
+  openPullRequests:[],
+  checkedAt:'2026-09-30T01:00:00Z',
+  detailCheckedAt:'2026-09-30T01:00:00Z'
+});
+assert.strictEqual(analyticsAvailabilityChanges.find(item=>item.title==='Analytics availability changed').section,'systemsDetails');
 assert.match(H.freshnessMeta('2026-09-30T01:00:00Z','2026-09-30T01:00:00Z',9999).label,/Updated|May be stale/);
 assert.strictEqual(H.trendText(12.5),'↑ 12.5% vs previous 30 days');
 assert.strictEqual(H.trendText(-4),'↓ 4% vs previous 30 days');
@@ -466,20 +489,21 @@ assert.match(runApiSource,/already running/);
 assert.match(runApiSource,/RUN_COOLDOWN_MS/);
 assert.doesNotMatch(runApiSource,/can only be started from the protected Project Health preview/);
 const projectHealthSource=fs.readFileSync(require.resolve('../project-health.js'),'utf8');
-assert.match(projectHealthSource,/View eval details/);
-assert.match(projectHealthSource,/data-attention-action="ai-quality"/);
+assert.match(projectHealthSource,/View full scenario catalog/);
+assert.match(projectHealthSource,/data-attention-action="review-quality"/);
 assert.match(projectHealthSource,/drawerCopyHandoffButton/);
 assert.match(projectHealthSource,/Changed since last visit/);
 assert.match(projectHealthSource,/Previous investigations/);
 assert.match(projectHealthSource,/commits\?sha=/);
 assert.match(projectHealthSource,/project\.releasePaths/);
-assert.match(projectHealthSource,/View quality results/);
+assert.match(projectHealthSource,/View AI eval results/);
 assert.match(projectHealthSource,/setActiveTab\('ai-quality'\)/);
 assert.doesNotMatch(projectHealthSource,/ai-learning-git-staging-cairn10\.vercel\.app\/project-health/);
 assert.doesNotMatch(projectHealthSource,/control:'investigate'/);
 assert.match(projectHealthSource,/AI evals are running/);
 assert.match(projectHealthSource,/Run a specific eval suite/);
 assert.match(projectHealthSource,/Update understanding<\/strong><span>How State interprets new evidence/);
+assert.match(projectHealthSource,/suite-action-run">Run →/);
 assert.match(projectHealthSource,/deliveryAttentionForData\(data\)/);
 assert.match(projectHealthSource,/Production &amp; release pipeline healthy/);
 assert.doesNotMatch(projectHealthSource,/Check update understanding/);
@@ -498,6 +522,10 @@ assert.match(projectHealthSource,/No previous 30-day period to compare yet/);
 assert.match(projectHealthSource,/Release pipeline/);
 assert.match(projectHealthSource,/Data available/);
 assert.match(projectHealthSource,/operationalNextDecision/);
+assert.match(projectHealthSource,/Full AI eval details/);
+assert.doesNotMatch(projectHealthSource,/Investigate this issue →/);
+assert.match(projectHealthSource,/Review AI evals →/);
+assert.doesNotMatch(projectHealthSource,/changes-zero[^>]*data-tab-target/);
 
 const workflowText=fs.readFileSync(require.resolve('../.github/workflows/question-review-live.yml'),'utf8');
 assert.match(workflowText,/suite:/);
