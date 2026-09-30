@@ -262,7 +262,11 @@ const groupedTimeline=H.activityTimelineItems({
   openPullRequests:[],
   investigationHistory:[]
 });
-assert.ok(groupedTimeline.some(item=>item.title==='Deployment recovered ×2'&&item.type==='Incident / recovery'));
+const groupedFailure=groupedTimeline.find(item=>item.title==='Deployment failure · 2 attempts');
+assert.ok(groupedFailure);
+assert.strictEqual(groupedFailure.category,'releases');
+assert.strictEqual(groupedFailure.attempts.length,2);
+assert.ok(groupedTimeline.some(item=>item.title==='Deployment recovered · 2 attempts'&&item.category==='releases'));
 assert.strictEqual(
   H.overallAttention({delivery:{vercel:{kind:'good'}},quality:severe,externalQuality:null,platform:null}).kind,
   'bad'
@@ -546,7 +550,8 @@ assert.match(projectHealthSource,/Changed since last visit/);
 assert.match(projectHealthSource,/Previous investigations/);
 assert.match(projectHealthSource,/commits\?sha=/);
 assert.match(projectHealthSource,/project\.releasePaths/);
-assert.match(projectHealthSource,/View AI eval results/);
+assert.doesNotMatch(projectHealthSource,/View AI eval results/);
+assert.match(projectHealthSource,/headerRunChecksButton\.hidden=!activeEvalRun/);
 assert.match(projectHealthSource,/setActiveTab\('ai-quality'\)/);
 assert.doesNotMatch(projectHealthSource,/ai-learning-git-staging-cairn10\.vercel\.app\/project-health/);
 assert.doesNotMatch(projectHealthSource,/control:'investigate'/);
@@ -567,7 +572,10 @@ assert.match(projectHealthSource,/unreviewedIncidents/);
 assert.doesNotMatch(projectHealthSource,/Recent check details/);
 assert.match(projectHealthSource,/stateEvalBehaviorStale/);
 assert.match(projectHealthSource,/activityTimelineItems/);
-assert.match(projectHealthSource,/Deployment recovered.*×/);
+assert.match(projectHealthSource,/Deployment failure · '.+attempts/);
+assert.match(projectHealthSource,/activityDayLabel/);
+assert.match(projectHealthSource,/data-activity-filter/);
+assert.match(projectHealthSource,/Show '.+attempts/);
 assert.match(projectHealthSource,/No previous 30-day period to compare yet/);
 assert.match(projectHealthSource,/Release pipeline/);
 assert.match(projectHealthSource,/label:'Site analytics'/);
@@ -576,12 +584,19 @@ assert.match(projectHealthSource,/health-card-head/);
 assert.match(projectHealthSource,/showFreshness=item\.fresh\?\.stale/);
 assert.doesNotMatch(projectHealthSource,/health-chevron/);
 assert.match(projectHealthSource,/Data available/);
+assert.match(projectHealthSource,/System health/);
+assert.match(projectHealthSource,/stateScenarioCard/);
+assert.match(projectHealthSource,/scenarios passed/);
 assert.match(projectHealthSource,/Open analytics ↗/);
 assert.match(projectHealthSource,/data-open-about/);
 assert.match(projectHealthSource,/operationalNextDecision/);
 assert.match(projectHealthSource,/Full AI eval details/);
 assert.doesNotMatch(projectHealthSource,/Investigate this issue →/);
 assert.match(projectHealthSource,/Review AI evals →/);
+assert.match(projectHealthSource,/projectCheckButton\.textContent=data\.investigation\?\.loading\?'Investigating…':'Investigate'/);
+assert.match(projectHealthSource,/projectCheckButton\.classList\.add\('primary'\)/);
+assert.match(projectHealthSource,/PROJECTS\.length<=3/);
+assert.doesNotMatch(projectHealthSource,/AI evals running…':'Run all AI evals/);
 assert.doesNotMatch(projectHealthSource,/changes-zero[^>]*data-tab-target/);
 
 const workflowText=fs.readFileSync(require.resolve('../.github/workflows/question-review-live.yml'),'utf8');
