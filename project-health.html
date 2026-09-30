@@ -58,6 +58,16 @@
     .action-menu-popover{border-color:#e3e6e3;border-radius:10px;box-shadow:0 12px 30px rgba(22,28,24,.12)}
     .drawer-backdrop{background:rgba(24,30,27,.16);backdrop-filter:blur(2px)}.investigation-drawer{background:#fff;border-left-color:#e3e6e3;box-shadow:-14px 0 40px rgba(22,28,24,.12)}.drawer-head{padding:20px 22px 15px;border-bottom-color:#eceeeb}.drawer-head h2{font-size:22px}.drawer-close{border:0;background:#f5f7f5;width:34px;height:34px}.drawer-body{padding:22px}.drawer-footer{border-top-color:#eceeeb;padding:12px 22px}.investigation-result pre{line-height:1.6}.history-section{border-top-color:#eceeeb}
     .about-dashboard{border-top-color:#eceeeb}.demo-panel{border-color:#e7eae7;background:#fafbfa}.demo-step{border-color:#e8ebe8;box-shadow:none}.explainer-card{border-color:#e7eae7;background:#fff}.coverage-grid{gap:8px}.coverage-item{border-radius:10px}
+    /* Add a little visual rhythm without returning to the old beige page. */
+    .overview-grid{padding:14px;border-radius:16px;background:#f6f8f6}
+    #changesPanel,#overviewHealthPanel{margin:8px 0;padding:20px;border-top:0;border-radius:12px;background:#f7f9f7}
+    #changesPanel+.panel,#overviewHealthPanel+.panel{border-top:0}
+    #attentionPanel{padding-bottom:20px}
+    #productFocusPanel{padding-top:20px}
+    #qualityPanel .eval-overview,#deliveryPanel .delivery-summary,#infrastructurePanel .infra-summary{background:#f6f8f6}
+    #connectionsPanel .service-grid,#historyPanel .timeline{padding:14px;border-radius:12px;background:#fafbfa}
+    .review-inbox:not(:empty){padding:4px 14px 10px;border-radius:14px;background:#fafbfa}
+    .about-dashboard .about-inner{padding:0 16px 14px;border-radius:14px;background:#fafbfa}
     @media(max-width:850px){.hero{grid-template-columns:1fr}.overview-grid{grid-template-columns:1fr}.panel.half{grid-column:span 12}.metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.demo-flow,.explainer-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.attribution,.focus-grid,.eval-grid,.coverage-grid{grid-template-columns:1fr}.service-grid{grid-template-columns:1fr}.project-tabs{gap:18px}}
     @media(max-width:560px){.shell{padding:22px 14px 48px}.topbar,.detail-head,.demo-head{align-items:flex-start;flex-direction:column}.detail-actions{justify-content:flex-start}.metrics,.demo-flow,.explainer-grid,.eval-grid,.coverage-grid{grid-template-columns:1fr}.row{grid-template-columns:1fr}.row span:last-child{text-align:left}.hero{margin-top:8px}.project-tabs{gap:16px;overflow-x:auto;flex-wrap:nowrap}.investigation-drawer{width:100vw}.drawer-backdrop{display:none}}
   </style>
