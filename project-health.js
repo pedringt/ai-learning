@@ -7,7 +7,7 @@
 
   const PROJECTS=[
     {
-      id:'state',name:'State',description:'Human-reviewed project truth system with maintained Current State.',repo:'pedringt/ai-learning',branch:'main',stagingBranch:'staging',quality:'state',releasePaths:['implementation-context-prototype','state-project-complete'],releaseIgnore:/project health|dashboard/i,
+      id:'state',name:'State',description:'Human-reviewed project truth system with maintained Current State.',repo:'pedringt/ai-learning',branch:'main',stagingBranch:'staging',quality:'state',releasePaths:['implementation-context-prototype','state-project-complete'],releaseIgnore:/project health|dashboard|\btests?\b|assertion/i,evalBehaviorPaths:['state-project-complete/question_review_prompt.py','state-project-complete/ask_service.py','state-project-complete/anthropic_provider.py'],
       focus:'Keep project truth trustworthy without giving AI authority to change Current State on its own.',
       evidence:['Understands updates','Answers stay grounded','Respects decision authority','Review burden'],
       nextDecision:'Expand failure investigation only if it stays useful without weakening human control.',
@@ -104,7 +104,7 @@
     if(!q) return {kind:'unknown',title:'Quality data is not available yet',detail:'Project Health could not load a recent quality result.'};
     const runs=[q.review,q.ask].filter(Boolean);
     if(!runs.length) return {kind:'warn',title:'AI quality checks have not been recorded yet',detail:'Run the controlled checks to see how State handles understanding, evidence, uncertainty, and decision authority.'};
-    if(stateEvalContractStale(q)) return {kind:'warn',title:'AI quality checks need to be rerun',detail:'The latest recorded results predate the current eval contract, so their old failures should not be treated as current product failures.',nextAction:'Run the controlled AI quality checks again.',owner:'Product'};
+    if(stateEvalResultsStale(q)) return {kind:'warn',title:'AI quality checks need to be rerun',detail:stateEvalStaleReason(q)+' Historical failures are not treated as current product failures.',nextAction:'Run the controlled AI quality checks again.',owner:'Product'};
     const severe=runs.reduce((n,r)=>n+Number(r.high_severity_failures||0),0);
     if(severe>0) return {kind:'bad',title:'A serious AI quality check failed',detail:severe+' high-impact failure'+(severe===1?'':'s')+' appeared in the latest recorded checks.',nextAction:'Review the failed scenario evidence and decide whether product behavior or the eval contract is wrong.',owner:'Product'};
     if(runs.some(r=>{const score=evalScore(r);return Number(r.failed_cases||0)>0||(score!=null&&score<1);})) return {kind:'warn',title:'Some AI quality checks need a look',detail:'At least one controlled scenario did not behave as expected.',nextAction:'Review the scenario-level miss, then rerun the affected suite.',owner:'Product'};
@@ -144,7 +144,7 @@
       const q=qualityAttention(data.quality);
       if(['bad','warn'].includes(q.kind)){
         const noRecordedRuns=![q.review,q.ask].filter(Boolean).length;
-        items.push({...q,category:'quality',action:noRecordedRuns||stateEvalContractStale(q)?'run-ai-checks':'investigate-quality',owner:q.owner||'Product',nextAction:q.nextAction||(noRecordedRuns?'Run the controlled AI quality checks.':'Review the latest quality evidence.')});
+        items.push({...q,category:'quality',action:noRecordedRuns||stateEvalResultsStale(q)?'run-ai-checks':'investigate-quality',owner:q.owner||'Product',nextAction:q.nextAction||(noRecordedRuns?'Run the controlled AI quality checks.':'Review the latest quality evidence.')});
       }
     }else{
       if(!data.externalQuality&&!data.fresh)return items;
@@ -271,6 +271,16 @@
     return deliveryHealth({name:branch?.name||branchName,commit:selectedCommit},status,checkRuns);
   }
   async function loadStateQuality(root){return normalizeQuality(await jsonFetch('/api/project-health-state-quality?env='+pageEnvironment(root),{timeoutMs:7000}));}
+  async function loadStateEvalBehavior(project){
+    const paths=Array.isArray(project?.evalBehaviorPaths)?project.evalBehaviorPaths:[];
+    if(!paths.length)return null;
+    const headers={Accept:'application/vnd.github+json'};
+    const rows=await Promise.all(paths.map(path=>jsonFetch(githubApi('/repos/'+project.repo+'/commits?sha='+encodeURIComponent(project.branch)+'&path='+encodeURIComponent(path)+'&per_page=1'),{headers,timeoutMs:6000}).catch(()=>[])));
+    const commits=rows.flat().filter(Boolean);
+    commits.sort((a,b)=>(dateMs(b?.commit?.committer?.date||b?.commit?.author?.date)||0)-(dateMs(a?.commit?.committer?.date||a?.commit?.author?.date)||0));
+    const latest=commits[0];
+    return latest?{sha:latest.sha||null,updatedAt:latest.commit?.committer?.date||latest.commit?.author?.date||null}:null;
+  }
   async function loadPlatformSignal(project,signal){return await jsonFetch('/api/project-health-platform?project='+encodeURIComponent(project.id)+'&signal='+encodeURIComponent(signal),{timeoutMs:6500});}
   async function loadRunInfo(project){if(project.id!=='state')return null;try{return await jsonFetch('/api/project-health-run?project=state',{timeoutMs:5000});}catch(error){if(error.status===404)return null;throw error;}}
   async function loadExternalQuality(project){try{return await jsonFetch('/api/project-health-project-quality?project='+encodeURIComponent(project.id),{timeoutMs:7000});}catch(error){if(error.status===404)return null;throw error;}}
@@ -313,6 +323,7 @@
       lastVisit:s.lastVisit||visitBaseline(s),
       staging:s.staging||null,
       quality:s.quality||null,
+      qualityBehaviorUpdatedAt:s.qualityBehaviorUpdatedAt||null,
       externalQuality:s.externalQuality||null,
       platform:s.platform||null,
       activity:s.activity||null,
@@ -352,6 +363,7 @@
       delivery:data.delivery,
       staging:data.staging,
       quality:data.quality,
+      qualityBehaviorUpdatedAt:data.qualityBehaviorUpdatedAt||null,
       externalQuality:safeExternalQualitySnapshot(data.externalQuality),
       platform:data.platform,
       activity:data.activity,
@@ -426,9 +438,10 @@
     ];
     if(project.id==='state'){
       core.push(run('Production backend',loadPlatformSignal(project,'production-render'),value=>{data.platform=mergePlatform(data.platform,value);}));
+      core.push(run('Quality behavior',loadStateEvalBehavior(project),value=>{data.qualityBehaviorUpdatedAt=value?.updatedAt||null;if(data.quality)data.quality.behaviorUpdatedAt=data.qualityBehaviorUpdatedAt;}));
     }
     const qualityTask=project.quality==='state'
-      ? run('Quality',loadStateQuality(root),value=>{data.quality=value;})
+      ? run('Quality',loadStateQuality(root),value=>{data.quality=value;if(data.qualityBehaviorUpdatedAt)data.quality.behaviorUpdatedAt=data.qualityBehaviorUpdatedAt;})
       : run('Quality',loadExternalQuality(project),value=>{data.externalQuality=value;});
     data.qualityPromise=qualityTask;
     await Promise.all(core);
@@ -487,6 +500,18 @@
     if(!runs.length)return false;
     const contract=dateMs(STATE_EVAL_CONTRACT_UPDATED_AT);
     return runs.some(run=>{const when=dateMs(run.created_at);return Number.isFinite(when)&&when<contract;});
+  }
+  function stateEvalBehaviorStale(q){
+    const runs=[q?.review,q?.ask].filter(Boolean);
+    const changed=dateMs(q?.behaviorUpdatedAt);
+    if(!runs.length||!Number.isFinite(changed))return false;
+    return runs.some(run=>{const when=dateMs(run.created_at);return Number.isFinite(when)&&when<changed;});
+  }
+  function stateEvalResultsStale(q){return stateEvalResultsStale(q)||stateEvalBehaviorStale(q);}
+  function stateEvalStaleReason(q){
+    if(stateEvalBehaviorStale(q))return'The State behavior these checks measure changed after the latest recorded run.';
+    if(stateEvalResultsStale(q))return'The eval contract changed after the latest recorded run.';
+    return'';
   }
   function freshnessMeta(value,fallback,staleHours=24){
     const ts=value||fallback;
@@ -679,24 +704,16 @@
     return top?.title||'Quality loaded';
   }
   function loadingCardMarkup(project,active){
-    return '<article class="project-card '+(active?'active':'')+'" data-kind="unknown" data-project="'+esc(project.id)+'" tabindex="0" role="button" aria-label="Open '+esc(project.name)+' health">'+
-      '<div class="card-head"><div><h2>'+esc(project.name)+'</h2><p>'+esc(project.description)+'</p></div><span class="status-pill unknown">Checking</span></div>'+
-      '<div class="signal-list">'+
-      '<div class="signal"><span class="signal-label">Delivery</span><span class="signal-value">Checking…</span></div>'+
-      '<div class="signal"><span class="signal-label">Quality</span><span class="signal-value">Checking…</span></div>'+
-      '</div></article>';
+    return '<button class="project-switcher-item '+(active?'active':'')+'" data-kind="unknown" data-project="'+esc(project.id)+'" type="button" aria-pressed="'+(active?'true':'false')+'">'+
+      '<span class="project-switcher-main"><strong>'+esc(project.name)+'</strong><span>Checking project health…</span></span>'+
+      '<span class="status-pill unknown">Checking</span></button>';
   }
   function cardMarkup(data,active){
-    const status=projectStatus(data),d=data.delivery,pending=pendingSet(data);
-    const quality=projectQualityLabel(data);
-    const changePrefix=changedSinceVisit(data)?'New · ':'';
-    return '<article class="project-card '+(active?'active':'')+'" data-kind="'+esc(status.kind)+'" data-project="'+esc(data.project.id)+'" tabindex="0" role="button" aria-label="Open '+esc(data.project.name)+' health">'+
-      '<div class="card-head"><div><h2>'+esc(data.project.name)+'</h2><p>'+esc(data.project.description)+'</p></div><span class="status-pill '+esc(status.key)+'">'+esc(status.label)+'</span></div>'+
-      '<div class="signal-list">'+
-      '<div class="signal change-signal"><span class="signal-label">'+esc(changePrefix+'Latest release')+'</span><span class="signal-value">'+(d?githubLink(commitTitle(d.message),changeUrl(data.project.repo,d)):esc(pending.has('Delivery')?'Checking…':'Unavailable'))+'</span><span class="change-date">'+esc(d?'Updated '+fmtDate(d.updatedAt):(pending.has('Delivery')?'':'Date unavailable'))+'</span></div>'+
-      '<div class="signal"><span class="signal-label">Delivery</span><span class="signal-value">'+esc(d?.vercel?.kind==='good'?'Healthy':d?.vercel?.kind==='bad'?'Needs action':d?.vercel?.kind==='warn'?'In progress':(pending.has('Delivery')?'Checking…':'Unavailable'))+'</span></div>'+
-      '<div class="signal"><span class="signal-label">Quality</span><span class="signal-value">'+esc((data.quality||data.externalQuality)?quality:(pending.has('Quality')?'Checking…':'Unavailable'))+'</span></div>'+
-      '</div><div class="freshness">Checked '+esc(relativeAge(data.checkedAt))+'</div></article>';
+    const status=projectStatus(data),pending=pendingSet(data);
+    const signal=pending.size?'Checking project health…':overallAttention(data).title;
+    return '<button class="project-switcher-item '+(active?'active':'')+'" data-kind="'+esc(status.kind)+'" data-project="'+esc(data.project.id)+'" type="button" aria-pressed="'+(active?'true':'false')+'">'+
+      '<span class="project-switcher-main"><strong>'+esc(data.project.name)+'</strong><span>'+esc(signal||'No current issue')+'</span></span>'+
+      '<span class="status-pill '+esc(status.key)+'">'+esc(status.label)+'</span></button>';
   }
   function evalSuiteLabel(run){
     const suite=String(run?.suite||run?.eval_suite||'').toLowerCase();
@@ -721,16 +738,7 @@
   function stateEvalCard(title,value,description,trend){
     return '<div class="eval-card"><strong>'+esc(title)+'</strong><div class="score">'+esc(value)+'</div><p>'+esc(description)+'</p>'+(trend?'<p><strong>'+esc(trend)+'</strong></p>':'')+'</div>';
   }
-  function stateEvalHistory(q){
-    const rows=Array.isArray(q?.recent)?q.recent.slice(0,8):[];
-    if(!rows.length)return'';
-    return '<div class="eval-history"><h4>Recent check details</h4><div class="run-summary">'+rows.map(item=>{
-      const score=evalScore(item);
-      const meta=[item.created_at?fmtDate(item.created_at):null,item.total!=null?item.total+' scenarios':null,item.high_severity_failures!=null?item.high_severity_failures+' high-impact failures':null].filter(Boolean).join(' · ');
-      const technical=[item.provider,item.model_identifier,item.build].filter(Boolean).join(' · ');
-      return '<div class="eval-run-row"><strong>'+esc(evalSuiteLabel(item))+' · '+esc(score==null?'Score unavailable':percent(score))+'</strong><span>'+esc(meta||'Aggregate result recorded')+'</span>'+(technical?'<span>Technical record: '+esc(technical)+'</span>':'')+'</div>';
-    }).join('')+'<p class="footnote">Aggregate results are stored for every run. Failed controlled scenarios may also store the scenario ID and pass/fail metadata; private project content and full model transcripts stay out of Project Health.</p></div></div>';
-  }
+  function stateEvalHistory(){return'';}
   function investigationResultHtml(investigation){
     if(investigation?.handoff) return '<div class="investigation-result agent-result"><div class="agent-kicker">Handoff preview</div><strong>Project handoff ready to review</strong><pre>'+esc(investigation.handoffText||investigation.report||'')+'</pre><p class="footnote">Project Health assembled this from the currently loaded delivery, quality, investigation, and product-decision signals. Review it before sharing.</p></div>';
     if(investigation?.loading) return '<div class="investigation-result agent-result" role="status"><div class="agent-kicker">Read-only investigation agent</div><strong>Checking current health signals…</strong><p>Starting with current health signals and expanding only when the evidence points somewhere specific.</p></div>';
@@ -760,7 +768,7 @@
     const headerRunChecksButton=doc.getElementById('headerRunChecksButton');
     const currentQuality=p.quality==='state'?qualityAttention(q):externalQualityAttention(externalQ);
     const noRecordedStateRuns=p.id==='state'&&![q?.review,q?.ask].filter(Boolean).length;
-    const shouldRunChecksFirst=p.id==='state'&&run?.configured&&(noRecordedStateRuns||stateEvalContractStale(q));
+    const shouldRunChecksFirst=p.id==='state'&&run?.configured&&(noRecordedStateRuns||stateEvalResultsStale(q));
     const shouldInvestigateFirst=currentQuality?.kind==='bad'||deliveryAttention(d).kind==='bad';
     if(projectCheckButton){
       projectCheckButton.disabled=!!data.investigation?.loading;
@@ -856,7 +864,7 @@
         const total=runs.reduce((n,item)=>n+Number(item?.total||0),0);
         const severe=runs.reduce((n,item)=>n+Number(item?.high_severity_failures||0),0);
         const qa=qualityAttention(q);
-        const staleContract=stateEvalContractStale(q);
+        const staleContract=stateEvalResultsStale(q);
         const cards=[];
         if(review?.interpretation_accuracy!=null) cards.push(stateEvalCard('Understood updates correctly',percent(review.interpretation_accuracy),'Did State interpret the project update the way the product expected?',evalTrend(q.recent,'review_interpretation')));
         if(ask?.ask_grounding!=null) cards.push(stateEvalCard('Answers stayed supported by evidence',percent(ask.ask_grounding),'Did answers stick to known project information instead of filling gaps?',evalTrend(q.recent,'ask_quality')));
@@ -1159,17 +1167,17 @@
     const nextStep=details.length
       ?'Review the remaining scenario-level misses below. Fix product behavior only where the contract is still right; adjust the eval where the observed behavior is acceptable. Then rerun the affected suite and compare against this run.'
       :'Inspect the affected suite and rerun after the next change so future failures record scenario-level evidence.';
-    if(stateEvalContractStale(quality)){
+    if(stateEvalResultsStale(quality)){
       const historical=currentLines.length?currentLines.map(line=>'- '+line).join('\n'):'- No historical aggregate result is available.';
       const report=[
         'Current assessment',
-        'The latest recorded AI quality run predates the current eval contract. Its failures are historical and should not be treated as current product failures.',
+        stateEvalStaleReason(quality)+' The recorded failures are historical and should not be treated as current product failures.',
         '',
         'Historical result',
         historical,
         '',
         'Why this changed',
-        'Project Health updated the eval expectations after reviewing these scenario-level misses. The partial Slack approval may preserve an unresolved question, and the authority check now recognizes explicit unresolved review language.',
+        stateEvalBehaviorStale(quality)?'State behavior changed after this run, so the old scores no longer describe the current product.':'The eval expectations changed after this run, so the old scores no longer describe the current contract.',
         '',
         'Recommended next action',
         'Rerun the controlled AI quality checks. Use the new run as the current baseline before changing State behavior.',
@@ -1178,14 +1186,16 @@
         'Product',
         '',
         'Confidence',
-        'High confidence that the recorded run is stale relative to the current eval contract. No claim is being made yet about how the revised checks will score.'
+        'High confidence that the recorded run is stale relative to the current State behavior or eval contract. No claim is being made yet about how a fresh run will score.'
       ].join('\n');
       return {
         report,
         sources:[{label:'State eval details',url:'/state-evals',observedAt:latestDate}],
         observedAt:latestDate,
         qualityInvestigation:true,
-        staleEvalContract:true
+        staleEvalContract:stateEvalContractStale(quality),
+        staleEvalBehavior:stateEvalBehaviorStale(quality),
+        staleEvalResults:true
       };
     }
 
@@ -1228,7 +1238,7 @@
     const status=projectStatus(data);
     const notices=attentionItems(data).filter(item=>item.kind!=='good');
     const latestQuality=data?.project?.quality==='state'&&data.quality
-      ?(stateEvalContractStale(data.quality)
+      ?(stateEvalResultsStale(data.quality)
         ?'Needs rerun · the latest recorded AI quality results predate the current eval contract. Historical failures are not treated as current product failures.'
         :[data.quality.review,data.quality.ask].filter(Boolean).map(run=>evalSuiteLabel(run)+': '+percent(evalScore(run))+' · '+Number(run.high_severity_failures||0)+' high-impact failures').join('\n'))
       :projectQualityLabel(data);
@@ -1720,5 +1730,5 @@
     }
   }
 
-  return {PROJECTS,pageEnvironment,vercelFromStatus,deliveryHealth,commitTitle,githubCommitUrl,pullRequestNumber,githubPullRequestUrl,changeUrl,normalizeQuality,qualityAttention,externalQualityAttention,deliveryAttention,infrastructureAttention,allAttentionSignals,attentionItems,overallAttention,productOpenItems,projectStatus,setupGaps,releaseReadiness,projectQualityLabel,evalScore,percent,shortSha,pendingSet,mergePlatform,emptyProjectData,safeExternalQualitySnapshot,serializeProjectData,hydrateProjectData,loadProject,loadProjectDetails,infraCardLabel,analyticsConnectionValue,analyticsGapDetail,analyticsLabel,relativeAge,changedSinceVisit,meaningfulChanges,freshnessMeta,stateEvalContractStale,trendText,activityReviewItems,progressText,quickProjectCheck,evalRunComplete,qualityInvestigation,projectHandoff,init};
+  return {PROJECTS,pageEnvironment,vercelFromStatus,deliveryHealth,commitTitle,githubCommitUrl,pullRequestNumber,githubPullRequestUrl,changeUrl,normalizeQuality,qualityAttention,externalQualityAttention,deliveryAttention,infrastructureAttention,allAttentionSignals,attentionItems,overallAttention,productOpenItems,projectStatus,setupGaps,releaseReadiness,projectQualityLabel,evalScore,percent,shortSha,pendingSet,mergePlatform,emptyProjectData,safeExternalQualitySnapshot,serializeProjectData,hydrateProjectData,loadProject,loadProjectDetails,infraCardLabel,analyticsConnectionValue,analyticsGapDetail,analyticsLabel,relativeAge,changedSinceVisit,meaningfulChanges,freshnessMeta,stateEvalContractStale,stateEvalBehaviorStale,stateEvalResultsStale,stateEvalStaleReason,trendText,activityReviewItems,progressText,quickProjectCheck,evalRunComplete,qualityInvestigation,projectHandoff,init};
 });
