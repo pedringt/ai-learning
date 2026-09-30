@@ -9,12 +9,6 @@ assert.strictEqual(H.pageEnvironment({location:{hostname:'ai-learning-git-stagin
 assert.strictEqual(H.pageEnvironment({location:{hostname:'ai-learning-b19hocddc-cairn10.vercel.app',search:''}}),'staging');
 assert.strictEqual(H.pageEnvironment({location:{hostname:'www.contextswitch.tech',search:'?env=staging'}}),'staging');
 assert.strictEqual(H.pageEnvironment({location:{hostname:'www.authenticignorance.site'}}),'production');
-const protectedUrl=new URL(H.protectedControlsUrl({project:{id:'state'}},{control:'evals',suite:'all'}));
-assert.strictEqual(protectedUrl.hostname,'ai-learning-git-staging-cairn10.vercel.app');
-assert.strictEqual(protectedUrl.searchParams.get('project'),'state');
-assert.strictEqual(protectedUrl.searchParams.get('control'),'evals');
-assert.strictEqual(protectedUrl.searchParams.get('suite'),'all');
-
 const priorToken=process.env.GITHUB_TOKEN;
 const priorCost=process.env.PROJECT_HEALTH_RUN_COST_ESTIMATE_STATE;
 process.env.GITHUB_TOKEN='test-token';
@@ -312,7 +306,8 @@ assert.ok(H.PROJECTS[1].evidence.includes('Recommendation breadth'));
 assert.match(H.PROJECTS[1].nextDecision,/canonical store/);
 assert.match(H.PROJECTS[2].nextDecision,/first-play flow/);
 assert.match(H.PROJECTS[0].description,/Human-reviewed project truth system/);
-assert.strictEqual(H.PROJECTS[0].releasePath,'implementation-context-prototype');
+assert.deepStrictEqual(H.PROJECTS[0].releasePaths,['implementation-context-prototype','state-project-complete']);
+assert.ok(H.PROJECTS[0].releaseIgnore.test('Project Health dashboard update'));
 assert.strictEqual(H.infrastructureAttention({render:{configured:true,environments:{production:{ok:true}}}}),null);
 
 const unopenedState={...H.emptyProjectData(H.PROJECTS[0]),fresh:true,quality:H.normalizeQuality({controlled_evals:{latest_review_interpretation:null,latest_ask_quality:null}})};
@@ -375,7 +370,11 @@ assert.match(projectHealthSource,/drawerCopyHandoffButton/);
 assert.match(projectHealthSource,/Changed since last visit/);
 assert.match(projectHealthSource,/Previous investigations/);
 assert.match(projectHealthSource,/commits\?sha=/);
-assert.match(projectHealthSource,/project\.releasePath/);
+assert.match(projectHealthSource,/project\.releasePaths/);
+assert.match(projectHealthSource,/View AI results/);
+assert.match(projectHealthSource,/setActiveTab\('ai-quality'\)/);
+assert.doesNotMatch(projectHealthSource,/ai-learning-git-staging-cairn10\.vercel\.app\/project-health/);
+assert.doesNotMatch(projectHealthSource,/control:'investigate'/);
 assert.match(projectHealthSource,/AI checks are running/);
 assert.match(projectHealthSource,/Starting AI checks/);
 assert.doesNotMatch(projectHealthSource,/control:'evals'/);
