@@ -1305,6 +1305,7 @@
     let activeId=initialParams.get('project')||'state';
     const allowedTabs=new Set(['overview','ai-quality','delivery','infra','activity']);
     let activeTab=allowedTabs.has(initialParams.get('tab'))?initialParams.get('tab'):'overview';
+    let summaryFilter='all';
     let renderQueued=false,refreshGeneration=0,investigationDrawerOpen=false;
     const demoState={phase:'idle',step:0,timers:[]};
 
@@ -1339,10 +1340,17 @@
     }
 
     function renderCards(){
-      cards.innerHTML=PROJECTS.map(project=>{
+      const visible=PROJECTS.filter(project=>{
+        if(summaryFilter==='all')return true;
+        const item=state.find(entry=>entry&&entry.project.id===project.id);
+        if(!item?.fresh)return false;
+        return projectStatus(item).key===summaryFilter;
+      });
+      cards.innerHTML=visible.map(project=>{
         const item=state.find(entry=>entry&&entry.project.id===project.id);
         return item?cardMarkup(item,project.id===activeId):loadingCardMarkup(project,project.id===activeId);
       }).join('');
+      cards.hidden=!visible.length;
     }
 
     const reviewStorageKey='project-health-reviewed:'+pageEnvironment(root);
@@ -1390,27 +1398,30 @@
         '</div><div class="review-actions">'+(demoState.phase==='idle'?'<button class="button small primary" type="button" data-demo-start>Investigate failure</button>':demoState.phase==='running'?'<button class="button small" type="button" disabled>Investigating…</button>':'')+'</div></div>';
     }
 
+    function unreviewedIncidents(){
+      const reviewed=reviewedState();
+      return currentIncidents().filter(item=>!reviewed[item.key]);
+    }
     function renderReviewInbox(){
-      const items=currentIncidents(),reviewed=reviewedState();
+      const items=unreviewedIncidents();
       if(!items.length){reviewInbox.innerHTML='';return;}
       const rows=items.slice(0,6).map(item=>{
         const source=item.url?'<a class="button small" href="'+esc(item.url)+'" target="_blank" rel="noopener noreferrer">View evidence</a>':'';
-        const isReviewed=!!reviewed[item.key];
-        return '<div class="review-item"><div><span class="review-kind incident">Live incident</span><strong>'+esc(item.project)+' · '+esc(item.title)+'</strong><div class="review-meta">'+esc(relativeAge(item.observedAt))+' · '+esc(item.detail)+'</div><div class="review-meta"><strong>Impact:</strong> '+esc(item.impact||'Unknown')+' · <strong>Owner:</strong> '+esc(item.owner||'Unknown')+'</div></div><div class="review-actions">'+source+(isReviewed?'<span class="status-pill healthy">Reviewed</span>':'<button class="button small" type="button" data-review-key="'+esc(item.key)+'">Mark reviewed</button>')+'</div></div>';
+        return '<div class="review-item"><div><span class="review-kind incident">Live incident</span><strong>'+esc(item.project)+' · '+esc(item.title)+'</strong><div class="review-meta">'+esc(relativeAge(item.observedAt))+' · '+esc(item.detail)+'</div><div class="review-meta"><strong>Impact:</strong> '+esc(item.impact||'Unknown')+' · <strong>Owner:</strong> '+esc(item.owner||'Unknown')+'</div></div><div class="review-actions">'+source+'<button class="button small" type="button" data-review-key="'+esc(item.key)+'">Mark reviewed</button></div></div>';
       }).join('');
-      reviewInbox.innerHTML='<section class="panel"><h3>Incidents</h3><div class="review-list" style="margin-top:12px">'+rows+'</div></section>';
+      reviewInbox.innerHTML='<section class="panel"><div class="panel-title-row"><h3>Incidents</h3><span class="readiness-pill watch">'+items.length+' unreviewed</span></div><div class="review-list" style="margin-top:10px">'+rows+'</div></section>';
     }
     function renderSummary(){
       const fresh=state.filter(item=>item?.fresh);
-      const incidentCount=currentIncidents().length;
+      const incidentCount=unreviewedIncidents().length;
       const actionCount=fresh.filter(item=>projectStatus(item).key==='action').length;
       const watchCount=fresh.filter(item=>projectStatus(item).key==='watch').length;
       const checked=fresh.map(item=>item.checkedAt).filter(Boolean).sort().pop();
-      summary.innerHTML='<span class="summary-chip"><strong>'+PROJECTS.length+'</strong> projects</span>'+
-        (actionCount?'<span class="summary-chip incident"><strong>'+actionCount+'</strong> need action</span>':'')+
-        (watchCount?'<span class="summary-chip open"><strong>'+watchCount+'</strong> watch</span>':'')+
-        (incidentCount?'<span class="summary-chip incident"><strong>'+incidentCount+'</strong> active '+(incidentCount===1?'incident':'incidents')+'</span>':'')+
-        '<span class="summary-chip"><strong>'+esc(checked?relativeAge(checked):'checking')+'</strong> last updated</span>';
+      summary.innerHTML='<button class="summary-chip summary-action '+(summaryFilter==='all'?'active':'')+'" type="button" data-summary-filter="all"><strong>'+PROJECTS.length+'</strong> projects</button>'+
+        (actionCount?'<button class="summary-chip summary-action incident '+(summaryFilter==='action'?'active':'')+'" type="button" data-summary-filter="action"><strong>'+actionCount+'</strong> need action</button>':'')+
+        (watchCount?'<button class="summary-chip summary-action open '+(summaryFilter==='watch'?'active':'')+'" type="button" data-summary-filter="watch"><strong>'+watchCount+'</strong> watch</button>':'')+
+        (incidentCount?'<button class="summary-chip summary-action incident" type="button" data-summary-incidents><strong>'+incidentCount+'</strong> '+(incidentCount===1?'incident':'incidents')+'</button>':'')+
+        '<span class="summary-chip summary-meta"><strong>'+esc(checked?relativeAge(checked):'checking')+'</strong> last updated</span>';
     }
 
     function applyTabState(){
@@ -1478,8 +1489,26 @@
       try{await root.navigator.clipboard.writeText(text);button.textContent='Copied';root.setTimeout(()=>{button.textContent='Copy engineer handoff';},1500);}catch(_){root.prompt('Copy engineering handoff',text);}
     }
 
-    cards.addEventListener('click',event=>{if(event.target.closest?.('a,button'))return;const card=event.target.closest?.('.project-card');if(card)select(card.dataset.project);});
-    cards.addEventListener('keydown',event=>{if(event.target.closest?.('a,button'))return;const card=event.target.closest?.('.project-card');if(card&&(event.key==='Enter'||event.key===' ')){event.preventDefault();select(card.dataset.project);}});
+    cards.addEventListener('click',event=>{const item=event.target.closest?.('.project-switcher-item');if(item)select(item.dataset.project);});
+
+    summary.addEventListener('click',event=>{
+      const filterButton=event.target.closest?.('[data-summary-filter]');
+      if(filterButton){
+        summaryFilter=filterButton.dataset.summaryFilter||'all';
+        const candidates=state.filter(item=>item?.fresh&&(summaryFilter==='all'||projectStatus(item).key===summaryFilter));
+        if(summaryFilter!=='all'&&candidates.length&&!candidates.some(item=>item.project.id===activeId))select(candidates[0].project.id);
+        else renderNow();
+        return;
+      }
+      if(event.target.closest?.('[data-summary-incidents]')){
+        const first=unreviewedIncidents()[0];
+        if(first){
+          const data=state.find(item=>item.project.name===first.project);
+          if(data&&data.project.id!==activeId)select(data.project.id);
+          reviewInbox.scrollIntoView?.({behavior:'smooth',block:'start'});
+        }
+      }
+    });
 
     if(projectTabs)projectTabs.addEventListener('click',event=>{
       const button=event.target.closest?.('[data-tab]');
