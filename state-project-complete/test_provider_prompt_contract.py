@@ -235,3 +235,12 @@ def test_both_providers_keep_partial_answers_and_authority_disagreements_bounded
         assert 'lower-authority disagreement' in prompt
         assert 'partial answers leave broader questions open' in prompt
         assert 'do not widen scope' in prompt
+
+
+def test_both_providers_supersede_stale_pending_proposals_when_authoritative_evidence_corrects_them():
+    for provider_cls in (AnthropicProvider, OpenAIProvider):
+        prompt = _prompt(provider_cls()).lower()
+        assert "supersede" in prompt
+        assert "existing_review_id" in prompt
+        assert "stale pending proposal" in prompt
+        assert "preserve" in prompt
