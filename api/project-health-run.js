@@ -3,13 +3,13 @@ const RUNS={
     repo:'pedringt/ai-learning',
     workflow:'question-review-live.yml',
     ref:'staging',
-    label:'State AI quality checks',
-    button_label:'Run AI checks',
+    label:'State AI evals',
+    button_label:'Run AI evals',
     paid_model_calls:true,
     minimum_controlled_cases:10,
     suites:['all','review','ask'],
     costEstimateEnv:'PROJECT_HEALTH_RUN_COST_ESTIMATE_STATE',
-    note:'Runs controlled checks for update understanding, answer quality, or both. Aggregate results can be recorded back into the selected Project Health environment.'
+    note:'Runs controlled AI evals for update understanding, answer quality, or both. Aggregate results can be recorded back into the selected Project Health environment.'
   },
   tastemake:{
     repo:'pedringt/tastemake',
