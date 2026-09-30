@@ -99,7 +99,7 @@
     /* Final UX pass: neutral selection, stronger decisions, scenario-first evals, and scannable activity. */
     .project-switcher-item.active{border-color:#aeb5b0;background:#fafbfa;box-shadow:0 0 0 2px rgba(32,40,37,.07)}
     .decision-now{background:#f6f7f6;border-color:#cfd4d0;box-shadow:inset 3px 0 0 #68756e}
-    #analyticsPanel.panel.half{grid-column:span 4;opacity:.8}
+    #analyticsPanel.panel.half{grid-column:span 4}
     #overviewActivityPanel.panel.half{grid-column:span 8;padding-left:28px}
     #analyticsPanel h3{font-size:16px}#analyticsPanel .metric strong{font-size:18px}#analyticsPanel .metrics{grid-template-columns:repeat(2,minmax(0,1fr))}
     #overviewActivityPanel h3{font-size:19px}
@@ -115,7 +115,7 @@
     .activity-attempts>div{margin-top:6px;padding:7px 9px;border-radius:8px;background:#f7f8f7}
     .activity-attempt{display:grid;grid-template-columns:120px minmax(0,1fr);gap:10px;padding:4px 0;font-size:11px}.activity-attempt span:first-child{color:var(--muted)}
     #overviewSummary[hidden]{display:none!important}
-    @media(max-width:850px){#analyticsPanel.panel.half,#overviewActivityPanel.panel.half{grid-column:span 12;padding-left:0;opacity:1}}
+    @media(max-width:850px){#analyticsPanel.panel.half,#overviewActivityPanel.panel.half{grid-column:span 12;padding-left:0}}
     @media(max-width:560px){.activity-attempt{grid-template-columns:1fr}.activity-attempt span:first-child{margin-bottom:-2px}}
 </style>
 </head>
