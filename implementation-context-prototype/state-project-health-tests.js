@@ -129,6 +129,18 @@ const staleHandoff=H.projectHandoff({
 assert.match(staleHandoff.handoffText,/Needs rerun/);
 assert.doesNotMatch(staleHandoff.handoffText,/A serious AI quality check failed/);
 
+const duplicateCheckQuality=H.normalizeQuality({
+  controlled_evals:{
+    latest_review_interpretation:{suite:'review_interpretation',interpretation_accuracy:1,high_severity_failures:0,total:13,created_at:'2026-09-30 01:10:00'},
+    latest_ask_quality:{
+      suite:'ask_quality',overall_pass_rate:.9,ask_grounding:1,authority_accuracy:.9,high_severity_failures:1,total:10,created_at:'2026-09-30 01:10:01',
+      failure_details:[{scenario_id:'ask_conflicting_evidence',severity:'high',expected:'preserve authority',observed:'Failed checks: authority',failed_checks:['authority']}]
+    }
+  }
+});
+const duplicateCheckReport=H.qualityInvestigation({project:H.PROJECTS[0],quality:duplicateCheckQuality}).report;
+assert.strictEqual((duplicateCheckReport.match(/Failed checks: authority/g)||[]).length,1);
+
 assert.strictEqual(H.evalRunComplete(mediumOnly,{suite:'review',baselineReview:'2026-09-29 03:28:03',baselineAsk:null}),true);
 assert.strictEqual(H.evalRunComplete(mediumOnly,{suite:'all',baselineReview:'2026-09-29 03:28:03',baselineAsk:'2026-09-29 16:09:10'}),true);
 assert.strictEqual(H.evalRunComplete(mediumOnly,{suite:'all',baselineReview:'2026-09-30 00:45:46',baselineAsk:'2026-09-30 00:45:46'}),false);
@@ -287,6 +299,7 @@ assert.ok(H.PROJECTS[1].evidence.includes('Recommendation breadth'));
 assert.match(H.PROJECTS[1].nextDecision,/canonical store/);
 assert.match(H.PROJECTS[2].nextDecision,/first-play flow/);
 assert.match(H.PROJECTS[0].description,/Human-reviewed project truth system/);
+assert.strictEqual(H.PROJECTS[0].releasePath,'implementation-context-prototype');
 assert.strictEqual(H.infrastructureAttention({render:{configured:true,environments:{production:{ok:true}}}}),null);
 
 const unopenedState={...H.emptyProjectData(H.PROJECTS[0]),fresh:true,quality:H.normalizeQuality({controlled_evals:{latest_review_interpretation:null,latest_ask_quality:null}})};
@@ -334,6 +347,8 @@ assert.match(projectHealthSource,/data-attention-action="ai-quality"/);
 assert.match(projectHealthSource,/drawerCopyHandoffButton/);
 assert.match(projectHealthSource,/Changed since last visit/);
 assert.match(projectHealthSource,/Previous investigations/);
+assert.match(projectHealthSource,/commits\?sha=/);
+assert.match(projectHealthSource,/project\.releasePath/);
 assert.match(projectHealthSource,/AI checks are running/);
 assert.match(projectHealthSource,/checks automatically/);
 
