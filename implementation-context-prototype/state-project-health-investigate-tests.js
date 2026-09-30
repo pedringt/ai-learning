@@ -2,8 +2,6 @@ const assert=require('assert');
 const handler=require('../api/project-health-investigate.js');
 const T=handler._test;
 
-assert.strictEqual(T.constantTimeEqual('a','a'),true);
-assert.strictEqual(T.constantTimeEqual('a','b'),false);
 assert.strictEqual(T.safeSourceUrl('https://github.com/pedringt/ai-learning/commit/abc'),'https://github.com/pedringt/ai-learning/commit/abc');
 assert.strictEqual(T.safeSourceUrl('https://github.com.attacker.test/'),null);
 assert.strictEqual(T.safeSourceUrl('https://attacker.test/'),null);
@@ -18,7 +16,7 @@ assert.strictEqual(T.PROJECTS.unknown,undefined);
 function makeResponse(){return {statusCode:200,headers:{},setHeader(k,v){this.headers[k]=v;},status(n){this.statusCode=n;return this;},json(value){this.payload=value;return this;}};}
 async function withEnv(patch,run){const old={};for(const [key,value] of Object.entries(patch)){old[key]=process.env[key];if(value==null)delete process.env[key];else process.env[key]=value;}try{return await run();}finally{for(const [key,value] of Object.entries(old)){if(value==null)delete process.env[key];else process.env[key]=value;}}}
 (async()=>{
-  await withEnv({PROJECT_HEALTH_INVESTIGATION_KEY:'secret',ANTHROPIC_API_KEY:'model-key',VERCEL_TOKEN:'vercel-key',VERCEL_ENV:'production'},async()=>{
+  await withEnv({ANTHROPIC_API_KEY:'model-key',VERCEL_TOKEN:'vercel-key',VERCEL_ENV:'production'},async()=>{
     let calls=0,anthropicBody=null;
     const originalFetch=global.fetch;
     global.fetch=async(url,options={})=>{
@@ -30,7 +28,7 @@ async function withEnv(patch,run){const old={};for(const [key,value] of Object.e
     };
     try{
       const res=makeResponse();
-      await handler({method:'POST',headers:{'x-project-health-key':'secret'},body:{project:'narc',environment:'production',signalType:'github-check'}},res);
+      await handler({method:'POST',headers:{},body:{project:'narc',environment:'production',signalType:'github-check'}},res);
       assert.strictEqual(res.statusCode,200);
       assert.match(res.payload.report,/What happened/);
       assert.match(res.payload.report,/Owner: Engineering/);
@@ -44,10 +42,16 @@ async function withEnv(patch,run){const old={};for(const [key,value] of Object.e
       assert.ok(anthropicBody.messages[0].content.length<9000);
     }finally{global.fetch=originalFetch;}
   });
-  await withEnv({PROJECT_HEALTH_INVESTIGATION_KEY:'secret',ANTHROPIC_API_KEY:'model-key',VERCEL_TOKEN:'vercel-key',VERCEL_ENV:'production'},async()=>{
+  await withEnv({ANTHROPIC_API_KEY:null,VERCEL_TOKEN:'vercel-key',VERCEL_ENV:'production'},async()=>{
     let calls=0;const originalFetch=global.fetch;
-    global.fetch=async(url)=>{calls++;throw new Error('should not fetch before auth');};
-    try{const res=makeResponse();await handler({method:'POST',headers:{},body:{project:'state',environment:'production',signalType:'vercel'}},res);assert.strictEqual(res.statusCode,403);assert.strictEqual(calls,0);}finally{global.fetch=originalFetch;}
+    global.fetch=async()=>{calls++;throw new Error('should not fetch before configuration check');};
+    try{
+      const res=makeResponse();
+      await handler({method:'POST',headers:{},body:{project:'state',environment:'production',signalType:'vercel'}},res);
+      assert.strictEqual(res.statusCode,503);
+      assert.match(res.payload.detail,/server-side model and Vercel read connections/);
+      assert.strictEqual(calls,0);
+    }finally{global.fetch=originalFetch;}
   });
   console.log('Project Health investigation API tests passed');
 })().catch(error=>{console.error(error);process.exitCode=1;});

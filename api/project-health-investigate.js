@@ -1,6 +1,5 @@
 'use strict';
 
-const crypto=require('crypto');
 const TEAM_ID='team_UxrzvAczWhPiXlO3nvWPAu5b';
 const MODEL='claude-haiku-4-5-20251001';
 const MAX_BODY_BYTES=2000;
@@ -18,10 +17,6 @@ function readBody(req){
   const raw=String(req.body||'');
   if(Buffer.byteLength(raw)>MAX_BODY_BYTES) return null;
   try{return JSON.parse(raw||'{}');}catch(_){return null;}
-}
-function constantTimeEqual(a,b){
-  const left=Buffer.from(String(a||'')),right=Buffer.from(String(b||''));
-  return left.length===right.length&&left.length>0&&crypto.timingSafeEqual(left,right);
 }
 function sanitizeText(value,max=1200){
   return String(value||'')
@@ -151,11 +146,6 @@ module.exports=async function handler(req,res){
   const environment=String(body.environment||'production').toLowerCase();
   const signalType=String(body.signalType||'');
   if(!project||!project.branches[environment]||!['vercel','github-check'].includes(signalType))return response(res,400,{detail:'Unsupported project, environment, or signal.'});
-  const protectedPreview=String(process.env.VERCEL_ENV||'').toLowerCase()!=='production';
-  if(!protectedPreview){
-    if(!process.env.PROJECT_HEALTH_INVESTIGATION_KEY)return response(res,503,{configured:false,detail:'Investigation access is not configured yet.'});
-    if(!constantTimeEqual(req.headers?.['x-project-health-key'],process.env.PROJECT_HEALTH_INVESTIGATION_KEY))return response(res,403,{detail:'AI investigation is available from a protected preview or staging deployment.'});
-  }
   if(!process.env.ANTHROPIC_API_KEY||!process.env.VERCEL_TOKEN)return response(res,503,{configured:false,detail:'The server-side model and Vercel read connections are not configured.'});
   const branch=await fetchBranch(project,environment);
   if(!branch)return response(res,502,{detail:'Could not verify the current project branch.'});
@@ -175,5 +165,5 @@ module.exports=async function handler(req,res){
   res.setHeader('Cache-Control','no-store');
   return response(res,200,{project:project.slug,environment,commit:branch.sha,report,sources,observedAt:new Date().toISOString(),readOnly:true});
 };
-module.exports._test={PROJECTS,FAILED_CHECKS,constantTimeEqual,sanitizeText,safeSourceUrl,failedCheckRuns,statusFailure,eventLines,boundedEvidence,fetchBranch,fetchVercelEvidence,fetchGithubEvidence,fetchCommitFollowup};
+module.exports._test={PROJECTS,FAILED_CHECKS,sanitizeText,safeSourceUrl,failedCheckRuns,statusFailure,eventLines,boundedEvidence,fetchBranch,fetchVercelEvidence,fetchGithubEvidence,fetchCommitFollowup};
 

@@ -7,7 +7,7 @@
 
   const PROJECTS=[
     {
-      id:'state',name:'State',description:'Human-reviewed project truth system with maintained Current State.',repo:'pedringt/ai-learning',branch:'main',stagingBranch:'staging',quality:'state',releasePath:'implementation-context-prototype',
+      id:'state',name:'State',description:'Human-reviewed project truth system with maintained Current State.',repo:'pedringt/ai-learning',branch:'main',stagingBranch:'staging',quality:'state',releasePaths:['implementation-context-prototype','state-project-complete'],releaseIgnore:/project health|dashboard/i,
       focus:'Keep project truth trustworthy without giving AI authority to change Current State on its own.',
       evidence:['Understands updates','Answers stay grounded','Respects decision authority','Review burden'],
       nextDecision:'Expand failure investigation only if it stays useful without weakening human control.',
@@ -65,13 +65,6 @@
     if(/\.vercel\.app$/i.test(host)&&host!=='ai-learning.vercel.app')return 'staging';
     return 'production';
   }
-  function protectedControlsUrl(data,params={}){
-    const url=new URL('https://ai-learning-git-staging-cairn10.vercel.app/project-health');
-    if(data?.project?.id)url.searchParams.set('project',data.project.id);
-    for(const [key,value] of Object.entries(params)){if(value!=null&&value!=='')url.searchParams.set(key,String(value));}
-    return url.toString();
-  }
-
   async function jsonFetch(url,options={}){
     const controller=new AbortController();const timeoutMs=Number(options.timeoutMs||10000);const timer=setTimeout(()=>controller.abort(),timeoutMs);
     const fetchOptions={...options};delete fetchOptions.timeoutMs;
@@ -252,7 +245,16 @@
     const headers={Accept:'application/vnd.github+json'};
     const branch=await jsonFetch(githubApi('/repos/'+project.repo+'/branches/'+encodeURIComponent(branchName)),{headers,timeoutMs:6000});
     let selectedCommit=branch?.commit||null;
-    if(project.releasePath){
+    if(Array.isArray(project.releasePaths)&&project.releasePaths.length){
+      try{
+        const groups=await Promise.all(project.releasePaths.map(path=>
+          jsonFetch(githubApi('/repos/'+project.repo+'/commits?sha='+encodeURIComponent(branchName)+'&path='+encodeURIComponent(path)+'&per_page=6'),{headers,timeoutMs:6000}).catch(()=>[])
+        ));
+        const candidates=groups.flat().filter(Boolean).filter((item,index,all)=>all.findIndex(other=>other?.sha===item?.sha)===index);
+        candidates.sort((a,b)=>(dateMs(b?.commit?.committer?.date||b?.commit?.author?.date)||0)-(dateMs(a?.commit?.committer?.date||a?.commit?.author?.date)||0));
+        selectedCommit=candidates.find(item=>!project.releaseIgnore?.test(String(item?.commit?.message||'')))||selectedCommit;
+      }catch(_){}
+    }else if(project.releasePath){
       try{
         const commits=await jsonFetch(githubApi('/repos/'+project.repo+'/commits?sha='+encodeURIComponent(branchName)+'&path='+encodeURIComponent(project.releasePath)+'&per_page=1'),{headers,timeoutMs:6000});
         if(Array.isArray(commits)&&commits[0]) selectedCommit=commits[0];
@@ -274,11 +276,14 @@
     try{
       const headers={Accept:'application/vnd.github+json'};
       const pulls=await jsonFetch(githubApi('/repos/'+project.repo+'/pulls?state=open&per_page=5'),{headers,timeoutMs:6000});
-      if(!project.releasePath||!Array.isArray(pulls))return Array.isArray(pulls)?pulls:[];
+      if(!Array.isArray(pulls))return[];
+      const releasePaths=Array.isArray(project.releasePaths)&&project.releasePaths.length?project.releasePaths:(project.releasePath?[project.releasePath]:[]);
+      if(!releasePaths.length)return pulls;
       const scoped=await Promise.all(pulls.map(async pr=>{
+        if(project.releaseIgnore?.test(String(pr.title||'')))return null;
         try{
           const files=await jsonFetch(githubApi('/repos/'+project.repo+'/pulls/'+encodeURIComponent(pr.number)+'/files?per_page=100'),{headers,timeoutMs:5000});
-          return Array.isArray(files)&&files.some(file=>String(file.filename||'').startsWith(project.releasePath+'/'))?pr:null;
+          return Array.isArray(files)&&files.some(file=>releasePaths.some(path=>String(file.filename||'').startsWith(path+'/')))?pr:null;
         }catch(_){return null;}
       }));
       return scoped.filter(Boolean);
@@ -320,7 +325,8 @@
       fresh:false,
       detailLoaded:false,
       detailLoading:false,
-      qualityRun:null,
+      qualityRun:s.qualityRun||null,
+      qualityRunCompletedAt:s.qualityRunCompletedAt||null,
       snapshotAt:s.snapshotAt||null
     };
   }
@@ -520,34 +526,34 @@
     if(!before)return[];
     const items=[];
     if(before.deliverySha&&data.delivery?.sha&&before.deliverySha!==data.delivery.sha){
-      items.push({title:'New production release',detail:commitTitle(data.delivery.message)+' · '+shortSha(data.delivery.sha),observedAt:data.delivery.updatedAt||data.checkedAt});
+      items.push({title:'New production release',detail:commitTitle(data.delivery.message)+' · '+shortSha(data.delivery.sha),observedAt:data.delivery.updatedAt||data.checkedAt,tab:'delivery'});
     }
     if(before.deliveryKind&&data.delivery?.vercel?.kind&&before.deliveryKind!==data.delivery.vercel.kind){
-      items.push({title:'Delivery status changed',detail:(before.deliveryKind||'unknown')+' → '+data.delivery.vercel.kind,observedAt:data.delivery.updatedAt||data.checkedAt});
+      items.push({title:'Delivery status changed',detail:(before.deliveryKind||'unknown')+' → '+data.delivery.vercel.kind,observedAt:data.delivery.updatedAt||data.checkedAt,tab:'delivery'});
     }
     const currentQ=qualitySnapshot(data),oldQ=before.quality||{};
     if(currentQ.reviewAt&&oldQ.reviewAt&&String(currentQ.reviewAt)!==String(oldQ.reviewAt)){
       const delta=currentQ.reviewScore!=null&&oldQ.reviewScore!=null?Math.round((currentQ.reviewScore-oldQ.reviewScore)*1000)/10:null;
-      items.push({title:'Update-understanding eval changed',detail:(delta==null?'New controlled run recorded':(delta>=0?'Improved ':'Declined ')+Math.abs(delta)+' points')+' · '+percent(currentQ.reviewScore),observedAt:currentQ.reviewAt});
+      items.push({title:'Update-understanding eval changed',detail:(delta==null?'New controlled run recorded':(delta>=0?'Improved ':'Declined ')+Math.abs(delta)+' points')+' · '+percent(currentQ.reviewScore),observedAt:currentQ.reviewAt,tab:'ai-quality'});
     }
     if(currentQ.askAt&&oldQ.askAt&&String(currentQ.askAt)!==String(oldQ.askAt)){
       const delta=currentQ.askScore!=null&&oldQ.askScore!=null?Math.round((currentQ.askScore-oldQ.askScore)*1000)/10:null;
-      items.push({title:'Answer-quality eval changed',detail:(delta==null?'New controlled run recorded':(delta>=0?'Improved ':'Declined ')+Math.abs(delta)+' points')+' · '+percent(currentQ.askScore),observedAt:currentQ.askAt});
+      items.push({title:'Answer-quality eval changed',detail:(delta==null?'New controlled run recorded':(delta>=0?'Improved ':'Declined ')+Math.abs(delta)+' points')+' · '+percent(currentQ.askScore),observedAt:currentQ.askAt,tab:'ai-quality'});
     }
     if(currentQ.severe!=null&&oldQ.severe!=null&&currentQ.severe!==oldQ.severe){
-      items.push({title:'High-impact quality failures changed',detail:oldQ.severe+' → '+currentQ.severe,observedAt:data.checkedAt});
+      items.push({title:'High-impact quality failures changed',detail:oldQ.severe+' → '+currentQ.severe,observedAt:data.checkedAt,tab:'ai-quality'});
     }
     const analytics=data.platform?.analytics;
     if(before.analyticsAvailable!==null&&analytics&&before.analyticsAvailable!==analytics.available){
-      items.push({title:'Analytics availability changed',detail:(before.analyticsAvailable?'Available':'Unavailable')+' → '+(analytics.available?'Available':'Unavailable'),observedAt:data.detailCheckedAt||data.checkedAt});
+      items.push({title:'Analytics availability changed',detail:(before.analyticsAvailable?'Available':'Unavailable')+' → '+(analytics.available?'Available':'Unavailable'),observedAt:data.detailCheckedAt||data.checkedAt,tab:'activity'});
     }
     if(analytics?.available&&before.analyticsPageviews!=null&&Number(analytics.pageviews)!==Number(before.analyticsPageviews)){
       const diff=Number(analytics.pageviews)-Number(before.analyticsPageviews);
-      items.push({title:'Usage changed',detail:(diff>=0?'+':'')+diff+' page views in the current 30-day window',observedAt:data.detailCheckedAt||data.checkedAt});
+      items.push({title:'Usage changed',detail:(diff>=0?'+':'')+diff+' page views in the current 30-day window',observedAt:data.detailCheckedAt||data.checkedAt,tab:'activity'});
     }
     const prCount=Array.isArray(data.openPullRequests)?data.openPullRequests.length:0;
     if(Number(before.openPullRequests||0)!==prCount){
-      items.push({title:'Open work changed',detail:Number(before.openPullRequests||0)+' → '+prCount+' open pull requests',observedAt:data.detailCheckedAt||data.checkedAt});
+      items.push({title:'Open work changed',detail:Number(before.openPullRequests||0)+' → '+prCount+' open pull requests',observedAt:data.detailCheckedAt||data.checkedAt,tab:'activity'});
     }
     return items.sort((a,b)=>(dateMs(b.observedAt)||0)-(dateMs(a.observedAt)||0));
   }
@@ -723,7 +729,6 @@
   }
   function investigationResultHtml(investigation){
     if(investigation?.handoff) return '<div class="investigation-result agent-result"><div class="agent-kicker">Handoff preview</div><strong>Project handoff ready to review</strong><pre>'+esc(investigation.handoffText||investigation.report||'')+'</pre><p class="footnote">Project Health assembled this from the currently loaded delivery, quality, investigation, and product-decision signals. Review it before sharing.</p></div>';
-    if(investigation?.openingProtected) return '<div class="investigation-result agent-result" role="status"><div class="agent-kicker">Read-only investigation agent</div><strong>Opening protected investigation…</strong><p>Vercel will verify access before the live AI investigation starts.</p></div>';
     if(investigation?.loading) return '<div class="investigation-result agent-result" role="status"><div class="agent-kicker">Read-only investigation agent</div><strong>Checking current health signals…</strong><p>Starting with current health signals and expanding only when the evidence points somewhere specific.</p></div>';
     if(investigation?.error) return '<div class="investigation-result agent-result" role="status"><div class="agent-kicker">Read-only investigation agent</div><strong>Investigation unavailable</strong><p>'+esc(investigation.error)+'</p></div>';
     if(investigation?.quickCheck){
@@ -757,7 +762,7 @@
       const activeEvalRun=data.qualityRun;
       headerRunChecksButton.hidden=!(p.id==='state'&&run?.configured);
       headerRunChecksButton.disabled=!!activeEvalRun;
-      headerRunChecksButton.textContent=activeEvalRun?'AI checks running…':'Run AI checks';
+      headerRunChecksButton.textContent=activeEvalRun?'AI checks running…':data.qualityRunCompletedAt?'View AI results':'Run AI checks';
     }
     const investigationPanel=doc.getElementById('investigationPanel');
     const investigationDrawerTitle=doc.getElementById('investigationDrawerTitle');
@@ -775,12 +780,12 @@
       investigationDrawerStatus.textContent=data.investigation?.loading?'Running…':data.investigation?'Latest result available':historyRows.length?'Previous results available':'';
     }
     if(drawerCopyHandoffButton){
-      const busy=!!data.investigation?.loading||!!data.investigation?.openingProtected;
+      const busy=!!data.investigation?.loading;
       const copyable=!!(data.investigation?.report||data.investigation?.quickCheck||data.investigation?.handoff);
       drawerCopyHandoffButton.hidden=busy||!copyable;
     }
     if(drawerRunAgainButton){
-      const busy=!!data.investigation?.loading||!!data.investigation?.openingProtected;
+      const busy=!!data.investigation?.loading;
       drawerRunAgainButton.hidden=!data.investigation||busy;
       if(investigationDrawerFooter) investigationDrawerFooter.hidden=drawerRunAgainButton.hidden;
     }
@@ -817,7 +822,7 @@
     const changes=meaningfulChanges(data);
     const sinceLabel=data.lastVisit?.savedAt?fmtDate(data.lastVisit.savedAt):'your previous saved visit';
     doc.getElementById('changesPanel').innerHTML='<div class="panel-title-row"><div><h3>Changed since last visit</h3><p class="panel-copy">Compared with '+esc(sinceLabel)+'. Only meaningful changes are shown.</p></div><span class="readiness-pill '+(changes.length?'watch':'ready')+'">'+esc(changes.length)+' change'+(changes.length===1?'':'s')+'</span></div>'+
-      (changes.length?'<div class="change-list" style="margin-top:10px">'+changes.slice(0,8).map(item=>'<div class="change-item"><span class="change-dot"></span><div><strong>'+esc(item.title)+'</strong><span>'+esc(item.detail)+'</span></div></div>').join('')+'</div>':'<div class="empty" style="margin-top:10px">No meaningful changes detected since the previous saved visit.</div>');
+      (changes.length?'<div class="change-list" style="margin-top:10px">'+changes.slice(0,8).map(item=>'<button class="change-item" type="button" data-tab-target="'+esc(item.tab||'activity')+'"><span class="change-dot"></span><div><strong>'+esc(item.title)+'</strong><span>'+esc(item.detail)+'</span></div></button>').join('')+'</div>':'<div class="empty" style="margin-top:10px">No meaningful changes detected since the previous saved visit.</div>');
     const overviewGaps=setupGaps(data);
     doc.getElementById('overviewHealthPanel').innerHTML='<div class="panel-title-row"><h3>Project health</h3>'+(overviewGaps.length?'<span class="readiness-pill watch">'+esc(overviewGaps.length)+' coverage '+(overviewGaps.length===1?'gap':'gaps')+'</span>':'')+'</div>'+
       '<div class="overview-health" style="margin-top:8px">'+healthRows.map(item=>'<div class="overview-health-row"><div><strong>'+esc(item.label)+' · '+esc(statusLabel(item.kind))+'</strong><span>'+esc(item.detail)+'</span><span class="signal-meta '+(item.fresh?.stale?'stale':'')+'">'+esc(item.fresh?.label||'Freshness unknown')+'</span></div><button type="button" data-tab-target="'+esc(item.tab)+'">View</button></div>').join('')+'</div>';
@@ -857,7 +862,7 @@
       }else if(run?.configured){
         const runDisabled=activeEvalRun?' disabled':'';
         qualityHtml+='<div class="eval-actions"><button class="button small primary" type="button" data-run-checks="all"'+runDisabled+'>'+(activeEvalRun?'AI checks running…':'Run all AI checks')+'</button><button class="button small" type="button" data-run-checks="review"'+runDisabled+'>Check update understanding</button><button class="button small" type="button" data-run-checks="ask"'+runDisabled+'>Check answer quality</button></div>'+
-          '<p class="footnote">'+(run.can_run_here===false?'Running a check opens the protected control surface. Vercel handles access, so no admin key is required.':'Estimated model cost: '+esc(run.estimated_cost||'not configured')+'. You will confirm before any paid run starts.')+'</p>';
+          '<p class="footnote">Estimated model cost: '+esc(run.estimated_cost||'not configured')+'. You will confirm before any paid run starts.</p>';
       }else if(run){
         qualityHtml+='<p class="footnote">Running AI checks from the dashboard still needs setup. Existing recorded results can still appear here.</p>';
       }
@@ -1284,7 +1289,7 @@
     function activeData(){return state.find(item=>item.project.id===activeId)||null;}
 
     function recordInvestigation(data,investigation,trigger){
-      if(!data||!investigation||investigation.loading||investigation.openingProtected)return;
+      if(!data||!investigation||investigation.loading)return;
       const row={
         id:String(investigation.observedAt||new Date().toISOString())+':'+String(trigger||'project'),
         observedAt:investigation.observedAt||new Date().toISOString(),
@@ -1396,6 +1401,9 @@
     }
     function setActiveTab(tab,updateUrl=true){
       activeTab=allowedTabs.has(tab)?tab:'overview';
+      if(activeTab==='ai-quality'){
+        const data=activeData();if(data)data.qualityRunCompletedAt=null;
+      }
       applyTabState();
       if(updateUrl){
         const url=new URL(root.location.href);url.searchParams.set('project',activeId);url.searchParams.set('tab',activeTab);root.history.replaceState(null,'',url);
@@ -1485,24 +1493,12 @@
 
     async function runAgentInvestigation(data,signalType,environment='production'){
       if(!data)return;
-      if(pageEnvironment(root)==='production'){
-        data.investigation={openingProtected:true};
-        renderNow();
-        revealInvestigation();
-        root.setTimeout(()=>root.location.assign(protectedControlsUrl(data,{control:'investigate',signal:signalType,environment})),80);
-        return;
-      }
       data.investigation={loading:true};renderNow();revealInvestigation();
       try{
         const payload=await jsonFetch('/api/project-health-investigate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({project:data.project.id,environment,signalType}),timeoutMs:30000});
         data.investigation={report:payload.report,sources:Array.isArray(payload.sources)?payload.sources:[],observedAt:payload.observedAt};
       }catch(error){
-        if(error.status===401||error.status===403){
-          data.investigation=quickProjectCheck(data);
-          data.investigation.summary='A live issue is visible, but the AI investigation agent is restricted to a protected preview or staging deployment. This public view ran the deterministic project check instead.';
-        }else{
-          data.investigation={error:error.message||'Could not complete the investigation.'};
-        }
+        data.investigation={error:error.message||'Could not complete the investigation.'};
       }
       recordInvestigation(data,data.investigation,signalType==='vercel'?'Deployment failure':'Failed release check');
       renderNow();
@@ -1511,13 +1507,16 @@
     const headerRunChecksButton=doc.getElementById('headerRunChecksButton');
     if(headerRunChecksButton)headerRunChecksButton.addEventListener('click',async()=>{
       const data=activeData();if(!data||data.project.id!=='state'||data.qualityRun)return;
+      if(data.qualityRunCompletedAt){setActiveTab('ai-quality');renderNow();return;}
       headerRunChecksButton.disabled=true;
       headerRunChecksButton.textContent='Starting AI checks…';
       try{
         const started=await dispatchRun(data,root,'all');
         if(started?.started){
           data.qualityRun=started;
+          data.qualityRunCompletedAt=null;
           saveEvalRunState(root,started);
+          setActiveTab('ai-quality');
           renderNow();
           pollEvalResults(data);
         }else{
@@ -1542,7 +1541,7 @@
     const projectCheckButton=doc.getElementById('projectCheckButton');
     if(projectCheckButton)projectCheckButton.addEventListener('click',async()=>{
       const data=activeData();if(!data)return;
-      if(data.investigation&&!data.investigation.loading&&!data.investigation.openingProtected){revealInvestigation();return;}
+      if(data.investigation&&!data.investigation.loading){revealInvestigation();return;}
       await startProjectInvestigation(data);
     });
     if(drawerRunAgainButton)drawerRunAgainButton.addEventListener('click',async()=>{
@@ -1568,6 +1567,7 @@
       if(!action)return;
       const data=activeData();if(!data)return;
       if(action.dataset.attentionAction==='ai-quality'){
+        setActiveTab('ai-quality');
         data.investigation=qualityInvestigation(data);
         recordInvestigation(data,data.investigation,'AI quality');
         renderNow();
@@ -1645,6 +1645,7 @@
         data.quality=latest;
         if(evalRunComplete(latest,runState)){
           data.qualityRun=null;
+          data.qualityRunCompletedAt=activeTab==='ai-quality'?null:new Date().toISOString();
           saveEvalRunState(root,null);
           reconcileInvestigationHistory(data);
           persist();
@@ -1675,7 +1676,9 @@
         const started=await dispatchRun(data,root,button.dataset.runChecks||'all');
         if(started?.started){
           data.qualityRun=started;
+          data.qualityRunCompletedAt=null;
           saveEvalRunState(root,started);
+          setActiveTab('ai-quality');
           renderNow();
           pollEvalResults(data);
         }else{
@@ -1698,5 +1701,5 @@
     }
   }
 
-  return {PROJECTS,pageEnvironment,protectedControlsUrl,vercelFromStatus,deliveryHealth,commitTitle,githubCommitUrl,pullRequestNumber,githubPullRequestUrl,changeUrl,normalizeQuality,qualityAttention,externalQualityAttention,deliveryAttention,infrastructureAttention,allAttentionSignals,attentionItems,overallAttention,productOpenItems,projectStatus,setupGaps,releaseReadiness,projectQualityLabel,evalScore,percent,shortSha,pendingSet,mergePlatform,emptyProjectData,safeExternalQualitySnapshot,serializeProjectData,hydrateProjectData,loadProject,loadProjectDetails,infraCardLabel,analyticsConnectionValue,analyticsGapDetail,analyticsLabel,relativeAge,changedSinceVisit,meaningfulChanges,freshnessMeta,stateEvalContractStale,trendText,activityReviewItems,progressText,quickProjectCheck,evalRunComplete,qualityInvestigation,projectHandoff,init};
+  return {PROJECTS,pageEnvironment,vercelFromStatus,deliveryHealth,commitTitle,githubCommitUrl,pullRequestNumber,githubPullRequestUrl,changeUrl,normalizeQuality,qualityAttention,externalQualityAttention,deliveryAttention,infrastructureAttention,allAttentionSignals,attentionItems,overallAttention,productOpenItems,projectStatus,setupGaps,releaseReadiness,projectQualityLabel,evalScore,percent,shortSha,pendingSet,mergePlatform,emptyProjectData,safeExternalQualitySnapshot,serializeProjectData,hydrateProjectData,loadProject,loadProjectDetails,infraCardLabel,analyticsConnectionValue,analyticsGapDetail,analyticsLabel,relativeAge,changedSinceVisit,meaningfulChanges,freshnessMeta,stateEvalContractStale,trendText,activityReviewItems,progressText,quickProjectCheck,evalRunComplete,qualityInvestigation,projectHandoff,init};
 });
