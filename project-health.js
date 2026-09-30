@@ -7,7 +7,7 @@
 
   const PROJECTS=[
     {
-      id:'state',name:'State',description:'Human-reviewed project truth system with maintained Current State.',repo:'pedringt/ai-learning',branch:'main',stagingBranch:'staging',quality:'state',releasePath:'implementation-context-prototype',
+      id:'state',name:'State',description:'Human-reviewed project truth system with maintained Current State.',repo:'pedringt/ai-learning',branch:'main',stagingBranch:'staging',quality:'state',releasePaths:['implementation-context-prototype','state-project-complete'],releaseIgnore:/project health|dashboard/i,
       focus:'Keep project truth trustworthy without giving AI authority to change Current State on its own.',
       evidence:['Understands updates','Answers stay grounded','Respects decision authority','Review burden'],
       nextDecision:'Expand failure investigation only if it stays useful without weakening human control.',
@@ -65,13 +65,6 @@
     if(/\.vercel\.app$/i.test(host)&&host!=='ai-learning.vercel.app')return 'staging';
     return 'production';
   }
-  function protectedControlsUrl(data,params={}){
-    const url=new URL('https://ai-learning-git-staging-cairn10.vercel.app/project-health');
-    if(data?.project?.id)url.searchParams.set('project',data.project.id);
-    for(const [key,value] of Object.entries(params)){if(value!=null&&value!=='')url.searchParams.set(key,String(value));}
-    return url.toString();
-  }
-
   async function jsonFetch(url,options={}){
     const controller=new AbortController();const timeoutMs=Number(options.timeoutMs||10000);const timer=setTimeout(()=>controller.abort(),timeoutMs);
     const fetchOptions={...options};delete fetchOptions.timeoutMs;
@@ -252,7 +245,16 @@
     const headers={Accept:'application/vnd.github+json'};
     const branch=await jsonFetch(githubApi('/repos/'+project.repo+'/branches/'+encodeURIComponent(branchName)),{headers,timeoutMs:6000});
     let selectedCommit=branch?.commit||null;
-    if(project.releasePath){
+    if(Array.isArray(project.releasePaths)&&project.releasePaths.length){
+      try{
+        const groups=await Promise.all(project.releasePaths.map(path=>
+          jsonFetch(githubApi('/repos/'+project.repo+'/commits?sha='+encodeURIComponent(branchName)+'&path='+encodeURIComponent(path)+'&per_page=6'),{headers,timeoutMs:6000}).catch(()=>[])
+        ));
+        const candidates=groups.flat().filter(Boolean).filter((item,index,all)=>all.findIndex(other=>other?.sha===item?.sha)===index);
+        candidates.sort((a,b)=>(dateMs(b?.commit?.committer?.date||b?.commit?.author?.date)||0)-(dateMs(a?.commit?.committer?.date||a?.commit?.author?.date)||0));
+        selectedCommit=candidates.find(item=>!project.releaseIgnore?.test(String(item?.commit?.message||'')))||selectedCommit;
+      }catch(_){}
+    }else if(project.releasePath){
       try{
         const commits=await jsonFetch(githubApi('/repos/'+project.repo+'/commits?sha='+encodeURIComponent(branchName)+'&path='+encodeURIComponent(project.releasePath)+'&per_page=1'),{headers,timeoutMs:6000});
         if(Array.isArray(commits)&&commits[0]) selectedCommit=commits[0];
@@ -1485,24 +1487,12 @@
 
     async function runAgentInvestigation(data,signalType,environment='production'){
       if(!data)return;
-      if(pageEnvironment(root)==='production'){
-        data.investigation={openingProtected:true};
-        renderNow();
-        revealInvestigation();
-        root.setTimeout(()=>root.location.assign(protectedControlsUrl(data,{control:'investigate',signal:signalType,environment})),80);
-        return;
-      }
       data.investigation={loading:true};renderNow();revealInvestigation();
       try{
         const payload=await jsonFetch('/api/project-health-investigate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({project:data.project.id,environment,signalType}),timeoutMs:30000});
         data.investigation={report:payload.report,sources:Array.isArray(payload.sources)?payload.sources:[],observedAt:payload.observedAt};
       }catch(error){
-        if(error.status===401||error.status===403){
-          data.investigation=quickProjectCheck(data);
-          data.investigation.summary='A live issue is visible, but the AI investigation agent is restricted to a protected preview or staging deployment. This public view ran the deterministic project check instead.';
-        }else{
-          data.investigation={error:error.message||'Could not complete the investigation.'};
-        }
+        data.investigation={error:error.message||'Could not complete the investigation.'};
       }
       recordInvestigation(data,data.investigation,signalType==='vercel'?'Deployment failure':'Failed release check');
       renderNow();
@@ -1698,5 +1688,5 @@
     }
   }
 
-  return {PROJECTS,pageEnvironment,protectedControlsUrl,vercelFromStatus,deliveryHealth,commitTitle,githubCommitUrl,pullRequestNumber,githubPullRequestUrl,changeUrl,normalizeQuality,qualityAttention,externalQualityAttention,deliveryAttention,infrastructureAttention,allAttentionSignals,attentionItems,overallAttention,productOpenItems,projectStatus,setupGaps,releaseReadiness,projectQualityLabel,evalScore,percent,shortSha,pendingSet,mergePlatform,emptyProjectData,safeExternalQualitySnapshot,serializeProjectData,hydrateProjectData,loadProject,loadProjectDetails,infraCardLabel,analyticsConnectionValue,analyticsGapDetail,analyticsLabel,relativeAge,changedSinceVisit,meaningfulChanges,freshnessMeta,stateEvalContractStale,trendText,activityReviewItems,progressText,quickProjectCheck,evalRunComplete,qualityInvestigation,projectHandoff,init};
+  return {PROJECTS,pageEnvironment,vercelFromStatus,deliveryHealth,commitTitle,githubCommitUrl,pullRequestNumber,githubPullRequestUrl,changeUrl,normalizeQuality,qualityAttention,externalQualityAttention,deliveryAttention,infrastructureAttention,allAttentionSignals,attentionItems,overallAttention,productOpenItems,projectStatus,setupGaps,releaseReadiness,projectQualityLabel,evalScore,percent,shortSha,pendingSet,mergePlatform,emptyProjectData,safeExternalQualitySnapshot,serializeProjectData,hydrateProjectData,loadProject,loadProjectDetails,infraCardLabel,analyticsConnectionValue,analyticsGapDetail,analyticsLabel,relativeAge,changedSinceVisit,meaningfulChanges,freshnessMeta,stateEvalContractStale,trendText,activityReviewItems,progressText,quickProjectCheck,evalRunComplete,qualityInvestigation,projectHandoff,init};
 });
