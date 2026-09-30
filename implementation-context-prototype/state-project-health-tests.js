@@ -65,16 +65,16 @@ assert.strictEqual(H.qualityAttention(severe).kind,'bad');
 const mediumOnly=H.normalizeQuality({
   controlled_evals:{
     latest_review_interpretation:{
-      suite:'review_interpretation',interpretation_accuracy:.75,high_severity_failures:0,total:8,created_at:'2026-09-29 17:56:46',
+      suite:'review_interpretation',interpretation_accuracy:.75,high_severity_failures:0,total:8,created_at:'2026-09-30 00:45:46',
       failure_details:[
         {scenario_id:'review_question_answer_only',severity:'medium',expected:'answer_question',observed:'answer_question_and_update_state',failed_checks:['interpretation']},
         {scenario_id:'review_unknown_not_false',severity:'medium',expected:'preserve_evidence_only',observed:'open_question',failed_checks:['review_needed','interpretation']}
       ]
     },
-    latest_ask_quality:{suite:'ask_quality',overall_pass_rate:1,ask_grounding:1,high_severity_failures:0,total:8,created_at:'2026-09-29 17:56:46'},
+    latest_ask_quality:{suite:'ask_quality',overall_pass_rate:1,ask_grounding:1,high_severity_failures:0,total:8,created_at:'2026-09-30 00:45:46'},
     recent:[
-      {suite:'review_interpretation',interpretation_accuracy:.75,high_severity_failures:0,total:8,created_at:'2026-09-29 17:56:46'},
-      {suite:'review_interpretation',interpretation_accuracy:.625,high_severity_failures:2,total:8,created_at:'2026-09-29 03:28:03'}
+      {suite:'review_interpretation',interpretation_accuracy:.75,high_severity_failures:0,total:8,created_at:'2026-09-30 00:45:46'},
+      {suite:'review_interpretation',interpretation_accuracy:.625,high_severity_failures:2,total:8,created_at:'2026-09-30 00:35:03'}
     ]
   }
 });
@@ -88,7 +88,7 @@ assert.match(mediumInvestigation.report,/workflow noise rather than false truth/
 const detailedSevere=H.normalizeQuality({
   controlled_evals:{
     latest_review_interpretation:{
-      suite:'review_interpretation',interpretation_accuracy:.875,high_severity_failures:1,created_at:'2026-09-29T10:00:00Z',
+      suite:'review_interpretation',interpretation_accuracy:.875,high_severity_failures:1,created_at:'2026-09-30T01:00:00Z',
       failure_details:[{scenario_id:'review_direct_reversal',category:'direct_reversal',severity:'high',expected:'update_state',observed:'preserve_evidence_only',failed_checks:['interpretation']}]
     },
     latest_ask_quality:{suite:'ask_quality',overall_pass_rate:1,ask_grounding:1,high_severity_failures:0}
@@ -102,9 +102,36 @@ assert.match(qualityInvestigation.report,/Product \+ Engineering/);
 const legacyQualityInvestigation=H.qualityInvestigation({project:H.PROJECTS[0],quality:severe});
 assert.match(legacyQualityInvestigation.report,/older run/);
 
+const staleRecordedQuality=H.normalizeQuality({
+  controlled_evals:{
+    latest_review_interpretation:{
+      suite:'review_interpretation',interpretation_accuracy:.923076923,high_severity_failures:1,total:13,created_at:'2026-09-29 19:26:17',
+      failure_details:[{scenario_id:'review_partial_question_answer',severity:'high',expected:'update_state',observed:'update_state_and_open_question',failed_checks:['interpretation']}]
+    },
+    latest_ask_quality:{
+      suite:'ask_quality',overall_pass_rate:.9,ask_grounding:1,authority_accuracy:.9,high_severity_failures:1,total:10,created_at:'2026-09-29 19:26:18',
+      failure_details:[{scenario_id:'ask_conflicting_evidence',severity:'high',expected:'preserve authority',observed:'Failed checks: authority',failed_checks:['authority']}]
+    }
+  }
+});
+assert.strictEqual(H.stateEvalContractStale(staleRecordedQuality),true);
+assert.strictEqual(H.qualityAttention(staleRecordedQuality).kind,'warn');
+const staleInvestigation=H.qualityInvestigation({project:H.PROJECTS[0],quality:staleRecordedQuality});
+assert.strictEqual(staleInvestigation.staleEvalContract,true);
+assert.match(staleInvestigation.report,/predates the current eval contract/);
+const staleHandoff=H.projectHandoff({
+  ...H.emptyProjectData(H.PROJECTS[0]),
+  fresh:true,
+  quality:staleRecordedQuality,
+  delivery:{sha:'abc',message:'Latest release',updatedAt:'2026-09-30T01:00:00Z',vercel:{kind:'good'}},
+  platform:null
+});
+assert.match(staleHandoff.handoffText,/Needs rerun/);
+assert.doesNotMatch(staleHandoff.handoffText,/A serious AI quality check failed/);
+
 assert.strictEqual(H.evalRunComplete(mediumOnly,{suite:'review',baselineReview:'2026-09-29 03:28:03',baselineAsk:null}),true);
 assert.strictEqual(H.evalRunComplete(mediumOnly,{suite:'all',baselineReview:'2026-09-29 03:28:03',baselineAsk:'2026-09-29 16:09:10'}),true);
-assert.strictEqual(H.evalRunComplete(mediumOnly,{suite:'all',baselineReview:'2026-09-29 17:56:46',baselineAsk:'2026-09-29 17:56:46'}),false);
+assert.strictEqual(H.evalRunComplete(mediumOnly,{suite:'all',baselineReview:'2026-09-30 00:45:46',baselineAsk:'2026-09-30 00:45:46'}),false);
 
 assert.strictEqual(
   H.deliveryAttention({vercel:{kind:'good'}}).kind,
@@ -209,8 +236,9 @@ assert.strictEqual(serialized.projectId,'state');
 assert.strictEqual(serialized.delivery.sha,'abc123');
 assert.strictEqual(Object.prototype.hasOwnProperty.call(serialized,'pending'),false);
 
-assert.strictEqual(H.changedSinceVisit({lastSeenSha:'old',delivery:{sha:'new'}}),true);
-assert.strictEqual(H.changedSinceVisit({lastSeenSha:'same',delivery:{sha:'same'}}),false);
+assert.strictEqual(H.changedSinceVisit({project:{quality:null},lastVisit:{deliverySha:'old',quality:{},analyticsAvailable:null,openPullRequests:0},delivery:{sha:'new'},platform:{},openPullRequests:[],checkedAt:'2026-09-30T01:00:00Z'}),true);
+assert.strictEqual(H.changedSinceVisit({project:{quality:null},lastVisit:{deliverySha:'same',quality:{},analyticsAvailable:null,openPullRequests:0},delivery:{sha:'same'},platform:{},openPullRequests:[],checkedAt:'2026-09-30T01:00:00Z'}),false);
+assert.match(H.freshnessMeta('2026-09-30T01:00:00Z','2026-09-30T01:00:00Z',9999).label,/Updated|May be stale/);
 assert.strictEqual(H.trendText(12.5),'↑ 12.5% vs previous 30 days');
 assert.strictEqual(H.trendText(-4),'↓ 4% vs previous 30 days');
 
@@ -244,9 +272,11 @@ assert.match(healthHtml,/Spot problems, understand what they mean for users/);
 assert.match(healthHtml,/How Project Health works/);
 assert.match(healthHtml,/Role & attribution/);
 assert.match(healthHtml,/id="projectCheckButton"/);
-assert.match(healthHtml,/id="drawerPrepareHandoffButton"/);
+assert.match(healthHtml,/id="drawerCopyHandoffButton"/);
+assert.match(healthHtml,/id="changesPanel"/);
 assert.match(healthHtml,/id="investigationDrawer"[^>]*hidden/);
 assert.match(healthHtml,/investigation-drawer\[hidden\].*display:none!important/);
+assert.match(healthHtml,/drawer-copy\[hidden\].*display:none!important/);
 assert.match(healthHtml,/id="projectActionMenu"/);
 assert.doesNotMatch(healthHtml,/id="prepareHandoffButton"/);
 assert.match(healthHtml,/productFocusPanel/);
@@ -301,7 +331,9 @@ assert.match(evalDetailsHtml,/Synthetic controlled scenarios/);
 const projectHealthSource=fs.readFileSync(require.resolve('../project-health.js'),'utf8');
 assert.match(projectHealthSource,/View eval details/);
 assert.match(projectHealthSource,/data-attention-action="ai-quality"/);
-assert.match(projectHealthSource,/drawerPrepareHandoffButton/);
+assert.match(projectHealthSource,/drawerCopyHandoffButton/);
+assert.match(projectHealthSource,/Changed since last visit/);
+assert.match(projectHealthSource,/Previous investigations/);
 assert.match(projectHealthSource,/AI checks are running/);
 assert.match(projectHealthSource,/checks automatically/);
 
