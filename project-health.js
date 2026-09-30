@@ -56,7 +56,15 @@
   function htmlRow(label,value){return '<div class="row"><span>'+esc(label)+'</span><span>'+value+'</span></div>';}
   function linkedRow(label,value,url){return htmlRow(label,githubLink(value,url));}
   function githubApi(path){return 'https://api.github.com'+path;}
-  function pageEnvironment(root){const host=String(root?.location?.hostname||'');return /(^|[-.])staging([-.]|$)|-git-/i.test(host)?'staging':'production';}
+  function pageEnvironment(root){
+    const host=String(root?.location?.hostname||'');
+    const params=new URLSearchParams(String(root?.location?.search||''));
+    const explicit=String(params.get('env')||'').toLowerCase();
+    if(explicit==='staging'||explicit==='production')return explicit;
+    if(/(^|[-.])staging([-.]|$)|-git-/i.test(host))return 'staging';
+    if(/\.vercel\.app$/i.test(host)&&host!=='ai-learning.vercel.app')return 'staging';
+    return 'production';
+  }
   function protectedControlsUrl(data,params={}){
     const url=new URL('https://ai-learning-git-staging-cairn10.vercel.app/project-health');
     if(data?.project?.id)url.searchParams.set('project',data.project.id);
