@@ -181,10 +181,6 @@ body.v88-dark .card,body.v88-dark .band{box-shadow:none}
   </div>
 </header>
 
-<div class="thesis">
-  <p><strong>The goal was not another engineering dashboard.</strong> It was a product-facing view that could turn scattered releases, evals, analytics, issues, and failures into a smaller set of decisions.</p>
-</div>
-
 <div class="draft-note">
   <strong>Draft branch note:</strong> the structure and narrative are real, but final screenshots, final investigation evidence, and any measurable outcomes still need to be captured from the live version before this case study is published.
 </div>
@@ -217,8 +213,8 @@ body.v88-dark .card,body.v88-dark .band{box-shadow:none}
   </div>
 </div>
 
-<h2>The dashboard is organized around attention, not telemetry</h2>
-<p>I kept coming back to the same rule: the top of the page should help a product person decide where to spend attention. The technical detail can still exist, but it should earn its way onto the screen.</p>
+<h2>From scattered signals to a decision</h2>
+<p>The overview is intentionally selective. It surfaces what needs attention, keeps release context nearby, and lets deeper technical detail stay one step down.</p>
 
 <div class="dashboard-frame" aria-label="Simplified Project Health dashboard model">
   <div class="dashboard-bar">
@@ -244,18 +240,15 @@ body.v88-dark .card,body.v88-dark .band{box-shadow:none}
 </div>
 <p class="small">This is a simplified case-study rendering, not a screenshot of the live dashboard. Final publication should use the real interface.</p>
 
-<h2>Five decisions shaped the product</h2>
+<h2>Three decisions shaped the product</h2>
 <div class="grid3">
   <div class="decision-card"><div class="num">1</div><h3>No composite health score</h3><p><strong>Product quality and technical health stay separate.</strong> One green number can hide the thing that actually needs a decision.</p></div>
-  <div class="decision-card"><div class="num">2</div><h3>Attention first</h3><p>The overview should surface meaningful exceptions before it surfaces every available metric.</p></div>
-  <div class="decision-card"><div class="num">3</div><h3>Freshness is part of trust</h3><p>Old analytics or stale checks should not look as authoritative as data that was just verified.</p></div>
-  <div class="decision-card"><div class="num">4</div><h3>Context stays contextual</h3><p>Links to GitHub, Vercel, evals, and the live product sit near the signals they explain instead of in one giant tools directory.</p></div>
-  <div class="decision-card"><div class="num">5</div><h3>AI investigates, humans decide</h3><p>The investigation workflow can gather evidence and explain uncertainty. It does not silently decide what should change.</p></div>
-  <div class="decision-card"><div class="num">6</div><h3>Start narrow</h3><p>The investigator begins with tools relevant to the failure signal and expands only when the first evidence is not enough.</p></div>
+  <div class="decision-card"><div class="num">2</div><h3>Attention before telemetry</h3><p>The overview surfaces meaningful exceptions first. Raw technical detail stays available without becoming the product.</p></div>
+  <div class="decision-card"><div class="num">3</div><h3>A failed eval starts a question</h3><p>A red check can mean the product failed, the eval expectation is wrong, or more evidence is needed.</p></div>
 </div>
 
-<h2>The harder question: what does a failed eval actually mean?</h2>
-<p>A red eval result is useful evidence, but it is not automatically the truth about the product. One of the most important operating decisions was to make room for three possibilities: the product failed, the eval expectation is wrong, or the evidence is still incomplete.</p>
+<h2>The real work starts after something turns red</h2>
+<p>The most useful test of Project Health came from State. Two high-impact AI quality checks failed at the same time, but they did not deserve the same response.</p>
 
 <div class="investigation">
   <div class="investigation-head">
@@ -279,43 +272,36 @@ body.v88-dark .card,body.v88-dark .band{box-shadow:none}
   </div>
 
   <div class="inv-section">
-    <div class="inv-label">Product lesson</div>
-    <p><strong>A failed check should open an investigation, not close the argument.</strong> The dashboard needs enough context to help distinguish product behavior from test-design problems.</p>
+    <div class="inv-label">What the dashboard needed to support</div>
+    <p><strong>One failure pointed toward a real behavior mismatch. The other raised a product question about the eval itself.</strong> That changed the job of the dashboard from "report failures" to "help me understand what kind of failure this is."</p>
   </div>
 </div>
 
-<h2>The investigator is deliberately bounded</h2>
-<p>I did not want a general-purpose agent roaming every system by default. The investigation model starts from the signal that triggered it, uses the smallest useful set of tools, and broadens only when the evidence is not enough.</p>
+<h2>Investigate starts narrow on purpose</h2>
+<p>The agent begins with the evidence most relevant to the signal and broadens only when that is not enough.</p>
 
 <div class="flow">
-  <div class="flow-row"><div class="flow-num">1</div><div class="flow-card"><strong>Signal appears</strong><p>A failed eval, deployment problem, missing analytics signal, or other meaningful exception.</p></div></div>
+  <div class="flow-row"><div class="flow-num">1</div><div class="flow-card"><strong>Start from the signal</strong><p>Use the failure type to choose the first evidence source instead of opening every tool.</p></div></div>
   <div class="flow-line"></div>
-  <div class="flow-row"><div class="flow-num">2</div><div class="flow-card"><strong>Choose relevant tools</strong><p>Start with the evidence source most likely to explain that specific problem.</p></div></div>
+  <div class="flow-row"><div class="flow-num">2</div><div class="flow-card"><strong>Gather the smallest useful evidence set</strong><p>Compare observed behavior with the product contract, release context, logs, issue history, or eval definition.</p></div></div>
   <div class="flow-line"></div>
-  <div class="flow-row"><div class="flow-num">3</div><div class="flow-card"><strong>Gather evidence</strong><p>Compare the observed behavior with the product contract, release context, logs, issue history, or eval definition.</p></div></div>
+  <div class="flow-row"><div class="flow-num">3</div><div class="flow-card"><strong>Expand only if needed</strong><p>Look further only when the first evidence cannot explain the signal.</p></div></div>
   <div class="flow-line"></div>
-  <div class="flow-row"><div class="flow-num">4</div><div class="flow-card"><strong>Expand only if needed</strong><p>If the first evidence cannot explain the signal, the investigator can look further instead of starting broad.</p></div></div>
-  <div class="flow-line"></div>
-  <div class="flow-row"><div class="flow-num">5</div><div class="flow-card"><strong>Synthesize a handoff</strong><p>Current assessment, evidence, impact, uncertainty, and the likely next step.</p></div></div>
-  <div class="flow-line"></div>
-  <div class="flow-row"><div class="flow-num">6</div><div class="flow-card"><strong>A human decides</strong><p>The product, the eval, or neither may need to change. The dashboard does not make that call on its own.</p></div></div>
+  <div class="flow-row"><div class="flow-num">4</div><div class="flow-card"><strong>Return a handoff, not a verdict</strong><p>Summarize the assessment, evidence, impact, uncertainty, and likely next step so a human can decide what changes.</p></div></div>
 </div>
 
 <h2>QA changed the product, not just the polish</h2>
 <p>The dashboard became more useful when testing exposed places where the product model itself was weak.</p>
 
 <div class="before-after">
-  <div class="ba-card"><div class="label">Observed</div><h3>Investigate looked like it did nothing</h3><p>A technically running action still felt broken when the interface gave no useful progress or result state.</p></div>
-  <div class="ba-card"><div class="label">Changed</div><h3>Investigation became a visible workflow</h3><p>The UI needed to make progress, findings, and next steps legible instead of treating the agent call as a black box.</p></div>
+  <div class="ba-card"><div class="label">Observed</div><h3>A failed eval looked definitive</h3><p>The system could surface a red result without helping distinguish product behavior from a questionable test expectation.</p></div>
+  <div class="ba-card"><div class="label">Changed</div><h3>Failure became an investigation state</h3><p>The workflow now needs to preserve the evidence and uncertainty behind the result instead of treating the score as the conclusion.</p></div>
 
   <div class="ba-card"><div class="label">Observed</div><h3>Investigation output was too dense</h3><p>More evidence did not automatically make the result more useful to a product person.</p></div>
-  <div class="ba-card"><div class="label">Changed</div><h3>The handoff got a clearer shape</h3><p>Assessment, what failed, supporting evidence, impact, uncertainty, and next action became the useful unit.</p></div>
+  <div class="ba-card"><div class="label">Changed</div><h3>The handoff got a clearer shape</h3><p>Assessment, evidence, impact, uncertainty, and next action became the useful unit.</p></div>
 
-  <div class="ba-card"><div class="label">Observed</div><h3>Analytics could look connected without being useful</h3><p>A successful integration state was not the same as having current data worth trusting.</p></div>
-  <div class="ba-card"><div class="label">Changed</div><h3>Availability and freshness became product signals</h3><p>The dashboard needed to communicate whether a metric was current, absent, or potentially stale.</p></div>
-
-  <div class="ba-card"><div class="label">Observed</div><h3>The page grew into one long scan</h3><p>As more signals were added, the dashboard started recreating the density it was supposed to reduce.</p></div>
-  <div class="ba-card"><div class="label">Changed</div><h3>Overview and detail were separated</h3><p>The information architecture moved toward a short attention-oriented overview with deeper project detail available when needed.</p></div>
+  <div class="ba-card"><div class="label">Observed</div><h3>The page became one long scan</h3><p>Adding more signals started recreating the density the dashboard was supposed to reduce.</p></div>
+  <div class="ba-card"><div class="label">Changed</div><h3>Overview and detail were separated</h3><p>The information architecture moved toward a short attention view with deeper project detail when needed.</p></div>
 </div>
 
 <h2>What I did, and what AI helped with</h2>
@@ -323,22 +309,18 @@ body.v88-dark .card,body.v88-dark .band{box-shadow:none}
   <div class="role-card">
     <span class="tag">My role</span>
     <ul>
-      <li>framed the product problem</li>
-      <li>decided what a product person needs to see</li>
-      <li>defined the attention and health concepts</li>
-      <li>made the UX and information-hierarchy decisions</li>
+      <li>framed the problem and chose which signals mattered</li>
+      <li>designed the attention-first information hierarchy</li>
       <li>bounded the investigation workflow</li>
       <li>reviewed quality failures and challenged eval assumptions</li>
-      <li>ran QA and directed iteration</li>
-      <li>made scope and release decisions</li>
+      <li>ran QA and directed product iteration</li>
     </ul>
   </div>
   <div class="role-card">
     <span class="tag">AI-assisted work</span>
     <ul>
       <li>implementation and code iteration</li>
-      <li>research support</li>
-      <li>test support</li>
+      <li>research and test support</li>
       <li>drafting and synthesis</li>
       <li>investigation assistance inside the bounded workflow</li>
     </ul>
@@ -347,8 +329,7 @@ body.v88-dark .card,body.v88-dark .band{box-shadow:none}
 
 <h2>What I am learning from it</h2>
 <div class="band">
-  <p style="font-size:17px;margin-top:0"><strong>A useful project dashboard does not need to know everything.</strong> It needs to make change visible, show which signals deserve trust, and make the next useful human action easier to see.</p>
-  <p class="small">The final case study should replace this provisional takeaway with evidence from sustained use if the live dashboard teaches something more specific.</p>
+  <p style="font-size:17px;margin-top:0"><strong>A useful project dashboard does not need to know everything.</strong> It needs to show what changed, which signals deserve trust, and where a human should look next.</p>
 </div>
 
 <div class="cta-row">
