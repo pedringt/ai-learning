@@ -882,28 +882,42 @@
       doc.getElementById('analyticsPanel').innerHTML='<h3>Usage</h3><div class="empty" style="margin-top:12px">'+esc(usageMessage)+'</div>';
     }
 
-    // Recent activity / lightweight history
-    const activityItems=[];
+    // Chronological activity timeline across releases, evals, investigations, and open work.
+    const timelineItems=[];
+    if(d?.updatedAt) timelineItems.push({when:d.updatedAt,title:'Production release',detail:commitTitle(d.message)+' · '+shortSha(d.sha)});
     if(activity?.available){
-      const dep=activity.deployments||{},recovered=(dep.recent_failures||[]).filter(item=>item.recovered);
-      activityItems.push({title:(dep.total||0)+' production releases in the last '+(activity.lookback_days||7)+' days',detail:(dep.failed||0)+' failed · '+recovered.length+' recovered'});
-      const runtimeCount=(activity.runtime?.issues||[]).reduce((total,item)=>total+Number(item.count||0),0);
-      activityItems.push({title:runtimeCount?'User-facing errors were observed':'No user-facing server errors found in the latest release',detail:runtimeCount?runtimeCount+' bounded error occurrences need context.':'The latest bounded runtime check is clear.'});
+      const dep=activity.deployments||{};
+      for(const failure of dep.recent_failures||[]){
+        if(failure.created_at) timelineItems.push({when:failure.created_at,title:'Deployment failed',detail:failure.message||'Production deployment failed'});
+        if(failure.recovered&&failure.recovered_at) timelineItems.push({when:failure.recovered_at,title:'Deployment recovered',detail:'A later release restored a healthy production state.'});
+      }
+      for(const issue of activity.runtime?.issues||[]){
+        if(issue.last_seen) timelineItems.push({when:issue.last_seen,title:'Runtime signal',detail:(issue.path||'Server route')+(issue.count?' · '+issue.count+' occurrences':'')});
+      }
     }
     const prs=Array.isArray(data.openPullRequests)?data.openPullRequests:[];
-    if(prs.length) activityItems.push({title:prs.length+' '+(prs.length===1?'change is':'changes are')+' still being worked on',detail:prs.slice(0,2).map(pr=>String(pr.title||'Untitled')).join(' · ')});
-    if(p.id==='state'&&Array.isArray(q?.recent)&&q.recent.length){
-      const item=q.recent[0];
-      activityItems.push({title:evalSuiteLabel(item)+' was checked',detail:item.created_at?fmtDate(item.created_at):'Latest aggregate result recorded'});
-    }else if(p.id==='tastemake'&&externalQ){
-      activityItems.push({title:'Recommendation quality checks '+(externalQ.ci?.conclusion==='success'?'passed':'updated'),detail:externalQ.ci?.updated_at?fmtDate(externalQ.ci.updated_at):'Latest run recorded'});
-    }else if(p.id==='narc'&&externalQ?.recorded?.full_playtest_pending){
-      activityItems.push({title:'Full first-run playtest is still open',detail:'Automated checks are not a substitute for the human playthrough.'});
+    for(const pr of prs.slice(0,4)){
+      const when=pr.updated_at||pr.created_at;
+      if(when) timelineItems.push({when,title:'Open PR · '+(pr.number?'#'+pr.number:'work in progress'),detail:String(pr.title||'Untitled')});
     }
-    const activityHtml=activityItems.length?'<div class="activity-list">'+activityItems.slice(0,5).map(item=>'<div class="activity-item"><strong>'+esc(item.title)+'</strong><span>'+esc(item.detail)+'</span></div>').join('')+'</div>':'<div class="empty">No recent activity is available yet.</div>';
-    doc.getElementById('historyPanel').innerHTML='<h3>Activity</h3><p class="panel-copy">Meaningful releases, quality checks, work in progress, and user-facing signals.</p><div style="margin-top:12px">'+activityHtml+'</div>';
-    const overviewActivity=activityItems.length?'<div class="activity-list">'+activityItems.slice(0,3).map(item=>'<div class="activity-item"><strong>'+esc(item.title)+'</strong><span>'+esc(item.detail)+'</span></div>').join('')+'</div>':'<div class="empty">No recent activity is available yet.</div>';
-    doc.getElementById('overviewActivityPanel').innerHTML='<div class="panel-title-row"><h3>Recent activity</h3><button class="button small" type="button" data-tab-target="activity">View all activity</button></div><div style="margin-top:12px">'+overviewActivity+'</div>';
+    if(p.id==='state'&&Array.isArray(q?.recent)){
+      for(const item of q.recent.slice(0,6)){
+        if(item.created_at) timelineItems.push({when:item.created_at,title:evalSuiteLabel(item)+' checked',detail:(evalScore(item)==null?'Score unavailable':percent(evalScore(item)))+' · '+Number(item.high_severity_failures||0)+' high-impact failures'});
+      }
+    }else if(p.id==='tastemake'&&externalQ?.ci?.updated_at){
+      timelineItems.push({when:externalQ.ci.updated_at,title:'Recommendation quality checks updated',detail:externalQ.ci.conclusion==='success'?'Automated recommendation checks passed.':'Latest check result recorded.'});
+    }else if(p.id==='narc'&&externalQ?.recorded?.updated_at){
+      timelineItems.push({when:externalQ.recorded.updated_at,title:'Game quality record updated',detail:externalQ.recorded.full_playtest_pending?'Full first-run playtest still open.':'Latest recorded quality state.'});
+    }
+    for(const item of data.investigationHistory||[]){
+      timelineItems.push({when:item.observedAt,title:'Investigation · '+(item.trigger||'Project check'),detail:(item.summary||'Investigation completed')+(item.resolvedAt?' · later resolved':'')});
+      if(item.resolvedAt) timelineItems.push({when:item.resolvedAt,title:'Investigated issue resolved',detail:item.trigger||'Project investigation'});
+    }
+    timelineItems.sort((a,b)=>(dateMs(b.when)||0)-(dateMs(a.when)||0));
+    const timelineHtml=timelineItems.length?'<div class="timeline">'+timelineItems.slice(0,18).map(item=>'<div class="timeline-item"><span class="timeline-time">'+esc(fmtDate(item.when))+'</span><span class="timeline-marker"></span><div class="timeline-content"><strong>'+esc(item.title)+'</strong><span>'+esc(item.detail||'')+'</span></div></div>').join('')+'</div>':'<div class="empty">No recent activity is available yet.</div>';
+    doc.getElementById('historyPanel').innerHTML='<h3>Activity</h3><p class="panel-copy">A chronological operating history across releases, quality checks, investigations, and recovery.</p><div style="margin-top:12px">'+timelineHtml+'</div>';
+    const overviewActivity=timelineItems.length?'<div class="activity-list">'+timelineItems.slice(0,3).map(item=>'<div class="activity-item"><strong>'+esc(item.title)+'</strong><span>'+esc(relativeAge(item.when))+' · '+esc(item.detail||'')+'</span></div>').join('')+'</div>':'<div class="empty">No recent activity is available yet.</div>';
+    doc.getElementById('overviewActivityPanel').innerHTML='<div class="panel-title-row"><h3>Recent activity</h3><button class="button small" type="button" data-tab-target="activity">View timeline</button></div><div style="margin-top:12px">'+overviewActivity+'</div>';
 
     // Delivery: product summary plus always-visible grouped evidence.
     const investigationBusy=!!data.investigation?.loading;
