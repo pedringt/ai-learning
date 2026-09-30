@@ -190,7 +190,7 @@
   function projectStatus(data){
     const att=overallAttention(data);
     if(att.kind==='unknown') return {key:'checking',label:'Checking',kind:'unknown'};
-    if(att.kind==='bad') return {key:'action',label:'Action',kind:'bad'};
+    if(att.kind==='bad') return {key:'action',label:'Needs attention',kind:'bad'};
     if(att.kind==='warn') return {key:'watch',label:'Watch',kind:'warn'};
     return {key:'healthy',label:'Healthy',kind:'good'};
   }
@@ -629,6 +629,21 @@
       '<div class="focus-block"><strong>Next review</strong><p>'+esc(p.nextReview)+'</p></div>'+
       '</div>';
 
+    const overviewQuality=p.quality==='state'?qualityAttention(q):externalQualityAttention(externalQ);
+    const overviewDelivery=deliveryAttention(d);
+    const overviewInfra=infrastructureAttention(data);
+    const aSummary=platform?.analytics;
+    const statusLabel=kind=>kind==='bad'?'Needs attention':kind==='warn'?'Watch':kind==='good'?'Healthy':'Unknown';
+    const healthRows=[
+      {label:'AI quality',kind:overviewQuality?.kind||'unknown',detail:overviewQuality?.title||'Quality status unavailable',tab:'ai-quality'},
+      {label:'Delivery',kind:overviewDelivery?.kind||'unknown',detail:overviewDelivery?.title||'Delivery status unavailable',tab:'delivery'},
+      {label:'Infrastructure',kind:overviewInfra?.kind||'good',detail:overviewInfra?.title||'Production services healthy',tab:'infra'},
+      {label:'Usage',kind:pending.has('Analytics')?'unknown':aSummary?.available?'good':'unknown',detail:pending.has('Analytics')?'Checking usage…':aSummary?.available?((aSummary.visitors??0)+' visitors · '+(aSummary.pageviews??0)+' page views · 30d'):(aSummary?.configured?'Connected, but comparison data is not available yet':'Usage analytics are not connected'),tab:'activity'}
+    ];
+    const overviewGaps=setupGaps(data);
+    doc.getElementById('overviewHealthPanel').innerHTML='<div class="panel-title-row"><h3>Project health</h3>'+(overviewGaps.length?'<span class="readiness-pill watch">'+esc(overviewGaps.length)+' coverage '+(overviewGaps.length===1?'gap':'gaps')+'</span>':'')+'</div>'+
+      '<div class="overview-health" style="margin-top:8px">'+healthRows.map(item=>'<div class="overview-health-row"><div><strong>'+esc(item.label)+' · '+esc(statusLabel(item.kind))+'</strong><span>'+esc(item.detail)+'</span></div><button type="button" data-tab-target="'+esc(item.tab)+'">View</button></div>').join('')+'</div>';
+
     // Product quality / evals
     let qualityHtml='';
     if(p.quality==='state'){
@@ -732,7 +747,9 @@
       activityItems.push({title:'Full first-run playtest is still open',detail:'Automated checks are not a substitute for the human playthrough.'});
     }
     const activityHtml=activityItems.length?'<div class="activity-list">'+activityItems.slice(0,5).map(item=>'<div class="activity-item"><strong>'+esc(item.title)+'</strong><span>'+esc(item.detail)+'</span></div>').join('')+'</div>':'<div class="empty">No recent activity is available yet.</div>';
-    doc.getElementById('historyPanel').innerHTML='<h3>Recent activity</h3><div style="margin-top:12px">'+activityHtml+'</div>';
+    doc.getElementById('historyPanel').innerHTML='<h3>Activity</h3><p class="panel-copy">Meaningful releases, quality checks, work in progress, and user-facing signals.</p><div style="margin-top:12px">'+activityHtml+'</div>';
+    const overviewActivity=activityItems.length?'<div class="activity-list">'+activityItems.slice(0,3).map(item=>'<div class="activity-item"><strong>'+esc(item.title)+'</strong><span>'+esc(item.detail)+'</span></div>').join('')+'</div>':'<div class="empty">No recent activity is available yet.</div>';
+    doc.getElementById('overviewActivityPanel').innerHTML='<div class="panel-title-row"><h3>Recent activity</h3><button class="button small" type="button" data-tab-target="activity">View all activity</button></div><div style="margin-top:12px">'+overviewActivity+'</div>';
 
     // Delivery: product summary plus always-visible grouped evidence.
     const investigationBusy=!!data.investigation?.loading;
@@ -742,7 +759,7 @@
     const deliveryClass=deliveryKind==='bad'?'bad':deliveryKind==='warn'?'warn':'';
     const environmentBlock=(label,item)=>{
       if(!item)return'<div class="delivery-environment"><div class="delivery-environment-head"><strong>'+esc(label)+'</strong><span>Unavailable</span></div></div>';
-      const status=item.vercel?.kind==='good'?'Healthy':item.vercel?.kind==='bad'?'Needs action':item.vercel?.kind==='warn'?'In progress':'Unknown';
+      const status=item.vercel?.kind==='good'?'Healthy':item.vercel?.kind==='bad'?'Needs attention':item.vercel?.kind==='warn'?'Watch':'Unknown';
       return '<div class="delivery-environment"><div class="delivery-environment-head"><div><strong>'+esc(label)+'</strong><span class="branch-label">'+esc(item.branch)+'</span></div><span class="delivery-status '+esc(item.vercel?.kind||'unknown')+'">'+esc(status)+'</span></div>'+
         '<a class="delivery-release" href="'+esc(changeUrl(p.repo,item)||repoUrl(p.repo))+'" target="_blank" rel="noopener noreferrer">'+esc(commitTitle(item.message))+'</a>'+
         '<div class="delivery-meta"><span>Updated '+esc(fmtDate(item.updatedAt))+'</span><span>'+githubLink(shortSha(item.sha),githubCommitUrl(p.repo,item.sha))+'</span><span>'+esc(item.vercel?.label||'Deployment status unavailable')+'</span></div></div>';
@@ -1081,10 +1098,7 @@
 
     function renderReviewInbox(){
       const items=currentIncidents(),reviewed=reviewedState();
-      if(!items.length){
-        reviewInbox.innerHTML='<section class="panel"><h3>Incidents</h3><div class="review-empty">No live incidents need attention right now.</div></section>';
-        return;
-      }
+      if(!items.length){reviewInbox.innerHTML='';return;}
       const rows=items.slice(0,6).map(item=>{
         const source=item.url?'<a class="button small" href="'+esc(item.url)+'" target="_blank" rel="noopener noreferrer">View evidence</a>':'';
         const isReviewed=!!reviewed[item.key];
@@ -1095,13 +1109,12 @@
     function renderSummary(){
       const fresh=state.filter(item=>item?.fresh);
       const incidentCount=currentIncidents().length;
-      const openCount=openProductItems().length;
-      const changedCount=fresh.filter(changedSinceVisit).length;
+      const attentionCount=fresh.filter(item=>['action','watch'].includes(projectStatus(item).key)).length;
       const checked=fresh.map(item=>item.checkedAt).filter(Boolean).sort().pop();
-      summary.innerHTML='<span class="summary-chip incident"><strong>'+incidentCount+'</strong> '+(incidentCount===1?'incident':'incidents')+'</span>'+
-        '<span class="summary-chip open"><strong>'+openCount+'</strong> open '+(openCount===1?'item':'items')+'</span>'+
-        '<span class="summary-chip"><strong>'+changedCount+'</strong> '+(changedCount===1?'project released':'projects released')+' since last visit</span>'+
-        '<span class="summary-chip"><strong>'+esc(checked?relativeAge(checked):'checking')+'</strong> last checked</span>';
+      summary.innerHTML='<span class="summary-chip"><strong>'+PROJECTS.length+'</strong> projects</span>'+
+        '<span class="summary-chip open"><strong>'+attentionCount+'</strong> need attention</span>'+
+        '<span class="summary-chip incident"><strong>'+incidentCount+'</strong> active '+(incidentCount===1?'incident':'incidents')+'</span>'+
+        '<span class="summary-chip"><strong>'+esc(checked?relativeAge(checked):'checking')+'</strong> last updated</span>';
     }
 
     function renderNow(){
