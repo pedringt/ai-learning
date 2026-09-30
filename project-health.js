@@ -352,6 +352,28 @@
     }catch(_){}
   }
 
+  function investigationHistoryKey(root,projectId){return 'project-health-investigations:'+pageEnvironment(root)+':'+projectId;}
+  function loadInvestigationHistory(root,projectId){
+    try{
+      const rows=JSON.parse(root.localStorage?.getItem(investigationHistoryKey(root,projectId))||'[]');
+      return Array.isArray(rows)?rows.slice(0,20):[];
+    }catch(_){return[];}
+  }
+  function saveInvestigationHistory(root,projectId,rows){
+    try{root.localStorage?.setItem(investigationHistoryKey(root,projectId),JSON.stringify((rows||[]).slice(0,20)));}catch(_){}
+  }
+  function investigationHistorySummary(investigation){
+    if(!investigation)return'Investigation completed';
+    if(investigation.staleEvalContract)return'Quality result needs a fresh eval run';
+    if(investigation.quickCheck)return investigation.title||'Quick project check completed';
+    if(investigation.error)return 'Investigation failed: '+investigation.error;
+    if(investigation.report){
+      const first=String(investigation.report).split(/\n+/).map(line=>line.trim()).find(line=>line&&!/^(Current assessment|What failed|Why this matters|Recommended next action)$/i.test(line));
+      return first||'Investigation completed';
+    }
+    return'Investigation completed';
+  }
+
   function makeRunner(data,onUpdate){
     const notify=()=>{if(typeof onUpdate==='function')onUpdate(data);};
     return (label,promise,apply)=>{
