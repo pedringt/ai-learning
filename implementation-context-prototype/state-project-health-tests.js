@@ -335,6 +335,16 @@ assert.strictEqual(quick.title,'No immediate issue found');
 assert.ok(quick.checks.some(item=>item.label==='Production deployment'&&item.value==='Healthy'));
 assert.ok(quick.checks.some(item=>item.label==='Production backend'&&item.value==='Healthy'));
 
+const quickHandoff=H.projectHandoff({
+  ...H.emptyProjectData(H.PROJECTS[0]),
+  fresh:true,
+  quality:healthy,
+  delivery:{sha:'abc',message:'State release',updatedAt:'2026-09-30T01:00:00Z',vercel:{kind:'good'}},
+  investigation:quick
+});
+assert.match(quickHandoff.handoffText,/No immediate issue found/);
+assert.match(quickHandoff.handoffText,/Production deployment: Healthy/);
+
 const evalDetailsHtml=fs.readFileSync(require.resolve('../state-evals.html'),'utf8');
 assert.match(evalDetailsHtml,/State eval details/);
 assert.match(evalDetailsHtml,/23 controlled scenarios/);
