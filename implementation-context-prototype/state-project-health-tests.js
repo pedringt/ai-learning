@@ -533,3 +533,5 @@ assert.match(workflowText,/record_environment:/);
 assert.match(workflowText,/run_quality_evals\.py/);
 
 console.log('Project Health shell tests passed');
+
+// PR readiness refresh: evidence-first Project Health actions.
