@@ -812,13 +812,14 @@
         const total=runs.reduce((n,item)=>n+Number(item?.total||0),0);
         const severe=runs.reduce((n,item)=>n+Number(item?.high_severity_failures||0),0);
         const qa=qualityAttention(q);
+        const staleContract=stateEvalContractStale(q);
         const cards=[];
         if(review?.interpretation_accuracy!=null) cards.push(stateEvalCard('Understood updates correctly',percent(review.interpretation_accuracy),'Did State interpret the project update the way the product expected?',evalTrend(q.recent,'review_interpretation')));
         if(ask?.ask_grounding!=null) cards.push(stateEvalCard('Answers stayed supported by evidence',percent(ask.ask_grounding),'Did answers stick to known project information instead of filling gaps?',evalTrend(q.recent,'ask_quality')));
         if(ask?.authority_accuracy!=null) cards.push(stateEvalCard('Respected decision authority',percent(ask.authority_accuracy),'Did State keep proposed changes separate from approved project truth?',''));
         if(ask?.uncertainty_accuracy!=null) cards.push(stateEvalCard('Handled uncertainty clearly',percent(ask.uncertainty_accuracy),'Did State say when the available evidence was not enough?',''));
         qualityHtml='<h3>Product quality · AI checks</h3>'+
-          '<div class="eval-overview"><div><strong>'+esc(qa.title)+'</strong><span>'+(latestDate?'Last checked '+esc(fmtDate(latestDate))+' · ':'')+esc(total||'—')+' scenarios · '+esc(severe)+' high-impact failures</span></div></div>'+
+          '<div class="eval-overview"><div><strong>'+esc(qa.title)+'</strong><span>'+(latestDate?'Last checked '+esc(fmtDate(latestDate))+' · ':'')+(staleContract?'Recorded under the previous eval contract · rerun required':esc(total||'—')+' scenarios · '+esc(severe)+' high-impact failures')+'</span></div></div>'+
           '<div class="eval-grid">'+cards.join('')+'</div>'+stateEvalHistory(q);
       }
       qualityHtml+='<p class="footnote"><a href="/state-evals">View eval details →</a></p>';
