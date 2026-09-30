@@ -281,7 +281,7 @@
       project,
       delivery:s.delivery||null,
       lastSeenSha:s.lastSeenSha||s.delivery?.sha||null,
-      lastVisit:visitBaseline(s),
+      lastVisit:s.lastVisit||visitBaseline(s),
       staging:s.staging||null,
       quality:s.quality||null,
       externalQuality:s.externalQuality||null,
@@ -342,7 +342,7 @@
       const raw=root.localStorage?.getItem(snapshotKey(root));if(!raw)return null;
       const parsed=JSON.parse(raw);
       if(!parsed?.savedAt||!Array.isArray(parsed.projects))return null;
-      if(Date.now()-new Date(parsed.savedAt).getTime()>24*60*60*1000)return null;
+      if(Date.now()-new Date(parsed.savedAt).getTime()>30*24*60*60*1000)return null;
       return parsed;
     }catch(_){return null;}
   }
@@ -457,7 +457,8 @@
   }
   function visitBaseline(saved){
     if(!saved)return null;
-    const pseudo={project:{quality:saved.projectId==='state'?'state':null},quality:saved.quality,externalQuality:saved.externalQuality};
+    const projectId=saved.projectId||saved.project?.id||null;
+    const pseudo={project:{quality:projectId==='state'?'state':null},quality:saved.quality,externalQuality:saved.externalQuality};
     return {
       savedAt:saved.snapshotAt||saved.checkedAt||null,
       deliverySha:saved.delivery?.sha||null,
