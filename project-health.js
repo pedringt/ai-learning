@@ -989,7 +989,7 @@
         ['Neon',p.links?.neon],
         [p.id==='state'?'Full AI eval details':p.id==='tastemake'?'Recommendation checks':'Game checks',p.links?.quality]
       ].filter(item=>item[1]);
-      linksMenu.innerHTML='<button type="button" data-open-systems>Systems &amp; connections</button>'+links.map(([label,url])=>'<a href="'+esc(url)+'" target="_blank" rel="noopener noreferrer">'+esc(label)+'</a>').join('');
+      linksMenu.innerHTML='<button type="button" data-open-systems>Systems &amp; connections</button><button type="button" data-open-about>About Project Health</button>'+links.map(([label,url])=>'<a href="'+esc(url)+'" target="_blank" rel="noopener noreferrer">'+esc(label)+'</a>').join('');
     }
     const projectCheckButton=doc.getElementById('projectCheckButton');
     const headerRunChecksButton=doc.getElementById('headerRunChecksButton');
@@ -1215,7 +1215,8 @@
           '<div class="trend '+visitorClass+'"><strong>Visitors:</strong> '+esc(visitorTrend)+'</div>'+
           '<div class="trend '+pageClass+'"><strong>Page views:</strong> '+esc(pageTrend)+'</div>'+
           '</div>';
-      doc.getElementById('analyticsPanel').innerHTML='<h3>Site analytics</h3><div class="metrics" style="margin-top:12px">'+metric(a.visitors??'—','Visitors · 30d')+metric(a.pageviews??'—','Page views · 30d')+'</div>'+trends;
+      const analyticsUrl=p.links?.vercel?(p.links.vercel.replace(/\/$/,'')+'/analytics'):null;
+      doc.getElementById('analyticsPanel').innerHTML='<div class="panel-title-row"><h3>Site analytics</h3>'+(analyticsUrl?'<a class="site-analytics-link" href="'+esc(analyticsUrl)+'" target="_blank" rel="noopener noreferrer">Open analytics ↗</a>':'')+'</div><div class="metrics" style="margin-top:12px">'+metric(a.visitors??'—','Visitors · 30d')+metric(a.pageviews??'—','Page views · 30d')+'</div>'+trends;
     }else{
       analyticsPanel.innerHTML='';
     }
@@ -1254,8 +1255,11 @@
       '</div>'+
       '<div class="delivery-environments">'+(rawPreviewFailure?'<div class="delivery-environment"><div class="delivery-environment-head"><div><strong>Production release</strong></div><span class="delivery-status good">Healthy</span></div><div class="delivery-meta"><span>The failed Vercel status on the referenced commit was a preview or superseded attempt, not an active production release failure.</span>'+(p.links?.vercel?'<span>'+githubLink('Open in Vercel ↗',p.links.vercel)+'</span>':'')+'</div></div>':environmentBlock('Latest production release attempt',d))+(s?environmentBlock('Staging release',s):'')+'</div>'+
       '<div class="quality-actions">'+prodInvestigate+checkInvestigate+'</div>';
-    doc.getElementById('deliveryPanel').innerHTML=deliveryHealthy
-      ?'<details class="compact-delivery"><summary><div class="compact-delivery-summary"><strong>Delivery</strong><span>Production &amp; release pipeline healthy · View details</span></div></summary>'+deliveryDetails+'</details>'
+    const deliveryPanel=doc.getElementById('deliveryPanel');
+    deliveryPanel.classList.toggle('on-demand-panel',deliveryHealthy);
+    if(!deliveryHealthy)deliveryPanel.classList.remove('revealed');
+    deliveryPanel.innerHTML=deliveryHealthy
+      ?'<div class="panel-title-row"><h3>Delivery details</h3><span class="readiness-pill ready">Healthy</span></div>'+deliveryDetails
       :'<div class="panel-title-row"><h3>Delivery</h3><span class="readiness-pill '+esc(readiness.label.toLowerCase())+'">Release '+esc(readiness.label)+'</span></div>'+deliveryDetails;
 
     // Infrastructure details live one layer down under Systems & connections.
@@ -1822,15 +1826,23 @@
       const button=event.target.closest?.('[data-tab]');
       if(button)setActiveTab(button.dataset.tab);
     });
+    function openInfoDialog(dialog){
+      if(!dialog)return;
+      const menu=doc.getElementById('projectActionMenu');
+      if(menu)menu.open=false;
+      if(typeof dialog.showModal==='function'&&!dialog.open)dialog.showModal();
+      else dialog.setAttribute('open','');
+    }
     if(projectDetail)projectDetail.addEventListener('click',event=>{
       const systemsButton=event.target.closest?.('[data-open-systems]');
       if(systemsButton){
         setActiveTab('overview');
-        const systems=doc.getElementById('systemsDetails');
-        if(systems)systems.open=true;
-        const menu=doc.getElementById('projectActionMenu');
-        if(menu)menu.open=false;
-        root.setTimeout(()=>systems?.scrollIntoView?.({behavior:'smooth',block:'start'}),0);
+        openInfoDialog(doc.getElementById('systemsDetails'));
+        return;
+      }
+      const aboutButton=event.target.closest?.('[data-open-about]');
+      if(aboutButton){
+        openInfoDialog(doc.getElementById('aboutProjectHealth'));
         return;
       }
       const target=event.target.closest?.('[data-tab-target],[data-section-target]');
@@ -1839,8 +1851,17 @@
       setActiveTab(tab);
       if(target.dataset.sectionTarget){
         const section=doc.getElementById(target.dataset.sectionTarget);
-        if(section?.tagName==='DETAILS')section.open=true;
+        if(section?.tagName==='DIALOG'){openInfoDialog(section);return;}
+        if(section?.classList?.contains('on-demand-panel'))section.classList.add('revealed');
         root.setTimeout(()=>section?.scrollIntoView?.({behavior:'smooth',block:'start'}),0);
+      }
+    });
+    doc.addEventListener('click',event=>{
+      const close=event.target.closest?.('[data-close-info]');
+      if(close){
+        const dialog=close.closest?.('dialog');
+        if(dialog?.open&&typeof dialog.close==='function')dialog.close();
+        else dialog?.removeAttribute?.('open');
       }
     });
 
