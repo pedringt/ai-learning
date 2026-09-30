@@ -179,6 +179,40 @@ assert.strictEqual(
   H.infrastructureAttention({render:{configured:true,environments:{production:{ok:false},staging:{ok:true}}}}).kind,
   'bad'
 );
+assert.strictEqual(H.productionRuntime({delivery:{vercel:{kind:'bad'}}}).kind,'available');
+assert.match(H.productionRuntime({delivery:{vercel:{kind:'bad'}}}).detail,/previous production version remains live/i);
+assert.strictEqual(H.productionRuntime({platform:{render:{environments:{production:{ok:true}}}},delivery:{vercel:{kind:'bad'}}}).kind,'good');
+assert.match(H.operationalNextDecision({
+  project:H.PROJECTS[0],
+  delivery:{vercel:{kind:'bad'}},
+  quality:null,
+  externalQuality:null,
+  activity:{available:false},
+  platform:null,
+  openPullRequests:[]
+}),/retry the failed release|supersede/i);
+const failureClass=H.qualityFailureClassSummary(H.normalizeQuality({controlled_evals:{
+  latest_review_interpretation:{high_severity_failures:2,failure_details:[
+    {category:'authority_conflict',severity:'high'},
+    {category:'partial_question_answer',severity:'high'}
+  ]},
+  latest_ask_quality:{high_severity_failures:1,failure_details:[{category:'conflict',severity:'high'}]}
+}}));
+assert.strictEqual(failureClass.count,3);
+assert.ok(failureClass.classes.includes('authority conflict'));
+const groupedTimeline=H.activityTimelineItems({
+  project:{id:'state'},
+  delivery:null,
+  quality:null,
+  externalQuality:null,
+  activity:{available:true,deployments:{recent_failures:[
+    {id:'a',created_at:100,recovered:true,recovered_at:300,message:'A failed'},
+    {id:'b',created_at:200,recovered:true,recovered_at:300,message:'B failed'}
+  ]},runtime:{issues:[]}},
+  openPullRequests:[],
+  investigationHistory:[]
+});
+assert.ok(groupedTimeline.some(item=>item.title==='Deployment recovered ×2'&&item.type==='Incident / recovery'));
 assert.strictEqual(
   H.overallAttention({delivery:{vercel:{kind:'good'}},quality:severe,externalQuality:null,platform:null}).kind,
   'bad'
@@ -290,6 +324,12 @@ assert.strictEqual(reviewItems[1].resolved,true);
 assert.strictEqual(reviewItems[0].owner,'Engineering');
 assert.match(reviewItems[0].impact,/Users may be seeing errors/);
 assert.strictEqual(reviewItems[1].owner,'No action');
+const activeDeployItem=H.activityReviewItems({
+  project:{id:'state',name:'State'},
+  activity:{available:true,deployments:{recent_failures:[{id:'dpl_live',message:'Build failed',created_at:500,recovered:false}]},runtime:{issues:[]}}
+})[0];
+assert.match(activeDeployItem.title,/Release blocked/);
+assert.match(activeDeployItem.impact,/previous production version/i);
 
 const safeQuality=H.safeExternalQualitySnapshot({
   project:'tastemake',
@@ -312,6 +352,10 @@ assert.match(healthHtml,/id="investigationDrawer"[^>]*hidden/);
 assert.match(healthHtml,/investigation-drawer\[hidden\].*display:none!important/);
 assert.match(healthHtml,/drawer-copy\[hidden\].*display:none!important/);
 assert.match(healthHtml,/id="projectActionMenu"/);
+assert.match(healthHtml,/Project links ▾/);
+assert.doesNotMatch(healthHtml,/>More<\/summary>/);
+assert.match(healthHtml,/delivery-split/);
+assert.match(healthHtml,/activity-type/);
 assert.doesNotMatch(healthHtml,/id="prepareHandoffButton"/);
 assert.match(healthHtml,/productFocusPanel/);
 assert.doesNotMatch(healthHtml,/See a bounded investigation/);
@@ -343,6 +387,7 @@ const handoff=H.projectHandoff({
 assert.strictEqual(handoff.handoff,true);
 assert.match(handoff.handoffText,/State project handoff/);
 assert.match(handoff.handoffText,/Next decision/);
+assert.match(handoff.handoffText,/No immediate product decision|Rerun the AI quality checks|Review the quality miss|Review the high-impact failure class/);
 const narcWithNoAi={...H.emptyProjectData(H.PROJECTS[2]),fresh:true,platform:{analytics:{configured:true,available:true},aiTelemetry:{configured:false,not_applicable:true}}};
 assert.ok(!H.setupGaps(narcWithNoAi).some(item=>/^AI /.test(item.label)));
 
@@ -401,6 +446,12 @@ assert.match(projectHealthSource,/data-summary-filter/);
 assert.match(projectHealthSource,/unreviewedIncidents/);
 assert.doesNotMatch(projectHealthSource,/Recent check details/);
 assert.match(projectHealthSource,/stateEvalBehaviorStale/);
+assert.match(projectHealthSource,/activityTimelineItems/);
+assert.match(projectHealthSource,/Deployment recovered.*×/);
+assert.match(projectHealthSource,/No previous 30-day period to compare yet/);
+assert.match(projectHealthSource,/Release pipeline/);
+assert.match(projectHealthSource,/Data available/);
+assert.match(projectHealthSource,/operationalNextDecision/);
 
 const workflowText=fs.readFileSync(require.resolve('../.github/workflows/question-review-live.yml'),'utf8');
 assert.match(workflowText,/suite:/);
