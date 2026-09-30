@@ -1019,7 +1019,7 @@
       '</div><div class="focus-followup"><strong>'+(reviewIsDependency?'Waiting on':'Next review')+'</strong><span>'+esc(p.nextReview)+'</span></div>';
 
     const overviewQuality=p.quality==='state'?qualityAttention(q):externalQualityAttention(externalQ);
-    const overviewDelivery=deliveryAttention(d);
+    const overviewDelivery=deliveryAttentionForData(data);
     const overviewInfra=infrastructureAttention(platform);
     const runtimeStatus=productionRuntime(data);
     const aSummary=platform?.analytics;
@@ -1031,7 +1031,7 @@
       {label:p.qualityLabel||'Quality',kind:overviewQuality?.kind||'unknown',detail:overviewQuality?.title||'Quality status unavailable',tab:'ai-quality',fresh:freshnessMeta(qualityTime,data.checkedAt,72)},
       {label:'Production',kind:runtimeStatus.kind,status:runtimeStatus.label,detail:runtimeStatus.detail,tab:'overview',section:'deliveryPanel',fresh:freshnessMeta(data.detailCheckedAt||d?.updatedAt||data.checkedAt,data.checkedAt,24)},
       {label:'Release pipeline',kind:overviewDelivery?.kind||'unknown',detail:overviewDelivery?.title||'Release status unavailable',tab:'overview',section:'deliveryPanel',fresh:freshnessMeta(d?.updatedAt,data.checkedAt,24)},
-      {label:'Infrastructure',kind:overviewInfra?.kind||'good',detail:overviewInfra?.title||'Production services healthy',tab:'overview',section:'infrastructurePanel',fresh:freshnessMeta(data.detailCheckedAt||data.checkedAt,data.checkedAt,6)},
+      ...(overviewInfra&&['bad','warn'].includes(overviewInfra.kind)?[{label:'Infrastructure',kind:overviewInfra.kind,detail:overviewInfra.title,tab:'overview',section:'systemsDetails',fresh:freshnessMeta(data.detailCheckedAt||data.checkedAt,data.checkedAt,6)}]:[]),
       {label:'Usage',kind:pending.has('Analytics')?'unknown':aSummary?.available?'available':'unknown',status:aSummary?.available?'Data available':null,detail:pending.has('Analytics')?'Checking usage…':aSummary?.available?((aSummary.visitors??0)+' visitors · '+(aSummary.pageviews??0)+' page views · 30d'):(aSummary?.configured?'Connected, but comparison data is not available yet':'Usage analytics are not connected'),tab:'activity',fresh:freshnessMeta(data.detailCheckedAt||data.checkedAt,data.checkedAt,24)}
     ];
     const changes=meaningfulChanges(data);
@@ -1041,8 +1041,7 @@
     changesPanel.innerHTML=changes.length
       ?'<div class="panel-title-row"><div><h3>Changed since last visit</h3><p class="panel-copy">Compared with '+esc(sinceLabel)+'. Only meaningful changes are shown.</p></div><span class="readiness-pill watch">'+esc(changes.length)+' change'+(changes.length===1?'':'s')+'</span></div><div class="change-list" style="margin-top:8px">'+changes.slice(0,8).map(item=>'<button class="change-item" type="button" data-tab-target="'+esc(item.tab||'activity')+'"'+(item.section?' data-section-target="'+esc(item.section)+'"':'')+'><span class="change-dot"></span><div><strong>'+esc(item.title)+'</strong><span>'+esc(item.detail)+'</span></div></button>').join('')+'</div>'
       :'<button class="changes-zero" type="button" data-tab-target="activity"><span aria-hidden="true">✓</span><strong>No meaningful changes since your last visit</strong></button>';
-    const overviewGaps=setupGaps(data);
-    doc.getElementById('overviewHealthPanel').innerHTML='<div class="panel-title-row"><h3>Project health</h3>'+(overviewGaps.length?'<span class="readiness-pill watch">'+esc(overviewGaps.length)+' coverage '+(overviewGaps.length===1?'gap':'gaps')+'</span>':'')+'</div>'+
+    doc.getElementById('overviewHealthPanel').innerHTML='<div class="panel-title-row"><h3>Project health</h3></div>'+
       '<div class="overview-health" style="margin-top:6px">'+healthRows.map(item=>'<button class="overview-health-row" type="button" data-tab-target="'+esc(item.tab)+'"'+(item.section?' data-section-target="'+esc(item.section)+'"':'')+'><div><strong>'+esc(item.label)+'</strong><span class="health-status '+esc(item.kind)+'">'+esc(item.status||statusLabel(item.kind))+'</span><span class="health-detail">'+esc(item.detail)+'</span><span class="signal-meta '+(item.fresh?.stale?'stale':'')+'">'+esc(item.fresh?.label||'Freshness unknown')+'</span></div><span class="health-chevron" aria-hidden="true">›</span></button>').join('')+'</div>';
 
     // Product quality / evals
