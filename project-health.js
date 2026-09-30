@@ -1055,10 +1055,6 @@
 
   async function dispatchRun(data,root,suite='all'){
     const run=data.runInfo;if(!run?.configured)return;
-    if(run.can_run_here===false){
-      root.location.assign(protectedControlsUrl(data,{control:'evals',suite}));
-      return;
-    }
     const labels={all:'all AI quality checks',review:'update-understanding checks',ask:'answer-quality checks'};
     const cases=suite==='all'?Math.max(16,Number(run.minimum_controlled_cases||8)):Number(run.minimum_controlled_cases||8);
     const message='Run '+(labels[suite]||labels.all)+'?\n\nAbout '+cases+' controlled scenarios will use paid model calls.\nEstimated cost: '+run.estimated_cost+'\n\nResults are recorded as aggregate quality data. Start the run?';
@@ -1515,6 +1511,8 @@
     const headerRunChecksButton=doc.getElementById('headerRunChecksButton');
     if(headerRunChecksButton)headerRunChecksButton.addEventListener('click',async()=>{
       const data=activeData();if(!data||data.project.id!=='state'||data.qualityRun)return;
+      headerRunChecksButton.disabled=true;
+      headerRunChecksButton.textContent='Starting AI checks…';
       try{
         const started=await dispatchRun(data,root,'all');
         if(started?.started){
@@ -1522,6 +1520,8 @@
           saveEvalRunState(root,started);
           renderNow();
           pollEvalResults(data);
+        }else{
+          renderNow();
         }
       }catch(_){renderNow();}
     });
@@ -1668,7 +1668,9 @@
       const button=event.target.closest?.('[data-run-checks]');
       if(!button)return;
       const data=activeData();if(!data||data.qualityRun)return;
+      const originalLabel=button.textContent;
       button.disabled=true;
+      button.textContent='Starting…';
       try{
         const started=await dispatchRun(data,root,button.dataset.runChecks||'all');
         if(started?.started){
@@ -1676,6 +1678,9 @@
           saveEvalRunState(root,started);
           renderNow();
           pollEvalResults(data);
+        }else{
+          button.disabled=false;
+          button.textContent=originalLabel;
         }
       }catch(_){renderDetail(data,doc);}
     });
