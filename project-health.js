@@ -207,9 +207,13 @@
       if(fallback&&['bad','warn'].includes(fallback.kind)) open=[fallback];
     }
     if(open.length) return open;
+    const delivery=deliveryAttention(data.delivery);
+    if(delivery.kind==='bad') return [{...delivery,category:'delivery',owner:'Engineering'}];
+    const infra=infrastructureAttention(data.platform);
+    if(infra&&['bad','warn'].includes(infra.kind)) return [{...infra,category:'infrastructure',owner:'Engineering'}];
     const pending=pendingSet(data);
     if(pending.size) return [{kind:'unknown',title:'Still checking',detail:'Some connected signals are still loading.'}];
-    return [{kind:'good',title:'Nothing needs action right now',detail:'No current incident or product-quality action is open.'}];
+    return [{kind:'good',title:'Nothing needs action right now',detail:'No current incident, product-quality action, delivery failure, or infrastructure issue is open.'}];
   }
   function setupGaps(data){
     const gaps=[],p=data.project,platform=data.platform,run=data.runInfo,ai=platform?.aiTelemetry;
@@ -471,6 +475,12 @@
     const content='<strong>'+esc(item.title)+'</strong><p>'+esc(item.detail)+'</p>';
     if(item.category==='quality'&&['bad','warn'].includes(item.kind)){
       return '<button class="attention attention-action '+esc(item.kind||'')+'" type="button" data-attention-action="ai-quality" aria-label="Investigate '+esc(item.title)+'">'+content+'<span class="attention-action-label">Investigate this issue →</span></button>';
+    }
+    if(item.category==='delivery'){
+      return '<button class="attention attention-action '+esc(item.kind||'')+'" type="button" data-tab-target="delivery">'+content+'<span class="attention-action-label">View delivery evidence →</span></button>';
+    }
+    if(item.category==='infrastructure'){
+      return '<button class="attention attention-action '+esc(item.kind||'')+'" type="button" data-tab-target="infra">'+content+'<span class="attention-action-label">View infrastructure →</span></button>';
     }
     return '<div class="attention '+esc(item.kind||'')+'">'+content+'</div>';
   }
@@ -785,7 +795,7 @@
       const production=r.environments?.production;
       if(production) infraCards.push({label:'Production backend',status:production.ok?'Healthy':'Unavailable',detail:'Render'});
       const stagingEnv=r.environments?.staging;
-      if(stagingEnv) infraCards.push({label:'Staging backend',status:stagingEnv.ok?'Healthy':'May be asleep',detail:stagingEnv.ok?'Render':'Production unaffected'});
+      if(stagingEnv) infraCards.push({label:'Staging backend',status:stagingEnv.ok?'Healthy':'Unknown',detail:stagingEnv.ok?'Render':'Render · no recent successful response observed; production unaffected'});
       else if(p.id==='state'&&pending.has('Staging backend')) infraCards.push({label:'Staging backend',status:'Checking…',detail:'Render'});
     }else if(p.id==='state') infraCards.push({label:'Production backend',status:pending.has('Production backend')?'Checking…':'Unavailable',detail:'Render'});
     if(n?.configured&&n.available) infraCards.push({label:'Database',status:'Connected',detail:'Neon'});
