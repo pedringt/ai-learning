@@ -2,6 +2,7 @@ import unittest
 
 from eval.ask_quality_scenarios import SCENARIOS as ASK_SCENARIOS, AskQualityScenario
 from eval.quality_harness import ReviewQualityResult, score_ask_answer
+from ask_service import _grounding_rules
 from eval.review_interpretation_scenarios import SCENARIOS as REVIEW_SCENARIOS
 
 
@@ -64,6 +65,13 @@ class QualityEvalDatasetTests(unittest.TestCase):
         )
         self.assertTrue(result.authority_ok)
         self.assertTrue(result.passed)
+
+    def test_ask_prompt_requires_current_truth_plus_unresolved_conflict(self):
+        rules = _grounding_rules().lower()
+        self.assertIn("maintained current state first", rules)
+        self.assertIn("conflicting review is unresolved", rules)
+        self.assertIn("may change", rules)
+
 
     def test_question_answer_scenario_accepts_supported_state_update(self):
         scenario = next(s for s in REVIEW_SCENARIOS if s.id == "review_question_answer_only")
