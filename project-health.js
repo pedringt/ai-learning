@@ -283,10 +283,10 @@
   function releaseReadiness(data){
     const incidents=activityReviewItems(data).filter(item=>!item.resolved);
     const open=productOpenItems(data);
-    if(incidents.length||open.some(item=>item.kind==='bad')) return {label:'Hold',detail:'Resolve the current high-impact issue before treating the next release as ready.'};
-    if(open.length) return {label:'Watch',detail:'Delivery is healthy, but a product-quality check or human review is still open.'};
-    if(deliveryAttentionForData(data).kind==='good') return {label:'Ready',detail:'Delivery is healthy and there is no current high-impact quality issue.'};
-    return {label:'Unknown',detail:'There is not enough current evidence to call this release-ready.'};
+    if(incidents.length||open.some(item=>item.kind==='bad')) return {kind:'bad',label:'Needs attention',detail:'Resolve the current high-impact issue before treating the next release as healthy.'};
+    if(open.length) return {kind:'warn',label:'Watch',detail:'Delivery is healthy, but a product-quality check or human review is still open.'};
+    if(deliveryAttentionForData(data).kind==='good') return {kind:'good',label:'Healthy',detail:'Delivery is healthy and there is no current high-impact quality issue.'};
+    return {kind:'unknown',label:'Unknown',detail:'There is not enough current evidence to confirm release health.'};
   }
   function productionRuntime(data){
     const backend=data?.platform?.render?.environments?.production;
@@ -939,7 +939,7 @@
     return top?.title||'Quality loaded';
   }
   function loadingCardMarkup(project,active){
-    return '<button class="project-switcher-item '+(active?'active':'')+'" data-kind="unknown" data-project="'+esc(project.id)+'" type="button" aria-pressed="'+(active?'true':'false')+'">'+
+    return '<button class="project-switcher-item '+(active?'active':'')+'" data-kind="unknown" data-project="'+esc(project.id)+'" type="button" aria-pressed="'+(active?'true':'false')+'" aria-busy="true">'+
       '<span class="project-switcher-main"><strong>'+esc(project.name)+'</strong><span>Checking project health…</span></span>'+
       '<span class="status-pill unknown">Checking</span></button>';
   }
@@ -1043,6 +1043,7 @@
     const shouldInvestigateFirst=currentQuality?.kind==='bad'||deliveryAttentionForData(data).kind==='bad'||activityReviewItems(data).some(item=>!item.resolved);
     if(projectCheckButton){
       projectCheckButton.disabled=!!data.investigation?.loading;
+      projectCheckButton.setAttribute('aria-busy',data.investigation?.loading?'true':'false');
       projectCheckButton.textContent=data.investigation?.loading?'Investigating…':'Investigate';
       projectCheckButton.classList.add('primary');
       projectCheckButton.style.order='1';
@@ -1277,14 +1278,15 @@
       const attempts=Array.isArray(item.attempts)&&item.attempts.length>1
         ?'<details class="activity-attempts"><summary>Show '+item.attempts.length+' attempts</summary><div>'+item.attempts.map(attempt=>'<div class="activity-attempt"><span>'+esc(fmtDate(attempt.when))+'</span><span>'+esc(attempt.detail)+'</span></div>').join('')+'</div></details>'
         :'';
-      return '<div class="timeline-item"><span class="timeline-time">'+esc(activityTimeRange(item))+'</span><span class="timeline-marker"></span><div class="timeline-content"><span class="activity-type">'+esc(item.type||'Activity')+'</span><strong>'+esc(item.title)+'</strong><span>'+esc(item.detail||'')+'</span>'+attempts+'</div></div>';
+      const incidentClass=(item.type==='Release incident'||(Array.isArray(item.attempts)&&item.attempts.length>1))?' incident-episode':'';
+      return '<div class="timeline-item'+incidentClass+'"><span class="timeline-time">'+esc(activityTimeRange(item))+'</span><span class="timeline-marker"></span><div class="timeline-content"><span class="activity-type">'+esc(item.type||'Activity')+'</span><strong>'+esc(item.title)+'</strong><span>'+esc(item.detail||'')+'</span>'+attempts+'</div></div>';
     };
     const timelineHtml=filteredTimeline.length
       ?'<div class="activity-day-groups">'+groupedDays.map(group=>'<section class="activity-day"><h4>'+esc(group.label)+'</h4><div class="timeline">'+group.items.map(activityItemMarkup).join('')+'</div></section>').join('')+'</div>'
       :'<div class="empty">No activity matches this filter yet.</div>';
     const activityFilters=[['all','All'],['releases','Releases'],['quality','Quality'],['investigations','Investigations']];
     doc.getElementById('historyPanel').innerHTML='<div class="panel-title-row"><div><h3>Activity</h3><p class="panel-copy">A chronological operating history across releases, quality checks, investigations, and recovery.</p></div></div>'+
-      '<div class="activity-filters" role="group" aria-label="Filter activity">'+activityFilters.map(([key,label])=>'<button class="activity-filter '+(activityFilter===key?'active':'')+'" type="button" data-activity-filter="'+key+'">'+label+'</button>').join('')+'</div>'+
+      '<div class="activity-filters" role="group" aria-label="Filter activity">'+activityFilters.map(([key,label])=>'<button class="activity-filter '+(activityFilter===key?'active':'')+'" type="button" data-activity-filter="'+key+'" aria-pressed="'+(activityFilter===key?'true':'false')+'">'+label+'</button>').join('')+'</div>'+
       '<div style="margin-top:12px">'+timelineHtml+'</div>';
     const overviewActivity=timelineItems.length?'<div class="activity-list">'+timelineItems.slice(0,3).map(item=>'<div class="activity-item"><span class="activity-type">'+esc(item.type||'Activity')+'</span><strong>'+esc(item.title)+'</strong><span>'+esc(relativeAge(item.when))+' · '+esc(item.detail||'')+'</span></div>').join('')+'</div>':'<div class="empty">No recent activity is available yet.</div>';
     doc.getElementById('overviewActivityPanel').innerHTML='<div class="panel-title-row"><h3>Recent activity</h3><button class="button small" type="button" data-tab-target="activity">View timeline</button></div><div style="margin-top:12px">'+overviewActivity+'</div>';
@@ -1312,7 +1314,7 @@
     const deliveryDetails=
       '<div class="delivery-split" style="margin-top:12px">'+
         '<div class="delivery-concept"><span class="activity-type">Runtime</span><strong>Current production</strong><span class="delivery-status '+esc(runtime.kind)+'">'+esc(runtime.label)+'</span><p>'+esc(runtime.detail)+'</p></div>'+
-        '<div class="delivery-concept '+deliveryClass+'"><span class="activity-type">Release pipeline</span><strong>'+esc(pipelineText)+'</strong><span class="delivery-status '+esc(deliveryKind)+'">'+esc(deliveryKind==='good'?'Healthy':deliveryKind==='bad'?'Attention needed':deliveryKind==='warn'?'Watch':'Unknown')+'</span><p>'+esc(pipeline.detail)+'</p></div>'+
+        '<div class="delivery-concept '+deliveryClass+'"><span class="activity-type">Release pipeline</span><strong>'+esc(pipelineText)+'</strong><span class="delivery-status '+esc(deliveryKind)+'">'+esc(deliveryKind==='good'?'Healthy':deliveryKind==='bad'?'Needs attention':deliveryKind==='warn'?'Watch':'Unknown')+'</span><p>'+esc(pipeline.detail)+'</p></div>'+
       '</div>'+
       '<div class="delivery-environments">'+(rawPreviewFailure?'<div class="delivery-environment"><div class="delivery-environment-head"><div><strong>Production release</strong></div><span class="delivery-status good">Healthy</span></div><div class="delivery-meta"><span>The failed Vercel status on the referenced commit was a preview or superseded attempt, not an active production release failure.</span>'+(p.links?.vercel?'<span>'+githubLink('Open in Vercel ↗',p.links.vercel)+'</span>':'')+'</div></div>':environmentBlock('Latest production release attempt',d))+(s?environmentBlock('Staging release',s):'')+'</div>'+
       '<div class="quality-actions">'+prodInvestigate+checkInvestigate+'</div>';
@@ -1321,7 +1323,7 @@
     if(!deliveryHealthy)deliveryPanel.classList.remove('revealed');
     deliveryPanel.innerHTML=deliveryHealthy
       ?'<div class="panel-title-row"><h3>Delivery details</h3><span class="readiness-pill ready">Healthy</span></div>'+deliveryDetails
-      :'<div class="panel-title-row"><h3>Delivery</h3><span class="readiness-pill '+esc(readiness.label.toLowerCase())+'">Release '+esc(readiness.label)+'</span></div>'+deliveryDetails;
+      :'<div class="panel-title-row"><h3>Delivery</h3><span class="readiness-pill '+esc(readiness.kind==='bad'?'hold':readiness.kind==='warn'?'watch':readiness.kind==='good'?'ready':'unknown')+'">Release · '+esc(readiness.label)+'</span></div>'+deliveryDetails;
 
     // Infrastructure details live one layer down under Systems & connections.
     const r=platform?.render,n=platform?.neon;
