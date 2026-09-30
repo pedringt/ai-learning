@@ -1212,19 +1212,22 @@
       (gaps.length?'<h4 style="margin:18px 0 8px">Coverage gaps</h4><div class="coverage-grid">'+gaps.map(item=>'<div class="coverage-item"><strong>'+esc(item.label)+'</strong><span>'+esc(item.detail)+'</span></div>').join('')+'</div>':'');
   }
 
-  function evalRunStorageKey(root){return 'project-health-eval-run:'+pageEnvironment(root);}
-  function loadEvalRunState(root){
+  function evalRunStorageKey(root,projectId){return 'project-health-eval-run:'+pageEnvironment(root)+':'+String(projectId||'state');}
+  function loadEvalRunState(root,projectId){
     try{
-      const raw=root.localStorage?.getItem(evalRunStorageKey(root));if(!raw)return null;
+      const key=evalRunStorageKey(root,projectId);
+      const raw=root.localStorage?.getItem(key);if(!raw)return null;
       const parsed=JSON.parse(raw);
-      if(!parsed?.startedAt||Date.now()-new Date(parsed.startedAt).getTime()>10*60*1000){root.localStorage?.removeItem(evalRunStorageKey(root));return null;}
+      if(!parsed?.startedAt||Date.now()-new Date(parsed.startedAt).getTime()>10*60*1000){root.localStorage?.removeItem(key);return null;}
       return parsed;
     }catch(_){return null;}
   }
-  function saveEvalRunState(root,value){
+  function saveEvalRunState(root,value,projectId){
     try{
-      if(value)root.localStorage?.setItem(evalRunStorageKey(root),JSON.stringify(value));
-      else root.localStorage?.removeItem(evalRunStorageKey(root));
+      const id=projectId||value?.project||'state';
+      const key=evalRunStorageKey(root,id);
+      if(value)root.localStorage?.setItem(key,JSON.stringify(value));
+      else root.localStorage?.removeItem(key);
     }catch(_){}
   }
   function evalRunComplete(quality,runState){
@@ -1233,6 +1236,12 @@
     if(runState.suite==='review')return changed(quality.review,runState.baselineReview);
     if(runState.suite==='ask')return changed(quality.ask,runState.baselineAsk);
     return changed(quality.review,runState.baselineReview)&&changed(quality.ask,runState.baselineAsk);
+  }
+  function externalQualityRunComplete(externalQuality,runState){
+    if(!externalQuality||!runState)return false;
+    const ci=externalQuality.ci;
+    if(!ci?.updated_at||String(ci.updated_at)===String(runState.baselineUpdatedAt||''))return false;
+    return String(ci.status||'').toLowerCase()==='completed'||!!ci.conclusion;
   }
   function evalFailureImpact(detail){
     const id=String(detail?.scenario_id||'');
