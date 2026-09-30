@@ -276,11 +276,14 @@
     try{
       const headers={Accept:'application/vnd.github+json'};
       const pulls=await jsonFetch(githubApi('/repos/'+project.repo+'/pulls?state=open&per_page=5'),{headers,timeoutMs:6000});
-      if(!project.releasePath||!Array.isArray(pulls))return Array.isArray(pulls)?pulls:[];
+      if(!Array.isArray(pulls))return[];
+      const releasePaths=Array.isArray(project.releasePaths)&&project.releasePaths.length?project.releasePaths:(project.releasePath?[project.releasePath]:[]);
+      if(!releasePaths.length)return pulls;
       const scoped=await Promise.all(pulls.map(async pr=>{
+        if(project.releaseIgnore?.test(String(pr.title||'')))return null;
         try{
           const files=await jsonFetch(githubApi('/repos/'+project.repo+'/pulls/'+encodeURIComponent(pr.number)+'/files?per_page=100'),{headers,timeoutMs:5000});
-          return Array.isArray(files)&&files.some(file=>String(file.filename||'').startsWith(project.releasePath+'/'))?pr:null;
+          return Array.isArray(files)&&files.some(file=>releasePaths.some(path=>String(file.filename||'').startsWith(path+'/')))?pr:null;
         }catch(_){return null;}
       }));
       return scoped.filter(Boolean);
@@ -322,7 +325,8 @@
       fresh:false,
       detailLoaded:false,
       detailLoading:false,
-      qualityRun:null,
+      qualityRun:s.qualityRun||null,
+      qualityRunCompletedAt:s.qualityRunCompletedAt||null,
       snapshotAt:s.snapshotAt||null
     };
   }
