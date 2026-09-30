@@ -92,8 +92,8 @@ assert.strictEqual(H.qualityAttention(mediumOnly).kind,'warn');
 const mediumInvestigation=H.qualityInvestigation({project:H.PROJECTS[0],quality:mediumOnly});
 assert.match(mediumInvestigation.report,/75%/);
 assert.match(mediumInvestigation.report,/0 high-impact failures/);
-assert.match(mediumInvestigation.report,/improved 12\.5 points/);
-assert.match(mediumInvestigation.report,/workflow noise rather than false truth/);
+assert.match(mediumInvestigation.report,/Current AI eval failures/);
+assert.match(mediumInvestigation.report,/Overall AI eval status/);
 
 const detailedSevere=H.normalizeQuality({
   controlled_evals:{
@@ -107,7 +107,7 @@ const detailedSevere=H.normalizeQuality({
 const qualityInvestigation=H.qualityInvestigation({project:H.PROJECTS[0],quality:detailedSevere});
 assert.strictEqual(qualityInvestigation.qualityInvestigation,true);
 assert.match(qualityInvestigation.report,/review_direct_reversal/);
-assert.match(qualityInvestigation.report,/Product \+ Engineering/);
+assert.match(qualityInvestigation.report,/Investigation scope/);
 
 const legacyQualityInvestigation=H.qualityInvestigation({project:H.PROJECTS[0],quality:severe});
 assert.match(legacyQualityInvestigation.report,/older run/);
@@ -152,7 +152,7 @@ assert.strictEqual(H.stateEvalResultsStale(behaviorStaleQuality),true);
 assert.match(H.qualityAttention(behaviorStaleQuality).detail,/behavior these checks measure changed/i);
 const behaviorStaleInvestigation=H.qualityInvestigation({project:H.PROJECTS[0],quality:behaviorStaleQuality});
 assert.strictEqual(behaviorStaleInvestigation.staleEvalBehavior,true);
-assert.match(behaviorStaleInvestigation.report,/old scores no longer describe the current product/i);
+assert.match(behaviorStaleInvestigation.report,/recorded failures are historical and should not be treated as current product failures/i);
 
 const duplicateCheckQuality=H.normalizeQuality({
   controlled_evals:{
@@ -164,10 +164,45 @@ const duplicateCheckQuality=H.normalizeQuality({
   }
 });
 const duplicateCheckReport=H.qualityInvestigation({project:H.PROJECTS[0],quality:duplicateCheckQuality}).report;
-assert.strictEqual((duplicateCheckReport.match(/Failed checks: authority/g)||[]).length,1);
+assert.strictEqual((duplicateCheckReport.match(/ask_conflicting_evidence/g)||[]).length,1);
 const targetedConflict=H.qualityInvestigation({project:H.PROJECTS[0],quality:duplicateCheckQuality},'ask_conflicting_evidence');
 assert.match(targetedConflict.report,/ask_conflicting_evidence/);
 assert.doesNotMatch(targetedConflict.report,/review_direct_reversal/);
+const currentTwoFailureQuality=H.normalizeQuality({
+  controlled_evals:{
+    latest_review_interpretation:{
+      suite:'review_interpretation',interpretation_accuracy:.923076923,high_severity_failures:1,total:13,created_at:'2026-09-30 20:00:00',
+      failure_details:[{scenario_id:'review_new_evidence_over_pending_review',category:'supersedes_pending_review',severity:'high',expected:'update_state',observed:'preserve_evidence_only',failed_checks:['review_needed','interpretation','processing']}]
+    },
+    latest_ask_quality:{
+      suite:'ask_quality',overall_pass_rate:.9,ask_grounding:1,authority_accuracy:1,high_severity_failures:1,total:10,created_at:'2026-09-30 20:00:01',
+      model_identifier:'claude-haiku-4-5-20251001',build:'765dfe4a03117acabf357604f6d7a924c9824750',
+      failure_details:[{scenario_id:'ask_known_outcome_unknown_reason',category:'outcome_vs_reason',severity:'high',expected:'Grounded answer that preserves uncertainty, open items, and decision authority.',observed:'Failed checks: uncertainty',failed_checks:['uncertainty']}]
+    },
+    recent:[
+      {suite:'ask_quality',overall_pass_rate:1,ask_grounding:1,authority_accuracy:1,high_severity_failures:0,total:10,created_at:'2026-09-30 19:00:00'}
+    ]
+  }
+});
+const targetedUnknownReason=H.qualityInvestigation({project:H.PROJECTS[0],quality:currentTwoFailureQuality},'ask_known_outcome_unknown_reason');
+assert.match(targetedUnknownReason.report,/Investigation scope\nAnswer quality · ask_known_outcome_unknown_reason/);
+assert.match(targetedUnknownReason.report,/reason for the pause was not established/i);
+assert.match(targetedUnknownReason.report,/mistake an inferred explanation for maintained project truth/i);
+assert.match(targetedUnknownReason.report,/Overall AI eval status/);
+assert.match(targetedUnknownReason.report,/Answer quality: 90% · 1 high-impact failure/);
+assert.doesNotMatch(targetedUnknownReason.report,/Current assessment/);
+assert.strictEqual(targetedUnknownReason.nextCheckpoint,'After Answer quality is rerun.');
+const targetedHandoff=H.projectHandoff({
+  ...H.emptyProjectData(H.PROJECTS[0]),
+  fresh:true,
+  quality:currentTwoFailureQuality,
+  delivery:{sha:'28f8caafc6025947f8bd45bae6f7e3ea09504dbd',message:'Compact Project Health cards',updatedAt:'2026-09-30T20:00:00Z',vercel:{kind:'good'}},
+  investigation:targetedUnknownReason
+});
+assert.match(targetedHandoff.handoffText,/1 high-impact failure\nAnswer quality: 90% · 1 high-impact failure/);
+assert.match(targetedHandoff.handoffText,/Next checkpoint\nAfter Answer quality is rerun/);
+assert.doesNotMatch(targetedHandoff.handoffText,/Next decision/);
+assert.doesNotMatch(targetedHandoff.handoffText,/28f8caa/);
 
 assert.strictEqual(H.evalRunComplete(mediumOnly,{suite:'review',baselineReview:'2026-09-29 03:28:03',baselineAsk:null}),true);
 assert.strictEqual(H.evalRunComplete(mediumOnly,{suite:'all',baselineReview:'2026-09-29 03:28:03',baselineAsk:'2026-09-29 16:09:10'}),true);
@@ -397,7 +432,7 @@ const healthHtml=fs.readFileSync(require.resolve('../project-health.html'),'utf8
 assert.doesNotMatch(healthHtml,/Product health triage/);
 assert.match(healthHtml,/Spot problems, understand what they mean for users/);
 assert.match(healthHtml,/How Project Health works/);
-assert.match(healthHtml,/Role & attribution/);
+assert.match(healthHtml,/Role &amp; attribution/);
 assert.match(healthHtml,/id="projectCheckButton"/);
 assert.match(healthHtml,/id="drawerCopyHandoffButton"/);
 assert.match(healthHtml,/id="changesPanel"/);
@@ -406,8 +441,12 @@ assert.match(healthHtml,/investigation-drawer\[hidden\].*display:none!important/
 assert.match(healthHtml,/drawer-copy\[hidden\].*display:none!important/);
 assert.match(healthHtml,/id="projectActionMenu"/);
 assert.match(healthHtml,/aria-label="More project options"/);
-assert.match(healthHtml,/id="systemsDetails"/);
+assert.match(healthHtml,/<dialog class="info-dialog" id="systemsDetails"/);
 assert.match(healthHtml,/Systems &amp; connections/);
+assert.match(healthHtml,/<dialog class="info-dialog" id="aboutProjectHealth"/);
+assert.match(healthHtml,/About Project Health/);
+assert.doesNotMatch(healthHtml,/<details class="about-dashboard">/);
+assert.doesNotMatch(healthHtml,/<details class="systems-details"/);
 assert.match(healthHtml,/data-tab="overview"/);
 assert.match(healthHtml,/data-tab="ai-quality"/);
 assert.match(healthHtml,/data-tab="activity"/);
@@ -516,7 +555,7 @@ assert.match(projectHealthSource,/Run a specific eval suite/);
 assert.match(projectHealthSource,/Update understanding<\/strong><span>How State interprets new evidence/);
 assert.match(projectHealthSource,/suite-action-run">Run →/);
 assert.match(projectHealthSource,/deliveryAttentionForData\(data\)/);
-assert.match(projectHealthSource,/Production &amp; release pipeline healthy/);
+assert.match(projectHealthSource,/on-demand-panel/);
 assert.doesNotMatch(projectHealthSource,/Check update understanding/);
 assert.doesNotMatch(projectHealthSource,/Check answer quality/);
 assert.match(projectHealthSource,/Starting checks/);
@@ -537,6 +576,8 @@ assert.match(projectHealthSource,/health-card-head/);
 assert.match(projectHealthSource,/showFreshness=item\.fresh\?\.stale/);
 assert.doesNotMatch(projectHealthSource,/health-chevron/);
 assert.match(projectHealthSource,/Data available/);
+assert.match(projectHealthSource,/Open analytics ↗/);
+assert.match(projectHealthSource,/data-open-about/);
 assert.match(projectHealthSource,/operationalNextDecision/);
 assert.match(projectHealthSource,/Full AI eval details/);
 assert.doesNotMatch(projectHealthSource,/Investigate this issue →/);

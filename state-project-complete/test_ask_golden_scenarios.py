@@ -4,7 +4,7 @@ from fastapi.testclient import TestClient
 
 from api import Settings, create_app
 from ask_contract import AskSelection, AskSynthesis
-from ask_service import _compact_candidates, _trim_candidates_for_query, _validate_synthesis
+from ask_service import _compact_candidates, _trim_candidates_for_query, _validate_synthesis, _grounding_rules
 from database_migration_backed import initialize_db
 from db import connect
 from review_service import list_state, resolve_review
@@ -189,3 +189,10 @@ def test_golden_repeated_current_state_evidence_does_not_create_noop_review(tmp_
         assert '"outcome": "no_review"' in record["structured_result"]
     finally:
         conn.close()
+
+
+def test_grounding_rules_preserve_unknown_reason_when_only_outcome_is_known():
+    rules = _grounding_rules().lower()
+    assert "outcome happened" in rules
+    assert "reason is unknown" in rules or "reason is unknown, not established" in rules
+    assert "never infer a motive, cause, or rationale" in rules

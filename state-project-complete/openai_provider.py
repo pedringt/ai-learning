@@ -317,6 +317,7 @@ Respond ONLY with JSON in this structure:
 
 Remember:
 - Evidence alone does not change State (only humans can authorize)
+- If new authoritative Evidence corrects or supersedes the substance of the same open Review, use review_action "update_existing" with that exact existing_review_id and propose the corrected State change. Do not preserve the correction as Evidence only; software will supersede the stale pending proposal after you return the corrected proposal.
 - review_type determines what kind of proposal is legal:
   - proposed_update: use when Evidence changes or retires an EXISTING State item; proposed_changes may use update or retire (and may also include create when a grouped decision genuinely adds new State). Requires at least one proposed_changes entry; with none, use missing_understanding or state_at_risk instead.
   - missing_understanding: use only when the missing understanding is NOT already represented in Current State; every proposed_change in a missing_understanding review MUST use operation "create" and must state the concrete new fact. Never emit missing_understanding with an empty proposed_changes list just to register that something happened -- if you cannot articulate the concrete fact, this is not the right outcome. Never use update or retire inside missing_understanding.
