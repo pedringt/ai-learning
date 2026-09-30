@@ -1205,10 +1205,11 @@
   }
 
   async function init(root){
-    const doc=root.document,cards=doc.getElementById('projectCards'),status=doc.getElementById('status'),summary=doc.getElementById('overviewSummary'),reviewInbox=doc.getElementById('reviewInbox'),refresh=doc.getElementById('refreshButton'),qualityPanel=doc.getElementById('qualityPanel'),projectTabs=doc.getElementById('projectTabs'),projectDetail=doc.getElementById('projectDetail'),investigationDrawer=doc.getElementById('investigationDrawer'),investigationBackdrop=doc.getElementById('investigationBackdrop'),closeInvestigationDrawerButton=doc.getElementById('closeInvestigationDrawer'),drawerPrepareHandoffButton=doc.getElementById('drawerPrepareHandoffButton');
+    const doc=root.document,cards=doc.getElementById('projectCards'),status=doc.getElementById('status'),summary=doc.getElementById('overviewSummary'),reviewInbox=doc.getElementById('reviewInbox'),refresh=doc.getElementById('refreshButton'),qualityPanel=doc.getElementById('qualityPanel'),projectTabs=doc.getElementById('projectTabs'),projectDetail=doc.getElementById('projectDetail'),investigationDrawer=doc.getElementById('investigationDrawer'),investigationBackdrop=doc.getElementById('investigationBackdrop'),closeInvestigationDrawerButton=doc.getElementById('closeInvestigationDrawer'),drawerRunAgainButton=doc.getElementById('drawerRunAgainButton'),drawerCopyHandoffButton=doc.getElementById('drawerCopyHandoffButton');
     if(!cards||!status||!summary||!reviewInbox||!refresh||!qualityPanel)return;
     const cached=loadSnapshot(root);
     let state=PROJECTS.map(project=>hydrateProjectData(project,cached?.projects?.find(item=>item.projectId===project.id)));
+    state.forEach(item=>{item.investigationHistory=loadInvestigationHistory(root,item.project.id);});
     const initialParams=new URLSearchParams(root.location.search);
     let activeId=initialParams.get('project')||'state';
     const allowedTabs=new Set(['overview','ai-quality','delivery','infra','activity']);
@@ -1217,6 +1218,33 @@
     const demoState={phase:'idle',step:0,timers:[]};
 
     function activeData(){return state.find(item=>item.project.id===activeId)||null;}
+
+    function recordInvestigation(data,investigation,trigger){
+      if(!data||!investigation||investigation.loading||investigation.openingProtected)return;
+      const row={
+        id:String(investigation.observedAt||new Date().toISOString())+':'+String(trigger||'project'),
+        observedAt:investigation.observedAt||new Date().toISOString(),
+        trigger:trigger||'project check',
+        summary:investigationHistorySummary(investigation),
+        evidence:(investigation.sources||[]).map(source=>source.label).filter(Boolean),
+        qualityInvestigation:!!investigation.qualityInvestigation,
+        quickCheck:!!investigation.quickCheck,
+        resolvedAt:null
+      };
+      const rows=Array.isArray(data.investigationHistory)?data.investigationHistory:[];
+      data.investigationHistory=[row,...rows.filter(item=>item.id!==row.id)].slice(0,20);
+      saveInvestigationHistory(root,data.project.id,data.investigationHistory);
+    }
+    function reconcileInvestigationHistory(data){
+      if(!data||!Array.isArray(data.investigationHistory)||!data.investigationHistory.length)return;
+      if(overallAttention(data).kind!=='good')return;
+      let changed=false;
+      data.investigationHistory=data.investigationHistory.map((item,index)=>{
+        if(index===0&&!item.resolvedAt){changed=true;return {...item,resolvedAt:new Date().toISOString()};}
+        return item;
+      });
+      if(changed)saveInvestigationHistory(root,data.project.id,data.investigationHistory);
+    }
 
     function renderCards(){
       cards.innerHTML=PROJECTS.map(project=>{
