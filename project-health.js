@@ -1053,7 +1053,8 @@
     const failedLines=details.length?details.map(detail=>{
       const expected=detail.expected?'Expected: '+detail.expected+'. ':'';
       const observed=detail.observed?'Observed: '+detail.observed+'. ':'';
-      const checks=(detail.failed_checks||[]).length?'Failed checks: '+detail.failed_checks.join(', ')+'. ':'';
+      const observedAlreadyListsChecks=/^Failed checks:/i.test(String(detail.observed||''));
+      const checks=!observedAlreadyListsChecks&&(detail.failed_checks||[]).length?'Failed checks: '+detail.failed_checks.join(', ')+'. ':'';
       return '- '+detail.suiteLabel+' / '+detail.scenario_id+' ('+(detail.severity||'unknown')+'). '+expected+observed+checks+evalFailureImpact(detail);
     }):['- Exact scenario metadata is unavailable for this older run, so Project Health can only report the suite-level result.'];
     const improvements=[];
@@ -1068,6 +1069,36 @@
     const nextStep=details.length
       ?'Review the remaining scenario-level misses below. Fix product behavior only where the contract is still right; adjust the eval where the observed behavior is acceptable. Then rerun the affected suite and compare against this run.'
       :'Inspect the affected suite and rerun after the next change so future failures record scenario-level evidence.';
+    if(stateEvalContractStale(quality)){
+      const historical=currentLines.length?currentLines.map(line=>'- '+line).join('\n'):'- No historical aggregate result is available.';
+      const report=[
+        'Current assessment',
+        'The latest recorded AI quality run predates the current eval contract. Its failures are historical and should not be treated as current product failures.',
+        '',
+        'Historical result',
+        historical,
+        '',
+        'Why this changed',
+        'Project Health updated the eval expectations after reviewing these scenario-level misses. The partial Slack approval may preserve an unresolved question, and the authority check now recognizes explicit unresolved review language.',
+        '',
+        'Recommended next action',
+        'Rerun the controlled AI quality checks. Use the new run as the current baseline before changing State behavior.',
+        '',
+        'Owner',
+        'Product',
+        '',
+        'Confidence',
+        'High confidence that the recorded run is stale relative to the current eval contract. No claim is being made yet about how the revised checks will score.'
+      ].join('\n');
+      return {
+        report,
+        sources:[{label:'State eval details',url:'/state-evals',observedAt:latestDate}],
+        observedAt:latestDate,
+        qualityInvestigation:true,
+        staleEvalContract:true
+      };
+    }
+
     const report=[
       'Current assessment',
       currentLines.join('\n')||'No current controlled-eval result is available.',
@@ -1107,7 +1138,9 @@
     const status=projectStatus(data);
     const notices=attentionItems(data).filter(item=>item.kind!=='good');
     const latestQuality=data?.project?.quality==='state'&&data.quality
-      ?[data.quality.review,data.quality.ask].filter(Boolean).map(run=>evalSuiteLabel(run)+': '+percent(evalScore(run))+' · '+Number(run.high_severity_failures||0)+' high-impact failures').join('\n')
+      ?(stateEvalContractStale(data.quality)
+        ?'Needs rerun · the latest recorded AI quality results predate the current eval contract. Historical failures are not treated as current product failures.'
+        :[data.quality.review,data.quality.ask].filter(Boolean).map(run=>evalSuiteLabel(run)+': '+percent(evalScore(run))+' · '+Number(run.high_severity_failures||0)+' high-impact failures').join('\n'))
       :projectQualityLabel(data);
     const release=data?.delivery
       ?commitTitle(data.delivery.message)+' · '+shortSha(data.delivery.sha)+' · '+fmtDate(data.delivery.updatedAt)
