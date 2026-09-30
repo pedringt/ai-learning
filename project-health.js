@@ -12,7 +12,16 @@
       evidence:['Understands updates','Answers stay grounded','Respects decision authority','Review burden'],
       nextDecision:'Expand failure investigation only if it stays useful without weakening human control.',
       nextReview:'After the next recorded AI quality check.',
-      owner:'Product'
+      owner:'Product',
+      qualityLabel:'AI Quality',
+      links:{
+        live:'https://state.contextswitch.tech',
+        vercel:'https://vercel.com/cairn10/state',
+        renderProduction:'https://dashboard.render.com/web/srv-dabogoajnfac73dp7h1g',
+        renderStaging:'https://dashboard.render.com/web/srv-dadloi8n74is73ajsg50',
+        neon:'https://console.neon.tech',
+        quality:'/state-evals'
+      }
     },
     {
       id:'tastemake',name:'Tastemake',description:'Taste-learning recommendation prototype built around preference discovery.',repo:'pedringt/tastemake',branch:'main',
@@ -20,7 +29,14 @@
       evidence:['Recommendation breadth','Irrelevant suggestions','Validator catches','Repeat engagement'],
       nextDecision:'Decide whether the canonical store improves recommendation quality enough to expand further.',
       nextReview:'After the next recommendation-quality pass.',
-      owner:'Product'
+      owner:'Product',
+      qualityLabel:'Recommendation Quality',
+      links:{
+        live:'https://tastemake.vercel.app',
+        vercel:'https://vercel.com/cairn10/tastemake',
+        neon:'https://console.neon.tech',
+        quality:'https://github.com/pedringt/tastemake/actions/workflows/test.yml'
+      }
     },
     {
       id:'narc',name:'NARC',description:'Workplace-surveillance satire game with branching consequences.',repo:'pedringt/narc',branch:'main',
@@ -28,7 +44,13 @@
       evidence:['First-run playtest','Branch consistency','Confusing choices','Replayable endings'],
       nextDecision:'Decide whether the first-play flow is clear enough before adding more branches and mechanics.',
       nextReview:'After the full first-run playtest.',
-      owner:'Product'
+      owner:'Product',
+      qualityLabel:'Game Quality',
+      links:{
+        live:'https://narc-opal.vercel.app',
+        vercel:'https://vercel.com/cairn10/narc',
+        quality:'https://github.com/pedringt/narc/actions/workflows/quality-checks.yml'
+      }
     }
   ];
   const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
