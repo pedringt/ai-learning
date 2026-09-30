@@ -297,15 +297,59 @@
     if(Array.isArray(data?.openPullRequests)&&data.openPullRequests.length)return 'Decide whether the current open work is ready for the next release.';
     return 'No immediate product decision is required. Continue the current goal until the next review.';
   }
-  function qualityFailureClassSummary(q){
+  function failureCheckCount(q,check){
     const runs=[q?.review,q?.ask].filter(Boolean);
-    const details=runs.flatMap(run=>Array.isArray(run?.failure_details)?run.failure_details:[]);
+    return runs.flatMap(run=>Array.isArray(run?.failure_details)?run.failure_details:[])
+      .filter(item=>String(item?.severity||'').toLowerCase()==='high')
+      .filter(item=>(item?.failed_checks||[]).some(name=>String(name).toLowerCase()===String(check).toLowerCase())).length;
+  }
+  function failureExplanation(detail){
+    const id=String(detail?.scenario_id||'');
+    if(id==='ask_conflicting_evidence'){
+      return {
+        title:'Conflicting evidence was not handled cautiously enough',
+        whatHappened:'State did not fully preserve the unresolved conflict between approved Current State and newer contradictory evidence in its answer.',
+        expected:'Report the maintained truth, explicitly surface the unresolved conflict, and avoid treating the newer evidence as settled.',
+        why:'A user could leave believing a disputed project fact is settled when it still needs human review.'
+      };
+    }
+    if(id==='review_direct_reversal'){
+      return {
+        title:'Authoritative reversal was not applied correctly',
+        whatHappened:'State did not interpret evidence that directly reversed an existing maintained fact the way the product contract expected.',
+        expected:'Recognize the authoritative reversal and propose the corresponding Current State change for human review.',
+        why:'Stale project truth could remain active after authoritative evidence changes it.'
+      };
+    }
+    if(id==='ask_blocker_not_omitted'){
+      return {
+        title:'A consequential blocker was omitted from a readiness answer',
+        whatHappened:'The answer did not surface a blocking open item that materially changes whether the project is ready.',
+        expected:'Include the blocker and make the remaining uncertainty explicit.',
+        why:'A user could make a launch decision without seeing a known blocking dependency.'
+      };
+    }
+    const category=String(detail?.category||detail?.scenario_id||'controlled behavior').replaceAll('_',' ').trim();
+    return {
+      title:category.charAt(0).toUpperCase()+category.slice(1)+' needs review',
+      whatHappened:detail?.observed?String(detail.observed).replaceAll('_',' '):'Observed behavior differed from the controlled product expectation.',
+      expected:detail?.expected?String(detail.expected).replaceAll('_',' '):'Follow the controlled product contract for this scenario.',
+      why:evalFailureImpact(detail).replace(/^Risk:\s*/,'')
+    };
+  }
+  function qualityFailureClassSummary(q){
+    const runs=[{suite:'update understanding',run:q?.review},{suite:'answer quality',run:q?.ask}].filter(item=>item.run);
+    const details=runs.flatMap(({suite,run})=>(Array.isArray(run?.failure_details)?run.failure_details:[]).map(item=>({...item,suite})));
     const high=details.filter(item=>String(item?.severity||'').toLowerCase()==='high');
     const names=[...new Set(high.map(item=>{
       const category=String(item?.category||item?.scenario_id||'').replaceAll('_',' ').trim();
       return category||'controlled behavior';
     }))];
-    return {count:runs.reduce((n,run)=>n+Number(run?.high_severity_failures||0),0),classes:names.slice(0,3)};
+    return {
+      count:runs.reduce((n,item)=>n+Number(item.run?.high_severity_failures||0),0),
+      classes:names.slice(0,3),
+      details:high.map(item=>({...item,...failureExplanation(item)}))
+    };
   }
   function activityTimelineItems(data){
     const p=data?.project||{},d=data?.delivery,q=data?.quality,externalQ=data?.externalQuality,activity=data?.activity;
