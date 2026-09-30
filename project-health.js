@@ -1104,6 +1104,22 @@
     }else{
       qualityHtml='<h3>Product quality</h3><div class="empty" style="margin-top:12px">Quality data is not available right now.</div>';
     }
+    if(p.id!=='state'&&run){
+      const activeQualityRun=data.qualityRun;
+      if(activeQualityRun){
+        const delayed=activeQualityRun.state==='delayed';
+        qualityHtml+='<div class="eval-run-status '+(delayed?'warn':'')+'" role="status"><strong>'+(delayed?'Run started · waiting for a newer result':'Quality checks are running…')+'</strong><span>Started '+esc(fmtDate(activeQualityRun.startedAt))+'. The latest recorded results stay visible until the workflow finishes.</span></div>';
+      }
+      if(pending.has('Run controls')){
+        qualityHtml+='<div class="eval-actions"><span class="footnote">Checking whether dashboard-run controls are ready…</span></div>';
+      }else if(run.configured){
+        const runDisabled=activeQualityRun?' disabled':'';
+        qualityHtml+='<div class="eval-actions"><button class="button small primary" type="button" data-run-checks="all"'+runDisabled+'>'+(activeQualityRun?'Checks running…':esc(run.button_label||'Run quality checks'))+'</button></div>'+
+          '<p class="footnote">This dashboard run uses the project\'s existing GitHub Actions workflow and does not make paid model calls.</p>';
+      }else{
+        qualityHtml+='<p class="footnote">Running these checks from the dashboard still needs GitHub workflow access. Existing recorded results can still appear here.</p>';
+      }
+    }
     doc.getElementById('qualityPanel').innerHTML=qualityHtml;
 
     // Usage only gets a standalone Overview section when there is real usage data to show.
