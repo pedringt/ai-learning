@@ -1084,7 +1084,7 @@
     if(n?.configured&&n.available) infraCards.push({label:'Database',status:'Connected',detail:'Neon'});
     else if(n?.configured) infraCards.push({label:'Database',status:'Temporarily unavailable',detail:'Neon'});
     else infraCards.push({label:'Database',status:p.id==='state'?'Not connected yet':'Not used',detail:p.id==='state'?'Neon':'No database dependency'});
-    const infraAttention=infrastructureAttention(data);
+    const infraAttention=infrastructureAttention(platform);
     doc.getElementById('infrastructurePanel').innerHTML='<h3>Infrastructure</h3>'+
       '<div class="delivery-summary '+(infraAttention?.kind==='bad'?'bad':infraAttention?.kind==='warn'?'warn':'')+'" style="margin-top:12px">'+esc(infraAttention?.title||'Production services healthy')+'</div>'+
       '<div class="service-grid">'+infraCards.map(item=>'<div class="service-card"><strong>'+esc(item.label)+'</strong><span class="service-status">'+esc(item.status)+'</span><span class="service-detail">'+esc(item.detail)+'</span></div>').join('')+'</div>';
