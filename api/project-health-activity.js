@@ -88,7 +88,7 @@ function isIgnoredBuildSkip(item){
 
 function summarizeDeployments(items){
   const deployments=(Array.isArray(items)?items:[])
-    .filter(item=>String(item.target||'production')==='production')
+    .filter(item=>String(item.target||'').toLowerCase()==='production')
     .sort((a,b)=>deploymentCreated(b)-deploymentCreated(a));
   const skipped=deployments.filter(isIgnoredBuildSkip);
   const meaningful=deployments.filter(item=>!isIgnoredBuildSkip(item));
