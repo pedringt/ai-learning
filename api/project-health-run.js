@@ -4,10 +4,32 @@ const RUNS={
     workflow:'question-review-live.yml',
     ref:'staging',
     label:'State AI quality checks',
+    button_label:'Run AI checks',
     paid_model_calls:true,
     minimum_controlled_cases:10,
+    suites:['all','review','ask'],
     costEstimateEnv:'PROJECT_HEALTH_RUN_COST_ESTIMATE_STATE',
     note:'Runs controlled checks for update understanding, answer quality, or both. Aggregate results can be recorded back into the selected Project Health environment.'
+  },
+  tastemake:{
+    repo:'pedringt/tastemake',
+    workflow:'test.yml',
+    ref:'main',
+    label:'Tastemake recommendation checks',
+    button_label:'Run recommendation checks',
+    paid_model_calls:false,
+    suites:['all'],
+    note:'Runs Tastemake\'s existing automated QA suite, including its free deterministic recommendation eval and validator checks.'
+  },
+  narc:{
+    repo:'pedringt/narc',
+    workflow:'quality-checks.yml',
+    ref:'main',
+    label:'NARC game quality checks',
+    button_label:'Run game checks',
+    paid_model_calls:false,
+    suites:['all'],
+    note:'Runs NARC\'s core game regression, single-day engine, and desktop integration suites. The human first-run playtest remains a separate product-quality gate.'
   }
 };
 
@@ -21,17 +43,21 @@ const RUN_COOLDOWN_MS=10*60*1000;
 function runInfo(projectId){
   const run=RUNS[projectId];
   if(!run) return null;
-  const costEstimate=String(process.env[run.costEstimateEnv]||'').trim();
+  const costEstimate=run.costEstimateEnv?String(process.env[run.costEstimateEnv]||'').trim():null;
   return {
-    configured:!!(process.env.GITHUB_TOKEN&&costEstimate),
+    configured:!!(process.env.GITHUB_TOKEN&&(!run.paid_model_calls||costEstimate)),
     can_run_here:true,
-    protection:'Public run with paid-model confirmation, one active run at a time, and a 10-minute cooldown',
+    protection:run.paid_model_calls
+      ?'Public run with paid-model confirmation, one active run at a time, and a 10-minute cooldown'
+      :'Public run with one active run at a time and a 10-minute cooldown',
     project:projectId,
     label:run.label,
+    button_label:run.button_label,
     ref:run.ref,
     paid_model_calls:run.paid_model_calls,
-    minimum_controlled_cases:run.minimum_controlled_cases,
+    minimum_controlled_cases:run.minimum_controlled_cases||null,
     estimated_cost:costEstimate||null,
+    suites:run.suites,
     note:run.note
   };
 }
@@ -59,15 +85,17 @@ module.exports=async function handler(req,res){
   if(!run||!info){res.status(404).json({detail:'No runnable workflow is configured for this project yet.'});return;}
 
   if(!info.configured){
-    res.status(503).json({detail:'Dashboard-run credentials and cost estimate are not configured yet.'});
+    res.status(503).json({detail:'Dashboard-run credentials'+(run.paid_model_calls?' and cost estimate':'')+' are not configured yet.'});
     return;
   }
 
-  if(body.confirm_paid_model_calls!==true || body.estimated_cost!==info.estimated_cost){
+  if(run.paid_model_calls&&(body.confirm_paid_model_calls!==true || body.estimated_cost!==info.estimated_cost)){
     res.status(400).json({detail:'Paid model-call confirmation for the displayed cost estimate is required before starting this workflow.'});
     return;
   }
-  const suite=['all','review','ask'].includes(String(body.suite||'all'))?String(body.suite||'all'):'all';
+
+  const requestedSuite=String(body.suite||'all');
+  const suite=run.suites.includes(requestedSuite)?requestedSuite:'all';
   const recordEnvironment=String(body.record_environment||'production')==='staging'?'staging':'production';
 
   const githubHeaders={
@@ -81,14 +109,14 @@ module.exports=async function handler(req,res){
   );
   if(!runsResponse.ok){
     const payload=await runsResponse.json().catch(()=>({}));
-    res.status(runsResponse.status).json({detail:payload?.message||'Could not check recent AI quality runs'});
+    res.status(runsResponse.status).json({detail:payload?.message||'Could not check recent quality runs'});
     return;
   }
   const recentPayload=await runsResponse.json().catch(()=>({workflow_runs:[]}));
   const workflowRuns=Array.isArray(recentPayload.workflow_runs)?recentPayload.workflow_runs:[];
   const active=workflowRuns.find(item=>['queued','in_progress','waiting','requested','pending'].includes(String(item.status||'').toLowerCase()));
   if(active){
-    res.status(409).json({detail:'AI quality checks are already running. Wait for the current run to finish before starting another one.',actions_url:active.html_url||null});
+    res.status(409).json({detail:'Quality checks are already running. Wait for the current run to finish before starting another one.',actions_url:active.html_url||null});
     return;
   }
   const latest=workflowRuns[0]||null;
@@ -97,16 +125,18 @@ module.exports=async function handler(req,res){
   if(elapsed>=0&&elapsed<RUN_COOLDOWN_MS){
     const retryAfter=Math.max(1,Math.ceil((RUN_COOLDOWN_MS-elapsed)/1000));
     res.setHeader('Retry-After',String(retryAfter));
-    res.status(429).json({detail:'AI quality checks were started recently. Try again in about '+Math.ceil(retryAfter/60)+' minute'+(Math.ceil(retryAfter/60)===1?'':'s')+'.',retry_after_seconds:retryAfter});
+    res.status(429).json({detail:'Quality checks were started recently. Try again in about '+Math.ceil(retryAfter/60)+' minute'+(Math.ceil(retryAfter/60)===1?'':'s')+'.',retry_after_seconds:retryAfter});
     return;
   }
 
+  const dispatchBody={ref:run.ref};
+  if(projectId==='state') dispatchBody.inputs={suite,record_environment:recordEnvironment};
   const response=await fetch(
     'https://api.github.com/repos/'+run.repo+'/actions/workflows/'+encodeURIComponent(run.workflow)+'/dispatches',
     {
       method:'POST',
       headers:{...githubHeaders,'Content-Type':'application/json'},
-      body:JSON.stringify({ref:run.ref,inputs:{suite,record_environment:recordEnvironment}})
+      body:JSON.stringify(dispatchBody)
     }
   );
 
@@ -121,11 +151,14 @@ module.exports=async function handler(req,res){
     started:true,
     project:projectId,
     label:run.label,
+    button_label:run.button_label,
     ref:run.ref,
+    paid_model_calls:run.paid_model_calls,
     estimated_cost:info.estimated_cost,
     suite,
-    record_environment:recordEnvironment,
-    actions_url:'https://github.com/'+run.repo+'/actions'
+    record_environment:projectId==='state'?recordEnvironment:null,
+    actions_url:'https://github.com/'+run.repo+'/actions',
+    baseline_updated_at:body.baseline_updated_at||null
   });
 };
 

@@ -9,7 +9,8 @@ const SOURCES={
   narc:{
     repo:'pedringt/narc',
     branch:'main',
-    handoff:'docs/HANDOFF.md'
+    handoff:'docs/HANDOFF.md',
+    workflow:'quality-checks.yml'
   }
 };
 
@@ -108,26 +109,31 @@ async function tastemake(){
 
 async function narc(){
   const source=SOURCES.narc;
-  const [branch,handoffText]=await Promise.all([
+  const [branch,handoffText,runs]=await Promise.all([
     githubJson('/repos/'+source.repo+'/branches/'+source.branch),
-    githubText(source.repo,source.handoff,source.branch)
+    githubText(source.repo,source.handoff,source.branch),
+    githubJson('/repos/'+source.repo+'/actions/workflows/'+source.workflow+'/runs?branch='+source.branch+'&per_page=1').catch(()=>({workflow_runs:[]}))
   ]);
   const recorded=parseNarcHandoff(handoffText);
+  const latest=Array.isArray(runs.workflow_runs)?runs.workflow_runs[0]:null;
+  const ci=latest?{status:latest.status,conclusion:latest.conclusion,updated_at:latest.updated_at,html_url:latest.html_url,head_sha:latest.head_sha}:null;
   const attention=[];
-  if(!recorded.recorded_all_suites_green) attention.push({kind:'warn',title:'No current recorded test verification found',detail:'Project Health could not confirm the handoff statement that all three deterministic suites are green.'});
+  if(ci?.conclusion&&ci.conclusion!=='success') attention.push({kind:'bad',title:'Automated game checks are not green',detail:'The latest NARC quality workflow concluded '+ci.conclusion+'.'});
+  if(!ci&&!recorded.recorded_all_suites_green) attention.push({kind:'warn',title:'No current recorded test verification found',detail:'Project Health could not confirm that all three deterministic suites are green.'});
   if(recorded.full_playtest_pending) attention.push({kind:'warn',title:'Full first-run playtest still pending',detail:'The code-level suites are recorded green, but the ~15-minute human playtest is still the next product-quality gate.'});
-  if(!attention.length) attention.push({kind:'good',title:'Recorded NARC quality checks look healthy',detail:'The handoff records all three deterministic suites as green.'});
+  if(!attention.length) attention.push({kind:'good',title:'Latest NARC quality checks look healthy',detail:'The automated game suites are green and no additional code-level quality issue is recorded.'});
   return {
     project:'narc',
     source_commit:branch.commit?.sha||null,
-    recorded,
+    ci,
+    recorded:{...recorded,updated_at:ci?.updated_at||null},
     suites:[
       {name:'Core game regression',command:'node test.mjs',detail:'Broad authored-game rules, branches, consequences, endings, and regression cases.'},
       {name:'Single-day engine',command:'node test-day.mjs',detail:'Time, deadlines, NARC adaptation, coworker consequences, trust, and ending-state consistency.'},
       {name:'Desktop integration',command:'node test-desktop.mjs',detail:'Source-level desktop interaction and UI integration checks.'}
     ],
     attention,
-    caveat:'NARC has no GitHub Actions workflow, so this is the latest recorded repo verification, not a live CI result.',
+    caveat:ci?'Latest GitHub Actions result plus the human playtest gate.':'No workflow result is available yet; the repo handoff is being used as fallback evidence.',
     analytics_blocked_until_playtest:recorded.analytics_blocked_until_playtest
   };
 }

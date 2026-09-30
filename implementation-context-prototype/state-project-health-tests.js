@@ -200,6 +200,15 @@ const failureClass=H.qualityFailureClassSummary(H.normalizeQuality({controlled_e
 }}));
 assert.strictEqual(failureClass.count,3);
 assert.ok(failureClass.classes.includes('authority conflict'));
+const conflictDetail=H.qualityFailureClassSummary(H.normalizeQuality({controlled_evals:{
+  latest_ask_quality:{high_severity_failures:1,failure_details:[{scenario_id:'ask_conflicting_evidence',category:'conflict',severity:'high',failed_checks:['uncertainty']}]}
+}}));
+assert.match(conflictDetail.details[0].title,/Conflicting evidence/);
+assert.match(conflictDetail.details[0].why,/disputed project fact/i);
+assert.strictEqual(H.failureCheckCount(H.normalizeQuality({controlled_evals:{
+  latest_ask_quality:{high_severity_failures:1,failure_details:[{scenario_id:'ask_conflicting_evidence',severity:'high',failed_checks:['uncertainty']}]}
+}}),'uncertainty'),1);
+assert.strictEqual(H.externalQualityRunComplete({ci:{status:'completed',conclusion:'success',updated_at:'2026-09-30T18:00:00Z'}},{baselineUpdatedAt:'2026-09-30T17:00:00Z'}),true);
 const groupedTimeline=H.activityTimelineItems({
   project:{id:'state'},
   delivery:null,
@@ -353,6 +362,8 @@ assert.match(healthHtml,/investigation-drawer\[hidden\].*display:none!important/
 assert.match(healthHtml,/drawer-copy\[hidden\].*display:none!important/);
 assert.match(healthHtml,/id="projectActionMenu"/);
 assert.match(healthHtml,/Project links ▾/);
+assert.match(healthHtml,/id="projectLinksMenu"/);
+assert.match(healthHtml,/\.button\[hidden\]\{display:none!important\}/);
 assert.doesNotMatch(healthHtml,/>More<\/summary>/);
 assert.match(healthHtml,/delivery-split/);
 assert.match(healthHtml,/activity-type/);
@@ -365,6 +376,12 @@ assert.ok(H.PROJECTS[1].evidence.includes('Recommendation breadth'));
 assert.match(H.PROJECTS[1].nextDecision,/canonical store/);
 assert.match(H.PROJECTS[2].nextDecision,/first-play flow/);
 assert.match(H.PROJECTS[0].description,/Human-reviewed project truth system/);
+assert.strictEqual(H.PROJECTS[0].qualityLabel,'AI Quality');
+assert.strictEqual(H.PROJECTS[1].qualityLabel,'Recommendation Quality');
+assert.strictEqual(H.PROJECTS[2].qualityLabel,'Game Quality');
+assert.match(H.PROJECTS[0].links.vercel,/vercel\.com/);
+assert.match(H.PROJECTS[0].links.renderProduction,/dashboard\.render\.com/);
+assert.match(H.PROJECTS[0].links.neon,/neon\.tech/);
 assert.deepStrictEqual(H.PROJECTS[0].releasePaths,['implementation-context-prototype','state-project-complete']);
 assert.ok(H.PROJECTS[0].releaseIgnore.test('Project Health dashboard update'));
 assert.ok(H.PROJECTS[0].releaseIgnore.test('Align prompt assertions after final compaction'));
@@ -433,12 +450,12 @@ assert.match(projectHealthSource,/Changed since last visit/);
 assert.match(projectHealthSource,/Previous investigations/);
 assert.match(projectHealthSource,/commits\?sha=/);
 assert.match(projectHealthSource,/project\.releasePaths/);
-assert.match(projectHealthSource,/View AI results/);
+assert.match(projectHealthSource,/View quality results/);
 assert.match(projectHealthSource,/setActiveTab\('ai-quality'\)/);
 assert.doesNotMatch(projectHealthSource,/ai-learning-git-staging-cairn10\.vercel\.app\/project-health/);
 assert.doesNotMatch(projectHealthSource,/control:'investigate'/);
 assert.match(projectHealthSource,/AI checks are running/);
-assert.match(projectHealthSource,/Starting AI checks/);
+assert.match(projectHealthSource,/Starting checks/);
 assert.doesNotMatch(projectHealthSource,/control:'evals'/);
 assert.match(projectHealthSource,/checks automatically/);
 assert.match(projectHealthSource,/project-switcher-item/);
