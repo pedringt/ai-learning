@@ -435,8 +435,10 @@
 
   const STATE_EVAL_CONTRACT_UPDATED_AT='2026-09-30T00:30:24Z';
   function dateMs(value){
-    if(!value)return NaN;
+    if(value==null||value==='')return NaN;
+    if(typeof value==='number')return value<1e12?value*1000:value;
     const raw=String(value);
+    if(/^\d+$/.test(raw)){const n=Number(raw);return n<1e12?n*1000:n;}
     const normalized=/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(raw)?raw.replace(' ','T')+'Z':raw;
     return new Date(normalized).getTime();
   }
@@ -453,8 +455,8 @@
   function stateEvalContractStale(q){
     const runs=[q?.review,q?.ask].filter(Boolean);
     if(!runs.length)return false;
-    const newest=Math.max(...runs.map(run=>dateMs(run.created_at)).filter(Number.isFinite));
-    return Number.isFinite(newest)&&newest<dateMs(STATE_EVAL_CONTRACT_UPDATED_AT);
+    const contract=dateMs(STATE_EVAL_CONTRACT_UPDATED_AT);
+    return runs.some(run=>{const when=dateMs(run.created_at);return Number.isFinite(when)&&when<contract;});
   }
   function freshnessMeta(value,fallback,staleHours=24){
     const ts=value||fallback;
