@@ -34,6 +34,17 @@ assert.strictEqual(deploymentSummary.total,3);
 assert.strictEqual(deploymentSummary.failed,1);
 assert.strictEqual(deploymentSummary.recent_failures[0].recovered,true);
 
+const skippedDeploymentSummary=activity.summarizeDeployments([
+  {uid:'skip-new',name:'state',target:'production',state:'CANCELED',created:400,errorMessage:'The deployment was canceled because the Ignored Build Step command returned exit code 0.'},
+  {uid:'ready-current',name:'state',target:'production',state:'READY',created:300},
+  {uid:'bad-old',name:'state',target:'production',state:'ERROR',created:200,errorMessage:'Build failed'}
+]);
+assert.strictEqual(activity.isIgnoredBuildSkip(skippedDeploymentSummary.latest),false);
+assert.strictEqual(skippedDeploymentSummary.skipped,1);
+assert.strictEqual(skippedDeploymentSummary.failed,1);
+assert.strictEqual(skippedDeploymentSummary.latest.uid,'ready-current');
+assert.ok(!skippedDeploymentSummary.recent_failures.some(item=>item.id==='skip-new'));
+
 const parsedRows=activity.parseRuntimeRows('{"level":"error","message":"boom","requestPath":"/api/ask","responseStatusCode":500,"timestampInMs":100}\n{"level":"info","message":"ok"}');
 assert.strictEqual(parsedRows.length,2);
 const runtimeIssues=activity.runtimeIssues(parsedRows,'https://vercel.com/example');

@@ -125,7 +125,7 @@ assert.strictEqual(H.stateEvalContractStale(staleRecordedQuality),true);
 assert.strictEqual(H.qualityAttention(staleRecordedQuality).kind,'warn');
 const staleInvestigation=H.qualityInvestigation({project:H.PROJECTS[0],quality:staleRecordedQuality});
 assert.strictEqual(staleInvestigation.staleEvalContract,true);
-assert.match(staleInvestigation.report,/predates the current eval contract/);
+assert.match(staleInvestigation.report,/eval contract changed/i);
 const staleHandoff=H.projectHandoff({
   ...H.emptyProjectData(H.PROJECTS[0]),
   fresh:true,
@@ -135,6 +135,21 @@ const staleHandoff=H.projectHandoff({
 });
 assert.match(staleHandoff.handoffText,/Needs rerun/);
 assert.doesNotMatch(staleHandoff.handoffText,/A serious AI quality check failed/);
+
+const behaviorStaleQuality=H.normalizeQuality({
+  controlled_evals:{
+    latest_review_interpretation:{suite:'review_interpretation',interpretation_accuracy:.9,high_severity_failures:1,total:10,created_at:'2026-09-30 01:10:00'},
+    latest_ask_quality:{suite:'ask_quality',overall_pass_rate:.9,ask_grounding:1,high_severity_failures:1,total:10,created_at:'2026-09-30 01:10:01'}
+  }
+});
+behaviorStaleQuality.behaviorUpdatedAt='2026-09-30T02:00:00Z';
+assert.strictEqual(H.stateEvalContractStale(behaviorStaleQuality),false);
+assert.strictEqual(H.stateEvalBehaviorStale(behaviorStaleQuality),true);
+assert.strictEqual(H.stateEvalResultsStale(behaviorStaleQuality),true);
+assert.match(H.qualityAttention(behaviorStaleQuality).detail,/behavior these checks measure changed/i);
+const behaviorStaleInvestigation=H.qualityInvestigation({project:H.PROJECTS[0],quality:behaviorStaleQuality});
+assert.strictEqual(behaviorStaleInvestigation.staleEvalBehavior,true);
+assert.match(behaviorStaleInvestigation.report,/old scores no longer describe the current product/i);
 
 const duplicateCheckQuality=H.normalizeQuality({
   controlled_evals:{
@@ -308,6 +323,8 @@ assert.match(H.PROJECTS[2].nextDecision,/first-play flow/);
 assert.match(H.PROJECTS[0].description,/Human-reviewed project truth system/);
 assert.deepStrictEqual(H.PROJECTS[0].releasePaths,['implementation-context-prototype','state-project-complete']);
 assert.ok(H.PROJECTS[0].releaseIgnore.test('Project Health dashboard update'));
+assert.ok(H.PROJECTS[0].releaseIgnore.test('Align prompt assertions after final compaction'));
+assert.ok(H.PROJECTS[0].evalBehaviorPaths.includes('state-project-complete/question_review_prompt.py'));
 assert.strictEqual(H.infrastructureAttention({render:{configured:true,environments:{production:{ok:true}}}}),null);
 
 const unopenedState={...H.emptyProjectData(H.PROJECTS[0]),fresh:true,quality:H.normalizeQuality({controlled_evals:{latest_review_interpretation:null,latest_ask_quality:null}})};
@@ -379,6 +396,11 @@ assert.match(projectHealthSource,/AI checks are running/);
 assert.match(projectHealthSource,/Starting AI checks/);
 assert.doesNotMatch(projectHealthSource,/control:'evals'/);
 assert.match(projectHealthSource,/checks automatically/);
+assert.match(projectHealthSource,/project-switcher-item/);
+assert.match(projectHealthSource,/data-summary-filter/);
+assert.match(projectHealthSource,/unreviewedIncidents/);
+assert.doesNotMatch(projectHealthSource,/Recent check details/);
+assert.match(projectHealthSource,/stateEvalBehaviorStale/);
 
 const workflowText=fs.readFileSync(require.resolve('../.github/workflows/question-review-live.yml'),'utf8');
 assert.match(workflowText,/suite:/);
