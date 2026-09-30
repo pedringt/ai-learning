@@ -163,7 +163,12 @@ def test_anthropic_prompt_is_compact_and_does_not_repeat_json_skeleton():
     # new required behavior for the empty-Current-State case, not bloat.
     # This test's own `_prompt()` fixture always passes empty state_items,
     # so it measures the bootstrap-mode prompt specifically.
-    assert len(prompt) < 10500
+    # Bumped again -> 11000 2026-09-30: the reviewed State authority fix adds
+    # one bounded rule requiring newer authoritative corrections to reuse an
+    # existing Review and supersede stale pending proposals. The deterministic
+    # suite covers that behavior directly; this small headroom keeps the
+    # compactness guard meaningful without rejecting the required contract.
+    assert len(prompt) < 11000
 
 
 def test_provider_output_schema_stays_below_anthropic_complexity_budget():
@@ -235,3 +240,12 @@ def test_both_providers_keep_partial_answers_and_authority_disagreements_bounded
         assert 'lower-authority disagreement' in prompt
         assert 'partial answers leave broader questions open' in prompt
         assert 'do not widen scope' in prompt
+
+
+def test_both_providers_supersede_stale_pending_proposals_when_authoritative_evidence_corrects_them():
+    for provider_cls in (AnthropicProvider, OpenAIProvider):
+        prompt = _prompt(provider_cls()).lower()
+        assert "supersede" in prompt
+        assert "existing_review_id" in prompt
+        assert "stale pending proposal" in prompt
+        assert "preserve" in prompt
