@@ -300,7 +300,7 @@ assert.match(evalDetailsHtml,/Synthetic controlled scenarios/);
 const projectHealthSource=fs.readFileSync(require.resolve('../project-health.js'),'utf8');
 assert.match(projectHealthSource,/View eval details/);
 assert.match(projectHealthSource,/data-attention-action="ai-quality"/);
-assert.match(projectHealthSource,/Prepare handoff|prepareHandoffButton/);
+assert.match(projectHealthSource,/drawerPrepareHandoffButton/);
 assert.match(projectHealthSource,/AI checks are running/);
 assert.match(projectHealthSource,/checks automatically/);
 
