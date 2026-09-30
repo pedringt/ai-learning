@@ -13,7 +13,7 @@
       nextDecision:'Expand failure investigation only if it stays useful without weakening human control.',
       nextReview:'After the next recorded AI quality check.',
       owner:'Product',
-      qualityLabel:'AI Quality',
+      qualityLabel:'AI Evals',
       links:{
         live:'https://state.contextswitch.tech',
         vercel:'https://vercel.com/cairn10/state',
@@ -607,7 +607,8 @@
     const run=makeRunner(data,onUpdate);
     const core=[
       run('Delivery',loadGitHubProject(project,project.branch),value=>{data.delivery=value;}),
-      run('Activity',loadActivity(project),value=>{data.activity=value;})
+      run('Activity',loadActivity(project),value=>{data.activity=value;}),
+      run('Run controls',loadRunInfo(project),value=>{data.runInfo=value;})
     ];
     if(project.id==='state'){
       core.push(run('Production backend',loadPlatformSignal(project,'production-render'),value=>{data.platform=mergePlatform(data.platform,value);}));
@@ -632,8 +633,7 @@
       run('Analytics',loadPlatformSignal(project,'analytics'),value=>{data.platform=mergePlatform(data.platform,value);}),
       run('AI operations',loadPlatformSignal(project,'ai-telemetry'),value=>{data.platform=mergePlatform(data.platform,value);}),
       run('Neon',loadPlatformSignal(project,'neon'),value=>{data.platform=mergePlatform(data.platform,value);}),
-      run('Open work',loadOpenPullRequests(project),value=>{data.openPullRequests=Array.isArray(value)?value:[];}),
-      run('Run controls',loadRunInfo(project),value=>{data.runInfo=value;})
+      run('Open work',loadOpenPullRequests(project),value=>{data.openPullRequests=Array.isArray(value)?value:[];})
     ];
     if(project.id==='state'){
       tasks.push(
@@ -822,7 +822,7 @@
       return '<button class="attention attention-action '+esc(item.kind||'')+'" type="button" data-section-target="deliveryPanel">'+content+'<span class="attention-action-label">View delivery evidence →</span></button>';
     }
     if(item.category==='infrastructure'){
-      return '<button class="attention attention-action '+esc(item.kind||'')+'" type="button" data-section-target="infrastructurePanel">'+content+'<span class="attention-action-label">View infrastructure →</span></button>';
+      return '<button class="attention attention-action '+esc(item.kind||'')+'" type="button" data-section-target="systemsDetails">'+content+'<span class="attention-action-label">View systems &amp; connections →</span></button>';
     }
     return '<div class="attention '+esc(item.kind||'')+'">'+content+'</div>';
   }
@@ -909,7 +909,16 @@
     return (delta>0?'Up ':'Down ')+Math.abs(delta)+' points vs previous run';
   }
   function stateEvalCard(title,value,description,trend,note){
-    return '<div class="eval-card"><strong>'+esc(title)+'</strong><div class="score">'+esc(value)+'</div><p>'+esc(description)+'</p>'+(note?'<p class="eval-card-note"><strong>'+esc(note)+'</strong></p>':'')+(trend?'<p><strong>'+esc(trend)+'</strong></p>':'')+'</div>';
+    return '<div class="eval-card compact"><strong>'+esc(title)+'</strong><div class="score">'+esc(value)+'</div><div class="eval-card-meta">'+
+      (description?'<span>'+esc(description)+'</span>':'')+
+      (note?'<span class="failure">'+esc(note)+'</span>':'')+
+      (trend?'<span class="trend">'+esc(trend)+'</span>':'')+
+      '</div></div>';
+  }
+  function scenarioPassLabel(run,score){
+    const total=Number(run?.total||0),value=Number(score);
+    if(!total||!Number.isFinite(value))return'';
+    return Math.round(total*value)+' / '+total+' passed';
   }
   function stateEvalHistory(){return'';}
   function investigationResultHtml(investigation){
@@ -951,7 +960,7 @@
         ['Neon',p.links?.neon],
         [p.id==='state'?'State eval details':p.id==='tastemake'?'Recommendation checks':'Game checks',p.links?.quality]
       ].filter(item=>item[1]);
-      linksMenu.innerHTML=links.map(([label,url])=>'<a href="'+esc(url)+'" target="_blank" rel="noopener noreferrer">'+esc(label)+'</a>').join('');
+      linksMenu.innerHTML='<button type="button" data-open-systems>Systems &amp; connections</button>'+links.map(([label,url])=>'<a href="'+esc(url)+'" target="_blank" rel="noopener noreferrer">'+esc(label)+'</a>').join('');
     }
     const projectCheckButton=doc.getElementById('projectCheckButton');
     const headerRunChecksButton=doc.getElementById('headerRunChecksButton');
@@ -968,9 +977,11 @@
     if(headerRunChecksButton){
       const activeEvalRun=data.qualityRun;
       const baseLabel=run?.button_label||(p.id==='state'?'Run AI evals':p.id==='tastemake'?'Run recommendation checks':'Run game checks');
-      headerRunChecksButton.hidden=!run?.configured;
-      headerRunChecksButton.disabled=!!activeEvalRun;
+      const runInfoLoading=!run&&(!data.fresh||pending.has('Run controls'));
+      headerRunChecksButton.hidden=false;
+      headerRunChecksButton.disabled=!!activeEvalRun||runInfoLoading||!run?.configured;
       headerRunChecksButton.textContent=activeEvalRun?'Checks running…':data.qualityRunCompletedAt?'View quality results':baseLabel;
+      headerRunChecksButton.title=runInfoLoading?'Checking run availability…':(!run?.configured?'Run controls are unavailable for this project.':'');
       headerRunChecksButton.classList.toggle('primary',!!shouldRunChecksFirst);
       headerRunChecksButton.style.order=shouldRunChecksFirst?'1':'2';
     }
@@ -1017,7 +1028,7 @@
       '</div><div class="focus-followup"><strong>'+(reviewIsDependency?'Waiting on':'Next review')+'</strong><span>'+esc(p.nextReview)+'</span></div>';
 
     const overviewQuality=p.quality==='state'?qualityAttention(q):externalQualityAttention(externalQ);
-    const overviewDelivery=deliveryAttention(d);
+    const overviewDelivery=deliveryAttentionForData(data);
     const overviewInfra=infrastructureAttention(platform);
     const runtimeStatus=productionRuntime(data);
     const aSummary=platform?.analytics;
@@ -1029,7 +1040,7 @@
       {label:p.qualityLabel||'Quality',kind:overviewQuality?.kind||'unknown',detail:overviewQuality?.title||'Quality status unavailable',tab:'ai-quality',fresh:freshnessMeta(qualityTime,data.checkedAt,72)},
       {label:'Production',kind:runtimeStatus.kind,status:runtimeStatus.label,detail:runtimeStatus.detail,tab:'overview',section:'deliveryPanel',fresh:freshnessMeta(data.detailCheckedAt||d?.updatedAt||data.checkedAt,data.checkedAt,24)},
       {label:'Release pipeline',kind:overviewDelivery?.kind||'unknown',detail:overviewDelivery?.title||'Release status unavailable',tab:'overview',section:'deliveryPanel',fresh:freshnessMeta(d?.updatedAt,data.checkedAt,24)},
-      {label:'Infrastructure',kind:overviewInfra?.kind||'good',detail:overviewInfra?.title||'Production services healthy',tab:'overview',section:'infrastructurePanel',fresh:freshnessMeta(data.detailCheckedAt||data.checkedAt,data.checkedAt,6)},
+      ...(overviewInfra&&['bad','warn'].includes(overviewInfra.kind)?[{label:'Infrastructure',kind:overviewInfra.kind,detail:overviewInfra.title,tab:'overview',section:'systemsDetails',fresh:freshnessMeta(data.detailCheckedAt||data.checkedAt,data.checkedAt,6)}]:[]),
       {label:'Usage',kind:pending.has('Analytics')?'unknown':aSummary?.available?'available':'unknown',status:aSummary?.available?'Data available':null,detail:pending.has('Analytics')?'Checking usage…':aSummary?.available?((aSummary.visitors??0)+' visitors · '+(aSummary.pageviews??0)+' page views · 30d'):(aSummary?.configured?'Connected, but comparison data is not available yet':'Usage analytics are not connected'),tab:'activity',fresh:freshnessMeta(data.detailCheckedAt||data.checkedAt,data.checkedAt,24)}
     ];
     const changes=meaningfulChanges(data);
@@ -1039,8 +1050,7 @@
     changesPanel.innerHTML=changes.length
       ?'<div class="panel-title-row"><div><h3>Changed since last visit</h3><p class="panel-copy">Compared with '+esc(sinceLabel)+'. Only meaningful changes are shown.</p></div><span class="readiness-pill watch">'+esc(changes.length)+' change'+(changes.length===1?'':'s')+'</span></div><div class="change-list" style="margin-top:8px">'+changes.slice(0,8).map(item=>'<button class="change-item" type="button" data-tab-target="'+esc(item.tab||'activity')+'"'+(item.section?' data-section-target="'+esc(item.section)+'"':'')+'><span class="change-dot"></span><div><strong>'+esc(item.title)+'</strong><span>'+esc(item.detail)+'</span></div></button>').join('')+'</div>'
       :'<button class="changes-zero" type="button" data-tab-target="activity"><span aria-hidden="true">✓</span><strong>No meaningful changes since your last visit</strong></button>';
-    const overviewGaps=setupGaps(data);
-    doc.getElementById('overviewHealthPanel').innerHTML='<div class="panel-title-row"><h3>Project health</h3>'+(overviewGaps.length?'<span class="readiness-pill watch">'+esc(overviewGaps.length)+' coverage '+(overviewGaps.length===1?'gap':'gaps')+'</span>':'')+'</div>'+
+    doc.getElementById('overviewHealthPanel').innerHTML='<div class="panel-title-row"><h3>Project health</h3></div>'+
       '<div class="overview-health" style="margin-top:6px">'+healthRows.map(item=>'<button class="overview-health-row" type="button" data-tab-target="'+esc(item.tab)+'"'+(item.section?' data-section-target="'+esc(item.section)+'"':'')+'><div><strong>'+esc(item.label)+'</strong><span class="health-status '+esc(item.kind)+'">'+esc(item.status||statusLabel(item.kind))+'</span><span class="health-detail">'+esc(item.detail)+'</span><span class="signal-meta '+(item.fresh?.stale?'stale':'')+'">'+esc(item.fresh?.label||'Freshness unknown')+'</span></div><span class="health-chevron" aria-hidden="true">›</span></button>').join('')+'</div>';
 
     // Product quality / evals
@@ -1059,22 +1069,33 @@
         const qa=qualityAttention(q);
         const staleResults=stateEvalResultsStale(q);
         const cards=[];
-        const noteFor=check=>{const count=failureCheckCount(q,check);return count?count+' high-impact miss'+(count===1?'':'es'):'';};
-        if(review?.interpretation_accuracy!=null) cards.push(stateEvalCard('Understood updates correctly',percent(review.interpretation_accuracy),'Did State interpret the project update the way the product expected?',evalTrend(q.recent,'review_interpretation'),noteFor('interpretation')));
-        if(ask?.ask_grounding!=null) cards.push(stateEvalCard('Answers stayed supported by evidence',percent(ask.ask_grounding),'Did answers stick to known project information instead of filling gaps?',evalTrend(q.recent,'ask_quality'),noteFor('grounding')));
-        if(ask?.authority_accuracy!=null) cards.push(stateEvalCard('Respected decision authority',percent(ask.authority_accuracy),'Did State keep proposed changes separate from approved project truth?','',noteFor('authority')));
-        if(ask?.uncertainty_accuracy!=null) cards.push(stateEvalCard('Handled uncertainty clearly',percent(ask.uncertainty_accuracy),'Did State say when the available evidence was not enough?','',noteFor('uncertainty')));
+        const noteFor=check=>{const count=failureCheckCount(q,check);return count?count+' high-impact failure'+(count===1?'':'s'):'';};
+        if(review?.interpretation_accuracy!=null) cards.push(stateEvalCard('Update understanding',percent(review.interpretation_accuracy),scenarioPassLabel(review,review.interpretation_accuracy),evalTrend(q.recent,'review_interpretation'),noteFor('interpretation')));
+        if(ask?.ask_grounding!=null) cards.push(stateEvalCard('Evidence grounding',percent(ask.ask_grounding),scenarioPassLabel(ask,ask.ask_grounding),evalTrend(q.recent,'ask_quality'),noteFor('grounding')));
+        if(ask?.authority_accuracy!=null) cards.push(stateEvalCard('Decision authority',percent(ask.authority_accuracy),scenarioPassLabel(ask,ask.authority_accuracy),'',noteFor('authority')));
+        if(ask?.uncertainty_accuracy!=null) cards.push(stateEvalCard('Uncertainty handling',percent(ask.uncertainty_accuracy),scenarioPassLabel(ask,ask.uncertainty_accuracy),'',noteFor('uncertainty')));
         const failureSummary=qualityFailureClassSummary(q);
-        const primaryFailure=failureSummary.details?.[0]||null;
-        const failureDetailHtml=primaryFailure
-          ?'<div class="quality-failure-detail"><strong>'+esc(primaryFailure.title)+'</strong><p><b>What happened:</b> '+esc(primaryFailure.whatHappened)+'</p><p><b>Expected:</b> '+esc(primaryFailure.expected)+'</p><p><b>Why it matters:</b> '+esc(primaryFailure.why)+'</p><div class="quality-actions"><button class="button small primary" type="button" data-investigate-quality>Investigate this failure</button><a class="button small" href="/state-evals?failure='+encodeURIComponent(primaryFailure.scenario_id||'')+'">View failed scenario</a></div></div>'
-          :'<p>Open the failed scenarios to see the affected behavior.</p>';
+        const failureDetailHtml=failureSummary.details?.length
+          ?'<div class="failure-list">'+failureSummary.details.map(detail=>
+              '<div class="failure-item-compact">'+
+                '<div class="eyebrow">'+esc(detail.suite||'AI eval')+'</div>'+
+                '<h4>'+esc(detail.title)+'</h4>'+
+                '<div class="failure-facts"><strong>Observed</strong><span>'+esc(detail.whatHappened)+'</span><strong>Expected</strong><span>'+esc(detail.expected)+'</span><strong>Why it matters</strong><span>'+esc(detail.why)+'</span></div>'+
+                '<div class="quality-actions"><button class="button small primary" type="button" data-investigate-quality data-failure-id="'+esc(detail.scenario_id||'')+'">Investigate failure</button><a class="button small" href="/state-evals?failure='+encodeURIComponent(detail.scenario_id||'')+'">View scenario</a></div>'+
+              '</div>'
+            ).join('')+'</div>'
+          :'';
+        const statusText=staleResults
+          ?'Previous run · rerun required'
+          :(failureSummary.count
+            ?esc(total||'—')+' scenarios · '+failureSummary.count+' high-impact failure'+(failureSummary.count===1?'':'s')
+            :esc(total||'—')+' scenarios · no high-impact failures');
         qualityHtml='<h3>Product quality · AI evals</h3>'+
-          '<div class="eval-overview"><div><strong>'+esc(qa.title)+'</strong><span>'+(latestDate?'Last checked '+esc(fmtDate(latestDate))+' · ':'')+(staleResults?'Previous run · rerun required':esc(total||'—')+' scenarios')+'</span></div></div>'+
+          '<div class="eval-overview"><div><strong>AI eval status</strong><span>'+(latestDate?'Last checked '+esc(fmtDate(latestDate))+' · ':'')+statusText+'</span></div></div>'+
           (staleResults
-            ?'<div class="run-callout stale-quality-summary"><strong>What to know from the last run</strong><p>The previous run recorded '+esc(severe)+' high-impact miss'+(severe===1?'':'es')+', but '+esc(stateEvalStaleReason(q).toLowerCase())+' Run the checks again before treating those scores as current.</p></div>'
+            ?'<div class="run-callout stale-quality-summary"><strong>Previous results need a rerun</strong><p>'+esc(stateEvalStaleReason(q))+' Run the evals again before treating these scores as current.</p></div>'
             :failureSummary.count
-              ?'<div class="run-callout quality-failure-summary"><strong>'+esc(failureSummary.count)+' high-impact scenario'+(failureSummary.count===1?'':'s')+' need review</strong><p>'+esc(Math.max(0,total-failureSummary.count))+' of '+esc(total)+' scenarios did not report a high-impact failure.</p>'+failureDetailHtml+'<p class="footnote"><a href="/state-evals">Review failed scenario →</a></p></div><div class="eval-grid">'+cards.join('')+'</div>'
+              ?'<div class="run-callout quality-failure-summary"><strong>Failures requiring review</strong>'+failureDetailHtml+'</div><div class="eval-grid">'+cards.join('')+'</div>'
               :'<div class="eval-grid">'+cards.join('')+'</div>')+stateEvalHistory(q);
       }
       qualityHtml+='<p class="footnote"><a href="/state-evals">View eval details →</a></p>';
@@ -1083,11 +1104,15 @@
         const delayed=activeEvalRun.state==='delayed';
         qualityHtml+='<div class="eval-run-status '+(delayed?'warn':'')+'" role="status"><strong>'+(delayed?'Run started · waiting for a newer result':'AI evals are running…')+'</strong><span>Started '+esc(fmtDate(activeEvalRun.startedAt))+'. The previous results stay visible until the new run finishes; this page checks automatically.</span></div>';
       }
-      if(pending.has('Run controls')){
-        qualityHtml+='<div class="eval-actions"><span class="footnote">Checking whether dashboard-run controls are ready…</span></div>';
+      if(pending.has('Run controls')&&!run){
+        qualityHtml+='<div class="eval-actions"><button class="button small primary" type="button" disabled>Run all AI evals</button><span class="footnote">Checking run availability…</span></div>';
       }else if(run?.configured){
         const runDisabled=activeEvalRun?' disabled':'';
-        qualityHtml+='<div class="eval-actions"><button class="button small primary" type="button" data-run-checks="all"'+runDisabled+'>'+(activeEvalRun?'AI evals running…':'Run all AI evals')+'</button><button class="button small" type="button" data-run-checks="review"'+runDisabled+'>Check update understanding</button><button class="button small" type="button" data-run-checks="ask"'+runDisabled+'>Check answer quality</button></div>'+
+        qualityHtml+='<div class="eval-actions"><button class="button small primary" type="button" data-run-checks="all"'+runDisabled+'>'+(activeEvalRun?'AI evals running…':'Run all AI evals')+'</button></div>'+
+          '<div class="eval-suite-actions"><strong>Run a specific eval suite</strong><p>State has two controlled eval areas. Rerun one when you are checking a targeted change.</p><div class="suite-action-grid">'+
+          '<button class="button small suite-action" type="button" data-run-checks="review"'+runDisabled+'><strong>Update understanding</strong><span>How State interprets new evidence and proposed truth changes.</span></button>'+
+          '<button class="button small suite-action" type="button" data-run-checks="ask"'+runDisabled+'><strong>Answer quality</strong><span>Grounding, uncertainty, and decision authority in answers.</span></button>'+
+          '</div></div>'+
           '<p class="footnote">Estimated model cost: '+esc(run.estimated_cost||'not configured')+'. You will confirm before any paid run starts.</p>';
       }else if(run){
         qualityHtml+='<p class="footnote">Running AI evals from the dashboard still needs setup. Existing recorded results can still appear here.</p>';
@@ -1185,15 +1210,19 @@
     };
     const prodInvestigate=deliveryKind==='bad'?investigateButton('vercel','production','Investigate deployment'):'';
     const checkInvestigate=Array.isArray(d?.failedChecks)&&d.failedChecks.length?investigateButton('github-check','production','Investigate failed check'):'';
-    doc.getElementById('deliveryPanel').innerHTML='<div class="panel-title-row"><h3>Delivery</h3><span class="readiness-pill '+esc(readiness.label.toLowerCase())+'">Release '+esc(readiness.label)+'</span></div>'+
+    const deliveryHealthy=deliveryKind==='good'&&runtime.kind==='good'&&!checkInvestigate;
+    const deliveryDetails=
       '<div class="delivery-split" style="margin-top:12px">'+
         '<div class="delivery-concept"><span class="activity-type">Runtime</span><strong>Current production</strong><span class="delivery-status '+esc(runtime.kind)+'">'+esc(runtime.label)+'</span><p>'+esc(runtime.detail)+'</p></div>'+
         '<div class="delivery-concept '+deliveryClass+'"><span class="activity-type">Release pipeline</span><strong>'+esc(pipelineText)+'</strong><span class="delivery-status '+esc(deliveryKind)+'">'+esc(deliveryKind==='good'?'Healthy':deliveryKind==='bad'?'Attention needed':deliveryKind==='warn'?'Watch':'Unknown')+'</span><p>'+esc(pipeline.detail)+'</p></div>'+
       '</div>'+
       '<div class="delivery-environments">'+(rawPreviewFailure?'<div class="delivery-environment"><div class="delivery-environment-head"><div><strong>Production release</strong></div><span class="delivery-status good">Healthy</span></div><div class="delivery-meta"><span>The failed Vercel status on the referenced commit was a preview or superseded attempt, not an active production release failure.</span>'+(p.links?.vercel?'<span>'+githubLink('Open in Vercel ↗',p.links.vercel)+'</span>':'')+'</div></div>':environmentBlock('Latest production release attempt',d))+(s?environmentBlock('Staging release',s):'')+'</div>'+
       '<div class="quality-actions">'+prodInvestigate+checkInvestigate+'</div>';
+    doc.getElementById('deliveryPanel').innerHTML=deliveryHealthy
+      ?'<details class="compact-delivery"><summary><div class="compact-delivery-summary"><strong>Delivery</strong><span>Production &amp; release pipeline healthy · View details</span></div></summary>'+deliveryDetails+'</details>'
+      :'<div class="panel-title-row"><h3>Delivery</h3><span class="readiness-pill '+esc(readiness.label.toLowerCase())+'">Release '+esc(readiness.label)+'</span></div>'+deliveryDetails;
 
-    // Infrastructure stays visible, grouped as services rather than settings rows.
+    // Infrastructure details live one layer down under Systems & connections.
     const r=platform?.render,n=platform?.neon;
     const infraCards=[];
     if(r?.configured){
@@ -1211,7 +1240,7 @@
       '<div class="delivery-summary '+(infraAttention?.kind==='bad'?'bad':infraAttention?.kind==='warn'?'warn':'')+'" style="margin-top:12px">'+esc(infraAttention?.title||'Production services healthy')+'</div>'+
       '<div class="service-grid">'+infraCards.map(item=>'<div class="service-card"><strong>'+esc(item.label)+'</strong><span class="service-status">'+esc(item.status)+'</span><span class="service-detail">'+esc(item.detail)+'</span>'+(item.url?'<a href="'+esc(item.url)+'" target="_blank" rel="noopener noreferrer">Open '+esc(item.detail.split(' · ')[0])+' ↗</a>':'')+'</div>').join('')+'</div>';
 
-    // Connections and coverage gaps stay visible; they are setup context, not incidents.
+    // Connections and coverage gaps are setup context, so they stay behind the Systems & connections disclosure.
     const ai=platform?.aiTelemetry;
     const connections=[];
     connections.push({label:'Code + deployments',value:d?'Connected':'Unavailable'});
@@ -1362,7 +1391,7 @@
     };
   }
 
-  function qualityInvestigation(data){
+  function qualityInvestigation(data,scenarioId){
     const quality=data?.quality||{};
     const runs=[
       {label:'Update understanding',run:quality.review},
@@ -1372,7 +1401,8 @@
       const score=evalScore(item.run);
       return Number(item.run?.high_severity_failures||0)>0||(score!=null&&score<1);
     });
-    const details=affected.flatMap(item=>(Array.isArray(item.run?.failure_details)?item.run.failure_details:[]).map(detail=>({...detail,suiteLabel:item.label})));
+    const allDetails=affected.flatMap(item=>(Array.isArray(item.run?.failure_details)?item.run.failure_details:[]).map(detail=>({...detail,suiteLabel:item.label})));
+    const details=scenarioId?allDetails.filter(detail=>String(detail.scenario_id||'')===String(scenarioId)):allDetails;
     const severe=affected.reduce((n,item)=>n+Number(item.run?.high_severity_failures||0),0);
     const latestDate=runs.map(item=>item.run?.created_at).filter(Boolean).sort().pop()||new Date().toISOString();
     const review=quality.review,ask=quality.ask;
@@ -1651,15 +1681,11 @@
     }
     function renderSummary(){
       const fresh=state.filter(item=>item?.fresh);
-      const incidentCount=unreviewedIncidents().length;
       const actionCount=fresh.filter(item=>projectStatus(item).key==='action').length;
       const watchCount=fresh.filter(item=>projectStatus(item).key==='watch').length;
-      const checked=fresh.map(item=>item.checkedAt).filter(Boolean).sort().pop();
-      summary.innerHTML='<button class="summary-chip summary-action '+(summaryFilter==='all'?'active':'')+'" type="button" data-summary-filter="all"><strong>'+PROJECTS.length+'</strong> projects</button>'+
-        (actionCount?'<button class="summary-chip summary-action incident '+(summaryFilter==='action'?'active':'')+'" type="button" data-summary-filter="action"><strong>'+actionCount+'</strong> need action</button>':'')+
-        (watchCount?'<button class="summary-chip summary-action open '+(summaryFilter==='watch'?'active':'')+'" type="button" data-summary-filter="watch"><strong>'+watchCount+'</strong> watch</button>':'')+
-        (incidentCount?'<button class="summary-chip summary-action incident" type="button" data-summary-incidents><strong>'+incidentCount+'</strong> '+(incidentCount===1?'incident':'incidents')+'</button>':'')+
-        '<span class="summary-chip summary-meta"><strong>'+esc(checked?relativeAge(checked):'checking')+'</strong> last updated</span>';
+      summary.innerHTML=
+        (actionCount?'<button class="summary-chip summary-action incident '+(summaryFilter==='action'?'active':'')+'" type="button" data-summary-filter="action"><strong>'+actionCount+'</strong> '+(actionCount===1?'needs':'need')+' attention</button>':'')+
+        (watchCount?'<button class="summary-chip summary-action open '+(summaryFilter==='watch'?'active':'')+'" type="button" data-summary-filter="watch"><strong>'+watchCount+'</strong> watch</button>':'');
     }
 
     function applyTabState(){
@@ -1732,7 +1758,8 @@
     summary.addEventListener('click',event=>{
       const filterButton=event.target.closest?.('[data-summary-filter]');
       if(filterButton){
-        summaryFilter=filterButton.dataset.summaryFilter||'all';
+        const requested=filterButton.dataset.summaryFilter||'all';
+        summaryFilter=summaryFilter===requested?'all':requested;
         const candidates=state.filter(item=>item?.fresh&&(summaryFilter==='all'||projectStatus(item).key===summaryFilter));
         if(summaryFilter!=='all'&&candidates.length&&!candidates.some(item=>item.project.id===activeId))select(candidates[0].project.id);
         else renderNow();
@@ -1753,12 +1780,23 @@
       if(button)setActiveTab(button.dataset.tab);
     });
     if(projectDetail)projectDetail.addEventListener('click',event=>{
+      const systemsButton=event.target.closest?.('[data-open-systems]');
+      if(systemsButton){
+        setActiveTab('overview');
+        const systems=doc.getElementById('systemsDetails');
+        if(systems)systems.open=true;
+        const menu=doc.getElementById('projectActionMenu');
+        if(menu)menu.open=false;
+        root.setTimeout(()=>systems?.scrollIntoView?.({behavior:'smooth',block:'start'}),0);
+        return;
+      }
       const target=event.target.closest?.('[data-tab-target],[data-section-target]');
       if(!target)return;
       const tab=target.dataset.tabTarget||'overview';
       setActiveTab(tab);
       if(target.dataset.sectionTarget){
         const section=doc.getElementById(target.dataset.sectionTarget);
+        if(section?.tagName==='DETAILS')section.open=true;
         root.setTimeout(()=>section?.scrollIntoView?.({behavior:'smooth',block:'start'}),0);
       }
     });
@@ -1923,10 +1961,8 @@
       await Promise.all(jobs);
       if(generation!==refreshGeneration)return;
       state.forEach(reconcileInvestigationHistory);
-      const errors=state.flatMap(item=>item.errors.map(error=>item.project.name+': '+error));
       persist();
-      const coverageGapCount=errors.length;
-      status.innerHTML='<strong>Updated just now</strong>'+(coverageGapCount?' · '+coverageGapCount+' coverage '+(coverageGapCount===1?'gap':'gaps'):'')+(errors.length?' · some signals unavailable':'');
+      status.innerHTML='<strong>Updated just now</strong>';
       refresh.disabled=false;
       ensureDetails(activeId);
     }
@@ -1985,8 +2021,8 @@
       const investigate=event.target.closest?.('[data-investigate-quality]');
       if(investigate){
         const data=activeData();if(!data)return;
-        data.investigation=qualityInvestigation(data);
-        recordInvestigation(data,data.investigation,'AI eval');
+        data.investigation=qualityInvestigation(data,investigate.dataset.failureId||null);
+        recordInvestigation(data,data.investigation,investigate.dataset.failureId?'AI eval failure · '+investigate.dataset.failureId:'AI eval');
         renderNow();revealInvestigation();return;
       }
       const button=event.target.closest?.('[data-run-checks]');
@@ -2015,11 +2051,13 @@
     if(requestedInvestigation==='quality'){
       const data=activeData();
       if(data?.project?.id==='state'&&data.quality){
-        data.investigation=qualityInvestigation(data);
-        recordInvestigation(data,data.investigation,'AI eval');
+        const requestedFailure=initialParams.get('failure');
+        data.investigation=qualityInvestigation(data,requestedFailure||null);
+        recordInvestigation(data,data.investigation,requestedFailure?'AI eval failure · '+requestedFailure:'AI eval');
         renderNow();
         revealInvestigation();
         const url=new URL(root.location.href);
+        url.searchParams.delete('failure');
         url.searchParams.delete('investigate');
         root.history.replaceState(null,'',url);
       }
