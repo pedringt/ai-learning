@@ -125,12 +125,12 @@
   function qualityAttention(q){
     if(!q) return {kind:'unknown',title:'Quality data is not available yet',detail:'Project Health could not load a recent quality result.'};
     const runs=[q.review,q.ask].filter(Boolean);
-    if(!runs.length) return {kind:'warn',title:'AI quality checks have not been recorded yet',detail:'Run the controlled checks to see how State handles understanding, evidence, uncertainty, and decision authority.'};
-    if(stateEvalResultsStale(q)) return {kind:'warn',title:'AI quality checks need to be rerun',detail:stateEvalStaleReason(q)+' Historical failures are not treated as current product failures.',nextAction:'Run the controlled AI quality checks again.',owner:'Product'};
+    if(!runs.length) return {kind:'warn',title:'AI evals have not been recorded yet',detail:'Run the controlled checks to see how State handles understanding, evidence, uncertainty, and decision authority.'};
+    if(stateEvalResultsStale(q)) return {kind:'warn',title:'AI evals need to be rerun',detail:stateEvalStaleReason(q)+' Historical failures are not treated as current product failures.',nextAction:'Run the controlled AI evals again.',owner:'Product'};
     const severe=runs.reduce((n,r)=>n+Number(r.high_severity_failures||0),0);
     if(severe>0) return {kind:'bad',title:severe+' high-impact AI scenario'+(severe===1?'':'s')+' need review',detail:'Most aggregate quality signals may still look healthy; review the specific failed scenario'+(severe===1?'':'s')+' before deciding whether product behavior or the eval contract should change.',nextAction:'Review the failed scenario evidence and decide whether product behavior or the eval contract is wrong.',owner:'Product'};
-    if(runs.some(r=>{const score=evalScore(r);return Number(r.failed_cases||0)>0||(score!=null&&score<1);})) return {kind:'warn',title:'Some AI quality checks need a look',detail:'At least one controlled scenario did not behave as expected.',nextAction:'Review the scenario-level miss, then rerun the affected suite.',owner:'Product'};
-    return {kind:'good',title:'AI quality checks are healthy',detail:'The latest recorded checks did not report a high-impact failure.'};
+    if(runs.some(r=>{const score=evalScore(r);return Number(r.failed_cases||0)>0||(score!=null&&score<1);})) return {kind:'warn',title:'Some AI evals need a look',detail:'At least one controlled scenario did not behave as expected.',nextAction:'Review the scenario-level miss, then rerun the affected suite.',owner:'Product'};
+    return {kind:'good',title:'AI evals are healthy',detail:'The latest recorded checks did not report a high-impact failure.'};
   }
   function deliveryAttention(d){
     if(!d) return {kind:'warn',title:'Delivery status is unavailable',detail:'Project Health could not confirm the latest release status.'};
@@ -182,7 +182,7 @@
       const q=qualityAttention(data.quality);
       if(['bad','warn'].includes(q.kind)){
         const noRecordedRuns=![q.review,q.ask].filter(Boolean).length;
-        items.push({...q,category:'quality',action:noRecordedRuns||stateEvalResultsStale(q)?'run-ai-checks':'investigate-quality',owner:q.owner||'Product',nextAction:q.nextAction||(noRecordedRuns?'Run the controlled AI quality checks.':'Review the latest quality evidence.')});
+        items.push({...q,category:'quality',action:noRecordedRuns||stateEvalResultsStale(q)?'run-ai-checks':'investigate-quality',owner:q.owner||'Product',nextAction:q.nextAction||(noRecordedRuns?'Run the controlled AI evals.':'Review the latest quality evidence.')});
       }
     }else{
       if(!data.externalQuality&&!data.fresh)return items;
@@ -264,7 +264,7 @@
       gaps.push({label:'Runtime error visibility',detail});
     }
     if(p.id==='state'&&!platform?.neon?.available) gaps.push({label:'Database health',detail:'Not connected or unavailable. This is a monitoring gap, not a product incident.'});
-    if(p.id==='state'&&run&&!run.configured) gaps.push({label:'Run AI quality checks',detail:'Dashboard-run setup is incomplete.'});
+    if(p.id==='state'&&run&&!run.configured) gaps.push({label:'Run AI evals',detail:'Dashboard-run setup is incomplete.'});
     if(p.id!=='narc'&&!pendingSet(data).has('AI operations')&&!ai?.available){
       gaps.push({label:'AI cost',detail:'Estimated model spend is not available yet.'});
       gaps.push({label:'AI response speed',detail:'Observed model response speed is not available yet.'});
@@ -278,7 +278,7 @@
     const open=productOpenItems(data);
     if(incidents.length||open.some(item=>item.kind==='bad')) return {label:'Hold',detail:'Resolve the current high-impact issue before treating the next release as ready.'};
     if(open.length) return {label:'Watch',detail:'Delivery is healthy, but a product-quality check or human review is still open.'};
-    if(data.delivery?.vercel?.kind==='good') return {label:'Ready',detail:'Delivery is healthy and there is no current high-impact quality issue.'};
+    if(deliveryAttentionForData(data).kind==='good') return {label:'Ready',detail:'Delivery is healthy and there is no current high-impact quality issue.'};
     return {label:'Unknown',detail:'There is not enough current evidence to call this release-ready.'};
   }
   function productionRuntime(data){
@@ -298,7 +298,7 @@
     if(live?.kind==='deployment')return 'Decide whether to retry the failed release or supersede it with the current branch.';
     if(data?.project?.quality==='state'&&data.quality){
       const q=qualityAttention(data.quality);
-      if(stateEvalResultsStale(data.quality))return 'Rerun the AI quality checks before changing State behavior or the eval.';
+      if(stateEvalResultsStale(data.quality))return 'Rerun the AI evals before changing State behavior or the eval.';
       if(q.kind==='bad')return 'Review the high-impact failure class before changing the prompt, product behavior, or eval.';
       if(q.kind==='warn')return 'Review the quality miss and decide whether it represents product behavior or eval noise.';
     }else{
@@ -815,7 +815,7 @@
     const meta=(item.owner||item.nextAction)?'<div class="attention-meta">'+(item.owner?'Owner: '+esc(item.owner):'')+(item.owner&&item.nextAction?' · ':'')+(item.nextAction?'Next: '+esc(item.nextAction):'')+'</div>':'';
     const content='<strong>'+esc(item.title)+'</strong><p>'+esc(item.detail)+'</p>'+meta;
     if(item.category==='quality'&&['bad','warn'].includes(item.kind)){
-      if(item.action==='run-ai-checks') return '<button class="attention attention-action '+esc(item.kind||'')+'" type="button" data-attention-action="run-ai-checks" aria-label="Run AI checks">'+content+'<span class="attention-action-label">Run AI checks →</span></button>';
+      if(item.action==='run-ai-checks') return '<button class="attention attention-action '+esc(item.kind||'')+'" type="button" data-attention-action="run-ai-checks" aria-label="Run AI evals">'+content+'<span class="attention-action-label">Run AI evals →</span></button>';
       return '<button class="attention attention-action '+esc(item.kind||'')+'" type="button" data-attention-action="ai-quality" aria-label="Investigate '+esc(item.title)+'">'+content+'<span class="attention-action-label">Investigate this issue →</span></button>';
     }
     if(item.category==='delivery'){
@@ -865,9 +865,9 @@
     if(data.project.quality==='state'){
       if(!data.quality) return 'Quality unavailable';
       const q=qualityAttention(data.quality);
-      if(q.kind==='good') return 'AI checks healthy';
-      if(q.kind==='bad') return 'AI checks need action';
-      if(q.kind==='warn') return 'AI checks need a look';
+      if(q.kind==='good') return 'AI evals healthy';
+      if(q.kind==='bad') return 'AI evals need action';
+      if(q.kind==='warn') return 'AI evals need a look';
       return q.title;
     }
     const q=data.externalQuality;if(!q) return 'Quality unavailable';
@@ -967,7 +967,7 @@
     }
     if(headerRunChecksButton){
       const activeEvalRun=data.qualityRun;
-      const baseLabel=run?.button_label||(p.id==='state'?'Run AI checks':p.id==='tastemake'?'Run recommendation checks':'Run game checks');
+      const baseLabel=run?.button_label||(p.id==='state'?'Run AI evals':p.id==='tastemake'?'Run recommendation checks':'Run game checks');
       headerRunChecksButton.hidden=!run?.configured;
       headerRunChecksButton.disabled=!!activeEvalRun;
       headerRunChecksButton.textContent=activeEvalRun?'Checks running…':data.qualityRunCompletedAt?'View quality results':baseLabel;
@@ -1048,10 +1048,10 @@
     if(p.quality==='state'){
       const review=q?.review,ask=q?.ask,runs=[review,ask].filter(Boolean);
       if(!q&&pending.has('Quality')){
-        qualityHtml='<h3>Product quality · AI checks</h3><div class="empty" style="margin-top:12px">Checking the latest recorded AI quality results…</div>';
+        qualityHtml='<h3>Product quality · AI evals</h3><div class="empty" style="margin-top:12px">Checking the latest recorded AI eval results…</div>';
       }else if(!runs.length){
-        qualityHtml='<h3>Product quality · AI checks</h3>'+
-          '<div class="eval-overview"><div><strong>No recorded AI quality check yet</strong><span>Run a controlled check to see how State handles understanding, evidence, uncertainty, and decision authority.</span></div></div>';
+        qualityHtml='<h3>Product quality · AI evals</h3>'+
+          '<div class="eval-overview"><div><strong>No recorded AI eval yet</strong><span>Run a controlled check to see how State handles understanding, evidence, uncertainty, and decision authority.</span></div></div>';
       }else{
         const latestDate=runs.map(item=>item?.created_at).filter(Boolean).sort().pop();
         const total=runs.reduce((n,item)=>n+Number(item?.total||0),0);
@@ -1069,7 +1069,7 @@
         const failureDetailHtml=primaryFailure
           ?'<div class="quality-failure-detail"><strong>'+esc(primaryFailure.title)+'</strong><p><b>What happened:</b> '+esc(primaryFailure.whatHappened)+'</p><p><b>Expected:</b> '+esc(primaryFailure.expected)+'</p><p><b>Why it matters:</b> '+esc(primaryFailure.why)+'</p></div>'
           :'<p>Open the failed scenarios to see the affected behavior.</p>';
-        qualityHtml='<h3>Product quality · AI checks</h3>'+
+        qualityHtml='<h3>Product quality · AI evals</h3>'+
           '<div class="eval-overview"><div><strong>'+esc(qa.title)+'</strong><span>'+(latestDate?'Last checked '+esc(fmtDate(latestDate))+' · ':'')+(staleResults?'Previous run · rerun required':esc(total||'—')+' scenarios')+'</span></div></div>'+
           (staleResults
             ?'<div class="run-callout stale-quality-summary"><strong>What to know from the last run</strong><p>The previous run recorded '+esc(severe)+' high-impact miss'+(severe===1?'':'es')+', but '+esc(stateEvalStaleReason(q).toLowerCase())+' Run the checks again before treating those scores as current.</p></div>'
@@ -1081,16 +1081,16 @@
       const activeEvalRun=data.qualityRun;
       if(activeEvalRun){
         const delayed=activeEvalRun.state==='delayed';
-        qualityHtml+='<div class="eval-run-status '+(delayed?'warn':'')+'" role="status"><strong>'+(delayed?'Run started · waiting for a newer result':'AI checks are running…')+'</strong><span>Started '+esc(fmtDate(activeEvalRun.startedAt))+'. The previous results stay visible until the new run finishes; this page checks automatically.</span></div>';
+        qualityHtml+='<div class="eval-run-status '+(delayed?'warn':'')+'" role="status"><strong>'+(delayed?'Run started · waiting for a newer result':'AI evals are running…')+'</strong><span>Started '+esc(fmtDate(activeEvalRun.startedAt))+'. The previous results stay visible until the new run finishes; this page checks automatically.</span></div>';
       }
       if(pending.has('Run controls')){
         qualityHtml+='<div class="eval-actions"><span class="footnote">Checking whether dashboard-run controls are ready…</span></div>';
       }else if(run?.configured){
         const runDisabled=activeEvalRun?' disabled':'';
-        qualityHtml+='<div class="eval-actions"><button class="button small primary" type="button" data-run-checks="all"'+runDisabled+'>'+(activeEvalRun?'AI checks running…':'Run all AI checks')+'</button><button class="button small" type="button" data-run-checks="review"'+runDisabled+'>Check update understanding</button><button class="button small" type="button" data-run-checks="ask"'+runDisabled+'>Check answer quality</button></div>'+
+        qualityHtml+='<div class="eval-actions"><button class="button small primary" type="button" data-run-checks="all"'+runDisabled+'>'+(activeEvalRun?'AI evals running…':'Run all AI evals')+'</button><button class="button small" type="button" data-run-checks="review"'+runDisabled+'>Check update understanding</button><button class="button small" type="button" data-run-checks="ask"'+runDisabled+'>Check answer quality</button></div>'+
           '<p class="footnote">Estimated model cost: '+esc(run.estimated_cost||'not configured')+'. You will confirm before any paid run starts.</p>';
       }else if(run){
-        qualityHtml+='<p class="footnote">Running AI checks from the dashboard still needs setup. Existing recorded results can still appear here.</p>';
+        qualityHtml+='<p class="footnote">Running AI evals from the dashboard still needs setup. Existing recorded results can still appear here.</p>';
       }
       qualityHtml+='<p class="footnote">Resolved Reviews · 30d: '+esc(q?.resolvedReviews??'Not loaded')+'. Project content is not copied into this dashboard.</p>';
     }else if(p.id==='tastemake'&&externalQ){
@@ -1413,7 +1413,7 @@
         stateEvalBehaviorStale(quality)?'State behavior changed after this run, so the old scores no longer describe the current product.':'The eval expectations changed after this run, so the old scores no longer describe the current contract.',
         '',
         'Recommended next action',
-        'Rerun the controlled AI quality checks. Use the new run as the current baseline before changing State behavior.',
+        'Rerun the controlled AI evals. Use the new run as the current baseline before changing State behavior.',
         '',
         'Owner',
         'Product',
