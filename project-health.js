@@ -56,7 +56,15 @@
   function htmlRow(label,value){return '<div class="row"><span>'+esc(label)+'</span><span>'+value+'</span></div>';}
   function linkedRow(label,value,url){return htmlRow(label,githubLink(value,url));}
   function githubApi(path){return 'https://api.github.com'+path;}
-  function pageEnvironment(root){const host=String(root?.location?.hostname||'');return /(^|[-.])staging([-.]|$)|-git-/i.test(host)?'staging':'production';}
+  function pageEnvironment(root){
+    const host=String(root?.location?.hostname||'');
+    const params=new URLSearchParams(String(root?.location?.search||''));
+    const explicit=String(params.get('env')||'').toLowerCase();
+    if(explicit==='staging'||explicit==='production')return explicit;
+    if(/(^|[-.])staging([-.]|$)|-git-/i.test(host))return 'staging';
+    if(/\.vercel\.app$/i.test(host)&&host!=='ai-learning.vercel.app')return 'staging';
+    return 'production';
+  }
   function protectedControlsUrl(data,params={}){
     const url=new URL('https://ai-learning-git-staging-cairn10.vercel.app/project-health');
     if(data?.project?.id)url.searchParams.set('project',data.project.id);
@@ -182,7 +190,7 @@
   function projectStatus(data){
     const att=overallAttention(data);
     if(att.kind==='unknown') return {key:'checking',label:'Checking',kind:'unknown'};
-    if(att.kind==='bad') return {key:'action',label:'Action',kind:'bad'};
+    if(att.kind==='bad') return {key:'action',label:'Needs attention',kind:'bad'};
     if(att.kind==='warn') return {key:'watch',label:'Watch',kind:'warn'};
     return {key:'healthy',label:'Healthy',kind:'good'};
   }
@@ -199,9 +207,13 @@
       if(fallback&&['bad','warn'].includes(fallback.kind)) open=[fallback];
     }
     if(open.length) return open;
+    const delivery=deliveryAttention(data.delivery);
+    if(delivery.kind==='bad') return [{...delivery,category:'delivery',owner:'Engineering'}];
+    const infra=infrastructureAttention(data.platform);
+    if(infra&&['bad','warn'].includes(infra.kind)) return [{...infra,category:'infrastructure',owner:'Engineering'}];
     const pending=pendingSet(data);
     if(pending.size) return [{kind:'unknown',title:'Still checking',detail:'Some connected signals are still loading.'}];
-    return [{kind:'good',title:'Nothing needs action right now',detail:'No current incident or product-quality action is open.'}];
+    return [{kind:'good',title:'Nothing needs action right now',detail:'No current incident, product-quality action, delivery failure, or infrastructure issue is open.'}];
   }
   function setupGaps(data){
     const gaps=[],p=data.project,platform=data.platform,run=data.runInfo,ai=platform?.aiTelemetry;
@@ -464,6 +476,12 @@
     if(item.category==='quality'&&['bad','warn'].includes(item.kind)){
       return '<button class="attention attention-action '+esc(item.kind||'')+'" type="button" data-attention-action="ai-quality" aria-label="Investigate '+esc(item.title)+'">'+content+'<span class="attention-action-label">Investigate this issue →</span></button>';
     }
+    if(item.category==='delivery'){
+      return '<button class="attention attention-action '+esc(item.kind||'')+'" type="button" data-tab-target="delivery">'+content+'<span class="attention-action-label">View delivery evidence →</span></button>';
+    }
+    if(item.category==='infrastructure'){
+      return '<button class="attention attention-action '+esc(item.kind||'')+'" type="button" data-tab-target="infra">'+content+'<span class="attention-action-label">View infrastructure →</span></button>';
+    }
     return '<div class="attention '+esc(item.kind||'')+'">'+content+'</div>';
   }
 
@@ -600,6 +618,13 @@
       projectCheckButton.disabled=!!data.investigation?.loading;
       projectCheckButton.textContent=data.investigation?.loading?'Checking project…':'Investigate project';
     }
+    const headerRunChecksButton=doc.getElementById('headerRunChecksButton');
+    if(headerRunChecksButton){
+      const activeEvalRun=data.qualityRun;
+      headerRunChecksButton.hidden=!(p.id==='state'&&run?.configured);
+      headerRunChecksButton.disabled=!!activeEvalRun;
+      headerRunChecksButton.textContent=activeEvalRun?'AI checks running…':'Run AI checks';
+    }
     const investigationPanel=doc.getElementById('investigationPanel');
     if(investigationPanel){
       investigationPanel.innerHTML=investigationResultHtml(data.investigation);
@@ -620,6 +645,21 @@
       '<div class="focus-block"><strong>Next decision</strong><p>'+esc(p.nextDecision)+'</p></div>'+
       '<div class="focus-block"><strong>Next review</strong><p>'+esc(p.nextReview)+'</p></div>'+
       '</div>';
+
+    const overviewQuality=p.quality==='state'?qualityAttention(q):externalQualityAttention(externalQ);
+    const overviewDelivery=deliveryAttention(d);
+    const overviewInfra=infrastructureAttention(data);
+    const aSummary=platform?.analytics;
+    const statusLabel=kind=>kind==='bad'?'Needs attention':kind==='warn'?'Watch':kind==='good'?'Healthy':'Unknown';
+    const healthRows=[
+      {label:'AI quality',kind:overviewQuality?.kind||'unknown',detail:overviewQuality?.title||'Quality status unavailable',tab:'ai-quality'},
+      {label:'Delivery',kind:overviewDelivery?.kind||'unknown',detail:overviewDelivery?.title||'Delivery status unavailable',tab:'delivery'},
+      {label:'Infrastructure',kind:overviewInfra?.kind||'good',detail:overviewInfra?.title||'Production services healthy',tab:'infra'},
+      {label:'Usage',kind:pending.has('Analytics')?'unknown':aSummary?.available?'good':'unknown',detail:pending.has('Analytics')?'Checking usage…':aSummary?.available?((aSummary.visitors??0)+' visitors · '+(aSummary.pageviews??0)+' page views · 30d'):(aSummary?.configured?'Connected, but comparison data is not available yet':'Usage analytics are not connected'),tab:'activity'}
+    ];
+    const overviewGaps=setupGaps(data);
+    doc.getElementById('overviewHealthPanel').innerHTML='<div class="panel-title-row"><h3>Project health</h3>'+(overviewGaps.length?'<span class="readiness-pill watch">'+esc(overviewGaps.length)+' coverage '+(overviewGaps.length===1?'gap':'gaps')+'</span>':'')+'</div>'+
+      '<div class="overview-health" style="margin-top:8px">'+healthRows.map(item=>'<div class="overview-health-row"><div><strong>'+esc(item.label)+' · '+esc(statusLabel(item.kind))+'</strong><span>'+esc(item.detail)+'</span></div><button type="button" data-tab-target="'+esc(item.tab)+'">View</button></div>').join('')+'</div>';
 
     // Product quality / evals
     let qualityHtml='';
@@ -724,7 +764,9 @@
       activityItems.push({title:'Full first-run playtest is still open',detail:'Automated checks are not a substitute for the human playthrough.'});
     }
     const activityHtml=activityItems.length?'<div class="activity-list">'+activityItems.slice(0,5).map(item=>'<div class="activity-item"><strong>'+esc(item.title)+'</strong><span>'+esc(item.detail)+'</span></div>').join('')+'</div>':'<div class="empty">No recent activity is available yet.</div>';
-    doc.getElementById('historyPanel').innerHTML='<h3>Recent activity</h3><div style="margin-top:12px">'+activityHtml+'</div>';
+    doc.getElementById('historyPanel').innerHTML='<h3>Activity</h3><p class="panel-copy">Meaningful releases, quality checks, work in progress, and user-facing signals.</p><div style="margin-top:12px">'+activityHtml+'</div>';
+    const overviewActivity=activityItems.length?'<div class="activity-list">'+activityItems.slice(0,3).map(item=>'<div class="activity-item"><strong>'+esc(item.title)+'</strong><span>'+esc(item.detail)+'</span></div>').join('')+'</div>':'<div class="empty">No recent activity is available yet.</div>';
+    doc.getElementById('overviewActivityPanel').innerHTML='<div class="panel-title-row"><h3>Recent activity</h3><button class="button small" type="button" data-tab-target="activity">View all activity</button></div><div style="margin-top:12px">'+overviewActivity+'</div>';
 
     // Delivery: product summary plus always-visible grouped evidence.
     const investigationBusy=!!data.investigation?.loading;
@@ -734,7 +776,7 @@
     const deliveryClass=deliveryKind==='bad'?'bad':deliveryKind==='warn'?'warn':'';
     const environmentBlock=(label,item)=>{
       if(!item)return'<div class="delivery-environment"><div class="delivery-environment-head"><strong>'+esc(label)+'</strong><span>Unavailable</span></div></div>';
-      const status=item.vercel?.kind==='good'?'Healthy':item.vercel?.kind==='bad'?'Needs action':item.vercel?.kind==='warn'?'In progress':'Unknown';
+      const status=item.vercel?.kind==='good'?'Healthy':item.vercel?.kind==='bad'?'Needs attention':item.vercel?.kind==='warn'?'Watch':'Unknown';
       return '<div class="delivery-environment"><div class="delivery-environment-head"><div><strong>'+esc(label)+'</strong><span class="branch-label">'+esc(item.branch)+'</span></div><span class="delivery-status '+esc(item.vercel?.kind||'unknown')+'">'+esc(status)+'</span></div>'+
         '<a class="delivery-release" href="'+esc(changeUrl(p.repo,item)||repoUrl(p.repo))+'" target="_blank" rel="noopener noreferrer">'+esc(commitTitle(item.message))+'</a>'+
         '<div class="delivery-meta"><span>Updated '+esc(fmtDate(item.updatedAt))+'</span><span>'+githubLink(shortSha(item.sha),githubCommitUrl(p.repo,item.sha))+'</span><span>'+esc(item.vercel?.label||'Deployment status unavailable')+'</span></div></div>';
@@ -753,7 +795,7 @@
       const production=r.environments?.production;
       if(production) infraCards.push({label:'Production backend',status:production.ok?'Healthy':'Unavailable',detail:'Render'});
       const stagingEnv=r.environments?.staging;
-      if(stagingEnv) infraCards.push({label:'Staging backend',status:stagingEnv.ok?'Healthy':'May be asleep',detail:stagingEnv.ok?'Render':'Production unaffected'});
+      if(stagingEnv) infraCards.push({label:'Staging backend',status:stagingEnv.ok?'Healthy':'Unknown',detail:stagingEnv.ok?'Render':'Render · no recent successful response observed; production unaffected'});
       else if(p.id==='state'&&pending.has('Staging backend')) infraCards.push({label:'Staging backend',status:'Checking…',detail:'Render'});
     }else if(p.id==='state') infraCards.push({label:'Production backend',status:pending.has('Production backend')?'Checking…':'Unavailable',detail:'Render'});
     if(n?.configured&&n.available) infraCards.push({label:'Database',status:'Connected',detail:'Neon'});
@@ -1009,11 +1051,14 @@
   }
 
   async function init(root){
-    const doc=root.document,cards=doc.getElementById('projectCards'),status=doc.getElementById('status'),summary=doc.getElementById('overviewSummary'),reviewInbox=doc.getElementById('reviewInbox'),refresh=doc.getElementById('refreshButton'),qualityPanel=doc.getElementById('qualityPanel');
+    const doc=root.document,cards=doc.getElementById('projectCards'),status=doc.getElementById('status'),summary=doc.getElementById('overviewSummary'),reviewInbox=doc.getElementById('reviewInbox'),refresh=doc.getElementById('refreshButton'),qualityPanel=doc.getElementById('qualityPanel'),projectTabs=doc.getElementById('projectTabs'),projectDetail=doc.getElementById('projectDetail');
     if(!cards||!status||!summary||!reviewInbox||!refresh||!qualityPanel)return;
     const cached=loadSnapshot(root);
     let state=PROJECTS.map(project=>hydrateProjectData(project,cached?.projects?.find(item=>item.projectId===project.id)));
-    let activeId=new URLSearchParams(root.location.search).get('project')||'state';
+    const initialParams=new URLSearchParams(root.location.search);
+    let activeId=initialParams.get('project')||'state';
+    const allowedTabs=new Set(['overview','ai-quality','delivery','infra','activity']);
+    let activeTab=allowedTabs.has(initialParams.get('tab'))?initialParams.get('tab'):'overview';
     let renderQueued=false,refreshGeneration=0;
     const demoState={phase:'idle',step:0,timers:[]};
 
@@ -1073,10 +1118,7 @@
 
     function renderReviewInbox(){
       const items=currentIncidents(),reviewed=reviewedState();
-      if(!items.length){
-        reviewInbox.innerHTML='<section class="panel"><h3>Incidents</h3><div class="review-empty">No live incidents need attention right now.</div></section>';
-        return;
-      }
+      if(!items.length){reviewInbox.innerHTML='';return;}
       const rows=items.slice(0,6).map(item=>{
         const source=item.url?'<a class="button small" href="'+esc(item.url)+'" target="_blank" rel="noopener noreferrer">View evidence</a>':'';
         const isReviewed=!!reviewed[item.key];
@@ -1087,19 +1129,36 @@
     function renderSummary(){
       const fresh=state.filter(item=>item?.fresh);
       const incidentCount=currentIncidents().length;
-      const openCount=openProductItems().length;
-      const changedCount=fresh.filter(changedSinceVisit).length;
+      const attentionCount=fresh.filter(item=>['action','watch'].includes(projectStatus(item).key)).length;
       const checked=fresh.map(item=>item.checkedAt).filter(Boolean).sort().pop();
-      summary.innerHTML='<span class="summary-chip incident"><strong>'+incidentCount+'</strong> '+(incidentCount===1?'incident':'incidents')+'</span>'+
-        '<span class="summary-chip open"><strong>'+openCount+'</strong> open '+(openCount===1?'item':'items')+'</span>'+
-        '<span class="summary-chip"><strong>'+changedCount+'</strong> '+(changedCount===1?'project released':'projects released')+' since last visit</span>'+
-        '<span class="summary-chip"><strong>'+esc(checked?relativeAge(checked):'checking')+'</strong> last checked</span>';
+      summary.innerHTML='<span class="summary-chip"><strong>'+PROJECTS.length+'</strong> projects</span>'+
+        '<span class="summary-chip open"><strong>'+attentionCount+'</strong> need attention</span>'+
+        '<span class="summary-chip incident"><strong>'+incidentCount+'</strong> active '+(incidentCount===1?'incident':'incidents')+'</span>'+
+        '<span class="summary-chip"><strong>'+esc(checked?relativeAge(checked):'checking')+'</strong> last updated</span>';
     }
 
+    function applyTabState(){
+      if(projectTabs){
+        projectTabs.querySelectorAll('[data-tab]').forEach(button=>{
+          const selected=button.dataset.tab===activeTab;
+          button.classList.toggle('active',selected);
+          button.setAttribute('aria-selected',selected?'true':'false');
+        });
+      }
+      doc.querySelectorAll('[data-tab-panel]').forEach(panel=>{panel.hidden=panel.dataset.tabPanel!==activeTab;});
+    }
+    function setActiveTab(tab,updateUrl=true){
+      activeTab=allowedTabs.has(tab)?tab:'overview';
+      applyTabState();
+      if(updateUrl){
+        const url=new URL(root.location.href);url.searchParams.set('project',activeId);url.searchParams.set('tab',activeTab);root.history.replaceState(null,'',url);
+      }
+    }
     function renderNow(){
       renderQueued=false;
       renderCards();renderSummary();renderReviewInbox();
       const data=activeData();if(data)renderDetail(data,doc);
+      applyTabState();
       root.PROJECT_HEALTH_LAST_TIMINGS=Object.fromEntries(state.map(item=>[item.project.id,{...item.timings}]));
     }
     function scheduleRender(){
@@ -1119,7 +1178,7 @@
     function select(id){
       activeId=PROJECTS.some(p=>p.id===id)?id:'state';
       scheduleRender();
-      const url=new URL(root.location.href);url.searchParams.set('project',activeId);root.history.replaceState(null,'',url);
+      const url=new URL(root.location.href);url.searchParams.set('project',activeId);url.searchParams.set('tab',activeTab);root.history.replaceState(null,'',url);
       ensureDetails(activeId);
     }
 
@@ -1140,6 +1199,15 @@
 
     cards.addEventListener('click',event=>{if(event.target.closest?.('a,button'))return;const card=event.target.closest?.('.project-card');if(card)select(card.dataset.project);});
     cards.addEventListener('keydown',event=>{if(event.target.closest?.('a,button'))return;const card=event.target.closest?.('.project-card');if(card&&(event.key==='Enter'||event.key===' ')){event.preventDefault();select(card.dataset.project);}});
+
+    if(projectTabs)projectTabs.addEventListener('click',event=>{
+      const button=event.target.closest?.('[data-tab]');
+      if(button)setActiveTab(button.dataset.tab);
+    });
+    if(projectDetail)projectDetail.addEventListener('click',event=>{
+      const target=event.target.closest?.('[data-tab-target]');
+      if(target)setActiveTab(target.dataset.tabTarget);
+    });
 
     function revealInvestigation(){
       const panel=doc.getElementById('investigationPanel');
@@ -1172,6 +1240,20 @@
       }
       renderNow();
     }
+
+    const headerRunChecksButton=doc.getElementById('headerRunChecksButton');
+    if(headerRunChecksButton)headerRunChecksButton.addEventListener('click',async()=>{
+      const data=activeData();if(!data||data.project.id!=='state'||data.qualityRun)return;
+      try{
+        const started=await dispatchRun(data,root,'all');
+        if(started?.started){
+          data.qualityRun=started;
+          saveEvalRunState(root,started);
+          renderNow();
+          pollEvalResults(data);
+        }
+      }catch(_){renderNow();}
+    });
 
     const projectCheckButton=doc.getElementById('projectCheckButton');
     if(projectCheckButton)projectCheckButton.addEventListener('click',async()=>{

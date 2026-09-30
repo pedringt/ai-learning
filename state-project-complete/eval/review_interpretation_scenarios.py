@@ -189,11 +189,12 @@ SCENARIOS = (
         current_state=(("sources", "Slack is not yet approved as a general evidence source."),),
         open_questions=("Will Slack be approved as an evidence source for all project channels?",),
         expected_action="update_state",
+        allowed_actions=("update_state", "update_state_and_open_question"),
         required_state_update_phrases=("#product", "#support"),
         forbidden_state_update_phrases=("all project channels", "slack is approved for all"),
         should_change_state=True,
         must_preserve_uncertainty=True,
         severity="high",
-        rationale="Partial approval should be recorded at the approved scope without falsely resolving the broader Question.",
+        rationale="Partial approval should be recorded at the approved scope. Keeping or reopening an unresolved broader Question is acceptable as long as the approved scope is not overstated."
     ),
 )

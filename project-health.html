@@ -13,7 +13,7 @@
     .notice{padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:rgba(255,255,255,.55);color:var(--muted);margin-bottom:16px}.notice strong{color:var(--ink)}.overview-summary{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 12px}.summary-chip{padding:7px 10px;border:1px solid var(--line);border-radius:999px;background:rgba(255,255,255,.55);font-size:12px;font-weight:750;color:var(--muted)}.summary-chip strong{color:var(--ink)}
     .overview-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin:18px 0 28px}.project-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:18px;box-shadow:0 12px 30px rgba(65,59,47,.04);cursor:pointer;transition:.15s ease}.project-card:hover{transform:translateY(-1px);border-color:#c9c2b5}.project-card.active{outline:2px solid rgba(56,98,77,.25);border-color:#8fa795}.card-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}.project-card h2{margin:0;font-size:23px;letter-spacing:-.03em}.project-card p{margin:5px 0 14px;color:var(--muted);font-size:13px}.status-pill{display:inline-flex;align-items:center;gap:5px;padding:3px 6px;border-radius:999px;background:var(--soft);font-size:10px;font-weight:800;white-space:nowrap;cursor:default;pointer-events:none}.status-pill.good{background:#e8f2ec;color:var(--good)}.status-pill.warn,.status-pill.unknown{background:#f6ecdd;color:var(--warn)}.status-pill.bad{background:#f7e4e1;color:var(--danger)}
     .signal-list{display:grid;gap:8px}.signal{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:start;padding-top:8px;border-top:1px solid #eee9df}.signal:first-child{border-top:0;padding-top:0}.signal-label{font-size:12px;color:var(--muted)}.signal-value{font-size:12px;font-weight:800;text-align:right}.change-signal{grid-template-columns:minmax(0,1fr);gap:3px}.change-signal .signal-value{text-align:left;overflow-wrap:anywhere}.change-date{font-size:11px;color:var(--muted)}.card-focus{margin:0 0 13px;padding:10px 11px;border-radius:10px;background:var(--soft);font-size:12px;font-weight:750}.project-card[data-kind="bad"] .card-focus{background:#fff0ed;color:var(--danger)}.project-card[data-kind="warn"] .card-focus{background:#fff7e9;color:var(--warn)}.project-card[data-kind="good"] .card-focus{background:#edf6f0;color:var(--good)}
-    .detail{display:none}.detail.active{display:block}.detail-head{display:flex;justify-content:space-between;gap:20px;align-items:flex-end;margin-bottom:16px}.detail-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}.detail h2{margin:0;font-size:30px;letter-spacing:-.035em}.detail-copy{margin:4px 0 0;color:var(--muted)}.grid{display:grid;grid-template-columns:repeat(12,1fr);gap:16px}.panel{grid-column:span 12;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:20px}.panel.half{grid-column:span 6}.panel h3{margin:0;font-size:20px;letter-spacing:-.02em}.panel-copy{margin:3px 0 14px;color:var(--muted);font-size:13px}.rows{display:grid;gap:8px}.row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:14px;padding:10px 12px;border:1px solid var(--line);border-radius:11px;background:#fff}.row span:last-child{font-weight:800;overflow-wrap:anywhere;text-align:right}.empty{padding:14px;border:1px dashed #c9c3b7;border-radius:11px;color:var(--muted);background:rgba(255,255,255,.4)}.attention{padding:14px;border-left:4px solid var(--warn);border-radius:10px;background:#fff8ed}.attention-action{width:100%;border-top:0;border-right:0;border-bottom:0;text-align:left;font:inherit;color:inherit;cursor:pointer}.attention-action:hover{filter:brightness(.985)}.attention-action-label{display:inline-block;margin-top:8px;color:var(--accent);font-size:12px;font-weight:850}.attention.good{border-left-color:var(--good);background:#f1f7f3}.attention.bad{border-left-color:var(--danger);background:#fff2ef}.attention strong{display:block}.attention p{margin:3px 0 0;color:var(--muted)}.metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}.metric{padding:14px;border:1px solid var(--line);border-radius:12px;background:#fff}.metric strong{display:block;font-size:25px;line-height:1.05;letter-spacing:-.04em}.metric span{display:block;margin-top:5px;color:var(--muted);font-size:12px}.footnote{margin:12px 0 0;color:var(--muted);font-size:12px}.run-summary{display:grid;gap:10px}.run-callout{padding:14px;border:1px solid var(--line);border-radius:12px;background:#fff}.run-callout strong{display:block}.run-callout p{margin:4px 0 0;color:var(--muted);font-size:13px}.footer{margin-top:26px;color:var(--muted);font-size:12px}
+    .detail{display:none}.detail.active{display:block}.detail-head{display:flex;justify-content:space-between;gap:20px;align-items:flex-end;margin-bottom:12px}.project-tabs{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 16px;padding-bottom:10px;border-bottom:1px solid var(--line)}.project-tab{appearance:none;border:0;background:transparent;color:var(--muted);padding:8px 10px;border-radius:8px;font-weight:800;cursor:pointer}.project-tab:hover{background:rgba(255,255,255,.55);color:var(--ink)}.project-tab.active{background:var(--surface);color:var(--ink);box-shadow:0 0 0 1px var(--line)}[data-tab-panel][hidden]{display:none!important}.overview-health{display:grid;gap:0}.overview-health-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:14px;align-items:start;padding:11px 0;border-top:1px solid #eee9df}.overview-health-row:first-child{border-top:0}.overview-health-row strong{display:block}.overview-health-row span{color:var(--muted);font-size:12px}.overview-health-row button{border:0;background:transparent;color:var(--accent);font-weight:850;cursor:pointer;padding:0}.about-dashboard{margin-top:28px;border-top:1px solid var(--line);padding-top:14px}.about-dashboard summary{cursor:pointer;font-weight:850}.about-dashboard .about-inner{margin-top:12px}.utility-row{display:flex;gap:8px;align-items:center;justify-content:flex-end;flex-wrap:wrap}.utility-row .notice{margin:0}.hero .button{min-height:34px;padding:7px 10px;font-size:12px}.detail-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}.detail h2{margin:0;font-size:30px;letter-spacing:-.035em}.detail-copy{margin:4px 0 0;color:var(--muted)}.grid{display:grid;grid-template-columns:repeat(12,1fr);gap:16px}.panel{grid-column:span 12;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:20px}.panel.half{grid-column:span 6}.panel h3{margin:0;font-size:20px;letter-spacing:-.02em}.panel-copy{margin:3px 0 14px;color:var(--muted);font-size:13px}.rows{display:grid;gap:8px}.row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:14px;padding:10px 12px;border:1px solid var(--line);border-radius:11px;background:#fff}.row span:last-child{font-weight:800;overflow-wrap:anywhere;text-align:right}.empty{padding:14px;border:1px dashed #c9c3b7;border-radius:11px;color:var(--muted);background:rgba(255,255,255,.4)}.attention{padding:14px;border-left:4px solid var(--warn);border-radius:10px;background:#fff8ed}.attention-action{width:100%;border-top:0;border-right:0;border-bottom:0;text-align:left;font:inherit;color:inherit;cursor:pointer}.attention-action:hover{filter:brightness(.985)}.attention-action-label{display:inline-block;margin-top:8px;color:var(--accent);font-size:12px;font-weight:850}.attention.good{border-left-color:var(--good);background:#f1f7f3}.attention.bad{border-left-color:var(--danger);background:#fff2ef}.attention strong{display:block}.attention p{margin:3px 0 0;color:var(--muted)}.metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}.metric{padding:14px;border:1px solid var(--line);border-radius:12px;background:#fff}.metric strong{display:block;font-size:25px;line-height:1.05;letter-spacing:-.04em}.metric span{display:block;margin-top:5px;color:var(--muted);font-size:12px}.footnote{margin:12px 0 0;color:var(--muted);font-size:12px}.run-summary{display:grid;gap:10px}.run-callout{padding:14px;border:1px solid var(--line);border-radius:12px;background:#fff}.run-callout strong{display:block}.run-callout p{margin:4px 0 0;color:var(--muted);font-size:13px}.footer{margin-top:26px;color:var(--muted);font-size:12px}
     .row a,.signal-value a,.footnote a{color:var(--accent);text-decoration:underline;text-underline-offset:2px}
     .investigation-result{margin-top:14px;padding:14px;border:1px solid var(--line);border-radius:12px;background:#f5f8f5}.investigation-result pre{font:inherit;white-space:pre-wrap;overflow-wrap:anywhere;margin:8px 0}.investigation-sources{font-size:12px}.investigation-sources a{color:var(--accent);text-decoration:underline}
     .hero-note{max-width:760px;margin:10px 0 0;color:var(--muted);font-size:13px}.hero-note strong{color:var(--ink)}
@@ -49,10 +49,8 @@
         <h1>Project Health</h1>
         <p class="lede">Spot problems, understand what they mean for users, and give the right person a grounded starting point.</p>
       </div>
-      <button class="button primary" id="refreshButton" type="button">Refresh health</button>
+      <div class="utility-row"><div id="status" class="notice">Loading project health…</div><button class="button" id="refreshButton" type="button">Refresh</button></div>
     </section>
-
-    <div id="status" class="notice">Loading project health…</div>
     <div id="overviewSummary" class="overview-summary" aria-live="polite"></div>
     <section class="overview-grid" id="projectCards" aria-live="polite"></section>
     <section class="review-inbox" id="reviewInbox" aria-live="polite"></section>
@@ -66,26 +64,40 @@
         </div>
         <div class="detail-actions">
           <button class="button primary" id="projectCheckButton" type="button">Investigate project</button>
+          <button class="button" id="headerRunChecksButton" type="button" hidden>Run AI checks</button>
           <button class="button" id="prepareHandoffButton" type="button">Prepare handoff</button>
           <a class="button" id="repoLink" target="_blank" rel="noopener noreferrer">Open repository</a>
         </div>
       </div>
 
+      <nav class="project-tabs" id="projectTabs" aria-label="Project health sections">
+        <button class="project-tab active" type="button" data-tab="overview">Overview</button>
+        <button class="project-tab" type="button" data-tab="ai-quality">AI Quality</button>
+        <button class="project-tab" type="button" data-tab="delivery">Delivery</button>
+        <button class="project-tab" type="button" data-tab="infra">Infra</button>
+        <button class="project-tab" type="button" data-tab="activity">Activity</button>
+      </nav>
+
       <div id="investigationPanel" class="investigation-area" aria-live="polite" tabindex="-1"></div>
 
       <div class="grid">
-        <section class="panel" id="attentionPanel"></section>
-        <section class="panel" id="productFocusPanel"></section>
-        <section class="panel" id="qualityPanel"></section>
-        <section class="panel half" id="analyticsPanel"></section>
-        <section class="panel half" id="historyPanel"></section>
-        <section class="panel half" id="deliveryPanel"></section>
-        <section class="panel half" id="infrastructurePanel"></section>
-        <section class="panel" id="connectionsPanel"></section>
+        <section class="panel" id="attentionPanel" data-tab-panel="overview"></section>
+        <section class="panel" id="productFocusPanel" data-tab-panel="overview"></section>
+        <section class="panel" id="overviewHealthPanel" data-tab-panel="overview"></section>
+        <section class="panel half" id="analyticsPanel" data-tab-panel="overview"></section>
+        <section class="panel half" id="overviewActivityPanel" data-tab-panel="overview"></section>
+        <section class="panel" id="qualityPanel" data-tab-panel="ai-quality" hidden></section>
+        <section class="panel" id="deliveryPanel" data-tab-panel="delivery" hidden></section>
+        <section class="panel" id="infrastructurePanel" data-tab-panel="infra" hidden></section>
+        <section class="panel" id="connectionsPanel" data-tab-panel="infra" hidden></section>
+        <section class="panel" id="historyPanel" data-tab-panel="activity" hidden></section>
       </div>
     </section>
 
-    <section class="panel explainer">
+    <details class="about-dashboard">
+      <summary>About this dashboard</summary>
+      <div class="about-inner">
+        <section class="panel explainer">
       <h3>How Project Health works</h3>
       <p class="panel-copy">I built this after managing several live projects made it harder to tell what actually needed attention across delivery, quality, usage, and infrastructure. The dashboard keeps deterministic monitoring separate from AI interpretation and leaves consequential decisions with a person.</p>
       <div class="explainer-grid">
@@ -95,16 +107,20 @@
         <div class="explainer-card"><strong>Human decides</strong><p>A person verifies the diagnosis and chooses whether any code, configuration, or deployment should change.</p></div>
       </div>
       <p class="footnote"><strong>Quality is project-specific.</strong> State measures interpretation and grounded answers. Tastemake checks recommendation grounding and calibration. NARC relies mostly on deterministic gameplay tests plus human playtesting.</p>
-    </section>
+        </section>
 
-    <section class="panel explainer">
+        <section class="panel explainer">
       <h3>Role & attribution</h3>
       <p class="panel-copy">This is an applied AI product exercise, not a claim that the implementation was written by hand.</p>
       <div class="attribution">
         <div class="attribution-block"><strong>My work</strong><p>Product framing, workflow design, guardrails, quality model, failure behavior, QA, and iteration.</p></div>
         <div class="attribution-block"><strong>AI-assisted work</strong><p>Implementation support, code generation, research support, and the bounded failure-investigation summary.</p></div>
       </div>
-    </section>
+        </section>
+
+
+      </div>
+    </details>
 
     <p class="footer">Project Health summarizes operational evidence; it does not replace the underlying systems. Missing telemetry stays missing rather than being guessed. Aggregate analytics never include project content.</p>
   </main>

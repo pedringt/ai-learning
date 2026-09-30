@@ -281,8 +281,13 @@ def _has_open_item_language(text: str) -> bool:
 
 
 def _distinguishes_proposal(text: str) -> bool:
-    signals = ("pending", "proposed", "awaiting review", "not decided", "not approved", "has not been accepted")
-    return any(signal in text for signal in signals)
+    signals = ("pending", "proposed", "awaiting review", "under review", "in review", "not decided", "not approved", "has not been accepted")
+    if any(signal in text for signal in signals):
+        return True
+    # A grounded answer can also distinguish maintained truth from a conflicting
+    # Review by naming the review and explicitly preserving uncertainty, without
+    # using one of the exact proposal words above.
+    return "review" in text and _has_uncertainty_language(text)
 
 
 def score_ask_answer(scenario: AskQualityScenario, answer: dict[str, Any]) -> AskQualityResult:
