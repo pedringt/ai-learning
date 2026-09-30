@@ -117,6 +117,45 @@
     #overviewSummary[hidden]{display:none!important}
     @media(max-width:850px){#analyticsPanel.panel.half,#overviewActivityPanel.panel.half{grid-column:span 12;padding-left:0}}
     @media(max-width:560px){.activity-attempt{grid-template-columns:1fr}.activity-attempt span:first-child{margin-bottom:-2px}}
+
+    /* Final consistency + accessibility polish. */
+    :where(button,a,summary,[tabindex]):focus-visible{outline:3px solid rgba(56,98,77,.28);outline-offset:3px}
+    .project-switcher-item:focus-visible,.overview-health-row.health-card:focus-visible,.change-item:focus-visible{border-color:#80968a;box-shadow:0 0 0 3px rgba(56,98,77,.12)}
+    .project-tab:focus-visible{outline-offset:-2px;border-radius:6px}
+    .activity-filter:focus-visible{outline-offset:2px}
+    .action-menu-popover a:focus-visible,.action-menu-popover button:focus-visible{background:var(--soft)}
+    .activity-attempts summary:focus-visible{border-radius:5px}
+    .project-switcher-item[data-kind="unknown"]{background:#fbfcfb}
+    .project-switcher-item[data-kind="unknown"] .project-switcher-main span{color:#7f8882}
+    .eval-run-status{border-left:3px solid #9ab0a2;background:#f5f8f6}
+    .eval-run-status.warn{border-left-color:#c69a5b}
+    .empty{line-height:1.45;background:#f7f8f7;color:#737d77}
+    .incident-episode{margin:5px 0;padding:10px 10px 10px 0;border-radius:10px;background:#fff8f6}
+    .incident-episode .timeline-marker{background:var(--danger)}
+    .incident-episode .timeline-content>strong{color:#6f312c}
+    .incident-episode .activity-type{color:#8b5a54}
+    .activity-attempts>div{border-left:2px solid #e6cbc6}
+    .readiness-pill.unknown{background:#f1f3f1;color:var(--muted)}
+    #attentionPanel{padding-top:24px;padding-bottom:18px}
+    #productFocusPanel{padding-top:18px;padding-bottom:22px}
+    #changesPanel{margin-top:8px}
+    #overviewHealthPanel{margin-top:8px}
+    .focus-followup{flex-wrap:wrap}
+    @media(max-width:850px){
+      #analyticsPanel.panel.half,#overviewActivityPanel.panel.half{padding-top:18px;padding-bottom:18px}
+      .focus-followup{align-items:flex-start}
+    }
+    @media(max-width:560px){
+      .timeline-item{grid-template-columns:68px 12px minmax(0,1fr);gap:8px}
+      .timeline-time{text-align:left;font-size:10px}
+      .incident-episode{padding-right:8px}
+      .activity-filters{gap:5px}
+      .activity-filter{padding:6px 8px}
+      .focus-followup{display:grid;gap:3px}
+    }
+    @media(prefers-reduced-motion:reduce){
+      *,*::before,*::after{scroll-behavior:auto!important;transition:none!important;animation:none!important}
+    }
 </style>
 </head>
 <body>
