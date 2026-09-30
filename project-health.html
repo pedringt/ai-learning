@@ -84,8 +84,16 @@
     .overview-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:10px 0 18px;padding:8px;border-radius:14px;background:#f6f8f6}.overview-grid[hidden]{display:none!important}
     .project-switcher-item{appearance:none;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:center;min-height:64px;padding:11px 13px;border:1px solid #e3e7e3;border-radius:11px;background:#fff;color:var(--ink);text-align:left;cursor:pointer;box-shadow:0 1px 1px rgba(22,28,24,.02)}.project-switcher-item:hover{border-color:#cad3cc;background:#fcfdfc}.project-switcher-item.active{border-color:#8da496;box-shadow:0 0 0 2px rgba(56,98,77,.07)}.project-switcher-main{min-width:0}.project-switcher-main strong{display:block;font-size:14px;line-height:1.2}.project-switcher-main span{display:block;margin-top:4px;color:var(--muted);font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.project-switcher-item .status-pill{justify-self:end}
     .stale-quality-summary{margin-top:8px;background:#f7f9f7;border:0;box-shadow:none}
-    @media(max-width:850px){.hero{grid-template-columns:1fr}.overview-grid{grid-template-columns:1fr}.panel.half{grid-column:span 12}.metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.demo-flow,.explainer-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.attribution,.focus-grid,.eval-grid,.coverage-grid{grid-template-columns:1fr}.service-grid{grid-template-columns:1fr}.project-tabs{gap:18px}}
-    @media(max-width:560px){.shell{padding:22px 14px 48px}.topbar,.detail-head,.demo-head{align-items:flex-start;flex-direction:column}.detail-actions{justify-content:flex-start}.metrics,.demo-flow,.explainer-grid,.eval-grid,.coverage-grid{grid-template-columns:1fr}.row{grid-template-columns:1fr}.row span:last-child{text-align:left}.hero{margin-top:8px}.project-tabs{gap:16px;overflow-x:auto;flex-wrap:nowrap}.investigation-drawer{width:100vw}.drawer-backdrop{display:none}}
+    /* Decision-support pass: prioritize the workspace over dashboard chrome. */
+    .topbar{margin-bottom:14px}.hero{margin-bottom:10px;gap:18px}.hero h1{font-size:clamp(30px,4vw,42px);margin:2px 0 4px}.lede{font-size:14px;line-height:1.45}.hero .eyebrow{font-size:10px}.utility-row{align-self:center}
+    .detail-head{gap:14px}.detail-actions{gap:7px;flex-wrap:nowrap}.detail-actions>.button,.project-links-button{min-height:34px;padding:6px 10px;font-size:12px}.action-menu{order:3}.action-menu-popover{right:0;left:auto;top:calc(100% + 5px);min-width:160px;max-width:210px;padding:5px}.action-menu-popover a{padding:8px 9px;font-size:12px;white-space:nowrap}.project-links-button{white-space:nowrap}
+    .health-status.available{color:var(--accent)}
+    .decision-now{background:#f7f9f7}
+    .usage-comparison-empty{margin-top:10px;color:var(--muted);font-size:12px;font-weight:650}.usage-trends{display:grid;gap:3px;margin-top:10px}.usage-trends .trend{font-size:12px}.usage-trends .trend strong{color:var(--ink)}
+    .activity-type{display:inline-block;margin-bottom:3px;color:#7b847e;font-size:10px;font-weight:800;letter-spacing:.05em;text-transform:uppercase}.timeline-content .activity-type{display:block}.activity-item .activity-type{margin-bottom:2px}
+    .delivery-split{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.delivery-concept{position:relative;padding:14px;border:1px solid #e9ece9;border-radius:10px;background:#fff}.delivery-concept>strong{display:block;font-size:14px;padding-right:110px}.delivery-concept>p{margin:6px 0 0;color:var(--muted);font-size:12px}.delivery-concept>.delivery-status{position:absolute;right:14px;top:14px}.delivery-concept.bad{background:#fbf3f2}.delivery-status.available{color:var(--accent)}
+    @media(max-width:850px){.hero{grid-template-columns:1fr}.overview-grid{grid-template-columns:1fr}.delivery-split{grid-template-columns:1fr}.panel.half{grid-column:span 12}.metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.demo-flow,.explainer-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.attribution,.focus-grid,.eval-grid,.coverage-grid{grid-template-columns:1fr}.service-grid{grid-template-columns:1fr}.project-tabs{gap:18px}}
+    @media(max-width:560px){.shell{padding:22px 14px 48px}.topbar,.detail-head,.demo-head{align-items:flex-start;flex-direction:column}.detail-actions{justify-content:flex-start;flex-wrap:wrap}.action-menu{order:3}.metrics,.demo-flow,.explainer-grid,.eval-grid,.coverage-grid{grid-template-columns:1fr}.row{grid-template-columns:1fr}.row span:last-child{text-align:left}.hero{margin-top:8px}.project-tabs{gap:16px;overflow-x:auto;flex-wrap:nowrap}.investigation-drawer{width:100vw}.drawer-backdrop{display:none}}
   </style>
 </head>
 <body>
@@ -118,7 +126,7 @@
           <button class="button primary" id="projectCheckButton" type="button">Investigate project</button>
           <button class="button" id="headerRunChecksButton" type="button" hidden>Run AI checks</button>
           <details class="action-menu" id="projectActionMenu">
-            <summary class="button" aria-label="More project actions">More</summary>
+            <summary class="button project-links-button" aria-label="Project links">Project links ▾</summary>
             <div class="action-menu-popover">
               <a id="repoLink" target="_blank" rel="noopener noreferrer">Open repository</a>
             </div>
