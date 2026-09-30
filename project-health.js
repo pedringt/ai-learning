@@ -892,8 +892,8 @@
     if(Math.abs(delta)<0.1)return'Stable vs previous run';
     return (delta>0?'Up ':'Down ')+Math.abs(delta)+' points vs previous run';
   }
-  function stateEvalCard(title,value,description,trend){
-    return '<div class="eval-card"><strong>'+esc(title)+'</strong><div class="score">'+esc(value)+'</div><p>'+esc(description)+'</p>'+(trend?'<p><strong>'+esc(trend)+'</strong></p>':'')+'</div>';
+  function stateEvalCard(title,value,description,trend,note){
+    return '<div class="eval-card"><strong>'+esc(title)+'</strong><div class="score">'+esc(value)+'</div><p>'+esc(description)+'</p>'+(note?'<p class="eval-card-note"><strong>'+esc(note)+'</strong></p>':'')+(trend?'<p><strong>'+esc(trend)+'</strong></p>':'')+'</div>';
   }
   function stateEvalHistory(){return'';}
   function investigationResultHtml(investigation){
