@@ -292,6 +292,7 @@
       checkedAt:s.checkedAt||null,
       detailCheckedAt:s.detailCheckedAt||null,
       investigation:s.investigation||null,
+      investigationHistory:Array.isArray(s.investigationHistory)?s.investigationHistory:[],
       errors:[],
       pending:new Set(),
       timings:{},
@@ -442,7 +443,7 @@
   function fmtDate(value){if(!value)return'Unknown';const d=new Date(Number.isNaN(dateMs(value))?value:dateMs(value));return Number.isNaN(d.getTime())?'Unknown':d.toLocaleString([],{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'});}
   function relativeAge(value){
     if(!value)return'not checked yet';
-    const time=new Date(value).getTime();if(Number.isNaN(time))return'unknown';
+    const time=dateMs(value);if(Number.isNaN(time))return'unknown';
     const minutes=Math.max(0,Math.round((Date.now()-time)/60000));
     if(minutes<1)return'just now';
     if(minutes<60)return minutes+'m ago';
