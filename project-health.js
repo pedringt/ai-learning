@@ -408,7 +408,14 @@
     return data;
   }
 
-  function fmtDate(value){if(!value)return'Unknown';const d=new Date(value);return Number.isNaN(d.getTime())?'Unknown':d.toLocaleString([],{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'});}
+  const STATE_EVAL_CONTRACT_UPDATED_AT='2026-09-30T00:30:24Z';
+  function dateMs(value){
+    if(!value)return NaN;
+    const raw=String(value);
+    const normalized=/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(raw)?raw.replace(' ','T')+'Z':raw;
+    return new Date(normalized).getTime();
+  }
+  function fmtDate(value){if(!value)return'Unknown';const d=new Date(Number.isNaN(dateMs(value))?value:dateMs(value));return Number.isNaN(d.getTime())?'Unknown':d.toLocaleString([],{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'});}
   function relativeAge(value){
     if(!value)return'not checked yet';
     const time=new Date(value).getTime();if(Number.isNaN(time))return'unknown';
@@ -418,7 +425,84 @@
     const hours=Math.round(minutes/60);if(hours<24)return hours+'h ago';
     return Math.round(hours/24)+'d ago';
   }
-  function changedSinceVisit(data){return !!(data?.lastSeenSha&&data?.delivery?.sha&&data.lastSeenSha!==data.delivery.sha);}
+  function stateEvalContractStale(q){
+    const runs=[q?.review,q?.ask].filter(Boolean);
+    if(!runs.length)return false;
+    const newest=Math.max(...runs.map(run=>dateMs(run.created_at)).filter(Number.isFinite));
+    return Number.isFinite(newest)&&newest<dateMs(STATE_EVAL_CONTRACT_UPDATED_AT);
+  }
+  function freshnessMeta(value,fallback,staleHours=24){
+    const ts=value||fallback;
+    if(!ts)return {label:'Freshness unknown',stale:true};
+    const ageMs=Math.max(0,Date.now()-dateMs(ts));
+    if(!Number.isFinite(ageMs))return {label:'Freshness unknown',stale:true};
+    const stale=ageMs>staleHours*60*60*1000;
+    return {label:(stale?'May be stale · ':'Updated ')+relativeAge(ts),stale};
+  }
+  function qualitySnapshot(data){
+    if(data?.project?.quality==='state'){
+      const review=data.quality?.review,ask=data.quality?.ask;
+      return {
+        reviewAt:review?.created_at||null,
+        askAt:ask?.created_at||null,
+        reviewScore:evalScore(review),
+        askScore:evalScore(ask),
+        severe:Number(review?.high_severity_failures||0)+Number(ask?.high_severity_failures||0)
+      };
+    }
+    const q=data?.externalQuality||{};
+    return {updatedAt:q?.ci?.updated_at||q?.recorded?.updated_at||null,status:JSON.stringify(q?.attention||[])};
+  }
+  function visitBaseline(saved){
+    if(!saved)return null;
+    const pseudo={project:{quality:saved.projectId==='state'?'state':null},quality:saved.quality,externalQuality:saved.externalQuality};
+    return {
+      savedAt:saved.snapshotAt||saved.checkedAt||null,
+      deliverySha:saved.delivery?.sha||null,
+      deliveryKind:saved.delivery?.vercel?.kind||null,
+      quality:qualitySnapshot(pseudo),
+      analyticsAvailable:saved.platform?.analytics?.available??null,
+      analyticsPageviews:saved.platform?.analytics?.pageviews??null,
+      openPullRequests:Array.isArray(saved.openPullRequests)?saved.openPullRequests.length:0
+    };
+  }
+  function meaningfulChanges(data){
+    const before=data?.lastVisit;
+    if(!before)return[];
+    const items=[];
+    if(before.deliverySha&&data.delivery?.sha&&before.deliverySha!==data.delivery.sha){
+      items.push({title:'New production release',detail:commitTitle(data.delivery.message)+' · '+shortSha(data.delivery.sha),observedAt:data.delivery.updatedAt||data.checkedAt});
+    }
+    if(before.deliveryKind&&data.delivery?.vercel?.kind&&before.deliveryKind!==data.delivery.vercel.kind){
+      items.push({title:'Delivery status changed',detail:(before.deliveryKind||'unknown')+' → '+data.delivery.vercel.kind,observedAt:data.delivery.updatedAt||data.checkedAt});
+    }
+    const currentQ=qualitySnapshot(data),oldQ=before.quality||{};
+    if(currentQ.reviewAt&&oldQ.reviewAt&&String(currentQ.reviewAt)!==String(oldQ.reviewAt)){
+      const delta=currentQ.reviewScore!=null&&oldQ.reviewScore!=null?Math.round((currentQ.reviewScore-oldQ.reviewScore)*1000)/10:null;
+      items.push({title:'Update-understanding eval changed',detail:(delta==null?'New controlled run recorded':(delta>=0?'Improved ':'Declined ')+Math.abs(delta)+' points')+' · '+percent(currentQ.reviewScore),observedAt:currentQ.reviewAt});
+    }
+    if(currentQ.askAt&&oldQ.askAt&&String(currentQ.askAt)!==String(oldQ.askAt)){
+      const delta=currentQ.askScore!=null&&oldQ.askScore!=null?Math.round((currentQ.askScore-oldQ.askScore)*1000)/10:null;
+      items.push({title:'Answer-quality eval changed',detail:(delta==null?'New controlled run recorded':(delta>=0?'Improved ':'Declined ')+Math.abs(delta)+' points')+' · '+percent(currentQ.askScore),observedAt:currentQ.askAt});
+    }
+    if(currentQ.severe!=null&&oldQ.severe!=null&&currentQ.severe!==oldQ.severe){
+      items.push({title:'High-impact quality failures changed',detail:oldQ.severe+' → '+currentQ.severe,observedAt:data.checkedAt});
+    }
+    const analytics=data.platform?.analytics;
+    if(before.analyticsAvailable!==null&&analytics&&before.analyticsAvailable!==analytics.available){
+      items.push({title:'Analytics availability changed',detail:(before.analyticsAvailable?'Available':'Unavailable')+' → '+(analytics.available?'Available':'Unavailable'),observedAt:data.detailCheckedAt||data.checkedAt});
+    }
+    if(analytics?.available&&before.analyticsPageviews!=null&&Number(analytics.pageviews)!==Number(before.analyticsPageviews)){
+      const diff=Number(analytics.pageviews)-Number(before.analyticsPageviews);
+      items.push({title:'Usage changed',detail:(diff>=0?'+':'')+diff+' page views in the current 30-day window',observedAt:data.detailCheckedAt||data.checkedAt});
+    }
+    const prCount=Array.isArray(data.openPullRequests)?data.openPullRequests.length:0;
+    if(Number(before.openPullRequests||0)!==prCount){
+      items.push({title:'Open work changed',detail:Number(before.openPullRequests||0)+' → '+prCount+' open pull requests',observedAt:data.detailCheckedAt||data.checkedAt});
+    }
+    return items.sort((a,b)=>(dateMs(b.observedAt)||0)-(dateMs(a.observedAt)||0));
+  }
+  function changedSinceVisit(data){return meaningfulChanges(data).length>0;}
   function trendText(value){
     if(value==null||Number.isNaN(Number(value)))return'No comparison yet';
     const n=Number(value);if(Math.abs(n)<0.1)return'About the same as the previous 30 days';
