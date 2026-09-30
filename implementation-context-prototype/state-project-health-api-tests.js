@@ -82,6 +82,7 @@ process.env.VERCEL_ENV='production';
 assert.strictEqual(runApi.runInfo('state').configured,false);
 assert.strictEqual(runApi.runInfo('state').minimum_controlled_cases,10);
 assert.strictEqual(runApi.runInfo('state').can_run_here,true);
+assert.strictEqual(runApi.runInfo('state').button_label,'Run AI evals');
 assert.match(runApi.runInfo('state').protection,/Public run/);
 assert.strictEqual(runApi.RUN_COOLDOWN_MS,10*60*1000);
 assert.strictEqual(runApi.runInfo('tastemake').configured,false);
