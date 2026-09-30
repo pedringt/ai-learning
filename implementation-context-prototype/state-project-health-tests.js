@@ -432,7 +432,7 @@ const healthHtml=fs.readFileSync(require.resolve('../project-health.html'),'utf8
 assert.doesNotMatch(healthHtml,/Product health triage/);
 assert.match(healthHtml,/Spot problems, understand what they mean for users/);
 assert.match(healthHtml,/How Project Health works/);
-assert.match(healthHtml,/Role & attribution/);
+assert.match(healthHtml,/Role &amp; attribution/);
 assert.match(healthHtml,/id="projectCheckButton"/);
 assert.match(healthHtml,/id="drawerCopyHandoffButton"/);
 assert.match(healthHtml,/id="changesPanel"/);
