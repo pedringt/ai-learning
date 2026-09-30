@@ -629,6 +629,7 @@
     const investigationDrawerTitle=doc.getElementById('investigationDrawerTitle');
     const investigationDrawerStatus=doc.getElementById('investigationDrawerStatus');
     const drawerPrepareHandoffButton=doc.getElementById('drawerPrepareHandoffButton');
+    const investigationDrawerFooter=doc.getElementById('investigationDrawerFooter');
     if(investigationPanel) investigationPanel.innerHTML=investigationResultHtml(data.investigation);
     if(investigationDrawerTitle) investigationDrawerTitle.textContent=p.name+' investigation';
     if(investigationDrawerStatus){
@@ -636,6 +637,7 @@
     }
     if(drawerPrepareHandoffButton){
       drawerPrepareHandoffButton.hidden=!data.investigation||!!data.investigation.loading||!!data.investigation.openingProtected||!!data.investigation.handoff;
+      if(investigationDrawerFooter) investigationDrawerFooter.hidden=drawerPrepareHandoffButton.hidden;
     }
 
     const notices=attentionItems(data),readiness=releaseReadiness(data);
