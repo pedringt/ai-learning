@@ -80,12 +80,20 @@ function deploymentCreated(item){
   return Number.isFinite(value)?value:0;
 }
 
+function isIgnoredBuildSkip(item){
+  if(String(item?.state||'').toUpperCase()!=='CANCELED')return false;
+  const detail=String(item?.errorMessage||item?.errorCode||'');
+  return /ignored build step|returned exit code 0/i.test(detail);
+}
+
 function summarizeDeployments(items){
   const deployments=(Array.isArray(items)?items:[])
     .filter(item=>String(item.target||'production')==='production')
     .sort((a,b)=>deploymentCreated(b)-deploymentCreated(a));
-  const failed=deployments.filter(item=>['ERROR','CANCELED'].includes(String(item.state||'').toUpperCase()));
-  const ready=deployments.filter(item=>String(item.state||'').toUpperCase()==='READY');
+  const skipped=deployments.filter(isIgnoredBuildSkip);
+  const meaningful=deployments.filter(item=>!isIgnoredBuildSkip(item));
+  const failed=meaningful.filter(item=>['ERROR','CANCELED'].includes(String(item.state||'').toUpperCase()));
+  const ready=meaningful.filter(item=>String(item.state||'').toUpperCase()==='READY');
   const recentFailures=failed.slice(0,5).map(item=>{
     const created=deploymentCreated(item);
     const recovery=ready.find(candidate=>deploymentCreated(candidate)>created);
@@ -103,8 +111,9 @@ function summarizeDeployments(items){
   return {
     total:deployments.length,
     failed:failed.length,
+    skipped:skipped.length,
     ready:ready.length,
-    latest:deployments[0]||null,
+    latest:meaningful[0]||null,
     recent_failures:recentFailures
   };
 }
@@ -202,6 +211,7 @@ async function loadActivity(project){
     deployments:{
       total:summary.total,
       failed:summary.failed,
+      skipped:summary.skipped,
       ready:summary.ready,
       recent_failures:summary.recent_failures,
       latest_state:String(latest?.state||'').toUpperCase()||null,
@@ -241,4 +251,4 @@ module.exports=async function handler(req,res){
   });
 };
 
-module.exports._test={PROJECTS,safeText,summarizeDeployments,parseRuntimeRows,runtimeIssues,timedRuntimeText};
+module.exports._test={PROJECTS,safeText,isIgnoredBuildSkip,summarizeDeployments,parseRuntimeRows,runtimeIssues,timedRuntimeText};
