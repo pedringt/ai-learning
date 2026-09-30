@@ -243,6 +243,96 @@
     if(data.delivery?.vercel?.kind==='good') return {label:'Ready',detail:'Delivery is healthy and there is no current high-impact quality issue.'};
     return {label:'Unknown',detail:'There is not enough current evidence to call this release-ready.'};
   }
+  function productionRuntime(data){
+    const backend=data?.platform?.render?.environments?.production;
+    if(backend) return backend.ok
+      ?{kind:'good',label:'Healthy',detail:'Production is responding normally.'}
+      :{kind:'bad',label:'Unavailable',detail:'The production backend is not responding successfully.'};
+    const deliveryKind=data?.delivery?.vercel?.kind||'unknown';
+    if(deliveryKind==='good')return {kind:'good',label:'Healthy',detail:'The latest production release is deployed.'};
+    if(deliveryKind==='bad')return {kind:'available',label:'Production unaffected',detail:'The latest release did not deploy; the previous production version remains live.'};
+    if(deliveryKind==='warn')return {kind:'available',label:'Current release live',detail:'A new deployment is still finishing; the existing production version remains live.'};
+    return {kind:'unknown',label:'Unknown',detail:'Project Health cannot confirm the current production runtime.'};
+  }
+  function operationalNextDecision(data){
+    const live=activityReviewItems(data).find(item=>!item.resolved);
+    if(live?.kind==='runtime')return 'Confirm user impact from the runtime incident and decide whether engineering needs to intervene now.';
+    if(live?.kind==='deployment')return 'Decide whether to retry the failed release or supersede it with the current branch.';
+    if(data?.project?.quality==='state'&&data.quality){
+      const q=qualityAttention(data.quality);
+      if(stateEvalResultsStale(data.quality))return 'Rerun the AI quality checks before changing State behavior or the eval.';
+      if(q.kind==='bad')return 'Review the high-impact failure class before changing the prompt, product behavior, or eval.';
+      if(q.kind==='warn')return 'Review the quality miss and decide whether it represents product behavior or eval noise.';
+    }else{
+      const q=externalQualityAttention(data?.externalQuality);
+      if(q?.kind==='bad')return 'Review the failing product-quality signal and decide whether the next change should address it.';
+      if(q?.kind==='warn')return 'Decide whether the watched quality signal needs action before expanding scope.';
+    }
+    const delivery=deliveryAttention(data?.delivery);
+    if(delivery.kind==='bad')return 'Decide whether to retry the failed release or supersede it with the current branch.';
+    const infra=infrastructureAttention(data?.platform);
+    if(infra?.kind==='bad')return 'Confirm user impact and assign the infrastructure response.';
+    if(Array.isArray(data?.openPullRequests)&&data.openPullRequests.length)return 'Decide whether the current open work is ready for the next release.';
+    return 'No immediate product decision is required. Continue the current goal until the next review.';
+  }
+  function qualityFailureClassSummary(q){
+    const runs=[q?.review,q?.ask].filter(Boolean);
+    const details=runs.flatMap(run=>Array.isArray(run?.failure_details)?run.failure_details:[]);
+    const high=details.filter(item=>String(item?.severity||'').toLowerCase()==='high');
+    const names=[...new Set(high.map(item=>{
+      const category=String(item?.category||item?.scenario_id||'').replaceAll('_',' ').trim();
+      return category||'controlled behavior';
+    }))];
+    return {count:runs.reduce((n,run)=>n+Number(run?.high_severity_failures||0),0),classes:names.slice(0,3)};
+  }
+  function activityTimelineItems(data){
+    const p=data?.project||{},d=data?.delivery,q=data?.quality,externalQ=data?.externalQuality,activity=data?.activity;
+    const items=[];
+    if(d?.updatedAt)items.push({when:d.updatedAt,type:'Release',title:'Production release',detail:commitTitle(d.message)+' · '+shortSha(d.sha)});
+    if(activity?.available){
+      const dep=activity.deployments||{};
+      const recoveryGroups=new Map();
+      for(const failure of dep.recent_failures||[]){
+        if(failure.created_at)items.push({when:failure.created_at,type:'Incident / recovery',title:'Deployment failed',detail:failure.message||'Production deployment failed'});
+        if(failure.recovered&&failure.recovered_at){
+          const key=String(failure.recovered_at);
+          const current=recoveryGroups.get(key)||{when:failure.recovered_at,count:0};
+          current.count+=1;
+          recoveryGroups.set(key,current);
+        }
+      }
+      for(const recovery of recoveryGroups.values()){
+        items.push({
+          when:recovery.when,
+          type:'Incident / recovery',
+          title:'Deployment recovered'+(recovery.count>1?' ×'+recovery.count:''),
+          detail:recovery.count>1?'Multiple failed release attempts were superseded by a later healthy deployment.':'A later release restored a healthy production state.'
+        });
+      }
+      for(const issue of activity.runtime?.issues||[]){
+        if(issue.last_seen)items.push({when:issue.last_seen,type:'Incident / recovery',title:'Runtime signal',detail:(issue.path||'Server route')+(issue.count?' · '+issue.count+' occurrences':'')});
+      }
+    }
+    const prs=Array.isArray(data?.openPullRequests)?data.openPullRequests:[];
+    for(const pr of prs.slice(0,4)){
+      const when=pr.updated_at||pr.created_at;
+      if(when)items.push({when,type:'Release',title:'Open PR · '+(pr.number?'#'+pr.number:'work in progress'),detail:String(pr.title||'Untitled')});
+    }
+    if(p.id==='state'&&Array.isArray(q?.recent)){
+      for(const item of q.recent.slice(0,6)){
+        if(item.created_at)items.push({when:item.created_at,type:'Quality check',title:evalSuiteLabel(item)+' checked',detail:(evalScore(item)==null?'Score unavailable':percent(evalScore(item)))+' · '+Number(item.high_severity_failures||0)+' high-impact failures'});
+      }
+    }else if(p.id==='tastemake'&&externalQ?.ci?.updated_at){
+      items.push({when:externalQ.ci.updated_at,type:'Quality check',title:'Recommendation quality checks updated',detail:externalQ.ci.conclusion==='success'?'Automated recommendation checks passed.':'Latest check result recorded.'});
+    }else if(p.id==='narc'&&externalQ?.recorded?.updated_at){
+      items.push({when:externalQ.recorded.updated_at,type:'Quality check',title:'Game quality record updated',detail:externalQ.recorded.full_playtest_pending?'Full first-run playtest still open.':'Latest recorded quality state.'});
+    }
+    for(const item of data?.investigationHistory||[]){
+      items.push({when:item.observedAt,type:'Investigation',title:item.trigger||'Project check',detail:(item.summary||'Investigation completed')+(item.resolvedAt?' · later resolved':'')});
+      if(item.resolvedAt)items.push({when:item.resolvedAt,type:'Incident / recovery',title:'Investigated issue resolved',detail:item.trigger||'Project investigation'});
+    }
+    return items.sort((a,b)=>(dateMs(b.when)||0)-(dateMs(a.when)||0));
+  }
 
   async function loadGitHubProject(project,branchName){
     const headers={Accept:'application/vnd.github+json'};
