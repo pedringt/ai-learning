@@ -2,6 +2,7 @@
 const assert=require('assert');
 const fs=require('fs');
 const H=require('../project-health.js');
+const RUN_API=require('../api/project-health-run.js')._test;
 
 assert.deepStrictEqual(H.PROJECTS.map(p=>p.id),['state','tastemake','narc']);
 assert.strictEqual(H.pageEnvironment({location:{hostname:'ai-learning-git-staging-cairn10.vercel.app',search:''}}),'staging');
@@ -13,6 +14,18 @@ assert.strictEqual(protectedUrl.hostname,'ai-learning-git-staging-cairn10.vercel
 assert.strictEqual(protectedUrl.searchParams.get('project'),'state');
 assert.strictEqual(protectedUrl.searchParams.get('control'),'evals');
 assert.strictEqual(protectedUrl.searchParams.get('suite'),'all');
+
+const priorToken=process.env.GITHUB_TOKEN;
+const priorCost=process.env.PROJECT_HEALTH_RUN_COST_ESTIMATE_STATE;
+process.env.GITHUB_TOKEN='test-token';
+process.env.PROJECT_HEALTH_RUN_COST_ESTIMATE_STATE='<$0.25 per full run';
+const publicRunInfo=RUN_API.runInfo('state');
+assert.strictEqual(publicRunInfo.configured,true);
+assert.strictEqual(publicRunInfo.can_run_here,true);
+assert.match(publicRunInfo.protection,/Public run/);
+assert.strictEqual(RUN_API.RUN_COOLDOWN_MS,10*60*1000);
+if(priorToken==null)delete process.env.GITHUB_TOKEN;else process.env.GITHUB_TOKEN=priorToken;
+if(priorCost==null)delete process.env.PROJECT_HEALTH_RUN_COST_ESTIMATE_STATE;else process.env.PROJECT_HEALTH_RUN_COST_ESTIMATE_STATE=priorCost;
 assert.strictEqual(
   H.commitTitle('Merge pull request #284 from pedringt/project-health-streaming-refresh\n\nMake Project Health load progressively and cache safely'),
   'Make Project Health load progressively and cache safely'
@@ -351,6 +364,10 @@ assert.match(evalDetailsHtml,/23 controlled scenarios/);
 assert.match(evalDetailsHtml,/Update understanding/);
 assert.match(evalDetailsHtml,/Answer quality/);
 assert.match(evalDetailsHtml,/Synthetic controlled scenarios/);
+const runApiSource=fs.readFileSync(require.resolve('../api/project-health-run.js'),'utf8');
+assert.match(runApiSource,/already running/);
+assert.match(runApiSource,/RUN_COOLDOWN_MS/);
+assert.doesNotMatch(runApiSource,/can only be started from the protected Project Health preview/);
 const projectHealthSource=fs.readFileSync(require.resolve('../project-health.js'),'utf8');
 assert.match(projectHealthSource,/View eval details/);
 assert.match(projectHealthSource,/data-attention-action="ai-quality"/);
@@ -360,6 +377,8 @@ assert.match(projectHealthSource,/Previous investigations/);
 assert.match(projectHealthSource,/commits\?sha=/);
 assert.match(projectHealthSource,/project\.releasePath/);
 assert.match(projectHealthSource,/AI checks are running/);
+assert.match(projectHealthSource,/Starting AI checks/);
+assert.doesNotMatch(projectHealthSource,/control:'evals'/);
 assert.match(projectHealthSource,/checks automatically/);
 
 const workflowText=fs.readFileSync(require.resolve('../.github/workflows/question-review-live.yml'),'utf8');
