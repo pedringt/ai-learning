@@ -979,9 +979,9 @@
       const baseLabel=run?.button_label||(p.id==='state'?'Run AI evals':p.id==='tastemake'?'Run recommendation checks':'Run game checks');
       const runInfoLoading=!run&&(!data.fresh||pending.has('Run controls'));
       headerRunChecksButton.hidden=false;
-      headerRunChecksButton.disabled=!!activeEvalRun||runInfoLoading||!!(run&&!run.configured);
+      headerRunChecksButton.disabled=!!activeEvalRun||runInfoLoading||!run?.configured;
       headerRunChecksButton.textContent=activeEvalRun?'Checks running…':data.qualityRunCompletedAt?'View quality results':baseLabel;
-      headerRunChecksButton.title=runInfoLoading?'Checking run availability…':(run&&!run.configured?'Run controls are not configured for this project.':'');
+      headerRunChecksButton.title=runInfoLoading?'Checking run availability…':(!run?.configured?'Run controls are unavailable for this project.':'');
       headerRunChecksButton.classList.toggle('primary',!!shouldRunChecksFirst);
       headerRunChecksButton.style.order=shouldRunChecksFirst?'1':'2';
     }
