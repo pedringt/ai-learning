@@ -13,7 +13,7 @@
       nextDecision:'Expand failure investigation only if it stays useful without weakening human control.',
       nextReview:'After the next recorded AI quality check.',
       owner:'Product',
-      qualityLabel:'AI Quality',
+      qualityLabel:'AI Evals',
       links:{
         live:'https://state.contextswitch.tech',
         vercel:'https://vercel.com/cairn10/state',
@@ -607,7 +607,8 @@
     const run=makeRunner(data,onUpdate);
     const core=[
       run('Delivery',loadGitHubProject(project,project.branch),value=>{data.delivery=value;}),
-      run('Activity',loadActivity(project),value=>{data.activity=value;})
+      run('Activity',loadActivity(project),value=>{data.activity=value;}),
+      run('Run controls',loadRunInfo(project),value=>{data.runInfo=value;})
     ];
     if(project.id==='state'){
       core.push(run('Production backend',loadPlatformSignal(project,'production-render'),value=>{data.platform=mergePlatform(data.platform,value);}));
@@ -632,8 +633,7 @@
       run('Analytics',loadPlatformSignal(project,'analytics'),value=>{data.platform=mergePlatform(data.platform,value);}),
       run('AI operations',loadPlatformSignal(project,'ai-telemetry'),value=>{data.platform=mergePlatform(data.platform,value);}),
       run('Neon',loadPlatformSignal(project,'neon'),value=>{data.platform=mergePlatform(data.platform,value);}),
-      run('Open work',loadOpenPullRequests(project),value=>{data.openPullRequests=Array.isArray(value)?value:[];}),
-      run('Run controls',loadRunInfo(project),value=>{data.runInfo=value;})
+      run('Open work',loadOpenPullRequests(project),value=>{data.openPullRequests=Array.isArray(value)?value:[];})
     ];
     if(project.id==='state'){
       tasks.push(
