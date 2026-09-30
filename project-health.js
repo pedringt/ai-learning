@@ -725,7 +725,6 @@
   }
   function investigationResultHtml(investigation){
     if(investigation?.handoff) return '<div class="investigation-result agent-result"><div class="agent-kicker">Handoff preview</div><strong>Project handoff ready to review</strong><pre>'+esc(investigation.handoffText||investigation.report||'')+'</pre><p class="footnote">Project Health assembled this from the currently loaded delivery, quality, investigation, and product-decision signals. Review it before sharing.</p></div>';
-    if(investigation?.openingProtected) return '<div class="investigation-result agent-result" role="status"><div class="agent-kicker">Read-only investigation agent</div><strong>Opening protected investigation…</strong><p>Vercel will verify access before the live AI investigation starts.</p></div>';
     if(investigation?.loading) return '<div class="investigation-result agent-result" role="status"><div class="agent-kicker">Read-only investigation agent</div><strong>Checking current health signals…</strong><p>Starting with current health signals and expanding only when the evidence points somewhere specific.</p></div>';
     if(investigation?.error) return '<div class="investigation-result agent-result" role="status"><div class="agent-kicker">Read-only investigation agent</div><strong>Investigation unavailable</strong><p>'+esc(investigation.error)+'</p></div>';
     if(investigation?.quickCheck){
@@ -777,12 +776,12 @@
       investigationDrawerStatus.textContent=data.investigation?.loading?'Running…':data.investigation?'Latest result available':historyRows.length?'Previous results available':'';
     }
     if(drawerCopyHandoffButton){
-      const busy=!!data.investigation?.loading||!!data.investigation?.openingProtected;
+      const busy=!!data.investigation?.loading;
       const copyable=!!(data.investigation?.report||data.investigation?.quickCheck||data.investigation?.handoff);
       drawerCopyHandoffButton.hidden=busy||!copyable;
     }
     if(drawerRunAgainButton){
-      const busy=!!data.investigation?.loading||!!data.investigation?.openingProtected;
+      const busy=!!data.investigation?.loading;
       drawerRunAgainButton.hidden=!data.investigation||busy;
       if(investigationDrawerFooter) investigationDrawerFooter.hidden=drawerRunAgainButton.hidden;
     }
@@ -859,7 +858,7 @@
       }else if(run?.configured){
         const runDisabled=activeEvalRun?' disabled':'';
         qualityHtml+='<div class="eval-actions"><button class="button small primary" type="button" data-run-checks="all"'+runDisabled+'>'+(activeEvalRun?'AI checks running…':'Run all AI checks')+'</button><button class="button small" type="button" data-run-checks="review"'+runDisabled+'>Check update understanding</button><button class="button small" type="button" data-run-checks="ask"'+runDisabled+'>Check answer quality</button></div>'+
-          '<p class="footnote">'+(run.can_run_here===false?'Running a check opens the protected control surface. Vercel handles access, so no admin key is required.':'Estimated model cost: '+esc(run.estimated_cost||'not configured')+'. You will confirm before any paid run starts.')+'</p>';
+          '<p class="footnote">Estimated model cost: '+esc(run.estimated_cost||'not configured')+'. You will confirm before any paid run starts.</p>';
       }else if(run){
         qualityHtml+='<p class="footnote">Running AI checks from the dashboard still needs setup. Existing recorded results can still appear here.</p>';
       }
@@ -1286,7 +1285,7 @@
     function activeData(){return state.find(item=>item.project.id===activeId)||null;}
 
     function recordInvestigation(data,investigation,trigger){
-      if(!data||!investigation||investigation.loading||investigation.openingProtected)return;
+      if(!data||!investigation||investigation.loading)return;
       const row={
         id:String(investigation.observedAt||new Date().toISOString())+':'+String(trigger||'project'),
         observedAt:investigation.observedAt||new Date().toISOString(),
@@ -1538,7 +1537,7 @@
     const projectCheckButton=doc.getElementById('projectCheckButton');
     if(projectCheckButton)projectCheckButton.addEventListener('click',async()=>{
       const data=activeData();if(!data)return;
-      if(data.investigation&&!data.investigation.loading&&!data.investigation.openingProtected){revealInvestigation();return;}
+      if(data.investigation&&!data.investigation.loading){revealInvestigation();return;}
       await startProjectInvestigation(data);
     });
     if(drawerRunAgainButton)drawerRunAgainButton.addEventListener('click',async()=>{
