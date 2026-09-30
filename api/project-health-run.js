@@ -16,9 +16,7 @@ function readBody(req){
   try{return JSON.parse(req.body||'{}');}catch(_){return {};}
 }
 
-function isProtectedEnvironment(){
-  return String(process.env.VERCEL_ENV||'development').toLowerCase()!=='production';
-}
+const RUN_COOLDOWN_MS=10*60*1000;
 
 function runInfo(projectId){
   const run=RUNS[projectId];
@@ -26,8 +24,8 @@ function runInfo(projectId){
   const costEstimate=String(process.env[run.costEstimateEnv]||'').trim();
   return {
     configured:!!(process.env.GITHUB_TOKEN&&costEstimate),
-    can_run_here:isProtectedEnvironment(),
-    protection:isProtectedEnvironment()?'Protected preview + paid-run confirmation':'Protected preview required',
+    can_run_here:true,
+    protection:'Public run with paid-model confirmation, one active run at a time, and a 10-minute cooldown',
     project:projectId,
     label:run.label,
     ref:run.ref,
@@ -60,11 +58,6 @@ module.exports=async function handler(req,res){
   const info=runInfo(projectId);
   if(!run||!info){res.status(404).json({detail:'No runnable workflow is configured for this project yet.'});return;}
 
-  if(!info.can_run_here){
-    res.status(403).json({detail:'Paid AI quality checks can only be started from the protected Project Health preview.'});
-    return;
-  }
-
   if(!info.configured){
     res.status(503).json({detail:'Dashboard-run credentials and cost estimate are not configured yet.'});
     return;
@@ -77,16 +70,42 @@ module.exports=async function handler(req,res){
   const suite=['all','review','ask'].includes(String(body.suite||'all'))?String(body.suite||'all'):'all';
   const recordEnvironment=String(body.record_environment||'production')==='staging'?'staging':'production';
 
+  const githubHeaders={
+    Authorization:'Bearer '+process.env.GITHUB_TOKEN,
+    Accept:'application/vnd.github+json',
+    'X-GitHub-Api-Version':'2022-11-28'
+  };
+  const runsResponse=await fetch(
+    'https://api.github.com/repos/'+run.repo+'/actions/workflows/'+encodeURIComponent(run.workflow)+'/runs?branch='+encodeURIComponent(run.ref)+'&per_page=10',
+    {headers:githubHeaders}
+  );
+  if(!runsResponse.ok){
+    const payload=await runsResponse.json().catch(()=>({}));
+    res.status(runsResponse.status).json({detail:payload?.message||'Could not check recent AI quality runs'});
+    return;
+  }
+  const recentPayload=await runsResponse.json().catch(()=>({workflow_runs:[]}));
+  const workflowRuns=Array.isArray(recentPayload.workflow_runs)?recentPayload.workflow_runs:[];
+  const active=workflowRuns.find(item=>['queued','in_progress','waiting','requested','pending'].includes(String(item.status||'').toLowerCase()));
+  if(active){
+    res.status(409).json({detail:'AI quality checks are already running. Wait for the current run to finish before starting another one.',actions_url:active.html_url||null});
+    return;
+  }
+  const latest=workflowRuns[0]||null;
+  const latestStarted=latest?.created_at?new Date(latest.created_at).getTime():NaN;
+  const elapsed=Number.isFinite(latestStarted)?Date.now()-latestStarted:Infinity;
+  if(elapsed>=0&&elapsed<RUN_COOLDOWN_MS){
+    const retryAfter=Math.max(1,Math.ceil((RUN_COOLDOWN_MS-elapsed)/1000));
+    res.setHeader('Retry-After',String(retryAfter));
+    res.status(429).json({detail:'AI quality checks were started recently. Try again in about '+Math.ceil(retryAfter/60)+' minute'+(Math.ceil(retryAfter/60)===1?'':'s')+'.',retry_after_seconds:retryAfter});
+    return;
+  }
+
   const response=await fetch(
     'https://api.github.com/repos/'+run.repo+'/actions/workflows/'+encodeURIComponent(run.workflow)+'/dispatches',
     {
       method:'POST',
-      headers:{
-        Authorization:'Bearer '+process.env.GITHUB_TOKEN,
-        Accept:'application/vnd.github+json',
-        'X-GitHub-Api-Version':'2022-11-28',
-        'Content-Type':'application/json'
-      },
+      headers:{...githubHeaders,'Content-Type':'application/json'},
       body:JSON.stringify({ref:run.ref,inputs:{suite,record_environment:recordEnvironment}})
     }
   );
@@ -110,4 +129,4 @@ module.exports=async function handler(req,res){
   });
 };
 
-module.exports._test={RUNS,runInfo,isProtectedEnvironment};
+module.exports._test={RUNS,runInfo,RUN_COOLDOWN_MS};
