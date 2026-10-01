@@ -183,6 +183,138 @@
     .dialog-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:6px}
     @media(max-width:850px){.decision-support-grid{grid-template-columns:1fr}}
     @media(max-width:560px){.decision-log-head{align-items:flex-start;flex-direction:column}.decision-log-item{grid-template-columns:1fr}.decision-log-item>span:last-child{white-space:normal}.dialog-actions{justify-content:stretch}.dialog-actions .button{flex:1}}
+
+    /* Mock-aligned light dashboard skin. Data/rendering logic remains unchanged. */
+    :root{
+      --mock-ink:#172033;--mock-muted:#6f788b;--mock-line:#e1e6ef;--mock-page:#f7f8fc;
+      --mock-purple:#6758e8;--mock-purple-soft:#f2efff;--mock-green:#16815b;--mock-green-soft:#edf9f3;
+      --mock-amber:#b76818;--mock-amber-soft:#fff7e9;--mock-red:#c8463d;--mock-red-soft:#fff1ef;
+    }
+    body{background:var(--mock-page);color:var(--mock-ink)}
+    .shell{max-width:1280px;padding:24px 24px 56px}
+    .topbar{margin-bottom:24px;padding-bottom:14px;border-bottom:1px solid #e4e8ef}
+    .brand{font-size:18px;font-weight:800;letter-spacing:-.02em}
+    .compact-hero{align-items:flex-end;margin-bottom:16px}
+    .compact-hero h1{font-size:42px;letter-spacing:-.045em}
+    .compact-hero .lede{max-width:760px;font-size:15px}
+    .utility-row .notice{background:transparent;border:0;padding:0}
+
+    .overview-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:14px 0 22px}
+    .project-switcher-item{
+      min-height:96px;padding:16px 17px;border:1px solid #e0e5ed;border-radius:13px;background:#fff;
+      box-shadow:0 4px 14px rgba(24,33,52,.025);transition:.15s ease
+    }
+    .project-switcher-item:hover{transform:translateY(-1px);border-color:#cbd2de}
+    .project-switcher-item.active{
+      border-color:#7c70ed;background:linear-gradient(135deg,#fff,#f5f2ff);
+      box-shadow:0 0 0 2px rgba(103,88,232,.10),0 8px 22px rgba(103,88,232,.08)
+    }
+    .project-switcher-main strong{font-size:16px}
+    .project-switcher-main span{font-size:11px;line-height:1.4;color:#7b8496}
+    .status-pill{font-size:10px;padding:4px 7px}
+    .status-pill.good,.status-pill.healthy{background:#eaf8f1;color:#087653}
+    .status-pill.warn,.status-pill.watch,.status-pill.unknown{background:#fff2dc;color:#a75a12}
+    .status-pill.bad,.status-pill.action,.status-pill.blocked{background:#ffebe8;color:#b6332b}
+
+    .detail{
+      margin-top:0;border:1px solid #dfe4ed;border-radius:18px;background:#fff;
+      box-shadow:0 14px 40px rgba(28,38,58,.045);overflow:hidden
+    }
+    .detail-head{
+      min-height:118px;margin:0;padding:24px 26px;align-items:center;
+      background:linear-gradient(105deg,#efecff 0%,#f7f5ff 58%,#fff 100%);
+      border-bottom:1px solid #e6e3f7
+    }
+    .detail h2{font-size:32px;letter-spacing:-.035em;color:#151d33}
+    .detail-copy{max-width:650px;font-size:13px;color:#687287}
+    .detail-actions{align-items:center}
+    .detail-actions .button{min-height:38px}
+    .button.primary{background:var(--mock-purple);border-color:var(--mock-purple);color:#fff}
+    .button.primary:hover{background:#594ad7;border-color:#594ad7}
+    .project-tabs{margin:0;padding:0 26px;border-bottom:1px solid #e5e9f0;background:#fff;gap:28px}
+    .project-tab{padding:13px 0 12px;font-size:12px;font-weight:750;color:#747e91}
+    .project-tab.active{color:var(--mock-purple);border-bottom-color:var(--mock-purple)}
+
+    .grid.mock-overview-grid{padding:22px;gap:16px;background:#fafbfe}
+    .mock-overview-grid>.panel{margin:0;border:1px solid var(--mock-line);border-radius:13px;background:#fff;box-shadow:none}
+    .mock-attention{
+      padding:18px 20px!important;border-color:#efc98f!important;
+      background:linear-gradient(120deg,#fffdf9,#fff8eb)!important
+    }
+    .mock-attention h3{font-size:19px!important;color:#a65314!important}
+    .mock-attention .attention-list{display:grid;gap:8px;margin-top:12px}
+    .mock-attention .attention{border-color:#efd8b2;border-left:4px solid var(--mock-amber);background:#fff}
+    .mock-attention .attention.bad{border-color:#efc4bf;border-left-color:var(--mock-red)}
+    .mock-attention .attention.good{border-color:#cfe8dc;border-left-color:var(--mock-green);background:#fbfefa}
+
+    .mock-health{padding:18px!important}
+    .mock-health .overview-health{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:12px!important;margin-top:12px!important}
+    .mock-health .overview-health-row{
+      min-height:128px!important;padding:15px!important;border:1px solid #e4e8ef!important;border-radius:12px!important;
+      background:#fff!important;text-align:left!important;display:flex!important;flex-direction:column!important;justify-content:flex-start!important;gap:8px!important
+    }
+    .mock-health .health-card-head{display:flex!important;flex-direction:column-reverse!important;align-items:flex-start!important;gap:8px!important}
+    .mock-health .health-card-head strong{font-size:12px!important;color:#697388}
+    .mock-health .health-status{font-size:9px!important;padding:3px 6px!important}
+    .mock-health .health-detail{font-size:12px!important;line-height:1.42!important}
+    .mock-health .health-card.good,.mock-health .health-card.available{background:#fbfefc!important}
+    .mock-health .health-card.warn{background:#fffdf8!important}
+    .mock-health .health-card.bad{background:#fffafa!important}
+
+    .mock-quality-summary{padding:19px!important}
+    .mock-quality-head{display:flex;align-items:flex-start;justify-content:space-between;gap:18px}
+    .mock-quality-head h3{font-size:19px;margin:0}
+    .mock-quality-head p{margin:4px 0 0;color:#768096;font-size:12px}
+    .mock-quality-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:14px}
+    .mock-quality-card{padding:15px;border:1px solid #e4e8ef;border-radius:12px;background:#fbfcfe}
+    .mock-quality-card-head{display:flex;align-items:center;justify-content:space-between;gap:10px}
+    .mock-quality-card h4{margin:0;font-size:13px;color:#3a455b}
+    .mock-quality-score{margin-top:9px;font-size:31px;font-weight:800;line-height:1;letter-spacing:-.04em}
+    .mock-quality-note{margin-top:6px;color:#758094;font-size:11px;line-height:1.4}
+    .mock-quality-bar{height:7px;margin-top:13px;border-radius:999px;background:#e8ecf2;overflow:hidden}
+    .mock-quality-bar>span{display:block;height:100%;border-radius:999px;background:var(--mock-purple)}
+    .mock-quality-bar.good>span{background:#24a173}.mock-quality-bar.warn>span{background:#dfa04f}.mock-quality-bar.bad>span{background:#d95b52}
+    .mock-quality-trend{margin-top:9px;color:#768096;font-size:10px}
+
+    .mock-release{grid-column:span 6!important;min-height:215px;padding:19px!important}
+    .mock-usage{grid-column:span 6!important;min-height:215px;padding:19px!important}
+    .mock-activity{grid-column:span 12!important}
+    .mock-release .delivery-split{gap:10px}
+    .mock-release .delivery-environment{border-color:#e5e9f0;background:#fbfcfe;box-shadow:none}
+    .mock-release .delivery-summary{border-radius:10px}
+    .mock-usage .metrics{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+    .mock-usage .metric{padding:13px;border:1px solid #e6eaf0;border-radius:11px;background:#fafbfe}
+    .mock-usage .metric strong{font-size:30px;color:var(--mock-green)}
+    .mock-usage .trend{border-radius:9px}
+    .mock-activity .activity-item{border-color:#e6eaf0;background:#fbfcfe}
+
+    .mock-investigation{padding:19px!important;background:linear-gradient(180deg,#fff,#fafbff)!important}
+    .mock-investigation-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:14px}
+    .mock-investigation-block{min-height:145px;padding:15px;border:1px solid #e5e9f0;border-radius:12px;background:#fff}
+    .mock-investigation-block>strong{display:block;margin-bottom:7px;font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:#657086}
+    .mock-investigation-block p,.mock-investigation-block li{font-size:12px;line-height:1.5;color:#5f697c}
+    .mock-investigation-block ul{margin:0;padding-left:17px}
+
+    .mock-secondary{background:#fff!important}
+    .mock-secondary h3{font-size:16px}
+    .mock-secondary .focus-block,.mock-secondary .decision-support-block{background:#fbfcfe;border-color:#e6eaf0}
+    .mock-secondary .decision-now{background:#f5f3ff;border-color:#ded9ff}
+
+    @media(max-width:960px){
+      .mock-health .overview-health{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+      .mock-quality-grid{grid-template-columns:1fr}
+      .mock-release,.mock-usage{grid-column:span 12!important}
+      .mock-investigation-grid{grid-template-columns:1fr}
+    }
+    @media(max-width:680px){
+      .shell{padding:16px 12px 42px}
+      .overview-grid{grid-template-columns:1fr}
+      .detail-head{padding:18px}
+      .project-tabs{padding:0 18px;overflow-x:auto;flex-wrap:nowrap}
+      .grid.mock-overview-grid{padding:14px;gap:12px}
+      .mock-health .overview-health{grid-template-columns:1fr!important}
+    }
+
 </style>
 </head>
 <body>
@@ -229,16 +361,18 @@
         <button class="project-tab" type="button" data-tab="activity">Activity</button>
       </nav>
 
-      <div class="grid">
-        <section class="panel" id="attentionPanel" data-tab-panel="overview"></section>
-        <section class="panel" id="productFocusPanel" data-tab-panel="overview"></section>
-        <section class="panel" id="decisionSupportPanel" data-tab-panel="overview"></section>
-        <section class="panel" id="changesPanel" data-tab-panel="overview"></section>
-        <section class="panel" id="overviewHealthPanel" data-tab-panel="overview"></section>
-        <section class="panel half" id="analyticsPanel" data-tab-panel="overview"></section>
-        <section class="panel half" id="overviewActivityPanel" data-tab-panel="overview"></section>
+      <div class="grid mock-overview-grid">
+        <section class="panel mock-attention" id="attentionPanel" data-tab-panel="overview"></section>
+        <section class="panel mock-health" id="overviewHealthPanel" data-tab-panel="overview"></section>
+        <section class="panel mock-quality-summary" id="overviewQualitySummaryPanel" data-tab-panel="overview"></section>
+        <section class="panel mock-release" id="deliveryPanel" data-tab-panel="overview"></section>
+        <section class="panel half mock-usage" id="analyticsPanel" data-tab-panel="overview"></section>
+        <section class="panel half mock-activity" id="overviewActivityPanel" data-tab-panel="overview"></section>
+        <section class="panel mock-investigation" id="overviewInvestigationPanel" data-tab-panel="overview"></section>
+        <section class="panel mock-secondary" id="changesPanel" data-tab-panel="overview"></section>
+        <section class="panel mock-secondary" id="productFocusPanel" data-tab-panel="overview"></section>
+        <section class="panel mock-secondary" id="decisionSupportPanel" data-tab-panel="overview"></section>
         <section class="panel" id="qualityPanel" data-tab-panel="ai-quality" hidden></section>
-        <section class="panel" id="deliveryPanel" data-tab-panel="overview"></section>
         <section class="panel" id="historyPanel" data-tab-panel="activity" hidden></section>
       </div>
     </section>
