@@ -1,1 +1,1 @@
-Staging deploy retry trigger. Retry 2. No application behavior changes.
+Production deploy retry trigger after Vercel block. No application behavior changes.
