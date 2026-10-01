@@ -473,13 +473,15 @@ body.v88-dark .home-state-feature{box-shadow:none}body.v88-dark .home-state-acti
 .home-feature-stack{display:grid;gap:16px;margin-top:14px}
 .home-feature-card{display:flex;justify-content:space-between;gap:28px;padding:28px;border:1px solid var(--border);border-radius:20px;background:var(--card)}
 .home-feature-card>div:first-child{max-width:760px}.home-feature-card h2{margin:5px 0 8px;font-size:25px;line-height:1.15}.home-feature-card p{margin:0;color:var(--muted);font-size:14px;line-height:1.6}
-.home-feature-lead{padding:34px;background:linear-gradient(135deg,color-mix(in srgb,var(--softp) 48%,var(--card)),var(--card))}
-.home-feature-lead h2{font-size:30px}
+.home-feature-lead{padding:26px 28px;background:linear-gradient(135deg,color-mix(in srgb,var(--softp) 48%,var(--card)),var(--card));align-items:center}
+.home-feature-lead>div:first-child{max-width:720px}
+.home-feature-lead h2{font-size:28px}
+.home-feature-lead .home-feature-actions{justify-content:flex-start;min-width:0;margin-left:6px}
 .home-feature-pair{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.home-feature-pair .home-feature-card{flex-direction:column}
 .home-feature-actions{display:flex;flex-wrap:wrap;gap:10px 14px;align-items:center;justify-content:flex-end;min-width:220px}.home-feature-pair .home-feature-actions{justify-content:flex-start;min-width:0}
 .home-see-all{display:inline-block;margin-top:18px;color:var(--purple);font-size:13px;font-weight:850;text-decoration:none}.home-see-all:hover{text-decoration:underline}
 .applied-featured-grid .applied-major-lead{grid-column:1/-1;background:linear-gradient(135deg,color-mix(in srgb,var(--softp) 42%,var(--card)),var(--card))}
-@media(max-width:760px){.home-feature-card{flex-direction:column;padding:22px}.home-feature-lead{padding:24px}.home-feature-pair{grid-template-columns:1fr}.home-feature-actions{justify-content:flex-start;min-width:0}.applied-featured-grid .applied-major-lead{grid-column:auto}}
+@media(max-width:760px){.home-feature-card{flex-direction:column;padding:22px}.home-feature-lead{padding:22px}.home-feature-lead .home-feature-actions{margin-left:0}.home-feature-pair{grid-template-columns:1fr}.home-feature-actions{justify-content:flex-start;min-width:0}.applied-featured-grid .applied-major-lead{grid-column:auto}}
 </style></head>
 <body>
 <div class="app-root" id="ai-cs-mock">
@@ -552,7 +554,7 @@ body.v88-dark .learning-how-note strong{color:#f5f2fb!important}
 <div class="home-applied-heading"><div class="section-kicker"><span>Applied work · start here</span></div></div>
 <div class="home-feature-stack">
 <article class="home-feature-card home-feature-lead">
-  <div><span class="home-project-kicker">Featured · AI product</span><h2>Tastemake</h2><p>An AI recommendation product that learns not just what you like, but why. I used it to work through recommendation quality, user correction, feedback loops, and the tradeoff between better results and slower AI calls.</p></div>
+  <div><span class="home-project-kicker">Featured · AI product</span><h2>Tastemake</h2><p>An AI recommendation product that learns what users like and why, with feedback loops that let them correct the model as their taste profile changes.</p></div>
   <div class="home-feature-actions"><a class="home-state-primary" href="https://tastemake.vercel.app/" target="_blank" rel="noopener noreferrer">Open Tastemake →</a><a class="home-state-secondary" href="tastemake.html">Read the case study →</a></div>
 </article>
 <div class="home-feature-pair">
@@ -562,7 +564,7 @@ body.v88-dark .learning-how-note strong{color:#f5f2fb!important}
 </article>
 <article class="home-feature-card">
   <div><span class="home-project-kicker">Featured · Product health</span><h2>Project Health</h2><p>A dashboard that brings releases, AI-quality checks, incidents, and missing signals together so I can see what needs attention and where to look next.</p></div>
-  <div class="home-feature-actions"><a class="home-state-primary" href="project-health.html">Open Project Health →</a><a class="home-state-secondary" href="project-health-case-study.html">Read the case study →</a></div>
+  <div class="home-feature-actions"><a class="home-state-primary" href="project-health.html" target="_blank" rel="noopener noreferrer">Open Project Health →</a><a class="home-state-secondary" href="project-health-case-study.html">Read the case study →</a></div>
 </article>
 </div>
 </div>
@@ -650,7 +652,7 @@ body.v88-dark .learning-how-note strong{color:#f5f2fb!important}
 <div class="applied-major-grid applied-featured-grid">
 <div class="card applied-major applied-major-with-actions applied-major-lead"><span class="tag">AI product · Personalization</span><h3><a class="applied-card-primary-link" href="tastemake.html">Tastemake</a></h3><p class="card-intro">An AI recommendation product where users can see what the system thinks it has learned about their taste and correct it when the model gets the wrong idea.</p><div class="applied-card-actions"><a href="tastemake.html">Read case study →</a><a href="https://tastemake.vercel.app/" target="_blank" rel="noopener noreferrer">Open Tastemake →</a></div></div>
 <div class="card applied-major applied-major-with-actions"><span class="tag">Trustworthy AI · Human control</span><h3><a class="applied-card-primary-link" href="implementation-context.html">State</a></h3><p class="card-intro">A project truth system that keeps AI interpretation separate from human-approved state, with explicit rules for evidence, uncertainty, and authority.</p><div class="applied-card-actions"><a href="implementation-context.html">Read case study →</a><a href="/implementation-context-prototype/" target="_blank" rel="noopener noreferrer">Open State →</a></div></div>
-<div class="card applied-major applied-major-with-actions"><span class="tag">Product health · AI quality</span><h3><a class="applied-card-primary-link" href="project-health-case-study.html">Project Health</a></h3><p class="card-intro">A product-facing dashboard for seeing what changed, what needs attention, what signals are missing, and what to investigate next.</p><div class="applied-card-actions"><a href="project-health-case-study.html">Read case study →</a><a href="project-health.html">Open Project Health →</a></div></div>
+<div class="card applied-major applied-major-with-actions"><span class="tag">Product health · AI quality</span><h3><a class="applied-card-primary-link" href="project-health-case-study.html">Project Health</a></h3><p class="card-intro">A product-facing dashboard for seeing what changed, what needs attention, what signals are missing, and what to investigate next.</p><div class="applied-card-actions"><a href="project-health-case-study.html">Read case study →</a><a href="project-health.html" target="_blank" rel="noopener noreferrer">Open Project Health →</a></div></div>
 </div>
 <div class="section-kicker applied-group-kicker"><span>Supporting work</span></div>
 <div class="applied-secondary-grid">
