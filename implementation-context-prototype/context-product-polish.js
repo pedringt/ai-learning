@@ -71,6 +71,7 @@
     stale: false,
     running: false,
     requestId: 0,
+    askTiming: null,
     copyContextData: null,
   };
 
@@ -261,7 +262,7 @@
     // abort's rejection arrives after something else already changed
     // requestId. running is cleared immediately either way, so a new
     // question can be asked right away instead of waiting out the old one.
-    if(ui.running){ui.abortController?.abort();ui.requestId++;ui.running=false;ui.streamRaw='';}
+    if(ui.running){ui.askTiming?.cancelled?.();ui.askTiming=null;ui.abortController?.abort();ui.requestId++;ui.running=false;ui.streamRaw='';}
     ui.drawerOpen=false;document.getElementById('askStateDrawer')?.setAttribute('hidden','');document.body.classList.remove('ask-state-drawer-open');syncLauncherVisibility();
   }
   // state.md QA follow-up: Ask's drawer state (the last-rendered answer,
@@ -410,19 +411,23 @@
     // through to the real fetch/stream in context-api.js, so
     // closeAskDrawer() can now actually cancel the in-flight call.
     ui.abortController=new AbortController();
+    const liveStream=!!ASK.canStream?.(clean);
+    const askTiming=liveStream?window.StateAnalytics?.startAskTiming?.('live_stream'):null;
+    ui.askTiming=askTiming||null;
     const statePromise=currentStateSignature();const resolvedPromise=relevantResolvedDecisions(clean);
     renderDrawerResult('<div class="ask-live-loading"><span class="ask-loading-mark" aria-hidden="true"></span><div><strong>Checking the project record…</strong><p>Keeping accepted, pending, and unresolved information separate.</p></div></div>');
     try{
       let payload;
-      if(ASK.canStream?.(clean)){
+      if(liveStream){
         payload=await ASK.submitStream(clean,null,{
           preview:preview=>{if(requestId!==ui.requestId)return;const html=ASK.renderStream?.('',preview);if(html)renderDrawerResult(html);},
-          delta:event=>{if(requestId!==ui.requestId)return;ui.streamRaw=(ui.streamRaw||'')+(event?.text||'');const html=ASK.renderStream?.(ui.streamRaw,null);if(html)renderDrawerResult(html);}
+          delta:event=>{if(requestId!==ui.requestId)return;ui.streamRaw=(ui.streamRaw||'')+(event?.text||'');const html=ASK.renderStream?.(ui.streamRaw,null);if(html){renderDrawerResult(html);if(html.includes('ask-live-answer'))askTiming?.firstResponse?.();}}
         },ui.abortController.signal);
       }else payload=await ASK.submit(clean,null,ui.abortController.signal);
       if(requestId!==ui.requestId)return;
-      ui.payload=payload;ui.answerStateSignature=await statePromise;ui.resolvedContext=await resolvedPromise;ui.running=false;ui.streamRaw='';renderFinalAsk();
+      ui.payload=payload;ui.answerStateSignature=await statePromise;ui.resolvedContext=await resolvedPromise;ui.running=false;ui.streamRaw='';renderFinalAsk();askTiming?.completed?.();if(ui.askTiming===askTiming)ui.askTiming=null;
     }catch(error){
+      askTiming?.failed?.();if(ui.askTiming===askTiming)ui.askTiming=null;
       if(requestId!==ui.requestId)return;ui.running=false;ui.streamRaw='';
       // QA follow-up (2026-09-14): the backend's own 503 fallback text is
       // literally "Ask is temporarily unavailable. Please try again." --
