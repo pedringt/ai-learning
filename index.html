@@ -469,7 +469,38 @@ body.v88-dark .home-state-feature{box-shadow:none}body.v88-dark .home-state-acti
 @media(max-width:980px){#ai-cs-mock [data-page="portfolio"] .applied-secondary-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}}
 @media(max-width:620px){#ai-cs-mock [data-page="portfolio"] .applied-secondary-grid{grid-template-columns:1fr!important}#ai-cs-mock [data-page="portfolio"] .applied-secondary-grid>.applied-secondary{padding:15px!important}#ai-cs-mock [data-page="home"] .home-quiet-ending{margin-top:32px!important;padding-top:19px!important}#ai-cs-mock [data-page="learn"] .learning-reference-map{grid-template-columns:1fr;padding:16px}#ai-cs-mock [data-page="learn"] .learning-reference-map>a{justify-self:start}}
 </style>
-</head>
+<style id="portfolio-featured-hierarchy">
+.home-feature-grid{display:grid;gap:16px;margin-top:14px;align-items:stretch}
+.home-feature-state-led{grid-template-columns:minmax(0,1.15fr) minmax(0,.85fr)}
+.home-feature-stack-right{display:grid;grid-template-rows:repeat(2,minmax(0,1fr));gap:16px}
+.home-feature-card{display:flex;flex-direction:column;justify-content:space-between;gap:18px;min-height:0;padding:22px 24px;border:1px solid var(--border);border-radius:20px;background:var(--card)}
+.home-feature-card>div:first-child{max-width:none}.home-feature-card h2{margin:5px 0 8px;font-size:24px;line-height:1.15}.home-feature-card p{margin:0;color:var(--muted);font-size:13.5px;line-height:1.55}
+.home-feature-state-anchor{padding:28px;background:linear-gradient(180deg,color-mix(in srgb,var(--softp) 62%,var(--card)),var(--card));border-color:color-mix(in srgb,var(--purple) 30%,var(--border));box-shadow:0 10px 26px color-mix(in srgb,var(--purple) 8%,transparent)}
+.home-feature-state-anchor h2{font-size:31px}.home-feature-state-anchor p{max-width:690px;font-size:14.5px;line-height:1.65}
+.home-state-content{display:flex;flex-direction:column;align-items:flex-start;gap:0;height:100%}
+.home-state-signals{display:flex;flex-wrap:wrap;gap:8px;margin-top:20px}
+.home-state-signals span{padding:7px 10px;border:1px solid color-mix(in srgb,var(--purple) 24%,var(--border));border-radius:999px;background:color-mix(in srgb,var(--softp) 52%,var(--card));color:var(--muted);font-size:11.5px;font-weight:800;line-height:1}
+.home-state-button-row{display:flex;flex-wrap:wrap;gap:10px;margin-top:22px}
+.home-state-button{display:inline-flex;align-items:center;justify-content:center;padding:10px 14px;border-radius:11px;font-size:12px;font-weight:850;line-height:1.2;text-decoration:none!important}
+.home-state-button-primary{background:var(--purple);color:#fff!important;border:1px solid var(--purple)}
+.home-state-button-secondary{background:var(--card);color:var(--purple)!important;border:1px solid color-mix(in srgb,var(--purple) 30%,var(--border))}
+.home-state-button:hover{transform:translateY(-1px)}
+.home-feature-lead{background:linear-gradient(180deg,color-mix(in srgb,var(--softp) 30%,var(--card)),var(--card))}
+.home-feature-actions{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;justify-content:flex-start;margin-top:auto}
+.home-feature-actions a{font-size:12px!important;font-weight:850!important;line-height:1.25}
+.home-see-all{display:inline-block;margin-top:18px;color:var(--purple);font-size:13px;font-weight:850;text-decoration:none}.home-see-all:hover{text-decoration:underline}
+.applied-featured-three{grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:14px}
+.applied-featured-three .applied-major{min-height:0}
+.applied-major-with-actions .applied-card-actions{gap:8px 14px!important;padding-top:14px!important}
+.applied-major-with-actions .applied-card-actions a{font-size:11.5px!important;font-weight:850!important}
+.applied-secondary-compact{gap:10px!important}
+.applied-secondary-compact>.applied-secondary{padding:15px 17px!important}
+.applied-secondary-compact .card-intro{font-size:12.5px;line-height:1.5}
+.applied-secondary-compact .nav-card::after{margin-top:10px}
+@media(max-width:980px){.applied-featured-three{grid-template-columns:1fr 1fr!important}.applied-featured-three .applied-major:first-child{grid-column:1/-1}}
+@media(max-width:900px){.home-feature-state-led{grid-template-columns:1fr}.home-feature-stack-right{grid-template-columns:1fr 1fr;grid-template-rows:none}}
+@media(max-width:760px){.home-feature-stack-right,.applied-featured-three{grid-template-columns:1fr!important}.applied-featured-three .applied-major:first-child{grid-column:auto}.home-feature-card,.home-feature-state-anchor{padding:21px}.home-feature-state-anchor h2{font-size:27px}.home-state-button-row{width:100%}.home-state-button{flex:1 1 auto}}
+</style></head>
 <body>
 <div class="app-root" id="ai-cs-mock">
 <style>
@@ -537,10 +568,38 @@ body.v88-dark .learning-how-note strong{color:#f5f2fb!important}
 <div class="topbar"><div class="topinner"><button aria-label="Go to home" class="brand-button" data-brand-home="" type="button"><span class="brand">Context <span>Switch</span></span></button><nav aria-label="Primary pages" class="nav"><button class="active" data-view="home">Home</button><button data-view="portfolio">Applied Work</button><button data-view="learn">Learning Library</button></nav><div class="top-actions"><button aria-label="Switch to dark mode" aria-pressed="false" class="theme-toggle" id="themeToggle" title="Switch to dark mode" type="button">☾</button><select aria-label="Choose page" id="mobileNav"><option value="home">Home</option><option value="portfolio">Applied Work</option><option value="learn">Learning Library</option></select></div></div></div>
 <section class="view active" data-page="home" id="home">
 <div class="hero"><h1>AI doesn’t know <span>what it doesn’t know.</span></h1><p class="lead">AI can take you further, faster. The real skill is knowing when to let it work, when to question it, and when to take back control.</p></div>
-<div class="home-start"><div class="home-applied-heading"><div class="section-kicker"><span>Applied work · start here</span></div></div>
-<article class="home-state-feature"><div class="home-state-copy"><span class="home-project-kicker">Flagship project</span><h2>State: A project-context experiment</h2><p class="home-state-lead">State helps teams keep a reliable, up-to-date picture of what’s true in a project. It turns scattered evidence into proposed updates and open questions, while keeping a clear history of what changed. AI helps interpret new information, software enforces the rules, and people decide what actually becomes Current State.</p></div><div class="home-state-actions"><a class="home-state-primary" href="https://state.contextswitch.tech/" target="_blank" rel="noopener noreferrer">Open State →</a><a class="home-state-secondary" href="implementation-context.html">Read the case study →</a></div></article>
-<a class="home-project-card home-feature-wide home-legal-feature" href="legal-ai-governance.html"><div class="home-feature-wide-text"><span class="home-project-kicker">Opportunity evaluation</span><strong>Legal AI Governance</strong><p>I found a real governance and workflow gap, but the firms with the greatest need may be difficult to serve profitably one at a time. I’d validate the opportunity with customer discovery before proposing an offering.</p></div><span class="home-project-path">Read the evaluation →</span></a>
-<div class="home-more-applied"><div class="section-kicker"><span>More applied work</span></div><div class="home-supporting-row"><a href="meridian.html"><strong>Meridian AI Support Pilot</strong><span>A simulated support pilot shaped by discovery and evidence-led iteration</span></a><a href="state-testing-debugging.html"><strong>Testing &amp; Debugging State</strong><span>Hands-on QA, automated coverage, and failure investigation</span></a><a href="state-managed-agent-tracing.html"><strong>Agent tracing</strong><span>Tracing a read-only agent to separate retrieval success from an authority failure</span></a><a href="state-ai-evals.html"><strong>AI evals for State</strong><span>Practical eval cases tied to State’s highest-risk behaviors</span></a></div></div></div><section class="home-principle" aria-labelledby="home-principle-heading"><div class="section-kicker"><span>How I work with AI</span></div><h2 id="home-principle-heading">Better outcomes, not maximum automation.</h2><p>I use AI where it creates real value, and I raise the evidence bar as its autonomy and consequences grow. Human involvement should be intentional: not automatic, and not automatically eliminated. Technically strong AI can still fail if it creates hidden work or overlooks the people whose work is changing.</p></section>
+<div class="home-start">
+<div class="home-applied-heading"><div class="section-kicker"><span>Applied work · start here</span></div></div>
+<div class="home-feature-grid home-feature-state-led">
+<article class="home-feature-card home-feature-state-anchor">
+  <div class="home-state-content">
+    <span class="home-project-kicker">Featured · Trustworthy AI</span>
+    <h2>State</h2>
+    <p>State is a project truth system for teams working across scattered sources. AI interprets new evidence, software enforces the rules, and people decide what becomes Current State. The goal is to keep project knowledge useful without letting the model quietly turn guesses or stale information into fact.</p>
+    <div class="home-state-signals" aria-label="What State demonstrates">
+      <span>Human-in-the-loop</span>
+      <span>AI quality &amp; evals</span>
+      <span>Evidence &amp; authority</span>
+    </div>
+    <div class="home-state-button-row">
+      <a class="home-state-button home-state-button-primary" href="/implementation-context-prototype/" target="_blank" rel="noopener noreferrer">Open State ↗</a>
+      <a class="home-state-button home-state-button-secondary" href="implementation-context.html">Case study →</a>
+    </div>
+  </div>
+</article>
+<div class="home-feature-stack-right">
+<article class="home-feature-card home-feature-lead">
+  <div><span class="home-project-kicker">Featured · AI product</span><h2>Tastemake</h2><p>An AI recommendation product that learns what users like and why, then lets them correct what the model has learned.</p></div>
+  <div class="home-feature-actions"><a class="home-state-primary" href="https://tastemake.vercel.app/" target="_blank" rel="noopener noreferrer">Open Tastemake →</a><a class="home-state-secondary" href="tastemake.html">Case study →</a></div>
+</article>
+<article class="home-feature-card">
+  <div><span class="home-project-kicker">Featured · Product health</span><h2>Project Health</h2><p>A dashboard that brings releases, AI-quality checks, incidents, and missing signals together so I can see what needs attention next.</p></div>
+  <div class="home-feature-actions"><a class="home-state-primary" href="project-health.html" target="_blank" rel="noopener noreferrer">Open Project Health →</a><a class="home-state-secondary" href="project-health-case-study.html">Case study →</a></div>
+</article>
+</div>
+</div>
+<a class="home-see-all" href="#portfolio">See all applied work →</a>
+</div><section class="home-principle" aria-labelledby="home-principle-heading"><div class="section-kicker"><span>How I work with AI</span></div><h2 id="home-principle-heading">Better outcomes, not maximum automation.</h2><p>I use AI where it creates real value, and I raise the evidence bar as its autonomy and consequences grow. Human involvement should be intentional: not automatic, and not automatically eliminated. Technically strong AI can still fail if it creates hidden work or overlooks the people whose work is changing.</p></section>
 
 </section>
 <section class="view" data-page="learn" id="learn">
@@ -618,21 +677,20 @@ body.v88-dark .learning-how-note strong{color:#f5f2fb!important}
 </section>
 </section>
 
-<section class="view" data-page="portfolio" id="portfolio"><header class="page-intro"><div class="eyebrow">Applied Work</div><h2 class="section-title">Projects that exercise different kinds of product judgment</h2><p class="section-lead">The work here is less about collecting AI technologies and more about making decisions with imperfect evidence: what to build, what to constrain, and when to change course.</p></header>
-<div class="section-kicker applied-group-kicker"><span>Primary work</span></div>
-<div class="applied-major-grid">
-<div class="card applied-major applied-major-with-actions"><span class="tag">Flagship project</span><h3><a class="applied-card-primary-link" href="implementation-context.html">State</a></h3><p class="card-intro">A project-context experiment about maintaining a reliable current understanding by combining AI interpretation, software-enforced rules, and human control.</p><div class="applied-card-actions"><a href="implementation-context.html">Read case study →</a><a href="https://state.contextswitch.tech/" target="_blank" rel="noopener noreferrer">Open State →</a></div></div>
-<a class="card nav-card applied-major" href="legal-ai-governance.html"><span class="tag">Opportunity evaluation</span><h3>Legal AI Governance</h3><p class="card-intro">I investigated a documented governance and workflow gap and found that the firms with the clearest structural need may be the least attractive clients to pursue one at a time. My recommendation: do not propose an offering until direct customer discovery changes that commercial picture.</p></a>
+<section class="view" data-page="portfolio" id="portfolio"><header class="page-intro"><div class="eyebrow">Applied Work</div><h2 class="section-title">Projects that exercise different kinds of product judgment</h2><p class="section-lead">Three projects show the strongest range of my applied AI work. Supporting work adds a few distinct lessons without turning the page into a catalog.</p></header>
+<div class="section-kicker applied-group-kicker"><span>Featured work</span></div>
+<div class="applied-major-grid applied-featured-grid applied-featured-three">
+<div class="card applied-major applied-major-with-actions"><span class="tag">Flagship · Trustworthy AI</span><h3><a class="applied-card-primary-link" href="implementation-context.html">State</a></h3><p class="card-intro">A project truth system that keeps AI interpretation separate from human-approved state, with clear rules for evidence, uncertainty, and authority.</p><div class="applied-card-actions"><a href="/implementation-context-prototype/" target="_blank" rel="noopener noreferrer">Open State →</a><a href="implementation-context.html">Case study →</a></div></div>
+<div class="card applied-major applied-major-with-actions"><span class="tag">AI product · Personalization</span><h3><a class="applied-card-primary-link" href="tastemake.html">Tastemake</a></h3><p class="card-intro">A recommendation product where users can see and correct what the system thinks it has learned about their taste.</p><div class="applied-card-actions"><a href="https://tastemake.vercel.app/" target="_blank" rel="noopener noreferrer">Open Tastemake →</a><a href="tastemake.html">Case study →</a></div></div>
+<div class="card applied-major applied-major-with-actions"><span class="tag">Product health · AI quality</span><h3><a class="applied-card-primary-link" href="project-health-case-study.html">Project Health</a></h3><p class="card-intro">A dashboard for seeing what changed, what needs attention, what signals are missing, and where to investigate next.</p><div class="applied-card-actions"><a href="project-health.html" target="_blank" rel="noopener noreferrer">Open Project Health →</a><a href="project-health-case-study.html">Case study →</a></div></div>
 </div>
 <div class="section-kicker applied-group-kicker"><span>Supporting work</span></div>
-<div class="applied-secondary-grid">
-<a class="card nav-card applied-secondary" href="meridian.html"><span class="tag">Simulated pilot · Customer support</span><h3>Meridian AI Support Pilot</h3><p class="card-intro">A simulated support pilot where discovery changed the design and weak evidence changed my first measurement recommendation.</p></a>
-<a class="card nav-card applied-secondary" href="state-testing-debugging.html"><span class="tag">Validation &amp; debugging</span><h3>Testing &amp; Debugging State</h3><p class="card-intro">How I combined hands-on QA with AI-assisted automated coverage to locate the failure before choosing a fix.</p></a>
-<a class="card nav-card applied-secondary" href="state-managed-agent-tracing.html"><span class="tag">Agent tracing &amp; authority</span><h3>Debugging a Read-Only Agent</h3><p class="card-intro">Tracing showed the agent found the right evidence but overstated what it established, so I fixed the authority rule rather than changing retrieval.</p></a>
-<a class="card nav-card applied-secondary" href="state-ai-evals.html"><span class="tag">AI eval design</span><h3>Designing Practical AI Evals for State</h3><p class="card-intro">How I turned State’s highest-risk behaviors into practical eval cases, then used the results to decide what needed fixing.</p></a>
-<a class="card nav-card applied-secondary" href="state-architecture-cost.html"><span class="tag">Architecture &amp; cost</span><h3>State Architecture &amp; Cost: Before vs. After</h3><p class="card-intro">I revisited the architecture and cost assumptions I made before integrating AI into State and compared them with what the working State prototype taught me about where AI added value and where deterministic software was the better choice.</p></a>
+<div class="applied-secondary-grid applied-secondary-compact">
+<a class="card nav-card applied-secondary" href="debugging-ai-systems.html"><span class="tag">AI quality &amp; debugging</span><h3>Debugging AI Systems</h3><p class="card-intro">Finding where AI behavior first went wrong before deciding what should change.</p></a>
+<a class="card nav-card applied-secondary" href="legal-ai-governance.html"><span class="tag">Opportunity evaluation</span><h3>Legal AI Governance</h3><p class="card-intro">A real governance problem that I chose not to build before stronger customer evidence.</p></a>
+<a class="card nav-card applied-secondary" href="meridian.html"><span class="tag">Simulated pilot · Customer support</span><h3>Meridian AI Support Pilot</h3><p class="card-intro">A support pilot where discovery and weak evidence changed the design and measurement plan.</p></a>
+<a class="card nav-card applied-secondary" href="state-architecture-cost.html"><span class="tag">Architecture &amp; cost</span><h3>State Architecture &amp; Cost</h3><p class="card-intro">Where AI earned its cost and where deterministic software remained the better choice.</p></a>
 </div>
-
 </section>
 <script>
 (()=>{const root=document.getElementById('ai-cs-mock');if(!root)return;root.querySelectorAll('[data-page="home"] .journey .step').forEach(step=>{step.style.cursor='default';step.removeAttribute('tabindex');step.removeAttribute('role');});})();
