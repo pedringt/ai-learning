@@ -700,6 +700,25 @@ assert.match(projectHealthSource,/PROJECTS\.length<=3/);
 assert.doesNotMatch(projectHealthSource,/AI evals running…':'Run all AI evals/);
 assert.doesNotMatch(projectHealthSource,/changes-zero[^>]*data-tab-target/);
 
+const recurring=H.recurringFailureSignal({
+  project:{quality:'state'},
+  quality:{recent:[
+    {suite:'ask_quality',failure_details:[{scenario_id:'ask_conflicting_evidence'}]},
+    {suite:'ask_quality',failure_details:[{scenario_id:'ask_conflicting_evidence'}]}
+  ]}
+});
+assert.strictEqual(recurring.kind,'warn');
+assert.match(recurring.detail,/2 recent runs/);
+
+const operational=H.operationalSignals({
+  project:{id:'state',quality:'state'},
+  quality:{resolvedReviews:4,materialEditRate:.25,recent:[]},
+  platform:{aiTelemetry:{available:true,response_speed:{sample_size:12,p95_ms:2400}}}
+});
+assert.ok(operational.some(item=>item.label==='AI response speed'&&item.status==='Measured'));
+assert.ok(operational.some(item=>item.label==='Human review burden'&&/25% materially edited/.test(item.detail)));
+assert.ok(operational.some(item=>item.label==='Agent workflow'&&item.status==='Not measured'));
+
 const workflowText=fs.readFileSync(require.resolve('../.github/workflows/question-review-live.yml'),'utf8');
 assert.match(workflowText,/suite:/);
 assert.match(workflowText,/record_environment:/);
