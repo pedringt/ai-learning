@@ -1028,14 +1028,28 @@ def create_app(settings: Settings | None = None, provider: InterpretationProvide
                         logger.info("Ask cache hit endpoint=stream")
                         yield f"event: final\ndata: {json.dumps(cached, ensure_ascii=False)}\n\n"
                         return
-                    for event_name, event_payload in stream_ask_events(
-                        connection, selected_ask_provider, payload.query.strip(), payload.previous_answer
-                    ):
-                        if event_name == "final":
-                            request.app.state.ask_cache.put(cache_key, event_payload)
-                        yield f"event: {event_name}\ndata: {json.dumps(event_payload, ensure_ascii=False)}\n\n"
+                    try:
+                        for event_name, event_payload in stream_ask_events(
+                            connection, selected_ask_provider, payload.query.strip(), payload.previous_answer
+                        ):
+                            if event_name == "final":
+                                request.app.state.ask_cache.put(cache_key, event_payload)
+                            yield f"event: {event_name}\ndata: {json.dumps(event_payload, ensure_ascii=False)}\n\n"
+                        return
+                    except (ValueError, TypeError, json.JSONDecodeError) as first_exc:
+                        # A streamed draft is not authoritative until the completed
+                        # structured result passes the same grounding contract used
+                        # by normal Ask. Mirror the normal endpoint's one bounded
+                        # contract retry instead of turning a recoverable model-format
+                        # miss into a visible dead end after the user already saw text.
+                        logger.warning("Streaming Ask contract failure; retrying once: %s", first_exc)
+                        result = run_ask(
+                            connection, selected_ask_provider, payload.query.strip(), payload.previous_answer
+                        )
+                        request.app.state.ask_cache.put(cache_key, result)
+                        yield f"event: final\ndata: {json.dumps(result, ensure_ascii=False)}\n\n"
             except (ValueError, TypeError, json.JSONDecodeError) as exc:
-                logger.warning("Streaming Ask contract failure: %s", exc)
+                logger.warning("Streaming Ask contract failure after retry: %s", exc)
                 yield "event: error\ndata: {\"message\": \"Ask could not produce a valid grounded answer\"}\n\n"
             except Exception:
                 logger.exception("Streaming Ask provider failure")
