@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<link href="favicon.svg" rel="icon"/>
+<meta charset="utf-8"/>
+<meta content="width=device-width,initial-scale=1" name="viewport"/>
+<title>Debugging AI Systems · Context Switch</title>
+<meta content="A supporting case study about finding where an AI failure actually happened before deciding what should change." name="description"/>
+<link href="site-shell.css" rel="stylesheet"/>
+<link href="site-components.css" rel="stylesheet"/>
+<link href="implementation-context-case.css?v=r6-final-cleanup" rel="stylesheet"/>
+<link href="site-polish.css" rel="stylesheet"/>
+</head>
+<body>
+<div class="topbar"><div class="topinner"><a class="brand-button" href="index.html"><span class="brand">Context <span>Switch</span></span></a><nav aria-label="Primary pages" class="nav"><a href="index.html">Home</a><a aria-current="page" href="index.html#portfolio">Applied Work</a><a href="index.html#learn">Learning Library</a></nav><div class="top-actions"><button aria-label="Switch to dark mode" aria-pressed="false" class="theme-toggle" id="v922ThemeToggle" title="Switch to dark mode" type="button">☾</button><select aria-label="Choose page" id="v922MobileNav"><option value="index.html">Home</option><option selected value="index.html#portfolio">Applied Work</option><option value="index.html#learn">Learning Library</option></select></div></div></div>
+
+<main class="meridian-page-shell case-system-page" id="main-content">
+<div class="meridian-heading"><nav class="site-breadcrumb" aria-label="Breadcrumb"><ol><li><a href="index.html#portfolio">Applied Work</a></li><li aria-current="page">Debugging AI Systems</li></ol></nav></div>
+
+<header class="meridian-case-hero">
+<h1>Debugging AI Systems</h1>
+<p class="lead">A failed AI check tells me something went wrong. It does not tell me what is wrong. I learned to find the first meaningful failure before choosing a fix.</p>
+<div class="case-meta"><span><b>My role</b> Expected behavior, severity, investigation &amp; product decisions</span><span><b>AI collaborator</b> Test support, trace review, implementation &amp; documentation</span><span><b>Scope</b> Controlled State exercises and product QA</span></div>
+</header>
+
+<article class="case-page-content flagship-case">
+<section class="section narrative-open">
+<div class="kicker">The recurring problem</div>
+<h2>Very different failures can look the same at the surface.</h2>
+<p>A bad answer might come from retrieval, missing context, interpretation, authority handling, deterministic logic, the eval expectation, or the final presentation. Reaching for the prompt first can fix the wrong layer.</p>
+<div class="question-shift"><span>The question I use instead</span><strong>Where is the first place the system stopped matching the intended behavior?</strong></div>
+</section>
+
+<section class="section evolution">
+<div class="kicker">Investigation model</div>
+<h2>Diagnose before changing anything.</h2>
+<div class="human-flow"><span>Observed failure</span><b>→</b><span>Expected behavior</span><b>→</b><span>Trace the system</span><b>→</b><span class="accent">Locate the failure</span><b>→</b><span>Choose the fix</span><b>→</b><span>Rerun</span></div>
+<p>I use the failed case as evidence, then work backward through the system. The goal is to change the product only when the product is actually the problem.</p>
+</section>
+
+<section class="section seam-learning">
+<div class="kicker">Example A · product behavior was wrong</div>
+<h2>The agent found the right evidence and still gave the wrong answer.</h2>
+<p>In a controlled State agent exercise, the investigator correctly found an open Review proposing an owner. Its final answer then presented that proposed owner as established fact.</p>
+<div class="surface-grid">
+<article><span>Retrieval</span><strong>Working</strong><p>The agent found the relevant files and recognized that the Review was still open.</p></article>
+<article><span>Failure location</span><strong>Interpretation and authority</strong><p>The final synthesis promoted a pending proposal into project truth.</p></article>
+<article><span>Fix</span><strong>Tighten the authority rule</strong><p>Open Reviews were made explicitly pending, then the same case was rerun and behaved correctly.</p></article>
+</div>
+<p class="section-note">This example used a controlled fake State dataset. It is evidence of the debugging method, not production performance.</p>
+</section>
+
+<section class="section seam-learning">
+<div class="kicker">Example B · the eval expectation needed revision</div>
+<h2>Sometimes satisfying the test would make the product worse.</h2>
+<p>In later State eval work, one scenario expected an answer-only action but observed an answer plus a supported state update. Product review found that the broader behavior could be acceptable when the evidence justified it.</p>
+<div class="surface-grid">
+<article><span>What the eval said</span><strong>Failure</strong><p>The observed action did not match the original expected action exactly.</p></article>
+<article><span>Product review</span><strong>The behavior was not necessarily wrong</strong><p>The system had enough evidence to support the additional update, so forcing answer-only behavior would have made the test more important than the product contract.</p></article>
+<article><span>Decision</span><strong>Revise the eval</strong><p>The expectation was updated rather than changing acceptable product behavior just to make the check pass.</p></article>
+</div>
+</section>
+
+<section class="section product-model">
+<div class="kicker">What I keep from this</div>
+<h2>A failing eval is evidence, not an oracle.</h2>
+<div class="state-model-grid">
+<article><span>Localize first</span><strong>Find the failing layer</strong><p>Separate retrieval, context, interpretation, authority, validation, and presentation before choosing a fix.</p></article>
+<article><span>Retest the same case</span><strong>Prove the failure changed</strong><p>Rerun the exact scenario, then add nearby regression cases so a narrow fix does not simply move the problem.</p></article>
+<article><span>Protect uncertainty</span><strong>Fluent is not the same as correct</strong><p>Authority and uncertainty failures matter even when the answer sounds plausible.</p></article>
+<article><span>Review the test too</span><strong>Evals need maintenance</strong><p>If the expected behavior no longer matches the product contract, the eval should change.</p></article>
+</div>
+</section>
+
+<section class="section current-conclusion">
+<div class="kicker">Attribution</div>
+<h2>The product decisions stayed human.</h2>
+<p>I defined the expected behavior, judged severity, decided whether a failure belonged to the product or the eval, and required same-case retesting. AI helped draft cases, summarize traces, support implementation, and expand regression coverage.</p>
+<div class="closing-links"><a class="meridian-primary-action" href="implementation-context.html">Read the State case →</a><a class="text-link" href="state-managed-agent-tracing.html">Agent tracing exercise →</a><a class="text-link" href="state-ai-evals.html">Eval design exercise →</a></div>
+</section>
+</article>
+</main>
+<script src="site-shell.js"></script>
+</body>
+</html>
