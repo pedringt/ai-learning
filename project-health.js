@@ -339,7 +339,14 @@
       const sample=Number(speed?.sample_size||0);
       const p95=Number(speed?.p95_ms);
       if(ai?.available&&sample>0&&Number.isFinite(p95)){
-        signals.push({kind:'available',label:'AI response speed',status:'Measured',detail:'p95 '+durationLabel(p95)+' across '+sample+' '+(sample===1?'recorded call':'recorded calls')+'.'});
+        const previousP95=Number(data?.previousPlatform?.aiTelemetry?.response_speed?.p95_ms);
+        const hasPrevious=Number.isFinite(previousP95)&&previousP95>0;
+        const delta=hasPrevious?p95-previousP95:null;
+        const changed=hasPrevious&&Math.abs(delta)>=1;
+        const comparison=changed
+          ?' · last saved '+durationLabel(previousP95)+' ('+(delta>0?'+':'')+durationLabel(Math.abs(delta))+(delta<0?' faster':' slower')+')'
+          :'';
+        signals.push({kind:'available',label:'AI response speed',status:changed?'Changed':'Measured',detail:'p95 '+durationLabel(p95)+' across '+sample+' '+(sample===1?'recorded call':'recorded calls')+comparison+'.'});
       }else{
         signals.push({kind:'unknown',label:'AI response speed',status:'Not measured',detail:'There is not enough recent runtime telemetry to establish a response-speed pattern.'});
       }
@@ -363,6 +370,13 @@
       }else{
         signals.push({kind:'unknown',label:'Agent workflow',status:'Not measured',detail:'Tool-call repetition, retries, loops, fallbacks, and escalations are not connected yet.'});
       }
+    }
+    const unresolved=(Array.isArray(data?.investigationHistory)?data.investigationHistory:[])
+      .filter(item=>item?.needsAttentionAtRun&&!item?.resolvedAt)
+      .sort((a,b)=>(dateMs(b?.observedAt)||0)-(dateMs(a?.observedAt)||0))[0];
+    if(unresolved){
+      const age=relativeAge(unresolved.observedAt);
+      signals.push({kind:'warn',label:'Open investigation',status:'Open',detail:(unresolved.trigger||'Project investigation')+' · opened '+age+' · no resolution recorded yet.'});
     }
     return signals;
   }
@@ -695,6 +709,7 @@
       qualityBehaviorUpdatedAt:s.qualityBehaviorUpdatedAt||null,
       externalQuality:s.externalQuality||null,
       platform:s.platform||null,
+      previousPlatform:s.platform||null,
       activity:s.activity||null,
       openPullRequests:Array.isArray(s.openPullRequests)?s.openPullRequests:[],
       runInfo:null,
@@ -1311,7 +1326,7 @@
         '<div class="decision-support-block"><strong>Would I hesitate to ship?</strong><div class="risk-checklist">'+riskItems.map(item=>'<div class="risk-row"><span class="health-status '+esc(item.kind)+'">'+esc(item.status)+'</span><div><strong>'+esc(item.label)+'</strong><span>'+esc(item.detail)+'</span></div></div>').join('')+'</div></div>'+
         '<div class="decision-support-block"><strong>Recent regression</strong><div class="regression-card '+esc(regression.kind)+'"><span class="health-status '+esc(regression.kind)+'">'+esc(regression.kind==='warn'?'Watch':regression.kind==='good'?'Healthy':'Unknown')+'</span><strong>'+esc(regression.title)+'</strong><span>'+esc(regression.detail)+'</span></div>'+
           '<div class="monitoring-gaps"><strong>What we cannot confirm</strong>'+(monitoringGaps.length?'<div class="gap-list">'+monitoringGaps.slice(0,4).map(gap=>'<span><b>'+esc(gap.label)+':</b> '+esc(gap.detail)+'</span>').join('')+'</div>':'<span class="healthy-note">No known monitoring gaps.</span>')+'</div>'+
-          '<div class="monitoring-gaps"><strong>Operational signals</strong>'+(operational.length?'<div class="risk-checklist">'+operational.slice(0,4).map(item=>'<div class="risk-row"><span class="health-status '+esc(item.kind)+'">'+esc(item.status)+'</span><div><strong>'+esc(item.label)+'</strong><span>'+esc(item.detail)+'</span></div></div>').join('')+'</div>':'<span class="healthy-note">No additional operational signals for this project.</span>')+'</div></div>'+
+          '<div class="monitoring-gaps"><strong>Operational signals</strong>'+(operational.length?'<div class="risk-checklist">'+operational.slice(0,5).map(item=>'<div class="risk-row"><span class="health-status '+esc(item.kind)+'">'+esc(item.status)+'</span><div><strong>'+esc(item.label)+'</strong><span>'+esc(item.detail)+'</span></div></div>').join('')+'</div>':'<span class="healthy-note">No additional operational signals for this project.</span>')+'</div></div>'+
       '</div>'+
       '<div class="decision-log"><div class="decision-log-head"><strong>Decision & change log</strong><span>Stored in this browser</span></div>'+
         (productNotes.length?'<div class="decision-log-list">'+productNotes.slice(0,5).map(note=>'<div class="decision-log-item"><span class="activity-type">'+esc(note.type==='change'?'Change':note.type==='experiment'?'Experiment':'Decision')+'</span><strong>'+esc(note.text)+'</strong><span>'+esc(fmtDate(note.createdAt))+'</span></div>').join('')+'</div>':'<div class="empty compact-empty">No product decisions or changes recorded yet.</div>')+
