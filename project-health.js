@@ -1738,12 +1738,13 @@
       aiHtml='<h4 style="margin:18px 0 8px">AI operations</h4><div class="empty">Checking AI cost and response speed…</div>';
     }else if(ai?.available){
       const samples=Number(ai.response_speed?.sample_size||0);
+      const firstSamples=Number(ai.response_speed?.first_response_sample_size||0);
       const speedScope=ai.response_speed?.scope||'AI calls';
       const costScope=ai.cost?.scope||'recorded AI calls';
       aiHtml='<h4 style="margin:18px 0 8px">AI operations · last '+esc(ai.period_days||30)+' days</h4>'+
         '<div class="metrics">'+
-        metric(samples?durationLabel(ai.response_speed?.p50_ms):'No calls yet','Typical response speed')+
-        metric(samples?durationLabel(ai.response_speed?.p95_ms):'No calls yet','Slower-end response speed')+
+        metric(firstSamples?durationLabel(ai.response_speed?.first_response_p50_ms):'No calls yet','Typical time to first answer')+
+        metric(samples?durationLabel(ai.response_speed?.p50_ms):'No calls yet','Typical complete answer')+
         metric(costLabel(ai.cost?.estimated_usd),'Estimated AI cost')+
         '</div>'+
         '<p class="footnote">Speed: '+esc(speedScope)+'. Cost: '+esc(costScope)+'. '+esc(ai.note||'Operational metadata only; no project or user content is included.')+'</p>';

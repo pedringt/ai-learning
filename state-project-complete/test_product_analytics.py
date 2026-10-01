@@ -166,6 +166,30 @@ class ProductAnalyticsTests(unittest.TestCase):
         for forbidden in ("prompt", "content", "answer", "evidence", "query"):
             self.assertNotIn(forbidden, columns)
 
+    def test_live_stream_ask_latency_uses_browser_visible_timings_only(self):
+        now = datetime(2026, 9, 17, 13, 0, tzinfo=timezone.utc)
+        rows = [
+            ("old-server","ask_completed",None,12,"success"),
+            ("first-1","ask_first_response","live_stream",4200,"visible_answer_started"),
+            ("done-1","ask_user_completed","live_stream",7600,"visible_answer_complete"),
+            ("first-2","ask_first_response","live_stream",5000,"visible_answer_started"),
+            ("done-2","ask_user_completed","live_stream",9000,"visible_answer_complete"),
+        ]
+        for event_id,name,source_type,duration_ms,outcome in rows:
+            self.connection.execute(
+                "INSERT INTO product_analytics_events("
+                "id,event_name,project_id,environment,source_type,duration_ms,outcome,occurred_at"
+                ") VALUES (?,?,?,?,?,?,?,?)",
+                (event_id,name,"northstar","production",source_type,duration_ms,outcome,"2026-09-17 12:00:00"),
+            )
+        self.connection.commit()
+
+        data = _aggregate(self.connection, "northstar", now)
+        reliability = data["reliability"]
+        self.assertEqual(reliability["ask_first_response_ms"], {"sample_size": 2, "p50": 4600.0, "p95": 4960.0})
+        self.assertEqual(reliability["ask_latency_ms"], {"sample_size": 2, "p50": 8300.0, "p95": 8930.0})
+        self.assertIn("Browser-measured live streamed Ask requests only", reliability["ask_latency_note"])
+
     def test_no_composite_health_score(self):
         data = _aggregate(self.connection, None, datetime.now(timezone.utc))
         self.assertNotIn("health_score", str(data).lower())
