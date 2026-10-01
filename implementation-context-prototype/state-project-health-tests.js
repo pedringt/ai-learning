@@ -15,8 +15,8 @@ process.env.GITHUB_TOKEN='test-token';
 process.env.PROJECT_HEALTH_RUN_COST_ESTIMATE_STATE='<$0.25 per full run';
 const publicRunInfo=RUN_API.runInfo('state');
 assert.strictEqual(publicRunInfo.configured,true);
-assert.strictEqual(publicRunInfo.can_run_here,true);
-assert.match(publicRunInfo.protection,/Public run/);
+assert.strictEqual(publicRunInfo.can_run_here,false);
+assert.match(publicRunInfo.protection,/Owner-only/);
 assert.strictEqual(RUN_API.RUN_COOLDOWN_MS,10*60*1000);
 if(priorToken==null)delete process.env.GITHUB_TOKEN;else process.env.GITHUB_TOKEN=priorToken;
 if(priorCost==null)delete process.env.PROJECT_HEALTH_RUN_COST_ESTIMATE_STATE;else process.env.PROJECT_HEALTH_RUN_COST_ESTIMATE_STATE=priorCost;
@@ -699,6 +699,113 @@ assert.match(projectHealthSource,/projectCheckButton\.classList\.add\('primary'\
 assert.match(projectHealthSource,/PROJECTS\.length<=3/);
 assert.doesNotMatch(projectHealthSource,/AI evals running…':'Run all AI evals/);
 assert.doesNotMatch(projectHealthSource,/changes-zero[^>]*data-tab-target/);
+
+const recurring=H.recurringFailureSignal({
+  project:{quality:'state'},
+  quality:{recent:[
+    {suite:'ask_quality',failure_details:[{scenario_id:'ask_conflicting_evidence'}]},
+    {suite:'ask_quality',failure_details:[{scenario_id:'ask_conflicting_evidence'}]}
+  ]}
+});
+assert.strictEqual(recurring.kind,'warn');
+assert.match(recurring.detail,/2 recent runs/);
+
+const operational=H.operationalSignals({
+  project:{id:'state',quality:'state'},
+  quality:{resolvedReviews:4,materialEditRate:.25,recent:[]},
+  platform:{aiTelemetry:{available:true,response_speed:{sample_size:12,p95_ms:2400}}}
+});
+assert.ok(operational.some(item=>item.label==='AI response speed'&&item.status==='Measured'));
+assert.ok(operational.some(item=>item.label==='Human review burden'&&/25% materially edited/.test(item.detail)));
+assert.ok(!operational.some(item=>item.label==='Agent workflow'));
+assert.ok(H.setupGaps({project:{id:'state'},platform:{aiTelemetry:{available:true,cost:{partial:false}}},runInfo:{configured:true}}).some(item=>item.label==='Agent workflow telemetry'));
+
+const operationalCompared=H.operationalSignals({
+  project:{id:'state',quality:'state'},
+  quality:{resolvedReviews:1,materialEditRate:0,recent:[]},
+  platform:{aiTelemetry:{available:true,response_speed:{sample_size:10,p95_ms:8200}}},
+  previousPlatform:{aiTelemetry:{available:true,response_speed:{sample_size:8,p95_ms:5700}}},
+  investigationHistory:[{observedAt:new Date(Date.now()-2*24*60*60*1000).toISOString(),trigger:'AI eval failure · ask_conflicting_evidence',needsAttentionAtRun:true,resolvedAt:null}]
+});
+const speedChanged=operationalCompared.find(item=>item.label==='AI response speed');
+assert.strictEqual(speedChanged.status,'Changed');
+assert.match(speedChanged.detail,/last saved 5\.7 s/);
+assert.match(speedChanged.detail,/2\.5 s slower/);
+const openInvestigation=operationalCompared.find(item=>item.label==='Open investigation');
+assert.strictEqual(openInvestigation.status,'Open');
+assert.match(openInvestigation.detail,/no resolution recorded yet/);
+
+const seeded=H.emptyProjectData(H.PROJECTS[0],{platform:{aiTelemetry:{available:true,response_speed:{p95_ms:5700}}}});
+assert.strictEqual(seeded.previousPlatform.aiTelemetry.response_speed.p95_ms,5700);
+
+const regressionWithBuilds=H.regressionSignal({
+  project:{quality:'state'},
+  quality:{recent:[
+    {suite:'ask_quality',created_at:'2026-10-01T12:00:00Z',overall_pass_rate:.8,build:'abcdef123456'},
+    {suite:'ask_quality',created_at:'2026-09-30T12:00:00Z',overall_pass_rate:1,build:'123456abcdef'}
+  ]}
+});
+assert.strictEqual(regressionWithBuilds.kind,'warn');
+assert.match(regressionWithBuilds.detail,/123456a → abcdef1/);
+
+const operationalContext=H.operationalSignals({
+  project:{id:'state',quality:'state'},
+  quality:{
+    resolvedReviews:0,
+    review:{errors:1},
+    ask:{errors:0},
+    recent:[
+      {suite:'review_interpretation',created_at:'2026-10-01T12:00:00Z',model_identifier:'claude-haiku-4-5-20251001'},
+      {suite:'review_interpretation',created_at:'2026-09-30T12:00:00Z',model_identifier:'older-model'}
+    ]
+  },
+  platform:{aiTelemetry:{available:true,response_speed:{sample_size:0}}}
+});
+assert.ok(operationalContext.some(item=>item.label==='Eval execution'&&item.status==='Watch'));
+assert.ok(operationalContext.some(item=>item.label==='Eval context changed'&&item.status==='Context'));
+assert.ok(!operationalContext.some(item=>item.label==='Human review burden'));
+assert.ok(!operationalContext.some(item=>item.label==='AI response speed'));
+
+const operationalDeployments=H.operationalSignals({
+  project:{id:'tastemake',quality:'external'},
+  activity:{lookback_days:7,deployments:{recent_failures:[
+    {recovered:true},{recovered:true},{recovered:false}
+  ]}},
+  platform:{aiTelemetry:{available:true,response_speed:{sample_size:2,p95_ms:1200}}}
+});
+const deploymentPattern=operationalDeployments.find(item=>item.label==='Release attempts');
+assert.strictEqual(deploymentPattern.status,'Pattern');
+assert.match(deploymentPattern.detail,/3 failed production-target deployment attempts/);
+assert.match(deploymentPattern.detail,/2 later recovered/);
+
+const evalCoverageGaps=H.setupGaps({
+  project:{id:'state'},
+  delivery:{sha:'abcdef1234567890'},
+  quality:{review:{build:'1234567abcdef'},ask:{build:'1234567abcdef'}},
+  platform:{aiTelemetry:{available:true,cost:{partial:false},workflow:{available:true}},neon:{available:true}},
+  runInfo:{configured:true}
+});
+assert.ok(evalCoverageGaps.some(item=>item.label==='Current release eval coverage'));
+
+const splitEvalBuildGaps=H.setupGaps({
+  project:{id:'state'},
+  delivery:{sha:'abcdef1234567890'},
+  quality:{review:{build:'1234567abcdef'},ask:{build:'7654321abcdef'}},
+  platform:{aiTelemetry:{available:true,cost:{partial:false},workflow:{available:true}},neon:{available:true}},
+  runInfo:{configured:true}
+});
+assert.ok(splitEvalBuildGaps.some(item=>item.label==='Eval build alignment'));
+
+const evalContextDetails=H.operationalSignals({
+  project:{id:'state',quality:'state'},
+  quality:{recent:[
+    {suite:'ask_quality',created_at:'2026-10-01T12:00:00Z',provider:'anthropic',model_identifier:'new-model',total:12},
+    {suite:'ask_quality',created_at:'2026-09-30T12:00:00Z',provider:'openai',model_identifier:'old-model',total:10}
+  ]},
+  platform:{aiTelemetry:{available:true,response_speed:{sample_size:0}}}
+}).find(item=>item.label==='Eval context changed');
+assert.match(evalContextDetails.detail,/provider: openai → anthropic/);
+assert.match(evalContextDetails.detail,/scenarios: 10 → 12/);
 
 const workflowText=fs.readFileSync(require.resolve('../.github/workflows/question-review-live.yml'),'utf8');
 assert.match(workflowText,/suite:/);
