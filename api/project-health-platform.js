@@ -130,6 +130,7 @@ async function aiTelemetry(project){
   if(config.kind==='state'){
     const reliability=result.payload?.reliability||{};
     const speed=reliability.ask_latency_ms||{};
+    const firstResponse=reliability.ask_first_response_ms||{};
     const cost=reliability.model_cost||{};
     const tokens=reliability.token_usage||{};
     return {
@@ -137,10 +138,13 @@ async function aiTelemetry(project){
       available:true,
       period_days:30,
       response_speed:{
-        scope:'user-facing Ask requests',
+        scope:'browser-measured live streamed Ask requests',
         sample_size:Number(speed.sample_size||0),
         p50_ms:numericCount(speed.p50),
-        p95_ms:numericCount(speed.p95)
+        p95_ms:numericCount(speed.p95),
+        first_response_sample_size:Number(firstResponse.sample_size||0),
+        first_response_p50_ms:numericCount(firstResponse.p50),
+        first_response_p95_ms:numericCount(firstResponse.p95)
       },
       cost:{
         estimated_usd:cost.estimated_usd==null?null:Number(cost.estimated_usd),
@@ -158,8 +162,8 @@ async function aiTelemetry(project){
       operations:reliability.model_calls_by_operation||{},
       last_call_at:null,
       note:Number(cost.unpriced_calls||0)>0
-        ?'Response speed covers Ask. Cost includes recorded State model calls with known pricing; unpriced calls are excluded.'
-        :'Response speed covers Ask. Cost includes recorded interpretation and Ask model calls.'
+        ?'Response speed is measured in the browser from Ask submission to visible streamed output and final completion. Cost includes recorded State model calls with known pricing; unpriced calls are excluded.'
+        :'Response speed is measured in the browser from Ask submission to visible streamed output and final completion. Cost includes recorded interpretation and Ask model calls.'
     };
   }
   const payload=result.payload||{};
