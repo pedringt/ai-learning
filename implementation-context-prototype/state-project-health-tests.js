@@ -507,7 +507,7 @@ assert.match(healthHtml,/data-tab="technical"/);
 assert.doesNotMatch(healthHtml,/data-tab="activity"/);
 assert.match(healthHtml,/id="deliveryPanel" data-tab-panel="releases"/);
 assert.match(healthHtml,/id="analyticsPanel" data-tab-panel="usage"/);
-assert.match(healthHtml,/id="latestInvestigationPanel" data-tab-panel="investigation"/);
+assert.match(healthHtml,/id="latestInvestigationPanel" data-tab-panel="overview"/);\nassert.match(healthHtml,/id="investigationTabPanel" data-tab-panel="investigation"/);\nassert.match(healthHtml,/id="overviewReleasePanel" data-tab-panel="overview"/);\nassert.match(healthHtml,/id="overviewUsagePanel" data-tab-panel="overview"/);
 assert.match(healthHtml,/id="technicalPanel" data-tab-panel="technical"/);
 assert.match(healthHtml,/id="infrastructurePanel"/);
 assert.doesNotMatch(healthHtml,/id="infrastructurePanel" data-tab-panel="overview"/);
