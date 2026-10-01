@@ -766,6 +766,18 @@ assert.ok(operationalContext.some(item=>item.label==='Eval model change'&&item.s
 assert.ok(!operationalContext.some(item=>item.label==='Human review burden'));
 assert.ok(!operationalContext.some(item=>item.label==='AI response speed'));
 
+const operationalDeployments=H.operationalSignals({
+  project:{id:'tastemake',quality:'external'},
+  activity:{lookback_days:7,deployments:{recent_failures:[
+    {recovered:true},{recovered:true},{recovered:false}
+  ]}},
+  platform:{aiTelemetry:{available:true,response_speed:{sample_size:2,p95_ms:1200}}}
+});
+const deploymentPattern=operationalDeployments.find(item=>item.label==='Release attempts');
+assert.strictEqual(deploymentPattern.status,'Pattern');
+assert.match(deploymentPattern.detail,/3 failed production-target deployment attempts/);
+assert.match(deploymentPattern.detail,/2 later recovered/);
+
 const workflowText=fs.readFileSync(require.resolve('../.github/workflows/question-review-live.yml'),'utf8');
 assert.match(workflowText,/suite:/);
 assert.match(workflowText,/record_environment:/);
