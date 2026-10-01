@@ -62,7 +62,7 @@ module.exports=async function handler(req,res){
   const env=String(req.query?.env||'production').toLowerCase();
   const base=env==='staging'?STAGING:PROD;
   const controller=new AbortController();
-  const timer=setTimeout(()=>controller.abort(),6000);
+  const timer=setTimeout(()=>controller.abort(),9000);
   try{
     const response=await fetch(base+'/api/admin/quality-analytics',{headers:{'Accept':'application/json'},signal:controller.signal});
     res.setHeader('Cache-Control','s-maxage=60, stale-while-revalidate=300');
