@@ -261,14 +261,19 @@
     const gaps=[],p=data.project,platform=data.platform,run=data.runInfo,ai=platform?.aiTelemetry;
     if(platform?.analytics?.configured===false) gaps.push({label:'Site analytics',detail:analyticsGapDetail(platform.analytics)});
     else if(platform?.analytics?.configured&&!platform?.analytics?.available&&!pendingSet(data).has('Analytics')) gaps.push({label:'Site analytics',detail:analyticsGapDetail(platform.analytics)});
-    if(data?.activity?.available&&data.activity?.runtime?.available===false){
-      const status=Number(data.activity.runtime.status||0);
-      const detail=[401,403].includes(status)
-        ?'Project Health can read deployments, but its Vercel token cannot read runtime logs.'
-        :status===404
-          ?'The latest deployment does not expose runtime logs through the Vercel log endpoint.'
-          :'Project Health could not read the bounded runtime-log stream for the latest deployment.';
-      gaps.push({label:'Runtime error visibility',detail});
+    if(data?.activity?.available&&data.activity?.runtime){
+      const runtime=data.activity.runtime;
+      if(runtime.available===false){
+        const status=Number(runtime.status||0);
+        const detail=[401,403].includes(status)
+          ?'Project Health can read deployments, but its Vercel token cannot read runtime logs.'
+          :status===404
+            ?'The latest deployment does not expose runtime logs through the Vercel log endpoint.'
+            :'Project Health could not read runtime logs for the latest deployment.';
+        gaps.push({label:'Runtime error visibility',detail});
+      }else if(runtime.coverage==='partial'){
+        gaps.push({label:'Runtime error visibility',detail:'The bounded Vercel log stream did not return rows before timeout. Deployment health is still known, but this runtime error scan is incomplete.'});
+      }
     }
     if(p.id==='state'&&!platform?.neon?.available) gaps.push({label:'Database health',detail:'Not connected or unavailable. This is a monitoring gap, not a product incident.'});
     if(p.id==='state'&&run&&!run.configured) gaps.push({label:'Run AI evals',detail:'Dashboard-run setup is incomplete.'});
@@ -968,6 +973,15 @@
     return '<div class="attention '+esc(item.kind||'')+'">'+content+'</div>';
   }
 
+  function neonConnectionDetail(neon){
+    if(!neon?.configured)return'Neon';
+    const branch=neon.primary_branch||'primary';
+    const state=String(neon.primary_branch_state||'').toLowerCase();
+    if(state==='archived')return'Neon · '+branch+' · idle storage; resumes automatically';
+    if(state)return'Neon · '+branch+' · '+state;
+    return'Neon · '+branch;
+  }
+
   function infraCardLabel(platform){
     const render=platform?.render;
     if(render?.configured){
@@ -1431,7 +1445,7 @@
       if(stagingEnv) infraCards.push({label:'Staging backend',status:stagingEnv.ok?'Healthy':'Unknown',detail:stagingEnv.ok?'Render':'Render · no recent successful response observed; production unaffected',url:p.links?.renderStaging});
       else if(p.id==='state'&&pending.has('Staging backend')) infraCards.push({label:'Staging backend',status:'Checking…',detail:'Render',url:p.links?.renderStaging});
     }else if(p.id==='state') infraCards.push({label:'Production backend',status:pending.has('Production backend')?'Checking…':'Unavailable',detail:'Render',url:p.links?.renderProduction});
-    if(n?.configured&&n.available) infraCards.push({label:'Database',status:'Connected',detail:'Neon',url:p.links?.neon});
+    if(n?.configured&&n.available) infraCards.push({label:'Database',status:'Connected',detail:neonConnectionDetail(n),url:p.links?.neon});
     else if(n?.configured) infraCards.push({label:'Database',status:'Temporarily unavailable',detail:'Neon',url:p.links?.neon});
     else infraCards.push({label:'Database',status:p.id==='state'?'Not connected yet':'Not used',detail:p.id==='state'?'Neon':'No database dependency',url:p.id==='state'?p.links?.neon:null});
     const infraAttention=infrastructureAttention(platform);
@@ -2328,5 +2342,5 @@
     }
   }
 
-  return {PROJECTS,pageEnvironment,vercelFromStatus,deliveryHealth,commitTitle,githubCommitUrl,pullRequestNumber,githubPullRequestUrl,changeUrl,normalizeQuality,qualityAttention,externalQualityAttention,deliveryAttention,deliveryAttentionForData,infrastructureAttention,allAttentionSignals,attentionItems,overallAttention,productOpenItems,projectStatus,setupGaps,releaseReadiness,regressionSignal,releaseRiskChecklist,healthConsistencyIssues,productionRuntime,operationalNextDecision,qualityFailureClassSummary,failureCheckCount,failureExplanation,activityTimelineItems,projectQualityLabel,evalScore,percent,shortSha,pendingSet,mergePlatform,emptyProjectData,safeExternalQualitySnapshot,serializeProjectData,hydrateProjectData,productNoteKey,loadProductNotes,saveProductNotes,loadProject,loadProjectDetails,infraCardLabel,analyticsConnectionValue,analyticsGapDetail,analyticsLabel,relativeAge,changedSinceVisit,meaningfulChanges,freshnessMeta,stateEvalContractStale,stateEvalBehaviorStale,stateEvalResultsStale,stateEvalStaleReason,trendText,activityReviewItems,progressText,quickProjectCheck,evalRunComplete,externalQualityRunComplete,qualityInvestigation,projectHandoff,init};
+  return {PROJECTS,pageEnvironment,vercelFromStatus,deliveryHealth,commitTitle,githubCommitUrl,pullRequestNumber,githubPullRequestUrl,changeUrl,normalizeQuality,qualityAttention,externalQualityAttention,deliveryAttention,deliveryAttentionForData,infrastructureAttention,allAttentionSignals,attentionItems,overallAttention,productOpenItems,projectStatus,setupGaps,releaseReadiness,regressionSignal,releaseRiskChecklist,healthConsistencyIssues,productionRuntime,operationalNextDecision,qualityFailureClassSummary,failureCheckCount,failureExplanation,activityTimelineItems,projectQualityLabel,evalScore,percent,shortSha,pendingSet,mergePlatform,emptyProjectData,safeExternalQualitySnapshot,serializeProjectData,hydrateProjectData,productNoteKey,loadProductNotes,saveProductNotes,loadProject,loadProjectDetails,infraCardLabel,neonConnectionDetail,analyticsConnectionValue,analyticsGapDetail,analyticsLabel,relativeAge,changedSinceVisit,meaningfulChanges,freshnessMeta,stateEvalContractStale,stateEvalBehaviorStale,stateEvalResultsStale,stateEvalStaleReason,trendText,activityReviewItems,progressText,quickProjectCheck,evalRunComplete,externalQualityRunComplete,qualityInvestigation,projectHandoff,init};
 });

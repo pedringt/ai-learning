@@ -3,6 +3,7 @@ from __future__ import annotations
 import sqlite3
 import tempfile
 import unittest
+from unittest.mock import patch
 from pathlib import Path
 
 from fastapi.testclient import TestClient
@@ -60,6 +61,13 @@ class ApiWorkflowTests(unittest.TestCase):
     def tearDown(self):
         self.client_context.__exit__(None, None, None)
         self.tempdir.cleanup()
+
+    def test_settings_from_env_always_allows_current_context_switch_origins(self):
+        with patch.dict("os.environ", {"CORS_ORIGINS": "https://legacy.example"}, clear=False):
+            settings = Settings.from_env()
+        self.assertIn("https://legacy.example", settings.cors_origins)
+        self.assertIn("https://www.contextswitch.tech", settings.cors_origins)
+        self.assertIn("https://state.contextswitch.tech", settings.cors_origins)
 
     def test_evidence_requires_human_acceptance_before_state_mutation(self):
         response = self.client.post("/api/evidence", json={"content": "Launch moved to October 15."})
