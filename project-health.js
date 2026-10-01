@@ -408,18 +408,28 @@
         signals.push({kind:'warn',label:'Eval execution',status:'Watch',detail:evalErrors+' eval execution error'+(evalErrors===1?'':'s')+' recorded in the latest controlled runs. Treat these separately from product-quality failures.'});
       }
       const recent=Array.isArray(data.quality.recent)?data.quality.recent:[];
-      const modelChanges=[];
+      const contextChanges=[];
       for(const suite of ['review_interpretation','ask_quality']){
         const rows=recent.filter(item=>item?.suite===suite).slice().sort((a,b)=>(dateMs(b?.created_at)||0)-(dateMs(a?.created_at)||0));
         if(rows.length<2)continue;
+        const label=suite==='review_interpretation'?'Update understanding':'Answer quality';
         const latestModel=String(rows[0]?.model_identifier||'').trim();
         const previousModel=String(rows[1]?.model_identifier||'').trim();
         if(latestModel&&previousModel&&latestModel!==previousModel){
-          modelChanges.push((suite==='review_interpretation'?'Update understanding':'Answer quality')+': '+modelDisplayName(previousModel)+' → '+modelDisplayName(latestModel));
+          contextChanges.push(label+' model: '+modelDisplayName(previousModel)+' → '+modelDisplayName(latestModel));
+        }
+        const latestProvider=String(rows[0]?.provider||'').trim();
+        const previousProvider=String(rows[1]?.provider||'').trim();
+        if(latestProvider&&previousProvider&&latestProvider!==previousProvider){
+          contextChanges.push(label+' provider: '+previousProvider+' → '+latestProvider);
+        }
+        const latestTotal=Number(rows[0]?.total),previousTotal=Number(rows[1]?.total);
+        if(Number.isFinite(latestTotal)&&Number.isFinite(previousTotal)&&latestTotal!==previousTotal){
+          contextChanges.push(label+' scenarios: '+previousTotal+' → '+latestTotal);
         }
       }
-      if(modelChanges.length){
-        signals.push({kind:'available',label:'Eval model change',status:'Context',detail:modelChanges.join(' · ')+'.'});
+      if(contextChanges.length){
+        signals.push({kind:'available',label:'Eval context changed',status:'Context',detail:contextChanges.join(' · ')+'.'});
       }
     }
     const unresolved=(Array.isArray(data?.investigationHistory)?data.investigationHistory:[])
