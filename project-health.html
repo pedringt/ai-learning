@@ -183,257 +183,6 @@
     .dialog-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:6px}
     @media(max-width:850px){.decision-support-grid{grid-template-columns:1fr}}
     @media(max-width:560px){.decision-log-head{align-items:flex-start;flex-direction:column}.decision-log-item{grid-template-columns:1fr}.decision-log-item>span:last-child{white-space:normal}.dialog-actions{justify-content:stretch}.dialog-actions .button{flex:1}}
-
-    /* 2026-09-30 visual redesign: mock-aligned hierarchy and calmer dashboard surfaces. */
-    :root{
-      --ink:#152038;--muted:#667085;--line:#e1e6ee;--paper:#f7f8fc;--surface:#ffffff;--soft:#f3f5fa;
-      --accent:#5547e8;--accent-soft:#f0eeff;--warn:#c86b16;--warn-soft:#fff7e8;--danger:#c93f36;--danger-soft:#fff1ef;
-      --good:#16815b;--good-soft:#edf9f3;--radius:15px;--shadow:0 8px 24px rgba(30,41,59,.045)
-    }
-    body{background:
-      radial-gradient(circle at 75% 8%,rgba(103,80,255,.055),transparent 28rem),
-      var(--paper);color:var(--ink)}
-    .shell{max-width:1240px;padding-top:24px}
-    .topbar{margin-bottom:26px;padding-bottom:14px;border-bottom:1px solid rgba(218,223,232,.8)}
-    .brand{font-family:Georgia,"Times New Roman",serif;font-size:21px;letter-spacing:-.035em}
-    .brand .subtle{font-family:Inter,ui-sans-serif,system-ui;font-size:12px;letter-spacing:0}
-    .compact-hero{align-items:center;margin-bottom:18px}
-    .compact-hero h1{font-family:Georgia,"Times New Roman",serif;font-size:clamp(38px,5vw,56px);letter-spacing:-.045em}
-    .compact-hero .lede{font-size:15px;max-width:720px}
-    .utility-row{align-items:flex-end}.utility-row .notice{padding:0;border:0;background:transparent;font-size:11px;text-align:right}
-    .button{border-color:#d9dfe9;background:#fff;box-shadow:0 1px 2px rgba(15,23,42,.02)}
-    .button:hover{border-color:#bfc7d4;background:#fafbff}
-    .button.primary{background:var(--accent);border-color:var(--accent);color:#fff}
-    .button.primary:hover{background:#493bd8;border-color:#493bd8}
-    .overview-summary{margin:2px 0 10px}
-    .summary-chip{border-color:#e1e5ed;background:#fff;color:#717b8e}
-    .overview-grid{gap:10px;margin:12px 0 22px}
-    .project-switcher-item{
-      min-height:82px;padding:14px 16px;border:1px solid #dfe4ec;border-radius:12px;background:#fff;
-      box-shadow:0 4px 14px rgba(15,23,42,.025);transition:.15s ease
-    }
-    .project-switcher-item:hover{transform:translateY(-1px);border-color:#cbd2de}
-    .project-switcher-item.active{
-      border-color:#7569ef;background:linear-gradient(135deg,#fff,#f5f3ff);
-      box-shadow:0 0 0 2px rgba(85,71,232,.11),0 8px 22px rgba(85,71,232,.08)
-    }
-    .project-switcher-main strong{font-size:15px}.project-switcher-main span{font-size:11px;color:#768096;line-height:1.35}
-    .status-pill{padding:4px 7px;font-size:10px}
-    .status-pill.good,.status-pill.healthy{background:#e8f8f0;color:#087653}
-    .status-pill.warn,.status-pill.watch,.status-pill.unknown{background:#fff2db;color:#a95a11}
-    .status-pill.bad,.status-pill.action,.status-pill.blocked{background:#ffebe8;color:#b6332b}
-
-    .detail{
-      position:relative;margin-top:4px;padding:22px;border:1px solid #e0e4ec;border-radius:20px;
-      background:rgba(255,255,255,.72);box-shadow:0 14px 40px rgba(29,41,57,.045);overflow:clip
-    }
-    .detail:before{content:"";position:absolute;inset:0 0 auto;height:130px;background:linear-gradient(100deg,rgba(92,75,235,.075),rgba(92,75,235,.015));pointer-events:none}
-    .detail-head,.project-tabs,.grid{position:relative}
-    .detail-head{align-items:center;margin:0;padding:0 4px 14px}
-    .detail h2{font-family:Georgia,"Times New Roman",serif;font-size:36px;color:#111a31}
-    .detail-copy{font-size:13px;max-width:680px}
-    .detail-actions{align-items:center}
-    #projectCheckButton{background:#fff;color:var(--ink)}
-    .action-menu-popover{border-color:#e0e4ec;box-shadow:0 16px 45px rgba(15,23,42,.12)}
-    .project-tabs{
-      position:sticky;top:0;margin:0 -4px 18px;padding:0 4px;background:rgba(255,255,255,.92);
-      backdrop-filter:blur(10px);border-bottom:1px solid #e2e6ed;gap:28px
-    }
-    .project-tab{padding:11px 0 12px;font-size:12px;font-weight:750;color:#717b8d}
-    .project-tab.active{color:var(--accent);border-bottom-color:var(--accent)}
-
-    .grid{gap:14px}
-    .panel{border:1px solid #e2e6ee;border-radius:14px;background:#fff;padding:18px;box-shadow:var(--shadow)}
-    .panel h3{font-size:18px;color:#18223b}
-    .panel-copy{font-size:12px;color:#788297}
-    #attentionPanel{
-      padding:18px 20px;border-color:#efc98d;background:linear-gradient(120deg,#fffdf9,#fff8eb);
-      box-shadow:0 8px 22px rgba(186,112,28,.05)
-    }
-    #attentionPanel h3{font-size:20px;color:#a94e13}
-    .attention-list{display:grid;gap:8px;margin-top:12px}
-    .attention{border:1px solid #efd8b2;border-left:4px solid var(--warn);background:#fff;padding:12px 14px}
-    .attention.bad{border-color:#efc4bf;border-left-color:var(--danger);background:#fff}
-    .attention.good{border-color:#cfe8dc;border-left-color:var(--good);background:#f8fcfa}
-    .attention strong{font-size:13px}.attention p{font-size:12px}
-    .attention-action-label{color:var(--accent)}
-    #productFocusPanel,#decisionSupportPanel{box-shadow:none}
-    .focus-grid{grid-template-columns:1.1fr .9fr 1.1fr}
-    .focus-block,.decision-support-block{border-color:#e5e8ef;background:#fbfcfe}
-    .decision-now{background:#f5f3ff;border-color:#dcd7ff;box-shadow:inset 3px 0 0 var(--accent)}
-
-    #overviewHealthPanel{padding:18px}
-    .overview-health{grid-template-columns:repeat(4,minmax(0,1fr));gap:10px!important}
-    .overview-health-row.health-card{
-      min-height:126px;display:flex;flex-direction:column;align-items:stretch;justify-content:flex-start;gap:8px;
-      padding:14px!important;border:1px solid #e4e7ee!important;border-radius:12px;background:#fff;text-align:left
-    }
-    .overview-health-row.health-card:first-child{border-top:1px solid #e4e7ee}
-    .health-card-head{display:flex;flex-direction:column-reverse;gap:8px;align-items:flex-start!important}
-    .health-card-head strong{font-size:13px}
-    .health-status{font-size:9px!important;padding:3px 6px!important}
-    .health-detail{font-size:12px!important;line-height:1.4}
-    .overview-health-row.health-card.good,.overview-health-row.health-card.available{background:#fbfefc}
-    .overview-health-row.health-card.warn{background:#fffdf8}
-    .overview-health-row.health-card.bad{background:#fffafa}
-
-    #deliveryPanel,#analyticsPanel,#overviewActivityPanel{min-height:190px}
-    #analyticsPanel.panel.half{grid-column:span 6}
-    #overviewActivityPanel.panel.half{grid-column:span 6;padding-left:18px}
-    .metrics{gap:10px}
-    .metric{border-color:#e5e8ef;background:#fbfcfe}
-    .metric strong{font-size:31px;color:#087b58}
-    .metric span{font-size:11px}
-    .delivery-summary{background:#eef9f3;color:#166b4c}
-    .delivery-summary.warn{background:#fff7e8;color:#a75b17}.delivery-summary.bad{background:#fff1ef;color:#aa332c}
-    .delivery-environment,.service-card,.eval-card,.run-callout{border-color:#e3e7ee;box-shadow:none}
-
-    .investigation-overview-panel{background:linear-gradient(180deg,#fff,#fbfcff)}
-    .investigation-overview-grid{display:grid;grid-template-columns:1.05fr 1fr 1fr;gap:10px;margin-top:12px}
-    .investigation-overview-block{padding:14px;border:1px solid #e5e8ef;border-radius:12px;background:#f8fafd}
-    .investigation-overview-block>strong{display:block;margin-bottom:8px;font-size:12px}
-    .investigation-overview-block p{margin:0;color:var(--muted);font-size:12px;line-height:1.5}
-    .investigation-overview-block ul{margin:0;padding-left:17px;color:var(--muted);font-size:12px}
-    .investigation-overview-meta{display:flex;gap:8px;flex-wrap:wrap;color:var(--muted);font-size:11px}
-    .investigation-overview-empty{padding:16px;border:1px dashed #d9dee7;border-radius:11px;background:#fafbfc;color:var(--muted);font-size:12px}
-    .investigation-overview-panel .panel-title-row{align-items:flex-start}
-
-    .timeline-item{padding:8px 0}.activity-item{border-color:#e5e8ef;background:#fbfcfd}
-    .change-item{border-top-color:#eceff4}.change-dot{background:var(--accent)}
-    .readiness-pill.watch{background:#fff2db;color:#a95a11}
-    .readiness-pill.ready{background:#e8f8f0;color:#087653}
-    .row{border-color:#e5e8ef;background:#fbfcfe}
-    .empty{border-color:#dfe4ec;background:#fafbfd;color:#778095}
-
-    .info-dialog{border-color:#dfe4ec}.drawer-backdrop{background:rgba(18,25,38,.24)}
-    .investigation-drawer{background:#fff;border-color:#dfe4ec}
-    .agent-result{background:#fbfcff!important}
-    .footer{padding:0 4px;color:#7b8495}
-
-    @media(max-width:980px){
-      .overview-health{grid-template-columns:repeat(2,minmax(0,1fr))}
-      .focus-grid{grid-template-columns:1fr}
-      .investigation-overview-grid{grid-template-columns:1fr}
-    }
-    @media(max-width:850px){
-      .detail{padding:18px}
-      #analyticsPanel.panel.half,#overviewActivityPanel.panel.half{grid-column:span 12}
-      .project-tabs{overflow-x:auto;flex-wrap:nowrap;gap:22px;scrollbar-width:none}
-      .project-tab{flex:0 0 auto}
-    }
-    @media(max-width:560px){
-      .shell{padding:18px 12px 44px}.topbar{margin-bottom:20px}
-      .brand .subtle{display:none}.detail{padding:14px;border-radius:16px}
-      .detail h2{font-size:30px}.detail-head{gap:14px}.detail-actions{width:100%}
-      .detail-actions>.button{flex:1}.overview-health{grid-template-columns:1fr}
-      .overview-health-row.health-card{min-height:0}
-      .project-switcher-item{min-height:76px}.compact-hero h1{font-size:38px}
-      .utility-row{width:100%;justify-content:space-between}.utility-row .notice{text-align:left}
-    }
-
-
-
-    /* Mock-aligned structural rebuild. This intentionally overrides the legacy dashboard composition. */
-    body{font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
-    .brand,.compact-hero h1,.detail h2{font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
-    .brand{font-size:17px;font-weight:800;letter-spacing:-.02em}
-    .compact-hero h1{font-size:clamp(34px,4vw,48px);font-weight:800;letter-spacing:-.045em}
-    .detail{padding:0;border:1px solid #e1e5ee;background:#fff;box-shadow:0 12px 34px rgba(29,41,57,.05);overflow:visible}
-    .detail:before{display:none}
-    .detail-head{
-      margin:0;padding:22px 24px 18px;border-radius:18px 18px 0 0;
-      background:linear-gradient(105deg,#f5f2ff 0%,#fbfaff 58%,#fff 100%);
-      border-bottom:1px solid #e6e3f7
-    }
-    .detail h2{font-size:30px;font-weight:800;color:#18203a}
-    .detail-copy{max-width:620px;margin-top:5px;font-size:13px;line-height:1.45}
-    .detail-actions{min-width:max-content}
-    .project-tabs{
-      position:sticky;top:0;z-index:12;margin:0;padding:0 24px;background:rgba(255,255,255,.97);
-      border-bottom:1px solid #e7eaf0;gap:26px
-    }
-    .project-tab{padding:13px 0 12px;font-size:12px;font-weight:750}
-    .grid.overview-layout{padding:22px;gap:16px;background:#fbfcff;border-radius:0 0 18px 18px}
-    .grid.overview-layout>.panel{margin:0}
-    .panel{box-shadow:none}
-    .attention-panel{
-      padding:0!important;border:1px solid #efc887!important;background:#fffaf0!important;border-radius:13px!important;overflow:hidden
-    }
-    .attention-panel>h3{
-      margin:0!important;padding:15px 18px 10px;font-size:18px!important;color:#9e4e16!important;background:transparent
-    }
-    .attention-panel .attention-list{margin:0;gap:0}
-    .attention-panel .attention{
-      margin:0;border:0;border-top:1px solid #f2dfbf;border-left:4px solid var(--warn);border-radius:0;background:#fffdf8;padding:13px 16px
-    }
-    .attention-panel .attention:first-child{border-top:0}
-    .attention-panel .attention.bad{border-left-color:var(--danger);background:#fffaf9}
-    .attention-panel .attention.good{border-left-color:var(--good);background:#fbfefa}
-    .attention-panel .attention strong{font-size:13px;line-height:1.35}
-    .attention-panel .attention p{margin-top:4px;font-size:12px;line-height:1.45}
-
-    .metrics-panel{padding:16px 18px!important}
-    .metrics-panel .panel-title-row{margin-bottom:12px}
-    .overview-health{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:12px!important}
-    .overview-health-row.health-card{
-      min-height:132px!important;padding:15px!important;border:1px solid #e4e8ef!important;border-radius:12px!important;
-      background:#fff!important;box-shadow:0 3px 10px rgba(16,24,40,.025);justify-content:space-between
-    }
-    .health-card-head{display:block!important}
-    .health-card-head strong{display:block;font-size:12px!important;color:#657086;font-weight:700}
-    .health-card-head .health-status{display:inline-flex;margin-top:8px}
-    .health-primary{display:block;font-size:30px;font-weight:800;line-height:1;letter-spacing:-.045em;color:#17203a}
-    .health-support{display:block;margin-top:8px;color:#7a8498;font-size:11px;line-height:1.35}
-    .health-primary.good{color:#147a58}.health-primary.warn{color:#a95a11}.health-primary.bad{color:#b33a31}.health-primary.unknown{color:#667085}
-
-    .overview-split-card{min-height:205px;padding:18px!important}
-    .overview-card-kicker{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.07em;color:#7a8498}
-    .overview-card-title{margin:6px 0 4px;font-size:17px;font-weight:800;color:#1b243b;line-height:1.3}
-    .overview-card-meta{color:#7a8498;font-size:11px;line-height:1.45}
-    .overview-card-copy{margin:12px 0 0;color:#59647a;font-size:12px;line-height:1.5}
-    .overview-card-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}
-    .overview-usage-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:14px}
-    .overview-usage-stat{padding:12px;border:1px solid #e7eaf0;border-radius:10px;background:#fafbfe}
-    .overview-usage-stat strong{display:block;font-size:27px;line-height:1;color:#167c59}
-    .overview-usage-stat span{display:block;margin-top:6px;color:#7b8496;font-size:11px}
-
-    .investigation-overview-panel{padding:18px!important}
-    .investigation-overview-panel .panel-title-row{align-items:center}
-    .investigation-overview-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
-    .investigation-overview-block{min-height:150px;padding:15px;border:1px solid #e5e9f0;background:#fafbfe}
-    .investigation-overview-block>strong{font-size:12px;color:#39445b}
-    .investigation-overview-block p,.investigation-overview-block li{font-size:12px;line-height:1.5}
-
-    .project-switcher-item{
-      display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:start;gap:12px;min-height:92px;padding:15px 16px
-    }
-    .project-switcher-main{display:grid;align-content:start;gap:5px;min-width:0;text-align:left}
-    .project-switcher-main strong{font-size:15px;line-height:1.25}
-    .project-switcher-main span{
-      display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
-      font-size:11px;line-height:1.4;color:#778196
-    }
-    .project-switcher-item .status-pill{align-self:start;margin-top:1px}
-    .project-switcher-item.active:after{display:none!important}
-
-    #productFocusPanel,#decisionSupportPanel,#technicalPanel,#deliveryPanel,#changesPanel,#overviewActivityPanel,#historyPanel,#analyticsPanel,#qualityPanel,#investigationTabPanel{
-      border-radius:13px;background:#fff
-    }
-
-    @media(max-width:900px){
-      .overview-health{grid-template-columns:repeat(2,minmax(0,1fr))!important}
-      .investigation-overview-grid{grid-template-columns:1fr}
-      .overview-split-card{grid-column:span 12!important}
-    }
-    @media(max-width:620px){
-      .detail-head{padding:18px}.project-tabs{padding:0 18px}
-      .grid.overview-layout{padding:14px;gap:12px}
-      .overview-health{grid-template-columns:1fr!important}
-      .overview-health-row.health-card{min-height:112px!important}
-      .overview-split-card{min-height:0}
-      .detail-actions{min-width:0}
-    }
-
 </style>
 </head>
 <body>
@@ -461,8 +210,7 @@
           <p class="detail-copy" id="detailCopy"></p>
         </div>
         <div class="detail-actions">
-          <a class="button primary" id="liveProjectLink" target="_blank" rel="noopener noreferrer" hidden>Open project ↗</a>
-          <button class="button" id="projectCheckButton" type="button">Investigate</button>
+          <button class="button primary" id="projectCheckButton" type="button">Investigate project</button>
           <button class="button" id="headerRunChecksButton" type="button" hidden>Run AI evals</button>
           <details class="action-menu" id="projectActionMenu">
             <summary class="button project-links-button overflow-button" aria-label="More project options">•••</summary>
@@ -478,33 +226,20 @@
       <nav class="project-tabs" id="projectTabs" aria-label="Project health sections">
         <button class="project-tab active" type="button" data-tab="overview">Overview</button>
         <button class="project-tab" type="button" data-tab="ai-quality">Quality</button>
-        <button class="project-tab" type="button" data-tab="releases">Releases</button>
-        <button class="project-tab" type="button" data-tab="usage">Usage</button>
-        <button class="project-tab" type="button" data-tab="investigation">Investigation</button>
-        <button class="project-tab" type="button" data-tab="technical">Technical</button>
+        <button class="project-tab" type="button" data-tab="activity">Activity</button>
       </nav>
 
-      <div class="grid overview-layout">
-        <section class="panel attention-panel" id="attentionPanel" data-tab-panel="overview"></section>
-        <section class="panel metrics-panel" id="overviewHealthPanel" data-tab-panel="overview"></section>
-        <section class="panel half overview-split-card" id="overviewReleasePanel" data-tab-panel="overview"></section>
-        <section class="panel half overview-split-card" id="overviewUsagePanel" data-tab-panel="overview"></section>
-        <section class="panel investigation-overview-panel" id="latestInvestigationPanel" data-tab-panel="overview"></section>
-
+      <div class="grid">
+        <section class="panel" id="attentionPanel" data-tab-panel="overview"></section>
+        <section class="panel" id="productFocusPanel" data-tab-panel="overview"></section>
+        <section class="panel" id="decisionSupportPanel" data-tab-panel="overview"></section>
+        <section class="panel" id="changesPanel" data-tab-panel="overview"></section>
+        <section class="panel" id="overviewHealthPanel" data-tab-panel="overview"></section>
+        <section class="panel half" id="analyticsPanel" data-tab-panel="overview"></section>
+        <section class="panel half" id="overviewActivityPanel" data-tab-panel="overview"></section>
         <section class="panel" id="qualityPanel" data-tab-panel="ai-quality" hidden></section>
-
-        <section class="panel" id="deliveryPanel" data-tab-panel="releases" hidden></section>
-        <section class="panel" id="changesPanel" data-tab-panel="releases" hidden></section>
-        <section class="panel" id="overviewActivityPanel" data-tab-panel="releases" hidden></section>
-        <section class="panel" id="historyPanel" data-tab-panel="releases" hidden></section>
-
-        <section class="panel" id="analyticsPanel" data-tab-panel="usage" hidden></section>
-
-        <section class="panel investigation-overview-panel" id="investigationTabPanel" data-tab-panel="investigation" hidden></section>
-
-        <section class="panel" id="productFocusPanel" data-tab-panel="technical" hidden></section>
-        <section class="panel" id="decisionSupportPanel" data-tab-panel="technical" hidden></section>
-        <section class="panel" id="technicalPanel" data-tab-panel="technical" hidden></section>
+        <section class="panel" id="deliveryPanel" data-tab-panel="overview"></section>
+        <section class="panel" id="historyPanel" data-tab-panel="activity" hidden></section>
       </div>
     </section>
 
