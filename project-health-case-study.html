@@ -96,10 +96,10 @@ body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,Bl
   <div class="case-hero-actions"><a class="cta primary" href="project-health.html" target="_blank" rel="noopener noreferrer">Open Project Health ↗</a></div>
 </header>
 
-<div class="callout"><p><strong>Project Health treats quality as evidence, not a single score.</strong> It brings together product, AI-quality, and delivery signals so important failures and unknowns stay visible before I decide what should change.</p></div>
+<div class="callout"><p><strong>Project Health separates product quality, delivery, possible user impact, and observability.</strong> A strong signal in one area should not cancel out a serious failure or an important unknown somewhere else.</p></div>
 
 <h2>The problem</h2>
-<p>The information already existed. It was just spread across deployments, commits, evals, analytics, logs, and the live products themselves. I wanted one place that helped me decide whether a signal was a real product problem, something to watch, or simply missing information.</p>
+<p>The information already existed. It was just spread across deployments, commits, evals, analytics, logs, and the live products themselves. I built Project Health around my own projects as a practical test bed for a pattern I would expect to matter inside a product team: bring the signals together, then help someone decide whether a signal is a real product problem, something to watch, or simply missing information.</p>
 
 <div class="grid2">
   <div class="card"><span class="tag">Before</span><h3>Too many places to check</h3><p>A failed release, a lower eval score, and a runtime warning all meant opening a different tool and figuring out what the signal actually meant.</p></div>
@@ -136,6 +136,19 @@ body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,Bl
 
 <div class="callout"><p><strong>Project Health keeps that difference visible before I decide what should change.</strong> The quality view shows what was observed, what was expected, and why the difference matters.</p></div>
 
+<div class="example">
+  <div class="example-head"><span class="example-label">Incident · AI quality</span><h3>A strong average hid a high-impact miss</h3><p>State's aggregate AI quality still looked strong, but one scenario failed in a way that could change what a user believed was true.</p></div>
+  <div class="example-row"><span class="example-label">What happened</span><p>State knew the Northstar pilot was paused, but its answer did not clearly preserve that the reason for the pause was still unknown.</p></div>
+  <div class="example-row"><span class="example-label">Why it mattered</span><p>A user could mistake an inferred explanation for maintained project truth. Project Health surfaced the failed scenario ahead of the reassuring average and pointed the next review at the scenario evidence, not the score alone.</p></div>
+  <div class="example-row"><span class="example-label">Next decision</span><p>Review whether the product behavior or the eval contract is wrong, make the smallest justified change, then rerun the affected suite.</p></div>
+</div>
+
+<div class="example">
+  <div class="example-head"><span class="example-label">Incident · delivery</span><h3>A failed deployment was not the same as an unhealthy product</h3><p>One production deployment failed while the previous production version remained available.</p></div>
+  <div class="example-row"><span class="example-label">What Project Health separated</span><p>The release needed engineering attention, but that did not mean the live product had suddenly failed its quality checks. Delivery health and product quality stayed separate instead of collapsing into one red or green status.</p></div>
+  <div class="example-row"><span class="example-label">Why it mattered</span><p>The next action was clearer: investigate the failed release while preserving the distinction between deployment status, current user impact, and AI-product quality.</p></div>
+</div>
+
 <h2>Investigate starts with the specific problem</h2>
 <div class="flow">
   <div class="flow-row"><div class="num">1</div><div class="flow-card"><strong>Start with the signal</strong><p>Use the failure or incident to decide what evidence to check first.</p></div></div>
@@ -155,14 +168,14 @@ body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,Bl
   <div class="evidence-item"><strong>Product-flow test</strong><span>A full smoke test checks that important state changes still require human approval.</span></div>
 </div>
 
-<h2>What I did, and what AI helped with</h2>
+<h2>How I split the work</h2>
 <div class="role-grid">
   <div class="card"><span class="tag">My role</span><ul><li>framed the problem and chose which signals mattered</li><li>designed the information hierarchy</li><li>reviewed failed evals and decided whether product behavior or the test should change</li><li>used QA findings to reshape the product</li></ul></div>
-  <div class="card"><span class="tag">AI-assisted work</span><ul><li>implementation and code iteration</li><li>testing and regression coverage</li><li>drafting and interface iteration under my direction</li></ul></div>
+  <div class="card"><span class="tag">AI-assisted work</span><ul><li>implementation and code iteration</li><li>testing and regression coverage</li><li>drafting and interface iteration</li></ul></div>
 </div>
 
-<h2>What I learned</h2>
-<div class="callout"><p><strong>More data was not the answer.</strong> The useful part was making it easier to see what deserved attention and what evidence I needed before acting.</p></div>
+<h2>What held up</h2>
+<div class="callout"><p><strong>More data was not the answer.</strong> The useful part was separating failure types clearly enough that the next investigation could start with the right evidence instead of the loudest metric.</p></div>
 
 <div class="cta-row">
   <a class="cta primary" href="project-health.html" target="_blank" rel="noopener noreferrer">Open Project Health ↗</a>
