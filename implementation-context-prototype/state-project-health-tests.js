@@ -51,6 +51,18 @@ const analyticsDeniedGaps=H.setupGaps({
 });
 assert.match(analyticsDeniedGaps.find(item=>item.label==='Site analytics').detail,/token/i);
 assert.match(analyticsDeniedGaps.find(item=>item.label==='Runtime error visibility').detail,/token/i);
+const partialRuntimeGaps=H.setupGaps({
+  project:H.PROJECTS[0],
+  platform:{analytics:{configured:true,available:true},neon:{configured:true,available:true},aiTelemetry:{configured:true,available:true}},
+  activity:{available:true,runtime:{available:true,coverage:'partial',issues:[]}},
+  pending:new Set(),
+  runInfo:{configured:true}
+});
+assert.match(partialRuntimeGaps.find(item=>item.label==='Runtime error visibility').detail,/incomplete/i);
+assert.strictEqual(
+  H.neonConnectionDetail({configured:true,available:true,primary_branch:'production',primary_branch_state:'archived'}),
+  'Neon · production · idle storage; resumes automatically'
+);
 
 const healthy=H.normalizeQuality({
   live_review_quality:{resolved_reviews:4,material_edit_rate:.25},
@@ -478,6 +490,13 @@ assert.strictEqual(safeQuality.endpoint.rule_checks.passed,2);
 assert.strictEqual(Object.prototype.hasOwnProperty.call(safeQuality.endpoint,'grounding_findings'),false);
 assert.strictEqual(Object.prototype.hasOwnProperty.call(safeQuality.endpoint,'failing_fixtures'),false);
 
+
+const renderConfig=fs.readFileSync(require.resolve('../render.yaml'),'utf8');
+assert.match(renderConfig,/https:\/\/www\.contextswitch\.tech/);
+assert.match(renderConfig,/https:\/\/state\.contextswitch\.tech/);
+const stateVercelConfig=JSON.parse(fs.readFileSync(require.resolve('./vercel.json'),'utf8'));
+assert.doesNotMatch(stateVercelConfig.ignoreCommand,/VERCEL_GIT_PREVIOUS_SHA/);
+assert.match(stateVercelConfig.ignoreCommand,/git diff --quiet HEAD\^ HEAD -- \./);
 
 const healthHtml=fs.readFileSync(require.resolve('../project-health.html'),'utf8');
 assert.doesNotMatch(healthHtml,/Product health triage/);
