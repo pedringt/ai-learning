@@ -562,7 +562,22 @@
     ]);
     return deliveryHealth({name:branch?.name||branchName,commit:selectedCommit},status,checkRuns);
   }
-  async function loadStateQuality(root){return normalizeQuality(await jsonFetch('/api/project-health-state-quality?env='+pageEnvironment(root),{timeoutMs:7000}));}
+  async function loadStateQuality(root){
+    const url='/api/project-health-state-quality?env='+pageEnvironment(root);
+    let lastError=null;
+    for(let attempt=0;attempt<2;attempt++){
+      try{return normalizeQuality(await jsonFetch(url,{timeoutMs:12000}));}
+      catch(error){
+        lastError=error;
+        if(attempt===0&&(error?.status===502||error?.status===503||error?.status===504||error?.name==='AbortError')){
+          await new Promise(resolve=>setTimeout(resolve,650));
+          continue;
+        }
+        throw error;
+      }
+    }
+    throw lastError;
+  }
   async function loadStateEvalBehavior(project){
     const paths=Array.isArray(project?.evalBehaviorPaths)?project.evalBehaviorPaths:[];
     if(!paths.length)return null;
@@ -750,7 +765,7 @@
       ? run('Quality',loadStateQuality(root),value=>{data.quality=value;if(data.qualityBehaviorUpdatedAt)data.quality.behaviorUpdatedAt=data.qualityBehaviorUpdatedAt;})
       : run('Quality',loadExternalQuality(project),value=>{data.externalQuality=value;});
     data.qualityPromise=qualityTask;
-    await Promise.all(core);
+    await Promise.all([...core,qualityTask]);
     data.fresh=true;
     data.checkedAt=new Date().toISOString();
     if(typeof onUpdate==='function')onUpdate(data);
@@ -1466,7 +1481,7 @@
           (a?.available?'<div class="mock-usage-bars">'+usageBars+'</div><div class="mock-usage-axis"><span>Current 30-day window</span><span>'+esc(trendText(a.pageviews_delta_pct))+'</span></div>':'<div class="empty compact-empty">Usage data is not available yet.</div>')+
         '</section>'+
         '<section class="mock-dashboard-section mock-quality-detail">'+
-          '<div class="mock-quality-detail-head"><h3>Quality and evaluation details</h3><button class="button small" type="button" data-tab-target="ai-quality">View all evaluations →</button></div>'+
+          '<div class="mock-quality-detail-head"><div><h3>Quality and evaluation details</h3>'+(pending.has('Quality')?'<span class="mock-refreshing-evals">Refreshing evals… showing last good results</span>':'')+'</div><button class="button small" type="button" data-tab-target="ai-quality">View all evaluations →</button></div>'+
           '<div class="mock-quality-detail-grid">'+qualityCards+'</div>'+
         '</section>'+
         '<section class="mock-dashboard-section mock-investigation-card">'+
@@ -2457,7 +2472,6 @@
         if(generation!==refreshGeneration)return;
         state[index]=item;
         completed.add(project.id);
-        if(item.qualityPromise)item.qualityPromise.finally(()=>{if(generation===refreshGeneration){scheduleRender();persist();}});
         scheduleRender();
         if(completed.size<PROJECTS.length)status.textContent=progressText(completed.size,PROJECTS.length,pendingNames());
       });
