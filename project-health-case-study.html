@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<link rel="icon" href="favicon.svg">
+<title>Project Health Case Study · Context Switch</title>
+<meta name="description" content="How I designed Project Health to turn deployment, AI-quality, analytics, and investigation signals into product decisions.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Project Health Case Study · Context Switch">
+<meta property="og:description" content="A product case study about turning technical and AI-quality signals into a decision-support layer for product work.">
+<meta name="twitter:card" content="summary">
+<link href="site-shell.css" rel="stylesheet"/>
+<link href="site-components.css" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.55}
+.case-shell{max-width:1020px;margin:0 auto;padding:44px 28px 76px}
+.case-hero{max-width:900px}
+.eyebrow{display:inline-block;color:var(--purple);font-size:11px;font-weight:850;letter-spacing:.08em;text-transform:uppercase}
+.case-hero h1{margin:10px 0 14px;font-size:clamp(34px,5vw,52px);line-height:1.02;letter-spacing:-.04em}
+.case-hero .lead{max-width:850px;margin:0;color:var(--muted);font-size:18px;line-height:1.6}
+.meta{display:flex;flex-wrap:wrap;gap:8px;margin:18px 0 0}.meta span{padding:7px 10px;border:1px solid var(--border);border-radius:999px;background:var(--card);color:var(--muted);font-size:11px;font-weight:700}.meta b{color:var(--ink)}
+.case-shell h2{margin:42px 0 12px;font-size:24px;line-height:1.2;letter-spacing:-.02em}
+.case-shell h3{margin:0 0 7px;font-size:16px}.case-shell p,.case-shell li{font-size:14px;line-height:1.68}
+.callout{margin:22px 0;padding:18px 20px;border-left:4px solid var(--purple);border-radius:0 12px 12px 0;background:color-mix(in srgb,var(--softp) 55%,var(--card))}
+.callout p{margin:0;font-size:16px}
+.grid2,.grid3{display:grid;gap:14px;margin-top:14px}.grid2{grid-template-columns:repeat(2,minmax(0,1fr))}.grid3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.card{padding:18px;border:1px solid var(--border);border-radius:16px;background:var(--card)}.card p{margin:7px 0 0;color:var(--muted)}
+.tag{display:inline-flex;margin-bottom:8px;padding:5px 8px;border:1px solid color-mix(in srgb,var(--purple) 26%,var(--border));border-radius:999px;background:var(--softp);color:var(--purple);font-size:10px;font-weight:850;letter-spacing:.07em;text-transform:uppercase}
+.product-model{margin:18px 0;padding:16px;border:1px solid var(--border);border-radius:18px;background:var(--soft)}
+.product-model-grid{display:grid;grid-template-columns:1.2fr .8fr;gap:12px}
+.product-panel{padding:15px;border:1px solid var(--border);border-radius:13px;background:var(--card)}
+.product-panel strong{display:block}.product-panel .big{margin:5px 0 7px;font-size:20px;line-height:1.2;font-weight:850}
+.signal{display:flex;justify-content:space-between;gap:12px;padding:8px 0;border-top:1px solid var(--border);font-size:12px}.signal:first-of-type{border-top:0}.signal b{font-weight:800}
+.flow{display:grid;gap:9px;margin-top:16px}.flow-row{display:grid;grid-template-columns:28px minmax(0,1fr);gap:10px;align-items:start}.num{width:28px;height:28px;display:flex;align-items:center;justify-content:center;border:1px solid var(--border);border-radius:999px;background:var(--card);color:var(--purple);font-size:11px;font-weight:900}.flow-card{padding:13px 15px;border:1px solid var(--border);border-radius:12px;background:var(--card)}.flow-card p{margin:4px 0 0;color:var(--muted)}
+.example{margin:16px 0;border:1px solid var(--border);border-radius:16px;overflow:hidden;background:var(--card)}.example-head{padding:17px 18px;border-bottom:1px solid var(--border);background:var(--softp)}.example-head p{margin:5px 0 0;color:var(--muted)}.example-row{padding:15px 18px;border-bottom:1px solid var(--border)}.example-row:last-child{border-bottom:0}.example-row p{margin:5px 0 0}.example-label{color:var(--purple);font-size:10px;font-weight:850;letter-spacing:.06em;text-transform:uppercase}
+.role-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px}.role-grid ul{margin:8px 0 0;padding-left:18px}.role-grid li+li{margin-top:4px}
+.evidence-list{display:grid;gap:9px;margin-top:12px}.evidence-item{display:grid;grid-template-columns:130px minmax(0,1fr);gap:14px;padding:12px 0;border-top:1px solid var(--border)}.evidence-item:first-child{border-top:0}.evidence-item strong{font-size:12px}.evidence-item span{color:var(--muted);font-size:13px}
+.cta-row{display:flex;flex-wrap:wrap;gap:10px;margin-top:24px}.cta{display:inline-flex;align-items:center;justify-content:center;padding:10px 14px;border-radius:10px;font-size:13px;font-weight:800;text-decoration:none}.cta.primary{background:var(--purple);color:#fff}.cta.secondary{border:1px solid var(--border);background:var(--card);color:var(--ink)}
+@media(max-width:760px){.grid2,.grid3,.product-model-grid,.role-grid{grid-template-columns:1fr}.evidence-item{grid-template-columns:1fr;gap:3px}.case-shell{padding:34px 18px 58px}}
+</style>
+<script>
+(function () {
+  const params = new URLSearchParams(window.location.search);
+  const ownerParam = params.get('owner');
+  if (ownerParam === 'true') localStorage.setItem('paigeOwnerMode','true');
+  else if (ownerParam === 'false') localStorage.removeItem('paigeOwnerMode');
+  if (ownerParam !== null) {
+    params.delete('owner');
+    const query=params.toString();
+    history.replaceState({},'',location.pathname+(query?'?'+query:'')+location.hash);
+  }
+  if (localStorage.getItem('paigeOwnerMode') !== 'true') {
+    window.va=window.va||function(){(window.vaq=window.vaq||[]).push(arguments);};
+    const s=document.createElement('script');s.defer=true;s.src='/_vercel/insights/script.js';document.head.appendChild(s);
+  }
+})();
+</script>
+</head>
+<body>
+<div class="topbar">
+  <div class="topinner">
+    <a class="brand-button" href="index.html"><span class="brand">Context <span>Switch</span></span></a>
+    <nav aria-label="Primary pages" class="nav">
+      <a href="index.html">Home</a>
+      <a aria-current="page" href="index.html#portfolio">Applied Work</a>
+      <a href="index.html#learn">Learning Library</a>
+    </nav>
+    <div class="top-actions">
+      <button aria-label="Switch to dark mode" aria-pressed="false" class="theme-toggle" id="v922ThemeToggle" title="Switch to dark mode" type="button">☾</button>
+      <select aria-label="Choose page" id="v922MobileNav">
+        <option value="index.html">Home</option>
+        <option selected value="index.html#portfolio">Applied Work</option>
+        <option value="index.html#learn">Learning Library</option>
+      </select>
+    </div>
+  </div>
+</div>
+
+<main class="case-shell site-page">
+<nav class="site-breadcrumb" aria-label="Breadcrumb"><ol><li><a href="index.html#portfolio">Applied Work</a></li><li aria-current="page">Project Health</li></ol></nav>
+
+<header class="case-hero">
+  <div class="eyebrow">AI product operations · case study</div>
+  <h1>Project Health</h1>
+  <p class="lead">I built a product-facing layer over deployment, AI-quality, analytics, and investigation signals so I could answer one question quickly: what actually needs a product decision?</p>
+  <div class="meta">
+    <span><b>Role:</b> product framing, UX, QA, eval review</span>
+    <span><b>Focus:</b> AI product health and decision support</span>
+    <span><b>Status:</b> working portfolio product</span>
+  </div>
+</header>
+
+<div class="callout"><p><strong>The product is not a prettier engineering dashboard.</strong> Its job is to translate technical and AI-quality signals into what changed, why it matters, what cannot yet be known, and what a product person should do next.</p></div>
+
+<h2>The problem: plenty of telemetry, weak product context</h2>
+<p>My projects already had deployments, commits, eval results, analytics, runtime signals, and live products. The difficult part was deciding which signal mattered, whether it represented a real product problem, and what evidence I needed before asking for a fix.</p>
+
+<div class="grid2">
+  <div class="card"><span class="tag">Before</span><h3>Signals lived in different tools</h3><p>A failed deployment, a lower eval score, and a runtime warning each required a different place to investigate and a different interpretation.</p></div>
+  <div class="card"><span class="tag">Product need</span><h3>Interpret the signal before acting</h3><p>I wanted one place that could distinguish a release issue, an AI behavior failure, a monitoring gap, and a decision that still needed human judgment.</p></div>
+</div>
+
+<h2>The product model</h2>
+<p>The Overview follows the way I actually triage a project in the morning: attention first, product context second, supporting evidence after that.</p>
+
+<div class="product-model" aria-label="Simplified Project Health overview">
+  <div class="product-model-grid">
+    <section class="product-panel">
+      <span class="tag">Overview</span>
+      <strong>What needs attention</strong>
+      <div class="big">One consequential behavior is enough to stop the scan</div>
+      <p style="margin:0;color:var(--muted);font-size:12px">Aggregate scores stay secondary to scenario-level failures and product impact.</p>
+      <div class="signal"><span>Product focus</span><b>goal · watch · next decision</b></div>
+      <div class="signal"><span>Changed since last visit</span><b>human-readable</b></div>
+    </section>
+    <section class="product-panel">
+      <span class="tag">Decision support</span>
+      <strong>Would I hesitate to ship?</strong>
+      <div class="signal"><span>Product quality</span><b>scenario evidence</b></div>
+      <div class="signal"><span>User impact</span><b>known / unknown</b></div>
+      <div class="signal"><span>Observability</span><b>blind spots surfaced</b></div>
+      <div class="signal"><span>Delivery</span><b>current release health</b></div>
+    </section>
+  </div>
+</div>
+
+<h2>Five product decisions shaped it</h2>
+<div class="grid3">
+  <div class="card"><span class="tag">01</span><h3>No composite score</h3><p>Technical health and product quality stay separate. One green number can hide the exact behavior that deserves review.</p></div>
+  <div class="card"><span class="tag">02</span><h3>Failures before averages</h3><p>AI eval cards lead with scenarios passed and high-impact failures. Percentages are supporting context, not the verdict.</p></div>
+  <div class="card"><span class="tag">03</span><h3>Unknown is a real state</h3><p>Monitoring gaps are visible instead of being silently interpreted as healthy.</p></div>
+  <div class="card"><span class="tag">04</span><h3>Investigate is one mental model</h3><p>If something is wrong, Investigate goes deeper. If things look healthy, it performs a bounded health pass instead of inventing a second workflow.</p></div>
+  <div class="card"><span class="tag">05</span><h3>Keep the human decision visible</h3><p>Decisions, changes, and experiments can be recorded alongside the next release or quality evidence that follows them.</p></div>
+</div>
+
+<h2>The most important behavior is what happens after a red signal</h2>
+<p>Project Health does not assume a failed eval automatically means “fix the model.” I used State failures to force the dashboard to separate product behavior problems from eval-contract problems.</p>
+
+<div class="example">
+  <div class="example-head"><span class="tag">State example</span><h3>Two failures that looked similar at the score level required different reasoning</h3><p>The dashboard needed enough context to preserve uncertainty rather than jump from “failed check” to “engineering bug.”</p></div>
+  <div class="example-row"><div class="example-label">Behavior contract</div><strong>New authoritative evidence must supersede a stale pending proposal</strong><p>A pending proposal is not authority against newer evidence from the responsible source. The fix belonged in product behavior, not in weakening the eval.</p></div>
+  <div class="example-row"><div class="example-label">Grounding contract</div><strong>Known outcome, unknown reason</strong><p>If State knows that something happened but the record does not establish why, Ask should state the known outcome and preserve the reason as unknown instead of inventing a causal explanation.</p></div>
+  <div class="example-row"><div class="example-label">What changed in Project Health</div><p>The quality view now explains <strong>Observed / Expected / Why it matters</strong>, investigations can target the failed scenario, and regression context is surfaced separately from the aggregate percentage.</p></div>
+</div>
+
+<h2>Investigation is deliberately bounded</h2>
+<div class="flow">
+  <div class="flow-row"><div class="num">1</div><div class="flow-card"><strong>Start from the specific signal</strong><p>Use the failure type or incident to choose the first evidence source instead of opening every connected tool.</p></div></div>
+  <div class="flow-row"><div class="num">2</div><div class="flow-card"><strong>Gather the smallest useful evidence set</strong><p>Compare behavior with the product contract, release context, logs, issue history, or eval definition.</p></div></div>
+  <div class="flow-row"><div class="num">3</div><div class="flow-card"><strong>Return a handoff, not an autonomous fix</strong><p>The investigation summarizes assessment, evidence, impact, uncertainty, and next checkpoint so the human still decides what changes.</p></div></div>
+  <div class="flow-row"><div class="num">4</div><div class="flow-card"><strong>Look for the next evidence</strong><p>Activity links decisions and investigations to the subsequent release or quality result when one exists.</p></div></div>
+</div>
+
+<h2>QA changed the product, not just the polish</h2>
+<div class="grid2">
+  <div class="card"><span class="tag">Information design</span><h3>Raw event streams became operating history</h3><p>Repeated deployment failures are grouped into one incident episode, Activity is grouped by day, and filters separate releases, quality, investigations, and decisions.</p></div>
+  <div class="card"><span class="tag">Trust</span><h3>Healthy and unknown cannot look the same</h3><p>Failure-recovery, freshness, monitoring-gap, and cross-signal consistency tests help prevent stale or missing data from being presented as healthy.</p></div>
+</div>
+
+<h2>What is actually tested</h2>
+<div class="evidence-list">
+  <div class="evidence-item"><strong>Known-bad regressions</strong><span>Important AI behavior failures become permanent deterministic scenarios instead of one-off bug reports.</span></div>
+  <div class="evidence-item"><strong>Cross-signal consistency</strong><span>The dashboard checks for contradictions such as “healthy” while a high-impact issue is still open.</span></div>
+  <div class="evidence-item"><strong>Failure recovery</strong><span>Unavailable runtime, analytics, or platform signals degrade to unknown/watch rather than implying health.</span></div>
+  <div class="evidence-item"><strong>Golden product path</strong><span>A deterministic State smoke test covers Evidence → Review → human authorization → Current State update → History, including the rule that a proposal is not authoritative before approval.</span></div>
+</div>
+
+<h2>What I did, and what AI helped with</h2>
+<div class="role-grid">
+  <div class="card"><span class="tag">My role</span><ul><li>framed the product problem and decided which signals should influence product attention</li><li>defined the information hierarchy and decision-support model</li><li>reviewed AI failures and decided whether behavior or the eval contract should change</li><li>ran repeated QA passes and used findings to reshape the product</li><li>kept investigation bounded so AI could support judgment without taking authority</li></ul></div>
+  <div class="card"><span class="tag">AI-assisted work</span><ul><li>implementation and code iteration</li><li>test generation and regression coverage</li><li>evidence gathering across connected tools</li><li>draft investigation synthesis and handoff structure</li><li>copy and interface iteration under my direction</li></ul></div>
+</div>
+
+<h2>What I learned</h2>
+<div class="callout"><p><strong>A useful product-health tool does not need to know everything.</strong> It needs to make the boundary between evidence, interpretation, uncertainty, and human decision-making obvious enough that the next action is better.</p></div>
+
+<div class="cta-row">
+  <a class="cta primary" href="project-health.html">Open Project Health</a>
+  <a class="cta secondary" href="index.html#portfolio">Back to Applied Work</a>
+</div>
+</main>
+<script src="site-shell.js"></script>
+</body>
+</html>
