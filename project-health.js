@@ -1598,11 +1598,14 @@
     }
     doc.getElementById('qualityPanel').innerHTML=qualityHtml;
 
-    // Usage only gets a standalone Overview section when there is real usage data to show.
+    // Usage is a dedicated tab now, so the panel must always remain visible.
     const a=platform?.analytics;
     const analyticsPanel=doc.getElementById('analyticsPanel');
-    analyticsPanel.classList.toggle('usage-hidden',!a?.available);
-    if(a?.available){
+    analyticsPanel.classList.remove('usage-hidden');
+    const analyticsUrl=p.links?.vercel?(p.links.vercel.replace(/\/$/,'')+'/analytics'):null;
+    if(pending.has('Analytics')){
+      analyticsPanel.innerHTML='<div class="panel-title-row"><h3>Site analytics</h3></div><div class="empty" style="margin-top:12px">Loading site analytics…</div>';
+    }else if(a?.available){
       const visitorTrend=trendText(a.visitors_delta_pct),pageTrend=trendText(a.pageviews_delta_pct);
       const visitorClass=a.visitors_delta_pct==null?'flat':Number(a.visitors_delta_pct)>0?'up':Number(a.visitors_delta_pct)<0?'down':'flat';
       const pageClass=a.pageviews_delta_pct==null?'flat':Number(a.pageviews_delta_pct)>0?'up':Number(a.pageviews_delta_pct)<0?'down':'flat';
@@ -1614,10 +1617,12 @@
           '<div class="trend '+visitorClass+'"><strong>Visitors:</strong> '+esc(visitorTrend)+'</div>'+
           '<div class="trend '+pageClass+'"><strong>Page views:</strong> '+esc(pageTrend)+'</div>'+
           '</div>';
-      const analyticsUrl=p.links?.vercel?(p.links.vercel.replace(/\/$/,'')+'/analytics'):null;
-      doc.getElementById('analyticsPanel').innerHTML='<div class="panel-title-row"><h3>Site analytics</h3>'+(analyticsUrl?'<a class="site-analytics-link" href="'+esc(analyticsUrl)+'" target="_blank" rel="noopener noreferrer">Open analytics ↗</a>':'')+'</div><div class="metrics" style="margin-top:12px">'+metric(a.visitors??'—','Visitors · 30d')+metric(a.pageviews??'—','Page views · 30d')+'</div>'+trends;
+      analyticsPanel.innerHTML='<div class="panel-title-row"><h3>Site analytics</h3>'+(analyticsUrl?'<a class="site-analytics-link" href="'+esc(analyticsUrl)+'" target="_blank" rel="noopener noreferrer">Open analytics ↗</a>':'')+'</div><div class="metrics" style="margin-top:12px">'+metric(a.visitors??'—','Visitors · 30d')+metric(a.pageviews??'—','Page views · 30d')+'</div>'+trends;
     }else{
-      analyticsPanel.innerHTML='';
+      const unavailable=a?.configured===false
+        ?'Site analytics are not connected for this project.'
+        :(a?.error||'Site analytics are temporarily unavailable.');
+      analyticsPanel.innerHTML='<div class="panel-title-row"><h3>Site analytics</h3>'+(analyticsUrl?'<a class="site-analytics-link" href="'+esc(analyticsUrl)+'" target="_blank" rel="noopener noreferrer">Open analytics ↗</a>':'')+'</div><div class="empty" style="margin-top:12px">'+esc(unavailable)+'</div>';
     }
 
     // Chronological activity tells an operating story rather than exposing raw events.
