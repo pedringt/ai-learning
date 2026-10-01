@@ -338,7 +338,7 @@
       const sample=Number(speed?.sample_size||0);
       const p95=Number(speed?.p95_ms);
       if(ai?.available&&sample>0&&Number.isFinite(p95)){
-        signals.push({kind:'available',label:'AI response speed',status:'Measured',detail:'p95 '+formatDuration(p95)+' across '+sample+' '+(sample===1?'recorded call':'recorded calls')+'.'});
+        signals.push({kind:'available',label:'AI response speed',status:'Measured',detail:'p95 '+durationLabel(p95)+' across '+sample+' '+(sample===1?'recorded call':'recorded calls')+'.'});
       }else{
         signals.push({kind:'unknown',label:'AI response speed',status:'Not measured',detail:'There is not enough recent runtime telemetry to establish a response-speed pattern.'});
       }
