@@ -508,6 +508,8 @@
       </div>
     </section>`;
     // Keep Workspace decorations in the same render task as their container.
+    // Their observers remain as a fallback for other DOM changes, but should
+    // not insert the banner or source strip in a later frame after navigation.
     ASK?.syncWorkspaceDecorations?.();
     window.STATE_WORKSPACE_SOURCES?.decorate?.();
     // The Ask loading and refinement nodes are emitted here, and renderOverview
