@@ -332,6 +332,108 @@
     }
 
 
+
+    /* Mock-aligned structural rebuild. This intentionally overrides the legacy dashboard composition. */
+    body{font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+    .brand,.compact-hero h1,.detail h2{font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+    .brand{font-size:17px;font-weight:800;letter-spacing:-.02em}
+    .compact-hero h1{font-size:clamp(34px,4vw,48px);font-weight:800;letter-spacing:-.045em}
+    .detail{padding:0;border:1px solid #e1e5ee;background:#fff;box-shadow:0 12px 34px rgba(29,41,57,.05);overflow:visible}
+    .detail:before{display:none}
+    .detail-head{
+      margin:0;padding:22px 24px 18px;border-radius:18px 18px 0 0;
+      background:linear-gradient(105deg,#f5f2ff 0%,#fbfaff 58%,#fff 100%);
+      border-bottom:1px solid #e6e3f7
+    }
+    .detail h2{font-size:30px;font-weight:800;color:#18203a}
+    .detail-copy{max-width:620px;margin-top:5px;font-size:13px;line-height:1.45}
+    .detail-actions{min-width:max-content}
+    .project-tabs{
+      position:sticky;top:0;z-index:12;margin:0;padding:0 24px;background:rgba(255,255,255,.97);
+      border-bottom:1px solid #e7eaf0;gap:26px
+    }
+    .project-tab{padding:13px 0 12px;font-size:12px;font-weight:750}
+    .grid.overview-layout{padding:22px;gap:16px;background:#fbfcff;border-radius:0 0 18px 18px}
+    .grid.overview-layout>.panel{margin:0}
+    .panel{box-shadow:none}
+    .attention-panel{
+      padding:0!important;border:1px solid #efc887!important;background:#fffaf0!important;border-radius:13px!important;overflow:hidden
+    }
+    .attention-panel>h3{
+      margin:0!important;padding:15px 18px 10px;font-size:18px!important;color:#9e4e16!important;background:transparent
+    }
+    .attention-panel .attention-list{margin:0;gap:0}
+    .attention-panel .attention{
+      margin:0;border:0;border-top:1px solid #f2dfbf;border-left:4px solid var(--warn);border-radius:0;background:#fffdf8;padding:13px 16px
+    }
+    .attention-panel .attention:first-child{border-top:0}
+    .attention-panel .attention.bad{border-left-color:var(--danger);background:#fffaf9}
+    .attention-panel .attention.good{border-left-color:var(--good);background:#fbfefa}
+    .attention-panel .attention strong{font-size:13px;line-height:1.35}
+    .attention-panel .attention p{margin-top:4px;font-size:12px;line-height:1.45}
+
+    .metrics-panel{padding:16px 18px!important}
+    .metrics-panel .panel-title-row{margin-bottom:12px}
+    .overview-health{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:12px!important}
+    .overview-health-row.health-card{
+      min-height:132px!important;padding:15px!important;border:1px solid #e4e8ef!important;border-radius:12px!important;
+      background:#fff!important;box-shadow:0 3px 10px rgba(16,24,40,.025);justify-content:space-between
+    }
+    .health-card-head{display:block!important}
+    .health-card-head strong{display:block;font-size:12px!important;color:#657086;font-weight:700}
+    .health-card-head .health-status{display:inline-flex;margin-top:8px}
+    .health-primary{display:block;font-size:30px;font-weight:800;line-height:1;letter-spacing:-.045em;color:#17203a}
+    .health-support{display:block;margin-top:8px;color:#7a8498;font-size:11px;line-height:1.35}
+    .health-primary.good{color:#147a58}.health-primary.warn{color:#a95a11}.health-primary.bad{color:#b33a31}.health-primary.unknown{color:#667085}
+
+    .overview-split-card{min-height:205px;padding:18px!important}
+    .overview-card-kicker{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.07em;color:#7a8498}
+    .overview-card-title{margin:6px 0 4px;font-size:17px;font-weight:800;color:#1b243b;line-height:1.3}
+    .overview-card-meta{color:#7a8498;font-size:11px;line-height:1.45}
+    .overview-card-copy{margin:12px 0 0;color:#59647a;font-size:12px;line-height:1.5}
+    .overview-card-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}
+    .overview-usage-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:14px}
+    .overview-usage-stat{padding:12px;border:1px solid #e7eaf0;border-radius:10px;background:#fafbfe}
+    .overview-usage-stat strong{display:block;font-size:27px;line-height:1;color:#167c59}
+    .overview-usage-stat span{display:block;margin-top:6px;color:#7b8496;font-size:11px}
+
+    .investigation-overview-panel{padding:18px!important}
+    .investigation-overview-panel .panel-title-row{align-items:center}
+    .investigation-overview-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+    .investigation-overview-block{min-height:150px;padding:15px;border:1px solid #e5e9f0;background:#fafbfe}
+    .investigation-overview-block>strong{font-size:12px;color:#39445b}
+    .investigation-overview-block p,.investigation-overview-block li{font-size:12px;line-height:1.5}
+
+    .project-switcher-item{
+      display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:start;gap:12px;min-height:92px;padding:15px 16px
+    }
+    .project-switcher-main{display:grid;align-content:start;gap:5px;min-width:0;text-align:left}
+    .project-switcher-main strong{font-size:15px;line-height:1.25}
+    .project-switcher-main span{
+      display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
+      font-size:11px;line-height:1.4;color:#778196
+    }
+    .project-switcher-item .status-pill{align-self:start;margin-top:1px}
+    .project-switcher-item.active:after{display:none!important}
+
+    #productFocusPanel,#decisionSupportPanel,#technicalPanel,#deliveryPanel,#changesPanel,#overviewActivityPanel,#historyPanel,#analyticsPanel,#qualityPanel,#investigationTabPanel{
+      border-radius:13px;background:#fff
+    }
+
+    @media(max-width:900px){
+      .overview-health{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+      .investigation-overview-grid{grid-template-columns:1fr}
+      .overview-split-card{grid-column:span 12!important}
+    }
+    @media(max-width:620px){
+      .detail-head{padding:18px}.project-tabs{padding:0 18px}
+      .grid.overview-layout{padding:14px;gap:12px}
+      .overview-health{grid-template-columns:1fr!important}
+      .overview-health-row.health-card{min-height:112px!important}
+      .overview-split-card{min-height:0}
+      .detail-actions{min-width:0}
+    }
+
 </style>
 </head>
 <body>
@@ -382,18 +484,26 @@
         <button class="project-tab" type="button" data-tab="technical">Technical</button>
       </nav>
 
-      <div class="grid">
-        <section class="panel" id="attentionPanel" data-tab-panel="overview"></section>
-        <section class="panel" id="productFocusPanel" data-tab-panel="overview"></section>
-        <section class="panel" id="decisionSupportPanel" data-tab-panel="overview"></section>
-        <section class="panel" id="changesPanel" data-tab-panel="overview"></section>
-        <section class="panel" id="overviewHealthPanel" data-tab-panel="overview"></section>
-        <section class="panel" id="analyticsPanel" data-tab-panel="usage" hidden></section>
-        <section class="panel half" id="overviewActivityPanel" data-tab-panel="overview"></section>
-        <section class="panel investigation-overview-panel" id="latestInvestigationPanel" data-tab-panel="investigation" hidden></section>
+      <div class="grid overview-layout">
+        <section class="panel attention-panel" id="attentionPanel" data-tab-panel="overview"></section>
+        <section class="panel metrics-panel" id="overviewHealthPanel" data-tab-panel="overview"></section>
+        <section class="panel half overview-split-card" id="overviewReleasePanel" data-tab-panel="overview"></section>
+        <section class="panel half overview-split-card" id="overviewUsagePanel" data-tab-panel="overview"></section>
+        <section class="panel investigation-overview-panel" id="latestInvestigationPanel" data-tab-panel="overview"></section>
+
         <section class="panel" id="qualityPanel" data-tab-panel="ai-quality" hidden></section>
+
         <section class="panel" id="deliveryPanel" data-tab-panel="releases" hidden></section>
+        <section class="panel" id="changesPanel" data-tab-panel="releases" hidden></section>
+        <section class="panel" id="overviewActivityPanel" data-tab-panel="releases" hidden></section>
         <section class="panel" id="historyPanel" data-tab-panel="releases" hidden></section>
+
+        <section class="panel" id="analyticsPanel" data-tab-panel="usage" hidden></section>
+
+        <section class="panel investigation-overview-panel" id="investigationTabPanel" data-tab-panel="investigation" hidden></section>
+
+        <section class="panel" id="productFocusPanel" data-tab-panel="technical" hidden></section>
+        <section class="panel" id="decisionSupportPanel" data-tab-panel="technical" hidden></section>
         <section class="panel" id="technicalPanel" data-tab-panel="technical" hidden></section>
       </div>
     </section>
