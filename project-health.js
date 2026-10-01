@@ -1427,7 +1427,7 @@
       '<div class="activity-filters" role="group" aria-label="Filter activity">'+activityFilters.map(([key,label])=>'<button class="activity-filter '+(activityFilter===key?'active':'')+'" type="button" data-activity-filter="'+key+'" aria-pressed="'+(activityFilter===key?'true':'false')+'">'+label+'</button>').join('')+'</div>'+
       '<div style="margin-top:12px">'+timelineHtml+'</div>';
     const overviewActivity=timelineItems.length?'<div class="activity-list">'+timelineItems.slice(0,3).map(item=>'<div class="activity-item"><span class="activity-type">'+esc(item.type||'Activity')+'</span><strong>'+esc(item.title)+'</strong><span>'+esc(relativeAge(item.when))+' · '+esc(item.detail||'')+'</span></div>').join('')+'</div>':'<div class="empty">No recent activity is available yet.</div>';
-    doc.getElementById('overviewActivityPanel').innerHTML='<div class="panel-title-row"><h3>Recent activity</h3><button class="button small" type="button" data-tab-target="activity">View timeline</button></div><div style="margin-top:12px">'+overviewActivity+'</div>';
+    doc.getElementById('overviewActivityPanel').innerHTML='<div class="panel-title-row"><h3>Recent activity</h3><button class="button small" type="button" data-tab-target="releases">View timeline</button></div><div style="margin-top:12px">'+overviewActivity+'</div>';
 
     // Delivery separates what users have now from whether the next release can ship.
     const investigationBusy=!!data.investigation?.loading;
@@ -1480,6 +1480,24 @@
     doc.getElementById('infrastructurePanel').innerHTML='<h3>Infrastructure</h3>'+
       '<div class="delivery-summary '+(infraAttention?.kind==='bad'?'bad':infraAttention?.kind==='warn'?'warn':'')+'" style="margin-top:12px">'+esc(infraAttention?.title||'Production services healthy')+'</div>'+
       '<div class="service-grid">'+infraCards.map(item=>'<div class="service-card"><strong>'+esc(item.label)+'</strong><span class="service-status">'+esc(item.status)+'</span><span class="service-detail">'+esc(item.detail)+'</span>'+(item.url?'<a href="'+esc(item.url)+'" target="_blank" rel="noopener noreferrer">Open '+esc(item.detail.split(' · ')[0])+' ↗</a>':'')+'</div>').join('')+'</div>';
+
+    const technicalPanel=doc.getElementById('technicalPanel');
+    if(technicalPanel){
+      const techRows=[
+        ['Repository',p.repo],
+        ['Production branch',d?.branch||p.branch||'Unknown'],
+        ['Latest commit',shortSha(d?.sha)],
+        ['Release status',d?.vercel?.label||'Unavailable'],
+        ['Checked',fmtDate(data.detailCheckedAt||data.checkedAt)]
+      ];
+      technicalPanel.innerHTML=
+        '<div class="panel-title-row"><div><h3>Technical details</h3><p class="panel-copy">Source, deployment, and connection details for debugging and verification.</p></div><button class="button small" type="button" data-open-systems>Systems &amp; connections</button></div>'+
+        '<div class="rows" style="margin-top:12px">'+techRows.map(item=>row(item[0],item[1])).join('')+'</div>'+
+        '<div class="quality-actions"><a class="button small" href="'+esc(repoUrl(p.repo))+'" target="_blank" rel="noopener noreferrer">Open repository ↗</a>'+
+        (p.links?.vercel?'<a class="button small" href="'+esc(p.links.vercel)+'" target="_blank" rel="noopener noreferrer">Open Vercel ↗</a>':'')+
+        (p.links?.quality?'<a class="button small" href="'+esc(p.links.quality)+'" target="_blank" rel="noopener noreferrer">Open quality details ↗</a>':'')+
+        '</div>';
+    }
 
     // Connections and coverage gaps are setup context, so they stay behind the Systems & connections disclosure.
     const ai=platform?.aiTelemetry;
@@ -1819,7 +1837,7 @@
     state.forEach(item=>{item.investigationHistory=loadInvestigationHistory(root,item.project.id);item.productNotes=loadProductNotes(root,item.project.id);});
     const initialParams=new URLSearchParams(root.location.search);
     let activeId=initialParams.get('project')||'state';
-    const allowedTabs=new Set(['overview','ai-quality','activity']);
+    const allowedTabs=new Set(['overview','ai-quality','releases','usage','investigation','technical']);
     let activeTab=allowedTabs.has(initialParams.get('tab'))?initialParams.get('tab'):'overview';
     let summaryFilter='all';
     let renderQueued=false,refreshGeneration=0,investigationDrawerOpen=false;
@@ -1949,6 +1967,7 @@
       doc.querySelectorAll('[data-tab-panel]').forEach(panel=>{panel.hidden=panel.dataset.tabPanel!==activeTab;});
     }
     function setActiveTab(tab,updateUrl=true){
+      if(tab==='activity')tab='releases';
       activeTab=allowedTabs.has(tab)?tab:'overview';
       if(activeTab==='ai-quality'){
         const data=activeData();if(data)data.qualityRunCompletedAt=null;
@@ -2037,6 +2056,8 @@
       else dialog.setAttribute('open','');
     }
     if(projectDetail)projectDetail.addEventListener('click',event=>{
+      const openInvestigationButton=event.target.closest?.('[data-open-investigation]');
+      if(openInvestigationButton){openInvestigationDrawer();return;}
       const addNoteButton=event.target.closest?.('[data-add-product-note]');
       if(addNoteButton){
         if(productNoteDialog?.showModal)productNoteDialog.showModal();else productNoteDialog?.setAttribute('open','');
