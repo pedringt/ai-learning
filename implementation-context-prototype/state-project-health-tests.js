@@ -51,6 +51,18 @@ const analyticsDeniedGaps=H.setupGaps({
 });
 assert.match(analyticsDeniedGaps.find(item=>item.label==='Site analytics').detail,/token/i);
 assert.match(analyticsDeniedGaps.find(item=>item.label==='Runtime error visibility').detail,/token/i);
+const partialRuntimeGaps=H.setupGaps({
+  project:H.PROJECTS[0],
+  platform:{analytics:{configured:true,available:true},neon:{configured:true,available:true},aiTelemetry:{configured:true,available:true}},
+  activity:{available:true,runtime:{available:true,coverage:'partial',issues:[]}},
+  pending:new Set(),
+  runInfo:{configured:true}
+});
+assert.match(partialRuntimeGaps.find(item=>item.label==='Runtime error visibility').detail,/incomplete/i);
+assert.strictEqual(
+  H.neonConnectionDetail({configured:true,available:true,primary_branch:'production',primary_branch_state:'archived'}),
+  'Neon · production · idle storage; resumes automatically'
+);
 
 const healthy=H.normalizeQuality({
   live_review_quality:{resolved_reviews:4,material_edit_rate:.25},
