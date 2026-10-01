@@ -1099,12 +1099,6 @@
     doc.getElementById('detailCopy').textContent=p.description;
     const repoLink=doc.getElementById('repoLink');
     if(repoLink)repoLink.href=repoUrl(p.repo);
-    const liveProjectLink=doc.getElementById('liveProjectLink');
-    if(liveProjectLink){
-      const liveUrl=p.links?.live||'';
-      liveProjectLink.hidden=!liveUrl;
-      if(liveUrl)liveProjectLink.href=liveUrl;
-    }
     const qualityTab=doc.querySelector?.('[data-tab="ai-quality"]');
     if(qualityTab)qualityTab.textContent=p.qualityLabel||'Quality';
     const linksMenu=doc.getElementById('projectLinksMenu');
@@ -1130,8 +1124,8 @@
       projectCheckButton.disabled=!!data.investigation?.loading;
       projectCheckButton.setAttribute('aria-busy',data.investigation?.loading?'true':'false');
       projectCheckButton.textContent=data.investigation?.loading?'Investigating…':'Investigate';
-      projectCheckButton.classList.remove('primary');
-      projectCheckButton.style.order='2';
+      projectCheckButton.classList.add('primary');
+      projectCheckButton.style.order='1';
     }
     if(headerRunChecksButton){
       const activeEvalRun=data.qualityRun;
@@ -1199,181 +1193,38 @@
         (productNotes.length?'<div class="decision-log-list">'+productNotes.slice(0,5).map(note=>'<div class="decision-log-item"><span class="activity-type">'+esc(note.type==='change'?'Change':note.type==='experiment'?'Experiment':'Decision')+'</span><strong>'+esc(note.text)+'</strong><span>'+esc(fmtDate(note.createdAt))+'</span></div>').join('')+'</div>':'<div class="empty compact-empty">No product decisions or changes recorded yet.</div>')+
       '</div>';
 
-    const investigationPanels=[
-      doc.getElementById('latestInvestigationPanel'),
-      doc.getElementById('investigationTabPanel')
-    ].filter(Boolean);
-    if(investigationPanels.length){
-      const latestInvestigation=data.investigation||historyRows[0]||null;
-      let investigationOverviewHtml='';
-      if(latestInvestigation){
-        const reportText=String(latestInvestigation.report||latestInvestigation.summary||latestInvestigation.title||'Investigation completed');
-        const sections={};
-        let current='summary';
-        for(const rawLine of reportText.split(/\n+/)){
-          const line=rawLine.trim();
-          if(!line)continue;
-          const key=line.toLowerCase();
-          if(['current assessment','investigation scope','what failed','why this matters','recommended next action','next checkpoint'].includes(key)){
-            current=key;sections[current]=sections[current]||[];continue;
-          }
-          sections[current]=sections[current]||[];
-          sections[current].push(line.replace(/^[-•]\s*/,''));
-        }
-        const assessment=(sections['current assessment']||sections['investigation scope']||sections.summary||[]).slice(0,2);
-        const failed=(sections['what failed']||[]).slice(0,3);
-        const next=(sections['recommended next action']||sections['next checkpoint']||[]).slice(0,3);
-        const when=latestInvestigation.observedAt||latestInvestigation.createdAt||historyRows[0]?.observedAt;
-        investigationOverviewHtml=
-          '<div class="panel-title-row"><div><h3>Latest investigation</h3><div class="investigation-overview-meta">'+
-          (when?'<span>'+esc(fmtDate(when))+'</span>':'')+
-          (latestInvestigation.qualityInvestigation?'<span>AI quality</span>':'<span>Project health</span>')+
-          '</div></div><button class="button small" type="button" data-open-investigation>View full investigation</button></div>'+
-          '<div class="investigation-overview-grid">'+
-          '<div class="investigation-overview-block"><strong>Current assessment</strong>'+(assessment.length?'<p>'+esc(assessment.join(' '))+'</p>':'<p>No concise assessment was recorded.</p>')+'</div>'+
-          '<div class="investigation-overview-block"><strong>What failed</strong>'+(failed.length?'<ul>'+failed.map(item=>'<li>'+esc(item)+'</li>').join('')+'</ul>':'<p>No specific failed scenario was recorded.</p>')+'</div>'+
-          '<div class="investigation-overview-block"><strong>Recommended next look</strong>'+(next.length?'<ul>'+next.map(item=>'<li>'+esc(item)+'</li>').join('')+'</ul>':'<p>Use the full investigation for the next diagnostic step.</p>')+'</div>'+
-          '</div>';
-      }else{
-        investigationOverviewHtml='<div class="panel-title-row"><div><h3>Latest investigation</h3><p class="panel-copy">Focused diagnostic context appears here after an investigation is run.</p></div><button class="button small" type="button" data-open-investigation>Investigate project</button></div><div class="investigation-overview-empty">No investigation has been recorded for this project yet.</div>';
-      }
-      investigationPanels.forEach(panel=>{panel.innerHTML=investigationOverviewHtml;});
-    }
-
     const overviewQuality=p.quality==='state'?qualityAttention(q):externalQualityAttention(externalQ);
     const overviewDelivery=deliveryAttentionForData(data);
     const overviewInfra=infrastructureAttention(platform);
     const runtimeStatus=productionRuntime(data);
     const aSummary=platform?.analytics;
-    const statusLabel=kind=>kind==='bad'?'Needs attention':kind==='warn'?'Watch':kind==='good'?'Healthy':kind==='available'?'Available':'Unknown';
-
-    const qualityRunPrimary=(run)=>{
-      const score=evalScore(run);
-      return score==null?'—':percent(score);
-    };
-    const healthMetricCard=(label,primary,support,kind,tab)=>'<button class="overview-health-row health-card '+esc(kind||'unknown')+'" type="button" data-tab-target="'+esc(tab)+'">'+
-      '<div class="health-card-head"><strong>'+esc(label)+'</strong></div>'+
-      '<span class="health-primary '+esc(kind||'unknown')+'">'+esc(primary)+'</span>'+
-      '<span class="health-support">'+esc(support)+'</span>'+
-      '</button>';
-
-    let healthCards=[];
-    if(p.quality==='state'){
-      const review=q?.review,ask=q?.ask;
-      const reviewKind=review?(Number(review.high_severity_failures||0)>0?'bad':evalScore(review)<1?'warn':'good'):'unknown';
-      const askKind=ask?(Number(ask.high_severity_failures||0)>0?'bad':evalScore(ask)<1?'warn':'good'):'unknown';
-      healthCards.push({
-        label:'Update understanding',
-        primary:qualityRunPrimary(review),
-        support:review?(scenarioPassLabel(review,evalScore(review))||'Latest controlled eval'):'No recorded run yet',
-        kind:reviewKind,
-        tab:'ai-quality'
-      });
-      healthCards.push({
-        label:'Answer quality',
-        primary:qualityRunPrimary(ask),
-        support:ask?(scenarioPassLabel(ask,evalScore(ask))||'Latest controlled eval'):'No recorded run yet',
-        kind:askKind,
-        tab:'ai-quality'
-      });
-    }else if(p.id==='tastemake'&&externalQ){
-      const endpoint=externalQ.endpoint||{},ci=externalQ.ci||{};
-      const rulesPassed=endpoint.rule_checks?.passed, rulesTotal=endpoint.rule_checks?.total;
-      const caught=endpoint.validator_self_test?.caught, caughtTotal=endpoint.validator_self_test?.total;
-      healthCards.push({
-        label:'Recommendation rules',
-        primary:(rulesPassed??'—')+'/'+(rulesTotal??'—'),
-        support:'Current recommendation-rule checks',
-        kind:rulesPassed!=null&&rulesTotal!=null&&Number(rulesPassed)===Number(rulesTotal)?'good':'warn',
-        tab:'ai-quality'
-      });
-      healthCards.push({
-        label:'Bad outputs caught',
-        primary:(caught??'—')+'/'+(caughtTotal??'—'),
-        support:ci.conclusion==='success'?'Main automated checks passing':'Latest automated check status',
-        kind:ci.conclusion==='success'?'good':'unknown',
-        tab:'ai-quality'
-      });
-    }else if(p.id==='narc'&&externalQ){
-      healthCards.push({
-        label:'Automated checks',
-        primary:externalQ.recorded?.recorded_all_suites_green?'3/3':'—',
-        support:'Branches, consequences, time rules, and desktop behavior',
-        kind:externalQ.recorded?.recorded_all_suites_green?'good':'unknown',
-        tab:'ai-quality'
-      });
-      healthCards.push({
-        label:'Human playtest',
-        primary:externalQ.recorded?.full_playtest_pending?'Pending':'Recorded',
-        support:'First-run experience check',
-        kind:externalQ.recorded?.full_playtest_pending?'warn':'good',
-        tab:'ai-quality'
-      });
-    }else{
-      const qKind=overviewQuality?.kind||'unknown';
-      healthCards.push({label:p.qualityLabel||'Product quality',primary:statusLabel(qKind),support:overviewQuality?.title||'Quality status unavailable',kind:qKind,tab:'ai-quality'});
-      healthCards.push({label:'Quality evidence',primary:'—',support:'No comparable quality score available',kind:'unknown',tab:'ai-quality'});
-    }
-
-    const prodKind=runtimeStatus.kind==='good'?'good':runtimeStatus.kind==='bad'?'bad':overviewDelivery?.kind||'unknown';
-    healthCards.push({
-      label:'Production',
-      primary:runtimeStatus.label||statusLabel(prodKind),
-      support:overviewDelivery?.title||runtimeStatus.detail||'Production status',
-      kind:prodKind,
-      tab:'releases'
-    });
-    healthCards.push({
-      label:'Usage',
-      primary:aSummary?.available?String(aSummary.visitors??'—'):'—',
-      support:aSummary?.available?((aSummary.pageviews??'—')+' page views · 30d'):(aSummary?.configured?'Connected, no usable counts yet':'Usage data not connected'),
-      kind:aSummary?.available?'good':'unknown',
-      tab:'usage'
-    });
-
-    doc.getElementById('overviewHealthPanel').innerHTML=
-      '<div class="panel-title-row"><h3>Current health</h3></div>'+
-      '<div class="overview-health">'+healthCards.slice(0,4).map(item=>healthMetricCard(item.label,item.primary,item.support,item.kind,item.tab)).join('')+'</div>';
-
-    const releasePanel=doc.getElementById('overviewReleasePanel');
-    if(releasePanel){
-      const releaseTitle=d?.message?commitTitle(d.message):'No recent release data';
-      const releaseStatus=d?.vercel?.label||'Deployment status unavailable';
-      releasePanel.innerHTML=
-        '<span class="overview-card-kicker">Latest release</span>'+
-        '<div class="overview-card-title">'+esc(releaseTitle)+'</div>'+
-        '<div class="overview-card-meta">'+esc(shortSha(d?.sha))+(d?.updatedAt?' · '+esc(fmtDate(d.updatedAt)):'')+'</div>'+
-        '<p class="overview-card-copy">'+esc(releaseStatus)+'.</p>'+
-        '<div class="overview-card-actions"><button class="button small" type="button" data-tab-target="releases">View releases</button></div>';
-    }
-
-    const usagePanel=doc.getElementById('overviewUsagePanel');
-    if(usagePanel){
-      if(aSummary?.available){
-        usagePanel.innerHTML=
-          '<span class="overview-card-kicker">Usage</span>'+
-          '<div class="overview-card-title">Production activity · last 30 days</div>'+
-          '<div class="overview-usage-grid">'+
-            '<div class="overview-usage-stat"><strong>'+esc(aSummary.visitors??'—')+'</strong><span>Visitors</span></div>'+
-            '<div class="overview-usage-stat"><strong>'+esc(aSummary.pageviews??'—')+'</strong><span>Page views</span></div>'+
-          '</div>'+
-          '<div class="overview-card-actions"><button class="button small" type="button" data-tab-target="usage">View usage</button></div>';
-      }else{
-        usagePanel.innerHTML=
-          '<span class="overview-card-kicker">Usage</span>'+
-          '<div class="overview-card-title">No usage data available yet</div>'+
-          '<p class="overview-card-copy">'+esc(aSummary?.configured?'Analytics are connected, but usable counts are not available for this project yet.':'Usage analytics are not connected for this project.')+'</p>'+
-          '<div class="overview-card-actions"><button class="button small" type="button" data-tab-target="usage">View usage setup</button></div>';
-      }
-    }
-
+    const statusLabel=kind=>kind==='bad'?'Needs attention':kind==='warn'?'Watch':kind==='good'?'Healthy':kind==='available'?'Data available':'Unknown';
+    const qualityTime=p.quality==='state'
+      ?[q?.review?.created_at,q?.ask?.created_at].filter(Boolean).sort().pop()
+      :(externalQ?.ci?.updated_at||externalQ?.recorded?.updated_at||data.checkedAt);
+    const healthRows=[
+      {label:p.qualityLabel||'Quality',kind:overviewQuality?.kind||'unknown',detail:overviewQuality?.title||'Quality status unavailable',tab:'ai-quality',fresh:freshnessMeta(qualityTime,data.checkedAt,72)},
+      {label:'Production',kind:runtimeStatus.kind,status:runtimeStatus.label,detail:runtimeStatus.detail,tab:'overview',section:'deliveryPanel',fresh:freshnessMeta(data.detailCheckedAt||d?.updatedAt||data.checkedAt,data.checkedAt,24)},
+      {label:'Release pipeline',kind:overviewDelivery?.kind||'unknown',detail:overviewDelivery?.title||'Release status unavailable',tab:'overview',section:'deliveryPanel',fresh:freshnessMeta(d?.updatedAt,data.checkedAt,24)},
+      ...(overviewInfra&&['bad','warn'].includes(overviewInfra.kind)?[{label:'Infrastructure',kind:overviewInfra.kind,detail:overviewInfra.title,tab:'overview',section:'systemsDetails',fresh:freshnessMeta(data.detailCheckedAt||data.checkedAt,data.checkedAt,6)}]:[]),
+      {label:'Site analytics',kind:pending.has('Analytics')?'unknown':aSummary?.available?'available':'unknown',status:aSummary?.available?'Data available':null,detail:pending.has('Analytics')?'Checking site analytics…':aSummary?.available?((aSummary.visitors??0)+' visitors · '+(aSummary.pageviews??0)+' page views · 30d'):(aSummary?.configured?'Connected, but comparison data is not available yet':'Site analytics are not connected'),tab:'overview',section:aSummary?.available?'analyticsPanel':'systemsDetails',fresh:freshnessMeta(data.detailCheckedAt||data.checkedAt,data.checkedAt,24)}
+    ];
     const changes=meaningfulChanges(data);
     const sinceLabel=data.lastVisit?.savedAt?fmtDate(data.lastVisit.savedAt):'your previous saved visit';
     const changesPanel=doc.getElementById('changesPanel');
     changesPanel.classList.toggle('compact-zero',!changes.length);
     changesPanel.innerHTML=changes.length
-      ?'<div class="panel-title-row"><div><h3>Changed since last visit</h3><p class="panel-copy">Compared with '+esc(sinceLabel)+'. Only meaningful changes are shown.</p></div><span class="readiness-pill watch">'+esc(changes.length)+' change'+(changes.length===1?'':'s')+'</span></div><div class="change-list" style="margin-top:6px">'+changes.slice(0,8).map(item=>'<button class="change-item" type="button" data-tab-target="'+esc(item.tab||'releases')+'"'+(item.section?' data-section-target="'+esc(item.section)+'"':'')+'><span class="change-dot"></span><div><div class="change-item-head"><strong>'+esc(item.title)+'</strong><span class="change-time">'+esc(relativeAge(item.observedAt))+'</span></div><span class="change-detail">'+esc(item.detail)+'</span></div></button>').join('')+'</div>'
+      ?'<div class="panel-title-row"><div><h3>Changed since last visit</h3><p class="panel-copy">Compared with '+esc(sinceLabel)+'. Only meaningful changes are shown.</p></div><span class="readiness-pill watch">'+esc(changes.length)+' change'+(changes.length===1?'':'s')+'</span></div><div class="change-list" style="margin-top:6px">'+changes.slice(0,8).map(item=>'<button class="change-item" type="button" data-tab-target="'+esc(item.tab||'activity')+'"'+(item.section?' data-section-target="'+esc(item.section)+'"':'')+'><span class="change-dot"></span><div><div class="change-item-head"><strong>'+esc(item.title)+'</strong><span class="change-time">'+esc(relativeAge(item.observedAt))+'</span></div><span class="change-detail">'+esc(item.detail)+'</span></div></button>').join('')+'</div>'
       :'<div class="changes-zero" role="status"><span aria-hidden="true">✓</span><strong>No meaningful changes since your last visit</strong></div>';
+    doc.getElementById('overviewHealthPanel').innerHTML='<div class="panel-title-row"><h3>System health</h3></div>'+
+      '<div class="overview-health" style="margin-top:10px">'+healthRows.map(item=>{
+        const showFreshness=item.fresh?.stale||['bad','warn','unknown'].includes(item.kind);
+        return '<button class="overview-health-row health-card '+esc(item.kind||'unknown')+'" type="button" data-tab-target="'+esc(item.tab)+'"'+(item.section?' data-section-target="'+esc(item.section)+'"':'')+'>'+
+          '<div class="health-card-head"><strong>'+esc(item.label)+'</strong><span class="health-status '+esc(item.kind)+'">'+esc(item.status||statusLabel(item.kind))+'</span></div>'+
+          '<span class="health-detail">'+esc(item.detail)+'</span>'+
+          (showFreshness?'<span class="signal-meta '+(item.fresh?.stale?'stale':'')+'">'+esc(item.fresh?.label||'Freshness unknown')+'</span>':'')+
+        '</button>';
+      }).join('')+'</div>';
 
     // Product quality / evals
     let qualityHtml='';
@@ -1534,7 +1385,7 @@
       '<div class="activity-filters" role="group" aria-label="Filter activity">'+activityFilters.map(([key,label])=>'<button class="activity-filter '+(activityFilter===key?'active':'')+'" type="button" data-activity-filter="'+key+'" aria-pressed="'+(activityFilter===key?'true':'false')+'">'+label+'</button>').join('')+'</div>'+
       '<div style="margin-top:12px">'+timelineHtml+'</div>';
     const overviewActivity=timelineItems.length?'<div class="activity-list">'+timelineItems.slice(0,3).map(item=>'<div class="activity-item"><span class="activity-type">'+esc(item.type||'Activity')+'</span><strong>'+esc(item.title)+'</strong><span>'+esc(relativeAge(item.when))+' · '+esc(item.detail||'')+'</span></div>').join('')+'</div>':'<div class="empty">No recent activity is available yet.</div>';
-    doc.getElementById('overviewActivityPanel').innerHTML='<div class="panel-title-row"><h3>Recent activity</h3><button class="button small" type="button" data-tab-target="releases">View timeline</button></div><div style="margin-top:12px">'+overviewActivity+'</div>';
+    doc.getElementById('overviewActivityPanel').innerHTML='<div class="panel-title-row"><h3>Recent activity</h3><button class="button small" type="button" data-tab-target="activity">View timeline</button></div><div style="margin-top:12px">'+overviewActivity+'</div>';
 
     // Delivery separates what users have now from whether the next release can ship.
     const investigationBusy=!!data.investigation?.loading;
@@ -1587,24 +1438,6 @@
     doc.getElementById('infrastructurePanel').innerHTML='<h3>Infrastructure</h3>'+
       '<div class="delivery-summary '+(infraAttention?.kind==='bad'?'bad':infraAttention?.kind==='warn'?'warn':'')+'" style="margin-top:12px">'+esc(infraAttention?.title||'Production services healthy')+'</div>'+
       '<div class="service-grid">'+infraCards.map(item=>'<div class="service-card"><strong>'+esc(item.label)+'</strong><span class="service-status">'+esc(item.status)+'</span><span class="service-detail">'+esc(item.detail)+'</span>'+(item.url?'<a href="'+esc(item.url)+'" target="_blank" rel="noopener noreferrer">Open '+esc(item.detail.split(' · ')[0])+' ↗</a>':'')+'</div>').join('')+'</div>';
-
-    const technicalPanel=doc.getElementById('technicalPanel');
-    if(technicalPanel){
-      const techRows=[
-        ['Repository',p.repo],
-        ['Production branch',d?.branch||p.branch||'Unknown'],
-        ['Latest commit',shortSha(d?.sha)],
-        ['Release status',d?.vercel?.label||'Unavailable'],
-        ['Checked',fmtDate(data.detailCheckedAt||data.checkedAt)]
-      ];
-      technicalPanel.innerHTML=
-        '<div class="panel-title-row"><div><h3>Technical details</h3><p class="panel-copy">Source, deployment, and connection details for debugging and verification.</p></div><button class="button small" type="button" data-open-systems>Systems &amp; connections</button></div>'+
-        '<div class="rows" style="margin-top:12px">'+techRows.map(item=>row(item[0],item[1])).join('')+'</div>'+
-        '<div class="quality-actions"><a class="button small" href="'+esc(repoUrl(p.repo))+'" target="_blank" rel="noopener noreferrer">Open repository ↗</a>'+
-        (p.links?.vercel?'<a class="button small" href="'+esc(p.links.vercel)+'" target="_blank" rel="noopener noreferrer">Open Vercel ↗</a>':'')+
-        (p.links?.quality?'<a class="button small" href="'+esc(p.links.quality)+'" target="_blank" rel="noopener noreferrer">Open quality details ↗</a>':'')+
-        '</div>';
-    }
 
     // Connections and coverage gaps are setup context, so they stay behind the Systems & connections disclosure.
     const ai=platform?.aiTelemetry;
@@ -1944,7 +1777,7 @@
     state.forEach(item=>{item.investigationHistory=loadInvestigationHistory(root,item.project.id);item.productNotes=loadProductNotes(root,item.project.id);});
     const initialParams=new URLSearchParams(root.location.search);
     let activeId=initialParams.get('project')||'state';
-    const allowedTabs=new Set(['overview','ai-quality','releases','usage','investigation','technical']);
+    const allowedTabs=new Set(['overview','ai-quality','activity']);
     let activeTab=allowedTabs.has(initialParams.get('tab'))?initialParams.get('tab'):'overview';
     let summaryFilter='all';
     let renderQueued=false,refreshGeneration=0,investigationDrawerOpen=false;
@@ -2074,7 +1907,6 @@
       doc.querySelectorAll('[data-tab-panel]').forEach(panel=>{panel.hidden=panel.dataset.tabPanel!==activeTab;});
     }
     function setActiveTab(tab,updateUrl=true){
-      if(tab==='activity')tab='releases';
       activeTab=allowedTabs.has(tab)?tab:'overview';
       if(activeTab==='ai-quality'){
         const data=activeData();if(data)data.qualityRunCompletedAt=null;
@@ -2163,8 +1995,6 @@
       else dialog.setAttribute('open','');
     }
     if(projectDetail)projectDetail.addEventListener('click',event=>{
-      const openInvestigationButton=event.target.closest?.('[data-open-investigation]');
-      if(openInvestigationButton){openInvestigationDrawer();return;}
       const addNoteButton=event.target.closest?.('[data-add-product-note]');
       if(addNoteButton){
         if(productNoteDialog?.showModal)productNoteDialog.showModal();else productNoteDialog?.setAttribute('open','');
