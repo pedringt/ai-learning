@@ -1556,13 +1556,15 @@
       }
       if(pending.has('Run controls')&&!run){
         qualityHtml+='<div class="eval-actions"><span class="footnote">Checking run availability…</span></div>';
-      }else if(run?.configured&&!activeEvalRun){
+      }else if(run?.configured&&run?.can_run_here!==false&&!activeEvalRun){
         qualityHtml+='<div class="eval-actions"><button class="button small primary" type="button" data-run-checks="all">Run all AI evals</button></div>'+
           '<div class="eval-suite-actions"><strong>Run a specific eval suite</strong><p>State has two controlled eval areas. Rerun one when you are checking a targeted change.</p><div class="suite-action-grid">'+
           '<button class="button small suite-action" type="button" data-run-checks="review"><span class="suite-action-copy"><strong>Update understanding</strong><span>How State interprets new evidence and proposed truth changes.</span></span><span class="suite-action-run">Run →</span></button>'+
           '<button class="button small suite-action" type="button" data-run-checks="ask"><span class="suite-action-copy"><strong>Answer quality</strong><span>Grounding, uncertainty, and decision authority in answers.</span></span><span class="suite-action-run">Run →</span></button>'+
           '</div></div>'+
           '<p class="footnote">Estimated model cost: '+esc(run.estimated_cost||'not configured')+'. You will confirm before any paid run starts.</p>';
+      }else if(run?.can_run_here===false&&!activeEvalRun){
+        qualityHtml+='<p class="footnote">Live State AI eval runs are owner-only. Public triggering is disabled because the suite makes paid model calls and updates the recorded quality history.</p>';
       }else if(run&&!activeEvalRun){
         qualityHtml+='<p class="footnote">Running AI evals from the dashboard still needs setup. Existing recorded results can still appear here.</p>';
       }
@@ -1802,7 +1804,7 @@
   }
 
   async function dispatchRun(data,root,suite='all'){
-    const run=data.runInfo;if(!run?.configured)return;
+    const run=data.runInfo;if(!run?.configured||run?.can_run_here===false)return;
     const projectId=data.project.id;
     if(run.paid_model_calls){
       const labels={all:'all AI quality checks',review:'update-understanding checks',ask:'answer-quality checks'};
