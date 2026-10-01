@@ -778,6 +778,24 @@ assert.strictEqual(deploymentPattern.status,'Pattern');
 assert.match(deploymentPattern.detail,/3 failed production-target deployment attempts/);
 assert.match(deploymentPattern.detail,/2 later recovered/);
 
+const evalCoverageGaps=H.setupGaps({
+  project:{id:'state'},
+  delivery:{sha:'abcdef1234567890'},
+  quality:{review:{build:'1234567abcdef'},ask:{build:'1234567abcdef'}},
+  platform:{aiTelemetry:{available:true,cost:{partial:false},workflow:{available:true}},neon:{available:true}},
+  runInfo:{configured:true}
+});
+assert.ok(evalCoverageGaps.some(item=>item.label==='Current release eval coverage'));
+
+const splitEvalBuildGaps=H.setupGaps({
+  project:{id:'state'},
+  delivery:{sha:'abcdef1234567890'},
+  quality:{review:{build:'1234567abcdef'},ask:{build:'7654321abcdef'}},
+  platform:{aiTelemetry:{available:true,cost:{partial:false},workflow:{available:true}},neon:{available:true}},
+  runInfo:{configured:true}
+});
+assert.ok(splitEvalBuildGaps.some(item=>item.label==='Eval build alignment'));
+
 const workflowText=fs.readFileSync(require.resolve('../.github/workflows/question-review-live.yml'),'utf8');
 assert.match(workflowText,/suite:/);
 assert.match(workflowText,/record_environment:/);
