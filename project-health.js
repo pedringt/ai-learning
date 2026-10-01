@@ -281,6 +281,9 @@
     }else if(p.id==='state'&&ai?.available&&ai.cost?.partial){
       gaps.push({label:'AI cost coverage',detail:'Some recorded model calls do not have known pricing, so they are excluded from the estimate.'});
     }
+    if(p.id==='state'&&ai?.available&&!(ai.workflow?.available||ai.agent_workflow?.available)){
+      gaps.push({label:'Agent workflow telemetry',detail:'Tool calls, retries, loops, fallbacks, and escalations are not emitted by the current State telemetry feed.'});
+    }
     return gaps;
   }
   function releaseReadiness(data){
@@ -307,7 +310,14 @@
     candidates.sort((a,b)=>a.delta-b.delta);
     const worst=candidates[0];
     const label=worst.suite==='review_interpretation'?'Update understanding':'Answer quality';
-    if(worst.delta<0)return {kind:'warn',title:label+' regressed '+Math.abs(worst.delta)+' points',detail:'Review the changed scenario evidence and the release or product change that preceded this run.',when:worst.when};
+    if(worst.delta<0){
+      const suiteRows=rows.filter(item=>item?.suite===worst.suite).slice().sort((a,b)=>(dateMs(b?.created_at)||0)-(dateMs(a?.created_at)||0));
+      const latestBuild=String(suiteRows[0]?.build||'').trim(),previousBuild=String(suiteRows[1]?.build||'').trim();
+      const buildContext=latestBuild&&previousBuild&&latestBuild!==previousBuild
+        ?' Comparable runs used builds '+shortSha(previousBuild)+' → '+shortSha(latestBuild)+'.'
+        :'';
+      return {kind:'warn',title:label+' regressed '+Math.abs(worst.delta)+' points',detail:'Review the changed scenario evidence and the release or product change that preceded this run.'+buildContext,when:worst.when};
+    }
     return {kind:'good',title:'No recent eval regression detected',detail:'The latest comparable controlled eval runs are stable or improved.',when:worst.when};
   }
   function recurringFailureSignal(data){
@@ -333,7 +343,10 @@
   function operationalSignals(data){
     const signals=[];
     const ai=data?.platform?.aiTelemetry;
-    if(data?.project?.quality==='state')signals.push(recurringFailureSignal(data));
+    if(data?.project?.quality==='state'){
+      const recurring=recurringFailureSignal(data);
+      if(recurring.kind!=='unknown')signals.push(recurring);
+    }
     if(data?.project?.id!=='narc'){
       const speed=ai?.response_speed;
       const sample=Number(speed?.sample_size||0);
@@ -347,8 +360,6 @@
           ?' · last saved '+durationLabel(previousP95)+' ('+(delta>0?'+':'')+durationLabel(Math.abs(delta))+(delta<0?' faster':' slower')+')'
           :'';
         signals.push({kind:'available',label:'AI response speed',status:changed?'Changed':'Measured',detail:'p95 '+durationLabel(p95)+' across '+sample+' '+(sample===1?'recorded call':'recorded calls')+comparison+'.'});
-      }else{
-        signals.push({kind:'unknown',label:'AI response speed',status:'Not measured',detail:'There is not enough recent runtime telemetry to establish a response-speed pattern.'});
       }
     }
     if(data?.project?.quality==='state'){
@@ -359,16 +370,33 @@
           ?resolved+' human-reviewed proposals resolved.'
           :resolved+' human-reviewed proposals resolved · '+percent(edit)+' materially edited.';
         signals.push({kind:'available',label:'Human review burden',status:'Observed',detail});
-      }else{
-        signals.push({kind:'unknown',label:'Human review burden',status:'Not enough data',detail:'No resolved live review sample is available yet.'});
       }
       const workflow=ai?.workflow||ai?.agent_workflow;
       if(workflow?.available){
         const repeated=Number(workflow.repeated_tool_calls||0),retries=Number(workflow.retries||0),fallbacks=Number(workflow.fallbacks||0);
         const kind=repeated>0||retries>0?'warn':'available';
         signals.push({kind,label:'Agent workflow',status:kind==='warn'?'Watch':'Measured',detail:[repeated+' repeated tool calls',retries+' retries',fallbacks+' fallbacks'].join(' · ')});
-      }else{
-        signals.push({kind:'unknown',label:'Agent workflow',status:'Not measured',detail:'Tool-call repetition, retries, loops, fallbacks, and escalations are not connected yet.'});
+      }
+    }
+    if(data?.project?.quality==='state'&&data?.quality){
+      const latestRuns=[data.quality.review,data.quality.ask].filter(Boolean);
+      const evalErrors=latestRuns.reduce((sum,run)=>sum+Number(run?.errors||0),0);
+      if(evalErrors>0){
+        signals.push({kind:'warn',label:'Eval execution',status:'Watch',detail:evalErrors+' eval execution error'+(evalErrors===1?'':'s')+' recorded in the latest controlled runs. Treat these separately from product-quality failures.'});
+      }
+      const recent=Array.isArray(data.quality.recent)?data.quality.recent:[];
+      const modelChanges=[];
+      for(const suite of ['review_interpretation','ask_quality']){
+        const rows=recent.filter(item=>item?.suite===suite).slice().sort((a,b)=>(dateMs(b?.created_at)||0)-(dateMs(a?.created_at)||0));
+        if(rows.length<2)continue;
+        const latestModel=String(rows[0]?.model_identifier||'').trim();
+        const previousModel=String(rows[1]?.model_identifier||'').trim();
+        if(latestModel&&previousModel&&latestModel!==previousModel){
+          modelChanges.push((suite==='review_interpretation'?'Update understanding':'Answer quality')+': '+modelDisplayName(previousModel)+' → '+modelDisplayName(latestModel));
+        }
+      }
+      if(modelChanges.length){
+        signals.push({kind:'available',label:'Eval model change',status:'Context',detail:modelChanges.join(' · ')+'.'});
       }
     }
     const unresolved=(Array.isArray(data?.investigationHistory)?data.investigationHistory:[])
