@@ -275,11 +275,26 @@
     }
     if(p.id==='state'&&!platform?.neon?.available) gaps.push({label:'Database health',detail:'Not connected or unavailable. This is a monitoring gap, not a product incident.'});
     if(p.id==='state'&&run&&!run.configured) gaps.push({label:'Run AI evals',detail:'Dashboard-run setup is incomplete.'});
+    if(p.id==='state'&&data?.quality){
+      const evalBuilds=[data.quality.review?.build,data.quality.ask?.build]
+        .map(value=>String(value||'').trim())
+        .filter(value=>/^[0-9a-f]{7,40}$/i.test(value));
+      const uniqueBuilds=[...new Set(evalBuilds)];
+      const releaseSha=String(data?.delivery?.sha||'').trim();
+      if(uniqueBuilds.length>1){
+        gaps.push({label:'Eval build alignment',detail:'The latest controlled eval suites were recorded against different builds ('+uniqueBuilds.map(shortSha).join(' and ')+').'});
+      }else if(uniqueBuilds.length===1&&/^[0-9a-f]{7,40}$/i.test(releaseSha)&&uniqueBuilds[0]!==releaseSha){
+        gaps.push({label:'Current release eval coverage',detail:'Latest controlled eval evidence is from build '+shortSha(uniqueBuilds[0])+', while the current scoped release is '+shortSha(releaseSha)+'.'});
+      }
+    }
     if(p.id!=='narc'&&!pendingSet(data).has('AI operations')&&!ai?.available){
       gaps.push({label:'AI cost',detail:'Estimated model spend is not available yet.'});
       gaps.push({label:'AI response speed',detail:'Observed model response speed is not available yet.'});
     }else if(p.id==='state'&&ai?.available&&ai.cost?.partial){
       gaps.push({label:'AI cost coverage',detail:'Some recorded model calls do not have known pricing, so they are excluded from the estimate.'});
+    }
+    if(p.id==='state'&&ai?.available&&!(ai.workflow?.available||ai.agent_workflow?.available)){
+      gaps.push({label:'Agent workflow telemetry',detail:'Tool calls, retries, loops, fallbacks, and escalations are not emitted by the current State telemetry feed.'});
     }
     return gaps;
   }
@@ -307,9 +322,126 @@
     candidates.sort((a,b)=>a.delta-b.delta);
     const worst=candidates[0];
     const label=worst.suite==='review_interpretation'?'Update understanding':'Answer quality';
-    if(worst.delta<0)return {kind:'warn',title:label+' regressed '+Math.abs(worst.delta)+' points',detail:'Review the changed scenario evidence and the release or product change that preceded this run.',when:worst.when};
+    if(worst.delta<0){
+      const suiteRows=rows.filter(item=>item?.suite===worst.suite).slice().sort((a,b)=>(dateMs(b?.created_at)||0)-(dateMs(a?.created_at)||0));
+      const latestBuild=String(suiteRows[0]?.build||'').trim(),previousBuild=String(suiteRows[1]?.build||'').trim();
+      const buildContext=latestBuild&&previousBuild&&latestBuild!==previousBuild
+        ?' Comparable runs used builds '+shortSha(previousBuild)+' → '+shortSha(latestBuild)+'.'
+        :'';
+      return {kind:'warn',title:label+' regressed '+Math.abs(worst.delta)+' points',detail:'Review the changed scenario evidence and the release or product change that preceded this run.'+buildContext,when:worst.when};
+    }
     return {kind:'good',title:'No recent eval regression detected',detail:'The latest comparable controlled eval runs are stable or improved.',when:worst.when};
   }
+  function recurringFailureSignal(data){
+    if(data?.project?.quality!=='state'||!data?.quality)return {kind:'unknown',label:'Recurring failures',status:'Not measured',detail:'Recurring scenario failures are only available for State controlled evals.'};
+    const rows=(Array.isArray(data.quality.recent)?data.quality.recent:[]).slice(0,8);
+    if(rows.length<2)return {kind:'unknown',label:'Recurring failures',status:'Not enough history',detail:'At least two recorded eval runs are needed to distinguish a one-off miss from a recurring pattern.'};
+    const counts=new Map();
+    for(const run of rows){
+      const seen=new Set();
+      for(const failure of (Array.isArray(run?.failure_details)?run.failure_details:[])){
+        const id=String(failure?.scenario_id||'').trim();
+        if(!id||seen.has(id))continue;
+        seen.add(id);
+        counts.set(id,(counts.get(id)||0)+1);
+      }
+    }
+    const recurring=[...counts.entries()].filter(([,count])=>count>=2).sort((a,b)=>b[1]-a[1]);
+    if(!recurring.length)return {kind:'good',label:'Recurring failures',status:'No pattern',detail:'No scenario failed in more than one of the recent recorded runs.'};
+    const [scenario,count]=recurring[0];
+    const explanation=failureExplanation({scenario_id:scenario});
+    return {kind:'warn',label:'Recurring failures',status:'Watch',detail:(explanation?.title||scenario)+' · failed in '+count+' recent runs.'};
+  }
+  function operationalSignals(data){
+    const signals=[];
+    const ai=data?.platform?.aiTelemetry;
+    if(data?.project?.quality==='state'){
+      const recurring=recurringFailureSignal(data);
+      if(recurring.kind!=='unknown')signals.push(recurring);
+    }
+    if(data?.project?.id!=='narc'){
+      const speed=ai?.response_speed;
+      const sample=Number(speed?.sample_size||0);
+      const p95=Number(speed?.p95_ms);
+      if(ai?.available&&sample>0&&Number.isFinite(p95)){
+        const previousP95=Number(data?.previousPlatform?.aiTelemetry?.response_speed?.p95_ms);
+        const hasPrevious=Number.isFinite(previousP95)&&previousP95>0;
+        const delta=hasPrevious?p95-previousP95:null;
+        const changed=hasPrevious&&Math.abs(delta)>=1;
+        const comparison=changed
+          ?' · last saved '+durationLabel(previousP95)+' ('+(delta>0?'+':'')+durationLabel(Math.abs(delta))+(delta<0?' faster':' slower')+')'
+          :'';
+        signals.push({kind:'available',label:'AI response speed',status:changed?'Changed':'Measured',detail:'p95 '+durationLabel(p95)+' across '+sample+' '+(sample===1?'recorded call':'recorded calls')+comparison+'.'});
+      }
+    }
+    if(data?.project?.quality==='state'){
+      const resolved=Number(data?.quality?.resolvedReviews||0);
+      if(resolved>0){
+        const edit=data?.quality?.materialEditRate;
+        const detail=edit==null
+          ?resolved+' human-reviewed proposals resolved.'
+          :resolved+' human-reviewed proposals resolved · '+percent(edit)+' materially edited.';
+        signals.push({kind:'available',label:'Human review burden',status:'Observed',detail});
+      }
+      const workflow=ai?.workflow||ai?.agent_workflow;
+      if(workflow?.available){
+        const repeated=Number(workflow.repeated_tool_calls||0),retries=Number(workflow.retries||0),fallbacks=Number(workflow.fallbacks||0);
+        const kind=repeated>0||retries>0?'warn':'available';
+        signals.push({kind,label:'Agent workflow',status:kind==='warn'?'Watch':'Measured',detail:[repeated+' repeated tool calls',retries+' retries',fallbacks+' fallbacks'].join(' · ')});
+      }
+    }
+    const deploymentFailures=Array.isArray(data?.activity?.deployments?.recent_failures)?data.activity.deployments.recent_failures:[];
+    if(deploymentFailures.length>=2){
+      const recovered=deploymentFailures.filter(item=>item?.recovered).length;
+      const lookback=Number(data?.activity?.lookback_days||7);
+      signals.push({
+        kind:'warn',
+        label:'Release attempts',
+        status:'Pattern',
+        detail:deploymentFailures.length+' failed production-target deployment attempts in the last '+lookback+' days'+(recovered?' · '+recovered+' later recovered':'')+'.'
+      });
+    }
+    if(data?.project?.quality==='state'&&data?.quality){
+      const latestRuns=[data.quality.review,data.quality.ask].filter(Boolean);
+      const evalErrors=latestRuns.reduce((sum,run)=>sum+Number(run?.errors||0),0);
+      if(evalErrors>0){
+        signals.push({kind:'warn',label:'Eval execution',status:'Watch',detail:evalErrors+' eval execution error'+(evalErrors===1?'':'s')+' recorded in the latest controlled runs. Treat these separately from product-quality failures.'});
+      }
+      const recent=Array.isArray(data.quality.recent)?data.quality.recent:[];
+      const contextChanges=[];
+      for(const suite of ['review_interpretation','ask_quality']){
+        const rows=recent.filter(item=>item?.suite===suite).slice().sort((a,b)=>(dateMs(b?.created_at)||0)-(dateMs(a?.created_at)||0));
+        if(rows.length<2)continue;
+        const label=suite==='review_interpretation'?'Update understanding':'Answer quality';
+        const latestModel=String(rows[0]?.model_identifier||'').trim();
+        const previousModel=String(rows[1]?.model_identifier||'').trim();
+        if(latestModel&&previousModel&&latestModel!==previousModel){
+          contextChanges.push(label+' model: '+modelDisplayName(previousModel)+' → '+modelDisplayName(latestModel));
+        }
+        const latestProvider=String(rows[0]?.provider||'').trim();
+        const previousProvider=String(rows[1]?.provider||'').trim();
+        if(latestProvider&&previousProvider&&latestProvider!==previousProvider){
+          contextChanges.push(label+' provider: '+previousProvider+' → '+latestProvider);
+        }
+        const latestTotal=Number(rows[0]?.total),previousTotal=Number(rows[1]?.total);
+        if(Number.isFinite(latestTotal)&&Number.isFinite(previousTotal)&&latestTotal!==previousTotal){
+          contextChanges.push(label+' scenarios: '+previousTotal+' → '+latestTotal);
+        }
+      }
+      if(contextChanges.length){
+        signals.push({kind:'available',label:'Eval context changed',status:'Context',detail:contextChanges.join(' · ')+'.'});
+      }
+    }
+    const unresolved=(Array.isArray(data?.investigationHistory)?data.investigationHistory:[])
+      .filter(item=>item?.needsAttentionAtRun&&!item?.resolvedAt)
+      .sort((a,b)=>(dateMs(b?.observedAt)||0)-(dateMs(a?.observedAt)||0))[0];
+    if(unresolved){
+      const age=relativeAge(unresolved.observedAt);
+      signals.push({kind:'warn',label:'Open investigation',status:'Open',detail:(unresolved.trigger||'Project investigation')+' · opened '+age+' · no resolution recorded yet.'});
+    }
+    return signals;
+  }
+
   function healthConsistencyIssues(data){
     const issues=[];
     const open=productOpenItems(data);
@@ -638,6 +770,7 @@
       qualityBehaviorUpdatedAt:s.qualityBehaviorUpdatedAt||null,
       externalQuality:s.externalQuality||null,
       platform:s.platform||null,
+      previousPlatform:s.platform||null,
       activity:s.activity||null,
       openPullRequests:Array.isArray(s.openPullRequests)?s.openPullRequests:[],
       runInfo:null,
@@ -1246,13 +1379,15 @@
     const riskItems=releaseRiskChecklist(data);
     const regression=regressionSignal(data);
     const monitoringGaps=setupGaps(data);
+    const operational=operationalSignals(data);
     const productNotes=Array.isArray(data.productNotes)?data.productNotes:[];
     doc.getElementById('decisionSupportPanel').innerHTML=
       '<div class="panel-title-row"><div><h3>Decision support</h3><p class="panel-copy">Release risk, regressions, blind spots, and the human decisions behind changes.</p></div><button class="button small" type="button" data-add-product-note>Add decision / change</button></div>'+
       '<div class="decision-support-grid" style="margin-top:12px">'+
         '<div class="decision-support-block"><strong>Would I hesitate to ship?</strong><div class="risk-checklist">'+riskItems.map(item=>'<div class="risk-row"><span class="health-status '+esc(item.kind)+'">'+esc(item.status)+'</span><div><strong>'+esc(item.label)+'</strong><span>'+esc(item.detail)+'</span></div></div>').join('')+'</div></div>'+
         '<div class="decision-support-block"><strong>Recent regression</strong><div class="regression-card '+esc(regression.kind)+'"><span class="health-status '+esc(regression.kind)+'">'+esc(regression.kind==='warn'?'Watch':regression.kind==='good'?'Healthy':'Unknown')+'</span><strong>'+esc(regression.title)+'</strong><span>'+esc(regression.detail)+'</span></div>'+
-          '<div class="monitoring-gaps"><strong>What we cannot confirm</strong>'+(monitoringGaps.length?'<div class="gap-list">'+monitoringGaps.slice(0,4).map(gap=>'<span><b>'+esc(gap.label)+':</b> '+esc(gap.detail)+'</span>').join('')+'</div>':'<span class="healthy-note">No known monitoring gaps.</span>')+'</div></div>'+
+          '<div class="monitoring-gaps"><strong>What we cannot confirm</strong>'+(monitoringGaps.length?'<div class="gap-list">'+monitoringGaps.slice(0,4).map(gap=>'<span><b>'+esc(gap.label)+':</b> '+esc(gap.detail)+'</span>').join('')+'</div>':'<span class="healthy-note">No known monitoring gaps.</span>')+'</div>'+
+          '<div class="monitoring-gaps"><strong>Operational signals</strong>'+(operational.length?'<div class="risk-checklist">'+operational.slice(0,5).map(item=>'<div class="risk-row"><span class="health-status '+esc(item.kind)+'">'+esc(item.status)+'</span><div><strong>'+esc(item.label)+'</strong><span>'+esc(item.detail)+'</span></div></div>').join('')+'</div>':'<span class="healthy-note">No additional operational signals for this project.</span>')+'</div></div>'+
       '</div>'+
       '<div class="decision-log"><div class="decision-log-head"><strong>Decision & change log</strong><span>Stored in this browser</span></div>'+
         (productNotes.length?'<div class="decision-log-list">'+productNotes.slice(0,5).map(note=>'<div class="decision-log-item"><span class="activity-type">'+esc(note.type==='change'?'Change':note.type==='experiment'?'Experiment':'Decision')+'</span><strong>'+esc(note.text)+'</strong><span>'+esc(fmtDate(note.createdAt))+'</span></div>').join('')+'</div>':'<div class="empty compact-empty">No product decisions or changes recorded yet.</div>')+
@@ -2614,5 +2749,5 @@
     }
   }
 
-  return {PROJECTS,pageEnvironment,vercelFromStatus,deliveryHealth,commitTitle,githubCommitUrl,pullRequestNumber,githubPullRequestUrl,changeUrl,normalizeQuality,qualityAttention,externalQualityAttention,deliveryAttention,deliveryAttentionForData,infrastructureAttention,allAttentionSignals,attentionItems,overallAttention,productOpenItems,projectStatus,setupGaps,releaseReadiness,regressionSignal,releaseRiskChecklist,healthConsistencyIssues,productionRuntime,operationalNextDecision,qualityFailureClassSummary,failureCheckCount,failureExplanation,activityTimelineItems,projectQualityLabel,evalScore,percent,shortSha,pendingSet,mergePlatform,emptyProjectData,safeExternalQualitySnapshot,serializeProjectData,hydrateProjectData,productNoteKey,loadProductNotes,saveProductNotes,loadProject,loadProjectDetails,infraCardLabel,neonConnectionDetail,analyticsConnectionValue,analyticsGapDetail,analyticsLabel,relativeAge,changedSinceVisit,meaningfulChanges,freshnessMeta,stateEvalContractStale,stateEvalBehaviorStale,stateEvalResultsStale,stateEvalStaleReason,trendText,activityReviewItems,progressText,quickProjectCheck,evalRunComplete,externalQualityRunComplete,qualityInvestigation,projectHandoff,init};
+  return {PROJECTS,pageEnvironment,vercelFromStatus,deliveryHealth,commitTitle,githubCommitUrl,pullRequestNumber,githubPullRequestUrl,changeUrl,normalizeQuality,qualityAttention,externalQualityAttention,deliveryAttention,deliveryAttentionForData,infrastructureAttention,allAttentionSignals,attentionItems,overallAttention,productOpenItems,projectStatus,setupGaps,releaseReadiness,regressionSignal,recurringFailureSignal,operationalSignals,releaseRiskChecklist,healthConsistencyIssues,productionRuntime,operationalNextDecision,qualityFailureClassSummary,failureCheckCount,failureExplanation,activityTimelineItems,projectQualityLabel,evalScore,percent,shortSha,pendingSet,mergePlatform,emptyProjectData,safeExternalQualitySnapshot,serializeProjectData,hydrateProjectData,productNoteKey,loadProductNotes,saveProductNotes,loadProject,loadProjectDetails,infraCardLabel,neonConnectionDetail,analyticsConnectionValue,analyticsGapDetail,analyticsLabel,relativeAge,changedSinceVisit,meaningfulChanges,freshnessMeta,stateEvalContractStale,stateEvalBehaviorStale,stateEvalResultsStale,stateEvalStaleReason,trendText,activityReviewItems,progressText,quickProjectCheck,evalRunComplete,externalQualityRunComplete,qualityInvestigation,projectHandoff,init};
 });
