@@ -315,6 +315,159 @@
       .mock-health .overview-health{grid-template-columns:1fr!important}
     }
 
+
+    /* Global spacing pass: natural-height content cards, consistent vertical rhythm. */
+    .grid.mock-overview-grid{
+      align-items:start;
+      row-gap:20px;
+      column-gap:16px;
+    }
+    .mock-overview-grid>.panel{
+      align-self:start;
+      min-height:0!important;
+      height:auto!important;
+      padding:18px!important;
+    }
+    .mock-overview-grid>.panel>h3,
+    .mock-overview-grid .panel-title-row h3{
+      margin:0;
+      line-height:1.2;
+    }
+    .mock-overview-grid .panel-copy{
+      margin-top:5px;
+      line-height:1.45;
+    }
+
+    /* Keep true comparison cards equal; let everything else hug its content. */
+    .mock-health .overview-health-row{min-height:112px!important}
+    .mock-quality-card{min-height:0!important}
+    .mock-release,.mock-usage,.mock-investigation,.mock-secondary,.mock-activity{
+      min-height:0!important;
+    }
+    .mock-release{padding:18px!important}
+    .mock-usage{padding:18px!important}
+    .mock-investigation{padding:18px!important}
+
+    /* Release and usage should read as paired cards without forced empty space. */
+    .mock-release .delivery-split{align-items:start}
+    .mock-release .delivery-concept,
+    .mock-release .delivery-environment{min-height:0!important;height:auto!important}
+    .mock-release .delivery-environments{margin-top:12px}
+    .mock-usage .metrics{margin-top:12px!important}
+    .mock-usage .usage-trends{margin-top:10px}
+
+    /* Investigation blocks use natural height, but remain visually aligned. */
+    .mock-investigation-grid{align-items:start}
+    .mock-investigation-block{
+      min-height:0!important;
+      height:auto!important;
+      padding:14px 15px;
+    }
+
+    /* Secondary product-ops sections should be compact and clearly separated. */
+    .mock-secondary{
+      padding:18px!important;
+    }
+    .mock-secondary .panel-title-row{
+      align-items:flex-start;
+      gap:14px;
+      margin-bottom:12px;
+    }
+    .mock-secondary .panel-title-row>div{
+      min-width:0;
+    }
+    .mock-secondary .panel-title-row .button{
+      flex:0 0 auto;
+      align-self:flex-start;
+    }
+    .mock-secondary .focus-grid{
+      gap:12px!important;
+      align-items:start;
+    }
+    .mock-secondary .focus-block{
+      min-height:0!important;
+      padding:14px!important;
+    }
+    .mock-secondary .focus-followup{
+      margin-top:12px!important;
+      padding-top:12px!important;
+    }
+
+    /* Decision support: remove the stretched/scrunched look from the screenshot. */
+    .mock-secondary .decision-support-grid{
+      align-items:start;
+      gap:14px;
+      margin-top:12px!important;
+    }
+    .mock-secondary .decision-support-block{
+      min-height:0!important;
+      height:auto!important;
+      padding:14px 16px;
+    }
+    .mock-secondary .decision-support-block>strong{
+      margin-bottom:10px;
+    }
+    .mock-secondary .risk-checklist{
+      gap:0;
+    }
+    .mock-secondary .risk-row{
+      padding:10px 0;
+      gap:10px;
+    }
+    .mock-secondary .risk-row:first-child{padding-top:0}
+    .mock-secondary .risk-row:last-child{padding-bottom:0}
+    .mock-secondary .regression-card{
+      padding:12px 14px;
+    }
+    .mock-secondary .monitoring-gaps{
+      margin-top:16px;
+      padding-top:14px;
+      gap:8px;
+    }
+    .mock-secondary .gap-list{
+      gap:7px;
+    }
+    .mock-secondary .decision-log{
+      margin-top:22px;
+      padding-top:18px;
+    }
+    .mock-secondary .decision-log-head{
+      align-items:center;
+      margin-bottom:10px;
+    }
+    .mock-secondary .compact-empty{
+      display:inline-block;
+      width:auto;
+      max-width:100%;
+      margin-top:0;
+      padding:10px 12px;
+      border:1px solid #e8ebf0;
+      border-radius:9px;
+      background:#fafbfc;
+    }
+
+    /* More consistent rhythm inside attention, activity, and change cards. */
+    .mock-attention .attention-list{gap:10px}
+    .mock-attention .attention{padding:12px 14px}
+    .mock-activity .activity-list{gap:9px}
+    .mock-activity .activity-item{padding:11px 12px}
+    .mock-secondary .change-list{gap:8px}
+    .mock-secondary .change-item{padding:10px 12px}
+
+    /* Major sections get breathing room without bloating internal card padding. */
+    .mock-quality-summary,
+    .mock-release,
+    .mock-usage,
+    .mock-investigation,
+    .mock-secondary{margin-top:0!important}
+
+    @media(max-width:850px){
+      .grid.mock-overview-grid{row-gap:14px}
+      .mock-secondary .panel-title-row{flex-direction:column}
+      .mock-secondary .panel-title-row .button{align-self:flex-start}
+      .mock-secondary .decision-support-grid{gap:12px}
+    }
+
 </style>
 </head>
 <body>
