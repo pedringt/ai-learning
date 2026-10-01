@@ -30,6 +30,7 @@ async function timedRuntimeText(url,options={}){
   const fetchOptions={...options};delete fetchOptions.timeoutMs;
   let response=null;
   let text='';
+  let timedOut=false;
   try{
     response=await fetch(url,{...fetchOptions,signal:controller.signal});
     if(!response.ok){
@@ -55,13 +56,14 @@ async function timedRuntimeText(url,options={}){
       text+=decoder.decode();
     }catch(error){
       if(error?.name!=='AbortError')throw error;
+      timedOut=true;
       // Runtime logs are a stream. Reaching the bounded read timeout after the
       // connection succeeded still means the signal is available; keep whatever
       // rows arrived instead of reporting a false monitoring outage.
     }
-    return {ok:true,status:response.status,text};
+    return {ok:true,status:response.status,text,timedOut};
   }catch(error){
-    if(response?.ok&&error?.name==='AbortError')return {ok:true,status:response.status,text};
+    if(response?.ok&&error?.name==='AbortError')return {ok:true,status:response.status,text,timedOut:true};
     return {ok:false,status:response?.status||null,text,error:error?.name==='AbortError'?'timeout':'unavailable'};
   }finally{clearTimeout(timer);}
 }
@@ -201,7 +203,7 @@ async function loadActivity(project){
       }
       runtimeAvailable=logs.ok||logs.error==='timeout';
       runtimeStatus=logs.status;
-      runtimeCoverage=logs.ok?'complete':(logs.error==='timeout'?'partial':'unavailable');
+      runtimeCoverage=(logs.timedOut||logs.error==='timeout')?'partial':(logs.ok?'complete':'unavailable');
       runtimeError=logs.ok||logs.error==='timeout'?null:(logs.error||safeText(logs.text,180)||'Runtime logs unavailable');
       if(logs.ok)runtime=runtimeIssues(parseRuntimeRows(logs.text),deploymentUrl);
     }
