@@ -473,22 +473,31 @@ body.v88-dark .home-state-feature{box-shadow:none}body.v88-dark .home-state-acti
 .home-feature-grid{display:grid;gap:16px;margin-top:14px;align-items:stretch}
 .home-feature-state-led{grid-template-columns:minmax(0,1.15fr) minmax(0,.85fr)}
 .home-feature-stack-right{display:grid;grid-template-rows:repeat(2,minmax(0,1fr));gap:16px}
-.home-feature-card{display:flex;flex-direction:column;justify-content:space-between;gap:18px;min-height:0;padding:22px 24px;border:1px solid var(--border);border-radius:20px;background:var(--card)}
-.home-feature-card>div:first-child{max-width:none}.home-feature-card h2{margin:5px 0 8px;font-size:24px;line-height:1.15}.home-feature-card p{margin:0;color:var(--muted);font-size:13.5px;line-height:1.55}
-.home-feature-state-anchor{padding:28px;background:linear-gradient(180deg,color-mix(in srgb,var(--softp) 62%,var(--card)),var(--card));border-color:color-mix(in srgb,var(--purple) 30%,var(--border));box-shadow:0 10px 26px color-mix(in srgb,var(--purple) 8%,transparent)}
-.home-feature-state-anchor h2{font-size:31px}.home-feature-state-anchor p{max-width:690px;font-size:14.5px;line-height:1.65}
+.home-feature-card{position:relative;overflow:hidden;display:flex;flex-direction:column;justify-content:space-between;gap:21px;min-height:0;padding:24px 26px;border:1px solid color-mix(in srgb,var(--border) 90%,var(--ink));border-radius:20px;background:var(--card);box-shadow:0 5px 16px color-mix(in srgb,var(--ink) 3%,transparent);transition:transform .16s ease,border-color .16s ease,box-shadow .16s ease}
+.home-feature-card::before{content:"";position:absolute;inset:0 0 auto;height:3px;background:color-mix(in srgb,var(--purple) 22%,transparent);opacity:.8}
+.home-feature-card:hover{transform:translateY(-2px);border-color:color-mix(in srgb,var(--purple) 26%,var(--border));box-shadow:0 12px 28px color-mix(in srgb,var(--purple) 9%,transparent)}
+.home-feature-card>div:first-child{max-width:none}.home-feature-card h2{margin:7px 0 10px;font-size:27px;letter-spacing:-.025em;line-height:1.08}.home-feature-card p{margin:0;color:var(--muted);font-size:13.5px;line-height:1.58}
+.home-project-kicker{display:inline-flex;align-items:center;gap:7px;font-size:10.5px!important;font-weight:850!important;letter-spacing:.075em;text-transform:uppercase;color:var(--muted)!important}
+.home-project-mark{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border:1px solid color-mix(in srgb,var(--purple) 20%,var(--border));border-radius:7px;background:color-mix(in srgb,var(--softp) 45%,var(--card));color:var(--purple);font-size:10px;letter-spacing:0}
+.home-feature-state-anchor{padding:30px;background:linear-gradient(180deg,color-mix(in srgb,var(--softp) 66%,var(--card)),var(--card) 76%);border-color:color-mix(in srgb,var(--purple) 30%,var(--border));box-shadow:0 10px 26px color-mix(in srgb,var(--purple) 8%,transparent)}
+.home-feature-state-anchor::before{background:color-mix(in srgb,var(--purple) 72%,transparent)}
+.home-feature-state-anchor h2{font-size:34px}.home-feature-state-anchor p{max-width:690px;font-size:14.5px;line-height:1.65}
+.home-feature-tastemake{background:linear-gradient(180deg,color-mix(in srgb,var(--softp) 27%,var(--card)),var(--card) 75%)}
+.home-feature-tastemake::before{background:color-mix(in srgb,var(--purple2) 52%,transparent)}
+.home-feature-health{background:linear-gradient(180deg,color-mix(in srgb,var(--blue) 7%,var(--card)),var(--card) 75%)}
+.home-feature-health::before{background:color-mix(in srgb,var(--blue) 46%,transparent)}
+.home-feature-health .home-project-mark{border-color:color-mix(in srgb,var(--blue) 22%,var(--border));background:color-mix(in srgb,var(--blue) 8%,var(--card));color:var(--blue)}
 .home-state-content{display:flex;flex-direction:column;align-items:flex-start;gap:0;height:100%}
-.home-state-signals{display:flex;flex-wrap:wrap;gap:8px;margin-top:20px}
-.home-state-signals span{padding:7px 10px;border:1px solid color-mix(in srgb,var(--purple) 24%,var(--border));border-radius:999px;background:color-mix(in srgb,var(--softp) 52%,var(--card));color:var(--muted);font-size:11.5px;font-weight:800;line-height:1}
+.home-state-signals{display:flex;flex-wrap:wrap;gap:7px;margin-top:18px}
+.home-state-signals span{padding:6px 9px;border:1px solid color-mix(in srgb,var(--purple) 18%,var(--border));border-radius:999px;background:color-mix(in srgb,var(--softp) 36%,var(--card));color:var(--muted);font-size:10.5px;font-weight:800;line-height:1}
 .home-state-button-row{display:flex;flex-wrap:wrap;gap:10px;margin-top:22px}
-.home-state-button{display:inline-flex;align-items:center;justify-content:center;padding:10px 14px;border-radius:11px;font-size:12px;font-weight:850;line-height:1.2;text-decoration:none!important}
-.home-state-button-primary{background:var(--purple);color:#fff!important;border:1px solid var(--purple)}
-.home-state-button-secondary{background:var(--card);color:var(--purple)!important;border:1px solid color-mix(in srgb,var(--purple) 30%,var(--border))}
-.home-state-button:hover{transform:translateY(-1px)}
-.home-feature-lead{background:linear-gradient(180deg,color-mix(in srgb,var(--softp) 30%,var(--card)),var(--card))}
-.home-feature-actions{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;justify-content:flex-start;margin-top:auto}
-.home-feature-actions a{font-size:12px!important;font-weight:850!important;line-height:1.25}
-.home-see-all{display:inline-block;margin-top:18px;color:var(--purple);font-size:13px;font-weight:850;text-decoration:none}.home-see-all:hover{text-decoration:underline}
+.home-state-button,.home-feature-button{display:inline-flex;align-items:center;justify-content:center;min-height:40px;padding:9px 13px;border-radius:10px;font-size:11.5px;font-weight:850;line-height:1.2;text-decoration:none!important;transition:transform .16s ease,box-shadow .16s ease,border-color .16s ease}
+.home-state-button-primary,.home-feature-button-primary{background:var(--purple);color:#fff!important;border:1px solid var(--purple);box-shadow:0 4px 11px color-mix(in srgb,var(--purple) 15%,transparent)}
+.home-state-button-secondary,.home-feature-button-secondary{background:color-mix(in srgb,var(--card) 92%,transparent);color:var(--purple)!important;border:1px solid color-mix(in srgb,var(--purple) 25%,var(--border))}
+.home-state-button:hover,.home-feature-button:hover{transform:translateY(-1px)}
+.home-feature-actions{display:flex;flex-wrap:wrap;gap:9px;align-items:center;justify-content:flex-start;margin-top:auto;padding-top:2px}
+.home-see-all{display:inline-flex;align-items:center;margin-top:18px;padding:8px 11px;border:1px solid color-mix(in srgb,var(--purple) 18%,var(--border));border-radius:10px;background:color-mix(in srgb,var(--softp) 28%,transparent);color:var(--purple);font-size:12px;font-weight:850;text-decoration:none;transition:transform .16s ease,border-color .16s ease,background .16s ease}
+.home-see-all:hover{transform:translateY(-1px);border-color:color-mix(in srgb,var(--purple) 32%,var(--border));background:color-mix(in srgb,var(--softp) 50%,transparent);text-decoration:none}
 .applied-featured-three{grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:14px}
 .applied-featured-three .applied-major{min-height:0}
 .applied-major-with-actions .applied-card-actions{gap:8px 14px!important;padding-top:14px!important}
@@ -573,7 +582,7 @@ body.v88-dark .learning-how-note strong{color:#f5f2fb!important}
 <div class="home-feature-grid home-feature-state-led">
 <article class="home-feature-card home-feature-state-anchor">
   <div class="home-state-content">
-    <span class="home-project-kicker">Featured · Trustworthy AI</span>
+    <span class="home-project-kicker"><span class="home-project-mark" aria-hidden="true">◇</span>Featured · Trustworthy AI</span>
     <h2>State</h2>
     <p>State is a project truth system for teams working across scattered sources. AI interprets new evidence, software enforces the rules, and people decide what becomes Current State. The goal is to keep project knowledge useful without letting the model quietly turn guesses or stale information into fact.</p>
     <div class="home-state-signals" aria-label="What State demonstrates">
@@ -588,13 +597,21 @@ body.v88-dark .learning-how-note strong{color:#f5f2fb!important}
   </div>
 </article>
 <div class="home-feature-stack-right">
-<article class="home-feature-card home-feature-lead">
-  <div><span class="home-project-kicker">Featured · AI product</span><h2>Tastemake</h2><p>An AI recommendation product that learns what users like and why, then lets them correct what the model has learned.</p></div>
-  <div class="home-feature-actions"><a class="home-state-primary" href="https://tastemake.vercel.app/" target="_blank" rel="noopener noreferrer">Open Tastemake →</a><a class="home-state-secondary" href="tastemake.html">Case study →</a></div>
+<article class="home-feature-card home-feature-lead home-feature-tastemake">
+  <div>
+    <span class="home-project-kicker"><span class="home-project-mark" aria-hidden="true">✦</span>Featured · AI product</span>
+    <h2>Tastemake</h2>
+    <p>An AI recommendation product that learns what users like and why, then lets them correct what the model has learned.</p>
+  </div>
+  <div class="home-feature-actions"><a class="home-feature-button home-feature-button-primary" href="https://tastemake.vercel.app/" target="_blank" rel="noopener noreferrer">Open Tastemake ↗</a><a class="home-feature-button home-feature-button-secondary" href="tastemake.html">Case study →</a></div>
 </article>
-<article class="home-feature-card">
-  <div><span class="home-project-kicker">Featured · Product health</span><h2>Project Health</h2><p>A dashboard that brings releases, AI-quality checks, incidents, and missing signals together so I can see what needs attention next.</p></div>
-  <div class="home-feature-actions"><a class="home-state-primary" href="project-health.html" target="_blank" rel="noopener noreferrer">Open Project Health →</a><a class="home-state-secondary" href="project-health-case-study.html">Case study →</a></div>
+<article class="home-feature-card home-feature-health">
+  <div>
+    <span class="home-project-kicker"><span class="home-project-mark" aria-hidden="true">◫</span>Featured · Product health</span>
+    <h2>Project Health</h2>
+    <p>A dashboard that brings releases, AI-quality checks, incidents, and missing signals together so I can see what needs attention next.</p>
+  </div>
+  <div class="home-feature-actions"><a class="home-feature-button home-feature-button-primary" href="project-health.html" target="_blank" rel="noopener noreferrer">Open Project Health ↗</a><a class="home-feature-button home-feature-button-secondary" href="project-health-case-study.html">Case study →</a></div>
 </article>
 </div>
 </div>
