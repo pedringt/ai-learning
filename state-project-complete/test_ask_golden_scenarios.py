@@ -196,3 +196,39 @@ def test_grounding_rules_preserve_unknown_reason_when_only_outcome_is_known():
     assert "outcome happened" in rules
     assert "reason is unknown" in rules or "reason is unknown, not established" in rules
     assert "never infer a motive, cause, or rationale" in rules
+
+
+def test_golden_product_smoke_evidence_review_human_authorization_updates_state_and_history(tmp_path):
+    conn = seeded_connection(tmp_path)
+    try:
+        before_history = conn.execute("SELECT COUNT(*) AS c FROM history_transitions").fetchone()["c"]
+        conn.execute(
+            "INSERT INTO current_state_items(id,topic,statement,version) VALUES ('k-smoke-owner','ownership','Project owner is Alex.',1)"
+        )
+        conn.execute(
+            "INSERT INTO evidence(id,content,source_type,processing_status) VALUES ('e-smoke-owner','Jordan is now the project owner.','manual_note','processed')"
+        )
+        conn.execute(
+            "INSERT INTO review_issues(id,review_type,decision_question,why_consequential,status) VALUES ('r-smoke-owner','proposed_update','Update the project owner?','Ownership is maintained project truth','open')"
+        )
+        conn.execute("INSERT INTO review_evidence(review_id,evidence_id) VALUES ('r-smoke-owner','e-smoke-owner')")
+        conn.execute(
+            "INSERT INTO proposed_state_changes(id,review_id,state_item_id,proposed_statement,rationale,expected_state_version,status,operation) VALUES ('p-smoke-owner','r-smoke-owner','k-smoke-owner','Project owner is Jordan.','The submitted evidence states the ownership change.',1,'pending','update')"
+        )
+        conn.commit()
+
+        # The proposed change is not authoritative before a human resolves Review.
+        before = next(item for item in list_state(conn) if item["id"] == "k-smoke-owner")
+        assert before["statement"] == "Project owner is Alex."
+
+        resolve_review(conn, "r-smoke-owner", "accept")
+
+        after = next(item for item in list_state(conn) if item["id"] == "k-smoke-owner")
+        assert after["statement"] == "Project owner is Jordan."
+        assert after["version"] == 2
+        after_history = conn.execute("SELECT COUNT(*) AS c FROM history_transitions").fetchone()["c"]
+        assert after_history == before_history + 1
+        review = conn.execute("SELECT status,resolution FROM review_issues WHERE id='r-smoke-owner'").fetchone()
+        assert review["status"] == "resolved"
+    finally:
+        conn.close()
