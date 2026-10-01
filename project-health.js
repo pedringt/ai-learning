@@ -83,8 +83,7 @@
     const params=new URLSearchParams(String(root?.location?.search||''));
     const explicit=String(params.get('env')||'').toLowerCase();
     if(explicit==='staging'||explicit==='production')return explicit;
-    if(/(^|[-.])staging([-.]|$)|-git-/i.test(host))return 'staging';
-    if(/\.vercel\.app$/i.test(host)&&host!=='ai-learning.vercel.app')return 'staging';
+    if(/(^|[-.])staging([-.]|$)/i.test(host))return 'staging';
     return 'production';
   }
   async function jsonFetch(url,options={}){
