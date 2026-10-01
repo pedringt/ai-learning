@@ -15,7 +15,7 @@
   ]);
   var SAFE_EVENT_NAMES = new Set([
     'state_demo_opened','view_opened','outbound_link_opened','ask_submitted',
-    'ask_completed','ask_failed','ask_cancelled','api_failure'
+    'ask_completed','ask_first_response','ask_user_completed','ask_failed','ask_cancelled','api_failure'
   ]);
   var SAFE_VIEWS = new Set(['overview','open-items','project-overview','notes','history','settings']);
 
@@ -117,9 +117,30 @@
   }
   function trackAskQuery(_query, props) { track('ask_submitted', props || {}); }
 
+  function startAskTiming(sourceType) {
+    var started = Date.now(), firstRecorded = false, done = false;
+    var source = String(sourceType || 'live_stream').slice(0, 80);
+    function duration() { return Math.max(0, Date.now() - started); }
+    return {
+      firstResponse:function () {
+        if (done || firstRecorded) return;
+        firstRecorded = true;
+        track('ask_first_response', {duration_ms:duration(), source_type:source, outcome:'visible_answer_started'});
+      },
+      completed:function () {
+        if (done) return;
+        done = true;
+        track('ask_user_completed', {duration_ms:duration(), source_type:source, outcome:'visible_answer_complete'});
+      },
+      cancelled:function () { done = true; },
+      failed:function () { done = true; }
+    };
+  }
+
   window.StateAnalytics = {
     track:track,
     trackAskQuery:trackAskQuery,
+    startAskTiming:startAskTiming,
     refLabel:refLabel,
     sessionId:sessionId,
     ownerMode:ownerMode,
