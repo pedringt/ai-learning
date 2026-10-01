@@ -717,7 +717,8 @@ const operational=H.operationalSignals({
 });
 assert.ok(operational.some(item=>item.label==='AI response speed'&&item.status==='Measured'));
 assert.ok(operational.some(item=>item.label==='Human review burden'&&/25% materially edited/.test(item.detail)));
-assert.ok(operational.some(item=>item.label==='Agent workflow'&&item.status==='Not measured'));
+assert.ok(!operational.some(item=>item.label==='Agent workflow'));
+assert.ok(H.setupGaps({project:{id:'state'},platform:{aiTelemetry:{available:true,cost:{partial:false}}},runInfo:{configured:true}}).some(item=>item.label==='Agent workflow telemetry'));
 
 const operationalCompared=H.operationalSignals({
   project:{id:'state',quality:'state'},
@@ -736,6 +737,34 @@ assert.match(openInvestigation.detail,/no resolution recorded yet/);
 
 const seeded=H.emptyProjectData(H.PROJECTS[0],{platform:{aiTelemetry:{available:true,response_speed:{p95_ms:5700}}}});
 assert.strictEqual(seeded.previousPlatform.aiTelemetry.response_speed.p95_ms,5700);
+
+const regressionWithBuilds=H.regressionSignal({
+  project:{quality:'state'},
+  quality:{recent:[
+    {suite:'ask_quality',created_at:'2026-10-01T12:00:00Z',overall_pass_rate:.8,build:'abcdef123456'},
+    {suite:'ask_quality',created_at:'2026-09-30T12:00:00Z',overall_pass_rate:1,build:'123456abcdef'}
+  ]}
+});
+assert.strictEqual(regressionWithBuilds.kind,'warn');
+assert.match(regressionWithBuilds.detail,/123456a → abcdef1/);
+
+const operationalContext=H.operationalSignals({
+  project:{id:'state',quality:'state'},
+  quality:{
+    resolvedReviews:0,
+    review:{errors:1},
+    ask:{errors:0},
+    recent:[
+      {suite:'review_interpretation',created_at:'2026-10-01T12:00:00Z',model_identifier:'claude-haiku-4-5-20251001'},
+      {suite:'review_interpretation',created_at:'2026-09-30T12:00:00Z',model_identifier:'older-model'}
+    ]
+  },
+  platform:{aiTelemetry:{available:true,response_speed:{sample_size:0}}}
+});
+assert.ok(operationalContext.some(item=>item.label==='Eval execution'&&item.status==='Watch'));
+assert.ok(operationalContext.some(item=>item.label==='Eval model change'&&item.status==='Context'));
+assert.ok(!operationalContext.some(item=>item.label==='Human review burden'));
+assert.ok(!operationalContext.some(item=>item.label==='AI response speed'));
 
 const workflowText=fs.readFileSync(require.resolve('../.github/workflows/question-review-live.yml'),'utf8');
 assert.match(workflowText,/suite:/);
