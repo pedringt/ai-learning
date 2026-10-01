@@ -378,6 +378,17 @@
         signals.push({kind,label:'Agent workflow',status:kind==='warn'?'Watch':'Measured',detail:[repeated+' repeated tool calls',retries+' retries',fallbacks+' fallbacks'].join(' · ')});
       }
     }
+    const deploymentFailures=Array.isArray(data?.activity?.deployments?.recent_failures)?data.activity.deployments.recent_failures:[];
+    if(deploymentFailures.length>=2){
+      const recovered=deploymentFailures.filter(item=>item?.recovered).length;
+      const lookback=Number(data?.activity?.lookback_days||7);
+      signals.push({
+        kind:'warn',
+        label:'Release attempts',
+        status:'Pattern',
+        detail:deploymentFailures.length+' failed production-target deployment attempts in the last '+lookback+' days'+(recovered?' · '+recovered+' later recovered':'')+'.'
+      });
+    }
     if(data?.project?.quality==='state'&&data?.quality){
       const latestRuns=[data.quality.review,data.quality.ask].filter(Boolean);
       const evalErrors=latestRuns.reduce((sum,run)=>sum+Number(run?.errors||0),0);
