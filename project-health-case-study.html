@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<link rel="icon" href="favicon.svg">
+<title>Project Health Case Study · Context Switch</title>
+<meta name="description" content="How I built Project Health to help me decide what needs attention across releases, AI quality, incidents, and monitoring gaps.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Project Health Case Study · Context Switch">
+<meta property="og:description" content="A product case study about turning scattered project signals into clearer product decisions.">
+<meta name="twitter:card" content="summary">
+<link href="site-shell.css" rel="stylesheet"/>
+<link href="site-components.css" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.55}
+.case-shell{max-width:1000px;margin:0 auto;padding:44px 28px 76px}
+.case-hero{max-width:860px}
+.eyebrow{display:inline-block;color:var(--purple);font-size:11px;font-weight:850;letter-spacing:.08em;text-transform:uppercase}
+.case-hero h1{margin:10px 0 14px;font-size:clamp(34px,5vw,52px);line-height:1.02;letter-spacing:-.04em}
+.case-hero .lead{max-width:820px;margin:0;color:var(--muted);font-size:18px;line-height:1.6}
+.meta{display:flex;flex-wrap:wrap;gap:8px;margin:18px 0 0}.meta span{padding:7px 10px;border:1px solid var(--border);border-radius:999px;background:var(--card);color:var(--muted);font-size:11px;font-weight:700}.meta b{color:var(--ink)}
+.case-shell h2{margin:40px 0 12px;font-size:24px;line-height:1.2;letter-spacing:-.02em}
+.case-shell h3{margin:0 0 7px;font-size:16px}.case-shell p,.case-shell li{font-size:14px;line-height:1.68}
+.callout{margin:22px 0;padding:18px 20px;border-left:4px solid var(--purple);border-radius:0 12px 12px 0;background:color-mix(in srgb,var(--softp) 55%,var(--card))}
+.callout p{margin:0;font-size:16px}
+.grid2,.grid3{display:grid;gap:14px;margin-top:14px}.grid2{grid-template-columns:repeat(2,minmax(0,1fr))}.grid3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.card{padding:18px;border:1px solid var(--border);border-radius:16px;background:var(--card)}.card p{margin:7px 0 0;color:var(--muted)}
+.tag{display:inline-flex;margin-bottom:8px;padding:5px 8px;border:1px solid color-mix(in srgb,var(--purple) 26%,var(--border));border-radius:999px;background:var(--softp);color:var(--purple);font-size:10px;font-weight:850;letter-spacing:.07em;text-transform:uppercase}
+.product-model{margin:18px 0;padding:16px;border:1px solid var(--border);border-radius:18px;background:var(--soft)}
+.product-model-grid{display:grid;grid-template-columns:1.1fr .9fr;gap:12px}
+.product-panel{padding:15px;border:1px solid var(--border);border-radius:13px;background:var(--card)}
+.product-panel strong{display:block}.product-panel .big{margin:5px 0 7px;font-size:20px;line-height:1.2;font-weight:850}
+.signal{display:flex;justify-content:space-between;gap:12px;padding:8px 0;border-top:1px solid var(--border);font-size:12px}.signal:first-of-type{border-top:0}.signal b{font-weight:800}
+.example{margin:16px 0;border:1px solid var(--border);border-radius:16px;overflow:hidden;background:var(--card)}.example-head{padding:17px 18px;border-bottom:1px solid var(--border);background:var(--softp)}.example-head p{margin:5px 0 0;color:var(--muted)}.example-row{padding:15px 18px;border-bottom:1px solid var(--border)}.example-row:last-child{border-bottom:0}.example-row p{margin:5px 0 0}.example-label{color:var(--purple);font-size:10px;font-weight:850;letter-spacing:.06em;text-transform:uppercase}
+.flow{display:grid;gap:9px;margin-top:16px}.flow-row{display:grid;grid-template-columns:28px minmax(0,1fr);gap:10px;align-items:start}.num{width:28px;height:28px;display:flex;align-items:center;justify-content:center;border:1px solid var(--border);border-radius:999px;background:var(--card);color:var(--purple);font-size:11px;font-weight:900}.flow-card{padding:13px 15px;border:1px solid var(--border);border-radius:12px;background:var(--card)}.flow-card p{margin:4px 0 0;color:var(--muted)}
+.role-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px}.role-grid ul{margin:8px 0 0;padding-left:18px}.role-grid li+li{margin-top:4px}
+.evidence-list{display:grid;gap:8px;margin-top:12px}.evidence-item{display:grid;grid-template-columns:130px minmax(0,1fr);gap:14px;padding:11px 0;border-top:1px solid var(--border)}.evidence-item:first-child{border-top:0}.evidence-item strong{font-size:12px}.evidence-item span{color:var(--muted);font-size:13px}
+.cta-row{display:flex;flex-wrap:wrap;gap:10px;margin-top:24px}.cta{display:inline-flex;align-items:center;justify-content:center;padding:10px 14px;border-radius:10px;font-size:13px;font-weight:800;text-decoration:none}.cta.primary{background:var(--purple);color:#fff}.cta.secondary{border:1px solid var(--border);background:var(--card);color:var(--ink)}
+@media(max-width:760px){.grid2,.grid3,.product-model-grid,.role-grid{grid-template-columns:1fr}.evidence-item{grid-template-columns:1fr;gap:3px}.case-shell{padding:34px 18px 58px}}
+</style>
+<script>
+(function () {
+  const params = new URLSearchParams(window.location.search);
+  const ownerParam = params.get('owner');
+  if (ownerParam === 'true') localStorage.setItem('paigeOwnerMode','true');
+  else if (ownerParam === 'false') localStorage.removeItem('paigeOwnerMode');
+  if (ownerParam !== null) {
+    params.delete('owner');
+    const query=params.toString();
+    history.replaceState({},'',location.pathname+(query?'?'+query:'')+location.hash);
+  }
+  if (localStorage.getItem('paigeOwnerMode') !== 'true') {
+    window.va=window.va||function(){(window.vaq=window.vaq||[]).push(arguments);};
+    const s=document.createElement('script');s.defer=true;s.src='/_vercel/insights/script.js';document.head.appendChild(s);
+  }
+})();
+</script>
+</head>
+<body>
+<div class="topbar">
+  <div class="topinner">
+    <a class="brand-button" href="index.html"><span class="brand">Context <span>Switch</span></span></a>
+    <nav aria-label="Primary pages" class="nav">
+      <a href="index.html">Home</a>
+      <a aria-current="page" href="index.html#portfolio">Applied Work</a>
+      <a href="index.html#learn">Learning Library</a>
+    </nav>
+    <div class="top-actions">
+      <button aria-label="Switch to dark mode" aria-pressed="false" class="theme-toggle" id="v922ThemeToggle" title="Switch to dark mode" type="button">☾</button>
+      <select aria-label="Choose page" id="v922MobileNav">
+        <option value="index.html">Home</option>
+        <option selected value="index.html#portfolio">Applied Work</option>
+        <option value="index.html#learn">Learning Library</option>
+      </select>
+    </div>
+  </div>
+</div>
+
+<main class="case-shell site-page">
+<nav class="site-breadcrumb" aria-label="Breadcrumb"><ol><li><a href="index.html#portfolio">Applied Work</a></li><li aria-current="page">Project Health</li></ol></nav>
+
+<header class="case-hero">
+  <div class="eyebrow">AI product operations · case study</div>
+  <h1>Project Health</h1>
+  <p class="lead">I built Project Health because checking five different tools still left me with the same question: what actually needs my attention?</p>
+  <div class="meta">
+    <span><b>Role:</b> product framing, UX, QA, eval review</span>
+    <span><b>Focus:</b> product health and AI quality</span>
+    <span><b>Status:</b> working portfolio product</span>
+  </div>
+</header>
+
+<div class="callout"><p><strong>Project Health helps me decide what needs attention.</strong> It brings together product, AI-quality, and delivery signals so I can see what changed and where to look next.</p></div>
+
+<h2>The problem</h2>
+<p>The information already existed. It was just spread across deployments, commits, evals, analytics, logs, and the live products themselves. I wanted one place that helped me decide whether a signal was a real product problem, something to watch, or simply missing information.</p>
+
+<div class="grid2">
+  <div class="card"><span class="tag">Before</span><h3>Too many places to check</h3><p>A failed release, a lower eval score, and a runtime warning all meant opening a different tool and figuring out what the signal actually meant.</p></div>
+  <div class="card"><span class="tag">Goal</span><h3>Make the next step obvious</h3><p>Surface what needs attention first, keep the important context nearby, and leave deeper technical detail one step down.</p></div>
+</div>
+
+<h2>What I built</h2>
+<div class="product-model" aria-label="Simplified Project Health overview">
+  <div class="product-model-grid">
+    <section class="product-panel">
+      <span class="tag">Overview</span>
+      <strong>What needs attention</strong>
+      <div class="big">One important failure matters more than a healthy average</div>
+      <div class="signal"><span>Product focus</span><b>goal · watch · next decision</b></div>
+      <div class="signal"><span>Recent changes</span><b>plain language</b></div>
+    </section>
+    <section class="product-panel">
+      <span class="tag">Ship check</span>
+      <strong>Would I hesitate to ship?</strong>
+      <p style="margin:7px 0 0;color:var(--muted);font-size:12px">The dashboard checks product quality, delivery health, possible user impact, and whether any important signals are missing.</p>
+    </section>
+  </div>
+</div>
+
+<h2>Three decisions mattered most</h2>
+<div class="grid3">
+  <div class="card"><span class="tag">01</span><h3>No single health score</h3><p>Technical health and product quality stay separate. One green number can hide the exact behavior that needs review.</p></div>
+  <div class="card"><span class="tag">02</span><h3>Failures before averages</h3><p>The dashboard leads with important failures instead of letting a healthy average hide them.</p></div>
+  <div class="card"><span class="tag">03</span><h3>Unknown is not healthy</h3><p>If the dashboard can’t check something, it says so instead of quietly treating missing data as good news.</p></div>
+</div>
+
+<h2>The useful part starts after something fails</h2>
+<p>A failed AI check does not always mean the same thing. One failure may point to a real product bug. Another may show that the test expectation is wrong or that the available evidence is incomplete.</p>
+
+<div class="callout"><p><strong>Project Health keeps that difference visible before I decide what should change.</strong> The quality view shows what was observed, what was expected, and why the difference matters.</p></div>
+
+<h2>Investigate starts with the specific problem</h2>
+<div class="flow">
+  <div class="flow-row"><div class="num">1</div><div class="flow-card"><strong>Start with the signal</strong><p>Use the failure or incident to decide what evidence to check first.</p></div></div>
+  <div class="flow-row"><div class="num">2</div><div class="flow-card"><strong>Gather only what is useful</strong><p>Compare the behavior with the product rules, release context, logs, issue history, or eval definition.</p></div></div>
+  <div class="flow-row"><div class="num">3</div><div class="flow-card"><strong>Give the human a handoff</strong><p>Summarize what happened, what the evidence says, what is still uncertain, and what should happen next.</p></div></div>
+</div>
+
+<h2>QA changed the product</h2>
+<div class="grid2">
+  <div class="card"><span class="tag">Easier to scan</span><h3>Activity became less noisy</h3><p>Repeated failures are grouped into one incident, so the activity feed is easier to scan.</p></div>
+  <div class="card"><span class="tag">More trustworthy</span><h3>Missing data stopped looking healthy</h3><p>The dashboard now calls out monitoring gaps, stale quality results, and contradictions between signals instead of smoothing them over.</p></div>
+</div>
+
+<div class="evidence-list">
+  <div class="evidence-item"><strong>Regression tests</strong><span>Important failures are added to regression tests so they do not quietly come back.</span></div>
+  <div class="evidence-item"><strong>Failure recovery</strong><span>If an important signal is unavailable, the dashboard shows that gap instead of calling the project healthy.</span></div>
+  <div class="evidence-item"><strong>Product-flow test</strong><span>A full smoke test checks that important state changes still require human approval.</span></div>
+</div>
+
+<h2>What I did, and what AI helped with</h2>
+<div class="role-grid">
+  <div class="card"><span class="tag">My role</span><ul><li>framed the problem and chose which signals mattered</li><li>designed the information hierarchy</li><li>reviewed failed evals and decided whether product behavior or the test should change</li><li>used QA findings to reshape the product</li></ul></div>
+  <div class="card"><span class="tag">AI-assisted work</span><ul><li>implementation and code iteration</li><li>testing and regression coverage</li><li>drafting and interface iteration under my direction</li></ul></div>
+</div>
+
+<h2>What I learned</h2>
+<div class="callout"><p><strong>More data was not the answer.</strong> The useful part was making it easier to see what deserved attention and what evidence I needed before acting.</p></div>
+
+<div class="cta-row">
+  <a class="cta primary" href="project-health.html">Open Project Health</a>
+  <a class="cta secondary" href="index.html#portfolio">Back to Applied Work</a>
+</div>
+</main>
+<script src="site-shell.js"></script>
+</body>
+</html>
