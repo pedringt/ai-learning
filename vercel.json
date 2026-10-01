@@ -89,6 +89,16 @@
       ],
       "destination": "https://state.contextswitch.tech/state-product-health",
       "permanent": false
+    },
+    {
+      "source": "/state-ai-evals",
+      "destination": "/state-evals",
+      "permanent": true
+    },
+    {
+      "source": "/state-ai-evals.html",
+      "destination": "/state-evals",
+      "permanent": true
     }
   ],
   "headers": [
