@@ -428,7 +428,7 @@ const usageChanges=H.meaningfulChanges({
   checkedAt:'2026-09-30T01:00:00Z',
   detailCheckedAt:'2026-09-30T01:00:00Z'
 });
-assert.strictEqual(usageChanges.find(item=>item.title==='Site analytics changed').section,'analyticsPanel');
+assert.strictEqual(usageChanges.find(item=>item.title==='Site analytics changed').section,undefined);
 const analyticsAvailabilityChanges=H.meaningfulChanges({
   project:{quality:null},
   lastVisit:{deliverySha:'same',deliveryKind:'good',quality:{},analyticsAvailable:false,analyticsPageviews:null,openPullRequests:0,savedAt:'2026-09-29T01:00:00Z'},
@@ -520,18 +520,21 @@ assert.doesNotMatch(healthHtml,/<details class="systems-details"/);
 assert.match(healthHtml,/data-tab="overview"/);
 assert.match(healthHtml,/data-tab="ai-quality"/);
 assert.match(healthHtml,/data-tab="releases"/);
-assert.match(healthHtml,/data-tab="usage"/);
-assert.match(healthHtml,/data-tab="investigation"/);
-assert.match(healthHtml,/data-tab="technical"/);
+assert.match(healthHtml,/data-tab="decision-support"/);
+assert.doesNotMatch(healthHtml,/data-tab="usage"/);
+assert.doesNotMatch(healthHtml,/data-tab="investigation"/);
+assert.doesNotMatch(healthHtml,/data-tab="technical"/);
 assert.doesNotMatch(healthHtml,/data-tab="activity"/);
 assert.match(healthHtml,/id="deliveryPanel" data-tab-panel="releases"/);
-assert.match(healthHtml,/id="analyticsPanel" data-tab-panel="usage"/);
 assert.match(healthHtml,/id="mockDashboardOverview" data-tab-panel="overview"/);
-assert.match(healthHtml,/id="overviewInvestigationPanel" data-tab-panel="investigation"/);
-assert.match(healthHtml,/id="deliveryPanel" data-tab-panel="releases"/);
-assert.match(healthHtml,/id="analyticsPanel" data-tab-panel="usage"/);
-assert.match(healthHtml,/id="productFocusPanel" data-tab-panel="technical"/);
-assert.match(healthHtml,/id="decisionSupportPanel" data-tab-panel="technical"/);
+assert.match(healthHtml,/id="productFocusPanel" data-tab-panel="decision-support"/);
+assert.match(healthHtml,/id="decisionSupportPanel" data-tab-panel="decision-support"/);
+assert.match(healthHtml,/id="analyticsPanel" hidden/);
+assert.match(healthHtml,/id="overviewInvestigationPanel" hidden/);
+assert.match(healthHtml,/id="overviewActivityPanel" hidden/);
+assert.match(healthHtml,/id="attentionPanel" hidden/);
+assert.match(healthHtml,/id="overviewHealthPanel" hidden/);
+assert.match(healthHtml,/id="overviewQualitySummaryPanel" hidden/);
 assert.match(healthHtml,/id="infrastructurePanel"/);
 assert.doesNotMatch(healthHtml,/id="infrastructurePanel" data-tab-panel="overview"/);
 assert.match(healthHtml,/id="projectLinksMenu"/);

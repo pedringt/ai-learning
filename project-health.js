@@ -1039,7 +1039,7 @@
     }
     if(analytics?.available&&before.analyticsPageviews!=null&&Number(analytics.pageviews)!==Number(before.analyticsPageviews)){
       const diff=Number(analytics.pageviews)-Number(before.analyticsPageviews);
-      items.push({title:'Site analytics changed',detail:(diff>=0?'+':'')+diff+' page views in the current 30-day window',observedAt:data.detailCheckedAt||data.checkedAt,tab:'overview',section:'analyticsPanel'});
+      items.push({title:'Site analytics changed',detail:(diff>=0?'+':'')+diff+' page views in the current 30-day window',observedAt:data.detailCheckedAt||data.checkedAt,tab:'overview'});
     }
     const prCount=Array.isArray(data.openPullRequests)?data.openPullRequests.length:0;
     if(Number(before.openPullRequests||0)!==prCount){
@@ -1749,7 +1749,7 @@
     }
     doc.getElementById('qualityPanel').innerHTML=qualityHtml;
 
-    // Usage is a dedicated tab now, so the panel must always remain visible.
+    // Detailed usage rendering is retained for compatibility; the visible analytics summary now lives on Overview.
     const a=platform?.analytics;
     const analyticsPanel=doc.getElementById('analyticsPanel');
     analyticsPanel.classList.remove('usage-hidden');
@@ -1804,7 +1804,7 @@
       '<div class="activity-filters" role="group" aria-label="Filter activity">'+activityFilters.map(([key,label])=>'<button class="activity-filter '+(activityFilter===key?'active':'')+'" type="button" data-activity-filter="'+key+'" aria-pressed="'+(activityFilter===key?'true':'false')+'">'+label+'</button>').join('')+'</div>'+
       '<div style="margin-top:12px">'+timelineHtml+'</div>';
     const overviewActivity=timelineItems.length?'<div class="activity-list">'+timelineItems.slice(0,3).map(item=>'<div class="activity-item"><span class="activity-type">'+esc(item.type||'Activity')+'</span><strong>'+esc(item.title)+'</strong><span>'+esc(relativeAge(item.when))+' · '+esc(item.detail||'')+'</span></div>').join('')+'</div>':'<div class="empty">No recent activity is available yet.</div>';
-    doc.getElementById('overviewActivityPanel').innerHTML='<div class="panel-title-row"><h3>Recent activity</h3><button class="button small" type="button" data-tab-target="activity">View timeline</button></div><div style="margin-top:12px">'+overviewActivity+'</div>';
+    doc.getElementById('overviewActivityPanel').innerHTML='<div class="panel-title-row"><h3>Recent activity</h3><button class="button small" type="button" data-tab-target="releases">View timeline</button></div><div style="margin-top:12px">'+overviewActivity+'</div>';
 
     // Delivery separates what users have now from whether the next release can ship.
     const investigationBusy=!!data.investigation?.loading;
@@ -2197,8 +2197,10 @@
     state.forEach(item=>{item.investigationHistory=loadInvestigationHistory(root,item.project.id);item.productNotes=loadProductNotes(root,item.project.id);});
     const initialParams=new URLSearchParams(root.location.search);
     let activeId=initialParams.get('project')||'state';
-    const allowedTabs=new Set(['overview','ai-quality','releases','usage','investigation','technical']);
-    const initialTab=initialParams.get('tab')==='activity'?'releases':initialParams.get('tab');
+    const allowedTabs=new Set(['overview','ai-quality','releases','decision-support']);
+    const legacyTabMap={activity:'releases',usage:'overview',investigation:'overview',technical:'decision-support'};
+    const requestedTab=initialParams.get('tab');
+    const initialTab=legacyTabMap[requestedTab]||requestedTab;
     let activeTab=allowedTabs.has(initialTab)?initialTab:'overview';
     let summaryFilter='all';
     let renderQueued=false,refreshGeneration=0,investigationDrawerOpen=false;
@@ -2328,7 +2330,8 @@
       doc.querySelectorAll('[data-tab-panel]').forEach(panel=>{panel.hidden=panel.dataset.tabPanel!==activeTab;});
     }
     function setActiveTab(tab,updateUrl=true){
-      const normalized=tab==='activity'?'releases':tab;
+      const legacyTabMap={activity:'releases',usage:'overview',investigation:'overview',technical:'decision-support'};
+      const normalized=legacyTabMap[tab]||tab;
       activeTab=allowedTabs.has(normalized)?normalized:'overview';
       if(activeTab==='ai-quality'){
         const data=activeData();if(data)data.qualityRunCompletedAt=null;
