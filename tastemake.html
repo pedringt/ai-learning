@@ -23,8 +23,8 @@
 .taste-example article+article{border-left:1px solid var(--border)}
 .taste-example strong{display:block;margin-bottom:5px;font-size:15px}
 .taste-example p{margin:0;font-size:13px;line-height:1.5}
-.evidence-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}
-@media(max-width:800px){.case-system-page .case-meta{grid-template-columns:1fr}.case-system-page .meridian-case-hero{padding-bottom:24px}.taste-example>div,.evidence-grid{grid-template-columns:1fr!important}.taste-example article+article{border-left:0;border-top:1px solid var(--border)}}
+.product-model-grid{grid-template-columns:repeat(3,minmax(0,1fr))!important}.evidence-grid{grid-template-columns:repeat(4,minmax(0,1fr))!important}.evidence-grid article{padding:15px!important}.evidence-grid strong{font-size:14px!important}.evidence-grid p{font-size:12.2px!important;line-height:1.5!important}
+@media(max-width:1000px){.evidence-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}}@media(max-width:800px){.case-system-page .case-meta{grid-template-columns:1fr}.case-system-page .meridian-case-hero{padding-bottom:24px}.taste-example>div,.product-model-grid,.evidence-grid{grid-template-columns:1fr!important}.taste-example article+article{border-left:0;border-top:1px solid var(--border)}}
 </style>
 </head>
 <body>
@@ -54,7 +54,7 @@
 <div class="kicker">The product model</div>
 <h2>Feedback gives Tastemake a working theory, not a permanent label.</h2>
 <div class="human-flow"><span>Item feedback</span><b>→</b><span>Inferred pattern</span><b>→</b><span class="accent">User correction</span><b>→</b><span class="accent">Refined profile</span><b>→</b><span>New recommendations</span></div>
-<div class="surface-grid">
+<div class="surface-grid product-model-grid">
 <article><span>Evidence vs. intent</span><strong>Not every action means “I like this”</strong><p>Loved, Liked, and Didn’t like come from something the user actually tried. Saving or browsing does not count as taste evidence on its own.</p></article>
 <article><span>Visible learning</span><strong>The profile shows its work</strong><p>Tastemake shows the patterns it is using instead of hiding them inside a recommendation score.</p></article>
 <article><span>User control</span><strong>Corrections affect what happens next</strong><p>A user can say a pattern is right, partly right, too strong, or just wrong. Tastemake keeps that correction separate from the original AI guess.</p></article>
