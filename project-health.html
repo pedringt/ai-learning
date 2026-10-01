@@ -156,6 +156,33 @@
     @media(prefers-reduced-motion:reduce){
       *,*::before,*::after{scroll-behavior:auto!important;transition:none!important;animation:none!important}
     }
+
+    .decision-support-grid{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,.85fr);gap:14px}
+    .decision-support-block{padding:16px;border:1px solid var(--line);border-radius:12px;background:#fff}
+    .decision-support-block>strong{display:block;margin-bottom:10px;font-size:14px}
+    .risk-checklist{display:grid;gap:8px}
+    .risk-row{display:grid;grid-template-columns:auto minmax(0,1fr);gap:10px;align-items:start;padding:8px 0;border-top:1px solid #edf0ed}
+    .risk-row:first-child{border-top:0;padding-top:0}
+    .risk-row>div{display:grid;gap:2px}.risk-row>div>strong{font-size:13px}.risk-row>div>span{color:var(--muted);font-size:12px;line-height:1.45}
+    .regression-card{display:grid;grid-template-columns:auto minmax(0,1fr);gap:4px 10px;align-items:start;padding:12px;border:1px solid var(--line);border-radius:10px;background:#fafbfa}
+    .regression-card>strong,.regression-card>span:last-child{grid-column:2}.regression-card>strong{font-size:13px}.regression-card>span:last-child{color:var(--muted);font-size:12px;line-height:1.45}
+    .regression-card.warn{background:#fff9ef;border-color:#ead9b9}.regression-card.good{background:#f4faf6}.regression-card.unknown{background:#f7f8f7}
+    .monitoring-gaps{display:grid;gap:7px;margin-top:14px;padding-top:12px;border-top:1px solid var(--line)}.monitoring-gaps>strong{font-size:12px}
+    .gap-list{display:grid;gap:6px}.gap-list>span{color:var(--muted);font-size:11px;line-height:1.45}.gap-list b{color:var(--ink)}
+    .decision-log{margin-top:14px;padding-top:14px;border-top:1px solid var(--line)}.decision-log-head{display:flex;justify-content:space-between;gap:10px;align-items:baseline}.decision-log-head>span{color:var(--muted);font-size:11px}
+    .decision-log-list{display:grid;gap:8px;margin-top:9px}.decision-log-item{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:10px;align-items:start;padding:9px 10px;border:1px solid #e8ebe8;border-radius:9px;background:#fafbfa}
+    .decision-log-item>strong{font-size:12px;line-height:1.4}.decision-log-item>span:last-child{color:var(--muted);font-size:10px;white-space:nowrap}
+    .compact-empty{margin-top:8px;padding:10px 12px}
+    .impact-chip{display:inline-flex;width:max-content;margin-top:5px;padding:3px 7px;border-radius:999px;font-size:10px;font-weight:800;background:#f1f3f1;color:var(--muted)}
+    .impact-chip.good{background:#edf7ef;color:#356444}.impact-chip.unknown{background:#f2f3f2;color:#6f7872}.impact-chip.bad{background:#fbefed;color:#8a3f38}
+    .activity-followup{display:block;margin-top:5px;color:#50675b;font-size:11px;font-weight:750}
+    .product-note-dialog{width:min(620px,calc(100vw - 32px))}
+    .product-note-form{display:grid;gap:8px}.product-note-form label{display:grid;gap:3px;font-size:13px}.product-note-form label span{color:var(--muted);font-size:11px;font-weight:500}
+    .product-note-form select,.product-note-form textarea{width:100%;box-sizing:border-box;border:1px solid #dfe4df;border-radius:9px;background:#fff;color:var(--ink);font:inherit;padding:10px 11px}
+    .product-note-form textarea{resize:vertical;min-height:110px;line-height:1.45}.product-note-form select:focus-visible,.product-note-form textarea:focus-visible{border-color:#82998d;outline:3px solid rgba(56,98,77,.12)}
+    .dialog-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:6px}
+    @media(max-width:850px){.decision-support-grid{grid-template-columns:1fr}}
+    @media(max-width:560px){.decision-log-head{align-items:flex-start;flex-direction:column}.decision-log-item{grid-template-columns:1fr}.decision-log-item>span:last-child{white-space:normal}.dialog-actions{justify-content:stretch}.dialog-actions .button{flex:1}}
 </style>
 </head>
 <body>
@@ -205,6 +232,7 @@
       <div class="grid">
         <section class="panel" id="attentionPanel" data-tab-panel="overview"></section>
         <section class="panel" id="productFocusPanel" data-tab-panel="overview"></section>
+        <section class="panel" id="decisionSupportPanel" data-tab-panel="overview"></section>
         <section class="panel" id="changesPanel" data-tab-panel="overview"></section>
         <section class="panel" id="overviewHealthPanel" data-tab-panel="overview"></section>
         <section class="panel half" id="analyticsPanel" data-tab-panel="overview"></section>
@@ -242,6 +270,27 @@
         <section class="panel" id="infrastructurePanel"></section>
         <section class="panel" id="connectionsPanel"></section>
       </div>
+    </dialog>
+
+    <dialog class="info-dialog product-note-dialog" id="productNoteDialog" aria-labelledby="productNoteDialogTitle">
+      <form id="productNoteForm" method="dialog">
+        <div class="info-dialog-head">
+          <div><div class="eyebrow">Product record</div><h2 id="productNoteDialogTitle">Record a decision or change</h2></div>
+          <button class="drawer-close" type="button" data-close-info aria-label="Close product record">×</button>
+        </div>
+        <div class="info-dialog-body product-note-form">
+          <label for="productNoteType"><strong>Type</strong></label>
+          <select id="productNoteType" name="type">
+            <option value="decision">Decision</option>
+            <option value="change">Change</option>
+            <option value="experiment">Experiment</option>
+          </select>
+          <label for="productNoteText"><strong>What happened?</strong><span>Capture the product judgment or change in plain language.</span></label>
+          <textarea id="productNoteText" name="text" rows="4" maxlength="500" required placeholder="Example: Treat the unknown-reason eval miss as a product behavior issue, not eval noise."></textarea>
+          <p class="footnote">This lightweight log is stored in this browser and appears in Activity. It does not change the project itself.</p>
+          <div class="dialog-actions"><button class="button" type="button" data-close-info>Cancel</button><button class="button primary" type="submit">Save record</button></div>
+        </div>
+      </form>
     </dialog>
 
     <dialog class="info-dialog" id="aboutProjectHealth" aria-labelledby="aboutProjectHealthTitle">
