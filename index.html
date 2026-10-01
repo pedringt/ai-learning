@@ -476,23 +476,30 @@ body.v88-dark .home-state-feature{box-shadow:none}body.v88-dark .home-state-acti
 .home-feature-card{display:flex;flex-direction:column;justify-content:space-between;gap:18px;min-height:0;padding:22px 24px;border:1px solid var(--border);border-radius:20px;background:var(--card)}
 .home-feature-card>div:first-child{max-width:none}.home-feature-card h2{margin:5px 0 8px;font-size:24px;line-height:1.15}.home-feature-card p{margin:0;color:var(--muted);font-size:13.5px;line-height:1.55}
 .home-feature-state-anchor{padding:28px;background:linear-gradient(180deg,color-mix(in srgb,var(--softp) 62%,var(--card)),var(--card));border-color:color-mix(in srgb,var(--purple) 30%,var(--border));box-shadow:0 10px 26px color-mix(in srgb,var(--purple) 8%,transparent)}
-.home-feature-state-anchor h2{font-size:31px}.home-feature-state-anchor p{max-width:620px;font-size:14.5px}
+.home-feature-state-anchor h2{font-size:31px}.home-feature-state-anchor p{max-width:690px;font-size:14.5px;line-height:1.65}
+.home-state-content{display:flex;flex-direction:column;align-items:flex-start;gap:0;height:100%}
+.home-state-signals{display:flex;flex-wrap:wrap;gap:8px;margin-top:20px}
+.home-state-signals span{padding:7px 10px;border:1px solid color-mix(in srgb,var(--purple) 24%,var(--border));border-radius:999px;background:color-mix(in srgb,var(--softp) 52%,var(--card));color:var(--muted);font-size:11.5px;font-weight:800;line-height:1}
+.home-state-button-row{display:flex;flex-wrap:wrap;gap:10px;margin-top:22px}
+.home-state-button{display:inline-flex;align-items:center;justify-content:center;padding:10px 14px;border-radius:11px;font-size:12px;font-weight:850;line-height:1.2;text-decoration:none!important}
+.home-state-button-primary{background:var(--purple);color:#fff!important;border:1px solid var(--purple)}
+.home-state-button-secondary{background:var(--card);color:var(--purple)!important;border:1px solid color-mix(in srgb,var(--purple) 30%,var(--border))}
+.home-state-button:hover{transform:translateY(-1px)}
 .home-feature-lead{background:linear-gradient(180deg,color-mix(in srgb,var(--softp) 30%,var(--card)),var(--card))}
 .home-feature-actions{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;justify-content:flex-start;margin-top:auto}
 .home-feature-actions a{font-size:12px!important;font-weight:850!important;line-height:1.25}
 .home-see-all{display:inline-block;margin-top:18px;color:var(--purple);font-size:13px;font-weight:850;text-decoration:none}.home-see-all:hover{text-decoration:underline}
-.applied-featured-state-led{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:14px}
-.applied-featured-state-led .applied-state-feature{grid-column:1/-1;padding:24px 26px;background:linear-gradient(135deg,color-mix(in srgb,var(--softp) 46%,var(--card)),var(--card));border-color:color-mix(in srgb,var(--purple) 28%,var(--border))}
-.applied-featured-state-led .applied-state-feature h3{font-size:25px}
-.applied-featured-state-led .applied-major{min-height:0}
+.applied-featured-three{grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:14px}
+.applied-featured-three .applied-major{min-height:0}
 .applied-major-with-actions .applied-card-actions{gap:8px 14px!important;padding-top:14px!important}
 .applied-major-with-actions .applied-card-actions a{font-size:11.5px!important;font-weight:850!important}
 .applied-secondary-compact{gap:10px!important}
 .applied-secondary-compact>.applied-secondary{padding:15px 17px!important}
 .applied-secondary-compact .card-intro{font-size:12.5px;line-height:1.5}
 .applied-secondary-compact .nav-card::after{margin-top:10px}
+@media(max-width:980px){.applied-featured-three{grid-template-columns:1fr 1fr!important}.applied-featured-three .applied-major:first-child{grid-column:1/-1}}
 @media(max-width:900px){.home-feature-state-led{grid-template-columns:1fr}.home-feature-stack-right{grid-template-columns:1fr 1fr;grid-template-rows:none}}
-@media(max-width:760px){.home-feature-stack-right,.applied-featured-state-led{grid-template-columns:1fr!important}.home-feature-card,.home-feature-state-anchor{padding:21px}.home-feature-state-anchor h2{font-size:27px}.applied-featured-state-led .applied-state-feature{grid-column:auto;padding:20px}}
+@media(max-width:760px){.home-feature-stack-right,.applied-featured-three{grid-template-columns:1fr!important}.applied-featured-three .applied-major:first-child{grid-column:auto}.home-feature-card,.home-feature-state-anchor{padding:21px}.home-feature-state-anchor h2{font-size:27px}.home-state-button-row{width:100%}.home-state-button{flex:1 1 auto}}
 </style></head>
 <body>
 <div class="app-root" id="ai-cs-mock">
@@ -565,8 +572,20 @@ body.v88-dark .learning-how-note strong{color:#f5f2fb!important}
 <div class="home-applied-heading"><div class="section-kicker"><span>Applied work · start here</span></div></div>
 <div class="home-feature-grid home-feature-state-led">
 <article class="home-feature-card home-feature-state-anchor">
-  <div><span class="home-project-kicker">Featured · Trustworthy AI</span><h2>State</h2><p>A project truth system that keeps AI interpretation separate from human-approved state, with explicit rules for evidence, uncertainty, and authority.</p></div>
-  <div class="home-feature-actions"><a class="home-state-primary" href="/implementation-context-prototype/" target="_blank" rel="noopener noreferrer">Open State →</a><a class="home-state-secondary" href="implementation-context.html">Case study →</a></div>
+  <div class="home-state-content">
+    <span class="home-project-kicker">Featured · Trustworthy AI</span>
+    <h2>State</h2>
+    <p>State is a project truth system for teams working across scattered sources. AI interprets new evidence, software enforces the rules, and people decide what becomes Current State. The goal is to keep project knowledge useful without letting the model quietly turn guesses or stale information into fact.</p>
+    <div class="home-state-signals" aria-label="What State demonstrates">
+      <span>Human-in-the-loop</span>
+      <span>AI quality &amp; evals</span>
+      <span>Evidence &amp; authority</span>
+    </div>
+    <div class="home-state-button-row">
+      <a class="home-state-button home-state-button-primary" href="/implementation-context-prototype/" target="_blank" rel="noopener noreferrer">Open State ↗</a>
+      <a class="home-state-button home-state-button-secondary" href="implementation-context.html">Case study →</a>
+    </div>
+  </div>
 </article>
 <div class="home-feature-stack-right">
 <article class="home-feature-card home-feature-lead">
@@ -660,8 +679,8 @@ body.v88-dark .learning-how-note strong{color:#f5f2fb!important}
 
 <section class="view" data-page="portfolio" id="portfolio"><header class="page-intro"><div class="eyebrow">Applied Work</div><h2 class="section-title">Projects that exercise different kinds of product judgment</h2><p class="section-lead">Three projects show the strongest range of my applied AI work. Supporting work adds a few distinct lessons without turning the page into a catalog.</p></header>
 <div class="section-kicker applied-group-kicker"><span>Featured work</span></div>
-<div class="applied-major-grid applied-featured-grid applied-featured-state-led">
-<div class="card applied-major applied-major-with-actions applied-state-feature"><span class="tag">Flagship · Trustworthy AI</span><h3><a class="applied-card-primary-link" href="implementation-context.html">State</a></h3><p class="card-intro">A project truth system that keeps AI interpretation separate from human-approved state, with clear rules for evidence, uncertainty, and authority.</p><div class="applied-card-actions"><a href="/implementation-context-prototype/" target="_blank" rel="noopener noreferrer">Open State →</a><a href="implementation-context.html">Case study →</a></div></div>
+<div class="applied-major-grid applied-featured-grid applied-featured-three">
+<div class="card applied-major applied-major-with-actions"><span class="tag">Flagship · Trustworthy AI</span><h3><a class="applied-card-primary-link" href="implementation-context.html">State</a></h3><p class="card-intro">A project truth system that keeps AI interpretation separate from human-approved state, with clear rules for evidence, uncertainty, and authority.</p><div class="applied-card-actions"><a href="/implementation-context-prototype/" target="_blank" rel="noopener noreferrer">Open State →</a><a href="implementation-context.html">Case study →</a></div></div>
 <div class="card applied-major applied-major-with-actions"><span class="tag">AI product · Personalization</span><h3><a class="applied-card-primary-link" href="tastemake.html">Tastemake</a></h3><p class="card-intro">A recommendation product where users can see and correct what the system thinks it has learned about their taste.</p><div class="applied-card-actions"><a href="https://tastemake.vercel.app/" target="_blank" rel="noopener noreferrer">Open Tastemake →</a><a href="tastemake.html">Case study →</a></div></div>
 <div class="card applied-major applied-major-with-actions"><span class="tag">Product health · AI quality</span><h3><a class="applied-card-primary-link" href="project-health-case-study.html">Project Health</a></h3><p class="card-intro">A dashboard for seeing what changed, what needs attention, what signals are missing, and where to investigate next.</p><div class="applied-card-actions"><a href="project-health.html" target="_blank" rel="noopener noreferrer">Open Project Health →</a><a href="project-health-case-study.html">Case study →</a></div></div>
 </div>
