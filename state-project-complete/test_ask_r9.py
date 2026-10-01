@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from copy import deepcopy
+import json
 import time
 from types import SimpleNamespace
 
@@ -186,6 +187,40 @@ def test_streaming_ask_reuses_the_same_state_aware_cache(tmp_path):
         assert second.status_code == 200
         assert len(provider.prompts) == 2
         assert '"cache_hit": true' in second.text
+
+
+class RetryableStreamingAskProvider(FakeAskProvider):
+    def __init__(self):
+        super().__init__()
+        self.stream_calls = 0
+
+    def stream(self, prompt):
+        self.stream_calls += 1
+        invalid_answer = deepcopy(self.answer)
+        invalid_answer["job"] = "not-a-real-ask-job"
+        yield json.dumps({"selection": self.selection, "answer": invalid_answer})
+
+
+def test_streaming_ask_retries_once_after_final_contract_failure_and_caches_result(tmp_path):
+    provider = RetryableStreamingAskProvider()
+    settings = Settings(database_path=str(tmp_path / "stream-retry.db"), cors_origins=[], demo_bootstrap=True)
+    app = create_app(settings, provider=None, ask_provider=provider)
+    with TestClient(app) as client:
+        first = client.post("/api/ask/stream", json={"query": "Prep me for the security meeting."})
+
+        assert first.status_code == 200
+        assert "event: delta" in first.text
+        assert "event: final" in first.text
+        assert "event: error" not in first.text
+        assert "Security meeting prep" in first.text
+        assert provider.stream_calls == 1
+        assert len(provider.prompts) == 2
+
+        second = client.post("/api/ask/stream", json={"query": "Prep me for the security meeting."})
+        assert second.status_code == 200
+        assert '"cache_hit": true' in second.text
+        assert provider.stream_calls == 1
+        assert len(provider.prompts) == 2
 
 
 def test_api_ask_fails_closed_when_provider_fails(tmp_path):

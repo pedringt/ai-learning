@@ -86,6 +86,20 @@ The **meeting-prep shape** eval (#246) is defined in `state-project-complete/eva
 - **End to end:** the 12 new-guidance answers were streamed frame by frame through the real frontend renderer: nothing ever disappeared mid-stream, and in 10 of 12 the last streamed frame is identical to the finished answer after the backend's trimming; the other 2 are the over-cap case above.
 - **Separate observation, not caused by this change (#247):** the model sometimes writes an internal record id into its text (for example "k-monitoring" or "Demo-juniper-review-elevator qualifies this risk."): **7 of 12 raw answers with the old guidance, 3 of 12 with the new**. The backend scrubs these before the answer is shown (`_clean_visible_ask_text`), so what a person reads is much cleaner: after running the real scrubber over these answers, an id or a leftover fragment remained in **0 to 1 of 12** answers per prompt (a range, because the exact selected-record ids were not saved). The leftover is a mangled fragment when a slug-style id has a prefix the scrub regex does not recognize ("Demo-juniper- qualifies this risk."), mainly on the seeded Juniper demo. I found no difference between what streams and what finishes (0 of 12). **Fixed in #247:** the scrubber now removes a seeded slug id whole and is given every id the model was shown, selected or not; re-running the same audit on these 24 answers, even in the worst case (only the ids cited on the answer's own items), leaves an id or fragment in 0 of 12 answers for both prompts (it was 1 of 12 for each).
 
+### Ask completion reliability
+
+The Ask completion-reliability eval measures a different product property from Ask quality: whether a fresh live Ask call can finish the structured grounding contract at all. It was added after production testing on 2026-10-01 showed a plausible answer visibly streaming and then disappearing when the completed payload failed final contract validation.
+
+It lives in `state-project-complete/eval/ask_reliability.py` with the runnable entrypoint `python -m eval.run_ask_reliability`. The suite uses representative typed synthesis questions against the seeded Northstar project, including the exact production question that reproduced the failure. For each fresh call it records:
+
+- first-attempt contract-valid completion rate;
+- contract-failure rate;
+- recovery rate after the one bounded retry used by Ask;
+- unrecovered failure rate;
+- provider-error rate separately from contract misses.
+
+This is a **paid, targeted measurement**, not part of the normal release gate and not part of the Ask-quality score. It deliberately does not score wording, grounding quality, or authority semantics; those remain the job of the Ask-quality suite. Run `python -m eval.run_ask_reliability --dry-run` first: the dry run reports both the guaranteed initial-call count and the worst-case retry count without calling a model. The reusable harness is safe to import from deterministic tests and never loads `.env` on import.
+
 Targeted model-sensitive regressions also live alongside the State test suite when a single failure needs stronger semantic assertions than review/no-review alone. `test_bootstrap_mixed_spec_eval.py` protects the bootstrap case where one realistic planning/spec document contains settled decisions, tentative ideas, and explicit open questions: the expected outcome includes both at least one proposed maintained fact and at least one proposed Question, without pinning exact model wording.
 
 When a real failure reveals a missing behavior case, add it to the cheapest layer that can reliably catch it. Not every AI-facing bug needs a paid real-model eval; deterministic and fake-provider regression tests are preferable when they can express the invariant.
