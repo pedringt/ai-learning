@@ -1024,9 +1024,9 @@
   }
   function cardMarkup(data,active){
     const status=projectStatus(data),pending=pendingSet(data);
-    const secondary=pending.size?'Checking project health…':data.project.description;
+    const signal=pending.size?'Checking project health…':overallAttention(data).title;
     return '<button class="project-switcher-item '+(active?'active':'')+'" data-kind="'+esc(status.kind)+'" data-project="'+esc(data.project.id)+'" type="button" aria-pressed="'+(active?'true':'false')+'">'+
-      '<span class="project-switcher-main"><strong>'+esc(data.project.name)+'</strong><span>'+esc(secondary||'Project health')+'</span></span>'+
+      '<span class="project-switcher-main"><strong>'+esc(data.project.name)+'</strong><span>'+esc(signal||'No current issue')+'</span></span>'+
       '<span class="status-pill '+esc(status.key)+'">'+esc(status.label)+'</span></button>';
   }
   function evalSuiteLabel(run){
@@ -1073,31 +1073,6 @@
     return Math.round(total*value)+' / '+total+' passed';
   }
   function stateEvalHistory(){return'';}
-  function sparklineMarkup(values){
-    const nums=(Array.isArray(values)?values:[]).map(Number).filter(Number.isFinite).slice(0,8).reverse();
-    if(nums.length<2)return'';
-    const w=180,h=42,p=3,min=Math.min(...nums),max=Math.max(...nums),range=Math.max(.001,max-min);
-    const pts=nums.map((v,i)=>{
-      const x=p+(i*(w-p*2)/(nums.length-1));
-      const y=h-p-((v-min)/range)*(h-p*2);
-      return {x,y};
-    });
-    return '<div class="quality-sparkline" aria-label="Recent quality trend"><svg viewBox="0 0 '+w+' '+h+'" role="img" aria-hidden="true">'+
-      '<line class="spark-grid" x1="0" y1="'+(h-8)+'" x2="'+w+'" y2="'+(h-8)+'"></line>'+
-      '<polyline class="spark-line" points="'+pts.map(pt=>pt.x.toFixed(1)+','+pt.y.toFixed(1)).join(' ')+'"></polyline>'+
-      pts.map(pt=>'<circle class="spark-dot" cx="'+pt.x.toFixed(1)+'" cy="'+pt.y.toFixed(1)+'" r="2.2"></circle>').join('')+
-      '</svg></div>';
-  }
-  function suiteTrendValues(quality,suite){
-    return (Array.isArray(quality?.recent)?quality.recent:[])
-      .filter(item=>item?.suite===suite)
-      .map(evalScore)
-      .filter(value=>value!=null);
-  }
-  function percentNumber(value){
-    const n=Number(value);
-    return Number.isFinite(n)?Math.max(0,Math.min(100,n*100)):0;
-  }
   function investigationResultHtml(investigation){
     if(investigation?.handoff) return '<div class="investigation-result agent-result"><div class="agent-kicker">Handoff preview</div><strong>Project handoff ready to review</strong><pre>'+esc(investigation.handoffText||investigation.report||'')+'</pre><p class="footnote">Project Health assembled this from the currently loaded delivery, quality, investigation, and product-decision signals. Review it before sharing.</p></div>';
     if(investigation?.loading) return '<div class="investigation-result agent-result" role="status"><div class="agent-kicker">Read-only investigation agent</div><strong>Checking current health signals…</strong><p>Starting with current health signals and expanding only when the evidence points somewhere specific.</p></div>';
@@ -1122,12 +1097,6 @@
     const pending=pendingSet(data);
     doc.getElementById('detailTitle').textContent=p.name;
     doc.getElementById('detailCopy').textContent=p.description;
-    const detailStatus=doc.getElementById('detailStatus');
-    if(detailStatus){
-      const status=projectStatus(data);
-      detailStatus.className='project-header-status status-pill '+esc(status.key);
-      detailStatus.textContent=status.label;
-    }
     const repoLink=doc.getElementById('repoLink');
     if(repoLink)repoLink.href=repoUrl(p.repo);
     const liveProjectLink=doc.getElementById('liveProjectLink');
@@ -1370,31 +1339,23 @@
     if(releasePanel){
       const releaseTitle=d?.message?commitTitle(d.message):'No recent release data';
       const releaseStatus=d?.vercel?.label||'Deployment status unavailable';
-      const releaseKind=d?.vercel?.kind||'unknown';
       releasePanel.innerHTML=
         '<span class="overview-card-kicker">Latest release</span>'+
         '<div class="overview-card-title">'+esc(releaseTitle)+'</div>'+
         '<div class="overview-card-meta">'+esc(shortSha(d?.sha))+(d?.updatedAt?' · '+esc(fmtDate(d.updatedAt)):'')+'</div>'+
-        '<div class="overview-release-status '+esc(releaseKind)+'"><span class="health-card-dot '+esc(releaseKind)+'"></span>'+esc(releaseStatus)+'</div>'+
-        '<div class="overview-mini-meta"><span>Branch: '+esc(d?.branch||p.branch||'Unknown')+'</span><span>Environment: production</span></div>'+
+        '<p class="overview-card-copy">'+esc(releaseStatus)+'.</p>'+
         '<div class="overview-card-actions"><button class="button small" type="button" data-tab-target="releases">View releases</button></div>';
     }
 
     const usagePanel=doc.getElementById('overviewUsagePanel');
     if(usagePanel){
       if(aSummary?.available){
-        const visitorsTrend=trendText(aSummary.visitors_delta_pct);
-        const viewsTrend=trendText(aSummary.pageviews_delta_pct);
         usagePanel.innerHTML=
           '<span class="overview-card-kicker">Usage</span>'+
           '<div class="overview-card-title">Production activity · last 30 days</div>'+
           '<div class="overview-usage-grid">'+
             '<div class="overview-usage-stat"><strong>'+esc(aSummary.visitors??'—')+'</strong><span>Visitors</span></div>'+
             '<div class="overview-usage-stat"><strong>'+esc(aSummary.pageviews??'—')+'</strong><span>Page views</span></div>'+
-          '</div>'+
-          '<div class="usage-trend-row">'+
-            '<div class="usage-trend-box">Visitors trend<strong>'+esc(visitorsTrend)+'</strong></div>'+
-            '<div class="usage-trend-box">Page views trend<strong>'+esc(viewsTrend)+'</strong></div>'+
           '</div>'+
           '<div class="overview-card-actions"><button class="button small" type="button" data-tab-target="usage">View usage</button></div>';
       }else{
@@ -1404,62 +1365,6 @@
           '<p class="overview-card-copy">'+esc(aSummary?.configured?'Analytics are connected, but usable counts are not available for this project yet.':'Usage analytics are not connected for this project.')+'</p>'+
           '<div class="overview-card-actions"><button class="button small" type="button" data-tab-target="usage">View usage setup</button></div>';
       }
-    }
-
-    const overviewQualitySummaryPanel=doc.getElementById('overviewQualitySummaryPanel');
-    if(overviewQualitySummaryPanel){
-      let summaryCards='';
-      let footerText='Project-specific quality evidence.';
-      if(p.quality==='state'){
-        const review=q?.review,ask=q?.ask;
-        const stateCards=[
-          {
-            title:'Update understanding',
-            score:evalScore(review),
-            note:review?(scenarioPassLabel(review,evalScore(review))||'Latest controlled eval'):'No recorded run',
-            kind:review?(Number(review.high_severity_failures||0)>0?'bad':evalScore(review)<1?'warn':'good'):'unknown',
-            trend:sparklineMarkup(suiteTrendValues(q,'review_interpretation'))
-          },
-          {
-            title:'Answer quality',
-            score:evalScore(ask),
-            note:ask?(scenarioPassLabel(ask,evalScore(ask))||'Latest controlled eval'):'No recorded run',
-            kind:ask?(Number(ask.high_severity_failures||0)>0?'bad':evalScore(ask)<1?'warn':'good'):'unknown',
-            trend:sparklineMarkup(suiteTrendValues(q,'ask_quality'))
-          }
-        ];
-        summaryCards=stateCards.map(item=>'<div class="overview-quality-card">'+
-          '<div class="overview-quality-card-head"><h4>'+esc(item.title)+'</h4><span class="status-pill '+esc(item.kind)+'">'+esc(item.kind==='good'?'Healthy':item.kind==='bad'?'Needs attention':item.kind==='warn'?'Watch':'Unknown')+'</span></div>'+
-          '<div class="overview-quality-score">'+(item.score==null?'—':esc(percent(item.score)))+'</div>'+
-          '<div class="overview-quality-note">'+esc(item.note)+'</div>'+
-          '<div class="quality-progress '+esc(item.kind)+'"><span style="width:'+percentNumber(item.score)+'%"></span></div>'+
-          item.trend+
-          '</div>').join('');
-        footerText='Controlled evals for understanding updates and answer quality.';
-      }else if(p.id==='tastemake'&&externalQ){
-        const endpoint=externalQ.endpoint||{},ci=externalQ.ci||{};
-        const rulePassed=Number(endpoint.rule_checks?.passed||0),ruleTotal=Number(endpoint.rule_checks?.total||0);
-        const caught=Number(endpoint.validator_self_test?.caught||0),caughtTotal=Number(endpoint.validator_self_test?.total||0);
-        const cards=[
-          {title:'Recommendation rules',score:ruleTotal?rulePassed/ruleTotal:null,note:ruleTotal?(rulePassed+' / '+ruleTotal+' passed'):'Not measured',kind:ruleTotal&&rulePassed===ruleTotal?'good':'warn'},
-          {title:'Validator defenses',score:caughtTotal?caught/caughtTotal:null,note:caughtTotal?(caught+' / '+caughtTotal+' bad outputs caught'):'Not measured',kind:caughtTotal&&caught===caughtTotal?'good':'warn'}
-        ];
-        summaryCards=cards.map(item=>'<div class="overview-quality-card"><div class="overview-quality-card-head"><h4>'+esc(item.title)+'</h4><span class="status-pill '+esc(item.kind)+'">'+esc(item.kind==='good'?'Healthy':'Watch')+'</span></div><div class="overview-quality-score">'+(item.score==null?'—':esc(percent(item.score)))+'</div><div class="overview-quality-note">'+esc(item.note)+'</div><div class="quality-progress '+esc(item.kind)+'"><span style="width:'+percentNumber(item.score)+'%"></span></div></div>').join('');
-        footerText=ci.conclusion==='success'?'Main automated recommendation checks are passing.':'Latest recommendation checks need review.';
-      }else if(p.id==='narc'&&externalQ){
-        const green=!!externalQ.recorded?.recorded_all_suites_green;
-        const pendingPlaytest=!!externalQ.recorded?.full_playtest_pending;
-        summaryCards=
-          '<div class="overview-quality-card"><div class="overview-quality-card-head"><h4>Automated game checks</h4><span class="status-pill '+(green?'good':'unknown')+'">'+(green?'Healthy':'Unknown')+'</span></div><div class="overview-quality-score">'+(green?'3/3':'—')+'</div><div class="overview-quality-note">Branches, consequences, time rules, and desktop behavior.</div><div class="quality-progress '+(green?'good':'unknown')+'"><span style="width:'+(green?100:0)+'%"></span></div></div>'+
-          '<div class="overview-quality-card"><div class="overview-quality-card-head"><h4>Human playtest</h4><span class="status-pill '+(pendingPlaytest?'warn':'good')+'">'+(pendingPlaytest?'Pending':'Recorded')+'</span></div><div class="overview-quality-score">'+(pendingPlaytest?'Open':'Done')+'</div><div class="overview-quality-note">First-run player experience check.</div></div>';
-        footerText='Automated game checks plus the human first-run playtest gate.';
-      }else{
-        summaryCards='<div class="overview-quality-card"><div class="overview-quality-card-head"><h4>Quality evidence</h4><span class="status-pill unknown">Unknown</span></div><div class="overview-quality-score">—</div><div class="overview-quality-note">No comparable quality summary is available yet.</div></div>';
-      }
-      overviewQualitySummaryPanel.innerHTML=
-        '<div class="overview-quality-head"><div><h3>Quality & evaluation</h3><p>See whether the product is behaving the way its quality contract expects.</p></div><button class="button small" type="button" data-tab-target="ai-quality">View full quality details</button></div>'+
-        '<div class="overview-quality-grid">'+summaryCards+'</div>'+
-        '<div class="quality-summary-footer"><span>'+esc(footerText)+'</span><span>Signals use recorded project evidence only.</span></div>';
     }
 
     const changes=meaningfulChanges(data);
