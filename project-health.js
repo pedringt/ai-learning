@@ -455,7 +455,7 @@
   function releaseRiskChecklist(data){
     const quality=data?.project?.quality==='state'?qualityAttention(data.quality):externalQualityAttention(data.externalQuality);
     const incidents=activityReviewItems(data).filter(item=>!item.resolved);
-    const gaps=setupGaps(data);
+    const gaps=setupGaps(data).filter(gap=>gap.label!=='Agent workflow telemetry');
     const delivery=deliveryAttentionForData(data);
     const stale=data?.project?.quality==='state'&&stateEvalResultsStale(data.quality);
     const qualityKind=stale?'warn':(quality?.kind||'unknown');
