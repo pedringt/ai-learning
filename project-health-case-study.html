@@ -96,7 +96,7 @@ body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,Bl
   <div class="case-hero-actions"><a class="cta primary" href="project-health.html" target="_blank" rel="noopener noreferrer">Open Project Health ↗</a></div>
 </header>
 
-<div class="callout"><p><strong>Project Health separates product quality, delivery, possible user impact, and observability.</strong> A strong signal in one area should not cancel out a serious failure or an important unknown somewhere else.</p></div>
+<div class="callout"><p><strong>The core product decision was to keep unlike signals separate.</strong> Product quality, delivery, possible user impact, and observability can all move independently. A healthy number in one area should not end the investigation when another area contains a serious failure or an important unknown.</p></div>
 
 <h2>The problem</h2>
 <p>The information already existed. It was just spread across deployments, commits, evals, analytics, logs, and the live products themselves. I built Project Health around my own projects as a practical test bed for a pattern I would expect to matter inside a product team: bring the signals together, then help someone decide whether a signal is a real product problem, something to watch, or simply missing information.</p>
@@ -175,7 +175,7 @@ body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,Bl
 </div>
 
 <h2>What held up</h2>
-<div class="callout"><p><strong>More data was not the answer.</strong> The useful part was separating failure types clearly enough that the next investigation could start with the right evidence instead of the loudest metric.</p></div>
+<div class="callout"><p><strong>More data was not the answer.</strong> The useful part was preventing one reassuring metric from becoming the verdict. Separating failure types made the next investigation start with the evidence that could actually change the decision.</p></div>
 
 <div class="cta-row">
   <a class="cta primary" href="project-health.html" target="_blank" rel="noopener noreferrer">Open Project Health ↗</a>
