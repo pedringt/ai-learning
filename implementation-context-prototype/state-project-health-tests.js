@@ -660,7 +660,7 @@ assert.match(projectHealthSource,/Decision support/);
 assert.match(projectHealthSource,/What we cannot confirm/);
 assert.match(projectHealthSource,/Decision & change log/);
 assert.match(projectHealthSource,/data-add-product-note/);
-assert.match(projectHealthSource,/product-health-product-notes/);
+assert.match(projectHealthSource,/project-health-product-notes/);
 assert.match(projectHealthSource,/Next evidence:/);
 assert.match(projectHealthSource,/User impact:/);
 assert.match(projectHealthSource,/Full AI eval details/);
