@@ -468,6 +468,113 @@
       .mock-secondary .decision-support-grid{gap:12px}
     }
 
+
+    /* Exact mock composition pass. */
+    .mock-detail-head{padding:20px 20px 12px!important;min-height:0!important;display:flex;gap:18px;align-items:center}
+    .mock-project-heading{display:flex;align-items:center;gap:16px;min-width:0}
+    .mock-project-icon{
+      width:66px;height:66px;display:grid;place-items:center;flex:0 0 auto;border-radius:14px;
+      background:linear-gradient(145deg,#745ff2,#4d3ed0);color:#fff;font-size:29px;font-weight:800;
+      box-shadow:0 8px 24px rgba(87,70,210,.18)
+    }
+    .mock-project-title-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+    .mock-project-title-row h2{margin:0}
+    .mock-project-title-row .status-pill{font-size:10px}
+    .mock-open-link{color:#4f46d9}.mock-source-link{color:#1f2937}
+    .mock-tabs{padding:0 20px!important;gap:30px!important}
+
+    .mock-overview-grid{display:block!important;padding:0!important;background:#f6f7fb!important}
+    .mock-dashboard{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:16px;padding:16px;background:#f6f7fb}
+    .mock-dashboard-section{
+      grid-column:1/-1;border:1px solid #dfe4ed;border-radius:13px;background:#fff;
+      box-shadow:0 3px 14px rgba(21,32,52,.025)
+    }
+    .mock-attention-banner{
+      display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:start;gap:14px;padding:18px 20px;
+      border-color:#f2c47f;background:linear-gradient(105deg,#fffaf1,#fffdf8)
+    }
+    .mock-attention-icon{
+      width:42px;height:42px;display:grid;place-items:center;border-radius:999px;background:#f97316;color:#fff;font-size:20px;font-weight:900
+    }
+    .mock-attention-copy h3{margin:1px 0 3px;color:#b54708;font-size:19px}
+    .mock-attention-copy>p{margin:0;color:#8a6a4f;font-size:12px}
+    .mock-issue-row{
+      display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:10px;align-items:center;
+      margin-top:14px;padding:12px 14px;border:1px solid #efd9b7;border-radius:10px;background:#fff
+    }
+    .mock-issue-dot{width:10px;height:10px;border-radius:999px;background:#f97316}
+    .mock-issue-row strong{font-size:12px}.mock-issue-row p{margin:3px 0 0;font-size:11px;color:#6f788b;line-height:1.4}
+    .mock-issue-meta{font-size:10px;color:#7b8496;white-space:nowrap}
+
+    .mock-kpi-grid{grid-column:1/-1;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+    .mock-kpi{
+      min-height:142px;padding:16px;border:1px solid #dfe4ed;border-radius:12px;background:#fff;position:relative
+    }
+    .mock-kpi-top{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
+    .mock-kpi-value{font-size:31px;font-weight:800;letter-spacing:-.04em;line-height:1;color:#0f8058}
+    .mock-kpi-delta{padding:4px 7px;border-radius:999px;background:#eaf8f1;color:#137657;font-size:9px;font-weight:800}
+    .mock-kpi-delta.down{background:#fff0ef;color:#c44139}.mock-kpi-delta.flat{background:#f1f3f6;color:#6b7280}
+    .mock-kpi-label{margin-top:7px;font-size:12px;font-weight:700}
+    .mock-kpi-signal{display:flex;align-items:center;gap:6px;margin-top:12px;font-size:10px;font-weight:750}
+    .mock-kpi-signal.good{color:#0f8058}.mock-kpi-signal.warn{color:#c06010}.mock-kpi-signal.bad{color:#c8322b}
+    .mock-kpi-sub{margin-top:4px;font-size:10px;color:#7b8496}
+    .mock-sparkline{position:absolute;right:14px;bottom:18px;width:54px;height:28px}
+    .mock-sparkline svg{width:100%;height:100%;display:block}.mock-sparkline polyline{fill:none;stroke:#20a675;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+    .mock-sparkline circle{fill:#20a675}
+
+    .mock-release-card{grid-column:span 6;padding:18px}
+    .mock-usage-card{grid-column:span 6;padding:18px}
+    .mock-card-title{display:flex;align-items:center;gap:9px;margin-bottom:14px}
+    .mock-card-title-icon{width:30px;height:30px;display:grid;place-items:center;border-radius:8px;background:#f0edff;color:#5a4de2;font-weight:800}
+    .mock-card-title h3{margin:0;font-size:16px}
+    .mock-release-version{display:flex;align-items:center;gap:9px}
+    .mock-release-version strong{font-size:19px}.mock-release-stable{padding:4px 8px;border-radius:999px;background:#eaf8f1;color:#127553;font-size:10px;font-weight:800}
+    .mock-release-meta,.mock-release-copy{font-size:11px;color:#6f788b}.mock-release-copy{margin:9px 0 14px;line-height:1.45}
+    .mock-usage-metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-bottom:12px}
+    .mock-usage-metric{padding-right:10px;border-right:1px solid #e7eaf0}.mock-usage-metric:last-child{border-right:0}
+    .mock-usage-metric strong{display:block;font-size:21px}.mock-usage-metric span{font-size:10px;color:#788295}
+    .mock-usage-bars{height:68px;display:flex;align-items:flex-end;gap:7px;padding-top:8px}
+    .mock-usage-bar{flex:1;min-width:12px;border-radius:3px 3px 0 0;background:#b7adff}
+    .mock-usage-axis{display:flex;justify-content:space-between;margin-top:5px;font-size:9px;color:#8a93a3}
+
+    .mock-quality-detail{grid-column:1/-1;padding:18px}
+    .mock-quality-detail-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}
+    .mock-quality-detail-head h3{margin:0;font-size:16px}
+    .mock-quality-detail-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+    .mock-quality-detail-card{padding:14px;border:1px solid #e3e7ee;border-radius:10px;background:#fff}
+    .mock-quality-detail-card span{font-size:11px;color:#525d70}.mock-quality-detail-card strong{display:block;margin-top:7px;font-size:22px;color:#0f8058}
+    .mock-progress{height:6px;margin-top:11px;border-radius:999px;background:#e9edf3;overflow:hidden}.mock-progress>span{display:block;height:100%;border-radius:999px;background:#18a26e}
+    .mock-quality-detail-card small{display:block;margin-top:7px;font-size:10px;color:#7c8698}
+
+    .mock-investigation-card{grid-column:1/-1;padding:18px}
+    .mock-investigation-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}
+    .mock-investigation-head h3{margin:0;font-size:16px}
+    .mock-investigation-columns{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+    .mock-investigation-column{min-height:150px;padding:14px;border-radius:10px;background:#f8f9fc}
+    .mock-investigation-column>strong{display:block;margin-bottom:8px;font-size:11px}
+    .mock-investigation-column p,.mock-investigation-column li{font-size:11px;color:#5f697c;line-height:1.5}
+    .mock-investigation-column ul{margin:0;padding-left:17px}
+    .mock-related-tests{margin-top:14px;border-top:1px solid #e6e9ef;padding-top:12px}
+    .mock-test-row{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:12px;align-items:center;padding:9px 2px;border-top:1px solid #eef0f4}
+    .mock-test-row:first-child{border-top:0}.mock-test-row strong{font-size:11px}.mock-test-row span{font-size:10px;color:#727c8e}
+
+    @media(max-width:900px){
+      .mock-kpi-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+      .mock-release-card,.mock-usage-card{grid-column:1/-1}
+      .mock-quality-detail-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+      .mock-investigation-columns{grid-template-columns:1fr}
+    }
+    @media(max-width:620px){
+      .mock-detail-head{align-items:flex-start;flex-direction:column}
+      .mock-project-icon{width:54px;height:54px;font-size:24px}
+      .mock-kpi-grid,.mock-quality-detail-grid{grid-template-columns:1fr}
+      .mock-attention-banner{grid-template-columns:auto minmax(0,1fr)}
+      .mock-attention-banner>.button{grid-column:1/-1}
+      .mock-usage-metrics{grid-template-columns:1fr}
+      .mock-usage-metric{border-right:0;border-bottom:1px solid #e7eaf0;padding:0 0 8px}
+      .mock-tabs{gap:18px!important}
+    }
+
 </style>
 </head>
 <body>
@@ -489,12 +596,17 @@
     <section class="review-inbox" id="reviewInbox" aria-live="polite"></section>
 
     <section class="detail active" id="projectDetail" aria-live="polite">
-      <div class="detail-head">
-        <div>
-          <h2 id="detailTitle">Project</h2>
-          <p class="detail-copy" id="detailCopy"></p>
+      <div class="detail-head mock-detail-head">
+        <div class="mock-project-heading">
+          <div class="mock-project-icon" id="detailIcon">S</div>
+          <div>
+            <div class="mock-project-title-row"><h2 id="detailTitle">Project</h2><span id="detailHeaderStatus" class="status-pill unknown">Checking</span></div>
+            <p class="detail-copy" id="detailCopy"></p>
+          </div>
         </div>
         <div class="detail-actions">
+          <a class="button mock-open-link" id="mockOpenProjectLink" target="_blank" rel="noopener noreferrer" hidden>Open project ↗</a>
+          <a class="button mock-source-link" id="mockSourceLink" target="_blank" rel="noopener noreferrer">View source</a>
           <button class="button primary" id="projectCheckButton" type="button">Investigate project</button>
           <button class="button" id="headerRunChecksButton" type="button" hidden>Run AI evals</button>
           <details class="action-menu" id="projectActionMenu">
@@ -508,25 +620,35 @@
         </div>
       </div>
 
-      <nav class="project-tabs" id="projectTabs" aria-label="Project health sections">
+      <nav class="project-tabs mock-tabs" id="projectTabs" aria-label="Project health sections">
         <button class="project-tab active" type="button" data-tab="overview">Overview</button>
         <button class="project-tab" type="button" data-tab="ai-quality">Quality</button>
-        <button class="project-tab" type="button" data-tab="activity">Activity</button>
+        <button class="project-tab" type="button" data-tab="releases">Releases</button>
+        <button class="project-tab" type="button" data-tab="usage">Usage</button>
+        <button class="project-tab" type="button" data-tab="investigation">Investigation</button>
+        <button class="project-tab" type="button" data-tab="technical">Technical</button>
       </nav>
 
       <div class="grid mock-overview-grid">
-        <section class="panel mock-attention" id="attentionPanel" data-tab-panel="overview"></section>
-        <section class="panel mock-health" id="overviewHealthPanel" data-tab-panel="overview"></section>
-        <section class="panel mock-quality-summary" id="overviewQualitySummaryPanel" data-tab-panel="overview"></section>
-        <section class="panel mock-release" id="deliveryPanel" data-tab-panel="overview"></section>
-        <section class="panel half mock-usage" id="analyticsPanel" data-tab-panel="overview"></section>
-        <section class="panel half mock-activity" id="overviewActivityPanel" data-tab-panel="overview"></section>
-        <section class="panel mock-investigation" id="overviewInvestigationPanel" data-tab-panel="overview"></section>
-        <section class="panel mock-secondary" id="changesPanel" data-tab-panel="overview"></section>
-        <section class="panel mock-secondary" id="productFocusPanel" data-tab-panel="overview"></section>
-        <section class="panel mock-secondary" id="decisionSupportPanel" data-tab-panel="overview"></section>
+        <section class="mock-dashboard" id="mockDashboardOverview" data-tab-panel="overview"></section>
+
         <section class="panel" id="qualityPanel" data-tab-panel="ai-quality" hidden></section>
-        <section class="panel" id="historyPanel" data-tab-panel="activity" hidden></section>
+
+        <section class="panel mock-release" id="deliveryPanel" data-tab-panel="releases" hidden></section>
+        <section class="panel mock-secondary" id="changesPanel" data-tab-panel="releases" hidden></section>
+        <section class="panel mock-activity" id="overviewActivityPanel" data-tab-panel="releases" hidden></section>
+        <section class="panel" id="historyPanel" data-tab-panel="releases" hidden></section>
+
+        <section class="panel mock-usage" id="analyticsPanel" data-tab-panel="usage" hidden></section>
+
+        <section class="panel mock-investigation" id="overviewInvestigationPanel" data-tab-panel="investigation" hidden></section>
+
+        <section class="panel mock-secondary" id="productFocusPanel" data-tab-panel="technical" hidden></section>
+        <section class="panel mock-secondary" id="decisionSupportPanel" data-tab-panel="technical" hidden></section>
+
+        <section class="panel" id="attentionPanel" data-tab-panel="technical" hidden></section>
+        <section class="panel" id="overviewHealthPanel" data-tab-panel="technical" hidden></section>
+        <section class="panel mock-quality-summary" id="overviewQualitySummaryPanel" data-tab-panel="technical" hidden></section>
       </div>
     </section>
 
