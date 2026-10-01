@@ -719,6 +719,24 @@ assert.ok(operational.some(item=>item.label==='AI response speed'&&item.status==
 assert.ok(operational.some(item=>item.label==='Human review burden'&&/25% materially edited/.test(item.detail)));
 assert.ok(operational.some(item=>item.label==='Agent workflow'&&item.status==='Not measured'));
 
+const operationalCompared=H.operationalSignals({
+  project:{id:'state',quality:'state'},
+  quality:{resolvedReviews:1,materialEditRate:0,recent:[]},
+  platform:{aiTelemetry:{available:true,response_speed:{sample_size:10,p95_ms:8200}}},
+  previousPlatform:{aiTelemetry:{available:true,response_speed:{sample_size:8,p95_ms:5700}}},
+  investigationHistory:[{observedAt:new Date(Date.now()-2*24*60*60*1000).toISOString(),trigger:'AI eval failure · ask_conflicting_evidence',needsAttentionAtRun:true,resolvedAt:null}]
+});
+const speedChanged=operationalCompared.find(item=>item.label==='AI response speed');
+assert.strictEqual(speedChanged.status,'Changed');
+assert.match(speedChanged.detail,/last saved 5\.7 s/);
+assert.match(speedChanged.detail,/2\.5 s slower/);
+const openInvestigation=operationalCompared.find(item=>item.label==='Open investigation');
+assert.strictEqual(openInvestigation.status,'Open');
+assert.match(openInvestigation.detail,/no resolution recorded yet/);
+
+const seeded=H.emptyProjectData(H.PROJECTS[0],{platform:{aiTelemetry:{available:true,response_speed:{p95_ms:5700}}}});
+assert.strictEqual(seeded.previousPlatform.aiTelemetry.response_speed.p95_ms,5700);
+
 const workflowText=fs.readFileSync(require.resolve('../.github/workflows/question-review-live.yml'),'utf8');
 assert.match(workflowText,/suite:/);
 assert.match(workflowText,/record_environment:/);
