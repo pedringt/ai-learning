@@ -98,3 +98,20 @@ A PR should explicitly call out data/privacy impact when it:
 - changes provider/model data handling.
 
 Update `RISKS.md` and this file when those changes are material.
+
+
+## Project Health privacy boundary
+
+Project Health is a portfolio-operations surface across State, Tastemake, and NARC. It may read deployment, infrastructure, database-project metadata, aggregate site analytics, and controlled quality results from external providers.
+
+Allowed Project Health data is intentionally narrow:
+
+- repository/branch/commit identifiers and CI/deployment status;
+- Render service reachability, build identifier, and bounded response latency;
+- Neon project/branch health metadata such as project name, region, branch count, and primary-branch state;
+- Vercel Web Analytics aggregate visitor/page-view counts;
+- the same content-free controlled eval aggregates already allowed above.
+
+Project Health must not expose provider API keys, database connection strings, raw logs, visitor identities, request bodies, State project content, model prompts/responses, or detailed traces merely to make the dashboard richer. Provider credentials stay server-side in environment variables. Missing provider credentials or telemetry are shown as "not connected" rather than inferred.
+
+The dashboard-run control is a separate authorization boundary from read-only health data. It requires a server-side GitHub credential, a separate admin key, a configured cost estimate, and an explicit confirmation of paid model calls before dispatching a workflow. Those secrets must never be shipped to the browser.
