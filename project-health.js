@@ -1199,9 +1199,13 @@
         (productNotes.length?'<div class="decision-log-list">'+productNotes.slice(0,5).map(note=>'<div class="decision-log-item"><span class="activity-type">'+esc(note.type==='change'?'Change':note.type==='experiment'?'Experiment':'Decision')+'</span><strong>'+esc(note.text)+'</strong><span>'+esc(fmtDate(note.createdAt))+'</span></div>').join('')+'</div>':'<div class="empty compact-empty">No product decisions or changes recorded yet.</div>')+
       '</div>';
 
-    const latestInvestigationPanel=doc.getElementById('latestInvestigationPanel');
-    if(latestInvestigationPanel){
+    const investigationPanels=[
+      doc.getElementById('latestInvestigationPanel'),
+      doc.getElementById('investigationTabPanel')
+    ].filter(Boolean);
+    if(investigationPanels.length){
       const latestInvestigation=data.investigation||historyRows[0]||null;
+      let investigationOverviewHtml='';
       if(latestInvestigation){
         const reportText=String(latestInvestigation.report||latestInvestigation.summary||latestInvestigation.title||'Investigation completed');
         const sections={};
@@ -1216,11 +1220,11 @@
           sections[current]=sections[current]||[];
           sections[current].push(line.replace(/^[-•]\s*/,''));
         }
-        const assessment=(sections['current assessment']||sections['investigation scope']||sections.summary||[]).slice(0,3);
-        const failed=(sections['what failed']||[]).slice(0,4);
-        const next=(sections['recommended next action']||sections['next checkpoint']||[]).slice(0,4);
+        const assessment=(sections['current assessment']||sections['investigation scope']||sections.summary||[]).slice(0,2);
+        const failed=(sections['what failed']||[]).slice(0,3);
+        const next=(sections['recommended next action']||sections['next checkpoint']||[]).slice(0,3);
         const when=latestInvestigation.observedAt||latestInvestigation.createdAt||historyRows[0]?.observedAt;
-        latestInvestigationPanel.innerHTML=
+        investigationOverviewHtml=
           '<div class="panel-title-row"><div><h3>Latest investigation</h3><div class="investigation-overview-meta">'+
           (when?'<span>'+esc(fmtDate(when))+'</span>':'')+
           (latestInvestigation.qualityInvestigation?'<span>AI quality</span>':'<span>Project health</span>')+
@@ -1231,8 +1235,9 @@
           '<div class="investigation-overview-block"><strong>Recommended next look</strong>'+(next.length?'<ul>'+next.map(item=>'<li>'+esc(item)+'</li>').join('')+'</ul>':'<p>Use the full investigation for the next diagnostic step.</p>')+'</div>'+
           '</div>';
       }else{
-        latestInvestigationPanel.innerHTML='<div class="panel-title-row"><div><h3>Latest investigation</h3><p class="panel-copy">Focused diagnostic context appears here after an investigation is run.</p></div><button class="button small" type="button" data-open-investigation>Investigate project</button></div><div class="investigation-overview-empty">No investigation has been recorded for this project yet.</div>';
+        investigationOverviewHtml='<div class="panel-title-row"><div><h3>Latest investigation</h3><p class="panel-copy">Focused diagnostic context appears here after an investigation is run.</p></div><button class="button small" type="button" data-open-investigation>Investigate project</button></div><div class="investigation-overview-empty">No investigation has been recorded for this project yet.</div>';
       }
+      investigationPanels.forEach(panel=>{panel.innerHTML=investigationOverviewHtml;});
     }
 
     const overviewQuality=p.quality==='state'?qualityAttention(q):externalQualityAttention(externalQ);
@@ -1240,33 +1245,135 @@
     const overviewInfra=infrastructureAttention(platform);
     const runtimeStatus=productionRuntime(data);
     const aSummary=platform?.analytics;
-    const statusLabel=kind=>kind==='bad'?'Needs attention':kind==='warn'?'Watch':kind==='good'?'Healthy':kind==='available'?'Data available':'Unknown';
-    const qualityTime=p.quality==='state'
-      ?[q?.review?.created_at,q?.ask?.created_at].filter(Boolean).sort().pop()
-      :(externalQ?.ci?.updated_at||externalQ?.recorded?.updated_at||data.checkedAt);
-    const healthRows=[
-      {label:p.qualityLabel||'Quality',kind:overviewQuality?.kind||'unknown',detail:overviewQuality?.title||'Quality status unavailable',tab:'ai-quality',fresh:freshnessMeta(qualityTime,data.checkedAt,72)},
-      {label:'Production',kind:runtimeStatus.kind,status:runtimeStatus.label,detail:runtimeStatus.detail,tab:'overview',section:'deliveryPanel',fresh:freshnessMeta(data.detailCheckedAt||d?.updatedAt||data.checkedAt,data.checkedAt,24)},
-      {label:'Release pipeline',kind:overviewDelivery?.kind||'unknown',detail:overviewDelivery?.title||'Release status unavailable',tab:'overview',section:'deliveryPanel',fresh:freshnessMeta(d?.updatedAt,data.checkedAt,24)},
-      ...(overviewInfra&&['bad','warn'].includes(overviewInfra.kind)?[{label:'Infrastructure',kind:overviewInfra.kind,detail:overviewInfra.title,tab:'overview',section:'systemsDetails',fresh:freshnessMeta(data.detailCheckedAt||data.checkedAt,data.checkedAt,6)}]:[]),
-      {label:'Site analytics',kind:pending.has('Analytics')?'unknown':aSummary?.available?'available':'unknown',status:aSummary?.available?'Data available':null,detail:pending.has('Analytics')?'Checking site analytics…':aSummary?.available?((aSummary.visitors??0)+' visitors · '+(aSummary.pageviews??0)+' page views · 30d'):(aSummary?.configured?'Connected, but comparison data is not available yet':'Site analytics are not connected'),tab:'overview',section:aSummary?.available?'analyticsPanel':'systemsDetails',fresh:freshnessMeta(data.detailCheckedAt||data.checkedAt,data.checkedAt,24)}
-    ];
+    const statusLabel=kind=>kind==='bad'?'Needs attention':kind==='warn'?'Watch':kind==='good'?'Healthy':kind==='available'?'Available':'Unknown';
+
+    const qualityRunPrimary=(run)=>{
+      const score=evalScore(run);
+      return score==null?'—':percent(score);
+    };
+    const healthMetricCard=(label,primary,support,kind,tab)=>'<button class="overview-health-row health-card '+esc(kind||'unknown')+'" type="button" data-tab-target="'+esc(tab)+'">'+
+      '<div class="health-card-head"><strong>'+esc(label)+'</strong></div>'+
+      '<span class="health-primary '+esc(kind||'unknown')+'">'+esc(primary)+'</span>'+
+      '<span class="health-support">'+esc(support)+'</span>'+
+      '</button>';
+
+    let healthCards=[];
+    if(p.quality==='state'){
+      const review=q?.review,ask=q?.ask;
+      const reviewKind=review?(Number(review.high_severity_failures||0)>0?'bad':evalScore(review)<1?'warn':'good'):'unknown';
+      const askKind=ask?(Number(ask.high_severity_failures||0)>0?'bad':evalScore(ask)<1?'warn':'good'):'unknown';
+      healthCards.push({
+        label:'Update understanding',
+        primary:qualityRunPrimary(review),
+        support:review?(scenarioPassLabel(review,evalScore(review))||'Latest controlled eval'):'No recorded run yet',
+        kind:reviewKind,
+        tab:'ai-quality'
+      });
+      healthCards.push({
+        label:'Answer quality',
+        primary:qualityRunPrimary(ask),
+        support:ask?(scenarioPassLabel(ask,evalScore(ask))||'Latest controlled eval'):'No recorded run yet',
+        kind:askKind,
+        tab:'ai-quality'
+      });
+    }else if(p.id==='tastemake'&&externalQ){
+      const endpoint=externalQ.endpoint||{},ci=externalQ.ci||{};
+      const rulesPassed=endpoint.rule_checks?.passed, rulesTotal=endpoint.rule_checks?.total;
+      const caught=endpoint.validator_self_test?.caught, caughtTotal=endpoint.validator_self_test?.total;
+      healthCards.push({
+        label:'Recommendation rules',
+        primary:(rulesPassed??'—')+'/'+(rulesTotal??'—'),
+        support:'Current recommendation-rule checks',
+        kind:rulesPassed!=null&&rulesTotal!=null&&Number(rulesPassed)===Number(rulesTotal)?'good':'warn',
+        tab:'ai-quality'
+      });
+      healthCards.push({
+        label:'Bad outputs caught',
+        primary:(caught??'—')+'/'+(caughtTotal??'—'),
+        support:ci.conclusion==='success'?'Main automated checks passing':'Latest automated check status',
+        kind:ci.conclusion==='success'?'good':'unknown',
+        tab:'ai-quality'
+      });
+    }else if(p.id==='narc'&&externalQ){
+      healthCards.push({
+        label:'Automated checks',
+        primary:externalQ.recorded?.recorded_all_suites_green?'3/3':'—',
+        support:'Branches, consequences, time rules, and desktop behavior',
+        kind:externalQ.recorded?.recorded_all_suites_green?'good':'unknown',
+        tab:'ai-quality'
+      });
+      healthCards.push({
+        label:'Human playtest',
+        primary:externalQ.recorded?.full_playtest_pending?'Pending':'Recorded',
+        support:'First-run experience check',
+        kind:externalQ.recorded?.full_playtest_pending?'warn':'good',
+        tab:'ai-quality'
+      });
+    }else{
+      const qKind=overviewQuality?.kind||'unknown';
+      healthCards.push({label:p.qualityLabel||'Product quality',primary:statusLabel(qKind),support:overviewQuality?.title||'Quality status unavailable',kind:qKind,tab:'ai-quality'});
+      healthCards.push({label:'Quality evidence',primary:'—',support:'No comparable quality score available',kind:'unknown',tab:'ai-quality'});
+    }
+
+    const prodKind=runtimeStatus.kind==='good'?'good':runtimeStatus.kind==='bad'?'bad':overviewDelivery?.kind||'unknown';
+    healthCards.push({
+      label:'Production',
+      primary:runtimeStatus.label||statusLabel(prodKind),
+      support:overviewDelivery?.title||runtimeStatus.detail||'Production status',
+      kind:prodKind,
+      tab:'releases'
+    });
+    healthCards.push({
+      label:'Usage',
+      primary:aSummary?.available?String(aSummary.visitors??'—'):'—',
+      support:aSummary?.available?((aSummary.pageviews??'—')+' page views · 30d'):(aSummary?.configured?'Connected, no usable counts yet':'Usage data not connected'),
+      kind:aSummary?.available?'good':'unknown',
+      tab:'usage'
+    });
+
+    doc.getElementById('overviewHealthPanel').innerHTML=
+      '<div class="panel-title-row"><h3>Current health</h3></div>'+
+      '<div class="overview-health">'+healthCards.slice(0,4).map(item=>healthMetricCard(item.label,item.primary,item.support,item.kind,item.tab)).join('')+'</div>';
+
+    const releasePanel=doc.getElementById('overviewReleasePanel');
+    if(releasePanel){
+      const releaseTitle=d?.message?commitTitle(d.message):'No recent release data';
+      const releaseStatus=d?.vercel?.label||'Deployment status unavailable';
+      releasePanel.innerHTML=
+        '<span class="overview-card-kicker">Latest release</span>'+
+        '<div class="overview-card-title">'+esc(releaseTitle)+'</div>'+
+        '<div class="overview-card-meta">'+esc(shortSha(d?.sha))+(d?.updatedAt?' · '+esc(fmtDate(d.updatedAt)):'')+'</div>'+
+        '<p class="overview-card-copy">'+esc(releaseStatus)+'.</p>'+
+        '<div class="overview-card-actions"><button class="button small" type="button" data-tab-target="releases">View releases</button></div>';
+    }
+
+    const usagePanel=doc.getElementById('overviewUsagePanel');
+    if(usagePanel){
+      if(aSummary?.available){
+        usagePanel.innerHTML=
+          '<span class="overview-card-kicker">Usage</span>'+
+          '<div class="overview-card-title">Production activity · last 30 days</div>'+
+          '<div class="overview-usage-grid">'+
+            '<div class="overview-usage-stat"><strong>'+esc(aSummary.visitors??'—')+'</strong><span>Visitors</span></div>'+
+            '<div class="overview-usage-stat"><strong>'+esc(aSummary.pageviews??'—')+'</strong><span>Page views</span></div>'+
+          '</div>'+
+          '<div class="overview-card-actions"><button class="button small" type="button" data-tab-target="usage">View usage</button></div>';
+      }else{
+        usagePanel.innerHTML=
+          '<span class="overview-card-kicker">Usage</span>'+
+          '<div class="overview-card-title">No usage data available yet</div>'+
+          '<p class="overview-card-copy">'+esc(aSummary?.configured?'Analytics are connected, but usable counts are not available for this project yet.':'Usage analytics are not connected for this project.')+'</p>'+
+          '<div class="overview-card-actions"><button class="button small" type="button" data-tab-target="usage">View usage setup</button></div>';
+      }
+    }
+
     const changes=meaningfulChanges(data);
     const sinceLabel=data.lastVisit?.savedAt?fmtDate(data.lastVisit.savedAt):'your previous saved visit';
     const changesPanel=doc.getElementById('changesPanel');
     changesPanel.classList.toggle('compact-zero',!changes.length);
     changesPanel.innerHTML=changes.length
-      ?'<div class="panel-title-row"><div><h3>Changed since last visit</h3><p class="panel-copy">Compared with '+esc(sinceLabel)+'. Only meaningful changes are shown.</p></div><span class="readiness-pill watch">'+esc(changes.length)+' change'+(changes.length===1?'':'s')+'</span></div><div class="change-list" style="margin-top:6px">'+changes.slice(0,8).map(item=>'<button class="change-item" type="button" data-tab-target="'+esc(item.tab||'activity')+'"'+(item.section?' data-section-target="'+esc(item.section)+'"':'')+'><span class="change-dot"></span><div><div class="change-item-head"><strong>'+esc(item.title)+'</strong><span class="change-time">'+esc(relativeAge(item.observedAt))+'</span></div><span class="change-detail">'+esc(item.detail)+'</span></div></button>').join('')+'</div>'
+      ?'<div class="panel-title-row"><div><h3>Changed since last visit</h3><p class="panel-copy">Compared with '+esc(sinceLabel)+'. Only meaningful changes are shown.</p></div><span class="readiness-pill watch">'+esc(changes.length)+' change'+(changes.length===1?'':'s')+'</span></div><div class="change-list" style="margin-top:6px">'+changes.slice(0,8).map(item=>'<button class="change-item" type="button" data-tab-target="'+esc(item.tab||'releases')+'"'+(item.section?' data-section-target="'+esc(item.section)+'"':'')+'><span class="change-dot"></span><div><div class="change-item-head"><strong>'+esc(item.title)+'</strong><span class="change-time">'+esc(relativeAge(item.observedAt))+'</span></div><span class="change-detail">'+esc(item.detail)+'</span></div></button>').join('')+'</div>'
       :'<div class="changes-zero" role="status"><span aria-hidden="true">✓</span><strong>No meaningful changes since your last visit</strong></div>';
-    doc.getElementById('overviewHealthPanel').innerHTML='<div class="panel-title-row"><h3>System health</h3></div>'+
-      '<div class="overview-health" style="margin-top:10px">'+healthRows.map(item=>{
-        const showFreshness=item.fresh?.stale||['bad','warn','unknown'].includes(item.kind);
-        return '<button class="overview-health-row health-card '+esc(item.kind||'unknown')+'" type="button" data-tab-target="'+esc(item.tab)+'"'+(item.section?' data-section-target="'+esc(item.section)+'"':'')+'>'+
-          '<div class="health-card-head"><strong>'+esc(item.label)+'</strong><span class="health-status '+esc(item.kind)+'">'+esc(item.status||statusLabel(item.kind))+'</span></div>'+
-          '<span class="health-detail">'+esc(item.detail)+'</span>'+
-          (showFreshness?'<span class="signal-meta '+(item.fresh?.stale?'stale':'')+'">'+esc(item.fresh?.label||'Freshness unknown')+'</span>':'')+
-        '</button>';
-      }).join('')+'</div>';
 
     // Product quality / evals
     let qualityHtml='';
