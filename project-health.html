@@ -434,107 +434,6 @@
       .detail-actions{min-width:0}
     }
 
-
-    /* Literal mock pass: stronger dashboard composition, signals, and real-data visuals. */
-    .shell{max-width:1320px;padding-left:28px;padding-right:28px}
-    .compact-hero{margin-bottom:14px}
-    .compact-hero .lede{max-width:760px}
-    .overview-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:14px 0 20px}
-    .project-switcher-item{
-      min-height:104px;padding:17px 18px;border-radius:13px;border:1px solid #e1e5ed;background:#fff
-    }
-    .project-switcher-main{gap:7px}
-    .project-switcher-main strong{font-size:16px}
-    .project-switcher-main span{font-size:12px;-webkit-line-clamp:2}
-    .project-switcher-item.active{
-      border-color:#7a6df0;background:linear-gradient(135deg,#ffffff 0%,#f5f2ff 100%);
-      box-shadow:0 0 0 2px rgba(93,76,232,.11),0 9px 24px rgba(74,58,190,.08)
-    }
-
-    .detail-head{
-      min-height:118px;padding:24px 26px;
-      background:linear-gradient(110deg,#efecff 0%,#f7f5ff 52%,#fff 100%)
-    }
-    .project-identity{min-width:0}
-    .project-title-line{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
-    .project-title-line h2{margin:0}
-    .project-header-status{font-size:10px;padding:5px 8px}
-    .detail-copy{font-size:13px;color:#657087}
-    .detail-actions .button{min-height:38px}
-    #liveProjectLink{background:#5d4ee8;border-color:#5d4ee8}
-    .project-tabs{padding-left:26px;padding-right:26px}
-
-    .grid.overview-layout{padding:24px;background:#f8f9fd;gap:18px}
-    .metrics-panel{padding:18px!important}
-    .overview-health{gap:14px!important}
-    .overview-health-row.health-card{
-      min-height:150px!important;padding:17px!important;border-radius:13px!important;
-      box-shadow:0 5px 16px rgba(18,29,54,.03)
-    }
-    .health-card-head strong{font-size:12px!important;color:#6e788c}
-    .health-primary{font-size:34px}
-    .health-support{font-size:11px;line-height:1.4}
-    .health-card-signal{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:auto}
-    .health-card-dot{width:7px;height:7px;border-radius:999px;background:#98a2b3}
-    .health-card-dot.good{background:#1d9b70}.health-card-dot.warn{background:#d4822f}.health-card-dot.bad{background:#d3544b}
-    .health-card-caption{color:#7e8798;font-size:10px}
-
-    .overview-split-card{min-height:230px;padding:20px!important}
-    .overview-card-kicker{color:#7366e8}
-    .overview-card-title{font-size:18px}
-    .overview-release-status{
-      display:inline-flex;align-items:center;gap:7px;margin-top:12px;padding:7px 9px;border-radius:999px;
-      background:#eef8f3;color:#166e51;font-size:11px;font-weight:800
-    }
-    .overview-release-status.warn{background:#fff5e7;color:#a45c17}.overview-release-status.bad{background:#fff0ee;color:#ac3c34}
-    .overview-mini-meta{display:flex;gap:12px;flex-wrap:wrap;margin-top:12px;color:#7d8799;font-size:11px}
-    .overview-usage-grid{gap:12px}
-    .overview-usage-stat{padding:14px;background:#f9fafc}
-    .overview-usage-stat strong{font-size:31px}
-    .usage-trend-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
-    .usage-trend-box{padding:10px 12px;border-radius:10px;background:#f4f6fa;font-size:11px;color:#687387}
-    .usage-trend-box strong{display:block;margin-top:2px;font-size:13px;color:#263149}
-
-    .overview-quality-summary{padding:20px!important}
-    .overview-quality-head{display:flex;align-items:flex-start;justify-content:space-between;gap:18px}
-    .overview-quality-head h3{margin:0}
-    .overview-quality-head p{margin:4px 0 0;color:#768096;font-size:12px}
-    .overview-quality-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-top:16px}
-    .overview-quality-card{padding:16px;border:1px solid #e4e8ef;border-radius:12px;background:#fbfcfe}
-    .overview-quality-card-head{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
-    .overview-quality-card h4{margin:0;font-size:13px;color:#374158}
-    .overview-quality-score{margin-top:8px;font-size:30px;font-weight:800;line-height:1;letter-spacing:-.04em;color:#18223b}
-    .overview-quality-note{margin-top:6px;color:#778196;font-size:11px;line-height:1.4}
-    .quality-progress{height:7px;margin-top:13px;border-radius:999px;background:#e9edf3;overflow:hidden}
-    .quality-progress>span{display:block;height:100%;border-radius:999px;background:#4f7fe8}
-    .quality-progress.good>span{background:#26a576}.quality-progress.warn>span{background:#dfa04f}.quality-progress.bad>span{background:#d95b52}
-    .quality-sparkline{height:44px;margin-top:10px}
-    .quality-sparkline svg{display:block;width:100%;height:44px;overflow:visible}
-    .quality-sparkline .spark-grid{stroke:#e8ebf1;stroke-width:1}
-    .quality-sparkline .spark-line{fill:none;stroke:#6a5bea;stroke-width:2.3;stroke-linecap:round;stroke-linejoin:round}
-    .quality-sparkline .spark-dot{fill:#6a5bea}
-    .quality-summary-footer{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-top:14px;padding-top:13px;border-top:1px solid #e8ebf1}
-    .quality-summary-footer span{color:#7b8495;font-size:11px}
-
-    .investigation-overview-panel{
-      padding:20px!important;background:linear-gradient(180deg,#ffffff,#f8f9fe);border-color:#dfe4ef
-    }
-    .investigation-overview-grid{gap:14px}
-    .investigation-overview-block{min-height:175px;padding:17px;background:#fff}
-    .investigation-overview-block>strong{font-size:12px;color:#5e6680;text-transform:uppercase;letter-spacing:.04em}
-    .investigation-overview-block p,.investigation-overview-block li{font-size:12px;line-height:1.55;color:#5e687b}
-
-    @media(max-width:900px){
-      .overview-quality-grid{grid-template-columns:1fr}
-    }
-    @media(max-width:620px){
-      .shell{padding-left:12px;padding-right:12px}
-      .overview-grid{grid-template-columns:1fr}
-      .detail-head{min-height:0}
-      .usage-trend-row{grid-template-columns:1fr}
-      .overview-quality-head{align-items:flex-start;flex-direction:column}
-    }
-
 </style>
 </head>
 <body>
@@ -557,11 +456,8 @@
 
     <section class="detail active" id="projectDetail" aria-live="polite">
       <div class="detail-head">
-        <div class="project-identity">
-          <div class="project-title-line">
-            <h2 id="detailTitle">Project</h2>
-            <span class="project-header-status status-pill unknown" id="detailStatus">Checking</span>
-          </div>
+        <div>
+          <h2 id="detailTitle">Project</h2>
           <p class="detail-copy" id="detailCopy"></p>
         </div>
         <div class="detail-actions">
@@ -593,7 +489,6 @@
         <section class="panel metrics-panel" id="overviewHealthPanel" data-tab-panel="overview"></section>
         <section class="panel half overview-split-card" id="overviewReleasePanel" data-tab-panel="overview"></section>
         <section class="panel half overview-split-card" id="overviewUsagePanel" data-tab-panel="overview"></section>
-        <section class="panel overview-quality-summary" id="overviewQualitySummaryPanel" data-tab-panel="overview"></section>
         <section class="panel investigation-overview-panel" id="latestInvestigationPanel" data-tab-panel="overview"></section>
 
         <section class="panel" id="qualityPanel" data-tab-panel="ai-quality" hidden></section>
