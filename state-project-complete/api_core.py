@@ -185,7 +185,13 @@ class Settings(BaseModel):
 
     @classmethod
     def from_env(cls) -> "Settings":
-        origins = [x.strip() for x in os.getenv("CORS_ORIGINS", "http://localhost:8000").split(",") if x.strip()]
+        configured_origins = [x.strip() for x in os.getenv("CORS_ORIGINS", "http://localhost:8000").split(",") if x.strip()]
+        portfolio_origins = [
+            "https://contextswitch.tech",
+            "https://www.contextswitch.tech",
+            "https://state.contextswitch.tech",
+        ]
+        origins = list(dict.fromkeys([*configured_origins, *portfolio_origins]))
         database_url = os.getenv("DATABASE_URL")
         return cls(
             database_url=database_url,
