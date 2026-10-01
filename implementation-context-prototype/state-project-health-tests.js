@@ -267,6 +267,53 @@ assert.ok(groupedFailure);
 assert.strictEqual(groupedFailure.category,'releases');
 assert.strictEqual(groupedFailure.attempts.length,2);
 assert.ok(groupedTimeline.some(item=>item.title==='Deployment recovered · 2 attempts'&&item.category==='releases'));
+assert.strictEqual(groupedFailure.userImpact.status,'No confirmed impact');
+
+const regressionData={
+  ...H.emptyProjectData(H.PROJECTS[0]),
+  fresh:true,
+  quality:{
+    ...healthy,
+    recent:[
+      {suite:'review_interpretation',overall_pass_rate:.8,created_at:'2026-09-30T20:00:00Z'},
+      {suite:'review_interpretation',overall_pass_rate:1,created_at:'2026-09-30T19:00:00Z'},
+      {suite:'ask_quality',overall_pass_rate:1,created_at:'2026-09-30T20:00:00Z'},
+      {suite:'ask_quality',overall_pass_rate:1,created_at:'2026-09-30T19:00:00Z'}
+    ]
+  },
+  delivery:{vercel:{kind:'good'}},
+  activity:{available:true,deployments:{recent_failures:[]},runtime:{available:true,issues:[]}},
+  platform:{analytics:{configured:true,available:true},neon:{configured:true,available:true},aiTelemetry:{configured:true,available:true}},
+  runInfo:{configured:true}
+};
+const regression=H.regressionSignal(regressionData);
+assert.strictEqual(regression.kind,'warn');
+assert.match(regression.title,/regressed 20 points/);
+const releaseRisk=H.releaseRiskChecklist(regressionData);
+assert.ok(releaseRisk.some(item=>item.label==='Product quality'));
+assert.ok(releaseRisk.some(item=>item.label==='Observability'&&item.status==='Healthy'));
+assert.deepStrictEqual(H.healthConsistencyIssues(regressionData),[]);
+
+const blindSpotRisk=H.releaseRiskChecklist({
+  ...regressionData,
+  platform:{analytics:{configured:false,available:false},neon:{configured:false,available:false},aiTelemetry:{configured:false,available:false}},
+  activity:{available:true,deployments:{recent_failures:[]},runtime:{available:false,status:403,issues:[]}}
+});
+assert.ok(blindSpotRisk.some(item=>item.label==='Observability'&&item.status==='Watch'));
+
+const annotatedTimeline=H.activityTimelineItems({
+  project:{id:'state'},
+  delivery:{updatedAt:'2026-09-30T20:00:00Z',message:'Ship decision support',sha:'abcdef1'},
+  quality:null,
+  externalQuality:null,
+  activity:{available:false},
+  openPullRequests:[],
+  investigationHistory:[],
+  productNotes:[{type:'decision',text:'Treat this as product behavior, not eval noise.',createdAt:'2026-09-30T19:00:00Z'}]
+});
+const decisionEvent=annotatedTimeline.find(item=>item.category==='decisions');
+assert.ok(decisionEvent);
+assert.match(decisionEvent.followup,/Next evidence: Production release/);
 assert.strictEqual(
   H.overallAttention({delivery:{vercel:{kind:'good'}},quality:severe,externalQuality:null,platform:null}).kind,
   'bad'
@@ -464,6 +511,9 @@ assert.match(healthHtml,/\.button\[hidden\]\{display:none!important\}/);
 assert.doesNotMatch(healthHtml,/>More<\/summary>/);
 assert.match(healthHtml,/delivery-split/);
 assert.match(healthHtml,/activity-type/);
+assert.match(healthHtml,/id="decisionSupportPanel"/);
+assert.match(healthHtml,/id="productNoteDialog"/);
+assert.match(healthHtml,/Record a decision or change/);
 assert.match(healthHtml,/:focus-visible/);
 assert.match(healthHtml,/prefers-reduced-motion:reduce/);
 assert.match(healthHtml,/incident-episode/);
@@ -603,6 +653,16 @@ assert.match(projectHealthSource,/scenarios passed/);
 assert.match(projectHealthSource,/Open analytics ↗/);
 assert.match(projectHealthSource,/data-open-about/);
 assert.match(projectHealthSource,/operationalNextDecision/);
+assert.match(projectHealthSource,/releaseRiskChecklist/);
+assert.match(projectHealthSource,/regressionSignal/);
+assert.match(projectHealthSource,/healthConsistencyIssues/);
+assert.match(projectHealthSource,/Decision support/);
+assert.match(projectHealthSource,/What we cannot confirm/);
+assert.match(projectHealthSource,/Decision & change log/);
+assert.match(projectHealthSource,/data-add-product-note/);
+assert.match(projectHealthSource,/product-health-product-notes/);
+assert.match(projectHealthSource,/Next evidence:/);
+assert.match(projectHealthSource,/User impact:/);
 assert.match(projectHealthSource,/Full AI eval details/);
 assert.doesNotMatch(projectHealthSource,/Investigate this issue →/);
 assert.match(projectHealthSource,/Review AI evals →/);
