@@ -200,8 +200,10 @@ async function loadActivity(project){
       }
       runtimeAvailable=logs.ok||logs.error==='timeout';
       runtimeStatus=logs.status;
-      runtimeError=logs.ok?null:(logs.error==='timeout'?'bounded stream timed out before returning rows':(logs.error||safeText(logs.text,180)||'Runtime logs unavailable'));
+      const runtimeCoverage=logs.ok?'complete':(logs.error==='timeout'?'partial':'unavailable');
+      runtimeError=logs.ok||logs.error==='timeout'?null:(logs.error||safeText(logs.text,180)||'Runtime logs unavailable');
       if(logs.ok)runtime=runtimeIssues(parseRuntimeRows(logs.text),deploymentUrl);
+      runtime=Object.assign(runtime,{_coverage:runtimeCoverage});
     }
   }
   return {
@@ -221,7 +223,9 @@ async function loadActivity(project){
       available:runtimeAvailable,
       status:runtimeStatus,
       error:runtimeError,
-      issues:runtime
+      coverage:Array.isArray(runtime)&&runtime._coverage?runtime._coverage:(runtimeAvailable?'complete':'unavailable'),
+      note:Array.isArray(runtime)&&runtime._coverage==='partial'?'Runtime error scan was incomplete because the bounded Vercel log stream returned no rows before timeout.':null,
+      issues:Array.isArray(runtime)?runtime:[]
     },
     observed_at:new Date().toISOString()
   };
