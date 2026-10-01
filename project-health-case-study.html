@@ -115,10 +115,7 @@ body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,Bl
     <section class="product-panel">
       <span class="tag">Ship check</span>
       <strong>Would I hesitate to ship?</strong>
-      <div class="signal"><span>Product quality</span><b>what failed?</b></div>
-      <div class="signal"><span>User impact</span><b>known or unknown?</b></div>
-      <div class="signal"><span>Monitoring</span><b>what can’t I see?</b></div>
-      <div class="signal"><span>Delivery</span><b>is the release healthy?</b></div>
+      <p style="margin:7px 0 0;color:var(--muted);font-size:12px">The dashboard checks product quality, delivery health, possible user impact, and whether any important signals are missing.</p>
     </section>
   </div>
 </div>
@@ -126,19 +123,14 @@ body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,Bl
 <h2>Three decisions mattered most</h2>
 <div class="grid3">
   <div class="card"><span class="tag">01</span><h3>No single health score</h3><p>Technical health and product quality stay separate. One green number can hide the exact behavior that needs review.</p></div>
-  <div class="card"><span class="tag">02</span><h3>Failures before averages</h3><p>AI quality shows scenarios passed and high-impact failures first. The percentage is supporting context.</p></div>
+  <div class="card"><span class="tag">02</span><h3>Failures before averages</h3><p>The dashboard leads with important failures instead of letting a healthy average hide them.</p></div>
   <div class="card"><span class="tag">03</span><h3>Unknown is not healthy</h3><p>If the dashboard can’t check something, it says so instead of quietly treating missing data as good news.</p></div>
 </div>
 
 <h2>The useful part starts after something fails</h2>
-<p>A failed AI eval does not automatically mean “fix the model.” Sometimes the product is wrong. Sometimes the test expectation is wrong. Sometimes the evidence is not strong enough yet.</p>
+<p>A failed AI check does not always mean the same thing. One failure may point to a real product bug. Another may show that the test expectation is wrong or that the available evidence is incomplete.</p>
 
-<div class="example">
-  <div class="example-head"><span class="tag">State example</span><h3>Two failures needed different responses</h3><p>This is where the dashboard became more useful than a status page.</p></div>
-  <div class="example-row"><div class="example-label">Product behavior</div><strong>New evidence should beat a stale pending proposal</strong><p>State was treating an older pending proposal as more important than newer authoritative evidence. That was a real product bug, so the behavior changed.</p></div>
-  <div class="example-row"><div class="example-label">Uncertainty</div><strong>Known outcome, unknown reason</strong><p>State knew the Northstar pilot was paused, but the project record did not say why. Ask needed to say the outcome was known and the reason was not, rather than guess.</p></div>
-  <div class="example-row"><div class="example-label">Dashboard change</div><p>The quality view now shows <strong>Observed / Expected / Why it matters</strong>, and Investigate can start from the exact failed scenario instead of a general health check.</p></div>
-</div>
+<div class="callout"><p><strong>Project Health keeps that difference visible before I decide what should change.</strong> The quality view shows what was observed, what was expected, and why the difference matters.</p></div>
 
 <h2>Investigate starts with the specific problem</h2>
 <div class="flow">
@@ -149,20 +141,20 @@ body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,Bl
 
 <h2>QA changed the product</h2>
 <div class="grid2">
-  <div class="card"><span class="tag">Easier to scan</span><h3>Activity became less noisy</h3><p>Repeated deployment failures are grouped into one incident. Activity is grouped by day and can be filtered by releases, quality, investigations, and decisions.</p></div>
+  <div class="card"><span class="tag">Easier to scan</span><h3>Activity became less noisy</h3><p>Repeated failures are grouped into one incident, so the activity feed is easier to scan.</p></div>
   <div class="card"><span class="tag">More trustworthy</span><h3>Missing data stopped looking healthy</h3><p>The dashboard now calls out monitoring gaps, stale quality results, and contradictions between signals instead of smoothing them over.</p></div>
 </div>
 
 <div class="evidence-list">
-  <div class="evidence-item"><strong>Regression tests</strong><span>Important AI failures become permanent test cases.</span></div>
-  <div class="evidence-item"><strong>Failure recovery</strong><span>If analytics, runtime data, or another signal is unavailable, the dashboard falls back to unknown/watch rather than healthy.</span></div>
-  <div class="evidence-item"><strong>Golden path</strong><span>A State smoke test covers Evidence → Review → human approval → Current State → History, including the rule that a proposal does not become authoritative before approval.</span></div>
+  <div class="evidence-item"><strong>Regression tests</strong><span>Important failures are added to regression tests so they do not quietly come back.</span></div>
+  <div class="evidence-item"><strong>Failure recovery</strong><span>If an important signal is unavailable, the dashboard shows that gap instead of calling the project healthy.</span></div>
+  <div class="evidence-item"><strong>Product-flow test</strong><span>A full smoke test checks that important state changes still require human approval.</span></div>
 </div>
 
 <h2>What I did, and what AI helped with</h2>
 <div class="role-grid">
-  <div class="card"><span class="tag">My role</span><ul><li>framed the problem and chose which signals mattered</li><li>designed the attention-first information hierarchy</li><li>reviewed failed evals and decided whether product behavior or the test should change</li><li>ran repeated QA passes and used the findings to reshape the product</li><li>kept investigation advisory so the human still made the decision</li></ul></div>
-  <div class="card"><span class="tag">AI-assisted work</span><ul><li>implementation and code iteration</li><li>test generation and regression coverage</li><li>evidence gathering across connected tools</li><li>draft investigation summaries and handoffs</li><li>copy and interface iteration under my direction</li></ul></div>
+  <div class="card"><span class="tag">My role</span><ul><li>framed the problem and chose which signals mattered</li><li>designed the information hierarchy</li><li>reviewed failed evals and decided whether product behavior or the test should change</li><li>used QA findings to reshape the product</li></ul></div>
+  <div class="card"><span class="tag">AI-assisted work</span><ul><li>implementation and code iteration</li><li>testing and regression coverage</li><li>drafting and interface iteration under my direction</li></ul></div>
 </div>
 
 <h2>What I learned</h2>
