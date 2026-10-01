@@ -599,6 +599,26 @@
       .mock-analytics-link{margin-left:39px}
     }
 
+
+    /* Align Decision Support status pills to a single text column. */
+    .mock-secondary .risk-row{
+      grid-template-columns:106px minmax(0,1fr)!important;
+      column-gap:10px!important;
+    }
+    .mock-secondary .risk-row>.health-status{
+      justify-self:start;
+      max-width:106px;
+      text-align:center;
+    }
+    @media(max-width:560px){
+      .mock-secondary .risk-row{
+        grid-template-columns:96px minmax(0,1fr)!important;
+      }
+      .mock-secondary .risk-row>.health-status{
+        max-width:96px;
+      }
+    }
+
 </style>
 </head>
 <body>
