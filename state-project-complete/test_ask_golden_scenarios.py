@@ -209,7 +209,7 @@ def test_golden_product_smoke_evidence_review_human_authorization_updates_state_
             "INSERT INTO evidence(id,content,source_type,processing_status) VALUES ('e-smoke-owner','Jordan is now the project owner.','manual_note','processed')"
         )
         conn.execute(
-            "INSERT INTO review_issues(id,review_type,decision_question,why_consequential,status) VALUES ('r-smoke-owner','state_change','Update the project owner?','Ownership is maintained project truth','open')"
+            "INSERT INTO review_issues(id,review_type,decision_question,why_consequential,status) VALUES ('r-smoke-owner','proposed_update','Update the project owner?','Ownership is maintained project truth','open')"
         )
         conn.execute("INSERT INTO review_evidence(review_id,evidence_id) VALUES ('r-smoke-owner','e-smoke-owner')")
         conn.execute(
