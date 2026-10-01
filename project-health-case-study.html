@@ -96,7 +96,7 @@ body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,Bl
   <div class="case-hero-actions"><a class="cta primary" href="project-health.html" target="_blank" rel="noopener noreferrer">Open Project Health ↗</a></div>
 </header>
 
-<div class="callout"><p><strong>Project Health treats quality as evidence, not a single score.</strong> It brings together product, AI-quality, and delivery signals so important failures and unknowns stay visible before I decide what should change.</p></div>
+<div class="callout"><p><strong>Project Health separates product quality, delivery, possible user impact, and observability.</strong> A strong signal in one area should not cancel out a serious failure or an important unknown somewhere else.</p></div>
 
 <h2>The problem</h2>
 <p>The information already existed. It was just spread across deployments, commits, evals, analytics, logs, and the live products themselves. I built Project Health around my own projects as a practical test bed for a pattern I would expect to matter inside a product team: bring the signals together, then help someone decide whether a signal is a real product problem, something to watch, or simply missing information.</p>
@@ -168,14 +168,14 @@ body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,Bl
   <div class="evidence-item"><strong>Product-flow test</strong><span>A full smoke test checks that important state changes still require human approval.</span></div>
 </div>
 
-<h2>What I did, and what AI helped with</h2>
+<h2>How I split the work</h2>
 <div class="role-grid">
   <div class="card"><span class="tag">My role</span><ul><li>framed the problem and chose which signals mattered</li><li>designed the information hierarchy</li><li>reviewed failed evals and decided whether product behavior or the test should change</li><li>used QA findings to reshape the product</li></ul></div>
-  <div class="card"><span class="tag">AI-assisted work</span><ul><li>implementation and code iteration</li><li>testing and regression coverage</li><li>drafting and interface iteration under my direction</li></ul></div>
+  <div class="card"><span class="tag">AI-assisted work</span><ul><li>implementation and code iteration</li><li>testing and regression coverage</li><li>drafting and interface iteration</li></ul></div>
 </div>
 
-<h2>What I learned</h2>
-<div class="callout"><p><strong>More data was not the answer.</strong> The useful part was making it easier to see what deserved attention and what evidence I needed before acting.</p></div>
+<h2>What held up</h2>
+<div class="callout"><p><strong>More data was not the answer.</strong> The useful part was separating failure types clearly enough that the next investigation could start with the right evidence instead of the loudest metric.</p></div>
 
 <div class="cta-row">
   <a class="cta primary" href="project-health.html" target="_blank" rel="noopener noreferrer">Open Project Health ↗</a>

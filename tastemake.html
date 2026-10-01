@@ -35,7 +35,7 @@
 <header class="meridian-case-hero flagship-hero">
 <h1>Tastemake</h1>
 <p class="lead">Tastemake is a working prototype for user-editable personalization. Recommendations are the surface; the harder question is whether people can see, understand, and correct the model an AI builds of their taste.</p>
-<div class="case-meta"><span><b>My role</b> Product model, UX rules, evaluation, testing &amp; final decisions</span><span><b>AI collaborator</b> Research, implementation, debugging &amp; test support</span><span><b>Status</b> Working portfolio prototype</span></div>
+<div class="case-meta"><span><b>My role</b> Product model, UX rules, evaluation &amp; testing</span><span><b>AI collaborator</b> Research, implementation, debugging &amp; test support</span><span><b>Status</b> Working portfolio prototype</span></div>
 </header>
 
 <aside class="meridian-product-callout"><div><span>Try Tastemake</span><strong>Build and refine a Taste Profile</strong><p>Start with a few favorites, react to recommendations, and see what Tastemake learns from the result.</p></div><a class="meridian-primary-action" href="https://tastemake.vercel.app/" target="_blank" rel="noopener noreferrer">Open Tastemake <span aria-hidden="true">→</span></a></aside>
@@ -86,8 +86,9 @@
 </section>
 
 <section class="section seam-learning">
-<div class="kicker">AI product quality</div>
-<h2>I kept important product rules outside the model.</h2>
+<div class="kicker">Evidence from the build</div>
+<h2>The prototype had to work beyond a good-looking recommendation card.</h2>
+<p>It now exercises two live model calls across books, movies, TV, and games, while deterministic checks protect the evidence rules and validate model output.</p>
 <div class="surface-grid">
 <article><span>Live AI, bounded by software</span><strong>Two model calls, clear limits</strong><p>Live AI ranks recommendations and builds Taste Profile hypotheses. Software still decides what counts as evidence, which catalog items are allowed, and whether model output is valid.</p></article>
 <article><span>Real catalog</span><strong>It works across books, movies, TV, and games</strong><p>Tastemake pulls from real catalog sources, then applies its own rules and stored metadata so the prototype is not limited to a hand-written demo set.</p></article>
@@ -97,9 +98,8 @@
 
 <section class="section current-conclusion">
 <div class="kicker">Where I landed</div>
-<h2>The most interesting part of Tastemake is the model behind the recommendations.</h2>
-<p>The recommendation engine itself uses fairly familiar ideas. The more useful experiment is giving the user a clear view of what the system thinks it has learned, keeping weak assumptions visible, and letting corrections change future recommendations.</p>
-<p>What I would carry forward is simple: personalization works better when users can see it, question it, and change it.</p>
+<h2>The recommendation engine became a test environment for an editable user model.</h2>
+<p>The product got more interesting when feedback stopped being just another hidden score. A useful correction changes the system’s explanation of what it believes, preserves where that belief came from, and affects what it tries next.</p>
 <div class="closing-links"><a class="meridian-primary-action" href="https://tastemake.vercel.app/" target="_blank" rel="noopener noreferrer">Open Tastemake →</a><a class="text-link" href="https://github.com/pedringt/tastemake" target="_blank" rel="noopener noreferrer">View GitHub →</a></div>
 </section>
 
