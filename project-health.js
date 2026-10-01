@@ -275,6 +275,18 @@
     }
     if(p.id==='state'&&!platform?.neon?.available) gaps.push({label:'Database health',detail:'Not connected or unavailable. This is a monitoring gap, not a product incident.'});
     if(p.id==='state'&&run&&!run.configured) gaps.push({label:'Run AI evals',detail:'Dashboard-run setup is incomplete.'});
+    if(p.id==='state'&&data?.quality){
+      const evalBuilds=[data.quality.review?.build,data.quality.ask?.build]
+        .map(value=>String(value||'').trim())
+        .filter(value=>/^[0-9a-f]{7,40}$/i.test(value));
+      const uniqueBuilds=[...new Set(evalBuilds)];
+      const releaseSha=String(data?.delivery?.sha||'').trim();
+      if(uniqueBuilds.length>1){
+        gaps.push({label:'Eval build alignment',detail:'The latest controlled eval suites were recorded against different builds ('+uniqueBuilds.map(shortSha).join(' and ')+').'});
+      }else if(uniqueBuilds.length===1&&/^[0-9a-f]{7,40}$/i.test(releaseSha)&&uniqueBuilds[0]!==releaseSha){
+        gaps.push({label:'Current release eval coverage',detail:'Latest controlled eval evidence is from build '+shortSha(uniqueBuilds[0])+', while the current scoped release is '+shortSha(releaseSha)+'.'});
+      }
+    }
     if(p.id!=='narc'&&!pendingSet(data).has('AI operations')&&!ai?.available){
       gaps.push({label:'AI cost',detail:'Estimated model spend is not available yet.'});
       gaps.push({label:'AI response speed',detail:'Observed model response speed is not available yet.'});
