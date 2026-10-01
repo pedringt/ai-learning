@@ -580,13 +580,32 @@
       display:block;margin-top:4px;font-size:10px;font-weight:650;color:#7b8496;
     }
 
+
+    .mock-analytics-title{justify-content:flex-start}
+    .mock-analytics-link{
+      margin-left:auto;font-size:10px;font-weight:750;color:#5b4fe0;text-decoration:none;
+    }
+    .mock-analytics-link:hover{text-decoration:underline}
+    .mock-usage-card .mock-usage-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}
+    .mock-usage-card .mock-usage-metric{display:grid;gap:4px;padding:12px 14px;border:1px solid #e6eaf0;border-radius:10px;background:#fafbfe}
+    .mock-usage-card .mock-usage-metric:last-child{border-right:1px solid #e6eaf0}
+    .mock-analytics-compare{display:inline-flex;width:max-content;margin-top:5px;padding:3px 7px;border-radius:999px;font-size:9px;font-weight:800}
+    .mock-analytics-compare.up{background:#eaf8f1;color:#127553}
+    .mock-analytics-compare.down{background:#fff0ef;color:#b63d35}
+    .mock-analytics-compare.flat{background:#f0f2f5;color:#6f788b}
+    @media(max-width:620px){
+      .mock-usage-card .mock-usage-metrics{grid-template-columns:1fr}
+      .mock-analytics-title{align-items:flex-start;flex-wrap:wrap}
+      .mock-analytics-link{margin-left:39px}
+    }
+
 </style>
 </head>
 <body>
   <main class="shell">
     <div class="topbar">
       <div class="brand">Context Switch <span class="subtle">/ Project Health</span></div>
-      <a class="button" href="/">Back to portfolio</a>
+      <a class="button" href="https://www.contextswitch.tech/" target="_blank" rel="noopener noreferrer">Back to portfolio ↗</a>
     </div>
 
     <section class="hero compact-hero">
