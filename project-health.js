@@ -18,9 +18,8 @@
         live:'https://state.contextswitch.tech',
         vercel:'https://vercel.com/cairn10/state',
         renderProduction:'https://dashboard.render.com/web/srv-dabogoajnfac73dp7h1g',
-        renderStaging:'https://dashboard.render.com/web/srv-dadloi8n74is73ajsg50',
         neon:'https://console.neon.tech',
-        quality:'/state-evals'
+        quality:'https://www.contextswitch.tech/state-evals'
       }
     },
     {
@@ -83,8 +82,7 @@
     const params=new URLSearchParams(String(root?.location?.search||''));
     const explicit=String(params.get('env')||'').toLowerCase();
     if(explicit==='staging'||explicit==='production')return explicit;
-    if(/(^|[-.])staging([-.]|$)|-git-/i.test(host))return 'staging';
-    if(/\.vercel\.app$/i.test(host)&&host!=='ai-learning.vercel.app')return 'staging';
+    if(/(^|[-.])staging([-.]|$)/i.test(host))return 'staging';
     return 'production';
   }
   async function jsonFetch(url,options={}){
@@ -568,7 +566,22 @@
     ]);
     return deliveryHealth({name:branch?.name||branchName,commit:selectedCommit},status,checkRuns);
   }
-  async function loadStateQuality(root){return normalizeQuality(await jsonFetch('/api/project-health-state-quality?env='+pageEnvironment(root),{timeoutMs:7000}));}
+  async function loadStateQuality(root){
+    const url='/api/project-health-state-quality?env='+pageEnvironment(root);
+    let lastError=null;
+    for(let attempt=0;attempt<2;attempt++){
+      try{return normalizeQuality(await jsonFetch(url,{timeoutMs:12000}));}
+      catch(error){
+        lastError=error;
+        if(attempt===0&&(error?.status===502||error?.status===503||error?.status===504||error?.name==='AbortError')){
+          await new Promise(resolve=>setTimeout(resolve,650));
+          continue;
+        }
+        throw error;
+      }
+    }
+    throw lastError;
+  }
   async function loadStateEvalBehavior(project){
     const paths=Array.isArray(project?.evalBehaviorPaths)?project.evalBehaviorPaths:[];
     if(!paths.length)return null;
@@ -756,7 +769,7 @@
       ? run('Quality',loadStateQuality(root),value=>{data.quality=value;if(data.qualityBehaviorUpdatedAt)data.quality.behaviorUpdatedAt=data.qualityBehaviorUpdatedAt;})
       : run('Quality',loadExternalQuality(project),value=>{data.externalQuality=value;});
     data.qualityPromise=qualityTask;
-    await Promise.all(core);
+    await Promise.all([...core,qualityTask]);
     data.fresh=true;
     data.checkedAt=new Date().toISOString();
     if(typeof onUpdate==='function')onUpdate(data);
@@ -1087,6 +1100,29 @@
     return Math.round(total*value)+' / '+total+' passed';
   }
   function stateEvalHistory(){return'';}
+  function mockSparkline(values){
+    const nums=(Array.isArray(values)?values:[]).map(Number).filter(Number.isFinite).slice(0,8).reverse();
+    if(nums.length<2)return'';
+    const w=54,h=28,p=2,min=Math.min(...nums),max=Math.max(...nums),range=Math.max(.001,max-min);
+    const pts=nums.map((v,i)=>{
+      const x=p+(i*(w-p*2)/(nums.length-1));
+      const y=h-p-((v-min)/range)*(h-p*2);
+      return {x,y};
+    });
+    return '<div class="mock-sparkline"><svg viewBox="0 0 '+w+' '+h+'" aria-hidden="true"><polyline points="'+pts.map(pt=>pt.x.toFixed(1)+','+pt.y.toFixed(1)).join(' ')+'"></polyline>'+pts.map(pt=>'<circle cx="'+pt.x.toFixed(1)+'" cy="'+pt.y.toFixed(1)+'" r="1.6"></circle>').join('')+'</svg></div>';
+  }
+  function mockTrendValues(q,suite){
+    return (Array.isArray(q?.recent)?q.recent:[]).filter(item=>item?.suite===suite).map(evalScore).filter(v=>v!=null);
+  }
+  function mockDelta(recent,suite){
+    const rows=(Array.isArray(recent)?recent:[]).filter(item=>item?.suite===suite);
+    if(rows.length<2)return {label:'—',cls:'flat'};
+    const a=evalScore(rows[0]),b=evalScore(rows[1]);
+    if(a==null||b==null)return {label:'—',cls:'flat'};
+    const d=Math.round((a-b)*1000)/10;
+    if(Math.abs(d)<0.1)return {label:'0',cls:'flat'};
+    return {label:(d>0?'↑ ':'↓ ')+Math.abs(d)+'%',cls:d>0?'':'down'};
+  }
   function investigationResultHtml(investigation){
     if(investigation?.handoff) return '<div class="investigation-result agent-result"><div class="agent-kicker">Handoff preview</div><strong>Project handoff ready to review</strong><pre>'+esc(investigation.handoffText||investigation.report||'')+'</pre><p class="footnote">Project Health assembled this from the currently loaded delivery, quality, investigation, and product-decision signals. Review it before sharing.</p></div>';
     if(investigation?.loading) return '<div class="investigation-result agent-result" role="status"><div class="agent-kicker">Read-only investigation agent</div><strong>Checking current health signals…</strong><p>Starting with current health signals and expanding only when the evidence points somewhere specific.</p></div>';
@@ -1111,6 +1147,22 @@
     const pending=pendingSet(data);
     doc.getElementById('detailTitle').textContent=p.name;
     doc.getElementById('detailCopy').textContent=p.description;
+    const detailIcon=doc.getElementById('detailIcon');
+    if(detailIcon)detailIcon.textContent=(p.name||'?').slice(0,1).toUpperCase();
+    const detailHeaderStatus=doc.getElementById('detailHeaderStatus');
+    if(detailHeaderStatus){
+      const status=projectStatus(data);
+      detailHeaderStatus.className='status-pill '+esc(status.key);
+      detailHeaderStatus.textContent=status.label;
+    }
+    const mockOpenProjectLink=doc.getElementById('mockOpenProjectLink');
+    if(mockOpenProjectLink){
+      const live=p.links?.live||'';
+      mockOpenProjectLink.hidden=!live;
+      if(live)mockOpenProjectLink.href=live;
+    }
+    const mockSourceLink=doc.getElementById('mockSourceLink');
+    if(mockSourceLink)mockSourceLink.href=repoUrl(p.repo);
     const repoLink=doc.getElementById('repoLink');
     if(repoLink)repoLink.href=repoUrl(p.repo);
     const qualityTab=doc.querySelector?.('[data-tab="ai-quality"]');
@@ -1122,7 +1174,6 @@
         ['GitHub repository',repoUrl(p.repo)],
         ['Vercel',p.links?.vercel],
         ['Render · production',p.links?.renderProduction],
-        ['Render · staging',p.links?.renderStaging],
         ['Neon',p.links?.neon],
         [p.id==='state'?'Full AI eval details':p.id==='tastemake'?'Recommendation checks':'Game checks',p.links?.quality]
       ].filter(item=>item[1]);
@@ -1240,6 +1291,218 @@
         '</button>';
       }).join('')+'</div>';
 
+    const overviewQualitySummaryPanel=doc.getElementById('overviewQualitySummaryPanel');
+    if(overviewQualitySummaryPanel){
+      const scorePct=value=>{
+        const n=Number(value);
+        return Number.isFinite(n)?Math.max(0,Math.min(100,Math.round(n*1000)/10)):null;
+      };
+      const summaryCard=(title,score,note,kind,trend)=>{
+        const pct=scorePct(score);
+        return '<div class="mock-quality-card">'+
+          '<div class="mock-quality-card-head"><h4>'+esc(title)+'</h4><span class="status-pill '+esc(kind||'unknown')+'">'+
+            esc(kind==='good'?'Healthy':kind==='bad'?'Needs attention':kind==='warn'?'Watch':'Unknown')+
+          '</span></div>'+
+          '<div class="mock-quality-score">'+(pct==null?'—':esc(pct+'%'))+'</div>'+
+          '<div class="mock-quality-note">'+esc(note||'No recorded result yet')+'</div>'+
+          '<div class="mock-quality-bar '+esc(kind||'unknown')+'"><span style="width:'+(pct==null?0:pct)+'%"></span></div>'+
+          (trend?'<div class="mock-quality-trend">'+esc(trend)+'</div>':'')+
+        '</div>';
+      };
+      let cards='',summaryCopy='Project-specific quality evidence.';
+      if(p.quality==='state'){
+        const review=q?.review,ask=q?.ask;
+        const reviewScore=review?.interpretation_accuracy??evalScore(review);
+        const askScore=ask?.ask_grounding??evalScore(ask);
+        const reviewKind=!review?'unknown':Number(review.high_severity_failures||0)>0?'bad':Number(reviewScore)<1?'warn':'good';
+        const askKind=!ask?'unknown':Number(ask.high_severity_failures||0)>0?'bad':Number(askScore)<1?'warn':'good';
+        cards=
+          summaryCard('Update understanding',reviewScore,review?scenarioPassLabel(review,reviewScore):'No recorded run',reviewKind,evalTrend(q?.recent,'review_interpretation'))+
+          summaryCard('Answer quality',askScore,ask?scenarioPassLabel(ask,askScore):'No recorded run',askKind,evalTrend(q?.recent,'ask_quality'));
+        summaryCopy='Controlled evals for how State understands updates and answers from evidence.';
+      }else if(p.id==='tastemake'&&externalQ){
+        const endpoint=externalQ.endpoint||{};
+        const rp=Number(endpoint.rule_checks?.passed),rt=Number(endpoint.rule_checks?.total);
+        const cp=Number(endpoint.validator_self_test?.caught),ct=Number(endpoint.validator_self_test?.total);
+        const ruleScore=rt?rp/rt:null,catchScore=ct?cp/ct:null;
+        cards=
+          summaryCard('Recommendation rules',ruleScore,rt?(rp+' / '+rt+' passed'):'No recorded result',rt&&rp===rt?'good':'warn','')+
+          summaryCard('Bad outputs caught',catchScore,ct?(cp+' / '+ct+' caught'):'No recorded result',ct&&cp===ct?'good':'warn','');
+        summaryCopy='Recommendation grounding, rule compliance, and validator protection.';
+      }else if(p.id==='narc'&&externalQ){
+        const green=!!externalQ.recorded?.recorded_all_suites_green;
+        const pendingPlaytest=!!externalQ.recorded?.full_playtest_pending;
+        cards=
+          summaryCard('Automated game checks',green?1:null,green?'3 / 3 suites passing':'Status unavailable',green?'good':'unknown','')+
+          summaryCard('Human first-run playtest',pendingPlaytest?0:null,pendingPlaytest?'Still needed':'Recorded',pendingPlaytest?'warn':'good','');
+        summaryCopy='Automated branch checks plus the human first-run playtest gate.';
+      }else{
+        cards=summaryCard(p.qualityLabel||'Product quality',null,'Quality summary is not available yet','unknown','');
+      }
+      overviewQualitySummaryPanel.innerHTML=
+        '<div class="mock-quality-head"><div><h3>Quality & evaluation</h3><p>'+esc(summaryCopy)+'</p></div>'+
+        '<button class="button small" type="button" data-tab-target="ai-quality">View full quality details</button></div>'+
+        '<div class="mock-quality-grid">'+cards+'</div>';
+    }
+
+    const overviewInvestigationPanel=doc.getElementById('overviewInvestigationPanel');
+    if(overviewInvestigationPanel){
+      const current=overallAttention(data);
+      const failureDetails=p.quality==='state'?qualityFailureClassSummary(q).details||[]:[];
+      const liveFailure=activityReviewItems(data).find(item=>!item.resolved);
+      const failedItems=[];
+      if(liveFailure)failedItems.push(liveFailure.title);
+      failureDetails.slice(0,2).forEach(item=>failedItems.push(item.title||item.scenario_id||'Quality scenario needs review'));
+      const nextLook=operationalNextDecision(data);
+      const latestHistory=Array.isArray(data.investigationHistory)?data.investigationHistory[0]:null;
+      overviewInvestigationPanel.innerHTML=
+        '<div class="panel-title-row"><div><h3>Latest investigation</h3><p class="panel-copy">'+
+          esc(latestHistory?('Last recorded '+relativeAge(latestHistory.observedAt)):'Current diagnostic view from loaded evidence')+
+        '</p></div><button class="button small" type="button" data-open-investigation>Open investigation</button></div>'+
+        '<div class="mock-investigation-grid">'+
+          '<div class="mock-investigation-block"><strong>Current assessment</strong><p>'+esc(current.title)+'. '+esc(current.detail||'')+'</p></div>'+
+          '<div class="mock-investigation-block"><strong>What failed</strong>'+
+            (failedItems.length?'<ul>'+failedItems.map(item=>'<li>'+esc(item)+'</li>').join('')+'</ul>':'<p>No specific current failure is recorded.</p>')+
+          '</div>'+
+          '<div class="mock-investigation-block"><strong>Recommended next look</strong><p>'+esc(nextLook)+'</p></div>'+
+        '</div>';
+    }
+
+    const mockDashboard=doc.getElementById('mockDashboardOverview');
+    if(mockDashboard){
+      const overall=overallAttention(data);
+      const actionable=attentionItems(data).filter(item=>item.kind!=='good');
+      const qDetails=p.quality==='state'?qualityFailureClassSummary(q):{details:[]};
+      const latestHistory=Array.isArray(data.investigationHistory)?data.investigationHistory[0]:null;
+
+      const pct=v=>{
+        const n=Number(v);
+        return Number.isFinite(n)?Math.max(0,Math.min(100,Math.round(n*1000)/10)):null;
+      };
+      const kpi=(label,value,delta,kind,signal,sub,sparkValues)=>{
+        const n=pct(value);
+        const display=n==null?'—':n+'%';
+        return '<div class="mock-kpi">'+
+          '<div class="mock-kpi-top"><div class="mock-kpi-value">'+esc(display)+'</div><span class="mock-kpi-delta '+esc(delta?.cls||'flat')+'">'+esc(delta?.label||'—')+'</span></div>'+
+          '<div class="mock-kpi-label">'+esc(label)+'</div>'+
+          '<div class="mock-kpi-signal '+esc(kind||'good')+'">'+esc(signal||'No current failures')+'</div>'+
+          (sub?'<div class="mock-kpi-sub">'+esc(sub)+'</div>':'')+
+          mockSparkline(sparkValues)+
+        '</div>';
+      };
+
+      let kpis='',qualityCards='';
+      if(p.quality==='state'){
+        const review=q?.review,ask=q?.ask;
+        const reviewScore=review?.interpretation_accuracy??evalScore(review);
+        const grounding=ask?.ask_grounding;
+        const authority=ask?.authority_accuracy;
+        const uncertainty=ask?.uncertainty_accuracy;
+        const reviewFailures=Number(review?.high_severity_failures||0);
+        const askFailures=Number(ask?.high_severity_failures||0);
+        const reviewDelta=mockDelta(q?.recent,'review_interpretation');
+        const askDelta=mockDelta(q?.recent,'ask_quality');
+        kpis=
+          kpi('Update understanding',reviewScore,reviewDelta,reviewFailures?'warn':'good',reviewFailures?(reviewFailures+' high-impact failure'+(reviewFailures===1?'':'s')):'0 high-impact failures',scenarioPassLabel(review,reviewScore),mockTrendValues(q,'review_interpretation'))+
+          kpi('Answer quality',grounding??evalScore(ask),askDelta,askFailures?'bad':'good',askFailures?(askFailures+' failure'+(askFailures===1?'':'s')):'0 failures',scenarioPassLabel(ask,grounding??evalScore(ask)),mockTrendValues(q,'ask_quality'))+
+          kpi('Decision authority',authority,{label:'—',cls:'flat'},authority!=null&&authority<1?'warn':'good',authority!=null&&authority<1?'Needs review':'0 failures',authority==null?'Not measured':'Authority boundary scenarios',[])+
+          kpi('Uncertainty handling',uncertainty,{label:'—',cls:'flat'},uncertainty!=null&&uncertainty<1?'warn':'good',uncertainty!=null&&uncertainty<1?'Needs review':'Within target',uncertainty==null?'Not measured':'Unknown-answer scenarios',[]);
+        const qualityItems=[
+          ['Update understanding',reviewScore,review],
+          ['Answer quality',grounding??evalScore(ask),ask],
+          ['Decision authority',authority,ask],
+          ['Uncertainty handling',uncertainty,ask]
+        ];
+        qualityCards=qualityItems.map(([label,score,run])=>{
+          const n=pct(score),pass=run&&score!=null?scenarioPassLabel(run,score):'Not measured';
+          return '<div class="mock-quality-detail-card"><span>'+esc(label)+'</span><strong>'+(n==null?'—':esc(n+'%'))+'</strong><div class="mock-progress"><span style="width:'+(n||0)+'%"></span></div><small>'+esc(pass)+'</small></div>';
+        }).join('');
+      }else if(p.id==='tastemake'&&externalQ){
+        const e=externalQ.endpoint||{},b=externalQ.baseline||{},ci=externalQ.ci||{};
+        const vals=[
+          ['Recommendation rules',Number(e.rule_checks?.total)?Number(e.rule_checks?.passed)/Number(e.rule_checks?.total):null,e.rule_checks?.passed,e.rule_checks?.total],
+          ['Bad outputs caught',Number(e.validator_self_test?.total)?Number(e.validator_self_test?.caught)/Number(e.validator_self_test?.total):null,e.validator_self_test?.caught,e.validator_self_test?.total],
+          ['Main automated checks',ci.conclusion==='success'?1:null,ci.conclusion==='success'?1:null,1],
+          ['Baseline outputs kept',Number(b.valid_fixture_outputs?.total)?Number(b.valid_fixture_outputs?.passed)/Number(b.valid_fixture_outputs?.total):null,b.valid_fixture_outputs?.passed,b.valid_fixture_outputs?.total]
+        ];
+        kpis=vals.map(([label,score,passed,total])=>kpi(label,score,{label:'—',cls:'flat'},score===1?'good':score==null?'warn':'warn',score===1?'Healthy':'Needs a look',total?passed+' / '+total:'Not measured',[])).join('');
+        qualityCards=vals.map(([label,score,passed,total])=>{const n=pct(score);return '<div class="mock-quality-detail-card"><span>'+esc(label)+'</span><strong>'+(n==null?'—':esc(n+'%'))+'</strong><div class="mock-progress"><span style="width:'+(n||0)+'%"></span></div><small>'+esc(total?(passed+' / '+total+' passing'):'Not measured')+'</small></div>';}).join('');
+      }else{
+        const green=!!externalQ?.recorded?.recorded_all_suites_green;
+        const playtestPending=!!externalQ?.recorded?.full_playtest_pending;
+        const vals=[
+          ['Automated game checks',green?1:null,green?'3 / 3 suites passing':'Status unavailable'],
+          ['First-run playtest',playtestPending?0:null,playtestPending?'Still needed':'Recorded'],
+          ['Branch consistency',green?1:null,green?'Passing':'Status unavailable'],
+          ['Desktop behavior',green?1:null,green?'Passing':'Status unavailable']
+        ];
+        kpis=vals.map(([label,score,sub])=>kpi(label,score,{label:'—',cls:'flat'},score===1?'good':score===0?'warn':'warn',score===1?'Healthy':score===0?'Needs review':'Unknown',sub,[])).join('');
+        qualityCards=vals.map(([label,score,sub])=>{const n=pct(score);return '<div class="mock-quality-detail-card"><span>'+esc(label)+'</span><strong>'+(n==null?'—':esc(n+'%'))+'</strong><div class="mock-progress"><span style="width:'+(n||0)+'%"></span></div><small>'+esc(sub)+'</small></div>';}).join('');
+      }
+
+      const dKind=deliveryAttentionForData(data).kind||'unknown';
+      const latestRelease=d?.message?commitTitle(d.message):'No recent release data';
+      const releaseStatus=dKind==='good'?'Stable':dKind==='bad'?'Needs attention':dKind==='warn'?'Watch':'Unknown';
+      const releaseClass=dKind==='good'?'mock-release-stable':'mock-release-stable';
+
+      const a=platform?.analytics;
+      const visitors=Number(a?.visitors||0),views=Number(a?.pageviews||0);
+      const analyticsUrl=p.links?.vercel?(p.links.vercel.replace(/\/$/,'')+'/analytics'):null;
+      const analyticsDelta=(value,label)=>{
+        const n=Number(value);
+        if(value==null||Number.isNaN(n))return '<span class="mock-analytics-compare flat">No previous period yet</span>';
+        if(Math.abs(n)<0.1)return '<span class="mock-analytics-compare flat">No change vs previous 30d</span>';
+        return '<span class="mock-analytics-compare '+(n>0?'up':'down')+'">'+esc((n>0?'↑ ':'↓ ')+Math.abs(n)+'% '+label+' vs previous 30d')+'</span>';
+      };
+
+      const failedItems=[];
+      const liveFailure=activityReviewItems(data).find(item=>!item.resolved);
+      if(liveFailure)failedItems.push(liveFailure.title);
+      (qDetails.details||[]).slice(0,3).forEach(item=>failedItems.push(item.title||item.scenario_id||'Quality scenario needs review'));
+      const nextLook=operationalNextDecision(data);
+
+      const testRows=(qDetails.details||[]).slice(0,2).map(item=>
+        '<div class="mock-test-row"><strong>'+esc(item.title||item.scenario_id||'Quality scenario')+'</strong><span class="status-pill bad">Failed</span><span>'+esc(item.expected||'Review scenario')+'</span></div>'
+      ).join('');
+
+      const attentionHtml=actionable.length
+        ? '<div class="mock-issue-row"><span class="mock-issue-dot"></span><div><strong>'+esc(actionable[0].title)+'</strong><p>'+esc(actionable[0].detail||'Review the current signal before changing product behavior.')+'</p></div><span class="mock-issue-meta">'+esc(actionable[0].owner||'Product')+'</span></div>'
+        : '<div class="mock-issue-row"><span class="mock-issue-dot" style="background:#16a36f"></span><div><strong>Nothing needs attention right now</strong><p>No current incident or product-quality action is open.</p></div><span class="mock-issue-meta">Healthy</span></div>';
+
+      mockDashboard.innerHTML=
+        '<section class="mock-dashboard-section mock-attention-banner">'+
+          '<div class="mock-attention-icon">!</div><div class="mock-attention-copy"><h3>What needs attention</h3><p>'+esc(actionable.length?(actionable.length+' issue'+(actionable.length===1?'':'s')+' needs your review.'):'Everything looks good right now.')+'</p>'+attentionHtml+'</div>'+
+          '<button class="button small" type="button" data-tab-target="ai-quality">View all issues →</button>'+
+        '</section>'+
+        '<div class="mock-kpi-grid">'+kpis+'</div>'+
+        '<section class="mock-dashboard-section mock-release-card">'+
+          '<div class="mock-card-title"><span class="mock-card-title-icon">◇</span><h3>Latest release</h3></div>'+
+          '<div class="mock-release-version"><strong>'+esc(latestRelease)+'</strong><span class="'+releaseClass+'">'+esc(releaseStatus)+'</span></div>'+
+          '<div class="mock-release-meta">'+(d?.updatedAt?esc(fmtDate(d.updatedAt)):'No release date')+'</div>'+
+          '<p class="mock-release-copy">Production release'+(d?.branch?' · '+esc(d.branch):'')+'</p>'+
+          '<button class="button small" type="button" data-tab-target="releases">View release details →</button>'+
+        '</section>'+
+        '<section class="mock-dashboard-section mock-usage-card">'+
+          '<div class="mock-card-title mock-analytics-title"><span class="mock-card-title-icon">▥</span><h3>Site analytics <span style="font-weight:500;color:#7b8496;font-size:11px">(last 30 days)</span></h3>'+(analyticsUrl?'<a class="mock-analytics-link" href="'+esc(analyticsUrl)+'" target="_blank" rel="noopener noreferrer">Open analytics ↗</a>':'')+'</div>'+
+          (a?.available
+            ?'<div class="mock-usage-metrics"><div class="mock-usage-metric"><strong>'+esc(views)+'</strong><span>Page views</span>'+analyticsDelta(a.pageviews_delta_pct,'page views')+'</div><div class="mock-usage-metric"><strong>'+esc(visitors)+'</strong><span>Visitors</span>'+analyticsDelta(a.visitors_delta_pct,'visitors')+'</div></div>'
+            :'<div class="empty compact-empty">'+esc(a?.configured===false?'Site analytics are not connected for this environment.':a?.error||'Site analytics are still loading or temporarily unavailable.')+'</div>')+
+        '</section>'+
+        '<section class="mock-dashboard-section mock-quality-detail">'+
+          '<div class="mock-quality-detail-head"><div><h3>Quality and evaluation details</h3>'+(pending.has('Quality')?'<span class="mock-refreshing-evals">Refreshing evals… showing last good results</span>':'')+'</div><button class="button small" type="button" data-tab-target="ai-quality">View all evaluations →</button></div>'+
+          '<div class="mock-quality-detail-grid">'+qualityCards+'</div>'+
+        '</section>'+
+        '<section class="mock-dashboard-section mock-investigation-card">'+
+          '<div class="mock-investigation-head"><h3>Latest investigation</h3><button class="button small" type="button" data-open-investigation>View full investigation →</button></div>'+
+          '<div class="mock-investigation-columns">'+
+            '<div class="mock-investigation-column"><strong>Current assessment</strong><p>'+esc(overall.title)+'. '+esc(overall.detail||'')+'</p></div>'+
+            '<div class="mock-investigation-column"><strong>What failed</strong>'+(failedItems.length?'<ul>'+failedItems.map(item=>'<li>'+esc(item)+'</li>').join('')+'</ul>':'<p>No specific current failure is recorded.</p>')+'</div>'+
+            '<div class="mock-investigation-column"><strong>Recommended next look</strong><p>'+esc(nextLook)+'</p></div>'+
+          '</div>'+
+          (testRows?'<div class="mock-related-tests"><strong style="font-size:11px">Related test scenarios</strong>'+testRows+'</div>':'')+
+        '</section>';
+    }
+
     // Product quality / evals
     let qualityHtml='';
     if(p.quality==='state'){
@@ -1268,7 +1531,7 @@
                 '<div class="eyebrow">'+esc(detail.suite||'AI eval')+'</div>'+
                 '<h4>'+esc(detail.title)+'</h4>'+
                 '<div class="failure-facts"><strong>Observed</strong><span>'+esc(detail.whatHappened)+'</span><strong>Expected</strong><span>'+esc(detail.expected)+'</span><strong>Why it matters</strong><span>'+esc(detail.why)+'</span></div>'+
-                '<div class="quality-actions"><button class="button small primary" type="button" data-investigate-quality data-failure-id="'+esc(detail.scenario_id||'')+'">Investigate failure</button><a class="button small" href="/state-evals?failure='+encodeURIComponent(detail.scenario_id||'')+'">View scenario</a></div>'+
+                '<div class="quality-actions"><button class="button small primary" type="button" data-investigate-quality data-failure-id="'+esc(detail.scenario_id||'')+'">Investigate failure</button><a class="button small" href="'+esc(p.links.quality)+'?failure='+encodeURIComponent(detail.scenario_id||'')+'" target="_blank" rel="noopener noreferrer">View scenario ↗</a></div>'+
               '</div>'
             ).join('')+'</div>'
           :'';
@@ -1285,7 +1548,7 @@
               ?'<div class="run-callout quality-failure-summary"><strong>Failures requiring review</strong>'+failureDetailHtml+'</div><div class="eval-grid">'+cards.join('')+'</div>'
               :'<div class="eval-grid">'+cards.join('')+'</div>')+stateEvalHistory(q);
       }
-      qualityHtml+='<p class="footnote"><a href="/state-evals">View full scenario catalog →</a></p>';
+      qualityHtml+='<p class="footnote"><a href="'+esc(p.links.quality)+'" target="_blank" rel="noopener noreferrer">View full scenario catalog ↗</a></p>';
       const activeEvalRun=data.qualityRun;
       if(activeEvalRun){
         const delayed=activeEvalRun.state==='delayed';
@@ -1349,11 +1612,14 @@
     }
     doc.getElementById('qualityPanel').innerHTML=qualityHtml;
 
-    // Usage only gets a standalone Overview section when there is real usage data to show.
+    // Usage is a dedicated tab now, so the panel must always remain visible.
     const a=platform?.analytics;
     const analyticsPanel=doc.getElementById('analyticsPanel');
-    analyticsPanel.classList.toggle('usage-hidden',!a?.available);
-    if(a?.available){
+    analyticsPanel.classList.remove('usage-hidden');
+    const analyticsUrl=p.links?.vercel?(p.links.vercel.replace(/\/$/,'')+'/analytics'):null;
+    if(pending.has('Analytics')){
+      analyticsPanel.innerHTML='<div class="panel-title-row"><h3>Site analytics</h3></div><div class="empty" style="margin-top:12px">Loading site analytics…</div>';
+    }else if(a?.available){
       const visitorTrend=trendText(a.visitors_delta_pct),pageTrend=trendText(a.pageviews_delta_pct);
       const visitorClass=a.visitors_delta_pct==null?'flat':Number(a.visitors_delta_pct)>0?'up':Number(a.visitors_delta_pct)<0?'down':'flat';
       const pageClass=a.pageviews_delta_pct==null?'flat':Number(a.pageviews_delta_pct)>0?'up':Number(a.pageviews_delta_pct)<0?'down':'flat';
@@ -1365,10 +1631,12 @@
           '<div class="trend '+visitorClass+'"><strong>Visitors:</strong> '+esc(visitorTrend)+'</div>'+
           '<div class="trend '+pageClass+'"><strong>Page views:</strong> '+esc(pageTrend)+'</div>'+
           '</div>';
-      const analyticsUrl=p.links?.vercel?(p.links.vercel.replace(/\/$/,'')+'/analytics'):null;
-      doc.getElementById('analyticsPanel').innerHTML='<div class="panel-title-row"><h3>Site analytics</h3>'+(analyticsUrl?'<a class="site-analytics-link" href="'+esc(analyticsUrl)+'" target="_blank" rel="noopener noreferrer">Open analytics ↗</a>':'')+'</div><div class="metrics" style="margin-top:12px">'+metric(a.visitors??'—','Visitors · 30d')+metric(a.pageviews??'—','Page views · 30d')+'</div>'+trends;
+      analyticsPanel.innerHTML='<div class="panel-title-row"><h3>Site analytics</h3>'+(analyticsUrl?'<a class="site-analytics-link" href="'+esc(analyticsUrl)+'" target="_blank" rel="noopener noreferrer">Open analytics ↗</a>':'')+'</div><div class="metrics" style="margin-top:12px">'+metric(a.visitors??'—','Visitors · 30d')+metric(a.pageviews??'—','Page views · 30d')+'</div>'+trends;
     }else{
-      analyticsPanel.innerHTML='';
+      const unavailable=a?.configured===false
+        ?'Site analytics are not connected for this project.'
+        :(a?.error||'Site analytics are temporarily unavailable.');
+      analyticsPanel.innerHTML='<div class="panel-title-row"><h3>Site analytics</h3>'+(analyticsUrl?'<a class="site-analytics-link" href="'+esc(analyticsUrl)+'" target="_blank" rel="noopener noreferrer">Open analytics ↗</a>':'')+'</div><div class="empty" style="margin-top:12px">'+esc(unavailable)+'</div>';
     }
 
     // Chronological activity tells an operating story rather than exposing raw events.
@@ -1442,8 +1710,8 @@
       const production=r.environments?.production;
       if(production) infraCards.push({label:'Production backend',status:production.ok?'Healthy':'Unavailable',detail:'Render',url:p.links?.renderProduction});
       const stagingEnv=r.environments?.staging;
-      if(stagingEnv) infraCards.push({label:'Staging backend',status:stagingEnv.ok?'Healthy':'Unknown',detail:stagingEnv.ok?'Render':'Render · no recent successful response observed; production unaffected',url:p.links?.renderStaging});
-      else if(p.id==='state'&&pending.has('Staging backend')) infraCards.push({label:'Staging backend',status:'Checking…',detail:'Render',url:p.links?.renderStaging});
+      if(stagingEnv) infraCards.push({label:'Staging backend',status:stagingEnv.ok?'Healthy':'Unknown',detail:stagingEnv.ok?'Render':'Render · no recent successful response observed; production unaffected',url:null});
+      else if(p.id==='state'&&pending.has('Staging backend')) infraCards.push({label:'Staging backend',status:'Checking…',detail:'Render',url:null});
     }else if(p.id==='state') infraCards.push({label:'Production backend',status:pending.has('Production backend')?'Checking…':'Unavailable',detail:'Render',url:p.links?.renderProduction});
     if(n?.configured&&n.available) infraCards.push({label:'Database',status:'Connected',detail:neonConnectionDetail(n),url:p.links?.neon});
     else if(n?.configured) infraCards.push({label:'Database',status:'Temporarily unavailable',detail:'Neon',url:p.links?.neon});
@@ -1642,7 +1910,7 @@
       ].join('\n');
       return {
         report,
-        sources:[{label:'State eval details',url:'/state-evals',observedAt:latestDate}],
+        sources:[{label:'State eval details',url:'https://www.contextswitch.tech/state-evals',observedAt:latestDate}],
         observedAt:latestDate,
         qualityInvestigation:true,
         staleEvalContract:stateEvalContractStale(quality),
@@ -1704,7 +1972,7 @@
     ].join('\n');
     return {
       report,
-      sources:[{label:'State eval details',url:'/state-evals',observedAt:latestDate}],
+      sources:[{label:'State eval details',url:'https://www.contextswitch.tech/state-evals',observedAt:latestDate}],
       observedAt:latestDate,
       qualityInvestigation:true,
       scenarioId:targeted?.scenario_id||null,
@@ -1791,8 +2059,9 @@
     state.forEach(item=>{item.investigationHistory=loadInvestigationHistory(root,item.project.id);item.productNotes=loadProductNotes(root,item.project.id);});
     const initialParams=new URLSearchParams(root.location.search);
     let activeId=initialParams.get('project')||'state';
-    const allowedTabs=new Set(['overview','ai-quality','activity']);
-    let activeTab=allowedTabs.has(initialParams.get('tab'))?initialParams.get('tab'):'overview';
+    const allowedTabs=new Set(['overview','ai-quality','releases','usage','investigation','technical']);
+    const initialTab=initialParams.get('tab')==='activity'?'releases':initialParams.get('tab');
+    let activeTab=allowedTabs.has(initialTab)?initialTab:'overview';
     let summaryFilter='all';
     let renderQueued=false,refreshGeneration=0,investigationDrawerOpen=false;
     const demoState={phase:'idle',step:0,timers:[]};
@@ -1921,7 +2190,8 @@
       doc.querySelectorAll('[data-tab-panel]').forEach(panel=>{panel.hidden=panel.dataset.tabPanel!==activeTab;});
     }
     function setActiveTab(tab,updateUrl=true){
-      activeTab=allowedTabs.has(tab)?tab:'overview';
+      const normalized=tab==='activity'?'releases':tab;
+      activeTab=allowedTabs.has(normalized)?normalized:'overview';
       if(activeTab==='ai-quality'){
         const data=activeData();if(data)data.qualityRunCompletedAt=null;
       }
@@ -2215,7 +2485,6 @@
         if(generation!==refreshGeneration)return;
         state[index]=item;
         completed.add(project.id);
-        if(item.qualityPromise)item.qualityPromise.finally(()=>{if(generation===refreshGeneration){scheduleRender();persist();}});
         scheduleRender();
         if(completed.size<PROJECTS.length)status.textContent=progressText(completed.size,PROJECTS.length,pendingNames());
       });
@@ -2223,10 +2492,10 @@
       await Promise.all(jobs);
       if(generation!==refreshGeneration)return;
       state.forEach(reconcileInvestigationHistory);
+      await ensureDetails(activeId);
       persist();
       status.innerHTML='<strong>Updated just now</strong>';
       refresh.disabled=false;
-      ensureDetails(activeId);
     }
 
     if(cached?.savedAt)status.innerHTML='<strong>Showing the last good snapshot.</strong> Last checked '+esc(fmtDate(cached.savedAt))+'. Refreshing current health…';
