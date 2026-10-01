@@ -1,6 +1,9 @@
-// #228: production portfolio links open State's own subdomain. The staging
-// homepage keeps its two Open State links on the same-origin in-portfolio app
-// route so staging QA does not accidentally send users to production.
+// #228 step 5: the portfolio points at State's own subdomain, and the old
+// in-portfolio app paths redirect there on the production host only.
+//
+// The redirects must NOT apply on staging/preview hosts: Deep QA still targets
+// the portfolio's old staging path until #228 step 6 repoints it, and a
+// redirect there would send it to the production State app.
 const fs=require('fs'),path=require('path');
 const root=path.join(__dirname,'..');
 const SUBDOMAIN='https://state.contextswitch.tech/';
@@ -18,15 +21,29 @@ for(const page of pages){
   }
 }
 
-const stagingAppLinks=anchors.filter(a=>a.page==='index.html'&&a.href==='/implementation-context-prototype/');
-check('the staging homepage keeps both Open State links on its same-origin app route',stagingAppLinks.length===2,
-  `${stagingAppLinks.length} links`);
-const unexpectedOldPath=anchors.filter(a=>a.href.includes('implementation-context-prototype')&&!(a.page==='index.html'&&a.href==='/implementation-context-prototype/'));
-check('no other portfolio link targets the old in-portfolio State path',unexpectedOldPath.length===0,unexpectedOldPath.map(a=>a.page).join(', '));
+const oldPath=anchors.filter(a=>a.href.includes('implementation-context-prototype'));
+check('no portfolio page links to the old in-portfolio State path',oldPath.length===0,oldPath.map(a=>a.page).join(', '));
 
 const toState=anchors.filter(a=>a.href===SUBDOMAIN);
-check('non-homepage portfolio links point to State\'s own subdomain (6 links across 5 pages)',toState.length===6&&new Set(toState.map(a=>a.page)).size===5,`${toState.length} links, ${new Set(toState.map(a=>a.page)).size} pages`);
+check('the portfolio links to State\'s own subdomain as its no-JS production fallback (8 links across 6 pages)',toState.length===8&&new Set(toState.map(a=>a.page)).size===6,`${toState.length} links, ${new Set(toState.map(a=>a.page)).size} pages`);
+check('every State link is environment-aware',toState.every(a=>/data-state-app-link/.test(a.tag)));
 check('every State link opens in a new tab safely',toState.every(a=>/target="_blank"/.test(a.tag)&&/rel="[^"]*noopener/.test(a.tag)));
+
+const ENV_LINKS=require('../site-environment.js');
+check('production Context Switch hosts open the production State app',
+  ENV_LINKS.stateAppUrl('www.contextswitch.tech')===SUBDOMAIN&&ENV_LINKS.stateAppUrl('contextswitch.tech')===SUBDOMAIN);
+check('staging and preview hosts keep State in the same environment',
+  ENV_LINKS.stateAppUrl('ai-learning-git-staging-cairn10.vercel.app')==='/implementation-context-prototype/'&&
+  ENV_LINKS.stateAppUrl('ai-learning-example-cairn10.vercel.app')==='/implementation-context-prototype/'&&
+  ENV_LINKS.stateAppUrl('localhost')==='/implementation-context-prototype/');
+
+for(const statePage of ['implementation-context-prototype/index.html','implementation-context-prototype/state-product-health.html']){
+  const html=fs.readFileSync(path.join(root,statePage),'utf8');
+  check(statePage+' gates Vercel Insights to the production State hostname',
+    html.includes("if(host!=='state.contextswitch.tech') return;")&&
+    html.includes("analytics.src='https://cdn.vercel-insights.com/v1/script.js'")&&
+    !html.includes('<script defer src="https://cdn.vercel-insights.com/v1/script.js"></script>'));
+}
 
 const cfg=JSON.parse(fs.readFileSync(path.join(root,'vercel.json'),'utf8'));
 const redirects=cfg.redirects||[];
