@@ -95,6 +95,28 @@ for(const [q,kind] of topicQualified){
 // cases above, which had no comparable synthesized answer to lose.
 check('"What changed?" is left as a normal answer, not a routing card', api.detectAskIntent('What changed?')?.kind!=='pending' && api.detectAskIntent('What changed?')?.kind!=='open' && api.detectAskIntent('What changed?')?.kind!=='blockers');
 
+// Regression for synthesis questions that happen to mention inventory terms.
+// These are not "show me a list/count" asks, so they must reach live Ask.
+const synthesisQuestions=[
+  'What is the current status of the Northstar pilot, and what is still unresolved?',
+  'What decisions have already been made about the pilot, and which ones still need a person to decide?',
+  'What risks or open questions should I bring into the next Northstar meeting?',
+];
+for(const q of synthesisQuestions){
+  check(`synthesis question stays on live Ask path: "${q}"`, api.detectAskIntent(q)===null, JSON.stringify(api.detectAskIntent(q)));
+}
+
+// True inventory/navigation questions still route to Open Items.
+const pureInventory=[
+  ['List all open questions','open'],
+  ['What needs review?','pending'],
+  ['How many blockers are there?','blockers'],
+  ['Show me pending reviews','pending'],
+];
+for(const [q,kind] of pureInventory){
+  check(`pure inventory still routes: "${q}"`, api.detectAskIntent(q)?.kind===kind, JSON.stringify(api.detectAskIntent(q)));
+}
+
 // The routing card's CTA sets window.__stateScrollAnchor and navigates to
 // Open Items, which renderOpenItems() consumes to force-expand the target
 // section. openItemSections.questions starts out `null` (not `false`), and
