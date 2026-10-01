@@ -85,7 +85,20 @@ body.v88-dark{--ink:#f5f5f7;--muted:#b6b6c2;--border:#34343d;--soft:#19191f;--so
 <p>Conversation history, retrieved facts, inferred state, and authoritative state are different things. Important facts may need explicit ownership, validation, timestamps, history, or human authorization.</p>
 <h3>AI can fail without a software error</h3>
 <p>An agent can choose the wrong tool, misunderstand the goal, retrieve the wrong evidence, or stop too early while every service remains technically healthy.</p>
-<p class="edge-callout"><strong>Durable question:</strong> What can we observe directly instead of trusting the model to explain itself?</p></section>
+<p class="edge-callout"><strong>Durable question:</strong> What can we observe directly instead of trusting the model to explain itself?</p><h3>Design an ongoing worker as a complete workflow</h3>
+<p>A useful way to scope an agent is to walk through eight linked decisions:</p>
+<ol>
+<li><strong>Goal:</strong> What outcome is the worker responsible for?</li>
+<li><strong>Context:</strong> What facts, memory, and sources may it use, and which are authoritative?</li>
+<li><strong>Tools:</strong> What systems can it read or act through?</li>
+<li><strong>Authority:</strong> What may it decide, and what requires human approval?</li>
+<li><strong>Execution:</strong> How does it start, persist progress, stop, and recover after interruption?</li>
+<li><strong>Observation:</strong> What can a person inspect about its evidence and actions?</li>
+<li><strong>Evaluation:</strong> How will we test both outcomes and the path taken to reach them?</li>
+<li><strong>Intervention:</strong> How can a person correct, pause, or take over?</li>
+</ol>
+<p>Together, these decisions make the worker’s boundary and operating behavior reviewable. They also connect the AI feature to the surrounding workflow, state, permissions, and recovery paths.</p>
+</section>
 
 <section id="questions"><h2>Questions I keep coming back to</h2>
 <ol>

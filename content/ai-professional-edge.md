@@ -76,6 +76,14 @@ AI products are increasingly moving from one-off chat interactions toward persis
 
 **Ask:** When does a repeated workflow deserve a standing AI worker instead of an on-demand assistant?
 
+### Scope an ongoing agent as a product role
+
+A standing worker turns product design from a single prompt and response into an ongoing workflow. The product team needs to define its goal, context and memory, tools, authority, execution rules, observability, evaluation, and human intervention.
+
+For AI product and consulting work, this is a practical way to turn “build an agent” into a reviewable scope. Map the workflow, decide what the worker may do and what requires approval, then specify how people can inspect, correct, pause, or recover it.
+
+**Ask:** What does the worker own? What context and sources can it use? Which actions may it take? How does it show its work, prove it is reliable, and hand control back to a person?
+
 ### Behavior contracts may become more important than model selection
 
 Today, teams often choose a specific model first. A more mature pattern may be to define the behavior a workflow needs, such as quality, latency, cost, tool support, output structure, and risk tolerance, then map that contract to an approved model or model configuration.
