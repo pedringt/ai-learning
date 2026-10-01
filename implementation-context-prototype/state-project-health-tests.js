@@ -762,7 +762,7 @@ const operationalContext=H.operationalSignals({
   platform:{aiTelemetry:{available:true,response_speed:{sample_size:0}}}
 });
 assert.ok(operationalContext.some(item=>item.label==='Eval execution'&&item.status==='Watch'));
-assert.ok(operationalContext.some(item=>item.label==='Eval model change'&&item.status==='Context'));
+assert.ok(operationalContext.some(item=>item.label==='Eval context changed'&&item.status==='Context'));
 assert.ok(!operationalContext.some(item=>item.label==='Human review burden'));
 assert.ok(!operationalContext.some(item=>item.label==='AI response speed'));
 
@@ -795,6 +795,17 @@ const splitEvalBuildGaps=H.setupGaps({
   runInfo:{configured:true}
 });
 assert.ok(splitEvalBuildGaps.some(item=>item.label==='Eval build alignment'));
+
+const evalContextDetails=H.operationalSignals({
+  project:{id:'state',quality:'state'},
+  quality:{recent:[
+    {suite:'ask_quality',created_at:'2026-10-01T12:00:00Z',provider:'anthropic',model_identifier:'new-model',total:12},
+    {suite:'ask_quality',created_at:'2026-09-30T12:00:00Z',provider:'openai',model_identifier:'old-model',total:10}
+  ]},
+  platform:{aiTelemetry:{available:true,response_speed:{sample_size:0}}}
+}).find(item=>item.label==='Eval context changed');
+assert.match(evalContextDetails.detail,/provider: openai → anthropic/);
+assert.match(evalContextDetails.detail,/scenarios: 10 → 12/);
 
 const workflowText=fs.readFileSync(require.resolve('../.github/workflows/question-review-live.yml'),'utf8');
 assert.match(workflowText,/suite:/);
