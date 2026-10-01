@@ -11,7 +11,17 @@
   <meta name="twitter:card" content="summary">
   <meta name="twitter:title" content="State">
   <meta name="twitter:description" content="State captures project information, maintains current understanding, tracks unresolved questions, and reviews new evidence before it changes what the project treats as current.">
-  <script defer src="https://cdn.vercel-insights.com/v1/script.js"></script>
+  <script>
+    (function(){
+      var host=String(location.hostname||'').toLowerCase();
+      if(host!=='state.contextswitch.tech') return;
+      var analytics=document.createElement('script');
+      analytics.defer=true;
+      analytics.src='https://cdn.vercel-insights.com/v1/script.js';
+      analytics.setAttribute('data-state-production-analytics','true');
+      document.head.appendChild(analytics);
+    })();
+  </script>
   <script>
     document.documentElement.classList.add('state-prepaint','state-final-mobile-pending');
     window.__stateRevealTimer=setTimeout(function(){document.documentElement.classList.remove('state-prepaint');},1200);
