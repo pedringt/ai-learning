@@ -183,6 +183,7 @@ async function loadActivity(project){
   let runtimeAvailable=false;
   let runtimeStatus=null;
   let runtimeError=null;
+  let runtimeCoverage='unavailable';
   if(latest&&String(latest.state||'').toUpperCase()==='READY'){
     const deploymentId=String(latest.uid||latest.id||'');
     const deploymentUrl=deploymentId?'https://vercel.com/'+TEAM_SLUG+'/'+project.slug+'/'+encodeURIComponent(deploymentId):null;
@@ -200,10 +201,9 @@ async function loadActivity(project){
       }
       runtimeAvailable=logs.ok||logs.error==='timeout';
       runtimeStatus=logs.status;
-      const runtimeCoverage=logs.ok?'complete':(logs.error==='timeout'?'partial':'unavailable');
+      runtimeCoverage=logs.ok?'complete':(logs.error==='timeout'?'partial':'unavailable');
       runtimeError=logs.ok||logs.error==='timeout'?null:(logs.error||safeText(logs.text,180)||'Runtime logs unavailable');
       if(logs.ok)runtime=runtimeIssues(parseRuntimeRows(logs.text),deploymentUrl);
-      runtime=Object.assign(runtime,{_coverage:runtimeCoverage});
     }
   }
   return {
@@ -223,9 +223,9 @@ async function loadActivity(project){
       available:runtimeAvailable,
       status:runtimeStatus,
       error:runtimeError,
-      coverage:Array.isArray(runtime)&&runtime._coverage?runtime._coverage:(runtimeAvailable?'complete':'unavailable'),
-      note:Array.isArray(runtime)&&runtime._coverage==='partial'?'Runtime error scan was incomplete because the bounded Vercel log stream returned no rows before timeout.':null,
-      issues:Array.isArray(runtime)?runtime:[]
+      coverage:runtimeCoverage,
+      note:runtimeCoverage==='partial'?'Runtime error scan was incomplete because the bounded Vercel log stream returned no rows before timeout.':null,
+      issues:runtime
     },
     observed_at:new Date().toISOString()
   };
