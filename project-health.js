@@ -18,9 +18,8 @@
         live:'https://state.contextswitch.tech',
         vercel:'https://vercel.com/cairn10/state',
         renderProduction:'https://dashboard.render.com/web/srv-dabogoajnfac73dp7h1g',
-        renderStaging:'https://dashboard.render.com/web/srv-dadloi8n74is73ajsg50',
         neon:'https://console.neon.tech',
-        quality:'/state-evals'
+        quality:'https://www.contextswitch.tech/state-evals'
       }
     },
     {
@@ -1161,7 +1160,6 @@
         ['GitHub repository',repoUrl(p.repo)],
         ['Vercel',p.links?.vercel],
         ['Render · production',p.links?.renderProduction],
-        ['Render · staging',p.links?.renderStaging],
         ['Neon',p.links?.neon],
         [p.id==='state'?'Full AI eval details':p.id==='tastemake'?'Recommendation checks':'Game checks',p.links?.quality]
       ].filter(item=>item[1]);
@@ -1435,18 +1433,13 @@
 
       const a=platform?.analytics;
       const visitors=Number(a?.visitors||0),views=Number(a?.pageviews||0);
-      const repeat=Math.max(0,Math.min(100,Number(a?.repeat_visitors_pct??0)));
-      const bars=[
-        Math.max(8,Math.min(64,visitors?24:8)),
-        Math.max(8,Math.min(64,views?38:10)),
-        Math.max(8,Math.min(64,(visitors+views)?28:9)),
-        Math.max(8,Math.min(64,views?52:11)),
-        Math.max(8,Math.min(64,visitors?34:8)),
-        Math.max(8,Math.min(64,views?44:10)),
-        Math.max(8,Math.min(64,visitors?30:8)),
-        Math.max(8,Math.min(64,views?58:10))
-      ];
-      const usageBars=bars.map(v=>'<span class="mock-usage-bar" style="height:'+v+'px"></span>').join('');
+      const analyticsUrl=p.links?.vercel?(p.links.vercel.replace(/\/$/,'')+'/analytics'):null;
+      const analyticsDelta=(value,label)=>{
+        const n=Number(value);
+        if(value==null||Number.isNaN(n))return '<span class="mock-analytics-compare flat">No previous period yet</span>';
+        if(Math.abs(n)<0.1)return '<span class="mock-analytics-compare flat">No change vs previous 30d</span>';
+        return '<span class="mock-analytics-compare '+(n>0?'up':'down')+'">'+esc((n>0?'↑ ':'↓ ')+Math.abs(n)+'% '+label+' vs previous 30d')+'</span>';
+      };
 
       const failedItems=[];
       const liveFailure=activityReviewItems(data).find(item=>!item.resolved);
@@ -1470,15 +1463,16 @@
         '<div class="mock-kpi-grid">'+kpis+'</div>'+
         '<section class="mock-dashboard-section mock-release-card">'+
           '<div class="mock-card-title"><span class="mock-card-title-icon">◇</span><h3>Latest release</h3></div>'+
-          '<div class="mock-release-version"><strong>'+esc(shortSha(d?.sha))+'</strong><span class="'+releaseClass+'">'+esc(releaseStatus)+'</span></div>'+
+          '<div class="mock-release-version"><strong>'+esc(latestRelease)+'</strong><span class="'+releaseClass+'">'+esc(releaseStatus)+'</span></div>'+
           '<div class="mock-release-meta">'+(d?.updatedAt?esc(fmtDate(d.updatedAt)):'No release date')+'</div>'+
-          '<p class="mock-release-copy">'+esc(latestRelease)+'</p>'+
+          '<p class="mock-release-copy">Production release'+(d?.branch?' · '+esc(d.branch):'')+'</p>'+
           '<button class="button small" type="button" data-tab-target="releases">View release details →</button>'+
         '</section>'+
         '<section class="mock-dashboard-section mock-usage-card">'+
-          '<div class="mock-card-title"><span class="mock-card-title-icon">▥</span><h3>Usage <span style="font-weight:500;color:#7b8496;font-size:11px">(last 30 days)</span></h3></div>'+
-          '<div class="mock-usage-metrics"><div class="mock-usage-metric"><strong>'+esc(a?.available?(views||0):'—')+'</strong><span>Page views</span></div><div class="mock-usage-metric"><strong>'+esc(a?.available?(visitors||0):'—')+'</strong><span>Visitors</span></div><div class="mock-usage-metric"><strong>'+esc(a?.available?(repeat?repeat+'%':'—'):'—')+'</strong><span>Repeat visitors</span></div></div>'+
-          (a?.available?'<div class="mock-usage-bars">'+usageBars+'</div><div class="mock-usage-axis"><span>Current 30-day window</span><span>'+esc(trendText(a.pageviews_delta_pct))+'</span></div>':'<div class="empty compact-empty">Usage data is not available yet.</div>')+
+          '<div class="mock-card-title mock-analytics-title"><span class="mock-card-title-icon">▥</span><h3>Site analytics <span style="font-weight:500;color:#7b8496;font-size:11px">(last 30 days)</span></h3>'+(analyticsUrl?'<a class="mock-analytics-link" href="'+esc(analyticsUrl)+'" target="_blank" rel="noopener noreferrer">Open analytics ↗</a>':'')+'</div>'+
+          (a?.available
+            ?'<div class="mock-usage-metrics"><div class="mock-usage-metric"><strong>'+esc(views)+'</strong><span>Page views</span>'+analyticsDelta(a.pageviews_delta_pct,'page views')+'</div><div class="mock-usage-metric"><strong>'+esc(visitors)+'</strong><span>Visitors</span>'+analyticsDelta(a.visitors_delta_pct,'visitors')+'</div></div>'
+            :'<div class="empty compact-empty">'+esc(a?.configured===false?'Site analytics are not connected for this environment.':a?.error||'Site analytics are still loading or temporarily unavailable.')+'</div>')+
         '</section>'+
         '<section class="mock-dashboard-section mock-quality-detail">'+
           '<div class="mock-quality-detail-head"><div><h3>Quality and evaluation details</h3>'+(pending.has('Quality')?'<span class="mock-refreshing-evals">Refreshing evals… showing last good results</span>':'')+'</div><button class="button small" type="button" data-tab-target="ai-quality">View all evaluations →</button></div>'+
@@ -1523,7 +1517,7 @@
                 '<div class="eyebrow">'+esc(detail.suite||'AI eval')+'</div>'+
                 '<h4>'+esc(detail.title)+'</h4>'+
                 '<div class="failure-facts"><strong>Observed</strong><span>'+esc(detail.whatHappened)+'</span><strong>Expected</strong><span>'+esc(detail.expected)+'</span><strong>Why it matters</strong><span>'+esc(detail.why)+'</span></div>'+
-                '<div class="quality-actions"><button class="button small primary" type="button" data-investigate-quality data-failure-id="'+esc(detail.scenario_id||'')+'">Investigate failure</button><a class="button small" href="/state-evals?failure='+encodeURIComponent(detail.scenario_id||'')+'">View scenario</a></div>'+
+                '<div class="quality-actions"><button class="button small primary" type="button" data-investigate-quality data-failure-id="'+esc(detail.scenario_id||'')+'">Investigate failure</button><a class="button small" href="'+esc(p.links.quality)+'?failure='+encodeURIComponent(detail.scenario_id||'')+'" target="_blank" rel="noopener noreferrer">View scenario ↗</a></div>'+
               '</div>'
             ).join('')+'</div>'
           :'';
@@ -1540,7 +1534,7 @@
               ?'<div class="run-callout quality-failure-summary"><strong>Failures requiring review</strong>'+failureDetailHtml+'</div><div class="eval-grid">'+cards.join('')+'</div>'
               :'<div class="eval-grid">'+cards.join('')+'</div>')+stateEvalHistory(q);
       }
-      qualityHtml+='<p class="footnote"><a href="/state-evals">View full scenario catalog →</a></p>';
+      qualityHtml+='<p class="footnote"><a href="'+esc(p.links.quality)+'" target="_blank" rel="noopener noreferrer">View full scenario catalog ↗</a></p>';
       const activeEvalRun=data.qualityRun;
       if(activeEvalRun){
         const delayed=activeEvalRun.state==='delayed';
@@ -1697,8 +1691,8 @@
       const production=r.environments?.production;
       if(production) infraCards.push({label:'Production backend',status:production.ok?'Healthy':'Unavailable',detail:'Render',url:p.links?.renderProduction});
       const stagingEnv=r.environments?.staging;
-      if(stagingEnv) infraCards.push({label:'Staging backend',status:stagingEnv.ok?'Healthy':'Unknown',detail:stagingEnv.ok?'Render':'Render · no recent successful response observed; production unaffected',url:p.links?.renderStaging});
-      else if(p.id==='state'&&pending.has('Staging backend')) infraCards.push({label:'Staging backend',status:'Checking…',detail:'Render',url:p.links?.renderStaging});
+      if(stagingEnv) infraCards.push({label:'Staging backend',status:stagingEnv.ok?'Healthy':'Unknown',detail:stagingEnv.ok?'Render':'Render · no recent successful response observed; production unaffected',url:null});
+      else if(p.id==='state'&&pending.has('Staging backend')) infraCards.push({label:'Staging backend',status:'Checking…',detail:'Render',url:null});
     }else if(p.id==='state') infraCards.push({label:'Production backend',status:pending.has('Production backend')?'Checking…':'Unavailable',detail:'Render',url:p.links?.renderProduction});
     if(n?.configured&&n.available) infraCards.push({label:'Database',status:'Connected',detail:'Neon',url:p.links?.neon});
     else if(n?.configured) infraCards.push({label:'Database',status:'Temporarily unavailable',detail:'Neon',url:p.links?.neon});
@@ -2479,10 +2473,10 @@
       await Promise.all(jobs);
       if(generation!==refreshGeneration)return;
       state.forEach(reconcileInvestigationHistory);
+      await ensureDetails(activeId);
       persist();
       status.innerHTML='<strong>Updated just now</strong>';
       refresh.disabled=false;
-      ensureDetails(activeId);
     }
 
     if(cached?.savedAt)status.innerHTML='<strong>Showing the last good snapshot.</strong> Last checked '+esc(fmtDate(cached.savedAt))+'. Refreshing current health…';
