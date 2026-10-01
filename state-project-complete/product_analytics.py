@@ -30,6 +30,8 @@ ALLOWED_EVENT_NAMES = {
     "outbound_link_opened",
     "ask_submitted",
     "ask_completed",
+    "ask_first_response",
+    "ask_user_completed",
     "ask_failed",
     "ask_cancelled",
     "api_failure",
@@ -298,7 +300,18 @@ def _aggregate(connection, project_id: str | None, now: datetime) -> dict:
     feature_use = Counter(x.get("event_name") for x in recent_events_30)
     view_use = Counter(x.get("view_name") for x in recent_events_30 if x.get("event_name") == "view_opened" and x.get("view_name"))
     ask_events = [x for x in recent_events_30 if x.get("event_name", "").startswith("ask_")]
-    ask_latencies = [float(x["duration_ms"]) for x in ask_events if x.get("event_name") == "ask_completed" and x.get("duration_ms") is not None]
+    # StreamingResponse returns headers before the streamed body finishes, so the
+    # HTTP middleware's ask_completed duration measures only response setup. Use
+    # browser-measured events from the live streamed UI for user-perceived speed.
+    live_stream_events = [x for x in ask_events if x.get("source_type") == "live_stream"]
+    ask_first_response_latencies = [
+        float(x["duration_ms"]) for x in live_stream_events
+        if x.get("event_name") == "ask_first_response" and x.get("duration_ms") is not None
+    ]
+    ask_latencies = [
+        float(x["duration_ms"]) for x in live_stream_events
+        if x.get("event_name") == "ask_user_completed" and x.get("duration_ms") is not None
+    ]
 
     active_project_ids_7 = {x.get("project_id") for x in recent_events_7 if x.get("project_id")}
     active_project_ids_30 = {x.get("project_id") for x in recent_events_30 if x.get("project_id")}
@@ -407,7 +420,9 @@ def _aggregate(connection, project_id: str | None, now: datetime) -> dict:
             "interpretation_succeeded": len(interpretation_success),
             "interpretation_failed": len(interpretation_failed),
             "provider_models": dict(provider_models),
+            "ask_first_response_ms": {"sample_size": len(ask_first_response_latencies), "p50": _percentile(ask_first_response_latencies, 0.5), "p95": _percentile(ask_first_response_latencies, 0.95)},
             "ask_latency_ms": {"sample_size": len(ask_latencies), "p50": _percentile(ask_latencies, 0.5), "p95": _percentile(ask_latencies, 0.95)},
+            "ask_latency_note": "Browser-measured live streamed Ask requests only. Cached, routed, and deterministic starter responses are excluded.",
             "model_latency_ms": {"sample_size": len(model_latencies), "p50": _percentile(model_latencies, 0.5), "p95": _percentile(model_latencies, 0.95)},
             "token_usage": {"period_days": 30, "input": input_tokens_30, "output": output_tokens_30, "sample_size": len(model_calls_30)},
             "model_calls_by_operation": dict(model_calls_by_operation),
