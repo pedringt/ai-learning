@@ -1891,7 +1891,7 @@
       ].join('\n');
       return {
         report,
-        sources:[{label:'State eval details',url:'/state-evals',observedAt:latestDate}],
+        sources:[{label:'State eval details',url:'https://www.contextswitch.tech/state-evals',observedAt:latestDate}],
         observedAt:latestDate,
         qualityInvestigation:true,
         staleEvalContract:stateEvalContractStale(quality),
@@ -1953,7 +1953,7 @@
     ].join('\n');
     return {
       report,
-      sources:[{label:'State eval details',url:'/state-evals',observedAt:latestDate}],
+      sources:[{label:'State eval details',url:'https://www.contextswitch.tech/state-evals',observedAt:latestDate}],
       observedAt:latestDate,
       qualityInvestigation:true,
       scenarioId:targeted?.scenario_id||null,
