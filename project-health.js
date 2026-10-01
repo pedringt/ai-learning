@@ -1099,6 +1099,12 @@
     doc.getElementById('detailCopy').textContent=p.description;
     const repoLink=doc.getElementById('repoLink');
     if(repoLink)repoLink.href=repoUrl(p.repo);
+    const liveProjectLink=doc.getElementById('liveProjectLink');
+    if(liveProjectLink){
+      const liveUrl=p.links?.live||'';
+      liveProjectLink.hidden=!liveUrl;
+      if(liveUrl)liveProjectLink.href=liveUrl;
+    }
     const qualityTab=doc.querySelector?.('[data-tab="ai-quality"]');
     if(qualityTab)qualityTab.textContent=p.qualityLabel||'Quality';
     const linksMenu=doc.getElementById('projectLinksMenu');
@@ -1124,8 +1130,8 @@
       projectCheckButton.disabled=!!data.investigation?.loading;
       projectCheckButton.setAttribute('aria-busy',data.investigation?.loading?'true':'false');
       projectCheckButton.textContent=data.investigation?.loading?'Investigating…':'Investigate';
-      projectCheckButton.classList.add('primary');
-      projectCheckButton.style.order='1';
+      projectCheckButton.classList.remove('primary');
+      projectCheckButton.style.order='2';
     }
     if(headerRunChecksButton){
       const activeEvalRun=data.qualityRun;
@@ -1192,6 +1198,42 @@
       '<div class="decision-log"><div class="decision-log-head"><strong>Decision & change log</strong><span>Stored in this browser</span></div>'+
         (productNotes.length?'<div class="decision-log-list">'+productNotes.slice(0,5).map(note=>'<div class="decision-log-item"><span class="activity-type">'+esc(note.type==='change'?'Change':note.type==='experiment'?'Experiment':'Decision')+'</span><strong>'+esc(note.text)+'</strong><span>'+esc(fmtDate(note.createdAt))+'</span></div>').join('')+'</div>':'<div class="empty compact-empty">No product decisions or changes recorded yet.</div>')+
       '</div>';
+
+    const latestInvestigationPanel=doc.getElementById('latestInvestigationPanel');
+    if(latestInvestigationPanel){
+      const latestInvestigation=data.investigation||historyRows[0]||null;
+      if(latestInvestigation){
+        const reportText=String(latestInvestigation.report||latestInvestigation.summary||latestInvestigation.title||'Investigation completed');
+        const sections={};
+        let current='summary';
+        for(const rawLine of reportText.split(/\n+/)){
+          const line=rawLine.trim();
+          if(!line)continue;
+          const key=line.toLowerCase();
+          if(['current assessment','investigation scope','what failed','why this matters','recommended next action','next checkpoint'].includes(key)){
+            current=key;sections[current]=sections[current]||[];continue;
+          }
+          sections[current]=sections[current]||[];
+          sections[current].push(line.replace(/^[-•]\s*/,''));
+        }
+        const assessment=(sections['current assessment']||sections['investigation scope']||sections.summary||[]).slice(0,3);
+        const failed=(sections['what failed']||[]).slice(0,4);
+        const next=(sections['recommended next action']||sections['next checkpoint']||[]).slice(0,4);
+        const when=latestInvestigation.observedAt||latestInvestigation.createdAt||historyRows[0]?.observedAt;
+        latestInvestigationPanel.innerHTML=
+          '<div class="panel-title-row"><div><h3>Latest investigation</h3><div class="investigation-overview-meta">'+
+          (when?'<span>'+esc(fmtDate(when))+'</span>':'')+
+          (latestInvestigation.qualityInvestigation?'<span>AI quality</span>':'<span>Project health</span>')+
+          '</div></div><button class="button small" type="button" data-open-investigation>View full investigation</button></div>'+
+          '<div class="investigation-overview-grid">'+
+          '<div class="investigation-overview-block"><strong>Current assessment</strong>'+(assessment.length?'<p>'+esc(assessment.join(' '))+'</p>':'<p>No concise assessment was recorded.</p>')+'</div>'+
+          '<div class="investigation-overview-block"><strong>What failed</strong>'+(failed.length?'<ul>'+failed.map(item=>'<li>'+esc(item)+'</li>').join('')+'</ul>':'<p>No specific failed scenario was recorded.</p>')+'</div>'+
+          '<div class="investigation-overview-block"><strong>Recommended next look</strong>'+(next.length?'<ul>'+next.map(item=>'<li>'+esc(item)+'</li>').join('')+'</ul>':'<p>Use the full investigation for the next diagnostic step.</p>')+'</div>'+
+          '</div>';
+      }else{
+        latestInvestigationPanel.innerHTML='<div class="panel-title-row"><div><h3>Latest investigation</h3><p class="panel-copy">Focused diagnostic context appears here after an investigation is run.</p></div><button class="button small" type="button" data-open-investigation>Investigate project</button></div><div class="investigation-overview-empty">No investigation has been recorded for this project yet.</div>';
+      }
+    }
 
     const overviewQuality=p.quality==='state'?qualityAttention(q):externalQualityAttention(externalQ);
     const overviewDelivery=deliveryAttentionForData(data);
