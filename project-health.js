@@ -1225,6 +1225,83 @@
         '</button>';
       }).join('')+'</div>';
 
+    const overviewQualitySummaryPanel=doc.getElementById('overviewQualitySummaryPanel');
+    if(overviewQualitySummaryPanel){
+      const scorePct=value=>{
+        const n=Number(value);
+        return Number.isFinite(n)?Math.max(0,Math.min(100,Math.round(n*1000)/10)):null;
+      };
+      const summaryCard=(title,score,note,kind,trend)=>{
+        const pct=scorePct(score);
+        return '<div class="mock-quality-card">'+
+          '<div class="mock-quality-card-head"><h4>'+esc(title)+'</h4><span class="status-pill '+esc(kind||'unknown')+'">'+
+            esc(kind==='good'?'Healthy':kind==='bad'?'Needs attention':kind==='warn'?'Watch':'Unknown')+
+          '</span></div>'+
+          '<div class="mock-quality-score">'+(pct==null?'—':esc(pct+'%'))+'</div>'+
+          '<div class="mock-quality-note">'+esc(note||'No recorded result yet')+'</div>'+
+          '<div class="mock-quality-bar '+esc(kind||'unknown')+'"><span style="width:'+(pct==null?0:pct)+'%"></span></div>'+
+          (trend?'<div class="mock-quality-trend">'+esc(trend)+'</div>':'')+
+        '</div>';
+      };
+      let cards='',summaryCopy='Project-specific quality evidence.';
+      if(p.quality==='state'){
+        const review=q?.review,ask=q?.ask;
+        const reviewScore=review?.interpretation_accuracy??evalScore(review);
+        const askScore=ask?.ask_grounding??evalScore(ask);
+        const reviewKind=!review?'unknown':Number(review.high_severity_failures||0)>0?'bad':Number(reviewScore)<1?'warn':'good';
+        const askKind=!ask?'unknown':Number(ask.high_severity_failures||0)>0?'bad':Number(askScore)<1?'warn':'good';
+        cards=
+          summaryCard('Update understanding',reviewScore,review?scenarioPassLabel(review,reviewScore):'No recorded run',reviewKind,evalTrend(q?.recent,'review_interpretation'))+
+          summaryCard('Answer quality',askScore,ask?scenarioPassLabel(ask,askScore):'No recorded run',askKind,evalTrend(q?.recent,'ask_quality'));
+        summaryCopy='Controlled evals for how State understands updates and answers from evidence.';
+      }else if(p.id==='tastemake'&&externalQ){
+        const endpoint=externalQ.endpoint||{};
+        const rp=Number(endpoint.rule_checks?.passed),rt=Number(endpoint.rule_checks?.total);
+        const cp=Number(endpoint.validator_self_test?.caught),ct=Number(endpoint.validator_self_test?.total);
+        const ruleScore=rt?rp/rt:null,catchScore=ct?cp/ct:null;
+        cards=
+          summaryCard('Recommendation rules',ruleScore,rt?(rp+' / '+rt+' passed'):'No recorded result',rt&&rp===rt?'good':'warn','')+
+          summaryCard('Bad outputs caught',catchScore,ct?(cp+' / '+ct+' caught'):'No recorded result',ct&&cp===ct?'good':'warn','');
+        summaryCopy='Recommendation grounding, rule compliance, and validator protection.';
+      }else if(p.id==='narc'&&externalQ){
+        const green=!!externalQ.recorded?.recorded_all_suites_green;
+        const pendingPlaytest=!!externalQ.recorded?.full_playtest_pending;
+        cards=
+          summaryCard('Automated game checks',green?1:null,green?'3 / 3 suites passing':'Status unavailable',green?'good':'unknown','')+
+          summaryCard('Human first-run playtest',pendingPlaytest?0:null,pendingPlaytest?'Still needed':'Recorded',pendingPlaytest?'warn':'good','');
+        summaryCopy='Automated branch checks plus the human first-run playtest gate.';
+      }else{
+        cards=summaryCard(p.qualityLabel||'Product quality',null,'Quality summary is not available yet','unknown','');
+      }
+      overviewQualitySummaryPanel.innerHTML=
+        '<div class="mock-quality-head"><div><h3>Quality & evaluation</h3><p>'+esc(summaryCopy)+'</p></div>'+
+        '<button class="button small" type="button" data-tab-target="ai-quality">View full quality details</button></div>'+
+        '<div class="mock-quality-grid">'+cards+'</div>';
+    }
+
+    const overviewInvestigationPanel=doc.getElementById('overviewInvestigationPanel');
+    if(overviewInvestigationPanel){
+      const current=overallAttention(data);
+      const failureDetails=p.quality==='state'?qualityFailureClassSummary(q).details||[]:[];
+      const liveFailure=activityReviewItems(data).find(item=>!item.resolved);
+      const failedItems=[];
+      if(liveFailure)failedItems.push(liveFailure.title);
+      failureDetails.slice(0,2).forEach(item=>failedItems.push(item.title||item.scenario_id||'Quality scenario needs review'));
+      const nextLook=operationalNextDecision(data);
+      const latestHistory=Array.isArray(data.investigationHistory)?data.investigationHistory[0]:null;
+      overviewInvestigationPanel.innerHTML=
+        '<div class="panel-title-row"><div><h3>Latest investigation</h3><p class="panel-copy">'+
+          esc(latestHistory?('Last recorded '+relativeAge(latestHistory.observedAt)):'Current diagnostic view from loaded evidence')+
+        '</p></div><button class="button small" type="button" data-open-investigation>Open investigation</button></div>'+
+        '<div class="mock-investigation-grid">'+
+          '<div class="mock-investigation-block"><strong>Current assessment</strong><p>'+esc(current.title)+'. '+esc(current.detail||'')+'</p></div>'+
+          '<div class="mock-investigation-block"><strong>What failed</strong>'+
+            (failedItems.length?'<ul>'+failedItems.map(item=>'<li>'+esc(item)+'</li>').join('')+'</ul>':'<p>No specific current failure is recorded.</p>')+
+          '</div>'+
+          '<div class="mock-investigation-block"><strong>Recommended next look</strong><p>'+esc(nextLook)+'</p></div>'+
+        '</div>';
+    }
+
     // Product quality / evals
     let qualityHtml='';
     if(p.quality==='state'){
