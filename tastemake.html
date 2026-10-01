@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<link href="favicon.svg" rel="icon"/>
+<meta charset="utf-8"/>
+<meta content="width=device-width,initial-scale=1" name="viewport"/>
+<title>Tastemake · Context Switch</title>
+<meta content="A product case study about building an inspectable, revisable model of taste and making the system's learning visible to the user." name="description"/>
+<link href="site-shell.css" rel="stylesheet"/>
+<link href="site-components.css" rel="stylesheet"/>
+<link href="implementation-context-case.css?v=r2-product-visuals" rel="stylesheet"/>
+<link href="site-polish.css" rel="stylesheet"/>
+<style>
+.case-system-page .meridian-case-hero{padding-top:18px;padding-bottom:30px}
+.case-system-page .meridian-case-hero .lead{max-width:900px}
+.case-system-page .case-meta{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px;margin-top:26px}
+.case-system-page .case-meta span{min-width:0;line-height:1.45}
+.case-system-page .meridian-product-callout{margin-top:24px}
+.taste-example{max-width:860px;margin:22px 0;border:1px solid var(--border);border-radius:16px;background:var(--card);overflow:hidden}
+.taste-example>span{display:block;padding:11px 16px;background:var(--soft);font-size:10px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:var(--purple)}
+.taste-example>div{display:grid;grid-template-columns:repeat(3,minmax(0,1fr))}
+.taste-example article{padding:18px}
+.taste-example article+article{border-left:1px solid var(--border)}
+.taste-example strong{display:block;margin-bottom:5px;font-size:15px}
+.taste-example p{margin:0;font-size:13px;line-height:1.5}
+@media(max-width:800px){.case-system-page .case-meta{grid-template-columns:1fr}.case-system-page .meridian-case-hero{padding-bottom:24px}.taste-example>div{grid-template-columns:1fr}.taste-example article+article{border-left:0;border-top:1px solid var(--border)}}
+</style>
+</head>
+<body>
+<div class="topbar"><div class="topinner"><a class="brand-button" href="index.html"><span class="brand">Context <span>Switch</span></span></a><nav aria-label="Primary pages" class="nav"><a href="index.html">Home</a><a aria-current="page" href="index.html#portfolio">Applied Work</a><a href="index.html#learn">Learning Library</a></nav><div class="top-actions"><button aria-label="Switch to dark mode" aria-pressed="false" class="theme-toggle" id="v922ThemeToggle" title="Switch to dark mode" type="button">☾</button><select aria-label="Choose page" id="v922MobileNav"><option value="index.html">Home</option><option selected value="index.html#portfolio">Applied Work</option><option value="index.html#learn">Learning Library</option></select></div></div></div>
+
+<main class="meridian-page-shell case-system-page" id="main-content">
+<div class="meridian-heading"><nav class="site-breadcrumb" aria-label="Breadcrumb"><ol><li><a href="index.html#portfolio">Applied Work</a></li><li aria-current="page">Tastemake</li></ol></nav></div>
+
+<header class="meridian-case-hero flagship-hero">
+<h1>Tastemake</h1>
+<p class="lead">Tastemake is a recommendation experiment built around a simple idea: personalization is more useful when the system shows what it is learning, lets the user correct it, and makes those corrections matter.</p>
+<div class="case-meta"><span><b>My role</b> Product model, UX rules, evaluation, testing &amp; final decisions</span><span><b>AI collaborator</b> Research, implementation, debugging &amp; test support</span><span><b>Status</b> Working portfolio prototype</span></div>
+</header>
+
+<aside class="meridian-product-callout"><div><span>Try Tastemake</span><strong>Build and refine a Taste Profile</strong><p>Start with a few favorites, react to recommendations, and see what Tastemake learns from the result.</p></div><a class="meridian-primary-action" href="https://tastemake.vercel.app/" target="_blank" rel="noopener noreferrer">Open Tastemake <span aria-hidden="true">→</span></a></aside>
+
+<article class="case-page-content flagship-case">
+
+<section class="section narrative-open">
+<div class="kicker">The problem</div>
+<h2>Most recommenders learn from behavior without showing the user what they concluded.</h2>
+<p>I wanted to explore a different model. Tastemake still recommends books, movies, shows, and games, but it also exposes the patterns it thinks explain those reactions. The user can then confirm, narrow, weaken, or reject those patterns instead of only rating the next item.</p>
+<p>That changed the product question from “can I make better recommendations?” to “can the user understand and shape what the system thinks their taste means?”</p>
+</section>
+
+<section class="section product-model">
+<div class="kicker">The product model</div>
+<h2>Item feedback becomes a hypothesis, not a permanent label.</h2>
+<div class="human-flow"><span>Item feedback</span><b>→</b><span>Inferred pattern</span><b>→</b><span class="accent">User correction</span><b>→</b><span class="accent">Refined profile</span><b>→</b><span>New recommendations</span></div>
+<div class="surface-grid">
+<article><span>Evidence vs. intent</span><strong>Not every action means “I like this”</strong><p>Loved, Liked, and Didn’t like are evidence about something the user experienced. Save, browsing, and Not interested stay separate so convenience does not become false taste evidence.</p></article>
+<article><span>Model visibility</span><strong>The profile is inspectable</strong><p>Tastemake shows the patterns it is testing instead of hiding personalization behind a score.</p></article>
+<article><span>User authority</span><strong>Corrections change future behavior</strong><p>A user can say a pattern is accurate, conditional, weak, or wrong. That correction stays distinct from the original AI inference.</p></article>
+</div>
+</section>
+
+<section class="section seam-learning">
+<div class="kicker">Learning out loud</div>
+<h2>The most important iteration was making the learning itself visible.</h2>
+<p>Earlier versions could infer a Taste Profile, but the user still had to guess what changed after giving feedback. I redesigned that loop so Tastemake can explain the consequence of a reaction or correction.</p>
+<div class="taste-example">
+<span>Example interaction</span>
+<div>
+<article><strong>You told Tastemake</strong><p><em>Neon Gods</em> → Loved.</p></article>
+<article><strong>So Tastemake changed</strong><p>A broad romance pattern becomes more specific around mythic atmosphere and morally messy characters.</p></article>
+<article><strong>What that means</strong><p>Future picks can lean into those qualities without assuming every similar romance will fit.</p></article>
+</div>
+</div>
+<p>Recommendation explanations follow the same rule: show why a pick might work, which pattern is being tested, and what could still miss.</p>
+</section>
+
+<section class="section next-tests">
+<div class="kicker">What testing changed</div>
+<h2>The product got simpler as the model got more sophisticated.</h2>
+<div class="causal-story">
+<div><span>A confident miss</span><strong><em>Outer Wilds</em> exposed an over-broad “discovery” pattern. I narrowed the hypothesis instead of simply lowering a hidden similarity score.</strong></div>
+<div><span>Cold-start friction</span><strong>Browse made it easier to recognize familiar items when favorites were hard to recall, while browsing itself remained non-evidence.</strong></div>
+<div><span>Feedback overload</span><strong>Detailed taste refinement moved behind progressive disclosure. The card stays simple first; deeper questions appear only when useful.</strong></div>
+</div>
+</section>
+
+<section class="section seam-learning">
+<div class="kicker">AI product quality</div>
+<h2>The model interprets and ranks. Software protects the meaning of the data.</h2>
+<div class="surface-grid">
+<article><span>Catalog-constrained</span><strong>The model cannot invent the whole recommendation set</strong><p>Candidate eligibility comes from the catalog and software rules. The model ranks and explains within those boundaries.</p></article>
+<article><span>Safe fallback</span><strong>Valid recommendations still exist if the model call fails</strong><p>Catalog-based fallback behavior keeps the product usable instead of presenting low-confidence model output as trustworthy.</p></article>
+<article><span>Regression coverage</span><strong>Product rules became tests</strong><p>I added automated coverage around recommendation behavior, evidence semantics, profile corrections, mobile layout, and the first learning loop.</p></article>
+</div>
+</section>
+
+<section class="section current-conclusion">
+<div class="kicker">Where I landed</div>
+<h2>The interesting part of Tastemake is not the recommendation list. It is the editable model behind it.</h2>
+<p>The candidate-retrieval layer is intentionally conventional. The stronger product experiment is above it: separating evidence from intent, showing what the system inferred, making uncertainty visible, and letting the user change the model in a way that affects what happens next.</p>
+<p>That is the principle I would carry into other AI products: personalization becomes more useful when learning is visible, revisable, and consequential.</p>
+<div class="closing-links"><a class="meridian-primary-action" href="https://tastemake.vercel.app/" target="_blank" rel="noopener noreferrer">Open Tastemake →</a><a class="text-link" href="https://github.com/pedringt/tastemake" target="_blank" rel="noopener noreferrer">View GitHub →</a></div>
+</section>
+
+</article>
+</main>
+<script src="site-shell.js"></script>
+</body>
+</html>
