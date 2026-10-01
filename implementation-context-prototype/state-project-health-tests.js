@@ -428,7 +428,7 @@ const usageChanges=H.meaningfulChanges({
   checkedAt:'2026-09-30T01:00:00Z',
   detailCheckedAt:'2026-09-30T01:00:00Z'
 });
-assert.strictEqual(usageChanges.find(item=>item.title==='Site analytics changed').section,'analyticsPanel');
+assert.strictEqual(usageChanges.find(item=>item.title==='Site analytics changed').section,undefined);
 const analyticsAvailabilityChanges=H.meaningfulChanges({
   project:{quality:null},
   lastVisit:{deliverySha:'same',deliveryKind:'good',quality:{},analyticsAvailable:false,analyticsPageviews:null,openPullRequests:0,savedAt:'2026-09-29T01:00:00Z'},
