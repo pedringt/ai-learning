@@ -293,7 +293,7 @@
     const rows=Array.isArray(data.quality.recent)?data.quality.recent:[];
     const candidates=[];
     for(const suite of ['review_interpretation','ask_quality']){
-      const suiteRows=rows.filter(item=>item?.suite===suite);
+      const suiteRows=rows.filter(item=>item?.suite===suite).slice().sort((a,b)=>(dateMs(b?.created_at)||0)-(dateMs(a?.created_at)||0));
       if(suiteRows.length<2)continue;
       const latest=evalScore(suiteRows[0]),previous=evalScore(suiteRows[1]);
       if(latest==null||previous==null)continue;
@@ -467,6 +467,7 @@
           category:'releases',
           title:count>1?'Deployment failure · '+count+' attempts':'Deployment failure',
           detail:count>1?'A new release failed '+count+' times in a short window. Production stayed on the previous healthy release.':(first.message||'Production deployment failed'),
+          userImpact:{status:'No confirmed impact',kind:'good',detail:'The previous production version remained available.'},
           attempts:group.items.map(item=>({when:item.created_at,detail:item.message||'Deployment failed'}))
         });
       }
@@ -489,7 +490,7 @@
         });
       }
       for(const issue of activity.runtime?.issues||[]){
-        if(issue.last_seen)items.push({when:issue.last_seen,type:'Release incident',category:'releases',title:'Runtime signal',detail:(issue.path||'Server route')+(issue.count?' · '+issue.count+' occurrences':'')});
+        if(issue.last_seen)items.push({when:issue.last_seen,type:'Release incident',category:'releases',title:'Runtime signal',detail:(issue.path||'Server route')+(issue.count?' · '+issue.count+' occurrences':''),userImpact:{status:'Unknown',kind:'unknown',detail:'Confirm whether this runtime signal affected users.'}});
       }
     }
     const prs=Array.isArray(data?.openPullRequests)?data.openPullRequests:[];
