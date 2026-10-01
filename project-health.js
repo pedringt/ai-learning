@@ -288,6 +288,59 @@
     if(deliveryAttentionForData(data).kind==='good') return {kind:'good',label:'Healthy',detail:'Delivery is healthy and there is no current high-impact quality issue.'};
     return {kind:'unknown',label:'Unknown',detail:'There is not enough current evidence to confirm release health.'};
   }
+  function regressionSignal(data){
+    if(data?.project?.quality!=='state'||!data?.quality)return {kind:'unknown',title:'No comparable regression signal yet',detail:'A previous controlled eval run is needed before Project Health can identify a quality regression.'};
+    const rows=Array.isArray(data.quality.recent)?data.quality.recent:[];
+    const candidates=[];
+    for(const suite of ['review_interpretation','ask_quality']){
+      const suiteRows=rows.filter(item=>item?.suite===suite);
+      if(suiteRows.length<2)continue;
+      const latest=evalScore(suiteRows[0]),previous=evalScore(suiteRows[1]);
+      if(latest==null||previous==null)continue;
+      const delta=Math.round((latest-previous)*1000)/10;
+      candidates.push({suite,delta,latest,when:suiteRows[0].created_at});
+    }
+    if(!candidates.length)return {kind:'unknown',title:'No comparable regression signal yet',detail:'A previous controlled eval run is needed before Project Health can identify a quality regression.'};
+    candidates.sort((a,b)=>a.delta-b.delta);
+    const worst=candidates[0];
+    const label=worst.suite==='review_interpretation'?'Update understanding':'Answer quality';
+    if(worst.delta<0)return {kind:'warn',title:label+' regressed '+Math.abs(worst.delta)+' points',detail:'Review the changed scenario evidence and the release or product change that preceded this run.',when:worst.when};
+    return {kind:'good',title:'No recent eval regression detected',detail:'The latest comparable controlled eval runs are stable or improved.',when:worst.when};
+  }
+  function healthConsistencyIssues(data){
+    const issues=[];
+    const open=productOpenItems(data);
+    const overall=overallAttention(data);
+    const readiness=releaseReadiness(data);
+    if(overall.kind==='good'&&open.some(item=>['bad','warn'].includes(item.kind)))issues.push('Overall health is healthy while product-quality work is still open.');
+    if(readiness.kind==='good'&&open.some(item=>item.kind==='bad'))issues.push('Release health is healthy while a high-impact product-quality issue is open.');
+    if(readiness.kind==='good'&&activityReviewItems(data).some(item=>!item.resolved))issues.push('Release health is healthy while an unresolved incident is open.');
+    return issues;
+  }
+  function releaseRiskChecklist(data){
+    const quality=data?.project?.quality==='state'?qualityAttention(data.quality):externalQualityAttention(data.externalQuality);
+    const incidents=activityReviewItems(data).filter(item=>!item.resolved);
+    const gaps=setupGaps(data);
+    const delivery=deliveryAttentionForData(data);
+    const stale=data?.project?.quality==='state'&&stateEvalResultsStale(data.quality);
+    const qualityKind=stale?'warn':(quality?.kind||'unknown');
+    const runtimeIncident=incidents.find(item=>item.kind==='runtime');
+    const deploymentIncident=incidents.find(item=>item.kind==='deployment');
+    const userImpact=runtimeIncident
+      ?{kind:'unknown',label:'User impact',status:'Unknown',detail:'A runtime signal is open. Confirm whether users are affected before treating impact as known.'}
+      :deploymentIncident
+        ?{kind:'good',label:'User impact',status:'No confirmed impact',detail:'The failed release did not replace the previous production version.'}
+        :{kind:'good',label:'User impact',status:'No active signal',detail:'No current user-facing incident signal is open.'};
+    const consistency=healthConsistencyIssues(data);
+    return [
+      {kind:qualityKind,label:'Product quality',status:qualityKind==='bad'?'Needs attention':qualityKind==='warn'?'Watch':qualityKind==='good'?'Healthy':'Unknown',detail:stale?'The recorded State eval result is stale and should be rerun.':(quality?.title||'Quality evidence is not available yet.')},
+      userImpact,
+      {kind:gaps.length?'warn':'good',label:'Observability',status:gaps.length?'Watch':'Healthy',detail:gaps.length?gaps.length+' monitoring gap'+(gaps.length===1?'':'s')+' limit what Project Health can confirm.':'No known monitoring gap is limiting this health view.'},
+      {kind:delivery?.kind||'unknown',label:'Delivery',status:delivery?.kind==='bad'?'Needs attention':delivery?.kind==='warn'?'Watch':delivery?.kind==='good'?'Healthy':'Unknown',detail:delivery?.title||'Delivery health is unavailable.'},
+      ...(consistency.length?[{kind:'bad',label:'Dashboard consistency',status:'Needs attention',detail:consistency[0]}]:[])
+    ];
+  }
+
   function productionRuntime(data){
     const backend=data?.platform?.render?.environments?.production;
     if(backend) return backend.ok
@@ -457,7 +510,18 @@
       items.push({when:item.observedAt,type:'Investigation',category:'investigations',title:item.trigger||'Project check',detail:(item.summary||'Investigation completed')+(item.resolvedAt?' · later resolved':'')});
       if(item.resolvedAt)items.push({when:item.resolvedAt,type:'Investigation',category:'investigations',title:'Investigated issue resolved',detail:item.trigger||'Project investigation'});
     }
-    return items.sort((a,b)=>(dateMs(b.when)||0)-(dateMs(a.when)||0));
+    for(const note of data?.productNotes||[]){
+      if(note?.createdAt&&note?.text)items.push({when:note.createdAt,type:note.type==='change'?'Change':note.type==='experiment'?'Experiment':'Decision',category:'decisions',title:note.type==='change'?'Product change recorded':note.type==='experiment'?'Experiment recorded':'Product decision recorded',detail:note.text});
+    }
+    const sorted=items.sort((a,b)=>(dateMs(b.when)||0)-(dateMs(a.when)||0));
+    for(const item of sorted){
+      if(!['investigations','decisions'].includes(item.category))continue;
+      const after=sorted
+        .filter(candidate=>['releases','quality'].includes(candidate.category)&&(dateMs(candidate.when)||0)>(dateMs(item.when)||0))
+        .sort((a,b)=>(dateMs(a.when)||0)-(dateMs(b.when)||0))[0];
+      if(after)item.followup='Next evidence: '+after.title+' · '+relativeAge(after.when);
+    }
+    return sorted;
   }
   function activityDayLabel(when){
     const date=new Date(when),now=new Date(),yesterday=new Date(now);yesterday.setDate(now.getDate()-1);
@@ -562,6 +626,7 @@
       detailCheckedAt:s.detailCheckedAt||null,
       investigation:s.investigation||null,
       investigationHistory:Array.isArray(s.investigationHistory)?s.investigationHistory:[],
+      productNotes:Array.isArray(s.productNotes)?s.productNotes:[],
       errors:[],
       pending:new Set(),
       timings:{},
@@ -622,6 +687,17 @@
     try{
       root.localStorage?.setItem(snapshotKey(root),JSON.stringify({savedAt:new Date().toISOString(),projects:state.map(serializeProjectData)}));
     }catch(_){}
+  }
+
+  function productNoteKey(root,projectId){return 'project-health-product-notes:'+pageEnvironment(root)+':'+projectId;}
+  function loadProductNotes(root,projectId){
+    try{
+      const rows=JSON.parse(root.localStorage?.getItem(productNoteKey(root,projectId))||'[]');
+      return Array.isArray(rows)?rows.slice(0,30):[];
+    }catch(_){return[];}
+  }
+  function saveProductNotes(root,projectId,rows){
+    try{root.localStorage?.setItem(productNoteKey(root,projectId),JSON.stringify((rows||[]).slice(0,30)));}catch(_){}
   }
 
   function investigationHistoryKey(root,projectId){return 'project-health-investigations:'+pageEnvironment(root)+':'+projectId;}
@@ -836,6 +912,7 @@
         title:failure.recovered?'Deployment failed, then recovered':'Release blocked · production unaffected',
         detail:(failure.message||'Deployment failure')+(failure.recovered&&failure.recovered_at?' · recovered '+relativeAge(failure.recovered_at):''),
         impact:failure.recovered?'A later deployment recovered the failed release.':'The latest change did not deploy; the previous production version should remain available.',
+        userImpact:{status:'No confirmed impact',kind:'good',detail:'The previous production version remained available.'},
         owner:failure.recovered?'No action':'Engineering',
         observedAt:failure.created_at,
         resolved:!!failure.recovered,
@@ -850,6 +927,7 @@
         title:(issue.status?('HTTP '+issue.status+' · '):'')+(issue.path||'Runtime error'),
         detail:(issue.count>1?issue.count+' occurrences · ':'')+(issue.message||'Runtime error'),
         impact:'Users may be seeing errors on this route; scope is unknown until the signal is investigated.',
+        userImpact:{status:'Unknown',kind:'unknown',detail:'Confirm whether this runtime signal affected users.'},
         owner:'Engineering',
         observedAt:issue.last_seen,
         resolved:false,
@@ -1099,6 +1177,21 @@
       '<div class="focus-block decision-now"><strong>Next decision</strong><p>'+esc(nextDecision)+'</p></div>'+
       '</div><div class="focus-followup"><strong>'+(reviewIsDependency?'Waiting on':'Next review')+'</strong><span>'+esc(p.nextReview)+'</span></div>';
 
+    const riskItems=releaseRiskChecklist(data);
+    const regression=regressionSignal(data);
+    const monitoringGaps=setupGaps(data);
+    const productNotes=Array.isArray(data.productNotes)?data.productNotes:[];
+    doc.getElementById('decisionSupportPanel').innerHTML=
+      '<div class="panel-title-row"><div><h3>Decision support</h3><p class="panel-copy">Release risk, regressions, blind spots, and the human decisions behind changes.</p></div><button class="button small" type="button" data-add-product-note>Add decision / change</button></div>'+
+      '<div class="decision-support-grid" style="margin-top:12px">'+
+        '<div class="decision-support-block"><strong>Would I hesitate to ship?</strong><div class="risk-checklist">'+riskItems.map(item=>'<div class="risk-row"><span class="health-status '+esc(item.kind)+'">'+esc(item.status)+'</span><div><strong>'+esc(item.label)+'</strong><span>'+esc(item.detail)+'</span></div></div>').join('')+'</div></div>'+
+        '<div class="decision-support-block"><strong>Recent regression</strong><div class="regression-card '+esc(regression.kind)+'"><span class="health-status '+esc(regression.kind)+'">'+esc(regression.kind==='warn'?'Watch':regression.kind==='good'?'Healthy':'Unknown')+'</span><strong>'+esc(regression.title)+'</strong><span>'+esc(regression.detail)+'</span></div>'+
+          '<div class="monitoring-gaps"><strong>What we cannot confirm</strong>'+(monitoringGaps.length?'<div class="gap-list">'+monitoringGaps.slice(0,4).map(gap=>'<span><b>'+esc(gap.label)+':</b> '+esc(gap.detail)+'</span>').join('')+'</div>':'<span class="healthy-note">No known monitoring gaps.</span>')+'</div></div>'+
+      '</div>'+
+      '<div class="decision-log"><div class="decision-log-head"><strong>Decision & change log</strong><span>Stored in this browser</span></div>'+
+        (productNotes.length?'<div class="decision-log-list">'+productNotes.slice(0,5).map(note=>'<div class="decision-log-item"><span class="activity-type">'+esc(note.type==='change'?'Change':note.type==='experiment'?'Experiment':'Decision')+'</span><strong>'+esc(note.text)+'</strong><span>'+esc(fmtDate(note.createdAt))+'</span></div>').join('')+'</div>':'<div class="empty compact-empty">No product decisions or changes recorded yet.</div>')+
+      '</div>';
+
     const overviewQuality=p.quality==='state'?qualityAttention(q):externalQualityAttention(externalQ);
     const overviewDelivery=deliveryAttentionForData(data);
     const overviewInfra=infrastructureAttention(platform);
@@ -1279,12 +1372,14 @@
         ?'<details class="activity-attempts"><summary>Show '+item.attempts.length+' attempts</summary><div>'+item.attempts.map(attempt=>'<div class="activity-attempt"><span>'+esc(fmtDate(attempt.when))+'</span><span>'+esc(attempt.detail)+'</span></div>').join('')+'</div></details>'
         :'';
       const incidentClass=(item.type==='Release incident'||(Array.isArray(item.attempts)&&item.attempts.length>1))?' incident-episode':'';
-      return '<div class="timeline-item'+incidentClass+'"><span class="timeline-time">'+esc(activityTimeRange(item))+'</span><span class="timeline-marker"></span><div class="timeline-content"><span class="activity-type">'+esc(item.type||'Activity')+'</span><strong>'+esc(item.title)+'</strong><span>'+esc(item.detail||'')+'</span>'+attempts+'</div></div>';
+      const impact=item.userImpact?'<span class="impact-chip '+esc(item.userImpact.kind||'unknown')+'">User impact: '+esc(item.userImpact.status||'Unknown')+'</span>':'';
+      const followup=item.followup?'<span class="activity-followup">'+esc(item.followup)+'</span>':'';
+      return '<div class="timeline-item'+incidentClass+'"><span class="timeline-time">'+esc(activityTimeRange(item))+'</span><span class="timeline-marker"></span><div class="timeline-content"><span class="activity-type">'+esc(item.type||'Activity')+'</span><strong>'+esc(item.title)+'</strong><span>'+esc(item.detail||'')+'</span>'+impact+followup+attempts+'</div></div>';
     };
     const timelineHtml=filteredTimeline.length
       ?'<div class="activity-day-groups">'+groupedDays.map(group=>'<section class="activity-day"><h4>'+esc(group.label)+'</h4><div class="timeline">'+group.items.map(activityItemMarkup).join('')+'</div></section>').join('')+'</div>'
       :'<div class="empty">No activity matches this filter yet.</div>';
-    const activityFilters=[['all','All'],['releases','Releases'],['quality','Quality'],['investigations','Investigations']];
+    const activityFilters=[['all','All'],['releases','Releases'],['quality','Quality'],['investigations','Investigations'],['decisions','Decisions']];
     doc.getElementById('historyPanel').innerHTML='<div class="panel-title-row"><div><h3>Activity</h3><p class="panel-copy">A chronological operating history across releases, quality checks, investigations, and recovery.</p></div></div>'+
       '<div class="activity-filters" role="group" aria-label="Filter activity">'+activityFilters.map(([key,label])=>'<button class="activity-filter '+(activityFilter===key?'active':'')+'" type="button" data-activity-filter="'+key+'" aria-pressed="'+(activityFilter===key?'true':'false')+'">'+label+'</button>').join('')+'</div>'+
       '<div style="margin-top:12px">'+timelineHtml+'</div>';
@@ -1674,11 +1769,11 @@
   }
 
   async function init(root){
-    const doc=root.document,cards=doc.getElementById('projectCards'),status=doc.getElementById('status'),summary=doc.getElementById('overviewSummary'),reviewInbox=doc.getElementById('reviewInbox'),refresh=doc.getElementById('refreshButton'),qualityPanel=doc.getElementById('qualityPanel'),projectTabs=doc.getElementById('projectTabs'),projectDetail=doc.getElementById('projectDetail'),investigationDrawer=doc.getElementById('investigationDrawer'),investigationBackdrop=doc.getElementById('investigationBackdrop'),closeInvestigationDrawerButton=doc.getElementById('closeInvestigationDrawer'),drawerRunAgainButton=doc.getElementById('drawerRunAgainButton'),drawerCopyHandoffButton=doc.getElementById('drawerCopyHandoffButton');
+    const doc=root.document,cards=doc.getElementById('projectCards'),status=doc.getElementById('status'),summary=doc.getElementById('overviewSummary'),reviewInbox=doc.getElementById('reviewInbox'),refresh=doc.getElementById('refreshButton'),qualityPanel=doc.getElementById('qualityPanel'),projectTabs=doc.getElementById('projectTabs'),projectDetail=doc.getElementById('projectDetail'),investigationDrawer=doc.getElementById('investigationDrawer'),investigationBackdrop=doc.getElementById('investigationBackdrop'),closeInvestigationDrawerButton=doc.getElementById('closeInvestigationDrawer'),drawerRunAgainButton=doc.getElementById('drawerRunAgainButton'),drawerCopyHandoffButton=doc.getElementById('drawerCopyHandoffButton'),productNoteDialog=doc.getElementById('productNoteDialog'),productNoteForm=doc.getElementById('productNoteForm'),productNoteType=doc.getElementById('productNoteType'),productNoteText=doc.getElementById('productNoteText');
     if(!cards||!status||!summary||!reviewInbox||!refresh||!qualityPanel)return;
     const cached=loadSnapshot(root);
     let state=PROJECTS.map(project=>hydrateProjectData(project,cached?.projects?.find(item=>item.projectId===project.id)));
-    state.forEach(item=>{item.investigationHistory=loadInvestigationHistory(root,item.project.id);});
+    state.forEach(item=>{item.investigationHistory=loadInvestigationHistory(root,item.project.id);item.productNotes=loadProductNotes(root,item.project.id);});
     const initialParams=new URLSearchParams(root.location.search);
     let activeId=initialParams.get('project')||'state';
     const allowedTabs=new Set(['overview','ai-quality','activity']);
@@ -1899,6 +1994,12 @@
       else dialog.setAttribute('open','');
     }
     if(projectDetail)projectDetail.addEventListener('click',event=>{
+      const addNoteButton=event.target.closest?.('[data-add-product-note]');
+      if(addNoteButton){
+        if(productNoteDialog?.showModal)productNoteDialog.showModal();else productNoteDialog?.setAttribute('open','');
+        root.setTimeout(()=>productNoteText?.focus?.(),0);
+        return;
+      }
       const activityFilterButton=event.target.closest?.('[data-activity-filter]');
       if(activityFilterButton){
         const data=activeData();
@@ -2060,6 +2161,20 @@
       await runAgentInvestigation(data,button.dataset.investigate,button.dataset.environment);
     });
 
+    if(productNoteForm)productNoteForm.addEventListener('submit',event=>{
+      event.preventDefault();
+      const data=activeData();if(!data)return;
+      const textValue=String(productNoteText?.value||'').trim();
+      if(!textValue)return;
+      const row={id:'note-'+Date.now(),type:String(productNoteType?.value||'decision'),text:textValue,createdAt:new Date().toISOString()};
+      data.productNotes=[row,...(Array.isArray(data.productNotes)?data.productNotes:[])].slice(0,30);
+      saveProductNotes(root,data.project.id,data.productNotes);
+      if(productNoteText)productNoteText.value='';
+      if(productNoteType)productNoteType.value='decision';
+      if(productNoteDialog?.close)productNoteDialog.close();else productNoteDialog?.removeAttribute?.('open');
+      renderNow();
+    });
+
     async function refreshAll(){
       if(refresh.disabled)return;
       refresh.disabled=true;
@@ -2212,5 +2327,5 @@
     }
   }
 
-  return {PROJECTS,pageEnvironment,vercelFromStatus,deliveryHealth,commitTitle,githubCommitUrl,pullRequestNumber,githubPullRequestUrl,changeUrl,normalizeQuality,qualityAttention,externalQualityAttention,deliveryAttention,deliveryAttentionForData,infrastructureAttention,allAttentionSignals,attentionItems,overallAttention,productOpenItems,projectStatus,setupGaps,releaseReadiness,productionRuntime,operationalNextDecision,qualityFailureClassSummary,failureCheckCount,failureExplanation,activityTimelineItems,projectQualityLabel,evalScore,percent,shortSha,pendingSet,mergePlatform,emptyProjectData,safeExternalQualitySnapshot,serializeProjectData,hydrateProjectData,loadProject,loadProjectDetails,infraCardLabel,analyticsConnectionValue,analyticsGapDetail,analyticsLabel,relativeAge,changedSinceVisit,meaningfulChanges,freshnessMeta,stateEvalContractStale,stateEvalBehaviorStale,stateEvalResultsStale,stateEvalStaleReason,trendText,activityReviewItems,progressText,quickProjectCheck,evalRunComplete,externalQualityRunComplete,qualityInvestigation,projectHandoff,init};
+  return {PROJECTS,pageEnvironment,vercelFromStatus,deliveryHealth,commitTitle,githubCommitUrl,pullRequestNumber,githubPullRequestUrl,changeUrl,normalizeQuality,qualityAttention,externalQualityAttention,deliveryAttention,deliveryAttentionForData,infrastructureAttention,allAttentionSignals,attentionItems,overallAttention,productOpenItems,projectStatus,setupGaps,releaseReadiness,regressionSignal,releaseRiskChecklist,healthConsistencyIssues,productionRuntime,operationalNextDecision,qualityFailureClassSummary,failureCheckCount,failureExplanation,activityTimelineItems,projectQualityLabel,evalScore,percent,shortSha,pendingSet,mergePlatform,emptyProjectData,safeExternalQualitySnapshot,serializeProjectData,hydrateProjectData,productNoteKey,loadProductNotes,saveProductNotes,loadProject,loadProjectDetails,infraCardLabel,analyticsConnectionValue,analyticsGapDetail,analyticsLabel,relativeAge,changedSinceVisit,meaningfulChanges,freshnessMeta,stateEvalContractStale,stateEvalBehaviorStale,stateEvalResultsStale,stateEvalStaleReason,trendText,activityReviewItems,progressText,quickProjectCheck,evalRunComplete,externalQualityRunComplete,qualityInvestigation,projectHandoff,init};
 });
