@@ -491,6 +491,13 @@ assert.strictEqual(Object.prototype.hasOwnProperty.call(safeQuality.endpoint,'gr
 assert.strictEqual(Object.prototype.hasOwnProperty.call(safeQuality.endpoint,'failing_fixtures'),false);
 
 
+const renderConfig=fs.readFileSync(require.resolve('../render.yaml'),'utf8');
+assert.match(renderConfig,/https:\/\/www\.contextswitch\.tech/);
+assert.match(renderConfig,/https:\/\/state\.contextswitch\.tech/);
+const stateVercelConfig=JSON.parse(fs.readFileSync(require.resolve('./vercel.json'),'utf8'));
+assert.doesNotMatch(stateVercelConfig.ignoreCommand,/VERCEL_GIT_PREVIOUS_SHA/);
+assert.match(stateVercelConfig.ignoreCommand,/git diff --quiet HEAD\^ HEAD -- \./);
+
 const healthHtml=fs.readFileSync(require.resolve('../project-health.html'),'utf8');
 assert.doesNotMatch(healthHtml,/Product health triage/);
 assert.match(healthHtml,/Spot problems, understand what they mean for users/);
