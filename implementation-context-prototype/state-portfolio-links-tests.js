@@ -37,6 +37,14 @@ check('staging and preview hosts keep State in the same environment',
   ENV_LINKS.stateAppUrl('ai-learning-example-cairn10.vercel.app')==='/implementation-context-prototype/'&&
   ENV_LINKS.stateAppUrl('localhost')==='/implementation-context-prototype/');
 
+for(const statePage of ['implementation-context-prototype/index.html','implementation-context-prototype/state-product-health.html']){
+  const html=fs.readFileSync(path.join(root,statePage),'utf8');
+  check(statePage+' gates Vercel Insights to the production State hostname',
+    html.includes("if(host!=='state.contextswitch.tech') return;")&&
+    html.includes("analytics.src='https://cdn.vercel-insights.com/v1/script.js'")&&
+    !html.includes('<script defer src="https://cdn.vercel-insights.com/v1/script.js"></script>'));
+}
+
 const cfg=JSON.parse(fs.readFileSync(path.join(root,'vercel.json'),'utf8'));
 const redirects=cfg.redirects||[];
 const legacy=redirects.filter(r=>/^\/(implementation-context-prototype|state-product-health)/.test(r.source));
