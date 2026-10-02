@@ -475,13 +475,13 @@ body.v88-dark .home-state-feature{box-shadow:none}body.v88-dark .home-state-acti
 .home-feature-stack-right{display:grid;grid-template-rows:repeat(2,minmax(0,1fr));gap:16px}
 .home-feature-card{display:flex;flex-direction:column;justify-content:space-between;gap:18px;min-height:0;padding:22px 24px;border:1px solid var(--border);border-radius:20px;background:var(--card)}
 .home-feature-card>div:first-child{max-width:none}.home-feature-card h2{margin:5px 0 8px;font-size:24px;line-height:1.15}.home-feature-card p{margin:0;color:var(--muted);font-size:13.5px;line-height:1.55}
-.home-feature-state-anchor{padding:28px;background:linear-gradient(180deg,color-mix(in srgb,var(--softp) 62%,var(--card)),var(--card));border-color:color-mix(in srgb,var(--purple) 30%,var(--border));box-shadow:0 10px 26px color-mix(in srgb,var(--purple) 8%,transparent);display:flex;flex-direction:column}
+.home-feature-state-anchor{padding:26px 28px;background:linear-gradient(180deg,color-mix(in srgb,var(--softp) 62%,var(--card)),var(--card));border-color:color-mix(in srgb,var(--purple) 30%,var(--border));box-shadow:0 10px 26px color-mix(in srgb,var(--purple) 8%,transparent);display:flex;flex-direction:column;align-self:start}
 .home-feature-state-anchor h2{font-size:54px;margin:5px 0 14px}.home-feature-state-anchor p{max-width:690px;font-size:14.5px;line-height:1.65}
 .home-state-kicker{flex:0 0 auto}
-.home-state-content{display:flex;flex:1 1 auto;flex-direction:column;align-items:flex-start;justify-content:center;gap:0}
-.home-state-signals{display:flex;flex-wrap:wrap;gap:8px;margin-top:24px}
+.home-state-content{display:flex;flex-direction:column;align-items:flex-start;gap:0}
+.home-state-signals{display:flex;flex-wrap:wrap;gap:8px;margin-top:18px}
 .home-state-signals span{padding:7px 10px;border:1px solid color-mix(in srgb,var(--purple) 24%,var(--border));border-radius:999px;background:color-mix(in srgb,var(--softp) 52%,var(--card));color:var(--muted);font-size:11.5px;font-weight:800;line-height:1}
-.home-state-button-row{display:flex;flex-wrap:wrap;gap:10px;margin-top:24px}
+.home-state-button-row{display:flex;flex-wrap:wrap;gap:10px;margin-top:18px}
 .home-state-button{display:inline-flex;align-items:center;justify-content:center;padding:10px 14px;border-radius:11px;font-size:12px;font-weight:850;line-height:1.2;text-decoration:none!important}
 .home-state-button-primary{background:var(--purple);color:#fff!important;border:1px solid var(--purple)}
 .home-state-button-secondary{background:var(--card);color:var(--purple)!important;border:1px solid color-mix(in srgb,var(--purple) 30%,var(--border))}
@@ -501,6 +501,24 @@ body.v88-dark .home-state-feature{box-shadow:none}body.v88-dark .home-state-acti
 @media(max-width:980px){.applied-featured-three{grid-template-columns:1fr 1fr!important}.applied-featured-three .applied-major:first-child{grid-column:1/-1}}
 @media(max-width:900px){.home-feature-state-led{grid-template-columns:1fr}.home-feature-stack-right{grid-template-columns:1fr 1fr;grid-template-rows:none}}
 @media(max-width:760px){.home-feature-stack-right,.applied-featured-three{grid-template-columns:1fr!important}.applied-featured-three .applied-major:first-child{grid-column:auto}.home-feature-card,.home-feature-state-anchor{padding:21px}.home-feature-state-anchor h2{font-size:34px;margin-bottom:11px}.home-state-button-row{width:100%}.home-state-button{flex:1 1 auto}}
+
+/* Oct 2 portfolio feedback: tighter featured card + skimmable Learning Library */
+.learning-start-here{display:grid;grid-template-columns:minmax(150px,.8fr) repeat(3,minmax(0,1fr));gap:10px;align-items:stretch;margin:18px 0 14px}
+.learning-start-here>div,.learning-start-here>a{padding:13px 14px;border:1px solid var(--border);border-radius:12px;background:var(--card)}
+.learning-start-here>div{display:flex;flex-direction:column;justify-content:center;background:var(--softp)}
+.learning-start-here>div span{color:var(--purple);font-size:10px;font-weight:900;letter-spacing:.08em;text-transform:uppercase}
+.learning-start-here>div strong{margin-top:4px;font-size:14px}
+.learning-start-here>a{display:flex;flex-direction:column;justify-content:center;text-decoration:none!important}
+.learning-start-here>a b{font-size:12.5px;color:var(--ink)}
+.learning-start-here>a small{margin-top:3px;color:var(--muted);font-size:11px}
+.learning-theme-map{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:0 0 20px}
+.learning-theme{padding:13px 14px;border-top:2px solid color-mix(in srgb,var(--purple) 35%,var(--border));background:color-mix(in srgb,var(--soft) 55%,transparent)}
+.learning-theme>strong{display:block;margin-bottom:8px;font-size:12px}
+.learning-theme>div{display:flex;flex-wrap:wrap;gap:6px}
+.learning-theme a{font-size:10.5px;font-weight:750;color:var(--purple);text-decoration:none}
+@media(max-width:800px){.learning-start-here{grid-template-columns:1fr 1fr}.learning-theme-map{grid-template-columns:1fr 1fr}}
+@media(max-width:520px){.learning-start-here,.learning-theme-map{grid-template-columns:1fr}}
+
 </style><script defer src="site-environment.js"></script>
 </head>
 <body>
@@ -569,7 +587,7 @@ body.v88-dark .learning-how-note strong{color:#f5f2fb!important}
 <main class="shell" id="main-content">
 <div class="topbar"><div class="topinner"><button aria-label="Go to home" class="brand-button" data-brand-home="" type="button"><span class="brand">Context <span>Switch</span></span></button><nav aria-label="Primary pages" class="nav"><button class="active" data-view="home">Home</button><button data-view="portfolio">Applied Work</button><button data-view="learn">Learning Library</button></nav><div class="top-actions"><button aria-label="Switch to dark mode" aria-pressed="false" class="theme-toggle" id="themeToggle" title="Switch to dark mode" type="button">☾</button><select aria-label="Choose page" id="mobileNav"><option value="home">Home</option><option value="portfolio">Applied Work</option><option value="learn">Learning Library</option></select></div></div></div>
 <section class="view active" data-page="home" id="home">
-<div class="hero"><h1>AI doesn’t know <span>what it doesn’t know.</span></h1><p class="lead">That limitation matters when AI moves from promising demo to usable product. I focus on the decisions that matter in client-facing and product-team work: what the system can know, what it can do, when people stay in control, how failures are detected, and whether the workflow is worth building at all.</p></div>
+<div class="hero"><h1>AI doesn’t know <span>what it doesn’t know.</span></h1><p class="lead">That limitation matters when AI moves from promising demo to usable product. I focus on whether an AI workflow is trustworthy, controllable, and worth building in the first place.</p></div>
 <div class="home-start">
 <div class="home-applied-heading"><div class="section-kicker"><span>Applied work · start here</span></div></div>
 <div class="home-feature-grid home-feature-state-led">
@@ -602,20 +620,6 @@ body.v88-dark .learning-how-note strong{color:#f5f2fb!important}
 </div>
 <a class="home-see-all" href="#portfolio">See all applied work →</a>
 </div><section class="home-principle" aria-labelledby="home-principle-heading"><div class="section-kicker"><span>How I work with AI</span></div><h2 id="home-principle-heading">Boundaries, feedback, and evidence.</h2><p>I use AI where it helps, but automation is not the goal. The more a system can decide or affect, the clearer its limits, correction paths, and evidence need to be. People should stay involved where their judgment actually matters.</p></section>
-<section class="band" aria-labelledby="use-work-heading" style="margin-top:30px">
-<div class="section-kicker"><span>How to use this work</span></div>
-<h2 id="use-work-heading" style="margin:0 0 10px;font-size:24px;line-height:1.2">Start with the decision you need to make.</h2>
-<p class="section-lead" style="margin-bottom:14px">The projects and resources are organized around recurring AI delivery questions, not one company or one tool stack.</p>
-<div class="resource-row">
-<a class="resource-link" href="implementation-context.html">Authority boundaries: State</a>
-<a class="resource-link" href="project-health-case-study.html">Quality after release: Project Health</a>
-<a class="resource-link" href="debugging-ai-systems.html">Failure diagnosis: Debugging AI Systems</a>
-<a class="resource-link" href="meridian.html">Discovery and workflow: AI Support Workflow Exercise</a>
-<a class="resource-link" href="legal-ai-governance.html">Build decision: Legal AI</a>
-<a class="resource-link" href="tastemake.html">Adoption and correction: Tastemake</a>
-</div>
-</section>
-
 </section>
 <section class="view" data-page="learn" id="learn">
 <div class="hero learning-hero page-intro">
@@ -629,6 +633,18 @@ body.v88-dark .learning-how-note strong{color:#f5f2fb!important}
 <div class="section-kicker"><span>Coverage map</span></div>
 <h2>Reusable resources by delivery question.</h2>
 <p class="section-lead learning-curriculum-intro">Technical fluency matters, but most of this map is about making better product decisions around AI and knowing which resource helps with discovery, delivery, governance, adoption, or evaluation.</p>
+<div class="learning-start-here" aria-label="Learning Library start here">
+  <div><span>Start here</span><strong>Three useful entry points</strong></div>
+  <a href="ai-durable-knowledge.html" target="_blank" rel="noopener"><b>Principles</b><small>Durable AI Knowledge</small></a>
+  <a href="#quality-evals"><b>Quality</b><small>Evals &amp; reliability</small></a>
+  <a href="#governance-human-control"><b>Control</b><small>Governance &amp; human authority</small></a>
+</div>
+<div class="learning-theme-map" aria-label="Browse Learning Library by theme">
+  <div class="learning-theme"><strong>Discover &amp; decide</strong><div><a href="#discovery-workflows">Discovery</a><a href="#product-strategy">Product judgment</a></div></div>
+  <div class="learning-theme"><strong>Build &amp; govern</strong><div><a href="#ai-foundations">Technical fluency</a><a href="#governance-human-control">Human control</a><a href="#ai-ux-workflow-design">AI UX</a></div></div>
+  <div class="learning-theme"><strong>Test &amp; improve</strong><div><a href="#quality-evals">Quality &amp; evals</a><a href="#measurement-business">Measurement</a></div></div>
+  <div class="learning-theme"><strong>Deliver &amp; advise</strong><div><a href="#implementation-adoption">Adoption</a><a href="#ai-consulting-client-work">Client work</a><a href="#ai-landscape-edge">Landscape</a></div></div>
+</div>
 
 <details class="learning-stage" id="discovery-workflows">
 <summary><span class="stage-num">01</span><span class="stage-main"><b>Business &amp; Workflow Discovery</b><small>Understand the business today before deciding what should change.</small><span class="topic-preview">stakeholders · current workflow · pain points · baselines · constraints · readiness</span></span></summary>
@@ -692,7 +708,7 @@ body.v88-dark .learning-how-note strong{color:#f5f2fb!important}
 </section>
 </section>
 
-<section class="view" data-page="portfolio" id="portfolio"><header class="page-intro"><div class="eyebrow">Applied Work</div><h2 class="section-title">Three products, three different AI product problems</h2><p class="section-lead">State tests maintained project truth, Tastemake tests editable personalization, and Project Health tests how teams interpret quality and delivery signals. Supporting work shows the discovery, debugging, governance, and architecture decisions around them. Across all of them, I’m most interested in what happens after the demo works: where the system slows down, gets the wrong answer, hides uncertainty, or creates more work for people.</p></header>
+<section class="view" data-page="portfolio" id="portfolio"><header class="page-intro"><div class="eyebrow">Applied Work</div><h2 class="section-title">Three products, three different AI product problems</h2><p class="section-lead">State tests maintained project truth, Tastemake tests editable personalization, and Project Health tests how teams interpret quality and delivery signals. Supporting work shows the discovery, debugging, governance, and architecture decisions around them. Across all of them, I’m most interested in what happens after the demo works: whether the product still holds up under real use.</p></header>
 <div class="section-kicker applied-group-kicker"><span>Featured work</span></div>
 <div class="applied-major-grid applied-featured-grid applied-featured-three">
 <div class="card applied-major applied-major-with-actions"><span class="tag">Flagship · Boundaries &amp; authority</span><h3><a class="applied-card-primary-link" href="implementation-context.html">State</a></h3><p class="card-intro">What should AI be allowed to decide? State keeps AI interpretation separate from human-approved project truth, with explicit rules for evidence, uncertainty, and authority.</p><div class="applied-card-actions"><a href="https://state.contextswitch.tech/" data-state-app-link target="_blank" rel="noopener noreferrer">Open State →</a><a href="implementation-context.html">Case study →</a></div></div>
