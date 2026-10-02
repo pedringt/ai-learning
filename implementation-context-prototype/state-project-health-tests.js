@@ -621,7 +621,7 @@ assert.match(quickHandoff.handoffText,/Production deployment: Healthy/);
 
 const evalDetailsHtml=fs.readFileSync(require.resolve('../state-evals.html'),'utf8');
 assert.match(evalDetailsHtml,/State eval details/);
-assert.match(evalDetailsHtml,/23 controlled scenarios/);
+assert.match(evalDetailsHtml,/23 scenarios/);
 assert.match(evalDetailsHtml,/Update understanding/);
 assert.match(evalDetailsHtml,/Answer quality/);
 assert.match(evalDetailsHtml,/Synthetic controlled scenarios/);
