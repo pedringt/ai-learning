@@ -641,7 +641,7 @@ assert.match(projectHealthSource,/Previous investigations/);
 assert.match(projectHealthSource,/commits\?sha=/);
 assert.match(projectHealthSource,/project\.releasePaths/);
 assert.doesNotMatch(projectHealthSource,/View AI eval results/);
-assert.match(projectHealthSource,/headerRunChecksButton\.hidden=!activeEvalRun/);
+assert.match(projectHealthSource,/headerRunChecksButton\.hidden=!canRun&&!activeEvalRun/);
 assert.match(projectHealthSource,/setActiveTab\('ai-quality'\)/);
 assert.doesNotMatch(projectHealthSource,/ai-learning-git-staging-cairn10\.vercel\.app\/project-health/);
 assert.doesNotMatch(projectHealthSource,/control:'investigate'/);
