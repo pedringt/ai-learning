@@ -5,21 +5,118 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>State eval details · Context Switch</title>
   <style>
-    :root{--ink:#202825;--muted:#69736e;--line:#ded9ce;--paper:#f5f2ea;--surface:#fffdf8;--soft:#ece8de;--accent:#38624d;--warn:#8a5b22;--danger:#8b3a32;--good:#2e6b4d;--radius:16px}
-    *{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font:15px/1.5 Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}a{color:var(--accent);text-underline-offset:2px}.shell{max-width:1080px;margin:0 auto;padding:32px 24px 72px}.topbar{display:flex;justify-content:space-between;gap:16px;align-items:center;margin-bottom:32px}.brand{font-weight:850;letter-spacing:-.025em}.button{display:inline-flex;align-items:center;justify-content:center;min-height:40px;padding:9px 13px;border:1px solid var(--line);border-radius:10px;background:var(--surface);color:inherit;text-decoration:none;font-weight:750}.eyebrow{font-size:12px;font-weight:850;letter-spacing:.09em;text-transform:uppercase;color:var(--accent)}h1{margin:5px 0 8px;font-size:clamp(34px,5vw,54px);line-height:1;letter-spacing:-.045em}.lede{max-width:780px;margin:0;color:var(--muted);font-size:17px}.note{margin:18px 0 24px;padding:14px 16px;border:1px solid var(--line);border-radius:12px;background:rgba(255,255,255,.55);color:var(--muted)}.note strong{color:var(--ink)}.summary-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin:0 0 24px}.summary-card,.panel,.scenario{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius)}.summary-card{padding:18px}.summary-card strong{display:block;font-size:18px}.summary-card .score{font-size:30px;font-weight:850;letter-spacing:-.04em;margin:3px 0}.summary-card p{margin:4px 0 0;color:var(--muted);font-size:13px}.panel{padding:20px;margin-top:18px}.panel h2{margin:0;font-size:24px;letter-spacing:-.03em}.panel-copy{margin:4px 0 14px;color:var(--muted)}.tabs{display:flex;gap:8px;flex-wrap:wrap;margin:16px 0}.tab{min-height:40px;padding:8px 12px;border:1px solid var(--line);border-radius:999px;background:var(--surface);font:inherit;font-weight:800;cursor:pointer;color:var(--ink)}.tab.active{background:var(--ink);border-color:var(--ink);color:white}.suite-intro{padding:14px;border-radius:12px;background:var(--soft);margin-bottom:12px}.suite-intro strong{display:block}.suite-intro p{margin:4px 0 0;color:var(--muted)}.scenario-list{display:grid;gap:10px}.scenario{padding:16px}.scenario.failed{border-color:#d9a39e;box-shadow:0 0 0 2px rgba(139,58,50,.08)}.failure-panel{border-color:#d9a39e;background:#fff8f6}.failure-item{padding:14px 0;border-top:1px solid var(--line)}.failure-item:first-child{border-top:0}.failure-item h3{margin:0 0 6px}.failure-meta{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0}.failure-meta span{display:inline-flex;padding:4px 7px;border-radius:999px;background:#f7e4e1;color:var(--danger);font-size:11px;font-weight:800}.failure-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.scenario-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}.scenario h3{margin:0;font-size:17px}.severity{display:inline-flex;padding:4px 7px;border-radius:999px;background:var(--soft);font-size:10px;font-weight:850;text-transform:uppercase;letter-spacing:.05em;white-space:nowrap}.severity.high{background:#f7e4e1;color:var(--danger)}.severity.medium{background:#f6ecdd;color:var(--warn)}.severity.low{background:#e8f2ec;color:var(--good)}.scenario-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px}.detail{padding-top:10px;border-top:1px solid #eee9df}.detail strong{display:block;font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}.detail p{margin:4px 0 0}.why{grid-column:1/-1}.run-list{display:grid;gap:8px;margin-top:12px}.run-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;padding:11px 12px;border:1px solid var(--line);border-radius:11px;background:#fff}.run-row strong,.run-row span{display:block}.run-row span{color:var(--muted);font-size:12px}.status{margin-top:12px;color:var(--muted);font-size:13px}.sources{display:flex;gap:12px;flex-wrap:wrap;margin-top:14px;font-size:12px}.footer{margin-top:28px;color:var(--muted);font-size:12px}.disabled-action{position:relative;display:inline-flex;outline:none}.disabled-action .button:disabled{cursor:not-allowed;opacity:.58}.disabled-action-tooltip{position:absolute;z-index:20;right:0;top:calc(100% + 8px);width:min(320px,80vw);padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--ink);color:white;font-size:12px;line-height:1.45;font-weight:600;box-shadow:0 8px 24px rgba(0,0,0,.14);opacity:0;visibility:hidden;transform:translateY(-3px);transition:opacity .14s ease,transform .14s ease,visibility .14s}.disabled-action:hover .disabled-action-tooltip,.disabled-action:focus .disabled-action-tooltip,.disabled-action:focus-within .disabled-action-tooltip{opacity:1;visibility:visible;transform:translateY(0)}
-    @media(max-width:720px){.summary-grid,.scenario-grid{grid-template-columns:1fr}.why{grid-column:auto}.run-row{grid-template-columns:1fr}.topbar{align-items:flex-start;flex-direction:column}.shell{padding:22px 14px 48px}}
+    :root{
+      --ink:#172033;--muted:#6f788b;--line:#e1e6ef;--paper:#f7f8fc;--surface:#fff;
+      --soft:#f3f5f8;--accent:#6758e8;--accent-soft:#f2efff;--warn:#b76818;--warn-soft:#fff7e9;
+      --danger:#c8463d;--danger-soft:#fff1ef;--good:#16815b;--good-soft:#edf9f3;--radius:14px;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--paper);color:var(--ink);font:15px/1.5 Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+    a{color:var(--accent);text-underline-offset:2px}
+    button{font:inherit}
+    :where(button,a,[tabindex]):focus-visible{outline:3px solid rgba(103,88,232,.22);outline-offset:3px}
+    .shell{max-width:1240px;margin:0 auto;padding:24px 24px 64px}
+    .topbar{display:flex;justify-content:space-between;gap:16px;align-items:center;margin-bottom:24px;padding-bottom:14px;border-bottom:1px solid #e4e8ef}
+    .brand{font-size:18px;font-weight:800;letter-spacing:-.02em}
+    .brand span{color:var(--muted)!important;font-weight:650}
+    .actions{display:flex;gap:8px;flex-wrap:wrap}
+    .button{display:inline-flex;align-items:center;justify-content:center;min-height:36px;padding:7px 11px;border:1px solid var(--line);border-radius:9px;background:#fff;color:var(--ink);text-decoration:none;font-weight:750;font-size:12px;cursor:pointer}
+    .button:hover:not(:disabled){border-color:#cbd2de;background:#fbfcff}
+    .button.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+    .eyebrow{font-size:10px;font-weight:850;letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+    .hero{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:20px;align-items:end;margin-bottom:16px}
+    h1{margin:3px 0 6px;font-size:clamp(34px,5vw,46px);line-height:1;letter-spacing:-.045em}
+    .lede{max-width:780px;margin:0;color:var(--muted);font-size:15px;line-height:1.5}
+    .hero-meta{display:flex;gap:7px;flex-wrap:wrap;justify-content:flex-end}
+    .meta-chip{display:inline-flex;align-items:center;padding:5px 8px;border-radius:999px;background:var(--accent-soft);color:#5146bd;font-size:10px;font-weight:800}
+    .note{margin:0 0 20px;padding:12px 14px;border:1px solid #e3e6ef;border-left:3px solid #8d82ef;border-radius:11px;background:#fafaff;color:var(--muted);font-size:12px}
+    .note strong{color:var(--ink)}
+    .summary-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:0 0 20px}
+    .summary-card,.panel,.scenario{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);box-shadow:0 4px 14px rgba(24,33,52,.025)}
+    .summary-card{position:relative;padding:17px 18px;overflow:hidden}
+    .summary-card:before{content:"";position:absolute;inset:0 auto 0 0;width:4px;background:var(--accent)}
+    .summary-card>strong{display:block;font-size:14px}
+    .summary-card .score{font-size:32px;font-weight:850;letter-spacing:-.045em;margin:6px 0 2px}
+    .summary-card p{margin:0;color:var(--muted);font-size:12px}
+    .panel{padding:20px;margin-top:14px}
+    .panel h2{margin:0;font-size:22px;letter-spacing:-.03em}
+    .panel-copy{margin:4px 0 14px;color:var(--muted);font-size:13px}
+    .section-head{display:flex;justify-content:space-between;gap:14px;align-items:flex-start}
+    .section-count{display:inline-flex;padding:4px 7px;border-radius:999px;background:var(--soft);color:var(--muted);font-size:10px;font-weight:800;white-space:nowrap}
+    .failure-panel{border-color:#efc9c5;background:#fffafa;box-shadow:inset 3px 0 0 var(--danger)}
+    .failure-panel h2{color:#7f2f2a}
+    .failure-item{padding:14px 0;border-top:1px solid #f0d9d6}
+    .failure-item:first-child{border-top:0;padding-top:4px}
+    .failure-item h3{margin:0 0 4px;font-size:17px}
+    .failure-item p{margin:7px 0;color:#41495a;font-size:13px}
+    .failure-meta{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}
+    .failure-meta span{display:inline-flex;padding:4px 7px;border-radius:999px;background:var(--danger-soft);color:var(--danger);font-size:10px;font-weight:800}
+    .failure-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:11px}
+    .failure-actions .button:first-child{background:#fff;border-color:#e7b9b4;color:#853832}
+    .tabs{display:flex;gap:20px;flex-wrap:wrap;margin:18px 0 14px;border-bottom:1px solid var(--line)}
+    .tab{appearance:none;min-height:38px;padding:8px 0 10px;border:0;border-bottom:3px solid transparent;border-radius:0;background:transparent;color:var(--muted);font:inherit;font-size:13px;font-weight:800;cursor:pointer}
+    .tab:hover{color:var(--ink)}
+    .tab.active{color:var(--ink);border-bottom-color:var(--accent)}
+    .suite-intro{padding:13px 14px;border:1px solid #e6e4f7;border-radius:11px;background:#faf9ff;margin-bottom:12px}
+    .suite-intro strong{display:block;font-size:13px}
+    .suite-intro p{margin:3px 0 0;color:var(--muted);font-size:12px}
+    .scenario-list{display:grid;gap:9px}
+    .scenario{padding:16px 17px}
+    .scenario.failed{border-color:#e8bbb7;background:#fffafa;box-shadow:inset 3px 0 0 var(--danger)}
+    .scenario-head{display:flex;justify-content:space-between;gap:14px;align-items:flex-start}
+    .scenario .eyebrow{color:#8a91a0;font-size:9px;letter-spacing:.05em;text-transform:none}
+    .scenario h3{margin:3px 0 0;font-size:17px;letter-spacing:-.015em}
+    .severity{display:inline-flex;padding:4px 7px;border-radius:999px;background:var(--soft);font-size:9px;font-weight:850;text-transform:uppercase;letter-spacing:.04em;white-space:nowrap}
+    .severity.high{background:var(--danger-soft);color:var(--danger)}
+    .severity.medium{background:var(--warn-soft);color:var(--warn)}
+    .severity.low{background:var(--good-soft);color:var(--good)}
+    .scenario-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px 18px;margin-top:13px}
+    .detail{padding-top:10px;border-top:1px solid #edf0f5}
+    .detail strong{display:block;font-size:9px;text-transform:uppercase;letter-spacing:.06em;color:#8b93a2}
+    .detail p{margin:4px 0 0;color:#3e4657;font-size:12.5px;line-height:1.5}
+    .detail:nth-child(2){order:-1;grid-column:1/-1;padding:11px 12px;border:1px solid #e7e4fb;border-radius:9px;background:#faf9ff}
+    .detail:nth-child(2) strong{color:#6258c6}
+    .why{grid-column:auto}
+    .run-list{display:grid;margin-top:10px;border-top:1px solid var(--line)}
+    .run-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(180px,.65fr);gap:16px;padding:12px 2px;border-bottom:1px solid var(--line);background:transparent}
+    .run-row:last-child{border-bottom:0}
+    .run-row strong,.run-row span{display:block}
+    .run-row strong{font-size:13px}
+    .run-row span{color:var(--muted);font-size:11px;line-height:1.45}
+    .run-row>span{text-align:right;overflow-wrap:anywhere}
+    .status{margin-top:10px;padding:11px 12px;border-radius:9px;background:var(--soft);color:var(--muted);font-size:12px}
+    .sources{display:flex;gap:12px;flex-wrap:wrap;margin-top:16px;padding-top:13px;border-top:1px solid var(--line);font-size:11px;font-weight:750}
+    .footer{margin-top:24px;padding-top:14px;border-top:1px solid var(--line);color:var(--muted);font-size:11px}
+    .disabled-action{position:relative;display:inline-flex;outline:none}
+    .disabled-action .button:disabled{cursor:not-allowed;opacity:.5}
+    .disabled-action-tooltip{position:absolute;z-index:20;right:0;top:calc(100% + 8px);width:min(320px,80vw);padding:10px 12px;border:1px solid #30384b;border-radius:9px;background:#20283a;color:white;font-size:11px;line-height:1.45;font-weight:600;box-shadow:0 12px 28px rgba(23,32,51,.18);opacity:0;visibility:hidden;transform:translateY(-3px);transition:opacity .14s ease,transform .14s ease,visibility .14s}
+    .disabled-action:hover .disabled-action-tooltip,.disabled-action:focus .disabled-action-tooltip,.disabled-action:focus-within .disabled-action-tooltip{opacity:1;visibility:visible;transform:translateY(0)}
+    @media(max-width:760px){
+      .shell{padding:20px 14px 48px}.topbar,.hero{align-items:flex-start;grid-template-columns:1fr;flex-direction:column}.hero-meta{justify-content:flex-start}
+      .summary-grid,.scenario-grid{grid-template-columns:1fr}.detail:nth-child(2){grid-column:auto;order:0}.why{grid-column:auto}
+      .run-row{grid-template-columns:1fr}.run-row>span{text-align:left}.tabs{gap:15px;overflow-x:auto;flex-wrap:nowrap}.tab{white-space:nowrap}
+    }
   </style>
 </head>
 <body>
   <main class="shell">
     <div class="topbar">
       <div class="brand">Context Switch <span style="color:var(--muted)">/ State evals</span></div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap"><span class="disabled-action" tabindex="0" aria-describedby="runEvalsDisabledReason"><button class="button" id="runEvalsButton" type="button" disabled aria-disabled="true">Run AI evals</button><span class="disabled-action-tooltip" id="runEvalsDisabledReason" role="tooltip">When enabled, this runs the real State AI eval suite and records aggregate results in Project Health. Public runs are disabled because they make paid model calls and could change the published quality history.</span></span><a class="button" href="/project-health?project=state&tab=ai-quality">Back to Project Health</a></div>
+      <div class="actions"><span class="disabled-action" tabindex="0" aria-describedby="runEvalsDisabledReason"><button class="button" id="runEvalsButton" type="button" disabled aria-disabled="true">Run AI evals</button><span class="disabled-action-tooltip" id="runEvalsDisabledReason" role="tooltip">When enabled, this runs the real State AI eval suite and records aggregate results in Project Health. Public runs are disabled because they make paid model calls and could change the published quality history.</span></span><a class="button" href="/project-health?project=state&tab=ai-quality">Back to Project Health</a></div>
     </div>
 
-    <div class="eyebrow">Controlled AI evaluation</div>
-    <h1>State eval details</h1>
-    <p class="lede">A read-only view of the controlled scenarios used to test whether State interprets project updates correctly and answers from maintained project truth.</p>
+    <section class="hero">
+      <div>
+        <div class="eyebrow">Controlled AI evaluation</div>
+        <h1>State eval details</h1>
+        <p class="lede">The evidence behind State's Project Health quality signals: controlled scenarios for update understanding and grounded answers.</p>
+      </div>
+      <div class="hero-meta" aria-label="Eval catalog metadata">
+        <span class="meta-chip">23 scenarios</span>
+        <span class="meta-chip">2 suites</span>
+        <span class="meta-chip">Read-only</span>
+      </div>
+    </section>
 
     <div class="note"><strong>Synthetic controlled scenarios.</strong> These cases are deliberately constructed test data, not customer or private project content. State records aggregate run metrics and, for failed controlled scenarios, limited scenario IDs and pass/fail metadata. Raw production content and full model transcripts are not published here.</div>
 
@@ -35,8 +132,7 @@
     </section>
 
     <section class="panel">
-      <h2>23 controlled scenarios</h2>
-      <p class="panel-copy">The scenario catalog is the product contract. Each case describes the setup, the behavior State should produce, and why that behavior matters.</p>
+      <div class="section-head"><div><h2>Scenario catalog</h2><p class="panel-copy">The scenario catalog is the product contract. Each case describes the setup, expected behavior, and why that behavior matters.</p></div><span class="section-count">23 scenarios</span></div>
       <div class="tabs" role="tablist" aria-label="Eval suites">
         <button class="tab active" type="button" data-suite="review" role="tab" aria-selected="true">Update understanding · 13</button>
         <button class="tab" type="button" data-suite="ask" role="tab" aria-selected="false">Answer quality · 10</button>
