@@ -695,6 +695,8 @@ assert.match(projectHealthSource,/Decision & change log/);
 assert.match(projectHealthSource,/data-add-product-note/);
 assert.match(projectHealthSource,/project-health-product-notes/);
 assert.match(projectHealthSource,/Next evidence:/);
+assert.match(projectHealthSource,/accepted ambiguity outcome/);
+assert.match(projectHealthSource,/not surfaced through an accepted uncertainty path/);
 assert.match(projectHealthSource,/User impact:/);
 assert.match(projectHealthSource,/Full AI eval details/);
 assert.doesNotMatch(projectHealthSource,/Investigate this issue →/);
