@@ -1325,8 +1325,8 @@
       projectCheckButton.classList.add('primary');
       projectCheckButton.style.order='1';
     }
+    const activeEvalRun=data.qualityRun;
     if(headerRunChecksButton){
-      const activeEvalRun=data.qualityRun;
       const canRun=!!run?.configured&&run?.can_run_here!==false;
       headerRunChecksButton.hidden=!canRun&&!activeEvalRun;
       headerRunChecksButton.disabled=!!activeEvalRun||!canRun;
@@ -1334,6 +1334,17 @@
       headerRunChecksButton.title=activeEvalRun?'Quality checks are running. Open Quality for details.':'';
       headerRunChecksButton.classList.remove('primary');
       headerRunChecksButton.style.order='2';
+    }
+    const evalRunBanner=doc.getElementById('evalRunBanner');
+    if(evalRunBanner){
+      evalRunBanner.hidden=!activeEvalRun;
+      if(activeEvalRun){
+        const stateLabel=p.id==='state'?'AI evals are running':'Quality checks are running';
+        const delayed=activeEvalRun.state==='delayed';
+        evalRunBanner.innerHTML='<div class="eval-global-status-copy"><div><strong>'+(delayed?'Still running · taking longer than usual':stateLabel)+'</strong><span>Started '+esc(fmtDate(activeEvalRun.startedAt))+' · Previous results remain visible until the new run finishes.</span></div></div><button class="button small" type="button" data-open-running-quality>'+(p.id==='state'?'View AI Evals':'View quality')+' →</button>';
+      }else{
+        evalRunBanner.innerHTML='';
+      }
     }
     const investigationPanel=doc.getElementById('investigationPanel');
     const investigationDrawerTitle=doc.getElementById('investigationDrawerTitle');
@@ -1671,25 +1682,32 @@
               '</div>'
             ).join('')+'</div>'
           :'';
-        const statusText=staleResults
-          ?'Previous run · rerun required'
-          :(failureSummary.count
-            ?esc(total||'—')+' scenarios · '+failureSummary.count+' high-impact failure'+(failureSummary.count===1?'':'s')
-            :esc(total||'—')+' scenarios · no high-impact failures');
+        const activeEvalRun=data.qualityRun;
+        const evalStateClass=activeEvalRun?'running':staleResults?'warn':failureSummary.count?'bad':'healthy';
+        const statusTitle=activeEvalRun
+          ?(activeEvalRun.state==='delayed'?'AI eval run is taking longer than expected':'AI evals are running')
+          :(staleResults
+            ?'AI evals need to be rerun'
+            :(failureSummary.count?'AI evals need review':'AI evals are healthy'));
+        const statusDetail=activeEvalRun
+          ?'Started '+esc(fmtDate(activeEvalRun.startedAt))+' · Previous results stay visible below until this run finishes.'
+          :(staleResults
+            ?(latestDate?'Last checked '+esc(fmtDate(latestDate))+' · ':'')+'Previous run needs a rerun before these scores are treated as current.'
+            :(latestDate?'Last checked '+esc(fmtDate(latestDate))+' · ':'')+esc(total||'—')+' scenarios · '+(failureSummary.count
+              ?failureSummary.count+' high-impact failure'+(failureSummary.count===1?'':'s')
+              :'no high-impact failures'));
+        const statusAction=(!activeEvalRun&&!staleResults&&failureSummary.count)
+          ?'<button class="button small eval-overview-action" type="button" data-jump-quality-failures>Review failure'+(failureSummary.count===1?'':'s')+'</button>'
+          :'';
         qualityHtml='<h3>Product quality · AI evals</h3>'+
-          '<div class="eval-overview"><div><strong>AI eval status</strong><span>'+(latestDate?'Last checked '+esc(fmtDate(latestDate))+' · ':'')+statusText+'</span></div></div>'+
+          '<div class="eval-overview '+evalStateClass+'" '+(activeEvalRun?'role="status"':'')+'><div><strong>'+statusTitle+'</strong><span>'+statusDetail+'</span>'+statusAction+'</div></div>'+
           (staleResults
             ?'<div class="run-callout stale-quality-summary"><strong>Previous results need a rerun</strong><p>'+esc(stateEvalStaleReason(q))+' Run the evals again before treating these scores as current.</p></div>'
             :failureSummary.count
-              ?'<div class="run-callout quality-failure-summary"><strong>Failures requiring review</strong>'+failureDetailHtml+'</div><div class="eval-grid">'+cards.join('')+'</div>'
+              ?'<div class="run-callout quality-failure-summary" id="qualityFailures"><strong>Failures requiring review</strong>'+failureDetailHtml+'</div><div class="eval-grid">'+cards.join('')+'</div>'
               :'<div class="eval-grid">'+cards.join('')+'</div>')+stateEvalHistory(q);
       }
       qualityHtml+='<p class="footnote"><a href="'+esc(p.links.quality)+'" target="_blank" rel="noopener noreferrer">View full scenario catalog ↗</a></p>';
-      const activeEvalRun=data.qualityRun;
-      if(activeEvalRun){
-        const delayed=activeEvalRun.state==='delayed';
-        qualityHtml+='<div class="eval-run-status '+(delayed?'warn':'')+'" role="status"><strong>'+(delayed?'Run started · waiting for a newer result':'AI evals are running…')+'</strong><span>Started '+esc(fmtDate(activeEvalRun.startedAt))+'. The previous results stay visible until the new run finishes; this page checks automatically.</span></div>';
-      }
       if(pending.has('Run controls')&&!run){
         qualityHtml+='<div class="eval-actions"><span class="footnote">Checking run availability…</span></div>';
       }else if(run?.configured&&run?.can_run_here!==false&&!activeEvalRun){
@@ -1832,6 +1850,13 @@
       '</div>'+
       '<div class="delivery-environments">'+(rawPreviewFailure?'<div class="delivery-environment"><div class="delivery-environment-head"><div><strong>Production release</strong></div><span class="delivery-status good">Healthy</span></div><div class="delivery-meta"><span>The failed Vercel status on the referenced commit was a preview or superseded attempt, not an active production release failure.</span>'+(p.links?.vercel?'<span>'+githubLink('Open in Vercel ↗',p.links.vercel)+'</span>':'')+'</div></div>':environmentBlock('Latest production release attempt',d))+(s?environmentBlock('Staging release',s):'')+'</div>'+
       '<div class="quality-actions">'+prodInvestigate+checkInvestigate+'</div>';
+    if(evalRunBanner)evalRunBanner.addEventListener('click',event=>{
+      if(!event.target.closest?.('[data-open-running-quality]'))return;
+      setActiveTab('ai-quality');
+      renderNow();
+      root.scrollTo?.({top:Math.max(0,(doc.getElementById('qualityPanel')?.getBoundingClientRect().top||0)+root.scrollY-24),behavior:'smooth'});
+    });
+
     const deliveryPanel=doc.getElementById('deliveryPanel');
     deliveryPanel.classList.toggle('on-demand-panel',deliveryHealthy);
     if(!deliveryHealthy)deliveryPanel.classList.remove('revealed');
@@ -2573,6 +2598,7 @@
       if(action.dataset.attentionAction==='review-quality'){
         setActiveTab('ai-quality');
         renderNow();
+        root.setTimeout(()=>doc.getElementById('qualityFailures')?.scrollIntoView({behavior:'smooth',block:'start'}),0);
       }
     });
 
@@ -2689,6 +2715,11 @@
     }
 
     qualityPanel.addEventListener('click',async event=>{
+      const jumpToFailures=event.target.closest?.('[data-jump-quality-failures]');
+      if(jumpToFailures){
+        doc.getElementById('qualityFailures')?.scrollIntoView({behavior:'smooth',block:'start'});
+        return;
+      }
       const investigate=event.target.closest?.('[data-investigate-quality]');
       if(investigate){
         const data=activeData();if(!data)return;
