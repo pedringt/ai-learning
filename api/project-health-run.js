@@ -2,7 +2,7 @@ const RUNS={
   state:{
     repo:'pedringt/ai-learning',
     workflow:'question-review-live.yml',
-    ref:'staging',
+    refs:{production:'main',staging:'staging'},
     label:'State AI evals',
     button_label:'Run AI evals',
     paid_model_calls:true,
@@ -40,6 +40,13 @@ function readBody(req){
 
 const RUN_COOLDOWN_MS=10*60*1000;
 
+function runRef(run,projectId,environment='production'){
+  if(projectId==='state'&&run?.refs){
+    return environment==='staging'?run.refs.staging:run.refs.production;
+  }
+  return run?.ref||'main';
+}
+
 function runInfo(projectId){
   const run=RUNS[projectId];
   if(!run) return null;
@@ -53,7 +60,8 @@ function runInfo(projectId){
     project:projectId,
     label:run.label,
     button_label:run.button_label,
-    ref:run.ref,
+    ref:runRef(run,projectId,'production'),
+    refs:run.refs||null,
     paid_model_calls:run.paid_model_calls,
     minimum_controlled_cases:run.minimum_controlled_cases||null,
     estimated_cost:costEstimate||null,
@@ -97,6 +105,7 @@ module.exports=async function handler(req,res){
   const requestedSuite=String(body.suite||'all');
   const suite=run.suites.includes(requestedSuite)?requestedSuite:'all';
   const recordEnvironment=String(body.record_environment||'production')==='staging'?'staging':'production';
+  const ref=runRef(run,projectId,recordEnvironment);
 
   const githubHeaders={
     Authorization:'Bearer '+process.env.GITHUB_TOKEN,
@@ -104,7 +113,7 @@ module.exports=async function handler(req,res){
     'X-GitHub-Api-Version':'2022-11-28'
   };
   const runsResponse=await fetch(
-    'https://api.github.com/repos/'+run.repo+'/actions/workflows/'+encodeURIComponent(run.workflow)+'/runs?branch='+encodeURIComponent(run.ref)+'&per_page=10',
+    'https://api.github.com/repos/'+run.repo+'/actions/workflows/'+encodeURIComponent(run.workflow)+'/runs?branch='+encodeURIComponent(ref)+'&per_page=10',
     {headers:githubHeaders}
   );
   if(!runsResponse.ok){
@@ -129,7 +138,7 @@ module.exports=async function handler(req,res){
     return;
   }
 
-  const dispatchBody={ref:run.ref};
+  const dispatchBody={ref};
   if(projectId==='state') dispatchBody.inputs={suite,record_environment:recordEnvironment};
   const response=await fetch(
     'https://api.github.com/repos/'+run.repo+'/actions/workflows/'+encodeURIComponent(run.workflow)+'/dispatches',
@@ -152,7 +161,7 @@ module.exports=async function handler(req,res){
     project:projectId,
     label:run.label,
     button_label:run.button_label,
-    ref:run.ref,
+    ref,
     paid_model_calls:run.paid_model_calls,
     estimated_cost:info.estimated_cost,
     suite,
@@ -162,4 +171,4 @@ module.exports=async function handler(req,res){
   });
 };
 
-module.exports._test={RUNS,runInfo,RUN_COOLDOWN_MS};
+module.exports._test={RUNS,runRef,runInfo,RUN_COOLDOWN_MS};
