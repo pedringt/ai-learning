@@ -38,7 +38,7 @@
       }
     },
     {
-      id:'narc',name:'NARC',description:'Workplace-surveillance satire game with branching consequences.',repo:'pedringt/narc',branch:'main',
+      id:'narc',name:'NARC',stageLabel:'In progress',description:'Workplace-surveillance satire game with branching consequences.',repo:'pedringt/narc',branch:'main',
       focus:'Make the first playthrough feel like a coherent workplace simulation rather than a stack of mechanics.',
       evidence:['First-run playtest','Branch consistency','Confusing choices','Replayable endings'],
       nextDecision:'Decide whether the first-play flow is clear enough before adding more branches and mechanics.',
@@ -1182,7 +1182,7 @@
   }
   function loadingCardMarkup(project,active){
     return '<button class="project-switcher-item '+(active?'active':'')+'" data-kind="unknown" data-project="'+esc(project.id)+'" type="button" aria-pressed="'+(active?'true':'false')+'" aria-busy="true">'+
-      '<span class="project-switcher-main"><strong>'+esc(project.name)+'</strong><span>Checking project health…</span></span>'+
+      '<span class="project-switcher-main"><strong>'+esc(project.name)+(project.stageLabel?' · '+esc(project.stageLabel):'')+'</strong><span>Checking project health…</span></span>'+
       '<span class="status-pill unknown">Checking</span></button>';
   }
   function cardMarkup(data,active){
@@ -1192,7 +1192,7 @@
       ?'Checking project health…'
       :(status.kind==='good'?'No current product-quality action':attention.title);
     return '<button class="project-switcher-item '+(active?'active':'')+'" data-kind="'+esc(status.kind)+'" data-project="'+esc(data.project.id)+'" type="button" aria-pressed="'+(active?'true':'false')+'">'+
-      '<span class="project-switcher-main"><strong>'+esc(data.project.name)+'</strong><span>'+esc(signal||'No current issue')+'</span></span>'+
+      '<span class="project-switcher-main"><strong>'+esc(data.project.name)+(data.project.stageLabel?' · '+esc(data.project.stageLabel):'')+'</strong><span>'+esc(signal||'No current issue')+'</span></span>'+
       '<span class="status-pill '+esc(status.key)+'">'+esc(status.label)+'</span></button>';
   }
   function evalSuiteLabel(run){
@@ -1285,7 +1285,7 @@
     const p=data.project,d=data.delivery,s=data.staging,q=data.quality,externalQ=data.externalQuality,platform=data.platform,run=data.runInfo,activity=data.activity;
     const pending=pendingSet(data);
     doc.getElementById('detailTitle').textContent=p.name;
-    doc.getElementById('detailCopy').textContent=p.description;
+    doc.getElementById('detailCopy').textContent=(p.stageLabel?p.stageLabel+' · ':'')+p.description;
     const detailIcon=doc.getElementById('detailIcon');
     if(detailIcon)detailIcon.textContent=(p.name||'?').slice(0,1).toUpperCase();
     const detailHeaderStatus=doc.getElementById('detailHeaderStatus');
