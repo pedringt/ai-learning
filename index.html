@@ -502,22 +502,11 @@ body.v88-dark .home-state-feature{box-shadow:none}body.v88-dark .home-state-acti
 @media(max-width:900px){.home-feature-state-led{grid-template-columns:1fr}.home-feature-stack-right{grid-template-columns:1fr 1fr;grid-template-rows:none}}
 @media(max-width:760px){.home-feature-stack-right,.applied-featured-three{grid-template-columns:1fr!important}.applied-featured-three .applied-major:first-child{grid-column:auto}.home-feature-card,.home-feature-state-anchor{padding:21px}.home-feature-state-anchor h2{font-size:34px;margin-bottom:11px}.home-state-button-row{width:100%}.home-state-button{flex:1 1 auto}}
 
-/* Oct 2 portfolio feedback: tighter featured card + skimmable Learning Library */
-.learning-start-here{display:grid;grid-template-columns:minmax(150px,.8fr) repeat(3,minmax(0,1fr));gap:10px;align-items:stretch;margin:18px 0 14px}
-.learning-start-here>div,.learning-start-here>a{padding:13px 14px;border:1px solid var(--border);border-radius:12px;background:var(--card)}
-.learning-start-here>div{display:flex;flex-direction:column;justify-content:center;background:var(--softp)}
-.learning-start-here>div span{color:var(--purple);font-size:10px;font-weight:900;letter-spacing:.08em;text-transform:uppercase}
-.learning-start-here>div strong{margin-top:4px;font-size:14px}
-.learning-start-here>a{display:flex;flex-direction:column;justify-content:center;text-decoration:none!important}
-.learning-start-here>a b{font-size:12.5px;color:var(--ink)}
-.learning-start-here>a small{margin-top:3px;color:var(--muted);font-size:11px}
-.learning-theme-map{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:0 0 20px}
-.learning-theme{padding:13px 14px;border-top:2px solid color-mix(in srgb,var(--purple) 35%,var(--border));background:color-mix(in srgb,var(--soft) 55%,transparent)}
-.learning-theme>strong{display:block;margin-bottom:8px;font-size:12px}
-.learning-theme>div{display:flex;flex-wrap:wrap;gap:6px}
-.learning-theme a{font-size:10.5px;font-weight:750;color:var(--purple);text-decoration:none}
-@media(max-width:800px){.learning-start-here{grid-template-columns:1fr 1fr}.learning-theme-map{grid-template-columns:1fr 1fr}}
-@media(max-width:520px){.learning-start-here,.learning-theme-map{grid-template-columns:1fr}}
+/* Oct 2 portfolio feedback: tighter featured card + calmer Learning Library */
+.learning-related-references{margin-top:24px}
+.learning-reference-links{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:8px}
+.learning-reference-links a{display:inline-flex;align-items:center;justify-content:center;padding:9px 12px;border:1px solid var(--border);border-radius:10px;background:var(--card);color:var(--purple);font-size:12px;font-weight:800;text-decoration:none;white-space:nowrap}
+@media(max-width:700px){.learning-reference-links{justify-content:flex-start}}
 
 </style><script defer src="site-environment.js"></script>
 </head>
@@ -623,28 +612,13 @@ body.v88-dark .learning-how-note strong{color:#f5f2fb!important}
 </section>
 <section class="view" data-page="learn" id="learn">
 <div class="hero learning-hero page-intro">
-<div class="eyebrow">Reusable resources</div>
-<h2 aria-level="1" class="route-title" role="heading">AI product delivery resources I keep using across the work</h2>
-<p class="lead">This is a working map of the product questions, frameworks, and technical concepts that keep showing up across the projects. I use it as practical delivery support: to scope work, explain tradeoffs, test behavior, and decide where to go deeper.</p>
-<p style="margin:14px 0 0;font-size:13px;color:var(--muted)">Start with <a href="ai-durable-knowledge.html" target="_blank" rel="noopener" style="font-weight:750;text-decoration:none">Durable AI Knowledge</a> for principles, or <a href="ai-professional-edge.html" target="_blank" rel="noopener" style="font-weight:750;text-decoration:none">AI Professional Edge</a> for current patterns and vocabulary.</p>
+<div class="eyebrow">Learning Library</div>
+<h2 aria-level="1" class="route-title" role="heading">Resources for making better AI product decisions</h2>
+<p class="lead">A working collection of the concepts, frameworks, and references I use across discovery, product design, evaluation, and delivery.</p>
 </div>
-<div class="band"><h3 style="margin:0 0 6px">How I think about the work</h3><p style="margin:0;color:var(--muted)">Understand the problem → decide whether AI belongs → design the human/AI workflow → test the behavior → get it adopted → prove value → improve it.</p></div>
 <section aria-label="Learning coverage areas" class="learning-stages">
-<div class="section-kicker"><span>Coverage map</span></div>
-<h2>Reusable resources by delivery question.</h2>
-<p class="section-lead learning-curriculum-intro">Technical fluency matters, but most of this map is about making better product decisions around AI and knowing which resource helps with discovery, delivery, governance, adoption, or evaluation.</p>
-<div class="learning-start-here" aria-label="Learning Library start here">
-  <div><span>Start here</span><strong>Three useful entry points</strong></div>
-  <a href="ai-durable-knowledge.html" target="_blank" rel="noopener"><b>Principles</b><small>Durable AI Knowledge</small></a>
-  <a href="#quality-evals"><b>Quality</b><small>Evals &amp; reliability</small></a>
-  <a href="#governance-human-control"><b>Control</b><small>Governance &amp; human authority</small></a>
-</div>
-<div class="learning-theme-map" aria-label="Browse Learning Library by theme">
-  <div class="learning-theme"><strong>Discover &amp; decide</strong><div><a href="#discovery-workflows">Discovery</a><a href="#product-strategy">Product judgment</a></div></div>
-  <div class="learning-theme"><strong>Build &amp; govern</strong><div><a href="#ai-foundations">Technical fluency</a><a href="#governance-human-control">Human control</a><a href="#ai-ux-workflow-design">AI UX</a></div></div>
-  <div class="learning-theme"><strong>Test &amp; improve</strong><div><a href="#quality-evals">Quality &amp; evals</a><a href="#measurement-business">Measurement</a></div></div>
-  <div class="learning-theme"><strong>Deliver &amp; advise</strong><div><a href="#implementation-adoption">Adoption</a><a href="#ai-consulting-client-work">Client work</a><a href="#ai-landscape-edge">Landscape</a></div></div>
-</div>
+<div class="section-kicker"><span>Browse the library</span></div>
+<h2>Explore by product question.</h2>
 
 <details class="learning-stage" id="discovery-workflows">
 <summary><span class="stage-num">01</span><span class="stage-main"><b>Business &amp; Workflow Discovery</b><small>Understand the business today before deciding what should change.</small><span class="topic-preview">stakeholders · current workflow · pain points · baselines · constraints · readiness</span></span></summary>
@@ -696,9 +670,17 @@ body.v88-dark .learning-how-note strong{color:#f5f2fb!important}
 <div class="stage-body"><div class="stage-group"><h3>Landscape use</h3><div class="learning-item"><p>I keep up with changes when they affect what is feasible, reliable, affordable, or practical to adopt. The goal is not to follow every launch. It is to know when new information should change a product recommendation.</p></div></div><div class="stage-group"><h3>Optional references</h3><div class="resource-row"><a class="resource-link" href="ai-professional-edge.html" target="_blank" rel="noopener">AI Professional Edge</a><a class="resource-link" href="https://academy.claude.com/" rel="noopener noreferrer" target="_blank">Anthropic Academy</a><a class="resource-link" href="https://academy.claude.com/all?category=fluency&amp;kind=tutorial" rel="noopener noreferrer" target="_blank">AI Fluency tutorials</a><a class="resource-link" href="https://docs.anthropic.com/" rel="noopener noreferrer" target="_blank">Anthropic docs</a></div></div></div>
 </details>
 </section>
-<section class="learning-reference-map" aria-label="AI Business Solutions Map reference">
-<div><span class="reference-label">Reference map</span><h3>AI Business Solutions Map</h3><p>A reference for where businesses are applying AI beyond chatbots, and the recurring product patterns underneath those use cases.</p></div>
-<a href="ai-business-solutions-map.html" target="_blank" rel="noopener noreferrer">Open the map →</a>
+<section class="learning-reference-map learning-related-references" aria-label="Related references">
+<div>
+  <span class="reference-label">Related references</span>
+  <h3>Deeper and current-reference material</h3>
+  <p>Use these when you want the durable principles, current AI landscape, or a broader map of business use cases.</p>
+</div>
+<div class="learning-reference-links">
+  <a href="ai-durable-knowledge.html" target="_blank" rel="noopener noreferrer">Durable AI Knowledge →</a>
+  <a href="ai-professional-edge.html" target="_blank" rel="noopener noreferrer">AI Professional Edge →</a>
+  <a href="ai-business-solutions-map.html" target="_blank" rel="noopener noreferrer">AI Business Solutions Map →</a>
+</div>
 </section>
 <section aria-labelledby="building-next-heading" class="learning-next">
 <div class="section-kicker"><span>How I use the map</span></div>
@@ -708,7 +690,7 @@ body.v88-dark .learning-how-note strong{color:#f5f2fb!important}
 </section>
 </section>
 
-<section class="view" data-page="portfolio" id="portfolio"><header class="page-intro"><div class="eyebrow">Applied Work</div><h2 class="section-title">Three products, three different AI product problems</h2><p class="section-lead">State tests maintained project truth, Tastemake tests editable personalization, and Project Health tests how teams interpret quality and delivery signals. Supporting work shows the discovery, debugging, governance, and architecture decisions around them. Across all of them, I’m most interested in what happens after the demo works: whether the product still holds up under real use.</p></header>
+<section class="view" data-page="portfolio" id="portfolio"><header class="page-intro"><div class="eyebrow">Applied Work</div><h2 class="section-title">Three products, three different AI product problems</h2><p class="section-lead">State tests maintained project truth, Tastemake tests editable personalization, and Project Health tests how teams interpret quality and delivery signals. Supporting work shows the discovery, debugging, governance, and architecture decisions around them. Across all of this work, I keep coming back to the same question: what does the product need to make AI behavior understandable, correctable, and trustworthy?</p></header>
 <div class="section-kicker applied-group-kicker"><span>Featured work</span></div>
 <div class="applied-major-grid applied-featured-grid applied-featured-three">
 <div class="card applied-major applied-major-with-actions"><span class="tag">Flagship · Boundaries &amp; authority</span><h3><a class="applied-card-primary-link" href="implementation-context.html">State</a></h3><p class="card-intro">What should AI be allowed to decide? State keeps AI interpretation separate from human-approved project truth, with explicit rules for evidence, uncertainty, and authority.</p><div class="applied-card-actions"><a href="https://state.contextswitch.tech/" data-state-app-link target="_blank" rel="noopener noreferrer">Open State →</a><a href="implementation-context.html">Case study →</a></div></div>
