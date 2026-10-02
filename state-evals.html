@@ -102,7 +102,7 @@
   <main class="shell">
     <div class="topbar">
       <div class="brand">Context Switch <span style="color:var(--muted)">/ State evals</span></div>
-      <div class="actions"><span class="disabled-action" tabindex="0" aria-describedby="runEvalsDisabledReason"><button class="button" id="runEvalsButton" type="button" disabled aria-disabled="true">Run AI evals</button><span class="disabled-action-tooltip" id="runEvalsDisabledReason" role="tooltip">When enabled, this runs the real State AI eval suite and records aggregate results in Project Health. Public runs are disabled because they make paid model calls and could change the published quality history.</span></span><a class="button" href="/project-health?project=state&tab=ai-quality">Back to Project Health</a></div>
+      <div class="actions"><a class="button primary" href="/project-health?project=state&tab=ai-quality">Run AI evals in Project Health</a><a class="button" href="/project-health?project=state&tab=ai-quality">Back to Project Health</a></div>
     </div>
 
     <section class="hero">
@@ -118,7 +118,7 @@
       </div>
     </section>
 
-    <div class="note"><strong>Synthetic controlled scenarios.</strong> These cases are deliberately constructed test data, not customer or private project content. State records aggregate run metrics and, for failed controlled scenarios, limited scenario IDs and pass/fail metadata. Raw production content and full model transcripts are not published here.</div>
+    <div class="note"><strong>Read-only details.</strong> Run controlled AI evals from Project Health, where paid-model confirmation, one active run at a time, and the cooldown are enforced. These cases are deliberately constructed test data, not customer or private project content. State records aggregate run metrics and, for failed controlled scenarios, limited scenario IDs and pass/fail metadata. Raw production content and full model transcripts are not published here.</div>
 
     <section class="summary-grid" aria-label="Latest eval summaries">
       <div class="summary-card" id="reviewSummary"><strong>Update understanding</strong><div class="score">Loading…</div><p>Checking the latest recorded run.</p></div>
