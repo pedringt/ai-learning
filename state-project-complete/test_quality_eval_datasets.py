@@ -1,7 +1,7 @@
 import unittest
 
 from eval.ask_quality_scenarios import SCENARIOS as ASK_SCENARIOS, AskQualityScenario
-from eval.quality_harness import ReviewQualityResult, score_ask_answer
+from eval.quality_harness import ReviewQualityResult, score_ask_answer, _new_test_connection, _close, _observed_review_outcome
 from ask_service import _grounding_rules
 from eval.review_interpretation_scenarios import SCENARIOS as REVIEW_SCENARIOS
 
@@ -54,6 +54,39 @@ class QualityEvalDatasetTests(unittest.TestCase):
             proposed_state_text="Slack is approved for #product and #support. Other channels remain under review.",
         )
         self.assertTrue(result.interpretation_correct)
+
+
+    def test_ambiguity_scenario_accepts_state_at_risk(self):
+        scenario = next(s for s in REVIEW_SCENARIOS if s.id == "review_ambiguity_opens_question")
+        self.assertIn("open_question", scenario.allowed_actions)
+        self.assertIn("state_at_risk", scenario.allowed_actions)
+        result = ReviewQualityResult(
+            scenario=scenario,
+            review_recommended=True,
+            observed_action="state_at_risk",
+            processing_status="succeeded",
+        )
+        self.assertTrue(result.interpretation_correct)
+        self.assertTrue(result.passed)
+
+    def test_state_at_risk_review_is_not_collapsed_to_preserve_only(self):
+        connection = _new_test_connection()
+        try:
+            connection.execute(
+                "INSERT INTO current_state_items(id, topic, statement, version) VALUES ('risk-state', 'scope', 'Billing actions remain outside the first implementation.', 1)"
+            )
+            connection.execute(
+                "INSERT INTO review_issues(id, review_type, decision_question, why_consequential, status) VALUES ('risk-review', 'state_at_risk', 'Is billing draft activity happening despite the recorded scope?', 'Controlled ambiguity case', 'open')"
+            )
+            connection.execute(
+                "INSERT INTO review_state_items(review_id, state_item_id) VALUES ('risk-review', 'risk-state')"
+            )
+            connection.commit()
+            observed, proposed = _observed_review_outcome(connection, ['risk-review'])
+            self.assertEqual(observed, "state_at_risk")
+            self.assertEqual(proposed, "")
+        finally:
+            _close(connection)
 
     def test_authority_eval_accepts_unresolved_review_wording(self):
         scenario = next(s for s in ASK_SCENARIOS if s.id == "ask_conflicting_evidence")

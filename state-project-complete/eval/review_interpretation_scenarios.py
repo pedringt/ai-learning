@@ -19,6 +19,7 @@ ExpectedAction = Literal[
     "answer_question_and_update_state",
     "update_state_and_open_question",
     "open_question",
+    "state_at_risk",
     "preserve_evidence_only",
 ]
 Severity = Literal["low", "medium", "high"]
@@ -88,6 +89,7 @@ SCENARIOS = (
         evidence="Support thinks billing drafts may already be happening, but nobody could confirm whether that workflow is actually enabled.",
         current_state=(("scope", "Billing actions remain outside the first implementation."),),
         expected_action="open_question",
+        allowed_actions=("open_question", "state_at_risk"),
         should_open_question=True,
         must_preserve_uncertainty=True,
         severity="high",
