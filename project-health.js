@@ -1623,8 +1623,8 @@
         : '<div class="mock-issue-row"><span class="mock-issue-dot" style="background:#16a36f"></span><div><strong>Nothing needs attention right now</strong><p>No current incident or product-quality action is open.</p></div><span class="mock-issue-meta">Healthy</span></div>';
 
       mockDashboard.innerHTML=
-        '<section class="mock-dashboard-section mock-attention-banner">'+
-          '<div class="mock-attention-icon">!</div><div class="mock-attention-copy"><h3>What needs attention</h3><p>'+esc(actionable.length?(actionable.length+' issue'+(actionable.length===1?'':'s')+' needs your review.'):'Everything looks good right now.')+'</p>'+attentionHtml+'</div>'+
+        '<section class="mock-dashboard-section mock-attention-banner '+(actionable.length?'has-attention':'is-healthy')+'">'+
+          '<div class="mock-attention-icon">'+(actionable.length?'!':'✓')+'</div><div class="mock-attention-copy"><h3>'+(actionable.length?'What needs attention':'Current status')+'</h3><p>'+esc(actionable.length?(actionable.length+' issue'+(actionable.length===1?'':'s')+' needs your review.'):'Everything looks healthy right now.')+'</p>'+attentionHtml+'</div>'+
           '<button class="button small" type="button" data-tab-target="ai-quality">View all issues →</button>'+
         '</section>'+
         '<div class="mock-kpi-grid">'+kpis+'</div>'+
