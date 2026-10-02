@@ -475,13 +475,17 @@ body.v88-dark .home-state-feature{box-shadow:none}body.v88-dark .home-state-acti
 .home-feature-stack-right{display:grid;grid-template-rows:repeat(2,minmax(0,1fr));gap:16px}
 .home-feature-card{display:flex;flex-direction:column;justify-content:space-between;gap:18px;min-height:0;padding:22px 24px;border:1px solid var(--border);border-radius:20px;background:var(--card)}
 .home-feature-card>div:first-child{max-width:none}.home-feature-card h2{margin:5px 0 8px;font-size:24px;line-height:1.15}.home-feature-card p{margin:0;color:var(--muted);font-size:13.5px;line-height:1.55}
-.home-feature-state-anchor{padding:26px 28px;background:linear-gradient(180deg,color-mix(in srgb,var(--softp) 62%,var(--card)),var(--card));border-color:color-mix(in srgb,var(--purple) 30%,var(--border));box-shadow:0 10px 26px color-mix(in srgb,var(--purple) 8%,transparent);display:flex;flex-direction:column;align-self:start}
+.home-feature-state-anchor{padding:26px 28px;background:linear-gradient(180deg,color-mix(in srgb,var(--softp) 62%,var(--card)),var(--card));border-color:color-mix(in srgb,var(--purple) 30%,var(--border));box-shadow:0 10px 26px color-mix(in srgb,var(--purple) 8%,transparent);display:flex;flex-direction:column;height:100%}
 .home-feature-state-anchor h2{font-size:54px;margin:5px 0 14px}.home-feature-state-anchor p{max-width:690px;font-size:14.5px;line-height:1.65}
 .home-state-kicker{flex:0 0 auto}
-.home-state-content{display:flex;flex-direction:column;align-items:flex-start;gap:0}
+.home-state-content{display:flex;flex:1 1 auto;flex-direction:column;align-items:flex-start;gap:0}
+.home-state-proof{display:grid;gap:8px;width:100%;margin-top:22px;padding:16px 0;border-top:1px solid color-mix(in srgb,var(--purple) 18%,var(--border));border-bottom:1px solid color-mix(in srgb,var(--purple) 18%,var(--border))}
+.home-state-proof div{display:grid;grid-template-columns:145px minmax(0,1fr);gap:14px;align-items:baseline}
+.home-state-proof strong{font-size:11px;color:var(--ink);letter-spacing:.01em}
+.home-state-proof span{font-size:12px;color:var(--muted);line-height:1.45}
 .home-state-signals{display:flex;flex-wrap:wrap;gap:8px;margin-top:18px}
 .home-state-signals span{padding:7px 10px;border:1px solid color-mix(in srgb,var(--purple) 24%,var(--border));border-radius:999px;background:color-mix(in srgb,var(--softp) 52%,var(--card));color:var(--muted);font-size:11.5px;font-weight:800;line-height:1}
-.home-state-button-row{display:flex;flex-wrap:wrap;gap:10px;margin-top:18px}
+.home-state-button-row{display:flex;flex-wrap:wrap;gap:10px;margin-top:auto;padding-top:20px}
 .home-state-button{display:inline-flex;align-items:center;justify-content:center;padding:10px 14px;border-radius:11px;font-size:12px;font-weight:850;line-height:1.2;text-decoration:none!important}
 .home-state-button-primary{background:var(--purple);color:#fff!important;border:1px solid var(--purple)}
 .home-state-button-secondary{background:var(--card);color:var(--purple)!important;border:1px solid color-mix(in srgb,var(--purple) 30%,var(--border))}
@@ -500,7 +504,7 @@ body.v88-dark .home-state-feature{box-shadow:none}body.v88-dark .home-state-acti
 .applied-secondary-compact .nav-card::after{margin-top:10px}
 @media(max-width:980px){.applied-featured-three{grid-template-columns:1fr 1fr!important}.applied-featured-three .applied-major:first-child{grid-column:1/-1}}
 @media(max-width:900px){.home-feature-state-led{grid-template-columns:1fr}.home-feature-stack-right{grid-template-columns:1fr 1fr;grid-template-rows:none}}
-@media(max-width:760px){.home-feature-stack-right,.applied-featured-three{grid-template-columns:1fr!important}.applied-featured-three .applied-major:first-child{grid-column:auto}.home-feature-card,.home-feature-state-anchor{padding:21px}.home-feature-state-anchor h2{font-size:34px;margin-bottom:11px}.home-state-button-row{width:100%}.home-state-button{flex:1 1 auto}}
+@media(max-width:760px){.home-feature-stack-right,.applied-featured-three{grid-template-columns:1fr!important}.applied-featured-three .applied-major:first-child{grid-column:auto}.home-feature-card,.home-feature-state-anchor{padding:21px}.home-feature-state-anchor h2{font-size:34px;margin-bottom:11px}.home-state-proof div{grid-template-columns:1fr;gap:2px}.home-state-button-row{width:100%}.home-state-button{flex:1 1 auto}}
 
 /* Oct 2 portfolio feedback: tighter featured card + calmer Learning Library */
 .learning-related-references{margin-top:24px}
@@ -585,6 +589,11 @@ body.v88-dark .learning-how-note strong{color:#f5f2fb!important}
   <div class="home-state-content">
     <h2>State</h2>
     <p>AI interprets project evidence, software enforces the rules, and people decide what becomes Current State so guesses and stale information do not quietly become fact.</p>
+    <div class="home-state-proof" aria-label="State product proof points">
+      <div><strong>Maintained truth</strong><span>Evidence → Review → Current State, with human authorization at the boundary.</span></div>
+      <div><strong>Grounded answers</strong><span>Ask uses bounded project context and keeps unresolved information distinct.</span></div>
+      <div><strong>Quality loop</strong><span>Scenario evals and Project Health surface failures without hiding them behind one score.</span></div>
+    </div>
     <div class="home-state-signals" aria-label="What State demonstrates">
       <span>Human-in-the-loop</span>
       <span>AI quality &amp; evals</span>
@@ -608,7 +617,7 @@ body.v88-dark .learning-how-note strong{color:#f5f2fb!important}
 </div>
 </div>
 <a class="home-see-all" href="#portfolio">See all applied work →</a>
-</div><section class="home-principle" aria-labelledby="home-principle-heading"><div class="section-kicker"><span>How I work with AI</span></div><h2 id="home-principle-heading">Boundaries, feedback, and evidence.</h2><p>I use AI where it helps, but automation is not the goal. The more a system can decide or affect, the clearer its limits, correction paths, and evidence need to be. People should stay involved where their judgment actually matters.</p></section>
+</div><section class="home-principle" aria-labelledby="home-principle-heading"><div class="section-kicker"><span>How I work with AI</span></div><h2 id="home-principle-heading">Boundaries, feedback, and evidence.</h2><p>I’m optimistic about where AI genuinely helps, but skeptical of claims that outrun the evidence. I use it selectively, with clear limits and correction paths, and keep people involved where judgment actually matters.</p></section>
 </section>
 <section class="view" data-page="learn" id="learn">
 <div class="hero learning-hero page-intro">
