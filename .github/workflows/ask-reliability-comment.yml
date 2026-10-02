@@ -1,0 +1,135 @@
+name: State Ask Reliability Runner
+
+on:
+  issue_comment:
+    types: [created]
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: state-ask-reliability
+  cancel-in-progress: false
+
+jobs:
+  run:
+    if: >-
+      github.event.issue.number == 409 &&
+      github.event.issue.pull_request == null &&
+      github.event.comment.body == '/run-ask-reliability' &&
+      (github.event.comment.author_association == 'OWNER' ||
+       github.event.comment.author_association == 'MEMBER' ||
+       github.event.comment.author_association == 'COLLABORATOR')
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      REPORT_PATH: /tmp/ask-reliability.json
+    steps:
+      - name: Check out staging
+        uses: actions/checkout@v4
+        with:
+          ref: staging
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install eval dependencies
+        run: pip install -r state-project-complete/requirements.txt
+
+      - name: Record staging revision
+        id: revision
+        run: echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
+      - name: Dry-run paid call plan
+        run: python state-project-complete/eval/run_ask_reliability.py --repeats 2 --dry-run
+
+      - name: Run Ask reliability eval
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          CLAUDE_MODEL: ${{ vars.CLAUDE_MODEL }}
+        run: |
+          if [ -z "${ANTHROPIC_API_KEY:-}" ]; then
+            echo "::error::ANTHROPIC_API_KEY is not configured for GitHub Actions."
+            exit 1
+          fi
+          python state-project-complete/eval/run_ask_reliability.py \
+            --repeats 2 \
+            --json "$REPORT_PATH"
+
+      - name: Build issue summary
+        if: success()
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          report = json.loads(Path(os.environ["REPORT_PATH"]).read_text())
+          s = report["summary"]
+
+          def pct(value):
+              return "n/a" if value is None else f"{value:.1%}"
+
+          lines = [
+              "## Ask reliability eval complete",
+              "",
+              f"Staging revision: `{os.environ['STAGING_SHA']}`",
+              "",
+              f"- Fresh runs: **{s['runs']}**",
+              f"- First-attempt contract-valid: **{pct(s['first_attempt_valid_rate'])}**",
+              f"- Contract failures: **{pct(s['contract_failure_rate'])}**",
+              f"- Retry recovery: **{pct(s['retry_recovery_rate'])}**",
+              f"- Unrecovered failures: **{pct(s['unrecovered_failure_rate'])}**",
+              f"- Provider errors: **{pct(s['provider_error_rate'])}**",
+              f"- Real model calls: **{s['model_calls']}** (hard cap for this workflow: 20)",
+              "",
+              f"Workflow run: {os.environ['RUN_URL']}",
+              "",
+              "The JSON artifact contains reliability metadata and error summaries only; it does not store prompt or answer text.",
+          ]
+          Path("/tmp/ask-reliability-comment.md").write_text("\n".join(lines))
+          PY
+        env:
+          STAGING_SHA: ${{ steps.revision.outputs.sha }}
+          RUN_URL: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
+      - name: Upload reliability report
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ask-reliability-${{ github.run_id }}
+          path: /tmp/ask-reliability.json
+          retention-days: 14
+          if-no-files-found: error
+
+      - name: Comment result on runner issue
+        if: always()
+        uses: actions/github-script@v7
+        env:
+          RUN_URL: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        with:
+          script: |
+            const fs = require('fs');
+            const summaryPath = '/tmp/ask-reliability-comment.md';
+            let body;
+            if (fs.existsSync(summaryPath)) {
+              body = fs.readFileSync(summaryPath, 'utf8');
+            } else {
+              body = [
+                '## Ask reliability eval did not complete',
+                '',
+                `See the workflow run for the failure details: ${process.env.RUN_URL}`,
+                '',
+                'No successful reliability report was produced.'
+              ].join('\n');
+            }
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body,
+            });
