@@ -239,14 +239,10 @@ def test_both_providers_keep_partial_answers_and_authority_disagreements_bounded
         prompt = _prompt(provider_cls()).lower()
         assert 'lower-authority disagreement' in prompt
         assert 'partial answers leave broader questions open' in prompt
-        assert 'do not widen scope' in prompt
-        assert 'settle the whole semantic scope' in prompt
-        assert 'partial progress' in prompt
-        assert 'scoped approval' in prompt
-        assert 'must not include the broader question id' in prompt
-        assert '#product' in prompt
-        assert '#support' in prompt
+        assert 'resolves_question_ids requires the whole question answered' in prompt
+        assert '#product/#support' in prompt
         assert 'other channels remain under review' in prompt
+        assert 'all-channels question stays open' in prompt
 
 
 def test_both_providers_supersede_stale_pending_proposals_when_authoritative_evidence_corrects_them():
