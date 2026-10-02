@@ -44,15 +44,12 @@ function runInfo(projectId){
   const run=RUNS[projectId];
   if(!run) return null;
   const costEstimate=run.costEstimateEnv?String(process.env[run.costEstimateEnv]||'').trim():null;
-  const publicPaidRunDisabled=projectId==='state'&&run.paid_model_calls;
   return {
     configured:!!(process.env.GITHUB_TOKEN&&(!run.paid_model_calls||costEstimate)),
-    can_run_here:!publicPaidRunDisabled,
-    protection:publicPaidRunDisabled
-      ?'Owner-only in the live portfolio. Public paid-model runs are disabled.'
-      :(run.paid_model_calls
-        ?'Paid-model confirmation, one active run at a time, and a 10-minute cooldown'
-        :'Public run with one active run at a time and a 10-minute cooldown'),
+    can_run_here:true,
+    protection:run.paid_model_calls
+      ?'Paid-model confirmation, one active run at a time, and a 10-minute cooldown'
+      :'Public run with one active run at a time and a 10-minute cooldown',
     project:projectId,
     label:run.label,
     button_label:run.button_label,
@@ -86,11 +83,6 @@ module.exports=async function handler(req,res){
   const run=RUNS[projectId];
   const info=runInfo(projectId);
   if(!run||!info){res.status(404).json({detail:'No runnable workflow is configured for this project yet.'});return;}
-
-  if(info.can_run_here===false){
-    res.status(403).json({detail:'Paid State AI eval runs are owner-only in the live portfolio. Public runs are disabled to prevent model spend and changes to published quality history.'});
-    return;
-  }
 
   if(!info.configured){
     res.status(503).json({detail:'Dashboard-run credentials'+(run.paid_model_calls?' and cost estimate':'')+' are not configured yet.'});
