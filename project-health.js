@@ -1327,9 +1327,10 @@
     }
     if(headerRunChecksButton){
       const activeEvalRun=data.qualityRun;
-      headerRunChecksButton.hidden=!activeEvalRun;
-      headerRunChecksButton.disabled=true;
-      headerRunChecksButton.textContent=activeEvalRun?'Running…':'';
+      const canRun=!!run?.configured&&run?.can_run_here!==false;
+      headerRunChecksButton.hidden=!canRun&&!activeEvalRun;
+      headerRunChecksButton.disabled=!!activeEvalRun||!canRun;
+      headerRunChecksButton.textContent=activeEvalRun?'Running…':(run?.button_label||'Run AI evals');
       headerRunChecksButton.title=activeEvalRun?'Quality checks are running. Open Quality for details.':'';
       headerRunChecksButton.classList.remove('primary');
       headerRunChecksButton.style.order='2';
@@ -1698,8 +1699,6 @@
           '<button class="button small suite-action" type="button" data-run-checks="ask"><span class="suite-action-copy"><strong>Answer quality</strong><span>Grounding, uncertainty, and decision authority in answers.</span></span><span class="suite-action-run">Run →</span></button>'+
           '</div></div>'+
           '<p class="footnote">Estimated model cost: '+esc(run.estimated_cost||'not configured')+'. You will confirm before any paid run starts.</p>';
-      }else if(run?.can_run_here===false&&!activeEvalRun){
-        qualityHtml+='<p class="footnote">Live State AI eval runs are owner-only. Public triggering is disabled because the suite makes paid model calls and updates the recorded quality history.</p>';
       }else if(run&&!activeEvalRun){
         qualityHtml+='<p class="footnote">Running AI evals from the dashboard still needs setup. Existing recorded results can still appear here.</p>';
       }
