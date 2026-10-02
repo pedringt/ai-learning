@@ -1187,7 +1187,10 @@
   }
   function cardMarkup(data,active){
     const status=projectStatus(data),pending=pendingSet(data);
-    const signal=pending.size?'Checking project health…':overallAttention(data).title;
+    const attention=overallAttention(data);
+    const signal=pending.size
+      ?'Checking project health…'
+      :(status.kind==='good'?'No current product-quality action':attention.title);
     return '<button class="project-switcher-item '+(active?'active':'')+'" data-kind="'+esc(status.kind)+'" data-project="'+esc(data.project.id)+'" type="button" aria-pressed="'+(active?'true':'false')+'">'+
       '<span class="project-switcher-main"><strong>'+esc(data.project.name)+'</strong><span>'+esc(signal||'No current issue')+'</span></span>'+
       '<span class="status-pill '+esc(status.key)+'">'+esc(status.label)+'</span></button>';
