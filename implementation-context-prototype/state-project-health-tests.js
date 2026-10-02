@@ -655,7 +655,7 @@ assert.doesNotMatch(projectHealthSource,/Check update understanding/);
 assert.doesNotMatch(projectHealthSource,/Check answer quality/);
 assert.match(projectHealthSource,/Starting checks/);
 assert.doesNotMatch(projectHealthSource,/control:'evals'/);
-assert.match(projectHealthSource,/checks automatically/);
+assert.match(projectHealthSource,/Previous results remain visible until the new run finishes/);
 assert.match(projectHealthSource,/project-switcher-item/);
 assert.match(projectHealthSource,/data-summary-filter/);
 assert.match(projectHealthSource,/unreviewedIncidents/);
