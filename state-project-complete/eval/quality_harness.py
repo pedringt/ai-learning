@@ -146,6 +146,10 @@ def _observed_review_outcome(connection, review_ids: list[str]) -> tuple[str, st
         f"SELECT COUNT(*) AS n FROM review_questions WHERE review_id IN ({placeholders})",
         tuple(review_ids),
     ).fetchone()["n"]
+    risk_reviews = connection.execute(
+        f"SELECT COUNT(*) AS n FROM review_issues WHERE id IN ({placeholders}) AND review_type='state_at_risk'",
+        tuple(review_ids),
+    ).fetchone()["n"]
 
     if state_changes and linked_questions:
         return "answer_question_and_update_state", proposed_state_text
@@ -157,6 +161,8 @@ def _observed_review_outcome(connection, review_ids: list[str]) -> tuple[str, st
         return "open_question", ""
     if linked_questions:
         return "answer_question", ""
+    if risk_reviews:
+        return "state_at_risk", ""
     return "preserve_evidence_only", ""
 
 
