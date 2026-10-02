@@ -1958,7 +1958,8 @@
     if(id==='review_direct_reversal')return 'Risk: stale Current State could remain active after authoritative evidence reverses it.';
     if(id==='review_question_answer_only')return 'Risk: the Question was handled, but the eval could not confirm that an optional State update stayed inside the evidence.';
     if(id==='review_unknown_not_false')return 'Risk: extra Review/Question burden for an uncertainty already represented in Current State; this is workflow noise rather than false truth.';
-    if(id==='review_ambiguity_opens_question')return 'Risk: ambiguous evidence could be treated as established truth instead of an explicit unknown.';
+    if(id==='review_ambiguity_opens_question'&&String(detail?.observed||'').includes('state_at_risk'))return 'State flagged the maintained scope as at risk. That is an accepted ambiguity outcome and should not be treated as ignored evidence.';
+    if(id==='review_ambiguity_opens_question')return 'Risk: ambiguous evidence was not surfaced through an accepted uncertainty path.';
     return 'Risk: controlled behavior differed from the product contract and needs scenario-level review.';
   }
   function previousEvalRun(quality,current){
