@@ -714,11 +714,14 @@
     }
     throw lastError;
   }
-  async function loadStateEvalBehavior(project){
+  function evalBehaviorBranch(project,environment='production'){
+    return environment==='staging'?(project.stagingBranch||project.branch):project.branch;
+  }
+  async function loadStateEvalBehavior(project,root){
     const paths=Array.isArray(project?.evalBehaviorPaths)?project.evalBehaviorPaths:[];
     if(!paths.length)return null;
     const headers={Accept:'application/vnd.github+json'};
-    const behaviorBranch=project.stagingBranch||project.branch;
+    const behaviorBranch=evalBehaviorBranch(project,pageEnvironment(root));
     const rows=await Promise.all(paths.map(path=>jsonFetch(githubApi('/repos/'+project.repo+'/commits?sha='+encodeURIComponent(behaviorBranch)+'&path='+encodeURIComponent(path)+'&per_page=1'),{headers,timeoutMs:6000}).catch(()=>[])));
     const commits=rows.flat().filter(Boolean);
     commits.sort((a,b)=>(dateMs(b?.commit?.committer?.date||b?.commit?.author?.date)||0)-(dateMs(a?.commit?.committer?.date||a?.commit?.author?.date)||0));
@@ -896,7 +899,7 @@
     ];
     if(project.id==='state'){
       core.push(run('Production backend',loadPlatformSignal(project,'production-render'),value=>{data.platform=mergePlatform(data.platform,value);}));
-      core.push(run('Quality behavior',loadStateEvalBehavior(project),value=>{data.qualityBehaviorUpdatedAt=value?.updatedAt||null;if(data.quality)data.quality.behaviorUpdatedAt=data.qualityBehaviorUpdatedAt;}));
+      core.push(run('Quality behavior',loadStateEvalBehavior(project,root),value=>{data.qualityBehaviorUpdatedAt=value?.updatedAt||null;if(data.quality)data.quality.behaviorUpdatedAt=data.qualityBehaviorUpdatedAt;}));
     }
     const qualityTask=project.quality==='state'
       ? run('Quality',loadStateQuality(root),value=>{data.quality=value;if(data.qualityBehaviorUpdatedAt)data.quality.behaviorUpdatedAt=data.qualityBehaviorUpdatedAt;})
@@ -2782,5 +2785,5 @@
     }
   }
 
-  return {PROJECTS,pageEnvironment,vercelFromStatus,deliveryHealth,commitTitle,githubCommitUrl,pullRequestNumber,githubPullRequestUrl,changeUrl,normalizeQuality,qualityAttention,externalQualityAttention,deliveryAttention,deliveryAttentionForData,infrastructureAttention,allAttentionSignals,attentionItems,overallAttention,productOpenItems,projectStatus,setupGaps,releaseReadiness,regressionSignal,recurringFailureSignal,operationalSignals,releaseRiskChecklist,healthConsistencyIssues,productionRuntime,operationalNextDecision,qualityFailureClassSummary,failureCheckCount,failureExplanation,activityTimelineItems,projectQualityLabel,evalScore,percent,shortSha,pendingSet,mergePlatform,emptyProjectData,safeExternalQualitySnapshot,serializeProjectData,hydrateProjectData,productNoteKey,loadProductNotes,saveProductNotes,loadProject,loadProjectDetails,infraCardLabel,neonConnectionDetail,analyticsConnectionValue,analyticsGapDetail,analyticsLabel,relativeAge,changedSinceVisit,meaningfulChanges,freshnessMeta,stateEvalContractStale,stateEvalBehaviorStale,stateEvalResultsStale,stateEvalStaleReason,trendText,activityReviewItems,progressText,quickProjectCheck,evalRunComplete,externalQualityRunComplete,qualityInvestigation,projectHandoff,init};
+  return {PROJECTS,pageEnvironment,evalBehaviorBranch,vercelFromStatus,deliveryHealth,commitTitle,githubCommitUrl,pullRequestNumber,githubPullRequestUrl,changeUrl,normalizeQuality,qualityAttention,externalQualityAttention,deliveryAttention,deliveryAttentionForData,infrastructureAttention,allAttentionSignals,attentionItems,overallAttention,productOpenItems,projectStatus,setupGaps,releaseReadiness,regressionSignal,recurringFailureSignal,operationalSignals,releaseRiskChecklist,healthConsistencyIssues,productionRuntime,operationalNextDecision,qualityFailureClassSummary,failureCheckCount,failureExplanation,activityTimelineItems,projectQualityLabel,evalScore,percent,shortSha,pendingSet,mergePlatform,emptyProjectData,safeExternalQualitySnapshot,serializeProjectData,hydrateProjectData,productNoteKey,loadProductNotes,saveProductNotes,loadProject,loadProjectDetails,infraCardLabel,neonConnectionDetail,analyticsConnectionValue,analyticsGapDetail,analyticsLabel,relativeAge,changedSinceVisit,meaningfulChanges,freshnessMeta,stateEvalContractStale,stateEvalBehaviorStale,stateEvalResultsStale,stateEvalStaleReason,trendText,activityReviewItems,progressText,quickProjectCheck,evalRunComplete,externalQualityRunComplete,qualityInvestigation,projectHandoff,init};
 });

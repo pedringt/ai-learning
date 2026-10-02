@@ -9,6 +9,8 @@ assert.strictEqual(H.pageEnvironment({location:{hostname:'ai-learning-git-stagin
 assert.strictEqual(H.pageEnvironment({location:{hostname:'ai-learning-b19hocddc-cairn10.vercel.app',search:''}}),'production');
 assert.strictEqual(H.pageEnvironment({location:{hostname:'www.contextswitch.tech',search:'?env=staging'}}),'staging');
 assert.strictEqual(H.pageEnvironment({location:{hostname:'www.authenticignorance.site'}}),'production');
+assert.strictEqual(H.evalBehaviorBranch(H.PROJECTS[0],'production'),'main');
+assert.strictEqual(H.evalBehaviorBranch(H.PROJECTS[0],'staging'),'staging');
 const priorToken=process.env.GITHUB_TOKEN;
 const priorCost=process.env.PROJECT_HEALTH_RUN_COST_ESTIMATE_STATE;
 process.env.GITHUB_TOKEN='test-token';
@@ -813,6 +815,8 @@ assert.match(evalContextDetails.detail,/scenarios: 10 → 12/);
 const workflowText=fs.readFileSync(require.resolve('../.github/workflows/question-review-live.yml'),'utf8');
 assert.match(workflowText,/suite:/);
 assert.match(workflowText,/record_environment:/);
+assert.match(workflowText,/github\.ref == 'refs\/heads\/main' \|\| github\.ref == 'refs\/heads\/staging'/);
+assert.match(workflowText,/github\.ref == 'refs\/heads\/staging' && inputs\.suite == 'all'/);
 assert.match(workflowText,/run_quality_evals\.py/);
 
 console.log('Project Health shell tests passed');
