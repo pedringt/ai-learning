@@ -1850,7 +1850,6 @@
       '</div>'+
       '<div class="delivery-environments">'+(rawPreviewFailure?'<div class="delivery-environment"><div class="delivery-environment-head"><div><strong>Production release</strong></div><span class="delivery-status good">Healthy</span></div><div class="delivery-meta"><span>The failed Vercel status on the referenced commit was a preview or superseded attempt, not an active production release failure.</span>'+(p.links?.vercel?'<span>'+githubLink('Open in Vercel ↗',p.links.vercel)+'</span>':'')+'</div></div>':environmentBlock('Latest production release attempt',d))+(s?environmentBlock('Staging release',s):'')+'</div>'+
       '<div class="quality-actions">'+prodInvestigate+checkInvestigate+'</div>';
-    const evalRunBanner=doc.getElementById('evalRunBanner');
     if(evalRunBanner)evalRunBanner.addEventListener('click',event=>{
       if(!event.target.closest?.('[data-open-running-quality]'))return;
       setActiveTab('ai-quality');
