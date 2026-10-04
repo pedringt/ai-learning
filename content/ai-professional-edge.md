@@ -122,114 +122,39 @@ These are not endorsements or a shopping list. They are useful examples of how c
 
 ---
 
-## Things I'm Watching
+## Watching
 
-### AI Discovery & AEO
-
-Answer Engine Optimization matters when AI systems act as a customer's research layer. The useful goal is not to game a chatbot; it is to make accurate, current, differentiating information easy for AI systems to find and understand.
-
-**Ask:** When an AI evaluates a product for a customer, what does it understand correctly and where does that understanding break down?
-
-A practical test:
-
-- ask realistic buyer questions
-- try multiple models and small wording variations
-- inspect the visible sources behind the answer
-- note what information is missing, stale, or ambiguous
-- rerun the same tests over time
-
-### Memory routing and context budgets
-
-Systems such as Jev-Mem point toward memory becoming more actively managed: deciding what to retrieve, how much to retrieve, and when more context stops being worth the cost.
-
-**Ask:** What deserves to enter context for this step, and what can stay outside it?
-
-### Voice and local or hybrid agents
-
-Realtime voice and local or hybrid execution are making latency, privacy, connectivity, and environment part of the product decision rather than implementation details.
-
-**Ask:** Does this job benefit enough from immediacy or local execution to justify a different architecture?
-
-### Persistent and shared bots
-
-Personal and team bots point toward a different product model: instead of opening a fresh chat each time, people may work with named AI roles that keep context, use assigned tools, and operate within defined permissions over time.
-
-**Ask:** If this bot became a long-running coworker, what should it remember, what should it forget, and when should it ask a person before acting?
+- **AI Discovery & AEO:** Can AI systems find and correctly understand the facts that matter when they research a product for a customer?
+- **Memory routing and context budgets:** Which information deserves to enter context for this step, and when does more context stop being worth the cost?
+- **Voice and local or hybrid agents:** When do latency, privacy, connectivity, or environment justify local or hybrid execution?
+- **Persistent and shared bots:** If an AI becomes a long-running coworker, what should it remember, forget, access, and ask before acting?
 
 ---
 
 ## Working Vocabulary
 
-These are the terms I still find useful enough to keep visible.
-
-### Bot
-
-A broad, informal term for AI set up to do a job. Some bots only respond to requests; others are more capable and persistent.
-
-### Agent
-
-A more specific kind of bot that can choose steps or tools to pursue a goal within defined permissions and stopping rules.
-
-### Agent harness
-
-The orchestration layer around a model that manages context, tools, state, and the flow of multi-step work.
-
-### Agent skill
-
-A reusable procedure that tells an agent how to do one kind of job, including the method, tools, checks, and expected output.
-
-### Context isolation
-
-Giving a subtask only the context it needs so unrelated history does not bias or clutter the work.
-
-### Compaction
-
-Compressing older context into a smaller summary so a long-running agent can keep working. Because that summary shapes future behavior, treat it as persisted state.
-
-### Execution boundary
-
-The boundary between what AI may interpret or decide and what trusted software or people may actually change. For consequential actions, prefer fail-closed controls: if permission or policy cannot be verified, block the action rather than assume it is safe.
-
-### Fan-out / fan-in
-
-Splitting one problem into focused parallel branches, then merging the results through a final synthesis or decision step.
-
-### Semantic layer
-
-Shared definitions and relationships that explain what business data means so people and AI use metrics consistently.
-
-### Trace / span
-
-A trace is the recorded end-to-end run. A span is one operation inside it, such as a model call, retrieval, or tool call.
-
-### Silent quality failure
-
-The software executes without an obvious technical error, but the AI still fails the user by misunderstanding the goal, choosing the wrong tool, or producing an unacceptable result.
-
-### Headless architecture
-
-A design where useful data, business logic, permissions, and actions can be accessed independently of the original user interface while the source system still owns the rules.
-
-### Behavioral canary
-
-A small set of critical eval cases run regularly to detect meaningful drift in AI behavior before a full regression suite is needed.
-
-### Blast radius
-
-The amount of harm a failure could cause before someone notices and stops it. A workflow with broader permissions, more users, or harder-to-reverse actions has a larger blast radius.
+- **Bot:** Broad term for AI set up to do a job. Some only respond; others are persistent and more capable.
+- **Agent:** AI that can choose steps or tools to pursue a goal within defined permissions and stopping rules.
+- **Agent harness:** The layer around a model that manages context, tools, state, and multi-step execution.
+- **Agent skill:** A reusable procedure for doing one kind of job, including method, tools, checks, and expected output.
+- **Context isolation:** Giving a subtask only the context it needs.
+- **Compaction:** Compressing older context so long-running work can continue; treat the summary as persisted state.
+- **Execution boundary:** The line between what AI may interpret or decide and what trusted software or people may actually change. For consequential actions, fail closed when permission or policy cannot be verified.
+- **Fan-out / fan-in:** Split one problem into focused parallel branches, then merge the results.
+- **Semantic layer:** Shared definitions and relationships that keep business data meaning consistent.
+- **Trace / span:** A trace is the full recorded run; a span is one operation inside it.
+- **Silent quality failure:** The software works technically, but the AI still misunderstands the goal, uses the wrong tool, or gives an unacceptable result.
+- **Headless architecture:** Data, rules, permissions, and actions are accessible independently of the original UI while the source system still owns the rules.
+- **Behavioral canary:** A small set of critical eval cases run regularly to detect meaningful behavior drift.
+- **Blast radius:** How much harm a failure could cause before someone notices and stops it.
 
 ---
 
 ## Questions I'm Adding to My Toolkit
 
-These are the questions that still feel useful beyond the shorter durable set.
-
 1. Does this job need more facts, or a better procedure for applying the facts?
-2. Which tasks should inherit existing context, which need a clean context, and what can be loaded only when needed?
-3. If a multi-step agent fails, where did the first bad step occur and how will the workflow recover?
-4. Which business definitions must be fixed before AI analyzes the data?
-5. Can the model provider or interface change without rebuilding the authoritative workflow underneath it?
-6. Can this model, alias, or preset change underneath us, and how will we know if that changes product behavior?
-7. If the underlying AI improves, does this workflow still earn its maintenance cost?
-8. If this were a standing AI worker instead of a one-off interaction, what would it own, remember, access, and need approval for?
-9. What evidence would we need before moving this from pilot to a standard workflow?
+2. If a multi-step agent fails, where did the first bad step occur and how will the workflow recover?
+3. Which business definitions must be fixed before AI analyzes the data?
+4. Can the model or provider change without rebuilding the authoritative workflow, and how will we know if behavior changes underneath us?
+5. If this were a standing AI worker, what would it own, remember, access, need approval for, and how long should that authority last?
+6. What evidence would we need before moving this from pilot to a standard workflow?
