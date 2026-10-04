@@ -475,6 +475,41 @@ body.v88-dark .home-state-feature{box-shadow:none}body.v88-dark .home-state-acti
 .home-feature-stack-right{display:grid;grid-template-rows:repeat(2,minmax(0,1fr));gap:16px}
 .home-feature-card{display:flex;flex-direction:column;justify-content:space-between;gap:18px;min-height:0;padding:22px 24px;border:1px solid var(--border);border-radius:20px;background:var(--card)}
 .home-feature-card>div:first-child{max-width:none}.home-feature-card h2{margin:5px 0 8px;font-size:24px;line-height:1.15}.home-feature-card p{margin:0;color:var(--muted);font-size:13.5px;line-height:1.55}
+#ai-cs-mock [data-page="home"] .home-project-kicker{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  width:max-content;
+  max-width:100%;
+  margin:0 0 4px;
+  color:var(--muted);
+  font-size:0;
+  line-height:1.25;
+  font-weight:650;
+  letter-spacing:.01em;
+  text-transform:none;
+}
+#ai-cs-mock [data-page="home"] .home-project-kicker::before{
+  content:"Featured";
+  display:inline-flex;
+  align-items:center;
+  min-height:19px;
+  padding:2px 7px 2px 0;
+  border-right:1px solid color-mix(in srgb,var(--purple) 24%,var(--border));
+  color:var(--purple);
+  font-size:11px;
+  font-weight:850;
+  letter-spacing:.095em;
+  line-height:1;
+  text-transform:uppercase;
+}
+#ai-cs-mock [data-page="home"] .home-project-kicker::after{
+  content:attr(data-topic);
+  color:var(--muted);
+  font-size:13px;
+  font-weight:650;
+  letter-spacing:.01em;
+}
 .home-feature-state-anchor{padding:26px 28px;background:linear-gradient(180deg,color-mix(in srgb,var(--softp) 62%,var(--card)),var(--card));border-color:color-mix(in srgb,var(--purple) 30%,var(--border));box-shadow:0 10px 26px color-mix(in srgb,var(--purple) 8%,transparent);display:flex;flex-direction:column;height:100%}
 .home-feature-state-anchor h2{font-size:54px;margin:5px 0 14px}.home-feature-state-anchor p{max-width:690px;font-size:14.5px;line-height:1.65}
 .home-state-kicker{flex:0 0 auto}
@@ -583,7 +618,7 @@ body.v88-dark .learning-how-note strong{color:#f5f2fb!important}
 <div class="home-applied-heading"><div class="section-kicker"><span>Applied work · start here</span></div></div>
 <div class="home-feature-grid home-feature-state-led">
 <article class="home-feature-card home-feature-state-anchor">
-  <span class="home-project-kicker home-state-kicker">Featured · Boundaries &amp; authority</span>
+  <span class="home-project-kicker home-state-kicker" data-topic="Boundaries &amp; authority">Featured · Boundaries &amp; authority</span>
   <div class="home-state-content">
     <h2>State</h2>
     <p>AI interprets project evidence, software enforces the rules, and people decide what becomes Current State so guesses and stale information do not quietly become fact.</p>
@@ -600,11 +635,11 @@ body.v88-dark .learning-how-note strong{color:#f5f2fb!important}
 </article>
 <div class="home-feature-stack-right">
 <article class="home-feature-card home-feature-lead">
-  <div><span class="home-project-kicker">Featured · Feedback &amp; correction</span><h2>Tastemake</h2><p>An experiment in user-editable personalization. Tastemake shows people the taste model behind their recommendations and lets them correct what the system thinks it has learned.</p></div>
+  <div><span class="home-project-kicker" data-topic="Feedback &amp; correction">Featured · Feedback &amp; correction</span><h2>Tastemake</h2><p>An experiment in user-editable personalization. Tastemake shows people the taste model behind their recommendations and lets them correct what the system thinks it has learned.</p></div>
   <div class="home-feature-actions"><a class="home-state-primary" href="https://tastemake.vercel.app/" target="_blank" rel="noopener noreferrer">Open Tastemake →</a><a class="home-state-secondary" href="tastemake.html">Case study →</a></div>
 </article>
 <article class="home-feature-card">
-  <div><span class="home-project-kicker">Featured · Quality &amp; evidence</span><h2>Project Health</h2><p>A product-health dashboard that surfaces important AI failures, missing signals, releases, and incidents without hiding them behind one reassuring score.</p></div>
+  <div><span class="home-project-kicker" data-topic="Quality &amp; evidence">Featured · Quality &amp; evidence</span><h2>Project Health</h2><p>A product-health dashboard that surfaces important AI failures, missing signals, releases, and incidents without hiding them behind one reassuring score.</p></div>
   <div class="home-feature-actions"><a class="home-state-primary" href="project-health.html" target="_blank" rel="noopener noreferrer">Open Project Health →</a><a class="home-state-secondary" href="project-health-case-study.html">Case study →</a></div>
 </article>
 </div>
