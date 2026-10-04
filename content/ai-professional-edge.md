@@ -4,7 +4,7 @@
 
 Durable principles live in Durable AI Knowledge. Day-to-day efficiency habits live in the Efficient AI Use for Product Work cheat sheet. This page stays closer to current patterns, tools, vocabulary, and techniques that may change.
 
-<!-- edge-review: 2026-09-28 -->
+<!-- edge-review: 2026-10-04 -->
 
 ---
 
@@ -70,19 +70,13 @@ The workflow, skills, permissions, and user experience do not have to come from 
 
 **Ask:** Can we change the model or provider without rebuilding the agent experience?
 
-### Treat persistent bots as standing product roles
+### Treat persistent agents as standing product roles
 
-AI products are increasingly moving from one-off chat interactions toward persistent bots that can hold a role, retain relevant context, use approved tools, and continue a workflow across sessions.
+AI products are increasingly moving from one-off interactions toward persistent agents that can hold a role, retain relevant context, use approved tools, and continue work across sessions. That turns product design from a single prompt and response into an ongoing workflow.
 
-**Ask:** When does a repeated workflow deserve a standing AI worker instead of an on-demand assistant?
+Scope the role explicitly: its goal, context and memory, tools, authority, execution rules, observability, evaluation, human intervention, and how long its authority should remain valid. Permissions that make sense for a short task may be too broad for a worker that can keep acting indefinitely.
 
-### Scope an ongoing agent as a product role
-
-A standing worker turns product design from a single prompt and response into an ongoing workflow. The product team needs to define its goal, context and memory, tools, authority, execution rules, observability, evaluation, and human intervention.
-
-For AI product and consulting work, this is a practical way to turn “build an agent” into a reviewable scope. Map the workflow, decide what the worker may do and what requires approval, then specify how people can inspect, correct, pause, or recover it.
-
-**Ask:** What does the worker own? What context and sources can it use? Which actions may it take? How does it show its work, prove it is reliable, and hand control back to a person?
+**Ask:** When does a repeated workflow deserve a standing AI worker? What does it own, remember, access, and need approval for? How long does that authority last, and when should it expire or be renewed?
 
 ### Behavior contracts may become more important than model selection
 
@@ -100,137 +94,67 @@ A stable API does not guarantee stable product behavior. A provider can change t
 
 ## Tools & Systems Worth Knowing
 
-These are not endorsements or a shopping list. They are useful examples of how current AI products are solving recurring product and architecture problems.
+Useful examples of how current AI products are solving recurring product and architecture problems, not endorsements or a shopping list.
 
 ### Specialized models and bounded decisions
 
-- [**TypeSafe AI · Jev**](https://typesafe.ai/blog/introducing-system-one-models-and-jev) — A specialized “System One” model for fast, typed decisions such as classification, routing, scoring, and escalation. Useful as a concrete example of not using a generative LLM for every judgment.
-- [**Astra for Law**](https://help.openai.com/en/articles/20001528-astra-for-law) — A vertical AI system combining a strong general model with a refreshed legal index, domain instructions, plugins, and cited-source review. Useful as an example of specialization through the whole system, not just model training.
+- [**TypeSafe AI · Jev**](https://typesafe.ai/blog/introducing-system-one-models-and-jev) — Specialized model for fast, typed decisions such as classification, routing, scoring, and escalation.
+- [**Astra for Law**](https://help.openai.com/en/articles/20001528-astra-for-law) — Vertical AI combining a general model with legal data, domain instructions, plugins, and cited-source review.
 
 ### Memory, context, and business knowledge
 
-- [**Jev-Mem**](https://arxiv.org/abs/2609.23986) — A research architecture that uses a lightweight control layer to decide what memory to retrieve, how much to retrieve, and when to stop before heavier reasoning runs.
-- [**V7 Context Graph**](https://openai.com/index/v7/) — An enterprise example of turning scattered documents into structured, source-linked entities, relationships, facts, and citations that agents can use.
-- [**UiPath Cartographer**](https://www.uipath.com/product/cartographer) — Builds a living, governed “Map of Work” from process knowledge, including rules, exceptions, systems, judgment, provenance, and approvals.
+- [**Jev-Mem**](https://arxiv.org/abs/2609.23986) — Lightweight control layer that decides what memory to retrieve, how much, and when to stop.
+- [**V7 Context Graph**](https://openai.com/index/v7/) — Turns scattered documents into structured, source-linked facts, entities, relationships, and citations.
+- [**UiPath Cartographer**](https://www.uipath.com/product/cartographer) — Maps process knowledge, rules, exceptions, systems, judgment, provenance, and approvals.
 
 ### Agent governance and enterprise access
 
-- [**Dataiku Agent Management**](https://www.dataiku.com/company/news/dataiku-agent-management-general-availability) — Discovers agents across platforms and tracks ownership, value, technical performance, and risk.
-- [**Okta Agentic Enterprise Blueprint**](https://www.okta.com/solutions/secure-ai/agentic-enterprise-blueprint/) — A reference architecture for agent identity, task-scoped access, traceable delegation, runtime monitoring, and containment.
-- [**AWS AgentCore + MCP multi-account pattern**](https://aws.amazon.com/blogs/machine-learning/build-a-multi-account-ai-agent-with-agentcore-gateway-and-mcp/) — A federated pattern where teams keep ownership of their data while agents access approved capabilities through controlled gateways.
+- [**Dataiku Agent Management**](https://www.dataiku.com/company/news/dataiku-agent-management-general-availability) — Tracks agents across platforms, including ownership, value, performance, and risk.
+- [**Okta Agentic Enterprise Blueprint**](https://www.okta.com/solutions/secure-ai/agentic-enterprise-blueprint/) — Reference architecture for agent identity, scoped access, delegation, monitoring, and containment.
+- [**AWS AgentCore + MCP multi-account pattern**](https://aws.amazon.com/blogs/machine-learning/build-a-multi-account-ai-agent-with-agentcore-gateway-and-mcp/) — Federated pattern for controlled agent access while teams retain data ownership.
 
 ### Agent tooling and deployment patterns
 
-- [**Vercel Plugin for Coding Agents**](https://vercel.com/changelog/introducing-vercel-plugin-for-coding-agents) — A useful example of dynamically loading current platform knowledge and specialized skills into an agent instead of stuffing everything into a system prompt.
-- [**Vercel AI SDK 7**](https://vercel.com/blog/ai-sdk-7) — A practical reference for production agent capabilities such as tool approvals, durability, sandboxes, telemetry, model-provider flexibility, and realtime voice.
-- [**Tenable CyberAgents Exchange AI Inspector**](https://www.tenable.com/blog/ai-agent-security-openai-tenable-cyberagents-exchange-inspector) — An example of evaluating community-built agents, skills, MCP servers, and multi-agent playbooks before deployment.
-- [**SoundHound OASYS Edge**](https://www.soundhound.com/resource/introducing-oasys-edge) — A concrete example of deploying voice agents locally, in the cloud, or as a hybrid based on latency, privacy, connectivity, and cost.
+- [**Vercel Plugin for Coding Agents**](https://vercel.com/changelog/introducing-vercel-plugin-for-coding-agents) — Loads current platform knowledge and specialized skills dynamically instead of stuffing everything into one prompt.
+- [**Vercel AI SDK 7**](https://vercel.com/blog/ai-sdk-7) — Reference for approvals, durable execution, sandboxes, telemetry, provider flexibility, and realtime voice.
+- [**Tenable CyberAgents Exchange AI Inspector**](https://www.tenable.com/blog/ai-agent-security-openai-tenable-cyberagents-exchange-inspector) — Evaluates community-built agents, skills, MCP servers, and playbooks before deployment.
+- [**SoundHound OASYS Edge**](https://www.soundhound.com/resource/introducing-oasys-edge) — Example of local, cloud, or hybrid voice deployment based on latency, privacy, connectivity, and cost.
 
 ---
 
-## Things I'm Watching
+## Watching
 
-### AI Discovery & AEO
-
-Answer Engine Optimization matters when AI systems act as a customer's research layer. The useful goal is not to game a chatbot; it is to make accurate, current, differentiating information easy for AI systems to find and understand.
-
-**Ask:** When an AI evaluates a product for a customer, what does it understand correctly and where does that understanding break down?
-
-A practical test:
-
-- ask realistic buyer questions
-- try multiple models and small wording variations
-- inspect the visible sources behind the answer
-- note what information is missing, stale, or ambiguous
-- rerun the same tests over time
-
-### Memory routing and context budgets
-
-Systems such as Jev-Mem point toward memory becoming more actively managed: deciding what to retrieve, how much to retrieve, and when more context stops being worth the cost.
-
-**Ask:** What deserves to enter context for this step, and what can stay outside it?
-
-### Voice and local or hybrid agents
-
-Realtime voice and local or hybrid execution are making latency, privacy, connectivity, and environment part of the product decision rather than implementation details.
-
-**Ask:** Does this job benefit enough from immediacy or local execution to justify a different architecture?
-
-### Persistent and shared bots
-
-Personal and team bots point toward a different product model: instead of opening a fresh chat each time, people may work with named AI roles that keep context, use assigned tools, and operate within defined permissions over time.
-
-**Ask:** If this bot became a long-running coworker, what should it remember, what should it forget, and when should it ask a person before acting?
+- **AI Discovery & AEO:** Can AI systems find and correctly understand the facts that matter when they research a product for a customer?
+- **Memory routing and context budgets:** Which information deserves to enter context for this step, and when does more context stop being worth the cost?
+- **Voice and local or hybrid agents:** When do latency, privacy, connectivity, or environment justify local or hybrid execution?
+- **Persistent and shared bots:** If an AI becomes a long-running coworker, what should it remember, forget, access, and ask before acting?
 
 ---
 
 ## Working Vocabulary
 
-These are the terms I still find useful enough to keep visible.
-
-### Bot
-
-A broad, informal term for AI set up to do a job. Some bots only respond to requests; others are more capable and persistent.
-
-### Agent
-
-A more specific kind of bot that can choose steps or tools to pursue a goal within defined permissions and stopping rules.
-
-### Agent harness
-
-The orchestration layer around a model that manages context, tools, state, and the flow of multi-step work.
-
-### Agent skill
-
-A reusable procedure that tells an agent how to do one kind of job, including the method, tools, checks, and expected output.
-
-### Context isolation
-
-Giving a subtask only the context it needs so unrelated history does not bias or clutter the work.
-
-### Compaction
-
-Compressing older context into a smaller summary so a long-running agent can keep working. Because that summary shapes future behavior, treat it as persisted state.
-
-### Execution boundary
-
-The boundary between what AI may interpret or decide and what trusted software or people may actually change.
-
-### Fan-out / fan-in
-
-Splitting one problem into focused parallel branches, then merging the results through a final synthesis or decision step.
-
-### Semantic layer
-
-Shared definitions and relationships that explain what business data means so people and AI use metrics consistently.
-
-### Trace / span
-
-A trace is the recorded end-to-end run. A span is one operation inside it, such as a model call, retrieval, or tool call.
-
-### Silent quality failure
-
-The software executes without an obvious technical error, but the AI still fails the user by misunderstanding the goal, choosing the wrong tool, or producing an unacceptable result.
-
-### Headless architecture
-
-A design where useful data, business logic, permissions, and actions can be accessed independently of the original user interface while the source system still owns the rules.
-
-### Behavioral canary
-
-A small set of critical eval cases run regularly to detect meaningful drift in AI behavior before a full regression suite is needed.
+- **Bot:** Broad term for AI set up to do a job. Some only respond; others are persistent and more capable.
+- **Agent:** AI that can choose steps or tools to pursue a goal within defined permissions and stopping rules.
+- **Agent harness:** The layer around a model that manages context, tools, state, and multi-step execution.
+- **Agent skill:** A reusable procedure for doing one kind of job, including method, tools, checks, and expected output.
+- **Context isolation:** Giving a subtask only the context it needs.
+- **Compaction:** Compressing older context so long-running work can continue; treat the summary as persisted state.
+- **Execution boundary:** The line between what AI may interpret or decide and what trusted software or people may actually change. For consequential actions, fail closed when permission or policy cannot be verified.
+- **Fan-out / fan-in:** Split one problem into focused parallel branches, then merge the results.
+- **Semantic layer:** Shared definitions and relationships that keep business data meaning consistent.
+- **Trace / span:** A trace is the full recorded run; a span is one operation inside it.
+- **Silent quality failure:** The software works technically, but the AI still misunderstands the goal, uses the wrong tool, or gives an unacceptable result.
+- **Headless architecture:** Data, rules, permissions, and actions are accessible independently of the original UI while the source system still owns the rules.
+- **Behavioral canary:** A small set of critical eval cases run regularly to detect meaningful behavior drift.
+- **Blast radius:** How much harm a failure could cause before someone notices and stops it.
 
 ---
 
 ## Questions I'm Adding to My Toolkit
 
-These are the questions that still feel useful beyond the shorter durable set.
-
 1. Does this job need more facts, or a better procedure for applying the facts?
-2. Which tasks should inherit existing context, which need a clean context, and what can be loaded only when needed?
-3. If a multi-step agent fails, where did the first bad step occur and how will the workflow recover?
-4. Which business definitions must be fixed before AI analyzes the data?
-5. Can the model provider or interface change without rebuilding the authoritative workflow underneath it?
-6. Can this model, alias, or preset change underneath us, and how will we know if that changes product behavior?
-7. If the underlying AI improves, does this workflow still earn its maintenance cost?
-8. If this were a standing AI worker instead of a one-off interaction, what would it own, remember, access, and need approval for?
+2. If a multi-step agent fails, where did the first bad step occur and how will the workflow recover?
+3. Which business definitions must be fixed before AI analyzes the data?
+4. Can the model or provider change without rebuilding the authoritative workflow, and how will we know if behavior changes underneath us?
+5. If this were a standing AI worker, what would it own, remember, access, need approval for, and how long should that authority last?
+6. What evidence would we need before moving this from pilot to a standard workflow?
