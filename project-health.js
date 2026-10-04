@@ -23,7 +23,7 @@
       }
     },
     {
-      id:'tastemake',name:'Tastemake',description:'Taste-learning recommendation prototype built around preference discovery.',repo:'pedringt/tastemake',branch:'main',
+      id:'tastemake',name:'Tastemake',description:'Taste-learning recommendation product built around preference discovery.',repo:'pedringt/tastemake',branch:'main',
       focus:'Improve recommendation variety without weakening relevance or grounding.',
       evidence:['Recommendation breadth','Irrelevant suggestions','Validator catches','Repeat engagement'],
       nextDecision:'Decide whether the canonical store improves recommendation quality enough to expand further.',
@@ -1580,13 +1580,16 @@
       }else if(p.id==='tastemake'&&externalQ){
         const e=externalQ.endpoint||{},b=externalQ.baseline||{},ci=externalQ.ci||{};
         const vals=[
-          ['Recommendation rules',Number(e.rule_checks?.total)?Number(e.rule_checks?.passed)/Number(e.rule_checks?.total):null,e.rule_checks?.passed,e.rule_checks?.total],
-          ['Bad outputs caught',Number(e.validator_self_test?.total)?Number(e.validator_self_test?.caught)/Number(e.validator_self_test?.total):null,e.validator_self_test?.caught,e.validator_self_test?.total],
-          ['Main automated checks',ci.conclusion==='success'?1:null,ci.conclusion==='success'?1:null,1],
-          ['Baseline outputs kept',Number(b.valid_fixture_outputs?.total)?Number(b.valid_fixture_outputs?.passed)/Number(b.valid_fixture_outputs?.total):null,b.valid_fixture_outputs?.passed,b.valid_fixture_outputs?.total]
+          ['Recommendation rules',Number(e.rule_checks?.total)?Number(e.rule_checks?.passed)/Number(e.rule_checks?.total):null,e.rule_checks?.passed,e.rule_checks?.total,false],
+          ['Bad outputs caught',Number(e.validator_self_test?.total)?Number(e.validator_self_test?.caught)/Number(e.validator_self_test?.total):null,e.validator_self_test?.caught,e.validator_self_test?.total,false],
+          ['Main automated checks',ci.conclusion==='success'?1:null,ci.conclusion==='success'?1:null,1,false],
+          ['Baseline comparison',Number(b.valid_fixture_outputs?.total)?Number(b.valid_fixture_outputs?.passed)/Number(b.valid_fixture_outputs?.total):null,b.valid_fixture_outputs?.passed,b.valid_fixture_outputs?.total,true]
         ];
-        kpis=vals.map(([label,score,passed,total])=>kpi(label,score,{label:'—',cls:'flat'},score===1?'good':score==null?'warn':'warn',score===1?'Healthy':'Needs a look',total?passed+' / '+total:'Not measured',[])).join('');
-        qualityCards=vals.map(([label,score,passed,total])=>{const n=pct(score);return '<div class="mock-quality-detail-card"><span>'+esc(label)+'</span><strong>'+(n==null?'—':esc(n+'%'))+'</strong><div class="mock-progress"><span style="width:'+(n||0)+'%"></span></div><small>'+esc(total?(passed+' / '+total+' passing'):'Not measured')+'</small></div>';}).join('');
+        kpis=vals.map(([label,score,passed,total,comparison])=>comparison
+          ?kpi(label,score,{label:'—',cls:'flat'},'good','Historical comparison',total?passed+' / '+total+' baseline outputs kept':'Not measured',[])
+          :kpi(label,score,{label:'—',cls:'flat'},score===1?'good':score==null?'warn':'warn',score===1?'Healthy':'Needs a look',total?passed+' / '+total:'Not measured',[])
+        ).join('');
+        qualityCards=vals.map(([label,score,passed,total,comparison])=>{const n=pct(score);return '<div class="mock-quality-detail-card"><span>'+esc(label)+'</span><strong>'+(n==null?'—':esc(n+'%'))+'</strong><div class="mock-progress"><span style="width:'+(n||0)+'%"></span></div><small>'+esc(comparison?(total?(passed+' / '+total+' historical baseline'):'Historical comparison'):(total?(passed+' / '+total+' passing'):'Not measured'))+'</small></div>';}).join('');
       }else{
         const green=!!externalQ?.recorded?.recorded_all_suites_green;
         const playtestPending=!!externalQ?.recorded?.full_playtest_pending;
@@ -1743,7 +1746,7 @@
         stateEvalCard('Recommendation rules passed',(endpoint.rule_checks?.passed??'—')+'/'+(endpoint.rule_checks?.total??'—'),'Checks that recommendations obey the product rules.','')+
         stateEvalCard('Bad outputs were caught',(endpoint.validator_self_test?.caught??'—')+'/'+(endpoint.validator_self_test?.total??'—'),'Deliberately bad recommendations should be rejected before a user sees them.','')+
         stateEvalCard('Main automated checks',ci.conclusion==='success'?'Passing':(ci.conclusion||'Unknown'),'Confirms the current code still passes its automated quality gates.','')+
-        stateEvalCard('Baseline outputs kept',(base.valid_fixture_outputs?.passed??'—')+'/'+(base.valid_fixture_outputs?.total??'—'),'A comparison point for whether quality is improving or regressing.','')+
+        stateEvalCard('Baseline comparison',(base.valid_fixture_outputs?.passed??'—')+'/'+(base.valid_fixture_outputs?.total??'—'),'Historical comparison only. Baseline misses do not create a current Project Health warning.','')+
         '</div>'+
         '<div class="eval-history"><h4>What these checks cover</h4><div class="run-summary">'+
         (externalQ.check_groups||[]).map(g=>'<div class="run-callout"><strong>'+esc(g.name)+'</strong><p>'+esc(g.detail)+'</p></div>').join('')+

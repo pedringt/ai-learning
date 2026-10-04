@@ -66,8 +66,7 @@ function tastemakeAttention(baseline,endpoint,ci){
   if(ci&&ci.conclusion&&ci.conclusion!=='success') items.push({kind:'bad',title:'Main QA is not green',detail:'The latest Tastemake GitHub test workflow concluded '+ci.conclusion+'.'});
   if(endpoint?.rule_checks?.failed>0) items.push({kind:'bad',title:'Live-endpoint eval has rule failures',detail:endpoint.rule_checks.failed+' rule check(s) failed in the committed endpoint report.'});
   if(endpoint?.validator_self_test?.missed>0) items.push({kind:'bad',title:'Validator self-test missed bad output',detail:endpoint.validator_self_test.missed+' deliberately bad case(s) were not caught.'});
-  if(baseline?.valid_fixture_outputs?.failed>0) items.push({kind:'warn',title:'Baseline still has known quality gaps',detail:baseline.valid_fixture_outputs.failed+' baseline fixture(s) rejected one or more proposed outputs; this is expected comparison evidence, not a production failure.'});
-  if(!items.length) items.push({kind:'good',title:'Latest recorded Tastemake checks look healthy',detail:'No rule or validator-self-test failures are present in the committed eval reports.'});
+  if(!items.length) items.push({kind:'good',title:'Latest recorded Tastemake checks look healthy',detail:'Current endpoint rules, validator defenses, and main automated checks are healthy. Baseline results remain visible as historical comparison evidence only.'});
   return items;
 }
 
