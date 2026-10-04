@@ -94,31 +94,31 @@ A stable API does not guarantee stable product behavior. A provider can change t
 
 ## Tools & Systems Worth Knowing
 
-These are not endorsements or a shopping list. They are useful examples of how current AI products are solving recurring product and architecture problems.
+Useful examples of how current AI products are solving recurring product and architecture problems, not endorsements or a shopping list.
 
 ### Specialized models and bounded decisions
 
-- [**TypeSafe AI · Jev**](https://typesafe.ai/blog/introducing-system-one-models-and-jev) — A specialized “System One” model for fast, typed decisions such as classification, routing, scoring, and escalation. Useful as a concrete example of not using a generative LLM for every judgment.
-- [**Astra for Law**](https://help.openai.com/en/articles/20001528-astra-for-law) — A vertical AI system combining a strong general model with a refreshed legal index, domain instructions, plugins, and cited-source review. Useful as an example of specialization through the whole system, not just model training.
+- [**TypeSafe AI · Jev**](https://typesafe.ai/blog/introducing-system-one-models-and-jev) — Specialized model for fast, typed decisions such as classification, routing, scoring, and escalation.
+- [**Astra for Law**](https://help.openai.com/en/articles/20001528-astra-for-law) — Vertical AI combining a general model with legal data, domain instructions, plugins, and cited-source review.
 
 ### Memory, context, and business knowledge
 
-- [**Jev-Mem**](https://arxiv.org/abs/2609.23986) — A research architecture that uses a lightweight control layer to decide what memory to retrieve, how much to retrieve, and when to stop before heavier reasoning runs.
-- [**V7 Context Graph**](https://openai.com/index/v7/) — An enterprise example of turning scattered documents into structured, source-linked entities, relationships, facts, and citations that agents can use.
-- [**UiPath Cartographer**](https://www.uipath.com/product/cartographer) — Builds a living, governed “Map of Work” from process knowledge, including rules, exceptions, systems, judgment, provenance, and approvals.
+- [**Jev-Mem**](https://arxiv.org/abs/2609.23986) — Lightweight control layer that decides what memory to retrieve, how much, and when to stop.
+- [**V7 Context Graph**](https://openai.com/index/v7/) — Turns scattered documents into structured, source-linked facts, entities, relationships, and citations.
+- [**UiPath Cartographer**](https://www.uipath.com/product/cartographer) — Maps process knowledge, rules, exceptions, systems, judgment, provenance, and approvals.
 
 ### Agent governance and enterprise access
 
-- [**Dataiku Agent Management**](https://www.dataiku.com/company/news/dataiku-agent-management-general-availability) — Discovers agents across platforms and tracks ownership, value, technical performance, and risk.
-- [**Okta Agentic Enterprise Blueprint**](https://www.okta.com/solutions/secure-ai/agentic-enterprise-blueprint/) — A reference architecture for agent identity, task-scoped access, traceable delegation, runtime monitoring, and containment.
-- [**AWS AgentCore + MCP multi-account pattern**](https://aws.amazon.com/blogs/machine-learning/build-a-multi-account-ai-agent-with-agentcore-gateway-and-mcp/) — A federated pattern where teams keep ownership of their data while agents access approved capabilities through controlled gateways.
+- [**Dataiku Agent Management**](https://www.dataiku.com/company/news/dataiku-agent-management-general-availability) — Tracks agents across platforms, including ownership, value, performance, and risk.
+- [**Okta Agentic Enterprise Blueprint**](https://www.okta.com/solutions/secure-ai/agentic-enterprise-blueprint/) — Reference architecture for agent identity, scoped access, delegation, monitoring, and containment.
+- [**AWS AgentCore + MCP multi-account pattern**](https://aws.amazon.com/blogs/machine-learning/build-a-multi-account-ai-agent-with-agentcore-gateway-and-mcp/) — Federated pattern for controlled agent access while teams retain data ownership.
 
 ### Agent tooling and deployment patterns
 
-- [**Vercel Plugin for Coding Agents**](https://vercel.com/changelog/introducing-vercel-plugin-for-coding-agents) — A useful example of dynamically loading current platform knowledge and specialized skills into an agent instead of stuffing everything into a system prompt.
-- [**Vercel AI SDK 7**](https://vercel.com/blog/ai-sdk-7) — A practical reference for production agent capabilities such as tool approvals, durability, sandboxes, telemetry, model-provider flexibility, and realtime voice.
-- [**Tenable CyberAgents Exchange AI Inspector**](https://www.tenable.com/blog/ai-agent-security-openai-tenable-cyberagents-exchange-inspector) — An example of evaluating community-built agents, skills, MCP servers, and multi-agent playbooks before deployment.
-- [**SoundHound OASYS Edge**](https://www.soundhound.com/resource/introducing-oasys-edge) — A concrete example of deploying voice agents locally, in the cloud, or as a hybrid based on latency, privacy, connectivity, and cost.
+- [**Vercel Plugin for Coding Agents**](https://vercel.com/changelog/introducing-vercel-plugin-for-coding-agents) — Loads current platform knowledge and specialized skills dynamically instead of stuffing everything into one prompt.
+- [**Vercel AI SDK 7**](https://vercel.com/blog/ai-sdk-7) — Reference for approvals, durable execution, sandboxes, telemetry, provider flexibility, and realtime voice.
+- [**Tenable CyberAgents Exchange AI Inspector**](https://www.tenable.com/blog/ai-agent-security-openai-tenable-cyberagents-exchange-inspector) — Evaluates community-built agents, skills, MCP servers, and playbooks before deployment.
+- [**SoundHound OASYS Edge**](https://www.soundhound.com/resource/introducing-oasys-edge) — Example of local, cloud, or hybrid voice deployment based on latency, privacy, connectivity, and cost.
 
 ---
 
