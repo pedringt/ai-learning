@@ -134,6 +134,12 @@
     const severe=runs.reduce((n,r)=>n+Number(r.high_severity_failures||0),0);
     if(severe>0) return {kind:'bad',title:severe+' high-impact AI scenario'+(severe===1?'':'s')+' need review',detail:'Most aggregate quality signals may still look healthy; review the specific failed scenario'+(severe===1?'':'s')+' before deciding whether product behavior or the eval contract should change.',nextAction:'Review the failed scenario evidence and decide whether product behavior or the eval contract is wrong.',owner:'Product'};
     if(runs.some(r=>{const score=evalScore(r);return Number(r.failed_cases||0)>0||(score!=null&&score<1);})) return {kind:'warn',title:'Some AI evals need a look',detail:'At least one controlled scenario did not behave as expected.',nextAction:'Review the scenario-level miss, then rerun the affected suite.',owner:'Product'};
+    const missing=[];
+    if(!q.review||evalScore(q.review)==null) missing.push('update understanding');
+    if(!q.ask||(q.ask.ask_grounding??evalScore(q.ask))==null) missing.push('answer quality');
+    if(q.ask?.authority_accuracy==null) missing.push('decision authority');
+    if(q.ask?.uncertainty_accuracy==null) missing.push('uncertainty handling');
+    if(missing.length) return {kind:'warn',title:'Some AI quality signals are not measured',detail:'Project Health cannot call State quality healthy while '+missing.join(', ')+' '+(missing.length===1?'is':'are')+' unmeasured.',nextAction:'Run or repair the missing controlled quality checks before treating the quality signal as healthy.',owner:'Product'};
     return {kind:'good',title:'AI evals are healthy',detail:'The latest recorded checks did not report a high-impact failure.'};
   }
   function deliveryAttention(d){
@@ -1529,6 +1535,7 @@
       const latestHistory=Array.isArray(data.investigationHistory)?data.investigationHistory[0]:null;
 
       const pct=v=>{
+        if(v==null||v==='')return null;
         const n=Number(v);
         return Number.isFinite(n)?Math.max(0,Math.min(100,Math.round(n*1000)/10)):null;
       };
@@ -1558,8 +1565,8 @@
         kpis=
           kpi('Update understanding',reviewScore,reviewDelta,reviewFailures?'warn':'good',reviewFailures?(reviewFailures+' high-impact failure'+(reviewFailures===1?'':'s')):'0 high-impact failures',scenarioPassLabel(review,reviewScore),mockTrendValues(q,'review_interpretation'))+
           kpi('Answer quality',grounding??evalScore(ask),askDelta,askFailures?'bad':'good',askFailures?(askFailures+' failure'+(askFailures===1?'':'s')):'0 failures',scenarioPassLabel(ask,grounding??evalScore(ask)),mockTrendValues(q,'ask_quality'))+
-          kpi('Decision authority',authority,{label:'—',cls:'flat'},authority!=null&&authority<1?'warn':'good',authority!=null&&authority<1?'Needs review':'0 failures',authority==null?'Not measured':'Authority boundary scenarios',[])+
-          kpi('Uncertainty handling',uncertainty,{label:'—',cls:'flat'},uncertainty!=null&&uncertainty<1?'warn':'good',uncertainty!=null&&uncertainty<1?'Needs review':'Within target',uncertainty==null?'Not measured':'Unknown-answer scenarios',[]);
+          kpi('Decision authority',authority,{label:'—',cls:'flat'},authority==null?'warn':authority<1?'warn':'good',authority==null?'Not measured':authority<1?'Needs review':'0 failures',authority==null?'Run the authority checks':'Authority boundary scenarios',[])+
+          kpi('Uncertainty handling',uncertainty,{label:'—',cls:'flat'},uncertainty==null?'warn':uncertainty<1?'warn':'good',uncertainty==null?'Not measured':uncertainty<1?'Needs review':'Within target',uncertainty==null?'Run the uncertainty checks':'Unknown-answer scenarios',[]);
         const qualityItems=[
           ['Update understanding',reviewScore,review],
           ['Answer quality',grounding??evalScore(ask),ask],
