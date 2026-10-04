@@ -1,0 +1,645 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Context Switch A+C Blend Mockup</title>
+    <style>
+      :root {
+        --ink: #15111a;
+        --muted: #696372;
+        --line: #e8e7ef;
+        --paper: #ffffff;
+        --soft: #f8f7ff;
+        --pink: #ff5fa2;
+        --cyan: #00bfd6;
+        --violet: #6b5cff;
+        --acid: #f4ff52;
+        --coral: #ff6b57;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+
+      * { box-sizing: border-box; }
+
+      body {
+        margin: 0;
+        overflow-x: hidden;
+        background: var(--paper);
+        color: var(--ink);
+      }
+
+      .page {
+        position: relative;
+        min-height: 100vh;
+        isolation: isolate;
+      }
+
+      .page::before {
+        content: "";
+        position: fixed;
+        inset: 0;
+        z-index: -3;
+        background:
+          linear-gradient(90deg, rgba(21, 17, 26, 0.045) 1px, transparent 1px),
+          linear-gradient(0deg, rgba(21, 17, 26, 0.045) 1px, transparent 1px);
+        background-size: 42px 42px;
+        mask-image: linear-gradient(to bottom, #000 0%, transparent 82%);
+      }
+
+      .wash {
+        position: fixed;
+        inset: -20% -10% auto;
+        z-index: -2;
+        height: 70vh;
+        background:
+          radial-gradient(circle at 17% 28%, rgba(255, 95, 162, 0.2), transparent 28%),
+          radial-gradient(circle at 74% 18%, rgba(244, 255, 82, 0.34), transparent 26%),
+          radial-gradient(circle at 88% 56%, rgba(0, 191, 214, 0.18), transparent 30%);
+        filter: blur(6px);
+        animation: floatWash 12s ease-in-out infinite alternate;
+      }
+
+      .nav {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        padding: 18px clamp(20px, 4vw, 58px);
+        border-bottom: 1px solid rgba(232, 231, 239, 0.78);
+        background: rgba(255, 255, 255, 0.82);
+        backdrop-filter: blur(18px);
+      }
+
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 14px;
+        font-weight: 950;
+        letter-spacing: -0.035em;
+      }
+
+      .mark {
+        width: 22px;
+        height: 22px;
+        border: 2px solid var(--ink);
+        border-radius: 7px;
+        background: linear-gradient(135deg, #fff 0 42%, var(--acid) 42% 100%);
+        box-shadow: 4px 4px 0 var(--ink);
+      }
+
+      .navlinks {
+        display: flex;
+        gap: 15px;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .hero {
+        display: grid;
+        grid-template-columns: minmax(0, 1.1fr) minmax(320px, 470px);
+        gap: clamp(28px, 5vw, 72px);
+        align-items: center;
+        min-height: calc(100vh - 64px);
+        padding: 54px clamp(20px, 4vw, 58px) 34px;
+      }
+
+      .eyebrow {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        width: fit-content;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.84);
+        padding: 8px 12px;
+        color: #31283a;
+        font-size: 11px;
+        font-weight: 950;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 999px;
+        background: var(--pink);
+        box-shadow: 0 0 0 0 rgba(255, 95, 162, 0.42);
+        animation: pulse 1.9s ease-out infinite;
+      }
+
+      h1 {
+        max-width: 980px;
+        margin: 18px 0 0;
+        font-size: clamp(64px, 10vw, 150px);
+        line-height: 0.82;
+        letter-spacing: -0.092em;
+      }
+
+      .word-swap {
+        display: inline-grid;
+        color: var(--pink);
+      }
+
+      .word-swap span {
+        grid-area: 1 / 1;
+        opacity: 0;
+        transform: translateY(20px) rotateX(38deg);
+        animation: wordSwap 9s infinite;
+      }
+
+      .word-swap span:nth-child(2) {
+        color: var(--violet);
+        animation-delay: 3s;
+      }
+
+      .word-swap span:nth-child(3) {
+        color: #00a6ba;
+        animation-delay: 6s;
+      }
+
+      .lede {
+        max-width: 690px;
+        margin: 24px 0 0;
+        color: var(--muted);
+        font-size: clamp(17px, 1.5vw, 21px);
+        line-height: 1.5;
+      }
+
+      .actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-top: 30px;
+      }
+
+      .button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 46px;
+        border: 1px solid var(--ink);
+        border-radius: 999px;
+        background: var(--ink);
+        color: #fff;
+        padding: 0 18px;
+        font-size: 14px;
+        font-weight: 900;
+        transition: transform 180ms ease, box-shadow 180ms ease;
+      }
+
+      .button.secondary {
+        background: #fff;
+        color: var(--ink);
+      }
+
+      .button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 16px 30px rgba(21, 17, 26, 0.14);
+      }
+
+      .stage {
+        position: relative;
+        min-height: 520px;
+      }
+
+      .tilt-card {
+        position: relative;
+        z-index: 2;
+        border: 1px solid var(--line);
+        border-radius: 28px;
+        background: rgba(255, 255, 255, 0.82);
+        box-shadow: 0 32px 90px rgba(21, 17, 26, 0.13);
+        backdrop-filter: blur(22px);
+        padding: 16px;
+        transform: rotate(2.3deg);
+      }
+
+      .tilt-card::before {
+        content: "";
+        position: absolute;
+        inset: -14px auto auto -14px;
+        width: 110px;
+        height: 110px;
+        border-radius: 26px;
+        background: var(--acid);
+        z-index: -1;
+        transform: rotate(-12deg);
+      }
+
+      .card-top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 14px;
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 900;
+      }
+
+      .status {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        border-radius: 999px;
+        background: #fff7fb;
+        color: #b6236a;
+        padding: 6px 9px;
+        font-size: 11px;
+        font-weight: 950;
+      }
+
+      .status::before {
+        content: "";
+        width: 7px;
+        height: 7px;
+        border-radius: 999px;
+        background: currentColor;
+      }
+
+      .control {
+        border: 1px solid rgba(155, 92, 255, 0.18);
+        border-radius: 20px;
+        background: linear-gradient(145deg, #fff8fd, #f5f0ff 48%, #e8fbff);
+        padding: 18px;
+      }
+
+      .control h2 {
+        margin: 0;
+        font-size: 38px;
+        line-height: 0.92;
+        letter-spacing: -0.07em;
+      }
+
+      .control p {
+        margin: 12px 0 0;
+        color: #6d6075;
+        line-height: 1.45;
+      }
+
+      .trace {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 8px;
+        margin-top: 18px;
+      }
+
+      .trace div {
+        min-height: 62px;
+        border: 1px solid rgba(155, 92, 255, 0.17);
+        border-radius: 14px;
+        background: rgba(255, 255, 255, 0.68);
+        padding: 10px;
+        color: #392948;
+        font-size: 11px;
+        font-weight: 900;
+        animation: glowStep 4.5s ease-in-out infinite;
+      }
+
+      .trace div:nth-child(2) { animation-delay: 0.45s; }
+      .trace div:nth-child(3) { animation-delay: 0.9s; }
+      .trace div:nth-child(4) { animation-delay: 1.35s; }
+
+      .floating-note {
+        position: absolute;
+        right: -10px;
+        bottom: 38px;
+        z-index: 3;
+        width: 205px;
+        border: 1px solid var(--ink);
+        border-radius: 20px;
+        background: var(--acid);
+        padding: 15px;
+        box-shadow: 10px 10px 0 var(--ink);
+        transform: rotate(-5deg);
+        font-size: 13px;
+        font-weight: 850;
+        line-height: 1.25;
+      }
+
+      .floating-note span {
+        display: block;
+        margin-top: 8px;
+        color: #493f11;
+        font-size: 11px;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+      }
+
+      .mini-orbit {
+        position: absolute;
+        left: -20px;
+        bottom: 74px;
+        z-index: 1;
+        display: grid;
+        gap: 9px;
+        transform: rotate(-4deg);
+      }
+
+      .mini-orbit span {
+        display: inline-flex;
+        width: fit-content;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        background: #fff;
+        padding: 9px 12px;
+        color: #3b3145;
+        font-size: 12px;
+        font-weight: 850;
+        box-shadow: 0 12px 24px rgba(21, 17, 26, 0.08);
+      }
+
+      .signal-rail {
+        overflow: hidden;
+        border-top: 1px solid var(--line);
+        border-bottom: 1px solid var(--line);
+        background: rgba(255, 255, 255, 0.76);
+        padding: 10px 0;
+        white-space: nowrap;
+      }
+
+      .signal-track {
+        display: flex;
+        gap: 10px;
+        width: max-content;
+        animation: drift 24s linear infinite;
+      }
+
+      .signal-track span {
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        background: var(--soft);
+        padding: 9px 13px;
+        color: #32293d;
+        font-size: 12px;
+        font-weight: 850;
+      }
+
+      .work {
+        padding: 54px clamp(20px, 4vw, 58px) 72px;
+      }
+
+      .section-head {
+        display: flex;
+        align-items: end;
+        justify-content: space-between;
+        gap: 24px;
+        margin-bottom: 20px;
+      }
+
+      .section-head h2 {
+        max-width: 790px;
+        margin: 0;
+        font-size: clamp(40px, 6vw, 84px);
+        line-height: 0.88;
+        letter-spacing: -0.08em;
+      }
+
+      .project-grid {
+        display: grid;
+        grid-template-columns: 1.2fr 0.8fr 1fr;
+        gap: 14px;
+      }
+
+      .project {
+        position: relative;
+        min-height: 260px;
+        overflow: hidden;
+        border: 1px solid var(--line);
+        border-radius: 28px;
+        background: #fff;
+        padding: 20px;
+        transition: transform 220ms ease, box-shadow 220ms ease;
+      }
+
+      .project:hover {
+        transform: translateY(-5px) rotate(-0.6deg);
+        box-shadow: 0 26px 60px rgba(21, 17, 26, 0.12);
+      }
+
+      .project:first-child {
+        grid-row: span 2;
+        min-height: 536px;
+        background: linear-gradient(145deg, #fff1fa, #ffd7ec 44%, #b8f4ff);
+      }
+
+      .project:last-child {
+        grid-column: span 2;
+      }
+
+      .tag {
+        display: inline-flex;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.68);
+        padding: 7px 10px;
+        color: #503459;
+        font-size: 11px;
+        font-weight: 950;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .project h3 {
+        margin: 16px 0 0;
+        font-size: 34px;
+        line-height: 0.94;
+        letter-spacing: -0.065em;
+      }
+
+      .project p {
+        max-width: 440px;
+        margin: 12px 0 0;
+        color: var(--muted);
+        line-height: 1.45;
+      }
+
+      .index {
+        position: absolute;
+        right: 18px;
+        bottom: 18px;
+        display: grid;
+        place-items: center;
+        width: 56px;
+        height: 56px;
+        border-radius: 16px;
+        background: var(--acid);
+        color: var(--ink);
+        font-weight: 1000;
+        box-shadow: 6px 6px 0 var(--ink);
+        transform: rotate(-7deg);
+      }
+
+      @keyframes floatWash {
+        from { transform: translate3d(0, 0, 0) scale(1); }
+        to { transform: translate3d(-34px, 28px, 0) scale(1.06); }
+      }
+
+      @keyframes pulse {
+        to { box-shadow: 0 0 0 14px rgba(255, 95, 162, 0); }
+      }
+
+      @keyframes wordSwap {
+        0%, 8% { opacity: 0; transform: translateY(20px) rotateX(38deg); }
+        12%, 28% { opacity: 1; transform: translateY(0) rotateX(0); }
+        34%, 100% { opacity: 0; transform: translateY(-20px) rotateX(-38deg); }
+      }
+
+      @keyframes glowStep {
+        0%, 100% { background: rgba(255, 255, 255, 0.68); }
+        45%, 55% {
+          background: rgba(244, 255, 82, 0.42);
+          border-color: rgba(255, 107, 87, 0.44);
+        }
+      }
+
+      @keyframes drift {
+        to { transform: translateX(-50%); }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        *, *::before, *::after {
+          animation-duration: 0.001ms !important;
+          animation-iteration-count: 1 !important;
+          scroll-behavior: auto !important;
+          transition-duration: 0.001ms !important;
+        }
+      }
+
+      @media (max-width: 980px) {
+        .hero {
+          grid-template-columns: 1fr;
+          min-height: auto;
+        }
+
+        .stage {
+          min-height: 480px;
+        }
+
+        .project-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .project:first-child,
+        .project:last-child {
+          grid-row: auto;
+          grid-column: auto;
+          min-height: 260px;
+        }
+      }
+
+      @media (max-width: 680px) {
+        .navlinks { display: none; }
+        h1 { font-size: clamp(54px, 17vw, 88px); }
+        .trace { grid-template-columns: repeat(2, 1fr); }
+        .tilt-card { transform: none; }
+        .floating-note, .mini-orbit { position: static; margin-top: 16px; transform: none; }
+        .stage { min-height: auto; }
+        .section-head { display: grid; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="page">
+      <div class="wash"></div>
+      <nav class="nav">
+        <div class="brand"><span class="mark"></span><span>Context Switch</span></div>
+        <div class="navlinks"><span>Work</span><span>Systems</span><span>Learning</span><span>Contact</span></div>
+      </nav>
+
+      <main>
+        <section class="hero">
+          <div>
+            <div class="eyebrow"><span class="dot"></span> Applied AI product practice</div>
+            <h1>
+              Make AI behavior
+              <span class="word-swap"><span>visible</span><span>correctable</span><span>trustworthy</span></span>
+            </h1>
+            <p class="lede">
+              I build and test prototypes around the parts of AI products that usually get hand-waved:
+              state, authority, evals, handoffs, and what happens when confident systems are wrong.
+            </p>
+            <div class="actions">
+              <span class="button">Explore the work</span>
+              <span class="button secondary">Open Project Health</span>
+            </div>
+          </div>
+
+          <aside class="stage" aria-label="Featured product system preview">
+            <div class="mini-orbit">
+              <span>authority boundaries</span>
+              <span>stale state</span>
+              <span>review gates</span>
+            </div>
+            <div class="tilt-card">
+              <div class="card-top">
+                <span>Product control surface</span>
+                <span class="status">Live checks</span>
+              </div>
+              <div class="control">
+                <h2>Project Health</h2>
+                <p>What needs attention, what changed, and what a person should investigate next.</p>
+                <div class="trace">
+                  <div>Incident</div>
+                  <div>Eval</div>
+                  <div>Evidence</div>
+                  <div>Handoff</div>
+                </div>
+              </div>
+            </div>
+            <div class="floating-note">
+              The question is not “does the demo work?”
+              <span>It is “can the team correct it?”</span>
+            </div>
+          </aside>
+        </section>
+
+        <div class="signal-rail">
+          <div class="signal-track">
+            <span>authority boundaries</span><span>eval regressions</span><span>human review</span><span>portable context</span><span>ask reliability</span><span>state drift</span>
+            <span>authority boundaries</span><span>eval regressions</span><span>human review</span><span>portable context</span><span>ask reliability</span><span>state drift</span>
+          </div>
+        </div>
+
+        <section class="work">
+          <div class="section-head">
+            <h2>Four projects, one product question.</h2>
+            <div class="eyebrow">What makes AI usable after the demo?</div>
+          </div>
+
+          <div class="project-grid">
+            <article class="project">
+              <span class="tag">Truth system</span>
+              <h3>State</h3>
+              <p>Evidence becomes review, review becomes current state, and only humans authorize consequential changes.</p>
+              <div class="index">01</div>
+            </article>
+            <article class="project">
+              <span class="tag">Ops layer</span>
+              <h3>Project Health</h3>
+              <p>Incidents, evals, usage signals, and investigation summaries in one product-facing flow.</p>
+              <div class="index">02</div>
+            </article>
+            <article class="project">
+              <span class="tag">Taste model</span>
+              <h3>Tastemake</h3>
+              <p>Recommendation UX where taste is a hypothesis users can inspect and refine.</p>
+              <div class="index">03</div>
+            </article>
+            <article class="project">
+              <span class="tag">Simulation</span>
+              <h3>NARC</h3>
+              <p>A workplace AI game about surveillance, compliance, adaptation, and the weird incentives created by scoring systems.</p>
+              <div class="index">04</div>
+            </article>
+          </div>
+        </section>
+      </main>
+    </div>
+  </body>
+</html>

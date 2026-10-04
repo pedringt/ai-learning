@@ -1,0 +1,104 @@
+/* State evals page: bright redesign (#428). Appearance only. Same system as project-health-redesign.css.
+   Rollback: remove the <link>. */
+html { background: #fff; }
+html body {
+  --ink: #15111a;
+  --muted: #5f5968;
+  --line: #e8e7ef;
+  --accent: #5b4de6;
+  --accent-soft: #f1eeff;
+  --soft: #f8f7ff;
+  --radius: 22px;
+  --rd-pink-soft: #ff5fa2;
+  --rd-acid: #f4ff52;
+  background: transparent !important;
+  color: var(--ink);
+  overflow-x: hidden;
+}
+html body::before, html body::after { content: ""; position: absolute; left: 0; right: 0; top: 0; z-index: -2; pointer-events: none; }
+html body::before {
+  height: 520px;
+  background:
+    linear-gradient(90deg, rgba(21, 17, 26, 0.04) 1px, transparent 1px),
+    linear-gradient(0deg, rgba(21, 17, 26, 0.04) 1px, transparent 1px);
+  background-size: 42px 42px;
+  -webkit-mask-image: linear-gradient(to bottom, #000 0%, transparent 100%);
+  mask-image: linear-gradient(to bottom, #000 0%, transparent 100%);
+}
+html body::after {
+  height: 440px;
+  background:
+    radial-gradient(circle at 14% 20%, rgba(255, 95, 162, 0.14), transparent 30%),
+    radial-gradient(circle at 80% 10%, rgba(244, 255, 82, 0.28), transparent 28%),
+    radial-gradient(circle at 92% 50%, rgba(0, 191, 214, 0.12), transparent 30%);
+}
+
+html body .shell { max-width: 1240px; }
+html body .topbar { border-bottom-color: var(--line); }
+html body .topbar .brand { font-weight: 950; letter-spacing: -0.035em; }
+html body .topbar .brand::before {
+  content: "";
+  display: inline-block;
+  width: 18px;
+  height: 18px;
+  margin-right: 9px;
+  vertical-align: -3px;
+  border: 2px solid var(--ink);
+  border-radius: 6px;
+  background: linear-gradient(135deg, #fff 0 42%, var(--rd-acid) 42% 100%);
+  box-shadow: 3px 3px 0 var(--ink);
+}
+
+html body h1 { font-size: clamp(36px, 4.6vw, 60px); line-height: 1; letter-spacing: -0.055em; font-weight: 900; margin: 6px 0 8px; }
+html body .hero h1::after {
+  content: "";
+  display: block;
+  width: 88px;
+  height: 9px;
+  margin-top: 16px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--rd-pink-soft), var(--rd-acid));
+}
+html body .hero .eyebrow, html body .eyebrow { color: var(--muted); }
+html body .lede { font-size: 16px; }
+
+html body .button {
+  min-height: 40px;
+  border: 1px solid var(--ink);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--ink);
+  font-weight: 800;
+  transition: transform 180ms ease, box-shadow 180ms ease;
+}
+html body .button:hover { transform: translateY(-2px); box-shadow: 0 12px 24px rgba(21, 17, 26, 0.12); }
+html body .button.primary, html body .primary { background: var(--ink); border-color: var(--ink); color: #fff; }
+
+html body :is(.meta-chip, .section-count, .severity) { border-radius: 8px; }
+html body .meta-chip { background: #f1eeff; color: #31283a; }
+
+/* cards: one look */
+html body :is(.summary-card, .panel, .scenario) {
+  border: 1px solid var(--line);
+  border-radius: 22px;
+  background: #fff;
+  box-shadow: none;
+}
+html body .summary-card:nth-child(odd) { background: #fff4f9; border-color: transparent; }
+html body .summary-card:nth-child(even) { background: #eefcff; border-color: transparent; }
+html body .summary-card { border-left-width: 1px !important; box-shadow: none !important; }
+html body .summary-card::before, html body .summary-card::after { display: none !important; }
+html body .failure-panel, html body .failed { border-radius: 22px; }
+html body .note, html body .suite-intro { border: 0; border-radius: 18px; background: var(--soft); }
+html body .note { border-left: 0; }
+
+html body .tab { font-weight: 800; }
+html body .tab.active, html body .active.tab { color: var(--ink); border-bottom-color: var(--rd-pink-soft); }
+html body .score { letter-spacing: -0.05em; }
+
+@media (max-width: 680px) {
+  html body h1 { font-size: clamp(32px, 10vw, 44px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition-duration: 0.001ms !important; animation-duration: 0.001ms !important; }
+}

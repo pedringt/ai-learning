@@ -784,9 +784,17 @@ body.v88-dark .learning-how-note strong{color:#f5f2fb!important}
 }
 </style>
 <main class="shell" id="main-content">
-<div class="topbar"><div class="topinner"><button aria-label="Go to home" class="brand-button" data-brand-home="" type="button"><span class="brand">Context <span>Switch</span></span></button><nav aria-label="Primary pages" class="nav"><button class="active" data-view="home">Home</button><button data-view="portfolio">Applied Work</button><button data-view="learn">Learning Library</button></nav><div class="top-actions"><button aria-label="Switch to dark mode" aria-pressed="false" class="theme-toggle" id="themeToggle" title="Switch to dark mode" type="button">☾</button><select aria-label="Choose page" id="mobileNav"><option value="home">Home</option><option value="portfolio">Applied Work</option><option value="learn">Learning Library</option></select></div></div></div>
+<div class="topbar"><div class="topinner"><button aria-label="Go to home" class="brand-button" data-brand-home="" type="button"><span class="brand">Context <span>Switch</span></span></button><nav aria-label="Primary pages" class="nav"><button class="active" data-view="home">Home</button><button data-view="portfolio">Applied Work</button><button data-view="learn">Learning Library</button></nav><div class="top-actions"><select aria-label="Choose page" id="mobileNav"><option value="home">Home</option><option value="portfolio">Applied Work</option><option value="learn">Learning Library</option></select></div></div></div>
 <section class="view active" data-page="home" id="home">
-<div class="hero"><h1>AI doesn’t know <span>what it doesn’t know.</span></h1><p class="lead">That limitation matters when AI moves from promising demo to usable product. I focus on whether an AI workflow is trustworthy, controllable, and worth building in the first place.</p></div>
+<div class="hero rd-hero"><div class="rd-hero-copy"><h1>AI doesn’t know <span>what it doesn’t know.</span></h1><p class="lead">That limitation matters when AI moves from promising demo to usable product. I focus on whether an AI workflow is trustworthy, controllable, and worth building in the first place.</p><div class="rd-actions"><a class="rd-button" href="#portfolio">See all applied work →</a><a class="rd-button rd-button-secondary" href="https://state.contextswitch.tech/" data-state-app-link target="_blank" rel="noopener noreferrer">Open State ↗</a></div></div>
+<aside class="rd-stage" aria-label="Featured product: State">
+<div class="rd-orbit" aria-hidden="true"><span>authority boundaries</span><span>stale information</span><span>human review</span></div>
+<div class="rd-card"><div class="rd-card-top"><span>Featured product</span><span class="rd-status">Live product</span></div>
+<div class="rd-control"><h2>State</h2><p>AI interprets project evidence, software enforces the rules, and people decide what becomes Current State.</p>
+<div class="rd-trace" aria-hidden="true"><div>Evidence</div><div>Review</div><div>Current State</div><div>History</div></div></div></div>
+<div class="rd-note">AI interprets. Software enforces. People authorize.<span>That’s the whole boundary.</span></div>
+</aside></div>
+<div class="rd-rail" aria-hidden="true"><div class="rd-rail-track"><span>Evidence → Review → Current State</span><span>Human authorization</span><span>Bounded project context</span><span>Scenario evals</span><span>Correction paths</span><span>Stale information</span><span>Evidence → Review → Current State</span><span>Human authorization</span><span>Bounded project context</span><span>Scenario evals</span><span>Correction paths</span><span>Stale information</span></div></div>
 <div class="home-start">
 <div class="home-applied-heading"><div class="section-kicker"><span>Applied work · start here</span></div></div>
 <div class="home-feature-grid home-feature-state-led">
@@ -997,7 +1005,7 @@ body.v88-dark .learning-how-note strong{color:#f5f2fb!important}
     if(persist){try{localStorage.setItem('ai-cs-theme',dark?'dark':'light');}catch(e){}}
   };
   let savedTheme=null; try{savedTheme=localStorage.getItem('ai-cs-theme');}catch(e){}
-  setTheme(savedTheme? savedTheme==='dark' : !!(window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches));
+  setTheme(false); /* light only: dark mode removed in the bright redesign (#428) */
   if(themeToggle)themeToggle.addEventListener('click',()=>setTheme(!root.classList.contains('dark'),true));
   const valid=new Set(views.map(v=>v.dataset.page));
   const learningIds=new Set([...root.querySelectorAll('details.learning-stage[id]')].map(el=>el.id));
@@ -1196,5 +1204,6 @@ window.addEventListener('popstate',()=>render(pageFromHash(),false));
     if(e.key==='Escape')tip.hidden=true;
   });
 })();
-</script></div></body>
+</script></div><link href="site-redesign.css?v=r1-bright" rel="stylesheet"/>
+</body>
 </html>

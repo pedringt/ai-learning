@@ -253,7 +253,7 @@
   };
   const savedTheme=localStorage.getItem('ai-cs-theme');
   const systemDark=!!(window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches);
-  if(savedTheme==='dark'||(!savedTheme&&systemDark)) body.classList.add('v88-dark');
+  body.classList.remove('v88-dark'); /* light only (#428) */
   applyIcon();
   if(btn) btn.addEventListener('click',()=>{body.classList.toggle('v88-dark');localStorage.setItem('ai-cs-theme',isDark()?'dark':'light');applyIcon();});
   if(mobile) mobile.addEventListener('change',()=>{ location.href=mobile.value; });
