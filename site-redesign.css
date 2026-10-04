@@ -1562,6 +1562,19 @@ html body main.case-shell .role-grid > * {
   padding: 0 !important;
 }
 
+/* ---------- 4t. Project Health case study + Meridian: real space between sections (their headings are direct children of main) ---------- */
+html body main.case-shell > h2 {
+  margin-top: 56px !important;
+  margin-bottom: 16px !important;
+  padding-top: 34px;
+  border-top: 1px solid var(--rd-line);
+  max-width: none !important;
+}
+html body main.case-shell > h2:first-of-type { margin-top: 40px !important; }
+
+/* Project Health: "Failure recovery" repeats the "Unknown is not healthy" decision (text stays in the markup) */
+html body main.case-shell .evidence-list > .evidence-item:nth-child(2) { display: none !important; }
+
 /* ---------- 5. Motion ---------- */
 @keyframes rdFloatWash { from { transform: translate3d(0, 0, 0) scale(1); } to { transform: translate3d(-34px, 28px, 0) scale(1.06); } }
 @keyframes rdPulse { 0% { box-shadow: 0 0 0 0 rgba(182, 35, 106, 0.42); } 100% { box-shadow: 0 0 0 10px rgba(182, 35, 106, 0); } }

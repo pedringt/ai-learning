@@ -719,7 +719,7 @@ body.v88-dark .home-state-feature{box-shadow:none}body.v88-dark .home-state-acti
 }
 </style>
 <script defer src="site-environment.js"></script>
-</head>
+<style id="rd-hold">html.rd-pending body{visibility:hidden}</style><script>document.documentElement.classList.add("rd-pending");setTimeout(function(){document.documentElement.classList.remove("rd-pending")},2500)</script></head>
 <body>
 <div class="app-root" id="ai-cs-mock">
 <style>
@@ -1204,6 +1204,6 @@ window.addEventListener('popstate',()=>render(pageFromHash(),false));
     if(e.key==='Escape')tip.hidden=true;
   });
 })();
-</script></div><link href="site-redesign.css?v=r1-bright" rel="stylesheet"/>
+</script></div><link href="site-redesign.css?v=r1-bright" rel="stylesheet" onload="document.documentElement.classList.remove('rd-pending')" onerror="document.documentElement.classList.remove('rd-pending')">
 </body>
 </html>

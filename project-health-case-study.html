@@ -60,7 +60,7 @@ body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,Bl
   }
 })();
 </script>
-</head>
+<style id="rd-hold">html.rd-pending body{visibility:hidden}</style><script>document.documentElement.classList.add("rd-pending");setTimeout(function(){document.documentElement.classList.remove("rd-pending")},2500)</script></head>
 <body>
 <div class="topbar">
   <div class="topinner">
@@ -183,5 +183,5 @@ body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,Bl
 </div>
 </main>
 <script src="site-shell.js"></script>
-<link href="site-redesign.css?v=r1-bright" rel="stylesheet"/></body>
+<link href="site-redesign.css?v=r1-bright" rel="stylesheet" onload="document.documentElement.classList.remove('rd-pending')" onerror="document.documentElement.classList.remove('rd-pending')"></body>
 </html>
