@@ -946,12 +946,28 @@ html body main :is(.callout, .plain-language, .note, .flagship-case > .evidence-
 }
 html body main .evidence-principle:not(.flagship-case > .evidence-principle:first-child) {
   border: 0 !important;
+  border-left: 5px solid var(--ink) !important;
   border-radius: 0 !important;
   background: transparent !important;
   box-shadow: none !important;
-  padding: 0 !important;
+  padding: 4px 0 4px 22px !important;
+  margin: 26px 0 !important;
 }
-html body main .evidence-principle:not(.flagship-case > .evidence-principle:first-child) strong { color: var(--ink); }
+html body main .evidence-principle:not(.flagship-case > .evidence-principle:first-child) strong {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--ink);
+  font-size: clamp(20px, 2.1vw, 26px);
+  font-weight: 900;
+  line-height: 1.2;
+  letter-spacing: -0.035em;
+}
+html body main .evidence-principle:not(.flagship-case > .evidence-principle:first-child) > p {
+  margin: 0;
+  font-size: 15.5px !important;
+  line-height: 1.6 !important;
+  color: var(--muted);
+}
 
 /* quote block: simple pull quote */
 html body main .question-shift {
@@ -1314,21 +1330,21 @@ html body main .closing-links {
 html body main .closing-links > a {
   box-sizing: border-box;
   display: flex !important;
-  align-items: flex-end;
-  min-height: 92px;
-  padding: 18px 20px !important;
+  align-items: center;
+  min-height: 52px;
+  padding: 0 18px !important;
   border: 1px solid var(--rd-line) !important;
-  border-radius: 20px !important;
+  border-radius: 14px !important;
   background: #fff !important;
   color: var(--ink) !important;
-  font-size: 15px !important;
+  font-size: 14.5px !important;
   font-weight: 900 !important;
   line-height: 1.25;
   text-decoration: none !important;
   box-shadow: none !important;
   transition: transform 180ms ease, box-shadow 180ms ease;
 }
-html body main .closing-links > a:hover { transform: translateY(-3px); box-shadow: 0 16px 34px rgba(21, 17, 26, 0.1) !important; }
+html body main .closing-links > a:hover { transform: translateY(-2px); box-shadow: 0 12px 26px rgba(21, 17, 26, 0.1) !important; }
 html body main .closing-links > a.meridian-primary-action {
   background: var(--ink) !important;
   border-color: var(--ink) !important;
@@ -1512,6 +1528,39 @@ html body #ai-cs-mock .learning-next .learning-how-note { padding: 12px 16px !im
 html body #ai-cs-mock .learning-next .learning-how-note strong { font-size: 14px; }
 html body #ai-cs-mock .learning-next .learning-how-note p { font-size: 14px !important; line-height: 1.55; margin: 6px 0 10px; }
 html body #ai-cs-mock .learning-next .learning-how-note a { min-height: 32px; padding: 0 12px; font-size: 13px; }
+
+/* ---------- 4r. State case study: hide the two duplicates (text stays in the page source) ---------- */
+html body main.case-system-page:has(.meridian-product-callout a[data-state-app-link]) .integration-flow.authority-steps { display: none !important; }
+html body main.case-system-page:has(.meridian-product-callout a[data-state-app-link]) .closing-links > a[data-state-app-link] { display: none !important; }
+@media (min-width: 621px) and (max-width: 700px) {
+  html body main.case-system-page:has(.meridian-product-callout a[data-state-app-link]) .closing-links { grid-template-columns: 1fr !important; }
+}
+@media (min-width: 701px) {
+  html body main.case-system-page:has(.meridian-product-callout a[data-state-app-link]) .closing-links { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }
+}
+
+/* ---------- 4s. Project Health case study bottom: fewer boxes ---------- */
+html body main.case-shell .evidence-list { display: block !important; }
+html body main.case-shell .evidence-item {
+  display: grid !important;
+  grid-template-columns: 150px minmax(0, 1fr);
+  gap: 14px;
+  padding: 12px 0 !important;
+  border: 0 !important;
+  border-top: 1px solid var(--rd-line) !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+}
+html body main.case-shell .evidence-item > :first-child { margin: 0; }
+@media (max-width: 620px) { html body main.case-shell .evidence-item { grid-template-columns: 1fr; gap: 3px; } }
+html body main.case-shell .role-grid { gap: 40px !important; }
+html body main.case-shell .role-grid > * {
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+}
 
 /* ---------- 5. Motion ---------- */
 @keyframes rdFloatWash { from { transform: translate3d(0, 0, 0) scale(1); } to { transform: translate3d(-34px, 28px, 0) scale(1.06); } }
