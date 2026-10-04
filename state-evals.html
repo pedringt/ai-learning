@@ -11,11 +11,14 @@
       --danger:#c8463d;--danger-soft:#fff1ef;--good:#16815b;--good-soft:#edf9f3;--radius:14px;
     }
     *{box-sizing:border-box}
+    html,body{max-width:100%;overflow-x:hidden}
     body{margin:0;background:var(--paper);color:var(--ink);font:15px/1.5 Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
     a{color:var(--accent);text-underline-offset:2px}
     button{font:inherit}
     :where(button,a,[tabindex]):focus-visible{outline:3px solid rgba(103,88,232,.22);outline-offset:3px}
-    .shell{max-width:1240px;margin:0 auto;padding:24px 24px 64px}
+    .shell{width:100%;max-width:1240px;min-width:0;margin:0 auto;padding:24px 24px 64px}
+    .topbar,.hero,.actions,.summary-grid,.summary-card,.panel,.section-head,.scenario,.scenario-head,.scenario-grid,.run-list,.run-row{min-width:0}
+    .brand,.lede,.panel-copy,.scenario h3,.detail p,.failure-item h3,.failure-item p,.run-row strong,.run-row span{overflow-wrap:anywhere}
     .topbar{display:flex;justify-content:space-between;gap:16px;align-items:center;margin-bottom:24px;padding-bottom:14px;border-bottom:1px solid #e4e8ef}
     .brand{font-size:18px;font-weight:800;letter-spacing:-.02em}
     .brand span{color:var(--muted)!important;font-weight:650}
@@ -94,7 +97,9 @@
     @media(max-width:760px){
       .shell{padding:20px 14px 48px}.topbar,.hero{align-items:flex-start;grid-template-columns:1fr;flex-direction:column}.hero-meta{justify-content:flex-start}
       .summary-grid,.scenario-grid{grid-template-columns:1fr}.detail:nth-child(2){grid-column:auto;order:0}.why{grid-column:auto}
-      .run-row{grid-template-columns:1fr}.run-row>span{text-align:left}.tabs{gap:15px;overflow-x:auto;flex-wrap:nowrap}.tab{white-space:nowrap}
+      .run-row{grid-template-columns:minmax(0,1fr)}.run-row>span{text-align:left}.tabs{width:100%;max-width:100%;gap:15px;overflow-x:auto;overflow-y:hidden;flex-wrap:nowrap;-webkit-overflow-scrolling:touch}.tab{flex:0 0 auto;white-space:nowrap}
+      .actions{width:100%}.actions .button{max-width:100%;white-space:normal}.disabled-action{max-width:100%}.disabled-action-tooltip{left:0;right:auto;width:min(320px,calc(100vw - 28px))}
+      .scenario-head{display:grid;grid-template-columns:minmax(0,1fr) auto}.section-head{display:grid;grid-template-columns:minmax(0,1fr) auto}
     }
   </style>
 </head>
