@@ -238,7 +238,7 @@ html body #ai-cs-mock .rd-hero .lead {
 
 .rd-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 30px; }
 
-.rd-stage { position: relative; min-height: 440px; }
+.rd-stage { position: relative; display: flex; flex-direction: column; min-height: 0; }
 
 .rd-card {
   position: relative;
@@ -369,13 +369,14 @@ html body #ai-cs-mock .rd-control p {
   letter-spacing: 0.08em;
 }
 
-.rd-orbit { position: absolute; left: -20px; bottom: 54px; z-index: 1; display: grid; gap: 9px; transform: rotate(-4deg); }
+.rd-card { order: 1; }
+.rd-orbit { order: 2; position: relative; z-index: 1; display: grid; gap: 9px; width: fit-content; margin: 24px 0 0 -12px; transform: rotate(-3deg); }
 
 .rd-orbit span {
   display: inline-flex;
   width: fit-content;
   border: 1px solid var(--rd-line);
-  border-radius: 999px;
+  border-radius: 8px;
   background: #fff;
   padding: 9px 12px;
   color: #3b3145;
