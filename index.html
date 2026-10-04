@@ -657,13 +657,29 @@ body.v88-dark .home-state-feature{box-shadow:none}body.v88-dark .home-state-acti
 #ai-cs-mock .page-intro .section-lead,
 #ai-cs-mock [data-page="portfolio"] > .page-intro .section-lead,
 #ai-cs-mock [data-page="learn"] > .page-intro .lead{
-  max-width:920px!important;
-  margin-top:12px!important;
-  color:color-mix(in srgb,var(--ink) 42%,var(--muted))!important;
-  font-size:16.5px!important;
-  line-height:1.68!important;
-  font-weight:430!important;
-  letter-spacing:-.002em!important;
+  position:relative!important;
+  max-width:860px!important;
+  margin-top:14px!important;
+  padding-left:16px!important;
+  color:color-mix(in srgb,var(--ink) 48%,var(--muted))!important;
+  font-size:15.5px!important;
+  line-height:1.66!important;
+  font-weight:470!important;
+  letter-spacing:.001em!important;
+}
+#ai-cs-mock .page-intro .lead::before,
+#ai-cs-mock .page-intro .section-lead::before,
+#ai-cs-mock [data-page="portfolio"] > .page-intro .section-lead::before,
+#ai-cs-mock [data-page="learn"] > .page-intro .lead::before{
+  content:"";
+  position:absolute;
+  left:0;
+  top:.32em;
+  bottom:.34em;
+  width:3px;
+  border-radius:999px;
+  background:linear-gradient(180deg,color-mix(in srgb,var(--purple) 58%,var(--border)),color-mix(in srgb,var(--gold) 44%,var(--border)));
+  opacity:.72;
 }
 #ai-cs-mock .page-intro .section-title,
 #ai-cs-mock .page-intro .route-title{
@@ -681,9 +697,10 @@ body.v88-dark .home-state-feature{box-shadow:none}body.v88-dark .home-state-acti
   #ai-cs-mock [data-page="portfolio"] > .page-intro .section-lead,
   #ai-cs-mock [data-page="learn"] > .page-intro .lead{
     max-width:none!important;
-    margin-top:10px!important;
-    font-size:15.5px!important;
-    line-height:1.62!important;
+    margin-top:11px!important;
+    padding-left:13px!important;
+    font-size:15px!important;
+    line-height:1.6!important;
   }
 }
 </style>
