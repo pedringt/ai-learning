@@ -4,7 +4,7 @@
 
 Durable principles live in Durable AI Knowledge. Day-to-day efficiency habits live in the Efficient AI Use for Product Work cheat sheet. This page stays closer to current patterns, tools, vocabulary, and techniques that may change.
 
-<!-- edge-review: 2026-09-28 -->
+<!-- edge-review: 2026-10-04 -->
 
 ---
 
@@ -70,19 +70,13 @@ The workflow, skills, permissions, and user experience do not have to come from 
 
 **Ask:** Can we change the model or provider without rebuilding the agent experience?
 
-### Treat persistent bots as standing product roles
+### Treat persistent agents as standing product roles
 
-AI products are increasingly moving from one-off chat interactions toward persistent bots that can hold a role, retain relevant context, use approved tools, and continue a workflow across sessions.
+AI products are increasingly moving from one-off interactions toward persistent agents that can hold a role, retain relevant context, use approved tools, and continue work across sessions. That turns product design from a single prompt and response into an ongoing workflow.
 
-**Ask:** When does a repeated workflow deserve a standing AI worker instead of an on-demand assistant?
+Scope the role explicitly: its goal, context and memory, tools, authority, execution rules, observability, evaluation, human intervention, and how long its authority should remain valid. Permissions that make sense for a short task may be too broad for a worker that can keep acting indefinitely.
 
-### Scope an ongoing agent as a product role
-
-A standing worker turns product design from a single prompt and response into an ongoing workflow. The product team needs to define its goal, context and memory, tools, authority, execution rules, observability, evaluation, and human intervention.
-
-For AI product and consulting work, this is a practical way to turn “build an agent” into a reviewable scope. Map the workflow, decide what the worker may do and what requires approval, then specify how people can inspect, correct, pause, or recover it.
-
-**Ask:** What does the worker own? What context and sources can it use? Which actions may it take? How does it show its work, prove it is reliable, and hand control back to a person?
+**Ask:** When does a repeated workflow deserve a standing AI worker? What does it own, remember, access, and need approval for? How long does that authority last, and when should it expire or be renewed?
 
 ### Behavior contracts may become more important than model selection
 
@@ -194,7 +188,7 @@ Compressing older context into a smaller summary so a long-running agent can kee
 
 ### Execution boundary
 
-The boundary between what AI may interpret or decide and what trusted software or people may actually change.
+The boundary between what AI may interpret or decide and what trusted software or people may actually change. For consequential actions, prefer fail-closed controls: if permission or policy cannot be verified, block the action rather than assume it is safe.
 
 ### Fan-out / fan-in
 
@@ -220,6 +214,10 @@ A design where useful data, business logic, permissions, and actions can be acce
 
 A small set of critical eval cases run regularly to detect meaningful drift in AI behavior before a full regression suite is needed.
 
+### Blast radius
+
+The amount of harm a failure could cause before someone notices and stops it. A workflow with broader permissions, more users, or harder-to-reverse actions has a larger blast radius.
+
 ---
 
 ## Questions I'm Adding to My Toolkit
@@ -234,3 +232,4 @@ These are the questions that still feel useful beyond the shorter durable set.
 6. Can this model, alias, or preset change underneath us, and how will we know if that changes product behavior?
 7. If the underlying AI improves, does this workflow still earn its maintenance cost?
 8. If this were a standing AI worker instead of a one-off interaction, what would it own, remember, access, and need approval for?
+9. What evidence would we need before moving this from pilot to a standard workflow?
