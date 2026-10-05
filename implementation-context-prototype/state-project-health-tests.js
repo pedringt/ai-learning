@@ -70,10 +70,33 @@ const healthy=H.normalizeQuality({
   live_review_quality:{resolved_reviews:4,material_edit_rate:.25},
   controlled_evals:{
     latest_review_interpretation:{interpretation_accuracy:1,high_severity_failures:0,failed_cases:0},
-    latest_ask_quality:{ask_grounding:1,authority_accuracy:1,overall_pass_rate:1,high_severity_failures:0,failed_cases:0}
+    latest_ask_quality:{ask_grounding:1,authority_accuracy:1,uncertainty_accuracy:1,overall_pass_rate:1,high_severity_failures:0,failed_cases:0}
   }
 });
 assert.strictEqual(H.qualityAttention(healthy).kind,'good');
+
+// "Unknown is not healthy": a quality signal that was never measured must not read as healthy (PR #429).
+const unmeasured=H.normalizeQuality({
+  controlled_evals:{
+    latest_review_interpretation:{interpretation_accuracy:1,high_severity_failures:0,failed_cases:0},
+    latest_ask_quality:{ask_grounding:1,overall_pass_rate:1,high_severity_failures:0,failed_cases:0}
+  }
+});
+const unmeasuredAttention=H.qualityAttention(unmeasured);
+assert.strictEqual(unmeasuredAttention.kind,'warn');
+assert.match(unmeasuredAttention.title,/not measured/i);
+assert.match(unmeasuredAttention.detail,/decision authority/);
+assert.match(unmeasuredAttention.detail,/uncertainty handling/);
+assert.doesNotMatch(unmeasuredAttention.detail,/answer quality|update understanding/);
+// ...and a single missing signal is named on its own
+const onlyUncertaintyMissing=H.qualityAttention(H.normalizeQuality({
+  controlled_evals:{
+    latest_review_interpretation:{interpretation_accuracy:1,high_severity_failures:0,failed_cases:0},
+    latest_ask_quality:{ask_grounding:1,authority_accuracy:1,overall_pass_rate:1,high_severity_failures:0,failed_cases:0}
+  }
+}));
+assert.strictEqual(onlyUncertaintyMissing.kind,'warn');
+assert.match(onlyUncertaintyMissing.detail,/uncertainty handling is unmeasured/);
 
 const severe=H.normalizeQuality({
   controlled_evals:{
@@ -575,7 +598,10 @@ const unopenedState={...H.emptyProjectData(H.PROJECTS[0]),fresh:true,quality:H.n
 assert.strictEqual(H.productOpenItems(unopenedState).length,1);
 assert.strictEqual(H.projectStatus(unopenedState).label,'Watch');
 assert.strictEqual(H.releaseReadiness({...unopenedState,delivery:{vercel:{kind:'good'}}}).label,'Watch');
-const healthyRelease=H.releaseReadiness({...unopenedState,quality:H.normalizeQuality({controlled_evals:{latest_review_interpretation:{overall_pass_rate:1,high_severity_failures:0,total:1},latest_ask_quality:{overall_pass_rate:1,high_severity_failures:0,total:1}}}),delivery:{vercel:{kind:'good'}}});
+// A release is only "Healthy" when every State quality signal was actually measured (PR #429).
+const partlyMeasuredRelease=H.releaseReadiness({...unopenedState,quality:H.normalizeQuality({controlled_evals:{latest_review_interpretation:{overall_pass_rate:1,high_severity_failures:0,total:1},latest_ask_quality:{overall_pass_rate:1,high_severity_failures:0,total:1}}}),delivery:{vercel:{kind:'good'}}});
+assert.strictEqual(partlyMeasuredRelease.label,'Watch');
+const healthyRelease=H.releaseReadiness({...unopenedState,quality:H.normalizeQuality({controlled_evals:{latest_review_interpretation:{overall_pass_rate:1,high_severity_failures:0,total:1},latest_ask_quality:{overall_pass_rate:1,ask_grounding:1,authority_accuracy:1,uncertainty_accuracy:1,high_severity_failures:0,total:1}}}),delivery:{vercel:{kind:'good'}}});
 assert.strictEqual(healthyRelease.label,'Healthy');
 assert.strictEqual(healthyRelease.kind,'good');
 const blockedRelease=H.releaseReadiness({...unopenedState,activity:{available:true,deployments:{recent_failures:[{id:'release-fail',created_at:'2026-09-30T18:00:00Z',recovered:false,message:'failed'}]},runtime:{issues:[]}},delivery:{vercel:{kind:'bad'}}});
@@ -626,7 +652,9 @@ assert.match(evalDetailsHtml,/State eval details/);
 assert.match(evalDetailsHtml,/23 scenarios/);
 assert.match(evalDetailsHtml,/Update understanding/);
 assert.match(evalDetailsHtml,/Answer quality/);
-assert.match(evalDetailsHtml,/Synthetic controlled scenarios/);
+// The page must keep saying the eval cases are constructed test data and that raw content is not published (reworded in PR #422).
+assert.match(evalDetailsHtml,/deliberately constructed test data, not customer or private project content/);
+assert.match(evalDetailsHtml,/Raw production content and full model transcripts are not published here/);
 assert.match(evalDetailsHtml,/Failed scenarios/);
 assert.match(evalDetailsHtml,/Run AI evals/);
 assert.match(evalDetailsHtml,/Investigate this failure/);

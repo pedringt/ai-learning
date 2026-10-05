@@ -136,8 +136,18 @@ const attention=projectQuality.tastemakeAttention(
   {rule_checks:{failed:0},validator_self_test:{missed:0}},
   {conclusion:'success'}
 );
-assert.strictEqual(attention[0].kind,'warn');
-assert.match(attention[0].title,/Baseline/);
+// Baseline fixture failures are historical comparison evidence, not a current warning (PR #422).
+assert.strictEqual(attention.length,1);
+assert.strictEqual(attention[0].kind,'good');
+assert.doesNotMatch(attention[0].title,/Baseline still has/);
+assert.match(attention[0].detail,/historical comparison/i);
+// ...but real current problems still raise attention.
+const ruleFailure=projectQuality.tastemakeAttention({valid_fixture_outputs:{failed:2}},{rule_checks:{failed:1},validator_self_test:{missed:0}},{conclusion:'success'});
+assert.ok(ruleFailure.some(item=>item.kind==='bad'&&/rule failures/i.test(item.title)));
+const validatorMiss=projectQuality.tastemakeAttention({valid_fixture_outputs:{failed:2}},{rule_checks:{failed:0},validator_self_test:{missed:1}},{conclusion:'success'});
+assert.ok(validatorMiss.some(item=>item.kind==='bad'&&/Validator self-test/i.test(item.title)));
+const ciNotGreen=projectQuality.tastemakeAttention({valid_fixture_outputs:{failed:2}},{rule_checks:{failed:0},validator_self_test:{missed:0}},{conclusion:'failure'});
+assert.ok(ciNotGreen.some(item=>item.kind==='bad'&&/Main QA is not green/i.test(item.title)));
 
 assert.deepStrictEqual(
   projectQuality.parseNarcHandoff('All three test suites are green on main as of this commit. The only real next step is #70 — a full ~15-minute playtest. #88 analytics stays blocked until then.'),
