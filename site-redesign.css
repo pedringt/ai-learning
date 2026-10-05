@@ -613,7 +613,7 @@ html body main:is(.case-system-page, .case-shell, .edge-wrap, .map-wrap) h3 {
 html body main :is(.section > p, .section-note, .evidence-principle > p, .plain-language p, .callout p, header > p.lead, header > .lead, .shift-lead, .case-page-content > p, .paper-section > p, .legal-story p, .edge-body > p, .case-shell > p, .map-wrap > p) {
   font-size: 16px !important;
   line-height: 1.65 !important;
-  color: #342d3b;
+  color: #3f3f46;
   max-width: 72ch;
 }
 html body main :is(.section, .edge-body, .case-page-content) > :is(ul, ol) li {
@@ -1088,7 +1088,7 @@ html body #ai-cs-mock #portfolio .applied-secondary-grid > .applied-secondary:nt
 html body #ai-cs-mock #portfolio .band[style*="margin-top:30px"] h3 {
   font-size: clamp(18px, 1.7vw, 20px) !important;
   line-height: 1.2 !important;
-  letter-spacing: -0.03em !important;
+  letter-spacing: -0.02em !important;
   margin: 0 0 8px !important;
   color: var(--ink) !important;
 }
@@ -1151,7 +1151,7 @@ html body #ai-cs-mock #learn .stage-body :is(h3, .stage-group > h3) {
   text-transform: uppercase;
 }
 html body #ai-cs-mock #learn .stage-body :is(p, li, .learning-item, .learning-item p) {
-  color: #342d3b !important;
+  color: #3f3f46 !important;
   font-size: 14.5px !important;
   line-height: 1.65 !important;
 }
@@ -1629,6 +1629,33 @@ html body main.legal-single-case .legal-article {
 html body main.legal-single-case .paper-abstract { border-bottom: 1px solid var(--rd-line) !important; }
 html body main.legal-single-case .paper-example { border-top: 1px solid var(--rd-line) !important; }
 html body main.legal-single-case .paper-section { border-top: 1px solid var(--rd-line) !important; }
+
+
+/* ---------- 4v. Typography (reviewer feedback #10): loosened headings; names are serif, everything you read is sans ---------- */
+/* every heading on every portfolio page: weight 700, gentle tracking, readable spaces after commas.
+   (:not(#_) only raises specificity so this wins over the older per-component rules above) */
+html body main:not(#_) :is(h1, h2, h3, h4):not(#_) {
+  font-weight: 700 !important;
+  letter-spacing: -0.02em !important;
+  word-spacing: 0.02em !important;
+}
+/* the big homepage hero headline keeps a tighter, heavier look */
+html body #ai-cs-mock .rd-hero h1:not(#_) {
+  font-weight: 800 !important;
+  letter-spacing: -0.05em !important;
+  word-spacing: 0 !important;
+}
+/* names are serif: homepage card titles (already), Applied Work card titles, every case-study / reference page title */
+html body main.case-system-page h1:not(#_),
+html body main.case-shell h1:not(#_),
+html body main.edge-wrap h1:not(#_),
+html body main.map-wrap h1:not(#_),
+html body #ai-cs-mock #portfolio .applied-major > h3:not(#_),
+html body #ai-cs-mock #portfolio .applied-major > h3 a:not(#_),
+html body #ai-cs-mock #portfolio .applied-secondary > h3:not(#_) {
+  font-family: "Iowan Old Style", "Charter", "Georgia", "Times New Roman", serif !important;
+}
+html body #ai-cs-mock #portfolio .applied-secondary > h3:not(#_) { font-size: 17px !important; }
 
 /* ---------- 5. Motion ---------- */
 @keyframes rdFloatWash { from { transform: translate3d(0, 0, 0) scale(1); } to { transform: translate3d(-34px, 28px, 0) scale(1.06); } }

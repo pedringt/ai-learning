@@ -72,8 +72,9 @@ html body .topbar .brand::before {
 html body h1 {
   font-size: clamp(44px, 5.6vw, 76px);
   line-height: 0.95;
-  letter-spacing: -0.06em;
-  font-weight: 900;
+  letter-spacing: -0.02em;
+  word-spacing: 0.02em;
+  font-weight: 700;
 }
 html body .hero h1::after {
   content: "";
@@ -121,7 +122,7 @@ html body .project-card.active {
 }
 
 /* selected project panel */
-html body .detail-head h2 { letter-spacing: -0.045em; font-weight: 900; }
+html body .detail-head h2 { letter-spacing: -0.02em; word-spacing: 0.02em; font-weight: 700; }
 html body .project-tabs { border-bottom-color: var(--line); }
 html body .project-tab { font-weight: 800; color: var(--muted); }
 html body .project-tab.active { color: var(--ink); border-bottom-color: var(--rd-pink); border-bottom-width: 3px; }
@@ -221,6 +222,9 @@ html body .mock-dashboard .mock-attention-banner.is-checking .mock-attention-cop
 .mock-skeleton i:last-child { width: 38%; }
 @keyframes phSpin { to { transform: rotate(360deg); } }
 @keyframes phShimmer { to { background-position: -200% 0; } }
+
+/* headings: same weight and tracking as the portfolio (reviewer feedback #10); tool pages stay sans */
+html body :is(h1, h2, h3, h4):not(#_) { font-weight: 700 !important; letter-spacing: -0.02em !important; word-spacing: 0.02em !important; }
 
 @media (max-width: 680px) {
   html body h1 { font-size: clamp(40px, 12vw, 56px); }
