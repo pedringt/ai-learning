@@ -4,7 +4,7 @@
 
 Durable principles live in Durable AI Knowledge. Day-to-day efficiency habits live in the Efficient AI Use for Product Work cheat sheet. This page stays closer to current patterns, tools, vocabulary, and techniques that may change.
 
-<!-- edge-review: 2026-10-04 -->
+<!-- edge-review: 2026-10-05 -->
 
 ---
 
@@ -78,6 +78,14 @@ Scope the role explicitly: its goal, context and memory, tools, authority, execu
 
 **Ask:** When does a repeated workflow deserve a standing AI worker? What does it own, remember, access, and need approval for? How long does that authority last, and when should it expire or be renewed?
 
+### Let reversible systems correct themselves
+
+For low-consequence actions that are genuinely reversible, an AI system can sometimes act first and keep checking whether the evidence supporting that action still holds. If later evidence contradicts the earlier judgment, the system can reverse or compensate for its own action instead of waiting for a person to notice.
+
+The stronger pattern is not just automatic rollback. A system can also revoke its own authority when its reliability drops, then route similar future actions back to human review. Irreversible or high-consequence actions should still require approval before they happen.
+
+**Ask:** Which actions are safe to reverse automatically, what evidence should trigger reversal, and when should the system lose the authority to act on its own?
+
 ### Behavior contracts may become more important than model selection
 
 Today, teams often choose a specific model first. A more mature pattern may be to define the behavior a workflow needs, such as quality, latency, cost, tool support, output structure, and risk tolerance, then map that contract to an approved model or model configuration.
@@ -147,6 +155,8 @@ Useful examples of how current AI products are solving recurring product and arc
 - **Headless architecture:** Data, rules, permissions, and actions are accessible independently of the original UI while the source system still owns the rules.
 - **Behavioral canary:** A small set of critical eval cases run regularly to detect meaningful behavior drift.
 - **Blast radius:** How much harm a failure could cause before someone notices and stops it.
+- **Reversible autonomy:** AI is allowed to take a bounded action, keep evaluating whether the action remains justified, and automatically reverse or compensate when defined evidence shows it should no longer stand.
+- **Compensating action:** A new action that neutralizes or reverses the effect of an earlier action while preserving the audit trail.
 
 ---
 
@@ -158,3 +168,4 @@ Useful examples of how current AI products are solving recurring product and arc
 4. Can the model or provider change without rebuilding the authoritative workflow, and how will we know if behavior changes underneath us?
 5. If this were a standing AI worker, what would it own, remember, access, need approval for, and how long should that authority last?
 6. What evidence would we need before moving this from pilot to a standard workflow?
+7. Which autonomous actions are truly reversible, what should trigger automatic reversal, and when should the system lose that authority?
