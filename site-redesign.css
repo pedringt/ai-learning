@@ -447,7 +447,6 @@ html body #ai-cs-mock .home-feature-state-anchor {
 
 html body #ai-cs-mock .home-feature-card h2 {
   margin: 14px 0 0;
-  font-family: "Iowan Old Style", "Charter", "Georgia", "Times New Roman", serif;
   font-size: 34px;
   font-weight: 700;
   line-height: 1;
@@ -1631,7 +1630,7 @@ html body main.legal-single-case .paper-example { border-top: 1px solid var(--rd
 html body main.legal-single-case .paper-section { border-top: 1px solid var(--rd-line) !important; }
 
 
-/* ---------- 4v. Typography (reviewer feedback #10): loosened headings; names are serif, everything you read is sans ---------- */
+/* ---------- 4v. Typography (reviewer feedback #10): loosened headings; all type is sans ---------- */
 /* every heading on every portfolio page: weight 700, gentle tracking, readable spaces after commas.
    (:not(#_) only raises specificity so this wins over the older per-component rules above) */
 html body main:not(#_) :is(h1, h2, h3, h4):not(#_) {
@@ -1644,16 +1643,6 @@ html body #ai-cs-mock .rd-hero h1:not(#_) {
   font-weight: 800 !important;
   letter-spacing: -0.065em !important;
   word-spacing: 0 !important;
-}
-/* names are serif: homepage card titles (already), Applied Work card titles, every case-study / reference page title */
-html body main.case-system-page h1:not(#_),
-html body main.case-shell h1:not(#_),
-html body main.edge-wrap h1:not(#_),
-html body main.map-wrap h1:not(#_),
-html body #ai-cs-mock #portfolio .applied-major > h3:not(#_),
-html body #ai-cs-mock #portfolio .applied-major > h3 a:not(#_),
-html body #ai-cs-mock #portfolio .applied-secondary > h3:not(#_) {
-  font-family: "Iowan Old Style", "Charter", "Georgia", "Times New Roman", serif !important;
 }
 html body #ai-cs-mock #portfolio .applied-secondary > h3:not(#_) { font-size: 17px !important; }
 
