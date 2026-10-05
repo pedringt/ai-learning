@@ -1747,6 +1747,10 @@ html body #ai-cs-mock .rd-control p{margin:10px 0 0!important;color:#63708a!impo
   .rd-hero{grid-template-columns:minmax(0,1fr) minmax(360px,430px);gap:26px}
   .rd-stage{transform:scale(.9);transform-origin:center right}
   .rd-review-current{right:-32px}
+  /* the card is 74px wider than the room to its right here (128px in, 376px wide, 430px stage): pull it and its paper sheets left so nothing passes the window edge */
+  .rd-card{left:54px!important}
+  .rd-paper-one{left:38px}
+  .rd-paper-two{left:58px}
 }
 @media (max-width:980px) and (min-width:681px){
   .rd-hero{grid-template-columns:1fr;gap:18px;min-height:auto;padding:34px 0 28px}
