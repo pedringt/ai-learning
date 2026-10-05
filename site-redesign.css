@@ -905,10 +905,7 @@ html body main :is(.surface-grid, .state-model-grid) > * > :is(span, small, .lab
   /* 6 cards -> 3 x 2 */
   html body main :is(.surface-grid, .state-model-grid):has(> :nth-child(6):last-child) { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }
 }
-@media (min-width: 1101px) {
-  /* 4 cards -> one row of 4 */
-  html body main :is(.surface-grid, .state-model-grid):has(> :nth-child(4):last-child) { grid-template-columns: repeat(4, minmax(0, 1fr)) !important; }
-}
+
 /* a lone card never sits alone on a row */
 html body main :is(.surface-grid, .state-model-grid):has(> :nth-child(1):last-child) { grid-template-columns: 1fr !important; }
 
@@ -1038,7 +1035,7 @@ html body #ai-cs-mock .applied-secondary-grid > .applied-secondary:nth-child(4n+
 html body #ai-cs-mock [data-page="portfolio"] .band[style*="margin-top:30px"] {
   border: 0 !important;
   border-radius: 28px !important;
-  background: linear-gradient(145deg, #fff1fa, #f5f0ff 55%, #e8fbff) !important;
+  background: linear-gradient(145deg, #ffe3f1, #e9e4ff 52%, #d9f6fb) !important;
   padding: 22px 26px !important;
   margin-top: 32px !important;
   border-radius: 22px !important;
@@ -1309,48 +1306,34 @@ html body main.map-wrap .map-q > b { display: block; margin-bottom: 4px; }
 html body main.map-wrap .map-q > span { display: block; }
 html body main.map-wrap .map-family { padding: 18px 20px !important; border-radius: 16px !important; }
 
-/* closing links: equal cards, first one filled */
+/* closing links: content-sized pill buttons, like the homepage "Open State / Case study" buttons */
 html body main .closing-links {
-  display: grid !important;
-  gap: 12px !important;
-  grid-template-columns: 1fr !important;
+  display: flex !important;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px !important;
   margin-top: 16px;
-}
-@media (min-width: 621px) {
-  html body main .closing-links { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
-}
-@media (min-width: 621px) and (max-width: 700px) {
-  html body main .closing-links:has(> :nth-child(3):last-child) { grid-template-columns: 1fr !important; }
-}
-@media (min-width: 701px) {
-  html body main .closing-links:has(> :nth-child(3):last-child) { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }
-}
-@media (min-width: 1101px) {
-  html body main .closing-links:has(> :nth-child(4):last-child) { grid-template-columns: repeat(4, minmax(0, 1fr)) !important; }
 }
 html body main .closing-links > a {
   box-sizing: border-box;
-  display: flex !important;
+  display: inline-flex !important;
   align-items: center;
-  min-height: 52px;
+  justify-content: center;
+  min-height: 44px;
   padding: 0 18px !important;
-  border: 1px solid var(--rd-line) !important;
-  border-radius: 14px !important;
+  border: 1px solid var(--ink) !important;
+  border-radius: 999px !important;
   background: #fff !important;
   color: var(--ink) !important;
-  font-size: 14.5px !important;
+  font-size: 14px !important;
   font-weight: 900 !important;
-  line-height: 1.25;
+  line-height: 1.2;
   text-decoration: none !important;
   box-shadow: none !important;
   transition: transform 180ms ease, box-shadow 180ms ease;
 }
-html body main .closing-links > a:hover { transform: translateY(-2px); box-shadow: 0 12px 26px rgba(21, 17, 26, 0.1) !important; }
-html body main .closing-links > a.meridian-primary-action {
-  background: var(--ink) !important;
-  border-color: var(--ink) !important;
-  color: #fff !important;
-}
+html body main .closing-links > a:hover { transform: translateY(-2px); box-shadow: 0 12px 26px rgba(21, 17, 26, 0.12) !important; }
+html body main .closing-links > a.meridian-primary-action { background: var(--ink) !important; color: #fff !important; }
 
 /* Project Health case study: cards and prose only */
 html body main.case-shell .flow {
@@ -1533,12 +1516,6 @@ html body #ai-cs-mock .learning-next .learning-how-note a { min-height: 32px; pa
 /* ---------- 4r. State case study: hide the two duplicates (text stays in the page source) ---------- */
 html body main.case-system-page:has(.meridian-product-callout a[data-state-app-link]) .integration-flow.authority-steps { display: none !important; }
 html body main.case-system-page:has(.meridian-product-callout a[data-state-app-link]) .closing-links > a[data-state-app-link] { display: none !important; }
-@media (min-width: 621px) and (max-width: 700px) {
-  html body main.case-system-page:has(.meridian-product-callout a[data-state-app-link]) .closing-links { grid-template-columns: 1fr !important; }
-}
-@media (min-width: 701px) {
-  html body main.case-system-page:has(.meridian-product-callout a[data-state-app-link]) .closing-links { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }
-}
 
 /* ---------- 4s. Project Health case study bottom: fewer boxes ---------- */
 html body main.case-shell .evidence-list { display: block !important; }
@@ -1575,6 +1552,83 @@ html body main.case-shell > h2:first-of-type { margin-top: 40px !important; }
 
 /* Project Health: "Failure recovery" repeats the "Unknown is not healthy" decision (text stays in the markup) */
 html body main.case-shell .evidence-list > .evidence-item:nth-child(2) { display: none !important; }
+
+
+/* ---------- 4u. Review follow-ups ---------- */
+/* Portfolio note: the Learning Library link fills the right side */
+html body #ai-cs-mock #portfolio .band[style*="margin-top:30px"] {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  column-gap: 32px;
+  align-items: center;
+}
+html body #ai-cs-mock #portfolio .band[style*="margin-top:30px"]::before { justify-self: start; }
+html body #ai-cs-mock #portfolio .band .band-link {
+  grid-column: 2;
+  grid-row: 1 / span 3;
+  align-self: center;
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 18px;
+  border: 1px solid var(--ink);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--ink) !important;
+  font-size: 14px;
+  font-weight: 900;
+  text-decoration: none !important;
+  white-space: nowrap;
+}
+html body #ai-cs-mock #portfolio .band .band-link:hover { background: var(--ink); color: #fff !important; }
+@media (max-width: 700px) {
+  html body #ai-cs-mock #portfolio .band[style*="margin-top:30px"] { grid-template-columns: 1fr; }
+  html body #ai-cs-mock #portfolio .band .band-link { grid-column: 1; grid-row: auto; justify-self: start; margin-top: 14px; }
+}
+
+/* Applied Work supporting cards: readable text size (contrast was already fine) */
+html body #ai-cs-mock #portfolio .applied-secondary .card-intro { font-size: 14px !important; line-height: 1.5 !important; }
+html body #ai-cs-mock #portfolio .applied-card-actions a { font-size: 13.5px !important; }
+html body #ai-cs-mock #portfolio .applied-secondary { justify-content: flex-start !important; gap: 8px !important; }
+html body #ai-cs-mock #portfolio .applied-secondary .card-intro { margin-top: 0 !important; }
+html body #ai-cs-mock #portfolio .applied-secondary > h3 { margin-bottom: 0 !important; }
+/* reserve two lines for titles so descriptions line up; on wide screens every title is one line, so reserve none */
+html body #ai-cs-mock #portfolio .applied-secondary > h3 { min-height: 40px !important; }
+@media (min-width: 1300px) { html body #ai-cs-mock #portfolio .applied-secondary > h3 { min-height: 0 !important; } }
+
+/* "In short" line under each case study's intro */
+html body main .in-short {
+  max-width: 62ch;
+  margin: 22px 0 0;
+  font-size: clamp(17px, 1.6vw, 19px);
+  font-weight: 700;
+  line-height: 1.45;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+}
+html body main .in-short > span {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+/* Legal page: same column and hairline rules as the other case studies */
+html body main.legal-single-case .legal-story,
+html body main.legal-single-case .legal-paper,
+html body main.legal-single-case .legal-article {
+  max-width: none !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+}
+html body main.legal-single-case .paper-abstract { border-bottom: 1px solid var(--rd-line) !important; }
+html body main.legal-single-case .paper-example { border-top: 1px solid var(--rd-line) !important; }
+html body main.legal-single-case .paper-section { border-top: 1px solid var(--rd-line) !important; }
 
 /* ---------- 5. Motion ---------- */
 @keyframes rdFloatWash { from { transform: translate3d(0, 0, 0) scale(1); } to { transform: translate3d(-34px, 28px, 0) scale(1.06); } }

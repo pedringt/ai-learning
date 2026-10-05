@@ -1628,14 +1628,18 @@
         '<div class="mock-test-row"><strong>'+esc(item.title||item.scenario_id||'Quality scenario')+'</strong><span class="status-pill bad">Failed</span><span>'+esc(item.expected||'Review scenario')+'</span></div>'
       ).join('');
 
-      const attentionHtml=actionable.length
+      // While the only open item is "Still checking", show a neutral loading state instead of an orange warning.
+      const checking=actionable.length===1&&actionable[0].title==='Still checking';
+      const attentionHtml=checking
+        ? '<div class="mock-skeleton" aria-hidden="true"><i></i><i></i></div>'
+        : actionable.length
         ? '<div class="mock-issue-row"><span class="mock-issue-dot"></span><div><strong>'+esc(actionable[0].title)+'</strong><p>'+esc(actionable[0].detail||'Review the current signal before changing product behavior.')+'</p></div><span class="mock-issue-meta">'+esc(actionable[0].owner||'Product')+'</span></div>'
         : '<div class="mock-issue-row"><span class="mock-issue-dot" style="background:#16a36f"></span><div><strong>Nothing needs attention right now</strong><p>No current incident or product-quality action is open.</p></div><span class="mock-issue-meta">Healthy</span></div>';
 
       mockDashboard.innerHTML=
-        '<section class="mock-dashboard-section mock-attention-banner '+(actionable.length?'has-attention':'is-healthy')+'">'+
-          '<div class="mock-attention-icon">'+(actionable.length?'!':'✓')+'</div><div class="mock-attention-copy"><h3>'+(actionable.length?'What needs attention':'Current status')+'</h3><p>'+esc(actionable.length?(actionable.length+' issue'+(actionable.length===1?'':'s')+' needs your review.'):'Everything looks healthy right now.')+'</p>'+attentionHtml+'</div>'+
-          '<button class="button small" type="button" data-tab-target="ai-quality">View all issues →</button>'+
+        '<section class="mock-dashboard-section mock-attention-banner '+(checking?'is-checking':actionable.length?'has-attention':'is-healthy')+'"'+(checking?' role="status"':'')+'>'+
+          '<div class="mock-attention-icon">'+(checking?'<span class="mock-spinner"></span>':actionable.length?'!':'✓')+'</div><div class="mock-attention-copy"><h3>'+(checking?'Checking project health…':actionable.length?'What needs attention':'Current status')+'</h3><p>'+esc(checking?'Loading the latest signals.':actionable.length?(actionable.length+' issue'+(actionable.length===1?'':'s')+' needs your review.'):'Everything looks healthy right now.')+'</p>'+attentionHtml+'</div>'+
+          (checking?'':'<button class="button small" type="button" data-tab-target="ai-quality">View all issues →</button>')+
         '</section>'+
         '<div class="mock-kpi-grid">'+kpis+'</div>'+
         '<section class="mock-dashboard-section mock-release-card">'+
