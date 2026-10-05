@@ -1727,7 +1727,7 @@ html body #ai-cs-mock .rd-control p{margin:10px 0 0!important;color:#63708a!impo
 .human-icon{color:#9a3d35;font-size:16px;background:#fff}.authority-icon{color:#0b9b51}.current-icon{color:#3157d8}
 .rd-review-human{left:18px;top:30px;width:188px;background:#fff0e9;transform:rotate(-6deg)}
 .rd-review-authority{right:2px;top:34px;width:180px;background:#eaf9e9;transform:rotate(6deg)}
-.rd-review-current{right:-54px;top:160px;width:128px;background:#edf5ff;transform:rotate(7deg)}
+.rd-review-current{right:-30px;top:160px;width:128px;background:#edf5ff;transform:rotate(7deg)}
 .rd-review-current .rd-tape{left:64%;transform:translateX(-50%) rotate(5deg)}
 .rd-note{position:absolute!important;left:-8px!important;right:auto!important;bottom:28px!important;z-index:5!important;width:178px!important;border:1px solid #e1d846!important;border-radius:8px!important;background:#f6ee52!important;padding:14px 14px 12px!important;box-shadow:0 12px 24px rgba(141,132,23,.13)!important;transform:rotate(-8deg)!important;font-size:11.5px!important;font-weight:760!important;line-height:1.25!important;color:#171717!important}
 .rd-note .rd-tape-note{position:absolute;top:-11px;left:22px;width:38px;height:13px;background:rgba(218,220,216,.76);transform:rotate(-4deg)}
@@ -1754,7 +1754,7 @@ html body #ai-cs-mock .rd-control p{margin:10px 0 0!important;color:#63708a!impo
   html body #ai-cs-mock .rd-hero h1{max-width:760px;font-size:clamp(58px,9.5vw,80px)}
   html body #ai-cs-mock .rd-hero .lead{max-width:650px}
   .rd-stage{width:520px;max-width:100%;height:430px!important;margin:8px auto 0;transform:scale(.92);transform-origin:top center}
-  .rd-review-human{left:24px}.rd-review-authority{right:14px}.rd-review-current{right:-18px;top:170px}.rd-note{left:4px!important;bottom:20px!important}
+  .rd-review-human{left:24px}.rd-review-authority{right:14px}.rd-review-current{right:-28px;top:170px}.rd-note{left:4px!important;bottom:20px!important}
   .rd-rail{margin-top:-10px!important}
 }
 @media (max-width:680px){
@@ -1773,3 +1773,6 @@ html body #ai-cs-mock .rd-control p{margin:10px 0 0!important;color:#63708a!impo
   .rd-type-rail{font-size:12px;justify-content:space-between;padding:0 18px;gap:14px}
   .rd-type-left{gap:8px}.rd-type-label{font-size:10px}.rd-type-anchor{font-size:8.5px;letter-spacing:.08em}.rd-type-dynamic{min-width:0}
 }
+
+/* the blue "Current State" note sits further out on wide screens only; narrower ones have no room before the viewport edge */
+@media (min-width: 1300px) { .rd-review-current { right: -80px; } }
