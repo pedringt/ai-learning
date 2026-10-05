@@ -1642,7 +1642,7 @@ html body main:not(#_) :is(h1, h2, h3, h4):not(#_) {
 /* the big homepage hero headline keeps a tighter, heavier look */
 html body #ai-cs-mock .rd-hero h1:not(#_) {
   font-weight: 800 !important;
-  letter-spacing: -0.05em !important;
+  letter-spacing: -0.065em !important;
   word-spacing: 0 !important;
 }
 /* names are serif: homepage card titles (already), Applied Work card titles, every case-study / reference page title */
