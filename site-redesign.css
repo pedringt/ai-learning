@@ -1,5 +1,5 @@
 /* Context Switch bright redesign (#428). Loaded LAST on every page, after all inline styles.
-   Reference: docs/design/portfolio-ac-blend-mockup.html
+   Reference: the approved A+C blend mockup (kept outside the repo so it is not served publicly)
    Rule: expressive at the front door, disciplined once someone starts reading.
    Rollback: remove the <link> to this file. Light only; dark mode was removed. */
 

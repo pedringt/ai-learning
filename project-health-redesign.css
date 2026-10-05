@@ -1,6 +1,6 @@
 /* Project Health dashboard: bright redesign (#428). Appearance only: no layout, data or behaviour changes.
    Loaded last on project-health.html. Rollback: remove the <link>.
-   Reference: docs/design/portfolio-ac-blend-mockup.html */
+   Reference: the approved A+C blend mockup (kept outside the repo so it is not served publicly) */
 
 html { background: #fff; }
 
