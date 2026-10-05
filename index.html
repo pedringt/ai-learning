@@ -788,13 +788,64 @@ body.v88-dark .learning-how-note strong{color:#f5f2fb!important}
 <section class="view active" data-page="home" id="home">
 <div class="hero rd-hero"><div class="rd-hero-copy"><h1>AI doesn’t know <span>what it doesn’t know.</span></h1><p class="lead">That limitation matters when AI moves from promising demo to usable product. I focus on whether an AI workflow is trustworthy, controllable, and worth building in the first place.</p><div class="rd-actions"><a class="rd-button" href="#portfolio">See all applied work →</a><a class="rd-button rd-button-secondary" href="https://state.contextswitch.tech/" data-state-app-link target="_blank" rel="noopener noreferrer">Open State ↗</a></div></div>
 <aside class="rd-stage" aria-label="Featured product: State">
-<div class="rd-orbit" aria-hidden="true"><span>authority boundaries</span><span>stale information</span><span>human review</span></div>
-<div class="rd-card"><div class="rd-card-top"><span>Featured product</span><span class="rd-status">Live product</span></div>
-<div class="rd-control"><h2>State</h2><p>AI interprets project evidence, software enforces the rules, and people decide what becomes Current State.</p>
-<div class="rd-trace" aria-hidden="true"><div>Evidence</div><div>Review</div><div>Current State</div><div>History</div></div></div></div>
-<div class="rd-note">AI interprets. Software enforces. People authorize.<span>That’s the whole boundary.</span></div>
+<div class="rd-paper rd-paper-one" aria-hidden="true"></div>
+<div class="rd-paper rd-paper-two" aria-hidden="true"></div>
+<svg class="rd-lines" viewBox="0 0 520 430" aria-hidden="true">
+<defs>
+<marker id="rd-arrowhead" viewBox="0 0 10 10" refX="8.2" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+<path class="rd-arrowhead-shape" d="M1 1.5 Q5 4.7 9 5 Q5 5.3 1 8.5"></path>
+</marker>
+</defs>
+<path class="rd-sketch-main" d="M182 78 C 213 84, 229 99, 242 120" marker-end="url(#rd-arrowhead)"></path>
+<path class="rd-sketch-ghost" d="M181 80 C 214 88, 230 101, 243 121"></path>
+<path class="rd-sketch-main" d="M388 82 C 363 83, 348 96, 340 116" marker-end="url(#rd-arrowhead)"></path>
+<path class="rd-sketch-ghost" d="M389 84 C 365 86, 349 98, 341 117"></path>
+</svg>
+<div class="rd-review-note rd-review-human">
+<span class="rd-tape"></span>
+<span class="rd-review-icon human-icon">◉</span>
+<strong>Human<br>review required</strong>
+</div>
+<div class="rd-review-note rd-review-authority">
+<span class="rd-tape"></span>
+<span class="rd-review-icon authority-icon">✦</span>
+<strong>Authority<br>boundary</strong>
+</div>
+<div class="rd-card">
+<div class="rd-card-top"><span>Featured product</span><span class="rd-status">Live product</span></div>
+<div class="rd-control">
+<h2>State</h2>
+<p>AI interprets project evidence, software enforces the rules, and people decide what becomes Current State.</p>
+<div class="rd-trace" aria-hidden="true"><div>Evidence</div><div>Review</div><div>Current State</div><div>History</div></div>
+<div class="rd-mini-ui" aria-hidden="true">
+<div class="rd-mini-panel">
+<h3>Your workspace</h3>
+<div class="rd-mini-row"><span class="mini-box">□</span><span>Open items</span><b class="mini-count amber">3</b></div>
+<div class="rd-mini-row"><span class="mini-box">▤</span><span>Evidence</span><b class="mini-count blue">12</b></div>
+<div class="rd-mini-row"><span class="mini-box">◌</span><span>Blocking</span><b class="mini-count pink">1</b></div>
+</div>
+<div class="rd-mini-panel">
+<h3>Open Items</h3>
+<div class="rd-mini-row"><span>Needs review</span><b class="mini-count amber">3</b></div>
+<div class="rd-mini-row"><span>Blocking</span><b class="mini-count pink">1</b></div>
+<div class="rd-mini-row"><span>Still unresolved</span><b class="mini-count slate">2</b></div>
+</div>
+</div>
+</div>
+</div>
+<div class="rd-review-note rd-review-current">
+<span class="rd-tape"></span>
+<span class="rd-review-icon current-icon">▣</span>
+<strong>Current<br>State</strong>
+</div>
+<div class="rd-note"><span class="rd-tape rd-tape-note"></span>AI interprets.<br>Software enforces.<br>People authorize.<span>THAT’S THE WHOLE BOUNDARY.</span></div>
 </aside></div>
-<div class="rd-rail" aria-hidden="true"><div class="rd-rail-track"><span>Evidence → Review → Current State</span><span>Human authorization</span><span>Bounded project context</span><span>Scenario evals</span><span>Correction paths</span><span>Stale information</span><span>Evidence → Review → Current State</span><span>Human authorization</span><span>Bounded project context</span><span>Scenario evals</span><span>Correction paths</span><span>Stale information</span></div></div>
+<div class="rd-rail" aria-label="AI product principles">
+<div class="rd-type-rail">
+<span class="rd-type-label">What I’m watching for <span aria-hidden="true">→</span></span>
+<span class="rd-type-dynamic"><span class="rd-type-text" id="rd-type-text">Human authorization</span><span class="rd-type-cursor" aria-hidden="true"></span></span>
+</div>
+</div>
 <div class="home-start">
 <div class="home-applied-heading"><div class="section-kicker"><span>Applied work · start here</span></div></div>
 <div class="home-feature-grid home-feature-state-led">
@@ -1205,5 +1256,57 @@ window.addEventListener('popstate',()=>render(pageFromHash(),false));
   });
 })();
 </script></div><link href="site-redesign.css?v=r1-bright" rel="stylesheet" onload="document.documentElement.classList.remove('rd-pending')" onerror="document.documentElement.classList.remove('rd-pending')">
+<script id="rd-type-rail-script">
+(() => {
+  const el = document.getElementById('rd-type-text');
+  if (!el) return;
+  const phrases = [
+    'Human authorization',
+    'Scenario evals',
+    'Correction paths',
+    'Known unknowns',
+    'Authority boundaries',
+    'Bounded project context',
+    'Evidence → Review → Current State'
+  ];
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (reduceMotion) {
+    el.textContent = phrases[0];
+    return;
+  }
+  let phraseIndex = 0;
+  let charIndex = phrases[0].length;
+  let deleting = false;
+  const typeSpeed = 72;
+  const deleteSpeed = 34;
+  const holdMs = 2300;
+  const resetPauseMs = 320;
+  const tick = () => {
+    const phrase = phrases[phraseIndex];
+    if (!deleting) {
+      charIndex += 1;
+      el.textContent = phrase.slice(0, charIndex);
+      if (charIndex >= phrase.length) {
+        charIndex = phrase.length;
+        deleting = true;
+        window.setTimeout(tick, holdMs);
+        return;
+      }
+      window.setTimeout(tick, typeSpeed);
+      return;
+    }
+    charIndex -= 1;
+    el.textContent = phrase.slice(0, Math.max(0, charIndex));
+    if (charIndex <= 0) {
+      deleting = false;
+      phraseIndex = (phraseIndex + 1) % phrases.length;
+      window.setTimeout(tick, resetPauseMs);
+      return;
+    }
+    window.setTimeout(tick, deleteSpeed);
+  };
+  window.setTimeout(tick, holdMs);
+})();
+</script>
 </body>
 </html>
