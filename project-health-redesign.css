@@ -1,0 +1,197 @@
+/* Project Health dashboard: bright redesign (#428). Appearance only: no layout, data or behaviour changes.
+   Loaded last on project-health.html. Rollback: remove the <link>.
+   Reference: the approved A+C blend mockup (kept outside the repo so it is not served publicly) */
+
+html { background: #fff; }
+
+html body {
+  --ink: #15111a;
+  --muted: #5f5968;
+  --line: #e8e7ef;
+  --accent: #5b4de6;
+  --mock-purple: #5b4de6;
+  --soft: #f8f7ff;
+  --good: #12805f;
+  --warn: #b45309;
+  --danger: #c2362b;
+  --radius: 22px;
+  --rd-pink: #f0408f;
+  --rd-pink-soft: #ff5fa2;
+  --rd-acid: #f4ff52;
+  background: transparent !important;
+  color: var(--ink);
+  overflow-x: hidden;
+}
+
+/* quiet grid + colour wash behind the top of the page */
+html body::before,
+html body::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  z-index: -2;
+  pointer-events: none;
+}
+html body::before {
+  height: 520px;
+  background:
+    linear-gradient(90deg, rgba(21, 17, 26, 0.04) 1px, transparent 1px),
+    linear-gradient(0deg, rgba(21, 17, 26, 0.04) 1px, transparent 1px);
+  background-size: 42px 42px;
+  -webkit-mask-image: linear-gradient(to bottom, #000 0%, transparent 100%);
+  mask-image: linear-gradient(to bottom, #000 0%, transparent 100%);
+}
+html body::after {
+  height: 440px;
+  background:
+    radial-gradient(circle at 14% 20%, rgba(255, 95, 162, 0.14), transparent 30%),
+    radial-gradient(circle at 80% 10%, rgba(244, 255, 82, 0.28), transparent 28%),
+    radial-gradient(circle at 92% 50%, rgba(0, 191, 214, 0.12), transparent 30%);
+}
+
+html body .shell { max-width: 1240px; }
+
+/* top bar: same brand mark as the portfolio */
+html body .topbar .brand { font-weight: 950; letter-spacing: -0.035em; }
+html body .topbar .brand::before {
+  content: "";
+  display: inline-block;
+  width: 18px;
+  height: 18px;
+  margin-right: 9px;
+  vertical-align: -3px;
+  border: 2px solid var(--ink);
+  border-radius: 6px;
+  background: linear-gradient(135deg, #fff 0 42%, var(--rd-acid) 42% 100%);
+  box-shadow: 3px 3px 0 var(--ink);
+}
+
+/* title */
+html body h1 {
+  font-size: clamp(44px, 5.6vw, 76px);
+  line-height: 0.95;
+  letter-spacing: -0.06em;
+  font-weight: 900;
+}
+html body .hero h1::after {
+  content: "";
+  display: block;
+  width: 88px;
+  height: 9px;
+  margin-top: 16px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--rd-pink-soft), var(--rd-acid));
+}
+html body .eyebrow { color: var(--accent); font-weight: 900; }
+html body .lede { font-size: 17px; color: var(--muted); }
+
+/* buttons: pills */
+html body .button {
+  min-height: 40px;
+  border: 1px solid var(--ink);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--ink);
+  font-weight: 800;
+  box-shadow: none;
+  transition: transform 180ms ease, box-shadow 180ms ease;
+}
+html body .button:hover:not([disabled]) { transform: translateY(-2px); box-shadow: 0 12px 24px rgba(21, 17, 26, 0.12); background: #fff; border-color: var(--ink); }
+html body .button.primary { background: var(--ink); border-color: var(--ink); color: #fff; }
+html body .button[disabled] { border-color: var(--line); color: var(--muted); }
+
+/* project chooser cards */
+html body .project-card {
+  border: 1px solid var(--line);
+  border-radius: 24px;
+  background: #fff;
+  box-shadow: none;
+  transition: transform 220ms ease, box-shadow 220ms ease;
+}
+html body .project-card:hover { transform: translateY(-4px); box-shadow: 0 22px 50px rgba(21, 17, 26, 0.1); }
+html body .overview-grid .project-card.project-card.active,
+html body .project-card.active {
+  border-color: var(--ink);
+  outline: 0;
+  background: linear-gradient(145deg, #fff1fa, #f5f0ff 55%, #e8fbff) !important;
+  box-shadow: 5px 5px 0 var(--ink);
+  transform: none;
+}
+
+/* selected project panel */
+html body .detail-head h2 { letter-spacing: -0.045em; font-weight: 900; }
+html body .project-tabs { border-bottom-color: var(--line); }
+html body .project-tab { font-weight: 800; color: var(--muted); }
+html body .project-tab.active { color: var(--ink); border-bottom-color: var(--rd-pink); border-bottom-width: 3px; }
+
+/* inner surfaces: soft tinted tiles instead of outlines */
+html body .metric,
+html body .eval-card,
+html body .service-card,
+html body .delivery-environment,
+html body .coverage-item,
+html body .focus-block,
+html body .eval-overview {
+  border-radius: 18px;
+  background: var(--soft);
+  border-color: transparent;
+}
+html body .metric:nth-child(3n+2) { background: #fff4f9; }
+html body .metric:nth-child(3n+3) { background: #eefcff; }
+
+html body .attention { border-radius: 18px; }
+html body .panel-title-row h2,
+html body .panel h2,
+html body .panel h3 { letter-spacing: -0.03em; }
+
+/* small labels: calm violet */
+html body .agent-kicker,
+html body .readiness-pill { color: var(--accent); }
+
+/* the overview dashboard block (mock-*): same soft surface and rounding as the top of the page */
+html body .mock-dashboard {
+  background: var(--soft) !important;
+  border-radius: 24px;
+}
+html body .mock-dashboard .mock-dashboard-section {
+  border: 0 !important;
+  border-radius: 22px !important;
+  background: #fff !important;
+  box-shadow: none !important;
+}
+html body .mock-dashboard .mock-attention-banner.is-healthy {
+  background: linear-gradient(105deg, #effcf6, #f4fff9) !important;
+}
+html body .mock-dashboard :is(.mock-metric, .mock-quality-card, .mock-health-card, .mock-kpi-grid > *) {
+  border: 0 !important;
+  border-radius: 18px !important;
+  background: var(--soft) !important;
+  box-shadow: none !important;
+}
+html body .mock-dashboard .mock-dashboard-section :is(.mock-metric, .mock-quality-card, .mock-health-card) { background: var(--soft) !important; }
+html body .mock-dashboard .mock-kpi-grid > * { background: #fff !important; }
+html body .mock-dashboard h3 { letter-spacing: -0.03em; }
+
+/* lower panels: same soft tinted surface as the top of the page */
+html body .detail .panel,
+html body .detail .grid > .panel {
+  border: 0 !important;
+  border-radius: 24px !important;
+  background: var(--soft) !important;
+  padding: 24px !important;
+}
+html body .detail .grid { gap: 14px; }
+html body .detail .panel :is(.metric, .eval-card, .service-card, .delivery-environment, .coverage-item, .focus-block, .eval-overview) { background: #fff !important; }
+html body .detail .panel :is(.row, .activity-item, .review-item) { border-color: rgba(21, 17, 26, 0.07) !important; }
+html body .detail .panel h2, html body .detail .panel h3 { letter-spacing: -0.03em; }
+
+@media (max-width: 680px) {
+  html body h1 { font-size: clamp(40px, 12vw, 56px); }
+  html body .project-card.active { box-shadow: 3px 3px 0 var(--ink); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition-duration: 0.001ms !important; animation-duration: 0.001ms !important; }
+}

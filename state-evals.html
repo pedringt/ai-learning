@@ -4,6 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>State eval details · Context Switch</title>
+  <link href="favicon.svg" rel="icon">
   <style>
     :root{
       --ink:#172033;--muted:#6f788b;--line:#e1e6ef;--paper:#f7f8fc;--surface:#fff;
@@ -102,7 +103,7 @@
       .scenario-head{display:grid;grid-template-columns:minmax(0,1fr) auto}.section-head{display:grid;grid-template-columns:minmax(0,1fr) auto}
     }
   </style>
-</head>
+<style id="rd-hold">html.rd-pending body{visibility:hidden}</style><script>document.documentElement.classList.add("rd-pending");setTimeout(function(){document.documentElement.classList.remove("rd-pending")},2500)</script></head>
 <body>
   <main class="shell">
     <div class="topbar">
@@ -277,5 +278,6 @@
       });
   })();
   </script>
+<link href="state-evals-redesign.css?v=r1-bright" rel="stylesheet" onload="document.documentElement.classList.remove('rd-pending')" onerror="document.documentElement.classList.remove('rd-pending')">
 </body>
 </html>

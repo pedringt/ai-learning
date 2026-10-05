@@ -60,7 +60,7 @@ body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,Bl
   }
 })();
 </script>
-</head>
+<style id="rd-hold">html.rd-pending body{visibility:hidden}</style><script>document.documentElement.classList.add("rd-pending");setTimeout(function(){document.documentElement.classList.remove("rd-pending")},2500)</script></head>
 <body>
 <div class="topbar">
   <div class="topinner">
@@ -71,7 +71,7 @@ body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,Bl
       <a href="index.html#learn">Learning Library</a>
     </nav>
     <div class="top-actions">
-      <button aria-label="Switch to dark mode" aria-pressed="false" class="theme-toggle" id="v922ThemeToggle" title="Switch to dark mode" type="button">☾</button>
+      
       <select aria-label="Choose page" id="v922MobileNav">
         <option value="index.html">Home</option>
         <option selected value="index.html#portfolio">Applied Work</option>
@@ -183,5 +183,5 @@ body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,Bl
 </div>
 </main>
 <script src="site-shell.js"></script>
-</body>
+<link href="site-redesign.css?v=r1-bright" rel="stylesheet" onload="document.documentElement.classList.remove('rd-pending')" onerror="document.documentElement.classList.remove('rd-pending')"></body>
 </html>
