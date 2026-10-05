@@ -49,7 +49,7 @@ html body .topbar .brand::before {
   box-shadow: 3px 3px 0 var(--ink);
 }
 
-html body h1 { font-size: clamp(36px, 4.6vw, 60px); line-height: 1; letter-spacing: -0.055em; font-weight: 900; margin: 6px 0 8px; }
+html body h1 { font-size: clamp(36px, 4.6vw, 60px); line-height: 1.05; letter-spacing: -0.02em; word-spacing: 0.02em; font-weight: 700; margin: 6px 0 8px; }
 html body .hero h1::after {
   content: "";
   display: block;
@@ -95,6 +95,9 @@ html body .note { border-left: 0; }
 html body .tab { font-weight: 800; }
 html body .tab.active, html body .active.tab { color: var(--ink); border-bottom-color: var(--rd-pink-soft); }
 html body .score { letter-spacing: -0.05em; }
+
+/* headings: same weight and tracking as the portfolio (reviewer feedback #10); tool pages stay sans */
+html body :is(h1, h2, h3, h4):not(#_) { font-weight: 700 !important; letter-spacing: -0.02em !important; word-spacing: 0.02em !important; }
 
 @media (max-width: 680px) {
   html body h1 { font-size: clamp(32px, 10vw, 44px); }

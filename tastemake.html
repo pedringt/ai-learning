@@ -37,9 +37,9 @@
 <h1>Tastemake</h1>
 <p class="lead">Tastemake is a working product for user-editable personalization. Recommendations are the surface; the harder question is whether people can see, understand, and correct the model an AI builds of their taste.</p>
 <div class="case-meta"><span><b>My role</b> Product model, UX rules, evaluation &amp; testing</span><span><b>AI collaborator</b> Research, implementation, debugging &amp; test support</span><span><b>Status</b> Working product · portfolio build</span></div>
-</header>
+</header><p class="in-short"><span>In short</span>Tastemake shows people the taste profile an AI builds from their feedback and lets them correct it, so a correction changes what the system believes and what it tries next.</p>
 
-<aside class="meridian-product-callout"><div><span>Try Tastemake</span><strong>Build and refine a Taste Profile</strong><p>Start with a few favorites, react to recommendations, and see what Tastemake learns from the result.</p></div><a class="meridian-primary-action" href="https://tastemake.vercel.app/" target="_blank" rel="noopener noreferrer">Open Tastemake <span aria-hidden="true">→</span></a></aside>
+<aside class="meridian-product-callout"><div><span>Try Tastemake</span><strong>Build and refine a Taste Profile</strong><p>Start with a few favorites, react to recommendations, and see what Tastemake learns from the result.</p></div><a class="meridian-primary-action" href="https://tastemake.vercel.app/" target="_blank" rel="noopener noreferrer">Open Tastemake <span aria-hidden="true">↗</span></a></aside>
 
 <article class="case-page-content flagship-case">
 
@@ -89,9 +89,9 @@
 <section class="section seam-learning">
 <div class="kicker">Evidence from the build</div>
 <h2>The product had to work beyond a good-looking recommendation card.</h2>
-<p>It now exercises two live model calls across books, movies, TV, and games, while deterministic checks protect the evidence rules and validate model output.</p>
+<p>The current version uses live model calls for two distinct AI functions: ranking recommendations and generating the Taste Profile. The surrounding product logic stays deterministic, including catalog constraints, saved-versus-tried state, and the controls that decide what evidence is allowed to influence the profile.</p>
 <div class="surface-grid evidence-grid">
-<article><span>Live AI, bounded by software</span><strong>Two model calls, clear limits</strong><p>Live AI ranks recommendations and builds Taste Profile hypotheses. Software still decides what counts as evidence, which catalog items are allowed, and whether model output is valid.</p></article><article><span>Latency</span><strong>Speed became a product problem</strong><p>Recommendation generation was taking roughly 10–16 seconds in testing, with model inference dominating the wait. At that point the delay was part of the user experience, not just a backend metric. I reduced unnecessary prompt context and changed the loading experience so the flow stayed understandable while the model was working.</p></article>
+<article><span>Live AI, bounded by software</span><strong>Two AI functions, clear limits</strong><p>Live AI ranks recommendations and builds Taste Profile hypotheses. Software still decides what counts as evidence, which catalog items are allowed, and whether model output is valid.</p></article><article><span>Latency</span><strong>Speed became a product problem</strong><p>Recommendation generation was taking roughly 10–16 seconds in testing, with model inference dominating the wait. At that point the delay was part of the user experience, not just a backend metric. I reduced unnecessary prompt context and changed the loading experience so the flow stayed understandable while the model was working.</p></article>
 <article><span>Real catalog</span><strong>It works across books, movies, TV, and games</strong><p>Tastemake pulls from real catalog sources, then applies its own rules and stored metadata so the product is not limited to a hand-written demo set.</p></article>
 <article><span>Regression coverage</span><strong>Important rules became tests</strong><p>I built coverage around recommendation quality, AI output validation, evidence rules, profile corrections, accessibility, mobile layout, and the first learning loop.</p></article>
 </div>
@@ -101,7 +101,7 @@
 <div class="kicker">Where I landed</div>
 <h2>The recommendation engine became a test environment for an editable user model.</h2>
 <p>The product got more interesting when feedback stopped being just another hidden score. A useful correction changes the system’s explanation of what it believes, preserves where that belief came from, and affects what it tries next.</p>
-<div class="closing-links"><a class="meridian-primary-action" href="https://tastemake.vercel.app/" target="_blank" rel="noopener noreferrer">Open Tastemake →</a><a class="text-link" href="https://github.com/pedringt/tastemake" target="_blank" rel="noopener noreferrer">View GitHub →</a></div>
+<div class="closing-links"><a class="meridian-primary-action" href="https://tastemake.vercel.app/" target="_blank" rel="noopener noreferrer">Open Tastemake ↗</a><a class="text-link" href="https://github.com/pedringt/tastemake" target="_blank" rel="noopener noreferrer">View GitHub ↗</a></div>
 </section>
 
 </article>

@@ -94,7 +94,7 @@ body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,Bl
     <span><b>Status:</b> working product · portfolio build</span>
   </div>
   <div class="case-hero-actions"><a class="cta primary" href="project-health.html" target="_blank" rel="noopener noreferrer">Open Project Health ↗</a></div>
-</header>
+</header><p class="in-short"><span>In short</span>Project Health leads with the failures and missing signals that matter, so one reassuring average can’t hide them.</p>
 
 <div class="callout"><p><strong>The core product decision was to keep unlike signals separate.</strong> Product quality, delivery, possible user impact, and observability can all move independently. A healthy number in one area should not end the investigation when another area contains a serious failure or an important unknown.</p></div>
 
@@ -150,6 +150,7 @@ body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,Bl
 </div>
 
 <h2>Investigate starts with the specific problem</h2>
+<p>I also added an Investigate workflow for signals that need more context before someone can act on them. Instead of asking the AI to make the decision, the agent gathers the relevant evidence, explains what it found, and produces a handoff a person can inspect or continue elsewhere. The goal is to shorten the path from "something looks wrong" to "here is what we actually know."</p>
 <div class="flow">
   <div class="flow-row"><div class="num">1</div><div class="flow-card"><strong>Start with the signal</strong><p>Use the failure or incident to decide what evidence to check first.</p></div></div>
   <div class="flow-row"><div class="num">2</div><div class="flow-card"><strong>Gather only what is useful</strong><p>Compare the behavior with the product rules, release context, logs, issue history, or eval definition.</p></div></div>
@@ -165,7 +166,7 @@ body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,Bl
 <div class="evidence-list">
   <div class="evidence-item"><strong>Regression tests</strong><span>Important failures are added to regression tests so they do not quietly come back.</span></div>
   <div class="evidence-item"><strong>Failure recovery</strong><span>If an important signal is unavailable, the dashboard shows that gap instead of calling the project healthy.</span></div>
-  <div class="evidence-item"><strong>Product-flow test</strong><span>A full smoke test checks that important state changes still require human approval.</span></div>
+  <div class="evidence-item"><strong>Product-flow test</strong><span>A State product-flow smoke test, surfaced through Project Health, checks that important changes to Current State still require human approval.</span></div>
 </div>
 
 <h2>How I split the work</h2>

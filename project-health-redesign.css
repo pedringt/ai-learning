@@ -72,8 +72,9 @@ html body .topbar .brand::before {
 html body h1 {
   font-size: clamp(44px, 5.6vw, 76px);
   line-height: 0.95;
-  letter-spacing: -0.06em;
-  font-weight: 900;
+  letter-spacing: -0.02em;
+  word-spacing: 0.02em;
+  font-weight: 700;
 }
 html body .hero h1::after {
   content: "";
@@ -121,7 +122,7 @@ html body .project-card.active {
 }
 
 /* selected project panel */
-html body .detail-head h2 { letter-spacing: -0.045em; font-weight: 900; }
+html body .detail-head h2 { letter-spacing: -0.02em; word-spacing: 0.02em; font-weight: 700; }
 html body .project-tabs { border-bottom-color: var(--line); }
 html body .project-tab { font-weight: 800; color: var(--muted); }
 html body .project-tab.active { color: var(--ink); border-bottom-color: var(--rd-pink); border-bottom-width: 3px; }
@@ -186,6 +187,44 @@ html body .detail .grid { gap: 14px; }
 html body .detail .panel :is(.metric, .eval-card, .service-card, .delivery-environment, .coverage-item, .focus-block, .eval-overview) { background: #fff !important; }
 html body .detail .panel :is(.row, .activity-item, .review-item) { border-color: rgba(21, 17, 26, 0.07) !important; }
 html body .detail .panel h2, html body .detail .panel h3 { letter-spacing: -0.03em; }
+
+/* loading state: neutral skeleton, not an orange warning */
+html body .mock-dashboard .mock-attention-banner.is-checking {
+  border: 0 !important;
+  background: #f8f7ff !important;
+}
+html body .mock-dashboard .mock-attention-banner.is-checking .mock-attention-icon {
+  background: #e8e7ef !important;
+  color: transparent;
+  display: grid;
+  place-items: center;
+}
+html body .mock-dashboard .mock-attention-banner.is-checking .mock-attention-copy h3 { color: var(--ink); }
+html body .mock-dashboard .mock-attention-banner.is-checking .mock-attention-copy > p { color: var(--muted); }
+.mock-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(21, 17, 26, 0.2);
+  border-top-color: var(--ink);
+  border-radius: 50%;
+  animation: phSpin 0.9s linear infinite;
+}
+.mock-skeleton { display: grid; gap: 8px; margin-top: 12px; }
+.mock-skeleton i {
+  display: block;
+  height: 12px;
+  border-radius: 6px;
+  background: linear-gradient(90deg, #ecebf3 25%, #f6f5fb 50%, #ecebf3 75%);
+  background-size: 200% 100%;
+  animation: phShimmer 1.4s ease-in-out infinite;
+}
+.mock-skeleton i:first-child { width: 62%; }
+.mock-skeleton i:last-child { width: 38%; }
+@keyframes phSpin { to { transform: rotate(360deg); } }
+@keyframes phShimmer { to { background-position: -200% 0; } }
+
+/* headings: same weight and tracking as the portfolio (reviewer feedback #10); tool pages stay sans */
+html body :is(h1, h2, h3, h4):not(#_) { font-weight: 700 !important; letter-spacing: -0.02em !important; word-spacing: 0.02em !important; }
 
 @media (max-width: 680px) {
   html body h1 { font-size: clamp(40px, 12vw, 56px); }
