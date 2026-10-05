@@ -2,7 +2,20 @@
 
 This is the canonical current-state handoff for State and the surrounding portfolio. Read this first, then verify the repository and live environments before relying on older notes or conversation memory.
 
-_Last updated: September 22, 2026 (evening), Pacific time. Written as a handoff for a fresh session._
+_Last updated: October 5, 2026, Pacific time. The Oct 5 section just below is the current one; everything under it is history. Written as a handoff for a fresh session._
+
+## Oct 5, 2026 handoff update: bright redesign shipped (#428)
+
+**Use this section over everything below it.**
+
+- **Production:** `main` = `675fddd` (PR #430, merged Oct 5 00:21 UTC). Both Vercel production projects built it; `www.contextswitch.tech` and `state.contextswitch.tech` return 200. Production API `/health` build is `4a6476405e70`, unchanged (the PR touched no backend, migration or State app file).
+- **Redesign (issue #428, still open):** shared `site-redesign.css` is linked LAST at the end of `<body>` on every portfolio page, because inline `<style>` blocks inside the body would otherwise win. The dashboard pages use `project-health-redesign.css` and `state-evals-redesign.css`. Each page hides itself (`html.rd-pending`) until its redesign stylesheet loads, with a 2.5 s timeout, so the old design does not flash on refresh.
+- **Design decisions made with Paige:** light only (dark mode removed); one card style; labels are small rounded rectangles, not pills (buttons and nav keep pills); homepage card titles are serif; the hero previews State; the hero headline keeps the live copy; NARC is not on the site; no copy was removed in the redesign (repetition was handled visually).
+- **Still open on #428:** a performance/animation measurement, direct observation of the flash fix in a real browser, and no State Deep QA / Cowork pass (the State app did not change).
+- **Open PRs:** #289 (contextual links), #357 (action destinations), #359 (old staging promotion) hold work not on `main`; #369, #371, #382, #384 were closed as superseded (branches kept).
+- **CI trap:** the `javascript` job is skipped for portfolio-only changes, which hid two stale Project Health test suites on `main` until Oct 4 (fixed in `7e0f40d`). Run `make qa-fast` yourself before promoting.
+- **Traps:** production serves repo files publicly (`docs/*.md` return 200), so never commit mockups or private pages; `python` is not on PATH here, so run `make` with `PATH=$PWD/state-project-complete/.venv/bin:$PATH`; zsh does not word-split variables, so use `bash -c` for loops; a local preview is `python3 -m http.server 8130` from the repo root (launch entry `portfolio-local`, `.claude/launch.json` is git-ignored) and the browser caches its HTML, so hard-refresh.
+- **Not re-verified this session:** the demo-data baseline described below.
 
 ## Sept 25, 2026 handoff update: Context Switch migration
 
@@ -300,7 +313,7 @@ When starting a new work session:
 
 1. Read this file.
 2. Verify `main`/`staging` heads and any relevant open PRs.
-3. Nothing is in flight. Read "At a glance" at the top. Everything open on the board is parked on purpose; check the relevant Issue only if Paige asks for something specific.
+3. Read the Oct 5 section at the top first; the "At a glance" section below is Sept history. Everything open on the board is parked on purpose; check the relevant Issue only if Paige asks for something specific.
 4. Read `docs/product/PRODUCT_BRIEF.md` and `docs/product/DECISIONS.md` if product behavior is involved.
 5. Read `QA.md` before testing or changing QA behavior.
 6. Do not deploy or promote because tests passed. Follow `RELEASE.md` and get explicit authorization.
