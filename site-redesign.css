@@ -1779,4 +1779,6 @@ html body #ai-cs-mock .rd-control p{margin:10px 0 0!important;color:#63708a!impo
 }
 
 /* the blue "Current State" note sits further out on wide screens only; narrower ones have no room before the viewport edge */
-@media (min-width: 1300px) { .rd-review-current { right: -80px; } }
+@media (min-width: 1300px) { .rd-review-current { right: -90px; } }
+@media (min-width: 1440px) { .rd-review-current { right: -130px; } }
+@media (min-width: 1600px) { .rd-review-current { right: -150px; } }
