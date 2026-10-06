@@ -58,11 +58,11 @@ AI can query the right data and still reach the wrong business conclusion if ter
 
 **Ask:** Which business definitions must be fixed before the AI starts analyzing?
 
-### Map an interface into capabilities
+### Start with workflow friction, not AI capability
 
-For an existing workflow, ignore the current screens and map the user goal, data, action, permission or approval, and system of record. Then decide which capabilities could be exposed to AI without recreating the whole UI.
+Map how the work actually happens: the user goal, data, handoffs, actions, permissions, system of record, delays, repeated work, and failure points. Then decide whether the smallest useful fix is AI, deterministic automation, or process redesign.
 
-**Why:** It reveals whether you are redesigning the job or merely putting a chat box on top of old screens.
+**Ask:** What evidence shows this workflow is broken, and does solving it actually require AI?
 
 ### Keep the agent layer and model provider separable
 
@@ -113,7 +113,11 @@ Useful examples of how current AI products are solving recurring product and arc
 
 - [**Jev-Mem**](https://arxiv.org/abs/2609.23986) — Lightweight control layer that decides what memory to retrieve, how much, and when to stop.
 - [**V7 Context Graph**](https://openai.com/index/v7/) — Turns scattered documents into structured, source-linked facts, entities, relationships, and citations.
+
+### Workflow discovery and improvement
+
 - [**UiPath Cartographer**](https://www.uipath.com/product/cartographer) — Maps process knowledge, rules, exceptions, systems, judgment, provenance, and approvals.
+- [**ServiceNow AI Workflow Factory**](https://newsroom.servicenow.com/press-releases/details/2026/ServiceNow-launches-AI-Workflow-Factory-to-turn-workflow-improvement-into-a-continuous-agentic-AI-powered-loop/default.aspx) — Connects process mining, workflow building, automation, and outcome measurement into a continuous improvement loop.
 
 ### Agent governance and enterprise access
 
@@ -135,7 +139,6 @@ Useful examples of how current AI products are solving recurring product and arc
 - **AI Discovery & AEO:** Can AI systems find and correctly understand the facts that matter when they research a product for a customer?
 - **Memory routing and context budgets:** Which information deserves to enter context for this step, and when does more context stop being worth the cost?
 - **Voice and local or hybrid agents:** When do latency, privacy, connectivity, or environment justify local or hybrid execution?
-- **Persistent and shared bots:** If an AI becomes a long-running coworker, what should it remember, forget, access, and ask before acting?
 
 ---
 
@@ -162,7 +165,7 @@ Useful examples of how current AI products are solving recurring product and arc
 
 ## Questions I'm Adding to My Toolkit
 
-1. Does this job need more facts, or a better procedure for applying the facts?
+1. Where does this workflow actually break, and is the cause missing facts, the wrong procedure, or the process itself?
 2. If a multi-step agent fails, where did the first bad step occur and how will the workflow recover?
 3. Which business definitions must be fixed before AI analyzes the data?
 4. Can the model or provider change without rebuilding the authoritative workflow, and how will we know if behavior changes underneath us?
