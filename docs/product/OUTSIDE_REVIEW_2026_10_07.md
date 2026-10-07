@@ -1,43 +1,30 @@
 # Outside design/product review, October 7, 2026: dispositions
 
-The 27 findings from the outside review of the portfolio, State, Project Health and Tastemake, each classified as **Fixed**, **Already resolved**, **Not changed intentionally**, or **Needs Paige's decision**. Verification is `make qa-fast` (passes, no model calls), rendered-page checks at 1440px and 390px, and, for #1, 8 live Ask questions against production State.
+The 27 findings from the outside review of the portfolio, State, Project Health and Tastemake. On October 7 Paige decided to keep **only bug fixes** on `staging` and roll the rest back. This file records what was kept, what was reverted, and where the reverted work lives in case any of it is wanted later.
 
-Nothing here has been promoted to `main`. Changes are on `staging` until Paige authorizes a promotion.
+Nothing here has been promoted to `main`.
 
-| # | Finding | Disposition | What was done / why |
-| --- | --- | --- | --- |
-| 1 | Ask State demotes an accepted fact to a proposal | **Already resolved** | Production runs `4a64764` = current `main` for State code. 8 live Asks (accepted fact direct, with related pending Review, superseding an earlier proposal, Current State vs unresolved) kept accepted facts established and pending items pending; prose and source labels agreed. The #227 guard and its tests pass. A residual paraphrase edge exists only under direct function calls; logged as R-021 in `RISKS.md`, no code change (no reproduced product failure). |
-| 2 | Owner and contact route never introduced | **Fixed** (scoped by Paige's decision) | Hero byline and an About block on the home page say what the work is and the QA, project-management and software-delivery background behind it; GitHub link as the contact route. **Decided (Paige, Oct 7):** no email or LinkedIn, and no full name on the site for now. |
-| 3 | How State Works claims follow-up questions | **Fixed** | The live Ask drawer sends no previous answer and the UI says "State does not carry a hidden conversation forward". Copy now says each question is answered fresh and to edit and re-run to refine. |
-| 4 | Governance PDF overlapping text | **Fixed** | Text overflowed the HIGH risk box and collided with a note; the banner sentence ran past its edge. Rebuilt from `scripts/build_governance_cheat_sheet.py` (boxes sized from content), inspected page by page (1 page). An overlap detector flags the original and finds no collisions in the other 11 PDFs. |
-| 5 | Unloaded quality cards show zero failures | **Fixed** | Cards show "Loading…" or "Not measured" in a neutral style until the suite loads; test added. |
-| 6 | State entry doesn't explain the demo-data boundary | **Fixed** (State app copy; needs State deploy) | Notes in the Add Evidence dialog, the "How this works" dialog and the Slack settings section: public demo, shared projects, anyone can change or reset, avoid sensitive data, Evidence goes to an AI provider, Slack connect links a real workspace to a shared project. |
-| 7 | "Healthy" broader than the evidence | **Fixed** | Overall badge now "No open issues" (scoped to delivery, recorded evals and connected signals, not real-user outcomes); product quality and eval labels read "Passing"; release readiness reads "Ready on recorded checks". Literal operational statuses (deployment, backend responding, observability) keep "Healthy". |
-| 8 | Four quality cards reuse two suites | **Fixed** | Each card names its suite (Review or Ask) and one line says four metrics come from two suites with scenario counts. The AI Quality tab was not changed. |
-| 9 | Truth guarantee wording | **Fixed** | "Never quietly becomes fact" etc. rewritten to the enforceable claim (AI cannot change Current State without a person authorizing it); added a paragraph stating what is not guaranteed (the model can still misread or answer wrongly). |
-| 10 | Eval-revision example sounds like an AI State write | **Fixed** | Actor made explicit: the model proposed, a person accepts, nothing changes until then. Example A is labeled an answer-wording failure from a read-only agent. |
-| 11 | Strongest proof hard to reach | **Fixed** (State, debugging, Project Health) | Restrained "claim → evidence" links to State evals, the architecture page, the debugging example, the trace write-up and the live dashboard. No new evidence link added on Tastemake (the live app link is already at the top). |
-| 12 | Real-user evidence | **Fixed** | "What has and hasn't been tested" blocks on State, Tastemake and Project Health: tested vs hypothesis, and a next user-learning step stated as not yet run. No validation invented. |
-| 13 | Bridge from prior delivery experience | **Fixed** | One About paragraph (QA, project management and software delivery, coordinating clients and teams), framed as continuity; no relabeling as Product Manager. |
-| 14 | Latency claims | **Fixed** | Historical figures labeled as when measured; current reference added from the 8 live Asks on Oct 7 (about 7-17 s server-side, median about 10, small sample, not a benchmark). Tastemake's 10-16 s is marked historical and not re-measured. |
-| 15 | Tastemake search can't tell same-title results apart | **Fixed** (open PR, not merged) | Search results and the detail sheet now read `Type · Year · Creator` (`itemMeta`). [pedringt/tastemake#217](https://github.com/pedringt/tastemake/pull/217); CI green; waiting on Paige's authorization to merge. |
-| 16 | Tastemake correction trace | **Fixed** | Real trace from experiments 001 and 002 in the Tastemake repo (Outer Wilds 86% miss, hypothesis revisions 88 to 76 and 86 to 72, second blind test). Labeled a hand-run experiment on one person's taste. **Confirm** the first-person framing ("my favorites") is right. |
-| 17 | Required display name | **Fixed** (open PR, not merged) | The name is only displayed back on the profile and never reaches the AI, yet it blocked setup. It is now optional. Same PR, [pedringt/tastemake#217](https://github.com/pedringt/tastemake/pull/217), with 12 new checks in `test:unit`. |
-| 18 | Legal sample can't be audited | **Needs Paige's decision** | The page states its limits (secondary trackers, small and non-exhaustive, court-filing cases only) but the repo has no record of sample size, selection or inclusion rules, or which steps were AI-assisted. Those facts must come from Paige; none were invented. |
-| 19 | Legal next step too generic | **Fixed** | Decision-oriented discovery plan: who to talk to, the decision being settled, what would raise confidence, and what would narrow or end the recommendation. Stated as not started. |
-| 20 | How high-risk classification failures reach a human | **Fixed** | Section covering clearly high-risk, clearly low-risk, ambiguous (treated as high-risk), classifier uncertainty, and high-risk predicted low-risk (deterministic backstop, rep reclassify, audit of false negatives). Labeled a simulated design. |
-| 21 | Provider comparison context | **Partly fixed; needs Paige's decision** | Added that it was a directional comparison on one Ask path, judged on response time, not a controlled benchmark. The repo has no record of the trials, dates, prompts or sample, so those details need Paige. |
-| 22 | Learning coverage vs applied evidence | **Fixed** | A how-to-read note, and each of the 10 sections ends with "Where I applied it" linking real case studies, or saying plainly it is studied, not shown (adoption, measurement, client work). |
-| 23 | "Agent" means different things | **Fixed** (PDF not edited) | One practical distinction on the library page: AI feature, AI workflow, agent. The debugging field guide PDF defines agent loosely and has no source in the repo, so a note beside its link reconciles it instead of editing the PDF. |
-| 24 | Professional Edge title and intro render twice | **Fixed** | Cause: the header-stripping regex no longer matched the markdown after the review-date comment was added, so the markdown header rendered under the page header. Regex made robust; the efficiency-habits pointer moved into the page intro so no content is lost. |
-| 25 | Tools examined vs tested | **Fixed** (confirm) | The tools section now says these are studied from public documentation, not tested hands-on, and any tool Paige uses will be marked **Used**. **Confirm** none of them has been used hands-on; promote any that have. |
-| 26 | Principles connect to decisions | **Fixed** | Five "Where I ran into this" lines on the most distinctive principles (Unknown became 0%, the authority model, model behind an interface, review workload, read-only agent overconfidence). |
-| 27 | Repeated polished framing | **Fixed** (restrained) | Eight headings and sentences rewritten to concrete versions across the case studies. A fuller pass is possible if wanted. |
+## Kept on staging (bug fixes)
 
-## Guardrails honored
+| # | Finding | What is kept |
+| --- | --- | --- |
+| 1 | Ask State demotes an accepted fact to a proposal | **Already resolved.** No code change. 8 live Ask questions against production (build `4a64764`, equal to `main` for State code) kept accepted facts established and pending items pending. The residual paraphrase edge is logged as R-021 in `RISKS.md`. |
+| 3 | How State Works claims follow-up questions | Copy in `state-how-it-works.html` now matches the live Ask drawer: each question is answered fresh, with no hidden conversation. |
+| 4 | Governance PDF has overlapping text | PDF rebuilt by `scripts/build_governance_cheat_sheet.py` with boxes sized from content; one page, no overlaps. The other 11 PDFs have no text collisions. |
+| 5 | Unloaded quality cards show zero failures | Project Health cards show "Loading…" or "Not measured" in a neutral style until a suite loads. Test added. |
+| 24 | Professional Edge title and intro render twice | The header-stripping regex no longer matched after the review-date comment was added; it is fixed at the source. The efficiency-habits pointer moved into the page intro so no content is lost. |
 
-State evals (23/23 scenarios at last count) and NARC (still in progress) were not changed. The support workflow stays labeled simulated. No validation, adoption or customer evidence was invented.
+## Reverted (not bug fixes)
 
-## Statements to confirm
+Findings #2, #6-#14, #16, #18-#23 and #25-#27, plus the section 05 Learning Library tag change, the hero byline, the About block, and the case-study and Learning Library copy. They were reverted to their `main` versions on `staging`.
 
-Several additions say something about Paige's own history; each is scoped to this portfolio or phrased as not yet done, but should be read by her: the About paragraph (#13), "not started" on the Legal discovery plan (#19), "I haven't run that yet" on the three validation notes (#12), "haven't re-measured" on Tastemake latency (#14), the first-person experiment framing (#16), and "studied, not tested hands-on" on the tools list (#25).
+The work is still in git history: commits `c6c6f4e`, `8c2b345`, `926fb0c`, `9a4e7a0` and `9904213` on `staging`. Any file can be restored with `git checkout <commit> -- <file>`.
+
+## Tastemake repo
+
+Findings #15 (year in search results) and #17 (optional display name) are in [pedringt/tastemake#217](https://github.com/pedringt/tastemake/pull/217), open and not merged.
+
+## Not changed intentionally
+
+- The residual paraphrase edge in Ask's prose backstop (#1, R-021): no reproduced product failure, so the boundary was not touched.
+- No email, LinkedIn or full name on the site (Paige's decision).

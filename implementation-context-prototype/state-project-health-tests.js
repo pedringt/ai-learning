@@ -364,7 +364,7 @@ const tastemakeQuality={
 assert.strictEqual(H.externalQualityAttention(tastemakeQuality).kind,'good');
 assert.strictEqual(
   H.projectQualityLabel({project:{id:'tastemake'},externalQuality:tastemakeQuality}),
-  'Recommendation checks passing'
+  'Recommendation checks healthy'
 );
 
 const narcQuality={
@@ -602,7 +602,7 @@ assert.strictEqual(H.releaseReadiness({...unopenedState,delivery:{vercel:{kind:'
 const partlyMeasuredRelease=H.releaseReadiness({...unopenedState,quality:H.normalizeQuality({controlled_evals:{latest_review_interpretation:{overall_pass_rate:1,high_severity_failures:0,total:1},latest_ask_quality:{overall_pass_rate:1,high_severity_failures:0,total:1}}}),delivery:{vercel:{kind:'good'}}});
 assert.strictEqual(partlyMeasuredRelease.label,'Watch');
 const healthyRelease=H.releaseReadiness({...unopenedState,quality:H.normalizeQuality({controlled_evals:{latest_review_interpretation:{overall_pass_rate:1,high_severity_failures:0,total:1},latest_ask_quality:{overall_pass_rate:1,ask_grounding:1,authority_accuracy:1,uncertainty_accuracy:1,high_severity_failures:0,total:1}}}),delivery:{vercel:{kind:'good'}}});
-assert.strictEqual(healthyRelease.label,'Ready on recorded checks');
+assert.strictEqual(healthyRelease.label,'Healthy');
 assert.strictEqual(healthyRelease.kind,'good');
 const blockedRelease=H.releaseReadiness({...unopenedState,activity:{available:true,deployments:{recent_failures:[{id:'release-fail',created_at:'2026-09-30T18:00:00Z',recovered:false,message:'failed'}]},runtime:{issues:[]}},delivery:{vercel:{kind:'bad'}}});
 assert.strictEqual(blockedRelease.label,'Needs attention');

@@ -1074,5 +1074,3 @@ html body .overview-stage.overview-stage--plain.overview-stage--plain{display:bl
 .state-fact-preview li{position:relative;padding:10px 0 10px 24px;border-top:1px solid #edf1f6;font-size:12px;line-height:1.45;color:#25334e}
 .state-fact-preview li::before{content:'✓';position:absolute;left:1px;top:10px;color:var(--state-blue,var(--accent));font-weight:800}
 .state-fact-preview .text-button{margin-top:12px;display:inline-flex!important}
-
-.demo-boundary-note{margin:8px 0 12px;padding:8px 10px;border-radius:8px;background:var(--soft,#f6f5f8);color:var(--muted);font-size:12px;line-height:1.5}

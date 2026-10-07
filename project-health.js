@@ -140,7 +140,7 @@
     if(q.ask?.authority_accuracy==null) missing.push('decision authority');
     if(q.ask?.uncertainty_accuracy==null) missing.push('uncertainty handling');
     if(missing.length) return {kind:'warn',title:'Some AI quality signals are not measured',detail:'Project Health cannot call State quality healthy while '+missing.join(', ')+' '+(missing.length===1?'is':'are')+' unmeasured.',nextAction:'Run or repair the missing controlled quality checks before treating the quality signal as healthy.',owner:'Product'};
-    return {kind:'good',title:'AI evals are passing',detail:'The latest recorded checks did not report a high-impact failure. Passing evals cover the scenarios written so far, not every behavior.'};
+    return {kind:'good',title:'AI evals are healthy',detail:'The latest recorded checks did not report a high-impact failure.'};
   }
   function deliveryAttention(d){
     if(!d) return {kind:'warn',title:'Delivery status is unavailable',detail:'Project Health could not confirm the latest release status.'};
@@ -231,14 +231,14 @@
     if(delivery.kind==='bad') return delivery;
     const infra=infrastructureAttention(data.platform);
     if(infra?.kind==='bad') return infra;
-    return {kind:'good',title:'No open issues',detail:'No current incident or product-quality action needs attention. This reflects delivery, the recorded evals and the connected signals only, not real-user outcomes.'};
+    return {kind:'good',title:'Healthy',detail:'No current incident or product-quality action needs attention.'};
   }
   function projectStatus(data){
     const att=overallAttention(data);
     if(att.kind==='unknown') return {key:'checking',label:'Checking',kind:'unknown'};
     if(att.kind==='bad') return {key:'action',label:'Needs attention',kind:'bad'};
     if(att.kind==='warn') return {key:'watch',label:'Watch',kind:'warn'};
-    return {key:'healthy',label:'No open issues',kind:'good'};
+    return {key:'healthy',label:'Healthy',kind:'good'};
   }
   function attentionItems(data){
     const incidents=activityReviewItems(data).filter(item=>!item.resolved).map(item=>({kind:'bad',title:item.title,detail:item.impact,owner:item.owner}));
@@ -309,7 +309,7 @@
     const open=productOpenItems(data);
     if(incidents.length||open.some(item=>item.kind==='bad')) return {kind:'bad',label:'Needs attention',detail:'Resolve the current high-impact issue before treating the next release as healthy.'};
     if(open.length) return {kind:'warn',label:'Watch',detail:'Delivery is healthy, but a product-quality check or human review is still open.'};
-    if(deliveryAttentionForData(data).kind==='good') return {kind:'good',label:'Ready on recorded checks',detail:'Delivery is healthy and the recorded checks show no current high-impact quality issue. That is not a claim about real-user outcomes.'};
+    if(deliveryAttentionForData(data).kind==='good') return {kind:'good',label:'Healthy',detail:'Delivery is healthy and there is no current high-impact quality issue.'};
     return {kind:'unknown',label:'Unknown',detail:'There is not enough current evidence to confirm release health.'};
   }
   function regressionSignal(data){
@@ -474,7 +474,7 @@
         :{kind:'good',label:'User impact',status:'No active signal',detail:'No current user-facing incident signal is open.'};
     const consistency=healthConsistencyIssues(data);
     return [
-      {kind:qualityKind,label:'Product quality',status:qualityKind==='bad'?'Needs attention':qualityKind==='warn'?'Watch':qualityKind==='good'?'Passing':'Unknown',detail:stale?'The recorded State eval result is stale and should be rerun.':(quality?.title||'Quality evidence is not available yet.')},
+      {kind:qualityKind,label:'Product quality',status:qualityKind==='bad'?'Needs attention':qualityKind==='warn'?'Watch':qualityKind==='good'?'Healthy':'Unknown',detail:stale?'The recorded State eval result is stale and should be rerun.':(quality?.title||'Quality evidence is not available yet.')},
       userImpact,
       {kind:gaps.length?'warn':'good',label:'Observability',status:gaps.length?'Watch':'Healthy',detail:gaps.length?gaps.length+' monitoring gap'+(gaps.length===1?'':'s')+' limit what Project Health can confirm.':'No known monitoring gap is limiting this health view.'},
       {kind:delivery?.kind||'unknown',label:'Delivery',status:delivery?.kind==='bad'?'Needs attention':delivery?.kind==='warn'?'Watch':delivery?.kind==='good'?'Healthy':'Unknown',detail:delivery?.title||'Delivery health is unavailable.'},
@@ -1175,15 +1175,15 @@
     if(data.project.quality==='state'){
       if(!data.quality) return 'Quality unavailable';
       const q=qualityAttention(data.quality);
-      if(q.kind==='good') return 'AI evals passing';
+      if(q.kind==='good') return 'AI evals healthy';
       if(q.kind==='bad') return 'AI evals need action';
       if(q.kind==='warn') return 'AI evals need a look';
       return q.title;
     }
     const q=data.externalQuality;if(!q) return 'Quality unavailable';
     const top=externalQualityAttention(q);
-    if(q.project==='tastemake'&&q.ci?.conclusion==='success'&&top?.kind==='good') return 'Recommendation checks passing';
-    if(q.project==='narc'&&q.recorded?.recorded_all_suites_green) return q.recorded.full_playtest_pending?'Automated checks pass · playtest open':'Game checks passing';
+    if(q.project==='tastemake'&&q.ci?.conclusion==='success'&&top?.kind==='good') return 'Recommendation checks healthy';
+    if(q.project==='narc'&&q.recorded?.recorded_all_suites_green) return q.recorded.full_playtest_pending?'Automated checks pass · playtest open':'Game checks healthy';
     return top?.title||'Quality loaded';
   }
   function loadingCardMarkup(project,active){
@@ -1551,7 +1551,7 @@
         '</div>';
       };
 
-      let kpis='',qualityCards='',suiteNote='';
+      let kpis='',qualityCards='';
       if(p.quality==='state'){
         const review=q?.review,ask=q?.ask;
         const reviewScore=review?.interpretation_accuracy??evalScore(review);
@@ -1563,24 +1563,22 @@
         // Unknown is not zero: until a suite's results have loaded, say so instead of "0 failures".
         const waiting=pendingSet(data).size>0;
         const unknownSignal=waiting?'Loading…':'Not measured';
-        const suiteCount=run=>run&&Number(run.total)?Number(run.total)+' scenario'+(Number(run.total)===1?'':'s'):'not loaded';
-        suiteNote='Four metrics, two eval suites: Update understanding comes from the Review suite ('+suiteCount(review)+'); Answer quality, Decision authority and Uncertainty handling all come from the same Ask suite ('+suiteCount(ask)+'), so they are four views of two test sets, not four independent ones.';
         const reviewDelta=mockDelta(q?.recent,'review_interpretation');
         const askDelta=mockDelta(q?.recent,'ask_quality');
         kpis=
-          kpi('Update understanding',reviewScore,reviewDelta,!review?'unknown':reviewFailures?'warn':'good',!review?unknownSignal:reviewFailures?(reviewFailures+' high-impact failure'+(reviewFailures===1?'':'s')):'0 high-impact failures',(review?'Review suite · '+scenarioPassLabel(review,reviewScore):''),mockTrendValues(q,'review_interpretation'))+
-          kpi('Answer quality',grounding??evalScore(ask),askDelta,!ask?'unknown':askFailures?'bad':'good',!ask?unknownSignal:askFailures?(askFailures+' failure'+(askFailures===1?'':'s')):'0 failures',(ask?'Ask suite · '+scenarioPassLabel(ask,grounding??evalScore(ask)):''),mockTrendValues(q,'ask_quality'))+
-          kpi('Decision authority',authority,{label:'—',cls:'flat'},authority==null?'unknown':authority<1?'warn':'good',authority==null?unknownSignal:authority<1?'Needs review':'0 failures',authority==null?'Run the authority checks':'Ask suite · authority-boundary scenarios',[])+
-          kpi('Uncertainty handling',uncertainty,{label:'—',cls:'flat'},uncertainty==null?'unknown':uncertainty<1?'warn':'good',uncertainty==null?unknownSignal:uncertainty<1?'Needs review':'Within target',uncertainty==null?'Run the uncertainty checks':'Ask suite · unknown-answer scenarios',[]);
+          kpi('Update understanding',reviewScore,reviewDelta,!review?'unknown':reviewFailures?'warn':'good',!review?unknownSignal:reviewFailures?(reviewFailures+' high-impact failure'+(reviewFailures===1?'':'s')):'0 high-impact failures',scenarioPassLabel(review,reviewScore),mockTrendValues(q,'review_interpretation'))+
+          kpi('Answer quality',grounding??evalScore(ask),askDelta,!ask?'unknown':askFailures?'bad':'good',!ask?unknownSignal:askFailures?(askFailures+' failure'+(askFailures===1?'':'s')):'0 failures',scenarioPassLabel(ask,grounding??evalScore(ask)),mockTrendValues(q,'ask_quality'))+
+          kpi('Decision authority',authority,{label:'—',cls:'flat'},authority==null?'unknown':authority<1?'warn':'good',authority==null?unknownSignal:authority<1?'Needs review':'0 failures',authority==null?'Run the authority checks':'Authority boundary scenarios',[])+
+          kpi('Uncertainty handling',uncertainty,{label:'—',cls:'flat'},uncertainty==null?'unknown':uncertainty<1?'warn':'good',uncertainty==null?unknownSignal:uncertainty<1?'Needs review':'Within target',uncertainty==null?'Run the uncertainty checks':'Unknown-answer scenarios',[]);
         const qualityItems=[
-          ['Update understanding',reviewScore,review,'Review suite'],
-          ['Answer quality',grounding??evalScore(ask),ask,'Ask suite'],
-          ['Decision authority',authority,ask,'Ask suite'],
-          ['Uncertainty handling',uncertainty,ask,'Ask suite']
+          ['Update understanding',reviewScore,review],
+          ['Answer quality',grounding??evalScore(ask),ask],
+          ['Decision authority',authority,ask],
+          ['Uncertainty handling',uncertainty,ask]
         ];
-        qualityCards=qualityItems.map(([label,score,run,suite])=>{
+        qualityCards=qualityItems.map(([label,score,run])=>{
           const n=pct(score),pass=run&&score!=null?scenarioPassLabel(run,score):unknownSignal;
-          return '<div class="mock-quality-detail-card"><span>'+esc(label)+'</span><strong>'+(n==null?'—':esc(n+'%'))+'</strong><div class="mock-progress"><span style="width:'+(n||0)+'%"></span></div><small>'+esc((run&&score!=null?suite+' · ':'')+pass)+'</small></div>';
+          return '<div class="mock-quality-detail-card"><span>'+esc(label)+'</span><strong>'+(n==null?'—':esc(n+'%'))+'</strong><div class="mock-progress"><span style="width:'+(n||0)+'%"></span></div><small>'+esc(pass)+'</small></div>';
         }).join('');
       }else if(p.id==='tastemake'&&externalQ){
         const e=externalQ.endpoint||{},b=externalQ.baseline||{},ci=externalQ.ci||{};
@@ -1662,7 +1660,7 @@
         '</section>'+
         '<section class="mock-dashboard-section mock-quality-detail">'+
           '<div class="mock-quality-detail-head"><div><h3>Quality and evaluation details</h3>'+(pending.has('Quality')?'<span class="mock-refreshing-evals">Refreshing evals… showing last good results</span>':'')+'</div><button class="button small" type="button" data-tab-target="ai-quality">View all evaluations →</button></div>'+
-          (suiteNote?'<p class="mock-suite-note">'+esc(suiteNote)+'</p>':'')+'<div class="mock-quality-detail-grid">'+qualityCards+'</div>'+
+          '<div class="mock-quality-detail-grid">'+qualityCards+'</div>'+
         '</section>'+
         '<section class="mock-dashboard-section mock-investigation-card">'+
           '<div class="mock-investigation-head"><h3>Latest investigation</h3><button class="button small" type="button" data-open-investigation>View full investigation →</button></div>'+
@@ -1713,7 +1711,7 @@
           ?(activeEvalRun.state==='delayed'?'AI eval run is taking longer than expected':'AI evals are running')
           :(staleResults
             ?'AI evals need to be rerun'
-            :(failureSummary.count?'AI evals need review':'AI evals are passing'));
+            :(failureSummary.count?'AI evals need review':'AI evals are healthy'));
         const statusDetail=activeEvalRun
           ?'Started '+esc(fmtDate(activeEvalRun.startedAt))+' · Previous results stay visible below until this run finishes.'
           :(staleResults
