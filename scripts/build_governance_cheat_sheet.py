@@ -82,7 +82,6 @@ def bullets_height(items, w):
 def build():
     c = canvas.Canvas(str(OUT), pagesize=(PAGE_W, PAGE_H))
     c.setTitle("AI Governance, Safety & Privacy: PM cheat sheet")
-    c.setAuthor("Paige Edrington")
 
     y = PAGE_H - 40
     c.setFillColor(INK)
