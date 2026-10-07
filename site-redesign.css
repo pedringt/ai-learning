@@ -1278,7 +1278,7 @@ html body main.case-system-page aside.meridian-product-callout.meridian-product-
   background-image: none !important;
   color: #fff !important;
   border: 1px solid var(--ink) !important;
-  border-radius: 999px !important;
+  border-radius: 12px !important;
 }
 html body main.case-system-page aside.meridian-product-callout a.meridian-primary-action:visited { color: #fff !important; }
 
@@ -1571,7 +1571,7 @@ html body #ai-cs-mock #portfolio .band .band-link {
   min-height: 44px;
   padding: 0 18px;
   border: 1px solid var(--ink);
-  border-radius: 999px;
+  border-radius: 12px;
   background: #fff;
   color: var(--ink) !important;
   font-size: 14px;
