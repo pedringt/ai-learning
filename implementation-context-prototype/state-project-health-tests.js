@@ -364,7 +364,7 @@ const tastemakeQuality={
 assert.strictEqual(H.externalQualityAttention(tastemakeQuality).kind,'good');
 assert.strictEqual(
   H.projectQualityLabel({project:{id:'tastemake'},externalQuality:tastemakeQuality}),
-  'Recommendation checks healthy'
+  'Recommendation checks passing'
 );
 
 const narcQuality={
@@ -602,7 +602,7 @@ assert.strictEqual(H.releaseReadiness({...unopenedState,delivery:{vercel:{kind:'
 const partlyMeasuredRelease=H.releaseReadiness({...unopenedState,quality:H.normalizeQuality({controlled_evals:{latest_review_interpretation:{overall_pass_rate:1,high_severity_failures:0,total:1},latest_ask_quality:{overall_pass_rate:1,high_severity_failures:0,total:1}}}),delivery:{vercel:{kind:'good'}}});
 assert.strictEqual(partlyMeasuredRelease.label,'Watch');
 const healthyRelease=H.releaseReadiness({...unopenedState,quality:H.normalizeQuality({controlled_evals:{latest_review_interpretation:{overall_pass_rate:1,high_severity_failures:0,total:1},latest_ask_quality:{overall_pass_rate:1,ask_grounding:1,authority_accuracy:1,uncertainty_accuracy:1,high_severity_failures:0,total:1}}}),delivery:{vercel:{kind:'good'}}});
-assert.strictEqual(healthyRelease.label,'Healthy');
+assert.strictEqual(healthyRelease.label,'Ready on recorded checks');
 assert.strictEqual(healthyRelease.kind,'good');
 const blockedRelease=H.releaseReadiness({...unopenedState,activity:{available:true,deployments:{recent_failures:[{id:'release-fail',created_at:'2026-09-30T18:00:00Z',recovered:false,message:'failed'}]},runtime:{issues:[]}},delivery:{vercel:{kind:'bad'}}});
 assert.strictEqual(blockedRelease.label,'Needs attention');
@@ -848,6 +848,16 @@ assert.match(workflowText,/record_environment:/);
 assert.match(workflowText,/github\.ref == 'refs\/heads\/main' \|\| github\.ref == 'refs\/heads\/staging'/);
 assert.match(workflowText,/github\.ref == 'refs\/heads\/staging' && inputs\.suite == 'all'/);
 assert.match(workflowText,/run_quality_evals\.py/);
+
+// Review #5 (Oct 2026): a suite that has not loaded must read as unknown, never as "0 failures"/green.
+const healthJs=fs.readFileSync(require.resolve('../project-health.js'),'utf8');
+assert.match(healthJs,/!review\?'unknown':reviewFailures\?'warn':'good'/);
+assert.match(healthJs,/!ask\?'unknown':askFailures\?'bad':'good'/);
+assert.match(healthJs,/!review\?unknownSignal:reviewFailures/);
+assert.match(healthJs,/!ask\?unknownSignal:askFailures/);
+assert.match(healthJs,/authority==null\?'unknown'/);
+assert.match(healthJs,/uncertainty==null\?'unknown'/);
+assert.match(fs.readFileSync(require.resolve('../project-health-redesign.css'),'utf8'),/\.mock-kpi-signal\.unknown/);
 
 console.log('Project Health shell tests passed');
 

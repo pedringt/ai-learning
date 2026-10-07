@@ -1771,3 +1771,10 @@ html body #ai-cs-mock .rd-control p{margin:10px 0 0!important;color:#63708a!impo
 @media (min-width: 1300px) { .rd-review-current { right: -90px; } }
 @media (min-width: 1440px) { .rd-review-current { right: -130px; } }
 @media (min-width: 1600px) { .rd-review-current { right: -150px; } }
+
+/* ---------- Owner byline + About (review #2, #13) ---------- */
+html body #ai-cs-mock .rd-byline { flex-basis: 100%; margin: 6px 0 0; color: var(--muted); font-size: 13.5px; line-height: 1.5; max-width: 52ch; }
+html body #ai-cs-mock .rd-byline strong { color: var(--ink); font-weight: 700; }
+html body #ai-cs-mock .home-about { margin-top: 28px; }
+html body #ai-cs-mock .home-about p + p { margin-top: 10px; }
+html body #ai-cs-mock .home-about-links a { color: var(--ink); font-weight: 800; text-decoration: underline; text-underline-offset: 4px; text-decoration-color: rgba(21, 17, 26, 0.25); }
