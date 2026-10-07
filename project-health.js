@@ -1560,13 +1560,16 @@
         const uncertainty=ask?.uncertainty_accuracy;
         const reviewFailures=Number(review?.high_severity_failures||0);
         const askFailures=Number(ask?.high_severity_failures||0);
+        // Unknown is not zero: until a suite's results have loaded, say so instead of "0 failures".
+        const waiting=pendingSet(data).size>0;
+        const unknownSignal=waiting?'Loading…':'Not measured';
         const reviewDelta=mockDelta(q?.recent,'review_interpretation');
         const askDelta=mockDelta(q?.recent,'ask_quality');
         kpis=
-          kpi('Update understanding',reviewScore,reviewDelta,reviewFailures?'warn':'good',reviewFailures?(reviewFailures+' high-impact failure'+(reviewFailures===1?'':'s')):'0 high-impact failures',scenarioPassLabel(review,reviewScore),mockTrendValues(q,'review_interpretation'))+
-          kpi('Answer quality',grounding??evalScore(ask),askDelta,askFailures?'bad':'good',askFailures?(askFailures+' failure'+(askFailures===1?'':'s')):'0 failures',scenarioPassLabel(ask,grounding??evalScore(ask)),mockTrendValues(q,'ask_quality'))+
-          kpi('Decision authority',authority,{label:'—',cls:'flat'},authority==null?'warn':authority<1?'warn':'good',authority==null?'Not measured':authority<1?'Needs review':'0 failures',authority==null?'Run the authority checks':'Authority boundary scenarios',[])+
-          kpi('Uncertainty handling',uncertainty,{label:'—',cls:'flat'},uncertainty==null?'warn':uncertainty<1?'warn':'good',uncertainty==null?'Not measured':uncertainty<1?'Needs review':'Within target',uncertainty==null?'Run the uncertainty checks':'Unknown-answer scenarios',[]);
+          kpi('Update understanding',reviewScore,reviewDelta,!review?'unknown':reviewFailures?'warn':'good',!review?unknownSignal:reviewFailures?(reviewFailures+' high-impact failure'+(reviewFailures===1?'':'s')):'0 high-impact failures',scenarioPassLabel(review,reviewScore),mockTrendValues(q,'review_interpretation'))+
+          kpi('Answer quality',grounding??evalScore(ask),askDelta,!ask?'unknown':askFailures?'bad':'good',!ask?unknownSignal:askFailures?(askFailures+' failure'+(askFailures===1?'':'s')):'0 failures',scenarioPassLabel(ask,grounding??evalScore(ask)),mockTrendValues(q,'ask_quality'))+
+          kpi('Decision authority',authority,{label:'—',cls:'flat'},authority==null?'unknown':authority<1?'warn':'good',authority==null?unknownSignal:authority<1?'Needs review':'0 failures',authority==null?'Run the authority checks':'Authority boundary scenarios',[])+
+          kpi('Uncertainty handling',uncertainty,{label:'—',cls:'flat'},uncertainty==null?'unknown':uncertainty<1?'warn':'good',uncertainty==null?unknownSignal:uncertainty<1?'Needs review':'Within target',uncertainty==null?'Run the uncertainty checks':'Unknown-answer scenarios',[]);
         const qualityItems=[
           ['Update understanding',reviewScore,review],
           ['Answer quality',grounding??evalScore(ask),ask],
@@ -1574,7 +1577,7 @@
           ['Uncertainty handling',uncertainty,ask]
         ];
         qualityCards=qualityItems.map(([label,score,run])=>{
-          const n=pct(score),pass=run&&score!=null?scenarioPassLabel(run,score):'Not measured';
+          const n=pct(score),pass=run&&score!=null?scenarioPassLabel(run,score):unknownSignal;
           return '<div class="mock-quality-detail-card"><span>'+esc(label)+'</span><strong>'+(n==null?'—':esc(n+'%'))+'</strong><div class="mock-progress"><span style="width:'+(n||0)+'%"></span></div><small>'+esc(pass)+'</small></div>';
         }).join('');
       }else if(p.id==='tastemake'&&externalQ){

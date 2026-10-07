@@ -849,6 +849,16 @@ assert.match(workflowText,/github\.ref == 'refs\/heads\/main' \|\| github\.ref =
 assert.match(workflowText,/github\.ref == 'refs\/heads\/staging' && inputs\.suite == 'all'/);
 assert.match(workflowText,/run_quality_evals\.py/);
 
+// Review #5 (Oct 2026): a suite that has not loaded must read as unknown, never as "0 failures"/green.
+const healthJs=fs.readFileSync(require.resolve('../project-health.js'),'utf8');
+assert.match(healthJs,/!review\?'unknown':reviewFailures\?'warn':'good'/);
+assert.match(healthJs,/!ask\?'unknown':askFailures\?'bad':'good'/);
+assert.match(healthJs,/!review\?unknownSignal:reviewFailures/);
+assert.match(healthJs,/!ask\?unknownSignal:askFailures/);
+assert.match(healthJs,/authority==null\?'unknown'/);
+assert.match(healthJs,/uncertainty==null\?'unknown'/);
+assert.match(fs.readFileSync(require.resolve('../project-health-redesign.css'),'utf8'),/\.mock-kpi-signal\.unknown/);
+
 console.log('Project Health shell tests passed');
 
 // PR readiness refresh: evidence-first Project Health actions.

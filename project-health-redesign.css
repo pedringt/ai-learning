@@ -188,6 +188,9 @@ html body .detail .panel :is(.metric, .eval-card, .service-card, .delivery-envir
 html body .detail .panel :is(.row, .activity-item, .review-item) { border-color: rgba(21, 17, 26, 0.07) !important; }
 html body .detail .panel h2, html body .detail .panel h3 { letter-spacing: -0.03em; }
 
+/* unknown / loading quality values read as neutral grey, never as a green zero */
+html body .mock-kpi-signal.unknown { color: var(--muted); }
+
 /* loading state: neutral skeleton, not an orange warning */
 html body .mock-dashboard .mock-attention-banner.is-checking {
   border: 0 !important;
