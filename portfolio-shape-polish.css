@@ -1,0 +1,148 @@
+/* Portfolio-only shape pass. Linked on portfolio pages, never the tools. */
+
+/* Keep the brand at left and let the primary links sit at the right edge. */
+html body .topbar .topinner {
+  justify-content: space-between !important;
+}
+
+html body .topbar .nav {
+  flex: 0 0 auto !important;
+  justify-content: flex-end !important;
+  gap: 22px !important;
+  margin-left: auto !important;
+  margin-right: 0 !important;
+}
+
+html body .topbar .top-actions {
+  flex: 0 0 auto !important;
+  min-width: 0 !important;
+  margin-left: 0 !important;
+}
+
+html body .topbar .nav a,
+html body .topbar .nav button {
+  position: relative !important;
+  padding: 9px 0 11px !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  color: var(--muted) !important;
+  transition: color 160ms ease !important;
+}
+
+html body .topbar .nav a:hover,
+html body .topbar .nav button:hover {
+  background: transparent !important;
+  color: var(--ink) !important;
+}
+
+html body .topbar .nav a[aria-current="page"],
+html body .topbar .nav a.active,
+html body .topbar .nav button.active {
+  background: transparent !important;
+  color: var(--ink) !important;
+}
+
+html body .topbar .nav :is(a[aria-current="page"], a.active, button.active)::after {
+  content: "" !important;
+  position: absolute !important;
+  right: 0 !important;
+  bottom: 3px !important;
+  left: 0 !important;
+  height: 2px !important;
+  border-radius: 2px !important;
+  background: var(--rd-pink, #f0408f) !important;
+}
+
+/* Homepage calls to action and reference links use a compact corner radius. */
+html body #ai-cs-mock :is(.rd-button, .home-state-button, .home-state-primary, .home-state-secondary, .home-state-button-secondary, .home-state-secondary),
+html body #ai-cs-mock .learning-reference-links a,
+html body #ai-cs-mock #learn .stage-body :is(.resource-row a, a.resource-link, .resource-row > a),
+html body #ai-cs-mock [data-page="learn"] .learning-reference-map > a {
+  border-radius: 12px !important;
+}
+
+html body #ai-cs-mock .tag,
+html body #ai-cs-mock .resource-link,
+html body #ai-cs-mock .home-pattern-flow span {
+  border-radius: 7px !important;
+}
+
+html body #ai-cs-mock .rd-trace div,
+html body #ai-cs-mock .rd-status {
+  border-radius: 8px !important;
+}
+
+html body #ai-cs-mock [data-page="learn"] .learning-reference-map {
+  border-radius: 18px !important;
+}
+
+/* Case-study CTAs, reference links, and process chips. */
+html body main:is(.case-system-page, .case-shell, .edge-wrap, .map-wrap) :is(.closing-links > a, .meridian-primary-action, .cta, .appendix-link a, .resource-link) {
+  border-radius: 12px !important;
+}
+
+/* Override the more specific full-pill rule on the top product callout buttons. */
+html body main.case-system-page aside.meridian-product-callout.meridian-product-callout > a.meridian-primary-action,
+html body main.case-shell aside.meridian-product-callout.meridian-product-callout > a.meridian-primary-action {
+  border-radius: 12px !important;
+}
+
+/* The shared redesign stylesheet sets closing links back to capsules. */
+html body main:is(.case-system-page, .case-shell, .edge-wrap, .map-wrap) .closing-links > a {
+  border-radius: 12px !important;
+}
+
+/* Case-study endings are quiet navigation links, not another row of CTAs. */
+html body main .case-study-footer,
+html body main.case-shell .case-study-footer {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  align-items: center !important;
+  gap: 18px !important;
+  margin-top: 30px !important;
+  padding-top: 14px !important;
+  border-top: 1px solid var(--border, #dedbe2) !important;
+}
+
+html body main .case-study-footer > a {
+  display: inline !important;
+  min-height: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  color: var(--muted, #6b6672) !important;
+  font-size: 12px !important;
+  font-weight: 750 !important;
+  line-height: 1.5 !important;
+  text-decoration: none !important;
+  box-shadow: none !important;
+}
+
+html body main .case-study-footer > a:hover {
+  color: var(--ink, #17141a) !important;
+  text-decoration: underline !important;
+  transform: none !important;
+}
+
+html body main:is(.case-system-page, .case-shell, .edge-wrap, .map-wrap) :is(.research-loop span, .human-flow span, .plain-rules span, .map-chip, .map-step, .context-loop span, .legal-evidence-strip span, .case-meta > span, .meta > span) {
+  border-radius: 7px !important;
+}
+
+html body main:is(.case-system-page, .case-shell, .edge-wrap, .map-wrap) .capability-local-nav a {
+  border-radius: 7px !important;
+}
+
+/* Applied Work's Learning Library footer action is a compact corner button. */
+html body #ai-cs-mock #portfolio .band .band-link {
+  border-radius: 12px !important;
+}
+
+/* Keep large section surfaces softly rounded without the oversized capsule look. */
+html body main:is(.case-system-page, .case-shell, .edge-wrap, .map-wrap) :is(.related-evidence-links, .learning-related-references) {
+  border-radius: 18px !important;
+}
+
+@media (max-width: 860px) {
+  html body .topbar .nav { display: none !important; }
+}
