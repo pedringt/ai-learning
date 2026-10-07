@@ -2,11 +2,21 @@
 
 This is the canonical current-state handoff for State and the surrounding portfolio. Read this first, then verify the repository and live environments before relying on older notes or conversation memory.
 
-_Last updated: October 5, 2026, Pacific time. The Oct 5 section just below is the current one; everything under it is history. Written as a handoff for a fresh session._
+_Last updated: October 7, 2026, Pacific time. The Oct 7 section just below is the current one and the Oct 5 sections still apply where it does not override them; everything older is history. Written as a handoff for a fresh session._
+
+## Oct 7, 2026: outside-review bug fixes promoted, repo cleanup, tech-debt plan
+
+**Use this section first; the Oct 5 sections below still apply where this does not override them.**
+
+- **Production:** `main` = `8d6ddf4` (PR #448, merged Oct 7). It promoted only the bug fixes kept from the Oct 7 outside review: How State Works follow-up copy, the rebuilt governance PDF (`scripts/build_governance_cheat_sheet.py`), Project Health "Loading…/Not measured" cards, the Professional Edge double title, and R-021. The rest of the review work was rolled back on `staging` (`ca8eed6`); `docs/product/OUTSIDE_REVIEW_2026_10_07.md` says where it lives. No `state-project-complete/` file changed, so Render did not redeploy. After the merge `main` and `staging` had identical trees.
+- **Branches:** `origin` now has only `main` and `staging` (about 146 merged or superseded branches deleted, including `backup/staging-before-history-cleanup-20260930` and the old case-study branches). A new ruleset, **Protect staging from deletion**, blocks deleting `staging`; **Protect main** is unchanged.
+- **PRs and issues:** #289, #357 and #359 closed as superseded (their files were already identical on `main`). #428 closed with its leftover checks moved to #447; #242, #244, #245, #269, #270 and #337 closed. #228 stays open for the `state.authenticignorance.site` Vercel redirect (Paige's edit).
+- **Permissions:** Paige's untracked `.claude/settings.local.json` allows `git push origin --delete`, `git branch -D` and `gh pr merge`, so sessions can finish cleanups and merges. Merging to `main` still needs Paige's explicit yes each time. Auto mode blocks an assistant from editing its own settings, so permission changes are Paige's.
+- **CI:** the `javascript` job in `.github/workflows/tests.yml` now always runs (about 2 s). Its suites also read root pages, `project-health.js`, `api/*` and `vercel.json`, and the old path filter is what hid two broken Project Health suites until Oct 4. The `python` job keeps its filter.
+- **Tech-debt plan** (State Product board, Work Type Tech debt): #449 phase 0 (this CI change and this doc), #450 fold the State app's patch-layer scripts (`context-feedback-pass*`, `-quickwins`, `-design-pass`, ...) and remove the legacy Ask path, #451 consolidate portfolio CSS, #452 split large files when next touched.
+- **Trap found Oct 7:** `site-shell.js` and `state-shell.js` inject `final-freeze-polish.css` at runtime and rewrite page copy and Applied Work layout (about 14 content writes each). A file can look unused from the HTML and still be live, and a page's HTML copy is not always what visitors see. Grep the shell scripts before deleting assets or editing copy. Moving those rewrites into the HTML is part of #451.
 
 ## Oct 5, 2026 handoff update: bright redesign shipped and polished (#428)
-
-**Use this section over everything below it.**
 
 - **Production:** `main` = `1f2c80c` (PR #433, merged Oct 5 05:19 UTC). The redesign landed in #430, the hero refinement in #431, and the case-study copy polish (#432) reached `main` with #433. Both Vercel projects are fine: `ai-learning` builds on every portfolio change, and `state` is skipped by its Ignored Build Step unless something in its own folder changes. Production API `/health` build is `4a6476405e70`, unchanged by any of this (no backend, migration or State app file was touched). `www.contextswitch.tech` and `state.contextswitch.tech` return 200.
 - **How the redesign is wired:** shared `site-redesign.css` is linked LAST at the end of `<body>` on every portfolio page, because inline `<style>` blocks inside the body would otherwise win; many rules use `:not(#_)` only to raise specificity over older per-component rules. The dashboard pages use `project-health-redesign.css` and `state-evals-redesign.css`. Each page hides itself (`html.rd-pending`, set in `<head>`) until its redesign stylesheet loads, with a 2.5 s timeout, so the old design does not flash on refresh; keep the inline head snippet and the `onload`/`onerror` on the link together.
