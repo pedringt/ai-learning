@@ -210,6 +210,20 @@ body.v88-dark .card,body.v88-dark .band{box-shadow:none}
 <div class="flow-step"><span class="flow-num">6</span><div class="flow-content owner-human"><span class="owner-tag">Human</span><b>Move to human-only handling when needed</b><span>carry the conversation history forward instead of making the customer start over</span></div></div>
 </div>
 
+<h2>What happens when classification is wrong</h2>
+<p>The safety branch only works if risky tickets actually reach it, so the design assumes the classifier will sometimes be wrong or unsure. This is a simulated design, not a measured system.</p>
+<table class="decision-table">
+<thead><tr><th>Case</th><th>What the design does</th></tr></thead>
+<tbody>
+<tr><td>Clearly high-risk</td><td>Skips drafting and routes straight to a person.</td></tr>
+<tr><td>Clearly low-risk</td><td>Continues down the standard path: retrieve, draft, human review before anything is sent.</td></tr>
+<tr><td>Ambiguous (a standard-looking ticket that mentions a refund, a login problem or a data request)</td><td>Treated as high-risk. The default is the conservative path, so doubt sends it to a person, not to drafting.</td></tr>
+<tr><td>Classifier uncertain or fails</td><td>Same default: no confident category means no drafting. A person picks it up.</td></tr>
+<tr><td>High-risk ticket predicted low-risk</td><td>Three backstops. A deterministic keyword and account-flag rule checks every drafted ticket for money, security and account-access terms and pulls it back to a person. The reviewing rep can reclassify any ticket in one click. A weekly audit samples “standard” tickets to estimate how many were really high-risk, because a missed one is the failure the classifier itself cannot report.</td></tr>
+</tbody>
+</table>
+<p>I would watch the false-negative rate from that audit more closely than overall classifier accuracy. Even then, human review stays mandatory: a wrong draft still has to get past a person before a customer sees it.</p>
+
 <h2>How the design changed</h2>
 <table class="decision-table">
 <thead><tr><th>Early assumption</th><th>After discovery</th></tr></thead>

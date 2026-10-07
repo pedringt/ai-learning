@@ -1778,3 +1778,24 @@ html body #ai-cs-mock .rd-byline strong { color: var(--ink); font-weight: 700; }
 html body #ai-cs-mock .home-about { margin-top: 28px; }
 html body #ai-cs-mock .home-about p + p { margin-top: 10px; }
 html body #ai-cs-mock .home-about-links a { color: var(--ink); font-weight: 800; text-decoration: underline; text-underline-offset: 4px; text-decoration-color: rgba(21, 17, 26, 0.25); }
+
+/* ---------- Evidence links (review #11): claim -> proof in one step ---------- */
+html body main .evidence-link { white-space: nowrap; font-size: 0.92em; font-weight: 700; color: var(--ink); text-decoration: underline; text-underline-offset: 3px; text-decoration-color: rgba(21, 17, 26, 0.3); }
+html body main .evidence-link:hover { text-decoration-color: var(--ink); }
+
+/* ---------- Validation notes (review #12) ---------- */
+html body main .validation-note { max-width: 70ch; margin: 14px 0 22px; padding: 14px 16px; border-radius: 12px; background: var(--rd-soft, #f6f5f8); color: var(--ink); font-size: 14px; line-height: 1.6; }
+html body main .validation-note strong { font-weight: 700; }
+
+/* ---------- Principle -> evidence (review #26) ---------- */
+html body main .edge-evidence { margin: 6px 0 18px; padding-left: 12px; border-left: 3px solid var(--rd-pink, #f0408f); color: var(--muted); font-size: 0.94em; line-height: 1.55; }
+html body main .edge-evidence strong { color: var(--ink); font-weight: 700; }
+html body main .edge-evidence a { color: var(--ink); font-weight: 700; text-decoration: underline; text-underline-offset: 3px; text-decoration-color: rgba(21, 17, 26, 0.3); }
+
+html body #ai-cs-mock .resource-note { flex-basis: 100%; margin: 8px 0 0; color: var(--muted); font-size: 12.5px; line-height: 1.5; max-width: 70ch; }
+
+/* ---------- Learning coverage vs applied evidence (review #22) ---------- */
+html body #ai-cs-mock .learn-reading-note { max-width: 70ch; margin: 10px 0 0; color: var(--muted); font-size: 13.5px; line-height: 1.55; }
+html body #ai-cs-mock .stage-evidence { margin: 0; padding: 12px 18px 14px; border-top: 1px solid var(--rd-line); color: var(--muted); font-size: 13px; line-height: 1.55; }
+html body #ai-cs-mock .stage-evidence strong { color: var(--ink); font-weight: 700; }
+html body #ai-cs-mock .stage-evidence a { color: var(--ink); font-weight: 700; text-decoration: underline; text-underline-offset: 3px; text-decoration-color: rgba(21, 17, 26, 0.3); }

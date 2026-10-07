@@ -102,7 +102,7 @@ A stable API does not guarantee stable product behavior. A provider can change t
 
 ## Tools & Systems Worth Knowing
 
-Useful examples of how current AI products are solving recurring product and architecture problems, not endorsements or a shopping list.
+Useful examples of how current AI products are solving recurring product and architecture problems. I know these from public documentation and announcements (studied, not tested hands-on): none is marked as something I have used, and they are not endorsements or a shopping list. If I use one in my own work, I will mark it **Used**.
 
 ### Specialized models and bounded decisions
 

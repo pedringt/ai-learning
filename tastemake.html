@@ -52,7 +52,7 @@
 
 <section class="section product-model">
 <div class="kicker">The product model</div>
-<h2>Feedback gives Tastemake a working theory, not a permanent label.</h2>
+<h2>Each reaction updates a working theory of your taste.</h2>
 <div class="human-flow"><span>Item feedback</span><b>→</b><span>Inferred pattern</span><b>→</b><span class="accent">User correction</span><b>→</b><span class="accent">Refined profile</span><b>→</b><span>New recommendations</span></div>
 <div class="surface-grid product-model-grid">
 <article><span>Evidence vs. intent</span><strong>Not every action means “I like this”</strong><p>Loved, Liked, and Didn’t like come from something the user actually tried. Saving or browsing does not count as taste evidence on its own.</p></article>
@@ -86,16 +86,31 @@
 </div>
 </section>
 
+<section class="section correction-trace">
+<div class="kicker">One correction, traced</div>
+<h2>A confident miss changed the model, and the next test showed it.</h2>
+<p>Before the in-app correction controls existed, I ran this loop by hand in two blind experiments using my own favorites and reactions. It is the same loop Tastemake now runs in the product, traced end to end.</p>
+<div class="causal-story">
+<div><span>1 · The inference</span><strong>From my favorites, the model predicted <em>Outer Wilds</em> as a positive with 86% confidence.</strong></div>
+<div><span>2 · The correction</span><strong>I reacted negatively. It was the one polarity miss among eight held-out items; the other seven got the direction right.</strong></div>
+<div><span>3 · The changed model</span><strong>The model had treated exploration and discovery as a strong preference. Its discovery hypotheses were rewritten as conditional positives, and its confidence in two of them dropped (88 → 76 and 86 → 72).</strong></div>
+<div><span>4 · The downstream effect</span><strong>I froze the revised model and ran a second blind test built around that boundary. Across eight new items it had no polarity misses, and it predicted <em>The Witness</em>, a game that is almost all observation and deduction, as “mixed”, which matched my reaction.</strong></div>
+</div>
+<p class="validation-note">This is a small, hand-run experiment with one person’s taste (mine), so it shows the loop working, not that the picks will be better for anyone else.</p>
+</section>
+
 <section class="section seam-learning">
 <div class="kicker">Evidence from the build</div>
 <h2>The product had to work beyond a good-looking recommendation card.</h2>
 <p>The current version uses live model calls for two distinct AI functions: ranking recommendations and generating the Taste Profile. The surrounding product logic stays deterministic, including catalog constraints, saved-versus-tried state, and the controls that decide what evidence is allowed to influence the profile.</p>
 <div class="surface-grid evidence-grid">
-<article><span>Live AI, bounded by software</span><strong>Two AI functions, clear limits</strong><p>Live AI ranks recommendations and builds Taste Profile hypotheses. Software still decides what counts as evidence, which catalog items are allowed, and whether model output is valid.</p></article><article><span>Latency</span><strong>Speed became a product problem</strong><p>Recommendation generation was taking roughly 10–16 seconds in testing, with model inference dominating the wait. At that point the delay was part of the user experience, not just a backend metric. I reduced unnecessary prompt context and changed the loading experience so the flow stayed understandable while the model was working.</p></article>
+<article><span>Live AI, bounded by software</span><strong>Two AI functions, clear limits</strong><p>Live AI ranks recommendations and builds Taste Profile hypotheses. Software still decides what counts as evidence, which catalog items are allowed, and whether model output is valid.</p></article><article><span>Latency</span><strong>Speed became a product problem</strong><p>Recommendation generation was taking roughly 10–16 seconds in testing, with model inference dominating the wait. That is the figure from when I measured it; I haven’t re-measured since, so treat it as historical. At that point the delay was part of the user experience, not just a backend metric. I reduced unnecessary prompt context and changed the loading experience so the flow stayed understandable while the model was working.</p></article>
 <article><span>Real catalog</span><strong>It works across books, movies, TV, and games</strong><p>Tastemake pulls from real catalog sources, then applies its own rules and stored metadata so the product is not limited to a hand-written demo set.</p></article>
 <article><span>Regression coverage</span><strong>Important rules became tests</strong><p>I built coverage around recommendation quality, AI output validation, evidence rules, profile corrections, accessibility, mobile layout, and the first learning loop.</p></article>
 </div>
 </section>
+
+<section class="section validation"><div class="kicker">What has and hasn’t been tested</div><h2>The mechanics are tested. Whether the picks are better is still a hypothesis.</h2><p class="validation-note">Tested with automated checks and my own use: recommendation rules, AI output validation, evidence rules, profile corrections, accessibility and mobile layout. Not tested: whether other people find the recommendations better than what they would have chosen, or whether correcting the Taste Profile feels worth the effort over time. The next thing I’d learn is how often people act on a pick they would not have found themselves, and whether they correct the profile unprompted. I haven’t run that yet.</p></section>
 
 <section class="section current-conclusion">
 <div class="kicker">Where I landed</div>

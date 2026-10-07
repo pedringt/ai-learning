@@ -44,20 +44,20 @@
 <p>In a controlled State agent exercise, the investigator correctly found an open Review proposing an owner. Its final answer then presented that proposed owner as established fact.</p>
 <div class="surface-grid">
 <article><span>Retrieval</span><strong>Working</strong><p>The agent found the relevant files and recognized that the Review was still open.</p></article>
-<article><span>Failure location</span><strong>Interpretation and authority</strong><p>The final synthesis promoted a pending proposal into project truth.</p></article>
+<article><span>Failure location</span><strong>Interpretation and authority</strong><p>The agent's final answer described a pending proposal as established fact. It was a wording failure in an answer: the agent could not write to Current State, and nothing there changed.</p></article>
 <article><span>Fix</span><strong>Tighten the authority rule</strong><p>Open Reviews were made explicitly pending, then the same case was rerun and behaved correctly.</p></article>
 </div>
-<p class="section-note">This example used a controlled fake State dataset. It is evidence of the debugging method, not production performance.</p>
+<p class="section-note">This example used a controlled fake State dataset. It is evidence of the debugging method, not production performance. <a class="evidence-link" href="state-managed-agent-tracing.html">Read the trace write-up →</a></p>
 </section>
 
 <section class="section seam-learning">
 <div class="kicker">Example B · the eval expectation needed revision</div>
 <h2>Sometimes satisfying the test would make the product worse.</h2>
-<p>In later State eval work, one scenario expected an answer-only action but observed an answer plus a supported state update. Product review found that the broader behavior could be acceptable when the evidence justified it.</p>
+<p>In later State eval work, one scenario gave the model Evidence that answered an open Question. The eval expected the model to propose answering that Question and nothing more. The model proposed answering it and also proposed updating Current State. Either way it was only a proposal: it goes to a person as a Review, and nothing changes until they accept it. Product review found the broader proposal could be acceptable when the evidence supported it.</p>
 <div class="surface-grid">
-<article><span>What the eval said</span><strong>Failure</strong><p>The observed action did not match the original expected action exactly.</p></article>
-<article><span>Product review</span><strong>The behavior was not necessarily wrong</strong><p>The system had enough evidence to support the additional update, so forcing answer-only behavior would have made the test more important than the product contract.</p></article>
-<article><span>Decision</span><strong>Revise the eval</strong><p>The expectation was updated rather than changing acceptable product behavior just to make the check pass.</p></article>
+<article><span>What the eval said</span><strong>Failure</strong><p>The proposed action did not match the original expected action exactly.</p></article>
+<article><span>Product review</span><strong>The behavior was not necessarily wrong</strong><p>The Evidence did support the additional update proposal, and a person still decides whether to accept it, so forcing an answer-only proposal would have made the test more important than the product contract.</p></article>
+<article><span>Decision</span><strong>Revise the eval</strong><p>The eval now accepts either proposal, as long as it does not claim the broader contract review is complete. I changed the expectation rather than changing acceptable product behavior just to make the check pass. <a class="evidence-link" href="state-evals.html">See the revised scenario in the State evals →</a></p></article>
 </div>
 </section>
 

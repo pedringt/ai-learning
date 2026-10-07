@@ -38,9 +38,9 @@ body.v88-dark{--ink:#f5f5f7;--muted:#b6b6c2;--border:#34343d;--soft:#19191f;--so
 <p class="edge-callout"><strong>Durable question:</strong> Where does the model end and the system begin?</p>
 <h3>Flexible reasoning belongs inside firm boundaries</h3>
 <p>AI is useful when the right path cannot be fully written as rules. Important limits should still be enforced outside the model when possible.</p>
-<p>Budgets, permissions, approval requirements, access scopes, and irreversible actions should not depend on the model remembering them.</p>
+<p>Budgets, permissions, approval requirements, access scopes, and irreversible actions should not depend on the model remembering them.</p><p class="edge-evidence"><strong>Where I ran into this:</strong> State splits the work: AI interprets, software enforces, people authorize. <a href="implementation-context.html" target="_blank" rel="noopener">The authority model →</a></p>
 <h3>Design around required behavior, not model names</h3>
-<p>AI products may increasingly specify the behavior a task requires and treat the model as the current implementation of that requirement. Reliability, speed, cost, tool support, and risk tolerance can outlast any particular model family.</p>
+<p>AI products may increasingly specify the behavior a task requires and treat the model as the current implementation of that requirement. Reliability, speed, cost, tool support, and risk tolerance can outlast any particular model family.</p><p class="edge-evidence"><strong>Where I ran into this:</strong> State keeps its model behind an application interface, and a provider comparison was judged on one measured workflow. <a href="state-architecture-cost.html" target="_blank" rel="noopener">Architecture and cost →</a></p>
 <p class="edge-callout"><strong>Durable question:</strong> What does this workflow need to be reliably true, regardless of which model provides it?</p></section>
 
 <section id="evidence"><h2>Evidence matters more than confidence</h2>
@@ -48,7 +48,7 @@ body.v88-dark{--ink:#f5f5f7;--muted:#b6b6c2;--border:#34343d;--soft:#19191f;--so
 <p>AI can sound certain while using incomplete, stale, or wrong information. Real work needs clear source quality, provenance, and a way to distinguish authoritative information from everything else.</p>
 <p class="edge-callout"><strong>Durable question:</strong> What is authoritative, and how does the AI know?</p>
 <h3>Preserve uncertainty</h3>
-<p>Unknown, inferred, proposed, and confirmed information are not interchangeable. Products should keep those distinctions visible when they affect a decision.</p></section>
+<p>Unknown, inferred, proposed, and confirmed information are not interchangeable. Products should keep those distinctions visible when they affect a decision.</p><p class="edge-evidence"><strong>Where I ran into this:</strong> In State, the model turned an unresolved automation target into a confident 0%. <a href="implementation-context.html" target="_blank" rel="noopener">“Unknown became 0%” →</a></p></section>
 
 <section id="authority"><h2>Autonomy should be earned</h2>
 <h3>Capability is not authority</h3>
@@ -70,7 +70,7 @@ body.v88-dark{--ink:#f5f5f7;--muted:#b6b6c2;--border:#34343d;--soft:#19191f;--so
 <p>One impressive answer proves very little. Representative scenarios, known failures, edge cases, and expected behaviors make AI quality repeatable enough to improve.</p>
 <p class="edge-callout"><strong>Product habit:</strong> Save the failure. Find where it started. Change one thing. Run it again.</p>
 <h3>Human review should be intentional</h3>
-<p>Human-in-the-loop is not automatically safe or useful. Review belongs where judgment or consequences justify the interruption. Too much review creates fatigue; too little gives the system authority it has not earned.</p>
+<p>Human-in-the-loop is not automatically safe or useful. Review belongs where judgment or consequences justify the interruption. Too much review creates fatigue; too little gives the system authority it has not earned.</p><p class="edge-evidence"><strong>Where I ran into this:</strong> State filters for consequential changes so human review doesn’t become its own failure mode. <a href="implementation-context.html" target="_blank" rel="noopener">Review workload →</a></p>
 <h3>Measure whether AI preserves human capability</h3>
 <p>AI can improve a person’s output on a bounded creative task while making outputs across people more alike. In one story-writing experiment, AI-generated ideas improved ratings of individual stories but increased similarity between them. That is a task-specific result, not proof that all AI use narrows creativity. <a href="https://doi.org/10.1126/sciadv.adn5290" target="_blank" rel="noopener">Read the study</a>.</p>
 <p>Also check whether AI reduces chances to practice, weakens independent review, shifts cleanup onto people, or turns saved time into more workload. Long-term skill effects remain uncertain, so monitor them rather than assume them.</p>
@@ -84,7 +84,7 @@ body.v88-dark{--ink:#f5f5f7;--muted:#b6b6c2;--border:#34343d;--soft:#19191f;--so
 <h3>Memory is not automatically a source of truth</h3>
 <p>Conversation history, retrieved facts, inferred state, and authoritative state are different things. Important facts may need explicit ownership, validation, timestamps, history, or human authorization.</p>
 <h3>AI can fail without a software error</h3>
-<p>An agent can choose the wrong tool, misunderstand the goal, retrieve the wrong evidence, or stop too early while every service remains technically healthy.</p>
+<p>An agent can choose the wrong tool, misunderstand the goal, retrieve the wrong evidence, or stop too early while every service remains technically healthy.</p><p class="edge-evidence"><strong>Where I ran into this:</strong> An agent in a controlled State exercise found the right evidence and still stated a pending proposal as fact. <a href="debugging-ai-systems.html" target="_blank" rel="noopener">The debugging example →</a></p>
 <p class="edge-callout"><strong>Durable question:</strong> What can we observe directly instead of trusting the model to explain itself?</p><h3>Design an ongoing worker as a complete workflow</h3>
 <p>A useful way to scope an agent is to walk through eight linked decisions:</p>
 <ol>

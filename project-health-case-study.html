@@ -131,7 +131,7 @@ body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,Bl
   <div class="card"><span class="tag">03</span><h3>Unknown is not healthy</h3><p>If the dashboard can’t check something, it says so instead of quietly treating missing data as good news.</p></div>
 </div>
 
-<h2>The useful part starts after something fails</h2>
+<h2>What happens after a check fails</h2>
 <p>A failed AI check does not always mean the same thing. One failure may point to a real product bug. Another may show that the test expectation is wrong or that the available evidence is incomplete.</p>
 
 <div class="callout"><p><strong>Project Health keeps that difference visible before I decide what should change.</strong> The quality view shows what was observed, what was expected, and why the difference matters.</p></div>
@@ -139,7 +139,7 @@ body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,Bl
 <div class="example">
   <div class="example-head"><span class="example-label">Earlier eval example · AI quality</span><h3>A strong average hid a high-impact miss</h3><p>State's aggregate AI quality still looked strong, but one scenario failed in a way that could change what a user believed was true.</p></div>
   <div class="example-row"><span class="example-label">What happened</span><p>State knew the Northstar pilot was paused, but its answer did not clearly preserve that the reason for the pause was still unknown.</p></div>
-  <div class="example-row"><span class="example-label">Why it mattered</span><p>A user could mistake an inferred explanation for maintained project truth. Project Health surfaced the failed scenario ahead of the reassuring average and pointed the next review at the scenario evidence, not the score alone.</p></div>
+  <div class="example-row"><span class="example-label">Why it mattered</span><p>A user could mistake an inferred explanation for maintained project truth. Project Health surfaced the failed scenario ahead of the reassuring average and pointed the next review at the scenario evidence, not the score alone. <a class="evidence-link" href="project-health.html">See it in the live dashboard →</a></p></div>
   <div class="example-row"><span class="example-label">Next decision</span><p>Review whether the product behavior or the eval contract is wrong, make the smallest justified change, then rerun the affected suite.</p></div>
 </div>
 
@@ -174,6 +174,9 @@ body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,Bl
   <div class="card"><span class="tag">My role</span><ul><li>framed the problem and chose which signals mattered</li><li>designed the information hierarchy</li><li>reviewed failed evals and decided whether product behavior or the test should change</li><li>used QA findings to reshape the product</li></ul></div>
   <div class="card"><span class="tag">AI-assisted work</span><ul><li>implementation and code iteration</li><li>testing and regression coverage</li><li>drafting and interface iteration</li></ul></div>
 </div>
+
+<h2>What has and hasn’t been tested</h2>
+<div class="callout"><p><strong>The dashboard is tested against my own projects, not against other people’s decisions.</strong> It has been exercised on State, Tastemake and NARC, including a real failed deployment and real failed evals. I haven’t tested whether anyone else would trust it enough to make a ship decision, or which signals they would ignore. The next thing I’d learn is whether a person who didn’t build it can answer “would you hesitate to ship?” from the dashboard alone. I haven’t run that yet.</p></div>
 
 <h2>What held up</h2>
 <div class="callout"><p><strong>More data was not the answer.</strong> The useful part was preventing one reassuring metric from becoming the verdict. Separating failure types made the next investigation start with the evidence that could actually change the decision.</p></div>
