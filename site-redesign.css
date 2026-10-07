@@ -1719,7 +1719,7 @@ html body #ai-cs-mock .rd-control p{margin:10px 0 0!important;color:#63708a!impo
 .rd-review-current{right:-30px;top:160px;width:128px;background:#edf5ff;transform:rotate(7deg)}
 .rd-review-current .rd-tape{left:64%;transform:translateX(-50%) rotate(5deg)}
 .rd-note{position:absolute!important;left:-8px!important;right:auto!important;bottom:28px!important;z-index:5!important;width:178px!important;border:1px solid #e1d846!important;border-radius:8px!important;background:#f6ee52!important;padding:14px 14px 12px!important;box-shadow:0 12px 24px rgba(141,132,23,.13)!important;transform:rotate(-8deg)!important;font-size:11.5px!important;font-weight:760!important;line-height:1.25!important;color:#171717!important}
-.rd-note .rd-tape-note{position:absolute;top:-11px;left:22px;width:38px;height:13px;background:rgba(218,220,216,.76);transform:rotate(-4deg)}
+.rd-note .rd-tape-note{position:absolute;top:-18px;left:22px;width:38px;height:13px;background:rgba(218,220,216,.76);transform:rotate(-4deg)}
 .rd-note>span:last-child{display:block;margin-top:10px;padding-top:8px;border-top:1px solid rgba(44,42,15,.22);color:#252411;font-size:7.7px;font-weight:850;text-transform:uppercase;letter-spacing:.16em}
 .rd-rail{overflow:hidden!important;width:100vw!important;margin-left:calc(50% - 50vw)!important;border-top:1px solid var(--rd-line)!important;border-bottom:1px solid var(--rd-line)!important;background:transparent!important;padding:13px 0!important;white-space:nowrap!important}
 .rd-type-rail{min-height:30px;width:min(100%,1360px);margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:24px;padding:0 clamp(20px,4vw,58px);color:#2a2530;font-size:13px;font-weight:800;letter-spacing:-.01em}
