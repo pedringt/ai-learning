@@ -25,7 +25,7 @@ const oldPath=anchors.filter(a=>a.href.includes('implementation-context-prototyp
 check('no portfolio page links to the old in-portfolio State path',oldPath.length===0,oldPath.map(a=>a.page).join(', '));
 
 const toState=anchors.filter(a=>a.href===SUBDOMAIN);
-check('the portfolio links to State\'s own subdomain as its no-JS production fallback (8 links across 5 pages)',toState.length===8&&new Set(toState.map(a=>a.page)).size===5,`${toState.length} links, ${new Set(toState.map(a=>a.page)).size} pages`);
+check('the portfolio links to State\'s own subdomain as its no-JS production fallback (4 links across 2 pages)',toState.length===4&&new Set(toState.map(a=>a.page)).size===2,`${toState.length} links, ${new Set(toState.map(a=>a.page)).size} pages`);
 check('every State link is environment-aware',toState.every(a=>/data-state-app-link/.test(a.tag)));
 check('every State link opens in a new tab safely',toState.every(a=>/target="_blank"/.test(a.tag)&&/rel="[^"]*noopener/.test(a.tag)));
 
