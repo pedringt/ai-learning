@@ -141,9 +141,13 @@
     const form=input?.closest('[data-review-batch-form="ask"]');
     const submit=form?.querySelector('button[type="submit"]');
     if(!input||!form) return;
-    input.required=true;
+    // Write only on change (#450): identical writes every frame kept every layer's observer busy.
+    if(!input.required) input.required=true;
     const blank=!input.value.trim();
-    if(submit){submit.disabled=blank;submit.setAttribute('aria-disabled',blank?'true':'false')}
+    if(submit){
+      if(submit.disabled!==blank) submit.disabled=blank;
+      if(submit.getAttribute('aria-disabled')!==String(blank)) submit.setAttribute('aria-disabled',String(blank));
+    }
   }
 
   let closeShieldTimer=0;
@@ -161,7 +165,7 @@
   document.addEventListener('input',event=>{if(event.target?.id==='askStateDrawerInput')syncAskBlankGuard()},true);
 
   function sync(){
-    document.documentElement.dataset.stateMobilePass=PASS;
+    if(document.documentElement.dataset.stateMobilePass!==PASS) document.documentElement.dataset.stateMobilePass=PASS;
     normalizeWorkspacePair(document);
     normalizeAttention(document);
     normalizeSettings(document);

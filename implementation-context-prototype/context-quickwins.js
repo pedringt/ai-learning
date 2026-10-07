@@ -16,27 +16,6 @@
     sparkle:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 1.4 4.1L17.5 8.5l-4.1 1.4L12 14l-1.4-4.1-4.1-1.4 4.1-1.4zM18.5 14.5l.8 2.2 2.2.8-2.2.8-.8 2.2-.8-2.2-2.2-.8 2.2-.8z"/></svg>'
   };
 
-
-  function navIconKey(btn){
-    const view=btn.dataset.view;
-    if(view==='overview')return 'workspace';
-    if(view==='open-items')return 'open';
-    if(view==='project-overview')return 'state';
-    if(view==='notes')return 'notes';
-    if(view==='history')return 'history';
-    if(view==='settings')return 'settings';
-    return null;
-  }
-
-  function decorateNav(scope=document){
-    scope.querySelectorAll('.sidebar-nav .nav-item').forEach(btn=>{
-      if(btn.querySelector('.nav-icon'))return;
-      const key=navIconKey(btn); if(!key)return;
-      const icon=document.createElement('span'); icon.className='nav-icon'; icon.innerHTML=ICONS[key];
-      btn.prepend(icon);
-    });
-  }
-
   function addWorkspaceOrientation(scope=document){
     const heading=scope.querySelector('.overview-heading-row > div');
     if(!heading)return;
@@ -215,12 +194,13 @@
       const count=details.querySelectorAll('.project-maintained-fact').length;
       if(!count)return;
       const hasProvenance=!!details.querySelector('.project-fact-provenance');
-      summary.textContent=`See ${count} maintained Current State ${count===1?'fact':'facts'}${hasProvenance?' · sources & history':''}`;
+      const text=`See ${count} maintained Current State ${count===1?'fact':'facts'}${hasProvenance?' · sources & history':''}`;
+      if(summary.textContent!==text) summary.textContent=text; // write only on change (#450)
     });
   }
 
   function enhance(scope=document){
-    decorateNav(scope);addWorkspaceOrientation(scope);decorateWorkspace(scope);addGrounding(scope);improveOpenItemsSummary(scope);clarifyQuestionsAwaitingReview(scope);improveEmptyStates(scope);clarifyReviewCompletion(scope);clarifyReviewActions(scope);clarifyNotesProcessedFilter(scope);improveProjectProvenanceSummary(scope);
+    addWorkspaceOrientation(scope);decorateWorkspace(scope);addGrounding(scope);improveOpenItemsSummary(scope);clarifyQuestionsAwaitingReview(scope);improveEmptyStates(scope);clarifyReviewCompletion(scope);clarifyReviewActions(scope);clarifyNotesProcessedFilter(scope);improveProjectProvenanceSummary(scope);
   }
   let queued=false;const schedule=()=>{if(queued)return;queued=true;requestAnimationFrame(()=>{queued=false;enhance(document);});};
   new MutationObserver(schedule).observe(document.documentElement,{childList:true,subtree:true});

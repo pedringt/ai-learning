@@ -17,7 +17,7 @@ Written for #135 (Sept 2026) from an audit of what `index.html` actually loads, 
 | Views + core | `context-notes-view`, `context-open-items-view`, `context-project-view`, `context-backend-sync` (maps API records to view shapes), `context-app` (router, render loop, project switcher; 1,800 lines) | the app proper |
 | Baseline Setup (three layers) | `context-baseline-setup` (original banner + review dialog), `context-baseline-polish` (manual entry, copy), `context-baseline-dogfood-fixes` (the banner that owns the states, starting-material dialog, polling) | Baseline UX. **Two banner renderers coexist** (`context-baseline-setup` and `context-baseline-dogfood-fixes`) and redraw over each other on every view refresh; #230, #231 and #232 were all bugs at that seam |
 | Features | `context-history` (browser history/navigation), `context-provenance`, `context-ask-question-handoff`, `context-settings`, `context-sources` | feature modules |
-| **Patch layers (historical names)** | `context-quickwins`, `context-product-polish`, `context-design-pass`, `context-feedback-pass`, `-2`, `-3`, `-4`, `context-attention-alignment`, `context-final-mobile` | inject CSS and rewrite already-rendered DOM (each uses a `MutationObserver` and re-runs on every change). Later ones patch earlier ones |
+| **Patch layers (historical names)** | `context-quickwins`, `context-product-polish`, `context-feedback-pass`, `-3`, `-4`, `context-attention-alignment`, `context-final-mobile` | rewrite already-rendered DOM (each uses a `MutationObserver` and re-runs on every change). Later ones patch earlier ones. Being folded into the renderers under #450: their CSS now lives in `state-app.css`, and `context-design-pass` and `context-feedback-pass-2` are gone |
 
 ## Where responsibilities overlap (candidates for consolidation, not proven duplicates)
 
@@ -25,11 +25,11 @@ Judged from function names; check the code before assuming two functions do the 
 
 | Concern | Touched by |
 |---|---|
-| Ask controls / launcher | `feedback-pass` (`askControlStates`), `feedback-pass-2` (`askIcons`), `feedback-pass-3` (`installAskLifecycle`, `ensureAskStatus`), `feedback-pass-4` (`syncAskControls`, `installAskControls`, `restoreAskDiscovery`), `attention-alignment` (`syncAskBlankGuard`), `final-mobile` (`syncMobileAskLauncher`) |
+| Ask controls / launcher | `feedback-pass` (`askControlStates`), `feedback-pass-3` (`installAskLifecycle`, `ensureAskStatus`), `feedback-pass-4` (`syncAskControls`, `installAskControls`, `restoreAskDiscovery`), `attention-alignment` (`syncAskBlankGuard`), `final-mobile` (`syncMobileAskLauncher`) |
 | Attention / Workspace sync | `feedback-pass` (`syncAttentionFromApi`), `feedback-pass-4` (`syncAttention`), `attention-alignment` (`normalizeAttention`) |
 | Evidence sync | `feedback-pass` (`evidenceSync`), `feedback-pass-4` (`installEvidenceSync`) |
-| Navigation styling | `design-pass`, `feedback-pass` (`fixNav`), `quickwins` (`decorateNav`) |
-| Help card | `design-pass`, `feedback-pass-3` (`syncHelpCard`), `final-mobile` (`ensureMobileHelp`) |
+| Navigation styling | Resolved (#450): static markup in `index.html` |
+| Help card | Card markup is static in `index.html` (#450); `feedback-pass-3` (`syncHelpCard`) still positions it and `final-mobile` (`ensureMobileHelp`) adds the mobile footer |
 
 If a consolidation is ever attempted, start with **Ask controls** (six modules touch it).
 

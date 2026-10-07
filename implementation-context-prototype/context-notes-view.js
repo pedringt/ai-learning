@@ -117,7 +117,17 @@
       : expanded
         ? `<p class="note-full-text">${esc(n.text)}</p>${!editable?'<p class="note-immutable-hint"><strong>Submitted note</strong> · Preserved as project evidence and not editable.</p>':''}<div class="inline-actions note-actions">${editable?`<button class="text-button" data-action="edit-note" data-note-id="${n.id}">Edit</button>`:''}${reviewAction}<button class="text-button" data-action="copy-note" data-note-id="${n.id}">Copy</button></div>`
         : `<p>${esc(preview)}</p><span class="note-expand-label">Open note →</span>`;
-    return `<article class="simple-note note-index-row ${expanded?'is-expanded':''}" data-action="toggle-note" data-note-id="${n.id}" tabindex="0"><span class="note-date">${esc(n.date)}</span><div class="note-index-main"><h3>${esc(n.title)}</h3><span class="note-source">${esc(n.source)}</span>${body}</div><div class="note-index-status">${statusBadge}</div></article>`;
+    return `<article class="simple-note note-index-row ${expanded?'is-expanded':''}" data-action="toggle-note" data-note-id="${n.id}" tabindex="0">${noteFeedIcon(n)}<div class="note-index-main"><h3>${esc(n.title)}</h3><span class="note-date">${esc(n.date)}</span><span class="note-source">${esc(n.source)}</span>${body}</div><div class="note-index-status">${statusBadge}</div></article>`;
+  }
+
+  // Feed icon for a Notes row: Slack notes get the Slack mark, project notes are tinted (#450, from context-feedback-pass-2.js).
+  const NOTE_ICONS={
+    slack:'<svg viewBox="0 0 24 24"><path d="M9 3a2 2 0 0 1 2 2v4H9a2 2 0 1 1 0-4V3zM21 9a2 2 0 0 1-2 2h-4V9a2 2 0 1 1 4 0h2zM15 21a2 2 0 0 1-2-2v-4h2a2 2 0 1 1 0 4v2zM3 15a2 2 0 0 1 2-2h4v2a2 2 0 1 1-4 0H3z"/></svg>',
+    note:'<svg viewBox="0 0 24 24"><path d="M6 3h9l3 3v15H6z"/><path d="M9 10h6M9 14h6"/></svg>'
+  };
+  function noteFeedIcon(n){
+    const source=String(n.source??'').trim()||String(n.title??'').trim();
+    return `<span class="note-feed-icon${/project note/i.test(source)?' is-project':''}">${/slack/i.test(source)?NOTE_ICONS.slack:NOTE_ICONS.note}</span>`;
   }
 
   function draftNoteRow(n){

@@ -44,7 +44,9 @@
   }
 
   function reveal(){
-    document.documentElement.classList.remove('state-final-mobile-pending');
+    // classList.remove rewrites the class attribute even when the class is absent, which
+    // re-triggered every layer's observer each frame (#450).
+    if(document.documentElement.classList.contains('state-final-mobile-pending')) document.documentElement.classList.remove('state-final-mobile-pending');
     if(window.__stateFinalMobileTimer){clearTimeout(window.__stateFinalMobileTimer);delete window.__stateFinalMobileTimer;}
   }
 

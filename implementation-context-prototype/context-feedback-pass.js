@@ -1,15 +1,4 @@
 (() => {
-  const icons={
-    overview:'<svg viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5V21h-6v-6H9v6H3z"/></svg>',
-    'project-overview':'<svg viewBox="0 0 24 24"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 8h6M9 12h6M9 16h4"/></svg>',
-    'open-items':'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m8 12 2.5 2.5L16 9"/></svg>',
-    notes:'<svg viewBox="0 0 24 24"><path d="M6 3h9l3 3v15H6z"/><path d="M9 10h6M9 14h6M9 18h4"/></svg>',
-    history:'<svg viewBox="0 0 24 24"><path d="M4 7V3m0 4h4M4.5 7A9 9 0 1 1 3 15"/><path d="M12 7v5l3 2"/></svg>',
-    settings:'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19 13.5v-3l-2-.7-.7-1.7.9-1.9-2.1-2.1-1.9.9-1.7-.7L10.5 2h-3l-.7 2.3-1.7.7-1.9-.9-2.1 2.1.9 1.9-.7 1.7-2 .7v3l2 .7.7 1.7-.9 1.9 2.1 2.1 1.9-.9 1.7.7.7 2.3h3l.7-2.3 1.7-.7 1.9.9 2.1-2.1-.9-1.9.7-1.7z" transform="translate(2.25 0) scale(.8)"/></svg>'
-  };
-
-
-  function fixNav(){document.querySelectorAll('.sidebar-nav .nav-item').forEach(b=>{let i=b.querySelector(':scope > .nav-icon');if(!i&&icons[b.dataset.view]){i=document.createElement('span');i.className='nav-icon';b.prepend(i)}if(i&&icons[b.dataset.view])i.innerHTML=icons[b.dataset.view]})}
 
   function syncAttentionFromApi(){
     const API=window.STATE_API,app=window.STATE_ASK_TEST_API;if(!API?.getAttention||!app?.state)return;
@@ -79,8 +68,8 @@
     if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
   }
 
-  function run(){fixNav();mobileAsk();askControlStates();evidenceSync()}
-  let queued=false;const schedule=()=>{if(queued)return;queued=true;requestAnimationFrame(()=>{queued=false;fixNav()})};
-  new MutationObserver(schedule).observe(document.documentElement,{childList:true,subtree:true});
+  // Sidebar nav icons are static markup in index.html now (#450); fixNav and its every-frame
+  // MutationObserver loop are gone.
+  function run(){mobileAsk();askControlStates();evidenceSync()}
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',run,{once:true});else run();
 })();

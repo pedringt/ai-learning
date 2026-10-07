@@ -154,3 +154,36 @@ def test_history_entries_have_no_left_timeline_rail_or_hover_transform():
         assert values["after"] == "none"
     finally:
         browser.close(); pw.stop()
+
+
+IDLE_MUTATIONS_JS = """async () => {
+  const seen = [];
+  const mo = new MutationObserver(list => {
+    for (const m of list) {
+      const t = m.target.nodeType === 1 ? m.target : m.target.parentElement;
+      seen.push(`${m.type} ${m.attributeName || ''} ${t ? t.tagName + '.' + String(t.className).split(' ')[0] : ''}`);
+    }
+  });
+  mo.observe(document.documentElement, {childList: true, subtree: true, attributes: true, characterData: true});
+  await new Promise(r => setTimeout(r, 1000));
+  mo.disconnect();
+  return seen;
+}"""
+
+
+@pytest.mark.parametrize("open_ask", [False, True])
+def test_idle_page_does_not_rewrite_the_dom_every_frame(open_ask):
+    # #450: several patch layers rewrote identical values on every animation
+    # frame (sidebar icons, <html>/<body> classes, the Ask status and submit
+    # button), and each write re-triggered every other layer's MutationObserver,
+    # so an idle tab kept the DOM changing ~840 times a second. An idle page
+    # must not change at all.
+    pw, browser, page = _page()
+    try:
+        if open_ask:
+            page.locator("#askStateLauncher").click()
+        page.wait_for_timeout(1500)
+        seen = page.evaluate(IDLE_MUTATIONS_JS)
+        assert seen == [], f"{len(seen)} DOM changes on an idle page, e.g. {sorted(set(seen))[:5]}"
+    finally:
+        browser.close(); pw.stop()

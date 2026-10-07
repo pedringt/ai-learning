@@ -174,12 +174,24 @@
     catch(_){if(status)status.textContent='Copy failed. Your browser may be blocking clipboard access.';}
   }
 
+  // Starter buttons with their icons (#450, from context-feedback-pass-2.js): the first four get
+  // sparkle / calendar / check-doc / question; any further starter has no icon.
+  const STARTER_ICONS=[
+    '<svg viewBox="0 0 24 24"><path d="M12 2l1.7 5.3L19 9l-5.3 1.7L12 16l-1.7-5.3L5 9l5.3-1.7L12 2z"/><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8L19 15z"/></svg>',
+    '<svg viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M8 3v4M16 3v4M4 10h16"/></svg>',
+    '<svg viewBox="0 0 24 24"><path d="M6 3h9l3 3v15H6z"/><path d="m9 14 2 2 4-5"/></svg>',
+    '<svg viewBox="0 0 24 24"><path d="M21 12a8 8 0 0 1-8 8H7l-4 2 1.4-4.2A8 8 0 1 1 21 12z"/><path d="M9.8 9a2.4 2.4 0 1 1 3.7 2c-.9.5-1.5 1-1.5 2M12 16h.01"/></svg>'
+  ];
+  function starterButtonsHtml(list){
+    return list.map(([label,prompt],n)=>`<button type="button" data-review-batch-prompt="${esc(prompt)}">${n<STARTER_ICONS.length?`<span class="ask-polish-icon">${STARTER_ICONS[n]}</span>`:''}${esc(label)}</button>`).join('');
+  }
+
   function ensureAskShell(){
     if(!document.getElementById('askStateLauncher')){
       const launcher=document.createElement('button');launcher.id='askStateLauncher';launcher.className='ask-state-launcher';launcher.type='button';launcher.dataset.reviewBatchAction='open-ask';launcher.textContent='Ask State';document.body.appendChild(launcher);
     }
     if(!document.getElementById('askStateDrawer')){
-      const drawer=document.createElement('aside');drawer.id='askStateDrawer';drawer.className='ask-state-drawer';drawer.hidden=true;drawer.setAttribute('aria-label','Ask State');drawer.innerHTML=`<div class="ask-state-drawer-head"><div><h2>Ask State</h2><p>Read-only. Asking never changes the project record.</p></div><button class="ask-state-drawer-close" type="button" aria-label="Close Ask State" data-review-batch-action="close-ask">×</button></div><div class="ask-state-drawer-body"><div class="ask-state-drawer-controls"><form class="ask-state-drawer-form" data-review-batch-form="ask"><input id="askStateDrawerInput" autocomplete="off" aria-label="Ask State" placeholder="What do you want to know?"><button class="btn primary" type="submit">Ask</button></form><p class="ask-state-drawer-help">Edit the question and run it again to refine the answer. State does not carry a hidden conversation forward. Questions asked here may be recorded to help improve State.</p><div class="ask-state-starters">${starters.map(([label,prompt])=>`<button type="button" data-review-batch-prompt="${esc(prompt)}">${esc(label)}</button>`).join('')}</div></div><div class="ask-state-drawer-result" id="askStateDrawerResult" aria-live="polite"></div></div>`;document.body.appendChild(drawer);
+      const drawer=document.createElement('aside');drawer.id='askStateDrawer';drawer.className='ask-state-drawer';drawer.hidden=true;drawer.setAttribute('aria-label','Ask State');drawer.innerHTML=`<div class="ask-state-drawer-head"><div><h2>Ask State</h2><p>Read-only. Asking never changes the project record.</p></div><button class="ask-state-drawer-close" type="button" aria-label="Close Ask State" data-review-batch-action="close-ask">×</button></div><div class="ask-state-drawer-body"><div class="ask-state-drawer-controls"><form class="ask-state-drawer-form" data-review-batch-form="ask"><input id="askStateDrawerInput" autocomplete="off" aria-label="Ask State" placeholder="What do you want to know?"><button class="btn primary" type="submit">Ask</button></form><p class="ask-state-drawer-help">Edit the question and run it again to refine the answer. State does not carry a hidden conversation forward. Questions asked here may be recorded to help improve State.</p><div class="ask-state-starters">${starterButtonsHtml(starters)}</div></div><div class="ask-state-drawer-result" id="askStateDrawerResult" aria-live="polite"></div></div>`;document.body.appendChild(drawer);
     }
     syncAskInputs();
   }
@@ -224,7 +236,7 @@
     syncAskInputs();
     starters=publishStarters(projectId||liveProjectId());
     const holder=document.querySelector('.ask-state-starters');
-    if(holder)holder.innerHTML=starters.map(([label,prompt])=>`<button type="button" data-review-batch-prompt="${esc(prompt)}">${esc(label)}</button>`).join('');
+    if(holder)holder.innerHTML=starterButtonsHtml(starters);
   }
   window.STATE_ASK_UI={resetForProjectSwitch};
   function syncLauncherVisibility(){

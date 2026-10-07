@@ -8,7 +8,9 @@
 
 
   function forceLightState(){
-    document.body?.classList.remove('v88-dark');
+    // Guarded (#450): classList.remove rewrites the class attribute even when the class is
+    // absent, and this file observes class changes, so it re-triggered itself every frame.
+    if(document.body?.classList.contains('v88-dark')) document.body.classList.remove('v88-dark');
     document.documentElement.style.colorScheme='light';
   }
 
@@ -27,12 +29,12 @@
   function cleanNotes(){
     document.querySelectorAll('.notes-page .notes-disclosure').forEach(el=>el.remove());
     document.querySelectorAll('.notes-page .note-status,.notes-page .note-index-status [class*="status"]').forEach(el=>{
-      if(/no review needed/i.test(el.textContent||'')) el.classList.add('is-neutral-status');
+      if(/no review needed/i.test(el.textContent||'')&&!el.classList.contains('is-neutral-status')) el.classList.add('is-neutral-status');
     });
   }
 
   function simplifyCurrentState(){
-    document.querySelectorAll('.project-page .project-maintained-facts').forEach(el=>{el.hidden=true;});
+    document.querySelectorAll('.project-page .project-maintained-facts').forEach(el=>{if(!el.hidden) el.hidden=true;});
     const toolbar=document.querySelector('.project-page-toolbar');
     toolbar?.remove();
   }
@@ -91,11 +93,16 @@
     if(hasAnswer){delete drawer.dataset.askPending;}
     drawer.classList.toggle('is-generating',loading&&!hasAnswer&&!error);
     drawer.classList.toggle('has-answer',hasAnswer);
-    if(submit) submit.disabled=loading&&!hasAnswer&&!error;
-    status.className='state-ask-status';
-    if(loading&&!hasAnswer&&!error){status.classList.add('is-visible','is-loading');status.textContent='Finding the answer…';}
-    else if(hasAnswer){status.classList.add('is-visible','is-ready');status.textContent='Answer ready';}
-    else status.textContent='';
+    // The submit button's disabled state is owned by context-attention-alignment.js
+    // (syncAskBlankGuard: disabled only while the question is blank). This file used
+    // to set it as well, and the two fought every frame (#450).
+    // Write only on change: rewriting identical values each frame re-triggered every
+    // layer's MutationObserver (#450).
+    const generating=loading&&!hasAnswer&&!error;
+    const statusClass=generating?'state-ask-status is-visible is-loading':hasAnswer?'state-ask-status is-visible is-ready':'state-ask-status';
+    const statusText=generating?'Finding the answer…':hasAnswer?'Answer ready':'';
+    if(status.className!==statusClass) status.className=statusClass;
+    if(status.textContent!==statusText) status.textContent=statusText;
   }
 
   function installAskLifecycle(){

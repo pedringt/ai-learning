@@ -63,6 +63,9 @@
 
   async function run() {
     const out = {};
+    // What a visitor sees first: Workspace right after load, before any navigation.
+    await settle();
+    out['workspace-cold'] = snap();
     // Warm-up pass: on a cold load the patch layers race (#450), and the UI only
     // settles to one stable version after each view has rendered once.
     for (const v of VIEWS) await go(v);
