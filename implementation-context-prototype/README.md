@@ -26,13 +26,14 @@ For the product model, current project status, QA process, release rules, and kn
 | `context-settings.js` | Rules and Slack settings |
 | `context-data.js` | Deterministic local/test fixture |
 | `context-tool.css` | Product styling |
-| `state-shell.css`, `state-shell.js`, `final-freeze-polish.css`, `favicon.svg` | State's own shell (copied from the portfolio's `site-shell.*`; still contains portfolio-only selectors that do nothing here) |
+| `state-app.css` | Layer styles the `context-*.js` scripts used to inject at runtime, kept verbatim in their settled cascade order (#450); do not reorder sections |
+| `state-shell.css`, `state-shell.js`, `favicon.svg` | State's own shell (copied from the portfolio's `site-shell.*`; still contains portfolio-only selectors that do nothing here) |
 | `api/state-config.js` | Vercel function that tells the page which backend to call (production deploy uses the production API; anything else uses staging) |
 | `api/state-diagnostic.js` | Diagnostic helper used by tests |
 | `state-product-health.html`, `state-product-health.js` | Internal Product Analytics dashboard (aggregate metadata only; not linked from the product) |
 | `vercel.json` | Deployment settings for this folder |
 
-The historically named `context-*-pass.js` files are still live runtime code. Do not remove or consolidate them just because their names look temporary. Previous investigation found real layout/race regressions when seemingly redundant behavior was removed.
+The historically named `context-*-pass.js` files are still live runtime code. Do not remove or consolidate them just because their names look temporary. Previous investigation found real layout/race regressions when seemingly redundant behavior was removed. #450 is folding them in slices; each slice must leave the rendered UI identical (computed styles, text and structure on every view at desktop and phone widths) before and after.
 
 ## Running locally
 

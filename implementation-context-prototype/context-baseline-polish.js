@@ -53,26 +53,6 @@
     if(patience)patience.textContent='Larger starting sources can take a little while to analyze. You can review the Starting State when they finish.';
   }
 
-  function addStyles(){
-    if(document.getElementById('state-baseline-polish-styles'))return;
-    const style=document.createElement('style');
-    style.id='state-baseline-polish-styles';
-    style.textContent=`
-      body.state-baseline-active .state-reviewer-guide{display:none!important}
-      #baselineSetupBanner{padding:10px 12px!important;border-radius:10px!important;box-shadow:none!important}
-      #baselineSetupBanner .baseline-review-button,#baselineSetupBanner .baseline-start-manual{width:auto!important;min-height:32px!important;padding:6px 10px!important;font-size:12px!important}
-      #baselineSetupBanner .baseline-start-manual{margin-left:auto;margin-right:-8px}
-      .baseline-manual-list{display:grid;gap:10px;margin:14px 0}.baseline-manual-row{padding:11px;border:1px solid var(--line);border-radius:9px;background:var(--surface2)}
-      .baseline-manual-grid{display:grid;grid-template-columns:minmax(120px,.7fr) minmax(140px,1fr);gap:8px;margin-bottom:8px}
-      .baseline-manual-field{display:flex;flex-direction:column;gap:4px}.baseline-manual-field span{font-size:10px;font-weight:750;color:var(--muted)}
-      .baseline-manual-field input,.baseline-manual-field textarea{width:100%;box-sizing:border-box;border:1px solid var(--line);border-radius:7px;background:var(--surface);color:var(--ink);font:inherit;padding:7px 8px}
-      .baseline-manual-field textarea{resize:vertical;min-height:64px;line-height:1.4}.baseline-manual-row-head{display:flex;justify-content:flex-end;margin-bottom:5px}
-      .baseline-manual-remove{border:0;background:transparent;color:var(--muted);cursor:pointer;font-size:12px;padding:0}.baseline-manual-actions{display:flex;gap:8px;align-items:center;justify-content:flex-end;margin-top:14px}
-      .baseline-manual-status{margin-right:auto;font-size:11px;color:var(--muted)}
-      @media(max-width:760px){#baselineSetupBanner .baseline-start-manual{margin:0;width:100%!important}.baseline-manual-grid{grid-template-columns:1fr}.baseline-manual-actions{align-items:stretch;flex-direction:column}.baseline-manual-status{margin-right:0}.baseline-manual-actions .btn{width:100%}}
-    `;
-    document.head.appendChild(style);
-  }
 
   function manualRowHtml(){
     return `<div class="baseline-manual-row"><div class="baseline-manual-row-head"><button type="button" class="baseline-manual-remove" data-baseline-remove-manual>Remove</button></div><div class="baseline-manual-grid"><label class="baseline-manual-field"><span>Section</span><input data-baseline-manual-area maxlength="80" value="General"></label><label class="baseline-manual-field"><span>Title</span><input data-baseline-manual-topic maxlength="120" placeholder="e.g. Purpose"></label></div><label class="baseline-manual-field"><span>What should Current State say?</span><textarea data-baseline-manual-statement maxlength="4000" rows="3" placeholder="Write one fact you already know to be true."></textarea></label></div>`;
@@ -133,7 +113,7 @@
   }
 
   function start(){
-    addStyles();syncBaselinePresentation();
+    syncBaselinePresentation();
     new MutationObserver(()=>requestAnimationFrame(syncBaselinePresentation))
       .observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:['hidden']});
 

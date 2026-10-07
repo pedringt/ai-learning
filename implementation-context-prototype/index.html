@@ -59,6 +59,12 @@
     .mobile-primary-nav .nav-count[hidden]{display:none!important;}
     .mobile-subnav[hidden]{display:none!important;}
   </style>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lora:wght@600;700&display=swap">
+  <script>
+    // Layer styles that the context-*.js scripts used to inject at runtime (#450). Must stay after
+    // context-tool.css and the inline styles above so the cascade order is unchanged.
+    document.write('<link rel="stylesheet" href="' + window.__STATE_BASE + 'state-app.css?v=1">');
+  </script>
 </head>
 <body>
   <div class="prototype-productbar"><span class="product-mark" aria-hidden="true">◆</span><button type="button" class="product-name product-home" data-view="overview" aria-label="Return to Workspace">State</button><span class="product-divider" aria-hidden="true">·</span><span class="product-tagline">Maintained project understanding, not reconstructed history.</span><a class="product-case-study" href="https://www.contextswitch.tech/implementation-context" target="_blank" rel="noopener noreferrer">Case study</a></div>

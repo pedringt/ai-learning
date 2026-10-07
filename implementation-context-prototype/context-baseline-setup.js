@@ -5,42 +5,6 @@
   let activeRequest = 0;
   let latestDraft = null;
 
-  function ensureStyles(){
-    if(document.getElementById('state-baseline-setup-styles')) return;
-    const style=document.createElement('style');
-    style.id='state-baseline-setup-styles';
-    style.textContent=`
-      .baseline-setup-banner{margin:24px 30px 0;padding:12px 14px;border:1px solid var(--line);border-radius:10px;background:var(--surface);box-shadow:none}
-      body.state-baseline-active .app-workspace>.view-root{padding-top:16px}
-      .baseline-setup-row{display:flex;align-items:center;justify-content:space-between;gap:18px}
-      .baseline-setup-copy-wrap{min-width:0}.baseline-setup-title{font-weight:800;font-size:14px;margin:0 0 3px;color:var(--ink)}
-      .baseline-setup-copy{margin:0;color:var(--muted);font-size:12.5px;line-height:1.45}
-      .baseline-setup-meta{margin-top:5px;color:var(--muted);font-size:11.5px;line-height:1.35}
-      .baseline-review-button{flex:0 0 auto;min-height:34px!important;padding:7px 11px!important;white-space:nowrap}
-      .baseline-draft-dialog{min-width:0}.baseline-draft-intro{margin-bottom:16px;color:var(--muted)}
-      .baseline-draft-attention{margin:14px 0;padding:12px;border:1px solid var(--line);border-radius:10px;background:var(--surface2)}
-      .baseline-draft-attention h3,.baseline-draft-section h3{margin:0 0 8px;font-size:14px}
-      .baseline-draft-attention ul{margin:7px 0 0;padding-left:18px}.baseline-draft-attention li{margin:4px 0;font-size:13px}
-      .baseline-draft-section{margin-top:18px}.baseline-draft-area{margin:12px 0 0;padding-top:12px;border-top:1px solid var(--line)}
-      .baseline-draft-area-title{font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin:0 0 8px}
-      .baseline-draft-fact{margin:0 0 10px;padding:10px 11px;border:1px solid var(--line);border-radius:9px;background:var(--surface)}
-      .baseline-draft-fact.is-current{padding:8px 10px;background:transparent}.baseline-draft-fact.is-removed{opacity:.6}
-      .baseline-draft-fact-head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:7px}
-      .baseline-draft-badge{font-size:10px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
-      .baseline-draft-remove{border:0;background:transparent;color:var(--muted);cursor:pointer;font-size:12px;padding:2px 0}
-      .baseline-draft-grid{display:grid;grid-template-columns:minmax(120px,.7fr) minmax(140px,1fr);gap:8px;margin-bottom:8px}
-      .baseline-draft-field{display:flex;flex-direction:column;gap:4px}.baseline-draft-field span{font-size:10px;font-weight:750;color:var(--muted)}
-      .baseline-draft-field input,.baseline-draft-field textarea{width:100%;box-sizing:border-box;border:1px solid var(--line);border-radius:7px;background:var(--surface);color:var(--ink);font:inherit;padding:7px 8px}
-      .baseline-draft-field textarea{resize:vertical;min-height:64px;line-height:1.4}
-      .baseline-draft-current-title{font-weight:750;font-size:12px;margin:0 0 3px}.baseline-draft-current-copy{margin:0;font-size:13px;line-height:1.45}
-      .baseline-draft-question{padding:8px 0;border-top:1px solid var(--line);font-size:13px}.baseline-draft-question:first-of-type{border-top:0}
-      .baseline-draft-question .baseline-draft-badge{display:block;margin-bottom:3px}
-      .baseline-draft-actions{display:flex;justify-content:flex-end;gap:8px;align-items:center;margin-top:18px;padding-top:14px;border-top:1px solid var(--line)}
-      .baseline-draft-status{margin-right:auto;font-size:11px;color:var(--muted);max-width:360px}
-      @media(max-width:760px){.baseline-setup-banner{margin:14px 0 0}.baseline-setup-row{align-items:flex-start;flex-direction:column}.baseline-review-button{width:100%}.baseline-draft-grid{grid-template-columns:1fr}.baseline-draft-actions{align-items:stretch;flex-direction:column}.baseline-draft-status{margin-right:0}.baseline-draft-actions .btn{width:100%}}
-    `;
-    document.head.appendChild(style);
-  }
 
   function ensureBanner(){
     let banner=document.getElementById('baselineSetupBanner');
@@ -356,7 +320,7 @@
   });
 
   function start(){
-    ensureStyles();ensureBanner();
+    ensureBanner();
     const switcher=document.getElementById('projectSwitcher');
     if(switcher)new MutationObserver(()=>refresh()).observe(switcher,{attributes:true,attributeFilter:['data-project-id','data-name']});
     const root=document.getElementById('viewRoot');

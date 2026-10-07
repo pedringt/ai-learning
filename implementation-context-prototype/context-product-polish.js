@@ -75,66 +75,6 @@
     copyContextData: null,
   };
 
-  function addStyles() {
-    if (document.getElementById('state-product-polish-styles')) return;
-    const style = document.createElement('style');
-    style.id = 'state-product-polish-styles';
-    style.textContent = `
-      .ask-state-drawer-form{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;min-width:0;align-items:center}
-      .ask-state-drawer-form input{min-width:0;width:100%;box-sizing:border-box;border:1px solid #cfc9bd;background:#fff;border-radius:9px;padding:11px 12px;color:var(--ink);outline:none}
-      .ask-state-drawer-form input:focus{border-color:var(--accent);box-shadow:0 0 0 2px color-mix(in srgb,var(--accent) 16%,transparent)}
-      .ask-state-starters{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;min-width:0;padding-right:2px}
-      .ask-state-starters button{max-width:100%;white-space:normal;text-align:left;border:1px solid var(--line);border-radius:999px;background:var(--surface);padding:7px 10px;font:inherit;font-size:12px;cursor:pointer;color:var(--ink)}
-      .ask-state-starters button:hover{background:var(--surface2)}
-      .ask-state-launcher{position:fixed;right:24px;bottom:24px;z-index:1200;border:1px solid var(--line);border-radius:12px;background:var(--ink);color:var(--surface);padding:11px 15px;font:inherit;font-weight:800;box-shadow:0 10px 28px rgba(0,0,0,.16);cursor:pointer;opacity:.62;transition:opacity .16s ease,transform .16s ease}
-      .ask-state-launcher:hover,.ask-state-launcher:focus-visible{opacity:1}
-      .ask-state-launcher.is-hidden{opacity:0;pointer-events:none;transform:translateY(8px)}
-      .ask-state-drawer{position:fixed;right:0;top:92px;height:calc(100dvh - 92px);width:min(470px,calc(100vw - 24px));z-index:1250;background:var(--surface);border-left:1px solid var(--line);box-shadow:-16px 0 40px rgba(0,0,0,.14);display:flex;flex-direction:column}
-      .ask-state-drawer[hidden]{display:none}
-      .ask-state-drawer-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;padding:18px 18px 14px;border-bottom:1px solid var(--line)}
-      .ask-state-drawer-head h2{margin:0 0 4px;font-size:20px}.ask-state-drawer-head p{margin:0;color:var(--muted);font-size:12px;line-height:1.4}
-      .ask-state-drawer-close{border:0;background:transparent;color:var(--muted);font-size:24px;line-height:1;cursor:pointer;padding:2px 4px}
-      .ask-state-drawer-body{flex:1;min-height:0;overflow:auto;overscroll-behavior:contain}
-      .ask-state-drawer-controls{padding:14px 18px;border-bottom:1px solid var(--line)}
-      .ask-state-drawer-help{margin:7px 0 0;color:var(--muted);font-size:11px;line-height:1.4}
-      .ask-state-drawer-result{padding:18px}
-      .ask-state-drawer-result:empty::before{content:'Ask about decisions, open questions, project changes, evidence, or meeting context.';display:block;color:var(--muted);font-size:13px;line-height:1.55}
-      .ask-state-drawer .ask-live-answer{max-width:none}.ask-state-drawer .ask-answer-head{gap:10px}.ask-state-drawer .ask-answer-actions{margin-left:auto}
-      .ask-state-drawer .ask-answer-section{margin-top:18px}.ask-state-drawer .ask-answer-section h3{font-size:14px}
-      .ask-state-stale{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin:0 0 14px;padding:10px 11px;border:1px solid var(--line);border-radius:9px;background:var(--surface2);font-size:12px;line-height:1.4}
-      .ask-state-stale button{flex:0 0 auto}
-      .ask-readonly-message{padding:14px;border:1px solid var(--line);border-radius:10px;background:var(--surface2)}
-      .ask-readonly-message h3{margin:0 0 5px}.ask-readonly-message p{margin:0 0 12px;color:var(--muted);font-size:13px;line-height:1.5}
-      .ask-resolved-decisions{margin-top:18px;padding-top:16px;border-top:1px solid var(--line)}
-      .ask-resolved-decisions>span{display:block;margin-bottom:7px;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}
-      .ask-resolved-decisions h3{margin:0 0 8px;font-size:14px}.ask-resolved-decisions ul{margin:0;padding-left:18px}.ask-resolved-decisions li{margin:7px 0;line-height:1.45;font-size:13px}.ask-resolved-decisions small{display:block;margin-top:2px;color:var(--muted)}
-      .project-head-copy-context{margin-left:auto}
-      .copy-context-intro{margin-bottom:16px}.copy-context-options{display:grid;gap:9px;margin:16px 0}
-      .copy-context-option{display:grid;grid-template-columns:auto 1fr;gap:10px;align-items:flex-start;border:1px solid var(--line);border-radius:10px;padding:12px;background:var(--surface);cursor:pointer}
-      .copy-context-option input{margin-top:4px}.copy-context-option strong,.copy-context-option span{display:block}.copy-context-option span{margin-top:3px;color:var(--muted);font-size:12px;line-height:1.45}
-      .copy-context-task{margin-top:14px}.copy-context-task label{display:block;font-weight:800;font-size:12px;margin-bottom:6px}.copy-context-task input{width:100%;box-sizing:border-box;border:1px solid #cfc9bd;background:#fff;border-radius:9px;padding:11px 12px;color:var(--ink);outline:none}
-      .copy-context-status{min-height:18px;margin:8px 0 0!important;font-size:12px}
-      .review-confirm-change{margin:14px 0 2px;padding:10px 12px;border-radius:9px;background:var(--surface2);font-size:12px;line-height:1.45}.review-confirm-change span{display:block;margin-bottom:4px;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
-      .review-saving-compact{text-align:left}.review-saving-compact h2{margin-bottom:6px}.review-saving-compact p{margin:0;color:var(--muted)}
-      .state-toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%);z-index:2147482000;max-width:min(520px,calc(100vw - 32px));padding:10px 14px;border:1px solid var(--line);border-radius:10px;background:var(--ink);color:var(--surface);font-size:13px;font-weight:700;box-shadow:0 10px 28px rgba(0,0,0,.18)}
-      .state-help-steps{display:grid;gap:9px;margin:16px 0}.state-help-step{padding:10px 12px;border:1px solid var(--line);border-radius:9px;background:var(--surface2)}.state-help-step strong{display:block;margin-bottom:3px}.state-help-step span{display:block;color:var(--muted);font-size:12px;line-height:1.45}
-      .settings-page .settings-how-state-first{order:-1}
-      .notes-page .notes-product-purpose{margin-top:6px}
-      @media(max-width:760px){
-        /* Compact icon-only on mobile: every Workspace card's CTA link
-           ("History ->", "Open Items ->", "Browse Current State ->") is
-           right-aligned, the same corner the launcher lives in -- at phone
-           width the labeled button's footprint reliably sits on top of one
-           of them even at rest, not just mid-scroll. Desktop keeps the
-           labeled "Ask State" button; a smaller icon here shrinks the
-           collision footprint without changing what it does. */
-        .ask-state-launcher{right:14px;bottom:14px;width:48px;height:48px;padding:0;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0}
-        .ask-state-launcher::before{content:'✦';font-size:19px;line-height:1}
-        .ask-state-drawer{top:0;height:100dvh;width:100vw;border-left:0}.ask-state-drawer-form{grid-template-columns:1fr}.project-head-copy-context{margin-left:0}
-      }
-    `;
-    document.head.appendChild(style);
-  }
 
   function overlayParts() {
     return {overlay: document.getElementById('overlay'), body: document.getElementById('dialogBody')};
@@ -449,7 +389,7 @@
   // rather than layered on top of the native fix.
 
   function enhanceAll(){
-    addStyles();ensureAskShell();syncLauncherVisibility();
+    ensureAskShell();syncLauncherVisibility();
   }
 
   document.addEventListener('submit',event=>{

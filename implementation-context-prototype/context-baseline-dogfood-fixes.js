@@ -107,15 +107,6 @@
     if(baselineActive())document.querySelectorAll('.workspace-status-card .workspace-status-item').forEach(item=>{const strong=item.querySelector('.workspace-status-value'),support=item.querySelector('.workspace-status-row>span');if(strong?.textContent.trim()==='Not yet established'){setText(strong,'Starting State not confirmed');setText(support,'Confirm Starting State to establish the project baseline.')}else if(/^0 established facts?$/.test(strong?.textContent.trim()||''))setText(support,'Starting material you confirm will appear here.')});
   }
 
-  function addStyles(){
-    if(document.getElementById('state-baseline-dogfood-fixes-styles'))return;const style=document.createElement('style');style.id='state-baseline-dogfood-fixes-styles';style.textContent=`
-      #baselineSetupBanner .baseline-setup-row{align-items:center}#baselineSetupBanner .baseline-retry-status{margin-top:6px;color:var(--muted);font-size:11.5px;line-height:1.4}#baselineSetupBanner .baseline-retry-status:empty{display:none}#baselineSetupBanner .baseline-dogfood-actions{display:flex;align-items:center;justify-content:flex-end;gap:8px;flex:0 0 auto}#baselineSetupBanner .baseline-dogfood-actions .btn{width:auto!important;min-height:34px!important;padding:7px 11px!important;font-size:12px!important;white-space:nowrap}
-      .baseline-draft-actions [data-baseline-confirm-starting]{white-space:nowrap!important;flex:0 0 auto;min-width:max-content}.baseline-add-fact{margin:2px 0 10px}.baseline-inline-new-fact{margin:8px 0 14px;padding:12px;border:1px dashed var(--line);border-radius:9px;background:var(--surface2)}.baseline-inline-new-actions{display:flex;gap:8px;justify-content:flex-end;align-items:center;margin-top:8px}.baseline-inline-new-status{margin-right:auto;color:var(--muted);font-size:11px}
-      .baseline-starting-upload{display:flex;align-items:center;gap:8px;margin:5px 0 12px;color:var(--muted);font-size:12px}.baseline-starting-upload label{cursor:pointer;padding:7px 10px}.baseline-starting-filename{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.baseline-starting-status{min-height:18px;color:var(--muted);font-size:11px}
-      html body .workspace-attention.is-clear.dogfood-caught-up{border-color:color-mix(in srgb,var(--good) 24%,var(--line))!important;background:color-mix(in srgb,var(--surface) 94%,#eaf7ee)!important;box-shadow:none!important}html body .workspace-attention.is-clear.dogfood-caught-up .attention-head-icon{background:#eaf7ee!important;border-color:#cfe8d7!important;color:#277b45!important;box-shadow:none!important}html body .workspace-attention.is-clear.dogfood-caught-up .attention-head-icon::before{color:#277b45!important}html body .workspace-attention .dogfood-quiet-link{color:var(--muted)!important;font-weight:650!important;font-size:11.5px!important}
-      @media(max-width:760px){#baselineSetupBanner .baseline-dogfood-actions{width:100%;flex-direction:column;align-items:stretch}#baselineSetupBanner .baseline-dogfood-actions .btn{width:100%!important}.baseline-draft-actions [data-baseline-confirm-starting]{width:100%!important}.baseline-inline-new-actions{align-items:stretch;flex-direction:column}.baseline-inline-new-status{margin-right:0}.baseline-inline-new-actions .btn{width:100%}}
-    `;document.head.appendChild(style);
-  }
   function sync(){enhanceDraftDialog();renameManualDialog();syncWorkspaceEmptyStates()}
 
   document.addEventListener('click',event=>{
@@ -131,7 +122,7 @@
   document.addEventListener('state-baseline-analysis-started',()=>{scheduleRefresh(40);pollUntilSettled()});
 
   function start(){
-    addStyles();const banner=document.getElementById('baselineSetupBanner');
+    const banner=document.getElementById('baselineSetupBanner');
     if(banner)new MutationObserver(()=>{if(!banner.querySelector('[data-baseline-dogfood-owned]'))scheduleRefresh(0)}).observe(banner,{childList:true,subtree:true});
     const switcher=document.getElementById('projectSwitcher');if(switcher)new MutationObserver(()=>scheduleRefresh(50)).observe(switcher,{attributes:true,attributeFilter:['data-project-id']});
     let syncQueued=false;new MutationObserver(()=>{if(syncQueued)return;syncQueued=true;requestAnimationFrame(()=>{syncQueued=false;sync()})}).observe(document.body,{childList:true,subtree:true});
