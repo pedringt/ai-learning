@@ -7,6 +7,9 @@
   const sleep = ms => new Promise(r => setTimeout(r, ms));
   const hash = s => { let x = 2166136261; for (let i = 0; i < s.length; i++) { x ^= s.charCodeAt(i); x = Math.imul(x, 16777619); } return (x >>> 0).toString(36); };
   // Relative timestamps change between runs; they are not UI differences.
+  // Generated ids (new project, proposal, evidence ids) are random per run: 8+ hex characters
+  // that include a digit, or a UUID.
+  const GENERATED_ID = /(?<![0-9a-z])(?:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}|(?=[0-9a-f]*\d)[0-9a-f]{8,})(?![0-9a-z])/gi;  // e.g. project_2ccda7ef36fa
   const VOLATILE = /\b(\d+\s*(s|m|h|d|sec|min|minute|minutes|hour|hours|day|days)\s*ago|just now|just added|\d+(\.\d+)?\s?(ms|s|seconds?))\b/gi;
 
   const pathOf = el => {
@@ -52,7 +55,7 @@
         .replace(VOLATILE, '~').replace(/\s+/g, ' ').trim();
       // The style attribute is skipped: its effect is already in the computed style, and moving
       // inline styles into a stylesheet must not count as a change.
-      const attrs = [...el.attributes].filter(a => a.name !== 'style').map(a => a.name + '=' + a.value.replace(VOLATILE, '~')).sort().join('|');
+      const attrs = [...el.attributes].filter(a => a.name !== 'style').map(a => a.name + '=' + a.value.replace(VOLATILE, '~').replace(GENERATED_ID, '#id').replace(/127\.0\.0\.1:\d+/g, 'localhost')).sort().join('|');  // each capture's backend has its own port
       const visible = el.getClientRects().length ? 'v' : 'h';
       rows[pathOf(el)] = {
         s: hash(styleOf(el) + '@@' + styleOf(el, '::before') + '@@' + styleOf(el, '::after')),
@@ -73,6 +76,12 @@
     if (location.hash !== '#' + view) location.hash = '#' + view;
     document.querySelector(`.sidebar-nav [data-view="${view}"]`)?.click();
     await settle();
+  }
+
+  async function waitFor(test, timeout = 15000) {
+    const until = Date.now() + timeout;
+    while (Date.now() < until) { try { if (test()) return true; } catch (e) { /* keep waiting */ } await sleep(150); }
+    return false;
   }
 
   async function ask(question) {
@@ -135,7 +144,10 @@
       slowInput.value = 'COMPARE_SLOW pilot scope';
       slowInput.dispatchEvent(new Event('input', { bubbles: true }));
       slowInput.closest('form')?.requestSubmit();
-      await sleep(1200);
+      // Snapshot once the loading state is showing, not after a fixed delay (a fixed delay
+      // sometimes landed after the answer under load).
+      await waitFor(() => document.querySelector('#askStateDrawerResult .ask-live-loading'), 8000);
+      await sleep(300);
       if (record('ask-generating')) return out.__detail;
       for (let i = 0; i < 80; i++) {
         await sleep(150);
@@ -146,6 +158,44 @@
     }
     document.querySelector('.ask-state-drawer-close')?.click();
     await settle();
+
+    // Baseline Setup on a brand-new project. Model-free: facts are entered manually, and
+    // pasted starting material fails analysis because compare.py's backend has no model.
+    const click = sel => document.querySelector(sel)?.click();
+    const fill = (sel, value) => { const el = document.querySelector(sel); if (el) { el.value = value; el.dispatchEvent(new Event('input', { bubbles: true })); } };
+    const bannerText = () => document.getElementById('baselineSetupBanner')?.textContent || '';
+    await go('workspace');
+    click('#projectSwitcher'); await settle();
+    [...document.querySelectorAll('#projectMenu button')].find(b => /New project/.test(b.textContent))?.click(); await settle();
+    fill('#dialogBody input', 'Compare baseline');
+    click('#dialogBody button.primary');
+    await waitFor(() => /Set up Current State/.test(bannerText()));
+    await settle();
+    if (record('baseline-blank')) return out.__detail;
+    click('[data-baseline-add-starting]'); await settle();
+    if (record('baseline-starting-dialog')) return out.__detail;
+    click('#dialogBody [data-action="close-dialog"]'); await settle();
+    click('[data-baseline-start-manual]'); await settle();
+    if (record('baseline-manual-dialog')) return out.__detail;
+    fill('[data-baseline-manual-topic]', 'Pilot scope');
+    fill('[data-baseline-manual-statement]', 'The pilot covers Tier 1 troubleshooting only.');
+    click('[data-baseline-save-manual]');
+    await waitFor(() => document.querySelector('.baseline-draft-dialog .baseline-draft-fact[data-proposal-id]'));
+    await settle();
+    if (record('baseline-draft-dialog')) return out.__detail;
+    click('[data-baseline-add-fact]'); await settle();
+    if (record('baseline-new-fact-form')) return out.__detail;
+    click('[data-baseline-cancel-new-fact]');
+    click('#dialogBody [data-action="close-dialog"]');
+    await waitFor(() => /ready to review/i.test(bannerText()));
+    await settle();
+    if (record('baseline-ready')) return out.__detail;
+    click('[data-baseline-add-starting]'); await settle();
+    fill('#baselineStartingText', 'Starting notes for the pilot.');
+    click('[data-baseline-save-starting-text]');
+    await waitFor(() => /needs attention|could not|failed/i.test(bannerText() + (document.getElementById('dialogBody')?.textContent || '')), 12000);
+    await sleep(2500); await settle();
+    if (record('baseline-after-failed-analysis')) return out.__detail;
     return out;
   }
 

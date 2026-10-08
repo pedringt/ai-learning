@@ -1,13 +1,14 @@
 const fs=require('fs'),path=require('path');
 const dir=__dirname;
 const index=fs.readFileSync(path.join(dir,'index.html'),'utf8');
-const fixes=fs.readFileSync(path.join(dir,'context-baseline-dogfood-fixes.js'),'utf8');
+// The three Baseline layers were consolidated into context-baseline.js (#450).
+const fixes=fs.readFileSync(path.join(dir,'context-baseline.js'),'utf8');
 // The dogfood-fixes rules moved from the script into state-app.css (#450).
 const fixesCss=require('./state-layer-css')('context-baseline-dogfood-fixes.js');
 const prompt=fs.readFileSync(path.join(dir,'../state-project-complete/baseline_prompt_hardening.py'),'utf8');
 let pass=0,fail=0;
 function check(name,ok,detail=''){if(ok){pass++;console.log('ok',name)}else{fail++;console.error('FAIL',name,detail)}}
-check('dogfood fixes load after baseline polish',index.indexOf('context-baseline-dogfood-fixes.js')>index.indexOf('context-baseline-polish.js'));
+check('Baseline module loads after the app it extends',index.indexOf('context-baseline.js')>index.indexOf('context-app.js')&&!index.includes('context-baseline-dogfood-fixes.js'));
 check('blank setup has one obvious starting-material action',fixes.includes('Add starting material')&&fixes.includes('Enter Current State manually'));
 check('blank setup no longer presents Review Starting State as the initial action',fixes.indexOf("if(blank)")>=0&&fixes.indexOf('Add starting material',fixes.indexOf("if(blank)"))>=0);
 check('processing setup exposes progress and another-source path',fixes.includes('Building your Starting State')&&fixes.includes('source${processing===1')&&fixes.includes('Add more material'));

@@ -1360,7 +1360,7 @@
      attention row can render before the rest of the project arrives.
      ------------------------------------------------------------------- */
   function analyzingDialog(){
-    return `<div class="analysis-state"><div class="analysis-orbit" aria-hidden="true"><span></span><span></span><span></span></div><span class="eyebrow">Analyzing evidence</span><h2 id="dialogTitle">Working out what this changes…</h2><p>Comparing the note with Current State and deciding whether anything needs your review.</p><div class="analysis-progress"><span class="analysis-pulse" aria-hidden="true"></span><span id="analysisElapsed">Starting analysis…</span></div><p class="analysis-patience">A thorough comparison can take around 10–20 seconds.</p></div>`;
+    return `<div class="analysis-state"><div class="analysis-orbit" aria-hidden="true"><span></span><span></span><span></span></div><span class="eyebrow">Analyzing evidence</span><h2 id="dialogTitle">Working out what this changes…</h2><p>Comparing the note with Current State and deciding whether anything needs your review.</p><div class="analysis-progress"><span class="analysis-pulse" aria-hidden="true"></span><span id="analysisElapsed">Starting analysis…</span></div><p class="analysis-patience">${baselineSetupActive()?'Larger starting sources can take a little while to analyze. You can review the Starting State when they finish.':'A thorough comparison can take around 10–20 seconds.'}</p></div>`;
   }
   function startAnalysisClock(){
     clearInterval(analysisClock);
@@ -1379,6 +1379,15 @@
   // Replaces two patch layers (context-feedback-pass.js, context-feedback-pass-4.js) that each
   // refetched /attention and rewrote the counts and the attention text themselves, which
   // replaced the capped "2 reviews · +8 more in Open Items" line with uncapped totals (#450).
+  // While Baseline Setup is active (context-baseline.js), Evidence feeds the Starting State
+  // draft, so the copy says so; otherwise it never mentions a Starting State (#456: a patch
+  // layer used to rewrite this message for every project, including established ones).
+  function baselineSetupActive(){ return document.body.classList.contains('state-baseline-active'); }
+  function evidenceNoReviewCopy(){
+    return baselineSetupActive()
+      ? 'Added as Evidence. State is using it to update your Starting State. Questions and conflicts stay in Review.'
+      : 'Added as Evidence. Current State did not need a Review.';
+  }
   function refreshAfterEvidence(){
     hydrateBackend().catch(error=>console.warn('Evidence saved; refresh needed.',error));
   }
@@ -1411,7 +1420,7 @@
       if(apiReviews.length){
         showDialog(`<span class="eyebrow">Evidence added</span><h2 id="dialogTitle">Evidence added</h2><p>${apiReviews.length===1?'1 Review needs your decision.':`${apiReviews.length} Reviews need your decisions.`}</p><div class="dialog-actions"><button class="btn primary" data-action="go-review">View Review</button></div>`);
       }else{
-        showDialog(`<span class="eyebrow">Evidence added</span><h2 id="dialogTitle">Evidence added</h2><p>Added as Evidence. Current State did not need a Review.</p>`);
+        showDialog(`<span class="eyebrow">Evidence added</span><h2 id="dialogTitle">Evidence added</h2><p>${evidenceNoReviewCopy()}</p>`);
       }
     }catch(e){ await showAnalysisFailure(e); }
   }
@@ -1440,7 +1449,7 @@
       if(apiReviews.length){
         showDialog(`<span class="eyebrow">Evidence added</span><h2 id="dialogTitle">Evidence added</h2><p>${apiReviews.length===1?'1 Review needs your decision.':`${apiReviews.length} Reviews need your decisions.`}</p><div class="dialog-actions"><button class="btn primary" data-action="go-review">View Review</button></div>`);
       }else{
-        showDialog(`<span class="eyebrow">Evidence added</span><h2 id="dialogTitle">Evidence added</h2><p>Added as Evidence. Current State did not need a Review.</p>`);
+        showDialog(`<span class="eyebrow">Evidence added</span><h2 id="dialogTitle">Evidence added</h2><p>${evidenceNoReviewCopy()}</p>`);
       }
     }catch(e){ await showAnalysisFailure(e); }
   }
@@ -1474,7 +1483,7 @@
       apiReviews.forEach(r=>{r.evidenceId=n.id; upsertBackendReview(r);});
       state.reviewBannerDismissed=false; state.isAnalyzing=false; stopAnalysisClock(); updateNav(); refreshAfterEvidence();
       if(apiReviews.length) showDialog(`<span class="eyebrow">Evidence added</span><h2 id="dialogTitle">Evidence added</h2><p>${apiReviews.length===1?'1 Review needs your decision.':`${apiReviews.length} Reviews need your decisions.`}</p><div class="dialog-actions"><button class="btn primary" data-action="go-review">View Review</button><button class="btn secondary" data-action="go-notes">Back to Notes</button></div>`);
-      else showDialog(`<span class="eyebrow">Evidence added</span><h2 id="dialogTitle">Evidence added</h2><p>Added as Evidence. Current State did not need a Review.</p><div class="dialog-actions"><button class="btn primary" data-action="go-notes">Back to Notes</button></div>`);
+      else showDialog(`<span class="eyebrow">Evidence added</span><h2 id="dialogTitle">Evidence added</h2><p>${evidenceNoReviewCopy()}</p><div class="dialog-actions"><button class="btn primary" data-action="go-notes">Back to Notes</button></div>`);
     }catch(e){
       if(e?.evidenceId){
         n.evidenceId=e.evidenceId; n.status='failed';

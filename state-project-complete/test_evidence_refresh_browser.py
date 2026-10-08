@@ -86,6 +86,10 @@ def test_attention_line_stays_capped_after_evidence(tmp_path, note):
                 page.locator("#dialogBody button.primary").first.click()
                 page.wait_for_function("/Evidence added|Saved, but not analyzed/i.test(document.getElementById('dialogBody')?.textContent || '')")
                 page.wait_for_timeout(1500)  # the old layers rewrote the line 250ms after this dialog
+                if note.startswith("NO_REVIEW"):
+                    # #456: an established project must not be told Evidence updates a Starting State.
+                    message = page.evaluate("() => document.querySelector('#dialogBody p')?.textContent || ''")
+                    assert message == "Added as Evidence. Current State did not need a Review.", message
                 page.evaluate("() => document.querySelector('#dialogBody [data-action=close-dialog]')?.click()")
                 page.wait_for_timeout(800)
 

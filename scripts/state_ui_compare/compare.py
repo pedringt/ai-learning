@@ -52,6 +52,7 @@ def start_backend() -> str:
     import logging
     import uvicorn
     logging.getLogger("state.api").setLevel(logging.CRITICAL)  # the forced Ask failure logs an ERROR on purpose
+    logging.getLogger("state.interpretation").setLevel(logging.CRITICAL)  # so does the no-model Baseline analysis
     from api import Settings, create_app
 
     class NoModel:
@@ -154,12 +155,15 @@ def serve_frontend(root: str, api: str) -> str:
     return f"http://127.0.0.1:{server.server_address[1]}/"
 
 
-def capture(browser, url: str, width: int, height: int):
+def capture(browser, root: str, width: int, height: int):
+    # A fresh backend per capture: the Baseline scenario creates a project, which must not
+    # leak into the next capture (or into the other build's capture).
+    url = serve_frontend(root, start_backend())
     ctx = browser.new_context(viewport={"width": width, "height": height})
     page = ctx.new_page()
     errors: list[str] = []
     page.on("pageerror", lambda e: errors.append(str(e)))
-    page.goto(url + "#workspace")
+    page.goto(url + "#workspace", wait_until="domcontentloaded", timeout=90000)  # do not wait on external font requests
     page.wait_for_timeout(2500)
     page.add_script_tag(content=CAPTURE_JS)
     data = page.evaluate("() => STATE_CAPTURE.run()")
@@ -167,7 +171,7 @@ def capture(browser, url: str, width: int, height: int):
     return data, errors
 
 
-def explain(browser, urls, width, height, d: dict, limit: int):
+def explain(browser, roots, width, height, d: dict, limit: int):
     """Print which computed properties differ for the first `limit` style-changed elements per view."""
     def props(style):
         out = {}
@@ -181,10 +185,11 @@ def explain(browser, urls, width, height, d: dict, limit: int):
         if not paths:
             continue
         details = []
-        for url in urls:
+        for root in roots:
+            url = serve_frontend(root, start_backend())
             ctx = browser.new_context(viewport={"width": width, "height": height})
             page = ctx.new_page()
-            page.goto(url + "#workspace")
+            page.goto(url + "#workspace", wait_until="domcontentloaded", timeout=90000)  # do not wait on external font requests
             page.wait_for_timeout(2500)
             page.add_script_tag(content=CAPTURE_JS)
             details.append(page.evaluate("([v, p]) => STATE_CAPTURE.run(v, p)", [view, paths]))
@@ -235,10 +240,8 @@ def main() -> int:
     print(f"checking out {args.base} for comparison...", flush=True)
     subprocess.run(["git", "-C", REPO, "worktree", "add", "--detach", "-q", worktree, args.base], check=True)
     try:
-        api = start_backend()
-        print("local backend up; capturing...", flush=True)
-        before_url = serve_frontend(os.path.join(worktree, APP_DIR), api)
-        after_url = before_url if args.self_check else serve_frontend(os.path.join(REPO, APP_DIR), api)
+        before_url = os.path.join(worktree, APP_DIR)
+        after_url = before_url if args.self_check else os.path.join(REPO, APP_DIR)
         report, changed = {}, False
         with sync_playwright() as pw:
             browser = pw.chromium.launch()

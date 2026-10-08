@@ -3,7 +3,7 @@
 The banner copy is "Add existing project material, or enter what you already
 know", so it needs both "Add starting material" and "Enter Current State
 manually". The manual button used to be removed straight after rendering:
-context-baseline-polish.js decided blankness only from a ".baseline-setup-meta"
+context-baseline-polish.js (now merged into context-baseline.js, #450) decided blankness only from a ".baseline-setup-meta"
 line that the dogfood banner does not render for a blank project, and the
 dogfood banner's signature guard never drew it again.
 

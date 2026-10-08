@@ -19,6 +19,7 @@ For the product model, current project status, QA process, release rules, and kn
 | `context-api.js` | Backend HTTP client and Ask streaming |
 | `context-ask.js` | Ask UI and answer rendering |
 | `context-ask-followup.js` | Ask follow-up/refinement behavior |
+| `context-baseline.js` | Baseline Setup: banner, Starting State draft dialog, manual entry, starting material, confirm/retry (one module since #450) |
 | `context-layout.js` | Layout behavior CSS cannot do: help-card width tracking, mobile help footer, mobile subnav pinning, first-render reveal (consolidated in #450) |
 | `context-ask-controls.js` | Ask drawer controls: status line, reset button, blank-question guard, editing state, mobile launcher and close handling (consolidated from five patch layers in #450; the Ask flow itself is `runAsk()` in `context-product-polish.js`) |
 | `context-backend-sync.js` | Backend payload to frontend-shape mapping |
@@ -35,7 +36,7 @@ For the product model, current project status, QA process, release rules, and kn
 | `state-product-health.html`, `state-product-health.js` | Internal Product Analytics dashboard (aggregate metadata only; not linked from the product) |
 | `vercel.json` | Deployment settings for this folder |
 
-The historically named `context-*-pass.js` files are still live runtime code. Do not remove or consolidate them just because their names look temporary. Previous investigation found real layout/race regressions when seemingly redundant behavior was removed. #450 is folding them in slices; each slice must leave the rendered UI identical (computed styles, text and structure on every view at desktop and phone widths) before and after.
+The historically named patch layers (`context-*-pass.js`, `context-quickwins.js` and others) were folded into the renderers and a few owning modules in #450, one verified slice at a time. Each slice had to leave the rendered UI identical (computed styles, text and structure on every view, Ask state and Baseline state at desktop and phone widths, checked with `scripts/state_ui_compare/compare.py`) unless a difference was explained and intended. Do not add new patch layers; change the module that owns the behavior.
 
 ## Running locally
 

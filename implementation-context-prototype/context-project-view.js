@@ -60,12 +60,15 @@
     return paragraphs;
   }
 
+  // Older Baseline confirmations stored this setup-process text as an area description. It is not
+  // project truth, so it is never rendered as Current State content (#450, from context-baseline-polish.js).
+  const LEGACY_BASELINE_AREA_DESCRIPTION='Baseline section created from human-authorized project material.';
   function projectOutlineSection(area,items,pendingFor,history){
     if(!items.length) return '';
     const paragraphs=projectWikiParagraphs(items);
     // Hidden: the prose above is the Current State reading surface (#450, from context-feedback-pass-3.js / context-quickwins.js).
     const maintained=`<details class="project-maintained-facts" hidden><summary>See ${items.length} maintained Current State ${items.length===1?'fact':'facts'}</summary><ul>${items.map(k=>projectFact(k,pendingFor,history)).join('')}</ul></details>`;
-    return `<section class="project-outline-section project-wiki-section" id="project-${esc(area.id)}"><div class="project-section-sticky"><h3>${esc(area.name)}</h3></div>${area.description?`<p class="project-outline-description">${esc(area.description)}</p>`:''}<div class="project-wiki-prose">${paragraphs.map(text=>`<p>${esc(text)}</p>`).join('')}</div>${maintained}</section>`;
+    return `<section class="project-outline-section project-wiki-section" id="project-${esc(area.id)}"><div class="project-section-sticky"><h3>${esc(area.name)}</h3></div>${area.description&&area.description.trim()!==LEGACY_BASELINE_AREA_DESCRIPTION?`<p class="project-outline-description">${esc(area.description)}</p>`:''}<div class="project-wiki-prose">${paragraphs.map(text=>`<p>${esc(text)}</p>`).join('')}</div>${maintained}</section>`;
   }
 
   // Universal facts are matched by topic label (see UNIVERSAL_TOPICS), not a
