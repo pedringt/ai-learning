@@ -38,7 +38,7 @@
       }
     },
     {
-      id:'narc',name:'NARC',stageLabel:'In progress',description:'Workplace-surveillance satire game with branching consequences.',repo:'pedringt/narc',branch:'main',
+      id:'narc',name:'NARC',stageLabel:'In progress',noRuntimeAi:true,description:'Workplace-surveillance satire game with branching consequences.',repo:'pedringt/narc',branch:'main',
       focus:'Make the first playthrough feel like a coherent workplace simulation rather than a stack of mechanics.',
       evidence:['First-run playtest','Branch consistency','Confusing choices','Replayable endings'],
       nextDecision:'Decide whether the first-play flow is clear enough before adding more branches and mechanics.',
@@ -49,6 +49,19 @@
         live:'https://narc-opal.vercel.app',
         vercel:'https://vercel.com/cairn10/narc',
         quality:'https://github.com/pedringt/narc/actions/workflows/quality-checks.yml'
+      }
+    },
+    {
+      id:'authority-lab',name:'Authority Lab',stageLabel:'In progress',noRuntimeAi:true,description:'Prototype for deciding what an AI capability is allowed to do, based on evidence.',repo:'pedringt/authority-lab',branch:'main',
+      focus:'Show authority as explicit, evidence-earned, conditional, reversible, and authorized by a named person.',
+      evidence:['Lifecycle walkthrough','Authority decisions','Record history','Reversibility'],
+      nextDecision:'Decide whether the Refund recommendation walkthrough is clear enough to add a second capability.',
+      nextReview:'After the next full lifecycle walkthrough.',
+      owner:'Product',
+      qualityLabel:'Prototype Quality',
+      links:{
+        live:'https://authority-lab.vercel.app',
+        vercel:'https://vercel.com/cairn10/authority-lab'
       }
     }
   ];
@@ -293,7 +306,7 @@
         gaps.push({label:'Current release eval coverage',detail:'Latest controlled eval evidence is from build '+shortSha(uniqueBuilds[0])+', while the current scoped release is '+shortSha(releaseSha)+'.'});
       }
     }
-    if(p.id!=='narc'&&!pendingSet(data).has('AI operations')&&!ai?.available){
+    if(!p.noRuntimeAi&&!pendingSet(data).has('AI operations')&&!ai?.available){
       gaps.push({label:'AI cost',detail:'Estimated model spend is not available yet.'});
       gaps.push({label:'AI response speed',detail:'Observed model response speed is not available yet.'});
     }else if(p.id==='state'&&ai?.available&&ai.cost?.partial){
@@ -365,7 +378,7 @@
       const recurring=recurringFailureSignal(data);
       if(recurring.kind!=='unknown')signals.push(recurring);
     }
-    if(data?.project?.id!=='narc'){
+    if(!data?.project?.noRuntimeAi){
       const speed=ai?.response_speed;
       const sample=Number(speed?.sample_size||0);
       const p95=Number(speed?.p95_ms);
@@ -1933,7 +1946,7 @@
         '</div>'+
         '<p class="footnote">Speed: '+esc(speedScope)+'. Cost: '+esc(costScope)+'. '+esc(ai.note||'Operational metadata only; no project or user content is included.')+'</p>';
     }else if(ai?.not_applicable){
-      aiHtml='<p class="footnote"><strong>AI operations:</strong> Not applicable. NARC does not make runtime AI calls.</p>';
+      aiHtml='<p class="footnote"><strong>AI operations:</strong> Not applicable. '+esc(p.name)+' does not make runtime AI calls.</p>';
     }
     const gaps=setupGaps(data);
     doc.getElementById('connectionsPanel').innerHTML='<h3>Connections & coverage</h3>'+

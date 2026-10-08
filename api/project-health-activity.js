@@ -7,7 +7,8 @@ const MAX_RUNTIME_ROWS=250;
 const PROJECTS={
   state:{vercelProjectId:'prj_zQtHJg96oM7Ol4qTapiwk1mV8iRl',slug:'state'},
   tastemake:{vercelProjectId:'prj_UWguNtKhGJkLr0X3jswk2rgBKLGu',slug:'tastemake'},
-  narc:{vercelProjectId:'prj_SKJS8qSkSAiceK5qZ4GkcZEbI41H',slug:'narc'}
+  narc:{vercelProjectId:'prj_SKJS8qSkSAiceK5qZ4GkcZEbI41H',slug:'narc'},
+  'authority-lab':{vercelProjectId:'prj_DEsIbVajmdgFqxtVFeZLQsa6QJ69',slug:'authority-lab'}
 };
 
 async function timedJson(url,options={}){

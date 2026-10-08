@@ -4,7 +4,9 @@ const fs=require('fs');
 const H=require('../project-health.js');
 const RUN_API=require('../api/project-health-run.js')._test;
 
-assert.deepStrictEqual(H.PROJECTS.map(p=>p.id),['state','tastemake','narc']);
+assert.deepStrictEqual(H.PROJECTS.map(p=>p.id),['state','tastemake','narc','authority-lab']);
+assert.strictEqual(H.PROJECTS[3].stageLabel,'In progress');
+assert.ok(H.PROJECTS[3].noRuntimeAi);
 assert.strictEqual(H.pageEnvironment({location:{hostname:'ai-learning-git-staging-cairn10.vercel.app',search:''}}),'staging');
 assert.strictEqual(H.pageEnvironment({location:{hostname:'ai-learning-b19hocddc-cairn10.vercel.app',search:''}}),'production');
 assert.strictEqual(H.pageEnvironment({location:{hostname:'www.contextswitch.tech',search:'?env=staging'}}),'staging');
