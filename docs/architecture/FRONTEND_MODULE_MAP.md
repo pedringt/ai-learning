@@ -13,7 +13,7 @@ Written for #135 (Sept 2026) from an audit of what `index.html` actually loads, 
 | Layer | Modules | Role |
 |---|---|---|
 | Foundation | `context-analytics`, `context-data` (Northstar seed fixture), `context-api` (API client, `X-State-Project-Id` header), `context-evidence-resilience` (Evidence submit/upload/retry with long timeouts and the Baseline async ack) | data + transport |
-| Ask | `context-ask`, `context-ask-followup` | Ask requests, streaming, follow-ups |
+| Ask | `context-ask`, `context-ask-followup`, `context-ask-controls` | Ask requests, streaming, follow-ups; drawer controls (consolidated in #450) |
 | Views + core | `context-notes-view`, `context-open-items-view`, `context-project-view`, `context-backend-sync` (maps API records to view shapes), `context-app` (router, render loop, project switcher; 1,800 lines) | the app proper |
 | Baseline Setup (three layers) | `context-baseline-setup` (original banner + review dialog), `context-baseline-polish` (manual entry, copy), `context-baseline-dogfood-fixes` (the banner that owns the states, starting-material dialog, polling) | Baseline UX. **Two banner renderers coexist** (`context-baseline-setup` and `context-baseline-dogfood-fixes`) and redraw over each other on every view refresh; #230, #231 and #232 were all bugs at that seam |
 | Features | `context-history` (browser history/navigation), `context-provenance`, `context-ask-question-handoff`, `context-settings`, `context-sources` | feature modules |
@@ -25,13 +25,13 @@ Judged from function names; check the code before assuming two functions do the 
 
 | Concern | Touched by |
 |---|---|
-| Ask controls / launcher | `feedback-pass` (`askControlStates`), `feedback-pass-3` (`installAskLifecycle`, `ensureAskStatus`), `feedback-pass-4` (`syncAskControls`, `installAskControls`, `restoreAskDiscovery`), `attention-alignment` (`syncAskBlankGuard`), `final-mobile` (`syncMobileAskLauncher`) |
+| Ask controls / launcher | Consolidated in `context-ask-controls` (#450). The old layers' functions are kept there in their original order; the never-visible second clear button and the dead quick-actions branch were removed |
 | Attention / Workspace sync | `feedback-pass` (`syncAttentionFromApi`), `feedback-pass-4` (`syncAttention`), `attention-alignment` (`normalizeAttention`) |
 | Evidence sync | `feedback-pass` (`evidenceSync`), `feedback-pass-4` (`installEvidenceSync`) |
 | Navigation styling | Resolved (#450): static markup in `index.html` |
 | Help card | Card markup is static in `index.html` (#450); `feedback-pass-3` (`syncHelpCard`) still positions it and `final-mobile` (`ensureMobileHelp`) adds the mobile footer |
 
-If a consolidation is ever attempted, start with **Ask controls** (six modules touch it).
+#450 is doing this consolidation slice by slice; each slice is checked with `scripts/state_ui_compare/compare.py` (identical UI before and after, including Ask's answered, editing, cleared, error and mid-answer states).
 
 ## What the layering has cost so far
 

@@ -73,8 +73,8 @@ def test_ask_answer_has_one_control_and_reset_restores_discovery_ui():
         reset = page.locator("#askStateDrawer .state-ask-reset")
         assert reset.is_visible()
         assert not page.locator("#askStateDrawer .ask-state-drawer-form button[type='submit']").is_visible()
-        assert page.locator("#askStateDrawer .state-ask-clear").count() == 1
-        assert not page.locator("#askStateDrawer .state-ask-clear").is_visible()
+        # The second, never-visible clear button that feedback-pass-3 used to add is gone (#450).
+        assert page.locator("#askStateDrawer .state-ask-clear").count() == 0
         reset_after = reset.evaluate("e => getComputedStyle(e,'::after').content")
         assert reset_after in ('none', '""')
 

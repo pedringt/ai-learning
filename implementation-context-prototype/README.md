@@ -19,6 +19,7 @@ For the product model, current project status, QA process, release rules, and kn
 | `context-api.js` | Backend HTTP client and Ask streaming |
 | `context-ask.js` | Ask UI and answer rendering |
 | `context-ask-followup.js` | Ask follow-up/refinement behavior |
+| `context-ask-controls.js` | Ask drawer controls: status line, reset button, blank-question guard, editing state, mobile launcher and close handling (consolidated from five patch layers in #450; the Ask flow itself is `runAsk()` in `context-product-polish.js`) |
 | `context-backend-sync.js` | Backend payload to frontend-shape mapping |
 | `context-notes-view.js` | Notes rendering |
 | `context-open-items-view.js` | Reviews and Questions rendering |

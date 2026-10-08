@@ -12,39 +12,11 @@
     });
   }
 
-  function syncAskBlankGuard(){
-    const input=document.getElementById('askStateDrawerInput');
-    const form=input?.closest('[data-review-batch-form="ask"]');
-    const submit=form?.querySelector('button[type="submit"]');
-    if(!input||!form) return;
-    // Write only on change (#450): identical writes every frame kept every layer's observer busy.
-    if(!input.required) input.required=true;
-    const blank=!input.value.trim();
-    if(submit){
-      if(submit.disabled!==blank) submit.disabled=blank;
-      if(submit.getAttribute('aria-disabled')!==String(blank)) submit.setAttribute('aria-disabled',String(blank));
-    }
-  }
-
-  let closeShieldTimer=0;
-  function shieldMobileNav(){
-    if(!matchMedia('(max-width:760px)').matches) return;
-    document.body.classList.add('state-ask-close-shield');
-    clearTimeout(closeShieldTimer);
-    closeShieldTimer=setTimeout(()=>document.body.classList.remove('state-ask-close-shield'),600);
-  }
-
-  const closeTarget=event=>event.target?.closest?.('#askStateDrawer [data-review-batch-action="close-ask"],#askStateDrawer .ask-state-drawer-close');
-  window.addEventListener('pointerdown',event=>{if(closeTarget(event))shieldMobileNav()},true);
-  window.addEventListener('touchstart',event=>{if(closeTarget(event))shieldMobileNav()},{capture:true,passive:true});
-  document.addEventListener('click',event=>{if(closeTarget(event))shieldMobileNav()},true);
-  document.addEventListener('input',event=>{if(event.target?.id==='askStateDrawerInput')syncAskBlankGuard()},true);
 
   function sync(){
     if(document.documentElement.dataset.stateMobilePass!==PASS) document.documentElement.dataset.stateMobilePass=PASS;
     
     normalizeStage(document);
-    syncAskBlankGuard();
   }
 
   let queued=false;

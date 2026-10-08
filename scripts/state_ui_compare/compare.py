@@ -6,8 +6,9 @@ Every view plus the Ask drawer is fingerprinted at desktop and phone widths
 (computed styles incl. pseudo-elements, own text, attributes, structure) and the
 two builds are compared. Use it to prove a refactor leaves the UI unchanged.
 
-No model calls: the backend's interpretation and Ask providers refuse every call,
-and API keys are removed from the environment before the app is imported.
+No model calls: interpretation refuses every call, Ask returns one fixed answer (or a
+forced failure for queries containing COMPARE_FAIL; COMPARE_SLOW streams slowly), and API keys are removed from the
+environment before the app is imported.
 
 Usage (from the repo root):
   state-project-complete/.venv/bin/python scripts/state_ui_compare/compare.py
@@ -50,7 +51,7 @@ def start_backend() -> str:
     sys.path.insert(0, BACKEND)
     import logging
     import uvicorn
-    logging.getLogger("state.api").setLevel(logging.WARNING)
+    logging.getLogger("state.api").setLevel(logging.CRITICAL)  # the forced Ask failure logs an ERROR on purpose
     from api import Settings, create_app
 
     class NoModel:
@@ -62,9 +63,59 @@ def start_backend() -> str:
                 raise RuntimeError("state_ui_compare: model calls are disabled")
             return refuse
 
+    class FakeAsk:
+        """Deterministic Ask answers so the drawer's answered/error states can be compared.
+        Same shape as test_ask_r9.FakeAskProvider; ids are from the demo seed."""
+        name = "fake-ask"
+        model_identifier = "fake-ask-v1"
+        selection = {"job": "meeting_prep", "state_ids": ["k-data", "k-security", "k-pilot"], "review_ids": [],
+                     "blocking_question_ids": ["q-retention"], "question_ids": ["q-ask-named-access"],
+                     "history_ids": ["demo-history-data-boundary"], "evidence_ids": ["ask-evidence-security-meeting"]}
+        answer = {"job": "meeting_prep", "headline": "Security meeting prep",
+                  "summary": "The pilot is bounded and human-reviewed, while vendor retention authority still needs a decision.",
+                  "sections": [
+                      {"kind": "established", "title": "Decisions already made", "items": [
+                          {"text": "The pilot remains read-only and human-reviewed.", "record_type": "state", "record_id": "k-data", "detail": None}]},
+                      {"kind": "questions", "title": "Get these answered", "items": [
+                          {"text": "Does security require named-agent access for the full pilot?", "record_type": "question", "record_id": "q-ask-named-access", "detail": None}]}],
+                  "source_ids": ["k-data", "ask-evidence-security-meeting"], "uncertainty_ids": ["q-retention"],
+                  "suggested_refinements": ["Turn into agenda", "Make shorter"]}
+
+        @staticmethod
+        def _check(prompt):
+            if "COMPARE_FAIL" in str(prompt):
+                raise RuntimeError("state_ui_compare: forced Ask failure")
+
+        def select(self, prompt):
+            self._check(prompt)
+            return json.loads(json.dumps(self.selection))
+
+        def synthesize(self, prompt):
+            self._check(prompt)
+            return json.loads(json.dumps(self.answer))
+
+        def stream(self, prompt):
+            self._check(prompt)
+            slow = "COMPARE_SLOW" in str(prompt)  # lets the capture see the drawer mid-answer
+            text = json.dumps({"selection": self.selection, "answer": self.answer})
+            for i in range(0, len(text), 200):
+                if slow:
+                    time.sleep(0.6)
+                yield text[i:i + 200]
+
     db = os.path.join(tempfile.mkdtemp(prefix="state-ui-compare-"), "state.db")
     app = create_app(Settings(database_path=db, demo_bootstrap=True, cors_origins=["*"], environment="local"),
-                     provider=NoModel(), ask_provider=NoModel())
+                     provider=NoModel(), ask_provider=FakeAsk())
+    # Never serve a cached Ask answer: both builds ask the same questions against one backend,
+    # and a cache hit would skip the slow mid-answer state for whichever build asks second.
+    class NoAskCache:
+        def get(self, key):
+            return None
+
+        def put(self, key, value):
+            pass
+
+    app.state.ask_cache = NoAskCache()
     port = free_port()
     server = uvicorn.Server(uvicorn.Config(app, host="127.0.0.1", port=port, log_level="warning"))
     threading.Thread(target=server.run, daemon=True).start()
@@ -136,7 +187,7 @@ def explain(browser, urls, width, height, d: dict, limit: int):
             page.goto(url + "#workspace")
             page.wait_for_timeout(2500)
             page.add_script_tag(content=CAPTURE_JS)
-            details.append(page.evaluate("([v, p]) => STATE_CAPTURE.detail(v, p)", [view, paths]))
+            details.append(page.evaluate("([v, p]) => STATE_CAPTURE.run(v, p)", [view, paths]))
             ctx.close()
         for path in paths:
             a, b = details[0].get(path), details[1].get(path)

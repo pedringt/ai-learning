@@ -13,22 +13,6 @@
     page.appendChild(help);
   }
 
-  function syncMobileAskLauncher(){
-    if(!window.matchMedia('(max-width:760px)').matches)return;
-    const launcher=document.getElementById('askStateLauncher');
-    if(!launcher)return;
-    const drawer=document.getElementById('askStateDrawer');
-    const drawerOpen=!!drawer&&!drawer.hidden&&document.body.classList.contains('ask-state-drawer-open');
-    launcher.classList.toggle('is-hidden',drawerOpen);
-    if(!drawerOpen){
-      launcher.style.removeProperty('opacity');
-      launcher.style.removeProperty('visibility');
-      launcher.style.removeProperty('pointer-events');
-      launcher.style.removeProperty('transform');
-      launcher.removeAttribute('aria-hidden');
-    }
-  }
-
   function reveal(){
     // classList.remove rewrites the class attribute even when the class is absent, which
     // re-triggered every layer's observer each frame (#450).
@@ -86,7 +70,7 @@
   window.addEventListener('scroll',onScroll,{passive:true});
   window.addEventListener('resize',onScroll,{passive:true});
 
-  function run(){ensureMobileHelp();syncMobileAskLauncher();syncSubnavSentinel();reveal();}
+  function run(){ensureMobileHelp();syncSubnavSentinel();reveal();}
   let queued=false;
   const schedule=()=>{
     if(queued)return;
@@ -95,18 +79,12 @@
       queued=false;
       
       ensureMobileHelp();
-      syncMobileAskLauncher();
+      
       syncSubnavSentinel();
       reveal();
     });
   };
   new MutationObserver(schedule).observe(document.documentElement,{childList:true,subtree:true,attributes:true,attributeFilter:['hidden','class']});
-  document.addEventListener('click',event=>{
-    if(event.target.closest?.('[data-review-batch-action="close-ask"]')){
-      requestAnimationFrame(()=>requestAnimationFrame(syncMobileAskLauncher));
-    }
-  },true);
-  window.addEventListener('pageshow',syncMobileAskLauncher);
   window.addEventListener('resize',schedule,{passive:true});
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',run,{once:true});else run();
 })();
