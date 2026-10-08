@@ -1,6 +1,20 @@
+// Layout behavior that CSS alone cannot do (#450). Consolidated from context-feedback-pass-3.js
+// (syncHelpCard: the fixed "Need help?" card tracks the sidebar's measured width) and
+// context-final-mobile.js (mobile help footer, mobile subnav pinning, and clearing the
+// state-final-mobile-pending class that index.html's inline guard uses to hide the shell
+// until the first render; the class keeps its old name so that guard did not have to change).
 (() => {
-  // loadAttentionAlignment (a fallback loader that never ran: index.html always loads the script) and
-  // removeWorkspaceAttentionIcon (its class is rendered nowhere) were removed in #450.
+  function syncHelpCard(){
+    if(window.matchMedia('(max-width:760px)').matches) return;
+    const sidebar=document.querySelector('.app-sidebar');
+    const card=sidebar?.querySelector(':scope > .demo-help-button.state-help-card');
+    if(!sidebar||!card) return;
+    const rect=sidebar.getBoundingClientRect();
+    const inset=18;
+    card.style.left=`${Math.round(rect.left+inset)}px`;
+    card.style.width=`${Math.max(0,Math.round(rect.width-inset*2))}px`;
+  }
+
   function ensureMobileHelp(){
     const root=document.getElementById('viewRoot');
     const page=root?.querySelector('.page,.overview');
@@ -70,21 +84,22 @@
   window.addEventListener('scroll',onScroll,{passive:true});
   window.addEventListener('resize',onScroll,{passive:true});
 
-  function run(){ensureMobileHelp();syncSubnavSentinel();reveal();}
+  function run(){syncHelpCard();ensureMobileHelp();syncSubnavSentinel();reveal();}
   let queued=false;
   const schedule=()=>{
     if(queued)return;
     queued=true;
     requestAnimationFrame(()=>{
       queued=false;
-      
+      syncHelpCard();
       ensureMobileHelp();
-      
       syncSubnavSentinel();
       reveal();
     });
   };
   new MutationObserver(schedule).observe(document.documentElement,{childList:true,subtree:true,attributes:true,attributeFilter:['hidden','class']});
   window.addEventListener('resize',schedule,{passive:true});
+  window.addEventListener('resize',syncHelpCard,{passive:true});
+  window.addEventListener('scroll',syncHelpCard,{passive:true});
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',run,{once:true});else run();
 })();

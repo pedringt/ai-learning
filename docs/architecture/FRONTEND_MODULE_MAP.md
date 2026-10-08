@@ -17,7 +17,7 @@ Written for #135 (Sept 2026) from an audit of what `index.html` actually loads, 
 | Views + core | `context-notes-view`, `context-open-items-view`, `context-project-view`, `context-backend-sync` (maps API records to view shapes), `context-app` (router, render loop, project switcher; 1,800 lines) | the app proper |
 | Baseline Setup (three layers) | `context-baseline-setup` (original banner + review dialog), `context-baseline-polish` (manual entry, copy), `context-baseline-dogfood-fixes` (the banner that owns the states, starting-material dialog, polling) | Baseline UX. **Two banner renderers coexist** (`context-baseline-setup` and `context-baseline-dogfood-fixes`) and redraw over each other on every view refresh; #230, #231 and #232 were all bugs at that seam |
 | Features | `context-history` (browser history/navigation), `context-provenance`, `context-ask-question-handoff`, `context-settings`, `context-sources` | feature modules |
-| **Patch layers (historical names)** | `context-quickwins`, `context-product-polish`, `context-feedback-pass`, `-3`, `-4`, `context-attention-alignment`, `context-final-mobile` | rewrite already-rendered DOM (each uses a `MutationObserver` and re-runs on every change). Later ones patch earlier ones. Being folded into the renderers under #450: their CSS now lives in `state-app.css`, and `context-design-pass` and `context-feedback-pass-2` are gone |
+| **Patch layers (historical names)** | `context-baseline-polish`, `context-baseline-dogfood-fixes` (Baseline; see the row above) | #450 folded the rest: CSS moved to `state-app.css`; `context-quickwins`, `context-design-pass`, `context-feedback-pass`, `-2`, `-3`, `-4`, `context-attention-alignment`, `context-final-mobile` and `context-sources` are deleted. Their behavior now lives in the renderers, `context-ask-controls` (Ask drawer controls) and `context-layout` (layout behavior CSS cannot do) |
 
 ## Where responsibilities overlap (candidates for consolidation, not proven duplicates)
 
@@ -28,7 +28,7 @@ Judged from function names; check the code before assuming two functions do the 
 | Ask controls / launcher | Consolidated in `context-ask-controls` (#450). The old layers' functions are kept there in their original order; the never-visible second clear button and the dead quick-actions branch were removed |
 | Attention / Workspace sync | Resolved (#450): after Evidence is added `context-app` re-hydrates (`refreshAfterEvidence`); `feedback-pass` and `feedback-pass-4` are deleted, and `attention-alignment`'s styles are CSS |
 | Navigation styling | Resolved (#450): static markup in `index.html` |
-| Help card | Card markup is static in `index.html` (#450); `feedback-pass-3` (`syncHelpCard`) still positions it and `final-mobile` (`ensureMobileHelp`) adds the mobile footer |
+| Help card | Card markup is static in `index.html`; `context-layout` positions it and adds the mobile footer (#450) |
 
 #450 is doing this consolidation slice by slice; each slice is checked with `scripts/state_ui_compare/compare.py` (identical UI before and after, including Ask's answered, editing, cleared, error and mid-answer states).
 

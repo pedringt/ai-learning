@@ -382,7 +382,7 @@
     const current=parts[0]||text;
     const next=(parts[1]||'').replace(/\s+next$/i,'').trim();
     if(current.length<=MAX_PILL_PHRASE_LENGTH && (!next||next.length<=MAX_PILL_PHRASE_LENGTH)){
-      return `<p class="overview-stage" data-mock-styled="true"><span class="workspace-stage-pill">${esc(current)}</span>${next?`<span class="workspace-stage-divider" aria-hidden="true"></span><span class="workspace-next-step">Next: ${esc(next.charAt(0).toUpperCase()+next.slice(1))}</span><span class="workspace-next-arrow" aria-hidden="true">›</span>`:''}</p>`;
+      return `<p class="overview-stage" data-mock-styled="true"><span class="workspace-stage-pill${/^late discovery$/i.test(current)?' is-late-discovery':''}">${esc(current)}</span>${next?`<span class="workspace-stage-divider" aria-hidden="true"></span><span class="workspace-next-step">Next: ${esc(next.charAt(0).toUpperCase()+next.slice(1))}</span><span class="workspace-next-arrow" aria-hidden="true">›</span>`:''}</p>`;
     }
     return `<p class="overview-stage overview-stage--plain" data-mock-styled="true">${esc(raw)}</p>`;
   }

@@ -1452,3 +1452,7 @@ html:not(#_#_#_) .history-page .history-change>p{width:100%!important;max-width:
 /* ==== from context-feedback-pass-3.js forceLightState (#450): State is light-only. It was an inline
    style on <html>; the prefix and !important keep that precedence. ==== */
 html:not(#_#_#_){color-scheme:light!important}
+
+/* ==== from context-attention-alignment.js normalizeStage (#450): a "Late discovery" stage pill.
+   It was matched by text and styled inline; the template now adds .is-late-discovery. ==== */
+html:not(#_#_#_) .overview-stage .workspace-stage-pill.is-late-discovery{background:#e8edff!important;background-color:#e8edff!important;color:#4f5f8e!important;border-color:#d9def2!important;box-shadow:none!important}

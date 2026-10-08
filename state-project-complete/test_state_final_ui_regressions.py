@@ -34,7 +34,7 @@ def _page(width=1200, height=900):
     browser = _launch(pw)
     page = browser.new_page(viewport={"width": width, "height": height})
     page.goto(STATE_URL)
-    # context-final-mobile.js clears this class once it has run (#450: its styles are static now).
+    # context-layout.js (formerly context-final-mobile.js, #450) clears this class after the first render.
     page.wait_for_function("!document.documentElement.classList.contains('state-final-mobile-pending')")
     return pw, browser, page
 
