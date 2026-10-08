@@ -6,7 +6,6 @@
   ]);
 
 
-
   function forceLightState(){
     // Guarded (#450): classList.remove rewrites the class attribute even when the class is
     // absent, and this file observes class changes, so it re-triggered itself every frame.
@@ -17,12 +16,6 @@
   function markNorthstar(){
     document.querySelectorAll('#viewRoot h1,#viewRoot h2').forEach(el=>{
       if((el.textContent||'').trim()==='Northstar') el.classList.add('northstar-display');
-    });
-  }
-
-  function simplifyWorkspaceBrowse(){
-    document.querySelectorAll('.workspace-status-card .state-fact-preview>.text-button').forEach(b=>{
-      if(/browse current state/i.test(b.textContent)) b.textContent='Browse →';
     });
   }
 
@@ -159,7 +152,7 @@
   function run(){
     forceLightState();
     markNorthstar();
-    simplifyWorkspaceBrowse();
+    
     cleanNotes();
     simplifyCurrentState();
     styleEvidenceCallout();

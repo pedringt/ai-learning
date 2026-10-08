@@ -61,30 +61,6 @@
     }
   }
 
-  function decorateWorkspace(scope=document){
-    const attention=scope.querySelector('.workspace-attention');
-    if(attention){
-      const headCopy=attention.querySelector('.workspace-attention-head>div');
-      if(headCopy && !headCopy.querySelector('.attention-head-icon')){
-        const icon=document.createElement('span');icon.className='attention-head-icon mock-icon';icon.innerHTML=ICONS.alert;headCopy.prepend(icon);
-      }
-      attention.querySelectorAll('.attention-item').forEach(item=>{
-        const copy=item.querySelector('.attention-item-copy'); if(!copy||copy.querySelector('.attention-row-icon'))return;
-        const kind=item.classList.contains('blocker')?'blocker':'review';
-        const icon=document.createElement('span');icon.className=`attention-row-icon ${kind} mock-icon`;icon.innerHTML=ICONS[kind==='blocker'?'question':'review'];copy.prepend(icon);
-      });
-    }
-    const recentHead=scope.querySelector('.workspace-recent-head');
-    if(recentHead && !recentHead.querySelector('.section-icon')){
-      const icon=document.createElement('span');icon.className='section-icon changed mock-icon';icon.innerHTML=ICONS.changed;recentHead.prepend(icon);
-    }
-    const status=scope.querySelector('.workspace-status-card');
-    const eyebrow=status?.querySelector(':scope > .eyebrow');
-    if(eyebrow && !eyebrow.querySelector('.section-icon')){
-      const icon=document.createElement('span');icon.className='section-icon current mock-icon';icon.innerHTML=ICONS.current;eyebrow.prepend(icon);
-    }
-  }
-
   function addGrounding(scope = document) {
     scope.querySelectorAll('.ask-live-answer').forEach(answer => {
       if (answer.querySelector('.ask-grounding')) return;
@@ -200,7 +176,7 @@
   }
 
   function enhance(scope=document){
-    addWorkspaceOrientation(scope);decorateWorkspace(scope);addGrounding(scope);improveOpenItemsSummary(scope);clarifyQuestionsAwaitingReview(scope);improveEmptyStates(scope);clarifyReviewCompletion(scope);clarifyReviewActions(scope);clarifyNotesProcessedFilter(scope);improveProjectProvenanceSummary(scope);
+    addWorkspaceOrientation(scope);addGrounding(scope);improveOpenItemsSummary(scope);clarifyQuestionsAwaitingReview(scope);improveEmptyStates(scope);clarifyReviewCompletion(scope);clarifyReviewActions(scope);clarifyNotesProcessedFilter(scope);improveProjectProvenanceSummary(scope);
   }
   let queued=false;const schedule=()=>{if(queued)return;queued=true;requestAnimationFrame(()=>{queued=false;enhance(document);});};
   new MutationObserver(schedule).observe(document.documentElement,{childList:true,subtree:true});

@@ -325,10 +325,10 @@
   }
   function workspaceAttentionHtml(){
     if(API && state.workspaceAttentionStatus==='loading'){
-      return `<section class="workspace-attention is-loading" aria-busy="true"><div class="workspace-attention-head"><div><span class="eyebrow">Needs your attention</span><h3>Opening action items…</h3></div></div></section>`;
+      return `<section class="workspace-attention is-loading" aria-busy="true"><div class="workspace-attention-head"><div><span class="attention-head-icon mock-icon">${workspaceIcon('alert')}</span><span class="eyebrow">Needs your attention</span><h3>Opening action items…</h3></div></div></section>`;
     }
     if(API && state.workspaceAttentionStatus==='error'){
-      return `<section class="workspace-attention is-clear"><div class="workspace-attention-head"><div><span class="eyebrow">Needs your attention</span><h3>Attention items could not be loaded</h3><p>Ask still works; try Open Items again in a moment.</p></div><button class="text-button" data-action="retry-hydration">Try again →</button></div></section>`;
+      return `<section class="workspace-attention is-clear"><div class="workspace-attention-head"><div><span class="attention-head-icon mock-icon">${workspaceIcon('alert')}</span><span class="eyebrow">Needs your attention</span><h3>Attention items could not be loaded</h3><p>Ask still works; try Open Items again in a moment.</p></div><button class="text-button" data-action="retry-hydration">Try again →</button></div></section>`;
     }
     const reviews=API?state.data.reviews.filter(r=>r.status==='pending'&&r.backendReviewId):uiPendingReviews();
     const blockers=(API?state.data.questions.filter(q=>q.status==='open'&&q.backendManaged):openQuestions()).filter(q=>q.blocking);
@@ -337,7 +337,7 @@
     if(items.length<2) blockers.slice(0,2-items.length).forEach(q=>items.push({kind:'blocker',id:q.id,label:'Blocking question',title:q.text,detail:q.blocks?`Blocks ${q.blocks}`:'A concrete dependency is waiting on this answer.'}));
     const total=reviews.length+blockers.length;
     if(!items.length){
-      return `<section class="workspace-attention is-clear"><div class="workspace-attention-head"><div><span class="eyebrow">Needs your attention</span><h3>You're caught up</h3><p>Nothing currently needs a decision and no questions are blocking progress.</p></div><button class="text-button" data-view="open-items">Open Items →</button></div></section>`;
+      return `<section class="workspace-attention is-clear"><div class="workspace-attention-head"><div><span class="attention-head-icon mock-icon">${workspaceIcon('alert')}</span><span class="eyebrow">Needs your attention</span><h3>You're caught up</h3><p>Nothing currently needs a decision and no questions are blocking progress.</p></div><button class="text-button" data-view="open-items">Open Items →</button></div></section>`;
     }
     // Describe exactly what's rendered in `items` below, never the uncapped
     // reviews/blockers totals -- those can outnumber the 2 row slots, and a
@@ -350,14 +350,25 @@
     if(shownReviews) breakdownParts.push(`${shownReviews} review${shownReviews===1?'':'s'}`);
     if(shownBlockers) breakdownParts.push(`${shownBlockers} blocking question${shownBlockers===1?'':'s'}`);
     if(hiddenCount>0) breakdownParts.push(`+${hiddenCount} more in Open Items`);
-    const rows=items.map(item=>`<button class="attention-item ${item.kind}" data-action="${item.kind==='review'?'open-specific-review':'go-open-question'}" ${item.kind==='review'?`data-review-id="${esc(item.id)}"`:`data-question-id="${esc(item.id)}"`}><span class="attention-item-copy"><span class="attention-kind">${esc(item.label)}</span><strong>${esc(item.title)}</strong><span>${esc(item.detail)}</span></span><span class="attention-arrow" aria-hidden="true">→</span><span class="attention-kind">${esc(item.label)}</span></button>`).join('');
-    return `<section class="workspace-attention"><div class="workspace-attention-head"><div><span class="eyebrow">Needs your attention</span><h3>${total===1?'1 item is waiting on you':`${total} items are waiting on you`}</h3><p class="attention-intro-text">${esc(breakdownParts.join(' · '))}</p></div><button class="text-button" data-view="open-items">Open Items →</button></div><div class="attention-list">${rows}</div></section>`;
+    const rows=items.map(item=>`<button class="attention-item ${item.kind}" data-action="${item.kind==='review'?'open-specific-review':'go-open-question'}" ${item.kind==='review'?`data-review-id="${esc(item.id)}"`:`data-question-id="${esc(item.id)}"`}><span class="attention-item-copy"><span class="attention-row-icon ${item.kind==='blocker'?'blocker':'review'} mock-icon">${workspaceIcon(item.kind==='blocker'?'question':'review')}</span><span class="attention-kind">${esc(item.label)}</span><strong>${esc(item.title)}</strong><span>${esc(item.detail)}</span></span><span class="attention-arrow" aria-hidden="true">→</span><span class="attention-kind">${esc(item.label)}</span></button>`).join('');
+    return `<section class="workspace-attention"><div class="workspace-attention-head"><div><span class="attention-head-icon mock-icon">${workspaceIcon('alert')}</span><span class="eyebrow">Needs your attention</span><h3>${total===1?'1 item is waiting on you':`${total} items are waiting on you`}</h3><p class="attention-intro-text">${esc(breakdownParts.join(' · '))}</p></div><button class="text-button" data-view="open-items">Open Items →</button></div><div class="attention-list">${rows}</div></section>`;
   }
   // Answers "What actually changed?" -- up to 3 meaningful recent decisions,
   // led by the substance of the change (history's `after` text), not a
   // generic "X was updated" label. Not a second History feed: no
   // filtering/search here, just a link out. Rows have no trailing arrow --
   // the whole row is already the click target.
+  // Workspace card icons (#450, from context-quickwins.js decorateWorkspace). A function, not a
+  // const, so it is hoisted: renderers can run before later declarations in this file execute.
+  function workspaceIcon(name){
+    return ({
+      alert:'<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7.5v6M12 17h.01"/></svg>',
+      review:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3.5h8l3 3V20H7z"/><path d="M15 3.5V7h3M10 11h5M10 14h5M10 17h3"/></svg>',
+      question:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5.5h14v10H10l-4 3v-3H5z"/><path d="M10 9a2.2 2.2 0 1 1 3.8 1.5c-.9.8-1.8 1.1-1.8 2M12 15h.01"/></svg>',
+      changed:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m4 16 5-5 3 3 7-8"/><path d="M15 6h4v4"/></svg>',
+      current:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 4h10a2 2 0 0 1 2 2v14H8a2 2 0 0 1-2-2z"/><path d="M8 4v16M11 8h4M11 12h4M11 16h3"/></svg>',
+    })[name];
+  }
   function whatChangedHtml(){
     if(state.backendStatus.history!=='loaded'){
       return `<section class="workspace-recent"><div class="workspace-recent-head"><span class="eyebrow">What changed</span><button class="text-button" data-view="history">History →</button></div><p class="workspace-section-hint" role="status">${state.backendStatus.history==='error'?'Recent changes are unavailable.':'Loading recent changes…'}</p></section>`;
@@ -373,7 +384,7 @@
     // Changed" card vanish, leaving "Current State" alone stretched across
     // the row -- confirmed live, read as broken rather than "nothing here
     // yet." An explicit empty state keeps the two-card layout intact.
-    if(!entries.length) return `<section class="workspace-recent"><div class="workspace-recent-head"><span class="eyebrow">What changed</span><button class="text-button" data-view="history">History →</button></div><p class="workspace-section-hint">No changes recorded yet.</p></section>`;
+    if(!entries.length) return `<section class="workspace-recent"><div class="workspace-recent-head"><span class="section-icon changed mock-icon">${workspaceIcon('changed')}</span><span class="workspace-recent-copy"><span class="workspace-recent-title">What Changed</span><p class="workspace-section-hint">No changes recorded yet.</p></span><span class="eyebrow">What changed</span><button class="text-button" data-view="history">History →</button></div></section>`;
     const rows=entries.map(h=>{
       const date=h.date||formatBackendDate(h.changed_at);
       const topic=state.backendStatus.state==='loaded'&&h.knowledgeId?state.data.knowledge.find(k=>k.id===h.knowledgeId):null;
@@ -382,7 +393,7 @@
       const linkAttrs=h.knowledgeId?`data-action="view-topic-history" data-knowledge-id="${esc(h.knowledgeId)}"`:'data-view="history"';
       return `<button class="recent-update-row" ${linkAttrs}><strong>${esc(truncateText(summary,120))}</strong><span>${esc(kicker)}</span></button>`;
     }).join('');
-    return `<section class="workspace-recent"><div class="workspace-recent-head"><span class="eyebrow">What changed</span><button class="text-button" data-view="history">History →</button></div><p class="workspace-section-hint">Recent decisions and updates to the project.</p><div class="recent-update-list">${rows}</div></section>`;
+    return `<section class="workspace-recent"><div class="workspace-recent-head"><span class="section-icon changed mock-icon">${workspaceIcon('changed')}</span><span class="workspace-recent-copy"><span class="workspace-recent-title">What Changed</span><p class="workspace-section-hint">Recent decisions and updates to the project.</p></span><span class="eyebrow">What changed</span><button class="text-button" data-view="history">History →</button></div><div class="recent-update-list">${rows}</div></section>`;
   }
   // Answers "Where does the project stand?" -- a Current State pulse across
   // three real dimensions: what's fresh (last change), how much is
@@ -441,8 +452,15 @@
     // text), not a place for a full-paragraph fact -- an untruncated real
     // statement can run several lines, growing this card unevenly against
     // its paired "What Changed" card (QA follow-up, 2026-09-14).
-    const factPreviewHtml=previewFacts.length?`<div class="state-fact-preview"><p>What's treated as true.</p><ul>${previewFacts.map(k=>`<li>${esc(truncateText(k.statement||k.title,120))}</li>`).join('')}</ul><button class="text-button" data-view="project-overview">Browse Current State →</button></div>`:'';
-    return `<section class="workspace-status-card"><span class="eyebrow">Current State</span><div class="workspace-status-body">
+    // With facts to preview, the card's header carries the title, the support line and the
+    // Browse link (#450, from context-attention-alignment.js / context-feedback-pass-3.js).
+    // The bare "Current State" text is invisible (font-size:0) but is a grid item in the header's
+    // grid, so it still shapes the layout; removing it changes the card's height.
+    const factPreviewHtml=previewFacts.length?`<div class="state-fact-preview"><ul>${previewFacts.map(k=>`<li>${esc(truncateText(k.statement||k.title,120))}</li>`).join('')}</ul></div>`:'';
+    const statusEyebrow=previewFacts.length
+      ?`<span class="eyebrow"><span class="section-icon current mock-icon">${workspaceIcon('current')}</span><span class="current-state-copy"><span class="current-state-title">Current State</span><p class="current-state-support">What's treated as true.</p></span>Current State<button class="text-button current-state-browse" data-view="project-overview">Browse →</button></span>`
+      :`<span class="eyebrow"><span class="section-icon current mock-icon">${workspaceIcon('current')}</span>Current State</span>`;
+    return `<section class="workspace-status-card">${statusEyebrow}<div class="workspace-status-body">
       <div class="workspace-status-item"><strong class="workspace-status-value">${!historyLoaded?(state.backendStatus.history==='error'?'Recent change unavailable':'…'):lastUpdated?`Updated ${esc(lastUpdated)}`:'Not yet established'}</strong><div class="workspace-status-row"><span>${!historyLoaded&&state.backendStatus.history!=='error'?'Loading most recent change…':lastLabel?esc(lastLabel):'Most recent change.'}</span></div></div>
       <div class="workspace-status-item"><strong class="workspace-status-value">${stateLoaded?`${establishedCount} established fact${establishedCount===1?'':'s'}`:state.backendStatus.state==='error'?'Established facts unavailable':'… established facts'}</strong><div class="workspace-status-row"><span>What the project currently treats as true.</span><button class="text-button" data-view="project-overview">Browse Current State →</button></div></div>
       <div class="workspace-status-item"><strong class="workspace-status-value${questionsLoaded&&openCount===0?' is-clear':''}">${esc(openHeadline)}</strong><div class="workspace-status-row"><span>${openSupportText}</span><button class="text-button" data-view="open-items">Open Items →</button></div></div>
