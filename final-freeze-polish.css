@@ -9,14 +9,6 @@
 #ai-cs-mock [data-page="learn"] > .band:first-of-type .resource-row{margin-top:11px}
 
 /* State should read as the flagship because of its treatment, not because every line is equally dark. */
-.home-state-feature{
-  border-color:color-mix(in srgb,var(--purple) 24%,var(--border))!important;
-  background:linear-gradient(145deg,color-mix(in srgb,var(--softp) 92%,var(--card)) 0%,var(--card) 72%)!important;
-}
-.home-state-feature .home-project-kicker{color:var(--purple)!important}
-.home-state-feature h2,.home-state-feature .home-state-lead{color:var(--ink)!important}
-.home-state-feature p:not(.home-state-lead){color:var(--muted)!important}
-.home-state-feature p strong{color:var(--ink)!important}
 
 #ai-cs-mock [data-page="portfolio"] .applied-major-grid > .applied-major:first-child{
   border-color:color-mix(in srgb,var(--purple) 30%,var(--border))!important;
@@ -40,7 +32,7 @@
   letter-spacing:.005em;
 }
 .ask-state-launcher:hover,.ask-state-launcher:focus-visible{opacity:1!important;transform:translateY(-1px)}
-.ask-state-launcher.is-hidden{opacity:0!important;transform:translateY(8px)!important}
+
 @media(max-width:760px){
   .ask-state-launcher{border-radius:50%!important;transform:none}
   .ask-state-launcher:hover,.ask-state-launcher:focus-visible{transform:none}

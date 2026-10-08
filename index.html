@@ -22,11 +22,6 @@
 <meta content="Context Switch applied AI product portfolio" name="twitter:image:alt"/>
 <style id="v893-style">
 
-#ai-cs-mock .site-go-deeper{
-  max-width:1180px;margin:34px auto 0;padding:24px 28px 34px;
-  border-top:1px solid var(--border);color:var(--text);
-}
-
 /* v90 final polish: keep the editorial left alignment, but make intro widths deliberate and consistent. */
 
 #ai-cs-mock [data-page="home"] .hero{
@@ -70,13 +65,6 @@
 
 .gloss-term{background:none;border:none;padding:0;margin:0;font:inherit;color:inherit;cursor:help;border-bottom:1px dotted color-mix(in srgb,var(--purple) 55%,transparent);text-decoration:none}
 .concept-diagram{border:1px solid var(--border);border-radius:14px;padding:16px 18px;background:var(--soft);margin:12px 0 16px}
-.concept-diagram-title{font-size:11px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--purple);margin-bottom:11px}
-.concept-diagram-flow{display:flex;align-items:center;flex-wrap:wrap;gap:7px;row-gap:10px}
-.concept-diagram-step{display:inline-flex;align-items:center;gap:7px}
-.concept-diagram-box{border:1px solid var(--border);background:var(--card);border-radius:9px;padding:7px 11px;font-size:12.5px;font-weight:700;color:var(--ink);white-space:nowrap}
-.concept-diagram-arrow{color:var(--muted);font-size:14px;flex:0 0 auto}
-
-@media(max-width:640px){.concept-diagram-box{white-space:normal}}
 
 .gloss-term:hover,.gloss-term:focus-visible{border-bottom-style:solid;color:var(--purple);outline:none}
 .gloss-tooltip{position:absolute;z-index:200;max-width:280px;background:var(--ink);color:var(--bg,#fff);font-size:12.5px;line-height:1.45;padding:9px 12px;border-radius:10px;box-shadow:0 12px 30px rgba(0,0,0,.22);pointer-events:auto}
@@ -365,55 +353,6 @@
 /* Capabilities growth note: intentional but quiet. */
 
 /* Shared "Go deeper" becomes a lightweight footer resource band, not a hero card. */
-.site-go-deeper{
-  margin:36px auto 0!important;
-  padding:22px 0 12px!important;
-  border:0!important;
-  border-top:1px solid var(--border)!important;
-  border-radius:0!important;
-  background:transparent!important;
-  box-shadow:none!important;
-}
-.site-go-deeper h3{
-  margin:0 0 6px!important;
-  font-size:18px!important;
-  line-height:1.3!important;
-}
-.site-go-deeper .section-lead{
-  margin:0 0 12px!important;
-  max-width:760px!important;
-  font-size:13.5px!important;
-  line-height:1.55!important;
-}
-.site-go-deeper .resource-row{
-  display:flex!important;
-  flex-wrap:wrap!important;
-  gap:8px!important;
-}
-.site-go-deeper .resource-link{
-  display:inline-flex!important;
-  align-items:center!important;
-  padding:7px 10px!important;
-  border:1px solid var(--border)!important;
-  border-radius:999px!important;
-  background:var(--card)!important;
-  color:var(--purple)!important;
-  font-size:12px!important;
-  font-weight:800!important;
-  text-decoration:none!important;
-}
-.site-go-deeper .resource-link:hover{
-  background:var(--softp)!important;
-  border-color:color-mix(in srgb,var(--purple) 38%,var(--border))!important;
-}
-
-@media(max-width:560px){
-  
-  .site-go-deeper{
-    padding:18px 0 8px!important;
-    margin-top:28px!important;
-  }
-}
 
 </style>
 <link href="site-components.css?v=r16-release-hardening" rel="stylesheet"/>
@@ -451,15 +390,10 @@
 .applied-major-grid,.applied-secondary-grid{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-top:14px}
 .applied-major-with-actions .applied-card-primary-link{color:inherit!important;text-decoration:none}.applied-major-with-actions .applied-card-primary-link::after{content:"";position:absolute;inset:0;z-index:1}.applied-major-with-actions:has(.applied-card-primary-link:focus-visible){outline:3px solid color-mix(in srgb,var(--purple) 55%,transparent);outline-offset:3px}.applied-major-with-actions .applied-card-primary-link:focus-visible{outline:none}.applied-major-with-actions .applied-card-actions{display:flex;flex-wrap:wrap;gap:10px 18px;margin-top:auto;padding-top:18px;position:relative;z-index:2}.applied-major-with-actions .applied-card-actions a{color:var(--purple);font-size:12px;font-weight:800;text-decoration:none}.applied-major-with-actions .applied-card-actions a:hover{text-decoration:underline}
 .applied-secondary-grid>.card{display:flex;flex-direction:column}
-@media(max-width:620px){.applied-major-grid,.applied-secondary-grid,.applied-support-grid,.home-option-d-links{grid-template-columns:1fr!important}}
+@media(max-width:620px){.applied-major-grid,.applied-secondary-grid{grid-template-columns:1fr!important}}
 </style></link><style>
 /* Final portfolio hierarchy pass */
-.home-state-feature{margin-top:14px;padding:34px;border:1px solid var(--line);border-radius:22px;background:var(--card);display:grid;grid-template-columns:minmax(0,1fr) auto;gap:32px;align-items:end;box-shadow:0 12px 34px rgba(41,31,72,.07)}
-.home-state-feature h2{font-size:clamp(2.2rem,5vw,4rem);margin:4px 0 12px;letter-spacing:-.04em}.home-state-feature p{max-width:760px}.home-state-lead{font-size:1.14rem}.home-state-actions{display:flex;gap:12px;flex-wrap:wrap;align-items:center}.home-state-actions a{font-weight:750;text-decoration:none;padding:11px 15px;border-radius:12px;border:1px solid var(--line)}.home-state-actions .home-state-primary{background:var(--purple);color:#fff;border-color:var(--purple)}
-.home-legal-feature{margin-top:18px}.home-supporting-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px}.home-supporting-row a{display:flex;flex-direction:column;gap:5px;padding:18px 20px;border-top:1px solid var(--line);text-decoration:none}.home-supporting-row span{font-size:.92rem;color:var(--muted)}
-.home-approach-compact{max-width:850px;margin:54px auto 20px;padding:0 8px}.home-approach-compact p{font-size:1.05rem;line-height:1.75}.learning-principles-compact{max-width:850px}
-@media(max-width:760px){.home-state-feature{grid-template-columns:1fr;padding:24px}.home-supporting-row{grid-template-columns:1fr}.home-state-actions{align-items:stretch}.home-state-actions a{text-align:center}}
-body.v88-dark .home-state-feature{box-shadow:none}body.v88-dark .home-state-actions .home-state-primary{color:#fff}
+
 </style>
 
 <style id="issue176-final-polish">
@@ -469,19 +403,14 @@ body.v88-dark .home-state-feature{box-shadow:none}body.v88-dark .home-state-acti
 #ai-cs-mock [data-page="portfolio"] .applied-secondary-grid>.applied-secondary h3{margin:6px 0!important;font-size:15.5px!important;line-height:1.22!important;letter-spacing:-.01em!important}
 #ai-cs-mock [data-page="portfolio"] .applied-secondary-grid>.applied-secondary .card-intro{margin:0!important;font-size:11.9px!important;line-height:1.45!important}
 #ai-cs-mock [data-page="portfolio"] .applied-secondary-grid>.applied-secondary::after{margin-top:auto!important;padding-top:12px!important;font-size:11.5px!important}
-#ai-cs-mock [data-page="home"] .home-quiet-ending{display:block!important;visibility:visible!important;opacity:1!important;position:static!important;width:auto!important;height:auto!important;max-height:none!important;overflow:visible!important;margin:38px 0 0!important;padding:22px 0 2px!important;border-top:1px solid var(--border)!important;color:var(--ink)!important}
-#ai-cs-mock [data-page="home"] .home-quiet-ending h2{margin:0 0 7px!important;font-size:18px!important;line-height:1.3!important;letter-spacing:-.01em!important}
-#ai-cs-mock [data-page="home"] .home-quiet-ending p{max-width:800px!important;margin:0!important;color:var(--muted)!important;font-size:14px!important;line-height:1.62!important}
-#ai-cs-mock [data-page="home"] .home-quiet-ending>span{display:block!important;margin-top:10px!important}
-#ai-cs-mock [data-page="home"] .home-quiet-ending a{color:var(--purple)!important;font-size:13px!important;font-weight:800!important;text-decoration:none!important}
-#ai-cs-mock [data-page="home"] .home-quiet-ending a:hover{text-decoration:underline!important}
+
 #ai-cs-mock [data-page="learn"] .learning-reference-map{margin:24px 0 8px;padding:18px 20px;border:1px solid var(--border);border-radius:16px;background:linear-gradient(180deg,var(--card),color-mix(in srgb,var(--soft) 45%,var(--card)));display:grid;grid-template-columns:minmax(0,1fr) auto;gap:20px;align-items:center}
 #ai-cs-mock [data-page="learn"] .learning-reference-map .reference-label{font-size:10.5px;font-weight:850;letter-spacing:.075em;text-transform:uppercase;color:var(--purple)}
 #ai-cs-mock [data-page="learn"] .learning-reference-map h3{margin:4px 0 5px;font-size:18px;line-height:1.3}
 #ai-cs-mock [data-page="learn"] .learning-reference-map p{margin:0;max-width:780px;color:var(--muted);font-size:13.5px;line-height:1.55}
 #ai-cs-mock [data-page="learn"] .learning-reference-map>a{display:inline-flex;align-items:center;justify-content:center;padding:9px 12px;border:1px solid var(--border);border-radius:10px;background:var(--card);color:var(--purple);font-size:12.5px;font-weight:800;text-decoration:none;white-space:nowrap}
 @media(max-width:1100px){#ai-cs-mock [data-page="portfolio"] .applied-secondary-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}}
-@media(max-width:620px){#ai-cs-mock [data-page="portfolio"] .applied-secondary-grid{grid-template-columns:1fr!important}#ai-cs-mock [data-page="portfolio"] .applied-secondary-grid>.applied-secondary{padding:15px!important}#ai-cs-mock [data-page="home"] .home-quiet-ending{margin-top:32px!important;padding-top:19px!important}#ai-cs-mock [data-page="learn"] .learning-reference-map{grid-template-columns:1fr;padding:16px}#ai-cs-mock [data-page="learn"] .learning-reference-map>a{justify-self:start}}
+@media(max-width:620px){#ai-cs-mock [data-page="portfolio"] .applied-secondary-grid{grid-template-columns:1fr!important}#ai-cs-mock [data-page="portfolio"] .applied-secondary-grid>.applied-secondary{padding:15px!important}#ai-cs-mock [data-page="learn"] .learning-reference-map{grid-template-columns:1fr;padding:16px}#ai-cs-mock [data-page="learn"] .learning-reference-map>a{justify-self:start}}
 </style>
 <style id="portfolio-featured-hierarchy">
 .home-feature-grid{display:grid;gap:16px;margin-top:14px;align-items:stretch}
@@ -735,10 +664,10 @@ body.v88-dark #ai-cs-mock{background:#171419!important;color:#f3ede8!important;-
 .section-lead{color:var(--muted);max-width:760px;margin:0 0 26px}.card{border:1px solid var(--border);border-radius:18px;padding:20px;background:linear-gradient(180deg,var(--card),color-mix(in srgb,var(--softp) 10%,var(--card)));min-width:0;display:flex;flex-direction:column;position:relative;overflow:hidden;box-shadow:0 10px 28px color-mix(in srgb,var(--purple) 5%,transparent);transition:transform .18s ease,border-color .18s ease,box-shadow .18s ease,background .18s ease}.card::before{content:"";position:absolute;inset:0 0 auto 0;height:3px;background:linear-gradient(90deg,color-mix(in srgb,var(--gold) 72%,transparent),color-mix(in srgb,var(--purple) 68%,transparent),color-mix(in srgb,var(--cyan) 42%,transparent),transparent);opacity:.58}.card::after{content:"✦";position:absolute;right:13px;top:12px;color:color-mix(in srgb,var(--gold) 80%,var(--purple));font-size:10px;opacity:.28;pointer-events:none}.card:hover{transform:translateY(-2px);border-color:color-mix(in srgb,var(--purple) 28%,var(--border));box-shadow:0 14px 34px color-mix(in srgb,var(--purple) 9%,transparent)}.card h3{margin:8px 0 8px;font-size:20px}.card p{color:var(--muted);margin:0;font-size:14px;line-height:1.55}.tag{display:inline-block;align-self:flex-start;border:1px solid color-mix(in srgb,var(--purple) 25%,var(--border));background:linear-gradient(135deg,color-mix(in srgb,var(--softp) 88%,var(--card)),color-mix(in srgb,var(--gold) 6%,var(--card)));color:var(--purple);font-weight:800;border-radius:999px;padding:5px 8px;font-size:11px;letter-spacing:.04em;text-transform:uppercase;box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--gold) 5%,transparent)}.nav-card::after{margin-top:auto;padding-top:14px}
 .band{border:1px solid var(--border);border-radius:18px;background:linear-gradient(135deg,var(--soft),color-mix(in srgb,var(--softp) 55%,var(--soft)));padding:24px;margin:28px 0;position:relative;overflow:hidden}.band::after{content:"✦   ·   ✧";position:absolute;right:16px;top:11px;color:var(--purple);font-size:11px;letter-spacing:4px;opacity:.25}.resource-row{display:flex;gap:7px;flex-wrap:wrap;margin-top:13px}.resource-link{display:inline-flex;align-items:center;gap:5px;border:1px solid var(--border);border-radius:999px;padding:6px 9px;background:var(--soft);font-size:11.5px;font-weight:800;color:var(--purple)!important}.resource-link::after{content:"↗";font-size:10px}.practice{border:1px solid #cfe9ee;border-left:4px solid var(--cyan);background:#f3fbfd;border-radius:14px;padding:16px 18px;margin-top:14px;position:relative}.practice::after{content:"✧";position:absolute;right:11px;top:9px;color:var(--cyan);font-size:10px;opacity:.28}
 
-.nav button{position:relative}.nav button.active::after{content:"";position:absolute;left:20%;right:20%;bottom:2px;height:2px;border-radius:99px;background:linear-gradient(90deg,var(--gold),var(--purple))}.theme-toggle:hover{box-shadow:0 0 0 3px color-mix(in srgb,var(--purple) 9%,transparent),0 0 22px color-mix(in srgb,var(--gold) 16%,transparent)}
+.nav button{position:relative}.nav button.active::after{content:"";position:absolute;left:20%;right:20%;bottom:2px;height:2px;border-radius:99px;background:linear-gradient(90deg,var(--gold),var(--purple))}
 
 /* Keep the celestial theme intentional rather than scattered. */
-.view.active::before,.view.active::after,.hero::after,.eyebrow::before,.section-kicker::before,.card::after,.band::after,.practice::after,.decision::after,.checkpoint::before,.artifact::after,.stage.todo::after{display:none!important}
+.view.active::before,.view.active::after,.hero::after,.eyebrow::before,.section-kicker::before,.card::after,.band::after,.practice::after,.decision::after,.artifact::after{display:none!important}
 @media(max-width:560px){.shell{padding:0 18px 48px}.hero h1{font-size:40px}.lead{font-size:17px}.card{padding:17px}}
 
 /* v88.2, navigation cleanup */
@@ -747,41 +676,12 @@ body.v88-dark #ai-cs-mock{background:#171419!important;color:#f3ede8!important;-
 
 /* v88.1, Meridian emphasis + status polish */
 
-.home-feature-pair{grid-template-columns:1fr 1fr!important}.home-feature-pair .home-project-card{min-height:230px;display:flex;flex-direction:column;transition:transform .16s ease,border-color .16s ease,box-shadow .16s ease}.home-feature-pair .home-project-card:hover{transform:translateY(-2px);box-shadow:0 10px 26px rgba(41,31,72,.08)}.home-feature-pair .home-project-path{margin-top:auto;padding-top:18px}@media(max-width:700px){.home-feature-pair{grid-template-columns:1fr!important}}
-
 /* v98 feedback correction: curated home + intentional State feature + compact Learning Guide note */
-.home-state-feature{
-  margin-top:14px!important;
-  padding:30px 32px!important;
-  border:1px solid var(--border)!important;
-  border-top:4px solid var(--purple)!important;
-  border-radius:18px!important;
-  background:linear-gradient(180deg,var(--softp) 0%,var(--card) 64%)!important;
-  display:grid!important;
-  grid-template-columns:minmax(0,1fr) auto!important;
-  gap:30px!important;
-  align-items:end!important;
-  box-shadow:0 10px 28px rgba(41,31,72,.06)!important;
-}
-.home-state-feature h2{font-size:clamp(2.35rem,5vw,4rem)!important;margin:4px 0 12px!important;letter-spacing:-.045em!important;line-height:.98!important}
-.home-state-copy{min-width:0!important}.home-state-copy p{max-width:780px!important}.home-state-lead{font-size:1.08rem!important;line-height:1.58!important;font-weight:400!important}
-.home-state-actions{display:flex!important;gap:10px!important;flex-wrap:wrap!important;align-items:center!important;justify-content:flex-end!important;min-width:270px!important}
-.home-state-actions a{display:inline-flex!important;align-items:center!important;justify-content:center!important;min-height:46px!important;padding:11px 16px!important;border-radius:11px!important;border:1px solid var(--border)!important;text-decoration:none!important;font-size:14px!important;line-height:1.2!important;font-weight:800!important;white-space:nowrap!important}
-.home-state-actions .home-state-primary{background:var(--purple)!important;color:#fff!important;border-color:var(--purple)!important;min-width:158px!important}
-.home-state-actions .home-state-secondary{background:var(--card)!important;color:var(--purple)!important;border-color:#cfc8ee!important}
-.home-state-actions .home-state-primary:visited{color:#fff!important}.home-state-actions .home-state-secondary:visited{color:var(--purple)!important}
-.home-legal-feature{margin-top:18px!important}
 
-.home-quiet-ending{margin-top:42px!important}
 .learning-how-note{max-width:900px!important;margin:18px 0 30px!important;padding:14px 16px!important;border-left:3px solid var(--border)!important;background:transparent!important;color:var(--muted)!important;font-size:14px!important;line-height:1.6!important}
 .learning-how-note strong{color:var(--ink)!important}
 body.v88-dark .learning-how-note strong{color:#f5f2fb!important}
-@media(max-width:760px){
-  .home-state-feature{grid-template-columns:1fr!important;padding:24px!important;gap:20px!important}
-  .home-state-actions{justify-content:flex-start!important;min-width:0!important;align-items:stretch!important}
-  .home-state-actions a{flex:1 1 160px!important;text-align:center!important}
-  
-}
+
 </style>
 <main class="shell" id="main-content">
 <div class="topbar"><div class="topinner"><button aria-label="Go to home" class="brand-button" data-brand-home="" type="button"><span class="brand">Context <span>Switch</span></span></button><nav aria-label="Primary pages" class="nav"><button class="active" data-view="home">Home</button><button data-view="portfolio">Applied Work</button><button data-view="learn">Learning Library</button></nav><div class="top-actions"><select aria-label="Choose page" id="mobileNav"><option value="home">Home</option><option value="portfolio">Applied Work</option><option value="learn">Learning Library</option></select></div></div></div>
@@ -1010,7 +910,7 @@ body.v88-dark .learning-how-note strong{color:#f5f2fb!important}
 
 /* Final portfolio lock: stable proof, deep links, print, and compact mobile behavior. */
 
-@media print{#ai-cs-mock{background:#fff!important;color:#000!important;--muted:#444;--border:#bbb;--soft:#fff;--softp:#fff;--card:#fff}.topbar,.float-tool,.resource-float,.float-panel,.resource-panel,.back-top,.meridian-mini-nav,.theme-toggle,#mobileNav{display:none!important}.view{display:block!important;padding-top:18px!important;break-before:page}.view:first-of-type{break-before:auto}.card,.decision,.artifact,.proof-card,.band,.checkpoint,.metric,.stage{break-inside:avoid;box-shadow:none!important;background:#fff!important}.shell{max-width:none!important;padding:0!important}.nav-card::after,.resource-link::after{display:none!important}}
+@media print{#ai-cs-mock{background:#fff!important;color:#000!important;--muted:#444;--border:#bbb;--soft:#fff;--softp:#fff;--card:#fff}.topbar,#mobileNav{display:none!important}.view{display:block!important;padding-top:18px!important;break-before:page}.view:first-of-type{break-before:auto}.card,.decision,.artifact,.band,.metric,.stage{break-inside:avoid;box-shadow:none!important;background:#fff!important}.shell{max-width:none!important;padding:0!important}.nav-card::after,.resource-link::after{display:none!important}}
 </style>
 </main>
 <style>
@@ -1032,7 +932,7 @@ body.v88-dark .learning-how-note strong{color:#f5f2fb!important}
 }
 
 /* V12 feedback: principles return to the lighter Learning Guide treatment. */
-.learning-principles{margin:22px 0 28px!important;padding:20px 0!important;background:transparent!important;border:0!important;border-top:1px solid var(--border)!important;border-bottom:1px solid var(--border)!important;border-radius:0!important}.learning-principles h2{font-size:22px!important;margin:5px 0 7px!important}.learning-principles>.section-lead{font-size:13px!important;line-height:1.55!important;margin-bottom:16px!important}.principles-grid>div{padding:13px 18px 13px 0!important}.principles-grid>div:nth-child(even){padding-left:20px!important}.principles-grid strong{font-size:12.5px!important;margin-bottom:3px!important}.principles-grid p{font-size:11.5px!important;line-height:1.5!important}@media(max-width:760px){.principles-grid>div:nth-child(even){padding-left:0!important;border-left:0!important}}
+
 </style>
 <script id="v895-router">
 (()=>{

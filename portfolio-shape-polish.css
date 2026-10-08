@@ -61,9 +61,7 @@ html body #ai-cs-mock [data-page="learn"] .learning-reference-map > a {
   border-radius: 12px !important;
 }
 
-html body #ai-cs-mock .tag,
-html body #ai-cs-mock .resource-link,
-html body #ai-cs-mock .home-pattern-flow span {
+html body #ai-cs-mock .tag,html body #ai-cs-mock .resource-link{
   border-radius: 7px !important;
 }
 
@@ -88,9 +86,6 @@ html body main.case-shell aside.meridian-product-callout.meridian-product-callou
 }
 
 /* The shared redesign stylesheet sets closing links back to capsules. */
-html body main:is(.case-system-page, .case-shell, .edge-wrap, .map-wrap) .closing-links > a {
-  border-radius: 12px !important;
-}
 
 /* Case-study endings are quiet navigation links, not another row of CTAs. */
 html body main .case-study-footer,
@@ -126,10 +121,6 @@ html body main .case-study-footer > a:hover {
 }
 
 html body main:is(.case-system-page, .case-shell, .edge-wrap, .map-wrap) :is(.research-loop span, .human-flow span, .plain-rules span, .map-chip, .map-step, .context-loop span, .legal-evidence-strip span, .case-meta > span, .meta > span) {
-  border-radius: 7px !important;
-}
-
-html body main:is(.case-system-page, .case-shell, .edge-wrap, .map-wrap) .capability-local-nav a {
   border-radius: 7px !important;
 }
 

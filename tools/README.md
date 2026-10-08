@@ -96,3 +96,20 @@ git worktree add /tmp/old HEAD
 python tools/style_parity.py --old /tmp/old --new .
 ```
 
+
+## dead_css.py
+
+Finds portfolio CSS rules that cannot match anything: a selector is dead when it requires a class or id that appears in no portfolio page (inline `<style>` text excluded) and no portfolio script. `--apply FILE...` removes fully dead rules and dead selectors from shared rule lists, plus any `@media` block left empty. A class assembled at runtime would not be found in the sources, so prove every application with the portfolio comparison below (#451).
+
+```
+python3 tools/dead_css.py                      # report
+python3 tools/dead_css.py --apply site-components.css index.html
+```
+
+## Portfolio comparison (scripts/state_ui_compare/portfolio_compare.py)
+
+The broader successor to `style_parity.py` for the portfolio: every root portfolio page at desktop, tablet and phone widths, after scrolling through each page, comparing computed styles, own text, attributes and structure between a git ref and the working tree. Run `--self` first for the noise floor.
+
+```
+state-project-complete/.venv/bin/python scripts/state_ui_compare/portfolio_compare.py --base origin/staging
+```

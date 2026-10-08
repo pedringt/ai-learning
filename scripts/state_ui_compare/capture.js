@@ -199,5 +199,5 @@
     return out;
   }
 
-  window.STATE_CAPTURE = { run };
+  window.STATE_CAPTURE = { run, snap };  // snap: one page, used by portfolio_compare.py
 })();

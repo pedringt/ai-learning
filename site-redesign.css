@@ -142,8 +142,6 @@ html body .topbar .nav [aria-current="page"] {
 }
 html body .nav button.active::after { display: none !important; }
 
-html body .theme-toggle { display: none !important; }
-
 /* ---------- 3. Shared controls ---------- */
 .rd-button,
 html body .home-state-button,
@@ -370,20 +368,6 @@ html body #ai-cs-mock .rd-control p {
 }
 
 .rd-card { order: 1; }
-.rd-orbit { order: 2; position: relative; z-index: 1; display: grid; gap: 9px; width: fit-content; margin: 24px 0 0 -12px; transform: rotate(-3deg); }
-
-.rd-orbit span {
-  display: inline-flex;
-  width: fit-content;
-  border: 1px solid var(--rd-line);
-  border-radius: 8px;
-  background: #fff;
-  padding: 9px 12px;
-  color: #3b3145;
-  font-size: 12px;
-  font-weight: 850;
-  box-shadow: 0 12px 24px rgba(21, 17, 26, 0.08);
-}
 
 /* Signal rail */
 .rd-rail {
@@ -395,18 +379,6 @@ html body #ai-cs-mock .rd-control p {
   background: rgba(255, 255, 255, 0.76);
   padding: 10px 0;
   white-space: nowrap;
-}
-
-.rd-rail-track { display: flex; gap: 10px; width: max-content; animation: rdDrift 40s linear infinite; }
-
-.rd-rail-track span {
-  border: 1px solid var(--rd-line);
-  border-radius: 999px;
-  background: var(--soft);
-  padding: 9px 13px;
-  color: #32293d;
-  font-size: 12px;
-  font-weight: 850;
 }
 
 /* Featured work grid */
@@ -1064,7 +1036,6 @@ html body #ai-cs-mock [data-page="portfolio"] .band[style*="margin-top:30px"] p 
   line-height: 1.6;
 }
 
-
 /* specificity match for the older #portfolio rules */
 html body #ai-cs-mock #portfolio :is(.applied-major, .applied-secondary) .tag {
   display: inline-flex !important;
@@ -1270,7 +1241,6 @@ html body main.case-shell .callout:not(.case-hero + .callout) {
   padding: 0 !important;
 }
 
-
 /* ---------- 4m. Final feedback pass ---------- */
 /* "Try ..." buttons keep their ink fill (the transparent reset above is for the row, not the button) */
 html body main.case-system-page aside.meridian-product-callout.meridian-product-callout > a.meridian-primary-action {
@@ -1306,33 +1276,6 @@ html body main.map-wrap .map-q > span { display: block; }
 html body main.map-wrap .map-family { padding: 18px 20px !important; border-radius: 16px !important; }
 
 /* closing links: content-sized pill buttons, like the homepage "Open State / Case study" buttons */
-html body main .closing-links {
-  display: flex !important;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 10px !important;
-  margin-top: 16px;
-}
-html body main .closing-links > a {
-  box-sizing: border-box;
-  display: inline-flex !important;
-  align-items: center;
-  justify-content: center;
-  min-height: 44px;
-  padding: 0 18px !important;
-  border: 1px solid var(--ink) !important;
-  border-radius: 999px !important;
-  background: #fff !important;
-  color: var(--ink) !important;
-  font-size: 14px !important;
-  font-weight: 900 !important;
-  line-height: 1.2;
-  text-decoration: none !important;
-  box-shadow: none !important;
-  transition: transform 180ms ease, box-shadow 180ms ease;
-}
-html body main .closing-links > a:hover { transform: translateY(-2px); box-shadow: 0 12px 26px rgba(21, 17, 26, 0.12) !important; }
-html body main .closing-links > a.meridian-primary-action { background: var(--ink) !important; color: #fff !important; }
 
 /* Project Health case study: cards and prose only */
 html body main.case-shell .flow {
@@ -1387,7 +1330,6 @@ html body main.case-shell .example {
 }
 html body main.case-shell .example-head { background: transparent !important; padding: 0 0 8px !important; border: 0 !important; }
 
-
 /* ---------- 4n. Homepage cards: aligned titles, consistent buttons ---------- */
 /* State's label sat in its own flex slot (18px gap before the title); the other cards keep label + title together */
 html body #ai-cs-mock .home-feature-state-anchor { gap: 0; }
@@ -1414,18 +1356,15 @@ html body #ai-cs-mock :is(.home-feature-actions, .home-state-button-row) a {
   html body #ai-cs-mock :is(.home-feature-actions, .home-state-button-row) { flex-wrap: nowrap; }
 }
 
-
 /* narrow three-up cards: keep the label on one line so the titles stay level */
 @media (min-width: 981px) and (max-width: 1139px) {
   html body #ai-cs-mock .home-feature-card .home-project-kicker { font-size: 10px; letter-spacing: 0.03em; padding: 6px 8px; white-space: nowrap; }
 }
 
-
 /* wide desktop: the buttons fill the card's bottom row, so the number badge moves to the top-right corner */
 @media (min-width: 1240px) {
   html body #ai-cs-mock .home-feature-card::after { top: 18px; bottom: auto; width: 44px; height: 44px; font-size: 14px; }
 }
-
 
 /* ---------- 4o. Homepage project cards: small illustrated band (decorative, no text) ---------- */
 html body #ai-cs-mock .home-feature-card { gap: 0; justify-content: flex-start; }
@@ -1514,7 +1453,6 @@ html body #ai-cs-mock .learning-next .learning-how-note a { min-height: 32px; pa
 
 /* ---------- 4r. State case study: hide the two duplicates (text stays in the page source) ---------- */
 html body main.case-system-page:has(.meridian-product-callout a[data-state-app-link]) .integration-flow.authority-steps { display: none !important; }
-html body main.case-system-page:has(.meridian-product-callout a[data-state-app-link]) .closing-links > a[data-state-app-link] { display: none !important; }
 
 /* ---------- 4s. Project Health case study bottom: fewer boxes ---------- */
 html body main.case-shell .evidence-list { display: block !important; }
@@ -1551,7 +1489,6 @@ html body main.case-shell > h2:first-of-type { margin-top: 40px !important; }
 
 /* Project Health: "Failure recovery" repeats the "Unknown is not healthy" decision (text stays in the markup) */
 html body main.case-shell .evidence-list > .evidence-item:nth-child(2) { display: none !important; }
-
 
 /* ---------- 4u. Review follow-ups ---------- */
 /* Portfolio note: the Learning Library link fills the right side */
@@ -1616,9 +1553,7 @@ html body main .in-short > span {
 }
 
 /* Legal page: same column and hairline rules as the other case studies */
-html body main.legal-single-case .legal-story,
-html body main.legal-single-case .legal-paper,
-html body main.legal-single-case .legal-article {
+html body main.legal-single-case .legal-story,html body main.legal-single-case .legal-paper{
   max-width: none !important;
   margin-left: 0 !important;
   margin-right: 0 !important;
@@ -1628,7 +1563,6 @@ html body main.legal-single-case .legal-article {
 html body main.legal-single-case .paper-abstract { border-bottom: 1px solid var(--rd-line) !important; }
 html body main.legal-single-case .paper-example { border-top: 1px solid var(--rd-line) !important; }
 html body main.legal-single-case .paper-section { border-top: 1px solid var(--rd-line) !important; }
-
 
 /* ---------- 4v. Typography (reviewer feedback #10): loosened headings; all type is sans ---------- */
 /* every heading on every portfolio page: weight 700, gentle tracking, readable spaces after commas.
@@ -1672,13 +1606,12 @@ html body #ai-cs-mock #portfolio .applied-secondary > h3:not(#_) { font-size: 17
   html body #ai-cs-mock .rd-hero h1 { font-size: clamp(46px, 14vw, 72px); }
   .rd-trace { grid-template-columns: repeat(2, 1fr); }
   .rd-card { transform: none; }
-  .rd-orbit { display: none; }
+  
   .rd-note { position: static; margin-top: 16px; transform: none; width: auto; }
   .rd-stage { min-height: 0; }
   html body #ai-cs-mock .home-feature-actions { padding-right: 0; }
   html body #ai-cs-mock .home-feature-card::after { display: none !important; }
 }
-
 
 /* Oct 5 hero product-review refinement */
 .rd-stage{position:relative!important;display:block!important;height:430px!important;min-width:0!important}
