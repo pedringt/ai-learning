@@ -22,7 +22,9 @@ test.describe('Portfolio -> State entry', () => {
     const diag = attachDiagnostics(page);
     await gotoWithBypass(page, '/');
     await expect(page.getByRole('link', { name: /Open State/i }).first()).toBeVisible();
-    await expect(page.getByRole('link', { name: /Read (?:the )?case study/i }).first()).toBeVisible();
+    // The State case study link (#454: the redesign changed its text from "Read the case study" to
+    // "Case study ->"; match the destination so a copy change does not break this check).
+    await expect(page.locator('a[href*="implementation-context"]', { hasText: /case study/i }).first()).toBeVisible();
     diag.assertClean(expect);
   });
 
