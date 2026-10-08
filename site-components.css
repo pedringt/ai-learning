@@ -63,25 +63,6 @@
 
 /* v95.35 — stabilize the Capabilities subnav position across legacy/new pages.
    Scope is intentionally only the wrapper whose first child is the capability nav. */
-body > .wrap:has(> .capability-local-nav),
-body > main.wrap:has(> .capability-local-nav){
-  width:100%!important;
-  max-width:1180px!important;
-  margin-left:auto!important;
-  margin-right:auto!important;
-  padding-top:34px!important;
-  padding-left:28px!important;
-  padding-right:28px!important;
-  box-sizing:border-box!important;
-}
-@media(max-width:760px){
-  body > .wrap:has(> .capability-local-nav),
-  body > main.wrap:has(> .capability-local-nav){
-    padding-top:26px!important;
-    padding-left:18px!important;
-    padding-right:18px!important;
-  }
-}
 
 /* v95.36 — capability hierarchy + Learning Guide orientation */
 

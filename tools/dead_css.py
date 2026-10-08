@@ -27,7 +27,7 @@ REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 EXCLUDE_PAGES = {"project-health.html", "state-evals.html"}
 SCRIPTS = ["site-shell.js", "site-environment.js"]
 SHARED_CSS = ["site-shell.css", "site-components.css", "site-redesign.css", "site-polish.css",
-              "portfolio-shape-polish.css", "implementation-context-case.css", "final-freeze-polish.css"]
+              "implementation-context-case.css", "final-freeze-polish.css"]
 
 
 def source_words() -> set[str]:
