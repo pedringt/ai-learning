@@ -14,14 +14,15 @@ _Last updated: October 7, 2026, Pacific time. The Oct 7 section just below is th
 - **Permissions:** Paige's untracked `.claude/settings.local.json` allows `git push origin --delete`, `git branch -D` and `gh pr merge`, so sessions can finish cleanups and merges. Merging to `main` still needs Paige's explicit yes each time. Auto mode blocks an assistant from editing its own settings, so permission changes are Paige's.
 - **CI:** the `javascript` job in `.github/workflows/tests.yml` now always runs (about 2 s). Its suites also read root pages, `project-health.js`, `api/*` and `vercel.json`, and the old path filter is what hid two broken Project Health suites until Oct 4. The `python` job keeps its filter.
 - **Tech-debt plan** (State Product board, Work Type Tech debt): #449 phase 0 (this CI change and this doc), #450 fold the State app's patch-layer scripts (`context-feedback-pass*`, `-quickwins`, `-design-pass`, ...) and remove the legacy Ask path, #451 consolidate portfolio CSS, #452 split large files when next touched.
-- **#450 progress (on `staging`, not `main`):** the State app now loads 21 `context-*.js` scripts instead of 28.
+- **#450 is done on `staging` (not `main`).** The State app loads 19 `context-*.js` scripts instead of 28, and no patch layers remain.
   - **Deleted:** `context-quickwins`, `-design-pass`, `-feedback-pass`, `-2`, `-3`, `-4`, `-attention-alignment`, `-final-mobile`, `-sources`.
-  - **Moved instead to:** their CSS is in `state-app.css`; their markup is in the renderers; the Ask drawer controls are in `context-ask-controls.js`; layout-only JavaScript is in `context-layout.js`.
+  - **Merged:** the three Baseline layers are now `context-baseline.js`, with one banner renderer.
+  - **Where their behavior lives now:** markup in the renderers; CSS in `state-app.css`; the Ask drawer controls in `context-ask-controls.js`; layout-only JavaScript in `context-layout.js`.
   - **An idle page no longer rewrites the DOM.** It used to make about 840 changes a second; a test pins this.
-  - **Fixed along the way:** #455 (a new project's banner was missing "Enter Current State manually") and the uncapped Workspace attention line after an Evidence add.
-  - **How every slice was checked:** `scripts/state_ui_compare/compare.py`. It renders staging and the working tree side by side against a local demo backend with no model calls (a fake Ask provider covers the answered, editing, cleared, error and mid-answer states) and compares every element on every view at 1280 and 375px.
-  - **Still open:** the three Baseline layers (`context-baseline-setup`, `-polish`, `-dogfood-fixes`). Hold them until #453 (staging model calls failing) is fixed, so Deep QA's real Baseline lifecycle test can verify the fold.
-- **Before promoting this batch to `main`:** fix #453, then rerun State Deep QA on `staging`. Paige's instruction: nothing goes to `main` until then.
+  - **Fixed along the way:** #455 (missing "Enter Current State manually"), #456 (established projects were shown Baseline copy after adding Evidence), and the uncapped Workspace attention line after an Evidence add.
+  - **How every slice was checked:** `scripts/state_ui_compare/compare.py` compared old and new builds on every view, Ask state and Baseline state at 1280 and 375px, with no model calls. Deep QA on `5f02f48`: 14/14.
+- **Staging model access (#453) is fixed:** Paige put a new Anthropic key, from a new account, on `state-api-staging` (Oct 7). The stale Deep QA homepage check (#454) is fixed too.
+- **Promotion to `main`:** everything above is ready on `staging`. Paige chose to wait on promoting (Oct 8); open the `staging` -> `main` PR only with her go-ahead.
 - **Trap found Oct 7:** `site-shell.js` and `state-shell.js` inject `final-freeze-polish.css` at runtime and rewrite page copy and Applied Work layout (about 14 content writes each). A file can look unused from the HTML and still be live, and a page's HTML copy is not always what visitors see. Grep the shell scripts before deleting assets or editing copy. Moving those rewrites into the HTML is part of #451.
 
 ## Oct 5, 2026 handoff update: bright redesign shipped and polished (#428)
