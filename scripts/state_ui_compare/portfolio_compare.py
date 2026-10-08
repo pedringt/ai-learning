@@ -35,7 +35,10 @@ EXCLUDE = {"project-health.html", "state-evals.html"}
 
 def portfolio_pages() -> list[str]:
     names = subprocess.run(["git", "-C", REPO, "ls-files", "*.html"], capture_output=True, text=True, check=True).stdout.split()
-    return sorted(n for n in names if "/" not in n and n not in EXCLUDE)
+    pages = sorted(n for n in names if "/" not in n and n not in EXCLUDE)
+    # index.html is a single-page app: its Learning Guide and Applied Work panels are hidden
+    # until their hash is opened, and hidden content is never styled, so visit them too.
+    return pages + ["index.html#learn", "index.html#portfolio"]
 
 
 def serve(root: str) -> str:
