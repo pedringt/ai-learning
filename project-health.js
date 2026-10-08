@@ -1199,9 +1199,10 @@
     if(q.project==='narc'&&q.recorded?.recorded_all_suites_green) return q.recorded.full_playtest_pending?'Automated checks pass · playtest open':'Game checks healthy';
     return top?.title||'Quality loaded';
   }
+  function stageTag(project){return project.stageLabel?'<em class="stage-tag">'+esc(project.stageLabel)+'</em>':'';}
   function loadingCardMarkup(project,active){
     return '<button class="project-switcher-item '+(active?'active':'')+'" data-kind="unknown" data-project="'+esc(project.id)+'" type="button" aria-pressed="'+(active?'true':'false')+'" aria-busy="true">'+
-      '<span class="project-switcher-main"><strong>'+esc(project.name)+(project.stageLabel?' · '+esc(project.stageLabel):'')+'</strong><span>Checking project health…</span></span>'+
+      '<span class="project-switcher-main"><strong>'+esc(project.name)+'</strong>'+stageTag(project)+'<span>Checking project health…</span></span>'+
       '<span class="status-pill unknown">Checking</span></button>';
   }
   function cardMarkup(data,active){
@@ -1211,7 +1212,7 @@
       ?'Checking project health…'
       :(status.kind==='good'?'No current product-quality action':attention.title);
     return '<button class="project-switcher-item '+(active?'active':'')+'" data-kind="'+esc(status.kind)+'" data-project="'+esc(data.project.id)+'" type="button" aria-pressed="'+(active?'true':'false')+'">'+
-      '<span class="project-switcher-main"><strong>'+esc(data.project.name)+(data.project.stageLabel?' · '+esc(data.project.stageLabel):'')+'</strong><span>'+esc(signal||'No current issue')+'</span></span>'+
+      '<span class="project-switcher-main"><strong>'+esc(data.project.name)+'</strong>'+stageTag(data.project)+'<span>'+esc(signal||'No current issue')+'</span></span>'+
       '<span class="status-pill '+esc(status.key)+'">'+esc(status.label)+'</span></button>';
   }
   function evalSuiteLabel(run){
