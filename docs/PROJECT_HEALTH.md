@@ -6,7 +6,8 @@ Project Health is a portfolio-operations dashboard for Paige's active product wo
 
 - State
 - Tastemake
-- NARC
+- NARC (in progress)
+- Authority Lab (in progress)
 
 ## Common health layers
 
@@ -25,7 +26,7 @@ The dashboard works without these variables, but unavailable integrations stay l
 
 - `VERCEL_TOKEN`
 
-The token stays server-side. Project Health only returns aggregate visitor/page-view counts for the three allowlisted Vercel project IDs.
+The token stays server-side. Project Health only returns aggregate visitor/page-view counts for the allowlisted Vercel project IDs.
 
 ### Neon health
 
