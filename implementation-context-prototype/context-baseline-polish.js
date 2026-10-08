@@ -10,6 +10,11 @@
   }
 
   function ensureManualButton(banner){
+    // The dogfood banner (context-baseline-dogfood-fixes.js) renders its own action buttons,
+    // including "Enter Current State manually" for a blank project. Its blank state has no
+    // .baseline-setup-meta line, so the blank check below misread it and removed that button,
+    // and the dogfood banner never redrew it (#455). Leave a dogfood-owned banner alone.
+    if(banner?.dataset.baselineDogfoodOwned==='true') return;
     const existing=banner?.querySelector('[data-baseline-start-manual]');
     if(!banner||!baselineIsBlank(banner)){
       existing?.remove();

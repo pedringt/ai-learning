@@ -686,7 +686,7 @@
     const adjustedProvenance=h.accepted_as_adjusted&&h.aiProposed
       ? `<div class="history-change history-adjusted-provenance"><p><span>State proposed</span>${historyHighlight(h.aiProposed)}</p><p><span>Human approved</span>${historyHighlight(after)}</p></div>`
       : '';
-    return `<article class="history-entry"><div class="history-entry-date">${esc(h.date||formatBackendDate(h.changed_at))}</div><div class="history-entry-body"><span class="history-reason">${historyHighlight(reason)}</span><h3>${historyHighlight(h.type||historyType(h))}</h3><div class="history-change"><p><span>Before</span>${historyHighlight(before)}</p><p><span>Now</span>${historyHighlight(after)}</p></div>${adjustedProvenance}<p class="decision-line">${historyHighlight(decision)}</p>${historySources(h)}</div></article>`;
+    return `<article class="history-entry"><div class="history-entry-date">${esc(h.date||formatBackendDate(h.changed_at))}</div><div class="history-entry-body"><h3>${historyHighlight(h.type||historyType(h))}</h3><div class="history-change"><p><span>Before</span>${historyHighlight(before)}</p><p><span>Now</span>${historyHighlight(after)}</p></div>${adjustedProvenance}<p class="decision-line">${historyHighlight(decision)}</p>${historySources(h)}</div></article>`;
   }
   function updateHistoryResults(){
     const list=document.getElementById('historyList');

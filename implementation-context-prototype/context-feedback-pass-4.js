@@ -68,9 +68,6 @@
     },true);
   }
 
-  function cleanHistory(){
-    document.querySelectorAll('.history-page .history-reason').forEach(el=>el.remove());
-  }
 
   function syncAttention(){
     const API=window.STATE_API,app=window.STATE_ASK_TEST_API;if(!API?.getAttention||!app?.state)return;
@@ -93,9 +90,9 @@
     }).observe(body,{childList:true,subtree:true,characterData:true});
   }
 
-  function run(){installAskControls();ensureResetButton();syncAskControls();cleanHistory();installEvidenceSync();}
+  function run(){installAskControls();ensureResetButton();syncAskControls();installEvidenceSync();}
   let queued=false;
-  const schedule=()=>{if(queued)return;queued=true;requestAnimationFrame(()=>{queued=false;ensureResetButton();syncAskControls();cleanHistory();});};
+  const schedule=()=>{if(queued)return;queued=true;requestAnimationFrame(()=>{queued=false;ensureResetButton();syncAskControls();});};
   new MutationObserver(schedule).observe(document.documentElement,{childList:true,subtree:true});
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',run,{once:true});else run();
 })();

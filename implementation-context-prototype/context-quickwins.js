@@ -81,39 +81,8 @@
     });
   }
 
-  async function clarifyQuestionsAwaitingReview(scope=document){
-    const page=scope.querySelector('.open-items-page');
-    if(!page || page.dataset.awaitingReviewChecked==='true' || !window.STATE_API?.getReviews)return;
-    page.dataset.awaitingReviewChecked='true';
-    try{
-      const payload=await window.STATE_API.getReviews('open');
-      const reviews=payload?.items||payload||[];
-      const questionIds=new Set(reviews.flatMap(review=>review.resolves_question_ids||[]).filter(Boolean).map(String));
-      if(!questionIds.size)return;
-      const currentPage=document.querySelector('.open-items-page');
-      if(!currentPage)return;
-      currentPage.querySelectorAll('.open-question-row[data-question-id]').forEach(row=>{
-        if(!questionIds.has(String(row.dataset.questionId)))return;
-        row.classList.add('is-awaiting-review');
-        const label=row.querySelector('.open-item-label');
-        if(label)label.textContent='Answer found · Awaiting review';
-        const copy=row.querySelector('.open-question-copy');
-        if(copy && !copy.querySelector('.question-awaiting-review-note')){
-          const note=document.createElement('span');
-          note.className='question-awaiting-review-note';
-          note.textContent='Evidence may answer this question. Review it before State treats the question as resolved.';
-          copy.appendChild(note);
-        }
-        row.setAttribute('aria-label',`Answer found, awaiting review: ${row.querySelector('.open-question-title')?.textContent?.trim()||'open question'}`);
-      });
-    }catch(error){
-      console.warn('Could not derive questions awaiting review.',error);
-      delete page.dataset.awaitingReviewChecked;
-    }
-  }
-
   function enhance(scope=document){
-    addWorkspaceOrientation(scope);addGrounding(scope);clarifyQuestionsAwaitingReview(scope);
+    addWorkspaceOrientation(scope);addGrounding(scope);
   }
   let queued=false;const schedule=()=>{if(queued)return;queued=true;requestAnimationFrame(()=>{queued=false;enhance(document);});};
   new MutationObserver(schedule).observe(document.documentElement,{childList:true,subtree:true});

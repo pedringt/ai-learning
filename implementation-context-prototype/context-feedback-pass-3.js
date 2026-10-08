@@ -5,19 +5,6 @@
     ['Show recent changes', 'What changed recently?']
   ]);
 
-  function styleEvidenceCallout(){
-    const root=document.getElementById('viewRoot');
-    if(!root) return;
-    root.querySelectorAll('*').forEach(el=>{
-      if(el.children.length) return;
-      const text=(el.textContent||'').replace(/\s+/g,' ').trim();
-      if(/^(?:New )?Evidence may answer this question\./i.test(text)){
-        el.classList.add('evidence-answer-callout');
-        el.textContent='New evidence may answer this question. Review it before State treats the question as resolved.';
-      }
-    });
-  }
-
   function syncHelpCard(){
     if(window.matchMedia('(max-width:760px)').matches) return;
     const sidebar=document.querySelector('.app-sidebar');
@@ -123,8 +110,6 @@
   }
 
   function run(){
-    
-    styleEvidenceCallout();
     syncHelpCard();
     ensureAskStatus();
     installAskLifecycle();
