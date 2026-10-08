@@ -1359,6 +1359,14 @@
     update(); analysisClock=setInterval(update,1000);
   }
   function stopAnalysisClock(){ clearInterval(analysisClock); analysisClock=null; }
+  // After Evidence is added, reload the project record so counts, Questions and the Workspace
+  // attention section come from one fresh hydration (the failure path below already does this).
+  // Replaces two patch layers (context-feedback-pass.js, context-feedback-pass-4.js) that each
+  // refetched /attention and rewrote the counts and the attention text themselves, which
+  // replaced the capped "2 reviews · +8 more in Open Items" line with uncapped totals (#450).
+  function refreshAfterEvidence(){
+    hydrateBackend().catch(error=>console.warn('Evidence saved; refresh needed.',error));
+  }
   async function showAnalysisFailure(error,{draftMessage='This update needs another try.',safeContext='Your note'}={}){
     state.isAnalyzing=false; stopAnalysisClock();
     if(error?.evidenceId){
@@ -1384,6 +1392,7 @@
       state.reviewBannerDismissed=false;
       state.isAnalyzing=false; stopAnalysisClock();
       updateNav();
+      refreshAfterEvidence();
       if(apiReviews.length){
         showDialog(`<span class="eyebrow">Evidence added</span><h2 id="dialogTitle">Evidence added</h2><p>${apiReviews.length===1?'1 Review needs your decision.':`${apiReviews.length} Reviews need your decisions.`}</p><div class="dialog-actions"><button class="btn primary" data-action="go-review">View Review</button></div>`);
       }else{
@@ -1412,6 +1421,7 @@
       state.reviewBannerDismissed=false;
       state.isAnalyzing=false; stopAnalysisClock();
       updateNav();
+      refreshAfterEvidence();
       if(apiReviews.length){
         showDialog(`<span class="eyebrow">Evidence added</span><h2 id="dialogTitle">Evidence added</h2><p>${apiReviews.length===1?'1 Review needs your decision.':`${apiReviews.length} Reviews need your decisions.`}</p><div class="dialog-actions"><button class="btn primary" data-action="go-review">View Review</button></div>`);
       }else{
@@ -1447,7 +1457,7 @@
       if(n.draftId){try{await API.deleteDraft(n.draftId);}catch(err){console.warn('Evidence saved but draft cleanup failed:',err);}}
       n.backendDraft=false; n.draftId=null; n.backendManaged=true; n.status=apiReviews.length?'pending':'no_review_needed'; n.reviewId=apiReviews[0]?.id||null; n.reviewIds=apiReviews.map(r=>r.id); n.evidenceId=result.evidence_id;
       apiReviews.forEach(r=>{r.evidenceId=n.id; upsertBackendReview(r);});
-      state.reviewBannerDismissed=false; state.isAnalyzing=false; stopAnalysisClock(); updateNav();
+      state.reviewBannerDismissed=false; state.isAnalyzing=false; stopAnalysisClock(); updateNav(); refreshAfterEvidence();
       if(apiReviews.length) showDialog(`<span class="eyebrow">Evidence added</span><h2 id="dialogTitle">Evidence added</h2><p>${apiReviews.length===1?'1 Review needs your decision.':`${apiReviews.length} Reviews need your decisions.`}</p><div class="dialog-actions"><button class="btn primary" data-action="go-review">View Review</button><button class="btn secondary" data-action="go-notes">Back to Notes</button></div>`);
       else showDialog(`<span class="eyebrow">Evidence added</span><h2 id="dialogTitle">Evidence added</h2><p>Added as Evidence. Current State did not need a Review.</p><div class="dialog-actions"><button class="btn primary" data-action="go-notes">Back to Notes</button></div>`);
     }catch(e){

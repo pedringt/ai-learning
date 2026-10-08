@@ -4,7 +4,7 @@ Written for #135 (Sept 2026) from an audit of what `index.html` actually loads, 
 
 ## Decision (#135)
 
-**The current organization is accepted technical debt. Do not rename or merge the historically named modules.** All 28 `context-*.js` files are loaded by `index.html` and none is dead, so nothing can be deleted "because the name looks temporary". They are coupled by load order (later modules patch what earlier ones rendered), and the automated tests that name most of the patch layers are few or none, so a rename or merge would be a cascade/DOM-order refactor with the weakest protection exactly where it would happen. The benefit would be cosmetic. What was done instead: the one confirmed piece of dev-only code (`seedStressNotes` in `context-feedback-pass-4.js`, two hard-coded "Stress test" notes) was removed with a guard test (`state-no-dev-fixtures-tests.js`), and this map was written.
+**Update (Oct 2026, #450): the patch layers are now being folded into the renderers, one slice at a time.** The earlier position here was "do not rename or merge", because the layers are coupled by load order and few tests named them, so a merge would happen exactly where protection was weakest. What changed is the protection: `scripts/state_ui_compare/compare.py` renders the old and new build side by side against a local demo backend (no model calls) and compares every element's computed style, text, attributes and structure on every view and Ask state at desktop and phone widths. A slice ships only when that comparison is identical, or every difference is explained and intended. Progress and findings are recorded on #450. (The original dev-only cleanup still stands: `seedStressNotes` was removed with the guard test `state-no-dev-fixtures-tests.js`.)
 
 ## Load order and roles
 
@@ -26,8 +26,7 @@ Judged from function names; check the code before assuming two functions do the 
 | Concern | Touched by |
 |---|---|
 | Ask controls / launcher | Consolidated in `context-ask-controls` (#450). The old layers' functions are kept there in their original order; the never-visible second clear button and the dead quick-actions branch were removed |
-| Attention / Workspace sync | `feedback-pass` (`syncAttentionFromApi`), `feedback-pass-4` (`syncAttention`), `attention-alignment` (`normalizeAttention`) |
-| Evidence sync | `feedback-pass` (`evidenceSync`), `feedback-pass-4` (`installEvidenceSync`) |
+| Attention / Workspace sync | Resolved (#450): after Evidence is added `context-app` re-hydrates (`refreshAfterEvidence`); `feedback-pass` and `feedback-pass-4` are deleted, and `attention-alignment`'s styles are CSS |
 | Navigation styling | Resolved (#450): static markup in `index.html` |
 | Help card | Card markup is static in `index.html` (#450); `feedback-pass-3` (`syncHelpCard`) still positions it and `final-mobile` (`ensureMobileHelp`) adds the mobile footer |
 
