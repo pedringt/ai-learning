@@ -38,7 +38,9 @@
       if (el.closest('script,style,noscript')) continue;
       const own = [...el.childNodes].filter(n => n.nodeType === 3).map(n => n.textContent).join(' ')
         .replace(VOLATILE, '~').replace(/\s+/g, ' ').trim();
-      const attrs = [...el.attributes].map(a => a.name + '=' + a.value.replace(VOLATILE, '~')).sort().join('|');
+      // The style attribute is skipped: its effect is already in the computed style, and moving
+      // inline styles into a stylesheet must not count as a change.
+      const attrs = [...el.attributes].filter(a => a.name !== 'style').map(a => a.name + '=' + a.value.replace(VOLATILE, '~')).sort().join('|');
       const visible = el.getClientRects().length ? 'v' : 'h';
       rows[pathOf(el)] = {
         s: hash(styleOf(el) + '@@' + styleOf(el, '::before') + '@@' + styleOf(el, '::after')),
@@ -79,5 +81,15 @@
     return out;
   }
 
-  window.STATE_CAPTURE = { run };
+  // For --explain: full computed styles for given element paths on one view.
+  async function detail(view, paths) {
+    if (view === 'ask-drawer') { await go('workspace'); document.getElementById('askStateLauncher')?.click(); await settle(); }
+    else if (view === 'workspace-cold') { /* already there */ }
+    else await go(view);
+    const byPath = {};
+    for (const el of document.body.querySelectorAll('*')) { const p = pathOf(el); if (paths.includes(p)) byPath[p] = { base: styleOf(el), before: styleOf(el, '::before'), after: styleOf(el, '::after') }; }
+    return byPath;
+  }
+
+  window.STATE_CAPTURE = { run, detail };
 })();

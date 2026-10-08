@@ -116,6 +116,41 @@ def capture(browser, url: str, width: int, height: int):
     return data, errors
 
 
+def explain(browser, urls, width, height, d: dict, limit: int):
+    """Print which computed properties differ for the first `limit` style-changed elements per view."""
+    def props(style):
+        out = {}
+        for part in style.split(";"):
+            if ":" in part:
+                k, v = part.split(":", 1)
+                out[k] = v
+        return out
+    for view, kinds in d.items():
+        paths = [row[0] for row in kinds.get("style", [])][-limit:]  # deepest-last order: innermost elements are most telling
+        if not paths:
+            continue
+        details = []
+        for url in urls:
+            ctx = browser.new_context(viewport={"width": width, "height": height})
+            page = ctx.new_page()
+            page.goto(url + "#workspace")
+            page.wait_for_timeout(2500)
+            page.add_script_tag(content=CAPTURE_JS)
+            details.append(page.evaluate("([v, p]) => STATE_CAPTURE.detail(v, p)", [view, paths]))
+            ctx.close()
+        for path in paths:
+            a, b = details[0].get(path), details[1].get(path)
+            if not a or not b:
+                continue
+            for part in ("base", "before", "after"):
+                pa, pb = props(a[part]), props(b[part])
+                changed = [k for k in sorted(set(pa) | set(pb)) if pa.get(k) != pb.get(k)]
+                if changed:
+                    print(f"  [{view}] {path}{'' if part == 'base' else '::' + part}")
+                    for k in changed[:12]:
+                        print(f"      {k}: {pa.get(k)!r} -> {pb.get(k)!r}")
+
+
 def diff(a: dict, b: dict) -> dict:
     out = {}
     for view in sorted(set(a) | set(b)):
@@ -139,14 +174,18 @@ def main() -> int:
     parser.add_argument("--runs", type=int, default=2)
     parser.add_argument("--self", action="store_true", dest="self_check")
     parser.add_argument("--json", help="write the full report here")
+    parser.add_argument("--explain", type=int, default=0, metavar="N",
+                        help="for the first differing run, print the changed CSS properties of up to N elements per view")
     args = parser.parse_args()
 
     from playwright.sync_api import sync_playwright
 
     worktree = tempfile.mkdtemp(prefix="state-ui-base-")
+    print(f"checking out {args.base} for comparison...", flush=True)
     subprocess.run(["git", "-C", REPO, "worktree", "add", "--detach", "-q", worktree, args.base], check=True)
     try:
         api = start_backend()
+        print("local backend up; capturing...", flush=True)
         before_url = serve_frontend(os.path.join(worktree, APP_DIR), api)
         after_url = before_url if args.self_check else serve_frontend(os.path.join(REPO, APP_DIR), api)
         report, changed = {}, False
@@ -154,11 +193,16 @@ def main() -> int:
             browser = pw.chromium.launch()
             for label, (w, h) in WIDTHS.items():
                 for run in range(args.runs):
+                    print(f"capturing {label} run {run + 1}: base...", flush=True)
                     before, errors_before = capture(browser, before_url, w, h)
+                    print(f"capturing {label} run {run + 1}: working tree...", flush=True)
                     after, errors_after = capture(browser, after_url, w, h)
                     d = diff(before, after)
                     changed = changed or bool(d) or bool(errors_after)
                     report[f"{label} run {run + 1}"] = {"diff": d, "errors_before": errors_before, "errors_after": errors_after}
+                    if d and args.explain and run == 0:
+                        print(f"--- explain: {label}")
+                        explain(browser, [before_url, after_url], w, h, d, args.explain)
             browser.close()
     finally:
         subprocess.run(["git", "-C", REPO, "worktree", "remove", "--force", worktree], check=False)

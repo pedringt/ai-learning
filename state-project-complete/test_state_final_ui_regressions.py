@@ -187,3 +187,24 @@ def test_idle_page_does_not_rewrite_the_dom_every_frame(open_ask):
         assert seen == [], f"{len(seen)} DOM changes on an idle page, e.g. {sorted(set(seen))[:5]}"
     finally:
         browser.close(); pw.stop()
+
+
+def test_dismissed_sources_strip_stays_dismissed_after_rerender():
+    # #450: the Workspace "Sources" strip moved from a MutationObserver layer
+    # (context-sources.js) into the Workspace template; dismissal must still
+    # remove it and survive later Workspace renders.
+    pw, browser, page = _page()
+    try:
+        page.evaluate("() => localStorage.removeItem('state-workspace-source-banner-dismissed-v2')")
+        page.locator('.sidebar-nav [data-view="notes"]').click()
+        page.locator('.sidebar-nav [data-view="overview"]').click()
+        assert page.locator(".overview .workspace-source-strip").count() == 1
+        page.locator(".workspace-source-dismiss").click()
+        assert page.locator(".workspace-source-strip").count() == 0
+        page.locator('.sidebar-nav [data-view="notes"]').click()
+        page.locator('.sidebar-nav [data-view="overview"]').click()
+        page.wait_for_timeout(300)
+        assert page.locator(".overview").count() == 1
+        assert page.locator(".workspace-source-strip").count() == 0
+    finally:
+        browser.close(); pw.stop()

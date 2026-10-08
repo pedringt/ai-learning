@@ -501,6 +501,7 @@
     // (context-product-polish.js), not a Workspace feature.
     root.innerHTML = `<section class="overview pristine">
       <section class="overview-heading"><div class="overview-heading-row"><div><h2>Workspace</h2>${currentProjectStage()?`<p class="overview-stage">${esc(currentProjectStage())}</p>`:''}</div><button class="btn secondary overview-add" data-action="add-info">+ Add Evidence</button></div></section>
+      ${workspaceSourcesHtml()}
       ${workspaceAttentionHtml()}
       <div class="workspace-below-grid">
         ${whatChangedHtml()}
@@ -511,7 +512,6 @@
     // Their observers remain as a fallback for other DOM changes, but should
     // not insert the banner or source strip in a later frame after navigation.
     ASK?.syncWorkspaceDecorations?.();
-    window.STATE_WORKSPACE_SOURCES?.decorate?.();
     // The Ask loading and refinement nodes are emitted here, and renderOverview
     // is called directly on the Ask paths rather than always through render(),
     // so activate the rotating wait states at the point they are created.
@@ -1454,6 +1454,19 @@
     }
   }
 
+  // Workspace "Sources" strip (#450, from context-sources.js). Dismissal is remembered per browser.
+  // Function declarations, not consts: renderOverview can run before this point in the file executes.
+  function sourcesDismissKey(){ return 'state-workspace-source-banner-dismissed-v2'; }
+  function sourcesStripDismissed(){ try{ return localStorage.getItem(sourcesDismissKey())==='1'; }catch(err){ return false; } }
+  function workspaceSourcesHtml(){
+    if(sourcesStripDismissed()) return '';
+    return `<section class="workspace-source-strip" aria-label="Source status"><div class="workspace-source-head"><span class="meta-label">Sources</span><span class="workspace-source-name">Slack</span><span class="workspace-source-status">Just added</span></div><div class="workspace-source-head"><button class="btn secondary workspace-source-action" type="button" data-view="settings" data-anchor="settings-slack">Connect your apps →</button><button class="workspace-source-dismiss" type="button" aria-label="Dismiss">×</button></div></section>`;
+  }
+  document.addEventListener('click',e=>{
+    if(!e.target.closest?.('.workspace-source-dismiss')) return;
+    try{ localStorage.setItem(sourcesDismissKey(),'1'); }catch(err){ /* private mode: dismissal just won't persist */ }
+    e.target.closest('.workspace-source-strip')?.remove();
+  });
   document.addEventListener('click',async e=>{
     if(e.target.closest('[data-action="dismiss-review-banner"]')){ state.reviewBannerDismissed=true; renderOverview(); return; }
     if(e.target.closest('[data-action="dismiss-nudge"]')){ const btn=e.target.closest('[data-action="dismiss-nudge"]'); state.dismissedNudges.add(btn.dataset.nudge); renderReview(); return; }

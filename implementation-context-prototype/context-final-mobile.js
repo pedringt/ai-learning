@@ -1,20 +1,6 @@
 (() => {
-
-
-  function loadAttentionAlignment(){
-    if(document.querySelector('script[data-state-attention-alignment],script[src*="context-attention-alignment.js"]'))return;
-    const script=document.createElement('script');
-    script.dataset.stateAttentionAlignment='true';
-    const local=location.protocol==='file:';
-    script.src=(window.__STATE_BASE||'')+'context-attention-alignment.js?v=r69-last-mile';
-    document.head.appendChild(script);
-  }
-
-
-  function removeWorkspaceAttentionIcon(){
-    document.querySelectorAll('.workspace-attention .workspace-attention-head>.state-attention-head-icon').forEach(icon=>icon.remove());
-  }
-
+  // loadAttentionAlignment (a fallback loader that never ran: index.html always loads the script) and
+  // removeWorkspaceAttentionIcon (its class is rendered nowhere) were removed in #450.
   function ensureMobileHelp(){
     const root=document.getElementById('viewRoot');
     const page=root?.querySelector('.page,.overview');
@@ -100,15 +86,14 @@
   window.addEventListener('scroll',onScroll,{passive:true});
   window.addEventListener('resize',onScroll,{passive:true});
 
-  function run(){loadAttentionAlignment();removeWorkspaceAttentionIcon();ensureMobileHelp();syncMobileAskLauncher();syncSubnavSentinel();reveal();}
+  function run(){ensureMobileHelp();syncMobileAskLauncher();syncSubnavSentinel();reveal();}
   let queued=false;
   const schedule=()=>{
     if(queued)return;
     queued=true;
     requestAnimationFrame(()=>{
       queued=false;
-      loadAttentionAlignment();
-      removeWorkspaceAttentionIcon();
+      
       ensureMobileHelp();
       syncMobileAskLauncher();
       syncSubnavSentinel();

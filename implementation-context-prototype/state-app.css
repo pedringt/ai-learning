@@ -311,9 +311,6 @@
       @media(max-width:680px){.settings-section{padding:16px}.settings-section-head,.slack-preview-row{align-items:flex-start;flex-direction:column}.settings-rule-form{display:grid}.settings-rule-list li{align-items:center}.settings-status{align-self:flex-start}.settings-behavior-list,.settings-source-grid{grid-template-columns:1fr}.source-row,.source-row:nth-child(-n+2){border-top:1px solid var(--line,#e5e5ea)}.source-row:first-child{border-top:0}.settings-danger .settings-actions{margin-top:12px}}
     
 
-/* ==== from context-sources.js: state-final-mobile-loader-style ==== */
-html.state-final-mobile-pending .prototype-productbar,html.state-final-mobile-pending .software-shell{visibility:hidden!important}
-
 /* ==== from context-sources.js: state-workspace-sources-styles ==== */
     .workspace-source-strip{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;margin:2px 0 18px;padding:9px 14px;border:1px solid var(--border,#d9dde3);border-radius:12px;background:var(--accent-soft,#eeebf4);font-size:12px}
     .workspace-source-head{display:flex;align-items:center;gap:10px;min-width:0;flex-wrap:wrap}
@@ -1395,3 +1392,59 @@ body:not(.v88-dark) .ask-state-drawer{background:#fbfdff!important}.ask-title-ro
         html body .prototype-productbar{gap:8px!important}
       }
     
+
+/* ==== from context-attention-alignment.js: inline !important styles (#450) ====
+   These were set as inline !important styles on every render by normalizeAttention,
+   normalizeWorkspacePair, normalizeSettings, normalizeStage and normalizeRecordSurfaces.
+   :has() keeps the original "only when this child exists" conditions. html:not(#_#_#_) gives
+   them the precedence inline !important styles had over other !important stylesheet rules. */
+
+/* Workspace: "Needs your attention" head (only when its copy block has a title). */
+html:not(#_#_#_) .workspace-attention .workspace-attention-head:has(> div h3){display:flex!important;align-items:flex-start!important}
+html:not(#_#_#_) .workspace-attention .workspace-attention-head:has(> div h3)>div:first-of-type{display:flex!important;align-items:center!important;gap:12px!important;padding-left:0!important;position:static!important;min-height:38px!important}
+html:not(#_#_#_) .workspace-attention .workspace-attention-head:has(> div h3)>div:first-of-type .attention-head-icon{position:static!important;flex:0 0 38px!important;width:38px!important;height:38px!important;margin:0!important;transform:none!important;top:auto!important;left:auto!important}
+html:not(#_#_#_) .workspace-attention .workspace-attention-head:has(> div h3)>div:first-of-type h3{margin:0!important;align-self:center!important}
+
+/* Workspace: What Changed + Current State pair. */
+html:not(#_#_#_) .workspace-below-grid{align-items:stretch!important;grid-auto-rows:auto!important}
+html:not(#_#_#_) .workspace-below-grid .workspace-recent:has(.workspace-recent-head){align-self:stretch!important;height:100%!important}
+html:not(#_#_#_) .workspace-below-grid .workspace-recent .workspace-recent-head>.eyebrow{display:none!important}
+html:not(#_#_#_) .workspace-status-card:has(> .eyebrow):has(.state-fact-preview){align-self:stretch!important;height:100%!important;min-height:0!important}
+html:not(#_#_#_) .workspace-status-card:has(> .eyebrow):has(.state-fact-preview) .workspace-status-body{display:block!important;flex:0 0 auto!important;height:auto!important;min-height:0!important}
+html:not(#_#_#_) .workspace-status-card:has(> .eyebrow) .state-fact-preview{display:block!important;flex:0 0 auto!important;height:auto!important;min-height:0!important;justify-content:flex-start!important;padding-top:0!important}
+html:not(#_#_#_) .workspace-status-card:has(.state-fact-preview)>.eyebrow>.current-state-browse{grid-column:3!important;grid-row:1!important;align-self:start!important;justify-self:end!important;position:static!important;margin:3px 0 0!important}
+
+/* Workspace: project stage chip. */
+html:not(#_#_#_) .overview-stage{background:#f4f6ff!important;background-color:#f4f6ff!important;border-color:#d9def2!important;box-shadow:none!important}
+
+/* Settings. */
+html:not(#_#_#_) .settings-page{width:100%!important;max-width:1280px!important;margin-left:auto!important;margin-right:auto!important;box-sizing:border-box!important}
+html:not(#_#_#_) .settings-page .settings-section{width:100%!important;max-width:none!important;margin-left:0!important;margin-right:0!important;border:0!important;border-radius:0!important;box-shadow:none!important;background:var(--surface,#fff)!important;box-sizing:border-box!important;padding:20px 24px!important}
+html:not(#_#_#_) .settings-page .settings-source-grid{display:block!important;grid-template-columns:none!important;gap:0!important}
+html:not(#_#_#_) .settings-page .settings-source-grid>.source-row{display:grid!important;grid-template-columns:minmax(0,1fr) auto!important;grid-template-rows:auto!important;column-gap:16px!important;row-gap:0!important;align-items:start!important;width:100%!important;min-width:0!important;box-sizing:border-box!important;border-top:0!important}
+html:not(#_#_#_) .settings-page .settings-source-grid>.source-row~.source-row{border-top:1px solid #e5e8ed!important}
+html:not(#_#_#_) .settings-page .settings-source-grid>.source-row>div:first-of-type{grid-column:1!important;grid-row:1!important;width:100%!important;min-width:0!important}
+html:not(#_#_#_) .settings-page .settings-source-grid>.source-row>.settings-status{grid-column:2!important;grid-row:1!important;align-self:start!important;justify-self:end!important;margin:1px 0 0!important;width:max-content!important;max-width:none!important}
+
+/* Open Items. */
+html:not(#_#_#_) .open-items-page .open-items-section-body,html:not(#_#_#_) .open-items-page .open-question-list{width:100%!important;max-width:none!important;background:var(--surface,#fff)!important;box-shadow:none!important;box-sizing:border-box!important}
+html:not(#_#_#_) .open-items-page .open-question-list{padding-left:0!important;padding-right:0!important}
+html:not(#_#_#_) .open-items-page details.open-question-item,html:not(#_#_#_) .open-items-page .open-question-row{background:transparent!important;box-shadow:none!important;box-sizing:border-box!important;padding-left:12px!important;padding-right:16px!important}
+html:not(#_#_#_) .open-items-page .review-card,html:not(#_#_#_) .open-items-page .compact-review{background:transparent!important;box-shadow:none!important;box-sizing:border-box!important;position:relative!important;padding-left:40px!important;padding-right:16px!important}
+
+/* History. */
+html:not(#_#_#_) .history-page .history-list,html:not(#_#_#_) .history-page #historyList{width:100%!important;max-width:none!important;box-sizing:border-box!important;background:var(--surface,#fff)!important;padding:20px 24px 24px!important}
+html:not(#_#_#_) .history-page .history-entry,html:not(#_#_#_) .history-page .history-entry-body{width:100%!important;max-width:none!important;box-sizing:border-box!important;padding-left:0!important;padding-right:0!important}
+html:not(#_#_#_) .history-page .history-change{width:100%!important;max-width:none!important;box-sizing:border-box!important;margin-left:0!important;margin-right:0!important}
+html:not(#_#_#_) .history-page .history-change>p{width:100%!important;max-width:none!important;box-sizing:border-box!important}
+
+@media(max-width:760px){
+  html:not(#_#_#_) .workspace-below-grid{align-items:start!important;grid-auto-rows:min-content!important}
+  html:not(#_#_#_) .workspace-below-grid .workspace-recent:has(.workspace-recent-head){align-self:start!important;height:auto!important}
+  html:not(#_#_#_) .workspace-status-card:has(> .eyebrow):has(.state-fact-preview){align-self:start!important;height:auto!important}
+  html:not(#_#_#_) .settings-page .settings-section{padding:18px 16px!important}
+  html:not(#_#_#_) .settings-page .settings-source-grid>.source-row{column-gap:10px!important}
+  html:not(#_#_#_) .open-items-page details.open-question-item,html:not(#_#_#_) .open-items-page .open-question-row{padding-left:10px!important;padding-right:12px!important}
+  html:not(#_#_#_) .open-items-page .review-card,html:not(#_#_#_) .open-items-page .compact-review{padding-left:34px!important;padding-right:12px!important}
+  html:not(#_#_#_) .history-page .history-list,html:not(#_#_#_) .history-page #historyList{padding:18px 16px 20px!important}
+}
