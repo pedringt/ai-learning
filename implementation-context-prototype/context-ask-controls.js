@@ -1,5 +1,5 @@
 // Ask drawer controls (#450). Consolidated, in their original order, from the patch layers
-// that used to own them: context-feedback-pass.js (mobileAsk, askControlStates),
+// that used to own them: context-quickwins.js (addGrounding), context-feedback-pass.js (mobileAsk, askControlStates),
 // context-feedback-pass-3.js (status line, lifecycle), context-feedback-pass-4.js (reset
 // button, control visibility), context-attention-alignment.js (blank-question guard, mobile
 // close shield) and context-final-mobile.js (mobile launcher). Capture-phase handlers here
@@ -8,7 +8,29 @@
 // feedback-pass-4); the feedback-pass-3 lifecycle one animation frame later.
 // The Ask flow itself (runAsk, routing, read-only guard) lives in context-product-polish.js.
 (() => {
+  const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
+
+  // ---- from context-quickwins.js ----
+  function addGrounding(scope = document) {
+    scope.querySelectorAll('.ask-live-answer').forEach(answer => {
+      if (answer.querySelector('.ask-grounding')) return;
+      const rows = [...answer.querySelectorAll('.ask-answer-item')].map(row => {
+        const badge = row.querySelector('.ask-record-badge')?.textContent?.trim() || '';
+        const text = row.querySelector('.ask-item-text')?.textContent?.trim() || '';
+        return badge && text ? {badge,text} : null;
+      }).filter(Boolean);
+      const unique=[]; const seen=new Set();
+      rows.forEach(row=>{const key=`${row.badge}:${row.text}`;if(!seen.has(key)){seen.add(key);unique.push(row);}});
+      if(!unique.length)return;
+      const details=document.createElement('details');
+      details.className='evidence ask-grounding';
+      details.innerHTML=`<summary>Grounded in State's project record</summary><p>${unique.length} project ${unique.length===1?'item is':'items are'} shown in this answer.</p>${unique.map(row=>`<article><strong>${esc(row.badge)}</strong><p>${esc(row.text)}</p></article>`).join('')}`;
+      const actions=answer.querySelector('.ask-state-actions');
+      const safety=answer.querySelector('.ask-open-items-safety');
+      if(actions)answer.insertBefore(details,actions);else if(safety)answer.insertBefore(details,safety);else answer.appendChild(details);
+    });
+  }
 
   // ---- from context-feedback-pass.js ----
   function mobileAsk(){
@@ -231,6 +253,7 @@
   // the order those files ran in (feedback-pass-3, feedback-pass-4, attention-alignment,
   // final-mobile).
   function sync(){
+    addGrounding(document);                   // quickwins ran before these layers each frame
     ensureAskStatus();
     installAskLifecycle();
     ensureResetButton();

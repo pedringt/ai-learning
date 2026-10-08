@@ -371,6 +371,21 @@
       current:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 4h10a2 2 0 0 1 2 2v14H8a2 2 0 0 1-2-2z"/><path d="M8 4v16M11 8h4M11 12h4M11 16h3"/></svg>',
     })[name];
   }
+  // Workspace stage line (#450, from context-quickwins.js addWorkspaceOrientation). A short
+  // "current · next" pair becomes a pill; anything longer stays plain flowing text. Hydration
+  // later replaces the text if the stage fact changes (see hydrateBackend), as before.
+  function workspaceStageHtml(raw){
+    if(!raw) return '';
+    const MAX_PILL_PHRASE_LENGTH=60;
+    const text=String(raw).trim();
+    const parts=text.split('·').map(x=>x.trim()).filter(Boolean);
+    const current=parts[0]||text;
+    const next=(parts[1]||'').replace(/\s+next$/i,'').trim();
+    if(current.length<=MAX_PILL_PHRASE_LENGTH && (!next||next.length<=MAX_PILL_PHRASE_LENGTH)){
+      return `<p class="overview-stage" data-mock-styled="true"><span class="workspace-stage-pill">${esc(current)}</span>${next?`<span class="workspace-stage-divider" aria-hidden="true"></span><span class="workspace-next-step">Next: ${esc(next.charAt(0).toUpperCase()+next.slice(1))}</span><span class="workspace-next-arrow" aria-hidden="true">›</span>`:''}</p>`;
+    }
+    return `<p class="overview-stage overview-stage--plain" data-mock-styled="true">${esc(raw)}</p>`;
+  }
   function whatChangedHtml(){
     if(state.backendStatus.history!=='loaded'){
       return `<section class="workspace-recent"><div class="workspace-recent-head"><span class="eyebrow">What changed</span><button class="text-button" data-view="history">History →</button></div><p class="workspace-section-hint" role="status">${state.backendStatus.history==='error'?'Recent changes are unavailable.':'Loading recent changes…'}</p></section>`;
@@ -520,7 +535,7 @@
     // read-only utility reached from the floating Ask State control
     // (context-product-polish.js), not a Workspace feature.
     root.innerHTML = `<section class="overview pristine">
-      <section class="overview-heading"><div class="overview-heading-row"><div><h2>Workspace</h2>${currentProjectStage()?`<p class="overview-stage">${esc(currentProjectStage())}</p>`:''}</div><button class="btn secondary overview-add" data-action="add-info">+ Add Evidence</button></div></section>
+      <section class="overview-heading"><div class="overview-heading-row"><div><h2>Workspace</h2><p class="workspace-record-orientation">See what needs attention, what changed, and what the team currently treats as true.</p>${workspaceStageHtml(currentProjectStage())}</div><button class="btn secondary overview-add" data-action="add-info">+ Add Evidence</button></div></section>
       ${workspaceSourcesHtml()}
       ${workspaceAttentionHtml()}
       <div class="workspace-below-grid">

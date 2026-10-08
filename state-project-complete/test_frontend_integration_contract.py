@@ -389,7 +389,7 @@ def test_r861_grounded_ask_module_and_release_assets_are_self_contained():
     file_list_match = re.search(r"\[('context-[^\]]+)\]\.forEach", html)
     assert file_list_match, "could not find the JS loader's file list in index.html"
     referenced = set(re.findall(r"'([\w.-]+\.js)'", file_list_match.group(1)))
-    assert {"context-ask.js", "context-app.js", "context-history.js", "context-quickwins.js"} <= referenced
+    assert {"context-ask.js", "context-app.js", "context-history.js", "context-ask-controls.js"} <= referenced
 
     for name in referenced:
         assert (FRONTEND / name).exists(), f"{name} is referenced but does not exist"

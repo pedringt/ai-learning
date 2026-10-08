@@ -22,7 +22,7 @@ def test_state_release_assets_share_one_dynamic_version_token():
     assets = re.findall(r"['\"]([^'\"]+\.js)['\"]", array_match.group(1))
     referenced = {Path(src).name for src in assets}
 
-    required = {"context-ask.js", "context-app.js", "context-history.js", "context-quickwins.js"}
+    required = {"context-ask.js", "context-app.js", "context-history.js", "context-ask-controls.js"}
     assert required <= referenced
 
     for src in assets:
