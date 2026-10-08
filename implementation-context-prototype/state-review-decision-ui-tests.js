@@ -45,7 +45,7 @@ check('adjust dialog submits via confirm-review-adjust, not a second confirmatio
 
 // --- 3. Leave unchanged is always present and labeled plainly ---------------
 check('Leave unchanged uses the existing review-keep action (no new backend concept needed)',
-  normalHtml.includes('data-action="review-keep" data-review="r-normal">Leave unchanged<'));
+  normalHtml.includes('data-action="review-keep" data-review="r-normal" title="Do not apply this evidence to Current State.">Leave unchanged<'));
 
 // --- 4. state_at_risk / uncertainty-only Review -----------------------------
 const riskReview={

@@ -5,33 +5,6 @@
     ['Show recent changes', 'What changed recently?']
   ]);
 
-
-  function forceLightState(){
-    // Guarded (#450): classList.remove rewrites the class attribute even when the class is
-    // absent, and this file observes class changes, so it re-triggered itself every frame.
-    if(document.body?.classList.contains('v88-dark')) document.body.classList.remove('v88-dark');
-    document.documentElement.style.colorScheme='light';
-  }
-
-  function markNorthstar(){
-    document.querySelectorAll('#viewRoot h1,#viewRoot h2').forEach(el=>{
-      if((el.textContent||'').trim()==='Northstar') el.classList.add('northstar-display');
-    });
-  }
-
-  function cleanNotes(){
-    document.querySelectorAll('.notes-page .notes-disclosure').forEach(el=>el.remove());
-    document.querySelectorAll('.notes-page .note-status,.notes-page .note-index-status [class*="status"]').forEach(el=>{
-      if(/no review needed/i.test(el.textContent||'')&&!el.classList.contains('is-neutral-status')) el.classList.add('is-neutral-status');
-    });
-  }
-
-  function simplifyCurrentState(){
-    document.querySelectorAll('.project-page .project-maintained-facts').forEach(el=>{if(!el.hidden) el.hidden=true;});
-    const toolbar=document.querySelector('.project-page-toolbar');
-    toolbar?.remove();
-  }
-
   function styleEvidenceCallout(){
     const root=document.getElementById('viewRoot');
     if(!root) return;
@@ -150,11 +123,7 @@
   }
 
   function run(){
-    forceLightState();
-    markNorthstar();
     
-    cleanNotes();
-    simplifyCurrentState();
     styleEvidenceCallout();
     syncHelpCard();
     ensureAskStatus();

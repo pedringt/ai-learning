@@ -1448,3 +1448,7 @@ html:not(#_#_#_) .history-page .history-change>p{width:100%!important;max-width:
   html:not(#_#_#_) .open-items-page .review-card,html:not(#_#_#_) .open-items-page .compact-review{padding-left:34px!important;padding-right:12px!important}
   html:not(#_#_#_) .history-page .history-list,html:not(#_#_#_) .history-page #historyList{padding:18px 16px 20px!important}
 }
+
+/* ==== from context-feedback-pass-3.js forceLightState (#450): State is light-only. It was an inline
+   style on <html>; the prefix and !important keep that precedence. ==== */
+html:not(#_#_#_){color-scheme:light!important}

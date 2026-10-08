@@ -290,6 +290,8 @@
         holder.className='project-fact-provenance';
         holder.innerHTML=`<button type="button" class="text-button project-provenance-toggle" data-action="toggle-provenance" aria-expanded="false">Why this is current →</button><div class="project-provenance-body" hidden>${markup}</div>`;
         li.appendChild(holder);
+        const summary=li.closest('.project-maintained-facts')?.querySelector(':scope > summary');
+        if(summary&&!summary.textContent.endsWith(' · sources & history')) summary.textContent+=' · sources & history';
       });
     }catch(error){console.warn('Could not load project provenance.',error);}
     finally{projectProvenanceDecorating=false;}

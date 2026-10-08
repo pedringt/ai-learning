@@ -63,7 +63,8 @@
   function projectOutlineSection(area,items,pendingFor,history){
     if(!items.length) return '';
     const paragraphs=projectWikiParagraphs(items);
-    const maintained=`<details class="project-maintained-facts"><summary>Maintained from ${items.length} Current State ${items.length===1?'fact':'facts'}</summary><ul>${items.map(k=>projectFact(k,pendingFor,history)).join('')}</ul></details>`;
+    // Hidden: the prose above is the Current State reading surface (#450, from context-feedback-pass-3.js / context-quickwins.js).
+    const maintained=`<details class="project-maintained-facts" hidden><summary>See ${items.length} maintained Current State ${items.length===1?'fact':'facts'}</summary><ul>${items.map(k=>projectFact(k,pendingFor,history)).join('')}</ul></details>`;
     return `<section class="project-outline-section project-wiki-section" id="project-${esc(area.id)}"><div class="project-section-sticky"><h3>${esc(area.name)}</h3></div>${area.description?`<p class="project-outline-description">${esc(area.description)}</p>`:''}<div class="project-wiki-prose">${paragraphs.map(text=>`<p>${esc(text)}</p>`).join('')}</div>${maintained}</section>`;
   }
 

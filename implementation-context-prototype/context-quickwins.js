@@ -81,16 +81,6 @@
     });
   }
 
-  function improveOpenItemsSummary(scope=document){
-    const page=scope.querySelector('.open-items-page'); if(!page)return;
-    const head=page.querySelector('.page-head p'); if(!head||head.dataset.quickwinCounts==='true')return;
-    const sections=[...page.querySelectorAll('.open-items-section')]; if(sections.length<3)return;
-    const readCount=s=>{const n=Number(s.querySelector('.open-items-section-count')?.textContent?.trim()||'0');return Number.isFinite(n)?n:null;};
-    const [reviews,blockers,questions]=sections.slice(0,3).map(readCount); if([reviews,blockers,questions].some(v=>v===null))return;
-    const summary=document.createElement('strong');summary.className='open-items-count-summary';summary.textContent=`${reviews} ${reviews===1?'needs review':'need review'} · ${blockers} blocking · ${questions} ${questions===1?'other question':'other questions'}`;
-    head.prepend(summary,document.createElement('br'));head.dataset.quickwinCounts='true';
-  }
-
   async function clarifyQuestionsAwaitingReview(scope=document){
     const page=scope.querySelector('.open-items-page');
     if(!page || page.dataset.awaitingReviewChecked==='true' || !window.STATE_API?.getReviews)return;
@@ -122,61 +112,8 @@
     }
   }
 
-  function improveEmptyStates(scope=document){
-    scope.querySelectorAll('.open-items-empty').forEach(node=>{
-      const text=node.textContent.trim();
-      if(text==='Nothing needs your decision right now.')node.textContent='Nothing needs review. Current State is up to date with accepted evidence.';
-      else if(text==='Nothing is currently blocked on an answer.')node.textContent='Nothing is blocking the project right now.';
-      else if(text==='No other open questions.')node.textContent='Nothing else is unresolved right now.';
-    });
-  }
-
-  function clarifyReviewCompletion(scope=document){
-    const title=scope.querySelector('#dialogTitle'); if(!title)return;
-    if(title.textContent.trim()==='Evidence reviewed.'){
-      title.textContent='Review complete.';
-      const p=title.nextElementSibling;
-      if(p&&/preserved as reviewed material/i.test(p.textContent))p.textContent='Current State was not changed. The original evidence remains in Notes, and this review is recorded in History.';
-    }
-  }
-
-  function clarifyReviewActions(scope=document){
-    scope.querySelectorAll('button').forEach(btn=>{
-      const text=btn.textContent.trim();
-      if(text==='Accept as reviewed evidence'){
-        btn.textContent='Accept evidence';
-        btn.title='Keep this as reviewed project evidence without automatically changing Current State.';
-      } else if(text==='Leave unchanged'){
-        btn.title='Do not apply this evidence to Current State.';
-      }
-    });
-  }
-
-  function clarifyNotesProcessedFilter(scope=document){
-    const select=scope.querySelector('#notesStatusFilter');
-    if(!select)return;
-    const reviewedOption=select.querySelector('option[value="reviewed"]');
-    if(reviewedOption && reviewedOption.textContent!=='Processed') reviewedOption.textContent='Processed';
-    if(select.value==='reviewed'){
-      const summary=scope.querySelector('#notesFilterSummary span');
-      if(summary) summary.textContent=summary.textContent.replace(/Reviewed/g,'Processed');
-    }
-  }
-
-  function improveProjectProvenanceSummary(scope=document){
-    scope.querySelectorAll('.project-maintained-facts').forEach(details=>{
-      const summary=details.querySelector(':scope > summary');
-      if(!summary)return;
-      const count=details.querySelectorAll('.project-maintained-fact').length;
-      if(!count)return;
-      const hasProvenance=!!details.querySelector('.project-fact-provenance');
-      const text=`See ${count} maintained Current State ${count===1?'fact':'facts'}${hasProvenance?' · sources & history':''}`;
-      if(summary.textContent!==text) summary.textContent=text; // write only on change (#450)
-    });
-  }
-
   function enhance(scope=document){
-    addWorkspaceOrientation(scope);addGrounding(scope);improveOpenItemsSummary(scope);clarifyQuestionsAwaitingReview(scope);improveEmptyStates(scope);clarifyReviewCompletion(scope);clarifyReviewActions(scope);clarifyNotesProcessedFilter(scope);improveProjectProvenanceSummary(scope);
+    addWorkspaceOrientation(scope);addGrounding(scope);clarifyQuestionsAwaitingReview(scope);
   }
   let queued=false;const schedule=()=>{if(queued)return;queued=true;requestAnimationFrame(()=>{queued=false;enhance(document);});};
   new MutationObserver(schedule).observe(document.documentElement,{childList:true,subtree:true});
