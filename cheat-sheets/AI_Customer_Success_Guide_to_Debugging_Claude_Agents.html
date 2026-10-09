@@ -1,193 +1,33 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>AI Customer Success Guide to Debugging Claude Agents · Context Switch</title><style>
-:root{--ink:#20202a;--muted:#5f6271;--accent:#6a50a7;--line:#dddce6;--paper:#fff;--wash:#f7f5fc}
-*{box-sizing:border-box}body{margin:0;background:#f4f3f7;color:var(--ink);font:15px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif}
-a{color:var(--accent)}.wrap{max-width:840px;margin:38px auto 70px;padding:42px 52px;background:var(--paper);border:1px solid var(--line);border-radius:16px}
-.top{display:flex;justify-content:space-between;gap:12px;align-items:center;font-size:13px}.top a{text-decoration:none;font-weight:700}
-.label{text-transform:uppercase;letter-spacing:.12em;color:var(--accent);font-size:11px;font-weight:800;margin-top:32px}
-h1{font:700 32px/1.13 Georgia,serif;letter-spacing:-.03em;margin:8px 0 12px}
-h2{font-size:18px;margin:30px 0 10px;border-top:1px solid var(--line);padding-top:24px}
-p{margin:0 0 12px;overflow-wrap:anywhere}.intro{font-size:17px;color:var(--muted)}
-ul{padding-left:21px;margin:8px 0}li{padding-left:3px;margin:0 0 10px;overflow-wrap:anywhere}
-.footer{border-top:1px solid var(--line);padding-top:24px;margin-top:32px;font-size:13px;color:var(--muted)}
-.print{border:1px solid var(--line);border-radius:8px;padding:8px 12px;background:var(--wash);cursor:pointer;font:inherit;color:var(--ink)}
-@media(max-width:700px){.wrap{margin:0;padding:24px 22px;border:0;border-radius:0}.top{flex-wrap:wrap}h1{font-size:27px}}
-@media print{body{background:white}.wrap{margin:0;border:0;padding:0;max-width:none}.print{display:none}h2{break-after:avoid}p,li{orphans:2;widows:2}@page{size:letter;margin:.65in}}
-</style></head><body>
-    <main class="wrap"><div class="top"><a href="../index.html#learn">← Learning Library</a><button class="print" onclick="window.print()">Print / Save PDF</button></div>
-    <div class="label">Context Switch · Learning reference</div><h1>AI Customer Success Guide to Debugging Claude Agents</h1><p class="intro">Reference adapted from the original PDF; consult the source for original tables and visual layout.</p><p>A practical guide for turning vague customer complaints into reproducible evidence, likely cause, impact, and a verified outcome.</p>
-<p>Core mindset: Debug the whole system, not just Claude. Find the first point where actual behavior stopped matching expected behavior, collect clear evidence, and help the right owner act.</p>
-<p>Request Asked whether order shipped. Was the request understood?</p>
-<p>Tool result Status = label created. Correct and current upstream data?</p>
-<p>Interpretation Treated label-created as shipped. Were status definitions/instructions unclear?</p>
-<p>Final answer Incorrect confirmation. Was a fallback/escalation rule missing?</p>
-<p>A likely fix is to define which statuses actually confirm carrier possession, then test nearby statuses and wording variations before calling the issue fixed.</p>
-<p>AI Learning Reference Debugging Claude-Based AI Agents | 1/7</p>
-<p>AI CUSTOMER SUCCESS / FIELD GUIDE</p>
-<h2>Debugging Claude-Based AI Agents</h2>
-<h2>Quick orientation</h2>
-<p>What is an agent?</p>
-<p>Claude + instructions + data/context + tools + workflow rules that let it answer questions or take actions.</p>
-<p>What is a trace?</p>
-<p>A step-by-step record of one request: inputs, model calls, tool calls, outputs, errors, timing, and usage.</p>
-<h2>Simple example</h2>
-<p>Customer: &quot;Has my order shipped?&quot; Tool result: &quot;label created&quot; Agent: &quot;Yes, it shipped.&quot;</p>
-<p>Step What happened Debug question</p>
-<p>Tool call Looked up the right order. Correct tool and ID?</p>
-<p>What is debugging?</p>
-<p>Finding the first meaningful difference between expected and actual behavior.</p>
-<p>Your value</p>
-<p>Turn a vague complaint into evidence another team can reproduce, prioritize, and fix without re-interviewing the customer.</p>
-<p>AI CUSTOMER SUCCESS / FIELD GUIDE</p>
-<h2>Where Agent Failures Come From</h2>
-<p>Classify the likely failing layer before deciding who should change what.</p>
-<h2>Common failure sources</h2>
-<p>Source What it looks like What to check</p>
-<p>User request Ambiguous wording, missing identifier. Exact wording + needed account context.</p>
-<p>Instructions Policy missing, vague, conflicting, outdated. Compare behavior with the written rule.</p>
-<p>Conversation context Earlier turns missing or misunderstood. Read full thread; find first context drift.</p>
-<p>Knowledge / retrieval Wrong, stale, irrelevant, missing docs. Source used, date, expected source.</p>
-<p>Tool choice Wrong tool or skipped needed tool. Available descriptions vs selected tool.</p>
-<p>Tool inputs Wrong customer ID/date/amount. Arguments vs known facts.</p>
-<p>Tool result API error, timeout, empty/bad data. Raw result; separate upstream failure from interpretation.</p>
-<p>Permissions Access denied or action allowed incorrectly. User, role, scope, approval, intended policy.</p>
-<p>Model response Correct facts, poor certainty/tone/policy. Final wording vs expected behavior.</p>
-<p>Workflow Loops, repeated calls, bad handoff. Retry count, stop and escalation rules.</p>
-<p>Operations Slow, expensive, intermittent. Timing, usage, errors, customer impact.</p>
-<p>The same bad final answer can come from very different causes. Route the fix based on the first wrong layer, not the symptom.</p>
-<p>AI Learning Reference Debugging Claude-Based AI Agents | 2/7</p>
-<p>Read left to right. Stop at the first input, decision, tool result, or interpretation that diverges from expectation.</p>
-<p>1 Clarify expected behavior. One plain sentence: Given X, the agent should do Y. Confirm source-of-truth policy.</p>
-<p>2 Capture actual behavior. Exact request, response, timestamps, conversation/request ID, account conditions.</p>
-<p>3 Assess urgency and safety. Escalate privacy exposure, unauthorized actions, financial harm, security risk, or broad impact immediately.</p>
-<p>5 Read from left to right. User input → context/retrieval → model → tool calls → tool results → final output.</p>
-<p>6 Classify likely cause. Instruction, context, retrieval, tool, permissions, model wording, workflow, or operations.</p>
-<p>7 Reproduce safely. Start with the exact request in a test/approved environment; change one condition at a time.</p>
-<p>9 Route smallest fix. CS may improve examples/tests; engineering changes code/tools; security changes policy; PM owns product tradeoffs.</p>
-<p>10 Regression + close loop. Original, paraphrases, neighbors, permissions/failures, customer update, monitoring plan.</p>
-<p>AI Learning Reference Debugging Claude-Based AI Agents | 3/7</p>
-<p>AI CUSTOMER SUCCESS / FIELD GUIDE</p>
-<h2>Trace Reading Workflow</h2>
-<h2>Step-by-step debugging</h2>
-<p>4 Find the trace. Search by conversation/request ID, account, time, environment, or trace ID.</p>
-<p>8 Compare. Pair the failing trace with a similar good trace when possible.</p>
-<h2>Trace-reading checklist</h2>
-<p>Input + instructions</p>
-<p>Context + retrieval</p>
-<p>Exact user wording, account facts, environment, instruction version.</p>
-<p>Sources returned, freshness, missing expected source.</p>
-<p>Arguments + result</p>
-<p>Next model step</p>
-<p>Inputs, error/status, timing, retries.</p>
-<p>Did interpretation follow from the result?</p>
-<p>Tool decision</p>
-<p>Chosen tool, skipped tool, ordering.</p>
-<p>Performance</p>
-<p>Per-step latency, repeated work, tool/model usage.</p>
-<p>A fix is not one successful rerun. Build enough nearby cases to show the behavior improved without breaking adjacent behavior.</p>
-<p>Tool name + description → Input schema → Structured tool call → Application executes → Structured result → Agent interprets</p>
-<p>check_order Retrieve latest order/shipping status for a verified order ID. Status questions only; do not modify order.</p>
-<p>refund Create a refund only after eligibility and user authorization are confirmed. Requires order ID, amount, reason, approval token.</p>
-<p>search_customer Find a customer using verified email/account ID. Return possible matches; do not expose records without authorization.</p>
-<p>Safe reproduction rule: never repeat a risky action on a real customer account just to prove it fails. Use approved test data and environments.</p>
-<p>AI Learning Reference Debugging Claude-Based AI Agents | 4/7</p>
-<p>AI CUSTOMER SUCCESS / FIELD GUIDE</p>
-<h2>Reproduction, Evals &amp; Tool Calls</h2>
-<h2>Turn a bug into a compact eval set</h2>
-<p>ORIGINAL</p>
-<p>PARAPHRASES</p>
-<p>Exact reported failure.</p>
-<p>Same intent, different wording.</p>
-<p>NEIGHBORING</p>
-<p>MISSING DATA</p>
-<p>Nearby status/intent that needs a different response.</p>
-<p>Clarification and fallback behavior.</p>
-<h2>Tool-call mental model</h2>
-<h2>Good descriptions reduce ambiguity</h2>
-<p>Vague Clearer</p>
-<p>POSITIVE</p>
-<p>Case where the agent should confidently act.</p>
-<p>PERMISSION / FAILURE</p>
-<p>Blocked action, timeout, empty result, escalation.</p>
-<p>Operational quality includes permissions, escalation, speed, cost, reliability, and privacy - not only answer correctness.</p>
-<p>Stop and escalate now: potential data exposure, unauthorized account changes, payment/refund harm, security abuse, repeated unsafe actions, or a high-volume production incident.</p>
-<p>MCP (Model Context Protocol) is a standard way for an AI application to connect to outside tools and information - like a common plug between the AI host and systems that expose capabilities.</p>
-<p>MCP host AI application → MCP client connection component → MCP server tools/resources → Connected system</p>
-<p>MCP is not Claude, and it is not the CRM/database. It is the communication standard connecting an AI application to the server exposing those capabilities.</p>
-<p>AI Learning Reference Debugging Claude-Based AI Agents | 5/7</p>
-<p>AI CUSTOMER SUCCESS / FIELD GUIDE</p>
-<h2>Safety, Performance &amp; MCP</h2>
-<h2>Operational checks</h2>
-<p>Permissions</p>
-<p>Escalation</p>
-<p>Least access needed; sensitive actions require correct scope and approval.</p>
-<p>Agent admits uncertainty, stops after defined failures, transfers useful context.</p>
-<p>Cost</p>
-<p>Reliability</p>
-<p>Look for repeated calls, oversized context, needless retries, expensive paths.</p>
-<p>Consistent behavior, bounded retries, graceful timeout and fallback.</p>
-<h2>MCP in simple terms</h2>
-<p>Speed</p>
-<p>Record total and per-step latency; compare to a normal run.</p>
-<p>Privacy</p>
-<p>Minimize sensitive data in tools/logs; follow incident policy.</p>
-<p>CRM / DB / docs</p>
-<p>Own the investigation and customer context. Coordinate before changing production behavior outside your role.</p>
-<p>AI Customer Success Intake, context, expected behavior, accessible trace review, safe reproduction, impact/severity, examples/eval cases, issue reports, customer communication, fix validation.</p>
-<p>AI / application engineer Prompts/workflows/tools/MCP, code/schema changes, tracing instrumentation, technical fixes.</p>
-<p>AI Learning Reference Debugging Claude-Based AI Agents | 6/7</p>
-<p>AI CUSTOMER SUCCESS / FIELD GUIDE</p>
-<h2>Role Boundaries &amp; Handoffs</h2>
-<h2>Who owns what</h2>
-<p>Role Typical ownership</p>
-<p>AI Product Manager Intended behavior, priorities, acceptance criteria, tradeoffs, rollout decisions.</p>
-<p>Security / privacy Access policy, scopes, approvals, data handling, audit requirements, incident response.</p>
-<p>Operations / SRE Availability, monitoring, alerting, latency, capacity, incidents, rollback.</p>
-<p>Data / knowledge owner Source accuracy, freshness, taxonomy, and permissions.</p>
-<h2>A useful boundary test</h2>
-<p>You can usually do</p>
-<p>Inspect approved conversation/trace data, reproduce in approved test space, write cases and expected outcomes, compare before/after, document findings.</p>
-<h2>Issue report: minimum useful packet</h2>
-<p>✓One-line expected vs actual summary.</p>
-<p>✓Customer/account impact + scale.</p>
-<p>✓Severity and why.</p>
-<p>✓Environment/version + date/time.</p>
-<p>✓Conversation/request/trace IDs.</p>
-<p>✓Exact input + needed context only.</p>
-<p>Coordinate before doing</p>
-<p>Change production prompts, code, tools/MCP servers, permissions, customer records, refund/payment logic, or monitoring policy.</p>
-<p>✓Expected behavior + source of truth.</p>
-<p>✓Actual response/action.</p>
-<p>✓Minimal safe reproduction steps.</p>
-<p>✓First suspected failure point.</p>
-<p>✓Trace + comparison evidence.</p>
-<p>✓Risk/workaround + next owner.</p>
-<p>Expected → Actual → Impact → Trace → First divergence → Reproduce → Classify + route</p>
-<p>Your job is not to know every implementation detail. It is to make the failure understandable: what should have happened, what actually happened, where the first divergence appeared, how severe it is, and what evidence shows the fix worked.</p>
-<p>AI Learning Reference Debugging Claude-Based AI Agents | 7/7</p>
-<p>AI CUSTOMER SUCCESS / FIELD GUIDE</p>
-<h2>Final Quick Reference</h2>
-<p>Use this page when a live report arrives and you need a fast debugging path.</p>
-<h2>When a report arrives</h2>
-<p>If you see...</p>
-<p>Symptom First place to look</p>
-<p>Wrong fact Retrieved data, tool result, source freshness.</p>
-<p>Wrong action Tool choice, arguments, permissions, approval rules.</p>
-<p>No action Tool availability/description, missing input, permission denial, error.</p>
-<p>Confident guess Missing-data handling, uncertainty instructions, escalation.</p>
-<p>Slow response Per-step timing, repeated calls, retries, retrieval volume, model latency.</p>
-<p>High cost Context size, repeated steps, tool definitions, model choice.</p>
-<p>Works sometimes Version/environment, data conditions, nondeterminism, timeout, race.</p>
-<p>Keeps looping Stop condition, retry count, repeated result, fallback/escalation.</p>
-<h2>Beginner capability checklist</h2>
-<p>✓Explain agent, trace, log, metric, and eval.</p>
-<p>✓Find a trace from a conversation/request ID.</p>
-<p>✓Narrate input → tools/context → output.</p>
-<p>✓Identify the first divergence.</p>
-<p>✓Separate model failure from upstream data/tool failure.</p>
-<p>✓Reproduce safely, one variable at a time.</p>
-<p>✓Create a compact regression eval set.</p>
-<p>✓Recognize privacy/security/financial escalation triggers.</p>
-<p>✓Check latency, retries, usage/cost, reliability.</p>
-<p>✓Explain MCP host/client/server/system.</p>
-<p>✓Route the fix to the correct owner.</p>
-<p>✓Validate the fix and close the customer loop.</p><div class="footer"><a href="AI_Customer_Success_Guide_to_Debugging_Claude_Agents.pdf" target="_blank" rel="noopener">View original PDF</a> · 7 original page(s)</div></main></body></html>
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width,initial-scale=1" name="viewport"/><title>Debugging Claude-Based AI Agents · Context Switch</title><style>
+:root{--ink:#15111a;--muted:#5f5968;--line:#e8e7ef;--pink:#f0408f;--cyan:#00bfd6;--violet:#6b5cff;--acid:#f4ff52}*{box-sizing:border-box}body{margin:0;background:white;color:var(--ink);font:14px/1.5 Inter,system-ui,Arial,sans-serif}.bar{border-bottom:1px solid var(--line);padding:18px max(26px,calc((100% - 1030px)/2));font-weight:900;font-size:17px;letter-spacing:-.03em}.bar i{display:inline-block;width:17px;height:17px;background:var(--acid);border:2px solid var(--ink);margin-right:10px;vertical-align:-3px;box-shadow:3px 3px var(--ink)}main{max-width:1030px;margin:auto;padding:25px 30px 45px}.tools{display:flex;justify-content:space-between;align-items:center;margin-bottom:27px;font-size:12px;font-weight:750}.tools a{color:inherit}.tools button{background:white;border:1px solid var(--ink);box-shadow:3px 3px 0 var(--acid);padding:9px 12px;font-weight:750;cursor:pointer}.label{display:inline-block;background:var(--acid);font-weight:900;font-size:10px;text-transform:uppercase;letter-spacing:.08em;padding:5px 10px;transform:rotate(-2deg);margin-bottom:12px}h1{font-size:clamp(37px,5.8vw,63px);letter-spacing:-.042em;line-height:1.08;margin:0 0 12px;font-weight:950}.pink{color:var(--pink)}.purple{color:var(--violet)}.intro{color:var(--muted);font-size:17px;max-width:740px}.hero{border-bottom:2px solid var(--ink);padding-bottom:16px}.lead{border-left:4px solid var(--violet);background:#f8f7ff;padding:11px 14px;margin:15px 0}section{margin-top:25px;padding-top:24px;border-top:1px solid var(--line)}section.first{border:0;margin-top:0;padding-top:12px}.kicker{font-size:10px;font-weight:900;letter-spacing:.1em;color:var(--muted);text-transform:uppercase;margin:0 0 6px}h2{font-size:24px;line-height:1.18;letter-spacing:-.045em;margin:0 0 11px;font-weight:900}.flow{max-width:750px}.step{display:flex;gap:13px;padding:12px 14px;border:1px solid var(--line);border-left:4px solid var(--violet)}.step:nth-of-type(4n+1){border-left-color:var(--pink)}.number{display:grid;place-items:center;background:var(--acid);font-weight:900;width:27px;height:27px;flex:0 0 27px}.step strong{display:block}.step small{color:var(--muted);font-size:13px;display:block;margin-top:3px}.arrow{height:14px;border-left:2px solid var(--ink);margin-left:28px}.note{border-left:4px solid var(--cyan);background:#f6fcff;padding:11px 14px;margin:15px 0}.table-wrap{overflow-x:auto}table{border-collapse:collapse;width:100%;font-size:13px}thead{border-top:2px solid var(--ink);background:#f8f7ff}td,th{padding:10px 12px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}th{font-size:10px;letter-spacing:.07em;text-transform:uppercase}td:first-child{font-weight:850;white-space:nowrap}tr:nth-child(even){background:#fcfcff}.twocol{display:grid;grid-template-columns:1fr 1fr;gap:13px}.twocol article{border:1px solid var(--line);border-top:4px solid var(--pink);padding:13px}.twocol article+article{border-top-color:var(--cyan)}.twocol strong{display:block;margin-bottom:4px}footer{margin-top:23px;border-top:2px solid var(--ink);padding-top:11px;color:var(--muted);font-size:12px}footer a{font-weight:700;color:inherit}p{margin:0 0 9px}@media(max-width:680px){main{padding:20px}.bar{padding:14px 20px}h1{font-size:clamp(34px,9vw,51px)}.twocol{grid-template-columns:1fr}}
+@media print{@page{size:letter;margin:.44in .52in}html,body{font-size:9.3pt;line-height:1.31;-webkit-print-color-adjust:exact;print-color-adjust:exact}.bar,.tools{display:none!important}main{padding:0;max-width:100%;margin:0}.hero{padding:0 0 10px}h1{font-size:27pt;line-height:1.08;margin-bottom:6px}.intro{font-size:10pt}.label{font-size:8pt;padding:3px 6px;margin-bottom:6px;transform:none}.lead{margin:8px 0;padding:7px 10px}section{margin-top:11px;padding-top:10px}section.first{padding-top:6px}h2{font-size:14pt;margin-bottom:7px}.kicker{margin-bottom:3px}.step{padding:6px 9px;break-inside:avoid}.step small{font-size:8.6pt;margin-top:2px}.number{width:21px;height:21px;flex-basis:21px}.arrow{height:8px;margin-left:21px}.note{padding:7px 10px;margin:8px 0;break-inside:avoid}table{font-size:8.6pt;line-height:1.26}td,th{padding:5px 8px}thead{display:table-header-group}tr{break-inside:avoid}.evaluation{break-before:page;margin-top:0;padding-top:0;border-top:0}h2,.kicker{break-after:avoid}.table-wrap{overflow:visible}.twocol{gap:8px}.twocol article{padding:8px;break-inside:avoid}footer{margin-top:11px;padding-top:7px}p{orphans:2;widows:2}}
+
+.cards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.card{border:1px solid var(--line);border-top:4px solid var(--violet);padding:12px 14px}.card:nth-child(3n+2){border-top-color:var(--pink)}.card:nth-child(3n){border-top-color:var(--cyan)}.card h3{font-size:14px;line-height:1.24;margin:0 0 5px}.card p{margin:0;font-size:13px}.chips{display:flex;gap:9px;flex-wrap:wrap}.chip{border:1px solid var(--line);padding:7px 10px;font-weight:800;font-size:12px}.list{padding-left:20px;margin:9px 0}.list li{margin:0 0 7px}.pair{display:grid;grid-template-columns:1fr 1fr;gap:14px}.pair>*{min-width:0}.flowbox{display:flex;gap:7px;align-items:stretch;flex-wrap:wrap}.flowbox span{background:#f8f7ff;border-left:3px solid var(--violet);padding:10px 12px;flex:1 1 115px;font-size:13px;font-weight:750}.source{font-size:11px;color:var(--muted)}@media(max-width:680px){.cards,.pair{grid-template-columns:1fr}}@media print{.cards,.pair{gap:7px}.card{padding:7px 9px;break-inside:avoid}.card h3{font-size:10pt}.card p{font-size:9pt}.list li{margin-bottom:4px}.flowbox span{padding:6px 9px;break-inside:avoid}.source{font-size:8pt}section{break-inside:auto}.hero{break-inside:avoid}.cards{grid-template-columns:repeat(2,minmax(0,1fr))}}</style><style id="restored-additions">.restored{break-inside:auto}.restored h3{font-size:15px;letter-spacing:-.018em;margin:18px 0 9px}.restored strong{font-weight:850}.restored .note{margin:11px 0}.restored td{overflow-wrap:anywhere}.restored td:first-child{white-space:normal;min-width:116px}.restored table{table-layout:auto}.restored thead{display:table-header-group}@media print{.restored{break-inside:auto;page-break-inside:auto}.restored h2,.restored h3,.restored .kicker{break-after:avoid;page-break-after:avoid}.restored .table-wrap{overflow:visible}.restored tr,.restored .note{break-inside:avoid;page-break-inside:avoid}.restored td,.restored th{padding:6px 8px}.restored .note{padding:8px 11px}.restored h3{margin:12px 0 7px;font-size:11pt}.restored{margin-top:19px;padding-top:16px}}</style></head><body><div class="bar"><i></i>Context Switch</div><main><div class="tools"><a href="index.html">← All references</a><button onclick="window.print()">Print / Save PDF</button></div><div class="hero"><div class="label">Learning Library / Reference</div><h1>Debugging Claude-Based AI Agents</h1><p class="intro">Turn a vague customer complaint into reproducible evidence and a verified outcome.</p></div><section class="first"><div class="kicker">01 / flow</div><h2>Debug from source to answer</h2><div class="flowbox"><span>Customer request</span><span>Context + retrieval</span><span>Instructions + model</span><span>Tool call + result</span><span>Interpretation</span><span>Final answer</span></div></section><section class=""><div class="kicker">02 / note</div><h2>Order status example</h2><div class="lead">Customer asks whether an order shipped. Tool returns “label created”; agent says “Yes.” The first wrong layer is interpreting label creation as carrier possession.</div></section><section class=""><div class="kicker">03 / table</div><h2>Failure source → inspection</h2><div class="table-wrap"><table><thead><tr><th>Layer</th><th>What to check</th></tr></thead><tbody><tr><td>Request</td><td>Exact wording and missing identifiers</td></tr><tr><td>Instructions</td><td>Written rules, conflicts, stale examples</td></tr><tr><td>Conversation context</td><td>Prior turns and first context drift</td></tr><tr><td>Retrieval</td><td>Sources used, relevance, dates and access</td></tr><tr><td>Tools</td><td>Selected tool, arguments, raw results and timeouts</td></tr><tr><td>Permissions</td><td>Identity, scopes and approval requirements</td></tr><tr><td>Model output</td><td>Certainty, tone, compliance and evidence</td></tr><tr><td>Operations</td><td>Retries, loops, latency, errors and usage</td></tr></tbody></table></div></section><section class=""><div class="kicker">04 / flow</div><h2>Practical investigation</h2><div class="flowbox"><span>Expected behavior</span><span>Exact actual behavior + IDs</span><span>Assess impact</span><span>Read trace</span><span>Locate first divergence</span><span>Reproduce safely</span><span>Route owner</span><span>Regression + customer update</span></div></section><section class=""><div class="kicker">05 / table</div><h2>Fix ownership</h2><div class="table-wrap"><table><thead><tr><th>Owner</th><th>Likely responsibility</th></tr></thead><tbody><tr><td>Customer success</td><td>Capture reproducible evidence, impact and follow-up</td></tr><tr><td>Engineering</td><td>Fix code, tools, routing, instrumentation</td></tr><tr><td>Security / policy</td><td>Permission or privacy determinations</td></tr><tr><td>PM</td><td>Prioritization, acceptable tradeoffs and quality bars</td></tr></tbody></table></div></section><section class=""><div class="kicker">06 / list</div><h2>Close the loop</h2><ul class="list"><li>Original request and paraphrases pass</li><li>Nearby statuses / failure cases pass</li><li>Correct permissions and customer identity verified</li><li>Monitoring or owner identified</li><li>Customer is told the verified outcome</li></ul></section><section aria-label="Field debugging: evidence, safety, and handoff" class="restored"><div class="kicker">REFERENCE DETAIL / RESTORED</div><h2>Field debugging: evidence, safety, and handoff</h2>
+<h3>At first report: capture a usable issue packet</h3><div class="table-wrap"><table><thead><tr><th>Field</th><th>What to capture</th></tr></thead><tbody>
+<tr><td>Expected vs actual</td><td>Exact customer request, approved source-of-truth rule, the answer/action the agent gave</td></tr>
+<tr><td>Scope and urgency</td><td>Customer impact, scale, severity, account conditions, workaround, privacy or financial risk</td></tr>
+<tr><td>Traceability</td><td>Environment/version, time, request or conversation ID, trace ID, model, permitted tool calls</td></tr>
+<tr><td>Reproduction</td><td>Safe minimal steps with the same input; change one condition at a time</td></tr>
+<tr><td>Diagnosis and route</td><td>First observed divergence, candidate owner, evidence supporting the hypothesis</td></tr>
+<tr><td>Closure</td><td>Exact-case retest, paraphrases, nearby boundaries, customer update, monitoring owner</td></tr>
+</tbody></table></div>
+<h3>Symptom → first place to inspect</h3><div class="table-wrap"><table><thead><tr><th>Symptom</th><th>First check</th></tr></thead><tbody>
+<tr><td>Wrong fact</td><td>Retrieved source, tool result, data age and status definitions</td></tr>
+<tr><td>Wrong action</td><td>Tool chosen, arguments, user scope, approval and permissions</td></tr>
+<tr><td>No action</td><td>Tool discoverability, missing input, permission denial or tool error</td></tr>
+<tr><td>Confident guess</td><td>Unknown-data handling, instructions and escalation</td></tr>
+<tr><td>Slow or costly</td><td>Timing by step, repeated tools, context volume, retries and provider latency</td></tr>
+<tr><td>Looping</td><td>Stop rules, retry count, repeated results and safe escalation</td></tr>
+</tbody></table></div>
+<h3>Regression case categories</h3><div class="table-wrap"><table><thead><tr><th>Case</th><th>Purpose</th></tr></thead><tbody>
+<tr><td>Positive</td><td>Agent may answer or act on sufficiently established facts</td></tr>
+<tr><td>Negative / no-action</td><td>Agent should abstain rather than make up an answer or mutate state</td></tr>
+<tr><td>Paraphrase</td><td>Same intent written differently should retain meaning</td></tr>
+<tr><td>Boundary and missing context</td><td>Ambiguity, missing identifiers, stale results and close status values</td></tr>
+<tr><td>Permission / failure</td><td>Denied access, timeout, empty result and proper fallback</td></tr>
+</tbody></table></div>
+<div class="note"><strong>MCP: what it is and is not:</strong> Model Context Protocol (MCP) is a standard interface between an AI host and tools/resources. An MCP host/application uses an MCP client to connect to an MCP server, which exposes capabilities backed by a CRM, database or document system. The server is not the model and does not replace application-level permissions. Check both tool descriptions and actual server results when debugging.</div>
+<div class="note"><strong>Stop and escalate:</strong> Escalate possible data exposure, unauthorized account changes, payment/refund harm, security abuse, repeated unsafe actions or a high-volume production incident immediately; do not independently change production tools, permissions, prompts, records or payment logic.</div>
+<div class="note"><strong>Ownership boundary:</strong> Customer Success owns customer context, evidence, safe reproduction, validation and communication; product defines intended behavior and release tradeoffs; engineers own changes to implementation, tools and instrumentation; security owns access policy and incidents; operations owns availability and rollback.</div>
+</section><footer><a href="https://github.com/pedringt/ai-learning/blob/staging/cheat-sheets/AI_Customer_Success_Guide_to_Debugging_Claude_Agents.pdf">View original source</a> · Local review draft · Source remains unchanged in GitHub</footer></main></body></html>
