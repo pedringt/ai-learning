@@ -29,24 +29,32 @@ def normalize(txt):
 
 def extract(pdf):
     doc=fitz.open(pdf)
-    blocks=[]
-    sizes=[]
+    blocks=[]; sizes=[]
     for page in doc:
-        for blk in page.get_text("dict",sort=True)["blocks"]:
+        found=[]; width=page.rect.width
+        for blk in page.get_text("dict",sort=False)["blocks"]:
             if "lines" not in blk: continue
             lines=[]
             for line in blk["lines"]:
-                spans=[s for s in line["spans"] if s["text"].strip()]
+                spans=[v for v in line["spans"] if v["text"].strip()]
                 if not spans: continue
-                txt=normalize("".join(s["text"] for s in spans))
+                txt=normalize("".join(v["text"] for v in spans))
                 if not txt: continue
-                size=max(s["size"] for s in spans)
-                bold=any(("bold" in s["font"].lower() or "black" in s["font"].lower()) for s in spans)
-                sizes.append(size)
-                lines.append((txt,size,bold))
-            if lines:
-                blocks.extend(lines)
-    return blocks, statistics.median(sizes) if sizes else 10, len(doc)
+                size=max(v["size"] for v in spans)
+                bold=any(("bold" in v["font"].lower() or "black" in v["font"].lower()) for v in spans)
+                sizes.append(size);lines.append((txt,size,bold))
+            if not lines: continue
+            txt=" ".join(x[0] for x in lines)
+            found.append((blk["bbox"][0],blk["bbox"][1],blk["bbox"][2],txt,max(x[1] for x in lines),any(x[2] for x in lines)))
+        left=[b for b in found if b[0]<width*.48 and b[2]<width*.65]
+        right=[b for b in found if b[0]>=width*.48]
+        wide=[b for b in found if b not in left and b not in right]
+        if len(left)>3 and len(right)>3:
+            ordered=sorted(wide,key=lambda b:b[1])+sorted(left,key=lambda b:b[1])+sorted(right,key=lambda b:b[1])
+        else:
+            ordered=sorted(found,key=lambda b:(b[1],b[0]))
+        blocks.extend((txt,size,bold) for _,_,_,txt,size,bold in ordered)
+    return blocks,statistics.median(sizes) if sizes else 10,len(doc)
 
 def render(pdf):
     lines,base,n=extract(pdf)
