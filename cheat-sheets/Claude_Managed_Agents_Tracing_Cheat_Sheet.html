@@ -1,0 +1,79 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Claude Managed Agents + Tracing · Context Switch</title><style>
+:root{--ink:#20202a;--muted:#5f6271;--accent:#6a50a7;--line:#dddce6;--paper:#fff;--wash:#f7f5fc}
+*{box-sizing:border-box}body{margin:0;background:#f4f3f7;color:var(--ink);font:15px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif}
+a{color:var(--accent)}.wrap{max-width:840px;margin:38px auto 70px;padding:42px 52px;background:var(--paper);border:1px solid var(--line);border-radius:16px}
+.top{display:flex;justify-content:space-between;gap:12px;align-items:center;font-size:13px}.top a{text-decoration:none;font-weight:700}
+.label{text-transform:uppercase;letter-spacing:.12em;color:var(--accent);font-size:11px;font-weight:800;margin-top:32px}
+h1{font:700 32px/1.13 Georgia,serif;letter-spacing:-.03em;margin:8px 0 12px}
+h2{font-size:18px;margin:30px 0 10px;border-top:1px solid var(--line);padding-top:24px}
+p{margin:0 0 12px;overflow-wrap:anywhere}.intro{font-size:17px;color:var(--muted)}
+ul{padding-left:21px;margin:8px 0}li{padding-left:3px;margin:0 0 10px;overflow-wrap:anywhere}
+.footer{border-top:1px solid var(--line);padding-top:24px;margin-top:32px;font-size:13px;color:var(--muted)}
+.print{border:1px solid var(--line);border-radius:8px;padding:8px 12px;background:var(--wash);cursor:pointer;font:inherit;color:var(--ink)}
+@media(max-width:700px){.wrap{margin:0;padding:24px 22px;border:0;border-radius:0}.top{flex-wrap:wrap}h1{font-size:27px}}
+@media print{body{background:white}.wrap{margin:0;border:0;padding:0;max-width:none}.print{display:none}h2{break-after:avoid}p,li{orphans:2;widows:2}@page{size:letter;margin:.65in}}
+</style></head><body>
+    <main class="wrap"><div class="top"><a href="../index.html#learn">← Learning Library</a><button class="print" onclick="window.print()">Print / Save PDF</button></div>
+    <div class="label">Context Switch · Learning reference</div><h1>Claude Managed Agents + Tracing</h1><p class="intro">Reference adapted from the original PDF; consult the source for original tables and visual layout.</p><p>A controlled State Question Investigator exercise: bounded tools, explicit authority, eval cases, and trace-based debugging.</p>
+<p>Product rule: AI interprets -&gt; software enforces -&gt; people authorize. The agent may investigate and suggest, but it does not approve Reviews, change Current State, or resolve Questions.</p>
+<p>Job Investigate one unresolved State Question; return evidence + suggested answer for human review.</p>
+<p>Preserve chronology and authority. Newer evidence may qualify older evidence. Open Reviews are pending proposals, not established facts.</p>
+<p>AI Learning Reference Claude Managed Agents + Tracing | 1/2</p>
+<p>AGENT TRACE CHEAT SHEET</p>
+<h2>What the exercise tested</h2>
+<p>AGENT DESIGN</p>
+<p>TOOLING</p>
+<p>Search deeply without crossing authority boundaries.</p>
+<p>Work inside a deliberately limited read/search toolset.</p>
+<h2>Bounded agent setup</h2>
+<p>Decision Design</p>
+<p>Allowed tools Read, Grep, Glob.</p>
+<p>Disabled Write, Edit, Bash, Web Search, Web Fetch.</p>
+<p>Sources Current State, Reviews, Questions, Notes, Slack, transcripts.</p>
+<p>Confidence No numeric confidence score; evidence and provenance carry the weight.</p>
+<h2>Investigation order</h2>
+<p>Current State</p>
+<p>Open Reviews</p>
+<p>Existing Questions</p>
+<p>→</p>
+<p>→</p>
+<p>TRACING</p>
+<p>ITERATION</p>
+<p>Separate retrieval, missing context, interpretation, and authority failures.</p>
+<p>Change instructions, rerun the same case, verify the fix.</p>
+<p>Raw sources</p>
+<p>Suggested answer + provenance + unknowns + human next step</p>
+<p>→</p>
+<p>→</p>
+<p>Evals tell you that something failed. The trace helps you localize where the first wrong step became observable.</p>
+<p>Instruction changes: open Reviews are pending proposals; use pending/proposed language unless Current State independently establishes the fact; do not infer group approval from one person agreeing.</p>
+<p>Retest: same data + same Q-103 question -&gt; agent correctly said ownership was not established and pointed the human to the open Review.</p>
+<p>The useful lesson was not &quot;the agent worked.&quot; It was learning how to separate retrieval success from an authority failure and verify that the targeted fix changed the same case.</p>
+<p>AI Learning Reference Claude Managed Agents + Tracing | 2/2</p>
+<p>AGENT TRACE CHEAT SHEET</p>
+<h2>Read the trace by layer</h2>
+<p>Retrieval</p>
+<p>Context</p>
+<p>Did it find the right files or records?</p>
+<p>Did it receive enough relevant information, with chronology and provenance?</p>
+<p>Authority</p>
+<p>Final output</p>
+<p>Did it turn a pending proposal into established fact?</p>
+<p>Did wording preserve uncertainty and keep the human decision explicit?</p>
+<h2>The useful failure: Q-103</h2>
+<p>Observed: the agent found the right evidence and open Review, then stated that Priya owned customer support training as established fact.</p>
+<p>Reality: Priya had offered; an open Review proposed the assignment; Current State still said ownership was under review.</p>
+<h2>Fix + retest</h2>
+<h2>Product takeaways</h2>
+<p>✓Read-only tools do not guarantee safe interpretation.</p>
+<p>✓Tracing is localization, not mind reading.</p>
+<p>✓Do not fix the prompt before diagnosing the failure.</p>
+<p>Interpretation</p>
+<p>Did it understand what the evidence establishes - and what it does not?</p>
+<p>Rule</p>
+<p>Fix the layer that failed, not the layer that is easiest to change.</p>
+<p>Trace: retrieval correct, source evidence sufficient, Review detected correctly.</p>
+<p>First wrong step: synthesis upgraded a pending proposal into established fact.</p>
+<p>✓Retest the exact same case after the fix.</p>
+<p>✓Watch review burden; &quot;safe&quot; can still become over-cautious.</p>
+<p>✓Keep controlled exercises separate from production claims.</p><div class="footer"><a href="Claude_Managed_Agents_Tracing_Cheat_Sheet.pdf" target="_blank" rel="noopener">View original PDF</a> · 2 original page(s)</div></main></body></html>

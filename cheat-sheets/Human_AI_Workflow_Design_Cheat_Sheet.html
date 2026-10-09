@@ -1,0 +1,103 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Human + AI Workflow Design · Context Switch</title><style>
+:root{--ink:#20202a;--muted:#5f6271;--accent:#6a50a7;--line:#dddce6;--paper:#fff;--wash:#f7f5fc}
+*{box-sizing:border-box}body{margin:0;background:#f4f3f7;color:var(--ink);font:15px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif}
+a{color:var(--accent)}.wrap{max-width:840px;margin:38px auto 70px;padding:42px 52px;background:var(--paper);border:1px solid var(--line);border-radius:16px}
+.top{display:flex;justify-content:space-between;gap:12px;align-items:center;font-size:13px}.top a{text-decoration:none;font-weight:700}
+.label{text-transform:uppercase;letter-spacing:.12em;color:var(--accent);font-size:11px;font-weight:800;margin-top:32px}
+h1{font:700 32px/1.13 Georgia,serif;letter-spacing:-.03em;margin:8px 0 12px}
+h2{font-size:18px;margin:30px 0 10px;border-top:1px solid var(--line);padding-top:24px}
+p{margin:0 0 12px;overflow-wrap:anywhere}.intro{font-size:17px;color:var(--muted)}
+ul{padding-left:21px;margin:8px 0}li{padding-left:3px;margin:0 0 10px;overflow-wrap:anywhere}
+.footer{border-top:1px solid var(--line);padding-top:24px;margin-top:32px;font-size:13px;color:var(--muted)}
+.print{border:1px solid var(--line);border-radius:8px;padding:8px 12px;background:var(--wash);cursor:pointer;font:inherit;color:var(--ink)}
+@media(max-width:700px){.wrap{margin:0;padding:24px 22px;border:0;border-radius:0}.top{flex-wrap:wrap}h1{font-size:27px}}
+@media print{body{background:white}.wrap{margin:0;border:0;padding:0;max-width:none}.print{display:none}h2{break-after:avoid}p,li{orphans:2;widows:2}@page{size:letter;margin:.65in}}
+</style></head><body>
+    <main class="wrap"><div class="top"><a href="../index.html#learn">← Learning Library</a><button class="print" onclick="window.print()">Print / Save PDF</button></div>
+    <div class="label">Context Switch · Learning reference</div><h1>Human + AI Workflow Design</h1><p class="intro">Reference adapted from the original PDF; consult the source for original tables and visual layout.</p><p>PM CHEAT SHEET 1 / 2</p>
+<p>Rule of thumb: If you can write the rule precisely, do not make the model enforce it.</p>
+<p>Make judgment, authority, uncertainty, and recovery explicit.</p>
+<p>VISUAL ANCHOR</p>
+<h2>Human judgment &gt;</h2>
+<h2>AI interprets &gt;</h2>
+<p>Tools +</p>
+<h2>data &gt;</h2>
+<p>Not every workflow needs final approval. Raise control as data sensitivity, authority, or impact rises.</p>
+<p>1. ASSIGN EACH LAYER ONE JOB</p>
+<p>Human judgment</p>
+<p>AI</p>
+<p>Set goals, risk tolerance, evidence bar, exceptions, and what must stay under human control.</p>
+<p>Interpret, summarize, classify, compare, synthesize, and surface uncertainty.</p>
+<p>Suggest rather than silently authorize.</p>
+<p>Software</p>
+<p>Enforce exact rules: permissions, schemas, allowed transitions, version checks, limits, dedupe, and required approvals.</p>
+<p>2. SUGGEST VS. ENFORCE VS. AUTHORIZE</p>
+<p>AI should suggest</p>
+<p>Software should enforce</p>
+<p>Semantic judgments with real ambiguity</p>
+<p>Rules you can state exactly</p>
+<p>Summaries, comparisons, draft recommendations</p>
+<p>Permissions, limits, validation, versioning</p>
+<p>Potential changes a person can inspect</p>
+<p>Safe defaults when authority or inputs are missing</p>
+<p>3. MAKE UNCERTAINTY VISIBLE</p>
+<p>Evidence is not truth. Pending is not accepted. Unknown is not zero.</p>
+<p>Separate accepted facts, pending proposals, and open questions.</p>
+<p>Preserve source and freshness when they matter.</p>
+<p>Let users adjust, reject, leave unchanged, or keep tracking uncertainty.</p>
+<p>TAKEAWAY The best AI workflow makes the authority boundary obvious before anything goes wrong.</p>
+<h2>Software enforces &gt;</h2>
+<p>Approval /</p>
+<p>action</p>
+<p>Tools + data</p>
+<p>Retrieve, query, or execute through bounded tools with scoped inputs, permissions, and observable outcomes.</p>
+<p>People / action</p>
+<p>Approve consequential mutations, resolve tradeoffs, correct wording, reject proposals, or keep uncertainty open.</p>
+<p>People should authorize</p>
+<p>High-impact or irreversible actions</p>
+<p>Policy exceptions and tradeoffs under uncertainty</p>
+<p>What becomes authoritative when mistakes materially matter</p>
+<p>PM CHEAT SHEET 2 / 2</p>
+<p>Layer Failure signal First thing to inspect</p>
+<p>Instructions Same evidence is misread across cases Framing, examples, ambiguity, conflicting instructions</p>
+<p>Retrieval Right source is missing, stale, or conflicting What was actually retrieved before judging generation</p>
+<p>Tools Call fails, times out, or returns partial/wrong data Inputs, outputs, retries, dependency failure</p>
+<p>Permissions System can see/do too much or too little Auth, scopes, isolation, approval requirements</p>
+<p>UX User cannot tell what happened or recover Explanation, correction, and recovery in the interface</p>
+<p>Debugging principle: Trace backward to the first place reality diverges from the expected workflow.</p>
+<p>TAKEAWAY Human-in-the-loop is not “put a person at the end.” It is explicit authority, uncertainty, correction, and recovery end to end.</p>
+<h2>Failure Diagnosis + Recovery</h2>
+<p>Debug the layer that failed, then make the recovery path visible.</p>
+<p>4. DIAGNOSE THE FIRST OBSERVABLE FAILURE</p>
+<p>Do not default every AI failure to a prompt problem.</p>
+<p>Logic Model output is reasonable but product behavior is wrong</p>
+<p>5. DESIGN RECOVERY BEFORE LAUNCH</p>
+<p>Model/provider fails</p>
+<p>Fail closed or use an intentionally limited fallback. Never invent an answer just to keep the flow moving.</p>
+<p>Tool call fails</p>
+<p>Retry only when safe; otherwise expose a manual or escalated path.</p>
+<p>Permission is missing</p>
+<p>Deny the action, explain the boundary, and request approved access.</p>
+<p>6. PM DESIGN CHECKLIST</p>
+<p>Before design</p>
+<p>Before release</p>
+<p>Final authority mapped</p>
+<p>Evidence vs. proposal is visible</p>
+<p>AI read/write/tool scope bounded</p>
+<p>Correction / rejection path exists</p>
+<p>Reversibility + approvals explicit</p>
+<p>Failure + fallback + escalation designed</p>
+<p>Uncertainty that must stay visible</p>
+<p>Silent misses are traceable</p>
+<p>Validation, branching, versioning, deterministic state rules</p>
+<p>Evidence is weak</p>
+<p>Show insufficient support, ask for more evidence, or keep a Question open.</p>
+<p>State is stale/conflicting</p>
+<p>Block the mutation and require re-review against the current version.</p>
+<p>Bad action slips through</p>
+<p>Preserve history, support reversal/escalation where possible, and add a regression case.</p>
+<p>During iteration</p>
+<p>Retest exact failure + boundaries</p>
+<p>Use holdouts/repeated runs</p>
+<p>Measure false certainty + review burden</p>
+<p>Fix the failing layer, not the nearest prompt</p><div class="footer"><a href="Human_AI_Workflow_Design_Cheat_Sheet.pdf" target="_blank" rel="noopener">View original PDF</a> · 2 original page(s)</div></main></body></html>
