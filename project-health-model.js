@@ -56,7 +56,7 @@
       }
     },
     {
-      id:'authority-lab',name:'Authority Lab',stageLabel:'In progress',noRuntimeAi:true,description:'Prototype for deciding what an AI capability is allowed to do, based on evidence.',repo:'pedringt/authority-lab',branch:'main',
+      id:'authority-lab',name:'Authority Lab',stageLabel:'In progress',noRuntimeAi:true,noQualitySource:true,description:'Prototype for deciding what an AI capability is allowed to do, based on evidence.',repo:'pedringt/authority-lab',branch:'main',
       focus:'Show authority as explicit, evidence-earned, conditional, reversible, and authorized by a named person.',
       evidence:['Lifecycle walkthrough','Authority decisions','Record history','Reversibility'],
       nextDecision:'Decide whether the Refund recommendation walkthrough is clear enough to add a second capability.',
@@ -1019,6 +1019,7 @@
       if(q.kind==='warn') return 'AI evals need a look';
       return q.title;
     }
+    if(data.project.noQualitySource) return 'Not connected yet';
     const q=data.externalQuality;if(!q) return 'Quality unavailable';
     const top=externalQualityAttention(q);
     if(q.project==='tastemake'&&q.ci?.conclusion==='success'&&top?.kind==='good') return 'Recommendation checks healthy';

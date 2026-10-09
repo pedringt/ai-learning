@@ -219,7 +219,7 @@
         ['Vercel',p.links?.vercel],
         ['Render · production',p.links?.renderProduction],
         ['Neon',p.links?.neon],
-        [p.id==='state'?'Full AI eval details':p.id==='tastemake'?'Recommendation checks':'Game checks',p.links?.quality]
+        [p.id==='state'?'Full AI eval details':p.id==='tastemake'?'Recommendation checks':p.id==='narc'?'Game checks':(p.qualityLabel||'Quality checks'),p.links?.quality]
       ].filter(item=>item[1]);
       linksMenu.innerHTML='<button type="button" data-open-systems>Systems &amp; connections</button><button type="button" data-open-about>About Project Health</button>'+links.map(([label,url])=>'<a href="'+esc(url)+'" target="_blank" rel="noopener noreferrer">'+esc(label)+'</a>').join('');
     }
@@ -326,7 +326,7 @@
       ?[q?.review?.created_at,q?.ask?.created_at].filter(Boolean).sort().pop()
       :(externalQ?.ci?.updated_at||externalQ?.recorded?.updated_at||data.checkedAt);
     const healthRows=[
-      {label:p.qualityLabel||'Quality',kind:overviewQuality?.kind||'unknown',detail:overviewQuality?.title||'Quality status unavailable',tab:'ai-quality',fresh:freshnessMeta(qualityTime,data.checkedAt,72)},
+      {label:p.qualityLabel||'Quality',kind:overviewQuality?.kind||'unknown',detail:overviewQuality?.title||(p.noQualitySource?'Not connected yet':'Quality status unavailable'),tab:'ai-quality',fresh:freshnessMeta(qualityTime,data.checkedAt,72)},
       {label:'Production',kind:runtimeStatus.kind,status:runtimeStatus.label,detail:runtimeStatus.detail,tab:'overview',section:'deliveryPanel',fresh:freshnessMeta(data.detailCheckedAt||d?.updatedAt||data.checkedAt,data.checkedAt,24)},
       {label:'Release pipeline',kind:overviewDelivery?.kind||'unknown',detail:overviewDelivery?.title||'Release status unavailable',tab:'overview',section:'deliveryPanel',fresh:freshnessMeta(d?.updatedAt,data.checkedAt,24)},
       ...(overviewInfra&&['bad','warn'].includes(overviewInfra.kind)?[{label:'Infrastructure',kind:overviewInfra.kind,detail:overviewInfra.title,tab:'overview',section:'systemsDetails',fresh:freshnessMeta(data.detailCheckedAt||data.checkedAt,data.checkedAt,6)}]:[]),
@@ -394,6 +394,9 @@
           summaryCard('Automated game checks',green?1:null,green?'3 / 3 suites passing':'Status unavailable',green?'good':'unknown','')+
           summaryCard('Human first-run playtest',pendingPlaytest?0:null,pendingPlaytest?'Still needed':'Recorded',pendingPlaytest?'warn':'good','');
         summaryCopy='Automated branch checks plus the human first-run playtest gate.';
+      }else if(p.noQualitySource){
+        cards=summaryCard('Quality checks',null,'Not connected yet','unknown','');
+        summaryCopy='This project has no automated checks the dashboard can read yet.';
       }else{
         cards=summaryCard(p.qualityLabel||'Product quality',null,'Quality summary is not available yet','unknown','');
       }
@@ -492,7 +495,7 @@
           :kpi(label,score,{label:'—',cls:'flat'},score===1?'good':score==null?'warn':'warn',score===1?'Healthy':'Needs a look',total?passed+' / '+total:'Not measured',[])
         ).join('');
         qualityCards=vals.map(([label,score,passed,total,comparison])=>{const n=pct(score);return '<div class="mock-quality-detail-card"><span>'+esc(label)+'</span><strong>'+(n==null?'—':esc(n+'%'))+'</strong><div class="mock-progress"><span style="width:'+(n||0)+'%"></span></div><small>'+esc(comparison?(total?(passed+' / '+total+' historical baseline'):'Historical comparison'):(total?(passed+' / '+total+' passing'):'Not measured'))+'</small></div>';}).join('');
-      }else{
+      }else if(p.id==='narc'){
         const green=!!externalQ?.recorded?.recorded_all_suites_green;
         const playtestPending=!!externalQ?.recorded?.full_playtest_pending;
         const vals=[
@@ -503,6 +506,12 @@
         ];
         kpis=vals.map(([label,score,sub])=>kpi(label,score,{label:'—',cls:'flat'},score===1?'good':score===0?'warn':'warn',score===1?'Healthy':score===0?'Needs review':'Unknown',sub,[])).join('');
         qualityCards=vals.map(([label,score,sub])=>{const n=pct(score);return '<div class="mock-quality-detail-card"><span>'+esc(label)+'</span><strong>'+(n==null?'—':esc(n+'%'))+'</strong><div class="mock-progress"><span style="width:'+(n||0)+'%"></span></div><small>'+esc(sub)+'</small></div>';}).join('');
+      }
+      else{
+        const label=p.noQualitySource?'Quality checks':(p.qualityLabel||'Product quality');
+        const sub=p.noQualitySource?'No automated checks connected':'Status unavailable';
+        kpis=kpi(label,null,{label:'—',cls:'flat'},'unknown',p.noQualitySource?'Not connected yet':'Unknown',sub,[]);
+        qualityCards='<div class="mock-quality-detail-card"><span>'+esc(label)+'</span><strong>—</strong><div class="mock-progress"><span style="width:0%"></span></div><small>'+esc(sub)+'</small></div>';
       }
 
       const dKind=deliveryAttentionForData(data).kind||'unknown';
@@ -558,7 +567,7 @@
             :'<div class="empty compact-empty">'+esc(a?.configured===false?'Site analytics are not connected for this environment.':a?.error||'Site analytics are still loading or temporarily unavailable.')+'</div>')+
         '</section>'+
         '<section class="mock-dashboard-section mock-quality-detail">'+
-          '<div class="mock-quality-detail-head"><div><h3>Quality and evaluation details</h3>'+(pending.has('Quality')?'<span class="mock-refreshing-evals">Refreshing evals… showing last good results</span>':'')+'</div><button class="button small" type="button" data-tab-target="ai-quality">View all evaluations →</button></div>'+
+          '<div class="mock-quality-detail-head"><div><h3>Quality and evaluation details</h3>'+(pending.has('Quality')?'<span class="mock-refreshing-evals">'+(p.id==='state'?'Refreshing evals':'Refreshing checks')+'… showing last good results</span>':'')+'</div><button class="button small" type="button" data-tab-target="ai-quality">'+(p.id==='state'?'View all evaluations':'View all checks')+' →</button></div>'+
           '<div class="mock-quality-detail-grid">'+qualityCards+'</div>'+
         '</section>'+
         '<section class="mock-dashboard-section mock-investigation-card">'+
@@ -667,6 +676,8 @@
         '<div class="eval-history"><h4>Automated check details</h4><div class="run-summary">'+
         (externalQ.suites||[]).map(item=>'<div class="run-callout"><strong>'+esc(item.name)+'</strong><p>'+esc(item.detail)+'</p></div>').join('')+
         '<p class="footnote">'+esc(externalQ.caveat||'')+'</p></div></div>';
+    }else if(p.noQualitySource){
+      qualityHtml='<h3>Product quality</h3><div class="empty" style="margin-top:12px">Not connected yet. This project has no automated checks the dashboard can read yet.</div>';
     }else{
       qualityHtml='<h3>Product quality</h3><div class="empty" style="margin-top:12px">Quality data is not available right now.</div>';
     }

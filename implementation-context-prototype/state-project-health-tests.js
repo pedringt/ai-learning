@@ -864,3 +864,18 @@ assert.match(fs.readFileSync(require.resolve('../project-health-redesign.css'),'
 console.log('Project Health shell tests passed');
 
 // PR readiness refresh: evidence-first Project Health actions.
+
+// A project with no quality source reads as "not connected", never as another project's checks or as an issue.
+const authorityLab=H.PROJECTS.find(p=>p.id==='authority-lab');
+assert.ok(authorityLab.noQualitySource);
+assert.ok(H.PROJECTS.filter(p=>p.noQualitySource).every(p=>p.id!=='narc'&&p.quality!=='state'));
+assert.strictEqual(H.projectQualityLabel({project:authorityLab,externalQuality:null}),'Not connected yet');
+const authorityQuick=H.quickProjectCheck({
+  project:authorityLab,
+  delivery:{vercel:{kind:'good',label:'Vercel deploy healthy'}},
+  externalQuality:null,
+  activity:{runtime:{issues:[]}},
+  platform:{}
+});
+assert.strictEqual(authorityQuick.title,'No immediate issue found');
+assert.ok(authorityQuick.checks.some(item=>item.label==='Automated quality'&&item.value==='Not connected yet'));
