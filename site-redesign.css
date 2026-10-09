@@ -32,7 +32,7 @@ html body .app-root {
   color-scheme: light;
 }
 
-html { background: #fff !important; }
+html { background: #fff; }
 
 html body {
   background: transparent !important; /* html paints the white; keeps the grid/wash visible */
@@ -84,20 +84,20 @@ html body:has(#home.active)::after {
 
 /* ---------- 2. Shared chrome: top bar ---------- */
 html body .topbar {
-  position: sticky !important;
+  position: sticky;
   top: 0;
   z-index: 20;
-  background: rgba(255, 255, 255, 0.82) !important;
+  background: rgba(255, 255, 255, 0.82);
   -webkit-backdrop-filter: blur(18px);
   backdrop-filter: blur(18px);
-  border-bottom: 1px solid rgba(232, 231, 239, 0.9) !important;
-  box-shadow: none !important;
+  border-bottom: 1px solid rgba(232, 231, 239, 0.9);
+  box-shadow: none;
 }
 
 html body .topbar .topinner {
-  max-width: none !important;
-  padding: 14px clamp(20px, 4vw, 58px) !important;
-  justify-content: space-between !important;
+  max-width: none;
+  padding: 14px clamp(20px, 4vw, 58px);
+  justify-content: space-between;
 }
 html body .topbar .nav { margin-left: auto !important; margin-right: 0 !important; }
 
@@ -878,7 +878,7 @@ html body main :is(.surface-grid, .state-model-grid) > * > :is(span, small, .lab
 }
 
 /* a lone card never sits alone on a row */
-html body main :is(.surface-grid, .state-model-grid):has(> :nth-child(1):last-child) { grid-template-columns: 1fr !important; }
+html body main :is(.surface-grid, .state-model-grid):has(> :nth-child(1):last-child) { grid-template-columns: 1fr; }
 
 /* sections that hold a card grid plus a full-width box stack normally: cards in a row, the box underneath */
 html body main.case-system-page section:has(> .architecture-split) { display: block !important; }
@@ -897,8 +897,8 @@ html body main.case-system-page .architecture-infra {
 
 /* inline flows wrap inside cards instead of clipping */
 html body main :is(.integration-flow, .human-flow, .authority-steps) {
-  display: flex !important;
-  flex-wrap: wrap !important;
+  display: flex;
+  flex-wrap: wrap;
   gap: 6px 10px !important;
   overflow: visible !important;
   max-width: 100%;
@@ -950,23 +950,23 @@ html body main .question-shift {
 
 /* "Try ..." product box: a light row with one button, not a tinted card */
 html body main .meridian-product-callout {
-  background: transparent !important;
-  border: 0 !important;
-  border-top: 1px solid var(--rd-line) !important;
-  border-bottom: 1px solid var(--rd-line) !important;
-  border-radius: 0 !important;
-  box-shadow: none !important;
-  padding: 16px 0 !important;
+  background: transparent;
+  border: 0;
+  border-top: 1px solid var(--rd-line);
+  border-bottom: 1px solid var(--rd-line);
+  border-radius: 0;
+  box-shadow: none;
+  padding: 16px 0;
 }
 html body main.case-system-page aside.meridian-product-callout.meridian-product-callout,
-html body main.case-system-page aside.meridian-product-callout.meridian-product-callout > * { background: transparent !important; background-image: none !important; box-shadow: none !important; }
-html body main .meridian-product-callout { padding-left: 0 !important; padding-right: 0 !important; display: flex; align-items: center; justify-content: space-between; gap: 20px; flex-wrap: wrap; }
+html body main.case-system-page aside.meridian-product-callout.meridian-product-callout > * { background: transparent; background-image: none; box-shadow: none; }
+html body main .meridian-product-callout { padding-left: 0; padding-right: 0; display: flex; align-items: center; justify-content: space-between; gap: 20px; flex-wrap: wrap; }
 html body main .meridian-primary-action {
-  background: var(--ink) !important;
-  border: 1px solid var(--ink) !important;
-  border-radius: 999px !important;
-  color: #fff !important;
-  box-shadow: none !important;
+  background: var(--ink);
+  border: 1px solid var(--ink);
+  border-radius: 999px;
+  color: #fff;
+  box-shadow: none;
 }
 
 /* flow diagrams: neutral outlined steps */
@@ -1166,14 +1166,14 @@ html body #ai-cs-mock [data-page="learn"] .learning-reference-map {
 
 /* ---------- 4j. Project Health case study: mock-ups match the page ---------- */
 html body main.case-shell .product-panel {
-  border: 0 !important;
-  border-radius: 24px !important;
-  background: var(--soft) !important;
-  box-shadow: none !important;
+  border: 0;
+  border-radius: 24px;
+  background: var(--soft);
+  box-shadow: none;
 }
 html body main.case-shell .product-panel :is(.card, .flow-card, .example-row, .evidence-item) {
-  background: #fff !important;
-  border-color: rgba(21, 17, 26, 0.08) !important;
+  background: #fff;
+  border-color: rgba(21, 17, 26, 0.08);
 }
 
 /* ---------- 4k. Labels are small rounded rectangles, not pills (buttons keep their shape) ---------- */
@@ -1190,46 +1190,46 @@ html body main :is(.meta > span, .tag, .num, .flow-num, .map-chip, .map-step, sp
 /* ---------- 4l. Project Health case study: one card style, one list style, one callout ---------- */
 html body main.case-shell :is(.card, .flow-card) .tag,
 html body main.case-shell .tag {
-  padding: 0 !important;
-  background: none !important;
+  padding: 0;
+  background: none;
   border: 0 !important;
   border-radius: 0 !important;
-  color: var(--muted) !important;
-  font-size: 11.5px !important;
-  letter-spacing: 0.08em !important;
+  color: var(--muted);
+  font-size: 11.5px;
+  letter-spacing: 0.08em;
 }
 html body main.case-shell :is(.num, .flow-num) {
-  padding: 0 !important;
-  background: none !important;
+  padding: 0;
+  background: none;
   border: 0 !important;
   border-radius: 0 !important;
-  color: var(--muted) !important;
-  font-size: 12px !important;
-  min-width: 0 !important;
-  width: auto !important;
-  height: auto !important;
+  color: var(--muted);
+  font-size: 12px;
+  min-width: 0;
+  width: auto;
+  height: auto;
 }
 html body main.case-shell .meta { display: flex; flex-wrap: wrap; gap: 6px 28px; }
 html body main.case-shell .meta > span { padding: 0 !important; background: none !important; border: 0 !important; border-radius: 0 !important; font-size: 13.5px; }
 
-html body main.case-shell .example { border: 0 !important; background: transparent !important; box-shadow: none !important; padding: 0 !important; }
+html body main.case-shell .example { border: 0; background: transparent; box-shadow: none; padding: 0; }
 html body main.case-shell .example-row {
-  border: 0 !important;
-  border-top: 1px solid var(--rd-line) !important;
-  border-radius: 0 !important;
-  background: transparent !important;
-  box-shadow: none !important;
-  padding: 12px 0 !important;
+  border: 0;
+  border-top: 1px solid var(--rd-line);
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  padding: 12px 0;
 }
-html body main.case-shell .flow-row { display: grid !important; grid-template-columns: 28px minmax(0, 1fr) !important; gap: 10px !important; align-items: start; }
+html body main.case-shell .flow-row { display: grid; grid-template-columns: 28px minmax(0, 1fr); gap: 10px; align-items: start; }
 html body main.case-shell .flow-card { width: 100%; box-sizing: border-box; }
 html body main.case-shell .evidence-item {
-  border: 0 !important;
-  border-top: 1px solid var(--rd-line) !important;
-  border-radius: 0 !important;
-  background: transparent !important;
-  box-shadow: none !important;
-  padding: 12px 0 !important;
+  border: 0;
+  border-top: 1px solid var(--rd-line);
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  padding: 12px 0;
 }
 
 /* callouts: only the one right under the hero keeps the highlight */
@@ -1244,11 +1244,11 @@ html body main.case-shell .callout:not(.case-hero + .callout) {
 /* ---------- 4m. Final feedback pass ---------- */
 /* "Try ..." buttons keep their ink fill (the transparent reset above is for the row, not the button) */
 html body main.case-system-page aside.meridian-product-callout.meridian-product-callout > a.meridian-primary-action {
-  background: var(--ink) !important;
-  background-image: none !important;
-  color: #fff !important;
-  border: 1px solid var(--ink) !important;
-  border-radius: 12px !important;
+  background: var(--ink);
+  background-image: none;
+  color: #fff;
+  border: 1px solid var(--ink);
+  border-radius: 12px;
 }
 html body main.case-system-page aside.meridian-product-callout a.meridian-primary-action:visited { color: #fff !important; }
 
@@ -1268,12 +1268,12 @@ html body #ai-cs-mock #learn .learning-hero {
 
 /* AI Business Solutions Map: boxes with real padding and spacing */
 html body main.map-wrap .map-q {
-  padding: 16px 20px !important;
-  border-radius: 16px !important;
+  padding: 16px 20px;
+  border-radius: 16px;
 }
 html body main.map-wrap .map-q > b { display: block; margin-bottom: 4px; }
 html body main.map-wrap .map-q > span { display: block; }
-html body main.map-wrap .map-family { padding: 18px 20px !important; border-radius: 16px !important; }
+html body main.map-wrap .map-family { padding: 18px 20px; border-radius: 16px; }
 
 /* closing links: content-sized pill buttons, like the homepage "Open State / Case study" buttons */
 
@@ -1287,48 +1287,48 @@ html body main.case-shell .flow {
   html body main.case-shell .flow:has(> :nth-child(3):last-child) { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }
 }
 html body main.case-shell .flow-row {
-  display: block !important;
+  display: block;
   box-sizing: border-box;
-  padding: 20px !important;
+  padding: 20px;
   border: 1px solid var(--rd-line);
   border-radius: 20px;
   background: #fff;
 }
 html body main.case-shell .flow-row .flow-card {
-  padding: 0 !important;
-  border: 0 !important;
-  background: transparent !important;
-  box-shadow: none !important;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
 }
 html body main.case-shell .flow-row .num { display: block; margin-bottom: 8px; }
 
 html body main.case-shell .evidence-list {
-  display: grid !important;
-  gap: 14px !important;
-  grid-template-columns: 1fr !important;
+  display: grid;
+  gap: 14px;
+  grid-template-columns: 1fr;
 }
 @media (min-width: 701px) {
-  html body main.case-shell .evidence-list:has(> :nth-child(3):last-child) { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }
+  html body main.case-shell .evidence-list:has(> :nth-child(3):last-child) { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
 html body main.case-shell .evidence-item {
   box-sizing: border-box;
-  display: block !important;
-  padding: 20px !important;
-  border: 1px solid var(--rd-line) !important;
-  border-radius: 20px !important;
-  background: #fff !important;
+  display: block;
+  padding: 20px;
+  border: 1px solid var(--rd-line);
+  border-radius: 20px;
+  background: #fff;
 }
 html body main.case-shell .evidence-item > :first-child { display: block; margin-bottom: 6px; }
 
 html body main.case-shell .example {
   box-sizing: border-box;
-  border: 1px solid var(--rd-line) !important;
-  border-radius: 20px !important;
-  background: #fff !important;
-  padding: 20px !important;
-  margin: 0 0 14px !important;
+  border: 1px solid var(--rd-line);
+  border-radius: 20px;
+  background: #fff;
+  padding: 20px;
+  margin: 0 0 14px;
 }
-html body main.case-shell .example-head { background: transparent !important; padding: 0 0 8px !important; border: 0 !important; }
+html body main.case-shell .example-head { background: transparent; padding: 0 0 8px; border: 0; }
 
 /* ---------- 4n. Homepage cards: aligned titles, consistent buttons ---------- */
 /* State's label sat in its own flex slot (18px gap before the title); the other cards keep label + title together */
@@ -1455,16 +1455,16 @@ html body #ai-cs-mock .learning-next .learning-how-note a { min-height: 32px; pa
 html body main.case-system-page:has(.meridian-product-callout a[data-state-app-link]) .integration-flow.authority-steps { display: none !important; }
 
 /* ---------- 4s. Project Health case study bottom: fewer boxes ---------- */
-html body main.case-shell .evidence-list { display: block !important; }
+html body main.case-shell .evidence-list { display: block; }
 html body main.case-shell .evidence-item {
-  display: grid !important;
+  display: grid;
   grid-template-columns: 150px minmax(0, 1fr);
   gap: 14px;
-  padding: 12px 0 !important;
-  border: 0 !important;
-  border-top: 1px solid var(--rd-line) !important;
-  border-radius: 0 !important;
-  background: transparent !important;
+  padding: 12px 0;
+  border: 0;
+  border-top: 1px solid var(--rd-line);
+  border-radius: 0;
+  background: transparent;
 }
 html body main.case-shell .evidence-item > :first-child { margin: 0; }
 @media (max-width: 620px) { html body main.case-shell .evidence-item { grid-template-columns: 1fr; gap: 3px; } }
@@ -1480,15 +1480,15 @@ html body main.case-shell .role-grid > * {
 /* ---------- 4t. Project Health case study + Meridian: real space between sections (their headings are direct children of main) ---------- */
 html body main.case-shell > h2 {
   margin-top: 56px !important;
-  margin-bottom: 16px !important;
+  margin-bottom: 16px;
   padding-top: 34px;
   border-top: 1px solid var(--rd-line);
-  max-width: none !important;
+  max-width: none;
 }
 html body main.case-shell > h2:first-of-type { margin-top: 40px !important; }
 
 /* Project Health: "Failure recovery" repeats the "Unknown is not healthy" decision (text stays in the markup) */
-html body main.case-shell .evidence-list > .evidence-item:nth-child(2) { display: none !important; }
+html body main.case-shell .evidence-list > .evidence-item:nth-child(2) { display: none; }
 
 /* ---------- 4u. Review follow-ups ---------- */
 /* Portfolio note: the Learning Library link fills the right side */
@@ -1614,7 +1614,7 @@ html body #ai-cs-mock #portfolio .applied-secondary > h3:not(#_) { font-size: 17
 }
 
 /* Oct 5 hero product-review refinement */
-.rd-stage{position:relative!important;display:block!important;height:430px!important;min-width:0!important}
+.rd-stage{position:relative;display:block;height:430px;min-width:0}
 .rd-paper{position:absolute;z-index:0;border:1px solid rgba(21,17,26,.045);background:rgba(249,247,241,.74);box-shadow:0 18px 40px rgba(21,17,26,.035)}
 .rd-paper::after{content:"";position:absolute;inset:0;background-image:linear-gradient(rgba(21,17,26,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(21,17,26,.035) 1px,transparent 1px);background-size:18px 18px;opacity:.38}
 .rd-paper-one{left:112px;top:128px;width:338px;height:250px;transform:rotate(-3.2deg)}
@@ -1624,16 +1624,16 @@ html body #ai-cs-mock #portfolio .applied-secondary > h3:not(#_) { font-size: 17
 .rd-sketch-main{stroke:#1b2431;stroke-width:1.7;stroke-dasharray:90;stroke-dashoffset:0}
 .rd-sketch-ghost{stroke:#1b2431;stroke-width:.85;opacity:.22;transform:translate(.7px,-.35px)}
 .rd-arrowhead-shape{fill:none;stroke:#1b2431;stroke-width:1.45;stroke-linecap:round;stroke-linejoin:round}
-.rd-card{position:absolute!important;z-index:2!important;left:128px!important;top:108px!important;width:376px!important;border:1px solid #e2e5ec!important;border-radius:19px!important;background:rgba(255,255,255,.95)!important;box-shadow:0 20px 42px rgba(21,17,26,.11),0 5px 14px rgba(21,17,26,.035)!important;padding:14px!important;transform:rotate(2.4deg)!important;order:initial!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important}
-.rd-card::before{content:none!important}
-.rd-card-top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px!important;color:#667085!important;font-size:10px!important;font-weight:800!important}
-.rd-status{display:inline-flex!important;align-items:center;gap:6px;border-radius:999px;background:#fff3f8!important;color:#ee2a7b!important;padding:6px 10px!important;font-size:10px!important;font-weight:850!important}
-.rd-status::before{width:7px!important;height:7px!important;box-shadow:0 0 0 4px rgba(238,42,123,.1);animation:none!important}
-.rd-control{border:0!important;border-radius:0!important;background:transparent!important;padding:0!important}
+.rd-card{position:absolute;z-index:2;left:128px;top:108px;width:376px;border:1px solid #e2e5ec;border-radius:19px;background:rgba(255,255,255,.95);box-shadow:0 20px 42px rgba(21,17,26,.11),0 5px 14px rgba(21,17,26,.035);padding:14px;transform:rotate(2.4deg);order:initial;-webkit-backdrop-filter:none;backdrop-filter:none}
+.rd-card::before{content:none}
+.rd-card-top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px;color:#667085;font-size:10px;font-weight:800}
+.rd-status{display:inline-flex;align-items:center;gap:6px;border-radius:999px;background:#fff3f8;color:#ee2a7b;padding:6px 10px;font-size:10px;font-weight:850}
+.rd-status::before{width:7px;height:7px;box-shadow:0 0 0 4px rgba(238,42,123,.1);animation:none!important}
+.rd-control{border:0;border-radius:0;background:transparent;padding:0}
 html body #ai-cs-mock .rd-control h2{margin:0!important;font-size:38px!important;line-height:.96!important;letter-spacing:-.055em!important;color:#0f172a!important}
 html body #ai-cs-mock .rd-control p{margin:10px 0 0!important;color:#63708a!important;font-size:11.5px!important;line-height:1.45!important}
-.rd-trace{display:grid!important;grid-template-columns:repeat(4,1fr)!important;gap:6px!important;margin-top:14px!important}
-.rd-trace div{display:flex!important;align-items:center!important;justify-content:center!important;min-height:31px!important;border:1px solid #efe4a5!important;border-radius:999px!important;background:#fff8c9!important;padding:6px 5px!important;color:#344054!important;font-size:9px!important;font-weight:750!important;white-space:nowrap!important;animation:none!important}
+.rd-trace{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:14px}
+.rd-trace div{display:flex;align-items:center;justify-content:center;min-height:31px;border:1px solid #efe4a5;border-radius:999px;background:#fff8c9;padding:6px 5px;color:#344054;font-size:9px;font-weight:750;white-space:nowrap;animation:none!important}
 .rd-mini-ui{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
 .rd-mini-panel{border:1px solid #dfe4ed;border-radius:13px;background:rgba(255,255,255,.92);padding:10px 11px}
 .rd-mini-panel h3{margin:0 0 7px;font-size:10.5px;letter-spacing:-.02em}
@@ -1651,10 +1651,10 @@ html body #ai-cs-mock .rd-control p{margin:10px 0 0!important;color:#63708a!impo
 .rd-review-authority{right:2px;top:34px;width:180px;background:#eaf9e9;transform:rotate(6deg)}
 .rd-review-current{right:-30px;top:160px;width:128px;background:#edf5ff;transform:rotate(7deg)}
 .rd-review-current .rd-tape{left:64%;transform:translateX(-50%) rotate(5deg)}
-.rd-note{position:absolute!important;left:-8px!important;right:auto!important;bottom:28px!important;z-index:5!important;width:178px!important;border:1px solid #e1d846!important;border-radius:8px!important;background:#f6ee52!important;padding:14px 14px 12px!important;box-shadow:0 12px 24px rgba(141,132,23,.13)!important;transform:rotate(-8deg)!important;font-size:11.5px!important;font-weight:760!important;line-height:1.25!important;color:#171717!important}
+.rd-note{position:absolute;left:-8px;right:auto;bottom:28px;z-index:5;width:178px;border:1px solid #e1d846;border-radius:8px;background:#f6ee52;padding:14px 14px 12px;box-shadow:0 12px 24px rgba(141,132,23,.13);transform:rotate(-8deg);font-size:11.5px;font-weight:760;line-height:1.25;color:#171717}
 .rd-note .rd-tape-note{position:absolute;top:-15px;left:22px;width:38px;height:13px;background:rgba(218,220,216,.76);transform:rotate(-4deg)}
 .rd-note>span:last-child{display:block;margin-top:10px;padding-top:8px;border-top:1px solid rgba(44,42,15,.22);color:#252411;font-size:7.7px;font-weight:850;text-transform:uppercase;letter-spacing:.16em}
-.rd-rail{overflow:hidden!important;width:100vw!important;margin-left:calc(50% - 50vw)!important;border-top:1px solid var(--rd-line)!important;border-bottom:1px solid var(--rd-line)!important;background:transparent!important;padding:13px 0!important;white-space:nowrap!important}
+.rd-rail{overflow:hidden;width:100vw;margin-left:calc(50% - 50vw);border-top:1px solid var(--rd-line);border-bottom:1px solid var(--rd-line);background:transparent;padding:13px 0;white-space:nowrap}
 .rd-type-rail{min-height:30px;width:min(100%,1360px);margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:24px;padding:0 clamp(20px,4vw,58px);color:#2a2530;font-size:13px;font-weight:800;letter-spacing:-.01em}
 .rd-type-left{display:flex;align-items:center;gap:12px;min-width:0}
 .rd-type-anchor{flex:0 0 auto;color:#8b8490;font-size:10px;font-weight:800;letter-spacing:.12em;text-transform:uppercase}
@@ -1670,7 +1670,7 @@ html body #ai-cs-mock .rd-control p{margin:10px 0 0!important;color:#63708a!impo
   .rd-stage{transform:scale(.9);transform-origin:center right}
   .rd-review-current{right:-32px}
   /* the card is 74px wider than the room to its right here (128px in, 376px wide, 430px stage): pull it and its paper sheets left so nothing passes the window edge */
-  .rd-card{left:54px!important}
+  .rd-card{left:54px}
   .rd-paper-one{left:38px}
   .rd-paper-two{left:58px}
 }
@@ -1679,23 +1679,23 @@ html body #ai-cs-mock .rd-control p{margin:10px 0 0!important;color:#63708a!impo
   .rd-hero-copy{max-width:760px}
   html body #ai-cs-mock .rd-hero h1{max-width:760px;font-size:clamp(58px,9.5vw,80px)}
   html body #ai-cs-mock .rd-hero .lead{max-width:650px}
-  .rd-stage{width:520px;max-width:100%;height:430px!important;margin:8px auto 0;transform:scale(.92);transform-origin:top center}
-  .rd-review-human{left:24px}.rd-review-authority{right:14px}.rd-review-current{right:-28px;top:170px}.rd-note{left:4px!important;bottom:20px!important}
-  .rd-rail{margin-top:-10px!important}
+  .rd-stage{width:520px;max-width:100%;height:430px;margin:8px auto 0;transform:scale(.92);transform-origin:top center}
+  .rd-review-human{left:24px}.rd-review-authority{right:14px}.rd-review-current{right:-28px;top:170px}.rd-note{left:4px;bottom:20px}
+  .rd-rail{margin-top:-10px}
 }
 @media (max-width:680px){
   .rd-hero{display:block;min-height:auto;padding:30px 0 22px}
   html body #ai-cs-mock .rd-hero h1{font-size:clamp(46px,13vw,62px);line-height:.91;letter-spacing:-.067em}
   html body #ai-cs-mock .rd-hero .lead{margin-top:20px;font-size:17px;line-height:1.5}
   .rd-actions{margin-top:24px;gap:9px}
-  .rd-stage{width:100%;height:auto!important;margin:34px 0 0;display:grid!important;gap:12px;transform:none}
-  .rd-paper,.rd-lines,.rd-review-note{display:none!important}
-  .rd-card{position:relative!important;left:auto!important;top:auto!important;width:100%!important;max-width:430px!important;margin:0 auto!important;transform:rotate(1.2deg)!important;padding:13px!important}
-  .rd-control h2{font-size:36px!important}.rd-control p{font-size:11px!important}
-  .rd-trace{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:6px!important}.rd-trace div{white-space:normal!important;min-height:34px!important}
+  .rd-stage{width:100%;height:auto;margin:34px 0 0;display:grid;gap:12px;transform:none}
+  .rd-paper,.rd-lines,.rd-review-note{display:none}
+  .rd-card{position:relative;left:auto;top:auto;width:100%;max-width:430px;margin:0 auto;transform:rotate(1.2deg);padding:13px}
+  .rd-control h2{font-size:36px}.rd-control p{font-size:11px}
+  .rd-trace{grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}.rd-trace div{white-space:normal;min-height:34px}
   .rd-mini-ui{grid-template-columns:1fr;gap:8px}
-  .rd-note{position:relative!important;left:auto!important;bottom:auto!important;width:172px!important;margin:-4px 0 0 max(8px,calc(50% - 180px))!important;transform:rotate(-6deg)!important}
-  .rd-rail{margin-top:26px!important;padding:8px 0!important}
+  .rd-note{position:relative;left:auto;bottom:auto;width:172px;margin:-4px 0 0 max(8px,calc(50% - 180px));transform:rotate(-6deg)}
+  .rd-rail{margin-top:26px;padding:8px 0}
   .rd-type-rail{font-size:12px;justify-content:space-between;padding:0 18px;gap:14px}
   .rd-type-left{gap:8px}.rd-type-label{font-size:10px}.rd-type-anchor{font-size:8.5px;letter-spacing:.08em}.rd-type-dynamic{min-width:0}
 }
@@ -1711,7 +1711,7 @@ html body #ai-cs-mock .rd-control p{margin:10px 0 0!important;color:#63708a!impo
 
 /* Keep the brand at left and let the primary links sit at the right edge. */
 html body .topbar .topinner {
-  justify-content: space-between !important;
+  justify-content: space-between;
 }
 
 html body .topbar .nav {
@@ -1785,13 +1785,13 @@ html body #ai-cs-mock [data-page="learn"] .learning-reference-map {
 
 /* Case-study CTAs, reference links, and process chips. */
 html body main:is(.case-system-page, .case-shell, .edge-wrap, .map-wrap) :is(.closing-links > a, .meridian-primary-action, .cta, .appendix-link a, .resource-link) {
-  border-radius: 12px !important;
+  border-radius: 12px;
 }
 
 /* Override the more specific full-pill rule on the top product callout buttons. */
 html body main.case-system-page aside.meridian-product-callout.meridian-product-callout > a.meridian-primary-action,
 html body main.case-shell aside.meridian-product-callout.meridian-product-callout > a.meridian-primary-action {
-  border-radius: 12px !important;
+  border-radius: 12px;
 }
 
 /* The shared redesign stylesheet sets closing links back to capsules. */
@@ -1799,28 +1799,28 @@ html body main.case-shell aside.meridian-product-callout.meridian-product-callou
 /* Case-study endings are quiet navigation links, not another row of CTAs. */
 html body main .case-study-footer,
 html body main.case-shell .case-study-footer {
-  display: flex !important;
-  flex-wrap: wrap !important;
-  align-items: center !important;
-  gap: 18px !important;
-  margin-top: 30px !important;
-  padding-top: 14px !important;
-  border-top: 1px solid var(--border, #dedbe2) !important;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 18px;
+  margin-top: 30px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border, #dedbe2);
 }
 
 html body main .case-study-footer > a {
-  display: inline !important;
-  min-height: 0 !important;
-  padding: 0 !important;
-  border: 0 !important;
-  border-radius: 0 !important;
-  background: transparent !important;
-  color: var(--muted, #6b6672) !important;
-  font-size: 12px !important;
-  font-weight: 750 !important;
-  line-height: 1.5 !important;
-  text-decoration: none !important;
-  box-shadow: none !important;
+  display: inline;
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--muted, #6b6672);
+  font-size: 12px;
+  font-weight: 750;
+  line-height: 1.5;
+  text-decoration: none;
+  box-shadow: none;
 }
 
 html body main .case-study-footer > a:hover {
@@ -1840,7 +1840,7 @@ html body #ai-cs-mock #portfolio .band .band-link {
 
 /* Keep large section surfaces softly rounded without the oversized capsule look. */
 html body main:is(.case-system-page, .case-shell, .edge-wrap, .map-wrap) :is(.related-evidence-links, .learning-related-references) {
-  border-radius: 18px !important;
+  border-radius: 18px;
 }
 
 @media (max-width: 860px) {

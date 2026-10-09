@@ -44,11 +44,11 @@
 }
 .page-intro .lead,
 .page-intro>.section-lead{
-  max-width:var(--reading-max)!important;
-  margin:0!important;
-  font-size:var(--lead-size)!important;
-  line-height:1.62!important;
-  color:var(--muted)!important;
+  max-width:var(--reading-max);
+  margin:0;
+  font-size:var(--lead-size);
+  line-height:1.62;
+  color:var(--muted);
 }
 
 /* One local navigation component for the Capabilities family. */
@@ -132,7 +132,7 @@ body.v88-dark:has(> main.artifact-detail){--ink:#f3ede8;--muted:#b9afb6;--border
 body.v88-dark:has(> main.case-system-page){--ink:#f3ede8;--muted:#b9afb6;--border:#3b333d;--soft:#241f27;--softp:#2c2430;--card:#1f1b22;--bg:#171419;--purple:#b59cc8;--purple2:#c1a8d1;--blue:#8fa9c8;--cyan:#82aeb3;--green:#8eae98;--gold:#c8ad72}
 body:has(> main.case-system-page){background:var(--bg);color:var(--ink)}
 
-.meridian-primary-action{display:inline-flex!important;align-items:center;gap:9px;padding:12px 17px!important;border-radius:10px!important;background:var(--purple)!important;color:#fff!important;font-size:14px!important;font-weight:850!important;text-decoration:none!important;box-shadow:0 8px 22px color-mix(in srgb,var(--purple) 25%,transparent)}
+.meridian-primary-action{display:inline-flex;align-items:center;gap:9px;padding:12px 17px;border-radius:10px;background:var(--purple);color:#fff;font-size:14px;font-weight:850;text-decoration:none;box-shadow:0 8px 22px color-mix(in srgb,var(--purple) 25%,transparent)}
 .meridian-primary-action:hover{transform:translateY(-1px);filter:brightness(1.04);text-decoration:none!important}
 .meridian-product-callout{display:flex;align-items:center;justify-content:space-between;gap:24px;margin:0 0 28px;padding:18px 20px;border:1px solid color-mix(in srgb,var(--purple) 28%,var(--border));border-radius:var(--radius-lg);background:linear-gradient(135deg,var(--softp),var(--card))}
 .meridian-product-callout>div{min-width:0}.meridian-product-callout>div>span{display:block;margin-bottom:4px;color:var(--purple);font-size:10px;font-weight:850;letter-spacing:.08em;text-transform:uppercase}.meridian-product-callout strong{display:block;font-size:16px}.meridian-product-callout p{max-width:720px;margin:4px 0 0;color:var(--muted);font-size:13px;line-height:1.5}.meridian-product-callout .meridian-primary-action{flex:0 0 auto}
@@ -262,7 +262,7 @@ body>main.site-page{
   margin-inline:auto!important;
   padding:34px 28px 72px!important;
 }
-.site-page>.site-breadcrumb{margin-bottom:22px!important}
+.site-page>.site-breadcrumb{margin-bottom:22px}
 .site-page>.case-hero{
   max-width:var(--reading-max);
   margin:0 0 28px;
@@ -274,16 +274,16 @@ body>main.site-page{
   letter-spacing:-.03em!important;
 }
 .site-page>.case-hero .lead{
-  max-width:var(--reading-max)!important;
-  margin:0!important;
-  color:var(--muted)!important;
-  font-size:var(--lead-size)!important;
-  line-height:1.62!important;
+  max-width:var(--reading-max);
+  margin:0;
+  color:var(--muted);
+  font-size:var(--lead-size);
+  line-height:1.62;
 }
 
 @media(max-width:760px){
   body>main.site-page{padding:28px 18px 56px!important}
-  .site-page>.site-breadcrumb{margin-bottom:18px!important}
+  .site-page>.site-breadcrumb{margin-bottom:18px}
   .site-page>.case-hero{margin-bottom:22px}
 
 }
@@ -291,7 +291,7 @@ body>main.site-page{
 
 /* v96.01 portfolio hierarchy */
 
-.applied-major-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}.applied-secondary-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}.applied-secondary-grid>.nav-card,.applied-secondary-grid>.card{grid-column:auto!important}@media(max-width:900px){.applied-secondary-grid{grid-template-columns:1fr!important}}
+.applied-major-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}.applied-secondary-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.applied-secondary-grid>.nav-card,.applied-secondary-grid>.card{grid-column:auto}@media(max-width:900px){.applied-secondary-grid{grid-template-columns:1fr}}
 
 /* v96.02 — Home project hierarchy */
 
@@ -530,8 +530,8 @@ body:has(.meridian-breadcrumb span:last-child) .meridian-heading .eyebrow{displa
 
 /* State case-study pages use the same quiet portfolio surfaces as Home. */
 
-.case-system-page .meridian-product-callout{background:color-mix(in srgb,var(--softp) 48%,var(--card))!important;border-color:color-mix(in srgb,var(--purple) 34%,var(--border))!important}
-.case-system-page .meridian-primary-action{background:var(--purple)!important}
+.case-system-page .meridian-product-callout{background:color-mix(in srgb,var(--softp) 48%,var(--card));border-color:color-mix(in srgb,var(--purple) 34%,var(--border))}
+.case-system-page .meridian-primary-action{background:var(--purple)}
 
 /* Legal AI is a discovery readout, not a dashboard: typography and rules carry hierarchy. */
 
@@ -562,7 +562,7 @@ body:has(.meridian-breadcrumb span:last-child) .meridian-heading .eyebrow{displa
 .legal-paper .paper-findings li:first-child{border-top:0;padding-top:4px}
 .legal-paper .paper-findings li:before{content:"0" counter(findings);position:absolute;left:0;top:15px;color:var(--purple);font-size:11px;font-weight:850;letter-spacing:.08em}
 .legal-paper .paper-findings li:first-child:before{top:3px}
-.legal-paper .paper-findings h3{font-size:18px!important;line-height:1.3!important;margin:0 0 7px!important}
+.legal-paper .paper-findings h3{font-size:18px;line-height:1.3;margin:0 0 7px}
 .legal-paper .paper-findings p{margin:0!important;color:var(--muted);font-size:14px!important;line-height:1.62!important}
 .legal-paper .paper-example{margin:8px 0 0;padding:26px 0 30px;border-top:2px solid var(--purple);border-bottom:1px solid var(--border)}
 .legal-paper .paper-example figcaption{display:block;max-width:760px;margin-bottom:18px}

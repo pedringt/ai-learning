@@ -24,17 +24,17 @@
   --shell-brand-size:18px;
 }
 .topbar{
-  position:sticky!important;
-  top:0!important;
+  position:sticky;
+  top:0;
   z-index:50!important;
-  background:rgba(251,248,243,.96)!important;
+  background:rgba(251,248,243,.96);
   backdrop-filter:blur(12px)!important;
-  border-bottom:1px solid var(--border)!important;
-  margin:0!important;
-  padding:0!important;
-  width:100vw!important;
-  margin-inline:calc(50% - 50vw)!important;
-  box-sizing:border-box!important;
+  border-bottom:1px solid var(--border);
+  margin:0;
+  padding:0;
+  width:100vw;
+  margin-inline:calc(50% - 50vw);
+  box-sizing:border-box;
 }
 .dark .topbar,
 .v88-dark .topbar,
@@ -42,11 +42,11 @@ body.dark .topbar,
 body.v88-dark .topbar{
   background:rgba(23,20,25,.96)!important;
 }
-.topbar .topinner{margin:0 auto!important;padding:13px var(--shell-x)!important;display:flex!important;align-items:center!important;justify-content:space-between!important;gap:18px!important}
+.topbar .topinner{margin:0 auto;padding:13px var(--shell-x);display:flex;align-items:center;justify-content:space-between;gap:18px}
 .brand-button{
-  border:0!important;background:transparent!important;color:inherit!important;
-  padding:0!important;margin:0!important;cursor:pointer!important;
-  text-align:left!important;text-decoration:none!important;white-space:nowrap!important;
+  border:0;background:transparent;color:inherit;
+  padding:0;margin:0;cursor:pointer;
+  text-align:left;text-decoration:none;white-space:nowrap;
 }
 .brand{
   font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif!important;
@@ -120,15 +120,15 @@ body.v88-dark .topbar{
 @media(max-width:560px){
   :root{--shell-x:14px;--shell-brand-size:15px}
   .topbar .topinner{
-    padding-top:11px!important;
-    padding-bottom:11px!important;
-    gap:8px!important;
-    flex-wrap:nowrap!important;
+    padding-top:11px;
+    padding-bottom:11px;
+    gap:8px;
+    flex-wrap:nowrap;
   }
   .topbar .brand-button{
-    flex:1 1 auto!important;
-    min-width:0!important;
-    overflow:hidden!important;
+    flex:1 1 auto;
+    min-width:0;
+    overflow:hidden;
   }
   .topbar .brand{
     display:block!important;
@@ -154,7 +154,7 @@ body.v88-dark .topbar{
 }
 @media(max-width:360px){
   :root{--shell-x:10px;--shell-brand-size:13.5px}
-  .topbar .topinner{gap:6px!important}
+  .topbar .topinner{gap:6px}
   .topbar .top-actions{gap:6px!important}
   
   #mobileNav,#v922MobileNav{
@@ -190,16 +190,16 @@ html{
   scrollbar-gutter:stable;
 }
 .topbar .topinner{
-  width:100%!important;
-  max-width:1180px!important;
-  margin-left:auto!important;
-  margin-right:auto!important;
-  box-sizing:border-box!important;
+  width:100%;
+  max-width:1180px;
+  margin-left:auto;
+  margin-right:auto;
+  box-sizing:border-box;
 }
 /* Equal left/right header anchors keep the center navigation stationary. */
 .topbar .brand-button{
-  flex:0 0 190px!important;
-  min-width:190px!important;
+  flex:0 0 190px;
+  min-width:190px;
 }
 .topbar .top-actions{
   flex:0 0 190px!important;
@@ -213,8 +213,8 @@ html{
 }
 @media(max-width:860px){
   .topbar .brand-button{
-    flex:0 1 auto!important;
-    min-width:0!important;
+    flex:0 1 auto;
+    min-width:0;
   }
   .topbar .top-actions{
     flex:0 1 auto!important;
