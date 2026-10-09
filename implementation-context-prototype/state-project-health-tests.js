@@ -664,7 +664,7 @@ const runApiSource=fs.readFileSync(require.resolve('../api/project-health-run.js
 assert.match(runApiSource,/already running/);
 assert.match(runApiSource,/RUN_COOLDOWN_MS/);
 assert.doesNotMatch(runApiSource,/can only be started from the protected Project Health preview/);
-const projectHealthSource=fs.readFileSync(require.resolve('../project-health.js'),'utf8');
+const projectHealthSource=fs.readFileSync(require.resolve('../project-health.js'),'utf8')+fs.readFileSync(require.resolve('../project-health-model.js'),'utf8'); // split in #452
 assert.match(projectHealthSource,/View full scenario catalog/);
 assert.match(projectHealthSource,/data-attention-action="review-quality"/);
 assert.match(projectHealthSource,/drawerCopyHandoffButton/);
@@ -852,7 +852,7 @@ assert.match(workflowText,/github\.ref == 'refs\/heads\/staging' && inputs\.suit
 assert.match(workflowText,/run_quality_evals\.py/);
 
 // Review #5 (Oct 2026): a suite that has not loaded must read as unknown, never as "0 failures"/green.
-const healthJs=fs.readFileSync(require.resolve('../project-health.js'),'utf8');
+const healthJs=fs.readFileSync(require.resolve('../project-health.js'),'utf8')+fs.readFileSync(require.resolve('../project-health-model.js'),'utf8'); // split in #452
 assert.match(healthJs,/!review\?'unknown':reviewFailures\?'warn':'good'/);
 assert.match(healthJs,/!ask\?'unknown':askFailures\?'bad':'good'/);
 assert.match(healthJs,/!review\?unknownSignal:reviewFailures/);
