@@ -6,7 +6,9 @@ const projectQuality=require('../api/project-health-project-quality.js')._test;
 const activity=require('../api/project-health-activity.js')._test;
 const stateQuality=require('../api/project-health-state-quality.js')._test;
 
-assert.deepStrictEqual(Object.keys(platform.PROJECTS),['state','tastemake','narc']);
+assert.deepStrictEqual(Object.keys(platform.PROJECTS),['state','tastemake','narc','authority-lab']);
+assert.strictEqual(platform.PROJECTS['authority-lab'].vercelProjectId,'prj_DEsIbVajmdgFqxtVFeZLQsa6QJ69');
+assert.strictEqual(platform.PROJECTS['authority-lab'].aiTelemetry.kind,'none');
 assert.strictEqual(platform.PROJECTS.state.vercelProjectId,'prj_zQtHJg96oM7Ol4qTapiwk1mV8iRl');
 assert.strictEqual(platform.PROJECTS.tastemake.vercelProjectId,'prj_UWguNtKhGJkLr0X3jswk2rgBKLGu');
 assert.strictEqual(platform.PROJECTS.narc.vercelProjectId,'prj_SKJS8qSkSAiceK5qZ4GkcZEbI41H');
