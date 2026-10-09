@@ -1,0 +1,64 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Testing &amp; Evaluating Probabilistic Systems · Context Switch</title><style>
+:root{--ink:#20202a;--muted:#5f6271;--accent:#6a50a7;--line:#dddce6;--paper:#fff;--wash:#f7f5fc}
+*{box-sizing:border-box}body{margin:0;background:#f4f3f7;color:var(--ink);font:15px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif}
+a{color:var(--accent)}.wrap{max-width:840px;margin:38px auto 70px;padding:42px 52px;background:var(--paper);border:1px solid var(--line);border-radius:16px}
+.top{display:flex;justify-content:space-between;gap:12px;align-items:center;font-size:13px}.top a{text-decoration:none;font-weight:700}
+.label{text-transform:uppercase;letter-spacing:.12em;color:var(--accent);font-size:11px;font-weight:800;margin-top:32px}
+h1{font:700 32px/1.13 Georgia,serif;letter-spacing:-.03em;margin:8px 0 12px}
+h2{font-size:18px;margin:30px 0 10px;border-top:1px solid var(--line);padding-top:24px}
+p{margin:0 0 12px;overflow-wrap:anywhere}.intro{font-size:17px;color:var(--muted)}
+ul{padding-left:21px;margin:8px 0}li{padding-left:3px;margin:0 0 10px;overflow-wrap:anywhere}
+.footer{border-top:1px solid var(--line);padding-top:24px;margin-top:32px;font-size:13px;color:var(--muted)}
+.print{border:1px solid var(--line);border-radius:8px;padding:8px 12px;background:var(--wash);cursor:pointer;font:inherit;color:var(--ink)}
+@media(max-width:700px){.wrap{margin:0;padding:24px 22px;border:0;border-radius:0}.top{flex-wrap:wrap}h1{font-size:27px}}
+@media print{body{background:white}.wrap{margin:0;border:0;padding:0;max-width:none}.print{display:none}h2{break-after:avoid}p,li{orphans:2;widows:2}@page{size:letter;margin:.65in}}
+</style></head><body>
+    <main class="wrap"><div class="top"><a href="../index.html#learn">← Learning Library</a><button class="print" onclick="window.print()">Print / Save PDF</button></div>
+    <div class="label">Context Switch · Learning reference</div><h1>Testing &amp; Evaluating Probabilistic Systems</h1><p class="intro">Reference adapted from the original PDF; consult the source for original tables and visual layout.</p><p>Use deterministic tests for guarantees, evals for judgment, and real QA to find the cases neither system anticipated.</p>
+<p>Core idea: Tests prove rules that should always hold. Evals measure whether probabilistic behavior is good enough. A reliable AI product needs both.</p>
+<p>Unit / contract test Rules that should always hold. Rejected Evidence never mutates Current State.</p>
+<p>Integration test Deterministic flows across components. Evidence → interpretation → Review → accepted transition → History.</p>
+<p>End-to-end test User journeys across browser + API. Add a Note, review change, confirm Project/History update.</p>
+<p>LLM eval Judgment where several outputs may be plausible. Did the model correctly judge whether Evidence is consequential?</p>
+<p>Manual / adversarial QA Unexpected behavior and UX seams. Ambiguous notes, duplicate Reviews, misleading copy, strange navigation.</p>
+<p>A golden scenario is a deliberately chosen case with the expected product judgment written before looking at model output. It prevents the model from quietly redefining what &quot;good&quot; means.</p>
+<p>A plausible model answer can still be wrong for the product. Valid JSON proves shape, not correct judgment.</p>
+<p>AI Learning Reference Testing &amp; Evaluating Probabilistic Systems | 1/2</p>
+<p>AI QUALITY CHEAT SHEET</p>
+<h2>Choose the right evidence for the behavior</h2>
+<p>Layer Best for State example</p>
+<h2>Golden scenarios</h2>
+<p>GIVEN Current State + relevant rules + incoming Evidence + open</p>
+<p>Questions/Reviews.</p>
+<p>EXPECTED INTERPRETATION Review/no Review, affected State,</p>
+<p>proposal, or explicit uncertainty.</p>
+<p>PROHIBITED BEHAVIOR What the model/software must not infer,</p>
+<p>mutate, or hide.</p>
+<p>AFTER HUMAN ACTION Expected State, History, review lifecycle, and</p>
+<p>downstream behavior.</p>
+<p>Real failures are valuable because they reveal decision boundaries your planned test set probably missed.</p>
+<p>Case type Example Why it matters</p>
+<p>Original failure &quot;Password reset tickets were approved for automation.&quot; Preserves the exact bug.</p>
+<p>Paraphrase &quot;Security signed off on automating password resets.&quot; Checks the fix is semantic, not phrase-specific.</p>
+<p>Positive neighbor &quot;Automation is live in production.&quot; Ensures real implementation evidence still works.</p>
+<p>Negative neighbor &quot;We may automate password resets later.&quot; Speculation must not become current truth.</p>
+<p>Failure / uncertainty Provider times out after source Evidence is saved. Checks durable input and safe recovery.</p>
+<p>Is expected behavior specified? → Is the model wrong? → Is validation/app logic wrong? → Is UI presenting correct behavior badly?</p>
+<p>Use deterministic tests for invariants, evals for judgment, and real QA to discover the cases neither of them imagined.</p>
+<p>AI Learning Reference Testing &amp; Evaluating Probabilistic Systems | 2/2</p>
+<p>AI QUALITY CHEAT SHEET</p>
+<h2>Turn every meaningful defect into permanent coverage</h2>
+<h2>Useful evaluation dimensions</h2>
+<p>State integrity</p>
+<p>Interpretation</p>
+<p>Was authoritative state preserved correctly?</p>
+<p>Did the model identify the right consequence, items, and proposal?</p>
+<p>Groundedness</p>
+<p>Failure behavior</p>
+<p>Did the output stay within what the evidence established?</p>
+<p>Did timeouts, malformed output, stale data, and retries degrade safely?</p>
+<h2>When an eval fails</h2>
+<p>User burden</p>
+<p>Did the system create unnecessary Reviews or blockers?</p>
+<p>Consistency</p>
+<p>Is behavior acceptable across paraphrases and repeated runs?</p><div class="footer"><a href="Testing_and_Evaluating_AI_Systems.pdf" target="_blank" rel="noopener">View original PDF</a> · 2 original page(s)</div></main></body></html>

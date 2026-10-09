@@ -4,7 +4,7 @@
 
 Durable principles live in Durable AI Knowledge. Day-to-day efficiency habits live in the Efficient AI Use for Product Work cheat sheet. This page stays closer to current patterns, tools, vocabulary, and techniques that may change.
 
-<!-- edge-review: 2026-10-05 -->
+<!-- edge-review: 2026-10-09 -->
 
 ---
 
@@ -30,9 +30,9 @@ Run a task while intentionally withholding one source or permission. Watch wheth
 
 ---
 
-## Current Product Patterns
+## Workflow and Agent Patterns
 
-These are useful patterns I want close at hand, but they are still specific enough to stay here rather than in Durable Knowledge.
+Current methods for implementing the longer-lived principles in Durable AI Knowledge.
 
 ### Separate knowledge from procedure
 
@@ -58,18 +58,6 @@ AI can query the right data and still reach the wrong business conclusion if ter
 
 **Ask:** Which business definitions must be fixed before the AI starts analyzing?
 
-### Start with workflow friction, not AI capability
-
-Map how the work actually happens: the user goal, data, handoffs, actions, permissions, system of record, delays, repeated work, and failure points. Then decide whether the smallest useful fix is AI, deterministic automation, or process redesign.
-
-**Ask:** What evidence shows this workflow is broken, and does solving it actually require AI?
-
-### Keep the agent layer and model provider separable
-
-The workflow, skills, permissions, and user experience do not have to come from the same vendor as the model. Keeping those layers separable can make model changes less disruptive.
-
-**Ask:** Can we change the model or provider without rebuilding the agent experience?
-
 ### Treat persistent agents as standing product roles
 
 AI products are increasingly moving from one-off interactions toward persistent agents that can hold a role, retain relevant context, use approved tools, and continue work across sessions. That turns product design from a single prompt and response into an ongoing workflow.
@@ -78,7 +66,7 @@ Scope the role explicitly: its goal, context and memory, tools, authority, execu
 
 **Ask:** When does a repeated workflow deserve a standing AI worker? What does it own, remember, access, and need approval for? How long does that authority last, and when should it expire or be renewed?
 
-### Let reversible systems correct themselves
+### Implement reversible autonomy with explicit triggers
 
 For low-consequence actions that are genuinely reversible, an AI system can sometimes act first and keep checking whether the evidence supporting that action still holds. If later evidence contradicts the earlier judgment, the system can reverse or compensate for its own action instead of waiting for a person to notice.
 
@@ -86,17 +74,53 @@ The stronger pattern is not just automatic rollback. A system can also revoke it
 
 **Ask:** Which actions are safe to reverse automatically, what evidence should trigger reversal, and when should the system lose the authority to act on its own?
 
-### Behavior contracts may become more important than model selection
+### Configure workflows against behavior contracts
 
-Today, teams often choose a specific model first. A more mature pattern may be to define the behavior a workflow needs, such as quality, latency, cost, tool support, output structure, and risk tolerance, then map that contract to an approved model or model configuration.
+Specify task-level thresholds for quality, latency, cost, tool support, output structure, and risk tolerance. Then test approved model configurations against those thresholds.
 
-**Why:** Models change quickly. The durable product requirement is the behavior the job needs, while the underlying model may become a replaceable implementation detail.
+**Ask:** Which configurations meet the contract today, and what evidence would disqualify one?
 
-### Treat model behavior like a versioned dependency
+### Monitor provider changes with behavioral canaries
 
 A stable API does not guarantee stable product behavior. A provider can change the model behind an alias or managed preset and shift outputs, tool use, refusals, latency, cost, or edge-case handling without any change to your own code.
 
 **Product habit:** Track the resolved model or configuration, run affected evals after known upstream changes, and use small scheduled behavioral canaries to catch changes you were not explicitly told about.
+
+---
+
+## AI Product Delivery Patterns
+
+Practical ways to test, launch, support, and improve an AI feature.
+
+### Use separate release gates for different failure severity
+
+Define task success, unacceptable errors, and stop conditions before rollout. Examine severe edge cases separately from the overall pass rate, and retest changed behaviors before increasing exposure.
+
+**Ask:** Which specific failure would block release or require rollback?
+
+### Roll out with an owner and a feedback path
+
+Identify who receives user reports, who investigates an AI behavior issue, and who can pause the feature. Start with limited exposure and turn recurring failures into regression cases.
+
+**Ask:** Who responds when the AI is wrong but the service is technically healthy?
+
+### Test the UX around uncertainty
+
+Try ambiguous requests, missing sources, incorrect assumptions, and actions requiring approval. Check whether the interface asks, distinguishes draft from completed work, and lets the person correct course.
+
+**Ask:** Can users tell what happened and recover without understanding the implementation?
+
+### Check data-handling boundaries before connecting tools
+
+Map sensitive fields, source trust, third-party processing, retention, and logs. Test whether untrusted retrieved text tries to override instructions or permissions.
+
+**Ask:** Can external content change what the agent is authorized to do?
+
+### Verify real adoption beyond the pilot
+
+Measure whether teams actually complete work better, whether review queues grow, and whether training, support, or role ambiguity prevent sustained use.
+
+**Ask:** Does this improve the whole workflow after the initial demonstration?
 
 ---
 

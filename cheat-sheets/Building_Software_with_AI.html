@@ -1,0 +1,80 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Building Software with AI Without Creating Chaos · Context Switch</title><style>
+:root{--ink:#20202a;--muted:#5f6271;--accent:#6a50a7;--line:#dddce6;--paper:#fff;--wash:#f7f5fc}
+*{box-sizing:border-box}body{margin:0;background:#f4f3f7;color:var(--ink);font:15px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif}
+a{color:var(--accent)}.wrap{max-width:840px;margin:38px auto 70px;padding:42px 52px;background:var(--paper);border:1px solid var(--line);border-radius:16px}
+.top{display:flex;justify-content:space-between;gap:12px;align-items:center;font-size:13px}.top a{text-decoration:none;font-weight:700}
+.label{text-transform:uppercase;letter-spacing:.12em;color:var(--accent);font-size:11px;font-weight:800;margin-top:32px}
+h1{font:700 32px/1.13 Georgia,serif;letter-spacing:-.03em;margin:8px 0 12px}
+h2{font-size:18px;margin:30px 0 10px;border-top:1px solid var(--line);padding-top:24px}
+p{margin:0 0 12px;overflow-wrap:anywhere}.intro{font-size:17px;color:var(--muted)}
+ul{padding-left:21px;margin:8px 0}li{padding-left:3px;margin:0 0 10px;overflow-wrap:anywhere}
+.footer{border-top:1px solid var(--line);padding-top:24px;margin-top:32px;font-size:13px;color:var(--muted)}
+.print{border:1px solid var(--line);border-radius:8px;padding:8px 12px;background:var(--wash);cursor:pointer;font:inherit;color:var(--ink)}
+@media(max-width:700px){.wrap{margin:0;padding:24px 22px;border:0;border-radius:0}.top{flex-wrap:wrap}h1{font-size:27px}}
+@media print{body{background:white}.wrap{margin:0;border:0;padding:0;max-width:none}.print{display:none}h2{break-after:avoid}p,li{orphans:2;widows:2}@page{size:letter;margin:.65in}}
+</style></head><body>
+    <main class="wrap"><div class="top"><a href="../index.html#learn">← Learning Library</a><button class="print" onclick="window.print()">Print / Save PDF</button></div>
+    <div class="label">Context Switch · Learning reference</div><h1>Building Software with AI Without Creating Chaos</h1><p class="intro">Reference adapted from the original PDF; consult the source for original tables and visual layout.</p><p>Core idea: Prototype to learn. Freeze to build. Give AI bounded jobs. Turn every meaningful failure into permanent coverage. The danger is not AI speed itself - it is letting fast changes outrun architecture, ownership, and tests.</p>
+<p>Repository clarity is part of AI coding quality. If two files look equally authoritative, an AI coding assistant can confidently change the wrong one. Clean paths and explicit ownership reduce both human and model mistakes.</p>
+<p>AI Learning Reference Building Software with AI | 1/2</p>
+<p>AI-ASSISTED BUILD CHEAT SHEET</p>
+<p>Move quickly while learning the product, then deliberately shift into a maintainable build mode.</p>
+<h2>The phase change that matters</h2>
+<p>Prototype</p>
+<p>Transition</p>
+<p>Goal: discover the product and interaction model.</p>
+<p>Goal: convert learning into a build contract.</p>
+<p>AI: audit, identify invariants, map ownership and source-of-truth paths.</p>
+<p>AI: explore, vary, challenge, generate disposable code.</p>
+<p>Exit when: golden behaviors and architecture boundaries are explicit.</p>
+<p>Exit when: you can explain what the product is and which behaviors matter.</p>
+<h2>Before AI writes production code</h2>
+<p>SOURCE OF TRUTH Exact frontend, backend, schema, migration, and</p>
+<p>deploy paths.</p>
+<p>BEHAVIORAL CONTRACT What must always remain true regardless of</p>
+<p>model output.</p>
+<p>GOLDEN BEHAVIORS Representative user journeys with expected</p>
+<p>outcomes written first.</p>
+<h2>Keep the architecture boring</h2>
+<p>Useful complexity</p>
+<p>Product rules, authority boundaries, meaningful state transitions, and user behavior learned through use.</p>
+<p>Real build</p>
+<p>Goal: implement reliably without losing product lessons.</p>
+<p>AI: bounded slices, tests, QA, conflict removal.</p>
+<p>Exit when: automated coverage and deployed smoke checks pass.</p>
+<p>OWNERSHIP MAP Which layer owns routing, validation, persistence,</p>
+<p>rendering, and authority.</p>
+<p>PROVIDER SPIKE Real schema support, latency, cost, and failure</p>
+<p>modes.</p>
+<p>SMOKE GATE The few deployed journeys that prove the product is</p>
+<p>basically usable.</p>
+<p>Avoidable complexity</p>
+<p>Duplicate runtime paths, patch-on-patch styling, stale configs, hidden fallbacks, unclear routing, multiple owners for the same behavior.</p>
+<p>Use AI differently depending on the job, and debug the whole system before reaching for a prompt change.</p>
+<p>Reproduce → Failing test → Find owning layer → Remove conflict → Fix → Full suite + deployed check</p>
+<p>A bug that mattered once should not depend on someone remembering to manually check it forever.</p>
+<p>Wrong factual answer Wrong frontend execution path; model was not the core failure. Verify routing, retrieval, context, and authority before prompt-engineering.</p>
+<p>Broken deployed modal Conflicting CSS/JS visibility mechanisms and accumulated overrides. Do not patch a symptom with another mechanism. Pick one owner.</p>
+<p>AI calls felt slow Provider inference dominated latency. Instrument first. Optimize the actual bottleneck; use interaction design and real streaming when latency remains.</p>
+<p>Move fast while discovering the product. Then make implementation boring: one source of truth, bounded AI jobs, explicit phase gates, permanent regression coverage, and deployed-browser verification.</p>
+<p>AI Learning Reference Building Software with AI | 2/2</p>
+<p>AI-ASSISTED BUILD CHEAT SHEET</p>
+<h2>Use AI as four different jobs</h2>
+<p>ARCHITECT</p>
+<p>BUILDER</p>
+<p>Find the owning layer, invariants, dependencies, and simplest design before changing code.</p>
+<p>Implement one bounded slice. Preserve the contract. Prefer removing conflicts to adding overrides.</p>
+<h2>The repair loop</h2>
+<h2>Three State lessons worth keeping</h2>
+<p>Symptom Actual cause Reusable lesson</p>
+<h2>AI-specific build rules</h2>
+<p>✓Models make semantic judgments; software should own mechanical facts when possible.</p>
+<p>✓Adapt provider output to the product contract, not the reverse.</p>
+<p>✓Schema-valid is not the same as semantically correct.</p>
+<p>QA</p>
+<p>PRODUCT</p>
+<p>Assume the builder missed something. Reproduce, probe adjacent paths, and identify permanent coverage.</p>
+<p>Use it like a real user. Separate product confusion from implementation defects and model failures.</p>
+<p>✓Capability does not imply authority: recommend, validate, authorize, then mutate.</p>
+<p>✓Use real product usage to discover useful rework.</p>
+<p>✓Repeated implementation debt means the process or ownership model needs to change.</p><div class="footer"><a href="Building_Software_with_AI.pdf" target="_blank" rel="noopener">View original PDF</a> · 2 original page(s)</div></main></body></html>
