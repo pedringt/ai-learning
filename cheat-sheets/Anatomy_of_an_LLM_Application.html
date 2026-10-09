@@ -1,0 +1,124 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Anatomy of an LLM Application · Context Switch</title><style>
+:root{--ink:#20202a;--muted:#5f6271;--accent:#6a50a7;--line:#dddce6;--paper:#fff;--wash:#f7f5fc}
+*{box-sizing:border-box}body{margin:0;background:#f4f3f7;color:var(--ink);font:15px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif}
+a{color:var(--accent)}.wrap{max-width:840px;margin:38px auto 70px;padding:42px 52px;background:var(--paper);border:1px solid var(--line);border-radius:16px}
+.top{display:flex;justify-content:space-between;gap:12px;align-items:center;font-size:13px}.top a{text-decoration:none;font-weight:700}
+.label{text-transform:uppercase;letter-spacing:.12em;color:var(--accent);font-size:11px;font-weight:800;margin-top:32px}
+h1{font:700 32px/1.13 Georgia,serif;letter-spacing:-.03em;margin:8px 0 12px}
+h2{font-size:18px;margin:30px 0 10px;border-top:1px solid var(--line);padding-top:24px}
+p{margin:0 0 12px;overflow-wrap:anywhere}.intro{font-size:17px;color:var(--muted)}
+ul{padding-left:21px;margin:8px 0}li{padding-left:3px;margin:0 0 10px;overflow-wrap:anywhere}
+.footer{border-top:1px solid var(--line);padding-top:24px;margin-top:32px;font-size:13px;color:var(--muted)}
+.print{border:1px solid var(--line);border-radius:8px;padding:8px 12px;background:var(--wash);cursor:pointer;font:inherit;color:var(--ink)}
+@media(max-width:700px){.wrap{margin:0;padding:24px 22px;border:0;border-radius:0}.top{flex-wrap:wrap}h1{font-size:27px}}
+@media print{body{background:white}.wrap{margin:0;border:0;padding:0;max-width:none}.print{display:none}h2{break-after:avoid}p,li{orphans:2;widows:2}@page{size:letter;margin:.65in}}
+</style></head><body>
+    <main class="wrap"><div class="top"><a href="../index.html#learn">← Learning Library</a><button class="print" onclick="window.print()">Print / Save PDF</button></div>
+    <div class="label">Context Switch · Learning reference</div><h1>Anatomy of an LLM Application</h1><p class="intro">Reference converted from the original cheat sheet. All extracted text is retained.</p><p>AI SYSTEMS CHEAT SHEET</p>
+<p>The model is one component. The surrounding application controls context, data, permissions, validation, persistence, and</p>
+<p>consequences.</p>
+<h2>Core idea: Treat the LLM as a probabilistic interpreter inside a larger software system. Reliability</h2>
+<h2>comes from what the application does around the model, not from the model alone.</h2>
+<h2>The system at a glance</h2>
+<p>Frontend</p>
+<p>user interaction</p>
+<h2>→</h2>
+<p>Backend</p>
+<p>orchestration</p>
+<h2>→</h2>
+<p>Context</p>
+<p>what model sees</p>
+<h2>→</h2>
+<p>LLM API</p>
+<p>interpretation</p>
+<h2>→</h2>
+<p>Validation + rules</p>
+<p>what may happen</p>
+<p>Database</p>
+<p>durable truth</p>
+<h2>↔</h2>
+<p>Application logic</p>
+<p>state transitions</p>
+<h2>↔</h2>
+<p>Human</p>
+<p>authority</p>
+<h2>What each part owns</h2>
+<p>FRONTEND</p>
+<p>BACKEND</p>
+<p>DATABASE</p>
+<p>Shows the experience, captures user intent,</p>
+<p>and renders authoritative application state.</p>
+<p>Coordinates protected logic, data access,</p>
+<p>model calls, validation, tools, and server-side</p>
+<p>security.</p>
+<p>Persists information across sessions:</p>
+<p>evidence, state, history, reviews,</p>
+<p>configuration, provenance.</p>
+<p>LLM API</p>
+<p>APPLICATION LOGIC</p>
+<p>HUMAN</p>
+<p>Makes semantic judgments: summarize,</p>
+<p>classify, interpret, draft, choose among</p>
+<p>ambiguous possibilities.</p>
+<p>Enforces deterministic rules, permissions,</p>
+<p>allowed transitions, retries, and</p>
+<p>consequences.</p>
+<p>Provides judgment and authority where</p>
+<p>consequential decisions or approvals must</p>
+<p>remain explicit.</p>
+<h2>Backend is an umbrella term. Request handling, database access, model calls, context</h2>
+<h2>construction, validation, and business rules are separate responsibilities even when they live in</h2>
+<h2>one small codebase.</h2>
+<p>AI Learning Reference</p>
+<p>Anatomy of an LLM Application | 1/2</p>
+<p>AI SYSTEMS CHEAT SHEET</p>
+<h2>Anatomy of an LLM Application</h2>
+<p>Three concepts matter especially for product work: context construction, structured outputs, and validation.</p>
+<h2>One evidence flow through State</h2>
+<p>Save source</p>
+<p>evidence</p>
+<h2>→</h2>
+<p>Build trusted</p>
+<p>context</p>
+<h2>→</h2>
+<p>LLM interprets</p>
+<h2>→</h2>
+<p>Validate output</p>
+<h2>→</h2>
+<p>Human approves if</p>
+<p>needed</p>
+<h2>→</h2>
+<p>Software applies</p>
+<p>transition</p>
+<h2>Context construction</h2>
+<h2>Structured output</h2>
+<h2>Validation</h2>
+<p>Ask the model to return a predefined shape</p>
+<p>rather than free-form prose when downstream</p>
+<p>software needs predictable fields.</p>
+<p>Check required fields, allowed values,</p>
+<p>references, and combinations before the</p>
+<p>application acts.</p>
+<p>Decide what information the model receives</p>
+<p>for this task. Send the smallest trustworthy</p>
+<p>governing context that is sufficient - not the</p>
+<p>entire history by default.</p>
+<h2>Valid output is not necessarily correct output. Schema validation proves the response is well-</h2>
+<h2>formed enough to process. It does not prove the model interpreted the evidence correctly.</h2>
+<h2>Design for model mistakes</h2>
+<p>✓Preserve original source evidence unchanged.</p>
+<p>✓Require human authority for consequential transitions.</p>
+<p>✓Keep AI interpretation separate from source material.</p>
+<p>✓Show provenance beside AI interpretation.</p>
+<p>✓Validate before application actions.</p>
+<p>✓Keep history so prior state is inspectable.</p>
+<p>✓Use deterministic rules for mechanical facts.</p>
+<p>✓Fail safely when the model is unavailable or unusable.</p>
+<h2>Current State vs. repeated re-reasoning</h2>
+<p>For ordinary current-state questions, maintained State should govern. Do not repeatedly ask the model to reconstruct truth from the raw archive when</p>
+<p>the product already has an authoritative current representation.</p>
+<p>If an unresolved review could make that state stale, surface the qualification rather than silently changing the answer.</p>
+<p>The model interprets ambiguity. The surrounding application owns persistence, permissions, validation, state transitions, and</p>
+<p>consequences.</p>
+<p>AI Learning Reference</p>
+<p>Anatomy of an LLM Application | 2/2</p><div class="footer"><a href="Anatomy_of_an_LLM_Application.pdf" target="_blank" rel="noopener">View original PDF</a> · 2 original page(s)</div></main></body></html>

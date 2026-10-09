@@ -1,0 +1,114 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Production Reliability &amp; Observability · Context Switch</title><style>
+:root{--ink:#20202a;--muted:#5f6271;--accent:#6a50a7;--line:#dddce6;--paper:#fff;--wash:#f7f5fc}
+*{box-sizing:border-box}body{margin:0;background:#f4f3f7;color:var(--ink);font:15px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif}
+a{color:var(--accent)}.wrap{max-width:840px;margin:38px auto 70px;padding:42px 52px;background:var(--paper);border:1px solid var(--line);border-radius:16px}
+.top{display:flex;justify-content:space-between;gap:12px;align-items:center;font-size:13px}.top a{text-decoration:none;font-weight:700}
+.label{text-transform:uppercase;letter-spacing:.12em;color:var(--accent);font-size:11px;font-weight:800;margin-top:32px}
+h1{font:700 32px/1.13 Georgia,serif;letter-spacing:-.03em;margin:8px 0 12px}
+h2{font-size:18px;margin:30px 0 10px;border-top:1px solid var(--line);padding-top:24px}
+p{margin:0 0 12px;overflow-wrap:anywhere}.intro{font-size:17px;color:var(--muted)}
+ul{padding-left:21px;margin:8px 0}li{padding-left:3px;margin:0 0 10px;overflow-wrap:anywhere}
+.footer{border-top:1px solid var(--line);padding-top:24px;margin-top:32px;font-size:13px;color:var(--muted)}
+.print{border:1px solid var(--line);border-radius:8px;padding:8px 12px;background:var(--wash);cursor:pointer;font:inherit;color:var(--ink)}
+@media(max-width:700px){.wrap{margin:0;padding:24px 22px;border:0;border-radius:0}.top{flex-wrap:wrap}h1{font-size:27px}}
+@media print{body{background:white}.wrap{margin:0;border:0;padding:0;max-width:none}.print{display:none}h2{break-after:avoid}p,li{orphans:2;widows:2}@page{size:letter;margin:.65in}}
+</style></head><body>
+    <main class="wrap"><div class="top"><a href="../index.html#learn">← Learning Library</a><button class="print" onclick="window.print()">Print / Save PDF</button></div>
+    <div class="label">Context Switch · Learning reference</div><h1>Production Reliability &amp; Observability</h1><p class="intro">Reference converted from the original cheat sheet. All extracted text is retained.</p><h2>PRODUCTION AI CHEAT SHEET</h2>
+<h2>Debug from the request forward. Find the first divergence, not just the final bad answer.</h2>
+<h2>Core idea: A production AI failure can start anywhere in the chain. Make each boundary</h2>
+<h2>observable so you can localize the defect instead of guessing from the final response.</h2>
+<h2>The production path</h2>
+<p>Database</p>
+<p>durable records</p>
+<p>Browser</p>
+<p>user action</p>
+<h2>→</h2>
+<p>Frontend</p>
+<p>request + UI state</p>
+<h2>→</h2>
+<p>API</p>
+<p>validation + orchestration</p>
+<h2>→</h2>
+<h2>→</h2>
+<p>Model</p>
+<p>probabilistic</p>
+<p>interpretation</p>
+<h2>Where failures hide</h2>
+<p>Boundary</p>
+<p>Typical failure</p>
+<p>First evidence to inspect</p>
+<p>Browser / frontend</p>
+<p>Stale local state, rerender race, wrong API base, double submit.</p>
+<p>Network request, console, rendered state, reproduction video.</p>
+<p>API / app logic</p>
+<p>Wrong status, unsafe retry, bad validation, duplicate side effect.</p>
+<p>Request ID, route logs, response body, persisted records.</p>
+<p>Model provider</p>
+<p>Timeout, refusal, malformed/poor interpretation, latency spike.</p>
+<p>Provider timing, model ID, token counts, structured result.</p>
+<p>Database</p>
+<p>Constraint failure, stale version, rollback, migration drift.</p>
+<p>Transaction logs, row versions, migration state, affected records.</p>
+<p>Cross-boundary</p>
+<p>Works locally, fails deployed; config/environment mismatch.</p>
+<p>Environment, deployed commit, service logs, DB target, CORS.</p>
+<h2>Trace, log, metric - different jobs</h2>
+<h2>Trace</h2>
+<h2>Log</h2>
+<h2>Metric</h2>
+<p>What happened for this one request, in what</p>
+<p>order?</p>
+<p>What technical event, warning, or error</p>
+<p>happened?</p>
+<p>How often, how slow, how expensive, or how</p>
+<p>widespread is it?</p>
+<h2>Correlation/request ID ties the browser request, API logs, provider call, and database activity</h2>
+<h2>together.</h2>
+<p>AI Learning Reference</p>
+<p>Production Reliability &amp; Observability | 1/2</p>
+<h2>PRODUCTION AI CHEAT SHEET</h2>
+<h2>Production Reliability &amp; Observability</h2>
+<h2>Safe recovery matters because AI calls are slow, fallible, and can fail after partial work already happened.</h2>
+<h2>Safe failure and retry design</h2>
+<p>Situation</p>
+<p>Bad recovery</p>
+<p>Better recovery</p>
+<p>Evidence saved; model call fails</p>
+<p>Ask user to submit the Note again.</p>
+<p>Keep the same Evidence; offer retry analysis.</p>
+<p>Review races with newer State</p>
+<p>Overwrite newer truth.</p>
+<p>Reject stale proposal with version checks.</p>
+<p>Valid shape, bad references</p>
+<p>Persist partial downstream records.</p>
+<p>Reject deterministically; preserve failed interpretation.</p>
+<p>Frontend waits for server update</p>
+<p>Sleep 300 ms and hope.</p>
+<p>Use the authoritative response and deterministic revalidation.</p>
+<p>Provider unavailable</p>
+<p>Expose internal exception or mutate anyway.</p>
+<p>Return safe service failure; preserve authoritative data.</p>
+<h2>Latency: measure the parts</h2>
+<p>Frontend / network</p>
+<h2>+</h2>
+<p>API work</p>
+<h2>+</h2>
+<p>Provider call</p>
+<h2>+</h2>
+<p>Validation / persistence</p>
+<h2>+</h2>
+<p>Rehydration</p>
+<h2>If inference takes 15 seconds and persistence takes 20 ms, optimizing SQL will not meaningfully</h2>
+<h2>improve the user experience.</h2>
+<h2>Production checklist</h2>
+<p>✓Identity: deployed version/commit and model identifier.</p>
+<p>✓Logging: safe request IDs, timing, provider/model, usage, categorized errors.</p>
+<p>✓Configuration: API base, provider keys, CORS, database URL, environment.</p>
+<p>✓Regression: production defects become tests/evals when feasible.</p>
+<p>✓Durability: which records must survive restart/redeploy.</p>
+<p>✓Graceful degradation: preserve authoritative data when AI is unavailable.</p>
+<p>✓Retries: idempotency and version checks where needed.</p>
+<p>Reliable AI products make every boundary observable, every consequential write controlled, and every retry safe.</p>
+<p>AI Learning Reference</p>
+<p>Production Reliability &amp; Observability | 2/2</p><div class="footer"><a href="AI_Production_Reliability_and_Observability.pdf" target="_blank" rel="noopener">View original PDF</a> · 2 original page(s)</div></main></body></html>

@@ -1,0 +1,186 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>AI Product Evals · Context Switch</title><style>
+:root{--ink:#20202a;--muted:#5f6271;--accent:#6a50a7;--line:#dddce6;--paper:#fff;--wash:#f7f5fc}
+*{box-sizing:border-box}body{margin:0;background:#f4f3f7;color:var(--ink);font:15px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif}
+a{color:var(--accent)}.wrap{max-width:840px;margin:38px auto 70px;padding:42px 52px;background:var(--paper);border:1px solid var(--line);border-radius:16px}
+.top{display:flex;justify-content:space-between;gap:12px;align-items:center;font-size:13px}.top a{text-decoration:none;font-weight:700}
+.label{text-transform:uppercase;letter-spacing:.12em;color:var(--accent);font-size:11px;font-weight:800;margin-top:32px}
+h1{font:700 32px/1.13 Georgia,serif;letter-spacing:-.03em;margin:8px 0 12px}
+h2{font-size:18px;margin:30px 0 10px;border-top:1px solid var(--line);padding-top:24px}
+p{margin:0 0 12px;overflow-wrap:anywhere}.intro{font-size:17px;color:var(--muted)}
+ul{padding-left:21px;margin:8px 0}li{padding-left:3px;margin:0 0 10px;overflow-wrap:anywhere}
+.footer{border-top:1px solid var(--line);padding-top:24px;margin-top:32px;font-size:13px;color:var(--muted)}
+.print{border:1px solid var(--line);border-radius:8px;padding:8px 12px;background:var(--wash);cursor:pointer;font:inherit;color:var(--ink)}
+@media(max-width:700px){.wrap{margin:0;padding:24px 22px;border:0;border-radius:0}.top{flex-wrap:wrap}h1{font-size:27px}}
+@media print{body{background:white}.wrap{margin:0;border:0;padding:0;max-width:none}.print{display:none}h2{break-after:avoid}p,li{orphans:2;widows:2}@page{size:letter;margin:.65in}}
+</style></head><body>
+    <main class="wrap"><div class="top"><a href="../index.html#learn">← Learning Library</a><button class="print" onclick="window.print()">Print / Save PDF</button></div>
+    <div class="label">Context Switch · Learning reference</div><h1>AI Product Evals</h1><p class="intro">Reference converted from the original cheat sheet. All extracted text is retained.</p><p>PM EVALS CHEAT SHEET</p>
+<p>Define expected behavior, test realistic risk, and use results to make product decisions - not just produce a score.</p>
+<h2>Five rules: define expected behavior before seeing outputs; severity matters more than one</h2>
+<h2>accuracy number; find the first wrong step before fixing; rerun failures plus neighbors and</h2>
+<h2>holdouts; use evals to make a product decision.</h2>
+<h2>Tests and evals answer different questions</h2>
+<h2>Deterministic software test</h2>
+<h2>AI eval</h2>
+<h2>Question: Did the software do what it was programmed to do?</h2>
+<h2>Question: Did the probabilistic behavior work well enough across</h2>
+<p>realistic cases?</p>
+<p>Best for invariants, schemas, permissions, transitions, validation, and known logic.</p>
+<p>Best for interpretation, groundedness, ambiguity, judgment, tone, and uncertainty</p>
+<p>handling.</p>
+<h2>What the PM owns</h2>
+<p class='bullet'>• </p>
+<p>Which behaviors matter.</p>
+<h2>Engineering usually owns: repeatable execution, instrumentation,</h2>
+<p>logging, and product integration.</p>
+<p class='bullet'>• </p>
+<p>What counts as correct.</p>
+<p>AI can help: draft cases, variants, summaries, and initial analysis.</p>
+<p class='bullet'>• </p>
+<p>Failure severity and realistic risk.</p>
+<p class='bullet'>• </p>
+<p>Release quality bars and tradeoffs.</p>
+<p>Human judgment: approves expected behavior and what is acceptable.</p>
+<h2>Build the first eval set</h2>
+<p>NORMAL</p>
+<p>PARAPHRASE</p>
+<p>EDGE</p>
+<p>Representative expected behavior.</p>
+<p>Same intent, different wording.</p>
+<p>Boundary or unusual but plausible case.</p>
+<p>UNCERTAINTY</p>
+<p>KNOWN FAILURE</p>
+<p>NEGATIVE / NO-ACTION</p>
+<p>Unknown, tentative, conditional, conflicting.</p>
+<p>A real defect that should never quietly return.</p>
+<p>Cases where the AI should correctly do</p>
+<p>nothing.</p>
+<h2>Write expected behavior before looking at outputs. Otherwise it is easy to redefine success</h2>
+<h2>around whatever the model happened to produce.</h2>
+<h2>Simple scoring rubric</h2>
+<p>Dimension</p>
+<p>Ask</p>
+<p>Supported</p>
+<p>Is the conclusion grounded in the available evidence?</p>
+<p>Complete</p>
+<p>Did it catch the important information?</p>
+<p>Uncertainty preserved</p>
+<p>Did unknown/pending information remain uncertain?</p>
+<p>Human burden</p>
+<p>Did it avoid unnecessary reviews, alerts, or duplicate work?</p>
+<p>AI Learning Reference</p>
+<p>AI Product Evals | 1/3</p>
+<p>PM EVALS CHEAT SHEET</p>
+<h2>AI Product Evals</h2>
+<p>Treat severity, decision boundaries, and generalization as first-class parts of quality.</p>
+<h2>Severity beats one overall accuracy score</h2>
+<p>LOW</p>
+<p>MEDIUM</p>
+<p>HIGH</p>
+<p>CRITICAL</p>
+<p>Minor inconvenience.</p>
+<p>Misleading or wasteful, but easy</p>
+<p>to catch.</p>
+<p>Could materially affect decisions</p>
+<p>or trust.</p>
+<p>Could directly cause unsafe,</p>
+<p>irreversible, or externally</p>
+<p>consequential action.</p>
+<h2>A strong aggregate score can still fail the release bar if the remaining failure is severe enough.</h2>
+<h2>Test the decision boundary, not just the broken sentence</h2>
+<p>Case</p>
+<p>Expected distinction</p>
+<p>Unknown</p>
+<p>Remain unknown.</p>
+<p>Explicit 0</p>
+<p>Allow 0 only when explicitly established.</p>
+<p>Tentative 10%</p>
+<p>Do not treat as approved.</p>
+<p>Approved 10%</p>
+<p>Allow a concrete proposal/value.</p>
+<p>Observed 8%, target unknown</p>
+<p>Do not confuse actual performance with target.</p>
+<p>Prior target withdrawn</p>
+<p>Return to unknown unless a replacement is established.</p>
+<h2>After a fix</h2>
+<p>Original failure</p>
+<h2>→</h2>
+<p>Nearby boundary cases</p>
+<h2>→</h2>
+<p>Positive cases</p>
+<h2>→</h2>
+<p>Holdouts</p>
+<h2>→</h2>
+<p>Repeat high-risk cases</p>
+<h2>Holdouts</h2>
+<h2>Repeat where it matters</h2>
+<p>Keep some cases that were not directly used to design the fix. Passing</p>
+<p>tuned examples does not prove the behavior generalizes.</p>
+<p>Repeat high-severity, previously failed, ambiguous, or unstable cases</p>
+<p>more heavily than routine low-risk cases.</p>
+<h2>Quality is multidimensional</h2>
+<h2>A fix can improve one metric while making another worse. Check safety, correctness, usability,</h2>
+<h2>and human workload together.</h2>
+<p>AI Learning Reference</p>
+<p>AI Product Evals | 2/3</p>
+<p>PM EVALS CHEAT SHEET</p>
+<h2>AI Product Evals</h2>
+<p>When something fails, diagnose the layer before changing the model or prompt.</p>
+<h2>Trace the first wrong step</h2>
+<p>Evidence</p>
+<h2>→</h2>
+<p>Context / retrieval</p>
+<h2>→</h2>
+<p>Model</p>
+<p>interpretation</p>
+<h2>→</h2>
+<p>Validation / post-</p>
+<p>processing</p>
+<h2>→</h2>
+<p>Classification</p>
+<h2>→</h2>
+<p>Product action</p>
+<h2>Do not change the prompt until you know the failure actually occurred at the model step. If</h2>
+<h2>software converted null into 0, a better prompt will not fix the real defect.</h2>
+<h2>What tracing should let you inspect</h2>
+<p>✓Input evidence and context.</p>
+<p>✓Validation or normalization.</p>
+<p>✓Prompt/instruction and model version.</p>
+<p>✓Action/review classification.</p>
+<p>✓Model interpretation.</p>
+<p>✓Errors, timing, run or trace ID.</p>
+<h2>Find silent misses</h2>
+<h2>Useful product metrics</h2>
+<p>Visible wrong answers are easier to notice than cases where the AI</p>
+<p>should have acted but did nothing.</p>
+<p>Miss rate - important changes missed.</p>
+<p class='bullet'>• </p>
+<p>Sample no-action cases.</p>
+<p>Unsupported-claim rate - invented/overstated claims.</p>
+<p class='bullet'>• </p>
+<p>Have humans judge whether inaction was correct.</p>
+<p>Uncertainty-loss rate - uncertain became falsely certain.</p>
+<p class='bullet'>• </p>
+<p>Track confirmed false negatives and severity.</p>
+<p>Unnecessary-review rate - avoidable human work.</p>
+<h2>Practical PM eval loop</h2>
+<p>Define</p>
+<p>behavior</p>
+<h2>→</h2>
+<p>Draft cases</p>
+<h2>→</h2>
+<p>Baseline</p>
+<h2>→</h2>
+<p>Score +</p>
+<p>severity</p>
+<h2>→</h2>
+<p>Trace failure</p>
+<h2>→</h2>
+<p>Targeted fix</p>
+<h2>→</h2>
+<p>Regression +</p>
+<p>monitor</p>
+<p>Schema-valid does not mean semantically correct. Correct AI behavior sometimes means doing nothing. Averages should not hide</p>
+<p>unacceptable failure modes.</p>
+<p>AI Learning Reference</p>
+<p>AI Product Evals | 3/3</p><div class="footer"><a href="AI_Product_Evals_Cheat_Sheet.pdf" target="_blank" rel="noopener">View original PDF</a> · 3 original page(s)</div></main></body></html>
