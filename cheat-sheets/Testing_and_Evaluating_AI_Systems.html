@@ -14,97 +14,52 @@ ul{padding-left:21px;margin:8px 0}li{padding-left:3px;margin:0 0 10px;overflow-w
 @media print{body{background:white}.wrap{margin:0;border:0;padding:0;max-width:none}.print{display:none}h2{break-after:avoid}p,li{orphans:2;widows:2}@page{size:letter;margin:.65in}}
 </style></head><body>
     <main class="wrap"><div class="top"><a href="../index.html#learn">← Learning Library</a><button class="print" onclick="window.print()">Print / Save PDF</button></div>
-    <div class="label">Context Switch · Learning reference</div><h1>Testing &amp; Evaluating Probabilistic Systems</h1><p class="intro">Reference converted from the original cheat sheet. All extracted text is retained.</p><h2>AI QUALITY CHEAT SHEET</h2>
-<h2>Use deterministic tests for guarantees, evals for judgment, and real QA to find the cases neither system anticipated.</h2>
-<h2>Core idea: Tests prove rules that should always hold. Evals measure whether probabilistic</h2>
-<h2>behavior is good enough. A reliable AI product needs both.</h2>
-<h2>Choose the right evidence for the behavior</h2>
-<p>Layer</p>
-<p>Best for</p>
-<p>State example</p>
-<p>Unit / contract test</p>
-<p>Rules that should always hold.</p>
-<p>Rejected Evidence never mutates Current State.</p>
-<p>Integration test</p>
-<p>Deterministic flows across components.</p>
-<p>Evidence → interpretation → Review → accepted transition → History.</p>
-<p>End-to-end test</p>
-<p>User journeys across browser + API.</p>
-<p>Add a Note, review change, confirm Project/History update.</p>
-<p>LLM eval</p>
-<p>Judgment where several outputs may be plausible.</p>
-<p>Did the model correctly judge whether Evidence is consequential?</p>
-<p>Manual / adversarial QA</p>
-<p>Unexpected behavior and UX seams.</p>
-<p>Ambiguous notes, duplicate Reviews, misleading copy, strange navigation.</p>
-<h2>Golden scenarios</h2>
-<p>A golden scenario is a deliberately chosen case with the expected product judgment written before looking at model output. It prevents the model from</p>
-<p>quietly redefining what &quot;good&quot; means.</p>
-<p>GIVEN</p>
-<p>Current State + relevant rules + incoming Evidence + open</p>
-<p>PROHIBITED BEHAVIOR</p>
-<p>What the model/software must not infer,</p>
-<p>Questions/Reviews.</p>
-<p>mutate, or hide.</p>
-<p>EXPECTED INTERPRETATION</p>
-<p>Review/no Review, affected State,</p>
-<p>AFTER HUMAN ACTION</p>
-<p>Expected State, History, review lifecycle, and</p>
-<p>proposal, or explicit uncertainty.</p>
-<p>downstream behavior.</p>
-<h2>A plausible model answer can still be wrong for the product. Valid JSON proves shape, not</h2>
-<h2>correct judgment.</h2>
-<p>AI Learning Reference</p>
-<p>Testing &amp; Evaluating Probabilistic Systems | 1/2</p>
+    <div class="label">Context Switch · Learning reference</div><h1>Testing &amp; Evaluating Probabilistic Systems</h1><p class="intro">Reference converted from the original cheat sheet. All extracted text is retained.</p><h2>Use deterministic tests for guarantees, evals for judgment, and real QA to find the cases neither system anticipated.</h2>
+<p>Core idea: Tests prove rules that should always hold. Evals measure whether probabilistic behavior is good enough. A reliable AI product needs both.</p>
+<p>Unit / contract test Rules that should always hold. Rejected Evidence never mutates Current State.</p>
+<p>Integration test Deterministic flows across components. Evidence → interpretation → Review → accepted transition → History.</p>
+<p>End-to-end test User journeys across browser + API. Add a Note, review change, confirm Project/History update.</p>
+<p>LLM eval Judgment where several outputs may be plausible. Did the model correctly judge whether Evidence is consequential?</p>
+<p>Manual / adversarial QA Unexpected behavior and UX seams. Ambiguous notes, duplicate Reviews, misleading copy, strange navigation.</p>
+<p>A golden scenario is a deliberately chosen case with the expected product judgment written before looking at model output. It prevents the model from quietly redefining what &quot;good&quot; means.</p>
+<h2>A plausible model answer can still be wrong for the product. Valid JSON proves shape, not correct judgment.</h2>
+<p>AI Learning Reference Testing &amp; Evaluating Probabilistic Systems | 1/2</p>
 <h2>AI QUALITY CHEAT SHEET</h2>
+<h2>Choose the right evidence for the behavior</h2>
+<p>Layer Best for State example</p>
+<h2>Golden scenarios</h2>
+<h2>GIVEN Current State + relevant rules + incoming Evidence + open</h2>
+<p>Questions/Reviews.</p>
+<h2>EXPECTED INTERPRETATION Review/no Review, affected State,</h2>
+<p>proposal, or explicit uncertainty.</p>
+<h2>PROHIBITED BEHAVIOR What the model/software must not infer,</h2>
+<p>mutate, or hide.</p>
+<h2>AFTER HUMAN ACTION Expected State, History, review lifecycle, and</h2>
+<p>downstream behavior.</p>
 <h2>Testing &amp; Evaluating Probabilistic Systems</h2>
 <h2>Real failures are valuable because they reveal decision boundaries your planned test set probably missed.</h2>
+<p>Case type Example Why it matters</p>
+<p>Original failure &quot;Password reset tickets were approved for automation.&quot; Preserves the exact bug.</p>
+<p>Paraphrase &quot;Security signed off on automating password resets.&quot; Checks the fix is semantic, not phrase-specific.</p>
+<p>Positive neighbor &quot;Automation is live in production.&quot; Ensures real implementation evidence still works.</p>
+<p>Negative neighbor &quot;We may automate password resets later.&quot; Speculation must not become current truth.</p>
+<p>Failure / uncertainty Provider times out after source Evidence is saved. Checks durable input and safe recovery.</p>
+<p>Is expected behavior specified? → Is the model wrong? → Is validation/app logic wrong? → Is UI presenting correct behavior badly?</p>
+<p>Use deterministic tests for invariants, evals for judgment, and real QA to discover the cases neither of them imagined.</p>
+<p>AI Learning Reference Testing &amp; Evaluating Probabilistic Systems | 2/2</p>
+<h2>AI QUALITY CHEAT SHEET</h2>
 <h2>Turn every meaningful defect into permanent coverage</h2>
-<p>Case type</p>
-<p>Example</p>
-<p>Why it matters</p>
-<p>Original failure</p>
-<p>&quot;Password reset tickets were approved for automation.&quot;</p>
-<p>Preserves the exact bug.</p>
-<p>Paraphrase</p>
-<p>&quot;Security signed off on automating password resets.&quot;</p>
-<p>Checks the fix is semantic, not phrase-specific.</p>
-<p>Positive neighbor</p>
-<p>&quot;Automation is live in production.&quot;</p>
-<p>Ensures real implementation evidence still works.</p>
-<p>Negative neighbor</p>
-<p>&quot;We may automate password resets later.&quot;</p>
-<p>Speculation must not become current truth.</p>
-<p>Failure / uncertainty</p>
-<p>Provider times out after source Evidence is saved.</p>
-<p>Checks durable input and safe recovery.</p>
 <h2>Useful evaluation dimensions</h2>
 <h2>State integrity</h2>
 <h2>Interpretation</h2>
-<h2>User burden</h2>
 <p>Was authoritative state preserved correctly?</p>
-<p>Did the model identify the right consequence,</p>
-<p>items, and proposal?</p>
-<p>Did the system create unnecessary Reviews</p>
-<p>or blockers?</p>
+<p>Did the model identify the right consequence, items, and proposal?</p>
 <h2>Groundedness</h2>
 <h2>Failure behavior</h2>
-<h2>Consistency</h2>
-<p>Did the output stay within what the evidence</p>
-<p>established?</p>
-<p>Did timeouts, malformed output, stale data,</p>
-<p>and retries degrade safely?</p>
-<p>Is behavior acceptable across paraphrases</p>
-<p>and repeated runs?</p>
+<p>Did the output stay within what the evidence established?</p>
+<p>Did timeouts, malformed output, stale data, and retries degrade safely?</p>
 <h2>When an eval fails</h2>
-<p>Is expected behavior specified?</p>
-<h2>→</h2>
-<p>Is the model wrong?</p>
-<h2>→</h2>
-<p>Is validation/app logic wrong?</p>
-<h2>→</h2>
-<p>Is UI presenting correct behavior</p>
-<p>badly?</p>
-<p>Use deterministic tests for invariants, evals for judgment, and real QA to discover the cases neither of them imagined.</p>
-<p>AI Learning Reference</p>
-<p>Testing &amp; Evaluating Probabilistic Systems | 2/2</p><div class="footer"><a href="Testing_and_Evaluating_AI_Systems.pdf" target="_blank" rel="noopener">View original PDF</a> · 2 original page(s)</div></main></body></html>
+<h2>User burden</h2>
+<p>Did the system create unnecessary Reviews or blockers?</p>
+<h2>Consistency</h2>
+<p>Is behavior acceptable across paraphrases and repeated runs?</p><div class="footer"><a href="Testing_and_Evaluating_AI_Systems.pdf" target="_blank" rel="noopener">View original PDF</a> · 2 original page(s)</div></main></body></html>

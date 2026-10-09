@@ -14,130 +14,90 @@ ul{padding-left:21px;margin:8px 0}li{padding-left:3px;margin:0 0 10px;overflow-w
 @media print{body{background:white}.wrap{margin:0;border:0;padding:0;max-width:none}.print{display:none}h2{break-after:avoid}p,li{orphans:2;widows:2}@page{size:letter;margin:.65in}}
 </style></head><body>
     <main class="wrap"><div class="top"><a href="../index.html#learn">← Learning Library</a><button class="print" onclick="window.print()">Print / Save PDF</button></div>
-    <div class="label">Context Switch · Learning reference</div><h1>Human + AI Workflow Design</h1><p class="intro">Reference converted from the original cheat sheet. All extracted text is retained.</p><p>Make judgment, authority, uncertainty, and recovery explicit.</p>
-<p>PM CHEAT SHEET</p>
+    <div class="label">Context Switch · Learning reference</div><h1>Human + AI Workflow Design</h1><p class="intro">Reference converted from the original cheat sheet. All extracted text is retained.</p><p>PM CHEAT SHEET 1 / 2</p>
+<p>Rule of thumb: If you can write the rule precisely, do not make the model enforce it.</p>
+<p>Make judgment, authority, uncertainty, and recovery explicit.</p>
 <p>VISUAL ANCHOR</p>
+<h2>Human judgment &gt;</h2>
+<h2>AI interprets &gt;</h2>
 <h2>Tools +</h2>
-<h2>Approval /</h2>
-<h2>Human</h2>
-<h2>judgment</h2>
-<h2>&gt;</h2>
-<h2>AI</h2>
-<h2>interprets</h2>
-<h2>&gt;</h2>
-<h2>data</h2>
-<h2>&gt;</h2>
-<h2>Software</h2>
-<h2>enforces</h2>
-<h2>&gt;</h2>
-<h2>action</h2>
+<h2>data &gt;</h2>
 <p>Not every workflow needs final approval. Raise control as data sensitivity, authority, or impact rises.</p>
 <p>1. ASSIGN EACH LAYER ONE JOB</p>
 <h2>Human judgment</h2>
 <h2>AI</h2>
-<h2>Tools + data</h2>
-<p>Set goals, risk tolerance, evidence</p>
-<p>bar, exceptions, and what must stay</p>
-<p>under human control.</p>
-<p>Interpret, summarize, classify,</p>
-<p>compare, synthesize, and surface</p>
-<p>uncertainty.</p>
-<p>Retrieve, query, or execute through</p>
-<p>bounded tools with scoped inputs,</p>
-<p>permissions, and observable</p>
-<p>outcomes.</p>
+<p>Set goals, risk tolerance, evidence bar, exceptions, and what must stay under human control.</p>
+<p>Interpret, summarize, classify, compare, synthesize, and surface uncertainty.</p>
 <p>Suggest rather than silently authorize.</p>
 <h2>Software</h2>
-<h2>People / action</h2>
-<p>Enforce exact rules: permissions, schemas, allowed transitions,</p>
-<p>version checks, limits, dedupe, and required approvals.</p>
-<p>Approve consequential mutations, resolve tradeoffs, correct</p>
-<p>wording, reject proposals, or keep uncertainty open.</p>
+<p>Enforce exact rules: permissions, schemas, allowed transitions, version checks, limits, dedupe, and required approvals.</p>
 <p>2. SUGGEST VS. ENFORCE VS. AUTHORIZE</p>
-<p>Rule of thumb: If you can write the rule precisely, do not make the model enforce it.</p>
 <h2>AI should suggest</h2>
 <h2>Software should enforce</h2>
-<h2>People should authorize</h2>
 <p>Semantic judgments with real ambiguity</p>
 <p>Rules you can state exactly</p>
-<p>High-impact or irreversible actions</p>
-<p>Summaries, comparisons, draft</p>
-<p>recommendations</p>
-<p>Permissions, limits, validation,</p>
-<p>versioning</p>
-<p>Policy exceptions and tradeoffs under</p>
-<p>uncertainty</p>
+<p>Summaries, comparisons, draft recommendations</p>
+<p>Permissions, limits, validation, versioning</p>
 <p>Potential changes a person can inspect</p>
-<p>Safe defaults when authority or inputs</p>
-<p>are missing</p>
-<p>What becomes authoritative when</p>
-<p>mistakes materially matter</p>
+<p>Safe defaults when authority or inputs are missing</p>
 <p>3. MAKE UNCERTAINTY VISIBLE</p>
 <h2>Evidence is not truth. Pending is not accepted. Unknown is not zero.</h2>
 <p>Separate accepted facts, pending proposals, and open questions.</p>
 <p>Preserve source and freshness when they matter.</p>
 <p>Let users adjust, reject, leave unchanged, or keep tracking uncertainty.</p>
-<h2>TAKEAWAY</h2>
-<p>The best AI workflow makes the authority boundary obvious before anything goes wrong.</p>
+<p>TAKEAWAY The best AI workflow makes the authority boundary obvious before anything goes wrong.</p>
+<h2>Software enforces &gt;</h2>
+<h2>Approval /</h2>
+<h2>action</h2>
+<h2>Tools + data</h2>
+<p>Retrieve, query, or execute through bounded tools with scoped inputs, permissions, and observable outcomes.</p>
+<h2>People / action</h2>
+<p>Approve consequential mutations, resolve tradeoffs, correct wording, reject proposals, or keep uncertainty open.</p>
+<h2>People should authorize</h2>
+<p>High-impact or irreversible actions</p>
+<p>Policy exceptions and tradeoffs under uncertainty</p>
+<p>What becomes authoritative when mistakes materially matter</p>
+<p>PM CHEAT SHEET 2 / 2</p>
+<h2>Layer Failure signal First thing to inspect</h2>
+<p>Instructions Same evidence is misread across cases Framing, examples, ambiguity, conflicting instructions</p>
+<p>Retrieval Right source is missing, stale, or conflicting What was actually retrieved before judging generation</p>
+<p>Tools Call fails, times out, or returns partial/wrong data Inputs, outputs, retries, dependency failure</p>
+<p>Permissions System can see/do too much or too little Auth, scopes, isolation, approval requirements</p>
+<p>UX User cannot tell what happened or recover Explanation, correction, and recovery in the interface</p>
+<p>Debugging principle: Trace backward to the first place reality diverges from the expected workflow.</p>
+<p>TAKEAWAY Human-in-the-loop is not “put a person at the end.” It is explicit authority, uncertainty, correction, and recovery end to end.</p>
 <h2>Failure Diagnosis + Recovery</h2>
 <p>Debug the layer that failed, then make the recovery path visible.</p>
-<p>PM CHEAT SHEET</p>
 <p>4. DIAGNOSE THE FIRST OBSERVABLE FAILURE</p>
 <h2>Do not default every AI failure to a prompt problem.</h2>
-<h2>Layer</h2>
-<h2>Failure signal</h2>
-<h2>First thing to inspect</h2>
-<p>Instructions</p>
-<p>Same evidence is misread across cases</p>
-<p>Framing, examples, ambiguity, conflicting instructions</p>
-<p>Retrieval</p>
-<p>Right source is missing, stale, or conflicting</p>
-<p>What was actually retrieved before judging generation</p>
-<p>Tools</p>
-<p>Call fails, times out, or returns partial/wrong data</p>
-<p>Inputs, outputs, retries, dependency failure</p>
-<p>Validation, branching, versioning, deterministic state rules</p>
-<p>Logic</p>
-<p>Model output is reasonable but product behavior is</p>
-<p>wrong</p>
-<p>Permissions</p>
-<p>System can see/do too much or too little</p>
-<p>Auth, scopes, isolation, approval requirements</p>
-<p>UX</p>
-<p>User cannot tell what happened or recover</p>
-<p>Explanation, correction, and recovery in the interface</p>
-<p>Debugging principle: Trace backward to the first place reality diverges from the expected workflow.</p>
+<p>Logic Model output is reasonable but product behavior is wrong</p>
 <p>5. DESIGN RECOVERY BEFORE LAUNCH</p>
 <p>Model/provider fails</p>
-<p>Evidence is weak</p>
-<p>Fail closed or use an intentionally limited fallback. Never invent an answer</p>
-<p>just to keep the flow moving.</p>
-<p>Show insufficient support, ask for more evidence, or keep a Question</p>
-<p>open.</p>
+<p>Fail closed or use an intentionally limited fallback. Never invent an answer just to keep the flow moving.</p>
 <p>Tool call fails</p>
-<p>State is stale/conflicting</p>
 <p>Retry only when safe; otherwise expose a manual or escalated path.</p>
-<p>Block the mutation and require re-review against the current version.</p>
 <p>Permission is missing</p>
-<p>Bad action slips through</p>
 <p>Deny the action, explain the boundary, and request approved access.</p>
-<p>Preserve history, support reversal/escalation where possible, and add a</p>
-<p>regression case.</p>
 <p>6. PM DESIGN CHECKLIST</p>
 <p>Before design</p>
 <p>Before release</p>
-<p>During iteration</p>
 <p>Final authority mapped</p>
 <p>Evidence vs. proposal is visible</p>
-<p>Retest exact failure + boundaries</p>
 <p>AI read/write/tool scope bounded</p>
 <p>Correction / rejection path exists</p>
-<p>Use holdouts/repeated runs</p>
 <p>Reversibility + approvals explicit</p>
 <p>Failure + fallback + escalation designed</p>
-<p>Measure false certainty + review burden</p>
 <p>Uncertainty that must stay visible</p>
 <p>Silent misses are traceable</p>
-<p>Fix the failing layer, not the nearest prompt</p>
-<h2>TAKEAWAY</h2>
-<p>Human-in-the-loop is not “put a person at the end.” It is explicit authority, uncertainty, correction, and recovery end to end.</p><div class="footer"><a href="Human_AI_Workflow_Design_Cheat_Sheet.pdf" target="_blank" rel="noopener">View original PDF</a> · 2 original page(s)</div></main></body></html>
+<p>Validation, branching, versioning, deterministic state rules</p>
+<p>Evidence is weak</p>
+<p>Show insufficient support, ask for more evidence, or keep a Question open.</p>
+<p>State is stale/conflicting</p>
+<p>Block the mutation and require re-review against the current version.</p>
+<p>Bad action slips through</p>
+<p>Preserve history, support reversal/escalation where possible, and add a regression case.</p>
+<p>During iteration</p>
+<p>Retest exact failure + boundaries</p>
+<p>Use holdouts/repeated runs</p>
+<p>Measure false certainty + review burden</p>
+<p>Fix the failing layer, not the nearest prompt</p><div class="footer"><a href="Human_AI_Workflow_Design_Cheat_Sheet.pdf" target="_blank" rel="noopener">View original PDF</a> · 2 original page(s)</div></main></body></html>

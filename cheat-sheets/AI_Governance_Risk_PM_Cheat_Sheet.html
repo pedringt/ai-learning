@@ -14,90 +14,43 @@ ul{padding-left:21px;margin:8px 0}li{padding-left:3px;margin:0 0 10px;overflow-w
 @media print{body{background:white}.wrap{margin:0;border:0;padding:0;max-width:none}.print{display:none}h2{break-after:avoid}p,li{orphans:2;widows:2}@page{size:letter;margin:.65in}}
 </style></head><body>
     <main class="wrap"><div class="top"><a href="../index.html#learn">← Learning Library</a><button class="print" onclick="window.print()">Print / Save PDF</button></div>
-    <div class="label">Context Switch · Learning reference</div><h1>AI Governance, Safety &amp; Privacy</h1><p class="intro">Reference converted from the original cheat sheet. All extracted text is retained.</p><h2>PM cheat sheet: turn policy into product decisions and controls</h2>
-<p>USEFUL DEFAULT FOR CONSEQUENTIAL WORKFLOWS</p>
-<h2>AI interprets→software enforces→people authorize</h2>
+    <div class="label">Context Switch · Learning reference</div><h1>AI Governance, Safety &amp; Privacy</h1><p class="intro">Reference converted from the original cheat sheet. All extracted text is retained.</p><p>Use this as a product review aid, not a substitute for company policy, legal advice, privacy, security, or compliance review.</p>
+<h2>PM cheat sheet: turn policy into product decisions and controls</h2>
+<h2>USEFUL DEFAULT FOR CONSEQUENTIAL WORKFLOWS AI interprets→software enforces→people authorize</h2>
 <p>Use stricter controls as data, authority, or impact rises.</p>
-<p>1 · FAST RISK SCAN</p>
-<h2>Ask these before choosing controls</h2>
-<p>3 · CONTROL MENU</p>
-<h2>Choose controls that match the risk</h2>
-<p>DATA</p>
-<p>Minimize/redact inputs; approved enterprise tools;</p>
-<p>retention/training settings; vendor/DPA review.</p>
-<p>Data: What enters the model? Client-confidential, personal,</p>
-<p>regulated, credentials, or proprietary information?</p>
-<p>ACCESS</p>
-<p>Least privilege; tenant/project boundaries; separate</p>
-<p>read from write permissions; secrets outside prompts.</p>
-<p>Authority: Does AI only suggest, or can it decide, send,</p>
-<p>publish, approve, change records, spend money, or touch</p>
-<p>production?</p>
-<p>Impact: What happens if the answer is wrong, biased, stale,</p>
-<p>leaked, or confidently unsupported?</p>
-<p>HUMAN</p>
-<p>Human approval before consequential actions; clear</p>
-<p>escalation path; do not hide uncertainty behind</p>
-<p>confidence scores.</p>
-<p>Access: Who may see the source data and output? Could</p>
-<p>retrieval expose information across users, teams, or clients?</p>
-<p>EVIDENCE</p>
-<p>Ground important claims in approved sources; show</p>
-<p>provenance when users need to verify what the AI</p>
-<p>relied on.</p>
-<p>Oversight: Can a person review important outputs, inspect</p>
-<p>evidence/logs, stop the system, and recover from a bad</p>
-<p>action?</p>
-<p>TEST</p>
-<p>Representative + high-risk evals;</p>
-<p>permission-boundary tests;</p>
-<p>prompt-injection/adversarial cases; safe-failure</p>
-<p>behavior.</p>
-<p>OBSERVE</p>
-<p>Logs/traces appropriate to the risk; monitor failures,</p>
-<p>corrections, drift, model/vendor changes, and misuse.</p>
-<p>2 · PRACTICAL RISK LEVELS</p>
-<h2>Scale review to the use case</h2>
-<p>RECOVER</p>
-<p>Pause/kill switch for risky actions; rollback where</p>
-<p>possible; preserve logs; incident owner + notification</p>
-<p>path.</p>
-<h2>LOW</h2>
-<p>Drafting, brainstorming, public-info summaries. No</p>
-<p>sensitive data; no consequential action.</p>
+<h2>1 · FAST RISK SCAN Ask these before choosing controls</h2>
+<p>Data: What enters the model? Client-confidential, personal, regulated, credentials, or proprietary information?</p>
+<p>Authority: Does AI only suggest, or can it decide, send, publish, approve, change records, spend money, or touch production?</p>
+<p>Impact: What happens if the answer is wrong, biased, stale, leaked, or confidently unsupported?</p>
+<p>Access: Who may see the source data and output? Could retrieval expose information across users, teams, or clients?</p>
+<p>Oversight: Can a person review important outputs, inspect evidence/logs, stop the system, and recover from a bad action?</p>
+<h2>2 · PRACTICAL RISK LEVELS Scale review to the use case</h2>
+<p>LOW Drafting, brainstorming, public-info summaries. No sensitive data; no consequential action.</p>
 <p>Normal QA + approved-tool rules.</p>
+<p>MEDIUM Internal knowledge, client-confidential content in approved systems, support suggestions, code assistance.</p>
+<p>Privacy/security review, permissions, evals, source checks, monitoring.</p>
+<p>HIGH Sensitive/regulated data + material decisions, autonomous external actions, production changes, employment/financial/legal/medical impact.</p>
+<p>Formal approval, human authorization, least privilege, strong evals, logging, rollback/kill switch, incident plan.</p>
+<p>Risk is contextual. Company policy, contracts, and law can raise the required level.</p>
+<p>STOP AND ESCALATE WHEN</p>
+<p>A new use case introduces sensitive/regulated data or unclear data-retention/training terms.</p>
+<p>An agent gains new write/action permissions, especially money, production, customer messages, or record changes.</p>
+<p>Framework anchors: NIST AI RMF (Govern · Map · Measure · Manage), NIST GenAI Profile, ISO/IEC 42001.</p>
+<h2>3 · CONTROL MENU Choose controls that match the risk</h2>
+<p>DATA Minimize/redact inputs; approved enterprise tools; retention/training settings; vendor/DPA review.</p>
+<p>ACCESS Least privilege; tenant/project boundaries; separate read from write permissions; secrets outside prompts.</p>
+<p>HUMAN Human approval before consequential actions; clear escalation path; do not hide uncertainty behind confidence scores.</p>
+<p>EVIDENCE Ground important claims in approved sources; show provenance when users need to verify what the AI relied on.</p>
+<p>TEST Representative + high-risk evals; permission-boundary tests; prompt-injection/adversarial cases; safe-failure behavior.</p>
+<p>OBSERVE Logs/traces appropriate to the risk; monitor failures, corrections, drift, model/vendor changes, and misuse.</p>
+<p>RECOVER Pause/kill switch for risky actions; rollback where possible; preserve logs; incident owner + notification path.</p>
 <p>4 · PM REVIEW FLOW</p>
 <h2>1 Intake→2 Classify risk→</h2>
-<h2>MEDIUM Internal knowledge, client-confidential content in</h2>
-<p>approved systems, support suggestions, code</p>
-<p>assistance.</p>
 <h2>3 Data/privacy + vendor review→</h2>
 <h2>4 Define authority &amp; controls→5 Eval/test→6 Approve→</h2>
-<p>Privacy/security review, permissions, evals, source</p>
-<p>checks, monitoring.</p>
 <h2>7 Monitor→8 Incident/review</h2>
-<p>The PM owns the product questions; specialists own legal/security</p>
-<p>determinations.</p>
-<h2>HIGH</h2>
-<p>Sensitive/regulated data + material decisions,</p>
-<p>autonomous external actions, production changes,</p>
-<p>employment/financial/legal/medical impact.</p>
-<p>Re-review when data, permissions, model/vendor, or impact</p>
-<p>meaningfully changes.</p>
-<p>Formal approval, human authorization, least</p>
-<p>privilege, strong evals, logging, rollback/kill switch,</p>
-<p>incident plan.</p>
-<p>Risk is contextual. Company policy, contracts, and law can raise the</p>
-<p>required level.</p>
-<p>STOP AND ESCALATE WHEN</p>
-<p>A new use case introduces sensitive/regulated data or unclear</p>
-<p>data-retention/training terms.</p>
-<p>AI output becomes a material input to a consequential</p>
-<p>decision without meaningful human review.</p>
-<p>An agent gains new write/action permissions, especially</p>
-<p>money, production, customer messages, or record changes.</p>
-<p>You cannot explain who is accountable, what was accessed,</p>
-<p>why an action happened, or how to undo it.</p>
-<p>Sep 2026</p>
-<p>Framework anchors: NIST AI RMF (Govern · Map · Measure · Manage), NIST GenAI Profile, ISO/IEC 42001.</p>
-<p>Use this as a product review aid, not a substitute for company policy, legal advice, privacy, security, or compliance review.</p><div class="footer"><a href="AI_Governance_Risk_PM_Cheat_Sheet.pdf" target="_blank" rel="noopener">View original PDF</a> · 1 original page(s)</div></main></body></html>
+<p>The PM owns the product questions; specialists own legal/security determinations.</p>
+<p>Re-review when data, permissions, model/vendor, or impact meaningfully changes.</p>
+<p>AI output becomes a material input to a consequential decision without meaningful human review.</p>
+<p>You cannot explain who is accountable, what was accessed, why an action happened, or how to undo it.</p>
+<p>Sep 2026</p><div class="footer"><a href="AI_Governance_Risk_PM_Cheat_Sheet.pdf" target="_blank" rel="noopener">View original PDF</a> · 1 original page(s)</div></main></body></html>
