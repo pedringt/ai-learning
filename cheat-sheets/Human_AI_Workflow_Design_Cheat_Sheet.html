@@ -1,103 +1,21 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Human + AI Workflow Design · Context Switch</title><style>
-:root{--ink:#20202a;--muted:#5f6271;--accent:#6a50a7;--line:#dddce6;--paper:#fff;--wash:#f7f5fc}
-*{box-sizing:border-box}body{margin:0;background:#f4f3f7;color:var(--ink);font:15px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif}
-a{color:var(--accent)}.wrap{max-width:840px;margin:38px auto 70px;padding:42px 52px;background:var(--paper);border:1px solid var(--line);border-radius:16px}
-.top{display:flex;justify-content:space-between;gap:12px;align-items:center;font-size:13px}.top a{text-decoration:none;font-weight:700}
-.label{text-transform:uppercase;letter-spacing:.12em;color:var(--accent);font-size:11px;font-weight:800;margin-top:32px}
-h1{font:700 32px/1.13 Georgia,serif;letter-spacing:-.03em;margin:8px 0 12px}
-h2{font-size:18px;margin:30px 0 10px;border-top:1px solid var(--line);padding-top:24px}
-p{margin:0 0 12px;overflow-wrap:anywhere}.intro{font-size:17px;color:var(--muted)}
-ul{padding-left:21px;margin:8px 0}li{padding-left:3px;margin:0 0 10px;overflow-wrap:anywhere}
-.footer{border-top:1px solid var(--line);padding-top:24px;margin-top:32px;font-size:13px;color:var(--muted)}
-.print{border:1px solid var(--line);border-radius:8px;padding:8px 12px;background:var(--wash);cursor:pointer;font:inherit;color:var(--ink)}
-@media(max-width:700px){.wrap{margin:0;padding:24px 22px;border:0;border-radius:0}.top{flex-wrap:wrap}h1{font-size:27px}}
-@media print{body{background:white}.wrap{margin:0;border:0;padding:0;max-width:none}.print{display:none}h2{break-after:avoid}p,li{orphans:2;widows:2}@page{size:letter;margin:.65in}}
-</style></head><body>
-    <main class="wrap"><div class="top"><a href="../index.html#learn">← Learning Library</a><button class="print" onclick="window.print()">Print / Save PDF</button></div>
-    <div class="label">Context Switch · Learning reference</div><h1>Human + AI Workflow Design</h1><p class="intro">Reference adapted from the original PDF; consult the source for original tables and visual layout.</p><p>PM CHEAT SHEET 1 / 2</p>
-<p>Rule of thumb: If you can write the rule precisely, do not make the model enforce it.</p>
-<p>Make judgment, authority, uncertainty, and recovery explicit.</p>
-<p>VISUAL ANCHOR</p>
-<h2>Human judgment &gt;</h2>
-<h2>AI interprets &gt;</h2>
-<p>Tools +</p>
-<h2>data &gt;</h2>
-<p>Not every workflow needs final approval. Raise control as data sensitivity, authority, or impact rises.</p>
-<p>1. ASSIGN EACH LAYER ONE JOB</p>
-<p>Human judgment</p>
-<p>AI</p>
-<p>Set goals, risk tolerance, evidence bar, exceptions, and what must stay under human control.</p>
-<p>Interpret, summarize, classify, compare, synthesize, and surface uncertainty.</p>
-<p>Suggest rather than silently authorize.</p>
-<p>Software</p>
-<p>Enforce exact rules: permissions, schemas, allowed transitions, version checks, limits, dedupe, and required approvals.</p>
-<p>2. SUGGEST VS. ENFORCE VS. AUTHORIZE</p>
-<p>AI should suggest</p>
-<p>Software should enforce</p>
-<p>Semantic judgments with real ambiguity</p>
-<p>Rules you can state exactly</p>
-<p>Summaries, comparisons, draft recommendations</p>
-<p>Permissions, limits, validation, versioning</p>
-<p>Potential changes a person can inspect</p>
-<p>Safe defaults when authority or inputs are missing</p>
-<p>3. MAKE UNCERTAINTY VISIBLE</p>
-<p>Evidence is not truth. Pending is not accepted. Unknown is not zero.</p>
-<p>Separate accepted facts, pending proposals, and open questions.</p>
-<p>Preserve source and freshness when they matter.</p>
-<p>Let users adjust, reject, leave unchanged, or keep tracking uncertainty.</p>
-<p>TAKEAWAY The best AI workflow makes the authority boundary obvious before anything goes wrong.</p>
-<h2>Software enforces &gt;</h2>
-<p>Approval /</p>
-<p>action</p>
-<p>Tools + data</p>
-<p>Retrieve, query, or execute through bounded tools with scoped inputs, permissions, and observable outcomes.</p>
-<p>People / action</p>
-<p>Approve consequential mutations, resolve tradeoffs, correct wording, reject proposals, or keep uncertainty open.</p>
-<p>People should authorize</p>
-<p>High-impact or irreversible actions</p>
-<p>Policy exceptions and tradeoffs under uncertainty</p>
-<p>What becomes authoritative when mistakes materially matter</p>
-<p>PM CHEAT SHEET 2 / 2</p>
-<p>Layer Failure signal First thing to inspect</p>
-<p>Instructions Same evidence is misread across cases Framing, examples, ambiguity, conflicting instructions</p>
-<p>Retrieval Right source is missing, stale, or conflicting What was actually retrieved before judging generation</p>
-<p>Tools Call fails, times out, or returns partial/wrong data Inputs, outputs, retries, dependency failure</p>
-<p>Permissions System can see/do too much or too little Auth, scopes, isolation, approval requirements</p>
-<p>UX User cannot tell what happened or recover Explanation, correction, and recovery in the interface</p>
-<p>Debugging principle: Trace backward to the first place reality diverges from the expected workflow.</p>
-<p>TAKEAWAY Human-in-the-loop is not “put a person at the end.” It is explicit authority, uncertainty, correction, and recovery end to end.</p>
-<h2>Failure Diagnosis + Recovery</h2>
-<p>Debug the layer that failed, then make the recovery path visible.</p>
-<p>4. DIAGNOSE THE FIRST OBSERVABLE FAILURE</p>
-<p>Do not default every AI failure to a prompt problem.</p>
-<p>Logic Model output is reasonable but product behavior is wrong</p>
-<p>5. DESIGN RECOVERY BEFORE LAUNCH</p>
-<p>Model/provider fails</p>
-<p>Fail closed or use an intentionally limited fallback. Never invent an answer just to keep the flow moving.</p>
-<p>Tool call fails</p>
-<p>Retry only when safe; otherwise expose a manual or escalated path.</p>
-<p>Permission is missing</p>
-<p>Deny the action, explain the boundary, and request approved access.</p>
-<p>6. PM DESIGN CHECKLIST</p>
-<p>Before design</p>
-<p>Before release</p>
-<p>Final authority mapped</p>
-<p>Evidence vs. proposal is visible</p>
-<p>AI read/write/tool scope bounded</p>
-<p>Correction / rejection path exists</p>
-<p>Reversibility + approvals explicit</p>
-<p>Failure + fallback + escalation designed</p>
-<p>Uncertainty that must stay visible</p>
-<p>Silent misses are traceable</p>
-<p>Validation, branching, versioning, deterministic state rules</p>
-<p>Evidence is weak</p>
-<p>Show insufficient support, ask for more evidence, or keep a Question open.</p>
-<p>State is stale/conflicting</p>
-<p>Block the mutation and require re-review against the current version.</p>
-<p>Bad action slips through</p>
-<p>Preserve history, support reversal/escalation where possible, and add a regression case.</p>
-<p>During iteration</p>
-<p>Retest exact failure + boundaries</p>
-<p>Use holdouts/repeated runs</p>
-<p>Measure false certainty + review burden</p>
-<p>Fix the failing layer, not the nearest prompt</p><div class="footer"><a href="Human_AI_Workflow_Design_Cheat_Sheet.pdf" target="_blank" rel="noopener">View original PDF</a> · 2 original page(s)</div></main></body></html>
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width,initial-scale=1" name="viewport"/><title>Human–AI Workflow Design · Context Switch</title><style>
+:root{--ink:#15111a;--muted:#5f5968;--line:#e8e7ef;--pink:#f0408f;--cyan:#00bfd6;--violet:#6b5cff;--acid:#f4ff52}*{box-sizing:border-box}body{margin:0;background:white;color:var(--ink);font:14px/1.5 Inter,system-ui,Arial,sans-serif}.bar{border-bottom:1px solid var(--line);padding:18px max(26px,calc((100% - 1030px)/2));font-weight:900;font-size:17px;letter-spacing:-.03em}.bar i{display:inline-block;width:17px;height:17px;background:var(--acid);border:2px solid var(--ink);margin-right:10px;vertical-align:-3px;box-shadow:3px 3px var(--ink)}main{max-width:1030px;margin:auto;padding:25px 30px 45px}.tools{display:flex;justify-content:space-between;align-items:center;margin-bottom:27px;font-size:12px;font-weight:750}.tools a{color:inherit}.tools button{background:white;border:1px solid var(--ink);box-shadow:3px 3px 0 var(--acid);padding:9px 12px;font-weight:750;cursor:pointer}.label{display:inline-block;background:var(--acid);font-weight:900;font-size:10px;text-transform:uppercase;letter-spacing:.08em;padding:5px 10px;transform:rotate(-2deg);margin-bottom:12px}h1{font-size:clamp(37px,5.8vw,63px);letter-spacing:-.042em;line-height:1.08;margin:0 0 12px;font-weight:950}.pink{color:var(--pink)}.purple{color:var(--violet)}.intro{color:var(--muted);font-size:17px;max-width:740px}.hero{border-bottom:2px solid var(--ink);padding-bottom:16px}.lead{border-left:4px solid var(--violet);background:#f8f7ff;padding:11px 14px;margin:15px 0}section{margin-top:25px;padding-top:24px;border-top:1px solid var(--line)}section.first{border:0;margin-top:0;padding-top:12px}.kicker{font-size:10px;font-weight:900;letter-spacing:.1em;color:var(--muted);text-transform:uppercase;margin:0 0 6px}h2{font-size:24px;line-height:1.18;letter-spacing:-.045em;margin:0 0 11px;font-weight:900}.flow{max-width:750px}.step{display:flex;gap:13px;padding:12px 14px;border:1px solid var(--line);border-left:4px solid var(--violet)}.step:nth-of-type(4n+1){border-left-color:var(--pink)}.number{display:grid;place-items:center;background:var(--acid);font-weight:900;width:27px;height:27px;flex:0 0 27px}.step strong{display:block}.step small{color:var(--muted);font-size:13px;display:block;margin-top:3px}.arrow{height:14px;border-left:2px solid var(--ink);margin-left:28px}.note{border-left:4px solid var(--cyan);background:#f6fcff;padding:11px 14px;margin:15px 0}.table-wrap{overflow-x:auto}table{border-collapse:collapse;width:100%;font-size:13px}thead{border-top:2px solid var(--ink);background:#f8f7ff}td,th{padding:10px 12px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}th{font-size:10px;letter-spacing:.07em;text-transform:uppercase}td:first-child{font-weight:850;white-space:nowrap}tr:nth-child(even){background:#fcfcff}.twocol{display:grid;grid-template-columns:1fr 1fr;gap:13px}.twocol article{border:1px solid var(--line);border-top:4px solid var(--pink);padding:13px}.twocol article+article{border-top-color:var(--cyan)}.twocol strong{display:block;margin-bottom:4px}footer{margin-top:23px;border-top:2px solid var(--ink);padding-top:11px;color:var(--muted);font-size:12px}footer a{font-weight:700;color:inherit}p{margin:0 0 9px}@media(max-width:680px){main{padding:20px}.bar{padding:14px 20px}h1{font-size:clamp(34px,9vw,51px)}.twocol{grid-template-columns:1fr}}
+@media print{@page{size:letter;margin:.44in .52in}html,body{font-size:9.3pt;line-height:1.31;-webkit-print-color-adjust:exact;print-color-adjust:exact}.bar,.tools{display:none!important}main{padding:0;max-width:100%;margin:0}.hero{padding:0 0 10px}h1{font-size:27pt;line-height:1.08;margin-bottom:6px}.intro{font-size:10pt}.label{font-size:8pt;padding:3px 6px;margin-bottom:6px;transform:none}.lead{margin:8px 0;padding:7px 10px}section{margin-top:11px;padding-top:10px}section.first{padding-top:6px}h2{font-size:14pt;margin-bottom:7px}.kicker{margin-bottom:3px}.step{padding:6px 9px;break-inside:avoid}.step small{font-size:8.6pt;margin-top:2px}.number{width:21px;height:21px;flex-basis:21px}.arrow{height:8px;margin-left:21px}.note{padding:7px 10px;margin:8px 0;break-inside:avoid}table{font-size:8.6pt;line-height:1.26}td,th{padding:5px 8px}thead{display:table-header-group}tr{break-inside:avoid}.evaluation{break-before:page;margin-top:0;padding-top:0;border-top:0}h2,.kicker{break-after:avoid}.table-wrap{overflow:visible}.twocol{gap:8px}.twocol article{padding:8px;break-inside:avoid}footer{margin-top:11px;padding-top:7px}p{orphans:2;widows:2}}
+
+.cards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.card{border:1px solid var(--line);border-top:4px solid var(--violet);padding:12px 14px}.card:nth-child(3n+2){border-top-color:var(--pink)}.card:nth-child(3n){border-top-color:var(--cyan)}.card h3{font-size:14px;line-height:1.24;margin:0 0 5px}.card p{margin:0;font-size:13px}.chips{display:flex;gap:9px;flex-wrap:wrap}.chip{border:1px solid var(--line);padding:7px 10px;font-weight:800;font-size:12px}.list{padding-left:20px;margin:9px 0}.list li{margin:0 0 7px}.pair{display:grid;grid-template-columns:1fr 1fr;gap:14px}.pair>*{min-width:0}.flowbox{display:flex;gap:7px;align-items:stretch;flex-wrap:wrap}.flowbox span{background:#f8f7ff;border-left:3px solid var(--violet);padding:10px 12px;flex:1 1 115px;font-size:13px;font-weight:750}.source{font-size:11px;color:var(--muted)}@media(max-width:680px){.cards,.pair{grid-template-columns:1fr}}@media print{.cards,.pair{gap:7px}.card{padding:7px 9px;break-inside:avoid}.card h3{font-size:10pt}.card p{font-size:9pt}.list li{margin-bottom:4px}.flowbox span{padding:6px 9px;break-inside:avoid}.source{font-size:8pt}section{break-inside:auto}.hero{break-inside:avoid}.cards{grid-template-columns:repeat(2,minmax(0,1fr))}}</style><style id="restored-additions">.restored{break-inside:auto}.restored h3{font-size:15px;letter-spacing:-.018em;margin:18px 0 9px}.restored strong{font-weight:850}.restored .note{margin:11px 0}.restored td{overflow-wrap:anywhere}.restored td:first-child{white-space:normal;min-width:116px}.restored table{table-layout:auto}.restored thead{display:table-header-group}@media print{.restored{break-inside:auto;page-break-inside:auto}.restored h2,.restored h3,.restored .kicker{break-after:avoid;page-break-after:avoid}.restored .table-wrap{overflow:visible}.restored tr,.restored .note{break-inside:avoid;page-break-inside:avoid}.restored td,.restored th{padding:6px 8px}.restored .note{padding:8px 11px}.restored h3{margin:12px 0 7px;font-size:11pt}.restored{margin-top:19px;padding-top:16px}}</style><style id="decision-practice-additions">.decision-practice h2{margin-bottom:12px}.decision-practice p{max-width:870px}.decision-practice .table-wrap{overflow-x:auto}.decision-practice table{width:100%;border-collapse:collapse}.decision-practice td,.decision-practice th{white-space:normal!important;overflow-wrap:anywhere}.decision-practice td:first-child{min-width:0!important}.decision-practice .flowbox{margin-bottom:12px}@media print{.decision-practice{break-inside:auto}.decision-practice h2{break-after:avoid;page-break-after:avoid}.decision-practice tr,.decision-practice .card,.decision-practice .note{break-inside:avoid;page-break-inside:avoid}.decision-practice td,.decision-practice th{padding:5px 7px}.decision-practice .cards{grid-template-columns:repeat(2,minmax(0,1fr))}}</style></head><body><div class="bar"><i></i>Context Switch</div><main><div class="tools"><a href="index.html">← All references</a><button onclick="window.print()">Print / Save PDF</button></div><div class="hero"><div class="label">Learning Library / Reference</div><h1>Human–AI Workflow Design</h1><p class="intro">Make judgment, authority, uncertainty, and recovery explicit.</p></div><section class="first"><div class="kicker">01 / flow</div><h2>Authority chain</h2><div class="flowbox"><span>Human sets goals</span><span>Tools supply evidence</span><span>AI interprets</span><span>Software validates</span><span>Human approves if needed</span><span>Software executes</span></div></section><section class=""><div class="kicker">02 / table</div><h2>Assign each layer a job</h2><div class="table-wrap"><table><thead><tr><th>Layer</th><th>Owns</th></tr></thead><tbody><tr><td>People</td><td>Goals, risk tolerance, exceptions, consequential approval</td></tr><tr><td>AI</td><td>Interpretation, classification, synthesis, suggestions and uncertainty</td></tr><tr><td>Software</td><td>Permissions, schemas, transitions, version checks and safe fallback</td></tr><tr><td>Tools + data</td><td>Bounded retrieval, scoped API access, observable results</td></tr></tbody></table></div></section><section class=""><div class="kicker">03 / table</div><h2>Suggest vs enforce vs authorize</h2><div class="table-wrap"><table><thead><tr><th>AI suggests</th><th>Software enforces</th><th>People authorize</th></tr></thead><tbody><tr><td>Ambiguous judgments</td><td>Exact permissions and limits</td><td>Consequential or irreversible actions</td></tr><tr><td>Draft recommendations</td><td>Validation and version checks</td><td>Tradeoffs and exceptions</td></tr><tr><td>Possible changes with evidence</td><td>Safe defaults and denial</td><td>What becomes authoritative</td></tr></tbody></table></div></section><section class=""><div class="kicker">04 / list</div><h2>Make uncertainty visible</h2><ul class="list"><li>Evidence is not automatically accepted truth</li><li>Pending is not approved; unknown is not zero</li><li>Show source freshness and provenance</li><li>Offer correction, rejection, unchanged, and escalation paths</li></ul></section><section class=""><div class="kicker">05 / table</div><h2>Failure recovery</h2><div class="table-wrap"><table><thead><tr><th>Failure</th><th>Safe response</th></tr></thead><tbody><tr><td>Provider unavailable</td><td>Fail closed or use a deliberately limited fallback</td></tr><tr><td>Tool timeout</td><td>Retry only if safe; show manual path</td></tr><tr><td>Missing permission</td><td>Deny action and explain authorization</td></tr><tr><td>Weak evidence</td><td>Request more or keep question open</td></tr><tr><td>Stale state</td><td>Version check and re-review</td></tr><tr><td>Bad consequential action</td><td>Preserve history, reverse or escalate, add regression</td></tr></tbody></table></div></section><section class=""><div class="kicker">06 / note</div><h2>Remember</h2><div class="lead">Human-in-the-loop is not a person tacked on at the end. Authority and recovery must be designed throughout the workflow.</div></section><section aria-label="Debugging matrix and PM gates" class="restored"><div class="kicker">REFERENCE DETAIL / RESTORED</div><h2>Debugging matrix and PM gates</h2>
+<h3>First observable failure</h3><div class="table-wrap"><table><thead><tr><th>Layer</th><th>Signal</th><th>Inspect</th></tr></thead><tbody>
+<tr><td>Instructions</td><td>The same evidence is misread across cases</td><td>Conflicting rules, weak examples or ambiguity</td></tr>
+<tr><td>Retrieval</td><td>Correct source missing, stale or conflicting</td><td>Actual retrieved context, freshness and scope</td></tr>
+<tr><td>Tools</td><td>Timeout, partial response or wrong data</td><td>Inputs, results, bounded retries and dependency</td></tr>
+<tr><td>Permissions</td><td>Agent can see/do too much or too little</td><td>Roles, scopes, approval and isolation</td></tr>
+<tr><td>UX</td><td>User cannot understand or recover</td><td>Visible state, explanations and reversal path</td></tr>
+<tr><td>Logic</td><td>Interpretation reasonable but product result wrong</td><td>Schema conversion, branches, versioning and ownership</td></tr>
+</tbody></table></div>
+<h3>PM design and release checklist</h3><div class="table-wrap"><table><thead><tr><th>When</th><th>Check</th></tr></thead><tbody>
+<tr><td>Before design</td><td>Map human authority, sensitive data, uncertainty, read/write scope and reversibility</td></tr>
+<tr><td>Before release</td><td>Separate evidence from proposals, enforce validation/version checks, test approval and corrections, expose failures and fallback</td></tr>
+<tr><td>During iteration</td><td>Retest original and neighboring cases, holdouts and repeat runs; measure silent misses, false certainty and human review burden</td></tr>
+</tbody></table></div>
+<div class="note"><strong>Recovery cases:</strong> When data is weak, keep a question open. When state is stale, block changes and require re-review. When tools fail, retry only if safe or escalate. When an unauthorized action slips through, preserve history, support reversal and add a regression case.</div>
+</section><section class="decision-practice"><div class="kicker">PRACTICAL FRAMEWORK / AI PRODUCT WORK</div><h2>Reversible autonomy: decide, act, revoke</h2><div class="flowbox"><span>Is the action consequential or hard to reverse?</span><span>Yes → approve first</span><span>No → bound scope and verify recovery</span><span>Monitor defined evidence</span><span>Reverse or compensate when contradicted</span><span>Revoke autonomy when reliability degrades</span></div><div class="table-wrap"><table><thead><tr><th>Gate</th><th>PM question</th></tr></thead><tbody><tr><td>Before action</td><td>Is the action low impact, reversible in practice, time-bounded, logged and within an approved permission scope?</td></tr><tr><td>After action</td><td>What contrary evidence, timeout or changed state triggers compensation or human review?</td></tr><tr><td>Authority withdrawal</td><td>What failure rate, serious incident or missing evidence forces the system back to recommend-only?</td></tr></tbody></table></div><p>Compensation is not deletion: retain the audit trail, and never call an action reversible without testing the recovery path.</p></section><footer><a href="https://github.com/pedringt/ai-learning/blob/staging/cheat-sheets/Human_AI_Workflow_Design_Cheat_Sheet.pdf">View original source</a> · Local review draft · Source remains unchanged in GitHub</footer></main></body></html>
