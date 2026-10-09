@@ -1,61 +1,51 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Buy / Boost / Build · Context Switch</title><style>
-:root{--ink:#20202a;--muted:#5f6271;--accent:#6a50a7;--line:#dddce6;--paper:#fff;--wash:#f7f5fc}
-*{box-sizing:border-box}body{margin:0;background:#f4f3f7;color:var(--ink);font:15px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif}
-a{color:var(--accent)}.wrap{max-width:840px;margin:38px auto 70px;padding:42px 52px;background:var(--paper);border:1px solid var(--line);border-radius:16px}
-.top{display:flex;justify-content:space-between;gap:12px;align-items:center;font-size:13px}.top a{text-decoration:none;font-weight:700}
-.label{text-transform:uppercase;letter-spacing:.12em;color:var(--accent);font-size:11px;font-weight:800;margin-top:32px}
-h1{font:700 32px/1.13 Georgia,serif;letter-spacing:-.03em;margin:8px 0 12px}
-h2{font-size:18px;margin:30px 0 10px;border-top:1px solid var(--line);padding-top:24px}
-p{margin:0 0 12px;overflow-wrap:anywhere}.intro{font-size:17px;color:var(--muted)}
-ul{padding-left:21px;margin:8px 0}li{padding-left:3px;margin:0 0 10px;overflow-wrap:anywhere}
-.footer{border-top:1px solid var(--line);padding-top:24px;margin-top:32px;font-size:13px;color:var(--muted)}
-.print{border:1px solid var(--line);border-radius:8px;padding:8px 12px;background:var(--wash);cursor:pointer;font:inherit;color:var(--ink)}
-@media(max-width:700px){.wrap{margin:0;padding:24px 22px;border:0;border-radius:0}.top{flex-wrap:wrap}h1{font-size:27px}}
-@media print{body{background:white}.wrap{margin:0;border:0;padding:0;max-width:none}.print{display:none}h2{break-after:avoid}p,li{orphans:2;widows:2}@page{size:letter;margin:.65in}}
-</style></head><body>
-    <main class="wrap"><div class="top"><a href="../index.html#learn">← Learning Library</a><button class="print" onclick="window.print()">Print / Save PDF</button></div>
-    <div class="label">Context Switch · Learning reference</div><h1>Buy / Boost / Build</h1><p class="intro">Reference adapted from the original PDF; consult the source for original tables and visual layout.</p><p>PM DECISION TREE</p>
-<p>Choose the lightest intervention that solves the real workflow problem. Custom AI is one option, not the default.</p>
-<p>Core idea: Start with the business need and constraints. Then compare whether to buy an existing product, boost an existing workflow/tool with AI, build something custom, run a limited pilot, or do nothing yet.</p>
-<h2>The decision path</h2>
-<p>1 Is the problem important enough? If the pain is small, rare, or unmeasured, first improve the baseline or process. Do not start with technology selection.</p>
-<p>2 Does an existing product solve most of the workflow? If yes, compare buying/configuring it before creating custom software.</p>
-<p>3 Is the current tool/workflow already good, but missing one useful AI capability? If yes, boost it with a bounded assistant, retrieval layer, automation, or integration.</p>
-<p>4 Is the workflow differentiated, tightly integrated, or control-heavy enough to justify custom work? If yes, build - but only the parts that genuinely need to be custom.</p>
-<p>5 Is uncertainty still too high? Run a small pilot or discovery spike before committing to any of the three.</p>
+:root{--ink:#20202a;--muted:#626475;--accent:#6a50a7;--line:#dedce7;--wash:#f7f5fc}
+*{box-sizing:border-box}body{margin:0;background:#f4f3f7;color:var(--ink);font:15px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif}a{color:var(--accent)}
+.wrap{max-width:900px;margin:34px auto 70px;padding:40px 48px;background:#fff;border:1px solid var(--line);border-radius:16px}
+.top{display:flex;justify-content:space-between;align-items:center;gap:15px;font-size:13px}.top a{font-weight:750;text-decoration:none}.print{border:1px solid var(--line);border-radius:8px;padding:8px 12px;background:var(--wash);cursor:pointer;font:inherit}
+.label{font-size:11px;font-weight:850;letter-spacing:.13em;text-transform:uppercase;color:var(--accent);margin-top:32px}h1{font:700 34px/1.13 Georgia,serif;letter-spacing:-.03em;margin:8px 0 12px}h2{font-size:19px;margin:34px 0 15px;padding-top:23px;border-top:1px solid var(--line)}p{margin:0 0 12px}.intro{font-size:17px;color:var(--muted)}.lead{background:var(--wash);border-left:3px solid var(--accent);padding:13px 16px;border-radius:0 9px 9px 0;margin:20px 0}
+.flow{display:grid;gap:0;max-width:700px;margin:4px auto}.step{border:1px solid var(--line);border-radius:10px;padding:13px 15px;display:flex;gap:14px;align-items:flex-start;background:#fff}.num{background:var(--wash);color:var(--accent);font-weight:850;min-width:28px;height:28px;display:grid;place-items:center;border-radius:50%}.step b{display:block}.step small{display:block;font-size:13px;color:var(--muted);margin-top:3px}.arrow{margin:auto;width:2px;height:22px;background:var(--line);position:relative}.arrow:after{content:"";position:absolute;bottom:0;left:-4px;border-left:5px solid transparent;border-right:5px solid transparent;border-top:7px solid var(--line)}
+.table-wrap{overflow-x:auto}.matrix{width:100%;border-collapse:collapse;font-size:14px}.matrix th{text-align:left;background:var(--wash);color:var(--ink);font-size:12px;letter-spacing:.03em}.matrix td,.matrix th{padding:12px 14px;border-bottom:1px solid var(--line);vertical-align:top}.matrix td:first-child{font-weight:750;white-space:nowrap}.matrix tr:last-child td{border-bottom:0}
+.note{padding:13px 16px;border:1px solid var(--line);border-radius:10px;background:#faf9fc;margin:18px 0}.note strong{color:var(--accent)}.mini{display:grid;grid-template-columns:1fr 1fr;gap:16px}.mini>div{background:var(--wash);padding:16px;border-radius:10px}.mini b{display:block;margin-bottom:5px}.footer{border-top:1px solid var(--line);padding-top:22px;margin-top:32px;font-size:13px;color:var(--muted)}
+@media(max-width:700px){.wrap{margin:0;padding:24px 20px;border:0;border-radius:0}h1{font-size:28px}.mini{grid-template-columns:1fr}.matrix{font-size:13px}.matrix td,.matrix th{padding:9px}}
+@media print{body{background:#fff}.wrap{margin:0;max-width:none;border:0;padding:0}.print{display:none}.step,.mini>div,.note{break-inside:avoid}.matrix tr{break-inside:avoid}@page{size:letter;margin:.65in}}
+</style></head><body><main class="wrap">
+<div class="top"><a href="../index.html#learn">← Learning Library</a><button class="print" onclick="window.print()">Print / Save PDF</button></div>
+<div class="label">Context Switch · Learning reference</div><h1>Buy / Boost / Build</h1>
+<p class="intro">Choose the lightest intervention that solves the real workflow problem. Custom AI is one option, not the default.</p>
+<div class="lead"><strong>Core idea:</strong> Start with the business need and constraints. Then compare buying an existing product, boosting a working tool with AI, building something custom, running a limited pilot, or doing nothing yet.</div>
+<h2>The decision path</h2><div class="flow">
+<div class="step"><span class="num">1</span><div><b>Is the problem important enough?</b><small>If pain is small, rare, or unmeasured, first improve the baseline or process.</small></div></div><div class="arrow"></div>
+<div class="step"><span class="num">2</span><div><b>Does an existing product solve most of the workflow?</b><small>If yes, compare buying or configuring it before building custom software.</small></div></div><div class="arrow"></div>
+<div class="step"><span class="num">3</span><div><b>Is a good existing workflow missing one useful capability?</b><small>If yes, consider boosting it with a bounded assistant, retrieval layer, automation, or integration.</small></div></div><div class="arrow"></div>
+<div class="step"><span class="num">4</span><div><b>Is custom work justified by differentiated needs or controls?</b><small>Build only what genuinely needs to be custom.</small></div></div><div class="arrow"></div>
+<div class="step"><span class="num">5</span><div><b>Is uncertainty still too high?</b><small>Run a small pilot or discovery spike before committing.</small></div></div>
+</div>
+<div class="note"><strong>Two legitimate outcomes:</strong> Do nothing yet, or pilot first. A real problem may be a poor automation target; a good idea may be premature because the data, process, or adoption path is not ready.</div>
 <h2>What each option is good at</h2>
-<h2>BUY</h2>
-<h2>BOOST</h2>
-<h2>BUILD</h2>
-<p>Best when: the workflow is common, time-to- value matters, and an existing product meets most requirements.</p>
-<p>Best when: users already live in a useful system/process and AI can remove a specific bottleneck without replacing it.</p>
-<p>Best when: the workflow, data, controls, or differentiation justify owning the experience and system behavior.</p>
-<p>Tradeoff: less control, vendor constraints, recurring cost, lock-in.</p>
-<p>Tradeoff: integration limits and inherited platform constraints.</p>
-<p>Tradeoff: maintenance, evaluation, observability, security, and ongoing product ownership.</p>
-<p>Do not skip &quot;do nothing&quot; or &quot;pilot first.&quot; A real problem can still be a poor automation target, and a good AI idea can still be premature because the data, process, or adoption path is not ready.</p>
-<p>AI Learning Reference Buy / Boost / Build | 1/2</p>
-<p>PM DECISION TREE</p>
-<p>Compare options with the same criteria so the recommendation is about fit, not enthusiasm.</p>
-<h2>Comparison checklist</h2>
-<p>Criterion Questions to ask</p>
-<p>Workflow fit How much of the real workflow is covered, including exceptions and handoffs?</p>
-<p>Integration Can it connect to the systems, data, identity, and actions that matter?</p>
-<p>Data + privacy What data leaves the company? Retention, training use, permissions, residency, auditability?</p>
-<p>Control Can we define human approval, permissions, fallback behavior, and prohibited actions?</p>
-<p>Observability + evals Can we inspect failures, measure quality, and verify changes over time?</p>
-<p>Time to value How quickly can users get a meaningful improvement, not just a demo?</p>
-<p>Total cost Licensing + implementation + model use + support + maintenance + change management.</p>
-<p>Lock-in + portability How hard would it be to change vendor, model, or architecture later?</p>
-<p>Adoption Does the option fit how people already work, or require a new destination and behavior?</p>
+<div class="table-wrap"><table class="matrix"><thead><tr><th>Option</th><th>Best when</th><th>Main tradeoff</th></tr></thead><tbody>
+<tr><td>BUY</td><td>The workflow is common, time to value matters, and an existing product meets most requirements.</td><td>Less control, vendor constraints, recurring cost, lock-in.</td></tr>
+<tr><td>BOOST</td><td>Users already work in a useful system and AI can remove a specific bottleneck without replacing it.</td><td>Integration limits and inherited platform constraints.</td></tr>
+<tr><td>BUILD</td><td>Workflow, data, controls, or differentiation justify owning the experience and system behavior.</td><td>Ongoing maintenance, evals, observability, security, and product ownership.</td></tr>
+</tbody></table></div>
+<h2>Comparison checklist</h2><p>Use the same criteria for each option so the recommendation is about fit, not enthusiasm.</p>
+<div class="table-wrap"><table class="matrix"><thead><tr><th>Criterion</th><th>Questions to ask</th></tr></thead><tbody>
+<tr><td>Workflow fit</td><td>How much of the actual work is covered, including exceptions and handoffs?</td></tr>
+<tr><td>Integration</td><td>Can it connect to the systems, identity, data, and actions that matter?</td></tr>
+<tr><td>Data & privacy</td><td>What data leaves the company? What about retention, training use, residency, access, and auditability?</td></tr>
+<tr><td>Control</td><td>Can we enforce approval, permissions, fallback, and prohibited actions?</td></tr>
+<tr><td>Observability & evals</td><td>Can we inspect failures, measure quality, and verify changes?</td></tr>
+<tr><td>Time to value</td><td>How quickly can users realize a meaningful improvement, beyond a demo?</td></tr>
+<tr><td>Total cost</td><td>Licensing, implementation, model use, support, maintenance, and change management?</td></tr>
+<tr><td>Lock-in & portability</td><td>How difficult would changing vendor, model, or architecture be?</td></tr>
+<tr><td>Adoption</td><td>Does it fit current work or require a new destination and behavior?</td></tr>
+</tbody></table></div>
 <h2>Recommendation format</h2>
-<p>Recommend: Buy / Boost / Build / Pilot / Do nothing yet.</p>
-<p>Because: 2-3 evidence-backed reasons tied to workflow fit, value, and risk.</p>
-<p>Main tradeoff: the most important downside you are accepting.</p>
-<p>What would change the call: missing evidence, threshold, or constraint that could flip the recommendation.</p>
-<p>Common trap</p>
-<p>Useful PM move</p>
-<p>Comparing a polished vendor product with a hypothetical custom build as if both are equally known. Label assumptions and uncertainty.</p>
-<p>Use a small real workflow to test the leading option before broad rollout. Measure user effort, quality, exceptions, and operational burden.</p>
-<p>The best option is the one that solves enough of the real problem with acceptable risk and ownership - not the one with the most AI in it.</p>
-<p>AI Learning Reference Buy / Boost / Build | 2/2</p><div class="footer"><a href="BUILD_BOOST_BUY_DECISION_TREE.pdf" target="_blank" rel="noopener">View original PDF</a> · 2 original page(s)</div></main></body></html>
+<div class="table-wrap"><table class="matrix"><tbody><tr><td>Recommend</td><td>Buy / Boost / Build / Pilot / Do nothing yet.</td></tr><tr><td>Because</td><td>Two or three evidence-backed reasons tied to fit, value, and risk.</td></tr><tr><td>Main tradeoff</td><td>The most important downside you're accepting.</td></tr><tr><td>What changes the call</td><td>Missing evidence, threshold, or constraint that could flip the recommendation.</td></tr></tbody></table></div>
+<h2>Common trap and useful PM move</h2><div class="mini">
+<div><b>Common trap</b>Comparing a polished vendor product to a hypothetical custom build as if both are equally known. Label assumptions and uncertainty.</div>
+<div><b>Useful PM move</b>Test the leading option on a small real workflow before broad rollout. Measure effort, quality, exceptions, and operating burden.</div>
+</div>
+<div class="lead"><strong>Remember:</strong> The best option solves enough of the real problem with acceptable risk and ownership, not the one with the most AI.</div>
+<div class="footer"><a href="BUILD_BOOST_BUY_DECISION_TREE.pdf" target="_blank" rel="noopener">View original PDF</a> · Preserved as the source reference</div>
+</main></body></html>
