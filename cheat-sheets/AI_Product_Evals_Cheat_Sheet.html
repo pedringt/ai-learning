@@ -1,110 +1,29 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>AI Product Evals · Context Switch</title><style>
-:root{--ink:#20202a;--muted:#5f6271;--accent:#6a50a7;--line:#dddce6;--paper:#fff;--wash:#f7f5fc}
-*{box-sizing:border-box}body{margin:0;background:#f4f3f7;color:var(--ink);font:15px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif}
-a{color:var(--accent)}.wrap{max-width:840px;margin:38px auto 70px;padding:42px 52px;background:var(--paper);border:1px solid var(--line);border-radius:16px}
-.top{display:flex;justify-content:space-between;gap:12px;align-items:center;font-size:13px}.top a{text-decoration:none;font-weight:700}
-.label{text-transform:uppercase;letter-spacing:.12em;color:var(--accent);font-size:11px;font-weight:800;margin-top:32px}
-h1{font:700 32px/1.13 Georgia,serif;letter-spacing:-.03em;margin:8px 0 12px}
-h2{font-size:18px;margin:30px 0 10px;border-top:1px solid var(--line);padding-top:24px}
-p{margin:0 0 12px;overflow-wrap:anywhere}.intro{font-size:17px;color:var(--muted)}
-ul{padding-left:21px;margin:8px 0}li{padding-left:3px;margin:0 0 10px;overflow-wrap:anywhere}
-.footer{border-top:1px solid var(--line);padding-top:24px;margin-top:32px;font-size:13px;color:var(--muted)}
-.print{border:1px solid var(--line);border-radius:8px;padding:8px 12px;background:var(--wash);cursor:pointer;font:inherit;color:var(--ink)}
-@media(max-width:700px){.wrap{margin:0;padding:24px 22px;border:0;border-radius:0}.top{flex-wrap:wrap}h1{font-size:27px}}
-@media print{body{background:white}.wrap{margin:0;border:0;padding:0;max-width:none}.print{display:none}h2{break-after:avoid}p,li{orphans:2;widows:2}@page{size:letter;margin:.65in}}
-</style></head><body>
-    <main class="wrap"><div class="top"><a href="../index.html#learn">← Learning Library</a><button class="print" onclick="window.print()">Print / Save PDF</button></div>
-    <div class="label">Context Switch · Learning reference</div><h1>AI Product Evals</h1><p class="intro">Reference adapted from the original PDF; consult the source for original tables and visual layout.</p><p>Define expected behavior, test realistic risk, and use results to make product decisions - not just produce a score.</p>
-<p>Five rules: define expected behavior before seeing outputs; severity matters more than one accuracy number; find the first wrong step before fixing; rerun failures plus neighbors and holdouts; use evals to make a product decision.</p>
-<p>Write expected behavior before looking at outputs. Otherwise it is easy to redefine success around whatever the model happened to produce.</p>
-<p>AI Learning Reference AI Product Evals | 1/3</p>
-<p>PM EVALS CHEAT SHEET</p>
-<h2>Tests and evals answer different questions</h2>
-<p>Deterministic software test</p>
-<p>Question: Did the software do what it was programmed to do?</p>
-<p>Best for invariants, schemas, permissions, transitions, validation, and known logic.</p>
-<h2>What the PM owns</h2>
-<p>Which behaviors matter.</p>
-<p>What counts as correct.</p>
-<p>Failure severity and realistic risk.</p>
-<p>Release quality bars and tradeoffs.</p>
-<h2>Build the first eval set</h2>
-<p>NORMAL</p>
-<p>PARAPHRASE</p>
-<p>Representative expected behavior.</p>
-<p>Same intent, different wording.</p>
-<p>UNCERTAINTY</p>
-<p>KNOWN FAILURE</p>
-<p>Unknown, tentative, conditional, conflicting.</p>
-<p>A real defect that should never quietly return.</p>
-<h2>Simple scoring rubric</h2>
-<p>Dimension Ask</p>
-<p>Supported Is the conclusion grounded in the available evidence?</p>
-<p>Complete Did it catch the important information?</p>
-<p>Uncertainty preserved Did unknown/pending information remain uncertain?</p>
-<p>Human burden Did it avoid unnecessary reviews, alerts, or duplicate work?</p>
-<p>AI eval</p>
-<p>Question: Did the probabilistic behavior work well enough across realistic cases?</p>
-<p>Best for interpretation, groundedness, ambiguity, judgment, tone, and uncertainty handling.</p>
-<p>Engineering usually owns: repeatable execution, instrumentation, logging, and product integration.</p>
-<p>AI can help: draft cases, variants, summaries, and initial analysis.</p>
-<p>Human judgment: approves expected behavior and what is acceptable.</p>
-<p>EDGE</p>
-<p>Boundary or unusual but plausible case.</p>
-<p>NEGATIVE / NO-ACTION</p>
-<p>Cases where the AI should correctly do nothing.</p>
-<p>A strong aggregate score can still fail the release bar if the remaining failure is severe enough.</p>
-<p>Prior target withdrawn Return to unknown unless a replacement is established.</p>
-<p>Original failure → Nearby boundary cases → Positive cases → Holdouts → Repeat high-risk cases</p>
-<p>A fix can improve one metric while making another worse. Check safety, correctness, usability, and human workload together.</p>
-<p>AI Learning Reference AI Product Evals | 2/3</p>
-<p>PM EVALS CHEAT SHEET</p>
-<p>Treat severity, decision boundaries, and generalization as first-class parts of quality.</p>
-<h2>Severity beats one overall accuracy score</h2>
-<p>LOW</p>
-<p>MEDIUM</p>
-<p>Minor inconvenience.</p>
-<p>Misleading or wasteful, but easy to catch.</p>
-<h2>Test the decision boundary, not just the broken sentence</h2>
-<p>Case Expected distinction</p>
-<p>Unknown Remain unknown.</p>
-<p>Explicit 0 Allow 0 only when explicitly established.</p>
-<p>Tentative 10% Do not treat as approved.</p>
-<p>Approved 10% Allow a concrete proposal/value.</p>
-<p>Observed 8%, target unknown Do not confuse actual performance with target.</p>
-<h2>After a fix</h2>
-<p>Holdouts</p>
-<p>Keep some cases that were not directly used to design the fix. Passing tuned examples does not prove the behavior generalizes.</p>
-<h2>Quality is multidimensional</h2>
-<p>HIGH</p>
-<p>CRITICAL</p>
-<p>Could materially affect decisions or trust.</p>
-<p>Could directly cause unsafe, irreversible, or externally consequential action.</p>
-<p>Repeat where it matters</p>
-<p>Repeat high-severity, previously failed, ambiguous, or unstable cases more heavily than routine low-risk cases.</p>
-<p>Evidence → Context / retrieval → Model interpretation → Validation / post- processing → Classification → Product action</p>
-<p>Do not change the prompt until you know the failure actually occurred at the model step. If software converted null into 0, a better prompt will not fix the real defect.</p>
-<p>Define behavior → Draft cases → Baseline → Score + severity → Trace failure → Targeted fix → Regression + monitor</p>
-<p>Schema-valid does not mean semantically correct. Correct AI behavior sometimes means doing nothing. Averages should not hide unacceptable failure modes.</p>
-<p>AI Learning Reference AI Product Evals | 3/3</p>
-<p>PM EVALS CHEAT SHEET</p>
-<p>When something fails, diagnose the layer before changing the model or prompt.</p>
-<h2>Trace the first wrong step</h2>
-<h2>What tracing should let you inspect</h2>
-<p>✓Input evidence and context.</p>
-<p>✓Prompt/instruction and model version.</p>
-<p>✓Model interpretation.</p>
-<h2>Find silent misses</h2>
-<p>Visible wrong answers are easier to notice than cases where the AI should have acted but did nothing.</p>
-<p>Sample no-action cases.</p>
-<p>Have humans judge whether inaction was correct.</p>
-<p>Track confirmed false negatives and severity.</p>
-<h2>Practical PM eval loop</h2>
-<p>✓Validation or normalization.</p>
-<p>✓Action/review classification.</p>
-<p>✓Errors, timing, run or trace ID.</p>
-<p>Useful product metrics</p>
-<p>Miss rate - important changes missed.</p>
-<p>Unsupported-claim rate - invented/overstated claims.</p>
-<p>Uncertainty-loss rate - uncertain became falsely certain.</p>
-<p>Unnecessary-review rate - avoidable human work.</p><div class="footer"><a href="AI_Product_Evals_Cheat_Sheet.pdf" target="_blank" rel="noopener">View original PDF</a> · 3 original page(s)</div></main></body></html>
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width,initial-scale=1" name="viewport"/><title>AI Product Evals · Context Switch</title><style>
+:root{--ink:#15111a;--muted:#5f5968;--line:#e8e7ef;--pink:#f0408f;--cyan:#00bfd6;--violet:#6b5cff;--acid:#f4ff52}*{box-sizing:border-box}body{margin:0;background:white;color:var(--ink);font:14px/1.5 Inter,system-ui,Arial,sans-serif}.bar{border-bottom:1px solid var(--line);padding:18px max(26px,calc((100% - 1030px)/2));font-weight:900;font-size:17px;letter-spacing:-.03em}.bar i{display:inline-block;width:17px;height:17px;background:var(--acid);border:2px solid var(--ink);margin-right:10px;vertical-align:-3px;box-shadow:3px 3px var(--ink)}main{max-width:1030px;margin:auto;padding:25px 30px 45px}.tools{display:flex;justify-content:space-between;align-items:center;margin-bottom:27px;font-size:12px;font-weight:750}.tools a{color:inherit}.tools button{background:white;border:1px solid var(--ink);box-shadow:3px 3px 0 var(--acid);padding:9px 12px;font-weight:750;cursor:pointer}.label{display:inline-block;background:var(--acid);font-weight:900;font-size:10px;text-transform:uppercase;letter-spacing:.08em;padding:5px 10px;transform:rotate(-2deg);margin-bottom:12px}h1{font-size:clamp(37px,5.8vw,63px);letter-spacing:-.042em;line-height:1.08;margin:0 0 12px;font-weight:950}.pink{color:var(--pink)}.purple{color:var(--violet)}.intro{color:var(--muted);font-size:17px;max-width:740px}.hero{border-bottom:2px solid var(--ink);padding-bottom:16px}.lead{border-left:4px solid var(--violet);background:#f8f7ff;padding:11px 14px;margin:15px 0}section{margin-top:25px;padding-top:24px;border-top:1px solid var(--line)}section.first{border:0;margin-top:0;padding-top:12px}.kicker{font-size:10px;font-weight:900;letter-spacing:.1em;color:var(--muted);text-transform:uppercase;margin:0 0 6px}h2{font-size:24px;line-height:1.18;letter-spacing:-.045em;margin:0 0 11px;font-weight:900}.flow{max-width:750px}.step{display:flex;gap:13px;padding:12px 14px;border:1px solid var(--line);border-left:4px solid var(--violet)}.step:nth-of-type(4n+1){border-left-color:var(--pink)}.number{display:grid;place-items:center;background:var(--acid);font-weight:900;width:27px;height:27px;flex:0 0 27px}.step strong{display:block}.step small{color:var(--muted);font-size:13px;display:block;margin-top:3px}.arrow{height:14px;border-left:2px solid var(--ink);margin-left:28px}.note{border-left:4px solid var(--cyan);background:#f6fcff;padding:11px 14px;margin:15px 0}.table-wrap{overflow-x:auto}table{border-collapse:collapse;width:100%;font-size:13px}thead{border-top:2px solid var(--ink);background:#f8f7ff}td,th{padding:10px 12px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}th{font-size:10px;letter-spacing:.07em;text-transform:uppercase}td:first-child{font-weight:850;white-space:nowrap}tr:nth-child(even){background:#fcfcff}.twocol{display:grid;grid-template-columns:1fr 1fr;gap:13px}.twocol article{border:1px solid var(--line);border-top:4px solid var(--pink);padding:13px}.twocol article+article{border-top-color:var(--cyan)}.twocol strong{display:block;margin-bottom:4px}footer{margin-top:23px;border-top:2px solid var(--ink);padding-top:11px;color:var(--muted);font-size:12px}footer a{font-weight:700;color:inherit}p{margin:0 0 9px}@media(max-width:680px){main{padding:20px}.bar{padding:14px 20px}h1{font-size:clamp(34px,9vw,51px)}.twocol{grid-template-columns:1fr}}
+@media print{@page{size:letter;margin:.44in .52in}html,body{font-size:9.3pt;line-height:1.31;-webkit-print-color-adjust:exact;print-color-adjust:exact}.bar,.tools{display:none!important}main{padding:0;max-width:100%;margin:0}.hero{padding:0 0 10px}h1{font-size:27pt;line-height:1.08;margin-bottom:6px}.intro{font-size:10pt}.label{font-size:8pt;padding:3px 6px;margin-bottom:6px;transform:none}.lead{margin:8px 0;padding:7px 10px}section{margin-top:11px;padding-top:10px}section.first{padding-top:6px}h2{font-size:14pt;margin-bottom:7px}.kicker{margin-bottom:3px}.step{padding:6px 9px;break-inside:avoid}.step small{font-size:8.6pt;margin-top:2px}.number{width:21px;height:21px;flex-basis:21px}.arrow{height:8px;margin-left:21px}.note{padding:7px 10px;margin:8px 0;break-inside:avoid}table{font-size:8.6pt;line-height:1.26}td,th{padding:5px 8px}thead{display:table-header-group}tr{break-inside:avoid}.evaluation{break-before:page;margin-top:0;padding-top:0;border-top:0}h2,.kicker{break-after:avoid}.table-wrap{overflow:visible}.twocol{gap:8px}.twocol article{padding:8px;break-inside:avoid}footer{margin-top:11px;padding-top:7px}p{orphans:2;widows:2}}
+
+.cards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.card{border:1px solid var(--line);border-top:4px solid var(--violet);padding:12px 14px}.card:nth-child(3n+2){border-top-color:var(--pink)}.card:nth-child(3n){border-top-color:var(--cyan)}.card h3{font-size:14px;line-height:1.24;margin:0 0 5px}.card p{margin:0;font-size:13px}.chips{display:flex;gap:9px;flex-wrap:wrap}.chip{border:1px solid var(--line);padding:7px 10px;font-weight:800;font-size:12px}.list{padding-left:20px;margin:9px 0}.list li{margin:0 0 7px}.pair{display:grid;grid-template-columns:1fr 1fr;gap:14px}.pair>*{min-width:0}.flowbox{display:flex;gap:7px;align-items:stretch;flex-wrap:wrap}.flowbox span{background:#f8f7ff;border-left:3px solid var(--violet);padding:10px 12px;flex:1 1 115px;font-size:13px;font-weight:750}.source{font-size:11px;color:var(--muted)}@media(max-width:680px){.cards,.pair{grid-template-columns:1fr}}@media print{.cards,.pair{gap:7px}.card{padding:7px 9px;break-inside:avoid}.card h3{font-size:10pt}.card p{font-size:9pt}.list li{margin-bottom:4px}.flowbox span{padding:6px 9px;break-inside:avoid}.source{font-size:8pt}section{break-inside:auto}.hero{break-inside:avoid}.cards{grid-template-columns:repeat(2,minmax(0,1fr))}}</style><style id="restored-additions">.restored{break-inside:auto}.restored h3{font-size:15px;letter-spacing:-.018em;margin:18px 0 9px}.restored strong{font-weight:850}.restored .note{margin:11px 0}.restored td{overflow-wrap:anywhere}.restored td:first-child{white-space:normal;min-width:116px}.restored table{table-layout:auto}.restored thead{display:table-header-group}@media print{.restored{break-inside:auto;page-break-inside:auto}.restored h2,.restored h3,.restored .kicker{break-after:avoid;page-break-after:avoid}.restored .table-wrap{overflow:visible}.restored tr,.restored .note{break-inside:avoid;page-break-inside:avoid}.restored td,.restored th{padding:6px 8px}.restored .note{padding:8px 11px}.restored h3{margin:12px 0 7px;font-size:11pt}.restored{margin-top:19px;padding-top:16px}}</style></head><body><div class="bar"><i></i>Context Switch</div><main><div class="tools"><a href="../index.html#learn">← All references</a><button onclick="window.print()">Print / Save PDF</button></div><div class="hero"><div class="label">Learning Library / Reference</div><h1>AI Product Evals</h1><p class="intro">Define expected behavior first; test realistic risk and use the results to make product decisions.</p></div><section class="first"><div class="kicker">01 / table</div><h2>Tests and evals are different</h2><div class="table-wrap"><table><thead><tr><th>Deterministic software tests</th><th>AI evals</th></tr></thead><tbody><tr><td>Did rules execute as programmed?</td><td>Was probabilistic behavior acceptable across real cases?</td></tr><tr><td>Schemas, permissions, state transitions, validation</td><td>Interpretation, groundedness, uncertainty, completeness</td></tr><tr><td>Automated pass/fail invariants</td><td>Rubrics, severity, repeated and human-scored cases</td></tr></tbody></table></div></section><section class=""><div class="kicker">02 / cards</div><h2>Build a balanced eval set</h2><div class="cards"><article class="card"><h3>Normal</h3><p>Representative expected behavior.</p></article><article class="card"><h3>Paraphrase</h3><p>Same intent, different wording.</p></article><article class="card"><h3>Edge</h3><p>Plausible boundary case.</p></article><article class="card"><h3>Uncertainty</h3><p>Tentative, conflicting, or unknown facts.</p></article><article class="card"><h3>Known failure</h3><p>A regression that must stay fixed.</p></article><article class="card"><h3>Negative / no-action</h3><p>The correct response is to refrain.</p></article></div></section><section class=""><div class="kicker">03 / table</div><h2>Score what matters</h2><div class="table-wrap"><table><thead><tr><th>Dimension</th><th>Question</th></tr></thead><tbody><tr><td>Supported</td><td>Is the answer grounded in available evidence?</td></tr><tr><td>Complete</td><td>Did it catch important information?</td></tr><tr><td>Uncertainty preserved</td><td>Did unknown remain unknown?</td></tr><tr><td>Human burden</td><td>Did it avoid needless reviews or alerts?</td></tr></tbody></table></div></section><section class=""><div class="kicker">04 / table</div><h2>Boundary examples</h2><div class="table-wrap"><table><thead><tr><th>Evidence</th><th>Expected</th></tr></thead><tbody><tr><td>Target unknown</td><td>Keep target unknown, never assume zero</td></tr><tr><td>Explicit 0</td><td>Allow 0 only when established</td></tr><tr><td>Tentative 10%</td><td>Do not treat as approved</td></tr><tr><td>Observed 8%, target unknown</td><td>Keep actual separate from target</td></tr></tbody></table></div></section><section class=""><div class="kicker">05 / flow</div><h2>Failure → fix → regression</h2><div class="flowbox"><span>Define expected behavior</span><span>Baseline + severity</span><span>Trace first wrong layer</span><span>Targeted fix</span><span>Original + neighbors + holdouts</span><span>Monitor</span></div></section><section class=""><div class="kicker">06 / note</div><h2>Severity beats averages</h2><div class="lead">A high aggregate pass rate never excuses an unacceptable high-impact failure. Repeat high-risk and unstable cases more often.</div></section><section aria-label="Severity, silent misses, and boundary decisions" class="restored"><div class="kicker">REFERENCE DETAIL / RESTORED</div><h2>Severity, silent misses, and boundary decisions</h2>
+<h3>Severity should drive release decisions</h3><div class="table-wrap"><table><thead><tr><th>Level</th><th>Meaning</th></tr></thead><tbody>
+<tr><td>Low</td><td>Minor inconvenience; easy to notice and correct</td></tr>
+<tr><td>Medium</td><td>Misleading or wasteful; generally detectable before material harm</td></tr>
+<tr><td>High</td><td>Can materially distort product decisions or undermine trust</td></tr>
+<tr><td>Critical</td><td>Can directly cause unsafe, irreversible or externally consequential action; treat as a stop condition unless explicitly resolved</td></tr>
+</tbody></table></div>
+<h3>Decision-boundary regression cases</h3><div class="table-wrap"><table><thead><tr><th>Evidence</th><th>Expected behavior</th></tr></thead><tbody>
+<tr><td>Unknown value</td><td>Keep it unknown; never silently fill with zero</td></tr>
+<tr><td>Explicit 0</td><td>Use 0 only when the value is positively established</td></tr>
+<tr><td>Tentative 10%</td><td>Do not present as approved or authoritative</td></tr>
+<tr><td>Approved 10%</td><td>Represent as a concrete approved target, with evidence</td></tr>
+<tr><td>Observed 8%, target unknown</td><td>Keep observed performance separate from a target</td></tr>
+<tr><td>Previously proposed target withdrawn</td><td>Return the target to unknown unless a replacement is established</td></tr>
+</tbody></table></div>
+<h3>Product-oriented failure measures</h3><div class="table-wrap"><table><thead><tr><th>Measure</th><th>What it detects</th></tr></thead><tbody>
+<tr><td>Miss rate</td><td>Material changes or expected actions the system silently failed to identify</td></tr>
+<tr><td>Unsupported-claim rate</td><td>Invented, exaggerated or poorly sourced claims</td></tr>
+<tr><td>Uncertainty-loss rate</td><td>Pending or unknown information upgraded to certainty</td></tr>
+<tr><td>Unnecessary-review rate</td><td>Avoidable human workload from duplicate or low-value requests</td></tr>
+</tbody></table></div>
+<div class="note"><strong>Silent failures matter:</strong> A visible wrong answer is easier to notice than a consequential case the AI never flagged. Sample no-action outputs and ask humans whether the inaction was appropriate; track confirmed false negatives and their severity.</div>
+<div class="note"><strong>Ownership and troubleshooting:</strong> PMs set expected behavior, severity and release bars. Engineering implements repeatable runs and instrumentation; AI can propose cases and analyses; accountable humans approve expectations and acceptable risk. Trace evidence → context/retrieval → interpretation → deterministic validation → classification → action before blaming the prompt.</div>
+</section><footer><a href="https://github.com/pedringt/ai-learning/blob/staging/cheat-sheets/AI_Product_Evals_Cheat_Sheet.pdf">View original source</a> · Learning reference · Source remains unchanged in GitHub</footer></main></body></html>
