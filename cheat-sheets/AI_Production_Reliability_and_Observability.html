@@ -14,36 +14,36 @@ ul{padding-left:21px;margin:8px 0}li{padding-left:3px;margin:0 0 10px;overflow-w
 @media print{body{background:white}.wrap{margin:0;border:0;padding:0;max-width:none}.print{display:none}h2{break-after:avoid}p,li{orphans:2;widows:2}@page{size:letter;margin:.65in}}
 </style></head><body>
     <main class="wrap"><div class="top"><a href="../index.html#learn">← Learning Library</a><button class="print" onclick="window.print()">Print / Save PDF</button></div>
-    <div class="label">Context Switch · Learning reference</div><h1>AI Production Reliability and Observability</h1><p class="intro">Reference converted from the original cheat sheet. All extracted text is retained.</p><p>Core idea: A production AI failure can start anywhere in the chain. Make each boundary observable so you can localize the defect instead of guessing from the final response.</p>
+    <div class="label">Context Switch · Learning reference</div><h1>AI Production Reliability and Observability</h1><p class="intro">Reference adapted from the original PDF; consult the source for original tables and visual layout.</p><p>Core idea: A production AI failure can start anywhere in the chain. Make each boundary observable so you can localize the defect instead of guessing from the final response.</p>
 <p>Boundary Typical failure First evidence to inspect</p>
 <p>Browser / frontend Stale local state, rerender race, wrong API base, double submit. Network request, console, rendered state, reproduction video.</p>
 <p>API / app logic Wrong status, unsafe retry, bad validation, duplicate side effect. Request ID, route logs, response body, persisted records.</p>
 <p>Model provider Timeout, refusal, malformed/poor interpretation, latency spike. Provider timing, model ID, token counts, structured result.</p>
 <p>Database Constraint failure, stale version, rollback, migration drift. Transaction logs, row versions, migration state, affected records.</p>
 <p>Cross-boundary Works locally, fails deployed; config/environment mismatch. Environment, deployed commit, service logs, DB target, CORS.</p>
-<h2>Correlation/request ID ties the browser request, API logs, provider call, and database activity together.</h2>
+<p>Correlation/request ID ties the browser request, API logs, provider call, and database activity together.</p>
 <p>AI Learning Reference Production Reliability &amp; Observability | 1/2</p>
-<h2>PRODUCTION AI CHEAT SHEET</h2>
+<p>PRODUCTION AI CHEAT SHEET</p>
 <h2>Production Reliability &amp; Observability</h2>
-<h2>Debug from the request forward. Find the first divergence, not just the final bad answer.</h2>
+<p>Debug from the request forward. Find the first divergence, not just the final bad answer.</p>
 <h2>The production path</h2>
 <h2>Browser user action →</h2>
 <h2>Frontend request + UI state →</h2>
 <h2>API validation + orchestration →</h2>
 <h2>Where failures hide</h2>
 <h2>Trace, log, metric - different jobs</h2>
-<h2>Trace</h2>
-<h2>Log</h2>
+<p>Trace</p>
+<p>Log</p>
 <p>What happened for this one request, in what order?</p>
 <p>What technical event, warning, or error happened?</p>
 <p>Model probabilistic interpretation</p>
 <p>Database durable records</p>
 <h2>→</h2>
-<h2>Metric</h2>
+<p>Metric</p>
 <p>How often, how slow, how expensive, or how widespread is it?</p>
-<h2>PRODUCTION AI CHEAT SHEET</h2>
+<p>PRODUCTION AI CHEAT SHEET</p>
 <h2>Production Reliability &amp; Observability</h2>
-<h2>Safe recovery matters because AI calls are slow, fallible, and can fail after partial work already happened.</h2>
+<p>Safe recovery matters because AI calls are slow, fallible, and can fail after partial work already happened.</p>
 <h2>Safe failure and retry design</h2>
 <p>Situation Bad recovery Better recovery</p>
 <p>Evidence saved; model call fails Ask user to submit the Note again. Keep the same Evidence; offer retry analysis.</p>
@@ -53,7 +53,7 @@ ul{padding-left:21px;margin:8px 0}li{padding-left:3px;margin:0 0 10px;overflow-w
 <p>Provider unavailable Expose internal exception or mutate anyway. Return safe service failure; preserve authoritative data.</p>
 <h2>Latency: measure the parts</h2>
 <h2>Frontend / network + API work + Provider call + Validation / persistence + Rehydration</h2>
-<h2>If inference takes 15 seconds and persistence takes 20 ms, optimizing SQL will not meaningfully improve the user experience.</h2>
+<p>If inference takes 15 seconds and persistence takes 20 ms, optimizing SQL will not meaningfully improve the user experience.</p>
 <h2>Production checklist</h2>
 <p>✓Identity: deployed version/commit and model identifier.</p>
 <p>✓Logging: safe request IDs, timing, provider/model, usage, categorized errors.</p>

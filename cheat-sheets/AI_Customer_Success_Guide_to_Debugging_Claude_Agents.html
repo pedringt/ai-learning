@@ -14,7 +14,7 @@ ul{padding-left:21px;margin:8px 0}li{padding-left:3px;margin:0 0 10px;overflow-w
 @media print{body{background:white}.wrap{margin:0;border:0;padding:0;max-width:none}.print{display:none}h2{break-after:avoid}p,li{orphans:2;widows:2}@page{size:letter;margin:.65in}}
 </style></head><body>
     <main class="wrap"><div class="top"><a href="../index.html#learn">← Learning Library</a><button class="print" onclick="window.print()">Print / Save PDF</button></div>
-    <div class="label">Context Switch · Learning reference</div><h1>AI Customer Success Guide to Debugging Claude Agents</h1><p class="intro">Reference converted from the original cheat sheet. All extracted text is retained.</p><p>A practical guide for turning vague customer complaints into reproducible evidence, likely cause, impact, and a verified outcome.</p>
+    <div class="label">Context Switch · Learning reference</div><h1>AI Customer Success Guide to Debugging Claude Agents</h1><p class="intro">Reference adapted from the original PDF; consult the source for original tables and visual layout.</p><p>A practical guide for turning vague customer complaints into reproducible evidence, likely cause, impact, and a verified outcome.</p>
 <p>Core mindset: Debug the whole system, not just Claude. Find the first point where actual behavior stopped matching expected behavior, collect clear evidence, and help the right owner act.</p>
 <p>Request Asked whether order shipped. Was the request understood?</p>
 <p>Tool result Status = label created. Correct and current upstream data?</p>
@@ -22,22 +22,22 @@ ul{padding-left:21px;margin:8px 0}li{padding-left:3px;margin:0 0 10px;overflow-w
 <p>Final answer Incorrect confirmation. Was a fallback/escalation rule missing?</p>
 <p>A likely fix is to define which statuses actually confirm carrier possession, then test nearby statuses and wording variations before calling the issue fixed.</p>
 <p>AI Learning Reference Debugging Claude-Based AI Agents | 1/7</p>
-<h2>AI CUSTOMER SUCCESS / FIELD GUIDE</h2>
+<p>AI CUSTOMER SUCCESS / FIELD GUIDE</p>
 <h2>Debugging Claude-Based AI Agents</h2>
 <h2>Quick orientation</h2>
-<h2>What is an agent?</h2>
+<p>What is an agent?</p>
 <p>Claude + instructions + data/context + tools + workflow rules that let it answer questions or take actions.</p>
-<h2>What is a trace?</h2>
+<p>What is a trace?</p>
 <p>A step-by-step record of one request: inputs, model calls, tool calls, outputs, errors, timing, and usage.</p>
 <h2>Simple example</h2>
 <p>Customer: &quot;Has my order shipped?&quot; Tool result: &quot;label created&quot; Agent: &quot;Yes, it shipped.&quot;</p>
 <p>Step What happened Debug question</p>
 <p>Tool call Looked up the right order. Correct tool and ID?</p>
-<h2>What is debugging?</h2>
+<p>What is debugging?</p>
 <p>Finding the first meaningful difference between expected and actual behavior.</p>
-<h2>Your value</h2>
+<p>Your value</p>
 <p>Turn a vague complaint into evidence another team can reproduce, prioritize, and fix without re-interviewing the customer.</p>
-<h2>AI CUSTOMER SUCCESS / FIELD GUIDE</h2>
+<p>AI CUSTOMER SUCCESS / FIELD GUIDE</p>
 <h2>Where Agent Failures Come From</h2>
 <p>Classify the likely failing layer before deciding who should change what.</p>
 <h2>Common failure sources</h2>
@@ -65,23 +65,23 @@ ul{padding-left:21px;margin:8px 0}li{padding-left:3px;margin:0 0 10px;overflow-w
 <p>9 Route smallest fix. CS may improve examples/tests; engineering changes code/tools; security changes policy; PM owns product tradeoffs.</p>
 <p>10 Regression + close loop. Original, paraphrases, neighbors, permissions/failures, customer update, monitoring plan.</p>
 <p>AI Learning Reference Debugging Claude-Based AI Agents | 3/7</p>
-<h2>AI CUSTOMER SUCCESS / FIELD GUIDE</h2>
+<p>AI CUSTOMER SUCCESS / FIELD GUIDE</p>
 <h2>Trace Reading Workflow</h2>
 <h2>Step-by-step debugging</h2>
 <p>4 Find the trace. Search by conversation/request ID, account, time, environment, or trace ID.</p>
 <p>8 Compare. Pair the failing trace with a similar good trace when possible.</p>
 <h2>Trace-reading checklist</h2>
-<h2>Input + instructions</h2>
-<h2>Context + retrieval</h2>
+<p>Input + instructions</p>
+<p>Context + retrieval</p>
 <p>Exact user wording, account facts, environment, instruction version.</p>
 <p>Sources returned, freshness, missing expected source.</p>
-<h2>Arguments + result</h2>
-<h2>Next model step</h2>
+<p>Arguments + result</p>
+<p>Next model step</p>
 <p>Inputs, error/status, timing, retries.</p>
 <p>Did interpretation follow from the result?</p>
-<h2>Tool decision</h2>
+<p>Tool decision</p>
 <p>Chosen tool, skipped tool, ordering.</p>
-<h2>Performance</h2>
+<p>Performance</p>
 <p>Per-step latency, repeated work, tool/model usage.</p>
 <p>A fix is not one successful rerun. Build enough nearby cases to show the behavior improved without breaking adjacent behavior.</p>
 <p>Tool name + description → Input schema → Structured tool call → Application executes → Structured result → Agent interprets</p>
@@ -90,7 +90,7 @@ ul{padding-left:21px;margin:8px 0}li{padding-left:3px;margin:0 0 10px;overflow-w
 <p>search_customer Find a customer using verified email/account ID. Return possible matches; do not expose records without authorization.</p>
 <p>Safe reproduction rule: never repeat a risky action on a real customer account just to prove it fails. Use approved test data and environments.</p>
 <p>AI Learning Reference Debugging Claude-Based AI Agents | 4/7</p>
-<h2>AI CUSTOMER SUCCESS / FIELD GUIDE</h2>
+<p>AI CUSTOMER SUCCESS / FIELD GUIDE</p>
 <h2>Reproduction, Evals &amp; Tool Calls</h2>
 <h2>Turn a bug into a compact eval set</h2>
 <p>ORIGINAL</p>
@@ -114,28 +114,28 @@ ul{padding-left:21px;margin:8px 0}li{padding-left:3px;margin:0 0 10px;overflow-w
 <p>MCP host AI application → MCP client connection component → MCP server tools/resources → Connected system</p>
 <p>MCP is not Claude, and it is not the CRM/database. It is the communication standard connecting an AI application to the server exposing those capabilities.</p>
 <p>AI Learning Reference Debugging Claude-Based AI Agents | 5/7</p>
-<h2>AI CUSTOMER SUCCESS / FIELD GUIDE</h2>
+<p>AI CUSTOMER SUCCESS / FIELD GUIDE</p>
 <h2>Safety, Performance &amp; MCP</h2>
 <h2>Operational checks</h2>
-<h2>Permissions</h2>
-<h2>Escalation</h2>
+<p>Permissions</p>
+<p>Escalation</p>
 <p>Least access needed; sensitive actions require correct scope and approval.</p>
 <p>Agent admits uncertainty, stops after defined failures, transfers useful context.</p>
-<h2>Cost</h2>
-<h2>Reliability</h2>
+<p>Cost</p>
+<p>Reliability</p>
 <p>Look for repeated calls, oversized context, needless retries, expensive paths.</p>
 <p>Consistent behavior, bounded retries, graceful timeout and fallback.</p>
 <h2>MCP in simple terms</h2>
-<h2>Speed</h2>
+<p>Speed</p>
 <p>Record total and per-step latency; compare to a normal run.</p>
-<h2>Privacy</h2>
+<p>Privacy</p>
 <p>Minimize sensitive data in tools/logs; follow incident policy.</p>
 <p>CRM / DB / docs</p>
 <p>Own the investigation and customer context. Coordinate before changing production behavior outside your role.</p>
 <p>AI Customer Success Intake, context, expected behavior, accessible trace review, safe reproduction, impact/severity, examples/eval cases, issue reports, customer communication, fix validation.</p>
 <p>AI / application engineer Prompts/workflows/tools/MCP, code/schema changes, tracing instrumentation, technical fixes.</p>
 <p>AI Learning Reference Debugging Claude-Based AI Agents | 6/7</p>
-<h2>AI CUSTOMER SUCCESS / FIELD GUIDE</h2>
+<p>AI CUSTOMER SUCCESS / FIELD GUIDE</p>
 <h2>Role Boundaries &amp; Handoffs</h2>
 <h2>Who owns what</h2>
 <p>Role Typical ownership</p>
@@ -144,7 +144,7 @@ ul{padding-left:21px;margin:8px 0}li{padding-left:3px;margin:0 0 10px;overflow-w
 <p>Operations / SRE Availability, monitoring, alerting, latency, capacity, incidents, rollback.</p>
 <p>Data / knowledge owner Source accuracy, freshness, taxonomy, and permissions.</p>
 <h2>A useful boundary test</h2>
-<h2>You can usually do</h2>
+<p>You can usually do</p>
 <p>Inspect approved conversation/trace data, reproduce in approved test space, write cases and expected outcomes, compare before/after, document findings.</p>
 <h2>Issue report: minimum useful packet</h2>
 <p>✓One-line expected vs actual summary.</p>
@@ -153,7 +153,7 @@ ul{padding-left:21px;margin:8px 0}li{padding-left:3px;margin:0 0 10px;overflow-w
 <p>✓Environment/version + date/time.</p>
 <p>✓Conversation/request/trace IDs.</p>
 <p>✓Exact input + needed context only.</p>
-<h2>Coordinate before doing</h2>
+<p>Coordinate before doing</p>
 <p>Change production prompts, code, tools/MCP servers, permissions, customer records, refund/payment logic, or monitoring policy.</p>
 <p>✓Expected behavior + source of truth.</p>
 <p>✓Actual response/action.</p>
@@ -164,11 +164,11 @@ ul{padding-left:21px;margin:8px 0}li{padding-left:3px;margin:0 0 10px;overflow-w
 <p>Expected → Actual → Impact → Trace → First divergence → Reproduce → Classify + route</p>
 <p>Your job is not to know every implementation detail. It is to make the failure understandable: what should have happened, what actually happened, where the first divergence appeared, how severe it is, and what evidence shows the fix worked.</p>
 <p>AI Learning Reference Debugging Claude-Based AI Agents | 7/7</p>
-<h2>AI CUSTOMER SUCCESS / FIELD GUIDE</h2>
+<p>AI CUSTOMER SUCCESS / FIELD GUIDE</p>
 <h2>Final Quick Reference</h2>
 <p>Use this page when a live report arrives and you need a fast debugging path.</p>
 <h2>When a report arrives</h2>
-<h2>If you see...</h2>
+<p>If you see...</p>
 <p>Symptom First place to look</p>
 <p>Wrong fact Retrieved data, tool result, source freshness.</p>
 <p>Wrong action Tool choice, arguments, permissions, approval rules.</p>

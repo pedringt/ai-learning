@@ -14,16 +14,15 @@ ul{padding-left:21px;margin:8px 0}li{padding-left:3px;margin:0 0 10px;overflow-w
 @media print{body{background:white}.wrap{margin:0;border:0;padding:0;max-width:none}.print{display:none}h2{break-after:avoid}p,li{orphans:2;widows:2}@page{size:letter;margin:.65in}}
 </style></head><body>
     <main class="wrap"><div class="top"><a href="../index.html#learn">← Learning Library</a><button class="print" onclick="window.print()">Print / Save PDF</button></div>
-    <div class="label">Context Switch · Learning reference</div><h1>Anatomy of an LLM Application</h1><p class="intro">Reference converted from the original cheat sheet. All extracted text is retained.</p><p>The model is one component. The surrounding application controls context, data, permissions, validation, persistence, and consequences.</p>
+    <div class="label">Context Switch · Learning reference</div><h1>Anatomy of an LLM Application</h1><p class="intro">Reference adapted from the original PDF; consult the source for original tables and visual layout.</p><p>The model is one component. The surrounding application controls context, data, permissions, validation, persistence, and consequences.</p>
 <p>Core idea: Treat the LLM as a probabilistic interpreter inside a larger software system. Reliability comes from what the application does around the model, not from the model alone.</p>
 <p>Frontend user interaction → Backend orchestration → Context what model sees → LLM API interpretation → Validation + rules what may happen</p>
-<h2>state transitions ↔ Human authority</h2>
+<p>state transitions ↔ Human authority</p>
 <p>Backend is an umbrella term. Request handling, database access, model calls, context construction, validation, and business rules are separate responsibilities even when they live in one small codebase.</p>
 <p>AI Learning Reference Anatomy of an LLM Application | 1/2</p>
 <p>AI SYSTEMS CHEAT SHEET</p>
-<h2>Anatomy of an LLM Application</h2>
 <h2>The system at a glance</h2>
-<h2>Database durable truth ↔ Application logic</h2>
+<p>Database durable truth ↔ Application logic</p>
 <h2>What each part owns</h2>
 <p>FRONTEND</p>
 <p>BACKEND</p>
@@ -45,10 +44,9 @@ ul{padding-left:21px;margin:8px 0}li{padding-left:3px;margin:0 0 10px;overflow-w
 <p>The model interprets ambiguity. The surrounding application owns persistence, permissions, validation, state transitions, and consequences.</p>
 <p>AI Learning Reference Anatomy of an LLM Application | 2/2</p>
 <p>AI SYSTEMS CHEAT SHEET</p>
-<h2>Anatomy of an LLM Application</h2>
 <h2>One evidence flow through State</h2>
-<h2>Context construction</h2>
-<h2>Structured output</h2>
+<p>Context construction</p>
+<p>Structured output</p>
 <p>Decide what information the model receives for this task. Send the smallest trustworthy governing context that is sufficient - not the entire history by default.</p>
 <p>Ask the model to return a predefined shape rather than free-form prose when downstream software needs predictable fields.</p>
 <h2>Design for model mistakes</h2>
@@ -57,7 +55,7 @@ ul{padding-left:21px;margin:8px 0}li{padding-left:3px;margin:0 0 10px;overflow-w
 <p>✓Validate before application actions.</p>
 <p>✓Use deterministic rules for mechanical facts.</p>
 <h2>Current State vs. repeated re-reasoning</h2>
-<h2>Validation</h2>
+<p>Validation</p>
 <p>Check required fields, allowed values, references, and combinations before the application acts.</p>
 <p>✓Require human authority for consequential transitions.</p>
 <p>✓Show provenance beside AI interpretation.</p>

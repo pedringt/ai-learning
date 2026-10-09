@@ -14,14 +14,14 @@ ul{padding-left:21px;margin:8px 0}li{padding-left:3px;margin:0 0 10px;overflow-w
 @media print{body{background:white}.wrap{margin:0;border:0;padding:0;max-width:none}.print{display:none}h2{break-after:avoid}p,li{orphans:2;widows:2}@page{size:letter;margin:.65in}}
 </style></head><body>
     <main class="wrap"><div class="top"><a href="../index.html#learn">← Learning Library</a><button class="print" onclick="window.print()">Print / Save PDF</button></div>
-    <div class="label">Context Switch · Learning reference</div><h1>Building Software with AI Without Creating Chaos</h1><p class="intro">Reference converted from the original cheat sheet. All extracted text is retained.</p><p>Core idea: Prototype to learn. Freeze to build. Give AI bounded jobs. Turn every meaningful failure into permanent coverage. The danger is not AI speed itself - it is letting fast changes outrun architecture, ownership, and tests.</p>
+    <div class="label">Context Switch · Learning reference</div><h1>Building Software with AI Without Creating Chaos</h1><p class="intro">Reference adapted from the original PDF; consult the source for original tables and visual layout.</p><p>Core idea: Prototype to learn. Freeze to build. Give AI bounded jobs. Turn every meaningful failure into permanent coverage. The danger is not AI speed itself - it is letting fast changes outrun architecture, ownership, and tests.</p>
 <p>Repository clarity is part of AI coding quality. If two files look equally authoritative, an AI coding assistant can confidently change the wrong one. Clean paths and explicit ownership reduce both human and model mistakes.</p>
 <p>AI Learning Reference Building Software with AI | 1/2</p>
 <p>AI-ASSISTED BUILD CHEAT SHEET</p>
 <p>Move quickly while learning the product, then deliberately shift into a maintainable build mode.</p>
 <h2>The phase change that matters</h2>
-<h2>Prototype</h2>
-<h2>Transition</h2>
+<p>Prototype</p>
+<p>Transition</p>
 <p>Goal: discover the product and interaction model.</p>
 <p>Goal: convert learning into a build contract.</p>
 <p>AI: audit, identify invariants, map ownership and source-of-truth paths.</p>
@@ -36,9 +36,9 @@ ul{padding-left:21px;margin:8px 0}li{padding-left:3px;margin:0 0 10px;overflow-w
 <p>GOLDEN BEHAVIORS Representative user journeys with expected</p>
 <p>outcomes written first.</p>
 <h2>Keep the architecture boring</h2>
-<h2>Useful complexity</h2>
+<p>Useful complexity</p>
 <p>Product rules, authority boundaries, meaningful state transitions, and user behavior learned through use.</p>
-<h2>Real build</h2>
+<p>Real build</p>
 <p>Goal: implement reliably without losing product lessons.</p>
 <p>AI: bounded slices, tests, QA, conflict removal.</p>
 <p>Exit when: automated coverage and deployed smoke checks pass.</p>
@@ -48,9 +48,8 @@ ul{padding-left:21px;margin:8px 0}li{padding-left:3px;margin:0 0 10px;overflow-w
 <p>modes.</p>
 <p>SMOKE GATE The few deployed journeys that prove the product is</p>
 <p>basically usable.</p>
-<h2>Avoidable complexity</h2>
+<p>Avoidable complexity</p>
 <p>Duplicate runtime paths, patch-on-patch styling, stale configs, hidden fallbacks, unclear routing, multiple owners for the same behavior.</p>
-<h2>Building Software with AI Without Creating Chaos</h2>
 <p>Use AI differently depending on the job, and debug the whole system before reaching for a prompt change.</p>
 <p>Reproduce → Failing test → Find owning layer → Remove conflict → Fix → Full suite + deployed check</p>
 <p>A bug that mattered once should not depend on someone remembering to manually check it forever.</p>

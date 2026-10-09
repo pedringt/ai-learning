@@ -14,7 +14,7 @@ ul{padding-left:21px;margin:8px 0}li{padding-left:3px;margin:0 0 10px;overflow-w
 @media print{body{background:white}.wrap{margin:0;border:0;padding:0;max-width:none}.print{display:none}h2{break-after:avoid}p,li{orphans:2;widows:2}@page{size:letter;margin:.65in}}
 </style></head><body>
     <main class="wrap"><div class="top"><a href="../index.html#learn">← Learning Library</a><button class="print" onclick="window.print()">Print / Save PDF</button></div>
-    <div class="label">Context Switch · Learning reference</div><h1>Testing &amp; Evaluating Probabilistic Systems</h1><p class="intro">Reference converted from the original cheat sheet. All extracted text is retained.</p><h2>Use deterministic tests for guarantees, evals for judgment, and real QA to find the cases neither system anticipated.</h2>
+    <div class="label">Context Switch · Learning reference</div><h1>Testing &amp; Evaluating Probabilistic Systems</h1><p class="intro">Reference adapted from the original PDF; consult the source for original tables and visual layout.</p><p>Use deterministic tests for guarantees, evals for judgment, and real QA to find the cases neither system anticipated.</p>
 <p>Core idea: Tests prove rules that should always hold. Evals measure whether probabilistic behavior is good enough. A reliable AI product needs both.</p>
 <p>Unit / contract test Rules that should always hold. Rejected Evidence never mutates Current State.</p>
 <p>Integration test Deterministic flows across components. Evidence → interpretation → Review → accepted transition → History.</p>
@@ -22,22 +22,21 @@ ul{padding-left:21px;margin:8px 0}li{padding-left:3px;margin:0 0 10px;overflow-w
 <p>LLM eval Judgment where several outputs may be plausible. Did the model correctly judge whether Evidence is consequential?</p>
 <p>Manual / adversarial QA Unexpected behavior and UX seams. Ambiguous notes, duplicate Reviews, misleading copy, strange navigation.</p>
 <p>A golden scenario is a deliberately chosen case with the expected product judgment written before looking at model output. It prevents the model from quietly redefining what &quot;good&quot; means.</p>
-<h2>A plausible model answer can still be wrong for the product. Valid JSON proves shape, not correct judgment.</h2>
+<p>A plausible model answer can still be wrong for the product. Valid JSON proves shape, not correct judgment.</p>
 <p>AI Learning Reference Testing &amp; Evaluating Probabilistic Systems | 1/2</p>
-<h2>AI QUALITY CHEAT SHEET</h2>
+<p>AI QUALITY CHEAT SHEET</p>
 <h2>Choose the right evidence for the behavior</h2>
 <p>Layer Best for State example</p>
 <h2>Golden scenarios</h2>
-<h2>GIVEN Current State + relevant rules + incoming Evidence + open</h2>
+<p>GIVEN Current State + relevant rules + incoming Evidence + open</p>
 <p>Questions/Reviews.</p>
-<h2>EXPECTED INTERPRETATION Review/no Review, affected State,</h2>
+<p>EXPECTED INTERPRETATION Review/no Review, affected State,</p>
 <p>proposal, or explicit uncertainty.</p>
-<h2>PROHIBITED BEHAVIOR What the model/software must not infer,</h2>
+<p>PROHIBITED BEHAVIOR What the model/software must not infer,</p>
 <p>mutate, or hide.</p>
-<h2>AFTER HUMAN ACTION Expected State, History, review lifecycle, and</h2>
+<p>AFTER HUMAN ACTION Expected State, History, review lifecycle, and</p>
 <p>downstream behavior.</p>
-<h2>Testing &amp; Evaluating Probabilistic Systems</h2>
-<h2>Real failures are valuable because they reveal decision boundaries your planned test set probably missed.</h2>
+<p>Real failures are valuable because they reveal decision boundaries your planned test set probably missed.</p>
 <p>Case type Example Why it matters</p>
 <p>Original failure &quot;Password reset tickets were approved for automation.&quot; Preserves the exact bug.</p>
 <p>Paraphrase &quot;Security signed off on automating password resets.&quot; Checks the fix is semantic, not phrase-specific.</p>
@@ -47,19 +46,19 @@ ul{padding-left:21px;margin:8px 0}li{padding-left:3px;margin:0 0 10px;overflow-w
 <p>Is expected behavior specified? → Is the model wrong? → Is validation/app logic wrong? → Is UI presenting correct behavior badly?</p>
 <p>Use deterministic tests for invariants, evals for judgment, and real QA to discover the cases neither of them imagined.</p>
 <p>AI Learning Reference Testing &amp; Evaluating Probabilistic Systems | 2/2</p>
-<h2>AI QUALITY CHEAT SHEET</h2>
+<p>AI QUALITY CHEAT SHEET</p>
 <h2>Turn every meaningful defect into permanent coverage</h2>
 <h2>Useful evaluation dimensions</h2>
-<h2>State integrity</h2>
-<h2>Interpretation</h2>
+<p>State integrity</p>
+<p>Interpretation</p>
 <p>Was authoritative state preserved correctly?</p>
 <p>Did the model identify the right consequence, items, and proposal?</p>
-<h2>Groundedness</h2>
-<h2>Failure behavior</h2>
+<p>Groundedness</p>
+<p>Failure behavior</p>
 <p>Did the output stay within what the evidence established?</p>
 <p>Did timeouts, malformed output, stale data, and retries degrade safely?</p>
 <h2>When an eval fails</h2>
-<h2>User burden</h2>
+<p>User burden</p>
 <p>Did the system create unnecessary Reviews or blockers?</p>
-<h2>Consistency</h2>
+<p>Consistency</p>
 <p>Is behavior acceptable across paraphrases and repeated runs?</p><div class="footer"><a href="Testing_and_Evaluating_AI_Systems.pdf" target="_blank" rel="noopener">View original PDF</a> · 2 original page(s)</div></main></body></html>

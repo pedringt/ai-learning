@@ -14,26 +14,26 @@ ul{padding-left:21px;margin:8px 0}li{padding-left:3px;margin:0 0 10px;overflow-w
 @media print{body{background:white}.wrap{margin:0;border:0;padding:0;max-width:none}.print{display:none}h2{break-after:avoid}p,li{orphans:2;widows:2}@page{size:letter;margin:.65in}}
 </style></head><body>
     <main class="wrap"><div class="top"><a href="../index.html#learn">← Learning Library</a><button class="print" onclick="window.print()">Print / Save PDF</button></div>
-    <div class="label">Context Switch · Learning reference</div><h1>Human + AI Workflow Design</h1><p class="intro">Reference converted from the original cheat sheet. All extracted text is retained.</p><p>PM CHEAT SHEET 1 / 2</p>
+    <div class="label">Context Switch · Learning reference</div><h1>Human + AI Workflow Design</h1><p class="intro">Reference adapted from the original PDF; consult the source for original tables and visual layout.</p><p>PM CHEAT SHEET 1 / 2</p>
 <p>Rule of thumb: If you can write the rule precisely, do not make the model enforce it.</p>
 <p>Make judgment, authority, uncertainty, and recovery explicit.</p>
 <p>VISUAL ANCHOR</p>
 <h2>Human judgment &gt;</h2>
 <h2>AI interprets &gt;</h2>
-<h2>Tools +</h2>
+<p>Tools +</p>
 <h2>data &gt;</h2>
 <p>Not every workflow needs final approval. Raise control as data sensitivity, authority, or impact rises.</p>
 <p>1. ASSIGN EACH LAYER ONE JOB</p>
-<h2>Human judgment</h2>
-<h2>AI</h2>
+<p>Human judgment</p>
+<p>AI</p>
 <p>Set goals, risk tolerance, evidence bar, exceptions, and what must stay under human control.</p>
 <p>Interpret, summarize, classify, compare, synthesize, and surface uncertainty.</p>
 <p>Suggest rather than silently authorize.</p>
-<h2>Software</h2>
+<p>Software</p>
 <p>Enforce exact rules: permissions, schemas, allowed transitions, version checks, limits, dedupe, and required approvals.</p>
 <p>2. SUGGEST VS. ENFORCE VS. AUTHORIZE</p>
-<h2>AI should suggest</h2>
-<h2>Software should enforce</h2>
+<p>AI should suggest</p>
+<p>Software should enforce</p>
 <p>Semantic judgments with real ambiguity</p>
 <p>Rules you can state exactly</p>
 <p>Summaries, comparisons, draft recommendations</p>
@@ -41,24 +41,24 @@ ul{padding-left:21px;margin:8px 0}li{padding-left:3px;margin:0 0 10px;overflow-w
 <p>Potential changes a person can inspect</p>
 <p>Safe defaults when authority or inputs are missing</p>
 <p>3. MAKE UNCERTAINTY VISIBLE</p>
-<h2>Evidence is not truth. Pending is not accepted. Unknown is not zero.</h2>
+<p>Evidence is not truth. Pending is not accepted. Unknown is not zero.</p>
 <p>Separate accepted facts, pending proposals, and open questions.</p>
 <p>Preserve source and freshness when they matter.</p>
 <p>Let users adjust, reject, leave unchanged, or keep tracking uncertainty.</p>
 <p>TAKEAWAY The best AI workflow makes the authority boundary obvious before anything goes wrong.</p>
 <h2>Software enforces &gt;</h2>
-<h2>Approval /</h2>
-<h2>action</h2>
-<h2>Tools + data</h2>
+<p>Approval /</p>
+<p>action</p>
+<p>Tools + data</p>
 <p>Retrieve, query, or execute through bounded tools with scoped inputs, permissions, and observable outcomes.</p>
-<h2>People / action</h2>
+<p>People / action</p>
 <p>Approve consequential mutations, resolve tradeoffs, correct wording, reject proposals, or keep uncertainty open.</p>
-<h2>People should authorize</h2>
+<p>People should authorize</p>
 <p>High-impact or irreversible actions</p>
 <p>Policy exceptions and tradeoffs under uncertainty</p>
 <p>What becomes authoritative when mistakes materially matter</p>
 <p>PM CHEAT SHEET 2 / 2</p>
-<h2>Layer Failure signal First thing to inspect</h2>
+<p>Layer Failure signal First thing to inspect</p>
 <p>Instructions Same evidence is misread across cases Framing, examples, ambiguity, conflicting instructions</p>
 <p>Retrieval Right source is missing, stale, or conflicting What was actually retrieved before judging generation</p>
 <p>Tools Call fails, times out, or returns partial/wrong data Inputs, outputs, retries, dependency failure</p>
@@ -69,7 +69,7 @@ ul{padding-left:21px;margin:8px 0}li{padding-left:3px;margin:0 0 10px;overflow-w
 <h2>Failure Diagnosis + Recovery</h2>
 <p>Debug the layer that failed, then make the recovery path visible.</p>
 <p>4. DIAGNOSE THE FIRST OBSERVABLE FAILURE</p>
-<h2>Do not default every AI failure to a prompt problem.</h2>
+<p>Do not default every AI failure to a prompt problem.</p>
 <p>Logic Model output is reasonable but product behavior is wrong</p>
 <p>5. DESIGN RECOVERY BEFORE LAUNCH</p>
 <p>Model/provider fails</p>
