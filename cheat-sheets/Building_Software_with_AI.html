@@ -1,80 +1,18 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Building Software with AI Without Creating Chaos · Context Switch</title><style>
-:root{--ink:#20202a;--muted:#5f6271;--accent:#6a50a7;--line:#dddce6;--paper:#fff;--wash:#f7f5fc}
-*{box-sizing:border-box}body{margin:0;background:#f4f3f7;color:var(--ink);font:15px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif}
-a{color:var(--accent)}.wrap{max-width:840px;margin:38px auto 70px;padding:42px 52px;background:var(--paper);border:1px solid var(--line);border-radius:16px}
-.top{display:flex;justify-content:space-between;gap:12px;align-items:center;font-size:13px}.top a{text-decoration:none;font-weight:700}
-.label{text-transform:uppercase;letter-spacing:.12em;color:var(--accent);font-size:11px;font-weight:800;margin-top:32px}
-h1{font:700 32px/1.13 Georgia,serif;letter-spacing:-.03em;margin:8px 0 12px}
-h2{font-size:18px;margin:30px 0 10px;border-top:1px solid var(--line);padding-top:24px}
-p{margin:0 0 12px;overflow-wrap:anywhere}.intro{font-size:17px;color:var(--muted)}
-ul{padding-left:21px;margin:8px 0}li{padding-left:3px;margin:0 0 10px;overflow-wrap:anywhere}
-.footer{border-top:1px solid var(--line);padding-top:24px;margin-top:32px;font-size:13px;color:var(--muted)}
-.print{border:1px solid var(--line);border-radius:8px;padding:8px 12px;background:var(--wash);cursor:pointer;font:inherit;color:var(--ink)}
-@media(max-width:700px){.wrap{margin:0;padding:24px 22px;border:0;border-radius:0}.top{flex-wrap:wrap}h1{font-size:27px}}
-@media print{body{background:white}.wrap{margin:0;border:0;padding:0;max-width:none}.print{display:none}h2{break-after:avoid}p,li{orphans:2;widows:2}@page{size:letter;margin:.65in}}
-</style></head><body>
-    <main class="wrap"><div class="top"><a href="../index.html#learn">← Learning Library</a><button class="print" onclick="window.print()">Print / Save PDF</button></div>
-    <div class="label">Context Switch · Learning reference</div><h1>Building Software with AI Without Creating Chaos</h1><p class="intro">Reference adapted from the original PDF; consult the source for original tables and visual layout.</p><p>Core idea: Prototype to learn. Freeze to build. Give AI bounded jobs. Turn every meaningful failure into permanent coverage. The danger is not AI speed itself - it is letting fast changes outrun architecture, ownership, and tests.</p>
-<p>Repository clarity is part of AI coding quality. If two files look equally authoritative, an AI coding assistant can confidently change the wrong one. Clean paths and explicit ownership reduce both human and model mistakes.</p>
-<p>AI Learning Reference Building Software with AI | 1/2</p>
-<p>AI-ASSISTED BUILD CHEAT SHEET</p>
-<p>Move quickly while learning the product, then deliberately shift into a maintainable build mode.</p>
-<h2>The phase change that matters</h2>
-<p>Prototype</p>
-<p>Transition</p>
-<p>Goal: discover the product and interaction model.</p>
-<p>Goal: convert learning into a build contract.</p>
-<p>AI: audit, identify invariants, map ownership and source-of-truth paths.</p>
-<p>AI: explore, vary, challenge, generate disposable code.</p>
-<p>Exit when: golden behaviors and architecture boundaries are explicit.</p>
-<p>Exit when: you can explain what the product is and which behaviors matter.</p>
-<h2>Before AI writes production code</h2>
-<p>SOURCE OF TRUTH Exact frontend, backend, schema, migration, and</p>
-<p>deploy paths.</p>
-<p>BEHAVIORAL CONTRACT What must always remain true regardless of</p>
-<p>model output.</p>
-<p>GOLDEN BEHAVIORS Representative user journeys with expected</p>
-<p>outcomes written first.</p>
-<h2>Keep the architecture boring</h2>
-<p>Useful complexity</p>
-<p>Product rules, authority boundaries, meaningful state transitions, and user behavior learned through use.</p>
-<p>Real build</p>
-<p>Goal: implement reliably without losing product lessons.</p>
-<p>AI: bounded slices, tests, QA, conflict removal.</p>
-<p>Exit when: automated coverage and deployed smoke checks pass.</p>
-<p>OWNERSHIP MAP Which layer owns routing, validation, persistence,</p>
-<p>rendering, and authority.</p>
-<p>PROVIDER SPIKE Real schema support, latency, cost, and failure</p>
-<p>modes.</p>
-<p>SMOKE GATE The few deployed journeys that prove the product is</p>
-<p>basically usable.</p>
-<p>Avoidable complexity</p>
-<p>Duplicate runtime paths, patch-on-patch styling, stale configs, hidden fallbacks, unclear routing, multiple owners for the same behavior.</p>
-<p>Use AI differently depending on the job, and debug the whole system before reaching for a prompt change.</p>
-<p>Reproduce → Failing test → Find owning layer → Remove conflict → Fix → Full suite + deployed check</p>
-<p>A bug that mattered once should not depend on someone remembering to manually check it forever.</p>
-<p>Wrong factual answer Wrong frontend execution path; model was not the core failure. Verify routing, retrieval, context, and authority before prompt-engineering.</p>
-<p>Broken deployed modal Conflicting CSS/JS visibility mechanisms and accumulated overrides. Do not patch a symptom with another mechanism. Pick one owner.</p>
-<p>AI calls felt slow Provider inference dominated latency. Instrument first. Optimize the actual bottleneck; use interaction design and real streaming when latency remains.</p>
-<p>Move fast while discovering the product. Then make implementation boring: one source of truth, bounded AI jobs, explicit phase gates, permanent regression coverage, and deployed-browser verification.</p>
-<p>AI Learning Reference Building Software with AI | 2/2</p>
-<p>AI-ASSISTED BUILD CHEAT SHEET</p>
-<h2>Use AI as four different jobs</h2>
-<p>ARCHITECT</p>
-<p>BUILDER</p>
-<p>Find the owning layer, invariants, dependencies, and simplest design before changing code.</p>
-<p>Implement one bounded slice. Preserve the contract. Prefer removing conflicts to adding overrides.</p>
-<h2>The repair loop</h2>
-<h2>Three State lessons worth keeping</h2>
-<p>Symptom Actual cause Reusable lesson</p>
-<h2>AI-specific build rules</h2>
-<p>✓Models make semantic judgments; software should own mechanical facts when possible.</p>
-<p>✓Adapt provider output to the product contract, not the reverse.</p>
-<p>✓Schema-valid is not the same as semantically correct.</p>
-<p>QA</p>
-<p>PRODUCT</p>
-<p>Assume the builder missed something. Reproduce, probe adjacent paths, and identify permanent coverage.</p>
-<p>Use it like a real user. Separate product confusion from implementation defects and model failures.</p>
-<p>✓Capability does not imply authority: recommend, validate, authorize, then mutate.</p>
-<p>✓Use real product usage to discover useful rework.</p>
-<p>✓Repeated implementation debt means the process or ownership model needs to change.</p><div class="footer"><a href="Building_Software_with_AI.pdf" target="_blank" rel="noopener">View original PDF</a> · 2 original page(s)</div></main></body></html>
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width,initial-scale=1" name="viewport"/><title>Building Software with AI · Context Switch</title><style>
+:root{--ink:#15111a;--muted:#5f5968;--line:#e8e7ef;--pink:#f0408f;--cyan:#00bfd6;--violet:#6b5cff;--acid:#f4ff52}*{box-sizing:border-box}body{margin:0;background:white;color:var(--ink);font:14px/1.5 Inter,system-ui,Arial,sans-serif}.bar{border-bottom:1px solid var(--line);padding:18px max(26px,calc((100% - 1030px)/2));font-weight:900;font-size:17px;letter-spacing:-.03em}.bar i{display:inline-block;width:17px;height:17px;background:var(--acid);border:2px solid var(--ink);margin-right:10px;vertical-align:-3px;box-shadow:3px 3px var(--ink)}main{max-width:1030px;margin:auto;padding:25px 30px 45px}.tools{display:flex;justify-content:space-between;align-items:center;margin-bottom:27px;font-size:12px;font-weight:750}.tools a{color:inherit}.tools button{background:white;border:1px solid var(--ink);box-shadow:3px 3px 0 var(--acid);padding:9px 12px;font-weight:750;cursor:pointer}.label{display:inline-block;background:var(--acid);font-weight:900;font-size:10px;text-transform:uppercase;letter-spacing:.08em;padding:5px 10px;transform:rotate(-2deg);margin-bottom:12px}h1{font-size:clamp(37px,5.8vw,63px);letter-spacing:-.042em;line-height:1.08;margin:0 0 12px;font-weight:950}.pink{color:var(--pink)}.purple{color:var(--violet)}.intro{color:var(--muted);font-size:17px;max-width:740px}.hero{border-bottom:2px solid var(--ink);padding-bottom:16px}.lead{border-left:4px solid var(--violet);background:#f8f7ff;padding:11px 14px;margin:15px 0}section{margin-top:25px;padding-top:24px;border-top:1px solid var(--line)}section.first{border:0;margin-top:0;padding-top:12px}.kicker{font-size:10px;font-weight:900;letter-spacing:.1em;color:var(--muted);text-transform:uppercase;margin:0 0 6px}h2{font-size:24px;line-height:1.18;letter-spacing:-.045em;margin:0 0 11px;font-weight:900}.flow{max-width:750px}.step{display:flex;gap:13px;padding:12px 14px;border:1px solid var(--line);border-left:4px solid var(--violet)}.step:nth-of-type(4n+1){border-left-color:var(--pink)}.number{display:grid;place-items:center;background:var(--acid);font-weight:900;width:27px;height:27px;flex:0 0 27px}.step strong{display:block}.step small{color:var(--muted);font-size:13px;display:block;margin-top:3px}.arrow{height:14px;border-left:2px solid var(--ink);margin-left:28px}.note{border-left:4px solid var(--cyan);background:#f6fcff;padding:11px 14px;margin:15px 0}.table-wrap{overflow-x:auto}table{border-collapse:collapse;width:100%;font-size:13px}thead{border-top:2px solid var(--ink);background:#f8f7ff}td,th{padding:10px 12px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}th{font-size:10px;letter-spacing:.07em;text-transform:uppercase}td:first-child{font-weight:850;white-space:nowrap}tr:nth-child(even){background:#fcfcff}.twocol{display:grid;grid-template-columns:1fr 1fr;gap:13px}.twocol article{border:1px solid var(--line);border-top:4px solid var(--pink);padding:13px}.twocol article+article{border-top-color:var(--cyan)}.twocol strong{display:block;margin-bottom:4px}footer{margin-top:23px;border-top:2px solid var(--ink);padding-top:11px;color:var(--muted);font-size:12px}footer a{font-weight:700;color:inherit}p{margin:0 0 9px}@media(max-width:680px){main{padding:20px}.bar{padding:14px 20px}h1{font-size:clamp(34px,9vw,51px)}.twocol{grid-template-columns:1fr}}
+@media print{@page{size:letter;margin:.44in .52in}html,body{font-size:9.3pt;line-height:1.31;-webkit-print-color-adjust:exact;print-color-adjust:exact}.bar,.tools{display:none!important}main{padding:0;max-width:100%;margin:0}.hero{padding:0 0 10px}h1{font-size:27pt;line-height:1.08;margin-bottom:6px}.intro{font-size:10pt}.label{font-size:8pt;padding:3px 6px;margin-bottom:6px;transform:none}.lead{margin:8px 0;padding:7px 10px}section{margin-top:11px;padding-top:10px}section.first{padding-top:6px}h2{font-size:14pt;margin-bottom:7px}.kicker{margin-bottom:3px}.step{padding:6px 9px;break-inside:avoid}.step small{font-size:8.6pt;margin-top:2px}.number{width:21px;height:21px;flex-basis:21px}.arrow{height:8px;margin-left:21px}.note{padding:7px 10px;margin:8px 0;break-inside:avoid}table{font-size:8.6pt;line-height:1.26}td,th{padding:5px 8px}thead{display:table-header-group}tr{break-inside:avoid}.evaluation{break-before:page;margin-top:0;padding-top:0;border-top:0}h2,.kicker{break-after:avoid}.table-wrap{overflow:visible}.twocol{gap:8px}.twocol article{padding:8px;break-inside:avoid}footer{margin-top:11px;padding-top:7px}p{orphans:2;widows:2}}
+
+.cards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.card{border:1px solid var(--line);border-top:4px solid var(--violet);padding:12px 14px}.card:nth-child(3n+2){border-top-color:var(--pink)}.card:nth-child(3n){border-top-color:var(--cyan)}.card h3{font-size:14px;line-height:1.24;margin:0 0 5px}.card p{margin:0;font-size:13px}.chips{display:flex;gap:9px;flex-wrap:wrap}.chip{border:1px solid var(--line);padding:7px 10px;font-weight:800;font-size:12px}.list{padding-left:20px;margin:9px 0}.list li{margin:0 0 7px}.pair{display:grid;grid-template-columns:1fr 1fr;gap:14px}.pair>*{min-width:0}.flowbox{display:flex;gap:7px;align-items:stretch;flex-wrap:wrap}.flowbox span{background:#f8f7ff;border-left:3px solid var(--violet);padding:10px 12px;flex:1 1 115px;font-size:13px;font-weight:750}.source{font-size:11px;color:var(--muted)}@media(max-width:680px){.cards,.pair{grid-template-columns:1fr}}@media print{.cards,.pair{gap:7px}.card{padding:7px 9px;break-inside:avoid}.card h3{font-size:10pt}.card p{font-size:9pt}.list li{margin-bottom:4px}.flowbox span{padding:6px 9px;break-inside:avoid}.source{font-size:8pt}section{break-inside:auto}.hero{break-inside:avoid}.cards{grid-template-columns:repeat(2,minmax(0,1fr))}}</style><style id="restored-additions">.restored{break-inside:auto}.restored h3{font-size:15px;letter-spacing:-.018em;margin:18px 0 9px}.restored strong{font-weight:850}.restored .note{margin:11px 0}.restored td{overflow-wrap:anywhere}.restored td:first-child{white-space:normal;min-width:116px}.restored table{table-layout:auto}.restored thead{display:table-header-group}@media print{.restored{break-inside:auto;page-break-inside:auto}.restored h2,.restored h3,.restored .kicker{break-after:avoid;page-break-after:avoid}.restored .table-wrap{overflow:visible}.restored tr,.restored .note{break-inside:avoid;page-break-inside:avoid}.restored td,.restored th{padding:6px 8px}.restored .note{padding:8px 11px}.restored h3{margin:12px 0 7px;font-size:11pt}.restored{margin-top:19px;padding-top:16px}}</style></head><body><div class="bar"><i></i>Context Switch</div><main><div class="tools"><a href="index.html">← All references</a><button onclick="window.print()">Print / Save PDF</button></div><div class="hero"><div class="label">Learning Library / Reference</div><h1>Building Software with AI</h1><p class="intro">Prototype to learn, then freeze boundaries and build reliably.</p></div><section class="first"><div class="kicker">01 / table</div><h2>Different phases, different AI jobs</h2><div class="table-wrap"><table><thead><tr><th>Phase</th><th>Goal</th><th>AI role</th></tr></thead><tbody><tr><td>Prototype</td><td>Discover interaction and behavior</td><td>Explore and challenge disposable ideas</td></tr><tr><td>Transition</td><td>Document golden behaviors and ownership</td><td>Audit source-of-truth paths and invariants</td></tr><tr><td>Real build</td><td>Make implementation maintainable</td><td>Small bounded changes, tests and QA</td></tr></tbody></table></div></section><section class=""><div class="kicker">02 / cards</div><h2>Before production code</h2><div class="cards"><article class="card"><h3>Source of truth</h3><p>Exact frontend, backend, schema, and deployment paths.</p></article><article class="card"><h3>Behavior contract</h3><p>What must always remain true independent of model output.</p></article><article class="card"><h3>Golden behaviors</h3><p>Written expected user outcomes before implementing.</p></article><article class="card"><h3>Ownership map</h3><p>Which layer owns routing, validation, persistence, and authority.</p></article><article class="card"><h3>Provider spike</h3><p>Real schema, cost, latency, failures.</p></article><article class="card"><h3>Smoke gate</h3><p>Deployed journeys proving baseline usability.</p></article></div></section><section class=""><div class="kicker">03 / flow</div><h2>Repair loop</h2><div class="flowbox"><span>Reproduce</span><span>Failing test</span><span>Find owning layer</span><span>Remove conflict</span><span>Fix</span><span>Full suite + deployed check</span></div></section><section class=""><div class="kicker">04 / table</div><h2>AI as separate jobs</h2><div class="table-wrap"><table><thead><tr><th>Role</th><th>Use</th></tr></thead><tbody><tr><td>Architect</td><td>Find simplest owning design and invariants</td></tr><tr><td>Builder</td><td>Implement one bounded slice</td></tr><tr><td>QA</td><td>Attack assumptions and capture regressions</td></tr><tr><td>Product</td><td>Test actual user confusion and value</td></tr></tbody></table></div></section><section class=""><div class="kicker">05 / list</div><h2>Working rules</h2><ul class="list"><li>Keep one source of truth for each behavior</li><li>Use deterministic rules for mechanical facts</li><li>Do not confuse valid schema with correct meaning</li><li>Do not equate capability with authority</li><li>Instrument latency before optimizing</li><li>Every important bug earns permanent coverage</li></ul></section><section aria-label="Three debugging lessons from real builds" class="restored"><div class="kicker">REFERENCE DETAIL / RESTORED</div><h2>Three debugging lessons from real builds</h2>
+<h3>Symptom → actual cause → reusable lesson</h3><div class="table-wrap"><table><thead><tr><th>Symptom</th><th>What went wrong</th><th>Product/engineering lesson</th></tr></thead><tbody>
+<tr><td>Wrong factual answer</td><td>Frontend used the wrong execution path; the model was not the owning layer</td><td>Check routing, retrieval, context and authoritative state before prompt changes</td></tr>
+<tr><td>Broken deployed modal</td><td>Conflicting CSS/JS visibility mechanisms and accumulated overrides</td><td>Remove the conflict; give the behavior one owner instead of patching again</td></tr>
+<tr><td>AI calls felt slow</td><td>Model inference dominated latency, not SQL</td><td>Measure provider timing and optimize the real bottleneck; use interaction design or genuine streaming where useful</td></tr>
+</tbody></table></div>
+<h3>Complexity worth keeping vs removing</h3><div class="table-wrap"><table><thead><tr><th>Useful complexity</th><th>Avoidable complexity</th></tr></thead><tbody>
+<tr><td>Explicit authority and product invariants</td><td>Duplicate runtime paths and ambiguous routing</td></tr>
+<tr><td>Meaningful state transitions and review history</td><td>Patch-on-patch CSS or hidden fallback behavior</td></tr>
+<tr><td>User journeys learned through testing</td><td>Multiple files claiming to own the same behavior</td></tr>
+</tbody></table></div>
+<div class="note"><strong>Deployed smoke gate:</strong> The repair loop is reproduce → failing test → identify owner → remove conflicts → fix → full tests → deployed-browser check. Convert important bugs into regression coverage, and preserve the prototype → transition → maintainable build phase boundary.</div>
+</section><footer><a href="https://github.com/pedringt/ai-learning/blob/staging/cheat-sheets/Building_Software_with_AI.pdf">View original source</a> · Local review draft · Source remains unchanged in GitHub</footer></main></body></html>
