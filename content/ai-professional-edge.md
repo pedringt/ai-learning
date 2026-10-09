@@ -4,7 +4,7 @@
 
 Durable principles live in Durable AI Knowledge. Day-to-day efficiency habits live in the Efficient AI Use for Product Work cheat sheet. This page stays closer to current patterns, tools, vocabulary, and techniques that may change.
 
-<!-- edge-review: 2026-10-05 -->
+<!-- edge-review: 2026-10-09 -->
 
 ---
 
@@ -63,6 +63,12 @@ AI can query the right data and still reach the wrong business conclusion if ter
 Map how the work actually happens: the user goal, data, handoffs, actions, permissions, system of record, delays, repeated work, and failure points. Then decide whether the smallest useful fix is AI, deterministic automation, or process redesign.
 
 **Ask:** What evidence shows this workflow is broken, and does solving it actually require AI?
+
+### Design for downstream human capacity
+
+AI can create findings, recommendations, exceptions, and drafts faster than people can review or act on them. A workflow has not really removed a bottleneck if it simply moves the queue to human triage.
+
+**Ask:** If AI output volume doubled, could the people downstream actually process it?
 
 ### Keep the agent layer and model provider separable
 
