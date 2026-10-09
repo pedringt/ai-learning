@@ -106,6 +106,15 @@ python3 tools/dead_css.py                      # report
 python3 tools/dead_css.py --apply site-components.css index.html
 ```
 
+## important_audit.py
+
+Finds portfolio `!important` flags that change no computed style. Candidates exclude flags on interactive pseudo-classes, JS-toggled classes and attributes, and print / prefers-* / hover media, because those states are never rendered. Each round removes every remaining candidate, renders all portfolio views at a width inside every breakpoint interval, and keeps each flag whose removal changed a computed value. Rounds repeat until nothing changes; if a change cannot be traced to a candidate it prints STOP and applies nothing. `--apply` rewrites the sources. A full run takes about two hours; prove the result with the portfolio comparison below (#451).
+
+```
+python3 tools/important_audit.py           # report
+python3 tools/important_audit.py --apply
+```
+
 ## Portfolio comparison (scripts/state_ui_compare/portfolio_compare.py)
 
 The broader successor to `style_parity.py` for the portfolio: every root portfolio page at desktop, tablet and phone widths, after scrolling through each page, comparing computed styles, own text, attributes and structure between a git ref and the working tree. Run `--self` first for the noise floor.
