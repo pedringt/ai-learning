@@ -67,11 +67,13 @@ def render(pdf):
     chunks=[]
     seen_heading=False
     for i,(txt,size,bold) in enumerate(lines):
-        if i<5 and txt==title: continue
+        if txt==title: continue
+        if re.search(r"AI Learning Reference.*\\d+/\\d+",txt): continue
+        if txt.strip() in ("•", "-", "–"): continue
         if re.fullmatch(r"(?:\d+|Page\s+\d+|\d+\s*/\s*\d+)",txt,re.I):continue
         if txt.startswith("•") or re.match(r"^[-–]\s+",txt):
             chunks.append("<p class='bullet'>• "+html.escape(txt.lstrip("•-– ").strip())+"</p>")
-        elif size>=base*1.23 and len(txt)<125 or (bold and len(txt)<75 and size>=base*1.02 and not txt.endswith(".")):
+        elif size>=base*1.26 and len(txt)<95 and not txt.endswith("."):
             chunks.append("<h2>"+html.escape(txt)+"</h2>")
             seen_heading=True
         else:
@@ -80,7 +82,7 @@ def render(pdf):
     original=html.escape(pdf.name)
     head=f"""<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>{html.escape(title)} · Context Switch</title>{STYLE}</head><body>
     <main class="wrap"><div class="top"><a href="../index.html#learn">← Learning Library</a><button class="print" onclick="window.print()">Print / Save PDF</button></div>
-    <div class="label">Context Switch · Learning reference</div><h1>{html.escape(title)}</h1><p class="intro">Reference converted from the original cheat sheet. All extracted text is retained.</p>"""
+    <div class="label">Context Switch · Learning reference</div><h1>{html.escape(title)}</h1><p class="intro">Reference adapted from the original PDF; consult the source for original tables and visual layout.</p>"""
     foot=f"""<div class="footer"><a href="{original}" target="_blank" rel="noopener">View original PDF</a> · {n} original page(s)</div></main></body></html>"""
     dest=pdf.with_suffix(".html")
     dest.write_text(head+"\n".join(chunks)+foot,encoding="utf-8")
