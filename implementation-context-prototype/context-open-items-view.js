@@ -22,7 +22,11 @@
     const adjustableCount=proposals.filter(p=>p.operation!=='retire').length;
     const questionProposal=r.questionToCreate;
     const questionReady=!!questionProposal?.id&&questionProposal.status==='pending';
-    const meaningfulUnresolved=r.unresolved && !/^nothing beyond this proposed change/i.test(cleanReviewCopy(r.unresolved));
+    // #482 (QA-11): "Still unresolved" that only restates the card's title adds nothing.
+    const plain=v=>cleanReviewCopy(v).toLowerCase().replace(/[^a-z0-9 ]+/g,' ').replace(/\s+/g,' ').trim();
+    const unresolvedText=plain(r.unresolved), titleText=plain(r.summary);
+    const repeatsTitle=!!unresolvedText&&!!titleText&&(unresolvedText===titleText||unresolvedText.includes(titleText)||titleText.includes(unresolvedText));
+    const meaningfulUnresolved=r.unresolved && !repeatsTitle && !/^nothing beyond this proposed change/i.test(cleanReviewCopy(r.unresolved));
     const sourceMeta=sourceNote?`${sourceNote.date} · ${sourceNote.source}`:'';
     const chevron=accordion&&expanded?'⌃':'›';
     const head=`<span class="open-question-copy"><span class="open-item-label blocking">Review</span><span class="open-question-title">${esc(r.summary)}</span>${sourceMeta?`<span class="open-question-meta">Evidence · ${esc(sourceMeta)}</span>`:''}</span><span class="question-card-chevron" aria-hidden="true">${chevron}</span>`;

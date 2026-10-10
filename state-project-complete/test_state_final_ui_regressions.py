@@ -249,3 +249,22 @@ def test_new_project_with_an_empty_name_says_why_and_enter_submits():
         assert error.is_visible(), "Enter in the name field runs the same submit"
     finally:
         browser.close(); pw.stop()
+
+
+def test_confirming_starting_state_says_so_after_the_reload():
+    """#482 (Cowork, Oct 9): Confirm Starting State reloaded the page with no confirmation."""
+    pw, browser, page = _page()
+    try:
+        page.evaluate("sessionStorage.setItem('state-starting-state-confirmed','1')")
+        page.reload()
+        page.wait_for_function("!document.documentElement.classList.contains('state-final-mobile-pending')")
+        toast = page.locator(".state-toast")
+        toast.wait_for(timeout=3000)
+        assert "Starting State confirmed" in toast.inner_text()
+        assert page.evaluate("sessionStorage.getItem('state-starting-state-confirmed')") is None
+
+        page.reload()
+        page.wait_for_timeout(800)
+        assert page.locator(".state-toast").count() == 0, "shown once, not on every load"
+    finally:
+        browser.close(); pw.stop()

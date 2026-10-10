@@ -116,8 +116,12 @@
   // one of three banners. Absence of that hook (older bundle, test harness
   // without context-app.js loaded) falls back to the original banner.
   function onboardingStage() {
-    const data = window.STATE_ASK_TEST_API?.state?.data;
+    const app = window.STATE_ASK_TEST_API?.state;
+    const data = app?.data;
     if (!data) return 'established';
+    // #482 (Cowork, Oct 9): a new tab on Northstar showed "Add your first evidence" because
+    // this ran before the project's Evidence had loaded. Unknown is not "no evidence".
+    if (app.backendStatus?.evidence === 'loading') return null;
     if (!(data.notes || []).length) return 'no_evidence';
     // syncApiState() never removes a knowledge item on an empty backend
     // response, only tags it state:'retired' (context-backend-sync.js) --
@@ -158,6 +162,7 @@
       return;
     }
     const stage = onboardingStage();
+    if (stage === null) { existing?.remove(); return; }  // still loading; the next render decides
     if (!existing) { overview.insertAdjacentHTML('afterbegin', guideMarkup(stage)); return; }
     if (existing.dataset.guideStage !== stage) existing.outerHTML = guideMarkup(stage);
   }

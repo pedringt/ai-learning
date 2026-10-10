@@ -163,7 +163,7 @@
     else if(c.failed_evidence) status='Some starting material could not be analyzed. Retry the analysis before confirming.';
     else if(c.needs_individual_review) status='Resolve the flagged Reviews first. Routine draft facts do not need separate Review clicks.';
     else if(!factCount&&questionCount) status='State found Questions but no Starting State facts. This may be incomplete; review the source before confirming.';
-    return `<div class="baseline-draft-dialog"><span class="eyebrow">Baseline Setup</span><h2 id="dialogTitle">Review your Starting State</h2><p class="baseline-draft-intro">This is the project picture State assembled from your starting material. Edit routine facts, move them between sections, or remove misunderstandings. Nothing below becomes Current State until you confirm it.</p>${attention}<section class="baseline-draft-section"><h3>Starting State</h3><button type="button" class="btn secondary small baseline-add-fact" data-baseline-add-fact>+ Add missing fact</button>${facts}</section>${questions}<div class="baseline-draft-actions"><span class="baseline-draft-status">${esc(status)}</span>${c.failed_evidence&&!c.processing_evidence?'<button type="button" class="btn secondary" data-baseline-retry-failed>Retry failed analysis</button>':''}<button type="button" class="btn secondary" data-action="close-dialog">Cancel</button><button type="button" class="btn primary" data-baseline-confirm-starting ${summary.can_confirm?'':'disabled'}>Confirm Starting State</button></div></div>`;
+    return `<div class="baseline-draft-dialog"><span class="eyebrow">Baseline Setup</span><h2 id="dialogTitle">Review your Starting State</h2><p class="baseline-draft-intro">This is the project picture State put together from what you entered or uploaded. Edit routine facts, move them between sections, or remove misunderstandings. Nothing below becomes Current State until you confirm it.</p>${attention}<section class="baseline-draft-section"><h3>Starting State</h3><button type="button" class="btn secondary small baseline-add-fact" data-baseline-add-fact>+ Add missing fact</button>${facts}</section>${questions}<div class="baseline-draft-actions"><span class="baseline-draft-status">${esc(status)}</span>${c.failed_evidence&&!c.processing_evidence?'<button type="button" class="btn secondary" data-baseline-retry-failed>Retry failed analysis</button>':''}<button type="button" class="btn secondary" data-action="close-dialog">Cancel</button><button type="button" class="btn primary" data-baseline-confirm-starting ${summary.can_confirm?'':'disabled'}>Confirm Starting State</button></div></div>`;
   }
 
   // The review dialog is a snapshot of the draft. If it is opened while
@@ -303,7 +303,13 @@
       latestDraft=null;
       renderOwnedBanner(null);
       document.dispatchEvent(new Event('state-project-record-changed'));
-      if(payload.status==='established') window.location.reload();
+      if(payload.status==='established'){
+        // #482 (Cowork, Oct 9): the reload used to land on Workspace with no confirmation, and
+        // a #open-items URL kept pointing at a view that was not shown.
+        try{ sessionStorage.setItem('state-starting-state-confirmed','1'); }catch(err){ /* private mode: no message */ }
+        if(location.hash) history.replaceState(null,'',location.pathname+location.search);
+        window.location.reload();
+      }
     }catch(error){
       button.disabled=false; button.textContent='Confirm Starting State';
       const status=document.querySelector('.baseline-draft-status');

@@ -86,9 +86,10 @@
       resolvesQuestionIds:[...(r.resolves_question_ids||[])],
       resolvesQuestionId:(r.resolves_question_ids||[])[0],
       establishes:rationale||r.why_consequential,
-      doesNot:r.review_type==='proposed_update'
-        ? 'The proposed change does not become Current State until you accept it.'
-        : 'The evidence does not automatically resolve the uncertainty or change Current State.',
+      // #482 (QA-11): one short line per decision type instead of the same boilerplate on every card.
+      doesNot:proposals.length
+        ? 'Only accepting this changes Current State.'
+        : 'Neither choice changes Current State.',
       whyConsequential:r.why_consequential,
       reviewType:r.review_type,
       proposals,
