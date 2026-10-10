@@ -121,3 +121,23 @@ def test_r86_history_backfill_does_not_stale_existing_demo_open_reviews(tmp_path
             "WHERE p.status='pending' AND p.expected_state_version<>s.version"
         ).fetchone()["n"]
         assert mismatches == 0
+
+
+def test_seeded_questions_are_dated_at_the_start_of_the_demo_story(tmp_path):
+    """#485 (Cowork, Oct 9): every demo Question was dated at seed time, so a freshly seeded
+    project showed them as created "today" and Ask read them as new activity."""
+    from db import connect_sqlite
+    from database_migration_backed import initialize_db
+    from seed_demo import bootstrap_demo_data, bootstrap_juniper_demo_data
+    connection = connect_sqlite(str(tmp_path / "seed-dates.db"))
+    initialize_db(connection)
+    bootstrap_demo_data(connection)
+    bootstrap_juniper_demo_data(connection)
+    for project, first_note in (("northstar", "2026-08-18"), ("juniper", "2026-09-04")):
+        dates = {row["created_at"][:10] for row in connection.execute(
+            "SELECT created_at FROM questions WHERE project_id=?", (project,)).fetchall()}
+        assert dates == {first_note}, (project, dates)
+        earliest_note = connection.execute(
+            "SELECT min(submitted_at) AS m FROM evidence WHERE project_id=?", (project,)).fetchone()["m"]
+        assert earliest_note[:10] == first_note, "keep the seed date in step with the demo notes"
+    connection.close()

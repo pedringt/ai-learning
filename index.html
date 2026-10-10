@@ -22,11 +22,6 @@
 <meta content="Context Switch applied AI product portfolio" name="twitter:image:alt"/>
 <style id="v893-style">
 
-#ai-cs-mock .site-go-deeper{
-  max-width:1180px;margin:34px auto 0;padding:24px 28px 34px;
-  border-top:1px solid var(--border);color:var(--text);
-}
-
 /* v90 final polish: keep the editorial left alignment, but make intro widths deliberate and consistent. */
 
 #ai-cs-mock [data-page="home"] .hero{
@@ -70,13 +65,6 @@
 
 .gloss-term{background:none;border:none;padding:0;margin:0;font:inherit;color:inherit;cursor:help;border-bottom:1px dotted color-mix(in srgb,var(--purple) 55%,transparent);text-decoration:none}
 .concept-diagram{border:1px solid var(--border);border-radius:14px;padding:16px 18px;background:var(--soft);margin:12px 0 16px}
-.concept-diagram-title{font-size:11px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--purple);margin-bottom:11px}
-.concept-diagram-flow{display:flex;align-items:center;flex-wrap:wrap;gap:7px;row-gap:10px}
-.concept-diagram-step{display:inline-flex;align-items:center;gap:7px}
-.concept-diagram-box{border:1px solid var(--border);background:var(--card);border-radius:9px;padding:7px 11px;font-size:12.5px;font-weight:700;color:var(--ink);white-space:nowrap}
-.concept-diagram-arrow{color:var(--muted);font-size:14px;flex:0 0 auto}
-
-@media(max-width:640px){.concept-diagram-box{white-space:normal}}
 
 .gloss-term:hover,.gloss-term:focus-visible{border-bottom-style:solid;color:var(--purple);outline:none}
 .gloss-tooltip{position:absolute;z-index:200;max-width:280px;background:var(--ink);color:var(--bg,#fff);font-size:12.5px;line-height:1.45;padding:9px 12px;border-radius:10px;box-shadow:0 12px 30px rgba(0,0,0,.22);pointer-events:auto}
@@ -190,8 +178,8 @@
 /* Practice is the one distinct content treatment. */
 
 .stage-group.practice h3{
-  margin-bottom:8px!important;
-  font-size:12.5px!important;
+  margin-bottom:8px;
+  font-size:12.5px;
 }
 
 /* Footer guidance should read like a note, not another component. */
@@ -282,39 +270,39 @@
 
 .stage-group h3{
   margin:0 0 8px!important;
-  font-size:12px!important;
-  letter-spacing:.07em!important;
-  text-transform:uppercase!important;
-  color:var(--muted)!important;
+  font-size:12px;
+  letter-spacing:.07em;
+  text-transform:uppercase;
+  color:var(--muted);
 }
 .learning-item{
-  padding:10px 0!important;
+  padding:10px 0;
 }
 .learning-item+.learning-item{
-  border-top:1px dashed var(--border)!important;
+  border-top:1px dashed var(--border);
 }
 
 .learning-item p,
 .stage-group.practice p{
-  margin:4px 0 0!important;
-  font-size:14px!important;
-  line-height:1.6!important;
-  color:var(--muted)!important;
-  max-width:920px!important;
+  margin:4px 0 0;
+  font-size:14px;
+  line-height:1.6;
+  color:var(--muted);
+  max-width:920px;
 }
 
 /* Practice remains a distinct callout with enough left padding. */
 .stage-group.practice{
-  margin:14px 0 0!important;
-  padding:18px 20px 18px 24px!important;
-  border:0!important;
-  border-left:5px solid #18a6bf!important;
-  border-radius:12px!important;
-  background:rgba(24,166,191,.07)!important;
+  margin:14px 0 0;
+  padding:18px 20px 18px 24px;
+  border:0;
+  border-left:5px solid #18a6bf;
+  border-radius:12px;
+  background:rgba(24,166,191,.07);
 }
 
 .stage-group.practice p{
-  margin:0!important;
+  margin:0;
 }
 
 /* Clean up top-of-library section rhythm. */
@@ -337,8 +325,8 @@
   }
   
   .stage-group.practice{
-    margin-left:-48px!important;
-    padding-left:20px!important;
+    margin-left:-48px;
+    padding-left:20px;
   }
 }
 
@@ -365,55 +353,6 @@
 /* Capabilities growth note: intentional but quiet. */
 
 /* Shared "Go deeper" becomes a lightweight footer resource band, not a hero card. */
-.site-go-deeper{
-  margin:36px auto 0!important;
-  padding:22px 0 12px!important;
-  border:0!important;
-  border-top:1px solid var(--border)!important;
-  border-radius:0!important;
-  background:transparent!important;
-  box-shadow:none!important;
-}
-.site-go-deeper h3{
-  margin:0 0 6px!important;
-  font-size:18px!important;
-  line-height:1.3!important;
-}
-.site-go-deeper .section-lead{
-  margin:0 0 12px!important;
-  max-width:760px!important;
-  font-size:13.5px!important;
-  line-height:1.55!important;
-}
-.site-go-deeper .resource-row{
-  display:flex!important;
-  flex-wrap:wrap!important;
-  gap:8px!important;
-}
-.site-go-deeper .resource-link{
-  display:inline-flex!important;
-  align-items:center!important;
-  padding:7px 10px!important;
-  border:1px solid var(--border)!important;
-  border-radius:999px!important;
-  background:var(--card)!important;
-  color:var(--purple)!important;
-  font-size:12px!important;
-  font-weight:800!important;
-  text-decoration:none!important;
-}
-.site-go-deeper .resource-link:hover{
-  background:var(--softp)!important;
-  border-color:color-mix(in srgb,var(--purple) 38%,var(--border))!important;
-}
-
-@media(max-width:560px){
-  
-  .site-go-deeper{
-    padding:18px 0 8px!important;
-    margin-top:28px!important;
-  }
-}
 
 </style>
 <link href="site-components.css?v=r16-release-hardening" rel="stylesheet"/>
@@ -451,15 +390,10 @@
 .applied-major-grid,.applied-secondary-grid{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-top:14px}
 .applied-major-with-actions .applied-card-primary-link{color:inherit!important;text-decoration:none}.applied-major-with-actions .applied-card-primary-link::after{content:"";position:absolute;inset:0;z-index:1}.applied-major-with-actions:has(.applied-card-primary-link:focus-visible){outline:3px solid color-mix(in srgb,var(--purple) 55%,transparent);outline-offset:3px}.applied-major-with-actions .applied-card-primary-link:focus-visible{outline:none}.applied-major-with-actions .applied-card-actions{display:flex;flex-wrap:wrap;gap:10px 18px;margin-top:auto;padding-top:18px;position:relative;z-index:2}.applied-major-with-actions .applied-card-actions a{color:var(--purple);font-size:12px;font-weight:800;text-decoration:none}.applied-major-with-actions .applied-card-actions a:hover{text-decoration:underline}
 .applied-secondary-grid>.card{display:flex;flex-direction:column}
-@media(max-width:620px){.applied-major-grid,.applied-secondary-grid,.applied-support-grid,.home-option-d-links{grid-template-columns:1fr!important}}
+@media(max-width:620px){.applied-major-grid,.applied-secondary-grid{grid-template-columns:1fr!important}}
 </style></link><style>
 /* Final portfolio hierarchy pass */
-.home-state-feature{margin-top:14px;padding:34px;border:1px solid var(--line);border-radius:22px;background:var(--card);display:grid;grid-template-columns:minmax(0,1fr) auto;gap:32px;align-items:end;box-shadow:0 12px 34px rgba(41,31,72,.07)}
-.home-state-feature h2{font-size:clamp(2.2rem,5vw,4rem);margin:4px 0 12px;letter-spacing:-.04em}.home-state-feature p{max-width:760px}.home-state-lead{font-size:1.14rem}.home-state-actions{display:flex;gap:12px;flex-wrap:wrap;align-items:center}.home-state-actions a{font-weight:750;text-decoration:none;padding:11px 15px;border-radius:12px;border:1px solid var(--line)}.home-state-actions .home-state-primary{background:var(--purple);color:#fff;border-color:var(--purple)}
-.home-legal-feature{margin-top:18px}.home-supporting-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px}.home-supporting-row a{display:flex;flex-direction:column;gap:5px;padding:18px 20px;border-top:1px solid var(--line);text-decoration:none}.home-supporting-row span{font-size:.92rem;color:var(--muted)}
-.home-approach-compact{max-width:850px;margin:54px auto 20px;padding:0 8px}.home-approach-compact p{font-size:1.05rem;line-height:1.75}.learning-principles-compact{max-width:850px}
-@media(max-width:760px){.home-state-feature{grid-template-columns:1fr;padding:24px}.home-supporting-row{grid-template-columns:1fr}.home-state-actions{align-items:stretch}.home-state-actions a{text-align:center}}
-body.v88-dark .home-state-feature{box-shadow:none}body.v88-dark .home-state-actions .home-state-primary{color:#fff}
+
 </style>
 
 <style id="issue176-final-polish">
@@ -469,19 +403,14 @@ body.v88-dark .home-state-feature{box-shadow:none}body.v88-dark .home-state-acti
 #ai-cs-mock [data-page="portfolio"] .applied-secondary-grid>.applied-secondary h3{margin:6px 0!important;font-size:15.5px!important;line-height:1.22!important;letter-spacing:-.01em!important}
 #ai-cs-mock [data-page="portfolio"] .applied-secondary-grid>.applied-secondary .card-intro{margin:0!important;font-size:11.9px!important;line-height:1.45!important}
 #ai-cs-mock [data-page="portfolio"] .applied-secondary-grid>.applied-secondary::after{margin-top:auto!important;padding-top:12px!important;font-size:11.5px!important}
-#ai-cs-mock [data-page="home"] .home-quiet-ending{display:block!important;visibility:visible!important;opacity:1!important;position:static!important;width:auto!important;height:auto!important;max-height:none!important;overflow:visible!important;margin:38px 0 0!important;padding:22px 0 2px!important;border-top:1px solid var(--border)!important;color:var(--ink)!important}
-#ai-cs-mock [data-page="home"] .home-quiet-ending h2{margin:0 0 7px!important;font-size:18px!important;line-height:1.3!important;letter-spacing:-.01em!important}
-#ai-cs-mock [data-page="home"] .home-quiet-ending p{max-width:800px!important;margin:0!important;color:var(--muted)!important;font-size:14px!important;line-height:1.62!important}
-#ai-cs-mock [data-page="home"] .home-quiet-ending>span{display:block!important;margin-top:10px!important}
-#ai-cs-mock [data-page="home"] .home-quiet-ending a{color:var(--purple)!important;font-size:13px!important;font-weight:800!important;text-decoration:none!important}
-#ai-cs-mock [data-page="home"] .home-quiet-ending a:hover{text-decoration:underline!important}
+
 #ai-cs-mock [data-page="learn"] .learning-reference-map{margin:24px 0 8px;padding:18px 20px;border:1px solid var(--border);border-radius:16px;background:linear-gradient(180deg,var(--card),color-mix(in srgb,var(--soft) 45%,var(--card)));display:grid;grid-template-columns:minmax(0,1fr) auto;gap:20px;align-items:center}
 #ai-cs-mock [data-page="learn"] .learning-reference-map .reference-label{font-size:10.5px;font-weight:850;letter-spacing:.075em;text-transform:uppercase;color:var(--purple)}
 #ai-cs-mock [data-page="learn"] .learning-reference-map h3{margin:4px 0 5px;font-size:18px;line-height:1.3}
 #ai-cs-mock [data-page="learn"] .learning-reference-map p{margin:0;max-width:780px;color:var(--muted);font-size:13.5px;line-height:1.55}
 #ai-cs-mock [data-page="learn"] .learning-reference-map>a{display:inline-flex;align-items:center;justify-content:center;padding:9px 12px;border:1px solid var(--border);border-radius:10px;background:var(--card);color:var(--purple);font-size:12.5px;font-weight:800;text-decoration:none;white-space:nowrap}
 @media(max-width:1100px){#ai-cs-mock [data-page="portfolio"] .applied-secondary-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}}
-@media(max-width:620px){#ai-cs-mock [data-page="portfolio"] .applied-secondary-grid{grid-template-columns:1fr!important}#ai-cs-mock [data-page="portfolio"] .applied-secondary-grid>.applied-secondary{padding:15px!important}#ai-cs-mock [data-page="home"] .home-quiet-ending{margin-top:32px!important;padding-top:19px!important}#ai-cs-mock [data-page="learn"] .learning-reference-map{grid-template-columns:1fr;padding:16px}#ai-cs-mock [data-page="learn"] .learning-reference-map>a{justify-self:start}}
+@media(max-width:620px){#ai-cs-mock [data-page="portfolio"] .applied-secondary-grid{grid-template-columns:1fr!important}#ai-cs-mock [data-page="portfolio"] .applied-secondary-grid>.applied-secondary{padding:15px!important}#ai-cs-mock [data-page="learn"] .learning-reference-map{grid-template-columns:1fr;padding:16px}#ai-cs-mock [data-page="learn"] .learning-reference-map>a{justify-self:start}}
 </style>
 <style id="portfolio-featured-hierarchy">
 .home-feature-grid{display:grid;gap:16px;margin-top:14px;align-items:stretch}
@@ -545,8 +474,8 @@ body.v88-dark .home-state-feature{box-shadow:none}body.v88-dark .home-state-acti
 .applied-featured-three .applied-major{min-height:0}
 .applied-major-with-actions .applied-card-actions{gap:8px 14px!important;padding-top:14px!important}
 .applied-major-with-actions .applied-card-actions a{font-size:11.5px!important;font-weight:850!important}
-.applied-secondary-compact{gap:10px!important}
-.applied-secondary-compact>.applied-secondary{padding:15px 17px!important}
+.applied-secondary-compact{gap:10px}
+.applied-secondary-compact>.applied-secondary{padding:15px 17px}
 .applied-secondary-compact .card-intro{font-size:12.5px;line-height:1.5}
 .applied-secondary-compact .nav-card::after{margin-top:10px}
 @media(max-width:980px){.applied-featured-three{grid-template-columns:1fr 1fr!important}.applied-featured-three .applied-major:first-child{grid-column:1/-1}}
@@ -733,12 +662,12 @@ body.v88-dark #ai-cs-mock{background:#171419!important;color:#f3ede8!important;-
 .view{display:none;padding-top:54px;position:relative}.view.active{display:block}.view.active::before{content:"☀  ✦";position:absolute;top:16px;right:4px;color:var(--gold);font-size:14px;letter-spacing:5px;opacity:.62}.view.active::after{content:"✧  ·  ✦  ·  ✧";position:absolute;top:25px;right:44px;color:var(--purple);font-size:10px;letter-spacing:5px;opacity:.28;pointer-events:none}.eyebrow{font-size:12px;letter-spacing:.13em;text-transform:uppercase;color:var(--purple);font-weight:800}.eyebrow::before{content:"☀";display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;margin-right:8px;border:1px solid color-mix(in srgb,var(--gold) 40%,var(--border));border-radius:999px;background:color-mix(in srgb,var(--gold) 12%,transparent);font-size:11px;color:var(--gold);vertical-align:-4px;box-shadow:0 0 18px color-mix(in srgb,var(--gold) 16%,transparent)}.hero{position:relative}.hero::after{content:"✦   ·   ✧   ☼   ✧   ·   ✦";position:absolute;right:8px;top:0;color:var(--purple);font-size:15px;letter-spacing:7px;opacity:.28;pointer-events:none}.hero h1{font-size:clamp(40px,7vw,68px);line-height:.98;letter-spacing:-.05em;margin:14px 0 14px;max-width:900px}.hero h1 span{color:var(--purple)}.lead{font-size:19px;line-height:1.55;color:var(--muted);max-width:800px;margin:0}.section-kicker{display:flex;align-items:center;gap:10px;margin:34px 0 12px}.section-kicker::before{content:"✦";font-size:11px;color:var(--gold);opacity:.9}.section-kicker::after{content:"";height:1px;background:linear-gradient(90deg,color-mix(in srgb,var(--gold) 20%,var(--border)),color-mix(in srgb,var(--purple) 28%,var(--border)),var(--border));flex:1}.section-kicker span{font-size:11px;letter-spacing:.08em;text-transform:uppercase;font-weight:800;color:var(--muted)}
 .nav-card:hover{transform:translateY(-2px);border-color:color-mix(in srgb,var(--purple) 35%,var(--border));background:color-mix(in srgb,var(--softp) 26%,var(--card))}.nav-card::after{content:"Explore →";display:block;margin-top:14px;color:var(--purple);font-size:12px;font-weight:800}
 .section-lead{color:var(--muted);max-width:760px;margin:0 0 26px}.card{border:1px solid var(--border);border-radius:18px;padding:20px;background:linear-gradient(180deg,var(--card),color-mix(in srgb,var(--softp) 10%,var(--card)));min-width:0;display:flex;flex-direction:column;position:relative;overflow:hidden;box-shadow:0 10px 28px color-mix(in srgb,var(--purple) 5%,transparent);transition:transform .18s ease,border-color .18s ease,box-shadow .18s ease,background .18s ease}.card::before{content:"";position:absolute;inset:0 0 auto 0;height:3px;background:linear-gradient(90deg,color-mix(in srgb,var(--gold) 72%,transparent),color-mix(in srgb,var(--purple) 68%,transparent),color-mix(in srgb,var(--cyan) 42%,transparent),transparent);opacity:.58}.card::after{content:"✦";position:absolute;right:13px;top:12px;color:color-mix(in srgb,var(--gold) 80%,var(--purple));font-size:10px;opacity:.28;pointer-events:none}.card:hover{transform:translateY(-2px);border-color:color-mix(in srgb,var(--purple) 28%,var(--border));box-shadow:0 14px 34px color-mix(in srgb,var(--purple) 9%,transparent)}.card h3{margin:8px 0 8px;font-size:20px}.card p{color:var(--muted);margin:0;font-size:14px;line-height:1.55}.tag{display:inline-block;align-self:flex-start;border:1px solid color-mix(in srgb,var(--purple) 25%,var(--border));background:linear-gradient(135deg,color-mix(in srgb,var(--softp) 88%,var(--card)),color-mix(in srgb,var(--gold) 6%,var(--card)));color:var(--purple);font-weight:800;border-radius:999px;padding:5px 8px;font-size:11px;letter-spacing:.04em;text-transform:uppercase;box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--gold) 5%,transparent)}.nav-card::after{margin-top:auto;padding-top:14px}
-.band{border:1px solid var(--border);border-radius:18px;background:linear-gradient(135deg,var(--soft),color-mix(in srgb,var(--softp) 55%,var(--soft)));padding:24px;margin:28px 0;position:relative;overflow:hidden}.band::after{content:"✦   ·   ✧";position:absolute;right:16px;top:11px;color:var(--purple);font-size:11px;letter-spacing:4px;opacity:.25}.resource-row{display:flex;gap:7px;flex-wrap:wrap;margin-top:13px}.resource-link{display:inline-flex;align-items:center;gap:5px;border:1px solid var(--border);border-radius:999px;padding:6px 9px;background:var(--soft);font-size:11.5px;font-weight:800;color:var(--purple)!important}.resource-link::after{content:"↗";font-size:10px}.practice{border:1px solid #cfe9ee;border-left:4px solid var(--cyan);background:#f3fbfd;border-radius:14px;padding:16px 18px;margin-top:14px;position:relative}.practice::after{content:"✧";position:absolute;right:11px;top:9px;color:var(--cyan);font-size:10px;opacity:.28}
+.band{border:1px solid var(--border);border-radius:18px;background:linear-gradient(135deg,var(--soft),color-mix(in srgb,var(--softp) 55%,var(--soft)));padding:24px;margin:28px 0;position:relative;overflow:hidden}.band::after{content:"✦   ·   ✧";position:absolute;right:16px;top:11px;color:var(--purple);font-size:11px;letter-spacing:4px;opacity:.25}.resource-row{display:flex;gap:7px;flex-wrap:wrap;margin-top:13px}.resource-link{display:inline-flex;align-items:center;gap:5px;border:1px solid var(--border);border-radius:999px;padding:6px 9px;background:var(--soft);font-size:11.5px;font-weight:800;color:var(--purple)}.resource-link::after{content:"↗";font-size:10px}.practice{border:1px solid #cfe9ee;border-left:4px solid var(--cyan);background:#f3fbfd;border-radius:14px;padding:16px 18px;margin-top:14px;position:relative}.practice::after{content:"✧";position:absolute;right:11px;top:9px;color:var(--cyan);font-size:10px;opacity:.28}
 
-.nav button{position:relative}.nav button.active::after{content:"";position:absolute;left:20%;right:20%;bottom:2px;height:2px;border-radius:99px;background:linear-gradient(90deg,var(--gold),var(--purple))}.theme-toggle:hover{box-shadow:0 0 0 3px color-mix(in srgb,var(--purple) 9%,transparent),0 0 22px color-mix(in srgb,var(--gold) 16%,transparent)}
+.nav button{position:relative}.nav button.active::after{content:"";position:absolute;left:20%;right:20%;bottom:2px;height:2px;border-radius:99px;background:linear-gradient(90deg,var(--gold),var(--purple))}
 
 /* Keep the celestial theme intentional rather than scattered. */
-.view.active::before,.view.active::after,.hero::after,.eyebrow::before,.section-kicker::before,.card::after,.band::after,.practice::after,.decision::after,.checkpoint::before,.artifact::after,.stage.todo::after{display:none!important}
+.view.active::before,.view.active::after,.hero::after,.eyebrow::before,.section-kicker::before,.card::after,.band::after,.practice::after,.decision::after{display:none!important}
 @media(max-width:560px){.shell{padding:0 18px 48px}.hero h1{font-size:40px}.lead{font-size:17px}.card{padding:17px}}
 
 /* v88.2, navigation cleanup */
@@ -747,46 +676,17 @@ body.v88-dark #ai-cs-mock{background:#171419!important;color:#f3ede8!important;-
 
 /* v88.1, Meridian emphasis + status polish */
 
-.home-feature-pair{grid-template-columns:1fr 1fr!important}.home-feature-pair .home-project-card{min-height:230px;display:flex;flex-direction:column;transition:transform .16s ease,border-color .16s ease,box-shadow .16s ease}.home-feature-pair .home-project-card:hover{transform:translateY(-2px);box-shadow:0 10px 26px rgba(41,31,72,.08)}.home-feature-pair .home-project-path{margin-top:auto;padding-top:18px}@media(max-width:700px){.home-feature-pair{grid-template-columns:1fr!important}}
-
 /* v98 feedback correction: curated home + intentional State feature + compact Learning Guide note */
-.home-state-feature{
-  margin-top:14px!important;
-  padding:30px 32px!important;
-  border:1px solid var(--border)!important;
-  border-top:4px solid var(--purple)!important;
-  border-radius:18px!important;
-  background:linear-gradient(180deg,var(--softp) 0%,var(--card) 64%)!important;
-  display:grid!important;
-  grid-template-columns:minmax(0,1fr) auto!important;
-  gap:30px!important;
-  align-items:end!important;
-  box-shadow:0 10px 28px rgba(41,31,72,.06)!important;
-}
-.home-state-feature h2{font-size:clamp(2.35rem,5vw,4rem)!important;margin:4px 0 12px!important;letter-spacing:-.045em!important;line-height:.98!important}
-.home-state-copy{min-width:0!important}.home-state-copy p{max-width:780px!important}.home-state-lead{font-size:1.08rem!important;line-height:1.58!important;font-weight:400!important}
-.home-state-actions{display:flex!important;gap:10px!important;flex-wrap:wrap!important;align-items:center!important;justify-content:flex-end!important;min-width:270px!important}
-.home-state-actions a{display:inline-flex!important;align-items:center!important;justify-content:center!important;min-height:46px!important;padding:11px 16px!important;border-radius:11px!important;border:1px solid var(--border)!important;text-decoration:none!important;font-size:14px!important;line-height:1.2!important;font-weight:800!important;white-space:nowrap!important}
-.home-state-actions .home-state-primary{background:var(--purple)!important;color:#fff!important;border-color:var(--purple)!important;min-width:158px!important}
-.home-state-actions .home-state-secondary{background:var(--card)!important;color:var(--purple)!important;border-color:#cfc8ee!important}
-.home-state-actions .home-state-primary:visited{color:#fff!important}.home-state-actions .home-state-secondary:visited{color:var(--purple)!important}
-.home-legal-feature{margin-top:18px!important}
 
-.home-quiet-ending{margin-top:42px!important}
-.learning-how-note{max-width:900px!important;margin:18px 0 30px!important;padding:14px 16px!important;border-left:3px solid var(--border)!important;background:transparent!important;color:var(--muted)!important;font-size:14px!important;line-height:1.6!important}
-.learning-how-note strong{color:var(--ink)!important}
+.learning-how-note{max-width:900px;margin:18px 0 30px!important;padding:14px 16px;border-left:3px solid var(--border);background:transparent;color:var(--muted);font-size:14px;line-height:1.6}
+.learning-how-note strong{color:var(--ink)}
 body.v88-dark .learning-how-note strong{color:#f5f2fb!important}
-@media(max-width:760px){
-  .home-state-feature{grid-template-columns:1fr!important;padding:24px!important;gap:20px!important}
-  .home-state-actions{justify-content:flex-start!important;min-width:0!important;align-items:stretch!important}
-  .home-state-actions a{flex:1 1 160px!important;text-align:center!important}
-  
-}
+
 </style>
 <main class="shell" id="main-content">
 <div class="topbar"><div class="topinner"><button aria-label="Go to home" class="brand-button" data-brand-home="" type="button"><span class="brand">Context <span>Switch</span></span></button><nav aria-label="Primary pages" class="nav"><button class="active" data-view="home">Home</button><button data-view="portfolio">Applied Work</button><button data-view="learn">Learning Library</button></nav><div class="top-actions"><select aria-label="Choose page" id="mobileNav"><option value="home">Home</option><option value="portfolio">Applied Work</option><option value="learn">Learning Library</option></select></div></div></div>
 <section class="view active" data-page="home" id="home">
-<div class="hero rd-hero"><div class="rd-hero-copy"><h1>AI doesn’t know <span>what it doesn’t know.</span></h1><p class="lead">This gap matters when building AI products that people can trust. My products test three things: aggressively keeping humans in the loop, exposing what’s happening beneath the surface, and making failures more visible.</p><div class="rd-actions"><a class="rd-button" href="#portfolio">See all applied work →</a><a class="rd-button rd-button-secondary" href="https://state.contextswitch.tech/" data-state-app-link target="_blank" rel="noopener noreferrer">Open State ↗</a></div></div>
+<div class="hero rd-hero"><div class="rd-hero-copy"><h1>AI doesn’t know <span>what it doesn’t know.</span></h1><p class="lead">This gap matters when building AI products that people can trust. My products test three things: aggressively keeping humans in the loop, exposing what’s happening beneath the surface, and making failures more visible.</p><div class="rd-actions"><a class="rd-button" href="#portfolio">See all applied work →</a><a class="rd-button rd-button-secondary" href="https://state.contextswitch.tech/" data-state-app-link target="_blank" rel="noopener noreferrer">Open State</a></div></div>
 <aside class="rd-stage" aria-label="Featured product: State">
 <div class="rd-paper rd-paper-one" aria-hidden="true"></div>
 <div class="rd-paper rd-paper-two" aria-hidden="true"></div>
@@ -863,7 +763,7 @@ body.v88-dark .learning-how-note strong{color:#f5f2fb!important}
       <div><strong>Quality loop</strong><span>Scenario evals and Project Health surface failures without hiding them behind one score.</span></div>
     </div>
     <div class="home-state-button-row">
-      <a class="home-state-button home-state-button-primary" href="https://state.contextswitch.tech/" data-state-app-link target="_blank" rel="noopener noreferrer">Open State ↗</a>
+      <a class="home-state-button home-state-button-primary" href="https://state.contextswitch.tech/" data-state-app-link target="_blank" rel="noopener noreferrer">Open State</a>
       <a class="home-state-button home-state-button-secondary" href="implementation-context.html">Case study →</a>
     </div>
   </div>
@@ -871,11 +771,11 @@ body.v88-dark .learning-how-note strong{color:#f5f2fb!important}
 <div class="home-feature-stack-right">
 <article class="home-feature-card home-feature-lead">
   <div><span class="home-project-kicker" data-topic="Feedback &amp; correction">Featured · Feedback &amp; correction</span><h2>Tastemake</h2><p>An experiment in user-editable personalization. Tastemake shows people the taste model behind their recommendations and lets them correct what the system thinks it has learned.</p></div>
-  <div class="home-feature-actions"><a class="home-state-primary" href="https://tastemake.vercel.app/" target="_blank" rel="noopener noreferrer">Open Tastemake ↗</a><a class="home-state-secondary" href="tastemake.html">Case study →</a></div>
+  <div class="home-feature-actions"><a class="home-state-primary" href="https://tastemake.vercel.app/" target="_blank" rel="noopener noreferrer">Open Tastemake</a><a class="home-state-secondary" href="tastemake.html">Case study →</a></div>
 </article>
 <article class="home-feature-card">
   <div><span class="home-project-kicker" data-topic="Quality &amp; evidence">Featured · Quality &amp; evidence</span><h2>Project Health</h2><p>A product-health dashboard that surfaces important AI failures, missing signals, releases, and incidents without hiding them behind one reassuring score.</p></div>
-  <div class="home-feature-actions"><a class="home-state-primary" href="project-health.html" target="_blank" rel="noopener noreferrer">Open Project Health ↗</a><a class="home-state-secondary" href="project-health-case-study.html">Case study →</a></div>
+  <div class="home-feature-actions"><a class="home-state-primary" href="project-health.html" target="_blank" rel="noopener noreferrer">Open Project Health</a><a class="home-state-secondary" href="project-health-case-study.html">Case study →</a></div>
 </article>
 </div>
 </div>
@@ -894,47 +794,47 @@ body.v88-dark .learning-how-note strong{color:#f5f2fb!important}
 
 <details class="learning-stage" id="discovery-workflows">
 <summary><span class="stage-num">01</span><span class="stage-main"><b>Business &amp; Workflow Discovery</b><small>Understand the business today before deciding what should change.</small><span class="topic-preview">stakeholders · current workflow · pain points · baselines · constraints · readiness</span></span></summary>
-<div class="stage-body"><div class="stage-group"><h3>Discovery use</h3><div class="learning-item"><p>Before changing a workflow, I want to understand how it works today, where it breaks down, who feels the pain, and what would count as a real improvement.</p></div></div><div class="resource-row"><a class="resource-link" href="cheat-sheets/AI_Product_Discovery_Questions.pdf" target="_blank" rel="noopener noreferrer">Discovery questions</a></div></div>
+<div class="stage-body"><div class="stage-group"><h3>Discovery use</h3><div class="learning-item"><p>Before changing a workflow, I want to understand how it works today, where it breaks down, who feels the pain, and what would count as a real improvement.</p><p><strong>Data readiness:</strong> Before adding AI, check whether the needed records exist, are accurate and current, share consistent identifiers, have clear owners, and can be accessed lawfully through maintained integrations. If the sources disagree or access is unreliable, a better model will not repair the underlying problem.</p></div></div><div class="resource-row"><a class="resource-link" href="cheat-sheets/AI_Product_Discovery_Questions.html" target="_blank" rel="noopener noreferrer">Discovery questions</a><a class="resource-link" href="cheat-sheets/enterprise-data-readiness-ai.html" target="_blank" rel="noopener noreferrer">Enterprise data readiness</a></div></div>
 </details>
 
 <details class="learning-stage" id="product-strategy">
 <summary><span class="stage-num">02</span><span class="stage-main"><b>AI Opportunity &amp; Product Judgment</b><small>Decide whether AI belongs in the solution and what kind of intervention makes sense.</small><span class="topic-preview">AI vs rules · assistance vs automation · bots vs agents · build/configure/buy · feasibility · prioritization</span></span></summary>
-<div class="stage-body"><div class="stage-group"><h3>Strategy use</h3><div class="learning-item"><p>A real problem does not automatically need AI. I want to compare AI with simpler options, make the tradeoffs visible, and use more autonomy only when it earns its added complexity.</p></div></div><div class="resource-row"><a class="resource-link" href="cheat-sheets/BUILD_BOOST_BUY_DECISION_TREE.pdf" target="_blank" rel="noopener noreferrer">Build / boost / buy</a></div></div>
+<div class="stage-body"><div class="stage-group"><h3>Strategy use</h3><div class="learning-item"><p>A real problem does not automatically need AI. I want to compare AI with simpler options, make the tradeoffs visible, and use more autonomy only when it earns its added complexity.</p><p><strong>Vendor decision:</strong> Compare options against the actual workflow and a non-AI baseline. Alongside quality and price, check privacy and data terms, service reliability, integration effort, auditability, support, portability, and how hard it would be to leave. A cheaper demo is not always the lower-cost product.</p></div></div><div class="resource-row"><a class="resource-link" href="cheat-sheets/BUILD_BOOST_BUY_DECISION_TREE.html" target="_blank" rel="noopener noreferrer">Build / boost / buy</a><a class="resource-link" href="cheat-sheets/evaluating-ai-vendors-platforms.html" target="_blank" rel="noopener noreferrer">Evaluating AI vendors</a></div></div>
 </details>
 
 <details class="learning-stage" id="ai-foundations">
 <summary><span class="stage-num">03</span><span class="stage-main"><b>AI Systems &amp; Technical Fluency</b><small>Know enough about the system to scope, question, troubleshoot, and communicate well.</small><span class="topic-preview">models · context · retrieval/RAG · tools/MCP · bots &amp; agents · memory/state · APIs · routing · cost/latency</span></span></summary>
-<div class="stage-body"><div class="stage-group"><h3>Technical fluency use</h3><div class="learning-item"><p>I want enough technical fluency to understand what the model sees, how it gets information and tools, where state lives, and what the surrounding software controls. That helps me scope better and diagnose the right layer when something goes wrong.</p><p><strong>Bot vs agent:</strong> I use <em>bot</em> as the broad term for AI set up to do a job. An <em>agent</em> is a more specific kind of bot that can choose steps or tools to pursue a goal. For product work, the useful mental model is model + instructions + tools + context/state + permissions + an action loop + stopping rules. The important questions are what the agent may decide, what it may touch, when it must stop or escalate, and how we evaluate whether it did the job well.</p></div></div><div class="resource-row"><a class="resource-link" href="cheat-sheets/Efficient_AI_Use_for_Product_Work.pdf" target="_blank" rel="noopener noreferrer">Efficient AI use for product work</a><a class="resource-link" href="cheat-sheets/Anatomy_of_an_LLM_Application.pdf" target="_blank" rel="noopener noreferrer">LLM application anatomy</a><a class="resource-link" href="cheat-sheets/Building_Software_with_AI.pdf" target="_blank" rel="noopener noreferrer">Building software with AI</a></div></div>
+<div class="stage-body"><div class="stage-group"><h3>Technical fluency use</h3><div class="learning-item"><p>I want enough technical fluency to understand what the model sees, how it gets information and tools, where state lives, and what the surrounding software controls. That helps me scope better and diagnose the right layer when something goes wrong.</p><p><strong>Bot vs agent:</strong> I use <em>bot</em> as the broad term for AI set up to do a job. An <em>agent</em> is a more specific kind of bot that can choose steps or tools to pursue a goal. For product work, the useful mental model is model + instructions + tools + context/state + permissions + an action loop + stopping rules. The important questions are what the agent may decide, what it may touch, when it must stop or escalate, and how we evaluate whether it did the job well.</p></div></div><div class="resource-row"><a class="resource-link" href="cheat-sheets/Efficient_AI_Use_for_Product_Work.html" target="_blank" rel="noopener noreferrer">Efficient AI use for product work</a><a class="resource-link" href="cheat-sheets/Anatomy_of_an_LLM_Application.html" target="_blank" rel="noopener noreferrer">LLM application anatomy</a><a class="resource-link" href="cheat-sheets/choosing-ai-architecture.html" target="_blank" rel="noopener noreferrer">Choosing an AI architecture</a><a class="resource-link" href="cheat-sheets/Building_Software_with_AI.html" target="_blank" rel="noopener noreferrer">Building software with AI</a></div></div>
 </details>
 
 <details class="learning-stage" id="quality-evals">
 <summary><span class="stage-num">04</span><span class="stage-main"><b>Quality, Evals &amp; Reliability</b><small>Know how to decide whether the system is good enough and where failures come from.</small><span class="topic-preview">eval design · deterministic tests · AI judges · tracing · grounding · safe failure · monitoring</span></span></summary>
-<div class="stage-body"><div class="stage-group"><h3>Quality use</h3><div class="learning-item"><p>I want to define good behavior before launch, test normal and high-risk cases, and trace failures to the right layer. Reliability also means planning for bad model output, missing retrieval, broken tools, and other predictable failure modes.</p></div></div><div class="resource-row"><a class="resource-link" href="cheat-sheets/AI_Product_Evals_Cheat_Sheet.pdf" target="_blank" rel="noopener noreferrer">AI product evals</a><a class="resource-link" href="cheat-sheets/Testing_and_Evaluating_AI_Systems.pdf" target="_blank" rel="noopener noreferrer">Testing probabilistic systems</a><a class="resource-link" href="cheat-sheets/AI_Production_Reliability_and_Observability.pdf" target="_blank" rel="noopener noreferrer">Reliability &amp; observability</a><a class="resource-link" href="cheat-sheets/Claude_Managed_Agents_Tracing_Cheat_Sheet.pdf" target="_blank" rel="noopener noreferrer">Managed agents + tracing</a></div></div>
+<div class="stage-body"><div class="stage-group"><h3>Quality use</h3><div class="learning-item"><p>I want to define good behavior before launch, test normal and high-risk cases, and trace failures to the right layer. Reliability also means planning for bad model output, missing retrieval, broken tools, and other predictable failure modes.</p></div></div><div class="resource-row"><a class="resource-link" href="cheat-sheets/AI_Product_Evals_Cheat_Sheet.html" target="_blank" rel="noopener noreferrer">AI product evals</a><a class="resource-link" href="cheat-sheets/Testing_and_Evaluating_AI_Systems.html" target="_blank" rel="noopener noreferrer">Testing probabilistic systems</a><a class="resource-link" href="cheat-sheets/AI_Production_Reliability_and_Observability.html" target="_blank" rel="noopener noreferrer">Reliability &amp; observability</a><a class="resource-link" href="cheat-sheets/Claude_Managed_Agents_Tracing_Cheat_Sheet.html" target="_blank" rel="noopener noreferrer">Managed agents + tracing</a><a class="resource-link" href="https://learn.microsoft.com/en-us/azure/architecture/ai-ml/guide/rag/rag-llm-evaluation-phase" target="_blank" rel="noopener noreferrer">RAG evaluation guide</a></div></div>
 </details>
 
 <details class="learning-stage" id="governance-human-control">
 <summary><span class="stage-num">05</span><span class="stage-main"><b>Governance, Risk &amp; Human Control</b><small>Define what the AI may do, what software must enforce, and what people must authorize.</small><span class="topic-preview">permissions · decision rights · human review · privacy/security · auditability · escalation · recovery · evidence bar</span></span></summary>
-<div class="stage-body"><div class="stage-group"><h3>Governance use</h3><div class="learning-item"><p>For consequential work, I want decision rights to be obvious. AI can interpret, software can enforce rules, and people can authorize the decisions that need human judgment. Higher-impact automation should require stronger evidence and clearer recovery paths.</p></div></div><div class="resource-row"><a class="resource-link" href="cheat-sheets/AI_Governance_Risk_PM_Cheat_Sheet.pdf" target="_blank" rel="noopener noreferrer">AI governance, safety &amp; privacy</a></div></div>
+<div class="stage-body"><div class="stage-group"><h3>Governance use</h3><div class="learning-item"><p>For consequential work, I want decision rights to be obvious. AI can interpret, software can enforce rules, and people can authorize the decisions that need human judgment. Higher-impact automation should require stronger evidence and clearer recovery paths.</p></div></div><div class="resource-row"><a class="resource-link" href="cheat-sheets/AI_Governance_Risk_PM_Cheat_Sheet.html" target="_blank" rel="noopener noreferrer">AI governance, safety &amp; privacy</a><a class="resource-link" href="https://www.nist.gov/itl/ai-risk-management-framework/nist-ai-rmf-playbook" target="_blank" rel="noopener noreferrer">NIST AI RMF Playbook</a></div></div>
 </details>
 
 <details class="learning-stage" id="ai-ux-workflow-design">
 <summary><span class="stage-num">06</span><span class="stage-main"><b>AI UX &amp; Workflow Design</b><small>Design the human/AI workflow, not just an AI control inside an existing screen.</small><span class="topic-preview">division of labor · trust · uncertainty · review UX · approvals · creative variety · skill retention · hidden work</span></span></summary>
-<div class="stage-body"><div class="stage-group"><h3>Workflow design use</h3><div class="learning-item"><p>I want users to understand what the AI is doing, what they still own, and how to correct or challenge it. Good AI UX should make review and recovery easier, not hide uncertainty or quietly push extra work onto people.</p><div class="learning-item"><b>Human capability, creativity &amp; AI</b><p>AI can help individuals produce stronger work while nudging a group toward more similar ideas. Design for useful assistance without making AI the first or only source of ideas: preserve room for independent thinking, meaningful review, and skill practice. In pilots, check output quality and speed alongside variety of ideas, reviewer effort, people’s ability to challenge suggestions, and whether saved time becomes useful capacity or simply more work. Treat long-term skill loss as a risk to monitor, not a proven outcome.</p></div></div></div><div class="resource-row"><a class="resource-link" href="cheat-sheets/Human_AI_Workflow_Design_Cheat_Sheet.pdf" target="_blank" rel="noopener noreferrer">Human + AI workflow design</a></div></div>
+<div class="stage-body"><div class="stage-group"><h3>Workflow design use</h3><div class="learning-item"><p>I want users to understand what the AI is doing, what they still own, and how to correct or challenge it. Good AI UX should make review and recovery easier, not hide uncertainty or quietly push extra work onto people.</p><div class="learning-item"><b>Human capability, creativity &amp; AI</b><p>AI can help individuals produce stronger work while nudging a group toward more similar ideas. Design for useful assistance without making AI the first or only source of ideas: preserve room for independent thinking, meaningful review, and skill practice. In pilots, check output quality and speed alongside variety of ideas, reviewer effort, people’s ability to challenge suggestions, and whether saved time becomes useful capacity or simply more work. Treat long-term skill loss as a risk to monitor, not a proven outcome.</p></div></div></div><div class="resource-row"><a class="resource-link" href="cheat-sheets/Human_AI_Workflow_Design_Cheat_Sheet.html" target="_blank" rel="noopener noreferrer">Human + AI workflow design</a></div></div>
 </details>
 
 <details class="learning-stage" id="implementation-adoption">
 <summary><span class="stage-num">07</span><span class="stage-main"><b>Implementation, Adoption &amp; Change</b><small>Turn a technically sound idea into something an organization can actually use and sustain.</small><span class="topic-preview">pilots · rollout · stakeholder alignment · training · trust · resistance · ownership · support · role change</span></span></summary>
-<div class="stage-body"><div class="stage-group"><h3>Adoption use</h3><div class="learning-item"><p>A working prototype only matters if people can actually use and sustain it. I want to treat adoption problems as signals about the product, workflow, ownership, or role change instead of assuming training will fix everything.</p></div></div></div>
+<div class="stage-body"><div class="stage-group"><h3>Adoption use</h3><div class="learning-item"><p>A working prototype only matters if people can actually use and sustain it. I want to treat adoption problems as signals about the product, workflow, ownership, or role change instead of assuming training will fix everything.</p><p><strong>Pilot to production:</strong> A pilot shows whether an approach has promise; scaling requires a named owner, acceptable quality thresholds, a rollout and rollback plan, user support, budget, training, and a way to turn incidents into better tests. Check real usage and review workload after launch, not just pilot success.</p></div></div><div class="resource-row"><a class="resource-link" href="cheat-sheets/ai-pilot-to-production.html" target="_blank" rel="noopener noreferrer">AI pilot to production</a></div></div>
 </details>
 
 <details class="learning-stage" id="measurement-business">
 <summary><span class="stage-num">08</span><span class="stage-main"><b>Product Analytics, Measurement &amp; Business Value</b><small>Understand how people use software, whether changes actually work, and what business value follows.</small><span class="topic-preview">success metrics · instrumentation · funnels/cohorts · experimentation · AI-assisted analysis · ROI</span></span></summary>
-<div class="stage-body"><div class="stage-group"><h3>Measurement use</h3><div class="learning-item"><p>I want to connect AI quality to normal product outcomes. That means defining useful metrics, instrumenting the right behavior, checking what users actually do, and verifying AI-assisted analysis before using it to make decisions.</p></div></div></div>
+<div class="stage-body"><div class="stage-group"><h3>Measurement use</h3><div class="learning-item"><p>I want to connect AI quality to normal product outcomes. That means defining useful metrics, instrumenting the right behavior, checking what users actually do, and verifying AI-assisted analysis before using it to make decisions.</p><p><strong>Experimentation:</strong> An eval score says how the system performs on tested tasks, not whether it caused better outcomes. Define a baseline and primary outcome, compare groups or time periods carefully, and watch guardrails such as cost, latency, errors, and human review. A/B tests and holdouts help when practical; otherwise, state the uncertainty and possible confounders.</p></div></div><div class="resource-row"><a class="resource-link" href="cheat-sheets/ai-product-metrics-experimentation.html" target="_blank" rel="noopener noreferrer">AI product metrics &amp; experimentation</a></div></div>
 </details>
 
 <details class="learning-stage" id="ai-consulting-client-work">
 <summary><span class="stage-num">09</span><span class="stage-main"><b>AI Consulting &amp; Client Work</b><small>Move from vague AI interest to a clear, realistic recommendation a client can act on.</small><span class="topic-preview">discovery conversations · readiness · expectation setting · simple explanations · recommendations · uncertainty</span></span></summary>
-<div class="stage-body"><div class="stage-group"><h3>Client work use</h3><div class="learning-item"><p>Client work starts with the business problem, not an AI pitch. I want to explain tradeoffs plainly, surface missing evidence, set realistic expectations, and turn technical uncertainty into decisions a client can act on.</p></div><div class="learning-item"><p><strong>Evaluation as a client capability.</strong> I want to turn eval evidence into launch and scale recommendations, and help a client keep a quality loop running after launch: production failures become new eval cases, which feed regression testing and updated thresholds and decisions.</p></div></div><div class="resource-row"><a class="resource-link" href="cheat-sheets/AI_Customer_Success_Guide_to_Debugging_Claude_Agents.pdf" target="_blank" rel="noopener noreferrer">Debugging AI agents for customer-facing work</a></div></div>
+<div class="stage-body"><div class="stage-group"><h3>Client work use</h3><div class="learning-item"><p>Client work starts with the business problem, not an AI pitch. I want to explain tradeoffs plainly, surface missing evidence, set realistic expectations, and turn technical uncertainty into decisions a client can act on.</p></div><div class="learning-item"><p><strong>Evaluation as a client capability.</strong> I want to turn eval evidence into launch and scale recommendations, and help a client keep a quality loop running after launch: production failures become new eval cases, which feed regression testing and updated thresholds and decisions.</p></div></div><div class="resource-row"><a class="resource-link" href="cheat-sheets/AI_Customer_Success_Guide_to_Debugging_Claude_Agents.html" target="_blank" rel="noopener noreferrer">Debugging AI agents for customer-facing work</a></div></div>
 </details>
 
 <details class="learning-stage" id="ai-landscape-edge">
@@ -958,16 +858,16 @@ body.v88-dark .learning-how-note strong{color:#f5f2fb!important}
 <div class="section-kicker"><span>How I use the map</span></div>
 <h2 id="building-next-heading">The projects tell me what to learn next.</h2>
 <p class="section-lead">When a project exposes a gap, I come back here to decide whether I need more study, a small exercise, or a better way to test the idea in practice.</p>
-<div class="learning-how-note"><strong>Working effectively with AI as a collaborator</strong><p>I use AI differently across exploration, building, and review, then check the output against the product rules and evidence that matter for the task.</p><div class="resource-row"><a class="resource-link" href="cheat-sheets/Building_Software_with_AI.pdf" target="_blank" rel="noopener noreferrer">Building software with AI</a></div></div>
+<div class="learning-how-note"><strong>Working effectively with AI as a collaborator</strong><p>I use AI differently across exploration, building, and review, then check the output against the product rules and evidence that matter for the task.</p><div class="resource-row"><a class="resource-link" href="cheat-sheets/Building_Software_with_AI.html" target="_blank" rel="noopener noreferrer">Building software with AI</a></div></div>
 </section>
 </section>
 
 <section class="view" data-page="portfolio" id="portfolio"><header class="page-intro"><div class="eyebrow">Applied Work</div><h2 class="section-title">Three products, three different AI product problems</h2><p class="section-lead">State tests maintained project truth, Tastemake tests editable personalization, and Project Health tests how teams interpret quality and delivery signals. Supporting work shows the discovery, debugging, governance, and architecture decisions around them. Across all of this work, I’m testing the same thing: what does a product need to keep humans genuinely in control, expose what the system is actually doing, and surface failures instead of hiding them?</p></header>
 <div class="section-kicker applied-group-kicker"><span>Featured work</span></div>
 <div class="applied-major-grid applied-featured-grid applied-featured-three">
-<div class="card applied-major applied-major-with-actions"><span class="tag">Flagship · Boundaries &amp; authority</span><h3><a class="applied-card-primary-link" href="implementation-context.html">State</a></h3><p class="card-intro">What should AI be allowed to decide? State keeps AI interpretation separate from human-approved project truth, with explicit rules for evidence, uncertainty, and authority.</p><div class="applied-card-actions"><a href="https://state.contextswitch.tech/" data-state-app-link target="_blank" rel="noopener noreferrer">Open State ↗</a><a href="implementation-context.html">Case study →</a></div></div>
-<div class="card applied-major applied-major-with-actions"><span class="tag">Feedback &amp; correction</span><h3><a class="applied-card-primary-link" href="tastemake.html">Tastemake</a></h3><p class="card-intro">Most recommenders hide the model they build of you. Tastemake exposes its working theory of your taste and lets corrections change what happens next.</p><div class="applied-card-actions"><a href="https://tastemake.vercel.app/" target="_blank" rel="noopener noreferrer">Open Tastemake ↗</a><a href="tastemake.html">Case study →</a></div></div>
-<div class="card applied-major applied-major-with-actions"><span class="tag">Quality &amp; evidence</span><h3><a class="applied-card-primary-link" href="project-health-case-study.html">Project Health</a></h3><p class="card-intro">How do teams know when AI behavior needs attention? Project Health brings releases, evals, incidents, and missing signals together without reducing quality to one score.</p><div class="applied-card-actions"><a href="project-health.html" target="_blank" rel="noopener noreferrer">Open Project Health ↗</a><a href="project-health-case-study.html">Case study →</a></div></div>
+<div class="card applied-major applied-major-with-actions"><span class="tag">Flagship · Boundaries &amp; authority</span><h3><a class="applied-card-primary-link" href="implementation-context.html">State</a></h3><p class="card-intro">What should AI be allowed to decide? State keeps AI interpretation separate from human-approved project truth, with explicit rules for evidence, uncertainty, and authority.</p><div class="applied-card-actions"><a href="https://state.contextswitch.tech/" data-state-app-link target="_blank" rel="noopener noreferrer">Open State</a><a href="implementation-context.html">Case study →</a></div></div>
+<div class="card applied-major applied-major-with-actions"><span class="tag">Feedback &amp; correction</span><h3><a class="applied-card-primary-link" href="tastemake.html">Tastemake</a></h3><p class="card-intro">Most recommenders hide the model they build of you. Tastemake exposes its working theory of your taste and lets corrections change what happens next.</p><div class="applied-card-actions"><a href="https://tastemake.vercel.app/" target="_blank" rel="noopener noreferrer">Open Tastemake</a><a href="tastemake.html">Case study →</a></div></div>
+<div class="card applied-major applied-major-with-actions"><span class="tag">Quality &amp; evidence</span><h3><a class="applied-card-primary-link" href="project-health-case-study.html">Project Health</a></h3><p class="card-intro">How do teams know when AI behavior needs attention? Project Health brings releases, evals, incidents, and missing signals together without reducing quality to one score.</p><div class="applied-card-actions"><a href="project-health.html" target="_blank" rel="noopener noreferrer">Open Project Health</a><a href="project-health-case-study.html">Case study →</a></div></div>
 </div>
 <div class="section-kicker applied-group-kicker"><span>Supporting work</span></div>
 <div class="applied-secondary-grid applied-secondary-compact">
@@ -1010,7 +910,7 @@ body.v88-dark .learning-how-note strong{color:#f5f2fb!important}
 
 /* Final portfolio lock: stable proof, deep links, print, and compact mobile behavior. */
 
-@media print{#ai-cs-mock{background:#fff!important;color:#000!important;--muted:#444;--border:#bbb;--soft:#fff;--softp:#fff;--card:#fff}.topbar,.float-tool,.resource-float,.float-panel,.resource-panel,.back-top,.meridian-mini-nav,.theme-toggle,#mobileNav{display:none!important}.view{display:block!important;padding-top:18px!important;break-before:page}.view:first-of-type{break-before:auto}.card,.decision,.artifact,.proof-card,.band,.checkpoint,.metric,.stage{break-inside:avoid;box-shadow:none!important;background:#fff!important}.shell{max-width:none!important;padding:0!important}.nav-card::after,.resource-link::after{display:none!important}}
+@media print{#ai-cs-mock{background:#fff!important;color:#000!important;--muted:#444;--border:#bbb;--soft:#fff;--softp:#fff;--card:#fff}.topbar,#mobileNav{display:none!important}.view{display:block!important;padding-top:18px!important;break-before:page}.view:first-of-type{break-before:auto}.card,.decision,.band,.metric,.stage{break-inside:avoid;box-shadow:none!important;background:#fff!important}.shell{max-width:none!important;padding:0!important}.nav-card::after,.resource-link::after{display:none!important}}
 </style>
 </main>
 <style>
@@ -1032,7 +932,7 @@ body.v88-dark .learning-how-note strong{color:#f5f2fb!important}
 }
 
 /* V12 feedback: principles return to the lighter Learning Guide treatment. */
-.learning-principles{margin:22px 0 28px!important;padding:20px 0!important;background:transparent!important;border:0!important;border-top:1px solid var(--border)!important;border-bottom:1px solid var(--border)!important;border-radius:0!important}.learning-principles h2{font-size:22px!important;margin:5px 0 7px!important}.learning-principles>.section-lead{font-size:13px!important;line-height:1.55!important;margin-bottom:16px!important}.principles-grid>div{padding:13px 18px 13px 0!important}.principles-grid>div:nth-child(even){padding-left:20px!important}.principles-grid strong{font-size:12.5px!important;margin-bottom:3px!important}.principles-grid p{font-size:11.5px!important;line-height:1.5!important}@media(max-width:760px){.principles-grid>div:nth-child(even){padding-left:0!important;border-left:0!important}}
+
 </style>
 <script id="v895-router">
 (()=>{
@@ -1258,8 +1158,7 @@ window.addEventListener('popstate',()=>render(pageFromHash(),false));
     if(e.key==='Escape')tip.hidden=true;
   });
 })();
-</script></div><link href="site-redesign.css?v=portfolio-footer-review-3" rel="stylesheet" onload="document.documentElement.classList.remove('rd-pending')" onerror="document.documentElement.classList.remove('rd-pending')">
-<link href="portfolio-shape-polish.css?v=portfolio-footer-review-3" rel="stylesheet">
+</script></div><link href="site-redesign.css?v=451-fold-shape" rel="stylesheet" onload="document.documentElement.classList.remove('rd-pending')" onerror="document.documentElement.classList.remove('rd-pending')">
 <script id="rd-type-rail-script">
 (() => {
   const el = document.getElementById('rd-type-text');

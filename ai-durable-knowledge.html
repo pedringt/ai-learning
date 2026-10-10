@@ -17,7 +17,9 @@ body.v88-dark{--ink:#f5f5f7;--muted:#b6b6c2;--border:#34343d;--soft:#19191f;--so
 @media(max-width:760px){.edge-wrap{padding:0 20px 60px}.edge-title{font-size:27px}}
 </style>
 <link href="site-shell.css" rel="stylesheet"><link href="site-components.css" rel="stylesheet"/>
-<style id="rd-hold">html.rd-pending body{visibility:hidden}</style><script>document.documentElement.classList.add("rd-pending");setTimeout(function(){document.documentElement.classList.remove("rd-pending")},2500)</script></head><body>
+<link rel="stylesheet" href="final-freeze-polish.css"><!-- was injected by site-shell.js until #451 -->
+<link rel="stylesheet" href="site-redesign.css?v=451-head"><!-- render-blocking in <head> since #451: no rd-pending hide/reveal needed -->
+</head><body>
 <div class="topbar"><div class="topinner"><a class="brand-button" href="index.html"><span class="brand">Context <span>Switch</span></span></a><nav aria-label="Primary pages" class="nav"><a href="index.html">Home</a><a href="index.html#portfolio">Applied Work</a><a aria-current="page" href="index.html#learn">Learning Library</a></nav><div class="top-actions"><select aria-label="Choose page" id="v922MobileNav"><option value="index.html">Home</option><option value="index.html#portfolio">Applied Work</option><option selected="" value="index.html#learn">Learning Library</option></select></div></div></div>
 <main class="edge-wrap">
 <div class="edge-head">
@@ -29,9 +31,15 @@ body.v88-dark{--ink:#f5f5f7;--muted:#b6b6c2;--border:#34343d;--soft:#19191f;--so
 </div>
 <div class="edge-layout">
 <nav class="edge-jump" aria-label="On this page" id="edgeJump">
-<a href="#system">The system matters</a><a href="#evidence">Evidence & grounding</a><a href="#authority">Authority & autonomy</a><a href="#economics">Economics</a><a href="#quality">Quality & evals</a><a href="#state">State & observability</a><a href="#questions">Questions I keep</a>
+<a href="#discovery">Start with the problem</a><a href="#system">The system matters</a><a href="#evidence">Evidence & grounding</a><a href="#authority">Authority & autonomy</a><a href="#economics">Economics</a><a href="#quality">Quality & evals</a><a href="#experience">People & adoption</a><a href="#state">State & observability</a><a href="#questions">Questions I keep</a>
 </nav>
 <div class="edge-body">
+<section id="discovery"><h2>Start with the problem, not the model</h2>
+<h3>AI should earn its place in the workflow</h3>
+<p>Start with the person’s goal, the current workflow, and evidence of where it breaks. Compare AI with simpler options: clearer rules, conventional software, deterministic automation, or process changes.</p>
+<p>AI adds variability, evaluation work, security exposure, and operating cost. It should solve a problem those alternatives cannot solve as well.</p>
+<p class="edge-callout"><strong>Durable question:</strong> What is the smallest reliable improvement, and does it actually require AI?</p></section>
+
 <section id="system"><h2>The system matters more than the demo</h2>
 <h3>The model is only one part of the product</h3>
 <p>A stronger model can improve an AI product, but reliability still depends on context, retrieval, tools, permissions, state, application logic, checks, and recovery paths.</p>
@@ -39,8 +47,12 @@ body.v88-dark{--ink:#f5f5f7;--muted:#b6b6c2;--border:#34343d;--soft:#19191f;--so
 <h3>Flexible reasoning belongs inside firm boundaries</h3>
 <p>AI is useful when the right path cannot be fully written as rules. Important limits should still be enforced outside the model when possible.</p>
 <p>Budgets, permissions, approval requirements, access scopes, and irreversible actions should not depend on the model remembering them.</p>
-<h3>Design around required behavior, not model names</h3>
-<p>AI products may increasingly specify the behavior a task requires and treat the model as the current implementation of that requirement. Reliability, speed, cost, tool support, and risk tolerance can outlast any particular model family.</p>
+<h3>Automation can move the bottleneck instead of removing it</h3>
+<p>When AI makes one step much faster, inspect what happens immediately afterward. Review, exception handling, approvals, investigation, or follow-up can become the new constraint.</p>
+<p>Measure the whole workflow, not just the automated step.</p>
+<p class="edge-callout"><strong>Durable question:</strong> What work becomes the new bottleneck if this step gets dramatically faster?</p>
+<h3>Keep requirements separate from providers</h3>
+<p>AI products may increasingly specify the behavior a task requires and treat the model as the current implementation of that requirement. Reliability, speed, cost, tool support, and risk tolerance can outlast any particular model family. Keeping the authoritative workflow, permissions, and user experience separable from the provider makes replacements less disruptive.</p>
 <p class="edge-callout"><strong>Durable question:</strong> What does this workflow need to be reliably true, regardless of which model provides it?</p></section>
 
 <section id="evidence"><h2>Evidence matters more than confidence</h2>
@@ -48,13 +60,21 @@ body.v88-dark{--ink:#f5f5f7;--muted:#b6b6c2;--border:#34343d;--soft:#19191f;--so
 <p>AI can sound certain while using incomplete, stale, or wrong information. Real work needs clear source quality, provenance, and a way to distinguish authoritative information from everything else.</p>
 <p class="edge-callout"><strong>Durable question:</strong> What is authoritative, and how does the AI know?</p>
 <h3>Preserve uncertainty</h3>
-<p>Unknown, inferred, proposed, and confirmed information are not interchangeable. Products should keep those distinctions visible when they affect a decision.</p></section>
+<p>Unknown, inferred, proposed, and confirmed information are not interchangeable. Products should keep those distinctions visible when they affect a decision.</p>
+<h3>Data meaning and access are product requirements</h3>
+<p>Correct data can still produce wrong conclusions when important definitions are inconsistent. Establish what business terms mean, who owns the data, who may access it, and how freshness and provenance are checked.</p>
+<h3>Retrieved content is not instruction authority</h3>
+<p>Documents, websites, and tool responses can contain malicious or mistaken instructions. Treat them as untrusted input, not permission to override the product’s rules. Sensitive information also needs deliberate consent, minimization, retention, deletion, and logging boundaries.</p>
+<p class="edge-callout"><strong>Durable question:</strong> What data may this system read, remember, reveal, or act on, and who authorized that use?</p></section>
 
 <section id="authority"><h2>Autonomy should be earned</h2>
 <h3>Capability is not authority</h3>
 <p>A model may be able to send an email, change a record, deploy code, or make a purchase. That does not mean it should be allowed to do so without limits.</p>
 <h3>Increase autonomy progressively</h3>
 <p>Start narrow. Observe behavior. Add tools, access, and authority only when reliability evidence, safeguards, observability, and recovery paths justify it.</p>
+<h3>Contain failure and make reversal real</h3>
+<p>Not every mistake can be prevented. Limit the scope of each action, make consequential actions inspectable, and provide a way to pause, compensate, or roll back. A reversible action is only safe when reversal works in practice and does not create greater harm.</p>
+<p>Low-consequence authority may be expanded with evidence and withdrawn when reliability deteriorates. Irreversible or high-impact decisions deserve stronger approval gates.</p>
 <p class="edge-callout"><strong>Product principle:</strong> Let the model choose within the boundary. Do not let it define the boundary.</p></section>
 
 <section id="economics"><h2>Economic authority is still authority</h2>
@@ -62,6 +82,8 @@ body.v88-dark{--ink:#f5f5f7;--muted:#b6b6c2;--border:#34343d;--soft:#19191f;--so
 <p>Agents may use model calls, retrieval, compute, human review, paid APIs, or machine payments to complete a goal. Once money becomes another tool, spending behavior becomes part of product quality.</p>
 <p>A task can succeed and still be badly designed if it costs far more than necessary.</p>
 <p class="edge-callout"><strong>Durable question:</strong> What does one successful outcome cost?</p>
+<h3>Count the entire cost of ownership</h3>
+<p>Include integration, evaluation, monitoring, review, error recovery, vendor dependency, and support costs when comparing AI with simpler alternatives. Optimize for value delivered, not tokens consumed or activity produced.</p>
 <h3>Machine payments need the same governance as other consequential tools</h3>
 <p>Useful controls include total budgets, per-action limits, approved services, human approval thresholds, and transaction logs. The agent can optimize inside those constraints without receiving unlimited financial authority.</p></section>
 
@@ -69,6 +91,10 @@ body.v88-dark{--ink:#f5f5f7;--muted:#b6b6c2;--border:#34343d;--soft:#19191f;--so
 <h3>Evals turn failures into learning</h3>
 <p>One impressive answer proves very little. Representative scenarios, known failures, edge cases, and expected behaviors make AI quality repeatable enough to improve.</p>
 <p class="edge-callout"><strong>Product habit:</strong> Save the failure. Find where it started. Change one thing. Run it again.</p>
+<h3>Define the quality bar before release</h3>
+<p>Task success alone is not enough. Choose measures that reflect the job: factual accuracy, correct actions, safety, latency, consistency, recovery, and user effort. Evaluate ordinary tasks alongside difficult cases, and break results down by failure severity and affected user groups rather than hiding them in one average.</p>
+<p>Set explicit release thresholds and escalation rules. A high aggregate pass rate cannot excuse a small number of severe failures. Include accessibility and uneven performance across languages or contexts where relevant.</p>
+<p class="edge-callout"><strong>Durable question:</strong> Which failures would make this unacceptable to ship, even if most tests pass?</p>
 <h3>Human review should be intentional</h3>
 <p>Human-in-the-loop is not automatically safe or useful. Review belongs where judgment or consequences justify the interruption. Too much review creates fatigue; too little gives the system authority it has not earned.</p>
 <h3>Measure whether AI preserves human capability</h3>
@@ -80,9 +106,18 @@ body.v88-dark{--ink:#f5f5f7;--muted:#b6b6c2;--border:#34343d;--soft:#19191f;--so
 <p>Use event-triggered testing for changes you know about and periodic behavioral checks for changes you may not know happened.</p>
 <p class="edge-callout"><strong>Durable question:</strong> What could change upstream without us deploying anything, and how would we detect its effect?</p></section>
 
+<section id="experience"><h2>People and adoption matter as much as the technology</h2>
+<h3>Make uncertainty and control understandable</h3>
+<p>A trustworthy interface communicates what the AI knows, what it assumes, whether an action was actually completed, and what a person can correct. Ask for clarification when ambiguity changes the outcome. Offer review, recovery, and meaningful override instead of relying on polished language to create confidence.</p>
+<h3>Measure adoption as workflow change</h3>
+<p>A pilot can pass technical tests and still fail in practice. Training, incentives, role clarity, support, user trust, and downstream capacity determine whether people can use it consistently. Measure sustained outcomes and burden, not just clicks or generated outputs.</p>
+<p class="edge-callout"><strong>Durable question:</strong> Is this making people more capable and the workflow better, or merely adding another system to manage?</p></section>
+
 <section id="state"><h2>State and observability keep agents trustworthy</h2>
 <h3>Memory is not automatically a source of truth</h3>
 <p>Conversation history, retrieved facts, inferred state, and authoritative state are different things. Important facts may need explicit ownership, validation, timestamps, history, or human authorization.</p>
+<h3>Production systems need accountable owners</h3>
+<p>Name who monitors behavior, handles incidents, approves changes, responds to user reports, and decides when to pause or roll back. Use staged rollout and feedback-to-evaluation loops so learning continues after launch.</p>
 <h3>AI can fail without a software error</h3>
 <p>An agent can choose the wrong tool, misunderstand the goal, retrieve the wrong evidence, or stop too early while every service remains technically healthy.</p>
 <p class="edge-callout"><strong>Durable question:</strong> What can we observe directly instead of trusting the model to explain itself?</p><h3>Design an ongoing worker as a complete workflow</h3>
@@ -100,9 +135,17 @@ body.v88-dark{--ink:#f5f5f7;--muted:#b6b6c2;--border:#34343d;--soft:#19191f;--so
 <p>Together, these decisions make the worker’s boundary and operating behavior reviewable. They also connect the AI feature to the surrounding workflow, state, permissions, and recovery paths.</p>
 </section>
 
+<section id="related-reference-guides" aria-labelledby="related-reference-title"><h2 id="related-reference-title">From principle to practice</h2><p>These printable references turn the durable principles into concrete product questions, decision flows, and checklists.</p><div style="overflow-x:auto"><table style="border-collapse:collapse;width:100%;font-size:14px"><thead><tr><th style="text-align:left;padding:10px;border-bottom:1px solid #e8e7ef">Knowledge area</th><th style="text-align:left;padding:10px;border-bottom:1px solid #e8e7ef">Primary cheat sheet</th><th style="text-align:left;padding:10px;border-bottom:1px solid #e8e7ef">Also useful</th></tr></thead><tbody><tr><th scope="row">Start with the problem</th><td><a href="cheat-sheets/AI_Product_Discovery_Questions.html">AI Product Discovery Questions</a></td><td><a href="cheat-sheets/BUILD_BOOST_BUY_DECISION_TREE.html">Buy / Boost / Build</a></td></tr>
+<tr><th scope="row">The system matters</th><td><a href="cheat-sheets/Anatomy_of_an_LLM_Application.html">Anatomy of an LLM Application</a></td><td><a href="cheat-sheets/choosing-ai-architecture.html">Choosing AI Architecture</a></td></tr>
+<tr><th scope="row">Evidence & grounding</th><td><a href="cheat-sheets/enterprise-data-readiness-ai.html">Enterprise Data Readiness</a></td><td><a href="cheat-sheets/AI_Governance_Risk_PM_Cheat_Sheet.html">Governance & Risk</a></td></tr>
+<tr><th scope="row">Authority & autonomy</th><td><a href="cheat-sheets/Human_AI_Workflow_Design_Cheat_Sheet.html">Human–AI Workflow Design</a></td><td><a href="cheat-sheets/AI_Governance_Risk_PM_Cheat_Sheet.html">Governance & Risk</a></td></tr>
+<tr><th scope="row">Economics</th><td><a href="cheat-sheets/Efficient_AI_Use_for_Product_Work.html">Efficient AI Use</a></td><td><a href="cheat-sheets/evaluating-ai-vendors-platforms.html">Evaluating AI Vendors</a></td></tr>
+<tr><th scope="row">Quality & evals</th><td><a href="cheat-sheets/AI_Product_Evals_Cheat_Sheet.html">AI Product Evals</a></td><td><a href="cheat-sheets/ai-product-metrics-experimentation.html">Product Metrics & Experimentation</a></td></tr>
+<tr><th scope="row">People & adoption</th><td><a href="cheat-sheets/ai-pilot-to-production.html">Pilot to Production</a></td><td><a href="cheat-sheets/ai-product-metrics-experimentation.html">Product Metrics & Experimentation</a></td></tr>
+<tr><th scope="row">State & observability</th><td><a href="cheat-sheets/AI_Production_Reliability_and_Observability.html">Production Reliability</a></td><td><a href="cheat-sheets/Testing_and_Evaluating_AI_Systems.html">Testing & Evaluating AI Systems</a></td></tr></tbody></table></div></section>
 <section id="questions"><h2>Questions I keep coming back to</h2>
 <ol>
-<li>What job are we actually trying to improve?</li>
+<li>What job are we actually trying to improve, and is AI necessary?</li>
 <li>What information is authoritative?</li>
 <li>What should the AI reason about, and what should software enforce?</li>
 <li>What can the AI see, decide, and do?</li>
@@ -111,11 +154,12 @@ body.v88-dark{--ink:#f5f5f7;--muted:#b6b6c2;--border:#34343d;--soft:#19191f;--so
 <li>What does one successful outcome cost?</li>
 <li>What evidence would justify giving the system more autonomy?</li>
 <li>What behavior must remain stable even if the underlying model changes?</li>
+<li>Who owns the system once it is live, and what would make us stop it?</li>
+<li>Can people recognize, challenge, and correct an uncertain answer or action?</li>
 </ol>
 <h3>The point</h3>
 <p>Models and products will keep changing. The durable skill is learning how to make good decisions about evidence, authority, reliability, cost, and value while they do.</p></section>
 </div></div></main>
 <script>
 (()=>{const jump=document.getElementById('edgeJump'),heads=[...document.querySelectorAll('.edge-body h2')],links=[...jump.querySelectorAll('a')];if('IntersectionObserver'in window){const observer=new IntersectionObserver(entries=>{const visible=entries.filter(e=>e.isIntersecting).sort((a,b)=>a.boundingClientRect.top-b.boundingClientRect.top)[0];if(!visible)return;links.forEach(a=>a.classList.toggle('is-active',a.getAttribute('href')===`#${visible.target.parentElement.id}`))},{rootMargin:'-15% 0px -70% 0px',threshold:0});heads.forEach(h=>observer.observe(h))}})();
-</script><script defer src="site-shell.js"></script><link href="site-redesign.css?v=portfolio-footer-review-3" rel="stylesheet" onload="document.documentElement.classList.remove('rd-pending')" onerror="document.documentElement.classList.remove('rd-pending')">
-<link href="portfolio-shape-polish.css?v=portfolio-footer-review-3" rel="stylesheet"></body></html>
+</script><script defer src="site-shell.js"></script></body></html>

@@ -8,7 +8,8 @@ const MAX_OUTPUT_TOKENS=450;
 const PROJECTS={
   state:{repo:'pedringt/ai-learning',vercelProjectId:'prj_zQtHJg96oM7Ol4qTapiwk1mV8iRl',slug:'state',branches:{production:'main',staging:'staging'}},
   tastemake:{repo:'pedringt/tastemake',vercelProjectId:'prj_UWguNtKhGJkLr0X3jswk2rgBKLGu',slug:'tastemake',branches:{production:'main'}},
-  narc:{repo:'pedringt/narc',vercelProjectId:'prj_SKJS8qSkSAiceK5qZ4GkcZEbI41H',slug:'narc',branches:{production:'main'}}
+  narc:{repo:'pedringt/narc',vercelProjectId:'prj_SKJS8qSkSAiceK5qZ4GkcZEbI41H',slug:'narc',branches:{production:'main'}},
+  'authority-lab':{repo:'pedringt/authority-lab',vercelProjectId:'prj_DEsIbVajmdgFqxtVFeZLQsa6QJ69',slug:'authority-lab',branches:{production:'main'}}
 };
 const FAILED_CHECKS=new Set(['failure','timed_out','action_required','startup_failure']);
 function response(res,status,payload){res.status(status).json(payload);}

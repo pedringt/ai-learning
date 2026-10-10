@@ -103,22 +103,6 @@
   }
 
   root.addEventListener('click',rememberHistoryTarget,true);
-  const style=document.createElement('style');
-  style.textContent=`
-    .history-provenance-detail{margin-top:16px;padding-top:14px;border-top:1px solid var(--border,#d9dde3);font-size:13px;line-height:1.45}
-    .history-provenance-detail>strong{display:block;margin-bottom:5px;font-size:13px}
-    .history-provenance-detail>p{margin:0;color:var(--muted,#626779)}
-    .history-provenance-evidence{margin-top:12px}
-    .history-provenance-evidence>span{display:block;margin-bottom:6px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--muted,#626779)}
-    .history-provenance-evidence ul{margin:0;padding:0;list-style:none}
-    .history-provenance-evidence li{padding:9px 0;border-top:1px solid var(--border,#e2e4e8)}
-    .history-provenance-evidence li>p{margin:5px 0 0}
-    .history-source-line{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
-    .history-source-badge{font-size:11px;font-weight:700}
-    .history-source-detail{font-size:12px;color:var(--muted,#626779)}
-    .history-source-line a{margin-left:auto;font-size:12px;font-weight:600;text-decoration:none}
-  `;
-  document.head.appendChild(style);
   const observer=new MutationObserver(()=>requestAnimationFrame(decorateFocusedHistory));
   observer.observe(root,{childList:true,subtree:true});
   window.STATE_PROVENANCE=Object.freeze({buildTrace,traceMarkup,hasAcceptedProvenance,affectedStateIds,supportingResolvedReview,normalizeBootstrap,loadProvenance});

@@ -70,6 +70,12 @@
     return payload;
   }
 
+  // #476: Ask sends the asker's local day so "today" is not the server's UTC day. A
+  // backend without the field answers 422 (it rejects unknown fields); during a deploy the
+  // frontend can be live first, so Ask retries once without it instead of failing.
+  const localDateISO = () => { const d=new Date(); const pad=n=>String(n).padStart(2,'0'); return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`; };
+  const askBody = (query, previousAnswer, withDate = true) => ({query, ...(previousAnswer ? {previous_answer: previousAnswer} : {}), ...(withDate ? {client_date: localDateISO()} : {})});
+
   const jsonPost = (path, body, signal) => request(path, {
     method: 'POST',
     headers: {'Content-Type': 'application/json'},
@@ -107,12 +113,14 @@
     };
     let response;
     try {
-      response = await fetch(`${base}/api/ask/stream`, {
+      const post = withDate => fetch(`${base}/api/ask/stream`, {
         method: 'POST',
         headers: projectHeaders({'Content-Type':'application/json', 'Accept':'text/event-stream'}),
-        body: JSON.stringify({query, ...(previousAnswer ? {previous_answer: previousAnswer} : {})}),
+        body: JSON.stringify(askBody(query, previousAnswer, withDate)),
         signal: controller.signal,
       });
+      response = await post(true);
+      if (response.status === 422) response = await post(false);
     } catch (err) {
       clearTimeout(watchdog);
       throw err.name === 'AbortError' ? abortReason() : err;
@@ -211,6 +219,7 @@
     // Free-form Ask streams visible answer text while the final grounded payload
     // is still validated server-side. Product-owned starters remain deterministic.
     askStream,
-    ask: (query, previousAnswer = null, signal) => jsonPost('/api/ask', {query, ...(previousAnswer ? {previous_answer: previousAnswer} : {})}, signal),
+    ask: (query, previousAnswer = null, signal) => jsonPost('/api/ask', askBody(query, previousAnswer), signal)
+      .catch(err => { if (err.status === 422) return jsonPost('/api/ask', askBody(query, previousAnswer, false), signal); throw err; }),
   });
 })();

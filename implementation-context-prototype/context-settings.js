@@ -26,47 +26,6 @@
   }
   function sourceTitle(type,label){return `<span class="source-title">${sourceIcon(type)}<span>${esc(label)}</span></span>`;}
 
-  function styles(){
-    if(document.getElementById('state-settings-view-styles')) return;
-    const style=document.createElement('style');
-    style.id='state-settings-view-styles';
-    style.textContent=`
-      .settings-page{max-width:920px;margin:0 auto;padding:8px 0 48px}
-      .settings-page .page-head{margin-bottom:22px}
-      .settings-section{border:1px solid var(--line,#d8d8df);border-radius:16px;padding:20px;margin:0 0 18px;background:var(--surface,#fff)}
-      .settings-section-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:14px}
-      .settings-section h3{margin:0 0 5px;font-size:18px}.settings-section p{margin:0;color:var(--muted,#666);line-height:1.5}
-      .settings-project-name{display:grid;gap:6px;max-width:420px}.settings-project-name label{font-size:12px;font-weight:700}
-      .settings-project-name input{width:100%;box-sizing:border-box;padding:10px 11px;border:1px solid var(--line,#ccc);border-radius:10px;background:var(--soft,#f6f5f8);color:inherit}
-      .settings-status{font-size:12px;font-weight:700;padding:5px 9px;border:1px solid var(--line,#d8d8df);border-radius:999px;white-space:nowrap}
-      .settings-status.dev{background:var(--soft,#f6f5f8)}
-      .settings-rules{margin-top:18px;border:1px solid var(--line,#e1e1e7);border-radius:12px;background:var(--soft,#f8f8fa);overflow:hidden}
-      .settings-rules summary{cursor:pointer;list-style:none;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 16px;font-weight:700}
-      .settings-rules summary:hover{background:rgba(127,127,127,.05)}.settings-rules summary::-webkit-details-marker{display:none}
-      .settings-rules summary::after{content:'+';font-size:20px;font-weight:400;color:var(--muted,#666)}.settings-rules[open] summary::after{content:'−'}
-      .settings-rules[open] summary{border-bottom:1px solid var(--line,#e1e1e7);background:var(--surface,#fff)}
-      .settings-rules-count{font-size:12px;font-weight:600;color:var(--muted,#666);margin-left:6px}
-      .settings-rules-body{padding:16px;background:var(--surface,#fff)}
-      .settings-rule-form{display:flex;gap:8px;margin-top:14px;align-items:flex-end;flex-wrap:wrap}
-      .settings-rule-form label{flex:1;display:grid;gap:6px;font-size:12px;font-weight:700;min-width:180px}.settings-rule-form label:has(select){flex:0 0 auto;min-width:0}
-      .settings-rule-form input{width:100%;box-sizing:border-box;padding:10px 11px;border:1px solid var(--line,#ccc);border-radius:10px;background:var(--surface,#fff);color:inherit}
-      .settings-rule-form select{box-sizing:border-box;padding:10px 30px 10px 11px;border:1px solid var(--line,#ccc);border-radius:10px;background:var(--surface,#fff);color:inherit;font:inherit;font-size:13px;font-weight:600;appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'><path fill='%23666' d='M5.5 7.5l4.5 4.5 4.5-4.5z'/></svg>");background-repeat:no-repeat;background-position:right 9px center;background-size:13px}
-      @media(max-width:520px){.settings-rule-form label:has(select){flex:1 1 100%}}
-      .settings-rule-list{list-style:none;margin:16px 0 0;padding:16px 0 0;border-top:1px solid var(--line,#e5e5ea);display:grid;gap:8px}
-      .settings-rule-list li{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:12px 14px;border:1px solid var(--line,#e5e5ea);border-radius:10px;background:var(--soft,#fafafd)}
-      .settings-rule-copy{min-width:0}.settings-rule-copy strong{display:block;margin-bottom:4px;font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted,#666)}
-      .settings-rule-list .text-button{align-self:center;flex:0 0 auto}
-      .settings-behavior-list{margin:12px 0 0;padding:0;list-style:none;display:grid;grid-template-columns:1fr 1fr;gap:9px 18px}.settings-behavior-list li{padding-left:22px;position:relative;line-height:1.45;font-size:13px}.settings-behavior-list li::before{content:'✓';position:absolute;left:0;font-weight:700}
-      .settings-quiet{background:var(--soft,#f6f5f8);border-color:transparent}.settings-quiet .settings-section-head{margin-bottom:8px}
-      .slack-preview,.source-list{margin-top:16px;display:grid;gap:10px}.slack-preview-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px 0;border-top:1px solid var(--line,#e5e5ea)}.slack-preview-row:first-child{border-top:0}.slack-preview-row span{color:var(--muted,#666);font-size:13px}
-      .source-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:16px;align-items:start;padding:14px 0;border-top:1px solid var(--line,#e5e5ea)}.source-row:nth-child(-n+2){border-top:0}.source-row>div{min-width:0}.source-description{display:block;margin:5px 0 0 26px;color:var(--muted,#666);font-size:13px;line-height:1.4}
-      .source-title{display:flex;align-items:center;gap:8px;font-weight:700;color:inherit}.source-icon{width:18px;height:18px;flex:0 0 18px;display:block}
-      .settings-slack-heading{display:flex;align-items:center;gap:9px}.settings-slack-heading .source-icon{width:20px;height:20px;flex-basis:20px}.settings-callout{margin-top:14px;padding:12px 14px;border-radius:12px;background:var(--soft,#f6f5f8);font-size:13px;line-height:1.45}.settings-actions{margin-top:16px;display:flex;gap:12px;align-items:center;flex-wrap:wrap}.settings-actions a.btn{text-decoration:none;display:inline-flex;align-items:center}.settings-slack-status{margin-top:14px;font-size:13px;font-weight:600;color:var(--muted,#666)}.settings-slack-status.connected{color:#1c8a5c}.settings-slack-status.error{color:#c81d55}.settings-slack-notice{margin-top:12px;padding:9px 12px;border-radius:10px;font-size:13px;font-weight:600}.settings-slack-notice.error{background:rgba(224,30,90,.1);color:#c81d55}.settings-slack .settings-section-head{align-items:center}.settings-slack-intro{max-width:620px}.settings-source-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 28px}
-      .settings-danger{border-color:#c8a7a7;padding:16px 20px}.settings-danger .settings-section-head{align-items:center;margin:0}.settings-danger .settings-actions{margin:0}
-      @media(max-width:680px){.settings-section{padding:16px}.settings-section-head,.slack-preview-row{align-items:flex-start;flex-direction:column}.settings-rule-form{display:grid}.settings-rule-list li{align-items:center}.settings-status{align-self:flex-start}.settings-behavior-list,.settings-source-grid{grid-template-columns:1fr}.source-row,.source-row:nth-child(-n+2){border-top:1px solid var(--line,#e5e5ea)}.source-row:first-child{border-top:0}.settings-danger .settings-actions{margin-top:12px}}
-    `;
-    document.head.appendChild(style);
-  }
 
   // Distinguishes "the fetch failed" from "there are genuinely zero rules"
   // -- State's whole thesis is not collapsing unknown into a false zero, so
@@ -246,5 +205,5 @@
     if(action==='delete-project'){control.disabled=true;const {name,projectId}=activeProjectInfo();showSettingsDialog(`<span class="eyebrow">Deleting</span><h2 id="dialogTitle">Deleting ${esc(name)}…</h2><p>This page reloads once it's done.</p>`);try{await api()?.deleteProject?.(projectId);window.location.reload();}catch(error){console.error('Could not delete project.',error);control.disabled=false;showSettingsDialog(`<span class="eyebrow">Couldn't delete project</span><h2 id="dialogTitle">${esc(name)} was not deleted.</h2><p>${esc(error.message)}</p><div class="dialog-actions"><button class="btn secondary" type="button" data-action="close-dialog">Close</button></div>`);}}
   });
 
-  styles();const settingsNav=document.querySelector('.sidebar-nav [data-view="settings"]');let settingsWasActive=!!settingsNav?.classList.contains('active');if(settingsWasActive)load();if(settingsNav){new MutationObserver(()=>{const active=settingsNav.classList.contains('active');if(active&&!settingsWasActive)load();settingsWasActive=active;}).observe(settingsNav,{attributes:true,attributeFilter:['class']});}
+  const settingsNav=document.querySelector('.sidebar-nav [data-view="settings"]');let settingsWasActive=!!settingsNav?.classList.contains('active');if(settingsWasActive)load();if(settingsNav){new MutationObserver(()=>{const active=settingsNav.classList.contains('active');if(active&&!settingsWasActive)load();settingsWasActive=active;}).observe(settingsNav,{attributes:true,attributeFilter:['class']});}
 })();

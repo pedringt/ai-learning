@@ -24,7 +24,7 @@ class QualityEvalDatasetTests(unittest.TestCase):
         self.assertTrue(any(not scenario.review_needed for scenario in REVIEW_SCENARIOS))
         self.assertTrue(any(scenario.must_preserve_uncertainty for scenario in REVIEW_SCENARIOS))
         self.assertTrue(any(scenario.severity == "high" for scenario in REVIEW_SCENARIOS))
-        self.assertEqual(len(REVIEW_SCENARIOS), 13)
+        self.assertEqual(len(REVIEW_SCENARIOS), 16)  # +3 from the Oct 9 Cowork pass (#477, #480, QA-11)
 
     def test_review_expectations_are_internally_consistent(self):
         for scenario in REVIEW_SCENARIOS:
@@ -239,3 +239,29 @@ class ErrorAccountingTests(unittest.TestCase):
         self.assertEqual(metrics["errors"], 1)
         self.assertEqual(metrics["overall_pass_rate"], 1.0)  # only the completed case is scored
         self.assertEqual(metrics["high_severity_failures"], 1)  # the errored high-severity case fails closed
+
+
+def test_review_prose_reads_values_not_column_names():
+    """The first _review_prose iterated mapping rows and returned column names, so
+    forbidden_review_phrases (#480) and required_review_phrases (QA-11) never checked anything."""
+    from eval.quality_harness import _close, _new_test_connection, _review_prose
+    connection = _new_test_connection()
+    try:
+        connection.execute("INSERT INTO review_issues(id,review_type,decision_question,why_consequential,status) "
+                           "VALUES ('r1','proposed_update','Should the budget be recorded?','Finance approved it','open')")
+        prose = _review_prose(connection, ["r1"])
+        assert "Should the budget be recorded?" in prose and "Finance approved it" in prose
+        assert "decision_question" not in prose
+    finally:
+        _close(connection)
+
+
+def test_rationale_check_ignores_the_proposed_statement():
+    """QA-11 case: the amount in the proposed statement must not satisfy the rationale check."""
+    from eval.quality_harness import ReviewQualityResult
+    from eval.review_interpretation_scenarios import SCENARIOS
+    scenario = [s for s in SCENARIOS if s.id == "review_rationale_states_what_evidence_establishes"][0]
+    base = dict(scenario=scenario, review_recommended=True, observed_action="update_state", processing_status="processed",
+                proposed_state_text="The pilot budget is approved at $40,000.", review_prose="The pilot budget is approved at $40,000.")
+    assert not ReviewQualityResult(**base, rationale_text="Implementation planning depends on a known budget ceiling.").passed
+    assert ReviewQualityResult(**base, rationale_text="Finance approved $40,000 for discovery and the first phase.").passed

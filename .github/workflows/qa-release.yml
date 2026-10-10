@@ -1,7 +1,17 @@
 name: State QA Release
 
 on:
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      base_ref:
+        description: Compare against this ref to decide whether the paid eval is needed (use origin/main before a promotion)
+        required: false
+        default: origin/staging
+      force_real_model:
+        description: Run the paid real-model eval even if no model-sensitive file changed
+        type: boolean
+        required: false
+        default: false
 
 permissions:
   contents: read
@@ -26,7 +36,8 @@ jobs:
     env:
       STATE_TEST_POSTGRES_URL: postgresql://postgres:postgres@localhost:5432/state_question_tests
       ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-      QA_BASE_REF: origin/staging
+      QA_BASE_REF: ${{ inputs.base_ref || 'origin/staging' }}
+      QA_FORCE_REAL_MODEL: ${{ inputs.force_real_model && '1' || '0' }}
     steps:
       - uses: actions/checkout@v4
         with:

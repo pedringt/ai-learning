@@ -17,8 +17,7 @@ body.v88-dark .topbar{background:rgba(16,16,20,.96)}
 .brand-button{color:inherit;text-decoration:none}.brand{font-weight:800;font-size:17px}.brand span{color:var(--purple)}
 .nav{display:flex;gap:5px;flex-wrap:wrap}.nav a{color:inherit;text-decoration:none;padding:9px 11px;border-radius:9px;font-size:13px;font-weight:700}.nav a:hover{background:var(--softp);color:var(--purple)}
 .top-actions{display:flex;align-items:center;gap:8px}
-.theme-toggle{border:1px solid var(--border);background:var(--card);color:var(--ink);border-radius:999px;padding:8px 11px;cursor:pointer;font-size:12px;font-weight:800}
-.theme-toggle:hover{background:var(--softp);color:var(--purple)}
+
 #v922MobileNav{display:none;border:1px solid var(--border);background:var(--card);color:var(--ink);border-radius:9px;padding:9px 11px;font-size:13px}
 @media(max-width:860px){.nav{display:none}#v922MobileNav{display:block}}
 
@@ -40,9 +39,6 @@ body.v88-dark .card,body.v88-dark .band{box-shadow:none}
 .grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;align-items:start;margin-top:14px}
 @media(max-width:720px){.grid2{grid-template-columns:1fr}}
 
-.backlink{display:inline-flex;align-items:center;margin-bottom:18px;color:var(--purple);font-weight:800;text-decoration:none;font-size:13px}
-.backlink:hover{text-decoration:underline}
-
 /* discovery-question cards */
 .qcard{border:1px solid var(--border);border-left:3px solid var(--purple);background:var(--softp);border-radius:10px;padding:13px 16px;margin:10px 0}
 .qcard b.qnum{display:block;font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--purple);margin-bottom:4px}
@@ -51,8 +47,7 @@ body.v88-dark .card,body.v88-dark .band{box-shadow:none}
 
 /* metrics blocks */
 .metric{border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin:12px 0;background:var(--card)}
-.metric .metric-target{font-size:14.5px;margin-bottom:4px}
-.metric .metric-target b{color:var(--purple)}
+
 .metric .shift{margin-top:8px;padding-top:8px;border-top:1px dashed var(--border);font-size:13px;color:var(--muted);font-style:italic}
 
 /* diagram: numbered vertical sequence, color-coded by who owns each step (AI/system, human, customer),
@@ -96,7 +91,6 @@ body.v88-dark .card,body.v88-dark .band{box-shadow:none}
 
 .callout{border:1px solid var(--border);border-left:4px solid var(--purple2);background:var(--softp);border-radius:12px;padding:15px 17px;margin:16px 0}
 .callout p:last-child{margin-bottom:0}
-.back-top{display:inline-block;margin-top:30px;padding-top:16px;border-top:1px solid var(--border);width:100%;font-size:12px;font-weight:800}
 
 .decision-table{width:100%;border-collapse:collapse;margin:14px 0 4px;font-size:13.5px}
 .decision-table th,.decision-table td{padding:12px 14px;border:1px solid var(--border);text-align:left;vertical-align:top}
@@ -105,7 +99,7 @@ body.v88-dark .card,body.v88-dark .band{box-shadow:none}
 .boundary-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:14px 0}
 .boundary-card{border:1px solid var(--border);border-radius:12px;padding:14px;background:var(--card)}
 .boundary-card strong{display:block;margin-bottom:6px;font-size:13px}
-.boundary-card p{margin:0!important;color:var(--muted);font-size:12.5px!important}
+.boundary-card p{margin:0;color:var(--muted);font-size:12.5px}
 @media(max-width:720px){.boundary-grid{grid-template-columns:1fr}.decision-table{display:block;overflow-x:auto}}
 </style>
 <link href="site-shell.css" rel="stylesheet"/>
@@ -132,7 +126,9 @@ body.v88-dark .card,body.v88-dark .band{box-shadow:none}
     }
   })();
 </script>
-<style id="rd-hold">html.rd-pending body{visibility:hidden}</style><script>document.documentElement.classList.add("rd-pending");setTimeout(function(){document.documentElement.classList.remove("rd-pending")},2500)</script></head><body>
+<link rel="stylesheet" href="final-freeze-polish.css"><!-- was injected by site-shell.js until #451 -->
+<link rel="stylesheet" href="site-redesign.css?v=451-head"><!-- render-blocking in <head> since #451: no rd-pending hide/reveal needed -->
+</head><body>
 <div class="topbar"><div class="topinner"><a class="brand-button" href="index.html"><span class="brand">Context <span>Switch</span></span></a><nav aria-label="Primary pages" class="nav"><a href="index.html">Home</a><a aria-current="page" href="index.html#portfolio">Applied Work</a><a href="index.html#learn">Learning Library</a></nav><div class="top-actions"><select aria-label="Choose page" id="v922MobileNav"><option value="index.html">Home</option><option selected value="index.html#portfolio">Applied Work</option><option value="index.html#learn">Learning Library</option></select></div></div></div>
 <main class="case-shell site-page">
 <nav class="site-breadcrumb" aria-label="Breadcrumb">
@@ -229,6 +225,4 @@ body.v88-dark .card,body.v88-dark .band{box-shadow:none}
 
 <footer class="case-study-footer"><a href="index.html#portfolio">Back to Applied Work →</a></footer>
 </main>
-<script defer src="site-shell.js"></script>
-<link href="site-redesign.css?v=portfolio-footer-review-3" rel="stylesheet" onload="document.documentElement.classList.remove('rd-pending')" onerror="document.documentElement.classList.remove('rd-pending')">
-<link href="portfolio-shape-polish.css?v=portfolio-footer-review-3" rel="stylesheet"></body></html>
+<script defer src="site-shell.js"></script></body></html>

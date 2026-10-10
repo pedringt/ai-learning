@@ -168,7 +168,10 @@ def test_anthropic_prompt_is_compact_and_does_not_repeat_json_skeleton():
     # existing Review and supersede stale pending proposals. The deterministic
     # suite covers that behavior directly; this small headroom keeps the
     # compactness guard meaningful without rejecting the required contract.
-    assert len(prompt) < 11000
+    # 11000 -> 11400 (2026-10-09): two compact rules from the Oct 9 Cowork pass, link-not-duplicate
+    # for an already-tracked unknown (#477) and planned != done (#480), measured before/after with
+    # the paid review-interpretation eval (results on the issues).
+    assert len(prompt) < 11400
 
 
 def test_provider_output_schema_stays_below_anthropic_complexity_budget():

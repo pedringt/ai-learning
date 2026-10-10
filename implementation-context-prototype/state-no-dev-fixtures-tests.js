@@ -9,6 +9,9 @@ function check(name,ok,detail=''){if(ok){pass++;console.log('ok',name)}else{fail
 const shipped=fs.readdirSync(dir).filter(f=>/^(context|state-shell).*\.(js)$/.test(f));
 const offenders=shipped.filter(f=>/n-stress-|Stress test:|seedStressNotes/.test(fs.readFileSync(path.join(dir,f),'utf8')));
 check('no shipped module seeds stress-test notes into the app',offenders.length===0,offenders.join(', '));
-check('the modules that were checked are the ones the app loads',shipped.length>=28,`${shipped.length} files`);
+// Every script index.html loads must have been scanned (a count floor broke as #450 deleted patch layers).
+const loaded=[...new Set(fs.readFileSync(path.join(dir,'index.html'),'utf8').match(/(context-[a-z0-9-]+|state-shell)\.js/g)||[])];
+const unscanned=loaded.filter(f=>!shipped.includes(f));
+check('the modules that were checked are the ones the app loads',loaded.length>=10&&unscanned.length===0,`loaded ${loaded.length}, unscanned: ${unscanned.join(', ')}`);
 console.log(`\n${pass} passed, ${fail} failed`);
 if(fail)process.exit(1);

@@ -467,6 +467,7 @@ def _seed_accepted_history(connection) -> int:
 
 
 def _bootstrap_project(connection, *, project_id: str, project_name: str, areas, items, questions, reviews, resolved_reviews,
+                        questions_created_at: str | None = None,
                         manage_transaction: bool = True, seed_history=None, ask_evidence=(), ask_rules=()) -> dict[str, int]:
     """state.md #114: the shared engine behind bootstrap_demo_data() (Northstar)
     and bootstrap_juniper_demo_data() (Juniper Office Move) -- same insertion
@@ -615,6 +616,11 @@ def _bootstrap_project(connection, *, project_id: str, project_name: str, areas,
                         "INSERT INTO questions(id,text,status,blocking,blocks,origin) VALUES (?,?,'open',?,?,?)",
                         (qid, text, blocking, blocks, origin),
                     )
+                if questions_created_at:
+                    # #485: without this every demo Question was dated at seed time, so a freshly seeded
+                    # project (staging re-seeds on each deploy) showed them all as created "today" and Ask
+                    # read them as new activity. They are tracked from the start of the demo story.
+                    connection.execute("UPDATE questions SET created_at=? WHERE id=?", (questions_created_at, qid))
                 counts["questions"] += 1
         for review in reviews:
             rid = review["id"]
@@ -750,6 +756,7 @@ def bootstrap_demo_data(connection, *, manage_transaction: bool = True) -> dict[
         connection, project_id="northstar", project_name="Northstar", areas=AREAS, items=ITEMS, questions=QUESTIONS,
         reviews=REVIEWS, resolved_reviews=RESOLVED_REVIEWS, manage_transaction=manage_transaction,
         seed_history=_seed_accepted_history, ask_evidence=ASK_EVIDENCE, ask_rules=ASK_RULES,
+        questions_created_at="2026-08-18 09:00:00",  # the morning of Northstar's first demo note
     )
 
 
@@ -762,6 +769,7 @@ def bootstrap_juniper_demo_data(connection, *, manage_transaction: bool = True) 
         connection, project_id="juniper", project_name="Juniper Office Move", areas=JUNIPER_AREAS, items=JUNIPER_ITEMS,
         questions=JUNIPER_QUESTIONS, reviews=JUNIPER_REVIEWS, resolved_reviews=JUNIPER_RESOLVED_REVIEWS,
         manage_transaction=manage_transaction,
+        questions_created_at="2026-09-04 09:00:00",  # the morning of Juniper's first demo note
     )
 
 

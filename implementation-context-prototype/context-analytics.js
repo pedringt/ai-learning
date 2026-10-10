@@ -171,10 +171,3 @@
   }
 })();
 
-/* Ask already links cited records inline. Hide the duplicate grounding appendix. */
-(function () {
-  var style = document.createElement('style');
-  style.id = 'state-ask-redundancy-cleanup';
-  style.textContent = '#askStateDrawer .ask-grounding,#askStateDrawer .ask-state-actions{display:none!important}';
-  document.head.appendChild(style);
-})();

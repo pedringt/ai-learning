@@ -13,6 +13,7 @@ from typing import Any
 
 from database_migration_backed import get_test_db
 from interpretation_trace import TracePolicy, run_traced_interpretation
+from question_review_service import matching_open_question
 from ask_provider import LiveAskProvider
 from ask_service import run_ask
 from eval.review_interpretation_scenarios import ReviewInterpretationScenario
@@ -71,6 +72,8 @@ class ReviewQualityResult:
     trace_id: str = ""
     trace_path: str = ""
     proposed_state_text: str = ""
+    review_prose: str = ""
+    rationale_text: str = ""
     error: str = ""
 
     @property
@@ -94,6 +97,13 @@ class ReviewQualityResult:
                 return False
             if any(_normalize(phrase) in text for phrase in self.scenario.forbidden_state_update_phrases):
                 return False
+        prose = _normalize(self.review_prose)
+        if any(_normalize(phrase) in prose for phrase in self.scenario.forbidden_review_phrases):
+            return False
+        rationale = _normalize(self.rationale_text)
+        if not all(any(_normalize(option) in rationale for option in ((r,) if isinstance(r, str) else r))
+                   for r in self.scenario.required_rationale_phrases):
+            return False
         return True
 
     @property
@@ -158,12 +168,45 @@ def _observed_review_outcome(connection, review_ids: list[str]) -> tuple[str, st
     if state_changes:
         return "update_state", proposed_state_text
     if proposed_questions:
+        # #477: a suggested Question whose text matches an open one is offered as "Link existing Question".
+        texts = connection.execute(
+            f"SELECT text FROM proposed_questions WHERE review_id IN ({placeholders}) AND status='pending'",
+            tuple(review_ids),
+        ).fetchall()
+        if any(matching_open_question(connection, row["text"]) for row in texts):
+            return "link_existing_question", ""
         return "open_question", ""
     if linked_questions:
         return "answer_question", ""
     if risk_reviews:
         return "state_at_risk", ""
     return "preserve_evidence_only", ""
+
+
+def _review_prose(connection, review_ids: list[str]) -> str:
+    if not review_ids:
+        return ""
+    placeholders = ",".join("?" for _ in review_ids)
+    # Read columns by name: the test database returns mapping rows, and iterating one yields the
+    # column NAMES (the first version of this did that, so every prose check compared against
+    # "decision_question why_consequential" and could never match).
+    parts = []
+    for row in connection.execute(
+            f"SELECT decision_question, why_consequential FROM review_issues WHERE id IN ({placeholders})", tuple(review_ids)).fetchall():
+        parts += [str(row["decision_question"] or ""), str(row["why_consequential"] or "")]
+    for row in connection.execute(
+            f"SELECT proposed_statement, rationale FROM proposed_state_changes WHERE review_id IN ({placeholders})", tuple(review_ids)).fetchall():
+        parts += [str(row["proposed_statement"] or ""), str(row["rationale"] or "")]
+    return " ".join(p for p in parts if p)
+
+
+def _rationale_text(connection, review_ids: list[str]) -> str:
+    if not review_ids:
+        return ""
+    placeholders = ",".join("?" for _ in review_ids)
+    rows = connection.execute(
+        f"SELECT rationale FROM proposed_state_changes WHERE review_id IN ({placeholders})", tuple(review_ids)).fetchall()
+    return " ".join(str(row["rationale"] or "") for row in rows if row["rationale"])
 
 
 def run_review_quality_scenario(scenario: ReviewInterpretationScenario, provider) -> ReviewQualityResult:
@@ -182,6 +225,8 @@ def run_review_quality_scenario(scenario: ReviewInterpretationScenario, provider
         process_result = traced.process_result
         review_ids = list(process_result.review_ids)
         observed_action, proposed_state_text = _observed_review_outcome(connection, review_ids)
+        review_prose = _review_prose(connection, review_ids)
+        rationale_text = _rationale_text(connection, review_ids)
         return ReviewQualityResult(
             scenario=scenario,
             review_recommended=bool(review_ids),
@@ -190,6 +235,8 @@ def run_review_quality_scenario(scenario: ReviewInterpretationScenario, provider
             trace_id=traced.trace_id,
             trace_path=traced.trace_path or "",
             proposed_state_text=proposed_state_text,
+            review_prose=review_prose,
+            rationale_text=rationale_text,
         )
     except Exception as exc:
         return ReviewQualityResult(

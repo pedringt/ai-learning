@@ -1,6 +1,9 @@
 (() => {
   const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const norm = s => String(s).toLowerCase().replace(/[’']/g,'').replace(/[^a-z0-9\s]/g,' ').replace(/\s+/g,' ').trim();
+  // #476: the API sends UTC timestamps without a zone ("2026-10-10 00:40:00"), which
+  // browsers read as local time, so evening actions west of UTC showed tomorrow's date.
+  const parseServerTime = value => { const raw=String(value); const naive=/^(\d{4}-\d{2}-\d{2})[ T](\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?)$/.exec(raw); return new Date(naive?`${naive[1]}T${naive[2]}Z`:raw); };
   const todayISO = () => { const d=new Date(); const pad=n=>String(n).padStart(2,'0'); return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`; };
   const isoValue = item => item?.dateISO || item?.createdISO || '';
   const sortDateDesc = (a,b) => isoValue(b).localeCompare(isoValue(a));
@@ -16,7 +19,7 @@
     if(!value)return null;
     const raw=String(value);
     if(/^\d{4}-\d{2}-\d{2}$/.test(raw))return raw;
-    const d=new Date(raw);
+    const d=parseServerTime(raw);
     if(Number.isNaN(d.getTime()))return null;
     const pad=n=>String(n).padStart(2,'0');
     return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
@@ -58,7 +61,7 @@
     const active=dateFilter!=='all'||statusFilter!=='all'||!!notesSearch;
     if(!active)return '';
     const dateLabels={today:'Today','7':'Last 7 days','30':'Last 30 days'};
-    const statusLabels={draft:'Draft',pending:'In review',reviewed:'Reviewed'};
+    const statusLabels={draft:'Draft',pending:'In review',reviewed:'Processed'};
     const parts=[];
     if(dateFilter!=='all')parts.push(dateLabels[dateFilter]);
     if(statusFilter!=='all')parts.push(statusLabels[statusFilter]);
@@ -84,7 +87,8 @@
       const count=n.reviewIds.length;
       return `<button type="button" class="text-button note-review-link" data-action="open-note-reviews" data-note-id="${n.id}" aria-label="Open ${count===1?'the Review':`${count} Reviews`} for this note">Review proposed update${count>1?` · ${count}`:''} →</button>`;
     }
-    const status=`<span class="note-status note-status--${statusClass}">${noteStatusLabel(n)}</span>`;
+    // "No review needed" reads as neutral, not as a pending state (#450, from context-feedback-pass-3.js).
+    const status=`<span class="note-status note-status--${statusClass}${n.status==='no_review_needed'?' is-neutral-status':''}">${noteStatusLabel(n)}</span>`;
     if(n.status==='accepted' && (n.historyIds||[]).length){
       return `${status}<button type="button" class="text-button note-history-link" data-action="open-note-history" data-note-id="${n.id}" aria-label="View accepted History from this note">View change →</button>`;
     }
@@ -117,7 +121,17 @@
       : expanded
         ? `<p class="note-full-text">${esc(n.text)}</p>${!editable?'<p class="note-immutable-hint"><strong>Submitted note</strong> · Preserved as project evidence and not editable.</p>':''}<div class="inline-actions note-actions">${editable?`<button class="text-button" data-action="edit-note" data-note-id="${n.id}">Edit</button>`:''}${reviewAction}<button class="text-button" data-action="copy-note" data-note-id="${n.id}">Copy</button></div>`
         : `<p>${esc(preview)}</p><span class="note-expand-label">Open note →</span>`;
-    return `<article class="simple-note note-index-row ${expanded?'is-expanded':''}" data-action="toggle-note" data-note-id="${n.id}" tabindex="0"><span class="note-date">${esc(n.date)}</span><div class="note-index-main"><h3>${esc(n.title)}</h3><span class="note-source">${esc(n.source)}</span>${body}</div><div class="note-index-status">${statusBadge}</div></article>`;
+    return `<article class="simple-note note-index-row ${expanded?'is-expanded':''}" data-action="toggle-note" data-note-id="${n.id}" tabindex="0">${noteFeedIcon(n)}<div class="note-index-main"><h3>${esc(n.title)}</h3><span class="note-date">${esc(n.date)}</span><span class="note-source">${esc(n.source)}</span>${body}${(n.linkedQuestions||[]).map(q=>`<p class="note-linked-question"><span>Linked to</span> ${esc(q.text)}</p>`).join('')}</div><div class="note-index-status">${statusBadge}</div></article>`;
+  }
+
+  // Feed icon for a Notes row: Slack notes get the Slack mark, project notes are tinted (#450, from context-feedback-pass-2.js).
+  const NOTE_ICONS={
+    slack:'<svg viewBox="0 0 24 24"><path d="M9 3a2 2 0 0 1 2 2v4H9a2 2 0 1 1 0-4V3zM21 9a2 2 0 0 1-2 2h-4V9a2 2 0 1 1 4 0h2zM15 21a2 2 0 0 1-2-2v-4h2a2 2 0 1 1 0 4v2zM3 15a2 2 0 0 1 2-2h4v2a2 2 0 1 1-4 0H3z"/></svg>',
+    note:'<svg viewBox="0 0 24 24"><path d="M6 3h9l3 3v15H6z"/><path d="M9 10h6M9 14h6"/></svg>'
+  };
+  function noteFeedIcon(n){
+    const source=String(n.source??'').trim()||String(n.title??'').trim();
+    return `<span class="note-feed-icon${/project note/i.test(source)?' is-project':''}">${/slack/i.test(source)?NOTE_ICONS.slack:NOTE_ICONS.note}</span>`;
   }
 
   function draftNoteRow(n){
@@ -129,7 +143,7 @@
   function render(notes,ui){
     const composer=ui.noteComposerOpen?`<section class="note-composer"><input id="newNoteTitle" class="dialog-input" placeholder="Note title" aria-label="Note title"><textarea id="newNoteText" rows="8" aria-label="New note text" placeholder="Write anything you want to keep with the project. Saving a note does not change project state."></textarea><div class="inline-actions"><button class="btn primary" data-action="save-new-note">Save note</button><button class="btn secondary" data-action="cancel-new-note">Cancel</button></div></section>`:'';
     const activeFilter=ui.notesFilter||'all';
-    const filters=`<label class="notes-status-filter"><span>Status</span><select id="notesStatusFilter" aria-label="Filter notes by status"><option value="all"${activeFilter==='all'?' selected':''}>All</option><option value="draft"${activeFilter==='draft'?' selected':''}>Draft</option><option value="pending"${activeFilter==='pending'?' selected':''}>In review</option><option value="reviewed"${activeFilter==='reviewed'?' selected':''}>Reviewed</option></select></label>`;
+    const filters=`<label class="notes-status-filter"><span>Status</span><select id="notesStatusFilter" aria-label="Filter notes by status"><option value="all"${activeFilter==='all'?' selected':''}>All</option><option value="draft"${activeFilter==='draft'?' selected':''}>Draft</option><option value="pending"${activeFilter==='pending'?' selected':''}>In review</option><option value="reviewed"${activeFilter==='reviewed'?' selected':''}>Processed</option></select></label>`;
     const dateFilter=ui.notesDateFilter||'all';
     const dateChip=(f,label)=>`<button class="filter${dateFilter===f?' active':''}" data-date-filter="${f}" aria-pressed="${dateFilter===f?'true':'false'}">${label}</button>`;
     const dateFilters=`<div class="filters notes-date-filters" aria-label="Filter notes by date">${dateChip('all','All time')}${dateChip('today','Today')}${dateChip('7','7 days')}${dateChip('30','30 days')}</div>`;
@@ -137,7 +151,7 @@
     const visibleNotes=notesLoading?[]:filteredNotes(notes,ui);
     const liveWarning=ui.evidenceStatus==='error'||ui.draftsStatus==='error'?`<div class="collection-warning"><strong>Some live Notes data is unavailable.</strong><span>${ui.evidenceStatus==='error'?'Saved Evidence could not be loaded. ':''}${ui.draftsStatus==='error'?'Saved drafts could not be loaded.':''}</span><button class="text-button" data-action="retry-hydration">Try again</button></div>`:'';
     const filterSummary=notesFilterSummary(visibleNotes,notes.length,ui);
-    return `<section class="page collection-page notes-page"><div class="page-head"><div><span class="eyebrow">Project memory</span><h2>Notes</h2><p class="notes-product-purpose">Keep working notes and browse information State has received. Use Review, Current State, and History for downstream detail.</p><p class="notes-disclosure">Northstar's seed data mixes notes adapted from my real discovery/product work with simulated project notes created to exercise retrieval, review, and maintained-context workflows.</p></div><div class="notes-add-actions"><button class="btn primary notes-add" data-action="add-info">+ Add Evidence</button><button class="btn secondary notes-add" data-action="new-note">+ Draft note</button></div></div><p class="notes-add-hint"><strong>Add Evidence</strong> is analyzed right away and can surface a Review or Question. <strong>Draft note</strong> stays private until you send it for review.</p>${liveWarning}${composer}${notesLoading?'<p class="workspace-section-hint" role="status">Loading Notes…</p>':`<div class="notes-toolbar notes-toolbar--stacked"><div class="notes-filter-row">${dateFilters}${filters}</div><input class="notes-search" id="notesSearch" type="search" placeholder="Search all notes" aria-label="Search notes" value="${esc(ui.notesSearch||'')}"></div>${filterSummary}<div class="note-results simple-notes" id="notesList">${visibleNotes.length?visibleNotes.map(n=>simpleNote(n,ui.expandedNotes,ui.editingNoteId)).join(''):'<div class="empty-state"><h3>Nothing here.</h3><p>No notes match these filters.</p></div>'}</div>`}</section>`;
+    return `<section class="page collection-page notes-page"><div class="page-head"><div><span class="eyebrow">Project memory</span><h2>Notes</h2><p class="notes-product-purpose">Keep working notes and browse information State has received. Use Review, Current State, and History for downstream detail.</p></div><div class="notes-add-actions"><button class="btn primary notes-add" data-action="add-info">+ Add Evidence</button><button class="btn secondary notes-add" data-action="new-note">+ Draft note</button></div></div><p class="notes-add-hint"><strong>Add Evidence</strong> is analyzed right away and can surface a Review or Question. <strong>Draft note</strong> stays private until you send it for review.</p>${liveWarning}${composer}${notesLoading?'<p class="workspace-section-hint" role="status">Loading Notes…</p>':`<div class="notes-toolbar notes-toolbar--stacked"><div class="notes-filter-row">${dateFilters}${filters}</div><input class="notes-search" id="notesSearch" type="search" placeholder="Search all notes" aria-label="Search notes" value="${esc(ui.notesSearch||'')}"></div>${filterSummary}<div class="note-results simple-notes" id="notesList">${visibleNotes.length?visibleNotes.map(n=>simpleNote(n,ui.expandedNotes,ui.editingNoteId)).join(''):'<div class="empty-state"><h3>Nothing here.</h3><p>No notes match these filters.</p></div>'}</div>`}</section>`;
   }
 
   window.STATE_NOTES_VIEW = Object.freeze({render,filteredNotes,notesFilterSummary,simpleNote,draftNoteRow});

@@ -19,6 +19,10 @@ const PROJECTS={
     vercelProjectId:'prj_SKJS8qSkSAiceK5qZ4GkcZEbI41H',
     neonProjectEnv:'PROJECT_HEALTH_NEON_PROJECT_NARC',
     aiTelemetry:{kind:'none'}
+  },
+  'authority-lab':{
+    vercelProjectId:'prj_DEsIbVajmdgFqxtVFeZLQsa6QJ69',
+    aiTelemetry:{kind:'none'}
   }
 };
 
@@ -190,6 +194,7 @@ async function aiTelemetry(project){
 }
 
 async function neonHealth(project){
+  if(!project.neonProjectEnv) return {configured:false,not_applicable:true,reason:'This product does not use a database.'};
   const token=process.env.NEON_API_KEY;
   const projectId=process.env[project.neonProjectEnv];
   if(!token||!projectId){

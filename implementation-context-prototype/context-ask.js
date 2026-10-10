@@ -164,6 +164,19 @@
     }
     return out;
   }
+  // #478: the draft is the model's raw text until the server's cleanup replaces it with the
+  // final answer; scrub the prompt's record format ("blocking=true; blocks:", "Review type:
+  // open_question", "decision_question:", record ids) so it doesn't flash on screen.
+  function cleanDraft(value){
+    return String(value||'')
+      .replace(/\b[a-z_]+=(?:true|false|null|none|\d+)\b[;,]?/gi,'')
+      .replace(/\b(?:decision_question|why_consequential|review_type|record_type|record_id|evidence_ids|affected_state_ids|source_type)\s*:?/gi,'')
+      .replace(/\bReview type:\s*/gi,'')
+      .replace(/\b(?:open_question|proposed_update|state_at_risk|missing_understanding)\b/g,m=>m.replace(/_/g,' '))
+      .replace(/\bdemo-(?:(?:northstar|juniper)-)?(?:review|state|question|evidence|proposal|history)-[a-z0-9-]+\b/gi,'')
+      .replace(/(?<![A-Za-z0-9_-])(?:k|q|jq|r|ask-evidence)-[a-z0-9-]+\b/g,'')
+      .replace(/\(\s*[:;,]\s*/g,'(').replace(/\(\s*\)/g,'').replace(/\s{2,}/g,' ');
+  }
   function renderStream(raw,preview=null){
     const fields=streamedFields(raw||'');
     if(!fields.length){
@@ -182,11 +195,11 @@
     let body='';
     for(const field of fields){
       const cursor=field.complete?'':'<span class="ask-stream-cursor" aria-hidden="true"></span>';
-      if(field.key==='headline')body+=`<h2>${esc(field.value)}${cursor}</h2>`;
-      else if(field.key==='summary')body+=`<p class="result-lede">${esc(field.value)}${cursor}</p>`;
-      else if(field.key==='title')body+=`<h3 class="ask-stream-section-title">${esc(field.value)}${cursor}</h3>`;
-      else if(field.key==='text')body+=`<div class="ask-stream-item">${esc(field.value)}${cursor}</div>`;
-      else if(field.key==='detail'&&field.value)body+=`<div class="ask-stream-detail">${esc(field.value)}${cursor}</div>`;
+      if(field.key==='headline')body+=`<h2>${esc(cleanDraft(field.value))}${cursor}</h2>`;
+      else if(field.key==='summary')body+=`<p class="result-lede">${esc(cleanDraft(field.value))}${cursor}</p>`;
+      else if(field.key==='title')body+=`<h3 class="ask-stream-section-title">${esc(cleanDraft(field.value))}${cursor}</h3>`;
+      else if(field.key==='text')body+=`<div class="ask-stream-item">${esc(cleanDraft(field.value))}${cursor}</div>`;
+      else if(field.key==='detail'&&field.value)body+=`<div class="ask-stream-detail">${esc(cleanDraft(field.value))}${cursor}</div>`;
     }
     return `<div class="ask-live-answer ask-streaming-draft" aria-busy="true"><div class="result-label">State Ask · Drafting</div>${body}</div>`;
   }
