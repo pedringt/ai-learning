@@ -13,6 +13,7 @@ from typing import Any
 
 from database_migration_backed import get_test_db
 from interpretation_trace import TracePolicy, run_traced_interpretation
+from question_review_service import matching_open_question
 from ask_provider import LiveAskProvider
 from ask_service import run_ask
 from eval.review_interpretation_scenarios import ReviewInterpretationScenario
@@ -71,6 +72,7 @@ class ReviewQualityResult:
     trace_id: str = ""
     trace_path: str = ""
     proposed_state_text: str = ""
+    review_prose: str = ""
     error: str = ""
 
     @property
@@ -94,6 +96,9 @@ class ReviewQualityResult:
                 return False
             if any(_normalize(phrase) in text for phrase in self.scenario.forbidden_state_update_phrases):
                 return False
+        prose = _normalize(self.review_prose)
+        if any(_normalize(phrase) in prose for phrase in self.scenario.forbidden_review_phrases):
+            return False
         return True
 
     @property
@@ -158,12 +163,30 @@ def _observed_review_outcome(connection, review_ids: list[str]) -> tuple[str, st
     if state_changes:
         return "update_state", proposed_state_text
     if proposed_questions:
+        # #477: a suggested Question whose text matches an open one is offered as "Link existing Question".
+        texts = connection.execute(
+            f"SELECT text FROM proposed_questions WHERE review_id IN ({placeholders}) AND status='pending'",
+            tuple(review_ids),
+        ).fetchall()
+        if any(matching_open_question(connection, row["text"]) for row in texts):
+            return "link_existing_question", ""
         return "open_question", ""
     if linked_questions:
         return "answer_question", ""
     if risk_reviews:
         return "state_at_risk", ""
     return "preserve_evidence_only", ""
+
+
+def _review_prose(connection, review_ids: list[str]) -> str:
+    if not review_ids:
+        return ""
+    placeholders = ",".join("?" for _ in review_ids)
+    parts = [" ".join(str(v or "") for v in row) for row in connection.execute(
+        f"SELECT decision_question, why_consequential FROM review_issues WHERE id IN ({placeholders})", tuple(review_ids)).fetchall()]
+    parts += [" ".join(str(v or "") for v in row) for row in connection.execute(
+        f"SELECT proposed_statement, rationale FROM proposed_state_changes WHERE review_id IN ({placeholders})", tuple(review_ids)).fetchall()]
+    return " ".join(parts)
 
 
 def run_review_quality_scenario(scenario: ReviewInterpretationScenario, provider) -> ReviewQualityResult:
@@ -182,6 +205,7 @@ def run_review_quality_scenario(scenario: ReviewInterpretationScenario, provider
         process_result = traced.process_result
         review_ids = list(process_result.review_ids)
         observed_action, proposed_state_text = _observed_review_outcome(connection, review_ids)
+        review_prose = _review_prose(connection, review_ids)
         return ReviewQualityResult(
             scenario=scenario,
             review_recommended=bool(review_ids),
@@ -190,6 +214,7 @@ def run_review_quality_scenario(scenario: ReviewInterpretationScenario, provider
             trace_id=traced.trace_id,
             trace_path=traced.trace_path or "",
             proposed_state_text=proposed_state_text,
+            review_prose=review_prose,
         )
     except Exception as exc:
         return ReviewQualityResult(

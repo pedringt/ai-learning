@@ -19,6 +19,7 @@ ExpectedAction = Literal[
     "answer_question_and_update_state",
     "update_state_and_open_question",
     "open_question",
+    "link_existing_question",
     "state_at_risk",
     "preserve_evidence_only",
 ]
@@ -38,6 +39,8 @@ class ReviewInterpretationScenario:
     allowed_actions: tuple[ExpectedAction, ...] = field(default_factory=tuple)
     required_state_update_phrases: tuple[str | tuple[str, ...], ...] = field(default_factory=tuple)
     forbidden_state_update_phrases: tuple[str, ...] = field(default_factory=tuple)
+    # Checked against all of the Review's prose (question, reasons, proposals, rationale).
+    forbidden_review_phrases: tuple[str, ...] = field(default_factory=tuple)
     should_change_state: bool = False
     should_answer_question: bool = False
     should_open_question: bool = False
@@ -198,5 +201,32 @@ SCENARIOS = (
         must_preserve_uncertainty=True,
         severity="high",
         rationale="Partial approval should be recorded at the approved scope. Keeping or reopening an unresolved broader Question is acceptable as long as the approved scope is not overstated."
+    ),
+    ReviewInterpretationScenario(
+        id="review_same_unknown_links_existing_question",
+        category="same_unknown_new_information",
+        evidence="Legal sync: the older MSA draft says prompts and outputs are retained for 90 days, while the vendor's email said 30 days. Security and Legal have not confirmed which applies.",
+        current_state=(("security", "The pilot stays read-only with human review of every draft."),),
+        open_questions=("What retention and deletion terms apply to pilot prompts and outputs?",),
+        expected_action="link_existing_question",
+        allowed_actions=("link_existing_question", "state_at_risk", "preserve_evidence_only"),
+        review_needed=True,
+        must_preserve_uncertainty=True,
+        severity="medium",
+        rationale="#477 (Cowork, Oct 9): conflicting claims about an unknown an open Question already tracks should link to that Question, not create a near-duplicate that loses its blocking status.",
+    ),
+    ReviewInterpretationScenario(
+        id="review_planned_action_not_stated_as_done",
+        category="planned_vs_completed",
+        evidence="Q3 planning: the team agreed the evaluation criteria and the sample definition need to be revised together before the next test round. No revision has been made yet.",
+        current_state=(("evaluation", "Evaluation uses the Q2 sample split, reported weekly against fixed criteria."),),
+        allowed_actions=("update_state", "state_at_risk", "open_question", "update_state_and_open_question"),
+        expected_action="update_state",
+        should_change_state=True,
+        forbidden_state_update_phrases=("was revised", "were revised", "revised q3", "redesigned", "redrawn from the revised"),
+        forbidden_review_phrases=("was revised", "were revised", "were redesigned", "was redesigned", "against the revised", "from the revised"),
+        must_preserve_uncertainty=True,
+        severity="high",
+        rationale="#480 (Cowork, Oct 9): an agreed future revision must not be proposed as already done.",
     ),
 )
