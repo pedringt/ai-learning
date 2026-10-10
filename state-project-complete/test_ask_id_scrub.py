@@ -103,3 +103,40 @@ def test_the_pool_helper_collects_ids_from_every_bucket_and_ignores_junk():
     pool = _candidate_pool_ids({"state": [{"id": "s1"}], "reviews": [{"id": "r1"}, {"nope": 1}], "rules": [{"id": "rule-1"}], "junk": "x", "questions": ["not a dict"]})
     assert pool == {"s1", "r1", "rule-1"}
     assert _candidate_pool_ids(None) == set()
+
+
+# --- #478: Cowork, Oct 9 ------------------------------------------------------
+
+from ask_authority_text import _source_type_labels
+
+
+def test_a_source_type_reads_as_words():
+    labels = _source_type_labels({"evidence": [{"id": "e-1", "source_type": "vendor_email"}]})
+    cleaned = _clean_visible_ask_text("Conflicts with current assumption (vendor_email from Sept 1 says 30 days).", set(), labels)
+    assert "vendor_email" not in cleaned and "vendor email from Sept 1" in cleaned
+
+
+def test_an_unrelated_snake_case_term_is_left_alone():
+    labels = _source_type_labels({"evidence": [{"id": "e-1", "source_type": "vendor_email"}]})
+    assert "feature_flag_beta" in _clean_visible_ask_text("Turn on feature_flag_beta first.", set(), labels)
+
+
+def test_a_stripped_id_leaves_no_empty_slot():
+    raw = "This conflicts with Current State (: Support Slack not approved; Slack source restricted by k-slack)."
+    cleaned = _clean_visible_ask_text(raw, {"k-slack"})
+    assert "(:" not in cleaned and "by )" not in cleaned and "by)" not in cleaned
+    assert "(Support Slack not approved; Slack source restricted)" in cleaned
+
+
+def test_key_value_pairs_from_the_prompt_format_are_removed():
+    cleaned = _clean_visible_ask_text("Retention question blocking=true; blocks: launch.", set())
+    assert "blocking=true" not in cleaned
+
+
+def test_review_type_values_read_as_words():
+    assert "open question" in _clean_visible_ask_text("Review type: open_question.", set())
+
+
+def test_a_real_parenthetical_with_a_preposition_inside_is_kept():
+    text = "The pilot (logged in by Security) continues"
+    assert _clean_visible_ask_text(text, set()) == text

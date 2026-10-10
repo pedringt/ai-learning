@@ -29,6 +29,7 @@ from ask_authority_text import (  # noqa: F401  (re-exported: tests and callers 
     _already_hedged,
     _candidate_pool_ids,
     _clean_visible_ask_text,
+    _source_type_labels,
     _governing_state_ngrams,
     _match_case,
     _quotes_governing_state,
@@ -554,6 +555,7 @@ def _validate_synthesis(
     }
     all_internal_ids = set().union(*allowed.values(), {x["id"] for x in context.get("rules", [])})
     all_internal_ids |= _candidate_pool_ids(candidates)          # ids the model was shown, selected or not (#247)
+    labels = _source_type_labels(candidates)                     # vendor_email -> vendor email (#478)
     canonical_reviews = {x["id"]: x for x in context.get("reviews", [])}
     canonical_questions = {x["id"]: x for x in context.get("questions", [])}
 
@@ -578,27 +580,27 @@ def _validate_synthesis(
         x.get("statement", "") for x in [*context.get("state", []), *((candidates or {}).get("state", []))]
     )
 
-    answer.headline = _clean_visible_ask_text(answer.headline, all_internal_ids) or "Project answer"
+    answer.headline = _clean_visible_ask_text(answer.headline, all_internal_ids, labels) or "Project answer"
     if has_pending_material:
         answer.headline = _soften_unearned_settled_words(answer.headline)
-    answer.summary = _clean_visible_ask_text(answer.summary, all_internal_ids) or "See the grounded project details below."
+    answer.summary = _clean_visible_ask_text(answer.summary, all_internal_ids, labels) or "See the grounded project details below."
     if has_pending_material:
         answer.summary = _soften_unearned_settled_prose(answer.summary, governing_ngrams)
     answer.suggested_refinements = [
         cleaned for value in answer.suggested_refinements
-        if (cleaned := _clean_visible_ask_text(value, all_internal_ids))
+        if (cleaned := _clean_visible_ask_text(value, all_internal_ids, labels))
     ]
 
     clean_sections = []
     for section in answer.sections:
-        section.title = _clean_visible_ask_text(section.title, all_internal_ids) or "Project context"
+        section.title = _clean_visible_ask_text(section.title, all_internal_ids, labels) or "Project context"
         if has_pending_material:
             section.title = _soften_unearned_settled_words(section.title)
         clean_items = []
         for item in section.items:
             if item.record_type == "none":
-                item.text = _clean_visible_ask_text(item.text, all_internal_ids) or "Project context"
-                item.detail = _clean_visible_ask_text(item.detail, all_internal_ids)
+                item.text = _clean_visible_ask_text(item.text, all_internal_ids, labels) or "Project context"
+                item.detail = _clean_visible_ask_text(item.detail, all_internal_ids, labels)
                 if has_pending_material:
                     item.text = _soften_unearned_settled_prose(item.text, governing_ngrams)
                     item.detail = _soften_unearned_settled_prose(item.detail, governing_ngrams)
@@ -616,8 +618,8 @@ def _validate_synthesis(
                     item.text = source["text"]
                     item.detail = source.get("blocks") if item.record_type == "blocking_question" else None
                 else:
-                    item.text = _clean_visible_ask_text(item.text, all_internal_ids) or "Project context"
-                    item.detail = _clean_visible_ask_text(item.detail, all_internal_ids)
+                    item.text = _clean_visible_ask_text(item.text, all_internal_ids, labels) or "Project context"
+                    item.detail = _clean_visible_ask_text(item.detail, all_internal_ids, labels)
                 clean_items.append(item)
         section.items = clean_items
         clean_sections.append(section)

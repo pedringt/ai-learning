@@ -380,11 +380,37 @@ def _candidate_pool_ids(candidates: Mapping[str, list[dict]] | None) -> set[str]
     return ids
 
 
-def _clean_visible_ask_text(value: str | None, internal_ids: set[str]) -> str | None:
+# #478: enum values that read fine as words once the underscores go. Source types are free
+# text in the data ("vendor_email"), so the candidates' own source types are added per Ask
+# (_source_type_labels); this fixed part covers the record types the prompt itself names.
+_ENUM_LABELS = {
+    "open_question": "open question", "proposed_update": "proposed update",
+    "state_at_risk": "state at risk", "missing_understanding": "missing understanding",
+    "manual_note": "project update", "working_note": "working note", "demo_seed": "project note",
+    "demo_history": "project note",
+}
+
+
+def _source_type_labels(candidates: Mapping[str, list[dict]] | None) -> dict[str, str]:
+    labels = dict(_ENUM_LABELS)
+    for bucket in (candidates or {}).values():
+        if isinstance(bucket, list):
+            for record in bucket:
+                source = record.get("source_type") if isinstance(record, dict) else None
+                if isinstance(source, str) and "_" in source and source not in labels:
+                    labels[source] = source.replace("_", " ")
+    return labels
+
+
+def _clean_visible_ask_text(value: str | None, internal_ids: set[str], labels: Mapping[str, str] | None = None) -> str | None:
     """Remove implementation identifiers from prose shown to users."""
     if value is None:
         return None
     text = str(value)
+    # #478: "blocking=true; blocks:" style key=value pairs copied from the prompt's record format.
+    text = re.sub(r"\b[a-z_]+=(?:true|false|null|none|\d+)\b[;,]?", "", text, flags=re.IGNORECASE)
+    for raw, label in sorted((labels or _ENUM_LABELS).items(), key=lambda kv: len(kv[0]), reverse=True):
+        text = re.sub(rf"(?<![A-Za-z0-9_]){re.escape(raw)}(?![A-Za-z0-9_])", label, text)
     # Remove exact IDs available to this Ask run first, then defensively strip
     # generated identifier shapes if a model echoes one outside record_id.
     for internal_id in sorted(internal_ids, key=len, reverse=True):
@@ -407,6 +433,12 @@ def _clean_visible_ask_text(value: str | None, internal_ids: set[str]) -> str | 
     # via live staging QA (2026-09-13). Only a parenthetical that is now
     # nothing but whitespace/punctuation is removed -- one with other real
     # words left inside ("(see the linked Review)") is untouched.
+    text = re.sub(r"\(\s*(?:[,;]\s*)*\)", "", text)
+    # #478: an id removed from "(: Support Slack not approved; restricted by k-slack)" leaves
+    # "(:" and a dangling "by )". Close those up rather than show an empty slot.
+    text = re.sub(r"\(\s*[:;,]\s*", "(", text)
+    text = re.sub(r"\s+(?:by|from|per|via|see)\s*([;,]?\s*\))", r"\1", text, flags=re.IGNORECASE)
+    text = re.sub(r"\s*[;,]\s*\)", ")", text)
     text = re.sub(r"\(\s*(?:[,;]\s*)*\)", "", text)
     text = re.sub(r"\s+([,.;:])", r"\1", text)
     text = re.sub(r"\s{2,}", " ", text).strip(" -–—:;,.")
