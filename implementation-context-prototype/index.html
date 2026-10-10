@@ -63,7 +63,7 @@
   <script>
     // Layer styles that the context-*.js scripts used to inject at runtime (#450). Must stay after
     // context-tool.css and the inline styles above so the cascade order is unchanged.
-    document.write('<link rel="stylesheet" href="' + window.__STATE_BASE + 'state-app.css?v=1">');
+    document.write('<link rel="stylesheet" href="' + window.__STATE_BASE + 'state-app.css?v=2">');
   </script>
 </head>
 <body>
@@ -85,7 +85,7 @@
       var local = location.protocol === 'file:';
       document.write('<script src="' + window.__STATE_BASE + 'state-shell.js"><\/script>');
       if(!local) document.write('<script src="/api/state-config.js"><\/script>');
-      var v='r118-current-state-feedback';
+      var v='r119-cowork-fixes';
       ['context-analytics.js','context-data.js','context-api.js','context-evidence-resilience.js','context-ask.js','context-ask-followup.js','context-notes-view.js','context-open-items-view.js','context-project-view.js','context-backend-sync.js','context-app.js','context-baseline.js','context-history.js','context-provenance.js','context-product-polish.js','context-ask-question-handoff.js','context-settings.js','context-ask-controls.js','context-layout.js'].forEach(function(file){document.write('<script src="'+window.__STATE_BASE+file+'?v='+v+'"><\/script>');});
       document.write('<script>requestAnimationFrame(function(){requestAnimationFrame(function(){document.documentElement.classList.remove("state-prepaint");clearTimeout(window.__stateRevealTimer);});});<\/script>');
     })();
