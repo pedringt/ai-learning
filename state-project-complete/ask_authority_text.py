@@ -148,6 +148,63 @@ def _words(text: str) -> list[str]:
     return _WORD_RE.findall(text.lower())
 
 
+class _GoverningState(frozenset):
+    """The three-word runs of the governing statements, plus each statement's words and
+    numbers for the attributive check below (#473). Still a frozenset, so callers and
+    tests that only need the runs are unaffected."""
+
+    statements: tuple = ()
+
+
+_NUMBER_RE = re.compile(r"\d[\d,.]*\d|\d")
+
+# Words that, directly before a settled word, make it attributive: "the approved move
+# budget", "earlier approved terms". Attributive use points at an existing thing rather
+# than asserting a new status ("the budget is approved at $95,000").
+_ATTRIBUTIVE_LEADS = frozenset({
+    "the", "a", "an", "this", "that", "these", "those", "its", "their", "our", "your",
+    "earlier", "previously", "already", "currently", "existing", "originally", "recorded",
+})
+_NOT_A_NOUN = frozenset({
+    "by", "for", "in", "at", "on", "to", "and", "or", "as", "with", "until", "under", "from",
+    "after", "before", "because", "but", "so", "if", "that", "which", "is", "are", "was", "were",
+})
+_ATTRIBUTIVE_REPLACEMENTS = {"approved": "proposed (not yet approved)"}
+
+
+def _numbers(text: str) -> set:
+    return {n.replace(",", "").rstrip(".") for n in _NUMBER_RE.findall(text)}
+
+
+def _attributive(text: str, match: "re.Match[str]") -> str | None:
+    """The noun right after an attributive settled word, or None if the use is not attributive."""
+    before = _words(text[:match.start()])[-1:]
+    after = _words(text[match.end():])[:1]
+    if not before or not after or before[0] not in _ATTRIBUTIVE_LEADS:
+        return None
+    noun = after[0]
+    if noun in _NOT_A_NOUN or noun.isdigit() or len(noun) < 3:
+        return None
+    return noun
+
+
+def _refers_to_governing_state(text: str, match: "re.Match[str]", governing) -> bool:
+    """#473: "Current State records the approved move budget at $85,000" paraphrases the
+    governing fact "The move budget is approved at $85,000…" without sharing a three-word
+    run, and was rewritten into "the proposed for approval (not yet approved) move budget".
+    An attributive settled word is spared when a governing statement uses the same word
+    about the same noun and every number in the sentence appears in that statement, so
+    "the approved move budget of $95,000" (a pending Review's figure) is still softened."""
+    statements = getattr(governing, "statements", ())
+    noun = _attributive(text, match)
+    if not statements or not noun:
+        return False
+    word = match.group(0).lower()
+    numbers = _numbers(text)
+    return any(word in tokens and noun in tokens and numbers <= statement_numbers
+               for tokens, statement_numbers, _grams in statements)
+
+
 def _governing_state_ngrams(statements) -> frozenset:
     """Every three-word run in the governing Current State statements (#227).
 
@@ -161,16 +218,35 @@ def _governing_state_ngrams(statements) -> frozenset:
     on lowercased alphanumeric words, so case, hyphens and punctuation don't matter.
     """
     grams: set = set()
+    parsed = []
     for statement in statements:
         tokens = _words(statement or "")
         grams.update(zip(tokens, tokens[1:], tokens[2:]))
-    return frozenset(grams)
+        parsed.append((frozenset(tokens), _numbers(statement or ""), frozenset(zip(tokens, tokens[1:], tokens[2:]))))
+    governing = _GoverningState(grams)
+    governing.statements = tuple(parsed)
+    return governing
 
 
 def _quotes_governing_state(text: str, match: "re.Match[str]", governing_ngrams: frozenset) -> bool:
-    """True if a three-word run around `match` appears in a governing state statement."""
+    """True if a three-word run around `match` appears in a governing state statement.
+
+    #473: the run alone is not enough when the sentence carries numbers. "The move budget
+    is approved at $95,000" shares "budget is approved" with the governing "...approved at
+    $85,000" but restates a pending Review's figure, so every number in the sentence must
+    also appear in a statement containing the run."""
     if not governing_ngrams:
         return False
+    statements = getattr(governing_ngrams, "statements", ())
+    numbers = _numbers(text)
+
+    def quoted(gram) -> bool:
+        if gram not in governing_ngrams:
+            return False
+        if not numbers or not statements:
+            return True
+        return any(gram in grams and numbers <= statement_numbers for _t, statement_numbers, grams in statements)
+
     before = _words(text[:match.start()])[-2:]
     inside = _words(match.group(0))
     after = _words(text[match.end():])[:2]
@@ -178,9 +254,20 @@ def _quotes_governing_state(text: str, match: "re.Match[str]", governing_ngrams:
     first, end = len(before), len(before) + len(inside)
     for start in range(max(0, first - 2), end):
         gram = tuple(sequence[start:start + 3])
-        if len(gram) == 3 and start + 3 > first and gram in governing_ngrams:
+        if len(gram) == 3 and start + 3 > first and quoted(gram):
             return True
     return False
+
+
+def _soften_match(text: str, match: "re.Match[str]", replacement, governing) -> str:
+    if _quotes_governing_state(text, match, governing) or _refers_to_governing_state(text, match, governing):
+        return match.group(0)
+    attributive = _ATTRIBUTIVE_REPLACEMENTS.get(match.group(0).lower())
+    if attributive and _attributive(text, match):
+        # "the approved move budget" -> "the proposed (not yet approved) move budget",
+        # not the ungrammatical "the proposed for approval (not yet approved) move budget".
+        return _match_case(attributive, match.group(0))
+    return replacement(match)
 
 
 def _soften_unearned_settled_prose(value: str | None, governing_ngrams: frozenset = frozenset()) -> str | None:
@@ -197,8 +284,9 @@ def _soften_unearned_settled_prose(value: str | None, governing_ngrams: frozense
 
     `governing_ngrams` (see _governing_state_ngrams, #227): a matched word is left
     alone when the wording around it quotes a governing Current State statement
-    verbatim, so an approved, established fact is never rewritten into an
-    unapproved one. Everything else is still softened.
+    verbatim, or (#473) refers to one attributively ("the approved move budget at
+    $85,000"; see _refers_to_governing_state), so an approved, established fact is never
+    rewritten into an unapproved one. Everything else is still softened.
     """
     if not value:
         return value
@@ -211,10 +299,7 @@ def _soften_unearned_settled_prose(value: str | None, governing_ngrams: frozense
         fixed = sentence
         for pattern, replacement in _UNEARNED_SETTLED_PROSE_REPLACEMENTS:
             current = fixed
-            fixed = pattern.sub(
-                lambda m, r=replacement, t=current: m.group(0) if _quotes_governing_state(t, m, governing_ngrams) else r(m),
-                current,
-            )
+            fixed = pattern.sub(lambda m, r=replacement, t=current: _soften_match(t, m, r, governing_ngrams), current)
         rewritten.append(fixed)
     text = " ".join(rewritten)
     text = re.sub(r"\s{2,}", " ", text).strip()

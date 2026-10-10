@@ -35,7 +35,7 @@ def test_a_sentence_quoting_an_approved_governing_fact_is_left_alone():
 def test_it_would_have_been_rewritten_before_the_fix():
     """Documents the bug: with no governing state supplied the old behavior is unchanged."""
     rewritten = _soften_unearned_settled_prose(SUMMARY_QUOTING_STATE)
-    assert "proposed for approval (not yet approved)" in rewritten
+    assert "not yet approved" in rewritten
 
 
 def test_a_pending_claim_is_still_softened_even_with_a_governing_fact_present():
@@ -129,3 +129,61 @@ def test_validate_synthesis_free_text_item_quoting_state_is_left_alone():
     selection, context, candidates = _context()
     cleaned = _validate_synthesis(_answer("See details.", item_text=SUMMARY_QUOTING_STATE), selection, context, candidates)
     assert _same(_free_text_item(cleaned).text, SUMMARY_QUOTING_STATE)
+
+
+# --- #473: attributive references to a governing fact ------------------------
+# Cowork, Oct 9 (Juniper): "Current State records the approved move budget at $85,000"
+# became "...records the proposed for approval (not yet approved) move budget...". The
+# sentence paraphrases the governing fact, so the three-word quote check above missed it,
+# while an open Review proposes the same sentence with $95,000.
+
+JUNIPER_BUDGET = "The move budget is approved at $85,000, covering moving services, furniture, and IT relocation."
+JUNIPER_PENDING = "The move budget is approved at $95,000, covering moving services, furniture, and IT relocation."
+
+
+def _juniper():
+    return _governing_state_ngrams([JUNIPER_BUDGET, "The office move is scheduled for November 8."])
+
+
+def test_an_attributive_reference_to_the_approved_budget_is_left_alone():
+    sentence = "Current State records the approved move budget at $85,000."
+    assert _soften_unearned_settled_prose(sentence, _juniper()) == sentence
+
+
+def test_the_pending_reviews_figure_is_still_softened():
+    fixed = _soften_unearned_settled_prose(JUNIPER_PENDING, _juniper())
+    assert "is approved at $95,000" not in fixed and "not yet approved" in fixed
+
+
+def test_an_attributive_reference_with_a_different_number_is_still_softened():
+    fixed = _soften_unearned_settled_prose("Finance sent the approved move budget of $95,000.", _juniper())
+    assert "not yet approved" in fixed
+
+
+def test_an_attributive_reference_to_something_not_in_state_is_still_softened():
+    fixed = _soften_unearned_settled_prose("The team cited the approved vendor contract.", _juniper())
+    assert "not yet approved" in fixed
+
+
+def test_a_softened_attributive_use_reads_as_a_sentence():
+    fixed = _soften_unearned_settled_prose("Security owns the approved decision for the pilot.", _juniper())
+    assert "the proposed (not yet approved) decision" in fixed
+    assert "proposed for approval (not yet approved) decision" not in fixed
+
+
+def test_predicative_use_keeps_the_existing_wording():
+    fixed = _soften_unearned_settled_prose("The vendor contract is approved.", _juniper())
+    assert "is proposed for approval (not yet approved)" in fixed
+
+
+def test_validate_synthesis_keeps_the_juniper_budget_answer():
+    state = [{"id": "j-budget-amount", "topic": "Approved budget", "statement": JUNIPER_BUDGET, "authority": "governing_current_fact"}]
+    review = {"id": "r-budget", "review_type": "proposed_update", "decision_question": "Should the move budget increase to $95,000?",
+              "why_consequential": "x", "affected_state_ids": ["j-budget-amount"], "evidence_ids": []}
+    context = {"state": state, "reviews": [review], "questions": [], "history": [], "evidence": [], "rules": []}
+    selection = AskSelection(job="current_fact", state_ids=["j-budget-amount"], review_ids=["r-budget"],
+                             blocking_question_ids=[], question_ids=[], history_ids=[], evidence_ids=[])
+    summary = "Current State records the approved move budget at $85,000."
+    cleaned = _validate_synthesis(_answer(summary), selection, context, dict(context))
+    assert "not yet approved" not in cleaned.summary
+    assert "approved move budget at $85,000" in cleaned.summary
