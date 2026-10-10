@@ -99,6 +99,9 @@ class ReviewQualityResult:
         prose = _normalize(self.review_prose)
         if any(_normalize(phrase) in prose for phrase in self.scenario.forbidden_review_phrases):
             return False
+        if not all(any(_normalize(option) in prose for option in ((r,) if isinstance(r, str) else r))
+                   for r in self.scenario.required_review_phrases):
+            return False
         return True
 
     @property

@@ -41,6 +41,8 @@ class ReviewInterpretationScenario:
     forbidden_state_update_phrases: tuple[str, ...] = field(default_factory=tuple)
     # Checked against all of the Review's prose (question, reasons, proposals, rationale).
     forbidden_review_phrases: tuple[str, ...] = field(default_factory=tuple)
+    # Each entry: one phrase, or a tuple of acceptable alternatives, that must appear in the Review's prose.
+    required_review_phrases: tuple[str | tuple[str, ...], ...] = field(default_factory=tuple)
     should_change_state: bool = False
     should_answer_question: bool = False
     should_open_question: bool = False
@@ -228,5 +230,17 @@ SCENARIOS = (
         must_preserve_uncertainty=True,
         severity="high",
         rationale="#480 (Cowork, Oct 9): an agreed future revision must not be proposed as already done.",
+    ),
+    ReviewInterpretationScenario(
+        id="review_rationale_states_what_evidence_establishes",
+        category="rationale_specificity",
+        evidence="Finance confirmed in today's budget review that the pilot budget is approved at $40,000, covering discovery and the first implementation phase.",
+        current_state=(("evaluation", "Evaluation uses a weekly report against fixed criteria."),),
+        expected_action="update_state",
+        should_change_state=True,
+        required_state_update_phrases=(("40,000", "40k", "$40"),),
+        required_review_phrases=(("40,000", "40k", "$40"),),
+        severity="medium",
+        rationale="#482 (QA-11, Cowork Oct 9): the Review's \"Establishes\" line (the proposal rationale) said why a budget matters instead of what the evidence established; it should carry the approved amount.",
     ),
 )

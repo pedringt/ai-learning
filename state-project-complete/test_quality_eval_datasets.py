@@ -24,7 +24,7 @@ class QualityEvalDatasetTests(unittest.TestCase):
         self.assertTrue(any(not scenario.review_needed for scenario in REVIEW_SCENARIOS))
         self.assertTrue(any(scenario.must_preserve_uncertainty for scenario in REVIEW_SCENARIOS))
         self.assertTrue(any(scenario.severity == "high" for scenario in REVIEW_SCENARIOS))
-        self.assertEqual(len(REVIEW_SCENARIOS), 15)  # +2 from the Oct 9 Cowork pass (#477, #480)
+        self.assertEqual(len(REVIEW_SCENARIOS), 16)  # +3 from the Oct 9 Cowork pass (#477, #480, QA-11)
 
     def test_review_expectations_are_internally_consistent(self):
         for scenario in REVIEW_SCENARIOS:

@@ -197,7 +197,20 @@ def _print_report(report: dict) -> None:
         print("  failures:")
         for row in failed:
             detail = row.get("error") or f"{row.get('expected_action', '')} -> {row.get('observed_action', '')}".strip(" ->")
+            if not row.get("error") and "grounding_ok" in row:
+                # Ask rows have no expected/observed action; say which checks failed (#484 follow-up:
+                # the workflow log used to print an empty line for these).
+                checks = ("grounding_ok", "required_facts_ok", "forbidden_claims_ok", "uncertainty_ok", "open_item_ok", "authority_ok")
+                detail = "failed " + ", ".join(c.removesuffix("_ok") for c in checks if row.get(c) is False)
             print(f"    - {row['id']}: {detail}")
+            # Synthetic scenarios only: a short excerpt of what the model produced, so a failure can
+            # be diagnosed from the workflow log without a local paid re-run.
+            answer = row.get("answer") if isinstance(row.get("answer"), dict) else {}
+            body = answer.get("answer") if isinstance(answer.get("answer"), dict) else answer
+            ask_text = f"{body.get('headline') or ''} — {body.get('summary') or ''}".strip(" —") if body else ""
+            excerpt = " ".join(str(row.get("proposed_state_text") or ask_text or "").split())
+            if excerpt:
+                print(f"      output: {excerpt[:240]}{'...' if len(excerpt) > 240 else ''}")
 
 
 def main() -> int:
