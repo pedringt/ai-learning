@@ -1137,7 +1137,11 @@ body:not(.v88-dark) .ask-state-drawer{background:#fbfdff!important}.ask-title-ro
       @media(max-width:760px){
         html,body{overflow-x:hidden!important}
         .software-shell{display:block!important;grid-template-columns:1fr!important}
-        .sidebar-project,.sidebar-nav,.project-subnav,.app-sidebar>.demo-help-button{display:none!important}
+        .sidebar-nav,.project-subnav,.app-sidebar>.demo-help-button{display:none!important}
+        /* #475: the project picker stays on phones (it is the only way to see, switch or create a project), as one compact row above the tabs. */
+        .sidebar-project{display:flex!important;align-items:center!important;gap:8px!important;padding:0 0 8px!important}
+        .sidebar-project .meta-label{margin:0!important;flex:0 0 auto!important}
+        .sidebar-project .project-switcher{flex:1 1 auto!important;min-width:0!important;min-height:38px!important;padding:7px 10px!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important}
         .app-sidebar{display:block!important;position:static!important;width:100%!important;height:auto!important;min-height:0!important;padding:8px 12px 0!important;border:0!important;background:transparent!important;overflow:visible!important}
         .mobile-primary-nav{display:flex!important;margin:0 -4px!important;padding:0 4px 10px!important}
         .mobile-subnav{display:flex!important}.mobile-subnav[hidden]{display:none!important}

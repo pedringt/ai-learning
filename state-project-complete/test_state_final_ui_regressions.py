@@ -208,3 +208,26 @@ def test_dismissed_sources_strip_stays_dismissed_after_rerender():
         assert page.locator(".workspace-source-strip").count() == 0
     finally:
         browser.close(); pw.stop()
+
+
+def test_phone_width_can_see_switch_and_create_projects():
+    """#475: at phone width the project picker used to be hidden with the desktop nav (0x0)."""
+    pw, browser, page = _page(375, 812)
+    try:
+        switcher = page.locator("#projectSwitcher")
+        box = switcher.bounding_box()
+        assert box and box["width"] > 150 and box["height"] >= 30
+        assert box["x"] >= 0 and box["x"] + box["width"] <= 375
+        assert "Loading" not in switcher.inner_text()
+        nav = page.locator(".mobile-primary-nav").bounding_box()
+        assert nav and box["y"] + box["height"] <= nav["y"] + 1, "picker sits above the phone tabs"
+
+        switcher.click()
+        menu = page.locator("#projectMenu")
+        assert menu.is_visible()
+        new_project = menu.locator("[data-action='new-project']")
+        assert new_project.is_visible()
+        new_box = new_project.bounding_box()
+        assert new_box["x"] >= 0 and new_box["x"] + new_box["width"] <= 375
+    finally:
+        browser.close(); pw.stop()
