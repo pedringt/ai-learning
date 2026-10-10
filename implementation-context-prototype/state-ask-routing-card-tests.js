@@ -106,6 +106,14 @@ for(const q of synthesisQuestions){
   check(`synthesis question stays on live Ask path: "${q}"`, api.detectAskIntent(q)===null, JSON.stringify(api.detectAskIntent(q)));
 }
 
+// #479 (Cowork, Oct 9): a two-part question got only the generic Blockers card.
+for(const q of [
+  'What is still unresolved about vendor data retention, and is anything blocked by it?',
+  'Which questions are open and what is blocking launch?',
+]){
+  check(`two-part question stays on live Ask path: "${q}"`, api.detectAskIntent(q)===null, JSON.stringify(api.detectAskIntent(q)));
+}
+
 // True inventory/navigation questions still route to Open Items.
 const pureInventory=[
   ['List all open questions','open'],

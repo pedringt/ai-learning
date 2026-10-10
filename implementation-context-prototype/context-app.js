@@ -580,6 +580,10 @@
     // asking for a raw inventory. Those should stay on the real Ask path.
     const synthesisIntent=has(/\b(current status|status update|decisions? (?:have|has|already)|risks?|meeting|bring into|before (?:the |a )?(?:next )?meeting|what should i know|summari[sz]e|explain|compare|careful not to assume|what does state know|based on the project record)\b/);
     if(synthesisIntent)return null;
+    // #479: a two-part question ("What is still unresolved about vendor data retention, and is
+    // anything blocked by it?") needs an answer, not an inventory card, even though its second
+    // half says "blocked". A single topic-qualified inventory ask still routes (see the #115 test).
+    if(has(/,?\s+and\s+(?:is|are|was|were|what|which|who|how|does|do|did|can|could|should|will|would|has|have)\b/))return null;
 
     if(has(/\b(blocker|blockers|blocking|blocked|holding us up|hold us up|in the way|stop us|stopping us|prevent us|waiting on|needs attention|need attention|requires attention|needs my attention|require my attention)\b/)) return {kind:'blockers'};
     if(has(/\b(needs review|need review|pending review|awaiting review|review first|evidence.*incorporated|new evidence|open review|open reviews|pending reviews|should i approve|need to approve|needs? to be approved|what to approve|what should i approve|what do i need to approve)\b/)) return {kind:'pending'};
