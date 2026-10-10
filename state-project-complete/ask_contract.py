@@ -1,6 +1,7 @@
 """Structured contracts for State Ask selection and synthesis."""
 from __future__ import annotations
 
+from datetime import date
 from typing import Literal
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -14,6 +15,9 @@ class AskRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
     query: str = Field(min_length=1, max_length=8_000)
     previous_answer: dict | None = None
+    # #476: the asker's local calendar day, so "today" is not the server's UTC day.
+    # Used only when within a day of the server's date (see ask_service.ask_today).
+    client_date: date | None = None
 
 class AskSelection(BaseModel):
     model_config = ConfigDict(extra="forbid")

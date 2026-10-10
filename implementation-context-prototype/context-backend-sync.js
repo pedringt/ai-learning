@@ -1,5 +1,8 @@
 (() => {
   const norm = s => String(s).toLowerCase().replace(/[’']/g,'').replace(/[^a-z0-9\s]/g,' ').replace(/\s+/g,' ').trim();
+  // #476: the API sends UTC timestamps without a zone ("2026-10-10 00:40:00"), which
+  // browsers read as local time, so evening actions west of UTC showed tomorrow's date.
+  const parseServerTime = value => { const raw=String(value); const naive=/^(\d{4}-\d{2}-\d{2})[ T](\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?)$/.exec(raw); return new Date(naive?`${naive[1]}T${naive[2]}Z`:raw); };
   const todayISO = () => { const d=new Date(); const pad=n=>String(n).padStart(2,'0'); return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`; };
   const OPEN_ITEMS_VIEW = window.STATE_OPEN_ITEMS_VIEW;
 
@@ -139,7 +142,8 @@
 
   function formatBackendDate(value){
     if(!value)return '';
-    const d=new Date(value); if(Number.isNaN(d.getTime()))return String(value).slice(0,10);
+    const day=/^(\d{4})-(\d{2})-(\d{2})$/.exec(String(value));
+    const d=day?new Date(+day[1],day[2]-1,+day[3]):parseServerTime(value); if(Number.isNaN(d.getTime()))return String(value).slice(0,10);
     return d.toLocaleDateString(undefined,{month:'short',day:'numeric'});
   }
   function sourceLabel(source){

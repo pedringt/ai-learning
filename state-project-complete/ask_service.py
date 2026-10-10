@@ -90,8 +90,7 @@ _SELECTION_LIMITS = {
 def ask_cache_key(
     connection: Any,
     query: str,
-    previous_answer: Mapping[str, Any] | None = None,
-) -> str:
+    previous_answer: Mapping[str, Any] | None = None, today: date | None = None) -> str:
     """Fingerprint an Ask request against every authority-bearing input.
 
     Reusing a prior answer is safe only while Current State, open Reviews,
@@ -123,7 +122,7 @@ def ask_cache_key(
         "query": " ".join(query.lower().split()),
         "previous_answer": previous_answer,
         "candidates": _compact_candidates(connection),
-        "as_of_date": date.today().isoformat(),
+        "as_of_date": (today or date.today()).isoformat(),
     }
     encoded = json.dumps(payload, ensure_ascii=False, sort_keys=True, separators=(",", ":"), default=str)
     return hashlib.sha256(encoded.encode("utf-8")).hexdigest()
@@ -281,7 +280,17 @@ def _retrieval_query(query: str, previous_answer: Mapping[str, Any] | None) -> s
     # both the user's new instruction and the subject matter already established.
     return f"{query} {prior}"
 
-def _grounding_rules() -> str:
+def ask_today(client_date: date | None = None) -> date:
+    """The day Ask treats as today (#476): the asker's local date when it is within a
+    day of the server's (UTC) date, otherwise the server's. An evening question west of
+    UTC used to be answered as if it were already tomorrow."""
+    server_today = date.today()
+    if client_date is not None and abs((client_date - server_today).days) <= 1:
+        return client_date
+    return server_today
+
+
+def _grounding_rules(today: date | None = None) -> str:
     """Shared non-negotiable rules injected into every prompt that produces
     user-visible Ask prose. Added 2026-09-07 after live QA found three
     related trust problems in the same family: a Review's consequentiality
@@ -294,7 +303,7 @@ def _grounding_rules() -> str:
     upcoming. The model has no other way to know what day it is, or that a
     section title should match its own contents -- both must be explicit.
     """
-    return f"""- Today's date is {date.today().isoformat()}. When referencing a specific date from a record, compare it to today: if that date has already passed, describe it as overdue, still unresolved, or needing follow-up -- never as upcoming or a future next step.
+    return f"""- Today's date is {(today or date.today()).isoformat()}. When referencing a specific date from a record, compare it to today: if that date has already passed, describe it as overdue, still unresolved, or needing follow-up -- never as upcoming or a future next step.
 - An open Review is relevant whenever it bears on the request, not only when it challenges a Current State record you already selected. Current State having no entry on a topic is not evidence that nothing relevant exists -- an open Review can be the only record that speaks to the request at all (e.g. "has X been decided?" when Current State is silent but a Review proposes X). Select and surface that Review, and answer that it is proposed/pending, not yet decided -- never report no relevant records exist merely because Current State itself is silent.
 - Before answering "no relevant records" or "not enough information" for any yes/no or status question ("has X been decided/approved/changed?", "is X still true?"), you MUST check the supplied candidate Reviews for one whose decision_question or why_consequential addresses the same subject, even if worded differently. A candidate Review record about the same topic being present is proof relevant records DO exist; the correct answer is "not yet decided, pending Review" (job current_fact still applies -- a pending Review is a real, checkable record, not an absence of one), never a claim that no records were found.
 - Section, group, and category titles must accurately describe the actual conceptual domain of their contents (for example, do not label access or security constraints as retention constraints, or vice versa). If items span more than one domain, either split them into separate sections or use a domain-neutral title.
@@ -328,7 +337,7 @@ def meeting_prep_shape_guidance() -> str:
     )
 
 
-def _one_call_prompt(query: str, candidates: Mapping[str, Any], previous_answer: Mapping[str, Any] | None) -> str:
+def _one_call_prompt(query: str, candidates: Mapping[str, Any], previous_answer: Mapping[str, Any] | None, today: date | None = None) -> str:
     previous = json.dumps(previous_answer, ensure_ascii=False)[:12000] if previous_answer else "null"
     
     # Build refinement guidance based on whether previous_answer exists
@@ -376,7 +385,7 @@ Authority rules are non-negotiable:
 - For meeting prep, prefer this information architecture when supported: concise before-the-meeting summary; Decisions needed; Questions to get answered; Useful context. State navigation/actions are rendered separately by the client.
 - Do not repeat the same issue across multiple sections. A Review and linked Question may both appear, but explain each once.
 - Never call something a blocker unless the supplied Question says blocking=true. Never claim a count of blockers unless it matches selected blocking Questions.
-{_grounding_rules()}
+{_grounding_rules(today)}
 
 Job choices: current_fact, meeting_prep, catch_up, project_update, why_or_provenance, attention_check, historical, drafting, general_project_synthesis, refinement.
 
@@ -389,7 +398,7 @@ Authority-tagged candidate records:
 Return the required JSON object with both `selection` and `answer`. Every answer record_id must be present in the selection and candidate records. Relevant Reviews must appear visibly in the main answer, not only in source_ids. {meeting_prep_shape_guidance()} Prefer one synthesized opening over many State cards. Do not create a section titled Current State or Open Reviews Qualifying Current State. Keep the full answer comfortably under 500 words.
 Use concise adaptive sections and short suggested refinements."""
 
-def _selector_prompt(query: str, candidates: Mapping[str, Any], previous_answer: Mapping[str, Any] | None) -> str:
+def _selector_prompt(query: str, candidates: Mapping[str, Any], previous_answer: Mapping[str, Any] | None, today: date | None = None) -> str:
     previous = json.dumps(previous_answer, ensure_ascii=False)[:8000] if previous_answer else "null"
     return f"""You are the relevance selector for State, a maintained-project-understanding product.
 Select only the records needed to answer the user's request. Do not answer the request.
@@ -409,7 +418,7 @@ Authority rules:
   - "make it leadership-ready": select only decision/status/risk-relevant records
   - "more detailed": select all supporting records to expand context
   - "what source supports X?" (conversational): select additional source evidence to append
-{_grounding_rules()}
+{_grounding_rules(today)}
 
 Job choices: current_fact, meeting_prep, catch_up, project_update, why_or_provenance, attention_check, historical, drafting, general_project_synthesis, refinement.
 
@@ -482,7 +491,7 @@ def _selected_context(selection: AskSelection, candidates: Mapping[str, list[dic
     return out
 
 
-def _synthesis_prompt(query: str, selection: AskSelection, context: Mapping[str, Any], previous_answer: Mapping[str, Any] | None) -> str:
+def _synthesis_prompt(query: str, selection: AskSelection, context: Mapping[str, Any], previous_answer: Mapping[str, Any] | None, today: date | None = None) -> str:
     previous = json.dumps(previous_answer, ensure_ascii=False)[:12000] if previous_answer else "null"
     
     refinement_guidance = ""
@@ -520,7 +529,7 @@ Non-negotiable rules:
 - Do not repeat the same issue across multiple sections. A Review and linked Question may both appear, but explain each once.
 - Never call something a blocker unless the supplied Question says blocking=true. Never claim a count of blockers unless it matches selected blocking Questions.
 - Keep the main output selective; Open Items handles completeness elsewhere.
-{_grounding_rules()}
+{_grounding_rules(today)}
 
 User request: {query}
 Job: {selection.job}
@@ -799,6 +808,7 @@ def stream_ask_events(
     provider: AskProvider,
     query: str,
     previous_answer: Mapping[str, Any] | None = None,
+    today: date | None = None,
 ) -> Iterator[tuple[str, dict[str, Any]]]:
     """Yield grounded-context status, real provider deltas, then a validated final Ask payload."""
     total_started = time.perf_counter()
@@ -823,14 +833,14 @@ def stream_ask_events(
     }
 
     if not hasattr(provider, "stream"):
-        result = run_ask(connection, provider, query, previous_answer)
+        result = run_ask(connection, provider, query, previous_answer, today=today)
         yield "final", result
         return
 
     provider_started = time.perf_counter()
     first_token_ms: int | None = None
     chunks: list[str] = []
-    for text in provider.stream(_one_call_prompt(query, candidates, previous_answer)):
+    for text in provider.stream(_one_call_prompt(query, candidates, previous_answer, today=today)):
         if not text:
             continue
         if first_token_ms is None:
@@ -850,7 +860,7 @@ def stream_ask_events(
     yield "final", result
 
 
-def run_ask(connection: Any, provider: AskProvider, query: str, previous_answer: Mapping[str, Any] | None = None) -> dict[str, Any]:
+def run_ask(connection: Any, provider: AskProvider, query: str, previous_answer: Mapping[str, Any] | None = None, today: date | None = None) -> dict[str, Any]:
     total_started = time.perf_counter()
 
     if previous_answer and detect_refinement_type(query):
@@ -876,21 +886,21 @@ def run_ask(connection: Any, provider: AskProvider, query: str, previous_answer:
         )
         selection_raw = selection.model_dump()
         selected = _selected_context(selection, candidates)
-        answer_raw = provider.synthesize_selected(_synthesis_prompt(query, selection, selected, previous_answer))
+        answer_raw = provider.synthesize_selected(_synthesis_prompt(query, selection, selected, previous_answer, today=today))
         provider_ms = round((time.perf_counter() - provider_started) * 1000)
         pipeline = "deterministic_fact_one_call"
     elif hasattr(provider, "run"):
-        combined = provider.run(_one_call_prompt(query, candidates, previous_answer))
+        combined = provider.run(_one_call_prompt(query, candidates, previous_answer, today=today))
         provider_ms = round((time.perf_counter() - provider_started) * 1000)
         selection_raw = combined.get("selection")
         answer_raw = combined.get("answer")
         pipeline = "one_call"
     else:
         # Compatibility path for deterministic test providers while R9.1 lands.
-        selection_raw = provider.select(_selector_prompt(query, candidates, previous_answer))
+        selection_raw = provider.select(_selector_prompt(query, candidates, previous_answer, today=today))
         selection = _validate_selection(AskSelection.model_validate(_bounded_selection_raw(selection_raw)), candidates)
         selected = _selected_context(selection, candidates)
-        answer_raw = provider.synthesize(_synthesis_prompt(query, selection, selected, previous_answer))
+        answer_raw = provider.synthesize(_synthesis_prompt(query, selection, selected, previous_answer, today=today))
         provider_ms = round((time.perf_counter() - provider_started) * 1000)
         pipeline = "two_call_compat"
 

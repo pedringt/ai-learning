@@ -1,6 +1,9 @@
 (() => {
   const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const norm = s => String(s).toLowerCase().replace(/[’']/g,'').replace(/[^a-z0-9\s]/g,' ').replace(/\s+/g,' ').trim();
+  // #476: the API sends UTC timestamps without a zone ("2026-10-10 00:40:00"), which
+  // browsers read as local time, so evening actions west of UTC showed tomorrow's date.
+  const parseServerTime = value => { const raw=String(value); const naive=/^(\d{4}-\d{2}-\d{2})[ T](\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?)$/.exec(raw); return new Date(naive?`${naive[1]}T${naive[2]}Z`:raw); };
   const todayISO = () => { const d=new Date(); const pad=n=>String(n).padStart(2,'0'); return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`; };
   const isoValue = item => item?.dateISO || item?.createdISO || '';
   const sortDateDesc = (a,b) => isoValue(b).localeCompare(isoValue(a));
@@ -16,7 +19,7 @@
     if(!value)return null;
     const raw=String(value);
     if(/^\d{4}-\d{2}-\d{2}$/.test(raw))return raw;
-    const d=new Date(raw);
+    const d=parseServerTime(raw);
     if(Number.isNaN(d.getTime()))return null;
     const pad=n=>String(n).padStart(2,'0');
     return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
