@@ -1472,3 +1472,11 @@ html:not(#_#_#_) .overview-stage .workspace-stage-pill.is-late-discovery{backgro
 .question-linked-date{font-weight:700;color:#5b6474;margin-right:4px}
 .note-linked-question{margin:6px 0 0;font-size:12.5px;color:#3f4a5c}
 .note-linked-question span{font-weight:700;color:#5b6474;margin-right:4px}
+
+/* #482 (QA-16): on phones the drawer's full-width button rule stretched the answer's Copy button
+   to ~240px and wrapped the "Meeting prep" label. Keep the answer header to one tidy row. */
+#askStateDrawer .ask-answer-head{display:flex!important;align-items:center!important;justify-content:space-between!important;gap:12px!important}
+#askStateDrawer .ask-answer-head .result-label{white-space:nowrap!important}
+#askStateDrawer .ask-answer-head{width:100%!important}
+#askStateDrawer .ask-answer-head .ask-answer-actions{flex:0 0 auto!important;width:auto!important;margin-left:auto!important}
+#askStateDrawer .ask-answer-head .ask-answer-actions .btn{width:auto!important;min-width:0!important;flex:0 0 auto!important;padding:7px 14px!important}
