@@ -123,6 +123,7 @@
   function modelDisplayName(value){
     const raw=String(value||'');
     if(raw==='claude-haiku-4-5-20251001')return'Claude Haiku 4.5';
+    if(raw==='claude-haiku-5-5')return'Claude Haiku 5.5';
     return raw||'Model unavailable';
   }
   function qualityAttention(q){

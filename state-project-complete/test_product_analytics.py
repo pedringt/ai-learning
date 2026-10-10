@@ -161,7 +161,7 @@ class ProductAnalyticsTests(unittest.TestCase):
         self.assertEqual(reliability["token_usage"]["output"], 700)
         self.assertEqual(reliability["model_calls_by_operation"], {"interpretation": 2, "ask": 1})
         self.assertAlmostEqual(reliability["model_cost"]["estimated_usd"], 0.007, places=6)
-        self.assertEqual(reliability["model_cost"]["pricing_as_of"], "2026-05-27")
+        self.assertEqual(reliability["model_cost"]["pricing_as_of"], "2026-10-10")
         columns = {info[1] for info in self.connection.execute("PRAGMA table_info(model_call_metrics)")}
         for forbidden in ("prompt", "content", "answer", "evidence", "query"):
             self.assertNotIn(forbidden, columns)
@@ -194,6 +194,20 @@ class ProductAnalyticsTests(unittest.TestCase):
         data = _aggregate(self.connection, None, datetime.now(timezone.utc))
         self.assertNotIn("health_score", str(data).lower())
         self.assertFalse(data["privacy"]["content_included"])
+
+
+class ModelRatesTests(unittest.TestCase):
+    def test_haiku_55_uses_short_and_long_prompt_tiers(self):
+        from product_analytics import _estimated_model_cost
+        short = _estimated_model_cost({"model_identifier": "claude-haiku-5-5", "input_tokens": 50_000, "output_tokens": 10_000})
+        long = _estimated_model_cost({"model_identifier": "claude-haiku-5-5", "input_tokens": 150_000, "output_tokens": 0})
+        self.assertAlmostEqual(short, (50_000 * 0.10 + 10_000 * 0.50) / 1_000_000, places=9)
+        self.assertAlmostEqual(long, 150_000 * 0.50 / 1_000_000, places=6)
+
+    def test_haiku_45_rows_keep_their_historical_rate(self):
+        from product_analytics import _estimated_model_cost
+        cost = _estimated_model_cost({"model_identifier": "claude-haiku-4-5-20251001", "input_tokens": 1_000_000, "output_tokens": 0})
+        self.assertAlmostEqual(cost, 1.0, places=6)
 
 
 if __name__ == "__main__":

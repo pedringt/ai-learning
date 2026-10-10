@@ -322,6 +322,7 @@ class LiveAskProvider:
             with self._anthropic_client().messages.stream(
                 model=self.model_identifier,
                 max_tokens=ASK_ONE_CALL_MAX_TOKENS,
+                thinking={"type": "disabled"},
                 output_config={"format": {"type": "json_schema", "schema": ONE_CALL_ASK_JSON_SCHEMA}},
                 messages=[{"role": "user", "content": prompt}],
             ) as stream:
@@ -362,6 +363,7 @@ class LiveAskProvider:
             message = self._anthropic_client().messages.create(
                 model=self.model_identifier,
                 max_tokens=max_tokens,
+                thinking={"type": "disabled"},
                 output_config={"format": {"type": "json_schema", "schema": schema}},
                 messages=[{"role": "user", "content": prompt}],
             )

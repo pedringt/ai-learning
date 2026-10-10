@@ -125,17 +125,28 @@ def _percentile(values: list[float], p: float) -> float | None:
     return round(value, 1)
 
 
-MODEL_PRICING_AS_OF = "2026-05-27"
+# Verified against Anthropic's published pricing (platform.claude.com/docs/en/about-claude/pricing).
+MODEL_PRICING_AS_OF = "2026-10-10"
 _HAIKU_45_PRICING = {"input": 1.0, "output": 5.0}
+# Haiku 5.5 is tiered per request: prompts over 100K tokens pay the higher rate.
+_HAIKU_55_PRICING = {"input": 0.10, "output": 0.50}
+_HAIKU_55_LONG_PRICING = {"input": 0.50, "output": 2.50}
+_HAIKU_55_LONG_THRESHOLD = 100_000
 
 
-def _model_rates(model_identifier: str | None) -> dict[str, float] | None:
+def _model_rates(model_identifier: str | None, input_tokens: float | None = None) -> dict[str, float] | None:
     model = str(model_identifier or "")
-    return _HAIKU_45_PRICING if model.startswith("claude-haiku-4-5") else None
+    if model.startswith("claude-haiku-4-5"):
+        return _HAIKU_45_PRICING
+    if model.startswith("claude-haiku-5-5"):
+        if input_tokens is not None and float(input_tokens) > _HAIKU_55_LONG_THRESHOLD:
+            return _HAIKU_55_LONG_PRICING
+        return _HAIKU_55_PRICING
+    return None
 
 
 def _estimated_model_cost(row: dict) -> float | None:
-    rates = _model_rates(row.get("model_identifier"))
+    rates = _model_rates(row.get("model_identifier"), row.get("input_tokens"))
     if rates is None or row.get("input_tokens") is None or row.get("output_tokens") is None:
         return None
     return (

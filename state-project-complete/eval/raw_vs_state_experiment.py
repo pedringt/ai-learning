@@ -19,7 +19,7 @@ REAL output of this session's own work, not authored for the experiment:
   would actually copy out of State.
 
 Uses the same model State's own interpretation pipeline uses
-(claude-haiku-4-5-20251001 by default) for a fair, apples-to-apples
+(claude-haiku-5-5 by default) for a fair, apples-to-apples
 comparison, and calls the Anthropic API directly (not process_evidence,
 which is evidence-intake-specific) since this is a plain question-
 answering comparison, not an interpretation judgment.
@@ -46,7 +46,7 @@ load_local_env()
 
 from eval.harness import REQUIRES_KEY_REASON  # noqa: E402
 
-MODEL = os.getenv("CLAUDE_MODEL", "claude-haiku-4-5-20251001")
+MODEL = (os.getenv("CLAUDE_MODEL") or "claude-haiku-5-5")
 
 RAW_CORPUS = """#eng-architecture, Mon 9:14am -- Dana: proposed Okta as the SSO provider in today's architecture review, as one option among a few.
 
