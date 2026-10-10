@@ -394,7 +394,6 @@ Compare the Evidence with Current State and open Reviews. Return the semantic in
 - In summary, decision_question, why_consequential, and other prose fields, refer to a State item by its topic name (shown in parentheses above) and a Question by its subject, never by a raw ID. IDs are for state_item_id/existing_review_id fields only.
 - Keep summary, questions, reasons, and rationales concise: one sentence each, usually under 25 words. Use at most 3 topics unless clearly necessary.
 - Preserve epistemic status: approved != implemented/enabled/complete; planned != committed; capable != enabled.
-- Planned/needed != done: "needs to be revised" never becomes "revised"/"redesigned" (#480).
 - Do not create speculative residue. Missing implementation details alone are not a Review; Reviews are for consequential change/risk to maintained State.
 - If Evidence establishes a narrow consequential fact, propose only that narrow fact. Do not widen scope beyond the Evidence.
 - Example: “Password reset tickets were approved for automation.” If that approval is not already Current State, propose the narrow fact “Password reset tickets are approved for automation.” Do not infer implementation, deployment, universal ticket coverage, or removal of human review.
