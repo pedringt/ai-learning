@@ -1610,7 +1610,11 @@ html body #ai-cs-mock #portfolio .applied-secondary > h3:not(#_) { font-size: 17
   .rd-note { position: static; margin-top: 16px; transform: none; width: auto; }
   .rd-stage { min-height: 0; }
   html body #ai-cs-mock .home-feature-actions { padding-right: 0; }
-  html body #ai-cs-mock .home-feature-card::after { display: none !important; }
+  /* #483 (PF-02): the numbered-sticker rules (01/02/03) are more specific and also !important, so this
+     phone rule never applied and the "02" sticker covered Tastemake's "Case study" button. Match them. */
+  html body #ai-cs-mock .home-feature-card::after,
+  html body #ai-cs-mock .home-feature-state-anchor::after,
+  html body #ai-cs-mock .home-feature-stack-right .home-feature-card:nth-child(n)::after { display: none !important; }
 }
 
 /* Oct 5 hero product-review refinement */
@@ -1846,3 +1850,7 @@ html body main:is(.case-system-page, .case-shell, .edge-wrap, .map-wrap) :is(.re
 @media (max-width: 860px) {
   html body .topbar .nav { display: none !important; }
 }
+/* #483 (PF-01): on phones the typed phrase ran over the anchor label and off the edge. Stack it under its label (fixed height while typing); the "Applied work" heading just below replaces the anchor. */
+@media(max-width:560px){.rd-type-rail{padding-top:6px;padding-bottom:6px}.rd-type-left{flex-direction:column;align-items:flex-start;gap:3px}.rd-type-anchor{display:none}}
+/* #483 (PF-06): on phones the core loop wrapped mid-sequence and left an arrow dangling at each line end. Read it top to bottom instead. */
+@media(max-width:560px){html body main .human-flow{flex-direction:column;align-items:flex-start}html body main .human-flow>b{transform:rotate(90deg);margin-left:10px}}

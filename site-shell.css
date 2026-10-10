@@ -143,10 +143,11 @@ body.v88-dark .topbar{
   }
   
   #mobileNav,#v922MobileNav{
-    flex:0 0 clamp(108px,34vw,146px)!important;
-    width:clamp(108px,34vw,146px)!important;
+    /* #483 (PF-03): 34vw clipped "Applied Work" to "Applied Worl" at 375px; fit "Learning Library". */
+    flex:0 0 clamp(132px,41vw,160px)!important;
+    width:clamp(132px,41vw,160px)!important;
     min-width:0!important;
-    max-width:146px!important;
+    max-width:160px!important;
     padding-left:9px!important;
     padding-right:30px!important;
     background-position:right 8px center!important;
@@ -252,9 +253,9 @@ select:focus-visible,
 @media(max-width:360px){
   .topbar .brand span{display:none!important}
   #mobileNav,#v922MobileNav{
-    flex-basis:126px!important;
-    width:126px!important;
-    max-width:126px!important;
+    flex-basis:146px!important;
+    width:146px!important;
+    max-width:146px!important;
   }
 }
 
