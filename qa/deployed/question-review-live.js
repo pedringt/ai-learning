@@ -198,7 +198,10 @@ async function unchanged() {
       const before = (await get('/api/questions')).items;
       const row = await openReview(r.id, 390);
       await expect(row.getByText('Already tracked', { exact: true })).toBeVisible();
-      await row.screenshot({ path: path.join(OUT, 'question-review-mobile.png') });
+      // The report screenshot is evidence, not a check: the row can be re-rendered right after the
+      // 390px resize (#487), which detached it mid-screenshot on Oct 10. Re-find it; never fail on it.
+      await page.locator('[data-review-card="' + r.id + '"]').screenshot({ path: path.join(OUT, 'question-review-mobile.png'), timeout: 10000 })
+        .catch(error => console.log('WARN screenshot skipped: ' + String(error.message || error).split('\n')[0]));
       await clickOutcome(row, 'Link existing Question');
       await expect(page.locator('.state-toast')).toContainText('Linked to the existing Question.');
       // Linking adds no Question and changes none; since #481 the linked Question also lists the
