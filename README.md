@@ -53,7 +53,7 @@ The repository root also contains the public portfolio site.
 | `RELEASE.md` | Current release and rollback gate. |
 | `CLAUDE.md` | Instructions for Claude/AI coding sessions. |
 
-The historically named frontend files such as `context-feedback-pass*.js`, `context-design-pass.js`, `context-attention-alignment.js`, and `context-final-mobile.js` are still live runtime code. Their names look temporary, but prior cleanup investigation found they are not safe to delete casually.
+The historically named frontend files such as `context-feedback-pass*.js`, `context-attention-alignment.js`, and `context-final-mobile.js` are still live runtime code. Their names look temporary, but prior cleanup investigation found they are not safe to delete casually. #450 is folding them into the renderers one at a time, proving each step with `scripts/state_ui_compare/compare.py` (identical UI before and after).
 
 ## Current implementation
 

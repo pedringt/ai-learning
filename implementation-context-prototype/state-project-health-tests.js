@@ -522,8 +522,13 @@ const renderConfig=fs.readFileSync(require.resolve('../render.yaml'),'utf8');
 assert.match(renderConfig,/https:\/\/www\.contextswitch\.tech/);
 assert.match(renderConfig,/https:\/\/state\.contextswitch\.tech/);
 const stateVercelConfig=JSON.parse(fs.readFileSync(require.resolve('./vercel.json'),'utf8'));
-assert.doesNotMatch(stateVercelConfig.ignoreCommand,/VERCEL_GIT_PREVIOUS_SHA/);
-assert.match(stateVercelConfig.ignoreCommand,/git diff --quiet HEAD\^ HEAD -- \./);
+// Oct 10: compares with the last deployed commit again, but must never exit with anything but 0
+// or 1 (the Sept 26 shallow-clone failure). Behavior is tested in test_vercel_ignore_step.py.
+assert.match(stateVercelConfig.ignoreCommand,/^P="\$VERCEL_GIT_PREVIOUS_SHA";/);
+assert.match(stateVercelConfig.ignoreCommand,/git cat-file -e "\$P\^\{commit\}" 2>\/dev\/null \|\| exit 1/);
+assert.ok(stateVercelConfig.ignoreCommand.length<=256,'Vercel rejects an ignoreCommand longer than 256 characters');
+assert.match(stateVercelConfig.ignoreCommand,/&& exit 0 \|\| exit 1$/);
+assert.match(stateVercelConfig.ignoreCommand,/git diff --quiet "\$P" HEAD -- \./);
 
 const healthHtml=fs.readFileSync(require.resolve('../project-health.html'),'utf8');
 assert.doesNotMatch(healthHtml,/Product health triage/);
@@ -664,7 +669,7 @@ const runApiSource=fs.readFileSync(require.resolve('../api/project-health-run.js
 assert.match(runApiSource,/already running/);
 assert.match(runApiSource,/RUN_COOLDOWN_MS/);
 assert.doesNotMatch(runApiSource,/can only be started from the protected Project Health preview/);
-const projectHealthSource=fs.readFileSync(require.resolve('../project-health.js'),'utf8');
+const projectHealthSource=fs.readFileSync(require.resolve('../project-health.js'),'utf8')+fs.readFileSync(require.resolve('../project-health-model.js'),'utf8'); // split in #452
 assert.match(projectHealthSource,/View full scenario catalog/);
 assert.match(projectHealthSource,/data-attention-action="review-quality"/);
 assert.match(projectHealthSource,/drawerCopyHandoffButton/);
@@ -852,7 +857,7 @@ assert.match(workflowText,/github\.ref == 'refs\/heads\/staging' && inputs\.suit
 assert.match(workflowText,/run_quality_evals\.py/);
 
 // Review #5 (Oct 2026): a suite that has not loaded must read as unknown, never as "0 failures"/green.
-const healthJs=fs.readFileSync(require.resolve('../project-health.js'),'utf8');
+const healthJs=fs.readFileSync(require.resolve('../project-health.js'),'utf8')+fs.readFileSync(require.resolve('../project-health-model.js'),'utf8'); // split in #452
 assert.match(healthJs,/!review\?'unknown':reviewFailures\?'warn':'good'/);
 assert.match(healthJs,/!ask\?'unknown':askFailures\?'bad':'good'/);
 assert.match(healthJs,/!review\?unknownSignal:reviewFailures/);
@@ -864,3 +869,18 @@ assert.match(fs.readFileSync(require.resolve('../project-health-redesign.css'),'
 console.log('Project Health shell tests passed');
 
 // PR readiness refresh: evidence-first Project Health actions.
+
+// A project with no quality source reads as "not connected", never as another project's checks or as an issue.
+const authorityLab=H.PROJECTS.find(p=>p.id==='authority-lab');
+assert.ok(authorityLab.noQualitySource);
+assert.ok(H.PROJECTS.filter(p=>p.noQualitySource).every(p=>p.id!=='narc'&&p.quality!=='state'));
+assert.strictEqual(H.projectQualityLabel({project:authorityLab,externalQuality:null}),'Not connected yet');
+const authorityQuick=H.quickProjectCheck({
+  project:authorityLab,
+  delivery:{vercel:{kind:'good',label:'Vercel deploy healthy'}},
+  externalQuality:null,
+  activity:{runtime:{issues:[]}},
+  platform:{}
+});
+assert.strictEqual(authorityQuick.title,'No immediate issue found');
+assert.ok(authorityQuick.checks.some(item=>item.label==='Automated quality'&&item.value==='Not connected yet'));

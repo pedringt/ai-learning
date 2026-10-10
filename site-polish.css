@@ -44,20 +44,9 @@ summary:focus-visible{
 }
 
 /* Architecture supporting case: four concepts read as a balanced 2x2 set. */
-.flagship-case .state-model-grid.architecture-four-grid{
-  grid-template-columns:repeat(2,minmax(0,1fr))!important;
-}
 
 /* Main State case: supporting paths should look intentionally clickable. */
-.flagship-case .go-deeper-link{margin-top:18px!important;}
-.flagship-case .go-deeper-link .text-link{
-  color:var(--purple)!important;
-  font-weight:800!important;
-  text-decoration:none!important;
-}
-.flagship-case .go-deeper-link .text-link:hover{text-decoration:underline!important;}
 
-.meridian-breadcrumb,
 .site-breadcrumb{
   font-size:12px!important;
   font-weight:750!important;
@@ -101,7 +90,7 @@ summary:focus-visible{
     overflow-x:auto;
     padding-bottom:4px;
   }
-  .flagship-case .state-model-grid.architecture-four-grid{grid-template-columns:1fr!important;}
+  
   .case-shell.site-page{padding-top:34px}
 }
 

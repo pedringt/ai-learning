@@ -24,17 +24,17 @@
   --shell-brand-size:18px;
 }
 .topbar{
-  position:sticky!important;
-  top:0!important;
+  position:sticky;
+  top:0;
   z-index:50!important;
-  background:rgba(251,248,243,.96)!important;
+  background:rgba(251,248,243,.96);
   backdrop-filter:blur(12px)!important;
-  border-bottom:1px solid var(--border)!important;
-  margin:0!important;
-  padding:0!important;
-  width:100vw!important;
-  margin-inline:calc(50% - 50vw)!important;
-  box-sizing:border-box!important;
+  border-bottom:1px solid var(--border);
+  margin:0;
+  padding:0;
+  width:100vw;
+  margin-inline:calc(50% - 50vw);
+  box-sizing:border-box;
 }
 .dark .topbar,
 .v88-dark .topbar,
@@ -42,11 +42,11 @@ body.dark .topbar,
 body.v88-dark .topbar{
   background:rgba(23,20,25,.96)!important;
 }
-.topbar .topinner{margin:0 auto!important;padding:13px var(--shell-x)!important;display:flex!important;align-items:center!important;justify-content:space-between!important;gap:18px!important}
+.topbar .topinner{margin:0 auto;padding:13px var(--shell-x);display:flex;align-items:center;justify-content:space-between;gap:18px}
 .brand-button{
-  border:0!important;background:transparent!important;color:inherit!important;
-  padding:0!important;margin:0!important;cursor:pointer!important;
-  text-align:left!important;text-decoration:none!important;white-space:nowrap!important;
+  border:0;background:transparent;color:inherit;
+  padding:0;margin:0;cursor:pointer;
+  text-align:left;text-decoration:none;white-space:nowrap;
 }
 .brand{
   font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif!important;
@@ -86,15 +86,7 @@ body.v88-dark .topbar{
 .top-actions{
   display:flex!important;align-items:center!important;gap:8px!important;margin-left:10px!important;
 }
-.theme-toggle{
-  display:inline-flex!important;align-items:center!important;justify-content:center!important;
-  min-width:44px!important;height:40px!important;
-  border:1px solid var(--border)!important;background:var(--card)!important;color:inherit!important;
-  border-radius:999px!important;padding:0 12px!important;cursor:pointer!important;
-  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif!important;font-size:var(--shell-control-size)!important;
-  line-height:1!important;font-weight:800!important;white-space:nowrap!important;
-}
-.theme-toggle:hover{background:var(--softp)!important;color:var(--purple)!important}
+
 .secondary-menu{position:relative!important}
 .secondary-menu summary{
   list-style:none!important;display:flex!important;align-items:center!important;justify-content:center!important;
@@ -106,21 +98,7 @@ body.v88-dark .topbar{
 }
 .secondary-menu summary::-webkit-details-marker{display:none!important}
 .secondary-menu summary:hover,.secondary-menu[open] summary{background:var(--softp)!important;color:var(--purple)!important}
-.menu-chevron{
-  display:inline-flex!important;align-items:center!important;justify-content:center!important;
-  width:14px!important;min-width:14px!important;height:14px!important;
-  font-size:14px!important;line-height:1!important;transform:translateY(-1px)!important;
-  transition:transform .15s ease!important;
-}
-.secondary-menu[open] .menu-chevron{transform:translateY(1px) rotate(180deg)!important}
-.secondary-menu-panel{position:absolute!important;right:0!important;top:calc(100% + 8px)!important;z-index:90!important;border:1px solid var(--border)!important;background:var(--card)!important;box-shadow:0 18px 42px rgba(0,0,0,.16)!important}
-.secondary-menu-panel a{color:inherit!important;text-decoration:none!important;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif!important;font-weight:700!important}
-.secondary-menu-panel a:hover{background:var(--softp)!important;color:var(--purple)!important}
-.secondary-menu-label{
-  display:block!important;padding:7px 10px 4px!important;color:var(--muted)!important;
-  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif!important;font-size:10px!important;font-weight:800!important;
-  letter-spacing:.06em!important;text-transform:uppercase!important;
-}
+
 #mobileNav,#v922MobileNav{
   display:none!important;appearance:none!important;-webkit-appearance:none!important;
   border:1px solid var(--border)!important;background-color:var(--card)!important;color:inherit!important;
@@ -142,15 +120,15 @@ body.v88-dark .topbar{
 @media(max-width:560px){
   :root{--shell-x:14px;--shell-brand-size:15px}
   .topbar .topinner{
-    padding-top:11px!important;
-    padding-bottom:11px!important;
-    gap:8px!important;
-    flex-wrap:nowrap!important;
+    padding-top:11px;
+    padding-bottom:11px;
+    gap:8px;
+    flex-wrap:nowrap;
   }
   .topbar .brand-button{
-    flex:1 1 auto!important;
-    min-width:0!important;
-    overflow:hidden!important;
+    flex:1 1 auto;
+    min-width:0;
+    overflow:hidden;
   }
   .topbar .brand{
     display:block!important;
@@ -163,18 +141,13 @@ body.v88-dark .topbar{
     min-width:0!important;
     gap:8px!important;
   }
-  .theme-toggle{
-    flex:0 0 38px!important;
-    min-width:38px!important;
-    width:38px!important;
-    height:38px!important;
-    padding:0!important;
-  }
+  
   #mobileNav,#v922MobileNav{
-    flex:0 0 clamp(108px,34vw,146px)!important;
-    width:clamp(108px,34vw,146px)!important;
+    /* #483 (PF-03): 34vw clipped "Applied Work" to "Applied Worl" at 375px; fit "Learning Library". */
+    flex:0 0 clamp(132px,41vw,160px)!important;
+    width:clamp(132px,41vw,160px)!important;
     min-width:0!important;
-    max-width:146px!important;
+    max-width:160px!important;
     padding-left:9px!important;
     padding-right:30px!important;
     background-position:right 8px center!important;
@@ -182,9 +155,9 @@ body.v88-dark .topbar{
 }
 @media(max-width:360px){
   :root{--shell-x:10px;--shell-brand-size:13.5px}
-  .topbar .topinner{gap:6px!important}
+  .topbar .topinner{gap:6px}
   .topbar .top-actions{gap:6px!important}
-  .theme-toggle{flex-basis:36px!important;min-width:36px!important;width:36px!important;height:36px!important;padding:0!important}
+  
   #mobileNav,#v922MobileNav{
     flex-basis:104px!important;
     width:104px!important;
@@ -194,50 +167,8 @@ body.v88-dark .topbar{
 }
 
 /* v95.3 — Evidence menu polish */
-.secondary-menu-panel{border-radius:16px!important}
-.secondary-menu-panel .menu-label{
-  display:block!important;
-  padding:10px 10px 5px!important;
-  margin-top:2px!important;
-  color:var(--muted)!important;
-  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif!important;
-  font-size:10px!important;
-  font-weight:800!important;
-  letter-spacing:.075em!important;
-  text-transform:uppercase!important;
-}
-.secondary-menu-panel .menu-label:first-child{
-  padding-top:4px!important;
-}
-.secondary-menu-panel a{align-items:center!important;min-height:38px!important;box-sizing:border-box!important;padding:9px 11px!important;margin:2px 0!important;border-radius:10px!important;font-size:13px!important;line-height:1.25!important}
-.secondary-menu-panel .menu-label + a{
-  margin-top:1px!important;
-}
-.secondary-menu-panel a + .menu-label{
-  margin-top:8px!important;
-  padding-top:12px!important;
-  border-top:1px solid var(--border)!important;
-}
 
 /* v95.4 — final Evidence menu hierarchy */
-.secondary-menu-panel{width:310px!important;padding:12px!important}
-.evidence-menu-intro{
-  padding:5px 9px 11px!important;margin-bottom:5px!important;
-  border-bottom:1px solid var(--border)!important;
-}
-.evidence-menu-intro strong{
-  display:block!important;font:800 12px/1.25 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif!important;color:var(--ink)!important;
-}
-.evidence-menu-intro span{
-  display:block!important;margin-top:3px!important;font:500 11px/1.35 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif!important;color:var(--muted)!important;
-}
-.secondary-menu-panel a{display:block!important}
-.secondary-menu-panel a span{display:block!important}
-.secondary-menu-panel a small{
-  display:block!important;margin-top:2px!important;color:var(--muted)!important;
-  font-size:10.5px!important;font-weight:500!important;line-height:1.25!important;
-}
-.secondary-menu-panel a:hover small{color:inherit!important;opacity:.8}
 
 /* v95.11 — sticky-header deep-link polish */
 html{
@@ -254,39 +185,22 @@ html{
   [id]{scroll-margin-top:76px}
 }
 
-.deep-link-return{
-  display:flex;
-  align-items:center;
-  gap:7px;
-  margin:0 0 18px;
-  color:var(--muted);
-  font:700 12px/1.3 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
-}
-.deep-link-return a{
-  color:var(--purple);
-  text-decoration:none;
-}
-.deep-link-return a:hover{
-  text-decoration:underline;
-}
-
-
 /* v95.32 — global header geometry only.
    Intentionally does not alter page/content layout. */
 html{
   scrollbar-gutter:stable;
 }
 .topbar .topinner{
-  width:100%!important;
-  max-width:1180px!important;
-  margin-left:auto!important;
-  margin-right:auto!important;
-  box-sizing:border-box!important;
+  width:100%;
+  max-width:1180px;
+  margin-left:auto;
+  margin-right:auto;
+  box-sizing:border-box;
 }
 /* Equal left/right header anchors keep the center navigation stationary. */
 .topbar .brand-button{
-  flex:0 0 190px!important;
-  min-width:190px!important;
+  flex:0 0 190px;
+  min-width:190px;
 }
 .topbar .top-actions{
   flex:0 0 190px!important;
@@ -300,8 +214,8 @@ html{
 }
 @media(max-width:860px){
   .topbar .brand-button{
-    flex:0 1 auto!important;
-    min-width:0!important;
+    flex:0 1 auto;
+    min-width:0;
   }
   .topbar .top-actions{
     flex:0 1 auto!important;
@@ -309,7 +223,6 @@ html{
     margin-left:auto!important;
   }
 }
-
 
 /* v95.47 — safe interaction hardening */
 .nav a[aria-current="page"],
@@ -340,42 +253,13 @@ select:focus-visible,
 @media(max-width:360px){
   .topbar .brand span{display:none!important}
   #mobileNav,#v922MobileNav{
-    flex-basis:126px!important;
-    width:126px!important;
-    max-width:126px!important;
+    flex-basis:146px!important;
+    width:146px!important;
+    max-width:146px!important;
   }
 }
 
 /* v96.1 — homepage State feature typography hierarchy. */
-.home-state-copy .home-state-lead{
-  max-width:720px!important;
-  margin:0!important;
-  padding:10px 0!important;
-  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif!important;
-  font-size:20px!important;
-  line-height:1.52!important;
-  font-weight:400!important;
-  letter-spacing:-.004em!important;
-  color:var(--muted)!important;
-}
-.home-state-copy .home-state-lead + p{
-  max-width:700px!important;
-  margin:20px 0 0!important;
-  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif!important;
-  font-size:16px!important;
-  line-height:1.6!important;
-  font-weight:450!important;
-  letter-spacing:-.004em!important;
-  color:var(--muted)!important;
-}
-body.v88-dark .home-state-copy .home-state-lead,
-.dark .home-state-copy .home-state-lead{color:var(--muted)!important}
-body.v88-dark .home-state-copy .home-state-lead + p,
-.dark .home-state-copy .home-state-lead + p{color:var(--muted)!important}
-@media(max-width:760px){
-  .home-state-copy .home-state-lead{font-size:18px!important;line-height:1.52!important}
-  .home-state-copy .home-state-lead + p{font-size:15.5px!important;margin-top:17px!important}
-}
 
 /* v96.2 — homepage reads as product judgment, not a learning log.
    The copy itself lives in index.html. These rules only style it.
@@ -395,21 +279,12 @@ body.v88-dark .home-state-copy .home-state-lead + p,
   line-height:1.55;
   color:var(--muted);
 }
-#home .home-legal-feature .home-feature-wide-text p{
-  display:block;
-  font-size:14px;
-  line-height:1.55;
-  color:var(--muted);
-}
+
 @media(max-width:560px){
   #home > .hero > .lead{font-size:17px}
 }
 
 /* v98.1 — keep the flagship State title prominent without overpowering the card. */
-#ai-cs-mock .home-state-feature h2{
-  font-size:clamp(2rem,3.8vw,3.15rem)!important;
-  line-height:1.02!important;
-}
 
 /* v98.2 — the bottom Working style section already explains the non-linear learning approach. */
 #ai-cs-mock .learning-hero > .lead + .lead{
@@ -476,18 +351,8 @@ body.v88-dark .home-state-copy .home-state-lead + p,
 }
 
 /* v98.5 — quiet calibration for Learning Guide topics that deepen through real work. */
-#ai-cs-mock [data-page="learn"] .learning-curriculum-intro::after{
-  content:' · “Deepens in practice” = proficiency grows through real work.';
-  color:color-mix(in srgb,var(--muted) 82%,transparent)!important;
-  font-size:11px!important;
-  font-weight:600!important;
-}
-#ai-cs-mock #data-knowledge-context .stage-group:first-of-type .learning-item:nth-of-type(3) > b::after,
-#ai-cs-mock #software-data-ux .stage-group:nth-of-type(2) .learning-item:nth-of-type(3) > b::after,
-#ai-cs-mock #implementation-adoption .stage-group:first-of-type .learning-item:nth-of-type(1) > b::after,
-#ai-cs-mock #implementation-adoption .stage-group:first-of-type .learning-item:nth-of-type(2) > b::after,
-#ai-cs-mock #product-strategy .stage-group:first-of-type .learning-item:nth-of-type(1) > b::after,
-#ai-cs-mock #product-strategy .stage-group:first-of-type .learning-item:nth-of-type(2) > b::after{
+
+#ai-cs-mock #implementation-adoption .stage-group:first-of-type .learning-item:nth-of-type(1) > b::after,#ai-cs-mock #implementation-adoption .stage-group:first-of-type .learning-item:nth-of-type(2) > b::after,#ai-cs-mock #product-strategy .stage-group:first-of-type .learning-item:nth-of-type(1) > b::after,#ai-cs-mock #product-strategy .stage-group:first-of-type .learning-item:nth-of-type(2) > b::after{
   content:' · DEEPENS IN PRACTICE';
   margin-left:7px!important;
   color:color-mix(in srgb,var(--muted) 78%,transparent)!important;
@@ -498,14 +363,12 @@ body.v88-dark .home-state-copy .home-state-lead + p,
   white-space:nowrap!important;
 }
 @media(max-width:640px){
-  #ai-cs-mock [data-page="learn"] .learning-curriculum-intro::after{font-size:10.5px!important;}
+  
   #ai-cs-mock [data-page="learn"] .learning-item > b::after{font-size:9px!important;margin-left:5px!important;}
 }
 
 /* v98.6 — keep the legend in the Reference Library row instead of the intro copy. */
-#ai-cs-mock [data-page="learn"] .learning-curriculum-intro::after{
-  content:none!important;
-}
+
 #ai-cs-mock [data-page="learn"] .learning-stages > .section-kicker{
   align-items:center!important;
 }
@@ -542,60 +405,11 @@ body.v88-dark .home-state-copy .home-state-lead + p,
 }
 
 /* v98.7 — keep homepage supporting proof compact and secondary. */
-#ai-cs-mock [data-page="home"] .home-more-applied .section-kicker{
-  margin:28px 0 6px!important;
-}
-#ai-cs-mock [data-page="home"] .home-more-applied .home-supporting-row{
-  display:flex!important;
-  flex-wrap:wrap!important;
-  align-items:center!important;
-  gap:8px 20px!important;
-  margin-top:0!important;
-}
-#ai-cs-mock [data-page="home"] .home-more-applied .home-supporting-row a{
-  display:inline-flex!important;
-  flex-direction:row!important;
-  align-items:center!important;
-  gap:3px!important;
-  padding:5px 0!important;
-  border:0!important;
-  color:var(--purple)!important;
-  font-size:14px!important;
-  line-height:1.35!important;
-  font-weight:750!important;
-  text-decoration:none!important;
-}
-#ai-cs-mock [data-page="home"] .home-more-applied .home-supporting-row a:hover{
-  text-decoration:underline!important;
-}
-#ai-cs-mock [data-page="home"] .home-more-applied .home-supporting-row a span{
-  display:none!important;
-}
-#ai-cs-mock [data-page="home"] .home-more-applied .home-supporting-row a strong{
-  font:inherit!important;
-}
-#ai-cs-mock [data-page="home"] .home-more-applied .home-supporting-row a strong::after{
-  content:' →';
-}
-#ai-cs-mock [data-page="home"] .home-more-applied .home-supporting-row a[href="meridian.html"]{
-  display:none!important;
-}
-#ai-cs-mock [data-page="home"] .home-quiet-ending{
-  display:none!important;
-}
-@media(max-width:620px){
-  #ai-cs-mock [data-page="home"] .home-more-applied .home-supporting-row{
-    display:grid!important;
-    grid-template-columns:1fr!important;
-    gap:2px!important;
-  }
-}
+
 /* Homepage rhythm (staging feedback): "More applied work" reads as part of the
    project cards above it; "How I work with AI" reads as a deliberate closing line
    with one full-width divider instead of a border plus a second kicker rule. */
-#ai-cs-mock [data-page="home"] .home-more-applied .section-kicker{
-  margin:12px 0 4px!important;
-}
+
 #ai-cs-mock [data-page="home"] .home-principle{
   max-width:none!important;
   margin-top:56px!important;

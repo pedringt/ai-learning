@@ -1,9 +1,12 @@
 # Deterministic test suite for State.
 #
-# Runs the full Python and JS State suites only when a change can affect the
-# State application or this workflow. Portfolio-only changes still report the
-# required python/javascript checks, but they finish quickly without starting
-# Postgres, installing Chromium, or running the State suites.
+# The Python suite runs only when a change can affect the State application or
+# this workflow; portfolio-only changes still report the required python check,
+# but it finishes quickly without starting Postgres or installing Chromium.
+#
+# The JavaScript suites always run. They take seconds and also cover portfolio
+# files (every root page, project-health.js, api/*, vercel.json), so filtering
+# them by path once hid two broken Project Health suites until Oct 4 (#449).
 #
 # This workflow only tests. It does not build, publish, or deploy anything.
 
@@ -116,24 +119,16 @@ jobs:
         run: docker rm -f state-ci-postgres >/dev/null 2>&1 || true
 
   javascript:
-    needs: changes
     runs-on: ubuntu-latest
     steps:
-      - name: Skip State JavaScript suite for portfolio-only changes
-        if: needs.changes.outputs.state != 'true'
-        run: echo "No State-impacting files changed; JavaScript State QA is not needed."
-
       - uses: actions/checkout@v4
-        if: needs.changes.outputs.state == 'true'
 
       - uses: actions/setup-node@v4
-        if: needs.changes.outputs.state == 'true'
         with:
           node-version: "22"
 
       # Runs every state-*-tests.js file rather than a hand-maintained list.
       - name: Run State behavior suites
-        if: needs.changes.outputs.state == 'true'
         working-directory: implementation-context-prototype
         run: |
           shopt -s nullglob

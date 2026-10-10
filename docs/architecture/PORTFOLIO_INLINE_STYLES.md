@@ -8,6 +8,10 @@ Only the provably neutral cleanup: removed **46 empty `@media` shells** (rules w
 
 Verified with `tools/style_parity.py`: the full computed style (every property, plus `::before` / `::after`) of all 291 elements is **identical** before and after, for Home, Applied Work and Learning Guide, at 1280 px and 390 px, in light and dark. The tool's noise floor (old vs old) is 0, and a positive control (a deliberate 1 px font-size change) is detected.
 
+## Oct 2026 (#451): dead rules removed
+
+`tools/dead_css.py` removed every rule and selector that requires a class or id found in no portfolio page or script: 71 rules from these inline blocks, and about 1,150 from the shared stylesheets (`site-components.css` went from 132 KB to 36 KB). The block positions described below were kept. `scripts/state_ui_compare/portfolio_compare.py` found every portfolio page identical at desktop, tablet and phone widths (computed styles, text, attributes, structure).
+
 ## Why the CSS was not moved out of `index.html`
 
 **The order of the blocks relative to the two `<link>` stylesheets is load-bearing.** In document order:

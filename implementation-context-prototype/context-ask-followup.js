@@ -106,37 +106,6 @@
     } catch (_) {}
   }
 
-  function addGuideStyles() {
-    if (document.getElementById('state-reviewer-guide-styles')) return;
-    const style = document.createElement('style');
-    style.id = 'state-reviewer-guide-styles';
-    style.textContent = `
-      .state-reviewer-guide{position:relative;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:16px;align-items:center;margin:0 0 16px;padding:14px 16px;border:1px solid #d9e3f0;border-radius:12px;background:#fff;color:#26344c;box-sizing:border-box}
-      .state-reviewer-guide-copy{min-width:0}
-      .state-reviewer-guide-copy strong{display:block;margin-bottom:3px;font-size:13px;color:#18253a}
-      .state-reviewer-guide-copy p{margin:0;font-size:12.5px;line-height:1.5;color:#59677d}
-      .state-reviewer-guide-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:flex-end}
-      .state-reviewer-guide-start{display:inline-flex;align-items:center;min-height:0;padding:4px 0;border:0;border-radius:0;background:transparent;box-shadow:none;color:#1769e8;font:inherit;font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap}
-      .state-reviewer-guide-dismiss{min-width:38px;min-height:38px;border:0;background:transparent;color:#6b778a;font:inherit;font-size:20px;line-height:1;cursor:pointer;border-radius:8px}
-      .state-reviewer-guide-dismiss:hover,.state-reviewer-guide-dismiss:focus-visible{background:#edf3f9;color:#26344c}
-      .ask-current-state-link{white-space:nowrap}
-      .project-maintained-fact.is-ask-target{outline:2px solid rgba(23,105,232,.28);outline-offset:5px;border-radius:6px}
-      body.v88-dark .state-reviewer-guide{background:#171b22;border-color:#303946;color:#eef2f7}
-      body.v88-dark .state-reviewer-guide-copy strong{color:#f2f5f8}
-      body.v88-dark .state-reviewer-guide-copy p{color:#b5bfcc}
-      body.v88-dark .state-reviewer-guide-start{background:transparent;border-color:transparent;color:#9fc6ff}
-      body.v88-dark .state-reviewer-guide-dismiss{color:#aeb8c5}
-      @media(max-width:760px){
-        .state-reviewer-guide{grid-template-columns:1fr;gap:11px;margin:0 14px 14px;padding:13px 14px}
-        .state-reviewer-guide-actions{justify-content:flex-start}
-        .state-reviewer-guide-start{min-height:44px}
-        .state-reviewer-guide-dismiss{position:absolute;right:8px;top:8px;min-width:44px;min-height:44px}
-        .state-reviewer-guide-copy{padding-right:38px}
-        #askStateDrawer .ask-item-action,#askStateDrawer .ask-item-link,#askStateDrawer .ask-copy-answer{min-height:44px!important;padding-top:8px!important;padding-bottom:8px!important}
-      }
-    `;
-    document.head.appendChild(style);
-  }
 
   // Blank-project bug report (2026-09-15): a brand-new project showed the
   // exact same "Exploring State?" tour banner as an established one, even
@@ -147,8 +116,12 @@
   // one of three banners. Absence of that hook (older bundle, test harness
   // without context-app.js loaded) falls back to the original banner.
   function onboardingStage() {
-    const data = window.STATE_ASK_TEST_API?.state?.data;
+    const app = window.STATE_ASK_TEST_API?.state;
+    const data = app?.data;
     if (!data) return 'established';
+    // #482 (Cowork, Oct 9): a new tab on Northstar showed "Add your first evidence" because
+    // this ran before the project's Evidence had loaded. Unknown is not "no evidence".
+    if (app.backendStatus?.evidence === 'loading') return null;
     if (!(data.notes || []).length) return 'no_evidence';
     // syncApiState() never removes a knowledge item on an empty backend
     // response, only tags it state:'retired' (context-backend-sync.js) --
@@ -181,7 +154,6 @@
   // it comes from.
   function syncReviewerGuide() {
     if (!root) return;
-    addGuideStyles();
     const overview = root.querySelector('.overview');
     const existing = root.querySelector('.state-reviewer-guide');
     const showBanner = !!overview && !isDismissed();
@@ -190,6 +162,7 @@
       return;
     }
     const stage = onboardingStage();
+    if (stage === null) { existing?.remove(); return; }  // still loading; the next render decides
     if (!existing) { overview.insertAdjacentHTML('afterbegin', guideMarkup(stage)); return; }
     if (existing.dataset.guideStage !== stage) existing.outerHTML = guideMarkup(stage);
   }

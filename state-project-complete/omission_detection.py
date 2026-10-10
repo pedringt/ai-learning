@@ -248,6 +248,7 @@ def call_detector(connection: Any, candidate: OmissionCandidate, provider: Any) 
         message = provider.client.messages.create(
             model=provider.model_identifier,
             max_tokens=getattr(provider, "max_tokens", 2000),
+            thinking={"type": "disabled"},
             output_config={"format": {"type": "json_schema", "schema": PROVIDER_OUTPUT_SCHEMA}},
             messages=[{"role": "user", "content": prompt}],
         )

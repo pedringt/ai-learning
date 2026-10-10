@@ -71,7 +71,7 @@ def test_anthropic(connection):
     try:
         print(f"✓ API key found (length: {len(api_key)})")
         print("Initializing AnthropicProvider...")
-        provider = AnthropicProvider(model_identifier="claude-opus-4-6")
+        provider = AnthropicProvider(model_identifier="claude-opus-5-5")
         
         print("Processing evidence...")
         start = time.time()
@@ -89,7 +89,7 @@ def test_anthropic(connection):
         
         return {
             "provider": "Anthropic Claude",
-            "model": "claude-opus-4-6",
+            "model": "claude-opus-5-5",
             "status": "succeeded",
             "latency_seconds": elapsed,
             "reviews": len(result.review_ids),
@@ -100,7 +100,7 @@ def test_anthropic(connection):
         print(f"❌ Error: {type(e).__name__}: {str(e)}")
         return {
             "provider": "Anthropic Claude",
-            "model": "claude-opus-4-6",
+            "model": "claude-opus-5-5",
             "status": "failed",
             "error": str(e),
         }

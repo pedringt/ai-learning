@@ -1,5 +1,5 @@
 // Regression coverage for a mobile-only Ask bug (2026-09-13): context-
-// feedback-pass.js's mobileAsk() intercepts starter-chip taps on a
+// context-ask-controls.js's mobileAsk() (moved from context-feedback-pass.js in #450) intercepts starter-chip taps on a
 // document-level 'pointerup' capturing listener (gated to max-width:760px)
 // and reimplemented "fill the input, dispatch input, form.requestSubmit()"
 // itself, with e.preventDefault()+e.stopImmediatePropagation(). On a real
@@ -94,7 +94,7 @@ function fire(type,target){
 }
 
 const context={
-  window:{addEventListener(){}, innerWidth:390},
+  window:{addEventListener(){}, innerWidth:390, matchMedia:query=>({matches:query.includes('max-width:760px')})},
   document,
   matchMedia:query=>({matches:query.includes('max-width:760px')}),
   navigator:{clipboard:{writeText(){}}},
@@ -106,7 +106,7 @@ const context={
   URLSearchParams,history:{replaceState(){}},
 };
 vm.createContext(context);
-vm.runInContext(fs.readFileSync(path.join(dir,'context-feedback-pass.js'),'utf8'),context);
+vm.runInContext(fs.readFileSync(path.join(dir,'context-ask-controls.js'),'utf8'),context);
 
 let pass=0,fail=0;
 function check(name,ok,detail=''){if(ok){pass++;console.log('✓',name);}else{fail++;console.error('✗',name,detail);}}

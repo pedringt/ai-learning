@@ -179,10 +179,4 @@
   });
   if (!installObserver()) bodyObserver.observe(document.body, {childList: true, subtree: true});
 
-  if (!document.getElementById('ask-question-handoff-styles')) {
-    const style = document.createElement('style');
-    style.id = 'ask-question-handoff-styles';
-    style.textContent = `.ask-question-handoff{margin-top:16px;padding:12px;border:1px solid var(--line);border-radius:10px;background:var(--surface2)}.ask-question-handoff strong{display:block;margin-bottom:4px;font-size:13px}.ask-question-handoff p{margin:0 0 10px;color:var(--muted);font-size:12px;line-height:1.45}.ask-question-handoff .btn{width:auto}`;
-    document.head.appendChild(style);
-  }
 })();

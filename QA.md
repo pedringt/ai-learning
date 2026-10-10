@@ -35,6 +35,7 @@ After that it checks the branch diff against `origin/staging`:
 - if model-sensitive files changed, it runs `state-project-complete/eval/run_eval.py` against the real Anthropic provider;
 - if a real-model eval is required but `ANTHROPIC_API_KEY` is unavailable, release QA stops clearly instead of silently reporting success;
 - set `QA_FORCE_REAL_MODEL=1` to force the live eval even when the diff would normally skip it.
+- before a `staging` -> `main` promotion, compare against `main` instead: `QA_BASE_REF=origin/main make qa-release`, or in GitHub run the **State QA Release** workflow on `staging` with `base_ref` = `origin/main` (it also has a `force_real_model` box). Run on `staging` against the default `origin/staging`, it would find no difference and skip the paid eval.
 
 This command still does **not** deploy or modify staging.
 

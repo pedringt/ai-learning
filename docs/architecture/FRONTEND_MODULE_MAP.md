@@ -4,7 +4,7 @@ Written for #135 (Sept 2026) from an audit of what `index.html` actually loads, 
 
 ## Decision (#135)
 
-**The current organization is accepted technical debt. Do not rename or merge the historically named modules.** All 28 `context-*.js` files are loaded by `index.html` and none is dead, so nothing can be deleted "because the name looks temporary". They are coupled by load order (later modules patch what earlier ones rendered), and the automated tests that name most of the patch layers are few or none, so a rename or merge would be a cascade/DOM-order refactor with the weakest protection exactly where it would happen. The benefit would be cosmetic. What was done instead: the one confirmed piece of dev-only code (`seedStressNotes` in `context-feedback-pass-4.js`, two hard-coded "Stress test" notes) was removed with a guard test (`state-no-dev-fixtures-tests.js`), and this map was written.
+**Update (Oct 2026, #450): the patch layers are now being folded into the renderers, one slice at a time.** The earlier position here was "do not rename or merge", because the layers are coupled by load order and few tests named them, so a merge would happen exactly where protection was weakest. What changed is the protection: `scripts/state_ui_compare/compare.py` renders the old and new build side by side against a local demo backend (no model calls) and compares every element's computed style, text, attributes and structure on every view and Ask state at desktop and phone widths. A slice ships only when that comparison is identical, or every difference is explained and intended. Progress and findings are recorded on #450. (The original dev-only cleanup still stands: `seedStressNotes` was removed with the guard test `state-no-dev-fixtures-tests.js`.)
 
 ## Load order and roles
 
@@ -13,11 +13,11 @@ Written for #135 (Sept 2026) from an audit of what `index.html` actually loads, 
 | Layer | Modules | Role |
 |---|---|---|
 | Foundation | `context-analytics`, `context-data` (Northstar seed fixture), `context-api` (API client, `X-State-Project-Id` header), `context-evidence-resilience` (Evidence submit/upload/retry with long timeouts and the Baseline async ack) | data + transport |
-| Ask | `context-ask`, `context-ask-followup` | Ask requests, streaming, follow-ups |
+| Ask | `context-ask`, `context-ask-followup`, `context-ask-controls` | Ask requests, streaming, follow-ups; drawer controls (consolidated in #450) |
 | Views + core | `context-notes-view`, `context-open-items-view`, `context-project-view`, `context-backend-sync` (maps API records to view shapes), `context-app` (router, render loop, project switcher; 1,800 lines) | the app proper |
-| Baseline Setup (three layers) | `context-baseline-setup` (original banner + review dialog), `context-baseline-polish` (manual entry, copy), `context-baseline-dogfood-fixes` (the banner that owns the states, starting-material dialog, polling) | Baseline UX. **Two banner renderers coexist** (`context-baseline-setup` and `context-baseline-dogfood-fixes`) and redraw over each other on every view refresh; #230, #231 and #232 were all bugs at that seam |
+| Baseline Setup | `context-baseline` | One module since #450 (was `context-baseline-setup`, `-polish`, `-dogfood-fixes`): a single banner renderer, the Starting State draft dialog, manual entry, starting material, confirm and retry, and the Workspace empty states while Baseline Setup is active. The two competing banner renderers behind #230, #231 and #232 are gone |
 | Features | `context-history` (browser history/navigation), `context-provenance`, `context-ask-question-handoff`, `context-settings`, `context-sources` | feature modules |
-| **Patch layers (historical names)** | `context-quickwins`, `context-product-polish`, `context-design-pass`, `context-feedback-pass`, `-2`, `-3`, `-4`, `context-attention-alignment`, `context-final-mobile` | inject CSS and rewrite already-rendered DOM (each uses a `MutationObserver` and re-runs on every change). Later ones patch earlier ones |
+| **Patch layers (historical names)** | none left | #450 folded them all: CSS moved to `state-app.css`; `context-quickwins`, `context-design-pass`, `context-feedback-pass`, `-2`, `-3`, `-4`, `context-attention-alignment`, `context-final-mobile`, `context-sources` and the three Baseline layers are deleted. Their behavior lives in the renderers, `context-baseline`, `context-ask-controls` (Ask drawer controls) and `context-layout` (layout behavior CSS cannot do) |
 
 ## Where responsibilities overlap (candidates for consolidation, not proven duplicates)
 
@@ -25,13 +25,12 @@ Judged from function names; check the code before assuming two functions do the 
 
 | Concern | Touched by |
 |---|---|
-| Ask controls / launcher | `feedback-pass` (`askControlStates`), `feedback-pass-2` (`askIcons`), `feedback-pass-3` (`installAskLifecycle`, `ensureAskStatus`), `feedback-pass-4` (`syncAskControls`, `installAskControls`, `restoreAskDiscovery`), `attention-alignment` (`syncAskBlankGuard`), `final-mobile` (`syncMobileAskLauncher`) |
-| Attention / Workspace sync | `feedback-pass` (`syncAttentionFromApi`), `feedback-pass-4` (`syncAttention`), `attention-alignment` (`normalizeAttention`) |
-| Evidence sync | `feedback-pass` (`evidenceSync`), `feedback-pass-4` (`installEvidenceSync`) |
-| Navigation styling | `design-pass`, `feedback-pass` (`fixNav`), `quickwins` (`decorateNav`) |
-| Help card | `design-pass`, `feedback-pass-3` (`syncHelpCard`), `final-mobile` (`ensureMobileHelp`) |
+| Ask controls / launcher | Consolidated in `context-ask-controls` (#450). The old layers' functions are kept there in their original order; the never-visible second clear button and the dead quick-actions branch were removed |
+| Attention / Workspace sync | Resolved (#450): after Evidence is added `context-app` re-hydrates (`refreshAfterEvidence`); `feedback-pass` and `feedback-pass-4` are deleted, and `attention-alignment`'s styles are CSS |
+| Navigation styling | Resolved (#450): static markup in `index.html` |
+| Help card | Card markup is static in `index.html`; `context-layout` positions it and adds the mobile footer (#450) |
 
-If a consolidation is ever attempted, start with **Ask controls** (six modules touch it).
+#450 is doing this consolidation slice by slice; each slice is checked with `scripts/state_ui_compare/compare.py` (identical UI before and after, including Ask's answered, editing, cleared, error and mid-answer states).
 
 ## What the layering has cost so far
 

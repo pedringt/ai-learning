@@ -84,7 +84,7 @@ All backend paths below are under `state-project-complete/` unless noted.
 | Database upgrade/reset | `migrations/009_question_review_proposals.sql`, `review_question_migration.py`, `database_migration_backed.py`, and `seed_demo.py` |
 | API | `api.py` extends the existing resolution input/response; no separate Question approval endpoint |
 | Review UI and actions | `implementation-context-prototype/context-open-items-view.js`, `context-app.js`, and `context-api.js` |
-| Ask grounding/freshness | Backend `ask_service.py`; frontend `implementation-context-prototype/context-product-polish.js`; stale-control hiding rules removed from `context-feedback-pass.js` and `context-feedback-pass-4.js` |
+| Ask grounding/freshness | Backend `ask_service.py`; frontend `implementation-context-prototype/context-product-polish.js`; stale-control hiding rules removed from `context-feedback-pass.js` and `context-feedback-pass-4.js` (both files were later deleted in #450) |
 | Feature tests | `test_question_review_creation.py`, `test_question_review_browser.py`, `test_ask_cache_authority.py`, `test_provider_prompt_contract.py`; frontend `state-question-review-handoff-tests.js` |
 | Permanent regression CI | `.github/workflows/tests.yml`, including an isolated PostgreSQL service |
 | Optional live walkthrough | `qa/deployed/question-review-live.js` and `.github/workflows/question-review-live.yml`, manual-only and staging-guarded |

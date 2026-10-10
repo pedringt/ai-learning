@@ -1,5 +1,8 @@
 (() => {
   const norm = s => String(s).toLowerCase().replace(/[’']/g,'').replace(/[^a-z0-9\s]/g,' ').replace(/\s+/g,' ').trim();
+  // #476: the API sends UTC timestamps without a zone ("2026-10-10 00:40:00"), which
+  // browsers read as local time, so evening actions west of UTC showed tomorrow's date.
+  const parseServerTime = value => { const raw=String(value); const naive=/^(\d{4}-\d{2}-\d{2})[ T](\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?)$/.exec(raw); return new Date(naive?`${naive[1]}T${naive[2]}Z`:raw); };
   const todayISO = () => { const d=new Date(); const pad=n=>String(n).padStart(2,'0'); return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`; };
   const OPEN_ITEMS_VIEW = window.STATE_OPEN_ITEMS_VIEW;
 
@@ -83,9 +86,10 @@
       resolvesQuestionIds:[...(r.resolves_question_ids||[])],
       resolvesQuestionId:(r.resolves_question_ids||[])[0],
       establishes:rationale||r.why_consequential,
-      doesNot:r.review_type==='proposed_update'
-        ? 'The proposed change does not become Current State until you accept it.'
-        : 'The evidence does not automatically resolve the uncertainty or change Current State.',
+      // #482 (QA-11): one short line per decision type instead of the same boilerplate on every card.
+      doesNot:proposals.length
+        ? 'Only accepting this changes Current State.'
+        : 'Neither choice changes Current State.',
       whyConsequential:r.why_consequential,
       reviewType:r.review_type,
       proposals,
@@ -139,7 +143,8 @@
 
   function formatBackendDate(value){
     if(!value)return '';
-    const d=new Date(value); if(Number.isNaN(d.getTime()))return String(value).slice(0,10);
+    const day=/^(\d{4})-(\d{2})-(\d{2})$/.exec(String(value));
+    const d=day?new Date(+day[1],day[2]-1,+day[3]):parseServerTime(value); if(Number.isNaN(d.getTime()))return String(value).slice(0,10);
     return d.toLocaleDateString(undefined,{month:'short',day:'numeric'});
   }
   function sourceLabel(source){
@@ -318,7 +323,9 @@
         // itself already tag (via the fixture-carried topics above) gets a
         // guessed topic anymore -- an empty array is an honest "untagged",
         // not a wrong guess dressed up as one.
-        topics:fixture?.topics?.length?fixture.topics:[],backendManaged:true
+        topics:fixture?.topics?.length?fixture.topics:[],backendManaged:true,
+        // #481: Evidence a reviewer attached with Keep tracking / Link existing Question.
+        linkedEvidence:(q.linked_evidence||[]).map(x=>({evidenceId:x.evidence_id,excerpt:x.excerpt||'',date:formatBackendDate(x.submitted_at),how:x.how}))
       };
     });
     return backend;

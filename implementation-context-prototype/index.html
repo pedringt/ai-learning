@@ -39,7 +39,7 @@
       window.__STATE_BASE = /(^|\/)index(\.html)?$/.test(path) ? path.replace(/index(\.html)?$/, '') : (path.slice(-1) === '/' ? path : path + '/');
       document.write('<link rel="icon" href="' + window.__STATE_BASE + 'favicon.svg">');
       document.write('<link rel="stylesheet" href="' + window.__STATE_BASE + 'state-shell.css">');
-      document.write('<link rel="stylesheet" href="' + window.__STATE_BASE + 'context-tool.css?v=r118-current-state-feedback">');
+      document.write('<link rel="stylesheet" href="' + window.__STATE_BASE + 'context-tool.css?v=r120-cowork-followup">');
     })();
   </script>
   <style id="state-mobile-nav">
@@ -59,6 +59,12 @@
     .mobile-primary-nav .nav-count[hidden]{display:none!important;}
     .mobile-subnav[hidden]{display:none!important;}
   </style>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lora:wght@600;700&display=swap">
+  <script>
+    // Layer styles that the context-*.js scripts used to inject at runtime (#450). Must stay after
+    // context-tool.css and the inline styles above so the cascade order is unchanged.
+    document.write('<link rel="stylesheet" href="' + window.__STATE_BASE + 'state-app.css?v=4">');
+  </script>
 </head>
 <body>
   <div class="prototype-productbar"><span class="product-mark" aria-hidden="true">◆</span><button type="button" class="product-name product-home" data-view="overview" aria-label="Return to Workspace">State</button><span class="product-divider" aria-hidden="true">·</span><span class="product-tagline">Maintained project understanding, not reconstructed history.</span><a class="product-case-study" href="https://www.contextswitch.tech/implementation-context" target="_blank" rel="noopener noreferrer">Case study</a></div>
@@ -66,10 +72,10 @@
     <h1 class="visually-hidden">State project workspace</h1>
     <aside class="app-sidebar" aria-label="Project workspace">
       <div class="sidebar-project"><span class="meta-label">Project</span><button class="project-switcher" id="projectSwitcher" data-action="toggle-projects" aria-expanded="false" aria-controls="projectMenu">Loading… <span>⌄</span></button><div class="project-menu" id="projectMenu" hidden></div></div>
-      <nav class="sidebar-nav"><button class="nav-item active" data-view="overview">Workspace</button><div class="sidebar-nav-group project-nav-group"><button class="nav-item project-nav-toggle" data-view="project-overview">Current State</button><div class="project-subnav" id="projectSubnav" hidden><button data-project-jump="project-top">Overview</button></div></div><button class="nav-item open-items-nav-toggle" data-view="open-items">Open Items <span class="nav-count" id="openItemsActionCount" hidden></span></button><button class="nav-item" data-view="notes">Notes</button><button class="nav-item" data-view="history">History</button><button class="nav-item" data-view="settings">Settings</button></nav>
+      <nav class="sidebar-nav"><button class="nav-item active" data-view="overview"><span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5V21h-6v-6H9v6H3z"/></svg></span><span class="nav-label">Workspace</span></button><div class="sidebar-nav-group project-nav-group"><button class="nav-item project-nav-toggle" data-view="project-overview"><span class="nav-icon"><svg viewBox="0 0 24 24"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 8h6M9 12h6M9 16h4"/></svg></span><span class="nav-label">Current State</span></button><div class="project-subnav" id="projectSubnav" hidden><button data-project-jump="project-top">Overview</button></div></div><button class="nav-item open-items-nav-toggle" data-view="open-items"><span class="nav-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m8 12 2.5 2.5L16 9"/></svg></span><span class="nav-label">Open Items</span><span class="nav-count" id="openItemsActionCount" hidden></span></button><button class="nav-item" data-view="notes"><span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M6 3h9l3 3v15H6z"/><path d="M9 10h6M9 14h6M9 18h4"/></svg></span><span class="nav-label">Notes</span></button><button class="nav-item" data-view="history"><span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M4 7V3m0 4h4M4.5 7A9 9 0 1 1 3 15"/><path d="M12 7v5l3 2"/></svg></span><span class="nav-label">History</span></button><button class="nav-item" data-view="settings"><span class="nav-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19 13.5v-3l-2-.7-.7-1.7.9-1.9-2.1-2.1-1.9.9-1.7-.7L10.5 2h-3l-.7 2.3-1.7.7-1.9-.9-2.1 2.1.9 1.9-.7 1.7-2 .7v3l2 .7.7 1.7-.9 1.9 2.1 2.1 1.9-.9 1.7.7.7 2.3h3l.7-2.3 1.7-.7 1.9.9 2.1-2.1-.9-1.9.7-1.7z" transform="translate(2.25 0) scale(.8)"/></svg></span><span class="nav-label">Settings</span></button></nav>
       <nav class="mobile-primary-nav" aria-label="Project navigation"><button class="nav-item active" data-view="overview">Workspace</button><button class="nav-item open-items-nav-toggle" data-view="open-items">Open Items <span class="nav-count" id="mobileOpenItemsCount" hidden></span></button><button class="nav-item" data-view="project-overview">Current State</button><button class="nav-item" data-view="notes">Notes</button><button class="nav-item" data-view="history">History</button><button class="nav-item" data-view="settings">Settings</button></nav>
       <nav class="mobile-subnav" id="mobileProjectSubnav" hidden aria-label="Current State sections"><button data-project-jump="project-top">Overview</button></nav>
-      <button class="demo-help-button" data-action="show-demo-help">How this works</button>
+      <button class="demo-help-button state-help-card" data-action="show-demo-help"><span class="state-help-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5.5A3.5 3.5 0 0 1 7.5 2H11v17H7.5A3.5 3.5 0 0 0 4 22zM20 5.5A3.5 3.5 0 0 0 16.5 2H13v17h3.5A3.5 3.5 0 0 1 20 22z"/></svg></span><span class="state-help-copy"><strong>Need help?</strong><span>Learn how State works</span></span></button>
     </aside>
     <section class="app-workspace"><section id="viewRoot" class="view-root" aria-live="polite"></section></section>
   </main>
@@ -79,8 +85,8 @@
       var local = location.protocol === 'file:';
       document.write('<script src="' + window.__STATE_BASE + 'state-shell.js"><\/script>');
       if(!local) document.write('<script src="/api/state-config.js"><\/script>');
-      var v='r118-current-state-feedback';
-      ['context-analytics.js','context-data.js','context-api.js','context-evidence-resilience.js','context-ask.js','context-ask-followup.js','context-notes-view.js','context-open-items-view.js','context-project-view.js','context-backend-sync.js','context-app.js','context-baseline-setup.js','context-baseline-polish.js','context-baseline-dogfood-fixes.js','context-history.js','context-provenance.js','context-quickwins.js','context-product-polish.js','context-ask-question-handoff.js','context-settings.js','context-sources.js','context-design-pass.js','context-feedback-pass.js','context-feedback-pass-2.js','context-feedback-pass-3.js','context-feedback-pass-4.js','context-attention-alignment.js','context-final-mobile.js'].forEach(function(file){document.write('<script src="'+window.__STATE_BASE+file+'?v='+v+'"><\/script>');});
+      var v='r120-cowork-followup';
+      ['context-analytics.js','context-data.js','context-api.js','context-evidence-resilience.js','context-ask.js','context-ask-followup.js','context-notes-view.js','context-open-items-view.js','context-project-view.js','context-backend-sync.js','context-app.js','context-baseline.js','context-history.js','context-provenance.js','context-product-polish.js','context-ask-question-handoff.js','context-settings.js','context-ask-controls.js','context-layout.js'].forEach(function(file){document.write('<script src="'+window.__STATE_BASE+file+'?v='+v+'"><\/script>');});
       document.write('<script>requestAnimationFrame(function(){requestAnimationFrame(function(){document.documentElement.classList.remove("state-prepaint");clearTimeout(window.__stateRevealTimer);});});<\/script>');
     })();
   </script>

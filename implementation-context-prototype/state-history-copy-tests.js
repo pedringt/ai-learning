@@ -51,7 +51,8 @@ check('synced history entry gets the specific headline, not the generic one',
 check('synced history entry\'s reason has the internal id stripped',
   entry.reason && entry.reason.indexOf('k-rollout')===-1, entry.reason);
 check('synced history entry\'s reason still reads as a sentence',
-  entry.reason==='Should Current State update based on this reviewed evidence?', entry.reason);
+  // #478: a bare k- id becomes words instead of leaving "update based on" without an object.
+  entry.reason==='Should Current State update the related Current State item based on this reviewed evidence?', entry.reason);
 
 console.log(`\n${pass} passed, ${fail} failed`);
 if(fail) process.exit(1);

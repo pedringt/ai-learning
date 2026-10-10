@@ -43,9 +43,8 @@ check('every script and stylesheet the page writes goes through the computed bas
     assert.ok(w.includes('__STATE_BASE'), 'loader line bypasses __STATE_BASE: ' + w.slice(0, 120));
   }
 });
-check('the shell computes its stylesheet URL from the same base', () => {
-  const shell = fs.readFileSync(path.join(__dirname, 'state-shell.js'), 'utf8');
-  assert.ok(/polish\.href=\(window\.__STATE_BASE\|\|''\)\+'final-freeze-polish\.css'/.test(shell));
+check('the layer stylesheet URL is computed from the same base', () => {
+  assert.ok(/window\.__STATE_BASE \+ 'state-app\.css/.test(html), 'index.html must load state-app.css through __STATE_BASE');
 });
 check('the app no longer reaches into portfolio root files', () => {
   assert.ok(!/\.\.\/(site-shell|favicon|index)/.test(html));

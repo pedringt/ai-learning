@@ -50,11 +50,11 @@ class AnthropicProvider:
 
         Args:
             model_identifier: Claude model to use. If None, uses CLAUDE_MODEL env var
-                            or defaults to 'claude-haiku-4-5-20251001' for low-latency interpretation
+                            or defaults to 'claude-haiku-5-5' for low-latency interpretation
             api_key: Anthropic API key (if None, uses ANTHROPIC_API_KEY env var)
         """
         self.name = "anthropic"
-        self.model_identifier = model_identifier or os.getenv("CLAUDE_MODEL", "claude-haiku-4-5-20251001")
+        self.model_identifier = model_identifier or (os.getenv("CLAUDE_MODEL") or "claude-haiku-5-5")
         # Bumped 1200 -> 2000 2026-09-13: the #105 long discovery-note stress
         # test hit stop_reason="max_tokens" on a dense, multi-topic note after
         # consequentiality_guidance.py's completeness-scan instruction (state.md
@@ -144,6 +144,9 @@ class AnthropicProvider:
         message = self.client.messages.create(
             model=self.model_identifier,
             max_tokens=self.max_tokens,
+            # Short strict-JSON job: Claude 5.x models think adaptively by default, which can spend
+            # the whole max_tokens budget before any text. Keep it off, as Haiku 4.5 had it.
+            thinking={"type": "disabled"},
             output_config={
                 "format": {
                     "type": "json_schema",
@@ -251,6 +254,7 @@ class AnthropicProvider:
         message = self.client.messages.create(
             model=self.model_identifier,
             max_tokens=300,
+            thinking={"type": "disabled"},
             output_config={"format": {"type": "json_schema", "schema": _RELEVANCE_SCHEMA}},
             messages=[{"role": "user", "content": prompt}],
         )
@@ -391,9 +395,10 @@ Compare the Evidence with Current State and open Reviews. Return the semantic in
 - effective_date is optional. Include only a complete date explicitly established by Evidence, as YYYY-MM-DD. Omit relative, partial, immediate, approval-dependent, or unknown timing.
 - grouping_reason is optional only when one Review genuinely groups multiple affected State items or multiple changes.
 - Never invent State IDs, Review IDs, dates, facts, or certainty.
-- In summary, decision_question, why_consequential, and other prose fields, refer to a State item by its topic name (shown in parentheses above), never by its raw ID. IDs are for state_item_id/existing_review_id fields only.
+- In summary, decision_question, why_consequential, and other prose fields, refer to a State item by its topic name (shown in parentheses above) and a Question by its subject, never by a raw ID. IDs are for state_item_id/existing_review_id fields only.
 - Keep summary, questions, reasons, and rationales concise: one sentence each, usually under 25 words. Use at most 3 topics unless clearly necessary.
 - Preserve epistemic status: approved != implemented/enabled/complete; planned != committed; capable != enabled.
+- Planned/needed != done: "needs to be revised" never becomes "revised"/"redesigned" (#480).
 - Do not create speculative residue. Missing implementation details alone are not a Review; Reviews are for consequential change/risk to maintained State.
 - If Evidence establishes a narrow consequential fact, propose only that narrow fact. Do not widen scope beyond the Evidence.
 - Example: “Password reset tickets were approved for automation.” If that approval is not already Current State, propose the narrow fact “Password reset tickets are approved for automation.” Do not infer implementation, deployment, universal ticket coverage, or removal of human review.

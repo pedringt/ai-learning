@@ -33,6 +33,14 @@ function check(name,ok,detail=''){if(ok){pass++;console.log('✓',name)}else{fai
 
 check('onboarding test API loaded', !!onboarding);
 
+// #482 (Cowork, Oct 9): before the project's Evidence loads, no banner is chosen at all; a new
+// tab on Northstar used to say "Add your first evidence" while its 15+ notes were loading.
+app.state.data.notes=[];
+app.state.data.knowledge=[];
+app.state.backendStatus.evidence='loading';
+check('while Evidence is loading, no onboarding stage is chosen', onboarding.onboardingStage()===null);
+app.state.backendStatus.evidence='loaded';
+
 app.state.data.notes=[];
 app.state.data.knowledge=[];
 check('a blank project (no notes, no current state) is the no_evidence stage', onboarding.onboardingStage()==='no_evidence');

@@ -33,8 +33,21 @@ from seed_demo import (
     SEEDED_PROJECT_IDS, bootstrap_demo_data, bootstrap_juniper_demo_data, delete_project_data, reset_demo_data,
 )
 from ask_contract import AskRequest
+from api_models import (  # noqa: F401  (re-exported for existing importers)
+    EvidenceInput,
+    ProposalAdjustmentInput,
+    ResolutionInput,
+    ProjectSwitchInput,
+    ProjectCreateInput,
+    ProjectRuleInput,
+    DraftNoteInput,
+    DraftNoteUpdate,
+    SlackChannelUpdate,
+    QuestionBlockingInput,
+    QuestionInput,
+)
 from ask_provider import LiveAskProvider
-from ask_service import ask_cache_key, run_ask, stream_ask_events
+from ask_service import ask_cache_key, ask_today, run_ask, stream_ask_events
 from slack_intake_service import (
     DEFAULT_QUIET_WINDOW_SECONDS,
     ensure_channel_approved,
@@ -83,6 +96,7 @@ from review_service import (
     list_state,
     list_project_areas,
     list_questions,
+    with_linked_evidence,
     create_question,
     stop_question,
     list_project_rules,
@@ -223,158 +237,11 @@ class Settings(BaseModel):
         )
 
 
-class EvidenceInput(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-    content: str = Field(min_length=1, max_length=100_000)
-    source_type: str = Field(default="manual_note", min_length=1, max_length=80)
-
-    @field_validator("content")
-    @classmethod
-    def content_must_not_be_blank(cls, value: str) -> str:
-        value = value.strip()
-        if not value:
-            raise ValueError("content must not be blank")
-        return value
-
-
-class ProposalAdjustmentInput(BaseModel):
-    """state.md #106: a human-revised statement for one pending proposal.
-
-    The original AI ``proposed_statement`` is never touched by this --
-    review_service.py persists this text separately and applies it instead
-    of the AI's own wording only for this one acceptance.
-    """
-    model_config = ConfigDict(extra="forbid")
-    proposal_id: str = Field(min_length=1, max_length=100)
-    adjusted_statement: str = Field(min_length=1, max_length=4_000)
-
-    @field_validator("adjusted_statement")
-    @classmethod
-    def adjusted_statement_not_blank(cls, value: str) -> str:
-        if not value.strip():
-            raise ValueError("adjusted_statement must not be blank")
-        return value
-
-
-class ResolutionInput(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-    decision: Literal["accept", "keep", "reject"]
-    note: str | None = Field(default=None, max_length=2_000)
-    expected_question_proposal_id: str | None = Field(default=None, min_length=1, max_length=100)
-    expected_existing_question_id: str | None = Field(default=None, min_length=1, max_length=100)
-    adjustments: list[ProposalAdjustmentInput] | None = Field(default=None, max_length=20)
-
-
-class ProjectSwitchInput(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-    project_id: str = Field(min_length=1, max_length=100)
-
-
-class ProjectCreateInput(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-    name: str = Field(min_length=1, max_length=200)
-
-    @field_validator("name")
-    @classmethod
-    def name_not_blank(cls, value: str) -> str:
-        stripped = value.strip()
-        if not stripped:
-            raise ValueError("Project name cannot be blank")
-        return stripped
-
-
-class ProjectRuleInput(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-    text: str = Field(min_length=1, max_length=2_000)
-    category: Literal["Authority", "Review", "Sources", "Interpretation"] = "Interpretation"
-
-    @field_validator("text")
-    @classmethod
-    def rule_text_not_blank(cls, value: str) -> str:
-        value = value.strip()
-        if not value:
-            raise ValueError("text must not be blank")
-        return value
-
-
-class DraftNoteInput(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-    title: str = Field(default="Untitled note", max_length=300)
-    content: str = Field(min_length=1, max_length=100_000)
-
-    @field_validator("content")
-    @classmethod
-    def draft_content_not_blank(cls, value: str) -> str:
-        value = value.strip()
-        if not value:
-            raise ValueError("content must not be blank")
-        return value
-
-
-class DraftNoteUpdate(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-    title: str = Field(default="Untitled note", max_length=300)
-    content: str = Field(min_length=1, max_length=100_000)
-
-    @field_validator("content")
-    @classmethod
-    def draft_update_not_blank(cls, value: str) -> str:
-        value = value.strip()
-        if not value:
-            raise ValueError("content must not be blank")
-        return value
-
-
-class SlackChannelUpdate(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-    enabled: bool | None = None
-    include_threads: bool | None = None
-    include_bots: bool | None = None
-
-
-class QuestionBlockingInput(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-    blocking: bool
-    blocks: str | None = Field(default=None, max_length=500)
-
-    @field_validator("blocks")
-    @classmethod
-    def normalize_blocks(cls, value: str | None) -> str | None:
-        if value is None:
-            return None
-        value = value.strip()
-        return value or None
-
-
-class QuestionInput(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-    text: str = Field(min_length=1, max_length=2_000)
-    origin: str = Field(default="Added from Workspace", min_length=1, max_length=200)
-    blocking: bool = False
-    blocks: str | None = Field(default=None, max_length=500)
-
-    @field_validator("text")
-    @classmethod
-    def text_not_blank(cls, value: str) -> str:
-        value = value.strip()
-        if not value:
-            raise ValueError("text must not be blank")
-        return value
-
-    @field_validator("blocks")
-    @classmethod
-    def blocker_requires_description(cls, value: str | None) -> str | None:
-        if value is None:
-            return None
-        value = value.strip()
-        return value or None
-
-
 def _provider_from_env(settings: Settings) -> InterpretationProvider:
     if settings.provider == "anthropic":
         if not os.getenv("ANTHROPIC_API_KEY"):
             raise RuntimeError("ANTHROPIC_API_KEY is required when STATE_PROVIDER=anthropic")
-        model = os.getenv("CLAUDE_MODEL", "claude-haiku-4-5-20251001")
+        model = (os.getenv("CLAUDE_MODEL") or "claude-haiku-5-5")
         return AnthropicProvider(
             model_identifier=model,
             api_key=os.environ["ANTHROPIC_API_KEY"]
@@ -566,7 +433,7 @@ def create_app(settings: Settings | None = None, provider: InterpretationProvide
                 "open_reviews": list_reviews(connection, "open"),
                 "resolved_reviews": list_reviews(connection, "resolved"),
                 "history": list_history(connection),
-                "questions": list_questions(connection, "open"),
+                "questions": with_linked_evidence(connection, list_questions(connection, "open")),
                 "rules": list_project_rules(connection),
                 "drafts": list_draft_notes(connection),
             }
@@ -616,7 +483,7 @@ def create_app(settings: Settings | None = None, provider: InterpretationProvide
         with get_connection() as connection:
             return {
                 "open_reviews": list_reviews(connection, "open"),
-                "questions": list_questions(connection, "open"),
+                "questions": with_linked_evidence(connection, list_questions(connection, "open")),
             }
 
     @app.post("/api/demo/reset")
@@ -942,7 +809,7 @@ def create_app(settings: Settings | None = None, provider: InterpretationProvide
                 "review_id": review_id,
                 "decision": payload.decision,
                 **(outcome or {}),
-                "questions": list_questions(connection, "open"),
+                "questions": with_linked_evidence(connection, list_questions(connection, "open")),
                 "state": list_state(connection),
                 "open_reviews": list_reviews(connection, "open"),
                 "history": list_history(connection),
@@ -951,7 +818,7 @@ def create_app(settings: Settings | None = None, provider: InterpretationProvide
     @app.get("/api/questions")
     def get_questions(status: Literal["open", "resolved", "stopped"] = Query(default="open")) -> dict:
         with get_connection() as connection:
-            return {"items": list_questions(connection, status)}
+            return {"items": with_linked_evidence(connection, list_questions(connection, status))}
 
     @app.post("/api/questions", status_code=201)
     def post_question(payload: QuestionInput) -> dict:
@@ -1019,10 +886,12 @@ def create_app(settings: Settings | None = None, provider: InterpretationProvide
             selected_ask_provider = LiveAskProvider(selected_provider)
             request.app.state.ask_provider = selected_ask_provider
 
+        today = ask_today(payload.client_date)
+
         def event_stream():
             try:
                 with get_connection() as connection:
-                    cache_key = ask_cache_key(connection, payload.query.strip(), payload.previous_answer)
+                    cache_key = ask_cache_key(connection, payload.query.strip(), payload.previous_answer, today=today)
                     cached = request.app.state.ask_cache.get(cache_key)
                     if cached is not None:
                         logger.info("Ask cache hit endpoint=stream")
@@ -1030,7 +899,7 @@ def create_app(settings: Settings | None = None, provider: InterpretationProvide
                         return
                     try:
                         for event_name, event_payload in stream_ask_events(
-                            connection, selected_ask_provider, payload.query.strip(), payload.previous_answer
+                            connection, selected_ask_provider, payload.query.strip(), payload.previous_answer, today=today
                         ):
                             if event_name == "final":
                                 request.app.state.ask_cache.put(cache_key, event_payload)
@@ -1044,7 +913,7 @@ def create_app(settings: Settings | None = None, provider: InterpretationProvide
                         # miss into a visible dead end after the user already saw text.
                         logger.warning("Streaming Ask contract failure; retrying once: %s", first_exc)
                         result = run_ask(
-                            connection, selected_ask_provider, payload.query.strip(), payload.previous_answer
+                            connection, selected_ask_provider, payload.query.strip(), payload.previous_answer, today=today
                         )
                         request.app.state.ask_cache.put(cache_key, result)
                         yield f"event: final\ndata: {json.dumps(result, ensure_ascii=False)}\n\n"
@@ -1074,21 +943,22 @@ def create_app(settings: Settings | None = None, provider: InterpretationProvide
                     raise HTTPException(status_code=503, detail=str(exc)) from exc
             selected_ask_provider = LiveAskProvider(selected_provider)
             request.app.state.ask_provider = selected_ask_provider
+        today = ask_today(payload.client_date)
         try:
             with get_connection() as connection:
-                cache_key = ask_cache_key(connection, payload.query.strip(), payload.previous_answer)
+                cache_key = ask_cache_key(connection, payload.query.strip(), payload.previous_answer, today=today)
                 cached = request.app.state.ask_cache.get(cache_key)
                 if cached is not None:
                     logger.info("Ask cache hit endpoint=standard")
                     return cached
                 try:
-                    result = run_ask(connection, selected_ask_provider, payload.query.strip(), payload.previous_answer)
+                    result = run_ask(connection, selected_ask_provider, payload.query.strip(), payload.previous_answer, today=today)
                 except (ValueError, TypeError) as first_exc:
                     # Model output can occasionally miss the grounded Ask contract even
                     # for a good query. Retry once with the same authoritative context
                     # before surfacing an error; invalid final output still fails closed.
                     logger.warning("Ask contract failure; retrying once: %s", first_exc)
-                    result = run_ask(connection, selected_ask_provider, payload.query.strip(), payload.previous_answer)
+                    result = run_ask(connection, selected_ask_provider, payload.query.strip(), payload.previous_answer, today=today)
                 request.app.state.ask_cache.put(cache_key, result)
                 timing = result.get("timing", {})
                 logger.info(

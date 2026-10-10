@@ -85,17 +85,17 @@ def flow(tmp_path):
 
 
 def open_review_dialog_while_analyzing(page, gate):
-    """Open the dialog the way Deep QA (or a fast user) can while analysis runs.
+    """Open the draft dialog while analysis runs.
 
-    While ``processing_evidence > 0`` the current banner has no review button,
-    but the older banner renderer in context-baseline-setup.js briefly puts one
-    back whenever the view re-renders. With a slow draft response that window is
-    wide enough to click into.
+    While ``processing_evidence > 0`` the banner deliberately has no review button.
+    This test used to click one that an older, second banner renderer briefly put
+    back on every view re-render; #450 left a single renderer, so that window is
+    gone. The dialog can still be open during analysis (for example, it reopens
+    after adding a missing fact), so open it the way the app does, through
+    STATE_BASELINE_SETUP.openDraft(), and check that it keeps itself current (#230).
     """
     gate['slow'] = True
-    page.evaluate("""(() => {const root=document.getElementById('viewRoot');
-      const n=document.createElement('span');root.appendChild(n);n.remove();})()""")
-    page.locator('[data-baseline-review-starting]').first.click()
+    page.evaluate("() => window.STATE_BASELINE_SETUP.openDraft()")
     page.locator('.baseline-draft-dialog').wait_for()
     gate['slow'] = False
 

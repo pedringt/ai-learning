@@ -113,7 +113,7 @@ class MockLiveProviderTests(unittest.TestCase):
         mock_client.messages.create.return_value = mock_response
         
         # Create provider and interpret
-        provider = AnthropicProvider(model_identifier="claude-opus-4-6")
+        provider = AnthropicProvider(model_identifier="claude-opus-5-5")
         
         # Build proper context snapshot
         context = InterpretationContextSnapshot(
@@ -240,7 +240,7 @@ class LiveProviderIntegrationTests(unittest.TestCase):
             self.skipTest("ANTHROPIC_API_KEY not set")
         
         # Initialize real provider
-        provider = AnthropicProvider(model_identifier="claude-opus-4-6")
+        provider = AnthropicProvider(model_identifier="claude-opus-5-5")
         
         # Process evidence using real Claude
         result = process_evidence(
@@ -310,7 +310,7 @@ class LiveProviderIntegrationTests(unittest.TestCase):
         
         # Test Anthropic
         start = time.time()
-        anthropic_provider = AnthropicProvider(model_identifier="claude-opus-4-6")
+        anthropic_provider = AnthropicProvider(model_identifier="claude-opus-5-5")
         anthropic_result = process_evidence(
             connection=self.connection,
             evidence_id="evidence_02",

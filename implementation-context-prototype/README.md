@@ -19,6 +19,9 @@ For the product model, current project status, QA process, release rules, and kn
 | `context-api.js` | Backend HTTP client and Ask streaming |
 | `context-ask.js` | Ask UI and answer rendering |
 | `context-ask-followup.js` | Ask follow-up/refinement behavior |
+| `context-baseline.js` | Baseline Setup: banner, Starting State draft dialog, manual entry, starting material, confirm/retry (one module since #450) |
+| `context-layout.js` | Layout behavior CSS cannot do: help-card width tracking, mobile help footer, mobile subnav pinning, first-render reveal (consolidated in #450) |
+| `context-ask-controls.js` | Ask drawer controls: status line, reset button, blank-question guard, editing state, mobile launcher and close handling (consolidated from five patch layers in #450; the Ask flow itself is `runAsk()` in `context-product-polish.js`) |
 | `context-backend-sync.js` | Backend payload to frontend-shape mapping |
 | `context-notes-view.js` | Notes rendering |
 | `context-open-items-view.js` | Reviews and Questions rendering |
@@ -26,13 +29,14 @@ For the product model, current project status, QA process, release rules, and kn
 | `context-settings.js` | Rules and Slack settings |
 | `context-data.js` | Deterministic local/test fixture |
 | `context-tool.css` | Product styling |
-| `state-shell.css`, `state-shell.js`, `final-freeze-polish.css`, `favicon.svg` | State's own shell (copied from the portfolio's `site-shell.*`; still contains portfolio-only selectors that do nothing here) |
+| `state-app.css` | Layer styles the `context-*.js` scripts used to inject at runtime, kept verbatim in their settled cascade order (#450); do not reorder sections |
+| `state-shell.css`, `state-shell.js`, `favicon.svg` | State's own shell (copied from the portfolio's `site-shell.*`; still contains portfolio-only selectors that do nothing here) |
 | `api/state-config.js` | Vercel function that tells the page which backend to call (production deploy uses the production API; anything else uses staging) |
 | `api/state-diagnostic.js` | Diagnostic helper used by tests |
 | `state-product-health.html`, `state-product-health.js` | Internal Product Analytics dashboard (aggregate metadata only; not linked from the product) |
 | `vercel.json` | Deployment settings for this folder |
 
-The historically named `context-*-pass.js` files are still live runtime code. Do not remove or consolidate them just because their names look temporary. Previous investigation found real layout/race regressions when seemingly redundant behavior was removed.
+The historically named patch layers (`context-*-pass.js`, `context-quickwins.js` and others) were folded into the renderers and a few owning modules in #450, one verified slice at a time. Each slice had to leave the rendered UI identical (computed styles, text and structure on every view, Ask state and Baseline state at desktop and phone widths, checked with `scripts/state_ui_compare/compare.py`) unless a difference was explained and intended. Do not add new patch layers; change the module that owns the behavior.
 
 ## Running locally
 
@@ -67,13 +71,15 @@ See `STATE-ASK-EVALUATION-MAP.md` for the Ask behavior/evaluation map.
 
 ## Deployment
 
-This folder is deployed as its own Vercel project, `state` (Root Directory `implementation-context-prototype`, production branch `main`). It is self-contained: it must not load files from the repository root. An Ignored Build Step skips builds for pushes that do not change this folder. Since Sept 20 it compares against the **last commit this branch successfully deployed** (`VERCEL_GIT_PREVIOUS_SHA`), so a batched push builds if *any* commit since then touched this folder, even when the tip commit is docs-only. It **fails open**: it builds when there is no previous deployment, when the commit was already deployed, or when the previous commit is not in Vercel's clone. The setting (Project Settings, Git, Ignored Build Step) is:
+This folder is deployed as its own Vercel project, `state` (Root Directory `implementation-context-prototype`, production branch `main`). It is self-contained: it must not load files from the repository root. An Ignored Build Step skips builds for pushes that do not change this folder. **Current rule (since Oct 10, in `vercel.json` as `ignoreCommand`):** build unless it can prove nothing in this folder changed since the last successful deployment, and only ever exit 0 (skip) or 1 (build):
 
 ```
-[ -z "$VERCEL_GIT_PREVIOUS_SHA" ] && exit 1; [ "$VERCEL_GIT_PREVIOUS_SHA" = "$(git rev-parse HEAD)" ] && exit 1; git diff --quiet "$VERCEL_GIT_PREVIOUS_SHA" HEAD -- .
+P="$VERCEL_GIT_PREVIOUS_SHA"; [ -z "$P" ] && exit 1; [ "$P" = "$(git rev-parse HEAD)" ] && exit 1; git cat-file -e "$P^{commit}" 2>/dev/null || exit 1; git diff --quiet "$P" HEAD -- . && exit 0 || exit 1
 ```
 
-Its logic was tested on five scenarios in a scratch repo, but **it has not yet been observed on a real push**: after the first batched push, confirm that the `state` project built (Vercel deployment `READY`, not `CANCELED`). To roll back, set the command to the previous value, `git diff HEAD^ HEAD --quiet .`, which looks only at the tip commit of a push. That old rule skipped a batched push whose tip commit was docs-only even though earlier commits changed the app (the `Vercel – state` check still showed green, "Canceled by Ignored Build Step"), and it also skipped API redeploys.
+So it builds on a first deploy, on a redeploy of the same commit, when Vercel's shallow clone lacks the previous commit, and when any commit since the last deploy touched this folder (even if the tip commit is docs-only). Vercel fails the deployment on any exit code other than 0 or 1, which is why every path ends in one of them, and rejects the whole `vercel.json` if `ignoreCommand` is longer than 256 characters (the first Oct 10 version was 261). `state-project-complete/test_vercel_ignore_step.py` runs the real command in scratch repos, including a shallow clone.
+
+History: the Sept 20 version (same comparison, no `cat-file` guard, no final `exit 0 || exit 1`) failed a deploy on Sept 26 when `git diff` exited 128 in a shallow clone; it was replaced by a tip-commit-only rule (`git diff HEAD^ HEAD -- .`), which then left a rate-limited deploy unretried on Oct 10 because the next push's tip commit didn't touch this folder. The dashboard's Ignored Build Step setting may still hold an older value; `vercel.json` is the source of truth for this repo.
 
 Which backend the page calls is decided by `api/state-config.js`: a **production** deployment (the `main` branch) uses the production API, and every **preview** deployment (for example the `staging` branch) uses the staging API. A Vercel project's very first deployment is labelled production whatever branch it came from, so check `window.STATE_API_BASE` on a new project's first preview before testing against it.
 
