@@ -67,7 +67,11 @@ PROVIDER_OUTPUT_SCHEMA = {
                                 "operation": {"type": "string", "enum": ["create", "update", "retire"]},
                                 "state_item_id": {"type": "string"},
                                 "proposed_statement": {"type": "string"},
-                                "rationale": {"type": "string"},
+                                "rationale": {
+                                    "type": "string",
+                                    # #482 (QA-11): shown as the Review's "Establishes" line.
+                                    "description": "One sentence stating the specific fact this Evidence establishes, repeating its key amount, date or decision and who stated it (e.g. \"Finance approved $40,000 for discovery and the first phase\"). Never only why it matters.",
+                                },
                                 "effective_date": {"type": "string", "format": "date"},
                             },
                         },
