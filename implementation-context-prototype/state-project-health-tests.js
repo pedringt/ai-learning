@@ -524,9 +524,11 @@ assert.match(renderConfig,/https:\/\/state\.contextswitch\.tech/);
 const stateVercelConfig=JSON.parse(fs.readFileSync(require.resolve('./vercel.json'),'utf8'));
 // Oct 10: compares with the last deployed commit again, but must never exit with anything but 0
 // or 1 (the Sept 26 shallow-clone failure). Behavior is tested in test_vercel_ignore_step.py.
-assert.match(stateVercelConfig.ignoreCommand,/git cat-file -e "\$VERCEL_GIT_PREVIOUS_SHA\^\{commit\}" 2>\/dev\/null \|\| exit 1/);
+assert.match(stateVercelConfig.ignoreCommand,/^P="\$VERCEL_GIT_PREVIOUS_SHA";/);
+assert.match(stateVercelConfig.ignoreCommand,/git cat-file -e "\$P\^\{commit\}" 2>\/dev\/null \|\| exit 1/);
+assert.ok(stateVercelConfig.ignoreCommand.length<=256,'Vercel rejects an ignoreCommand longer than 256 characters');
 assert.match(stateVercelConfig.ignoreCommand,/&& exit 0 \|\| exit 1$/);
-assert.match(stateVercelConfig.ignoreCommand,/git diff --quiet "\$VERCEL_GIT_PREVIOUS_SHA" HEAD -- \./);
+assert.match(stateVercelConfig.ignoreCommand,/git diff --quiet "\$P" HEAD -- \./);
 
 const healthHtml=fs.readFileSync(require.resolve('../project-health.html'),'utf8');
 assert.doesNotMatch(healthHtml,/Product health triage/);

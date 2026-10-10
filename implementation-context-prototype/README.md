@@ -74,10 +74,10 @@ See `STATE-ASK-EVALUATION-MAP.md` for the Ask behavior/evaluation map.
 This folder is deployed as its own Vercel project, `state` (Root Directory `implementation-context-prototype`, production branch `main`). It is self-contained: it must not load files from the repository root. An Ignored Build Step skips builds for pushes that do not change this folder. **Current rule (since Oct 10, in `vercel.json` as `ignoreCommand`):** build unless it can prove nothing in this folder changed since the last successful deployment, and only ever exit 0 (skip) or 1 (build):
 
 ```
-[ -z "$VERCEL_GIT_PREVIOUS_SHA" ] && exit 1; [ "$VERCEL_GIT_PREVIOUS_SHA" = "$(git rev-parse HEAD)" ] && exit 1; git cat-file -e "$VERCEL_GIT_PREVIOUS_SHA^{commit}" 2>/dev/null || exit 1; git diff --quiet "$VERCEL_GIT_PREVIOUS_SHA" HEAD -- . && exit 0 || exit 1
+P="$VERCEL_GIT_PREVIOUS_SHA"; [ -z "$P" ] && exit 1; [ "$P" = "$(git rev-parse HEAD)" ] && exit 1; git cat-file -e "$P^{commit}" 2>/dev/null || exit 1; git diff --quiet "$P" HEAD -- . && exit 0 || exit 1
 ```
 
-So it builds on a first deploy, on a redeploy of the same commit, when Vercel's shallow clone lacks the previous commit, and when any commit since the last deploy touched this folder (even if the tip commit is docs-only). Vercel fails the deployment on any exit code other than 0 or 1, which is why every path ends in one of them. `state-project-complete/test_vercel_ignore_step.py` runs the real command in scratch repos, including a shallow clone.
+So it builds on a first deploy, on a redeploy of the same commit, when Vercel's shallow clone lacks the previous commit, and when any commit since the last deploy touched this folder (even if the tip commit is docs-only). Vercel fails the deployment on any exit code other than 0 or 1, which is why every path ends in one of them, and rejects the whole `vercel.json` if `ignoreCommand` is longer than 256 characters (the first Oct 10 version was 261). `state-project-complete/test_vercel_ignore_step.py` runs the real command in scratch repos, including a shallow clone.
 
 History: the Sept 20 version (same comparison, no `cat-file` guard, no final `exit 0 || exit 1`) failed a deploy on Sept 26 when `git diff` exited 128 in a shallow clone; it was replaced by a tip-commit-only rule (`git diff HEAD^ HEAD -- .`), which then left a rate-limited deploy unretried on Oct 10 because the next push's tip commit didn't touch this folder. The dashboard's Ignored Build Step setting may still hold an older value; `vercel.json` is the source of truth for this repo.
 

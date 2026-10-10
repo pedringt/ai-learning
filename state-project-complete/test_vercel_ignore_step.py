@@ -105,3 +105,8 @@ def test_a_shallow_clone_without_the_previous_commit_builds(repo, tmp_path):
 
 def test_the_command_only_ever_exits_0_or_1():
     assert COMMAND.rstrip().endswith("&& exit 0 || exit 1")
+
+
+def test_the_command_fits_vercels_length_limit():
+    """Vercel rejects vercel.json (\"Deployment failed\") when ignoreCommand exceeds 256 characters (Oct 10: 261)."""
+    assert len(COMMAND) <= 256
