@@ -187,3 +187,48 @@ def test_validate_synthesis_keeps_the_juniper_budget_answer():
     cleaned = _validate_synthesis(_answer(summary), selection, context, dict(context))
     assert "not yet approved" not in cleaned.summary
     assert "approved move budget at $85,000" in cleaned.summary
+
+
+# --- #474: unconfirmed claims presented as settled ----------------------------
+# Cowork, Oct 9 (Northstar): the vendor's 30-day retention is an unconfirmed email claim,
+# not Current State, but Ask called it "the 30-day term on record" and "approved vendor data".
+
+NORTHSTAR = _governing_state_ngrams([
+    "Support Slack is not approved as an evidence source for the pilot.",
+    "The pilot budget is approved at $40,000, covering discovery and the first implementation phase.",
+])
+
+
+def test_a_negation_in_another_clause_does_not_shield_a_settled_claim():
+    sentence = ("This conflicts with Current State (Support Slack not approved; Slack source restricted) "
+                "and approved vendor data (30 days).")
+    fixed = _soften_unearned_settled_prose(sentence, NORTHSTAR)
+    assert "Support Slack not approved" in fixed
+    assert "approved vendor data" not in fixed
+    assert "the proposed (not yet approved) vendor data" not in fixed  # no article was there
+    assert "proposed (not yet approved) vendor data" in fixed
+
+
+def test_a_negation_still_covers_its_own_clause():
+    sentence = "Retention is not confirmed yet."
+    assert _soften_unearned_settled_prose(sentence, NORTHSTAR) == sentence
+
+
+def test_a_hedge_phrase_still_covers_the_whole_sentence():
+    sentence = "Evidence says the terms are approved; Legal confirmed it."
+    assert _soften_unearned_settled_prose(sentence, NORTHSTAR) == sentence
+
+
+def test_an_unconfirmed_term_on_record_is_softened():
+    fixed = _soften_unearned_settled_prose("Prompts are retained for 90 days rather than the 30-day term on record.", NORTHSTAR)
+    assert "on record" not in fixed and "reported (not in Current State)" in fixed
+
+
+def test_a_current_state_fact_on_record_is_left_alone():
+    sentence = "The $40,000 pilot budget on record covers discovery."
+    assert _soften_unearned_settled_prose(sentence, NORTHSTAR) == sentence
+
+
+def test_on_record_with_a_different_number_is_softened():
+    fixed = _soften_unearned_settled_prose("The $55,000 pilot budget on record covers discovery.", NORTHSTAR)
+    assert "reported (not in Current State)" in fixed

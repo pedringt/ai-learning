@@ -54,12 +54,27 @@ _SETTLED_TARGET_WORD_RE = re.compile(
 )
 
 
-def _already_hedged(text: str) -> bool:
+def _hedged_by_phrase(text: str) -> bool:
     lowered = text.lower()
-    if any(hedge in lowered for hedge in _PENDING_HEDGE_PHRASES):
-        return True
+    return any(hedge in lowered for hedge in _PENDING_HEDGE_PHRASES)
+
+
+def _negated(text: str) -> bool:
+    lowered = text.lower()
     negation = _NEGATION_RE.search(lowered)
     return bool(negation and _SETTLED_TARGET_WORD_RE.search(lowered, negation.end()))
+
+
+def _already_hedged(text: str) -> bool:
+    return _hedged_by_phrase(text) or _negated(text)
+
+
+# #474: a negation only covers its own clause in prose. Cowork, Oct 9: "This conflicts
+# with Current State (: Support Slack not approved; ...) and approved vendor data (: 30
+# days)" was skipped whole because of the "not approved" inside the parenthesis, so
+# "approved vendor data" (an unconfirmed vendor claim) went out as settled. Hedge
+# phrases ("proposed", "pending review", ...) still cover the whole sentence.
+_CLAUSE_SPLIT_RE = re.compile(r"(;|\(|\)|\s[—–]\s)")
 
 
 _SETTLED_WORD_REPLACEMENTS = (
@@ -135,6 +150,8 @@ _UNEARNED_SETTLED_PROSE_REPLACEMENTS = (
     (re.compile(r"\bestablished\b", re.I), lambda m: _match_case("proposed (not yet established)", m.group(0))),
     (re.compile(r"\bapproved\b", re.I), lambda m: _match_case("proposed for approval (not yet approved)", m.group(0))),
     (re.compile(r"\bdecided\b", re.I), lambda m: _match_case("proposed (not yet decided)", m.group(0))),
+    # #474: "the 30-day term on record" for a vendor claim that is not in Current State.
+    (re.compile(r"\bon record\b", re.I), lambda m: _match_case("reported (not in Current State)", m.group(0))),
     (re.compile(r"\bnow\s+known\b", re.I), lambda m: _match_case("reported (not yet confirmed)", m.group(0))),
     (re.compile(r"\bno\s+longer\s+blocking\b", re.I), lambda m: _match_case("reported as potentially no longer blocking, pending Review", m.group(0))),
 )
@@ -158,12 +175,12 @@ class _GoverningState(frozenset):
 
 _NUMBER_RE = re.compile(r"\d[\d,.]*\d|\d")
 
-# Words that, directly before a settled word, make it attributive: "the approved move
-# budget", "earlier approved terms". Attributive use points at an existing thing rather
-# than asserting a new status ("the budget is approved at $95,000").
-_ATTRIBUTIVE_LEADS = frozenset({
-    "the", "a", "an", "this", "that", "these", "those", "its", "their", "our", "your",
-    "earlier", "previously", "already", "currently", "existing", "originally", "recorded",
+# A settled word followed by a noun and not preceded by one of these is attributive:
+# "the approved move budget", "earlier approved terms", "and approved vendor data".
+# Attributive use points at a thing rather than asserting a new status ("the budget is
+# approved at $95,000").
+_PREDICATIVE_LEADS = frozenset({
+    "is", "are", "was", "were", "be", "been", "being", "has", "have", "had", "get", "gets", "got",
 })
 _NOT_A_NOUN = frozenset({
     "by", "for", "in", "at", "on", "to", "and", "or", "as", "with", "until", "under", "from",
@@ -180,7 +197,7 @@ def _attributive(text: str, match: "re.Match[str]") -> str | None:
     """The noun right after an attributive settled word, or None if the use is not attributive."""
     before = _words(text[:match.start()])[-1:]
     after = _words(text[match.end():])[:1]
-    if not before or not after or before[0] not in _ATTRIBUTIVE_LEADS:
+    if not after or (before and before[0] in _PREDICATIVE_LEADS):
         return None
     noun = after[0]
     if noun in _NOT_A_NOUN or noun.isdigit() or len(noun) < 3:
@@ -196,10 +213,16 @@ def _refers_to_governing_state(text: str, match: "re.Match[str]", governing) -> 
     about the same noun and every number in the sentence appears in that statement, so
     "the approved move budget of $95,000" (a pending Review's figure) is still softened."""
     statements = getattr(governing, "statements", ())
+    word = match.group(0).lower()
+    if word == "on record":
+        # "the $85,000 budget on record" names the thing on record just before it.
+        before = [w for w in _words(text[:match.start()]) if not w.isdigit()][-1:]
+        numbers = _numbers(text)
+        return bool(before) and any(before[0] in tokens and numbers <= statement_numbers
+                                    for tokens, statement_numbers, _grams in statements)
     noun = _attributive(text, match)
     if not statements or not noun:
         return False
-    word = match.group(0).lower()
     numbers = _numbers(text)
     return any(word in tokens and noun in tokens and numbers <= statement_numbers
                for tokens, statement_numbers, _grams in statements)
@@ -274,7 +297,7 @@ def _soften_unearned_settled_prose(value: str | None, governing_ngrams: frozense
     """Sentence-scoped companion to _soften_unearned_settled_words: rewrites
     an unhedged settled-sounding claim within full prose (Ask's summary,
     and free-text item text/detail), leaving any sentence that already
-    hedges completely untouched. Narrow by design -- this is a deterministic
+    hedges completely untouched (a negation hedges only its own clause, #474). Narrow by design -- this is a deterministic
     backstop for a specific, recurring trust failure (Ask narrating pending
     Review/Evidence/Question material as settled), not a general rewriter,
     per explicit direction after live testing showed prompt wording alone
@@ -293,14 +316,19 @@ def _soften_unearned_settled_prose(value: str | None, governing_ngrams: frozense
     sentences = _SENTENCE_SPLIT_RE.split(value)
     rewritten = []
     for sentence in sentences:
-        if _already_hedged(sentence):
+        if _hedged_by_phrase(sentence):
             rewritten.append(sentence)
             continue
-        fixed = sentence
-        for pattern, replacement in _UNEARNED_SETTLED_PROSE_REPLACEMENTS:
-            current = fixed
-            fixed = pattern.sub(lambda m, r=replacement, t=current: _soften_match(t, m, r, governing_ngrams), current)
-        rewritten.append(fixed)
+        parts = _CLAUSE_SPLIT_RE.split(sentence)
+        for index in range(0, len(parts), 2):  # odd indexes are the delimiters
+            if _negated(parts[index]):
+                continue
+            fixed = parts[index]
+            for pattern, replacement in _UNEARNED_SETTLED_PROSE_REPLACEMENTS:
+                current = fixed
+                fixed = pattern.sub(lambda m, r=replacement, t=current: _soften_match(t, m, r, governing_ngrams), current)
+            parts[index] = fixed
+        rewritten.append("".join(parts))
     text = " ".join(rewritten)
     text = re.sub(r"\s{2,}", " ", text).strip()
     return text or value
