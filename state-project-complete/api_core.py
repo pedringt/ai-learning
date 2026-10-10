@@ -241,7 +241,7 @@ def _provider_from_env(settings: Settings) -> InterpretationProvider:
     if settings.provider == "anthropic":
         if not os.getenv("ANTHROPIC_API_KEY"):
             raise RuntimeError("ANTHROPIC_API_KEY is required when STATE_PROVIDER=anthropic")
-        model = os.getenv("CLAUDE_MODEL", "claude-haiku-4-5-20251001")
+        model = (os.getenv("CLAUDE_MODEL") or "claude-haiku-4-5-20251001")
         return AnthropicProvider(
             model_identifier=model,
             api_key=os.environ["ANTHROPIC_API_KEY"]

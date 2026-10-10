@@ -54,7 +54,7 @@ class AnthropicProvider:
             api_key: Anthropic API key (if None, uses ANTHROPIC_API_KEY env var)
         """
         self.name = "anthropic"
-        self.model_identifier = model_identifier or os.getenv("CLAUDE_MODEL", "claude-haiku-4-5-20251001")
+        self.model_identifier = model_identifier or (os.getenv("CLAUDE_MODEL") or "claude-haiku-4-5-20251001")
         # Bumped 1200 -> 2000 2026-09-13: the #105 long discovery-note stress
         # test hit stop_reason="max_tokens" on a dense, multi-topic note after
         # consequentiality_guidance.py's completeness-scan instruction (state.md
