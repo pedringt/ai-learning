@@ -652,9 +652,15 @@
   }
   function filteredNotes(){ return NOTES_VIEW.filteredNotes(state.data.notes,notesUiState()); }
   function notesFilterSummary(notes){ return NOTES_VIEW.notesFilterSummary(notes,state.data.notes.length,notesUiState()); }
-  function simpleNote(n){ return NOTES_VIEW.simpleNote(n,state.expandedNotes,state.editingNoteId); }
+  // #481: the note side of a Question link -- one note can inform several Questions.
+  function withLinkedQuestions(notes){
+    const byEvidence=new Map();
+    for(const q of openQuestions()) for(const x of q.linkedEvidence||[]){ if(!byEvidence.has(x.evidenceId))byEvidence.set(x.evidenceId,[]); byEvidence.get(x.evidenceId).push({id:q.id,text:q.text}); }
+    return (notes||[]).map(n=>n.evidenceId&&byEvidence.has(n.evidenceId)?{...n,linkedQuestions:byEvidence.get(n.evidenceId)}:n);
+  }
+  function simpleNote(n){ return NOTES_VIEW.simpleNote(withLinkedQuestions([n])[0],state.expandedNotes,state.editingNoteId); }
   function draftNoteRow(n){ return NOTES_VIEW.draftNoteRow(n); }
-  function renderNotes(){ root.innerHTML=NOTES_VIEW.render(state.data.notes,notesUiState()); }
+  function renderNotes(){ root.innerHTML=NOTES_VIEW.render(withLinkedQuestions(state.data.notes),notesUiState()); }
 
   function historySearchText(h){
     const evidence=(h.evidenceItems||h.evidence_items||[]).map(e=>e.content||'').join(' ');

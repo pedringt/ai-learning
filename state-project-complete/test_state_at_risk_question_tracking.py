@@ -152,3 +152,40 @@ def test_blank_decision_question_cannot_be_tracked(db):
     with pytest.raises(ReviewConflictError, match='no uncertainty to track'):
         resolve_review(db, review_id, 'keep')
     assert list_reviews(db)[0]['status'] == 'open'  # fails closed, nothing decided
+
+
+# --- #481: the Question shows what was attached to it ------------------------
+
+from review_service import with_linked_evidence
+
+
+def _linked(db, question_id):
+    question = [q for q in with_linked_evidence(db, list_questions(db)) if q['id'] == question_id][0]
+    return question['linked_evidence']
+
+
+def test_keep_tracking_on_a_pre_linked_review_shows_its_evidence_on_the_question(db):
+    """Cowork, Oct 9: Keep tracking on the vendor-retention Review, then the matching
+    retention Question showed nothing. The pipeline's own link row has no evidence_id."""
+    existing = create_question(db, 'retention-q', 'What retention and deletion terms apply to pilot data?', origin='Manual')
+    assert _linked(db, existing['id']) == []
+    review_id, eid = make_risk_review(db, link_question_id=existing['id'])
+    assert _linked(db, existing['id']) == [], 'a pending Review is not a decision yet'
+    resolve_review(db, review_id, 'keep')
+    linked = _linked(db, existing['id'])
+    assert [x['evidence_id'] for x in linked] == [eid]
+    assert linked[0]['how'] == 'linked' and 'retention terms' in linked[0]['excerpt']
+
+
+def test_keep_tracking_with_no_matching_question_shows_its_evidence_on_the_new_question(db):
+    review_id, eid = make_risk_review(db)
+    q = resolve_review(db, review_id, 'keep')['question']
+    linked = _linked(db, q['id'])
+    assert [x['evidence_id'] for x in linked] == [eid] and linked[0]['how'] == 'kept'
+
+
+def test_a_dismissed_review_attaches_nothing(db):
+    existing = create_question(db, 'retention-q3', 'What retention and deletion terms apply to pilot data?', origin='Manual')
+    review_id, _ = make_risk_review(db, link_question_id=existing['id'])
+    resolve_review(db, review_id, 'reject')
+    assert _linked(db, existing['id']) == []

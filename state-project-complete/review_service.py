@@ -96,6 +96,47 @@ def list_questions(connection: Connection, status: str = "open") -> list[dict]:
     return [dict(row) for row in rows]
 
 
+def with_linked_evidence(connection: Connection, questions: list[dict]) -> list[dict]:
+    """#481: each Question's linked Evidence, for the Question card.
+
+    A reviewer's "Keep tracking" or "Link existing Question" attaches Evidence to a Question
+    (review_questions from a resolved Review; proposed_questions.resulting_question_id from an
+    accepted Question proposal), but nothing showed it. Pending Reviews are left out: they are
+    not a decision yet. Display-only: Ask reads Questions through its own field list."""
+    ids = [q["id"] for q in questions]
+    if not ids:
+        return questions
+    marks = ",".join("?" for _ in ids)
+    rows = connection.execute(
+        # A link the pipeline made when it created the Review has no evidence_id; fall back to the
+        # Review's own Evidence. A dismissed Review keeps its link row but attached nothing.
+        f"SELECT rq.question_id AS question_id, e.id AS evidence_id, e.content AS content, e.submitted_at AS submitted_at, "
+        f"r.resolution AS resolution FROM review_questions rq JOIN review_issues r ON r.id=rq.review_id "
+        f"LEFT JOIN review_evidence re ON re.review_id=rq.review_id "
+        f"JOIN evidence e ON e.id=COALESCE(rq.evidence_id, re.evidence_id) "
+        f"WHERE rq.question_id IN ({marks}) AND r.status='resolved' AND r.resolution IN ('question_linked','question_created') "
+        f"UNION SELECT pq.resulting_question_id, e.id, e.content, e.submitted_at, 'question_linked' "
+        f"FROM proposed_questions pq JOIN evidence e ON e.id=pq.evidence_id "
+        f"WHERE pq.resulting_question_id IN ({marks}) AND pq.status='accepted'",
+        (*ids, *ids),
+    ).fetchall()
+    linked: dict[str, dict[str, dict]] = {}
+    for row in rows:
+        item = linked.setdefault(row["question_id"], {})
+        if row["evidence_id"] in item:
+            continue
+        excerpt = " ".join(str(row["content"] or "").split())
+        item[row["evidence_id"]] = {
+            "evidence_id": row["evidence_id"],
+            "excerpt": excerpt if len(excerpt) <= 140 else excerpt[:137].rstrip() + "...",
+            "submitted_at": row["submitted_at"],
+            "how": "kept" if row["resolution"] == "question_created" else "linked",
+        }
+    for question in questions:
+        question["linked_evidence"] = sorted(linked.get(question["id"], {}).values(), key=lambda x: str(x["submitted_at"]))
+    return questions
+
+
 def _normalized_question_text(value: str) -> str:
     return normalized_question_text(value)
 

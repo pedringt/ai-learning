@@ -322,7 +322,9 @@
         // itself already tag (via the fixture-carried topics above) gets a
         // guessed topic anymore -- an empty array is an honest "untagged",
         // not a wrong guess dressed up as one.
-        topics:fixture?.topics?.length?fixture.topics:[],backendManaged:true
+        topics:fixture?.topics?.length?fixture.topics:[],backendManaged:true,
+        // #481: Evidence a reviewer attached with Keep tracking / Link existing Question.
+        linkedEvidence:(q.linked_evidence||[]).map(x=>({evidenceId:x.evidence_id,excerpt:x.excerpt||'',date:formatBackendDate(x.submitted_at),how:x.how}))
       };
     });
     return backend;

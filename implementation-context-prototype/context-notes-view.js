@@ -121,7 +121,7 @@
       : expanded
         ? `<p class="note-full-text">${esc(n.text)}</p>${!editable?'<p class="note-immutable-hint"><strong>Submitted note</strong> · Preserved as project evidence and not editable.</p>':''}<div class="inline-actions note-actions">${editable?`<button class="text-button" data-action="edit-note" data-note-id="${n.id}">Edit</button>`:''}${reviewAction}<button class="text-button" data-action="copy-note" data-note-id="${n.id}">Copy</button></div>`
         : `<p>${esc(preview)}</p><span class="note-expand-label">Open note →</span>`;
-    return `<article class="simple-note note-index-row ${expanded?'is-expanded':''}" data-action="toggle-note" data-note-id="${n.id}" tabindex="0">${noteFeedIcon(n)}<div class="note-index-main"><h3>${esc(n.title)}</h3><span class="note-date">${esc(n.date)}</span><span class="note-source">${esc(n.source)}</span>${body}</div><div class="note-index-status">${statusBadge}</div></article>`;
+    return `<article class="simple-note note-index-row ${expanded?'is-expanded':''}" data-action="toggle-note" data-note-id="${n.id}" tabindex="0">${noteFeedIcon(n)}<div class="note-index-main"><h3>${esc(n.title)}</h3><span class="note-date">${esc(n.date)}</span><span class="note-source">${esc(n.source)}</span>${body}${(n.linkedQuestions||[]).map(q=>`<p class="note-linked-question"><span>Linked to</span> ${esc(q.text)}</p>`).join('')}</div><div class="note-index-status">${statusBadge}</div></article>`;
   }
 
   // Feed icon for a Notes row: Slack notes get the Slack mark, project notes are tinted (#450, from context-feedback-pass-2.js).

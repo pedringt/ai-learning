@@ -1464,3 +1464,11 @@ html:not(#_#_#_) .overview-stage .workspace-stage-pill.is-late-discovery{backgro
 /* #482: inline validation message in dialogs (new project name). */
 .dialog-field-error{margin:6px 0 0;color:#b42318;font-size:13px;font-weight:600}
 .dialog-field-error[hidden]{display:none}
+
+/* #481: evidence attached to a Question, and the note side of that link. */
+.question-linked-evidence{margin:10px 0 0}
+.question-linked-evidence ul{margin:6px 0 0;padding-left:18px}
+.question-linked-evidence li{margin:4px 0;font-size:13px;line-height:1.5;color:#3f4a5c}
+.question-linked-date{font-weight:700;color:#5b6474;margin-right:4px}
+.note-linked-question{margin:6px 0 0;font-size:12.5px;color:#3f4a5c}
+.note-linked-question span{font-weight:700;color:#5b6474;margin-right:4px}

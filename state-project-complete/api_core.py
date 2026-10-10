@@ -96,6 +96,7 @@ from review_service import (
     list_state,
     list_project_areas,
     list_questions,
+    with_linked_evidence,
     create_question,
     stop_question,
     list_project_rules,
@@ -432,7 +433,7 @@ def create_app(settings: Settings | None = None, provider: InterpretationProvide
                 "open_reviews": list_reviews(connection, "open"),
                 "resolved_reviews": list_reviews(connection, "resolved"),
                 "history": list_history(connection),
-                "questions": list_questions(connection, "open"),
+                "questions": with_linked_evidence(connection, list_questions(connection, "open")),
                 "rules": list_project_rules(connection),
                 "drafts": list_draft_notes(connection),
             }
@@ -482,7 +483,7 @@ def create_app(settings: Settings | None = None, provider: InterpretationProvide
         with get_connection() as connection:
             return {
                 "open_reviews": list_reviews(connection, "open"),
-                "questions": list_questions(connection, "open"),
+                "questions": with_linked_evidence(connection, list_questions(connection, "open")),
             }
 
     @app.post("/api/demo/reset")
@@ -808,7 +809,7 @@ def create_app(settings: Settings | None = None, provider: InterpretationProvide
                 "review_id": review_id,
                 "decision": payload.decision,
                 **(outcome or {}),
-                "questions": list_questions(connection, "open"),
+                "questions": with_linked_evidence(connection, list_questions(connection, "open")),
                 "state": list_state(connection),
                 "open_reviews": list_reviews(connection, "open"),
                 "history": list_history(connection),
@@ -817,7 +818,7 @@ def create_app(settings: Settings | None = None, provider: InterpretationProvide
     @app.get("/api/questions")
     def get_questions(status: Literal["open", "resolved", "stopped"] = Query(default="open")) -> dict:
         with get_connection() as connection:
-            return {"items": list_questions(connection, status)}
+            return {"items": with_linked_evidence(connection, list_questions(connection, status))}
 
     @app.post("/api/questions", status_code=201)
     def post_question(payload: QuestionInput) -> dict:
