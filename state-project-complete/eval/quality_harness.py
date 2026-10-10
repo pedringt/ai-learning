@@ -185,11 +185,17 @@ def _review_prose(connection, review_ids: list[str]) -> str:
     if not review_ids:
         return ""
     placeholders = ",".join("?" for _ in review_ids)
-    parts = [" ".join(str(v or "") for v in row) for row in connection.execute(
-        f"SELECT decision_question, why_consequential FROM review_issues WHERE id IN ({placeholders})", tuple(review_ids)).fetchall()]
-    parts += [" ".join(str(v or "") for v in row) for row in connection.execute(
-        f"SELECT proposed_statement, rationale FROM proposed_state_changes WHERE review_id IN ({placeholders})", tuple(review_ids)).fetchall()]
-    return " ".join(parts)
+    # Read columns by name: the test database returns mapping rows, and iterating one yields the
+    # column NAMES (the first version of this did that, so every prose check compared against
+    # "decision_question why_consequential" and could never match).
+    parts = []
+    for row in connection.execute(
+            f"SELECT decision_question, why_consequential FROM review_issues WHERE id IN ({placeholders})", tuple(review_ids)).fetchall():
+        parts += [str(row["decision_question"] or ""), str(row["why_consequential"] or "")]
+    for row in connection.execute(
+            f"SELECT proposed_statement, rationale FROM proposed_state_changes WHERE review_id IN ({placeholders})", tuple(review_ids)).fetchall():
+        parts += [str(row["proposed_statement"] or ""), str(row["rationale"] or "")]
+    return " ".join(p for p in parts if p)
 
 
 def run_review_quality_scenario(scenario: ReviewInterpretationScenario, provider) -> ReviewQualityResult:
