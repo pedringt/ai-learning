@@ -1460,3 +1460,7 @@ html:not(#_#_#_){color-scheme:light!important}
 /* ==== from context-attention-alignment.js normalizeStage (#450): a "Late discovery" stage pill.
    It was matched by text and styled inline; the template now adds .is-late-discovery. ==== */
 html:not(#_#_#_) .overview-stage .workspace-stage-pill.is-late-discovery{background:#e8edff!important;background-color:#e8edff!important;color:#4f5f8e!important;border-color:#d9def2!important;box-shadow:none!important}
+
+/* #482: inline validation message in dialogs (new project name). */
+.dialog-field-error{margin:6px 0 0;color:#b42318;font-size:13px;font-weight:600}
+.dialog-field-error[hidden]{display:none}

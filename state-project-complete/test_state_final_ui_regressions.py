@@ -231,3 +231,21 @@ def test_phone_width_can_see_switch_and_create_projects():
         assert new_box["x"] >= 0 and new_box["x"] + new_box["width"] <= 375
     finally:
         browser.close(); pw.stop()
+
+
+def test_new_project_with_an_empty_name_says_why_and_enter_submits():
+    """#482 (Cowork, Oct 9): Create project with an empty name did nothing, silently."""
+    pw, browser, page = _page()
+    try:
+        page.locator("#projectSwitcher").click()
+        page.locator("#projectMenu [data-action='new-project']").click()
+        error = page.locator("#newProjectNameError")
+        assert error.is_hidden()
+        page.locator("[data-action='save-new-project']").click()
+        assert error.is_visible() and "Enter a project name" in error.inner_text()
+
+        page.evaluate("document.getElementById('newProjectNameError').hidden=true")
+        page.locator("#newProjectName").press("Enter")
+        assert error.is_visible(), "Enter in the name field runs the same submit"
+    finally:
+        browser.close(); pw.stop()

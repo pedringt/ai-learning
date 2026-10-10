@@ -106,7 +106,7 @@
   // injected so this module never needs to reach into another view module
   // directly.
   function render(props){
-    const {reviewsStatus,questionsStatus,draftsStatus,reviews,questions,draftNotes,notes,openQuestionsExpanded,expandedReviewId,openItemSections,renderDraftNote}=props;
+    const {reviewsStatus,questionsStatus,draftsStatus,reviews,questions,draftNotes,notes,openQuestionsExpanded,expandedReviewId,openItemSections,renderDraftNote,hasCurrentState=true}=props;
     if(reviewsStatus==='loading' || questionsStatus==='loading'){
       return `<section class="page collection-page open-items-page"><div class="empty-state unavailable-state"><h2>Loading Open Items…</h2><p>Checking Reviews and Questions that need attention.</p></div></section>`;
     }
@@ -125,7 +125,7 @@
     const reviewUnavailable=reviewsStatus==='error';
     const questionUnavailable=questionsStatus==='error';
     const reviewCardFor=r=>reviewCard(r,reviews.length===1||expandedReviewId===r.id,true,notes.find(n=>n.id===r.evidenceId));
-    const reviewBody=reviewUnavailable?'<div class="open-items-empty unavailable-inline">Reviews could not be loaded. <button class="text-button" data-action="retry-hydration">Try again</button></div>':reviews.length?reviews.map(reviewCardFor).join(''):'<div class="open-items-empty">Nothing needs review. Current State is up to date with accepted evidence.</div>';
+    const reviewBody=reviewUnavailable?'<div class="open-items-empty unavailable-inline">Reviews could not be loaded. <button class="text-button" data-action="retry-hydration">Try again</button></div>':reviews.length?reviews.map(reviewCardFor).join(''):'<div class="open-items-empty">'+(hasCurrentState?'Nothing needs review. Current State is up to date with accepted evidence.':'Nothing needs review yet. Current State has not been set up.')+'</div>';
     const blockerBody=questionUnavailable?'<div class="open-items-empty unavailable-inline">Blocking questions could not be loaded.</div>':blockers.length?`<div class="open-question-list" style="border-top:0">${blockers.map(q=>questionCard(q,linkedReviewFor(q))).join('')}</div>`:'<div class="open-items-empty">Nothing is blocking the project right now.</div>';
     const draftsLoading=draftsStatus!=='loaded'&&draftsStatus!=='error';
     const draftsUnavailable=draftsStatus==='error';

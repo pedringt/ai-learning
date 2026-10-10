@@ -748,6 +748,8 @@
     return {
       reviewsStatus:state.backendStatus.reviews,questionsStatus:state.backendStatus.questions,draftsStatus:state.backendStatus.drafts,
       reviews:uiPendingReviews(),questions:openQuestions(),
+      // #482: a project still in setup has no Current State to be "up to date".
+      hasCurrentState:!baselineSetupActive()&&(state.data.knowledge||[]).some(k=>k.state!=='retired'),
       draftNotes:state.data.notes.filter(n=>n.status==='working'||n.status==='draft'||!!n.backendDraft),
       notes:state.data.notes,
       openQuestionsExpanded:state.openQuestionsExpanded,expandedReviewId:state.expandedReviewId,openItemSections:state.openItemSections,
@@ -831,7 +833,7 @@
       if(result?.resolution==='question_linked')return 'Linked to an existing open question. Current State was not changed.';
       return 'Reviewed. Still flagged as uncertain — Current State was not changed.';
     }
-    if(decision==='dismiss-risk')return 'Dismissed. No longer tracked as an open question. Current State was not changed.';
+    if(decision==='dismiss-risk')return 'Dismissed. This concern will not be tracked. Current State was not changed.';
     return 'Current State left unchanged. Evidence is preserved.';
   }
 
@@ -1364,7 +1366,7 @@
      attention row can render before the rest of the project arrives.
      ------------------------------------------------------------------- */
   function analyzingDialog(){
-    return `<div class="analysis-state"><div class="analysis-orbit" aria-hidden="true"><span></span><span></span><span></span></div><span class="eyebrow">Analyzing evidence</span><h2 id="dialogTitle">Working out what this changes…</h2><p>Comparing the note with Current State and deciding whether anything needs your review.</p><div class="analysis-progress"><span class="analysis-pulse" aria-hidden="true"></span><span id="analysisElapsed">Starting analysis…</span></div><p class="analysis-patience">${baselineSetupActive()?'Larger starting sources can take a little while to analyze. You can review the Starting State when they finish.':'A thorough comparison can take around 10–20 seconds.'}</p></div>`;
+    return `<div class="analysis-state"><div class="analysis-orbit" aria-hidden="true"><span></span><span></span><span></span></div><span class="eyebrow">Analyzing evidence</span><h2 id="dialogTitle">Working out what this changes…</h2><p>Comparing the note with Current State and deciding whether anything needs your review.</p><div class="analysis-progress"><span class="analysis-pulse" aria-hidden="true"></span><span id="analysisElapsed">Starting analysis…</span></div><p class="analysis-patience">${baselineSetupActive()?'Larger starting sources can take a little while to analyze. You can review the Starting State when they finish.':'A thorough comparison can take up to about 30 seconds.'}</p></div>`;
   }
   function startAnalysisClock(){
     clearInterval(analysisClock);
@@ -1386,7 +1388,7 @@
   // While Baseline Setup is active (context-baseline.js), Evidence feeds the Starting State
   // draft, so the copy says so; otherwise it never mentions a Starting State (#456: a patch
   // layer used to rewrite this message for every project, including established ones).
-  function baselineSetupActive(){ return document.body.classList.contains('state-baseline-active'); }
+  function baselineSetupActive(){ return !!document.body?.classList?.contains?.('state-baseline-active'); }
   function evidenceNoReviewCopy(){
     return baselineSetupActive()
       ? 'Added as Evidence. State is using it to update your Starting State. Questions and conflicts stay in Review.'
@@ -1518,12 +1520,18 @@
   function sourcesStripDismissed(){ try{ return localStorage.getItem(sourcesDismissKey())==='1'; }catch(err){ return false; } }
   function workspaceSourcesHtml(){
     if(sourcesStripDismissed()) return '';
-    return `<section class="workspace-source-strip" aria-label="Source status"><div class="workspace-source-head"><span class="meta-label">Sources</span><span class="workspace-source-name">Slack</span><span class="workspace-source-status">Just added</span></div><div class="workspace-source-head"><button class="btn secondary workspace-source-action" type="button" data-view="settings" data-anchor="settings-slack">Connect your apps →</button><button class="workspace-source-dismiss" type="button" aria-label="Dismiss">×</button></div></section>`;
+    return `<section class="workspace-source-strip" aria-label="Source status"><div class="workspace-source-head"><span class="meta-label">Sources</span><span class="workspace-source-name">Slack</span><span class="workspace-source-status">New integration</span></div><div class="workspace-source-head"><button class="btn secondary workspace-source-action" type="button" data-view="settings" data-anchor="settings-slack">Connect Slack →</button><button class="workspace-source-dismiss" type="button" aria-label="Dismiss">×</button></div></section>`;
   }
   document.addEventListener('click',e=>{
     if(!e.target.closest?.('.workspace-source-dismiss')) return;
     try{ localStorage.setItem(sourcesDismissKey(),'1'); }catch(err){ /* private mode: dismissal just won't persist */ }
     e.target.closest('.workspace-source-strip')?.remove();
+  });
+  // #482: Enter in the new-project name field submits, like the button.
+  document.addEventListener('keydown',e=>{
+    if(e.key!=='Enter'||e.target?.id!=='newProjectName'||e.isComposing)return;
+    e.preventDefault();
+    document.querySelector('[data-action="save-new-project"]')?.click();
   });
   document.addEventListener('click',async e=>{
     if(e.target.closest('[data-action="dismiss-review-banner"]')){ state.reviewBannerDismissed=true; renderOverview(); return; }
@@ -1610,11 +1618,12 @@
     }
     else if(act==='new-project'){
       state.projectMenuOpen=false;
-      showDialog(`<span class="eyebrow">New project</span><h2 id="dialogTitle">Start a blank project</h2><p>Creates an empty project with no seeded Current State, Reviews, or Rules — a fresh place to build understanding from scratch.</p><label for="newProjectName" class="new-project-label">Project name</label><input id="newProjectName" class="dialog-input" type="text" maxlength="200" placeholder="e.g. AI Notes" autofocus /><div class="dialog-actions"><button class="btn primary" data-action="save-new-project">Create project</button><button class="btn secondary" data-action="close-dialog">Cancel</button></div>`);
+      showDialog(`<span class="eyebrow">New project</span><h2 id="dialogTitle">Start a blank project</h2><p>Creates an empty project with no seeded Current State, Reviews, or Rules — a fresh place to build understanding from scratch.</p><label for="newProjectName" class="new-project-label">Project name</label><input id="newProjectName" class="dialog-input" type="text" maxlength="200" placeholder="e.g. AI Notes" autofocus required aria-describedby="newProjectNameError" /><p id="newProjectNameError" class="dialog-field-error" role="alert" hidden>Enter a project name.</p><div class="dialog-actions"><button class="btn primary" data-action="save-new-project">Create project</button><button class="btn secondary" data-action="close-dialog">Cancel</button></div>`);
     }
     else if(act==='save-new-project'){
       const name=document.getElementById('newProjectName')?.value.trim();
-      if(!name)return;
+      // #482: an empty name used to do nothing at all.
+      if(!name){const error=document.getElementById('newProjectNameError');if(error)error.hidden=false;document.getElementById('newProjectName')?.focus();return;}
       state.isAnalyzing=true;
       showDialog(`<span class="eyebrow">Creating project</span><h2 id="dialogTitle">Setting up ${esc(name)}…</h2>`);
       try{
