@@ -50,11 +50,11 @@ class AnthropicProvider:
 
         Args:
             model_identifier: Claude model to use. If None, uses CLAUDE_MODEL env var
-                            or defaults to 'claude-haiku-4-5-20251001' for low-latency interpretation
+                            or defaults to 'claude-haiku-5-5' for low-latency interpretation
             api_key: Anthropic API key (if None, uses ANTHROPIC_API_KEY env var)
         """
         self.name = "anthropic"
-        self.model_identifier = model_identifier or os.getenv("CLAUDE_MODEL", "claude-haiku-4-5-20251001")
+        self.model_identifier = model_identifier or (os.getenv("CLAUDE_MODEL") or "claude-haiku-5-5")
         # Bumped 1200 -> 2000 2026-09-13: the #105 long discovery-note stress
         # test hit stop_reason="max_tokens" on a dense, multi-topic note after
         # consequentiality_guidance.py's completeness-scan instruction (state.md
@@ -144,6 +144,9 @@ class AnthropicProvider:
         message = self.client.messages.create(
             model=self.model_identifier,
             max_tokens=self.max_tokens,
+            # Short strict-JSON job: Claude 5.x models think adaptively by default, which can spend
+            # the whole max_tokens budget before any text. Keep it off, as Haiku 4.5 had it.
+            thinking={"type": "disabled"},
             output_config={
                 "format": {
                     "type": "json_schema",
@@ -251,6 +254,7 @@ class AnthropicProvider:
         message = self.client.messages.create(
             model=self.model_identifier,
             max_tokens=300,
+            thinking={"type": "disabled"},
             output_config={"format": {"type": "json_schema", "schema": _RELEVANCE_SCHEMA}},
             messages=[{"role": "user", "content": prompt}],
         )

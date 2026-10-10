@@ -48,7 +48,7 @@ def test_anthropic_low_latency_defaults(monkeypatch):
     monkeypatch.delenv('CLAUDE_MODEL', raising=False)
     monkeypatch.delenv('CLAUDE_MAX_TOKENS', raising=False)
     provider = AnthropicProvider(api_key='test')
-    assert provider.model_identifier == 'claude-haiku-4-5-20251001'
+    assert provider.model_identifier == 'claude-haiku-5-5'
     assert provider.max_tokens == 2000
 
 
