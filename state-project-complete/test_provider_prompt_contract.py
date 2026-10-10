@@ -173,7 +173,9 @@ def test_anthropic_prompt_is_compact_and_does_not_repeat_json_skeleton():
     # model miss attributed decisions such as "the CEO said the launch date is now October 1st".)
     # 11400 -> 11600 (2026-10-10): a gating-detail rule so Haiku 5.5 still opens a Question for an
     # unscheduled detail that gates access (review_new_fact_with_downstream_question failed 4/4 on 5.5).
-    assert len(prompt) < 11600
+    # 11600 -> 11800 (2026-10-10): a positively worded #480 rule (an agreed later change is a decision,
+    # proposed as planned); Haiku 5.5 otherwise raised no Review for it (3/3).
+    assert len(prompt) < 11800
 
 
 def test_provider_output_schema_stays_below_anthropic_complexity_budget():
