@@ -156,7 +156,9 @@ function check(name,ok,detail=''){if(ok){pass++;console.log('✓',name);}else{fa
 
   // But editing that text first must still go through the classifier like
   // any other typed question -- trust is for exact resubmission only.
-  const edited=starter.prompt+' Keep it very short.';
+  // Oct 10: multi-sentence text now routes per sentence, so the long starter plus an extra
+  // sentence would correctly stay on live Ask. Edit it into a pure inventory ask instead.
+  const edited='What is still unresolved?';
   calls.length=0;
   fire('submit',askForm(edited));
   await flush();await flush();await flush();

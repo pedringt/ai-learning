@@ -201,7 +201,14 @@ async function unchanged() {
       await row.screenshot({ path: path.join(OUT, 'question-review-mobile.png') });
       await clickOutcome(row, 'Link existing Question');
       await expect(page.locator('.state-toast')).toContainText('Linked to the existing Question.');
-      expect((await get('/api/questions')).items).toEqual(before); await unchanged(); item.questionId = q.id;
+      // Linking adds no Question and changes none; since #481 the linked Question also lists the
+      // Evidence it now carries, so compare everything except linked_evidence and check that too.
+      const after = (await get('/api/questions')).items;
+      const strip = items => items.map(({ linked_evidence, ...rest }) => rest);
+      expect(strip(after)).toEqual(strip(before));
+      const linkedQ = after.find(x => x.id === q.id);
+      expect((linkedQ.linked_evidence || []).length).toBeGreaterThan((before.find(x => x.id === q.id).linked_evidence || []).length);
+      await unchanged(); item.questionId = q.id;
     });
 
     await check('Live model avoids proposing an already-open unknown again', async item => {
