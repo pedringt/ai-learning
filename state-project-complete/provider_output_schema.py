@@ -63,7 +63,12 @@ PROVIDER_OUTPUT_SCHEMA = {
                                 "operation": {"type": "string", "enum": ["create", "update", "retire"]},
                                 "state_item_id": {"type": "string"},
                                 "proposed_statement": {"type": "string"},
-                                "rationale": {"type": "string"},
+                                "rationale": {
+                                    "type": "string",
+                                    # #482 (QA-11): shown as the Review's "Establishes" line; it used to say why
+                                    # the change mattered ("planning depends on a known budget ceiling").
+                                    "description": "What the Evidence establishes that supports this change: the concrete fact or decision, with who said it and any value (e.g. \"Finance approved $40,000 for discovery and the first phase\"). Not why it matters.",
+                                },
                                 "effective_date": {"type": "string", "format": "date"},
                             },
                         },
