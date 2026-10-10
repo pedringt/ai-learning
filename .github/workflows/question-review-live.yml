@@ -1,7 +1,11 @@
-# Manual only: makes real model calls. Controlled evals use temporary test
+# Makes real model calls: manually, and weekly on main (about 23 calls; well under
+# a cent per run on Haiku 5.5). Controlled evals use temporary test
 # databases and record aggregate metrics plus limited failure metadata for failed synthetic scenarios.
 name: State AI quality check
 on:
+  schedule:
+    # Mondays 14:17 UTC (7:17am Pacific). Scheduled runs use suite=all and record to production.
+    - cron: '17 14 * * 1'
   workflow_dispatch:
     inputs:
       suite:
@@ -46,17 +50,17 @@ jobs:
           STATE_EVAL_INGEST_KEY: ${{ secrets.STATE_EVAL_INGEST_KEY }}
           CLAUDE_MODEL: ${{ vars.CLAUDE_MODEL }}
         run: |
-          if [ "${{ inputs.record_environment }}" = "staging" ]; then
+          if [ "${{ inputs.record_environment || 'production' }}" = "staging" ]; then
             RECORD_URL="https://state-api-staging.onrender.com"
           else
             RECORD_URL="https://state-api-6waw.onrender.com"
           fi
           python state-project-complete/eval/run_quality_evals.py \
-            --suite "${{ inputs.suite }}" \
+            --suite "${{ inputs.suite || 'all' }}" \
             --record-url "$RECORD_URL"
 
   walkthrough:
-    if: github.ref == 'refs/heads/staging' && inputs.suite == 'all'
+    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/staging' && inputs.suite == 'all'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
