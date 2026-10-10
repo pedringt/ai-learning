@@ -179,6 +179,15 @@ test.describe('Review + Question resolution (deterministic demo data)', () => {
     return card;
   }
 
+  // A state_at_risk Review offers Keep tracking / Dismiss concern, not Update / Leave unchanged.
+  async function expandRiskCard(page, reviewId) {
+    const card = page.locator(`[data-review-card="${reviewId}"]`);
+    await expect(card).toBeVisible({ timeout: 15_000 });
+    await card.locator('[data-action="toggle-review-card"]').click();
+    await expect(card.locator('[data-action="review-acknowledge-risk"]')).toBeVisible({ timeout: 5_000 });
+    return card;
+  }
+
   async function confirmProposedUpdate(page, reviewCard) {
     await reviewCard.locator('[data-action="review-update"]').click();
     const confirmButton = page.locator('[data-action="confirm-review-update"]');
@@ -262,7 +271,7 @@ test.describe('Review + Question resolution (deterministic demo data)', () => {
     await gotoWithBypass(page, STATE_URL);
     await expect(page.locator('#appLoadStatus')).toBeHidden({ timeout: 30_000 });
     await page.locator('.sidebar-nav [data-view="open-items"]').click();
-    const card = await expandReviewCard(page, 'demo-review-retention');
+    const card = await expandRiskCard(page, 'demo-review-retention');
     await expect(card).toContainText('Neither choice changes Current State.');
     await expect(page.locator('.open-items-page')).not.toContainText('does not automatically resolve the uncertainty');
     diag.assertClean(expect);
@@ -273,7 +282,7 @@ test.describe('Review + Question resolution (deterministic demo data)', () => {
     await gotoWithBypass(page, STATE_URL);
     await expect(page.locator('#appLoadStatus')).toBeHidden({ timeout: 30_000 });
     await page.locator('.sidebar-nav [data-view="open-items"]').click();
-    const card = await expandReviewCard(page, 'demo-review-retention');
+    const card = await expandRiskCard(page, 'demo-review-retention');
     await card.locator('[data-action="review-acknowledge-risk"]').click();
     await expect(card).toHaveCount(0, { timeout: 10_000 });
 
