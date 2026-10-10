@@ -307,7 +307,7 @@ Respond ONLY with JSON in this structure:
           "operation": "create" | "update" | "retire",
           "state_item_id": "state_01",  // required for update/retire; omit for create
           "proposed_statement": "New or updated statement",  // required for create/update; omit for retire
-          "rationale": "What the Evidence establishes for this change: the concrete fact or decision, who said it, any value. Not why it matters.",
+          "rationale": "Why this change makes sense given Evidence",
           "effective_date": "YYYY-MM-DD"  // optional
         }}
       ]
