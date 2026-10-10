@@ -142,6 +142,19 @@ test.describe('Mobile smoke', () => {
     expect(box?.width).toBeLessThanOrEqual(390);
     diag.assertClean(expect);
   });
+
+  test('the project switcher is visible and opens at phone width (#475)', async ({ page }) => {
+    const diag = attachDiagnostics(page);
+    await gotoWithBypass(page, STATE_URL);
+    await expect(page.locator('#appLoadStatus')).toBeHidden({ timeout: 30_000 });
+    const switcher = page.locator('#projectSwitcher');
+    await expect(switcher).toBeVisible();
+    const box = await switcher.boundingBox();
+    expect(box?.width).toBeGreaterThan(150);
+    await switcher.click();
+    await expect(page.locator('#projectMenu [data-action="new-project"]')).toBeVisible();
+    diag.assertClean(expect);
+  });
 });
 
 
@@ -241,6 +254,46 @@ test.describe('Review + Question resolution (deterministic demo data)', () => {
     const after = await backendJson(request, '/api/state');
     const afterVip = (after.items || after).find(s => s.id === 'k-vip');
     expect(afterVip?.statement).toEqual(beforeVip?.statement);
+    diag.assertClean(expect);
+  });
+
+  test('Review cards use the short "Does not establish" line (QA-11)', async ({ page }) => {
+    const diag = attachDiagnostics(page);
+    await gotoWithBypass(page, STATE_URL);
+    await expect(page.locator('#appLoadStatus')).toBeHidden({ timeout: 30_000 });
+    await page.locator('.sidebar-nav [data-view="open-items"]').click();
+    const card = await expandReviewCard(page, 'demo-review-retention');
+    await expect(card).toContainText('Neither choice changes Current State.');
+    await expect(page.locator('.open-items-page')).not.toContainText('does not automatically resolve the uncertainty');
+    diag.assertClean(expect);
+  });
+
+  test('Keep tracking shows the evidence on the Question and the Question on the note (#481)', async ({ page, request }) => {
+    const diag = attachDiagnostics(page);
+    await gotoWithBypass(page, STATE_URL);
+    await expect(page.locator('#appLoadStatus')).toBeHidden({ timeout: 30_000 });
+    await page.locator('.sidebar-nav [data-view="open-items"]').click();
+    const card = await expandReviewCard(page, 'demo-review-retention');
+    await card.locator('[data-action="review-acknowledge-risk"]').click();
+    await expect(card).toHaveCount(0, { timeout: 10_000 });
+
+    let linked;
+    await expect(async () => {
+      const questions = await backendJson(request, '/api/questions?status=open');
+      linked = (questions.items || questions).find(q => (q.linked_evidence || []).some(x => x.evidence_id === 'demo-review-retention-evidence'));
+      expect(linked, 'a Question carries the kept evidence').toBeTruthy();
+    }).toPass({ timeout: 15_000 });
+
+    await page.reload();
+    await expect(page.locator('#appLoadStatus')).toBeHidden({ timeout: 30_000 });
+    await page.locator('.sidebar-nav [data-view="open-items"]').click();
+    const row = page.locator(`.open-question-item[data-question-id="${linked.id}"]`);
+    await expect(row).toBeVisible({ timeout: 15_000 });
+    await row.locator('summary').click();
+    await expect(row.locator('.question-linked-evidence')).toContainText('retention');
+
+    await page.locator('.sidebar-nav [data-view="notes"]').click();
+    await expect(page.locator('.note-linked-question').filter({ hasText: linked.text }).first()).toBeVisible({ timeout: 15_000 });
     diag.assertClean(expect);
   });
 });
@@ -366,6 +419,8 @@ test.describe.serial('Baseline Setup lifecycle (real deployed staging)', () => {
 
     await expect(page.locator('#baselineSetupBanner')).toBeHidden({ timeout: 30_000 });
     await page.waitForFunction(() => window.__preReload === undefined, null, { timeout: 15_000 }).catch(() => {});
+    // #482: the reload used to land with no confirmation.
+    await expect(page.locator('.state-toast')).toContainText('Starting State confirmed', { timeout: 15_000 });
     await expect(page.locator('#appLoadStatus')).toBeHidden({ timeout: 30_000 });
     await expect(page.locator('#projectSwitcher')).toHaveAttribute('data-project-id', projectId, { timeout: 30_000 });
 
