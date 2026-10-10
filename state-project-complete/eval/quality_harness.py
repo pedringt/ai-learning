@@ -343,13 +343,29 @@ def _distinguishes_proposal(text: str) -> bool:
     return "review" in text and _has_uncertainty_language(text)
 
 
+_NEGATION_BEFORE = re.compile(r"(?:\bnot|\bno longer|n't|\bnever)\s+(?:\w+\s+){0,1}$")
+
+
+def _asserts(text: str, claim: str) -> bool:
+    """True if `claim` appears in `text` other than directly negated.
+
+    A plain substring check counted "it is not currently approved" as the forbidden claim
+    "currently approved" (Oct 10, Haiku 5.5's correct answer to ask_current_over_stale)."""
+    start = text.find(claim)
+    while start != -1:
+        if not _NEGATION_BEFORE.search(text[:start]):
+            return True
+        start = text.find(claim, start + 1)
+    return False
+
+
 def score_ask_answer(scenario: AskQualityScenario, answer: dict[str, Any]) -> AskQualityResult:
     text = _normalize(_flatten_strings(answer))
     required_ok = all(
         any(_normalize(phrase) in text for phrase in ((fact,) if isinstance(fact, str) else fact))
         for fact in scenario.required_facts
     )
-    forbidden_ok = all(_normalize(claim) not in text for claim in scenario.forbidden_claims)
+    forbidden_ok = all(not _asserts(text, _normalize(claim)) for claim in scenario.forbidden_claims)
     uncertainty_ok = (not scenario.should_express_uncertainty) or _has_uncertainty_language(text)
     open_item_ok = (not scenario.should_reference_open_item) or _has_open_item_language(text)
     authority_ok = (not scenario.should_distinguish_proposal_from_truth) or _distinguishes_proposal(text)

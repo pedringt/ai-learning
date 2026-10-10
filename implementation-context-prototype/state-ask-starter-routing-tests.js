@@ -121,8 +121,10 @@ function check(name,ok,detail=''){if(ok){pass++;console.log('✓',name);}else{fa
   check('starters are exposed for testing', Array.isArray(starters)&&starters.length===5, JSON.stringify(starters));
 
   const misclassified=[
-    {label:'What should I know?', expectKind:'pending'},
-    {label:'What changed recently?', expectKind:'open'},
+    // Oct 10: multi-sentence prompts route per sentence now, so these two no longer misfire.
+    // skipRouting still matters for the third, a single sentence the classifier mistakes.
+    {label:'What should I know?', expectKind:null},
+    {label:'What changed recently?', expectKind:null},
     {label:'What are we still unsure about?', expectKind:'open'},
   ];
 
@@ -134,7 +136,7 @@ function check(name,ok,detail=''){if(ok){pass++;console.log('✓',name);}else{fa
     // Confirms the classifier really would misfire on this starter's long
     // instruction text -- this is *why* the starter needs skipRouting.
     const intent=api.detectAskIntent(starter.prompt);
-    check(`"${label}"'s prompt text is misclassified as "${expectKind}" by the generic-inventory classifier`, intent?.kind===expectKind, JSON.stringify(intent));
+    check(expectKind?`"${label}"'s prompt text is misclassified as "${expectKind}" by the generic-inventory classifier`:`"${label}"'s prompt text stays on live Ask`, (intent?.kind??null)===expectKind, JSON.stringify(intent));
 
     calls.length=0;
     fire('click',starterButton(starter.prompt));

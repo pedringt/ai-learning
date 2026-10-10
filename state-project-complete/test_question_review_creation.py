@@ -445,3 +445,34 @@ def test_postgres_upgrade_preserves_existing_records():
     finally:
         with connect(url) as admin:
             admin.execute(f'DROP SCHEMA {schema} CASCADE'); admin.commit()
+
+
+# --- #477: the model names the open Question it adds to -----------------------
+
+RETENTION = 'What retention and deletion terms apply to pilot prompts and outputs?'
+NARROWER = 'Does the vendor MSA establish 30-day or 90-day retention for pilot data?'
+
+
+def test_links_question_id_offers_link_existing_question(db):
+    existing = create_question(db, 'q-retention-test', RETENTION, origin='Manual', blocking=True, blocks='Security approval')
+    suggest(db, text=NARROWER, change={'links_question_id': existing['id']})
+    review, p = proposal(db)
+    assert p['text'] == RETENTION and review['decision_question'] == RETENTION
+    assert p['existing_question_id'] == existing['id']
+    outcome = authorize(db, review, p)
+    assert outcome['question']['id'] == existing['id'] and not outcome['question_created']
+    assert [q['id'] for q in list_questions(db)] == [existing['id']], 'no non-blocking near-duplicate'
+
+
+def test_a_lone_resolves_hint_on_an_open_question_is_used_as_the_link(db):
+    """Models often point resolves_question_ids at the related Question; normalization used to discard it."""
+    existing = create_question(db, 'q-retention-hint', RETENTION, origin='Manual')
+    suggest(db, text=NARROWER, change={'resolves_question_ids': [existing['id']]})
+    _, p = proposal(db)
+    assert p['existing_question_id'] == existing['id']
+
+
+def test_an_unknown_links_question_id_is_ignored(db):
+    suggest(db, text=NARROWER, change={'links_question_id': 'q-does-not-exist'})
+    review, p = proposal(db)
+    assert p['text'] == NARROWER and p['existing_question_id'] is None

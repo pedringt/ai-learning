@@ -585,9 +585,19 @@
     // half says "blocked". A single topic-qualified inventory ask still routes (see the #115 test).
     if(has(/,?\s+and\s+(?:is|are|was|were|what|which|who|how|does|do|did|can|could|should|will|would|has|have)\b/))return null;
 
-    if(has(/\b(blocker|blockers|blocking|blocked|holding us up|hold us up|in the way|stop us|stopping us|prevent us|waiting on|needs attention|need attention|requires attention|needs my attention|require my attention)\b/)) return {kind:'blockers'};
-    if(has(/\b(needs review|need review|pending review|awaiting review|review first|evidence.*incorporated|new evidence|open review|open reviews|pending reviews|should i approve|need to approve|needs? to be approved|what to approve|what should i approve|what do i need to approve)\b/)) return {kind:'pending'};
-    if(has(/\b(open questions?|still open|unresolved|unknowns|dont know|do not know|havent figured|have not figured|what havent we figured out|still need to figure|assumptions.*validated|what isnt decided|what is not decided|needs answering|need answering|still needs answering|not been answered|hasnt been answered|has not been answered|remains unanswered|not yet answered)\b/)) return {kind:'open'};
+    // A question with several sentences routes to an inventory card only when every sentence
+    // is itself an inventory ask: "Who has authority to pause the pilot? Separate accepted facts
+    // from unresolved concerns." needs an answer, not the Open questions card (the live staging
+    // walkthrough failed on exactly this from Sept 30 to Oct 10).
+    const sentences=String(raw).split(/(?<=[?.!])\s+/).map(norm).filter(Boolean);
+    if(sentences.length>1&&sentences.some(sentence=>!inventoryKind(sentence)))return null;
+    return inventoryKind(q);
+  }
+  function inventoryKind(q){
+    const has=(re)=>re.test(q);
+      if(has(/\b(blocker|blockers|blocking|blocked|holding us up|hold us up|in the way|stop us|stopping us|prevent us|waiting on|needs attention|need attention|requires attention|needs my attention|require my attention)\b/)) return {kind:'blockers'};
+      if(has(/\b(needs review|need review|pending review|awaiting review|review first|evidence.*incorporated|new evidence|open review|open reviews|pending reviews|should i approve|need to approve|needs? to be approved|what to approve|what should i approve|what do i need to approve)\b/)) return {kind:'pending'};
+      if(has(/\b(open questions?|still open|unresolved|unknowns|dont know|do not know|havent figured|have not figured|what havent we figured out|still need to figure|assumptions.*validated|what isnt decided|what is not decided|needs answering|need answering|still needs answering|not been answered|hasnt been answered|has not been answered|remains unanswered|not yet answered)\b/)) return {kind:'open'};
     return null;
   }
 

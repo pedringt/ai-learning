@@ -139,6 +139,11 @@
             "type": "string",
             "minLength": 1
           }
+        },
+        "links_question_id": {
+          "type": "string",
+          "minLength": 1,
+          "description": "open_question only (#477): an open Question this Evidence adds to without answering it; State offers to link instead of creating a near-duplicate."
         }
       },
       "allOf": [

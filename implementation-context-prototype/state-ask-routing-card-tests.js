@@ -114,6 +114,12 @@ for(const q of [
   check(`two-part question stays on live Ask path: "${q}"`, api.detectAskIntent(q)===null, JSON.stringify(api.detectAskIntent(q)));
 }
 
+// A question with a non-inventory sentence goes to live Ask even if another sentence says
+// "unresolved" (the live staging walkthrough query, failing since Sept 30).
+check('a specific question plus an inventory-sounding instruction stays on live Ask',
+  api.detectAskIntent('Who has authority to pause the Northstar pilot if severe AI failures appear? Separate accepted facts from unresolved concerns.')===null);
+check('two inventory sentences still route', api.detectAskIntent('What needs review? Show me pending reviews.')?.kind==='pending');
+
 // True inventory/navigation questions still route to Open Items.
 const pureInventory=[
   ['List all open questions','open'],

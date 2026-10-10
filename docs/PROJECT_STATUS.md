@@ -4,6 +4,15 @@ This is the canonical current-state handoff for State and the surrounding portfo
 
 _Last updated: October 7, 2026, Pacific time. The Oct 7 section just below is the current one and the Oct 5 sections still apply where it does not override them; everything older is history. Written as a handoff for a fresh session._
 
+## Oct 10, 2026: Haiku 5.5 switch measured and ready on staging (not yet on production)
+
+- **Model:** the code default is `claude-haiku-5-5` (`b3c2833`, #486); every Anthropic call sends `thinking: disabled`. Render `state-api-staging` runs Haiku 5.5. **Production `state-api` is pinned to `CLAUDE_MODEL=claude-haiku-4-5-20251001` until promotion.** The GitHub `CLAUDE_MODEL` repository variable is deleted on purpose, so evals follow the code default; an empty value now falls back to the default (`c0afd2e`).
+- **Branches:** #486 was squash-merged into `main` by mistake and #488 merged `main` back into `staging`. Use merge commits (not squash) for `staging` <-> `main` from now on.
+- **Prompt changes made for Haiku 5.5, each measured with paid runs on an `eval/*` branch first:** link an already-tracked unknown by Question ID (#477); answering one Question doesn't complete a review (#484); the proposal rationale states the fact (QA-11); a decided fact can leave a gating detail open (new Haiku 5.5 regression); a change the team agreed to make later is a decision, proposed as planned, but a personal opinion is not (#480). The earlier #480 rule ("planned != done") was removed because it made Haiku 4.5 miss real decisions.
+- **Haiku 5.5 on staging `4bf56b6`:** review suite 16/16 (3 of 3 runs), Ask 10/10, release gate (36 consequentiality scenarios) 100% precision and recall (5 of 5), Deep QA 17/17, live walkthrough 8/8 (its first full pass since Sept 30: an Ask routing bug sent multi-sentence questions containing "unresolved" to the inventory card).
+- **Eval tooling fixed today:** the review harness read column names instead of values (prose checks never ran); the Ask scorer counted "not currently approved" as the forbidden "currently approved"; `qa-release` can compare against `main` (`base_ref`) and force the paid eval; `question-review-live` runs on `eval/*` branches. Some runs earlier today recorded all-error results to staging analytics (the empty-model failure).
+- **To promote:** the `staging` -> `main` PR (merge commit) with Paige's go-ahead; verify Render `/health` and both Vercel projects; then Paige clears `CLAUDE_MODEL` on Render production (rollback: set it back to `claude-haiku-4-5-20251001`).
+
 ## Oct 7, 2026: outside-review bug fixes promoted, repo cleanup, tech-debt plan
 
 **Use this section first; the Oct 5 sections below still apply where this does not override them.**

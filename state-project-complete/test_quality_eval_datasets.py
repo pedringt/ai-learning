@@ -265,3 +265,11 @@ def test_rationale_check_ignores_the_proposed_statement():
                 proposed_state_text="The pilot budget is approved at $40,000.", review_prose="The pilot budget is approved at $40,000.")
     assert not ReviewQualityResult(**base, rationale_text="Implementation planning depends on a known budget ceiling.").passed
     assert ReviewQualityResult(**base, rationale_text="Finance approved $40,000 for discovery and the first phase.").passed
+
+
+def test_a_negated_forbidden_claim_is_not_a_violation():
+    from eval.quality_harness import _asserts
+    assert not _asserts("so it is not currently approved for automation", "currently approved")
+    assert not _asserts("it is no longer currently approved", "currently approved")
+    assert _asserts("automation is currently approved", "currently approved")
+    assert _asserts("it is not paused; it is currently approved", "currently approved")

@@ -261,8 +261,16 @@ def normalize_provider_payload(
         # about what open_question means, not a mechanical labeling slip (see
         # test_invalid_or_mixed_outcomes_are_rejected_without_side_effects).
         if recommendation.get("review_type") == "open_question":
+            # #477: that "related existing Question" hint is exactly what a link needs. Keep it as
+            # links_question_id (unless the model set one) instead of discarding it; the pipeline
+            # only uses it if it names a real open Question in this project.
+            hinted = recommendation.get("resolves_question_ids")
+            if not recommendation.get("links_question_id") and isinstance(hinted, list) and len(hinted) == 1 and isinstance(hinted[0], str):
+                recommendation["links_question_id"] = hinted[0]
             recommendation.pop("resolves_question_ids", None)
             recommendation.pop("grouping_reason", None)
+        else:
+            recommendation.pop("links_question_id", None)
 
         # grouping_reason is presentation metadata, not authority. It is legal
         # only when there is actual grouping; remove accidental singleton use.

@@ -272,11 +272,24 @@ def _persist_success(
             if rec["review_type"] == "open_question":
                 # The suggested Question lives on this Review only. It is not
                 # inserted into questions until a person authorizes it.
+                question_text = rec["decision_question"].strip()
+                # #477: when the model names an open Question this Evidence adds to, suggest that
+                # Question's exact text, so the reviewer is offered "Link existing Question" rather
+                # than a near-duplicate (which would also lose the existing Question's blocking
+                # status). An ID that is not an open Question in this project is ignored.
+                linked_id = rec.get("links_question_id")
+                if isinstance(linked_id, str) and linked_id:
+                    linked = connection.execute(
+                        "SELECT text FROM questions WHERE id=? AND status='open' AND project_id=?",
+                        (linked_id, project_id_of(connection)),
+                    ).fetchone()
+                    if linked is not None:
+                        question_text = linked["text"]
                 connection.execute(
                     "UPDATE review_issues SET decision_question=?, why_consequential=? WHERE id=?",
-                    (rec["decision_question"].strip(), rec["why_consequential"], review_id),
+                    (question_text, rec["why_consequential"], review_id),
                 )
-                persist_question_proposal(connection, review_id, evidence_id, rec["decision_question"])
+                persist_question_proposal(connection, review_id, evidence_id, question_text)
 
             # Link Evidence to Review
             connection.execute(
