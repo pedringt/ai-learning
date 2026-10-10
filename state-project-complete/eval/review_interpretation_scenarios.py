@@ -41,8 +41,9 @@ class ReviewInterpretationScenario:
     forbidden_state_update_phrases: tuple[str, ...] = field(default_factory=tuple)
     # Checked against all of the Review's prose (question, reasons, proposals, rationale).
     forbidden_review_phrases: tuple[str, ...] = field(default_factory=tuple)
-    # Each entry: one phrase, or a tuple of acceptable alternatives, that must appear in the Review's prose.
-    required_review_phrases: tuple[str | tuple[str, ...], ...] = field(default_factory=tuple)
+    # Each entry: one phrase, or a tuple of acceptable alternatives, that must appear in the proposal
+    # rationale (shown as the Review's "Establishes" line) -- not in the proposed statement.
+    required_rationale_phrases: tuple[str | tuple[str, ...], ...] = field(default_factory=tuple)
     should_change_state: bool = False
     should_answer_question: bool = False
     should_open_question: bool = False
@@ -239,7 +240,7 @@ SCENARIOS = (
         expected_action="update_state",
         should_change_state=True,
         required_state_update_phrases=(("40,000", "40k", "$40"),),
-        required_review_phrases=(("40,000", "40k", "$40"),),
+        required_rationale_phrases=(("40,000", "40k", "$40"),),
         severity="medium",
         rationale="#482 (QA-11, Cowork Oct 9): the Review's \"Establishes\" line (the proposal rationale) said why a budget matters instead of what the evidence established; it should carry the approved amount.",
     ),

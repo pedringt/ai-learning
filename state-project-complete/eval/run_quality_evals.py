@@ -69,6 +69,7 @@ def _review_report(provider) -> dict:
                 "trace_id": r.trace_id,
                 "trace_path": r.trace_path,
                 "proposed_state_text": r.proposed_state_text,
+                "rationale_text": r.rationale_text,
             }
             for r in results
         ],
@@ -211,6 +212,9 @@ def _print_report(report: dict) -> None:
             excerpt = " ".join(str(row.get("proposed_state_text") or ask_text or "").split())
             if excerpt:
                 print(f"      output: {excerpt[:240]}{'...' if len(excerpt) > 240 else ''}")
+            rationale = " ".join(str(row.get("rationale_text") or "").split())
+            if rationale:
+                print(f"      rationale: {rationale[:240]}{'...' if len(rationale) > 240 else ''}")
 
 
 def main() -> int:

@@ -254,3 +254,14 @@ def test_review_prose_reads_values_not_column_names():
         assert "decision_question" not in prose
     finally:
         _close(connection)
+
+
+def test_rationale_check_ignores_the_proposed_statement():
+    """QA-11 case: the amount in the proposed statement must not satisfy the rationale check."""
+    from eval.quality_harness import ReviewQualityResult
+    from eval.review_interpretation_scenarios import SCENARIOS
+    scenario = [s for s in SCENARIOS if s.id == "review_rationale_states_what_evidence_establishes"][0]
+    base = dict(scenario=scenario, review_recommended=True, observed_action="update_state", processing_status="processed",
+                proposed_state_text="The pilot budget is approved at $40,000.", review_prose="The pilot budget is approved at $40,000.")
+    assert not ReviewQualityResult(**base, rationale_text="Implementation planning depends on a known budget ceiling.").passed
+    assert ReviewQualityResult(**base, rationale_text="Finance approved $40,000 for discovery and the first phase.").passed

@@ -73,6 +73,7 @@ class ReviewQualityResult:
     trace_path: str = ""
     proposed_state_text: str = ""
     review_prose: str = ""
+    rationale_text: str = ""
     error: str = ""
 
     @property
@@ -99,8 +100,9 @@ class ReviewQualityResult:
         prose = _normalize(self.review_prose)
         if any(_normalize(phrase) in prose for phrase in self.scenario.forbidden_review_phrases):
             return False
-        if not all(any(_normalize(option) in prose for option in ((r,) if isinstance(r, str) else r))
-                   for r in self.scenario.required_review_phrases):
+        rationale = _normalize(self.rationale_text)
+        if not all(any(_normalize(option) in rationale for option in ((r,) if isinstance(r, str) else r))
+                   for r in self.scenario.required_rationale_phrases):
             return False
         return True
 
@@ -198,6 +200,15 @@ def _review_prose(connection, review_ids: list[str]) -> str:
     return " ".join(p for p in parts if p)
 
 
+def _rationale_text(connection, review_ids: list[str]) -> str:
+    if not review_ids:
+        return ""
+    placeholders = ",".join("?" for _ in review_ids)
+    rows = connection.execute(
+        f"SELECT rationale FROM proposed_state_changes WHERE review_id IN ({placeholders})", tuple(review_ids)).fetchall()
+    return " ".join(str(row["rationale"] or "") for row in rows if row["rationale"])
+
+
 def run_review_quality_scenario(scenario: ReviewInterpretationScenario, provider) -> ReviewQualityResult:
     connection = _new_test_connection()
     try:
@@ -215,6 +226,7 @@ def run_review_quality_scenario(scenario: ReviewInterpretationScenario, provider
         review_ids = list(process_result.review_ids)
         observed_action, proposed_state_text = _observed_review_outcome(connection, review_ids)
         review_prose = _review_prose(connection, review_ids)
+        rationale_text = _rationale_text(connection, review_ids)
         return ReviewQualityResult(
             scenario=scenario,
             review_recommended=bool(review_ids),
@@ -224,6 +236,7 @@ def run_review_quality_scenario(scenario: ReviewInterpretationScenario, provider
             trace_path=traced.trace_path or "",
             proposed_state_text=proposed_state_text,
             review_prose=review_prose,
+            rationale_text=rationale_text,
         )
     except Exception as exc:
         return ReviewQualityResult(
