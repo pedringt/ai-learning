@@ -142,7 +142,7 @@
 
   function attentionHtml(items){
     if(!items?.length) return '';
-    return `<section class="baseline-draft-attention"><h3>Needs your attention before confirmation</h3><p class="baseline-draft-intro">State keeps real Questions, conflicts, risks, and changes to already-current facts in Review instead of hiding them inside a bulk approval.</p><ul>${items.map(item=>`<li>${esc(item.decision_question||'Review required')}</li>`).join('')}</ul><button type="button" class="btn secondary" data-baseline-open-reviews>Open Reviews</button></section>`;
+    return `<section class="baseline-draft-attention"><h3>Needs your attention before confirmation</h3><p class="baseline-draft-intro">State keeps real Questions, conflicts, risks, and changes to already-current facts in Review instead of hiding them inside a bulk approval.</p><ul>${items.map(item=>`<li>${esc((item.statements||[]).join(' ')||item.decision_question||'Review required')}${item.reason?`<div class="baseline-draft-attention-reason">${esc(item.reason)}</div>`:''}</li>`).join('')}</ul><button type="button" class="btn secondary" data-baseline-open-reviews>Open Reviews</button></section>`;
   }
 
   function questionsHtml(questions){
