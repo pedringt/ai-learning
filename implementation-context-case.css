@@ -33,7 +33,7 @@
 
 /* v5 editorial refinement: calmer hierarchy, stable subnav, fewer slogan cards. */
 .case-system-page > .meridian-heading{min-height:0}
-.case-system-page > .meridian-case-hero{flex-direction:column;justify-content:center;margin-bottom:0!important}
+.case-system-page > .meridian-case-hero{flex-direction:column;justify-content:center;margin-bottom:0}
 
 .flagship-case .section{}
 

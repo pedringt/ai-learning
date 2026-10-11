@@ -68,7 +68,7 @@
 
 /* Learning Guide: one page, progressively disclosed */
 [data-page="learn"]{max-width:1180px;margin:0 auto}
-.learning-hero{padding-bottom:22px!important}
+.learning-hero{padding-bottom:22px}
 
 .learning-stage{
   border:1px solid var(--border);border-radius:16px;background:var(--card);
@@ -156,8 +156,8 @@
 }
 
 .stage-main>small{
-  font-size:14px!important;
-  max-width:800px!important;
+  font-size:14px;
+  max-width:800px;
 }
 
 /* Expanded content gets breathing room but no nested card. */
@@ -220,43 +220,43 @@
   content:"−"!important;
 }
 .stage-num{
-  font-size:12px!important;
-  font-weight:900!important;
-  color:var(--purple)!important;
-  padding-top:3px!important;
+  font-size:12px;
+  font-weight:900;
+  color:var(--purple);
+  padding-top:3px;
 }
 .stage-main>b{
-  font-size:18px!important;
-  line-height:1.3!important;
+  font-size:18px;
+  line-height:1.3;
 }
 .stage-main>small{
-  display:block!important;
-  margin-top:5px!important;
-  font-size:13.5px!important;
-  line-height:1.5!important;
-  color:var(--muted)!important;
+  display:block;
+  margin-top:5px;
+  font-size:13.5px;
+  line-height:1.5;
+  color:var(--muted);
 }
 .topic-preview{
-  display:block!important;
-  margin-top:8px!important;
-  font-size:12.5px!important;
-  line-height:1.5!important;
-  color:var(--muted)!important;
-  font-weight:650!important;
+  display:block;
+  margin-top:8px;
+  font-size:12.5px;
+  line-height:1.5;
+  color:var(--muted);
+  font-weight:650;
 }
 
 /* Keep expanded content mostly flat: no cards within cards. */
 .stage-body{
-  padding:8px 22px 22px 72px!important;
-  background:var(--card)!important;
+  padding:8px 22px 22px 72px;
+  background:var(--card);
 }
 .stage-group{
-  padding:14px 0!important;
-  border-bottom:1px solid var(--border)!important;
+  padding:14px 0;
+  border-bottom:1px solid var(--border);
 }
 
 .stage-group h3{
-  margin:0 0 8px!important;
+  margin:0 0 8px;
   font-size:12px;
   letter-spacing:.07em;
   text-transform:uppercase;
@@ -374,10 +374,10 @@
   })();
 </script>
 <style>
-.applied-major-grid,.applied-secondary-grid{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-top:14px}
-.applied-major-with-actions .applied-card-primary-link{color:inherit!important;text-decoration:none}.applied-major-with-actions .applied-card-primary-link::after{content:"";position:absolute;inset:0;z-index:1}.applied-major-with-actions:has(.applied-card-primary-link:focus-visible){outline:3px solid color-mix(in srgb,var(--purple) 55%,transparent);outline-offset:3px}.applied-major-with-actions .applied-card-primary-link:focus-visible{outline:none}.applied-major-with-actions .applied-card-actions{display:flex;flex-wrap:wrap;gap:10px 18px;margin-top:auto;padding-top:18px;position:relative;z-index:2}.applied-major-with-actions .applied-card-actions a{color:var(--purple);font-size:12px;font-weight:800;text-decoration:none}.applied-major-with-actions .applied-card-actions a:hover{text-decoration:underline}
+.applied-major-grid,.applied-secondary-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-top:14px}
+.applied-major-with-actions .applied-card-primary-link{color:inherit;text-decoration:none}.applied-major-with-actions .applied-card-primary-link::after{content:"";position:absolute;inset:0;z-index:1}.applied-major-with-actions:has(.applied-card-primary-link:focus-visible){outline:3px solid color-mix(in srgb,var(--purple) 55%,transparent);outline-offset:3px}.applied-major-with-actions .applied-card-primary-link:focus-visible{outline:none}.applied-major-with-actions .applied-card-actions{display:flex;flex-wrap:wrap;gap:10px 18px;margin-top:auto;padding-top:18px;position:relative;z-index:2}.applied-major-with-actions .applied-card-actions a{color:var(--purple);font-size:12px;font-weight:800;text-decoration:none}.applied-major-with-actions .applied-card-actions a:hover{text-decoration:underline}
 .applied-secondary-grid>.card{display:flex;flex-direction:column}
-@media(max-width:620px){.applied-major-grid,.applied-secondary-grid{grid-template-columns:1fr!important}}
+@media(max-width:620px){.applied-major-grid,.applied-secondary-grid{grid-template-columns:1fr}}
 </style></link><style>
 /* Final portfolio hierarchy pass */
 
@@ -457,7 +457,7 @@
 .home-feature-actions{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;justify-content:flex-start;margin-top:auto}
 .home-feature-actions a{font-size:12px!important;font-weight:850!important;line-height:1.25}
 .home-see-all{display:inline-block;margin-top:18px;color:var(--purple);font-size:13px;font-weight:850;text-decoration:none}.home-see-all:hover{text-decoration:underline}
-.applied-featured-three{grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:14px}
+.applied-featured-three{grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
 .applied-featured-three .applied-major{min-height:0}
 .applied-major-with-actions .applied-card-actions{gap:8px 14px!important;padding-top:14px!important}
 .applied-major-with-actions .applied-card-actions a{font-size:11.5px!important;font-weight:850!important}
@@ -465,9 +465,9 @@
 .applied-secondary-compact>.applied-secondary{padding:15px 17px}
 .applied-secondary-compact .card-intro{font-size:12.5px;line-height:1.5}
 .applied-secondary-compact .nav-card::after{margin-top:10px}
-@media(max-width:980px){.applied-featured-three{grid-template-columns:1fr 1fr!important}.applied-featured-three .applied-major:first-child{grid-column:1/-1}}
+@media(max-width:980px){.applied-featured-three{grid-template-columns:1fr 1fr}.applied-featured-three .applied-major:first-child{grid-column:1/-1}}
 @media(max-width:900px){.home-feature-state-led{grid-template-columns:1fr}.home-feature-stack-right{grid-template-columns:1fr 1fr;grid-template-rows:none}}
-@media(max-width:760px){.home-feature-stack-right,.applied-featured-three{grid-template-columns:1fr!important}.applied-featured-three .applied-major:first-child{grid-column:auto}.home-feature-card,.home-feature-state-anchor{padding:21px}.home-feature-state-anchor h2{font-size:34px;margin-bottom:11px}.home-state-proof div{grid-template-columns:1fr;gap:2px}.home-state-button-row{width:100%}.home-state-button{flex:1 1 auto}}
+@media(max-width:760px){.home-feature-stack-right,.applied-featured-three{grid-template-columns:1fr}.applied-featured-three .applied-major:first-child{grid-column:auto}.home-feature-card,.home-feature-state-anchor{padding:21px}.home-feature-state-anchor h2{font-size:34px;margin-bottom:11px}.home-state-proof div{grid-template-columns:1fr;gap:2px}.home-state-button-row{width:100%}.home-state-button{flex:1 1 auto}}
 
 /* Oct 2 portfolio feedback: tighter featured card + calmer Learning Library */
 .learning-related-references{margin-top:24px}
@@ -680,7 +680,7 @@ body.v88-dark #ai-cs-mock{background:#171419!important;color:#f3ede8!important;-
 
 /* v98 feedback correction: curated home + intentional State feature + compact Learning Guide note */
 
-.learning-how-note{max-width:900px;margin:18px 0 30px!important;padding:14px 16px;border-left:3px solid var(--border);background:transparent;color:var(--muted);font-size:14px;line-height:1.6}
+.learning-how-note{max-width:900px;margin:18px 0 30px;padding:14px 16px;border-left:3px solid var(--border);background:transparent;color:var(--muted);font-size:14px;line-height:1.6}
 .learning-how-note strong{color:var(--ink)}
 body.v88-dark .learning-how-note strong{color:#f5f2fb!important}
 

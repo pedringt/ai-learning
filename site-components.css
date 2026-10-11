@@ -35,8 +35,8 @@
 .page-intro h1,
 .page-intro h2,
 .page-intro>.section-title{
-  margin:0 0 var(--space-2)!important;
-  font-size:var(--page-title-size)!important;
+  margin:0 0 var(--space-2);
+  font-size:var(--page-title-size);
   line-height:1.1;
   letter-spacing:-.03em;
 }
@@ -160,7 +160,7 @@ body>main.meridian-page-shell{
   min-height:0;
   margin:0 0 22px;
   padding:0;
-  border:0!important;
+  border:0;
   border-radius:0;
 }
 .meridian-case-hero h1,
@@ -176,8 +176,8 @@ body>main.meridian-page-shell{
 @media(max-width:760px){
   body>main.meridian-page-shell{padding:48px 18px 70px}
 
-  .meridian-case-hero h1,.meridian-case-hero h2{min-height:0!important;font-size:32px}
-  .meridian-case-hero>.lead,.meridian-case-hero>.section-lead{min-height:0!important;font-size:15px}
+  .meridian-case-hero h1,.meridian-case-hero h2{min-height:0;font-size:32px}
+  .meridian-case-hero>.lead,.meridian-case-hero>.section-lead{min-height:0;font-size:15px}
 
 }
 
@@ -235,8 +235,8 @@ body>main.site-page{
   margin:0 0 28px;
 }
 .site-page>.case-hero h1{
-  margin:0 0 10px!important;
-  line-height:1.1!important;
+  margin:0 0 10px;
+  line-height:1.1;
 }
 
 @media(max-width:760px){
@@ -313,7 +313,7 @@ body:has(>main.case-system-page){
 
 /* v96.06 — case-study design QA: Meridian-calibrated rhythm and density. */
 .case-system-page .meridian-heading{margin-bottom:14px!important}
-.case-system-page .meridian-case-hero{min-height:0;margin-bottom:20px!important}
+.case-system-page .meridian-case-hero{min-height:0;margin-bottom:20px}
 
 .case-system-page .case-page-content>.section{padding:28px 0}
 
@@ -448,7 +448,7 @@ body:has(>main.case-system-page){
 /* V9 — final round corrections: clearer case-study family, simpler home close, compact learning principles. */
 
 /* Case-study shell: the newer cases should visibly belong to the same site. */
-.case-system-page>.meridian-case-hero,.legal-single-case>.meridian-case-hero{padding:24px 26px!important;border:1px solid color-mix(in srgb,var(--purple) 22%,var(--border));min-height:0}
+.case-system-page>.meridian-case-hero,.legal-single-case>.meridian-case-hero{padding:24px 26px;border:1px solid color-mix(in srgb,var(--purple) 22%,var(--border));min-height:0}
 .case-system-page>.meridian-case-hero:after,.legal-single-case>.meridian-case-hero:after{width:48px;height:3px;margin-top:15px;background:var(--purple)}
 
 /* Legal AI is a short case study, not a separately centered article. */
@@ -457,7 +457,7 @@ body:has(>main.case-system-page){
 
 @media(max-width:760px){
 
-  .case-system-page>.meridian-case-hero,.legal-single-case>.meridian-case-hero{padding:19px 18px!important}
+  .case-system-page>.meridian-case-hero,.legal-single-case>.meridian-case-hero{padding:19px 18px}
   
 }
 
@@ -467,7 +467,7 @@ body:has(>main.case-system-page){
 .case-system-page>.meridian-case-hero,.legal-single-case>.meridian-case-hero{}
 
 /* V12 final editorial/design corrections. */
-.case-system-page>.meridian-case-hero,.legal-single-case>.meridian-case-hero{background:var(--card)!important;border-color:color-mix(in srgb,var(--purple) 30%,var(--border))!important}.legal-single-case>.meridian-case-hero{background:var(--card)!important}.legal-single-case .meridian-case-hero:after{background:var(--purple)!important}.legal-single-case .legal-story h2{font-size:23px!important}.legal-single-case .legal-story p{font-size:13.5px!important;line-height:1.55!important}
+.case-system-page>.meridian-case-hero,.legal-single-case>.meridian-case-hero{background:var(--card);border-color:color-mix(in srgb,var(--purple) 30%,var(--border))}.legal-single-case>.meridian-case-hero{background:var(--card)}.legal-single-case .meridian-case-hero:after{background:var(--purple)}.legal-single-case .legal-story h2{font-size:23px!important}.legal-single-case .legal-story p{font-size:13.5px!important;line-height:1.55!important}
 
 /* Implementation Context: compact maintained-state architecture receipt */
 
@@ -961,7 +961,7 @@ html body main:is(.case-system-page, .case-shell, .edge-wrap, .map-wrap) :is(h1,
   font-weight: 900;
 }
 html body main:is(.case-system-page, .case-shell, .edge-wrap, .map-wrap) h1 {
-  font-size: clamp(34px, 4.4vw, 56px) !important;
+  font-size: clamp(34px, 4.4vw, 56px);
   line-height: 1.02;
   letter-spacing: -0.055em;
   margin: 14px 0 22px;
@@ -1020,18 +1020,18 @@ html body main:is(.case-system-page, .case-shell, .edge-wrap, .map-wrap) :is(.ki
 /* hero + metadata: flat, no box */
 html body main :is(.meridian-case-hero, .flagship-hero, .legal-hero, .edge-head, .map-head):is(.meridian-case-hero, .flagship-hero, .legal-hero, .edge-head, .map-head, header),
 html body main.case-system-page header.meridian-case-hero.meridian-case-hero {
-  background: transparent !important;
-  border: 0 !important;
-  box-shadow: none !important;
-  padding: 0 0 8px !important;
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  padding: 0 0 8px;
 }
 html body main .case-meta {
-  background: transparent !important;
-  border: 0 !important;
-  border-top: 1px solid var(--rd-line) !important;
-  border-bottom: 1px solid var(--rd-line) !important;
+  background: transparent;
+  border: 0;
+  border-top: 1px solid var(--rd-line);
+  border-bottom: 1px solid var(--rd-line);
   border-radius: 0;
-  box-shadow: none !important;
+  box-shadow: none;
   padding: 14px 0;
 }
 /* sections: whitespace and one hairline, not nested boxes */
@@ -1259,7 +1259,7 @@ html body main.case-system-page .architecture-infra {
 /* inline flows wrap inside cards instead of clipping */
 html body main :is(.integration-flow, .human-flow, .authority-steps) {
   display: flex;
-  gap: 6px 10px !important;
+  gap: 6px 10px;
   overflow: visible;
   max-width: 100%;
 }
