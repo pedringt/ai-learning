@@ -35,7 +35,7 @@ sys.path.insert(0, os.path.join(REPO, "scripts", "state_ui_compare"))
 from portfolio_compare import SETTLE_JS, portfolio_pages, serve  # noqa: E402
 
 FILES = ["site-shell.css", "site-components.css", "site-redesign.css", "site-polish.css",
-         "implementation-context-case.css", "final-freeze-polish.css"]
+         "implementation-context-case.css"]
 INTERACTIVE = re.compile(r":(hover|focus|focus-visible|focus-within|active|visited|checked|target|open|invalid|valid|"
                          r"placeholder-shown|disabled|enabled|indeterminate|autofill|user-invalid|popover-open|modal)\b"
                          r"|::(selection|placeholder|backdrop|marker|file-selector-button|-webkit-[\w-]+|-moz-[\w-]+)")
