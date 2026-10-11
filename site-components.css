@@ -1882,6 +1882,9 @@ html body main .kicker + .case-study-footer { margin-top: 0; padding-top: 0; bor
 html body main.legal-single-case :is(.paper-turn, .paper-example) { border-bottom: 0; }
 html body main.legal-single-case .paper-meta + .legal-method { border-top: 0; }
 html body main.legal-single-case :is(.legal-method, .paper-before-after, .paper-learning, .paper-sources) { max-width: none !important; }
+/* AI Support Workflow: the 9.5px "Customer" label was 4.15:1 in --cyan; a darker teal of the same hue
+   reaches 5.1:1 (WCAG AA). The lane colour and legend dot keep --cyan. */
+html body main .owner-customer .owner-tag { color: #007a8a; }
 @media (prefers-reduced-motion: reduce){
   *, *::before, *::after {
     animation-duration: 0.001ms !important;
