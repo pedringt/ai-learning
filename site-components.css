@@ -1851,6 +1851,13 @@ html body #ai-cs-mock .rd-hero h1:not(#_) {
   word-spacing: 0 !important;
 }
 html body #ai-cs-mock #portfolio .applied-secondary > h3 { font-size: 17px !important; }
+/* ---------- 4w. Supporting-page polish (#472) ---------- */
+/* Learning Library pages: each topic starts after a full-width hairline with room above it.
+   The 4c heading margin (10px, !important) had collapsed the gap, and its 22em max-width cut the
+   Professional Edge hairline short of the column. Durable AI Knowledge wraps topics in sections. */
+html body main .edge-body h2 { max-width: none; }
+html body main .edge-body > h2:not(:first-child) { margin-top: 44px !important; }
+html body main .edge-body > section + section { margin-top: 44px; padding-top: 14px; border-top: 1px solid var(--rd-line); }
 @media (prefers-reduced-motion: reduce){
   *, *::before, *::after {
     animation-duration: 0.001ms !important;
