@@ -2,7 +2,23 @@
 
 This is the canonical current-state handoff for State and the surrounding portfolio. Read this first, then verify the repository and live environments before relying on older notes or conversation memory.
 
-_Last updated: October 7, 2026, Pacific time. The Oct 7 section just below is the current one and the Oct 5 sections still apply where it does not override them; everything older is history. Written as a handoff for a fresh session._
+_Last updated: October 10, 2026 (evening), Pacific time. The Oct 10 sections just below are the current ones; the Oct 7 and Oct 5 sections still apply where they do not override them; everything older is history. Written as a handoff for a fresh session._
+
+## Oct 10, 2026 (evening): production smoke-test fixes
+
+Cowork's production smoke test (Paige's Portfolio project, `qa/prod-smoke-test-2026-10-10.md`) drove this batch.
+
+- **Released (#490, merge commit `b08c17c`):** frontend and Vercel functions only. No `state-project-complete/` change, so Render did not redeploy. Both Vercel projects deployed and were checked live.
+  - **Project Health no longer says "Healthy" when data failed.** A failed or timed-out core signal gives an **Incomplete** status ("Couldn't check: <signal> (<reason>)") with a Retry button (`uncheckedSignals` in `project-health-model.js`). Signals a project has no source for by design are never requested; Authority Lab has `noRunWorkflow` and `noQualitySource`.
+  - **GitHub reads are server-side:** `api/project-health-github.js` returns one cached response per project (authenticated with `GITHUB_TOKEN`, `s-maxage=60`). Browsers make no `api.github.com` calls, so GitHub's 60-requests-an-hour unauthenticated limit no longer applies. There are 8 functions; Hobby allows 12.
+  - **Link previews:** `tools/social_previews.py` generates `assets/social/<page>.png` and a marked og:/twitter: block for every root page. Re-run it after changing a title or description; `--check` reports stale pages. The old `social-preview.png` was corrupt (only its top third decoded) and is now the homepage card.
+  - **`404.html`** replaces Vercel's default page.
+  - **#487 closed:** Question rows are `<details>` and lost their open state on every Open Items re-render. Open rows now live in `state.openQuestionIds`. The State cache tag is `r121-question-open-state`. Deep QA on staging `517997f`: 17/17.
+  - Phone action buttons on the homepage cards and the Project Health header stay on one row.
+- **Merged but NOT deployed (#491, `main` = `e79934d`):** after #490 went live, a cold load showed every project's deployment activity as timed out. The page waited 7.5 s, but `api/project-health-activity.js` may take 20 s. The page now waits 22 s and the function is allowed 25 s, with a test keeping them in step. **Vercel refused the production deploy ("Deployment rate limited — retry in 24 hours", Hobby plan).** Redeploy `ai-learning` production once the limit resets. Until then production serves #490, where a cold load can show "Incomplete" and a reload clears it.
+- **Tastemake** (separate repo):
+  - Recommendations run on Haiku 5.5 in production (Vercel `TASTEMAKE_RECOMMENDATIONS_MODEL`), verified with a live visit.
+  - #229 merged: a portfolio footer link, related games must share two genres (the Outer Wilds → GTA V pick), and the taste-profile rules of tastemake#228. A live eval on Sonnet 5.5 and Haiku 5.5 passed every rule check (84 calls, about $0.44). #229's deploy waits on the same Vercel limit.
 
 ## Oct 10, 2026: Haiku 5.5 switch, promoted to production
 
