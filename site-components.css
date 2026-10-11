@@ -1858,6 +1858,10 @@ html body #ai-cs-mock #portfolio .applied-secondary > h3 { font-size: 17px !impo
 html body main .edge-body h2 { max-width: none; }
 html body main .edge-body > h2:not(:first-child) { margin-top: 44px !important; }
 html body main .edge-body > section + section { margin-top: 44px; padding-top: 14px; border-top: 1px solid var(--rd-line); }
+/* numbered question lists: the same 16px text on both pages (Durable's list sits inside a section, so the
+   4c list rule missed it and it stayed 14px), with the 18px badge centred on the first line (9 + (25.6 - 18) / 2) */
+html body main .edge-body ol > li { font-size: 16px; line-height: 1.6; }
+html body main .edge-body ol > li::before { top: 13px; }
 @media (prefers-reduced-motion: reduce){
   *, *::before, *::after {
     animation-duration: 0.001ms !important;
