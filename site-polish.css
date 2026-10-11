@@ -1,7 +1,7 @@
 /* The one rule left from the site-wide polish layer (#451): everything else moved into
    site-components.css or was proven never to win. It stays separate because it must reach
    the case-study pages and legal-ai-governance.html but not meridian.html or
-   project-health-case-study.html, whose breadcrumbs render at 13px (site-redesign.css).
+   project-health-case-study.html, whose breadcrumbs render at 13px (a site-components.css rule).
    Unifying the two sizes is a visible change, so it is a design decision, not a cleanup. */
 .site-breadcrumb{
   font-size:12px!important;
