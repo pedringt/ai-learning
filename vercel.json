@@ -127,6 +127,9 @@
     },
     "api/project-health-github.js": {
       "maxDuration": 20
+    },
+    "api/project-health-activity.js": {
+      "maxDuration": 25
     }
   }
 }
