@@ -30,7 +30,7 @@ REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 CAPTURE_JS = open(os.path.join(os.path.dirname(__file__), "capture.js")).read()
 WIDTHS = {"desktop": (1280, 900), "tablet": (820, 1180), "phone": (375, 812)}
 # Pages with their own stylesheet and live data are not part of the shared portfolio CSS.
-EXCLUDE = {"project-health.html", "state-evals.html"}
+EXCLUDE = {"project-health.html", "state-evals.html", "404.html"}
 
 
 def portfolio_pages() -> list[str]:
