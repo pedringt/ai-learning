@@ -37,8 +37,8 @@
 .page-intro>.section-title{
   margin:0 0 var(--space-2)!important;
   font-size:var(--page-title-size)!important;
-  line-height:1.1!important;
-  letter-spacing:-.03em!important;
+  line-height:1.1;
+  letter-spacing:-.03em;
 }
 .page-intro .lead,
 .page-intro>.section-lead{
@@ -136,12 +136,12 @@ body.v88-dark:has(> main.case-system-page){--ink:#f3ede8;--muted:#b9afb6;--borde
 
 /* Canonical content frame and route-heading behavior. */
 .site-page{
-  margin-inline:auto!important;
+  margin-inline:auto;
 }
 .route-title{
-  font-size:var(--page-title-size)!important;
-  line-height:1.1!important;
-  letter-spacing:-.03em!important;
+  font-size:var(--page-title-size);
+  line-height:1.1;
+  letter-spacing:-.03em;
 }
 
 /* One footer navigation pattern for every Meridian artifact. */
@@ -149,35 +149,35 @@ body.v88-dark:has(> main.case-system-page){--ink:#f3ede8;--muted:#b9afb6;--borde
 /* v95.64 — canonical Meridian page family. These namespaced classes are the
    only geometry contract for the overview, artifacts, and runner. */
 body>main.meridian-page-shell{
-  width:100%!important;
-  box-sizing:border-box!important;
+  width:100%;
+  box-sizing:border-box;
 }
 
-.meridian-heading{margin:0 0 16px!important}
+.meridian-heading{margin:0 0 16px}
 
 .meridian-case-hero{
-  display:block!important;
-  min-height:0!important;
-  margin:0 0 22px!important;
-  padding:0!important;
+  display:block;
+  min-height:0;
+  margin:0 0 22px;
+  padding:0;
   border:0!important;
-  border-radius:0!important;
+  border-radius:0;
 }
 .meridian-case-hero h1,
 .meridian-case-hero h2{
-  min-height:42px!important;
+  min-height:42px;
 }
 .meridian-case-hero>.lead,
 .meridian-case-hero>.section-lead{
-  min-height:50px!important;
-  margin:0!important;
+  min-height:50px;
+  margin:0;
 }
 
 @media(max-width:760px){
-  body>main.meridian-page-shell{padding:48px 18px 70px!important}
+  body>main.meridian-page-shell{padding:48px 18px 70px}
 
-  .meridian-case-hero h1,.meridian-case-hero h2{min-height:0!important;font-size:32px!important}
-  .meridian-case-hero>.lead,.meridian-case-hero>.section-lead{min-height:0!important;font-size:15px!important}
+  .meridian-case-hero h1,.meridian-case-hero h2{min-height:0!important;font-size:32px}
+  .meridian-case-hero>.lead,.meridian-case-hero>.section-lead{min-height:0!important;font-size:15px}
 
 }
 
@@ -226,8 +226,8 @@ body>main.meridian-page-shell{
 
 /* v95.90 — cross-page design consistency audit. */
 body>main.site-page{
-  width:100%!important;
-  margin-inline:auto!important;
+  width:100%;
+  margin-inline:auto;
 }
 .site-page>.site-breadcrumb{margin-bottom:22px}
 .site-page>.case-hero{
@@ -240,7 +240,7 @@ body>main.site-page{
 }
 
 @media(max-width:760px){
-  body>main.site-page{padding:28px 18px 56px!important}
+  body>main.site-page{padding:28px 18px 56px}
   .site-page>.site-breadcrumb{margin-bottom:18px}
   .site-page>.case-hero{margin-bottom:22px}
 
@@ -307,13 +307,13 @@ body:has(>main.case-system-page){
 #ai-cs-mock .card.nav-card{display:flex!important;}
 
 @media(max-width:760px){
- .case-system-page .meridian-case-hero{min-height:0!important}
+ .case-system-page .meridian-case-hero{min-height:0}
 
 }
 
 /* v96.06 — case-study design QA: Meridian-calibrated rhythm and density. */
 .case-system-page .meridian-heading{margin-bottom:14px!important}
-.case-system-page .meridian-case-hero{min-height:0!important;margin-bottom:20px!important}
+.case-system-page .meridian-case-hero{min-height:0;margin-bottom:20px!important}
 
 .case-system-page .case-page-content>.section{padding:28px 0}
 
@@ -374,10 +374,10 @@ body:has(>main.case-system-page){
 /* v96.13 — shared geometry + small visual QA fixes.
    One outer case-study grid; narrow only prose, never whole sections. */
 .case-system-page .case-page-content{
-  width:100%!important;
-  max-width:none!important;
-  margin-left:0!important;
-  margin-right:0!important;
+  width:100%;
+  max-width:none;
+  margin-left:0;
+  margin-right:0;
 }
 .case-system-page .case-page-content>.section{
   width:100%;
@@ -448,12 +448,12 @@ body:has(>main.case-system-page){
 /* V9 — final round corrections: clearer case-study family, simpler home close, compact learning principles. */
 
 /* Case-study shell: the newer cases should visibly belong to the same site. */
-.case-system-page>.meridian-case-hero,.legal-single-case>.meridian-case-hero{padding:24px 26px!important;border:1px solid color-mix(in srgb,var(--purple) 22%,var(--border));min-height:0!important}
+.case-system-page>.meridian-case-hero,.legal-single-case>.meridian-case-hero{padding:24px 26px!important;border:1px solid color-mix(in srgb,var(--purple) 22%,var(--border));min-height:0}
 .case-system-page>.meridian-case-hero:after,.legal-single-case>.meridian-case-hero:after{width:48px;height:3px;margin-top:15px;background:var(--purple)}
 
 /* Legal AI is a short case study, not a separately centered article. */
 
-.legal-single-case .legal-story{width:100%;max-width:none;margin:0 0 58px!important;padding:0!important}
+.legal-single-case .legal-story{width:100%;max-width:none;margin:0 0 58px;padding:0!important}
 
 @media(max-width:760px){
 
@@ -480,7 +480,7 @@ body:has(>main.case-system-page){
 /* Legal AI is a discovery readout, not a dashboard: typography and rules carry hierarchy. */
 
 /* QA4: one legal-story gutter; highlighted sections do not add a second inset. Applies at all widths, so no separate mobile override is needed. */
-.legal-single-case .legal-story{padding-inline:0!important;box-sizing:border-box}
+.legal-single-case .legal-story{padding-inline:0;box-sizing:border-box}
 
 /* QA4.2: findings keep the page alignment, but add breathing room after the accent rule. */
 
@@ -489,40 +489,40 @@ body:has(>main.case-system-page){
 /* QA5 — Legal AI as a concise research memo / paper. */
 .legal-single-case .legal-paper{max-width:900px!important;margin:28px auto 72px!important;padding:0 34px!important;box-sizing:border-box}
 .legal-paper .paper-abstract{padding:0 0 34px;}
-.legal-paper .paper-abstract h2{max-width:760px!important;font-size:30px!important;line-height:1.14!important;margin:0 0 14px!important}
-.legal-paper .paper-deck{max-width:760px!important;margin:0 0 24px!important}
+.legal-paper .paper-abstract h2{max-width:760px;font-size:30px!important;line-height:1.14!important;margin:0 0 14px!important}
+.legal-paper .paper-deck{max-width:760px;margin:0 0 24px}
 .legal-paper .paper-meta{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0;margin:24px 0 0;border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
 .legal-paper .paper-meta>div{padding:14px 18px 14px 0}
 .legal-paper .paper-meta>div+div{padding-left:18px;border-left:1px solid var(--border)}
 .legal-paper .paper-meta dt,.legal-paper .paper-flow span,.legal-paper .paper-before-after span{color:var(--purple);font-size:10px;font-weight:850;letter-spacing:.08em;text-transform:uppercase}
 .legal-paper .paper-meta dd{margin:5px 0 0;color:var(--ink);font-size:12.5px;line-height:1.48}
-.legal-paper .legal-method{max-width:760px!important;margin-top:16px!important}
+.legal-paper .legal-method{max-width:760px;margin-top:16px}
 .legal-paper .paper-section{padding:38px 0;}
 
-.legal-paper .paper-section>h2{max-width:760px!important;font-size:26px!important;line-height:1.18!important;margin:0 0 18px!important}
-.legal-paper .paper-section>p{max-width:760px!important;font-size:14.5px!important;line-height:1.65!important}
+.legal-paper .paper-section>h2{max-width:760px;font-size:26px!important;line-height:1.18!important;margin:0 0 18px!important}
+.legal-paper .paper-section>p{max-width:760px;font-size:14.5px!important;line-height:1.65!important}
 .legal-paper .paper-findings{margin:0;padding:0;list-style:none;counter-reset:findings}
 .legal-paper .paper-findings li{counter-increment:findings;position:relative;padding:14px 0 14px 52px;border-top:1px solid var(--border)}
 .legal-paper .paper-findings li:first-child{border-top:0;padding-top:4px}
 .legal-paper .paper-findings li:before{content:"0" counter(findings);position:absolute;left:0;top:15px;color:var(--purple);font-size:11px;font-weight:850;letter-spacing:.08em}
 .legal-paper .paper-findings li:first-child:before{top:3px}
 .legal-paper .paper-findings h3{font-size:18px;line-height:1.3;margin:0 0 7px}
-.legal-paper .paper-findings p{margin:0!important;color:var(--muted);font-size:14px!important;line-height:1.62!important}
+.legal-paper .paper-findings p{margin:0;color:var(--muted);font-size:14px!important;line-height:1.62!important}
 .legal-paper .paper-example{margin:8px 0 0;padding:26px 0 30px;border-bottom:1px solid var(--border)}
 .legal-paper .paper-example figcaption{display:block;margin-bottom:18px}
 .legal-paper .paper-example figcaption strong{display:block;margin-top:6px;font-size:18px;line-height:1.3}
 .legal-paper .paper-flow{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:0;border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
 .legal-paper .paper-flow>div{padding:15px 14px 15px 0}
 .legal-paper .paper-flow>div+div{padding-left:14px;border-left:1px solid var(--border)}
-.legal-paper .paper-flow p{margin:6px 0 0!important;color:var(--ink)!important;font-size:12px!important;line-height:1.48!important}
-.legal-paper .paper-turn{margin-top:38px;padding:32px 0!important;border-top:3px solid var(--purple)!important;border-bottom:1px solid var(--border)}
+.legal-paper .paper-flow p{margin:6px 0 0;color:var(--ink);font-size:12px!important;line-height:1.48!important}
+.legal-paper .paper-turn{margin-top:38px;padding:32px 0;border-top:3px solid var(--purple)!important;border-bottom:1px solid var(--border)}
 .legal-paper .paper-before-after{display:grid;grid-template-columns:1fr 1fr;gap:0;margin:24px 0;border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
 .legal-paper .paper-before-after>div{padding:16px 20px 16px 0}
 .legal-paper .paper-before-after>div+div{padding-left:20px;border-left:1px solid var(--border)}
-.legal-paper .paper-before-after p{margin:7px 0 0!important;color:var(--ink)!important;font-size:13px!important;}
-.legal-paper .paper-ruled{padding-left:16px;border-left:3px solid var(--purple);color:var(--ink)!important}
+.legal-paper .paper-before-after p{margin:7px 0 0;color:var(--ink);font-size:13px!important;}
+.legal-paper .paper-ruled{padding-left:16px;border-left:3px solid var(--purple);color:var(--ink)}
 .legal-paper .paper-next-grid{max-width:760px;display:grid;grid-template-columns:1fr 1fr;gap:28px;margin-top:20px}
-.legal-paper .paper-next-grid p{margin:0!important;padding-top:12px;border-top:1px solid var(--border);}
+.legal-paper .paper-next-grid p{margin:0;padding-top:12px;border-top:1px solid var(--border);}
 .legal-paper .paper-learning{padding:28px 0 0;border-top:1px solid var(--border)}
 .legal-paper .paper-learning p{margin:0 0 12px;color:var(--muted);}
 .legal-paper .paper-sources{max-width:760px;margin-top:20px;border-top:1px solid var(--border);color:var(--muted)}
@@ -533,7 +533,7 @@ body:has(>main.case-system-page){
 
 /* Final copy/feedback pass */
 
-.legal-paper{max-width:1040px!important;}
+.legal-paper{max-width:1040px;}
 .legal-paper .paper-abstract h2,
 .legal-paper .paper-deck,
 .legal-paper .legal-method,
@@ -545,13 +545,13 @@ body:has(>main.case-system-page){
 .legal-paper .paper-learning{max-width:860px}
 
 @media(max-width:760px){
-  .legal-paper{padding-left:8px!important;padding-right:8px!important}
+  .legal-paper{padding-left:8px;padding-right:8px}
   
 }
 
 /* Homepage: make the cross-project working pattern explicit without adding another large philosophy section. */
 
-.legal-part-divider{margin:48px 0 18px;padding:20px 22px;border:1px solid var(--border);border-radius:14px;background:var(--soft)}.legal-part-divider span{display:block;color:var(--purple);font-size:11px;font-weight:850;letter-spacing:.06em;text-transform:uppercase;margin-bottom:6px}.legal-part-divider h2{margin:0 0 8px!important;font-size:26px!important}.legal-part-divider p,.legal-part-transition p{margin:0!important;}.legal-part-transition{margin:42px 0 12px;padding:17px 19px;border-left:3px solid var(--purple);background:var(--softp);border-radius:0 12px 12px 0}.legal-part-transition strong{display:block;margin-bottom:5px;}
+.legal-part-divider{margin:48px 0 18px;padding:20px 22px;border:1px solid var(--border);border-radius:14px;background:var(--soft)}.legal-part-divider span{display:block;color:var(--purple);font-size:11px;font-weight:850;letter-spacing:.06em;text-transform:uppercase;margin-bottom:6px}.legal-part-divider h2{margin:0 0 8px;font-size:26px}.legal-part-divider p,.legal-part-transition p{margin:0;}.legal-part-transition{margin:42px 0 12px;padding:17px 19px;border-left:3px solid var(--purple);background:var(--softp);border-radius:0 12px 12px 0}.legal-part-transition strong{display:block;margin-bottom:5px;}
 
 /* ---- moved from site-polish.css (#451), in order; none of them crosses a rule it competes with ---- */
 .flagship-case .integration-flow{
@@ -691,7 +691,7 @@ html body .topbar .topinner {
   max-width: none;
   padding: 14px clamp(20px, 4vw, 58px);
 }
-html body .topbar .nav { margin-left: auto !important; margin-right: 0 !important; }
+html body .topbar .nav { margin-left: auto !important; margin-right: 0; }
 html body .topbar .brand,
 html body .topbar .brand-button {
   font-weight: 950 !important;
@@ -725,7 +725,7 @@ html body .topbar .nav [aria-current="page"] {
   color: #fff !important;
   background: var(--ink) !important;
 }
-html body .nav button.active::after { display: none !important; }
+html body .nav button.active::after { display: none; }
 .rd-button:hover,
 html body .home-state-button:hover,
 html body .home-state-primary:hover,
@@ -735,7 +735,7 @@ html body .home-state-secondary:hover {
 }
 /* Section kickers become small pills; the rule line goes away */
 html body #ai-cs-mock .section-kicker::after,
-html body #ai-cs-mock .section-kicker::before { display: none !important; }
+html body #ai-cs-mock .section-kicker::before { display: none; }
 html body #ai-cs-mock .section-kicker span,
 html body #ai-cs-mock .eyebrow {
   display: inline-flex;
@@ -872,7 +872,7 @@ html body #ai-cs-mock .home-state-button-row { padding-top: 16px; padding-right:
 /* the proof rows were added for the old large State card; hidden now that the cards are equal and compact (text stays in the markup) */
 html body #ai-cs-mock .home-state-proof { display: none !important; }
 html body #ai-cs-mock .home-state-proof { gap: 10px; padding: 12px 0; }
-html body #ai-cs-mock .home-state-proof div { grid-template-columns: 1fr !important; gap: 2px !important; }
+html body #ai-cs-mock .home-state-proof div { grid-template-columns: 1fr; gap: 2px !important; }
 
 html body #ai-cs-mock .home-state-proof strong { color: var(--ink); font-size: 12px; }
 html body #ai-cs-mock .home-state-proof span { color: #4a4353; font-size: 13px; }
@@ -893,9 +893,9 @@ html body #ai-cs-mock .home-feature-card::after {
   box-shadow: 6px 6px 0 var(--ink);
   transform: rotate(-7deg);
 }
-html body #ai-cs-mock .home-feature-state-anchor::after { content: "01" !important; display: grid !important; }
-html body #ai-cs-mock .home-feature-stack-right .home-feature-card:nth-child(1)::after { content: "02" !important; display: grid !important; }
-html body #ai-cs-mock .home-feature-stack-right .home-feature-card:nth-child(2)::after { content: "03" !important; display: grid !important; }
+html body #ai-cs-mock .home-feature-state-anchor::after { content: "01"; display: grid !important; }
+html body #ai-cs-mock .home-feature-stack-right .home-feature-card:nth-child(1)::after { content: "02"; display: grid !important; }
+html body #ai-cs-mock .home-feature-stack-right .home-feature-card:nth-child(2)::after { content: "03"; display: grid !important; }
 html body #ai-cs-mock .home-see-all { color: var(--ink); font-weight: 900; }
 html body #ai-cs-mock .home-principle {
   margin-top: 44px;
@@ -946,8 +946,8 @@ html body #ai-cs-mock .band {
 }
 /* ---------- 4c. Inner reading pages: simple, one column, easy to read ---------- */
 html body main:is(.case-system-page, .case-shell, .edge-wrap, .map-wrap) {
-  max-width: 1100px !important;
-  margin: 0 auto !important;
+  max-width: 1100px;
+  margin: 0 auto;
   padding: clamp(28px, 4vw, 52px) clamp(20px, 4vw, 40px) 88px !important;
   background: transparent !important;
   color: var(--ink);
@@ -956,20 +956,20 @@ html body main:is(.case-system-page, .case-shell, .edge-wrap, .map-wrap) {
 html body main:is(.edge-wrap, .map-wrap) { max-width: 1180px !important; }
 /* headings: one sans family, tight display tracking */
 html body main:is(.case-system-page, .case-shell, .edge-wrap, .map-wrap) :is(h1, h2, h3, h4) {
-  font-family: inherit !important;
+  font-family: inherit;
   color: var(--ink);
   font-weight: 900;
 }
 html body main:is(.case-system-page, .case-shell, .edge-wrap, .map-wrap) h1 {
   font-size: clamp(34px, 4.4vw, 56px) !important;
-  line-height: 1.02 !important;
-  letter-spacing: -0.055em !important;
-  margin: 14px 0 22px !important;
+  line-height: 1.02;
+  letter-spacing: -0.055em;
+  margin: 14px 0 22px;
 }
 html body main:is(.case-system-page, .case-shell, .edge-wrap, .map-wrap) h2 {
   font-size: clamp(22px, 2.4vw, 28px) !important;
-  line-height: 1.15 !important;
-  letter-spacing: -0.035em !important;
+  line-height: 1.15;
+  letter-spacing: -0.035em;
   margin: 10px 0 16px !important;
   max-width: 22em;
 }
@@ -1002,7 +1002,7 @@ html body main:is(.case-system-page, .case-shell, .edge-wrap, .map-wrap) :is(hea
   font-size: clamp(16px, 1.3vw, 18px) !important;
   line-height: 1.55 !important;
   color: var(--muted) !important;
-  max-width: 62ch !important;
+  max-width: 62ch;
 }
 /* the article repeats the page title inside .edge-body: keep it, but at section scale */
 html body main .edge-body h1 { font-size: clamp(22px, 2.4vw, 28px) !important; line-height: 1.1 !important; margin: 0 0 16px !important; }
@@ -1030,19 +1030,19 @@ html body main .case-meta {
   border: 0 !important;
   border-top: 1px solid var(--rd-line) !important;
   border-bottom: 1px solid var(--rd-line) !important;
-  border-radius: 0 !important;
+  border-radius: 0;
   box-shadow: none !important;
-  padding: 14px 0 !important;
+  padding: 14px 0;
 }
 /* sections: whitespace and one hairline, not nested boxes */
 html body main:is(.case-system-page, .case-shell) .section {
   background: transparent !important;
   border: 0 !important;
   border-top: 1px solid var(--rd-line) !important;
-  border-radius: 0 !important;
+  border-radius: 0;
   box-shadow: none !important;
   padding: 34px 0 4px !important;
-  margin: 34px 0 0 !important;
+  margin: 34px 0 0;
 }
 /* cards inside reading pages: quiet outlines, no shadows */
 html body main :is(.card, .surface-grid > *, .qcard, .flow-card, .boundary-card, .example-row, .evidence-item, .product-panel, .step, .map-family, .map-q) {
@@ -1091,7 +1091,7 @@ html body:has(main:is(.case-system-page, .case-shell, .edge-wrap, .map-wrap))::a
 /* page title: bigger, with a short pink-to-yellow bar under it */
 html body main:is(.case-system-page, .case-shell, .edge-wrap, .map-wrap) h1:not(.edge-body h1) {
   font-size: clamp(34px, 4.4vw, 56px) !important;
-  letter-spacing: -0.055em !important;
+  letter-spacing: -0.055em;
   margin-bottom: 22px !important;
 }
 html body main:is(.case-system-page, .case-shell, .edge-wrap, .map-wrap) h1:not(.edge-body h1)::after {
@@ -1151,7 +1151,7 @@ html body #ai-cs-mock .learning-reference-links a {
 }
 
 /* old decorative rule under the hero */
-html body main .meridian-case-hero::after, html body main .meridian-case-hero::before { display: none !important; }
+html body main .meridian-case-hero::after, html body main .meridian-case-hero::before { display: none; }
 html body #ai-cs-mock #learn details.learning-stage,
 html body #ai-cs-mock #learn details.learning-stage:nth-of-type(n) {
   border-left: 1px solid var(--rd-line) !important;
@@ -1205,21 +1205,21 @@ html body main :is(.card, .qcard, .flow-card, .boundary-card, .step, .map-family
 }
 /* grids of cards: side-by-side boxes, one card style; the column count follows the card count so no row is ever uneven */
 html body main :is(.surface-grid, .state-model-grid, .architecture-split, .grid2, .grid3, .role-grid) {
-  display: grid !important;
-  gap: 14px !important;
+  display: grid;
+  gap: 14px;
   align-items: stretch;
   grid-template-columns: 1fr !important;                      /* phones: one column */
 }
 html body main :is(.surface-grid, .state-model-grid, .architecture-split, .grid2, .grid3, .role-grid) > * {
-  box-sizing: border-box !important;
+  box-sizing: border-box;
   border: 1px solid var(--rd-line) !important;
-  border-radius: 20px !important;
+  border-radius: 20px;
   background: #fff !important;
   box-shadow: none !important;
   padding: 20px !important;
-  margin: 0 !important;
-  min-height: 0 !important;
-  height: auto !important;
+  margin: 0;
+  min-height: 0;
+  height: auto;
   min-width: 0;
 }
 html body main :is(.surface-grid, .state-model-grid) > * > :is(span, small, .label) {
@@ -1245,14 +1245,14 @@ html body main :is(.surface-grid, .state-model-grid) > * > :is(span, small, .lab
 /* a lone card never sits alone on a row */
 
 /* sections that hold a card grid plus a full-width box stack normally: cards in a row, the box underneath */
-html body main.case-system-page section:has(> .architecture-split) { display: block !important; }
-html body main.case-system-page section:has(> .architecture-split) > .architecture-split { width: 100% !important; max-width: none !important; }
+html body main.case-system-page section:has(> .architecture-split) { display: block; }
+html body main.case-system-page section:has(> .architecture-split) > .architecture-split { width: 100%; max-width: none; }
 html body main.case-system-page .architecture-infra {
-  box-sizing: border-box !important;
-  width: 100% !important;
-  margin: 14px 0 0 !important;
+  box-sizing: border-box;
+  width: 100%;
+  margin: 14px 0 0;
   border: 1px solid var(--rd-line) !important;
-  border-radius: 20px !important;
+  border-radius: 20px;
   background: #fff !important;
   box-shadow: none !important;
 }
@@ -1260,7 +1260,7 @@ html body main.case-system-page .architecture-infra {
 html body main :is(.integration-flow, .human-flow, .authority-steps) {
   display: flex;
   gap: 6px 10px !important;
-  overflow: visible !important;
+  overflow: visible;
   max-width: 100%;
 }
 html body main :is(.integration-flow, .human-flow, .authority-steps) > * { white-space: normal; min-width: 0; }
@@ -1277,8 +1277,8 @@ html body main .evidence-principle:not(.flagship-case > .evidence-principle:firs
   border-left: 5px solid var(--ink) !important;
   border-radius: 0 !important;
   background: transparent !important;
-  padding: 4px 0 4px 22px !important;
-  margin: 26px 0 !important;
+  padding: 4px 0 4px 22px;
+  margin: 26px 0;
 }
 html body main .evidence-principle:not(.flagship-case > .evidence-principle:first-child) strong {
   margin-bottom: 8px;
@@ -1296,7 +1296,7 @@ html body main .question-shift {
   background: transparent !important;
   border: 0 !important;
   border-left: 3px solid var(--ink) !important;
-  border-radius: 0 !important;
+  border-radius: 0;
   box-shadow: none !important;
   padding: 4px 0 4px 20px !important;
 }
@@ -1327,7 +1327,7 @@ html body main :is(.human-flow, .integration-flow) > * {
 /* metadata strip: one quiet line */
 html body main .case-meta { display: flex; flex-wrap: wrap; gap: 8px 32px; font-size: 13.5px; }
 /* ---------- 4g. Applied Work: ink, not violet ---------- */
-html body #ai-cs-mock .card::before { display: none !important; }
+html body #ai-cs-mock .card::before { display: none; }
 html body #ai-cs-mock :is(.applied-major h3, .applied-major h3 a, .applied-secondary h3, .nav-card h3, .applied-card-primary-link) {
   color: var(--ink) !important;
   letter-spacing: -0.04em;
@@ -1357,13 +1357,13 @@ html body #ai-cs-mock [data-page="portfolio"] .band[style*="margin-top:30px"] {
 }
 html body #ai-cs-mock [data-page="portfolio"] .band[style*="margin-top:30px"]::before {
   display: inline-flex !important;
-  margin: 0 0 14px !important;
+  margin: 0 0 14px;
   padding: 6px 10px;
   border-radius: 8px;
   background: #fff;
-  color: var(--ink) !important;
-  font-size: 10.5px !important;
-  font-weight: 950 !important;
+  color: var(--ink);
+  font-size: 10.5px;
+  font-weight: 950;
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
@@ -1398,7 +1398,7 @@ html body #ai-cs-mock #portfolio .applied-secondary-grid > .applied-secondary:nt
 html body #ai-cs-mock #portfolio .band[style*="margin-top:30px"] h3 {
   font-size: clamp(18px, 1.7vw, 20px) !important;
   line-height: 1.2 !important;
-  letter-spacing: -0.02em !important;
+  letter-spacing: -0.02em;
   margin: 0 0 8px !important;
   color: var(--ink) !important;
 }
@@ -1416,7 +1416,7 @@ html body #ai-cs-mock #learn details.learning-stage summary::after {
   height: 30px !important;
   right: 20px !important;
   border: 1px solid var(--rd-line) !important;
-  border-radius: 999px !important;
+  border-radius: 999px;
   background:
     linear-gradient(var(--ink), var(--ink)) center / 12px 2px no-repeat,
     linear-gradient(var(--ink), var(--ink)) center / 2px 12px no-repeat,
@@ -1501,7 +1501,7 @@ html body main :is(.meta > span, .tag, .num, .flow-num, .map-chip, .map-step, sp
 /* Applied Work featured cards: three across, or one column, never 1+2 */
 @media (min-width: 701px){
   html body #ai-cs-mock #portfolio .applied-featured-three { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }
-  html body #ai-cs-mock #portfolio .applied-featured-three > * { grid-column: auto !important; grid-row: auto !important; }
+  html body #ai-cs-mock #portfolio .applied-featured-three > * { grid-column: auto; grid-row: auto; }
 }
 /* ---------- 4l. Project Health case study: one card style, one list style, one callout ---------- */
 html body main.case-shell :is(.card, .flow-card) .tag,
@@ -1556,10 +1556,10 @@ html body main.case-system-page aside.meridian-product-callout.meridian-product-
 
 /* Learning Library: icons centred on the row; intro sits on the page like Applied Work */
 html body #ai-cs-mock #learn details.learning-stage summary::after {
-  grid-area: auto !important;   /* an old rule pinned it to grid row 1, so 50% was measured against that row only */
-  top: 50% !important;
-  bottom: auto !important;
-  margin: 0 !important;
+  grid-area: auto;   /* an old rule pinned it to grid row 1, so 50% was measured against that row only */
+  top: 50%;
+  bottom: auto;
+  margin: 0;
   transform: translateY(-50%) !important;
 }
 html body #ai-cs-mock #learn .learning-hero {
@@ -1579,8 +1579,8 @@ html body main.map-wrap .map-family { padding: 18px 20px; border-radius: 16px; }
 
 /* Project Health case study: cards and prose only */
 html body main.case-shell .flow {
-  gap: 14px !important;
-  grid-template-columns: 1fr !important;
+  gap: 14px;
+  grid-template-columns: 1fr;
 }
 @media (min-width: 701px){
   html body main.case-shell .flow:has(> :nth-child(3):last-child) { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }
@@ -1728,7 +1728,7 @@ html body #ai-cs-mock .learning-next .learning-how-note strong { font-size: 14px
 html body #ai-cs-mock .learning-next .learning-how-note p { font-size: 14px !important; line-height: 1.55; margin: 6px 0 10px; }
 html body #ai-cs-mock .learning-next .learning-how-note a { min-height: 32px; padding: 0 12px; font-size: 13px; }
 /* ---------- 4r. State case study: hide the two duplicates (text stays in the page source) ---------- */
-html body main.case-system-page:has(.meridian-product-callout a[data-state-app-link]) .integration-flow.authority-steps { display: none !important; }
+html body main.case-system-page:has(.meridian-product-callout a[data-state-app-link]) .integration-flow.authority-steps { display: none; }
 /* ---------- 4s. Project Health case study bottom: fewer boxes ---------- */
 html body main.case-shell .evidence-list { display: block; }
 html body main.case-shell .evidence-item {
@@ -1784,7 +1784,7 @@ html body #ai-cs-mock #portfolio .band .band-link {
   color: var(--ink) !important;
   font-size: 14px;
   font-weight: 900;
-  text-decoration: none !important;
+  text-decoration: none;
   white-space: nowrap;
 }
 html body #ai-cs-mock #portfolio .band .band-link:hover { background: var(--ink); color: #fff !important; }
@@ -1799,7 +1799,7 @@ html body #ai-cs-mock #portfolio .applied-secondary { justify-content: flex-star
 html body #ai-cs-mock #portfolio .applied-secondary .card-intro { margin-top: 0 !important; }
 html body #ai-cs-mock #portfolio .applied-secondary > h3 { margin-bottom: 0 !important; }
 /* reserve two lines for titles so descriptions line up; on wide screens every title is one line, so reserve none */
-html body #ai-cs-mock #portfolio .applied-secondary > h3 { min-height: 40px !important; }
+html body #ai-cs-mock #portfolio .applied-secondary > h3 { min-height: 40px; }
 @media (min-width: 1300px){
   html body #ai-cs-mock #portfolio .applied-secondary > h3 { min-height: 0 !important; }
 }
@@ -1839,7 +1839,7 @@ html body main.legal-single-case .paper-section { border-top: 1px solid var(--rd
 html body main:not(#_) :is(h1, h2, h3, h4):not(#_) {
   font-weight: 700 !important;
   letter-spacing: -0.02em !important;
-  word-spacing: 0.02em !important;
+  word-spacing: 0.02em;
 }
 /* the big homepage hero headline keeps a tighter, heavier look */
 html body #ai-cs-mock .rd-hero h1:not(#_) {
@@ -1847,7 +1847,7 @@ html body #ai-cs-mock .rd-hero h1:not(#_) {
   letter-spacing: -0.065em !important;
   word-spacing: 0 !important;
 }
-html body #ai-cs-mock #portfolio .applied-secondary > h3:not(#_) { font-size: 17px !important; }
+html body #ai-cs-mock #portfolio .applied-secondary > h3 { font-size: 17px !important; }
 @media (prefers-reduced-motion: reduce){
   *, *::before, *::after {
     animation-duration: 0.001ms !important;
@@ -1876,7 +1876,7 @@ html body #ai-cs-mock #portfolio .applied-secondary > h3:not(#_) { font-size: 17
 .rd-arrowhead-shape{fill:none;stroke:#1b2431;stroke-width:1.45;stroke-linecap:round;stroke-linejoin:round}
 .rd-card::before{content:none}
 .rd-status::before{width:7px;height:7px;box-shadow:0 0 0 4px rgba(238,42,123,.1);animation:none!important}
-html body #ai-cs-mock .rd-control h2{margin:0!important;font-size:38px!important;line-height:.96!important;letter-spacing:-.055em!important;color:#0f172a!important}
+html body #ai-cs-mock .rd-control h2{margin:0!important;font-size:38px!important;line-height:.96!important;letter-spacing:-.055em;color:#0f172a!important}
 html body #ai-cs-mock .rd-control p{margin:10px 0 0!important;color:#63708a!important;font-size:11.5px!important;line-height:1.45!important}
 .rd-trace div{display:flex;align-items:center;justify-content:center;min-height:31px;border:1px solid #efe4a5;border-radius:999px;background:#fff8c9;padding:6px 5px;color:#344054;font-size:9px;font-weight:750;white-space:nowrap;animation:none!important}
 .rd-mini-panel h3{margin:0 0 7px;font-size:10.5px;}
@@ -1940,7 +1940,7 @@ html body .topbar .nav {
   justify-content: flex-end !important;
   gap: 22px !important;
   margin-left: auto !important;
-  margin-right: 0 !important;
+  margin-right: 0;
 }
 html body .topbar .top-actions {
   flex: 0 0 auto !important;
@@ -1949,7 +1949,7 @@ html body .topbar .top-actions {
 }
 html body .topbar .nav a,
 html body .topbar .nav button {
-  position: relative !important;
+  position: relative;
   padding: 9px 0 11px !important;
   border-radius: 0 !important;
   background: transparent !important;
@@ -1968,13 +1968,13 @@ html body .topbar .nav button.active {
   color: var(--ink) !important;
 }
 html body .topbar .nav :is(a[aria-current="page"], a.active, button.active)::after {
-  content: "" !important;
-  position: absolute !important;
-  right: 0 !important;
-  bottom: 3px !important;
-  left: 0 !important;
-  height: 2px !important;
-  border-radius: 2px !important;
+  content: "";
+  position: absolute;
+  right: 0;
+  bottom: 3px;
+  left: 0;
+  height: 2px;
+  border-radius: 2px;
   background: var(--rd-pink, #f0408f) !important;
 }
 /* Homepage calls to action and reference links use a compact corner radius. */
@@ -2032,7 +2032,7 @@ html body main .case-study-footer > a {
 }
 html body main .case-study-footer > a:hover {
   color: var(--ink, #17141a) !important;
-  text-decoration: underline !important;
+  text-decoration: underline;
   transform: none !important;
 }
 html body main:is(.case-system-page, .case-shell, .edge-wrap, .map-wrap) :is(.research-loop span, .human-flow span, .plain-rules span, .map-chip, .map-step, .context-loop span, .legal-evidence-strip span, .case-meta > span, .meta > span) {
