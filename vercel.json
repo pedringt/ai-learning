@@ -124,6 +124,9 @@
   "functions": {
     "api/project-health-investigate.js": {
       "maxDuration": 60
+    },
+    "api/project-health-github.js": {
+      "maxDuration": 20
     }
   }
 }

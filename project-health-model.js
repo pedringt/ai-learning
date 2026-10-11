@@ -56,7 +56,7 @@
       }
     },
     {
-      id:'authority-lab',name:'Authority Lab',stageLabel:'In progress',noRuntimeAi:true,noQualitySource:true,description:'Prototype for deciding what an AI capability is allowed to do, based on evidence.',repo:'pedringt/authority-lab',branch:'main',
+      id:'authority-lab',name:'Authority Lab',stageLabel:'In progress',noRuntimeAi:true,noQualitySource:true,noRunWorkflow:true,description:'Prototype for deciding what an AI capability is allowed to do, based on evidence.',repo:'pedringt/authority-lab',branch:'main',
       focus:'Show authority as explicit, evidence-earned, conditional, reversible, and authorized by a named person.',
       evidence:['Lifecycle walkthrough','Authority decisions','Record history','Reversibility'],
       nextDecision:'Decide whether the Refund recommendation walkthrough is clear enough to add a second capability.',
@@ -202,6 +202,39 @@
     }
     return items;
   }
+  // A signal that failed to load is unknown, never healthy (QA, Oct 10): a timeout or a 404 on a signal the
+  // project is supposed to have must not roll up into "Healthy". Signals a project has no source for by design
+  // (Authority Lab's quality checks and run controls) are never requested, so they never land here.
+  const CORE_SIGNALS={
+    Delivery:()=>'Release pipeline',
+    Quality:project=>project?.qualityLabel||'Quality',
+    'Production backend':()=>'Production backend',
+    Activity:()=>'Deployment activity',
+    'Quality behavior':()=>'AI eval freshness'
+  };
+  function failureReason(error){
+    const status=Number(error?.status)||0;
+    if(error?.name==='AbortError'||error?.name==='TimeoutError'||/abort|timed? ?out/i.test(String(error?.message||'')))return 'request timed out';
+    if(status===404)return 'not found';
+    if(status===403||status===429)return 'rate limited or denied';
+    if(status>=500)return 'server error '+status;
+    if(status)return 'request failed ('+status+')';
+    return 'request failed';
+  }
+  function uncheckedSignals(data){
+    const pending=pendingSet(data),seen=new Set(),out=[];
+    for(const failure of Array.isArray(data?.failures)?data.failures:[]){
+      const name=CORE_SIGNALS[failure?.label];
+      if(!name||pending.has(failure.label)||seen.has(failure.label))continue;
+      seen.add(failure.label);
+      out.push({key:failure.label,label:name(data?.project),reason:failure.reason||'request failed'});
+    }
+    return out;
+  }
+  function incompleteAttention(unchecked){
+    const list=unchecked.map(item=>item.label+' ('+item.reason+')').join(', ');
+    return {kind:'unknown',incomplete:true,category:'incomplete',title:"Couldn't check: "+list,detail:'Project Health could not load '+(unchecked.length===1?'this signal':'these signals')+', so it cannot call this project healthy.',owner:'Project Health',nextAction:'Retry the check; if it keeps failing, the data source needs a look.',unchecked};
+  }
   function allAttentionSignals(data){
     const pending=pendingSet(data),signals=[];
     if(data.delivery) signals.push(deliveryAttentionForData(data));
@@ -231,16 +264,26 @@
     if(delivery.kind==='bad') return delivery;
     const infra=infrastructureAttention(data.platform);
     if(infra?.kind==='bad') return infra;
+    const unchecked=uncheckedSignals(data);
+    if(unchecked.length) return incompleteAttention(unchecked);
     return {kind:'good',title:'Healthy',detail:'No current incident or product-quality action needs attention.'};
   }
   function projectStatus(data){
     const att=overallAttention(data);
+    if(att.incomplete) return {key:'incomplete',label:'Incomplete',kind:'unknown'};
     if(att.kind==='unknown') return {key:'checking',label:'Checking',kind:'unknown'};
     if(att.kind==='bad') return {key:'action',label:'Needs attention',kind:'bad'};
     if(att.kind==='warn') return {key:'watch',label:'Watch',kind:'warn'};
     return {key:'healthy',label:'Healthy',kind:'good'};
   }
   function attentionItems(data){
+    const items=openAttentionItems(data);
+    const unchecked=uncheckedSignals(data);
+    if(!unchecked.length||items.some(item=>item.title==='Still checking'))return items;
+    const incomplete=incompleteAttention(unchecked);
+    return items.length===1&&items[0].kind==='good'?[incomplete]:[...items,incomplete];
+  }
+  function openAttentionItems(data){
     const incidents=activityReviewItems(data).filter(item=>!item.resolved).map(item=>({kind:'bad',title:item.title,detail:item.impact,owner:item.owner}));
     if(incidents.length) return incidents;
     let open=productOpenItems(data);
@@ -309,6 +352,8 @@
     const open=productOpenItems(data);
     if(incidents.length||open.some(item=>item.kind==='bad')) return {kind:'bad',label:'Needs attention',detail:'Resolve the current high-impact issue before treating the next release as healthy.'};
     if(open.length) return {kind:'warn',label:'Watch',detail:'Delivery is healthy, but a product-quality check or human review is still open.'};
+    const unchecked=uncheckedSignals(data);
+    if(unchecked.length) return {kind:'unknown',label:'Incomplete',detail:incompleteAttention(unchecked).title+'. Release health cannot be confirmed.'};
     if(deliveryAttentionForData(data).kind==='good') return {kind:'good',label:'Healthy',detail:'Delivery is healthy and there is no current high-impact quality issue.'};
     return {kind:'unknown',label:'Unknown',detail:'There is not enough current evidence to confirm release health.'};
   }
@@ -714,6 +759,7 @@
       investigationHistory:Array.isArray(s.investigationHistory)?s.investigationHistory:[],
       productNotes:Array.isArray(s.productNotes)?s.productNotes:[],
       errors:[],
+      failures:[],
       pending:new Set(),
       timings:{},
       fresh:false,
@@ -777,7 +823,11 @@
       data.pending.add(label);notify();
       return promise
         .then(value=>{apply(value);})
-        .catch(e=>{data.errors.push(label+': '+e.message);})
+        .catch(e=>{
+          data.errors.push(label+': '+e.message);
+          if(!Array.isArray(data.failures))data.failures=[];
+          data.failures.push({label,reason:failureReason(e),status:Number(e?.status)||null});
+        })
         .finally(()=>{data.timings[label]=Date.now()-started;data.pending.delete(label);notify();});
     };
   }
@@ -958,6 +1008,9 @@
       if(item.action==='run-ai-checks') return '<button class="attention attention-action '+esc(item.kind||'')+'" type="button" data-attention-action="run-ai-checks" aria-label="Run AI evals">'+content+'<span class="attention-action-label">Run AI evals →</span></button>';
       const isState=item.action==='review-ai-evals';
       return '<button class="attention attention-action '+esc(item.kind||'')+'" type="button" data-attention-action="review-quality" aria-label="'+esc(isState?'Review AI evals':'Review quality')+'">'+content+'<span class="attention-action-label">'+esc(isState?'Review AI evals →':'Review quality →')+'</span></button>';
+    }
+    if(item.category==='incomplete'){
+      return '<button class="attention attention-action unknown" type="button" data-retry-health>'+content+'<span class="attention-action-label">Retry check →</span></button>';
     }
     if(item.category==='delivery'){
       return '<button class="attention attention-action '+esc(item.kind||'')+'" type="button" data-section-target="deliveryPanel">'+content+'<span class="attention-action-label">View delivery evidence →</span></button>';
@@ -1172,7 +1225,9 @@
     checks.push({label:'User-facing server errors',value:runtimeSignal?.available===false?'Runtime log signal unavailable':runtimeIssues.length?runtimeIssues.length+' signal'+(runtimeIssues.length===1?'':'s'):'None found in bounded check'});
     const render=data?.platform?.render?.environments?.production;
     if(render) checks.push({label:'Production backend',value:render.ok?'Healthy':'Unavailable'});
-    const hasIssue=checks.some(item=>/needs action|failed|unavailable|signal/i.test(String(item.value||'')));
+    const unchecked=uncheckedSignals(data);
+    if(unchecked.length) checks.push({label:'Not checked',value:"Couldn't load "+unchecked.map(item=>item.label+' ('+item.reason+')').join(', ')});
+    const hasIssue=checks.some(item=>/needs action|failed|unavailable|signal|couldn't/i.test(String(item.value||'')));
     return {
       quickCheck:true,
       observedAt:new Date().toISOString(),
@@ -1361,5 +1416,5 @@
     };
   }
 
-  return {PROJECTS,esc,shortSha,commitTitle,repoUrl,githubCommitUrl,pullRequestNumber,githubPullRequestUrl,githubLink,changeUrl,commitLabel,htmlRow,linkedRow,githubApi,vercelFromStatus,deliveryHealth,normalizeQuality,percent,highImpactText,modelDisplayName,qualityAttention,deliveryAttention,deliveryAttentionForData,infrastructureAttention,externalQualityAttention,pendingSet,productOpenItems,allAttentionSignals,overallAttention,projectStatus,attentionItems,setupGaps,releaseReadiness,regressionSignal,recurringFailureSignal,operationalSignals,healthConsistencyIssues,releaseRiskChecklist,productionRuntime,operationalNextDecision,failureCheckCount,failureExplanation,qualityFailureClassSummary,activityTimelineItems,activityDayLabel,activityTimeRange,evalBehaviorBranch,mergePlatform,emptyProjectData,safeExternalQualitySnapshot,serializeProjectData,hydrateProjectData,investigationHistorySummary,makeRunner,STATE_EVAL_CONTRACT_UPDATED_AT,dateMs,fmtDate,relativeAge,stateEvalContractStale,stateEvalBehaviorStale,stateEvalResultsStale,stateEvalStaleReason,freshnessMeta,qualitySnapshot,visitBaseline,healthStateLabel,meaningfulChanges,changedSinceVisit,trendText,activityReviewItems,row,metric,durationLabel,costLabel,attentionMarkup,neonConnectionDetail,infraCardLabel,analyticsConnectionValue,analyticsGapDetail,analyticsLabel,projectQualityLabel,stageTag,loadingCardMarkup,cardMarkup,evalSuiteLabel,evalScore,evalTrend,stateEvalCard,stateScenarioCard,scenarioPassLabel,stateEvalHistory,mockSparkline,mockTrendValues,mockDelta,investigationResultHtml,evalRunComplete,externalQualityRunComplete,evalFailureImpact,previousEvalRun,progressText,quickProjectCheck,qualityInvestigation,projectHandoff};
+  return {PROJECTS,esc,shortSha,commitTitle,repoUrl,githubCommitUrl,pullRequestNumber,githubPullRequestUrl,githubLink,changeUrl,commitLabel,htmlRow,linkedRow,githubApi,vercelFromStatus,deliveryHealth,normalizeQuality,percent,highImpactText,modelDisplayName,qualityAttention,deliveryAttention,deliveryAttentionForData,infrastructureAttention,externalQualityAttention,pendingSet,productOpenItems,failureReason,uncheckedSignals,incompleteAttention,allAttentionSignals,overallAttention,projectStatus,attentionItems,setupGaps,releaseReadiness,regressionSignal,recurringFailureSignal,operationalSignals,healthConsistencyIssues,releaseRiskChecklist,productionRuntime,operationalNextDecision,failureCheckCount,failureExplanation,qualityFailureClassSummary,activityTimelineItems,activityDayLabel,activityTimeRange,evalBehaviorBranch,mergePlatform,emptyProjectData,safeExternalQualitySnapshot,serializeProjectData,hydrateProjectData,investigationHistorySummary,makeRunner,STATE_EVAL_CONTRACT_UPDATED_AT,dateMs,fmtDate,relativeAge,stateEvalContractStale,stateEvalBehaviorStale,stateEvalResultsStale,stateEvalStaleReason,freshnessMeta,qualitySnapshot,visitBaseline,healthStateLabel,meaningfulChanges,changedSinceVisit,trendText,activityReviewItems,row,metric,durationLabel,costLabel,attentionMarkup,neonConnectionDetail,infraCardLabel,analyticsConnectionValue,analyticsGapDetail,analyticsLabel,projectQualityLabel,stageTag,loadingCardMarkup,cardMarkup,evalSuiteLabel,evalScore,evalTrend,stateEvalCard,stateScenarioCard,scenarioPassLabel,stateEvalHistory,mockSparkline,mockTrendValues,mockDelta,investigationResultHtml,evalRunComplete,externalQualityRunComplete,evalFailureImpact,previousEvalRun,progressText,quickProjectCheck,qualityInvestigation,projectHandoff};
 });
