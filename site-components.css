@@ -1872,6 +1872,11 @@ html body main .card > .tag + h3 { margin-top: 0; }
 html body main header:has(> .case-meta:last-child) + .case-page-content > .section:first-child { margin-top: 0; border-top: 0 !important; }
 /* the "In short" line keeps the same 24px gap above whatever follows it */
 html body main .in-short + :is(.card, .meridian-product-callout) { margin-top: 24px; }
+/* lists in a case-study section read as body copy (the 4c list rule lost to an older 14px muted rule) */
+html body main.case-system-page .case-page-content .section > :is(ul, ol) > li { font-size: 16px; line-height: 1.6; color: #3f3f46; }
+/* a section label directly above the closing links stays with them: the hairline goes above the label */
+html body main .kicker:has(+ .case-study-footer) { margin-top: 30px; padding-top: 22px; border-top: 1px solid var(--rd-line); }
+html body main .kicker + .case-study-footer { margin-top: 0; padding-top: 0; border-top: 0; }
 @media (prefers-reduced-motion: reduce){
   *, *::before, *::after {
     animation-duration: 0.001ms !important;
