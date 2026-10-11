@@ -10,16 +10,23 @@ from __future__ import annotations
 
 from typing import Any
 
+from baseline_grounding import review_unsupported_specifics
 from baseline_setup import is_baseline_setup
 from review_service import list_reviews as _list_reviews
 
 
 def is_routine_starting_state_review(review: dict[str, Any]) -> bool:
-    """Return True only for routine baseline creates handled by the draft."""
+    """Return True only for routine baseline creates handled by the draft.
+
+    A create that adds a year or amount its source never states is not routine
+    (#240): it stays in the Review queue for an individual decision.
+    """
     if review.get("review_type") != "missing_understanding":
         return False
     pending = [p for p in (review.get("proposals") or []) if p.get("status") == "pending"]
-    return bool(pending) and all(p.get("operation") == "create" for p in pending)
+    if not pending or not all(p.get("operation") == "create" for p in pending):
+        return False
+    return not review_unsupported_specifics(review)
 
 
 def list_actionable_reviews(connection: Any, status: str = "open") -> list[dict[str, Any]]:

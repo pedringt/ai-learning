@@ -17,6 +17,7 @@ from typing import Any, Literal
 from fastapi import HTTPException, Request
 from pydantic import BaseModel
 
+from baseline_grounding import review_unsupported_specifics, unsupported_specifics_reason
 from baseline_setup import is_baseline_setup
 from db import connect, project_id_of
 from review_service import _apply_proposal, list_history, list_questions, list_reviews, list_state
@@ -101,6 +102,19 @@ def starting_state_draft(connection: Any) -> dict[str, Any]:
         proposals = [p for p in (review.get("proposals") or []) if p.get("status") == "pending"]
 
         if review_type == "missing_understanding" and proposals and all(p.get("operation") == "create" for p in proposals):
+            unsupported = review_unsupported_specifics(review)
+            if unsupported:
+                # #240: a year or amount the source never states must not ride along in the
+                # batch confirmation. The Review needs its own human decision first.
+                needs_individual_review.append({
+                    "review_id": review.get("id"),
+                    "review_type": review_type,
+                    "decision_question": review.get("decision_question") or "",
+                    "reason": unsupported_specifics_reason(unsupported),
+                    "unsupported_specifics": unsupported,
+                    "statements": [_proposal_statement(p) for p in proposals if _proposal_statement(p)],
+                })
+                continue
             for proposal in proposals:
                 statement = _proposal_statement(proposal)
                 key = _norm(statement)
