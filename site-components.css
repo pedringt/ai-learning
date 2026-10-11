@@ -85,6 +85,9 @@
   margin:0 0 var(--space-5);
   font:750 12px/1.4 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
   color:var(--muted);
+  /* One breadcrumb size on every page (Paige, Oct 11): Meridian and the Project Health
+     case study were 13px. This replaces site-polish.css (#451). */
+  font-size:12px!important;
 }
 .site-breadcrumb ol{
   display:flex;
