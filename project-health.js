@@ -26,31 +26,25 @@
     }finally{clearTimeout(timer);}
   }
 
-  async function loadGitHubProject(project,branchName){
-    const headers={Accept:'application/vnd.github+json'};
-    const branch=await jsonFetch(githubApi('/repos/'+project.repo+'/branches/'+encodeURIComponent(branchName)),{headers,timeoutMs:6000});
-    let selectedCommit=branch?.commit||null;
-    if(Array.isArray(project.releasePaths)&&project.releasePaths.length){
-      try{
-        const groups=await Promise.all(project.releasePaths.map(path=>
-          jsonFetch(githubApi('/repos/'+project.repo+'/commits?sha='+encodeURIComponent(branchName)+'&path='+encodeURIComponent(path)+'&per_page=6'),{headers,timeoutMs:6000}).catch(()=>[])
-        ));
-        const candidates=groups.flat().filter(Boolean).filter((item,index,all)=>all.findIndex(other=>other?.sha===item?.sha)===index);
-        candidates.sort((a,b)=>(dateMs(b?.commit?.committer?.date||b?.commit?.author?.date)||0)-(dateMs(a?.commit?.committer?.date||a?.commit?.author?.date)||0));
-        selectedCommit=candidates.find(item=>!project.releaseIgnore?.test(String(item?.commit?.message||'')))||selectedCommit;
-      }catch(_){}
-    }else if(project.releasePath){
-      try{
-        const commits=await jsonFetch(githubApi('/repos/'+project.repo+'/commits?sha='+encodeURIComponent(branchName)+'&path='+encodeURIComponent(project.releasePath)+'&per_page=1'),{headers,timeoutMs:6000});
-        if(Array.isArray(commits)&&commits[0]) selectedCommit=commits[0];
-      }catch(_){}
-    }
-    const selectedSha=selectedCommit?.sha||branch?.commit?.sha||branchName;
-    const [status,checkRuns]=await Promise.all([
-      jsonFetch(githubApi('/repos/'+project.repo+'/commits/'+encodeURIComponent(selectedSha)+'/status'),{headers,timeoutMs:6000}),
-      jsonFetch(githubApi('/repos/'+project.repo+'/commits/'+encodeURIComponent(selectedSha)+'/check-runs?per_page=10'),{headers,timeoutMs:6000}).catch(()=>({check_runs:[]}))
-    ]);
-    return deliveryHealth({name:branch?.name||branchName,commit:selectedCommit},status,checkRuns);
+  // GitHub reads go through /api/project-health-github (one edge-cached, token-authenticated response per
+  // project) instead of ~23 unauthenticated browser calls to api.github.com per page load (QA, Oct 10).
+  function githubSummary(project,root,data){
+    if(data?.githubSummary)return data.githubSummary;
+    const promise=jsonFetch('/api/project-health-github?project='+encodeURIComponent(project.id)+'&env='+pageEnvironment(root),{timeoutMs:15000});
+    if(data)data.githubSummary=promise;
+    // A failed bundle is retried by the next refresh, not reused.
+    promise.catch(()=>{if(data&&data.githubSummary===promise)data.githubSummary=null;});
+    return promise;
+  }
+  function githubPart(part,label){
+    if(part?.ok)return part.value;
+    const error=new Error(part?.detail||(label+' is unavailable'));
+    error.status=part?.status||502;
+    throw error;
+  }
+  async function loadGitHubProject(project,root,data,which='delivery'){
+    const summary=await githubSummary(project,root,data);
+    return githubPart(summary?.[which],which==='staging'?'Staging delivery':'Delivery');
   }
   async function loadStateQuality(root){
     const url='/api/project-health-state-quality?env='+pageEnvironment(root);
@@ -68,36 +62,20 @@
     }
     throw lastError;
   }
-  async function loadStateEvalBehavior(project,root){
-    const paths=Array.isArray(project?.evalBehaviorPaths)?project.evalBehaviorPaths:[];
-    if(!paths.length)return null;
-    const headers={Accept:'application/vnd.github+json'};
-    const behaviorBranch=evalBehaviorBranch(project,pageEnvironment(root));
-    const rows=await Promise.all(paths.map(path=>jsonFetch(githubApi('/repos/'+project.repo+'/commits?sha='+encodeURIComponent(behaviorBranch)+'&path='+encodeURIComponent(path)+'&per_page=1'),{headers,timeoutMs:6000}).catch(()=>[])));
-    const commits=rows.flat().filter(Boolean);
-    commits.sort((a,b)=>(dateMs(b?.commit?.committer?.date||b?.commit?.author?.date)||0)-(dateMs(a?.commit?.committer?.date||a?.commit?.author?.date)||0));
-    const latest=commits[0];
-    return latest?{sha:latest.sha||null,updatedAt:latest.commit?.committer?.date||latest.commit?.author?.date||null}:null;
+  async function loadStateEvalBehavior(project,root,data){
+    if(!(Array.isArray(project?.evalBehaviorPaths)&&project.evalBehaviorPaths.length))return null;
+    const summary=await githubSummary(project,root,data);
+    return githubPart(summary?.evalBehavior,'Quality behavior');
   }
   async function loadPlatformSignal(project,signal){return await jsonFetch('/api/project-health-platform?project='+encodeURIComponent(project.id)+'&signal='+encodeURIComponent(signal),{timeoutMs:6500});}
-  async function loadRunInfo(project){try{return await jsonFetch('/api/project-health-run?project='+encodeURIComponent(project.id),{timeoutMs:5000});}catch(error){if(error.status===404)return null;throw error;}}
-  async function loadExternalQuality(project){try{return await jsonFetch('/api/project-health-project-quality?project='+encodeURIComponent(project.id),{timeoutMs:7000});}catch(error){if(error.status===404)return null;throw error;}}
-  async function loadActivity(project){try{const payload=await jsonFetch('/api/project-health-activity?project='+encodeURIComponent(project.id),{timeoutMs:7500});return payload?.activity||null;}catch(error){if(error.status===404)return null;throw error;}}
-  async function loadOpenPullRequests(project){
+  async function loadRunInfo(project){if(project.noRunWorkflow)return null;try{return await jsonFetch('/api/project-health-run?project='+encodeURIComponent(project.id),{timeoutMs:5000});}catch(error){if(error.status===404)return null;throw error;}}
+  async function loadExternalQuality(project){if(project.noQualitySource)return null;return await jsonFetch('/api/project-health-project-quality?project='+encodeURIComponent(project.id),{timeoutMs:7000});}
+  async function loadActivity(project){const payload=await jsonFetch('/api/project-health-activity?project='+encodeURIComponent(project.id),{timeoutMs:7500});return payload?.activity||null;}
+  async function loadOpenPullRequests(project,root,data){
     try{
-      const headers={Accept:'application/vnd.github+json'};
-      const pulls=await jsonFetch(githubApi('/repos/'+project.repo+'/pulls?state=open&per_page=5'),{headers,timeoutMs:6000});
-      if(!Array.isArray(pulls))return[];
-      const releasePaths=Array.isArray(project.releasePaths)&&project.releasePaths.length?project.releasePaths:(project.releasePath?[project.releasePath]:[]);
-      if(!releasePaths.length)return pulls;
-      const scoped=await Promise.all(pulls.map(async pr=>{
-        if(project.releaseIgnore?.test(String(pr.title||'')))return null;
-        try{
-          const files=await jsonFetch(githubApi('/repos/'+project.repo+'/pulls/'+encodeURIComponent(pr.number)+'/files?per_page=100'),{headers,timeoutMs:5000});
-          return Array.isArray(files)&&files.some(file=>releasePaths.some(path=>String(file.filename||'').startsWith(path+'/')))?pr:null;
-        }catch(_){return null;}
-      }));
-      return scoped.filter(Boolean);
+      const summary=await githubSummary(project,root,data);
+      const pulls=summary?.openPullRequests?.ok?summary.openPullRequests.value:[];
+      return Array.isArray(pulls)?pulls:[];
     }catch(_){return[];}
   }
 
@@ -143,13 +121,13 @@
     const data=emptyProjectData(project,seed);
     const run=makeRunner(data,onUpdate);
     const core=[
-      run('Delivery',loadGitHubProject(project,project.branch),value=>{data.delivery=value;}),
+      run('Delivery',loadGitHubProject(project,root,data),value=>{data.delivery=value;}),
       run('Activity',loadActivity(project),value=>{data.activity=value;}),
       run('Run controls',loadRunInfo(project),value=>{data.runInfo=value;})
     ];
     if(project.id==='state'){
       core.push(run('Production backend',loadPlatformSignal(project,'production-render'),value=>{data.platform=mergePlatform(data.platform,value);}));
-      core.push(run('Quality behavior',loadStateEvalBehavior(project,root),value=>{data.qualityBehaviorUpdatedAt=value?.updatedAt||null;if(data.quality)data.quality.behaviorUpdatedAt=data.qualityBehaviorUpdatedAt;}));
+      core.push(run('Quality behavior',loadStateEvalBehavior(project,root,data),value=>{data.qualityBehaviorUpdatedAt=value?.updatedAt||null;if(data.quality)data.quality.behaviorUpdatedAt=data.qualityBehaviorUpdatedAt;}));
     }
     const qualityTask=project.quality==='state'
       ? run('Quality',loadStateQuality(root),value=>{data.quality=value;if(data.qualityBehaviorUpdatedAt)data.quality.behaviorUpdatedAt=data.qualityBehaviorUpdatedAt;})
@@ -170,11 +148,11 @@
       run('Analytics',loadPlatformSignal(project,'analytics'),value=>{data.platform=mergePlatform(data.platform,value);}),
       run('AI operations',loadPlatformSignal(project,'ai-telemetry'),value=>{data.platform=mergePlatform(data.platform,value);}),
       run('Neon',loadPlatformSignal(project,'neon'),value=>{data.platform=mergePlatform(data.platform,value);}),
-      run('Open work',loadOpenPullRequests(project),value=>{data.openPullRequests=Array.isArray(value)?value:[];})
+      run('Open work',loadOpenPullRequests(project,root,data),value=>{data.openPullRequests=Array.isArray(value)?value:[];})
     ];
     if(project.id==='state'){
       tasks.push(
-        run('Staging delivery',loadGitHubProject(project,project.stagingBranch),value=>{data.staging=value;}),
+        run('Staging delivery',loadGitHubProject(project,root,data,'staging'),value=>{data.staging=value;}),
         run('Staging backend',loadPlatformSignal(project,'staging-render'),value=>{data.platform=mergePlatform(data.platform,value);})
       );
     }
@@ -464,7 +442,7 @@
         const askFailures=Number(ask?.high_severity_failures||0);
         // Unknown is not zero: until a suite's results have loaded, say so instead of "0 failures".
         const waiting=pendingSet(data).size>0;
-        const unknownSignal=waiting?'Loading…':'Not measured';
+        const unknownSignal=waiting?'Loading…':(Array.isArray(data.failures)&&data.failures.some(item=>item.label==='Quality'))?'Couldn\'t load':'Not measured';
         const reviewDelta=mockDelta(q?.recent,'review_interpretation');
         const askDelta=mockDelta(q?.recent,'ask_quality');
         kpis=
@@ -541,6 +519,8 @@
 
       // While the only open item is "Still checking", show a neutral loading state instead of an orange warning.
       const checking=actionable.length===1&&actionable[0].title==='Still checking';
+      // A signal that failed to load is never "healthy": say what could not be checked and offer a retry.
+      const incompleteOnly=!checking&&actionable.length>0&&actionable.every(item=>item.incomplete);
       const attentionHtml=checking
         ? '<div class="mock-skeleton" aria-hidden="true"><i></i><i></i></div>'
         : actionable.length
@@ -548,9 +528,9 @@
         : '<div class="mock-issue-row"><span class="mock-issue-dot" style="background:#16a36f"></span><div><strong>Nothing needs attention right now</strong><p>No current incident or product-quality action is open.</p></div><span class="mock-issue-meta">Healthy</span></div>';
 
       mockDashboard.innerHTML=
-        '<section class="mock-dashboard-section mock-attention-banner '+(checking?'is-checking':actionable.length?'has-attention':'is-healthy')+'"'+(checking?' role="status"':'')+'>'+
-          '<div class="mock-attention-icon">'+(checking?'<span class="mock-spinner"></span>':actionable.length?'!':'✓')+'</div><div class="mock-attention-copy"><h3>'+(checking?'Checking project health…':actionable.length?'What needs attention':'Current status')+'</h3><p>'+esc(checking?'Loading the latest signals.':actionable.length?(actionable.length+' issue'+(actionable.length===1?'':'s')+' needs your review.'):'Everything looks healthy right now.')+'</p>'+attentionHtml+'</div>'+
-          (checking?'':'<button class="button small" type="button" data-tab-target="ai-quality">View all issues →</button>')+
+        '<section class="mock-dashboard-section mock-attention-banner '+(checking?'is-checking':incompleteOnly?'is-incomplete':actionable.length?'has-attention':'is-healthy')+'"'+(checking||incompleteOnly?' role="status"':'')+'>'+
+          '<div class="mock-attention-icon">'+(checking?'<span class="mock-spinner"></span>':incompleteOnly?'?':actionable.length?'!':'✓')+'</div><div class="mock-attention-copy"><h3>'+(checking?'Checking project health…':incompleteOnly?'Couldn\'t check everything':actionable.length?'What needs attention':'Current status')+'</h3><p>'+esc(checking?'Loading the latest signals.':incompleteOnly?'Some signals did not load, so this is not a healthy result.':actionable.length?(actionable.length+' issue'+(actionable.length===1?'':'s')+' needs your review.'):'Everything looks healthy right now.')+'</p>'+attentionHtml+'</div>'+
+          (checking?'':incompleteOnly?'<button class="button small" type="button" data-retry-health>Retry check</button>':'<button class="button small" type="button" data-tab-target="ai-quality">View all issues →</button>')+
         '</section>'+
         '<div class="mock-kpi-grid">'+kpis+'</div>'+
         '<section class="mock-dashboard-section mock-release-card">'+
@@ -1040,9 +1020,11 @@
       const fresh=state.filter(item=>item?.fresh);
       const actionCount=fresh.filter(item=>projectStatus(item).key==='action').length;
       const watchCount=fresh.filter(item=>projectStatus(item).key==='watch').length;
+      const incompleteCount=fresh.filter(item=>projectStatus(item).key==='incomplete').length;
       summary.innerHTML=
         (actionCount?'<button class="summary-chip summary-action incident '+(summaryFilter==='action'?'active':'')+'" type="button" data-summary-filter="action"><strong>'+actionCount+'</strong> '+(actionCount===1?'needs':'need')+' attention</button>':'')+
-        (watchCount?'<button class="summary-chip summary-action open '+(summaryFilter==='watch'?'active':'')+'" type="button" data-summary-filter="watch"><strong>'+watchCount+'</strong> watch</button>':'');
+        (watchCount?'<button class="summary-chip summary-action open '+(summaryFilter==='watch'?'active':'')+'" type="button" data-summary-filter="watch"><strong>'+watchCount+'</strong> watch</button>':'')+
+        (incompleteCount?'<button class="summary-chip summary-action open '+(summaryFilter==='incomplete'?'active':'')+'" type="button" data-summary-filter="incomplete"><strong>'+incompleteCount+'</strong> couldn\'t be fully checked</button>':'');
     }
 
     function applyTabState(){
@@ -1369,6 +1351,9 @@
     if(cached?.savedAt)status.innerHTML='<strong>Showing the last good snapshot.</strong> Last checked '+esc(fmtDate(cached.savedAt))+'. Refreshing current health…';
     renderNow();
     refresh.addEventListener('click',refreshAll);
+    doc.addEventListener('click',event=>{
+      if(event.target.closest?.('[data-retry-health]'))refreshAll();
+    });
     reviewInbox.addEventListener('click',async event=>{
       const reviewButton=event.target.closest?.('[data-review-key]');
       if(reviewButton){

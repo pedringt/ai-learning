@@ -4,7 +4,12 @@ This is the canonical current-state handoff for State and the surrounding portfo
 
 _Last updated: October 7, 2026, Pacific time. The Oct 7 section just below is the current one and the Oct 5 sections still apply where it does not override them; everything older is history. Written as a handoff for a fresh session._
 
-## Oct 10, 2026: Haiku 5.5 switch measured and ready on staging (not yet on production)
+## Oct 10, 2026: Haiku 5.5 switch, promoted to production
+
+- **Released:** PR #489 merged `staging` into `main` as a merge commit (`4519732`). Production `/health` serves `4519732`; both Vercel projects deployed and serve the new assets (State `r120-cowork-followup`, `state-app.css?v=4`; config points at the production API). Paige removed `CLAUDE_MODEL` from Render production, so production runs the code default **Claude Haiku 5.5** (rollback: set `CLAUDE_MODEL=claude-haiku-4-5-20251001`). A production Ask on Juniper answered correctly in 5.6 s. #473–#485 closed.
+
+The notes below describe the state just before promotion.
+
 
 - **Model:** the code default is `claude-haiku-5-5` (`b3c2833`, #486); every Anthropic call sends `thinking: disabled`. Render `state-api-staging` runs Haiku 5.5. **Production `state-api` is pinned to `CLAUDE_MODEL=claude-haiku-4-5-20251001` until promotion.** The GitHub `CLAUDE_MODEL` repository variable is deleted on purpose, so evals follow the code default; an empty value now falls back to the default (`c0afd2e`).
 - **Branches:** #486 was squash-merged into `main` by mistake and #488 merged `main` back into `staging`. Use merge commits (not squash) for `staging` <-> `main` from now on.

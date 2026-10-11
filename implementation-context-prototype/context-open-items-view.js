@@ -73,7 +73,7 @@
     return `<span class="eyebrow">Adjust State's interpretation</span><h2 id="dialogTitle">Revise before updating Current State</h2><p>Correct what State understood from the evidence — this is not a direct edit to Current State. The original AI interpretation stays on record either way.</p>${blocks}<div class="dialog-actions"><button class="btn secondary" data-action="close-dialog">Cancel</button><button class="btn primary" data-action="confirm-review-adjust" data-review="${esc(r.id)}">Update</button></div>`;
   }
 
-  function questionCard(q,linkedReview){
+  function questionCard(q,linkedReview,open=false){
     const blocking=!!q.blocking;
     const evidenceSummary=linkedReview?(cleanReviewCopy(linkedReview.evidence)||cleanReviewCopy(linkedReview.summary)||''):'';
     // With no evidence text to show, say plainly that the answer still needs review (#450, from
@@ -82,7 +82,7 @@
     const body=linkedReview
       ? `<div class="open-question-inline-state"><span class="eyebrow">Answer found · Awaiting review</span>${evidenceLine}<p class="blocking-detail">Current State has not changed yet because this still needs your review.</p></div><div class="open-question-actions"><button class="text-button" data-action="open-specific-review" data-review-id="${linkedReview.id}">Review proposed update →</button><button class="text-button muted" data-action="answer-question" data-question-id="${q.id}">Add something else</button></div>`
       : `<div class="open-question-inline-state"><p>This stays unresolved until reviewed evidence establishes an answer.</p>${linkedEvidenceHtml(q)}${blocking&&q.blocks?`<p class="blocking-detail"><strong>Blocks:</strong> ${esc(q.blocks)}</p>`:''}</div><div class="open-question-actions"><button class="text-button" data-action="answer-question" data-question-id="${q.id}">Add what you learned →</button>${blocking?`<button class="text-button muted" data-action="unmark-blocking" data-question-id="${q.id}">No longer blocking</button>`:`<button class="text-button muted" data-action="mark-blocking" data-question-id="${q.id}">Mark as blocking</button>`}<button class="text-button muted" data-action="confirm-stop-question" data-question-id="${q.id}">Stop tracking</button></div>`;
-    return `<details class="open-question-item${blocking?' is-blocking':''}" style="margin:10px 0 0;padding:0 0 6px;border:0;border-top:1px solid var(--line)" data-question-id="${q.id}"><summary class="open-question-row${blocking?' is-blocking':''}" style="border-bottom:0;padding-top:17px;padding-bottom:14px" aria-label="Question: ${esc(q.text)}"><span class="open-question-copy"><span class="open-item-label ${blocking?'blocking':'question'}">${blocking?'Blocking question':'Open question'}</span><span class="open-question-title">${esc(q.text)}</span><span class="open-question-meta">${esc(q.origin)}${q.created?` · ${esc(q.created)}`:''}${blocking&&q.blocks?` · Blocks: ${esc(q.blocks)}`:''}</span></span><span class="question-card-chevron" aria-hidden="true">›</span></summary><div class="open-question-inline-body">${body}</div></details>`;
+    return `<details class="open-question-item${blocking?' is-blocking':''}" style="margin:10px 0 0;padding:0 0 6px;border:0;border-top:1px solid var(--line)" data-question-id="${q.id}"${open?' open':''}><summary class="open-question-row${blocking?' is-blocking':''}" style="border-bottom:0;padding-top:17px;padding-bottom:14px" aria-label="Question: ${esc(q.text)}"><span class="open-question-copy"><span class="open-item-label ${blocking?'blocking':'question'}">${blocking?'Blocking question':'Open question'}</span><span class="open-question-title">${esc(q.text)}</span><span class="open-question-meta">${esc(q.origin)}${q.created?` · ${esc(q.created)}`:''}${blocking&&q.blocks?` · Blocks: ${esc(q.blocks)}`:''}</span></span><span class="question-card-chevron" aria-hidden="true">›</span></summary><div class="open-question-inline-body">${body}</div></details>`;
   }
 
   // #481: what a reviewer attached to this Question (Keep tracking / Link existing Question).
@@ -109,7 +109,8 @@
 
   // props: {reviewsStatus, questionsStatus, draftsStatus, reviews, questions,
   // draftNotes, notes, openQuestionsExpanded, expandedReviewId,
-  // openItemSections, renderDraftNote}. `reviews`/`questions` are already the
+  // openItemSections, renderDraftNote, openQuestionIds}. `openQuestionIds` is
+  // the Set of question rows the user has open, kept across re-renders (#487). `reviews`/`questions` are already the
   // backend-confirmed open sets (state.data filtered by uiPendingReviews()/
   // openQuestions() -- computed by the caller, not here). `notes` is
   // state.data.notes, used only to resolve each review's source-evidence
@@ -117,7 +118,7 @@
   // injected so this module never needs to reach into another view module
   // directly.
   function render(props){
-    const {reviewsStatus,questionsStatus,draftsStatus,reviews,questions,draftNotes,notes,openQuestionsExpanded,expandedReviewId,openItemSections,renderDraftNote,hasCurrentState=true}=props;
+    const {reviewsStatus,questionsStatus,draftsStatus,reviews,questions,draftNotes,notes,openQuestionsExpanded,expandedReviewId,openItemSections,renderDraftNote,hasCurrentState=true,openQuestionIds=new Set()}=props;
     if(reviewsStatus==='loading' || questionsStatus==='loading'){
       return `<section class="page collection-page open-items-page"><div class="empty-state unavailable-state"><h2>Loading Open Items…</h2><p>Checking Reviews and Questions that need attention.</p></div></section>`;
     }
@@ -137,11 +138,11 @@
     const questionUnavailable=questionsStatus==='error';
     const reviewCardFor=r=>reviewCard(r,reviews.length===1||expandedReviewId===r.id,true,notes.find(n=>n.id===r.evidenceId));
     const reviewBody=reviewUnavailable?'<div class="open-items-empty unavailable-inline">Reviews could not be loaded. <button class="text-button" data-action="retry-hydration">Try again</button></div>':reviews.length?reviews.map(reviewCardFor).join(''):'<div class="open-items-empty">'+(hasCurrentState?'Nothing needs review. Current State is up to date with accepted evidence.':'Nothing needs review yet. Current State has not been set up.')+'</div>';
-    const blockerBody=questionUnavailable?'<div class="open-items-empty unavailable-inline">Blocking questions could not be loaded.</div>':blockers.length?`<div class="open-question-list" style="border-top:0">${blockers.map(q=>questionCard(q,linkedReviewFor(q))).join('')}</div>`:'<div class="open-items-empty">Nothing is blocking the project right now.</div>';
+    const blockerBody=questionUnavailable?'<div class="open-items-empty unavailable-inline">Blocking questions could not be loaded.</div>':blockers.length?`<div class="open-question-list" style="border-top:0">${blockers.map(q=>questionCard(q,linkedReviewFor(q),openQuestionIds.has(q.id))).join('')}</div>`:'<div class="open-items-empty">Nothing is blocking the project right now.</div>';
     const draftsLoading=draftsStatus!=='loaded'&&draftsStatus!=='error';
     const draftsUnavailable=draftsStatus==='error';
     const draftBody=draftsLoading?'<div class="open-items-empty" role="status">Loading drafts…</div>':draftsUnavailable?'<div class="open-items-empty unavailable-inline">Draft notes could not be loaded.</div>':draftNotes.length?`<div class="open-question-list">${draftNotes.map(renderDraftNote).join('')}</div>`:'<div class="open-items-empty">No draft notes waiting to be submitted.</div>';
-    const questionBody=questionUnavailable?'<div class="open-items-empty unavailable-inline">Open questions could not be loaded. <button class="text-button" data-action="retry-hydration">Try again</button></div>':waiting.length?`<div class="open-question-list" style="border-top:0">${visibleWaiting.map(q=>questionCard(q,linkedReviewFor(q))).join('')}</div>${waiting.length>5?`<button class="open-questions-more" data-action="toggle-open-questions" aria-expanded="${openQuestionsExpanded?'true':'false'}">${openQuestionsExpanded?'Show fewer questions':`Show ${remaining} more questions`} <span aria-hidden="true">${openQuestionsExpanded?'↑':'↓'}</span></button>`:''}`:'<div class="open-items-empty">Nothing else is unresolved right now.</div>';
+    const questionBody=questionUnavailable?'<div class="open-items-empty unavailable-inline">Open questions could not be loaded. <button class="text-button" data-action="retry-hydration">Try again</button></div>':waiting.length?`<div class="open-question-list" style="border-top:0">${visibleWaiting.map(q=>questionCard(q,linkedReviewFor(q),openQuestionIds.has(q.id))).join('')}</div>${waiting.length>5?`<button class="open-questions-more" data-action="toggle-open-questions" aria-expanded="${openQuestionsExpanded?'true':'false'}">${openQuestionsExpanded?'Show fewer questions':`Show ${remaining} more questions`} <span aria-hidden="true">${openQuestionsExpanded?'↑':'↓'}</span></button>`:''}`:'<div class="open-items-empty">Nothing else is unresolved right now.</div>';
     const actionTotal=(reviewUnavailable?0:reviews.length)+(questionUnavailable?0:blockers.length);
     // QA follow-up (2026-09-14): the one-sentence explainer covered
     // Update/Adjust/Leave unchanged but not the other real review shapes

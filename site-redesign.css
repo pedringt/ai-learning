@@ -1854,3 +1854,13 @@ html body main:is(.case-system-page, .case-shell, .edge-wrap, .map-wrap) :is(.re
 @media(max-width:560px){.rd-type-rail{padding-top:6px;padding-bottom:6px}.rd-type-left{flex-direction:column;align-items:flex-start;gap:3px}.rd-type-anchor{display:none}}
 /* #483 (PF-06): on phones the core loop wrapped mid-sequence and left an arrow dangling at each line end. Read it top to bottom instead. */
 @media(max-width:560px){html body main .human-flow{flex-direction:column;align-items:flex-start}html body main .human-flow>b{transform:rotate(90deg);margin-left:10px}}
+/* QA Oct 10: on a ~390px phone the Project Health card's "Open Project Health" + "Case study →" pair wrapped onto two
+   rows (169 + 8 + 124px in a 300px row). Scale the pair with the viewport so both featured cards keep one row down to
+   340px; below that, wrapping is the safe fallback. */
+@media (max-width: 480px) {
+  html body #ai-cs-mock .home-feature-actions { flex-wrap: nowrap; gap: 8px; }
+  html body #ai-cs-mock .home-feature-actions a { flex: 0 1 auto; min-width: 0; padding: 0 clamp(8px, 2.5vw, 14px) !important; font-size: clamp(12px, 3.4vw, 13.5px) !important; }
+}
+@media (max-width: 339px) {
+  html body #ai-cs-mock .home-feature-actions { flex-wrap: wrap; }
+}
