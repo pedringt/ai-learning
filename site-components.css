@@ -1862,6 +1862,9 @@ html body main .edge-body > section + section { margin-top: 44px; padding-top: 1
    4c list rule missed it and it stayed 14px), with the 18px badge centred on the first line (9 + (25.6 - 18) / 2) */
 html body main .edge-body ol > li { font-size: 16px; line-height: 1.6; }
 html body main .edge-body ol > li::before { top: 13px; }
+/* card grids: State's model grid kept the hairlines and 1000px cap from its pre-card design, so its
+   cards stopped 20px short of the column and sat between two stray rules */
+html body main .state-model-grid { max-width: none; border-top: 0; border-bottom: 0; }
 @media (prefers-reduced-motion: reduce){
   *, *::before, *::after {
     animation-duration: 0.001ms !important;
