@@ -5,7 +5,8 @@
    shell (now implementation-context-prototype/state-shell.js) and most of it targeted
    elements portfolio pages do not have: the Ask drawer, Slack settings, the Notes toolbar,
    index.html's home/portfolio/learn sections (index.html never loaded this file), and a
-   theme toggle that no longer exists. final-freeze-polish.css is now a <link> in each page. */
+   theme toggle that no longer exists. The final-freeze-polish.css it injected is gone too: none of its
+   rules matched any page that loaded it. */
 (()=>{
   /* Portfolio traffic analytics. The domain restriction keeps staging,
      previews, and local QA out of the real portfolio numbers. */

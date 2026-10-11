@@ -1,21 +1,6 @@
 
 /* v93 shared site shell — single source of truth for global header/navigation */
 :root{
-  /* Canonical shared design tokens. Keep cross-page color changes here. */
-  --ink:#171419;
-  --muted:#6d676f;
-  --purple:#5b478f;
-  --purple2:#705b9f;
-  --blue:#355f8f;
-  --cyan:#3d7f88;
-  --green:#4e7a5e;
-  --gold:#96742d;
-  --border:#e5ddd6;
-  --soft:#f6f1ec;
-  --softp:#f0e9f3;
-  --white:#fffdfa;
-  --card:#fffdfa;
-  --bg:#fbf8f3;
 
   --shell-max:1180px;
   --shell-x:28px;
@@ -24,12 +9,9 @@
   --shell-brand-size:18px;
 }
 .topbar{
-  position:sticky;
   top:0;
-  z-index:50!important;
-  background:rgba(251,248,243,.96);
-  backdrop-filter:blur(12px)!important;
-  border-bottom:1px solid var(--border);
+  z-index:50;
+  backdrop-filter:blur(12px);
   margin:0;
   padding:0;
   width:100vw;
@@ -42,9 +24,9 @@ body.dark .topbar,
 body.v88-dark .topbar{
   background:rgba(23,20,25,.96)!important;
 }
-.topbar .topinner{margin:0 auto;padding:13px var(--shell-x);display:flex;align-items:center;justify-content:space-between;gap:18px}
+.topbar .topinner{margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:18px}
 .brand-button{
-  border:0;background:transparent;color:inherit;
+  border:0;background:transparent;
   padding:0;margin:0;cursor:pointer;
   text-align:left;text-decoration:none;white-space:nowrap;
 }
@@ -65,20 +47,20 @@ body.v88-dark .topbar{
   margin-left:auto!important;
 }
 .nav button,.nav a{
-  appearance:none!important;
+  appearance:none;
   border:0!important;
   background:transparent!important;
   color:inherit!important;
   padding:9px 10px!important;
   border-radius:9px!important;
-  cursor:pointer!important;
+  cursor:pointer;
   font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif!important;
   font-size:var(--shell-nav-size)!important;
   line-height:1.2!important;
   font-weight:700!important;
   letter-spacing:0!important;
   text-decoration:none!important;
-  white-space:nowrap!important;
+  white-space:nowrap;
 }
 .nav button:hover,.nav button.active,.nav a:hover{
   background:var(--softp)!important;color:var(--purple)!important;
@@ -89,18 +71,18 @@ body.v88-dark .topbar{
 
 .secondary-menu{position:relative!important}
 .secondary-menu summary{
-  list-style:none!important;display:flex!important;align-items:center!important;justify-content:center!important;
-  gap:8px!important;min-height:40px!important;box-sizing:border-box!important;
+  list-style:none;display:flex!important;align-items:center!important;justify-content:center;
+  gap:8px!important;min-height:40px!important;box-sizing:border-box;
   border:1px solid var(--border)!important;background:var(--card)!important;color:inherit!important;
-  border-radius:999px!important;padding:0 14px!important;cursor:pointer!important;
+  border-radius:999px!important;padding:0 14px!important;cursor:pointer;
   font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif!important;font-size:var(--shell-control-size)!important;
-  line-height:1.2!important;font-weight:800!important;white-space:nowrap!important;
+  line-height:1.2!important;font-weight:800;white-space:nowrap;
 }
-.secondary-menu summary::-webkit-details-marker{display:none!important}
+.secondary-menu summary::-webkit-details-marker{display:none}
 .secondary-menu summary:hover,.secondary-menu[open] summary{background:var(--softp)!important;color:var(--purple)!important}
 
 #mobileNav,#v922MobileNav{
-  display:none!important;appearance:none!important;-webkit-appearance:none!important;
+  display:none!important;appearance:none;-webkit-appearance:none;
   border:1px solid var(--border)!important;background-color:var(--card)!important;color:inherit!important;
   border-radius:9px!important;padding:9px 34px 9px 11px!important;
   font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif!important;font-size:14px!important;font-weight:700!important;
@@ -126,19 +108,16 @@ body.v88-dark .topbar{
     flex-wrap:nowrap;
   }
   .topbar .brand-button{
-    flex:1 1 auto;
-    min-width:0;
     overflow:hidden;
   }
   .topbar .brand{
     display:block!important;
-    min-width:0!important;
+    min-width:0;
     overflow:hidden!important;
-    text-overflow:ellipsis!important;
+    text-overflow:ellipsis;
   }
   .topbar .top-actions{
-    flex:0 0 auto!important;
-    min-width:0!important;
+    flex:0 0 auto;
     gap:8px!important;
   }
   
@@ -160,8 +139,7 @@ body.v88-dark .topbar{
   
   #mobileNav,#v922MobileNav{
     flex-basis:104px!important;
-    width:104px!important;
-    max-width:104px!important;
+    max-width:104px;
     font-size:13px!important;
   }
 }
@@ -192,9 +170,6 @@ html{
 }
 .topbar .topinner{
   width:100%;
-  max-width:1180px;
-  margin-left:auto;
-  margin-right:auto;
   box-sizing:border-box;
 }
 /* Equal left/right header anchors keep the center navigation stationary. */
@@ -237,15 +212,12 @@ summary:focus-visible,
 select:focus-visible,
 [role="button"]:focus-visible{
   outline:3px solid color-mix(in srgb,var(--purple) 72%,white)!important;
-  outline-offset:3px!important;
+  outline-offset:3px;
 }
 @media(prefers-reduced-motion:reduce){
-  html{scroll-behavior:auto!important}
+  
   *,*::before,*::after{
-    scroll-behavior:auto!important;
-    transition-duration:.01ms!important;
-    animation-duration:.01ms!important;
-    animation-iteration-count:1!important;
+    scroll-behavior:auto;
   }
 }
 
@@ -287,9 +259,6 @@ select:focus-visible,
 /* v98.1 — keep the flagship State title prominent without overpowering the card. */
 
 /* v98.2 — the bottom Working style section already explains the non-linear learning approach. */
-#ai-cs-mock .learning-hero > .lead + .lead{
-  display:none!important;
-}
 
 /* v98.3 — keep expanded Learning Guide content inside its mobile card bounds. */
 @media(max-width:640px){
@@ -298,14 +267,9 @@ select:focus-visible,
   #ai-cs-mock [data-page="learn"] .learning-stage .learning-item{
     min-width:0!important;
     max-width:100%!important;
-    box-sizing:border-box!important;
+    box-sizing:border-box;
   }
-  #ai-cs-mock [data-page="learn"] .learning-stage .stage-group.practice{
-    margin-left:0!important;
-    margin-right:0!important;
-    width:auto!important;
-    max-width:100%!important;
-  }
+  
   #ai-cs-mock [data-page="learn"] .learning-stage .resource-row{
     min-width:0!important;
     max-width:100%!important;
@@ -313,23 +277,23 @@ select:focus-visible,
   #ai-cs-mock [data-page="learn"] .learning-stage .resource-link{
     max-width:100%!important;
     white-space:normal!important;
-    overflow-wrap:anywhere!important;
+    overflow-wrap:anywhere;
   }
   #ai-cs-mock [data-page="learn"] .learning-stage .learning-item,
   #ai-cs-mock [data-page="learn"] .learning-stage .learning-item p,
   #ai-cs-mock [data-page="learn"] .learning-stage .stage-group.practice p{
-    overflow-wrap:break-word!important;
+    overflow-wrap:break-word;
   }
 }
 
 /* v98.4 — keep Reference / deeper dive rows away from the clipped card edge on phones. */
 @media(max-width:640px){
   #ai-cs-mock [data-page="learn"] .learning-stage .stage-body > .stage-group:not(.practice){
-    position:relative!important;
-    left:0!important;
+    position:relative;
+    left:0;
     transform:none!important;
     margin-left:0!important;
-    margin-right:0!important;
+    margin-right:0;
     width:100%!important;
     max-width:100%!important;
     padding-left:8px!important;
@@ -337,8 +301,8 @@ select:focus-visible,
   }
   #ai-cs-mock [data-page="learn"] .learning-stage .stage-body > .stage-group:not(.practice) > h3,
   #ai-cs-mock [data-page="learn"] .learning-stage .stage-body > .stage-group:not(.practice) > .learning-item{
-    position:relative!important;
-    left:0!important;
+    position:relative;
+    left:0;
     transform:none!important;
     margin-left:0!important;
     max-width:100%!important;
@@ -352,41 +316,28 @@ select:focus-visible,
 
 /* v98.5 — quiet calibration for Learning Guide topics that deepen through real work. */
 
-#ai-cs-mock #implementation-adoption .stage-group:first-of-type .learning-item:nth-of-type(1) > b::after,#ai-cs-mock #implementation-adoption .stage-group:first-of-type .learning-item:nth-of-type(2) > b::after,#ai-cs-mock #product-strategy .stage-group:first-of-type .learning-item:nth-of-type(1) > b::after,#ai-cs-mock #product-strategy .stage-group:first-of-type .learning-item:nth-of-type(2) > b::after{
-  content:' · DEEPENS IN PRACTICE';
-  margin-left:7px!important;
-  color:color-mix(in srgb,var(--muted) 78%,transparent)!important;
-  font-size:9.5px!important;
-  line-height:1!important;
-  font-weight:750!important;
-  letter-spacing:.055em!important;
-  white-space:nowrap!important;
-}
 @media(max-width:640px){
   
-  #ai-cs-mock [data-page="learn"] .learning-item > b::after{font-size:9px!important;margin-left:5px!important;}
+  #ai-cs-mock [data-page="learn"] .learning-item > b::after{font-size:9px;margin-left:5px;}
 }
 
 /* v98.6 — keep the legend in the Reference Library row instead of the intro copy. */
 
-#ai-cs-mock [data-page="learn"] .learning-stages > .section-kicker{
-  align-items:center!important;
-}
 #ai-cs-mock [data-page="learn"] .learning-stages > .section-kicker::after{
-  content:'DEEPENS IN PRACTICE · real-world proficiency grows on the job'!important;
-  height:auto!important;
-  min-height:1px!important;
-  flex:1 1 auto!important;
-  padding-left:18px!important;
+  content:'DEEPENS IN PRACTICE · real-world proficiency grows on the job';
+  height:auto;
+  min-height:1px;
+  flex:1 1 auto;
+  padding-left:18px;
   background:linear-gradient(90deg,var(--border),var(--border)) left center / calc(100% - 315px) 1px no-repeat!important;
-  color:color-mix(in srgb,var(--muted) 76%,transparent)!important;
-  font-size:10px!important;
-  line-height:1.2!important;
-  font-weight:650!important;
-  letter-spacing:.03em!important;
-  text-align:right!important;
-  text-transform:none!important;
-  white-space:nowrap!important;
+  color:color-mix(in srgb,var(--muted) 76%,transparent);
+  font-size:10px;
+  line-height:1.2;
+  font-weight:650;
+  letter-spacing:.03em;
+  text-align:right;
+  text-transform:none;
+  white-space:nowrap;
 }
 @media(max-width:760px){
   #ai-cs-mock [data-page="learn"] .learning-stages > .section-kicker::after{
@@ -420,7 +371,7 @@ select:focus-visible,
   margin:0 0 6px!important;
 }
 #ai-cs-mock [data-page="home"] .home-principle .section-kicker::after{
-  display:none!important;
+  display:none;
 }
 #ai-cs-mock [data-page="home"] .home-principle h2,
 #ai-cs-mock [data-page="home"] .home-principle p{

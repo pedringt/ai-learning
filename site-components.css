@@ -27,20 +27,18 @@
 .page-intro>.eyebrow{
   display:inline-flex;
   align-items:center;
-  margin:0 0 var(--space-2);
   font-size:11px;
   font-weight:850;
   letter-spacing:.07em;
-  text-transform:uppercase;
   color:var(--purple);
 }
 .page-intro h1,
 .page-intro h2,
 .page-intro>.section-title{
-  margin:0 0 var(--space-2)!important;
-  font-size:var(--page-title-size)!important;
-  line-height:1.1!important;
-  letter-spacing:-.03em!important;
+  margin:0 0 var(--space-2);
+  font-size:var(--page-title-size);
+  line-height:1.1;
+  letter-spacing:-.03em;
 }
 .page-intro .lead,
 .page-intro>.section-lead{
@@ -87,6 +85,9 @@
   margin:0 0 var(--space-5);
   font:750 12px/1.4 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
   color:var(--muted);
+  /* One breadcrumb size on every page (Paige, Oct 11): Meridian and the Project Health
+     case study were 13px. This replaces site-polish.css (#451). */
+  font-size:12px!important;
 }
 .site-breadcrumb ol{
   display:flex;
@@ -125,31 +126,25 @@
 /* v95.54 — quiet capability closing reflection */
 
 /* v95.59 standalone Meridian detail pages */
-body:has(> main.artifact-detail){margin:0;color:var(--ink);background:var(--bg);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;font-size:15px;line-height:1.62}
-body.v88-dark:has(> main.artifact-detail){--ink:#f3ede8;--muted:#b9afb6;--border:#3b333d;--soft:#241f27;--softp:#2c2430;--card:#1f1b22;--bg:#171419;--purple:#b59cc8;--purple2:#c1a8d1;--blue:#8fa9c8;--cyan:#82aeb3;--green:#8eae98;--gold:#c8ad72}
 
 /* v96.28 extend dark-mode tokens to the Implementation Context / Legal AI case-study template (previously only the top bar darkened) */
 body.v88-dark:has(> main.case-system-page){--ink:#f3ede8;--muted:#b9afb6;--border:#3b333d;--soft:#241f27;--softp:#2c2430;--card:#1f1b22;--bg:#171419;--purple:#b59cc8;--purple2:#c1a8d1;--blue:#8fa9c8;--cyan:#82aeb3;--green:#8eae98;--gold:#c8ad72}
-body:has(> main.case-system-page){background:var(--bg);color:var(--ink)}
 
-.meridian-primary-action{display:inline-flex;align-items:center;gap:9px;padding:12px 17px;border-radius:10px;background:var(--purple);color:#fff;font-size:14px;font-weight:850;text-decoration:none;box-shadow:0 8px 22px color-mix(in srgb,var(--purple) 25%,transparent)}
-.meridian-primary-action:hover{transform:translateY(-1px);filter:brightness(1.04);text-decoration:none!important}
-.meridian-product-callout{display:flex;align-items:center;justify-content:space-between;gap:24px;margin:0 0 28px;padding:18px 20px;border:1px solid color-mix(in srgb,var(--purple) 28%,var(--border));border-radius:var(--radius-lg);background:linear-gradient(135deg,var(--softp),var(--card))}
+.meridian-primary-action{display:inline-flex;align-items:center;gap:9px;padding:12px 17px;border-radius:10px;font-size:14px;font-weight:850;text-decoration:none;}
+.meridian-primary-action:hover{transform:translateY(-1px);filter:brightness(1.04);}
+.meridian-product-callout{align-items:center;justify-content:space-between;margin:0 0 28px;}
 .meridian-product-callout>div{min-width:0}.meridian-product-callout>div>span{display:block;margin-bottom:4px;color:var(--purple);font-size:10px;font-weight:850;letter-spacing:.08em;text-transform:uppercase}.meridian-product-callout strong{display:block;font-size:16px}.meridian-product-callout p{max-width:720px;margin:4px 0 0;color:var(--muted);font-size:13px;line-height:1.5}.meridian-product-callout .meridian-primary-action{flex:0 0 auto}
 @media(max-width:760px){.meridian-primary-action{width:100%;box-sizing:border-box;justify-content:center}}
 @media(max-width:700px){.meridian-product-callout{display:block}.meridian-product-callout .meridian-primary-action{margin-top:14px}}
 
 /* Canonical content frame and route-heading behavior. */
 .site-page{
-  width:min(var(--content-max),100%)!important;
-  margin-inline:auto!important;
-  box-sizing:border-box!important;
+  margin-inline:auto;
 }
 .route-title{
-  margin:0 0 var(--space-2)!important;
-  font-size:var(--page-title-size)!important;
-  line-height:1.1!important;
-  letter-spacing:-.03em!important;
+  font-size:var(--page-title-size);
+  line-height:1.1;
+  letter-spacing:-.03em;
 }
 
 /* One footer navigation pattern for every Meridian artifact. */
@@ -157,56 +152,35 @@ body:has(> main.case-system-page){background:var(--bg);color:var(--ink)}
 /* v95.64 — canonical Meridian page family. These namespaced classes are the
    only geometry contract for the overview, artifacts, and runner. */
 body>main.meridian-page-shell{
-  width:100%!important;
-  max-width:1180px!important;
-  margin:0 auto!important;
-  padding:66px 28px 90px!important;
-  box-sizing:border-box!important;
-}
-#ai-cs-mock .meridian-page-shell{
-  width:100%!important;
-  max-width:none!important;
-  box-sizing:border-box!important;
+  width:100%;
+  box-sizing:border-box;
 }
 
-.meridian-heading{margin:0 0 16px!important}
-
-.meridian-heading .eyebrow{margin:0!important}
+.meridian-heading{margin:0 0 16px}
 
 .meridian-case-hero{
-  display:block!important;
-  min-height:0!important;
-  margin:0 0 22px!important;
-  padding:0!important;
-  border:0!important;
-  border-radius:0!important;
-  background:transparent!important;
-  box-shadow:none!important;
+  display:block;
+  min-height:0;
+  margin:0 0 22px;
+  padding:0;
+  border:0;
+  border-radius:0;
 }
 .meridian-case-hero h1,
 .meridian-case-hero h2{
-  min-height:42px!important;
-  margin:0 0 10px!important;
-  font-size:38px!important;
-  line-height:1.08!important;
-  letter-spacing:-.035em!important;
+  min-height:42px;
 }
 .meridian-case-hero>.lead,
 .meridian-case-hero>.section-lead{
-  min-height:50px!important;
-  max-width:880px!important;
-  margin:0!important;
-  color:var(--muted)!important;
-  font-size:16px!important;
-  line-height:1.55!important;
+  min-height:50px;
+  margin:0;
 }
 
 @media(max-width:760px){
-  body>main.meridian-page-shell{padding:48px 18px 70px!important}
-  
-  .meridian-heading{margin-bottom:12px!important}
-  .meridian-case-hero h1,.meridian-case-hero h2{min-height:0!important;font-size:32px!important}
-  .meridian-case-hero>.lead,.meridian-case-hero>.section-lead{min-height:0!important;font-size:15px!important}
+  body>main.meridian-page-shell{padding:48px 18px 70px}
+
+  .meridian-case-hero h1,.meridian-case-hero h2{min-height:0;font-size:32px}
+  .meridian-case-hero>.lead,.meridian-case-hero>.section-lead{min-height:0;font-size:15px}
 
 }
 
@@ -223,8 +197,7 @@ body>main.meridian-page-shell{
 /* Small, reusable "correctly placed in a known framework" note — for naming a
    term/standard/framework already used correctly in the surrounding content,
    without a paragraph of explanation. Keep to one or two sentences. */
-.field-note{margin:14px 0 0;padding:10px 14px;border-left:3px solid var(--cyan);background:color-mix(in srgb,var(--cyan) 6%,var(--card));border-radius:0 8px 8px 0;color:var(--muted);font-size:12.5px;line-height:1.55}
-.field-note b{color:var(--ink);font-weight:700}
+.field-note{margin:14px 0 0;padding:10px 14px;border-left:3px solid var(--cyan);background:color-mix(in srgb,var(--cyan) 6%,var(--card));border-radius:0 8px 8px 0;}
 
 /* Small reusable status pill — for marking work as a deliberate, bounded
    pass (exploratory, in progress, resumed later) rather than abandoned.
@@ -249,18 +222,15 @@ body>main.meridian-page-shell{
 #ai-cs-mock [data-page="learn"] .stage-group h3{color:var(--stage-accent)!important}
 #ai-cs-mock [data-page="learn"] .stage-group:nth-of-type(2):not(.practice){margin:8px 0 2px!important;padding:14px 16px!important;border:1px solid color-mix(in srgb,var(--stage-accent,#a97718) 22%,var(--border))!important;border-radius:11px!important;background:color-mix(in srgb,var(--stage-accent,#a97718) 6%,var(--card))!important}
 #ai-cs-mock [data-page="learn"] .stage-group:nth-of-type(2):not(.practice) h3{color:#9a6c13!important}
-#ai-cs-mock [data-page="learn"] .stage-group.practice{border-left:4px solid #168f7b!important;background:color-mix(in srgb,#168f7b 7%,var(--card))!important}
-#ai-cs-mock [data-page="learn"] .stage-group.practice h3{color:#147b6b!important}
+
 #ai-cs-mock.dark [data-page="learn"] .stage-group:nth-of-type(2):not(.practice) h3{color:#d3a84f!important}
-#ai-cs-mock.dark [data-page="learn"] .stage-group.practice h3{color:#55c7b3!important}
+
 @media(max-width:760px){#ai-cs-mock [data-page="learn"] .stage-num{width:28px;height:28px}#ai-cs-mock [data-page="learn"] .stage-group:nth-of-type(2):not(.practice){margin-left:-48px!important;padding-left:18px!important}}
 
 /* v95.90 — cross-page design consistency audit. */
 body>main.site-page{
-  width:100%!important;
-  max-width:var(--content-max)!important;
-  margin-inline:auto!important;
-  padding:34px 28px 72px!important;
+  width:100%;
+  margin-inline:auto;
 }
 .site-page>.site-breadcrumb{margin-bottom:22px}
 .site-page>.case-hero{
@@ -268,21 +238,12 @@ body>main.site-page{
   margin:0 0 28px;
 }
 .site-page>.case-hero h1{
-  margin:0 0 10px!important;
-  font-size:var(--page-title-size)!important;
-  line-height:1.1!important;
-  letter-spacing:-.03em!important;
-}
-.site-page>.case-hero .lead{
-  max-width:var(--reading-max);
-  margin:0;
-  color:var(--muted);
-  font-size:var(--lead-size);
-  line-height:1.62;
+  margin:0 0 10px;
+  line-height:1.1;
 }
 
 @media(max-width:760px){
-  body>main.site-page{padding:28px 18px 56px!important}
+  body>main.site-page{padding:28px 18px 56px}
   .site-page>.site-breadcrumb{margin-bottom:18px}
   .site-page>.case-hero{margin-bottom:22px}
 
@@ -291,7 +252,7 @@ body>main.site-page{
 
 /* v96.01 portfolio hierarchy */
 
-.applied-major-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}.applied-secondary-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.applied-secondary-grid>.nav-card,.applied-secondary-grid>.card{grid-column:auto}@media(max-width:900px){.applied-secondary-grid{grid-template-columns:1fr}}
+.applied-secondary-grid>.nav-card,.applied-secondary-grid>.card{grid-column:auto}@media(max-width:900px){.applied-secondary-grid{grid-template-columns:1fr}}
 
 /* v96.02 — Home project hierarchy */
 
@@ -299,14 +260,14 @@ body>main.site-page{
    Meridian remains the geometry reference. New case studies use these shared
    primitives rather than project-local shell/card/CTA overrides. */
 body:has(>main.case-system-page){
-  margin:0;color:var(--ink);background:var(--bg);
+  margin:0;
   font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
   font-size:15px;line-height:1.62;
 }
 .case-system-page .case-page-content{margin:0 auto}
-.case-system-page .case-page-content>.section{margin:0;border-top:1px solid var(--border);background:transparent}
-.case-system-page .case-page-content>:first-child{border-top:0;padding-top:4px}
-.case-system-page .case-page-content h2{margin:0 0 10px}
+.case-system-page .case-page-content>.section{background:transparent}
+.case-system-page .case-page-content>:first-child{border-top:0;}
+
 .case-system-page .case-page-content h2:not(:first-child){margin-top:30px}
 .case-system-page .case-page-content h3{margin:22px 0 7px;line-height:1.3}
 .case-system-page .case-page-content p,
@@ -319,22 +280,17 @@ body:has(>main.case-system-page){
    (.summary-head .kicker, .case-section-intro .kicker), so any .kicker outside those
    two exact contexts (e.g. .legal-feature-card .kicker) silently got no styling at all.
    Made a real reusable class instead of a pattern repeated per-container. */
-.case-system-page .kicker{margin:0 0 5px;color:var(--purple);font-size:10px;font-weight:850;letter-spacing:.08em;text-transform:uppercase}
+.case-system-page .kicker{margin:0 0 5px;text-transform:uppercase}
 
 /* Shared artifact/path cards — promoted from Meridian instead of living in index.html. */
 
 /* Quiet end-cap: a conclusion, not a second hero. */
 
 /* Shared data/table rhythm for case-study pages. */
-.case-system-page .results{width:100%;margin:14px 0 20px;border-collapse:collapse;font-size:13px}
-.case-system-page .results th,.case-system-page .results td{padding:10px 12px;border:1px solid var(--border);vertical-align:top}
-.case-system-page .results th{background:var(--soft);color:var(--muted);font-size:10.5px;font-weight:850;letter-spacing:.055em;text-transform:uppercase}
-.case-system-page .results td{background:var(--card);color:var(--muted)}
 
 @media(max-width:760px){
 
   .case-system-page .case-page-content>.section{padding:23px 0}
-  .case-system-page .case-page-content h2{font-size:22px}
 
 }
 
@@ -351,20 +307,20 @@ body:has(>main.case-system-page){
 /* Full Investigation: keep the manuscript, collapse the chapter-scale scroll. */
 
 /* Global card CTA alignment: variable copy, fixed visual baseline. */
-#ai-cs-mock .card.nav-card{display:flex!important;flex-direction:column!important}
+#ai-cs-mock .card.nav-card{display:flex!important;}
 
 @media(max-width:760px){
- .case-system-page .meridian-case-hero{min-height:0!important}
+ .case-system-page .meridian-case-hero{min-height:0}
 
 }
 
 /* v96.06 — case-study design QA: Meridian-calibrated rhythm and density. */
 .case-system-page .meridian-heading{margin-bottom:14px!important}
-.case-system-page .meridian-case-hero{min-height:0!important;margin-bottom:20px!important}
+.case-system-page .meridian-case-hero{min-height:0;margin-bottom:20px}
 
 .case-system-page .case-page-content>.section{padding:28px 0}
 
-.case-system-page .case-page-content h2{font-size:24px;line-height:1.22;letter-spacing:-.022em}
+.case-system-page .case-page-content h2{font-size:24px;}
 .case-system-page .case-page-content h3{font-size:16px}
 .case-system-page .case-page-content p,
 .case-system-page .case-page-content li{font-size:14px;line-height:1.6}
@@ -376,8 +332,6 @@ body:has(>main.case-system-page){
    .case-panel-lede, which is why the same "wall of text" complaint showed up again
    on a .case-section-intro page (Product Decisions) using the identical .method-note
    markup. One shared rule now covers every instance instead of per-page patches. */
-
-.case-system-page .results{max-width:980px}
 
 @media(max-width:760px){
  .case-system-page .case-page-content>.section{padding:22px 0}
@@ -391,7 +345,7 @@ body:has(>main.case-system-page){
 
 /* v96.11 surgical fixes: intentionally scoped; v96.09 remains visual baseline. */
 /* Meridian provenance: quiet metadata rather than an oversized outlined pill. */
-body:has(.meridian-breadcrumb span:last-child) .meridian-heading .eyebrow{display:inline-block!important;width:auto!important;max-width:max-content!important;padding:0!important;border:0!important;border-radius:0!important;background:transparent!important;color:var(--muted)!important;font-size:10.5px!important;font-weight:800!important;letter-spacing:.055em!important;text-transform:uppercase!important}
+
 /* Deep Dive: fix only the accidental nested indentation; do not narrow other IC pages. */
 
 /* Legal Evidence progressive disclosure. */
@@ -423,10 +377,10 @@ body:has(.meridian-breadcrumb span:last-child) .meridian-heading .eyebrow{displa
 /* v96.13 — shared geometry + small visual QA fixes.
    One outer case-study grid; narrow only prose, never whole sections. */
 .case-system-page .case-page-content{
-  width:100%!important;
-  max-width:none!important;
-  margin-left:0!important;
-  margin-right:0!important;
+  width:100%;
+  max-width:none;
+  margin-left:0;
+  margin-right:0;
 }
 .case-system-page .case-page-content>.section{
   width:100%;
@@ -478,41 +432,35 @@ body:has(.meridian-breadcrumb span:last-child) .meridian-heading .eyebrow{displa
 /* Meridian-style chapter footer */
 
 /* v4 restrained color restoration: hierarchy without bright gradients. */
-.case-system-page .kicker,.case-system-page .section-kicker{color:var(--purple)}
-
-.evidence-principle{border-left:4px solid var(--purple)!important;background:color-mix(in srgb,var(--softp) 55%,var(--card))!important}
 
 /* v5 — restore restrained color hierarchy; remove bright/gradient home treatments. */
 
 /* V6 editorial consistency audit */
 
-.case-system-page .kicker,.case-system-page .eyebrow{color:var(--purple)}
-
 /* V7 homepage: prototype is a secondary artifact of the case study, not a third project card. */
 
 /* V7 Legal AI: one-page editorial case study with selective color and fewer containers. */
-.legal-single-case{}.legal-story{margin:0 auto 80px}.legal-story .kicker{margin-bottom:8px;color:var(--purple);font-size:10px;font-weight:850;letter-spacing:.09em;text-transform:uppercase}.legal-story h2{max-width:780px;margin:0 0 12px;line-height:1.16}.legal-story h3{font-size:17px;line-height:1.3;margin:4px 0 7px}.legal-story p{max-width:800px;color:var(--muted)}.legal-method{max-width:800px;border-top:1px solid var(--border)}.legal-method summary{cursor:pointer;color:var(--muted);font-size:12px;font-weight:750}.legal-method p{font-size:13px}.text-link{color:var(--purple);font-weight:800;text-decoration:none}.text-link:hover{text-decoration:underline}
-@media(max-width:760px){.legal-story h2{font-size:23px}}
+.legal-single-case{}.legal-story .kicker{margin-bottom:8px;letter-spacing:.09em;text-transform:uppercase}.legal-method{border-top:1px solid var(--border)}.legal-method summary{cursor:pointer;color:var(--muted);font-size:12px;font-weight:750}.text-link{color:var(--purple);font-weight:800;text-decoration:none}.text-link:hover{text-decoration:underline}
 
 /* V8 shared case-study finish: tighter, more editorial, selective color. */
-.legal-single-case .meridian-case-hero{padding-bottom:28px;border-bottom:3px solid color-mix(in srgb,var(--purple) 62%,var(--border))}.legal-story{max-width:940px;margin-bottom:58px}.legal-story h2{font-size:25px;margin-bottom:9px}.legal-story p{font-size:14px;line-height:1.58}.legal-method{margin-top:12px;padding-top:9px}
+.legal-story{margin-bottom:58px}.legal-story h2{font-size:25px;margin-bottom:9px}.legal-story p{font-size:14px;line-height:1.58}.legal-method{padding-top:9px}
 /* Give the flagship case-study pages the same restrained color vocabulary. */
-.meridian-page-shell .meridian-case-hero{position:relative}.meridian-page-shell .meridian-case-hero:after{content:"";display:block;width:54px;height:3px;margin-top:18px;border-radius:99px;background:var(--purple)}.meridian-page-shell .kicker,.meridian-page-shell .eyebrow{color:var(--purple)}
+.meridian-page-shell .meridian-case-hero{position:relative}.meridian-page-shell .meridian-case-hero:after{content:"";height:3px;border-radius:99px;background:var(--purple)}
 @media(max-width:760px){.legal-story h2{font-size:22px}}
 
 /* V9 — final round corrections: clearer case-study family, simpler home close, compact learning principles. */
 
 /* Case-study shell: the newer cases should visibly belong to the same site. */
-.case-system-page>.meridian-case-hero,.legal-single-case>.meridian-case-hero{margin-top:12px;padding:24px 26px!important;border:1px solid color-mix(in srgb,var(--purple) 22%,var(--border));border-radius:13px;min-height:0!important}
+.case-system-page>.meridian-case-hero,.legal-single-case>.meridian-case-hero{padding:24px 26px;border:1px solid color-mix(in srgb,var(--purple) 22%,var(--border));min-height:0}
 .case-system-page>.meridian-case-hero:after,.legal-single-case>.meridian-case-hero:after{width:48px;height:3px;margin-top:15px;background:var(--purple)}
 
 /* Legal AI is a short case study, not a separately centered article. */
-.legal-single-case{max-width:1180px!important}
-.legal-single-case .legal-story{width:100%;max-width:none;margin:0 0 58px!important;padding:0!important}
+
+.legal-single-case .legal-story{width:100%;max-width:none;margin:0 0 58px;padding:0!important}
 
 @media(max-width:760px){
 
-  .case-system-page>.meridian-case-hero,.legal-single-case>.meridian-case-hero{padding:19px 18px!important}
+  .case-system-page>.meridian-case-hero,.legal-single-case>.meridian-case-hero{padding:19px 18px}
   
 }
 
@@ -522,7 +470,7 @@ body:has(.meridian-breadcrumb span:last-child) .meridian-heading .eyebrow{displa
 .case-system-page>.meridian-case-hero,.legal-single-case>.meridian-case-hero{}
 
 /* V12 final editorial/design corrections. */
-.case-system-page>.meridian-case-hero,.legal-single-case>.meridian-case-hero{background:var(--card)!important;border-color:color-mix(in srgb,var(--purple) 30%,var(--border))!important}.legal-single-case>.meridian-case-hero{background:var(--card)!important}.legal-single-case .meridian-case-hero:after{background:var(--purple)!important}.legal-single-case .legal-story h2{font-size:23px!important}.legal-single-case .legal-story p{font-size:13.5px!important;line-height:1.55!important}
+.case-system-page>.meridian-case-hero,.legal-single-case>.meridian-case-hero{background:var(--card);border-color:color-mix(in srgb,var(--purple) 30%,var(--border))}.legal-single-case>.meridian-case-hero{background:var(--card)}.legal-single-case .meridian-case-hero:after{background:var(--purple)}.legal-single-case .legal-story h2{font-size:23px!important}.legal-single-case .legal-story p{font-size:13.5px!important;line-height:1.55!important}
 
 /* Implementation Context: compact maintained-state architecture receipt */
 
@@ -531,12 +479,11 @@ body:has(.meridian-breadcrumb span:last-child) .meridian-heading .eyebrow{displa
 /* State case-study pages use the same quiet portfolio surfaces as Home. */
 
 .case-system-page .meridian-product-callout{background:color-mix(in srgb,var(--softp) 48%,var(--card));border-color:color-mix(in srgb,var(--purple) 34%,var(--border))}
-.case-system-page .meridian-primary-action{background:var(--purple)}
 
 /* Legal AI is a discovery readout, not a dashboard: typography and rules carry hierarchy. */
 
 /* QA4: one legal-story gutter; highlighted sections do not add a second inset. Applies at all widths, so no separate mobile override is needed. */
-.legal-single-case .legal-story{padding-inline:0!important;box-sizing:border-box}
+.legal-single-case .legal-story{padding-inline:0;box-sizing:border-box}
 
 /* QA4.2: findings keep the page alignment, but add breathing room after the accent rule. */
 
@@ -544,52 +491,52 @@ body:has(.meridian-breadcrumb span:last-child) .meridian-heading .eyebrow{displa
 
 /* QA5 — Legal AI as a concise research memo / paper. */
 .legal-single-case .legal-paper{max-width:900px!important;margin:28px auto 72px!important;padding:0 34px!important;box-sizing:border-box}
-.legal-paper .paper-abstract{padding:0 0 34px;border-bottom:2px solid var(--ink)}
-.legal-paper .paper-abstract h2{max-width:760px!important;font-size:30px!important;line-height:1.14!important;margin:0 0 14px!important}
-.legal-paper .paper-deck{max-width:760px!important;font-size:16px!important;line-height:1.62!important;margin:0 0 24px!important}
+.legal-paper .paper-abstract{padding:0 0 34px;}
+.legal-paper .paper-abstract h2{max-width:760px;font-size:30px!important;line-height:1.14!important;margin:0 0 14px!important}
+.legal-paper .paper-deck{max-width:760px;margin:0 0 24px}
 .legal-paper .paper-meta{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0;margin:24px 0 0;border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
 .legal-paper .paper-meta>div{padding:14px 18px 14px 0}
 .legal-paper .paper-meta>div+div{padding-left:18px;border-left:1px solid var(--border)}
 .legal-paper .paper-meta dt,.legal-paper .paper-flow span,.legal-paper .paper-before-after span{color:var(--purple);font-size:10px;font-weight:850;letter-spacing:.08em;text-transform:uppercase}
 .legal-paper .paper-meta dd{margin:5px 0 0;color:var(--ink);font-size:12.5px;line-height:1.48}
-.legal-paper .legal-method{max-width:760px!important;margin-top:16px!important}
-.legal-paper .paper-section{padding:38px 0;border-top:1px solid var(--border)}
-.legal-paper .paper-abstract+.paper-section{border-top:0}
-.legal-paper .paper-section>h2{max-width:760px!important;font-size:26px!important;line-height:1.18!important;margin:0 0 18px!important}
-.legal-paper .paper-section>p{max-width:760px!important;font-size:14.5px!important;line-height:1.65!important}
-.legal-paper .paper-findings{max-width:760px;margin:0;padding:0;list-style:none;counter-reset:findings}
+.legal-paper .legal-method{max-width:760px;margin-top:16px}
+.legal-paper .paper-section{padding:38px 0;}
+
+.legal-paper .paper-section>h2{max-width:760px;font-size:26px!important;line-height:1.18!important;margin:0 0 18px!important}
+.legal-paper .paper-section>p{max-width:760px;font-size:14.5px!important;line-height:1.65!important}
+.legal-paper .paper-findings{margin:0;padding:0;list-style:none;counter-reset:findings}
 .legal-paper .paper-findings li{counter-increment:findings;position:relative;padding:14px 0 14px 52px;border-top:1px solid var(--border)}
 .legal-paper .paper-findings li:first-child{border-top:0;padding-top:4px}
 .legal-paper .paper-findings li:before{content:"0" counter(findings);position:absolute;left:0;top:15px;color:var(--purple);font-size:11px;font-weight:850;letter-spacing:.08em}
 .legal-paper .paper-findings li:first-child:before{top:3px}
 .legal-paper .paper-findings h3{font-size:18px;line-height:1.3;margin:0 0 7px}
-.legal-paper .paper-findings p{margin:0!important;color:var(--muted);font-size:14px!important;line-height:1.62!important}
-.legal-paper .paper-example{margin:8px 0 0;padding:26px 0 30px;border-top:2px solid var(--purple);border-bottom:1px solid var(--border)}
-.legal-paper .paper-example figcaption{display:block;max-width:760px;margin-bottom:18px}
+.legal-paper .paper-findings p{margin:0;color:var(--muted);font-size:14px!important;line-height:1.62!important}
+.legal-paper .paper-example{margin:8px 0 0;padding:26px 0 30px;border-bottom:1px solid var(--border)}
+.legal-paper .paper-example figcaption{display:block;margin-bottom:18px}
 .legal-paper .paper-example figcaption strong{display:block;margin-top:6px;font-size:18px;line-height:1.3}
 .legal-paper .paper-flow{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:0;border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
 .legal-paper .paper-flow>div{padding:15px 14px 15px 0}
 .legal-paper .paper-flow>div+div{padding-left:14px;border-left:1px solid var(--border)}
-.legal-paper .paper-flow p{margin:6px 0 0!important;color:var(--ink)!important;font-size:12px!important;line-height:1.48!important}
-.legal-paper .paper-turn{margin-top:38px;padding:32px 0!important;border-top:3px solid var(--purple)!important;border-bottom:1px solid var(--border)}
-.legal-paper .paper-before-after{max-width:760px;display:grid;grid-template-columns:1fr 1fr;gap:0;margin:24px 0;border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
+.legal-paper .paper-flow p{margin:6px 0 0;color:var(--ink);font-size:12px!important;line-height:1.48!important}
+.legal-paper .paper-turn{margin-top:38px;padding:32px 0;border-top:3px solid var(--purple)!important;border-bottom:1px solid var(--border)}
+.legal-paper .paper-before-after{display:grid;grid-template-columns:1fr 1fr;gap:0;margin:24px 0;border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
 .legal-paper .paper-before-after>div{padding:16px 20px 16px 0}
 .legal-paper .paper-before-after>div+div{padding-left:20px;border-left:1px solid var(--border)}
-.legal-paper .paper-before-after p{margin:7px 0 0!important;color:var(--ink)!important;font-size:13px!important;line-height:1.55!important}
-.legal-paper .paper-ruled{padding-left:16px;border-left:3px solid var(--purple);color:var(--ink)!important}
+.legal-paper .paper-before-after p{margin:7px 0 0;color:var(--ink);font-size:13px!important;}
+.legal-paper .paper-ruled{padding-left:16px;border-left:3px solid var(--purple);color:var(--ink)}
 .legal-paper .paper-next-grid{max-width:760px;display:grid;grid-template-columns:1fr 1fr;gap:28px;margin-top:20px}
-.legal-paper .paper-next-grid p{margin:0!important;padding-top:12px;border-top:1px solid var(--border);font-size:13.5px!important;line-height:1.55!important}
+.legal-paper .paper-next-grid p{margin:0;padding-top:12px;border-top:1px solid var(--border);}
 .legal-paper .paper-learning{padding:28px 0 0;border-top:1px solid var(--border)}
-.legal-paper .paper-learning p{margin:0 0 12px;color:var(--muted);font-size:13.5px;line-height:1.58}
-.legal-paper .paper-sources{max-width:760px;margin-top:20px;padding-top:14px;border-top:1px solid var(--border);color:var(--muted)}
-.legal-paper .paper-sources h3{margin:0 0 8px;font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.legal-paper .paper-learning p{margin:0 0 12px;color:var(--muted);}
+.legal-paper .paper-sources{max-width:760px;margin-top:20px;border-top:1px solid var(--border);color:var(--muted)}
+.legal-paper .paper-sources h3{margin:0 0 8px;font-size:11px;text-transform:uppercase;color:var(--muted)}
 .legal-paper .paper-sources ul{margin:0;padding-left:18px;font-size:12.5px;line-height:1.6}
 .legal-paper .paper-sources li{margin:3px 0}
 @media(max-width:760px){.legal-single-case .legal-paper{padding:0 18px!important;margin-top:18px!important}.legal-paper .paper-meta,.legal-paper .paper-flow,.legal-paper .paper-before-after,.legal-paper .paper-next-grid{grid-template-columns:1fr}.legal-paper .paper-meta>div+div,.legal-paper .paper-flow>div+div,.legal-paper .paper-before-after>div+div{padding-left:0;border-left:0;border-top:1px solid var(--border)}.legal-paper .paper-meta>div,.legal-paper .paper-flow>div,.legal-paper .paper-before-after>div{padding:12px 0}.legal-paper .paper-abstract h2{font-size:25px!important}.legal-paper .paper-section>h2{font-size:23px!important}.legal-paper .paper-findings li{padding-left:40px}}
 
 /* Final copy/feedback pass */
 
-.legal-paper{max-width:1040px!important;padding-left:24px!important;padding-right:24px!important}
+.legal-paper{max-width:1040px;}
 .legal-paper .paper-abstract h2,
 .legal-paper .paper-deck,
 .legal-paper .legal-method,
@@ -601,10 +548,1527 @@ body:has(.meridian-breadcrumb span:last-child) .meridian-heading .eyebrow{displa
 .legal-paper .paper-learning{max-width:860px}
 
 @media(max-width:760px){
-  .legal-paper{padding-left:8px!important;padding-right:8px!important}
+  .legal-paper{padding-left:8px;padding-right:8px}
   
 }
 
 /* Homepage: make the cross-project working pattern explicit without adding another large philosophy section. */
 
-.legal-part-divider{margin:48px 0 18px;padding:20px 22px;border:1px solid var(--border);border-radius:14px;background:var(--soft)}.legal-part-divider span{display:block;color:var(--purple);font-size:11px;font-weight:850;letter-spacing:.06em;text-transform:uppercase;margin-bottom:6px}.legal-part-divider h2{margin:0 0 8px!important;font-size:26px!important}.legal-part-divider p,.legal-part-transition p{margin:0!important;font-size:13.5px!important;line-height:1.6!important}.legal-part-transition{margin:42px 0 12px;padding:17px 19px;border-left:3px solid var(--purple);background:var(--softp);border-radius:0 12px 12px 0}.legal-part-transition strong{display:block;margin-bottom:5px;font-size:16px}
+.legal-part-divider{margin:48px 0 18px;padding:20px 22px;border:1px solid var(--border);border-radius:14px;background:var(--soft)}.legal-part-divider span{display:block;color:var(--purple);font-size:11px;font-weight:850;letter-spacing:.06em;text-transform:uppercase;margin-bottom:6px}.legal-part-divider h2{margin:0 0 8px;font-size:26px}.legal-part-divider p,.legal-part-transition p{margin:0;}.legal-part-transition{margin:42px 0 12px;padding:17px 19px;border-left:3px solid var(--purple);background:var(--softp);border-radius:0 12px 12px 0}.legal-part-transition strong{display:block;margin-bottom:5px;}
+
+/* ---- moved from site-polish.css (#451), in order; none of them crosses a rule it competes with ---- */
+.flagship-case .integration-flow{
+  padding-top:14px;
+  border-top:1px solid var(--border);
+  color:var(--muted);
+}
+.flagship-case .integration-flow span{
+  padding:0;
+  border:0;
+  border-radius:0;
+  color:var(--ink);
+  font-size:12px;
+  letter-spacing:0;
+  text-transform:none;
+  white-space:nowrap;
+}
+.flagship-case .integration-flow .ai-step,
+.flagship-case .integration-flow .human-step{color:var(--purple)}
+.flagship-case .integration-flow b{font-weight:600}
+.flagship-case .state-model-grid article{
+  background:color-mix(in srgb,var(--soft) 38%,var(--card))!important;
+  border-color:var(--border)!important;
+}
+.legal-paper .paper-learning{
+  margin-top:30px;
+  padding-top:24px;
+}
+.legal-paper .paper-sources{
+  margin-top:18px;
+  padding-top:18px;
+}
+.legal-paper .paper-learning + .paper-sources{margin-top:18px}
+@media(max-width:760px){
+  .flagship-case .integration-flow{
+    display:grid;
+    grid-template-columns:max-content 14px max-content 14px max-content;
+    padding-bottom:4px;
+  }
+}
+@media(max-width:430px){
+  
+  .flagship-case .integration-flow b{
+    width:14px;
+    margin-left:2px;
+  }
+}
+
+/* ==== Bright redesign (#428), moved here from site-redesign.css in #451 ====
+   Reference: the approved A+C blend mockup (kept outside the repo so it is not served publicly).
+   Rule: expressive at the front door, disciplined once someone starts reading. Light only.
+   These rules used to load last on every page. They keep their order, and none of them crosses a
+   rule it competes with (same element, property, importance and specificity, different value), so
+   loading them here changes nothing. The homepage-only rules that may compete with index.html's
+   inline styles stay in site-redesign.css, which only index.html loads. */
+
+/* ---------- 1. Tokens: remap the variables the older CSS already uses ---------- */
+:root,
+html body,
+html body #ai-cs-mock,
+html body .app-root {
+  --ink: #15111a;
+  --muted: #5f5968;
+  --border: #e8e7ef;
+  --soft: #f8f7ff;
+  --softp: #f5f2ff;
+  --white: #ffffff;
+  --card: #ffffff;
+  --bg: #ffffff;
+  --purple: #15111a;   /* was bright violet; ink keeps links/labels in palette (#428 feedback) */
+  --purple2: #3b3445;
+  --blue: #3b5bdb;
+  --cyan: #00899c;
+  --green: #12805f;
+  --gold: #c2410c;
+  --rd-pink: #f0408f;
+  --rd-pink-soft: #ff5fa2;
+  --rd-cyan: #00bfd6;
+  --rd-violet: #6b5cff;
+  --rd-acid: #f4ff52;
+  --rd-coral: #ff6b57;
+  --rd-line: #e8e7ef;
+  color-scheme: light;
+}
+html { background: #fff; }
+html body {
+  background: transparent !important; /* html paints the white; keeps the grid/wash visible */
+  color: var(--ink);
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  overflow-x: hidden;
+}
+html body #ai-cs-mock {
+  background: transparent !important;
+  color: var(--ink) !important;
+  font-family: inherit;
+  isolation: isolate;
+}
+/* Background: faint grid + soft colour wash (home only; reading pages stay clean) */
+html body::before,
+html body::after { content: none; }
+html body:has(#home.active)::before,
+html body:has(#home.active)::after {
+  content: "";
+  position: fixed;
+  pointer-events: none;
+}
+html body:has(#home.active)::before {
+  inset: 0;
+  z-index: -3;
+  background:
+    linear-gradient(90deg, rgba(21, 17, 26, 0.045) 1px, transparent 1px),
+    linear-gradient(0deg, rgba(21, 17, 26, 0.045) 1px, transparent 1px);
+  background-size: 42px 42px;
+  -webkit-mask-image: linear-gradient(to bottom, #000 0%, transparent 82%);
+  mask-image: linear-gradient(to bottom, #000 0%, transparent 82%);
+}
+html body:has(#home.active)::after {
+  inset: -20% -10% auto;
+  z-index: -2;
+  height: 70vh;
+  background:
+    radial-gradient(circle at 17% 28%, rgba(255, 95, 162, 0.2), transparent 28%),
+    radial-gradient(circle at 74% 18%, rgba(244, 255, 82, 0.34), transparent 26%),
+    radial-gradient(circle at 88% 56%, rgba(0, 191, 214, 0.18), transparent 30%);
+  filter: blur(6px);
+  animation: rdFloatWash 12s ease-in-out infinite alternate;
+}
+/* ---------- 2. Shared chrome: top bar ---------- */
+html body .topbar {
+  position: sticky;
+  background: rgba(255, 255, 255, 0.82);
+  -webkit-backdrop-filter: blur(18px);
+  border-bottom: 1px solid rgba(232, 231, 239, 0.9);
+  box-shadow: none;
+}
+html body .topbar .topinner {
+  max-width: none;
+  padding: 14px clamp(20px, 4vw, 58px);
+}
+html body .topbar .nav { margin-left: auto !important; margin-right: 0; }
+html body .topbar .brand,
+html body .topbar .brand-button {
+  font-weight: 950 !important;
+  letter-spacing: -0.035em !important;
+  color: var(--ink) !important;
+}
+html body .topbar .brand span { display: inline !important; color: var(--ink) !important; }
+html body .topbar .brand::before {
+  content: "";
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  margin-right: 10px;
+  vertical-align: -4px;
+  border: 2px solid var(--ink);
+  border-radius: 7px;
+  background: linear-gradient(135deg, #fff 0 42%, var(--rd-acid) 42% 100%);
+  box-shadow: 3px 3px 0 var(--ink);
+}
+html body .topbar .nav button,
+html body .topbar .nav a {
+  color: var(--muted) !important;
+  font-weight: 700 !important;
+  background: transparent !important;
+}
+html body .topbar .nav button:hover,
+html body .topbar .nav a:hover { color: var(--ink) !important; background: var(--soft) !important; }
+html body .topbar .nav button.active,
+html body .topbar .nav a.active,
+html body .topbar .nav [aria-current="page"] {
+  color: #fff !important;
+  background: var(--ink) !important;
+}
+html body .nav button.active::after { display: none; }
+.rd-button:hover,
+html body .home-state-button:hover,
+html body .home-state-primary:hover,
+html body .home-state-secondary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 16px 30px rgba(21, 17, 26, 0.14);
+}
+/* Section kickers become small pills; the rule line goes away */
+html body #ai-cs-mock .section-kicker::after,
+html body #ai-cs-mock .section-kicker::before { display: none; }
+html body #ai-cs-mock .section-kicker span,
+html body #ai-cs-mock .eyebrow {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.84);
+  padding: 8px 12px;
+  color: #31283a;
+  font-size: 11px;
+  font-weight: 950;
+  letter-spacing: 0.08em;
+}
+/* ---------- 4. Homepage ---------- */
+html body #ai-cs-mock .shell {
+  max-width: 1360px !important;
+  padding: 0 clamp(20px, 4vw, 58px) 72px !important;
+}
+html body #ai-cs-mock #home { padding-top: 0 !important; }
+html body #ai-cs-mock .rd-hero h1 {
+  max-width: 980px;
+  margin: 0;
+  font-size: clamp(54px, 6.8vw, 100px);
+  line-height: 0.88;
+  color: var(--ink);
+}
+html body #ai-cs-mock .rd-hero h1 span { color: var(--rd-pink); }
+html body #ai-cs-mock .rd-hero .lead {
+  max-width: 660px;
+  margin: 26px 0 0;
+  color: var(--muted);
+  font-size: clamp(17px, 1.5vw, 21px);
+  line-height: 1.5;
+}
+.rd-card::before {
+  position: absolute;
+  inset: -14px auto auto -14px;
+  width: 110px;
+  height: 110px;
+  border-radius: 26px;
+  background: var(--rd-acid);
+  z-index: -1;
+  transform: rotate(-12deg);
+}
+.rd-status::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: currentColor;
+}
+
+.rd-trace div {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  font-size: 11px;
+  line-height: 1.2;
+}
+.rd-trace div:nth-child(2) { animation-delay: 0.45s; }
+.rd-trace div:nth-child(3) { animation-delay: 0.9s; }
+.rd-trace div:nth-child(4) { animation-delay: 1.35s; }
+.rd-note span {
+  display: block;
+  margin-top: 8px;
+  color: #493f11;
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+/* Featured work grid */
+html body #ai-cs-mock .home-start { margin-top: 56px; }
+html body #ai-cs-mock .home-applied-heading { margin-bottom: 18px; }
+html body #ai-cs-mock .home-feature-grid {
+  display: grid;
+  grid-template-columns: 1fr;                       /* below 900px: one column */
+  gap: 14px;
+}
+@media (min-width: 900px){
+  html body #ai-cs-mock .home-feature-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+html body #ai-cs-mock .home-feature-stack-right { display: contents !important; }
+html body #ai-cs-mock .home-feature-card {
+  position: relative;
+  overflow: hidden;
+  padding: 24px 24px 28px;
+  border: 1px solid var(--rd-line);
+  border-radius: 28px;
+  background: #fff;
+  transition: transform 220ms ease, box-shadow 220ms ease;
+}
+html body #ai-cs-mock .home-feature-card:hover {
+  transform: translateY(-5px) rotate(-0.4deg);
+  box-shadow: 0 26px 60px rgba(21, 17, 26, 0.12);
+}
+html body #ai-cs-mock .home-feature-state-anchor {
+  padding: 24px 24px 28px;
+}
+html body #ai-cs-mock .home-feature-card h2 {
+  margin: 14px 0 0;
+  font-size: 34px;
+  line-height: 1;
+  color: var(--ink);
+}
+html body #ai-cs-mock .home-feature-state-anchor h2 { font-size: 34px; }
+html body #ai-cs-mock .home-feature-card p {
+  margin: 12px 0 0;
+  max-width: 520px;
+  color: var(--muted);
+  font-size: 15px;
+  line-height: 1.5;
+}
+html body #ai-cs-mock .home-project-kicker,
+html body #ai-cs-mock .home-state-kicker {
+  display: inline-flex;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.72);
+  padding: 7px 10px;
+  color: #503459 !important;
+  font-size: 11px;
+  font-weight: 950;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+html body #ai-cs-mock .home-state-proof {
+  border-color: rgba(21, 17, 26, 0.12);
+  margin-top: 16px;
+}
+html body #ai-cs-mock .home-state-button-row { padding-top: 16px; padding-right: 64px; }
+/* the proof rows were added for the old large State card; hidden now that the cards are equal and compact (text stays in the markup) */
+html body #ai-cs-mock .home-state-proof { display: none !important; }
+html body #ai-cs-mock .home-state-proof { gap: 10px; padding: 12px 0; }
+html body #ai-cs-mock .home-state-proof div { grid-template-columns: 1fr; gap: 2px !important; }
+
+html body #ai-cs-mock .home-state-proof strong { color: var(--ink); font-size: 12px; }
+html body #ai-cs-mock .home-state-proof span { color: #4a4353; font-size: 13px; }
+html body #ai-cs-mock .home-feature-actions { display: flex; gap: 10px; padding-right: 64px; }
+/* Index badges */
+html body #ai-cs-mock .home-feature-card::after {
+  position: absolute;
+  right: 18px;
+  bottom: 18px;
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  border-radius: 16px;
+  background: var(--rd-acid);
+  color: var(--ink);
+  font-weight: 1000;
+  box-shadow: 6px 6px 0 var(--ink);
+  transform: rotate(-7deg);
+}
+html body #ai-cs-mock .home-feature-state-anchor::after { content: "01"; display: grid !important; }
+html body #ai-cs-mock .home-feature-stack-right .home-feature-card:nth-child(1)::after { content: "02"; display: grid !important; }
+html body #ai-cs-mock .home-feature-stack-right .home-feature-card:nth-child(2)::after { content: "03"; display: grid !important; }
+html body #ai-cs-mock .home-see-all { color: var(--ink); font-weight: 900; }
+html body #ai-cs-mock .home-principle {
+  margin-top: 44px;
+  padding-top: 22px;
+  border-top: 1px solid var(--rd-line);
+}
+html body #ai-cs-mock .home-principle h2 {
+  margin: 10px 0 6px;
+  font-size: clamp(17px, 1.5vw, 20px);
+}
+html body #ai-cs-mock .home-principle p { color: var(--muted); font-size: 14px; line-height: 1.6; max-width: 62ch; }
+html body #ai-cs-mock .home-principle .section-kicker span { font-size: 10px; padding: 6px 10px; }
+/* ---------- 4b. Applied Work + Learning Library views (inside index.html) ---------- */
+html body #ai-cs-mock .view:not(#home) { padding-top: 40px !important; }
+html body #ai-cs-mock .page-intro .section-title,
+html body #ai-cs-mock .learning-hero h1,
+html body #ai-cs-mock .learning-hero h2 {
+  color: var(--ink);
+}
+html body #ai-cs-mock .page-intro .section-lead,
+html body #ai-cs-mock .learning-hero p { font-size: 18px; line-height: 1.6; color: var(--muted); max-width: 760px; }
+html body #ai-cs-mock .card,
+html body #ai-cs-mock .nav-card {
+  border: 1px solid var(--rd-line);
+  border-radius: 24px;
+  background: #fff;
+  box-shadow: none;
+  transition: transform 220ms ease, box-shadow 220ms ease;
+}
+html body #ai-cs-mock .nav-card:hover,
+html body #ai-cs-mock .card.applied-major:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 22px 50px rgba(21, 17, 26, 0.1);
+  border-color: var(--rd-line);
+  background: #fff;
+}
+html body #ai-cs-mock .tag {
+  background: var(--soft);
+  color: #503459;
+  border: 0;
+  font-weight: 950;
+  letter-spacing: 0.06em;
+}
+html body #ai-cs-mock .band {
+  border: 0;
+  border-radius: 24px;
+  background: var(--soft);
+}
+/* ---------- 4c. Inner reading pages: simple, one column, easy to read ---------- */
+html body main:is(.case-system-page, .case-shell, .edge-wrap, .map-wrap) {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: clamp(28px, 4vw, 52px) clamp(20px, 4vw, 40px) 88px !important;
+  background: transparent !important;
+  color: var(--ink);
+  font-family: inherit;
+}
+html body main:is(.edge-wrap, .map-wrap) { max-width: 1180px !important; }
+/* headings: one sans family, tight display tracking */
+html body main:is(.case-system-page, .case-shell, .edge-wrap, .map-wrap) :is(h1, h2, h3, h4) {
+  font-family: inherit;
+  color: var(--ink);
+  font-weight: 900;
+}
+html body main:is(.case-system-page, .case-shell, .edge-wrap, .map-wrap) h1 {
+  font-size: clamp(34px, 4.4vw, 56px);
+  line-height: 1.02;
+  letter-spacing: -0.055em;
+  margin: 14px 0 22px;
+}
+html body main:is(.case-system-page, .case-shell, .edge-wrap, .map-wrap) h2 {
+  font-size: clamp(22px, 2.4vw, 28px) !important;
+  line-height: 1.15;
+  letter-spacing: -0.035em;
+  margin: 10px 0 16px !important;
+  max-width: 22em;
+}
+html body main:is(.case-system-page, .case-shell, .edge-wrap, .map-wrap) h3 {
+  font-size: 17px;
+  line-height: 1.15;
+  letter-spacing: -0.03em;
+}
+/* body copy: bigger, calmer, comfortable measure */
+html body main :is(.section > p, .section-note, .evidence-principle > p, .plain-language p, .callout p, header > p.lead, header > .lead, .shift-lead, .case-page-content > p, .paper-section > p, .legal-story p, .edge-body > p, .case-shell > p, .map-wrap > p) {
+  font-size: 16px !important;
+  line-height: 1.65 !important;
+  color: #3f3f46;
+  max-width: 72ch;
+}
+html body main :is(.section, .edge-body, .case-page-content) > :is(ul, ol) li {
+  font-size: 16px;
+  line-height: 1.6;
+}
+/* text inside cards: readable, but secondary to the prose */
+html body main :is(article, .card, .surface-grid > *, .qcard, .flow-card, .boundary-card, .step) p {
+  font-size: 14.5px !important;
+  line-height: 1.55 !important;
+  color: #4a4353;
+}
+html body main :is(article, .card, .surface-grid > *) :is(strong, h3) { font-size: 16px; letter-spacing: -0.025em; }
+/* hero lead: a step larger than body, class doubled to beat older !important rules */
+html body main:is(.case-system-page, .case-shell, .edge-wrap, .map-wrap) :is(header, .meridian-case-hero, .edge-head, .map-head) > :is(p.lead, .lead, .section-lead).lead,
+html body main:is(.case-system-page, .case-shell, .edge-wrap, .map-wrap) :is(header, .meridian-case-hero, .edge-head, .map-head) > p:first-of-type:not(.eyebrow):not(.kicker) {
+  font-size: clamp(16px, 1.3vw, 18px) !important;
+  line-height: 1.55 !important;
+  color: var(--muted) !important;
+  max-width: 62ch;
+}
+/* the article repeats the page title inside .edge-body: keep it, but at section scale */
+html body main .edge-body h1 { font-size: clamp(22px, 2.4vw, 28px) !important; line-height: 1.1 !important; margin: 0 0 16px !important; }
+/* eyebrows/kickers: quiet violet label, no pill */
+html body main:is(.case-system-page, .case-shell, .edge-wrap, .map-wrap) :is(.kicker, .eyebrow, .edge-eyebrow, .map-eyebrow, .map-kicker) {
+  color: var(--purple) !important;
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  border: 0;
+  background: none;
+  padding: 0;
+}
+/* hero + metadata: flat, no box */
+html body main :is(.meridian-case-hero, .flagship-hero, .legal-hero, .edge-head, .map-head):is(.meridian-case-hero, .flagship-hero, .legal-hero, .edge-head, .map-head, header),
+html body main.case-system-page header.meridian-case-hero.meridian-case-hero {
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  padding: 0 0 8px;
+}
+html body main .case-meta {
+  background: transparent;
+  border: 0;
+  border-top: 1px solid var(--rd-line);
+  border-bottom: 1px solid var(--rd-line);
+  border-radius: 0;
+  box-shadow: none;
+  padding: 14px 0;
+}
+/* sections: whitespace and one hairline, not nested boxes */
+html body main:is(.case-system-page, .case-shell) .section {
+  background: transparent !important;
+  border: 0 !important;
+  border-top: 1px solid var(--rd-line) !important;
+  border-radius: 0;
+  box-shadow: none !important;
+  padding: 34px 0 4px !important;
+  margin: 34px 0 0;
+}
+/* cards inside reading pages: quiet outlines, no shadows */
+html body main :is(.card, .surface-grid > *, .qcard, .flow-card, .boundary-card, .example-row, .evidence-item, .product-panel, .step, .map-family, .map-q) {
+  border: 1px solid var(--rd-line);
+  border-radius: 18px;
+  background: #fff;
+  box-shadow: none;
+}
+/* callouts: soft tint with a violet edge */
+html body main :is(.callout, .evidence-principle, .case-callout, .plain-language, .note) {
+  border: 0 !important;
+  border-left: 4px solid var(--rd-violet) !important;
+  border-radius: 14px !important;
+  background: var(--soft) !important;
+  box-shadow: none !important;
+}
+html body main a:not([class]) { color: var(--purple); text-underline-offset: 3px; }
+/* breadcrumbs stay small */
+html body main :is(.breadcrumb, .crumbs, nav[aria-label="Breadcrumb"]) { font-size: 13px; color: var(--muted); }
+/* ---------- 4d. Inner pages: the quiet version of the homepage look ---------- */
+/* faint grid + soft wash, only behind the top of the page */
+html body:has(main:is(.case-system-page, .case-shell, .edge-wrap, .map-wrap))::before,
+html body:has(main:is(.case-system-page, .case-shell, .edge-wrap, .map-wrap))::after {
+  content: "";
+  position: absolute;
+  left: 0; right: 0; top: 0;
+  pointer-events: none;
+  z-index: -2;
+}
+html body:has(main:is(.case-system-page, .case-shell, .edge-wrap, .map-wrap))::before {
+  height: 520px;
+  background:
+    linear-gradient(90deg, rgba(21, 17, 26, 0.04) 1px, transparent 1px),
+    linear-gradient(0deg, rgba(21, 17, 26, 0.04) 1px, transparent 1px);
+  background-size: 42px 42px;
+  -webkit-mask-image: linear-gradient(to bottom, #000 0%, transparent 100%);
+  mask-image: linear-gradient(to bottom, #000 0%, transparent 100%);
+}
+html body:has(main:is(.case-system-page, .case-shell, .edge-wrap, .map-wrap))::after {
+  height: 420px;
+  background:
+    radial-gradient(circle at 14% 20%, rgba(255, 95, 162, 0.13), transparent 30%),
+    radial-gradient(circle at 80% 10%, rgba(244, 255, 82, 0.26), transparent 28%),
+    radial-gradient(circle at 92% 50%, rgba(0, 191, 214, 0.12), transparent 30%);
+}
+/* page title: bigger, with a short pink-to-yellow bar under it */
+html body main:is(.case-system-page, .case-shell, .edge-wrap, .map-wrap) h1:not(.edge-body h1) {
+  font-size: clamp(34px, 4.4vw, 56px) !important;
+  letter-spacing: -0.055em;
+  margin-bottom: 22px !important;
+}
+html body main:is(.case-system-page, .case-shell, .edge-wrap, .map-wrap) h1:not(.edge-body h1)::after {
+  content: "";
+  display: block;
+  width: 96px;
+  height: 10px;
+  margin-top: 22px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--rd-pink-soft), var(--rd-acid));
+}
+/* (section labels, cards, callouts: see 4f) */
+
+/* ---------- 4e. Learning Library (inside index.html) ---------- */
+html body #ai-cs-mock details.learning-stage {
+  border: 1px solid var(--rd-line) !important;
+  border-left: 1px solid var(--rd-line) !important;
+  border-radius: 24px !important;
+  background: #fff !important;
+  box-shadow: none !important;
+  overflow: hidden;
+  transition: transform 220ms ease, box-shadow 220ms ease;
+}
+html body #ai-cs-mock details.learning-stage:hover { transform: translateY(-3px); box-shadow: 0 18px 44px rgba(21, 17, 26, 0.09) !important; }
+html body #ai-cs-mock details.learning-stage[open] { background: var(--soft) !important; transform: none; box-shadow: none !important; }
+html body #ai-cs-mock details.learning-stage summary { padding: 20px 56px 20px 20px !important; gap: 16px !important; }
+html body #ai-cs-mock .learning-stage .stage-num {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  background: var(--rd-acid) !important;
+  color: var(--ink) !important;
+  box-shadow: 4px 4px 0 var(--ink);
+  transform: rotate(-6deg);
+}
+html body #ai-cs-mock .learning-stage .stage-main b { letter-spacing: -0.03em; color: var(--ink); }
+
+html body #ai-cs-mock .learning-stage .stage-body { padding: 4px 24px 24px 80px !important; }
+html body #ai-cs-mock .learning-stage .stage-body h3 { font-size: 13px; color: var(--purple); }
+html body #ai-cs-mock .learning-stage .stage-body p,
+html body #ai-cs-mock .learning-stage .stage-body li { font-size: 16px; }
+html body #ai-cs-mock [data-page="learn"] .learning-reference-map {
+  border: 0 !important;
+  padding: 26px 28px !important;
+}
+html body #ai-cs-mock .learning-reference-map h3 { font-size: 24px; margin: 8px 0; }
+html body #ai-cs-mock .learning-reference-links a {
+  display: inline-flex;
+  min-height: 40px;
+  padding: 0 16px;
+  border: 1px solid var(--ink);
+  background: #fff;
+  color: var(--ink) !important;
+  font-weight: 900;
+}
+
+/* old decorative rule under the hero */
+html body main .meridian-case-hero::after, html body main .meridian-case-hero::before { display: none; }
+html body #ai-cs-mock #learn details.learning-stage,
+html body #ai-cs-mock #learn details.learning-stage:nth-of-type(n) {
+  border-left: 1px solid var(--rd-line) !important;
+}
+/* quiet wash behind the Applied Work and Learning Library views */
+html body:has(#portfolio.active)::before,
+html body:has(#learn.active)::before,
+html body:has(#portfolio.active)::after,
+html body:has(#learn.active)::after {
+  content: "";
+  position: absolute;
+  left: 0; right: 0; top: 0;
+  pointer-events: none;
+  z-index: -2;
+}
+html body:has(#portfolio.active)::before,
+html body:has(#learn.active)::before {
+  height: 520px;
+  background:
+    linear-gradient(90deg, rgba(21, 17, 26, 0.04) 1px, transparent 1px),
+    linear-gradient(0deg, rgba(21, 17, 26, 0.04) 1px, transparent 1px);
+  background-size: 42px 42px;
+  -webkit-mask-image: linear-gradient(to bottom, #000 0%, transparent 100%);
+  mask-image: linear-gradient(to bottom, #000 0%, transparent 100%);
+}
+html body:has(#portfolio.active)::after,
+html body:has(#learn.active)::after {
+  height: 420px;
+  background:
+    radial-gradient(circle at 14% 20%, rgba(255, 95, 162, 0.13), transparent 30%),
+    radial-gradient(circle at 80% 10%, rgba(244, 255, 82, 0.26), transparent 28%),
+    radial-gradient(circle at 92% 50%, rgba(0, 191, 214, 0.12), transparent 30%);
+}
+/* ---------- 4f. Calmer components (feedback pass) ---------- */
+/* one quiet label style on reading pages: small caps, no pill */
+html body main:is(.case-system-page, .case-shell) .section > .kicker,
+html body main:is(.case-system-page, .case-shell) .section > :is(.eyebrow, .num) {
+  display: block;
+  color: var(--muted) !important;
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+/* one card style: neutral surface, hairline, no tints */
+html body main :is(.card, .qcard, .flow-card, .boundary-card, .step, .map-family, .map-q) {
+  border: 1px solid var(--rd-line);
+  border-radius: 20px;
+  background: #fff;
+  box-shadow: none;
+}
+/* grids of cards: side-by-side boxes, one card style; the column count follows the card count so no row is ever uneven */
+html body main :is(.surface-grid, .state-model-grid, .architecture-split, .grid2, .grid3, .role-grid) {
+  display: grid;
+  gap: 14px;
+  align-items: stretch;
+  grid-template-columns: 1fr !important;                      /* phones: one column */
+}
+html body main :is(.surface-grid, .state-model-grid, .architecture-split, .grid2, .grid3, .role-grid) > * {
+  box-sizing: border-box;
+  border: 1px solid var(--rd-line) !important;
+  border-radius: 20px;
+  background: #fff !important;
+  box-shadow: none !important;
+  padding: 20px !important;
+  margin: 0;
+  min-height: 0;
+  height: auto;
+  min-width: 0;
+}
+html body main :is(.surface-grid, .state-model-grid) > * > :is(span, small, .label) {
+  font-size: 11.5px;
+  color: var(--muted);
+}
+@media (min-width: 621px){
+  /* 2 cards -> 2 across; 4 and 6 cards -> 2 across (even rows) until there is room for more */
+  html body main :is(.surface-grid, .state-model-grid, .architecture-split, .grid2, .grid3, .role-grid) { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+}
+@media (min-width: 621px) and (max-width: 700px){
+  /* 3 cards never become 2 + 1: one column until there is room for three */
+  html body main :is(.surface-grid, .state-model-grid, .grid3):has(> :nth-child(3):last-child) { grid-template-columns: 1fr !important; }
+}
+@media (min-width: 701px){
+  /* 3 cards -> 3 across */
+  html body main :is(.surface-grid, .state-model-grid, .grid3):has(> :nth-child(3):last-child) { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }
+}
+@media (min-width: 981px){
+  /* 6 cards -> 3 x 2 */
+  html body main :is(.surface-grid, .state-model-grid):has(> :nth-child(6):last-child) { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }
+}
+/* a lone card never sits alone on a row */
+
+/* sections that hold a card grid plus a full-width box stack normally: cards in a row, the box underneath */
+html body main.case-system-page section:has(> .architecture-split) { display: block; }
+html body main.case-system-page section:has(> .architecture-split) > .architecture-split { width: 100%; max-width: none; }
+html body main.case-system-page .architecture-infra {
+  box-sizing: border-box;
+  width: 100%;
+  margin: 14px 0 0;
+  border: 1px solid var(--rd-line) !important;
+  border-radius: 20px;
+  background: #fff !important;
+  box-shadow: none !important;
+}
+/* inline flows wrap inside cards instead of clipping */
+html body main :is(.integration-flow, .human-flow, .authority-steps) {
+  display: flex;
+  gap: 6px 10px;
+  overflow: visible;
+  max-width: 100%;
+}
+html body main :is(.integration-flow, .human-flow, .authority-steps) > * { white-space: normal; min-width: 0; }
+/* callouts: only the first "In plain language" box keeps the highlight; the rest read as prose */
+html body main :is(.callout, .plain-language, .note, .flagship-case > .evidence-principle:first-child) {
+  border: 0 !important;
+  border-left: 6px solid var(--ink) !important;
+  border-radius: 18px !important;
+  background: #fbffd2 !important;
+  box-shadow: none !important;
+}
+html body main .evidence-principle:not(.flagship-case > .evidence-principle:first-child) {
+  border: 0 !important;
+  border-left: 5px solid var(--ink) !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  padding: 4px 0 4px 22px;
+  margin: 26px 0;
+}
+html body main .evidence-principle:not(.flagship-case > .evidence-principle:first-child) strong {
+  margin-bottom: 8px;
+  font-size: clamp(20px, 2.1vw, 26px);
+  font-weight: 900;
+  line-height: 1.2;
+  letter-spacing: -0.035em;
+}
+html body main .evidence-principle:not(.flagship-case > .evidence-principle:first-child) > p {
+  font-size: 15.5px !important;
+  line-height: 1.6 !important;
+}
+/* quote block: simple pull quote */
+html body main .question-shift {
+  background: transparent !important;
+  border: 0 !important;
+  border-left: 3px solid var(--ink) !important;
+  border-radius: 0;
+  box-shadow: none !important;
+  padding: 4px 0 4px 20px !important;
+}
+/* "Try ..." product box: a light row with one button, not a tinted card */
+html body main .meridian-product-callout {
+  background: transparent;
+  border: 0;
+  border-top: 1px solid var(--rd-line);
+  border-bottom: 1px solid var(--rd-line);
+  border-radius: 0;
+  padding: 16px 0;
+}
+html body main.case-system-page aside.meridian-product-callout.meridian-product-callout,
+html body main.case-system-page aside.meridian-product-callout.meridian-product-callout > * { background: transparent; background-image: none; box-shadow: none; }
+html body main .meridian-product-callout { padding-left: 0; padding-right: 0; display: flex; align-items: center; justify-content: space-between; gap: 20px; flex-wrap: wrap; }
+html body main .meridian-primary-action {
+  background: var(--ink);
+  border: 1px solid var(--ink);
+  border-radius: 999px;
+  box-shadow: none;
+}
+/* flow diagrams: neutral outlined steps */
+html body main :is(.human-flow, .integration-flow) > * {
+  background: #fff !important;
+  border-color: var(--rd-line) !important;
+  box-shadow: none !important;
+}
+/* metadata strip: one quiet line */
+html body main .case-meta { display: flex; flex-wrap: wrap; gap: 8px 32px; font-size: 13.5px; }
+/* ---------- 4g. Applied Work: ink, not violet ---------- */
+html body #ai-cs-mock .card::before { display: none; }
+html body #ai-cs-mock :is(.applied-major h3, .applied-major h3 a, .applied-secondary h3, .nav-card h3, .applied-card-primary-link) {
+  color: var(--ink) !important;
+  letter-spacing: -0.04em;
+}
+html body #ai-cs-mock .applied-major h3 { font-size: 30px; line-height: 1; }
+html body #ai-cs-mock .applied-card-actions a,
+html body #ai-cs-mock .nav-card::after {
+  color: var(--ink) !important;
+  font-weight: 900;
+}
+html body #ai-cs-mock .applied-card-actions a { text-decoration: underline; text-underline-offset: 4px; text-decoration-color: rgba(21, 17, 26, 0.25); }
+html body #ai-cs-mock .applied-card-actions a:hover { text-decoration-color: var(--ink); }
+html body #ai-cs-mock :is(.applied-major, .applied-secondary) .tag { color: #31283a !important; background: #f1eeff; }
+html body #ai-cs-mock .applied-featured-three > .card:nth-child(3n+2) .tag { background: #ffeef6; }
+html body #ai-cs-mock .applied-featured-three > .card:nth-child(3n+3) .tag { background: #e6f9fc; }
+html body #ai-cs-mock .applied-secondary-grid > .applied-secondary:nth-child(4n+2) .tag { background: #ffeef6; }
+html body #ai-cs-mock .applied-secondary-grid > .applied-secondary:nth-child(4n+3) .tag { background: #e6f9fc; }
+html body #ai-cs-mock .applied-secondary-grid > .applied-secondary:nth-child(4n+4) .tag { background: #fbffd2; }
+/* bottom band ("Portfolio note") */
+html body #ai-cs-mock [data-page="portfolio"] .band[style*="margin-top:30px"] {
+  border: 0 !important;
+  border-radius: 28px !important;
+  background: linear-gradient(145deg, #ffe3f1, #e9e4ff 52%, #d9f6fb) !important;
+  padding: 22px 26px !important;
+  margin-top: 32px !important;
+  border-radius: 22px !important;
+}
+html body #ai-cs-mock [data-page="portfolio"] .band[style*="margin-top:30px"]::before {
+  display: inline-flex !important;
+  margin: 0 0 14px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: #fff;
+  color: var(--ink);
+  font-size: 10.5px;
+  font-weight: 950;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+html body #ai-cs-mock [data-page="portfolio"] .band[style*="margin-top:30px"] h3 {
+  font-size: clamp(24px, 2.6vw, 32px);
+  line-height: 1.1;
+  margin-bottom: 12px !important;
+}
+html body #ai-cs-mock [data-page="portfolio"] .band[style*="margin-top:30px"] p {
+  max-width: 760px;
+  color: #4a4353 !important;
+  font-size: 16.5px;
+  line-height: 1.6;
+}
+/* specificity match for the older #portfolio rules */
+html body #ai-cs-mock #portfolio :is(.applied-major, .applied-secondary) .tag {
+  display: inline-flex !important;
+  width: fit-content;
+  padding: 7px 12px !important;
+  border-radius: 8px !important;
+  background: #f1eeff !important;
+  color: #31283a !important;
+  font-size: 11px !important;
+  font-weight: 950 !important;
+  letter-spacing: 0.06em !important;
+}
+html body #ai-cs-mock #portfolio .applied-featured-three > .card:nth-child(3n+2) .tag { background: #ffeef6 !important; }
+html body #ai-cs-mock #portfolio .applied-featured-three > .card:nth-child(3n+3) .tag { background: #e6f9fc !important; }
+html body #ai-cs-mock #portfolio .applied-secondary-grid > .applied-secondary:nth-child(4n+2) .tag { background: #ffeef6 !important; }
+html body #ai-cs-mock #portfolio .applied-secondary-grid > .applied-secondary:nth-child(4n+3) .tag { background: #e6f9fc !important; }
+html body #ai-cs-mock #portfolio .applied-secondary-grid > .applied-secondary:nth-child(4n+4) .tag { background: #fbffd2 !important; }
+html body #ai-cs-mock #portfolio .band[style*="margin-top:30px"] h3 {
+  font-size: clamp(18px, 1.7vw, 20px) !important;
+  line-height: 1.2 !important;
+  letter-spacing: -0.02em;
+  margin: 0 0 8px !important;
+  color: var(--ink) !important;
+}
+html body #ai-cs-mock #portfolio .band[style*="margin-top:30px"] p {
+  font-size: 14.5px !important;
+  line-height: 1.55 !important;
+  max-width: 760px;
+  color: #4a4353 !important;
+}
+/* ---------- 4h. Learning Library: open cards + exact centering of the +/- ---------- */
+html body #ai-cs-mock #learn details.learning-stage summary::after {
+  content: "" !important;
+  display: block !important;
+  width: 30px !important;
+  height: 30px !important;
+  right: 20px !important;
+  border: 1px solid var(--rd-line) !important;
+  border-radius: 999px;
+  background:
+    linear-gradient(var(--ink), var(--ink)) center / 12px 2px no-repeat,
+    linear-gradient(var(--ink), var(--ink)) center / 2px 12px no-repeat,
+    #fff !important;
+  color: var(--ink) !important;
+  font-size: 0 !important;
+}
+html body #ai-cs-mock #learn details.learning-stage[open] summary::after {
+  content: "" !important;
+  background:
+    linear-gradient(var(--ink), var(--ink)) center / 12px 2px no-repeat,
+    #fff !important;
+}
+/* one surface for the whole open card: no tinted header, no purple outline */
+html body #ai-cs-mock #learn details.learning-stage,
+html body #ai-cs-mock #learn details.learning-stage[open],
+html body #ai-cs-mock #learn details.learning-stage:hover {
+  border: 1px solid var(--rd-line) !important;
+  border-color: var(--rd-line) !important;
+}
+html body #ai-cs-mock #learn details.learning-stage[open] { background: #fff !important; }
+html body #ai-cs-mock #learn details.learning-stage[open] summary { background: transparent !important; }
+html body #ai-cs-mock #learn details.learning-stage .stage-body {
+  border-top: 1px solid var(--rd-line) !important;
+  padding: 8px 28px 28px 80px !important;
+}
+html body #ai-cs-mock #learn .stage-body :is(h3, .stage-group > h3) {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 11px;
+  border: 1px solid var(--rd-line);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--ink) !important;
+  font-size: 11px !important;
+  letter-spacing: 0.08em;
+}
+html body #ai-cs-mock #learn .stage-body :is(p, li, .learning-item, .learning-item p) {
+  color: #3f3f46 !important;
+  font-size: 14.5px !important;
+  line-height: 1.65 !important;
+}
+html body #ai-cs-mock #learn .stage-body :is(.resource-row a, a.resource-link, .resource-row > a) {
+  display: inline-flex;
+  min-height: 38px;
+  padding: 0 14px;
+  border: 1px solid var(--ink);
+  background: #fff !important;
+  color: var(--ink) !important;
+  font-weight: 900;
+  text-decoration: none;
+}
+html body #ai-cs-mock #learn .stage-body :is(.resource-row a, a.resource-link):hover { background: var(--ink) !important; color: #fff !important; }
+/* ---------- 4i. Learning Library: white cards, colour lives in the badge and (when open) a pale header ---------- */
+html body #ai-cs-mock #learn details.learning-stage { background: #fff !important; }
+html body #ai-cs-mock #learn details.learning-stage:hover { box-shadow: 0 18px 44px rgba(21, 17, 26, 0.1) !important; }
+
+html body #ai-cs-mock #learn details.learning-stage .stage-body { border-top-color: var(--rd-line) !important; background: #fff !important; }
+html body #ai-cs-mock #learn details.learning-stage:nth-of-type(4n+1) .stage-num { background: var(--rd-acid) !important; }
+html body #ai-cs-mock #learn details.learning-stage:nth-of-type(4n+2) .stage-num { background: #ffb3d6 !important; }
+html body #ai-cs-mock #learn details.learning-stage:nth-of-type(4n+3) .stage-num { background: #8fe9f4 !important; }
+html body #ai-cs-mock #learn details.learning-stage:nth-of-type(4n+4) .stage-num { background: #cfc7ff !important; }
+html body #ai-cs-mock #learn details.learning-stage[open]:nth-of-type(4n+1) summary { background: #fefff0 !important; }
+html body #ai-cs-mock #learn details.learning-stage[open]:nth-of-type(4n+2) summary { background: #fff8fb !important; }
+html body #ai-cs-mock #learn details.learning-stage[open]:nth-of-type(4n+3) summary { background: #f5fdfe !important; }
+html body #ai-cs-mock #learn details.learning-stage[open]:nth-of-type(4n+4) summary { background: #f9f8ff !important; }
+
+html body #ai-cs-mock [data-page="learn"] .learning-reference-map {
+  background: linear-gradient(145deg, #ffe3f1, #e9e4ff 52%, #d9f6fb) !important;
+}
+/* ---------- 4j. Project Health case study: mock-ups match the page ---------- */
+html body main.case-shell .product-panel {
+  border: 0;
+  border-radius: 24px;
+  background: var(--soft);
+}
+
+/* ---------- 4k. Labels are small rounded rectangles, not pills (buttons keep their shape) ---------- */
+html body main :is(.meta > span, .tag, .num, .flow-num, .map-chip, .map-step, span.accent) {
+  border-radius: 8px !important;
+}
+/* Applied Work featured cards: three across, or one column, never 1+2 */
+@media (min-width: 701px){
+  html body #ai-cs-mock #portfolio .applied-featured-three { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }
+  html body #ai-cs-mock #portfolio .applied-featured-three > * { grid-column: auto; grid-row: auto; }
+}
+/* ---------- 4l. Project Health case study: one card style, one list style, one callout ---------- */
+html body main.case-shell :is(.card, .flow-card) .tag,
+html body main.case-shell .tag {
+  padding: 0;
+  background: none;
+  border: 0 !important;
+  border-radius: 0 !important;
+  color: var(--muted);
+  font-size: 11.5px;
+  letter-spacing: 0.08em;
+}
+html body main.case-shell :is(.num, .flow-num) {
+  padding: 0;
+  background: none;
+  border: 0 !important;
+  border-radius: 0 !important;
+  color: var(--muted);
+  font-size: 12px;
+  min-width: 0;
+  width: auto;
+  height: auto;
+}
+
+html body main.case-shell .example { box-shadow: none; }
+html body main.case-shell .example-row {
+  border: 0;
+  border-top: 1px solid var(--rd-line);
+  border-radius: 0;
+  background: transparent;
+  padding: 12px 0;
+}
+
+html body main.case-shell .flow-card { width: 100%; }
+
+/* callouts: only the one right under the hero keeps the highlight */
+html body main.case-shell .callout:not(.case-hero + .callout) {
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  padding: 0 !important;
+}
+/* ---------- 4m. Final feedback pass ---------- */
+/* "Try ..." buttons keep their ink fill (the transparent reset above is for the row, not the button) */
+html body main.case-system-page aside.meridian-product-callout.meridian-product-callout > a.meridian-primary-action {
+  background: var(--ink);
+  background-image: none;
+  color: #fff;
+  border: 1px solid var(--ink);
+  border-radius: 12px;
+}
+
+/* Learning Library: icons centred on the row; intro sits on the page like Applied Work */
+html body #ai-cs-mock #learn details.learning-stage summary::after {
+  grid-area: auto;   /* an old rule pinned it to grid row 1, so 50% was measured against that row only */
+  top: 50%;
+  bottom: auto;
+  margin: 0;
+  transform: translateY(-50%) !important;
+}
+html body #ai-cs-mock #learn .learning-hero {
+  background: none !important;
+  border-radius: 0 !important;
+  padding: 0 0 22px !important;
+}
+/* AI Business Solutions Map: boxes with real padding and spacing */
+html body main.map-wrap .map-q {
+  padding: 16px 20px;
+  border-radius: 16px;
+}
+html body main.map-wrap .map-q > b { margin-bottom: 4px; }
+html body main.map-wrap .map-q > span { display: block; }
+html body main.map-wrap .map-family { padding: 18px 20px; border-radius: 16px; }
+/* closing links: content-sized pill buttons, like the homepage "Open State / Case study" buttons */
+
+/* Project Health case study: cards and prose only */
+html body main.case-shell .flow {
+  gap: 14px;
+  grid-template-columns: 1fr;
+}
+@media (min-width: 701px){
+  html body main.case-shell .flow:has(> :nth-child(3):last-child) { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }
+}
+html body main.case-shell .flow-row {
+  display: block;
+  padding: 20px;
+  border: 1px solid var(--rd-line);
+  border-radius: 20px;
+  background: #fff;
+}
+html body main.case-shell .flow-row .flow-card {
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+html body main.case-shell .flow-row .num { display: block; margin-bottom: 8px; }
+html body main.case-shell .evidence-list {
+  gap: 14px;
+  grid-template-columns: 1fr;
+}
+@media (min-width: 701px){
+  html body main.case-shell .evidence-list:has(> :nth-child(3):last-child) { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+html body main.case-shell .evidence-item {
+  padding: 20px;
+  border: 1px solid var(--rd-line);
+  border-radius: 20px;
+  background: #fff;
+}
+html body main.case-shell .evidence-item > :first-child { display: block; }
+html body main.case-shell .example {
+  border: 1px solid var(--rd-line);
+  border-radius: 20px;
+  background: #fff;
+  padding: 20px;
+  margin: 0 0 14px;
+}
+html body main.case-shell .example-head { background: transparent; padding: 0 0 8px; border: 0; }
+/* ---------- 4n. Homepage cards: aligned titles, consistent buttons ---------- */
+/* State's label sat in its own flex slot (18px gap before the title); the other cards keep label + title together */
+html body #ai-cs-mock .home-feature-state-anchor { gap: 0; }
+html body #ai-cs-mock :is(.home-feature-actions, .home-state-button-row) {
+  display: flex;
+  gap: 8px;
+  padding-right: 0;
+  align-items: center;
+}
+html body #ai-cs-mock :is(.home-feature-actions, .home-state-button-row) a {
+  min-height: 40px;
+  padding: 0 14px !important;
+  font-size: 13.5px !important;
+  white-space: nowrap;
+}
+/* tablet-ish desktop: cards are narrow, so all three stack their buttons the same way */
+@media (min-width: 981px) and (max-width: 1239px){
+  html body #ai-cs-mock :is(.home-feature-actions, .home-state-button-row) { flex-direction: column; align-items: flex-start; }
+}
+/* wide desktop: both buttons on one line in every card */
+@media (min-width: 1240px){
+  html body #ai-cs-mock :is(.home-feature-actions, .home-state-button-row) { flex-wrap: nowrap; }
+}
+/* narrow three-up cards: keep the label on one line so the titles stay level */
+@media (min-width: 981px) and (max-width: 1139px){
+  html body #ai-cs-mock .home-feature-card .home-project-kicker { font-size: 10px; letter-spacing: 0.03em; padding: 6px 8px; white-space: nowrap; }
+}
+/* wide desktop: the buttons fill the card's bottom row, so the number badge moves to the top-right corner */
+@media (min-width: 1240px){
+  html body #ai-cs-mock .home-feature-card::after { top: 18px; bottom: auto; width: 44px; height: 44px; font-size: 14px; }
+}
+/* ---------- 4o. Homepage project cards: small illustrated band (decorative, no text) ---------- */
+html body #ai-cs-mock .home-feature-card { gap: 0; justify-content: flex-start; }
+html body #ai-cs-mock .home-feature-card::before {
+  content: "";
+  display: block;
+  flex: none;
+  height: 64px;
+  border-radius: 16px;
+  background-repeat: no-repeat;
+  background-position: 14px center;
+  background-size: auto 44px;
+}
+html body #ai-cs-mock .home-feature-state-anchor::before {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 240 48%22%3E%3Cg fill=%22none%22 stroke=%22%2315111a%22 stroke-width=%222%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22%3E%3Crect x=%223%22 y=%228%22 width=%2252%22 height=%2232%22 rx=%229%22 fill=%22%23fff%22/%3E%3Cpath d=%22M62 24h24m-6-6 6 6-6 6%22/%3E%3Crect x=%2294%22 y=%228%22 width=%2252%22 height=%2232%22 rx=%229%22 fill=%22%23fff%22/%3E%3Cpath d=%22M153 24h24m-6-6 6 6-6 6%22/%3E%3C/g%3E%3Crect x=%22188%22 y=%2212%22 width=%2248%22 height=%2232%22 rx=%229%22 fill=%22%2315111a%22/%3E%3Crect x=%22184%22 y=%228%22 width=%2248%22 height=%2232%22 rx=%229%22 fill=%22%23f4ff52%22 stroke=%22%2315111a%22 stroke-width=%222%22/%3E%3Cpath d=%22M198 24l7 7 13-14%22 fill=%22none%22 stroke=%22%2315111a%22 stroke-width=%222.4%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22/%3E%3C/svg%3E");
+  background-color: #f1eeff;
+}
+html body #ai-cs-mock .home-feature-stack-right .home-feature-card:nth-child(1)::before {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 240 48%22%3E%3Cg stroke=%22%2315111a%22 stroke-width=%221.6%22%3E%3Crect x=%223%22 y=%226%22 width=%22104%22 height=%228%22 rx=%224%22 fill=%22%23fff%22/%3E%3Crect x=%223%22 y=%2220%22 width=%22104%22 height=%228%22 rx=%224%22 fill=%22%23fff%22/%3E%3Crect x=%223%22 y=%2234%22 width=%22104%22 height=%228%22 rx=%224%22 fill=%22%23fff%22/%3E%3C/g%3E%3Cg fill=%22%23ff5fa2%22%3E%3Crect x=%223%22 y=%226%22 width=%2286%22 height=%228%22 rx=%224%22/%3E%3Crect x=%223%22 y=%2220%22 width=%2258%22 height=%228%22 rx=%224%22/%3E%3Crect x=%223%22 y=%2234%22 width=%2272%22 height=%228%22 rx=%224%22/%3E%3C/g%3E%3Cg stroke=%22%2315111a%22 stroke-width=%221.6%22%3E%3Crect x=%22124%22 y=%226%22 width=%2250%22 height=%2216%22 rx=%226%22 fill=%22%23fff%22/%3E%3Crect x=%22180%22 y=%226%22 width=%2256%22 height=%2216%22 rx=%226%22 fill=%22%23f4ff52%22/%3E%3Crect x=%22124%22 y=%2228%22 width=%2260%22 height=%2216%22 rx=%226%22 fill=%22%23fff%22/%3E%3C/g%3E%3C/svg%3E");
+  background-color: #ffeef6;
+}
+html body #ai-cs-mock .home-feature-stack-right .home-feature-card:nth-child(2)::before {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 240 48%22%3E%3Cpath d=%22M4 40h232%22 stroke=%22%2315111a%22 stroke-opacity=%22.18%22 stroke-width=%222%22 stroke-linecap=%22round%22/%3E%3Cg stroke=%22%2315111a%22 stroke-width=%221.8%22%3E%3Ccircle cx=%2216%22 cy=%2222%22 r=%228%22 fill=%22%2300bfd6%22/%3E%3Ccircle cx=%2246%22 cy=%2222%22 r=%228%22 fill=%22%2300bfd6%22/%3E%3Ccircle cx=%2276%22 cy=%2222%22 r=%228%22 fill=%22%2300bfd6%22/%3E%3Ccircle cx=%22106%22 cy=%2222%22 r=%228%22 fill=%22%2300bfd6%22/%3E%3Ccircle cx=%22136%22 cy=%2222%22 r=%228%22 fill=%22%23f4ff52%22/%3E%3Ccircle cx=%22166%22 cy=%2222%22 r=%228%22 fill=%22%2300bfd6%22/%3E%3Ccircle cx=%22196%22 cy=%2222%22 r=%228%22 fill=%22%23fff%22/%3E%3Ccircle cx=%22226%22 cy=%2222%22 r=%228%22 fill=%22%23fff%22 stroke-dasharray=%223 3%22/%3E%3C/g%3E%3C/svg%3E");
+  background-color: #e6f9fc;
+}
+/* order inside each card: label, title, illustration band, description, buttons */
+html body #ai-cs-mock .home-feature-card > div:first-of-type,
+html body #ai-cs-mock .home-state-content { display: contents !important; }
+html body #ai-cs-mock .home-feature-card .home-project-kicker { order: 0; align-self: flex-start; }
+html body #ai-cs-mock .home-feature-card h2 { order: 1; }
+html body #ai-cs-mock .home-feature-card::before { order: 2; margin: 14px 0 14px; }
+html body #ai-cs-mock .home-feature-card p { order: 3; }
+html body #ai-cs-mock .home-feature-actions,
+html body #ai-cs-mock .home-state-button-row { order: 4; margin-top: auto !important; }
+/* State card: tinted card background is replaced by the band, so the card itself goes white like the others */
+html body #ai-cs-mock .home-feature-state-anchor { background: #fff; }
+html body #ai-cs-mock .home-feature-card::after { transition: transform 200ms ease; }
+html body #ai-cs-mock .home-feature-card:hover::after { transform: rotate(-3deg) scale(1.08); }
+@media (max-width: 680px){
+  html body #ai-cs-mock .home-feature-card::before { height: 56px; background-size: auto 38px; }
+}
+/* ---------- 4p. Applied Work: the featured three are typographic cards (the homepage ones are illustrated) ---------- */
+html body #ai-cs-mock #portfolio .applied-featured-three { counter-reset: apw; }
+html body #ai-cs-mock #portfolio .applied-featured-three > .card.applied-major {
+  display: flex !important;
+  padding: 30px 26px 26px !important;
+  border-top: 6px solid #cfc7ff !important;
+}
+html body #ai-cs-mock #portfolio .applied-featured-three > .card.applied-major:nth-child(2) { border-top-color: #ffb3d6 !important; }
+html body #ai-cs-mock #portfolio .applied-featured-three > .card.applied-major:nth-child(3) { border-top-color: #8fe9f4 !important; }
+html body #ai-cs-mock #portfolio .applied-featured-three > .card.applied-major::before {
+  counter-increment: apw;
+  content: "0" counter(apw);
+  display: block !important;
+  inset: 10px 18px auto auto;
+  height: auto;
+  background: none;
+  opacity: 1;
+  font-size: 72px;
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: -0.06em;
+  color: rgba(21, 17, 26, 0.07);
+  pointer-events: none;
+}
+html body #ai-cs-mock #portfolio .applied-featured-three > .card.applied-major > h3 { font-size: 34px; margin: 14px 0 10px; }
+html body #ai-cs-mock #portfolio .applied-featured-three > .card.applied-major > .card-intro { font-size: 15.5px; color: #3b3445; }
+
+/* ---------- 4q. Learning Library footer ("How I use the map"): small, like the homepage footnote ---------- */
+html body #ai-cs-mock .learning-next { margin-top: 36px; }
+html body #ai-cs-mock .learning-next h2 { font-size: clamp(17px, 1.5vw, 20px) !important; line-height: 1.2; letter-spacing: -0.02em; margin: 10px 0 6px; }
+html body #ai-cs-mock .learning-next > p { font-size: 14px !important; line-height: 1.6; max-width: 62ch; }
+html body #ai-cs-mock .learning-next .section-kicker span { font-size: 10px; padding: 6px 10px; }
+html body #ai-cs-mock .learning-next .learning-how-note { padding: 12px 16px !important; }
+html body #ai-cs-mock .learning-next .learning-how-note strong { font-size: 14px; }
+html body #ai-cs-mock .learning-next .learning-how-note p { font-size: 14px !important; line-height: 1.55; margin: 6px 0 10px; }
+html body #ai-cs-mock .learning-next .learning-how-note a { min-height: 32px; padding: 0 12px; font-size: 13px; }
+/* ---------- 4r. State case study: hide the two duplicates (text stays in the page source) ---------- */
+html body main.case-system-page:has(.meridian-product-callout a[data-state-app-link]) .integration-flow.authority-steps { display: none; }
+/* ---------- 4s. Project Health case study bottom: fewer boxes ---------- */
+html body main.case-shell .evidence-list { display: block; }
+html body main.case-shell .evidence-item {
+  display: grid;
+  grid-template-columns: 150px minmax(0, 1fr);
+  gap: 14px;
+  padding: 12px 0;
+  border: 0;
+  border-top: 1px solid var(--rd-line);
+  border-radius: 0;
+  background: transparent;
+}
+html body main.case-shell .evidence-item > :first-child { margin: 0; }
+@media (max-width: 620px){
+  html body main.case-shell .evidence-item { grid-template-columns: 1fr; gap: 3px; }
+}
+html body main.case-shell .role-grid { gap: 40px !important; }
+html body main.case-shell .role-grid > * {
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  padding: 0 !important;
+}
+/* ---------- 4t. Project Health case study + Meridian: real space between sections (their headings are direct children of main) ---------- */
+html body main.case-shell > h2 {
+  margin-top: 56px !important;
+  padding-top: 34px;
+  border-top: 1px solid var(--rd-line);
+  max-width: none;
+}
+html body main.case-shell > h2:first-of-type { margin-top: 40px !important; }
+/* Project Health: "Failure recovery" repeats the "Unknown is not healthy" decision (text stays in the markup) */
+html body main.case-shell .evidence-list > .evidence-item:nth-child(2) { display: none; }
+/* ---------- 4u. Review follow-ups ---------- */
+/* Portfolio note: the Learning Library link fills the right side */
+html body #ai-cs-mock #portfolio .band[style*="margin-top:30px"] {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  column-gap: 32px;
+  align-items: center;
+}
+html body #ai-cs-mock #portfolio .band[style*="margin-top:30px"]::before { justify-self: start; }
+html body #ai-cs-mock #portfolio .band .band-link {
+  grid-column: 2;
+  grid-row: 1 / span 3;
+  align-self: center;
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 18px;
+  border: 1px solid var(--ink);
+  background: #fff;
+  color: var(--ink) !important;
+  font-size: 14px;
+  font-weight: 900;
+  text-decoration: none;
+  white-space: nowrap;
+}
+html body #ai-cs-mock #portfolio .band .band-link:hover { background: var(--ink); color: #fff !important; }
+@media (max-width: 700px){
+  html body #ai-cs-mock #portfolio .band[style*="margin-top:30px"] { grid-template-columns: 1fr; }
+  html body #ai-cs-mock #portfolio .band .band-link { grid-column: 1; grid-row: auto; justify-self: start; margin-top: 14px; }
+}
+/* Applied Work supporting cards: readable text size (contrast was already fine) */
+html body #ai-cs-mock #portfolio .applied-secondary .card-intro { font-size: 14px !important; line-height: 1.5 !important; }
+html body #ai-cs-mock #portfolio .applied-card-actions a { font-size: 13.5px !important; }
+html body #ai-cs-mock #portfolio .applied-secondary { justify-content: flex-start !important; gap: 8px !important; }
+html body #ai-cs-mock #portfolio .applied-secondary .card-intro { margin-top: 0 !important; }
+html body #ai-cs-mock #portfolio .applied-secondary > h3 { margin-bottom: 0 !important; }
+/* reserve two lines for titles so descriptions line up; on wide screens every title is one line, so reserve none */
+html body #ai-cs-mock #portfolio .applied-secondary > h3 { min-height: 40px; }
+@media (min-width: 1300px){
+  html body #ai-cs-mock #portfolio .applied-secondary > h3 { min-height: 0 !important; }
+}
+/* "In short" line under each case study's intro */
+html body main .in-short {
+  max-width: 62ch;
+  margin: 22px 0 0;
+  font-size: clamp(17px, 1.6vw, 19px);
+  font-weight: 700;
+  line-height: 1.45;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+}
+html body main .in-short > span {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+/* Legal page: same column and hairline rules as the other case studies */
+html body main.legal-single-case .legal-story,html body main.legal-single-case .legal-paper{
+  max-width: none !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+}
+html body main.legal-single-case .paper-abstract { border-bottom: 1px solid var(--rd-line) !important; }
+html body main.legal-single-case .paper-example { border-top: 1px solid var(--rd-line) !important; }
+html body main.legal-single-case .paper-section { border-top: 1px solid var(--rd-line) !important; }
+/* ---------- 4v. Typography (reviewer feedback #10): loosened headings; all type is sans ---------- */
+/* every heading on every portfolio page: weight 700, gentle tracking, readable spaces after commas.
+   (:not(#_) only raises specificity so this wins over the older per-component rules above) */
+html body main:not(#_) :is(h1, h2, h3, h4):not(#_) {
+  font-weight: 700 !important;
+  letter-spacing: -0.02em !important;
+  word-spacing: 0.02em;
+}
+/* the big homepage hero headline keeps a tighter, heavier look */
+html body #ai-cs-mock .rd-hero h1:not(#_) {
+  font-weight: 800 !important;
+  letter-spacing: -0.065em !important;
+  word-spacing: 0 !important;
+}
+html body #ai-cs-mock #portfolio .applied-secondary > h3 { font-size: 17px !important; }
+@media (prefers-reduced-motion: reduce){
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+@media (max-width: 980px){
+  html body #ai-cs-mock .home-feature-grid { grid-template-columns: 1fr; }
+}
+@media (max-width: 680px){
+  
+  html body #ai-cs-mock .home-feature-actions { padding-right: 0; }
+  /* #483 (PF-02): the numbered-sticker rules (01/02/03) are more specific and also !important, so this
+     phone rule never applied and the "02" sticker covered Tastemake's "Case study" button. Match them. */
+  html body #ai-cs-mock .home-feature-card::after,
+  html body #ai-cs-mock .home-feature-state-anchor::after,
+  html body #ai-cs-mock .home-feature-stack-right .home-feature-card:nth-child(n)::after { display: none !important; }
+}
+.rd-paper::after{content:"";position:absolute;inset:0;background-image:linear-gradient(rgba(21,17,26,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(21,17,26,.035) 1px,transparent 1px);background-size:18px 18px;opacity:.38}
+.rd-paper-one{left:112px;top:128px;width:338px;height:250px;transform:rotate(-3.2deg)}
+.rd-paper-two{left:132px;top:150px;width:352px;height:246px;transform:rotate(2.4deg);opacity:.82}
+.rd-lines>path{fill:none;stroke-linecap:round;stroke-linejoin:round}
+.rd-sketch-main{stroke:#1b2431;stroke-width:1.7;stroke-dasharray:90;stroke-dashoffset:0}
+.rd-sketch-ghost{stroke:#1b2431;stroke-width:.85;opacity:.22;transform:translate(.7px,-.35px)}
+.rd-arrowhead-shape{fill:none;stroke:#1b2431;stroke-width:1.45;stroke-linecap:round;stroke-linejoin:round}
+.rd-card::before{content:none}
+.rd-status::before{width:7px;height:7px;box-shadow:0 0 0 4px rgba(238,42,123,.1);animation:none!important}
+html body #ai-cs-mock .rd-control h2{margin:0!important;font-size:38px!important;line-height:.96!important;letter-spacing:-.055em;color:#0f172a!important}
+html body #ai-cs-mock .rd-control p{margin:10px 0 0!important;color:#63708a!important;font-size:11.5px!important;line-height:1.45!important}
+.rd-trace div{display:flex;align-items:center;justify-content:center;min-height:31px;border:1px solid #efe4a5;border-radius:999px;background:#fff8c9;padding:6px 5px;color:#344054;font-size:9px;font-weight:750;white-space:nowrap;animation:none!important}
+.rd-mini-panel h3{margin:0 0 7px;font-size:10.5px;}
+.rd-mini-row:first-of-type{border-top:0}
+.rd-mini-row span:nth-child(2),.rd-mini-row>span:first-child:not(.mini-box){flex:1}
+.mini-count.amber{background:#ffe174;color:#5f4b00}
+.mini-count.blue{background:#e6edff;color:#334ac0}
+.mini-count.pink{background:#ffd6e2;color:#952449}
+.mini-count.slate{background:#e9ecf2;color:#475467}
+.rd-review-note .rd-tape{position:absolute;top:-8px;left:50%;width:38px;height:14px;background:rgba(221,224,221,.72);transform:translateX(-50%) rotate(-7deg);filter:drop-shadow(0 2px 2px rgba(21,17,26,.03))}
+.authority-icon{color:#0b9b51}
+.current-icon{color:#3157d8}
+.rd-review-human{left:18px;top:30px;width:188px;background:#fff0e9;transform:rotate(-6deg)}
+.rd-review-authority{right:2px;top:34px;width:180px;background:#eaf9e9;transform:rotate(6deg)}
+.rd-review-current{right:-30px;top:160px;width:128px;background:#edf5ff;transform:rotate(7deg)}
+.rd-review-current .rd-tape{left:64%;transform:translateX(-50%) rotate(5deg)}
+.rd-note .rd-tape-note{position:absolute;top:-15px;left:22px;width:38px;height:13px;background:rgba(218,220,216,.76);transform:rotate(-4deg)}
+.rd-note>span:last-child{margin-top:10px;padding-top:8px;border-top:1px solid rgba(44,42,15,.22);color:#252411;font-size:7.7px;font-weight:850;letter-spacing:.16em}
+.rd-type-anchor{flex:0 0 auto;color:#8b8490;font-size:10px;font-weight:800;letter-spacing:.12em;text-transform:uppercase}
+.rd-type-label span{color:#d6a31e;font-size:13px;letter-spacing:0}
+@media (max-width:1180px) and (min-width:981px){
+  .rd-stage{transform:scale(.9);transform-origin:center right}
+  .rd-review-current{right:-32px}
+  .rd-paper-one{left:38px}
+  .rd-paper-two{left:58px}
+}
+@media (max-width:980px) and (min-width:681px){
+  html body #ai-cs-mock .rd-hero h1{max-width:760px;font-size:clamp(58px,9.5vw,80px)}
+  html body #ai-cs-mock .rd-hero .lead{max-width:650px}
+  .rd-review-human{left:24px}
+  .rd-review-authority{right:14px}
+  .rd-review-current{right:-28px;top:170px}
+}
+@media (max-width:680px){
+  html body #ai-cs-mock .rd-hero h1{font-size:clamp(46px,13vw,62px);line-height:.91;letter-spacing:-.067em}
+  html body #ai-cs-mock .rd-hero .lead{margin-top:20px;font-size:17px;}
+  .rd-control h2{font-size:36px}
+  .rd-control p{font-size:11px}
+  .rd-trace div{white-space:normal;min-height:34px}
+  .rd-type-anchor{font-size:8.5px;letter-spacing:.08em}
+  
+}
+/* the blue "Current State" note sits further out on wide screens only; narrower ones have no room before the viewport edge */
+@media (min-width: 1300px){
+  .rd-review-current { right: -90px; }
+}
+@media (min-width: 1440px){
+  .rd-review-current { right: -130px; }
+}
+@media (min-width: 1600px){
+  .rd-review-current { right: -150px; }
+}
+/* ==== Folded in from portfolio-shape-polish.css (#451). Every page loaded that file
+   immediately after this one, so appending it here keeps the cascade order. ==== */
+/* Portfolio-only shape pass. Linked on portfolio pages, never the tools. */
+
+/* Keep the brand at left and let the primary links sit at the right edge. */
+
+html body .topbar .nav {
+  flex: 0 0 auto !important;
+  justify-content: flex-end !important;
+  gap: 22px !important;
+  margin-left: auto !important;
+  margin-right: 0;
+}
+html body .topbar .top-actions {
+  flex: 0 0 auto !important;
+  min-width: 0 !important;
+  margin-left: 0 !important;
+}
+html body .topbar .nav a,
+html body .topbar .nav button {
+  position: relative;
+  padding: 9px 0 11px !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  color: var(--muted) !important;
+  transition: color 160ms ease !important;
+}
+html body .topbar .nav a:hover,
+html body .topbar .nav button:hover {
+  background: transparent !important;
+  color: var(--ink) !important;
+}
+html body .topbar .nav a[aria-current="page"],
+html body .topbar .nav a.active,
+html body .topbar .nav button.active {
+  background: transparent !important;
+  color: var(--ink) !important;
+}
+html body .topbar .nav :is(a[aria-current="page"], a.active, button.active)::after {
+  content: "";
+  position: absolute;
+  right: 0;
+  bottom: 3px;
+  left: 0;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--rd-pink, #f0408f) !important;
+}
+/* Homepage calls to action and reference links use a compact corner radius. */
+html body #ai-cs-mock :is(.rd-button, .home-state-button, .home-state-primary, .home-state-secondary, .home-state-button-secondary, .home-state-secondary),
+html body #ai-cs-mock .learning-reference-links a,
+html body #ai-cs-mock #learn .stage-body :is(.resource-row a, a.resource-link, .resource-row > a),
+html body #ai-cs-mock [data-page="learn"] .learning-reference-map > a {
+  border-radius: 12px !important;
+}
+html body #ai-cs-mock .tag,html body #ai-cs-mock .resource-link{
+  border-radius: 7px !important;
+}
+html body #ai-cs-mock .rd-trace div,
+html body #ai-cs-mock .rd-status {
+  border-radius: 8px !important;
+}
+html body #ai-cs-mock [data-page="learn"] .learning-reference-map {
+  border-radius: 18px !important;
+}
+/* Case-study CTAs, reference links, and process chips. */
+html body main:is(.case-system-page, .case-shell, .edge-wrap, .map-wrap) :is(.closing-links > a, .meridian-primary-action, .cta, .appendix-link a, .resource-link) {
+  border-radius: 12px;
+}
+/* Override the more specific full-pill rule on the top product callout buttons. */
+html body main.case-system-page aside.meridian-product-callout.meridian-product-callout > a.meridian-primary-action,
+html body main.case-shell aside.meridian-product-callout.meridian-product-callout > a.meridian-primary-action {
+  border-radius: 12px;
+}
+/* The shared redesign stylesheet sets closing links back to capsules. */
+
+/* Case-study endings are quiet navigation links, not another row of CTAs. */
+html body main .case-study-footer,
+html body main.case-shell .case-study-footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 18px;
+  margin-top: 30px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border, #dedbe2);
+}
+html body main .case-study-footer > a {
+  display: inline;
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--muted, #6b6672);
+  font-size: 12px;
+  font-weight: 750;
+  line-height: 1.5;
+  text-decoration: none;
+  box-shadow: none;
+}
+html body main .case-study-footer > a:hover {
+  color: var(--ink, #17141a) !important;
+  text-decoration: underline;
+  transform: none !important;
+}
+html body main:is(.case-system-page, .case-shell, .edge-wrap, .map-wrap) :is(.research-loop span, .human-flow span, .plain-rules span, .map-chip, .map-step, .context-loop span, .legal-evidence-strip span, .case-meta > span, .meta > span) {
+  border-radius: 7px !important;
+}
+/* Applied Work's Learning Library footer action is a compact corner button. */
+html body #ai-cs-mock #portfolio .band .band-link {
+  border-radius: 12px !important;
+}
+/* Keep large section surfaces softly rounded without the oversized capsule look. */
+
+@media (max-width: 860px){
+  html body .topbar .nav { display: none !important; }
+}
+/* #483 (PF-06): on phones the core loop wrapped mid-sequence and left an arrow dangling at each line end. Read it top to bottom instead. */
+@media(max-width:560px){
+  html body main .human-flow{flex-direction:column;align-items:flex-start}
+  html body main .human-flow>b{transform:rotate(90deg);margin-left:10px}
+}
+/* QA Oct 10: on a ~390px phone the Project Health card's "Open Project Health" + "Case study →" pair wrapped onto two
+   rows (169 + 8 + 124px in a 300px row). Scale the pair with the viewport so both featured cards keep one row down to
+   340px; below that, wrapping is the safe fallback. */
+@media (max-width: 480px){
+  html body #ai-cs-mock .home-feature-actions { flex-wrap: nowrap; gap: 8px; }
+  html body #ai-cs-mock .home-feature-actions a { flex: 0 1 auto; min-width: 0; padding: 0 clamp(8px, 2.5vw, 14px) !important; font-size: clamp(12px, 3.4vw, 13.5px) !important; }
+}
+@media (max-width: 339px){
+  html body #ai-cs-mock .home-feature-actions { flex-wrap: wrap; }
+}
+
+/* Animations for the homepage rules above (moved from site-redesign.css with them, #451; the names are unique) */
+@keyframes rdFloatWash { from { transform: translate3d(0, 0, 0) scale(1); } to { transform: translate3d(-34px, 28px, 0) scale(1.06); } }
+@keyframes rdPulse { 0% { box-shadow: 0 0 0 0 rgba(182, 35, 106, 0.42); } 100% { box-shadow: 0 0 0 10px rgba(182, 35, 106, 0); } }
+@keyframes rdGlowStep { 0%, 100% { background: rgba(255, 255, 255, 0.68); } 45%, 55% { background: rgba(244, 255, 82, 0.42); border-color: rgba(255, 107, 87, 0.44); } }
+@keyframes rdDrift { to { transform: translateX(-50%); } }
+@keyframes rdCursorBlink{0%,48%{opacity:.72}49%,100%{opacity:0}}
