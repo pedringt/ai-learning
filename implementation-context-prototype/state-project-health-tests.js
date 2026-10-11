@@ -675,8 +675,10 @@ assert.match(projectHealthSource,/data-attention-action="review-quality"/);
 assert.match(projectHealthSource,/drawerCopyHandoffButton/);
 assert.match(projectHealthSource,/Changed since last visit/);
 assert.match(projectHealthSource,/Previous investigations/);
-assert.match(projectHealthSource,/commits\?sha=/);
-assert.match(projectHealthSource,/project\.releasePaths/);
+// Scoped release-commit selection moved server-side with the GitHub reads (QA, Oct 10).
+const githubFunctionSource=fs.readFileSync(require.resolve('../api/project-health-github.js'),'utf8');
+assert.match(githubFunctionSource,/commits\?sha=/);
+assert.match(githubFunctionSource,/project\.releasePaths/);
 assert.doesNotMatch(projectHealthSource,/View AI eval results/);
 assert.match(projectHealthSource,/headerRunChecksButton\.hidden=!canRun&&!activeEvalRun/);
 assert.match(projectHealthSource,/setActiveTab\('ai-quality'\)/);

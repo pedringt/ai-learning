@@ -237,3 +237,14 @@ html body :is(h1, h2, h3, h4):not(#_) { font-weight: 700 !important; letter-spac
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { transition-duration: 0.001ms !important; animation-duration: 0.001ms !important; }
 }
+
+/* incomplete: a signal failed to load. Neutral grey with a "?" icon, never the green healthy state. */
+html body .mock-dashboard .mock-attention-banner.is-incomplete {
+  border: 0 !important;
+  background: #f6f6f8 !important;
+}
+html body .mock-dashboard .mock-attention-banner.is-incomplete .mock-attention-icon { background: #8a8796 !important; color: #fff; }
+html body .mock-dashboard .mock-attention-banner.is-incomplete .mock-attention-copy h3 { color: var(--ink); }
+html body .mock-dashboard .mock-attention-banner.is-incomplete .mock-attention-copy > p { color: var(--muted); }
+html body .mock-dashboard .mock-attention-banner.is-incomplete .mock-issue-dot { background: #8a8796; }
+html body .status-pill.incomplete { background: #f1f1f4 !important; color: #5f5c6b !important; }
