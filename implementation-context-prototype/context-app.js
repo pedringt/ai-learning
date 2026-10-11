@@ -10,7 +10,7 @@
   const initial = clone(D);
   const state = {
     data: clone(D), view:'overview', result:null, resultQuery:'', askInputDraft:'', projectMenuOpen:false, refinements:[], lastScenario:null,
-    addedSample:false, pendingCreated:false, reviewBannerDismissed:false, dialogReturnFocus:null, expandedNotes:new Set(), noteComposerOpen:false, editingNoteId:null, dismissedNudges:new Set(), historyTopic:null, historyEvidenceId:null, historySearch:'', notesFilter:'all', notesDateFilter:'all', notesSearch:'', isAnalyzing:false, openQuestionsExpanded:false, expandedReviewId:null, openItemSections:{reviews:false,blockers:false,drafts:true,questions:null}, projectRules:[], workspaceAttentionStatus:'loading', backendStatus:{state:'loading',evidence:'loading',reviews:'loading',history:'loading',questions:'loading',rules:'loading',drafts:'loading'}, projectConfirmed:false, hydrationGeneration:0
+    addedSample:false, pendingCreated:false, reviewBannerDismissed:false, dialogReturnFocus:null, expandedNotes:new Set(), noteComposerOpen:false, editingNoteId:null, dismissedNudges:new Set(), historyTopic:null, historyEvidenceId:null, historySearch:'', notesFilter:'all', notesDateFilter:'all', notesSearch:'', isAnalyzing:false, openQuestionsExpanded:false, openQuestionIds:new Set(), expandedReviewId:null, openItemSections:{reviews:false,blockers:false,drafts:true,questions:null}, projectRules:[], workspaceAttentionStatus:'loading', backendStatus:{state:'loading',evidence:'loading',reviews:'loading',history:'loading',questions:'loading',rules:'loading',drafts:'loading'}, projectConfirmed:false, hydrationGeneration:0
   };
 
   const root = document.getElementById('viewRoot');
@@ -768,7 +768,7 @@
       hasCurrentState:!baselineSetupActive()&&(state.data.knowledge||[]).some(k=>k.state!=='retired'),
       draftNotes:state.data.notes.filter(n=>n.status==='working'||n.status==='draft'||!!n.backendDraft),
       notes:state.data.notes,
-      openQuestionsExpanded:state.openQuestionsExpanded,expandedReviewId:state.expandedReviewId,openItemSections:state.openItemSections,
+      openQuestionsExpanded:state.openQuestionsExpanded,openQuestionIds:state.openQuestionIds,expandedReviewId:state.expandedReviewId,openItemSections:state.openItemSections,
       renderDraftNote:n=>NOTES_VIEW.draftNoteRow(n)
     };
   }
@@ -1230,7 +1230,7 @@
     state.data.drafts=[];
     state.projectRules=[];
     state.view='overview';
-    state.result=null;state.resultQuery='';state.expandedReviewId=null;
+    state.result=null;state.resultQuery='';state.expandedReviewId=null;state.openQuestionIds.clear();
     state.backendStatus={state:'loading',evidence:'loading',reviews:'loading',history:'loading',questions:'loading',rules:'loading',drafts:'loading'};
     state.isAnalyzing=false;
     render();
@@ -1826,6 +1826,14 @@
   // itself as "outside" and close it before a switch-project click could land.
   document.addEventListener('click',e=>{ if(state.projectMenuOpen && !e.target.closest('.sidebar-project') && !e.target.closest('#projectMenu') && !e.target.closest('[data-action="toggle-projects"]')){state.projectMenuOpen=false;updateNav();} });
   overlay.addEventListener('click',e=>{if(e.target===overlay && !state.isAnalyzing) closeDialog();});
+  // Question rows are native <details>; remember which are open so a re-render
+  // (a late load, a retry) doesn't collapse the one someone is reading (#487).
+  // `toggle` doesn't bubble, hence the capture listener.
+  document.addEventListener('toggle',e=>{
+    const row=e.target; if(!row.matches?.('details.open-question-item')) return;
+    const id=row.dataset.questionId; if(!id) return;
+    if(row.open) state.openQuestionIds.add(id); else state.openQuestionIds.delete(id);
+  },true);
   // Drag-and-drop onto the Add Evidence dialog, reusing the exact same
   // uploadInformation() path as the file-picker link -- no new backend or
   // upload logic, just another way to hand it a File. Scoped to whenever
