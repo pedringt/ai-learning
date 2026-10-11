@@ -630,6 +630,7 @@ body:has(.meridian-breadcrumb span:last-child) .meridian-heading .eyebrow{displa
 .flagship-case .integration-flow b{font-weight:600}
 .flagship-case .state-model-grid article{
   background:color-mix(in srgb,var(--soft) 38%,var(--card))!important;
+  border-color:var(--border)!important;
 }
 .legal-paper .paper-learning{
   margin-top:30px;
