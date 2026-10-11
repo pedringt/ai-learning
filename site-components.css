@@ -608,3 +608,52 @@ body:has(.meridian-breadcrumb span:last-child) .meridian-heading .eyebrow{displa
 /* Homepage: make the cross-project working pattern explicit without adding another large philosophy section. */
 
 .legal-part-divider{margin:48px 0 18px;padding:20px 22px;border:1px solid var(--border);border-radius:14px;background:var(--soft)}.legal-part-divider span{display:block;color:var(--purple);font-size:11px;font-weight:850;letter-spacing:.06em;text-transform:uppercase;margin-bottom:6px}.legal-part-divider h2{margin:0 0 8px!important;font-size:26px!important}.legal-part-divider p,.legal-part-transition p{margin:0!important;font-size:13.5px!important;line-height:1.6!important}.legal-part-transition{margin:42px 0 12px;padding:17px 19px;border-left:3px solid var(--purple);background:var(--softp);border-radius:0 12px 12px 0}.legal-part-transition strong{display:block;margin-bottom:5px;font-size:16px}
+
+/* ---- moved from site-polish.css (#451): same order, proven not to cross a competing rule ---- */
+.flagship-case .integration-flow{
+  padding-top:14px;
+  border-top:1px solid var(--border);
+  color:var(--muted);
+}
+.flagship-case .integration-flow span{
+  padding:0;
+  border:0;
+  border-radius:0;
+  color:var(--ink);
+  font-size:12px;
+  letter-spacing:0;
+  text-transform:none;
+  white-space:nowrap;
+}
+.flagship-case .integration-flow .ai-step,
+.flagship-case .integration-flow .human-step{color:var(--purple)}
+.flagship-case .integration-flow b{font-weight:600}
+.flagship-case .state-model-grid article{
+  background:color-mix(in srgb,var(--soft) 38%,var(--card))!important;
+}
+.legal-paper .paper-learning{
+  margin-top:30px;
+  padding-top:24px;
+}
+.legal-paper .paper-sources{
+  margin-top:18px;
+  padding-top:18px;
+}
+.legal-paper .paper-learning + .paper-sources{margin-top:18px}
+@media(max-width:760px){
+  .flagship-case .integration-flow{
+    display:grid;
+    grid-template-columns:max-content 14px max-content 14px max-content;
+    gap:5px;
+    padding-bottom:4px;
+  }
+}
+@media(max-width:430px){
+  .flagship-case .integration-flow{
+    gap:5px;
+  }
+  .flagship-case .integration-flow b{
+    width:14px;
+    margin-left:2px;
+  }
+}
