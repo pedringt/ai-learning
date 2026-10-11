@@ -10,8 +10,8 @@
 }
 .topbar{
   top:0;
-  z-index:50!important;
-  backdrop-filter:blur(12px)!important;
+  z-index:50;
+  backdrop-filter:blur(12px);
   margin:0;
   padding:0;
   width:100vw;
@@ -47,20 +47,20 @@ body.v88-dark .topbar{
   margin-left:auto!important;
 }
 .nav button,.nav a{
-  appearance:none!important;
+  appearance:none;
   border:0!important;
   background:transparent!important;
   color:inherit!important;
   padding:9px 10px!important;
   border-radius:9px!important;
-  cursor:pointer!important;
+  cursor:pointer;
   font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif!important;
   font-size:var(--shell-nav-size)!important;
   line-height:1.2!important;
   font-weight:700!important;
   letter-spacing:0!important;
   text-decoration:none!important;
-  white-space:nowrap!important;
+  white-space:nowrap;
 }
 .nav button:hover,.nav button.active,.nav a:hover{
   background:var(--softp)!important;color:var(--purple)!important;
@@ -71,18 +71,18 @@ body.v88-dark .topbar{
 
 .secondary-menu{position:relative!important}
 .secondary-menu summary{
-  list-style:none!important;display:flex!important;align-items:center!important;justify-content:center!important;
-  gap:8px!important;min-height:40px!important;box-sizing:border-box!important;
+  list-style:none;display:flex!important;align-items:center!important;justify-content:center;
+  gap:8px!important;min-height:40px!important;box-sizing:border-box;
   border:1px solid var(--border)!important;background:var(--card)!important;color:inherit!important;
-  border-radius:999px!important;padding:0 14px!important;cursor:pointer!important;
+  border-radius:999px!important;padding:0 14px!important;cursor:pointer;
   font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif!important;font-size:var(--shell-control-size)!important;
-  line-height:1.2!important;font-weight:800!important;white-space:nowrap!important;
+  line-height:1.2!important;font-weight:800;white-space:nowrap;
 }
-.secondary-menu summary::-webkit-details-marker{display:none!important}
+.secondary-menu summary::-webkit-details-marker{display:none}
 .secondary-menu summary:hover,.secondary-menu[open] summary{background:var(--softp)!important;color:var(--purple)!important}
 
 #mobileNav,#v922MobileNav{
-  display:none!important;appearance:none!important;-webkit-appearance:none!important;
+  display:none!important;appearance:none;-webkit-appearance:none;
   border:1px solid var(--border)!important;background-color:var(--card)!important;color:inherit!important;
   border-radius:9px!important;padding:9px 34px 9px 11px!important;
   font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif!important;font-size:14px!important;font-weight:700!important;
@@ -112,12 +112,12 @@ body.v88-dark .topbar{
   }
   .topbar .brand{
     display:block!important;
-    min-width:0!important;
+    min-width:0;
     overflow:hidden!important;
-    text-overflow:ellipsis!important;
+    text-overflow:ellipsis;
   }
   .topbar .top-actions{
-    flex:0 0 auto!important;
+    flex:0 0 auto;
     gap:8px!important;
   }
   
@@ -139,7 +139,7 @@ body.v88-dark .topbar{
   
   #mobileNav,#v922MobileNav{
     flex-basis:104px!important;
-    max-width:104px!important;
+    max-width:104px;
     font-size:13px!important;
   }
 }
@@ -212,12 +212,12 @@ summary:focus-visible,
 select:focus-visible,
 [role="button"]:focus-visible{
   outline:3px solid color-mix(in srgb,var(--purple) 72%,white)!important;
-  outline-offset:3px!important;
+  outline-offset:3px;
 }
 @media(prefers-reduced-motion:reduce){
   
   *,*::before,*::after{
-    scroll-behavior:auto!important;
+    scroll-behavior:auto;
   }
 }
 
@@ -267,7 +267,7 @@ select:focus-visible,
   #ai-cs-mock [data-page="learn"] .learning-stage .learning-item{
     min-width:0!important;
     max-width:100%!important;
-    box-sizing:border-box!important;
+    box-sizing:border-box;
   }
   
   #ai-cs-mock [data-page="learn"] .learning-stage .resource-row{
@@ -277,23 +277,23 @@ select:focus-visible,
   #ai-cs-mock [data-page="learn"] .learning-stage .resource-link{
     max-width:100%!important;
     white-space:normal!important;
-    overflow-wrap:anywhere!important;
+    overflow-wrap:anywhere;
   }
   #ai-cs-mock [data-page="learn"] .learning-stage .learning-item,
   #ai-cs-mock [data-page="learn"] .learning-stage .learning-item p,
   #ai-cs-mock [data-page="learn"] .learning-stage .stage-group.practice p{
-    overflow-wrap:break-word!important;
+    overflow-wrap:break-word;
   }
 }
 
 /* v98.4 — keep Reference / deeper dive rows away from the clipped card edge on phones. */
 @media(max-width:640px){
   #ai-cs-mock [data-page="learn"] .learning-stage .stage-body > .stage-group:not(.practice){
-    position:relative!important;
-    left:0!important;
+    position:relative;
+    left:0;
     transform:none!important;
     margin-left:0!important;
-    margin-right:0!important;
+    margin-right:0;
     width:100%!important;
     max-width:100%!important;
     padding-left:8px!important;
@@ -301,8 +301,8 @@ select:focus-visible,
   }
   #ai-cs-mock [data-page="learn"] .learning-stage .stage-body > .stage-group:not(.practice) > h3,
   #ai-cs-mock [data-page="learn"] .learning-stage .stage-body > .stage-group:not(.practice) > .learning-item{
-    position:relative!important;
-    left:0!important;
+    position:relative;
+    left:0;
     transform:none!important;
     margin-left:0!important;
     max-width:100%!important;
@@ -318,26 +318,26 @@ select:focus-visible,
 
 @media(max-width:640px){
   
-  #ai-cs-mock [data-page="learn"] .learning-item > b::after{font-size:9px!important;margin-left:5px!important;}
+  #ai-cs-mock [data-page="learn"] .learning-item > b::after{font-size:9px;margin-left:5px;}
 }
 
 /* v98.6 — keep the legend in the Reference Library row instead of the intro copy. */
 
 #ai-cs-mock [data-page="learn"] .learning-stages > .section-kicker::after{
-  content:'DEEPENS IN PRACTICE · real-world proficiency grows on the job'!important;
-  height:auto!important;
-  min-height:1px!important;
-  flex:1 1 auto!important;
-  padding-left:18px!important;
+  content:'DEEPENS IN PRACTICE · real-world proficiency grows on the job';
+  height:auto;
+  min-height:1px;
+  flex:1 1 auto;
+  padding-left:18px;
   background:linear-gradient(90deg,var(--border),var(--border)) left center / calc(100% - 315px) 1px no-repeat!important;
-  color:color-mix(in srgb,var(--muted) 76%,transparent)!important;
-  font-size:10px!important;
-  line-height:1.2!important;
-  font-weight:650!important;
-  letter-spacing:.03em!important;
-  text-align:right!important;
-  text-transform:none!important;
-  white-space:nowrap!important;
+  color:color-mix(in srgb,var(--muted) 76%,transparent);
+  font-size:10px;
+  line-height:1.2;
+  font-weight:650;
+  letter-spacing:.03em;
+  text-align:right;
+  text-transform:none;
+  white-space:nowrap;
 }
 @media(max-width:760px){
   #ai-cs-mock [data-page="learn"] .learning-stages > .section-kicker::after{
@@ -371,7 +371,7 @@ select:focus-visible,
   margin:0 0 6px!important;
 }
 #ai-cs-mock [data-page="home"] .home-principle .section-kicker::after{
-  display:none!important;
+  display:none;
 }
 #ai-cs-mock [data-page="home"] .home-principle h2,
 #ai-cs-mock [data-page="home"] .home-principle p{

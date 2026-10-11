@@ -32,7 +32,7 @@
 @media(max-width:760px){.question-shift{padding:18px}.question-shift strong{font-size:18px}}
 
 /* v5 editorial refinement: calmer hierarchy, stable subnav, fewer slogan cards. */
-.case-system-page > .meridian-heading{min-height:0!important}
+.case-system-page > .meridian-heading{min-height:0}
 .case-system-page > .meridian-case-hero{flex-direction:column;justify-content:center;margin-bottom:0!important}
 
 .flagship-case .section{}
@@ -87,7 +87,7 @@
 .question-shift.is-quote{padding:20px 24px 18px}
 .question-shift.is-quote .shift-lead{margin:0 0 6px!important;font-size:14px!important;line-height:1.4!important}
 .question-shift.is-quote strong{max-width:640px;font-size:21px;line-height:1.35}
-.question-shift.is-quote .shift-support{max-width:680px;margin:14px 0 0!important;padding-top:12px;border-top:1px solid rgba(91,75,199,.18);font-size:15px!important;line-height:1.55!important}
+.question-shift.is-quote .shift-support{max-width:680px;margin:14px 0 0!important;padding-top:12px;border-top:1px solid rgba(91,75,199,.18);font-size:15px!important;line-height:1.55}
 @media(max-width:760px){.question-shift.is-quote{padding:16px}.question-shift.is-quote strong{font-size:18px}}
 
 /* Oct 2 portfolio feedback */
@@ -98,7 +98,7 @@
 
 .authority-steps b{line-height:1}
 @media(max-width:620px){
-  .authority-steps{grid-template-columns:1fr!important;gap:6px!important;justify-items:start}
+  .authority-steps{grid-template-columns:1fr!important;gap:6px;justify-items:start}
   .authority-steps b{transform:rotate(90deg);margin-left:10px}
 }
 
