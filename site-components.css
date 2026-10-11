@@ -1877,6 +1877,11 @@ html body main.case-system-page .case-page-content .section > :is(ul, ol) > li {
 /* a section label directly above the closing links stays with them: the hairline goes above the label */
 html body main .kicker:has(+ .case-study-footer) { margin-top: 30px; padding-top: 22px; border-top: 1px solid var(--rd-line); }
 html body main .kicker + .case-study-footer { margin-top: 0; padding-top: 0; border-top: 0; }
+/* Legal page: one hairline between blocks (the turn sections and the example figure also drew a bottom
+   rule, so pairs of lines stacked 30-40px apart), and every full rule spans the column */
+html body main.legal-single-case :is(.paper-turn, .paper-example) { border-bottom: 0; }
+html body main.legal-single-case .paper-meta + .legal-method { border-top: 0; }
+html body main.legal-single-case :is(.legal-method, .paper-before-after, .paper-learning, .paper-sources) { max-width: none !important; }
 @media (prefers-reduced-motion: reduce){
   *, *::before, *::after {
     animation-duration: 0.001ms !important;
