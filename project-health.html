@@ -89,7 +89,7 @@
     .stale-quality-summary{margin-top:8px;background:#f7f9f7;border:0;box-shadow:none}
     /* Decision-support pass: prioritize the workspace over dashboard chrome. */
     .topbar{margin-bottom:14px}.hero{margin-bottom:10px;gap:18px}.hero h1{font-size:clamp(30px,4vw,42px);margin:2px 0 4px}.lede{font-size:14px;line-height:1.45}.hero .eyebrow{font-size:10px}.utility-row{align-self:center}
-    .detail-head{gap:14px}.detail-actions{gap:7px;flex-wrap:nowrap}.detail-actions>.button,.project-links-button{min-height:34px;padding:6px 10px;font-size:12px}.action-menu{order:3}.action-menu-popover{right:0;left:auto;top:calc(100% + 5px);min-width:160px;max-width:210px;padding:5px}.action-menu-popover a{padding:8px 9px;font-size:12px;white-space:nowrap}.project-links-button{white-space:nowrap}
+    .detail-head{gap:14px}.detail-actions{gap:7px;flex-wrap:nowrap}.detail-actions .button,.project-links-button{min-height:34px;padding:6px 10px;font-size:12px}.action-menu{order:3}.action-menu-popover{right:0;left:auto;top:calc(100% + 5px);min-width:160px;max-width:210px;padding:5px}.action-menu-popover a{padding:8px 9px;font-size:12px;white-space:nowrap}.project-links-button{white-space:nowrap}
     .health-status.available{color:var(--accent)}
     .decision-now{background:#f7f9f7}
     .usage-comparison-empty{margin-top:10px;color:var(--muted);font-size:12px;font-weight:650}.usage-trends{display:grid;gap:3px;margin-top:10px}.usage-trends .trend{font-size:12px}.usage-trends .trend strong{color:var(--ink)}
@@ -484,8 +484,7 @@
     .mock-project-title-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
     .mock-project-title-row h2{margin:0}
     .mock-project-title-row .status-pill{font-size:10px}
-    .mock-open-link{color:#4f46d9}.mock-source-link{color:#1f2937}
-    .mock-tabs{padding:0 20px!important;gap:30px!important}
+        .mock-tabs{padding:0 20px!important;gap:30px!important}
 
     .mock-overview-grid{display:block!important;padding:0!important;background:#f6f7fb!important}
     .mock-dashboard{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:16px;padding:16px;background:#f6f7fb}
@@ -669,25 +668,21 @@
         <div class="mock-project-heading">
           <div class="mock-project-icon" id="detailIcon">S</div>
           <div>
-            <div class="mock-project-title-row"><h2 id="detailTitle">Project</h2><span id="detailHeaderStatus" class="status-pill unknown">Checking</span></div>
+            <div class="mock-project-title-row"><h2 id="detailTitle">Project</h2><span id="detailHeaderStatus" class="status-pill unknown">Checking</span><span class="project-title-links"><a class="project-title-link" id="detailLiveLink" target="_blank" rel="noopener noreferrer" hidden>Live site<span aria-hidden="true"> ↗</span><span class="visually-hidden"> (opens in a new tab)</span></a><a class="project-title-link" id="detailRepoLink" target="_blank" rel="noopener noreferrer" hidden><svg class="project-title-link-icon" viewBox="0 0 16 16" width="13" height="13" aria-hidden="true" focusable="false"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>GitHub<span aria-hidden="true"> ↗</span><span class="visually-hidden"> (opens in a new tab)</span></a></span></div>
             <p class="detail-copy" id="detailCopy"></p>
           </div>
         </div>
         <div class="detail-actions">
-          <a class="button mock-open-link" id="mockOpenProjectLink" target="_blank" rel="noopener noreferrer" hidden>Open project ↗</a>
-          <a class="button mock-source-link" id="mockSourceLink" target="_blank" rel="noopener noreferrer">View source</a>
-          <button class="button primary" id="projectCheckButton" type="button">Investigate project</button>
-          <button class="button" id="headerRunChecksButton" type="button" hidden>Run AI evals</button>
+          <span class="action-with-note"><button class="button primary" id="projectCheckButton" type="button">Investigate</button><small class="action-note" id="investigateNote" hidden></small></span>
+          <span class="action-with-note" id="headerRunChecksGroup" hidden><button class="button" id="headerRunChecksButton" type="button" hidden>Run AI evals</button><small class="action-note" id="runChecksNote" hidden></small></span>
           <details class="action-menu" id="projectActionMenu">
             <summary class="button project-links-button overflow-button" aria-label="More project options">•••</summary>
             <div class="action-menu-popover" id="projectLinksMenu">
               <button type="button" data-open-systems>Systems &amp; connections</button>
               <button type="button" data-open-about>About Project Health</button>
-              <a id="repoLink" target="_blank" rel="noopener noreferrer">Open repository</a>
             </div>
           </details>
         </div>
-        <p class="paid-action-note" id="paidActionNote" hidden></p>
       </div>
 
       <nav class="project-tabs mock-tabs" id="projectTabs" aria-label="Project health sections">
@@ -800,7 +795,7 @@
       </div>
     </dialog>
   </main>
-  <link href="project-health-redesign.css?v=r2-oct11" rel="stylesheet" onload="document.documentElement.classList.remove('rd-pending')" onerror="document.documentElement.classList.remove('rd-pending')">
+  <link href="project-health-redesign.css?v=r3-oct11" rel="stylesheet" onload="document.documentElement.classList.remove('rd-pending')" onerror="document.documentElement.classList.remove('rd-pending')">
   <script src="project-health-model.js"></script>
   <script src="project-health.js"></script>
 </body>

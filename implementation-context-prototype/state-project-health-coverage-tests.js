@@ -134,22 +134,54 @@ assert.notStrictEqual(M.projectStatus(tastemake404).kind,'good');
 const many=loaded(project('narc'),{delivery:null,failures:[{label:'Delivery',reason:'request timed out'},{label:'Activity',reason:'server error 502'},{label:'Delivery',reason:'request timed out'}]});
 assert.strictEqual(M.overallAttention(many).title,"Couldn't check: Release pipeline (request timed out), Deployment activity (server error 502)");
 
-// --- Cowork, Oct 11: paid actions explain themselves in one sentence; the cooldown matches the run API.
+// --- Cowork, Oct 11: paid actions explain themselves; the cooldown matches the run API. Visual pass, Oct 11: each note
+// belongs to the button it describes (short helper text under it, full sentence as tooltip and screen-reader text).
 const RUN_API=require('../api/project-health-run.js')._test;
 assert.strictEqual(M.RUN_COOLDOWN_MINUTES*60*1000,RUN_API.RUN_COOLDOWN_MS,'note cooldown must match the API cooldown');
 const paidRunInfo={configured:true,can_run_here:true,paid_model_calls:true,button_label:'Run AI evals',estimated_cost:'<$0.25 per full run'};
-assert.strictEqual(M.paidActionNote({...stateHealthy,runInfo:paidRunInfo}),'Run AI evals makes a few small paid AI calls, is limited to one run every 10 minutes, and may update what this page shows.');
-assert.strictEqual(M.paidActionNote({...stateHealthy,runInfo:{...paidRunInfo,configured:false}}),'','no note when the button is hidden');
-assert.strictEqual(M.paidActionNote(loaded(project('tastemake'),{runInfo:{configured:true,paid_model_calls:false}})),'','a free GitHub workflow run is not described as paid');
+const runOnly=M.actionNotes({...stateHealthy,runInfo:paidRunInfo});
+assert.deepStrictEqual(runOnly,{run:{short:'Paid AI calls · 1 run per 10 min',full:'Run AI evals makes a few small paid AI calls, is limited to one run every 10 minutes, and may update what this page shows.'},investigate:null},'a healthy project: only the run button is paid');
+assert.deepStrictEqual(M.actionNotes({...stateHealthy,runInfo:{...paidRunInfo,configured:false}}),{run:null,investigate:null},'no note when the button is hidden');
+assert.strictEqual(M.actionNotes(loaded(project('tastemake'),{runInfo:{configured:true,paid_model_calls:false}})).run,null,'a free GitHub workflow run is not described as paid');
 assert.strictEqual(M.investigationUsesModel(authorityByDesign),false,'a healthy project investigation is a free local summary');
-assert.strictEqual(M.paidActionNote(authorityByDesign),'');
+assert.deepStrictEqual(M.actionNotes(authorityByDesign),{run:null,investigate:null});
 assert.strictEqual(M.investigationUsesModel(authorityBad),true);
-assert.strictEqual(M.paidActionNote(authorityBad),'Investigate makes a small paid AI call to summarize the failure evidence; it only reads and changes nothing.');
+assert.deepStrictEqual(M.actionNotes(authorityBad).investigate,{short:'Paid AI call · read-only',full:'Investigate makes a small paid AI call to summarize the failure evidence; it only reads and changes nothing.'});
 const stateBadDelivery=loaded(project('state'),{quality:healthyStateQuality,qualityBehaviorUpdatedAt:'2026-10-01T00:00:00Z',delivery:{...goodDelivery,vercel:{kind:'bad',label:'Vercel deploy failed'}},runInfo:paidRunInfo});
-assert.match(M.paidActionNote(stateBadDelivery),/^Run AI evals and Investigate make small paid AI calls; eval runs are limited to one every 10 minutes/);
-for(const note of [M.paidActionNote({...stateHealthy,runInfo:paidRunInfo}),M.paidActionNote(stateBadDelivery),M.paidActionNote(authorityBad)]){
-  assert.strictEqual((note.match(/[.!?](\s|$)/g)||[]).length,1,'one sentence: '+note);
+const bothNotes=M.actionNotes(stateBadDelivery);
+assert.ok(bothNotes.run&&bothNotes.investigate,'both buttons carry their own note when both are paid');
+assert.doesNotMatch(bothNotes.investigate.full+bothNotes.investigate.short,/10 min|minutes/,'Investigate has no cooldown, so its note never mentions one');
+for(const note of [runOnly.run,bothNotes.investigate]){
+  assert.strictEqual((note.full.match(/[.!?](\s|$)/g)||[]).length,1,'one sentence: '+note.full);
+  assert.ok(note.short.split(' · ').every(line=>line.length<=16),'each helper line fits under its button: '+note.short);
 }
+
+// --- Visual pass, Oct 11: while the run API would refuse a run, the button says when it is available again.
+const T0=Date.parse('2026-10-11T12:00:00Z');
+const at=ms=>new Date(T0-ms).toISOString();
+assert.deepStrictEqual(M.runCooldown(at(3*60*1000),T0),{active:true,remainingMs:7*60*1000,minutes:7,label:'Available in 7 min'});
+assert.strictEqual(M.runCooldown(at(3*60*1000+5000),T0).label,'Available in 7 min','partial minutes round up');
+assert.strictEqual(M.runCooldown(at(0),T0).label,'Available in 10 min');
+assert.strictEqual(M.runCooldown(at(10*60*1000-1000),T0).label,'Available in 1 min','never "0 min" while still cooling down');
+assert.strictEqual(M.runCooldown(at(10*60*1000),T0).active,false,'re-enabled exactly at the API cooldown');
+assert.strictEqual(M.runCooldown(at(-60*1000),T0).active,false,'a start in the future is ignored, like the API (elapsed >= 0)');
+assert.strictEqual(M.runCooldown(null,T0).active,false);
+assert.strictEqual(M.runCooldown('not a date',T0).label,'');
+// Every 30 s check (the page ticks every 15 s) sees a label that never increases and ends enabled.
+let previous=Infinity;
+for(let t=0;t<=10*60*1000;t+=30*1000){
+  const step=M.runCooldown(at(0),T0+t);
+  if(step.active){assert.ok(step.minutes<=previous);previous=step.minutes;}
+  else assert.strictEqual(t,10*60*1000);
+}
+// The latest known start wins: this browser's own dispatch, an active run, or a 429's retry_after_seconds.
+assert.strictEqual(M.latestRunStart({runStartedAt:at(8*60*1000),qualityRun:{startedAt:at(2*60*1000)}}),at(2*60*1000));
+assert.strictEqual(M.runCooldownFor({runStartedAt:at(2*60*1000)},T0).label,'Available in 8 min');
+assert.strictEqual(M.runCooldownFor({},T0).active,false);
+assert.strictEqual(M.cooldownStartFromRetryAfter(420,T0),at(3*60*1000),'429 with 7 min left means the run started 3 min ago');
+assert.strictEqual(M.runCooldown(M.cooldownStartFromRetryAfter(420,T0),T0).label,'Available in 7 min');
+assert.strictEqual(M.cooldownStartFromRetryAfter(undefined,T0),null);
+assert.strictEqual(M.cooldownStartFromRetryAfter(99999,T0),at(0),'capped at the API cooldown');
 
 // --- Non-health controls and detail-only signals do not make a project incomplete.
 const controlsOnly=loaded(project('tastemake'),{externalQuality:{attention:[{kind:'good',title:'Recommendation checks healthy'}]},failures:[{label:'Run controls',reason:'not found'},{label:'Analytics',reason:'request timed out'}]});

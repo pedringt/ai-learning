@@ -283,18 +283,43 @@
     if(data.project.quality==='state'&&['bad','warn'].includes(qualityAttention(data.quality).kind))return false;
     return deliveryAttentionForData(data).kind==='bad';
   }
-  // Cowork, Oct 11: any visitor can press these, so say plainly what they cost. One sentence; the cooldown matches
-  // RUN_COOLDOWN_MS in api/project-health-run.js (asserted in tests). The investigate endpoint has no cooldown.
+  // Cowork, Oct 11: any visitor can press these, so say plainly what they cost. Visual pass, Oct 11: each note sits
+  // under the button it describes (short visible text, full sentence for the tooltip and screen readers) instead of
+  // one sentence under the whole row. The cooldown matches RUN_COOLDOWN_MS in api/project-health-run.js (asserted in
+  // tests); the investigate endpoint has no cooldown.
   const RUN_COOLDOWN_MINUTES=10;
-  function paidActionNote(data){
+  function actionNotes(data){
     const run=data?.runInfo;
     const runLabel=String(run?.button_label||'Run AI evals');
     const paidRun=!!(run?.configured&&run?.can_run_here!==false&&run?.paid_model_calls);
     const paidInvestigate=investigationUsesModel(data);
-    if(paidRun&&paidInvestigate)return runLabel+' and Investigate make small paid AI calls; eval runs are limited to one every '+RUN_COOLDOWN_MINUTES+' minutes and may update what this page shows.';
-    if(paidRun)return runLabel+' makes a few small paid AI calls, is limited to one run every '+RUN_COOLDOWN_MINUTES+' minutes, and may update what this page shows.';
-    if(paidInvestigate)return 'Investigate makes a small paid AI call to summarize the failure evidence; it only reads and changes nothing.';
-    return '';
+    return {
+      run:paidRun?{short:'Paid AI calls · 1 run per '+RUN_COOLDOWN_MINUTES+' min',full:runLabel+' makes a few small paid AI calls, is limited to one run every '+RUN_COOLDOWN_MINUTES+' minutes, and may update what this page shows.'}:null,
+      investigate:paidInvestigate?{short:'Paid AI call · read-only',full:'Investigate makes a small paid AI call to summarize the failure evidence; it only reads and changes nothing.'}:null
+    };
+  }
+  // The run API refuses a new run within RUN_COOLDOWN_MINUTES of the latest one (elapsed >= 0 and < cooldown). The page
+  // knows a run start when this browser started it, or from a 429's retry_after_seconds; it cannot see runs started
+  // elsewhere until the API refuses one.
+  function runCooldown(startedAt,now=Date.now()){
+    const cooldownMs=RUN_COOLDOWN_MINUTES*60*1000;
+    const elapsed=now-dateMs(startedAt);
+    if(!Number.isFinite(elapsed)||elapsed<0||elapsed>=cooldownMs)return {active:false,remainingMs:0,minutes:0,label:''};
+    const remainingMs=cooldownMs-elapsed;
+    const minutes=Math.ceil(remainingMs/60000);
+    return {active:true,remainingMs,minutes,label:'Available in '+minutes+' min'};
+  }
+  function latestRunStart(data){
+    const starts=[data?.runStartedAt,data?.qualityRun?.startedAt].filter(value=>Number.isFinite(dateMs(value)));
+    return starts.sort((a,b)=>dateMs(b)-dateMs(a))[0]||null;
+  }
+  function runCooldownFor(data,now=Date.now()){return runCooldown(latestRunStart(data),now);}
+  // A 429 says how long is left; turn it into the equivalent start time so one code path handles both.
+  function cooldownStartFromRetryAfter(retryAfterSeconds,now=Date.now()){
+    const seconds=Number(retryAfterSeconds);
+    if(!Number.isFinite(seconds)||seconds<=0)return null;
+    const remaining=Math.min(seconds*1000,RUN_COOLDOWN_MINUTES*60*1000);
+    return new Date(now-(RUN_COOLDOWN_MINUTES*60*1000-remaining)).toISOString();
   }
   function qualityNotMeasured(data){return !!data?.project?.noQualitySource;}
   function healthySummary(data){
@@ -1479,5 +1504,5 @@
     };
   }
 
-  return {PROJECTS,esc,shortSha,commitTitle,repoUrl,githubCommitUrl,pullRequestNumber,githubPullRequestUrl,githubLink,changeUrl,commitLabel,htmlRow,linkedRow,githubApi,vercelFromStatus,deliveryHealth,normalizeQuality,percent,highImpactText,modelDisplayName,qualityAttention,deliveryAttention,deliveryAttentionForData,infrastructureAttention,externalQualityAttention,pendingSet,productOpenItems,failureReason,uncheckedSignals,incompleteAttention,allAttentionSignals,overallAttention,projectStatus,qualityNotMeasured,healthySummary,investigationUsesModel,paidActionNote,RUN_COOLDOWN_MINUTES,attentionItems,setupGaps,releaseReadiness,regressionSignal,recurringFailureSignal,operationalSignals,healthConsistencyIssues,releaseRiskChecklist,productionRuntime,operationalNextDecision,failureCheckCount,failureExplanation,qualityFailureClassSummary,activityTimelineItems,activityDayLabel,activityTimeRange,evalBehaviorBranch,mergePlatform,emptyProjectData,safeExternalQualitySnapshot,serializeProjectData,hydrateProjectData,investigationHistorySummary,makeRunner,STATE_EVAL_CONTRACT_UPDATED_AT,dateMs,fmtDate,relativeAge,stateEvalContractStale,stateEvalBehaviorStale,stateEvalResultsStale,stateEvalStaleReason,freshnessMeta,qualitySnapshot,visitBaseline,healthStateLabel,meaningfulChanges,changedSinceVisit,trendText,activityReviewItems,row,metric,durationLabel,costLabel,attentionMarkup,neonConnectionDetail,infraCardLabel,analyticsConnectionValue,analyticsGapDetail,analyticsReceiving,analyticsSignal,analyticsLabel,projectQualityLabel,stageTag,loadingCardMarkup,cardMarkup,evalSuiteLabel,evalScore,evalTrend,stateEvalCard,stateScenarioCard,scenarioPassLabel,stateEvalHistory,mockSparkline,mockTrendValues,mockDelta,investigationResultHtml,evalRunComplete,externalQualityRunComplete,evalFailureImpact,previousEvalRun,progressText,quickProjectCheck,qualityInvestigation,projectHandoff};
+  return {PROJECTS,esc,shortSha,commitTitle,repoUrl,githubCommitUrl,pullRequestNumber,githubPullRequestUrl,githubLink,changeUrl,commitLabel,htmlRow,linkedRow,githubApi,vercelFromStatus,deliveryHealth,normalizeQuality,percent,highImpactText,modelDisplayName,qualityAttention,deliveryAttention,deliveryAttentionForData,infrastructureAttention,externalQualityAttention,pendingSet,productOpenItems,failureReason,uncheckedSignals,incompleteAttention,allAttentionSignals,overallAttention,projectStatus,qualityNotMeasured,healthySummary,investigationUsesModel,actionNotes,RUN_COOLDOWN_MINUTES,runCooldown,latestRunStart,runCooldownFor,cooldownStartFromRetryAfter,attentionItems,setupGaps,releaseReadiness,regressionSignal,recurringFailureSignal,operationalSignals,healthConsistencyIssues,releaseRiskChecklist,productionRuntime,operationalNextDecision,failureCheckCount,failureExplanation,qualityFailureClassSummary,activityTimelineItems,activityDayLabel,activityTimeRange,evalBehaviorBranch,mergePlatform,emptyProjectData,safeExternalQualitySnapshot,serializeProjectData,hydrateProjectData,investigationHistorySummary,makeRunner,STATE_EVAL_CONTRACT_UPDATED_AT,dateMs,fmtDate,relativeAge,stateEvalContractStale,stateEvalBehaviorStale,stateEvalResultsStale,stateEvalStaleReason,freshnessMeta,qualitySnapshot,visitBaseline,healthStateLabel,meaningfulChanges,changedSinceVisit,trendText,activityReviewItems,row,metric,durationLabel,costLabel,attentionMarkup,neonConnectionDetail,infraCardLabel,analyticsConnectionValue,analyticsGapDetail,analyticsReceiving,analyticsSignal,analyticsLabel,projectQualityLabel,stageTag,loadingCardMarkup,cardMarkup,evalSuiteLabel,evalScore,evalTrend,stateEvalCard,stateScenarioCard,scenarioPassLabel,stateEvalHistory,mockSparkline,mockTrendValues,mockDelta,investigationResultHtml,evalRunComplete,externalQualityRunComplete,evalFailureImpact,previousEvalRun,progressText,quickProjectCheck,qualityInvestigation,projectHandoff};
 });
