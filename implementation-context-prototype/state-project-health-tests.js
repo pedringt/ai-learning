@@ -496,6 +496,36 @@ const releaseAndDeliveryChanges=H.meaningfulChanges({
 assert.strictEqual(releaseAndDeliveryChanges.find(item=>item.title==='New production release').detail,'Promote Project Health action destination cleanup');
 assert.strictEqual(releaseAndDeliveryChanges.find(item=>item.title==='Delivery status improved').detail,'Needs attention → Healthy');
 assert.doesNotMatch(releaseAndDeliveryChanges.find(item=>item.title==='New production release').detail,/20d0bd7/);
+// Cowork, Oct 12: the changes timeline showed "Delivery status changed: Healthy → Unknown" while the card
+// read Healthy. Unknown is a check that could not confirm a state, not a transition.
+{
+  const M=require('../project-health-model.js');
+  const deliveryChange=(beforeKind,nowKind)=>M.meaningfulChanges({
+    project:{quality:null},
+    lastVisit:{deliverySha:'same',deliveryKind:beforeKind,quality:{},analyticsAvailable:null,openPullRequests:0},
+    delivery:{sha:'same',vercel:{kind:nowKind}},
+    platform:{},openPullRequests:[],checkedAt:'2026-10-12T01:00:00Z'
+  }).filter(item=>/^Delivery status/.test(item.title));
+  assert.deepStrictEqual(deliveryChange('good','unknown'),[],'Healthy → Unknown is not a change');
+  assert.deepStrictEqual(deliveryChange('unknown','good'),[],'Unknown → Healthy is not a change either (no flip-flop pair)');
+  assert.deepStrictEqual(deliveryChange('bad','unknown'),[]);
+  assert.deepStrictEqual(deliveryChange('good','incomplete'),[]);
+  assert.deepStrictEqual(deliveryChange('good','good'),[]);
+  assert.deepStrictEqual(deliveryChange('good','bad').map(item=>[item.title,item.detail]),[['Delivery status changed','Healthy → Needs attention']]);
+  assert.deepStrictEqual(deliveryChange('warn','good').map(item=>[item.title,item.detail]),[['Delivery status improved','Watch → Healthy']]);
+  // An older saved snapshot that recorded "unknown" is filtered at render time.
+  const legacyBaseline=M.visitBaseline({projectId:'tastemake',delivery:{sha:'same',vercel:{kind:'unknown'}},snapshotAt:'2026-10-12T00:00:00Z'});
+  assert.strictEqual(legacyBaseline.deliveryKind,null);
+  assert.deepStrictEqual(M.meaningfulChanges({project:{quality:null},lastVisit:legacyBaseline,delivery:{sha:'same',vercel:{kind:'good'}},platform:{},openPullRequests:[],checkedAt:'2026-10-12T01:00:00Z'}),[]);
+  // A snapshot saved while delivery read "unknown" keeps the last known state, so a real change across
+  // the gap (Healthy → Unknown → Needs attention) still shows as Healthy → Needs attention.
+  const savedDuringGap=M.serializeProjectData({project:{id:'tastemake'},delivery:{sha:'same',vercel:{kind:'unknown'}},lastVisit:{deliveryKind:'good'}});
+  assert.strictEqual(savedDuringGap.deliveryKnownKind,'good');
+  const gapBaseline=M.visitBaseline(savedDuringGap);
+  assert.strictEqual(gapBaseline.deliveryKind,'good');
+  assert.deepStrictEqual(M.meaningfulChanges({project:{quality:null},lastVisit:gapBaseline,delivery:{sha:'same',vercel:{kind:'bad'}},platform:{},openPullRequests:[],checkedAt:'2026-10-12T01:00:00Z'}).filter(item=>/^Delivery status/.test(item.title)).map(item=>item.detail),['Healthy → Needs attention']);
+  assert.strictEqual(M.serializeProjectData({project:{id:'tastemake'},delivery:{sha:'same',vercel:{kind:'bad'}},lastVisit:{deliveryKind:'good'}}).deliveryKnownKind,'bad');
+}
 // Cowork, Oct 12: a re-run with the same score read "Improved 0 points · 100%".
 {
   const M=require('../project-health-model.js');

@@ -858,6 +858,7 @@
     return {
       projectId:data.project.id,
       delivery:data.delivery,
+      deliveryKnownKind:knownDeliveryKind(data.delivery?.vercel?.kind)||data.lastVisit?.deliveryKind||null,
       staging:data.staging,
       quality:data.quality,
       qualityBehaviorUpdatedAt:data.qualityBehaviorUpdatedAt||null,
@@ -969,13 +970,16 @@
     return {
       savedAt:saved.snapshotAt||saved.checkedAt||null,
       deliverySha:saved.delivery?.sha||null,
-      deliveryKind:saved.delivery?.vercel?.kind||null,
+      // The last known delivery state: a snapshot saved while delivery read "unknown" keeps the state
+      // before it, so Healthy → Unknown → Needs attention still shows as Healthy → Needs attention.
+      deliveryKind:knownDeliveryKind(saved.delivery?.vercel?.kind)||knownDeliveryKind(saved.deliveryKnownKind)||null,
       quality:qualitySnapshot(pseudo),
       analyticsAvailable:saved.platform?.analytics?.available??null,
       analyticsReceiving:analyticsReceiving(saved.platform?.analytics),
       openPullRequests:Array.isArray(saved.openPullRequests)?saved.openPullRequests.length:0
     };
   }
+  function knownDeliveryKind(kind){return ['good','warn','bad'].includes(kind)?kind:null;}
   function healthStateLabel(kind){
     return kind==='bad'?'Needs attention':kind==='warn'?'Watch':kind==='good'?'Healthy':kind==='available'?'Data available':'Unknown';
   }
@@ -999,8 +1003,13 @@
     if(before.deliverySha&&data.delivery?.sha&&before.deliverySha!==data.delivery.sha){
       items.push({title:'New production release',detail:commitTitle(data.delivery.message),observedAt:data.delivery.updatedAt||data.checkedAt,tab:'overview',section:'deliveryPanel'});
     }
-    if(before.deliveryKind&&data.delivery?.vercel?.kind&&before.deliveryKind!==data.delivery.vercel.kind){
-      const previousDelivery=before.deliveryKind||'unknown',currentDelivery=data.delivery.vercel.kind;
+    // Only a move between two known delivery states is a change. "Unknown" means the check could not
+    // confirm a state (no Vercel status yet, a slow or failed load during a deploy restart), so
+    // "Healthy → Unknown" and its "Unknown → Healthy" pair are never shown (Cowork, Oct 12). This runs at
+    // render time against the saved baseline, so older snapshots holding "unknown" are filtered too.
+    const previousKnown=knownDeliveryKind(before.deliveryKind),currentKnown=knownDeliveryKind(data.delivery?.vercel?.kind);
+    if(previousKnown&&currentKnown&&previousKnown!==currentKnown){
+      const previousDelivery=previousKnown,currentDelivery=currentKnown;
       const improved=currentDelivery==='good'&&previousDelivery!=='good';
       items.push({title:improved?'Delivery status improved':'Delivery status changed',detail:healthStateLabel(previousDelivery)+' → '+healthStateLabel(currentDelivery),observedAt:data.delivery.updatedAt||data.checkedAt,tab:'overview',section:'deliveryPanel'});
     }
@@ -1532,5 +1541,5 @@
     };
   }
 
-  return {PROJECTS,esc,shortSha,commitTitle,repoUrl,githubCommitUrl,pullRequestNumber,githubPullRequestUrl,githubLink,changeUrl,commitLabel,htmlRow,linkedRow,githubApi,vercelFromStatus,deliveryHealth,normalizeQuality,percent,highImpactText,modelDisplayName,qualityAttention,deliveryAttention,deliveryAttentionForData,infrastructureAttention,externalQualityAttention,pendingSet,STATUS_SIGNALS,coreStatusKnown,activityStillLoading,productOpenItems,failureReason,uncheckedSignals,incompleteAttention,allAttentionSignals,overallAttention,projectStatus,qualityNotMeasured,healthySummary,investigationUsesModel,actionNotes,RUN_COOLDOWN_MINUTES,runCooldown,latestRunStart,runCooldownFor,cooldownStartFromRetryAfter,attentionItems,setupGaps,releaseReadiness,regressionSignal,recurringFailureSignal,operationalSignals,healthConsistencyIssues,releaseRiskChecklist,productionRuntime,operationalNextDecision,failureCheckCount,failureExplanation,qualityFailureClassSummary,activityTimelineItems,activityDayLabel,activityTimeRange,evalBehaviorBranch,mergePlatform,emptyProjectData,safeExternalQualitySnapshot,serializeProjectData,hydrateProjectData,investigationHistorySummary,makeRunner,STATE_EVAL_CONTRACT_UPDATED_AT,dateMs,fmtDate,relativeAge,stateEvalContractStale,stateEvalBehaviorStale,stateEvalResultsStale,stateEvalStaleReason,freshnessMeta,qualitySnapshot,visitBaseline,healthStateLabel,scoreDeltaPoints,evalChangeDetail,meaningfulChanges,changedSinceVisit,trendText,activityReviewItems,row,metric,durationLabel,costLabel,attentionMarkup,neonConnectionDetail,infraCardLabel,analyticsConnectionValue,analyticsGapDetail,analyticsReceiving,analyticsSignal,analyticsLabel,projectQualityLabel,stageTag,loadingCardMarkup,cardMarkup,evalSuiteLabel,evalScore,evalTrend,stateEvalCard,stateScenarioCard,scenarioPassLabel,stateEvalHistory,mockSparkline,mockTrendValues,mockDelta,investigationResultHtml,evalRunComplete,externalQualityRunComplete,evalFailureImpact,previousEvalRun,progressText,quickProjectCheck,qualityInvestigation,projectHandoff};
+  return {PROJECTS,esc,shortSha,commitTitle,repoUrl,githubCommitUrl,pullRequestNumber,githubPullRequestUrl,githubLink,changeUrl,commitLabel,htmlRow,linkedRow,githubApi,vercelFromStatus,deliveryHealth,normalizeQuality,percent,highImpactText,modelDisplayName,qualityAttention,deliveryAttention,deliveryAttentionForData,infrastructureAttention,externalQualityAttention,pendingSet,STATUS_SIGNALS,coreStatusKnown,activityStillLoading,productOpenItems,failureReason,uncheckedSignals,incompleteAttention,allAttentionSignals,overallAttention,projectStatus,qualityNotMeasured,healthySummary,investigationUsesModel,actionNotes,RUN_COOLDOWN_MINUTES,runCooldown,latestRunStart,runCooldownFor,cooldownStartFromRetryAfter,attentionItems,setupGaps,releaseReadiness,regressionSignal,recurringFailureSignal,operationalSignals,healthConsistencyIssues,releaseRiskChecklist,productionRuntime,operationalNextDecision,failureCheckCount,failureExplanation,qualityFailureClassSummary,activityTimelineItems,activityDayLabel,activityTimeRange,evalBehaviorBranch,mergePlatform,emptyProjectData,safeExternalQualitySnapshot,serializeProjectData,hydrateProjectData,investigationHistorySummary,makeRunner,STATE_EVAL_CONTRACT_UPDATED_AT,dateMs,fmtDate,relativeAge,stateEvalContractStale,stateEvalBehaviorStale,stateEvalResultsStale,stateEvalStaleReason,freshnessMeta,qualitySnapshot,visitBaseline,knownDeliveryKind,healthStateLabel,scoreDeltaPoints,evalChangeDetail,meaningfulChanges,changedSinceVisit,trendText,activityReviewItems,row,metric,durationLabel,costLabel,attentionMarkup,neonConnectionDetail,infraCardLabel,analyticsConnectionValue,analyticsGapDetail,analyticsReceiving,analyticsSignal,analyticsLabel,projectQualityLabel,stageTag,loadingCardMarkup,cardMarkup,evalSuiteLabel,evalScore,evalTrend,stateEvalCard,stateScenarioCard,scenarioPassLabel,stateEvalHistory,mockSparkline,mockTrendValues,mockDelta,investigationResultHtml,evalRunComplete,externalQualityRunComplete,evalFailureImpact,previousEvalRun,progressText,quickProjectCheck,qualityInvestigation,projectHandoff};
 });
