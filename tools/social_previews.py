@@ -21,7 +21,6 @@ SKIP = {"404.html"}
 
 # Pages without a meta description of their own.
 FALLBACK_DESCRIPTIONS = {
-    "project-health.html": "A live view of delivery, runtime and AI-quality signals across my projects, and what each one can and cannot confirm.",
     "state-evals.html": "How State's AI behavior is measured: controlled scenarios, the release gate, and what each eval does and does not prove.",
 }
 
