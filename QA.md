@@ -20,7 +20,7 @@ Default for normal work. Free/deterministic. Run this before calling a change ve
 
 It runs:
 
-- the full Python/pytest suite, including API, integrity, regression, PostgreSQL-backed, and mocked browser coverage already in the repo;
+- the full Python/pytest suite: API, integrity, regression and mocked browser coverage. The PostgreSQL variants skip locally unless `STATE_TEST_POSTGRES_URL` is set (see below); CI always runs them against `postgres:16`;
 - every `implementation-context-prototype/state-*-tests.js` behavior suite.
 
 It deliberately makes **no real model calls** and does not touch staging or production.
@@ -48,6 +48,21 @@ make qa-bootstrap
 ```
 
 Do not run bootstrap on every pass.
+
+### Postgres tests locally
+
+`make qa-fast` skips the PostgreSQL variants unless `STATE_TEST_POSTGRES_URL` points at a database. Production is SQLite, but the code supports Postgres and CI runs every test on it. Run them locally before shipping a database or migration change. There's no system Postgres or Docker needed; use an embedded server:
+
+```sh
+/usr/bin/python3 -m venv /tmp/pgvenv && /tmp/pgvenv/bin/pip install pgserver
+/tmp/pgvenv/bin/python -c "import pgserver; print(pgserver.get_server('/tmp/pgdata', cleanup_mode=None).get_uri())"
+```
+
+```sh
+cd state-project-complete && STATE_TEST_POSTGRES_URL='<uri printed above>' .venv/bin/python -m pytest -q
+```
+
+Stop it afterwards with `/tmp/pgvenv/lib/python3.*/site-packages/pgserver/pginstall/bin/pg_ctl -D /tmp/pgdata stop -m fast`. With the URL set, the remaining skips are the real-model tests.
 
 ## Deployed staging QA
 

@@ -2,7 +2,56 @@
 
 This is the canonical current-state handoff for State and the surrounding portfolio. Read this first, then verify the repository and live environments before relying on older notes or conversation memory.
 
-_Last updated: October 11, 2026, Pacific time. The Oct 11 section just below is the current one; the Oct 10 sections still apply where it does not override them, then Oct 7 and Oct 5; everything older is history. Written as a handoff for a fresh session._
+_Last updated: October 12, 2026 (evening), Pacific time. **Start with "Current state" just below**; the Oct 12 section after it says what changed most recently. Older sections still apply where nothing newer overrides them, and anything before Oct 5 is history (some open-issue lists down there are stale: trust GitHub). Written as a handoff for a fresh session._
+
+## Current state (Oct 12, 2026)
+
+- **Nothing is held.** `main` = `e9dcc3b`, and `staging` matches it. Both Vercel projects and Render production serve `main`.
+- **Production:**
+  - Portfolio: `https://www.contextswitch.tech/`. State: `https://state.contextswitch.tech/`. API: `https://state-api-6waw.onrender.com`.
+  - **Data:** SQLite on the `state-api` persistent disk (`/var/data/state.db`), not Postgres; see `CLAUDE.md` for backups.
+  - **A pre-migration backup** `/var/data/state-pre-migration-020.db` exists; delete it after about Oct 26.
+- **Model:** State runs `claude-haiku-5-5` (code default; `thinking: disabled`). Rollback is `CLAUDE_MODEL=claude-haiku-4-5-20251001` on Render. The GitHub `CLAUDE_MODEL` repo variable is deleted on purpose.
+- **Release checks:**
+  - `make qa-fast` (free; the Makefile finds the venv Python itself) and `make qa-release` (paid gate). See `QA.md`, including "Postgres tests locally".
+  - **Deep QA** on staging is the browser gate. Its "VP billing note reaches Review" check is a hard gate (DEC-010).
+  - **The live review suite** is read as a rate: each run must score at least 15/16, and no scenario may fail twice in a row (#494, `RELEASE.md`).
+  - **Paid eval workflows** (pre-approved for testing; report call count and cost afterwards):
+    - State AI quality check (`question-review-live.yml`);
+    - State QA Release (`qa-release.yml`);
+    - Baseline decomposition eval (`baseline-decomposition-eval.yml`, about 60 calls, about 30¢).
+- **Portfolio pages:**
+  - `tools/social_previews.py` keeps every root page and cheat sheet's description, preview card and `sitemap.xml` current. Re-run it after changing a title or description; CI expects `--check` to pass.
+  - The **AI Governance Handbook** (`ai-governance-handbook.html`) is a standalone page built from Paige's artifact, with its CSS scoped under `.handbook`. Its tools (triage, laws finder, calculator, incident clock, templates) are plain JS on the page.
+- **Project Health** (`project-health.html`) reads GitHub through `api/project-health-github.js` (cached, server-side). It never shows Healthy for a signal it couldn't load.
+- **Open work** (GitHub is the source of truth):
+  - #409 Ask reliability runner and #399 agent-workflow health: both need scoping.
+  - Parked: #142 Question Investigator, #243 Tell Me What You Remember case study.
+- **Other repos:**
+  - **Tastemake** (`~/code/tastemake`): see its `docs/HANDOFF.md`.
+  - **Authority Lab** (`~/code/authority-lab`): worked in Paige's other chat.
+
+## Oct 12, 2026: backend clean-up, handbook, Project Health, Cowork fixes
+
+All live and checked after each promotion.
+
+- **#502:** Baseline runtime composition is explicit, with no import-time patches (`baseline_composition.py`, `extension_points.py`, `docs/architecture/BACKEND_RUNTIME_MAP.md`).
+- **#136:** project-scoped area keys, **migration 020**. It ran cleanly on production after a backup.
+- **Telemetry fix:** a failed model-call telemetry insert rolls back on Postgres.
+- **Project Health:**
+  - The cooldown shows runs started anywhere: the run API reports `last_run_started_at`.
+  - The activity check drops a 9 s log retry; a cold check went from 14 s to about 5 s.
+  - Progress no longer sits at "0 of 4".
+  - "Unchanged at 100%" wording.
+  - No "Healthy → Unknown" changes.
+  - Delivery is judged on the deployed commit, using the branch tip's deploy when a batch was merged through a PR.
+- **AI Governance Handbook** added, then a follow-up: clearer Resources cards, external links in new tabs, search pinned in the sidebar. Both shipped to `main` alone, then `main` was merged into `staging`.
+- **#240 closed:** Baseline facts with a year or amount the source never states need their own Review; Haiku 5.5 invented 0 in 60 runs.
+- **#241 closed:** DEC-010 above.
+- **Content and docs:**
+  - The Metrics cheat sheet gained an ROI and business-case section (#196).
+  - The homepage ends with "Build with AI. Keep its limits in view."
+  - Content, polish (#472) and Learning Library back links.
 
 ## Oct 11, 2026: production fixes, polish, evals and Project Health
 
@@ -30,7 +79,7 @@ All of this is on production (`main` = `7a1a98c`, PR #501). Every item was check
   - **Models:** recommendations and the taste profile both run on Haiku 5.5. The taste-profile prompt is about 44% smaller on a long-running profile (#236).
   - **Shipped PRs:** #230 (search: same-title hints, optional display name), #231 (starter favorites cap confidence at "emerging"), #232 (five onboarding tabs fit at 390px), #233 (tech debt), #234 (Web Analytics and Speed Insights), #235 (background candidate prefetch and a loading banner; click to first pick measured at 3.1 s).
   - **Closed issues:** #100, #120, #209 and #228.
-- **Open next:** the run API reporting the last run time, so the cooldown shows runs started anywhere (in progress); Tastemake #115 search ranking (in progress, as a PR).
+- **Done since:** the run-API cooldown and Tastemake #115 both shipped on Oct 12 (see above).
 
 ## Oct 10, 2026 (evening): production smoke-test fixes
 
