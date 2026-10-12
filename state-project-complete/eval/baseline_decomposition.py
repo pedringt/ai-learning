@@ -15,7 +15,11 @@ run to run, so every source is run several times and the report gives RATES, not
 - suspect: an unresolved or merely-considered item recorded as an established fact. A statement that
   mentions the item but hedges it ("under consideration", "not yet decided") is counted separately as
   a hedged mention, not as suspect (the first real run showed most raw flags were correctly hedged)
-- invented: a year or dollar amount that appears in a fact but nowhere in the source
+- invented: a year or dollar amount that appears in a fact but nowhere in the source. This is the model
+  behavior, so it also counts facts that software took out of the routine draft for it (#240)
+- invented in draft: the same, but only in routine draft facts, which a person confirms together. Since
+  #240 software sends such a fact to its own Review, so this should always be zero; a non-zero value is an
+  app bug, not model variance
 - open items raised, and how often that blocked Confirm (a Review the person must resolve)
 
 The provider is injectable so the harness itself is tested without a model (see
@@ -117,6 +121,23 @@ SCENARIOS: tuple[DecompositionScenario, ...] = (
         unresolved=(("october 14",),),
         notes="The October 14 date is only being considered; recording it as an established fact would be wrong.",
     ),
+    DecompositionScenario(
+        id="undated_schedule",
+        title="A schedule whose dates never give a year (#240)",
+        source=(
+            "Project Heron release plan\n\n"
+            "Kickoff was on January 12. Code complete is March 3. The public launch is on May 19, "
+            "and the press briefing is the day before.\n\n"
+            "Aisha Grant owns the launch checklist. The launch budget is $40,000."
+        ),
+        expected_facts=(("march 3",), ("may 19",), ("aisha grant",), ("40,000",)),
+        min_areas=1,
+        notes=(
+            "Every date is given without a year, which is where the model has invented one (#240: "
+            "'March 6, 2025', 'September 30, 2025'). Any year in a fact is invented; a routine draft fact with "
+            "one is an app bug, because software must send it to its own Review."
+        ),
+    ),
 )
 
 
@@ -192,10 +213,17 @@ def score_run(scenario: DecompositionScenario, draft: dict[str, Any]) -> dict[st
     """Score one Baseline draft (the payload of GET /api/baseline/draft) against a scenario."""
     counts = draft.get("counts") or {}
     items = [i for i in (draft.get("draft") or {}).get("items", []) if i.get("kind") in ("proposed", "current")]
-    statements = [f"{i.get('topic', '')} {i.get('statement', '')}" for i in items]
+    draft_statements = [f"{i.get('topic', '')} {i.get('statement', '')}" for i in items]
     areas = {_norm(i.get("area_name") or "General") for i in items}
     questions = (draft.get("draft") or {}).get("questions", [])
-    needs_review = draft.get("needs_individual_review") or []
+    all_needs_review = draft.get("needs_individual_review") or []
+    # Facts software took out of the routine draft because they state a year or amount the source does not
+    # (#240). The model still proposed them, so the model-behavior measures below (recall, suspect, invented,
+    # facts) count them exactly as they did before that check existed; they are not open items the model raised.
+    flagged = [r for r in all_needs_review if r.get("unsupported_specifics")]
+    needs_review = [r for r in all_needs_review if not r.get("unsupported_specifics")]
+    flagged_statements = [str(st) for r in flagged for st in (r.get("statements") or [])]
+    statements = draft_statements + flagged_statements
     hits = [any(_has_all(s, group) for s in statements) for group in scenario.expected_facts]
     # An unresolved item is "suspect" only when some statement mentions it WITHOUT hedging; a statement that
     # mentions it and hedges is a hedged mention (the model reporting the uncertainty, which is fine).
@@ -205,16 +233,19 @@ def score_run(scenario: DecompositionScenario, draft: dict[str, Any]) -> dict[st
     suspect = sorted({group for group, _ in unhedged})
     grounded = _specifics(scenario.source)
     invented = sorted({tok for st in statements for tok in _specifics(st)} - grounded)
+    invented_in_draft = sorted({tok for st in draft_statements for tok in _specifics(st)} - grounded)
     open_items = len(questions) + len(needs_review)
     return {
         # What the draft actually said, so a person can judge the automatic flags below (the hedge check is a
         # keyword heuristic and can be wrong in both directions).
-        "facts_detail": [{"area": i.get("area_name") or "General", "topic": i.get("topic") or "", "statement": i.get("statement") or ""} for i in items],
+        "facts_detail": [{"area": i.get("area_name") or "General", "topic": i.get("topic") or "", "statement": i.get("statement") or ""} for i in items]
+                        + [{"area": "(sent to its own Review)", "topic": "", "statement": st} for st in flagged_statements],
         "open_item_texts": [str(q.get("text", ""))[:200] for q in questions] + [str(r.get("decision_question", ""))[:200] for r in needs_review],
         "failed": int(counts.get("failed_evidence", 0)) > 0,
         "failure_code": None,       # filled in by run_scenarios for a failed run (it owns the database)
         "failure_message": None,
-        "facts": len(items),
+        "facts": len(items) + len(flagged_statements),
+        "flagged_facts": len(flagged_statements),
         "areas": len(areas),
         "general_used": "general" in areas,
         "enough_areas": len(areas) >= scenario.min_areas,
@@ -226,6 +257,7 @@ def score_run(scenario: DecompositionScenario, draft: dict[str, Any]) -> dict[st
         "hedged_mentions": len({st for _, st in hedged}),
         "hedged_statements": sorted({st for _, st in hedged}),
         "invented": invented,
+        "invented_in_draft": invented_in_draft,
         "open_items": open_items,
         "blocked_confirm": not draft.get("can_confirm", True) and not counts.get("failed_evidence", 0),
         "expected_open_items_ok": None if scenario.expects_open_items is None else (open_items > 0) == scenario.expects_open_items,
@@ -257,6 +289,8 @@ def summarize(runs: list[dict[str, Any]]) -> dict[str, Any]:
         "suspect_rate": rate(lambda r: r["suspect"] > 0, ok),
         "hedged_mention_rate": rate(lambda r: r["hedged_mentions"] > 0, ok),
         "invented_rate": rate(lambda r: bool(r["invented"]), ok),
+        "invented_in_draft_rate": rate(lambda r: bool(r.get("invented_in_draft")), ok),
+        "flagged_rate": rate(lambda r: r.get("flagged_facts", 0) > 0, ok),
         "open_items_mean": mean("open_items"),
         "blocked_confirm_rate": rate(lambda r: r["blocked_confirm"], ok),
         "open_items_as_expected_rate": rate(lambda r: r["expected_open_items_ok"], checked),

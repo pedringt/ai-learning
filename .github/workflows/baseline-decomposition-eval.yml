@@ -1,0 +1,83 @@
+# Makes real model calls, manually only: 5 sources x repeats x routes (default 60 calls,
+# about 30 cents on Haiku 5.5). Measures how Baseline splits a source into facts, and how
+# often the model invents a year or amount the source never states (#233, #240).
+# Sources are synthetic; the JSON report (with the fact text) is a workflow artifact.
+name: Baseline decomposition eval
+on:
+  workflow_dispatch:
+    inputs:
+      repeats:
+        description: Runs per source and route
+        required: true
+        default: '6'
+      routes:
+        description: Which submit routes to measure
+        required: true
+        default: both
+        type: choice
+        options:
+          - both
+          - paste
+          - upload
+      max_calls:
+        description: Refuse to start above this many paid calls
+        required: true
+        default: '80'
+permissions:
+  contents: read
+concurrency:
+  group: baseline-decomposition-eval-${{ github.ref_name }}
+  cancel-in-progress: false
+jobs:
+  eval:
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/staging' || startsWith(github.ref, 'refs/heads/eval/')
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: state-project-complete
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+      - name: Plan and budget check (no model calls)
+        env:
+          REPEATS: ${{ inputs.repeats }}
+          ROUTES: ${{ inputs.routes }}
+          MAX_CALLS: ${{ inputs.max_calls }}
+        run: |
+          [[ "$REPEATS" =~ ^[0-9]+$ && "$MAX_CALLS" =~ ^[0-9]+$ ]] || { echo "repeats and max_calls must be whole numbers"; exit 1; }
+          if [ "$ROUTES" = both ]; then routes="paste upload"; else routes="$ROUTES"; fi
+          total=0
+          for route in $routes; do
+            plan="$(ANTHROPIC_API_KEY= python -m eval.run_baseline_decomposition --dry-run --repeats "$REPEATS" --route "$route")"
+            echo "$plan"
+            calls="$(echo "$plan" | sed -nE 's/.*= ([0-9]+) paid model call.*/\1/p')"
+            [ -n "$calls" ] || { echo "Could not read the planned call count"; exit 1; }
+            total=$(( total + calls ))
+          done
+          echo "Planned calls: $total (max $MAX_CALLS)"
+          if (( total > MAX_CALLS )); then echo "Refusing: $total planned calls is above max_calls=$MAX_CALLS"; exit 1; fi
+          echo "ROUTE_LIST=$routes" >> "$GITHUB_ENV"
+      - name: Run against the real model
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          CLAUDE_MODEL: ${{ vars.CLAUDE_MODEL }}
+          REPEATS: ${{ inputs.repeats }}
+        run: |
+          for route in $ROUTE_LIST; do
+            python -m eval.run_baseline_decomposition --repeats "$REPEATS" --route "$route" --json "out-$route.json" | tee "summary-$route.txt"
+            { echo "### Route: $route"; echo '```'; cat "summary-$route.txt"; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+          done
+      - name: Upload reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: baseline-decomposition-${{ github.run_id }}
+          path: |
+            state-project-complete/out-*.json
+            state-project-complete/summary-*.txt
+          if-no-files-found: ignore

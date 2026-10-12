@@ -18,6 +18,7 @@ check('routine facts can be removed from the baseline',source.includes('data-bas
 check('one confirm action uses the bulk baseline endpoint',source.includes("'/api/baseline/confirm'")&&source.includes('Confirm Starting State'));
 check('confirmation follows backend readiness',source.includes("summary.can_confirm?'':'disabled'"));
 check('older backend previews fail closed without breaking State',source.includes('if(response.status===404)return null'));
+check('a fact flagged for an unstated year or amount shows its statement and why (#240)',source.includes("(item.statements||[]).join(' ')")&&source.includes('baseline-draft-attention-reason')&&source.includes('esc(item.reason)'));
 check('banner refreshes after app rerenders Evidence or Review state',source.includes("observe(root,{childList:true,subtree:true})"));
 
 console.log(`\n${pass} passed, ${fail} failed`);

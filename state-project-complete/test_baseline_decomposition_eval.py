@@ -5,6 +5,7 @@ everything around it: the scenarios are well formed, the keyword matcher and sco
 aggregated correctly, and both submission routes work end to end with a fake provider.
 """
 import os
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -115,6 +116,79 @@ def test_a_year_or_amount_that_the_source_never_states_is_flagged_as_invented():
     plan = next(s for s in SCENARIOS if s.id == "structured_plan")
     money = score_run(plan, _draft([("Budget", "Total", "The approved budget is $ 180,000."), ("Budget", "Extra", "A reserve of $25,000 is set.")]))
     assert money["invented"] == ["$25000"]
+
+
+HERON = next(s for s in SCENARIOS if s.id == "undated_schedule")
+
+
+def test_the_undated_schedule_scenario_states_no_year_so_any_year_in_a_fact_is_invented():
+    assert not re.search(r"\b(?:19|20)\d{2}\b", HERON.source)
+    clean = score_run(HERON, _draft([("Schedule", "Launch", "The public launch is on May 19.")]))
+    assert clean["invented"] == [] and clean["invented_in_draft"] == []
+    bad = score_run(HERON, _draft([("Schedule", "Launch", "The public launch is on May 19, 2025.")]))
+    assert bad["invented"] == ["2025"] and bad["invented_in_draft"] == ["2025"]
+
+
+def test_a_fact_sent_to_its_own_review_still_counts_as_invented_but_not_as_in_the_routine_draft():
+    # #240: software moves such a fact out of the batch draft. The model still wrote the year, so the
+    # model-behavior measures must not improve just because the fact moved (the scorer is not loosened).
+    draft = _draft([("People", "Owner", "Aisha Grant owns the launch checklist.")], can_confirm=False)
+    draft["needs_individual_review"] = [{
+        "decision_question": "Should Current State record this baseline fact?",
+        "unsupported_specifics": ["2025"],
+        "statements": ["Code complete is March 3, 2025."],
+    }]
+    scored = score_run(HERON, draft)
+    assert scored["invented"] == ["2025"] and scored["invented_in_draft"] == []
+    assert scored["facts"] == 2 and scored["flagged_facts"] == 1
+    assert "march 3" not in scored["missed"]                    # the model did propose it
+    assert scored["open_items"] == 0                           # software raised it, not the model
+    assert scored["blocked_confirm"]                           # but it does hold Confirm until a person decides
+    summary = summarize([scored])
+    assert summary["invented_rate"] == 1.0 and summary["invented_in_draft_rate"] == 0.0 and summary["flagged_rate"] == 1.0
+
+
+class _InventsAYear:
+    """A fake Baseline provider that does what the real model did in #233: it adds a year to an undated date."""
+
+    name = "invents-a-year"
+    model_identifier = "invents-a-year-v1"
+
+    def interpret(self, *, context, evidence, connection=None):
+        from baseline_setup import record_interpretation_metadata, strip_internal_provider_metadata
+
+        raw = {
+            "summary": "The source sets the release schedule.",
+            "topics": ["schedule"],
+            "outcome": "review_recommended",
+            "review_recommendations": [
+                {
+                    "review_action": "create",
+                    "review_type": "missing_understanding",
+                    "decision_question": f"Should Current State record: {statement}",
+                    "why_consequential": "Starting fact.",
+                    "affected_state_item_ids": [],
+                    "proposed_changes": [{"operation": "create", "proposed_statement": statement, "rationale": "Stated.",
+                                          "proposed_area_name": area, "proposed_topic": topic}],
+                }
+                for statement, area, topic in (
+                    ("Code complete is March 3, 2025.", "Schedule", "Code complete"),
+                    ("Aisha Grant owns the launch checklist.", "People", "Launch owner"),
+                )
+            ],
+        }
+        record_interpretation_metadata(evidence["id"], raw, [raw])
+        return strip_internal_provider_metadata(raw)
+
+
+@pytest.mark.parametrize("route", ROUTES)
+def test_end_to_end_an_invented_year_is_measured_and_never_reaches_the_routine_draft(route):
+    report = run_scenarios(_InventsAYear(), [HERON], repeats=1, route=route)
+    run = report["scenarios"][HERON.id]["runs"][0]
+    assert not run["failed"]
+    assert run["invented"] == ["2025"] and run["invented_in_draft"] == [] and run["flagged_facts"] == 1
+    assert run["blocked_confirm"]
+    assert report["overall"]["invented_in_draft_rate"] == 0.0
 
 
 def test_summarize_reports_hedged_mention_and_invented_rates():
