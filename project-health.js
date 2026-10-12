@@ -534,7 +534,7 @@
       mockDashboard.innerHTML=
         '<section class="mock-dashboard-section mock-attention-banner '+(checking?'is-checking':incompleteOnly?'is-incomplete':actionable.length?'has-attention':partialOk?'is-partial':'is-healthy')+'"'+(checking||incompleteOnly||partialOk?' role="status"':'')+'>'+
           '<div class="mock-attention-icon">'+(checking?'<span class="mock-spinner"></span>':incompleteOnly?'?':actionable.length?'!':partialOk?'–':'✓')+'</div><div class="mock-attention-copy"><h3>'+(checking?'Checking project health…':incompleteOnly?'Couldn\'t check everything':actionable.length?'What needs attention':'Current status')+'</h3><p>'+esc(checking?'Loading the latest signals.':incompleteOnly?'Some signals did not load, so this is not a healthy result.':actionable.length?(actionable.length+' issue'+(actionable.length===1?'':'s')+' needs your review.'):okSummary.headline)+'</p>'+attentionHtml+'</div>'+
-          (checking?'':incompleteOnly?'<button class="button small" type="button" data-retry-health>Retry check</button>':'<button class="button small" type="button" data-tab-target="ai-quality">View all issues →</button>')+
+          (checking?'':incompleteOnly?'<button class="button small" type="button" data-retry-health>Retry check</button>':actionable.length?'<button class="button small" type="button" data-tab-target="ai-quality">View all issues →</button>':'')+
         '</section>'+
         '<div class="mock-kpi-grid">'+kpis+'</div>'+
         '<section class="mock-dashboard-section mock-release-card">'+
