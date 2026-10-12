@@ -6,7 +6,7 @@
   'use strict';
   // Data and pure analysis live in project-health-model.js (#452).
   const PROJECT_HEALTH_MODEL=(typeof module==='object'&&module.exports&&typeof require==='function')?require('./project-health-model.js'):globalThis.PROJECT_HEALTH_MODEL;
-  const {PROJECTS,esc,shortSha,commitTitle,repoUrl,githubCommitUrl,pullRequestNumber,githubPullRequestUrl,githubLink,changeUrl,commitLabel,htmlRow,linkedRow,githubApi,vercelFromStatus,deliveryHealth,normalizeQuality,percent,highImpactText,modelDisplayName,qualityAttention,deliveryAttention,deliveryAttentionForData,infrastructureAttention,externalQualityAttention,pendingSet,productOpenItems,allAttentionSignals,overallAttention,projectStatus,qualityNotMeasured,healthySummary,attentionItems,setupGaps,releaseReadiness,regressionSignal,recurringFailureSignal,operationalSignals,healthConsistencyIssues,releaseRiskChecklist,productionRuntime,operationalNextDecision,failureCheckCount,failureExplanation,qualityFailureClassSummary,activityTimelineItems,activityDayLabel,activityTimeRange,evalBehaviorBranch,mergePlatform,emptyProjectData,safeExternalQualitySnapshot,serializeProjectData,hydrateProjectData,investigationHistorySummary,makeRunner,STATE_EVAL_CONTRACT_UPDATED_AT,dateMs,fmtDate,relativeAge,stateEvalContractStale,stateEvalBehaviorStale,stateEvalResultsStale,stateEvalStaleReason,freshnessMeta,qualitySnapshot,visitBaseline,healthStateLabel,meaningfulChanges,changedSinceVisit,trendText,activityReviewItems,row,metric,durationLabel,costLabel,attentionMarkup,neonConnectionDetail,infraCardLabel,analyticsConnectionValue,analyticsGapDetail,analyticsLabel,projectQualityLabel,stageTag,loadingCardMarkup,cardMarkup,evalSuiteLabel,evalScore,evalTrend,stateEvalCard,stateScenarioCard,scenarioPassLabel,stateEvalHistory,mockSparkline,mockTrendValues,mockDelta,investigationResultHtml,evalRunComplete,externalQualityRunComplete,evalFailureImpact,previousEvalRun,progressText,quickProjectCheck,qualityInvestigation,projectHandoff}=PROJECT_HEALTH_MODEL;
+  const {PROJECTS,esc,shortSha,commitTitle,repoUrl,githubCommitUrl,pullRequestNumber,githubPullRequestUrl,githubLink,changeUrl,commitLabel,htmlRow,linkedRow,githubApi,vercelFromStatus,deliveryHealth,normalizeQuality,percent,highImpactText,modelDisplayName,qualityAttention,deliveryAttention,deliveryAttentionForData,infrastructureAttention,externalQualityAttention,pendingSet,productOpenItems,allAttentionSignals,overallAttention,projectStatus,qualityNotMeasured,healthySummary,investigationUsesModel,paidActionNote,RUN_COOLDOWN_MINUTES,attentionItems,setupGaps,releaseReadiness,regressionSignal,recurringFailureSignal,operationalSignals,healthConsistencyIssues,releaseRiskChecklist,productionRuntime,operationalNextDecision,failureCheckCount,failureExplanation,qualityFailureClassSummary,activityTimelineItems,activityDayLabel,activityTimeRange,evalBehaviorBranch,mergePlatform,emptyProjectData,safeExternalQualitySnapshot,serializeProjectData,hydrateProjectData,investigationHistorySummary,makeRunner,STATE_EVAL_CONTRACT_UPDATED_AT,dateMs,fmtDate,relativeAge,stateEvalContractStale,stateEvalBehaviorStale,stateEvalResultsStale,stateEvalStaleReason,freshnessMeta,qualitySnapshot,visitBaseline,healthStateLabel,meaningfulChanges,changedSinceVisit,trendText,activityReviewItems,row,metric,durationLabel,costLabel,attentionMarkup,neonConnectionDetail,infraCardLabel,analyticsConnectionValue,analyticsGapDetail,analyticsLabel,projectQualityLabel,stageTag,loadingCardMarkup,cardMarkup,evalSuiteLabel,evalScore,evalTrend,stateEvalCard,stateScenarioCard,scenarioPassLabel,stateEvalHistory,mockSparkline,mockTrendValues,mockDelta,investigationResultHtml,evalRunComplete,externalQualityRunComplete,evalFailureImpact,previousEvalRun,progressText,quickProjectCheck,qualityInvestigation,projectHandoff}=PROJECT_HEALTH_MODEL;
   function pageEnvironment(root){
     const host=String(root?.location?.hostname||'');
     const params=new URLSearchParams(String(root?.location?.search||''));
@@ -223,6 +223,12 @@
       headerRunChecksButton.title=activeEvalRun?'Quality checks are running. Open Quality for details.':'';
       headerRunChecksButton.classList.remove('primary');
       headerRunChecksButton.style.order='2';
+    }
+    const paidNote=doc.getElementById('paidActionNote');
+    if(paidNote){
+      const note=paidActionNote(data);
+      paidNote.hidden=!note;
+      paidNote.textContent=note;
     }
     const evalRunBanner=doc.getElementById('evalRunBanner');
     if(evalRunBanner){
@@ -630,7 +636,7 @@
           '<button class="button small suite-action" type="button" data-run-checks="review"><span class="suite-action-copy"><strong>Update understanding</strong><span>How State interprets new evidence and proposed truth changes.</span></span><span class="suite-action-run">Run →</span></button>'+
           '<button class="button small suite-action" type="button" data-run-checks="ask"><span class="suite-action-copy"><strong>Answer quality</strong><span>Grounding, uncertainty, and decision authority in answers.</span></span><span class="suite-action-run">Run →</span></button>'+
           '</div></div>'+
-          '<p class="footnote">Estimated model cost: '+esc(run.estimated_cost||'not configured')+'. You will confirm before any paid run starts.</p>';
+          '<p class="footnote">Estimated model cost: '+esc(run.estimated_cost||'not configured')+'. Runs are limited to one every '+RUN_COOLDOWN_MINUTES+' minutes, and you confirm before any paid run starts.</p>';
       }else if(run&&!activeEvalRun){
         qualityHtml+='<p class="footnote">Running AI evals from the dashboard still needs setup. Existing recorded results can still appear here.</p>';
       }
@@ -860,7 +866,7 @@
     if(run.paid_model_calls){
       const labels={all:'all AI quality checks',review:'update-understanding checks',ask:'answer-quality checks'};
       const cases=suite==='all'?Math.max(16,Number(run.minimum_controlled_cases||8)):Number(run.minimum_controlled_cases||8);
-      const message='Run '+(labels[suite]||labels.all)+'?\n\nAbout '+cases+' controlled scenarios will use paid model calls.\nEstimated cost: '+run.estimated_cost+'\n\nResults are recorded as aggregate quality data. Start the run?';
+      const message='Run '+(labels[suite]||labels.all)+'?\n\nAbout '+cases+' controlled scenarios will use paid model calls.\nEstimated cost: '+run.estimated_cost+'\n\nRuns are limited to one every '+RUN_COOLDOWN_MINUTES+' minutes. Results are recorded as aggregate quality data and may update what this page shows. Start the run?';
       if(!root.confirm(message)) return;
     }else{
       const message='Run '+String(run.label||'quality checks')+'?\n\nThis starts the project\'s existing GitHub Actions quality workflow. No paid model calls are part of this dashboard run.';
@@ -1295,7 +1301,7 @@
       const button=event.target.closest?.('[data-investigate]');
       if(!button)return;
       const data=activeData();if(!data)return;
-      if(!root.confirm('Run the read-only investigation agent? It will inspect only bounded evidence relevant to this failure and cannot change code, configuration, or deployments.'))return;
+      if(!root.confirm('Run the read-only investigation agent? It makes one small paid AI call, inspects only bounded evidence relevant to this failure, and cannot change code, configuration, or deployments.'))return;
       await runAgentInvestigation(data,button.dataset.investigate,button.dataset.environment);
     });
 

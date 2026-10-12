@@ -274,6 +274,28 @@
   // "Incomplete", which means a signal we do request failed to load.
   const QUALITY_NOT_MEASURED_LABEL='Healthy · quality not measured';
   const QUALITY_NOT_MEASURED_DETAIL='No delivery or runtime problems. Quality checks aren\u2019t connected for this project.';
+  // The header "Investigate" only calls the server-side model for a failed deployment or release check; every other
+  // path is a local, free summary. Mirrors startProjectInvestigation in project-health.js.
+  function investigationUsesModel(data){
+    if(!data?.project)return false;
+    const liveIncident=activityReviewItems(data).find(item=>!item.resolved);
+    if(liveIncident?.kind==='deployment')return true;
+    if(data.project.quality==='state'&&['bad','warn'].includes(qualityAttention(data.quality).kind))return false;
+    return deliveryAttentionForData(data).kind==='bad';
+  }
+  // Cowork, Oct 11: any visitor can press these, so say plainly what they cost. One sentence; the cooldown matches
+  // RUN_COOLDOWN_MS in api/project-health-run.js (asserted in tests). The investigate endpoint has no cooldown.
+  const RUN_COOLDOWN_MINUTES=10;
+  function paidActionNote(data){
+    const run=data?.runInfo;
+    const runLabel=String(run?.button_label||'Run AI evals');
+    const paidRun=!!(run?.configured&&run?.can_run_here!==false&&run?.paid_model_calls);
+    const paidInvestigate=investigationUsesModel(data);
+    if(paidRun&&paidInvestigate)return runLabel+' and Investigate make small paid AI calls; eval runs are limited to one every '+RUN_COOLDOWN_MINUTES+' minutes and may update what this page shows.';
+    if(paidRun)return runLabel+' makes a few small paid AI calls, is limited to one run every '+RUN_COOLDOWN_MINUTES+' minutes, and may update what this page shows.';
+    if(paidInvestigate)return 'Investigate makes a small paid AI call to summarize the failure evidence; it only reads and changes nothing.';
+    return '';
+  }
   function qualityNotMeasured(data){return !!data?.project?.noQualitySource;}
   function healthySummary(data){
     if(qualityNotMeasured(data)) return {qualityNotMeasured:true,headline:QUALITY_NOT_MEASURED_DETAIL,rowTitle:'Quality not measured',rowDetail:'Nothing needs action, but Project Health can only confirm delivery and runtime here.',meta:'Not measured'};
@@ -1430,5 +1452,5 @@
     };
   }
 
-  return {PROJECTS,esc,shortSha,commitTitle,repoUrl,githubCommitUrl,pullRequestNumber,githubPullRequestUrl,githubLink,changeUrl,commitLabel,htmlRow,linkedRow,githubApi,vercelFromStatus,deliveryHealth,normalizeQuality,percent,highImpactText,modelDisplayName,qualityAttention,deliveryAttention,deliveryAttentionForData,infrastructureAttention,externalQualityAttention,pendingSet,productOpenItems,failureReason,uncheckedSignals,incompleteAttention,allAttentionSignals,overallAttention,projectStatus,qualityNotMeasured,healthySummary,attentionItems,setupGaps,releaseReadiness,regressionSignal,recurringFailureSignal,operationalSignals,healthConsistencyIssues,releaseRiskChecklist,productionRuntime,operationalNextDecision,failureCheckCount,failureExplanation,qualityFailureClassSummary,activityTimelineItems,activityDayLabel,activityTimeRange,evalBehaviorBranch,mergePlatform,emptyProjectData,safeExternalQualitySnapshot,serializeProjectData,hydrateProjectData,investigationHistorySummary,makeRunner,STATE_EVAL_CONTRACT_UPDATED_AT,dateMs,fmtDate,relativeAge,stateEvalContractStale,stateEvalBehaviorStale,stateEvalResultsStale,stateEvalStaleReason,freshnessMeta,qualitySnapshot,visitBaseline,healthStateLabel,meaningfulChanges,changedSinceVisit,trendText,activityReviewItems,row,metric,durationLabel,costLabel,attentionMarkup,neonConnectionDetail,infraCardLabel,analyticsConnectionValue,analyticsGapDetail,analyticsLabel,projectQualityLabel,stageTag,loadingCardMarkup,cardMarkup,evalSuiteLabel,evalScore,evalTrend,stateEvalCard,stateScenarioCard,scenarioPassLabel,stateEvalHistory,mockSparkline,mockTrendValues,mockDelta,investigationResultHtml,evalRunComplete,externalQualityRunComplete,evalFailureImpact,previousEvalRun,progressText,quickProjectCheck,qualityInvestigation,projectHandoff};
+  return {PROJECTS,esc,shortSha,commitTitle,repoUrl,githubCommitUrl,pullRequestNumber,githubPullRequestUrl,githubLink,changeUrl,commitLabel,htmlRow,linkedRow,githubApi,vercelFromStatus,deliveryHealth,normalizeQuality,percent,highImpactText,modelDisplayName,qualityAttention,deliveryAttention,deliveryAttentionForData,infrastructureAttention,externalQualityAttention,pendingSet,productOpenItems,failureReason,uncheckedSignals,incompleteAttention,allAttentionSignals,overallAttention,projectStatus,qualityNotMeasured,healthySummary,investigationUsesModel,paidActionNote,RUN_COOLDOWN_MINUTES,attentionItems,setupGaps,releaseReadiness,regressionSignal,recurringFailureSignal,operationalSignals,healthConsistencyIssues,releaseRiskChecklist,productionRuntime,operationalNextDecision,failureCheckCount,failureExplanation,qualityFailureClassSummary,activityTimelineItems,activityDayLabel,activityTimeRange,evalBehaviorBranch,mergePlatform,emptyProjectData,safeExternalQualitySnapshot,serializeProjectData,hydrateProjectData,investigationHistorySummary,makeRunner,STATE_EVAL_CONTRACT_UPDATED_AT,dateMs,fmtDate,relativeAge,stateEvalContractStale,stateEvalBehaviorStale,stateEvalResultsStale,stateEvalStaleReason,freshnessMeta,qualitySnapshot,visitBaseline,healthStateLabel,meaningfulChanges,changedSinceVisit,trendText,activityReviewItems,row,metric,durationLabel,costLabel,attentionMarkup,neonConnectionDetail,infraCardLabel,analyticsConnectionValue,analyticsGapDetail,analyticsLabel,projectQualityLabel,stageTag,loadingCardMarkup,cardMarkup,evalSuiteLabel,evalScore,evalTrend,stateEvalCard,stateScenarioCard,scenarioPassLabel,stateEvalHistory,mockSparkline,mockTrendValues,mockDelta,investigationResultHtml,evalRunComplete,externalQualityRunComplete,evalFailureImpact,previousEvalRun,progressText,quickProjectCheck,qualityInvestigation,projectHandoff};
 });

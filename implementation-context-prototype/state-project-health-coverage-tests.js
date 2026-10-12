@@ -107,6 +107,23 @@ assert.notStrictEqual(M.projectStatus(tastemake404).kind,'good');
 const many=loaded(project('narc'),{delivery:null,failures:[{label:'Delivery',reason:'request timed out'},{label:'Activity',reason:'server error 502'},{label:'Delivery',reason:'request timed out'}]});
 assert.strictEqual(M.overallAttention(many).title,"Couldn't check: Release pipeline (request timed out), Deployment activity (server error 502)");
 
+// --- Cowork, Oct 11: paid actions explain themselves in one sentence; the cooldown matches the run API.
+const RUN_API=require('../api/project-health-run.js')._test;
+assert.strictEqual(M.RUN_COOLDOWN_MINUTES*60*1000,RUN_API.RUN_COOLDOWN_MS,'note cooldown must match the API cooldown');
+const paidRunInfo={configured:true,can_run_here:true,paid_model_calls:true,button_label:'Run AI evals',estimated_cost:'<$0.25 per full run'};
+assert.strictEqual(M.paidActionNote({...stateHealthy,runInfo:paidRunInfo}),'Run AI evals makes a few small paid AI calls, is limited to one run every 10 minutes, and may update what this page shows.');
+assert.strictEqual(M.paidActionNote({...stateHealthy,runInfo:{...paidRunInfo,configured:false}}),'','no note when the button is hidden');
+assert.strictEqual(M.paidActionNote(loaded(project('tastemake'),{runInfo:{configured:true,paid_model_calls:false}})),'','a free GitHub workflow run is not described as paid');
+assert.strictEqual(M.investigationUsesModel(authorityByDesign),false,'a healthy project investigation is a free local summary');
+assert.strictEqual(M.paidActionNote(authorityByDesign),'');
+assert.strictEqual(M.investigationUsesModel(authorityBad),true);
+assert.strictEqual(M.paidActionNote(authorityBad),'Investigate makes a small paid AI call to summarize the failure evidence; it only reads and changes nothing.');
+const stateBadDelivery=loaded(project('state'),{quality:healthyStateQuality,qualityBehaviorUpdatedAt:'2026-10-01T00:00:00Z',delivery:{...goodDelivery,vercel:{kind:'bad',label:'Vercel deploy failed'}},runInfo:paidRunInfo});
+assert.match(M.paidActionNote(stateBadDelivery),/^Run AI evals and Investigate make small paid AI calls; eval runs are limited to one every 10 minutes/);
+for(const note of [M.paidActionNote({...stateHealthy,runInfo:paidRunInfo}),M.paidActionNote(stateBadDelivery),M.paidActionNote(authorityBad)]){
+  assert.strictEqual((note.match(/[.!?](\s|$)/g)||[]).length,1,'one sentence: '+note);
+}
+
 // --- Non-health controls and detail-only signals do not make a project incomplete.
 const controlsOnly=loaded(project('tastemake'),{externalQuality:{attention:[{kind:'good',title:'Recommendation checks healthy'}]},failures:[{label:'Run controls',reason:'not found'},{label:'Analytics',reason:'request timed out'}]});
 assert.strictEqual(M.projectStatus(controlsOnly).label,'Healthy');

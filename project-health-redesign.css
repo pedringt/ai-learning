@@ -271,3 +271,10 @@ html body .status-pill.partial { background: #f1f3f1 !important; color: #4f5a54 
   html body .detail-actions > #headerRunChecksButton { white-space: normal; line-height: 1.15; text-align: center; }
   html body .detail-actions > :is(#projectCheckButton, .action-menu) { flex: 0 0 auto; }
 }
+
+/* Cowork, Oct 11: plain note that Run AI evals / Investigate make a small paid AI call. Quiet, never alarming. */
+html body .paid-action-note { margin: 2px 0 10px; color: var(--muted); font-size: 12px; line-height: 1.4; text-align: right; }
+html body .paid-action-note[hidden] { display: none; }
+@media (max-width: 560px) {
+  html body .paid-action-note { text-align: left; margin-top: 6px; }
+}
