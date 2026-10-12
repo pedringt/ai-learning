@@ -249,6 +249,18 @@ html body .mock-dashboard .mock-attention-banner.is-incomplete .mock-attention-c
 html body .mock-dashboard .mock-attention-banner.is-incomplete .mock-issue-dot { background: #8a8796; }
 html body .status-pill.incomplete { background: #f1f1f4 !important; color: #5f5c6b !important; }
 
+/* quality not measured by design (Cowork, Oct 11): delivery and runtime are fine, but there is no quality source,
+   so the banner and pill stay neutral instead of the green "healthy" state. Not the same as incomplete (a failed request). */
+html body .mock-dashboard .mock-attention-banner.is-partial {
+  border: 0 !important;
+  background: #f6f7f6 !important;
+}
+html body .mock-dashboard .mock-attention-banner.is-partial .mock-attention-icon { background: #7d8a83 !important; color: #fff; }
+html body .mock-dashboard .mock-attention-banner.is-partial .mock-attention-copy h3 { color: var(--ink); }
+html body .mock-dashboard .mock-attention-banner.is-partial .mock-attention-copy > p { color: var(--muted); }
+html body .mock-dashboard .mock-attention-banner.is-partial .mock-issue-dot { background: #7d8a83; }
+html body .status-pill.partial { background: #f1f3f1 !important; color: #4f5a54 !important; }
+
 /* QA Oct 10: on phones the project header's actions (Open project, View source, Investigate, Run, •••) wrapped onto
    two rows. "Open project" and "View source" are already in the ••• menu (Live project / GitHub repository), so phones
    keep one row: Investigate, the run button (its label may wrap inside the button), and •••. */
@@ -258,4 +270,13 @@ html body .status-pill.incomplete { background: #f1f1f4 !important; color: #5f5c
   html body .detail-actions > .button { flex: 0 1 auto; min-width: 0; padding: 6px 10px; font-size: 12px; }
   html body .detail-actions > #headerRunChecksButton { white-space: normal; line-height: 1.15; text-align: center; }
   html body .detail-actions > :is(#projectCheckButton, .action-menu) { flex: 0 0 auto; }
+}
+
+/* Cowork, Oct 11: plain note that Run AI evals / Investigate make a small paid AI call. Quiet, never alarming.
+   It sits inside the project header on its own row, under the action buttons. */
+html body .mock-detail-head { flex-wrap: wrap; }
+html body .paid-action-note { flex: 1 0 100%; margin: -8px 0 0; color: var(--muted); font-size: 12px; line-height: 1.4; text-align: right; }
+html body .paid-action-note[hidden] { display: none; }
+@media (max-width: 560px) {
+  html body .paid-action-note { flex-basis: auto; margin: -6px 0 0; text-align: left; }
 }

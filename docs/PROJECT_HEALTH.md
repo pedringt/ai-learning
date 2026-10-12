@@ -13,7 +13,7 @@ Project Health is a portfolio-operations dashboard for Paige's active product wo
 
 - Delivery: GitHub branch/commit status plus Vercel commit status.
 - Infrastructure: Render service health where a project has a Render backend, plus optional Neon project/branch metadata.
-- Site analytics: production Vercel Web Analytics aggregate visitor/page-view counts.
+- Site analytics: whether production Vercel Web Analytics is connected and receiving page views, with 7-day recency. Raw page-view and visitor counts are not shown or returned (Oct 11).
 - Product quality: project-specific checks. State currently reuses its content-free Review/Ask quality aggregates.
 - Attention: plain-language interpretation of concrete signals; no combined health score.
 - Run controls: guarded project-specific health workflows where one is explicitly configured.
@@ -26,7 +26,7 @@ The dashboard works without these variables, but unavailable integrations stay l
 
 - `VERCEL_TOKEN`
 
-The token stays server-side. Project Health only returns aggregate visitor/page-view counts for the allowlisted Vercel project IDs.
+The token stays server-side. Project Health reads aggregate page-view counts for the allowlisted Vercel project IDs server-side and returns only booleans: `receiving` (any page views in 30 days) and `recent` (any in the last 7 days).
 
 ### Neon health
 

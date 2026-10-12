@@ -3,7 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Project Health</title>
+  <title>Project Health · Context Switch</title>
+  <meta name="description" content="A live view of delivery, runtime and AI-quality signals across my projects, and what each one can and cannot confirm.">
   <link href="favicon.svg" rel="icon">
   <style>
     :root{--ink:#202825;--muted:#69736e;--line:#ded9ce;--paper:#f5f2ea;--surface:#fffdf8;--soft:#ece8de;--accent:#38624d;--warn:#8a5b22;--danger:#8b3a32;--good:#2e6b4d;--radius:16px}
@@ -597,6 +598,7 @@
     .mock-usage-card .mock-usage-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}
     .mock-usage-card .mock-usage-metric{display:grid;gap:4px;padding:12px 14px;border:1px solid #e6eaf0;border-radius:10px;background:#fafbfe}
     .mock-usage-card .mock-usage-metric:last-child{border-right:1px solid #e6eaf0}
+    .mock-analytics-signal{display:flex;gap:10px;align-items:flex-start;padding:12px 14px;border:1px solid #e6eaf0;border-radius:10px;background:#fafbfe}.mock-analytics-signal strong{display:block;font-size:14px}.mock-analytics-signal p{margin:3px 0 0;color:#788295;font-size:12px}.mock-analytics-dot{flex:0 0 auto;width:8px;height:8px;margin-top:6px;border-radius:999px;background:#9aa19d}.mock-analytics-dot.good{background:#16a36f}.mock-analytics-dot.warn{background:#b17b35}
     .mock-analytics-compare{display:inline-flex;width:max-content;margin-top:5px;padding:3px 7px;border-radius:999px;font-size:9px;font-weight:800}
     .mock-analytics-compare.up{background:#eaf8f1;color:#127553}
     .mock-analytics-compare.down{background:#fff0ef;color:#b63d35}
@@ -685,6 +687,7 @@
             </div>
           </details>
         </div>
+        <p class="paid-action-note" id="paidActionNote" hidden></p>
       </div>
 
       <nav class="project-tabs mock-tabs" id="projectTabs" aria-label="Project health sections">
@@ -797,7 +800,7 @@
       </div>
     </dialog>
   </main>
-  <link href="project-health-redesign.css?v=r1-bright" rel="stylesheet" onload="document.documentElement.classList.remove('rd-pending')" onerror="document.documentElement.classList.remove('rd-pending')">
+  <link href="project-health-redesign.css?v=r2-oct11" rel="stylesheet" onload="document.documentElement.classList.remove('rd-pending')" onerror="document.documentElement.classList.remove('rd-pending')">
   <script src="project-health-model.js"></script>
   <script src="project-health.js"></script>
 </body>
