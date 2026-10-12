@@ -1851,6 +1851,40 @@ html body #ai-cs-mock .rd-hero h1:not(#_) {
   word-spacing: 0 !important;
 }
 html body #ai-cs-mock #portfolio .applied-secondary > h3 { font-size: 17px !important; }
+/* ---------- 4w. Supporting-page polish (#472) ---------- */
+/* Learning Library pages: each topic starts after a full-width hairline with room above it.
+   The 4c heading margin (10px, !important) had collapsed the gap, and its 22em max-width cut the
+   Professional Edge hairline short of the column. Durable AI Knowledge wraps topics in sections. */
+html body main .edge-body h2 { max-width: none; }
+html body main .edge-body > h2:not(:first-child) { margin-top: 44px !important; }
+html body main .edge-body > section + section { margin-top: 44px; padding-top: 14px; border-top: 1px solid var(--rd-line); }
+/* numbered question lists: the same 16px text on both pages (Durable's list sits inside a section, so the
+   4c list rule missed it and it stayed 14px), with the 18px badge centred on the first line (9 + (25.6 - 18) / 2) */
+html body main .edge-body ol > li { font-size: 16px; line-height: 1.6; }
+html body main .edge-body ol > li::before { top: 13px; }
+/* card grids: State's model grid kept the hairlines and 1000px cap from its pre-card design, so its
+   cards stopped 20px short of the column and sat between two stray rules */
+html body main .state-model-grid { max-width: none; border-top: 0; border-bottom: 0; }
+/* a labelled card's title sits 8px under its label, as in every other card grid (the case-page h3
+   margin added 22px on Project Health) */
+html body main .card > .tag + h3 { margin-top: 0; }
+/* case-study openings: one hairline between the metadata and the first section, not two */
+html body main header:has(> .case-meta:last-child) + .case-page-content > .section:first-child { margin-top: 0; border-top: 0 !important; }
+/* the "In short" line keeps the same 24px gap above whatever follows it */
+html body main .in-short + :is(.card, .meridian-product-callout) { margin-top: 24px; }
+/* lists in a case-study section read as body copy (the 4c list rule lost to an older 14px muted rule) */
+html body main.case-system-page .case-page-content .section > :is(ul, ol) > li { font-size: 16px; line-height: 1.6; color: #3f3f46; }
+/* a section label directly above the closing links stays with them: the hairline goes above the label */
+html body main .kicker:has(+ .case-study-footer) { margin-top: 30px; padding-top: 22px; border-top: 1px solid var(--rd-line); }
+html body main .kicker + .case-study-footer { margin-top: 0; padding-top: 0; border-top: 0; }
+/* Legal page: one hairline between blocks (the turn sections and the example figure also drew a bottom
+   rule, so pairs of lines stacked 30-40px apart), and every full rule spans the column */
+html body main.legal-single-case :is(.paper-turn, .paper-example) { border-bottom: 0; }
+html body main.legal-single-case .paper-meta + .legal-method { border-top: 0; }
+html body main.legal-single-case :is(.legal-method, .paper-before-after, .paper-learning, .paper-sources) { max-width: none !important; }
+/* AI Support Workflow: the 9.5px "Customer" label was 4.15:1 in --cyan; a darker teal of the same hue
+   reaches 5.1:1 (WCAG AA). The lane colour and legend dot keep --cyan. */
+html body main .owner-customer .owner-tag { color: #007a8a; }
 @media (prefers-reduced-motion: reduce){
   *, *::before, *::after {
     animation-duration: 0.001ms !important;
