@@ -183,14 +183,12 @@ def test_clean_visible_ask_text_removes_the_empty_citation_left_behind_by_id_str
     artifact with nothing in it. A parenthetical that still has other real
     words in it must be left alone."""
     internal_ids = {"review_1", "k-data", "q-retention"}
-    # _clean_visible_ask_text already strips trailing sentence punctuation as
-    # part of its existing whitespace/punctuation cleanup -- unrelated to this
-    # fix, so these assertions match that pre-existing behavior.
-    assert _clean_visible_ask_text("Retention is confirmed (review_1).", internal_ids) == "Retention is confirmed"
-    assert _clean_visible_ask_text("Retention is confirmed (k-data, q-retention).", internal_ids) == "Retention is confirmed"
-    assert _clean_visible_ask_text("See the linked Review (review_1) for details.", internal_ids) == "See the linked Review for details"
+    # A sentence keeps its final period (Cowork, Oct 11); only the empty citation goes.
+    assert _clean_visible_ask_text("Retention is confirmed (review_1).", internal_ids) == "Retention is confirmed."
+    assert _clean_visible_ask_text("Retention is confirmed (k-data, q-retention).", internal_ids) == "Retention is confirmed."
+    assert _clean_visible_ask_text("See the linked Review (review_1) for details.", internal_ids) == "See the linked Review for details."
     assert _clean_visible_ask_text("See the linked Review (the one about retention) for details.", internal_ids) == (
-        "See the linked Review (the one about retention) for details"
+        "See the linked Review (the one about retention) for details."
     ), "A parenthetical with real, non-ID content must be left completely alone."
 
 

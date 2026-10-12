@@ -85,7 +85,7 @@ def _context(state_in_context=True):
 
 
 def _same(a, b):
-    """The answer-cleaning step ahead of the backstop trims a final period; that is unrelated to #227."""
+    """Compare ignoring a final period (the cleaner used to trim it; it keeps it since Oct 11). Unrelated to #227."""
     return a.rstrip(". ") == b.rstrip(". ")
 
 
