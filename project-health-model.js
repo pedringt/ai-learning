@@ -307,7 +307,7 @@
     if(att.kind==='unknown') return {key:'checking',label:'Checking',kind:'unknown'};
     if(att.kind==='bad') return {key:'action',label:'Needs attention',kind:'bad'};
     if(att.kind==='warn') return {key:'watch',label:'Watch',kind:'warn'};
-    if(att.qualityNotMeasured) return {key:'partial',label:QUALITY_NOT_MEASURED_LABEL,kind:'good'};
+    if(att.qualityNotMeasured) return {key:'partial',label:QUALITY_NOT_MEASURED_LABEL,shortLabel:'Quality not measured',kind:'good'};
     return {key:'healthy',label:'Healthy',kind:'good'};
   }
   function attentionItems(data){
@@ -1146,10 +1146,10 @@
     const attention=overallAttention(data);
     const signal=pending.size
       ?'Checking project health…'
-      :(status.key==='partial'?'Quality checks not connected':status.kind==='good'?'No current product-quality action':attention.title);
+      :(status.key==='partial'?'No delivery or runtime problems':status.kind==='good'?'No current product-quality action':attention.title);
     return '<button class="project-switcher-item '+(active?'active':'')+'" data-kind="'+esc(status.kind)+'" data-project="'+esc(data.project.id)+'" type="button" aria-pressed="'+(active?'true':'false')+'">'+
       '<span class="project-switcher-main"><strong>'+esc(data.project.name)+'</strong>'+stageTag(data.project)+'<span>'+esc(signal||'No current issue')+'</span></span>'+
-      '<span class="status-pill '+esc(status.key)+'">'+esc(status.label)+'</span></button>';
+      '<span class="status-pill '+esc(status.key)+'"'+(status.shortLabel?' title="'+esc(status.label)+'"':'')+'>'+esc(status.shortLabel||status.label)+'</span></button>';
   }
   function evalSuiteLabel(run){
     const suite=String(run?.suite||run?.eval_suite||'').toLowerCase();

@@ -47,7 +47,7 @@ assert.ok(project('authority-lab').noQualitySource&&project('authority-lab').noR
 // --- Cowork, Oct 11: a quality source missing by design is not a failure, but it is not hidden either.
 // Delivery/runtime can be fine; the project never gets the plain "Healthy" headline, pill, or banner copy.
 const authorityStatus=M.projectStatus(authorityByDesign);
-assert.deepStrictEqual(authorityStatus,{key:'partial',label:'Healthy · quality not measured',kind:'good'});
+assert.deepStrictEqual(authorityStatus,{key:'partial',label:'Healthy · quality not measured',shortLabel:'Quality not measured',kind:'good'});
 assert.notStrictEqual(authorityStatus.label,'Healthy');
 assert.ok(!['action','watch','incomplete'].includes(authorityStatus.key),'not counted in the attention, watch, or incomplete summary chips');
 const authorityOverall=M.overallAttention(authorityByDesign);
@@ -62,8 +62,9 @@ assert.doesNotMatch(authoritySummary.headline,/Everything looks healthy/);
 assert.strictEqual(authoritySummary.meta,'Not measured');
 assert.match(M.releaseReadiness(authorityByDesign).detail,/quality is not measured/);
 const authorityCard=M.cardMarkup(authorityByDesign,false);
-assert.match(authorityCard,/Healthy · quality not measured/);
-assert.match(authorityCard,/Quality checks not connected/);
+assert.match(authorityCard,/>Quality not measured</);
+assert.match(authorityCard,/title="Healthy · quality not measured"/);
+assert.match(authorityCard,/No delivery or runtime problems/);
 assert.doesNotMatch(authorityCard,/>Healthy<|No current product-quality action/);
 // State with real quality data still gets the plain healthy result.
 assert.strictEqual(M.healthySummary(stateHealthy).headline,'Everything looks healthy right now.');
