@@ -4,6 +4,8 @@ const TEAM_ID='team_UxrzvAczWhPiXlO3nvWPAu5b';
 const TEAM_SLUG='cairn10';
 const LOOKBACK_DAYS=7;
 const MAX_RUNTIME_ROWS=250;
+const DEPLOYMENTS_TIMEOUT_MS=6500;
+const RUNTIME_LOG_TIMEOUT_MS=4500;
 const PROJECTS={
   state:{vercelProjectId:'prj_zQtHJg96oM7Ol4qTapiwk1mV8iRl',slug:'state'},
   tastemake:{vercelProjectId:'prj_UWguNtKhGJkLr0X3jswk2rgBKLGu',slug:'tastemake'},
@@ -176,7 +178,7 @@ async function loadActivity(project){
     since:String(since),
     limit:'25'
   });
-  const deploymentsResult=await timedJson('https://api.vercel.com/v7/deployments?'+qs,{headers,timeoutMs:6500});
+  const deploymentsResult=await timedJson('https://api.vercel.com/v7/deployments?'+qs,{headers,timeoutMs:DEPLOYMENTS_TIMEOUT_MS});
   if(!deploymentsResult.ok){
     return {configured:true,available:false,status:deploymentsResult.status,error:deploymentsResult.error||deploymentsResult.payload?.error?.message||'Deployment activity unavailable'};
   }
@@ -192,16 +194,13 @@ async function loadActivity(project){
     const deploymentUrl=deploymentId?'https://vercel.com/'+TEAM_SLUG+'/'+project.slug+'/'+encodeURIComponent(deploymentId):null;
     if(deploymentId){
       const logQs=new URLSearchParams({teamId:TEAM_ID});
-      let logs=await timedRuntimeText('https://api.vercel.com/v1/projects/'+encodeURIComponent(project.vercelProjectId)+'/deployments/'+encodeURIComponent(deploymentId)+'/runtime-logs?'+logQs,{
+      // One bounded read of the runtime-log stream. Oct 12 production timing: every project's stream
+      // timed out with no rows, and the old 9 s retry made each cold load ~14 s without ever adding a
+      // row. A timeout is still reported as partial coverage, never as a clean scan.
+      const logs=await timedRuntimeText('https://api.vercel.com/v1/projects/'+encodeURIComponent(project.vercelProjectId)+'/deployments/'+encodeURIComponent(deploymentId)+'/runtime-logs?'+logQs,{
         headers:{Authorization:'Bearer '+token,Accept:'application/stream+json'},
-        timeoutMs:4500
+        timeoutMs:RUNTIME_LOG_TIMEOUT_MS
       });
-      if(!logs.ok&&logs.error==='timeout'){
-        logs=await timedRuntimeText('https://api.vercel.com/v1/projects/'+encodeURIComponent(project.vercelProjectId)+'/deployments/'+encodeURIComponent(deploymentId)+'/runtime-logs?'+logQs,{
-          headers:{Authorization:'Bearer '+token,Accept:'application/stream+json'},
-          timeoutMs:9000
-        });
-      }
       runtimeAvailable=logs.ok||logs.error==='timeout';
       runtimeStatus=logs.status;
       runtimeCoverage=(logs.timedOut||logs.error==='timeout')?'partial':(logs.ok?'complete':'unavailable');
@@ -258,4 +257,4 @@ module.exports=async function handler(req,res){
   });
 };
 
-module.exports._test={PROJECTS,safeText,isIgnoredBuildSkip,summarizeDeployments,parseRuntimeRows,runtimeIssues,timedRuntimeText};
+module.exports._test={PROJECTS,DEPLOYMENTS_TIMEOUT_MS,RUNTIME_LOG_TIMEOUT_MS,safeText,isIgnoredBuildSkip,summarizeDeployments,parseRuntimeRows,runtimeIssues,timedRuntimeText};
