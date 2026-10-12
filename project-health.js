@@ -6,7 +6,7 @@
   'use strict';
   // Data and pure analysis live in project-health-model.js (#452).
   const PROJECT_HEALTH_MODEL=(typeof module==='object'&&module.exports&&typeof require==='function')?require('./project-health-model.js'):globalThis.PROJECT_HEALTH_MODEL;
-  const {PROJECTS,esc,shortSha,commitTitle,repoUrl,githubCommitUrl,pullRequestNumber,githubPullRequestUrl,githubLink,changeUrl,commitLabel,htmlRow,linkedRow,githubApi,vercelFromStatus,deliveryHealth,normalizeQuality,percent,highImpactText,modelDisplayName,qualityAttention,deliveryAttention,deliveryAttentionForData,infrastructureAttention,externalQualityAttention,pendingSet,productOpenItems,allAttentionSignals,overallAttention,projectStatus,qualityNotMeasured,healthySummary,investigationUsesModel,paidActionNote,RUN_COOLDOWN_MINUTES,attentionItems,setupGaps,releaseReadiness,regressionSignal,recurringFailureSignal,operationalSignals,healthConsistencyIssues,releaseRiskChecklist,productionRuntime,operationalNextDecision,failureCheckCount,failureExplanation,qualityFailureClassSummary,activityTimelineItems,activityDayLabel,activityTimeRange,evalBehaviorBranch,mergePlatform,emptyProjectData,safeExternalQualitySnapshot,serializeProjectData,hydrateProjectData,investigationHistorySummary,makeRunner,STATE_EVAL_CONTRACT_UPDATED_AT,dateMs,fmtDate,relativeAge,stateEvalContractStale,stateEvalBehaviorStale,stateEvalResultsStale,stateEvalStaleReason,freshnessMeta,qualitySnapshot,visitBaseline,healthStateLabel,meaningfulChanges,changedSinceVisit,trendText,activityReviewItems,row,metric,durationLabel,costLabel,attentionMarkup,neonConnectionDetail,infraCardLabel,analyticsConnectionValue,analyticsGapDetail,analyticsReceiving,analyticsSignal,analyticsLabel,projectQualityLabel,stageTag,loadingCardMarkup,cardMarkup,evalSuiteLabel,evalScore,evalTrend,stateEvalCard,stateScenarioCard,scenarioPassLabel,stateEvalHistory,mockSparkline,mockTrendValues,mockDelta,investigationResultHtml,evalRunComplete,externalQualityRunComplete,evalFailureImpact,previousEvalRun,progressText,quickProjectCheck,qualityInvestigation,projectHandoff}=PROJECT_HEALTH_MODEL;
+  const {PROJECTS,esc,shortSha,commitTitle,repoUrl,githubCommitUrl,pullRequestNumber,githubPullRequestUrl,githubLink,changeUrl,commitLabel,htmlRow,linkedRow,githubApi,vercelFromStatus,deliveryHealth,normalizeQuality,percent,highImpactText,modelDisplayName,qualityAttention,deliveryAttention,deliveryAttentionForData,infrastructureAttention,externalQualityAttention,pendingSet,productOpenItems,allAttentionSignals,overallAttention,projectStatus,qualityNotMeasured,healthySummary,investigationUsesModel,actionNotes,RUN_COOLDOWN_MINUTES,runCooldownFor,cooldownStartFromRetryAfter,attentionItems,setupGaps,releaseReadiness,regressionSignal,recurringFailureSignal,operationalSignals,healthConsistencyIssues,releaseRiskChecklist,productionRuntime,operationalNextDecision,failureCheckCount,failureExplanation,qualityFailureClassSummary,activityTimelineItems,activityDayLabel,activityTimeRange,evalBehaviorBranch,mergePlatform,emptyProjectData,safeExternalQualitySnapshot,serializeProjectData,hydrateProjectData,investigationHistorySummary,makeRunner,STATE_EVAL_CONTRACT_UPDATED_AT,dateMs,fmtDate,relativeAge,stateEvalContractStale,stateEvalBehaviorStale,stateEvalResultsStale,stateEvalStaleReason,freshnessMeta,qualitySnapshot,visitBaseline,healthStateLabel,meaningfulChanges,changedSinceVisit,trendText,activityReviewItems,row,metric,durationLabel,costLabel,attentionMarkup,neonConnectionDetail,infraCardLabel,analyticsConnectionValue,analyticsGapDetail,analyticsReceiving,analyticsSignal,analyticsLabel,projectQualityLabel,stageTag,loadingCardMarkup,cardMarkup,evalSuiteLabel,evalScore,evalTrend,stateEvalCard,stateScenarioCard,scenarioPassLabel,stateEvalHistory,mockSparkline,mockTrendValues,mockDelta,investigationResultHtml,evalRunComplete,externalQualityRunComplete,evalFailureImpact,previousEvalRun,progressText,quickProjectCheck,qualityInvestigation,projectHandoff}=PROJECT_HEALTH_MODEL;
   function pageEnvironment(root){
     const host=String(root?.location?.hostname||'');
     const params=new URLSearchParams(String(root?.location?.search||''));
@@ -21,7 +21,7 @@
     try{
       const response=await fetch(url,{...fetchOptions,signal:controller.signal,headers:{Accept:'application/json',...(fetchOptions.headers||{})}});
       const payload=await response.json().catch(()=>({}));
-      if(!response.ok){const error=new Error(payload?.detail||payload?.message||('Request failed: '+response.status));error.status=response.status;throw error;}
+      if(!response.ok){const error=new Error(payload?.detail||payload?.message||('Request failed: '+response.status));error.status=response.status;error.payload=payload;throw error;}
       return payload;
     }finally{clearTimeout(timer);}
   }
@@ -177,23 +177,19 @@
       detailHeaderStatus.className='status-pill '+esc(status.key);
       detailHeaderStatus.textContent=status.label;
     }
-    const mockOpenProjectLink=doc.getElementById('mockOpenProjectLink');
-    if(mockOpenProjectLink){
-      const live=p.links?.live||'';
-      mockOpenProjectLink.hidden=!live;
-      if(live)mockOpenProjectLink.href=live;
+    // "Live site" and "GitHub" links beside the title; a project without one of the URLs omits that link.
+    for(const [id,url] of [['detailLiveLink',p.links?.live||''],['detailRepoLink',p.repo?repoUrl(p.repo):'']]){
+      const link=doc.getElementById(id);
+      if(!link)continue;
+      link.hidden=!url;
+      if(url)link.href=url;else link.removeAttribute('href');
     }
-    const mockSourceLink=doc.getElementById('mockSourceLink');
-    if(mockSourceLink)mockSourceLink.href=repoUrl(p.repo);
-    const repoLink=doc.getElementById('repoLink');
-    if(repoLink)repoLink.href=repoUrl(p.repo);
     const qualityTab=doc.querySelector?.('[data-tab="ai-quality"]');
     if(qualityTab)qualityTab.textContent=p.qualityLabel||'Quality';
     const linksMenu=doc.getElementById('projectLinksMenu');
     if(linksMenu){
+      // Live site and GitHub are beside the title now, so the menu keeps only the other destinations.
       const links=[
-        ['Live project',p.links?.live],
-        ['GitHub repository',repoUrl(p.repo)],
         ['Vercel',p.links?.vercel],
         ['Render · production',p.links?.renderProduction],
         ['Neon',p.links?.neon],
@@ -212,23 +208,28 @@
       projectCheckButton.setAttribute('aria-busy',data.investigation?.loading?'true':'false');
       projectCheckButton.textContent=data.investigation?.loading?'Investigating…':'Investigate';
       projectCheckButton.classList.add('primary');
-      projectCheckButton.style.order='1';
     }
     const activeEvalRun=data.qualityRun;
     if(headerRunChecksButton){
       const canRun=!!run?.configured&&run?.can_run_here!==false;
       headerRunChecksButton.hidden=!canRun&&!activeEvalRun;
-      headerRunChecksButton.disabled=!!activeEvalRun||!canRun;
-      headerRunChecksButton.textContent=activeEvalRun?'Running…':(run?.button_label||'Run AI evals');
-      headerRunChecksButton.title=activeEvalRun?'Quality checks are running. Open Quality for details.':'';
+      const group=doc.getElementById('headerRunChecksGroup');
+      if(group)group.hidden=headerRunChecksButton.hidden;
+      if(!headerRunChecksButton.dataset.starting){
+        headerRunChecksButton.disabled=!!activeEvalRun||!canRun;
+        headerRunChecksButton.textContent=activeEvalRun?'Running…':(run?.button_label||'Run AI evals');
+      }
       headerRunChecksButton.classList.remove('primary');
-      headerRunChecksButton.style.order='2';
     }
-    const paidNote=doc.getElementById('paidActionNote');
-    if(paidNote){
-      const note=paidActionNote(data);
-      paidNote.hidden=!note;
-      paidNote.textContent=note;
+    const notes=actionNotes(data);
+    for(const [buttonId,noteId,note] of [['projectCheckButton','investigateNote',notes.investigate],['headerRunChecksButton','runChecksNote',notes.run]]){
+      const button=doc.getElementById(buttonId),noteEl=doc.getElementById(noteId);
+      if(!button||!noteEl)continue;
+      noteEl.hidden=!note;
+      // The short text breaks at " · " into one line per fact; the full sentence is what assistive tech reads.
+      noteEl.innerHTML=note?'<span aria-hidden="true">'+note.short.split(' · ').map(line=>'<span class="action-note-line">'+esc(line)+'</span>').join('')+'</span><span class="visually-hidden">'+esc(note.full)+'</span>':'';
+      if(note)button.setAttribute('aria-describedby',noteId);else button.removeAttribute('aria-describedby');
+      button.title=buttonId==='headerRunChecksButton'&&activeEvalRun?'Quality checks are running. Open Quality for details.':(note?.full||'');
     }
     const evalRunBanner=doc.getElementById('evalRunBanner');
     if(evalRunBanner){
@@ -682,6 +683,7 @@
       }
     }
     doc.getElementById('qualityPanel').innerHTML=qualityHtml;
+    applyRunCooldown(data,doc);
 
     // Detailed usage rendering is retained for compatibility; the visible analytics summary now lives on Overview.
     const a=platform?.analytics;
@@ -826,6 +828,40 @@
       (gaps.length?'<h4 style="margin:18px 0 8px">Coverage gaps</h4><div class="coverage-grid">'+gaps.map(item=>'<div class="coverage-item"><strong>'+esc(item.label)+'</strong><span>'+esc(item.detail)+'</span></div>').join('')+'</div>':'');
   }
 
+  // Run cooldown (visual pass, Oct 11): while the run API would refuse a new run, the run buttons are disabled and say
+  // when they are available. The start time is remembered per browser; a 429 from the API also sets it.
+  function runStartedKey(root,projectId){return 'project-health-run-started:'+pageEnvironment(root)+':'+String(projectId||'state');}
+  function loadRunStartedAt(root,projectId){try{return root.localStorage?.getItem(runStartedKey(root,projectId))||null;}catch(_){return null;}}
+  function recordRunStarted(root,data,startedAt){
+    if(!data||!startedAt)return;
+    data.runStartedAt=startedAt;
+    try{root.localStorage?.setItem(runStartedKey(root,data.project.id),startedAt);}catch(_){}
+  }
+  // Refreshes rebuild the project objects, so the remembered start is read back from storage when missing.
+  function runCooldownNow(root,data,now=Date.now()){
+    if(data&&!data.runStartedAt)data.runStartedAt=loadRunStartedAt(root,data.project.id);
+    return runCooldownFor(data,now);
+  }
+  function applyRunCooldown(data,doc,now=Date.now()){
+    const run=data?.runInfo;
+    const canRun=!!run?.configured&&run?.can_run_here!==false;
+    const cooldown=runCooldownNow(doc.defaultView||globalThis,data,now);
+    if(!canRun||data.qualityRun)return cooldown;
+    const header=doc.getElementById('headerRunChecksButton');
+    if(header&&!header.dataset.starting){
+      header.disabled=cooldown.active;
+      header.textContent=cooldown.active?cooldown.label:(run.button_label||'Run AI evals');
+    }
+    doc.querySelectorAll?.('#qualityPanel [data-run-checks]').forEach(button=>{
+      if(button.dataset.starting)return;
+      const target=button.querySelector('.suite-action-run')||button;
+      if(!button.dataset.idleLabel)button.dataset.idleLabel=target.textContent;
+      button.disabled=cooldown.active;
+      target.textContent=cooldown.active?cooldown.label:button.dataset.idleLabel;
+    });
+    return cooldown;
+  }
+
   function evalRunStorageKey(root,projectId){return 'project-health-eval-run:'+pageEnvironment(root)+':'+String(projectId||'state');}
   function loadEvalRunState(root,projectId){
     try{
@@ -873,17 +909,20 @@
           baseline_updated_at:baselineUpdatedAt
         })
       });
+      const startedAt=new Date().toISOString();
+      if(payload?.started)recordRunStarted(root,data,startedAt);
       return {
         ...payload,
         project:projectId,
         suite,
-        startedAt:new Date().toISOString(),
+        startedAt,
         baselineReview:data.quality?.review?.created_at||null,
         baselineAsk:data.quality?.ask?.created_at||null,
         baselineUpdatedAt,
         state:'running'
       };
     }catch(error){
+      if(error?.status===429)recordRunStarted(root,data,cooldownStartFromRetryAfter(error.payload?.retry_after_seconds));
       root.alert('Could not start the quality checks: '+error.message);
       throw error;
     }
@@ -1207,10 +1246,13 @@
     if(headerRunChecksButton)headerRunChecksButton.addEventListener('click',async()=>{
       const data=activeData();if(!data||!data.runInfo?.configured||data.qualityRun)return;
       if(data.qualityRunCompletedAt){setActiveTab('ai-quality');renderNow();return;}
+      if(runCooldownNow(root,data).active)return;
       headerRunChecksButton.disabled=true;
+      headerRunChecksButton.dataset.starting='1';
       headerRunChecksButton.textContent='Starting checks…';
       try{
         const started=await dispatchRun(data,root,'all');
+        delete headerRunChecksButton.dataset.starting;
         if(started?.started){
           data.qualityRun=started;
           data.qualityRunCompletedAt=null;
@@ -1221,7 +1263,7 @@
         }else{
           renderNow();
         }
-      }catch(_){renderNow();}
+      }catch(_){delete headerRunChecksButton.dataset.starting;renderNow();}
     });
 
     async function startProjectInvestigation(data){
@@ -1410,12 +1452,16 @@
       }
       const button=event.target.closest?.('[data-run-checks]');
       if(!button)return;
-      const data=activeData();if(!data||data.qualityRun)return;
-      const originalLabel=button.textContent;
+      const data=activeData();if(!data||data.qualityRun||runCooldownNow(root,data).active)return;
+      // Suite cards change only their "Run →" label, so the title and description survive a cancelled confirm.
+      const label=button.querySelector('.suite-action-run')||button;
+      const originalLabel=label.textContent;
       button.disabled=true;
-      button.textContent='Starting…';
+      button.dataset.starting='1';
+      label.textContent='Starting…';
       try{
         const started=await dispatchRun(data,root,button.dataset.runChecks||'all');
+        delete button.dataset.starting;
         if(started?.started){
           data.qualityRun=started;
           data.qualityRunCompletedAt=null;
@@ -1425,9 +1471,9 @@
           pollEvalResults(data);
         }else{
           button.disabled=false;
-          button.textContent=originalLabel;
+          label.textContent=originalLabel;
         }
-      }catch(_){renderDetail(data,doc);}
+      }catch(_){delete button.dataset.starting;renderDetail(data,doc);}
     });
     await refreshAll();
     const requestedInvestigation=initialParams.get('investigate');
@@ -1445,6 +1491,8 @@
         root.history.replaceState(null,'',url);
       }
     }
+    // Keep "Available in N min" current and re-enable the run buttons when the cooldown ends.
+    root.setInterval?.(()=>{const data=activeData();if(data)applyRunCooldown(data,doc);},15000);
     for(const project of PROJECTS){
       const resumedRun=loadEvalRunState(root,project.id);
       if(!resumedRun)continue;
