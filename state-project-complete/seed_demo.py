@@ -776,6 +776,9 @@ def bootstrap_juniper_demo_data(connection, *, manage_transaction: bool = True) 
 _PROJECT_DEPENDENT_TABLES = (
     # (table, column-that-scopes-it-to-a-project -- either its own project_id
     # or a subquery through the parent row that has one)
+    # Migration 015's baseline_evidence_coverage has a foreign key to evidence,
+    # so its rows go first (formerly prepended by baseline_dogfood_fixes, #502).
+    ("baseline_evidence_coverage", "evidence_id IN (SELECT id FROM evidence WHERE project_id=?)"),
     ("history_transitions", "state_item_id IN (SELECT id FROM current_state_items WHERE project_id=?)"),
     ("proposed_questions", "review_id IN (SELECT id FROM review_issues WHERE project_id=?)"),
     ("review_questions", "review_id IN (SELECT id FROM review_issues WHERE project_id=?)"),

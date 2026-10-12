@@ -91,25 +91,6 @@ def section_aware_split(text: str, original_split, max_chars: int = 2600) -> lis
     return chunks or original_split(text, max_chars=max_chars)
 
 
-def _install_project_delete_dependency() -> None:
-    """Delete Baseline coverage rows before their Evidence parent rows.
-
-    Migration 015 added baseline_evidence_coverage with a foreign key to
-    evidence. The older project cleanup list predates that table; once a source
-    had been processed, deleting the project could therefore fail with a foreign
-    key error. Prepending the dependent table repairs both Reset and Delete while
-    keeping the existing transaction/order logic intact.
-    """
-    import seed_demo
-
-    entry = (
-        "baseline_evidence_coverage",
-        "evidence_id IN (SELECT id FROM evidence WHERE project_id=?)",
-    )
-    if entry not in seed_demo._PROJECT_DEPENDENT_TABLES:
-        seed_demo._PROJECT_DEPENDENT_TABLES = (entry, *seed_demo._PROJECT_DEPENDENT_TABLES)
-
-
 def _install_section_aware_chunking() -> None:
     import baseline_setup
 
@@ -128,6 +109,5 @@ def install_baseline_dogfood_fixes(core_module: Any, async_module: Any) -> None:
     global _INSTALLED
     if _INSTALLED:
         return
-    _install_project_delete_dependency()
     _install_section_aware_chunking()
     _INSTALLED = True
