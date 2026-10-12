@@ -43,6 +43,13 @@ function fakeGh(statusBySha){
   check('delivery is not Unknown when the push tip has no status of its own',JSON.stringify(delivery).toLowerCase().indexOf('no vercel status found')===-1,JSON.stringify(delivery).slice(0,300));
   check('it looks back only a few commits',T.DEPLOY_STATUS_LOOKBACK<=4);
 
+  // A batch promoted through a PR is deployed as the merge commit at the branch tip; none of the release
+  // commits has a status of its own. Delivery uses the tip's deploy.
+  f=fakeGh({tip:vercel('success')});
+  const viaTip=await T.loadDelivery(f.gh,project,'main');
+  check('with no deployed release commit, the branch tip deploy is used',f.asked.some(p=>p.includes('/commits/tip/status'))&&JSON.stringify(viaTip).toLowerCase().indexOf('no vercel status found')===-1,JSON.stringify(viaTip).slice(0,200));
+  check('and check-runs come from that same deployed commit',f.asked.some(p=>p.includes('/commits/tip/check-runs')));
+
   console.log(`\n${pass} passed, ${fail} failed`);
   if(fail)process.exit(1);
 })();
