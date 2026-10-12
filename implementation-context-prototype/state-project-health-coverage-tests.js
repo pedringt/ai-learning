@@ -252,6 +252,50 @@ assert.ok(M.attentionItems(staleEvals).some(item=>item.incomplete));
   }finally{global.fetch=originalFetch;}
 })().catch(error=>{console.error(error);process.exit(1);});
 
+// --- Cowork, Oct 12: a slow deployment-activity call must not hold the core status (or the page's
+// "Refreshing N of 4" count) back, and if it then fails the project is Incomplete, never Healthy.
+(async()=>{
+  const originalFetch=global.fetch;
+  const json=(status,body)=>({ok:status>=200&&status<300,status,json:async()=>body});
+  let releaseActivity;
+  const activityGate=new Promise(resolve=>{releaseActivity=resolve;});
+  global.fetch=async(url,options={})=>{
+    if(url.startsWith('/api/project-health-github')){
+      const okPart=value=>({ok:true,value});
+      return json(200,{delivery:okPart(goodDelivery),staging:okPart(goodDelivery),evalBehavior:okPart({sha:'abc',updatedAt:'2026-10-01T00:00:00Z'}),openPullRequests:okPart([])});
+    }
+    if(url.startsWith('/api/project-health-activity')){
+      await activityGate;
+      const error=new Error('This operation was aborted');error.name='AbortError';throw error;
+    }
+    if(url.startsWith('/api/project-health-run'))return json(200,{configured:false});
+    if(url.startsWith('/api/project-health-project-quality'))return json(200,{project:'tastemake',attention:[{kind:'good',title:'Recommendation checks pass'}]});
+    return json(404,{});
+  };
+  const root={location:{hostname:'www.contextswitch.tech',search:''}};
+  try{
+    const seen=[];
+    const loading=H.loadProject(project('tastemake'),root,partial=>{
+      seen.push({known:M.coreStatusKnown(partial),activity:M.activityStillLoading(partial),status:M.projectStatus(partial).key,card:M.cardMarkup(partial,false)});
+    });
+    await new Promise(resolve=>setTimeout(resolve,30));
+    const waiting=seen[seen.length-1];
+    assert.strictEqual(waiting.known,true,'core status is known while deployment activity is still loading');
+    assert.strictEqual(waiting.activity,true);
+    assert.notStrictEqual(waiting.status,'checking','the pill does not sit at Checking for the activity detail');
+    assert.match(waiting.card,/Checking deployment activity…/);
+    releaseActivity();
+    const done=await loading;
+    assert.strictEqual(M.activityStillLoading(done),false);
+    assert.strictEqual(M.projectStatus(done).key,'incomplete','a failed activity signal is never shown as Healthy');
+    assert.match(M.overallAttention(done).title,/Deployment activity \(request timed out\)/);
+  }finally{global.fetch=originalFetch;}
+  // Progress counts projects whose core status is known and names the ones still waiting on activity.
+  assert.strictEqual(M.coreStatusKnown({...M.emptyProjectData(project('state')),fresh:true,pending:new Set(['Activity'])}),true);
+  assert.strictEqual(M.coreStatusKnown({...M.emptyProjectData(project('state')),fresh:true,pending:new Set(['Delivery','Activity'])}),false);
+  assert.strictEqual(M.coreStatusKnown({...M.emptyProjectData(project('state')),fresh:false,pending:new Set()}),false,'a cached snapshot is not a known current status');
+})().catch(error=>{console.error(error);process.exit(1);});
+
 // --- Server-side GitHub function: allowlisted repos, token when set, cache headers.
 (async()=>{
   assert.deepStrictEqual(Object.keys(G.PROJECTS),M.PROJECTS.map(p=>p.id));

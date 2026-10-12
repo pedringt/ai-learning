@@ -412,6 +412,10 @@ assert.strictEqual(
   'Refreshing 2 of 3 projects… State still checking.'
 );
 assert.strictEqual(H.progressText(3,3,[]),'Finishing refresh…');
+// Cowork, Oct 12: projects waiting only on deployment activity count as checked and are named separately.
+assert.strictEqual(H.progressText(3,4,['NARC'],['State']),'Refreshing 3 of 4 projects… NARC still checking.');
+assert.strictEqual(H.progressText(4,4,[],['State','Tastemake']),'All 4 projects checked. Deployment activity still loading for State, Tastemake.');
+assert.strictEqual(H.progressText(4,4,[],[]),'Finishing refresh…');
 
 const blank=H.emptyProjectData(H.PROJECTS[0]);
 assert.strictEqual(blank.project.id,'state');
