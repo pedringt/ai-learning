@@ -70,13 +70,54 @@ function runInfo(projectId){
   };
 }
 
+function githubHeaders(){
+  return {
+    Authorization:'Bearer '+process.env.GITHUB_TOKEN,
+    Accept:'application/vnd.github+json',
+    'X-GitHub-Api-Version':'2022-11-28'
+  };
+}
+
+// The one source for "when did the last run start": the newest workflow run on the ref a run would use. The POST
+// cooldown and the GET's last_run_started_at both come from here, so the page and the API cannot disagree.
+async function fetchRecentRuns(run,ref,options={}){
+  const response=await fetch(
+    'https://api.github.com/repos/'+run.repo+'/actions/workflows/'+encodeURIComponent(run.workflow)+'/runs?branch='+encodeURIComponent(ref)+'&per_page=10',
+    {headers:githubHeaders(),...(options.signal?{signal:options.signal}:{})}
+  );
+  if(!response.ok){
+    const payload=await response.json().catch(()=>({}));
+    return {ok:false,status:response.status,message:payload?.message||null,workflowRuns:[]};
+  }
+  const payload=await response.json().catch(()=>({workflow_runs:[]}));
+  return {ok:true,status:response.status,message:null,workflowRuns:Array.isArray(payload.workflow_runs)?payload.workflow_runs:[]};
+}
+
+function latestRunStartedAt(workflowRuns){
+  const startedMs=new Date(workflowRuns?.[0]?.created_at||NaN).getTime();
+  return Number.isFinite(startedMs)?new Date(startedMs).toISOString():null;
+}
+
+// GET helper: a failed or slow lookup is null ("unknown"), never a failed GET.
+async function lastRunStartedAt(run,ref){
+  if(!process.env.GITHUB_TOKEN)return null;
+  try{
+    const signal=typeof AbortSignal!=='undefined'&&AbortSignal.timeout?AbortSignal.timeout(3500):undefined;
+    const recent=await fetchRecentRuns(run,ref,{signal});
+    return recent.ok?latestRunStartedAt(recent.workflowRuns):null;
+  }catch(_){return null;}
+}
+
 module.exports=async function handler(req,res){
   if(req.method==='GET'){
     const projectId=String(req.query?.project||'state').toLowerCase();
     const info=runInfo(projectId);
     if(!info){res.status(404).json({configured:false,detail:'No dashboard-run workflow is configured for this project yet.'});return;}
+    const environment=String(req.query?.env||'production').toLowerCase()==='staging'?'staging':'production';
+    const lastRunRef=runRef(RUNS[projectId],projectId,environment);
+    const last_run_started_at=await lastRunStartedAt(RUNS[projectId],lastRunRef);
     res.setHeader('Cache-Control','no-store');
-    res.status(200).json(info);
+    res.status(200).json({...info,last_run_ref:lastRunRef,last_run_started_at});
     return;
   }
 
@@ -107,29 +148,18 @@ module.exports=async function handler(req,res){
   const recordEnvironment=String(body.record_environment||'production')==='staging'?'staging':'production';
   const ref=runRef(run,projectId,recordEnvironment);
 
-  const githubHeaders={
-    Authorization:'Bearer '+process.env.GITHUB_TOKEN,
-    Accept:'application/vnd.github+json',
-    'X-GitHub-Api-Version':'2022-11-28'
-  };
-  const runsResponse=await fetch(
-    'https://api.github.com/repos/'+run.repo+'/actions/workflows/'+encodeURIComponent(run.workflow)+'/runs?branch='+encodeURIComponent(ref)+'&per_page=10',
-    {headers:githubHeaders}
-  );
-  if(!runsResponse.ok){
-    const payload=await runsResponse.json().catch(()=>({}));
-    res.status(runsResponse.status).json({detail:payload?.message||'Could not check recent quality runs'});
+  const recent=await fetchRecentRuns(run,ref);
+  if(!recent.ok){
+    res.status(recent.status).json({detail:recent.message||'Could not check recent quality runs'});
     return;
   }
-  const recentPayload=await runsResponse.json().catch(()=>({workflow_runs:[]}));
-  const workflowRuns=Array.isArray(recentPayload.workflow_runs)?recentPayload.workflow_runs:[];
+  const workflowRuns=recent.workflowRuns;
   const active=workflowRuns.find(item=>['queued','in_progress','waiting','requested','pending'].includes(String(item.status||'').toLowerCase()));
   if(active){
     res.status(409).json({detail:'Quality checks are already running. Wait for the current run to finish before starting another one.',actions_url:active.html_url||null});
     return;
   }
-  const latest=workflowRuns[0]||null;
-  const latestStarted=latest?.created_at?new Date(latest.created_at).getTime():NaN;
+  const latestStarted=new Date(latestRunStartedAt(workflowRuns)||NaN).getTime();
   const elapsed=Number.isFinite(latestStarted)?Date.now()-latestStarted:Infinity;
   if(elapsed>=0&&elapsed<RUN_COOLDOWN_MS){
     const retryAfter=Math.max(1,Math.ceil((RUN_COOLDOWN_MS-elapsed)/1000));
@@ -144,7 +174,7 @@ module.exports=async function handler(req,res){
     'https://api.github.com/repos/'+run.repo+'/actions/workflows/'+encodeURIComponent(run.workflow)+'/dispatches',
     {
       method:'POST',
-      headers:{...githubHeaders,'Content-Type':'application/json'},
+      headers:{...githubHeaders(),'Content-Type':'application/json'},
       body:JSON.stringify(dispatchBody)
     }
   );
@@ -171,4 +201,4 @@ module.exports=async function handler(req,res){
   });
 };
 
-module.exports._test={RUNS,runRef,runInfo,RUN_COOLDOWN_MS};
+module.exports._test={RUNS,runRef,runInfo,RUN_COOLDOWN_MS,fetchRecentRuns,latestRunStartedAt,lastRunStartedAt};

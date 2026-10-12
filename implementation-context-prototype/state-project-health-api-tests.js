@@ -31,7 +31,7 @@ assert.deepStrictEqual(
 );
 assert.strictEqual(platform.analyticsSignal({data:{pageviews:0,visitors:0}},{ok:true,payload:{data:{pageviews:0}}}).receiving,false);
 assert.strictEqual(platform.analyticsSignal({data:{pageviews:5}},{ok:false,status:500,payload:{}}).recent,null,'a failed recency query is unknown, not "no recent views"');
-(async()=>{
+const platformFetchTest=(async()=>{
   const originalFetch=global.fetch,originalToken=process.env.VERCEL_TOKEN;
   process.env.VERCEL_TOKEN='test-token';
   const urls=[];
@@ -53,6 +53,86 @@ assert.strictEqual(platform.analyticsSignal({data:{pageviews:5}},{ok:false,statu
     if(originalToken==null)delete process.env.VERCEL_TOKEN;else process.env.VERCEL_TOKEN=originalToken;
   }
 })().catch(error=>{console.error(error);process.exit(1);});
+
+// Oct 11: the run GET reports the newest workflow run's start (last_run_started_at) from the same lookup the POST
+// cooldown uses, so the page can show "Available in N min" for runs started by any visitor.
+// Runs after the platform test: both swap global.fetch, and overlapping swaps would restore the wrong fetch.
+platformFetchTest.then(async()=>{
+  const runHandler=require('../api/project-health-run.js');
+  const fs=require('fs');
+  const originalFetch=global.fetch;
+  const savedEnv={GITHUB_TOKEN:process.env.GITHUB_TOKEN,COST:process.env.PROJECT_HEALTH_RUN_COST_ESTIMATE_STATE};
+  const call=async req=>{
+    let body=null;
+    const res={headers:{},setHeader(k,v){this.headers[k]=v;},status(code){this.code=code;return this;},json(payload){body=payload;return this;}};
+    await runHandler(req,res);
+    return {res,body};
+  };
+  const threeMinAgo=new Date(Date.now()-3*60*1000).toISOString();
+  try{
+    process.env.GITHUB_TOKEN='test-token';
+    process.env.PROJECT_HEALTH_RUN_COST_ESTIMATE_STATE='$0.10-$0.25';
+    const urls=[],methods=[];
+    global.fetch=async(url,options={})=>{
+      urls.push(String(url));methods.push(options.method||'GET');
+      return {ok:true,status:200,json:async()=>({workflow_runs:[{status:'completed',created_at:threeMinAgo},{status:'completed',created_at:'2026-10-01T00:00:00Z'}]})};
+    };
+    const got=await call({method:'GET',query:{project:'state'}});
+    assert.strictEqual(got.res.code,200);
+    assert.strictEqual(got.res.headers['Cache-Control'],'no-store','cooldown data must never be cached');
+    assert.strictEqual(got.body.last_run_started_at,threeMinAgo);
+    assert.strictEqual(got.body.last_run_ref,'main');
+    assert.strictEqual(got.body.button_label,'Run AI evals','existing fields are kept');
+    assert.strictEqual(got.body.configured,true);
+    assert.deepStrictEqual(Object.keys(got.body).slice(0,Object.keys(runApi.runInfo('state')).length),Object.keys(runApi.runInfo('state')));
+    assert.strictEqual(urls.length,1);
+    assert.match(urls[0],/^https:\/\/api\.github\.com\/repos\/pedringt\/ai-learning\/actions\/workflows\/question-review-live\.yml\/runs\?branch=main&per_page=10$/);
+    const getUrl=urls[0];
+
+    const staging=await call({method:'GET',query:{project:'state',env:'staging'}});
+    assert.strictEqual(staging.body.last_run_ref,'staging');
+    assert.match(urls[1],/branch=staging/,'the staging page checks the staging ref, like a staging-recorded POST');
+
+    // Same source: the POST cooldown reads the same URL and refuses with the matching remaining time.
+    urls.length=0;methods.length=0;
+    const posted=await call({method:'POST',body:{project:'state',suite:'all',record_environment:'production',confirm_paid_model_calls:true,estimated_cost:'$0.10-$0.25'}});
+    assert.strictEqual(posted.res.code,429);
+    assert.deepStrictEqual(methods,['GET'],'a cooled-down POST never dispatches');
+    assert.strictEqual(urls[0],getUrl,'GET and POST cooldown use the same GitHub lookup');
+    const remaining=posted.body.retry_after_seconds;
+    assert.ok(remaining>=419&&remaining<=420,'3 minutes in leaves ~7 minutes: '+remaining);
+    assert.strictEqual(runApi.latestRunStartedAt([{created_at:threeMinAgo}]),threeMinAgo);
+    assert.strictEqual(runApi.latestRunStartedAt([]),null);
+    assert.strictEqual(runApi.latestRunStartedAt([{created_at:'nope'}]),null);
+    const runSource=fs.readFileSync(require.resolve('../api/project-health-run.js'),'utf8');
+    assert.strictEqual((runSource.match(/\/runs\?branch=/g)||[]).length,1,'one GitHub run-lookup path, shared by GET and POST');
+    assert.strictEqual((runSource.match(/fetchRecentRuns\(/g)||[]).length,3,'defined once, used by the POST and the GET helper');
+
+    // Lookup failures are null, never a failed GET.
+    global.fetch=async()=>({ok:false,status:403,json:async()=>({message:'rate limited'})});
+    const refused=await call({method:'GET',query:{project:'state'}});
+    assert.strictEqual(refused.res.code,200);
+    assert.strictEqual(refused.body.last_run_started_at,null);
+    assert.strictEqual(refused.body.label,'State AI evals');
+    global.fetch=async()=>{throw new Error('network down');};
+    const thrown=await call({method:'GET',query:{project:'tastemake'}});
+    assert.strictEqual(thrown.res.code,200);
+    assert.strictEqual(thrown.body.last_run_started_at,null);
+    global.fetch=async()=>({ok:true,status:200,json:async()=>({workflow_runs:[]})});
+    assert.strictEqual((await call({method:'GET',query:{project:'narc'}})).body.last_run_started_at,null,'no runs yet');
+    delete process.env.GITHUB_TOKEN;
+    let fetched=false;global.fetch=async()=>{fetched=true;throw new Error('should not fetch');};
+    const noToken=await call({method:'GET',query:{project:'state'}});
+    assert.strictEqual(noToken.res.code,200);
+    assert.strictEqual(noToken.body.last_run_started_at,null);
+    assert.strictEqual(fetched,false,'no token, no lookup');
+    assert.strictEqual((await call({method:'GET',query:{project:'nope'}})).res.code,404);
+  }finally{
+    global.fetch=originalFetch;
+    if(savedEnv.GITHUB_TOKEN==null)delete process.env.GITHUB_TOKEN;else process.env.GITHUB_TOKEN=savedEnv.GITHUB_TOKEN;
+    if(savedEnv.COST==null)delete process.env.PROJECT_HEALTH_RUN_COST_ESTIMATE_STATE;else process.env.PROJECT_HEALTH_RUN_COST_ESTIMATE_STATE=savedEnv.COST;
+  }
+}).catch(error=>{console.error(error);process.exit(1);});
 
 const deploymentSummary=activity.summarizeDeployments([
   {uid:'preview-cancel',name:'state',target:null,state:'CANCELED',created:400,errorMessage:'Preview canceled'},
