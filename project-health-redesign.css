@@ -102,6 +102,8 @@ html body .button {
 html body .button:hover:not([disabled]) { transform: translateY(-2px); box-shadow: 0 12px 24px rgba(21, 17, 26, 0.12); background: #fff; border-color: var(--ink); }
 html body .button.primary { background: var(--ink); border-color: var(--ink); color: #fff; }
 html body .button[disabled] { border-color: var(--line); color: var(--muted); }
+/* a disabled primary (e.g. "Run all AI evals" during the run cooldown) matches other disabled buttons, not grey-on-grey */
+html body .button.primary[disabled] { background: #f3f2f7; border-color: var(--line); color: var(--muted); }
 
 /* project chooser cards */
 html body .project-card {
@@ -296,9 +298,44 @@ html body a.button[target="_blank"]:hover { transform: none; box-shadow: none; }
 
 @media (max-width: 560px) {
   html body .project-title-links { flex-basis: 100%; margin-left: 0; }
-  html body .detail-actions { flex-wrap: nowrap; gap: 8px; width: 100%; }
-  html body .detail-actions .button { padding: 6px 12px; font-size: 12px; }
-  /* long run labels ("Run recommendation checks") wrap inside the button instead of pushing the row off-screen */
-  html body .detail-actions #headerRunChecksButton { white-space: normal; line-height: 1.15; text-align: center; }
-  html body .detail-actions #headerRunChecksGroup { flex: 0 1 auto; min-width: 0; }
+  /* Buttons stay one line (a two-line pill crowds its curved ends); if a long run label still cannot fit, the row
+     wraps rather than squeezing the label. */
+  html body .detail-actions { flex-wrap: wrap; gap: 8px 6px; width: 100%; }
+  html body .detail-actions .button { padding: 6px 10px; font-size: 12px; }
+  html body .detail-actions .overflow-button { min-width: 40px; padding-inline: 10px; }
+}
+
+/* Pill buttons are for one-line labels. Section headers with a "View all … →" button wrap the button under the heading
+   on narrow screens instead of breaking it onto two lines. */
+html body :is(.mock-quality-detail-head, .mock-investigation-head) { flex-wrap: wrap; }
+html body :is(.mock-quality-detail-head, .mock-investigation-head) > .button { white-space: nowrap; }
+
+/* Eval-suite actions (AI Evals tab): a title, a description and "Run →" do not fit a pill, so they are cards with the
+   page's card radius. "Run →" sits in its own column, centred, so both cards line up. */
+html body .button.suite-action {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 18px;
+  min-height: 0;
+  padding: 14px 16px 15px;
+  border-color: #d9d6e3;
+  border-radius: 13px;
+  text-align: left;
+  white-space: normal;
+}
+html body .button.suite-action:hover:not([disabled]) { border-color: var(--ink); }
+html body .suite-action-copy { gap: 4px; }
+html body .suite-action-copy > strong { font-size: 14px; line-height: 1.25; }
+html body .suite-action-copy > span { max-width: 44ch; font-size: 12.5px; font-weight: 600; line-height: 1.45; }
+html body .suite-action-run { font-size: 12.5px; }
+html body .button.suite-action[disabled] .suite-action-run { color: var(--muted); }
+html body .suite-action-grid { grid-template-columns: repeat(2, minmax(0, 360px)); gap: 12px; }
+html body .eval-suite-actions > p { margin-bottom: 12px; }
+@media (max-width: 720px) {
+  html body .suite-action-grid { grid-template-columns: 1fr; }
+}
+@media (max-width: 560px) {
+  /* on phones the status line ("Run →" / "Available in 7 min") goes under the description so the copy keeps its width */
+  html body .button.suite-action { grid-template-columns: 1fr; gap: 8px; }
 }
