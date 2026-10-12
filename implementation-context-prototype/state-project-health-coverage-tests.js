@@ -47,7 +47,7 @@ assert.ok(project('authority-lab').noQualitySource&&project('authority-lab').noR
 // --- Cowork, Oct 11: a quality source missing by design is not a failure, but it is not hidden either.
 // Delivery/runtime can be fine; the project never gets the plain "Healthy" headline, pill, or banner copy.
 const authorityStatus=M.projectStatus(authorityByDesign);
-assert.deepStrictEqual(authorityStatus,{key:'partial',label:'Healthy · quality not measured',shortLabel:'Quality not measured',kind:'good'});
+assert.deepStrictEqual(authorityStatus,{key:'partial',label:'Healthy · quality not measured',shortLabel:'Not measured',kind:'good'});
 assert.notStrictEqual(authorityStatus.label,'Healthy');
 assert.ok(!['action','watch','incomplete'].includes(authorityStatus.key),'not counted in the attention, watch, or incomplete summary chips');
 const authorityOverall=M.overallAttention(authorityByDesign);
@@ -62,10 +62,36 @@ assert.doesNotMatch(authoritySummary.headline,/Everything looks healthy/);
 assert.strictEqual(authoritySummary.meta,'Not measured');
 assert.match(M.releaseReadiness(authorityByDesign).detail,/quality is not measured/);
 const authorityCard=M.cardMarkup(authorityByDesign,false);
-assert.match(authorityCard,/>Quality not measured</);
+assert.match(authorityCard,/<span aria-hidden="true">Not measured<\/span>/,'short pill fits on one line beside the name');
+assert.match(authorityCard,/class="visually-hidden">Healthy · quality not measured</,'screen readers hear the full label');
 assert.match(authorityCard,/title="Healthy · quality not measured"/);
 assert.match(authorityCard,/No delivery or runtime problems/);
 assert.doesNotMatch(authorityCard,/>Healthy<|No current product-quality action/);
+// Visual pass, Oct 11: every switcher card (loaded or loading, with or without a stage tag) has the same two rows,
+// so pills and detail lines line up across cards. Row 1: name + pill. Row 2: optional stage tag, then the detail.
+function cardRows(html){
+  const head=html.match(/^<button [^>]*><span class="project-switcher-head"><strong class="project-switcher-name">([^<]*)<\/strong>(<span class="status-pill [^"]*"[^>]*>.*?)<\/span><span class="project-switcher-detail">(.*)<\/span><\/button>$/);
+  assert.ok(head,'card has head + detail rows: '+html);
+  const detail=head[3].match(/^(<em class="stage-tag">([^<]*)<\/em>)?<span class="project-switcher-signal">([^<]*)<\/span>$/);
+  assert.ok(detail,'detail row is an optional stage tag then one signal span: '+head[3]);
+  return {name:head[1],pill:head[2],stage:detail[2]||null,signal:detail[3]};
+}
+const authorityRows=cardRows(authorityCard);
+assert.deepStrictEqual([authorityRows.name,authorityRows.stage,authorityRows.signal],['Authority Lab','In progress','No delivery or runtime problems']);
+assert.match(authorityRows.pill,/^<span class="status-pill partial" title="Healthy · quality not measured">/);
+const stateRows=cardRows(M.cardMarkup(stateHealthy,true));
+assert.strictEqual(stateRows.stage,null);
+assert.strictEqual(stateRows.pill,'<span class="status-pill healthy">Healthy</span>');
+for(const id of ['state','tastemake','narc','authority-lab']){
+  const loading=M.loadingCardMarkup(project(id),id==='state');
+  const rows=cardRows(loading);
+  assert.strictEqual(rows.name,project(id).name);
+  assert.strictEqual(rows.pill,'<span class="status-pill unknown">Checking</span>');
+  assert.strictEqual(rows.signal,'Checking project health…');
+  assert.strictEqual(rows.stage,project(id).stageLabel||null);
+  assert.match(loading,/aria-busy="true"/);
+  assert.doesNotMatch(loading,/project-switcher-main/,'old single-column layout is gone');
+}
 // State with real quality data still gets the plain healthy result.
 assert.strictEqual(M.healthySummary(stateHealthy).headline,'Everything looks healthy right now.');
 assert.deepStrictEqual(M.projectStatus(stateHealthy),{key:'healthy',label:'Healthy',kind:'good'});

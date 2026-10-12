@@ -307,7 +307,7 @@
     if(att.kind==='unknown') return {key:'checking',label:'Checking',kind:'unknown'};
     if(att.kind==='bad') return {key:'action',label:'Needs attention',kind:'bad'};
     if(att.kind==='warn') return {key:'watch',label:'Watch',kind:'warn'};
-    if(att.qualityNotMeasured) return {key:'partial',label:QUALITY_NOT_MEASURED_LABEL,shortLabel:'Quality not measured',kind:'good'};
+    if(att.qualityNotMeasured) return {key:'partial',label:QUALITY_NOT_MEASURED_LABEL,shortLabel:'Not measured',kind:'good'};
     return {key:'healthy',label:'Healthy',kind:'good'};
   }
   function attentionItems(data){
@@ -1135,11 +1135,16 @@
     if(q.project==='narc'&&q.recorded?.recorded_all_suites_green) return q.recorded.full_playtest_pending?'Automated checks pass · playtest open':'Game checks healthy';
     return top?.title||'Quality loaded';
   }
+  // Project switcher cards (visual pass, Oct 11): every card has the same two rows so states line up across cards.
+  // Row 1: name (one line) and status pill, centred on each other. Row 2: optional stage tag inline before the detail.
   function stageTag(project){return project.stageLabel?'<em class="stage-tag">'+esc(project.stageLabel)+'</em>':'';}
+  function switcherCardInner(project,pill,detail){
+    return '<span class="project-switcher-head"><strong class="project-switcher-name">'+esc(project.name)+'</strong>'+pill+'</span>'+
+      '<span class="project-switcher-detail">'+stageTag(project)+'<span class="project-switcher-signal">'+esc(detail)+'</span></span>';
+  }
   function loadingCardMarkup(project,active){
     return '<button class="project-switcher-item '+(active?'active':'')+'" data-kind="unknown" data-project="'+esc(project.id)+'" type="button" aria-pressed="'+(active?'true':'false')+'" aria-busy="true">'+
-      '<span class="project-switcher-main"><strong>'+esc(project.name)+'</strong>'+stageTag(project)+'<span>Checking project health…</span></span>'+
-      '<span class="status-pill unknown">Checking</span></button>';
+      switcherCardInner(project,'<span class="status-pill unknown">Checking</span>','Checking project health…')+'</button>';
   }
   function cardMarkup(data,active){
     const status=projectStatus(data),pending=pendingSet(data);
@@ -1147,9 +1152,12 @@
     const signal=pending.size
       ?'Checking project health…'
       :(status.key==='partial'?'No delivery or runtime problems':status.kind==='good'?'No current product-quality action':attention.title);
+    // A shortened pill keeps the full label as its tooltip and as the text screen readers hear.
+    const pill=status.shortLabel
+      ?'<span class="status-pill '+esc(status.key)+'" title="'+esc(status.label)+'"><span aria-hidden="true">'+esc(status.shortLabel)+'</span><span class="visually-hidden">'+esc(status.label)+'</span></span>'
+      :'<span class="status-pill '+esc(status.key)+'">'+esc(status.label)+'</span>';
     return '<button class="project-switcher-item '+(active?'active':'')+'" data-kind="'+esc(status.kind)+'" data-project="'+esc(data.project.id)+'" type="button" aria-pressed="'+(active?'true':'false')+'">'+
-      '<span class="project-switcher-main"><strong>'+esc(data.project.name)+'</strong>'+stageTag(data.project)+'<span>'+esc(signal||'No current issue')+'</span></span>'+
-      '<span class="status-pill '+esc(status.key)+'"'+(status.shortLabel?' title="'+esc(status.label)+'"':'')+'>'+esc(status.shortLabel||status.label)+'</span></button>';
+      switcherCardInner(data.project,pill,signal||'No current issue')+'</button>';
   }
   function evalSuiteLabel(run){
     const suite=String(run?.suite||run?.eval_suite||'').toLowerCase();
