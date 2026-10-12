@@ -1,9 +1,12 @@
 """Generate link-preview cards and Open Graph / Twitter tags for every portfolio page.
 
-Each root page gets a 1200x630 card in assets/social/<slug>.png and a marked
-block of og:/twitter: tags in its <head>, built from the page's own <title> and
-meta description. Re-running replaces both, so edit a title or description and
-run this again rather than editing the tags by hand.
+Each root page and each cheat sheet (cheat-sheets/*.html) gets a 1200x630 card in
+assets/social/<slug>.png and a marked block of og:/twitter: tags in its <head>, built
+from the page's own <title> and meta description. A cheat sheet has no description
+tag of its own, so its one-line summary under the heading becomes one, inside the
+block. It also writes sitemap.xml for the same pages. Re-running replaces all of
+it, so edit a title or description and run this again rather than editing the tags
+by hand.
 
     state-project-complete/.venv/bin/python tools/social_previews.py          # write
     state-project-complete/.venv/bin/python tools/social_previews.py --check  # exit 1 if stale
@@ -18,6 +21,8 @@ SITE = "https://www.contextswitch.tech"
 OUT = ROOT / "assets" / "social"
 BEGIN, END = "<!-- social-preview:begin -->", "<!-- social-preview:end -->"
 SKIP = {"404.html"}
+CHEAT_SHEETS = "cheat-sheets"
+SITEMAP = ROOT / "sitemap.xml"
 
 # Pages without a meta description of their own.
 FALLBACK_DESCRIPTIONS = {
@@ -27,6 +32,8 @@ FALLBACK_DESCRIPTIONS = {
 
 
 def kicker(slug):
+    if slug.startswith(CHEAT_SHEETS + "/"):
+        return "Cheat sheet"
     if slug == "index":
         return "Applied AI + Product Work"
     if slug.startswith("state-") or slug == "implementation-context":
@@ -41,16 +48,24 @@ def kicker(slug):
 def page_meta(path):
     text = path.read_text()
     title = html.unescape(re.search(r"<title>([^<]*)</title>", text).group(1)).strip()
-    match = re.search(r'<meta content="([^"]*)" name="description"\s*/?>', text) or re.search(
-        r'<meta name="description" content="([^"]*)"\s*/?>', text
+    # Look for the page's own description, not one this tool wrote into its block.
+    own = re.sub(re.escape(BEGIN) + r".*?" + re.escape(END), "", text, flags=re.S)
+    match = re.search(r'<meta content="([^"]*)" name="description"\s*/?>', own) or re.search(
+        r'<meta name="description" content="([^"]*)"\s*/?>', own
     )
     description = html.unescape(match.group(1)) if match else FALLBACK_DESCRIPTIONS.get(path.name)
+    add_description = False
+    if not description and path.parent.name == CHEAT_SHEETS:
+        lede = re.search(r'<p class="(?:lede|lead|sub|intro)[^"]*"[^>]*>(.*?)</p>', text, re.S)
+        if lede:
+            description = re.sub(r"\s+", " ", html.unescape(re.sub(r"<[^>]+>", "", lede.group(1)))).strip()
+            add_description = True
     if not description:
         raise SystemExit(f"{path.name}: no meta description; add one or a fallback")
     headline = re.split(r"\s+[·|]\s+Context Switch$", title)[0]
     if path.name == "index.html":
         headline = "Context Switch"
-    return text, title, headline, description
+    return text, title, headline, description, add_description
 
 
 def card_html(kick, headline, description):
@@ -67,12 +82,17 @@ p{{margin:24px 0 0;font-size:28px;line-height:1.4;color:#6d676f;display:-webkit-
 <div class="foot"><span>Context <span style="color:#5b478f">Switch</span></span><span>contextswitch.tech</span></div></div></body></html>"""
 
 
-def tags(slug, title, description):
+def page_url(slug):
+    return SITE + "/" if slug == "index" else f"{SITE}/{slug}"
+
+
+def tags(slug, title, description, add_description=False):
     e = lambda s: html.escape(s, quote=True)
-    url = SITE + "/" if slug == "index" else f"{SITE}/{slug}"
+    url = page_url(slug)
     image = f"{SITE}/assets/social/{slug}.png"
     return "\n".join([
         BEGIN,
+        *([f'<meta content="{e(description)}" name="description"/>'] if add_description else []),
         f'<meta content="website" property="og:type"/>',
         f'<meta content="{e(url)}" property="og:url"/>',
         f'<meta content="{e(title)}" property="og:title"/>',
@@ -97,21 +117,34 @@ def with_tags(text, block):
     return text.replace("</head>", block + "\n</head>", 1)
 
 
+def sitemap(slugs):
+    rows = "".join(f"  <url><loc>{html.escape(page_url(slug))}</loc></url>\n" for slug in slugs)
+    return ('<?xml version="1.0" encoding="UTF-8"?>\n'
+            '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n' + rows + "</urlset>\n")
+
+
 def main():
     check = "--check" in sys.argv
     pages = sorted(p for p in ROOT.glob("*.html") if p.name not in SKIP)
-    stale, cards = [], []
+    pages += sorted((ROOT / CHEAT_SHEETS).glob("*.html"))
+    stale, cards, slugs = [], [], []
     for path in pages:
-        slug = path.stem
-        text, title, headline, description = page_meta(path)
-        updated = with_tags(text, tags(slug, title, description))
+        slug = path.relative_to(ROOT).with_suffix("").as_posix()
+        slugs.append(slug)
+        text, title, headline, description, add_description = page_meta(path)
+        updated = with_tags(text, tags(slug, title, description, add_description))
         if updated != text:
-            stale.append(path.name)
+            stale.append(path.relative_to(ROOT).as_posix())
             if not check:
                 path.write_text(updated)
         if not (OUT / f"{slug}.png").exists():
             stale.append(f"assets/social/{slug}.png")
         cards.append((slug, card_html(kicker(slug), headline, description)))
+    expected_sitemap = sitemap(slugs)
+    if not SITEMAP.exists() or SITEMAP.read_text() != expected_sitemap:
+        stale.append("sitemap.xml")
+        if not check:
+            SITEMAP.write_text(expected_sitemap)
     if check:
         if stale:
             print("stale:", ", ".join(stale))
@@ -126,6 +159,7 @@ def main():
         page = browser.new_page(viewport={"width": 1200, "height": 630})
         for slug, card in cards:
             page.set_content(card)
+            (OUT / f"{slug}.png").parent.mkdir(parents=True, exist_ok=True)
             page.screenshot(path=str(OUT / f"{slug}.png"))
         browser.close()
     print(f"wrote {len(cards)} cards and tags for {len(pages)} pages")
