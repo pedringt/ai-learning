@@ -16,7 +16,6 @@ import baseline_async_intake as _baseline_async_intake
 from baseline_draft import register_baseline_draft_routes
 from baseline_fact_recovery import install_baseline_fact_recovery
 from baseline_manual_setup import register_baseline_manual_setup_routes
-from baseline_prompt_hardening import install_baseline_prompt_hardening
 from baseline_review_visibility import install_baseline_review_visibility
 from baseline_composition import compose_baseline_runtime
 from baseline_setup import register_baseline_routes
@@ -33,7 +32,6 @@ from quality_analytics_api import register_quality_analytics
 # This keeps the wrapper understandable without turning these adapters into
 # another hidden dependency chain.
 compose_baseline_runtime()
-install_baseline_prompt_hardening()
 install_baseline_review_visibility(_core)
 install_baseline_resilience()
 install_baseline_fact_recovery()

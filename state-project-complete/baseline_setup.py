@@ -58,7 +58,7 @@ def is_baseline_setup(connection: Any) -> bool:
     return bool(row) and row["baseline_completed_at"] is None
 
 
-def baseline_prompt_guidance(connection: Any, evidence: Mapping[str, Any]) -> str:
+def _baseline_prompt_guidance_core(connection: Any, evidence: Mapping[str, Any]) -> str:
     """Additional provider guidance while a project is in Baseline Setup."""
     parts: list[str] = []
     chunk_index = evidence.get("_state_chunk_index")
@@ -102,6 +102,14 @@ Build a coherent starting picture across this Evidence and the Current State, op
         + "\n" + area_line + "\n</baseline_setup_mode>"
     )
     return "\n\n".join(parts)
+
+
+# Extension point (#502): extra provider guidance for Baseline interpretation.
+# baseline_composition adds, in order, baseline_prompt_hardening's quality checks
+# and baseline_fact_recovery's recovery-pass guidance, so the prompt reads
+# setup mode -> quality checks -> recovery. Read by the Baseline provider
+# classes' _build_prompt below.
+baseline_prompt_guidance = ExtensionPoint("baseline_setup.baseline_prompt_guidance", _baseline_prompt_guidance_core)
 
 
 def _split_dense_question_block(text: str) -> list[str]:

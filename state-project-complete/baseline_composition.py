@@ -26,6 +26,9 @@ baseline_setup.split_evidence_text + baseline_dogfood_fixes.with_section_aware_s
     Splits by numbered/Markdown source sections before size-based chunking.
     Read by: the Baseline provider classes' interpret (chunking) and
     baseline_resilience's max_tokens retry split.
+baseline_setup.baseline_prompt_guidance + baseline_prompt_hardening.with_quality_guidance
+    Appends the Baseline quality checks while a project is in Baseline Setup.
+    Read by: the Baseline provider classes' _build_prompt.
 
 Replaced by plain code (no longer composed at runtime):
 - baseline_async_intake._analyze_in_background is the delete-safe version.
@@ -37,6 +40,7 @@ from __future__ import annotations
 import api_core
 import baseline_setup
 from baseline_dogfood_fixes import with_section_aware_split
+from baseline_prompt_hardening import with_quality_guidance
 
 
 def compose_baseline_runtime() -> None:
@@ -44,3 +48,4 @@ def compose_baseline_runtime() -> None:
     api_core.resolve_review.add_layer("baseline_organization", baseline_setup.with_baseline_organization)
     api_core._provider_from_env.add_layer("baseline_providers", baseline_setup.with_baseline_providers)
     baseline_setup.split_evidence_text.add_layer("section_aware", with_section_aware_split)
+    baseline_setup.baseline_prompt_guidance.add_layer("quality_checks", with_quality_guidance)
