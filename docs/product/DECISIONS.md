@@ -189,3 +189,18 @@ A real failure is recorded with a `schema_violation` code (the eval now records 
 
 **Rejected / deferred**  
 An automatic retry now (no evidence it is needed); a repair pass that sends the invalid output back to the model (a new prompt, so a product change that needs its own eval); keeping the valid parts of a bad output (edges toward AI deciding what counts as valid); prevention by tuning chunk size or output limits (needs failure data first).
+
+### DEC-010 — A consequential note reaching Review stays a hard Deep QA gate
+
+**Status:** Settled  
+**Date:** 2026-10-12  
+**Related:** Issue #241; DEC-008; Issue #494
+
+**Decision**  
+The Deep QA check "VP billing note reaches Review, not a silent no_review" keeps blocking promotion. It is not downgraded to an observation the way DEC-008 treats the Baseline split. On a single miss, re-run once and read the printed API answer (Review types, outcome, interpretation) before treating it as a regression, the same reading as the review suite in #494.
+
+**Why**  
+A consequential note that silently produces no Review is a trust failure: evidence that should change what the project treats as true disappears without a person seeing it. That is an authority-relevant behaviour, unlike the number of facts or areas Baseline happens to produce. The one recorded miss (Sept 20, Haiku 4.5) was model variance with a clean response. On Oct 12 the same note produced a Review in 12 of 12 tries on Haiku 5.5, so the gate is not flaky enough to block on noise.
+
+**Revisit when**  
+It misses twice in a row, or misses in more than one run out of ten. That would be a real change in how the model treats terse consequential notes, and needs a look at the prompt or the consequentiality eval, not a softer gate.
