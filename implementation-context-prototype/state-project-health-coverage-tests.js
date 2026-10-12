@@ -182,6 +182,17 @@ assert.strictEqual(M.cooldownStartFromRetryAfter(420,T0),at(3*60*1000),'429 with
 assert.strictEqual(M.runCooldown(M.cooldownStartFromRetryAfter(420,T0),T0).label,'Available in 7 min');
 assert.strictEqual(M.cooldownStartFromRetryAfter(undefined,T0),null);
 assert.strictEqual(M.cooldownStartFromRetryAfter(99999,T0),at(0),'capped at the API cooldown');
+// Oct 11: the run GET's last_run_started_at covers runs started by another visitor or browser.
+assert.strictEqual(M.runCooldownFor({runInfo:{last_run_started_at:at(3*60*1000)}},T0).label,'Available in 7 min');
+assert.strictEqual(M.runCooldownFor({runInfo:{last_run_started_at:at(3*60*1000)}},T0).active,true);
+assert.strictEqual(M.runCooldownFor({runInfo:{last_run_started_at:at(9*60*1000+30*1000)}},T0).label,'Available in 1 min');
+assert.strictEqual(M.runCooldownFor({runInfo:{last_run_started_at:at(10*60*1000)}},T0).active,false,'an old run elsewhere does not block');
+assert.strictEqual(M.runCooldownFor({runInfo:{last_run_started_at:null}},T0).active,false,'null (lookup failed) means unknown, not blocked');
+assert.strictEqual(M.latestRunStart({runInfo:{last_run_started_at:at(6*60*1000)},runStartedAt:at(9*60*1000)}),at(6*60*1000),'a newer run elsewhere beats this browser\'s older start');
+assert.strictEqual(M.latestRunStart({runInfo:{last_run_started_at:at(9*60*1000)},runStartedAt:at(1*60*1000)}),at(1*60*1000),'a newer local start beats a stale GET');
+assert.strictEqual(M.runCooldownFor({runInfo:{last_run_started_at:at(9*60*1000)},runStartedAt:M.cooldownStartFromRetryAfter(300,T0)},T0).label,'Available in 5 min','the 429 fallback still counts');
+assert.strictEqual(M.runCooldownFor({runInfo:{last_run_started_at:'garbage'},runStartedAt:at(4*60*1000)},T0).label,'Available in 6 min');
+assert.match(require('fs').readFileSync(require.resolve('../project-health.js'),'utf8'),/\/api\/project-health-run\?project='\+encodeURIComponent\(project\.id\)\+'&env='\+pageEnvironment\(root\)/,'the page asks for the cooldown of the ref its runs record to');
 
 // --- Non-health controls and detail-only signals do not make a project incomplete.
 const controlsOnly=loaded(project('tastemake'),{externalQuality:{attention:[{kind:'good',title:'Recommendation checks healthy'}]},failures:[{label:'Run controls',reason:'not found'},{label:'Analytics',reason:'request timed out'}]});

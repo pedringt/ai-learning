@@ -299,8 +299,8 @@
     };
   }
   // The run API refuses a new run within RUN_COOLDOWN_MINUTES of the latest one (elapsed >= 0 and < cooldown). The page
-  // knows a run start when this browser started it, or from a 429's retry_after_seconds; it cannot see runs started
-  // elsewhere until the API refuses one.
+  // knows a run start from the run GET's last_run_started_at (the same GitHub lookup the POST cooldown uses, so runs
+  // started by any visitor count), when this browser started it, or from a 429's retry_after_seconds. The latest wins.
   function runCooldown(startedAt,now=Date.now()){
     const cooldownMs=RUN_COOLDOWN_MINUTES*60*1000;
     const elapsed=now-dateMs(startedAt);
@@ -310,7 +310,7 @@
     return {active:true,remainingMs,minutes,label:'Available in '+minutes+' min'};
   }
   function latestRunStart(data){
-    const starts=[data?.runStartedAt,data?.qualityRun?.startedAt].filter(value=>Number.isFinite(dateMs(value)));
+    const starts=[data?.runInfo?.last_run_started_at,data?.runStartedAt,data?.qualityRun?.startedAt].filter(value=>Number.isFinite(dateMs(value)));
     return starts.sort((a,b)=>dateMs(b)-dateMs(a))[0]||null;
   }
   function runCooldownFor(data,now=Date.now()){return runCooldown(latestRunStart(data),now);}
