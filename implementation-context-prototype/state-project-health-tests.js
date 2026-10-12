@@ -412,6 +412,10 @@ assert.strictEqual(
   'Refreshing 2 of 3 projects… State still checking.'
 );
 assert.strictEqual(H.progressText(3,3,[]),'Finishing refresh…');
+// Cowork, Oct 12: projects waiting only on deployment activity count as checked and are named separately.
+assert.strictEqual(H.progressText(3,4,['NARC'],['State']),'Refreshing 3 of 4 projects… NARC still checking.');
+assert.strictEqual(H.progressText(4,4,[],['State','Tastemake']),'All 4 projects checked. Deployment activity still loading for State, Tastemake.');
+assert.strictEqual(H.progressText(4,4,[],[]),'Finishing refresh…');
 
 const blank=H.emptyProjectData(H.PROJECTS[0]);
 assert.strictEqual(blank.project.id,'state');
@@ -492,6 +496,57 @@ const releaseAndDeliveryChanges=H.meaningfulChanges({
 assert.strictEqual(releaseAndDeliveryChanges.find(item=>item.title==='New production release').detail,'Promote Project Health action destination cleanup');
 assert.strictEqual(releaseAndDeliveryChanges.find(item=>item.title==='Delivery status improved').detail,'Needs attention → Healthy');
 assert.doesNotMatch(releaseAndDeliveryChanges.find(item=>item.title==='New production release').detail,/20d0bd7/);
+// Cowork, Oct 12: the changes timeline showed "Delivery status changed: Healthy → Unknown" while the card
+// read Healthy. Unknown is a check that could not confirm a state, not a transition.
+{
+  const M=require('../project-health-model.js');
+  const deliveryChange=(beforeKind,nowKind)=>M.meaningfulChanges({
+    project:{quality:null},
+    lastVisit:{deliverySha:'same',deliveryKind:beforeKind,quality:{},analyticsAvailable:null,openPullRequests:0},
+    delivery:{sha:'same',vercel:{kind:nowKind}},
+    platform:{},openPullRequests:[],checkedAt:'2026-10-12T01:00:00Z'
+  }).filter(item=>/^Delivery status/.test(item.title));
+  assert.deepStrictEqual(deliveryChange('good','unknown'),[],'Healthy → Unknown is not a change');
+  assert.deepStrictEqual(deliveryChange('unknown','good'),[],'Unknown → Healthy is not a change either (no flip-flop pair)');
+  assert.deepStrictEqual(deliveryChange('bad','unknown'),[]);
+  assert.deepStrictEqual(deliveryChange('good','incomplete'),[]);
+  assert.deepStrictEqual(deliveryChange('good','good'),[]);
+  assert.deepStrictEqual(deliveryChange('good','bad').map(item=>[item.title,item.detail]),[['Delivery status changed','Healthy → Needs attention']]);
+  assert.deepStrictEqual(deliveryChange('warn','good').map(item=>[item.title,item.detail]),[['Delivery status improved','Watch → Healthy']]);
+  // An older saved snapshot that recorded "unknown" is filtered at render time.
+  const legacyBaseline=M.visitBaseline({projectId:'tastemake',delivery:{sha:'same',vercel:{kind:'unknown'}},snapshotAt:'2026-10-12T00:00:00Z'});
+  assert.strictEqual(legacyBaseline.deliveryKind,null);
+  assert.deepStrictEqual(M.meaningfulChanges({project:{quality:null},lastVisit:legacyBaseline,delivery:{sha:'same',vercel:{kind:'good'}},platform:{},openPullRequests:[],checkedAt:'2026-10-12T01:00:00Z'}),[]);
+  // A snapshot saved while delivery read "unknown" keeps the last known state, so a real change across
+  // the gap (Healthy → Unknown → Needs attention) still shows as Healthy → Needs attention.
+  const savedDuringGap=M.serializeProjectData({project:{id:'tastemake'},delivery:{sha:'same',vercel:{kind:'unknown'}},lastVisit:{deliveryKind:'good'}});
+  assert.strictEqual(savedDuringGap.deliveryKnownKind,'good');
+  const gapBaseline=M.visitBaseline(savedDuringGap);
+  assert.strictEqual(gapBaseline.deliveryKind,'good');
+  assert.deepStrictEqual(M.meaningfulChanges({project:{quality:null},lastVisit:gapBaseline,delivery:{sha:'same',vercel:{kind:'bad'}},platform:{},openPullRequests:[],checkedAt:'2026-10-12T01:00:00Z'}).filter(item=>/^Delivery status/.test(item.title)).map(item=>item.detail),['Healthy → Needs attention']);
+  assert.strictEqual(M.serializeProjectData({project:{id:'tastemake'},delivery:{sha:'same',vercel:{kind:'bad'}},lastVisit:{deliveryKind:'good'}}).deliveryKnownKind,'bad');
+}
+// Cowork, Oct 12: a re-run with the same score read "Improved 0 points · 100%".
+{
+  const M=require('../project-health-model.js');
+  const evalChange=(oldScore,newScore)=>M.meaningfulChanges({
+    project:{quality:'state'},
+    lastVisit:{deliverySha:'same',quality:{askAt:'2026-10-11T00:00:00Z',askScore:oldScore},analyticsAvailable:null,openPullRequests:0},
+    delivery:{sha:'same'},
+    quality:{ask:{ask_grounding:newScore,created_at:'2026-10-12T00:00:00Z'}},
+    platform:{},openPullRequests:[],checkedAt:'2026-10-12T01:00:00Z'
+  }).find(item=>/Answer-quality eval/.test(item.title));
+  const up=evalChange(0.9,0.95),down=evalChange(1,0.875),same=evalChange(1,1),tiny=evalChange(1,0.9996);
+  assert.deepStrictEqual([up.title,up.detail],['Answer-quality eval changed','Improved 5 points to 95%']);
+  assert.deepStrictEqual([down.title,down.detail],['Answer-quality eval changed','Declined 12.5 points to 87.5%']);
+  assert.deepStrictEqual([same.title,same.detail],['Answer-quality eval re-run','Unchanged at 100%']);
+  assert.strictEqual(tiny.detail,'Unchanged at 100%','a change that rounds to zero is unchanged, not "Declined 0 points"');
+  assert.strictEqual(M.evalChangeDetail(null,0.8),'New controlled run recorded · 80%');
+  assert.strictEqual(M.scoreDeltaPoints(1,1),0);
+  assert.ok(Object.is(M.scoreDeltaPoints(0.99996,1),0),'negative zero is normalised');
+  assert.strictEqual(M.scoreDeltaPoints(null,1),null);
+  for(const item of [up,down,same,tiny])assert.doesNotMatch(item.detail,/\b0 points/);
+}
 assert.match(H.freshnessMeta('2026-09-30T01:00:00Z','2026-09-30T01:00:00Z',9999).label,/Updated|May be stale/);
 assert.strictEqual(H.trendText(12.5),'↑ 12.5% vs previous 30 days');
 assert.strictEqual(H.trendText(-4),'↓ 4% vs previous 30 days');

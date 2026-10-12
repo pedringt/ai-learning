@@ -184,6 +184,16 @@
     return [...items].sort((a,b)=>priority[b.kind]-priority[a.kind])[0];
   }
   function pendingSet(data){return data?.pending instanceof Set?data.pending:new Set();}
+  // The signals a project's status pill is built from. Deployment activity and run controls are detail:
+  // a project waiting only on them has a known core status (Cowork, Oct 12: one slow activity call held
+  // the whole page at "Refreshing 0 of 4").
+  const STATUS_SIGNALS=['Delivery','Quality','Production backend','Quality behavior'];
+  function coreStatusKnown(data){
+    if(!data?.fresh)return false;
+    const pending=pendingSet(data);
+    return !STATUS_SIGNALS.some(label=>pending.has(label));
+  }
+  function activityStillLoading(data){return pendingSet(data).has('Activity');}
   function productOpenItems(data){
     const items=[],pending=pendingSet(data);
     if(!data?.project||pending.has('Quality')) return items;
@@ -848,6 +858,7 @@
     return {
       projectId:data.project.id,
       delivery:data.delivery,
+      deliveryKnownKind:knownDeliveryKind(data.delivery?.vercel?.kind)||data.lastVisit?.deliveryKind||null,
       staging:data.staging,
       quality:data.quality,
       qualityBehaviorUpdatedAt:data.qualityBehaviorUpdatedAt||null,
@@ -959,15 +970,31 @@
     return {
       savedAt:saved.snapshotAt||saved.checkedAt||null,
       deliverySha:saved.delivery?.sha||null,
-      deliveryKind:saved.delivery?.vercel?.kind||null,
+      // The last known delivery state: a snapshot saved while delivery read "unknown" keeps the state
+      // before it, so Healthy → Unknown → Needs attention still shows as Healthy → Needs attention.
+      deliveryKind:knownDeliveryKind(saved.delivery?.vercel?.kind)||knownDeliveryKind(saved.deliveryKnownKind)||null,
       quality:qualitySnapshot(pseudo),
       analyticsAvailable:saved.platform?.analytics?.available??null,
       analyticsReceiving:analyticsReceiving(saved.platform?.analytics),
       openPullRequests:Array.isArray(saved.openPullRequests)?saved.openPullRequests.length:0
     };
   }
+  function knownDeliveryKind(kind){return ['good','warn','bad'].includes(kind)?kind:null;}
   function healthStateLabel(kind){
     return kind==='bad'?'Needs attention':kind==='warn'?'Watch':kind==='good'?'Healthy':kind==='available'?'Data available':'Unknown';
+  }
+  // Score change in percentage points (one decimal), or null when either score is missing. A change that
+  // rounds to zero is exactly 0, so it reads "Unchanged", never "Improved 0 points" (Cowork, Oct 12).
+  function scoreDeltaPoints(current,previous){
+    if(current==null||previous==null)return null;
+    const delta=Math.round((Number(current)-Number(previous))*1000)/10;
+    if(!Number.isFinite(delta))return null;
+    return delta===0?0:delta;
+  }
+  function evalChangeDetail(delta,score){
+    if(delta==null)return 'New controlled run recorded · '+percent(score);
+    if(delta===0)return 'Unchanged at '+percent(score);
+    return (delta>0?'Improved ':'Declined ')+Math.abs(delta)+' points to '+percent(score);
   }
   function meaningfulChanges(data){
     const before=data?.lastVisit;
@@ -976,19 +1003,24 @@
     if(before.deliverySha&&data.delivery?.sha&&before.deliverySha!==data.delivery.sha){
       items.push({title:'New production release',detail:commitTitle(data.delivery.message),observedAt:data.delivery.updatedAt||data.checkedAt,tab:'overview',section:'deliveryPanel'});
     }
-    if(before.deliveryKind&&data.delivery?.vercel?.kind&&before.deliveryKind!==data.delivery.vercel.kind){
-      const previousDelivery=before.deliveryKind||'unknown',currentDelivery=data.delivery.vercel.kind;
+    // Only a move between two known delivery states is a change. "Unknown" means the check could not
+    // confirm a state (no Vercel status yet, a slow or failed load during a deploy restart), so
+    // "Healthy → Unknown" and its "Unknown → Healthy" pair are never shown (Cowork, Oct 12). This runs at
+    // render time against the saved baseline, so older snapshots holding "unknown" are filtered too.
+    const previousKnown=knownDeliveryKind(before.deliveryKind),currentKnown=knownDeliveryKind(data.delivery?.vercel?.kind);
+    if(previousKnown&&currentKnown&&previousKnown!==currentKnown){
+      const previousDelivery=previousKnown,currentDelivery=currentKnown;
       const improved=currentDelivery==='good'&&previousDelivery!=='good';
       items.push({title:improved?'Delivery status improved':'Delivery status changed',detail:healthStateLabel(previousDelivery)+' → '+healthStateLabel(currentDelivery),observedAt:data.delivery.updatedAt||data.checkedAt,tab:'overview',section:'deliveryPanel'});
     }
     const currentQ=qualitySnapshot(data),oldQ=before.quality||{};
     if(currentQ.reviewAt&&oldQ.reviewAt&&String(currentQ.reviewAt)!==String(oldQ.reviewAt)){
-      const delta=currentQ.reviewScore!=null&&oldQ.reviewScore!=null?Math.round((currentQ.reviewScore-oldQ.reviewScore)*1000)/10:null;
-      items.push({title:'Update-understanding eval changed',detail:(delta==null?'New controlled run recorded':(delta>=0?'Improved ':'Declined ')+Math.abs(delta)+' points')+' · '+percent(currentQ.reviewScore),observedAt:currentQ.reviewAt,tab:'ai-quality'});
+      const delta=scoreDeltaPoints(currentQ.reviewScore,oldQ.reviewScore);
+      items.push({title:'Update-understanding eval '+(delta===0?'re-run':'changed'),detail:evalChangeDetail(delta,currentQ.reviewScore),observedAt:currentQ.reviewAt,tab:'ai-quality'});
     }
     if(currentQ.askAt&&oldQ.askAt&&String(currentQ.askAt)!==String(oldQ.askAt)){
-      const delta=currentQ.askScore!=null&&oldQ.askScore!=null?Math.round((currentQ.askScore-oldQ.askScore)*1000)/10:null;
-      items.push({title:'Answer-quality eval changed',detail:(delta==null?'New controlled run recorded':(delta>=0?'Improved ':'Declined ')+Math.abs(delta)+' points')+' · '+percent(currentQ.askScore),observedAt:currentQ.askAt,tab:'ai-quality'});
+      const delta=scoreDeltaPoints(currentQ.askScore,oldQ.askScore);
+      items.push({title:'Answer-quality eval '+(delta===0?'re-run':'changed'),detail:evalChangeDetail(delta,currentQ.askScore),observedAt:currentQ.askAt,tab:'ai-quality'});
     }
     if(currentQ.severe!=null&&oldQ.severe!=null&&currentQ.severe!==oldQ.severe){
       items.push({title:'High-impact quality failures changed',detail:oldQ.severe+' → '+currentQ.severe,observedAt:data.checkedAt,tab:'ai-quality'});
@@ -1174,8 +1206,10 @@
   function cardMarkup(data,active){
     const status=projectStatus(data),pending=pendingSet(data);
     const attention=overallAttention(data);
-    const signal=pending.size
+    const signal=pending.size&&!coreStatusKnown(data)
       ?'Checking project health…'
+      :status.kind==='good'&&activityStillLoading(data)
+      ?'Checking deployment activity…'
       :(status.key==='partial'?'No delivery or runtime problems':status.kind==='good'?'No current product-quality action':attention.title);
     // A shortened pill keeps the full label as its tooltip and as the text screen readers hear.
     const pill=status.shortLabel
@@ -1296,8 +1330,11 @@
     return (Array.isArray(quality?.recent)?quality.recent:[]).find(item=>item?.suite===current.suite&&String(item.created_at||'')!==String(current.created_at||''))||null;
   }
 
-  function progressText(done,total,pendingNames){
-    if(done>=total) return 'Finishing refresh…';
+  // done = projects whose core status is known; activityNames = projects still waiting only on the
+  // deployment-activity detail.
+  function progressText(done,total,pendingNames,activityNames){
+    const activity=Array.isArray(activityNames)&&activityNames.length?activityNames.join(', '):'';
+    if(done>=total) return activity?'All '+total+' projects checked. Deployment activity still loading for '+activity+'.':'Finishing refresh…';
     const pending=Array.isArray(pendingNames)&&pendingNames.length?pendingNames.join(', '):'remaining projects';
     return 'Refreshing '+done+' of '+total+' projects… '+pending+' still checking.';
   }
@@ -1383,8 +1420,8 @@
     const relevantScore=evalScore(relevantRun),previousScore=evalScore(previousRelevant);
     const changeLines=[];
     if(relevantRun&&previousRelevant&&relevantScore!=null&&previousScore!=null){
-      const delta=Math.round((relevantScore-previousScore)*1000)/10;
-      changeLines.push('- '+targeted.suiteLabel+' '+(delta>=0?'improved ':'declined ')+Math.abs(delta)+' points from '+percent(previousScore)+' to '+percent(relevantScore)+'.');
+      const delta=scoreDeltaPoints(relevantScore,previousScore);
+      changeLines.push('- '+targeted.suiteLabel+' '+(delta===0?'unchanged at '+percent(relevantScore)+' since the previous run.':(delta>0?'improved ':'declined ')+Math.abs(delta)+' points from '+percent(previousScore)+' to '+percent(relevantScore)+'.'));
     }
     if(relevantRun&&previousRelevant&&Number(previousRelevant.high_severity_failures||0)!==Number(relevantRun.high_severity_failures||0)){
       changeLines.push('- '+targeted.suiteLabel+' high-impact failures changed from '+Number(previousRelevant.high_severity_failures||0)+' to '+Number(relevantRun.high_severity_failures||0)+'.');
@@ -1504,5 +1541,5 @@
     };
   }
 
-  return {PROJECTS,esc,shortSha,commitTitle,repoUrl,githubCommitUrl,pullRequestNumber,githubPullRequestUrl,githubLink,changeUrl,commitLabel,htmlRow,linkedRow,githubApi,vercelFromStatus,deliveryHealth,normalizeQuality,percent,highImpactText,modelDisplayName,qualityAttention,deliveryAttention,deliveryAttentionForData,infrastructureAttention,externalQualityAttention,pendingSet,productOpenItems,failureReason,uncheckedSignals,incompleteAttention,allAttentionSignals,overallAttention,projectStatus,qualityNotMeasured,healthySummary,investigationUsesModel,actionNotes,RUN_COOLDOWN_MINUTES,runCooldown,latestRunStart,runCooldownFor,cooldownStartFromRetryAfter,attentionItems,setupGaps,releaseReadiness,regressionSignal,recurringFailureSignal,operationalSignals,healthConsistencyIssues,releaseRiskChecklist,productionRuntime,operationalNextDecision,failureCheckCount,failureExplanation,qualityFailureClassSummary,activityTimelineItems,activityDayLabel,activityTimeRange,evalBehaviorBranch,mergePlatform,emptyProjectData,safeExternalQualitySnapshot,serializeProjectData,hydrateProjectData,investigationHistorySummary,makeRunner,STATE_EVAL_CONTRACT_UPDATED_AT,dateMs,fmtDate,relativeAge,stateEvalContractStale,stateEvalBehaviorStale,stateEvalResultsStale,stateEvalStaleReason,freshnessMeta,qualitySnapshot,visitBaseline,healthStateLabel,meaningfulChanges,changedSinceVisit,trendText,activityReviewItems,row,metric,durationLabel,costLabel,attentionMarkup,neonConnectionDetail,infraCardLabel,analyticsConnectionValue,analyticsGapDetail,analyticsReceiving,analyticsSignal,analyticsLabel,projectQualityLabel,stageTag,loadingCardMarkup,cardMarkup,evalSuiteLabel,evalScore,evalTrend,stateEvalCard,stateScenarioCard,scenarioPassLabel,stateEvalHistory,mockSparkline,mockTrendValues,mockDelta,investigationResultHtml,evalRunComplete,externalQualityRunComplete,evalFailureImpact,previousEvalRun,progressText,quickProjectCheck,qualityInvestigation,projectHandoff};
+  return {PROJECTS,esc,shortSha,commitTitle,repoUrl,githubCommitUrl,pullRequestNumber,githubPullRequestUrl,githubLink,changeUrl,commitLabel,htmlRow,linkedRow,githubApi,vercelFromStatus,deliveryHealth,normalizeQuality,percent,highImpactText,modelDisplayName,qualityAttention,deliveryAttention,deliveryAttentionForData,infrastructureAttention,externalQualityAttention,pendingSet,STATUS_SIGNALS,coreStatusKnown,activityStillLoading,productOpenItems,failureReason,uncheckedSignals,incompleteAttention,allAttentionSignals,overallAttention,projectStatus,qualityNotMeasured,healthySummary,investigationUsesModel,actionNotes,RUN_COOLDOWN_MINUTES,runCooldown,latestRunStart,runCooldownFor,cooldownStartFromRetryAfter,attentionItems,setupGaps,releaseReadiness,regressionSignal,recurringFailureSignal,operationalSignals,healthConsistencyIssues,releaseRiskChecklist,productionRuntime,operationalNextDecision,failureCheckCount,failureExplanation,qualityFailureClassSummary,activityTimelineItems,activityDayLabel,activityTimeRange,evalBehaviorBranch,mergePlatform,emptyProjectData,safeExternalQualitySnapshot,serializeProjectData,hydrateProjectData,investigationHistorySummary,makeRunner,STATE_EVAL_CONTRACT_UPDATED_AT,dateMs,fmtDate,relativeAge,stateEvalContractStale,stateEvalBehaviorStale,stateEvalResultsStale,stateEvalStaleReason,freshnessMeta,qualitySnapshot,visitBaseline,knownDeliveryKind,healthStateLabel,scoreDeltaPoints,evalChangeDetail,meaningfulChanges,changedSinceVisit,trendText,activityReviewItems,row,metric,durationLabel,costLabel,attentionMarkup,neonConnectionDetail,infraCardLabel,analyticsConnectionValue,analyticsGapDetail,analyticsReceiving,analyticsSignal,analyticsLabel,projectQualityLabel,stageTag,loadingCardMarkup,cardMarkup,evalSuiteLabel,evalScore,evalTrend,stateEvalCard,stateScenarioCard,scenarioPassLabel,stateEvalHistory,mockSparkline,mockTrendValues,mockDelta,investigationResultHtml,evalRunComplete,externalQualityRunComplete,evalFailureImpact,previousEvalRun,progressText,quickProjectCheck,qualityInvestigation,projectHandoff};
 });

@@ -38,10 +38,24 @@ function makeGithubFetch(fetchImpl=fetch,headers=githubHeaders()){
 function commitDate(item){return MODEL.dateMs(item?.commit?.committer?.date||item?.commit?.author?.date)||0;}
 
 // Same selection rules the browser used: the newest commit touching a release path, skipping ignored titles.
+const DEPLOY_STATUS_LOOKBACK=4;
+function hasDeployStatus(status){
+  return Array.isArray(status?.statuses)&&status.statuses.some(item=>/vercel/i.test(String(item?.context||'')));
+}
+async function newestDeployedCommit(gh,repo,commits){
+  for(const commit of commits.slice(0,DEPLOY_STATUS_LOOKBACK)){
+    if(!commit?.sha)continue;
+    const status=await gh('/repos/'+repo+'/commits/'+encodeURIComponent(commit.sha)+'/status').catch(()=>null);
+    if(hasDeployStatus(status))return {commit,status};
+  }
+  return null;
+}
+
 async function loadDelivery(gh,project,branchName){
   const repo=project.repo;
   const branch=await gh('/repos/'+repo+'/branches/'+encodeURIComponent(branchName));
   let selectedCommit=branch?.commit||null;
+  let preloadedStatus=null;
   if(Array.isArray(project.releasePaths)&&project.releasePaths.length){
     try{
       const groups=await Promise.all(project.releasePaths.map(path=>
@@ -49,7 +63,13 @@ async function loadDelivery(gh,project,branchName){
       ));
       const candidates=groups.flat().filter(Boolean).filter((item,index,all)=>all.findIndex(other=>other?.sha===item?.sha)===index);
       candidates.sort((a,b)=>commitDate(b)-commitDate(a));
-      selectedCommit=candidates.find(item=>!project.releaseIgnore?.test(String(item?.commit?.message||'')))||selectedCommit;
+      const releases=candidates.filter(item=>!project.releaseIgnore?.test(String(item?.commit?.message||'')));
+      // Oct 12: Vercel deploys only the last commit of a push, so an earlier commit in the same push has
+      // no deploy status and read as "Unknown". Use the newest release commit that Vercel reported on,
+      // and keep its status so it is not fetched twice.
+      const deployed=await newestDeployedCommit(gh,repo,releases);
+      if(deployed){selectedCommit=deployed.commit;preloadedStatus=deployed.status;}
+      else selectedCommit=releases[0]||selectedCommit;
     }catch(_){}
   }else if(project.releasePath){
     try{
@@ -59,7 +79,7 @@ async function loadDelivery(gh,project,branchName){
   }
   const selectedSha=selectedCommit?.sha||branch?.commit?.sha||branchName;
   const [status,checkRuns]=await Promise.all([
-    gh('/repos/'+repo+'/commits/'+encodeURIComponent(selectedSha)+'/status'),
+    preloadedStatus||gh('/repos/'+repo+'/commits/'+encodeURIComponent(selectedSha)+'/status'),
     gh('/repos/'+repo+'/commits/'+encodeURIComponent(selectedSha)+'/check-runs?per_page=10').catch(()=>({check_runs:[]}))
   ]);
   return MODEL.deliveryHealth({name:branch?.name||branchName,commit:selectedCommit},status,checkRuns);
@@ -134,4 +154,4 @@ module.exports=async function handler(req,res){
   res.status(200).json({...payload,authenticated:!!process.env.GITHUB_TOKEN});
 };
 
-module.exports._test={PROJECTS,makeGithubFetch,githubSummary,loadDelivery,loadEvalBehavior,loadOpenPullRequests,safePullRequest,GITHUB_TIMEOUT_MS};
+module.exports._test={PROJECTS,makeGithubFetch,githubSummary,loadDelivery,loadEvalBehavior,loadOpenPullRequests,safePullRequest,GITHUB_TIMEOUT_MS,hasDeployStatus,newestDeployedCommit,DEPLOY_STATUS_LOOKBACK};
