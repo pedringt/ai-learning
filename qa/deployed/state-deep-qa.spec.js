@@ -489,7 +489,13 @@ test.describe('Evidence intake consequentiality (real model)', () => {
     const result = await backendPost(request, '/api/evidence', {
       content: 'VP says we can move forward on auto drafting billing quesitons',
     }, { timeout: 75_000 });
-    expect(Array.isArray(result.reviews)).toBeTruthy();
-    expect(result.reviews.length).toBeGreaterThan(0);
+    // #241: on a miss, show what the model decided so variance can be told apart from an error.
+    const diagnosis = JSON.stringify({
+      reviews: (result.reviews || []).map(r => r.type || r.review_type),
+      outcome: result.outcome ?? result.interpretation?.outcome ?? null,
+      interpretation: result.interpretation ?? null,
+    }).slice(0, 2000);
+    expect(Array.isArray(result.reviews), diagnosis).toBeTruthy();
+    expect(result.reviews.length, `A consequential note produced no Review. API answer: ${diagnosis}`).toBeGreaterThan(0);
   });
 });
