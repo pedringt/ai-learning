@@ -28,6 +28,7 @@ from consequentiality_guidance import (
     USER_PROMOTION_GUIDANCE,
 )
 from db import project_id_of
+from extension_points import ExtensionPoint
 
 _RELEVANCE_SCHEMA = {
     "type": "object",
@@ -109,9 +110,23 @@ class AnthropicProvider:
         *,
         context: InterpretationContextSnapshot,
         evidence: Mapping[str, Any],
+        connection: Any = None,
+    ) -> Mapping[str, Any]:
+        """Interpret evidence through the ``interpret_call`` extension point (#502).
+
+        Baseline Setup adds its max_tokens retry there (see
+        baseline_composition); with no layers this is one ``_interpret_once`` call.
+        """
+        return interpret_call(self, context=context, evidence=evidence, connection=connection)
+
+    def _interpret_once(
+        self,
+        *,
+        context: InterpretationContextSnapshot,
+        evidence: Mapping[str, Any],
         connection: Any = None,  # SQLite connection for fetching full context
     ) -> Mapping[str, Any]:
-        """Interpret evidence using Anthropic Claude.
+        """Interpret evidence using Anthropic Claude (one provider round-trip).
 
         Args:
             context: Authority snapshot (IDs/versions at interpretation time)
@@ -194,6 +209,14 @@ class AnthropicProvider:
             connection.commit()
         except Exception:
             logger.warning("Could not persist model-call telemetry", exc_info=True)
+            # A failed statement leaves a Postgres transaction aborted until rolled back, which
+            # would fail the interpretation's own writes after this (CLAUDE.md, Sept 14 incident).
+            # SQLite needs no rollback, and one would discard the caller's uncommitted work.
+            if getattr(connection, "is_postgres", False):
+                try:
+                    connection.rollback()
+                except Exception:
+                    logger.warning("Rollback after telemetry failure also failed", exc_info=True)
 
         # Structured outputs can still be non-schema text on refusal or be
         # truncated at max_tokens. Fail explicitly instead of surfacing a
@@ -477,3 +500,14 @@ Compare the Evidence with Current State and open Reviews. Return the semantic in
             lines.append("</user_promotion>")
 
         return "\n".join(lines)
+
+
+def _interpret_once(provider: AnthropicProvider, *, context, evidence, connection=None) -> Mapping[str, Any]:
+    return provider._interpret_once(context=context, evidence=evidence, connection=connection)
+
+
+# Extension point (#502): every AnthropicProvider.interpret call, including the
+# per-chunk calls the Baseline provider subclass makes. baseline_composition adds
+# baseline_resilience's max_tokens retry layer, which only acts on projects in
+# Baseline Setup.
+interpret_call = ExtensionPoint("anthropic_provider.interpret_call", _interpret_once)

@@ -7,6 +7,8 @@ One page for a new contributor: which files are the live runtime path, which are
 ```
 uvicorn api:app
   api.py                       composes the app (Baseline, analytics, Slack extensions)
+    baseline_composition.py    adds Baseline's layers to the core extension points (#502)
+    extension_points.py        ExtensionPoint: a named function other modules extend by ordered layers
     api_core.py                routes and the core Evidence/Review/Ask flows
       db.py / database_migration_backed.py   the one database abstraction (SQLite + Postgres) and migrations/
       interpretation_pipeline_integrated.py  process_evidence(): the interpretation pipeline
@@ -16,6 +18,8 @@ uvicorn api:app
       anthropic_provider.py / openai_provider.py                      real model providers
       ask_service.py, ask_provider.py, review_service.py, baseline_*.py, slack_*.py ...
 ```
+
+**Composition rule (#502):** no module reassigns another module's globals. A core behaviour Baseline changes is an `ExtensionPoint` declared by the module that owns it (`api_core.process_evidence`, `resolve_review`, `_provider_from_env`; `review_service.list_presented_reviews`; `baseline_setup.split_evidence_text`, `baseline_prompt_guidance`, `baseline_interpret`; `anthropic_provider.interpret_call`), and `baseline_composition.compose_baseline_runtime()` adds the layers in order. `api` is an ordinary module exporting `Settings`, `create_app` and `app`; to replace a global the route closures read in a test, patch `api_core`. One runtime patch remains: `baseline_setup._baseline_provider_classes()` extends `anthropic_provider.PROVIDER_OUTPUT_SCHEMA` with the area/topic fields the first time the Baseline provider classes are built.
 
 **Canonical import path for the validation package:** `interpretation_runtime.validation.<module>` (a namespace package; no `sys.path` changes needed). Do not import it as bare `validation.*` and do not add `sys.path.insert(...)` for it. `test_backend_import_paths.py` enforces this.
 

@@ -10,7 +10,8 @@ from pathlib import Path
 
 from fastapi.testclient import TestClient
 
-import api as api_module
+# The OAuth route closures read exchange_code_for_token from api_core's globals.
+import api_core as api_module
 from api import Settings, create_app
 
 
