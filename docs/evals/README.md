@@ -12,6 +12,8 @@ Does State preserve authority, provenance, immutability, uncertainty, version co
 
 Does State escalate evidence that materially affects what the project should treat as true, while avoiding low-value Reviews?
 
+The live review interpretation suite is read as a rate, not all-or-nothing: see "Reading the review interpretation suite" in `RELEASE.md` (#494).
+
 ### Review burden
 
 Does State require human attention only when judgment/authorization is genuinely needed?
