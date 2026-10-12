@@ -20,14 +20,25 @@ api_core._provider_from_env + baseline_setup.with_baseline_providers
     prompt guidance) instead of the plain adapters.
     Read by: api_core lifespan, evidence intake helper, _reanalyze, /api/ask and
     /api/ask/stream; baseline_async_intake._selected_provider.
+baseline_setup.split_evidence_text + baseline_dogfood_fixes.with_section_aware_split
+    Splits by numbered/Markdown source sections before size-based chunking.
+    Read by: the Baseline provider classes' interpret (chunking) and
+    baseline_resilience's max_tokens retry split.
+
+Replaced by plain code (no longer composed at runtime):
+- baseline_async_intake._analyze_in_background is the delete-safe version.
+- seed_demo._PROJECT_DEPENDENT_TABLES lists baseline_evidence_coverage first.
+- 015_baseline_setup.sql was already in database_migration_backed's expected list.
 """
 from __future__ import annotations
 
 import api_core
 import baseline_setup
+from baseline_dogfood_fixes import with_section_aware_split
 
 
 def compose_baseline_runtime() -> None:
     api_core.process_evidence.add_layer("baseline_metadata", baseline_setup.with_baseline_metadata)
     api_core.resolve_review.add_layer("baseline_organization", baseline_setup.with_baseline_organization)
     api_core._provider_from_env.add_layer("baseline_providers", baseline_setup.with_baseline_providers)
+    baseline_setup.split_evidence_text.add_layer("section_aware", with_section_aware_split)

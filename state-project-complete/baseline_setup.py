@@ -23,6 +23,7 @@ from typing import Any, Mapping
 from fastapi import HTTPException, Request
 
 from db import connect, project_id_of
+from extension_points import ExtensionPoint
 
 logger = logging.getLogger("state.baseline")
 
@@ -143,7 +144,7 @@ def _split_dense_question_block(text: str) -> list[str]:
     return units or [text]
 
 
-def split_evidence_text(text: str, max_chars: int = _MAX_CHUNK_CHARS) -> list[str]:
+def _split_evidence_text_core(text: str, max_chars: int = _MAX_CHUNK_CHARS) -> list[str]:
     """Split source text for bounded interpretation while preserving Evidence.
 
     The stored Evidence is never altered. This function only creates temporary
@@ -208,6 +209,12 @@ def split_evidence_text(text: str, max_chars: int = _MAX_CHUNK_CHARS) -> list[st
     if current:
         chunks.append(current)
     return chunks or [clean]
+
+
+# Extension point (#502): the Baseline chunker. baseline_dogfood_fixes adds the
+# section-aware layer through baseline_composition. Read by the Baseline provider
+# classes below and by baseline_resilience's max_tokens retry split.
+split_evidence_text = ExtensionPoint("baseline_setup.split_evidence_text", _split_evidence_text_core)
 
 
 def _proposal_key(proposal: Mapping[str, Any]) -> tuple[str, str, str]:

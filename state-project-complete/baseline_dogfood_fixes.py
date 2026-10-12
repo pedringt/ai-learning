@@ -8,9 +8,6 @@ Current State.
 from __future__ import annotations
 
 import re
-from typing import Any
-
-_INSTALLED = False
 
 
 def _heading_sections(text: str) -> list[tuple[str, str]]:
@@ -91,23 +88,10 @@ def section_aware_split(text: str, original_split, max_chars: int = 2600) -> lis
     return chunks or original_split(text, max_chars=max_chars)
 
 
-def _install_section_aware_chunking() -> None:
-    import baseline_setup
-
-    if getattr(baseline_setup.split_evidence_text, "_state_section_aware", False):
-        return
-    original = baseline_setup.split_evidence_text
+def with_section_aware_split(inner):
+    """Layer for ``baseline_setup.split_evidence_text``: split by source sections first."""
 
     def split_with_source_structure(text: str, max_chars: int = 2600) -> list[str]:
-        return section_aware_split(text, original, max_chars=max_chars)
+        return section_aware_split(text, inner, max_chars=max_chars)
 
-    split_with_source_structure._state_section_aware = True
-    baseline_setup.split_evidence_text = split_with_source_structure
-
-
-def install_baseline_dogfood_fixes(core_module: Any, async_module: Any) -> None:
-    global _INSTALLED
-    if _INSTALLED:
-        return
-    _install_section_aware_chunking()
-    _INSTALLED = True
+    return split_with_source_structure
