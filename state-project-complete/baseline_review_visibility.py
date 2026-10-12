@@ -12,7 +12,6 @@ from typing import Any
 
 from baseline_grounding import review_unsupported_specifics
 from baseline_setup import is_baseline_setup
-from review_service import list_reviews as _list_reviews
 
 
 def is_routine_starting_state_review(review: dict[str, Any]) -> bool:
@@ -29,35 +28,19 @@ def is_routine_starting_state_review(review: dict[str, Any]) -> bool:
     return not review_unsupported_specifics(review)
 
 
-def list_actionable_reviews(connection: Any, status: str = "open") -> list[dict[str, Any]]:
-    """User-facing Review list with routine baseline draft facts removed.
+def with_actionable_reviews(inner):
+    """Layer for ``review_service.list_presented_reviews``: drop routine baseline draft facts.
 
     Resolved Reviews are never filtered because History/provenance must retain
     the actual decision record. Once Baseline Setup is finished, the normal
-    Review list is restored unchanged.
+    Review list is restored unchanged. The raw Review rows remain in
+    review_service.list_reviews for the Starting State draft/confirmation code.
     """
-    reviews = _list_reviews(connection, status)
-    if status != "open" or not is_baseline_setup(connection):
-        return reviews
-    return [review for review in reviews if not is_routine_starting_state_review(review)]
 
+    def list_actionable_reviews(connection: Any, status: str = "open") -> list[dict[str, Any]]:
+        reviews = inner(connection, status)
+        if status != "open" or not is_baseline_setup(connection):
+            return reviews
+        return [review for review in reviews if not is_routine_starting_state_review(review)]
 
-def install_baseline_review_visibility(api_module: Any) -> None:
-    """Use actionable Reviews for API/Ask presentation, not for draft assembly."""
-    if getattr(api_module, "_baseline_review_visibility_installed", False):
-        return
-
-    # api_core resolves this global at request time for bootstrap, attention,
-    # Evidence responses, reanalysis, and GET /api/reviews. The raw Review rows
-    # remain in review_service and are therefore still available to the
-    # Starting State draft/confirmation code.
-    api_module.list_reviews = list_actionable_reviews
-
-    # Ask imports list_reviews directly from review_service, so patch its module
-    # global as well. Otherwise Ask could still tell a user that 20 routine
-    # baseline facts are 20 separate Reviews even though the UI correctly shows
-    # one Starting State draft.
-    import ask_service
-
-    ask_service.list_reviews = list_actionable_reviews
-    api_module._baseline_review_visibility_installed = True
+    return list_actionable_reviews

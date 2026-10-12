@@ -37,7 +37,10 @@ from ask_authority_text import (  # noqa: F401  (re-exported: tests and callers 
     _soften_unearned_settled_words,
     _words,
 )
-from review_service import list_evidence, list_history, list_project_rules, list_questions, list_reviews, list_state
+from review_service import list_evidence, list_history, list_project_rules, list_questions, list_state
+# Ask sees the Review list people see (an extension point; Baseline hides routine
+# Starting State creates), so it never counts draft facts as separate Reviews.
+from review_service import list_presented_reviews as list_reviews
 
 logger = logging.getLogger("state.ask")
 

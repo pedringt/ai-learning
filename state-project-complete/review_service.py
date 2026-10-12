@@ -6,6 +6,7 @@ import sqlite3
 from typing import Literal
 
 from db import Connection, project_id_of
+from extension_points import ExtensionPoint
 from interpretation_pipeline_integrated import new_id
 from question_review_service import (
     QuestionReviewConflictError, create_or_find_question, matching_open_question,
@@ -631,6 +632,15 @@ def list_reviews(connection: Connection, status: str = "open") -> list[dict]:
             item["question_to_create"] = question_proposal_read_model(connection, row["id"])
         result.append(item)
     return result
+
+
+# Extension point (#502): the Review list as presented to people -- API
+# responses and Ask -- as opposed to the raw rows above, which draft assembly,
+# confirmation and provenance keep using. baseline_composition adds
+# baseline_review_visibility's layer, which hides routine Starting State creates
+# while a project is in Baseline Setup. Read by api_core and ask_service, which
+# both import it under their historical name ``list_reviews``.
+list_presented_reviews = ExtensionPoint("review_service.list_presented_reviews", list_reviews)
 
 
 def list_history(connection: Connection) -> list[dict]:

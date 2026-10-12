@@ -94,7 +94,6 @@ from review_service import (
     ReviewNotFoundError,
     list_evidence,
     list_history,
-    list_reviews,
     list_state,
     list_project_areas,
     list_questions,
@@ -111,6 +110,9 @@ from review_service import (
     update_question_blocking,
 )
 from review_service import resolve_review as _review_service_resolve_review
+# The presented Review list (an extension point; Baseline hides routine Starting
+# State creates from it). Raw rows stay in review_service.list_reviews.
+from review_service import list_presented_reviews as list_reviews
 
 
 class AskResponseCache:
