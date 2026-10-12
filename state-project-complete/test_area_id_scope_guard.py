@@ -1,45 +1,19 @@
-"""#136 (option C, no schema change): area ids stay collision-free, and a collision can never be silent.
+"""#136: area ids are generated for user projects, and re-seeding a project is idempotent.
 
-`project_areas.id` is still a global primary key (migration 012; see
-docs/architecture/PROPOSAL_136_PROJECT_SCOPED_AREA_IDS.md). Nothing can collide today, and these tests pin
-why: hand-seeded ids are unique across the seeded projects, user-created projects generate `area_<uuid>` ids,
-and seeding a project whose area id is already taken raises instead of silently skipping the insert.
+Since migration 020 an area's key is (project_id, id), so two projects may use the same area id (see
+test_area_identity.py). Before that (option C, Sept 2026) these tests also pinned that hand-seeded ids were
+unique across seeded projects and that a collision raised; both guards are gone with the global key.
 
 Runs on SQLite locally and on Postgres in CI (shared `db` fixture).
 """
 import re
 
-import pytest
 from fastapi.testclient import TestClient
 
 from api import Settings, create_app
-from seed_demo import AREAS, JUNIPER_AREAS, _bootstrap_project, bootstrap_demo_data, bootstrap_juniper_demo_data
+from seed_demo import AREAS, bootstrap_demo_data
 from test_baseline_setup_lifecycle import BaselineFixtureProvider
 from test_project_isolation import db  # noqa: F401  (SQLite + Postgres connection fixture)
-
-
-def test_hand_seeded_area_ids_are_unique_across_the_seeded_projects():
-    ids = [area[0] for area in [*AREAS, *JUNIPER_AREAS]]
-    duplicates = sorted({i for i in ids if ids.count(i) > 1})
-    assert duplicates == [], (
-        f"seeded area ids {duplicates} are used by more than one seeded project; project_areas.id is a global key "
-        "(#136), so a second project reusing an id would collide. Use distinct ids."
-    )
-
-
-def _empty_project(connection, project_id, areas):
-    return _bootstrap_project(connection, project_id=project_id, project_name=project_id, areas=areas, items=[],
-                              questions=[], reviews=[], resolved_reviews=[])
-
-
-def test_seeding_a_project_with_a_taken_area_id_raises_instead_of_skipping_silently(db):
-    bootstrap_juniper_demo_data(db)            # owns "budget"
-    db.commit()
-    with pytest.raises(RuntimeError, match=r"'budget'.*'third'.*'juniper'|'budget'.*already used by project 'juniper'"):
-        _empty_project(db, "third", [("budget", "Budget", "", 1)])
-    db.rollback()
-    owners = db.execute("SELECT project_id FROM project_areas WHERE id='budget'").fetchall()
-    assert [r["project_id"] for r in owners] == ["juniper"], "the failed seed must not have touched the existing area"
 
 
 def test_reseeding_the_same_project_is_still_idempotent(db):
@@ -52,7 +26,7 @@ def test_reseeding_the_same_project_is_still_idempotent(db):
 
 
 def test_user_created_projects_generate_area_uuid_ids(tmp_path):
-    """The reason nothing can collide today: people and the model never choose an area id."""
+    """People and the model never choose an area id; a project's areas get generated ids."""
     settings = Settings(database_path=str(tmp_path / "areas.db"), cors_origins=[], demo_bootstrap=False)
     with TestClient(create_app(settings, provider=BaselineFixtureProvider())) as client:
         project = client.post("/api/projects", json={"name": "Areas Project"}).json()

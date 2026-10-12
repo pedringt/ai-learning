@@ -5,10 +5,15 @@ from __future__ import annotations
 from pathlib import Path
 
 from db import Connection, connect_sqlite
+from project_area_scope_migration import scope_project_area_keys
 from review_question_migration import extend_review_constraints
 
 MIGRATIONS_DIR = Path(__file__).resolve().parent / "migrations"
-_EXPECTED_MIGRATIONS = ("001_initial.sql", "002_add_operation_and_effective_date.sql", "003_questions.sql", "004_link_reviews_questions.sql", "005_draft_notes.sql", "006_slack_phase1.sql", "007_slack_phase2.sql", "008_slack_oauth.sql", "009_question_review_proposals.sql", "010_review_questions_evidence_source.sql", "011_review_proposal_adjustments.sql", "012_project_areas.sql", "013_projects.sql", "014_proposed_area.sql", "015_baseline_setup.sql", "016_product_analytics.sql", "017_unify_quality_eval_storage.sql", "018_model_call_metrics.sql", "019_eval_failure_details.sql")
+_EXPECTED_MIGRATIONS = ("001_initial.sql", "002_add_operation_and_effective_date.sql", "003_questions.sql", "004_link_reviews_questions.sql", "005_draft_notes.sql", "006_slack_phase1.sql", "007_slack_phase2.sql", "008_slack_oauth.sql", "009_question_review_proposals.sql", "010_review_questions_evidence_source.sql", "011_review_proposal_adjustments.sql", "012_project_areas.sql", "013_projects.sql", "014_proposed_area.sql", "015_baseline_setup.sql", "016_product_analytics.sql", "017_unify_quality_eval_storage.sql", "018_model_call_metrics.sql", "019_eval_failure_details.sql", "020_project_scoped_areas.sql")
+
+# Migrations that rebuild a table on SQLite, so foreign-key checks are off during them and
+# `PRAGMA foreign_key_check` must be clean before they commit.
+_SQLITE_REBUILD_MIGRATIONS = {"009_question_review_proposals", "020_project_scoped_areas"}
 
 
 def _get_migration_files() -> list[Path]:
@@ -260,19 +265,20 @@ def initialize_db(connection: Connection) -> None:
         version = migration_file.stem
         if version in applied:
             continue
-        widen_reviews = version == "009_question_review_proposals"
-        rebuild_sqlite = widen_reviews and not connection.is_postgres
+        rebuild_sqlite = version in _SQLITE_REBUILD_MIGRATIONS and not connection.is_postgres
         if rebuild_sqlite:
             connection.execute("PRAGMA foreign_keys = OFF")
         connection.execute("BEGIN IMMEDIATE")
         try:
-            if widen_reviews:
+            if version == "009_question_review_proposals":
                 extend_review_constraints(connection)
             for statement in _migration_statements(migration_file):
                 connection.execute(statement)
+            if version == "020_project_scoped_areas":
+                scope_project_area_keys(connection)
             connection.execute("INSERT INTO schema_migrations (version) VALUES (?)", (version,))
             if rebuild_sqlite and connection.execute("PRAGMA foreign_key_check").fetchall():
-                raise RuntimeError("Foreign key check failed during migration 009")
+                raise RuntimeError(f"Foreign key check failed during migration {version}")
             connection.execute("COMMIT")
         except Exception:
             connection.execute("ROLLBACK")

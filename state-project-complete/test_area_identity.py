@@ -21,7 +21,9 @@ from api import Settings, create_app
 from ask_service import _compact_candidates
 from db import connect
 from review_service import list_history, list_project_areas, list_state, resolve_review
-from seed_demo import JUNIPER_AREAS, AREAS, delete_project_data, reset_demo_data
+from seed_demo import (
+    AREAS, JUNIPER_AREAS, _bootstrap_project, bootstrap_juniper_demo_data, delete_project_data, reset_demo_data,
+)
 from test_baseline_setup_lifecycle import BaselineFixtureProvider
 from test_project_isolation import both_projects, db  # noqa: F401  (SQLite + Postgres connection fixtures)
 
@@ -195,3 +197,83 @@ def test_deleting_a_project_through_the_api_keeps_other_projects_areas(db_url):
         assert client.delete(f"/api/projects/{project['id']}").status_code == 200
         juniper = client.get("/api/project-areas", headers={"X-State-Project-Id": "juniper"}).json()["items"]
         assert [(a["id"], a["name"]) for a in juniper] == [(a[0], a[1]) for a in JUNIPER_AREAS]
+
+
+# --- #136: an area id is local to its project ---------------------------------------------------
+# These fail on the schema before #136, where project_areas.id was a global primary key.
+
+
+def _add_project_with_area(connection, project_id, area_id, area_name, fact_id=None):
+    connection.execute("INSERT INTO projects(id, name) VALUES (?, ?)", (project_id, project_id))
+    connection.execute("INSERT INTO project_areas(id, name, description, sort_order, project_id) VALUES (?, ?, '', 10, ?)",
+                       (area_id, area_name, project_id))
+    if fact_id:
+        connection.execute("INSERT INTO current_state_items(id, topic, statement, version, area_id, project_id) "
+                           "VALUES (?, 'Cap', 'A fact filed under a shared area id.', 1, ?, ?)", (fact_id, area_id, project_id))
+    connection.commit()
+
+
+def test_two_projects_can_each_define_the_same_area_id(both_projects):
+    db = both_projects
+    _add_project_with_area(db, "project_other", "budget", "Spending", fact_id="o-cap")  # Juniper already has 'budget'
+    assert _areas_by_id(db, "project_other") == {"budget": "Spending"}
+    assert _areas_by_id(db, "juniper")["budget"] == "Budget"
+    other = _state_by_id(db, "project_other")["o-cap"]
+    assert (other["area_id"], other["area_name"]) == ("budget", "Spending")
+    juniper = _state_by_id(db, "juniper")["j-budget-amount"]
+    assert (juniper["area_id"], juniper["area_name"]) == ("budget", "Budget")
+
+
+def test_a_proposed_area_id_resolves_inside_the_reviews_own_project(both_projects):
+    db = both_projects
+    db.execute("INSERT INTO project_areas(id, name, description, sort_order, project_id) "
+               "VALUES ('timeline', 'Northstar timeline', '', 40, 'northstar')")  # Juniper also has 'timeline'
+    db.execute("UPDATE proposed_state_changes SET proposed_area_id='timeline' WHERE review_id='demo-review-create-budget'")
+    db.commit()
+    for project_id, review_id, expected in (("northstar", "demo-review-create-budget", "Northstar timeline"),
+                                            ("juniper", "demo-juniper-review-internet-date", "Timeline & dependencies")):
+        before = set(_state_by_id(db, project_id))
+        db.project_id = project_id
+        resolve_review(db, review_id, "accept")
+        after = _state_by_id(db, project_id)
+        (new_id,) = set(after) - before
+        assert (after[new_id]["area_id"], after[new_id]["area_name"]) == ("timeline", expected)
+
+
+def test_seeding_a_project_that_reuses_a_seeded_area_id_gives_it_its_own_area(db):
+    bootstrap_juniper_demo_data(db)
+    db.commit()
+
+    def seed_third():
+        return _bootstrap_project(db, project_id="third", project_name="Third", areas=[("budget", "Third budget", "", 1)],
+                                  items=[("t-cap", "Cap", "The third project's cap is set.", "budget")],
+                                  questions=[], reviews=[], resolved_reviews=[])
+
+    seed_third()
+    seed_third()  # re-seeding stays idempotent
+    assert _areas_by_id(db, "third") == {"budget": "Third budget"}
+    assert _state_by_id(db, "third")["t-cap"]["area_name"] == "Third budget"
+    assert _areas_by_id(db, "juniper") == {a[0]: a[1] for a in JUNIPER_AREAS}
+    assert _state_by_id(db, "juniper")["j-budget-amount"]["area_name"] == "Budget"
+
+
+def test_a_fact_cannot_point_at_another_projects_area(both_projects):
+    """The database refuses a cross-project area reference (it used to accept any existing area id)."""
+    db = both_projects
+    with pytest.raises(Exception):
+        db.execute("INSERT INTO current_state_items(id, topic, statement, version, area_id, project_id) "
+                   "VALUES ('k-cross', 'Cross', 'Filed under a Juniper area.', 1, 'budget', 'northstar')")
+    db.rollback()  # on Postgres a failed statement leaves the transaction aborted
+    with pytest.raises(Exception):
+        db.execute("UPDATE current_state_items SET area_id='budget' WHERE id='k-pilot'")
+    db.rollback()
+    assert _state_by_id(db, "northstar")["k-pilot"]["area_id"] == "scope-workflow"
+
+
+def test_deleting_a_project_that_shares_an_area_id_keeps_the_other_projects_area(both_projects):
+    db = both_projects
+    _add_project_with_area(db, "project_other", "budget", "Spending", fact_id="o-cap")
+    delete_project_data(db, "project_other")
+    assert _areas_by_id(db, "project_other") == {}
+    assert _areas_by_id(db, "juniper") == {a[0]: a[1] for a in JUNIPER_AREAS}
+    assert _state_by_id(db, "juniper")["j-budget-amount"]["area_name"] == "Budget"
