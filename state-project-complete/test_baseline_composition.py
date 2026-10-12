@@ -22,6 +22,7 @@ from fastapi.testclient import TestClient
 
 import anthropic_provider
 import api
+import api_core
 import ask_service
 import baseline_async_intake
 import baseline_setup
@@ -137,7 +138,7 @@ def _with_fake_client(provider, respond):
 def _baseline_anthropic_provider(monkeypatch):
     """The provider the deployed app builds from the environment (composed factory)."""
     monkeypatch.setenv("ANTHROPIC_API_KEY", "dummy-not-a-key")
-    return api._provider_from_env(SimpleNamespace(provider="anthropic"))
+    return api_core._provider_from_env(SimpleNamespace(provider="anthropic"))
 
 
 def _submit(client, project_id, content):
@@ -317,7 +318,7 @@ def test_routine_starting_state_reviews_are_hidden_from_api_and_ask_but_not_from
     try:
         connection.project_id = project_id
         assert len(review_service.list_reviews(connection, "open")) == 1
-        assert api.list_reviews(connection, "open") == []
+        assert api_core.list_reviews(connection, "open") == []
         assert ask_service._compact_candidates(connection)["reviews"] == []
     finally:
         connection.close()
@@ -449,3 +450,37 @@ def test_public_entrypoints_expose_the_composed_app():
                      "/api/evidence", "/api/ask", "/api/attention"):
             assert path in paths
     assert baseline_api.Settings is api.Settings
+
+
+# --- explicit composition (#502) ----------------------------------------------------------------
+
+
+def test_composition_declares_every_layer_once_in_order():
+    from baseline_composition import compose_baseline_runtime
+
+    compose_baseline_runtime()  # idempotent: a second call adds nothing
+    assert api_core.process_evidence.layers == ("baseline_metadata",)
+    assert api_core.resolve_review.layers == ("baseline_organization",)
+    assert api_core._provider_from_env.layers == ("baseline_providers",)
+    assert baseline_setup.split_evidence_text.layers == ("section_aware",)
+    assert baseline_setup.baseline_prompt_guidance.layers == ("quality_checks", "fact_recovery")
+    assert baseline_setup.baseline_interpret.layers == ("fact_recovery",)
+    assert review_service.list_presented_reviews.layers == ("baseline_actionable",)
+    assert anthropic_provider.interpret_call.layers == ("baseline_max_tokens_retry",)
+
+
+def test_api_is_an_ordinary_module_not_an_alias_of_api_core():
+    assert api is not api_core
+    assert api.create_app is not api_core.create_app
+    assert api.Settings is api_core.Settings
+
+
+def test_extension_point_layers_wrap_in_order_and_ignore_repeats():
+    from extension_points import ExtensionPoint
+
+    point = ExtensionPoint("demo", lambda value: [value])
+    assert point.add_layer("a", lambda inner: lambda value: inner(value) + ["a"])
+    assert point.add_layer("b", lambda inner: lambda value: inner(value) + ["b"])
+    assert not point.add_layer("a", lambda inner: lambda value: ["replaced"])
+    assert point(0) == [0, "a", "b"]
+    assert point.layers == ("a", "b")

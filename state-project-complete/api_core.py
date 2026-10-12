@@ -1186,5 +1186,3 @@ def create_app(settings: Settings | None = None, provider: InterpretationProvide
 
     return app
 
-
-app = create_app()
