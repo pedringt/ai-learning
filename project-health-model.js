@@ -937,7 +937,7 @@
       deliveryKind:saved.delivery?.vercel?.kind||null,
       quality:qualitySnapshot(pseudo),
       analyticsAvailable:saved.platform?.analytics?.available??null,
-      analyticsPageviews:saved.platform?.analytics?.pageviews??null,
+      analyticsReceiving:analyticsReceiving(saved.platform?.analytics),
       openPullRequests:Array.isArray(saved.openPullRequests)?saved.openPullRequests.length:0
     };
   }
@@ -972,9 +972,9 @@
     if(before.analyticsAvailable!==null&&analytics&&before.analyticsAvailable!==analytics.available){
       items.push({title:'Site analytics availability changed',detail:(before.analyticsAvailable?'Available':'Unavailable')+' → '+(analytics.available?'Available':'Unavailable'),observedAt:data.detailCheckedAt||data.checkedAt,tab:'overview',section:'systemsDetails'});
     }
-    if(analytics?.available&&before.analyticsPageviews!=null&&Number(analytics.pageviews)!==Number(before.analyticsPageviews)){
-      const diff=Number(analytics.pageviews)-Number(before.analyticsPageviews);
-      items.push({title:'Site analytics changed',detail:(diff>=0?'+':'')+diff+' page views in the current 30-day window',observedAt:data.detailCheckedAt||data.checkedAt,tab:'overview'});
+    const receivingNow=analyticsReceiving(analytics);
+    if(analytics?.available&&before.analyticsReceiving!=null&&receivingNow!=null&&receivingNow!==before.analyticsReceiving){
+      items.push({title:'Site analytics changed',detail:(before.analyticsReceiving?'Receiving page views':'No page views')+' → '+(receivingNow?'Receiving page views':'No page views')+' in the last 30 days',observedAt:data.detailCheckedAt||data.checkedAt,tab:'overview'});
     }
     const prCount=Array.isArray(data.openPullRequests)?data.openPullRequests.length:0;
     if(Number(before.openPullRequests||0)!==prCount){
@@ -1095,9 +1095,28 @@
     if(Number(a.status)===404)return'Vercel could not return this project’s Web Analytics dataset. Verify project access and analytics availability.';
     return'Vercel Web Analytics is connected, but the latest query failed. Try again before treating this as missing usage.';
   }
+  // Cowork, Oct 11: show the signal, not the counts. The API now returns only receiving/recent booleans; an older
+  // cached snapshot may still hold a count, which is reduced to the same boolean here and never displayed.
+  function analyticsReceiving(analytics){
+    if(!analytics?.available)return null;
+    if(typeof analytics.receiving==='boolean')return analytics.receiving;
+    const legacy=Number(analytics.pageviews);
+    return analytics.pageviews!=null&&Number.isFinite(legacy)?legacy>0:null;
+  }
+  function analyticsSignal(analytics){
+    const a=analytics||{};
+    if(!a.available)return null;
+    const receiving=analyticsReceiving(a),days=Number(a.recent_days)||7;
+    if(receiving===false)return {kind:'warn',status:'Connected · no page views yet',detail:'No page views recorded in the last '+(Number(a.period_days)||30)+' days.'};
+    const recency=a.recent===true?'Page views recorded in the last '+days+' days.'
+      :a.recent===false?'No page views in the last '+days+' days.'
+      :'Recent activity could not be checked.';
+    if(receiving===true)return {kind:'good',status:'Connected · receiving page views',detail:recency};
+    return {kind:'good',status:'Connected',detail:'Vercel Web Analytics is connected.'};
+  }
   function analyticsLabel(platform){
-    const a=platform?.analytics;
-    if(a?.available) return (a.visitors??'—')+' visitors · 30d';
+    const signal=analyticsSignal(platform?.analytics);
+    if(signal) return signal.status;
     return analyticsConnectionValue(platform);
   }
   function projectQualityLabel(data){
@@ -1452,5 +1471,5 @@
     };
   }
 
-  return {PROJECTS,esc,shortSha,commitTitle,repoUrl,githubCommitUrl,pullRequestNumber,githubPullRequestUrl,githubLink,changeUrl,commitLabel,htmlRow,linkedRow,githubApi,vercelFromStatus,deliveryHealth,normalizeQuality,percent,highImpactText,modelDisplayName,qualityAttention,deliveryAttention,deliveryAttentionForData,infrastructureAttention,externalQualityAttention,pendingSet,productOpenItems,failureReason,uncheckedSignals,incompleteAttention,allAttentionSignals,overallAttention,projectStatus,qualityNotMeasured,healthySummary,investigationUsesModel,paidActionNote,RUN_COOLDOWN_MINUTES,attentionItems,setupGaps,releaseReadiness,regressionSignal,recurringFailureSignal,operationalSignals,healthConsistencyIssues,releaseRiskChecklist,productionRuntime,operationalNextDecision,failureCheckCount,failureExplanation,qualityFailureClassSummary,activityTimelineItems,activityDayLabel,activityTimeRange,evalBehaviorBranch,mergePlatform,emptyProjectData,safeExternalQualitySnapshot,serializeProjectData,hydrateProjectData,investigationHistorySummary,makeRunner,STATE_EVAL_CONTRACT_UPDATED_AT,dateMs,fmtDate,relativeAge,stateEvalContractStale,stateEvalBehaviorStale,stateEvalResultsStale,stateEvalStaleReason,freshnessMeta,qualitySnapshot,visitBaseline,healthStateLabel,meaningfulChanges,changedSinceVisit,trendText,activityReviewItems,row,metric,durationLabel,costLabel,attentionMarkup,neonConnectionDetail,infraCardLabel,analyticsConnectionValue,analyticsGapDetail,analyticsLabel,projectQualityLabel,stageTag,loadingCardMarkup,cardMarkup,evalSuiteLabel,evalScore,evalTrend,stateEvalCard,stateScenarioCard,scenarioPassLabel,stateEvalHistory,mockSparkline,mockTrendValues,mockDelta,investigationResultHtml,evalRunComplete,externalQualityRunComplete,evalFailureImpact,previousEvalRun,progressText,quickProjectCheck,qualityInvestigation,projectHandoff};
+  return {PROJECTS,esc,shortSha,commitTitle,repoUrl,githubCommitUrl,pullRequestNumber,githubPullRequestUrl,githubLink,changeUrl,commitLabel,htmlRow,linkedRow,githubApi,vercelFromStatus,deliveryHealth,normalizeQuality,percent,highImpactText,modelDisplayName,qualityAttention,deliveryAttention,deliveryAttentionForData,infrastructureAttention,externalQualityAttention,pendingSet,productOpenItems,failureReason,uncheckedSignals,incompleteAttention,allAttentionSignals,overallAttention,projectStatus,qualityNotMeasured,healthySummary,investigationUsesModel,paidActionNote,RUN_COOLDOWN_MINUTES,attentionItems,setupGaps,releaseReadiness,regressionSignal,recurringFailureSignal,operationalSignals,healthConsistencyIssues,releaseRiskChecklist,productionRuntime,operationalNextDecision,failureCheckCount,failureExplanation,qualityFailureClassSummary,activityTimelineItems,activityDayLabel,activityTimeRange,evalBehaviorBranch,mergePlatform,emptyProjectData,safeExternalQualitySnapshot,serializeProjectData,hydrateProjectData,investigationHistorySummary,makeRunner,STATE_EVAL_CONTRACT_UPDATED_AT,dateMs,fmtDate,relativeAge,stateEvalContractStale,stateEvalBehaviorStale,stateEvalResultsStale,stateEvalStaleReason,freshnessMeta,qualitySnapshot,visitBaseline,healthStateLabel,meaningfulChanges,changedSinceVisit,trendText,activityReviewItems,row,metric,durationLabel,costLabel,attentionMarkup,neonConnectionDetail,infraCardLabel,analyticsConnectionValue,analyticsGapDetail,analyticsReceiving,analyticsSignal,analyticsLabel,projectQualityLabel,stageTag,loadingCardMarkup,cardMarkup,evalSuiteLabel,evalScore,evalTrend,stateEvalCard,stateScenarioCard,scenarioPassLabel,stateEvalHistory,mockSparkline,mockTrendValues,mockDelta,investigationResultHtml,evalRunComplete,externalQualityRunComplete,evalFailureImpact,previousEvalRun,progressText,quickProjectCheck,qualityInvestigation,projectHandoff};
 });
