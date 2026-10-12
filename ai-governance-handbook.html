@@ -1,0 +1,1914 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width,initial-scale=1" name="viewport"/>
+<link href="favicon.svg" rel="icon"/>
+<title>AI Governance Handbook · Context Switch</title>
+<meta content="A working AI governance reference for any industry: review workflow, risk triage, assessments, testing, vendors, monitoring, incidents, a laws finder, frameworks and templates." name="description"/>
+<style>
+/* Layout: field-manual reference — sticky index + search on the left, one reading column, working tools embedded where they're used */
+.handbook {
+  /* --bg, --muted and --ink come from the site tokens (same values) */
+  --surface: #ffffff;
+  --wash: #faf9fc;
+  --fg: var(--ink);
+  --line: var(--rd-line);
+  --accent: #c42a72;
+  --accent-soft: #f1eeff;
+  --pink: var(--rd-pink);
+  --yellow: var(--rd-acid);
+  --rose: #ffb3d6;
+  --cyan: #8fe9f4;
+  --lilac: #cfc7ff;
+  --good: #2f7a4b;
+  --warn: #a8620d;
+  --crit: #b23b32;
+  --stop: #5b2a86;
+  --display: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --body: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --mono: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+/* Light only, by choice: the handbook always renders in its light palette */
+.handbook { color-scheme: light; }
+.handbook * { box-sizing: border-box; }
+.handbook { background: var(--bg); color: var(--fg); font-family: var(--body); font-size: 17px; line-height: 1.65; padding-inline: 16px; padding-block: 0 64px; }
+.handbook .shell { max-width: 1120px; margin: 0 auto; display: grid; grid-template-columns: minmax(0, 1fr); gap: 32px; }
+.handbook .shell > * { min-width: 0; }
+@media (min-width: 900px) { .handbook .shell { grid-template-columns: 220px minmax(0, 1fr); gap: 48px; } }
+
+.handbook header.top { max-width: 1120px; margin: 0 auto 32px; padding-block: 40px 24px; border-bottom: 1px solid var(--line); }
+.handbook .eyebrow { font-family: var(--mono); font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.handbook h1 { font-family: var(--display); font-weight: 600; font-size: clamp(32px, 5vw, 46px); line-height: 1.1; margin: 8px 0 12px; text-wrap: balance; }
+.handbook .lede { max-width: 64ch; color: var(--muted); margin: 0; }
+.handbook .meta { display: flex; flex-wrap: wrap; gap: 8px 20px; margin-top: 16px; font-family: var(--mono); font-size: 13px; color: var(--muted); align-items: center; }
+.handbook .toolstrip { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 20px; }
+.handbook .toolstrip a, .handbook .btn { display: inline-flex; align-items: center; gap: 6px; font: inherit; font-size: 14px; line-height: 1.2; text-decoration: none; color: var(--fg); background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 7px 12px; cursor: pointer; }
+.handbook .toolstrip a:hover, .handbook .btn:hover { border-color: var(--accent); color: var(--accent); }
+.handbook .btn.small { font-size: 13px; padding: 4px 9px; }
+
+.handbook nav.index { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 2; background: var(--bg); padding-block: 8px; border-bottom: 1px solid var(--line); }
+.handbook nav.index ol { list-style: none; margin: 0; padding: 0; display: flex; gap: 4px; overflow-x: auto; }
+.handbook nav.index li { margin: 0; }
+.handbook nav.index a { display: block; white-space: nowrap; text-decoration: none; color: var(--muted); font-size: 14px; padding: 5px 10px; border-radius: 6px; }
+.handbook nav.index a:hover, .handbook nav.index a:focus-visible { color: var(--fg); background: var(--accent-soft); outline: none; }
+.handbook nav.index a.on { color: var(--accent); background: var(--accent-soft); font-weight: 500; }
+.handbook nav.index .n { font-family: var(--mono); font-size: 12px; margin-right: 6px; }
+.handbook nav.index .grp-label { display: none; }
+@media (min-width: 900px) {
+  .handbook nav.index { align-self: start; top: calc(env(safe-area-inset-top, 0px) + 24px); border-bottom: 0; padding: 0; max-height: calc(100vh - 48px); overflow-y: auto; }
+  .handbook nav.index ol { flex-direction: column; overflow: visible; }
+  .handbook nav.index .grp-label { display: block; font-family: var(--mono); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); padding: 12px 10px 2px; }
+}
+
+.handbook .hb-body { min-width: 0; }
+.handbook section { padding-block: 8px 40px; border-bottom: 1px solid var(--line); margin-bottom: 40px; }
+.handbook section:last-child { border-bottom: 0; }
+.handbook [id] { scroll-margin-top: 150px; }
+@media (min-width: 900px) { .handbook [id] { scroll-margin-top: 24px; } }
+.handbook h2 { font-family: var(--display); font-weight: 600; font-size: 30px; line-height: 1.15; margin: 4px 0 12px; text-wrap: balance; }
+.handbook h3 { font-family: var(--display); font-weight: 600; font-size: 20px; margin: 32px 0 10px; }
+.handbook p, .handbook li { max-width: 68ch; }
+.handbook p { margin: 0 0 14px; }
+.handbook ul, .handbook ol.list { padding-left: 22px; margin: 0 0 14px; }
+.handbook li { margin-bottom: 6px; }
+.handbook a { color: var(--accent); }
+.handbook .point { font-size: 18px; font-weight: 500; max-width: 64ch; }
+.handbook .hint { font-size: 14px; color: var(--muted); }
+
+.handbook .checked { display: inline-flex; align-items: center; gap: 8px; font-family: var(--mono); font-size: 12px; color: var(--muted); border: 1px solid var(--line); border-radius: 4px; padding: 2px 8px; margin-bottom: 10px; }
+.handbook .checked .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--good); }
+.handbook .checked.stale { color: var(--warn); border-color: var(--warn); }
+.handbook .checked.stale .dot { background: var(--warn); }
+
+.handbook .tbl { overflow-x: auto; margin: 8px 0 20px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
+.handbook table { border-collapse: collapse; width: 100%; font-size: 14px; line-height: 1.45; min-width: 640px; }
+.handbook .tbl.narrow table { min-width: 480px; }
+.handbook th, .handbook td { text-align: left; vertical-align: top; padding: 10px 12px; border-bottom: 1px solid var(--line); }
+.handbook th { font-family: var(--mono); font-weight: 500; font-size: 12px; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); background: var(--bg); }
+.handbook tr:last-child td { border-bottom: 0; }
+.handbook td:first-child { font-weight: 600; }
+.handbook .num { font-variant-numeric: tabular-nums; text-align: right; }
+.handbook .tag { font-family: var(--mono); font-size: 12px; padding: 1px 6px; border-radius: 4px; white-space: nowrap; }
+.handbook .tag.now { color: var(--good); border: 1px solid currentColor; }
+.handbook .tag.soon { color: var(--warn); border: 1px solid currentColor; }
+.handbook .raci td { text-align: center; font-family: var(--mono); font-weight: 500; }
+.handbook .raci td:first-child { text-align: left; font-family: var(--body); font-weight: 600; }
+.handbook .raci .A { color: var(--accent); }
+
+/* Tool panels */
+.handbook .tool { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 18px; margin: 16px 0 24px; }
+.handbook .tool-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 6px 16px; margin-bottom: 12px; }
+.handbook .tool-head h3 { margin: 0; }
+.handbook .tool-head .eyebrow { color: var(--accent); }
+.handbook .field { display: grid; gap: 4px; min-width: 0; }
+.handbook .field label, .handbook .lbl { font-family: var(--mono); font-size: 12px; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); }
+.handbook input[type="text"], .handbook input[type="number"], .handbook input[type="datetime-local"], .handbook input[type="search"], .handbook select {
+  font: inherit; font-size: 15px; color: var(--fg); background: var(--bg); border: 1px solid var(--line); border-radius: 6px; padding: 7px 10px; min-width: 0; width: 100%;
+}
+.handbook input:focus, .handbook select:focus { border-color: var(--accent); outline: none; box-shadow: 0 0 0 3px var(--accent-soft); }
+
+/* Workflow */
+.handbook .wf { display: grid; grid-template-columns: 1fr; gap: 10px; margin: 12px 0 8px; counter-reset: wf; }
+@media (min-width: 760px) { .handbook .wf { grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; } }
+.handbook .wf-step { position: relative; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; display: grid; gap: 6px; align-content: start; }
+.handbook .wf-step b { font-family: var(--display); font-size: 18px; }
+.handbook .wf-step b .k { font-family: var(--mono); font-size: 12px; color: var(--accent); margin-right: 6px; font-weight: 500; }
+.handbook .wf-step p { margin: 0; font-size: 14px; }
+.handbook .wf-step small { font-family: var(--mono); font-size: 12px; color: var(--muted); line-height: 1.4; }
+.handbook .wf-loop { font-family: var(--mono); font-size: 12px; color: var(--muted); margin-top: 6px; }
+
+/* Triage */
+.handbook .tri-grid { display: grid; grid-template-columns: 1fr; gap: 20px; }
+@media (min-width: 860px) { .handbook .tri-grid { grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); } }
+.handbook fieldset { border: 0; padding: 0; margin: 0 0 14px; min-width: 0; }
+.handbook legend { font-weight: 600; font-size: 15px; margin-bottom: 6px; padding: 0; }
+.handbook .opts { display: grid; gap: 4px; }
+.handbook .opts label { display: flex; gap: 8px; align-items: flex-start; font-size: 14px; cursor: pointer; }
+.handbook .opts input { margin-top: 4px; accent-color: var(--accent); flex: none; }
+.handbook .tri-result { border: 1px solid var(--line); border-left: 4px solid var(--tier, var(--good)); border-radius: 8px; padding: 14px 16px; background: var(--bg); align-self: start; }
+@media (min-width: 860px) { .handbook .tri-result { position: sticky; top: 24px; } }
+.handbook .tier-name { font-family: var(--display); font-weight: 600; font-size: 30px; line-height: 1.1; color: var(--tier, var(--good)); }
+.handbook .tri-result h4 { font-family: var(--mono); font-weight: 500; font-size: 12px; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); margin: 14px 0 4px; }
+.handbook .tri-result ul { margin: 0; padding-left: 18px; font-size: 14px; }
+.handbook .tri-result li { margin-bottom: 4px; }
+
+/* Templates */
+.handbook details.tpl { border: 1px solid var(--line); border-radius: 8px; background: var(--surface); margin-bottom: 10px; }
+.handbook details.tpl summary { cursor: pointer; padding: 12px 16px; display: flex; justify-content: space-between; gap: 12px; align-items: center; list-style: none; }
+.handbook details.tpl summary::-webkit-details-marker { display: none; }
+.handbook details.tpl summary b { font-family: var(--display); font-size: 17px; }
+.handbook details.tpl summary .hint { font-size: 13px; }
+.handbook details.tpl summary::after { content: "+"; font-family: var(--mono); color: var(--muted); }
+.handbook details.tpl[open] summary::after { content: "−"; }
+.handbook .tpl-body { padding: 0 16px 16px; display: grid; gap: 8px; }
+.handbook .tpl-body pre { margin: 0; font-family: var(--mono); font-size: 13px; line-height: 1.55; white-space: pre-wrap; background: var(--bg); border: 1px solid var(--line); border-radius: 6px; padding: 12px 14px; overflow-x: auto; }
+.handbook .tpl-body .row { display: flex; justify-content: flex-end; gap: 8px; align-items: center; }
+.handbook .copied { font-family: var(--mono); font-size: 12px; color: var(--good); }
+
+/* Incident flow */
+.handbook .flow { display: grid; gap: 0; margin: 12px 0 8px; }
+.handbook .step { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 12px 16px; }
+.handbook .step.first { border: 2px solid var(--accent); background: var(--accent-soft); }
+.handbook .step b { font-family: var(--display); font-size: 17px; display: block; margin-bottom: 2px; }
+.handbook .step p { margin: 0; font-size: 14px; color: var(--muted); }
+.handbook .arrow { width: 1px; height: 22px; background: var(--muted); margin: 0 auto; position: relative; }
+.handbook .arrow::after { content: ""; position: absolute; bottom: -1px; left: -4px; border: 4px solid transparent; border-top: 6px solid var(--muted); border-bottom: 0; }
+.handbook .decide { text-align: center; font-family: var(--mono); font-size: 13px; padding: 8px; color: var(--fg); }
+.handbook .decide span { border: 1px solid var(--muted); padding: 6px 14px; border-radius: 999px; background: var(--surface); }
+.handbook .branches { display: grid; grid-template-columns: 1fr; gap: 10px; }
+@media (min-width: 640px) { .handbook .branches { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+.handbook .branch { border: 1px solid var(--line); border-top: 3px solid var(--sev); border-radius: 8px; padding: 10px 14px; background: var(--surface); }
+.handbook .branch b { font-family: var(--display); font-size: 16px; }
+.handbook .branch p { margin: 2px 0 0; font-size: 14px; }
+.handbook .branch small { font-family: var(--mono); color: var(--muted); font-size: 12px; }
+
+/* Incident clock */
+.handbook .clock-grid { display: grid; grid-template-columns: 1fr; gap: 16px; }
+@media (min-width: 700px) { .handbook .clock-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr); } }
+.handbook .clock-face { border: 1px solid var(--line); border-left: 4px solid var(--state, var(--good)); border-radius: 8px; padding: 12px 16px; background: var(--bg); }
+.handbook .clock-face .big { font-family: var(--display); font-weight: 600; font-size: 34px; line-height: 1.1; font-variant-numeric: tabular-nums; color: var(--state, var(--good)); }
+.handbook .clock-face .sub { font-size: 14px; color: var(--muted); }
+.handbook .meter { height: 6px; background: var(--line); border-radius: 3px; overflow: hidden; margin: 10px 0 4px; }
+.handbook .meter span { display: block; height: 100%; background: var(--state, var(--good)); width: 0; }
+.handbook .checklist { list-style: none; padding: 0; margin: 0; display: grid; gap: 6px; }
+.handbook .checklist li { margin: 0; max-width: none; }
+.handbook .checklist label { display: flex; gap: 10px; align-items: flex-start; font-size: 14px; cursor: pointer; }
+.handbook .checklist input { margin-top: 4px; accent-color: var(--accent); }
+.handbook .checklist input:checked + span { color: var(--muted); text-decoration: line-through; }
+.handbook .checklist .grp { font-family: var(--mono); font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); margin-top: 8px; }
+
+/* Laws filter */
+.handbook .filters { display: grid; grid-template-columns: 1fr; gap: 10px; margin: 8px 0 6px; }
+@media (min-width: 560px) { .handbook .filters { grid-template-columns: repeat(2, minmax(0, 1fr)) auto; align-items: end; } }
+.handbook tr.law-hidden { display: none; }
+.handbook .dom { display: block; font-family: var(--mono); font-size: 11px; color: var(--muted); font-weight: 400; margin-top: 2px; }
+
+/* Calculator */
+.handbook .calc-rows { display: grid; gap: 8px; }
+.handbook .calc-row { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, 1fr) auto; gap: 8px; align-items: end; }
+.handbook .calc-row .x { width: 34px; height: 37px; padding: 0; justify-content: center; }
+.handbook .calc-actions { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0 16px; align-items: center; }
+.handbook .bars { display: grid; gap: 8px; margin-top: 4px; }
+.handbook .bar { display: grid; grid-template-columns: minmax(70px, 140px) minmax(0, 1fr) 54px; gap: 10px; align-items: center; font-size: 14px; }
+.handbook .bar .track { position: relative; height: 20px; background: var(--bg); border: 1px solid var(--line); border-radius: 4px; }
+.handbook .bar .fill { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 3px 0 0 3px; background: var(--good); opacity: .85; }
+.handbook .bar.flag .fill { background: var(--crit); }
+.handbook .bar .line80 { position: absolute; top: -4px; bottom: -4px; left: 80%; width: 0; border-left: 2px dashed var(--fg); opacity: .55; }
+.handbook .bar .val { font-family: var(--mono); font-variant-numeric: tabular-nums; text-align: right; }
+.handbook .bar.flag .val { color: var(--crit); font-weight: 500; }
+.handbook .calc-note { font-size: 14px; margin-top: 12px; }
+.handbook .calc-note.bad { color: var(--crit); }
+.handbook .calc-note.ok { color: var(--good); }
+.handbook .flagtxt { color: var(--crit); font-weight: 600; }
+.handbook .oktxt { color: var(--good); }
+
+/* NIST cycle */
+.handbook .rmf { display: grid; gap: 10px; margin: 12px 0 8px; }
+.handbook .rmf-loop { display: grid; grid-template-columns: 1fr; gap: 10px; }
+@media (min-width: 640px) { .handbook .rmf-loop { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+.handbook .fn { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; }
+.handbook .fn b { font-family: var(--display); font-size: 18px; display: block; }
+.handbook .fn p { margin: 2px 0 6px; font-size: 14px; }
+.handbook .fn small { font-family: var(--mono); font-size: 12px; color: var(--muted); }
+.handbook .fn.govern { border: 2px solid var(--accent); background: var(--accent-soft); }
+.handbook .loopnote { font-family: var(--mono); font-size: 12px; color: var(--muted); }
+
+/* Formula */
+.handbook .formula { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 16px 18px; margin: 8px 0 14px; font-family: var(--mono); font-size: 14px; }
+.handbook .frac { display: inline-grid; text-align: center; }
+.handbook .frac span:first-child { border-bottom: 1px solid var(--fg); padding: 0 6px 4px; }
+.handbook .frac span:last-child { padding: 4px 6px 0; }
+.handbook .threshold { color: var(--crit); font-weight: 500; }
+
+.handbook .rules { counter-reset: r; list-style: none; padding: 0; }
+.handbook .rules li { counter-increment: r; position: relative; padding-left: 36px; }
+.handbook .rules li::before { content: counter(r); position: absolute; left: 0; top: 2px; font-family: var(--mono); font-size: 13px; color: var(--accent); border: 1px solid var(--accent); border-radius: 50%; width: 22px; height: 22px; display: grid; place-items: center; }
+
+/* Interview */
+.handbook .qa { display: grid; gap: 10px; }
+.handbook .qa > div { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 12px 16px; }
+.handbook .qa b { display: block; font-weight: 600; margin-bottom: 4px; }
+.handbook .qa span { font-size: 14px; color: var(--muted); }
+
+/* Resources */
+.handbook .reslist { display: grid; grid-template-columns: 1fr; gap: 8px; margin: 6px 0 8px; }
+@media (min-width: 640px) { .handbook .reslist { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.handbook a.res { display: grid; gap: 2px; text-decoration: none; color: var(--fg); background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 10px 14px; min-width: 0; }
+.handbook a.res:hover, .handbook a.res:focus-visible { border-color: var(--accent); }
+.handbook a.res b { font-weight: 600; color: var(--accent); display: flex; gap: 8px; align-items: baseline; justify-content: space-between; }
+.handbook a.res b::after { content: "↗"; font-family: var(--mono); font-size: 12px; color: var(--muted); font-weight: 400; }
+.handbook a.res span { font-size: 14px; color: var(--muted); }
+.handbook a.res .star { font-family: var(--mono); font-size: 11px; letter-spacing: .04em; text-transform: uppercase; color: var(--good); }
+
+/* Glossary */
+.handbook dl.gloss { display: grid; grid-template-columns: 1fr; gap: 0; margin: 8px 0; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); overflow: hidden; }
+.handbook dl.gloss > div { padding: 10px 14px; border-bottom: 1px solid var(--line); display: grid; grid-template-columns: 1fr; gap: 2px 20px; }
+.handbook dl.gloss > div:last-child { border-bottom: 0; }
+@media (min-width: 640px) { .handbook dl.gloss > div { grid-template-columns: 200px minmax(0, 1fr); } }
+.handbook dl.gloss dt { font-weight: 600; }
+.handbook dl.gloss dd { margin: 0; font-size: 15px; }
+.handbook dl.gloss dd small { font-family: var(--mono); font-size: 12px; color: var(--muted); }
+
+/* Search */
+.handbook .search { display: grid; gap: 6px; margin-bottom: 10px; }
+.handbook .search label { font-family: var(--mono); font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.handbook .search-row { display: flex; gap: 4px; align-items: center; }
+.handbook .search input { flex: 1; background: var(--surface); }
+.handbook .search button { font: inherit; font-size: 14px; line-height: 1; color: var(--fg); background: var(--surface); border: 1px solid var(--line); border-radius: 6px; width: 32px; height: 37px; cursor: pointer; flex: none; }
+.handbook .search button:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+.handbook .search button:disabled { opacity: .4; cursor: default; }
+.handbook .search .status { font-family: var(--mono); font-size: 12px; color: var(--muted); min-height: 1.4em; }
+.handbook .search kbd { font-family: var(--mono); font-size: 11px; border: 1px solid var(--line); border-radius: 3px; padding: 0 4px; }
+.handbook mark.hit { background: color-mix(in srgb, var(--warn) 28%, transparent); color: inherit; border-radius: 2px; padding: 0 1px; }
+.handbook mark.hit.current { background: var(--warn); color: var(--bg); }
+.handbook section.nomatch { opacity: .4; }
+.handbook nav.index a .count { font-family: var(--mono); font-size: 11px; margin-left: 6px; color: var(--accent); }
+.handbook nav.index a.dim { opacity: .45; }
+
+.handbook .sources { font-size: 14px; color: var(--muted); }
+.handbook :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+@media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth; } }
+
+/* Reading refinements: one readable typeface, quiet sentence-case labels, mono only for code and figures */
+.handbook h1, .handbook h2, .handbook h3, .handbook .wf-step b, .handbook .step b, .handbook .branch b, .handbook .fn b, .handbook .tier-name, .handbook .clock-face .big, .handbook details.tpl summary b { font-family: var(--display); font-weight: 700; letter-spacing: -0.005em; }
+.handbook h2 { font-size: 28px; }
+.handbook h3 { font-size: 19px; }
+.handbook .eyebrow, .handbook .field label, .handbook .lbl, .handbook th, .handbook .search label, .handbook nav.index .grp-label, .handbook .tri-result h4, .handbook .checklist .grp, .handbook a.res .star, .handbook .tool-head .eyebrow {
+  font-family: var(--body); text-transform: none; letter-spacing: 0; font-size: 13px; font-weight: 700;
+}
+.handbook .eyebrow { color: var(--muted); font-weight: 400; }
+.handbook th { font-size: 13px; color: var(--muted); }
+.handbook .meta, .handbook .checked, .handbook .wf-step small, .handbook .loopnote, .handbook .wf-loop, .handbook .copied, .handbook .dom, .handbook .branch small, .handbook .fn small, .handbook dl.gloss dd small, .handbook .search .status { font-family: var(--body); font-size: 13px; letter-spacing: 0; }
+.handbook .tag { font-family: var(--body); font-size: 13px; }
+.handbook nav.index a { font-size: 15px; }
+.handbook nav.index .n { font-family: var(--body); color: var(--muted); font-size: 12px; opacity: .8; }
+.handbook .point { font-weight: 400; font-size: 19px; line-height: 1.55; }
+.handbook table { font-size: 15px; }
+.handbook .opts label, .handbook .checklist label, .handbook .hint, .handbook .step p, .handbook .branch p, .handbook .fn p, .handbook .wf-step p { font-size: 15px; }
+.handbook .tpl-body pre { font-size: 13.5px; }
+.handbook .tool, .handbook .tbl, .handbook details.tpl, .handbook .step, .handbook .branch, .handbook .fn, .handbook .wf-step, .handbook a.res, .handbook dl.gloss, .handbook .qa > div { border-color: color-mix(in srgb, var(--line) 85%, transparent); }
+
+/* Context Switch theme: white page, ink text, soft lavender borders, rounded cards, ink buttons, pastel section badges */
+.handbook {
+  background:
+    radial-gradient(900px 360px at 8% -120px, rgba(255, 179, 214, .28), transparent 70%),
+    radial-gradient(800px 360px at 92% -120px, rgba(143, 233, 244, .24), transparent 70%),
+    var(--bg);
+  background-repeat: no-repeat;
+}
+.handbook header.top { border-bottom-color: var(--line); }
+.handbook header.top .eyebrow { display: inline-block; font-size: 11px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: #31283a; background: rgba(255,255,255,.84); border: 1px solid var(--line); border-radius: 8px; padding: 6px 10px; }
+.handbook h1 { font-weight: 800; letter-spacing: -0.035em; }
+.handbook h2 { font-weight: 800; letter-spacing: -0.02em; }
+.handbook h3 { font-weight: 700; letter-spacing: -0.01em; }
+.handbook h1, .handbook h2, .handbook h3, .handbook .wf-step b, .handbook .step b, .handbook .branch b, .handbook .fn b, .handbook .tier-name, .handbook .clock-face .big, .handbook details.tpl summary b { font-family: var(--display); }
+.handbook .point { color: #3b3642; }
+.handbook .hb-body section > .eyebrow {
+  display: inline-grid; place-items: center; min-width: 32px; height: 32px; padding: 0 6px;
+  font-size: 12px; font-weight: 900; color: var(--ink); background: var(--yellow);
+  border: 1px solid var(--ink); border-radius: 10px; box-shadow: 3px 3px 0 var(--ink); margin-bottom: 10px;
+}
+.handbook .hb-body section:nth-of-type(4n+2) > .eyebrow { background: var(--rose); }
+.handbook .hb-body section:nth-of-type(4n+3) > .eyebrow { background: var(--cyan); }
+.handbook .hb-body section:nth-of-type(4n+4) > .eyebrow { background: var(--lilac); }
+.handbook .toolstrip a, .handbook .btn { border-radius: 12px; font-weight: 700; border-color: var(--line); }
+.handbook .toolstrip a:hover, .handbook .btn:hover { border-color: var(--ink); color: var(--ink); }
+.handbook .tool { border-radius: 18px; }
+.handbook .tbl, .handbook details.tpl, .handbook a.res, .handbook dl.gloss, .handbook .qa > div, .handbook .step, .handbook .branch, .handbook .fn, .handbook .wf-step { border-radius: 14px; }
+.handbook .tri-result, .handbook .clock-face { border-radius: 14px; }
+.handbook th, .handbook .tpl-body pre { background: var(--wash); }
+.handbook input[type="text"], .handbook input[type="number"], .handbook input[type="datetime-local"], .handbook input[type="search"], .handbook select { background: #fff; border-radius: 10px; }
+.handbook .search input { background: #fff; }
+.handbook .search button { border-radius: 10px; }
+.handbook nav.index a { border-radius: 10px; }
+.handbook nav.index a.on { background: var(--accent-soft); color: var(--ink); font-weight: 700; }
+.handbook nav.index a:hover, .handbook nav.index a:focus-visible { background: var(--accent-soft); color: var(--ink); }
+.handbook .step.first, .handbook .fn.govern { border: 1px solid var(--ink); background: #fff; box-shadow: 3px 3px 0 var(--ink); }
+.handbook .wf-step b .k { color: var(--accent); }
+.handbook a { color: var(--accent); text-underline-offset: 2px; }
+.handbook a.res b { color: var(--ink); }
+.handbook a.res:hover, .handbook a.res:focus-visible { border-color: var(--ink); }
+.handbook a.res .star { color: var(--accent); }
+.handbook mark.hit { background: rgba(244, 255, 82, .7); }
+.handbook mark.hit.current { background: var(--pink); color: #fff; }
+.handbook :focus-visible { outline-color: var(--pink); }
+
+/* Site integration. Page level, as on the other reference pages: no default body margin. */
+body { margin: 0; }
+/* The handbook sits under the site's sticky top bar (67px tall, 66px on phones). */
+.handbook { --hb-top: 67px; }
+@media (max-width: 560px) { .handbook { --hb-top: 66px; } }
+.handbook nav.index { top: calc(env(safe-area-inset-top, 0px) + var(--hb-top)); }
+@media (min-width: 900px) {
+  .handbook nav.index { top: calc(env(safe-area-inset-top, 0px) + var(--hb-top) + 24px); max-height: calc(100vh - var(--hb-top) - 48px); }
+}
+@media (min-width: 860px) { .handbook .tri-result { top: calc(var(--hb-top) + 24px); } }
+.handbook > .case-study-footer { max-width: 1120px; margin: 30px auto 0; }
+</style>
+<link href="site-shell.css" rel="stylesheet"/><link href="site-components.css" rel="stylesheet"/>
+<!-- social-preview:begin -->
+<meta content="website" property="og:type"/>
+<meta content="https://www.contextswitch.tech/ai-governance-handbook" property="og:url"/>
+<meta content="AI Governance Handbook · Context Switch" property="og:title"/>
+<meta content="A working AI governance reference for any industry: review workflow, risk triage, assessments, testing, vendors, monitoring, incidents, a laws finder, frameworks and templates." property="og:description"/>
+<meta content="https://www.contextswitch.tech/assets/social/ai-governance-handbook.png" property="og:image"/>
+<meta content="1200" property="og:image:width"/>
+<meta content="630" property="og:image:height"/>
+<meta content="AI Governance Handbook · Context Switch" property="og:image:alt"/>
+<meta content="summary_large_image" name="twitter:card"/>
+<meta content="AI Governance Handbook · Context Switch" name="twitter:title"/>
+<meta content="A working AI governance reference for any industry: review workflow, risk triage, assessments, testing, vendors, monitoring, incidents, a laws finder, frameworks and templates." name="twitter:description"/>
+<meta content="https://www.contextswitch.tech/assets/social/ai-governance-handbook.png" name="twitter:image"/>
+<meta content="AI Governance Handbook · Context Switch" name="twitter:image:alt"/>
+<!-- social-preview:end -->
+</head><body>
+<div class="topbar"><div class="topinner"><a class="brand-button" href="index.html"><span class="brand">Context <span>Switch</span></span></a><nav aria-label="Primary pages" class="nav"><a href="index.html">Home</a><a href="index.html#portfolio">Applied Work</a><a aria-current="page" href="index.html#learn">Learning Library</a></nav><div class="top-actions"><select aria-label="Choose page" id="v922MobileNav"><option value="index.html">Home</option><option value="index.html#portfolio">Applied Work</option><option selected="" value="index.html#learn">Learning Library</option></select></div></div></div>
+<main class="handbook">
+<header class="top">
+  <div class="eyebrow">Learning Library</div>
+  <h1>AI Governance Handbook</h1>
+  <p class="lede">A working reference I maintain for AI governance in any industry: the review workflow, risk triage, assessments, testing, vendors, monitoring, incidents, law, frameworks and reporting, with working tools for the everyday parts.</p>
+  <div class="meta"><span>Built with Claude, checked and maintained by me</span><span id="stale-summary">Legal sections checked Oct 12, 2026</span></div>
+  <div class="toolstrip" aria-label="Tools">
+    <a href="#triage-tool">Risk triage</a>
+    <a href="#laws">Laws finder</a>
+    <a href="#templates">Templates</a>
+    <a href="#calculator">Bias calculator</a>
+    <a href="#clock">Incident clock</a>
+  </div>
+</header>
+
+<div class="shell">
+  <nav class="index" aria-label="Sections">
+    <form class="search" role="search" id="search-form">
+      <label for="q">Search the handbook</label>
+      <div class="search-row">
+        <input id="q" type="search" placeholder="e.g. deployer" autocomplete="off" spellcheck="false">
+        <button type="button" id="prev" aria-label="Previous match" disabled>↑</button>
+        <button type="button" id="next" aria-label="Next match" disabled>↓</button>
+      </div>
+      <div class="status" id="status" aria-live="polite">Press <kbd>/</kbd> to search</div>
+    </form>
+    <ol>
+      <li><a href="#use"><span class="n">00</span>About this handbook</a></li>
+      <li class="grp-label" aria-hidden="true">The work</li>
+      <li><a href="#program"><span class="n">01</span>Program setup</a></li>
+      <li><a href="#workflow"><span class="n">02</span>Review workflow</a></li>
+      <li><a href="#triage"><span class="n">03</span>Risk triage</a></li>
+      <li><a href="#assessment"><span class="n">04</span>Impact assessments</a></li>
+      <li><a href="#testing"><span class="n">05</span>Testing and evaluation</a></li>
+      <li><a href="#vendors"><span class="n">06</span>Vendors and contracts</a></li>
+      <li><a href="#monitoring"><span class="n">07</span>Monitoring</a></li>
+      <li><a href="#incidents"><span class="n">08</span>Incidents and privacy</a></li>
+      <li class="grp-label" aria-hidden="true">Rules and frameworks</li>
+      <li><a href="#laws-section"><span class="n">09</span>Laws and regulations</a></li>
+      <li><a href="#frameworks"><span class="n">10</span>Frameworks</a></li>
+      <li class="grp-label" aria-hidden="true">Communicating</li>
+      <li><a href="#writing"><span class="n">11</span>Writing and templates</a></li>
+      <li><a href="#reporting"><span class="n">12</span>Reporting to leadership</a></li>
+      <li><a href="#interview"><span class="n">13</span>Interview prep</a></li>
+      <li class="grp-label" aria-hidden="true">Reference</li>
+      <li><a href="#resources"><span class="n">14</span>Resources</a></li>
+      <li><a href="#glossary"><span class="n">15</span>Glossary</a></li>
+    </ol>
+  </nav>
+
+  <div class="hb-body">
+    <section id="use">
+      <div class="eyebrow">00</div>
+      <h2>About this handbook</h2>
+      <p class="point">This is the reference I use for AI governance work: practice exercises, case studies and real reviews alike. It's organized around the loop most governance work follows: intake, triage, assess, decide, monitor.</p>
+      <ul>
+        <li><strong>How to use it:</strong> start with program setup and the review workflow (sections 01 and 02), then jump to whatever the situation needs. The tools at the top work on any scenario.</li>
+        <li><strong>How it's kept current:</strong> legal sections show the date they were last checked and turn amber after 90 days. Laws in this area change monthly.</li>
+        <li><strong>What it leaves out:</strong> no employer's confidential details, ever. Lessons are written down without the company behind them.</li>
+        <li><strong>How it was made:</strong> built with Claude; the research is sourced and linked, and I review and update the content.</li>
+        <li><strong>Suggested cadences and thresholds are starting points,</strong> to adapt to an organization's own risk appetite.</li>
+      </ul>
+      <p class="hint">A practitioner's reference, not legal advice. Confirm legal questions with counsel.</p>
+    </section>
+
+    <!-- PROGRAM SETUP -->
+    <section id="program">
+      <div class="eyebrow">01</div>
+      <h2>Program setup</h2>
+      <p class="point">Before the review workflow can run, a program needs five foundations: a named owner, a policy, an inventory, a committee for the big decisions, and people trained to use AI well.</p>
+
+      <h3>A first 90 days</h3>
+      <p class="hint">A suggested sequence for a new program or a new role. Adjust the pace to the organization.</p>
+      <div class="tbl"><table>
+        <thead><tr><th>Phase</th><th>Goals</th><th>Outputs</th></tr></thead>
+        <tbody>
+          <tr><td>Days 1–30: Discover</td><td>Find the AI already in use, including shadow AI; meet stakeholders; stop the riskiest behavior quickly</td><td>First inventory, stakeholder map, interim guidance</td></tr>
+          <tr><td>Days 31–60: Structure</td><td>Agree on the tiering method, intake process and policy; set up the committee</td><td>Triage rubric, intake form, acceptable-use policy draft, committee charter</td></tr>
+          <tr><td>Days 61–90: Operate</td><td>Run the first assessments, launch training, report to leadership</td><td>First assessments, training plan, first leadership report</td></tr>
+        </tbody>
+      </table></div>
+
+      <h3>The governance committee</h3>
+      <ul>
+        <li><strong>Members:</strong> a chair (often legal, risk or a senior business leader), plus legal, privacy, security, data or engineering, HR, and business representatives. The governance lead usually runs it.</li>
+        <li><strong>Decides:</strong> approval of high-risk uses, policy changes, risk appetite, and exceptions to policy.</li>
+        <li><strong>Meets:</strong> monthly, with a fast path for urgent decisions.</li>
+        <li><strong>Records:</strong> every decision, its conditions and its rationale.</li>
+      </ul>
+      <p>A charter template is in <a href="#templates">Templates</a>.</p>
+
+      <h3>AI literacy and training</h3>
+      <p>The EU AI Act has required providers and deployers to ensure staff AI literacy since Feb 2, 2025. Good practice everywhere is to train by role:</p>
+      <div class="tbl"><table>
+        <thead><tr><th>Audience</th><th>What they need</th><th>When</th></tr></thead>
+        <tbody>
+          <tr><td>All staff</td><td>The policy, data rules, approved tools, AI's limits (it can be confidently wrong), how to report a mistake</td><td>Onboarding and yearly</td></tr>
+          <tr><td>Managers and approvers</td><td>How triage works, what they're accountable for, when to escalate</td><td>On taking the role, then yearly</td></tr>
+          <tr><td>Builders and data teams</td><td>Testing, documentation, secure development, bias and drift</td><td>Before building, then as practices change</td></tr>
+          <tr><td>Procurement and legal</td><td>Vendor questions, contract clauses, applicable laws</td><td>Before the first AI purchase review</td></tr>
+          <tr><td>Executives and board</td><td>Risk appetite, the regulatory landscape, their oversight role</td><td>Yearly briefing</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <!-- 01 WORKFLOW -->
+    <section id="workflow">
+      <div class="eyebrow">02</div>
+      <h2>The review workflow</h2>
+      <p class="point">Every AI use, whatever the industry, goes through the same five steps. What changes is how deep each step goes, and that depth is set at triage.</p>
+
+      <h3>Before intake: is AI the right tool?</h3>
+      <p>Ask these first. A "no" doesn't always stop a project, but it should shape it.</p>
+      <ul>
+        <li>Is the problem clearly defined, and would a simpler, non-AI approach work as well?</li>
+        <li>Is there enough good, lawful data for the job?</li>
+        <li>Can errors be caught before they cause harm, and can people live with the error rate?</li>
+        <li>Could you explain how it works to the people it affects?</li>
+        <li>Does the benefit outweigh the cost of the oversight it will need?</li>
+        <li>Is the use allowed at all? Check banned practices and sector rules.</li>
+      </ul>
+
+      <div class="wf">
+        <div class="wf-step"><b><span class="k">1</span>Intake</b><p>Someone proposes a tool or a new use. Capture it in the AI inventory.</p><small>Output: intake form, inventory entry</small><small>Owner: requester, governance lead</small></div>
+        <div class="wf-step"><b><span class="k">2</span>Triage</b><p>Sort it into a risk tier. The tier sets how deep the review goes.</p><small>Output: tier and rationale</small><small>Owner: governance lead</small></div>
+        <div class="wf-step"><b><span class="k">3</span>Assess</b><p>Impact assessment, testing, vendor, legal and privacy review, scaled to the tier.</p><small>Output: assessment, test results</small><small>Owner: governance lead with specialists</small></div>
+        <div class="wf-step"><b><span class="k">4</span>Decide</b><p>Approve, approve with conditions, or reject, at the right level of authority.</p><small>Output: decision memo, conditions</small><small>Owner: accountable executive or committee</small></div>
+        <div class="wf-step"><b><span class="k">5</span>Monitor</b><p>Track metrics, review on schedule and reassess when anything changes.</p><small>Output: monitoring plan, review log</small><small>Owner: business owner, governance lead</small></div>
+      </div>
+      <div class="wf-loop">↺ Monitoring loops back to intake whenever the system, its use or the law changes.</div>
+
+      <h3>What goes in the AI inventory</h3>
+      <p>The inventory is the governance team's source of truth. Each entry typically records:</p>
+      <div class="tbl narrow"><table>
+        <thead><tr><th>Field</th><th>Why it matters</th></tr></thead>
+        <tbody>
+          <tr><td>System name, vendor, version</td><td>Know exactly what's in use; model changes trigger reassessment</td></tr>
+          <tr><td>Business owner</td><td>One accountable person per system</td></tr>
+          <tr><td>Purpose and decisions supported</td><td>Drives the risk tier</td></tr>
+          <tr><td>People affected and where they are</td><td>Drives which laws apply</td></tr>
+          <tr><td>Data used (inputs and outputs)</td><td>Drives privacy and security review</td></tr>
+          <tr><td>Risk tier and date assessed</td><td>Sets review depth and cadence</td></tr>
+          <tr><td>Approval status and conditions</td><td>What was agreed, and what must stay true</td></tr>
+          <tr><td>Next review date</td><td>Keeps monitoring from slipping</td></tr>
+        </tbody>
+      </table></div>
+
+      <h3>Who owns what</h3>
+      <p>Unclear ownership causes most governance friction. A typical split, to adapt to your organization (R = does the work, A = accountable, C = consulted, I = informed):</p>
+      <div class="tbl"><table class="raci">
+        <thead><tr><th>Activity</th><th>Governance</th><th>Business owner</th><th>Legal</th><th>Privacy</th><th>Security</th><th>Procurement</th><th>Data / ML</th></tr></thead>
+        <tbody>
+          <tr><td>Intake and inventory</td><td class="A">A/R</td><td>R</td><td>I</td><td>I</td><td>I</td><td>C</td><td>C</td></tr>
+          <tr><td>Risk triage</td><td class="A">A/R</td><td>C</td><td>C</td><td>C</td><td>C</td><td>–</td><td>C</td></tr>
+          <tr><td>Impact assessment</td><td class="A">A/R</td><td>R</td><td>C</td><td>C</td><td>C</td><td>–</td><td>R</td></tr>
+          <tr><td>Testing</td><td>C</td><td>I</td><td>–</td><td>C</td><td>C</td><td>–</td><td class="A">A/R</td></tr>
+          <tr><td>Legal review</td><td>C</td><td>I</td><td class="A">A/R</td><td>C</td><td>–</td><td>–</td><td>–</td></tr>
+          <tr><td>Privacy review</td><td>C</td><td>I</td><td>C</td><td class="A">A/R</td><td>C</td><td>–</td><td>C</td></tr>
+          <tr><td>Security review</td><td>C</td><td>I</td><td>–</td><td>C</td><td class="A">A/R</td><td>–</td><td>C</td></tr>
+          <tr><td>Vendor contract</td><td>C</td><td>C</td><td>R</td><td>C</td><td>C</td><td class="A">A/R</td><td>–</td></tr>
+          <tr><td>Approval decision</td><td>R</td><td class="A">A</td><td>C</td><td>C</td><td>C</td><td>I</td><td>I</td></tr>
+          <tr><td>Monitoring</td><td>R</td><td class="A">A</td><td>I</td><td>I</td><td>C</td><td>–</td><td>R</td></tr>
+          <tr><td>Incident response</td><td>R</td><td>R</td><td class="A">A</td><td>R</td><td>R</td><td>I</td><td>C</td></tr>
+        </tbody>
+      </table></div>
+      <p class="hint">For high-risk systems, the approval usually sits with a governance committee or a named executive rather than the business owner alone.</p>
+    </section>
+
+    <!-- 02 TRIAGE -->
+    <section id="triage">
+      <div class="eyebrow">03</div>
+      <h2>Risk triage</h2>
+      <p class="point">Triage decides how much review a use case gets. A use that shapes decisions about people in a regulated area is high-risk almost by default. Everything else is scored on data, audience, autonomy and scale.</p>
+
+      <h3>The factors</h3>
+      <div class="tbl"><table>
+        <thead><tr><th>Factor</th><th>Lower risk</th><th>Higher risk</th></tr></thead>
+        <tbody>
+          <tr><td>Decisions about people</td><td>None; internal productivity</td><td>Employment, credit, insurance, housing, healthcare, education, benefits, legal</td></tr>
+          <tr><td>Role in the decision</td><td>Drafts or suggests; a person decides with full context</td><td>Substantially shapes or makes the decision</td></tr>
+          <tr><td>Data</td><td>Public or non-personal</td><td>Sensitive personal data: health, biometrics, finances, children's data</td></tr>
+          <tr><td>Audience</td><td>Internal staff</td><td>Customers, the public, children or vulnerable people</td></tr>
+          <tr><td>Autonomy</td><td>Output reviewed before use</td><td>Takes actions on its own: sends, buys, executes, changes records</td></tr>
+          <tr><td>Scale and reversibility</td><td>A few people; easy to undo</td><td>Thousands of people; hard to undo or notice</td></tr>
+          <tr><td>Supply chain</td><td>Enterprise contract with data protections</td><td>Free consumer tool with no contract</td></tr>
+        </tbody>
+      </table></div>
+
+      <div class="tool" id="triage-tool">
+        <div class="tool-head"><h3>Risk triage tool</h3><span class="eyebrow">Tool · example answers loaded</span></div>
+        <div class="tri-grid">
+          <form id="tri-form">
+            <fieldset>
+              <legend>Does it do any of these?</legend>
+              <div class="opts">
+                <label><input type="checkbox" name="pro" value="social"><span>Scores people's trustworthiness from their social behavior (social scoring)</span></label>
+                <label><input type="checkbox" name="pro" value="manip"><span>Manipulates people, or exploits age, disability or hardship, in ways that can cause harm</span></label>
+                <label><input type="checkbox" name="pro" value="emotion"><span>Infers the emotions of workers or students</span></label>
+                <label><input type="checkbox" name="pro" value="biocat"><span>Infers sensitive traits like race or religion from biometric data</span></label>
+                <label><input type="checkbox" name="pro" value="scrape"><span>Builds facial recognition databases from scraped images</span></label>
+              </div>
+            </fieldset>
+            <fieldset>
+              <legend><label for="tri-domain">Area it's used in</label></legend>
+              <select id="tri-domain">
+                <option value="none">Internal productivity, no decisions about people</option>
+                <option value="employment" selected>Employment or worker management</option>
+                <option value="lending">Credit or lending</option>
+                <option value="insurance">Insurance</option>
+                <option value="housing">Housing</option>
+                <option value="healthcare">Healthcare</option>
+                <option value="education">Education</option>
+                <option value="services">Public services or benefits</option>
+                <option value="legal">Legal or law enforcement</option>
+                <option value="customer">Customer service or marketing</option>
+                <option value="other">Other</option>
+              </select>
+            </fieldset>
+            <fieldset>
+              <legend>Its role in decisions about people</legend>
+              <div class="opts">
+                <label><input type="radio" name="role" value="0"><span>No decisions about people</span></label>
+                <label><input type="radio" name="role" value="1"><span>Informs a person who decides with full context</span></label>
+                <label><input type="radio" name="role" value="3" checked><span>Substantially shapes the decision (ranks, scores, filters)</span></label>
+                <label><input type="radio" name="role" value="4"><span>Makes the decision automatically</span></label>
+              </div>
+            </fieldset>
+            <fieldset>
+              <legend>Data it uses</legend>
+              <div class="opts">
+                <label><input type="checkbox" name="data" value="personal" checked><span>Personal data</span></label>
+                <label><input type="checkbox" name="data" value="sensitive"><span>Sensitive data: health, biometrics, finances, race, children</span></label>
+                <label><input type="checkbox" name="data" value="confidential"><span>Confidential business data</span></label>
+              </div>
+            </fieldset>
+            <fieldset>
+              <legend>Who sees or is affected by its outputs</legend>
+              <div class="opts">
+                <label><input type="radio" name="aud" value="internal"><span>Internal staff only</span></label>
+                <label><input type="radio" name="aud" value="external" checked><span>Customers, applicants or the public</span></label>
+                <label><input type="radio" name="aud" value="vulnerable"><span>Children or vulnerable people</span></label>
+              </div>
+            </fieldset>
+            <fieldset>
+              <legend>How it works</legend>
+              <div class="opts">
+                <label><input type="checkbox" name="how" value="gen"><span>Generates text, images, audio or code</span></label>
+                <label><input type="checkbox" name="how" value="agent"><span>Takes actions on its own (sends, buys, executes, edits records)</span></label>
+              </div>
+            </fieldset>
+            <fieldset>
+              <legend>Scale</legend>
+              <div class="opts">
+                <label><input type="radio" name="scale" value="0"><span>A team or a few people</span></label>
+                <label><input type="radio" name="scale" value="0.5"><span>A department or hundreds of people</span></label>
+                <label><input type="radio" name="scale" value="1" checked><span>Company-wide, or thousands of people affected</span></label>
+              </div>
+            </fieldset>
+            <fieldset>
+              <legend>Where it comes from</legend>
+              <div class="opts">
+                <label><input type="radio" name="src" value="inhouse"><span>Built in-house</span></label>
+                <label><input type="radio" name="src" value="vendor" checked><span>Vendor with an enterprise contract</span></label>
+                <label><input type="radio" name="src" value="consumer"><span>Free or consumer tool, no contract</span></label>
+              </div>
+            </fieldset>
+            <button type="button" class="btn small" id="tri-reset">Clear answers</button>
+          </form>
+          <div class="tri-result" id="tri-result" aria-live="polite">
+            <div class="lbl">Suggested tier</div>
+            <div class="tier-name" id="tier-name">High</div>
+            <h4>Why</h4><ul id="tier-why"></ul>
+            <h4>Review needed</h4><ul id="tier-do"></ul>
+            <h4>Check these laws</h4><ul id="tier-laws"></ul>
+            <p style="margin:12px 0 0"><button type="button" class="btn small" id="tier-showlaws">Show matching laws</button></p>
+            <p class="hint" style="margin:10px 0 0">A starting point for judgment, not a final classification. Document why you agree or override it.</p>
+          </div>
+        </div>
+      </div>
+
+      <h3>Review depth by tier</h3>
+      <div class="tbl"><table>
+        <thead><tr><th>Tier</th><th>Typical review</th><th>Who approves</th><th>Suggested review cycle</th></tr></thead>
+        <tbody>
+          <tr><td style="color:var(--stop)">Stop</td><td>Don't proceed. Escalate to legal and document the decision. Likely prohibited under the EU AI Act or another law.</td><td>Legal</td><td>Not applicable</td></tr>
+          <tr><td style="color:var(--crit)">High</td><td>Full impact assessment; testing for bias, accuracy and robustness; legal and privacy review; human oversight design; notices; monitoring plan</td><td>Governance committee or named executive</td><td>At least quarterly, and on any change</td></tr>
+          <tr><td style="color:var(--warn)">Medium</td><td>Short assessment; vendor due diligence; usage guidance for users; privacy check</td><td>Business owner with governance sign-off</td><td>Every 6 months</td></tr>
+          <tr><td style="color:var(--good)">Low</td><td>Inventory entry; confirm it's an approved tool and data rules apply; standard terms</td><td>Governance lead</td><td>Yearly</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <!-- 03 ASSESSMENT -->
+    <section id="assessment" data-checked="2026-10-12">
+      <div class="eyebrow">04</div>
+      <h2>Impact assessments</h2>
+      <span class="checked" data-checked-badge><span class="dot"></span><span>Checked Oct 12, 2026</span></span>
+      <p class="point">An impact assessment is the core document of the job: what the system does, who it affects, what could go wrong, and what keeps that in check. Build one template with modules, so a single assessment can satisfy several laws at once.</p>
+
+      <h3>Assessments that overlap</h3>
+      <div class="tbl"><table>
+        <thead><tr><th>Assessment</th><th>Required by</th><th>When</th><th>Reuse tip</th></tr></thead>
+        <tbody>
+          <tr><td>AI impact assessment</td><td>Internal policy; NIST AI RMF (Map, Measure); ISO/IEC 42001</td><td>Before launch for medium- and high-risk uses</td><td>Your base template; the others become modules</td></tr>
+          <tr><td>Data protection impact assessment (DPIA)</td><td>GDPR Art. 35</td><td>Processing likely to be high-risk to people, including systematic automated evaluation with significant effects</td><td>Data flows, lawful basis and retention sections carry over</td></tr>
+          <tr><td>Fundamental rights impact assessment (FRIA)</td><td>EU AI Act Art. 27</td><td>Certain deployers of high-risk AI: public bodies, private providers of public services, and credit scoring or life and health insurance pricing</td><td>Affected groups and harms sections carry over</td></tr>
+          <tr><td>Risk assessment</td><td><a href="https://www.skadden.com/insights/publications/2025/10/california-finalizes-cppa-regulations">California CCPA regulations</a></td><td>Certain processing, including automated decisions with significant effects; initial assessments due by Dec 31, 2027</td><td>Same core as a DPIA</td></tr>
+          <tr><td>Bias audit</td><td><a href="https://www.nyc.gov/site/dca/about/automated-employment-decision-tools.page">NYC Local Law 144</a></td><td>Yearly, for automated hiring and promotion tools</td><td>Feeds the testing module</td></tr>
+          <tr><td>AI systems program</td><td><a href="https://actuary.info/insights/ai-regulation-insurance-naic-2026">NAIC model bulletin</a> (insurers, in adopting states)</td><td>Ongoing governance program</td><td>Inventory, testing and vendor oversight carry over</td></tr>
+        </tbody>
+      </table></div>
+
+      <h3>What a good assessment covers</h3>
+      <ol class="list">
+        <li><strong>Purpose and context:</strong> the problem, the decision supported, what happens without it.</li>
+        <li><strong>People affected:</strong> who, how many, where, and any vulnerable groups.</li>
+        <li><strong>Data:</strong> inputs, outputs, sources, sensitivity, retention, where it's processed.</li>
+        <li><strong>System:</strong> model or vendor, how it was built, known limits, intended and prohibited uses.</li>
+        <li><strong>Risks:</strong> walk the NIST trustworthiness traits (section 10) and the relevant genAI risks.</li>
+        <li><strong>Testing evidence:</strong> what was tested, how, and the results (section 05).</li>
+        <li><strong>Controls:</strong> human oversight, notices, appeal route, access limits, guardrails.</li>
+        <li><strong>Legal check:</strong> which laws apply and how each is met (section 09).</li>
+        <li><strong>Remaining risk and decision:</strong> what's left after controls, and who accepts it.</li>
+        <li><strong>Monitoring:</strong> metrics, thresholds, review date (section 07).</li>
+      </ol>
+      <h3>Walking through harms</h3>
+      <p>The risk section is only as good as the list of people you thought about. For each group, ask how the system could help them and how it could harm them.</p>
+      <ul>
+        <li><strong>Direct users:</strong> the staff or customers who operate it</li>
+        <li><strong>People decided about:</strong> applicants, borrowers, patients, policyholders</li>
+        <li><strong>Bystanders:</strong> people in the data or affected indirectly</li>
+        <li><strong>Vulnerable groups:</strong> minors, people with disabilities, people in hardship, non-native speakers</li>
+        <li><strong>The organization:</strong> legal, financial and reputational exposure</li>
+      </ul>
+      <div class="tbl"><table>
+        <thead><tr><th>Harm type</th><th>What it looks like</th><th>Question to ask</th></tr></thead>
+        <tbody>
+          <tr><td>Allocation</td><td>Opportunities or resources unfairly withheld: jobs, credit, care</td><td>Could some groups be denied more often without good reason?</td></tr>
+          <tr><td>Quality of service</td><td>Works worse for some people: accents, skin tones, languages</td><td>Does performance hold up across groups?</td></tr>
+          <tr><td>Stereotyping and representation</td><td>Outputs that demean or reinforce stereotypes</td><td>What does it say or show about groups of people?</td></tr>
+          <tr><td>Privacy</td><td>Exposing, inferring or misusing personal data</td><td>What could it reveal or infer that people wouldn't expect?</td></tr>
+          <tr><td>Safety</td><td>Physical or psychological harm</td><td>What's the worst realistic output, and who sees it?</td></tr>
+          <tr><td>Economic</td><td>Financial loss from errors or bad advice</td><td>What does a wrong answer cost the person?</td></tr>
+          <tr><td>Autonomy and manipulation</td><td>Steering choices, dark patterns, over-reliance</td><td>Does it respect people's ability to decide for themselves?</td></tr>
+          <tr><td>Access and exclusion</td><td>Locking people out who can't use or reach the system</td><td>Is there a non-AI route for those who need one?</td></tr>
+        </tbody>
+      </table></div>
+      <p>The full template is in <a href="#templates">Templates</a>.</p>
+    </section>
+
+    <!-- 04 TESTING -->
+    <section id="testing">
+      <div class="eyebrow">05</div>
+      <h2>Testing and evaluation</h2>
+      <p class="point">Testing turns "we think it's fine" into evidence. Match the method to the risk: decision systems need fairness and accuracy testing; generative and agentic systems need adversarial testing too.</p>
+
+      <div class="tbl"><table>
+        <thead><tr><th>Method</th><th>What it shows</th><th>Use for</th><th>How it's done</th></tr></thead>
+        <tbody>
+          <tr><td>Disparity testing</td><td>Whether outcomes differ by group</td><td>Any system that decides or ranks people</td><td>Compare selection or approval rates by group; impact ratios; statistical tests for small samples</td></tr>
+          <tr><td>Paired (audit) testing</td><td>Whether one changed attribute changes the result</td><td>Screening, ranking, pricing, LLMs judging people</td><td>Submit matched inputs that differ only in a name, gender marker, zip code or similar signal</td></tr>
+          <tr><td>Performance validation</td><td>Accuracy on data like yours</td><td>All predictive systems</td><td>Test on representative, recent data; break results down by subgroup, not just overall</td></tr>
+          <tr><td>Robustness testing</td><td>Behavior under messy or unusual inputs</td><td>Production systems with varied inputs</td><td>Typos, missing fields, edge cases, formatting changes, other languages</td></tr>
+          <tr><td>Red-teaming</td><td>How it fails when someone tries to break it</td><td>Generative and customer-facing AI</td><td>Structured attempts at jailbreaks, harmful outputs, policy violations</td></tr>
+          <tr><td>Prompt injection testing</td><td>Whether hidden instructions in content hijack it</td><td>Agents and tools that read emails, files or web pages</td><td>Plant instructions in test documents; check whether the system follows them</td></tr>
+          <tr><td>Groundedness checks</td><td>How often it makes things up</td><td>Assistants, chatbots, summarizers</td><td>Question sets with known answers; check claims against source material</td></tr>
+          <tr><td>Privacy leakage testing</td><td>Whether it reveals personal or confidential data</td><td>Systems trained or grounded on internal data</td><td>Probe for training data, other users' content, secrets in outputs</td></tr>
+          <tr><td>Human factors review</td><td>Whether reviewers really review</td><td>Any human-in-the-loop system</td><td>Measure override rates and time per review; watch for rubber-stamping</td></tr>
+        </tbody>
+      </table></div>
+
+      <h3>The core bias math</h3>
+      <p>NYC bias audits and the federal four-fifths rule both compare selection rates between groups. The same math works for loan approvals, insurance offers and other yes-or-no outcomes.</p>
+      <div class="formula" role="math" aria-label="Impact ratio equals selection rate of a group divided by selection rate of the most-selected group">
+        <span>impact ratio =</span>
+        <span class="frac"><span>selection rate of a group</span><span>selection rate of the most-selected group</span></span>
+      </div>
+      <p>A ratio <span class="threshold">below 0.8</span> is the traditional red flag for adverse impact under the federal Uniform Guidelines on Employee Selection Procedures. It's a rule of thumb, not a safe harbor, and small samples need statistical tests too.</p>
+
+      <div class="tool" id="calculator">
+        <div class="tool-head"><h3>Impact ratio calculator</h3><span class="eyebrow">Tool · example data loaded</span></div>
+        <div class="calc-rows" id="calc-rows"></div>
+        <div class="calc-actions">
+          <button type="button" class="btn small" id="calc-add">Add group</button>
+          <button type="button" class="btn small" id="calc-example">Load example</button>
+          <button type="button" class="btn small" id="calc-clear">Clear</button>
+        </div>
+        <div class="tbl narrow"><table>
+          <thead><tr><th>Group</th><th class="num">Total</th><th class="num">Selected</th><th class="num">Selection rate</th><th class="num">Impact ratio</th><th>Flag</th></tr></thead>
+          <tbody id="calc-out"></tbody>
+        </table></div>
+        <div class="lbl">Impact ratio by group (dashed line = 0.8)</div>
+        <div class="bars" id="calc-bars"></div>
+        <p class="calc-note" id="calc-note"></p>
+      </div>
+      <h3>Security risks for generative AI</h3>
+      <p>Governance and security overlap most here. The <a href="https://genai.owasp.org/resource/owasp-top-10-for-llm-applications-2025/">OWASP Top 10 for LLM Applications (2025)</a> is the standard checklist:</p>
+      <div class="tbl"><table>
+        <thead><tr><th>Risk</th><th>What it means</th><th>Typical control</th></tr></thead>
+        <tbody>
+          <tr><td>Prompt injection</td><td>Inputs or hidden content override the system's instructions</td><td>Separate trusted and untrusted content; limit tool permissions; test with planted instructions</td></tr>
+          <tr><td>Sensitive information disclosure</td><td>The system reveals personal data, secrets or confidential content</td><td>Data minimization, output filtering, access controls</td></tr>
+          <tr><td>Supply chain</td><td>Compromised models, datasets, plugins or vendors</td><td>Vet sources, inventory components, vendor review</td></tr>
+          <tr><td>Data and model poisoning</td><td>Tampered training or reference data skews behavior</td><td>Data provenance and validation</td></tr>
+          <tr><td>Improper output handling</td><td>Other systems trust AI output blindly, such as running generated code</td><td>Treat output as untrusted input; validate before use</td></tr>
+          <tr><td>Excessive agency</td><td>An agent has more permissions or autonomy than it needs</td><td>Least privilege; human approval for consequential actions</td></tr>
+          <tr><td>System prompt leakage</td><td>Instructions, and anything secret in them, get exposed</td><td>Never put credentials or secrets in prompts</td></tr>
+          <tr><td>Vector and embedding weaknesses</td><td>Retrieval over internal documents leaks or is manipulated</td><td>Permission-aware retrieval; access controls on the index</td></tr>
+          <tr><td>Misinformation</td><td>Confident, false output that people act on</td><td>Grounding in sources, citations, human review</td></tr>
+          <tr><td>Unbounded consumption</td><td>Runaway costs or denial of service</td><td>Rate limits, quotas, usage monitoring</td></tr>
+        </tbody>
+      </table></div>
+      <p>A test plan template is in <a href="#templates">Templates</a>.</p>
+    </section>
+
+    <!-- 05 VENDORS -->
+    <section id="vendors">
+      <div class="eyebrow">06</div>
+      <h2>Vendors and contracts</h2>
+      <p class="point">Most AI arrives through vendors, but the legal responsibility stays with you. Due diligence finds the risks; the contract is where you fix them.</p>
+
+      <h3>Contract clauses to ask for</h3>
+      <div class="tbl"><table>
+        <thead><tr><th>Clause</th><th>What it does</th><th>Why it matters</th></tr></thead>
+        <tbody>
+          <tr><td>Data use limits</td><td>No training on your data; use only to provide the service</td><td>Stops your data improving someone else's product, or leaking</td></tr>
+          <tr><td>Confidentiality, retention, deletion</td><td>Sets how long data is kept and how it's deleted</td><td>Needed for privacy law and incident containment</td></tr>
+          <tr><td>Audit and testing access</td><td>Lets you or an auditor test the system, including data needed for bias audits</td><td>Required in practice for NYC audits and insurer oversight</td></tr>
+          <tr><td>Model change notice</td><td>Advance notice before the model or core logic changes</td><td>Changes can break your testing and approvals</td></tr>
+          <tr><td>Documentation</td><td>Intended use, limits, testing results, model or system cards</td><td>Feeds your impact assessment</td></tr>
+          <tr><td>Human override</td><td>Your staff can review and override any output</td><td>Core control for decisions about people</td></tr>
+          <tr><td>Incident notification</td><td>Notice within a set number of hours</td><td>You may have a 72-hour clock of your own</td></tr>
+          <tr><td>Subprocessors and locations</td><td>Lists who else touches the data and where</td><td>Cross-border transfer and security review</td></tr>
+          <tr><td>Regulatory cooperation</td><td>Vendor helps answer regulators and auditors</td><td>Regulators will ask you, not the vendor</td></tr>
+          <tr><td>Indemnification</td><td>Covers IP claims and, where possible, discriminatory outcomes</td><td>Shifts some of the financial risk</td></tr>
+          <tr><td>Exit and data return</td><td>Data returned or destroyed at termination</td><td>Avoids lock-in and lingering exposure</td></tr>
+        </tbody>
+      </table></div>
+      <p>The due-diligence questionnaire is in <a href="#templates">Templates</a>.</p>
+      <p class="hint">Watch the marketing too. The FTC has kept pursuing deceptive AI capability claims, including in business-to-business sales materials (<a href="https://www.hklaw.com/en/insights/publications/2026/08/operation-ai-comply-2-years-later-continued-enforcement">Holland &amp; Knight, Aug 2026</a>). Ask vendors to back up what they claim.</p>
+    </section>
+
+    <!-- 06 MONITORING -->
+    <section id="monitoring">
+      <div class="eyebrow">07</div>
+      <h2>Monitoring</h2>
+      <p class="point">Approval is a snapshot. Data drifts, vendors swap models and people start using tools in new ways, so every approved system needs metrics, a review date and clear triggers for a fresh look.</p>
+
+      <h3>What to measure</h3>
+      <div class="tbl"><table>
+        <thead><tr><th>System type</th><th>Metrics</th></tr></thead>
+        <tbody>
+          <tr><td>Decision systems (hiring, lending, pricing)</td><td>Selection or approval rates and impact ratios by group; accuracy against real outcomes; human override rate; appeals and complaints; drift in input data</td></tr>
+          <tr><td>Internal genAI assistants</td><td>Active users; blocked or flagged prompts; sensitive-data alerts; reported errors; use of unapproved tools (re-survey)</td></tr>
+          <tr><td>Customer-facing chatbots</td><td>Hand-offs to a person; complaint rate; harmful or incorrect output reports; AI disclosure shown as required</td></tr>
+          <tr><td>Agents that take actions</td><td>Actions taken vs. approved; errors and reversals; permission changes; injection attempts detected</td></tr>
+          <tr><td>Every vendor</td><td>Model change notices; security incidents; certification renewals; contract review date</td></tr>
+        </tbody>
+      </table></div>
+
+      <h3>Triggers for reassessment</h3>
+      <ul>
+        <li>The vendor changes the model, or you retrain your own</li>
+        <li>A new use, user group or affected population</li>
+        <li>A new data source, or a new location for affected people</li>
+        <li>A new law or regulator guidance that applies</li>
+        <li>An incident, or a pattern of complaints</li>
+        <li>A metric crosses its threshold</li>
+        <li>The scheduled review date arrives</li>
+      </ul>
+    </section>
+
+    <!-- 07 INCIDENTS -->
+    <section id="incidents" data-checked="2026-10-12">
+      <div class="eyebrow">08</div>
+      <h2>Incidents and privacy</h2>
+      <span class="checked" data-checked-badge><span class="dot"></span><span>Checked Oct 12, 2026</span></span>
+      <p class="point">The most common AI incident is personal or confidential data pasted into an unapproved tool. Under GDPR that can be a personal data breach, with 72 hours from becoming aware to notify the regulator unless the risk to people is unlikely.</p>
+
+      <h3>Key GDPR rules</h3>
+      <ul>
+        <li><strong>What a breach is:</strong> a security failure that leads to accidental or unlawful loss, change, disclosure of or access to personal data. Sharing data with an AI provider the company has no contract with can count as unauthorized disclosure.</li>
+        <li><strong>Notify the regulator</strong> without undue delay and, where feasible, within 72 hours of becoming aware, unless the breach is unlikely to put people at risk. If late, explain why (<a href="https://gdpr-info.eu/art-33-gdpr/">Art. 33</a>). Details can come in phases.</li>
+        <li><strong>Document every breach,</strong> including the ones you don't report.</li>
+        <li><strong>Tell the people affected</strong> without undue delay if the risk to them is high, unless the data was encrypted, the risk was removed, or individual notice would take disproportionate effort (<a href="https://gdpr-info.eu/art-34-gdpr/">Art. 34</a>).</li>
+        <li><strong>Automated decisions:</strong> people have a right not to be subject to decisions based solely on automated processing that have legal or similarly significant effects, with exceptions and safeguards such as human intervention (<a href="https://gdpr-info.eu/art-22-gdpr/">Art. 22</a>).</li>
+      </ul>
+
+      <h3>First response</h3>
+      <div class="flow">
+        <div class="step first"><b>1 · Someone reports data went into an AI tool</b><p>Note who reported it, which tool and when, and thank them: no blame. Tell legal the same day, since a notification clock may already be running.</p></div>
+        <div class="arrow" aria-hidden="true"></div>
+        <div class="step"><b>2 · Contain</b><p>Stop further use of that tool with that data. Record the account, dates and what was shared. Check whether it was a personal or company account, and whether the vendor keeps or trains on what's entered.</p></div>
+        <div class="arrow" aria-hidden="true"></div>
+        <div class="step"><b>3 · Assess with legal</b><p>Whose data, what kind, how many people, how sensitive, and in which jurisdictions. Judge the likely risk to the people affected, not to the company.</p></div>
+        <div class="arrow" aria-hidden="true"></div>
+        <div class="decide"><span>Risk to people?</span></div>
+        <div class="branches">
+          <div class="branch" style="--sev: var(--good)"><b>Unlikely</b><p>Document it internally.</p><small>GDPR Art. 33(5)</small></div>
+          <div class="branch" style="--sev: var(--warn)"><b>Likely</b><p>Notify the regulator within 72 hours.</p><small>GDPR Art. 33</small></div>
+          <div class="branch" style="--sev: var(--crit)"><b>High</b><p>Also tell the people affected.</p><small>GDPR Art. 34</small></div>
+        </div>
+        <div class="arrow" aria-hidden="true"></div>
+        <div class="step"><b>4 · Every case: document it, fix the cause, check other laws</b><p>US state breach laws mostly trigger on specific data like Social Security or account numbers. Sector rules (health, finance) may add their own clocks.</p></div>
+      </div>
+
+      <div class="tool" id="clock">
+        <div class="tool-head"><h3>Incident clock</h3><span class="eyebrow">Tool</span></div>
+        <div class="clock-grid">
+          <div style="display:grid; gap:12px; align-content:start;">
+            <div class="field">
+              <label for="aware-at">Company became aware at</label>
+              <input type="datetime-local" id="aware-at">
+            </div>
+            <div class="clock-face" id="clock-face">
+              <div class="lbl">GDPR 72-hour deadline</div>
+              <div class="big" id="clock-left">72h 0m left</div>
+              <div class="meter"><span id="clock-meter"></span></div>
+              <div class="sub" id="clock-deadline">Deadline: —</div>
+            </div>
+            <p class="hint" style="margin:0">The clock counts from awareness, not from when the data was shared. Times are in your local time zone. Checklist ticks aren't saved.</p>
+            <div><button type="button" class="btn small" id="clock-reset">Reset to now</button></div>
+          </div>
+          <ul class="checklist">
+            <li class="grp">First hour</li>
+            <li><label><input type="checkbox" id="ck1"><span>Thank the reporter and record who, which tool, when</span></label></li>
+            <li><label><input type="checkbox" id="ck2"><span>Tell legal; note the awareness time above</span></label></li>
+            <li><label><input type="checkbox" id="ck3"><span>Stop further use of that tool with that data</span></label></li>
+            <li class="grp">First day</li>
+            <li><label><input type="checkbox" id="ck4"><span>Capture account type, dates and exactly what was shared</span></label></li>
+            <li><label><input type="checkbox" id="ck5"><span>Check vendor terms: retention, training, deletion requests</span></label></li>
+            <li><label><input type="checkbox" id="ck6"><span>Identify whose data, how many people, how sensitive, which jurisdictions</span></label></li>
+            <li class="grp">Before the deadline</li>
+            <li><label><input type="checkbox" id="ck7"><span>Document the risk decision and the reasoning</span></label></li>
+            <li><label><input type="checkbox" id="ck8"><span>If risk is likely: notify the regulator (phased is fine)</span></label></li>
+            <li><label><input type="checkbox" id="ck9"><span>If risk is high: plan notice to the people affected</span></label></li>
+            <li class="grp">After</li>
+            <li><label><input type="checkbox" id="ck10"><span>Log it in the breach register</span></label></li>
+            <li><label><input type="checkbox" id="ck11"><span>Fix the cause: approved tool, training, guidance</span></label></li>
+          </ul>
+        </div>
+      </div>
+
+      <h3>Privacy laws that reach AI</h3>
+      <div class="tbl"><table>
+        <thead><tr><th>Rule</th><th>What it adds for AI</th></tr></thead>
+        <tbody>
+          <tr><td><a href="https://www.skadden.com/insights/publications/2025/10/california-finalizes-cppa-regulations">California CCPA regulations on automated decisions</a></td><td>From April 1, 2027: pre-use notice, opt-out, access and appeal rights when automated technology replaces or substantially replaces human decisions about finances, housing, education, healthcare or employment</td></tr>
+          <tr><td>GDPR Art. 22</td><td>Limits solely automated decisions with legal or similarly significant effects; requires safeguards such as human intervention</td></tr>
+          <tr><td>Other US state privacy laws</td><td>Many give opt-outs from profiling for significant decisions and require assessments for high-risk processing. Check each state where affected people live.</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <!-- 08 LAWS -->
+    <section id="laws-section" data-checked="2026-10-12">
+      <div class="eyebrow">09</div>
+      <h2>Laws and regulations</h2>
+      <span class="checked" data-checked-badge><span class="dot"></span><span>Checked Oct 12, 2026</span></span>
+      <p class="point">There's no single US AI law. Instead, broad state laws, sector rules, chatbot laws and long-standing anti-discrimination and consumer protection law all apply. The EU AI Act sets the strictest baseline for anything touching the EU.</p>
+
+      <div id="laws">
+        <div class="filters">
+          <div class="field"><label for="law-domain">Area</label>
+            <select id="law-domain">
+              <option value="all">All areas</option>
+              <option value="employment">Employment</option>
+              <option value="lending">Lending and credit</option>
+              <option value="insurance">Insurance</option>
+              <option value="healthcare">Healthcare</option>
+              <option value="chatbots">Chatbots and AI disclosure</option>
+              <option value="privacy">Privacy and automated decisions</option>
+              <option value="consumer">Consumer protection and marketing</option>
+            </select>
+          </div>
+          <div class="field"><label for="law-loc">Where affected people are</label>
+            <select id="law-loc">
+              <option value="all">Anywhere</option>
+              <option value="eu">European Union</option>
+              <option value="us">United States (federal only)</option>
+              <option value="ca">California</option>
+              <option value="co">Colorado</option>
+              <option value="ct">Connecticut</option>
+              <option value="il">Illinois</option>
+              <option value="me">Maine</option>
+              <option value="nv">Nevada</option>
+              <option value="ny">New York State</option>
+              <option value="nyc">New York City</option>
+              <option value="or">Oregon</option>
+              <option value="tn">Tennessee</option>
+              <option value="tx">Texas</option>
+              <option value="ut">Utah</option>
+              <option value="wa">Washington</option>
+              <option value="other">Another US state</option>
+            </select>
+          </div>
+          <button type="button" class="btn small" id="law-reset">Show all</button>
+        </div>
+        <p class="hint" id="law-count">Showing all rules.</p>
+        <div class="tbl"><table>
+          <thead><tr><th>Rule</th><th>In effect</th><th>Covers</th><th>Key requirements</th></tr></thead>
+          <tbody id="law-rows">
+            <tr data-domain="general" data-loc="eu"><td><a href="https://www.orrick.com/en/Insights/2026/07/EU-AI-Act-Update-Digital-Omnibus-Finalizes-8-Compliance-Changes">EU AI Act</a><span class="dom">General · EU</span></td><td><span class="tag now">Phased</span></td><td>AI placed on the EU market or whose output is used in the EU</td><td>Risk tiers: banned practices, high-risk duties, transparency duties, AI literacy. Dates below.</td></tr>
+            <tr data-domain="general" data-loc="co"><td><a href="https://www.mcdermottlaw.com/insights/colorado-ai-law-in-flux-comprehensive-replacement-bill-signed-after-federal-court-blocks-predecessors-enforcement/">Colorado SB 26-189</a><span class="dom">General · Colorado</span></td><td><span class="tag soon">Jan 1, 2027</span></td><td>Automated decision technology used for consequential decisions (replaced SB 24-205)</td><td>Notice at point of use; plain-language explanation within 30 days of an adverse outcome; data correction and human review. Confirm which decision types are covered.</td></tr>
+            <tr data-domain="general healthcare" data-loc="tx"><td><a href="https://www.ashurstperkinscoie.com/en/insights/update/texas-enacts-responsible-artificial-intelligence-governance-act/">Texas TRAIGA (HB 149)</a><span class="dom">General · Texas</span></td><td><span class="tag now">Jan 1, 2026</span></td><td>Anyone developing or deploying AI in Texas</td><td>Bans AI intended to manipulate people into harm, discriminate unlawfully or produce certain illegal content. Healthcare providers must disclose AI use in certain contexts. AG enforcement; 60-day cure for some violations.</td></tr>
+            <tr data-domain="general" data-loc="us"><td><a href="https://vorplabs.com/ai-regulatory-updates/united-states">Federal preemption push (EO 14365)</a><span class="dom">General · US</span></td><td><span class="tag now">Dec 2025</span></td><td>State AI laws</td><td>Directs federal efforts to challenge state AI laws. No federal preemption enacted as of Oct 2026; state laws still apply.</td></tr>
+            <tr data-domain="employment" data-loc="il"><td><a href="https://www.nelsonmullins.com/insights/blogs/ai-task-force/ai/states-take-aim-at-ai-in-employment-decisions-illinois-s-disclosure-and-anti-discrimination-requirements-enforcement-gaps-under-nyc-s-local-law-144-and-connecticut-s-new-ai-law">Illinois HB 3773</a><span class="dom">Employment · Illinois</span></td><td><span class="tag now">Jan 1, 2026</span></td><td>AI in employment decisions about Illinois workers and applicants</td><td>No discriminatory effect on protected classes; no zip codes as a proxy; notify people AI is used (notice rules in draft)</td></tr>
+            <tr data-domain="employment" data-loc="nyc"><td><a href="https://www.nyc.gov/site/dca/about/automated-employment-decision-tools.page">NYC Local Law 144</a><span class="dom">Employment · NYC</span></td><td><span class="tag now">July 2023</span></td><td>Automated tools that substantially help decide hiring or promotion</td><td>Independent bias audit every year; publish the summary; notify candidates in advance</td></tr>
+            <tr data-domain="employment" data-loc="ct"><td><a href="https://www.nelsonmullins.com/insights/blogs/ai-task-force/ai/states-take-aim-at-ai-in-employment-decisions-illinois-s-disclosure-and-anti-discrimination-requirements-enforcement-gaps-under-nyc-s-local-law-144-and-connecticut-s-new-ai-law">Connecticut SB 5 (employment tools)</a><span class="dom">Employment · Connecticut</span></td><td><span class="tag soon">Oct 1, 2027</span></td><td>Tools whose output substantially influences employment decisions</td><td>Notice naming the tool, data and sources; using AI is no defense to discrimination; bias testing counts as evidence</td></tr>
+            <tr data-domain="employment" data-loc="us"><td>Title VII and federal anti-discrimination law<span class="dom">Employment · US</span></td><td><span class="tag now">Always</span></td><td>All US hiring and employment</td><td>Disparate impact liability applies to AI-driven decisions; the employer stays responsible when a vendor built the tool</td></tr>
+            <tr data-domain="lending" data-loc="us"><td><a href="https://www.skadden.com/insights/publications/2024/01/cfpb-applies-adverse-action-notification-requirement">ECOA and Regulation B (CFPB Circulars 2022-03, 2023-03)</a><span class="dom">Lending · US</span></td><td><span class="tag now">In force</span></td><td>Credit decisions, including complex AI models</td><td>Adverse action notices must give specific, accurate principal reasons; a generic checklist reason isn't enough just because the model is complex</td></tr>
+            <tr data-domain="insurance" data-loc="multi"><td><a href="https://actuary.info/insights/ai-regulation-insurance-naic-2026">NAIC model bulletin on AI systems</a><span class="dom">Insurance · about half of states</span></td><td><span class="tag now">Dec 2023</span></td><td>Insurers using AI in underwriting, pricing, claims, fraud and marketing</td><td>Written AI governance program; testing for unfair discrimination; vendor oversight with audit rights; documentation for regulators. Check whether your state adopted it.</td></tr>
+            <tr data-domain="healthcare" data-loc="us"><td><a href="https://livecompliance.com/learn/ai-healthcare-regulations/">HHS Section 1557 rule (45 CFR 92.210)</a><span class="dom">Healthcare · US</span></td><td><span class="tag now">May 1, 2025</span></td><td>Covered providers using patient care decision support tools, including AI</td><td>Reasonable efforts to identify tools that use race, color, national origin, sex, age or disability as inputs, and to mitigate discrimination risk</td></tr>
+            <tr data-domain="healthcare" data-loc="us"><td><a href="https://livecompliance.com/learn/ai-healthcare-regulations/">FDA oversight of AI-enabled devices</a><span class="dom">Healthcare · US</span></td><td><span class="tag now">In force</span></td><td>AI that qualifies as a medical device</td><td>Premarket review; predetermined change control plans let approved models change within set limits</td></tr>
+            <tr data-domain="healthcare" data-loc="ca"><td><a href="https://livecompliance.com/learn/ai-healthcare-regulations/">California AB 3030</a><span class="dom">Healthcare · California</span></td><td><span class="tag now">Jan 1, 2025</span></td><td>Generative AI patient communications about clinical information</td><td>AI disclaimer and a way to reach a human, unless a licensed provider reviewed the message</td></tr>
+            <tr data-domain="chatbots" data-loc="me"><td><a href="https://www.wileyconnect.com/state-chatbot-laws-are-moving-from-transparency-to-risk-management">Maine AI transparency law</a><span class="dom">Chatbots · Maine</span></td><td><span class="tag now">Sept 2025</span></td><td>Chatbots in consumer transactions</td><td>Disclose AI when a reasonable consumer could think they're talking to a person</td></tr>
+            <tr data-domain="chatbots" data-loc="ut"><td><a href="https://www.wileyconnect.com/state-chatbot-laws-are-moving-from-transparency-to-risk-management">Utah SB 226</a><span class="dom">Chatbots · Utah</span></td><td><span class="tag now">May 7, 2025</span></td><td>Generative AI interacting with consumers</td><td>Disclose AI on clear request; prominent disclosure for higher-risk interactions in regulated occupations</td></tr>
+            <tr data-domain="chatbots" data-loc="ca"><td><a href="https://www.wileyconnect.com/state-chatbot-laws-are-moving-from-transparency-to-risk-management">California SB 243</a><span class="dom">Chatbots · California</span></td><td><span class="tag now">Jan 1, 2026</span></td><td>Companion chatbots</td><td>AI disclosure; published suicide and self-harm protocol; protections for minors; private right of action. Annual reporting from July 1, 2027.</td></tr>
+            <tr data-domain="chatbots" data-loc="ny"><td><a href="https://www.wileyconnect.com/state-chatbot-laws-are-moving-from-transparency-to-risk-management">New York AI companion models law</a><span class="dom">Chatbots · New York</span></td><td><span class="tag now">Nov 5, 2025</span></td><td>AI companions</td><td>Disclosure at the start and every three hours; self-harm protocol with crisis referral; AG penalties up to $15,000 a day</td></tr>
+            <tr data-domain="chatbots" data-loc="ct"><td><a href="https://www.wileyconnect.com/state-chatbot-laws-are-moving-from-transparency-to-risk-management">Connecticut SB 5 (chatbots)</a><span class="dom">Chatbots · Connecticut</span></td><td><span class="tag now">Oct 1, 2026</span></td><td>Companion chatbots</td><td>Recurring disclosure, hourly for minors; limits on age-inappropriate content and manipulative techniques</td></tr>
+            <tr data-domain="chatbots" data-loc="wa"><td><a href="https://www.wileyconnect.com/state-chatbot-laws-are-moving-from-transparency-to-risk-management">Washington HB 2225</a><span class="dom">Chatbots · Washington</span></td><td><span class="tag soon">Jan 1, 2027</span></td><td>Companion chatbots</td><td>Disclosure every three hours, hourly for minors; self-harm protocol; no manipulative engagement for minors; Consumer Protection Act enforcement</td></tr>
+            <tr data-domain="chatbots" data-loc="or"><td><a href="https://www.wileyconnect.com/state-chatbot-laws-are-moving-from-transparency-to-risk-management">Oregon SB 1546</a><span class="dom">Chatbots · Oregon</span></td><td><span class="tag soon">Jan 1, 2027</span></td><td>Companion chatbots</td><td>Self-harm protocol; break reminders for minors; private right of action</td></tr>
+            <tr data-domain="chatbots healthcare" data-loc="ca il nv tn"><td><a href="https://www.wileyconnect.com/state-chatbot-laws-are-moving-from-transparency-to-risk-management">Mental health chatbot limits</a><span class="dom">Chatbots · CA, IL, NV, TN</span></td><td><span class="tag now">2025–2026</span></td><td>Chatbots presented as health or therapy providers</td><td>California AB 489 bars implying a health license; Illinois bars AI therapy; Nevada bars claiming professional mental health care; Tennessee (July 1, 2026) bars presenting AI as a mental health professional</td></tr>
+            <tr data-domain="privacy employment lending housing healthcare" data-loc="ca"><td><a href="https://www.skadden.com/insights/publications/2025/10/california-finalizes-cppa-regulations">California CCPA automated decision rules</a><span class="dom">Privacy · California</span></td><td><span class="tag soon">Apr 1, 2027</span></td><td>Technology that replaces or substantially replaces human decisions about finances, housing, education, healthcare or employment</td><td>Pre-use notice, opt-out, access and appeal; risk assessments (initial ones due Dec 31, 2027)</td></tr>
+            <tr data-domain="privacy" data-loc="eu"><td><a href="https://gdpr-info.eu/art-22-gdpr/">GDPR Art. 22 and Art. 35</a><span class="dom">Privacy · EU</span></td><td><span class="tag now">2018</span></td><td>Personal data of people in the EU</td><td>Limits on solely automated significant decisions; DPIA for high-risk processing; breach notice within 72 hours</td></tr>
+            <tr data-domain="consumer" data-loc="us"><td><a href="https://www.hklaw.com/en/insights/publications/2026/08/operation-ai-comply-2-years-later-continued-enforcement">FTC Act Section 5</a><span class="dom">Consumer protection · US</span></td><td><span class="tag now">Always</span></td><td>Unfair or deceptive practices, including AI claims</td><td>Back up AI capability claims; keep testing records; vendors supplying misleading materials can be liable too</td></tr>
+          </tbody>
+        </table></div>
+      </div>
+
+      <h3>EU AI Act at a glance</h3>
+      <div class="tbl"><table>
+        <thead><tr><th>Tier</th><th>Examples</th><th>What applies</th><th>From</th></tr></thead>
+        <tbody>
+          <tr><td style="color:var(--stop)">Unacceptable (banned)</td><td>Social scoring, harmful manipulation, emotion recognition at work or school, untargeted face scraping; non-consensual intimate imagery added by the 2026 amendments</td><td>Prohibited</td><td>Feb 2, 2025 (new bans Dec 2, 2026)</td></tr>
+          <tr><td style="color:var(--crit)">High risk</td><td>Employment, education, credit scoring, essential services, critical infrastructure, law enforcement (Annex III)</td><td>Risk management, data governance, documentation, human oversight, logging; deployers monitor and inform people; some need a FRIA</td><td>Dec 2, 2027 (Annex III); Aug 2, 2028 (AI in regulated products)</td></tr>
+          <tr><td style="color:var(--warn)">Limited risk</td><td>Chatbots, AI-generated or manipulated content</td><td>Tell people they're interacting with AI; label synthetic content</td><td>Aug 2, 2026</td></tr>
+          <tr><td style="color:var(--good)">Minimal risk</td><td>Spam filters, AI in games</td><td>No specific duties</td><td>Not applicable</td></tr>
+          <tr><td>All organizations using AI</td><td>Any provider or deployer</td><td>AI literacy: make sure staff using AI understand it well enough</td><td>Feb 2, 2025</td></tr>
+          <tr><td>General-purpose AI models</td><td>Large foundation models</td><td>Provider duties: documentation, copyright policy, training data summary; more for systemic-risk models</td><td>Aug 2, 2025 (enforcement from Aug 2, 2026)</td></tr>
+        </tbody>
+      </table></div>
+      <p class="hint">Maximum fines run up to €35M or 7% of global turnover for banned practices, and €15M or 3% for most other breaches (<a href="https://www.softwareimprovementgroup.com/blog/eu-ai-act-summary/">SIG summary, Aug 2026</a>).</p>
+
+      <h3>Beyond the US and EU</h3>
+      <p>Most countries rely on existing law plus voluntary frameworks. South Korea is the main exception, with a comprehensive AI law now in force.</p>
+      <div class="tbl"><table>
+        <thead><tr><th>Country</th><th>Approach</th><th>What to know</th></tr></thead>
+        <tbody>
+          <tr><td><a href="https://www.cooley.com/news/insight/2026/2026-01-27-south-koreas-ai-basic-act-overview-and-key-takeaways">South Korea</a></td><td>Comprehensive law: AI Basic Act, in force Jan 22, 2026</td><td>High-impact AI (healthcare, hiring, biometrics, energy, transport) needs explanations, human oversight and a user protection plan; generative AI output must be labeled; large foreign firms need a local representative. One-year grace period before fines.</td></tr>
+          <tr><td><a href="https://www.dpo-consulting.com/blog/uk-ai-regulation">United Kingdom</a></td><td>No AI act; existing regulators apply five principles</td><td>Safety, transparency, fairness, accountability and contestability, applied by the ICO, FCA, CMA, Ofcom and others. UK GDPR still governs personal data. Public bodies follow the <a href="https://www.gov.uk/government/publications/ai-playbook-for-the-uk-government">UK AI Playbook</a>.</td></tr>
+          <tr><td><a href="https://vorplabs.com/ai-regulatory-updates/canada">Canada</a></td><td>No federal AI law; provincial rules</td><td>The federal AI bill (AIDA) died in Jan 2025. Quebec's Law 25 gives rights around fully automated decisions. Ontario has required AI disclosure in public job postings since Jan 1, 2026 (employers with 25+ staff). Federal agencies use the Algorithmic Impact Assessment.</td></tr>
+          <tr><td><a href="https://www.mallesons.com/au/en/insights/latest-thinking/australias-ai-plan-where-is-australia-going-with-ai">Australia</a></td><td>No AI act; existing laws plus guidance</td><td>The Dec 2025 National AI Plan dropped proposed mandatory guardrails and created an AI Safety Institute. Organizations are expected to follow the <a href="https://www.industry.gov.au/publications/guidance-for-ai-adoption">Guidance for AI Adoption</a> and its six essential practices.</td></tr>
+          <tr><td>Singapore</td><td>Voluntary frameworks and testing tools</td><td>The Model AI Governance Framework (with a generative AI edition) and the <a href="https://aiverifyfoundation.sg/">AI Verify</a> open testing toolkit.</td></tr>
+          <tr><td>Japan</td><td>Promotion-focused framework law (2025)</td><td>Sets national strategy and asks businesses to cooperate; no direct penalties. Existing sector laws apply.</td></tr>
+          <tr><td><a href="https://www.twobirds.com/en/insights/2025/new-ai-content-labelling-rules-in-china-what-are-they-and-how-do-they-compare-to-the-eu-ai-act">China</a></td><td>Targeted rules by technology</td><td>AI-generated content must carry visible labels and embedded metadata since Sept 1, 2025, on top of earlier rules for generative AI services and recommendation algorithms.</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <!-- 09 FRAMEWORKS -->
+    <section id="frameworks">
+      <div class="eyebrow">10</div>
+      <h2>Frameworks</h2>
+      <p class="point">Frameworks give a program its structure and give you a shared vocabulary with auditors and regulators. Most US programs are built on the NIST AI RMF; ISO/IEC 42001 is what companies certify against.</p>
+
+      <h3>NIST AI RMF: the four functions</h3>
+      <div class="rmf">
+        <div class="loopnote">Map → Measure → Manage, repeated as the system or its use changes</div>
+        <div class="rmf-loop">
+          <div class="fn"><b>Map</b><p>Understand the context: what, who, where and which risks.</p><small>e.g. the inventory, triage</small></div>
+          <div class="fn"><b>Measure</b><p>Test and track the risks with methods and metrics.</p><small>e.g. bias and robustness testing</small></div>
+          <div class="fn"><b>Manage</b><p>Act on risks by priority: reduce, accept or stop.</p><small>e.g. decision memo, controls</small></div>
+        </div>
+        <div class="fn govern"><b>Govern (applies throughout)</b><p>Policies, roles, accountability and culture: who decides, and how much risk is acceptable.</p><small>e.g. the AI policy and ownership chart</small></div>
+      </div>
+
+      <h3>Seven traits of trustworthy AI</h3>
+      <p>The RMF's goals for any system, and a checklist for the risk section of an assessment:</p>
+      <ol class="list">
+        <li>Valid and reliable</li>
+        <li>Safe</li>
+        <li>Secure and resilient</li>
+        <li>Accountable and transparent</li>
+        <li>Explainable and interpretable</li>
+        <li>Privacy-enhanced</li>
+        <li>Fair, with harmful bias managed</li>
+      </ol>
+
+      <h3>The 12 generative AI risks (NIST AI 600-1)</h3>
+      <div class="tbl"><table>
+        <thead><tr><th>Risk</th><th>Plain meaning</th><th>Typical example</th></tr></thead>
+        <tbody>
+          <tr><td>Data privacy</td><td>Personal data leaked, exposed or inferred</td><td>Staff paste customer records into a public chatbot</td></tr>
+          <tr><td>Information security</td><td>Tools that are easier to attack or that leak secrets</td><td>An email assistant follows instructions hidden in an incoming message</td></tr>
+          <tr><td>Harmful bias and homogenization</td><td>Unfair outputs, or everyone getting the same skewed output</td><td>An LLM ranks résumés or loan files differently by name</td></tr>
+          <tr><td>Confabulation</td><td>Confident but false output</td><td>A support bot invents a refund policy</td></tr>
+          <tr><td>Human-AI configuration</td><td>Over-reliance on, or misplaced trust in, the system</td><td>Reviewers approve AI recommendations without reading them</td></tr>
+          <tr><td>Value chain and component integration</td><td>Risk from third-party models, data and vendors</td><td>A vendor quietly swaps the underlying model</td></tr>
+          <tr><td>Intellectual property</td><td>Copyright or trade secret exposure</td><td>Proprietary code pasted into a tool that trains on inputs</td></tr>
+          <tr><td>Information integrity</td><td>Misinformation that's hard to tell from fact</td><td>Synthetic images in marketing presented as real</td></tr>
+          <tr><td>Dangerous, violent or hateful content</td><td>Generating harmful material</td><td>A customer-facing bot is jailbroken into abusive replies</td></tr>
+          <tr><td>Obscene, degrading or abusive content</td><td>Generating abusive or explicit material</td><td>Misuse of an image generator</td></tr>
+          <tr><td>CBRN information</td><td>Easier access to chemical, biological, radiological or nuclear weapons information</td><td>Mainly a concern for model developers</td></tr>
+          <tr><td>Environmental impacts</td><td>Energy and resource use of training and running models</td><td>Comes up in vendor selection and sustainability reporting</td></tr>
+        </tbody>
+      </table></div>
+
+      <h3>ISO/IEC 42001 in brief</h3>
+      <p>A certifiable management system standard for AI, built on the same structure as ISO 27001. Its clauses cover context, leadership, planning, support, operation, performance evaluation and improvement, plus an annex of AI-specific controls such as impact assessments, data management and third-party relationships. If your company holds ISO 27001, 42001 will feel familiar.</p>
+
+      <h3>OECD AI Principles</h3>
+      <p>Five values-based principles that many national policies build on: inclusive growth and well-being; human rights and democratic values, including fairness and privacy; transparency and explainability; robustness, security and safety; and accountability.</p>
+    </section>
+
+    <!-- 10 WRITING -->
+    <section id="writing">
+      <div class="eyebrow">11</div>
+      <h2>Writing and templates</h2>
+      <p class="point">Governance writing gets quoted back, forwarded without context and sometimes read by lawyers later. Write every piece as if it will be.</p>
+
+      <h3>Five rules for every piece</h3>
+      <ol class="rules">
+        <li><strong>Match the decision exactly.</strong> Write down what was agreed, not your own version of it. If you disagree, raise it separately.</li>
+        <li><strong>Lead with the action.</strong> The first sentence says what the reader must do or know.</li>
+        <li><strong>Be concrete.</strong> Name the data, tools and people. "Customer account numbers and support tickets" beats "personal data."</li>
+        <li><strong>Leave out what isn't true yet.</strong> Don't imply approval, safety or compliance you haven't confirmed.</li>
+        <li><strong>Give a next step.</strong> Who to contact, what happens next and by when.</li>
+      </ol>
+
+      <h3>By document type</h3>
+      <div class="tbl"><table>
+        <thead><tr><th>Document</th><th>Purpose</th><th>Length</th><th>Must include</th><th>Common mistake</th></tr></thead>
+        <tbody>
+          <tr><td>Interim guidance</td><td>Stop the riskiest behavior while a review runs</td><td>3 to 5 sentences</td><td>The rule, concrete data examples, what's still fine, that it's temporary, who to contact, a no-blame way to report past use</td><td>Sounding like a threat, or quietly approving current tools</td></tr>
+          <tr><td>Meeting recap</td><td>Lock in what was agreed</td><td>Under 150 words</td><td>Decisions, owners, dates, open questions</td><td>Waiting to be asked for it</td></tr>
+          <tr><td>Discovery plan</td><td>Get approval for how you'll find out</td><td>Half a page</td><td>Goal, methods, data sources, people, timeline, risks</td><td>Starting with surveys when hard data exists</td></tr>
+          <tr><td>Findings memo</td><td>Report what you found</td><td>1 page</td><td>Top finding with a number, evidence, severity, recommended actions</td><td>Burying the main finding</td></tr>
+          <tr><td>Decision memo</td><td>Get a decision from leadership</td><td>1 to 2 pages</td><td>The ask, options with tradeoffs, recommendation, conditions, remaining risk</td><td>Offering only one option</td></tr>
+          <tr><td>Acceptable-use policy</td><td>Set lasting rules for everyone</td><td>2 to 4 pages</td><td>Scope, approved tools, data rules, prohibited uses, how to request a tool, consequences</td><td>Legalese nobody reads</td></tr>
+        </tbody>
+      </table></div>
+
+      <h3>Words to watch</h3>
+      <div class="tbl"><table>
+        <thead><tr><th>Avoid</th><th>Why</th><th>Use instead</th></tr></thead>
+        <tbody>
+          <tr><td>"Compliant," "safe," "approved"</td><td>Legal claims you may not be able to back up</td><td>"Reviewed against X," "approved for Y use only"</td></tr>
+          <tr><td>"Can continue using"</td><td>Reads as an endorsement</td><td>"Until the review finishes, don't…"</td></tr>
+          <tr><td>"Data incident," "violation" in employee messages</td><td>Scares people into hiding past use</td><td>"Let us know so we can check whether anything needs follow-up"</td></tr>
+          <tr><td>"Personal data" or "PII" alone</td><td>Too abstract; people don't recognize it in their own work</td><td>Concrete examples from their job</td></tr>
+          <tr><td>"Never use AI"</td><td>Pushes use out of sight</td><td>Rules tied to specific data or tasks</td></tr>
+        </tbody>
+      </table></div>
+
+      <h3 id="templates">Templates</h3>
+      <p class="hint">Fill in the [brackets] and cut whatever doesn't apply. Copy puts the text on your clipboard.</p>
+
+      <details class="tpl"><summary><span><b>AI use-case intake form</b> <span class="hint">· every new tool or use</span></span></summary><div class="tpl-body">
+<pre id="tpl-intake">AI USE-CASE INTAKE
+
+1. Requester and team:
+2. Tool or vendor name (and version, if known):
+3. What problem does it solve? What happens today without it?
+4. Who will use it, and roughly how many people?
+5. Who is affected by its outputs? (employees / applicants / customers / patients / public)
+6. Does it make or support decisions about people? Which decisions?
+7. Data going in: (personal / sensitive / confidential / customer / none)
+8. Where do outputs go, and who sees them?
+9. Does it take actions on its own? Which ones?
+10. Where is data stored and processed? (countries)
+11. Does the vendor keep or train on our data? Retention period?
+12. Does a person review outputs before they're used? How?
+13. Where are the affected people located? (states, countries)
+14. Contract status: (signed / in negotiation / free self-signup / none)
+15. Target launch date and why that date:
+
+For governance use: risk tier [ ]  reviewer [ ]  decision [ ]  next review [ ]</pre>
+<div class="row"><span class="copied" aria-live="polite"></span><button type="button" class="btn small" data-copy="tpl-intake">Copy</button></div></div></details>
+
+      <details class="tpl"><summary><span><b>AI inventory (spreadsheet columns)</b> <span class="hint">· paste into a spreadsheet</span></span></summary><div class="tpl-body">
+<pre id="tpl-inventory">ID,System name,Vendor,Version or model,Business owner,Purpose,Decisions supported,People affected,Locations of affected people,Data used,Sensitive data (Y/N),Customer-facing (Y/N),Takes actions (Y/N),Risk tier,Date triaged,Assessment link,Approval status,Conditions,Next review date,Notes</pre>
+<div class="row"><span class="copied" aria-live="polite"></span><button type="button" class="btn small" data-copy="tpl-inventory">Copy</button></div></div></details>
+
+      <details class="tpl"><summary><span><b>Governance committee charter</b> <span class="hint">· one page</span></span></summary><div class="tpl-body">
+<pre id="tpl-charter">AI GOVERNANCE COMMITTEE CHARTER
+
+Purpose
+Oversee how [Company] develops, buys and uses AI, so benefits are realized and risks stay within agreed limits.
+
+Scope
+All AI systems and uses in the AI inventory, including vendor tools.
+
+Members
+Chair: [name, title]
+Members: legal, privacy, security, data/engineering, HR, [business units]
+Secretary: AI governance lead (agenda, minutes, decision log)
+Quorum: [number] members including the chair or delegate
+
+Responsibilities
+- Approve or reject high-risk AI uses, with conditions
+- Approve the AI policy and changes to it
+- Set and review risk appetite and tiering criteria
+- Grant and review exceptions to policy
+- Review incidents and monitoring trends
+- Report to [executive team / board] quarterly
+
+Decision-making
+[Consensus / majority]; the chair decides if there's no agreement. Dissent is recorded.
+
+Meetings
+Monthly; urgent decisions by [fast-path process] within [n] business days.
+
+Records
+Every decision, its conditions and rationale go in the decision log.
+
+Review
+This charter is reviewed yearly. Last reviewed: [date]</pre>
+<div class="row"><span class="copied" aria-live="polite"></span><button type="button" class="btn small" data-copy="tpl-charter">Copy</button></div></div></details>
+
+      <details class="tpl"><summary><span><b>AI impact assessment</b> <span class="hint">· medium and high risk</span></span></summary><div class="tpl-body">
+<pre id="tpl-ia">AI IMPACT ASSESSMENT: [system name]
+Owner: [name]   Assessor: [name]   Date: [ ]   Risk tier: [ ]
+
+1. Purpose and context
+   - Problem solved and decision supported:
+   - What happens without the system:
+   - Intended uses / uses that are out of scope:
+
+2. People affected
+   - Who, how many, where:
+   - Vulnerable groups (minors, patients, people in financial hardship, etc.):
+   - Harm walk-through: for each group, how could it help, and how could it harm?
+     (allocation, quality of service, stereotyping, privacy, safety, economic,
+      autonomy, access)
+
+3. Data
+   - Inputs, outputs, sources:
+   - Sensitive data involved:
+   - Retention, location of processing, access:
+
+4. System
+   - Model or vendor, version:
+   - How it works, in plain language:
+   - Known limitations and failure modes:
+
+5. Risks (rate likelihood and severity for each)
+   - Validity and reliability:
+   - Safety:
+   - Security and resilience:
+   - Accountability and transparency:
+   - Explainability:
+   - Privacy:
+   - Fairness and bias:
+   - Generative AI risks that apply (confabulation, data leakage, etc.):
+
+6. Testing evidence
+   - Tests run, method, sample, results (attach):
+
+7. Controls
+   - Human oversight (who reviews what, and when):
+   - Notices to affected people:
+   - Appeal or correction route:
+   - Technical guardrails and access limits:
+
+8. Legal check
+   - Laws that apply and how each is met:
+
+9. Remaining risk and decision
+   - Risk remaining after controls:
+   - Recommendation: approve / approve with conditions / reject
+   - Conditions:
+   - Accepted by: [name, title, date]
+
+10. Monitoring
+   - Metrics and thresholds:
+   - Next review date:
+   - Reassessment triggers:</pre>
+<div class="row"><span class="copied" aria-live="polite"></span><button type="button" class="btn small" data-copy="tpl-ia">Copy</button></div></div></details>
+
+      <details class="tpl"><summary><span><b>Test plan</b> <span class="hint">· before launch</span></span></summary><div class="tpl-body">
+<pre id="tpl-test">TEST PLAN: [system name]
+
+Questions this testing must answer
+- [e.g. Do outcomes differ by group?]
+- [e.g. How often does it make up answers?]
+
+Methods (see Testing section)
+- Method: [ ]  Data or prompts: [source, size]  Pass threshold: [ ]
+- Method: [ ]  Data or prompts: [source, size]  Pass threshold: [ ]
+
+Groups or scenarios covered
+- [Demographic groups, edge cases, languages, attack types]
+
+Who runs it, and independence
+- [Team; independent reviewer if required]
+
+Results
+- [Summary, numbers, failures found]
+
+Decision
+- [Pass / fix and retest / fail], approved by [name, date]</pre>
+<div class="row"><span class="copied" aria-live="polite"></span><button type="button" class="btn small" data-copy="tpl-test">Copy</button></div></div></details>
+
+      <details class="tpl"><summary><span><b>Vendor due-diligence questions</b> <span class="hint">· AI-specific</span></span></summary><div class="tpl-body">
+<pre id="tpl-vendor">AI VENDOR DUE DILIGENCE: [vendor], [product]
+
+Models and training
+- Which models power the product, and who built them?
+- What data were they trained on? Is customer data used for training? Can we opt out in the contract?
+
+Data handling
+- Where is our data processed and stored? Which subprocessors?
+- Retention and deletion terms? Can we get deletion on request?
+- Certifications: SOC 2 Type II, ISO 27001, ISO/IEC 42001?
+
+Fairness (required for systems that make decisions about people)
+- Have you tested for bias? Share the method and results by group.
+- Will you support our independent testing or audit, including access to outcome data by group?
+
+Transparency and oversight
+- Documentation of intended use, limitations and known failure modes?
+- Can a person review and override every output? Are inputs and outputs logged for audit?
+
+Security
+- Protections against prompt injection, data leakage and misuse?
+- Incident notification timeline to customers?
+
+Claims and change management
+- What evidence supports your accuracy and capability claims?
+- How and when are customers told about model changes?
+
+Contract
+- Audit rights, data-use limits, indemnification, exit and data return?</pre>
+<div class="row"><span class="copied" aria-live="polite"></span><button type="button" class="btn small" data-copy="tpl-vendor">Copy</button></div></div></details>
+
+      <details class="tpl"><summary><span><b>Acceptable-use policy outline</b> <span class="hint">· company-wide</span></span></summary><div class="tpl-body">
+<pre id="tpl-aup">[COMPANY] AI ACCEPTABLE-USE POLICY
+
+1. Purpose: why this policy exists, in two sentences.
+2. Scope: who it covers (employees, contractors) and which tools (any AI that generates content, makes recommendations or takes actions).
+3. Approved tools: where to find the current list; how to request a new tool.
+4. Data rules: what may never go into AI tools (e.g. customer personal data, health data, credentials, unreleased financials) unless the tool is approved for that data.
+5. Allowed uses: examples of encouraged, low-risk uses.
+6. Prohibited uses: e.g. making decisions about people without approved review; presenting AI output as human-written where disclosure is required; banned practices under law.
+7. Human responsibility: you own what you send, publish or decide, whatever drafted it.
+8. Disclosure: when to tell customers or colleagues that AI was used.
+9. Reporting: how to report mistakes or data shared by accident, without blame.
+10. Training: required AI literacy training and when.
+11. Consequences: what happens if the policy is broken.
+12. Owner and review date.</pre>
+<div class="row"><span class="copied" aria-live="polite"></span><button type="button" class="btn small" data-copy="tpl-aup">Copy</button></div></div></details>
+
+      <details class="tpl"><summary><span><b>Meeting recap email</b> <span class="hint">· send the same day</span></span></summary><div class="tpl-body">
+<pre id="tpl-recap">Subject: Recap: [meeting topic], [date]
+
+Hi [name],
+
+Thanks for your time today. Here's what we agreed:
+
+Decisions
+- [Decision 1]
+- [Decision 2]
+
+Next steps
+- [Owner]: [action] by [date]
+- [Owner]: [action] by [date]
+
+Open questions
+- [Question] ([who will answer], by [date])
+
+Let me know if I've missed or misstated anything.
+
+[Your name]</pre>
+<div class="row"><span class="copied" aria-live="polite"></span><button type="button" class="btn small" data-copy="tpl-recap">Copy</button></div></div></details>
+
+      <details class="tpl"><summary><span><b>Findings memo</b> <span class="hint">· one page</span></span></summary><div class="tpl-body">
+<pre id="tpl-findings">To: [name]
+From: [your name]
+Date: [date]
+Subject: [topic]: findings
+
+Bottom line
+[One sentence with the key number.]
+
+What we found
+1. [Finding], based on [evidence]
+2. [Finding], based on [evidence]
+
+Severity: [High / Medium / Low], because [reason]
+
+Recommended actions
+- [Action] (owner: [name], by [date])
+- [Action] (owner: [name], by [date])
+
+What we don't know yet
+- [Gap] (how we'll close it: [step])
+
+Method
+[Data sources reviewed, period covered, who was consulted.]</pre>
+<div class="row"><span class="copied" aria-live="polite"></span><button type="button" class="btn small" data-copy="tpl-findings">Copy</button></div></div></details>
+
+      <details class="tpl"><summary><span><b>Decision memo</b> <span class="hint">· one to two pages</span></span></summary><div class="tpl-body">
+<pre id="tpl-decision">Decision needed: [the question], by [date]
+
+Background
+[Two or three sentences: what's proposed and why now.]
+
+Options
+A. [Option]: benefit [ ], risk [ ], cost [ ]
+B. [Option]: benefit [ ], risk [ ], cost [ ]
+C. Do nothing: benefit [ ], risk [ ], cost [ ]
+
+Recommendation
+[Option], with these conditions:
+- [Condition, e.g. bias testing before launch]
+- [Condition, e.g. human review of every adverse outcome]
+
+Remaining risk and monitoring
+[What could still go wrong, what we'll measure, how often, who owns it.]
+
+Approval: [name, title]   Date: [ ]</pre>
+<div class="row"><span class="copied" aria-live="polite"></span><button type="button" class="btn small" data-copy="tpl-decision">Copy</button></div></div></details>
+
+      <details class="tpl"><summary><span><b>Leadership AI risk report</b> <span class="hint">· quarterly, one page</span></span></summary><div class="tpl-body">
+<pre id="tpl-report">AI RISK REPORT: [quarter]
+
+Headline
+[One sentence: overall posture and the one thing leadership needs to know.]
+
+Program at a glance
+- AI systems in inventory: [ ] (high [ ] / medium [ ] / low [ ])
+- Assessments completed this quarter: [ ]
+- Overdue reviews: [ ]
+- Open high risks: [ ]
+- Incidents: [ ] (reportable [ ])
+- Staff AI training completion: [ ]%
+
+Top risks
+1. [Risk]: impact [ ], trend [up/down/flat], action [ ], owner [ ]
+2. [Risk]: ...
+
+Regulatory changes affecting us
+- [Law or guidance], effective [date], what we're doing: [ ]
+
+Decisions or support needed
+- [Ask], by [date]</pre>
+<div class="row"><span class="copied" aria-live="polite"></span><button type="button" class="btn small" data-copy="tpl-report">Copy</button></div></div></details>
+    </section>
+
+    <!-- 11 REPORTING -->
+    <section id="reporting">
+      <div class="eyebrow">12</div>
+      <h2>Reporting to leadership</h2>
+      <p class="point">Boards and executives want three things: how much AI we use, where the real risk is, and what they need to decide. Give them that on one page and keep the detail in an appendix.</p>
+      <ul>
+        <li><strong>Lead with the headline.</strong> One sentence on overall posture, then the single most important item.</li>
+        <li><strong>Show trends, not just counts.</strong> "Open high risks fell from 6 to 3" says more than "3 open risks."</li>
+        <li><strong>Translate risk into business terms:</strong> customer impact, legal exposure, cost, delay.</li>
+        <li><strong>Name owners and dates</strong> for every top risk.</li>
+        <li><strong>End with the asks:</strong> decisions, budget or support needed.</li>
+        <li><strong>Be consistent quarter to quarter,</strong> so leaders can compare.</li>
+      </ul>
+      <p>The one-page report template is in <a href="#templates">Templates</a>.</p>
+    </section>
+
+    <!-- 12 INTERVIEW -->
+    <section id="interview">
+      <div class="eyebrow">13</div>
+      <h2>Interview prep</h2>
+      <p class="point">Governance interviews test judgment more than memorized law. Answer with a real situation: what happened, what you did, the result and what you learned. Tie answers to your portfolio work wherever you can.</p>
+      <div class="qa">
+        <div><b>How would you set up an AI governance program from scratch?</b><span>Listening for: start with an inventory, risk-based triage, clear ownership, a framework (NIST or ISO), quick wins like an acceptable-use policy, then build out.</span></div>
+        <div><b>How do you decide how much review a use case needs?</b><span>Listening for: risk factors (decisions about people, data, audience, autonomy, scale), tiers, and proportionality.</span></div>
+        <div><b>A team wants to launch next week and says governance is blocking them. What do you do?</b><span>Listening for: understand the deadline, triage fast, offer a conditional or limited launch, escalate the tradeoff to the right decision-maker rather than just saying no.</span></div>
+        <div><b>How would you assess a vendor's AI tool?</b><span>Listening for: due diligence questions, testing access, contract clauses, and knowing the company stays responsible.</span></div>
+        <div><b>Walk me through testing a system for bias.</b><span>Listening for: defining groups and outcomes, selection rates and impact ratios, paired testing, sample size limits, and what you'd do with a bad result.</span></div>
+        <div><b>An employee pasted customer data into a public chatbot. What happens next?</b><span>Listening for: no-blame reporting, containment, legal involvement, the notification clock, and fixing the cause with an approved tool.</span></div>
+        <div><b>Which frameworks and laws do you know, and how have you used them?</b><span>Listening for: applied knowledge, not a list. Show how a framework shaped a real deliverable.</span></div>
+        <div><b>How do you stay current?</b><span>Listening for: specific sources (IAPP, law firm alerts, regulator sites) and a habit, like a weekly review.</span></div>
+        <div><b>How would you explain AI risk to the board?</b><span>Listening for: business terms, trends, owners, and clear asks on one page.</span></div>
+        <div><b>Tell me about a time you pushed back on a decision.</b><span>Listening for: respect for the decision-maker, evidence, a constructive alternative, and how it ended.</span></div>
+      </div>
+    </section>
+
+    <!-- 13 RESOURCES -->
+    <section id="resources">
+      <div class="eyebrow">14</div>
+      <h2>Resources</h2>
+      <p class="point">The sources practitioners use most, grouped by what you'd reach for them for. Start with the three marked "Start here."</p>
+
+      <h3>Frameworks and standards</h3>
+      <div class="reslist">
+        <a class="res" href="https://airc.nist.gov/airmf-resources/playbook/"><b>NIST AI RMF Playbook</b><span class="star">Start here</span><span>Suggested actions for every part of the RMF. The daily working reference.</span></a>
+        <a class="res" href="https://www.nist.gov/itl/ai-risk-management-framework"><b>NIST AI RMF 1.0</b><span>The framework itself: Govern, Map, Measure, Manage.</span></a>
+        <a class="res" href="https://nvlpubs.nist.gov/nistpubs/ai/NIST.AI.600-1.pdf"><b>NIST Generative AI Profile (AI 600-1)</b><span>The 12 genAI risks and suggested actions for each.</span></a>
+        <a class="res" href="https://www.iso.org/standard/42001"><b>ISO/IEC 42001</b><span>The certifiable AI management system standard. Paid document.</span></a>
+        <a class="res" href="https://oecd.ai/en/ai-principles"><b>OECD AI Principles</b><span>Shared reference point for international policy work.</span></a>
+      </div>
+
+      <h3>Laws and official sources</h3>
+      <div class="reslist">
+        <a class="res" href="https://eur-lex.europa.eu/eli/reg/2024/1689/oj"><b>EU AI Act (official text)</b><span>Regulation (EU) 2024/1689 on EUR-Lex. Check later amendments too.</span></a>
+        <a class="res" href="https://gdpr-info.eu/"><b>GDPR (searchable text)</b><span>Articles and recitals, easy to link to.</span></a>
+        <a class="res" href="https://www.nyc.gov/site/dca/about/automated-employment-decision-tools.page"><b>NYC AEDT rules (Local Law 144)</b><span>The city's official page, rules and FAQ.</span></a>
+        <a class="res" href="https://www.consumerfinance.gov/rules-policy/regulations/1002/"><b>Regulation B (ECOA)</b><span>The CFPB's text of the credit anti-discrimination rule.</span></a>
+        <a class="res" href="https://www.ecfr.gov/current/title-29/subtitle-B/chapter-XIV/part-1607"><b>Uniform Guidelines (29 CFR 1607)</b><span>Source of the four-fifths rule.</span></a>
+        <a class="res" href="https://www.cppa.ca.gov/announcements/2025/20250923.html"><b>California Privacy Protection Agency</b><span>Announcement of the automated decision and risk assessment rules.</span></a>
+      </div>
+
+      <h3>News and legal trackers</h3>
+      <div class="reslist">
+        <a class="res" href="https://iapp.org/resources/topics/artificial-intelligence-1/"><b>IAPP AI governance resources</b><span class="star">Start here</span><span>Articles, trackers and news from the main professional body.</span></a>
+        <a class="res" href="https://www.wileyconnect.com/state-chatbot-laws-are-moving-from-transparency-to-risk-management"><b>Law firm client alerts</b><span>Free updates when laws change. Example: Wiley on state chatbot laws.</span></a>
+        <a class="res" href="https://www.onetrust.com/resources/ai-ready-governance-brief/"><b>OneTrust AI governance brief</b><span>Monthly vendor newsletter. Useful, but it's also selling something.</span></a>
+        <a class="res" href="https://www.aigl.blog/ai-governance-resource-repository/"><b>AI Governance Library</b><span>Curated frameworks, templates and reports.</span></a>
+      </div>
+
+      <h3>Incidents and risk databases</h3>
+      <div class="reslist">
+        <a class="res" href="https://incidentdatabase.ai/"><b>AI Incident Database</b><span class="star">Start here</span><span>Real AI failures, searchable. Answers "has this gone wrong elsewhere?"</span></a>
+        <a class="res" href="https://oecd.ai/en/incidents"><b>OECD AI Incidents Monitor</b><span>Incidents and hazards tracked from global news.</span></a>
+        <a class="res" href="https://airisk.mit.edu/"><b>MIT AI Risk Repository</b><span>A large catalog of AI risks, sorted by category.</span></a>
+      </div>
+
+      <h3>Other playbooks to compare</h3>
+      <div class="reslist">
+        <a class="res" href="https://www.gov.uk/government/publications/ai-playbook-for-the-uk-government"><b>UK Government AI Playbook</b><span>Ten principles for public-sector AI, including "choose the right tool."</span></a>
+        <a class="res" href="https://www.industry.gov.au/publications/guidance-for-ai-adoption"><b>Australia: Guidance for AI Adoption</b><span>Six essential practices, plus policy, register and screening templates.</span></a>
+        <a class="res" href="https://www.canada.ca/en/government/system/digital-government/digital-government-innovations/responsible-use-ai/algorithmic-impact-assessment.html"><b>Canada: Algorithmic Impact Assessment</b><span>A scored questionnaire that sets one of four impact levels.</span></a>
+        <a class="res" href="https://www.aigl.blog/microsoft-responsible-ai-impact-assessment-template/"><b>Microsoft Responsible AI Impact Assessment</b><span>A detailed assessment template, strong on stakeholders and harms.</span></a>
+        <a class="res" href="https://genai.owasp.org/resource/owasp-top-10-for-llm-applications-2025/"><b>OWASP Top 10 for LLM Applications</b><span>The standard security risk list for generative AI apps.</span></a>
+        <a class="res" href="https://ico.org.uk/for-organisations/uk-gdpr-guidance-and-resources/artificial-intelligence/guidance-on-ai-and-data-protection/ai-and-data-protection-risk-toolkit/"><b>ICO AI and data protection risk toolkit</b><span>The UK privacy regulator's risk toolkit for AI.</span></a>
+        <a class="res" href="https://aiverifyfoundation.sg/"><b>AI Verify (Singapore)</b><span>Open-source AI testing toolkit and framework.</span></a>
+        <a class="res" href="https://www.ischool.berkeley.edu/research/publications/2026/best-practices-public-sector-ai-governance-practitioners-playbook"><b>Berkeley public-sector governance playbook</b><span>2026 practitioner lessons from interviews and research.</span></a>
+      </div>
+
+      <h3>Career and community</h3>
+      <div class="reslist">
+        <a class="res" href="https://iapp.org/certify/aigp/"><b>IAPP AIGP certification</b><span>The credential governance job postings ask for most.</span></a>
+        <a class="res" href="https://iapp.org/"><b>IAPP</b><span>Membership, local chapters and conferences.</span></a>
+      </div>
+
+      <h3>Governance platforms</h3>
+      <p class="hint">Larger companies run inventories and assessments in software like these. Smaller ones use spreadsheets and documents.</p>
+      <div class="reslist">
+        <a class="res" href="https://www.onetrust.com/"><b>OneTrust</b><span>Privacy, risk and AI governance platform.</span></a>
+        <a class="res" href="https://www.credo.ai/"><b>Credo AI</b><span>AI governance and risk platform.</span></a>
+      </div>
+
+    </section>
+
+    <!-- 14 GLOSSARY -->
+    <section id="glossary">
+      <div class="eyebrow">15</div>
+      <h2>Glossary</h2>
+      <p class="point">Plain definitions of the terms that come up most in governance work and interviews.</p>
+      <dl class="gloss">
+        <div><dt>ADMT</dt><dd>Automated decisionmaking technology. California's term for technology that replaces or substantially replaces human decisions. <small>CCPA regulations</small></dd></div>
+        <div><dt>Adverse action notice</dt><dd>The notice a lender must send when it denies credit or changes terms, giving the specific principal reasons. <small>ECOA / Reg B</small></dd></div>
+        <div><dt>Adverse impact</dt><dd>A substantially lower selection rate for a protected group. Usually screened with the four-fifths rule.</dd></div>
+        <div><dt>AEDT</dt><dd>Automated employment decision tool. NYC's term for a tool that substantially assists or replaces discretionary hiring or promotion decisions. <small>NYC LL 144</small></dd></div>
+        <div><dt>AI inventory</dt><dd>A register of the AI systems an organization uses, with owner, purpose, data and risk tier for each.</dd></div>
+        <div><dt>AI literacy</dt><dd>Enough understanding of AI for staff to use it appropriately. Required of providers and deployers. <small>EU AI Act Art. 4</small></dd></div>
+        <div><dt>Bias audit</dt><dd>An independent evaluation of a tool's selection rates and impact ratios by group.</dd></div>
+        <div><dt>Confabulation</dt><dd>NIST's term for confident but false generative AI output, often called hallucination.</dd></div>
+        <div><dt>Controller</dt><dd>The organization that decides why and how personal data is processed. It carries the main GDPR duties. <small>GDPR</small></dd></div>
+        <div><dt>Deployer</dt><dd>An organization that uses an AI system under its own authority, such as a company running a vendor's screening or chatbot tool. <small>EU AI Act</small></dd></div>
+        <div><dt>Disparate impact</dt><dd>A neutral-looking practice that disproportionately harms a protected group. Unlawful in many settings unless justified. <small>Title VII, ECOA</small></dd></div>
+        <div><dt>Disparate treatment</dt><dd>Treating someone differently because of a protected characteristic, intentionally.</dd></div>
+        <div><dt>DPIA</dt><dd>Data protection impact assessment, required for processing likely to be high-risk to people. <small>GDPR Art. 35</small></dd></div>
+        <div><dt>Drift</dt><dd>When real-world data or behavior shifts away from what a model was built and tested on, degrading results.</dd></div>
+        <div><dt>Four-fifths rule</dt><dd>A group's selection rate under 80% of the highest group's rate is treated as evidence of adverse impact. A rule of thumb, not a safe harbor. <small>UGESP</small></dd></div>
+        <div><dt>Excessive agency</dt><dd>When an AI agent has more permissions or autonomy than its job needs, so a mistake or attack can do real damage. <small>OWASP</small></dd></div>
+        <div><dt>FRIA</dt><dd>Fundamental rights impact assessment, required of certain deployers of high-risk AI. <small>EU AI Act Art. 27</small></dd></div>
+        <div><dt>GPAI model</dt><dd>General-purpose AI model: one that can do a wide range of tasks and is built into many products. <small>EU AI Act</small></dd></div>
+        <div><dt>High-risk AI system</dt><dd>The EU AI Act category with the heaviest duties, including AI used in employment, education, credit and essential services. <small>EU AI Act Annex III</small></dd></div>
+        <div><dt>Human in the loop</dt><dd>A person reviews or approves the AI's output before it takes effect. Only meaningful if they have the time, information and authority to disagree.</dd></div>
+        <div><dt>Human oversight</dt><dd>Measures that let trained people monitor, understand and override an AI system's outputs.</dd></div>
+        <div><dt>Impact assessment</dt><dd>A structured review of a system's purpose, the people it affects, its risks and its controls, before and during use.</dd></div>
+        <div><dt>Model card</dt><dd>A short document describing a model's intended use, performance, limits and testing. System cards do the same for a whole product.</dd></div>
+        <div><dt>Least privilege</dt><dd>Giving a person, system or agent only the access it needs, and nothing more.</dd></div>
+        <div><dt>Personal data breach</dt><dd>A security breach leading to accidental or unlawful destruction, loss, alteration, unauthorized disclosure of, or access to personal data. <small>GDPR Art. 4</small></dd></div>
+        <div><dt>Processor</dt><dd>An organization that processes personal data on a controller's behalf, such as a vendor. <small>GDPR</small></dd></div>
+        <div><dt>Prompt injection</dt><dd>Instructions hidden in input, such as a document, email or web page, that hijack an AI model's behavior.</dd></div>
+        <div><dt>Provider</dt><dd>An organization that develops an AI system, or has it developed, and puts it on the market under its own name. <small>EU AI Act</small></dd></div>
+        <div><dt>RACI</dt><dd>A chart of who is Responsible, Accountable, Consulted and Informed for each activity.</dd></div>
+        <div><dt>RAG</dt><dd>Retrieval-augmented generation: an AI system that looks up documents and uses them to answer. Grounds answers, but needs access controls on what it can retrieve.</dd></div>
+        <div><dt>Red-teaming</dt><dd>Structured attempts to make an AI system fail or misbehave, to find weaknesses before others do.</dd></div>
+        <div><dt>Selection rate</dt><dd>The share of a group that gets the positive outcome: selected ÷ total.</dd></div>
+        <div><dt>Shadow AI</dt><dd>AI tools employees use without the organization's knowledge or approval.</dd></div>
+        <div><dt>Special category data</dt><dd>Sensitive personal data with stricter rules, such as racial or ethnic origin, health, religion and sexual orientation. <small>GDPR Art. 9</small></dd></div>
+        <div><dt>Supervisory authority</dt><dd>A national GDPR regulator, such as Ireland's Data Protection Commission.</dd></div>
+      </dl>
+      <p class="sources">Key sources: <a href="https://www.orrick.com/en/Insights/2026/07/EU-AI-Act-Update-Digital-Omnibus-Finalizes-8-Compliance-Changes">Orrick (EU Digital Omnibus)</a>, <a href="https://www.softwareimprovementgroup.com/blog/eu-ai-act-summary/">SIG (EU AI Act timeline)</a>, <a href="https://www.mcdermottlaw.com/insights/colorado-ai-law-in-flux-comprehensive-replacement-bill-signed-after-federal-court-blocks-predecessors-enforcement/">McDermott (Colorado)</a>, <a href="https://www.nelsonmullins.com/insights/blogs/ai-task-force/ai/states-take-aim-at-ai-in-employment-decisions-illinois-s-disclosure-and-anti-discrimination-requirements-enforcement-gaps-under-nyc-s-local-law-144-and-connecticut-s-new-ai-law">Nelson Mullins (IL, NYC, CT)</a>, <a href="https://www.wileyconnect.com/state-chatbot-laws-are-moving-from-transparency-to-risk-management">Wiley (chatbot laws)</a>, <a href="https://www.skadden.com/insights/publications/2025/10/california-finalizes-cppa-regulations">Skadden (California)</a>, <a href="https://livecompliance.com/learn/ai-healthcare-regulations/">LiveCompliance (healthcare)</a>, <a href="https://actuary.info/insights/ai-regulation-insurance-naic-2026">Actuary.info (insurance)</a>, <a href="https://www.nist.gov/itl/ai-risk-management-framework">NIST AI RMF</a>.</p>
+    </section>
+
+  </div>
+</div>
+<footer class="case-study-footer"><a href="index.html#learn">Back to Learning Library →</a></footer></main>
+<script>
+
+/* ---------- Helpers ---------- */
+function $(id) { return document.getElementById(id); }
+function fmtDate(d) { return d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }); }
+function fmtDateTime(d) { return d.toLocaleString(undefined, { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }); }
+function li(text) { var el = document.createElement('li'); el.textContent = text; return el; }
+
+/* ---------- Section index highlight ---------- */
+(function () {
+  var links = Array.prototype.slice.call(document.querySelectorAll('nav.index ol a'));
+  var map = {};
+  links.forEach(function (a) { map[a.getAttribute('href').slice(1)] = a; });
+  if (!('IntersectionObserver' in window)) return;
+  var io = new IntersectionObserver(function (entries) {
+    entries.forEach(function (e) {
+      if (e.isIntersecting) {
+        links.forEach(function (a) { a.classList.remove('on'); });
+        var a = map[e.target.id];
+        if (a) a.classList.add('on');
+      }
+    });
+  }, { rootMargin: '-30% 0px -60% 0px' });
+  document.querySelectorAll('.hb-body section').forEach(function (s) { io.observe(s); });
+})();
+
+/* ---------- Last-checked badges ---------- */
+(function () {
+  var STALE_DAYS = 90, staleCount = 0, oldest = null;
+  document.querySelectorAll('section[data-checked]').forEach(function (s) {
+    var d = new Date(s.getAttribute('data-checked') + 'T12:00:00');
+    var days = Math.floor((Date.now() - d.getTime()) / 864e5);
+    var badge = s.querySelector('[data-checked-badge]');
+    if (!oldest || d < oldest) oldest = d;
+    if (days > STALE_DAYS) {
+      staleCount++;
+      badge.classList.add('stale');
+      badge.lastElementChild.textContent = 'Checked ' + fmtDate(d) + ' · ' + days + ' days ago, recheck';
+    } else {
+      badge.lastElementChild.textContent = 'Checked ' + fmtDate(d) + ' · current';
+    }
+  });
+  var sum = $('stale-summary');
+  if (staleCount) { sum.textContent = staleCount + ' legal section' + (staleCount > 1 ? 's' : '') + ' due for a recheck'; sum.style.color = 'var(--warn)'; }
+  else if (oldest) { sum.textContent = 'Legal sections checked ' + fmtDate(oldest); }
+})();
+
+/* ---------- Copy buttons ---------- */
+document.querySelectorAll('[data-copy]').forEach(function (btn) {
+  btn.addEventListener('click', function () {
+    var pre = $(btn.getAttribute('data-copy'));
+    var msg = btn.parentNode.querySelector('.copied');
+    function selectIt() {
+      var r = document.createRange(); r.selectNodeContents(pre);
+      var sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(r);
+      msg.textContent = 'Selected. Press Ctrl+C or ⌘C to copy';
+    }
+    try {
+      navigator.clipboard.writeText(pre.textContent).then(function () {
+        msg.textContent = 'Copied';
+        setTimeout(function () { msg.textContent = ''; }, 2000);
+      }, selectIt);
+    } catch (e) { selectIt(); }
+  });
+});
+
+/* ---------- Laws finder ---------- */
+var lawsFilter = (function () {
+  var dom = $('law-domain'), loc = $('law-loc');
+  var rows = Array.prototype.slice.call(document.querySelectorAll('#law-rows tr'));
+  var US_STATES = ['ca', 'co', 'ct', 'il', 'me', 'nv', 'ny', 'nyc', 'or', 'tn', 'tx', 'ut', 'wa', 'other'];
+  function apply() {
+    var d = dom.value, l = loc.value, shown = 0;
+    rows.forEach(function (r) {
+      var ds = r.dataset.domain.split(' '), ls = r.dataset.loc.split(' ');
+      var dOk = d === 'all' || ds.indexOf(d) > -1 || ds.indexOf('general') > -1;
+      var lOk = l === 'all' || ls.indexOf(l) > -1 ||
+        (US_STATES.indexOf(l) > -1 && (ls.indexOf('us') > -1 || ls.indexOf('multi') > -1)) ||
+        (l === 'nyc' && ls.indexOf('ny') > -1);
+      var show = dOk && lOk;
+      r.classList.toggle('law-hidden', !show);
+      if (show) shown++;
+    });
+    var msg = (d === 'all' && l === 'all') ? 'Showing all ' + rows.length + ' rules.' : 'Showing ' + shown + ' of ' + rows.length + ' rules. Broad AI laws show for every area; federal and multi-state rules show for every US location.';
+    if (l === 'other') msg += ' Your state may have its own rules not listed here.';
+    $('law-count').textContent = msg;
+  }
+  dom.addEventListener('change', apply);
+  loc.addEventListener('change', apply);
+  $('law-reset').addEventListener('click', function () { dom.value = 'all'; loc.value = 'all'; apply(); });
+  apply();
+  return function (domain) {
+    var map = { employment: 'employment', lending: 'lending', insurance: 'insurance', healthcare: 'healthcare', housing: 'privacy', education: 'privacy', services: 'privacy', legal: 'all', customer: 'chatbots', none: 'all', other: 'all' };
+    dom.value = map[domain] || 'all'; loc.value = 'all'; apply();
+  };
+})();
+
+/* ---------- Risk triage ---------- */
+(function () {
+  var form = $('tri-form');
+  var DOMAIN_LABEL = { employment: 'employment', lending: 'credit', insurance: 'insurance', housing: 'housing', healthcare: 'healthcare', education: 'education', services: 'public services', legal: 'legal or law enforcement' };
+  var CONSEQ = Object.keys(DOMAIN_LABEL);
+  var REVIEW = {
+    Stop: ['Don\'t proceed', 'Escalate to legal now', 'Document the decision and the reason'],
+    High: ['Full impact assessment', 'Testing: bias, accuracy, robustness (plus red-teaming if generative)', 'Legal and privacy review', 'Human oversight design and notices', 'Committee or executive approval', 'Monitoring plan; review at least quarterly'],
+    Medium: ['Short impact assessment', 'Vendor due diligence', 'Usage guidance for users', 'Privacy check', 'Business owner sign-off with governance; review every 6 months'],
+    Low: ['Add to the inventory', 'Confirm it\'s an approved tool and data rules apply', 'Standard contract terms; review yearly']
+  };
+  var COLOR = { Stop: 'var(--stop)', High: 'var(--crit)', Medium: 'var(--warn)', Low: 'var(--good)' };
+  function vals(name) { return Array.prototype.map.call(form.querySelectorAll('input[name="' + name + '"]:checked'), function (i) { return i.value; }); }
+  function one(name, dflt) { var v = vals(name); return v.length ? v[0] : dflt; }
+  function run() {
+    var pro = vals('pro'), domain = $('tri-domain').value, role = parseFloat(one('role', '0'));
+    var data = vals('data'), aud = one('aud', 'internal'), how = vals('how'), scale = parseFloat(one('scale', '0')), src = one('src', 'inhouse');
+    var why = [], laws = [], score = 0, tier = 'Low', floor = 'Low';
+    var conseq = CONSEQ.indexOf(domain) > -1;
+    function raise(t) { var order = ['Low', 'Medium', 'High', 'Stop']; if (order.indexOf(t) > order.indexOf(floor)) floor = t; }
+    if (pro.length) { raise('Stop'); why.push('Matches a practice banned under the EU AI Act; may also be unlawful elsewhere'); }
+    if (conseq && role >= 3) { raise('High'); why.push('Shapes or makes ' + DOMAIN_LABEL[domain] + ' decisions about people'); }
+    else if (conseq && role >= 1) { raise('Medium'); score += 2; why.push('Informs ' + DOMAIN_LABEL[domain] + ' decisions; a person decides'); }
+    else if (role >= 3) { score += 2; why.push('Shapes decisions about people'); }
+    if (data.indexOf('sensitive') > -1) { score += 2; why.push('Uses sensitive personal data'); }
+    else if (data.indexOf('personal') > -1) { score += 1; why.push('Uses personal data'); }
+    if (data.indexOf('confidential') > -1) { score += 1; why.push('Uses confidential business data'); }
+    if (aud === 'vulnerable') { score += 2; raise('Medium'); why.push('Affects children or vulnerable people'); }
+    else if (aud === 'external') { score += 1; why.push('Outputs reach customers or the public'); }
+    if (how.indexOf('agent') > -1) { score += 2; why.push('Takes actions on its own'); }
+    if (how.indexOf('gen') > -1 && aud !== 'internal') { score += 1; why.push('Generates content seen outside the company'); }
+    if (scale >= 1) { score += 1; why.push('Large scale'); } else if (scale > 0) { score += 0.5; }
+    if (src === 'consumer') { score += 2; if (data.length) { raise('Medium'); why.push('Company data in a tool with no contract protections'); } else why.push('No contract protections'); }
+    tier = score >= 6 ? 'High' : score >= 3 ? 'Medium' : 'Low';
+    var order = ['Low', 'Medium', 'High', 'Stop'];
+    if (order.indexOf(floor) > order.indexOf(tier)) tier = floor;
+    if (!why.length) why.push('No major risk factors selected');
+    var lawMap = { employment: 'Employment laws: Illinois, NYC, Connecticut, Title VII', lending: 'ECOA and Regulation B adverse action rules', insurance: 'NAIC AI bulletin in adopting states', healthcare: 'HHS Section 1557 rule; FDA if it\'s a device; state health AI laws', housing: 'Fair housing law; California automated decision rules', education: 'EU AI Act high-risk (education); privacy laws', services: 'EU AI Act high-risk (essential services); FRIA for public bodies' };
+    if (lawMap[domain]) laws.push(lawMap[domain]);
+    if (conseq) laws.push('Broad AI laws: Colorado (2027), California automated decision rules (2027), EU AI Act high-risk (Dec 2027)');
+    if (aud !== 'internal' && (how.indexOf('gen') > -1 || domain === 'customer')) laws.push('Chatbot and AI disclosure laws; EU AI Act transparency duties');
+    if (data.indexOf('personal') > -1 || data.indexOf('sensitive') > -1) laws.push('Privacy law: GDPR, state privacy laws, breach rules');
+    if (aud !== 'internal') laws.push('FTC Act: back up any AI claims you make');
+    if (pro.length) laws.unshift('EU AI Act prohibited practices (Art. 5)');
+    if (!laws.length) laws.push('Your AI acceptable-use policy; EU AI Act AI literacy duty if in the EU');
+    $('tier-name').textContent = tier;
+    $('tri-result').style.setProperty('--tier', COLOR[tier]);
+    var w = $('tier-why'), d = $('tier-do'), l = $('tier-laws');
+    w.innerHTML = ''; d.innerHTML = ''; l.innerHTML = '';
+    why.forEach(function (t) { w.appendChild(li(t)); });
+    REVIEW[tier].forEach(function (t) { d.appendChild(li(t)); });
+    laws.forEach(function (t) { l.appendChild(li(t)); });
+  }
+  form.addEventListener('change', run);
+  $('tri-reset').addEventListener('click', function () {
+    form.querySelectorAll('input').forEach(function (i) { i.checked = false; });
+    $('tri-domain').value = 'none';
+    form.querySelector('input[name="role"][value="0"]').checked = true;
+    form.querySelector('input[name="aud"][value="internal"]').checked = true;
+    form.querySelector('input[name="scale"][value="0"]').checked = true;
+    form.querySelector('input[name="src"][value="inhouse"]').checked = true;
+    run();
+  });
+  $('tier-showlaws').addEventListener('click', function () {
+    lawsFilter($('tri-domain').value);
+    $('laws').scrollIntoView({ block: 'start' });
+  });
+  run();
+})();
+
+/* ---------- Incident clock ---------- */
+(function () {
+  var input = $('aware-at'), face = $('clock-face');
+  function localValue(d) {
+    var p = function (n) { return String(n).padStart(2, '0'); };
+    return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()) + 'T' + p(d.getHours()) + ':' + p(d.getMinutes());
+  }
+  function update() {
+    var start = input.value ? new Date(input.value) : null;
+    if (!start || isNaN(start)) { $('clock-left').textContent = 'Enter a time'; return; }
+    var deadline = new Date(start.getTime() + 72 * 3600e3);
+    var ms = deadline - Date.now();
+    var used = Math.min(1, Math.max(0, 1 - ms / (72 * 3600e3)));
+    var state = 'var(--good)';
+    if (ms <= 0) {
+      state = 'var(--crit)';
+      var over = -ms, oh = Math.floor(over / 3600e3), om = Math.floor((over % 3600e3) / 60e3);
+      $('clock-left').textContent = oh + 'h ' + om + 'm overdue';
+      $('clock-deadline').textContent = 'Deadline passed ' + fmtDateTime(deadline) + '. A late notice must explain the delay.';
+    } else {
+      if (ms < 24 * 3600e3) state = 'var(--warn)';
+      var h = Math.floor(ms / 3600e3), m = Math.floor((ms % 3600e3) / 60e3);
+      $('clock-left').textContent = h + 'h ' + m + 'm left';
+      $('clock-deadline').textContent = 'Deadline: ' + fmtDateTime(deadline);
+    }
+    face.style.setProperty('--state', state);
+    $('clock-meter').style.width = (used * 100).toFixed(1) + '%';
+  }
+  function reset() { input.value = localValue(new Date()); update(); }
+  input.addEventListener('input', update);
+  $('clock-reset').addEventListener('click', reset);
+  reset();
+  setInterval(update, 30000);
+})();
+
+/* ---------- Impact ratio calculator ---------- */
+(function () {
+  var wrap = $('calc-rows'), n = 0;
+  var EXAMPLE = [['Group A', 200, 50], ['Group B', 200, 30]];
+  function addRow(name, total, sel) {
+    n++;
+    var row = document.createElement('div');
+    row.className = 'calc-row';
+    row.innerHTML =
+      '<div class="field"><label for="g-name-' + n + '">Group</label><input type="text" id="g-name-' + n + '" class="g-name"></div>' +
+      '<div class="field"><label for="g-app-' + n + '">Total</label><input type="number" min="0" step="1" inputmode="numeric" id="g-app-' + n + '" class="g-app"></div>' +
+      '<div class="field"><label for="g-adv-' + n + '">Selected</label><input type="number" min="0" step="1" inputmode="numeric" id="g-adv-' + n + '" class="g-adv"></div>' +
+      '<button type="button" class="btn x" aria-label="Remove group">×</button>';
+    row.querySelector('.g-name').value = name || '';
+    row.querySelector('.g-app').value = total == null ? '' : total;
+    row.querySelector('.g-adv').value = sel == null ? '' : sel;
+    row.querySelector('.x').addEventListener('click', function () { row.remove(); calc(); });
+    row.addEventListener('input', calc);
+    wrap.appendChild(row);
+  }
+  function calc() {
+    var groups = Array.prototype.map.call(wrap.querySelectorAll('.calc-row'), function (r, i) {
+      return { name: r.querySelector('.g-name').value.trim() || 'Group ' + (i + 1), app: parseFloat(r.querySelector('.g-app').value), adv: parseFloat(r.querySelector('.g-adv').value) };
+    });
+    var out = $('calc-out'), bars = $('calc-bars'), note = $('calc-note');
+    out.innerHTML = ''; bars.innerHTML = ''; note.className = 'calc-note'; note.textContent = '';
+    var valid = groups.filter(function (g) { return g.app > 0 && g.adv >= 0 && g.adv <= g.app; });
+    var bad = groups.filter(function (g) { return !isNaN(g.app) && !isNaN(g.adv) && (g.app <= 0 || g.adv > g.app || g.adv < 0); });
+    valid.forEach(function (g) { g.rate = g.adv / g.app; });
+    var top = valid.reduce(function (m, g) { return g.rate > m ? g.rate : m; }, 0);
+    var flagged = [], small = [];
+    groups.forEach(function (g) {
+      var tr = document.createElement('tr');
+      var ok = valid.indexOf(g) > -1;
+      var ratio = ok && top > 0 ? g.rate / top : null;
+      var flag = ratio !== null && ratio < 0.8;
+      if (flag) flagged.push(g.name);
+      if (ok && g.app < 30) small.push(g.name);
+      [g.name, isNaN(g.app) ? '—' : g.app, isNaN(g.adv) ? '—' : g.adv, ok ? (g.rate * 100).toFixed(1) + '%' : '—', ratio === null ? '—' : ratio.toFixed(2)]
+        .forEach(function (c, i) { var td = document.createElement('td'); td.textContent = c; if (i > 0) td.className = 'num'; tr.appendChild(td); });
+      var f = document.createElement('td');
+      if (ratio === null) f.textContent = ok ? '—' : 'Check numbers';
+      else { var s = document.createElement('span'); s.className = flag ? 'flagtxt' : 'oktxt'; s.textContent = flag ? 'Below 0.8' : 'OK'; f.appendChild(s); }
+      tr.appendChild(f);
+      out.appendChild(tr);
+      if (ratio !== null) {
+        var b = document.createElement('div'); b.className = 'bar' + (flag ? ' flag' : '');
+        var lab = document.createElement('span'); lab.textContent = g.name;
+        var track = document.createElement('div'); track.className = 'track';
+        var fill = document.createElement('div'); fill.className = 'fill'; fill.style.width = (Math.min(1, ratio) * 100) + '%';
+        var line = document.createElement('div'); line.className = 'line80';
+        track.appendChild(fill); track.appendChild(line);
+        var val = document.createElement('span'); val.className = 'val'; val.textContent = ratio.toFixed(2);
+        b.appendChild(lab); b.appendChild(track); b.appendChild(val);
+        bars.appendChild(b);
+      }
+    });
+    var msgs = [];
+    if (valid.length < 2) msgs.push('Enter at least two groups to compare.');
+    if (bad.length) msgs.push('Check ' + bad.map(function (g) { return g.name; }).join(', ') + ': selected can\'t exceed total, and total must be above zero.');
+    if (top === 0 && valid.length >= 2) msgs.push('No one was selected in any group, so there is nothing to compare.');
+    if (flagged.length) { note.classList.add('bad'); msgs.unshift('Possible adverse impact for ' + flagged.join(', ') + '. Investigate before relying on this system.'); }
+    else if (valid.length >= 2 && top > 0) { note.classList.add('ok'); msgs.unshift('No group falls below the four-fifths threshold.'); }
+    if (small.length) msgs.push('Fewer than 30 in ' + small.join(', ') + ': ratios swing a lot at this size, so add a statistical significance test.');
+    note.textContent = msgs.join(' ');
+  }
+  function load(rows) { wrap.innerHTML = ''; rows.forEach(function (r) { addRow(r[0], r[1], r[2]); }); calc(); }
+  $('calc-add').addEventListener('click', function () { addRow('', null, null); calc(); var i = wrap.querySelectorAll('.g-name'); i[i.length - 1].focus(); });
+  $('calc-example').addEventListener('click', function () { load(EXAMPLE); });
+  $('calc-clear').addEventListener('click', function () { load([['', null, null], ['', null, null]]); });
+  load(EXAMPLE);
+})();
+
+/* ---------- Search ---------- */
+(function () {
+  var main = document.querySelector('.hb-body');
+  var input = $('q'), status = $('status'), prev = $('prev'), next = $('next');
+  var navLinks = {};
+  document.querySelectorAll('nav.index ol a').forEach(function (a) { navLinks[a.getAttribute('href').slice(1)] = a; });
+  var hits = [], idx = -1, timer = null;
+  function clear() {
+    main.querySelectorAll('mark.hit').forEach(function (m) {
+      var p = m.parentNode;
+      p.replaceChild(document.createTextNode(m.textContent), m);
+      p.normalize();
+    });
+    main.querySelectorAll('section').forEach(function (s) { s.classList.remove('nomatch'); });
+    Object.keys(navLinks).forEach(function (k) { var a = navLinks[k]; a.classList.remove('dim'); var c = a.querySelector('.count'); if (c) c.remove(); });
+    hits = []; idx = -1;
+  }
+  function run() {
+    clear();
+    var q = input.value.trim();
+    if (q.length < 2) { status.textContent = q.length ? 'Type at least 2 characters' : 'Press / to search'; prev.disabled = next.disabled = true; return; }
+    var needle = q.toLowerCase();
+    var walker = document.createTreeWalker(main, NodeFilter.SHOW_TEXT, {
+      acceptNode: function (nd) {
+        if (!nd.nodeValue.trim()) return NodeFilter.FILTER_REJECT;
+        if (nd.parentNode.closest('script,style,select,option,textarea,.law-hidden')) return NodeFilter.FILTER_REJECT;
+        return nd.nodeValue.toLowerCase().indexOf(needle) > -1 ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT;
+      }
+    });
+    var nodes = [];
+    while (walker.nextNode()) nodes.push(walker.currentNode);
+    nodes.forEach(function (node) {
+      var text = node.nodeValue, lower = text.toLowerCase(), frag = document.createDocumentFragment(), pos = 0, i;
+      while ((i = lower.indexOf(needle, pos)) > -1) {
+        if (i > pos) frag.appendChild(document.createTextNode(text.slice(pos, i)));
+        var m = document.createElement('mark'); m.className = 'hit';
+        m.textContent = text.slice(i, i + needle.length);
+        frag.appendChild(m); hits.push(m);
+        pos = i + needle.length;
+      }
+      if (pos < text.length) frag.appendChild(document.createTextNode(text.slice(pos)));
+      node.parentNode.replaceChild(frag, node);
+    });
+    main.querySelectorAll('section').forEach(function (s) {
+      var count = s.querySelectorAll('mark.hit').length, a = navLinks[s.id];
+      if (!count) { s.classList.add('nomatch'); if (a) a.classList.add('dim'); }
+      else if (a) { var c = document.createElement('span'); c.className = 'count'; c.textContent = count; a.appendChild(c); }
+    });
+    hits.forEach(function (m) { var d = m.closest('details'); if (d) d.open = true; });
+    if (!hits.length) { status.textContent = 'No matches for "' + q + '"'; prev.disabled = next.disabled = true; return; }
+    prev.disabled = next.disabled = false;
+    go(0);
+  }
+  function go(i) {
+    if (!hits.length) return;
+    if (idx > -1 && hits[idx]) hits[idx].classList.remove('current');
+    idx = (i + hits.length) % hits.length;
+    var m = hits[idx]; m.classList.add('current');
+    var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    m.scrollIntoView({ block: 'center', behavior: reduce ? 'auto' : 'smooth' });
+    status.textContent = (idx + 1) + ' of ' + hits.length + ' matches · Enter for next';
+  }
+  input.addEventListener('input', function () { clearTimeout(timer); timer = setTimeout(function () { run(); }, 150); });
+  input.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') { e.preventDefault(); go(e.shiftKey ? idx - 1 : idx + 1); }
+    if (e.key === 'Escape') { input.value = ''; run(); }
+  });
+  next.addEventListener('click', function () { go(idx + 1); });
+  prev.addEventListener('click', function () { go(idx - 1); });
+  $('search-form').addEventListener('submit', function (e) { e.preventDefault(); });
+  document.addEventListener('keydown', function (e) {
+    var t = document.activeElement;
+    if (e.key === '/' && t !== input && !/INPUT|TEXTAREA|SELECT/.test(t.tagName)) { e.preventDefault(); input.focus(); input.select(); }
+  });
+})();
+</script><script defer src="site-shell.js"></script></body></html>

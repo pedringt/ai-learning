@@ -41,6 +41,8 @@ def kicker(slug):
         return "Project Health"
     if slug == "tastemake":
         return "Tastemake"
+    if slug == "ai-governance-handbook":
+        return "Learning Library"
     return "Case study"
 
 
