@@ -11,6 +11,7 @@ uvicorn api:app
     extension_points.py        ExtensionPoint: a named function other modules extend by ordered layers
     api_core.py                routes and the core Evidence/Review/Ask flows
       db.py / database_migration_backed.py   the one database abstraction (SQLite + Postgres) and migrations/
+        review_question_migration.py, project_area_scope_migration.py   Python steps of migrations 009 and 020
       interpretation_pipeline_integrated.py  process_evidence(): the interpretation pipeline
         interpretation_runtime.validation.interpretation_validation   schema validation
         interpretation_runtime.validation.provider_normalization      provider payload normalization

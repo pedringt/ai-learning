@@ -1,6 +1,6 @@
 # Proposal for #136: project-scoped area identifiers
 
-Status: **Decided: option C (no schema change)** by Paige on 2026-09-19. Option A (composite key) is deferred, not rejected; see "Decision" below for when to reopen it. Prepared 2026-09-20 from a read-only audit. Related: R-009, R-014, migration 012/013/014.
+Status: **Option A implemented on 2026-10-12 as migration 020** (Paige approved doing #136), after option C (no schema change) was chosen on 2026-09-19. See "Option A, implemented" at the end. The rest of this page is the original Sept 20 audit, kept for the reasoning. Related: R-009, R-014, migrations 009/012/013/014.
 
 ## The problem, precisely
 
@@ -67,3 +67,14 @@ This does **not** meet #136's original "done when" (two projects using the same 
 - a third hand-seeded project is proposed (the uniqueness test will fail first, which is the intended alarm);
 - any path lets a person or a model choose an area id instead of generating `area_<uuid>`;
 - real user-created projects are expected on production. Production holds only the two seeded demo projects today (7 areas), which makes the migration cheapest now; it gets more expensive once real data lands. If that is coming, do A **before** it, with the rehearsal and backup steps in the plan above.
+
+## Option A, implemented (2026-10-12)
+
+Migration `020_project_scoped_areas` (the plan above said 018; 018 and 019 were taken since).
+
+- **Schema:** `project_areas` key is `(project_id, id)`; `current_state_items` references `(project_id, area_id)`. Area ids, API payloads (`/api/state`, `/api/project-areas`, Baseline draft) and every existing assignment are unchanged, so the frontend needed no change.
+- **SQL part:** clears any `area_id` that does not point at an area of the fact's own project. Reads already joined on the fact's project, so such a fact was already shown as General. Expected to touch no rows.
+- **Python part (`project_area_scope_migration.py`):** SQLite rebuilds `project_areas` then `current_state_items` the migration-009 way (FK checks off, create/copy/drop/rename, keep indexes and triggers, `PRAGMA foreign_key_check` before commit). Postgres drops the old foreign key and primary key by their looked-up names and adds the composite ones. Each half checks the live schema first, so a re-run is a no-op. No database error is caught; a failure rolls back the whole migration transaction.
+- **Seed:** the existence check is scoped to the project and the option-C collision error is removed (a shared id is now allowed).
+- **Tests:** `test_area_identity.py` (characterization plus five new-behaviour tests that fail on the old schema on both backends) and `test_migration_020_project_scoped_areas.py` (a pre-020 database filled like production migrates with no visible change, a second startup and a direct re-run are no-ops, a cross-project reference is cleared to General). Rehearsed outside the tests too: a database built by the pre-#136 code (SQLite file and Postgres schema) served identical API payloads after the new code started on it twice.
+- **Rollback:** the migration is not reversed in place. Reverting the code leaves the migrated schema, and the old code was rehearsed on it (boot, new project, Baseline areas, accepting Reviews) on both backends. One exception: the old seed check raises at startup if any project shares an area id with a seeded project, which only the new code allows (user projects still get `area_<uuid>` ids, so this needs a hand-made area). Recovery from a bad migration is a forward fix or a restore of the database copy taken before the deploy.
