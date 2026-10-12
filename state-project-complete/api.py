@@ -18,7 +18,6 @@ from baseline_fact_recovery import install_baseline_fact_recovery
 from baseline_manual_setup import register_baseline_manual_setup_routes
 from baseline_composition import compose_baseline_runtime
 from baseline_setup import register_baseline_routes
-from baseline_resilience import install_baseline_resilience
 from product_analytics import register_product_analytics
 from quality_analytics_api import register_quality_analytics
 
@@ -31,7 +30,6 @@ from quality_analytics_api import register_quality_analytics
 # This keeps the wrapper understandable without turning these adapters into
 # another hidden dependency chain.
 compose_baseline_runtime()
-install_baseline_resilience()
 install_baseline_fact_recovery()
 _core_create_app = _core.create_app
 

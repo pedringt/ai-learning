@@ -34,6 +34,11 @@ review_service.list_presented_reviews + baseline_review_visibility.with_actionab
     Read by: api_core (bootstrap, attention, evidence responses, reanalysis,
     GET /api/reviews, resolve response) and ask_service._compact_candidates, both
     as ``list_reviews``. The raw review_service.list_reviews (baseline_draft) is unchanged.
+anthropic_provider.interpret_call + baseline_resilience.with_max_tokens_retry
+    Retries a Baseline Setup chunk that hit max_tokens as smaller pieces (split with
+    baseline_setup.split_evidence_text) and merges them. Read by every
+    AnthropicProvider.interpret, including the Baseline subclass's per-chunk calls
+    (formerly a patch of the AnthropicProvider.interpret class attribute).
 
 Replaced by plain code (no longer composed at runtime):
 - baseline_async_intake._analyze_in_background is the delete-safe version.
@@ -42,11 +47,13 @@ Replaced by plain code (no longer composed at runtime):
 """
 from __future__ import annotations
 
+import anthropic_provider
 import api_core
 import baseline_setup
 import review_service
 from baseline_dogfood_fixes import with_section_aware_split
 from baseline_prompt_hardening import with_quality_guidance
+from baseline_resilience import with_max_tokens_retry
 from baseline_review_visibility import with_actionable_reviews
 
 
@@ -57,3 +64,4 @@ def compose_baseline_runtime() -> None:
     baseline_setup.split_evidence_text.add_layer("section_aware", with_section_aware_split)
     baseline_setup.baseline_prompt_guidance.add_layer("quality_checks", with_quality_guidance)
     review_service.list_presented_reviews.add_layer("baseline_actionable", with_actionable_reviews)
+    anthropic_provider.interpret_call.add_layer("baseline_max_tokens_retry", with_max_tokens_retry)

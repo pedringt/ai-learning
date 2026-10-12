@@ -13,7 +13,6 @@ from typing import Any, Callable, Mapping
 
 logger = logging.getLogger("state.baseline.resilience")
 
-_INSTALLED = False
 _MIN_RETRY_CHARS = 600
 _MAX_RETRY_DEPTH = 3
 
@@ -87,23 +86,20 @@ def _retry_interpret(
         return merge_fn(payloads)
 
 
-def install_baseline_resilience() -> None:
-    """Patch the Anthropic base adapter before Baseline providers are created."""
-    global _INSTALLED
-    if _INSTALLED:
-        return
+def with_max_tokens_retry(inner):
+    """Layer for ``anthropic_provider.interpret_call``: retry a max_tokens chunk in pieces.
 
-    import anthropic_provider
+    Only for projects in Baseline Setup; every other call goes straight through.
+    Pieces are split with the composed ``baseline_setup.split_evidence_text``.
+    """
     from baseline_setup import is_baseline_setup, merge_interpretation_payloads, split_evidence_text
-
-    original_interpret = anthropic_provider.AnthropicProvider.interpret
 
     def resilient_interpret(self, *, context, evidence, connection=None):
         if connection is None or not is_baseline_setup(connection):
-            return original_interpret(self, context=context, evidence=evidence, connection=connection)
+            return inner(self, context=context, evidence=evidence, connection=connection)
 
         def call(piece: Mapping[str, Any]) -> Mapping[str, Any]:
-            return original_interpret(self, context=context, evidence=piece, connection=connection)
+            return inner(self, context=context, evidence=piece, connection=connection)
 
         return _retry_interpret(
             call,
@@ -112,5 +108,4 @@ def install_baseline_resilience() -> None:
             merge_fn=merge_interpretation_payloads,
         )
 
-    anthropic_provider.AnthropicProvider.interpret = resilient_interpret
-    _INSTALLED = True
+    return resilient_interpret
