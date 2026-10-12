@@ -56,6 +56,7 @@ async function loadDelivery(gh,project,branchName){
   const branch=await gh('/repos/'+repo+'/branches/'+encodeURIComponent(branchName));
   let selectedCommit=branch?.commit||null;
   let preloadedStatus=null;
+  let statusSha=null;
   if(Array.isArray(project.releasePaths)&&project.releasePaths.length){
     try{
       const groups=await Promise.all(project.releasePaths.map(path=>
@@ -69,7 +70,16 @@ async function loadDelivery(gh,project,branchName){
       // and keep its status so it is not fetched twice.
       const deployed=await newestDeployedCommit(gh,repo,releases);
       if(deployed){selectedCommit=deployed.commit;preloadedStatus=deployed.status;}
-      else selectedCommit=releases[0]||selectedCommit;
+      else{
+        selectedCommit=releases[0]||selectedCommit;
+        // None of the recent release commits was deployed by itself: a batch promoted through a PR is
+        // deployed as the merge commit at the branch tip, which contains them. Judge that deploy.
+        const tipSha=branch?.commit?.sha;
+        if(tipSha&&tipSha!==selectedCommit?.sha){
+          const tipStatus=await gh('/repos/'+repo+'/commits/'+encodeURIComponent(tipSha)+'/status').catch(()=>null);
+          if(hasDeployStatus(tipStatus)){preloadedStatus=tipStatus;statusSha=tipSha;}
+        }
+      }
     }catch(_){}
   }else if(project.releasePath){
     try{
@@ -77,7 +87,7 @@ async function loadDelivery(gh,project,branchName){
       if(Array.isArray(commits)&&commits[0]) selectedCommit=commits[0];
     }catch(_){}
   }
-  const selectedSha=selectedCommit?.sha||branch?.commit?.sha||branchName;
+  const selectedSha=statusSha||selectedCommit?.sha||branch?.commit?.sha||branchName;
   const [status,checkRuns]=await Promise.all([
     preloadedStatus||gh('/repos/'+repo+'/commits/'+encodeURIComponent(selectedSha)+'/status'),
     gh('/repos/'+repo+'/commits/'+encodeURIComponent(selectedSha)+'/check-runs?per_page=10').catch(()=>({check_runs:[]}))
