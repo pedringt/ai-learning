@@ -900,17 +900,6 @@ html body #ai-cs-mock .home-feature-state-anchor::after { content: "01"; display
 html body #ai-cs-mock .home-feature-stack-right .home-feature-card:nth-child(1)::after { content: "02"; display: grid !important; }
 html body #ai-cs-mock .home-feature-stack-right .home-feature-card:nth-child(2)::after { content: "03"; display: grid !important; }
 html body #ai-cs-mock .home-see-all { color: var(--ink); font-weight: 900; }
-html body #ai-cs-mock .home-principle {
-  margin-top: 44px;
-  padding-top: 22px;
-  border-top: 1px solid var(--rd-line);
-}
-html body #ai-cs-mock .home-principle h2 {
-  margin: 10px 0 6px;
-  font-size: clamp(17px, 1.5vw, 20px);
-}
-html body #ai-cs-mock .home-principle p { color: var(--muted); font-size: 14px; line-height: 1.6; max-width: 62ch; }
-html body #ai-cs-mock .home-principle .section-kicker span { font-size: 10px; padding: 6px 10px; }
 /* ---------- 4b. Applied Work + Learning Library views (inside index.html) ---------- */
 html body #ai-cs-mock .view:not(#home) { padding-top: 40px !important; }
 html body #ai-cs-mock .page-intro .section-title,
