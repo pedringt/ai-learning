@@ -496,6 +496,27 @@ const releaseAndDeliveryChanges=H.meaningfulChanges({
 assert.strictEqual(releaseAndDeliveryChanges.find(item=>item.title==='New production release').detail,'Promote Project Health action destination cleanup');
 assert.strictEqual(releaseAndDeliveryChanges.find(item=>item.title==='Delivery status improved').detail,'Needs attention → Healthy');
 assert.doesNotMatch(releaseAndDeliveryChanges.find(item=>item.title==='New production release').detail,/20d0bd7/);
+// Cowork, Oct 12: a re-run with the same score read "Improved 0 points · 100%".
+{
+  const M=require('../project-health-model.js');
+  const evalChange=(oldScore,newScore)=>M.meaningfulChanges({
+    project:{quality:'state'},
+    lastVisit:{deliverySha:'same',quality:{askAt:'2026-10-11T00:00:00Z',askScore:oldScore},analyticsAvailable:null,openPullRequests:0},
+    delivery:{sha:'same'},
+    quality:{ask:{ask_grounding:newScore,created_at:'2026-10-12T00:00:00Z'}},
+    platform:{},openPullRequests:[],checkedAt:'2026-10-12T01:00:00Z'
+  }).find(item=>/Answer-quality eval/.test(item.title));
+  const up=evalChange(0.9,0.95),down=evalChange(1,0.875),same=evalChange(1,1),tiny=evalChange(1,0.9996);
+  assert.deepStrictEqual([up.title,up.detail],['Answer-quality eval changed','Improved 5 points to 95%']);
+  assert.deepStrictEqual([down.title,down.detail],['Answer-quality eval changed','Declined 12.5 points to 87.5%']);
+  assert.deepStrictEqual([same.title,same.detail],['Answer-quality eval re-run','Unchanged at 100%']);
+  assert.strictEqual(tiny.detail,'Unchanged at 100%','a change that rounds to zero is unchanged, not "Declined 0 points"');
+  assert.strictEqual(M.evalChangeDetail(null,0.8),'New controlled run recorded · 80%');
+  assert.strictEqual(M.scoreDeltaPoints(1,1),0);
+  assert.ok(Object.is(M.scoreDeltaPoints(0.99996,1),0),'negative zero is normalised');
+  assert.strictEqual(M.scoreDeltaPoints(null,1),null);
+  for(const item of [up,down,same,tiny])assert.doesNotMatch(item.detail,/\b0 points/);
+}
 assert.match(H.freshnessMeta('2026-09-30T01:00:00Z','2026-09-30T01:00:00Z',9999).label,/Updated|May be stale/);
 assert.strictEqual(H.trendText(12.5),'↑ 12.5% vs previous 30 days');
 assert.strictEqual(H.trendText(-4),'↓ 4% vs previous 30 days');
