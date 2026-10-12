@@ -109,7 +109,7 @@ Allowed Project Health data is intentionally narrow:
 - repository/branch/commit identifiers and CI/deployment status;
 - Render service reachability, build identifier, and bounded response latency;
 - Neon project/branch health metadata such as project name, region, branch count, and primary-branch state;
-- Vercel Web Analytics aggregate visitor/page-view counts;
+- whether Vercel Web Analytics is connected and receiving page views (30 days) and whether any arrived in the last 7 days, as booleans; the server reads aggregate counts but does not return them (Oct 11);
 - the same content-free controlled eval aggregates already allowed above.
 
 Project Health must not expose provider API keys, database connection strings, raw logs, visitor identities, request bodies, State project content, model prompts/responses, or detailed traces merely to make the dashboard richer. Provider credentials stay server-side in environment variables. Missing provider credentials or telemetry are shown as "not connected" rather than inferred.

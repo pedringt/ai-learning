@@ -83,43 +83,37 @@ function numericCount(value){
   return Number.isFinite(number)?number:null;
 }
 
-function percentDelta(current,previous){
-  if(current==null||previous==null||previous===0) return null;
-  return Math.round(((current-previous)/previous)*1000)/10;
+// Cowork, Oct 11: the public card shows the signal, not the counts. Raw page-view and visitor numbers never leave
+// this function; the response says only whether analytics is connected and receiving page views, and how recently.
+const ANALYTICS_PERIOD_DAYS=30;
+const ANALYTICS_RECENT_DAYS=7;
+function analyticsSignal(currentPayload,recentResult){
+  const pageviews=numericCount(currentPayload?.data?.pageviews);
+  const recentPageviews=recentResult?.ok?numericCount(recentResult.payload?.data?.pageviews):null;
+  return {
+    configured:true,
+    available:true,
+    period_days:ANALYTICS_PERIOD_DAYS,
+    receiving:pageviews==null?null:pageviews>0,
+    recent_days:ANALYTICS_RECENT_DAYS,
+    recent:recentPageviews==null?null:recentPageviews>0
+  };
 }
 
 async function vercelAnalytics(project){
   const token=process.env.VERCEL_TOKEN;
   if(!token) return {configured:false,reason:'VERCEL_TOKEN not configured'};
   const until=new Date();
-  const since=new Date(until.getTime()-30*24*60*60*1000);
-  const previousUntil=new Date(since.getTime()-24*60*60*1000);
-  const previousSince=new Date(previousUntil.getTime()-30*24*60*60*1000);
-  const [currentResult,previousResult]=await Promise.all([
+  const since=new Date(until.getTime()-ANALYTICS_PERIOD_DAYS*24*60*60*1000);
+  const recentSince=new Date(until.getTime()-ANALYTICS_RECENT_DAYS*24*60*60*1000);
+  const [currentResult,recentResult]=await Promise.all([
     analyticsWindow(project,token,since,until),
-    analyticsWindow(project,token,previousSince,previousUntil)
+    analyticsWindow(project,token,recentSince,until)
   ]);
   if(!currentResult.ok){
     return {configured:true,available:false,status:currentResult.status,error:currentResult.error||currentResult.payload?.error?.message||currentResult.payload?.message||'Web Analytics unavailable'};
   }
-  const current=currentResult.payload?.data||{};
-  const previous=previousResult.ok?(previousResult.payload?.data||{}):{};
-  const pageviews=numericCount(current.pageviews);
-  const visitors=numericCount(current.visitors);
-  const previousPageviews=numericCount(previous.pageviews);
-  const previousVisitors=numericCount(previous.visitors);
-  return {
-    configured:true,
-    available:true,
-    period_days:30,
-    pageviews,
-    visitors,
-    previous_pageviews:previousPageviews,
-    previous_visitors:previousVisitors,
-    pageviews_delta_pct:percentDelta(pageviews,previousPageviews),
-    visitors_delta_pct:percentDelta(visitors,previousVisitors),
-    comparison_available:previousResult.ok
-  };
+  return analyticsSignal(currentResult.payload,recentResult);
 }
 
 async function aiTelemetry(project){
@@ -255,9 +249,9 @@ module.exports=async function handler(req,res){
     ...payload,
     privacy:{
       content_included:false,
-      analytics_scope:'aggregate Web Analytics counts and metadata-only AI operations telemetry'
+      analytics_scope:'Web Analytics connection status only (no page-view or visitor counts) and metadata-only AI operations telemetry'
     }
   });
 };
 
-module.exports._test={safeRenderHealth,numericCount,percentDelta,PROJECTS};
+module.exports._test={safeRenderHealth,numericCount,analyticsSignal,vercelAnalytics,PROJECTS};

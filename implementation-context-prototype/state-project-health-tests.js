@@ -448,19 +448,34 @@ assert.strictEqual(H.changedSinceVisit({project:{quality:null},lastVisit:{delive
 assert.strictEqual(H.changedSinceVisit({project:{quality:null},lastVisit:{deliverySha:'same',quality:{},analyticsAvailable:null,openPullRequests:0},delivery:{sha:'same'},platform:{},openPullRequests:[],checkedAt:'2026-09-30T01:00:00Z'}),false);
 const usageChanges=H.meaningfulChanges({
   project:{quality:null},
-  lastVisit:{deliverySha:'same',deliveryKind:'good',quality:{},analyticsAvailable:true,analyticsPageviews:10,openPullRequests:0,savedAt:'2026-09-29T01:00:00Z'},
+  lastVisit:{deliverySha:'same',deliveryKind:'good',quality:{},analyticsAvailable:true,analyticsReceiving:false,openPullRequests:0,savedAt:'2026-09-29T01:00:00Z'},
   delivery:{sha:'same',vercel:{kind:'good'}},
-  platform:{analytics:{available:true,pageviews:12}},
+  platform:{analytics:{available:true,receiving:true,recent:true}},
   openPullRequests:[],
   checkedAt:'2026-09-30T01:00:00Z',
   detailCheckedAt:'2026-09-30T01:00:00Z'
 });
 assert.strictEqual(usageChanges.find(item=>item.title==='Site analytics changed').section,undefined);
+assert.strictEqual(usageChanges.find(item=>item.title==='Site analytics changed').detail,'No page views → Receiving page views in the last 30 days');
+assert.ok(!usageChanges.some(item=>/\d+ page views/.test(item.detail)),'changes never report raw counts');
+// Cowork, Oct 11: the analytics card shows the signal, not the counts.
+assert.deepStrictEqual(H.analyticsSignal({configured:true,available:true,period_days:30,receiving:true,recent_days:7,recent:true}),{kind:'good',status:'Connected · receiving page views',detail:'Page views recorded in the last 7 days.'});
+assert.strictEqual(H.analyticsSignal({available:true,receiving:true,recent_days:7,recent:false}).detail,'No page views in the last 7 days.');
+assert.strictEqual(H.analyticsSignal({available:true,receiving:true,recent:null}).detail,'Recent activity could not be checked.');
+assert.strictEqual(H.analyticsSignal({available:true,period_days:30,receiving:false}).status,'Connected · no page views yet');
+assert.strictEqual(H.analyticsSignal({configured:true,available:false,status:403}),null);
+// An older cached snapshot that still holds counts is reduced to the same signal; the number is never shown.
+const legacySignal=H.analyticsSignal({available:true,pageviews:28,visitors:19});
+assert.strictEqual(legacySignal.status,'Connected · receiving page views');
+assert.doesNotMatch(JSON.stringify(legacySignal),/28|19/);
+assert.strictEqual(H.analyticsLabel({analytics:{available:true,visitors:19,pageviews:28}}),'Connected · receiving page views');
+assert.strictEqual(require('../project-health-model.js').visitBaseline({projectId:'state',platform:{analytics:{available:true,pageviews:28}}}).analyticsReceiving,true);
+assert.ok(!Object.prototype.hasOwnProperty.call(require('../project-health-model.js').visitBaseline({projectId:'state',platform:{analytics:{available:true}}}),'analyticsPageviews'));
 const analyticsAvailabilityChanges=H.meaningfulChanges({
   project:{quality:null},
-  lastVisit:{deliverySha:'same',deliveryKind:'good',quality:{},analyticsAvailable:false,analyticsPageviews:null,openPullRequests:0,savedAt:'2026-09-29T01:00:00Z'},
+  lastVisit:{deliverySha:'same',deliveryKind:'good',quality:{},analyticsAvailable:false,analyticsReceiving:null,openPullRequests:0,savedAt:'2026-09-29T01:00:00Z'},
   delivery:{sha:'same',vercel:{kind:'good'}},
-  platform:{analytics:{available:true,pageviews:12}},
+  platform:{analytics:{available:true,receiving:true,recent:true}},
   openPullRequests:[],
   checkedAt:'2026-09-30T01:00:00Z',
   detailCheckedAt:'2026-09-30T01:00:00Z'
@@ -468,7 +483,7 @@ const analyticsAvailabilityChanges=H.meaningfulChanges({
 assert.strictEqual(analyticsAvailabilityChanges.find(item=>item.title==='Site analytics availability changed').section,'systemsDetails');
 const releaseAndDeliveryChanges=H.meaningfulChanges({
   project:{quality:null},
-  lastVisit:{deliverySha:'oldsha',deliveryKind:'bad',quality:{},analyticsAvailable:null,analyticsPageviews:null,openPullRequests:0,savedAt:'2026-09-29T01:00:00Z'},
+  lastVisit:{deliverySha:'oldsha',deliveryKind:'bad',quality:{},analyticsAvailable:null,analyticsReceiving:null,openPullRequests:0,savedAt:'2026-09-29T01:00:00Z'},
   delivery:{sha:'20d0bd7abcdef',message:'Promote Project Health action destination cleanup',vercel:{kind:'good'},updatedAt:'2026-09-30T01:00:00Z'},
   platform:{},
   openPullRequests:[],
@@ -707,7 +722,8 @@ assert.match(projectHealthSource,/data-activity-filter/);
 assert.match(projectHealthSource,/aria-pressed/);
 assert.match(projectHealthSource,/aria-busy="true"/);
 assert.match(projectHealthSource,/Show '.+attempts/);
-assert.match(projectHealthSource,/No previous 30-day period to compare yet/);
+assert.doesNotMatch(projectHealthSource,/a\.visitors|a\.pageviews|aSummary\.(visitors|pageviews)|'Visitors · 30d'|'Page views · 30d'/,'the analytics card shows the signal, not raw counts');
+assert.match(projectHealthSource,/analyticsSignal\(a\)/);
 assert.match(projectHealthSource,/Release pipeline/);
 assert.doesNotMatch(projectHealthSource,/Attention needed/);
 assert.match(projectHealthSource,/Needs attention/);

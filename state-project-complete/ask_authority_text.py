@@ -441,5 +441,10 @@ def _clean_visible_ask_text(value: str | None, internal_ids: set[str], labels: M
     text = re.sub(r"\s*[;,]\s*\)", ")", text)
     text = re.sub(r"\(\s*(?:[,;]\s*)*\)", "", text)
     text = re.sub(r"\s+([,.;:])", r"\1", text)
-    text = re.sub(r"\s{2,}", " ", text).strip(" -–—:;,.")
-    return text or None
+    # Trim separators an id removal can strand at either end, and a leading dot, but keep a
+    # sentence's own final period: trimming it left every Ask summary and item unpunctuated
+    # (Cowork, Oct 11).
+    text = re.sub(r"\s{2,}", " ", text).strip(" -–—:;,").lstrip(". ")
+    if text in {".", ""}:
+        return None
+    return text

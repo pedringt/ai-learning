@@ -24,8 +24,35 @@ assert.deepStrictEqual(
 );
 
 assert.strictEqual(platform.numericCount('12'),12);
-assert.strictEqual(platform.percentDelta(120,100),20);
-assert.strictEqual(platform.percentDelta(0,0),null);
+// Cowork, Oct 11: the public analytics signal is connected/receiving/recent only, never raw counts.
+assert.deepStrictEqual(
+  platform.analyticsSignal({data:{pageviews:28,visitors:19}},{ok:true,payload:{data:{pageviews:4,visitors:3}}}),
+  {configured:true,available:true,period_days:30,receiving:true,recent_days:7,recent:true}
+);
+assert.strictEqual(platform.analyticsSignal({data:{pageviews:0,visitors:0}},{ok:true,payload:{data:{pageviews:0}}}).receiving,false);
+assert.strictEqual(platform.analyticsSignal({data:{pageviews:5}},{ok:false,status:500,payload:{}}).recent,null,'a failed recency query is unknown, not "no recent views"');
+(async()=>{
+  const originalFetch=global.fetch,originalToken=process.env.VERCEL_TOKEN;
+  process.env.VERCEL_TOKEN='test-token';
+  const urls=[];
+  global.fetch=async url=>{urls.push(String(url));return {ok:true,status:200,json:async()=>({data:{pageviews:28,visitors:19,devices:7}})};};
+  try{
+    const handler=require('../api/project-health-platform.js');
+    let body=null;
+    const res={headers:{},setHeader(k,v){this.headers[k]=v;},status(code){this.code=code;return this;},json(payload){body=payload;return this;}};
+    await handler({method:'GET',query:{project:'state',signal:'analytics'}},res);
+    assert.strictEqual(res.code,200);
+    const text=JSON.stringify(body);
+    assert.doesNotMatch(text,/pageviews|visitors|"28"|:28\b|:19\b/,'no raw counts in the public JSON: '+text);
+    assert.strictEqual(body.analytics.receiving,true);
+    assert.strictEqual(body.analytics.recent,true);
+    assert.match(body.privacy.analytics_scope,/no page-view or visitor counts/);
+    assert.ok(urls.every(url=>url.startsWith('https://api.vercel.com/v1/query/web-analytics/visits/count?')));
+  }finally{
+    global.fetch=originalFetch;
+    if(originalToken==null)delete process.env.VERCEL_TOKEN;else process.env.VERCEL_TOKEN=originalToken;
+  }
+})().catch(error=>{console.error(error);process.exit(1);});
 
 const deploymentSummary=activity.summarizeDeployments([
   {uid:'preview-cancel',name:'state',target:null,state:'CANCELED',created:400,errorMessage:'Preview canceled'},

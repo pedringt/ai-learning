@@ -41,9 +41,41 @@ const stateHealthy=loaded(project('state'),{quality:healthyStateQuality,qualityB
 assert.strictEqual(M.overallAttention(stateHealthy).kind,'good');
 assert.strictEqual(M.projectStatus(stateHealthy).label,'Healthy');
 const authorityByDesign=loaded(project('authority-lab'),{externalQuality:null});
-assert.strictEqual(M.projectStatus(authorityByDesign).label,'Healthy','no quality source by design is not a failure');
 assert.deepStrictEqual(M.uncheckedSignals(authorityByDesign),[]);
 assert.ok(project('authority-lab').noQualitySource&&project('authority-lab').noRunWorkflow);
+
+// --- Cowork, Oct 11: a quality source missing by design is not a failure, but it is not hidden either.
+// Delivery/runtime can be fine; the project never gets the plain "Healthy" headline, pill, or banner copy.
+const authorityStatus=M.projectStatus(authorityByDesign);
+assert.deepStrictEqual(authorityStatus,{key:'partial',label:'Healthy · quality not measured',shortLabel:'Quality not measured',kind:'good'});
+assert.notStrictEqual(authorityStatus.label,'Healthy');
+assert.ok(!['action','watch','incomplete'].includes(authorityStatus.key),'not counted in the attention, watch, or incomplete summary chips');
+const authorityOverall=M.overallAttention(authorityByDesign);
+assert.strictEqual(authorityOverall.kind,'good');
+assert.ok(authorityOverall.qualityNotMeasured);
+assert.notStrictEqual(authorityOverall.title,'Healthy');
+assert.strictEqual(authorityOverall.detail,'No delivery or runtime problems. Quality checks aren\u2019t connected for this project.');
+assert.ok(!authorityOverall.incomplete,'missing by design is not the failed-request "Incomplete" state');
+const authoritySummary=M.healthySummary(authorityByDesign);
+assert.strictEqual(authoritySummary.qualityNotMeasured,true);
+assert.doesNotMatch(authoritySummary.headline,/Everything looks healthy/);
+assert.strictEqual(authoritySummary.meta,'Not measured');
+assert.match(M.releaseReadiness(authorityByDesign).detail,/quality is not measured/);
+const authorityCard=M.cardMarkup(authorityByDesign,false);
+assert.match(authorityCard,/>Quality not measured</);
+assert.match(authorityCard,/title="Healthy · quality not measured"/);
+assert.match(authorityCard,/No delivery or runtime problems/);
+assert.doesNotMatch(authorityCard,/>Healthy<|No current product-quality action/);
+// State with real quality data still gets the plain healthy result.
+assert.strictEqual(M.healthySummary(stateHealthy).headline,'Everything looks healthy right now.');
+assert.deepStrictEqual(M.projectStatus(stateHealthy),{key:'healthy',label:'Healthy',kind:'good'});
+assert.ok(!M.overallAttention(stateHealthy).qualityNotMeasured);
+// A real problem still outranks "quality not measured".
+const authorityBad=loaded(project('authority-lab'),{delivery:{...goodDelivery,vercel:{kind:'bad',label:'Vercel deploy failed'}}});
+assert.strictEqual(M.projectStatus(authorityBad).key,'action');
+// A failed request on a project with no quality source is still "Incomplete", not "quality not measured".
+const authorityTimedOut=loaded(project('authority-lab'),{delivery:null,failures:[{label:'Delivery',reason:'request timed out'}]});
+assert.strictEqual(M.projectStatus(authorityTimedOut).key,'incomplete');
 
 // --- The QA repro: State's quality request timed out on first load, nothing seeded. Never "Healthy".
 const stateTimedOut=loaded(project('state'),{quality:null,failures:[{label:'Quality',reason:'request timed out'}]});
@@ -75,6 +107,23 @@ assert.notStrictEqual(M.projectStatus(tastemake404).kind,'good');
 // --- Several missing signals are all named, once each.
 const many=loaded(project('narc'),{delivery:null,failures:[{label:'Delivery',reason:'request timed out'},{label:'Activity',reason:'server error 502'},{label:'Delivery',reason:'request timed out'}]});
 assert.strictEqual(M.overallAttention(many).title,"Couldn't check: Release pipeline (request timed out), Deployment activity (server error 502)");
+
+// --- Cowork, Oct 11: paid actions explain themselves in one sentence; the cooldown matches the run API.
+const RUN_API=require('../api/project-health-run.js')._test;
+assert.strictEqual(M.RUN_COOLDOWN_MINUTES*60*1000,RUN_API.RUN_COOLDOWN_MS,'note cooldown must match the API cooldown');
+const paidRunInfo={configured:true,can_run_here:true,paid_model_calls:true,button_label:'Run AI evals',estimated_cost:'<$0.25 per full run'};
+assert.strictEqual(M.paidActionNote({...stateHealthy,runInfo:paidRunInfo}),'Run AI evals makes a few small paid AI calls, is limited to one run every 10 minutes, and may update what this page shows.');
+assert.strictEqual(M.paidActionNote({...stateHealthy,runInfo:{...paidRunInfo,configured:false}}),'','no note when the button is hidden');
+assert.strictEqual(M.paidActionNote(loaded(project('tastemake'),{runInfo:{configured:true,paid_model_calls:false}})),'','a free GitHub workflow run is not described as paid');
+assert.strictEqual(M.investigationUsesModel(authorityByDesign),false,'a healthy project investigation is a free local summary');
+assert.strictEqual(M.paidActionNote(authorityByDesign),'');
+assert.strictEqual(M.investigationUsesModel(authorityBad),true);
+assert.strictEqual(M.paidActionNote(authorityBad),'Investigate makes a small paid AI call to summarize the failure evidence; it only reads and changes nothing.');
+const stateBadDelivery=loaded(project('state'),{quality:healthyStateQuality,qualityBehaviorUpdatedAt:'2026-10-01T00:00:00Z',delivery:{...goodDelivery,vercel:{kind:'bad',label:'Vercel deploy failed'}},runInfo:paidRunInfo});
+assert.match(M.paidActionNote(stateBadDelivery),/^Run AI evals and Investigate make small paid AI calls; eval runs are limited to one every 10 minutes/);
+for(const note of [M.paidActionNote({...stateHealthy,runInfo:paidRunInfo}),M.paidActionNote(stateBadDelivery),M.paidActionNote(authorityBad)]){
+  assert.strictEqual((note.match(/[.!?](\s|$)/g)||[]).length,1,'one sentence: '+note);
+}
 
 // --- Non-health controls and detail-only signals do not make a project incomplete.
 const controlsOnly=loaded(project('tastemake'),{externalQuality:{attention:[{kind:'good',title:'Recommendation checks healthy'}]},failures:[{label:'Run controls',reason:'not found'},{label:'Analytics',reason:'request timed out'}]});
@@ -124,7 +173,7 @@ assert.ok(M.attentionItems(staleEvals).some(item=>item.incomplete));
     requested.length=0;
     const authority=await H.loadProject(project('authority-lab'),root);
     assert.ok(!requested.some(url=>/project-health-(run|project-quality)/.test(url)),'by-design gaps are not requested');
-    assert.strictEqual(M.projectStatus(authority).label,'Healthy');
+    assert.strictEqual(M.projectStatus(authority).label,'Healthy · quality not measured');
     await H.loadProjectDetails(authority,root);
     assert.strictEqual(requested.filter(url=>url.startsWith('/api/project-health-github')).length,1,'details reuse the same GitHub response');
 

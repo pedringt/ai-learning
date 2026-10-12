@@ -31,7 +31,7 @@ def test_a_slug_style_id_is_removed_whole_even_when_it_is_not_in_the_exact_id_li
 
 
 def test_the_two_strings_from_the_issue_read_cleanly():
-    assert _clean_visible_ask_text("Demo-juniper-review-elevator qualifies this risk.", set()) == "qualifies this risk"
+    assert _clean_visible_ask_text("Demo-juniper-review-elevator qualifies this risk.", set()) == "qualifies this risk."
     assert _clean_visible_ask_text("Proposed via demo-juniper-review-budget-evidence; awaiting authorization to track formally", set()) \
         == "Proposed via; awaiting authorization to track formally"
 
@@ -140,3 +140,13 @@ def test_review_type_values_read_as_words():
 def test_a_real_parenthetical_with_a_preposition_inside_is_kept():
     text = "The pilot (logged in by Security) continues"
     assert _clean_visible_ask_text(text, set()) == text
+
+
+def test_a_sentence_keeps_its_final_period():
+    """Cowork (Oct 11): Ask summaries ended without a period because the cleaner trimmed it."""
+    summary = "Two Reviews need attention, and the retention question is still open."
+    assert _clean_visible_ask_text(summary, set()) == summary
+    assert _clean_visible_ask_text("Launch is planned (review_1).", {"review_1"}) == "Launch is planned."
+    assert _clean_visible_ask_text("Is the vendor approved?", set()) == "Is the vendor approved?"
+    assert _clean_visible_ask_text(". Leading dot left by an id", set()) == "Leading dot left by an id"
+    assert _clean_visible_ask_text("review_1.", {"review_1"}) is None
