@@ -209,6 +209,14 @@ class AnthropicProvider:
             connection.commit()
         except Exception:
             logger.warning("Could not persist model-call telemetry", exc_info=True)
+            # A failed statement leaves a Postgres transaction aborted until rolled back, which
+            # would fail the interpretation's own writes after this (CLAUDE.md, Sept 14 incident).
+            # SQLite needs no rollback, and one would discard the caller's uncommitted work.
+            if getattr(connection, "is_postgres", False):
+                try:
+                    connection.rollback()
+                except Exception:
+                    logger.warning("Rollback after telemetry failure also failed", exc_info=True)
 
         # Structured outputs can still be non-schema text on refusal or be
         # truncated at max_tokens. Fail explicitly instead of surfacing a

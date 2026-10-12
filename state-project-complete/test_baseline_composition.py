@@ -504,3 +504,20 @@ def test_extension_point_layers_wrap_in_order_and_ignore_repeats():
     assert not point.add_layer("a", lambda inner: lambda value: ["replaced"])
     assert point(0) == [0, "a", "b"]
     assert point.layers == ("a", "b")
+
+
+def test_a_failed_telemetry_insert_does_not_fail_interpretation(monkeypatch, db_url):
+    """On Postgres a failed INSERT aborts the transaction until a rollback; the interpretation's
+    own writes after it must still succeed (CLAUDE.md Postgres rule; found during #502)."""
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "dummy-not-a-key")
+    provider = anthropic_provider.AnthropicProvider()
+    _with_fake_client(provider, lambda _prompt, _call: ("end_turn", _fact_payload("Telemetry-proof fact.")))
+    with TestClient(api.create_app(settings=_settings(db_url), provider=provider)) as client:
+        broken = connect(db_url)
+        try:
+            broken.execute("DROP TABLE model_call_metrics")
+            broken.commit()
+        finally:
+            broken.close()
+        response = _submit(client, "northstar", "Launch moved to May 4 after the vendor review.")
+        assert response.status_code == 201, response.text
