@@ -12,7 +12,9 @@ client, so no model is ever called.
 from __future__ import annotations
 
 import json
+import os
 import socket
+import uuid
 import tempfile
 from pathlib import Path
 from types import SimpleNamespace
@@ -29,7 +31,7 @@ import baseline_setup
 import database_migration_backed
 import review_service
 import seed_demo
-from db import connect_sqlite
+from db import connect
 from test_baseline_setup_lifecycle import BaselineFixtureProvider
 
 QUALITY_TAG = "<baseline_setup_quality_checks>"
@@ -45,14 +47,32 @@ def _no_network(monkeypatch):
     monkeypatch.setattr(socket.socket, "connect", refuse)
 
 
-@pytest.fixture
-def db_path():
-    with tempfile.TemporaryDirectory() as tempdir:
-        yield str(Path(tempdir) / "state.db")
+@pytest.fixture(params=["sqlite", "postgres"])
+def db_url(request):
+    """Each test runs on SQLite and, when STATE_TEST_POSTGRES_URL is set, on its own Postgres schema."""
+    if request.param == "sqlite":
+        with tempfile.TemporaryDirectory() as tempdir:
+            yield "sqlite://" + str(Path(tempdir) / "state.db")
+        return
+    url = os.getenv("STATE_TEST_POSTGRES_URL")
+    if not url:
+        pytest.skip("Isolated PostgreSQL service runs in CI")
+    pytest.importorskip("psycopg2")
+    schema = "test_composition_" + uuid.uuid4().hex
+    with connect(url) as admin:
+        admin.execute(f"CREATE SCHEMA {schema}")
+        admin.commit()
+    separator = "&" if "?" in url else "?"
+    try:
+        yield f"{url}{separator}options=-csearch_path%3D{schema}"
+    finally:
+        with connect(url) as admin:
+            admin.execute(f"DROP SCHEMA {schema} CASCADE")
+            admin.commit()
 
 
-def _settings(path):
-    return api.Settings(database_path=path, cors_origins=[], demo_bootstrap=True)
+def _settings(url):
+    return api.Settings(database_url=url, cors_origins=[], demo_bootstrap=True)
 
 
 def _create_project(client, name="Composition Test"):
@@ -149,8 +169,8 @@ def _submit(client, project_id, content):
     )
 
 
-def _coverage_rows(path, evidence_id):
-    connection = connect_sqlite(path)
+def _coverage_rows(url, evidence_id):
+    connection = connect(url)
     try:
         return [dict(row) for row in connection.execute(
             "SELECT chunk_count, represented_chunks, unrepresented_chunks FROM baseline_evidence_coverage "
@@ -170,13 +190,13 @@ def _draft_items(client, project_id):
 # --- install_baseline_extensions: provider factory ----------------------------------------------
 
 
-def test_composed_provider_factory_builds_the_baseline_anthropic_provider(monkeypatch, db_path):
+def test_composed_provider_factory_builds_the_baseline_anthropic_provider(monkeypatch, db_url):
     provider = _baseline_anthropic_provider(monkeypatch)
     assert type(provider).__name__ == "BaselineAnthropicProvider"
     assert isinstance(provider, anthropic_provider.AnthropicProvider)
 
     # The app's lifespan and the async Baseline intake both use the composed factory.
-    with TestClient(api.create_app(settings=_settings(db_path))) as client:
+    with TestClient(api.create_app(settings=_settings(db_url))) as client:
         assert type(client.app.state.provider).__name__ == "BaselineAnthropicProvider"
         client.app.state.provider = None
         selected = baseline_async_intake._selected_provider(client.app, client.app.state.settings)
@@ -186,14 +206,14 @@ def test_composed_provider_factory_builds_the_baseline_anthropic_provider(monkey
 # --- install_baseline_extensions: process_evidence and resolve_review ---------------------------
 
 
-def test_sync_evidence_route_persists_baseline_metadata_and_accept_organizes_the_fact(db_path):
-    with TestClient(api.create_app(settings=_settings(db_path), provider=BaselineFixtureProvider())) as client:
+def test_sync_evidence_route_persists_baseline_metadata_and_accept_organizes_the_fact(db_url):
+    with TestClient(api.create_app(settings=_settings(db_url), provider=BaselineFixtureProvider())) as client:
         project_id = _create_project(client)
         headers = {"X-State-Project-Id": project_id}
         created = _submit(client, project_id, "First baseline note about what State is.")
         assert created.status_code == 201, created.text
         evidence_id = created.json()["evidence_id"]
-        assert _coverage_rows(db_path, evidence_id) == [
+        assert _coverage_rows(db_url, evidence_id) == [
             {"chunk_count": 1, "represented_chunks": 1, "unrepresented_chunks": 0}
         ]
 
@@ -204,8 +224,8 @@ def test_sync_evidence_route_persists_baseline_metadata_and_accept_organizes_the
         assert [(item["area_name"], item["topic"]) for item in state] == [("Product", "Purpose")]
 
 
-def test_async_baseline_intake_runs_the_composed_process_evidence(db_path):
-    with TestClient(api.create_app(settings=_settings(db_path), provider=BaselineFixtureProvider())) as client:
+def test_async_baseline_intake_runs_the_composed_process_evidence(db_url):
+    with TestClient(api.create_app(settings=_settings(db_url), provider=BaselineFixtureProvider())) as client:
         project_id = _create_project(client)
         queued = client.post(
             "/api/baseline/evidence",
@@ -214,14 +234,14 @@ def test_async_baseline_intake_runs_the_composed_process_evidence(db_path):
         )
         assert queued.status_code == 202, queued.text
         evidence_id = queued.json()["evidence_id"]
-        assert _coverage_rows(db_path, evidence_id) == [
+        assert _coverage_rows(db_url, evidence_id) == [
             {"chunk_count": 1, "represented_chunks": 1, "unrepresented_chunks": 0}
         ]
         assert _draft_items(client, project_id)[0]["area_name"] == "Product"
 
 
-def test_manual_starting_state_runs_the_composed_process_evidence(db_path):
-    with TestClient(api.create_app(settings=_settings(db_path), provider=BaselineFixtureProvider())) as client:
+def test_manual_starting_state_runs_the_composed_process_evidence(db_url):
+    with TestClient(api.create_app(settings=_settings(db_url), provider=BaselineFixtureProvider())) as client:
         project_id = _create_project(client)
         created = client.post(
             "/api/baseline/manual",
@@ -229,7 +249,7 @@ def test_manual_starting_state_runs_the_composed_process_evidence(db_path):
             json={"items": [{"statement": "State is a portfolio project.", "area_name": "Scope", "topic": "Boundary"}]},
         )
         assert created.status_code == 201, created.text
-        assert len(_coverage_rows(db_path, created.json()["evidence_id"])) == 1
+        assert len(_coverage_rows(db_url, created.json()["evidence_id"])) == 1
         assert _draft_items(client, project_id)[0]["area_name"] == "Scope"
 
 
@@ -240,8 +260,8 @@ def test_baseline_migration_is_expected_exactly_once():
 # --- prompt hardening + fact recovery: prompt guidance order ------------------------------------
 
 
-def _guidance(path, project_id, **evidence_extra):
-    connection = connect_sqlite(path)
+def _guidance(url, project_id, **evidence_extra):
+    connection = connect(url)
     try:
         connection.project_id = project_id
         return baseline_setup.baseline_prompt_guidance(
@@ -251,20 +271,20 @@ def _guidance(path, project_id, **evidence_extra):
         connection.close()
 
 
-def test_prompt_guidance_layers_apply_in_order(db_path):
-    with TestClient(api.create_app(settings=_settings(db_path), provider=BaselineFixtureProvider())) as client:
+def test_prompt_guidance_layers_apply_in_order(db_url):
+    with TestClient(api.create_app(settings=_settings(db_url), provider=BaselineFixtureProvider())) as client:
         project_id = _create_project(client)
 
-    plain = _guidance(db_path, project_id)
+    plain = _guidance(db_url, project_id)
     assert plain.index(SETUP_MODE_TAG) < plain.index(QUALITY_TAG)
     assert RECOVERY_TAG not in plain
 
-    recovery = _guidance(db_path, project_id, _state_baseline_fact_recovery=True)
+    recovery = _guidance(db_url, project_id, _state_baseline_fact_recovery=True)
     assert recovery.index(SETUP_MODE_TAG) < recovery.index(QUALITY_TAG) < recovery.index(RECOVERY_TAG)
 
     # Outside Baseline Setup: no setup mode, no quality checks; the recovery flag alone still appends.
-    assert _guidance(db_path, "northstar") == ""
-    assert _guidance(db_path, "northstar", _state_baseline_fact_recovery=True).startswith(RECOVERY_TAG)
+    assert _guidance(db_url, "northstar") == ""
+    assert _guidance(db_url, "northstar", _state_baseline_fact_recovery=True).startswith(RECOVERY_TAG)
 
 
 # --- dogfood fixes ------------------------------------------------------------------------------
@@ -279,18 +299,18 @@ def test_section_aware_splitter_is_what_baseline_setup_exposes():
     ]
 
 
-def test_project_delete_clears_baseline_coverage_before_evidence(db_path):
+def test_project_delete_clears_baseline_coverage_before_evidence(db_url):
     assert seed_demo._PROJECT_DEPENDENT_TABLES[0][0] == "baseline_evidence_coverage"
-    with TestClient(api.create_app(settings=_settings(db_path), provider=BaselineFixtureProvider())) as client:
+    with TestClient(api.create_app(settings=_settings(db_url), provider=BaselineFixtureProvider())) as client:
         project_id = _create_project(client)
         evidence_id = _submit(client, project_id, "First baseline note about what State is.").json()["evidence_id"]
-        assert _coverage_rows(db_path, evidence_id)
+        assert _coverage_rows(db_url, evidence_id)
         deleted = client.delete(f"/api/projects/{project_id}", headers={"X-State-Project-Id": project_id})
         assert deleted.status_code == 200, deleted.text
-        assert _coverage_rows(db_path, evidence_id) == []
+        assert _coverage_rows(db_url, evidence_id) == []
 
 
-def test_background_analysis_skips_a_deleted_project(db_path):
+def test_background_analysis_skips_a_deleted_project(db_url):
     class FailIfCalled:
         name = "fail"
         model_identifier = "fail"
@@ -298,7 +318,7 @@ def test_background_analysis_skips_a_deleted_project(db_path):
         def interpret(self, **_kwargs):
             raise AssertionError("provider must not be called")
 
-    settings = _settings(db_path)
+    settings = _settings(db_url)
     with TestClient(api.create_app(settings=settings)):
         pass
     baseline_async_intake._analyze_in_background(settings, FailIfCalled(), "project_gone", "evidence_gone")
@@ -307,14 +327,14 @@ def test_background_analysis_skips_a_deleted_project(db_path):
 # --- review visibility --------------------------------------------------------------------------
 
 
-def test_routine_starting_state_reviews_are_hidden_from_api_and_ask_but_not_from_raw_rows(db_path):
-    with TestClient(api.create_app(settings=_settings(db_path), provider=BaselineFixtureProvider())) as client:
+def test_routine_starting_state_reviews_are_hidden_from_api_and_ask_but_not_from_raw_rows(db_url):
+    with TestClient(api.create_app(settings=_settings(db_url), provider=BaselineFixtureProvider())) as client:
         project_id = _create_project(client)
         headers = {"X-State-Project-Id": project_id}
         _submit(client, project_id, "First baseline note about what State is.")
         assert client.get("/api/reviews", headers=headers).json()["items"] == []
 
-    connection = connect_sqlite(db_path)
+    connection = connect(db_url)
     try:
         connection.project_id = project_id
         assert len(review_service.list_reviews(connection, "open")) == 1
@@ -327,7 +347,7 @@ def test_routine_starting_state_reviews_are_hidden_from_api_and_ask_but_not_from
 # --- provider stack: dogfood splitter + hardening + resilience + fact recovery ------------------
 
 
-def test_baseline_provider_chunks_by_source_section_with_quality_guidance(monkeypatch, db_path):
+def test_baseline_provider_chunks_by_source_section_with_quality_guidance(monkeypatch, db_url):
     provider = _baseline_anthropic_provider(monkeypatch)
     markers = {"ZXALPHA": "Alpha is durable.", "ZXBRAVO": "Bravo is durable.", "ZXCHARLIE": "Charlie is durable."}
 
@@ -342,12 +362,12 @@ def test_baseline_provider_chunks_by_source_section_with_quality_guidance(monkey
         "Project notes\n\n1. Product overview\nZXALPHA fact.\n\n"
         "2. Product principles\nZXBRAVO fact.\n\n3. Technical approach\nZXCHARLIE fact.\n"
     )
-    with TestClient(api.create_app(settings=_settings(db_path), provider=provider)) as client:
+    with TestClient(api.create_app(settings=_settings(db_url), provider=provider)) as client:
         project_id = _create_project(client)
         created = _submit(client, project_id, source)
         assert created.status_code == 201, created.text
         statements = sorted(item["statement"] for item in _draft_items(client, project_id))
-        assert _coverage_rows(db_path, created.json()["evidence_id"]) == [
+        assert _coverage_rows(db_url, created.json()["evidence_id"]) == [
             {"chunk_count": 4, "represented_chunks": 3, "unrepresented_chunks": 1}
         ]
 
@@ -363,7 +383,7 @@ def _two_paragraph_source(marker):
     return f"{marker}ONE {body}\n\n{marker}TWO {body}"
 
 
-def test_baseline_provider_retries_a_max_tokens_chunk_in_smaller_pieces(monkeypatch, db_path):
+def test_baseline_provider_retries_a_max_tokens_chunk_in_smaller_pieces(monkeypatch, db_url):
     provider = _baseline_anthropic_provider(monkeypatch)
 
     def respond(_prompt, call):
@@ -372,7 +392,7 @@ def test_baseline_provider_retries_a_max_tokens_chunk_in_smaller_pieces(monkeypa
         return "end_turn", _fact_payload(f"Piece {call} is durable.", area="Product", topic="Piece")
 
     messages = _with_fake_client(provider, respond)
-    with TestClient(api.create_app(settings=_settings(db_path), provider=provider)) as client:
+    with TestClient(api.create_app(settings=_settings(db_url), provider=provider)) as client:
         project_id = _create_project(client)
         created = _submit(client, project_id, _two_paragraph_source("ZXRETRY"))
         assert created.status_code == 201, created.text
@@ -386,7 +406,7 @@ def test_baseline_provider_retries_a_max_tokens_chunk_in_smaller_pieces(monkeypa
     assert statements == ["Piece 2 is durable.", "Piece 3 is durable."]
 
 
-def test_plain_anthropic_adapter_also_retries_on_a_baseline_project(monkeypatch, db_path):
+def test_plain_anthropic_adapter_also_retries_on_a_baseline_project(monkeypatch, db_url):
     monkeypatch.setenv("ANTHROPIC_API_KEY", "dummy-not-a-key")
     provider = anthropic_provider.AnthropicProvider()
 
@@ -396,16 +416,16 @@ def test_plain_anthropic_adapter_also_retries_on_a_baseline_project(monkeypatch,
         return "end_turn", _fact_payload(f"Piece {call} is durable.")
 
     messages = _with_fake_client(provider, respond)
-    with TestClient(api.create_app(settings=_settings(db_path), provider=provider)) as client:
+    with TestClient(api.create_app(settings=_settings(db_url), provider=provider)) as client:
         project_id = _create_project(client)
         assert _submit(client, project_id, _two_paragraph_source("ZXPLAIN")).status_code == 201
     assert len(messages.prompts) == 3
 
 
-def test_max_tokens_is_not_retried_outside_baseline_setup(monkeypatch, db_path):
+def test_max_tokens_is_not_retried_outside_baseline_setup(monkeypatch, db_url):
     provider = _baseline_anthropic_provider(monkeypatch)
     messages = _with_fake_client(provider, lambda _prompt, _call: ("max_tokens", _NO_REVIEW))
-    with TestClient(api.create_app(settings=_settings(db_path), provider=provider)) as client:
+    with TestClient(api.create_app(settings=_settings(db_url), provider=provider)) as client:
         response = _submit(client, "northstar", _two_paragraph_source("ZXNORTH"))
         assert response.status_code == 503
         assert response.json()["detail"]["code"] == "provider_error"
@@ -413,7 +433,7 @@ def test_max_tokens_is_not_retried_outside_baseline_setup(monkeypatch, db_path):
     assert QUALITY_TAG not in messages.prompts[0]
 
 
-def test_baseline_provider_recovers_facts_when_the_first_pass_found_only_questions(monkeypatch, db_path):
+def test_baseline_provider_recovers_facts_when_the_first_pass_found_only_questions(monkeypatch, db_url):
     provider = _baseline_anthropic_provider(monkeypatch)
 
     def respond(prompt, _call):
@@ -424,7 +444,7 @@ def test_baseline_provider_recovers_facts_when_the_first_pass_found_only_questio
     messages = _with_fake_client(provider, respond)
     source = " ".join(["State keeps a durable record of the project baseline."] * 26) + " Which launch date is current?"
     assert 1200 <= len(source) <= 2600
-    with TestClient(api.create_app(settings=_settings(db_path), provider=provider)) as client:
+    with TestClient(api.create_app(settings=_settings(db_url), provider=provider)) as client:
         project_id = _create_project(client)
         created = _submit(client, project_id, source)
         assert created.status_code == 201, created.text
