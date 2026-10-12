@@ -249,6 +249,18 @@ html body .mock-dashboard .mock-attention-banner.is-incomplete .mock-attention-c
 html body .mock-dashboard .mock-attention-banner.is-incomplete .mock-issue-dot { background: #8a8796; }
 html body .status-pill.incomplete { background: #f1f1f4 !important; color: #5f5c6b !important; }
 
+/* quality not measured by design (Cowork, Oct 11): delivery and runtime are fine, but there is no quality source,
+   so the banner and pill stay neutral instead of the green "healthy" state. Not the same as incomplete (a failed request). */
+html body .mock-dashboard .mock-attention-banner.is-partial {
+  border: 0 !important;
+  background: #f6f7f6 !important;
+}
+html body .mock-dashboard .mock-attention-banner.is-partial .mock-attention-icon { background: #7d8a83 !important; color: #fff; }
+html body .mock-dashboard .mock-attention-banner.is-partial .mock-attention-copy h3 { color: var(--ink); }
+html body .mock-dashboard .mock-attention-banner.is-partial .mock-attention-copy > p { color: var(--muted); }
+html body .mock-dashboard .mock-attention-banner.is-partial .mock-issue-dot { background: #7d8a83; }
+html body .status-pill.partial { background: #f1f3f1 !important; color: #4f5a54 !important; }
+
 /* QA Oct 10: on phones the project header's actions (Open project, View source, Investigate, Run, •••) wrapped onto
    two rows. "Open project" and "View source" are already in the ••• menu (Live project / GitHub repository), so phones
    keep one row: Investigate, the run button (its label may wrap inside the button), and •••. */

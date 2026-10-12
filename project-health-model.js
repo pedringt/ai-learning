@@ -266,7 +266,18 @@
     if(infra?.kind==='bad') return infra;
     const unchecked=uncheckedSignals(data);
     if(unchecked.length) return incompleteAttention(unchecked);
+    if(qualityNotMeasured(data)) return {kind:'good',qualityNotMeasured:true,title:QUALITY_NOT_MEASURED_LABEL,detail:QUALITY_NOT_MEASURED_DETAIL};
     return {kind:'good',title:'Healthy',detail:'No current incident or product-quality action needs attention.'};
+  }
+  // A project with no quality source by design (Authority Lab) can be fine on delivery and runtime, but Project Health
+  // must not hide the missing signal (Cowork, Oct 11): it never gets the plain "Healthy" headline or pill. This is not
+  // "Incomplete", which means a signal we do request failed to load.
+  const QUALITY_NOT_MEASURED_LABEL='Healthy · quality not measured';
+  const QUALITY_NOT_MEASURED_DETAIL='No delivery or runtime problems. Quality checks aren\u2019t connected for this project.';
+  function qualityNotMeasured(data){return !!data?.project?.noQualitySource;}
+  function healthySummary(data){
+    if(qualityNotMeasured(data)) return {qualityNotMeasured:true,headline:QUALITY_NOT_MEASURED_DETAIL,rowTitle:'Quality not measured',rowDetail:'Nothing needs action, but Project Health can only confirm delivery and runtime here.',meta:'Not measured'};
+    return {qualityNotMeasured:false,headline:'Everything looks healthy right now.',rowTitle:'Nothing needs attention right now',rowDetail:'No current incident or product-quality action is open.',meta:'Healthy'};
   }
   function projectStatus(data){
     const att=overallAttention(data);
@@ -274,6 +285,7 @@
     if(att.kind==='unknown') return {key:'checking',label:'Checking',kind:'unknown'};
     if(att.kind==='bad') return {key:'action',label:'Needs attention',kind:'bad'};
     if(att.kind==='warn') return {key:'watch',label:'Watch',kind:'warn'};
+    if(att.qualityNotMeasured) return {key:'partial',label:QUALITY_NOT_MEASURED_LABEL,kind:'good'};
     return {key:'healthy',label:'Healthy',kind:'good'};
   }
   function attentionItems(data){
@@ -354,7 +366,9 @@
     if(open.length) return {kind:'warn',label:'Watch',detail:'Delivery is healthy, but a product-quality check or human review is still open.'};
     const unchecked=uncheckedSignals(data);
     if(unchecked.length) return {kind:'unknown',label:'Incomplete',detail:incompleteAttention(unchecked).title+'. Release health cannot be confirmed.'};
-    if(deliveryAttentionForData(data).kind==='good') return {kind:'good',label:'Healthy',detail:'Delivery is healthy and there is no current high-impact quality issue.'};
+    if(deliveryAttentionForData(data).kind==='good') return qualityNotMeasured(data)
+      ?{kind:'good',label:'Healthy',detail:'Delivery is healthy. Quality checks aren\u2019t connected for this project, so quality is not measured.'}
+      :{kind:'good',label:'Healthy',detail:'Delivery is healthy and there is no current high-impact quality issue.'};
     return {kind:'unknown',label:'Unknown',detail:'There is not enough current evidence to confirm release health.'};
   }
   function regressionSignal(data){
@@ -1091,7 +1105,7 @@
     const attention=overallAttention(data);
     const signal=pending.size
       ?'Checking project health…'
-      :(status.kind==='good'?'No current product-quality action':attention.title);
+      :(status.key==='partial'?'Quality checks not connected':status.kind==='good'?'No current product-quality action':attention.title);
     return '<button class="project-switcher-item '+(active?'active':'')+'" data-kind="'+esc(status.kind)+'" data-project="'+esc(data.project.id)+'" type="button" aria-pressed="'+(active?'true':'false')+'">'+
       '<span class="project-switcher-main"><strong>'+esc(data.project.name)+'</strong>'+stageTag(data.project)+'<span>'+esc(signal||'No current issue')+'</span></span>'+
       '<span class="status-pill '+esc(status.key)+'">'+esc(status.label)+'</span></button>';
@@ -1416,5 +1430,5 @@
     };
   }
 
-  return {PROJECTS,esc,shortSha,commitTitle,repoUrl,githubCommitUrl,pullRequestNumber,githubPullRequestUrl,githubLink,changeUrl,commitLabel,htmlRow,linkedRow,githubApi,vercelFromStatus,deliveryHealth,normalizeQuality,percent,highImpactText,modelDisplayName,qualityAttention,deliveryAttention,deliveryAttentionForData,infrastructureAttention,externalQualityAttention,pendingSet,productOpenItems,failureReason,uncheckedSignals,incompleteAttention,allAttentionSignals,overallAttention,projectStatus,attentionItems,setupGaps,releaseReadiness,regressionSignal,recurringFailureSignal,operationalSignals,healthConsistencyIssues,releaseRiskChecklist,productionRuntime,operationalNextDecision,failureCheckCount,failureExplanation,qualityFailureClassSummary,activityTimelineItems,activityDayLabel,activityTimeRange,evalBehaviorBranch,mergePlatform,emptyProjectData,safeExternalQualitySnapshot,serializeProjectData,hydrateProjectData,investigationHistorySummary,makeRunner,STATE_EVAL_CONTRACT_UPDATED_AT,dateMs,fmtDate,relativeAge,stateEvalContractStale,stateEvalBehaviorStale,stateEvalResultsStale,stateEvalStaleReason,freshnessMeta,qualitySnapshot,visitBaseline,healthStateLabel,meaningfulChanges,changedSinceVisit,trendText,activityReviewItems,row,metric,durationLabel,costLabel,attentionMarkup,neonConnectionDetail,infraCardLabel,analyticsConnectionValue,analyticsGapDetail,analyticsLabel,projectQualityLabel,stageTag,loadingCardMarkup,cardMarkup,evalSuiteLabel,evalScore,evalTrend,stateEvalCard,stateScenarioCard,scenarioPassLabel,stateEvalHistory,mockSparkline,mockTrendValues,mockDelta,investigationResultHtml,evalRunComplete,externalQualityRunComplete,evalFailureImpact,previousEvalRun,progressText,quickProjectCheck,qualityInvestigation,projectHandoff};
+  return {PROJECTS,esc,shortSha,commitTitle,repoUrl,githubCommitUrl,pullRequestNumber,githubPullRequestUrl,githubLink,changeUrl,commitLabel,htmlRow,linkedRow,githubApi,vercelFromStatus,deliveryHealth,normalizeQuality,percent,highImpactText,modelDisplayName,qualityAttention,deliveryAttention,deliveryAttentionForData,infrastructureAttention,externalQualityAttention,pendingSet,productOpenItems,failureReason,uncheckedSignals,incompleteAttention,allAttentionSignals,overallAttention,projectStatus,qualityNotMeasured,healthySummary,attentionItems,setupGaps,releaseReadiness,regressionSignal,recurringFailureSignal,operationalSignals,healthConsistencyIssues,releaseRiskChecklist,productionRuntime,operationalNextDecision,failureCheckCount,failureExplanation,qualityFailureClassSummary,activityTimelineItems,activityDayLabel,activityTimeRange,evalBehaviorBranch,mergePlatform,emptyProjectData,safeExternalQualitySnapshot,serializeProjectData,hydrateProjectData,investigationHistorySummary,makeRunner,STATE_EVAL_CONTRACT_UPDATED_AT,dateMs,fmtDate,relativeAge,stateEvalContractStale,stateEvalBehaviorStale,stateEvalResultsStale,stateEvalStaleReason,freshnessMeta,qualitySnapshot,visitBaseline,healthStateLabel,meaningfulChanges,changedSinceVisit,trendText,activityReviewItems,row,metric,durationLabel,costLabel,attentionMarkup,neonConnectionDetail,infraCardLabel,analyticsConnectionValue,analyticsGapDetail,analyticsLabel,projectQualityLabel,stageTag,loadingCardMarkup,cardMarkup,evalSuiteLabel,evalScore,evalTrend,stateEvalCard,stateScenarioCard,scenarioPassLabel,stateEvalHistory,mockSparkline,mockTrendValues,mockDelta,investigationResultHtml,evalRunComplete,externalQualityRunComplete,evalFailureImpact,previousEvalRun,progressText,quickProjectCheck,qualityInvestigation,projectHandoff};
 });
