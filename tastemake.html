@@ -52,7 +52,7 @@
 <h1>Tastemake</h1>
 <p class="lead">Tastemake is a working product for user-editable personalization. Recommendations are the surface; the harder question is whether people can see, understand, and correct the model an AI builds of their taste.</p>
 <div class="case-meta"><span><b>My role</b> Product model, UX rules, evaluation &amp; testing</span><span><b>AI collaborator</b> Research, implementation, debugging &amp; test support</span><span><b>Status</b> Working product · portfolio build</span></div>
-</header><p class="in-short"><span>In short</span>Tastemake shows people the taste profile an AI builds from their feedback and lets them correct it, so a correction changes what the system believes and what it tries next.</p>
+</header><p class="in-short"><span>In short</span>Tastemake lets people see and correct the taste profile behind their recommendations.</p>
 
 <aside class="meridian-product-callout"><div><span>Try Tastemake</span><strong>Build and refine a Taste Profile</strong><p>Start with a few favorites, react to recommendations, and see what Tastemake learns from the result.</p></div><a class="meridian-primary-action" href="https://tastemake.vercel.app/" target="_blank" rel="noopener noreferrer">Open Tastemake <span aria-hidden="true">↗</span></a></aside>
 
@@ -95,7 +95,7 @@
 <div class="kicker">What testing changed</div>
 <h2>Testing made the product simpler.</h2>
 <div class="causal-story">
-<div><span>A confident miss</span><strong><em>Outer Wilds</em> showed that Tastemake was treating “discovery” too broadly. I narrowed the pattern instead of just lowering a hidden score.</strong></div>
+<div><span>A confident miss</span><strong>When a recommendation missed, I used the failure to refine the underlying taste pattern rather than just suppress that one result.</strong></div>
 <div><span>Cold-start friction</span><strong>Browse gave people another way to find familiar titles when four favorites were hard to recall. Browsing itself still does not count as taste evidence.</strong></div>
 <div><span>Too much feedback at once</span><strong>I moved deeper taste questions behind the first reaction so the recommendation card stays simple unless more detail is useful.</strong></div>
 </div>
@@ -103,7 +103,7 @@
 
 <section class="section seam-learning">
 <div class="kicker">Evidence from the build</div>
-<h2>The product had to work beyond a good-looking recommendation card.</h2>
+<h2>The product only worked if feedback meaningfully improved future recommendations.</h2>
 <p>The current version uses live model calls for two distinct AI functions: ranking recommendations and generating the Taste Profile. The surrounding product logic stays deterministic, including catalog constraints, saved-versus-tried state, and the controls that decide what evidence is allowed to influence the profile.</p>
 <div class="surface-grid evidence-grid">
 <article><span>Live AI, bounded by software</span><strong>Two AI functions, clear limits</strong><p>Live AI ranks recommendations and builds Taste Profile hypotheses. Software still decides what counts as evidence, which catalog items are allowed, and whether model output is valid.</p></article><article><span>Latency</span><strong>Speed became a product problem</strong><p>Recommendation generation was taking roughly 10–16 seconds in testing, with model inference dominating the wait. At that point the delay was part of the user experience, not just a backend metric. I reduced unnecessary prompt context and changed the loading experience so the flow stayed understandable while the model was working.</p></article>
@@ -115,7 +115,7 @@
 <section class="section current-conclusion">
 <div class="kicker">Where I landed</div>
 <h2>The recommendation engine became a test environment for an editable user model.</h2>
-<p>The product got more interesting when feedback stopped being just another hidden score. A useful correction changes the system’s explanation of what it believes, preserves where that belief came from, and affects what it tries next.</p>
+<p>The product got more interesting when feedback became part of the taste profile itself. A useful correction should change how the system understands someone’s taste and what it recommends next.</p>
 <footer class="case-study-footer"><a href="index.html#portfolio">Back to Applied Work →</a></footer>
 </section>
 
