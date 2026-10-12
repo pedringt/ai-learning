@@ -28,7 +28,15 @@ baseline_setup.split_evidence_text + baseline_dogfood_fixes.with_section_aware_s
     baseline_resilience's max_tokens retry split.
 baseline_setup.baseline_prompt_guidance + baseline_prompt_hardening.with_quality_guidance
     Appends the Baseline quality checks while a project is in Baseline Setup.
+    + baseline_fact_recovery.with_recovery_guidance
+    Then appends the recovery-pass instructions when the Evidence is flagged for
+    recovery. Layer order is prompt order: setup mode, quality checks, recovery.
     Read by: the Baseline provider classes' _build_prompt.
+baseline_setup.baseline_interpret + baseline_fact_recovery.with_fact_recovery
+    Runs one fact-recovery pass when a substantial source produced Questions but
+    no Starting State facts, and merges both passes.
+    Read by: BaselineAnthropicProvider.interpret and BaselineOpenAIProvider.interpret
+    (formerly a patch of those classes' interpret via _baseline_provider_classes).
 review_service.list_presented_reviews + baseline_review_visibility.with_actionable_reviews
     Hides routine Starting State creates from the open Review list during Baseline Setup.
     Read by: api_core (bootstrap, attention, evidence responses, reanalysis,
@@ -52,6 +60,7 @@ import api_core
 import baseline_setup
 import review_service
 from baseline_dogfood_fixes import with_section_aware_split
+from baseline_fact_recovery import with_fact_recovery, with_recovery_guidance
 from baseline_prompt_hardening import with_quality_guidance
 from baseline_resilience import with_max_tokens_retry
 from baseline_review_visibility import with_actionable_reviews
@@ -65,3 +74,5 @@ def compose_baseline_runtime() -> None:
     baseline_setup.baseline_prompt_guidance.add_layer("quality_checks", with_quality_guidance)
     review_service.list_presented_reviews.add_layer("baseline_actionable", with_actionable_reviews)
     anthropic_provider.interpret_call.add_layer("baseline_max_tokens_retry", with_max_tokens_retry)
+    baseline_setup.baseline_prompt_guidance.add_layer("fact_recovery", with_recovery_guidance)
+    baseline_setup.baseline_interpret.add_layer("fact_recovery", with_fact_recovery)

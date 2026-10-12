@@ -349,6 +349,17 @@ def extend_provider_schema(schema: Mapping[str, Any]) -> dict[str, Any]:
     return extended
 
 
+def _interpret_in_chunks(provider: Any, *, context, evidence, connection=None) -> Mapping[str, Any]:
+    return provider._interpret_in_chunks(context=context, evidence=evidence, connection=connection)
+
+
+# Extension point (#502): one whole-Evidence interpretation by a Baseline provider
+# class (chunk, interpret each chunk, merge, record metadata). baseline_composition
+# adds baseline_fact_recovery's second pass for the "Questions but no facts" shape.
+# Read by BaselineAnthropicProvider.interpret and BaselineOpenAIProvider.interpret.
+baseline_interpret = ExtensionPoint("baseline_setup.baseline_interpret", _interpret_in_chunks)
+
+
 def _baseline_provider_classes() -> tuple[type, type]:
     global _BASELINE_PROVIDER_CLASSES
     if _BASELINE_PROVIDER_CLASSES is not None:
@@ -368,6 +379,9 @@ def _baseline_provider_classes() -> tuple[type, type]:
             return prompt if not extra else f"{prompt}\n\n{extra}\n"
 
         def interpret(self, *, context, evidence, connection=None):
+            return baseline_interpret(self, context=context, evidence=evidence, connection=connection)
+
+        def _interpret_in_chunks(self, *, context, evidence, connection=None):
             chunks = split_evidence_text(str(evidence.get("content") or ""))
             payloads = []
             for index, chunk in enumerate(chunks, start=1):
@@ -395,6 +409,9 @@ def _baseline_provider_classes() -> tuple[type, type]:
             return prompt if not extra else f"{prompt}\n\n{extra}\n"
 
         def interpret(self, *, context, evidence, connection=None):
+            return baseline_interpret(self, context=context, evidence=evidence, connection=connection)
+
+        def _interpret_in_chunks(self, *, context, evidence, connection=None):
             chunks = split_evidence_text(str(evidence.get("content") or ""))
             payloads = []
             for index, chunk in enumerate(chunks, start=1):
