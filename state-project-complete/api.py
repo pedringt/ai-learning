@@ -19,7 +19,8 @@ from baseline_fact_recovery import install_baseline_fact_recovery
 from baseline_manual_setup import register_baseline_manual_setup_routes
 from baseline_prompt_hardening import install_baseline_prompt_hardening
 from baseline_review_visibility import install_baseline_review_visibility
-from baseline_setup import install_baseline_extensions, register_baseline_routes
+from baseline_composition import compose_baseline_runtime
+from baseline_setup import register_baseline_routes
 from baseline_resilience import install_baseline_resilience
 from product_analytics import register_product_analytics
 from quality_analytics_api import register_quality_analytics
@@ -32,7 +33,7 @@ from quality_analytics_api import register_quality_analytics
 # 4) install visibility/resilience/recovery last.
 # This keeps the wrapper understandable without turning these adapters into
 # another hidden dependency chain.
-install_baseline_extensions(_core)
+compose_baseline_runtime()
 _baseline_async_intake.process_evidence = _core.process_evidence
 install_baseline_prompt_hardening()
 install_baseline_dogfood_fixes(_core, _baseline_async_intake)
