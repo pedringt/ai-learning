@@ -4,68 +4,52 @@ The original FastAPI implementation lives in ``api_core``. Keeping this wrapper
 as ``api.py`` means Render's existing ``uvicorn api:app`` start command loads the
 Baseline Setup lifecycle without any environment or service configuration change.
 
-``api`` remains an alias of the core module after composition so existing imports
-and test monkeypatches still target the globals used by State's route handlers.
+Composition is explicit (#502): ``compose_baseline_runtime()`` adds Baseline's
+layers to the extension points the core modules declare (see
+``baseline_composition`` for the inventory), then ``create_app`` builds the core
+app and registers the Baseline/analytics routes. No module's globals are
+reassigned, and ``api`` is an ordinary module: it exports ``Settings``,
+``create_app`` and ``app``. Tests that replace a core global the route closures
+read (for example ``exchange_code_for_token``) patch ``api_core``, not ``api``.
 """
 from __future__ import annotations
 
-import sys
-
 import api_core as _core
-import baseline_async_intake as _baseline_async_intake
-from baseline_dogfood_fixes import install_baseline_dogfood_fixes
+from api_core import Settings
+from baseline_async_intake import register_baseline_async_intake_routes
+from baseline_composition import compose_baseline_runtime
 from baseline_draft import register_baseline_draft_routes
-from baseline_fact_recovery import install_baseline_fact_recovery
 from baseline_manual_setup import register_baseline_manual_setup_routes
-from baseline_prompt_hardening import install_baseline_prompt_hardening
-from baseline_review_visibility import install_baseline_review_visibility
-from baseline_setup import install_baseline_extensions, register_baseline_routes
-from baseline_resilience import install_baseline_resilience
+from baseline_setup import register_baseline_routes
 from product_analytics import register_product_analytics
 from quality_analytics_api import register_quality_analytics
 
-# Baseline runtime composition order is intentional and is part of the adapter
-# contract around api_core. Keep this sequence explicit:
-# 1) install the core Baseline extensions;
-# 2) point async intake at the composed processing hook;
-# 3) install prompt/dogfood patches before resilience captures the splitter;
-# 4) install visibility/resilience/recovery last.
-# This keeps the wrapper understandable without turning these adapters into
-# another hidden dependency chain.
-install_baseline_extensions(_core)
-_baseline_async_intake.process_evidence = _core.process_evidence
-install_baseline_prompt_hardening()
-install_baseline_dogfood_fixes(_core, _baseline_async_intake)
-install_baseline_review_visibility(_core)
-install_baseline_resilience()
-install_baseline_fact_recovery()
-_core_create_app = _core.create_app
+__all__ = ["Settings", "app", "create_app"]
+
+# Idempotent; done at import so anything that imports ``api`` sees the composed
+# core functions even before it builds an app.
+compose_baseline_runtime()
 
 
 def create_app(settings=None, provider=None, ask_provider=None):
-    application = _core_create_app(
+    compose_baseline_runtime()
+    application = _core.create_app(
         settings=settings,
         provider=provider,
         ask_provider=ask_provider,
     )
     register_baseline_routes(application, application.state.settings)
     register_baseline_draft_routes(application, application.state.settings)
-    _baseline_async_intake.register_baseline_async_intake_routes(application, application.state.settings)
+    register_baseline_async_intake_routes(application, application.state.settings)
     register_baseline_manual_setup_routes(application, application.state.settings)
     register_product_analytics(application, application.state.settings)
     register_quality_analytics(application, application.state.settings)
     return application
 
 
-# Keep the historical public module contract intact: callers that import or
-# monkeypatch ``api`` should operate on the same globals the core route closures
-# use, not on copied re-exports from a wrapper module.
-_core.create_app = create_app
-_core.app = create_app()
+app = create_app()
 
 # Source-contract breadcrumbs for tests/documentation that locate these routes
 # from the deployment entrypoint. Their implementations live in api_core.py.
 # @app.get("/api/attention")
 # @app.post("/api/ask")
-
-sys.modules[__name__] = _core

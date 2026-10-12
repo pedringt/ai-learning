@@ -8,8 +8,6 @@ from __future__ import annotations
 
 from typing import Any, Mapping
 
-_INSTALLED = False
-
 _QUALITY_GUIDANCE = r"""
 <baseline_setup_quality_checks>
 Baseline Setup is assembling one editable Starting State. Straightforward, unambiguous, durable starting facts still MUST be emitted as missing_understanding create proposals when the Evidence establishes them. Those proposals are internal draft material: software keeps them out of the individual Review queue and presents them together in the Starting State draft. Do not return no_review merely because a routine baseline fact does not need its own approval click.
@@ -41,21 +39,17 @@ Before returning, check the proposed Starting State against the source's major s
 """.strip()
 
 
-def install_baseline_prompt_hardening() -> None:
-    """Append dogfood-derived quality guidance only while baseline is active."""
-    global _INSTALLED
-    if _INSTALLED:
-        return
+def with_quality_guidance(inner):
+    """Layer for ``baseline_setup.baseline_prompt_guidance``: append the quality checks.
 
-    import baseline_setup
-
-    original = baseline_setup.baseline_prompt_guidance
+    Only while the project is in Baseline Setup.
+    """
+    from baseline_setup import is_baseline_setup
 
     def hardened_prompt_guidance(connection: Any, evidence: Mapping[str, Any]) -> str:
-        prompt = original(connection, evidence)
-        if not baseline_setup.is_baseline_setup(connection):
+        prompt = inner(connection, evidence)
+        if not is_baseline_setup(connection):
             return prompt
         return f"{prompt}\n\n{_QUALITY_GUIDANCE}" if prompt else _QUALITY_GUIDANCE
 
-    baseline_setup.baseline_prompt_guidance = hardened_prompt_guidance
-    _INSTALLED = True
+    return hardened_prompt_guidance

@@ -8,9 +8,6 @@ Current State.
 from __future__ import annotations
 
 import re
-from typing import Any
-
-_INSTALLED = False
 
 
 def _heading_sections(text: str) -> list[tuple[str, str]]:
@@ -91,119 +88,10 @@ def section_aware_split(text: str, original_split, max_chars: int = 2600) -> lis
     return chunks or original_split(text, max_chars=max_chars)
 
 
-def _install_project_delete_dependency() -> None:
-    """Delete Baseline coverage rows before their Evidence parent rows.
-
-    Migration 015 added baseline_evidence_coverage with a foreign key to
-    evidence. The older project cleanup list predates that table; once a source
-    had been processed, deleting the project could therefore fail with a foreign
-    key error. Prepending the dependent table repairs both Reset and Delete while
-    keeping the existing transaction/order logic intact.
-    """
-    import seed_demo
-
-    entry = (
-        "baseline_evidence_coverage",
-        "evidence_id IN (SELECT id FROM evidence WHERE project_id=?)",
-    )
-    if entry not in seed_demo._PROJECT_DEPENDENT_TABLES:
-        seed_demo._PROJECT_DEPENDENT_TABLES = (entry, *seed_demo._PROJECT_DEPENDENT_TABLES)
-
-
-def _install_section_aware_chunking() -> None:
-    import baseline_setup
-
-    if getattr(baseline_setup.split_evidence_text, "_state_section_aware", False):
-        return
-    original = baseline_setup.split_evidence_text
+def with_section_aware_split(inner):
+    """Layer for ``baseline_setup.split_evidence_text``: split by source sections first."""
 
     def split_with_source_structure(text: str, max_chars: int = 2600) -> list[str]:
-        return section_aware_split(text, original, max_chars=max_chars)
+        return section_aware_split(text, inner, max_chars=max_chars)
 
-    split_with_source_structure._state_section_aware = True
-    baseline_setup.split_evidence_text = split_with_source_structure
-
-
-def _install_delete_safe_background_analysis(async_module: Any) -> None:
-    """Make a deleted project a benign terminal state for queued analysis.
-
-    A Baseline upload returns before interpretation finishes. If the person
-    deletes that test project while the task is running, the task must not later
-    try to persist Reviews/proposals into rows that no longer exist.
-    """
-    if getattr(async_module._analyze_in_background, "_state_delete_safe", False):
-        return
-
-    def analyze_delete_safe(settings: Any, provider: Any, project_id: str, evidence_id: str) -> None:
-        connection = async_module.connect(settings.connection_url())
-        try:
-            connection.project_id = project_id
-            project = connection.execute("SELECT id FROM projects WHERE id=?", (project_id,)).fetchone()
-            evidence = connection.execute(
-                "SELECT id FROM evidence WHERE id=? AND project_id=?", (evidence_id, project_id)
-            ).fetchone()
-            if project is None or evidence is None:
-                async_module.logger.info(
-                    "Skipping Baseline analysis for deleted project/evidence %s", evidence_id
-                )
-                return
-
-            try:
-                async_module.process_evidence(
-                    connection, evidence_id=evidence_id, provider=provider
-                )
-            except Exception:
-                try:
-                    connection.rollback()
-                except Exception:
-                    pass
-
-                # Deletion can race the provider call itself. Re-check after the
-                # failure; if the project/Evidence disappeared, there is nothing
-                # left to mark failed and no product error to surface.
-                try:
-                    project = connection.execute(
-                        "SELECT id FROM projects WHERE id=?", (project_id,)
-                    ).fetchone()
-                    evidence = connection.execute(
-                        "SELECT id FROM evidence WHERE id=? AND project_id=?",
-                        (evidence_id, project_id),
-                    ).fetchone()
-                except Exception:
-                    project = evidence = None
-                if project is None or evidence is None:
-                    async_module.logger.info(
-                        "Baseline analysis stopped because project/evidence was deleted: %s",
-                        evidence_id,
-                    )
-                    return
-
-                async_module.logger.exception(
-                    "Background Baseline analysis failed for %s", evidence_id
-                )
-                try:
-                    connection.execute(
-                        "UPDATE evidence SET processing_status='failed' "
-                        "WHERE id=? AND project_id=? AND processing_status='pending'",
-                        (evidence_id, project_id),
-                    )
-                    connection.commit()
-                except Exception:
-                    async_module.logger.exception(
-                        "Could not mark failed Baseline Evidence %s", evidence_id
-                    )
-        finally:
-            connection.close()
-
-    analyze_delete_safe._state_delete_safe = True
-    async_module._analyze_in_background = analyze_delete_safe
-
-
-def install_baseline_dogfood_fixes(core_module: Any, async_module: Any) -> None:
-    global _INSTALLED
-    if _INSTALLED:
-        return
-    _install_project_delete_dependency()
-    _install_section_aware_chunking()
-    _install_delete_safe_background_analysis(async_module)
-    _INSTALLED = True
+    return split_with_source_structure

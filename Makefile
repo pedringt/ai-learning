@@ -1,13 +1,16 @@
 .PHONY: qa-bootstrap qa-fast qa-release qa-js qa-python qa-real-model
 
+# The project venv if it exists, else python3 (a stock Mac has no `python`). Override with PYTHON=...
+PYTHON ?= $(if $(wildcard state-project-complete/.venv/bin/python),$(CURDIR)/state-project-complete/.venv/bin/python,python3)
+
 qa-bootstrap:
-	cd state-project-complete && pip install -r requirements.txt && pip install pytest pytest-subtests playwright
-	python -m playwright install chromium
+	cd state-project-complete && $(PYTHON) -m pip install -r requirements.txt && $(PYTHON) -m pip install pytest pytest-subtests playwright
+	$(PYTHON) -m playwright install chromium
 
 qa-fast: qa-python qa-js
 
 qa-python:
-	cd state-project-complete && env -u ANTHROPIC_API_KEY -u OPENAI_API_KEY python -m pytest -q
+	cd state-project-complete && env -u ANTHROPIC_API_KEY -u OPENAI_API_KEY $(PYTHON) -m pytest -q
 
 qa-js:
 	@set -eu; cd implementation-context-prototype; \
@@ -19,7 +22,7 @@ qa-real-model:
 	@if [ -z "$${ANTHROPIC_API_KEY:-}" ]; then \
 		echo "ANTHROPIC_API_KEY is required for real-model QA."; exit 2; \
 	fi
-	cd state-project-complete && python -m eval.run_eval
+	cd state-project-complete && $(PYTHON) -m eval.run_eval
 
 qa-release: qa-fast
 	@set -eu; \

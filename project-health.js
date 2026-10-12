@@ -68,7 +68,7 @@
     return githubPart(summary?.evalBehavior,'Quality behavior');
   }
   async function loadPlatformSignal(project,signal){return await jsonFetch('/api/project-health-platform?project='+encodeURIComponent(project.id)+'&signal='+encodeURIComponent(signal),{timeoutMs:6500});}
-  async function loadRunInfo(project){if(project.noRunWorkflow)return null;try{return await jsonFetch('/api/project-health-run?project='+encodeURIComponent(project.id),{timeoutMs:5000});}catch(error){if(error.status===404)return null;throw error;}}
+  async function loadRunInfo(project,root){if(project.noRunWorkflow)return null;try{return await jsonFetch('/api/project-health-run?project='+encodeURIComponent(project.id)+'&env='+pageEnvironment(root),{timeoutMs:5000});}catch(error){if(error.status===404)return null;throw error;}}
   async function loadExternalQuality(project){if(project.noQualitySource)return null;return await jsonFetch('/api/project-health-project-quality?project='+encodeURIComponent(project.id),{timeoutMs:7000});}
   async function loadActivity(project){const payload=await jsonFetch('/api/project-health-activity?project='+encodeURIComponent(project.id),{timeoutMs:22000});return payload?.activity||null;}
   async function loadOpenPullRequests(project,root,data){
@@ -123,7 +123,7 @@
     const core=[
       run('Delivery',loadGitHubProject(project,root,data),value=>{data.delivery=value;}),
       run('Activity',loadActivity(project),value=>{data.activity=value;}),
-      run('Run controls',loadRunInfo(project),value=>{data.runInfo=value;})
+      run('Run controls',loadRunInfo(project,root),value=>{data.runInfo=value;})
     ];
     if(project.id==='state'){
       core.push(run('Production backend',loadPlatformSignal(project,'production-render'),value=>{data.platform=mergePlatform(data.platform,value);}));
@@ -829,7 +829,8 @@
   }
 
   // Run cooldown (visual pass, Oct 11): while the run API would refuse a new run, the run buttons are disabled and say
-  // when they are available. The start time is remembered per browser; a 429 from the API also sets it.
+  // when they are available. The run GET's last_run_started_at covers runs started anywhere (refreshed with the page);
+  // a start from this browser is remembered per browser, and a 429 from the API also sets it.
   function runStartedKey(root,projectId){return 'project-health-run-started:'+pageEnvironment(root)+':'+String(projectId||'state');}
   function loadRunStartedAt(root,projectId){try{return root.localStorage?.getItem(runStartedKey(root,projectId))||null;}catch(_){return null;}}
   function recordRunStarted(root,data,startedAt){

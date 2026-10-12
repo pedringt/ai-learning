@@ -2,7 +2,35 @@
 
 This is the canonical current-state handoff for State and the surrounding portfolio. Read this first, then verify the repository and live environments before relying on older notes or conversation memory.
 
-_Last updated: October 10, 2026 (evening), Pacific time. The Oct 10 sections just below are the current ones; the Oct 7 and Oct 5 sections still apply where they do not override them; everything older is history. Written as a handoff for a fresh session._
+_Last updated: October 11, 2026, Pacific time. The Oct 11 section just below is the current one; the Oct 10 sections still apply where it does not override them, then Oct 7 and Oct 5; everything older is history. Written as a handoff for a fresh session._
+
+## Oct 11, 2026: production fixes, polish, evals and Project Health
+
+All of this is on production (`main` = `7a1a98c`, PR #501). Every item was checked live after its promotion.
+
+- **#491 shipped** once Vercel's Hobby production limit reset. Project Health now waits 22 s for deployment activity.
+- **State:**
+  - **#240:** a Baseline fact whose AI-written statement has a year or currency amount its source never states leaves the one-click Starting State draft and needs its own Review. Confirm returns 409 until a person handles it (`baseline_grounding.py`, deterministic, no prompt change). Cache tag is `r122`.
+  - **Baseline eval workflow:** the new manual **Baseline decomposition eval** workflow dry-runs first and refuses above `max_calls`. Its first run on main (60 calls, about 30¢, Haiku 5.5): invented specifics 0%, recall 96%, failures 0%.
+  - **Ask:** answer text keeps a sentence's final period; the id cleaner used to trim it.
+  - **#494 decided:** the live review suite is read as a rate (`RELEASE.md`, "On staging"). Each run needs at least 15/16, and no scenario may fail twice in a row. A miss in the unsafe direction still blocks.
+  - **Fresh evals:** the State AI quality check was re-run on main and recorded to production (review 16/16, Ask 10/10). Project Health shows State Healthy.
+- **Portfolio:**
+  - **Content and polish:** Paige's content pass, the #472 supporting-page polish, "Back to Learning Library" links on the three Learning Library pages, and a fixed "On this page" highlight (it follows the scroll position).
+  - **Homepage:** it ends with one line, "Build with AI. Keep its limits in view.", which replaced the "How I work with AI" section.
+  - **#451 closed:** case studies load 3 stylesheets; `final-freeze-polish.css` and `site-polish.css` are gone; breadcrumbs are 12px everywhere.
+  - **Cheat sheets and crawlers:** all 17 cheat sheets have meta descriptions and preview cards. `robots.txt` and `sitemap.xml` (33 pages) exist. `tools/social_previews.py` keeps all of them current; run it after changing a title or description, and `--check` reports anything stale.
+- **Project Health:**
+  - **Authority Lab** reads "Healthy · quality not measured" (card pill "Not measured"), never a plain "Everything looks healthy".
+  - **Analytics card** shows the signal ("Connected · receiving page views"). The API no longer returns page-view or visitor counts.
+  - **Header:** "Live site ↗" and "GitHub ↗" are links by the title. Only Investigate, Run AI evals and ••• are buttons. Each paid button has its own note. Run AI evals shows "Available in N min" during the cooldown.
+  - **Switcher cards** share one two-row layout. The eval-suite actions are cards, not multi-line pills. "View all issues" shows only when there is one.
+  - **Title** is "Project Health · Context Switch".
+- **Tastemake** (separate repo):
+  - **Models:** recommendations and the taste profile both run on Haiku 5.5. The taste-profile prompt is about 44% smaller on a long-running profile (#236).
+  - **Shipped PRs:** #230 (search: same-title hints, optional display name), #231 (starter favorites cap confidence at "emerging"), #232 (five onboarding tabs fit at 390px), #233 (tech debt), #234 (Web Analytics and Speed Insights), #235 (background candidate prefetch and a loading banner; click to first pick measured at 3.1 s).
+  - **Closed issues:** #100, #120, #209 and #228.
+- **Open next:** the run API reporting the last run time, so the cooldown shows runs started anywhere (in progress); Tastemake #115 search ranking (in progress, as a PR).
 
 ## Oct 10, 2026 (evening): production smoke-test fixes
 
@@ -220,7 +248,7 @@ Do not weaken these without an explicit product decision:
 
 See `docs/product/RISKS.md` for the maintained register. The most important implementation-specific known risk is:
 
-- `project_areas.id` is a global primary key rather than project-scoped (R-009, #136, P2, Backlog). **Decided Sept 19 (Paige): option C, no schema change.** Seeding an area id that is already taken now raises instead of silently skipping, and tests pin that hand-seeded ids are unique across seeded projects and that user projects generate `area_<uuid>` ids. The structural limit remains; it just cannot be hit silently. Reopen the composite-key migration (option A) if a third hand-seeded project is proposed, if any path lets a person or model choose an area id, or if real user projects are expected on production (production holds only the two demo projects, which makes the migration cheapest now). Proposal, options and the migration plan: `docs/architecture/PROPOSAL_136_PROJECT_SCOPED_AREA_IDS.md`.
+- `project_areas.id` was a global primary key rather than project-scoped (R-009, #136). Option C (no schema change, Sept 19) made a collision loud; **on Oct 12 Paige approved option A, implemented as migration 020** (key `(project_id, id)`, composite area reference on `current_state_items`; branch `issue-136-project-scoped-areas`, not yet on staging). Details, rehearsal and rollback: `docs/architecture/PROPOSAL_136_PROJECT_SCOPED_AREA_IDS.md`.
 - **#238 (P1, Ready): the open-Review uniqueness index `uq_open_review_identity` had no `project_id`**, so Evidence in one project could fail with a 500 when another project had the same open Review. Fixed in the batch below (verified on SQLite and on Postgres 16.2).
 
 Known UX issue (fixed in the local batch, [#239](https://github.com/pedringt/ai-learning/issues/239)):

@@ -14,7 +14,6 @@ from __future__ import annotations
 import re
 from typing import Any, Mapping
 
-_INSTALLED = False
 _MIN_SOURCE_CHARS = 1200
 _MIN_DECLARATIVE_CHARS = 500
 
@@ -72,59 +71,47 @@ def should_recover_baseline_facts(text: str, payload: Mapping[str, Any]) -> bool
     return has_questions or payload.get("outcome") == "no_review" or not recommendations
 
 
-def install_baseline_fact_recovery() -> None:
-    """Patch Baseline provider creation before the deployment app is built."""
-    global _INSTALLED
-    if _INSTALLED:
-        return
+def with_recovery_guidance(inner):
+    """Layer for ``baseline_setup.baseline_prompt_guidance``: recovery-pass instructions.
 
-    import baseline_setup
-
-    original_guidance = baseline_setup.baseline_prompt_guidance
+    Applies whenever the Evidence carries the recovery flag, which only
+    ``with_fact_recovery`` sets.
+    """
 
     def recovery_aware_guidance(connection: Any, evidence: Mapping[str, Any]) -> str:
-        prompt = original_guidance(connection, evidence)
+        prompt = inner(connection, evidence)
         if not evidence.get("_state_baseline_fact_recovery"):
             return prompt
         return f"{prompt}\n\n{_RECOVERY_GUIDANCE}" if prompt else _RECOVERY_GUIDANCE
 
-    baseline_setup.baseline_prompt_guidance = recovery_aware_guidance
+    return recovery_aware_guidance
 
-    original_factory = baseline_setup._baseline_provider_classes
 
-    def provider_factory():
-        classes = original_factory()
-        for provider_class in classes:
-            if getattr(provider_class, "_state_fact_recovery_installed", False):
-                continue
-            original_interpret = provider_class.interpret
+def with_fact_recovery(inner):
+    """Layer for ``baseline_setup.baseline_interpret``: one bounded fact-recovery pass."""
+    from baseline_setup import is_baseline_setup, merge_interpretation_payloads
 
-            def interpret_with_recovery(self, *, context, evidence, connection=None, _original=original_interpret):
-                result = _original(self, context=context, evidence=evidence, connection=connection)
-                if connection is None or not baseline_setup.is_baseline_setup(connection):
-                    return result
-                if evidence.get("_state_baseline_fact_recovery"):
-                    return result
-                source_text = str(evidence.get("content") or "")
-                if not should_recover_baseline_facts(source_text, result):
-                    return result
+    def interpret_with_recovery(self, *, context, evidence, connection=None):
+        result = inner(self, context=context, evidence=evidence, connection=connection)
+        if connection is None or not is_baseline_setup(connection):
+            return result
+        if evidence.get("_state_baseline_fact_recovery"):
+            return result
+        source_text = str(evidence.get("content") or "")
+        if not should_recover_baseline_facts(source_text, result):
+            return result
 
-                recovery_evidence = dict(evidence)
-                recovery_evidence["_state_baseline_fact_recovery"] = True
-                recovered = _original(
-                    self,
-                    context=context,
-                    evidence=recovery_evidence,
-                    connection=connection,
-                )
-                # The recovery call records the proposal metadata/hints that the
-                # persistence hook consumes. Merge its facts with the first
-                # pass's Questions/conflicts for the canonical validation path.
-                return baseline_setup.merge_interpretation_payloads([result, recovered])
+        recovery_evidence = dict(evidence)
+        recovery_evidence["_state_baseline_fact_recovery"] = True
+        recovered = inner(
+            self,
+            context=context,
+            evidence=recovery_evidence,
+            connection=connection,
+        )
+        # The recovery call records the proposal metadata/hints that the
+        # persistence hook consumes. Merge its facts with the first
+        # pass's Questions/conflicts for the canonical validation path.
+        return merge_interpretation_payloads([result, recovered])
 
-            provider_class.interpret = interpret_with_recovery
-            provider_class._state_fact_recovery_installed = True
-        return classes
-
-    baseline_setup._baseline_provider_classes = provider_factory
-    _INSTALLED = True
+    return interpret_with_recovery

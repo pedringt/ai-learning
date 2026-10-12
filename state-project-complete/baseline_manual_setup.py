@@ -140,8 +140,9 @@ def register_baseline_manual_setup_routes(app: Any, settings: Any) -> None:
             )
             connection.commit()
 
-            # Use the composed, authority-bearing pipeline hook. Import here so
-            # api.py has already installed Baseline metadata persistence.
+            # Use the composed, authority-bearing pipeline: the
+            # api_core.process_evidence extension point, which carries Baseline
+            # metadata persistence (see baseline_composition).
             import api_core
 
             result = api_core.process_evidence(

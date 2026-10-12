@@ -27,7 +27,9 @@ from docx import Document as DocxDocument
 from anthropic_provider import AnthropicProvider
 from database_migration_backed import initialize_db
 from db import connect
-from interpretation_pipeline_integrated import InterpretationProvider, new_id, process_evidence
+from extension_points import ExtensionPoint
+from interpretation_pipeline_integrated import InterpretationProvider, new_id
+from interpretation_pipeline_integrated import process_evidence as _pipeline_process_evidence
 from openai_provider import OpenAIProvider
 from seed_demo import (
     SEEDED_PROJECT_IDS, bootstrap_demo_data, bootstrap_juniper_demo_data, delete_project_data, reset_demo_data,
@@ -92,7 +94,6 @@ from review_service import (
     ReviewNotFoundError,
     list_evidence,
     list_history,
-    list_reviews,
     list_state,
     list_project_areas,
     list_questions,
@@ -107,8 +108,11 @@ from review_service import (
     update_draft_note,
     delete_draft_note,
     update_question_blocking,
-    resolve_review,
 )
+from review_service import resolve_review as _review_service_resolve_review
+# The presented Review list (an extension point; Baseline hides routine Starting
+# State creates from it). Raw rows stay in review_service.list_reviews.
+from review_service import list_presented_reviews as list_reviews
 
 
 class AskResponseCache:
@@ -237,7 +241,7 @@ class Settings(BaseModel):
         )
 
 
-def _provider_from_env(settings: Settings) -> InterpretationProvider:
+def _core_provider_from_env(settings: Settings) -> InterpretationProvider:
     if settings.provider == "anthropic":
         if not os.getenv("ANTHROPIC_API_KEY"):
             raise RuntimeError("ANTHROPIC_API_KEY is required when STATE_PROVIDER=anthropic")
@@ -249,6 +253,21 @@ def _provider_from_env(settings: Settings) -> InterpretationProvider:
     if not os.getenv("OPENAI_API_KEY"):
         raise RuntimeError("OPENAI_API_KEY is required when STATE_PROVIDER=openai")
     return OpenAIProvider(api_key=os.environ["OPENAI_API_KEY"])
+
+
+# Extension points (#502). The route closures below call these by name; Baseline
+# Setup adds its layers once through baseline_composition.compose_baseline_runtime(),
+# which api.py runs before building the app. Nothing reassigns these globals.
+#
+# - process_evidence: the interpretation pipeline. Baseline adds metadata
+#   persistence (area/topic hints, chunk coverage). Also read by
+#   baseline_async_intake and baseline_manual_setup.
+# - resolve_review: Review resolution. Baseline organizes accepted facts into areas.
+# - _provider_from_env: the deployed provider factory. Baseline swaps in its
+#   chunking/area-aware provider classes. Also read by baseline_async_intake.
+process_evidence = ExtensionPoint("api_core.process_evidence", _pipeline_process_evidence)
+resolve_review = ExtensionPoint("api_core.resolve_review", _review_service_resolve_review)
+_provider_from_env = ExtensionPoint("api_core._provider_from_env", _core_provider_from_env)
 
 
 def create_app(settings: Settings | None = None, provider: InterpretationProvider | None = None, ask_provider=None) -> FastAPI:
@@ -1167,5 +1186,3 @@ def create_app(settings: Settings | None = None, provider: InterpretationProvide
 
     return app
 
-
-app = create_app()

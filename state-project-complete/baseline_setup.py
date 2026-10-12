@@ -23,6 +23,7 @@ from typing import Any, Mapping
 from fastapi import HTTPException, Request
 
 from db import connect, project_id_of
+from extension_points import ExtensionPoint
 
 logger = logging.getLogger("state.baseline")
 
@@ -30,8 +31,6 @@ _MAX_CHUNK_CHARS = 2600
 _MAX_QUESTIONS_PER_CHUNK = 2
 _METADATA_LOCK = threading.Lock()
 _INTERPRETATION_METADATA: dict[str, dict[str, Any]] = {}
-_INSTALL_LOCK = threading.Lock()
-_INSTALLED = False
 _BASELINE_PROVIDER_CLASSES: tuple[type, type] | None = None
 
 
@@ -59,7 +58,7 @@ def is_baseline_setup(connection: Any) -> bool:
     return bool(row) and row["baseline_completed_at"] is None
 
 
-def baseline_prompt_guidance(connection: Any, evidence: Mapping[str, Any]) -> str:
+def _baseline_prompt_guidance_core(connection: Any, evidence: Mapping[str, Any]) -> str:
     """Additional provider guidance while a project is in Baseline Setup."""
     parts: list[str] = []
     chunk_index = evidence.get("_state_chunk_index")
@@ -105,6 +104,14 @@ Build a coherent starting picture across this Evidence and the Current State, op
     return "\n\n".join(parts)
 
 
+# Extension point (#502): extra provider guidance for Baseline interpretation.
+# baseline_composition adds, in order, baseline_prompt_hardening's quality checks
+# and baseline_fact_recovery's recovery-pass guidance, so the prompt reads
+# setup mode -> quality checks -> recovery. Read by the Baseline provider
+# classes' _build_prompt below.
+baseline_prompt_guidance = ExtensionPoint("baseline_setup.baseline_prompt_guidance", _baseline_prompt_guidance_core)
+
+
 def _split_dense_question_block(text: str) -> list[str]:
     """Split question-heavy Markdown without interpreting the questions.
 
@@ -145,7 +152,7 @@ def _split_dense_question_block(text: str) -> list[str]:
     return units or [text]
 
 
-def split_evidence_text(text: str, max_chars: int = _MAX_CHUNK_CHARS) -> list[str]:
+def _split_evidence_text_core(text: str, max_chars: int = _MAX_CHUNK_CHARS) -> list[str]:
     """Split source text for bounded interpretation while preserving Evidence.
 
     The stored Evidence is never altered. This function only creates temporary
@@ -210,6 +217,12 @@ def split_evidence_text(text: str, max_chars: int = _MAX_CHUNK_CHARS) -> list[st
     if current:
         chunks.append(current)
     return chunks or [clean]
+
+
+# Extension point (#502): the Baseline chunker. baseline_dogfood_fixes adds the
+# section-aware layer through baseline_composition. Read by the Baseline provider
+# classes below and by baseline_resilience's max_tokens retry split.
+split_evidence_text = ExtensionPoint("baseline_setup.split_evidence_text", _split_evidence_text_core)
 
 
 def _proposal_key(proposal: Mapping[str, Any]) -> tuple[str, str, str]:
@@ -336,6 +349,17 @@ def extend_provider_schema(schema: Mapping[str, Any]) -> dict[str, Any]:
     return extended
 
 
+def _interpret_in_chunks(provider: Any, *, context, evidence, connection=None) -> Mapping[str, Any]:
+    return provider._interpret_in_chunks(context=context, evidence=evidence, connection=connection)
+
+
+# Extension point (#502): one whole-Evidence interpretation by a Baseline provider
+# class (chunk, interpret each chunk, merge, record metadata). baseline_composition
+# adds baseline_fact_recovery's second pass for the "Questions but no facts" shape.
+# Read by BaselineAnthropicProvider.interpret and BaselineOpenAIProvider.interpret.
+baseline_interpret = ExtensionPoint("baseline_setup.baseline_interpret", _interpret_in_chunks)
+
+
 def _baseline_provider_classes() -> tuple[type, type]:
     global _BASELINE_PROVIDER_CLASSES
     if _BASELINE_PROVIDER_CLASSES is not None:
@@ -355,6 +379,9 @@ def _baseline_provider_classes() -> tuple[type, type]:
             return prompt if not extra else f"{prompt}\n\n{extra}\n"
 
         def interpret(self, *, context, evidence, connection=None):
+            return baseline_interpret(self, context=context, evidence=evidence, connection=connection)
+
+        def _interpret_in_chunks(self, *, context, evidence, connection=None):
             chunks = split_evidence_text(str(evidence.get("content") or ""))
             payloads = []
             for index, chunk in enumerate(chunks, start=1):
@@ -382,6 +409,9 @@ def _baseline_provider_classes() -> tuple[type, type]:
             return prompt if not extra else f"{prompt}\n\n{extra}\n"
 
         def interpret(self, *, context, evidence, connection=None):
+            return baseline_interpret(self, context=context, evidence=evidence, connection=connection)
+
+        def _interpret_in_chunks(self, *, context, evidence, connection=None):
             chunks = split_evidence_text(str(evidence.get("content") or ""))
             payloads = []
             for index, chunk in enumerate(chunks, start=1):
@@ -516,91 +546,91 @@ def _organize_accepted_baseline_proposals(
     connection.commit()
 
 
-def install_baseline_extensions(api_module: Any) -> None:
-    """Install Baseline Setup composition hooks before creating the live app."""
-    global _INSTALLED
-    with _INSTALL_LOCK:
-        if _INSTALLED:
-            return
+def with_baseline_metadata(inner):
+    """Layer for ``api_core.process_evidence``: persist Baseline area/topic hints and coverage.
 
-        import database_migration_backed as migrations
+    Runs the pipeline first; only a successful run with recorded metadata
+    touches the database, and a failure there rolls back without failing the
+    interpretation.
+    """
 
-        baseline_migration = "015_baseline_setup.sql"
-        if baseline_migration not in migrations._EXPECTED_MIGRATIONS:
-            migrations._EXPECTED_MIGRATIONS = (*migrations._EXPECTED_MIGRATIONS, baseline_migration)
-
-        original_process_evidence = api_module.process_evidence
-        original_resolve_review = api_module.resolve_review
-
-        def process_evidence_with_baseline_metadata(
+    def process_evidence_with_baseline_metadata(
+        connection,
+        evidence_id,
+        provider,
+        *,
+        user_requested_maintenance=False,
+    ):
+        result = inner(
             connection,
             evidence_id,
             provider,
-            *,
-            user_requested_maintenance=False,
-        ):
-            result = original_process_evidence(
-                connection,
-                evidence_id,
-                provider,
-                user_requested_maintenance=user_requested_maintenance,
-            )
-            metadata = consume_interpretation_metadata(evidence_id)
-            if result.processing_status != "succeeded" or not metadata:
-                return result
-            try:
-                _persist_interpretation_metadata(connection, evidence_id, metadata)
-            except Exception:
-                connection.rollback()
-                logger.exception("Could not persist Baseline Setup metadata for evidence %s", evidence_id)
+            user_requested_maintenance=user_requested_maintenance,
+        )
+        metadata = consume_interpretation_metadata(evidence_id)
+        if result.processing_status != "succeeded" or not metadata:
             return result
+        try:
+            _persist_interpretation_metadata(connection, evidence_id, metadata)
+        except Exception:
+            connection.rollback()
+            logger.exception("Could not persist Baseline Setup metadata for evidence %s", evidence_id)
+        return result
 
-        def resolve_review_with_baseline_organization(
+    return process_evidence_with_baseline_metadata
+
+
+def with_baseline_organization(inner):
+    """Layer for ``api_core.resolve_review``: file accepted Baseline facts under their area/topic."""
+
+    def resolve_review_with_baseline_organization(
+        connection,
+        review_id,
+        decision,
+        note=None,
+        *,
+        expected_question_proposal_id=None,
+        expected_existing_question_id=None,
+        adjustments=None,
+    ):
+        hints: list[dict[str, Any]] = []
+        if decision == "accept" and is_baseline_setup(connection):
+            rows = connection.execute(
+                "SELECT id, operation, proposed_area_name, proposed_topic FROM proposed_state_changes "
+                "WHERE review_id=? AND status='pending' ORDER BY created_at, id",
+                (review_id,),
+            ).fetchall()
+            hints = [
+                {
+                    "proposal_id": row["id"],
+                    "area_name": row["proposed_area_name"],
+                    "topic": row["proposed_topic"],
+                }
+                for row in rows if row["operation"] == "create"
+            ]
+        outcome = inner(
             connection,
             review_id,
             decision,
-            note=None,
-            *,
-            expected_question_proposal_id=None,
-            expected_existing_question_id=None,
-            adjustments=None,
-        ):
-            hints: list[dict[str, Any]] = []
-            if decision == "accept" and is_baseline_setup(connection):
-                rows = connection.execute(
-                    "SELECT id, operation, proposed_area_name, proposed_topic FROM proposed_state_changes "
-                    "WHERE review_id=? AND status='pending' ORDER BY created_at, id",
-                    (review_id,),
-                ).fetchall()
-                hints = [
-                    {
-                        "proposal_id": row["id"],
-                        "area_name": row["proposed_area_name"],
-                        "topic": row["proposed_topic"],
-                    }
-                    for row in rows if row["operation"] == "create"
-                ]
-            outcome = original_resolve_review(
-                connection,
-                review_id,
-                decision,
-                note,
-                expected_question_proposal_id=expected_question_proposal_id,
-                expected_existing_question_id=expected_existing_question_id,
-                adjustments=adjustments,
-            )
-            if decision == "accept" and hints:
-                try:
-                    _organize_accepted_baseline_proposals(connection, hints)
-                except Exception:
-                    connection.rollback()
-                    logger.exception("Could not organize accepted Baseline Setup Review %s", review_id)
-            return outcome
+            note,
+            expected_question_proposal_id=expected_question_proposal_id,
+            expected_existing_question_id=expected_existing_question_id,
+            adjustments=adjustments,
+        )
+        if decision == "accept" and hints:
+            try:
+                _organize_accepted_baseline_proposals(connection, hints)
+            except Exception:
+                connection.rollback()
+                logger.exception("Could not organize accepted Baseline Setup Review %s", review_id)
+        return outcome
 
-        api_module.process_evidence = process_evidence_with_baseline_metadata
-        api_module.resolve_review = resolve_review_with_baseline_organization
-        api_module._provider_from_env = _provider_from_env
-        _INSTALLED = True
+    return resolve_review_with_baseline_organization
+
+
+def with_baseline_providers(_inner):
+    """Layer for ``api_core._provider_from_env``: build the Baseline provider classes instead."""
+    return _provider_from_env
 
 
 def baseline_coverage(connection: Any) -> dict[str, Any]:

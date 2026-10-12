@@ -512,19 +512,16 @@ def _bootstrap_project(connection, *, project_id: str, project_name: str, areas,
         ).fetchone() is not None
         if areas_ready:
             for area_id, name, description, sort_order in areas:
-                # project_areas.id is a bare global PRIMARY KEY (migration 012, #136 / R-009), not
-                # composite with project_id, so two projects cannot share an area id ("budget",
-                # "timeline"). Making the key composite is a schema migration that has been
-                # deliberately deferred (see docs/architecture/PROPOSAL_136_PROJECT_SCOPED_AREA_IDS.md).
-                # Until then a collision must be LOUD: this used to skip the insert silently, leaving
-                # the second project without its area. Re-seeding the same project stays idempotent.
-                existing = connection.execute("SELECT * FROM project_areas WHERE id=?", (area_id,)).fetchone()
-                if existing is not None and projects_ready and existing["project_id"] != project_id:
-                    raise RuntimeError(
-                        f"Area id {area_id!r} for project {project_id!r} is already used by project "
-                        f"{existing['project_id']!r}. project_areas.id is a global key (#136), so hand-seeded "
-                        "area ids must be unique across projects."
-                    )
+                # An area id is local to its project (#136, migration 020: the key is
+                # (project_id, id)), so another project may already use the same id ("budget");
+                # only this project's own row makes the insert a no-op. Before migration 013 there
+                # is no project_id and every area is Northstar's.
+                if projects_ready:
+                    existing = connection.execute(
+                        "SELECT id FROM project_areas WHERE id=? AND project_id=?", (area_id, project_id)
+                    ).fetchone()
+                else:
+                    existing = connection.execute("SELECT id FROM project_areas WHERE id=?", (area_id,)).fetchone()
                 if existing is None:
                     if projects_ready:
                         connection.execute(
@@ -776,6 +773,9 @@ def bootstrap_juniper_demo_data(connection, *, manage_transaction: bool = True) 
 _PROJECT_DEPENDENT_TABLES = (
     # (table, column-that-scopes-it-to-a-project -- either its own project_id
     # or a subquery through the parent row that has one)
+    # Migration 015's baseline_evidence_coverage has a foreign key to evidence,
+    # so its rows go first (formerly prepended by baseline_dogfood_fixes, #502).
+    ("baseline_evidence_coverage", "evidence_id IN (SELECT id FROM evidence WHERE project_id=?)"),
     ("history_transitions", "state_item_id IN (SELECT id FROM current_state_items WHERE project_id=?)"),
     ("proposed_questions", "review_id IN (SELECT id FROM review_issues WHERE project_id=?)"),
     ("review_questions", "review_id IN (SELECT id FROM review_issues WHERE project_id=?)"),

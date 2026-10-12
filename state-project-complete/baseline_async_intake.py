@@ -24,7 +24,7 @@ from pypdf import PdfReader
 
 from baseline_setup import is_baseline_setup
 from db import connect
-from interpretation_pipeline_integrated import new_id, process_evidence
+from interpretation_pipeline_integrated import new_id
 
 logger = logging.getLogger("state.baseline.intake")
 
@@ -137,27 +137,70 @@ def _store_pending_evidence(settings: Any, project_id: str, content: str, source
 
 
 def _analyze_in_background(settings: Any, provider: Any, project_id: str, evidence_id: str) -> None:
+    """Analyze queued Baseline Evidence; a deleted project is a benign terminal state.
+
+    A Baseline upload returns before interpretation finishes. If the person
+    deletes that test project while the task is queued or running, the task
+    must not later try to persist Reviews/proposals into rows that no longer
+    exist. (Formerly installed over this function by baseline_dogfood_fixes;
+    #502 made it the one implementation.)
+    """
     connection = connect(settings.connection_url())
     try:
         connection.project_id = project_id
-        process_evidence(connection, evidence_id=evidence_id, provider=provider)
-    except Exception:
-        logger.exception("Background Baseline analysis failed for %s", evidence_id)
-        # Most provider/contract failures are already persisted by
-        # process_evidence. This fallback handles unexpected failures so the
-        # UI does not display an Evidence item as "Analyzing" forever.
+        project = connection.execute("SELECT id FROM projects WHERE id=?", (project_id,)).fetchone()
+        evidence = connection.execute(
+            "SELECT id FROM evidence WHERE id=? AND project_id=?", (evidence_id, project_id)
+        ).fetchone()
+        if project is None or evidence is None:
+            logger.info("Skipping Baseline analysis for deleted project/evidence %s", evidence_id)
+            return
+
+        # The app's composed pipeline (with Baseline metadata persistence) is the
+        # api_core.process_evidence extension point; see baseline_composition.
+        import api_core
+
         try:
-            connection.rollback()
+            api_core.process_evidence(connection, evidence_id=evidence_id, provider=provider)
         except Exception:
-            pass
-        try:
-            connection.execute(
-                "UPDATE evidence SET processing_status='failed' WHERE id=? AND project_id=? AND processing_status='pending'",
-                (evidence_id, project_id),
-            )
-            connection.commit()
-        except Exception:
-            logger.exception("Could not mark failed Baseline Evidence %s", evidence_id)
+            # Most provider/contract failures are already persisted by
+            # process_evidence. This fallback handles unexpected failures so the
+            # UI does not display an Evidence item as "Analyzing" forever.
+            try:
+                connection.rollback()
+            except Exception:
+                pass
+
+            # Deletion can race the provider call itself. Re-check after the
+            # failure; if the project/Evidence disappeared, there is nothing
+            # left to mark failed and no product error to surface.
+            try:
+                project = connection.execute(
+                    "SELECT id FROM projects WHERE id=?", (project_id,)
+                ).fetchone()
+                evidence = connection.execute(
+                    "SELECT id FROM evidence WHERE id=? AND project_id=?",
+                    (evidence_id, project_id),
+                ).fetchone()
+            except Exception:
+                project = evidence = None
+            if project is None or evidence is None:
+                logger.info(
+                    "Baseline analysis stopped because project/evidence was deleted: %s",
+                    evidence_id,
+                )
+                return
+
+            logger.exception("Background Baseline analysis failed for %s", evidence_id)
+            try:
+                connection.execute(
+                    "UPDATE evidence SET processing_status='failed' "
+                    "WHERE id=? AND project_id=? AND processing_status='pending'",
+                    (evidence_id, project_id),
+                )
+                connection.commit()
+            except Exception:
+                logger.exception("Could not mark failed Baseline Evidence %s", evidence_id)
     finally:
         connection.close()
 
