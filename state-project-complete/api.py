@@ -33,7 +33,6 @@ from quality_analytics_api import register_quality_analytics
 # This keeps the wrapper understandable without turning these adapters into
 # another hidden dependency chain.
 compose_baseline_runtime()
-_baseline_async_intake.process_evidence = _core.process_evidence
 install_baseline_prompt_hardening()
 install_baseline_review_visibility(_core)
 install_baseline_resilience()

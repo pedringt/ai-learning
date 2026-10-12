@@ -11,7 +11,9 @@ api_core.process_evidence  + baseline_setup.with_baseline_metadata
     Persists area/topic hints and chunk coverage after a successful run.
     Read by: api_core POST /api/evidence and /api/evidence/upload (shared intake
     helper), /api/evidence/{id}/reanalyze and /promote (_reanalyze);
-    baseline_manual_setup POST /api/baseline/manual (api_core.process_evidence).
+    baseline_manual_setup POST /api/baseline/manual and
+    baseline_async_intake._analyze_in_background (both call api_core.process_evidence;
+    the latter used to be re-pointed by api.py).
 api_core.resolve_review    + baseline_setup.with_baseline_organization
     Files accepted Baseline facts under their proposed area/topic.
     Read by: api_core POST /api/reviews/{id}/resolve.

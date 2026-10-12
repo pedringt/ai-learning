@@ -24,7 +24,7 @@ from pypdf import PdfReader
 
 from baseline_setup import is_baseline_setup
 from db import connect
-from interpretation_pipeline_integrated import new_id, process_evidence
+from interpretation_pipeline_integrated import new_id
 
 logger = logging.getLogger("state.baseline.intake")
 
@@ -156,8 +156,12 @@ def _analyze_in_background(settings: Any, provider: Any, project_id: str, eviden
             logger.info("Skipping Baseline analysis for deleted project/evidence %s", evidence_id)
             return
 
+        # The app's composed pipeline (with Baseline metadata persistence) is the
+        # api_core.process_evidence extension point; see baseline_composition.
+        import api_core
+
         try:
-            process_evidence(connection, evidence_id=evidence_id, provider=provider)
+            api_core.process_evidence(connection, evidence_id=evidence_id, provider=provider)
         except Exception:
             # Most provider/contract failures are already persisted by
             # process_evidence. This fallback handles unexpected failures so the
