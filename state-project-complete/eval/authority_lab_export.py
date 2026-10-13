@@ -130,11 +130,37 @@ def _rate(metric: str, label: str, passed: int, total: int, segment: str | None 
 
 
 SEVERITY_SEGMENTS = (("high", "High-severity scenarios"), ("medium", "Medium-severity scenarios"), ("low", "Low-severity scenarios"))
+STATE_CHANGING = {"update_state", "answer_question_and_update_state", "update_state_and_open_question"}
 
 
-def measurements(rows: list[Mapping[str, Any]]) -> list[dict[str, Any]]:
+def _norm(text: Any) -> str:
+    return " ".join(str(text or "").lower().split())
+
+
+def unsafe_direction_miss(row: Mapping[str, Any], scenario: Any) -> bool:
+    """Whether a run proposed something unconfirmed as established, decided or
+    done (RELEASE.md), by the scenario's ``unsafe_if`` tag: any Current State
+    change where the Evidence settles nothing, or an overstated scope or status
+    (the scenario's forbidden phrases, as the harness scores them). An errored
+    run proposed nothing, so it is never an unsafe miss."""
+    tag = getattr(scenario, "unsafe_if", None)
+    if not tag or row.get("processing_status") == "error":
+        return False
+    changes_state = row.get("observed_action") in STATE_CHANGING
+    if tag == "state_change":
+        return changes_state
+    proposal = _norm(row.get("proposed_state_text"))
+    prose = _norm(row.get("review_prose"))
+    return (changes_state and any(_norm(p) in proposal for p in scenario.forbidden_state_update_phrases)) or any(_norm(p) in prose for p in scenario.forbidden_review_phrases)
+
+
+def measurements(rows: list[Mapping[str, Any]], scenarios: tuple | None = None) -> list[dict[str, Any]]:
     """The run's results as counts and rates. ``rows`` are the per-scenario
     results of ``run_quality_evals``' review report."""
+    if scenarios is None:
+        from eval.review_interpretation_scenarios import SCENARIOS as scenarios
+    from eval.review_interpretation_scenarios import RISK_KIND_LABELS
+    by_id = {s.id: s for s in scenarios}
     total = len(rows)
     errored = [r for r in rows if r.get("processing_status") == "error"]
     scored = [r for r in rows if r.get("processing_status") != "error"]
@@ -152,8 +178,17 @@ def measurements(rows: list[Mapping[str, Any]]) -> list[dict[str, Any]]:
         _count("unnecessary-reviews", "Reviews raised when none was needed", sum(1 for r in not_needed if r.get("actual_review_needed")), len(not_needed), severity="low"),
         _count("errors", "Scenarios that errored", len(errored), total),
     ]
+    # Proposing something unconfirmed as settled blocks even once (RELEASE.md).
+    tagged = [r for r in rows if getattr(by_id.get(r.get("id")), "unsafe_if", None)]
+    out.append(_count("unsafe-direction-misses", "Unconfirmed things proposed as settled", sum(1 for r in tagged if unsafe_direction_miss(r, by_id[r["id"]])), len(tagged), severity="high"))
     for sev, label in SEVERITY_SEGMENTS:
         group = [r for r in rows if r.get("severity") == sev]
+        if group:
+            out.append(_rate("scenarios-passed", "Scenarios passed", sum(1 for r in group if r.get("passed")), len(group), segment=label))
+    # Kinds of risk: descriptive, overlapping slices for weak-slice analysis,
+    # not gates (Paige, Oct 13). A scenario can count in several.
+    for kind, label in RISK_KIND_LABELS.items():
+        group = [r for r in rows if kind in getattr(by_id.get(r.get("id")), "risk_kinds", ())]
         if group:
             out.append(_rate("scenarios-passed", "Scenarios passed", sum(1 for r in group if r.get("passed")), len(group), segment=label))
     return [m for m in out if m]
@@ -180,7 +215,7 @@ def build_envelope(report: Mapping[str, Any], *, provider: str, model: str, buil
             "implementation": (build or "unknown")[:12],
             "evalSet": eval_set_fingerprint(scenarios),
         },
-        "measurements": measurements(report["results"]),
+        "measurements": measurements(report["results"], scenarios),
         "notes": "Controlled synthetic scenarios from State's review interpretation suite, read as a rate (RELEASE.md). Aggregates only.",
     }
     if ref["reference"]:

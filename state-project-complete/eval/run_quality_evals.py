@@ -73,6 +73,7 @@ def _review_report(provider) -> dict:
                 "trace_id": r.trace_id,
                 "trace_path": r.trace_path,
                 "proposed_state_text": r.proposed_state_text,
+                "review_prose": r.review_prose,
                 "rationale_text": r.rationale_text,
             }
             for r in results

@@ -11,7 +11,7 @@ from datetime import datetime, timezone
 from unittest import mock
 
 from eval import authority_lab_export as ex
-from eval.review_interpretation_scenarios import SCENARIOS
+from eval.review_interpretation_scenarios import SCENARIOS, RISK_KIND_LABELS
 
 STARTED = datetime(2026, 10, 13, 14, 17, 5, 123456, tzinfo=timezone.utc)
 GH = {"GITHUB_RUN_ID": "40001", "GITHUB_RUN_ATTEMPT": "1", "GITHUB_SERVER_URL": "https://github.com",
@@ -28,6 +28,7 @@ def _row(s, *, passed=True, actual_review=None, status="succeeded", correct=None
         "review_needed_correct": True, "interpretation_correct": passed if correct is None else correct,
         "passed": passed, "processing_status": status, "error": "",
         "proposed_state_text": "MODEL OUTPUT that must never be exported", "rationale_text": "MODEL RATIONALE that must never be exported",
+        "review_prose": "REVIEW PROSE that must never be exported",
         "trace_id": "trace_secret", "trace_path": "/tmp/trace.json",
     }
 
@@ -143,7 +144,7 @@ class AuthorityLabExportTests(unittest.TestCase):
                 self.assertNotIn(statement[:40], text)
             for q in s.open_questions:
                 self.assertNotIn(q[:40], text)
-        for leaked in ("MODEL OUTPUT", "MODEL RATIONALE", "trace_secret", "/tmp/trace"):
+        for leaked in ("MODEL OUTPUT", "MODEL RATIONALE", "REVIEW PROSE", "trace_secret", "/tmp/trace"):
             self.assertNotIn(leaked, text)
 
     def test_versions_change_with_what_they_describe(self):
@@ -164,6 +165,62 @@ class AuthorityLabExportTests(unittest.TestCase):
         import ast
         norm = lambda s: ast.unparse(ex._strip_docstrings(ast.parse(s)))
         self.assertEqual(norm(src), norm(src2))
+
+    def test_the_unsafe_direction_tags_are_the_approved_groups(self):
+        # Paige, Oct 13 (#517): groups A, B and C exactly as proposed.
+        tags = {s.id: s.unsafe_if for s in SCENARIOS}
+        group_a = {"review_ambiguity_opens_question", "review_tentative_high_consequence", "review_non_authoritative_opinion",
+                   "review_authority_disagreement", "review_unknown_not_false", "review_same_unknown_links_existing_question"}
+        group_b = {"review_partial_reversal", "review_partial_question_answer", "review_planned_action_not_stated_as_done",
+                   "review_new_evidence_over_pending_review", "review_question_answer_only"}
+        self.assertEqual({k for k, v in tags.items() if v == "state_change"}, group_a)
+        self.assertEqual({k for k, v in tags.items() if v == "overstatement"}, group_b)
+        self.assertIsNone(tags["review_duplicate_confirmation"])
+        self.assertIsNone(tags["review_direct_reversal"])
+        for s in SCENARIOS:
+            if s.unsafe_if == "state_change":
+                self.assertFalse(s.should_change_state, s.id)
+            if s.unsafe_if == "overstatement":
+                self.assertTrue(s.forbidden_state_update_phrases or s.forbidden_review_phrases, f"{s.id} needs forbidden phrases to detect overstatement")
+            self.assertTrue(set(s.risk_kinds) <= set(RISK_KIND_LABELS), s.id)
+
+    def test_an_unsafe_miss_is_what_the_model_did_not_a_label(self):
+        sc = {s.id: s for s in SCENARIOS}
+        miss = ex.unsafe_direction_miss
+        a = sc["review_tentative_high_consequence"]
+        self.assertTrue(miss({"observed_action": "update_state"}, a), "a question turned into a decision")
+        self.assertFalse(miss({"observed_action": "open_question"}, a))
+        self.assertFalse(miss({"observed_action": "update_state", "processing_status": "error"}, a), "an errored run proposed nothing")
+        b = sc["review_partial_reversal"]
+        self.assertTrue(miss({"observed_action": "update_state", "proposed_state_text": "All password-reset automation is  PAUSED now."}, b))
+        self.assertFalse(miss({"observed_action": "update_state", "proposed_state_text": "Privileged-account resets are paused; standard resets stay approved."}, b))
+        planned = sc["review_planned_action_not_stated_as_done"]
+        self.assertTrue(miss({"observed_action": "state_at_risk", "review_prose": "Evaluation now runs against the revised criteria."}, planned), "overstated in the Review's prose")
+        c = sc["review_direct_reversal"]
+        self.assertFalse(miss({"observed_action": "preserve_evidence_only"}, c), "an omission is a routing miss, not unsafe")
+        self.assertFalse(miss({"observed_action": "update_state", "proposed_state_text": "anything"}, sc["review_duplicate_confirmation"]))
+
+    def test_unsafe_misses_and_overlapping_risk_slices_are_measured(self):
+        sc = {s.id: s for s in SCENARIOS}
+        rows = [_row(s) for s in SCENARIOS]
+        for r in rows:
+            if r["id"] == "review_tentative_high_consequence":
+                r.update(passed=False, observed_action="update_state")
+            if r["id"] == "review_partial_reversal":
+                r.update(passed=False, proposed_state_text="All password-reset automation is paused.")
+        e = _envelope(rows)
+        self.assertEqual(al_problems(e), [])
+        by = {(m["metric"], m.get("segment")): m for m in e["measurements"]}
+        self.assertEqual((by[("unsafe-direction-misses", None)]["value"], by[("unsafe-direction-misses", None)]["total"]), (2, 11))
+        self.assertEqual(by[("unsafe-direction-misses", None)]["severity"], "high")
+        fc = by[("scenarios-passed", "False certainty")]
+        self.assertEqual(fc["total"], sum(1 for s in SCENARIOS if "false_certainty" in s.risk_kinds))
+        self.assertEqual(fc["total"] - fc["passed"], 2, "both failures test false certainty")
+        self.assertEqual(by[("scenarios-passed", "Authority")]["total"] - by[("scenarios-passed", "Authority")]["passed"], 1)
+        self.assertEqual(by[("scenarios-passed", "Stale or conflicting evidence")]["total"] - by[("scenarios-passed", "Stale or conflicting evidence")]["passed"], 1)
+        # Slices overlap: their sizes add up to more than the suite.
+        sizes = sum(by[("scenarios-passed", label)]["total"] for label in RISK_KIND_LABELS.values())
+        self.assertGreater(sizes, sum(1 for s in SCENARIOS if s.risk_kinds))
 
     def test_only_the_review_suite_is_exported(self):
         with self.assertRaisesRegex(ValueError, "Only the review_interpretation suite"):
