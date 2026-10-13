@@ -22,6 +22,7 @@ For the State GitHub Project workflow, fields, statuses, and board conventions, 
 
 ## Product-operating defaults
 
+- **Product decisions are Paige's (Oct 13).** Claude builds mechanics and reports technical facts (what a system exposes, constraints, gaps), and suggests options only when asked. It stops and asks at anything needing product judgment rather than filling it in because the answer seems obvious. This applies especially to the Question Investigator (#142) and its Authority Lab exercise.
 - Durable settled product choices go in `docs/product/DECISIONS.md`; do not casually reopen them without new evidence or an explicit product question.
 - Material trust/authority/isolation/review-burden/privacy/cost/latency risks go in `docs/product/RISKS.md`; implementation work to mitigate a risk belongs in an Issue.
 - AI behavior failures should be separated from ordinary software bugs. Use outcome-based expectations and the eval registry in `docs/evals/`.

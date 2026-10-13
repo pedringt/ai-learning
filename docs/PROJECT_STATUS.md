@@ -2,34 +2,45 @@
 
 This is the canonical current-state handoff for State and the surrounding portfolio. Read this first, then verify the repository and live environments before relying on older notes or conversation memory.
 
-_Last updated: October 12, 2026 (evening), Pacific time. **Start with "Current state" just below**; the Oct 12 section after it says what changed most recently. Older sections still apply where nothing newer overrides them, and anything before Oct 5 is history (some open-issue lists down there are stale: trust GitHub). Written as a handoff for a fresh session._
+_Last updated: October 13, 2026 (evening), Pacific time. **Start with "Current state" just below**; the Oct 13 section after it says what changed most recently. Older sections still apply where nothing newer overrides them, and anything before Oct 5 is history (some open-issue lists down there are stale: trust GitHub). Written as a handoff for a fresh session._
 
-## Current state (Oct 12, 2026)
+## Current state (Oct 13, 2026)
 
-- **Nothing is held.** `main` = `e9dcc3b`, and `staging` matches it. Both Vercel projects and Render production serve `main`.
+- **`main` = `e9dcc3b` (unchanged since Oct 12). `staging` = `c4c5118`: #517 (the Authority Lab evidence export), pushed Oct 13, not promoted.** Promoting needs Paige's per-time OK. Until it's on `main`, the weekly State AI quality check on `main` doesn't produce Authority Lab evidence files.
 - **Production:**
   - Portfolio: `https://www.contextswitch.tech/`. State: `https://state.contextswitch.tech/`. API: `https://state-api-6waw.onrender.com`.
   - **Data:** SQLite on the `state-api` persistent disk (`/var/data/state.db`), not Postgres; see `CLAUDE.md` for backups.
   - **A pre-migration backup** `/var/data/state-pre-migration-020.db` exists; delete it after about Oct 26.
 - **Model:** State runs `claude-haiku-5-5` (code default; `thinking: disabled`). Rollback is `CLAUDE_MODEL=claude-haiku-4-5-20251001` on Render. The GitHub `CLAUDE_MODEL` repo variable is deleted on purpose.
-- **Release checks:**
-  - `make qa-fast` (free; the Makefile finds the venv Python itself) and `make qa-release` (paid gate). See `QA.md`, including "Postgres tests locally".
-  - **Deep QA** on staging is the browser gate. Its "VP billing note reaches Review" check is a hard gate (DEC-010).
-  - **The live review suite** is read as a rate: each run must score at least 15/16, and no scenario may fail twice in a row (#494, `RELEASE.md`).
-  - **Paid eval workflows** (pre-approved for testing; report call count and cost afterwards):
-    - State AI quality check (`question-review-live.yml`);
-    - State QA Release (`qa-release.yml`);
-    - Baseline decomposition eval (`baseline-decomposition-eval.yml`, about 60 calls, about 30¢).
-- **Portfolio pages:**
-  - `tools/social_previews.py` keeps every root page and cheat sheet's description, preview card and `sitemap.xml` current. Re-run it after changing a title or description; CI expects `--check` to pass.
-  - The **AI Governance Handbook** (`ai-governance-handbook.html`) is a standalone page built from Paige's artifact, with its CSS scoped under `.handbook`. Its tools (triage, laws finder, calculator, incident clock, templates) are plain JS on the page.
-- **Project Health** (`project-health.html`) reads GitHub through `api/project-health-github.js` (cached, server-side). It never shows Healthy for a signal it couldn't load.
+- **Release checks:** unchanged from Oct 12 (see that section).
+  - `make qa-fast` (free) and `make qa-release` (paid gate).
+  - Deep QA's "VP billing note reaches Review" is a hard gate (DEC-010).
+  - The review suite is read as a rate (at least 15/16 a run; no scenario failing twice in a row).
+  - Paid eval workflows are pre-approved; report the call count and cost afterwards.
+- **Authority Lab integration** (Authority Lab is a separate repo, `~/code/authority-lab`, live on `main`):
+  - **#517 (on `staging`):** `eval/authority_lab_export.py` turns a review-suite run into an `authority-lab-evidence/1` envelope (aggregates only, versions, a link to the run). The State AI quality check workflow keeps it as a 90-day artifact.
+  - **Unsafe-direction and risk tags:** the review scenarios carry `unsafe_if` and `risk_kinds` tags (Paige, Oct 13), documented in `docs/evals/README.md` and `docs/product/DATA_PRIVACY.md`.
+  - **The first delivery** is done (#518, closed): the envelope from run 38411808397 (staging, 16/16) is in Authority Lab, where State's capability reads 5 of 5 checks met. Paige recorded the Draft decision in her browser; publishing it is on the Authority Lab side.
+- **Question Investigator (#142, reopened Oct 13): nothing built yet.**
+  - **The plan:** build it in State first, as the technical source for a from-scratch Authority Lab exercise, where Paige makes every product decision.
+  - **Decisions so far** (full text in #142's comments):
+    1. **Results:** each investigation is saved on its Question. "Use as my answer" pre-fills the existing Answer question flow, so it goes Evidence → Review. Provenance: drafted from run X, the original draft kept, and whether it was edited. State has no user identity, so not *who*.
+    2. **Public use:** the seeded demo shows recorded examples only. Live runs are only in projects visitors create, with server-side caps of 50 a day site-wide and 5 per project. No pseudo-identity.
+    3. **Limits per run:** 12 steps, 18 tool calls, 75 seconds. A run that hits a limit is saved as Unresolved, with the stop reason recorded as a normal outcome.
+    4. **Model:** build the engine model-agnostic, then compare Haiku 5.5 and Sonnet 5.5 (not Opus or Fable) on the same cases, reporting retrieval, authority judgment, provenance, limits, time and cost. Paige chooses; the per-run spend cap comes after.
+  - **Decision 5 is in progress:** eval cases, case by case. The **Q-101 test card is drafted and waiting for Paige's approval** in `docs/evals/question-investigator-cases.md` (with her severity model). Q-102 to Q-105 come next. Once all five are approved: build the engine, then the smoke comparison.
+- **Process rules (Paige, Oct 13):**
+  - **Product decisions are Paige's:** Claude builds mechanics and reports technical facts, and stops at anything needing product judgment.
+  - **The Authority Lab visual redesign is paused.**
 - **Open work** (GitHub is the source of truth):
-  - #409 Ask reliability runner and #399 agent-workflow health: both need scoping.
-  - Parked: #142 Question Investigator, #243 Tell Me What You Remember case study.
-- **Other repos:**
-  - **Tastemake** (`~/code/tastemake`): see its `docs/HANDOFF.md`.
-  - **Authority Lab** (`~/code/authority-lab`): worked in Paige's other chat.
+  - #142 Question Investigator, in progress as above.
+  - #519: Slack Evidence always lands in Northstar.
+  - #520: the Juniper seeded flag.
+  - #521: `run_eval.py` records the wrong model id.
+  - #522: stale-proposal 409s aren't recorded.
+  - #529: Ask makes paid calls for any public visitor with no limit.
+  - #409 and #399 still need scoping. #243 is parked.
+- **Other repos:** Tastemake (`~/code/tastemake`, see its `docs/HANDOFF.md`); Authority Lab (`~/code/authority-lab`, see its `docs/HANDOFF.md`).
 
 ## Oct 12, 2026: backend clean-up, handbook, Project Health, Cowork fixes
 
