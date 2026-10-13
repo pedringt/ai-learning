@@ -1,6 +1,7 @@
 # Makes real model calls: manually, and weekly on main (about 23 calls; well under
 # a cent per run on Haiku 5.5). Controlled evals use temporary test
 # databases and record aggregate metrics plus limited failure metadata for failed synthetic scenarios.
+# The review suite's aggregates are also saved as Authority Lab evidence (#517).
 name: State AI quality check
 on:
   schedule:
@@ -58,7 +59,20 @@ jobs:
           fi
           python state-project-complete/eval/run_quality_evals.py \
             --suite "${{ inputs.suite || 'all' }}" \
-            --record-url "$RECORD_URL"
+            --record-url "$RECORD_URL" \
+            --authority-lab-envelope authority-lab-evidence.json
+      # #517: the review suite's aggregate results as Authority Lab evidence
+      # (counts, versions and this run's link; no scenario or model text).
+      # Kept 90 days so it can be delivered by hand (#518). Saved even when a
+      # scenario failed: a failing run is evidence too.
+      - name: Save Authority Lab evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: authority-lab-evidence-${{ github.run_id }}-${{ github.run_attempt }}
+          path: authority-lab-evidence.json
+          retention-days: 90
+          if-no-files-found: ignore
 
   walkthrough:
     if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/staging' && inputs.suite == 'all'

@@ -13,6 +13,7 @@ import os
 import sys
 import time
 import urllib.request
+from datetime import datetime, timezone
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
@@ -30,6 +31,7 @@ from eval.quality_harness import (
     run_review_quality_scenario,
 )
 from eval.review_interpretation_scenarios import SCENARIOS as REVIEW_SCENARIOS
+from eval.authority_lab_export import build_envelope
 
 
 def _record(url: str, key: str, payload: dict) -> None:
@@ -46,10 +48,12 @@ def _record(url: str, key: str, payload: dict) -> None:
 
 def _review_report(provider) -> dict:
     started = time.time()
+    started_at = datetime.now(timezone.utc).isoformat()
     results = [run_review_quality_scenario(scenario, provider) for scenario in REVIEW_SCENARIOS]
     metrics = review_quality_metrics(results)
     return {
         "suite": "review_interpretation",
+        "started_at": started_at,
         "elapsed_seconds": round(time.time() - started, 2),
         "summary": metrics,
         "results": [
@@ -223,6 +227,7 @@ def main() -> int:
     parser.add_argument("--json", metavar="PATH", help="write the detailed local report")
     parser.add_argument("--record-url", metavar="URL", help="State API base URL for aggregate eval ingestion")
     parser.add_argument("--record-key", metavar="KEY", help="defaults to STATE_EVAL_INGEST_KEY")
+    parser.add_argument("--authority-lab-envelope", metavar="PATH", help="write the review suite's aggregate results as Authority Lab evidence (#517)")
     args = parser.parse_args()
 
     if not os.getenv("ANTHROPIC_API_KEY"):
@@ -254,6 +259,17 @@ def main() -> int:
                     print(f"Recorded aggregate {report['suite']} metrics in State Product Analytics.")
                 except Exception as exc:
                     print(f"WARNING: {report['suite']} ran, but analytics ingestion failed: {exc}")
+
+    if args.authority_lab_envelope:
+        review = next((r for r in reports if r["suite"] == "review_interpretation"), None)
+        if review is None:
+            print("\nNo Authority Lab evidence written: only the review suite is exported (run with --suite review or all).")
+        else:
+            payload = _analytics_payload(review, provider)
+            envelope = build_envelope(review, provider=payload["provider"], model=payload["model_identifier"], build=payload["build"],
+                                      env=os.environ, started_at=datetime.fromisoformat(review["started_at"]))
+            Path(args.authority_lab_envelope).write_text(json.dumps(envelope, indent=2) + "\n")
+            print(f"\nWrote Authority Lab evidence {envelope['id']} to {args.authority_lab_envelope}")
 
     has_failure = any(any(not row["passed"] for row in report["results"]) for report in reports)
     return 1 if has_failure else 0

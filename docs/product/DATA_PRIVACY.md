@@ -60,6 +60,16 @@ The dashboard may ingest aggregate eval results such as precision, recall, miss/
 
 Eval result ingestion requires a server-side `STATE_EVAL_INGEST_KEY`. The key must never be shipped to the browser.
 
+### Authority Lab evidence export (#517)
+
+The review interpretation suite's results can be exported as evidence for Authority Lab (`pedringt/authority-lab`, a **public** repository), which judges what State's interpretation step may do. The export (`eval/authority_lab_export.py`) is aggregate-only:
+
+- counts and rates (scenarios passed, interpretation quality, high-severity failures, consequential evidence that missed Review, unnecessary Reviews, errors), with severity groups as segments;
+- version identifiers: provider, model, build, a prompt fingerprint (a hash of the instruction text and prompt-rendering code, not of any rendered prompt) and an eval-set fingerprint;
+- the run's id and its GitHub Actions link.
+
+It never includes scenario ids, Evidence, Current State, Questions, proposals, rationales, prompts, model output or traces; a test checks this. Only controlled synthetic eval runs are exported. Production activity is not, because production holds seeded demo data and resettable visitor activity, which isn't meaningful production evidence (Paige, Oct 12). Delivery to Authority Lab is a pull request to that repository (#518), so anything exported becomes public.
+
 ## If State were a real company product
 
 Before connecting real Slack channels, documents, transcripts, or other company sources, product and engineering would need explicit controls for:

@@ -26,6 +26,10 @@ Does Ask accurately distinguish Current State, Questions, Reviews, History, and 
 
 Does the model turn a starting source into a useful Starting State: several sensible sections instead of one blob, the facts a person would expect, undecided items kept out of the facts, and few failures? Model output varies run to run, so this dimension is measured as **rates over repeated runs**, not as a pass/fail (DEC-008: the Deep QA gate only records how one sample splits).
 
+### Authority Lab evidence (#517)
+
+`run_quality_evals --authority-lab-envelope PATH` writes the review suite's aggregate results as an `authority-lab-evidence/1` envelope, the evidence Authority Lab uses to judge State's interpretation step ("Interpret incoming project evidence"). The weekly **State AI quality check** workflow saves it as the `authority-lab-evidence-<run>-<attempt>` artifact for 90 days. The envelope's id is the GitHub run and attempt, so re-delivering it is a no-op on Authority Lab's side. `prompt` is a fingerprint of the interpretation instructions, the prompt-rendering code (comments and docstrings ignored), the output schema and the call settings; `evalSet` is a fingerprint of every scenario field. A change to either starts a new configuration in Authority Lab, whose earlier results are kept but no longer counted. Only the review suite is exported; the consequentiality suite waits for #521. The library is `eval/authority_lab_export.py` (no `.env`, no model); tests are in `test_authority_lab_export.py`.
+
 ## Canonical case shape
 
 For each meaningful case, record:
