@@ -11,11 +11,10 @@
   },
   "models": [
     "claude-haiku-5-5",
-    "claude-haiku-5-5@900",
-    "claude-sonnet-5-5",
-    "claude-opus-5-5"
+    "claude-haiku-5-5@900"
   ],
-  "repeats": 2,
+  "repeats": 3,
   "maxCalls": 300,
-  "concurrency": 6
+  "concurrency": 6,
+  "logVariants": true
 }
