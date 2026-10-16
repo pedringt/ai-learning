@@ -38,6 +38,7 @@ async function run(){
   if(config.logVariants){
     const INV=require('../../api/project-health-investigate.js')._test;
     const token=process.env.GITHUB_TOKEN||'';
+    if(!token)throw new Error('logVariants needs GITHUB_TOKEN to read job logs');
     for(const item of real.filter(c=>c.signalType==='github-check')){
       const project=INV.PROJECTS[item.evidence.project==='ai-learning'?'state':item.evidence.project]||Object.values(INV.PROJECTS).find(p=>p.slug===item.evidence.project);
       const primary=JSON.parse(item.evidence.primary);

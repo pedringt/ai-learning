@@ -35,6 +35,8 @@ jobs:
       - name: Run the investigator prompt
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          # logVariants reads failed job logs the way production does.
+          GITHUB_TOKEN: ${{ github.token }}
           PH_EVAL_OUT: ${{ runner.temp }}/ph-eval
         run: node scripts/project_health_eval/run.js run
       - name: Keep cases and results
