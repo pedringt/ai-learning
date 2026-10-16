@@ -378,7 +378,7 @@ def review_record(r) -> dict[str, Any]:
             "failure_mode": failure, "failed_checks": failed if outcome == "fail" else [], "checks": checks,
             "expected": r.scenario.expected_action, "observed": r.observed_action,
             "processing_status": r.processing_status, "error": error or None,
-            **({"model_output_excerpt": _excerpt(f"proposed: {r.proposed_state_text} | rationale: {r.rationale_text}")}
+            **({"model_output_excerpt": _excerpt(f"proposed: {r.proposed_state_text} | rationale: {r.rationale_text} | proposals: {r.proposal_rows}")}
                if outcome == "fail" else {})}
 
 

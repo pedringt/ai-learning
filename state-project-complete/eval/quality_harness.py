@@ -75,6 +75,7 @@ class ReviewQualityResult:
     review_prose: str = ""
     rationale_text: str = ""
     error: str = ""
+    proposal_rows: str = ""
 
     @property
     def review_needed_correct(self) -> bool:
@@ -241,6 +242,15 @@ def run_review_quality_scenario(scenario: ReviewInterpretationScenario, provider
         observed_action, proposed_state_text = _observed_review_outcome(connection, review_ids)
         review_prose = _review_prose(connection, review_ids)
         rationale_text = _rationale_text(connection, review_ids)
+        proposal_rows = ""
+        if review_ids:
+            placeholders = ",".join("?" for _ in review_ids)
+            proposal_rows = "; ".join(
+                f"{row['operation']} target={row['state_item_id']} status={row['status']}"
+                f" supersedes={row['supersedes_proposal_id']}"
+                for row in connection.execute(
+                    f"SELECT operation, state_item_id, status, supersedes_proposal_id FROM proposed_state_changes "
+                    f"WHERE review_id IN ({placeholders}) ORDER BY created_at, id", tuple(review_ids)).fetchall())
         error = ""
         if process_result.processing_status == "failed":
             # The pipeline stores why it failed on the interpretation record; keep it so the report
@@ -260,6 +270,7 @@ def run_review_quality_scenario(scenario: ReviewInterpretationScenario, provider
             review_prose=review_prose,
             rationale_text=rationale_text,
             error=error,
+            proposal_rows=proposal_rows,
         )
     except Exception as exc:
         return ReviewQualityResult(
