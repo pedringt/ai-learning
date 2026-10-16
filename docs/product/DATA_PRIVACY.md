@@ -60,6 +60,16 @@ The dashboard may ingest aggregate eval results such as precision, recall, miss/
 
 Eval result ingestion requires a server-side `STATE_EVAL_INGEST_KEY`. The key must never be shipped to the browser.
 
+### Authority Lab evidence export (#517)
+
+The review interpretation suite's results can be exported as evidence for Authority Lab (`pedringt/authority-lab`, a **public** repository), which judges what State's interpretation step may do. The export (`eval/authority_lab_export.py`) is aggregate-only:
+
+- counts and rates (scenarios passed, interpretation quality, high-severity failures, consequential evidence that missed Review, unnecessary Reviews, unsafe-direction misses, errors), with severity groups and kinds of risk as segments;
+- version identifiers: provider, model, build, a prompt fingerprint (a hash of the instruction text and prompt-rendering code, not of any rendered prompt) and an eval-set fingerprint;
+- the run's id and its GitHub Actions link.
+
+It never includes scenario ids, Evidence, Current State, Questions, proposals, rationales, prompts, model output or traces; a test checks this. Only controlled synthetic eval runs are exported. Production activity is not, because production holds seeded demo data and resettable visitor activity, which isn't meaningful production evidence (Paige, Oct 12). Delivery to Authority Lab is a pull request to that repository (#518), so anything exported becomes public.
+
 ## If State were a real company product
 
 Before connecting real Slack channels, documents, transcripts, or other company sources, product and engineering would need explicit controls for:
@@ -114,4 +124,6 @@ Allowed Project Health data is intentionally narrow:
 
 Project Health must not expose provider API keys, database connection strings, raw logs, visitor identities, request bodies, State project content, model prompts/responses, or detailed traces merely to make the dashboard richer. Provider credentials stay server-side in environment variables. Missing provider credentials or telemetry are shown as "not connected" rather than inferred.
 
-The dashboard-run control is a separate authorization boundary from read-only health data. It requires a server-side GitHub credential, a separate admin key, a configured cost estimate, and an explicit confirmation of paid model calls before dispatching a workflow. Those secrets must never be shipped to the browser.
+The dashboard-run control is a separate authorization boundary from read-only health data. Since Sept 28 (064ddac) it no longer uses an admin key: it needs a server-side GitHub credential, a configured cost estimate and an explicit paid-call confirmation, and it is meant to work only from a protected (Vercel-login) deployment. On Oct 16 the public production dashboard still reported `can_run_here: true`, so that guard does not hold there; Paige accepted anyone being able to start runs for now (DEC-012). Those secrets must never be shipped to the browser.
+
+The failure investigator (`api/project-health-investigate.js`) sends one bounded evidence bundle to Anthropic per request: failed check names, titles and summaries, the Vercel deployment's error fields and filtered build-output lines, the related commit message, and (Oct 16) an excerpt of each of the first two failed GitHub Actions job logs: at most 25 error-looking lines (or the last 25 lines), 300 characters a line and 3,000 characters a job. Every line goes through the same redaction as the rest of the evidence (bearer tokens, Anthropic/GitHub/Slack/Vercel tokens, `*_KEY`/`*_TOKEN`/`*_SECRET`/`*_PASSWORD` assignments, and every URL outside github.com and vercel.com). Job logs come only from the four allowlisted repositories, which are public, and are read with the server-side `GITHUB_TOKEN`. They are not stored. The investigator does not check an admin key, so anyone who can reach the endpoint can trigger one Haiku call while a project has a current failure; Paige accepted that for now (DEC-012).

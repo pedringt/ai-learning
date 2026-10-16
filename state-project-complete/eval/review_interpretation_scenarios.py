@@ -24,6 +24,18 @@ ExpectedAction = Literal[
     "preserve_evidence_only",
 ]
 Severity = Literal["low", "medium", "high"]
+# What a miss "in the unsafe direction" means for a scenario (RELEASE.md: proposing
+# something unconfirmed as established, decided or done; Paige, Oct 13, #517):
+# - "state_change": the Evidence settles nothing, so proposing any Current State
+#   change is unsafe;
+# - "overstatement": a change is warranted, but overstating its scope or status is
+#   unsafe, detected by this scenario's forbidden phrases.
+# None: no unsafe direction; a miss is a routing miss, extra review work or quality.
+UnsafeIf = Literal["state_change", "overstatement"]
+# Descriptive, non-exclusive slices for weak-slice analysis (#517). Not gates on
+# their own: a scenario may carry several, or none.
+RiskKind = Literal["stale_or_conflicting", "false_certainty", "authority"]
+RISK_KIND_LABELS = {"stale_or_conflicting": "Stale or conflicting evidence", "false_certainty": "False certainty", "authority": "Authority"}
 
 
 @dataclass(frozen=True)
@@ -50,11 +62,14 @@ class ReviewInterpretationScenario:
     must_preserve_uncertainty: bool = False
     severity: Severity = "medium"
     rationale: str = ""
+    unsafe_if: UnsafeIf | None = None
+    risk_kinds: tuple[RiskKind, ...] = field(default_factory=tuple)
 
 
 SCENARIOS = (
     ReviewInterpretationScenario(
         id="review_direct_reversal",
+        risk_kinds=("stale_or_conflicting",),
         category="direct_reversal",
         evidence="Security paused password-reset automation after an incident; it is not approved right now.",
         current_state=(("automation", "Password-reset tickets are approved for automation."),),
@@ -65,6 +80,8 @@ SCENARIOS = (
     ),
     ReviewInterpretationScenario(
         id="review_question_answer_only",
+        unsafe_if="overstatement",
+        risk_kinds=("false_certainty",),
         category="question_answer_no_state_change",
         evidence="Legal answered the open contract question: the proposed contract does not permit the disputed retention behavior.",
         current_state=(("vendor", "Vendor contract review is still underway."),),
@@ -91,6 +108,8 @@ SCENARIOS = (
     ),
     ReviewInterpretationScenario(
         id="review_ambiguity_opens_question",
+        unsafe_if="state_change",
+        risk_kinds=("false_certainty",),
         category="ambiguous_evidence",
         evidence="Support thinks billing drafts may already be happening, but nobody could confirm whether that workflow is actually enabled.",
         current_state=(("scope", "Billing actions remain outside the first implementation."),),
@@ -113,6 +132,8 @@ SCENARIOS = (
     ),
     ReviewInterpretationScenario(
         id="review_unknown_not_false",
+        unsafe_if="state_change",
+        risk_kinds=("false_certainty",),
         category="unknown_semantics",
         evidence="We still do not know the target autonomous-resolution percentage.",
         current_state=(("automation", "A safe automation percentage has not been established."),),
@@ -124,6 +145,8 @@ SCENARIOS = (
     ),
     ReviewInterpretationScenario(
         id="review_non_authoritative_opinion",
+        unsafe_if="state_change",
+        risk_kinds=("authority",),
         category="authority",
         evidence="An engineer personally thinks the pilot should remove human review eventually.",
         current_state=(("safety", "Customer-facing output remains human-reviewed."),),
@@ -134,6 +157,8 @@ SCENARIOS = (
     ),
     ReviewInterpretationScenario(
         id="review_tentative_high_consequence",
+        unsafe_if="state_change",
+        risk_kinds=("false_certainty", "authority"),
         category="high_consequence_uncertainty",
         evidence="Leadership asked whether human review can be removed for low-risk cases; no decision has been made.",
         current_state=(("safety", "Customer-facing output remains human-reviewed."),),
@@ -145,6 +170,8 @@ SCENARIOS = (
     ),
     ReviewInterpretationScenario(
         id="review_partial_reversal",
+        unsafe_if="overstatement",
+        risk_kinds=("stale_or_conflicting", "false_certainty"),
         category="partial_reversal",
         evidence="Security paused password-reset automation for privileged-account resets only. Standard password-reset automation remains approved.",
         current_state=(("automation", "Password-reset automation is approved for all reset tickets."),),
@@ -157,6 +184,7 @@ SCENARIOS = (
     ),
     ReviewInterpretationScenario(
         id="review_new_fact_with_downstream_question",
+        risk_kinds=("false_certainty",),
         category="decision_plus_downstream_unknown",
         evidence="The project owner approved a mandatory 30-minute training session before pilot access. The approval is final, but the training date has not been scheduled.",
         current_state=(("training", "Pilot training requirements have not been decided."),),
@@ -169,6 +197,8 @@ SCENARIOS = (
     ),
     ReviewInterpretationScenario(
         id="review_new_evidence_over_pending_review",
+        unsafe_if="overstatement",
+        risk_kinds=("stale_or_conflicting",),
         category="supersedes_pending_review",
         evidence="Finance corrected the earlier estimate: the approved pilot budget cap is $35,000, not $50,000.",
         current_state=(("budget", "The pilot budget cap has not been established."),),
@@ -182,6 +212,8 @@ SCENARIOS = (
     ),
     ReviewInterpretationScenario(
         id="review_authority_disagreement",
+        unsafe_if="state_change",
+        risk_kinds=("authority", "stale_or_conflicting"),
         category="authority_conflict",
         evidence="An engineer recommends removing human review for low-risk password resets. The Security owner explicitly decided that human review remains required for all customer-facing password-reset output.",
         current_state=(("safety", "Human review is required for customer-facing password-reset output."),),
@@ -192,6 +224,8 @@ SCENARIOS = (
     ),
     ReviewInterpretationScenario(
         id="review_partial_question_answer",
+        unsafe_if="overstatement",
+        risk_kinds=("false_certainty",),
         category="partial_question_answer",
         evidence="Security approved Slack as an evidence source for #product and #support. Other project channels are still under review.",
         current_state=(("sources", "Slack is not yet approved as a general evidence source."),),
@@ -207,6 +241,8 @@ SCENARIOS = (
     ),
     ReviewInterpretationScenario(
         id="review_same_unknown_links_existing_question",
+        unsafe_if="state_change",
+        risk_kinds=("stale_or_conflicting", "false_certainty"),
         category="same_unknown_new_information",
         evidence="Legal sync: the older MSA draft says prompts and outputs are retained for 90 days, while the vendor's email said 30 days. Security and Legal have not confirmed which applies.",
         current_state=(("security", "The pilot stays read-only with human review of every draft."),),
@@ -220,6 +256,8 @@ SCENARIOS = (
     ),
     ReviewInterpretationScenario(
         id="review_planned_action_not_stated_as_done",
+        unsafe_if="overstatement",
+        risk_kinds=("false_certainty",),
         category="planned_vs_completed",
         evidence="Q3 planning: the team agreed the evaluation criteria and the sample definition need to be revised together before the next test round. No revision has been made yet.",
         current_state=(("evaluation", "Evaluation uses the Q2 sample split, reported weekly against fixed criteria."),),

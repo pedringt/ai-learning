@@ -26,6 +26,24 @@ Does Ask accurately distinguish Current State, Questions, Reviews, History, and 
 
 Does the model turn a starting source into a useful Starting State: several sensible sections instead of one blob, the facts a person would expect, undecided items kept out of the facts, and few failures? Model output varies run to run, so this dimension is measured as **rates over repeated runs**, not as a pass/fail (DEC-008: the Deep QA gate only records how one sample splits).
 
+### Authority Lab evidence (#517)
+
+`run_quality_evals --authority-lab-envelope PATH` writes the review suite's aggregate results as an `authority-lab-evidence/1` envelope, the evidence Authority Lab uses to judge State's interpretation step ("Interpret incoming project evidence"). The weekly **State AI quality check** workflow saves it as the `authority-lab-evidence-<run>-<attempt>` artifact for 90 days. The envelope's id is the GitHub run and attempt, so re-delivering it is a no-op on Authority Lab's side. `prompt` is a fingerprint of the interpretation instructions, the prompt-rendering code (comments and docstrings ignored), the output schema and the call settings; `evalSet` is a fingerprint of every scenario field. A change to either starts a new configuration in Authority Lab, whose earlier results are kept but no longer counted. Only the review suite is exported; the consequentiality suite waits for #521.
+
+Each review scenario carries two tags (Paige, Oct 13):
+
+- **`unsafe_if`** makes RELEASE.md's "a miss in the unsafe direction blocks even once" a number (`unsafe-direction-misses`). `state_change`: the Evidence settles nothing, so any proposed Current State change is unsafe (ambiguity, tentative high-consequence, non-authoritative opinion, authority disagreement, unknown-not-false, same unknown). `overstatement`: a change is warranted, but overstating its scope or status is unsafe, detected by the scenario's forbidden phrases (partial reversal, partial answer, planned-not-done, correction over a pending Review, answer-only). The rest have no unsafe direction: a missed direct reversal is a routing miss (`review-routing-misses`), a re-proposed duplicate is review burden. The count comes from what the model did, never from the tag alone; an errored run is never an unsafe miss.
+- **`risk_kinds`** (stale or conflicting evidence, false certainty, authority) are overlapping, descriptive slices for weak-slice analysis. A scenario may carry several or none. They are not gates unless a target is deliberately bound to one. The library is `eval/authority_lab_export.py` (no `.env`, no model); tests are in `test_authority_lab_export.py`.
+
+### Project Health investigator (Oct 16)
+
+Not a State eval: it measures Project Health's failed-deploy/check investigator (`api/project-health-investigate.js`), which sends sanitized evidence to the model for one short report. Code: `scripts/project_health_eval/` (library `investigator_eval_lib.js`, thin `run.js`, free tests in `implementation-context-prototype/state-project-health-investigator-eval-tests.js`). The paid run happens in the **Project Health investigator eval** workflow on a push to `eval/ph-investigator*`; models, repeats and the call cap are in `config.json`.
+
+- **Cases:** `cases.json` holds real failures collected from the four projects' GitHub check runs and Vercel statuses, built the way the production handler builds evidence (frozen so reruns compare like with like). Each carries a `reference` (the failed job's log tail) that the model never sees, for grading. `planted_cases.js` adds log prompt-injection cases with canary strings, clear single causes, a rate limit, a no-diagnostic failure and a flaky-eval failure.
+- **What it records:** mechanical facts per report (labels present, word count, owner value, URLs not in the evidence, action claims, canary strings, planted-cause terms, `stop_reason`), on both the raw model text and the sanitized text Project Health shows. A canary in the text is a fact, not a verdict: reading the hit is required, since reports often quote an ignored instruction.
+- **Not decided:** whether a report names the right cause, and every pass/fail threshold, are Paige's to set. Nothing here grades correctness yet.
+- **Grading page:** `scripts/project_health_eval/grading/build.py` builds Paige's grading page from two run artifacts (instructions in its docstring); it is published at https://claude.ai/artifact/LmwtuHrnPgqatoJsTar1kV and keeps grades in that page's database. Grading is on hold (Oct 16).
+
 ## Canonical case shape
 
 For each meaningful case, record:

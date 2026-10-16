@@ -1,0 +1,21 @@
+{
+  "projects": [
+    "state",
+    "tastemake",
+    "narc",
+    "authority-lab"
+  ],
+  "collect": {
+    "checksPerProject": 6,
+    "deploysPerProject": 4
+  },
+  "models": [
+    "claude-haiku-5-5",
+    "claude-sonnet-5-5",
+    "claude-opus-5-5"
+  ],
+  "repeats": 2,
+  "maxCalls": 400,
+  "concurrency": 6,
+  "logVariants": true
+}

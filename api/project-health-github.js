@@ -90,9 +90,9 @@ async function loadDelivery(gh,project,branchName){
   const selectedSha=statusSha||selectedCommit?.sha||branch?.commit?.sha||branchName;
   const [status,checkRuns]=await Promise.all([
     preloadedStatus||gh('/repos/'+repo+'/commits/'+encodeURIComponent(selectedSha)+'/status'),
-    gh('/repos/'+repo+'/commits/'+encodeURIComponent(selectedSha)+'/check-runs?per_page=10').catch(()=>({check_runs:[]}))
+    gh('/repos/'+repo+'/commits/'+encodeURIComponent(selectedSha)+'/check-runs?per_page=50').catch(()=>({check_runs:[]}))
   ]);
-  return MODEL.deliveryHealth({name:branch?.name||branchName,commit:selectedCommit},status,checkRuns);
+  return MODEL.deliveryHealth({name:branch?.name||branchName,commit:selectedCommit},status,checkRuns,project);
 }
 
 async function loadEvalBehavior(gh,project,environment){
