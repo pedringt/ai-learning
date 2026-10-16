@@ -148,6 +148,7 @@ Useful examples of how current AI products are solving recurring product and arc
 - [**Dataiku Agent Management**](https://www.dataiku.com/company/news/dataiku-agent-management-general-availability) — Tracks agents across platforms, including ownership, value, performance, and risk.
 - [**Okta Agentic Enterprise Blueprint**](https://www.okta.com/solutions/secure-ai/agentic-enterprise-blueprint/) — Reference architecture for agent identity, scoped access, delegation, monitoring, and containment.
 - [**AWS AgentCore + MCP multi-account pattern**](https://aws.amazon.com/blogs/machine-learning/build-a-multi-account-ai-agent-with-agentcore-gateway-and-mcp/) — Federated pattern for controlled agent access while teams retain data ownership.
+- [**ServiceNow AI Passport**](https://newsroom.servicenow.com/press-releases/details/2026/ServiceNow-advances-its-operational-harness-for-enterprise-AI-with-AI-Passport-and-expanded-governance-capabilities/default.aspx) — Signed credentials that define an agent's authorized scope and are checked at runtime across first- and third-party agents, with scoped delegation, revocation, and graduated restriction when an agent drifts outside its boundary. Expected Q4 2026.
 
 ### Agent tooling and deployment patterns
 
