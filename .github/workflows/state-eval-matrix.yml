@@ -1,0 +1,174 @@
+# Makes real model calls (unless dry_run is ticked, the default): runs State's AI eval suites
+# `repeats` times on one model and reports per-scenario pass rates with 95% intervals.
+#
+# - plan: no model calls. Validates the model id (^claude-[a-z0-9.-]+$, and it must be in the price
+#   table), counts calls per suite x repeats, prints a cost estimate, refuses above max_calls, and
+#   splits the work into jobs that each plan at most 90 minutes (eval/matrix.py has the measured
+#   per-suite durations). With dry_run ticked it stops here.
+# - run: one job per slice, timeout 150 min (GitHub's maximum is 360). Each job has a hard call cap
+#   (the caps add up to at most max_calls), writes every repeat's JSON as soon as that repeat
+#   finishes, stops starting repeats after 120 minutes, and uploads what it has with if: always().
+# - aggregate: merges every job's files into the step summary and an artifact.
+#
+# Results are recorded only in artifacts: nothing is posted to Product Analytics.
+# Sonnet 5.5 and Opus 5.5 are refused at plan time: State's providers send thinking disabled,
+# which those models reject (see INCOMPATIBLE_MODELS in eval/matrix.py).
+name: State eval matrix
+on:
+  workflow_dispatch:
+    inputs:
+      suites:
+        description: Comma list from review, ask, consequentiality, baseline
+        required: true
+        default: review,ask,consequentiality,baseline
+      model:
+        description: Model id (claude-haiku-5-5, claude-haiku-4-5; Sonnet/Opus 5.5 are refused today)
+        required: true
+        default: claude-haiku-5-5
+      repeats:
+        description: Runs of each suite
+        required: true
+        default: '10'
+      max_calls:
+        description: Hard cap on paid model calls for the whole run
+        required: true
+        default: '1000'
+      dry_run:
+        description: Plan and estimate only (no model calls)
+        type: boolean
+        required: true
+        default: true
+permissions:
+  contents: read
+concurrency:
+  group: state-eval-matrix-${{ github.ref_name }}
+  cancel-in-progress: false
+jobs:
+  plan:
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/staging' || startsWith(github.ref, 'refs/heads/eval/')
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    outputs:
+      matrix: ${{ steps.plan.outputs.matrix }}
+      model: ${{ steps.plan.outputs.model }}
+      run: ${{ steps.plan.outputs.run }}
+    defaults:
+      run:
+        working-directory: state-project-complete
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+      - name: Plan and budget check (no model calls)
+        id: plan
+        env:
+          SUITES: ${{ inputs.suites }}
+          MODEL: ${{ inputs.model }}
+          REPEATS: ${{ inputs.repeats }}
+          MAX_CALLS: ${{ inputs.max_calls }}
+          DRY_RUN: ${{ inputs.dry_run }}
+        run: |
+          [[ "$REPEATS" =~ ^[0-9]+$ && "$MAX_CALLS" =~ ^[0-9]+$ ]] || { echo "repeats and max_calls must be whole numbers"; exit 1; }
+          [[ "$MODEL" =~ ^claude-[a-z0-9.-]+$ ]] || { echo "Refusing model id: it must match ^claude-[a-z0-9.-]+\$"; exit 1; }
+          [[ "$SUITES" =~ ^[a-z,\ ]+$ ]] || { echo "suites must be a comma list of suite names"; exit 1; }
+          set +e
+          ANTHROPIC_API_KEY= python -m eval.run_matrix --dry-run --suites "$SUITES" --model "$MODEL" \
+            --repeats "$REPEATS" --max-calls "$MAX_CALLS" --plan-json plan.json | tee plan.txt
+          status=${PIPESTATUS[0]}
+          set -e
+          { echo "## Eval matrix plan"; echo '```'; cat plan.txt; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+          if [ "$status" -ne 0 ]; then echo "Plan refused (exit $status); no model calls were made."; exit 1; fi
+          python -c "import json; p=json.load(open('plan.json')); print('matrix=' + json.dumps({'include': p['shards']}))" >> "$GITHUB_OUTPUT"
+          echo "model=$MODEL" >> "$GITHUB_OUTPUT"
+          if [ "$DRY_RUN" = "true" ]; then
+            echo "run=false" >> "$GITHUB_OUTPUT"
+            echo "Dry run: no model calls. Untick dry_run to launch." | tee -a "$GITHUB_STEP_SUMMARY"
+          else
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Upload plan
+        uses: actions/upload-artifact@v4
+        with:
+          name: eval-matrix-plan-${{ github.run_id }}
+          path: |
+            state-project-complete/plan.json
+            state-project-complete/plan.txt
+          if-no-files-found: ignore
+
+  run:
+    needs: plan
+    if: needs.plan.outputs.run == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 150
+    strategy:
+      fail-fast: false
+      max-parallel: 4
+      matrix: ${{ fromJSON(needs.plan.outputs.matrix) }}
+    name: run ${{ matrix.name }}
+    defaults:
+      run:
+        working-directory: state-project-complete
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+      - name: Run against the real model (per-repeat JSON written as each repeat finishes)
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          CLAUDE_MODEL: ${{ needs.plan.outputs.model }}
+          STATE_EVAL_TRACE_DIR: ${{ runner.temp }}/eval-traces
+          SUITE: ${{ matrix.suite }}
+          REPEAT_START: ${{ matrix.repeat_start }}
+          REPEAT_COUNT: ${{ matrix.repeat_count }}
+          CALL_CAP: ${{ matrix.call_cap }}
+        run: |
+          python -m eval.run_matrix --suite "$SUITE" --model "$CLAUDE_MODEL" \
+            --repeat-start "$REPEAT_START" --repeat-count "$REPEAT_COUNT" --call-cap "$CALL_CAP" \
+            --out-dir matrix-results
+      - name: Upload repeat results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: matrix-${{ matrix.name }}
+          path: state-project-complete/matrix-results/
+          if-no-files-found: warn
+          retention-days: 30
+
+  aggregate:
+    needs: [plan, run]
+    if: always() && needs.plan.outputs.run == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: state-project-complete
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+      - name: Download every job's repeat results
+        uses: actions/download-artifact@v4
+        with:
+          pattern: matrix-*
+          path: state-project-complete/matrix-results
+      - name: Summarize (no model calls)
+        run: python -m eval.aggregate_matrix matrix-results --out matrix-summary.md --json matrix-summary.json
+      - name: Upload summary
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: eval-matrix-summary-${{ github.run_id }}
+          path: |
+            state-project-complete/matrix-summary.md
+            state-project-complete/matrix-summary.json
+          if-no-files-found: warn
+          retention-days: 30
