@@ -11,6 +11,7 @@ posts to State's Product Analytics (no ``--record-url``).
 Suites and model calls per repeat (one call per scenario; see ``calls_per_repeat``):
 - review: Review-interpretation scenarios (``eval.review_interpretation_scenarios``)
 - ask: Ask-quality scenarios (``eval.ask_quality_scenarios``); Ask runs the one-call pipeline
+- adversarial: adversarial Ask scenarios for the pending-vs-confirmed boundary (``eval.ask_adversarial_scenarios``), scored like ask
 - consequentiality: the release-gate scenarios (``eval.scenarios``, what ``run_eval`` runs)
 - baseline: Baseline decomposition sources (``eval.baseline_decomposition``), paste route by default.
   Baseline can make extra calls (chunking, a max_tokens retry split), so its count is a floor; the
@@ -29,7 +30,7 @@ from pathlib import Path
 from typing import Any, Callable, Iterable
 
 SCHEMA = "state-eval-matrix/v1"
-SUITES = ("review", "ask", "consequentiality", "baseline")
+SUITES = ("review", "ask", "consequentiality", "baseline", "adversarial")
 MODEL_ID_PATTERN = re.compile(r"^claude-[a-z0-9.-]+$")
 
 # USD per million tokens, Anthropic first-party API. Source: the claude-api skill's model table
@@ -55,6 +56,7 @@ INCOMPATIBLE_MODELS: dict[str, str] = {}
 TOKENS_PER_CALL: dict[str, dict[str, int]] = {
     "review": {"input": 3_500, "output": 700, "max_output": 2_000},
     "ask": {"input": 4_000, "output": 900, "max_output": 2_400},
+    "adversarial": {"input": 4_000, "output": 900, "max_output": 2_400},
     "consequentiality": {"input": 3_500, "output": 700, "max_output": 2_000},
     "baseline": {"input": 7_500, "output": 900, "max_output": 2_000},
 }
@@ -63,7 +65,7 @@ TOKENS_PER_CALL: dict[str, dict[str, int]] = {
 # review 35-40s (16 cases; State AI quality check runs 38195077931, 38199551242, 38299891763, 38411808397),
 # ask 27.6-28.3s (10 cases; same workflow), consequentiality 67-77s (36 cases; State QA Release runs
 # 38078551511, 38079304500, 38271757236), baseline 119-126s per 6 repeats of 5 sources per route (run 38187113539).
-SECONDS_PER_REPEAT: dict[str, float] = {"review": 40, "ask": 30, "consequentiality": 80, "baseline": 22}
+SECONDS_PER_REPEAT: dict[str, float] = {"review": 40, "ask": 30, "adversarial": 30, "consequentiality": 80, "baseline": 22}
 # Other models are unmeasured here; plan shards as if they were this much slower.
 MODEL_SLOWDOWN: dict[str, float] = {"claude-haiku-5-5": 1.0, "claude-haiku-4-5": 2.0}
 DEFAULT_SLOWDOWN = 3.0
@@ -114,6 +116,8 @@ def scenario_ids(suite: str) -> list[str]:
         from eval.review_interpretation_scenarios import SCENARIOS
     elif suite == "ask":
         from eval.ask_quality_scenarios import SCENARIOS
+    elif suite == "adversarial":
+        from eval.ask_adversarial_scenarios import SCENARIOS
     elif suite == "consequentiality":
         from eval.scenarios import SCENARIOS
     elif suite == "baseline":
@@ -486,6 +490,8 @@ def _scenarios(suite: str) -> list[Any]:
         from eval.review_interpretation_scenarios import SCENARIOS
     elif suite == "ask":
         from eval.ask_quality_scenarios import SCENARIOS
+    elif suite == "adversarial":
+        from eval.ask_adversarial_scenarios import SCENARIOS
     elif suite == "consequentiality":
         from eval.scenarios import SCENARIOS
     else:
@@ -495,14 +501,14 @@ def _scenarios(suite: str) -> list[Any]:
 
 def _runner(suite: str, model: str, *, baseline_route: str, baseline_timeout: float) -> Callable[[Any], dict[str, Any]]:
     """A function that runs one scenario once and returns its record (without usage/latency)."""
-    if suite in ("review", "ask", "consequentiality"):
+    if suite in ("review", "ask", "adversarial", "consequentiality"):
         from anthropic_provider import AnthropicProvider
 
         provider = AnthropicProvider(model_identifier=model)
         if suite == "review":
             from eval.quality_harness import run_review_quality_scenario
             return lambda s: review_record(run_review_quality_scenario(s, provider))
-        if suite == "ask":
+        if suite in ("ask", "adversarial"):
             from eval.quality_harness import run_ask_quality_scenario
             return lambda s: ask_record(run_ask_quality_scenario(s, provider))
         from eval.harness import run_scenario

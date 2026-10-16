@@ -426,3 +426,11 @@ def test_dry_run_summary_for_the_single_run_scripts(monkeypatch):
     line = matrix.dry_run_summary(["review", "ask"])
     assert line.startswith("DRY RUN (no model calls)") and f"{len(REVIEW) + len(ASK)} paid model call(s) on claude-haiku-5-5" in line
     assert "NOTE" not in matrix.dry_run_summary(["ask"], "claude-opus-5-5")  # Opus 5.5 is callable since Oct 16
+
+
+def test_adversarial_suite_plans_one_call_per_scenario_and_runs_as_ask():
+    from eval.ask_adversarial_scenarios import SCENARIOS as ADVERSARIAL
+
+    assert matrix.calls_per_repeat("adversarial") == len(ADVERSARIAL) == 20
+    assert all(s.id.startswith("adv_") for s in ADVERSARIAL)
+    assert matrix.parse_suites("adversarial") == ["adversarial"]
