@@ -30,7 +30,7 @@ from pathlib import Path
 from typing import Any, Callable, Iterable
 
 SCHEMA = "state-eval-matrix/v1"
-SUITES = ("review", "ask", "consequentiality", "baseline", "adversarial", "graded")
+SUITES = ("review", "ask", "consequentiality", "baseline", "adversarial", "graded", "regrade")
 MODEL_ID_PATTERN = re.compile(r"^claude-[a-z0-9.-]+$")
 
 # USD per million tokens, Anthropic first-party API. Source: the claude-api skill's model table
@@ -60,6 +60,7 @@ TOKENS_PER_CALL: dict[str, dict[str, int]] = {
     # graded: the grading call only (claude-opus-5-5); its Ask call is priced as "ask" on the run's model.
     # About 1,600 tokens of rubric plus records and the answer; output includes low-effort thinking.
     "graded": {"input": 3_500, "output": 1_000, "max_output": 9_500},
+    "regrade": {"input": 3_500, "output": 1_000, "max_output": 9_500},
     "consequentiality": {"input": 3_500, "output": 700, "max_output": 2_000},
     "baseline": {"input": 7_500, "output": 900, "max_output": 2_000},
 }
@@ -68,7 +69,7 @@ TOKENS_PER_CALL: dict[str, dict[str, int]] = {
 # review 35-40s (16 cases; State AI quality check runs 38195077931, 38199551242, 38299891763, 38411808397),
 # ask 27.6-28.3s (10 cases; same workflow), consequentiality 67-77s (36 cases; State QA Release runs
 # 38078551511, 38079304500, 38271757236), baseline 119-126s per 6 repeats of 5 sources per route (run 38187113539).
-SECONDS_PER_REPEAT: dict[str, float] = {"review": 40, "ask": 30, "adversarial": 30, "graded": 60, "consequentiality": 80, "baseline": 22}
+SECONDS_PER_REPEAT: dict[str, float] = {"review": 40, "ask": 30, "adversarial": 30, "graded": 60, "regrade": 30, "consequentiality": 80, "baseline": 22}
 # Other models are unmeasured here; plan shards as if they were this much slower.
 MODEL_SLOWDOWN: dict[str, float] = {"claude-haiku-5-5": 1.0, "claude-haiku-4-5": 2.0}
 DEFAULT_SLOWDOWN = 3.0
@@ -123,6 +124,8 @@ def scenario_ids(suite: str) -> list[str]:
         from eval.ask_adversarial_scenarios import SCENARIOS
     elif suite == "graded":
         from eval.ask_quality_scenarios import SCENARIOS
+    elif suite == "regrade":
+        SCENARIOS = calibration_items()
     elif suite == "consequentiality":
         from eval.scenarios import SCENARIOS
     elif suite == "baseline":
@@ -137,6 +140,25 @@ def calls_per_repeat(suite: str) -> int:
     return len(scenario_ids(suite)) * (2 if suite == "graded" else 1)
 
 
+CALIBRATION_ANSWERS = Path(__file__).resolve().parent / "calibration" / "ask_calibration_answers.json"
+
+
+@dataclass(frozen=True)
+class CalibrationItem:
+    """One saved answer for the regrade suite: graded again without a new Ask call."""
+    id: str
+    scenario: Any
+    answer: Any
+
+
+def calibration_items(path: Path = CALIBRATION_ANSWERS) -> list[CalibrationItem]:
+    from eval.ask_quality_scenarios import SCENARIOS as ASK
+
+    by_id = {s.id: s for s in ASK}
+    data = json.loads(Path(path).read_text())
+    return [CalibrationItem(a["answer_id"], by_id[a["scenario_id"]], a["answer"]) for a in data["answers"]]
+
+
 def estimated_call_cost(suite: str, model: str, output_key: str = "output") -> float:
     """Mean estimated cost of one planned call. A graded scenario is one Ask call on `model` and one
     grading call on the grader model, so its two calls average those two prices."""
@@ -145,6 +167,11 @@ def estimated_call_cost(suite: str, model: str, output_key: str = "output") -> f
 
         ask, grade = TOKENS_PER_CALL["ask"], TOKENS_PER_CALL["graded"]
         return (call_cost(model, ask["input"], ask[output_key]) + call_cost(GRADER_MODEL, grade["input"], grade[output_key])) / 2
+    if suite == "regrade":
+        from eval.ask_grader import GRADER_MODEL
+
+        grade = TOKENS_PER_CALL["regrade"]
+        return call_cost(GRADER_MODEL, grade["input"], grade[output_key])
     tokens = TOKENS_PER_CALL[suite]
     return call_cost(model, tokens["input"], tokens[output_key])
 
@@ -469,6 +496,25 @@ def graded_record(r, grade) -> dict[str, Any]:
     return record
 
 
+def regrade_record(item: CalibrationItem, grade) -> dict[str, Any]:
+    """The LLM grader's scores for one saved calibration answer (no Ask call)."""
+    from eval.ask_grader import GRADER_VERSION, gates
+
+    base = {"scenario_id": item.id, "category": item.scenario.id, "severity": item.scenario.severity,
+            "expected": None, "observed": None, "grader_version": GRADER_VERSION}
+    try:
+        grades = grade(item.scenario, item.answer)
+    except Exception as exc:
+        return {**base, "outcome": _error_outcome(str(exc)), "passed": None, "failure_mode": None, "failed_checks": [],
+                "checks": {}, "error": f"grader: {type(exc).__name__}: {exc}"[:300]}
+    scores = {name: g["score"] for name, g in grades.items()}
+    gate = gates(scores, item.scenario.severity)
+    failed = [name for name, ok in gate.items() if not ok]
+    return {**base, "outcome": "fail" if failed else "pass", "passed": not failed, "checks": gate,
+            "failed_checks": failed, "failure_mode": ("grader scored 1: " + ", ".join(failed)) if failed else None,
+            "grades": grades, "scores": scores, "error": None}
+
+
 def consequentiality_record(r) -> dict[str, Any]:
     """One consequentiality result. Ambiguous scenarios have no ground truth and stay unscored."""
     expected = r.scenario.expected
@@ -539,6 +585,8 @@ def _scenarios(suite: str) -> list[Any]:
         from eval.ask_adversarial_scenarios import SCENARIOS
     elif suite == "graded":
         from eval.ask_quality_scenarios import SCENARIOS
+    elif suite == "regrade":
+        SCENARIOS = calibration_items()
     elif suite == "consequentiality":
         from eval.scenarios import SCENARIOS
     else:
@@ -548,6 +596,9 @@ def _scenarios(suite: str) -> list[Any]:
 
 def _runner(suite: str, model: str, *, baseline_route: str, baseline_timeout: float) -> Callable[[Any], dict[str, Any]]:
     """A function that runs one scenario once and returns its record (without usage/latency)."""
+    if suite == "regrade":
+        from eval.ask_grader import grade_answer
+        return lambda item: regrade_record(item, grade_answer)
     if suite in ("review", "ask", "adversarial", "graded", "consequentiality"):
         from anthropic_provider import AnthropicProvider
 

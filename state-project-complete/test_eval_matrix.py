@@ -503,3 +503,33 @@ def test_grader_prompt_carries_records_and_rationale_but_not_keyword_lists():
     assert "secret-id" not in text
     assert not any(claim in text for claim in scenario.forbidden_claims)
     assert GRADE_SCHEMA["additionalProperties"] is False
+
+
+def test_calibration_report_applies_paiges_bar():
+    from eval.ask_grader import DIMENSIONS, calibration_report
+    good = {d: 4 for d in DIMENSIONS}
+    near = {d: 3 for d in DIMENSIONS}
+    pairs = [(f"a{i}", good, good, None) for i in range(7)] + [(f"b{i}", good, near, None) for i in range(3)]
+    report = calibration_report(pairs)
+    assert report["passes"] and report["dimensions"]["faithfulness"]["exact"] == 0.7
+    missed = calibration_report(pairs + [("c", {**good, "faithfulness": 1}, {**good, "faithfulness": 3}, None)])
+    assert not missed["passes"] and missed["missed_fails"][0]["answer_id"] == "c"
+    low_exact = calibration_report([(f"d{i}", good, near, None) for i in range(10)])
+    assert not low_exact["passes"]  # every answer within one, but exact agreement 0%
+
+
+def test_visible_answer_unwraps_the_run_ask_envelope():
+    from eval.ask_grader import visible_answer
+    envelope = {"answer": {"headline": "h", "source_ids": ["x"], "uncertainty_ids": ["y"], "sections": []},
+                "selection": {"state_ids": ["x"]}, "timing": {"total_ms": 1}}
+    assert visible_answer(envelope) == {"headline": "h", "sections": []}
+
+
+def test_regrade_suite_grades_the_saved_calibration_answers_without_an_ask_call():
+    items = matrix.calibration_items()
+    assert len(items) == 20 == matrix.calls_per_repeat("regrade")
+    assert all(isinstance(i.answer, dict) and "source_ids" not in i.answer for i in items)
+    rec = matrix.regrade_record(items[0], lambda s, a: _grades(faithfulness=1))
+    assert rec["scenario_id"] == items[0].id and rec["outcome"] == "fail" and rec["scores"]["faithfulness"] == 1
+    p = matrix.plan(["regrade"], "claude-haiku-5-5", 3, 100)
+    assert p["total_calls"] == 60 and 0.5 < p["estimated_cost_usd"] < 3

@@ -110,11 +110,17 @@ def supplied_records(scenario) -> dict[str, Any]:
     }
 
 
+_HIDDEN_ANSWER_FIELDS = ("source_ids", "uncertainty_ids")
+
+
 def visible_answer(answer: Any) -> Any:
-    """What a person reads: drop hidden id lists so the grader judges the visible answer (Paige's default)."""
+    """What a person reads (Paige's default): run_ask returns an envelope ({"answer": {...}, "selection",
+    "timing", ...}); keep only the inner answer and drop its hidden id lists."""
+    if isinstance(answer, dict) and isinstance(answer.get("answer"), dict):
+        answer = answer["answer"]
     if not isinstance(answer, dict):
         return answer
-    return {key: value for key, value in answer.items() if key not in ("source_ids", "uncertainty_ids")}
+    return {key: value for key, value in answer.items() if key not in _HIDDEN_ANSWER_FIELDS}
 
 
 def user_message(scenario, answer: Any) -> str:
@@ -160,3 +166,34 @@ def grade_answer(scenario, answer: Any, client=None) -> dict[str, dict[str, Any]
     )
     text = next((block.text for block in message.content if getattr(block, "type", "") == "text"), "")
     return parse_grade(text)
+
+
+# Paige's calibration bar (Oct 16 defaults).
+CALIBRATION_WITHIN_ONE = 0.90
+CALIBRATION_EXACT = 0.65
+
+
+def calibration_report(pairs: list[tuple[str, dict[str, int], dict[str, int], str | None]]) -> dict[str, Any]:
+    """Agreement between Paige's blind grades and the grader's, per dimension.
+
+    `pairs` holds (answer_id, paige_scores, grader_scores, severity). The grader passes when, for every
+    dimension, within-one agreement >= 90% and exact agreement >= 65%, and no answer Paige scored 1 on a
+    gated dimension got a 3 or 4 from the grader (a missed fail is worse than a false alarm).
+    """
+    per_dim: dict[str, dict[str, Any]] = {}
+    missed_fails = []
+    for name in DIMENSIONS:
+        rows = [(aid, p[name], g[name]) for aid, p, g, _sev in pairs if name in p and name in g]
+        if not rows:
+            continue
+        exact = sum(1 for _aid, a, b in rows if a == b) / len(rows)
+        within = sum(1 for _aid, a, b in rows if abs(a - b) <= 1) / len(rows)
+        per_dim[name] = {"n": len(rows), "exact": exact, "within_one": within,
+                         "passes": exact >= CALIBRATION_EXACT and within >= CALIBRATION_WITHIN_ONE}
+    for aid, p, g, severity in pairs:
+        gated = list(GATED_EVERYWHERE) + (list(GATED_ON_HIGH_SEVERITY) if severity == "high" else [])
+        for name in gated:
+            if p.get(name) == 1 and g.get(name, 0) >= 3:
+                missed_fails.append({"answer_id": aid, "dimension": name, "paige": 1, "grader": g[name]})
+    return {"dimensions": per_dim, "missed_fails": missed_fails,
+            "passes": bool(per_dim) and all(d["passes"] for d in per_dim.values()) and not missed_fails}
