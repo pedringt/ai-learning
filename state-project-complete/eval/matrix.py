@@ -349,7 +349,7 @@ def reconcile_call_errors(record: dict[str, Any], usage: list[dict[str, Any]]) -
     if record.get("outcome") in ("error", "timeout") and call_errors:
         if any(_is_timeout(e) for e in call_errors):
             record["outcome"] = "timeout"
-        if not record.get("error") or record["error"] in ("processing error", "processing failed"):
+        if not record.get("error") or record["error"].startswith(("processing error", "processing failed")):
             record["error"] = call_errors[-1]
     record["call_errors"] = call_errors
     return record
@@ -368,13 +368,33 @@ def review_record(r) -> dict[str, Any]:
     else:
         outcome = "fail"
         failure = f"expected {r.scenario.expected_action} -> observed {r.observed_action}"
+        problems = r.interpretation_problems
+        if problems and not problems[0].startswith("action "):
+            failure += f" but {'; '.join(problems)}"
         if r.review_recommended != r.scenario.review_needed:
             failure += " (review " + ("raised, not needed" if r.review_recommended else "missed") + ")"
     return {"scenario_id": r.scenario.id, "category": r.scenario.category, "severity": r.scenario.severity,
             "outcome": outcome, "passed": outcome == "pass" if outcome in ("pass", "fail") else None,
             "failure_mode": failure, "failed_checks": failed if outcome == "fail" else [], "checks": checks,
             "expected": r.scenario.expected_action, "observed": r.observed_action,
-            "processing_status": r.processing_status, "error": error or None}
+            "processing_status": r.processing_status, "error": error or None,
+            **({"model_output_excerpt": _excerpt(f"proposed: {r.proposed_state_text} | rationale: {r.rationale_text}")}
+               if outcome == "fail" else {})}
+
+
+# Failed scenarios keep a short excerpt of what the model said, so a failure can be read instead of
+# guessed at. Every matrix scenario is synthetic, so this records no user content.
+MODEL_OUTPUT_EXCERPT_CHARS = 1500
+
+
+def _excerpt(text: str) -> str:
+    text = " ".join((text or "").split())
+    return text if len(text) <= MODEL_OUTPUT_EXCERPT_CHARS else text[:MODEL_OUTPUT_EXCERPT_CHARS] + "…"
+
+
+def _answer_text(answer: Any) -> str:
+    from eval.quality_harness import _flatten_strings
+    return _flatten_strings(answer)
 
 
 _ASK_CHECKS = ("grounding", "required_facts", "forbidden_claims", "uncertainty", "open_item", "authority")
@@ -396,7 +416,8 @@ def ask_record(r) -> dict[str, Any]:
             "outcome": outcome, "passed": outcome == "pass" if outcome in ("pass", "fail") else None,
             "failure_mode": ("failed " + ", ".join(failed)) if outcome == "fail" else None,
             "failed_checks": failed if outcome == "fail" else [], "checks": checks,
-            "expected": None, "observed": None, "error": r.error or None}
+            "expected": None, "observed": None, "error": r.error or None,
+            **({"model_output_excerpt": _excerpt(_answer_text(r.answer))} if outcome == "fail" else {})}
 
 
 def consequentiality_record(r) -> dict[str, Any]:

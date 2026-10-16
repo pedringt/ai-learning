@@ -82,29 +82,43 @@ class ReviewQualityResult:
 
     @property
     def interpretation_correct(self) -> bool:
+        return not self.interpretation_problems
+
+    @property
+    def interpretation_problems(self) -> list[str]:
+        """Why the interpretation check failed (empty when it passed), so a report can say which part
+        missed instead of showing a matching expected and observed action as a failure."""
         allowed = self.scenario.allowed_actions or (self.scenario.expected_action,)
         if self.observed_action not in allowed:
-            return False
+            return [f"action {self.observed_action} not in {', '.join(allowed)}"]
         if self.observed_action in {"update_state", "answer_question_and_update_state", "update_state_and_open_question"}:
             text = _normalize(self.proposed_state_text)
-            if self.scenario.required_state_update_phrases and not all(
-                any(
+            missing = [
+                required if isinstance(required, str) else " / ".join(required)
+                for required in self.scenario.required_state_update_phrases
+                if not any(
                     _normalize(option) in text
                     for option in ((required,) if isinstance(required, str) else required)
                 )
-                for required in self.scenario.required_state_update_phrases
-            ):
-                return False
-            if any(_normalize(phrase) in text for phrase in self.scenario.forbidden_state_update_phrases):
-                return False
+            ]
+            if missing:
+                return [f"proposed state lacks {', '.join(missing)}"]
+            forbidden = [phrase for phrase in self.scenario.forbidden_state_update_phrases if _normalize(phrase) in text]
+            if forbidden:
+                return [f"proposed state contains forbidden {', '.join(forbidden)}"]
         prose = _normalize(self.review_prose)
-        if any(_normalize(phrase) in prose for phrase in self.scenario.forbidden_review_phrases):
-            return False
+        forbidden = [phrase for phrase in self.scenario.forbidden_review_phrases if _normalize(phrase) in prose]
+        if forbidden:
+            return [f"review prose contains forbidden {', '.join(forbidden)}"]
         rationale = _normalize(self.rationale_text)
-        if not all(any(_normalize(option) in rationale for option in ((r,) if isinstance(r, str) else r))
-                   for r in self.scenario.required_rationale_phrases):
-            return False
-        return True
+        missing = [
+            r if isinstance(r, str) else " / ".join(r)
+            for r in self.scenario.required_rationale_phrases
+            if not any(_normalize(option) in rationale for option in ((r,) if isinstance(r, str) else r))
+        ]
+        if missing:
+            return [f"rationale lacks {', '.join(missing)}"]
+        return []
 
     @property
     def passed(self) -> bool:
@@ -227,6 +241,14 @@ def run_review_quality_scenario(scenario: ReviewInterpretationScenario, provider
         observed_action, proposed_state_text = _observed_review_outcome(connection, review_ids)
         review_prose = _review_prose(connection, review_ids)
         rationale_text = _rationale_text(connection, review_ids)
+        error = ""
+        if process_result.processing_status == "failed":
+            # The pipeline stores why it failed on the interpretation record; keep it so the report
+            # can tell a provider error from a schema or semantic validation failure.
+            row = connection.execute(
+                "SELECT error_code FROM interpretation_records WHERE evidence_id=? AND processing_status='failed' "
+                "ORDER BY rowid DESC LIMIT 1", (evidence_id,)).fetchone()
+            error = f"processing failed ({row['error_code']})" if row and row["error_code"] else ""
         return ReviewQualityResult(
             scenario=scenario,
             review_recommended=bool(review_ids),
@@ -237,6 +259,7 @@ def run_review_quality_scenario(scenario: ReviewInterpretationScenario, provider
             proposed_state_text=proposed_state_text,
             review_prose=review_prose,
             rationale_text=rationale_text,
+            error=error,
         )
     except Exception as exc:
         return ReviewQualityResult(

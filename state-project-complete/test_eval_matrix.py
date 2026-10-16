@@ -162,6 +162,30 @@ def test_review_record_failure_mode_names_the_wrong_action():
     assert "interpretation" in rec["failed_checks"]
 
 
+def test_review_record_says_which_part_failed_when_the_action_matched():
+    # Oct 16 Haiku x30: "expected update_state -> observed update_state" was reported as a failure
+    # without saying the proposed state lacked a required phrase.
+    from eval.quality_harness import ReviewQualityResult
+
+    scenario = next(s for s in REVIEW if s.id == "review_new_evidence_over_pending_review")
+    rec = matrix.review_record(ReviewQualityResult(scenario=scenario, review_recommended=scenario.review_needed,
+                                                   observed_action="update_state", processing_status="succeeded",
+                                                   proposed_state_text="The budget is $50,000."))
+    assert rec["outcome"] == "fail"
+    assert "but proposed state lacks" in rec["failure_mode"] and "35,000" in rec["failure_mode"]
+    assert "$50,000" in rec["model_output_excerpt"]
+
+
+def test_interpretation_problems_empty_exactly_when_interpretation_correct():
+    from eval.quality_harness import ReviewQualityResult
+
+    for scenario in REVIEW:
+        for action in {scenario.expected_action, "open_question", "update_state"}:
+            r = ReviewQualityResult(scenario=scenario, review_recommended=True, observed_action=action,
+                                    processing_status="succeeded")
+            assert r.interpretation_correct == (r.interpretation_problems == [])
+
+
 def test_review_record_marks_timeouts_and_errors_apart_from_failures():
     from eval.quality_harness import ReviewQualityResult
 
@@ -178,6 +202,10 @@ def test_ask_and_consequentiality_records():
 
     ask_fail = matrix.ask_record(AskQualityResult(ASK[0], {}, True, True, False, True, False))
     assert ask_fail["outcome"] == "fail" and ask_fail["failed_checks"] == ["uncertainty", "authority"]
+    with_answer = matrix.ask_record(AskQualityResult(ASK[0], {"answer": "Not yet: Security approval is blocking."},
+                                                     True, True, False, True, True))
+    assert with_answer["model_output_excerpt"] == "Not yet: Security approval is blocking."
+    assert "model_output_excerpt" not in matrix.ask_record(AskQualityResult(ASK[0], {"answer": "ok"}, True, True, True, True, True))
     assert matrix.ask_record(AskQualityResult(ASK[0], None, False, False, False, False, False, error="boom"))["outcome"] == "error"
 
     must = next(s for s in CONSEQUENTIALITY if s.expected == "must_review")
