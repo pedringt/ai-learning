@@ -232,3 +232,31 @@ def test_a_current_state_fact_on_record_is_left_alone():
 def test_on_record_with_a_different_number_is_softened():
     fixed = _soften_unearned_settled_prose("The $55,000 pilot budget on record covers discovery.", NORTHSTAR)
     assert "reported (not in Current State)" in fixed
+
+
+# Oct 16 (eval matrix output excerpts): restating an open Question, or negating with "cannot",
+# was garbled into "has proposed for approval (not yet approved)" / "cannot be considered proposed".
+def test_a_whether_clause_restating_an_open_question_is_left_alone():
+    text = "The question of whether Security has approved the production data path is open and marked blocking."
+    assert _soften_unearned_settled_prose(text) == text
+
+
+def test_a_sentence_that_is_a_question_is_left_alone():
+    text = "Has Security approved the production data path?"
+    assert _soften_unearned_settled_prose(text) == text
+
+
+def test_cannot_negates_a_settled_word():
+    text = "Until that is answered, launch readiness cannot be considered established."
+    assert _soften_unearned_settled_prose(text) == text
+
+
+def test_a_claim_after_a_whether_clause_and_comma_is_still_softened():
+    fixed = _soften_unearned_settled_prose("Whether Legal agrees, the terms are approved.")
+    assert "proposed for approval (not yet approved)" in fixed
+
+
+def test_a_plain_claim_is_still_softened_next_to_a_whether_clause():
+    fixed = _soften_unearned_settled_prose("Security approved the path; whether launch is decided is open.")
+    assert fixed.startswith("Security proposed (not yet approved) the path;")
+    assert "whether launch is decided is open" in fixed

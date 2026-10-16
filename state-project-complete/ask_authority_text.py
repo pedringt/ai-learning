@@ -48,7 +48,9 @@ _PENDING_HEDGE_PHRASES = (
 # already-hedged sentence, never from over-matching one that genuinely needed
 # the replacement, so the safer failure mode here is to skip a sentence, not
 # to mangle it.
-_NEGATION_RE = re.compile(r"\bnot\b|n['’]t\b", re.I)
+# Oct 16: "cannot" is one word, so \bnot\b never matched it and "launch readiness cannot be
+# considered established" became "...cannot be considered proposed (not yet established)".
+_NEGATION_RE = re.compile(r"\bnot\b|\bcannot\b|n['’]t\b", re.I)
 _SETTLED_TARGET_WORD_RE = re.compile(
     r"\b(?:confirmed|resolved|resolves|established|approved|decided|known|blocking)\b", re.I
 )
@@ -282,8 +284,21 @@ def _quotes_governing_state(text: str, match: "re.Match[str]", governing_ngrams:
     return False
 
 
+# Oct 16 (eval matrix output excerpts): an answer restating an open Question, "the question of
+# whether Security has approved the production data path is open", became "whether Security has
+# proposed for approval (not yet approved) the production data path". A word inside a "whether"
+# clause, or in a sentence that is itself a question, asks about a status rather than claiming it.
+_WHETHER_RE = re.compile(r"\bwhether\b", re.I)
+
+
 def _soften_match(text: str, match: "re.Match[str]", replacement, governing) -> str:
     if _quotes_governing_state(text, match, governing) or _refers_to_governing_state(text, match, governing):
+        return match.group(0)
+    whether = None
+    for whether in _WHETHER_RE.finditer(text[:match.start()]):
+        pass
+    if whether and "," not in text[whether.end():match.start()]:
+        # "Whether or not Legal agrees, the terms are approved" still claims approval.
         return match.group(0)
     attributive = _ATTRIBUTIVE_REPLACEMENTS.get(match.group(0).lower())
     if attributive and _attributive(text, match):
@@ -316,7 +331,7 @@ def _soften_unearned_settled_prose(value: str | None, governing_ngrams: frozense
     sentences = _SENTENCE_SPLIT_RE.split(value)
     rewritten = []
     for sentence in sentences:
-        if _hedged_by_phrase(sentence):
+        if _hedged_by_phrase(sentence) or sentence.rstrip().endswith("?"):
             rewritten.append(sentence)
             continue
         parts = _CLAUSE_SPLIT_RE.split(sentence)
