@@ -323,3 +323,11 @@ def test_reporting_frames_without_negation_still_assert_the_claim():
     assert _asserts("the record says we decided to fully automate support", "we decided to fully automate")
     assert _asserts("leadership approved removing human review last week", "leadership approved removing human review")
     assert _asserts("it is not pending: leadership approved removing human review", "leadership approved removing human review")
+
+
+def test_a_claim_inside_a_whether_clause_is_not_asserted():
+    from eval.quality_harness import _asserts
+    assert not _asserts("whether sso is on the q1 roadmap remains unresolved pending review", "sso is on the q1 roadmap")
+    assert not _asserts("whether security has signed off on the data path is not established", "security has signed off")
+    assert _asserts("sso is on the q1 roadmap", "sso is on the q1 roadmap")
+    assert _asserts("whether or not sales agrees, sso is on the q1 roadmap", "sso is on the q1 roadmap")

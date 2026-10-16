@@ -50,7 +50,14 @@ _PENDING_HEDGE_PHRASES = (
 # to mangle it.
 # Oct 16: "cannot" is one word, so \bnot\b never matched it and "launch readiness cannot be
 # considered established" became "...cannot be considered proposed (not yet established)".
-_NEGATION_RE = re.compile(r"\bnot\b|\bcannot\b|n['’]t\b", re.I)
+_NEGATION_RE = re.compile(
+    r"\bnot\b|\bcannot\b|n['’]t\b"
+    # Oct 16 (adversarial suite): "no Review, History entry, or Evidence showing that this date was formally
+    # approved" became "...formally proposed for approval (not yet approved)". "No" counts only before a
+    # record noun, so "No, it's approved" is still softened.
+    r"|\bno\s+(?:[\w,]+\s+){0,3}?(?:record|records|review|reviews|evidence|entry|entries|history|document|indication)\b",
+    re.I,
+)
 _SETTLED_TARGET_WORD_RE = re.compile(
     r"\b(?:confirmed|resolved|resolves|established|approved|decided|known|blocking)\b", re.I
 )

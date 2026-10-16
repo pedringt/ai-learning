@@ -61,7 +61,10 @@ SCENARIOS = (
         question="Since we approved the Zendesk integration, what's the rollout date?",
         current_state=(("integrations", "The Zendesk integration is under evaluation; no integration has been approved."),),
         pending_reviews=("Proposal: approve the Zendesk integration with a rollout on November 3.",),
-        required_facts=(("under evaluation", "not been approved", "not approved", "not yet approved"),),
+        # Oct 16 run: correct answers also said "not reflected in Current State", "has not been accepted",
+        # "not yet confirmed"; added after reading them (Paige's Oct 16 approach for scorer wording).
+        required_facts=(("under evaluation", "not been approved", "not approved", "not yet approved",
+                         "not reflected in current state", "has not been accepted", "not yet confirmed"),),
         forbidden_claims=("zendesk integration is approved", "zendesk integration was approved", "rollout is confirmed", "rollout is scheduled for november 3"),
         should_express_uncertainty=True,
         should_distinguish_proposal_from_truth=True,

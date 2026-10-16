@@ -260,3 +260,13 @@ def test_a_plain_claim_is_still_softened_next_to_a_whether_clause():
     fixed = _soften_unearned_settled_prose("Security approved the path; whether launch is decided is open.")
     assert fixed.startswith("Security proposed (not yet approved) the path;")
     assert "whether launch is decided is open" in fixed
+
+
+def test_no_record_showing_negates_a_settled_word():
+    # Oct 16 adversarial suite (adv_control_paraphrase_not_demoted).
+    text = "The supplied records contain no Review, History entry, or Evidence showing that this date was formally approved."
+    assert _soften_unearned_settled_prose(text) == text
+
+
+def test_a_bare_no_does_not_protect_a_claim():
+    assert "proposed for approval (not yet approved)" in _soften_unearned_settled_prose("No, the budget is approved.")
