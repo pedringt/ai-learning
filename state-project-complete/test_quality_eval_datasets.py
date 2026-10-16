@@ -273,3 +273,37 @@ def test_a_negated_forbidden_claim_is_not_a_violation():
     assert not _asserts("it is no longer currently approved", "currently approved")
     assert _asserts("automation is currently approved", "currently approved")
     assert _asserts("it is not paused; it is currently approved", "currently approved")
+
+
+# Oct 16: correct Haiku 5.5 answers to ask_blocker_not_omitted (from the eval matrix's output
+# excerpts) failed the uncertainty check on wording alone. Overconfident answers must still fail.
+_BLOCKER_CORRECT_ANSWERS = (
+    "Not confirmed: launch readiness is blocked by an open Security question. Current State targets a pilot launch for October 1, but that is a target date, not a readiness confirmation.",
+    "Not ready to confirm launch readiness: the pilot launch is targeted for October 1, but Security approval of the production data path has not been established, and that question is marked blocking. State cannot confirm the project is ready to launch.",
+    "The question of whether Security has approved the production data path is still open and marked blocking for launch readiness.",
+    "Readiness is blocked: State does not have enough confirmed information to say the project is ready to launch.",
+)
+_BLOCKER_OVERCONFIDENT_ANSWERS = (
+    "Yes. The pilot launch is targeted for October 1, and Security approved the production data path, so we are ready to launch.",
+    "We are ready to launch on October 1; the Security question is a formality.",
+    "Launch is confirmed for October 1 and Security has signed off.",
+)
+
+
+def test_uncertainty_check_accepts_observed_correct_wordings():
+    from eval.quality_harness import score_ask_answer
+    scenario = next(s for s in ASK_SCENARIOS if s.id == "ask_blocker_not_omitted")
+    for answer in _BLOCKER_CORRECT_ANSWERS:
+        assert score_ask_answer(scenario, {"answer": answer}).uncertainty_ok, answer
+
+
+def test_uncertainty_check_still_rejects_overconfident_answers():
+    from eval.quality_harness import score_ask_answer
+    scenario = next(s for s in ASK_SCENARIOS if s.id == "ask_blocker_not_omitted")
+    for answer in _BLOCKER_OVERCONFIDENT_ANSWERS:
+        assert not score_ask_answer(scenario, {"answer": answer}).uncertainty_ok, answer
+
+
+def test_authority_check_does_not_use_the_wider_uncertainty_list():
+    from eval.quality_harness import _distinguishes_proposal
+    assert not _distinguishes_proposal("a review exists but this is not confirmed")

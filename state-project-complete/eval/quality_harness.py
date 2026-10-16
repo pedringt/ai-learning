@@ -351,6 +351,20 @@ def _has_uncertainty_language(text: str) -> bool:
     return any(signal in text for signal in signals)
 
 
+# Oct 16 (approved by Paige): wordings from correct Haiku 5.5 answers that the list above missed, e.g.
+# "Not confirmed: launch readiness is blocked by an open Security question", "has not been established",
+# "State cannot confirm", "is still open", "does not have enough confirmed information". Used only for
+# the uncertainty check; the authority check keeps the original list.
+_ANSWER_UNCERTAINTY_SIGNALS = (
+    "not confirmed", "cannot confirm", "can't confirm", "unable to confirm",
+    "not been established", "still open", "does not have enough",
+)
+
+
+def _expresses_uncertainty(text: str) -> bool:
+    return _has_uncertainty_language(text) or any(signal in text for signal in _ANSWER_UNCERTAINTY_SIGNALS)
+
+
 def _has_open_item_language(text: str) -> bool:
     signals = ("review", "question", "blocking", "pending", "open", "unresolved", "awaiting")
     return any(signal in text for signal in signals)
@@ -389,7 +403,7 @@ def score_ask_answer(scenario: AskQualityScenario, answer: dict[str, Any]) -> As
         for fact in scenario.required_facts
     )
     forbidden_ok = all(not _asserts(text, _normalize(claim)) for claim in scenario.forbidden_claims)
-    uncertainty_ok = (not scenario.should_express_uncertainty) or _has_uncertainty_language(text)
+    uncertainty_ok = (not scenario.should_express_uncertainty) or _expresses_uncertainty(text)
     open_item_ok = (not scenario.should_reference_open_item) or _has_open_item_language(text)
     authority_ok = (not scenario.should_distinguish_proposal_from_truth) or _distinguishes_proposal(text)
     return AskQualityResult(
