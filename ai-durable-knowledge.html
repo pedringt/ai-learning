@@ -55,6 +55,9 @@ body.v88-dark{--ink:#f5f5f7;--muted:#b6b6c2;--border:#34343d;--soft:#19191f;--so
 <h3>The model is only one part of the product</h3>
 <p>A stronger model can improve an AI product, but reliability still depends on context, retrieval, tools, permissions, state, application logic, checks, and recovery paths.</p>
 <p class="edge-callout"><strong>Durable question:</strong> Where does the model end and the system begin?</p>
+<h3>More agents are not automatically a better system</h3>
+<p>A difficult task may benefit from splitting work across specialized or isolated agents, but orchestration adds cost, latency, coordination failures, and more behavior to evaluate. Use the simplest architecture that reliably completes the job, and make each additional agent earn its complexity through measurable improvement.</p>
+<p class="edge-callout"><strong>Durable question:</strong> What does orchestration improve enough to justify the extra cost and failure surface?</p>
 <h3>Flexible reasoning belongs inside firm boundaries</h3>
 <p>AI is useful when the right path cannot be fully written as rules. Important limits should still be enforced outside the model when possible.</p>
 <p>Budgets, permissions, approval requirements, access scopes, and irreversible actions should not depend on the model remembering them.</p>
@@ -85,7 +88,9 @@ body.v88-dark{--ink:#f5f5f7;--muted:#b6b6c2;--border:#34343d;--soft:#19191f;--so
 <p>Start narrow. Observe behavior. Add tools, access, and authority only when reliability evidence, safeguards, observability, and recovery paths justify it.</p>
 <h3>Contain failure and make reversal real</h3>
 <p>Not every mistake can be prevented. Limit the scope of each action, make consequential actions inspectable, and provide a way to pause, compensate, or roll back. A reversible action is only safe when reversal works in practice and does not create greater harm.</p>
-<p>Low-consequence authority may be expanded with evidence and withdrawn when reliability deteriorates. Irreversible or high-impact decisions deserve stronger approval gates.</p>
+<p>That is why reversibility changes how much authority a system can safely hold: low-consequence authority may be expanded with evidence and withdrawn when reliability deteriorates.</p>
+<h3>Put human judgment at consequence thresholds</h3>
+<p>Human review does not need to interrupt every AI step. Identify where an action becomes materially consequential, difficult to reverse, legally significant, or outside the authority the available evidence supports, and place approval or escalation there.</p>
 <p class="edge-callout"><strong>Product principle:</strong> Let the model choose within the boundary. Do not let it define the boundary.</p></section>
 
 <section id="economics"><h2>Economic authority is still authority</h2>
@@ -106,8 +111,8 @@ body.v88-dark{--ink:#f5f5f7;--muted:#b6b6c2;--border:#34343d;--soft:#19191f;--so
 <p>Task success alone is not enough. Choose measures that reflect the job: factual accuracy, correct actions, safety, latency, consistency, recovery, and user effort. Evaluate ordinary tasks alongside difficult cases, and break results down by failure severity and affected user groups rather than hiding them in one average.</p>
 <p>Set explicit release thresholds and escalation rules. A high aggregate pass rate cannot excuse a small number of severe failures. Include accessibility and uneven performance across languages or contexts where relevant.</p>
 <p class="edge-callout"><strong>Durable question:</strong> Which failures would make this unacceptable to ship, even if most tests pass?</p>
-<h3>Human review should be intentional</h3>
-<p>Human-in-the-loop is not automatically safe or useful. Review belongs where judgment or consequences justify the interruption. Too much review creates fatigue; too little gives the system authority it has not earned.</p>
+<h3>Human review is a control only if it works</h3>
+<p>Human-in-the-loop is not automatically safe. Reviewers need the time, context, and authority to disagree, and too much review turns into fatigue and rubber-stamping. Check whether review actually catches problems before counting it as a safeguard.</p>
 <h3>Measure whether AI preserves human capability</h3>
 <p>AI can improve a person’s output on a bounded creative task while making outputs across people more alike. In one story-writing experiment, AI-generated ideas improved ratings of individual stories but increased similarity between them. That is a task-specific result, not proof that all AI use narrows creativity. <a href="https://doi.org/10.1126/sciadv.adn5290" target="_blank" rel="noopener">Read the study</a>.</p>
 <p>Also check whether AI reduces chances to practice, weakens independent review, shifts cleanup onto people, or turns saved time into more workload. Long-term skill effects remain uncertain, so monitor them rather than assume them.</p>
@@ -119,7 +124,11 @@ body.v88-dark{--ink:#f5f5f7;--muted:#b6b6c2;--border:#34343d;--soft:#19191f;--so
 
 <section id="experience"><h2>People and adoption matter as much as the technology</h2>
 <h3>Make uncertainty and control understandable</h3>
-<p>A trustworthy interface communicates what the AI knows, what it assumes, whether an action was actually completed, and what a person can correct. Ask for clarification when ambiguity changes the outcome. Offer review, recovery, and meaningful override instead of relying on polished language to create confidence.</p>
+<p>People generally need to know what happened, what evidence was used, what the system actually did, what remains uncertain, and how to correct or challenge it. Ask for clarification when ambiguity changes the outcome. Offer review, recovery, and meaningful override instead of relying on polished language to create confidence.</p>
+<p>Transparency works best in layers rather than all-or-nothing: <strong>status → understandable activity → evidence and actions → specialist traces and logs</strong>. Most people need only the outcome and current status. Someone investigating a surprising result needs the evidence, actions, and sources. Specialists may need the full trace. Raw model reasoning is rarely the right default form of transparency.</p>
+<h3>Keep generated experiences inside understandable structure</h3>
+<p>AI can personalize content, recommendations, status, or task-specific controls without regenerating the whole interface unpredictably. Stable interaction patterns help people form a mental model of the product while the content inside those patterns adapts.</p>
+<p class="edge-callout"><strong>Durable question:</strong> What should remain predictable even when AI-generated content changes?</p>
 <h3>Measure adoption as workflow change</h3>
 <p>A pilot can pass technical tests and still fail in practice. Training, incentives, role clarity, support, user trust, and downstream capacity determine whether people can use it consistently. Measure sustained outcomes and burden, not just clicks or generated outputs.</p>
 <p class="edge-callout"><strong>Durable question:</strong> Is this making people more capable and the workflow better, or merely adding another system to manage?</p></section>
@@ -130,7 +139,11 @@ body.v88-dark{--ink:#f5f5f7;--muted:#b6b6c2;--border:#34343d;--soft:#19191f;--so
 <h3>Production systems need accountable owners</h3>
 <p>Name who monitors behavior, handles incidents, approves changes, responds to user reports, and decides when to pause or roll back. Use staged rollout and feedback-to-evaluation loops so learning continues after launch.</p>
 <h3>AI can fail without a software error</h3>
-<p>An agent can choose the wrong tool, misunderstand the goal, retrieve the wrong evidence, or stop too early while every service remains technically healthy.</p>
+<p>Traditional telemetry shows whether an API returned, a tool ran, or latency stayed within bounds. An AI system can still fail semantically: misunderstand the task, rely on weak evidence, choose the wrong tool, frustrate the user, expose sensitive information, cross an authority boundary, stop too early, or successfully complete the wrong job.</p>
+<p class="edge-callout"><strong>Durable question:</strong> Which important failures could happen while every service still reports healthy?</p>
+<h3>Observe behavior, not only system health</h3>
+<p>Where practical, make important behaviors searchable, measurable, or evaluable from production traces rather than relying only on user complaints or the model’s own explanation.</p>
+<p>Three practices answer different questions. <strong>Evals</strong> deliberately test expected behavior. <strong>Observability</strong> shows what actually happened in individual or aggregated runs. <strong>Monitoring</strong> watches production over time for unacceptable change or recurring patterns. What observation and monitoring find should become new evals.</p>
 <p class="edge-callout"><strong>Durable question:</strong> What can we observe directly instead of trusting the model to explain itself?</p><h3>Design an ongoing worker as a complete workflow</h3>
 <p>A useful way to scope an agent is to walk through eight linked decisions:</p>
 <ol>
