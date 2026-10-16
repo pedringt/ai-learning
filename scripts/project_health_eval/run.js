@@ -34,6 +34,20 @@ async function run(){
   const realPath=path.join(dir,'cases.json');
   const real=fs.existsSync(realPath)?JSON.parse(fs.readFileSync(realPath,'utf8')):[];
   const cases=[...real,...planted];
+  // logVariants: also run each real check case with job-log excerpts, fetched by the production function.
+  if(config.logVariants){
+    const INV=require('../../api/project-health-investigate.js')._test;
+    const token=process.env.GITHUB_TOKEN||'';
+    for(const item of real.filter(c=>c.signalType==='github-check')){
+      const project=INV.PROJECTS[item.evidence.project==='ai-learning'?'state':item.evidence.project]||Object.values(INV.PROJECTS).find(p=>p.slug===item.evidence.project);
+      const primary=JSON.parse(item.evidence.primary);
+      for(const failure of primary.failedChecks.slice(0,2)){
+        const log=await INV.fetchJobLog(project,failure.url,{token});
+        failure.jobLog=log.available?log.excerpt:('Not available: '+log.reason);
+      }
+      cases.push({...item,id:item.id+'+log',kind:'real+log',evidence:{...item.evidence,primary:JSON.stringify(primary)}});
+    }
+  }
   const estimate=lib.plan(cases,config.models,config.repeats);
   console.log(cases.length+' cases ('+real.length+' real, '+planted.length+' planted) × '+config.models.length+' models × '+config.repeats+' repeats = '+estimate.calls+' calls, at most about $'+estimate.estimateUsd);
   if(estimate.calls>config.maxCalls)throw new Error('Refusing: '+estimate.calls+' calls exceeds maxCalls '+config.maxCalls);
@@ -50,7 +64,7 @@ async function run(){
   async function worker(){
     while(next<jobs.length){
       const job=jobs[next++];
-      const result={repeat:job.repeat,...await lib.runCase(job.caseDef,job.model,{apiKey}).catch(error=>({caseId:job.caseDef.id,model:job.model,ok:false,error:String(error.message).slice(0,300)}))};
+      const result={repeat:job.repeat,kind:job.caseDef.kind,...await lib.runCase(job.caseDef,job.model,{apiKey}).catch(error=>({caseId:job.caseDef.id,model:job.model,ok:false,error:String(error.message).slice(0,300)}))};
       results.push(result);
       // Saved as it goes so a timeout keeps what already ran.
       fs.appendFileSync(resultsPath,JSON.stringify(result)+'\n');
@@ -58,7 +72,8 @@ async function run(){
     }
   }
   await Promise.all(Array.from({length:config.concurrency||4},worker));
-  const summary=lib.summarize(results);
+  const kinds=[...new Set(results.map(item=>item.kind))];
+  const summary={all:lib.summarize(results),byKind:Object.fromEntries(kinds.map(kind=>[kind,lib.summarize(results.filter(item=>item.kind===kind))]))};
   fs.writeFileSync(path.join(outDir,'summary.json'),JSON.stringify(summary,null,2));
   console.log(JSON.stringify(summary,null,2));
 }

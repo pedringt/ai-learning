@@ -957,3 +957,21 @@ const authorityQuick=H.quickProjectCheck({
 });
 assert.strictEqual(authorityQuick.title,'No immediate issue found');
 assert.ok(authorityQuick.checks.some(item=>item.label==='Automated quality'&&item.value==='Not connected yet'));
+
+// Delivery judges each check by its latest run and ignores a project's paid eval jobs (Oct 16:
+// a flaky eval run on main's tip read as "A release check failed").
+const MODEL_H=require('../project-health-model.js');
+const statePH=MODEL_H.PROJECTS.find(p=>p.id==='state');
+const evalJobs=[...fs.readFileSync(require('path').join(__dirname,'..','.github','workflows','question-review-live.yml'),'utf8').matchAll(/^  ([a-z_-]+):\s*$/gm)].map(m=>m[1]).filter(name=>!['schedule','workflow_dispatch'].includes(name));
+assert.deepStrictEqual([...statePH.evalCheckNames].sort(),evalJobs.sort(),'evalCheckNames must match the State AI quality check job ids');
+const mixedRuns={check_runs:[
+  {name:'quality',conclusion:'failure',completed_at:'2026-10-16T20:04:00Z'},
+  {name:'walkthrough',conclusion:'failure',completed_at:'2026-10-16T20:04:00Z'},
+  {name:'python',conclusion:'failure',completed_at:'2026-10-16T19:00:00Z'},
+  {name:'python',conclusion:'success',completed_at:'2026-10-16T19:30:00Z'},
+  {name:'javascript',conclusion:'success',completed_at:'2026-10-16T19:00:00Z'}
+]};
+assert.deepStrictEqual(MODEL_H.deliveryHealth({name:'main',commit:{sha:'a'}},{statuses:[]},mixedRuns,statePH).failedChecks,[]);
+assert.strictEqual(MODEL_H.deliveryHealth({name:'main',commit:{sha:'a'}},{statuses:[]},mixedRuns).failedChecks.length,2,'without a project, eval jobs still count');
+const reFailed={check_runs:[{name:'javascript',conclusion:'success',completed_at:'2026-10-16T19:00:00Z'},{name:'javascript',conclusion:'failure',completed_at:'2026-10-16T19:30:00Z'}]};
+assert.strictEqual(MODEL_H.deliveryHealth({name:'main',commit:{sha:'a'}},{statuses:[]},reFailed,statePH).failedChecks.length,1,'a later failure still counts');

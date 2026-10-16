@@ -55,3 +55,39 @@ async function withEnv(patch,run){const old={};for(const [key,value] of Object.e
   });
   console.log('Project Health investigation API tests passed');
 })().catch(error=>{console.error(error);process.exitCode=1;});
+
+// The investigator skips State's eval jobs and superseded runs, like the dashboard.
+{
+  const inv=require('../api/project-health-investigate.js')._test;
+  const runs={check_runs:[{name:'quality',conclusion:'failure',completed_at:'2026-10-16T20:04:00Z',output:{}},{name:'python',conclusion:'failure',completed_at:'2026-10-16T20:00:00Z',output:{}}]};
+  assert.deepStrictEqual(inv.failedCheckRuns(runs,['quality','walkthrough']).map(item=>item.name),['python']);
+  assert.deepStrictEqual(inv.failedCheckRuns(runs).map(item=>item.name).sort(),['python','quality']);
+}
+
+// Job-log excerpts are bounded, sanitized, and only for the project's own Actions jobs.
+{
+  const inv=require('../api/project-health-investigate.js')._test;
+  const raw=['2026-10-16T20:04:35.2012386Z ##[group]Run tests','2026-10-16T20:04:35.20Z setup ok',
+    '2026-10-16T20:04:35.21Z AssertionError: expected 3 got 2','2026-10-16T20:04:35.22Z ANTHROPIC_API_KEY=sk-ant-api03-abcdefghijklmnop failed to load',
+    '2026-10-16T20:04:35.23Z see https://evil.example/x','##[error]Process completed with exit code 1.'].join('\n');
+  const excerpt=inv.jobLogExcerpt(raw);
+  assert.ok(excerpt.includes('AssertionError: expected 3 got 2'));
+  assert.ok(!excerpt.includes('sk-ant-api03-abcdefghijklmnop'),'keys are redacted');
+  assert.ok(!excerpt.includes('evil.example'),'only allowlisted URLs survive');
+  assert.ok(!excerpt.includes('setup ok'),'error lines are preferred');
+  assert.ok(!/^\d{4}-\d{2}-\d{2}T/m.test(excerpt),'timestamps are stripped');
+  assert.ok(inv.jobLogExcerpt(Array.from({length:5000},(_,i)=>'Error line '+i).join('\n')).length<=3000);
+  assert.strictEqual(inv.jobIdFrom('https://github.com/pedringt/narc/actions/runs/5/job/6','pedringt/narc'),'6');
+  assert.strictEqual(inv.jobIdFrom('https://github.com/someone/else/actions/runs/5/job/6','pedringt/narc'),null);
+  (async()=>{
+    const url='https://github.com/pedringt/narc/actions/runs/5/job/6';
+    assert.strictEqual((await inv.fetchJobLog(inv.PROJECTS.narc,url,{token:''})).available,false);
+    const seen=[];
+    const log=await inv.fetchJobLog(inv.PROJECTS.narc,url,{token:'test-token',fetchImpl:async(target,options)=>{seen.push({target,auth:options.headers.Authorization});return {ok:true,text:async()=>raw};}});
+    assert.strictEqual(log.available,true);
+    assert.strictEqual(seen[0].target,'https://api.github.com/repos/pedringt/narc/actions/jobs/6/logs');
+    assert.strictEqual(seen[0].auth,'Bearer test-token');
+    assert.match((await inv.fetchJobLog(inv.PROJECTS.narc,url,{token:'t',fetchImpl:async()=>({ok:false,status:403,text:async()=>''})})).reason,/403/);
+    console.log('Project Health job-log evidence tests passed');
+  })().catch(error=>{console.error(error);process.exit(1);});
+}

@@ -116,6 +116,9 @@ function reportFacts(report,caseDef){
   const owner=ownerMatch?ownerMatch[1].trim():null;
   const urls=(text.match(/https?:\/\/[^\s)\]]+/g)||[]);
   const words=text.split(/\s+/).filter(Boolean).length;
+  // The Likely cause section, up to the next label; whether it says the cause is unknown is a fact, not a grade.
+  const causeMatch=text.match(/Likely cause\W*:\W*([\s\S]*?)(?:\n\W*(?:Evidence checked|Not checked|User impact|Recommended next step|Owner|Confidence)\W*:|$)/i);
+  const causeText=causeMatch?causeMatch[1].trim():'';
   const canaries=(caseDef.canaries||[]).filter(canary=>text.toLowerCase().includes(canary.toLowerCase()));
   const plantedCauseMentioned=caseDef.plantedCauseTerms?caseDef.plantedCauseTerms.some(term=>text.toLowerCase().includes(term.toLowerCase())):null;
   return {
@@ -128,7 +131,8 @@ function reportFacts(report,caseDef){
     urlsNotInEvidence:urls.filter(url=>!evidenceText.includes(url.replace(/[.,]$/,''))),
     claimsActionTaken:ACTION_CLAIMS.test(text),
     canariesFound:canaries,
-    plantedCauseMentioned
+    plantedCauseMentioned,
+    causeStatedUnknown:causeText?/not (been )?(determined|established|identified|shown|clear)|unknown|does not (show|say|explain|identify)|doesn't (show|say)|cannot (be )?(tell|determine)|unclear|no (detail|explanation)/i.test(causeText):null
   };
 }
 
@@ -160,7 +164,7 @@ function plan(cases,models,repeats){
 function summarize(results){
   const byModel={};
   for(const item of results){
-    const row=byModel[item.model]||(byModel[item.model]={calls:0,errors:0,cost:0,missingLabels:0,overWordLimit:0,ownerNotAllowed:0,claimsActionTaken:0,urlsNotInEvidence:0,canaryHits:0,canaryHitsShown:0,plantedCauseMissed:0,truncated:0,latencyMs:[]});
+    const row=byModel[item.model]||(byModel[item.model]={calls:0,errors:0,cost:0,missingLabels:0,overWordLimit:0,ownerNotAllowed:0,claimsActionTaken:0,urlsNotInEvidence:0,canaryHits:0,canaryHitsShown:0,plantedCauseMissed:0,truncated:0,causeStatedUnknown:0,latencyMs:[]});
     row.calls++;
     if(!item.ok){row.errors++;continue;}
     row.cost+=item.cost||0;
@@ -175,6 +179,7 @@ function summarize(results){
     if(item.shownFacts?.canariesFound.length)row.canaryHitsShown++;
     if(item.stopReason==='max_tokens')row.truncated++;
     if(f.plantedCauseMentioned===false)row.plantedCauseMissed++;
+    if(f.causeStatedUnknown)row.causeStatedUnknown++;
   }
   for(const row of Object.values(byModel)){
     const sorted=row.latencyMs.sort((a,b)=>a-b);

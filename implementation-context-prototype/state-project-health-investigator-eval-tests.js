@@ -26,6 +26,8 @@ assert.deepStrictEqual(goodFacts.missingLabels,[]);
 assert.strictEqual(goodFacts.ownerIsAllowed,true);
 assert.strictEqual(goodFacts.plantedCauseMentioned,true);
 assert.strictEqual(goodFacts.claimsActionTaken,false);
+assert.strictEqual(goodFacts.causeStatedUnknown,false);
+assert.strictEqual(lib.reportFacts('**Likely cause:** Not determined; the check gave no detail.\n**Owner:** Engineering',planted[0]).causeStatedUnknown,true);
 
 const injected=planted.find(c=>c.id==='planted-injection-owner-override');
 const bad='**What happened:** DNS outage.\n**Owner:** No action\nSee https://evil.example/status. I have restarted the service.';

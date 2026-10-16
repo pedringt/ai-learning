@@ -1,4 +1,5 @@
 'use strict';
+const MODEL_PROJECTS=require('../project-health-model.js');
 
 const TEAM_ID='team_UxrzvAczWhPiXlO3nvWPAu5b';
 const MODEL='claude-haiku-5-5';
@@ -13,6 +14,8 @@ const PROJECTS={
   narc:{repo:'pedringt/narc',vercelProjectId:'prj_SKJS8qSkSAiceK5qZ4GkcZEbI41H',slug:'narc',branches:{production:'main'}},
   'authority-lab':{repo:'pedringt/authority-lab',vercelProjectId:'prj_DEsIbVajmdgFqxtVFeZLQsa6QJ69',slug:'authority-lab',branches:{production:'main'}}
 };
+// Eval jobs come from the dashboard's project list so the two can never disagree.
+function evalCheckNamesFor(project){return MODEL_PROJECTS.PROJECTS.find(item=>item.repo===project.repo)?.evalCheckNames||[];}
 const FAILED_CHECKS=new Set(['failure','timed_out','action_required','startup_failure']);
 function response(res,status,payload){res.status(status).json(payload);}
 function readBody(req){
@@ -49,8 +52,8 @@ async function timedJson(url,options={}){
   finally{clearTimeout(timer);}
 }
 function githubApi(repo,path){return 'https://api.github.com/repos/'+repo+path;}
-function failedCheckRuns(payload){
-  return (Array.isArray(payload?.check_runs)?payload.check_runs:[])
+function failedCheckRuns(payload,evalCheckNames=[]){
+  return MODEL_PROJECTS.currentCheckRuns(payload,evalCheckNames)
     .filter(item=>FAILED_CHECKS.has(String(item.conclusion||'').toLowerCase()))
     .slice(0,10)
     .map(item=>({
@@ -70,6 +73,34 @@ function eventLines(payload){
   const lines=events.map(event=>event?.payload?.text||event?.text||'').filter(Boolean);
   const useful=lines.filter(line=>/error|fail|exception|cannot|could not|not found|invalid|warning/i.test(line));
   return (useful.length?useful:lines).slice(-12).map(line=>sanitizeText(line,700)).join('\n').slice(-MAX_EVIDENCE_CHARS);
+}
+// Failed GitHub Actions jobs leave the check's title and summary empty, so the cause is only in the
+// job log. Send a bounded, sanitized excerpt: error-looking lines (or the last lines), never the whole log.
+const MAX_JOB_LOG_CHARS=3000;
+function jobLogExcerpt(text){
+  const lines=String(text||'').split(/\r?\n/)
+    .map(line=>line.replace(/^\d{4}-\d{2}-\d{2}T[\d:.]+Z\s?/,'').replace(/\u001b\[[0-9;]*m/g,'').trimEnd())
+    .filter(line=>line.trim()&&!/^##\[(group|endgroup)\]/.test(line));
+  const useful=lines.filter(line=>/error|fail|exception|assert|cannot|could not|not found|invalid|traceback|expected|exit code/i.test(line));
+  const picked=(useful.length?useful.slice(-25):lines.slice(-25)).map(line=>sanitizeText(line,300));
+  return picked.join('\n').slice(-MAX_JOB_LOG_CHARS);
+}
+function jobIdFrom(url,repo){
+  const match=String(url||'').match(/^https:\/\/github\.com\/([^/]+\/[^/]+)\/actions\/runs\/\d+\/job\/(\d+)$/);
+  return match&&match[1]===repo?match[2]:null;
+}
+async function fetchJobLog(project,url,{fetchImpl=fetch,token=process.env.GITHUB_TOKEN}={}){
+  const jobId=jobIdFrom(url,project.repo);
+  if(!jobId)return {available:false,reason:'Not a GitHub Actions job.'};
+  if(!token)return {available:false,reason:'GitHub job logs are not connected.'};
+  const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),6000);
+  try{
+    const response=await fetchImpl(githubApi(project.repo,'/actions/jobs/'+jobId+'/logs'),{headers:{Accept:'application/vnd.github+json',Authorization:'Bearer '+token},signal:controller.signal});
+    if(!response.ok)return {available:false,reason:'GitHub job log could not be read ('+response.status+').'};
+    const excerpt=jobLogExcerpt(await response.text());
+    return excerpt?{available:true,excerpt}:{available:false,reason:'GitHub job log was empty.'};
+  }catch(_){return {available:false,reason:'GitHub job log request timed out.'};}
+  finally{clearTimeout(timer);}
 }
 async function fetchBranch(project,environment){
   const branch=project.branches[environment];
@@ -105,10 +136,15 @@ async function fetchVercelEvidence(project,sha){
 }
 async function fetchGithubEvidence(project,sha,signalType){
   if(signalType==='github-check'){
-    const result=await timedJson(githubApi(project.repo,'/commits/'+sha+'/check-runs?per_page=10'),{headers:{Accept:'application/vnd.github+json'}});
-    const failures=failedCheckRuns(result.payload);
+    const result=await timedJson(githubApi(project.repo,'/commits/'+sha+'/check-runs?per_page=50'),{headers:{Accept:'application/vnd.github+json'}});
+    const failures=failedCheckRuns(result.payload,evalCheckNamesFor(project));
     if(!result.ok||!failures.length)return null;
-    return {summary:JSON.stringify({failedChecks:failures}),sources:failures.map(item=>({label:'GitHub check: '+item.name,url:item.url,observedAt:null})).filter(item=>item.url),hasDiagnostic:failures.some(item=>item.title||item.summary)};
+    // Logs for the first two failed jobs only, to stay inside the evidence cap.
+    for(const failure of failures.slice(0,2)){
+      const log=await fetchJobLog(project,failure.url);
+      failure.jobLog=log.available?log.excerpt:('Not available: '+log.reason);
+    }
+    return {summary:JSON.stringify({failedChecks:failures}),sources:failures.map(item=>({label:'GitHub check: '+item.name,url:item.url,observedAt:null})).filter(item=>item.url),hasDiagnostic:failures.some(item=>item.title||item.summary||(item.jobLog&&!item.jobLog.startsWith('Not available')))};
   }
   const result=await timedJson(githubApi(project.repo,'/commits/'+sha+'/status'),{headers:{Accept:'application/vnd.github+json'},timeoutMs:7000});
   const failure=statusFailure(result.payload);
@@ -180,5 +216,5 @@ module.exports=async function handler(req,res){
   res.setHeader('Cache-Control','no-store');
   return response(res,200,{project:project.slug,environment,commit:branch.sha,report,sources,observedAt:new Date().toISOString(),readOnly:true});
 };
-module.exports._test={PROJECTS,FAILED_CHECKS,sanitizeText,safeSourceUrl,failedCheckRuns,statusFailure,eventLines,boundedEvidence,fetchBranch,fetchVercelEvidence,fetchGithubEvidence,fetchCommitFollowup,investigationRequest,reportText,MODEL,MAX_OUTPUT_TOKENS};
+module.exports._test={PROJECTS,FAILED_CHECKS,sanitizeText,safeSourceUrl,failedCheckRuns,statusFailure,eventLines,boundedEvidence,fetchBranch,fetchVercelEvidence,fetchGithubEvidence,fetchCommitFollowup,jobLogExcerpt,jobIdFrom,fetchJobLog,investigationRequest,reportText,MODEL,MAX_OUTPUT_TOKENS};
 
