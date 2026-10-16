@@ -663,6 +663,15 @@ body { margin: 0; }
           <tr><td style="color:var(--good)">Low</td><td>Inventory entry; confirm it's an approved tool and data rules apply; standard terms</td><td>Governance lead</td><td>Yearly</td></tr>
         </tbody>
       </table></div>
+      <p>When designing human oversight, place approval where the workflow crosses a consequence threshold rather than requiring sign-off on every AI step. Require approval or escalation when an action becomes:</p>
+      <ul>
+        <li>difficult to reverse</li>
+        <li>materially consequential for a person or the business</li>
+        <li>legally significant</li>
+        <li>outside the authority approved for the system</li>
+        <li>dependent on judgment the AI has not been authorized to make</li>
+      </ul>
+      <p class="hint">Record these thresholds in the assessment's oversight section so testing and monitoring can check them.</p>
     </section>
 
     <!-- 03 ASSESSMENT -->
@@ -740,6 +749,7 @@ body { margin: 0; }
           <tr><td>Prompt injection testing</td><td>Whether hidden instructions in content hijack it</td><td>Agents and tools that read emails, files or web pages</td><td>Plant instructions in test documents; check whether the system follows them</td></tr>
           <tr><td>Groundedness checks</td><td>How often it makes things up</td><td>Assistants, chatbots, summarizers</td><td>Question sets with known answers; check claims against source material</td></tr>
           <tr><td>Privacy leakage testing</td><td>Whether it reveals personal or confidential data</td><td>Systems trained or grounded on internal data</td><td>Probe for training data, other users' content, secrets in outputs</td></tr>
+          <tr><td>Agent-path evaluation</td><td>Whether the result was reached through acceptable evidence, tools, permissions and actions</td><td>Multi-step agents and consequential workflows</td><td>Inspect representative traces; test critical intermediate decisions and actions as well as final outcomes</td></tr>
           <tr><td>Human factors review</td><td>Whether reviewers really review</td><td>Any human-in-the-loop system</td><td>Measure override rates and time per review; watch for rubber-stamping</td></tr>
         </tbody>
       </table></div>
@@ -832,6 +842,7 @@ body { margin: 0; }
           <tr><td>Every vendor</td><td>Model change notices; security incidents; certification renewals; contract review date</td></tr>
         </tbody>
       </table></div>
+      <p>For generative and agentic systems, monitor behavior as well as system health. A service can report healthy while the AI makes unsupported claims, uses the wrong tool, crosses an authority boundary, exposes sensitive data, frustrates users or leaves tasks incomplete. Review production traces for these patterns, and turn recurring ones into regression tests.</p>
 
       <h3>Triggers for reassessment</h3>
       <ul>
