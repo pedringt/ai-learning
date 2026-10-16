@@ -307,3 +307,19 @@ def test_uncertainty_check_still_rejects_overconfident_answers():
 def test_authority_check_does_not_use_the_wider_uncertainty_list():
     from eval.quality_harness import _distinguishes_proposal
     assert not _distinguishes_proposal("a review exists but this is not confirmed")
+
+
+def test_negated_reporting_frames_do_not_assert_the_claim():
+    # Oct 16: correct Sonnet/Haiku answers counted as asserting the forbidden claim.
+    from eval.quality_harness import _asserts
+    assert not _asserts("state does not show that leadership approved removing human review", "leadership approved removing human review")
+    assert not _asserts("state does not have enough confirmed information to say we decided to fully automate support", "we decided to fully automate")
+    assert not _asserts("the records cannot confirm that we decided to fully automate support", "we decided to fully automate")
+
+
+def test_reporting_frames_without_negation_still_assert_the_claim():
+    from eval.quality_harness import _asserts
+    assert _asserts("yes, we decided to fully automate support", "we decided to fully automate")
+    assert _asserts("the record says we decided to fully automate support", "we decided to fully automate")
+    assert _asserts("leadership approved removing human review last week", "leadership approved removing human review")
+    assert _asserts("it is not pending: leadership approved removing human review", "leadership approved removing human review")
