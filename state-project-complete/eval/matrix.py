@@ -30,7 +30,7 @@ from pathlib import Path
 from typing import Any, Callable, Iterable
 
 SCHEMA = "state-eval-matrix/v1"
-SUITES = ("review", "ask", "consequentiality", "baseline", "adversarial")
+SUITES = ("review", "ask", "consequentiality", "baseline", "adversarial", "graded")
 MODEL_ID_PATTERN = re.compile(r"^claude-[a-z0-9.-]+$")
 
 # USD per million tokens, Anthropic first-party API. Source: the claude-api skill's model table
@@ -57,6 +57,9 @@ TOKENS_PER_CALL: dict[str, dict[str, int]] = {
     "review": {"input": 3_500, "output": 700, "max_output": 2_000},
     "ask": {"input": 4_000, "output": 900, "max_output": 2_400},
     "adversarial": {"input": 4_000, "output": 900, "max_output": 2_400},
+    # graded: the grading call only (claude-opus-5-5); its Ask call is priced as "ask" on the run's model.
+    # About 1,600 tokens of rubric plus records and the answer; output includes low-effort thinking.
+    "graded": {"input": 3_500, "output": 1_000, "max_output": 9_500},
     "consequentiality": {"input": 3_500, "output": 700, "max_output": 2_000},
     "baseline": {"input": 7_500, "output": 900, "max_output": 2_000},
 }
@@ -65,7 +68,7 @@ TOKENS_PER_CALL: dict[str, dict[str, int]] = {
 # review 35-40s (16 cases; State AI quality check runs 38195077931, 38199551242, 38299891763, 38411808397),
 # ask 27.6-28.3s (10 cases; same workflow), consequentiality 67-77s (36 cases; State QA Release runs
 # 38078551511, 38079304500, 38271757236), baseline 119-126s per 6 repeats of 5 sources per route (run 38187113539).
-SECONDS_PER_REPEAT: dict[str, float] = {"review": 40, "ask": 30, "adversarial": 30, "consequentiality": 80, "baseline": 22}
+SECONDS_PER_REPEAT: dict[str, float] = {"review": 40, "ask": 30, "adversarial": 30, "graded": 60, "consequentiality": 80, "baseline": 22}
 # Other models are unmeasured here; plan shards as if they were this much slower.
 MODEL_SLOWDOWN: dict[str, float] = {"claude-haiku-5-5": 1.0, "claude-haiku-4-5": 2.0}
 DEFAULT_SLOWDOWN = 3.0
@@ -118,6 +121,8 @@ def scenario_ids(suite: str) -> list[str]:
         from eval.ask_quality_scenarios import SCENARIOS
     elif suite == "adversarial":
         from eval.ask_adversarial_scenarios import SCENARIOS
+    elif suite == "graded":
+        from eval.ask_quality_scenarios import SCENARIOS
     elif suite == "consequentiality":
         from eval.scenarios import SCENARIOS
     elif suite == "baseline":
@@ -128,8 +133,20 @@ def scenario_ids(suite: str) -> list[str]:
 
 
 def calls_per_repeat(suite: str) -> int:
-    """Planned model calls for one repeat of a suite: one per scenario."""
-    return len(scenario_ids(suite))
+    """Planned model calls for one repeat of a suite: one per scenario (graded: an Ask call plus a grading call)."""
+    return len(scenario_ids(suite)) * (2 if suite == "graded" else 1)
+
+
+def estimated_call_cost(suite: str, model: str, output_key: str = "output") -> float:
+    """Mean estimated cost of one planned call. A graded scenario is one Ask call on `model` and one
+    grading call on the grader model, so its two calls average those two prices."""
+    if suite == "graded":
+        from eval.ask_grader import GRADER_MODEL
+
+        ask, grade = TOKENS_PER_CALL["ask"], TOKENS_PER_CALL["graded"]
+        return (call_cost(model, ask["input"], ask[output_key]) + call_cost(GRADER_MODEL, grade["input"], grade[output_key])) / 2
+    tokens = TOKENS_PER_CALL[suite]
+    return call_cost(model, tokens["input"], tokens[output_key])
 
 
 def call_cost(model: str, input_tokens: int | None, output_tokens: int | None) -> float:
@@ -173,14 +190,13 @@ def plan(suites: Iterable[str], model: str, repeats: int, max_calls: int) -> dic
         per_repeat = calls_per_repeat(suite)
         calls = per_repeat * repeats
         total += calls
-        tokens = TOKENS_PER_CALL[suite]
         per_suite.append({
             "suite": suite,
             "scenarios": per_repeat,
             "calls_per_repeat": per_repeat,
             "repeats": repeats,
             "calls": calls,
-            "estimated_cost_usd": calls * call_cost(model, tokens["input"], tokens["output"]),
+            "estimated_cost_usd": calls * estimated_call_cost(suite, model),
             "estimated_minutes": round(calls / per_repeat * SECONDS_PER_REPEAT[suite]
                                        * MODEL_SLOWDOWN.get(model, DEFAULT_SLOWDOWN) / 60, 1),
         })
@@ -200,8 +216,7 @@ def plan(suites: Iterable[str], model: str, repeats: int, max_calls: int) -> dic
                         min(max_calls * s.planned_calls // total, CAP_HEADROOM * s.planned_calls) if total <= max_calls else 0)
                   for s in shards]
     # Ceiling: every call the caps allow, each with the largest output the provider permits.
-    ceiling = sum(s.call_cap * call_cost(model, TOKENS_PER_CALL[s.suite]["input"], TOKENS_PER_CALL[s.suite]["max_output"])
-                  for s in shards)
+    ceiling = sum(s.call_cap * estimated_call_cost(s.suite, model, "max_output") for s in shards)
     result = {
         "model": model,
         "repeats": repeats,
@@ -279,10 +294,11 @@ class CallCounter:
                 raise CallBudgetExceeded(f"call cap {self.cap} reached")
             self.calls += 1
 
-    def _record(self, message: Any, started: float, error: BaseException | None = None) -> None:
+    def _record(self, message: Any, started: float, error: BaseException | None = None, model: str | None = None) -> None:
         usage = getattr(message, "usage", None)
         with self._lock:
             self.usage.append({
+                "model": model,
                 "input_tokens": getattr(usage, "input_tokens", None),
                 "output_tokens": getattr(usage, "output_tokens", None),
                 "latency_ms": int(round((time.perf_counter() - started) * 1000)),
@@ -309,9 +325,9 @@ class CallCounter:
             try:
                 message = original_create(self, *args, **kwargs)
             except Exception as exc:  # recorded so a provider timeout/error is not mistaken for a model judgment
-                counter._record(None, started, exc)
+                counter._record(None, started, exc, kwargs.get("model"))
                 raise
-            counter._record(message, started)
+            counter._record(message, started, model=kwargs.get("model"))
             return message
 
         def stream(self, *args, **kwargs):
@@ -424,6 +440,35 @@ def ask_record(r) -> dict[str, Any]:
             **({"model_output_excerpt": _excerpt(_answer_text(r.answer))} if outcome == "fail" else {})}
 
 
+def graded_record(r, grade) -> dict[str, Any]:
+    """An Ask result graded by the LLM grader (eval/ask_grader.py). Observed only (DEC-008): outcome is
+    the grader's gates (a 1 on faithfulness or authority_calibration, or on consequential_completeness
+    for a high-severity scenario, fails); the keyword checks are kept beside it. The full answer is kept
+    for Paige's blind calibration (every scenario is synthetic)."""
+    from eval.ask_grader import GRADER_VERSION, gates
+
+    record = ask_record(r)
+    record["keyword_outcome"] = record["outcome"]
+    record["keyword_failed_checks"] = record["failed_checks"]
+    record["grader_version"] = GRADER_VERSION
+    if r.error:
+        return record
+    record["answer"] = r.answer
+    try:
+        grades = grade(r.scenario, r.answer)
+    except Exception as exc:  # the grading call failed or returned bad JSON: not judged
+        record.update(outcome=_error_outcome(str(exc)), passed=None, failure_mode=None, failed_checks=[], checks={},
+                      error=f"grader: {type(exc).__name__}: {exc}"[:300])
+        return record
+    scores = {name: grade_["score"] for name, grade_ in grades.items()}
+    gate = gates(scores, r.scenario.severity)
+    failed = [name for name, ok in gate.items() if not ok]
+    record.update(outcome="fail" if failed else "pass", passed=not failed, checks=gate, failed_checks=failed,
+                  failure_mode=("grader scored 1: " + ", ".join(failed)) if failed else None,
+                  grades=grades, scores=scores)
+    return record
+
+
 def consequentiality_record(r) -> dict[str, Any]:
     """One consequentiality result. Ambiguous scenarios have no ground truth and stay unscored."""
     expected = r.scenario.expected
@@ -492,6 +537,8 @@ def _scenarios(suite: str) -> list[Any]:
         from eval.ask_quality_scenarios import SCENARIOS
     elif suite == "adversarial":
         from eval.ask_adversarial_scenarios import SCENARIOS
+    elif suite == "graded":
+        from eval.ask_quality_scenarios import SCENARIOS
     elif suite == "consequentiality":
         from eval.scenarios import SCENARIOS
     else:
@@ -501,7 +548,7 @@ def _scenarios(suite: str) -> list[Any]:
 
 def _runner(suite: str, model: str, *, baseline_route: str, baseline_timeout: float) -> Callable[[Any], dict[str, Any]]:
     """A function that runs one scenario once and returns its record (without usage/latency)."""
-    if suite in ("review", "ask", "adversarial", "consequentiality"):
+    if suite in ("review", "ask", "adversarial", "graded", "consequentiality"):
         from anthropic_provider import AnthropicProvider
 
         provider = AnthropicProvider(model_identifier=model)
@@ -511,6 +558,10 @@ def _runner(suite: str, model: str, *, baseline_route: str, baseline_timeout: fl
         if suite in ("ask", "adversarial"):
             from eval.quality_harness import run_ask_quality_scenario
             return lambda s: ask_record(run_ask_quality_scenario(s, provider))
+        if suite == "graded":
+            from eval.ask_grader import grade_answer
+            from eval.quality_harness import run_ask_quality_scenario
+            return lambda s: graded_record(run_ask_quality_scenario(s, provider), grade_answer)
         from eval.harness import run_scenario
         return lambda s: consequentiality_record(run_scenario(s, provider=provider))
 

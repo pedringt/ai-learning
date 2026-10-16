@@ -68,6 +68,16 @@ def _rate(passes: int, n: int) -> float | None:
     return passes / n if n else None
 
 
+def _grader_scores(rows: list[dict[str, Any]]) -> dict[str, dict[str, Any]]:
+    """Per grader dimension (graded suite only): answers graded, mean score, and the share scored 1 and 2."""
+    by_dim: dict[str, list[int]] = defaultdict(list)
+    for row in rows:
+        for name, score in (row.get("scores") or {}).items():
+            by_dim[name].append(int(score))
+    return {name: {"n": len(v), "mean": sum(v) / len(v), "share_1": v.count(1) / len(v), "share_2": v.count(2) / len(v)}
+            for name, v in by_dim.items() if v}
+
+
 def aggregate(repeats: list[dict[str, Any]]) -> dict[str, Any]:
     suites: dict[str, dict[str, Any]] = {}
     for rep in repeats:
@@ -130,8 +140,9 @@ def aggregate(repeats: list[dict[str, Any]]) -> dict[str, Any]:
             for use in row.get("call_usage") or []:
                 inp += use.get("input_tokens") or 0
                 outp += use.get("output_tokens") or 0
-                if model in PRICING:
-                    cost += call_cost(model, use.get("input_tokens"), use.get("output_tokens"))
+                priced_as = use.get("model") or model  # graded runs mix the Ask model and the grader model
+                if priced_as in PRICING:
+                    cost += call_cost(priced_as, use.get("input_tokens"), use.get("output_tokens"))
                 else:
                     unpriced += 1
         scenario_rows = []
@@ -167,6 +178,7 @@ def aggregate(repeats: list[dict[str, Any]]) -> dict[str, Any]:
             "latency_ms_p50": percentile(latencies, 50), "latency_ms_p95": percentile(latencies, 95),
             "calls": s["calls"], "input_tokens": inp, "output_tokens": outp, "cost_usd": cost, "unpriced_calls": unpriced,
             "scenarios": scenario_rows,
+            "grader_scores": _grader_scores([row for _model, row in s["rows"]]),
         })
         totals["calls"] += s["calls"]
         totals["input_tokens"] += inp
@@ -210,6 +222,11 @@ def to_markdown(summary: dict[str, Any]) -> str:
                      f"Calls {s['calls']}, tokens {s['input_tokens']:,} in / {s['output_tokens']:,} out, ${s['cost_usd']:.4f}.")
         if s["checks"]:
             lines.append("Checks: " + ", ".join(f"{name} {_pct(c['rate'])} ({c['passes']}/{c['n']})" for name, c in s["checks"].items()))
+        if s.get("grader_scores"):
+            lines += ["", "LLM grader (observed only, not a gate until calibrated; 1-4, higher is better):", "",
+                      "| Dimension | Answers | Mean | Scored 1 | Scored 2 |", "|---|---|---|---|---|"]
+            for name, g in s["grader_scores"].items():
+                lines.append(f"| {name} | {g['n']} | {g['mean']:.2f} | {_pct(g['share_1'])} | {_pct(g['share_2'])} |")
         lines += ["", "| Scenario | n | Passes | Pass rate | 95% CI | Errors | Timeouts | Failure modes |", "|---|---|---|---|---|---|---|---|"]
         for r in sorted(s["scenarios"], key=lambda r: (r["pass_rate"] if r["pass_rate"] is not None else 2, r["scenario_id"])):
             modes = "; ".join(f"{m} x{c}" for m, c in r["failure_modes"].items())

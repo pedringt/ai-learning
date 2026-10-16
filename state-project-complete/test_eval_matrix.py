@@ -434,3 +434,72 @@ def test_adversarial_suite_plans_one_call_per_scenario_and_runs_as_ask():
     assert matrix.calls_per_repeat("adversarial") == len(ADVERSARIAL) == 20
     assert all(s.id.startswith("adv_") for s in ADVERSARIAL)
     assert matrix.parse_suites("adversarial") == ["adversarial"]
+
+
+# ---------------------------------------------------------------- graded suite (LLM grader, no model calls)
+
+def _ask_result(scenario, answer=None, error=""):
+    from eval.quality_harness import AskQualityResult
+    return AskQualityResult(scenario, answer if answer is not None else {"headline": "x"}, True, True, True, True, True, error=error)
+
+
+def _grades(**scores):
+    from eval.ask_grader import DIMENSIONS
+    return {name: {"score": scores.get(name, 4), "reason": "r"} for name in DIMENSIONS}
+
+
+def test_graded_suite_plans_two_calls_per_scenario_and_prices_the_grader_as_opus():
+    assert matrix.calls_per_repeat("graded") == 2 * len(ASK)
+    p = matrix.plan(["graded"], "claude-haiku-5-5", 1, 1000)
+    ask_only = matrix.plan(["ask"], "claude-haiku-5-5", 1, 1000)
+    assert p["estimated_cost_usd"] > 10 * ask_only["estimated_cost_usd"]  # the Opus grading call dominates
+
+
+def test_graded_record_gates_on_faithfulness_and_authority_only():
+    scenario = next(s for s in ASK if s.severity != "high")
+    passed = matrix.graded_record(_ask_result(scenario), lambda s, a: _grades(directness=1, concision=1))
+    assert passed["outcome"] == "pass" and passed["scores"]["directness"] == 1
+    failed = matrix.graded_record(_ask_result(scenario), lambda s, a: _grades(authority_calibration=1))
+    assert failed["outcome"] == "fail" and failed["failed_checks"] == ["authority_calibration"]
+    two = matrix.graded_record(_ask_result(scenario), lambda s, a: _grades(faithfulness=2))
+    assert two["outcome"] == "pass"  # a 2 is counted toward a rate, not failed
+
+
+def test_graded_record_gates_completeness_only_on_high_severity():
+    high = next(s for s in ASK if s.severity == "high")
+    low = next(s for s in ASK if s.severity != "high")
+    grade = lambda s, a: _grades(consequential_completeness=1)
+    assert matrix.graded_record(_ask_result(high), grade)["outcome"] == "fail"
+    assert matrix.graded_record(_ask_result(low), grade)["outcome"] == "pass"
+
+
+def test_graded_record_keeps_answer_and_keyword_result_and_marks_grader_errors():
+    scenario = ASK[0]
+    rec = matrix.graded_record(_ask_result(scenario, {"headline": "h"}), lambda s, a: _grades())
+    assert rec["answer"] == {"headline": "h"} and rec["keyword_outcome"] == "pass"
+
+    def broken(s, a):
+        raise ValueError("bad json")
+    err = matrix.graded_record(_ask_result(scenario), broken)
+    assert err["outcome"] == "error" and err["passed"] is None and "grader" in err["error"]
+
+
+def test_aggregate_prices_each_call_by_its_own_model_and_reports_grader_scores():
+    row = {"scenario_id": "s", "outcome": "pass", "passed": True, "checks": {}, "scores": {"faithfulness": 4},
+           "call_usage": [{"model": "claude-haiku-5-5", "input_tokens": 100_000, "output_tokens": 0},
+                          {"model": "claude-opus-5-5", "input_tokens": 100_000, "output_tokens": 0}]}
+    summary = agg.aggregate([{"schema": matrix.SCHEMA, "suite": "graded", "model": "claude-haiku-5-5", "repeat": 0,
+                              "calls": 2, "complete": True, "results": [row]}])
+    assert round(summary["totals"]["cost_usd"], 3) == 0.41  # $0.01 Haiku + $0.40 Opus
+    assert summary["suites"][0]["grader_scores"]["faithfulness"]["mean"] == 4
+    assert "LLM grader" in agg.to_markdown(summary)
+
+
+def test_grader_prompt_carries_records_and_rationale_but_not_keyword_lists():
+    from eval.ask_grader import GRADE_SCHEMA, user_message
+    scenario = next(s for s in ASK if s.forbidden_claims)
+    text = user_message(scenario, {"headline": "h", "source_ids": ["secret-id"]})
+    assert scenario.question in text and scenario.rationale in text
+    assert "secret-id" not in text
+    assert not any(claim in text for claim in scenario.forbidden_claims)
+    assert GRADE_SCHEMA["additionalProperties"] is False
