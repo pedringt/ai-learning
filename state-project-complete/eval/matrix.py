@@ -43,14 +43,10 @@ PRICING: dict[str, dict[str, float]] = {
     "claude-haiku-4-5": {"input": 1.00, "output": 5.00},
 }
 
-# State's providers send thinking={"type": "disabled"} (anthropic_provider.py, ask_provider.py). Per the
-# same skill, that is a 400 on Sonnet 5.5 and on Opus 5.5 at every effort level, so every call would
-# fail (400s are not billed, but the run would measure nothing). Changing that is a product change, so
-# the matrix refuses these models until the providers support them.
-INCOMPATIBLE_MODELS: dict[str, str] = {
-    "claude-sonnet-5-5": 'State\'s providers send thinking={"type": "disabled"}, which Sonnet 5.5 rejects with a 400.',
-    "claude-opus-5-5": 'State\'s providers send thinking={"type": "disabled"}, which Opus 5.5 rejects with a 400 at every effort level.',
-}
+# Sonnet 5.5 and Opus 5.5 reject thinking={"type": "disabled"}; since Oct 16 every State provider call goes
+# through model_request_options.request_options, which sends each model's accepted form (Haiku 5.5 is
+# unchanged). Opus 5.5 keeps adaptive thinking at effort "low", and its thinking tokens bill as output.
+INCOMPATIBLE_MODELS: dict[str, str] = {}
 
 # Tokens per call, for the cost ESTIMATE only (the aggregator prices actual usage).
 # baseline: measured, run 38187113539 (Oct 12, Haiku 5.5, 60 calls): mean 7,311 input / 871 output.

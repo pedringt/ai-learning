@@ -94,9 +94,9 @@ def test_plan_refuses_bad_inputs():
         matrix.plan(["review"], "claude-haiku-5-5", 1, 0)
 
 
-def test_plan_refuses_models_the_providers_cannot_call():
-    for model in matrix.INCOMPATIBLE_MODELS:
-        assert "cannot run" in matrix.plan(["review"], model, 1, 1000)["refusal"]
+def test_plan_accepts_sonnet_and_opus_5_5():
+    for model in ("claude-sonnet-5-5", "claude-opus-5-5"):
+        assert not matrix.plan(["review"], model, 1, 1000).get("refusal"), model
 
 
 def test_shards_cover_every_repeat_and_caps_never_exceed_max_calls():
@@ -255,9 +255,9 @@ def test_run_shard_stops_before_passing_the_call_cap(tmp_path, fake_sdk):
     assert sorted(p.name for p in tmp_path.glob("*.json")) == ["ask-r0000.json", "ask-r0001.json"]
 
 
-def test_run_shard_refuses_incompatible_models_and_a_mismatched_claude_model(tmp_path, monkeypatch):
-    with pytest.raises(matrix.PlanError):
-        matrix.run_shard("review", "claude-opus-5-5", 0, 1, 10, tmp_path, runner=lambda s: {}, scenarios=[_S("a")])
+def test_run_shard_refuses_a_mismatched_claude_model(tmp_path, monkeypatch):
+    # Sonnet 5.5 and Opus 5.5 run since Oct 16 (model_request_options), so only the CLAUDE_MODEL check refuses.
+    assert matrix.INCOMPATIBLE_MODELS == {}
     monkeypatch.setenv("CLAUDE_MODEL", "claude-haiku-4-5")
     with pytest.raises(matrix.PlanError, match="CLAUDE_MODEL"):
         matrix.run_shard("review", "claude-haiku-5-5", 0, 1, 10, tmp_path, scenarios=[_S("a")])
@@ -397,4 +397,4 @@ def test_dry_run_summary_for_the_single_run_scripts(monkeypatch):
     monkeypatch.delenv("CLAUDE_MODEL", raising=False)
     line = matrix.dry_run_summary(["review", "ask"])
     assert line.startswith("DRY RUN (no model calls)") and f"{len(REVIEW) + len(ASK)} paid model call(s) on claude-haiku-5-5" in line
-    assert "NOTE" in matrix.dry_run_summary(["ask"], "claude-opus-5-5")
+    assert "NOTE" not in matrix.dry_run_summary(["ask"], "claude-opus-5-5")  # Opus 5.5 is callable since Oct 16
