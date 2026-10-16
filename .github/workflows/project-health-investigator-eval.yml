@@ -1,0 +1,48 @@
+# Paid: runs the Project Health investigator prompt on collected and planted failure
+# evidence. Triggered only by pushes to eval/ph-investigator*; models, repeats and the
+# call cap live in scripts/project_health_eval/config.json. See docs/evals/.
+name: Project Health investigator eval
+on:
+  push:
+    branches: ['eval/ph-investigator*']
+    paths: ['scripts/project_health_eval/**', 'api/project-health-investigate.js', '.github/workflows/project-health-investigator-eval.yml']
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: ph-investigator-eval-${{ github.ref_name }}
+  cancel-in-progress: false
+jobs:
+  eval:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Collect real failure evidence (no model calls)
+        if: hashFiles('scripts/project_health_eval/cases.json') == ''
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          PH_EVAL_OUT: ${{ runner.temp }}/ph-eval
+        run: |
+          node scripts/project_health_eval/run.js collect
+          cp "$PH_EVAL_OUT/cases.json" scripts/project_health_eval/cases.json
+      - name: Dry run
+        run: node scripts/project_health_eval/run.js run --dry-run
+      - name: Run the investigator prompt
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          PH_EVAL_OUT: ${{ runner.temp }}/ph-eval
+        run: node scripts/project_health_eval/run.js run
+      - name: Keep cases and results
+        if: always()
+        run: cp scripts/project_health_eval/cases.json "${{ runner.temp }}/ph-eval/" 2>/dev/null || true
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ph-investigator-eval
+          path: ${{ runner.temp }}/ph-eval
+          if-no-files-found: warn
