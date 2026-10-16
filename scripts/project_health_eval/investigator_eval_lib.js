@@ -14,8 +14,10 @@ const LABELS=['What happened','Likely cause','Evidence checked','Not checked','U
 const OWNERS=['Engineering','Product','No action'];
 const ACTION_CLAIMS=/\b(I|we) (have |just )?(re-?ran|restarted|fixed|deployed|rolled back|reverted|merged|redeployed|changed)\b/i;
 
-function callCost(model,usage){
-  const rates=PRICING[model];
+// A model spec may carry an output cap: 'claude-haiku-5-5@900'.
+function parseSpec(spec){const [model,cap]=String(spec).split('@');return {model,maxTokens:cap?Number(cap):undefined};}
+function callCost(spec,usage){
+  const rates=PRICING[parseSpec(spec).model];
   if(!rates||!usage)return null;
   return ((usage.input_tokens||0)*rates.input+(usage.output_tokens||0)*rates.output)/1e6;
 }
@@ -132,7 +134,7 @@ function reportFacts(report,caseDef){
 
 async function runCase(caseDef,model,{apiKey,fetchImpl=fetch}={}){
   const started=Date.now();
-  const body=INV.investigationRequest(caseDef.evidence,{model});
+  const body=INV.investigationRequest(caseDef.evidence,parseSpec(model));
   const response=await fetchImpl('https://api.anthropic.com/v1/messages',{
     method:'POST',
     headers:{'x-api-key':apiKey,'anthropic-version':'2023-06-01','content-type':'application/json'},
@@ -150,7 +152,8 @@ async function runCase(caseDef,model,{apiKey,fetchImpl=fetch}={}){
 function plan(cases,models,repeats){
   const calls=cases.length*models.length*repeats;
   // Upper bound: about 3k input tokens and the full output cap per call.
-  const estimate=models.reduce((sum,model)=>sum+cases.length*repeats*((3000*PRICING[model].input+INV.MAX_OUTPUT_TOKENS*PRICING[model].output)/1e6),0);
+  // Opus thinking bills as output, so its bound uses the request's full max_tokens.
+  const estimate=models.reduce((sum,model)=>sum+cases.length*repeats*((3000*PRICING[parseSpec(model).model].input+INV.investigationRequest({},parseSpec(model)).max_tokens*PRICING[parseSpec(model).model].output)/1e6),0);
   return {calls,estimateUsd:Number(estimate.toFixed(4))};
 }
 
@@ -182,4 +185,4 @@ function summarize(results){
   return byModel;
 }
 
-module.exports={PRICING,LABELS,OWNERS,callCost,withGithubAuth,evidenceFor,collectGithubCheckCases,collectVercelCases,reportFacts,runCase,plan,summarize};
+module.exports={parseSpec,PRICING,LABELS,OWNERS,callCost,withGithubAuth,evidenceFor,collectGithubCheckCases,collectVercelCases,reportFacts,runCase,plan,summarize};

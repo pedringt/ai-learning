@@ -1,0 +1,453 @@
+[
+  {
+    "id": "state-check-df2abae",
+    "kind": "real",
+    "signalType": "github-check",
+    "evidence": {
+      "project": "state",
+      "environment": "production",
+      "branch": "main",
+      "commit": "df2abae249c57a06e4935404c5421e4f97411eb0",
+      "signalType": "github-check",
+      "primary": "{\"failedChecks\":[{\"name\":\"quality\",\"conclusion\":\"failure\",\"title\":\"\",\"summary\":\"\",\"url\":\"https://github.com/pedringt/ai-learning/actions/runs/38959433667/job/117170484232\"}]}",
+      "followUp": "{\"commitMessage\":\"Merge pull request #534 from pedringt/content/learning-library-precision-main\\n\\nLearning library: four precision edits\"}"
+    },
+    "reference": {
+      "workflow": "State AI quality check",
+      "runUrl": "https://github.com/pedringt/ai-learning/actions/runs/38959433667",
+      "createdAt": "2026-10-16T20:03:23Z",
+      "log": {
+        "job": "quality",
+        "tail": "  CLAUDE_MODEL: \n##[endgroup]\nreview_interpretation (16 cases, 29.3s)\n  precision: 100.0%\n  recall: 100.0%\n  false_positives: 0\n  false_negatives: 0\n  errors: 0\n  interpretation_accuracy: 100.0%\n  high_severity_failures: 0\nask_quality (10 cases, 25.7s)\n  errors: 0\n  ask_grounding: 100.0%\n  uncertainty_accuracy: 90.0%\n  open_item_accuracy: 100.0%\n  authority_accuracy: 100.0%\n  overall_pass_rate: 90.0%\n  high_severity_failures: 1\n  failures:\n    - ask_blocker_not_omitted: failed uncertainty\n      output: Not yet confirmed: the pilot launch target is October 1, but a blocking Security question is still open. — Current State records the pilot launch target as October 1. However, the question of whether Security has approved the production dat...\nRecorded aggregate review_interpretation metrics in State Product Analytics.\nRecorded aggregate ask_quality metrics in State Product Analytics.\n##[error]Process completed with exit code 1.\nPost job cleanup.\n[command]/usr/bin/git version\ngit version 2.55.0\nTemporarily overriding HOME='/home/runner/work/_temp/8b8b937c-1c83-4bed-873f-df115196d387' before making global git config changes\nAdding repository directory to the temporary git global config as a safe directory\n[command]/usr/bin/git config --global --add safe.directory /home/runner/work/ai-learning/ai-learning\n[command]/usr/bin/git config --local --name-only --get-regexp core\\.sshCommand\n[command]/usr/bin/git submodule foreach --recursive sh -c \"git config --local --name-only --get-regexp 'core\\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :\"\n[command]/usr/bin/git config --local --name-only --get-regexp http\\.https\\:\\/\\/github\\.com\\/\\.extraheader\nhttp.https://github.com/.extraheader\n[command]/usr/bin/git config --local --unset-all http.https://github.com/.extraheader\n[command]/usr/bin/git submodule foreach --recursive sh -c \"git config --local --name-only --get-regexp 'http\\.https\\:\\/\\/github\\.com\\/\\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :\"\n[command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\\.gitdir:\n[command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url\nCleaning up orphan processes\n##[warning]Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: actions/checkout@v4, actions/setup-python@v5. For more information see: [external URL omitted]"
+      }
+    }
+  },
+  {
+    "id": "state-check-e6603a9",
+    "kind": "real",
+    "signalType": "github-check",
+    "evidence": {
+      "project": "state",
+      "environment": "production",
+      "branch": "main",
+      "commit": "e6603a93620ab422f3a1239998a5604efed973e6",
+      "signalType": "github-check",
+      "primary": "{\"failedChecks\":[{\"name\":\"eval\",\"conclusion\":\"failure\",\"title\":\"\",\"summary\":\"\",\"url\":\"https://github.com/pedringt/ai-learning/actions/runs/38941035982/job/117108429414\"}]}",
+      "followUp": "{\"commitMessage\":\"Merge pull request #533 from pedringt/content/learning-library-to-main\\n\\nLearning library: orchestration, semantic observability, AI interface patterns\"}"
+    },
+    "reference": {
+      "workflow": "Baseline decomposition eval",
+      "runUrl": "https://github.com/pedringt/ai-learning/actions/runs/38941035982",
+      "createdAt": "2026-10-16T17:36:53Z",
+      "log": {
+        "job": "eval",
+        "tail": "Planned calls: 240 (max 130)\nRefusing: 240 planned calls is above max_calls=130\n##[error]Process completed with exit code 1.\n##[group]Run actions/upload-artifact@v4\nwith:\n  name: baseline-decomposition-38941035982\n  path: state-project-complete/out-*.json\nstate-project-complete/summary-*.txt\n  if-no-files-found: ignore\n  compression-level: 6\n  overwrite: false\n  include-hidden-files: false\nenv:\n  pythonLocation: /opt/hostedtoolcache/Python/3.12.15/x64\n  PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.12.15/x64/lib/pkgconfig\n  Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.15/x64\n  Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.15/x64\n  Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.15/x64\n  LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.12.15/x64/lib\n##[endgroup]\n(node:2358) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.\n(Use `node --trace-deprecation ...` to show where the warning was created)\nNo files were found with the provided path: state-project-complete/out-*.json\nstate-project-complete/summary-*.txt. No artifacts will be uploaded.\nPost job cleanup.\n[command]/usr/bin/git version\ngit version 2.55.0\nTemporarily overriding HOME='/home/runner/work/_temp/57ef7bb1-0144-4444-b856-58bcfaf93cb8' before making global git config changes\nAdding repository directory to the temporary git global config as a safe directory\n[command]/usr/bin/git config --global --add safe.directory /home/runner/work/ai-learning/ai-learning\n[command]/usr/bin/git config --local --name-only --get-regexp core\\.sshCommand\n[command]/usr/bin/git submodule foreach --recursive sh -c \"git config --local --name-only --get-regexp 'core\\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :\"\n[command]/usr/bin/git config --local --name-only --get-regexp http\\.https\\:\\/\\/github\\.com\\/\\.extraheader\nhttp.https://github.com/.extraheader\n[command]/usr/bin/git config --local --unset-all http.https://github.com/.extraheader\n[command]/usr/bin/git submodule foreach --recursive sh -c \"git config --local --name-only --get-regexp 'http\\.https\\:\\/\\/github\\.com\\/\\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :\"\n[command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\\.gitdir:\n[command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url\nCleaning up orphan processes\n##[warning]Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: actions/checkout@v4, actions/setup-python@v5, actions/upload-artifact@v4. For more information see: [external URL omitted]"
+      }
+    }
+  },
+  {
+    "id": "state-check-e9dcc3b",
+    "kind": "real",
+    "signalType": "github-check",
+    "evidence": {
+      "project": "state",
+      "environment": "production",
+      "branch": "main",
+      "commit": "e9dcc3b0978abd747c28925cf94abb3bb98b86ae",
+      "signalType": "github-check",
+      "primary": "{\"failedChecks\":[{\"name\":\"quality\",\"conclusion\":\"failure\",\"title\":\"\",\"summary\":\"\",\"url\":\"https://github.com/pedringt/ai-learning/actions/runs/38314904235/job/115029097653\"}]}",
+      "followUp": "{\"commitMessage\":\"Merge pull request #507 from pedringt/staging\\n\\nPromote staging: Project Health delivery uses the deployed merge commit\"}"
+    },
+    "reference": {
+      "workflow": "State AI quality check",
+      "runUrl": "https://github.com/pedringt/ai-learning/actions/runs/38314904235",
+      "createdAt": "2026-10-12T22:08:26Z",
+      "log": {
+        "job": "quality",
+        "tail": "  CLAUDE_MODEL: \n##[endgroup]\nreview_interpretation (16 cases, 34.8s)\n  precision: 100.0%\n  recall: 100.0%\n  false_positives: 0\n  false_negatives: 0\n  errors: 0\n  interpretation_accuracy: 100.0%\n  high_severity_failures: 0\nask_quality (10 cases, 28.5s)\n  errors: 0\n  ask_grounding: 100.0%\n  uncertainty_accuracy: 90.0%\n  open_item_accuracy: 100.0%\n  authority_accuracy: 100.0%\n  overall_pass_rate: 90.0%\n  high_severity_failures: 1\n  failures:\n    - ask_blocker_not_omitted: failed uncertainty\n      output: Not confirmed: launch readiness is blocked by an open Security question — Current State targets a pilot launch for October 1, but that is a target, not a readiness confirmation. The question of whether Security has approved the production d...\nRecorded aggregate review_interpretation metrics in State Product Analytics.\nRecorded aggregate ask_quality metrics in State Product Analytics.\n##[error]Process completed with exit code 1.\nPost job cleanup.\n[command]/usr/bin/git version\ngit version 2.55.0\nTemporarily overriding HOME='/home/runner/work/_temp/c7a79aa0-7993-49c9-bf29-cf85434eff5b' before making global git config changes\nAdding repository directory to the temporary git global config as a safe directory\n[command]/usr/bin/git config --global --add safe.directory /home/runner/work/ai-learning/ai-learning\n[command]/usr/bin/git config --local --name-only --get-regexp core\\.sshCommand\n[command]/usr/bin/git submodule foreach --recursive sh -c \"git config --local --name-only --get-regexp 'core\\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :\"\n[command]/usr/bin/git config --local --name-only --get-regexp http\\.https\\:\\/\\/github\\.com\\/\\.extraheader\nhttp.https://github.com/.extraheader\n[command]/usr/bin/git config --local --unset-all http.https://github.com/.extraheader\n[command]/usr/bin/git submodule foreach --recursive sh -c \"git config --local --name-only --get-regexp 'http\\.https\\:\\/\\/github\\.com\\/\\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :\"\n[command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\\.gitdir:\n[command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url\nCleaning up orphan processes\n##[warning]Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: actions/checkout@v4, actions/setup-python@v5. For more information see: [external URL omitted]"
+      }
+    }
+  },
+  {
+    "id": "state-check-0b6c521",
+    "kind": "real",
+    "signalType": "github-check",
+    "evidence": {
+      "project": "state",
+      "environment": "staging",
+      "branch": "staging",
+      "commit": "0b6c5218e4dee5bc22cdc6957b2027c80cfcc9be",
+      "signalType": "github-check",
+      "primary": "{\"failedChecks\":[{\"name\":\"quality\",\"conclusion\":\"failure\",\"title\":\"\",\"summary\":\"\",\"url\":\"https://github.com/pedringt/ai-learning/actions/runs/38194937947/job/114635409368\"}]}",
+      "followUp": "{\"commitMessage\":\"Learning Library: the On this page highlight follows the scroll position\\n\\nBoth pages highlighted the section whose heading crossed an\\nIntersectionObserver band near the top of the screen. A fast jump never\\ncrosses the band, so jumping back to the top left the old item highlighted\\n(Durable AI Knowledge) or nothing (AI Professional Edge, which also\\nhighlighted the wrong section on a slow scroll).\\n\\nThe highlight is now the last section whose top is above the same 15% line,\\nthe first section at the \"}"
+    },
+    "reference": {
+      "workflow": "State AI quality check",
+      "runUrl": "https://github.com/pedringt/ai-learning/actions/runs/38194937947",
+      "createdAt": "2026-10-12T02:13:25Z",
+      "log": {
+        "job": "quality",
+        "tail": "shell: /usr/bin/bash -e {0}\nenv:\n  pythonLocation: /opt/hostedtoolcache/Python/3.12.15/x64\n  PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.12.15/x64/lib/pkgconfig\n  Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.15/x64\n  Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.15/x64\n  Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.15/x64\n  LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.12.15/x64/lib\n  ANTHROPIC_API_KEY=[REDACTED]\n  STATE_EVAL_INGEST_KEY=[REDACTED]\n  CLAUDE_MODEL: \n##[endgroup]\nreview_interpretation (16 cases, 35.2s)\n  precision: 100.0%\n  recall: 91.7%\n  false_positives: 0\n  false_negatives: 1\n  errors: 0\n  interpretation_accuracy: 93.8%\n  high_severity_failures: 1\n  failures:\n    - review_planned_action_not_stated_as_done: update_state -> preserve_evidence_only\nRecorded aggregate review_interpretation metrics in State Product Analytics.\n##[error]Process completed with exit code 1.\nPost job cleanup.\n[command]/usr/bin/git version\ngit version 2.55.0\nTemporarily overriding HOME='/home/runner/work/_temp/312b501d-f319-483c-936d-45035950ce82' before making global git config changes\nAdding repository directory to the temporary git global config as a safe directory\n[command]/usr/bin/git config --global --add safe.directory /home/runner/work/ai-learning/ai-learning\n[command]/usr/bin/git config --local --name-only --get-regexp core\\.sshCommand\n[command]/usr/bin/git submodule foreach --recursive sh -c \"git config --local --name-only --get-regexp 'core\\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :\"\n[command]/usr/bin/git config --local --name-only --get-regexp http\\.https\\:\\/\\/github\\.com\\/\\.extraheader\nhttp.https://github.com/.extraheader\n[command]/usr/bin/git config --local --unset-all http.https://github.com/.extraheader\n[command]/usr/bin/git submodule foreach --recursive sh -c \"git config --local --name-only --get-regexp 'http\\.https\\:\\/\\/github\\.com\\/\\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :\"\n[command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\\.gitdir:\n[command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url\nCleaning up orphan processes\n##[warning]Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: actions/checkout@v4, actions/setup-python@v5. For more information see: [external URL omitted]"
+      }
+    }
+  },
+  {
+    "id": "state-check-9dc961c",
+    "kind": "real",
+    "signalType": "github-check",
+    "evidence": {
+      "project": "state",
+      "environment": "staging",
+      "branch": "staging",
+      "commit": "9dc961cae1448df659de510a2171ceb96d642d9f",
+      "signalType": "github-check",
+      "primary": "{\"failedChecks\":[{\"name\":\"quality\",\"conclusion\":\"failure\",\"title\":\"\",\"summary\":\"\",\"url\":\"https://github.com/pedringt/ai-learning/actions/runs/38186167947/job/114608833009\"},{\"name\":\"quality\",\"conclusion\":\"failure\",\"title\":\"\",\"summary\":\"\",\"url\":\"https://github.com/pedringt/ai-learning/actions/runs/38186052913/job/114608492689\"}]}",
+      "followUp": "{\"commitMessage\":\"State: cache tag r122 for the #240 Baseline UI change\\n\\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\"}"
+    },
+    "reference": {
+      "workflow": "State AI quality check",
+      "runUrl": "https://github.com/pedringt/ai-learning/actions/runs/38186167947",
+      "createdAt": "2026-10-11T23:56:56Z",
+      "log": {
+        "job": "quality",
+        "tail": "shell: /usr/bin/bash -e {0}\nenv:\n  pythonLocation: /opt/hostedtoolcache/Python/3.12.15/x64\n  PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.12.15/x64/lib/pkgconfig\n  Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.15/x64\n  Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.15/x64\n  Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.15/x64\n  LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.12.15/x64/lib\n  ANTHROPIC_API_KEY=[REDACTED]\n  STATE_EVAL_INGEST_KEY=[REDACTED]\n  CLAUDE_MODEL: \n##[endgroup]\nreview_interpretation (16 cases, 36.4s)\n  precision: 92.3%\n  recall: 100.0%\n  false_positives: 1\n  false_negatives: 0\n  errors: 0\n  interpretation_accuracy: 93.8%\n  high_severity_failures: 1\n  failures:\n    - review_authority_disagreement: preserve_evidence_only -> open_question\nRecorded aggregate review_interpretation metrics in State Product Analytics.\n##[error]Process completed with exit code 1.\nPost job cleanup.\n[command]/usr/bin/git version\ngit version 2.55.0\nTemporarily overriding HOME='/home/runner/work/_temp/8791f4eb-5156-4c86-8fbd-2490ffed686d' before making global git config changes\nAdding repository directory to the temporary git global config as a safe directory\n[command]/usr/bin/git config --global --add safe.directory /home/runner/work/ai-learning/ai-learning\n[command]/usr/bin/git config --local --name-only --get-regexp core\\.sshCommand\n[command]/usr/bin/git submodule foreach --recursive sh -c \"git config --local --name-only --get-regexp 'core\\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :\"\n[command]/usr/bin/git config --local --name-only --get-regexp http\\.https\\:\\/\\/github\\.com\\/\\.extraheader\nhttp.https://github.com/.extraheader\n[command]/usr/bin/git config --local --unset-all http.https://github.com/.extraheader\n[command]/usr/bin/git submodule foreach --recursive sh -c \"git config --local --name-only --get-regexp 'http\\.https\\:\\/\\/github\\.com\\/\\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :\"\n[command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\\.gitdir:\n[command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url\nCleaning up orphan processes\n##[warning]Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: actions/checkout@v4, actions/setup-python@v5. For more information see: [external URL omitted]"
+      }
+    }
+  },
+  {
+    "id": "state-check-b225187",
+    "kind": "real",
+    "signalType": "github-check",
+    "evidence": {
+      "project": "state",
+      "environment": "staging",
+      "branch": "staging",
+      "commit": "b225187efa00b11f8cd979e2067724460b53f079",
+      "signalType": "github-check",
+      "primary": "{\"failedChecks\":[{\"name\":\"walkthrough\",\"conclusion\":\"failure\",\"title\":\"\",\"summary\":\"\",\"url\":\"https://github.com/pedringt/ai-learning/actions/runs/38079868631/job/114294393608\"},{\"name\":\"walkthrough\",\"conclusion\":\"failure\",\"title\":\"\",\"summary\":\"\",\"url\":\"https://github.com/pedringt/ai-learning/actions/runs/38079744298/job/114294019121\"}]}",
+      "followUp": "{\"commitMessage\":\"Narrow the #480 rule: only a change the team agreed to; a personal opinion is not a decision\\n\\nWith the broader wording Haiku 5.5 raised an unnecessary Review for \\\"an engineer\\nsaid in passing they personally think we should eventually go fully automated\\\"\\nin 2 of 5 release runs (0 of 6 without the rule).\\n\\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\"}"
+    },
+    "reference": {
+      "workflow": "State AI quality check",
+      "runUrl": "https://github.com/pedringt/ai-learning/actions/runs/38079868631",
+      "createdAt": "2026-10-10T19:27:26Z",
+      "log": {
+        "job": "walkthrough",
+        "tail": "##[group]Run actions/upload-artifact@v4\nwith:\n  name: question-review-live\n  path: qa/deployed/question-live-results/\n  retention-days: 7\n  if-no-files-found: warn\n  compression-level: 6\n  overwrite: false\n  include-hidden-files: false\n##[endgroup]\n(node:2872) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.\n(Use `node --trace-deprecation ...` to show where the warning was created)\nWith the provided path, there will be 3 files uploaded\nArtifact name is valid!\nRoot directory input is valid!\nBeginning upload of artifact content to blob storage\n(node:2872) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.\nUploaded bytes 469326\nFinished uploading artifact content to blob storage!\nSHA256 digest of uploaded artifact zip is f1dfaf5d37d0932e06860404a155d4ff3d2b11d672f0c2d189c84f7620180431\nFinalizing artifact upload\nArtifact question-review-live.zip successfully finalized. Artifact ID 11679957012\nArtifact question-review-live has been successfully uploaded! Final size is 469326 bytes. Artifact ID is 11679957012\nArtifact download URL: https://github.com/pedringt/ai-learning/actions/runs/38079868631/artifacts/11679957012\nPost job cleanup.\n[command]/usr/bin/git version\ngit version 2.55.0\nTemporarily overriding HOME='/home/runner/work/_temp/2c24bc60-bded-4668-87f6-249fb899a590' before making global git config changes\nAdding repository directory to the temporary git global config as a safe directory\n[command]/usr/bin/git config --global --add safe.directory /home/runner/work/ai-learning/ai-learning\n[command]/usr/bin/git config --local --name-only --get-regexp core\\.sshCommand\n[command]/usr/bin/git submodule foreach --recursive sh -c \"git config --local --name-only --get-regexp 'core\\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :\"\n[command]/usr/bin/git config --local --name-only --get-regexp http\\.https\\:\\/\\/github\\.com\\/\\.extraheader\nhttp.https://github.com/.extraheader\n[command]/usr/bin/git config --local --unset-all http.https://github.com/.extraheader\n[command]/usr/bin/git submodule foreach --recursive sh -c \"git config --local --name-only --get-regexp 'http\\.https\\:\\/\\/github\\.com\\/\\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :\"\n[command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\\.gitdir:\n[command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url\nCleaning up orphan processes\n##[warning]Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: actions/checkout@v4, actions/setup-node@v4, actions/upload-artifact@v4. For more information see: [external URL omitted]"
+      }
+    }
+  },
+  {
+    "id": "state-vercel-20722d4",
+    "kind": "real",
+    "signalType": "vercel",
+    "evidence": {
+      "project": "state",
+      "environment": "production",
+      "branch": "main",
+      "commit": "20722d419ba704cd455a60f9da497bf63044dee1",
+      "signalType": "vercel",
+      "primary": "{\"failedDeploymentStatus\":{\"context\":\"Vercel – state\",\"description\":\"Deployment has failed — run this Vercel CLI command: npx vercel inspect dpl_G4KDuHqWxYaWchC8sWKCa7pVNUjQ --logs\",\"state\":\"failure\",\"target\":\"https://vercel.com/cairn10/state/G4KDuHqWxYaWchC8sWKCa7pVNUjQ\"}}",
+      "followUp": "No matching Vercel deployment details were available.\n{\"commitMessage\":\"Homepage: close on one line instead of restating the hero\\n\\n\\\"How I work with AI / Boundaries, feedback, and evidence.\\\" and its paragraph\\nrepeated the hero's philosophy. The homepage now ends with a single quiet\\nline under a full-width hairline: \\\"Build with AI. Keep its limits in view.\\\"\\n(Paige, Oct 11). 88px of space above on desktop, 64px on phones; 17/16px,\\nsemibold ink, left-aligned with the content above. The old section's rules\\nare removed from index.html, site-components.css and site-shell.c\"}"
+    },
+    "reference": {
+      "status": "Deployment has failed — run this Vercel CLI command: npx vercel inspect dpl_G4KDuHqWxYaWchC8sWKCa7pVNUjQ --logs",
+      "targetUrl": "https://vercel.com/cairn10/state/G4KDuHqWxYaWchC8sWKCa7pVNUjQ",
+      "createdAt": "2026-10-12T02:28:54Z"
+    }
+  },
+  {
+    "id": "tastemake-check-dbf56af",
+    "kind": "real",
+    "signalType": "github-check",
+    "evidence": {
+      "project": "tastemake",
+      "environment": "production",
+      "branch": "main",
+      "commit": "dbf56afc5b3516d11c5127568fe149bc5f8efceb",
+      "signalType": "github-check",
+      "primary": "{\"failedChecks\":[{\"name\":\"test\",\"conclusion\":\"failure\",\"title\":\"\",\"summary\":\"\",\"url\":\"https://github.com/pedringt/tastemake/actions/runs/37030595281/job/110916165003\"}]}",
+      "followUp": "{\"commitMessage\":\"Style Taste Profile evidence summary\"}"
+    },
+    "reference": {
+      "workflow": "test",
+      "runUrl": "https://github.com/pedringt/tastemake/actions/runs/37030595281",
+      "createdAt": "2026-10-02T15:57:24Z",
+      "log": {
+        "job": "test",
+        "tail": "[tastemake-related] {\"wave\":\"first\",\"items\":1,\"ms\":0}\n[tastemake-related] {\"noveltyGuardMs\":0,\"eligible\":12,\"primary\":12}\n[tastemake-related] {\"domainCoverage\":true,\"anchorDomains\":[\"movies\"],\"candidateDomains\":[\"movies\"]}\n[tastemake-related] {\"provider\":\"tmdb\",\"ms\":0,\"results\":1}\n[tastemake-related] {\"provider\":\"openlibrary\",\"ms\":0,\"results\":1}\n[tastemake-related] {\"provider\":\"igdb\",\"ms\":1,\"results\":1}\n[tastemake-related] {\"wave\":\"first\",\"items\":3,\"ms\":1}\n[tastemake-related] {\"noveltyGuardMs\":0,\"eligible\":3,\"primary\":3}\n[tastemake-related] {\"domainCoverage\":true,\"anchorDomains\":[\"movies\",\"read\",\"play\"],\"candidateDomains\":[\"movies\",\"read\",\"play\"]}\n[tastemake-related] {\"provider\":\"openlibrary\",\"ms\":0,\"results\":1}\n[tastemake-related] {\"wave\":\"first\",\"items\":1,\"ms\":0}\n[tastemake-related] {\"noveltyGuardMs\":0,\"eligible\":1,\"primary\":1}\n[tastemake-related] {\"provider\":\"tmdb\",\"ms\":1,\"results\":1}\n[tastemake-related] {\"provider\":\"igdb\",\"ms\":0,\"results\":1}\n[tastemake-related] {\"provider\":\"openlibrary\",\"ms\":5,\"results\":0,\"errored\":true}\n[tastemake-related] {\"wave\":\"first\",\"items\":3,\"ms\":6}\n[tastemake-related] {\"noveltyGuardMs\":0,\"eligible\":2,\"primary\":2}\n[tastemake-related] {\"domainCoverage\":true,\"anchorDomains\":[\"movies\",\"read\",\"play\"],\"candidateDomains\":[\"movies\",\"play\"]}\n[tastemake-related] {\"provider\":\"tmdb\",\"ms\":0,\"results\":2}\n[tastemake-related] {\"wave\":\"first\",\"items\":1,\"ms\":0}\n[tastemake-related] {\"noveltyGuardMs\":0,\"eligible\":1,\"primary\":1}\ncatalog/AI tests: 91 passed, 1 failed\n  x Taste Profile prompt asks for a fuller 4-6 pattern set\n##[error]Process completed with exit code 1.\nPost job cleanup.\n[command]/usr/bin/git version\ngit version 2.55.0\nTemporarily overriding HOME='/home/runner/work/_temp/489a2394-f5ba-4f76-9a85-53f3c6993cad' before making global git config changes\nAdding repository directory to the temporary git global config as a safe directory\n[command]/usr/bin/git config --global --add safe.directory /home/runner/work/tastemake/tastemake\n[command]/usr/bin/git config --local --name-only --get-regexp core\\.sshCommand\n[command]/usr/bin/git submodule foreach --recursive sh -c \"git config --local --name-only --get-regexp 'core\\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :\"\n[command]/usr/bin/git config --local --name-only --get-regexp http\\.https\\:\\/\\/github\\.com\\/\\.extraheader\nhttp.https://github.com/.extraheader\n[command]/usr/bin/git config --local --unset-all http.https://github.com/.extraheader\n[command]/usr/bin/git submodule foreach --recursive sh -c \"git config --local --name-only --get-regexp 'http\\.https\\:\\/\\/github\\.com\\/\\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :\"\n[command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\\.gitdir:\n[command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url\nCleaning up orphan processes\n##[warning]Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: actions/checkout@v4, actions/setup-node@v4, browser-actions/setup-chrome@v1. For more information see: [external URL omitted]"
+      }
+    }
+  },
+  {
+    "id": "tastemake-check-ae6d36e",
+    "kind": "real",
+    "signalType": "github-check",
+    "evidence": {
+      "project": "tastemake",
+      "environment": "production",
+      "branch": "main",
+      "commit": "ae6d36e6756005b68bbe7955c433d2c90bbda000",
+      "signalType": "github-check",
+      "primary": "{\"failedChecks\":[{\"name\":\"test\",\"conclusion\":\"failure\",\"title\":\"\",\"summary\":\"\",\"url\":\"https://github.com/pedringt/tastemake/actions/runs/37030159850/job/110914681645\"}]}",
+      "followUp": "{\"commitMessage\":\"Compact Taste Profile supporting context\"}"
+    },
+    "reference": {
+      "workflow": "test",
+      "runUrl": "https://github.com/pedringt/tastemake/actions/runs/37030159850",
+      "createdAt": "2026-10-02T15:53:40Z",
+      "log": {
+        "job": "test",
+        "tail": "[tastemake-related] {\"wave\":\"first\",\"items\":1,\"ms\":0}\n[tastemake-related] {\"noveltyGuardMs\":0,\"eligible\":12,\"primary\":12}\n[tastemake-related] {\"domainCoverage\":true,\"anchorDomains\":[\"movies\"],\"candidateDomains\":[\"movies\"]}\n[tastemake-related] {\"provider\":\"tmdb\",\"ms\":0,\"results\":1}\n[tastemake-related] {\"provider\":\"openlibrary\",\"ms\":0,\"results\":1}\n[tastemake-related] {\"provider\":\"igdb\",\"ms\":1,\"results\":1}\n[tastemake-related] {\"wave\":\"first\",\"items\":3,\"ms\":1}\n[tastemake-related] {\"noveltyGuardMs\":0,\"eligible\":3,\"primary\":3}\n[tastemake-related] {\"domainCoverage\":true,\"anchorDomains\":[\"movies\",\"read\",\"play\"],\"candidateDomains\":[\"movies\",\"read\",\"play\"]}\n[tastemake-related] {\"provider\":\"openlibrary\",\"ms\":0,\"results\":1}\n[tastemake-related] {\"wave\":\"first\",\"items\":1,\"ms\":0}\n[tastemake-related] {\"noveltyGuardMs\":0,\"eligible\":1,\"primary\":1}\n[tastemake-related] {\"provider\":\"tmdb\",\"ms\":0,\"results\":1}\n[tastemake-related] {\"provider\":\"igdb\",\"ms\":0,\"results\":1}\n[tastemake-related] {\"provider\":\"openlibrary\",\"ms\":6,\"results\":0,\"errored\":true}\n[tastemake-related] {\"wave\":\"first\",\"items\":3,\"ms\":6}\n[tastemake-related] {\"noveltyGuardMs\":0,\"eligible\":2,\"primary\":2}\n[tastemake-related] {\"domainCoverage\":true,\"anchorDomains\":[\"movies\",\"read\",\"play\"],\"candidateDomains\":[\"movies\",\"play\"]}\n[tastemake-related] {\"provider\":\"tmdb\",\"ms\":0,\"results\":2}\n[tastemake-related] {\"wave\":\"first\",\"items\":1,\"ms\":0}\n[tastemake-related] {\"noveltyGuardMs\":0,\"eligible\":1,\"primary\":1}\ncatalog/AI tests: 91 passed, 1 failed\n  x Taste Profile prompt asks for a fuller 4-6 pattern set\n##[error]Process completed with exit code 1.\nPost job cleanup.\n[command]/usr/bin/git version\ngit version 2.55.0\nTemporarily overriding HOME='/home/runner/work/_temp/036863e1-ac24-4985-951b-797380226d52' before making global git config changes\nAdding repository directory to the temporary git global config as a safe directory\n[command]/usr/bin/git config --global --add safe.directory /home/runner/work/tastemake/tastemake\n[command]/usr/bin/git config --local --name-only --get-regexp core\\.sshCommand\n[command]/usr/bin/git submodule foreach --recursive sh -c \"git config --local --name-only --get-regexp 'core\\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :\"\n[command]/usr/bin/git config --local --name-only --get-regexp http\\.https\\:\\/\\/github\\.com\\/\\.extraheader\nhttp.https://github.com/.extraheader\n[command]/usr/bin/git config --local --unset-all http.https://github.com/.extraheader\n[command]/usr/bin/git submodule foreach --recursive sh -c \"git config --local --name-only --get-regexp 'http\\.https\\:\\/\\/github\\.com\\/\\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :\"\n[command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\\.gitdir:\n[command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url\nCleaning up orphan processes\n##[warning]Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: actions/checkout@v4, actions/setup-node@v4, browser-actions/setup-chrome@v1. For more information see: [external URL omitted]"
+      }
+    }
+  },
+  {
+    "id": "tastemake-check-7ba9d4e",
+    "kind": "real",
+    "signalType": "github-check",
+    "evidence": {
+      "project": "tastemake",
+      "environment": "production",
+      "branch": "main",
+      "commit": "7ba9d4ee69001e181c57130430398f7227be8742",
+      "signalType": "github-check",
+      "primary": "{\"failedChecks\":[{\"name\":\"test\",\"conclusion\":\"failure\",\"title\":\"\",\"summary\":\"\",\"url\":\"https://github.com/pedringt/tastemake/actions/runs/37028180663/job/110908033937\"}]}",
+      "followUp": "{\"commitMessage\":\"Make expanded Taste Map nodes fit cleanly\"}"
+    },
+    "reference": {
+      "workflow": "test",
+      "runUrl": "https://github.com/pedringt/tastemake/actions/runs/37028180663",
+      "createdAt": "2026-10-02T15:36:33Z",
+      "log": {
+        "job": "test",
+        "tail": "[tastemake-related] {\"wave\":\"first\",\"items\":1,\"ms\":0}\n[tastemake-related] {\"noveltyGuardMs\":1,\"eligible\":12,\"primary\":12}\n[tastemake-related] {\"domainCoverage\":true,\"anchorDomains\":[\"movies\"],\"candidateDomains\":[\"movies\"]}\n[tastemake-related] {\"provider\":\"tmdb\",\"ms\":0,\"results\":1}\n[tastemake-related] {\"provider\":\"openlibrary\",\"ms\":0,\"results\":1}\n[tastemake-related] {\"provider\":\"igdb\",\"ms\":0,\"results\":1}\n[tastemake-related] {\"wave\":\"first\",\"items\":3,\"ms\":0}\n[tastemake-related] {\"noveltyGuardMs\":0,\"eligible\":3,\"primary\":3}\n[tastemake-related] {\"domainCoverage\":true,\"anchorDomains\":[\"movies\",\"read\",\"play\"],\"candidateDomains\":[\"movies\",\"read\",\"play\"]}\n[tastemake-related] {\"provider\":\"openlibrary\",\"ms\":0,\"results\":1}\n[tastemake-related] {\"wave\":\"first\",\"items\":1,\"ms\":0}\n[tastemake-related] {\"noveltyGuardMs\":0,\"eligible\":1,\"primary\":1}\n[tastemake-related] {\"provider\":\"tmdb\",\"ms\":0,\"results\":1}\n[tastemake-related] {\"provider\":\"igdb\",\"ms\":1,\"results\":1}\n[tastemake-related] {\"provider\":\"openlibrary\",\"ms\":5,\"results\":0,\"errored\":true}\n[tastemake-related] {\"wave\":\"first\",\"items\":3,\"ms\":5}\n[tastemake-related] {\"noveltyGuardMs\":0,\"eligible\":2,\"primary\":2}\n[tastemake-related] {\"domainCoverage\":true,\"anchorDomains\":[\"movies\",\"read\",\"play\"],\"candidateDomains\":[\"movies\",\"play\"]}\n[tastemake-related] {\"provider\":\"tmdb\",\"ms\":0,\"results\":2}\n[tastemake-related] {\"wave\":\"first\",\"items\":1,\"ms\":0}\n[tastemake-related] {\"noveltyGuardMs\":0,\"eligible\":1,\"primary\":1}\ncatalog/AI tests: 91 passed, 1 failed\n  x Taste Profile prompt asks for a fuller 4-6 pattern set\n##[error]Process completed with exit code 1.\nPost job cleanup.\n[command]/usr/bin/git version\ngit version 2.55.0\nTemporarily overriding HOME='/home/runner/work/_temp/2aaf8c84-0fee-408c-8304-cfd13ad78888' before making global git config changes\nAdding repository directory to the temporary git global config as a safe directory\n[command]/usr/bin/git config --global --add safe.directory /home/runner/work/tastemake/tastemake\n[command]/usr/bin/git config --local --name-only --get-regexp core\\.sshCommand\n[command]/usr/bin/git submodule foreach --recursive sh -c \"git config --local --name-only --get-regexp 'core\\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :\"\n[command]/usr/bin/git config --local --name-only --get-regexp http\\.https\\:\\/\\/github\\.com\\/\\.extraheader\nhttp.https://github.com/.extraheader\n[command]/usr/bin/git config --local --unset-all http.https://github.com/.extraheader\n[command]/usr/bin/git submodule foreach --recursive sh -c \"git config --local --name-only --get-regexp 'http\\.https\\:\\/\\/github\\.com\\/\\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :\"\n[command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\\.gitdir:\n[command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url\nCleaning up orphan processes\n##[warning]Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: actions/checkout@v4, actions/setup-node@v4, browser-actions/setup-chrome@v1. For more information see: [external URL omitted]"
+      }
+    }
+  },
+  {
+    "id": "tastemake-check-8c37807",
+    "kind": "real",
+    "signalType": "github-check",
+    "evidence": {
+      "project": "tastemake",
+      "environment": "production",
+      "branch": "main",
+      "commit": "8c37807e22961c89006d199cddeab0823425d3df",
+      "signalType": "github-check",
+      "primary": "{\"failedChecks\":[{\"name\":\"test\",\"conclusion\":\"failure\",\"title\":\"\",\"summary\":\"\",\"url\":\"https://github.com/pedringt/tastemake/actions/runs/36954670687/job/110674885157\"}]}",
+      "followUp": "{\"commitMessage\":\"Polish public Tastemake language\"}"
+    },
+    "reference": {
+      "workflow": "test",
+      "runUrl": "https://github.com/pedringt/tastemake/actions/runs/36954670687",
+      "createdAt": "2026-10-02T02:14:03Z",
+      "log": {
+        "job": "test",
+        "tail": "[tastemake-related] {\"domainCoverage\":true,\"anchorDomains\":[\"movies\",\"tv\",\"read\",\"play\"],\"candidateDomains\":[\"movies\",\"tv\",\"read\",\"play\"]}\n[tastemake-related] {\"provider\":\"tmdb\",\"ms\":0,\"results\":0}\n[tastemake-related] {\"provider\":\"igdb\",\"ms\":0,\"results\":1}\n[tastemake-related] {\"wave\":\"first\",\"items\":2,\"ms\":0}\n[tastemake-related] {\"noveltyGuardMs\":0,\"eligible\":1,\"primary\":1}\n[tastemake-related] {\"domainCoverage\":true,\"anchorDomains\":[\"movies\",\"play\"],\"candidateDomains\":[\"play\"]}\n[tastemake-related] {\"provider\":\"igdb\",\"ms\":1,\"results\":12}\n[tastemake-related] {\"wave\":\"first\",\"items\":1,\"ms\":1}\n[tastemake-related] {\"noveltyGuardMs\":0,\"eligible\":12,\"primary\":12}\n[tastemake-related] {\"provider\":\"igdb\",\"ms\":0,\"results\":1}\n[tastemake-related] {\"wave\":\"first\",\"items\":1,\"ms\":0}\n[tastemake-related] {\"noveltyGuardMs\":0,\"eligible\":1,\"primary\":1}\n[tastemake-related] {\"provider\":\"igdb\",\"ms\":0,\"results\":1}\n[tastemake-related] {\"wave\":\"first\",\"items\":1,\"ms\":0}\n[tastemake-related] {\"noveltyGuardMs\":0,\"eligible\":1,\"primary\":1}\n[tastemake-related] {\"provider\":\"openlibrary\",\"ms\":1,\"results\":1}\n[tastemake-related] {\"provider\":\"openlibrary\",\"ms\":1,\"results\":1}\n[tastemake-related] {\"wave\":\"first\",\"items\":2,\"ms\":1}\n[tastemake-related] {\"noveltyGuardMs\":0,\"eligible\":2,\"primary\":2}\n  skipped live Open Library network case (set TASTEMAKE_LIVE_OPEN_LIBRARY=1 to run it)\ncandidate quality tests: 24 passed, 2 failed\n  x All retries a later TV anchor when the first wave has only movie candidates ([external URL omitted] | [external URL omitted] | [external URL omitted] | [external URL omitted]\n  x All returns both represented domains after that retry (movies,movies,movies,movies,movies,movies,movies,movies,movies,movies,movies,movies)\n##[error]Process completed with exit code 1.\nPost job cleanup.\n[command]/usr/bin/git version\ngit version 2.55.0\nTemporarily overriding HOME='/home/runner/work/_temp/21201a0f-18a6-40d2-ace9-7e10bb80c60c' before making global git config changes\nAdding repository directory to the temporary git global config as a safe directory\n[command]/usr/bin/git config --global --add safe.directory /home/runner/work/tastemake/tastemake\n[command]/usr/bin/git config --local --name-only --get-regexp core\\.sshCommand\n[command]/usr/bin/git submodule foreach --recursive sh -c \"git config --local --name-only --get-regexp 'core\\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :\"\n[command]/usr/bin/git config --local --name-only --get-regexp http\\.https\\:\\/\\/github\\.com\\/\\.extraheader\nhttp.https://github.com/.extraheader\n[command]/usr/bin/git config --local --unset-all http.https://github.com/.extraheader\n[command]/usr/bin/git submodule foreach --recursive sh -c \"git config --local --name-only --get-regexp 'http\\.https\\:\\/\\/github\\.com\\/\\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :\"\n[command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\\.gitdir:\n[command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url\nCleaning up orphan processes\n##[warning]Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: actions/checkout@v4, actions/setup-node@v4, browser-actions/setup-chrome@v1. For more information see: [external URL omitted]"
+      }
+    }
+  },
+  {
+    "id": "tastemake-check-a62c263",
+    "kind": "real",
+    "signalType": "github-check",
+    "evidence": {
+      "project": "tastemake",
+      "environment": "production",
+      "branch": "main",
+      "commit": "a62c263a7cd3a30e1358a54a5a06f0055a7bd2f0",
+      "signalType": "github-check",
+      "primary": "{\"failedChecks\":[{\"name\":\"test\",\"conclusion\":\"failure\",\"title\":\"\",\"summary\":\"\",\"url\":\"https://github.com/pedringt/tastemake/actions/runs/36951331532/job/110664717164\"}]}",
+      "followUp": "{\"commitMessage\":\"docs: refresh Tastemake README\"}"
+    },
+    "reference": {
+      "workflow": "test",
+      "runUrl": "https://github.com/pedringt/tastemake/actions/runs/36951331532",
+      "createdAt": "2026-10-02T01:31:21Z",
+      "log": {
+        "job": "test",
+        "tail": "[tastemake-related] {\"domainCoverage\":true,\"anchorDomains\":[\"movies\",\"tv\",\"read\",\"play\"],\"candidateDomains\":[\"movies\",\"tv\",\"read\",\"play\"]}\n[tastemake-related] {\"provider\":\"tmdb\",\"ms\":0,\"results\":0}\n[tastemake-related] {\"provider\":\"igdb\",\"ms\":0,\"results\":1}\n[tastemake-related] {\"wave\":\"first\",\"items\":2,\"ms\":0}\n[tastemake-related] {\"noveltyGuardMs\":0,\"eligible\":1,\"primary\":1}\n[tastemake-related] {\"domainCoverage\":true,\"anchorDomains\":[\"movies\",\"play\"],\"candidateDomains\":[\"play\"]}\n[tastemake-related] {\"provider\":\"igdb\",\"ms\":0,\"results\":12}\n[tastemake-related] {\"wave\":\"first\",\"items\":1,\"ms\":0}\n[tastemake-related] {\"noveltyGuardMs\":0,\"eligible\":12,\"primary\":12}\n[tastemake-related] {\"provider\":\"igdb\",\"ms\":0,\"results\":1}\n[tastemake-related] {\"wave\":\"first\",\"items\":1,\"ms\":0}\n[tastemake-related] {\"noveltyGuardMs\":0,\"eligible\":1,\"primary\":1}\n[tastemake-related] {\"provider\":\"igdb\",\"ms\":0,\"results\":1}\n[tastemake-related] {\"wave\":\"first\",\"items\":1,\"ms\":0}\n[tastemake-related] {\"noveltyGuardMs\":0,\"eligible\":1,\"primary\":1}\n[tastemake-related] {\"provider\":\"openlibrary\",\"ms\":0,\"results\":1}\n[tastemake-related] {\"provider\":\"openlibrary\",\"ms\":0,\"results\":1}\n[tastemake-related] {\"wave\":\"first\",\"items\":2,\"ms\":0}\n[tastemake-related] {\"noveltyGuardMs\":0,\"eligible\":2,\"primary\":2}\n  skipped live Open Library network case (set TASTEMAKE_LIVE_OPEN_LIBRARY=1 to run it)\ncandidate quality tests: 24 passed, 2 failed\n  x All retries a later TV anchor when the first wave has only movie candidates ([external URL omitted] | [external URL omitted] | [external URL omitted] | [external URL omitted]\n  x All returns both represented domains after that retry (movies,movies,movies,movies,movies,movies,movies,movies,movies,movies,movies,movies)\n##[error]Process completed with exit code 1.\nPost job cleanup.\n[command]/usr/bin/git version\ngit version 2.55.0\nTemporarily overriding HOME='/home/runner/work/_temp/2580c2c0-a566-4d6b-a38b-b3c58ba18a3d' before making global git config changes\nAdding repository directory to the temporary git global config as a safe directory\n[command]/usr/bin/git config --global --add safe.directory /home/runner/work/tastemake/tastemake\n[command]/usr/bin/git config --local --name-only --get-regexp core\\.sshCommand\n[command]/usr/bin/git submodule foreach --recursive sh -c \"git config --local --name-only --get-regexp 'core\\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :\"\n[command]/usr/bin/git config --local --name-only --get-regexp http\\.https\\:\\/\\/github\\.com\\/\\.extraheader\nhttp.https://github.com/.extraheader\n[command]/usr/bin/git config --local --unset-all http.https://github.com/.extraheader\n[command]/usr/bin/git submodule foreach --recursive sh -c \"git config --local --name-only --get-regexp 'http\\.https\\:\\/\\/github\\.com\\/\\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :\"\n[command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\\.gitdir:\n[command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url\nCleaning up orphan processes\n##[warning]Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: actions/checkout@v4, actions/setup-node@v4, browser-actions/setup-chrome@v1. For more information see: [external URL omitted]"
+      }
+    }
+  },
+  {
+    "id": "tastemake-check-ed8389c",
+    "kind": "real",
+    "signalType": "github-check",
+    "evidence": {
+      "project": "tastemake",
+      "environment": "production",
+      "branch": "main",
+      "commit": "ed8389c84d8f2139a0cffbfb65767bfe5b575d2b",
+      "signalType": "github-check",
+      "primary": "{\"failedChecks\":[{\"name\":\"test\",\"conclusion\":\"failure\",\"title\":\"\",\"summary\":\"\",\"url\":\"https://github.com/pedringt/tastemake/actions/runs/36811108053/job/110206140731\"}]}",
+      "followUp": "{\"commitMessage\":\"Preserve All-domain recommendations and clarify loading (#208)\\n\\n* Show branded skeletons for every recommendation load\\n\\n* Preserve represented domains through mixed retrieval\\n\\n* Cover all-domain anchors and domain-aware novelty\"}"
+    },
+    "reference": {
+      "workflow": "test",
+      "runUrl": "https://github.com/pedringt/tastemake/actions/runs/36811108053",
+      "createdAt": "2026-10-01T03:34:09Z",
+      "log": {
+        "job": "test",
+        "tail": "[tastemake-related] {\"domainCoverage\":true,\"anchorDomains\":[\"movies\",\"tv\",\"read\",\"play\"],\"candidateDomains\":[\"movies\",\"tv\",\"read\",\"play\"]}\n[tastemake-related] {\"provider\":\"tmdb\",\"ms\":0,\"results\":0}\n[tastemake-related] {\"provider\":\"igdb\",\"ms\":0,\"results\":1}\n[tastemake-related] {\"wave\":\"first\",\"items\":2,\"ms\":0}\n[tastemake-related] {\"noveltyGuardMs\":0,\"eligible\":1,\"primary\":1}\n[tastemake-related] {\"domainCoverage\":true,\"anchorDomains\":[\"movies\",\"play\"],\"candidateDomains\":[\"play\"]}\n[tastemake-related] {\"provider\":\"igdb\",\"ms\":1,\"results\":12}\n[tastemake-related] {\"wave\":\"first\",\"items\":1,\"ms\":1}\n[tastemake-related] {\"noveltyGuardMs\":0,\"eligible\":12,\"primary\":12}\n[tastemake-related] {\"provider\":\"igdb\",\"ms\":0,\"results\":1}\n[tastemake-related] {\"wave\":\"first\",\"items\":1,\"ms\":0}\n[tastemake-related] {\"noveltyGuardMs\":0,\"eligible\":1,\"primary\":1}\n[tastemake-related] {\"provider\":\"igdb\",\"ms\":0,\"results\":1}\n[tastemake-related] {\"wave\":\"first\",\"items\":1,\"ms\":0}\n[tastemake-related] {\"noveltyGuardMs\":0,\"eligible\":1,\"primary\":1}\n[tastemake-related] {\"provider\":\"openlibrary\",\"ms\":0,\"results\":1}\n[tastemake-related] {\"provider\":\"openlibrary\",\"ms\":0,\"results\":1}\n[tastemake-related] {\"wave\":\"first\",\"items\":2,\"ms\":0}\n[tastemake-related] {\"noveltyGuardMs\":0,\"eligible\":2,\"primary\":2}\n  skipped live Open Library network case (set TASTEMAKE_LIVE_OPEN_LIBRARY=1 to run it)\ncandidate quality tests: 24 passed, 2 failed\n  x All retries a later TV anchor when the first wave has only movie candidates ([external URL omitted] | [external URL omitted] | [external URL omitted] | [external URL omitted]\n  x All returns both represented domains after that retry (movies,movies,movies,movies,movies,movies,movies,movies,movies,movies,movies,movies)\n##[error]Process completed with exit code 1.\nPost job cleanup.\n[command]/usr/bin/git version\ngit version 2.55.0\nTemporarily overriding HOME='/home/runner/work/_temp/4c7fb1bc-4998-4ba5-974a-6d5e2a59be3c' before making global git config changes\nAdding repository directory to the temporary git global config as a safe directory\n[command]/usr/bin/git config --global --add safe.directory /home/runner/work/tastemake/tastemake\n[command]/usr/bin/git config --local --name-only --get-regexp core\\.sshCommand\n[command]/usr/bin/git submodule foreach --recursive sh -c \"git config --local --name-only --get-regexp 'core\\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :\"\n[command]/usr/bin/git config --local --name-only --get-regexp http\\.https\\:\\/\\/github\\.com\\/\\.extraheader\nhttp.https://github.com/.extraheader\n[command]/usr/bin/git config --local --unset-all http.https://github.com/.extraheader\n[command]/usr/bin/git submodule foreach --recursive sh -c \"git config --local --name-only --get-regexp 'http\\.https\\:\\/\\/github\\.com\\/\\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :\"\n[command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\\.gitdir:\n[command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url\nCleaning up orphan processes\n##[warning]Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: actions/checkout@v4, actions/setup-node@v4, browser-actions/setup-chrome@v1. For more information see: [external URL omitted]"
+      }
+    }
+  },
+  {
+    "id": "tastemake-vercel-7e1192e",
+    "kind": "real",
+    "signalType": "vercel",
+    "evidence": {
+      "project": "tastemake",
+      "environment": "production",
+      "branch": "main",
+      "commit": "7e1192e3546098537727101704c7da509c2680b2",
+      "signalType": "vercel",
+      "primary": "{\"failedDeploymentStatus\":{\"context\":\"Vercel\",\"description\":\"Deployment rate limited — retry in 24 hours.\",\"state\":\"failure\",\"target\":\"https://vercel.com/cairn10\"}}",
+      "followUp": "No matching Vercel deployment details were available.\n{\"commitMessage\":\"Phone nav: five onboarding tabs fit at 390px; layout check starts first-run (#232)\\n\\nThe 390px layout check's \\\".stepper runs off the page\\\" on Favorites and\\nBrowse was a real overflow that the check only saw some of the time.\\n\\nCause: during onboarding the nav shows all five tabs (Favorites and Browse\\nhide once onboarding is done, #117). At 390px they measured 401px against\\n372px of room, so Library sat off the right edge of a scroller with no\\nvisible scrollbar: every new phone user had a hidden de\"}"
+    },
+    "reference": {
+      "status": "Deployment rate limited — retry in 24 hours.",
+      "targetUrl": "https://vercel.com/cairn10",
+      "createdAt": "2026-10-11T04:13:14Z"
+    }
+  },
+  {
+    "id": "tastemake-vercel-e837067",
+    "kind": "real",
+    "signalType": "vercel",
+    "evidence": {
+      "project": "tastemake",
+      "environment": "production",
+      "branch": "main",
+      "commit": "e83706730679801a8a4e80c932887e07219e5c72",
+      "signalType": "vercel",
+      "primary": "{\"failedDeploymentStatus\":{\"context\":\"Vercel\",\"description\":\"Deployment rate limited — retry in 24 hours.\",\"state\":\"failure\",\"target\":\"https://vercel.com/cairn10\"}}",
+      "followUp": "No matching Vercel deployment details were available.\n{\"commitMessage\":\"Profile level: starter favorites are not tried evidence (#231)\\n\\nallowedLevel counted starter favorites as tried things, so a cold-start\\nprofile citing only favorites could be allowed \\\"supported\\\" (one favorite)\\nor \\\"strong\\\" (three), where the evidence contract allows \\\"emerging\\\":\\n\\\"Nothing the user tried has tested it yet\\\". It passed only because the\\nmodels chose \\\"emerging\\\". #229 fixed the same question for cross-domain;\\nboth caps now count support through one shared triedRecords() filter.\\nStarter f\"}"
+    },
+    "reference": {
+      "status": "Deployment rate limited — retry in 24 hours.",
+      "targetUrl": "https://vercel.com/cairn10",
+      "createdAt": "2026-10-11T04:13:07Z"
+    }
+  },
+  {
+    "id": "tastemake-vercel-ed8389c",
+    "kind": "real",
+    "signalType": "vercel",
+    "evidence": {
+      "project": "tastemake",
+      "environment": "production",
+      "branch": "main",
+      "commit": "ed8389c84d8f2139a0cffbfb65767bfe5b575d2b",
+      "signalType": "vercel",
+      "primary": "{\"failedDeploymentStatus\":{\"context\":\"Vercel\",\"description\":\"Deployment was blocked\",\"state\":\"failure\",\"target\":\"https://vercel.com/cairn10/tastemake/FGvNT6jiTEZESA4icmceUd7piyrr\"}}",
+      "followUp": "No matching Vercel deployment details were available.\n{\"commitMessage\":\"Preserve All-domain recommendations and clarify loading (#208)\\n\\n* Show branded skeletons for every recommendation load\\n\\n* Preserve represented domains through mixed retrieval\\n\\n* Cover all-domain anchors and domain-aware novelty\"}"
+    },
+    "reference": {
+      "status": "Deployment was blocked",
+      "targetUrl": "https://vercel.com/cairn10/tastemake/FGvNT6jiTEZESA4icmceUd7piyrr",
+      "createdAt": "2026-10-01T03:34:11Z"
+    }
+  },
+  {
+    "id": "narc-check-c7d64fd",
+    "kind": "real",
+    "signalType": "github-check",
+    "evidence": {
+      "project": "narc",
+      "environment": "production",
+      "branch": "main",
+      "commit": "c7d64fd48177f2f4adae5d4f6bed6cf058fc22aa",
+      "signalType": "github-check",
+      "primary": "{\"failedChecks\":[{\"name\":\"test\",\"conclusion\":\"failure\",\"title\":\"\",\"summary\":\"\",\"url\":\"https://github.com/pedringt/narc/actions/runs/37216401668/job/111477686203\"}]}",
+      "followUp": "{\"commitMessage\":\"Merge pull request #110 from pedringt/playtest-oct2-agency-pacing-pass\\n\\nPlaytest pass: more agency, stronger NARC pressure, tighter afternoon\"}"
+    },
+    "reference": {
+      "workflow": "quality checks",
+      "runUrl": "https://github.com/pedringt/narc/actions/runs/37216401668",
+      "createdAt": "2026-10-04T16:20:27Z",
+      "log": {
+        "job": "test",
+        "tail": "##[endgroup]\nNARC tests passed\n##[group]Run node test-day.mjs\n\u001b[36;1mnode test-day.mjs\u001b[0m\nshell: /usr/bin/bash -e {0}\n##[endgroup]\nnode:internal/modules/run_main:107\n    triggerUncaughtException(\n    ^\nAssertionError [ERR_ASSERTION]: The expression evaluated to a falsy value:\n  assert.ok(s.log.some((e) => e.kind === 'narc' && /midmorning pattern check/i.test(e.text)))\n    at file:///home/runner/work/narc/narc/test-day.mjs:72:10\n    at ModuleJob.run (node:internal/modules/esm/module_job:561:25)\n    at async node:internal/modules/esm/loader:647:26\n    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5) {\n  generatedMessage: true,\n  code: 'ERR_ASSERTION',\n  actual: false,\n  expected: true,\n  operator: '==',\n  diff: 'simple'\n}\nNode.js v24.21.0\n##[error]Process completed with exit code 1.\nPost job cleanup.\n[command]/usr/bin/git version\ngit version 2.55.0\nTemporarily overriding HOME='/home/runner/work/_temp/5c31997b-da05-413c-9323-451e6987cd65' before making global git config changes\nAdding repository directory to the temporary git global config as a safe directory\n[command]/usr/bin/git config --global --add safe.directory /home/runner/work/narc/narc\n[command]/usr/bin/git config --local --name-only --get-regexp core\\.sshCommand\n[command]/usr/bin/git submodule foreach --recursive sh -c \"git config --local --name-only --get-regexp 'core\\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :\"\n[command]/usr/bin/git config --local --name-only --get-regexp http\\.https\\:\\/\\/github\\.com\\/\\.extraheader\nhttp.https://github.com/.extraheader\n[command]/usr/bin/git config --local --unset-all http.https://github.com/.extraheader\n[command]/usr/bin/git submodule foreach --recursive sh -c \"git config --local --name-only --get-regexp 'http\\.https\\:\\/\\/github\\.com\\/\\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :\"\n[command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\\.gitdir:\n[command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url\nCleaning up orphan processes\n##[warning]Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: actions/checkout@v4, actions/setup-node@v4. For more information see: [external URL omitted]"
+      }
+    }
+  },
+  {
+    "id": "narc-vercel-17f5f73",
+    "kind": "real",
+    "signalType": "vercel",
+    "evidence": {
+      "project": "narc",
+      "environment": "production",
+      "branch": "main",
+      "commit": "17f5f73bafe2186cd52f161aa88eba22df263512",
+      "signalType": "vercel",
+      "primary": "{\"failedDeploymentStatus\":{\"context\":\"Vercel\",\"description\":\"Deployment rate limited — retry in 24 hours.\",\"state\":\"failure\",\"target\":\"https://vercel.com/cairn10\"}}",
+      "followUp": "No matching Vercel deployment details were available.\n{\"commitMessage\":\"Merge pull request #73 from pedringt/qa-feedback-sept24c\\n\\nQA pass: reversible Focus Time, keepalive gating, browser polish, pacing\"}"
+    },
+    "reference": {
+      "status": "Deployment rate limited — retry in 24 hours.",
+      "targetUrl": "https://vercel.com/cairn10",
+      "createdAt": "2026-09-25T00:03:57Z"
+    }
+  },
+  {
+    "id": "narc-vercel-70a3e90",
+    "kind": "real",
+    "signalType": "vercel",
+    "evidence": {
+      "project": "narc",
+      "environment": "production",
+      "branch": "main",
+      "commit": "70a3e90c4c88a408dafdce01d9f517973e9b0014",
+      "signalType": "vercel",
+      "primary": "{\"failedDeploymentStatus\":{\"context\":\"Vercel\",\"description\":\"Deployment rate limited — retry in 24 hours.\",\"state\":\"failure\",\"target\":\"https://vercel.com/cairn10\"}}",
+      "followUp": "No matching Vercel deployment details were available.\n{\"commitMessage\":\"Merge pull request #72 from pedringt/day-prototype-onto-main\\n\\nAdd single-workday core-loop prototype at /day.html (#66-#69)\"}"
+    },
+    "reference": {
+      "status": "Deployment rate limited — retry in 24 hours.",
+      "targetUrl": "https://vercel.com/cairn10",
+      "createdAt": "2026-09-24T23:45:17Z"
+    }
+  },
+  {
+    "id": "narc-vercel-7b7150b",
+    "kind": "real",
+    "signalType": "vercel",
+    "evidence": {
+      "project": "narc",
+      "environment": "production",
+      "branch": "main",
+      "commit": "7b7150b536fe48408f057618aba5b9b59b0ee293",
+      "signalType": "vercel",
+      "primary": "{\"failedDeploymentStatus\":{\"context\":\"Vercel\",\"description\":\"Deployment rate limited — retry in 24 hours.\",\"state\":\"failure\",\"target\":\"https://vercel.com/cairn10\"}}",
+      "followUp": "No matching Vercel deployment details were available.\n{\"commitMessage\":\"Cover stale focus feedback cleanup\"}"
+    },
+    "reference": {
+      "status": "Deployment rate limited — retry in 24 hours.",
+      "targetUrl": "https://vercel.com/cairn10",
+      "createdAt": "2026-09-24T21:18:11Z"
+    }
+  },
+  {
+    "id": "narc-vercel-6a48f3e",
+    "kind": "real",
+    "signalType": "vercel",
+    "evidence": {
+      "project": "narc",
+      "environment": "production",
+      "branch": "main",
+      "commit": "6a48f3e391efe3b07a5643c1355681501760e092",
+      "signalType": "vercel",
+      "primary": "{\"failedDeploymentStatus\":{\"context\":\"Vercel\",\"description\":\"Deployment rate limited — retry in 24 hours.\",\"state\":\"failure\",\"target\":\"https://vercel.com/cairn10\"}}",
+      "followUp": "No matching Vercel deployment details were available.\n{\"commitMessage\":\"Clear stale focus reaction when switching back to Busy\"}"
+    },
+    "reference": {
+      "status": "Deployment rate limited — retry in 24 hours.",
+      "targetUrl": "https://vercel.com/cairn10",
+      "createdAt": "2026-09-24T21:17:59Z"
+    }
+  }
+]
