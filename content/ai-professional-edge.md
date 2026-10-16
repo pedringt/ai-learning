@@ -60,7 +60,7 @@ AI can query the right data and still reach the wrong business conclusion if ter
 
 ### Treat persistent agents as standing product roles
 
-Persistent agents hold a role, keep context, use approved tools, and continue work across sessions. Durable AI Knowledge has the full framework for scoping an ongoing worker; what changes in implementation is that everything now has a lifespan. Decide how long memory lives, which access recurs, which tool permissions persist, how long authority stays valid, when it expires or must be renewed, how it is revoked, and how long-running execution checkpoints and stops. Permissions that make sense for a short task may be too broad for a worker that can keep acting indefinitely.
+Persistent agents hold a role, keep context, use approved tools, and continue work across sessions. The implementation question is lifespan: how long memory, access, permissions, and authority persist; when they expire or require renewal; who can revoke them; and how long-running work checkpoints and stops. Permissions that make sense for a short task may be too broad for a worker that can keep acting indefinitely.
 
 **Ask:** What does this worker remember and for how long, when does its authority expire, and who can revoke it?
 
@@ -153,7 +153,7 @@ Show the minimum useful explanation by default, then allow deeper inspection: st
 
 ### Generate inside a stable UI shell
 
-Generative UI does not have to mean inventing a new interface on every request. A more controlled pattern is designed components plus generated content or configuration: the AI picks which approved card is relevant, fills recommendations into an established component, chooses from approved visualizations, or updates task status without rearranging the application. That keeps consistency, accessibility, orientation, testability, and product control.
+Generative UI does not have to mean inventing a new interface on every request. A more controlled pattern is designed components plus generated content or configuration: the AI picks which approved card is relevant, fills recommendations into an established component, chooses from approved visualizations, or updates task status without rearranging the application. That preserves consistency, accessibility, testability, and user orientation.
 
 **Ask:** Which parts benefit from generation, and which should remain predictable?
 
