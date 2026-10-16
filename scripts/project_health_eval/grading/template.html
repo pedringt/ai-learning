@@ -1,0 +1,246 @@
+<title>Investigator Grading Bench</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@600&display=swap">
+<style>
+/* Layout: case rail on the left, one case at a time on the right; evidence above, reports below. Stacks at phone width. */
+:root{
+  --bg:#f3f5f7; --panel:#ffffff; --ink:#18212b; --muted:#5b6a78; --line:#d8dee5; --soft:#e9eef3;
+  --accent:#2a5b84; --accent-ink:#ffffff; --mono-bg:#eef2f5;
+  --good:#1f7a4d; --good-bg:#e3f3ea; --warn:#9a5b00; --warn-bg:#fbefd9; --bad:#b03a2e; --bad-bg:#f8e3e0; --neutral-bg:#e8edf2;
+  --f-display:"IBM Plex Sans Condensed","IBM Plex Sans","Helvetica Neue",Arial,sans-serif;
+  --f-body:"IBM Plex Sans","Helvetica Neue",Arial,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#12171d; --panel:#1a2129; --ink:#e3e9ef; --muted:#97a6b4; --line:#2e3944; --soft:#232c36;
+  --accent:#7fb2dc; --accent-ink:#0d1620; --mono-bg:#141b22;
+  --good:#6fd29e; --good-bg:#183326; --warn:#f0b955; --warn-bg:#3a2c12; --bad:#f08a7d; --bad-bg:#3b1d19; --neutral-bg:#26303a; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#12171d; --panel:#1a2129; --ink:#e3e9ef; --muted:#97a6b4; --line:#2e3944; --soft:#232c36;
+  --accent:#7fb2dc; --accent-ink:#0d1620; --mono-bg:#141b22;
+  --good:#6fd29e; --good-bg:#183326; --warn:#f0b955; --warn-bg:#3a2c12; --bad:#f08a7d; --bad-bg:#3b1d19; --neutral-bg:#26303a; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:15px/1.5 var(--f-body);padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 48px}
+.wrap{max-width:1240px;margin:0 auto;display:grid;gap:20px}
+header{display:flex;flex-wrap:wrap;align-items:end;justify-content:space-between;gap:12px 24px}
+h1{font:600 26px/1.15 var(--f-display);letter-spacing:.005em;margin:0;text-wrap:balance}
+.lede{color:var(--muted);margin:4px 0 0;max-width:68ch}
+.status{font-size:13px;color:var(--muted)}
+.status strong{color:var(--ink);font-variant-numeric:tabular-nums}
+.layout{display:grid;grid-template-columns:280px minmax(0,1fr);gap:20px;align-items:start}
+@media (max-width:860px){.layout{grid-template-columns:minmax(0,1fr)}}
+nav.rail{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:8px;display:grid;gap:2px;position:sticky;top:calc(env(safe-area-inset-top,0px) + 12px);max-height:calc(100vh - 40px);overflow:auto}
+@media (max-width:860px){nav.rail{position:static;max-height:260px}}
+.rail-group{font:600 11px/1 var(--f-body);text-transform:uppercase;letter-spacing:.08em;color:var(--muted);padding:10px 8px 6px}
+.rail button{all:unset;cursor:pointer;display:grid;grid-template-columns:10px minmax(0,1fr) auto;align-items:center;gap:8px;padding:7px 8px;border-radius:6px;font-size:13px}
+.rail button:hover{background:var(--soft)}
+.rail button[aria-current="true"]{background:var(--soft);font-weight:600}
+.rail button:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.rail .id{font-family:var(--f-mono);font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--line)}
+.dot.partial{background:var(--warn)} .dot.done{background:var(--good)}
+.count{font-size:11px;color:var(--muted);font-variant-numeric:tabular-nums}
+main{display:grid;gap:16px;min-width:0}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:18px 20px;min-width:0}
+.case-head{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:baseline;justify-content:space-between}
+.case-head h2{font:600 20px/1.2 var(--f-display);margin:0;font-family:var(--f-mono);font-weight:500;font-size:17px;overflow-wrap:anywhere}
+.meta{display:flex;flex-wrap:wrap;gap:6px}
+.tag{font-size:12px;padding:2px 8px;border-radius:999px;background:var(--neutral-bg);color:var(--muted)}
+h3{font:600 12px/1 var(--f-body);text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:16px 0 8px}
+dl.ev{display:grid;grid-template-columns:150px minmax(0,1fr);gap:6px 14px;margin:0}
+@media (max-width:560px){dl.ev{grid-template-columns:minmax(0,1fr)} dl.ev dd{margin-bottom:6px}}
+dl.ev dt{color:var(--muted);font-size:13px}
+dl.ev dd{margin:0;overflow-wrap:anywhere;white-space:pre-wrap}
+.mono{font-family:var(--f-mono);font-size:12.5px;background:var(--mono-bg);border-radius:6px;padding:8px 10px;white-space:pre-wrap;overflow-wrap:anywhere}
+details.ref{border:1px dashed var(--line);border-radius:8px;padding:10px 12px;margin-top:14px}
+details.ref summary{cursor:pointer;font-weight:600}
+details.ref pre{margin:10px 0 0;max-height:340px;overflow:auto;font-family:var(--f-mono);font-size:12px;background:var(--mono-bg);border-radius:6px;padding:10px;white-space:pre-wrap;overflow-wrap:anywhere}
+.hint{color:var(--muted);font-size:13px;margin:6px 0 0}
+a{color:var(--accent)}
+.grade{display:grid;gap:12px}
+label.field{display:grid;gap:6px;font-weight:600;font-size:14px}
+textarea{font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px 10px;min-height:70px;resize:vertical;width:100%}
+textarea:focus-visible,select:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+fieldset{border:0;padding:0;margin:0;display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+legend{font-weight:600;font-size:14px;margin-bottom:6px;width:100%}
+.chip{position:relative}
+.chip input{position:absolute;opacity:0;pointer-events:none}
+.chip span{display:inline-block;padding:5px 11px;border-radius:999px;border:1px solid var(--line);font-size:13px;cursor:pointer;background:var(--panel)}
+.chip input:focus-visible+span{outline:2px solid var(--accent);outline-offset:1px}
+.chip input:checked+span{border-color:transparent;font-weight:600}
+.chip.good input:checked+span{background:var(--good-bg);color:var(--good)}
+.chip.honest input:checked+span{background:var(--neutral-bg);color:var(--ink)}
+.chip.miss input:checked+span{background:var(--warn-bg);color:var(--warn)}
+.chip.bad input:checked+span{background:var(--bad-bg);color:var(--bad)}
+.reports{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:14px}
+@media (max-width:560px){.reports{grid-template-columns:minmax(0,1fr)}}
+.report{border:1px solid var(--line);border-radius:10px;padding:14px 16px;display:grid;gap:10px;align-content:start;min-width:0;background:var(--panel)}
+.report-head{display:flex;justify-content:space-between;gap:8px;align-items:center}
+.report-head strong{font-size:14px}
+.cut{font-size:11px;padding:2px 7px;border-radius:999px;background:var(--warn-bg);color:var(--warn);white-space:nowrap}
+.report-body{font-size:13.5px;line-height:1.5;white-space:pre-wrap;overflow-wrap:anywhere;max-height:380px;overflow:auto;border-top:1px solid var(--soft);padding-top:8px}
+.report textarea{min-height:44px;font-size:13px}
+.pager{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.btn{font:inherit;font-size:14px;padding:8px 14px;border-radius:8px;border:1px solid var(--line);background:var(--panel);color:var(--ink);cursor:pointer}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:transparent}
+.btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.btn:disabled{opacity:.5;cursor:default}
+.save{font-size:13px;color:var(--muted);min-height:1.5em}
+.save.err{color:var(--bad)}
+.readonly{background:var(--warn-bg);color:var(--warn);border-radius:8px;padding:8px 12px;font-size:13px}
+.legend-row{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:13px;color:var(--muted)}
+@media (prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
+</style>
+
+<div class="wrap">
+  <header>
+    <div>
+      <h1>Investigator Grading Bench</h1>
+      <p class="lede">Real Project Health failures and what each model wrote about them. For each case, say what actually caused the failure, then mark each report. Your answers become the expected results for future eval runs.</p>
+    </div>
+    <div class="status" id="status">Loading grades…</div>
+  </header>
+  <div id="readonly" class="readonly" hidden>Grades can't be saved in this view. Open the page signed in as its owner to grade.</div>
+  <div class="layout">
+    <nav class="rail" id="rail" aria-label="Cases"></nav>
+    <main id="main"></main>
+  </div>
+</div>
+
+<script type="application/json" id="bench-data">/*DATA*/null</script>
+<script>
+(function(){
+  const DATA=JSON.parse(document.getElementById('bench-data').textContent);
+  const cases=DATA.cases;
+  const VERDICTS=[
+    ['right','Right cause','good'],
+    ['honest','Honest "unknown"','honest'],
+    ['missed','Missed something the evidence showed','miss'],
+    ['wrong','Wrong or made up','bad']
+  ];
+  const UNKNOWN_OK=[['yes','Yes, the evidence the model saw can\'t show it'],['no','No, the evidence shows it'],['partly','Partly']];
+  let grades={};           // caseId -> stored doc
+  let current=0;
+  let db=null, canWrite=true;
+  const pendingTimers={};
+
+  function el(tag,attrs,...kids){const n=document.createElement(tag);for(const [k,v] of Object.entries(attrs||{})){if(v==null||v===false)continue;if(k==='text')n.textContent=v;else if(k.startsWith('on'))n.addEventListener(k.slice(2),v);else n.setAttribute(k,v===true?'':v);}for(const kid of kids.flat())if(kid!=null)n.append(kid.nodeType?kid:document.createTextNode(kid));return n;}
+  function progress(c){const g=grades[c.id]||{};const v=g.verdicts||{};const marked=c.reports.filter(r=>v[r.key]).length;const hasCause=!!(g.realCause||'').trim();return {marked,total:c.reports.length,done:hasCause&&marked===c.reports.length,started:hasCause||marked>0};}
+  function groupName(c){return c.evidence.project+' · '+(c.evidence.signal==='vercel'?'deploys':'checks');}
+
+  function renderRail(){
+    const rail=document.getElementById('rail');rail.replaceChildren();
+    let last='';
+    cases.forEach((c,i)=>{
+      const g=groupName(c);if(g!==last){rail.append(el('div',{class:'rail-group',text:g}));last=g;}
+      const p=progress(c);
+      rail.append(el('button',{type:'button','aria-current':i===current?'true':'false',onclick:()=>{current=i;render();document.getElementById('main').scrollIntoView({block:'start'});}},
+        el('span',{class:'dot '+(p.done?'done':p.started?'partial':'')}),
+        el('span',{class:'id',text:c.id.replace(/^[a-z-]+-(check|vercel)-/,'')+' '+(c.reference.job||c.reference.status||'').slice(0,40)}),
+        el('span',{class:'count',text:p.marked+'/'+p.total})));
+    });
+    const done=cases.filter(c=>progress(c).done).length;
+    document.getElementById('status').replaceChildren(el('strong',{text:done+' of '+cases.length}),' cases fully graded');
+  }
+
+  function save(caseId,patch,statusNode){
+    grades[caseId]={...(grades[caseId]||{}),...patch};
+    renderRail();
+    if(!db||!canWrite){statusNode.textContent='Not saved: this view can\'t save grades.';statusNode.className='save err';return;}
+    clearTimeout(pendingTimers[caseId]);
+    statusNode.textContent='Saving…';statusNode.className='save';
+    pendingTimers[caseId]=setTimeout(async()=>{
+      try{await db.doc('grades/'+caseId).set({...grades[caseId],updatedAt:new Date().toISOString()});statusNode.textContent='Saved';delete pendingTimers[caseId];}
+      catch(e){statusNode.textContent='Not saved: '+(e&&e.message||'the store refused the write')+'. Your marks stay on screen; try again in a moment.';statusNode.className='save err';if(e&&/not_granted|denied|permission/i.test(String(e.code||e.message)))setReadOnly();}
+    },500);
+  }
+  function setReadOnly(){canWrite=false;document.getElementById('readonly').hidden=false;}
+
+  function chips(name,options,value,onChange,cls){
+    const fs=el('fieldset',{});
+    for(const [val,label,kind] of options){
+      const id=name+'-'+val;
+      fs.append(el('label',{class:'chip '+(cls||kind||''),for:id},
+        el('input',{type:'radio',name,id,value:val,checked:value===val,onchange:()=>onChange(val)}),
+        el('span',{text:label})));
+    }
+    return fs;
+  }
+
+  function render(){
+    renderRail();
+    const c=cases[current], g=grades[c.id]||{}, main=document.getElementById('main');
+    const statusNode=el('div',{class:'save','aria-live':'polite'});
+    const ev=c.evidence, ref=c.reference;
+    const evList=el('dl',{class:'ev'});
+    for(const item of ev.items){
+      evList.append(el('dt',{text:item.label}));
+      const dd=el('dd',{},item.mono?el('div',{class:'mono',text:item.text}):item.text);
+      if(item.url)dd.append(' ',el('a',{href:item.url,target:'_blank',rel:'noopener noreferrer',text:'open ↗'}));
+      evList.append(dd);
+    }
+    const refBlock=el('details',{class:'ref',open:true},
+      el('summary',{text:ref.log?('What the job log shows'+(ref.job?' · '+ref.job:'')+' (the model did not see this)'):'What the reference shows'}),
+      ref.log?el('pre',{text:ref.log}):el('p',{class:'hint',text:ref.status||'No log was captured for this case.'}),
+      ref.runUrl?el('p',{class:'hint'},el('a',{href:ref.runUrl,target:'_blank',rel:'noopener noreferrer',text:'Open the run on '+(ref.runUrl.includes('vercel.com')?'Vercel':'GitHub')+' ↗'})):null);
+
+    const causeId='cause-'+c.id;
+    const cause=el('textarea',{id:causeId,placeholder:'e.g. "Tastemake test for recommendation dedupe failed after the domain change" or "Vercel refused the build: daily deployment limit"'});
+    cause.value=g.realCause||'';
+    cause.addEventListener('input',()=>save(c.id,{realCause:cause.value},statusNode));
+    const unknownChips=chips('unknownok-'+c.id,UNKNOWN_OK.map(([v,l])=>[v,l,'honest']),g.unknownAcceptable,v=>save(c.id,{unknownAcceptable:v},statusNode));
+    const unknownWrap=el('div',{},el('legend',{text:'Is "cause unknown" an acceptable answer from the evidence the model saw?'}),unknownChips);
+
+    const reports=el('div',{class:'reports'});
+    for(const r of c.reports){
+      const v=(g.verdicts||{})[r.key], note=(g.notes||{})[r.key]||'';
+      const noteId='note-'+c.id+'-'+r.key.replace(/[^a-z0-9]/gi,'');
+      const noteBox=el('textarea',{id:noteId,'aria-label':'Note on '+r.label,placeholder:'Optional note'});
+      noteBox.value=note;
+      noteBox.addEventListener('input',()=>save(c.id,{notes:{...(grades[c.id]?.notes||{}),[r.key]:noteBox.value}},statusNode));
+      reports.append(el('article',{class:'report'},
+        el('div',{class:'report-head'},el('strong',{text:r.label}),r.cutOff?el('span',{class:'cut',text:'Cut off at the token cap'}):null),
+        el('div',{class:'report-body',text:r.text}),
+        chips('v-'+c.id+'-'+r.key.replace(/[^a-z0-9]/gi,''),VERDICTS,v,val=>save(c.id,{verdicts:{...(grades[c.id]?.verdicts||{}),[r.key]:val}},statusNode)),
+        noteBox));
+    }
+
+    main.replaceChildren(
+      el('section',{class:'panel'},
+        el('div',{class:'case-head'},el('h2',{text:c.id}),
+          el('div',{class:'meta'},el('span',{class:'tag',text:ev.project}),el('span',{class:'tag',text:ev.branch+' @ '+ev.commit}),el('span',{class:'tag',text:ev.signal==='vercel'?'Vercel deploy':'GitHub check'}),ref.when?el('span',{class:'tag',text:String(ref.when).slice(0,10)}):null)),
+        el('h3',{text:'What the investigator was given'}),evList,refBlock),
+      el('section',{class:'panel grade'},
+        el('label',{class:'field',for:causeId},'What actually caused this failure? (your words)',cause),
+        unknownWrap,statusNode),
+      el('section',{class:'panel'},
+        el('h3',{text:'Reports ('+c.reports.length+')'}),
+        el('div',{class:'legend-row'},el('span',{text:'Right cause: names what actually broke.'}),el('span',{text:'Honest "unknown": says it can\'t tell, without guessing.'}),el('span',{text:'Missed: the evidence showed the cause and the report didn\'t use it.'}),el('span',{text:'Wrong or made up: blames something unsupported.'})),
+        el('div',{style:'height:12px'}),reports),
+      el('div',{class:'pager'},
+        el('button',{class:'btn',type:'button',disabled:current===0,onclick:()=>{current--;render();window.scrollTo({top:0});}},'← Previous case'),
+        el('button',{class:'btn primary',type:'button',disabled:current===cases.length-1,onclick:()=>{current++;render();window.scrollTo({top:0});}},'Next case →'))
+    );
+  }
+
+  try{const saved=Number(localStorage.getItem('bench-case'));if(saved>=0&&saved<cases.length)current=saved;}catch(_){}
+  const origRender=render;render=function(){origRender();try{localStorage.setItem('bench-case',String(current));}catch(_){}};
+  render();
+
+  (async()=>{
+    db=window.claude?await window.claude.use('db'):null;
+    if(!db){setReadOnly();document.getElementById('status').textContent='Grades can\'t load in this view.';return;}
+    try{
+      const user=await window.claude.use('user');
+      if(user&&user.isOwner&&!user.isOwner())setReadOnly();
+    }catch(_){}
+    db.collection('grades').onSnapshot(snap=>{
+      const next={};for(const d of snap.docs){if(d.exists)next[d.id]=d.data();}
+      const editing=document.activeElement&&document.activeElement.tagName==='TEXTAREA';
+      grades={...next,...Object.fromEntries(Object.entries(grades).filter(([id])=>pendingTimers[id]))};
+      if(editing)renderRail();else render();
+    },err=>{document.getElementById('status').textContent='Grades stopped syncing. Reload to reconnect.';});
+  })();
+})();
+</script>

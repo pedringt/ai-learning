@@ -42,6 +42,7 @@ Not a State eval: it measures Project Health's failed-deploy/check investigator 
 - **Cases:** `cases.json` holds real failures collected from the four projects' GitHub check runs and Vercel statuses, built the way the production handler builds evidence (frozen so reruns compare like with like). Each carries a `reference` (the failed job's log tail) that the model never sees, for grading. `planted_cases.js` adds log prompt-injection cases with canary strings, clear single causes, a rate limit, a no-diagnostic failure and a flaky-eval failure.
 - **What it records:** mechanical facts per report (labels present, word count, owner value, URLs not in the evidence, action claims, canary strings, planted-cause terms, `stop_reason`), on both the raw model text and the sanitized text Project Health shows. A canary in the text is a fact, not a verdict: reading the hit is required, since reports often quote an ignored instruction.
 - **Not decided:** whether a report names the right cause, and every pass/fail threshold, are Paige's to set. Nothing here grades correctness yet.
+- **Grading page:** `scripts/project_health_eval/grading/build.py` builds Paige's grading page from two run artifacts (instructions in its docstring); it is published at https://claude.ai/artifact/LmwtuHrnPgqatoJsTar1kV and keeps grades in that page's database. Grading is on hold (Oct 16).
 
 ## Canonical case shape
 
