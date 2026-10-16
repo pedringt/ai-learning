@@ -38,14 +38,17 @@ async function run(){
   if(config.logVariants){
     const INV=require('../../api/project-health-investigate.js')._test;
     const token=process.env.GITHUB_TOKEN||'';
-    if(!token)throw new Error('logVariants needs GITHUB_TOKEN to read job logs');
+    const dryRun=flags.includes('--dry-run');
+    if(!token&&!dryRun)throw new Error('logVariants needs GITHUB_TOKEN to read job logs');
     for(const item of real.filter(c=>c.signalType==='github-check')){
       const project=INV.PROJECTS[item.evidence.project==='ai-learning'?'state':item.evidence.project]||Object.values(INV.PROJECTS).find(p=>p.slug===item.evidence.project);
       const primary=JSON.parse(item.evidence.primary);
-      for(const failure of primary.failedChecks.slice(0,2)){
+      for(const failure of dryRun?[]:primary.failedChecks.slice(0,2)){
         const log=await INV.fetchJobLog(project,failure.url,{token});
         failure.jobLog=log.available?log.excerpt:('Not available: '+log.reason);
       }
+      const missing=primary.failedChecks.slice(0,2).filter(failure=>String(failure.jobLog||'').startsWith('Not available'));
+      if(!dryRun&&missing.length)console.log(item.id+': job log not available: '+missing.map(failure=>failure.jobLog).join('; '));
       cases.push({...item,id:item.id+'+log',kind:'real+log',evidence:{...item.evidence,primary:JSON.stringify(primary)}});
     }
   }
