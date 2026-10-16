@@ -4,7 +4,7 @@
 
 Durable principles live in Durable AI Knowledge. Day-to-day efficiency habits live in the Efficient AI Use for Product Work cheat sheet. This page stays closer to current patterns, tools, vocabulary, and techniques that may change.
 
-<!-- edge-review: 2026-10-09 -->
+<!-- edge-review: 2026-10-16 -->
 
 ---
 
@@ -60,17 +60,28 @@ AI can query the right data and still reach the wrong business conclusion if ter
 
 ### Treat persistent agents as standing product roles
 
-AI products are increasingly moving from one-off interactions toward persistent agents that can hold a role, retain relevant context, use approved tools, and continue work across sessions. That turns product design from a single prompt and response into an ongoing workflow.
+Persistent agents hold a role, keep context, use approved tools, and continue work across sessions. Durable AI Knowledge has the full framework for scoping an ongoing worker; what changes in implementation is that everything now has a lifespan. Decide how long memory lives, which access recurs, which tool permissions persist, how long authority stays valid, when it expires or must be renewed, how it is revoked, and how long-running execution checkpoints and stops. Permissions that make sense for a short task may be too broad for a worker that can keep acting indefinitely.
 
-Scope the role explicitly: its goal, context and memory, tools, authority, execution rules, observability, evaluation, human intervention, and how long its authority should remain valid. Permissions that make sense for a short task may be too broad for a worker that can keep acting indefinitely.
+**Ask:** What does this worker remember and for how long, when does its authority expire, and who can revoke it?
 
-**Ask:** When does a repeated workflow deserve a standing AI worker? What does it own, remember, access, and need approval for? How long does that authority last, and when should it expire or be renewed?
+### Make orchestration earn its complexity
+
+Multi-agent and dynamic workflows can split difficult work across isolated contexts or specialist workers and recombine the results. They can also multiply cost, latency, debugging difficulty, and coordination failures.
+
+Start with the simplest viable workflow. Compare deterministic, single-agent, and orchestrated approaches on representative tasks, and add parallelism or sub-agents only when the evidence shows a meaningful improvement.
+
+**Ask:** What does this additional agent or branch improve, and how will we know the improvement is worth the extra cost and failure modes?
 
 ### Implement reversible autonomy with explicit triggers
 
-For low-consequence actions that are genuinely reversible, an AI system can sometimes act first and keep checking whether the evidence supporting that action still holds. If later evidence contradicts the earlier judgment, the system can reverse or compensate for its own action instead of waiting for a person to notice.
+For low-consequence actions that are genuinely reversible, define four things before the system acts on its own:
 
-The stronger pattern is not just automatic rollback. A system can also revoke its own authority when its reliability drops, then route similar future actions back to human review. Irreversible or high-consequence actions should still require approval before they happen.
+- **Reversal trigger:** what later evidence means the action should no longer stand.
+- **Compensating action:** how the effect is undone while keeping the audit trail.
+- **Revocation rule:** what drop in reliability removes the system's authority to act alone.
+- **Fallback:** similar future actions route to human review until that authority is restored.
+
+Test each path, including a real reversal. A rollback that has never run is an assumption, not a control. Irreversible or high-consequence actions still need approval before they happen.
 
 **Ask:** Which actions are safe to reverse automatically, what evidence should trigger reversal, and when should the system lose the authority to act on its own?
 
@@ -104,12 +115,6 @@ Identify who receives user reports, who investigates an AI behavior issue, and w
 
 **Ask:** Who responds when the AI is wrong but the service is technically healthy?
 
-### Test the UX around uncertainty
-
-Try ambiguous requests, missing sources, incorrect assumptions, and actions requiring approval. Check whether the interface asks, distinguishes draft from completed work, and lets the person correct course.
-
-**Ask:** Can users tell what happened and recover without understanding the implementation?
-
 ### Check data-handling boundaries before connecting tools
 
 Map sensitive fields, source trust, third-party processing, retention, and logs. Test whether untrusted retrieved text tries to override instructions or permissions.
@@ -122,6 +127,36 @@ Measure whether teams actually complete work better, whether review queues grow,
 
 **Ask:** Does this improve the whole workflow after the initial demonstration?
 
+### Search production behavior by meaning
+
+Operational dashboards catch errors, latency, and outages. AI products also fail semantically: unsupported claims, user frustration, wrong-tool use, policy violations, sensitive-data exposure, incomplete work, or technically successful runs that solved the wrong problem. Observability tools increasingly let teams search, classify, or evaluate traces by these behaviors without predefining every failure mode as a structured field.
+
+**Product habit:** Turn recurring semantic failure patterns into saved searches, monitors, and regression evals.
+
+---
+
+## AI Interface Patterns
+
+How AI activity, uncertainty, and generated content show up to the person using the product.
+
+### Test the UX around uncertainty
+
+Try ambiguous requests, missing sources, incorrect assumptions, and actions requiring approval. Check whether the interface asks, distinguishes draft from completed work, and lets the person correct course.
+
+**Ask:** Can users tell what happened and recover without understanding the implementation?
+
+### Use progressive disclosure for AI activity
+
+Show the minimum useful explanation by default, then allow deeper inspection: status and outcome, understandable activity, evidence and sources, actions and tool use, then specialist traces and logs.
+
+**Ask:** What does this person need to see to trust, correct, or investigate the result?
+
+### Generate inside a stable UI shell
+
+Generative UI does not have to mean inventing a new interface on every request. A more controlled pattern is designed components plus generated content or configuration: the AI picks which approved card is relevant, fills recommendations into an established component, chooses from approved visualizations, or updates task status without rearranging the application. That keeps consistency, accessibility, orientation, testability, and product control.
+
+**Ask:** Which parts benefit from generation, and which should remain predictable?
+
 ---
 
 ## Tools & Systems Worth Knowing
@@ -132,6 +167,10 @@ Useful examples of how current AI products are solving recurring product and arc
 
 - [**TypeSafe AI · Jev**](https://typesafe.ai/blog/introducing-system-one-models-and-jev) — Specialized model for fast, typed decisions such as classification, routing, scoring, and escalation.
 - [**Astra for Law**](https://help.openai.com/en/articles/20001528-astra-for-law) — Vertical AI combining a general model with legal data, domain instructions, plugins, and cited-source review.
+
+### Evaluation and observability
+
+- [**LangSmith AI Search**](https://www.langchain.com/blog/agent-traces-ai-search-langsmith) — Searches production traces by described behavior, such as user frustration or sensitive-data leakage, that conventional filters and full-text search struggle to find.
 
 ### Memory, context, and business knowledge
 
@@ -153,6 +192,7 @@ Useful examples of how current AI products are solving recurring product and arc
 ### Agent tooling and deployment patterns
 
 - [**Vercel Plugin for Coding Agents**](https://vercel.com/changelog/introducing-vercel-plugin-for-coding-agents) — Loads current platform knowledge and specialized skills dynamically instead of stuffing everything into one prompt.
+- [**Anthropic Managed Agents · dynamic workflows**](https://platform.claude.com/docs/en/managed-agents/multiagent-orchestration) — Runtime orchestration where the lead agent writes a program that splits work across sub-agents and coordinates the results. A useful reference for adaptive multi-agent systems, and a reminder to set budgets and weigh orchestration cost.
 - [**Vercel AI SDK 7**](https://vercel.com/blog/ai-sdk-7) — Reference for approvals, durable execution, sandboxes, telemetry, provider flexibility, and realtime voice.
 - [**Tenable CyberAgents Exchange AI Inspector**](https://www.tenable.com/blog/ai-agent-security-openai-tenable-cyberagents-exchange-inspector) — Evaluates community-built agents, skills, MCP servers, and playbooks before deployment.
 - [**SoundHound OASYS Edge**](https://www.soundhound.com/resource/introducing-oasys-edge) — Example of local, cloud, or hybrid voice deployment based on latency, privacy, connectivity, and cost.
@@ -176,10 +216,13 @@ Useful examples of how current AI products are solving recurring product and arc
 - **Context isolation:** Giving a subtask only the context it needs.
 - **Compaction:** Compressing older context so long-running work can continue; treat the summary as persisted state.
 - **Execution boundary:** The line between what AI may interpret or decide and what trusted software or people may actually change. For consequential actions, fail closed when permission or policy cannot be verified.
+- **Dynamic orchestration:** Letting an AI system decide at runtime how work is split, delegated, sequenced, or recombined, rather than following a fixed workflow.
 - **Fan-out / fan-in:** Split one problem into focused parallel branches, then merge the results.
 - **Semantic layer:** Shared definitions and relationships that keep business data meaning consistent.
 - **Trace / span:** A trace is the full recorded run; a span is one operation inside it.
+- **Semantic observability:** Inspecting and monitoring the meaning and behavior of AI runs, not only technical metrics such as latency or errors.
 - **Silent quality failure:** The software works technically, but the AI still misunderstands the goal, uses the wrong tool, or gives an unacceptable result.
+- **Generative UI:** An interface where AI helps choose or populate the presentation a task needs. Prefer bounded components and predictable interaction patterns over unrestricted interface generation.
 - **Headless architecture:** Data, rules, permissions, and actions are accessible independently of the original UI while the source system still owns the rules.
 - **Behavioral canary:** A small set of critical eval cases run regularly to detect meaningful behavior drift.
 - **Blast radius:** How much harm a failure could cause before someone notices and stops it.
@@ -191,9 +234,10 @@ Useful examples of how current AI products are solving recurring product and arc
 ## Questions I'm Adding to My Toolkit
 
 1. Where does this workflow actually break, and is the cause missing facts, the wrong procedure, or the process itself?
-2. If a multi-step agent fails, where did the first bad step occur and how will the workflow recover?
-3. Which business definitions must be fixed before AI analyzes the data?
-4. Can the model or provider change without rebuilding the authoritative workflow, and how will we know if behavior changes underneath us?
-5. If this were a standing AI worker, what would it own, remember, access, need approval for, and how long should that authority last?
-6. What evidence would we need before moving this from pilot to a standard workflow?
-7. Which autonomous actions are truly reversible, what should trigger automatic reversal, and when should the system lose that authority?
+2. What does orchestration improve enough to justify its extra cost and failure surface?
+3. Which meaningful failures could happen while the software still reports healthy, and how would we trace one back to its first bad step?
+4. Which business definitions must be fixed before AI analyzes the data?
+5. Can the model or provider change without rebuilding the authoritative workflow, and how will we know if behavior changes underneath us?
+6. If this were a standing AI worker, what would it own, remember, and access, how long should its authority last, and what should trigger reversal or revocation?
+7. What should remain predictable in the interface even when AI-generated content changes?
+8. What evidence would we need before moving this from pilot to a standard workflow?
