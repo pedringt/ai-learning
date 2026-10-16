@@ -204,3 +204,40 @@ A consequential note that silently produces no Review is a trust failure: eviden
 
 **Revisit when**  
 It misses twice in a row, or misses in more than one run out of ten. That would be a real change in how the model treats terse consequential notes, and needs a look at the prompt or the consequentiality eval, not a softer gate.
+
+### DEC-011 — Project Health's investigator gets a 900-token report cap and failed job-log excerpts
+
+**Status:** Settled  
+**Date:** 2026-10-16  
+**Related:** `api/project-health-investigate.js`; `scripts/project_health_eval/`; eval runs 38961088400 and 38964340745; DATA_PRIVACY.md (Project Health)
+
+**Decision**  
+The investigator's output cap goes from 450 to 900 tokens, and it reads a bounded, redacted excerpt of each of the first two failed GitHub Actions job logs. Paige approved both on Oct 16.
+
+**Why**  
+At 450 tokens, 14 of 58 production Haiku reports stopped before the end, usually losing Owner or Confidence; with job logs it was 24 of 39. At 900 none did, at the same cost per report and response time. Without logs the investigator only saw an empty check title and summary, and said the cause was unknown on 24 of 26 real check failures; with logs, reports cite the concrete failing line, though most still hedge.
+
+**Rejected / deferred**  
+Switching to Sonnet or Opus (about 20× and 45× the cost per report, slower, and Sonnet was cut off on 38 of 58 at 450). Whether job logs make reports more correct is not settled: that waits on Paige's grades in the investigator grading page. Tastemake's logs carry deliberate test-noise lines the excerpt can pick up.
+
+**Revisit when**  
+Paige's grades show the job-log reports are wrong or misleading more often than the reports without logs.
+
+### DEC-012 — Project Health's paid actions stay open to anyone for now
+
+**Status:** Revisit if condition changes  
+**Date:** 2026-10-16  
+**Related:** RISKS.md R-020; DATA_PRIVACY.md (Project Health)
+
+**Decision**  
+Anyone who can open the Project Health dashboard may start an investigation or a State eval run, including on the public production site. Paige accepted this on Oct 16.
+
+**Why**  
+Each investigation is one capped Haiku call (a fraction of a cent) and only runs while a project has a current failure; a State eval run is about 23 Haiku calls with a 10-minute cooldown. Locking them would mean building an access path for a cost that is currently negligible.
+
+**Rejected / deferred**  
+Locking both to staging and protected previews; an admin key for investigations; a per-failure cache.
+
+**Revisit when**  
+Spend from these endpoints shows up unexpectedly, or the dashboard gets traffic beyond portfolio reviewers.
+

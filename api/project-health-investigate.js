@@ -5,7 +5,8 @@ const TEAM_ID='team_UxrzvAczWhPiXlO3nvWPAu5b';
 const MODEL='claude-haiku-5-5';
 const MAX_BODY_BYTES=2000;
 const MAX_EVIDENCE_CHARS=8000;
-const MAX_OUTPUT_TOKENS=450;
+// 900 since Oct 16 (DEC-011): at 450 about 1 report in 4, and most with job logs, stopped before Owner/Confidence.
+const MAX_OUTPUT_TOKENS=900;
 // Opus 5.5 cannot turn thinking off; its low-effort thinking needs room on top of the report.
 const OPUS_THINKING_HEADROOM=8000;
 const PROJECTS={
