@@ -251,6 +251,10 @@ def run_review_quality_scenario(scenario: ReviewInterpretationScenario, provider
                 for row in connection.execute(
                     f"SELECT operation, state_item_id, status, supersedes_proposal_id FROM proposed_state_changes "
                     f"WHERE review_id IN ({placeholders}) ORDER BY created_at, id", tuple(review_ids)).fetchall())
+            proposal_rows += " | affected: " + ",".join(
+                row["state_item_id"] for row in connection.execute(
+                    f"SELECT state_item_id FROM review_state_items WHERE review_id IN ({placeholders})",
+                    tuple(review_ids)).fetchall())
         error = ""
         if process_result.processing_status == "failed":
             # The pipeline stores why it failed on the interpretation record; keep it so the report
