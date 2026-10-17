@@ -1,6 +1,8 @@
 """Provider-neutral model adapter for State Ask."""
 from __future__ import annotations
 
+from model_request_options import request_options
+
 import json
 import re
 import time
@@ -321,9 +323,7 @@ class LiveAskProvider:
             started = time.perf_counter()
             with self._anthropic_client().messages.stream(
                 model=self.model_identifier,
-                max_tokens=ASK_ONE_CALL_MAX_TOKENS,
-                thinking={"type": "disabled"},
-                output_config={"format": {"type": "json_schema", "schema": ONE_CALL_ASK_JSON_SCHEMA}},
+                **request_options(self.model_identifier, ASK_ONE_CALL_MAX_TOKENS, {"format": {"type": "json_schema", "schema": ONE_CALL_ASK_JSON_SCHEMA}}),
                 messages=[{"role": "user", "content": prompt}],
             ) as stream:
                 for text in stream.text_stream:
@@ -362,9 +362,7 @@ class LiveAskProvider:
             started = time.perf_counter()
             message = self._anthropic_client().messages.create(
                 model=self.model_identifier,
-                max_tokens=max_tokens,
-                thinking={"type": "disabled"},
-                output_config={"format": {"type": "json_schema", "schema": schema}},
+                **request_options(self.model_identifier, max_tokens, {"format": {"type": "json_schema", "schema": schema}}),
                 messages=[{"role": "user", "content": prompt}],
             )
             self._capture_call_metrics(started, getattr(message, "usage", None))

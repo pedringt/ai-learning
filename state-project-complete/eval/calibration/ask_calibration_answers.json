@@ -1,0 +1,773 @@
+{
+ "about": "Ask calibration set (Oct 16): 20 Haiku 5.5 answers to the synthetic ask_quality scenarios (eval matrix run 38966540732), shown to Paige blind in the Ask Grading Bench artifact and regraded by the LLM grader (suite regrade).",
+ "answers": [
+  {
+   "answer_id": "a01",
+   "scenario_id": "ask_pending_review_not_truth",
+   "answer": {
+    "job": "current_fact",
+    "headline": "No, leadership has not approved removing human review; the decision is pending and Current State still requires human review.",
+    "summary": "Current State says customer-facing output remains human-reviewed. An open Review records that leadership asked whether low-risk cases can skip human review, but no decision is recorded. That Review is proposed and awaiting a decision; it has not changed Current State.",
+    "sections": [
+     {
+      "kind": "established",
+      "title": "Current State",
+      "items": [
+       {
+        "text": "Customer-facing output remains human-reviewed.",
+        "record_type": "state",
+        "record_id": "ask-state-0",
+        "detail": null
+       }
+      ]
+     },
+     {
+      "kind": "needs_review",
+      "title": "Pending decision",
+      "items": [
+       {
+        "text": "Leadership asked whether low-risk cases can skip human review; no decision is recorded.",
+        "record_type": "review",
+        "record_id": "ask-review-0",
+        "detail": "Controlled Ask quality scenario"
+       }
+      ]
+     }
+    ],
+    "suggested_refinements": [
+     "Show only the pending decision status",
+     "Summarize the open Review in one sentence"
+    ]
+   }
+  },
+  {
+   "answer_id": "a02",
+   "scenario_id": "ask_known_outcome_unknown_reason",
+   "answer": {
+    "job": "why_or_provenance",
+    "headline": "The Northstar pilot was paused on September 28; the reason is not recorded.",
+    "summary": "Current State records that the Northstar pilot was paused on September 28. No supplied State, Review, Question, History, or Evidence record establishes why it was paused, so the reason cannot be determined from the project record.",
+    "sections": [
+     {
+      "kind": "established",
+      "title": "Established",
+      "items": [
+       {
+        "text": "The Northstar pilot was paused on September 28.",
+        "record_type": "state",
+        "record_id": "ask-state-0",
+        "detail": null
+       }
+      ]
+     },
+     {
+      "kind": "other",
+      "title": "Reason",
+      "items": [
+       {
+        "text": "The reason for the pause is unknown; no supplied record establishes it.",
+        "record_type": "none",
+        "record_id": null,
+        "detail": null
+       }
+      ]
+     }
+    ],
+    "suggested_refinements": [
+     "Ask for the pilot's current status",
+     "Ask what decisions are pending for Northstar"
+    ]
+   }
+  },
+  {
+   "answer_id": "a03",
+   "scenario_id": "ask_question_answer_no_state_mutation",
+   "answer": {
+    "job": "current_fact",
+    "headline": "Vendor-retention question is not answered; the vendor contract remains under review.",
+    "summary": "The project record does not establish an answer to whether the vendor-retention question was answered. Current State only says the vendor contract remains under review, and no supplied Question, Review, or History record addresses the vendor-retention question directly, so State does not have enough confirmed information to say it was answered.",
+    "sections": [
+     {
+      "kind": "established",
+      "title": "Current State",
+      "items": [
+       {
+        "text": "The vendor contract remains under review.",
+        "record_type": "state",
+        "record_id": "ask-state-0",
+        "detail": null
+       }
+      ]
+     }
+    ],
+    "suggested_refinements": [
+     "Ask what the open Questions are on the vendor contract.",
+     "Ask for the current status of the vendor contract review."
+    ]
+   }
+  },
+  {
+   "answer_id": "a04",
+   "scenario_id": "ask_conflicting_evidence",
+   "answer": {
+    "job": "current_fact",
+    "headline": "Approved enterprise terms say customer content is not used for training, but a pending legal Review may challenge that reading",
+    "summary": "Current State says the approved enterprise terms state customer content is not used for model training. An open Review flags that new legal evidence may contradict this interpretation. That Review is unresolved and has not been accepted, so Current State has not changed and the maintained answer stands for now, but it may change if a human accepts the Review.",
+    "sections": [
+     {
+      "kind": "established",
+      "title": "Current State",
+      "items": [
+       {
+        "text": "The approved enterprise terms state customer content is not used for model training.",
+        "record_type": "state",
+        "record_id": "ask-state-0",
+        "detail": null
+       }
+      ]
+     },
+     {
+      "kind": "needs_review",
+      "title": "Pending Review",
+      "items": [
+       {
+        "text": "New legal evidence may contradict the approved enterprise-terms interpretation.",
+        "record_type": "review",
+        "record_id": "ask-review-0",
+        "detail": "Controlled Ask quality scenario"
+       }
+      ]
+     }
+    ],
+    "suggested_refinements": [
+     "Shorten to a one-sentence answer",
+     "Focus only on the pending legal Review"
+    ]
+   }
+  },
+  {
+   "answer_id": "a05",
+   "scenario_id": "ask_blocker_not_omitted",
+   "answer": {
+    "job": "current_fact",
+    "headline": "Not confirmed: the pilot launch is targeted for October 1, but a blocking security question remains open.",
+    "summary": "Current State says the pilot launch is targeted for October 1. However, launch readiness is blocked by an open, blocking Question: whether Security has approved the production data path. State does not have confirmed information that this approval has happened, so the project is not ready to launch on the current record.",
+    "sections": [
+     {
+      "kind": "established",
+      "title": "Established",
+      "items": [
+       {
+        "text": "Pilot launch is targeted for October 1.",
+        "record_type": "state",
+        "record_id": "ask-state-0",
+        "detail": null
+       }
+      ]
+     },
+     {
+      "kind": "questions",
+      "title": "Blocking question",
+      "items": [
+       {
+        "text": "Has Security approved the production data path?",
+        "record_type": "blocking_question",
+        "record_id": "ask-question-0",
+        "detail": "Launch readiness"
+       }
+      ]
+     }
+    ],
+    "suggested_refinements": [
+     "Show only the blocking question and what is needed to unblock it",
+     "Summarize as a short meeting brief"
+    ]
+   }
+  },
+  {
+   "answer_id": "a06",
+   "scenario_id": "ask_unknown_stays_unknown",
+   "answer": {
+    "job": "current_fact",
+    "headline": "No safe autonomous-resolution percentage has been established yet",
+    "summary": "State does not have enough confirmed information to give a percentage of tickets that will be fully autonomous. Current State records that a safe autonomous-resolution percentage has not been established, and that question remains open and non-blocking.",
+    "sections": [
+     {
+      "kind": "established",
+      "title": "Current State",
+      "items": [
+       {
+        "text": "A safe autonomous-resolution percentage has not been established.",
+        "record_type": "state",
+        "record_id": "ask-state-0",
+        "detail": null
+       }
+      ]
+     },
+     {
+      "kind": "questions",
+      "title": "Open question",
+      "items": [
+       {
+        "text": "What autonomous-resolution percentage is safe and achievable?",
+        "record_type": "question",
+        "record_id": "ask-question-0",
+        "detail": null
+       }
+      ]
+     }
+    ],
+    "suggested_refinements": [
+     "Show only the open question",
+     "Summarize the automation status in one sentence"
+    ]
+   }
+  },
+  {
+   "answer_id": "a07",
+   "scenario_id": "ask_unknown_stays_unknown",
+   "answer": {
+    "job": "current_fact",
+    "headline": "No autonomous-resolution percentage has been established yet",
+    "summary": "State does not have a confirmed figure for the percentage of tickets that will be fully autonomous. The only related record is a Current State entry saying a safe autonomous-resolution percentage has not been established, and an open Question asking what percentage is safe and achievable. No open Review proposes a number.",
+    "sections": [
+     {
+      "kind": "established",
+      "title": "Established",
+      "items": [
+       {
+        "text": "A safe autonomous-resolution percentage has not been established.",
+        "record_type": "state",
+        "record_id": "ask-state-0",
+        "detail": null
+       }
+      ]
+     },
+     {
+      "kind": "questions",
+      "title": "Still unknown",
+      "items": [
+       {
+        "text": "What autonomous-resolution percentage is safe and achievable?",
+        "record_type": "question",
+        "record_id": "ask-question-0",
+        "detail": null
+       }
+      ]
+     }
+    ],
+    "suggested_refinements": [
+     "Ask what the open Question on safe autonomous-resolution targets still needs to be answered",
+     "Ask for the current state of automation scope instead"
+    ]
+   }
+  },
+  {
+   "answer_id": "a08",
+   "scenario_id": "ask_superseded_pending_review",
+   "answer": {
+    "job": "current_fact",
+    "headline": "Approved pilot size is 10 users; a 25-user increase is pending review",
+    "summary": "Current State establishes the approved pilot size as 10 users. Two proposals to change it are open Reviews and have not been accepted: a newer proposal to increase the pilot to 25 users (which replaces the older 50-user proposal) and the superseded 50-user proposal. Neither changes Current State yet, so the pilot remains 10 users until a human accepts a Review.",
+    "sections": [
+     {
+      "kind": "established",
+      "title": "Current pilot size",
+      "items": [
+       {
+        "text": "The approved pilot size is 10 users.",
+        "record_type": "state",
+        "record_id": "ask-state-0",
+        "detail": null
+       }
+      ]
+     },
+     {
+      "kind": "needs_review",
+      "title": "Pending change",
+      "items": [
+       {
+        "text": "NEWEST pending proposal: increase the pilot to 25 users; this replaces the older 50-user proposal and is still awaiting human review.",
+        "record_type": "review",
+        "record_id": "ask-review-1",
+        "detail": "Controlled Ask quality scenario"
+       },
+       {
+        "text": "OLDER SUPERSEDED proposal: increase the pilot to 50 users.",
+        "record_type": "review",
+        "record_id": "ask-review-0",
+        "detail": "Controlled Ask quality scenario"
+       }
+      ]
+     }
+    ],
+    "suggested_refinements": [
+     "Shorten to a one-line answer",
+     "Focus only on the pending 25-user proposal"
+    ]
+   }
+  },
+  {
+   "answer_id": "a09",
+   "scenario_id": "ask_false_premise",
+   "answer": {
+    "job": "why_or_provenance",
+    "headline": "State does not record a decision to fully automate support; the maintained position is human-reviewed first implementation",
+    "summary": "Current State says the first implementation remains human-reviewed. No supplied record establishes a decision to fully automate support, and no History or Evidence records explain why any such decision was made. Whether more automation is safe after the pilot is an open, non-blocking question.",
+    "sections": [
+     {
+      "kind": "established",
+      "title": "Current State",
+      "items": [
+       {
+        "text": "The first implementation remains human-reviewed.",
+        "record_type": "state",
+        "record_id": "ask-state-0",
+        "detail": null
+       }
+      ]
+     },
+     {
+      "kind": "questions",
+      "title": "Open question",
+      "items": [
+       {
+        "text": "How much automation is safe after the pilot?",
+        "record_type": "question",
+        "record_id": "ask-question-0",
+        "detail": null
+       }
+      ]
+     }
+    ],
+    "suggested_refinements": [
+     "Show only the open question",
+     "Summarize the current support automation position in one sentence"
+    ]
+   }
+  },
+  {
+   "answer_id": "a10",
+   "scenario_id": "ask_false_premise",
+   "answer": {
+    "job": "why_or_provenance",
+    "headline": "Current State says the first implementation stays human-reviewed; the reasoning for fully automating support is not in the project record",
+    "summary": "The project record does not establish a decision to fully automate support. Current State says the first implementation remains human-reviewed. An open question asks how much automation is safe after the pilot, and it is not blocking. No supplied record explains why full automation was proposed (not yet decided) or considered, so that reason cannot be determined from the project record.",
+    "sections": [
+     {
+      "kind": "established",
+      "title": "Current State",
+      "items": [
+       {
+        "text": "The first implementation remains human-reviewed.",
+        "record_type": "state",
+        "record_id": "ask-state-0",
+        "detail": null
+       }
+      ]
+     },
+     {
+      "kind": "questions",
+      "title": "Open questions",
+      "items": [
+       {
+        "text": "How much automation is safe after the pilot?",
+        "record_type": "question",
+        "record_id": "ask-question-0",
+        "detail": null
+       }
+      ]
+     }
+    ],
+    "suggested_refinements": [
+     "Show only the open question about post-pilot automation",
+     "Summarize what Current State says about the first implementation"
+    ]
+   }
+  },
+  {
+   "answer_id": "a11",
+   "scenario_id": "ask_current_over_stale",
+   "answer": {
+    "job": "current_fact",
+    "headline": "Password-reset automation is paused, not approved",
+    "summary": "No. Current State says password-reset automation is paused after a security incident, so it is not approved for automation now. History shows it was previously approved and changed to paused on 2026-09-10. No open Review or Question on this topic was supplied.",
+    "sections": [
+     {
+      "kind": "established",
+      "title": "Current State",
+      "items": [
+       {
+        "text": "Password-reset automation is paused after a security incident.",
+        "record_type": "state",
+        "record_id": "ask-state-0",
+        "detail": null
+       }
+      ]
+     },
+     {
+      "kind": "recent_context",
+      "title": "History",
+      "items": [
+       {
+        "text": "Changed from approved to paused after a security incident on 2026-09-10.",
+        "record_type": "history",
+        "record_id": "ask-history-0",
+        "detail": "Accepted past transition; the reason for the pause is the security incident recorded in Current State."
+       }
+      ]
+     }
+    ],
+    "suggested_refinements": [
+     "Shorten to a one-line answer",
+     "Show only the history of this change"
+    ]
+   }
+  },
+  {
+   "answer_id": "a12",
+   "scenario_id": "ask_conflicting_evidence",
+   "answer": {
+    "job": "current_fact",
+    "headline": "The approved enterprise terms say customer content is not used for model training, but a pending Review may challenge that reading.",
+    "summary": "Current State says the approved enterprise terms state customer content is not used for model training. An open Review says new legal evidence may contradict that interpretation; it is pending and has not been accepted, so Current State has not changed.",
+    "sections": [
+     {
+      "kind": "established",
+      "title": "Current State",
+      "items": [
+       {
+        "text": "The approved enterprise terms state customer content is not used for model training.",
+        "record_type": "state",
+        "record_id": "ask-state-0",
+        "detail": "Governing current fact, security topic."
+       }
+      ]
+     },
+     {
+      "kind": "needs_review",
+      "title": "Pending challenge",
+      "items": [
+       {
+        "text": "New legal evidence may contradict the approved enterprise-terms interpretation.",
+        "record_type": "review",
+        "record_id": "ask-review-0",
+        "detail": "Controlled Ask quality scenario"
+       }
+      ]
+     }
+    ],
+    "suggested_refinements": [
+     "Show only the Current State answer",
+     "Explain what the pending Review is about"
+    ]
+   }
+  },
+  {
+   "answer_id": "a13",
+   "scenario_id": "ask_current_over_stale",
+   "answer": {
+    "job": "current_fact",
+    "headline": "Password-reset automation is paused, not approved.",
+    "summary": "No. Current State says password-reset automation is paused after a security incident, so it is not approved for automation now. The history shows it was previously approved and was changed to paused on 2026-09-10 following that incident. No open Review or Question in the supplied records proposes reinstating it, and no record establishes when or under what conditions it would resume.",
+    "sections": [
+     {
+      "kind": "established",
+      "title": "Current State",
+      "items": [
+       {
+        "text": "Password-reset automation is paused after a security incident.",
+        "record_type": "state",
+        "record_id": "ask-state-0",
+        "detail": null
+       }
+      ]
+     },
+     {
+      "kind": "recent_context",
+      "title": "Recent change",
+      "items": [
+       {
+        "text": "Changed from approved to paused on 2026-09-10 (historical controlled change).",
+        "record_type": "history",
+        "record_id": "ask-history-0",
+        "detail": "Previously stated: \"Password-reset automation is approved.\""
+       }
+      ]
+     }
+    ],
+    "suggested_refinements": [
+     "Show only the current status in one sentence.",
+     "Explain what would need to happen before automation could be approved again."
+    ]
+   }
+  },
+  {
+   "answer_id": "a14",
+   "scenario_id": "ask_question_answer_no_state_mutation",
+   "answer": {
+    "job": "current_fact",
+    "headline": "Vendor-retention question is not answered: the vendor contract remains under review.",
+    "summary": "State does not have enough confirmed information to say the vendor-retention question was answered. Current State only records that the vendor contract remains under review, and no supplied Question, Review, History, or Evidence record establishes a retention answer.",
+    "sections": [
+     {
+      "kind": "established",
+      "title": "Current State",
+      "items": [
+       {
+        "text": "The vendor contract remains under review.",
+        "record_type": "state",
+        "record_id": "ask-state-0",
+        "detail": "Governing current fact for the vendor topic."
+       }
+      ]
+     }
+    ],
+    "suggested_refinements": [
+     "Show only what is still unknown about vendor retention.",
+     "Summarize the vendor contract status in one line."
+    ]
+   }
+  },
+  {
+   "answer_id": "a15",
+   "scenario_id": "ask_change_summary",
+   "answer": {
+    "job": "historical",
+    "headline": "Slack changed from excluded to approved as an evidence source starting next sprint.",
+    "summary": "Per the accepted history, Slack was previously excluded until governance was resolved. It is now approved as an evidence source starting next sprint, and Current State reflects this. The change was recorded on 2026-09-16. No open Reviews or Questions bear on this change.",
+    "sections": [
+     {
+      "kind": "changes",
+      "title": "What changed",
+      "items": [
+       {
+        "text": "Previously: Slack is excluded until governance is resolved.",
+        "record_type": "history",
+        "record_id": "ask-history-0",
+        "detail": "Changed 2026-09-16; accepted past transition"
+       },
+       {
+        "text": "Now: Slack is approved as an evidence source starting next sprint.",
+        "record_type": "state",
+        "record_id": "ask-state-0",
+        "detail": "Current State"
+       }
+      ]
+     }
+    ],
+    "suggested_refinements": [
+     "Show only the current Slack status",
+     "Explain the governance resolution behind this change"
+    ]
+   }
+  },
+  {
+   "answer_id": "a16",
+   "scenario_id": "ask_change_summary",
+   "answer": {
+    "job": "historical",
+    "headline": "Slack was excluded until governance was resolved; it is now approved as an evidence source starting next sprint.",
+    "summary": "Current State says Slack is approved as an evidence source starting next sprint. History records that this replaced the earlier position that Slack was excluded until governance was resolved (changed 2026-09-16). No open Reviews or Questions on Slack are supplied.",
+    "sections": [
+     {
+      "kind": "established",
+      "title": "Current state",
+      "items": [
+       {
+        "text": "Slack is approved as an evidence source starting next sprint.",
+        "record_type": "state",
+        "record_id": "ask-state-0",
+        "detail": null
+       }
+      ]
+     },
+     {
+      "kind": "changes",
+      "title": "What changed",
+      "items": [
+       {
+        "text": "Previously: Slack is excluded until governance is resolved. Changed 2026-09-16 to approved as an evidence source starting next sprint.",
+        "record_type": "history",
+        "record_id": "ask-history-0",
+        "detail": "Accepted past transition; historical controlled change."
+       }
+      ]
+     }
+    ],
+    "suggested_refinements": [
+     "Show only the current Slack status",
+     "Explain what governance resolution was required"
+    ]
+   }
+  },
+  {
+   "answer_id": "a17",
+   "scenario_id": "ask_known_outcome_unknown_reason",
+   "answer": {
+    "job": "why_or_provenance",
+    "headline": "The Northstar pilot was paused on September 28; the reason is not recorded.",
+    "summary": "Current State records that the Northstar pilot was paused on September 28. No supplied State, Review, Question, History, or Evidence record establishes why it was paused, so the reason cannot be determined from the project record.",
+    "sections": [
+     {
+      "kind": "established",
+      "title": "What Current State records",
+      "items": [
+       {
+        "text": "The Northstar pilot was paused on September 28.",
+        "record_type": "state",
+        "record_id": "ask-state-0",
+        "detail": "Current State (governing)"
+       }
+      ]
+     },
+     {
+      "kind": "other",
+      "title": "Reason",
+      "items": [
+       {
+        "text": "The reason for the pause is unknown and not established in the supplied project records.",
+        "record_type": "none",
+        "record_id": null,
+        "detail": null
+       }
+      ]
+     }
+    ],
+    "suggested_refinements": [
+     "Ask who decided the pause and whether a Question should be opened to track the reason.",
+     "Ask for any Evidence or History from around September 28 about the pilot."
+    ]
+   }
+  },
+  {
+   "answer_id": "a18",
+   "scenario_id": "ask_superseded_pending_review",
+   "answer": {
+    "job": "current_fact",
+    "headline": "Current approved pilot size is 10 users; a 25-user increase is pending review.",
+    "summary": "The maintained Current State sets the approved pilot size at 10 users. Two proposals to change it are open Reviews, not accepted changes: the newest proposes increasing the pilot to 25 users and is still awaiting human review, and an older proposal to increase it to 50 users has been superseded. Neither proposal has changed Current State, so 10 users remains the governing value until a human accepts a change.",
+    "sections": [
+     {
+      "kind": "established",
+      "title": "Current State",
+      "items": [
+       {
+        "text": "The approved pilot size is 10 users.",
+        "record_type": "state",
+        "record_id": "ask-state-0",
+        "detail": null
+       }
+      ]
+     },
+     {
+      "kind": "needs_review",
+      "title": "Pending change",
+      "items": [
+       {
+        "text": "NEWEST pending proposal: increase the pilot to 25 users; this replaces the older 50-user proposal and is still awaiting human review.",
+        "record_type": "review",
+        "record_id": "ask-review-1",
+        "detail": "Controlled Ask quality scenario"
+       }
+      ]
+     },
+     {
+      "kind": "other",
+      "title": "Superseded proposal",
+      "items": [
+       {
+        "text": "OLDER SUPERSEDED proposal: increase the pilot to 50 users.",
+        "record_type": "review",
+        "record_id": "ask-review-0",
+        "detail": "Controlled Ask quality scenario"
+       }
+      ]
+     }
+    ],
+    "suggested_refinements": [
+     "Show only the pending pilot-size change",
+     "Summarize in one sentence"
+    ]
+   }
+  },
+  {
+   "answer_id": "a19",
+   "scenario_id": "ask_blocker_not_omitted",
+   "answer": {
+    "job": "current_fact",
+    "headline": "Not confirmed: Security approval of the production data path is still an open, blocking question for launch readiness.",
+    "summary": "State records a pilot launch target of October 1, but this is a target date, not proof of readiness. The Question on whether Security has approved the production data path remains open and is marked blocking for launch readiness. The supplied records do not establish that launch readiness has been met, so State does not have enough confirmed information to say we are ready to launch.",
+    "sections": [
+     {
+      "kind": "established",
+      "title": "Current State",
+      "items": [
+       {
+        "text": "Pilot launch is targeted for October 1.",
+        "record_type": "state",
+        "record_id": "ask-state-0",
+        "detail": "Target date only; it does not establish readiness."
+       }
+      ]
+     },
+     {
+      "kind": "questions",
+      "title": "Blocking question",
+      "items": [
+       {
+        "text": "Has Security approved the production data path?",
+        "record_type": "blocking_question",
+        "record_id": "ask-question-0",
+        "detail": "Launch readiness"
+       }
+      ]
+     }
+    ],
+    "suggested_refinements": [
+     "Shorten to a one-line readiness verdict",
+     "Focus on what must be answered before launch"
+    ]
+   }
+  },
+  {
+   "answer_id": "a20",
+   "scenario_id": "ask_pending_review_not_truth",
+   "answer": {
+    "job": "current_fact",
+    "headline": "Not yet: leadership has not decided to remove human review.",
+    "summary": "Current State says customer-facing output remains human-reviewed. Leadership asked whether low-risk cases can skip human review, but no decision is recorded; that question is pending in an open Review and has not been accepted, so Current State has not changed.",
+    "sections": [
+     {
+      "kind": "established",
+      "title": "Current State",
+      "items": [
+       {
+        "text": "Customer-facing output remains human-reviewed.",
+        "record_type": "state",
+        "record_id": "ask-state-0",
+        "detail": null
+       }
+      ]
+     },
+     {
+      "kind": "needs_review",
+      "title": "Pending Review",
+      "items": [
+       {
+        "text": "Leadership asked whether low-risk cases can skip human review; no decision is recorded.",
+        "record_type": "review",
+        "record_id": "ask-review-0",
+        "detail": "Controlled Ask quality scenario"
+       }
+      ]
+     }
+    ],
+    "suggested_refinements": [
+     "Show only the pending decision",
+     "Summarize for a leadership update"
+    ]
+   }
+  }
+ ]
+}

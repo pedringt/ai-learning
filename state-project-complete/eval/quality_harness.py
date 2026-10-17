@@ -75,6 +75,7 @@ class ReviewQualityResult:
     review_prose: str = ""
     rationale_text: str = ""
     error: str = ""
+    proposal_rows: str = ""
 
     @property
     def review_needed_correct(self) -> bool:
@@ -82,29 +83,43 @@ class ReviewQualityResult:
 
     @property
     def interpretation_correct(self) -> bool:
+        return not self.interpretation_problems
+
+    @property
+    def interpretation_problems(self) -> list[str]:
+        """Why the interpretation check failed (empty when it passed), so a report can say which part
+        missed instead of showing a matching expected and observed action as a failure."""
         allowed = self.scenario.allowed_actions or (self.scenario.expected_action,)
         if self.observed_action not in allowed:
-            return False
+            return [f"action {self.observed_action} not in {', '.join(allowed)}"]
         if self.observed_action in {"update_state", "answer_question_and_update_state", "update_state_and_open_question"}:
             text = _normalize(self.proposed_state_text)
-            if self.scenario.required_state_update_phrases and not all(
-                any(
+            missing = [
+                required if isinstance(required, str) else " / ".join(required)
+                for required in self.scenario.required_state_update_phrases
+                if not any(
                     _normalize(option) in text
                     for option in ((required,) if isinstance(required, str) else required)
                 )
-                for required in self.scenario.required_state_update_phrases
-            ):
-                return False
-            if any(_normalize(phrase) in text for phrase in self.scenario.forbidden_state_update_phrases):
-                return False
+            ]
+            if missing:
+                return [f"proposed state lacks {', '.join(missing)}"]
+            forbidden = [phrase for phrase in self.scenario.forbidden_state_update_phrases if _normalize(phrase) in text]
+            if forbidden:
+                return [f"proposed state contains forbidden {', '.join(forbidden)}"]
         prose = _normalize(self.review_prose)
-        if any(_normalize(phrase) in prose for phrase in self.scenario.forbidden_review_phrases):
-            return False
+        forbidden = [phrase for phrase in self.scenario.forbidden_review_phrases if _normalize(phrase) in prose]
+        if forbidden:
+            return [f"review prose contains forbidden {', '.join(forbidden)}"]
         rationale = _normalize(self.rationale_text)
-        if not all(any(_normalize(option) in rationale for option in ((r,) if isinstance(r, str) else r))
-                   for r in self.scenario.required_rationale_phrases):
-            return False
-        return True
+        missing = [
+            r if isinstance(r, str) else " / ".join(r)
+            for r in self.scenario.required_rationale_phrases
+            if not any(_normalize(option) in rationale for option in ((r,) if isinstance(r, str) else r))
+        ]
+        if missing:
+            return [f"rationale lacks {', '.join(missing)}"]
+        return []
 
     @property
     def passed(self) -> bool:
@@ -227,6 +242,27 @@ def run_review_quality_scenario(scenario: ReviewInterpretationScenario, provider
         observed_action, proposed_state_text = _observed_review_outcome(connection, review_ids)
         review_prose = _review_prose(connection, review_ids)
         rationale_text = _rationale_text(connection, review_ids)
+        proposal_rows = ""
+        if review_ids:
+            placeholders = ",".join("?" for _ in review_ids)
+            proposal_rows = "; ".join(
+                f"{row['operation']} target={row['state_item_id']} status={row['status']}"
+                f" supersedes={row['supersedes_proposal_id']}"
+                for row in connection.execute(
+                    f"SELECT operation, state_item_id, status, supersedes_proposal_id FROM proposed_state_changes "
+                    f"WHERE review_id IN ({placeholders}) ORDER BY created_at, id", tuple(review_ids)).fetchall())
+            proposal_rows += " | affected: " + ",".join(
+                row["state_item_id"] for row in connection.execute(
+                    f"SELECT state_item_id FROM review_state_items WHERE review_id IN ({placeholders})",
+                    tuple(review_ids)).fetchall())
+        error = ""
+        if process_result.processing_status == "failed":
+            # The pipeline stores why it failed on the interpretation record; keep it so the report
+            # can tell a provider error from a schema or semantic validation failure.
+            row = connection.execute(
+                "SELECT error_code FROM interpretation_records WHERE evidence_id=? AND processing_status='failed' "
+                "ORDER BY rowid DESC LIMIT 1", (evidence_id,)).fetchone()
+            error = f"processing failed ({row['error_code']})" if row and row["error_code"] else ""
         return ReviewQualityResult(
             scenario=scenario,
             review_recommended=bool(review_ids),
@@ -237,6 +273,8 @@ def run_review_quality_scenario(scenario: ReviewInterpretationScenario, provider
             proposed_state_text=proposed_state_text,
             review_prose=review_prose,
             rationale_text=rationale_text,
+            error=error,
+            proposal_rows=proposal_rows,
         )
     except Exception as exc:
         return ReviewQualityResult(
@@ -328,6 +366,20 @@ def _has_uncertainty_language(text: str) -> bool:
     return any(signal in text for signal in signals)
 
 
+# Oct 16 (approved by Paige): wordings from correct Haiku 5.5 answers that the list above missed, e.g.
+# "Not confirmed: launch readiness is blocked by an open Security question", "has not been established",
+# "State cannot confirm", "is still open", "does not have enough confirmed information". Used only for
+# the uncertainty check; the authority check keeps the original list.
+_ANSWER_UNCERTAINTY_SIGNALS = (
+    "not confirmed", "cannot confirm", "can't confirm", "unable to confirm",
+    "not been established", "still open", "does not have enough",
+)
+
+
+def _expresses_uncertainty(text: str) -> bool:
+    return _has_uncertainty_language(text) or any(signal in text for signal in _ANSWER_UNCERTAINTY_SIGNALS)
+
+
 def _has_open_item_language(text: str) -> bool:
     signals = ("review", "question", "blocking", "pending", "open", "unresolved", "awaiting")
     return any(signal in text for signal in signals)
@@ -344,6 +396,19 @@ def _distinguishes_proposal(text: str) -> bool:
 
 
 _NEGATION_BEFORE = re.compile(r"(?:\bnot|\bno longer|n't|\bnever)\s+(?:\w+\s+){0,1}$")
+# Oct 16 (approved by Paige): a negated reporting frame puts the claim further from the negation,
+# e.g. "State does not show that leadership approved removing human review" and "State does not have
+# enough confirmed information to say we decided to fully automate support" (correct answers that
+# failed). Only a frame ending in a reporting verb counts, so "the record says we decided" still asserts.
+# Oct 16 (adversarial suite): "whether SSO is on the Q1 roadmap remains unresolved" asks about the claim
+# rather than making it. A "whether" with no comma or sentence end between it and the claim covers it,
+# the same rule as the Ask backstop (ask_authority_text._soften_match).
+_INSIDE_WHETHER = re.compile(r"\bwhether\b[^,.;:!?]*$")
+_NEGATED_REPORT_BEFORE = re.compile(
+    r"(?:\bnot|n't|\bcannot|\bno)\s+(?:\w+\s+){0,6}?"
+    r"(?:show|shows|say|says|indicate|indicates|establish|establishes|confirm|confirms|record|records|support|supports)"
+    r"\s+(?:that\s+)?$"
+)
 
 
 def _asserts(text: str, claim: str) -> bool:
@@ -353,7 +418,8 @@ def _asserts(text: str, claim: str) -> bool:
     "currently approved" (Oct 10, Haiku 5.5's correct answer to ask_current_over_stale)."""
     start = text.find(claim)
     while start != -1:
-        if not _NEGATION_BEFORE.search(text[:start]):
+        if not (_NEGATION_BEFORE.search(text[:start]) or _NEGATED_REPORT_BEFORE.search(text[:start])
+                or _INSIDE_WHETHER.search(text[:start])):
             return True
         start = text.find(claim, start + 1)
     return False
@@ -366,7 +432,7 @@ def score_ask_answer(scenario: AskQualityScenario, answer: dict[str, Any]) -> As
         for fact in scenario.required_facts
     )
     forbidden_ok = all(not _asserts(text, _normalize(claim)) for claim in scenario.forbidden_claims)
-    uncertainty_ok = (not scenario.should_express_uncertainty) or _has_uncertainty_language(text)
+    uncertainty_ok = (not scenario.should_express_uncertainty) or _expresses_uncertainty(text)
     open_item_ok = (not scenario.should_reference_open_item) or _has_open_item_language(text)
     authority_ok = (not scenario.should_distinguish_proposal_from_truth) or _distinguishes_proposal(text)
     return AskQualityResult(

@@ -8,6 +8,8 @@ persistence so the user receives a normal Review and remains the authority.
 """
 from __future__ import annotations
 
+from model_request_options import request_options
+
 from dataclasses import dataclass
 import json
 import os
@@ -247,9 +249,7 @@ def call_detector(connection: Any, candidate: OmissionCandidate, provider: Any) 
         from provider_output_schema import PROVIDER_OUTPUT_SCHEMA
         message = provider.client.messages.create(
             model=provider.model_identifier,
-            max_tokens=getattr(provider, "max_tokens", 2000),
-            thinking={"type": "disabled"},
-            output_config={"format": {"type": "json_schema", "schema": PROVIDER_OUTPUT_SCHEMA}},
+            **request_options(provider.model_identifier, getattr(provider, "max_tokens", 2000), {"format": {"type": "json_schema", "schema": PROVIDER_OUTPUT_SCHEMA}}),
             messages=[{"role": "user", "content": prompt}],
         )
         text = next((getattr(block, "text", None) for block in message.content if getattr(block, "text", None)), None)

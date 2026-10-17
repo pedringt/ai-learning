@@ -19,6 +19,7 @@ ENTRYPOINTS = (
     "scaling_experiment.py",
     "raw_vs_state_experiment.py",
     "run_meeting_prep_shape.py",
+    "run_matrix.py",
 )
 
 
@@ -33,6 +34,7 @@ class EvalEnvIsolationTests(unittest.TestCase):
             dotenv.load_dotenv = lambda *a, **k: calls.append((a, k))
             import eval.harness, eval.quality_harness, eval.env  # noqa: F401
             import eval.meeting_prep_shape, eval.meeting_prep_shape_run  # noqa: F401
+            import eval.matrix, eval.aggregate_matrix  # noqa: F401
             assert not calls, f"load_dotenv called at import time: {calls}"
             """
         )

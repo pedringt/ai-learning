@@ -229,7 +229,14 @@ def main() -> int:
     parser.add_argument("--record-url", metavar="URL", help="State API base URL for aggregate eval ingestion")
     parser.add_argument("--record-key", metavar="KEY", help="defaults to STATE_EVAL_INGEST_KEY")
     parser.add_argument("--authority-lab-envelope", metavar="PATH", help="write the review suite's aggregate results as Authority Lab evidence (#517)")
+    parser.add_argument("--dry-run", action="store_true", help="print the planned paid model calls and exit without calling the model")
     args = parser.parse_args()
+
+    if args.dry_run:
+        from eval.matrix import dry_run_summary
+
+        print(dry_run_summary(["review", "ask"] if args.suite == "all" else [args.suite]))
+        return 0
 
     if not os.getenv("ANTHROPIC_API_KEY"):
         print("SKIPPED: ANTHROPIC_API_KEY is required because these evals measure real model judgment.")

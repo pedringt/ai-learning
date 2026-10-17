@@ -9,6 +9,8 @@ returns structured JSON. Application-owned validation enforces the contract.
 
 from __future__ import annotations
 
+from model_request_options import request_options
+
 import json
 import logging
 import os
@@ -158,16 +160,14 @@ class AnthropicProvider:
         )
         message = self.client.messages.create(
             model=self.model_identifier,
-            max_tokens=self.max_tokens,
             # Short strict-JSON job: Claude 5.x models think adaptively by default, which can spend
-            # the whole max_tokens budget before any text. Keep it off, as Haiku 4.5 had it.
-            thinking={"type": "disabled"},
-            output_config={
-                "format": {
-                    "type": "json_schema",
-                    "schema": PROVIDER_OUTPUT_SCHEMA,
-                }
-            },
+            # the whole max_tokens budget before any text. Keep it off, as Haiku 4.5 had it
+            # (request_options sends each model's accepted form; Haiku 5.5 is unchanged).
+            **request_options(
+                self.model_identifier,
+                self.max_tokens,
+                {"format": {"type": "json_schema", "schema": PROVIDER_OUTPUT_SCHEMA}},
+            ),
             messages=[
                 {
                     "role": "user",
@@ -276,9 +276,7 @@ class AnthropicProvider:
         )
         message = self.client.messages.create(
             model=self.model_identifier,
-            max_tokens=300,
-            thinking={"type": "disabled"},
-            output_config={"format": {"type": "json_schema", "schema": _RELEVANCE_SCHEMA}},
+            **request_options(self.model_identifier, 300, {"format": {"type": "json_schema", "schema": _RELEVANCE_SCHEMA}}),
             messages=[{"role": "user", "content": prompt}],
         )
         text_blocks = [getattr(block, "text", None) for block in message.content]

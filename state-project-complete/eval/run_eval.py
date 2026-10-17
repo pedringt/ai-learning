@@ -93,7 +93,14 @@ def main():
     parser.add_argument("--json", metavar="PATH", help="also write a JSON report to this path")
     parser.add_argument("--record-url", metavar="URL", help="State API base URL for aggregate eval ingestion")
     parser.add_argument("--record-key", metavar="KEY", help="ingestion key; defaults to STATE_EVAL_INGEST_KEY")
+    parser.add_argument("--dry-run", action="store_true", help="print the planned paid model calls and exit without calling the model")
     args = parser.parse_args()
+
+    if args.dry_run:
+        from eval.matrix import dry_run_summary
+
+        print(dry_run_summary(["consequentiality"]))
+        return 0
 
     if not os.getenv("ANTHROPIC_API_KEY"):
         print(f"SKIPPED: {REQUIRES_KEY_REASON}")

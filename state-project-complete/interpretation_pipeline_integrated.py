@@ -381,6 +381,28 @@ def _persist_success(
                             "WHERE id=?",
                             (supersedes_proposal_id,),
                         )
+                    # Oct 16: the new interpretation may propose a new item instead of updating the
+                    # one it names as affected. A pending update to that named item from an earlier
+                    # interpretation of this Review is then stale (eval matrix: the corrected $35,000
+                    # budget arrived as a create, and the superseded $50,000 update stayed pending in
+                    # 7 of 60 runs). Only updates to items this interpretation names are touched, so a
+                    # Review that gathers facts from several sources (Baseline) keeps them.
+                    affected = [item for item in rec["affected_state_item_ids"] if item]
+                    if affected:
+                        placeholders = ",".join("?" for _ in affected)
+                        stale = connection.execute(
+                            "SELECT id FROM proposed_state_changes "
+                            f"WHERE review_id=? AND status='pending' AND operation='update' AND state_item_id IN ({placeholders}) "
+                            "ORDER BY created_at DESC, id DESC",
+                            (review_id, *affected),
+                        ).fetchall()
+                        if stale:
+                            supersedes_proposal_id = supersedes_proposal_id or stale[0]["id"]
+                            connection.execute(
+                                "UPDATE proposed_state_changes SET status='superseded', decided_at=CURRENT_TIMESTAMP "
+                                f"WHERE review_id=? AND status='pending' AND operation='update' AND state_item_id IN ({placeholders})",
+                                (review_id, *affected),
+                            )
 
                 connection.execute(
                     "INSERT INTO proposed_state_changes("

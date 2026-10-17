@@ -77,3 +77,54 @@ def test_list_reviews_does_not_duplicate_review_with_multiple_evidence():
     assert reviews[0]['id'] == 'r1'
     assert {e['id'] for e in reviews[0]['evidence_items']} == {'e0','e2'}
     conn.close()
+
+
+class _CreateProvider:
+    """Oct 16 eval matrix: the corrected value arrived as a new-item create on the reused Review."""
+    name = "existing-review-create-test"
+    model_identifier = "deterministic"
+
+    def __init__(self, affected):
+        self.affected = affected
+
+    def interpret(self, *, context, evidence, connection=None):
+        return {
+            "summary": "Newest evidence corrects the pending date.",
+            "topics": ["timing"],
+            "outcome": "review_recommended",
+            "review_recommendations": [{
+                "review_action": "update_existing",
+                "existing_review_id": "r1",
+                "review_type": "proposed_update",
+                "decision_question": "Which launch date should State use?",
+                "why_consequential": "The pending date was corrected.",
+                "affected_state_item_ids": self.affected,
+                "proposed_changes": [{
+                    "operation": "create",
+                    "state_item_id": None,
+                    "proposed_statement": "Launch is September 20.",
+                    "rationale": "Newest evidence gives September 20.",
+                }],
+            }],
+        }
+
+
+def test_create_naming_the_affected_item_supersedes_its_stale_pending_update():
+    conn = _db()
+    result = process_evidence(conn, evidence_id='e1', provider=_CreateProvider(["s1"]))
+    assert result.processing_status == 'succeeded'
+    rows = {r['id']: r for r in conn.execute("SELECT id,status,supersedes_proposal_id FROM proposed_state_changes WHERE review_id='r1'").fetchall()}
+    assert rows['p0']['status'] == 'superseded'
+    new = next(r for i, r in rows.items() if i != 'p0')
+    assert new['status'] == 'pending' and new['supersedes_proposal_id'] == 'p0'
+    conn.close()
+
+
+def test_create_not_naming_the_item_leaves_the_pending_update_alone():
+    conn = _db()
+    result = process_evidence(conn, evidence_id='e1', provider=_CreateProvider([]))
+    assert result.processing_status == 'succeeded'
+    statuses = {r['id']: r['status'] for r in conn.execute("SELECT id,status FROM proposed_state_changes WHERE review_id='r1'").fetchall()}
+    assert statuses['p0'] == 'pending'
+    assert sorted(statuses.values()) == ['pending', 'pending']
+    conn.close()
