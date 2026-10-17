@@ -148,7 +148,7 @@
       "commit": "20722d419ba704cd455a60f9da497bf63044dee1",
       "signalType": "vercel",
       "primary": "{\"failedDeploymentStatus\":{\"context\":\"Vercel – state\",\"description\":\"Deployment has failed — run this Vercel CLI command: npx vercel inspect dpl_G4KDuHqWxYaWchC8sWKCa7pVNUjQ --logs\",\"state\":\"failure\",\"target\":\"https://vercel.com/cairn10/state/G4KDuHqWxYaWchC8sWKCa7pVNUjQ\"}}",
-      "followUp": "No matching Vercel deployment details were available.\n{\"commitMessage\":\"Homepage: close on one line instead of restating the hero\\n\\n\\\"How I work with AI / Boundaries, feedback, and evidence.\\\" and its paragraph\\nrepeated the hero's philosophy. The homepage now ends with a single quiet\\nline under a full-width hairline: \\\"Build with AI. Keep its limits in view.\\\"\\n(Paige, Oct 11). 88px of space above on desktop, 64px on phones; 17/16px,\\nsemibold ink, left-aligned with the content above. The old section's rules\\nare removed from index.html, site-components.css and site-shell.c\"}"
+      "followUp": "{\"deployment\":{\"project\":\"state\",\"state\":\"ERROR\",\"errorCode\":\"git_info_fail\",\"errorMessage\":\"GitHub fetch error - status: 403, message: {\\n  \\\"documentation_url\\\": \\\"https://docs.github.com/free-pro-team@latest/rest/overview/rate-limits-for-the-rest-api\\n  \\\"message\\\": \\\"You have exceeded a secondary rate limit. Please wait a few minutes before you try again. For more on scraping GitHub and how it may affect your rights, please review our Terms of Service (https://docs.github.com/en/site-policy/github-terms/github-terms-of-service) If you reach out to GitHub Support for help, please include the\",\"createdAt\":1791772119580,\"deploymentUrl\":\"https://vercel.com/cairn10/state/dpl_G4KDuHqWxYaWchC8sWKCa7pVNUjQ\"},\"buildOutput\":\"Build output was not available.\"}"
     },
     "reference": {
       "status": "Deployment has failed — run this Vercel CLI command: npx vercel inspect dpl_G4KDuHqWxYaWchC8sWKCa7pVNUjQ --logs",
@@ -343,7 +343,7 @@
       "commit": "ed8389c84d8f2139a0cffbfb65767bfe5b575d2b",
       "signalType": "vercel",
       "primary": "{\"failedDeploymentStatus\":{\"context\":\"Vercel\",\"description\":\"Deployment was blocked\",\"state\":\"failure\",\"target\":\"https://vercel.com/cairn10/tastemake/FGvNT6jiTEZESA4icmceUd7piyrr\"}}",
-      "followUp": "No matching Vercel deployment details were available.\n{\"commitMessage\":\"Preserve All-domain recommendations and clarify loading (#208)\\n\\n* Show branded skeletons for every recommendation load\\n\\n* Preserve represented domains through mixed retrieval\\n\\n* Cover all-domain anchors and domain-aware novelty\"}"
+      "followUp": "{\"deployment\":{\"project\":\"tastemake\",\"state\":\"BLOCKED\",\"errorCode\":\"\",\"errorMessage\":\"This deployment couldn’t be built because the project was paused.\",\"createdAt\":1790825650269,\"deploymentUrl\":\"https://vercel.com/cairn10/tastemake/dpl_FGvNT6jiTEZESA4icmceUd7piyrr\"},\"buildOutput\":\"Build output was not available.\"}"
     },
     "reference": {
       "status": "Deployment was blocked",
