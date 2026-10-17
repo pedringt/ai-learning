@@ -19,7 +19,8 @@ _Last updated: October 12, 2026 (evening), Pacific time. **Start with "Current s
   - **Paid eval workflows** (pre-approved for testing; report call count and cost afterwards):
     - State AI quality check (`question-review-live.yml`);
     - State QA Release (`qa-release.yml`);
-    - Baseline decomposition eval (`baseline-decomposition-eval.yml`, about 60 calls, about 30¢).
+    - Baseline decomposition eval (`baseline-decomposition-eval.yml`, about 60 calls, about 30¢);
+    - State eval matrix (`state-eval-matrix.yml`, Oct 16): repeated suites on any model, dry-run by default.
 - **Portfolio pages:**
   - `tools/social_previews.py` keeps every root page and cheat sheet's description, preview card and `sitemap.xml` current. Re-run it after changing a title or description; CI expects `--check` to pass.
   - The **AI Governance Handbook** (`ai-governance-handbook.html`) is a standalone page built from Paige's artifact, with its CSS scoped under `.handbook`. Its tools (triage, laws finder, calculator, incident clock, templates) are plain JS on the page.
@@ -30,6 +31,25 @@ _Last updated: October 12, 2026 (evening), Pacific time. **Start with "Current s
 - **Other repos:**
   - **Tastemake** (`~/code/tastemake`): see its `docs/HANDOFF.md`.
   - **Authority Lab** (`~/code/authority-lab`): worked in Paige's other chat.
+
+## Oct 16-17, 2026: eval matrix, Ask and review fixes, LLM grader
+
+Oct 16 was a large paid-eval session (about $141 of the October API budget). Promoted to production in #537 (`768dc22`, verified on `state-api` /health; Deep QA passed on staging):
+- **Ask backstop** (`ask_authority_text.py`): correct answers were being garbled into "proposed for approval (not yet approved)". It now leaves alone: words inside a "whether…" clause or a question; words after "cannot"; and words after "no" + a record noun ("no record shows it was approved").
+- **Review supersession** (`interpretation_pipeline_integrated.py`): when new Evidence reuses an open Review and proposes a new item, any pending update to an item the new interpretation names as affected is superseded. Before: 88% on `review_new_evidence_over_pending_review`; after: 60/60.
+- **`model_request_options.py`:** each model gets its accepted thinking-off form. Haiku 5.5 is unchanged; Sonnet/Opus 5.5 are used for evals only.
+- **State eval matrix** (`state-eval-matrix.yml`, `eval/matrix.py`): runs any suite `repeats` times with hard call caps, Wilson intervals, and failure excerpts. Suites: `review`, `ask`, `adversarial` (20 pending-vs-confirmed attacks), `consequentiality`, `baseline`, `graded` and `regrade` (an Opus 5.5 LLM grader, observe-only). See `docs/evals/README.md`.
+- **Scorer corrections**, made after reading the failing answers and approved by Paige: uncertainty wordings, negated reporting frames, whether-clauses.
+
+**Results on Haiku 5.5 (×30–60):**
+- Ask 99–99.5%; review 99%; consequentiality 99.8%; adversarial 92%.
+- Haiku/Sonnet/Opus scored alike on the original suites. Sonnet and Opus cost 20× and 40× as much.
+- An Ask conclusion with the wrong yes/no polarity appeared in 1 of 300 graded answers (caught by the grader).
+
+**Open:**
+- **Grader calibration:** Paige grades 20 answers blind in the "Ask Grading Bench" artifact (db collection `grades`), then `eval.ask_grader.calibration_report` compares them with regrade run 38967210206. The grader stays observe-only until this passes. Its known gap: it isn't shown the "today" date Ask gets.
+- **#536:** a drafting request ("Draft the customer email…") was treated as an email-address lookup and lost every record. Fixed on `fix/536-drafting-skips-lookup-filter`, being measured.
+- **Tastemake** #246 (structured outputs; malformed-JSON fallbacks 30/1,800 → 0) is merged and live.
 
 ## Oct 12, 2026: backend clean-up, handbook, Project Health, Cowork fixes
 
