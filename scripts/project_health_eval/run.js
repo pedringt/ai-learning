@@ -2,6 +2,7 @@
 'use strict';
 // Thin entry point. Usage:
 //   node run.js collect                       (free: writes cases.json from real failures)
+//   node run.js refresh-vercel                (free: rebuilds the frozen Vercel cases' evidence; needs VERCEL_TOKEN)
 //   node run.js run --dry-run                 (free: prints the call count and estimate)
 //   node run.js run                           (paid: needs ANTHROPIC_API_KEY)
 // Models, repeats and the call cap come from config.json next to this file.
@@ -28,6 +29,23 @@ async function collect(){
   fs.mkdirSync(outDir,{recursive:true});
   fs.writeFileSync(path.join(outDir,'cases.json'),JSON.stringify(cases,null,2));
   console.log('Wrote '+cases.length+' real cases.');
+}
+
+async function refreshVercel(){
+  if(!process.env.VERCEL_TOKEN)throw new Error('refresh-vercel needs VERCEL_TOKEN');
+  lib.withGithubAuth(process.env.GITHUB_TOKEN||'');
+  const INV=require('../../api/project-health-investigate.js')._test;
+  const cases=JSON.parse(fs.readFileSync(path.join(dir,'cases.json'),'utf8'));
+  for(const item of cases.filter(c=>c.signalType==='vercel')){
+    const project=Object.values(INV.PROJECTS).find(p=>p.slug===item.evidence.project);
+    const evidence=project?await lib.evidenceFor(project,item.evidence.branch,item.evidence.commit,'vercel'):null;
+    if(!evidence){console.log(item.id+': kept (no failed status found now)');continue;}
+    const changed=JSON.stringify(evidence)!==JSON.stringify(item.evidence);
+    item.evidence=evidence;
+    console.log(item.id+': '+(changed?'refreshed':'unchanged')+' · '+(evidence.followUp.includes('No matching Vercel deployment')?'no deployment details':'deployment details found'));
+  }
+  fs.mkdirSync(outDir,{recursive:true});
+  fs.writeFileSync(path.join(outDir,'cases.json'),JSON.stringify(cases,null,2));
 }
 
 async function run(){
@@ -82,4 +100,4 @@ async function run(){
   console.log(JSON.stringify(summary,null,2));
 }
 
-(mode==='collect'?collect():mode==='run'?run():Promise.reject(new Error('Use: collect | run [--dry-run]'))).catch(error=>{console.error(error.message);process.exit(1);});
+(mode==='collect'?collect():mode==='refresh-vercel'?refreshVercel():mode==='run'?run():Promise.reject(new Error('Use: collect | refresh-vercel | run [--dry-run]'))).catch(error=>{console.error(error.message);process.exit(1);});

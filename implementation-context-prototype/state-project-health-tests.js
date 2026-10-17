@@ -944,8 +944,7 @@ console.log('Project Health shell tests passed');
 // PR readiness refresh: evidence-first Project Health actions.
 
 // A project with no quality source reads as "not connected", never as another project's checks or as an issue.
-const authorityLab=H.PROJECTS.find(p=>p.id==='authority-lab');
-assert.ok(authorityLab.noQualitySource);
+const authorityLab={...H.PROJECTS.find(p=>p.id==='authority-lab'),noQualitySource:true};
 assert.ok(H.PROJECTS.filter(p=>p.noQualitySource).every(p=>p.id!=='narc'&&p.quality!=='state'));
 assert.strictEqual(H.projectQualityLabel({project:authorityLab,externalQuality:null}),'Not connected yet');
 const authorityQuick=H.quickProjectCheck({
@@ -975,3 +974,15 @@ assert.deepStrictEqual(MODEL_H.deliveryHealth({name:'main',commit:{sha:'a'}},{st
 assert.strictEqual(MODEL_H.deliveryHealth({name:'main',commit:{sha:'a'}},{statuses:[]},mixedRuns).failedChecks.length,2,'without a project, eval jobs still count');
 const reFailed={check_runs:[{name:'javascript',conclusion:'success',completed_at:'2026-10-16T19:00:00Z'},{name:'javascript',conclusion:'failure',completed_at:'2026-10-16T19:30:00Z'}]};
 assert.strictEqual(MODEL_H.deliveryHealth({name:'main',commit:{sha:'a'}},{statuses:[]},reFailed,statePH).failedChecks.length,1,'a later failure still counts');
+
+// Authority Lab's quality is its test workflow on main (Oct 17).
+{
+  const al=H.PROJECTS.find(p=>p.id==='authority-lab');
+  assert.ok(!al.noQualitySource);
+  assert.strictEqual(al.links.quality,'https://github.com/pedringt/authority-lab/actions/workflows/test.yml');
+  const passing={project:'authority-lab',ci:{status:'completed',conclusion:'success',updated_at:'2026-10-16T20:40:01Z'},suites:[{name:'App and store tests',tests:399,passed:399,failed:0},{name:'Agent tooling tests',tests:46,passed:46,failed:0}],attention:[{kind:'good',title:'Latest Authority Lab tests pass'}]};
+  assert.strictEqual(H.projectQualityLabel({project:al,externalQuality:passing}),'Automated tests pass');
+  const failing={...passing,ci:{...passing.ci,conclusion:'failure'},attention:[{kind:'bad',title:'Automated tests are not green'}]};
+  assert.strictEqual(H.externalQualityAttention(failing).kind,'bad');
+  assert.ok(H.activityTimelineItems({project:al,externalQuality:passing}).some(item=>item.title==='Automated tests ran on main'));
+}

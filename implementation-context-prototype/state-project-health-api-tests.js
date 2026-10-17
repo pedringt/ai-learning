@@ -264,3 +264,11 @@ assert.deepStrictEqual(
 );
 
 console.log('Project Health API tests passed');
+
+// Authority Lab: test counts come from node --test summaries in the CI job log (TAP "#" in CI, "ℹ" in a terminal).
+{
+  const q=require('../api/project-health-project-quality.js')._test;
+  assert.deepStrictEqual(q.parseNodeTestSummaries('2026-10-16T20:39:50.98Z # tests 399\n2026-10-16T20:39:50.98Z # pass 399\n2026-10-16T20:39:50.98Z # fail 0\nnoise # tests skipped words\nℹ tests 46\nℹ pass 45\nℹ fail 1'),
+    [{tests:399,pass:399,fail:0},{tests:46,pass:45,fail:1}]);
+  assert.deepStrictEqual(q.parseNodeTestSummaries('no summary here'),[]);
+}

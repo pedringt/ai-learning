@@ -163,6 +163,20 @@ def _is_transform_request(query: str) -> bool:
     return any(_normalized_query_text(hint) in q for hint in _TRANSFORM_HINTS)
 
 
+# #536: "Draft the customer email announcing the new price" asks for something to be written, so
+# "email" names the deliverable, not an attribute to look up; the strict lookup filter kept only records
+# containing "email" and dropped the pricing State item and its pending Review.
+_DRAFTING_RE = re.compile(
+    r"\b(?:draft|write|compose)\b(?:\W+\w+){0,6}?\W+"
+    r"(?:email|e-mail|message|note|announcement|update|post|letter|memo|reply|summary|brief)s?\b",
+    re.I,
+)
+
+
+def _is_drafting_request(query: str) -> bool:
+    return bool(_DRAFTING_RE.search(query or ""))
+
+
 def _record_text(record: Mapping[str, Any]) -> str:
     parts: list[str] = []
     for key, value in record.items():
@@ -184,7 +198,8 @@ def _filter_candidate_payload(query: str, payload: Mapping[str, Any]) -> dict[st
     answering records from masquerading as the answer. Rules are always kept.
     """
     data = {key: list(value) if isinstance(value, list) else value for key, value in payload.items()}
-    if _is_broad_request(query) or _is_dependent_followup(query) or _is_transform_request(query):
+    if (_is_broad_request(query) or _is_dependent_followup(query) or _is_transform_request(query)
+            or _is_drafting_request(query)):
         return data
 
     terms = _query_terms(query)

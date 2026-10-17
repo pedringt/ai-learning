@@ -7,6 +7,9 @@ const GITHUB_API=require('../api/project-health-github.js');
 const G=GITHUB_API._test;
 
 const project=id=>M.PROJECTS.find(p=>p.id===id);
+// No live project lacks a quality source since Authority Lab's tests were connected (Oct 17); a copy with the
+// flag set keeps the "quality not measured" path covered.
+const noQualityProject={...project('authority-lab'),noQualitySource:true};
 const goodDelivery={branch:'main',sha:'abcdef1234567',vercel:{kind:'good',label:'Vercel deploy healthy'},failedChecks:[],updatedAt:'2026-10-10T00:00:00Z',message:'Ship'};
 const healthyStateQuality={
   review:{interpretation_accuracy:1,high_severity_failures:0,failed_cases:0,created_at:'2026-10-09T00:00:00Z'},
@@ -40,9 +43,9 @@ assert.strictEqual(M.failureReason(new Error('boom')),'request failed');
 const stateHealthy=loaded(project('state'),{quality:healthyStateQuality,qualityBehaviorUpdatedAt:'2026-10-01T00:00:00Z'});
 assert.strictEqual(M.overallAttention(stateHealthy).kind,'good');
 assert.strictEqual(M.projectStatus(stateHealthy).label,'Healthy');
-const authorityByDesign=loaded(project('authority-lab'),{externalQuality:null});
+const authorityByDesign=loaded(noQualityProject,{externalQuality:null});
 assert.deepStrictEqual(M.uncheckedSignals(authorityByDesign),[]);
-assert.ok(project('authority-lab').noQualitySource&&project('authority-lab').noRunWorkflow);
+assert.ok(!project('authority-lab').noQualitySource&&project('authority-lab').noRunWorkflow);
 
 // --- Cowork, Oct 11: a quality source missing by design is not a failure, but it is not hidden either.
 // Delivery/runtime can be fine; the project never gets the plain "Healthy" headline, pill, or banner copy.
@@ -97,10 +100,10 @@ assert.strictEqual(M.healthySummary(stateHealthy).headline,'Everything looks hea
 assert.deepStrictEqual(M.projectStatus(stateHealthy),{key:'healthy',label:'Healthy',kind:'good'});
 assert.ok(!M.overallAttention(stateHealthy).qualityNotMeasured);
 // A real problem still outranks "quality not measured".
-const authorityBad=loaded(project('authority-lab'),{delivery:{...goodDelivery,vercel:{kind:'bad',label:'Vercel deploy failed'}}});
+const authorityBad=loaded(noQualityProject,{delivery:{...goodDelivery,vercel:{kind:'bad',label:'Vercel deploy failed'}}});
 assert.strictEqual(M.projectStatus(authorityBad).key,'action');
 // A failed request on a project with no quality source is still "Incomplete", not "quality not measured".
-const authorityTimedOut=loaded(project('authority-lab'),{delivery:null,failures:[{label:'Delivery',reason:'request timed out'}]});
+const authorityTimedOut=loaded(noQualityProject,{delivery:null,failures:[{label:'Delivery',reason:'request timed out'}]});
 assert.strictEqual(M.projectStatus(authorityTimedOut).key,'incomplete');
 
 // --- The QA repro: State's quality request timed out on first load, nothing seeded. Never "Healthy".
@@ -240,7 +243,7 @@ assert.ok(M.attentionItems(staleEvals).some(item=>item.incomplete));
     assert.ok(requested.some(url=>url==='/api/project-health-github?project=state&env=production'));
 
     requested.length=0;
-    const authority=await H.loadProject(project('authority-lab'),root);
+    const authority=await H.loadProject(noQualityProject,root);
     assert.ok(!requested.some(url=>/project-health-(run|project-quality)/.test(url)),'by-design gaps are not requested');
     assert.strictEqual(M.projectStatus(authority).label,'Healthy · quality not measured');
     await H.loadProjectDetails(authority,root);
