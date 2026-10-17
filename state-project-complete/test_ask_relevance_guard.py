@@ -223,3 +223,17 @@ def test_office_as_subject_keeps_records_that_do_not_say_office():
     }
     filtered = _filter_candidate_payload("Is the office move on schedule?", payload)
     assert [x["id"] for x in filtered["state"]] == ["move"]
+
+
+def test_drafting_request_keeps_records_despite_an_attribute_word():
+    # #536: "email" named the deliverable, and the lookup filter dropped every record.
+    from ask_provider import _filter_candidate_payload
+    payload = {"state": [{"id": "s", "topic": "pricing", "statement": "Pricing is unchanged at $49/month."},
+                         {"id": "c", "topic": "billing", "statement": "Billing contact email is ap@example.com."}],
+               "reviews": [{"id": "r", "decision_question": "Proposal: raise the price 25% to $61.25/month."}],
+               "questions": [], "history": [], "evidence": [], "rules": []}
+    drafted = _filter_candidate_payload(
+        "Assume the 25% price increase goes through. Draft the customer email announcing the new price.", payload)
+    assert len(drafted["state"]) == 2 and len(drafted["reviews"]) == 1
+    looked_up = _filter_candidate_payload("What is the billing contact email?", payload)
+    assert [r["id"] for r in looked_up["state"]] == ["c"]
