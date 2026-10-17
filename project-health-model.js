@@ -56,7 +56,7 @@
       }
     },
     {
-      id:'authority-lab',name:'Authority Lab',stageLabel:'In progress',noRuntimeAi:true,noQualitySource:true,noRunWorkflow:true,description:'Prototype for deciding what an AI capability is allowed to do, based on evidence.',repo:'pedringt/authority-lab',branch:'main',
+      id:'authority-lab',name:'Authority Lab',stageLabel:'In progress',noRuntimeAi:true,noRunWorkflow:true,description:'Prototype for deciding what an AI capability is allowed to do, based on evidence.',repo:'pedringt/authority-lab',branch:'main',
       focus:'Show authority as explicit, evidence-earned, conditional, reversible, and authorized by a named person.',
       evidence:['Lifecycle walkthrough','Authority decisions','Record history','Reversibility'],
       nextDecision:'Decide whether the Refund recommendation walkthrough is clear enough to add a second capability.',
@@ -65,7 +65,8 @@
       qualityLabel:'Prototype Quality',
       links:{
         live:'https://authority-lab.vercel.app',
-        vercel:'https://vercel.com/cairn10/authority-lab'
+        vercel:'https://vercel.com/cairn10/authority-lab',
+        quality:'https://github.com/pedringt/authority-lab/actions/workflows/test.yml'
       }
     }
   ];
@@ -774,6 +775,8 @@
       }
     }else if(p.id==='tastemake'&&externalQ?.ci?.updated_at){
       items.push({when:externalQ.ci.updated_at,type:'Quality check',category:'quality',title:'Recommendation quality checks updated',detail:externalQ.ci.conclusion==='success'?'Automated recommendation checks passed.':'Latest check result recorded.'});
+    }else if(p.id==='authority-lab'&&externalQ?.ci?.updated_at){
+      items.push({when:externalQ.ci.updated_at,type:'Quality check',category:'quality',title:'Automated tests ran on main',detail:externalQ.ci.conclusion==='success'?'All test suites passed.':'Latest test result recorded.'});
     }else if(p.id==='narc'&&externalQ?.recorded?.updated_at){
       items.push({when:externalQ.recorded.updated_at,type:'Quality check',category:'quality',title:'Game quality record updated',detail:externalQ.recorded.full_playtest_pending?'Full first-run playtest still open.':'Latest recorded quality state.'});
     }
@@ -1202,6 +1205,7 @@
     const q=data.externalQuality;if(!q) return 'Quality unavailable';
     const top=externalQualityAttention(q);
     if(q.project==='tastemake'&&q.ci?.conclusion==='success'&&top?.kind==='good') return 'Recommendation checks healthy';
+    if(q.project==='authority-lab'&&q.ci?.conclusion==='success'&&top?.kind==='good') return 'Automated tests pass';
     if(q.project==='narc'&&q.recorded?.recorded_all_suites_green) return q.recorded.full_playtest_pending?'Automated checks pass · playtest open':'Game checks healthy';
     return top?.title||'Quality loaded';
   }

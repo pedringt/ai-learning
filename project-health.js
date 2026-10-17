@@ -69,6 +69,15 @@
   }
   async function loadPlatformSignal(project,signal){return await jsonFetch('/api/project-health-platform?project='+encodeURIComponent(project.id)+'&signal='+encodeURIComponent(signal),{timeoutMs:6500});}
   async function loadRunInfo(project,root){if(project.noRunWorkflow)return null;try{return await jsonFetch('/api/project-health-run?project='+encodeURIComponent(project.id)+'&env='+pageEnvironment(root),{timeoutMs:5000});}catch(error){if(error.status===404)return null;throw error;}}
+  // Authority Lab: one row per test suite; counts are null when the job log could not be read.
+  function suiteRows(externalQ){
+    return (externalQ?.suites||[]).map(item=>{
+      const total=Number(item.tests),passed=Number(item.passed);
+      const score=Number.isFinite(total)&&total>0&&Number.isFinite(passed)?passed/total:null;
+      const passedRun=externalQ?.ci?.conclusion==='success';
+      return {name:item.name,detail:item.detail,score:score??(passedRun?1:null),label:score!=null?(passed+' / '+total+' passing'):(passedRun?'Passed (count unavailable)':'Status unavailable')};
+    });
+  }
   async function loadExternalQuality(project){if(project.noQualitySource)return null;return await jsonFetch('/api/project-health-project-quality?project='+encodeURIComponent(project.id),{timeoutMs:7000});}
   async function loadActivity(project){const payload=await jsonFetch('/api/project-health-activity?project='+encodeURIComponent(project.id),{timeoutMs:14000});return payload?.activity||null;}
   async function loadOpenPullRequests(project,root,data){
@@ -197,7 +206,7 @@
         ['Vercel',p.links?.vercel],
         ['Render · production',p.links?.renderProduction],
         ['Neon',p.links?.neon],
-        [p.id==='state'?'Full AI eval details':p.id==='tastemake'?'Recommendation checks':p.id==='narc'?'Game checks':(p.qualityLabel||'Quality checks'),p.links?.quality]
+        [p.id==='state'?'Full AI eval details':p.id==='tastemake'?'Recommendation checks':p.id==='narc'?'Game checks':p.id==='authority-lab'?'Test runs':(p.qualityLabel||'Quality checks'),p.links?.quality]
       ].filter(item=>item[1]);
       linksMenu.innerHTML='<button type="button" data-open-systems>Systems &amp; connections</button><button type="button" data-open-about>About Project Health</button>'+links.map(([label,url])=>'<a href="'+esc(url)+'" target="_blank" rel="noopener noreferrer">'+esc(label)+'</a>').join('');
     }
@@ -376,6 +385,9 @@
           summaryCard('Recommendation rules',ruleScore,rt?(rp+' / '+rt+' passed'):'No recorded result',rt&&rp===rt?'good':'warn','')+
           summaryCard('Bad outputs caught',catchScore,ct?(cp+' / '+ct+' caught'):'No recorded result',ct&&cp===ct?'good':'warn','');
         summaryCopy='Recommendation grounding, rule compliance, and validator protection.';
+      }else if(p.id==='authority-lab'&&externalQ){
+        cards=suiteRows(externalQ).map(row=>summaryCard(row.name,row.score,row.label,row.score===1?'good':row.score==null?'unknown':'warn','')).join('');
+        summaryCopy='The app and agent test suites on main (Node 22 and 24).';
       }else if(p.id==='narc'&&externalQ){
         const green=!!externalQ.recorded?.recorded_all_suites_green;
         const pendingPlaytest=!!externalQ.recorded?.full_playtest_pending;
@@ -484,6 +496,10 @@
           :kpi(label,score,{label:'—',cls:'flat'},score===1?'good':score==null?'warn':'warn',score===1?'Healthy':'Needs a look',total?passed+' / '+total:'Not measured',[])
         ).join('');
         qualityCards=vals.map(([label,score,passed,total,comparison])=>{const n=pct(score);return '<div class="mock-quality-detail-card"><span>'+esc(label)+'</span><strong>'+(n==null?'—':esc(n+'%'))+'</strong><div class="mock-progress"><span style="width:'+(n||0)+'%"></span></div><small>'+esc(comparison?(total?(passed+' / '+total+' historical baseline'):'Historical comparison'):(total?(passed+' / '+total+' passing'):'Not measured'))+'</small></div>';}).join('');
+      }else if(p.id==='authority-lab'&&externalQ){
+        const rows=suiteRows(externalQ);
+        kpis=rows.map(row=>kpi(row.name,row.score,{label:'—',cls:'flat'},row.score===1?'good':'warn',row.score===1?'Healthy':row.score==null?'Unknown':'Needs a look',row.label,[])).join('');
+        qualityCards=rows.map(row=>{const n=pct(row.score);return '<div class="mock-quality-detail-card"><span>'+esc(row.name)+'</span><strong>'+(n==null?'—':esc(n+'%'))+'</strong><div class="mock-progress"><span style="width:'+(n||0)+'%"></span></div><small>'+esc(row.label)+'</small></div>';}).join('');
       }else if(p.id==='narc'){
         const green=!!externalQ?.recorded?.recorded_all_suites_green;
         const playtestPending=!!externalQ?.recorded?.full_playtest_pending;
@@ -655,6 +671,12 @@
         '<div class="eval-history"><h4>What these checks cover</h4><div class="run-summary">'+
         (externalQ.check_groups||[]).map(g=>'<div class="run-callout"><strong>'+esc(g.name)+'</strong><p>'+esc(g.detail)+'</p></div>').join('')+
         '<p class="footnote">'+esc(externalQ.caveat||'')+'</p></div></div>';
+    }else if(p.id==='authority-lab'&&externalQ){
+      const top=externalQualityAttention(externalQ),ci=externalQ.ci||{};
+      qualityHtml='<h3>Product quality · Automated tests</h3>'+
+        '<div class="eval-overview"><div><strong>'+esc(top?.title||'Test results loaded')+'</strong><span>Latest test run on main'+(ci.updated_at?' · '+esc(fmtDate(ci.updated_at)):'')+'</span></div></div>'+
+        '<div class="eval-grid">'+suiteRows(externalQ).map(row=>stateEvalCard(row.name,row.label,row.detail,'')).join('')+'</div>'+
+        '<p class="footnote">'+esc(externalQ.caveat||'')+(ci.html_url?' <a href="'+esc(ci.html_url)+'" target="_blank" rel="noopener noreferrer">Open the run ↗</a>':'')+'</p>';
     }else if(p.id==='narc'&&externalQ){
       qualityHtml='<h3>Product quality · Game checks</h3>'+
         '<div class="eval-overview"><div><strong>'+(externalQ.recorded?.recorded_all_suites_green?'Automated checks are passing':'Automated check status is unclear')+'</strong><span>'+(externalQ.recorded?.full_playtest_pending?'Human first-run playtest is still open.':'Latest playtest gate is recorded.')+'</span></div></div>'+

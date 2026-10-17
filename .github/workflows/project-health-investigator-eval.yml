@@ -30,6 +30,17 @@ jobs:
         run: |
           node scripts/project_health_eval/run.js collect
           cp "$PH_EVAL_OUT/cases.json" scripts/project_health_eval/cases.json
+      - name: Refresh Vercel case evidence (no model calls)
+        if: hashFiles('scripts/project_health_eval/cases.json') != ''
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          PH_EVAL_OUT: ${{ runner.temp }}/ph-eval
+        run: |
+          if node -e "process.exit(require('./scripts/project_health_eval/config.json').refreshVercel?0:1)"; then
+            node scripts/project_health_eval/run.js refresh-vercel
+            cp "$PH_EVAL_OUT/cases.json" scripts/project_health_eval/cases.json
+          fi
       - name: Dry run
         run: node scripts/project_health_eval/run.js run --dry-run
       - name: Run the investigator prompt
