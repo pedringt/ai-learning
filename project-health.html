@@ -655,9 +655,20 @@
       <a class="ph-portfolio-link" href="https://www.contextswitch.tech/" target="_blank" rel="noopener noreferrer">Back to portfolio ↗</a>
       <div class="utility-row"><div id="status" class="notice" role="status">Loading project health…</div><button class="button" id="refreshButton" type="button">Refresh</button></div>
     </header>
-    <div id="overviewSummary" class="overview-summary" aria-live="polite"></div>
+    <nav class="project-tabs mock-tabs ph-main-tabs" id="projectTabs" aria-label="Project health sections">
+      <button class="project-tab active" type="button" data-tab="overview">Overview</button>
+      <button class="project-tab" type="button" data-tab="ai-quality">Product Quality / Evals</button>
+      <button class="project-tab" type="button" data-tab="releases">Delivery &amp; Activity</button>
+      <button class="project-tab" type="button" data-tab="decision-support">Decision Support</button>
+    </nav>
+    <section class="ph-global" id="phGlobal" aria-label="Project overview">
+      <div id="phGlobalContent"></div>
+      <div id="overviewSummary" class="overview-summary" aria-live="polite"></div>
+    </section>
     <section class="review-inbox" id="reviewInbox" aria-live="polite"></section>
 
+    <details class="ph-selected-detail" id="phSelectedDetail">
+      <summary><strong id="phDetailLabel">Project details</strong><span>Explore the selected project's signals and evidence</span></summary>
     <section class="detail active" id="projectDetail" aria-live="polite">
       <div class="detail-head mock-detail-head">
         <div class="mock-project-heading">
@@ -680,12 +691,6 @@
         </div>
       </div>
 
-      <nav class="project-tabs mock-tabs" id="projectTabs" aria-label="Project health sections">
-        <button class="project-tab active" type="button" data-tab="overview">Overview</button>
-        <button class="project-tab" type="button" data-tab="ai-quality">Quality</button>
-        <button class="project-tab" type="button" data-tab="releases">Releases</button>
-        <button class="project-tab" type="button" data-tab="decision-support">Decision Support</button>
-      </nav>
       <div id="evalRunBanner" class="eval-global-status" role="status" hidden></div>
 
       <div class="grid mock-overview-grid">
@@ -710,6 +715,7 @@
         <section class="panel mock-quality-summary" id="overviewQualitySummaryPanel" hidden></section>
       </div>
     </section>
+    </details>
 
         <div id="investigationBackdrop" class="drawer-backdrop" hidden></div>
     <aside id="investigationDrawer" class="investigation-drawer" aria-labelledby="investigationDrawerTitle" aria-hidden="true" hidden>

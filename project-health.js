@@ -969,7 +969,7 @@
     const initialTab=legacyTabMap[requestedTab]||requestedTab;
     let activeTab=allowedTabs.has(initialTab)?initialTab:'overview';
     let summaryFilter='all';
-    let renderQueued=false,refreshGeneration=0,investigationDrawerOpen=false;
+    let renderQueued=false,refreshGeneration=0,investigationDrawerOpen=false,lastRenderedTab=activeTab;
     const demoState={phase:'idle',step:0,timers:[]};
 
     function activeData(){return state.find(item=>item.project.id===activeId)||null;}
@@ -1085,6 +1085,64 @@
         (incompleteCount?'<button class="summary-chip summary-action open '+(summaryFilter==='incomplete'?'active':'')+'" type="button" data-summary-filter="incomplete"><strong>'+incompleteCount+'</strong> couldn\'t be fully checked</button>':'');
     }
 
+    function renderGlobalOverview(){
+      const global=doc.getElementById('phGlobalContent');
+      if(!global)return;
+      const live=state.filter(item=>item?.fresh);
+      const pending=state.some(item=>!coreStatusKnown(item));
+      const issues=live.flatMap(item=>attentionItems(item)
+        .filter(signal=>signal.kind!=='good'&&signal.title!=='Still checking')
+        .map(signal=>({...signal,project:item.project})))
+        .sort((a,b)=>({bad:0,warn:1,unknown:2}[a.kind]??3)-({bad:0,warn:1,unknown:2}[b.kind]??3));
+      const changes=state.flatMap(item=>meaningfulChanges(item).map(change=>({...change,project:item.project})))
+        .sort((a,b)=>(dateMs(b.observedAt)||0)-(dateMs(a.observedAt)||0));
+      const activity=state.flatMap(item=>activityTimelineItems(item).map(event=>({...event,project:item.project})))
+        .sort((a,b)=>(dateMs(b.when)||0)-(dateMs(a.when)||0));
+      const count=issues.length;
+      const actionable=issues.filter(signal=>signal.kind==='bad'||signal.kind==='warn').length;
+      const unchecked=count-actionable;
+      const headline=actionable
+        ?'<span>'+actionable+' '+(actionable===1?'thing':'things')+'</span> need'+(actionable===1?'s':'')+' attention.'
+        :pending?'Checking what needs attention.'
+        :unchecked?'Couldn\'t check every project signal.'
+        :'Nothing needs immediate attention.';
+      const attentionLabel=actionable?'Needs attention':unchecked?'Couldn\'t check':'Needs attention';
+      const timeline=activity.slice(0,6).reverse().map(event=>
+        '<button type="button" class="ph-timeline-event" data-ph-project="'+esc(event.project.id)+'" data-ph-tab="'+esc(event.category==='quality'?'ai-quality':'releases')+'" title="'+esc(event.project.name+' · '+event.title)+'"><i></i><span>'+esc(activityDayLabel(event.when))+'</span></button>'
+      ).join('');
+      const alerts=issues.slice(0,3).map(signal=>
+        '<button class="ph-signal ph-'+esc(signal.kind)+'" type="button" data-ph-project="'+esc(signal.project.id)+'" data-ph-tab="'+esc(signal.category==='quality'?'ai-quality':signal.category==='delivery'?'releases':'overview')+'">'+
+        '<span class="ph-kicker">'+esc(signal.category||'Project signal')+' · '+esc(signal.project.name)+'</span><strong>'+esc(signal.title)+'</strong><span class="ph-signal-copy">'+esc(signal.detail||'Review the current evidence for this signal.')+'</span><span class="ph-signal-status">'+esc(signal.kind==='bad'?'Needs attention':signal.kind==='warn'?'Investigate':'Couldn\'t check')+' →</span></button>'
+      ).join('');
+      const extra=issues.slice(3).map(signal=>'<button type="button" class="ph-extra" data-ph-project="'+esc(signal.project.id)+'" data-ph-tab="'+esc(signal.category==='quality'?'ai-quality':'overview')+'"><strong>'+esc(signal.project.name)+'</strong> · '+esc(signal.title)+' <span aria-hidden="true">→</span></button>').join('');
+      const projects=PROJECTS.map(project=>{
+        const data=state.find(item=>item.project.id===project.id),health=data?projectStatus(data):{key:'checking',label:'Checking'};
+        const signal=data?overallAttention(data):{title:'Checking project health'};
+        return '<button type="button" class="ph-product" data-ph-project="'+esc(project.id)+'" data-ph-tab="overview"><span class="ph-logo">'+esc(project.name[0])+'</span><span><strong>'+esc(project.name)+'</strong><small>'+esc(data?.fresh?signal.title:'Checking project health…')+'</small></span><span class="ph-state ph-'+esc(health.key)+'">'+esc(health.shortLabel||health.label)+'</span><span aria-hidden="true">›</span></button>';
+      }).join('');
+      const selected=activeData(),healthRows=doc.querySelector('#overviewHealthPanel .overview-health')?.innerHTML||'';
+      const recent=activity.slice(0,5).map(event=>
+        '<button type="button" class="ph-activity-row" data-ph-project="'+esc(event.project.id)+'" data-ph-tab="'+esc(event.category==='quality'?'ai-quality':'releases')+'"><time>'+esc(relativeAge(event.when))+'</time><i></i><span><strong>'+esc(event.title)+'</strong><small>'+esc(event.project.name+' · '+event.type)+'</small></span></button>'
+      ).join('');
+      const changed=changes.slice(0,5).map(change=>
+        '<button type="button" class="ph-change-row" data-ph-project="'+esc(change.project.id)+'" data-ph-tab="'+esc(change.tab||'overview')+'"><time>'+esc(relativeAge(change.observedAt))+'</time><span><strong>'+esc(change.title)+'</strong><small>'+esc(change.project.name+' · '+change.detail)+'</small></span><span aria-hidden="true">›</span></button>'
+      ).join('');
+      const open=state.flatMap(item=>productOpenItems(item).map(entry=>({...entry,project:item.project}))).slice(0,4).map(entry=>
+        '<button type="button" class="ph-open-row" data-ph-project="'+esc(entry.project.id)+'" data-ph-tab="ai-quality"><strong>'+esc(entry.title)+'</strong><small>'+esc(entry.project.name+' · '+(entry.owner||'Product'))+'</small></button>'
+      ).join('');
+      const html='<div class="ph-hero"><div><h2>'+headline+'</h2><p>What needs attention across your projects, based on the connected signals.</p></div><aside class="ph-timeline"><div class="ph-panel-heading"><h3>Recent changes</h3><span>Recorded activity</span></div>'+
+        (timeline?'<div class="ph-timeline-track">'+timeline+'</div>':'<p class="ph-empty">No recent activity has loaded yet.</p>')+'</aside></div>'+
+        '<section class="ph-attention"><div class="ph-attention-band"><span class="ph-alert-icon">!</span><h3>'+attentionLabel+'</h3><span>'+count+' '+(count===1?'item':'items')+'</span></div><div class="ph-attention-grid '+(count?'':'ph-no-alerts')+'">'+
+        (alerts||'<p class="ph-empty">'+(pending?'Checking the latest signals…':'No current attention items in the connected signals.')+'</p>')+'</div>'+(extra?'<div class="ph-extra-list">'+extra+'</div>':'')+'</section>'+
+        '<div class="ph-three"><section class="ph-panel"><div class="ph-panel-heading"><h3>Product focus</h3><span>Across your projects</span></div><div class="ph-products">'+projects+'</div></section>'+
+        '<section class="ph-panel"><div class="ph-panel-heading"><h3>Overall health</h3><span>'+esc(selected?.project.name||'Selected project')+'</span></div><div class="ph-health">'+(healthRows||'<p class="ph-empty">Checking project health…</p>')+'</div></section>'+
+        '<section class="ph-panel"><div class="ph-panel-heading"><h3>Recent activity</h3><span>Across your projects</span></div><div class="ph-activity">'+(recent||'<p class="ph-empty">No activity has loaded yet.</p>')+'</div></section></div>'+
+        '<div class="ph-two"><section class="ph-panel"><div class="ph-panel-heading"><h3>Changed since your last visit</h3><span>Meaningful changes only</span></div><div>'+ (changed||'<p class="ph-empty">No meaningful changes recorded since your last visit.</p>')+'</div></section>'+
+        '<section class="ph-panel"><div class="ph-panel-heading"><h3>Open items</h3><span>Product quality</span></div><div>'+(open||'<p class="ph-empty">No open product-quality items in the connected sources.</p>')+'</div></section></div>';
+      if(global.innerHTML!==html)global.innerHTML=html;
+      doc.getElementById('phDetailLabel').textContent=(selected?.project.name||'Project')+' details';
+    }
+
     function applyTabState(){
       if(projectTabs){
         projectTabs.querySelectorAll('[data-tab]').forEach(button=>{
@@ -1094,6 +1152,14 @@
         });
       }
       doc.querySelectorAll('[data-tab-panel]').forEach(panel=>{panel.hidden=panel.dataset.tabPanel!==activeTab;});
+      const global=doc.getElementById('phGlobal');if(global)global.hidden=activeTab!=='overview';
+      const detail=doc.getElementById('phSelectedDetail');
+      if(detail){
+        if(activeTab!=='overview')detail.open=true;
+        else if(lastRenderedTab!=='overview')detail.open=false;
+        detail.classList.toggle('is-tab',activeTab!=='overview');
+      }
+      lastRenderedTab=activeTab;
     }
     function setActiveTab(tab,updateUrl=true){
       const legacyTabMap={activity:'releases',usage:'overview',investigation:'overview',technical:'decision-support'};
@@ -1111,6 +1177,7 @@
       renderQueued=false;
       renderCards();renderSummary();renderReviewInbox();
       const data=activeData();if(data)renderDetail(data,doc);
+      renderGlobalOverview();
       applyTabState();
       root.PROJECT_HEALTH_LAST_TIMINGS=Object.fromEntries(state.map(item=>[item.project.id,{...item.timings}]));
     }
@@ -1153,6 +1220,13 @@
     }
 
     cards.addEventListener('change',event=>select(event.target.value));
+
+    doc.getElementById('phGlobalContent')?.addEventListener('click',event=>{
+      const target=event.target.closest?.('[data-ph-project],[data-tab-target]');
+      if(!target)return;
+      if(target.dataset.phProject)select(target.dataset.phProject);
+      if(target.dataset.phTab||target.dataset.tabTarget)setActiveTab(target.dataset.phTab||target.dataset.tabTarget);
+    });
 
     summary.addEventListener('click',event=>{
       const filterButton=event.target.closest?.('[data-summary-filter]');
