@@ -1003,17 +1003,15 @@
     }
 
     function renderCards(){
-      const visible=PROJECTS.filter(project=>{
-        if(summaryFilter==='all')return true;
+      // Use the same project data and select() path as the former card switcher.
+      // Do not replace options on every async refresh: preserve native keyboard focus.
+      const options=PROJECTS.map(project=>{
         const item=state.find(entry=>entry&&entry.project.id===project.id);
-        if(!item?.fresh)return false;
-        return projectStatus(item).key===summaryFilter;
-      });
-      cards.innerHTML=visible.map(project=>{
-        const item=state.find(entry=>entry&&entry.project.id===project.id);
-        return item?cardMarkup(item,project.id===activeId):loadingCardMarkup(project,project.id===activeId);
+        const label=item?projectStatus(item).label:'Loading…';
+        return '<option value="'+esc(project.id)+'">'+esc(project.name+' · '+label)+'</option>';
       }).join('');
-      cards.hidden=!visible.length;
+      if(cards.innerHTML!==options)cards.innerHTML=options;
+      cards.value=PROJECTS.some(project=>project.id===activeId)?activeId:'state';
     }
 
     const reviewStorageKey='project-health-reviewed:'+pageEnvironment(root);
@@ -1154,7 +1152,7 @@
       try{await root.navigator.clipboard.writeText(text);button.textContent='Copied';root.setTimeout(()=>{button.textContent='Copy engineer handoff';},1500);}catch(_){root.prompt('Copy engineering handoff',text);}
     }
 
-    cards.addEventListener('click',event=>{const item=event.target.closest?.('.project-switcher-item');if(item)select(item.dataset.project);});
+    cards.addEventListener('change',event=>select(event.target.value));
 
     summary.addEventListener('click',event=>{
       const filterButton=event.target.closest?.('[data-summary-filter]');

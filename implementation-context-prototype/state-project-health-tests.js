@@ -602,7 +602,7 @@ assert.match(stateVercelConfig.ignoreCommand,/git diff --quiet "\$P" HEAD -- \./
 
 const healthHtml=fs.readFileSync(require.resolve('../project-health.html'),'utf8');
 assert.doesNotMatch(healthHtml,/Product health triage/);
-assert.match(healthHtml,/Spot problems, understand what they mean for users/);
+assert.match(healthHtml,/<select id="projectCards" aria-label="Switch project">/);
 assert.match(healthHtml,/How Project Health works/);
 assert.match(healthHtml,/Role &amp; attribution/);
 assert.match(healthHtml,/id="projectCheckButton"/);

@@ -647,20 +647,15 @@
 </head>
 <body>
   <main class="shell">
-    <div class="topbar">
-      <div class="brand">Context Switch <span class="subtle">/ Project Health</span></div>
-      <a class="button" href="https://www.contextswitch.tech/" target="_blank" rel="noopener noreferrer">Back to portfolio ↗</a>
-    </div>
-
-    <section class="hero compact-hero">
-      <div>
-        <h1>Project Health</h1>
-        <p class="lede">Spot problems, understand what they mean for users, and give the right person a grounded starting point.</p>
-      </div>
-      <div class="utility-row"><div id="status" class="notice">Loading project health…</div><button class="button" id="refreshButton" type="button">Refresh</button></div>
-    </section>
+    <header class="topbar ph-product-bar">
+      <h1 class="brand">Project Health</h1>
+      <label class="ph-project-select"> <span class="visually-hidden">Switch project</span>
+        <select id="projectCards" aria-label="Switch project"><option value="state">State · Loading…</option></select>
+      </label>
+      <a class="ph-portfolio-link" href="https://www.contextswitch.tech/" target="_blank" rel="noopener noreferrer">Back to portfolio ↗</a>
+      <div class="utility-row"><div id="status" class="notice" role="status">Loading project health…</div><button class="button" id="refreshButton" type="button">Refresh</button></div>
+    </header>
     <div id="overviewSummary" class="overview-summary" aria-live="polite"></div>
-    <section class="overview-grid" id="projectCards" aria-live="polite"></section>
     <section class="review-inbox" id="reviewInbox" aria-live="polite"></section>
 
     <section class="detail active" id="projectDetail" aria-live="polite">
@@ -795,7 +790,7 @@
       </div>
     </dialog>
   </main>
-  <link href="project-health-redesign.css?v=r4-oct11" rel="stylesheet" onload="document.documentElement.classList.remove('rd-pending')" onerror="document.documentElement.classList.remove('rd-pending')">
+  <link href="project-health-redesign.css?v=v2-oct18" rel="stylesheet" onload="document.documentElement.classList.remove('rd-pending')" onerror="document.documentElement.classList.remove('rd-pending')">
   <script src="project-health-model.js"></script>
   <script src="project-health.js"></script>
 </body>
