@@ -628,10 +628,10 @@ assert.doesNotMatch(healthHtml,/data-tab="investigation"/);
 assert.doesNotMatch(healthHtml,/data-tab="technical"/);
 assert.doesNotMatch(healthHtml,/data-tab="activity"/);
 assert.match(healthHtml,/id="deliveryPanel" data-tab-panel="releases"/);
-assert.match(healthHtml,/id="mockDashboardOverview" data-tab-panel="overview"/);
+assert.doesNotMatch(healthHtml,/id="mockDashboardOverview"/);
 assert.match(healthHtml,/id="productFocusPanel" data-tab-panel="decision-support"/);
 assert.match(healthHtml,/id="decisionSupportPanel" data-tab-panel="decision-support"/);
-assert.match(healthHtml,/id="analyticsPanel" hidden/);
+assert.match(healthHtml,/id="analyticsPanel" data-tab-panel="overview"/);
 assert.match(healthHtml,/id="overviewInvestigationPanel" hidden/);
 assert.match(healthHtml,/id="overviewActivityPanel" hidden/);
 assert.match(healthHtml,/id="attentionPanel" hidden/);
@@ -766,7 +766,6 @@ assert.match(projectHealthSource,/Starting checks/);
 assert.doesNotMatch(projectHealthSource,/control:'evals'/);
 assert.match(projectHealthSource,/Previous results remain visible until the new run finishes/);
 assert.match(projectHealthSource,/project-switcher-item/);
-assert.match(projectHealthSource,/data-summary-filter/);
 assert.match(projectHealthSource,/unreviewedIncidents/);
 assert.doesNotMatch(projectHealthSource,/Recent check details/);
 assert.match(projectHealthSource,/stateEvalBehaviorStale/);
@@ -811,7 +810,6 @@ assert.doesNotMatch(projectHealthSource,/Investigate this issue →/);
 assert.match(projectHealthSource,/Review AI evals →/);
 assert.match(projectHealthSource,/projectCheckButton\.textContent=data\.investigation\?\.loading\?'Investigating…':'Investigate'/);
 assert.match(projectHealthSource,/projectCheckButton\.classList\.add\('primary'\)/);
-assert.match(projectHealthSource,/PROJECTS\.length<=3/);
 assert.doesNotMatch(projectHealthSource,/AI evals running…':'Run all AI evals/);
 assert.doesNotMatch(projectHealthSource,/changes-zero[^>]*data-tab-target/);
 
@@ -928,16 +926,6 @@ assert.match(workflowText,/record_environment:/);
 assert.match(workflowText,/github\.ref == 'refs\/heads\/main' \|\| github\.ref == 'refs\/heads\/staging'/);
 assert.match(workflowText,/github\.ref == 'refs\/heads\/staging' && inputs\.suite == 'all'/);
 assert.match(workflowText,/run_quality_evals\.py/);
-
-// Review #5 (Oct 2026): a suite that has not loaded must read as unknown, never as "0 failures"/green.
-const healthJs=fs.readFileSync(require.resolve('../project-health.js'),'utf8')+fs.readFileSync(require.resolve('../project-health-model.js'),'utf8'); // split in #452
-assert.match(healthJs,/!review\?'unknown':reviewFailures\?'warn':'good'/);
-assert.match(healthJs,/!ask\?'unknown':askFailures\?'bad':'good'/);
-assert.match(healthJs,/!review\?unknownSignal:reviewFailures/);
-assert.match(healthJs,/!ask\?unknownSignal:askFailures/);
-assert.match(healthJs,/authority==null\?'unknown'/);
-assert.match(healthJs,/uncertainty==null\?'unknown'/);
-assert.match(fs.readFileSync(require.resolve('../project-health-redesign.css'),'utf8'),/\.mock-kpi-signal\.unknown/);
 
 console.log('Project Health shell tests passed');
 
