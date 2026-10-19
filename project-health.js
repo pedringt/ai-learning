@@ -969,7 +969,7 @@
     const initialTab=legacyTabMap[requestedTab]||requestedTab;
     let activeTab=allowedTabs.has(initialTab)?initialTab:'overview';
     let summaryFilter='all';
-    let renderQueued=false,refreshGeneration=0,investigationDrawerOpen=false,lastRenderedTab=activeTab;
+    let renderQueued=false,refreshGeneration=0,investigationDrawerOpen=false;
     const demoState={phase:'idle',step:0,timers:[]};
 
     function activeData(){return state.find(item=>item.project.id===activeId)||null;}
@@ -1154,12 +1154,7 @@
       doc.querySelectorAll('[data-tab-panel]').forEach(panel=>{panel.hidden=panel.dataset.tabPanel!==activeTab;});
       const global=doc.getElementById('phGlobal');if(global)global.hidden=activeTab!=='overview';
       const detail=doc.getElementById('phSelectedDetail');
-      if(detail){
-        if(activeTab!=='overview')detail.open=true;
-        else if(lastRenderedTab!=='overview')detail.open=false;
-        detail.classList.toggle('is-tab',activeTab!=='overview');
-      }
-      lastRenderedTab=activeTab;
+      if(detail)detail.classList.toggle('is-tab',activeTab!=='overview');
     }
     function setActiveTab(tab,updateUrl=true){
       const legacyTabMap={activity:'releases',usage:'overview',investigation:'overview',technical:'decision-support'};

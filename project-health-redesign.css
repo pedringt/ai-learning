@@ -354,12 +354,6 @@ html body .ph-extra-list { border-top:1px solid #f0dbd9; background:#fffaf9; }
 html body .ph-extra { width:100%; padding:11px 22px; border:0; background:transparent; color:#445266; text-align:left; font-size:12px; cursor:pointer; }
 html body .ph-extra:hover { background:#fff0ed; }
 html body .ph-extra strong { color:var(--ink); }
-html body .ph-selected-detail { margin:28px 0 0; border-top:1px solid var(--line); }
-html body .ph-selected-detail>summary { display:flex; align-items:baseline; gap:14px; padding:20px 0; color:var(--ink); cursor:pointer; }
-html body .ph-selected-detail>summary strong { font:800 24px Georgia,serif; }
-html body .ph-selected-detail>summary span { color:var(--muted); font-size:12px; }
-html body .ph-selected-detail.is-tab { margin:0; border:0; }
-html body .ph-selected-detail.is-tab>summary { display:none; }
-@media(max-width:760px) {
-  html body .ph-selected-detail>summary { flex-direction:column; align-items:flex-start; gap:4px; }
-}
+html body .ph-selected-detail { margin:28px 0 0; }
+html body .ph-selected-detail.is-tab { margin:0; }
+html body .ph-selected-detail.is-tab>.ph-detail-divider { display:none; }
