@@ -7,7 +7,7 @@ const layerCss=require('./state-layer-css');
 const baselineJs=fs.readFileSync(path.join(dir,'context-baseline.js'),'utf8');
 const setup=baselineJs+layerCss('context-baseline-setup.js');
 const polish=baselineJs+layerCss('context-baseline-polish.js');
-const appJs=fs.readFileSync(path.join(dir,'context-app.js'),'utf8');
+const appJs=['context-app.js','context-app-dialogs.js','context-app-navigation.js','context-app-hydration.js','context-app-review-actions.js'].map(file=>fs.readFileSync(path.join(dir,file),'utf8')).join('\n');
 const projectViewJs=fs.readFileSync(path.join(dir,'context-project-view.js'),'utf8');
 let pass=0,fail=0;
 function check(name,ok,detail=''){if(ok){pass++;console.log('ok',name)}else{fail++;console.error('FAIL',name,detail)}}
