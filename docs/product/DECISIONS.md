@@ -241,3 +241,21 @@ Locking both to staging and protected previews; an admin key for investigations;
 **Revisit when**  
 Spend from these endpoints shows up unexpectedly, or the dashboard gets traffic beyond portfolio reviewers.
 
+### DEC-013 — The Ask quality suite is read like the review suite (trial)
+
+**Status:** Revisit if condition changes  
+**Date:** 2026-10-19  
+**Related:** `state-project-complete/eval/release_gate.py`; RELEASE.md "Reading the review interpretation suite"; DEC-012
+
+**Decision**  
+A State AI quality check run's Ask suite passes when at most one scenario misses and no scenario fails in two consecutive recorded runs. Paige chose this on Oct 19 as a trial ("let's try it and see how it goes").
+
+**Why**  
+Failing on any single miss made the known variable case `ask_blocker_not_omitted` (77–87% pass on every model, Oct 16) turn `main`'s latest commit red and send failure emails, without a regression behind it. The review suite already uses this reading (#494).
+
+**Rejected / deferred**  
+An unsafe-direction check for Ask (its scenarios have no `unsafe_if` tag yet); keeping "any miss fails".
+
+**Revisit when**  
+A real Ask regression passes under this reading, or a single scenario keeps missing every other run (the consecutive check would never catch it).
+

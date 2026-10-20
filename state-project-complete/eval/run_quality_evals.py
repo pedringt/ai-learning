@@ -32,6 +32,7 @@ from eval.quality_harness import (
 )
 from eval.review_interpretation_scenarios import SCENARIOS as REVIEW_SCENARIOS
 from eval.authority_lab_export import build_envelope
+from eval.release_gate import ASK_SUITE, REVIEW_SUITE, fetch_analytics, gate, previous_failed_ids
 
 
 def _record(url: str, key: str, payload: dict) -> None:
@@ -252,6 +253,10 @@ def main() -> int:
     for report in reports:
         _print_report(report)
 
+    # The previous recorded runs, read before this run is recorded (for "failed in two consecutive runs").
+    analytics = fetch_analytics(args.record_url) if args.record_url else None
+    previous = {suite: (previous_failed_ids(analytics, suite) if analytics else None) for suite in (REVIEW_SUITE, ASK_SUITE)}
+
     if args.json:
         Path(args.json).write_text(json.dumps({"reports": reports}, indent=2))
         print(f"\nWrote detailed report to {args.json}")
@@ -279,8 +284,13 @@ def main() -> int:
             Path(args.authority_lab_envelope).write_text(json.dumps(envelope, indent=2) + "\n")
             print(f"\nWrote Authority Lab evidence {envelope['id']} to {args.authority_lab_envelope}")
 
-    has_failure = any(any(not row["passed"] for row in report["results"]) for report in reports)
-    return 1 if has_failure else 0
+    # RELEASE.md's reading rules decide the exit code, not "any miss" (Oct 19).
+    reasons = gate(reports, {REVIEW_SUITE: REVIEW_SCENARIOS, ASK_SUITE: ASK_SCENARIOS}, previous)
+    print("\nRelease reading (RELEASE.md):")
+    for suite, why in reasons.items():
+        note = "" if previous.get(suite) is not None else " (previous run unknown, consecutive check skipped)"
+        print(f"  {suite}: " + ("FAIL - " + "; ".join(why) if why else "pass") + note)
+    return 1 if any(reasons.values()) else 0
 
 
 if __name__ == "__main__":

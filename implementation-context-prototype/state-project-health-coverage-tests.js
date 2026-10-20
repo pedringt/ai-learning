@@ -9,7 +9,7 @@ const G=GITHUB_API._test;
 const project=id=>M.PROJECTS.find(p=>p.id===id);
 // No live project lacks a quality source since Authority Lab's tests were connected (Oct 17); a copy with the
 // flag set keeps the "quality not measured" path covered.
-const noQualityProject={...project('authority-lab'),noQualitySource:true};
+const noQualityProject={...project('authority-lab'),noQualitySource:true,noRunWorkflow:true};
 const goodDelivery={branch:'main',sha:'abcdef1234567',vercel:{kind:'good',label:'Vercel deploy healthy'},failedChecks:[],updatedAt:'2026-10-10T00:00:00Z',message:'Ship'};
 const healthyStateQuality={
   review:{interpretation_accuracy:1,high_severity_failures:0,failed_cases:0,created_at:'2026-10-09T00:00:00Z'},
@@ -45,6 +45,7 @@ assert.strictEqual(M.overallAttention(stateHealthy).kind,'good');
 assert.strictEqual(M.projectStatus(stateHealthy).label,'Healthy');
 const authorityByDesign=loaded(noQualityProject,{externalQuality:null});
 assert.deepStrictEqual(M.uncheckedSignals(authorityByDesign),[]);
+// Run tests stays hidden until pedringt/authority-lab#146 (workflow_dispatch) is merged.
 assert.ok(!project('authority-lab').noQualitySource&&project('authority-lab').noRunWorkflow);
 
 // --- Cowork, Oct 11: a quality source missing by design is not a failure, but it is not hidden either.

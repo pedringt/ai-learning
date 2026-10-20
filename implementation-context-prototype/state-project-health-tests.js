@@ -986,3 +986,35 @@ assert.strictEqual(MODEL_H.deliveryHealth({name:'main',commit:{sha:'a'}},{status
   assert.strictEqual(H.externalQualityAttention(failing).kind,'bad');
   assert.ok(H.activityTimelineItems({project:al,externalQuality:passing}).some(item=>item.title==='Automated tests ran on main'));
 }
+
+// Server errors not monitored on this plan (Oct 19): an honest gap, never an issue.
+{
+  const notMonitored={...H.emptyProjectData(H.PROJECTS[0]),fresh:true,activity:{available:true,runtime:{available:false,coverage:'not_monitored',issues:[]}}};
+  assert.ok(H.setupGaps(notMonitored).some(item=>item.label==='Server error monitoring'&&/Not monitored/.test(item.detail)));
+  const quick=H.quickProjectCheck({...notMonitored,delivery:{vercel:{kind:'good'}}});
+  assert.ok(quick.checks.some(item=>item.label==='User-facing server errors'&&item.value==='Not monitored on this plan'));
+}
+
+// Each project's quality cards live in QUALITY_VIEWS and use only that project's terms (Oct 19; the
+// "else NARC" fallback once put NARC's game metrics on Authority Lab).
+{
+  const V=H.QUALITY_VIEWS;
+  for(const project of H.PROJECTS.filter(p=>p.quality!=='state'))
+    assert.ok(V[project.id]||project.noQualitySource,project.id+' needs a QUALITY_VIEWS entry or noQualitySource');
+  const samples={
+    tastemake:{project:'tastemake',ci:{conclusion:'success',updated_at:'2026-10-16T00:00:00Z'},endpoint:{rule_checks:{passed:6,total:6},validator_self_test:{caught:4,total:4}},baseline:{valid_fixture_outputs:{passed:5,total:6}},check_groups:[{name:'Recommendation grounding',detail:'x'}],attention:[{kind:'good',title:'ok'}],caveat:''},
+    narc:{project:'narc',ci:{conclusion:'success'},recorded:{recorded_all_suites_green:true,full_playtest_pending:true},suites:[{name:'Core game regression',detail:'x'}],attention:[{kind:'warn',title:'Full first-run playtest still pending'}],caveat:''},
+    'authority-lab':{project:'authority-lab',ci:{status:'completed',conclusion:'success',updated_at:'2026-10-16T20:40:01Z',html_url:'https://github.com/pedringt/authority-lab/actions/runs/1'},suites:[{name:'App and store tests',detail:'x',tests:399,passed:399,failed:0},{name:'Agent tooling tests',detail:'y',tests:46,passed:46,failed:0}],attention:[{kind:'good',title:'Latest Authority Lab tests pass'}],caveat:''}
+  };
+  const helpers={summaryCard:(title,score,note)=>'['+title+': '+note+']',kpi:(label,value,delta,kind,signal,sub)=>'['+label+': '+signal+' '+sub+']',pct:v=>v==null?null:Math.round(v*100)};
+  const own={tastemake:/Recommendation/,narc:/game|playtest/i,'authority-lab':/tests/};
+  const foreign={tastemake:/game|playtest|Agent tooling/i,narc:/Recommendation|Agent tooling|App and store/i,'authority-lab':/game|playtest|Recommendation|validator/i};
+  for(const [id,view] of Object.entries(V)){
+    const sample=samples[id];
+    assert.ok(sample,'add a sample for '+id);
+    const text=[view.summary(sample,helpers).cards,view.detail(sample,helpers).kpis,view.detail(sample,helpers).qualityCards,view.tab(sample),view.linkLabel].join(' ');
+    assert.match(text,own[id],id+' renders its own terms');
+    assert.doesNotMatch(text,foreign[id],id+' renders another project\'s terms');
+  }
+  assert.match(V['authority-lab'].summary(samples['authority-lab'],helpers).cards,/399 \/ 399 passing/);
+}
