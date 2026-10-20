@@ -54,6 +54,11 @@ def is_baseline_setup(connection: Any) -> bool:
             "SELECT baseline_completed_at FROM projects WHERE id=?", (project_id,)
         ).fetchone()
     except Exception:
+        # On Postgres the failed SELECT has already aborted the caller's transaction (often a locked
+        # BEGIN), so rolling back here would silently discard the caller's work; surface the error.
+        # SQLite keeps the old behaviour (CLAUDE.md, Sept 14 incident).
+        if getattr(connection, "is_postgres", False):
+            raise
         return False
     return bool(row) and row["baseline_completed_at"] is None
 

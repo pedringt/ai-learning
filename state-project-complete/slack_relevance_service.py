@@ -197,6 +197,9 @@ def evaluate_due_checkpoints(
             _evaluate_one(connection, checkpoint, classifier, provider, now_iso)
         except Exception:
             logger.exception("Slack relevance evaluation failed for checkpoint %s", checkpoint["id"])
+            # Discard this checkpoint's half-finished writes before the next one: otherwise Postgres
+            # stays aborted for the rest of the batch, and on SQLite the next commit would keep them.
+            connection.rollback()
             continue
         evaluated.append(checkpoint["id"])
     return evaluated
