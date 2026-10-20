@@ -5,7 +5,10 @@ FRONTEND = Path(__file__).parent.parent / "implementation-context-prototype"
 
 
 def test_current_integrity_and_polish_contracts():
-    app = (FRONTEND / "context-app.js").read_text(encoding="utf-8")
+    # context-app.js was split into context-app-*.js (Oct 2026, pure move).
+    app = "\n".join((FRONTEND / name).read_text(encoding="utf-8") for name in (
+        "context-app.js", "context-app-dialogs.js", "context-app-navigation.js",
+        "context-app-hydration.js", "context-app-review-actions.js"))
     api_js = (FRONTEND / "context-api.js").read_text(encoding="utf-8")
     html = (FRONTEND / "index.html").read_text(encoding="utf-8")
     notes = (FRONTEND / "context-notes-view.js").read_text(encoding="utf-8")

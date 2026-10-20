@@ -49,17 +49,12 @@ def is_baseline_setup(connection: Any) -> bool:
     project_id = project_id_of(connection)
     if not project_id.startswith("project_"):
         return False
-    try:
-        row = connection.execute(
-            "SELECT baseline_completed_at FROM projects WHERE id=?", (project_id,)
-        ).fetchone()
-    except Exception:
-        # On Postgres the failed SELECT has already aborted the caller's transaction (often a locked
-        # BEGIN), so rolling back here would silently discard the caller's work; surface the error.
-        # SQLite keeps the old behaviour (CLAUDE.md, Sept 14 incident).
-        if getattr(connection, "is_postgres", False):
-            raise
-        return False
+    # #548 (Paige, Oct 20): fail closed. A database error here used to make the project look
+    # not-in-setup (a 409 on upload, Baseline guidance silently dropped); it now surfaces. On Postgres
+    # the failed SELECT has already aborted the caller's transaction anyway (CLAUDE.md, Sept 14).
+    row = connection.execute(
+        "SELECT baseline_completed_at FROM projects WHERE id=?", (project_id,)
+    ).fetchone()
     return bool(row) and row["baseline_completed_at"] is None
 
 

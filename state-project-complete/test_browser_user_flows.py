@@ -111,7 +111,9 @@ def _launch_page(hydration_ms: int = 120, ask_ms: int = 180, resolved_review_ms:
     page.add_script_tag(content=(FRONT / "context-open-items-view.js").read_text())
     page.add_script_tag(content=(FRONT / "context-project-view.js").read_text())
     page.add_script_tag(content=(FRONT / "context-backend-sync.js").read_text())
-    page.add_script_tag(content=(FRONT / "context-app.js").read_text())
+    for name in ("context-app-dialogs.js", "context-app-navigation.js", "context-app-hydration.js",
+                 "context-app-review-actions.js", "context-app.js"):
+        page.add_script_tag(content=(FRONT / name).read_text())
     page.add_script_tag(content=(FRONT / "context-settings.js").read_text())
     page.add_script_tag(content=(FRONT / "context-product-polish.js").read_text())
     return pw, browser, page

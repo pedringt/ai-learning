@@ -29,6 +29,12 @@ from db import project_id_of
 
 logger = logging.getLogger("state.provider.openai")
 
+
+def _missing_project_id_column(exc: Exception) -> bool:
+    """True only for a pre-migration-013 schema: the questions table has no project_id column."""
+    text = str(exc).lower()
+    return "project_id" in text and ("no such column" in text or "does not exist" in text)
+
 class OpenAIProvider:
     """Provider adapter for OpenAI API."""
 
@@ -212,14 +218,18 @@ class OpenAIProvider:
         # Evidence was actually being interpreted. Falls back to the
         # unscoped query on a pre-migration-013 schema (no project_id column
         # yet) rather than failing outright.
+        # #548 (Paige, Oct 20): the unscoped read is allowed only when the schema genuinely predates
+        # projects (no project_id column, so a single project and nothing to leak). Any other error used
+        # to fall back too, which could have shown the model every project's open Questions; it now
+        # fails the interpretation visibly.
         try:
             question_rows = connection.execute(
                 "SELECT id, text, blocking, blocks FROM questions WHERE status='open' AND project_id=? ORDER BY created_at, id",
                 (project_id_of(connection),),
             ).fetchall()
-        except Exception:
-            # Pre-migration-013 fallback. On Postgres the failed SELECT aborted the transaction, so the
-            # fallback can only run after a rollback (CLAUDE.md, Sept 14 incident).
+        except Exception as exc:
+            if not _missing_project_id_column(exc):
+                raise
             if getattr(connection, "is_postgres", False):
                 connection.rollback()
             question_rows = connection.execute(

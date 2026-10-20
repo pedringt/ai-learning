@@ -108,7 +108,8 @@ def check_daily_budget(connection: Any, now: datetime | None = None) -> None:
     except Exception:
         # The guard must never take State down: if the metrics table cannot be read, allow the call
         # (and on Postgres clear the aborted transaction, CLAUDE.md Sept 14 incident).
-        logger.warning("Could not read today's model spend; allowing the call", exc_info=True)
+        # #548 (Paige, Oct 20): still fails open (a broken metrics table must not take Ask down), but loudly.
+        logger.error("Could not read today's model spend; the daily cap is NOT being enforced", exc_info=True)
         if getattr(connection, "is_postgres", False):
             connection.rollback()
         return

@@ -3,7 +3,17 @@ from pathlib import Path
 
 
 FRONTEND = Path(__file__).parent.parent / "implementation-context-prototype"
-JS = (FRONTEND / "context-app.js").read_text()
+# context-app.js was split into context-app-*.js (Oct 2026, pure move): the app's source
+# contract covers the coordinator and the four modules it installs.
+APP_FILES = ("context-app.js", "context-app-dialogs.js", "context-app-navigation.js",
+             "context-app-hydration.js", "context-app-review-actions.js")
+
+
+def _app_js():
+    return "\n".join((FRONTEND / name).read_text(encoding="utf-8") for name in APP_FILES)
+
+
+JS = _app_js()
 API_JS = (FRONTEND / "context-api.js").read_text()
 NOTES_VIEW_JS = (FRONTEND / "context-notes-view.js").read_text()
 OPEN_ITEMS_VIEW_JS = (FRONTEND / "context-open-items-view.js").read_text()
@@ -161,7 +171,7 @@ def test_provider_failure_retry_reuses_saved_evidence():
 
 
 def test_r8_long_project_and_open_items_scaling_contract():
-    app = (FRONTEND / "context-app.js").read_text(encoding="utf-8")
+    app = _app_js()
     css = (FRONTEND / "context-tool.css").read_text(encoding="utf-8")
     # The "waiting" question list's 5-item cap and topic-overlap sort moved to
     # context-open-items-view.js 2026-09-06; the click handler that flips
@@ -188,7 +198,7 @@ def test_r81_notes_filters_share_one_date_status_search_pipeline():
     # notesUiState()/filteredNotes() there) so every existing call site is
     # unchanged. Split out 2026-09-06 as part of the context-app.js size
     # reduction -- see README's "Known debt".
-    app = (FRONTEND / "context-app.js").read_text(encoding="utf-8")
+    app = _app_js()
     assert "function filteredNotes(){ return NOTES_VIEW.filteredNotes(" in app
     assert "const notes=filteredNotes();" in app
     assert "function filteredNotes(notes,ui)" in NOTES_VIEW_JS
@@ -197,7 +207,7 @@ def test_r81_notes_filters_share_one_date_status_search_pipeline():
 
 
 def test_r81_multiple_reviews_default_collapsed_with_single_open_accordion():
-    app = (FRONTEND / "context-app.js").read_text(encoding="utf-8")
+    app = _app_js()
     # The expanded/collapsed decision per review card moved to
     # context-open-items-view.js 2026-09-06 -- expandedReviewId arrives there
     # as a plain argument (from context-app.js's state.expandedReviewId)
@@ -222,7 +232,7 @@ def test_r81_project_nav_hides_empty_sections_and_orientation_uses_state():
     # sections" is now inherent rather than a per-button visibility check --
     # and "Project stage"/"Project outcome" are matched by topic label so a
     # different project's own universal facts work the same way.
-    app = (FRONTEND / "context-app.js").read_text(encoding="utf-8")
+    app = _app_js()
     assert "PROJECT_VIEW.visibleAreas(state.data.knowledge)" in app
     assert "'project stage'" in app and "'project outcome'" in app
     assert "'project stage'" in PROJECT_VIEW_JS and "'project outcome'" in PROJECT_VIEW_JS
@@ -232,7 +242,7 @@ def test_r81_project_nav_hides_empty_sections_and_orientation_uses_state():
 def test_r83_notes_date_filters_use_calendar_day_distance_not_timestamp_midnights():
     # Relocated to context-notes-view.js 2026-09-06 (see comment on
     # test_r81_notes_filters_share_one_date_status_search_pipeline above).
-    app = (FRONTEND / "context-app.js").read_text(encoding="utf-8")
+    app = _app_js()
     assert "function localCalendarKey(value)" in NOTES_VIEW_JS
     assert "function calendarDayNumber(value)" in NOTES_VIEW_JS
     assert "const age=todayDay-noteDay;" in NOTES_VIEW_JS
@@ -244,7 +254,7 @@ def test_r83_notes_date_filters_use_calendar_day_distance_not_timestamp_midnight
 
 
 def test_r82_authoritative_review_counts_do_not_flash_fixture_values_before_hydration():
-    app = (FRONTEND / "context-app.js").read_text(encoding="utf-8")
+    app = _app_js()
     assert "reviewsBackendAvailable" not in app
     assert "questionsBackendAvailable" not in app
     assert "reviewsHydrated" not in app
@@ -263,7 +273,7 @@ def test_r82_authoritative_review_counts_do_not_flash_fixture_values_before_hydr
 
 
 def test_r82_open_item_sections_are_collapsible_and_keep_attention_hierarchy():
-    app = (FRONTEND / "context-app.js").read_text(encoding="utf-8")
+    app = _app_js()
     css = (FRONTEND / "context-tool.css").read_text(encoding="utf-8")
     assert "openItemSections:{reviews:false,blockers:false,drafts:true,questions:null}" in app
     assert "toggle-open-item-section" in app
@@ -275,7 +285,7 @@ def test_r82_open_item_sections_are_collapsible_and_keep_attention_hierarchy():
 
 
 def test_r83_project_navigation_uses_stable_absolute_targets_without_sticky_section_motion():
-    app = (FRONTEND / "context-app.js").read_text(encoding="utf-8")
+    app = _app_js()
     css = (FRONTEND / "context-tool.css").read_text(encoding="utf-8")
     assert "function projectScrollTop(target)" in app
     assert "window.scrollY+el.getBoundingClientRect().top-offset" in app
@@ -287,7 +297,7 @@ def test_r83_project_navigation_uses_stable_absolute_targets_without_sticky_sect
 
 
 def test_r84_navigation_rules_and_review_polish_contract():
-    app = (FRONTEND / "context-app.js").read_text(encoding="utf-8")
+    app = _app_js()
     html = (FRONTEND / "index.html").read_text(encoding="utf-8")
     assert 'class="product-name product-home" data-view="overview"' in html
     assert "function navigateTo(view" in app
@@ -300,7 +310,7 @@ def test_r84_navigation_rules_and_review_polish_contract():
 
 
 def test_r85_integrity_and_polish_contracts():
-    app = (FRONTEND / "context-app.js").read_text(encoding="utf-8")
+    app = _app_js()
     api_js = (FRONTEND / "context-api.js").read_text(encoding="utf-8")
     html = (FRONTEND / "index.html").read_text(encoding="utf-8")
     # Renamed Project -> Project State -> Knowledge -> Current State (2026-09-07
@@ -338,7 +348,7 @@ def test_r85_integrity_and_polish_contracts():
 
 
 def test_r86_notes_link_into_review_and_history_workflow():
-    app = (FRONTEND / "context-app.js").read_text(encoding="utf-8")
+    app = _app_js()
     # reviewIds:open.map(...) moved to context-backend-sync.js's syncApiEvidence
     # 2026-09-12, alongside the rest of the backend mapping/sync layer.
     assert "data-action=\"open-note-reviews\"" in app
@@ -359,7 +369,7 @@ def test_r86_demo_history_is_real_provenance_not_frontend_fixture_rows():
 
 
 def test_r861_client_hydration_never_recreates_missing_fixture_questions():
-    app = (FRONTEND / "context-app.js").read_text(encoding="utf-8")
+    app = _app_js()
     seed = (Path(__file__).parent / "seed_demo.py").read_text(encoding="utf-8")
     assert "bootstrapFixtureQuestions" not in app
     assert "syncApiQuestions(payloadOf(byKey.questions).items||[])" in app
@@ -398,7 +408,7 @@ def test_r861_grounded_ask_module_and_release_assets_are_self_contained():
 
 def test_r95_workspace_attention_has_a_fast_independent_load_path():
     api_client = (FRONTEND / "context-api.js").read_text(encoding="utf-8")
-    app = (FRONTEND / "context-app.js").read_text(encoding="utf-8")
+    app = _app_js()
     api_server = (Path(__file__).parent / "api.py").read_text(encoding="utf-8")
     assert "getAttention: () => request('/api/attention')" in api_client
     assert "API.getAttention().then" in app
@@ -406,7 +416,7 @@ def test_r95_workspace_attention_has_a_fast_independent_load_path():
 
 
 def test_r19_project_summary_and_modal_actions_stay_compact():
-    app = (FRONTEND / "context-app.js").read_text(encoding="utf-8")
+    app = _app_js()
     # project-fact-count was deliberately removed 2026-09-07 (UX review
     # batch, item 14) along with the header's fact count.
     #
@@ -454,7 +464,7 @@ def test_r9_ask_vertical_slice_has_dedicated_module_and_backend_endpoint():
 
 
 def test_dialog_visibility_has_one_source_of_truth():
-    app = (FRONTEND / "context-app.js").read_text(encoding="utf-8")
+    app = _app_js()
     css = (FRONTEND / "context-tool.css").read_text(encoding="utf-8")
     html = (FRONTEND / "index.html").read_text(encoding="utf-8")
     assert 'id="overlay" hidden' in html
@@ -466,7 +476,7 @@ def test_dialog_visibility_has_one_source_of_truth():
 
 
 def test_r16_release_hardening_removes_control_chars_and_keeps_word_boundary_routing():
-    app = (FRONTEND / "context-app.js").read_text(encoding="utf-8")
+    app = _app_js()
     assert "\x08" not in app
     # The old approved/confirmed/decided/... heuristic (any past-tense word
     # plus a topic word) was replaced 2026-09-07 after live QA found it
@@ -500,7 +510,7 @@ def test_r16_mobile_workspace_nav_has_horizontal_overflow_affordance():
 
 def test_followup_rendering_obeys_payload_mode_and_preserves_previous_answer_state():
     ask = (FRONTEND / "context-ask.js").read_text()
-    app = (FRONTEND / "context-app.js").read_text()
+    app = _app_js()
     assert "followup_mode:'new'" in ask
     # state.md #115: payload?.followup_mode and visiblePrevious belonged to
     # context-app.js's submitAsk(), which tracked a previous answer across
