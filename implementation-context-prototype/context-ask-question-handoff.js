@@ -51,7 +51,13 @@
     return null;
   }
 
-  function handoffFor(query, answerText, questions = []) {
+  function handoffFor(query, answerText, questions = [], suggestedQuestion = '') {
+    // #543: a Question the answer itself suggests (a specific gap it found) comes first.
+    const suggestion = String(suggestedQuestion || '').trim();
+    if (suggestion) {
+      const tracked = equivalentQuestion(suggestion, questions);
+      return tracked ? {kind: 'existing', question: tracked} : {kind: 'suggest', query: suggestion};
+    }
     const cleanQuery = String(query || '').trim();
     if (!cleanQuery || !isUnanswerableAnswer(answerText)) return {kind: null};
     const existing = equivalentQuestion(cleanQuery, questions);
@@ -66,6 +72,9 @@
     if (decision?.kind === 'existing') {
       const q = decision.question || {};
       return `<aside class="ask-question-handoff" data-ask-question-handoff-card="existing"><strong>Already tracked as a Question</strong><p>State still does not have an established answer, and this unknown is already being tracked.</p><button class="btn secondary" type="button" data-action="go-open-question" data-question-id="${esc(q.id || '')}">Open Question</button></aside>`;
+    }
+    if (decision?.kind === 'suggest') {
+      return `<aside class="ask-question-handoff" data-ask-question-handoff-card="suggest"><strong>Track this unknown?</strong><p>&ldquo;${esc(decision.query)}&rdquo;</p><p>You can edit the wording before saving. Adding a Question does not change Current State.</p><button class="btn secondary" type="button" data-ask-question-handoff="add" data-question-text="${esc(decision.query)}">Add this as a Question</button></aside>`;
     }
     if (decision?.kind === 'add') {
       return `<aside class="ask-question-handoff" data-ask-question-handoff-card="add"><strong>State does not currently have enough information to answer this.</strong><p>Track the unknown as a Question so it does not get lost. You can review or edit the wording before saving. Adding a Question does not change Current State.</p><button class="btn secondary" type="button" data-ask-question-handoff="add">Add as Question</button></aside>`;
@@ -104,10 +113,10 @@
       return;
     }
     const query = lastQuery || document.getElementById('askStateDrawerInput')?.value.trim() || '';
-    const decision = handoffFor(query, answerSummaryText(answer), currentOpenQuestions());
+    const decision = handoffFor(query, answerSummaryText(answer), currentOpenQuestions(), answer.dataset.suggestedQuestion || '');
     const signature = decision.kind === 'existing'
       ? `existing:${decision.question?.id || ''}:${norm(query)}`
-      : decision.kind === 'add' ? `add:${norm(query)}` : '';
+      : decision.kind === 'add' || decision.kind === 'suggest' ? `${decision.kind}:${norm(decision.query)}` : '';
     if (!signature) {
       existingCard?.remove();
       return;
@@ -161,7 +170,7 @@
     if (!add) return;
     event.preventDefault();
     event.stopPropagation();
-    const query = lastQuery || document.getElementById('askStateDrawerInput')?.value.trim() || '';
+    const query = add.dataset.questionText || lastQuery || document.getElementById('askStateDrawerInput')?.value.trim() || '';
     openQuestionComposer(query);
   }, true);
 

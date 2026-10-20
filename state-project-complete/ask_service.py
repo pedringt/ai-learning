@@ -388,6 +388,8 @@ Authority rules are non-negotiable:
 - Meeting prep is a portable working brief, not a dashboard or record dump. It should be useful when pasted into a meeting document and leave room for live notes.
 - For meeting prep, prefer this information architecture when supported: concise before-the-meeting summary; Decisions needed; Questions to get answered; Useful context. State navigation/actions are rendered separately by the client.
 - Do not repeat the same issue across multiple sections. A Review and linked Question may both appear, but explain each once.
+- When you restate a Review or Question, keep its scope qualifiers (which cases, who, which part, which date). A Review about whether low-risk cases can skip human review is not a proposal to remove all human review (#545).
+- suggested_question (#543): null in most answers. Set it only when ALL of these hold: (1) the user's request directly asks for something (a reason, owner, date, number or decision) that no supplied record establishes; (2) no open Review or open Question already covers that topic, even in different words; (3) the answer does not correct a false premise in the request (never turn a premise you corrected into a Question). Then give one short, specific question a person could track. Never suggest tangential follow-ups the user did not ask about, and never present it as tracked or true.
 - Never call something a blocker unless the supplied Question says blocking=true. Never claim a count of blockers unless it matches selected blocking Questions.
 {_grounding_rules(today)}
 
@@ -531,6 +533,8 @@ Non-negotiable rules:
 - Meeting prep is a portable working brief, not a dashboard or record dump. It should be useful when pasted into a meeting document and leave room for live notes.
 - For meeting prep, prefer this information architecture when supported: concise before-the-meeting summary; Decisions needed; Questions to get answered; Useful context. State navigation/actions are rendered separately by the client.
 - Do not repeat the same issue across multiple sections. A Review and linked Question may both appear, but explain each once.
+- When you restate a Review or Question, keep its scope qualifiers (which cases, who, which part, which date). A Review about whether low-risk cases can skip human review is not a proposal to remove all human review (#545).
+- suggested_question (#543): null in most answers. Set it only when ALL of these hold: (1) the user's request directly asks for something (a reason, owner, date, number or decision) that no supplied record establishes; (2) no open Review or open Question already covers that topic, even in different words; (3) the answer does not correct a false premise in the request (never turn a premise you corrected into a Question). Then give one short, specific question a person could track. Never suggest tangential follow-ups the user did not ask about, and never present it as tracked or true.
 - Never call something a blocker unless the supplied Question says blocking=true. Never claim a count of blockers unless it matches selected blocking Questions.
 - Keep the main output selective; Open Items handles completeness elsewhere.
 {_grounding_rules(today)}
@@ -593,6 +597,8 @@ def _validate_synthesis(
         cleaned for value in answer.suggested_refinements
         if (cleaned := _clean_visible_ask_text(value, all_internal_ids, labels))
     ]
+    if answer.suggested_question:
+        answer.suggested_question = _clean_visible_ask_text(answer.suggested_question, all_internal_ids, labels) or None
 
     clean_sections = []
     for section in answer.sections:

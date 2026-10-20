@@ -273,6 +273,7 @@
   
 
 /* ==== from context-ask-question-handoff.js: ask-question-handoff-styles ==== */
+.ask-scope-note{margin:12px 0 0;color:var(--muted);font-size:12px;line-height:1.45}
 .ask-question-handoff{margin-top:16px;padding:12px;border:1px solid var(--line);border-radius:10px;background:var(--surface2)}.ask-question-handoff strong{display:block;margin-bottom:4px;font-size:13px}.ask-question-handoff p{margin:0 0 10px;color:var(--muted);font-size:12px;line-height:1.45}.ask-question-handoff .btn{width:auto}
 
 /* ==== from context-settings.js: state-settings-view-styles ==== */

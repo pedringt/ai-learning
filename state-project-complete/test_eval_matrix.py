@@ -431,7 +431,7 @@ def test_dry_run_summary_for_the_single_run_scripts(monkeypatch):
 def test_adversarial_suite_plans_one_call_per_scenario_and_runs_as_ask():
     from eval.ask_adversarial_scenarios import SCENARIOS as ADVERSARIAL
 
-    assert matrix.calls_per_repeat("adversarial") == len(ADVERSARIAL) == 20
+    assert matrix.calls_per_repeat("adversarial") == len(ADVERSARIAL) == 21
     assert all(s.id.startswith("adv_") for s in ADVERSARIAL)
     assert matrix.parse_suites("adversarial") == ["adversarial"]
 
@@ -527,12 +527,12 @@ def test_visible_answer_unwraps_the_run_ask_envelope():
 
 def test_regrade_suite_grades_the_saved_calibration_answers_without_an_ask_call():
     items = matrix.calibration_items()
-    assert len(items) == 20 == matrix.calls_per_repeat("regrade")
+    assert len(items) == 25 == matrix.calls_per_repeat("regrade")
     assert all(isinstance(i.answer, dict) and "source_ids" not in i.answer for i in items)
     rec = matrix.regrade_record(items[0], lambda s, a: _grades(faithfulness=1))
     assert rec["scenario_id"] == items[0].id and rec["outcome"] == "fail" and rec["scores"]["faithfulness"] == 1
     p = matrix.plan(["regrade"], "claude-haiku-5-5", 3, 100)
-    assert p["total_calls"] == 60 and 0.5 < p["estimated_cost_usd"] < 3
+    assert p["total_calls"] == 75 and 0.5 < p["estimated_cost_usd"] < 4
 
 
 def test_grader_is_told_todays_date():
@@ -540,3 +540,10 @@ def test_grader_is_told_todays_date():
     from eval.ask_grader import user_message
     text = user_message(ASK[0], {"headline": "h"}, today=_date(2026, 10, 17))
     assert "TODAY'S DATE (Ask was given this date): 2026-10-17" in text
+
+
+def test_grader_records_carry_question_blocking_status_like_the_ask_seed():
+    from eval.ask_grader import supplied_records
+    scenario = next(s for s in ASK if s.id == "ask_blocker_not_omitted")
+    q = supplied_records(scenario)["open_questions"][0]
+    assert q["blocking"] is True and q["blocks"] == "Launch readiness" and not q["text"].upper().startswith("BLOCKING")

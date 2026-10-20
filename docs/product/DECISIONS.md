@@ -280,3 +280,19 @@ Before this, nothing bounded what a script could spend through the public site (
 
 **Revisit when**  
 The cap is hit by real visitors rather than abuse, or the Project Health paid actions (DEC-012) need to count against it. Those actions are not recorded in `model_call_metrics` today.
+
+### DEC-015 — Ask suggests a Question for a gap it finds, and says it covers only what's on record
+
+**Status:** Active  
+**Date:** 2026-10-20  
+**Related:** #543, #544, #545
+
+**Decision**  
+- **Suggested Question (#543):** when an answer finds a specific gap the record doesn't cover (for example, the reason for a recorded change), Ask suggests one Question. The answer offers **Add this as a Question**, which opens the existing Question form prefilled and editable. Ask never creates it. If an equivalent open Question exists, the answer points to that one instead.
+- **Scope footer (#544):** every answer, and its copied text, ends with "Based on what's recorded in State. There may be things it doesn't know about." The line is fixed and deterministic, not written by the model.
+- **Scope qualifiers (#545):** when Ask restates a Review or Question, it keeps its scope ("low-risk cases"), with an adversarial case that checks it.
+
+Paige chose the smart suggestion and the fixed footer from her Oct 20 grading notes.
+
+**Rejected / deferred**  
+Plain "Add a Question / Add Evidence" buttons on every answer, and an AI-written scope sentence only on readiness questions.

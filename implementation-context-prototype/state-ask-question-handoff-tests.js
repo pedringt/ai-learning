@@ -49,5 +49,14 @@ for(const wording of [
 
 check('ordinary uncertainty is not treated as a dead-end Ask response',!api.isUnanswerableAnswer('There is an open Question about the vendor, so this is not settled yet.'));
 
+// #543: a Question the answer suggests is offered even when the answer itself is answerable.
+const suggested=api.handoffFor('Why was the pilot paused?','The pilot was paused on September 28.',[],'Why was the Northstar pilot paused on September 28?');
+check('a suggested Question is offered with its own wording',suggested.kind==='suggest'&&suggested.query==='Why was the Northstar pilot paused on September 28?',JSON.stringify(suggested));
+const suggestedTracked=api.handoffFor('Why was the pilot paused?','The pilot was paused.',[{id:'q-9',status:'open',text:'Why was the Northstar pilot paused on September 28?'}],'Why was the Northstar pilot paused on September 28?');
+check('a suggested Question already tracked shows the existing one',suggestedTracked.kind==='existing'&&suggestedTracked.question.id==='q-9',JSON.stringify(suggestedTracked));
+const markup=api.handoffMarkup(suggested);
+check('the suggestion card prefills the suggested wording',markup.includes('data-question-text="Why was the Northstar pilot paused on September 28?"')&&markup.includes('Add this as a Question'));
+check('no suggestion keeps the old behaviour',api.handoffFor('When is launch?',answerable,[],'').kind===null);
+
 console.log(`\n${pass} passed, ${fail} failed`);
 if(fail)process.exit(1);

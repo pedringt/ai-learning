@@ -136,3 +136,34 @@ class InterpretationGuardTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class BudgetMessageTests(unittest.TestCase):
+    """Oct 20: when the AI budget is used up, visitors see a calm, honest message (Paige's wording)."""
+
+    def test_provider_budget_errors_are_recognised_and_ordinary_errors_are_not(self) -> None:
+        from spend_guard import is_ai_budget_exhausted
+        oct20 = ("Error code: 429 - {'type': 'error', 'error': {'type': 'rate_limit_error', 'message': \"You have reached "
+                 "your API usage limits: your organization has crossed its monthly API usage threshold\", 'details': "
+                 "{'error_code': 'enforced_spend_limit_reached'}}}")
+        self.assertTrue(is_ai_budget_exhausted(oct20))
+        self.assertTrue(is_ai_budget_exhausted("Your credit balance is too low to access the Anthropic API."))
+        self.assertTrue(is_ai_budget_exhausted(DailySpendCapReached(CAP_REACHED_MESSAGE)))
+        self.assertFalse(is_ai_budget_exhausted("Error code: 429 - rate_limit_error: Number of requests per minute exceeded"))
+        self.assertFalse(is_ai_budget_exhausted("Request timed out."))
+
+    def test_ask_shows_the_budget_message_when_the_account_limit_is_hit(self) -> None:
+        from spend_guard import AI_BUDGET_MESSAGE
+
+        class _BudgetHitProvider:
+            def run(self, prompt):
+                raise RuntimeError("Error code: 429 - enforced_spend_limit_reached: You have reached your API usage limits")
+
+        with tempfile.TemporaryDirectory() as tmp:
+            app = create_app(Settings(database_path=str(Path(tmp) / "s.db"), provider="anthropic", cors_origins=[]), provider=None)
+            with TestClient(app) as client:
+                app.state.ask_provider = _BudgetHitProvider()
+                response = client.post("/api/ask", json={"query": "What is the pilot status?"})
+        self.assertEqual(response.status_code, 503)
+        self.assertEqual(response.json()["detail"], AI_BUDGET_MESSAGE)
+        self.assertIn("personal AI budget", AI_BUDGET_MESSAGE)
