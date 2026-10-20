@@ -56,7 +56,7 @@
       }
     },
     {
-      id:'authority-lab',name:'Authority Lab',stageLabel:'In progress',noRuntimeAi:true,noRunWorkflow:true,description:'Prototype for deciding what an AI capability is allowed to do, based on evidence.',repo:'pedringt/authority-lab',branch:'main',
+      id:'authority-lab',name:'Authority Lab',stageLabel:'In progress',noRuntimeAi:true,description:'Prototype for deciding what an AI capability is allowed to do, based on evidence.',repo:'pedringt/authority-lab',branch:'main',
       focus:'Show authority as explicit, evidence-earned, conditional, reversible, and authorized by a named person.',
       evidence:['Lifecycle walkthrough','Authority decisions','Record history','Reversibility'],
       nextDecision:'Decide whether the Refund recommendation walkthrough is clear enough to add a second capability.',
@@ -393,7 +393,9 @@
     else if(platform?.analytics?.configured&&!platform?.analytics?.available&&!pendingSet(data).has('Analytics')) gaps.push({label:'Site analytics',detail:analyticsGapDetail(platform.analytics)});
     if(data?.activity?.available&&data.activity?.runtime){
       const runtime=data.activity.runtime;
-      if(runtime.available===false){
+      if(runtime.coverage==='not_monitored'){
+        gaps.push({label:'Server error monitoring',detail:'Not monitored. Vercel only streams live runtime logs, so past server errors cannot be read on this plan. Log Drains (Vercel Pro) would add history.'});
+      }else if(runtime.available===false){
         const status=Number(runtime.status||0);
         const detail=[401,403].includes(status)
           ?'Project Health can read deployments, but its Vercel token cannot read runtime logs.'
@@ -1192,6 +1194,12 @@
     if(signal) return signal.status;
     return analyticsConnectionValue(platform);
   }
+  // DEC-012's revisit trigger: what the open paid eval button has cost (an upper bound: every finished run, any trigger).
+  function paidRunSpendText(spend){
+    if(!spend)return '';
+    const n=Number(spend.count||0);
+    return 'Paid eval runs in the last 30 days: '+n+(spend.cost_upper_usd!=null?' (at most $'+Number(spend.cost_upper_usd).toFixed(2)+' at the configured estimate)':'')+'. Counts every finished run, from any trigger.';
+  }
   function projectQualityLabel(data){
     if(data.project.quality==='state'){
       if(!data.quality) return 'Quality unavailable';
@@ -1364,7 +1372,7 @@
     const quality=projectQualityLabel(data);
     checks.push({label:'Production deployment',value:delivery?.vercel?.kind==='good'?'Healthy':delivery?.vercel?.label||'Unknown'});
     checks.push({label:'Automated quality',value:quality||'Unknown'});
-    checks.push({label:'User-facing server errors',value:runtimeSignal?.available===false?'Runtime log signal unavailable':runtimeIssues.length?runtimeIssues.length+' signal'+(runtimeIssues.length===1?'':'s'):'None found in bounded check'});
+    checks.push({label:'User-facing server errors',value:runtimeSignal?.coverage==='not_monitored'?'Not monitored on this plan':runtimeSignal?.available===false?'Runtime log signal unavailable':runtimeIssues.length?runtimeIssues.length+' signal'+(runtimeIssues.length===1?'':'s'):'None found in bounded check'});
     const render=data?.platform?.render?.environments?.production;
     if(render) checks.push({label:'Production backend',value:render.ok?'Healthy':'Unavailable'});
     const unchecked=uncheckedSignals(data);
@@ -1558,5 +1566,5 @@
     };
   }
 
-  return {PROJECTS,currentCheckRuns,esc,shortSha,commitTitle,repoUrl,githubCommitUrl,pullRequestNumber,githubPullRequestUrl,githubLink,changeUrl,commitLabel,htmlRow,linkedRow,githubApi,vercelFromStatus,deliveryHealth,normalizeQuality,percent,highImpactText,modelDisplayName,qualityAttention,deliveryAttention,deliveryAttentionForData,infrastructureAttention,externalQualityAttention,pendingSet,STATUS_SIGNALS,coreStatusKnown,activityStillLoading,productOpenItems,failureReason,uncheckedSignals,incompleteAttention,allAttentionSignals,overallAttention,projectStatus,qualityNotMeasured,healthySummary,investigationUsesModel,actionNotes,RUN_COOLDOWN_MINUTES,runCooldown,latestRunStart,runCooldownFor,cooldownStartFromRetryAfter,attentionItems,setupGaps,releaseReadiness,regressionSignal,recurringFailureSignal,operationalSignals,healthConsistencyIssues,releaseRiskChecklist,productionRuntime,operationalNextDecision,failureCheckCount,failureExplanation,qualityFailureClassSummary,activityTimelineItems,activityDayLabel,activityTimeRange,evalBehaviorBranch,mergePlatform,emptyProjectData,safeExternalQualitySnapshot,serializeProjectData,hydrateProjectData,investigationHistorySummary,makeRunner,STATE_EVAL_CONTRACT_UPDATED_AT,dateMs,fmtDate,relativeAge,stateEvalContractStale,stateEvalBehaviorStale,stateEvalResultsStale,stateEvalStaleReason,freshnessMeta,qualitySnapshot,visitBaseline,knownDeliveryKind,healthStateLabel,scoreDeltaPoints,evalChangeDetail,meaningfulChanges,changedSinceVisit,trendText,activityReviewItems,row,metric,durationLabel,costLabel,attentionMarkup,neonConnectionDetail,infraCardLabel,analyticsConnectionValue,analyticsGapDetail,analyticsReceiving,analyticsSignal,analyticsLabel,projectQualityLabel,stageTag,loadingCardMarkup,cardMarkup,evalSuiteLabel,evalScore,evalTrend,stateEvalCard,stateScenarioCard,scenarioPassLabel,stateEvalHistory,mockSparkline,mockTrendValues,mockDelta,investigationResultHtml,evalRunComplete,externalQualityRunComplete,evalFailureImpact,previousEvalRun,progressText,quickProjectCheck,qualityInvestigation,projectHandoff};
+  return {PROJECTS,paidRunSpendText,currentCheckRuns,esc,shortSha,commitTitle,repoUrl,githubCommitUrl,pullRequestNumber,githubPullRequestUrl,githubLink,changeUrl,commitLabel,htmlRow,linkedRow,githubApi,vercelFromStatus,deliveryHealth,normalizeQuality,percent,highImpactText,modelDisplayName,qualityAttention,deliveryAttention,deliveryAttentionForData,infrastructureAttention,externalQualityAttention,pendingSet,STATUS_SIGNALS,coreStatusKnown,activityStillLoading,productOpenItems,failureReason,uncheckedSignals,incompleteAttention,allAttentionSignals,overallAttention,projectStatus,qualityNotMeasured,healthySummary,investigationUsesModel,actionNotes,RUN_COOLDOWN_MINUTES,runCooldown,latestRunStart,runCooldownFor,cooldownStartFromRetryAfter,attentionItems,setupGaps,releaseReadiness,regressionSignal,recurringFailureSignal,operationalSignals,healthConsistencyIssues,releaseRiskChecklist,productionRuntime,operationalNextDecision,failureCheckCount,failureExplanation,qualityFailureClassSummary,activityTimelineItems,activityDayLabel,activityTimeRange,evalBehaviorBranch,mergePlatform,emptyProjectData,safeExternalQualitySnapshot,serializeProjectData,hydrateProjectData,investigationHistorySummary,makeRunner,STATE_EVAL_CONTRACT_UPDATED_AT,dateMs,fmtDate,relativeAge,stateEvalContractStale,stateEvalBehaviorStale,stateEvalResultsStale,stateEvalStaleReason,freshnessMeta,qualitySnapshot,visitBaseline,knownDeliveryKind,healthStateLabel,scoreDeltaPoints,evalChangeDetail,meaningfulChanges,changedSinceVisit,trendText,activityReviewItems,row,metric,durationLabel,costLabel,attentionMarkup,neonConnectionDetail,infraCardLabel,analyticsConnectionValue,analyticsGapDetail,analyticsReceiving,analyticsSignal,analyticsLabel,projectQualityLabel,stageTag,loadingCardMarkup,cardMarkup,evalSuiteLabel,evalScore,evalTrend,stateEvalCard,stateScenarioCard,scenarioPassLabel,stateEvalHistory,mockSparkline,mockTrendValues,mockDelta,investigationResultHtml,evalRunComplete,externalQualityRunComplete,evalFailureImpact,previousEvalRun,progressText,quickProjectCheck,qualityInvestigation,projectHandoff};
 });
