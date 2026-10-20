@@ -4,33 +4,64 @@ This is the canonical current-state handoff for State and the surrounding portfo
 
 _Last updated: October 12, 2026 (evening), Pacific time. **Start with "Current state" just below**; the Oct 12 section after it says what changed most recently. Older sections still apply where nothing newer overrides them, and anything before Oct 5 is history (some open-issue lists down there are stale: trust GitHub). Written as a handoff for a fresh session._
 
-## Current state (Oct 12, 2026)
+## Current state (Oct 20, 2026)
 
-- **Nothing is held.** `main` = `e9dcc3b`, and `staging` matches it. Both Vercel projects and Render production serve `main`.
+- **The Anthropic API is blocked until Nov 1 (Oct 20, 18:50 UTC).**
+  - What happened: the organization crossed its tier-based monthly usage threshold (429 `enforced_spend_limit_reached`). That threshold is separate from the $500 custom limit in the Console, which showed $234.60 used.
+  - Effect: every AI feature in State, Tastemake and Project Health shows the calm budget message (Paige's wording, Oct 20) instead of failing.
+  - What resumes it: Paige raising the limit, or Nov 1.
+  - Until then: no paid evals, and the Monday weekly eval run will only record errors.
+- **`main`:** `0d0ac6a` (#547), verified on `state-api` `/health` and the frontend. `staging` matches it, apart from work in progress named in the section below.
 - **Production:**
   - Portfolio: `https://www.contextswitch.tech/`. State: `https://state.contextswitch.tech/`. API: `https://state-api-6waw.onrender.com`.
   - **Data:** SQLite on the `state-api` persistent disk (`/var/data/state.db`), not Postgres; see `CLAUDE.md` for backups.
-  - **A pre-migration backup** `/var/data/state-pre-migration-020.db` exists; delete it after about Oct 26.
-- **Model:** State runs `claude-haiku-5-5` (code default; `thinking: disabled`). Rollback is `CLAUDE_MODEL=claude-haiku-4-5-20251001` on Render. The GitHub `CLAUDE_MODEL` repo variable is deleted on purpose.
+  - **A pre-migration backup** `/var/data/state-pre-migration-020.db` exists. Paige deletes it from the Render Shell on or after Oct 27; a reminder is scheduled.
+- **Model:** State runs `claude-haiku-5-5` (code default; `thinking: disabled` via `model_request_options.py`). Rollback is `CLAUDE_MODEL=claude-haiku-4-5-20251001` on Render. Opus 5.5 was measured for Ask (99.5% vs 97% adversarial, 1.8× slower, about 40× cost); Paige kept Haiku (Oct 20).
+- **Spend guard:** a $50/day cap on State's recorded model spend (DEC-014, `spend_guard.py`, `STATE_DAILY_MODEL_SPEND_CAP_USD`).
 - **Release checks:**
   - `make qa-fast` (free; the Makefile finds the venv Python itself) and `make qa-release` (paid gate). See `QA.md`, including "Postgres tests locally".
-  - **Deep QA** on staging is the browser gate. Its "VP billing note reaches Review" check is a hard gate (DEC-010).
+  - **Deep QA** on staging is the browser gate. Its "VP billing note reaches Review" check is a hard gate (DEC-010). It cannot pass while the API is blocked.
   - **The live review suite** is read as a rate: each run must score at least 15/16, and no scenario may fail twice in a row (#494, `RELEASE.md`).
   - **Paid eval workflows** (pre-approved for testing; report call count and cost afterwards):
     - State AI quality check (`question-review-live.yml`);
     - State QA Release (`qa-release.yml`);
     - Baseline decomposition eval (`baseline-decomposition-eval.yml`, about 60 calls, about 30¢);
-    - State eval matrix (`state-eval-matrix.yml`, Oct 16): repeated suites on any model, dry-run by default.
+    - State eval matrix (`state-eval-matrix.yml`): repeated suites on any model, dry-run by default, weekly on Mondays.
+  - **The Ask LLM grader** (v6, `eval/ask_grader.py`) passes calibration against Paige's 20 blind grades on all six dimensions. It is report-only (Paige, Oct 20).
 - **Portfolio pages:**
   - `tools/social_previews.py` keeps every root page and cheat sheet's description, preview card and `sitemap.xml` current. Re-run it after changing a title or description; CI expects `--check` to pass.
   - The **AI Governance Handbook** (`ai-governance-handbook.html`) is a standalone page built from Paige's artifact, with its CSS scoped under `.handbook`. Its tools (triage, laws finder, calculator, incident clock, templates) are plain JS on the page.
 - **Project Health** (`project-health.html`) reads GitHub through `api/project-health-github.js` (cached, server-side). It never shows Healthy for a signal it couldn't load.
 - **Open work** (GitHub is the source of truth):
   - #409 Ask reliability runner and #399 agent-workflow health: both need scoping.
-  - Parked: #142 Question Investigator, #243 Tell Me What You Remember case study.
+  - #510 and #512 (portfolio story): Paige says not ready yet.
+  - Parked: #142 Question Investigator, #243 Tell Me What You Remember case study, and the Ask "markers instead of repetition" redesign (Paige: hold).
 - **Other repos:**
-  - **Tastemake** (`~/code/tastemake`): see its `docs/HANDOFF.md`.
+  - **Tastemake** (`~/code/tastemake`): see its `docs/HANDOFF.md`. Oct 16-20: structured outputs (#246), distinct pick explanations (#247), budget message (#263).
   - **Authority Lab** (`~/code/authority-lab`): worked in Paige's other chat.
+
+## Oct 19-20, 2026: spend cap, budget message, grader calibration, Ask next steps
+
+- **#519, #520, #521 (#541):**
+  - Slack channels belong to the project they were approved from; channels approved earlier stay on Northstar (Paige).
+  - Juniper counts as seeded in Product Analytics.
+  - Eval runs record the model actually used.
+- **Weekly eval run:** every Monday at 15:00 UTC, `main` runs ask, adversarial and review ×30 on Haiku (about $1.40).
+- **#529 → DEC-014 (#542):** the $50/day spend cap.
+- **AI budget message (#547):** State Ask, Evidence and the cap, plus the Project Health investigator, show Paige's wording when the budget is used up: "AI features are paused for now. This portfolio project runs on a personal AI budget...". Tastemake #263 does the same for picks and the Taste Profile.
+- **#543-545 → DEC-015 (#547):**
+  - Ask suggests one Question for a gap the user asked about and nothing open covers.
+  - Every answer ends with "Based on what's recorded in State. There may be things it doesn't know about."
+  - The prompts keep a Review's scope qualifiers.
+  - Measured: suggestions on a false premise fell from 30/30 to 2/30, and duplicate suggestions to 0; the re-test was cut short by the API limit.
+- **Concision, measured and set aside:**
+  - A "say each thing once" prompt rule and a deterministic summary trim each moved the grader's concision score by about 0.0–0.06, so neither shipped.
+  - Paige's blind grades then showed the repetition was mostly a grader bias: she scored all 20 answers 4 on concision. The rubric was rewritten (grader v5/v6) to judge padding.
+  - Research report: `.claude/research/reports/Ask answer concision fixes.md` (local).
+- **Grader calibration:** 20 blind grades by Paige in the "Ask Grading Bench" artifact. Grader v6 passes on all six dimensions; five deliberately padded control answers score 1.
+- **On `staging`, not yet on `main`:**
+  - #522: refused stale Review accepts are counted as a content-free `review_conflict_refused` event.
+  - #508: State's Project Health database card explains SQLite instead of reading an idle Neon project.
 
 ## Oct 16-17, 2026: eval matrix, Ask and review fixes, LLM grader
 

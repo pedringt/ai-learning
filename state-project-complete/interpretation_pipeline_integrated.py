@@ -612,6 +612,10 @@ def process_evidence(
             error_message=str(exc),
         )
     except Exception as exc:
+        # A database error in the block above leaves a Postgres transaction aborted; clear it so
+        # _persist_failure can record the failure (CLAUDE.md, Sept 14 incident). SQLite: unchanged.
+        if getattr(connection, "is_postgres", False):
+            connection.rollback()
         # Capture full error details
         error_msg = f"{type(exc).__name__}: {str(exc)}"
         tb = traceback.format_exc()

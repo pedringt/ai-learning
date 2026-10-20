@@ -133,6 +133,24 @@ class ApiWorkflowTests(unittest.TestCase):
         self.assertEqual(self.client.post(f"/api/reviews/{review_id}/resolve", json={"decision": "keep"}).status_code, 200)
         self.assertEqual(self.client.post(f"/api/reviews/{review_id}/resolve", json={"decision": "accept"}).status_code, 409)
 
+    def test_refused_stale_accept_is_counted_without_content(self):
+        # #522: the fail-closed refusal happens, and is now recorded as metadata only.
+        review_id = self.client.post("/api/evidence", json={"content": "Launch moved to October 15."}).json()["reviews"][0]["id"]
+        with sqlite3.connect(self.db_path) as connection:  # State changes after the proposal was made
+            connection.execute("UPDATE current_state_items SET version = version + 1 WHERE id='state_launch'")
+            connection.commit()
+        refused = self.client.post(f"/api/reviews/{review_id}/resolve", json={"decision": "accept"},
+                                   headers={"X-State-Project-Id": "northstar"})
+        self.assertEqual(refused.status_code, 409)
+        with sqlite3.connect(self.db_path) as connection:
+            connection.row_factory = sqlite3.Row
+            rows = connection.execute(
+                "SELECT * FROM product_analytics_events WHERE event_name='review_conflict_refused'").fetchall()
+        self.assertEqual(len(rows), 1)
+        row = dict(rows[0])
+        self.assertEqual((row["outcome"], row["project_id"], row["status_code"]), ("stale_state_version", "northstar", 409))
+        self.assertNotIn("Launch", str(row))
+
     def test_evidence_archive_lists_processed_items_after_review_resolution(self):
         response = self.client.post("/api/evidence", json={"content": "Launch moved to October 15."})
         self.assertEqual(response.status_code, 201)

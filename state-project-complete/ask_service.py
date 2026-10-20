@@ -79,6 +79,9 @@ def _persist_model_call_metrics(connection: Any, provider: Any) -> None:
         connection.commit()
     except Exception:
         logger.warning("Could not persist Ask model-call telemetry", exc_info=True)
+        # Ask's contract retry reuses this connection; a failed INSERT must not leave Postgres aborted.
+        if getattr(connection, "is_postgres", False):
+            connection.rollback()
 
 
 _SELECTION_LIMITS = {

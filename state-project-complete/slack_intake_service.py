@@ -215,7 +215,10 @@ def _record_slack_event(
         )
     except Exception:
         # A concurrent delivery of the same Slack retry raced us on the
-        # UNIQUE(event_id) constraint. Treat it as the duplicate it is.
+        # UNIQUE(event_id) constraint. Treat it as the duplicate it is. On Postgres the failed INSERT
+        # aborted the transaction, so the re-check needs a rollback first.
+        if getattr(connection, "is_postgres", False):
+            connection.rollback()
         existing = connection.execute(
             "SELECT id FROM slack_events WHERE event_id=?", (event_id,)
         ).fetchone()

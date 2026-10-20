@@ -36,6 +36,8 @@ ALLOWED_EVENT_NAMES = {
     "ask_failed",
     "ask_cancelled",
     "api_failure",
+    # #522: a Review accept refused because its proposal no longer matches State (written by the server).
+    "review_conflict_refused",
 }
 
 SAFE_VIEWS = {"overview", "open-items", "project-overview", "notes", "history", "settings"}
@@ -194,6 +196,16 @@ def _validate_event(payload: ProductEventInput) -> None:
         tail = origin.split("://", 1)[-1]
         if "/" in tail or "?" in tail or "#" in tail:
             raise HTTPException(status_code=422, detail="destination_origin must not include a path or query")
+
+
+def review_conflict_kind(message: str) -> str:
+    """#522: which fail-closed rule refused the accept, from ReviewConflictError's message (no content kept)."""
+    text = (message or "").lower()
+    if "changed after interpretation" in text:
+        return "stale_state_version"
+    if "is not active" in text:
+        return "state_not_active"
+    return "other_conflict"
 
 
 def _insert_event(connection, payload: ProductEventInput, now: datetime | None = None) -> dict:
@@ -429,6 +441,8 @@ def _aggregate(connection, project_id: str | None, now: datetime) -> dict:
             "resolved_reviews_without_state_change_30d": sum(
                 1 for review in resolved_reviews_30 if review.get("id") not in state_change_review_ids
             ),
+            # #522: stale or conflicting proposals refused at accept time (the fail-closed invariant).
+            "review_conflicts_refused_30d": feature_use.get("review_conflict_refused", 0),
         },
         "reliability": {
             "interpretation_succeeded": len(interpretation_success),

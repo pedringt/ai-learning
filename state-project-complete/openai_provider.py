@@ -218,6 +218,10 @@ class OpenAIProvider:
                 (project_id_of(connection),),
             ).fetchall()
         except Exception:
+            # Pre-migration-013 fallback. On Postgres the failed SELECT aborted the transaction, so the
+            # fallback can only run after a rollback (CLAUDE.md, Sept 14 incident).
+            if getattr(connection, "is_postgres", False):
+                connection.rollback()
             question_rows = connection.execute(
                 "SELECT id, text, blocking, blocks FROM questions WHERE status='open' ORDER BY created_at, id"
             ).fetchall()
@@ -231,6 +235,9 @@ class OpenAIProvider:
                 (project_id_of(connection),),
             ).fetchall()
         except Exception:
+            logger.warning("Could not read project rules; interpreting without them", exc_info=True)
+            if getattr(connection, "is_postgres", False):
+                connection.rollback()
             rule_rows = []
         for row in rule_rows:
             rules.append({"text": row[0], "category": row[1]})

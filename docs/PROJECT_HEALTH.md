@@ -40,11 +40,10 @@ The token stays server-side. Project Health reads aggregate page-view counts for
 ### Neon health
 
 - `NEON_API_KEY`
-- `PROJECT_HEALTH_NEON_PROJECT_STATE`
 - `PROJECT_HEALTH_NEON_PROJECT_TASTEMAKE`
 - `PROJECT_HEALTH_NEON_PROJECT_NARC`
 
-Only configure a project-id variable when that project actually uses the corresponding Neon project. Project Health returns only project/branch health metadata, not connection strings, roles, query results, or credentials.
+Only configure a project-id variable when that project actually uses the corresponding Neon project. State does not (#508, Oct 20): its production data is SQLite on the Render `state-api` disk, so its database card shows that note instead, and `PROJECT_HEALTH_NEON_PROJECT_STATE` is no longer read. The idle Neon "State" projects can be deleted whenever Paige decides. Project Health returns only project/branch health metadata, not connection strings, roles, query results, or credentials.
 
 ### Investigation usage
 

@@ -300,3 +300,15 @@ console.log('Project Health API tests passed');
   assert.strictEqual(H.investigationSpendText({calls:3,estimated_usd:0.00105,unpriced_calls:0}),'AI investigations in the last 30 days (all projects): 3 · about $0.0010.');
   assert.strictEqual(H.investigationSpendText({calls:40,estimated_usd:0.42,unpriced_calls:1}),'AI investigations in the last 30 days (all projects): 40 · about $0.42 plus 1 unpriced.');
 }
+
+{
+  // #508: State's database card explains that State is on SQLite, instead of reading an idle Neon project.
+  const platform=require('../api/project-health-platform.js');
+  const api=platform._test||platform;
+  if(typeof api.neonHealth==='function'&&api.PROJECTS){
+    api.neonHealth(api.PROJECTS.state).then(result=>{
+      require('assert').ok(result.not_applicable&&/SQLite on its Render disk/.test(result.reason),JSON.stringify(result));
+      console.log('Project Health State database note test passed');
+    }).catch(error=>{console.error(error);process.exit(1);});
+  }
+}
