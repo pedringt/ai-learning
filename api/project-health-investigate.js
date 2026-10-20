@@ -190,13 +190,31 @@ function reportText(payload){
   const text=(payload?.content||[]).filter(part=>part.type==='text').map(part=>part.text).join('\n').trim();
   return text?sanitizeText(text,3000):null;
 }
+// Usage is recorded in the State backend (project_health_usage_api.py): metadata only, never evidence or the
+// report. Production records to the production API, every other deployment to staging. A missing key or a
+// failed write never affects the investigation.
+const STATE_API={production:'https://state-api-6waw.onrender.com',other:'https://state-api-staging.onrender.com'};
+function usageEndpoint(env=process.env.VERCEL_ENV){return (env==='production'?STATE_API.production:STATE_API.other)+'/api/admin/project-health-usage';}
+async function recordUsage(project,body,payload,durationMs,{fetchImpl=fetch,key=process.env.PROJECT_HEALTH_USAGE_KEY}={}){
+  if(!key||!payload?.usage)return false;
+  const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),2000);
+  try{
+    const response=await fetchImpl(usageEndpoint(),{method:'POST',signal:controller.signal,headers:{'content-type':'application/json','X-Project-Health-Usage-Key':key},
+      body:JSON.stringify({project,model_identifier:String(payload.model||body.model).slice(0,160),duration_ms:Math.max(0,Math.round(durationMs)),input_tokens:Number(payload.usage.input_tokens||0),output_tokens:Number(payload.usage.output_tokens||0)})});
+    return !!response.ok;
+  }catch(_){return false;}
+  finally{clearTimeout(timer);}
+}
 async function summarizeWithModel(evidence){
+  const body=investigationRequest(evidence);
+  const started=Date.now();
   const result=await timedJson('https://api.anthropic.com/v1/messages',{
     timeoutMs:20000,method:'POST',
     headers:{'x-api-key':process.env.ANTHROPIC_API_KEY,'anthropic-version':'2023-06-01','content-type':'application/json'},
-    body:JSON.stringify(investigationRequest(evidence))
+    body:JSON.stringify(body)
   });
   if(!result.ok)return null;
+  await recordUsage(evidence.project,body,result.payload,Date.now()-started);
   return reportText(result.payload);
 }
 module.exports=async function handler(req,res){
@@ -227,5 +245,5 @@ module.exports=async function handler(req,res){
   res.setHeader('Cache-Control','no-store');
   return response(res,200,{project:project.slug,environment,commit:branch.sha,report,sources,observedAt:new Date().toISOString(),readOnly:true});
 };
-module.exports._test={PROJECTS,FAILED_CHECKS,sanitizeText,safeSourceUrl,failedCheckRuns,statusFailure,eventLines,boundedEvidence,fetchBranch,fetchVercelEvidence,fetchGithubEvidence,fetchCommitFollowup,jobLogExcerpt,jobIdFrom,fetchJobLog,investigationRequest,reportText,MODEL,MAX_OUTPUT_TOKENS};
+module.exports._test={PROJECTS,FAILED_CHECKS,sanitizeText,safeSourceUrl,failedCheckRuns,statusFailure,eventLines,boundedEvidence,fetchBranch,fetchVercelEvidence,fetchGithubEvidence,fetchCommitFollowup,jobLogExcerpt,jobIdFrom,fetchJobLog,recordUsage,usageEndpoint,investigationRequest,reportText,MODEL,MAX_OUTPUT_TOKENS};
 

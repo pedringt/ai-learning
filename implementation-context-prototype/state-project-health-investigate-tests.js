@@ -91,3 +91,23 @@ async function withEnv(patch,run){const old={};for(const [key,value] of Object.e
     console.log('Project Health job-log evidence tests passed');
   })().catch(error=>{console.error(error);process.exit(1);});
 }
+
+// Usage records carry metadata only, go to the matching State API, and never block an investigation.
+{
+  const inv=require('../api/project-health-investigate.js')._test;
+  assert.strictEqual(inv.usageEndpoint('production'),'https://state-api-6waw.onrender.com/api/admin/project-health-usage');
+  assert.strictEqual(inv.usageEndpoint('preview'),'https://state-api-staging.onrender.com/api/admin/project-health-usage');
+  (async()=>{
+    const payload={model:'claude-haiku-5-5',usage:{input_tokens:2100,output_tokens:340},content:[{type:'text',text:'What happened: SECRET REPORT TEXT'}]};
+    assert.strictEqual(await inv.recordUsage('narc',{model:'claude-haiku-5-5'},payload,2400,{key:'',fetchImpl:async()=>{throw new Error('must not call');}}),false,'no key: skipped');
+    const sent=[];
+    const ok=await inv.recordUsage('narc',{model:'claude-haiku-5-5'},payload,2400.4,{key:'k',fetchImpl:async(url,options)=>{sent.push({url,options});return {ok:true};}});
+    assert.strictEqual(ok,true);
+    const body=JSON.parse(sent[0].options.body);
+    assert.deepStrictEqual(body,{project:'narc',model_identifier:'claude-haiku-5-5',duration_ms:2400,input_tokens:2100,output_tokens:340});
+    assert.ok(!sent[0].options.body.includes('SECRET'),'never sends report text');
+    assert.strictEqual(sent[0].options.headers['X-Project-Health-Usage-Key'],'k');
+    assert.strictEqual(await inv.recordUsage('narc',{},payload,1,{key:'k',fetchImpl:async()=>{throw new Error('down');}}),false,'a failed write is swallowed');
+    console.log('Project Health usage recording tests passed');
+  })().catch(error=>{console.error(error);process.exit(1);});
+}
