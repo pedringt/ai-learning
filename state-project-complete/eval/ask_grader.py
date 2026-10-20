@@ -19,7 +19,7 @@ from typing import Any
 from model_request_options import request_options
 
 GRADER_MODEL = "claude-opus-5-5"
-GRADER_VERSION = "ask-grader-v5 (2026-10-20: concision judges padding, not summary-card echo)"
+GRADER_VERSION = "ask-grader-v6 (2026-10-20: concision judges padding; mild redundancy is a 4)"
 GRADER_MAX_TOKENS = 1_500
 
 DIMENSIONS = (
@@ -64,8 +64,8 @@ hedging_calibration (D5). Certainty matches the record in both directions: settl
 - 1: an unknown stated as a definite value, or the whole answer so hedged the reader cannot tell what is true.
 
 concision (D6). Judge padding, not structure. Ask always shows a short summary above record cards; a summary that briefly names what the cards show, with its status (for example "One Review is pending"), is the expected shape and is NOT a concision flaw (Paige's calibration, Oct 20: she scored such answers 4). Penalize only real padding: filler or boilerplate sentences, the same point made three or more times, sections that add nothing, generic advice, or an answer much longer than the question needs.
-- 4: no padding; any echo of a card is brief and adds its status or meaning.
-- 3: one filler sentence or one section that adds nothing.
+- 4: no padding. Mild redundancy is still a 4: the main point appearing in the headline, the summary and one card, or a short closing restatement of the pending status, is how Ask answers read and does not lower the score.
+- 3: one clear filler sentence (generic, adds no fact or status) or one whole section that adds nothing.
 - 2: several filler sentences, the same point made three or more times, or several sections that add nothing.
 - 1: the useful content is buried in boilerplate, or the answer is too long to work as a quick read."""
 
