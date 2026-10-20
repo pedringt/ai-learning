@@ -15,7 +15,11 @@ For the product model, current project status, QA process, release rules, and kn
 | File | Responsibility |
 |---|---|
 | `index.html` | Application shell and navigation |
-| `context-app.js` | Routing, controller orchestration, dialogs, state transitions |
+| `context-app.js` | Coordinator: app `state`, Workspace/Notes/History/Open Items renderers, evidence capture, event listeners, boot. Installs the four `context-app-*.js` modules below |
+| `context-app-dialogs.js` | Shared dialog overlay, toast, Need Help, Rules and Add Evidence dialogs, analyzing dialog |
+| `context-app-navigation.js` | `render()` view router, `navigateTo()`, nav/subnav and project-switcher sync |
+| `context-app-hydration.js` | `hydrateBackend()`, project activation, open-Review refresh, backend-sync wrappers |
+| `context-app-review-actions.js` | Review decisions (accept/keep/adjust, open_question Reviews) |
 | `context-api.js` | Backend HTTP client and Ask streaming |
 | `context-ask.js` | Ask UI and answer rendering |
 | `context-ask-followup.js` | Ask follow-up/refinement behavior |
