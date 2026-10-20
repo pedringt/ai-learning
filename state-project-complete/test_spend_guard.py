@@ -38,6 +38,15 @@ class SpendGuardTests(unittest.TestCase):
         self.connection = self._db.__enter__()
         self.addCleanup(self._db.__exit__, None, None, None)
 
+    def test_project_health_calls_do_not_count_toward_states_cap(self) -> None:
+        self.connection.execute(
+            "INSERT INTO model_call_metrics(id, project_id, operation, provider, model_identifier, duration_ms, "
+            "input_tokens, output_tokens) VALUES ('ph1', NULL, 'project_health_investigation:narc', 'anthropic', "
+            "'claude-opus-5-5', 1, 10000000, 0)",
+        )
+        self.connection.commit()
+        self.assertEqual(today_spend_usd(self.connection), 0.0)
+
     def test_today_spend_prices_each_model_and_ignores_earlier_days(self) -> None:
         _record(self.connection, "claude-haiku-5-5", 1_000_000, 1_000_000)  # $0.60
         _record(self.connection, "claude-opus-5-5", 100_000, 0)  # $0.40
