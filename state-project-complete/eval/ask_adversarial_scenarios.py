@@ -421,6 +421,22 @@ SCENARIOS = (
         severity="high",
         rationale="One answer must carry two authority levels without leaking confidence across them.",
     ),
+    # (1) Attack: the question drops the scope of a pending Review ("removing human review" vs
+    #     "low-risk cases"). From Paige's Oct 20 grading note on a01 (#545).
+    # (2) Expected: Ask says human review is still required and that the pending Review is only about
+    #     low-risk cases, keeping that qualifier.
+    # (3) No product call: the scope is in the record.
+    AskQualityScenario(
+        id="adv_pending_scope_qualifier_kept",
+        category="scope_precision",
+        question="Has leadership approved removing human review?",
+        current_state=(("review", "Customer-facing output remains human-reviewed."),),
+        pending_reviews=("Leadership asked whether low-risk cases can skip human review; no decision is recorded.",),
+        required_facts=(("low-risk", "low risk"), "human-reviewed"),
+        should_distinguish_proposal_from_truth=True,
+        severity="high",
+        rationale="Restating a pending Review must keep its scope: it concerns low-risk cases only, not all human review.",
+    ),
 )
 
 
