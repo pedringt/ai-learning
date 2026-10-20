@@ -62,6 +62,28 @@ class SlackChannelApiTests(unittest.TestCase):
         items = self.client.get("/api/integrations/slack/channels").json()["items"]
         self.assertFalse(items[0]["enabled"])
 
+    def test_approving_a_channel_binds_it_to_the_requesting_project(self) -> None:
+        # #519: a channel approved from another project sends its Evidence there.
+        with sqlite3.connect(self.db_path) as connection:
+            connection.execute("INSERT OR IGNORE INTO projects(id, name) VALUES ('beta', 'Beta')")
+            connection.execute("UPDATE slack_channels SET enabled=0 WHERE id='slkch_1'")
+            connection.commit()
+        response = self.client.patch("/api/integrations/slack/channels/slkch_1", json={"enabled": True},
+                                     headers={"X-State-Project-Id": "beta"})
+        self.assertEqual(response.status_code, 200)
+        with sqlite3.connect(self.db_path) as connection:
+            project = connection.execute("SELECT project_id FROM slack_channels WHERE id='slkch_1'").fetchone()[0]
+        self.assertEqual(project, "beta")
+
+    def test_turning_a_channel_off_keeps_its_project(self) -> None:
+        with sqlite3.connect(self.db_path) as connection:
+            connection.execute("UPDATE slack_channels SET project_id='northstar' WHERE id='slkch_1'")
+            connection.commit()
+        self.client.patch("/api/integrations/slack/channels/slkch_1", json={"enabled": False})
+        with sqlite3.connect(self.db_path) as connection:
+            project = connection.execute("SELECT project_id FROM slack_channels WHERE id='slkch_1'").fetchone()[0]
+        self.assertEqual(project, "northstar")
+
     def test_patch_unknown_channel_is_404(self) -> None:
         response = self.client.patch("/api/integrations/slack/channels/nope", json={"enabled": False})
         self.assertEqual(response.status_code, 404)

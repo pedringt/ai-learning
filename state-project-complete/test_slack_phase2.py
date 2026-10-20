@@ -99,6 +99,35 @@ class SlackPhase2Test(unittest.TestCase):
         self.assertEqual(evidence[1], "#northstar-project")
         self.assertIsNone(evidence[2])
 
+    def test_channel_bound_to_another_project_creates_evidence_there(self) -> None:
+        # #519: Slack Evidence always landed in Northstar.
+        self.conn.execute("INSERT OR IGNORE INTO projects(id, name) VALUES ('beta', 'Beta')")
+        self.conn.execute("UPDATE slack_channels SET project_id='beta' WHERE id='slkch_1'")
+        conv_id = self._insert_conversation("300.0")
+        self._insert_message("300.0", "300.0", "We decided the vendor owns retention going forward.")
+        self._insert_checkpoint(conv_id, "slkchk_beta")
+
+        evaluate_due_checkpoints(self.conn, FakeSlackRelevanceClassifier(), self.provider)
+
+        evidence_id = self.conn.execute(
+            "SELECT evidence_id FROM slack_checkpoint_evaluations WHERE checkpoint_id='slkchk_beta'"
+        ).fetchone()[0]
+        self.assertEqual(self.conn.execute("SELECT project_id FROM evidence WHERE id=?", (evidence_id,)).fetchone()[0], "beta")
+        self.assertEqual(self.conn.execute(
+            "SELECT COUNT(*) FROM evidence WHERE project_id='northstar' AND source_type='slack_thread'").fetchone()[0], 0)
+
+    def test_channel_without_a_project_keeps_todays_northstar_behaviour(self) -> None:
+        conv_id = self._insert_conversation("400.0")
+        self._insert_message("400.0", "400.0", "We decided the vendor owns retention going forward.")
+        self._insert_checkpoint(conv_id, "slkchk_legacy")
+
+        evaluate_due_checkpoints(self.conn, FakeSlackRelevanceClassifier(), self.provider)
+
+        evidence_id = self.conn.execute(
+            "SELECT evidence_id FROM slack_checkpoint_evaluations WHERE checkpoint_id='slkchk_legacy'"
+        ).fetchone()[0]
+        self.assertEqual(self.conn.execute("SELECT project_id FROM evidence WHERE id=?", (evidence_id,)).fetchone()[0], "northstar")
+
     def test_casual_checkpoint_creates_no_evidence(self) -> None:
         conv_id = self._insert_conversation("200.0")
         self._insert_message("200.0", "200.0", "Anyone want coffee later?")

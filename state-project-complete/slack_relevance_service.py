@@ -99,6 +99,21 @@ def _previous_evidence_id(connection: Connection, previous_checkpoint_id: str | 
     return row["evidence_id"] if row else None
 
 
+# #519: channels approved before projects were recorded on them have no project_id. They keep
+# today's behaviour (Northstar) until someone re-approves them from a project; whether they should
+# instead stop creating Evidence is an open product question.
+LEGACY_SLACK_PROJECT_ID = "northstar"
+
+
+def channel_project_id(connection: Connection, team_id: str, channel_id: str) -> str:
+    """The project a channel's Evidence belongs to (#519)."""
+    row = connection.execute(
+        "SELECT project_id FROM slack_channels WHERE team_id=? AND channel_id=?", (team_id, channel_id)
+    ).fetchone()
+    value = (row[0] if not hasattr(row, "keys") else row["project_id"]) if row else None
+    return value or LEGACY_SLACK_PROJECT_ID
+
+
 def _evaluate_one(
     connection: Connection,
     checkpoint: Mapping[str, Any],
@@ -115,22 +130,33 @@ def _evaluate_one(
     summary = str(result.get("summary") or "").strip()
     if result.get("relevant") and summary:
         evidence_id = new_id("evidence")
+        project_id = channel_project_id(connection, checkpoint["team_id"], checkpoint["channel_id"])
         connection.execute(
-            "INSERT INTO evidence(id, content, source_type, supersedes_evidence_id, source_name) "
-            "VALUES (?,?,?,?,?)",
+            "INSERT INTO evidence(id, content, source_type, supersedes_evidence_id, source_name, project_id) "
+            "VALUES (?,?,?,?,?,?)",
             (
                 evidence_id,
                 summary,
                 "slack_thread",
                 _previous_evidence_id(connection, checkpoint["previous_checkpoint_id"]),
                 _channel_display_name(connection, checkpoint["team_id"], checkpoint["channel_id"]),
+                project_id,
             ),
         )
         connection.commit()
         # Feeds Slack Evidence through the exact same interpretation ->
         # Review/Question pipeline as every other source. No special-casing
-        # beyond the provenance fields set above.
-        process_evidence(connection, evidence_id=evidence_id, provider=provider)
+        # beyond the provenance fields set above. The pipeline writes Reviews and
+        # Questions into connection.project_id, so it runs in the channel's project (#519).
+        previous_project = getattr(connection, "project_id", None)
+        if previous_project is None:  # a raw sqlite3 connection (tests) has no project; Northstar applies
+            process_evidence(connection, evidence_id=evidence_id, provider=provider)
+        else:
+            try:
+                connection.project_id = project_id
+                process_evidence(connection, evidence_id=evidence_id, provider=provider)
+            finally:
+                connection.project_id = previous_project
 
     # slack_checkpoints itself is immutable (a DB trigger blocks every
     # UPDATE), so the evaluation outcome is recorded as its own row rather

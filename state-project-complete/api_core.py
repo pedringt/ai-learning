@@ -26,7 +26,7 @@ from docx import Document as DocxDocument
 
 from anthropic_provider import AnthropicProvider
 from database_migration_backed import initialize_db
-from db import connect
+from db import connect, project_id_of
 from extension_points import ExtensionPoint
 from interpretation_pipeline_integrated import InterpretationProvider, new_id
 from interpretation_pipeline_integrated import process_evidence as _pipeline_process_evidence
@@ -1093,6 +1093,10 @@ def create_app(settings: Settings | None = None, provider: InterpretationProvide
             ).fetchone()
             if existing is None:
                 raise HTTPException(status_code=404, detail="Slack channel not found")
+            if updates.get("enabled") is True:
+                # #519: approving a channel binds it to the project it was approved from, so its
+                # Evidence lands there instead of always in Northstar.
+                updates["project_id"] = project_id_of(connection)
             set_clause = ", ".join(f"{field}=?" for field in updates)
             values = [int(v) if isinstance(v, bool) else v for v in updates.values()]
             connection.execute(

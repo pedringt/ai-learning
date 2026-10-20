@@ -11,18 +11,25 @@
 # - aggregate: merges every job's files into the step summary and an artifact.
 #
 # Results are recorded only in artifacts: nothing is posted to Product Analytics.
-# Sonnet 5.5 and Opus 5.5 are refused at plan time: State's providers send thinking disabled,
-# which those models reject (see INCOMPATIBLE_MODELS in eval/matrix.py).
+# Sonnet 5.5 and Opus 5.5 run since Oct 16 (model_request_options.py sends each model its accepted
+# thinking-off form).
+#
+# Weekly regression run (Oct 19, approved by Paige): every Monday, main runs ask, adversarial and review
+# x30 on claude-haiku-5-5 (46 calls per repeat, 1,380 calls, about $1.40), so a break in Ask's
+# pending-vs-confirmed boundary shows up within a week. A scheduled run has no inputs; the
+# SCHEDULED_* values below apply.
 name: State eval matrix
 on:
+  schedule:
+    - cron: '0 15 * * 1'
   workflow_dispatch:
     inputs:
       suites:
-        description: Comma list from review, ask, consequentiality, baseline
+        description: Comma list from review, ask, adversarial, consequentiality, baseline, graded, regrade
         required: true
         default: review,ask,consequentiality,baseline
       model:
-        description: Model id (claude-haiku-5-5, claude-haiku-4-5; Sonnet/Opus 5.5 are refused today)
+        description: Model id (claude-haiku-5-5, claude-sonnet-5-5, claude-opus-5-5, claude-haiku-4-5)
         required: true
         default: claude-haiku-5-5
       repeats:
@@ -65,11 +72,11 @@ jobs:
       - name: Plan and budget check (no model calls)
         id: plan
         env:
-          SUITES: ${{ inputs.suites }}
-          MODEL: ${{ inputs.model }}
-          REPEATS: ${{ inputs.repeats }}
-          MAX_CALLS: ${{ inputs.max_calls }}
-          DRY_RUN: ${{ inputs.dry_run }}
+          SUITES: ${{ github.event_name == 'schedule' && 'ask,adversarial,review' || inputs.suites }}
+          MODEL: ${{ github.event_name == 'schedule' && 'claude-haiku-5-5' || inputs.model }}
+          REPEATS: ${{ github.event_name == 'schedule' && '30' || inputs.repeats }}
+          MAX_CALLS: ${{ github.event_name == 'schedule' && '1500' || inputs.max_calls }}
+          DRY_RUN: ${{ github.event_name == 'schedule' && 'false' || inputs.dry_run }}
         run: |
           [[ "$REPEATS" =~ ^[0-9]+$ && "$MAX_CALLS" =~ ^[0-9]+$ ]] || { echo "repeats and max_calls must be whole numbers"; exit 1; }
           [[ "$MODEL" =~ ^claude-[a-z0-9.-]+$ ]] || { echo "Refusing model id: it must match ^claude-[a-z0-9.-]+\$"; exit 1; }
