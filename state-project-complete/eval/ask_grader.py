@@ -19,7 +19,7 @@ from typing import Any
 from model_request_options import request_options
 
 GRADER_MODEL = "claude-opus-5-5"
-GRADER_VERSION = "ask-grader-v2 (2026-10-19: grader sees today's date)"
+GRADER_VERSION = "ask-grader-v3 (2026-10-20: grader sees today's date and card badges)"
 GRADER_MAX_TOKENS = 1_500
 
 DIMENSIONS = (
@@ -112,6 +112,9 @@ def supplied_records(scenario) -> dict[str, Any]:
 
 
 _HIDDEN_ANSWER_FIELDS = ("source_ids", "uncertainty_ids")
+# The card badges State's UI shows (implementation-context-prototype/context-ask.js, labelFor).
+CARD_BADGES = {"review": "Needs review", "blocking_question": "Blocking", "question": "Open question",
+               "state": "Current State", "history": "History", "evidence": "Project evidence"}
 
 
 def visible_answer(answer: Any) -> Any:
@@ -121,7 +124,19 @@ def visible_answer(answer: Any) -> Any:
         answer = answer["answer"]
     if not isinstance(answer, dict):
         return answer
-    return {key: value for key, value in answer.items() if key not in _HIDDEN_ANSWER_FIELDS}
+    visible = {key: value for key, value in answer.items() if key not in _HIDDEN_ANSWER_FIELDS}
+    # Oct 20: each card shows a status badge in the UI (context-ask.js labelFor); give the grader the same
+    # label so it judges what a person sees.
+    sections = []
+    for section in visible.get("sections") or []:
+        if isinstance(section, dict):
+            items = [{**item, "badge": CARD_BADGES.get(item.get("record_type"), "")} if isinstance(item, dict) else item
+                     for item in section.get("items") or []]
+            section = {**section, "items": items}
+        sections.append(section)
+    if sections:
+        visible["sections"] = sections
+    return visible
 
 
 def user_message(scenario, answer: Any, today: date | None = None) -> str:

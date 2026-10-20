@@ -439,6 +439,12 @@ def _excerpt(text: str) -> str:
     return text if len(text) <= MODEL_OUTPUT_EXCERPT_CHARS else text[:MODEL_OUTPUT_EXCERPT_CHARS] + "…"
 
 
+def _summary_repetition(answer: Any) -> dict[str, Any]:
+    from ask_dedupe import summary_repetition
+    inner = answer.get("answer") if isinstance(answer, dict) and isinstance(answer.get("answer"), dict) else answer
+    return summary_repetition(inner)
+
+
 def _answer_text(answer: Any) -> str:
     from eval.quality_harness import _flatten_strings
     return _flatten_strings(answer)
@@ -464,7 +470,8 @@ def ask_record(r) -> dict[str, Any]:
             "failure_mode": ("failed " + ", ".join(failed)) if outcome == "fail" else None,
             "failed_checks": failed if outcome == "fail" else [], "checks": checks,
             "expected": None, "observed": None, "error": r.error or None,
-            **({"model_output_excerpt": _excerpt(_answer_text(r.answer))} if outcome == "fail" else {})}
+            **({"model_output_excerpt": _excerpt(_answer_text(r.answer))} if outcome == "fail" else {}),
+            **({"summary_repetition": _summary_repetition(r.answer)} if r.answer else {})}
 
 
 def graded_record(r, grade) -> dict[str, Any]:
