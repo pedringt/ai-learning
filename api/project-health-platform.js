@@ -3,7 +3,9 @@ const TEAM_ID='team_UxrzvAczWhPiXlO3nvWPAu5b';
 const PROJECTS={
   state:{
     vercelProjectId:'prj_zQtHJg96oM7Ol4qTapiwk1mV8iRl',
-    neonProjectEnv:'PROJECT_HEALTH_NEON_PROJECT_STATE',
+    // #508: production State keeps its data in SQLite on the Render state-api disk (since #145, Sept 15),
+    // so the idle Neon "State" project is not monitored. The Render health checks below cover the service.
+    databaseNote:'State stores its data in SQLite on its Render disk, not in Neon. The Render health checks cover the service.',
     aiTelemetry:{kind:'state',url:'https://state-api-6waw.onrender.com/api/admin/product-analytics'},
     render:{
       production:'https://state-api-6waw.onrender.com/health',
@@ -188,7 +190,7 @@ async function aiTelemetry(project){
 }
 
 async function neonHealth(project){
-  if(!project.neonProjectEnv) return {configured:false,not_applicable:true,reason:'This product does not use a database.'};
+  if(!project.neonProjectEnv) return {configured:false,not_applicable:true,reason:project.databaseNote||'This product does not use a database.'};
   const token=process.env.NEON_API_KEY;
   const projectId=process.env[project.neonProjectEnv];
   if(!token||!projectId){
@@ -254,4 +256,4 @@ module.exports=async function handler(req,res){
   });
 };
 
-module.exports._test={safeRenderHealth,numericCount,analyticsSignal,vercelAnalytics,PROJECTS};
+module.exports._test={safeRenderHealth,numericCount,analyticsSignal,vercelAnalytics,PROJECTS,neonHealth};
