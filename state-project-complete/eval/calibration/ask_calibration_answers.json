@@ -1,5 +1,5 @@
 {
- "about": "Ask calibration set (Oct 16): 20 Haiku 5.5 answers to the synthetic ask_quality scenarios (eval matrix run 38966540732), shown to Paige blind in the Ask Grading Bench artifact and regraded by the LLM grader (suite regrade).",
+ "about": "Ask calibration set (Oct 16): 20 Haiku 5.5 answers to the synthetic ask_quality scenarios (eval matrix run 38966540732), shown to Paige blind in the Ask Grading Bench artifact and regraded by the LLM grader (suite regrade). Oct 20: p01-p05 are deliberately padded copies of a01-a05 (filler, a point restated three times, an empty section); a calibrated concision rubric must still score them 3 or lower.",
  "answers": [
   {
    "answer_id": "a01",
@@ -768,6 +768,254 @@
      "Summarize for a leadership update"
     ]
    }
+  },
+  {
+   "answer_id": "p01",
+   "scenario_id": "ask_pending_review_not_truth",
+   "answer": {
+    "job": "current_fact",
+    "headline": "No, leadership has not approved removing human review; the decision is pending and Current State still requires human review.",
+    "summary": "Current State says customer-facing output remains human-reviewed. An open Review records that leadership asked whether low-risk cases can skip human review, but no decision is recorded. That Review is proposed and awaiting a decision; it has not changed Current State. It is important to keep this in mind as the project moves forward. As noted above, this is the key point to understand here. To restate the main point clearly once more: Current State says customer-facing output remains human-reviewed. In summary, and to be completely clear, Current State says customer-facing output remains human-reviewed. Teams should always make sure they stay aligned and communicate regularly about status.",
+    "sections": [
+     {
+      "kind": "established",
+      "title": "Current State",
+      "items": [
+       {
+        "text": "Customer-facing output remains human-reviewed.",
+        "record_type": "state",
+        "record_id": "ask-state-0",
+        "detail": null
+       }
+      ]
+     },
+     {
+      "kind": "needs_review",
+      "title": "Pending decision",
+      "items": [
+       {
+        "text": "Leadership asked whether low-risk cases can skip human review; no decision is recorded.",
+        "record_type": "review",
+        "record_id": "ask-review-0",
+        "detail": "Controlled Ask quality scenario"
+       }
+      ]
+     },
+     {
+      "kind": "context",
+      "title": "Additional context",
+      "items": [
+       {
+        "text": "This answer is based on the project record.",
+        "record_type": "none",
+        "record_id": null,
+        "detail": "Keep checking the record for updates."
+       }
+      ]
+     }
+    ],
+    "suggested_refinements": [
+     "Show only the pending decision status",
+     "Summarize the open Review in one sentence"
+    ]
+   },
+   "padded_control": true
+  },
+  {
+   "answer_id": "p02",
+   "scenario_id": "ask_known_outcome_unknown_reason",
+   "answer": {
+    "job": "why_or_provenance",
+    "headline": "The Northstar pilot was paused on September 28; the reason is not recorded.",
+    "summary": "Current State records that the Northstar pilot was paused on September 28. No supplied State, Review, Question, History, or Evidence record establishes why it was paused, so the reason cannot be determined from the project record. It is important to keep this in mind as the project moves forward. As noted above, this is the key point to understand here. To restate the main point clearly once more: Current State records that the Northstar pilot was paused on September 28. In summary, and to be completely clear, Current State records that the Northstar pilot was paused on September 28. Teams should always make sure they stay aligned and communicate regularly about status.",
+    "sections": [
+     {
+      "kind": "established",
+      "title": "Established",
+      "items": [
+       {
+        "text": "The Northstar pilot was paused on September 28.",
+        "record_type": "state",
+        "record_id": "ask-state-0",
+        "detail": null
+       }
+      ]
+     },
+     {
+      "kind": "other",
+      "title": "Reason",
+      "items": [
+       {
+        "text": "The reason for the pause is unknown; no supplied record establishes it.",
+        "record_type": "none",
+        "record_id": null,
+        "detail": null
+       }
+      ]
+     },
+     {
+      "kind": "context",
+      "title": "Additional context",
+      "items": [
+       {
+        "text": "This answer is based on the project record.",
+        "record_type": "none",
+        "record_id": null,
+        "detail": "Keep checking the record for updates."
+       }
+      ]
+     }
+    ],
+    "suggested_refinements": [
+     "Ask for the pilot's current status",
+     "Ask what decisions are pending for Northstar"
+    ]
+   },
+   "padded_control": true
+  },
+  {
+   "answer_id": "p03",
+   "scenario_id": "ask_question_answer_no_state_mutation",
+   "answer": {
+    "job": "current_fact",
+    "headline": "Vendor-retention question is not answered; the vendor contract remains under review.",
+    "summary": "The project record does not establish an answer to whether the vendor-retention question was answered. Current State only says the vendor contract remains under review, and no supplied Question, Review, or History record addresses the vendor-retention question directly, so State does not have enough confirmed information to say it was answered. It is important to keep this in mind as the project moves forward. As noted above, this is the key point to understand here. To restate the main point clearly once more: The project record does not establish an answer to whether the vendor-retention question was answered. In summary, and to be completely clear, The project record does not establish an answer to whether the vendor-retention question was answered. Teams should always make sure they stay aligned and communicate regularly about status.",
+    "sections": [
+     {
+      "kind": "established",
+      "title": "Current State",
+      "items": [
+       {
+        "text": "The vendor contract remains under review.",
+        "record_type": "state",
+        "record_id": "ask-state-0",
+        "detail": null
+       }
+      ]
+     },
+     {
+      "kind": "context",
+      "title": "Additional context",
+      "items": [
+       {
+        "text": "This answer is based on the project record.",
+        "record_type": "none",
+        "record_id": null,
+        "detail": "Keep checking the record for updates."
+       }
+      ]
+     }
+    ],
+    "suggested_refinements": [
+     "Ask what the open Questions are on the vendor contract.",
+     "Ask for the current status of the vendor contract review."
+    ]
+   },
+   "padded_control": true
+  },
+  {
+   "answer_id": "p04",
+   "scenario_id": "ask_conflicting_evidence",
+   "answer": {
+    "job": "current_fact",
+    "headline": "Approved enterprise terms say customer content is not used for training, but a pending legal Review may challenge that reading",
+    "summary": "Current State says the approved enterprise terms state customer content is not used for model training. An open Review flags that new legal evidence may contradict this interpretation. That Review is unresolved and has not been accepted, so Current State has not changed and the maintained answer stands for now, but it may change if a human accepts the Review. It is important to keep this in mind as the project moves forward. As noted above, this is the key point to understand here. To restate the main point clearly once more: Current State says the approved enterprise terms state customer content is not used for model training. In summary, and to be completely clear, Current State says the approved enterprise terms state customer content is not used for model training. Teams should always make sure they stay aligned and communicate regularly about status.",
+    "sections": [
+     {
+      "kind": "established",
+      "title": "Current State",
+      "items": [
+       {
+        "text": "The approved enterprise terms state customer content is not used for model training.",
+        "record_type": "state",
+        "record_id": "ask-state-0",
+        "detail": null
+       }
+      ]
+     },
+     {
+      "kind": "needs_review",
+      "title": "Pending Review",
+      "items": [
+       {
+        "text": "New legal evidence may contradict the approved enterprise-terms interpretation.",
+        "record_type": "review",
+        "record_id": "ask-review-0",
+        "detail": "Controlled Ask quality scenario"
+       }
+      ]
+     },
+     {
+      "kind": "context",
+      "title": "Additional context",
+      "items": [
+       {
+        "text": "This answer is based on the project record.",
+        "record_type": "none",
+        "record_id": null,
+        "detail": "Keep checking the record for updates."
+       }
+      ]
+     }
+    ],
+    "suggested_refinements": [
+     "Shorten to a one-sentence answer",
+     "Focus only on the pending legal Review"
+    ]
+   },
+   "padded_control": true
+  },
+  {
+   "answer_id": "p05",
+   "scenario_id": "ask_blocker_not_omitted",
+   "answer": {
+    "job": "current_fact",
+    "headline": "Not confirmed: the pilot launch is targeted for October 1, but a blocking security question remains open.",
+    "summary": "Current State says the pilot launch is targeted for October 1. However, launch readiness is blocked by an open, blocking Question: whether Security has approved the production data path. State does not have confirmed information that this approval has happened, so the project is not ready to launch on the current record. It is important to keep this in mind as the project moves forward. As noted above, this is the key point to understand here. To restate the main point clearly once more: Current State says the pilot launch is targeted for October 1. In summary, and to be completely clear, Current State says the pilot launch is targeted for October 1. Teams should always make sure they stay aligned and communicate regularly about status.",
+    "sections": [
+     {
+      "kind": "established",
+      "title": "Established",
+      "items": [
+       {
+        "text": "Pilot launch is targeted for October 1.",
+        "record_type": "state",
+        "record_id": "ask-state-0",
+        "detail": null
+       }
+      ]
+     },
+     {
+      "kind": "questions",
+      "title": "Blocking question",
+      "items": [
+       {
+        "text": "Has Security approved the production data path?",
+        "record_type": "blocking_question",
+        "record_id": "ask-question-0",
+        "detail": "Launch readiness"
+       }
+      ]
+     },
+     {
+      "kind": "context",
+      "title": "Additional context",
+      "items": [
+       {
+        "text": "This answer is based on the project record.",
+        "record_type": "none",
+        "record_id": null,
+        "detail": "Keep checking the record for updates."
+       }
+      ]
+     }
+    ],
+    "suggested_refinements": [
+     "Show only the blocking question and what is needed to unblock it",
+     "Summarize as a short meeting brief"
+    ]
+   },
+   "padded_control": true
   }
  ]
 }

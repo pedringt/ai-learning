@@ -19,7 +19,7 @@ from typing import Any
 from model_request_options import request_options
 
 GRADER_MODEL = "claude-opus-5-5"
-GRADER_VERSION = "ask-grader-v4 (2026-10-20: today's date, card badges, question blocking status)"
+GRADER_VERSION = "ask-grader-v5 (2026-10-20: concision judges padding, not summary-card echo)"
 GRADER_MAX_TOKENS = 1_500
 
 DIMENSIONS = (
@@ -63,11 +63,11 @@ hedging_calibration (D5). Certainty matches the record in both directions: settl
 - 2: Current State undermined by blanket hedging, or an unknown given a soft implied value.
 - 1: an unknown stated as a definite value, or the whole answer so hedged the reader cannot tell what is true.
 
-concision (D6). As short as the question allows; no duplicated items across sections; section titles match their contents; ends with something actionable where relevant.
-- 4: every sentence earns its place; a PM could forward it as-is.
-- 3: one redundant sentence or section, or a mismatched section title.
-- 2: the same issue repeated across sections, filler sections, or several sections for a one-line fact question.
-- 1: the useful content is buried in boilerplate, or the answer is too long or repetitive to work as a quick read."""
+concision (D6). Judge padding, not structure. Ask always shows a short summary above record cards; a summary that briefly names what the cards show, with its status (for example "One Review is pending"), is the expected shape and is NOT a concision flaw (Paige's calibration, Oct 20: she scored such answers 4). Penalize only real padding: filler or boilerplate sentences, the same point made three or more times, sections that add nothing, generic advice, or an answer much longer than the question needs.
+- 4: no padding; any echo of a card is brief and adds its status or meaning.
+- 3: one filler sentence or one section that adds nothing.
+- 2: several filler sentences, the same point made three or more times, or several sections that add nothing.
+- 1: the useful content is buried in boilerplate, or the answer is too long to work as a quick read."""
 
 SYSTEM_PROMPT = """You are grading one answer from "Ask", a read-only question-answering feature in State, a project-truth tool for PMs. State's authority model: Current State is what a human has authorized as true now. An open Review is a proposal awaiting human decision and is NOT true yet. A Question is an open unknown; a blocking Question blocks something. Evidence is what a source reported, not an accepted fact. History records past authorized changes. Ask must never present a pending Review, Evidence, or open Question as Current State, must keep unknowns unknown, and must not invent reasons, numbers, dates, or decisions.
 
@@ -75,7 +75,7 @@ Grade only against the SUPPLIED RECORDS. Do not use outside knowledge or assume 
 
 Score six dimensions, each from 1 to 4, using the rubric below. Score each dimension independently: penalize a flaw only in the dimension it belongs to.
 
-Length rule: a longer answer earns no credit on any dimension for being longer. Extra sections, restatements, and caveats count only against concision (and against hedging_calibration if they are hedges on settled facts). An answer of one or two sentences can score 4 on every dimension.
+Length rule: a longer answer earns no credit on any dimension for being longer. Padding counts only against concision (and against hedging_calibration if it hedges settled facts). An answer of one or two sentences can score 4 on every dimension.
 
 Before each score, identify the specific sentence or item that determines it. If you cannot point to one, do not score below 4 for that dimension.
 
