@@ -19,7 +19,7 @@ from typing import Any
 from model_request_options import request_options
 
 GRADER_MODEL = "claude-opus-5-5"
-GRADER_VERSION = "ask-grader-v3 (2026-10-20: grader sees today's date and card badges)"
+GRADER_VERSION = "ask-grader-v4 (2026-10-20: today's date, card badges, question blocking status)"
 GRADER_MAX_TOKENS = 1_500
 
 DIMENSIONS = (
@@ -101,12 +101,20 @@ GRADE_SCHEMA = {
 }
 
 
+def _question_record(text: str) -> dict[str, Any]:
+    blocking = text.upper().startswith("BLOCKING:")
+    clean = text.split(":", 1)[1].strip() if blocking else text
+    return {"text": clean, "blocking": blocking, "blocks": "Launch readiness" if blocking else None}
+
+
 def supplied_records(scenario) -> dict[str, Any]:
     """The records the Ask call was seeded with, as the grader sees them."""
     return {
         "current_state": [{"topic": topic, "statement": statement} for topic, statement in scenario.current_state],
         "open_reviews": list(scenario.pending_reviews),
-        "open_questions": list(scenario.open_questions),
+        # Oct 20: the same blocking status and "blocks" text the Ask test seeds (quality_harness
+        # _seed_ask_scenario); without them the grader scored "non-blocking" and "launch readiness" as invented.
+        "open_questions": [_question_record(text) for text in scenario.open_questions],
         "history": [list(entry) for entry in scenario.history],
     }
 

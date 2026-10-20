@@ -540,3 +540,10 @@ def test_grader_is_told_todays_date():
     from eval.ask_grader import user_message
     text = user_message(ASK[0], {"headline": "h"}, today=_date(2026, 10, 17))
     assert "TODAY'S DATE (Ask was given this date): 2026-10-17" in text
+
+
+def test_grader_records_carry_question_blocking_status_like_the_ask_seed():
+    from eval.ask_grader import supplied_records
+    scenario = next(s for s in ASK if s.id == "ask_blocker_not_omitted")
+    q = supplied_records(scenario)["open_questions"][0]
+    assert q["blocking"] is True and q["blocks"] == "Launch readiness" and not q["text"].upper().startswith("BLOCKING")
