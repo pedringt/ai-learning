@@ -107,7 +107,7 @@ async function unchanged() {
     const nav = await page.goto(entry, { waitUntil: 'domcontentloaded', timeout: 60000 });
     if (!nav.ok()) throw new Error('Staging frontend access blocked: HTTP ' + nav.status());
     await page.goto(APP, { waitUntil: 'domcontentloaded' }); await loaded();
-    for (const file of ['context-app.js', 'context-open-items-view.js', 'context-api.js', 'context-product-polish.js']) {
+    for (const file of ['context-app.js', 'context-app-dialogs.js', 'context-app-navigation.js', 'context-app-hydration.js', 'context-app-review-actions.js', 'context-open-items-view.js', 'context-api.js', 'context-product-polish.js']) {
       const res = await context.request.get(APP + file);
       expect(res.ok()).toBeTruthy();
       expect(await res.text(), 'Deployed source must match staging: ' + file).toBe(fs.readFileSync(path.resolve(__dirname, '../../implementation-context-prototype', file), 'utf8'));
