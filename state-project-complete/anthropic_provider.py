@@ -10,6 +10,7 @@ returns structured JSON. Application-owned validation enforces the contract.
 from __future__ import annotations
 
 from model_request_options import request_options
+from spend_guard import check_daily_budget
 
 import json
 import logging
@@ -143,6 +144,10 @@ class AnthropicProvider:
             raise ValueError(
                 "Anthropic adapter requires database connection to fetch full context"
             )
+
+        # #529: background work (Slack intake, async Baseline chunks) reaches here without passing the
+        # HTTP spend-cap check, so the cap is checked again before each interpretation call.
+        check_daily_budget(connection)
 
         # Build complete prompt context from database and time it separately from
         # the provider round-trip so production traces identify the slow layer.

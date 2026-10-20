@@ -259,3 +259,24 @@ An unsafe-direction check for Ask (its scenarios have no `unsafe_if` tag yet); k
 **Revisit when**  
 A real Ask regression passes under this reading, or a single scenario keeps missing every other run (the consecutive check would never catch it).
 
+
+### DEC-014 — State's paid model spend has a $50 daily cap; Ask stays open to visitors
+
+**Status:** Active  
+**Date:** 2026-10-19  
+**Related:** #529; `spend_guard.py`
+
+**Decision**  
+Ask and Evidence analysis stay open to anonymous visitors. Once a UTC day's recorded model spend reaches **$50**, State refuses new model work until midnight UTC. Ask, Evidence intake, re-analysis and Baseline setup return 429 with a plain message; background interpretation (Slack, async Baseline) stops at the same cap. Everything that doesn't call a model keeps working. `STATE_DAILY_MODEL_SPEND_CAP_USD` changes the cap (`off` disables it). Paige chose this on Oct 19: there is an account-level Anthropic spend limit, but State shouldn't be able to use it all.
+
+**Why**  
+Before this, nothing bounded what a script could spend through the public site (about $270–1,400 a day at full rate). A daily cap is the only option that bounds the worst case, and the per-call token counts were already recorded in `model_call_metrics`.
+
+**Rejected / deferred**  
+- A per-IP rate limit (it doesn't bound the total, and shared networks share a limit).
+- A third-party bot check (needs a privacy review).
+- Shared answer caching (cuts normal cost, not abuse).
+- Pre-computed answers for more suggested questions.
+
+**Revisit when**  
+The cap is hit by real visitors rather than abuse, or the Project Health paid actions (DEC-012) need to count against it. Those actions are not recorded in `model_call_metrics` today.
