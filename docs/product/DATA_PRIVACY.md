@@ -25,6 +25,8 @@ Only approved metadata such as:
 
 The browser and server both use explicit schemas/allowlists. Unknown properties are not treated as safe by default.
 
+The server also records `review_conflict_refused` (#522, Oct 20) when a Review accept is refused because its proposal no longer matches State. It holds only the project id, the kind of conflict (`stale_state_version`, `state_not_active` or `other_conflict`) and the 409 status: no Review id, statement or Evidence text.
+
 ### What product analytics must not contain
 
 - raw Ask query text or Ask answer bodies;

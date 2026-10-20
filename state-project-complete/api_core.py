@@ -29,6 +29,7 @@ from docx import Document as DocxDocument
 from anthropic_provider import AnthropicProvider
 from database_migration_backed import initialize_db
 from db import connect, project_id_of
+from product_analytics import ProductEventInput, _insert_event, review_conflict_kind
 from spend_guard import AI_BUDGET_MESSAGE, DailySpendCapReached, check_daily_budget, is_ai_budget_exhausted
 from extension_points import ExtensionPoint
 from interpretation_pipeline_integrated import InterpretationProvider, new_id
@@ -832,8 +833,27 @@ def create_app(settings: Settings | None = None, provider: InterpretationProvide
         with get_connection() as connection:
             return {"items": list_reviews(connection, status)}
 
+    def _record_review_conflict(request: Request, exc: Exception) -> None:
+        """#522: count a refused stale/conflicting accept. Metadata only (project, kind of conflict); the
+        refusal itself never depends on this write, and a separate connection keeps a Postgres
+        transaction aborted by the conflict out of it."""
+        try:
+            connection = connect(settings.connection_url())
+            try:
+                _insert_event(connection, ProductEventInput(
+                    name="review_conflict_refused",
+                    project_id=request.headers.get("X-State-Project-Id") or None,
+                    environment=getattr(settings, "environment", None),
+                    outcome=review_conflict_kind(str(exc)),
+                    status_code=409,
+                ))
+            finally:
+                connection.close()
+        except Exception:
+            logger.warning("Could not record a refused review conflict", exc_info=True)
+
     @app.post("/api/reviews/{review_id}/resolve")
-    def post_resolution(review_id: str, payload: ResolutionInput) -> dict:
+    def post_resolution(review_id: str, payload: ResolutionInput, request: Request) -> dict:
         adjustments = (
             {item.proposal_id: item.adjusted_statement for item in payload.adjustments}
             if payload.adjustments else None
@@ -847,6 +867,7 @@ def create_app(settings: Settings | None = None, provider: InterpretationProvide
             except ReviewNotFoundError as exc:
                 raise HTTPException(status_code=404, detail="Review not found") from exc
             except ReviewConflictError as exc:
+                _record_review_conflict(request, exc)
                 raise HTTPException(status_code=409, detail=str(exc)) from exc
             return {
                 "review_id": review_id,
