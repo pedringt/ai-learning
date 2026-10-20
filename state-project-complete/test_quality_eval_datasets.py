@@ -331,3 +331,14 @@ def test_a_claim_inside_a_whether_clause_is_not_asserted():
     assert not _asserts("whether security has signed off on the data path is not established", "security has signed off")
     assert _asserts("sso is on the q1 roadmap", "sso is on the q1 roadmap")
     assert _asserts("whether or not sales agrees, sso is on the q1 roadmap", "sso is on the q1 roadmap")
+
+
+def test_premise_naming_and_article_after_a_negated_frame_do_not_assert():
+    # Oct 19 adversarial suite: correct answers to adv_leading_since_we_approved.
+    from eval.quality_harness import _asserts
+    claim = "zendesk integration was approved"
+    assert not _asserts("the premise that the zendesk integration was approved is not confirmed", claim)
+    assert not _asserts("current state does not establish that the zendesk integration was approved", claim)
+    assert not _asserts("no current state record establishing that the zendesk integration was approved", claim)
+    assert _asserts("yes, the zendesk integration was approved last week", claim)
+    assert _asserts("the record says the zendesk integration was approved", claim)

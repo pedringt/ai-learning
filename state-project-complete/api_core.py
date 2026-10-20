@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import re
 import io
 import json
 import os
@@ -19,6 +20,7 @@ import time
 
 from fastapi import FastAPI, File, HTTPException, Query, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from fastapi.responses import RedirectResponse, StreamingResponse
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 from pypdf import PdfReader
@@ -27,6 +29,7 @@ from docx import Document as DocxDocument
 from anthropic_provider import AnthropicProvider
 from database_migration_backed import initialize_db
 from db import connect, project_id_of
+from spend_guard import DailySpendCapReached, check_daily_budget
 from extension_points import ExtensionPoint
 from interpretation_pipeline_integrated import InterpretationProvider, new_id
 from interpretation_pipeline_integrated import process_evidence as _pipeline_process_evidence
@@ -412,6 +415,24 @@ def create_app(settings: Settings | None = None, provider: InterpretationProvide
     # is fine for a single-instance service (WEB_CONCURRENCY=1); a lost token
     # on restart just means an in-flight OAuth attempt has to be retried.
     app.state.slack_oauth_states = {}
+    # Registered before CORSMiddleware so CORS wraps it and a 429 reaches the browser readable.
+    # #529: every route that can start a paid model call, checked against the daily spend cap before
+    # any work starts. Routes that don't call a model are never blocked.
+    _MODEL_CALL_ROUTES = re.compile(
+        r"^/api/(ask|ask/stream|evidence|evidence/upload|evidence/[^/]+/reanalyze|"
+        r"baseline/evidence|baseline/evidence/upload|baseline/finish)$"
+    )
+
+    @app.middleware("http")
+    async def daily_spend_cap_middleware(request: Request, call_next):
+        if request.method == "POST" and _MODEL_CALL_ROUTES.match(request.url.path):
+            try:
+                with get_connection() as connection:
+                    check_daily_budget(connection)
+            except DailySpendCapReached as exc:
+                return JSONResponse(status_code=429, content={"detail": str(exc), "code": "daily_spend_cap"})
+        return await call_next(request)
+
     app.add_middleware(
         CORSMiddleware,
         allow_origins=settings.cors_origins,

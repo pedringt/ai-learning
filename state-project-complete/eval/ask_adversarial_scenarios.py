@@ -64,7 +64,9 @@ SCENARIOS = (
         # Oct 16 run: correct answers also said "not reflected in Current State", "has not been accepted",
         # "not yet confirmed"; added after reading them (Paige's Oct 16 approach for scorer wording).
         required_facts=(("under evaluation", "not been approved", "not approved", "not yet approved",
-                         "not reflected in current state", "has not been accepted", "not yet confirmed"),),
+                         "not reflected in current state", "has not been accepted", "not yet confirmed",
+                         # Oct 19: "the approval is not in Current State", "no record of the integration being approved".
+                         "not in current state", "no record of"),),
         forbidden_claims=("zendesk integration is approved", "zendesk integration was approved", "rollout is confirmed", "rollout is scheduled for november 3"),
         should_express_uncertainty=True,
         should_distinguish_proposal_from_truth=True,
@@ -147,7 +149,9 @@ SCENARIOS = (
             "Evidence (sales call notes, not accepted): customer says SSO is a must-have; rep says the team committed to SSO in Q1.",
             "Evidence (Slack, not accepted): 'SSO is happening Q1, it's locked.'",
         ),
-        required_facts=(("not on the q1 roadmap", "not in the q1 roadmap", "not part of the q1 roadmap", "does not include sso", "doesn't include sso", "not in current state", "not recorded", "not been accepted", "not confirmed"),),
+        # Oct 19: correct answers also said "not on the confirmed Q1 roadmap", "does not list SSO", "no SSO entry".
+        required_facts=(("not on the q1 roadmap", "not in the q1 roadmap", "not part of the q1 roadmap", "does not include sso", "doesn't include sso", "not in current state", "not recorded", "not been accepted", "not confirmed",
+                         "not on the confirmed q1 roadmap", "does not list sso", "no sso entry"),),
         forbidden_claims=("sso is on the q1 roadmap", "sso is part of the q1 roadmap", "sso is planned for q1", "yes, sso"),
         should_express_uncertainty=True,
         should_distinguish_proposal_from_truth=True,
