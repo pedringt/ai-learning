@@ -533,3 +533,10 @@ def test_regrade_suite_grades_the_saved_calibration_answers_without_an_ask_call(
     assert rec["scenario_id"] == items[0].id and rec["outcome"] == "fail" and rec["scores"]["faithfulness"] == 1
     p = matrix.plan(["regrade"], "claude-haiku-5-5", 3, 100)
     assert p["total_calls"] == 60 and 0.5 < p["estimated_cost_usd"] < 3
+
+
+def test_grader_is_told_todays_date():
+    from datetime import date as _date
+    from eval.ask_grader import user_message
+    text = user_message(ASK[0], {"headline": "h"}, today=_date(2026, 10, 17))
+    assert "TODAY'S DATE (Ask was given this date): 2026-10-17" in text
