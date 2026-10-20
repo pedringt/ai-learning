@@ -20,10 +20,29 @@ from typing import Any
 logger = logging.getLogger("state.spend_guard")
 
 DEFAULT_DAILY_CAP_USD = 50.0
-CAP_REACHED_MESSAGE = (
-    "State has reached today's AI usage limit, so new questions and new Evidence analysis are paused "
-    "until midnight UTC. Everything already in the project is still available."
+# What visitors see whenever the AI budget is used up: State's own daily cap, or the Anthropic account's
+# spend limit or credit balance (wording chosen by Paige, Oct 20: say it is a paused personal budget, not
+# a broken app).
+AI_BUDGET_MESSAGE = (
+    "AI features are paused for now. This portfolio project runs on a personal AI budget, and it's been "
+    "used up for this period. Everything else still works, and AI answers return when the budget resets."
 )
+CAP_REACHED_MESSAGE = AI_BUDGET_MESSAGE
+
+# Provider error text that means the account's budget, not the app, stopped the call: the monthly spend
+# limit (429 enforced_spend_limit_reached, seen Oct 20) and an exhausted credit balance.
+_BUDGET_ERROR_MARKERS = (
+    "enforced_spend_limit_reached", "reached your api usage limits", "monthly api usage threshold",
+    "credit balance is too low", "billing_error",
+)
+
+
+def is_ai_budget_exhausted(error: Any) -> bool:
+    """True when an exception (or its stored text) says the AI budget, not the app, stopped the call."""
+    if isinstance(error, DailySpendCapReached):
+        return True
+    text = str(error or "").lower()
+    return any(marker in text for marker in _BUDGET_ERROR_MARKERS) or AI_BUDGET_MESSAGE.lower() in text
 
 # USD per million tokens (input, output), from the claude-api skill's model table, checked 2026-10-19.
 # An unknown model is priced at the most expensive rate so the guard errs toward stopping.

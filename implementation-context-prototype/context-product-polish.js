@@ -386,7 +386,10 @@
       // identical to this card's hardcoded headline, so that specific
       // failure rendered the same sentence twice in a row. A distinct
       // headline can't collide with whatever the error message says.
-      renderDrawerResult(`<div class="ask-live-error"><h2>Ask couldn't answer that.</h2><p>${esc(error?.message||'Please try again.')}</p></div>`);
+      // Oct 20 (Paige): when the AI budget is used up the backend says so in plain words; show it as a
+      // calm pause, not a failure.
+      const budgetPaused=/^AI features are paused/.test(String(error?.message||''));
+      renderDrawerResult(`<div class="ask-live-error${budgetPaused?' ask-budget-paused':''}"><h2>${budgetPaused?'AI answers are paused':'Ask couldn&#39;t answer that.'}</h2><p>${esc(error?.message||'Please try again.')}</p></div>`);
     }
   }
 

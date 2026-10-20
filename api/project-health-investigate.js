@@ -19,6 +19,11 @@ const PROJECTS={
 function evalCheckNamesFor(project){return MODEL_PROJECTS.PROJECTS.find(item=>item.repo===project.repo)?.evalCheckNames||[];}
 const FAILED_CHECKS=new Set(['failure','timed_out','action_required','startup_failure']);
 function response(res,status,payload){res.status(status).json(payload);}
+// Oct 20 (Paige): when the Anthropic account's spend limit or credits are used up, say so calmly instead
+// of reporting a broken investigator. Same wording as State's backend (spend_guard.AI_BUDGET_MESSAGE).
+const AI_BUDGET_MESSAGE="AI features are paused for now. This portfolio project runs on a personal AI budget, and it's been used up for this period. Everything else still works, and AI answers return when the budget resets.";
+const BUDGET_ERROR_MARKERS=['enforced_spend_limit_reached','reached your api usage limits','monthly api usage threshold','credit balance is too low','billing_error'];
+function isAiBudgetExhausted(errorPayload){const text=JSON.stringify(errorPayload||{}).toLowerCase();return BUDGET_ERROR_MARKERS.some(marker=>text.includes(marker));}
 function readBody(req){
   if(req.body&&typeof req.body==='object') return Buffer.byteLength(JSON.stringify(req.body))<=MAX_BODY_BYTES?req.body:null;
   const raw=String(req.body||'');
@@ -47,7 +52,7 @@ async function timedJson(url,options={}){
   try{
     const response=await fetch(url,{...options,signal:controller.signal});
     const payload=await response.json().catch(()=>({}));
-    if(!response.ok) return {ok:false,status:response.status,payload:{}};
+    if(!response.ok) return {ok:false,status:response.status,payload:{},errorPayload:payload};
     return {ok:true,status:response.status,payload};
   }catch(_){return {ok:false,status:null,payload:{}};}
   finally{clearTimeout(timer);}
@@ -213,7 +218,7 @@ async function summarizeWithModel(evidence){
     headers:{'x-api-key':process.env.ANTHROPIC_API_KEY,'anthropic-version':'2023-06-01','content-type':'application/json'},
     body:JSON.stringify(body)
   });
-  if(!result.ok)return null;
+  if(!result.ok)return isAiBudgetExhausted(result.errorPayload)?{budgetPaused:true}:null;
   await recordUsage(evidence.project,body,result.payload,Date.now()-started);
   return reportText(result.payload);
 }
@@ -240,10 +245,11 @@ module.exports=async function handler(req,res){
   const followUps=[deploymentEvidence?.summary,commitEvidence?.summary].filter(Boolean).join('\n');
   const evidence={project:project.slug,environment,branch:branch.branch,commit:branch.sha,signalType,primary:selected.summary,followUp:followUps||'No follow-up source was available.'};
   const report=await summarizeWithModel(evidence);
+  if(report?.budgetPaused)return response(res,503,{code:'ai_budget_paused',detail:AI_BUDGET_MESSAGE});
   if(!report)return response(res,502,{detail:'The investigation model could not return a report. No project changes were made.'});
   const sources=[...selected.sources,...(deploymentEvidence?.sources||[]),...(commitEvidence?.sources||[])];
   res.setHeader('Cache-Control','no-store');
   return response(res,200,{project:project.slug,environment,commit:branch.sha,report,sources,observedAt:new Date().toISOString(),readOnly:true});
 };
-module.exports._test={PROJECTS,FAILED_CHECKS,sanitizeText,safeSourceUrl,failedCheckRuns,statusFailure,eventLines,boundedEvidence,fetchBranch,fetchVercelEvidence,fetchGithubEvidence,fetchCommitFollowup,jobLogExcerpt,jobIdFrom,fetchJobLog,recordUsage,usageEndpoint,investigationRequest,reportText,MODEL,MAX_OUTPUT_TOKENS};
+module.exports._test={PROJECTS,FAILED_CHECKS,sanitizeText,safeSourceUrl,failedCheckRuns,statusFailure,eventLines,boundedEvidence,fetchBranch,fetchVercelEvidence,fetchGithubEvidence,fetchCommitFollowup,jobLogExcerpt,jobIdFrom,fetchJobLog,recordUsage,usageEndpoint,investigationRequest,reportText,MODEL,MAX_OUTPUT_TOKENS,isAiBudgetExhausted,AI_BUDGET_MESSAGE};
 

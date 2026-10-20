@@ -111,3 +111,14 @@ async function withEnv(patch,run){const old={};for(const [key,value] of Object.e
     console.log('Project Health usage recording tests passed');
   })().catch(error=>{console.error(error);process.exit(1);});
 }
+
+{
+  // Oct 20: the Anthropic account's spend limit is reported as a calm pause, not a broken investigator.
+  const assert=require('assert');
+  const inv=require('../api/project-health-investigate.js')._test;
+  assert.ok(inv.isAiBudgetExhausted({type:'error',error:{type:'rate_limit_error',message:'You have reached your API usage limits',details:{error_code:'enforced_spend_limit_reached'}}}));
+  assert.ok(inv.isAiBudgetExhausted({error:{message:'Your credit balance is too low to access the Anthropic API.'}}));
+  assert.ok(!inv.isAiBudgetExhausted({error:{type:'rate_limit_error',message:'Number of request tokens has exceeded your per-minute rate limit'}}));
+  assert.ok(inv.AI_BUDGET_MESSAGE.startsWith('AI features are paused'));
+  console.log('Project Health AI budget message tests passed');
+}

@@ -29,7 +29,7 @@ from docx import Document as DocxDocument
 from anthropic_provider import AnthropicProvider
 from database_migration_backed import initialize_db
 from db import connect, project_id_of
-from spend_guard import DailySpendCapReached, check_daily_budget
+from spend_guard import AI_BUDGET_MESSAGE, DailySpendCapReached, check_daily_budget, is_ai_budget_exhausted
 from extension_points import ExtensionPoint
 from interpretation_pipeline_integrated import InterpretationProvider, new_id
 from interpretation_pipeline_integrated import process_evidence as _pipeline_process_evidence
@@ -630,7 +630,8 @@ def create_app(settings: Settings | None = None, provider: InterpretationProvide
                 public_error_details = error_details
                 if error_code == "provider_error":
                     public_error_details = {
-                        "error_message": "The analysis service could not complete this request. Please try again."
+                        "error_message": AI_BUDGET_MESSAGE if is_ai_budget_exhausted(record["structured_result"])
+                        else "The analysis service could not complete this request. Please try again."
                     }
                 raise HTTPException(status_code=status_code, detail={
                     "code": error_code,
@@ -769,6 +770,8 @@ def create_app(settings: Settings | None = None, provider: InterpretationProvide
                 ).fetchone()
                 error_code = record["error_code"]
                 status_code = 503 if error_code == "provider_error" else 422
+                if error_code == "provider_error" and is_ai_budget_exhausted(record["structured_result"]):
+                    failure_message = AI_BUDGET_MESSAGE
                 raise HTTPException(status_code=status_code, detail={
                     "code": error_code,
                     "evidence_id": evidence_id,
@@ -960,9 +963,10 @@ def create_app(settings: Settings | None = None, provider: InterpretationProvide
             except (ValueError, TypeError, json.JSONDecodeError) as exc:
                 logger.warning("Streaming Ask contract failure after retry: %s", exc)
                 yield "event: error\ndata: {\"message\": \"Ask could not produce a valid grounded answer\"}\n\n"
-            except Exception:
+            except Exception as exc:
                 logger.exception("Streaming Ask provider failure")
-                yield "event: error\ndata: {\"message\": \"Ask is temporarily unavailable. Please try again.\"}\n\n"
+                message = AI_BUDGET_MESSAGE if is_ai_budget_exhausted(exc) else "Ask is temporarily unavailable. Please try again."
+                yield f"event: error\ndata: {json.dumps({'message': message})}\n\n"
 
         return StreamingResponse(
             event_stream(),
@@ -1012,6 +1016,8 @@ def create_app(settings: Settings | None = None, provider: InterpretationProvide
             raise HTTPException(status_code=422, detail="Ask could not produce a valid grounded answer") from exc
         except Exception as exc:
             logger.exception("Ask provider failure")
+            if is_ai_budget_exhausted(exc):
+                raise HTTPException(status_code=503, detail=AI_BUDGET_MESSAGE) from exc
             raise HTTPException(status_code=503, detail="Ask is temporarily unavailable. Please try again.") from exc
 
     @app.post("/api/integrations/slack/events")
