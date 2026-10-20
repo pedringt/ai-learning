@@ -3,9 +3,11 @@
 const TEAM_ID='team_UxrzvAczWhPiXlO3nvWPAu5b';
 const TEAM_SLUG='cairn10';
 const LOOKBACK_DAYS=7;
-const MAX_RUNTIME_ROWS=250;
+// Oct 19: Vercel's runtime-logs endpoint is a live tail with no time range, so it never returns past
+// errors (every read here timed out with no rows). History needs Log Drains, which this plan lacks.
+// Server errors are reported as not monitored rather than as a clean or partial scan.
+const RUNTIME_NOT_MONITORED_NOTE='Not monitored: Vercel only streams live runtime logs, so past server errors cannot be read on this plan. Log Drains (Vercel Pro) would add history.';
 const DEPLOYMENTS_TIMEOUT_MS=6500;
-const RUNTIME_LOG_TIMEOUT_MS=4500;
 const PROJECTS={
   state:{vercelProjectId:'prj_zQtHJg96oM7Ol4qTapiwk1mV8iRl',slug:'state'},
   tastemake:{vercelProjectId:'prj_UWguNtKhGJkLr0X3jswk2rgBKLGu',slug:'tastemake'},
@@ -23,51 +25,6 @@ async function timedJson(url,options={}){
     return {ok:response.ok,status:response.status,payload};
   }catch(error){
     return {ok:false,status:null,payload:{},error:error?.name==='AbortError'?'timeout':'unavailable'};
-  }finally{clearTimeout(timer);}
-}
-
-async function timedRuntimeText(url,options={}){
-  const controller=new AbortController();
-  const timeoutMs=Number(options.timeoutMs||4500);
-  const timer=setTimeout(()=>controller.abort(),timeoutMs);
-  const fetchOptions={...options};delete fetchOptions.timeoutMs;
-  let response=null;
-  let text='';
-  let timedOut=false;
-  try{
-    response=await fetch(url,{...fetchOptions,signal:controller.signal});
-    if(!response.ok){
-      text=await response.text().catch(()=>'');
-      return {ok:false,status:response.status,text,error:null};
-    }
-    if(!response.body?.getReader){
-      text=await response.text();
-      return {ok:true,status:response.status,text};
-    }
-    const reader=response.body.getReader();
-    const decoder=new TextDecoder();
-    try{
-      while(true){
-        const {done,value}=await reader.read();
-        if(done)break;
-        if(value)text+=decoder.decode(value,{stream:true});
-        if(text.split(/\r?\n/).length>MAX_RUNTIME_ROWS||text.length>250000){
-          await reader.cancel().catch(()=>{});
-          break;
-        }
-      }
-      text+=decoder.decode();
-    }catch(error){
-      if(error?.name!=='AbortError')throw error;
-      timedOut=true;
-      // Runtime logs are a stream. Reaching the bounded read timeout after the
-      // connection succeeded still means the signal is available; keep whatever
-      // rows arrived instead of reporting a false monitoring outage.
-    }
-    return {ok:true,status:response.status,text,timedOut};
-  }catch(error){
-    if(response?.ok&&error?.name==='AbortError')return {ok:true,status:response.status,text,timedOut:true};
-    return {ok:false,status:response?.status||null,text,error:error?.name==='AbortError'?'timeout':'unavailable'};
   }finally{clearTimeout(timer);}
 }
 
@@ -123,49 +80,6 @@ function summarizeDeployments(items){
   };
 }
 
-function parseRuntimeRows(text){
-  if(!text)return[];
-  const trimmed=text.trim();
-  if(!trimmed)return[];
-  try{
-    const parsed=JSON.parse(trimmed);
-    if(Array.isArray(parsed))return parsed.slice(0,MAX_RUNTIME_ROWS);
-    if(parsed&&Array.isArray(parsed.logs))return parsed.logs.slice(0,MAX_RUNTIME_ROWS);
-  }catch(_){}
-  return trimmed.split(/\r?\n/).slice(0,MAX_RUNTIME_ROWS).map(line=>{
-    try{return JSON.parse(line);}catch(_){return null;}
-  }).filter(Boolean);
-}
-
-function runtimeIssues(rows,deploymentUrl){
-  const grouped=new Map();
-  for(const row of Array.isArray(rows)?rows:[]){
-    const level=String(row.level||'').toLowerCase();
-    const status=Number(row.responseStatusCode||row.statusCode||0);
-    if(!['error','fatal'].includes(level)&&!(status>=500))continue;
-    const path=safeText(row.requestPath||row.path||'Unknown route',120);
-    const message=safeText(row.message||row.text||('HTTP '+status),220);
-    const key=(path+'|'+message).slice(0,360);
-    const timestamp=Number(row.timestampInMs||row.timestamp||0);
-    const current=grouped.get(key)||{
-      key,
-      path,
-      message,
-      level:level||'error',
-      status:status||null,
-      count:0,
-      last_seen:null,
-      source_url:deploymentUrl||null
-    };
-    current.count+=1;
-    if(timestamp&&(!current.last_seen||timestamp>current.last_seen))current.last_seen=timestamp;
-    grouped.set(key,current);
-  }
-  return Array.from(grouped.values())
-    .sort((a,b)=>(b.last_seen||0)-(a.last_seen||0)||b.count-a.count)
-    .slice(0,5);
-}
-
 async function loadActivity(project){
   const token=process.env.VERCEL_TOKEN;
   if(!token)return {configured:false,reason:'VERCEL_TOKEN not configured'};
@@ -184,30 +98,6 @@ async function loadActivity(project){
   }
   const summary=summarizeDeployments(deploymentsResult.payload?.deployments);
   const latest=summary.latest;
-  let runtime=[];
-  let runtimeAvailable=false;
-  let runtimeStatus=null;
-  let runtimeError=null;
-  let runtimeCoverage='unavailable';
-  if(latest&&String(latest.state||'').toUpperCase()==='READY'){
-    const deploymentId=String(latest.uid||latest.id||'');
-    const deploymentUrl=deploymentId?'https://vercel.com/'+TEAM_SLUG+'/'+project.slug+'/'+encodeURIComponent(deploymentId):null;
-    if(deploymentId){
-      const logQs=new URLSearchParams({teamId:TEAM_ID});
-      // One bounded read of the runtime-log stream. Oct 12 production timing: every project's stream
-      // timed out with no rows, and the old 9 s retry made each cold load ~14 s without ever adding a
-      // row. A timeout is still reported as partial coverage, never as a clean scan.
-      const logs=await timedRuntimeText('https://api.vercel.com/v1/projects/'+encodeURIComponent(project.vercelProjectId)+'/deployments/'+encodeURIComponent(deploymentId)+'/runtime-logs?'+logQs,{
-        headers:{Authorization:'Bearer '+token,Accept:'application/stream+json'},
-        timeoutMs:RUNTIME_LOG_TIMEOUT_MS
-      });
-      runtimeAvailable=logs.ok||logs.error==='timeout';
-      runtimeStatus=logs.status;
-      runtimeCoverage=(logs.timedOut||logs.error==='timeout')?'partial':(logs.ok?'complete':'unavailable');
-      runtimeError=logs.ok||logs.error==='timeout'?null:(logs.error||safeText(logs.text,180)||'Runtime logs unavailable');
-      if(logs.ok)runtime=runtimeIssues(parseRuntimeRows(logs.text),deploymentUrl);
-    }
-  }
   return {
     configured:true,
     available:true,
@@ -221,14 +111,7 @@ async function loadActivity(project){
       latest_state:String(latest?.state||'').toUpperCase()||null,
       latest_at:deploymentCreated(latest)||null
     },
-    runtime:{
-      available:runtimeAvailable,
-      status:runtimeStatus,
-      error:runtimeError,
-      coverage:runtimeCoverage,
-      note:runtimeCoverage==='partial'?'Runtime error scan was incomplete because the bounded Vercel log stream returned no rows before timeout.':null,
-      issues:runtime
-    },
+    runtime:{available:false,coverage:'not_monitored',status:null,error:null,note:RUNTIME_NOT_MONITORED_NOTE,issues:[]},
     observed_at:new Date().toISOString()
   };
 }
@@ -252,9 +135,9 @@ module.exports=async function handler(req,res){
     activity,
     privacy:{
       content_included:false,
-      runtime_scope:'bounded error/fatal/5xx metadata from the latest production deployment'
+      runtime_scope:'not monitored (no runtime log history on this Vercel plan)'
     }
   });
 };
 
-module.exports._test={PROJECTS,DEPLOYMENTS_TIMEOUT_MS,RUNTIME_LOG_TIMEOUT_MS,safeText,isIgnoredBuildSkip,summarizeDeployments,parseRuntimeRows,runtimeIssues,timedRuntimeText};
+module.exports._test={PROJECTS,DEPLOYMENTS_TIMEOUT_MS,RUNTIME_NOT_MONITORED_NOTE,safeText,isIgnoredBuildSkip,summarizeDeployments};

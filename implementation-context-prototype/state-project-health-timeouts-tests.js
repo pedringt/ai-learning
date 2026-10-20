@@ -3,19 +3,20 @@
 // legitimately take its full chain of Vercel API timeouts (deployment list, then runtime logs).
 // The page must wait longer than that chain, and Vercel must allow it to run.
 // Oct 12 production timing: a cold activity call took ~14 s for every project because a 9 s retry
-// of the runtime-log stream never returned rows. The chain is now one bounded read per source.
+// of the runtime-log stream never returned rows. Oct 19: that stream is a live tail with no history,
+// so it is no longer read; the chain is one bounded deployment-list call.
 const fs=require('fs'),path=require('path');
 const root=path.join(__dirname,'..');
 let pass=0,fail=0;
 function check(name,ok,detail=''){if(ok){pass++;console.log('✓',name)}else{fail++;console.error('✗',name,detail)}}
 
 const api=fs.readFileSync(path.join(root,'api/project-health-activity.js'),'utf8');
-const {DEPLOYMENTS_TIMEOUT_MS,RUNTIME_LOG_TIMEOUT_MS}=require('../api/project-health-activity.js')._test;
-const serverWorst=DEPLOYMENTS_TIMEOUT_MS+RUNTIME_LOG_TIMEOUT_MS;
-check('the activity function has a bounded request chain',DEPLOYMENTS_TIMEOUT_MS>0&&RUNTIME_LOG_TIMEOUT_MS>0,String([DEPLOYMENTS_TIMEOUT_MS,RUNTIME_LOG_TIMEOUT_MS]));
+const {DEPLOYMENTS_TIMEOUT_MS}=require('../api/project-health-activity.js')._test;
+const serverWorst=DEPLOYMENTS_TIMEOUT_MS;
+check('the activity function has a bounded request',DEPLOYMENTS_TIMEOUT_MS>0,String(DEPLOYMENTS_TIMEOUT_MS));
 const body=api.slice(api.indexOf('async function loadActivity'),api.indexOf('module.exports=async function handler'));
-const calls=[...body.matchAll(/await timed(Json|RuntimeText)\(/g)].length;
-check('the chain is one deployment-list call and one runtime-log read (no retry)',calls===2,`found ${calls} awaited Vercel calls`);
+const calls=[...body.matchAll(/await timed\w*\(/g)].length;
+check('the chain is one deployment-list call (no runtime-log read, no retry)',calls===1,`found ${calls} awaited Vercel calls`);
 const literals=[...body.matchAll(/timeoutMs:(\d+)/g)].map(m=>m[1]);
 check('every Vercel call uses the named timeouts the chain is computed from',!literals.length,String(literals));
 check('the worst-case server chain stays under 12 s',serverWorst<=12000,`server worst ${serverWorst} ms`);
@@ -26,8 +27,8 @@ const fn=(JSON.parse(fs.readFileSync(path.join(root,'vercel.json'),'utf8')).func
 check('Vercel lets the function run that long',fn.maxDuration*1000>serverWorst,`maxDuration ${fn.maxDuration}`);
 
 (async()=>{
-  // Behavior, not just source shape: a runtime-log stream that times out is read once and reported as
-  // partial coverage (never as a clean scan), and the deployment summary is still returned.
+  // Behavior: the deployment summary is returned, no runtime-log stream is opened, and server errors
+  // are reported as not monitored (never as a clean or partial scan).
   const handler=require('../api/project-health-activity.js');
   const originalFetch=global.fetch,originalToken=process.env.VERCEL_TOKEN;
   const urls=[];
@@ -35,7 +36,7 @@ check('Vercel lets the function run that long',fn.maxDuration*1000>serverWorst,`
   global.fetch=async url=>{
     urls.push(String(url));
     if(/\/v7\/deployments/.test(String(url)))return {ok:true,status:200,json:async()=>({deployments:[{uid:'dpl_1',name:'state',target:'production',state:'READY',created:Date.now()-60000}]})};
-    const error=new Error('aborted');error.name='AbortError';throw error;
+    throw new Error('unexpected fetch '+url);
   };
   let payload=null;
   try{
@@ -44,10 +45,9 @@ check('Vercel lets the function run that long',fn.maxDuration*1000>serverWorst,`
     global.fetch=originalFetch;
     if(originalToken==null)delete process.env.VERCEL_TOKEN;else process.env.VERCEL_TOKEN=originalToken;
   }
-  const logCalls=urls.filter(url=>/runtime-logs/.test(url)).length;
-  check('a timed-out runtime-log stream is read once, not retried',logCalls===1,`runtime-log calls ${logCalls}`);
-  check('a timed-out runtime-log stream is reported as partial coverage',payload?.activity?.runtime?.coverage==='partial'&&/incomplete/i.test(payload?.activity?.runtime?.note||''),JSON.stringify(payload?.activity?.runtime));
-  check('deployment activity is still returned when the log scan is partial',payload?.activity?.available===true&&payload.activity.deployments.latest_state==='READY');
+  check('no runtime-log stream is opened',!urls.some(url=>/runtime-logs/.test(url)),urls.join(' '));
+  check('server errors are reported as not monitored',payload?.activity?.runtime?.coverage==='not_monitored'&&/Not monitored/.test(payload?.activity?.runtime?.note||''),JSON.stringify(payload?.activity?.runtime));
+  check('deployment activity is still returned',payload?.activity?.available===true&&payload.activity.deployments.latest_state==='READY');
 
   console.log(`\n${pass} passed, ${fail} failed`);
   if(fail)process.exit(1);

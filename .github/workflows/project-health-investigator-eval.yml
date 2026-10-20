@@ -1,8 +1,12 @@
 # Paid: runs the Project Health investigator prompt on collected and planted failure
-# evidence. Triggered only by pushes to eval/ph-investigator*; models, repeats and the
-# call cap live in scripts/project_health_eval/config.json. See docs/evals/.
+# evidence. Pushes to eval/ph-investigator* use scripts/project_health_eval/config.json; the weekly
+# schedule (on main) uses config.weekly.json: Haiku only, about 42 calls, about $0.02 a run.
+# See docs/evals/.
 name: Project Health investigator eval
 on:
+  schedule:
+    # Mondays 15:23 UTC, after the State AI quality check.
+    - cron: '23 15 * * 1'
   push:
     branches: ['eval/ph-investigator*']
     paths: ['scripts/project_health_eval/**', 'api/project-health-investigate.js', '.github/workflows/project-health-investigator-eval.yml']
@@ -42,12 +46,15 @@ jobs:
             cp "$PH_EVAL_OUT/cases.json" scripts/project_health_eval/cases.json
           fi
       - name: Dry run
+        env:
+          PH_EVAL_CONFIG: ${{ github.event_name == 'schedule' && 'config.weekly.json' || 'config.json' }}
         run: node scripts/project_health_eval/run.js run --dry-run
       - name: Run the investigator prompt
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           # logVariants reads failed job logs the way production does.
           GITHUB_TOKEN: ${{ github.token }}
+          PH_EVAL_CONFIG: ${{ github.event_name == 'schedule' && 'config.weekly.json' || 'config.json' }}
           PH_EVAL_OUT: ${{ runner.temp }}/ph-eval
         run: node scripts/project_health_eval/run.js run
       - name: Keep cases and results
