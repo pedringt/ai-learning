@@ -38,9 +38,16 @@ def test_unsafe_direction_miss_blocks_even_once():
     assert reasons == ["unsafe-direction miss (blocks even once): ambiguity"]
 
 
-def test_ask_suite_still_fails_on_any_miss():
-    reports = [{"suite": ASK_SUITE, "results": [row("ask_blocker_not_omitted", False), row("b", True)]}]
-    assert gate(reports, {}, {})[ASK_SUITE]
+def test_ask_suite_allows_one_miss():
+    reports = [{"suite": ASK_SUITE, "results": [row("ask_blocker_not_omitted", False), row("b", True), row("c", True)]}]
+    assert gate(reports, {}, {ASK_SUITE: set()})[ASK_SUITE] == []
+
+
+def test_ask_suite_fails_on_two_misses_or_a_repeat():
+    two = [{"suite": ASK_SUITE, "results": [row("a", False), row("b", False), row("c", True)]}]
+    assert any("1 of 3 passed" in r for r in gate(two, {}, {ASK_SUITE: set()})[ASK_SUITE])
+    repeat = [{"suite": ASK_SUITE, "results": [row("ask_blocker_not_omitted", False), row("b", True)]}]
+    assert gate(repeat, {}, {ASK_SUITE: {"ask_blocker_not_omitted"}})[ASK_SUITE] == ["failed in two consecutive runs: ask_blocker_not_omitted"]
 
 
 def test_previous_failed_ids_reads_the_latest_run_of_the_suite():

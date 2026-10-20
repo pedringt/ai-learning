@@ -31,7 +31,8 @@ const RUNS={
     suites:['all'],
     note:'Runs NARC\'s core game regression, single-day engine, and desktop integration suites. The human first-run playtest remains a separate product-quality gate.'
   },
-  // Needs workflow_dispatch in authority-lab's test.yml (pedringt/authority-lab#146).
+  // Needs workflow_dispatch in authority-lab's test.yml (pedringt/authority-lab#146); the dashboard hides
+  // the button (noRunWorkflow in project-health-model.js) until that is merged.
   'authority-lab':{
     repo:'pedringt/authority-lab',
     workflow:'test.yml',
