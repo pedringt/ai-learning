@@ -20,6 +20,7 @@ from fastapi import FastAPI, Header, HTTPException, Query, Request
 from pydantic import BaseModel, ConfigDict, Field
 
 from db import connect
+from seed_demo import SEEDED_PROJECT_IDS
 
 EVENT_RETENTION_DAYS = 90
 EVAL_RETENTION_DAYS = 365
@@ -360,7 +361,7 @@ def _aggregate(connection, project_id: str | None, now: datetime) -> dict:
         project_summaries.append({
             "id": pid,
             "name": project["name"],
-            "demo_seeded": pid in {"northstar", "juniper-office-move"},
+            "demo_seeded": pid in SEEDED_PROJECT_IDS,  # #520: one list; Juniper's id is "juniper"
             "sessions_30d": len({x.get("session_id") for x in p_events if _within(x.get("occurred_at"), now, 30) and x.get("event_name") == "state_demo_opened" and x.get("session_id")}),
             "evidence_30d": sum(1 for x in p_evidence if _within(x.get("submitted_at"), now, 30)),
             "state_changes_30d": sum(1 for x in p_history if _within(x.get("changed_at"), now, 30)),
