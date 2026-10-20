@@ -30,10 +30,12 @@ def _trace_suffix(result) -> str:
     return f" [trace {result.trace_id}]" if result.trace_id else ""
 
 
-def _aggregate_report(results, stats, elapsed):
+def _aggregate_report(results, stats, elapsed, model_identifier: str = "unknown"):
     errored = [r for r in results if r.processing_status == "error"]
     return {
         "elapsed_seconds": elapsed,
+        # #521: the model the provider actually used (it reads CLAUDE_MODEL), not ANTHROPIC_MODEL.
+        "model_identifier": model_identifier,
         "summary": {
             "total": len(results),
             "should_have_reviewed": stats["should_have_reviewed"],
@@ -68,7 +70,7 @@ def _record_aggregate(url: str, key: str, report: dict) -> None:
         "run_kind": "controlled_eval",
         "build": os.getenv("RENDER_GIT_COMMIT", os.getenv("GITHUB_SHA", "local"))[:120],
         "provider": "anthropic",
-        "model_identifier": os.getenv("ANTHROPIC_MODEL", "configured-default")[:160],
+        "model_identifier": str(report.get("model_identifier") or "unknown")[:160],
         "total": summary["total"],
         "precision": summary["precision"],
         "recall": summary["recall"],
@@ -108,12 +110,15 @@ def main():
 
     print(f"Running {len(SCENARIOS)} scenarios against the real AnthropicProvider...\n")
     start = time.time()
-    results = run_all()
+    from anthropic_provider import AnthropicProvider
+
+    provider = AnthropicProvider()
+    results = run_all(provider=provider)
     elapsed = time.time() - start
 
     errored = [r for r in results if r.processing_status == "error"]
     stats = precision_recall(results)
-    report = _aggregate_report(results, stats, elapsed)
+    report = _aggregate_report(results, stats, elapsed, provider.model_identifier)
 
     print(f"{len(results)} evidence events processed in {elapsed:.1f}s")
     print(f"{stats['should_have_reviewed']} should have required review")

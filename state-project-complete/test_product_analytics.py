@@ -93,6 +93,18 @@ class ProductAnalyticsTests(unittest.TestCase):
         self.assertNotIn("Beta secret text", serialized)
         self.assertNotIn("Beta private question", serialized)
 
+    def test_every_seeded_project_is_reported_as_demo_seeded(self):
+        # #520: Juniper's id is "juniper"; a hand-written list said "juniper-office-move".
+        from seed_demo import SEEDED_PROJECT_IDS
+
+        for pid in SEEDED_PROJECT_IDS:
+            self.connection.execute("INSERT OR IGNORE INTO projects(id,name) VALUES (?,?)", (pid, pid.title()))
+        self.connection.commit()
+        projects = {p["id"]: p for p in _aggregate(self.connection, None, datetime.now(timezone.utc))["projects"]}
+        for pid in SEEDED_PROJECT_IDS:
+            self.assertTrue(projects[pid]["demo_seeded"], pid)
+        self.assertFalse(projects["beta"]["demo_seeded"])
+
     def test_product_eval_card_ignores_review_and_ask_quality_suites(self):
         self.connection.execute(
             "INSERT INTO product_eval_runs(id,suite,run_kind,total,recall,precision,created_at) "

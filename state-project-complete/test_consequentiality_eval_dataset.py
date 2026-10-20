@@ -70,3 +70,32 @@ def test_eval_scenario_ambiguous_case_does_not_crash_the_pipeline(scenario):
         f"Pipeline itself failed on an ambiguous scenario: {scenario.id!r} "
         f"({result.error})"
     )
+
+
+def test_recorded_eval_run_names_the_model_the_provider_used(monkeypatch):
+    # #521: the record used ANTHROPIC_MODEL and said "configured-default"; the provider reads CLAUDE_MODEL.
+    import json as _json
+
+    from anthropic_provider import AnthropicProvider
+    from eval import run_eval
+
+    monkeypatch.setenv("CLAUDE_MODEL", "claude-haiku-5-5")
+    monkeypatch.delenv("ANTHROPIC_MODEL", raising=False)
+    model = AnthropicProvider(api_key="test-key").model_identifier
+    stats = {"should_have_reviewed": 0, "surfaced_for_review": 0, "precision": 1.0, "recall": 1.0,
+             "false_positives": [], "false_negatives": []}
+    report = run_eval._aggregate_report([], stats, 0.0, model)
+    sent = {}
+
+    class _Response:
+        status = 201
+        def __enter__(self): return self
+        def __exit__(self, *exc): return False
+
+    def fake_urlopen(request, timeout):
+        sent.update(_json.loads(request.data))
+        return _Response()
+
+    monkeypatch.setattr(run_eval.urllib.request, "urlopen", fake_urlopen)
+    run_eval._record_aggregate("https://example.test", "k", report)
+    assert sent["model_identifier"] == "claude-haiku-5-5"
