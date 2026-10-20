@@ -404,10 +404,14 @@ _NEGATION_BEFORE = re.compile(r"(?:\bnot|\bno longer|n't|\bnever)\s+(?:\w+\s+){0
 # rather than making it. A "whether" with no comma or sentence end between it and the claim covers it,
 # the same rule as the Ask backstop (ask_authority_text._soften_match).
 _INSIDE_WHETHER = re.compile(r"\bwhether\b[^,.;:!?]*$")
+# Oct 19 (adversarial suite): "the premise that the Zendesk integration was approved is not confirmed"
+# names the user's premise to correct it; it is not the claim.
+_NAMES_PREMISE = re.compile(r"\bpremise\s+that\s+(?:the\s+|a\s+|an\s+)?$")
 _NEGATED_REPORT_BEFORE = re.compile(
     r"(?:\bnot|n't|\bcannot|\bno)\s+(?:\w+\s+){0,6}?"
-    r"(?:show|shows|say|says|indicate|indicates|establish|establishes|confirm|confirms|record|records|support|supports)"
-    r"\s+(?:that\s+)?$"
+    r"(?:show|shows|showing|say|says|indicate|indicates|establish|establishes|establishing|confirm|confirms|"
+    r"confirming|record|records|support|supports)"
+    r"\s+(?:that\s+)?(?:the\s+|a\s+|an\s+)?$"
 )
 
 
@@ -419,7 +423,7 @@ def _asserts(text: str, claim: str) -> bool:
     start = text.find(claim)
     while start != -1:
         if not (_NEGATION_BEFORE.search(text[:start]) or _NEGATED_REPORT_BEFORE.search(text[:start])
-                or _INSIDE_WHETHER.search(text[:start])):
+                or _INSIDE_WHETHER.search(text[:start]) or _NAMES_PREMISE.search(text[:start])):
             return True
         start = text.find(claim, start + 1)
     return False

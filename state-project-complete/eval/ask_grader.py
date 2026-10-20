@@ -13,12 +13,13 @@ change GRADER_VERSION and re-calibrate when any of them changes.
 from __future__ import annotations
 
 import json
+from datetime import date
 from typing import Any
 
 from model_request_options import request_options
 
 GRADER_MODEL = "claude-opus-5-5"
-GRADER_VERSION = "ask-grader-v1 (2026-10-16)"
+GRADER_VERSION = "ask-grader-v2 (2026-10-19: grader sees today's date)"
 GRADER_MAX_TOKENS = 1_500
 
 DIMENSIONS = (
@@ -123,10 +124,13 @@ def visible_answer(answer: Any) -> Any:
     return {key: value for key, value in answer.items() if key not in _HIDDEN_ANSWER_FIELDS}
 
 
-def user_message(scenario, answer: Any) -> str:
+def user_message(scenario, answer: Any, today: date | None = None) -> str:
     # Reference-guided with the scenario rationale only, never the keyword lists (Paige's default).
     reference = f"\nWHAT A GOOD ANSWER MUST DO:\n{scenario.rationale}\n" if getattr(scenario, "rationale", "") else ""
+    # Oct 19: Ask is told today's date and may say a date has passed; without it the grader scored a
+    # correct "the October 1 target has already passed" as fabricated (graded run 38981586083).
     return (
+        f"TODAY'S DATE (Ask was given this date): {(today or date.today()).isoformat()}\n\n"
         f"QUESTION:\n{scenario.question}\n\n"
         f"SUPPLIED RECORDS (JSON; these are the only facts that exist):\n{json.dumps(supplied_records(scenario), indent=1)}\n\n"
         f"ANSWER (JSON as shown to the user):\n{json.dumps(visible_answer(answer), indent=1)}\n"
