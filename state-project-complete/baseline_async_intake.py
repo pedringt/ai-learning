@@ -174,6 +174,7 @@ def _analyze_in_background(settings: Any, provider: Any, project_id: str, eviden
             # Deletion can race the provider call itself. Re-check after the
             # failure; if the project/Evidence disappeared, there is nothing
             # left to mark failed and no product error to surface.
+            recheck_failed = False
             try:
                 project = connection.execute(
                     "SELECT id FROM projects WHERE id=?", (project_id,)
@@ -183,8 +184,14 @@ def _analyze_in_background(settings: Any, provider: Any, project_id: str, eviden
                     (evidence_id, project_id),
                 ).fetchone()
             except Exception:
+                # #548 (Paige, Oct 20): a failed re-check is not a deletion. Fall through and mark the
+                # Evidence failed (retryable) so the UI never shows "Analyzing" forever.
+                logger.warning("Could not re-check Baseline Evidence %s after a failure", evidence_id, exc_info=True)
+                if getattr(connection, "is_postgres", False):
+                    connection.rollback()
+                recheck_failed = True
                 project = evidence = None
-            if project is None or evidence is None:
+            if not recheck_failed and (project is None or evidence is None):
                 logger.info(
                     "Baseline analysis stopped because project/evidence was deleted: %s",
                     evidence_id,

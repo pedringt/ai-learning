@@ -168,6 +168,28 @@ def _evaluate_one(
     connection.commit()
 
 
+# #548 (Paige, Oct 20): a checkpoint that keeps failing used to be retried on every poll forever, with a
+# paid classifier call each time. After MAX_CHECKPOINT_ATTEMPTS failures it is recorded as evaluated with
+# no Evidence and logged. The count lives in memory, so a restart allows at most that many more tries.
+MAX_CHECKPOINT_ATTEMPTS = 3
+_FAILED_ATTEMPTS: dict[str, int] = {}
+
+
+def _give_up_on_checkpoint(connection: Connection, checkpoint_id: str, now_iso: str) -> None:
+    logger.error("Slack checkpoint %s failed %s times; giving up (no Evidence created)",
+                 checkpoint_id, MAX_CHECKPOINT_ATTEMPTS)
+    try:
+        connection.execute(
+            "INSERT INTO slack_checkpoint_evaluations (id, checkpoint_id, evaluated_at, evidence_id) VALUES (?,?,?,NULL)",
+            (new_id("slkeval"), checkpoint_id, now_iso),
+        )
+        connection.commit()
+        _FAILED_ATTEMPTS.pop(checkpoint_id, None)
+    except Exception:
+        logger.exception("Could not record giving up on Slack checkpoint %s", checkpoint_id)
+        connection.rollback()
+
+
 def evaluate_due_checkpoints(
     connection: Connection,
     classifier: RelevanceClassifier,
@@ -197,10 +219,14 @@ def evaluate_due_checkpoints(
             _evaluate_one(connection, checkpoint, classifier, provider, now_iso)
         except Exception:
             logger.exception("Slack relevance evaluation failed for checkpoint %s", checkpoint["id"])
+            _FAILED_ATTEMPTS[checkpoint["id"]] = _FAILED_ATTEMPTS.get(checkpoint["id"], 0) + 1
             # Discard this checkpoint's half-finished writes before the next one: otherwise Postgres
             # stays aborted for the rest of the batch, and on SQLite the next commit would keep them.
             connection.rollback()
+            if _FAILED_ATTEMPTS[checkpoint["id"]] >= MAX_CHECKPOINT_ATTEMPTS:
+                _give_up_on_checkpoint(connection, checkpoint["id"], now_iso)
             continue
+        _FAILED_ATTEMPTS.pop(checkpoint["id"], None)
         evaluated.append(checkpoint["id"])
     return evaluated
 
