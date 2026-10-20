@@ -87,5 +87,14 @@ let otherItems=0;
 for(let n=1;n<=other.length;n++)otherItems=Math.max(otherItems,streamItems(ASK.renderStream(other.slice(0,n))).length);
 check('other jobs stream the same way (no special case for meeting_prep)',otherItems===totalItems,`items: ${otherItems}`);
 
+// #544 (Oct 20): every finished answer, and its copied text, says it covers only what State has on record.
+{
+  const answer={job:'current_fact',headline:'Paused',summary:'The pilot is paused.',sections:[section('established','Current State',['The pilot is paused.'],90)],source_ids:[],uncertainty_ids:[],suggested_refinements:[],suggested_question:'Why was the pilot paused?'};
+  const html=ASK.render({answer,selection:{},timing:{}},null);
+  check('the finished answer shows the scope note',html.includes('class="ask-scope-note">Based on what&#39;s recorded in State. There may be things it doesn&#39;t know about.<')||html.includes("class=\"ask-scope-note\">Based on what's recorded in State."),html.slice(-400));
+  check('the suggested Question rides on the answer element',html.includes('data-suggested-question="Why was the pilot paused?"'));
+  check('copied text ends with the scope note',ASK.portableText({answer},null).trim().endsWith("There may be things it doesn't know about."));
+}
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail?1:0);

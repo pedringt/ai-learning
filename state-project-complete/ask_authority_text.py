@@ -374,7 +374,7 @@ _INTERNAL_JSON_FIELD_NAMES = frozenset({
     "question_to_create", "existing_question_id", "review_type", "resolves_question_ids",
     "changed_at", "submitted_at", "source_type", "record_type", "record_id",
     "state_ids", "review_ids", "history_ids", "blocking_question_ids",
-    "source_ids", "uncertainty_ids", "suggested_refinements",
+    "source_ids", "uncertainty_ids", "suggested_refinements", "suggested_question",
     "governing_current_fact", "qualifies_current_state", "known_unknown",
     "accepted_past_transition", "supporting_or_event_evidence", "interpretation_guardrail",
     "needs_review", "recent_context", "open_attention",

@@ -75,6 +75,9 @@ class AskSynthesis(BaseModel):
     source_ids: list[str] = Field(default_factory=list, max_length=80)
     uncertainty_ids: list[str] = Field(default_factory=list, max_length=50)
     suggested_refinements: list[str] = Field(default_factory=list, max_length=5)
+    # #543 (Oct 20): one specific Question the person could track when the answer finds a gap the record
+    # does not cover. Ask never creates it; the UI offers to open the Question form prefilled.
+    suggested_question: str | None = Field(default=None, max_length=240)
 
 # Anthropic structured outputs support only a subset of JSON Schema and reject
 # array maxItems. Application limits therefore remain authoritative in
@@ -101,7 +104,7 @@ SELECTOR_JSON_SCHEMA = {
 ANSWER_JSON_SCHEMA = {
     "type": "object",
     "additionalProperties": False,
-    "required": ["job", "headline", "summary", "sections", "source_ids", "uncertainty_ids", "suggested_refinements"],
+    "required": ["job", "headline", "summary", "sections", "source_ids", "uncertainty_ids", "suggested_refinements", "suggested_question"],
     "properties": {
         "job": SELECTOR_JSON_SCHEMA["properties"]["job"],
         "headline": {"type": "string"},
@@ -135,6 +138,7 @@ ANSWER_JSON_SCHEMA = {
         "source_ids": {"type": "array", "items": {"type": "string"}},
         "uncertainty_ids": {"type": "array", "items": {"type": "string"}},
         "suggested_refinements": {"type": "array", "items": {"type": "string"}},
+        "suggested_question": {"type": ["string", "null"]},
     },
 }
 

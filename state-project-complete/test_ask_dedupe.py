@@ -37,3 +37,22 @@ def test_grader_sees_the_card_badges_people_see():
     from eval.ask_grader import visible_answer
     shown = visible_answer({"answer": {"headline": "h", "sections": [{"items": [{"text": "t", "record_type": "blocking_question"}]}]}})
     assert shown["sections"][0]["items"][0]["badge"] == "Blocking"
+
+
+def test_suggested_question_is_part_of_the_answer_contract_and_schema():
+    # #543
+    from ask_contract import ANSWER_JSON_SCHEMA, AskSynthesis
+    assert "suggested_question" in ANSWER_JSON_SCHEMA["required"]
+    assert ANSWER_JSON_SCHEMA["properties"]["suggested_question"]["type"] == ["string", "null"]
+    base = {"job": "current_fact", "headline": "h", "summary": "s"}
+    assert AskSynthesis.model_validate(base).suggested_question is None
+    assert AskSynthesis.model_validate({**base, "suggested_question": "Why was it paused?"}).suggested_question == "Why was it paused?"
+
+
+def test_prompts_carry_the_scope_and_suggestion_rules():
+    # #543, #545: both the one-call and the two-call prompts.
+    import inspect
+    import ask_service
+    source = inspect.getsource(ask_service)
+    assert source.count("keep its scope qualifiers") == 2
+    assert source.count("suggested_question: when the answer finds a specific gap") == 2
