@@ -86,7 +86,8 @@ platformFetchTest.then(async()=>{
     assert.strictEqual(got.body.configured,true);
     assert.deepStrictEqual(Object.keys(got.body).slice(0,Object.keys(runApi.runInfo('state')).length),Object.keys(runApi.runInfo('state')));
     // One cooldown lookup plus one 30-day spend count (Oct 19, DEC-012).
-    assert.strictEqual(urls.length,3);
+    assert.strictEqual(urls.length,4);
+    assert.ok(urls.some(url=>url==='https://state-api-6waw.onrender.com/api/admin/project-health-usage?days=30'),'production reads investigation usage from the production API');
     const getUrl=urls.find(url=>/runs\?branch=/.test(url));
     assert.match(getUrl,/^https:\/\/api\.github\.com\/repos\/pedringt\/ai-learning\/actions\/workflows\/question-review-live\.yml\/runs\?branch=main&per_page=10$/);
     for(const status of ['success','failure'])assert.ok(urls.some(url=>new RegExp('runs\\?created=%3E%3D\\d{4}-\\d{2}-\\d{2}&status='+status+'&per_page=1$').test(url)),urls.join(' '));
@@ -94,7 +95,7 @@ platformFetchTest.then(async()=>{
 
     const staging=await call({method:'GET',query:{project:'state',env:'staging'}});
     assert.strictEqual(staging.body.last_run_ref,'staging');
-    assert.ok(urls.slice(3).some(url=>/branch=staging/.test(url)),'the staging page checks the staging ref, like a staging-recorded POST');
+    assert.ok(urls.slice(4).some(url=>/branch=staging/.test(url)),'the staging page checks the staging ref, like a staging-recorded POST');
 
     // Same source: the POST cooldown reads the same URL and refuses with the matching remaining time.
     urls.length=0;methods.length=0;
@@ -124,11 +125,12 @@ platformFetchTest.then(async()=>{
     global.fetch=async()=>({ok:true,status:200,json:async()=>({workflow_runs:[]})});
     assert.strictEqual((await call({method:'GET',query:{project:'narc'}})).body.last_run_started_at,null,'no runs yet');
     delete process.env.GITHUB_TOKEN;
-    let fetched=false;global.fetch=async()=>{fetched=true;throw new Error('should not fetch');};
+    const fetchedUrls=[];global.fetch=async url=>{fetchedUrls.push(String(url));throw new Error('should not fetch GitHub');};
     const noToken=await call({method:'GET',query:{project:'state'}});
     assert.strictEqual(noToken.res.code,200);
     assert.strictEqual(noToken.body.last_run_started_at,null);
-    assert.strictEqual(fetched,false,'no token, no lookup');
+    assert.ok(!fetchedUrls.some(url=>url.includes('api.github.com')),'no token, no GitHub lookup');
+    assert.strictEqual(noToken.body.investigations_30d,null,'a failed usage read is null, never a failed GET');
     assert.strictEqual((await call({method:'GET',query:{project:'nope'}})).res.code,404);
   }finally{
     global.fetch=originalFetch;
@@ -289,4 +291,12 @@ console.log('Project Health API tests passed');
   assert.strictEqual(run.runInfo('authority-lab').button_label,'Run tests');
   assert.strictEqual(run.runInfo('authority-lab').paid_model_calls,false);
   assert.strictEqual(run.RUNS['authority-lab'].workflow,'test.yml');
+}
+
+// Investigation usage: 30-day text (Oct 19).
+{
+  const H=require('../project-health-model.js');
+  assert.strictEqual(H.investigationSpendText({calls:0,estimated_usd:0}),'AI investigations in the last 30 days (all projects): 0.');
+  assert.strictEqual(H.investigationSpendText({calls:3,estimated_usd:0.00105,unpriced_calls:0}),'AI investigations in the last 30 days (all projects): 3 · about $0.0010.');
+  assert.strictEqual(H.investigationSpendText({calls:40,estimated_usd:0.42,unpriced_calls:1}),'AI investigations in the last 30 days (all projects): 40 · about $0.42 plus 1 unpriced.');
 }
