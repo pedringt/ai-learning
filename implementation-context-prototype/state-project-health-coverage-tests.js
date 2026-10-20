@@ -45,7 +45,8 @@ assert.strictEqual(M.overallAttention(stateHealthy).kind,'good');
 assert.strictEqual(M.projectStatus(stateHealthy).label,'Healthy');
 const authorityByDesign=loaded(noQualityProject,{externalQuality:null});
 assert.deepStrictEqual(M.uncheckedSignals(authorityByDesign),[]);
-assert.ok(!project('authority-lab').noQualitySource&&!project('authority-lab').noRunWorkflow);
+// Run tests stays hidden until pedringt/authority-lab#146 (workflow_dispatch) is merged.
+assert.ok(!project('authority-lab').noQualitySource&&project('authority-lab').noRunWorkflow);
 
 // --- Cowork, Oct 11: a quality source missing by design is not a failure, but it is not hidden either.
 // Delivery/runtime can be fine; the project never gets the plain "Healthy" headline, pill, or banner copy.

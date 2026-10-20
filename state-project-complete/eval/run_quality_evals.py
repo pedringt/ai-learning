@@ -288,7 +288,7 @@ def main() -> int:
     reasons = gate(reports, {REVIEW_SUITE: REVIEW_SCENARIOS, ASK_SUITE: ASK_SCENARIOS}, previous)
     print("\nRelease reading (RELEASE.md):")
     for suite, why in reasons.items():
-        note = "" if previous.get(suite) is not None or suite != REVIEW_SUITE else " (previous run unknown, consecutive check skipped)"
+        note = "" if previous.get(suite) is not None else " (previous run unknown, consecutive check skipped)"
         print(f"  {suite}: " + ("FAIL - " + "; ".join(why) if why else "pass") + note)
     return 1 if any(reasons.values()) else 0
 

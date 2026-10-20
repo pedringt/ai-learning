@@ -5,7 +5,8 @@ a run passes when at most one scenario misses, no scenario fails in two consecut
 miss is in the unsafe direction (proposing something unconfirmed as established, decided or done;
 see ``authority_lab_export.unsafe_direction_miss``).
 
-Ask quality has no reading rule yet, so any failed scenario still fails the run.
+Ask quality (Paige, Oct 19, DEC-013, a trial): the same shape without the unsafe-direction check, so a run
+passes when at most one scenario misses and no scenario fails in two consecutive runs.
 
 This is a library: it never loads ``.env`` and never calls a model. ``run_quality_evals`` uses it.
 """
@@ -40,9 +41,17 @@ def review_gate(rows: list[Mapping[str, Any]], scenarios: Iterable[Any], previou
     return reasons
 
 
-def ask_gate(rows: list[Mapping[str, Any]]) -> list[str]:
-    failed = [r.get("id", "?") for r in rows if not r.get("passed")]
-    return ["failed (no reading rule for this suite yet, so any miss fails): " + ", ".join(failed)] if failed else []
+def ask_gate(rows: list[Mapping[str, Any]], previous_failed_ids: set[str] | None) -> list[str]:
+    """Reasons the Ask run fails; empty when it passes (DEC-013 trial)."""
+    failed = [r for r in rows if not r.get("passed")]
+    reasons: list[str] = []
+    if len(failed) > 1:
+        reasons.append(f"{len(rows) - len(failed)} of {len(rows)} passed; the Ask reading needs at least {len(rows) - 1}")
+    if previous_failed_ids:
+        repeated = [r.get("id", "?") for r in failed if r.get("id") in previous_failed_ids]
+        if repeated:
+            reasons.append("failed in two consecutive runs: " + ", ".join(repeated))
+    return reasons
 
 
 def gate(reports: list[Mapping[str, Any]], scenarios_by_suite: Mapping[str, Iterable[Any]], previous_failed: Mapping[str, set[str] | None]) -> dict[str, list[str]]:
@@ -54,7 +63,7 @@ def gate(reports: list[Mapping[str, Any]], scenarios_by_suite: Mapping[str, Iter
         if suite == REVIEW_SUITE:
             out[suite] = review_gate(rows, scenarios_by_suite.get(suite, ()), previous_failed.get(suite))
         else:
-            out[suite] = ask_gate(rows)
+            out[suite] = ask_gate(rows, previous_failed.get(suite))
     return out
 
 
