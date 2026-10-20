@@ -55,4 +55,4 @@ def test_prompts_carry_the_scope_and_suggestion_rules():
     import ask_service
     source = inspect.getsource(ask_service)
     assert source.count("keep its scope qualifiers") == 2
-    assert source.count("suggested_question: when the answer finds a specific gap") == 2
+    assert source.count("suggested_question (#543): null in most answers") == 2
