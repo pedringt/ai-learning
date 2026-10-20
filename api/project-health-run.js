@@ -31,8 +31,7 @@ const RUNS={
     suites:['all'],
     note:'Runs NARC\'s core game regression, single-day engine, and desktop integration suites. The human first-run playtest remains a separate product-quality gate.'
   },
-  // Needs workflow_dispatch in authority-lab's test.yml (pedringt/authority-lab#146); the dashboard hides
-  // the button (noRunWorkflow in project-health-model.js) until that is merged.
+  // Needs workflow_dispatch in authority-lab's test.yml, added by pedringt/authority-lab#146 (merged Oct 20).
   'authority-lab':{
     repo:'pedringt/authority-lab',
     workflow:'test.yml',
@@ -135,6 +134,18 @@ async function paidRuns30d(run,info){
   }catch(_){return null;}
 }
 
+// Investigations' recorded usage over 30 days, from the State backend (all projects). Null when unknown.
+async function investigations30d(environment){
+  try{
+    const base=environment==='staging'?'https://state-api-staging.onrender.com':'https://state-api-6waw.onrender.com';
+    const signal=typeof AbortSignal!=='undefined'&&AbortSignal.timeout?AbortSignal.timeout(3500):undefined;
+    const response=await fetch(base+'/api/admin/project-health-usage?days=30',{headers:{Accept:'application/json'},...(signal?{signal}:{})});
+    if(!response.ok)return null;
+    const body=await response.json().catch(()=>null);
+    return body&&Number.isFinite(Number(body.calls))?{calls:Number(body.calls),estimated_usd:Number(body.estimated_usd||0),unpriced_calls:Number(body.unpriced_calls||0)}:null;
+  }catch(_){return null;}
+}
+
 // GET helper: a failed or slow lookup is null ("unknown"), never a failed GET.
 async function lastRunStartedAt(run,ref){
   if(!process.env.GITHUB_TOKEN)return null;
@@ -152,9 +163,9 @@ module.exports=async function handler(req,res){
     if(!info){res.status(404).json({configured:false,detail:'No dashboard-run workflow is configured for this project yet.'});return;}
     const environment=String(req.query?.env||'production').toLowerCase()==='staging'?'staging':'production';
     const lastRunRef=runRef(RUNS[projectId],projectId,environment);
-    const [last_run_started_at,paid_runs_30d]=await Promise.all([lastRunStartedAt(RUNS[projectId],lastRunRef),paidRuns30d(RUNS[projectId],info)]);
+    const [last_run_started_at,paid_runs_30d,investigations_30d]=await Promise.all([lastRunStartedAt(RUNS[projectId],lastRunRef),paidRuns30d(RUNS[projectId],info),RUNS[projectId]?.paid_model_calls?investigations30d(environment):null]);
     res.setHeader('Cache-Control','no-store');
-    res.status(200).json({...info,last_run_ref:lastRunRef,last_run_started_at,paid_runs_30d});
+    res.status(200).json({...info,last_run_ref:lastRunRef,last_run_started_at,paid_runs_30d,investigations_30d});
     return;
   }
 
@@ -238,4 +249,4 @@ module.exports=async function handler(req,res){
   });
 };
 
-module.exports._test={costPerRun,paidRuns30d,RUNS,runRef,runInfo,RUN_COOLDOWN_MS,fetchRecentRuns,latestRunStartedAt,lastRunStartedAt};
+module.exports._test={costPerRun,paidRuns30d,investigations30d,RUNS,runRef,runInfo,RUN_COOLDOWN_MS,fetchRecentRuns,latestRunStartedAt,lastRunStartedAt};

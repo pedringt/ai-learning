@@ -267,7 +267,9 @@ def _aggregate(connection, project_id: str | None, now: datetime) -> dict:
         "FROM interpretation_records ir JOIN evidence e ON e.id=ir.evidence_id" + interpretation_where,
         interpretation_params,
     )
-    model_where = " WHERE project_id=?" if project_id else ""
+    # Project Health's investigator records its calls here too (project_health_usage_api.py); they are
+    # portfolio-dashboard spend, not State's, so State's AI metrics leave them out.
+    model_where = " WHERE operation NOT LIKE 'project_health_%'" + (" AND project_id=?" if project_id else "")
     model_calls = _rows(
         connection,
         "SELECT project_id,operation,provider,model_identifier,duration_ms,input_tokens,output_tokens,occurred_at "

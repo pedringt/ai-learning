@@ -62,11 +62,13 @@ def _price(model: str) -> tuple[float, float]:
 
 
 def today_spend_usd(connection: Any, now: datetime | None = None) -> float:
-    """Recorded model spend since midnight UTC, across every project."""
+    """Recorded model spend since midnight UTC, across every project. Project Health's investigator records
+    its calls in the same table (project_health_usage_api.py); that is portfolio-dashboard spend, not State's,
+    so it never counts toward State's cap (Oct 20)."""
     start = (now or datetime.now(timezone.utc)).strftime("%Y-%m-%d 00:00:00")
     rows = connection.execute(
         "SELECT model_identifier, COALESCE(SUM(input_tokens), 0), COALESCE(SUM(output_tokens), 0) "
-        "FROM model_call_metrics WHERE occurred_at >= ? GROUP BY model_identifier",
+        "FROM model_call_metrics WHERE occurred_at >= ? AND operation NOT LIKE 'project_health_%' GROUP BY model_identifier",
         (start,),
     ).fetchall()
     total = 0.0
