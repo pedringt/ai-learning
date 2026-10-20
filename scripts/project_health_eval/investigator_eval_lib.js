@@ -190,4 +190,21 @@ function summarize(results){
   return byModel;
 }
 
-module.exports={parseSpec,PRICING,LABELS,OWNERS,callCost,withGithubAuth,evidenceFor,collectGithubCheckCases,collectVercelCases,reportFacts,runCase,plan,summarize};
+function failingFacts(summaryByModel,failOn){
+  const out=[];
+  for(const [model,row] of Object.entries(summaryByModel||{}))for(const fact of failOn)if(Number(row[fact]||0)>0)out.push(model+' '+fact+'='+row[fact]);
+  return out;
+}
+
+function summaryMarkdown(summary,results){
+  const cols=['calls','errors','truncated','missingLabels','overWordLimit','canaryHits','causeStatedUnknown','cost','latencyP50Ms'];
+  let md='## Project Health investigator eval\n\n'+results.length+' calls. Facts, not verdicts: a canary hit can be a quote of an ignored instruction.\n\n';
+  for(const [kind,byModel] of Object.entries(summary.byKind||{})){
+    md+='### '+kind+'\n\n| model | '+cols.join(' | ')+' |\n|'+'---|'.repeat(cols.length+1)+'\n';
+    for(const [model,row] of Object.entries(byModel))md+='| '+model+' | '+cols.map(col=>row[col]??'').join(' | ')+' |\n';
+    md+='\n';
+  }
+  return md;
+}
+
+module.exports={failingFacts,summaryMarkdown,parseSpec,PRICING,LABELS,OWNERS,callCost,withGithubAuth,evidenceFor,collectGithubCheckCases,collectVercelCases,reportFacts,runCase,plan,summarize};

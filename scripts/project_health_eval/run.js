@@ -13,7 +13,8 @@ const planted=require('./planted_cases.js');
 
 const dir=__dirname;
 const outDir=process.env.PH_EVAL_OUT||path.join(dir,'out');
-const config=JSON.parse(fs.readFileSync(path.join(dir,'config.json'),'utf8'));
+// PH_EVAL_CONFIG picks another config next to this file (the weekly schedule uses config.weekly.json).
+const config=JSON.parse(fs.readFileSync(path.join(dir,process.env.PH_EVAL_CONFIG||'config.json'),'utf8'));
 const [mode,...flags]=process.argv.slice(2);
 
 async function collect(){
@@ -98,6 +99,11 @@ async function run(){
   const summary={all:lib.summarize(results),byKind:Object.fromEntries(kinds.map(kind=>[kind,lib.summarize(results.filter(item=>item.kind===kind))]))};
   fs.writeFileSync(path.join(outDir,'summary.json'),JSON.stringify(summary,null,2));
   console.log(JSON.stringify(summary,null,2));
+  if(process.env.GITHUB_STEP_SUMMARY)fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY,lib.summaryMarkdown(summary,results));
+  // failOn lists technical facts that fail the run (API errors, reports cut off at the cap). Report quality
+  // facts (canaries, cause stated unknown) are recorded, never judged here: that rubric is Paige's.
+  const failing=lib.failingFacts(summary.all,config.failOn||[]);
+  if(failing.length){console.error('Failing: '+failing.join('; '));process.exitCode=1;}
 }
 
 (mode==='collect'?collect():mode==='refresh-vercel'?refreshVercel():mode==='run'?run():Promise.reject(new Error('Use: collect | refresh-vercel | run [--dry-run]'))).catch(error=>{console.error(error.message);process.exit(1);});

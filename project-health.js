@@ -6,7 +6,7 @@
   'use strict';
   // Data and pure analysis live in project-health-model.js (#452).
   const PROJECT_HEALTH_MODEL=(typeof module==='object'&&module.exports&&typeof require==='function')?require('./project-health-model.js'):globalThis.PROJECT_HEALTH_MODEL;
-  const {PROJECTS,esc,shortSha,commitTitle,repoUrl,githubCommitUrl,pullRequestNumber,githubPullRequestUrl,githubLink,changeUrl,commitLabel,htmlRow,linkedRow,githubApi,vercelFromStatus,deliveryHealth,normalizeQuality,percent,highImpactText,modelDisplayName,qualityAttention,deliveryAttention,deliveryAttentionForData,infrastructureAttention,externalQualityAttention,pendingSet,coreStatusKnown,activityStillLoading,productOpenItems,allAttentionSignals,overallAttention,projectStatus,qualityNotMeasured,healthySummary,investigationUsesModel,actionNotes,RUN_COOLDOWN_MINUTES,runCooldownFor,cooldownStartFromRetryAfter,attentionItems,setupGaps,releaseReadiness,regressionSignal,recurringFailureSignal,operationalSignals,healthConsistencyIssues,releaseRiskChecklist,productionRuntime,operationalNextDecision,failureCheckCount,failureExplanation,qualityFailureClassSummary,activityTimelineItems,activityDayLabel,activityTimeRange,evalBehaviorBranch,mergePlatform,emptyProjectData,safeExternalQualitySnapshot,serializeProjectData,hydrateProjectData,investigationHistorySummary,makeRunner,STATE_EVAL_CONTRACT_UPDATED_AT,dateMs,fmtDate,relativeAge,stateEvalContractStale,stateEvalBehaviorStale,stateEvalResultsStale,stateEvalStaleReason,freshnessMeta,qualitySnapshot,visitBaseline,healthStateLabel,meaningfulChanges,changedSinceVisit,trendText,activityReviewItems,row,metric,durationLabel,costLabel,attentionMarkup,neonConnectionDetail,infraCardLabel,analyticsConnectionValue,analyticsGapDetail,analyticsReceiving,analyticsSignal,analyticsLabel,projectQualityLabel,stageTag,loadingCardMarkup,cardMarkup,evalSuiteLabel,evalScore,evalTrend,stateEvalCard,stateScenarioCard,scenarioPassLabel,stateEvalHistory,mockSparkline,mockTrendValues,mockDelta,investigationResultHtml,evalRunComplete,externalQualityRunComplete,evalFailureImpact,previousEvalRun,progressText,quickProjectCheck,qualityInvestigation,projectHandoff}=PROJECT_HEALTH_MODEL;
+  const {PROJECTS,esc,shortSha,commitTitle,repoUrl,githubCommitUrl,pullRequestNumber,githubPullRequestUrl,githubLink,changeUrl,commitLabel,htmlRow,linkedRow,githubApi,vercelFromStatus,deliveryHealth,normalizeQuality,percent,highImpactText,modelDisplayName,qualityAttention,deliveryAttention,deliveryAttentionForData,infrastructureAttention,externalQualityAttention,pendingSet,coreStatusKnown,activityStillLoading,productOpenItems,allAttentionSignals,overallAttention,projectStatus,qualityNotMeasured,healthySummary,investigationUsesModel,actionNotes,RUN_COOLDOWN_MINUTES,runCooldownFor,cooldownStartFromRetryAfter,attentionItems,setupGaps,releaseReadiness,regressionSignal,recurringFailureSignal,operationalSignals,healthConsistencyIssues,releaseRiskChecklist,productionRuntime,operationalNextDecision,failureCheckCount,failureExplanation,qualityFailureClassSummary,activityTimelineItems,activityDayLabel,activityTimeRange,evalBehaviorBranch,mergePlatform,emptyProjectData,safeExternalQualitySnapshot,serializeProjectData,hydrateProjectData,investigationHistorySummary,makeRunner,STATE_EVAL_CONTRACT_UPDATED_AT,dateMs,fmtDate,relativeAge,stateEvalContractStale,stateEvalBehaviorStale,stateEvalResultsStale,stateEvalStaleReason,freshnessMeta,qualitySnapshot,visitBaseline,healthStateLabel,meaningfulChanges,changedSinceVisit,trendText,activityReviewItems,row,metric,durationLabel,costLabel,attentionMarkup,neonConnectionDetail,infraCardLabel,analyticsConnectionValue,analyticsGapDetail,analyticsReceiving,analyticsSignal,analyticsLabel,projectQualityLabel,paidRunSpendText,stageTag,loadingCardMarkup,cardMarkup,evalSuiteLabel,evalScore,evalTrend,stateEvalCard,stateScenarioCard,scenarioPassLabel,stateEvalHistory,mockSparkline,mockTrendValues,mockDelta,investigationResultHtml,evalRunComplete,externalQualityRunComplete,evalFailureImpact,previousEvalRun,progressText,quickProjectCheck,qualityInvestigation,projectHandoff}=PROJECT_HEALTH_MODEL;
   function pageEnvironment(root){
     const host=String(root?.location?.hostname||'');
     const params=new URLSearchParams(String(root?.location?.search||''));
@@ -78,6 +78,125 @@
       return {name:item.name,detail:item.detail,score:score??(passedRun?1:null),label:score!=null?(passed+' / '+total+' passing'):(passedRun?'Passed (count unavailable)':'Status unavailable')};
     });
   }
+  // Each external project's quality rendering lives in one place (Oct 19). The three views used to be
+  // "if State / else if Tastemake / else NARC" chains, which is how NARC's game metrics reached Authority Lab.
+  // A project without an entry here gets the neutral fallback, never another project's cards.
+  const QUALITY_VIEWS={
+    'tastemake':{
+      linkLabel:'Recommendation checks',
+      summary(externalQ,{summaryCard}){
+        let cards='',summaryCopy='Project-specific quality evidence.';
+        const endpoint=externalQ.endpoint||{};
+        const rp=Number(endpoint.rule_checks?.passed),rt=Number(endpoint.rule_checks?.total);
+        const cp=Number(endpoint.validator_self_test?.caught),ct=Number(endpoint.validator_self_test?.total);
+        const ruleScore=rt?rp/rt:null,catchScore=ct?cp/ct:null;
+        cards=
+          summaryCard('Recommendation rules',ruleScore,rt?(rp+' / '+rt+' passed'):'No recorded result',rt&&rp===rt?'good':'warn','')+
+          summaryCard('Bad outputs caught',catchScore,ct?(cp+' / '+ct+' caught'):'No recorded result',ct&&cp===ct?'good':'warn','');
+        summaryCopy='Recommendation grounding, rule compliance, and validator protection.';
+        return {cards,summaryCopy};
+      },
+      detail(externalQ,{kpi,pct}){
+        let kpis='',qualityCards='';
+        const e=externalQ.endpoint||{},b=externalQ.baseline||{},ci=externalQ.ci||{};
+        const vals=[
+          ['Recommendation rules',Number(e.rule_checks?.total)?Number(e.rule_checks?.passed)/Number(e.rule_checks?.total):null,e.rule_checks?.passed,e.rule_checks?.total,false],
+          ['Bad outputs caught',Number(e.validator_self_test?.total)?Number(e.validator_self_test?.caught)/Number(e.validator_self_test?.total):null,e.validator_self_test?.caught,e.validator_self_test?.total,false],
+          ['Main automated checks',ci.conclusion==='success'?1:null,ci.conclusion==='success'?1:null,1,false],
+          ['Baseline comparison',Number(b.valid_fixture_outputs?.total)?Number(b.valid_fixture_outputs?.passed)/Number(b.valid_fixture_outputs?.total):null,b.valid_fixture_outputs?.passed,b.valid_fixture_outputs?.total,true]
+        ];
+        kpis=vals.map(([label,score,passed,total,comparison])=>comparison
+          ?kpi(label,score,{label:'—',cls:'flat'},'good','Historical comparison',total?passed+' / '+total+' baseline outputs kept':'Not measured',[])
+          :kpi(label,score,{label:'—',cls:'flat'},score===1?'good':score==null?'warn':'warn',score===1?'Healthy':'Needs a look',total?passed+' / '+total:'Not measured',[])
+        ).join('');
+        qualityCards=vals.map(([label,score,passed,total,comparison])=>{const n=pct(score);return '<div class="mock-quality-detail-card"><span>'+esc(label)+'</span><strong>'+(n==null?'—':esc(n+'%'))+'</strong><div class="mock-progress"><span style="width:'+(n||0)+'%"></span></div><small>'+esc(comparison?(total?(passed+' / '+total+' historical baseline'):'Historical comparison'):(total?(passed+' / '+total+' passing'):'Not measured'))+'</small></div>';}).join('');
+        return {kpis,qualityCards};
+      },
+      tab(externalQ){
+        let qualityHtml='';
+        const endpoint=externalQ.endpoint||{},base=externalQ.baseline||{},ci=externalQ.ci||{};
+        const top=externalQualityAttention(externalQ);
+        qualityHtml='<h3>Product quality · Recommendation checks</h3>'+
+          '<div class="eval-overview"><div><strong>'+esc(top?.title||'Recommendation checks loaded')+'</strong><span>Latest recorded recommendation-quality evidence</span></div></div>'+
+          '<div class="eval-grid">'+
+          stateEvalCard('Recommendation rules passed',(endpoint.rule_checks?.passed??'—')+'/'+(endpoint.rule_checks?.total??'—'),'Checks that recommendations obey the product rules.','')+
+          stateEvalCard('Bad outputs were caught',(endpoint.validator_self_test?.caught??'—')+'/'+(endpoint.validator_self_test?.total??'—'),'Deliberately bad recommendations should be rejected before a user sees them.','')+
+          stateEvalCard('Main automated checks',ci.conclusion==='success'?'Passing':(ci.conclusion||'Unknown'),'Confirms the current code still passes its automated quality gates.','')+
+          stateEvalCard('Baseline comparison',(base.valid_fixture_outputs?.passed??'—')+'/'+(base.valid_fixture_outputs?.total??'—'),'Historical comparison only. Baseline misses do not create a current Project Health warning.','')+
+          '</div>'+
+          '<div class="eval-history"><h4>What these checks cover</h4><div class="run-summary">'+
+          (externalQ.check_groups||[]).map(g=>'<div class="run-callout"><strong>'+esc(g.name)+'</strong><p>'+esc(g.detail)+'</p></div>').join('')+
+          '<p class="footnote">'+esc(externalQ.caveat||'')+'</p></div></div>';
+        return qualityHtml;
+      }
+    },
+    'authority-lab':{
+      linkLabel:'Test runs',
+      summary(externalQ,{summaryCard}){
+        let cards='',summaryCopy='Project-specific quality evidence.';
+        cards=suiteRows(externalQ).map(row=>summaryCard(row.name,row.score,row.label,row.score===1?'good':row.score==null?'unknown':'warn','')).join('');
+        summaryCopy='The app and agent test suites on main (Node 22 and 24).';
+        return {cards,summaryCopy};
+      },
+      detail(externalQ,{kpi,pct}){
+        let kpis='',qualityCards='';
+        const rows=suiteRows(externalQ);
+        kpis=rows.map(row=>kpi(row.name,row.score,{label:'—',cls:'flat'},row.score===1?'good':'warn',row.score===1?'Healthy':row.score==null?'Unknown':'Needs a look',row.label,[])).join('');
+        qualityCards=rows.map(row=>{const n=pct(row.score);return '<div class="mock-quality-detail-card"><span>'+esc(row.name)+'</span><strong>'+(n==null?'—':esc(n+'%'))+'</strong><div class="mock-progress"><span style="width:'+(n||0)+'%"></span></div><small>'+esc(row.label)+'</small></div>';}).join('');
+        return {kpis,qualityCards};
+      },
+      tab(externalQ){
+        let qualityHtml='';
+        const top=externalQualityAttention(externalQ),ci=externalQ.ci||{};
+        qualityHtml='<h3>Product quality · Automated tests</h3>'+
+          '<div class="eval-overview"><div><strong>'+esc(top?.title||'Test results loaded')+'</strong><span>Latest test run on main'+(ci.updated_at?' · '+esc(fmtDate(ci.updated_at)):'')+'</span></div></div>'+
+          '<div class="eval-grid">'+suiteRows(externalQ).map(row=>stateEvalCard(row.name,row.label,row.detail,'')).join('')+'</div>'+
+          '<p class="footnote">'+esc(externalQ.caveat||'')+(ci.html_url?' <a href="'+esc(ci.html_url)+'" target="_blank" rel="noopener noreferrer">Open the run ↗</a>':'')+'</p>';
+        return qualityHtml;
+      }
+    },
+    'narc':{
+      linkLabel:'Game checks',
+      detailWithoutData:true,
+      summary(externalQ,{summaryCard}){
+        let cards='',summaryCopy='Project-specific quality evidence.';
+        const green=!!externalQ.recorded?.recorded_all_suites_green;
+        const pendingPlaytest=!!externalQ.recorded?.full_playtest_pending;
+        cards=
+          summaryCard('Automated game checks',green?1:null,green?'3 / 3 suites passing':'Status unavailable',green?'good':'unknown','')+
+          summaryCard('Human first-run playtest',pendingPlaytest?0:null,pendingPlaytest?'Still needed':'Recorded',pendingPlaytest?'warn':'good','');
+        summaryCopy='Automated branch checks plus the human first-run playtest gate.';
+        return {cards,summaryCopy};
+      },
+      detail(externalQ,{kpi,pct}){
+        let kpis='',qualityCards='';
+        const green=!!externalQ?.recorded?.recorded_all_suites_green;
+        const playtestPending=!!externalQ?.recorded?.full_playtest_pending;
+        const vals=[
+          ['Automated game checks',green?1:null,green?'3 / 3 suites passing':'Status unavailable'],
+          ['First-run playtest',playtestPending?0:null,playtestPending?'Still needed':'Recorded'],
+          ['Branch consistency',green?1:null,green?'Passing':'Status unavailable'],
+          ['Desktop behavior',green?1:null,green?'Passing':'Status unavailable']
+        ];
+        kpis=vals.map(([label,score,sub])=>kpi(label,score,{label:'—',cls:'flat'},score===1?'good':score===0?'warn':'warn',score===1?'Healthy':score===0?'Needs review':'Unknown',sub,[])).join('');
+        qualityCards=vals.map(([label,score,sub])=>{const n=pct(score);return '<div class="mock-quality-detail-card"><span>'+esc(label)+'</span><strong>'+(n==null?'—':esc(n+'%'))+'</strong><div class="mock-progress"><span style="width:'+(n||0)+'%"></span></div><small>'+esc(sub)+'</small></div>';}).join('');
+        return {kpis,qualityCards};
+      },
+      tab(externalQ){
+        let qualityHtml='';
+        qualityHtml='<h3>Product quality · Game checks</h3>'+
+          '<div class="eval-overview"><div><strong>'+(externalQ.recorded?.recorded_all_suites_green?'Automated checks are passing':'Automated check status is unclear')+'</strong><span>'+(externalQ.recorded?.full_playtest_pending?'Human first-run playtest is still open.':'Latest playtest gate is recorded.')+'</span></div></div>'+
+          '<div class="eval-grid">'+
+          stateEvalCard('Automated game checks',externalQ.recorded?.recorded_all_suites_green?'3/3 passing':'Unknown','Checks branches, consequences, endings, time rules, and desktop behavior.','')+
+          stateEvalCard('Human first-run playtest',externalQ.recorded?.full_playtest_pending?'Still needed':'Recorded','This is the check that tells us whether the experience actually makes sense to a player.','')+
+          '</div>'+
+          '<div class="eval-history"><h4>Automated check details</h4><div class="run-summary">'+
+          (externalQ.suites||[]).map(item=>'<div class="run-callout"><strong>'+esc(item.name)+'</strong><p>'+esc(item.detail)+'</p></div>').join('')+
+          '<p class="footnote">'+esc(externalQ.caveat||'')+'</p></div></div>';
+        return qualityHtml;
+      }
+    }
+  };
   async function loadExternalQuality(project){if(project.noQualitySource)return null;return await jsonFetch('/api/project-health-project-quality?project='+encodeURIComponent(project.id),{timeoutMs:7000});}
   async function loadActivity(project){const payload=await jsonFetch('/api/project-health-activity?project='+encodeURIComponent(project.id),{timeoutMs:14000});return payload?.activity||null;}
   async function loadOpenPullRequests(project,root,data){
@@ -206,7 +325,7 @@
         ['Vercel',p.links?.vercel],
         ['Render · production',p.links?.renderProduction],
         ['Neon',p.links?.neon],
-        [p.id==='state'?'Full AI eval details':p.id==='tastemake'?'Recommendation checks':p.id==='narc'?'Game checks':p.id==='authority-lab'?'Test runs':(p.qualityLabel||'Quality checks'),p.links?.quality]
+        [p.id==='state'?'Full AI eval details':(QUALITY_VIEWS[p.id]?.linkLabel||p.qualityLabel||'Quality checks'),p.links?.quality]
       ].filter(item=>item[1]);
       linksMenu.innerHTML='<button type="button" data-open-systems>Systems &amp; connections</button><button type="button" data-open-about>About Project Health</button>'+links.map(([label,url])=>'<a href="'+esc(url)+'" target="_blank" rel="noopener noreferrer">'+esc(label)+'</a>').join('');
     }
@@ -376,25 +495,8 @@
           summaryCard('Update understanding',reviewScore,review?scenarioPassLabel(review,reviewScore):'No recorded run',reviewKind,evalTrend(q?.recent,'review_interpretation'))+
           summaryCard('Answer quality',askScore,ask?scenarioPassLabel(ask,askScore):'No recorded run',askKind,evalTrend(q?.recent,'ask_quality'));
         summaryCopy='Controlled evals for how State understands updates and answers from evidence.';
-      }else if(p.id==='tastemake'&&externalQ){
-        const endpoint=externalQ.endpoint||{};
-        const rp=Number(endpoint.rule_checks?.passed),rt=Number(endpoint.rule_checks?.total);
-        const cp=Number(endpoint.validator_self_test?.caught),ct=Number(endpoint.validator_self_test?.total);
-        const ruleScore=rt?rp/rt:null,catchScore=ct?cp/ct:null;
-        cards=
-          summaryCard('Recommendation rules',ruleScore,rt?(rp+' / '+rt+' passed'):'No recorded result',rt&&rp===rt?'good':'warn','')+
-          summaryCard('Bad outputs caught',catchScore,ct?(cp+' / '+ct+' caught'):'No recorded result',ct&&cp===ct?'good':'warn','');
-        summaryCopy='Recommendation grounding, rule compliance, and validator protection.';
-      }else if(p.id==='authority-lab'&&externalQ){
-        cards=suiteRows(externalQ).map(row=>summaryCard(row.name,row.score,row.label,row.score===1?'good':row.score==null?'unknown':'warn','')).join('');
-        summaryCopy='The app and agent test suites on main (Node 22 and 24).';
-      }else if(p.id==='narc'&&externalQ){
-        const green=!!externalQ.recorded?.recorded_all_suites_green;
-        const pendingPlaytest=!!externalQ.recorded?.full_playtest_pending;
-        cards=
-          summaryCard('Automated game checks',green?1:null,green?'3 / 3 suites passing':'Status unavailable',green?'good':'unknown','')+
-          summaryCard('Human first-run playtest',pendingPlaytest?0:null,pendingPlaytest?'Still needed':'Recorded',pendingPlaytest?'warn':'good','');
-        summaryCopy='Automated branch checks plus the human first-run playtest gate.';
+      }else if(QUALITY_VIEWS[p.id]&&externalQ){
+        ({cards,summaryCopy}=QUALITY_VIEWS[p.id].summary(externalQ,{summaryCard}));
       }else if(p.noQualitySource){
         cards=summaryCard('Quality checks',null,'Not connected yet','unknown','');
         summaryCopy='This project has no automated checks the dashboard can read yet.';
@@ -483,34 +585,8 @@
           const n=pct(score),pass=run&&score!=null?scenarioPassLabel(run,score):unknownSignal;
           return '<div class="mock-quality-detail-card"><span>'+esc(label)+'</span><strong>'+(n==null?'—':esc(n+'%'))+'</strong><div class="mock-progress"><span style="width:'+(n||0)+'%"></span></div><small>'+esc(pass)+'</small></div>';
         }).join('');
-      }else if(p.id==='tastemake'&&externalQ){
-        const e=externalQ.endpoint||{},b=externalQ.baseline||{},ci=externalQ.ci||{};
-        const vals=[
-          ['Recommendation rules',Number(e.rule_checks?.total)?Number(e.rule_checks?.passed)/Number(e.rule_checks?.total):null,e.rule_checks?.passed,e.rule_checks?.total,false],
-          ['Bad outputs caught',Number(e.validator_self_test?.total)?Number(e.validator_self_test?.caught)/Number(e.validator_self_test?.total):null,e.validator_self_test?.caught,e.validator_self_test?.total,false],
-          ['Main automated checks',ci.conclusion==='success'?1:null,ci.conclusion==='success'?1:null,1,false],
-          ['Baseline comparison',Number(b.valid_fixture_outputs?.total)?Number(b.valid_fixture_outputs?.passed)/Number(b.valid_fixture_outputs?.total):null,b.valid_fixture_outputs?.passed,b.valid_fixture_outputs?.total,true]
-        ];
-        kpis=vals.map(([label,score,passed,total,comparison])=>comparison
-          ?kpi(label,score,{label:'—',cls:'flat'},'good','Historical comparison',total?passed+' / '+total+' baseline outputs kept':'Not measured',[])
-          :kpi(label,score,{label:'—',cls:'flat'},score===1?'good':score==null?'warn':'warn',score===1?'Healthy':'Needs a look',total?passed+' / '+total:'Not measured',[])
-        ).join('');
-        qualityCards=vals.map(([label,score,passed,total,comparison])=>{const n=pct(score);return '<div class="mock-quality-detail-card"><span>'+esc(label)+'</span><strong>'+(n==null?'—':esc(n+'%'))+'</strong><div class="mock-progress"><span style="width:'+(n||0)+'%"></span></div><small>'+esc(comparison?(total?(passed+' / '+total+' historical baseline'):'Historical comparison'):(total?(passed+' / '+total+' passing'):'Not measured'))+'</small></div>';}).join('');
-      }else if(p.id==='authority-lab'&&externalQ){
-        const rows=suiteRows(externalQ);
-        kpis=rows.map(row=>kpi(row.name,row.score,{label:'—',cls:'flat'},row.score===1?'good':'warn',row.score===1?'Healthy':row.score==null?'Unknown':'Needs a look',row.label,[])).join('');
-        qualityCards=rows.map(row=>{const n=pct(row.score);return '<div class="mock-quality-detail-card"><span>'+esc(row.name)+'</span><strong>'+(n==null?'—':esc(n+'%'))+'</strong><div class="mock-progress"><span style="width:'+(n||0)+'%"></span></div><small>'+esc(row.label)+'</small></div>';}).join('');
-      }else if(p.id==='narc'){
-        const green=!!externalQ?.recorded?.recorded_all_suites_green;
-        const playtestPending=!!externalQ?.recorded?.full_playtest_pending;
-        const vals=[
-          ['Automated game checks',green?1:null,green?'3 / 3 suites passing':'Status unavailable'],
-          ['First-run playtest',playtestPending?0:null,playtestPending?'Still needed':'Recorded'],
-          ['Branch consistency',green?1:null,green?'Passing':'Status unavailable'],
-          ['Desktop behavior',green?1:null,green?'Passing':'Status unavailable']
-        ];
-        kpis=vals.map(([label,score,sub])=>kpi(label,score,{label:'—',cls:'flat'},score===1?'good':score===0?'warn':'warn',score===1?'Healthy':score===0?'Needs review':'Unknown',sub,[])).join('');
-        qualityCards=vals.map(([label,score,sub])=>{const n=pct(score);return '<div class="mock-quality-detail-card"><span>'+esc(label)+'</span><strong>'+(n==null?'—':esc(n+'%'))+'</strong><div class="mock-progress"><span style="width:'+(n||0)+'%"></span></div><small>'+esc(sub)+'</small></div>';}).join('');
+      }else if(QUALITY_VIEWS[p.id]&&(externalQ||QUALITY_VIEWS[p.id].detailWithoutData)){
+        ({kpis,qualityCards}=QUALITY_VIEWS[p.id].detail(externalQ,{kpi,pct}));
       }
       else{
         const label=p.noQualitySource?'Quality checks':(p.qualityLabel||'Product quality');
@@ -656,37 +732,10 @@
       }else if(run&&!activeEvalRun){
         qualityHtml+='<p class="footnote">Running AI evals from the dashboard still needs setup. Existing recorded results can still appear here.</p>';
       }
+      if(run?.paid_runs_30d)qualityHtml+='<p class="footnote">'+esc(paidRunSpendText(run.paid_runs_30d))+'</p>';
       qualityHtml+='<p class="footnote">Resolved Reviews · 30d: '+esc(q?.resolvedReviews??'Not loaded')+'. Project content is not copied into this dashboard.</p>';
-    }else if(p.id==='tastemake'&&externalQ){
-      const endpoint=externalQ.endpoint||{},base=externalQ.baseline||{},ci=externalQ.ci||{};
-      const top=externalQualityAttention(externalQ);
-      qualityHtml='<h3>Product quality · Recommendation checks</h3>'+
-        '<div class="eval-overview"><div><strong>'+esc(top?.title||'Recommendation checks loaded')+'</strong><span>Latest recorded recommendation-quality evidence</span></div></div>'+
-        '<div class="eval-grid">'+
-        stateEvalCard('Recommendation rules passed',(endpoint.rule_checks?.passed??'—')+'/'+(endpoint.rule_checks?.total??'—'),'Checks that recommendations obey the product rules.','')+
-        stateEvalCard('Bad outputs were caught',(endpoint.validator_self_test?.caught??'—')+'/'+(endpoint.validator_self_test?.total??'—'),'Deliberately bad recommendations should be rejected before a user sees them.','')+
-        stateEvalCard('Main automated checks',ci.conclusion==='success'?'Passing':(ci.conclusion||'Unknown'),'Confirms the current code still passes its automated quality gates.','')+
-        stateEvalCard('Baseline comparison',(base.valid_fixture_outputs?.passed??'—')+'/'+(base.valid_fixture_outputs?.total??'—'),'Historical comparison only. Baseline misses do not create a current Project Health warning.','')+
-        '</div>'+
-        '<div class="eval-history"><h4>What these checks cover</h4><div class="run-summary">'+
-        (externalQ.check_groups||[]).map(g=>'<div class="run-callout"><strong>'+esc(g.name)+'</strong><p>'+esc(g.detail)+'</p></div>').join('')+
-        '<p class="footnote">'+esc(externalQ.caveat||'')+'</p></div></div>';
-    }else if(p.id==='authority-lab'&&externalQ){
-      const top=externalQualityAttention(externalQ),ci=externalQ.ci||{};
-      qualityHtml='<h3>Product quality · Automated tests</h3>'+
-        '<div class="eval-overview"><div><strong>'+esc(top?.title||'Test results loaded')+'</strong><span>Latest test run on main'+(ci.updated_at?' · '+esc(fmtDate(ci.updated_at)):'')+'</span></div></div>'+
-        '<div class="eval-grid">'+suiteRows(externalQ).map(row=>stateEvalCard(row.name,row.label,row.detail,'')).join('')+'</div>'+
-        '<p class="footnote">'+esc(externalQ.caveat||'')+(ci.html_url?' <a href="'+esc(ci.html_url)+'" target="_blank" rel="noopener noreferrer">Open the run ↗</a>':'')+'</p>';
-    }else if(p.id==='narc'&&externalQ){
-      qualityHtml='<h3>Product quality · Game checks</h3>'+
-        '<div class="eval-overview"><div><strong>'+(externalQ.recorded?.recorded_all_suites_green?'Automated checks are passing':'Automated check status is unclear')+'</strong><span>'+(externalQ.recorded?.full_playtest_pending?'Human first-run playtest is still open.':'Latest playtest gate is recorded.')+'</span></div></div>'+
-        '<div class="eval-grid">'+
-        stateEvalCard('Automated game checks',externalQ.recorded?.recorded_all_suites_green?'3/3 passing':'Unknown','Checks branches, consequences, endings, time rules, and desktop behavior.','')+
-        stateEvalCard('Human first-run playtest',externalQ.recorded?.full_playtest_pending?'Still needed':'Recorded','This is the check that tells us whether the experience actually makes sense to a player.','')+
-        '</div>'+
-        '<div class="eval-history"><h4>Automated check details</h4><div class="run-summary">'+
-        (externalQ.suites||[]).map(item=>'<div class="run-callout"><strong>'+esc(item.name)+'</strong><p>'+esc(item.detail)+'</p></div>').join('')+
-        '<p class="footnote">'+esc(externalQ.caveat||'')+'</p></div></div>';
+    }else if(QUALITY_VIEWS[p.id]&&externalQ){
+      qualityHtml=QUALITY_VIEWS[p.id].tab(externalQ);
     }else if(p.noQualitySource){
       qualityHtml='<h3>Product quality</h3><div class="empty" style="margin-top:12px">Not connected yet. This project has no automated checks the dashboard can read yet.</div>';
     }else{
@@ -1545,5 +1594,5 @@
     }
   }
 
-  return {PROJECTS,pageEnvironment,evalBehaviorBranch,vercelFromStatus,deliveryHealth,commitTitle,githubCommitUrl,pullRequestNumber,githubPullRequestUrl,changeUrl,normalizeQuality,qualityAttention,externalQualityAttention,deliveryAttention,deliveryAttentionForData,infrastructureAttention,allAttentionSignals,attentionItems,overallAttention,productOpenItems,projectStatus,setupGaps,releaseReadiness,regressionSignal,recurringFailureSignal,operationalSignals,releaseRiskChecklist,healthConsistencyIssues,productionRuntime,operationalNextDecision,qualityFailureClassSummary,failureCheckCount,failureExplanation,activityTimelineItems,projectQualityLabel,evalScore,percent,shortSha,pendingSet,coreStatusKnown,activityStillLoading,mergePlatform,emptyProjectData,safeExternalQualitySnapshot,serializeProjectData,hydrateProjectData,productNoteKey,loadProductNotes,saveProductNotes,loadProject,loadProjectDetails,infraCardLabel,neonConnectionDetail,analyticsConnectionValue,analyticsGapDetail,analyticsSignal,analyticsLabel,relativeAge,changedSinceVisit,meaningfulChanges,freshnessMeta,stateEvalContractStale,stateEvalBehaviorStale,stateEvalResultsStale,stateEvalStaleReason,trendText,activityReviewItems,progressText,quickProjectCheck,evalRunComplete,externalQualityRunComplete,qualityInvestigation,projectHandoff,init};
+  return {QUALITY_VIEWS,PROJECTS,pageEnvironment,evalBehaviorBranch,vercelFromStatus,deliveryHealth,commitTitle,githubCommitUrl,pullRequestNumber,githubPullRequestUrl,changeUrl,normalizeQuality,qualityAttention,externalQualityAttention,deliveryAttention,deliveryAttentionForData,infrastructureAttention,allAttentionSignals,attentionItems,overallAttention,productOpenItems,projectStatus,setupGaps,releaseReadiness,regressionSignal,recurringFailureSignal,operationalSignals,releaseRiskChecklist,healthConsistencyIssues,productionRuntime,operationalNextDecision,qualityFailureClassSummary,failureCheckCount,failureExplanation,activityTimelineItems,projectQualityLabel,evalScore,percent,shortSha,pendingSet,coreStatusKnown,activityStillLoading,mergePlatform,emptyProjectData,safeExternalQualitySnapshot,serializeProjectData,hydrateProjectData,productNoteKey,loadProductNotes,saveProductNotes,loadProject,loadProjectDetails,infraCardLabel,neonConnectionDetail,analyticsConnectionValue,analyticsGapDetail,analyticsSignal,analyticsLabel,relativeAge,changedSinceVisit,meaningfulChanges,freshnessMeta,stateEvalContractStale,stateEvalBehaviorStale,stateEvalResultsStale,stateEvalStaleReason,trendText,activityReviewItems,progressText,quickProjectCheck,evalRunComplete,externalQualityRunComplete,qualityInvestigation,projectHandoff,init};
 });

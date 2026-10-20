@@ -78,13 +78,23 @@ function eventLines(payload){
 // Failed GitHub Actions jobs leave the check's title and summary empty, so the cause is only in the
 // job log. Send a bounded, sanitized excerpt: error-looking lines (or the last lines), never the whole log.
 const MAX_JOB_LOG_CHARS=3000;
+// Real failure markers first (a non-zero failure count, `not ok`, ✖/✗, `x name` result lines, AssertionError,
+// pytest FAILED/E lines, an eval's `- scenario: failed`), each with the few lines after it, because a suite's
+// own logging (mocked 500s, "not json" fixtures) also says "error" and is usually not the failure (Oct 19).
+const FAILURE_MARKER=/(^|\s)(not ok\b|✖|✗)|\b[1-9]\d* (failed|failing|failures?)\b|^\s*# fail [1-9]|^\s*x\s+\S|\bFAILED\b|AssertionError|^\s*E\s{2,}\S|^\s*-\s+\S+:\s+failed\b|Traceback \(most recent call last\)/;
+const GENERIC_ERROR=/error|fail|exception|assert|cannot|could not|not found|invalid|traceback|expected|exit code/i;
 function jobLogExcerpt(text){
   const lines=String(text||'').split(/\r?\n/)
     .map(line=>line.replace(/^\d{4}-\d{2}-\d{2}T[\d:.]+Z\s?/,'').replace(/\u001b\[[0-9;]*m/g,'').trimEnd())
     .filter(line=>line.trim()&&!/^##\[(group|endgroup)\]/.test(line));
-  const useful=lines.filter(line=>/error|fail|exception|assert|cannot|could not|not found|invalid|traceback|expected|exit code/i.test(line));
-  const picked=(useful.length?useful.slice(-25):lines.slice(-25)).map(line=>sanitizeText(line,300));
-  return picked.join('\n').slice(-MAX_JOB_LOG_CHARS);
+  const keep=new Set();
+  lines.forEach((line,index)=>{if(FAILURE_MARKER.test(line))for(let k=index;k<=Math.min(index+4,lines.length-1);k++)keep.add(k);});
+  const exit=lines.findIndex(line=>/^##\[error\]Process completed with exit code/.test(line));
+  if(exit>=0)keep.add(exit);
+  const picked=keep.size>(exit>=0?1:0)
+    ?[...keep].sort((a,b)=>a-b).map(index=>lines[index]).slice(-25)
+    :(()=>{const useful=lines.filter(line=>GENERIC_ERROR.test(line));return (useful.length?useful:lines).slice(-25);})();
+  return picked.map(line=>sanitizeText(line,300)).join('\n').slice(-MAX_JOB_LOG_CHARS);
 }
 function jobIdFrom(url,repo){
   const match=String(url||'').match(/^https:\/\/github\.com\/([^/]+\/[^/]+)\/actions\/runs\/\d+\/job\/(\d+)$/);

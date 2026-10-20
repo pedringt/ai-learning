@@ -85,13 +85,16 @@ platformFetchTest.then(async()=>{
     assert.strictEqual(got.body.button_label,'Run AI evals','existing fields are kept');
     assert.strictEqual(got.body.configured,true);
     assert.deepStrictEqual(Object.keys(got.body).slice(0,Object.keys(runApi.runInfo('state')).length),Object.keys(runApi.runInfo('state')));
-    assert.strictEqual(urls.length,1);
-    assert.match(urls[0],/^https:\/\/api\.github\.com\/repos\/pedringt\/ai-learning\/actions\/workflows\/question-review-live\.yml\/runs\?branch=main&per_page=10$/);
-    const getUrl=urls[0];
+    // One cooldown lookup plus one 30-day spend count (Oct 19, DEC-012).
+    assert.strictEqual(urls.length,3);
+    const getUrl=urls.find(url=>/runs\?branch=/.test(url));
+    assert.match(getUrl,/^https:\/\/api\.github\.com\/repos\/pedringt\/ai-learning\/actions\/workflows\/question-review-live\.yml\/runs\?branch=main&per_page=10$/);
+    for(const status of ['success','failure'])assert.ok(urls.some(url=>new RegExp('runs\\?created=%3E%3D\\d{4}-\\d{2}-\\d{2}&status='+status+'&per_page=1$').test(url)),urls.join(' '));
+    assert.deepStrictEqual(got.body.paid_runs_30d&&{count:got.body.paid_runs_30d.count,cost:got.body.paid_runs_30d.cost_upper_usd},{count:0,cost:0},'counts come from total_count (absent here, so 0)');
 
     const staging=await call({method:'GET',query:{project:'state',env:'staging'}});
     assert.strictEqual(staging.body.last_run_ref,'staging');
-    assert.match(urls[1],/branch=staging/,'the staging page checks the staging ref, like a staging-recorded POST');
+    assert.ok(urls.slice(3).some(url=>/branch=staging/.test(url)),'the staging page checks the staging ref, like a staging-recorded POST');
 
     // Same source: the POST cooldown reads the same URL and refuses with the matching remaining time.
     urls.length=0;methods.length=0;
@@ -156,12 +159,8 @@ assert.strictEqual(skippedDeploymentSummary.failed,1);
 assert.strictEqual(skippedDeploymentSummary.latest.uid,'ready-current');
 assert.ok(!skippedDeploymentSummary.recent_failures.some(item=>item.id==='skip-new'));
 
-const parsedRows=activity.parseRuntimeRows('{"level":"error","message":"boom","requestPath":"/api/ask","responseStatusCode":500,"timestampInMs":100}\n{"level":"info","message":"ok"}');
-assert.strictEqual(parsedRows.length,2);
-const runtimeIssues=activity.runtimeIssues(parsedRows,'https://vercel.com/example');
-assert.strictEqual(runtimeIssues.length,1);
-assert.strictEqual(runtimeIssues[0].path,'/api/ask');
-assert.strictEqual(runtimeIssues[0].count,1);
+// Runtime errors are reported as not monitored (Vercel offers only a live tail on this plan).
+assert.match(activity.RUNTIME_NOT_MONITORED_NOTE,/Not monitored/);
 assert.strictEqual(activity.safeText('ANTHROPIC_API_KEY=secret').includes('secret'),false);
 assert.strictEqual(activity.safeText('vcp_supersecrettoken').includes('supersecrettoken'),false);
 
@@ -271,4 +270,23 @@ console.log('Project Health API tests passed');
   assert.deepStrictEqual(q.parseNodeTestSummaries('2026-10-16T20:39:50.98Z # tests 399\n2026-10-16T20:39:50.98Z # pass 399\n2026-10-16T20:39:50.98Z # fail 0\nnoise # tests skipped words\nℹ tests 46\nℹ pass 45\nℹ fail 1'),
     [{tests:399,pass:399,fail:0},{tests:46,pass:45,fail:1}]);
   assert.deepStrictEqual(q.parseNodeTestSummaries('no summary here'),[]);
+}
+
+// DEC-012 revisit trigger: 30-day paid eval runs with an upper-bound cost (Oct 19).
+{
+  const run=require('../api/project-health-run.js')._test;
+  assert.strictEqual(run.costPerRun('<$0.25 per full run'),0.25);
+  assert.strictEqual(run.costPerRun('not configured'),null);
+  assert.strictEqual(run.costPerRun('$0.10-$0.25'),0.25);
+  const H=require('../project-health-model.js');
+  assert.strictEqual(H.paidRunSpendText({count:6,cost_upper_usd:1.5}),'Paid eval runs in the last 30 days: 6 (at most $1.50 at the configured estimate). Counts every finished run, from any trigger.');
+  assert.strictEqual(H.paidRunSpendText({count:100,cost_upper_usd:null}),'Paid eval runs in the last 30 days: 100. Counts every finished run, from any trigger.');
+}
+
+// Authority Lab's Run tests button: a free GitHub Actions run, no inputs (Oct 19).
+{
+  const run=require('../api/project-health-run.js')._test;
+  assert.strictEqual(run.runInfo('authority-lab').button_label,'Run tests');
+  assert.strictEqual(run.runInfo('authority-lab').paid_model_calls,false);
+  assert.strictEqual(run.RUNS['authority-lab'].workflow,'test.yml');
 }

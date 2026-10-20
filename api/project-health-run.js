@@ -30,6 +30,17 @@ const RUNS={
     paid_model_calls:false,
     suites:['all'],
     note:'Runs NARC\'s core game regression, single-day engine, and desktop integration suites. The human first-run playtest remains a separate product-quality gate.'
+  },
+  // Needs workflow_dispatch in authority-lab's test.yml (pedringt/authority-lab#146).
+  'authority-lab':{
+    repo:'pedringt/authority-lab',
+    workflow:'test.yml',
+    ref:'main',
+    label:'Authority Lab tests',
+    button_label:'Run tests',
+    paid_model_calls:false,
+    suites:['all'],
+    note:'Runs Authority Lab\'s app and agent test suites on Node 22 and 24. No model calls.'
   }
 };
 
@@ -98,6 +109,31 @@ function latestRunStartedAt(workflowRuns){
   return Number.isFinite(startedMs)?new Date(startedMs).toISOString():null;
 }
 
+// DEC-012 left paid runs open to anyone, revisit "if spend shows up unexpectedly": count the paid
+// workflow's finished runs over 30 days (every branch and trigger, so it is an upper bound on what the
+// dashboard started) and bound the cost with the configured per-run estimate. Null when unknown.
+function costPerRun(estimate){
+  // The largest dollar figure, so a range like "$0.10-$0.25" bounds at $0.25.
+  const amounts=[...String(estimate||'').matchAll(/\$\s*(\d+(?:\.\d+)?)/g)].map(match=>Number(match[1]));
+  return amounts.length?Math.max(...amounts):null;
+}
+async function paidRuns30d(run,info){
+  if(!run?.paid_model_calls||!process.env.GITHUB_TOKEN)return null;
+  try{
+    const since=new Date(Date.now()-30*24*60*60*1000).toISOString().slice(0,10);
+    const signal=typeof AbortSignal!=='undefined'&&AbortSignal.timeout?AbortSignal.timeout(3500):undefined;
+    // Two tiny requests that read only total_count (per_page=1), so the GET stays fast and is never capped.
+    const counts=await Promise.all(['success','failure'].map(async status=>{
+      const response=await fetch('https://api.github.com/repos/'+run.repo+'/actions/workflows/'+encodeURIComponent(run.workflow)+'/runs?created=%3E%3D'+since+'&status='+status+'&per_page=1',{headers:githubHeaders(),...(signal?{signal}:{})});
+      if(!response.ok)throw new Error('GitHub '+response.status);
+      return Number((await response.json().catch(()=>({}))).total_count||0);
+    }));
+    const finished=counts[0]+counts[1];
+    const perRun=costPerRun(info?.estimated_cost);
+    return {count:finished,since,cost_upper_usd:perRun==null?null:Number((finished*perRun).toFixed(2))};
+  }catch(_){return null;}
+}
+
 // GET helper: a failed or slow lookup is null ("unknown"), never a failed GET.
 async function lastRunStartedAt(run,ref){
   if(!process.env.GITHUB_TOKEN)return null;
@@ -115,9 +151,9 @@ module.exports=async function handler(req,res){
     if(!info){res.status(404).json({configured:false,detail:'No dashboard-run workflow is configured for this project yet.'});return;}
     const environment=String(req.query?.env||'production').toLowerCase()==='staging'?'staging':'production';
     const lastRunRef=runRef(RUNS[projectId],projectId,environment);
-    const last_run_started_at=await lastRunStartedAt(RUNS[projectId],lastRunRef);
+    const [last_run_started_at,paid_runs_30d]=await Promise.all([lastRunStartedAt(RUNS[projectId],lastRunRef),paidRuns30d(RUNS[projectId],info)]);
     res.setHeader('Cache-Control','no-store');
-    res.status(200).json({...info,last_run_ref:lastRunRef,last_run_started_at});
+    res.status(200).json({...info,last_run_ref:lastRunRef,last_run_started_at,paid_runs_30d});
     return;
   }
 
@@ -201,4 +237,4 @@ module.exports=async function handler(req,res){
   });
 };
 
-module.exports._test={RUNS,runRef,runInfo,RUN_COOLDOWN_MS,fetchRecentRuns,latestRunStartedAt,lastRunStartedAt};
+module.exports._test={costPerRun,paidRuns30d,RUNS,runRef,runInfo,RUN_COOLDOWN_MS,fetchRecentRuns,latestRunStartedAt,lastRunStartedAt};

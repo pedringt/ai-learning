@@ -18,6 +18,15 @@ Project Health is a portfolio-operations dashboard for Paige's active product wo
 - Attention: plain-language interpretation of concrete signals; no combined health score.
 - Run controls: guarded project-specific health workflows where one is explicitly configured.
 
+## Oct 19 changes
+
+- **Server errors are not monitored.** Vercel's runtime-logs API is a live tail with no time range, so it cannot return past errors, and history needs Log Drains (Vercel Pro). The dashboard says "Not monitored on this plan" instead of reporting a clean or partial scan, and no longer waits on the stream.
+- **Each project's quality cards live in `QUALITY_VIEWS`** in `project-health.js` (Overview cards, metrics, quality tab, links-menu label). A project without an entry gets the neutral fallback, and a test checks that each view uses only its own terms.
+- **Paid eval runs, last 30 days:** State's quality tab shows how many State AI quality check runs finished in 30 days (every branch and trigger, so an upper bound) and, with the configured estimate, an upper-bound cost. This is DEC-012's revisit signal. Investigations are not counted yet: that needs somewhere to store each call's usage.
+- **Authority Lab "Run tests"** starts its `test.yml` on main (free). It needs `workflow_dispatch` in that workflow (pedringt/authority-lab#146).
+- **The investigator's job-log excerpt** prefers real failure markers (a non-zero failure count, `not ok`, `x name` result lines, AssertionError, pytest `FAILED`) with the lines after each, so a suite's own logging is no longer mistaken for the failure.
+- **The investigator eval runs weekly** (Mondays, Haiku only, about $0.02), and fails only on API errors or reports cut off at the cap.
+
 ## Server-side configuration
 
 The dashboard works without these variables, but unavailable integrations stay labeled as not connected.
