@@ -125,6 +125,14 @@ async function fetchBranch(project,environment){
   if(!result.ok||!/^([0-9a-f]{40})$/i.test(String(sha||'')))return null;
   return {branch,sha};
 }
+// The release card judges the newest deployed release commit, which can be older than the branch tip (a
+// merge commit). Investigate the commit the page showed, but only if it is on the branch (Oct 20).
+async function investigatedCommit(project,branch,requestedSha){
+  const sha=String(requestedSha||'');
+  if(!/^[0-9a-f]{40}$/i.test(sha)||sha===branch.sha)return branch.sha;
+  const result=await timedJson(githubApi(project.repo,'/compare/'+sha+'...'+branch.sha),{headers:{Accept:'application/vnd.github+json'},timeoutMs:7000});
+  return result.ok&&['ahead','identical'].includes(result.payload?.status)?sha:branch.sha;
+}
 async function fetchVercelEvidence(project,sha){
   const query=new URLSearchParams({projectId:project.vercelProjectId,sha,teamId:TEAM_ID,limit:'5'});
   const listed=await timedJson('https://api.vercel.com/v7/deployments?'+query,{headers:{Authorization:'Bearer '+process.env.VERCEL_TOKEN,Accept:'application/json'},timeoutMs:7000});
@@ -234,22 +242,21 @@ module.exports=async function handler(req,res){
   if(!process.env.ANTHROPIC_API_KEY||!process.env.VERCEL_TOKEN)return response(res,503,{configured:false,detail:'The server-side model and Vercel read connections are not configured.'});
   const branch=await fetchBranch(project,environment);
   if(!branch)return response(res,502,{detail:'Could not verify the current project branch.'});
-  const selected=signalType==='github-check'
-    ?await fetchGithubEvidence(project,branch.sha,'github-check')
-    :await fetchGithubEvidence(project,branch.sha,'vercel');
+  const sha=await investigatedCommit(project,branch,body.sha);
+  const selected=await fetchGithubEvidence(project,sha,signalType);
   if(!selected)return response(res,409,{detail:'That failure is no longer present on the current branch. Refresh Project Health and try again.'});
   let deploymentEvidence=null;
-  if(signalType==='vercel')deploymentEvidence=await fetchVercelEvidence(project,branch.sha);
+  if(signalType==='vercel')deploymentEvidence=await fetchVercelEvidence(project,sha);
   let commitEvidence=null;
-  if(!selected.hasDiagnostic||(signalType==='vercel'&&!deploymentEvidence?.hasDiagnostic))commitEvidence=await fetchCommitFollowup(project,branch.sha);
+  if(!selected.hasDiagnostic||(signalType==='vercel'&&!deploymentEvidence?.hasDiagnostic))commitEvidence=await fetchCommitFollowup(project,sha);
   const followUps=[deploymentEvidence?.summary,commitEvidence?.summary].filter(Boolean).join('\n');
-  const evidence={project:project.slug,environment,branch:branch.branch,commit:branch.sha,signalType,primary:selected.summary,followUp:followUps||'No follow-up source was available.'};
+  const evidence={project:project.slug,environment,branch:branch.branch,commit:sha,signalType,primary:selected.summary,followUp:followUps||'No follow-up source was available.'};
   const report=await summarizeWithModel(evidence);
   if(report?.budgetPaused)return response(res,503,{code:'ai_budget_paused',detail:AI_BUDGET_MESSAGE});
   if(!report)return response(res,502,{detail:'The investigation model could not return a report. No project changes were made.'});
   const sources=[...selected.sources,...(deploymentEvidence?.sources||[]),...(commitEvidence?.sources||[])];
   res.setHeader('Cache-Control','no-store');
-  return response(res,200,{project:project.slug,environment,commit:branch.sha,report,sources,observedAt:new Date().toISOString(),readOnly:true});
+  return response(res,200,{project:project.slug,environment,commit:sha,report,sources,observedAt:new Date().toISOString(),readOnly:true});
 };
 module.exports._test={PROJECTS,FAILED_CHECKS,sanitizeText,safeSourceUrl,failedCheckRuns,statusFailure,eventLines,boundedEvidence,fetchBranch,fetchVercelEvidence,fetchGithubEvidence,fetchCommitFollowup,jobLogExcerpt,jobIdFrom,fetchJobLog,recordUsage,usageEndpoint,investigationRequest,reportText,MODEL,MAX_OUTPUT_TOKENS,isAiBudgetExhausted,AI_BUDGET_MESSAGE};
 

@@ -1310,7 +1310,7 @@
       if(!data)return;
       data.investigation={loading:true};renderNow();revealInvestigation();
       try{
-        const payload=await jsonFetch('/api/project-health-investigate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({project:data.project.id,environment,signalType}),timeoutMs:30000});
+        const payload=await jsonFetch('/api/project-health-investigate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({project:data.project.id,environment,signalType,sha:environment==='production'?data.delivery?.sha:data.staging?.sha}),timeoutMs:30000});
         data.investigation={report:payload.report,sources:Array.isArray(payload.sources)?payload.sources:[],observedAt:payload.observedAt};
       }catch(error){
         data.investigation={error:error.message||'Could not complete the investigation.'};
