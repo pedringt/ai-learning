@@ -53,6 +53,29 @@ async function withEnv(patch,run){const old={};for(const [key,value] of Object.e
       assert.strictEqual(calls,0);
     }finally{global.fetch=originalFetch;}
   });
+  // Oct 20: the card shows the newest deployed release commit, older than the branch tip; investigate that
+  // commit when it is on the branch, and fall back to the tip for anything else.
+  await withEnv({ANTHROPIC_API_KEY:'model-key',VERCEL_TOKEN:'vercel-key',VERCEL_ENV:'production'},async()=>{
+    const tip='a'.repeat(40),shown='b'.repeat(40),stranger='c'.repeat(40);const checked=[];const originalFetch=global.fetch;
+    global.fetch=async(url)=>{
+      url=String(url);
+      if(url.includes('/branches/main'))return {ok:true,status:200,json:async()=>({commit:{sha:tip}})};
+      if(url.includes('/compare/'))return {ok:true,status:200,json:async()=>({status:url.includes('/compare/'+shown)?'ahead':'diverged'})};
+      if(url.includes('/check-runs')){const sha=url.match(/commits\/([0-9a-f]{40})/)[1];checked.push(sha);return {ok:true,status:200,json:async()=>({check_runs:sha===shown?[{name:'playwright',conclusion:'failure',html_url:'https://github.com/pedringt/narc/checks/2',output:{title:'Deep QA failed'}}]:[]})};}
+      if(url==='https://api.anthropic.com/v1/messages')return {ok:true,status:200,json:async()=>({content:[{type:'text',text:'What happened: Deep QA failed.'}]})};
+      throw new Error('Unexpected fetch '+url);
+    };
+    try{
+      const res=makeResponse();
+      await handler({method:'POST',headers:{},body:{project:'narc',environment:'production',signalType:'github-check',sha:shown}},res);
+      assert.strictEqual(res.statusCode,200);
+      assert.deepStrictEqual(checked,[shown]);
+      const off=makeResponse();checked.length=0;
+      await handler({method:'POST',headers:{},body:{project:'narc',environment:'production',signalType:'github-check',sha:stranger}},off);
+      assert.strictEqual(off.statusCode,409);
+      assert.deepStrictEqual(checked,[tip],'a commit not on the branch is never investigated');
+    }finally{global.fetch=originalFetch;}
+  });
   console.log('Project Health investigation API tests passed');
 })().catch(error=>{console.error(error);process.exitCode=1;});
 

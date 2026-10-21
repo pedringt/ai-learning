@@ -972,6 +972,15 @@ const mixedRuns={check_runs:[
 ]};
 assert.deepStrictEqual(MODEL_H.deliveryHealth({name:'main',commit:{sha:'a'}},{statuses:[]},mixedRuns,statePH).failedChecks,[]);
 assert.strictEqual(MODEL_H.deliveryHealth({name:'main',commit:{sha:'a'}},{statuses:[]},mixedRuns).failedChecks.length,2,'without a project, eval jobs still count');
+// A failed check on a commit that deployed is not a failed deploy (Oct 20).
+{
+  const checkOnly=MODEL_H.deliveryAttention({vercel:{kind:'good'},failedChecks:[{name:'playwright'}]});
+  assert.strictEqual(checkOnly.kind,'bad');
+  assert.ok(checkOnly.checkFailed);
+  assert.match(checkOnly.detail,/^This change deployed, but the "playwright" check failed/);
+  assert.ok(!MODEL_H.deliveryAttention({vercel:{kind:'bad'},failedChecks:[]}).checkFailed);
+  assert.match(MODEL_H.deliveryAttention({vercel:{kind:'warn'},failedChecks:[{name:'a'},{name:'b'}]}).detail,/^2 checks \(a, b\) failed/);
+}
 const reFailed={check_runs:[{name:'javascript',conclusion:'success',completed_at:'2026-10-16T19:00:00Z'},{name:'javascript',conclusion:'failure',completed_at:'2026-10-16T19:30:00Z'}]};
 assert.strictEqual(MODEL_H.deliveryHealth({name:'main',commit:{sha:'a'}},{statuses:[]},reFailed,statePH).failedChecks.length,1,'a later failure still counts');
 

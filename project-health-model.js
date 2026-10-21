@@ -159,7 +159,13 @@
   function deliveryAttention(d){
     if(!d) return {kind:'warn',title:'Delivery status is unavailable',detail:'Project Health could not confirm the latest release status.'};
     if(d.vercel.kind==='bad') return {kind:'bad',title:'The latest version did not deploy',detail:'The existing production version should still be available while engineering reviews the failed release.'};
-    if(Array.isArray(d.failedChecks)&&d.failedChecks.length) return {kind:'bad',title:'A release check failed',detail:'An automated check failed before this change could be trusted.'};
+    // The deploy and its checks are separate signals: a check can fail on a commit that deployed fine (Oct 20:
+    // a staging Deep QA run on main's tip showed as "did not deploy" next to "Vercel deploy healthy").
+    if(Array.isArray(d.failedChecks)&&d.failedChecks.length){
+      const names=[...new Set(d.failedChecks.map(item=>item.name))];
+      const deployed=d.vercel.kind==='good';
+      return {kind:'bad',checkFailed:true,title:'A release check failed',detail:(deployed?'This change deployed, but ':'')+(names.length===1?'the "'+names[0]+'" check':names.length+' checks ('+names.join(', ')+')')+' failed on it. Rerun or explain '+(names.length===1?'that check':'those checks')+' before trusting the change.'};
+    }
     if(d.vercel.kind==='warn') return {kind:'warn',title:'A deployment is still finishing',detail:'No action is needed unless it stays pending longer than expected.'};
     if(d.vercel.kind==='good') return {kind:'good',title:'Delivery is healthy',detail:'The latest release completed successfully.'};
     return {kind:'warn',title:'Deployment status is not connected',detail:'Project Health can see the latest change but cannot confirm its Vercel result.'};
