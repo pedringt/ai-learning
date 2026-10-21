@@ -972,6 +972,15 @@ const mixedRuns={check_runs:[
 ]};
 assert.deepStrictEqual(MODEL_H.deliveryHealth({name:'main',commit:{sha:'a'}},{statuses:[]},mixedRuns,statePH).failedChecks,[]);
 assert.strictEqual(MODEL_H.deliveryHealth({name:'main',commit:{sha:'a'}},{statuses:[]},mixedRuns).failedChecks.length,2,'without a project, eval jobs still count');
+// The investigation report's **Label:** headings render bold, never as asterisks (Oct 20).
+{
+  const report='**What happened:** A check failed.\n\n**Owner:** <Engineering>';
+  const html=MODEL_H.investigationResultHtml({report,observedAt:'2026-10-20T00:00:00Z',sources:[]});
+  assert.ok(html.includes('<strong>What happened:</strong> A check failed.'));
+  assert.ok(!html.includes('**'));
+  assert.ok(html.includes('&lt;Engineering&gt;'),'report text is still escaped');
+  assert.strictEqual(MODEL_H.investigationHistorySummary({report}),'What happened: A check failed.');
+}
 // A failed check on a commit that deployed is not a failed deploy (Oct 20).
 {
   const checkOnly=MODEL_H.deliveryAttention({vercel:{kind:'good'},failedChecks:[{name:'playwright'}]});
