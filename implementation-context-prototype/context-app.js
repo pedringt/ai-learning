@@ -364,7 +364,6 @@
     // (context-product-polish.js), not a Workspace feature.
     root.innerHTML = `<section class="overview pristine">
       <section class="overview-heading"><div class="overview-heading-row"><div><h2>Workspace</h2><p class="workspace-record-orientation">See what needs attention, what changed, and what the team currently treats as true.</p>${workspaceStageHtml(currentProjectStage())}</div><button class="btn secondary overview-add" data-action="add-info">+ Add Evidence</button></div></section>
-      ${workspaceSourcesHtml()}
       ${workspaceAttentionHtml()}
       <div class="workspace-below-grid">
         ${whatChangedHtml()}
@@ -772,19 +771,6 @@
     }
   }
 
-  // Workspace "Sources" strip (#450, from context-sources.js). Dismissal is remembered per browser.
-  // Function declarations, not consts: renderOverview can run before this point in the file executes.
-  function sourcesDismissKey(){ return 'state-workspace-source-banner-dismissed-v2'; }
-  function sourcesStripDismissed(){ try{ return localStorage.getItem(sourcesDismissKey())==='1'; }catch(err){ return false; } }
-  function workspaceSourcesHtml(){
-    if(sourcesStripDismissed()) return '';
-    return `<section class="workspace-source-strip" aria-label="Source status"><div class="workspace-source-head"><span class="meta-label">Sources</span><span class="workspace-source-name">Slack</span><span class="workspace-source-status">New integration</span></div><div class="workspace-source-head"><button class="btn secondary workspace-source-action" type="button" data-view="settings" data-anchor="settings-slack">Connect Slack →</button><button class="workspace-source-dismiss" type="button" aria-label="Dismiss">×</button></div></section>`;
-  }
-  document.addEventListener('click',e=>{
-    if(!e.target.closest?.('.workspace-source-dismiss')) return;
-    try{ localStorage.setItem(sourcesDismissKey(),'1'); }catch(err){ /* private mode: dismissal just won't persist */ }
-    e.target.closest('.workspace-source-strip')?.remove();
-  });
   // #482: Enter in the new-project name field submits, like the button.
   document.addEventListener('keydown',e=>{
     if(e.key!=='Enter'||e.target?.id!=='newProjectName'||e.isComposing)return;

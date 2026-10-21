@@ -357,15 +357,15 @@ select:focus-visible,
 
 /* v98.7 — keep homepage supporting proof compact and secondary. */
 
-/* Homepage closing line (Oct 11): one quiet sentence under a full-width hairline,
-   replacing the "How I work with AI" section, which restated the hero. */
+/* Page closing line (Oct 11 on the homepage; Applied Work and Library since Oct 20): one quiet
+   sentence under a full-width hairline. */
 
-#ai-cs-mock [data-page="home"] .home-closing{
+#ai-cs-mock .page-closing{
   margin-top:88px;
   padding-top:30px;
   border-top:1px solid var(--border);
 }
-#ai-cs-mock [data-page="home"] .home-closing p{
+#ai-cs-mock .page-closing p{
   margin:0;
   max-width:none;
   color:var(--ink);
@@ -375,6 +375,6 @@ select:focus-visible,
   letter-spacing:-.01em;
 }
 @media(max-width:820px){
-  #ai-cs-mock [data-page="home"] .home-closing{margin-top:64px;padding-top:24px}
-  #ai-cs-mock [data-page="home"] .home-closing p{font-size:16px}
+  #ai-cs-mock .page-closing{margin-top:64px;padding-top:24px}
+  #ai-cs-mock .page-closing p{font-size:16px}
 }

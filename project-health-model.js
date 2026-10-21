@@ -906,7 +906,7 @@
     if(investigation.quickCheck)return investigation.title||'Quick project check completed';
     if(investigation.error)return 'Investigation failed: '+investigation.error;
     if(investigation.report){
-      const first=String(investigation.report).split(/\n+/).map(line=>line.trim()).find(line=>line&&!/^(Current assessment|What failed|Why this matters|Recommended next action)$/i.test(line));
+      const first=plainReportLine(investigation.report).split(/\n+/).map(line=>line.trim()).find(line=>line&&!/^(Current assessment|What failed|Why this matters|Recommended next action)$/i.test(line));
       return first||'Investigation completed';
     }
     return'Investigation completed';
@@ -1321,6 +1321,9 @@
     if(Math.abs(d)<0.1)return {label:'0',cls:'flat'};
     return {label:(d>0?'↑ ':'↓ ')+Math.abs(d)+'%',cls:d>0?'':'down'};
   }
+  // The investigation model writes **Label:** headings; show them as bold, not as asterisks (Oct 20).
+  function reportHtml(text){return esc(text).replace(/\*\*([^*\n]+)\*\*/g,'<strong>$1</strong>');}
+  function plainReportLine(text){return String(text).replace(/\*\*([^*\n]+)\*\*/g,'$1');}
   function investigationResultHtml(investigation){
     if(investigation?.handoff) return '<div class="investigation-result agent-result"><div class="agent-kicker">Handoff preview</div><strong>Project handoff ready to review</strong><pre>'+esc(investigation.handoffText||investigation.report||'')+'</pre><p class="footnote">Project Health assembled this from the currently loaded delivery, quality, investigation, and product-decision signals. Review it before sharing.</p></div>';
     if(investigation?.loading) return '<div class="investigation-result agent-result" role="status"><div class="agent-kicker">Read-only investigation agent</div><strong>Checking current health signals…</strong><p>Starting with current health signals and expanding only when the evidence points somewhere specific.</p></div>';
@@ -1334,7 +1337,7 @@
     if(!investigation?.report)return'';
     const label=investigation.qualityInvestigation?'AI quality investigation':'Read-only investigation agent';
     const title=investigation.qualityInvestigation?'Quality investigation · '+esc(fmtDate(investigation.observedAt)):'Agent investigation · '+esc(fmtDate(investigation.observedAt));
-    return '<div class="investigation-result agent-result"><div class="agent-kicker">'+label+'</div><strong>'+title+'</strong><pre>'+esc(investigation.report)+'</pre>'+
+    return '<div class="investigation-result agent-result"><div class="agent-kicker">'+label+'</div><strong>'+title+'</strong><pre>'+reportHtml(investigation.report)+'</pre>'+
       ((investigation.sources||[]).length?'<div class="investigation-sources"><strong>Evidence checked</strong> '+investigation.sources.map(source=>githubLink(esc(source.label),source.url)).join(' · ')+'</div>':'')+
 
       '<p class="footnote">'+(investigation.qualityInvestigation?'This investigation uses the recorded controlled-eval evidence already loaded by Project Health. No extra model call was made.':'The agent can inspect bounded evidence and draft a handoff. It cannot change code, configuration, or deployments.')+'</p></div>';

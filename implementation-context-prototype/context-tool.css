@@ -145,7 +145,8 @@ body.v88-dark .prototype-productbar{background:linear-gradient(135deg,#352a5e,#2
   .overview-heading-row{align-items:flex-start!important;gap:12px!important;flex-wrap:wrap!important}
   .overview-heading-row .overview-add{width:auto!important;margin-left:auto!important}
   .notes-page .page-head{align-items:flex-start!important}
-  .notes-add-actions{width:100%}
+  /* Oct 20: the two full-width buttons sat side by side and pushed Draft note off-screen. */
+  .notes-add-actions{width:100%;flex-direction:column}
   .notes-add{width:100%}
 }
 

@@ -111,6 +111,11 @@ async function withEnv(patch,run){const old={};for(const [key,value] of Object.e
     assert.strictEqual(seen[0].target,'https://api.github.com/repos/pedringt/narc/actions/jobs/6/logs');
     assert.strictEqual(seen[0].auth,'Bearer test-token');
     assert.match((await inv.fetchJobLog(inv.PROJECTS.narc,url,{token:'t',fetchImpl:async()=>({ok:false,status:403,text:async()=>''})})).reason,/403/);
+    // The failed check's own workflow, trigger and branch go into the evidence (Oct 20).
+    const ctx=await inv.fetchRunContext(inv.PROJECTS.narc,url,{token:'',fetchImpl:async(target)=>{assert.strictEqual(target,'https://api.github.com/repos/pedringt/narc/actions/runs/5');return {ok:true,json:async()=>({name:'State Deep QA',event:'workflow_dispatch',head_branch:'staging'})};}});
+    assert.deepStrictEqual(ctx,{workflow:'State Deep QA',trigger:'workflow_dispatch',ranOnBranch:'staging'});
+    assert.strictEqual(await inv.fetchRunContext(inv.PROJECTS.narc,'https://github.com/someone/else/actions/runs/5/job/6',{fetchImpl:async()=>{throw new Error('must not call');}}),null);
+    assert.strictEqual(await inv.fetchRunContext(inv.PROJECTS.narc,url,{fetchImpl:async()=>({ok:false,status:404})}),null);
     console.log('Project Health job-log evidence tests passed');
   })().catch(error=>{console.error(error);process.exit(1);});
 }

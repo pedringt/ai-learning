@@ -105,6 +105,20 @@ function jobIdFrom(url,repo){
   const match=String(url||'').match(/^https:\/\/github\.com\/([^/]+\/[^/]+)\/actions\/runs\/\d+\/job\/(\d+)$/);
   return match&&match[1]===repo?match[2]:null;
 }
+// Which workflow, trigger and branch produced a failed check (Oct 20: a staging Deep QA run on the same commit as
+// main's release was reported as a failure "on the production branch").
+async function fetchRunContext(project,url,{fetchImpl=fetch,token=process.env.GITHUB_TOKEN}={}){
+  const match=String(url||'').match(/^https:\/\/github\.com\/([^/]+\/[^/]+)\/actions\/runs\/(\d+)(?:\/|$)/);
+  if(!match||match[1]!==project.repo)return null;
+  const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),5000);
+  try{
+    const headers={Accept:'application/vnd.github+json',...(token?{Authorization:'Bearer '+token}:{})};
+    const response=await fetchImpl(githubApi(project.repo,'/actions/runs/'+match[2]),{headers,signal:controller.signal});
+    if(!response.ok)return null;
+    const run=await response.json();
+    return {workflow:sanitizeText(run?.name||'',120),trigger:sanitizeText(run?.event||'',40),ranOnBranch:sanitizeText(run?.head_branch||'',120)};
+  }catch(_){return null;}finally{clearTimeout(timer);}
+}
 async function fetchJobLog(project,url,{fetchImpl=fetch,token=process.env.GITHUB_TOKEN}={}){
   const jobId=jobIdFrom(url,project.repo);
   if(!jobId)return {available:false,reason:'Not a GitHub Actions job.'};
@@ -165,8 +179,9 @@ async function fetchGithubEvidence(project,sha,signalType){
     if(!result.ok||!failures.length)return null;
     // Logs for the first two failed jobs only, to stay inside the evidence cap.
     for(const failure of failures.slice(0,2)){
-      const log=await fetchJobLog(project,failure.url);
+      const [log,context]=await Promise.all([fetchJobLog(project,failure.url),fetchRunContext(project,failure.url)]);
       failure.jobLog=log.available?log.excerpt:('Not available: '+log.reason);
+      if(context)Object.assign(failure,context);
     }
     return {summary:JSON.stringify({failedChecks:failures}),sources:failures.map(item=>({label:'GitHub check: '+item.name,url:item.url,observedAt:null})).filter(item=>item.url),hasDiagnostic:failures.some(item=>item.title||item.summary||(item.jobLog&&!item.jobLog.startsWith('Not available')))};
   }
@@ -258,5 +273,5 @@ module.exports=async function handler(req,res){
   res.setHeader('Cache-Control','no-store');
   return response(res,200,{project:project.slug,environment,commit:sha,report,sources,observedAt:new Date().toISOString(),readOnly:true});
 };
-module.exports._test={PROJECTS,FAILED_CHECKS,sanitizeText,safeSourceUrl,failedCheckRuns,statusFailure,eventLines,boundedEvidence,fetchBranch,fetchVercelEvidence,fetchGithubEvidence,fetchCommitFollowup,jobLogExcerpt,jobIdFrom,fetchJobLog,recordUsage,usageEndpoint,investigationRequest,reportText,MODEL,MAX_OUTPUT_TOKENS,isAiBudgetExhausted,AI_BUDGET_MESSAGE};
+module.exports._test={PROJECTS,FAILED_CHECKS,sanitizeText,safeSourceUrl,failedCheckRuns,statusFailure,eventLines,boundedEvidence,fetchBranch,fetchVercelEvidence,fetchGithubEvidence,fetchCommitFollowup,jobLogExcerpt,jobIdFrom,fetchJobLog,fetchRunContext,recordUsage,usageEndpoint,investigationRequest,reportText,MODEL,MAX_OUTPUT_TOKENS,isAiBudgetExhausted,AI_BUDGET_MESSAGE};
 
