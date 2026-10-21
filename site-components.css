@@ -134,6 +134,7 @@ body.v88-dark:has(> main.case-system-page){--ink:#f3ede8;--muted:#b9afb6;--borde
 .meridian-primary-action:hover{transform:translateY(-1px);filter:brightness(1.04);}
 .meridian-product-callout{align-items:center;justify-content:space-between;margin:0 0 28px;}
 .meridian-product-callout>div{min-width:0}.meridian-product-callout>div>span{display:block;margin-bottom:4px;color:var(--purple);font-size:10px;font-weight:850;letter-spacing:.08em;text-transform:uppercase}.meridian-product-callout strong{display:block;font-size:16px}.meridian-product-callout p{max-width:720px;margin:4px 0 0;color:var(--muted);font-size:13px;line-height:1.5}.meridian-product-callout .meridian-primary-action{flex:0 0 auto}
+.meridian-product-callout .callout-example a{color:var(--ink);font-weight:750}
 @media(max-width:760px){.meridian-primary-action{width:100%;box-sizing:border-box;justify-content:center}}
 @media(max-width:700px){.meridian-product-callout{display:block}.meridian-product-callout .meridian-primary-action{margin-top:14px}}
 
