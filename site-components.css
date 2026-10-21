@@ -1462,6 +1462,9 @@ html body #ai-cs-mock #learn .stage-body :is(.resource-row a, a.resource-link, .
   text-decoration: none;
 }
 html body #ai-cs-mock #learn .stage-body :is(.resource-row a, a.resource-link):hover { background: var(--ink) !important; color: #fff !important; }
+/* Oct 20 audit: "Seen in" ties a card to the applied work that used it. */
+html body #ai-cs-mock #learn .stage-body p.seen-in { font-size: 13px !important; font-weight: 700; color: var(--muted) !important; }
+html body #ai-cs-mock #learn .stage-body p.seen-in a { color: var(--ink); font-weight: 800; text-decoration: underline; text-underline-offset: 2px; }
 /* ---------- 4i. Learning Library: white cards, colour lives in the badge and (when open) a pale header ---------- */
 html body #ai-cs-mock #learn details.learning-stage { background: #fff !important; }
 html body #ai-cs-mock #learn details.learning-stage:hover { box-shadow: 0 18px 44px rgba(21, 17, 26, 0.1) !important; }

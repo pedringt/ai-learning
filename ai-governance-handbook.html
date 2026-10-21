@@ -222,12 +222,6 @@
 .handbook .rules li { counter-increment: r; position: relative; padding-left: 36px; }
 .handbook .rules li::before { content: counter(r); position: absolute; left: 0; top: 2px; font-family: var(--mono); font-size: 13px; color: var(--accent); border: 1px solid var(--accent); border-radius: 50%; width: 22px; height: 22px; display: grid; place-items: center; }
 
-/* Interview */
-.handbook .qa { display: grid; gap: 10px; }
-.handbook .qa > div { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 12px 16px; }
-.handbook .qa b { display: block; font-weight: 600; margin-bottom: 4px; }
-.handbook .qa span { font-size: 14px; color: var(--muted); }
-
 /* Resources */
 .handbook .reslist { display: grid; grid-template-columns: 1fr; gap: 8px; margin: 6px 0 8px; }
 @media (min-width: 640px) { .handbook .reslist { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
@@ -372,10 +366,10 @@ body { margin: 0; }
 <meta content="AI Governance Handbook · Context Switch" name="twitter:image:alt"/>
 <!-- social-preview:end -->
 </head><body>
-<div class="topbar"><div class="topinner"><a class="brand-button" href="index.html"><span class="brand">Context <span>Switch</span></span></a><nav aria-label="Primary pages" class="nav"><a href="index.html">Home</a><a href="index.html#portfolio">Applied Work</a><a aria-current="page" href="index.html#learn">Learning Library</a></nav><div class="top-actions"><select aria-label="Choose page" id="v922MobileNav"><option value="index.html">Home</option><option value="index.html#portfolio">Applied Work</option><option selected="" value="index.html#learn">Learning Library</option></select></div></div></div>
+<div class="topbar"><div class="topinner"><a class="brand-button" href="index.html"><span class="brand">Context <span>Switch</span></span></a><nav aria-label="Primary pages" class="nav"><a href="index.html">Home</a><a href="index.html#portfolio">Applied Work</a><a aria-current="page" href="index.html#learn">Library</a></nav><div class="top-actions"><select aria-label="Choose page" id="v922MobileNav"><option value="index.html">Home</option><option value="index.html#portfolio">Applied Work</option><option selected="" value="index.html#learn">Library</option></select></div></div></div>
 <main class="handbook">
 <header class="top">
-  <div class="eyebrow">Learning Library</div>
+  <div class="eyebrow">Library</div>
   <h1>AI Governance Handbook</h1>
   <p class="lede">A working reference I maintain for AI governance in any industry: the review workflow, risk triage, assessments, testing, vendors, monitoring, incidents, law, frameworks and reporting, with working tools for the everyday parts.</p>
   <div class="meta"><span>Built with Claude, checked and maintained by me</span><span id="stale-summary">Legal sections checked Oct 12, 2026</span></div>
@@ -416,10 +410,9 @@ body { margin: 0; }
       <li class="grp-label" aria-hidden="true">Communicating</li>
       <li><a href="#writing"><span class="n">11</span>Writing and templates</a></li>
       <li><a href="#reporting"><span class="n">12</span>Reporting to leadership</a></li>
-      <li><a href="#interview"><span class="n">13</span>Interview prep</a></li>
       <li class="grp-label" aria-hidden="true">Reference</li>
-      <li><a href="#resources"><span class="n">14</span>Resources</a></li>
-      <li><a href="#glossary"><span class="n">15</span>Glossary</a></li>
+      <li><a href="#resources"><span class="n">13</span>Resources</a></li>
+      <li><a href="#glossary"><span class="n">14</span>Glossary</a></li>
     </ol>
   </nav>
 
@@ -427,7 +420,7 @@ body { margin: 0; }
     <section id="use">
       <div class="eyebrow">00</div>
       <h2>About this handbook</h2>
-      <p class="point">This is the reference I use for AI governance work: practice exercises, case studies and real reviews alike. It's organized around the loop most governance work follows: intake, triage, assess, decide, monitor.</p>
+      <p class="point">This is the reference I use for AI governance work and reviews. It's organized around the loop most governance work follows: intake, triage, assess, decide, monitor.</p>
       <ul>
         <li><strong>How to use it:</strong> start with program setup and the review workflow (sections 01 and 02), then jump to whatever the situation needs. The tools at the top work on any scenario.</li>
         <li><strong>How it's kept current:</strong> legal sections show the date they were last checked and turn amber after 90 days. Laws in this area change monthly.</li>
@@ -1450,28 +1443,9 @@ Decisions or support needed
       <p>The one-page report template is in <a href="#templates">Templates</a>.</p>
     </section>
 
-    <!-- 12 INTERVIEW -->
-    <section id="interview">
-      <div class="eyebrow">13</div>
-      <h2>Interview prep</h2>
-      <p class="point">Governance interviews test judgment more than memorized law. Answer with a real situation: what happened, what you did, the result and what you learned. Tie answers to your portfolio work wherever you can.</p>
-      <div class="qa">
-        <div><b>How would you set up an AI governance program from scratch?</b><span>Listening for: start with an inventory, risk-based triage, clear ownership, a framework (NIST or ISO), quick wins like an acceptable-use policy, then build out.</span></div>
-        <div><b>How do you decide how much review a use case needs?</b><span>Listening for: risk factors (decisions about people, data, audience, autonomy, scale), tiers, and proportionality.</span></div>
-        <div><b>A team wants to launch next week and says governance is blocking them. What do you do?</b><span>Listening for: understand the deadline, triage fast, offer a conditional or limited launch, escalate the tradeoff to the right decision-maker rather than just saying no.</span></div>
-        <div><b>How would you assess a vendor's AI tool?</b><span>Listening for: due diligence questions, testing access, contract clauses, and knowing the company stays responsible.</span></div>
-        <div><b>Walk me through testing a system for bias.</b><span>Listening for: defining groups and outcomes, selection rates and impact ratios, paired testing, sample size limits, and what you'd do with a bad result.</span></div>
-        <div><b>An employee pasted customer data into a public chatbot. What happens next?</b><span>Listening for: no-blame reporting, containment, legal involvement, the notification clock, and fixing the cause with an approved tool.</span></div>
-        <div><b>Which frameworks and laws do you know, and how have you used them?</b><span>Listening for: applied knowledge, not a list. Show how a framework shaped a real deliverable.</span></div>
-        <div><b>How do you stay current?</b><span>Listening for: specific sources (IAPP, law firm alerts, regulator sites) and a habit, like a weekly review.</span></div>
-        <div><b>How would you explain AI risk to the board?</b><span>Listening for: business terms, trends, owners, and clear asks on one page.</span></div>
-        <div><b>Tell me about a time you pushed back on a decision.</b><span>Listening for: respect for the decision-maker, evidence, a constructive alternative, and how it ended.</span></div>
-      </div>
-    </section>
-
     <!-- 13 RESOURCES -->
     <section id="resources">
-      <div class="eyebrow">14</div>
+      <div class="eyebrow">13</div>
       <h2>Resources</h2>
       <p class="point">The sources practitioners use most, grouped by what you'd reach for them for. Start with the three marked "Start here."</p>
 
@@ -1538,9 +1512,9 @@ Decisions or support needed
 
     <!-- 14 GLOSSARY -->
     <section id="glossary">
-      <div class="eyebrow">15</div>
+      <div class="eyebrow">14</div>
       <h2>Glossary</h2>
-      <p class="point">Plain definitions of the terms that come up most in governance work and interviews.</p>
+      <p class="point">Plain definitions of the terms that come up most in governance work.</p>
       <dl class="gloss">
         <div><dt>ADMT</dt><dd>Automated decisionmaking technology. California's term for technology that replaces or substantially replaces human decisions. <small>CCPA regulations</small></dd></div>
         <div><dt>Adverse action notice</dt><dd>The notice a lender must send when it denies credit or changes terms, giving the specific principal reasons. <small>ECOA / Reg B</small></dd></div>
@@ -1583,7 +1557,7 @@ Decisions or support needed
 
   </div>
 </div>
-<footer class="case-study-footer"><a href="index.html#learn">Back to Learning Library →</a></footer></main>
+<footer class="case-study-footer"><a href="index.html#learn">Back to Library →</a></footer></main>
 <script>
 
 /* ---------- Helpers ---------- */

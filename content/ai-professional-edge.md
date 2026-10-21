@@ -1,6 +1,6 @@
 # AI Professional Edge
 
-*A compact, living reference for the AI techniques, product patterns, tools, and questions I am actively using or watching.*
+*Current AI product patterns, techniques and vocabulary: the material that changes faster than the principles.*
 
 Durable principles live in Durable AI Knowledge. Day-to-day efficiency habits live in the Efficient AI Use for Product Work cheat sheet. This page stays closer to current patterns, tools, vocabulary, and techniques that may change.
 
@@ -159,7 +159,7 @@ Generative UI does not have to mean inventing a new interface on every request. 
 
 ---
 
-## Tools & Systems Worth Knowing
+## Tools and systems
 
 Useful examples of how current AI products are solving recurring product and architecture problems, not endorsements or a shopping list.
 
@@ -231,7 +231,7 @@ Useful examples of how current AI products are solving recurring product and arc
 
 ---
 
-## Questions I'm Adding to My Toolkit
+## Questions to ask
 
 1. Where does this workflow actually break, and is the cause missing facts, the wrong procedure, or the process itself?
 2. What does orchestration improve enough to justify its extra cost and failure surface?
