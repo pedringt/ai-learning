@@ -1121,6 +1121,12 @@ html body #ai-cs-mock .learning-stage .stage-num {
   box-shadow: 4px 4px 0 var(--ink);
   transform: rotate(-6deg);
 }
+/* The column must hold the badge plus its offset shadow and tilt, or the badge crowds the title. */
+html body #ai-cs-mock details.learning-stage summary { grid-template-columns: 52px minmax(0, 1fr) !important; }
+@media (max-width: 640px) {
+  html body #ai-cs-mock details.learning-stage summary { grid-template-columns: 44px minmax(0, 1fr) !important; gap: 14px !important; padding-left: 16px !important; }
+  html body #ai-cs-mock .learning-stage .stage-num { width: 36px; height: 36px; border-radius: 12px; }
+}
 html body #ai-cs-mock .learning-stage .stage-main b { letter-spacing: -0.03em; color: var(--ink); }
 
 html body #ai-cs-mock .learning-stage .stage-body { padding: 4px 24px 24px 80px !important; }
@@ -1433,7 +1439,10 @@ html body #ai-cs-mock #learn details.learning-stage[open] { background: #fff !im
 html body #ai-cs-mock #learn details.learning-stage[open] summary { background: transparent !important; }
 html body #ai-cs-mock #learn details.learning-stage .stage-body {
   border-top: 1px solid var(--rd-line) !important;
-  padding: 8px 28px 28px 80px !important;
+  padding: 8px 28px 28px 88px !important;
+}
+@media (max-width: 640px) {
+  html body #ai-cs-mock #learn details.learning-stage .stage-body { padding: 8px 20px 24px 74px !important; }
 }
 html body #ai-cs-mock #learn .stage-body :is(h3, .stage-group > h3) {
   display: inline-flex;
